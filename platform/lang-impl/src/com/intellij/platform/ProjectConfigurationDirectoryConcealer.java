@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform;
 
 import com.intellij.ide.projectView.TreeStructureProvider;
@@ -13,6 +13,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -20,9 +21,8 @@ import java.util.Collection;
 
 /**
  * Hides .idea directory in Project View.
- *
- * @author yole
  */
+@ApiStatus.Internal
 public final class ProjectConfigurationDirectoryConcealer implements TreeStructureProvider, DumbAware {
   private final Project myProject;
 
@@ -30,13 +30,12 @@ public final class ProjectConfigurationDirectoryConcealer implements TreeStructu
     myProject = project;
   }
 
-  @NotNull
   @Override
-  public Collection<AbstractTreeNode<?>> modify(@NotNull AbstractTreeNode<?> parent, @NotNull Collection<AbstractTreeNode<?>> children, ViewSettings settings) {
+  public @NotNull Collection<AbstractTreeNode<?>> modify(@NotNull AbstractTreeNode<?> parent, @NotNull Collection<AbstractTreeNode<?>> children, ViewSettings settings) {
     if (parent instanceof PsiDirectoryNode &&
         ProjectViewDirectoryHelper.getInstance(myProject).shouldHideProjectConfigurationFilesDirectory()) {
       final VirtualFile vFile = ((PsiDirectoryNode)parent).getVirtualFile();
-      if (vFile != null && Comparing.equal(ProjectFileIndex.SERVICE.getInstance(myProject).getContentRootForFile(vFile), vFile)) {
+      if (vFile != null && Comparing.equal(ProjectFileIndex.getInstance(myProject).getContentRootForFile(vFile), vFile)) {
         final Collection<? extends AbstractTreeNode<?>> moduleChildren = parent.getChildren();
         Collection<AbstractTreeNode<?>> result = new ArrayList<>();
         for (AbstractTreeNode<?> moduleChild : moduleChildren) {

@@ -5,7 +5,12 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
-import com.intellij.openapi.vcs.changes.*;
+import com.intellij.openapi.vcs.changes.ChangeListManagerGate;
+import com.intellij.openapi.vcs.changes.ChangeListManagerImpl;
+import com.intellij.openapi.vcs.changes.ChangeProvider;
+import com.intellij.openapi.vcs.changes.ChangelistBuilder;
+import com.intellij.openapi.vcs.changes.VcsDirtyScope;
+import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtilCore;
@@ -26,9 +31,8 @@ import java.io.File;
 import java.util.List;
 import java.util.regex.Pattern;
 
-/**
- * @author irengrig
- */
+import static org.junit.Assert.assertTrue;
+
 public class ExternalChangesDetectionVcsTest extends AbstractJunitVcsTestCase  {
   private MockAbstractVcs myVcs;
   private ProjectLevelVcsManagerImpl myVcsManager;
@@ -48,7 +52,7 @@ public class ExternalChangesDetectionVcsTest extends AbstractJunitVcsTestCase  {
       myClientRoot = new File(myTempDirTestFixture.getTempDirPath(), "clientroot");
       myClientRoot.mkdir();
 
-      initProject(myClientRoot, ExternalChangesDetectionVcsTest.this.getTestName());
+      initProject(myClientRoot, this.getTestName());
 
       myVcs = new MockAbstractVcs(myProject);
       myVcs.setChangeProvider(new MyMockChangeProvider());
@@ -83,11 +87,11 @@ public class ExternalChangesDetectionVcsTest extends AbstractJunitVcsTestCase  {
     f.createNewFile();
     final VirtualFile vf = myLFS.refreshAndFindFileByIoFile(f);
     myChangeListManager.ensureUpToDate();
-    myChangeListManager.getUnversionedFiles().contains(vf);
+    assertTrue(myChangeListManager.getUnversionedFiles().contains(vf));
     FileUtil.delete(f);
     myWorkingCopyDir.refresh(false, true);
     myChangeListManager.ensureUpToDate();
-    myChangeListManager.getUnversionedFiles().isEmpty();
+    assertTrue(myChangeListManager.getUnversionedFiles().isEmpty());
   }
 
   @Test
@@ -104,7 +108,7 @@ public class ExternalChangesDetectionVcsTest extends AbstractJunitVcsTestCase  {
     for (VirtualFile unversionedFile : unversionedFiles) {
       if (VfsUtilCore.isAncestor(myWorkingCopyDir, unversionedFile, true)) {
         ++cnt;
-        Assert.assertTrue(pattern.matcher(unversionedFile.getName()).matches());
+        assertTrue(pattern.matcher(unversionedFile.getName()).matches());
       }
     }
     Assert.assertEquals(100, cnt);

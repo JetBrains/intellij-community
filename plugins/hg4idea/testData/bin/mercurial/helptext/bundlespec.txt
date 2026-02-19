@@ -1,0 +1,121 @@
+Mercurial supports generating standalone "bundle" files that hold repository
+data. These "bundles" are typically saved locally and used later or exchanged
+between different repositories, possibly on different machines. Example
+commands using bundles are :hg:`bundle` and :hg:`unbundle`.
+
+Generation of bundle files is controlled by a "bundle specification"
+("bundlespec") string. This string tells the bundle generation process how
+to create the bundle.
+
+A "bundlespec" string is composed of the following elements:
+
+type
+    A string denoting the bundle format to use.
+
+compression
+    Denotes the compression engine to use compressing the raw bundle data.
+
+parameters
+    Arbitrary key-value parameters to further control bundle generation.
+
+A "bundlespec" string has the following formats:
+
+<type>
+    The literal bundle format string is used.
+
+<compression>-<type>
+    The compression engine and format are delimited by a hyphen (``-``).
+
+Optional parameters follow the ``<type>``. Parameters are URI escaped
+``key=value`` pairs. Each pair is delimited by a semicolon (``;``). The
+first parameter begins after a ``;`` immediately following the ``<type>``
+value.
+
+Available Types
+===============
+
+The following bundle <type> strings are available:
+
+v1
+    Produces a legacy "changegroup" version 1 bundle.
+
+    This format is compatible with nearly all Mercurial clients because it is
+    the oldest. However, it has some limitations, which is why it is no longer
+    the default for new repositories.
+
+    ``v1`` bundles can be used with modern repositories using the "generaldelta"
+    storage format. However, it may take longer to produce the bundle and the
+    resulting bundle may be significantly larger than a ``v2`` bundle.
+
+    ``v1`` bundles can only use the ``gzip``, ``bzip2``, and ``none`` compression
+    formats.
+
+v2
+    Produces a version 2 bundle.
+
+    Version 2 bundles are an extensible format that can store additional
+    repository data (such as bookmarks and phases information) and they can
+    store data more efficiently, resulting in smaller bundles.
+
+    Version 2 bundles can also use modern compression engines, such as
+    ``zstd``, making them faster to compress and often smaller.
+
+Available Compression Engines
+=============================
+
+The following bundle <compression> engines can be used:
+
+.. bundlecompressionmarker
+
+The compression engines can be prepended with ``stream`` to create a streaming bundle.
+These are bundles that are extremely efficient to produce and consume,
+but do not have guaranteed compatibility with older clients.
+
+Available Options
+=================
+
+The following options exist:
+
+changegroup
+    Include the changegroup data in the bundle (default to True).
+
+cg.version
+    Select the version of the changegroup to use. Available options are : 01, 02
+    or 03. By default it will be automatically selected according to the current
+    repository format.
+
+obsolescence
+    Include obsolescence-markers relevant to the bundled changesets.
+
+phases
+    Include phase information relevant to the bundled changesets.
+
+revbranchcache
+    Include the "tags-fnodes" cache inside the bundle.
+
+tagsfnodescache
+    Include the "tags-fnodes" cache inside the bundle.
+
+
+Examples
+========
+
+``v2``
+    Produce a ``v2`` bundle using default options, including compression.
+
+``none-v1``
+    Produce a ``v1`` bundle with no compression.
+
+``zstd-v2``
+    Produce a ``v2`` bundle with zstandard compression using default
+    settings.
+
+``zstd-v1``
+    This errors because ``zstd`` is not supported for ``v1`` types.
+
+``none-streamv2``
+    Produce a ``v2`` streaming bundle with no compression.
+
+``zstd-v2;obsolescence=true;phases=true``
+    Produce a ``v2`` bundle with zstandard compression which includes
+    obsolescence markers and phases.

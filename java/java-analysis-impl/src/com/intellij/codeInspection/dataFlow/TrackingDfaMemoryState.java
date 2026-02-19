@@ -1,17 +1,39 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.dataFlow;
 
-import com.intellij.codeInspection.dataFlow.instructions.AssignInstruction;
-import com.intellij.codeInspection.dataFlow.instructions.ConditionalGotoInstruction;
-import com.intellij.codeInspection.dataFlow.instructions.ExpressionPushingInstruction;
-import com.intellij.codeInspection.dataFlow.instructions.Instruction;
+import com.intellij.codeInspection.dataFlow.interpreter.DataFlowInterpreter;
+import com.intellij.codeInspection.dataFlow.java.anchor.JavaExpressionAnchor;
+import com.intellij.codeInspection.dataFlow.java.inst.AssignInstruction;
+import com.intellij.codeInspection.dataFlow.jvm.JvmDfaMemoryStateImpl;
+import com.intellij.codeInspection.dataFlow.jvm.problems.ContractFailureProblem;
+import com.intellij.codeInspection.dataFlow.jvm.problems.JvmDfaProblem;
+import com.intellij.codeInspection.dataFlow.lang.DfaAnchor;
+import com.intellij.codeInspection.dataFlow.lang.UnsatisfiedConditionProblem;
+import com.intellij.codeInspection.dataFlow.lang.ir.ConditionalGotoInstruction;
+import com.intellij.codeInspection.dataFlow.lang.ir.DfaInstructionState;
+import com.intellij.codeInspection.dataFlow.lang.ir.EnsureInstruction;
+import com.intellij.codeInspection.dataFlow.lang.ir.ExpressionPushingInstruction;
+import com.intellij.codeInspection.dataFlow.lang.ir.Instruction;
+import com.intellij.codeInspection.dataFlow.memory.DfaMemoryState;
+import com.intellij.codeInspection.dataFlow.memory.DistinctPairSet;
+import com.intellij.codeInspection.dataFlow.memory.EqClass;
+import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeBinOp;
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
-import com.intellij.codeInspection.dataFlow.types.*;
-import com.intellij.codeInspection.dataFlow.value.*;
+import com.intellij.codeInspection.dataFlow.types.DfAntiConstantType;
+import com.intellij.codeInspection.dataFlow.types.DfConstantType;
+import com.intellij.codeInspection.dataFlow.types.DfLongType;
+import com.intellij.codeInspection.dataFlow.types.DfType;
+import com.intellij.codeInspection.dataFlow.types.DfTypes;
+import com.intellij.codeInspection.dataFlow.value.DfaBinOpValue;
+import com.intellij.codeInspection.dataFlow.value.DfaTypeValue;
+import com.intellij.codeInspection.dataFlow.value.DfaValue;
+import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
+import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
+import com.intellij.codeInspection.dataFlow.value.RelationType;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiExpression;
-import com.intellij.psi.PsiType;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.psiutils.ExpressionUtils;
@@ -21,10 +43,18 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
 import java.util.function.Predicate;
 
-public class TrackingDfaMemoryState extends DfaMemoryStateImpl {
+public class TrackingDfaMemoryState extends JvmDfaMemoryStateImpl {
   private MemoryStateChange myHistory;
 
   protected TrackingDfaMemoryState(DfaValueFactory factory) {
@@ -37,17 +67,19 @@ public class TrackingDfaMemoryState extends DfaMemoryStateImpl {
     myHistory = toCopy.myHistory;
   }
 
-  @NotNull
   @Override
-  public TrackingDfaMemoryState createCopy() {
+  public @NotNull TrackingDfaMemoryState createCopy() {
     return new TrackingDfaMemoryState(this);
   }
 
   @Override
-  protected void afterMerge(DfaMemoryStateImpl other) {
+  public void afterMerge(@NotNull DfaMemoryState other) {
     super.afterMerge(other);
     assert other instanceof TrackingDfaMemoryState;
-    myHistory = myHistory.merge(((TrackingDfaMemoryState)other).myHistory);
+    MemoryStateChange otherHistory = ((TrackingDfaMemoryState)other).myHistory;
+    myHistory = myHistory == null ? otherHistory :
+                otherHistory == null ? myHistory :
+                myHistory.merge(otherHistory);
   }
 
   private Map<DfaVariableValue, Set<Relation>> getRelations() {
@@ -58,11 +90,11 @@ public class TrackingDfaMemoryState extends DfaMemoryStateImpl {
       }
       if (type instanceof DfAntiConstantType) {
         Set<?> notValues = ((DfAntiConstantType<?>)type).getNotValues();
-        PsiType varType = var.getType();
-        if (!notValues.isEmpty() && varType != null) {
+        if (!notValues.isEmpty()) {
+          DfType dfType = var.getDfType();
           for (Object notValue : notValues) {
             result.computeIfAbsent(var, k -> new HashSet<>()).add(
-              new Relation(RelationType.NE, getFactory().fromDfType(DfTypes.constant(notValue, varType))));
+              new Relation(RelationType.NE, getFactory().fromDfType(DfTypes.constant(notValue, dfType))));
           }
         }
       }
@@ -103,8 +135,7 @@ public class TrackingDfaMemoryState extends DfaMemoryStateImpl {
     myHistory = MemoryStateChange.create(myHistory, instruction, result, value);
   }
 
-  @NotNull
-  private Map<DfaVariableValue, Change> getChangeMap(TrackingDfaMemoryState previous) {
+  private @NotNull Map<DfaVariableValue, Change> getChangeMap(TrackingDfaMemoryState previous) {
     Map<DfaVariableValue, Change> changeMap = new HashMap<>();
     Set<DfaVariableValue> varsToCheck = new HashSet<>();
     previous.forRecordedVariableTypes((value, state) -> varsToCheck.add(value));
@@ -131,7 +162,7 @@ public class TrackingDfaMemoryState extends DfaMemoryStateImpl {
         removed.removeAll(newValueRelations);
         changeMap.compute(
           value, (v, change) -> change == null
-                                ? Change.create(removed, added, DfTypes.BOTTOM, DfTypes.BOTTOM)
+                                ? Change.create(removed, added, DfType.BOTTOM, DfType.BOTTOM)
                                 : Change.create(removed, added, change.myOldType, change.myNewType));
       }
     }
@@ -146,7 +177,7 @@ public class TrackingDfaMemoryState extends DfaMemoryStateImpl {
    * Records a bridge changes. A bridge states are states which process the same input instruction,
    * but in result jump to another place in the program (other than this state target).
    * A bridge change is the difference between this state and all states which have different
-   * target instruction. Bridges allow to track what else is processed in parallel with current state,
+   * target instruction. Bridges allow tracking what else is processed in parallel with current state,
    * including states which may not arrive into target place. E.g. consider two states like this:
    *
    * <pre>
@@ -163,7 +194,6 @@ public class TrackingDfaMemoryState extends DfaMemoryStateImpl {
    * {@code always_true_condition} explanation.
    *
    * @param instruction instruction which
-   * @param bridgeStates
    */
   void addBridge(Instruction instruction, List<TrackingDfaMemoryState> bridgeStates) {
     Map<DfaVariableValue, Change> changeMap = null;
@@ -180,7 +210,7 @@ public class TrackingDfaMemoryState extends DfaMemoryStateImpl {
         break;
       }
     }
-    if (changeMap != null && !changeMap.isEmpty()) {
+    if (changeMap != null && !changeMap.isEmpty() && myHistory != null) {
       myHistory = myHistory.withBridge(instruction, changeMap);
     }
   }
@@ -227,9 +257,8 @@ public class TrackingDfaMemoryState extends DfaMemoryStateImpl {
       myNewType = newType;
     }
 
-    @Nullable
-    static Change create(Set<Relation> removedRelations, Set<Relation> addedRelations, DfType oldType, DfType newType) {
-      if (removedRelations.isEmpty() && addedRelations.isEmpty() && oldType == DfTypes.BOTTOM && newType == DfTypes.BOTTOM) {
+    static @Nullable Change create(Set<Relation> removedRelations, Set<Relation> addedRelations, DfType oldType, DfType newType) {
+      if (removedRelations.isEmpty() && addedRelations.isEmpty() && oldType == DfType.BOTTOM && newType == DfType.BOTTOM) {
         return null;
       }
       return new Change(removedRelations, addedRelations, oldType, newType);
@@ -247,7 +276,7 @@ public class TrackingDfaMemoryState extends DfaMemoryStateImpl {
       DfType oldType = myOldType.join(other.myOldType);
       DfType newType = myNewType.join(other.myNewType);
       if (oldType.equals(newType)) {
-        oldType = newType = DfTypes.BOTTOM;
+        oldType = newType = DfType.BOTTOM;
       }
       return create(removed, added, oldType, newType);
     }
@@ -320,7 +349,7 @@ public class TrackingDfaMemoryState extends DfaMemoryStateImpl {
       }, false);
     }
 
-    MemoryStateChange findRelation(DfaVariableValue value, @NotNull Predicate<Relation> relationPredicate, boolean startFromSelf) {
+    MemoryStateChange findRelation(DfaVariableValue value, @NotNull Predicate<? super Relation> relationPredicate, boolean startFromSelf) {
       return findChange(change -> {
         if (change.myInstruction instanceof AssignInstruction && change.myTopOfStack == value) return true;
         Change varChange = change.myChanges.get(value);
@@ -342,21 +371,27 @@ public class TrackingDfaMemoryState extends DfaMemoryStateImpl {
           }
           if (change.myInstruction instanceof AssignInstruction && change.myTopOfStack == value && change.getPrevious() != null) {
             FactDefinition<T> fact = change.getPrevious().findFact(value, extractor);
-            return new FactDefinition<>(change, fact.myFact);
+            return new FactDefinition<>(change, fact.myFact, fact.myOldFact);
           }
         }
-        return new FactDefinition<>(null, extractor.extract(((DfaVariableValue)value).getInherentType()));
+        return new FactDefinition<>(null, extractor.extract(((DfaVariableValue)value).getInherentType()), null);
       }
-      if (value instanceof DfaBinOpValue) {
-        FactDefinition<T> left = findFact(((DfaBinOpValue)value).getLeft(), extractor);
-        FactDefinition<T> right = findFact(((DfaBinOpValue)value).getRight(), extractor);
+      if (value instanceof DfaBinOpValue binOp) {
+        FactDefinition<T> left = findFact(binOp.getLeft(), extractor);
+        FactDefinition<T> right = findFact(binOp.getRight(), extractor);
         if (left.myFact instanceof LongRangeSet && right.myFact instanceof LongRangeSet) {
-          @SuppressWarnings("unchecked") T result = (T)((LongRangeSet)left.myFact).binOpFromToken(
-            ((DfaBinOpValue)value).getTokenType(), ((LongRangeSet)right.myFact), PsiType.LONG.equals(value.getType()));
-          return new FactDefinition<>(null, Objects.requireNonNull(result));
+          LongRangeBinOp op = binOp.getOperation();
+          @SuppressWarnings("unchecked")
+          T result = (T)op.eval((LongRangeSet)left.myFact, (LongRangeSet)right.myFact, binOp.getDfType().getLongRangeType());
+          T oldFact = null;
+          if (left.myOldFact != null && right.myOldFact != null) {
+            //noinspection unchecked
+            oldFact = (T)op.eval((LongRangeSet)left.myOldFact, (LongRangeSet)right.myOldFact, binOp.getDfType().getLongRangeType());
+          }
+          return new FactDefinition<>(null, Objects.requireNonNull(result), oldFact);
         }
       }
-      return new FactDefinition<>(null, extractor.extract(value.getDfType()));
+      return new FactDefinition<>(null, extractor.extract(value.getDfType()), null);
     }
 
     @Nullable
@@ -370,20 +405,22 @@ public class TrackingDfaMemoryState extends DfaMemoryStateImpl {
       return change;
     }
 
-    @Nullable
-    private static <T> FactDefinition<T> factFromChange(FactExtractor<T> extractor, MemoryStateChange change, Change varChange) {
+    private static @Nullable <T> FactDefinition<T> factFromChange(FactExtractor<T> extractor, MemoryStateChange change, Change varChange) {
       if (varChange != null) {
         T newFact = extractor.extract(varChange.myNewType);
         T oldFact = extractor.extract(varChange.myOldType);
         if (!newFact.equals(oldFact)) {
-          return new FactDefinition<>(change, newFact);
+          if (change.myInstruction instanceof EnsureInstruction &&
+              ((EnsureInstruction)change.myInstruction).getProblem() instanceof ContractFailureProblem) {
+            change = change.getPrevious();
+          }
+          return new FactDefinition<>(change, newFact, oldFact);
         }
       }
       return null;
     }
 
-    @Nullable
-    private MemoryStateChange findChange(@NotNull Predicate<MemoryStateChange> predicate, boolean startFromSelf) {
+    private @Nullable MemoryStateChange findChange(@NotNull Predicate<? super MemoryStateChange> predicate, boolean startFromSelf) {
       for (MemoryStateChange change = startFromSelf ? this : getPrevious(); change != null; change = change.getPrevious()) {
         if (predicate.test(change)) {
           return change;
@@ -394,18 +431,25 @@ public class TrackingDfaMemoryState extends DfaMemoryStateImpl {
 
     @Nullable
     PsiExpression getExpression() {
-      if (myInstruction instanceof ExpressionPushingInstruction &&
-          ((ExpressionPushingInstruction<?>)myInstruction).getExpressionRange() == null) {
-        return ((ExpressionPushingInstruction<?>)myInstruction).getExpression();
+      if (myInstruction instanceof ExpressionPushingInstruction) {
+        DfaAnchor anchor = ((ExpressionPushingInstruction)myInstruction).getDfaAnchor();
+        if (anchor instanceof JavaExpressionAnchor) {
+          return ((JavaExpressionAnchor)anchor).getExpression();
+        }
       }
       if (myInstruction instanceof ConditionalGotoInstruction) {
         return ObjectUtils.tryCast(((ConditionalGotoInstruction)myInstruction).getPsiAnchor(), PsiExpression.class);
       }
+      if (myInstruction instanceof EnsureInstruction) {
+        UnsatisfiedConditionProblem problem = ((EnsureInstruction)myInstruction).getProblem();
+        if (problem instanceof JvmDfaProblem) {
+          return ObjectUtils.tryCast(((JvmDfaProblem<?>)problem).getAnchor(), PsiExpression.class);
+        }
+      }
       return null;
     }
 
-    @NotNull
-    public MemoryStateChange merge(MemoryStateChange change) {
+    public @NotNull MemoryStateChange merge(@NotNull MemoryStateChange change) {
       if (change == this) return this;
       Set<MemoryStateChange> previous = new LinkedHashSet<>();
       if (myInstruction instanceof MergeInstruction) {
@@ -439,11 +483,10 @@ public class TrackingDfaMemoryState extends DfaMemoryStateImpl {
       return new MemoryStateChange(myPrevious, instruction, myChanges, myTopOfStack, bridge);
     }
 
-    @Nullable
-    static MemoryStateChange create(@Nullable MemoryStateChange previous,
-                                    @NotNull Instruction instruction,
-                                    @NotNull Map<DfaVariableValue, Change> result,
-                                    @NotNull DfaValue value) {
+    static @Nullable MemoryStateChange create(@Nullable MemoryStateChange previous,
+                                              @NotNull Instruction instruction,
+                                              @NotNull Map<DfaVariableValue, Change> result,
+                                              @NotNull DfaValue value) {
       if (result.isEmpty() && DfaTypeValue.isUnknown(value)) {
         return previous;
       }
@@ -452,8 +495,7 @@ public class TrackingDfaMemoryState extends DfaMemoryStateImpl {
 
     MemoryStateChange[] flatten() {
       List<MemoryStateChange> changes = StreamEx.iterate(this, Objects::nonNull, change -> change.getPrevious()).toList();
-      Collections.reverse(changes);
-      return changes.toArray(new MemoryStateChange[0]);
+      return ArrayUtil.reverseArray(changes.toArray(new MemoryStateChange[0]));
     }
 
     String dump() {
@@ -472,7 +514,7 @@ public class TrackingDfaMemoryState extends DfaMemoryStateImpl {
 
   private static class MergeInstruction extends Instruction {
     @Override
-    public DfaInstructionState[] accept(DataFlowRunner runner, DfaMemoryState stateBefore, InstructionVisitor visitor) {
+    public DfaInstructionState[] accept(@NotNull DataFlowInterpreter interpreter, @NotNull DfaMemoryState stateBefore) {
       return DfaInstructionState.EMPTY_ARRAY;
     }
 
@@ -484,11 +526,15 @@ public class TrackingDfaMemoryState extends DfaMemoryStateImpl {
 
   static class FactDefinition<T> {
     final @Nullable MemoryStateChange myChange;
+    /** Fact value after change */
     final @NotNull T myFact;
+    /** Fact value before change, if known */
+    final @Nullable T myOldFact;
 
-    FactDefinition(@Nullable MemoryStateChange change, @NotNull T fact) {
+    FactDefinition(@Nullable MemoryStateChange change, @NotNull T fact, @Nullable T oldFact) {
       myChange = change;
       myFact = fact;
+      myOldFact = oldFact;
     }
 
     @Override

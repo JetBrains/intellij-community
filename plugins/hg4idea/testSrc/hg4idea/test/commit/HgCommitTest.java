@@ -28,12 +28,11 @@ import org.zmlx.hg4idea.repo.HgRepositoryImpl;
 
 import java.util.List;
 
-import static com.intellij.openapi.vcs.Executor.*;
+import static com.intellij.openapi.vcs.Executor.cd;
+import static com.intellij.openapi.vcs.Executor.echo;
+import static com.intellij.openapi.vcs.Executor.touch;
 import static hg4idea.test.HgExecutor.hg;
 
-/**
- * @author Nadya Zabrodina
- */
 public class HgCommitTest extends HgPlatformTest {
 
   @Override

@@ -1,0 +1,76 @@
+### auto-generated section `build intellij.builtInHelp` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "built-in-help_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "built-in-help",
+  module_name = "intellij.builtInHelp",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":built-in-help_resources"],
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "//libraries/netty/codec-http:libraries-netty-codec-http",
+    "@lib//:lucene-codecs",
+    "@lib//:lucene-memory",
+    "@lib//:lucene-queries",
+    "@lib//:lucene-sandbox",
+    "@lib//:lucene-highlighter",
+    "@lib//:lucene-queryparser",
+    "@lib//:lucene-suggest",
+    "//platform/forms_rt:java-guiForms-rt",
+    "//libraries/jsoup",
+    "@lib//:jaxb-api",
+    "//platform/core-api:core",
+    "//platform/credential-store",
+    "//platform/platform-api:ide",
+    "//platform/platform-impl:ide-impl",
+    "//platform/core-impl",
+    "//platform/projectModel-api:projectModel",
+    "//platform/util",
+    "//platform/util-ex",
+    "//platform/built-in-server:builtInServer-impl",
+    "//libraries/lucene.common",
+    "//libraries/netty/buffer",
+    "//platform/platform-util-io:ide-util-io",
+    "//platform/platform-util-netty:ide-util-netty",
+    "//libraries/jackson/jackson",
+    "//libraries/jackson/databind",
+    "//libraries/jackson/module-kotlin:libraries-jackson-module-kotlin",
+  ]
+)
+
+jvm_library(
+  name = "built-in-help_test_lib",
+  module_name = "intellij.builtInHelp",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    ":built-in-help",
+    "//libraries/netty/codec-http:libraries-netty-codec-http_test_lib",
+    "//platform/forms_rt:java-guiForms-rt_test_lib",
+    "//libraries/jsoup:jsoup_test_lib",
+    "//platform/core-api:core_test_lib",
+    "//platform/credential-store:credential-store_test_lib",
+    "//platform/platform-api:ide_test_lib",
+    "//platform/platform-impl:ide-impl_test_lib",
+    "//platform/core-impl:core-impl_test_lib",
+    "//platform/projectModel-api:projectModel_test_lib",
+    "//platform/util:util_test_lib",
+    "//platform/util-ex:util-ex_test_lib",
+    "//platform/built-in-server:builtInServer-impl_test_lib",
+    "//libraries/lucene.common:lucene.common_test_lib",
+    "//libraries/netty/buffer:buffer_test_lib",
+    "//platform/platform-util-io:ide-util-io_test_lib",
+    "//platform/platform-util-netty:ide-util-netty_test_lib",
+    "//libraries/jackson/jackson:jackson_test_lib",
+    "//libraries/jackson/databind:databind_test_lib",
+    "//libraries/jackson/module-kotlin:libraries-jackson-module-kotlin_test_lib",
+  ]
+)
+### auto-generated section `build intellij.builtInHelp` end

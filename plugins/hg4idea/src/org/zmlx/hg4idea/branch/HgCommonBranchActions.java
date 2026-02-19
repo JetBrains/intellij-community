@@ -1,24 +1,9 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.zmlx.hg4idea.branch;
 
 import com.intellij.dvcs.ui.BranchActionGroup;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsSafe;
@@ -34,11 +19,11 @@ import java.util.List;
 
 public class HgCommonBranchActions extends BranchActionGroup {
 
-  @NotNull protected final Project myProject;
-  @NotNull private final HgBranchManager myBranchManager;
-  @NotNull protected final @NlsSafe String myBranchName;
-  @NotNull protected final List<HgRepository> myRepositories;
-  @Nullable private final HgBranchType myBranchType;
+  protected final @NotNull Project myProject;
+  private final @NotNull HgBranchManager myBranchManager;
+  protected final @NotNull @NlsSafe String myBranchName;
+  protected final @NotNull List<HgRepository> myRepositories;
+  private final @Nullable HgBranchType myBranchType;
 
   HgCommonBranchActions(@NotNull Project project, @NotNull List<HgRepository> repositories, @NotNull @NlsSafe String branchName) {
     this(project, repositories, branchName, null);
@@ -51,7 +36,7 @@ public class HgCommonBranchActions extends BranchActionGroup {
     myProject = project;
     myBranchName = branchName;
     myRepositories = repositories;
-    myBranchManager = ServiceManager.getService(project, HgBranchManager.class);
+    myBranchManager = project.getService(HgBranchManager.class);
     getTemplatePresentation().setText(myBranchName, false); // no mnemonics
     myBranchType = branchType;
     setFavorite(myBranchManager.isFavorite(myBranchType, chooseRepository(myRepositories), myBranchName));
@@ -65,8 +50,7 @@ public class HgCommonBranchActions extends BranchActionGroup {
     }
   }
 
-  @Nullable
-  private static HgRepository chooseRepository(@NotNull List<? extends HgRepository> repositories) {
+  private static @Nullable HgRepository chooseRepository(@NotNull List<? extends HgRepository> repositories) {
     assert !repositories.isEmpty();
     return repositories.size() > 1 ? null : repositories.get(0);
   }

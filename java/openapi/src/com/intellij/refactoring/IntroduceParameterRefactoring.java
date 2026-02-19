@@ -17,9 +17,6 @@ package com.intellij.refactoring;
 
 import com.intellij.psi.PsiType;
 
-/**
- * @author dsl
- */
 public interface IntroduceParameterRefactoring extends Refactoring {
   int REPLACE_FIELDS_WITH_GETTERS_NONE = 0;
   int REPLACE_FIELDS_WITH_GETTERS_INACCESSIBLE = 1;

@@ -1,7 +1,8 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.dvcs.cherrypick;
 
 import com.intellij.dvcs.ui.DvcsBundle;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -14,17 +15,23 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.CommitId;
 import com.intellij.vcs.log.Hash;
-import com.intellij.vcs.log.VcsLog;
+import com.intellij.vcs.log.VcsLogCommitSelection;
 import com.intellij.vcs.log.VcsLogDataKeys;
 import com.intellij.vcs.log.util.VcsLogUtil;
 import icons.DvcsImplIcons;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
-public class VcsCherryPickAction extends DumbAwareAction {
+@ApiStatus.Internal
+public final class VcsCherryPickAction extends DumbAwareAction {
   public VcsCherryPickAction() {
     super(DvcsBundle.messagePointer("cherry.pick.action.text"),
           DvcsBundle.messagePointer("cherry.pick.action.description"),
@@ -32,13 +39,19 @@ public class VcsCherryPickAction extends DumbAwareAction {
   }
 
   @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
+  }
+
+  @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
     FileDocumentManager.getInstance().saveAllDocuments();
 
-    Project project = e.getRequiredData(CommonDataKeys.PROJECT);
-    VcsLog log = e.getRequiredData(VcsLogDataKeys.VCS_LOG);
+    Project project = e.getData(CommonDataKeys.PROJECT);
+    if (project == null) return;
+    VcsLogCommitSelection selection = e.getRequiredData(VcsLogDataKeys.VCS_LOG_COMMIT_SELECTION);
 
-    VcsCherryPickManager.getInstance(project).cherryPick(log);
+    VcsCherryPickManager.getInstance(project).cherryPick(selection);
   }
 
   @Override
@@ -46,21 +59,21 @@ public class VcsCherryPickAction extends DumbAwareAction {
     super.update(e);
     e.getPresentation().setVisible(true);
 
-    final VcsLog log = e.getData(VcsLogDataKeys.VCS_LOG);
     Project project = e.getProject();
-    if (project == null) {
+    VcsLogCommitSelection selection = e.getData(VcsLogDataKeys.VCS_LOG_COMMIT_SELECTION);
+    if (selection == null || project == null) {
       e.getPresentation().setEnabledAndVisible(false);
       return;
     }
     VcsCherryPickManager cherryPickManager = VcsCherryPickManager.getInstance(project);
 
     List<VcsCherryPicker> cherryPickers = getActiveCherryPickersForProject(project);
-    if (log == null || cherryPickers.isEmpty()) {
+    if (cherryPickers.isEmpty()) {
       e.getPresentation().setEnabledAndVisible(false);
       return;
     }
 
-    List<CommitId> commits = ContainerUtil.getFirstItems(log.getSelectedCommits(), VcsLogUtil.MAX_SELECTED_COMMITS);
+    List<CommitId> commits = ContainerUtil.getFirstItems(selection.getCommits(), VcsLogUtil.MAX_SELECTED_COMMITS);
     if (commits.isEmpty() || cherryPickManager.isCherryPickAlreadyStartedFor(commits)) {
       e.getPresentation().setEnabled(false);
       return;
@@ -74,14 +87,12 @@ public class VcsCherryPickAction extends DumbAwareAction {
     e.getPresentation().setDescription(activeCherryPicker != null ? "" : DvcsBundle.message("cherry.pick.action.description"));
   }
 
-  @Nullable
-  private static VcsCherryPicker getActiveCherryPicker(@NotNull List<VcsCherryPicker> cherryPickers,
-                                                       @NotNull Collection<VirtualFile> roots) {
+  private static @Nullable VcsCherryPicker getActiveCherryPicker(@NotNull List<? extends VcsCherryPicker> cherryPickers,
+                                                                 @NotNull Collection<? extends VirtualFile> roots) {
     return ContainerUtil.find(cherryPickers, picker -> picker.canHandleForRoots(roots));
   }
 
-  @NotNull
-  private static Map<VirtualFile, List<Hash>> groupByRoot(@NotNull List<CommitId> details) {
+  private static @NotNull Map<VirtualFile, List<Hash>> groupByRoot(@NotNull List<CommitId> details) {
     Map<VirtualFile, List<Hash>> result = new HashMap<>();
     for (CommitId commit : details) {
       List<Hash> hashes = result.get(commit.getRoot());
@@ -94,14 +105,11 @@ public class VcsCherryPickAction extends DumbAwareAction {
     return result;
   }
 
-  @Nls
-  @NotNull
-  private static String concatActionNamesForAllAvailable(@NotNull final List<VcsCherryPicker> pickers) {
+  private static @Nls @NotNull String concatActionNamesForAllAvailable(final @NotNull List<? extends VcsCherryPicker> pickers) {
     return StringUtil.join(pickers, VcsCherryPicker::getActionTitle, "/");
   }
 
-  @NotNull
-  private static List<VcsCherryPicker> getActiveCherryPickersForProject(@Nullable final Project project) {
+  private static @NotNull List<VcsCherryPicker> getActiveCherryPickersForProject(final @Nullable Project project) {
     if (project != null) {
       final ProjectLevelVcsManager projectLevelVcsManager = ProjectLevelVcsManager.getInstance(project);
       AbstractVcs[] vcss = projectLevelVcsManager.getAllActiveVcss();
@@ -110,6 +118,4 @@ public class VcsCherryPickAction extends DumbAwareAction {
     }
     return ContainerUtil.emptyList();
   }
-
-
 }

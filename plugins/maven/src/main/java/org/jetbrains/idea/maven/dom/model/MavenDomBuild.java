@@ -117,4 +117,10 @@ public interface MavenDomBuild extends MavenDomBuildBase {
    */
   @NotNull
   MavenDomExtensions getExtensions();
+
+
+
+  @NotNull
+  MavenDomSources getSources();
+
 }

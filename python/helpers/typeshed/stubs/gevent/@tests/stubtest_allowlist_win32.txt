@@ -1,0 +1,22 @@
+# Error: is not present in stub
+# =============================
+# these get exported but don't actually work on win32 so we ignore them
+gevent.signal.__all__
+gevent.signal.getsignal
+gevent.signal.signal
+gevent.signal.set_wakeup_fd
+
+# these don't exist on win32 in stdlib, but they do in gevent, for now we ignore them
+gevent.socket.SocketType.share
+
+# the docs say this doesn't work on windows, so it has been removed
+gevent._ffi.loop.AbstractLoop.fork
+
+# for some reason this extension exists even though it is not supported on windows
+gevent.libev.corecext.*
+
+# Error: failed to import
+# =============================
+# these won't work until we find out if we can install libev somehow with choco
+gevent.libev.corecffi
+gevent.libev.watcher

@@ -12,7 +12,6 @@
 // limitations under the License.
 package org.zmlx.hg4idea.provider.update;
 
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -21,14 +20,18 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsException;
-import com.intellij.openapi.vcs.update.*;
+import com.intellij.openapi.vcs.update.SequentialUpdatesContext;
+import com.intellij.openapi.vcs.update.UpdateEnvironment;
+import com.intellij.openapi.vcs.update.UpdateSession;
+import com.intellij.openapi.vcs.update.UpdateSessionAdapter;
+import com.intellij.openapi.vcs.update.UpdatedFiles;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.zmlx.hg4idea.HgBundle;
 import org.zmlx.hg4idea.ui.HgUpdateDialog;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
@@ -36,11 +39,9 @@ import java.util.List;
 public class HgUpdateEnvironment implements UpdateEnvironment {
 
   private final Project project;
-  @NotNull private final HgUpdateConfigurationSettings updateConfiguration;
 
   public HgUpdateEnvironment(Project project) {
     this.project = project;
-    updateConfiguration = ServiceManager.getService(project, HgUpdateConfigurationSettings.class);
   }
 
   @Override
@@ -48,10 +49,9 @@ public class HgUpdateEnvironment implements UpdateEnvironment {
   }
 
   @Override
-  @NotNull
-  public UpdateSession updateDirectories(FilePath @NotNull [] contentRoots,
-                                         UpdatedFiles updatedFiles, ProgressIndicator indicator,
-                                         @NotNull Ref<SequentialUpdatesContext> context) {
+  public @NotNull UpdateSession updateDirectories(FilePath @NotNull [] contentRoots,
+                                                  UpdatedFiles updatedFiles, ProgressIndicator indicator,
+                                                  @NotNull Ref<SequentialUpdatesContext> context) {
 
     List<VcsException> exceptions = new LinkedList<>();
 
@@ -67,6 +67,7 @@ public class HgUpdateEnvironment implements UpdateEnvironment {
       }
       try {
         result &= ProgressManager.getInstance().computeInNonCancelableSection(() -> {
+          HgUpdateConfigurationSettings updateConfiguration = project.getService(HgUpdateConfigurationSettings.class);
           HgUpdater updater = new HgRegularUpdater(project, repository, updateConfiguration);
           return updater.update(updatedFiles, indicator, exceptions);
         });
@@ -81,6 +82,7 @@ public class HgUpdateEnvironment implements UpdateEnvironment {
 
   @Override
   public Configurable createConfigurable(Collection<FilePath> contentRoots) {
+    HgUpdateConfigurationSettings updateConfiguration = project.getService(HgUpdateConfigurationSettings.class);
     return new UpdateConfigurable(updateConfiguration);
   }
 
@@ -97,9 +99,8 @@ public class HgUpdateEnvironment implements UpdateEnvironment {
       this.updateConfiguration = updateConfiguration;
     }
 
-    @Nls
     @Override
-  public String getDisplayName() {
+    public @Nls String getDisplayName() {
     return HgBundle.message("configurable.UpdateConfigurable.display.name");
   }
 

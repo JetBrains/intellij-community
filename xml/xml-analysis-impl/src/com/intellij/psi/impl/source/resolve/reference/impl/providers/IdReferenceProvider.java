@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.resolve.reference.impl.providers;
 
 import com.intellij.psi.PsiElement;
@@ -21,14 +21,11 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
-/**
- * @author peter
- */
 public final class IdReferenceProvider extends PsiReferenceProvider {
-  @NonNls public static final String FOR_ATTR_NAME = "for";
-  @NonNls public static final String ID_ATTR_NAME = "id";
-  @NonNls public static final String STYLE_ID_ATTR_NAME = "styleId";
-  @NonNls public static final String NAME_ATTR_NAME = "name";
+  public static final @NonNls String FOR_ATTR_NAME = "for";
+  public static final @NonNls String ID_ATTR_NAME = "id";
+  public static final @NonNls String STYLE_ID_ATTR_NAME = "styleId";
+  public static final @NonNls String NAME_ATTR_NAME = "name";
 
   private static final Set<String> ourNamespacesWithoutNameReference = new HashSet<>();
   static {
@@ -50,8 +47,7 @@ public final class IdReferenceProvider extends PsiReferenceProvider {
       @Override
       public boolean isAcceptable(Object element, PsiElement context) {
         final PsiElement grandParent = ((PsiElement)element).getParent().getParent();
-        if (grandParent instanceof XmlTag) {
-          final XmlTag tag = (XmlTag)grandParent;
+        if (grandParent instanceof XmlTag tag) {
 
           if (!tag.getNamespacePrefix().isEmpty()) {
             return true;
@@ -68,7 +64,7 @@ public final class IdReferenceProvider extends PsiReferenceProvider {
   }
 
   @Override
-  public PsiReference @NotNull [] getReferencesByElement(@NotNull PsiElement element, @NotNull final ProcessingContext context) {
+  public PsiReference @NotNull [] getReferencesByElement(@NotNull PsiElement element, final @NotNull ProcessingContext context) {
     if (element instanceof XmlAttributeValue) {
       final XmlExtension extension = XmlExtension.getExtensionByElement(element);
       if (extension != null && extension.hasDynamicComponents(element)) {

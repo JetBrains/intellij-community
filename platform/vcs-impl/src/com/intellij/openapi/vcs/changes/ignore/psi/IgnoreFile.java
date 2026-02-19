@@ -47,14 +47,11 @@ import java.util.Set;
  */
 public class IgnoreFile extends PsiFileImpl {
 
-  @NotNull
-  private final Language language;
+  private final @NotNull Language language;
 
-  @NotNull
-  private final ParserDefinition parserDefinition;
+  private final @NotNull ParserDefinition parserDefinition;
 
-  @NotNull
-  private final IgnoreFileType fileType;
+  private final @NotNull IgnoreFileType fileType;
 
   public IgnoreFile(@NotNull FileViewProvider viewProvider, @NotNull IgnoreFileType fileType) {
     super(viewProvider);
@@ -110,8 +107,7 @@ public class IgnoreFile extends PsiFileImpl {
    * @return current {@link Language}
    */
   @Override
-  @NotNull
-  public final Language getLanguage() {
+  public final @NotNull Language getLanguage() {
     return language;
   }
 
@@ -120,8 +116,7 @@ public class IgnoreFile extends PsiFileImpl {
    *
    * @return current {@link ParserDefinition}
    */
-  @NotNull
-  public ParserDefinition getParserDefinition() {
+  public @NotNull ParserDefinition getParserDefinition() {
     return parserDefinition;
   }
 
@@ -130,9 +125,8 @@ public class IgnoreFile extends PsiFileImpl {
    *
    * @return the file type instance.
    */
-  @NotNull
   @Override
-  public FileType getFileType() {
+  public @NotNull FileType getFileType() {
     return fileType;
   }
 

@@ -1,22 +1,29 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.tree.java;
 
-import com.intellij.psi.*;
+import com.intellij.psi.JavaElementVisitor;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.PsiPatternVariable;
+import com.intellij.psi.PsiTypeElement;
+import com.intellij.psi.PsiTypeTestPattern;
+import com.intellij.psi.ResolveState;
 import com.intellij.psi.impl.source.Constants;
 import com.intellij.psi.impl.source.tree.CompositePsiElement;
+import com.intellij.psi.scope.ElementClassHint;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
 
 public class PsiTypeTestPatternImpl extends CompositePsiElement implements PsiTypeTestPattern, Constants {
   public PsiTypeTestPatternImpl() {
     super(TYPE_TEST_PATTERN);
   }
 
-  @NotNull
   @Override
-  public PsiTypeElement getCheckType() {
+  public @NotNull PsiTypeElement getCheckType() {
     for (PsiElement child = getFirstChild(); child != null; child = child.getNextSibling()) {
       if (child instanceof PsiTypeElement) return (PsiTypeElement)child;
       if (child instanceof PsiPatternVariable) return ((PsiPatternVariable)child).getTypeElement();
@@ -24,9 +31,8 @@ public class PsiTypeTestPatternImpl extends CompositePsiElement implements PsiTy
     throw new IllegalStateException(this.getText());
   }
 
-  @Nullable
   @Override
-  public PsiPatternVariable getPatternVariable() {
+  public @Nullable PsiPatternVariable getPatternVariable() {
     return PsiTreeUtil.getChildOfType(this, PsiPatternVariable.class);
   }
 
@@ -47,7 +53,8 @@ public class PsiTypeTestPatternImpl extends CompositePsiElement implements PsiTy
     processor.handleEvent(PsiScopeProcessor.Event.SET_DECLARATION_HOLDER, this);
     
     PsiPatternVariable variable = getPatternVariable();
-    if (variable != null && variable != lastParent) {
+    if (variable != null && variable != lastParent && 
+        !(variable.isUnnamed() && !Boolean.TRUE.equals(processor.getHint(ElementClassHint.PROCESS_UNNAMED_VARIABLES)))) {
       return processor.execute(variable, state);
     }
     return true;

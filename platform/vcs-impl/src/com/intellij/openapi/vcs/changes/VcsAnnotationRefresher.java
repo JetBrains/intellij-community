@@ -18,12 +18,13 @@ package com.intellij.openapi.vcs.changes;
 import com.intellij.openapi.vcs.VcsKey;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.messages.Topic;
+import org.jetbrains.annotations.NotNull;
 
 public interface VcsAnnotationRefresher {
   Topic<VcsAnnotationRefresher> LOCAL_CHANGES_CHANGED = Topic.create("LOCAL_CHANGES_CHANGED", VcsAnnotationRefresher.class);
 
   void dirtyUnder(VirtualFile file);
-  void dirty(BaseRevision currentRevision);
-  void dirty(String path);
-  void configurationChanged(final VcsKey key);
+  void dirty(@NotNull BaseRevision currentRevision);
+  void dirty(@NotNull String path);
+  void configurationChanged(@NotNull VcsKey key);
 }

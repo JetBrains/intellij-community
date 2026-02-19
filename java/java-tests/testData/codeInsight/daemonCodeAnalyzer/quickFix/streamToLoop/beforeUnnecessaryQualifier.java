@@ -1,4 +1,4 @@
-// "Replace Stream API chain with loop" "true"
+// "Replace Stream API chain with loop" "true-preview"
 
 import java.util.List;
 import java.util.stream.Collectors;

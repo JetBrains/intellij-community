@@ -1,0 +1,16 @@
+LineBreakpoint created at unnamedContextParameters.kt:17
+Run Java
+Connected to the target VM
+unnamedContextParameters.kt:17
+Compile bytecode for bar(42)
+KotlinStackFrame (unnamedContextParameters.kt:17)
+    JavaValue[local] context-Ctx1: Ctx1@uniqueID = forTests.Ctx1@hashCode
+        JavaValue[field] name1: java.lang.String = ctx1 (contexts.kt:4)
+        JavaValue[field] name: java.lang.String = ctx1 (contexts.kt:5)
+    JavaValue[local] context-Ctx2: Ctx2@uniqueID = forTests.Ctx2@hashCode
+        JavaValue[field] name2: java.lang.String = ctx2 (contexts.kt:12)
+        JavaValue[field] name: java.lang.String = ctx2 (contexts.kt:13)
+    JavaValue[local] x: int = 10 (unnamedContextParameters.kt:13)
+Disconnected from the target VM
+
+Process finished with exit code 0

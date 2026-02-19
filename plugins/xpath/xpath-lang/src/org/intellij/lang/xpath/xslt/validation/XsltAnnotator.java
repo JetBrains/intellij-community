@@ -19,6 +19,7 @@ import com.intellij.lang.ASTNode;
 import com.intellij.lang.annotation.AnnotationHolder;
 import com.intellij.lang.annotation.Annotator;
 import com.intellij.lang.annotation.HighlightSeverity;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlAttribute;
@@ -33,7 +34,7 @@ import org.intellij.lang.xpath.xslt.quickfix.FlipOperandsFix;
 import org.intellij.plugins.xpathView.XPathBundle;
 import org.jetbrains.annotations.NotNull;
 
-public class XsltAnnotator implements Annotator {
+public class XsltAnnotator implements Annotator, DumbAware {
   @Override
   public void annotate(@NotNull PsiElement psiElement, @NotNull AnnotationHolder holder) {
     final boolean isXslt = ContextProvider.getContextProvider(psiElement) instanceof XsltContextProviderBase;
@@ -52,10 +53,9 @@ public class XsltAnnotator implements Annotator {
     if (context != null) {
       if (XsltSupport.isPatternAttribute(context)) {
         XsltPatternValidator.validate(holder, file);
-      } else {
-        if (file.getText().trim().length() == 0 && file.getExpression() == null) {
-          holder.newAnnotation(HighlightSeverity.ERROR, XPathBundle.message("annotator.error.empty.xpath.expression")).create();
-        }
+      }
+      else if (file.getText().trim().isEmpty() && file.getExpression() == null && !file.getText().isEmpty()) {
+        holder.newAnnotation(HighlightSeverity.ERROR, XPathBundle.message("annotator.error.empty.xpath.expression")).create();
       }
       if (XsltSupport.isXsltAttribute(context) && !XsltSupport.mayBeAVT(context)) {
         final ASTNode node = file.getNode();

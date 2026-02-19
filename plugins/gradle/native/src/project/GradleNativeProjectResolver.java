@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.nativeplatform.project;
 
 import com.intellij.openapi.externalSystem.model.DataNode;
@@ -9,7 +9,6 @@ import com.intellij.openapi.externalSystem.model.project.ExternalSystemSourceTyp
 import com.intellij.openapi.externalSystem.model.project.ModuleData;
 import com.intellij.openapi.externalSystem.util.ExternalSystemConstants;
 import com.intellij.openapi.externalSystem.util.Order;
-import com.intellij.util.containers.ContainerUtil;
 import org.gradle.tooling.model.DomainObjectSet;
 import org.gradle.tooling.model.Task;
 import org.gradle.tooling.model.cpp.CppExecutable;
@@ -22,8 +21,24 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.model.DefaultExternalTask;
 import org.jetbrains.plugins.gradle.model.ExternalTask;
 import org.jetbrains.plugins.gradle.nativeplatform.tooling.builder.CppModelBuilder;
-import org.jetbrains.plugins.gradle.nativeplatform.tooling.model.*;
-import org.jetbrains.plugins.gradle.nativeplatform.tooling.model.impl.*;
+import org.jetbrains.plugins.gradle.nativeplatform.tooling.model.CompilationDetails;
+import org.jetbrains.plugins.gradle.nativeplatform.tooling.model.CppBinary;
+import org.jetbrains.plugins.gradle.nativeplatform.tooling.model.CppComponent;
+import org.jetbrains.plugins.gradle.nativeplatform.tooling.model.CppProject;
+import org.jetbrains.plugins.gradle.nativeplatform.tooling.model.CppTestSuite;
+import org.jetbrains.plugins.gradle.nativeplatform.tooling.model.MacroDirective;
+import org.jetbrains.plugins.gradle.nativeplatform.tooling.model.SourceFile;
+import org.jetbrains.plugins.gradle.nativeplatform.tooling.model.impl.CompilationDetailsImpl;
+import org.jetbrains.plugins.gradle.nativeplatform.tooling.model.impl.CppBinaryImpl;
+import org.jetbrains.plugins.gradle.nativeplatform.tooling.model.impl.CppComponentImpl;
+import org.jetbrains.plugins.gradle.nativeplatform.tooling.model.impl.CppExecutableImpl;
+import org.jetbrains.plugins.gradle.nativeplatform.tooling.model.impl.CppProjectImpl;
+import org.jetbrains.plugins.gradle.nativeplatform.tooling.model.impl.CppSharedLibraryImpl;
+import org.jetbrains.plugins.gradle.nativeplatform.tooling.model.impl.CppStaticLibraryImpl;
+import org.jetbrains.plugins.gradle.nativeplatform.tooling.model.impl.CppTestSuiteImpl;
+import org.jetbrains.plugins.gradle.nativeplatform.tooling.model.impl.LinkageDetailsImpl;
+import org.jetbrains.plugins.gradle.nativeplatform.tooling.model.impl.MacroDirectiveImpl;
+import org.jetbrains.plugins.gradle.nativeplatform.tooling.model.impl.SourceFileImpl;
 import org.jetbrains.plugins.gradle.service.project.AbstractProjectResolverExtension;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
 
@@ -37,8 +52,8 @@ import java.util.Set;
  * @author Vladislav.Soroka
  */
 @Order(ExternalSystemConstants.UNORDERED)
-public class GradleNativeProjectResolver extends AbstractProjectResolverExtension {
-  @NotNull public static final Key<CppProject> CPP_PROJECT = Key.create(CppProject.class, ProjectKeys.MODULE.getProcessingWeight() + 1);
+public final class GradleNativeProjectResolver extends AbstractProjectResolverExtension {
+  public static final @NotNull Key<CppProject> CPP_PROJECT = Key.create(CppProject.class, ProjectKeys.MODULE.getProcessingWeight() + 1);
 
   @Override
   public void populateModuleContentRoots(@NotNull IdeaModule gradleModule, @NotNull DataNode<ModuleData> ideModule) {
@@ -64,16 +79,14 @@ public class GradleNativeProjectResolver extends AbstractProjectResolverExtensio
     nextResolver.populateModuleContentRoots(gradleModule, ideModule);
   }
 
-  @NotNull
   @Override
-  public Set<Class<?>> getExtraProjectModelClasses() {
-    return ContainerUtil.set(org.gradle.tooling.model.cpp.CppProject.class, CppProject.class);
+  public @NotNull Set<Class<?>> getExtraProjectModelClasses() {
+    return Set.of(org.gradle.tooling.model.cpp.CppProject.class, CppProject.class);
   }
 
-  @NotNull
   @Override
-  public Set<Class<?>> getToolingExtensionsClasses() {
-    return ContainerUtil.set(
+  public @NotNull Set<Class<?>> getToolingExtensionsClasses() {
+    return Set.of(
       // native-gradle-tooling jar
       CppModelBuilder.class
     );
@@ -81,16 +94,15 @@ public class GradleNativeProjectResolver extends AbstractProjectResolverExtensio
 
   @Override
   public Set<Class<?>> getTargetTypes() {
-    return ContainerUtil.set(
+    return Set.of(
       org.jetbrains.plugins.gradle.nativeplatform.tooling.model.CppExecutable.class,
       org.jetbrains.plugins.gradle.nativeplatform.tooling.model.CppSharedLibrary.class,
       org.jetbrains.plugins.gradle.nativeplatform.tooling.model.CppStaticLibrary.class
     );
   }
 
-  @Nullable
-  private CppProjectImpl appendCppProject(@NotNull IdeaModule gradleModule,
-                                          @NotNull DataNode<ModuleData> ideModule) {
+  private @Nullable CppProjectImpl appendCppProject(@NotNull IdeaModule gradleModule,
+                                                    @NotNull DataNode<ModuleData> ideModule) {
     CppProjectImpl cppProject = null;
     org.gradle.tooling.model.cpp.CppProject gradleCppProject =
       resolverCtx.getExtraProject(gradleModule, org.gradle.tooling.model.cpp.CppProject.class);
@@ -133,8 +145,7 @@ public class GradleNativeProjectResolver extends AbstractProjectResolverExtensio
     return cppComponent;
   }
 
-  @Nullable
-  private static CppBinaryImpl convert(@Nullable org.gradle.tooling.model.cpp.CppBinary binary) {
+  private static @Nullable CppBinaryImpl convert(@Nullable org.gradle.tooling.model.cpp.CppBinary binary) {
     CppBinaryImpl cppBinary;
     if (binary instanceof CppExecutable) {
       cppBinary = new CppExecutableImpl(binary.getName(), binary.getBaseName(), binary.getVariantName());

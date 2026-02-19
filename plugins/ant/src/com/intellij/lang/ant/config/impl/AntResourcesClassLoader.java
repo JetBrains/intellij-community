@@ -1,10 +1,11 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.lang.ant.config.impl;
 
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.util.lang.UrlClassLoader;
+import org.jetbrains.annotations.NotNull;
 
-import java.net.URL;
+import java.nio.file.Path;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -13,12 +14,12 @@ import java.util.Set;
  * @author Eugene Zhuravlev
 */
 public final class AntResourcesClassLoader extends UrlClassLoader {
-  static { if (registerAsParallelCapable()) markParallelCapable(AntResourcesClassLoader.class); }
+  private static final boolean isParallelCapable = registerAsParallelCapable();
 
   private final Set<String> myMisses = new HashSet<>();
 
-  public AntResourcesClassLoader(final List<URL> urls, final ClassLoader parentLoader, final boolean canLockJars, final boolean canUseCache) {
-    super(build().urls(urls).parent(parentLoader).allowLock(canLockJars).useCache(canUseCache).noPreload());
+  public AntResourcesClassLoader(List<Path> files, ClassLoader parentLoader, boolean canLockJars, boolean canUseCache) {
+    super(build().files(files).parent(parentLoader).allowLock(canLockJars).useCache(canUseCache).noPreload(), isParallelCapable);
   }
 
   @Override
@@ -37,7 +38,7 @@ public final class AntResourcesClassLoader extends UrlClassLoader {
   }
 
   @Override
-  protected Class<?> findClass(String name) throws ClassNotFoundException {
+  protected Class<?> findClass(@NotNull String name) throws ClassNotFoundException {
     ProgressManager.checkCanceled();
     try {
       return super.findClass(name);

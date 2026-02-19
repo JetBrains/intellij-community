@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.ui.ex;
 
 import com.intellij.CommonBundle;
@@ -15,8 +15,9 @@ import com.intellij.util.ArrayUtilRt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.Icon;
+import javax.swing.JComboBox;
+import java.awt.Component;
 
 public final class MessagesEx extends Messages {
   public static MessageInfo fileIsReadOnly(Project project, String filePath) {
@@ -40,8 +41,7 @@ public final class MessagesEx extends Messages {
     return error(project, message, UIBundle.message("error.dialog.title"));
   }
 
-  @NotNull
-  public static MessageInfo error(Project project, @DialogMessage String message, @DialogTitle String title) {
+  public static @NotNull MessageInfo error(Project project, @DialogMessage String message, @DialogTitle String title) {
     return new MessageInfo(project, message, title);
   }
 
@@ -79,8 +79,7 @@ public final class MessagesEx extends Messages {
       myIcon = icon;
     }
 
-    @NotNull
-    public ThisClass setTitle(@DialogTitle String title) {
+    public @NotNull ThisClass setTitle(@DialogTitle String title) {
       myTitle = title;
       return getThis();
     }
@@ -89,8 +88,7 @@ public final class MessagesEx extends Messages {
       return myMessage;
     }
 
-    @NotNull
-    public ThisClass appendMessage(@NotNull @DialogMessage String message) {
+    public @NotNull ThisClass appendMessage(@NotNull @DialogMessage String message) {
       myMessage += message;
       return getThis();
     }
@@ -100,11 +98,9 @@ public final class MessagesEx extends Messages {
       myDefaultOption = defaultOption;
     }
 
-    @NotNull
-    protected abstract ThisClass getThis();
+    protected abstract @NotNull ThisClass getThis();
 
-    @NotNull
-    public ThisClass setIcon(Icon icon) {
+    public @NotNull ThisClass setIcon(Icon icon) {
       myIcon = icon;
       return getThis();
     }
@@ -134,7 +130,7 @@ public final class MessagesEx extends Messages {
     }
   }
 
-  public static class MessageInfo extends BaseDialogInfo<MessageInfo> {
+  public static final class MessageInfo extends BaseDialogInfo<MessageInfo> {
     public MessageInfo(Project project, @DialogMessage String message, @DialogTitle String title) {
       super(project, message, title, getErrorIcon());
     }
@@ -158,14 +154,13 @@ public final class MessagesEx extends Messages {
       return showNow();
     }
 
-    @NotNull
     @Override
-    protected MessageInfo getThis() {
+    protected @NotNull MessageInfo getThis() {
       return this;
     }
   }
 
-  public static class ChoiceInfo extends BaseInputInfo<ChoiceInfo> {
+  public static final class ChoiceInfo extends BaseInputInfo<ChoiceInfo> {
     private String[] myChoises = ArrayUtilRt.EMPTY_STRING_ARRAY;
     private @NlsSafe String myDefaultChoice = null;
 
@@ -175,9 +170,8 @@ public final class MessagesEx extends Messages {
       setOptions(new String[]{CommonBundle.getOkButtonText()}, 0);
     }
 
-    @NotNull
     @Override
-    public ChoiceInfo getThis() {
+    public @NotNull ChoiceInfo getThis() {
       return this;
     }
 
@@ -234,9 +228,8 @@ public final class MessagesEx extends Messages {
       return new UserInput(dialog.getTextField().getText(), dialog.getExitCode());
     }
 
-    @NotNull
     @Override
-    public InputInfo getThis() {
+    public @NotNull InputInfo getThis() {
       return this;
     }
 

@@ -1,24 +1,45 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:JvmName("GitExecutor")
 package git4idea.test
 
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.openapi.vcs.Executor.*
+import com.intellij.openapi.vcs.Executor.append
+import com.intellij.openapi.vcs.Executor.cd
+import com.intellij.openapi.vcs.Executor.child
+import com.intellij.openapi.vcs.Executor.ourCurrentDir
+import com.intellij.openapi.vcs.Executor.overwrite
+import com.intellij.openapi.vcs.Executor.splitCommandInParameters
+import com.intellij.openapi.vcs.Executor.touch
 import com.intellij.openapi.vfs.VfsUtil
+import com.intellij.platform.eel.EelApi
+import com.intellij.platform.eel.provider.asNioPath
 import com.intellij.testFramework.vcs.ExecutableHelper
 import com.intellij.vcs.log.util.VcsLogUtil
 import git4idea.commands.Git
 import git4idea.commands.GitBinaryHandler
 import git4idea.commands.GitLineHandler
 import git4idea.commands.getGitCommandInstance
+import git4idea.config.GitExecutableDetector
 import git4idea.repo.GitRepository
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import java.io.File
+import kotlin.test.assertNotNull
 
-fun gitExecutable() = GitExecutorHolder.PathHolder.GIT_EXECUTABLE
+fun gitExecutable() = gitExecutable(eelApi = null)
+fun gitExecutable(eelApi: EelApi?): String {
+  if (GitExecutorHolder.PathHolder.CACHED_TARGET != eelApi || GitExecutorHolder.PathHolder.GIT_EXECUTABLE == null) {
+    val pathToGit = if (eelApi != null) {
+      GitExecutableDetector().getExecutable(null, eelApi.userInfo.home.asNioPath(), true)
+    }
+    else ExecutableHelper.findGitExecutable()
+    GitExecutorHolder.PathHolder.GIT_EXECUTABLE = assertNotNull(pathToGit)
+    GitExecutorHolder.PathHolder.CACHED_TARGET = eelApi
+  }
+  return assertNotNull(GitExecutorHolder.PathHolder.GIT_EXECUTABLE)
+}
 
 @JvmOverloads
 fun GitRepository.git(command: String, ignoreNonZeroExitCode: Boolean = false) = cd { git(project, command, ignoreNonZeroExitCode) }
@@ -26,7 +47,7 @@ fun GitRepository.git(command: String, ignoreNonZeroExitCode: Boolean = false) =
 fun GitPlatformTest.git(command: String, ignoreNonZeroExitCode: Boolean = false) = git(project, command, ignoreNonZeroExitCode)
 
 @JvmOverloads
-internal fun git(project: Project, command: String, ignoreNonZeroExitCode: Boolean = false): String {
+internal fun git(project: Project?, command: String, ignoreNonZeroExitCode: Boolean = false): String {
   val workingDir = ourCurrentDir()
   val split = splitCommandInParameters(command)
   val handler = GitLineHandler(project, workingDir, getGitCommandInstance(split[0]))
@@ -45,7 +66,7 @@ fun GitRepository.gitAsBytes(command: String): ByteArray {
   return gitAsBytes(project, command)
 }
 fun gitAsBytes(project: Project, command: String): ByteArray {
-  val workingDir = VfsUtil.findFileByIoFile(ourCurrentDir(), true)!!
+  val workingDir = VfsUtil.findFile(ourCurrentDir(), true)!!
   val split = splitCommandInParameters(command)
   val handler = GitBinaryHandler(project, workingDir, getGitCommandInstance(split[0]))
   handler.addParameters(split.subList(1, split.size))
@@ -63,10 +84,14 @@ private fun add(project: Project, path: String = ".") = git(project, "add --verb
 
 fun GitRepository.addCommit(message: String) = cd { addCommit(project, message) }
 fun GitPlatformTest.addCommit(message: String) = addCommit(project, message)
+fun GitPlatformTestContext.addCommit(message: String) = addCommit(project, message)
 private fun addCommit(project: Project, message: String): String {
   add(project)
   return commit(project, message)
 }
+
+fun GitRepository.deleteBranch(name: String) = cd { deleteBranch(project, name) }
+private fun deleteBranch(project: Project, name: String) = git(project, "branch -D $name")
 
 fun GitRepository.branch(name: String) = cd { branch(project, name) }
 fun GitPlatformTest.branch(name: String) = branch(project, name)
@@ -74,6 +99,7 @@ private fun branch(project: Project, name: String) = git(project, "branch $name"
 
 fun GitRepository.checkout(vararg params: String) = cd { checkout(project, *params) }
 fun GitPlatformTest.checkout(vararg params: String) = checkout(project, *params)
+fun GitPlatformTestContext.checkout(vararg params: String) = checkout(project, *params)
 private fun checkout(project: Project, vararg params: String) = git(project, "checkout ${params.joinToString(" ")}")
 
 fun GitRepository.checkoutNew(branchName: String, startPoint: String = "") = cd { checkoutNew(project, branchName, startPoint) }
@@ -93,6 +119,10 @@ private fun commit(project: Project, message: String): String {
 fun GitRepository.tac(file: String, content: String = "content" + Math.random()) = cd { tac(project, file, content) }
 
 fun GitPlatformTest.tac(file: String, content: String = "content" + Math.random()) = tac(project, file, content)
+fun GitPlatformTestContext.tac(file: String, content: String = "content" + Math.random()): String {
+  touch(file, content)
+  return addCommit(project, "Touched $file")
+}
 private fun tac(project: Project, file: String, content: String): String {
   touch(file, content)
   return addCommit(project, "Touched $file")
@@ -124,6 +154,10 @@ fun GitRepository.last() = cd { last(project) }
 fun GitPlatformTest.last() = last(project)
 private fun last(project: Project) = git(project, "log -1 --pretty=%H")
 
+fun GitRepository.getHash(depth: Int) = cd { getHash(project, depth) }
+fun GitPlatformTest.getHash(depth: Int) = getHash(project, depth)
+private fun getHash(project: Project, depth: Int) = git(project, "log -1 --skip=$depth --pretty=%H")
+
 fun GitRepository.lastMessage() = cd { lastMessage(project) }
 fun GitPlatformTest.lastMessage() = lastMessage(project)
 private fun lastMessage(project: Project) = message(project, "HEAD")
@@ -147,6 +181,12 @@ private fun mv(project: Project, fromPath: String, toPath: String) = git(project
 fun GitRepository.mv(from: File, to: File) {
   mv(from.path, to.path)
 }
+
+private const val DefaultInitBranch = "master"
+fun GitPlatformTest.gitInit(vararg params: String, initialBranch: String = DefaultInitBranch) =
+  gitInit(project, *params, initialBranch =  initialBranch)
+fun gitInit(project: Project?, vararg params: String, initialBranch: String = DefaultInitBranch) =
+  git(project, "init --initial-branch=$initialBranch ${params.joinToString(" ")}")
 
 fun GitRepository.prepareConflict(initialBranch: String = "master",
                                   featureBranch: String = "feature",
@@ -174,11 +214,12 @@ internal fun GitRepository.file(fileName: String): TestFile {
 private class GitExecutorHolder {
   //using inner class to avoid extra work during class loading of unrelated tests
   object PathHolder {
-    internal val GIT_EXECUTABLE = ExecutableHelper.findGitExecutable()!!
+    var GIT_EXECUTABLE: String? = null
+    var CACHED_TARGET: EelApi? = null
   }
 }
 
-internal class TestFile internal constructor(val repo: GitRepository, val file: File) {
+class TestFile internal constructor(val repo: GitRepository, val file: File) {
   fun append(content: String): TestFile {
     FileUtil.writeToFile(file, content.toByteArray(), true)
     return this
@@ -198,6 +239,11 @@ internal class TestFile internal constructor(val repo: GitRepository, val file: 
   fun delete(): TestFile {
     assertTrue(file.exists())
     FileUtil.delete(file)
+    return this
+  }
+
+  fun assertExists(): TestFile {
+    assertTrue(file.exists())
     return this
   }
 

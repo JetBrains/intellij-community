@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.application.options.codeStyle.properties;
 
 import com.intellij.lang.Language;
@@ -9,11 +9,9 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import static com.intellij.application.options.codeStyle.properties.CodeStylePropertiesUtil.*;
-
 public class VisualGuidesAccessor extends CodeStylePropertyAccessor<List<Integer>> implements CodeStyleValueList {
   private final CodeStyleSettings mySettings;
-  @Nullable private final Language myLanguage;
+  private final @Nullable Language myLanguage;
 
   public static final String VISUAL_GUIDES_PROPERTY_NAME = "visual_guides";
 
@@ -35,8 +33,7 @@ public class VisualGuidesAccessor extends CodeStylePropertyAccessor<List<Integer
   }
 
   @Override
-  @Nullable
-  public List<Integer> get() {
+  public @Nullable List<Integer> get() {
     return myLanguage != null ?
          mySettings.getCommonSettings(myLanguage).getSoftMargins() :
          mySettings.getDefaultSoftMargins();
@@ -44,16 +41,15 @@ public class VisualGuidesAccessor extends CodeStylePropertyAccessor<List<Integer
 
   @Override
   protected List<Integer> parseString(@NotNull String string) {
-    return getValueList(string).stream()
+    return CodeStylePropertiesUtil.getValueList(string).stream()
       .map(s -> safeToInt(s))
       .filter(integer -> integer >= 0)
       .collect(Collectors.toList());
   }
 
-  @Nullable
   @Override
-  protected String valueToString(@NotNull List<Integer> value) {
-    return toCommaSeparatedString(value);
+  protected @Nullable String valueToString(@NotNull List<Integer> value) {
+    return CodeStylePropertiesUtil.toCommaSeparatedString(value);
   }
 
   @Override

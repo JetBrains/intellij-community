@@ -1,0 +1,3 @@
+rootProject.name ="ide-starter-junit5"
+
+includeBuild "../intellij.tools.ide.starter"

@@ -1,0 +1,7 @@
+- name: dist.all/lib/intellij.settingsSync.core.jar
+  modules:
+  - name: intellij.settingsSync.core
+  library: jetbrains.intellij.deps.eclipse.jgit
+  files:
+  - name: $MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/org.eclipse.jgit/6/org.eclipse.jgit-6.jar
+  - name: $MAVEN_REPOSITORY$/com/googlecode/javaewah/JavaEWAH/1/JavaEWAH-1.jar

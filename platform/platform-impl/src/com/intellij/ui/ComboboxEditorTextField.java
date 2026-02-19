@@ -12,8 +12,10 @@ import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JComboBox;
+import javax.swing.UIManager;
+import java.awt.Component;
+import java.awt.Dimension;
 
 public class ComboboxEditorTextField extends EditorTextField {
 
@@ -41,7 +43,7 @@ public class ComboboxEditorTextField extends EditorTextField {
   protected void updateBorder(@NotNull EditorEx editor) {}
 
   @Override
-  protected EditorEx createEditor() {
+  protected @NotNull EditorEx createEditor() {
     EditorEx result = super.createEditor();
 
     result.addFocusListener(new FocusChangeListener() {

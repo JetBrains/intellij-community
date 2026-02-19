@@ -1,13 +1,11 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.structuralsearch.impl.matcher.compiler;
 
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.structuralsearch.MalformedPatternException;
 import com.intellij.structuralsearch.MatchOptions;
 import com.intellij.structuralsearch.MatchVariableConstraint;
 import com.intellij.structuralsearch.SSRBundle;
 import com.intellij.structuralsearch.plugin.ui.Configuration;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -19,18 +17,18 @@ import java.util.regex.PatternSyntaxException;
  * @author maxim
  */
 public final class StringToConstraintsTransformer {
-  @NonNls private static final String REF = "ref";
-  @NonNls private static final String REGEX = "regex";
-  @NonNls private static final String REGEXW = "regexw";
-  @NonNls private static final String EXPRTYPE = "exprtype";
-  @NonNls private static final String FORMAL = "formal";
-  @NonNls private static final String SCRIPT = "script";
-  @NonNls private static final String CONTAINS = "contains";
-  @NonNls private static final String WITHIN = "within";
-  @NonNls private static final String CONTEXT = "context";
+  private static final @NonNls String REF = "ref";
+  private static final @NonNls String REGEX = "regex";
+  private static final @NonNls String REGEXW = "regexw";
+  private static final @NonNls String EXPRTYPE = "exprtype";
+  private static final @NonNls String FORMAL = "formal";
+  private static final @NonNls String SCRIPT = "script";
+  private static final @NonNls String CONTAINS = "contains";
+  private static final @NonNls String WITHIN = "within";
+  private static final @NonNls String CONTEXT = "context";
 
   private static final Set<String> knownOptions =
-    ContainerUtil.set(REF, REGEX, REGEXW, EXPRTYPE, FORMAL, SCRIPT, CONTAINS, WITHIN, CONTEXT);
+    Set.of(REF, REGEX, REGEXW, EXPRTYPE, FORMAL, SCRIPT, CONTAINS, WITHIN, CONTEXT);
 
   @SuppressWarnings("AssignmentToForLoopParameter")
   public static void transformCriteria(@NotNull String criteria, @NotNull MatchOptions options) {
@@ -214,7 +212,7 @@ public final class StringToConstraintsTransformer {
     options.setSearchPattern(pattern.toString());
   }
 
-  public static int handleCharacterLiteral(@NotNull String criteria, int index, @NotNull StringBuilder pattern) {
+  private static int handleCharacterLiteral(@NotNull String criteria, int index, @NotNull StringBuilder pattern) {
     final int length = criteria.length();
     if (index + 1 < length && criteria.charAt(index + 1) == '\'') {
       // ignore next '
@@ -255,12 +253,8 @@ public final class StringToConstraintsTransformer {
     if (ch == '+' || ch == '*') {
       // this is type axis navigation relation
       switch (ch) {
-        case '+':
-          constraint.setStrictlyWithinHierarchy(true);
-          break;
-        case '*':
-          constraint.setWithinHierarchy(true);
-          break;
+        case '+' -> constraint.setStrictlyWithinHierarchy(true);
+        case '*' -> constraint.setWithinHierarchy(true);
       }
 
       ++index;
@@ -269,22 +263,35 @@ public final class StringToConstraintsTransformer {
     }
 
     if (ch == '[') {
+      int spaces = 0; // balance spaces surrounding content between brackets
+      while (++index < length && criteria.charAt(index) == ' ') spaces++;
+
       // eat complete condition
       boolean quoted = false;
-      int endIndex = index++;
+      boolean closed = false;
+      int endIndex = index - 1;
       while (++endIndex < length) {
         if (criteria.charAt(endIndex - 1) != '\\') {
           ch = criteria.charAt(endIndex);
           if (ch == '"') {
             quoted = !quoted;
           }
-          else if (ch == ']' && !quoted) break;
+          else if (ch == ']' && !quoted) {
+            int j = 1;
+            while (j <= spaces && criteria.charAt(endIndex - j) == ' ') j++;
+            if (j - 1 == spaces) {
+              endIndex -= spaces;
+              closed = true;
+              break;
+            }
+          }
         }
       }
       if (quoted) throw new MalformedPatternException(SSRBundle.message("error.expected.value", "\""));
-      if (ch != ']') throw new MalformedPatternException(SSRBundle.message("error.expected.value", "]"));
+      if (!closed) throw new MalformedPatternException(SSRBundle.message("error.expected.value", " ".repeat(spaces) + "]"));
+      if (index > endIndex) throw new MalformedPatternException(SSRBundle.message("error.expected.condition", "["));
       parseCondition(constraint, criteria.substring(index, endIndex));
-      return endIndex + 1;
+      return endIndex + spaces + 1;
     }
     else {
       // eat reg exp constraint
@@ -329,12 +336,12 @@ public final class StringToConstraintsTransformer {
     for (int i = 0; i < length; i++) {
       char c = condition.charAt(i);
       if (Character.isWhitespace(c)) {
-        if (text.length() == 0) continue;
+        if (text.isEmpty()) continue;
         handleOption(constraint, text.toString(), "", invert);
         optionExpected = false;
       }
       else if (c == '(') {
-        if (text.length() == 0) throw new MalformedPatternException(SSRBundle.message("error.expected.condition.name"));
+        if (text.isEmpty()) throw new MalformedPatternException(SSRBundle.message("error.expected.condition.name"));
         final String option = text.toString();
         if (!option.startsWith("_") && !knownOptions.contains(option)) {
           throw new MalformedPatternException(SSRBundle.message("option.is.not.recognized.error.message", option));
@@ -362,19 +369,16 @@ public final class StringToConstraintsTransformer {
           }
           text.append(c);
         }
-        if (text.length() == 0) throw new MalformedPatternException(SSRBundle.message("error.argument.expected", option));
+        if (text.isEmpty()) throw new MalformedPatternException(SSRBundle.message("error.argument.expected", option));
         if (quoted) throw new MalformedPatternException(SSRBundle.message("error.expected.value", "\""));
-        if (!closed) {
-          throw new MalformedPatternException(SSRBundle.message("error.expected.value",
-                                                                StringUtil.repeatSymbol(' ', spaces) + ")"));
-        }
+        if (!closed) throw new MalformedPatternException(SSRBundle.message("error.expected.value", " ".repeat(spaces) + ")"));
         handleOption(constraint, option, text.toString(), invert);
         text.setLength(0);
         invert = false;
         optionExpected = false;
       }
       else if (c == '&') {
-        if (text.length() != 0) {
+        if (!text.isEmpty()) {
           handleOption(constraint, text.toString(), "", invert);
           optionExpected = false;
         }
@@ -389,14 +393,14 @@ public final class StringToConstraintsTransformer {
         throw new MalformedPatternException(SSRBundle.message("error.expected.value", "&&"));
       }
       else if (c == '!') {
-        if (text.length() != 0) throw new MalformedPatternException(SSRBundle.message("error.unexpected.value", "!"));
+        if (!text.isEmpty()) throw new MalformedPatternException(SSRBundle.message("error.unexpected.value", "!"));
         invert = !invert;
       }
       else {
         text.append(c);
       }
     }
-    if (text.length() != 0) {
+    if (!text.isEmpty()) {
       handleOption(constraint, text.toString(), "", invert);
     }
     else if (invert) {
@@ -429,8 +433,14 @@ public final class StringToConstraintsTransformer {
         argument = argument.substring(1);
         constraint.setExprTypeWithinHierarchy(true);
       }
+      boolean regex = false;
+      if (argument.charAt(0) == '~') {
+        argument = argument.substring(1);
+        regex = true;
+      }
       argument = unescape(argument);
-      constraint.setExpressionTypes(argument);
+      if (regex) constraint.setNameOfExprType(argument);
+      else constraint.setExpressionTypes(argument);
       constraint.setInvertExprType(invert);
     }
     else if (option.equals(FORMAL)) {
@@ -482,8 +492,7 @@ public final class StringToConstraintsTransformer {
     }
   }
 
-  @NotNull
-  private static String unescape(@NotNull String s) {
+  private static @NotNull String unescape(@NotNull String s) {
     final StringBuilder result = new StringBuilder();
     boolean escaped = false;
     for (int i = 0, length = s.length(); i < length; i++) {

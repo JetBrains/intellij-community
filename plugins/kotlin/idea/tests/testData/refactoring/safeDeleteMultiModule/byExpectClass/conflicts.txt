@@ -1,0 +1,3 @@
+Usage of class test.Foo that is not safe to delete.
+Usage of class test.Foo that is not safe to delete.
+Usage of class test.Foo that is not safe to delete.

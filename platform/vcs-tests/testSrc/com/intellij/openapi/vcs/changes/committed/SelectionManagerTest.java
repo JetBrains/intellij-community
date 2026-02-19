@@ -19,9 +19,6 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.Map;
 
-/**
- * @author irengrig
- */
 public class SelectionManagerTest extends HeavyPlatformTestCase {
   private FileStructure myFs;
   private SelectionManager myCm;

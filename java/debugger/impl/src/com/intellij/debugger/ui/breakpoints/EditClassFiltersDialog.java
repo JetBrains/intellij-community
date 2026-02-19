@@ -12,10 +12,12 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.classFilter.ClassFilterEditor;
+import com.intellij.ui.components.JBBox;
 import com.intellij.util.ui.JBUI;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JComponent;
+import javax.swing.JPanel;
+import java.awt.BorderLayout;
 
 public class EditClassFiltersDialog extends DialogWrapper {
   private ClassFilterEditor myClassFilterEditor;
@@ -43,7 +45,7 @@ public class EditClassFiltersDialog extends DialogWrapper {
   protected JComponent createCenterPanel() {
     JPanel contentPanel = new JPanel(new BorderLayout());
 
-    Box mainPanel = Box.createHorizontalBox();
+    JBBox mainPanel = JBBox.createHorizontalBox();
 
     myClassFilterEditor = createClassFilterEditor(myProject);
     myClassFilterEditor.setPreferredSize(JBUI.size(400, 200));
@@ -63,7 +65,7 @@ public class EditClassFiltersDialog extends DialogWrapper {
   }
 
   @Override
-  public void dispose(){
+  public void dispose() {
     myClassFilterEditor.stopEditing();
     myClassExclusionFilterEditor.stopEditing();
     super.dispose();
@@ -75,7 +77,7 @@ public class EditClassFiltersDialog extends DialogWrapper {
   }
 
   @Override
-  protected String getDimensionServiceKey(){
+  protected String getDimensionServiceKey() {
     return "#com.intellij.debugger.ui.breakpoints.EditClassFiltersDialog";
   }
 

@@ -1,13 +1,15 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.util;
 
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.BuildNumber;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.xml.XmlFile;
@@ -15,14 +17,19 @@ import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomFileElement;
 import com.intellij.util.xml.DomManager;
 import com.intellij.util.xml.DomService;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 import org.jetbrains.idea.devkit.DevKitBundle;
 import org.jetbrains.idea.devkit.dom.Dependency;
 import org.jetbrains.idea.devkit.dom.IdeaPlugin;
+import org.jetbrains.idea.devkit.dom.IdeaVersion;
+import org.jetbrains.idea.devkit.dom.productModules.ProductModulesElement;
+import org.jetbrains.idea.devkit.dom.templates.TemplateSet;
 import org.jetbrains.idea.devkit.module.PluginModuleType;
 
 import java.util.ArrayList;
@@ -74,7 +81,7 @@ public final class DescriptorUtil {
     if (plugin == null) return Collections.emptyList();
     List<String> result = new ArrayList<>();
     ContainerUtil.addIfNotNull(result, plugin.getPluginId());
-    for (Dependency dependency : plugin.getDependencies()) {
+    for (Dependency dependency : plugin.getDepends()) {
       if (Boolean.TRUE.equals(dependency.getOptional().getValue())) {
         ContainerUtil.addIfNotNull(result, dependency.getRawText());
       }
@@ -83,27 +90,60 @@ public final class DescriptorUtil {
   }
 
   public static boolean isPluginXml(@Nullable PsiFile file) {
-    if (!(file instanceof XmlFile)) return false;
-    return getIdeaPluginFileElement((XmlFile)file) != null;
+    return getIdeaPluginTag(file) != null;
   }
 
-  @Nullable
-  public static DomFileElement<IdeaPlugin> getIdeaPluginFileElement(@NotNull XmlFile file) {
+  private static @Nullable XmlTag getIdeaPluginTag(PsiFile file) {
+    if (!(file instanceof XmlFile xmlFile)) return null;
+    XmlTag rootTag = xmlFile.getRootTag();
+    if (rootTag == null) return null;
+    return rootTag.getName().equals(IdeaPlugin.TAG_NAME) ? rootTag : null;
+  }
+
+  public static @Nullable DomFileElement<IdeaPlugin> getIdeaPluginFileElement(@NotNull XmlFile file) {
     return DomManager.getDomManager(file.getProject()).getFileElement(file, IdeaPlugin.class);
   }
 
-  @Nullable
-  public static IdeaPlugin getIdeaPlugin(@NotNull XmlFile file) {
+  public static @Nullable IdeaPlugin getIdeaPlugin(@NotNull XmlFile file) {
     final DomFileElement<IdeaPlugin> plugin = getIdeaPluginFileElement(file);
     return plugin != null ? plugin.getRootElement() : null;
   }
 
-  @NotNull
-  public static Collection<IdeaPlugin> getPlugins(Project project, GlobalSearchScope scope) {
+  public static @Nullable BuildNumber getActualUntilBuild(@NotNull IdeaVersion ideaVersion) {
+    BuildNumber strictUntilBuild = ideaVersion.getStrictUntilBuild().getValue();
+    if (strictUntilBuild != null) {
+      return strictUntilBuild;
+    }
+    return ideaVersion.getUntilBuild().getValue();
+  }
+
+  public static boolean isProductModulesXml(@Nullable PsiFile file) {
+    return isDomXml(file, ProductModulesElement.class);
+  }
+
+  public static boolean isTemplatesXml(@Nullable PsiFile file) {
+    return isDomXml(file, TemplateSet.class);
+  }
+
+  private static boolean isDomXml(PsiFile file, Class<? extends DomElement> domElementClass) {
+    if (!(file instanceof XmlFile xmlFile)) return false;
+    return DomManager.getDomManager(xmlFile.getProject()).getFileElement(xmlFile, domElementClass) != null;
+  }
+
+  public static @NotNull @Unmodifiable Collection<IdeaPlugin> getPlugins(Project project, GlobalSearchScope scope) {
     if (DumbService.isDumb(project)) return Collections.emptyList();
 
     List<DomFileElement<IdeaPlugin>> files = DomService.getInstance().getFileElements(IdeaPlugin.class, project, scope);
     return ContainerUtil.map(files, ideaPluginDomFileElement -> ideaPluginDomFileElement.getRootElement());
   }
 
+  public static boolean isPluginModuleFile(@NotNull PsiFile file) {
+    XmlTag ideaPlugin = getIdeaPluginTag(file);
+    if (ideaPlugin == null) return false;
+    if (ideaPlugin.findFirstSubTag("id") != null) return false;
+    PsiDirectory parent = file.getParent();
+    if (parent == null) return false;
+    String parentDirName = parent.getName();
+    return !parentDirName.equals("META-INF");
+  }
 }

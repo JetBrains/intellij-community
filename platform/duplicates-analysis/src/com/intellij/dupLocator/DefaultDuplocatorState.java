@@ -1,13 +1,10 @@
 package com.intellij.dupLocator;
 
-import com.intellij.openapi.diagnostic.Logger;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author Eugene.Kudelevsky
- */
+@ApiStatus.Internal
 public final class DefaultDuplocatorState implements ExternalizableDuplocatorState {
-  private static final Logger LOG = Logger.getInstance(DefaultDuplocatorState.class);
 
   public boolean DISTINGUISH_VARIABLES = false;
   public boolean DISTINGUISH_FUNCTIONS = true;
@@ -17,18 +14,10 @@ public final class DefaultDuplocatorState implements ExternalizableDuplocatorSta
 
   @Override
   public boolean distinguishRole(@NotNull PsiElementRole role) {
-    switch (role) {
-      case VARIABLE_NAME:
-      case FIELD_NAME:
-        return DISTINGUISH_VARIABLES;
-
-      case FUNCTION_NAME:
-        return DISTINGUISH_FUNCTIONS;
-
-      default:
-        LOG.error("Unknown role " + role);
-        return true;
-    }
+    return switch (role) {
+      case VARIABLE_NAME, FIELD_NAME -> DISTINGUISH_VARIABLES;
+      case FUNCTION_NAME -> DISTINGUISH_FUNCTIONS;
+    };
   }
 
   @Override

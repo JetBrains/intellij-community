@@ -1,11 +1,9 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xml.breadcrumbs;
 
-import com.intellij.internal.statistic.eventLog.FeatureUsageData;
-import com.intellij.internal.statistic.service.fus.collectors.UIEventId;
 import com.intellij.internal.statistic.service.fus.collectors.UIEventLogger;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiAnchor;
@@ -32,15 +30,15 @@ final class PsiCrumb extends Crumb.Impl implements NavigatableCrumb, LazyTooltip
   @Override
   public String getTooltip() {
     if (needCalculateTooltip()) {
-      PsiElement element = getElement(this);
-      tooltip = element == null ? null
-                                : provider.getElementTooltip(element);
-      provider = null; // do not try recalculate tooltip
-      FeatureUsageData data = new FeatureUsageData();
-      if (element != null) {
-        data.addLanguage(element.getLanguage());
-      }
-      UIEventLogger.logUIEvent(UIEventId.BreadcrumbShowTooltip, data);
+      ReadAction.run(() -> {
+        PsiElement element = getElement(this);
+        tooltip = element == null ? null
+                                  : provider.getElementTooltip(element);
+        provider = null; // do not try recalculate tooltip
+        if (element != null) {
+          UIEventLogger.BreadcrumbShowTooltip.log(element.getProject(), element.getLanguage());
+        }
+      });
     }
     return tooltip;
   }
@@ -56,9 +54,8 @@ final class PsiCrumb extends Crumb.Impl implements NavigatableCrumb, LazyTooltip
     return element != null ? element.getTextOffset() : -1;
   }
 
-  @Nullable
   @Override
-  public TextRange getHighlightRange() {
+  public @Nullable TextRange getHighlightRange() {
     PsiElement element = anchor.retrieve();
     return element != null ? element.getTextRange() : null;
   }
@@ -70,26 +67,12 @@ final class PsiCrumb extends Crumb.Impl implements NavigatableCrumb, LazyTooltip
       moveEditorCaretTo(editor, offset);
     }
 
-    FeatureUsageData data = new FeatureUsageData();
     PsiElement element = getElement(this);
-    if (element != null) {
-      data.addLanguage(element.getLanguage());
-    }
     if (withSelection) {
-      data.addData("with_selection", true);
       final TextRange range = getHighlightRange();
-      if (range != null) {
-        editor.getSelectionModel().setSelection(range.getStartOffset(), range.getEndOffset());
-      }
+      select(editor, range);
     }
-    UIEventLogger.logUIEvent(UIEventId.BreadcrumbNavigate, data);
-  }
-
-  private static void moveEditorCaretTo(Editor editor, int offset) {
-    if (offset >= 0) {
-      editor.getCaretModel().moveToOffset(offset);
-      editor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
-    }
+    UIEventLogger.BreadcrumbNavigate.log(element != null ? element.getProject() : null, element != null ? element.getLanguage() : null, withSelection);
   }
 
   @Contract("null -> null")

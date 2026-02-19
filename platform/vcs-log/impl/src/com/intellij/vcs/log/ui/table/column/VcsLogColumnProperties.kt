@@ -2,8 +2,9 @@
 package com.intellij.vcs.log.ui.table.column
 
 import com.intellij.vcs.log.impl.VcsLogUiProperties.VcsLogUiProperty
-import com.intellij.vcs.log.ui.table.VcsLogColumnDeprecated
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 data class VcsLogColumnProperties(
   val visibility: TableColumnVisibilityProperty,
   val width: TableColumnWidthProperty
@@ -16,14 +17,8 @@ data class VcsLogColumnProperties(
   }
 }
 
+@ApiStatus.Internal
 class TableColumnVisibilityProperty(val column: VcsLogColumn<*>) : VcsLogUiProperty<Boolean>("Table.${column.id}.ColumnIdVisibility")
 
-class TableColumnWidthProperty(val column: VcsLogColumn<*>) : VcsLogUiProperty<Int>("Table.${column.id}.ColumnIdWidth") {
-  @Deprecated("Should be removed after some releases. Used only for moving old columns width")
-  fun moveOldSettings(oldMapping: Map<Int, Int>, newMapping: MutableMap<String, Int>) {
-    val oldValue = oldMapping.map { (column, width) -> VcsLogColumnDeprecated.getVcsLogColumnEx(column) to width }.toMap()[column]
-    if (name !in newMapping && oldValue != null) {
-      newMapping[name] = oldValue
-    }
-  }
-}
+@ApiStatus.Internal
+class TableColumnWidthProperty(val column: VcsLogColumn<*>) : VcsLogUiProperty<Int>("Table.${column.id}.ColumnIdWidth")

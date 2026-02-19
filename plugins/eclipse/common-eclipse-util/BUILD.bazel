@@ -1,0 +1,30 @@
+### auto-generated section `build intellij.eclipse.common` start
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+jvm_library(
+  name = "common",
+  module_name = "intellij.eclipse.common",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  kotlinc_opts = "@community//:k11",
+  deps = [
+    "//platform/util",
+    "//platform/util/jdom",
+    "//jps/model-serialization",
+  ]
+)
+
+jvm_library(
+  name = "common_test_lib",
+  module_name = "intellij.eclipse.common",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  kotlinc_opts = "@community//:k11",
+  runtime_deps = [
+    ":common",
+    "//platform/util:util_test_lib",
+    "//platform/util/jdom:jdom_test_lib",
+    "//jps/model-serialization:model-serialization_test_lib",
+  ]
+)
+### auto-generated section `build intellij.eclipse.common` end

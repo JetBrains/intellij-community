@@ -38,7 +38,7 @@ import org.jetbrains.lang.manifest.psi.ManifestFile;
 /**
  * @author Robert F. Beeger (robert@beeger.net)
  */
-public class HeaderValuePartManipulator extends AbstractElementManipulator<HeaderValuePart> {
+public final class HeaderValuePartManipulator extends AbstractElementManipulator<HeaderValuePart> {
   @Override
   public HeaderValuePart handleContentChange(@NotNull HeaderValuePart element, @NotNull TextRange range, String newContent) throws IncorrectOperationException {
     String text = "HeaderValuePartManipulator: " + range.replace(element.getText(), newContent);

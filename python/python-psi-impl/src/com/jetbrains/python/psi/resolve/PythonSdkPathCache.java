@@ -24,18 +24,16 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFileManager;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
+import com.jetbrains.python.PythonPluginDisposable;
 import com.jetbrains.python.packaging.PyPackageManager;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Map;
+import java.util.WeakHashMap;
 import java.util.concurrent.atomic.AtomicReference;
 
-/**
- * @author yole
- */
 public class PythonSdkPathCache extends PythonPathCache implements Disposable {
   private static final Key<Map<Project, PythonSdkPathCache>> KEY = Key.create("PythonPathCache");
 
@@ -43,7 +41,7 @@ public class PythonSdkPathCache extends PythonPathCache implements Disposable {
     synchronized (KEY) {
       Map<Project, PythonSdkPathCache> cacheMap = sdk.getUserData(KEY);
       if (cacheMap == null) {
-        cacheMap = ContainerUtil.createWeakMap();
+        cacheMap = new WeakHashMap<>();
         sdk.putUserData(KEY, cacheMap);
       }
       PythonSdkPathCache cache = cacheMap.get(project);
@@ -59,13 +57,13 @@ public class PythonSdkPathCache extends PythonPathCache implements Disposable {
   private final Sdk mySdk;
   private final AtomicReference<PyBuiltinCache> myBuiltins = new AtomicReference<>();
 
-  public PythonSdkPathCache(@NotNull final Project project, @NotNull final Sdk sdk) {
+  public PythonSdkPathCache(final @NotNull Project project, final @NotNull Sdk sdk) {
     myProject = project;
     mySdk = sdk;
     if (project.isDisposed()) {
       return;
     }
-    Disposer.register(project, this);
+    Disposer.register(PythonPluginDisposable.getInstance(project), this);
     final MessageBusConnection connection = project.getMessageBus().connect(this);
     connection.subscribe(ProjectJdkTable.JDK_TABLE_TOPIC, new ProjectJdkTable.Listener() {
       @Override
@@ -105,13 +103,11 @@ public class PythonSdkPathCache extends PythonPathCache implements Disposable {
     }
   }
 
-  @NotNull
-  public PyBuiltinCache getBuiltins() {
+  public @NotNull PyBuiltinCache getBuiltins() {
     while (true) {
       PyBuiltinCache pyBuiltinCache = myBuiltins.get();
       if (pyBuiltinCache == null || !pyBuiltinCache.isValid()) {
-        PyBuiltinCache newCache = new PyBuiltinCache(PyBuiltinCache.getBuiltinsForSdk(myProject, mySdk),
-                                                     PyBuiltinCache.getExceptionsForSdk(myProject, mySdk));
+        PyBuiltinCache newCache = new PyBuiltinCache(myProject, mySdk);
         if (myBuiltins.compareAndSet(pyBuiltinCache, newCache)) {
           return newCache;
         }

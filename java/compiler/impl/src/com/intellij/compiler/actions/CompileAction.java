@@ -1,11 +1,18 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.compiler.actions;
 
 import com.intellij.compiler.CompilerConfiguration;
 import com.intellij.idea.ActionsBundle;
-import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.compiler.JavaCompilerBundle;
+import com.intellij.openapi.actionSystem.ActionPlaces;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.IdeActions;
+import com.intellij.openapi.actionSystem.LangDataKeys;
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
+import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.compiler.CompilerManager;
+import com.intellij.openapi.compiler.JavaCompilerBundle;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
@@ -15,7 +22,11 @@ import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaDirectoryService;
+import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiPackage;
 import com.intellij.task.ProjectTaskManager;
 import org.jetbrains.annotations.NotNull;
 
@@ -24,21 +35,21 @@ import java.util.List;
 
 public class CompileAction extends CompileActionBase {
 
-  private final boolean isForFiles;
-  private final String bundleKey;
+  private final boolean myIsForFiles;
+  private final String myBundleKey;
 
   public CompileAction() {
     this(false, IdeActions.ACTION_COMPILE);
   }
 
   protected CompileAction(boolean forFiles, String key) {
-    isForFiles = forFiles;
-    bundleKey = key;
+    myIsForFiles = forFiles;
+    myBundleKey = key;
   }
 
   @Override
-  protected void doAction(DataContext dataContext, Project project) {
-    final Module module = dataContext.getData(LangDataKeys.MODULE_CONTEXT);
+  protected void doAction(@NotNull DataContext dataContext, Project project) {
+    Module module = dataContext.getData(LangDataKeys.MODULE_CONTEXT);
     if (module != null) {
       ProjectTaskManager.getInstance(project).rebuild(module);
     }
@@ -47,8 +58,13 @@ public class CompileAction extends CompileActionBase {
       if (files.length > 0) {
         ProjectTaskManager.getInstance(project).compile(files);
       }
+      else {
+        module = dataContext.getData(PlatformCoreDataKeys.MODULE); // fallback to any module available from the context
+        if (module != null) {
+          ProjectTaskManager.getInstance(project).rebuild(module);
+        }
+      }
     }
-
   }
 
   @Override
@@ -59,7 +75,7 @@ public class CompileAction extends CompileActionBase {
       return;
     }
 
-    presentation.setText(ActionsBundle.actionText(bundleKey));
+    presentation.setText(ActionsBundle.actionText(myBundleKey));
     presentation.setVisible(true);
 
     Project project = e.getProject();
@@ -68,14 +84,21 @@ public class CompileAction extends CompileActionBase {
       return;
     }
 
-    CompilerConfiguration compilerConfiguration = CompilerConfiguration.getInstance(project);
-    final Module module = e.getData(LangDataKeys.MODULE_CONTEXT);
     boolean forFiles = false;
-
-    final VirtualFile[] files = getCompilableFiles(project, e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY));
+    Module module = e.getData(LangDataKeys.MODULE_CONTEXT);
+    final VirtualFile[] files;
+    if (module != null) {
+      files = VirtualFile.EMPTY_ARRAY;
+    }
+    else {
+      files = getCompilableFiles(project, e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY));
+      if (files.length == 0 && !ActionPlaces.isShortcutPlace(e.getPlace()) && !e.isFromContextMenu()) {
+        module = e.getData(PlatformCoreDataKeys.MODULE); // fallback to any module available from the context
+      }
+    }
     if (module == null && files.length == 0) {
       presentation.setEnabled(false);
-      presentation.setVisible(!ActionPlaces.isPopupPlace(e.getPlace()));
+      presentation.setVisible(!e.isFromContextMenu());
       return;
     }
 
@@ -100,7 +123,7 @@ public class CompileAction extends CompileActionBase {
 
       if (aPackage != null) {
         String name = aPackage.getQualifiedName();
-        if (name.length() == 0) {
+        if (name.isEmpty()) {
           name = "<default>";
         }
         elementDescription = "'" + name + "'";
@@ -109,8 +132,7 @@ public class CompileAction extends CompileActionBase {
         forFiles = true;
         final VirtualFile file = files[0];
         FileType fileType = file.getFileType();
-        if (CompilerManager.getInstance(project).isCompilableFileType(fileType) ||
-            compilerConfiguration.isCompilableResourceFile(project, file)) {
+        if (CompilerManager.getInstance(project).isCompilableFileType(fileType) || CompilerConfiguration.getInstance(project).isCompilableResourceFile(project, file)) {
           elementDescription = "'" + file.getName() + "'";
         }
         else {
@@ -133,14 +155,14 @@ public class CompileAction extends CompileActionBase {
     }
 
     presentation.setText(createPresentationText(elementDescription), true);
-    presentation.setEnabledAndVisible(forFiles == isForFiles);
+    presentation.setEnabledAndVisible(forFiles == myIsForFiles);
   }
 
   private @NlsSafe String createPresentationText(String elementDescription) {
     StringBuilder buffer = new StringBuilder(40);
-    buffer.append(ActionsBundle.actionText(bundleKey)).append(" ");
+    buffer.append(ActionsBundle.actionText(myBundleKey)).append(" ");
     int length = elementDescription.length();
-    if (length > 23) {
+    if (length > 50) {
       if (StringUtil.startsWithChar(elementDescription, '\'')) {
         buffer.append("'");
       }

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
 import com.intellij.openapi.util.NlsContexts;
@@ -10,8 +10,15 @@ import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.Icon;
+import javax.swing.JComboBox;
+import javax.swing.JLabel;
+import javax.swing.JList;
+import javax.swing.JSeparator;
+import javax.swing.ListCellRenderer;
+import java.awt.Color;
+import java.awt.Component;
+import java.awt.Font;
 
 import static com.intellij.openapi.util.Pair.pair;
 
@@ -55,8 +62,7 @@ public abstract class ListCellRendererWrapper<T> implements ListCellRenderer<T> 
     }
 
     Component component = myRenderer != null ? myRenderer.getListCellRendererComponent(list, value, index, selected, hasFocus) : new JBLabel();
-    if (component instanceof JLabel) {
-      JLabel label = (JLabel)component;
+    if (component instanceof JLabel label) {
       label.setIcon(myIcon);
       if (myText != null) label.setText(myText);
       if (myForeground != null) label.setForeground(myForeground);
@@ -73,9 +79,8 @@ public abstract class ListCellRendererWrapper<T> implements ListCellRenderer<T> 
   /**
    * @deprecated Use plain {@link JSeparator} instead
    */
-  @Deprecated
-  @NotNull
-  public static Component createSeparator(@Nullable @NlsContexts.Separator String text) {
+  @Deprecated(forRemoval = true)
+  private static @NotNull Component createSeparator(@Nullable @NlsContexts.Separator String text) {
     TitledSeparator separator = new TitledSeparator(text);
     separator.setBorder(JBUI.Borders.emptyLeft(2));
     separator.setOpaque(false);

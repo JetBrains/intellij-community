@@ -1,33 +1,40 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 import com.intellij.java.analysis.JavaAnalysisBundle;
-import com.intellij.openapi.project.Project;
+import com.intellij.modcommand.ActionContext;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.PsiUpdateModCommandAction;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.*;
-import gnu.trove.THashSet;
+import com.intellij.psi.JavaElementVisitor;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiCallExpression;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElementFactory;
+import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiExpressionList;
+import com.intellij.psi.PsiLiteralExpression;
+import com.intellij.psi.PsiMethod;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
 /**
  * @author Dmitry Batkovich
  */
-public class StringTokenizerDelimiterInspection extends AbstractBaseJavaLocalInspectionTool {
+public final class StringTokenizerDelimiterInspection extends AbstractBaseJavaLocalInspectionTool {
+  private static final @NonNls String NEXT_TOKEN = "nextToken";
+  private static final @NonNls String STRING_TOKENIZER = "java.util.StringTokenizer";
 
-  @NonNls
-  private final static String NEXT_TOKEN = "nextToken";
-  @NonNls
-  private final static String STRING_TOKENIZER = "java.util.StringTokenizer";
-
-  @NotNull
   @Override
-  public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, boolean isOnTheFly) {
+  public @NotNull PsiElementVisitor buildVisitor(final @NotNull ProblemsHolder holder, boolean isOnTheFly) {
     return new JavaElementVisitor() {
       @Override
-      public void visitCallExpression(PsiCallExpression callExpression) {
+      public void visitCallExpression(@NotNull PsiCallExpression callExpression) {
         final PsiExpressionList argumentList = callExpression.getArgumentList();
         final PsiMethod method = callExpression.resolveMethod();
         if (method != null && argumentList != null && (method.isConstructor() || NEXT_TOKEN.equals(method.getName()))) {
@@ -52,50 +59,37 @@ public class StringTokenizerDelimiterInspection extends AbstractBaseJavaLocalIns
   }
 
   private static void hasArgumentDuplicates(PsiExpression delimiterArgument, ProblemsHolder holder) {
-    if (delimiterArgument instanceof PsiLiteralExpression) {
-      final Object value = ((PsiLiteralExpression)delimiterArgument).getValue();
-      if (value instanceof String) {
-        String delimiters = (String)value;
-        final Set<Character> chars = new THashSet<>();
-        for (char c : delimiters.toCharArray()) {
-          if (!chars.add(c)) {
-            holder.registerProblem(delimiterArgument, JavaAnalysisBundle.message("delimiters.argument.contains.duplicated.characters"),
-                                   new ReplaceDelimitersWithUnique(delimiterArgument));
-            return;
-          }
+    if (delimiterArgument instanceof PsiLiteralExpression literal && literal.getValue() instanceof String delimiters) {
+      final Set<Character> chars = new HashSet<>();
+      for (char c : delimiters.toCharArray()) {
+        if (!chars.add(c)) {
+          holder.problem(delimiterArgument, JavaAnalysisBundle.message("delimiters.argument.contains.duplicated.characters"))
+            .fix(new ReplaceDelimitersWithUnique(literal)).register();
+          return;
         }
       }
     }
   }
 
-  private final static class ReplaceDelimitersWithUnique extends LocalQuickFixOnPsiElement {
-    ReplaceDelimitersWithUnique(@NotNull PsiElement element) {
+  private static final class ReplaceDelimitersWithUnique extends PsiUpdateModCommandAction<PsiLiteralExpression> {
+    ReplaceDelimitersWithUnique(@NotNull PsiLiteralExpression element) {
       super(element);
     }
 
-    @NotNull
     @Override
-    public String getText() {
-      return getFamilyName();
-    }
-
-    @NotNull
-    @Override
-    public String getFamilyName() {
+    public @NotNull String getFamilyName() {
       return JavaAnalysisBundle.message("replace.stringtokenizer.delimiters.parameter.with.unique.symbols");
     }
 
     @Override
-    public void invoke(@NotNull Project project, @NotNull PsiFile file, @NotNull PsiElement startElement, @NotNull PsiElement endElement) {
+    protected void invoke(@NotNull ActionContext context, @NotNull PsiLiteralExpression delimiterArgument, @NotNull ModPsiUpdater updater) {
       final Set<Character> uniqueChars = new LinkedHashSet<>();
-      final PsiLiteralExpression delimiterArgument = (PsiLiteralExpression)startElement;
-      final Object literal = delimiterArgument.getValue();
-      if(!(literal instanceof String)) return;
-      for (char c : ((String)literal).toCharArray()) {
+      if(!(delimiterArgument.getValue() instanceof String value)) return;
+      for (char c : value.toCharArray()) {
         uniqueChars.add(c);
       }
       final String newDelimiters = StringUtil.join(uniqueChars, "");
-      final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(project);
+      final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(context.project());
       delimiterArgument.replace(elementFactory.createExpressionFromText('"' + StringUtil.escapeStringCharacters(newDelimiters) + '"', null));
     }
   }

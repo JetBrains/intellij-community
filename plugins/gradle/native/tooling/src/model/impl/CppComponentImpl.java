@@ -2,7 +2,11 @@
 package org.jetbrains.plugins.gradle.nativeplatform.tooling.model.impl;
 
 import com.intellij.serialization.PropertyMapping;
-import org.jetbrains.plugins.gradle.nativeplatform.tooling.model.*;
+import org.jetbrains.plugins.gradle.nativeplatform.tooling.model.CppBinary;
+import org.jetbrains.plugins.gradle.nativeplatform.tooling.model.CppComponent;
+import org.jetbrains.plugins.gradle.nativeplatform.tooling.model.CppExecutable;
+import org.jetbrains.plugins.gradle.nativeplatform.tooling.model.CppSharedLibrary;
+import org.jetbrains.plugins.gradle.nativeplatform.tooling.model.CppStaticLibrary;
 
 import java.util.LinkedHashSet;
 import java.util.Set;
@@ -23,7 +27,7 @@ public class CppComponentImpl implements CppComponent {
   public CppComponentImpl(String name, String baseName) {
     this.name = name;
     this.baseName = baseName;
-    this.binaries = new LinkedHashSet<CppBinary>();
+    this.binaries = new LinkedHashSet<>();
   }
 
   public CppComponentImpl(CppComponent component) {

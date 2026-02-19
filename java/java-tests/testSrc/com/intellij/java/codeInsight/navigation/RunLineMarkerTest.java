@@ -1,65 +1,63 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.codeInsight.navigation;
 
 import com.intellij.application.options.editor.GutterIconsConfigurable;
 import com.intellij.codeInsight.daemon.GutterIconDescriptor;
 import com.intellij.codeInsight.daemon.GutterMark;
+import com.intellij.codeInsight.daemon.LineMarkerInfo;
 import com.intellij.execution.ExecutionBundle;
-import com.intellij.execution.TestStateStorage;
+import com.intellij.execution.Location;
+import com.intellij.execution.RunManager;
 import com.intellij.execution.actions.ConfigurationContext;
 import com.intellij.execution.actions.ConfigurationFromContext;
 import com.intellij.execution.actions.RunConfigurationProducer;
 import com.intellij.execution.application.ApplicationConfiguration;
 import com.intellij.execution.application.ApplicationConfigurationProducer;
-import com.intellij.execution.lineMarker.RunLineMarkerContributor;
+import com.intellij.execution.impl.RunManagerImpl;
+import com.intellij.execution.impl.RunnerAndConfigurationSettingsImpl;
+import com.intellij.execution.lineMarker.LineMarkerActionWrapper;
 import com.intellij.execution.lineMarker.RunLineMarkerProvider;
-import com.intellij.execution.testframework.sm.runner.states.TestStateInfo;
-import com.intellij.icons.AllIcons;
+import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
+import com.intellij.openapi.actionSystem.impl.Utils;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.extensions.LoadingOrder;
 import com.intellij.openapi.util.Ref;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiMethod;
+import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.TestActionEvent;
-import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
-import com.intellij.testIntegration.TestRunLineMarkerProvider;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.ThreeState;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Date;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
+
+import static com.intellij.java.codeInsight.navigation.RunLineMarkerJava22Test.checkMark;
 
 /**
  * @author Dmitry Avdeev
  */
-public class RunLineMarkerTest extends LightJavaCodeInsightFixtureTestCase {
+public class RunLineMarkerTest extends LineMarkerTestCase {
+
   public void testRunLineMarker() {
-    myFixture.configureByText("MainTest.java", "public class MainTest {\n" +
-                                               "    public static void <caret>foo(String[] args) {\n" +
-                                               "      someCode();\n" +
-                                               "    }\n " +
-                                               "    public static void main(String[] args) {\n" +
-                                               "      someCode();\n" +
-                                               "    }\n" +
-                                               "}");
+    myFixture.configureByText("MainTest.java", """
+      public class MainTest {
+          public static void <caret>foo(String[] args) {
+            someCode();
+          }
+           public static void main(String[] args) {
+            someCode();
+          }
+      }""");
     assertEquals(ThreeState.UNSURE, RunLineMarkerProvider.hadAnythingRunnable(myFixture.getFile().getVirtualFile()));
     assertEquals(0, myFixture.findGuttersAtCaret().size());
     List<GutterMark> gutters = myFixture.findAllGutters();
@@ -67,92 +65,65 @@ public class RunLineMarkerTest extends LightJavaCodeInsightFixtureTestCase {
     assertEquals(ThreeState.YES, RunLineMarkerProvider.hadAnythingRunnable(myFixture.getFile().getVirtualFile()));
   }
 
+  public void testRunLineMarkerOnInterface() {
+    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_24, () -> {
+    myFixture.configureByText("Main.java", """
+      public class Ma<caret>in implements I {}
+      interface I {    public static void main(String[] args) {}
+      }
+      """);
+    assertEquals(ThreeState.UNSURE, RunLineMarkerProvider.hadAnythingRunnable(myFixture.getFile().getVirtualFile()));
+    assertEquals(0, myFixture.findGuttersAtCaret().size());
+    List<GutterMark> gutters = myFixture.findAllGutters();
+    assertEquals(2, gutters.size());
+    assertEquals(ThreeState.YES, RunLineMarkerProvider.hadAnythingRunnable(myFixture.getFile().getVirtualFile()));
+    });
+  }
+
+  public void testNoRunLineMarkerAnonymous() {
+    myFixture.configureByText("X.java", """
+      public class X {
+        void foo() {
+          new Object() {
+            public static void <caret>main(String[] args) {}
+          };
+        }
+      }""");
+    doTestNoRunLineMarkers();
+  }
+
+  public void testNoRunLineMarkerLocal() {
+    myFixture.configureByText("X.java", """
+      public class X {
+        void foo() {
+          class Local {
+            public static void <caret>main(String[] args) {}
+          };
+        }
+      }""");
+    doTestNoRunLineMarkers();
+  }
+
   public void testNoRunLineMarker() {
     myFixture.configureByText("MainTest.java", "public class MainTest {}");
+    doTestNoRunLineMarkers();
+  }
+
+  private void doTestNoRunLineMarkers() {
     assertEquals(ThreeState.UNSURE, RunLineMarkerProvider.hadAnythingRunnable(myFixture.getFile().getVirtualFile()));
     assertEmpty(myFixture.findAllGutters());
     assertEquals(ThreeState.NO, RunLineMarkerProvider.hadAnythingRunnable(myFixture.getFile().getVirtualFile()));
   }
 
-  public void testTestClassWithMain() {
-    myFixture.addClass("package junit.framework; public class TestCase {}");
-    myFixture.configureByText("MainTest.java", "public class <caret>MainTest extends junit.framework.TestCase {\n" +
-                                               "    public static void main(String[] args) {\n" +
-                                               "    }\n" +
-                                               "    public void testFoo() {\n" +
-                                               "    }\n" +
-                                               "}");
-    List<GutterMark> marks = myFixture.findGuttersAtCaret();
-    assertEquals(1, marks.size());
-    GutterIconRenderer mark = (GutterIconRenderer)marks.get(0);
-    ActionGroup group = mark.getPopupMenuActions();
-    assertNotNull(group);
-    TestActionEvent event = new TestActionEvent();
-    List<AnAction> list = ContainerUtil.findAll(group.getChildren(event), action -> {
-      TestActionEvent actionEvent = new TestActionEvent();
-      action.update(actionEvent);
-      String text = actionEvent.getPresentation().getText();
-      return text != null && text.startsWith("Run '") && text.endsWith("'");
-    });
-    assertEquals(list.toString(), 2, list.size());
-    list.get(0).update(event);
-    assertEquals("Run 'MainTest.main()'", event.getPresentation().getText());
-    list.get(1).update(event);
-    assertEquals("Run 'MainTest'", event.getPresentation().getText());
-  }
-
-  public void testAbstractTestClassMethods() {
-    myFixture.addClass("package junit.framework; public class TestCase {}");
-    myFixture.configureByText("MyTest.java", "public abstract class MyTest extends junit.framework.TestCase {\n" +
-                                               "    public void test<caret>Foo() {\n" +
-                                               "    }\n" +
-                                               "}");
-    List<GutterMark> marks = myFixture.findGuttersAtCaret();
-    assertEquals(1, marks.size());
-  }
-
   public void testMarkersBeforeRunning() {
     myFixture.addClass("package junit.framework; public class TestCase {}");
-    myFixture.configureByText("MainTest.java", "public class MainTest extends junit.framework.TestCase {\n" +
-                                               "    public void test<caret>Foo() {\n" +
-                                               "    }\n" +
-                                               "}");
+    myFixture.configureByText("MainTest.java", """
+      public class MainTest extends junit.framework.TestCase {
+          public void test<caret>Foo() {
+          }
+      }""");
     List<GutterMark> marks = myFixture.findGuttersAtCaret();
     assertEquals(1, marks.size());
-  }
-
-  public void testTestAnnotationInSuperMethodOnly() {
-    myFixture.addClass("package org.junit; public @interface Test {}");
-    myFixture.addClass("class Foo { @Test public void testFoo() {}}");
-    myFixture.configureByText("MyTest.java", "public class MyTest extends Foo {\n" +
-                                               "    public void test<caret>Foo() {\n" +
-                                               "    }\n" +
-                                               "}");
-    List<GutterMark> marks = myFixture.findGuttersAtCaret();
-    assertEquals(1, marks.size());
-  }
-
-  public void testNestedTestClass() {
-    TestStateStorage stateStorage = TestStateStorage.getInstance(getProject());
-    String testUrl = "java:suite://Main$MainTest";
-    try {
-      stateStorage.writeState(testUrl, new TestStateStorage.Record(TestStateInfo.Magnitude.FAILED_INDEX.getValue(), new Date(), 0, 0, "",
-                                                                   "", ""));
-      myFixture.addClass("package junit.framework; public class TestCase {}");
-      PsiFile file = myFixture.configureByText("MainTest.java", "public class Main {\n" +
-                                                                "  public class Main<caret>Test extends junit.framework.TestCase {\n" +
-                                                                "    public void testFoo() {\n" +
-                                                                "    }\n" +
-                                                                "  }" +
-                                                                "}");
-
-      RunLineMarkerContributor.Info info = new TestRunLineMarkerProvider().getInfo(file.findElementAt(myFixture.getCaretOffset()));
-      assertNotNull(info);
-      assertEquals(AllIcons.RunConfigurations.TestState.Red2, info.icon);
-    }
-    finally {
-      stateStorage.removeState(testUrl);
-    }
   }
 
   public void testConfigurable() {
@@ -163,46 +134,67 @@ public class RunLineMarkerTest extends LightJavaCodeInsightFixtureTestCase {
     assertEquals(descriptors.size(), strings.size());
   }
 
+  public void testGeneratedNames() {
+    RunManager manager = RunManager.getInstance(getProject());
+    ApplicationConfiguration first = new ApplicationConfiguration("Unknown", getProject());
+    first.setMainClass(myFixture.addClass("package a; public class Main {public static void main(String[] args) {}}"));
+    first.setGeneratedName();
+    assertEquals("Main", first.getName());
+    RunnerAndConfigurationSettingsImpl settings = new RunnerAndConfigurationSettingsImpl((RunManagerImpl)manager, first);
+    manager.addConfiguration(settings);
+    myTempSettings.add(settings);
+    
+    ApplicationConfiguration second = new ApplicationConfiguration("Unknown", getProject());
+    second.setMainClass(myFixture.addClass("package b; public class Main {public static void main(String[] args) {}}"));
+    second.setGeneratedName();
+    assertEquals("b.Main", second.getName());
+  }
+
   public void testTooltip() {
-    myFixture.configureByText("Main.java", "public class Main {\n" +
-                                           "    public static void m<caret>ain(String[] args) {\n" +
-                                           "      someCode();\n" +
-                                           "    }\n" +
-                                           "}");
+    myFixture.configureByText("Main.java", """
+      public class Main {
+          public static void m<caret>ain(String[] args) {
+            someCode();
+          }
+      }""");
     List<GutterMark> marks = myFixture.findGuttersAtCaret();
     assertEquals(1, marks.size());
     GutterIconRenderer mark = (GutterIconRenderer)marks.get(0);
-    String text = mark.getTooltipText();
-    assertTrue(text.startsWith("Run 'Main.main()'\n" +
-                               "Debug 'Main.main()'\n" +
-                               "Run 'Main.main()' with Coverage"));
+    String text = mark.getTooltipText().lines().filter(line -> !line.contains("Profiler")).collect(Collectors.joining("\n"));
+    assertTrue(text, text.startsWith("""
+                                       Run 'Main.main()'
+                                       Debug 'Main.main()'
+                                       Run 'Main.main()' with Coverage"""));
   }
 
   public void testTooltipWithUnderscores() {
-    myFixture.configureByText("Main_class_test.java", "public class Main_class_test {\n" +
-                                                      "    public static void m<caret>ain(String[] args) {\n" +
-                                                      "      someCode();\n" +
-                                                      "    }\n" +
-                                                      "}");
+    myFixture.configureByText("Main_class_test.java", """
+      public class Main_class_test {
+          public static void m<caret>ain(String[] args) {
+            someCode();
+          }
+      }""");
     List<GutterMark> marks = myFixture.findGuttersAtCaret();
     assertEquals(1, marks.size());
     GutterIconRenderer mark = (GutterIconRenderer)marks.get(0);
-    String text = mark.getTooltipText();
-    assertTrue(text.startsWith("Run 'Main_class_test.main()'\n" +
-                               "Debug 'Main_class_test.main()'\n" +
-                               "Run 'Main_class_test.main()' with Coverage"));
+    String text = mark.getTooltipText().lines().filter(line -> !line.contains("Profiler")).collect(Collectors.joining("\n"));
+    assertTrue(text, text.startsWith("""
+                                       Run 'Main_class_test.main()'
+                                       Debug 'Main_class_test.main()'
+                                       Run 'Main_class_test.main()' with Coverage"""));
   }
 
   public void testEditConfigurationAction() {
-    myFixture.configureByText("MainTest.java", "public class MainTest {\n" +
-                                               "    public static void ma<caret>in(String[] args) {\n" +
-                                               "      someCode();\n" +
-                                               "    }\n" +
-                                               "}");
+    myFixture.configureByText("MainTest.java", """
+      public class MainTest {
+          public static void ma<caret>in(String[] args) {
+            someCode();
+          }
+      }""");
     List<GutterMark> marks = myFixture.findGuttersAtCaret();
     assertEquals(1, marks.size());
     GutterIconRenderer mark = (GutterIconRenderer)marks.get(0);
-    AnAction[] children = mark.getPopupMenuActions().getChildren(new TestActionEvent());
+    AnAction[] children = mark.getPopupMenuActions().getChildren(TestActionEvent.createTestEvent());
     String message = ExecutionBundle.message("create.run.configuration.action.name");
     AnAction action = ContainerUtil.find(children, t -> {
       if (t.getTemplateText() == null) return false;
@@ -210,15 +202,17 @@ public class RunLineMarkerTest extends LightJavaCodeInsightFixtureTestCase {
     });
     assertNotNull(action);
     myFixture.testAction(action);
-    TestActionEvent event = new TestActionEvent();
+    AnActionEvent event = TestActionEvent.createTestEvent();
     action.update(event);
     assertTrue(event.getPresentation().getText().startsWith(message));
+    ContainerUtil.addIfNotNull(myTempSettings, RunManager.getInstance(getProject()).getSelectedConfiguration());
   }
 
   public void testActionNameFromPreferredProducer() {
-    myFixture.configureByText("Main.java", "public class Main {\n" +
-                                           "    public static void ma<caret>in(String[] args) {}\n" +
-                                           "}");
+    myFixture.configureByText("Main.java", """
+      public class Main {
+          public static void ma<caret>in(String[] args) {}
+      }""");
     RunConfigurationProducer.EP_NAME.getPoint().registerExtension(new ApplicationConfigurationProducer() {
       @Override
       protected boolean setupConfigurationFromContext(@NotNull ApplicationConfiguration configuration,
@@ -239,9 +233,127 @@ public class RunLineMarkerTest extends LightJavaCodeInsightFixtureTestCase {
     }, LoadingOrder.FIRST, getTestRootDisposable());
     List<GutterMark> marks = myFixture.findGuttersAtCaret();
     GutterIconRenderer mark = (GutterIconRenderer)marks.get(0);
-    String text = mark.getTooltipText();
-    assertTrue(text.startsWith("Run 'Main.main()'\n" +
-                               "Debug 'Main.main()'\n" +
-                               "Run 'Main.main()' with Coverage"));
+    String text = mark.getTooltipText().lines().filter(line -> !line.contains("Profiler")).collect(Collectors.joining("\n"));
+    assertTrue(text, text.startsWith("""
+                                       Run 'Main.main()'
+                                       Debug 'Main.main()'
+                                       Run 'Main.main()' with Coverage"""));
+  }
+
+  public void testConfigurationContextCache() {
+    myFixture.configureByText("Main.java", """
+      public class Main {
+          public static void ma<caret>in(String[] args) {}
+      }""");
+    PsiElement element = ((PsiMethod)myFixture.getElementAtCaret()).getNameIdentifier();
+    LineMarkerInfo<?> info = new RunLineMarkerProvider().getLineMarkerInfo(element);
+    assertNotNull(info);
+    ActionGroup group = info.createGutterRenderer().getPopupMenuActions();
+    assertNotNull(group);
+    getEditor().getCaretModel().moveToOffset(0);
+    DataContext dataContext = DataManager.getInstance().getDataContext(getEditor().getComponent());
+    AnAction action = ArrayUtil.getLastElement(group.getChildren(TestActionEvent.createTestEvent(dataContext)));
+    assertInstanceOf(action, LineMarkerActionWrapper.class);
+
+    AnActionEvent event = TestActionEvent.createTestEvent(dataContext);
+    Utils.initUpdateSession(event);
+    action.update(event);
+    ConfigurationContext sharedContext = DataManager.getInstance().loadFromDataContext(event.getDataContext(), ConfigurationContext.SHARED_CONTEXT);
+    PsiElement locationElement = sharedContext.getLocation().getPsiElement();
+    assertEquals("main", locationElement.getText());
+  }
+
+  public void testLineMarkerActionWrapper() {
+    myFixture.configureByText("Main.java", """
+      public class Main {
+          public static void ma<caret>in(String[] args) {}
+      }""");
+    PsiElement element = ((PsiMethod)myFixture.getElementAtCaret()).getNameIdentifier();
+    Ref<Boolean> updated = Ref.create();
+    Ref<Boolean> performed = Ref.create();
+    Ref<ConfigurationContext> context = Ref.create();
+    LineMarkerActionWrapper wrapper = new LineMarkerActionWrapper(element, new AnAction() {
+      @Override
+      public void update(@NotNull AnActionEvent e) {
+        Location<?> location = e.getData(Location.DATA_KEY);
+        assertSame(element, location.getPsiElement());
+        context.set(ConfigurationContext.getFromContext(e.getDataContext(), e.getPlace()));
+        updated.set(true);
+      }
+
+      @Override
+      public void actionPerformed(@NotNull AnActionEvent e) {
+        Location<?> location = e.getData(Location.DATA_KEY);
+        assertSame(element, location.getPsiElement());
+        assertSame(context.get(), ConfigurationContext.getFromContext(e.getDataContext(), e.getPlace()));
+        performed.set(true);
+      }
+    });
+    DataContext dataContext = SimpleDataContext.getProjectContext(getProject());
+    wrapper.update(TestActionEvent.createTestEvent(dataContext));
+    assertTrue(updated.get());
+
+    wrapper.actionPerformed(TestActionEvent.createTestEvent(dataContext));
+    assertTrue(performed.get());
+  }
+
+  public void testNestedNonStaticClassMethod() {
+    myFixture.configureByText("A1.java", """
+      class A1 {
+          class A2{
+              public static void <caret>main(String[] args) {
+                  System.out.println("1");
+              }
+          }
+      }""");
+    List<GutterMark> marks = myFixture.findGuttersAtCaret();
+    assertEquals(0, marks.size());
+  }
+
+  public void testNonStaticMethod() {
+    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_25, () -> {
+      myFixture.configureByText("A1.java", """
+      class A1 {
+          public void main<caret>(){
+          }
+      }""");
+      List<GutterMark> marks = myFixture.findGuttersAtCaret();
+      assertEquals(1, marks.size());
+      checkMark(marks.get(0), "A1");
+    });
+  }
+
+  public void testInheritStaticMethod() {
+    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_25, () -> {
+      myFixture.addClass("""
+                         class A2 {
+                             public static void main(String[] args) {
+                                 System.out.println("1");
+                             }
+                         }""");
+    myFixture.configureByText("A1.java", """
+      class A1<caret> extends A2 {
+      }""");
+    List<GutterMark> marks = myFixture.findGuttersAtCaret();
+    assertEquals(1, marks.size());
+    checkMark(marks.get(0), "A1");
+    });
+  }
+
+  public void testInheritMethod() {
+    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_25, () -> {
+      myFixture.addClass("""
+                         class A2 {
+                             public void main(String[] args) {
+                                 System.out.println("1");
+                             }
+                         }""");
+    myFixture.configureByText("A1.java", """
+      class A1<caret> extends A2 {
+      }""");
+    List<GutterMark> marks = myFixture.findGuttersAtCaret();
+    assertEquals(1, marks.size());
+    checkMark(marks.get(0), "A1");
+    });
   }
 }

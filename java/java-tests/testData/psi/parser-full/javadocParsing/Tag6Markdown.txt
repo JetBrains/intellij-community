@@ -1,0 +1,53 @@
+PsiJavaFile:Tag6Markdown.java
+  PsiImportList
+    <empty list>
+  PsiClass:Test
+    PsiModifierList:
+      <empty list>
+    PsiKeyword:class('class')
+    PsiWhiteSpace(' ')
+    PsiIdentifier:Test('Test')
+    PsiTypeParameterList
+      <empty list>
+    PsiReferenceList
+      <empty list>
+    PsiReferenceList
+      <empty list>
+    PsiWhiteSpace(' ')
+    PsiJavaToken:LBRACE('{')
+    PsiWhiteSpace('\n    ')
+    PsiMethod:foo
+      PsiDocComment
+        PsiDocToken:DOC_COMMENT_LEADING_ASTERISKS('///')
+        PsiWhiteSpace('\n    ')
+        PsiDocToken:DOC_COMMENT_LEADING_ASTERISKS('///')
+        PsiDocToken:DOC_COMMENT_DATA(' ')
+        PsiDocTag:@return
+          PsiDocToken:DOC_TAG_NAME('@return')
+          PsiWhiteSpace(' ')
+          PsiDocToken:DOC_LPAREN('(')
+          PsiDocToken:DOC_COMMENT_DATA('read-only')
+          PsiDocToken:DOC_RPAREN(')')
+          PsiDocToken:DOC_COMMENT_DATA(' Foo')
+        PsiWhiteSpace('\n    ')
+        PsiDocToken:DOC_COMMENT_LEADING_ASTERISKS('///')
+      PsiWhiteSpace('\n    ')
+      PsiModifierList:
+        <empty list>
+      PsiTypeParameterList
+        <empty list>
+      PsiTypeElement:Foo
+        PsiJavaCodeReferenceElement:Foo
+          PsiIdentifier:Foo('Foo')
+          PsiReferenceParameterList
+            <empty list>
+      PsiWhiteSpace(' ')
+      PsiIdentifier:foo('foo')
+      PsiParameterList:()
+        PsiJavaToken:LPARENTH('(')
+        PsiJavaToken:RPARENTH(')')
+      PsiReferenceList
+        <empty list>
+      PsiJavaToken:SEMICOLON(';')
+    PsiWhiteSpace('\n')
+    PsiJavaToken:RBRACE('}')

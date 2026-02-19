@@ -1,0 +1,24 @@
+================ Step #1 =================
+Cleaning output files:
+  META-INF/kotlin_inlineFunctionImplementationChanged-a.kotlin_module
+  TheClass.class
+End of files
+Compiling files:
+  kotlin/inlineFunctionImplementationChanged/a/TheClass.kt
+End of files
+Cleaning output files:
+  META-INF/kotlin_inlineFunctionImplementationChanged-a.kotlin_module
+  UsageAKt.class
+End of files
+Compiling files:
+  kotlin/inlineFunctionImplementationChanged/a/usageA.kt
+End of files
+Cleaning output files:
+  META-INF/kotlin_inlineFunctionImplementationChanged-b.kotlin_module
+  UsageBKt.class
+End of files
+Compiling files:
+  kotlin/inlineFunctionImplementationChanged/b/usageB.kt
+End of files
+------------------------------------------
+Exit code: OK

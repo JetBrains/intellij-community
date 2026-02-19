@@ -5,7 +5,7 @@ import com.intellij.codeInsight.AnnotationUtil
 import com.intellij.psi.CommonClassNames
 import com.intellij.psi.PsiArrayType
 import com.intellij.psi.PsiModifier
-import com.intellij.psi.PsiType
+import com.intellij.psi.PsiTypes
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil
@@ -28,29 +28,29 @@ class VetoableTransformationSupport : AstTransformationSupport {
     val methods = mutableListOf<GrLightMethodBuilder>()
 
     methods += context.memberBuilder.method("addVetoableChangeListener") {
-      returnType = PsiType.VOID
+      returnType = PsiTypes.voidType()
       addParameter("propertyName", CommonClassNames.JAVA_LANG_STRING)
       addParameter("listener", VCL_FQN)
     }
 
     methods += context.memberBuilder.method("addVetoableChangeListener") {
-      returnType = PsiType.VOID
+      returnType = PsiTypes.voidType()
       addParameter("listener", VCL_FQN)
     }
 
     methods += context.memberBuilder.method("removeVetoableChangeListener") {
-      returnType = PsiType.VOID
+      returnType = PsiTypes.voidType()
       addParameter("propertyName", CommonClassNames.JAVA_LANG_STRING)
       addParameter("listener", VCL_FQN)
     }
 
     methods += context.memberBuilder.method("removeVetoableChangeListener") {
-      returnType = PsiType.VOID
+      returnType = PsiTypes.voidType()
       addParameter("listener", VCL_FQN)
     }
 
     methods += context.memberBuilder.method("fireVetoableChange") {
-      returnType = PsiType.VOID
+      returnType = PsiTypes.voidType()
       addParameter("propertyName", CommonClassNames.JAVA_LANG_STRING)
       addParameter("oldValue", CommonClassNames.JAVA_LANG_OBJECT)
       addParameter("newValue", CommonClassNames.JAVA_LANG_OBJECT)

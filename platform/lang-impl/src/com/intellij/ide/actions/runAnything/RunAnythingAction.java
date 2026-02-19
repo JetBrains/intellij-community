@@ -1,34 +1,46 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions.runAnything;
 
 import com.intellij.execution.Executor;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.ide.HelpTooltip;
 import com.intellij.ide.IdeBundle;
-import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.actions.GotoActionBase;
-import com.intellij.ide.actions.runAnything.activity.RunAnythingCommandExecutionProvider;
 import com.intellij.ide.actions.runAnything.activity.RunAnythingProvider;
-import com.intellij.ide.actions.runAnything.activity.RunAnythingRecentCommandProvider;
-import com.intellij.ide.actions.runAnything.activity.RunAnythingRecentProjectProvider;
 import com.intellij.ide.lightEdit.LightEdit;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionToolbar;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.DataKey;
+import com.intellij.openapi.actionSystem.IdeActions;
+import com.intellij.openapi.actionSystem.Presentation;
+import com.intellij.openapi.actionSystem.ex.ActionRuntimeRegistrar;
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction;
 import com.intellij.openapi.actionSystem.impl.ActionButton;
+import com.intellij.openapi.actionSystem.impl.ActionConfigurationCustomizer;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.client.ClientSystemInfo;
+import com.intellij.openapi.keymap.Keymap;
+import com.intellij.openapi.keymap.KeymapManager;
+import com.intellij.openapi.keymap.KeymapManagerListener;
 import com.intellij.openapi.keymap.MacKeymapUtil;
 import com.intellij.openapi.keymap.impl.ModifierKeyDoubleClickHandler;
+import com.intellij.openapi.options.advanced.AdvancedSettings;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.registry.Registry;
-import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.text.Strings;
 import com.intellij.util.FontUtil;
+import com.intellij.util.JavaCoroutines;
+import kotlin.Unit;
+import kotlin.coroutines.Continuation;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 import java.awt.event.KeyEvent;
-import java.util.Arrays;
+import java.util.Collection;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import static com.intellij.openapi.keymap.KeymapUtil.getActiveKeymapShortcuts;
@@ -36,43 +48,41 @@ import static com.intellij.openapi.keymap.KeymapUtil.getActiveKeymapShortcuts;
 public class RunAnythingAction extends AnAction implements CustomComponentAction, DumbAware {
   public static final String RUN_ANYTHING_ACTION_ID = "RunAnything";
   public static final DataKey<Executor> EXECUTOR_KEY = DataKey.create("EXECUTOR_KEY");
+  /**
+   * @deprecated this is an internal field, must not be used outside the class
+   */
+  @SuppressWarnings("DeprecatedIsStillUsed") 
+  @Deprecated
   public static final AtomicBoolean SHIFT_IS_PRESSED = new AtomicBoolean(false);
+  /**
+   * @deprecated this is an internal field, must not be used outside the class
+   */
+  @SuppressWarnings("DeprecatedIsStillUsed") 
+  @Deprecated
   public static final AtomicBoolean ALT_IS_PRESSED = new AtomicBoolean(false);
 
-  private boolean myIsDoubleCtrlRegistered;
+  private static boolean ourDoubleCtrlRegistered;
 
-  private static class Holder {
-    private static final boolean IS_ACTION_ENABLED = Arrays.stream(RunAnythingProvider.EP_NAME.getExtensions())
-          .anyMatch(provider -> !(provider instanceof RunAnythingRunConfigurationProvider ||
-                                  provider instanceof RunAnythingRecentProjectProvider ||
-                                  provider instanceof RunAnythingRecentCommandProvider ||
-                                  provider instanceof RunAnythingCommandExecutionProvider));
-  }
-
-  static {
-    IdeEventQueue.getInstance().addPostprocessor(event -> {
-      if (event instanceof KeyEvent) {
-        final int keyCode = ((KeyEvent)event).getKeyCode();
-        if (keyCode == KeyEvent.VK_SHIFT) {
-          SHIFT_IS_PRESSED.set(event.getID() == KeyEvent.KEY_PRESSED);
-        }
-        else if (keyCode == KeyEvent.VK_ALT) {
-          ALT_IS_PRESSED.set(event.getID() == KeyEvent.KEY_PRESSED);
-        }
-      }
-      return false;
-    }, null);
+  static final class ShortcutTracker implements ActionConfigurationCustomizer,
+                                                ActionConfigurationCustomizer.AsyncLightCustomizeStrategy {
+    @Override
+    public @Nullable Object customize(@NotNull ActionRuntimeRegistrar actionRegistrar, @NotNull Continuation<? super Unit> $completion) {
+      return JavaCoroutines.suspendJava(jc -> {
+        initShortcutTracker();
+        jc.resume(Unit.INSTANCE);
+      }, $completion);
+    }
   }
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
-    if (Registry.is("ide.suppress.double.click.handler") && e.getInputEvent() instanceof KeyEvent) {
+    if (AdvancedSettings.getBoolean("ide.suppress.double.click.handler") && e.getInputEvent() instanceof KeyEvent) {
       if (((KeyEvent)e.getInputEvent()).getKeyCode() == KeyEvent.VK_CONTROL) {
         return;
       }
     }
 
-    final Project project = e.getProject();
+    Project project = e.getProject();
     if (project != null && !LightEdit.owns(project)) {
       FeatureUsageTracker.getInstance().triggerFeatureUsed(IdeActions.ACTION_RUN_ANYTHING);
 
@@ -84,43 +94,76 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
 
   @Override
   public void update(@NotNull AnActionEvent e) {
-    if (getActiveKeymapShortcuts(RUN_ANYTHING_ACTION_ID).getShortcuts().length == 0) {
-      if (!myIsDoubleCtrlRegistered) {
-        ModifierKeyDoubleClickHandler.getInstance().registerAction(RUN_ANYTHING_ACTION_ID, KeyEvent.VK_CONTROL, -1, false);
-        myIsDoubleCtrlRegistered = true;
-      }
-    }
-    else {
-      if (myIsDoubleCtrlRegistered) {
-        ModifierKeyDoubleClickHandler.getInstance().unregisterAction(RUN_ANYTHING_ACTION_ID);
-        myIsDoubleCtrlRegistered = false;
-      }
-    }
-
-    boolean isEnabled = Holder.IS_ACTION_ENABLED;
+    boolean isEnabled = !RunAnythingProvider.EP_NAME.getExtensionList().isEmpty();
     e.getPresentation().setEnabledAndVisible(isEnabled);
   }
 
-  @NotNull
   @Override
-  public JComponent createCustomComponent(@NotNull Presentation presentation, @NotNull String place) {
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
+  }
+
+  private static void updateShortcut(KeymapManager keymapManager) {
+    if (!getActiveKeymapShortcuts(RUN_ANYTHING_ACTION_ID, keymapManager).hasShortcuts()) {
+      registerDblCtrlClick();
+    }
+    else if (ourDoubleCtrlRegistered) {
+      ModifierKeyDoubleClickHandler.getInstance().unregisterAction(RUN_ANYTHING_ACTION_ID);
+      ourDoubleCtrlRegistered = false;
+    }
+  }
+
+  private static void registerDblCtrlClick() {
+    if (!ourDoubleCtrlRegistered) {
+      ModifierKeyDoubleClickHandler.getInstance().registerAction(RUN_ANYTHING_ACTION_ID, KeyEvent.VK_CONTROL, -1, false);
+      ourDoubleCtrlRegistered = true;
+    }
+  }
+
+  private static void initShortcutTracker() {
+    KeymapManager keymapManager = ApplicationManager.getApplication().getServiceIfCreated(KeymapManager.class);
+    if (keymapManager != null) {
+      updateShortcut(keymapManager);
+    }
+    ApplicationManager.getApplication().getMessageBus().connect().subscribe(KeymapManagerListener.TOPIC, new KeymapManagerListener() {
+      @Override
+      public void activeKeymapChanged(@Nullable Keymap keymap) {
+        if (keymap == null) {
+          registerDblCtrlClick();
+        }
+        else {
+          updateShortcut(KeymapManager.getInstance());
+        }
+      }
+
+      @Override
+      public void shortcutsChanged(@NotNull Keymap keymap, @NonNls @NotNull Collection<String> actionIds, boolean fromSettings) {
+        if (actionIds.contains(RUN_ANYTHING_ACTION_ID)) {
+          updateShortcut(KeymapManager.getInstance());
+        }
+      }
+    });
+  }
+
+  @Override
+  public @NotNull JComponent createCustomComponent(@NotNull Presentation presentation, @NotNull String place) {
     return new ActionButton(this, presentation, place, ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE) {
       @Override
       protected void updateToolTipText() {
         HelpTooltip.dispose(this);
 
+        //noinspection DialogTitleCapitalization
         new HelpTooltip()
-          .setTitle(myPresentation.getText())
+          .setTitle(myPresentation::getText)
           .setShortcut(getShortcut())
           .setDescription(IdeBundle.message("run.anything.action.tooltip.text"))
           .installOn(this);
       }
 
-      @Nullable
-      private String getShortcut() {
-        if (myIsDoubleCtrlRegistered) {
+      private static @Nullable String getShortcut() {
+        if (ourDoubleCtrlRegistered) {
           return IdeBundle.message("double.ctrl.or.shift.shortcut",
-                                   SystemInfo.isMac ? FontUtil.thinSpace() + MacKeymapUtil.CONTROL : "Ctrl");
+                                   ClientSystemInfo.isMac() ? FontUtil.thinSpace() + MacKeymapUtil.CONTROL : "Ctrl"); //NON-NLS
         }
         //keymap shortcut is added automatically
         return null;
@@ -129,7 +172,7 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
       @Override
       public void setToolTipText(String s) {
         String shortcutText = getShortcutText();
-        super.setToolTipText(StringUtil.isNotEmpty(shortcutText) ? (s + " (" + shortcutText + ")") : s);
+        super.setToolTipText(Strings.isNotEmpty(shortcutText) ? (s + " (" + shortcutText + ")") : s);
       }
     };
   }

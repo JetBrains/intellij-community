@@ -2,27 +2,47 @@
 package com.intellij.ide.ui.laf.darcula.ui;
 
 import com.intellij.ui.scale.JBUIScale;
-import com.intellij.util.ui.*;
+import com.intellij.util.ui.JBInsets;
+import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.JBValue;
+import com.intellij.util.ui.MacUIUtil;
+import com.intellij.util.ui.UIUtil;
 import org.intellij.lang.annotations.MagicConstant;
 
-import javax.swing.*;
+import javax.swing.JButton;
+import javax.swing.JComponent;
+import javax.swing.SwingConstants;
 import javax.swing.plaf.ComponentUI;
 import javax.swing.plaf.basic.BasicArrowButton;
 import javax.swing.plaf.basic.BasicSpinnerUI;
-import java.awt.*;
+import java.awt.Color;
+import java.awt.Component;
+import java.awt.Container;
+import java.awt.Dimension;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.Insets;
+import java.awt.LayoutManager;
+import java.awt.Rectangle;
+import java.awt.RenderingHints;
+import java.awt.Shape;
 import java.awt.event.FocusAdapter;
 import java.awt.event.FocusEvent;
 import java.awt.geom.Path2D;
 import java.awt.geom.Rectangle2D;
 import java.awt.geom.RoundRectangle2D;
 
-import static com.intellij.ide.ui.laf.darcula.DarculaUIUtil.*;
+import static com.intellij.ide.ui.laf.darcula.DarculaUIUtil.BW;
+import static com.intellij.ide.ui.laf.darcula.DarculaUIUtil.COMPONENT_ARC;
+import static com.intellij.ide.ui.laf.darcula.DarculaUIUtil.LW;
+import static com.intellij.ide.ui.laf.darcula.DarculaUIUtil.getOutlineColor;
+import static com.intellij.ide.ui.laf.darcula.DarculaUIUtil.isCompact;
+import static com.intellij.ide.ui.laf.darcula.DarculaUIUtil.maximize;
 
 /**
  * @author Konstantin Bulenkov
  */
 public class DarculaSpinnerUI extends BasicSpinnerUI {
-  protected static final JBValue MINIMUM_WIDTH = new JBValue.Float(72);
   private static final JBValue ARROW_WIDTH = new JBValue.Float(9);
   private static final JBValue ARROW_HEIGHT = new JBValue.Float(5);
 
@@ -127,7 +147,9 @@ public class DarculaSpinnerUI extends BasicSpinnerUI {
 
   protected Dimension getSizeWithButtons(Insets i, Dimension size) {
     Dimension arrowSize = nextButton.getPreferredSize();
-    Dimension minSize = new Dimension(i.left + MINIMUM_WIDTH.get() + i.right, arrowSize.height * 2);
+    Dimension themeMinimumSize = JBUI.CurrentTheme.Spinner.minimumSize();
+    Dimension minSize = new Dimension(i.left + themeMinimumSize.width + i.right,
+                                      Math.max(i.top + themeMinimumSize.height + i.bottom, arrowSize.height * 2));
     size = maximize(size, minSize);
 
     Dimension editorSize = spinner.getEditor() != null ? spinner.getEditor().getPreferredSize() : JBUI.emptySize();
@@ -261,25 +283,23 @@ public class DarculaSpinnerUI extends BasicSpinnerUI {
         arc = arc > bw + lw ? arc - bw - lw : 0.0f;
 
         switch (direction) {
-          case SOUTH:
+          case SOUTH -> {
             shape.moveTo(lw, 0);
             shape.lineTo(w - bw - lw, 0);
             shape.lineTo(w - bw - lw, h - bw - lw - arc);
             shape.quadTo(w - bw - lw, h - bw - lw, w - bw - lw - arc, h - bw - lw);
             shape.lineTo(lw, h - bw - lw);
             shape.closePath();
-            break;
-
-          case NORTH:
+          }
+          case NORTH -> {
             shape.moveTo(lw, bw + lw);
             shape.lineTo(w - bw - lw - arc, bw + lw);
             shape.quadTo(w - bw - lw, bw + lw, w - bw - lw, bw + lw + arc);
             shape.lineTo(w - bw - lw, h);
             shape.lineTo(lw, h);
             shape.closePath();
-            break;
-          default:
-            break;
+          }
+          default -> {}
         }
         return shape;
       }
@@ -290,21 +310,19 @@ public class DarculaSpinnerUI extends BasicSpinnerUI {
         int ah = ARROW_HEIGHT.get();
 
         switch (direction) {
-          case SOUTH:
+          case SOUTH -> {
             arrow.moveTo(0, 0);
             arrow.lineTo(aw, 0);
             arrow.lineTo(aw / 2.0, ah);
             arrow.closePath();
-            break;
-
-          case NORTH:
+          }
+          case NORTH -> {
             arrow.moveTo(0, 0);
             arrow.lineTo(aw, 0);
             arrow.lineTo(aw / 2.0, -ah);
             arrow.closePath();
-            break;
-          default:
-            break;
+          }
+          default -> {}
         }
 
         return arrow;
@@ -314,7 +332,7 @@ public class DarculaSpinnerUI extends BasicSpinnerUI {
       public Dimension getPreferredSize() {
         Insets i = spinner.getInsets();
         int minHeight = isCompact(spinner) ? JBUIScale.scale(10) : JBUIScale.scale(12);
-        return new Dimension(ARROW_BUTTON_WIDTH.get() + i.left,
+        return new Dimension(JBUI.CurrentTheme.Component.ARROW_AREA_WIDTH.get() + i.right,
                              minHeight + (direction == SwingConstants.NORTH ? i.top : i.bottom));
       }
     };

@@ -18,6 +18,6 @@ public final class ConsoleBuffer {
   }
 
   public static int getLegacyCycleBufferSize() {
-    return SystemProperties.getIntProperty("idea.cycle.buffer.size", 1024) * 1024;
+    return Math.max(0, SystemProperties.getIntProperty("idea.cycle.buffer.size", 1024)) * 1024;
   }
 }

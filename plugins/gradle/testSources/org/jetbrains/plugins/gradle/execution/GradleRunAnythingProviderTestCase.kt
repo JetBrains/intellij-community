@@ -1,9 +1,10 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.execution
 
+import com.intellij.build.BuildDuration
 import com.intellij.build.BuildTreeConsoleView
+import com.intellij.build.BuildTreeNode
 import com.intellij.build.BuildView
-import com.intellij.build.ExecutionNode
 import com.intellij.execution.ExecutionListener
 import com.intellij.execution.ExecutionManager
 import com.intellij.execution.process.ProcessHandler
@@ -16,10 +17,9 @@ import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.util.Ref
-import com.intellij.openapi.util.text.StringUtil
+import com.intellij.platform.testFramework.assertion.BuildViewAssertions
+import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.PlatformTestUtil.dispatchAllEventsInIdeEventQueue
-import com.intellij.testFramework.PlatformTestUtil.waitWhileBusy
-import com.intellij.testFramework.fixtures.BuildViewTestFixture
 import com.intellij.testFramework.runInEdtAndWait
 import com.intellij.util.TimeoutUtil
 import com.intellij.util.concurrency.Semaphore
@@ -28,6 +28,7 @@ import org.assertj.core.api.Assertions.assertThat
 import org.jetbrains.plugins.gradle.importing.GradleImportingTestCase
 import org.jetbrains.plugins.gradle.service.execution.cmd.GradleCommandLineOptionsProvider
 import org.junit.Assert
+import org.junit.jupiter.api.Assertions
 import org.junit.runners.Parameterized
 import java.util.concurrent.TimeUnit
 import javax.swing.tree.DefaultMutableTreeNode
@@ -46,11 +47,23 @@ abstract class GradleRunAnythingProviderTestCase : GradleImportingTestCase() {
   fun getRootProjectTasks(prefix: String = "") =
     listOf("init", "wrapper").map { prefix + it }
 
-  fun getCommonTasks(prefix: String = "") =
-    listOf(
-      "components", "projects", "dependentComponents", "buildEnvironment", "dependencyInsight",
-      "dependencies", "prepareKotlinBuildScriptModel", "help", "model", "properties", "tasks"
-    ).map { prefix + it }
+  fun getCommonTasks(prefix: String = ""): List<String> {
+    val tasks = mutableListOf(
+      "projects", "buildEnvironment", "dependencyInsight",
+      "dependencies", "help", "properties", "tasks"
+    )
+    if (isGradleOlderThan("9.0")) {
+      /**
+      The model and component tasks report on the structure of legacy software model objects configured for the project.
+      Previously, these tasks were automatically added to the project for every build.
+      These tasks are now only added to a project when a rule-based plugin is applied
+      (such as those provided by Gradle’s support for building native software).
+       **/
+      tasks.add("components")
+      tasks.add("model")
+    }
+    return tasks.map { prefix + it }
+  }
 
   fun getGradleOptions(prefix: String = ""): List<String> {
     val options = GradleCommandLineOptionsProvider.getSupportedOptions().options.filterIsInstance<Option>()
@@ -75,10 +88,9 @@ abstract class GradleRunAnythingProviderTestCase : GradleImportingTestCase() {
   }
 
   private fun withVariantsFor(context: RunAnythingContext, command: String, action: (List<String>) -> Unit) {
-    val contextKey = RunAnythingProvider.EXECUTING_CONTEXT.name
-    val dataContext = SimpleDataContext.getSimpleContext(contextKey, context, myDataContext)
+    val dataContext = SimpleDataContext.getSimpleContext(RunAnythingProvider.EXECUTING_CONTEXT, context, myDataContext)
     val variants = provider.getValues(dataContext, "gradle $command")
-    action(variants.map { StringUtil.trimStart(it, "gradle ") })
+    action(variants.map { it.removePrefix("gradle ") })
   }
 
   private fun executeAndWait(context: RunAnythingContext, command: String): BuildView {
@@ -92,12 +104,12 @@ abstract class GradleRunAnythingProviderTestCase : GradleImportingTestCase() {
       }
     )
 
-    val targetDone = Semaphore()
+    val targetDone = Semaphore(1)
     val result = Ref<BuildView>()
     myProject.messageBus.connect(testRootDisposable).subscribe(
       ExecutionManager.EXECUTION_TOPIC,
       object : ExecutionListener {
-        override fun processStartScheduled(executorIdLocal: String, environmentLocal: ExecutionEnvironment) = targetDone.down()
+        override fun processStartScheduled(executorIdLocal: String, environmentLocal: ExecutionEnvironment) = Unit
         override fun processNotStarted(executorIdLocal: String, environmentLocal: ExecutionEnvironment) = targetDone.up()
         override fun processTerminated(
           executorIdLocal: String,
@@ -111,7 +123,7 @@ abstract class GradleRunAnythingProviderTestCase : GradleImportingTestCase() {
         }
       }
     )
-    val dataContext = SimpleDataContext.getSimpleContext(RunAnythingProvider.EXECUTING_CONTEXT.name, context, myDataContext)
+    val dataContext = SimpleDataContext.getSimpleContext(RunAnythingProvider.EXECUTING_CONTEXT, context, myDataContext)
     provider.execute(dataContext, "gradle $command")
 
     for (i in 0..5000) {
@@ -124,26 +136,27 @@ abstract class GradleRunAnythingProviderTestCase : GradleImportingTestCase() {
     val tree = eventView!!.tree
     runInEdtAndWait {
       dispatchAllEventsInIdeEventQueue()
-      waitWhileBusy(tree)
+      PlatformTestUtil.waitWhileBusy(tree)
     }
 
-    val buildNode = Ref<ExecutionNode>()
-    eventView.invokeLater {
-      val rootNode = (tree.model.root as DefaultMutableTreeNode).userObject as ExecutionNode
-      val buildsNodes = rootNode.childList
-      assertThat(buildsNodes).hasSize(1)
-      buildNode.set(buildsNodes.firstOrNull())
-    }.blockingGet(5, TimeUnit.SECONDS)
-
+    val buildNode = Ref<BuildTreeNode>()
     for (i in 0..5000) {
-      if (!buildNode.get().isRunning) break
+      eventView.invokeLater {
+        val treeModel = tree.model
+        val rootNode = treeModel.root
+        assertThat(treeModel.getChildCount(rootNode)).isEqualTo(1)
+        buildNode.set((treeModel.getChild(rootNode, 0) as DefaultMutableTreeNode).userObject as BuildTreeNode)
+      }.blockingGet(5, TimeUnit.SECONDS)
+
+      if (buildNode.get().duration !is BuildDuration.InProgress) break
+
       TimeoutUtil.sleep(5)
       runInEdtAndWait {
         dispatchAllEventsInIdeEventQueue()
-        waitWhileBusy(tree)
+        PlatformTestUtil.waitWhileBusy(tree)
       }
     }
-    Assert.assertFalse(buildNode.get().isRunning)
+    Assert.assertFalse("The tree node is still in Running state", buildNode.get().duration is BuildDuration.InProgress)
     return buildView
   }
 
@@ -160,6 +173,17 @@ abstract class GradleRunAnythingProviderTestCase : GradleImportingTestCase() {
     )
   }
 
+
+  fun BuildView.assertExecutionTree(expected: String): BuildView = apply {
+    BuildViewAssertions.assertBuildViewTreeText(this) {
+      Assertions.assertEquals(expected.trim(), it.trim())
+    }
+  }
+
+  fun BuildView.assertExecutionTreeNode(nodeText: String, assert: (String) -> Unit): BuildView = apply {
+    BuildViewAssertions.assertBuildViewNodeConsoleText(this, nodeText, assert)
+  }
+
   companion object {
     /**
      * It's sufficient to run the test against one gradle version
@@ -168,14 +192,4 @@ abstract class GradleRunAnythingProviderTestCase : GradleImportingTestCase() {
     @JvmStatic
     fun tests(): Collection<Array<out String>> = arrayListOf(arrayOf(BASE_GRADLE_VERSION))
   }
-}
-
-fun BuildView.assertExecutionTree(expected: String): BuildView {
-  BuildViewTestFixture.assertExecutionTree(this, expected, false)
-  return this
-}
-
-fun BuildView.assertExecutionTreeNode(nodeText: String, consoleTextChecker: (String?) -> Unit, assertSelected: Boolean = false): BuildView {
-  BuildViewTestFixture.assertExecutionTreeNode(this, nodeText, consoleTextChecker, assertSelected)
-  return this
 }

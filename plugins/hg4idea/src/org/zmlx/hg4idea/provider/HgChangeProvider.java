@@ -12,18 +12,38 @@
 // limitations under the License.
 package org.zmlx.hg4idea.provider;
 
+import com.intellij.ide.plugins.PluginManager;
+import com.intellij.openapi.extensions.PluginDescriptor;
+import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vcs.*;
-import com.intellij.openapi.vcs.changes.*;
+import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.vcs.FileStatus;
+import com.intellij.openapi.vcs.FileStatusFactory;
+import com.intellij.openapi.vcs.ProjectLevelVcsManager;
+import com.intellij.openapi.vcs.VcsKey;
+import com.intellij.openapi.vcs.changes.Change;
+import com.intellij.openapi.vcs.changes.ChangeListManagerGate;
+import com.intellij.openapi.vcs.changes.ChangeProvider;
+import com.intellij.openapi.vcs.changes.ChangelistBuilder;
+import com.intellij.openapi.vcs.changes.ContentRevision;
+import com.intellij.openapi.vcs.changes.CurrentContentRevision;
+import com.intellij.openapi.vcs.changes.LocallyDeletedChange;
+import com.intellij.openapi.vcs.changes.VcsDirtyScope;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.zmlx.hg4idea.*;
+import org.zmlx.hg4idea.HgBundle;
+import org.zmlx.hg4idea.HgChange;
+import org.zmlx.hg4idea.HgContentRevision;
+import org.zmlx.hg4idea.HgFile;
+import org.zmlx.hg4idea.HgFileStatusEnum;
+import org.zmlx.hg4idea.HgNameWithHashInfo;
+import org.zmlx.hg4idea.HgRevisionNumber;
 import org.zmlx.hg4idea.command.HgResolveCommand;
 import org.zmlx.hg4idea.command.HgResolveStatusEnum;
 import org.zmlx.hg4idea.command.HgStatusCommand;
@@ -32,27 +52,41 @@ import org.zmlx.hg4idea.repo.HgRepository;
 import org.zmlx.hg4idea.util.HgUtil;
 
 import java.io.File;
-import java.util.*;
+import java.util.Collection;
+import java.util.EnumMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 
-public class HgChangeProvider implements ChangeProvider {
-
+public final class HgChangeProvider implements ChangeProvider {
   private final Project myProject;
   private final VcsKey myVcsKey;
 
-  public static final FileStatus COPIED = FileStatusFactory.getInstance().createFileStatus("COPIED", HgBundle.messagePointer("hg4idea.file.status.copied"));
-  public static final FileStatus RENAMED = FileStatusFactory.getInstance().createFileStatus("RENAMED", HgBundle.messagePointer("hg4idea.file.status.renamed"));
+  public static final class FileStatuses {
+    private static final PluginId OUR_PLUGIN_ID;
 
-  private static final EnumMap<HgFileStatusEnum, HgChangeProcessor> PROCESSORS =
-    new EnumMap<>(HgFileStatusEnum.class);
+    static {
+      PluginDescriptor plugin = PluginManager.getPluginByClass(HgChangeProvider.class);
+      OUR_PLUGIN_ID = plugin == null ? null : plugin.getPluginId();
+    }
 
-  static {
-    PROCESSORS.put(HgFileStatusEnum.ADDED, HgChangeProcessor.ADDED);
-    PROCESSORS.put(HgFileStatusEnum.DELETED, HgChangeProcessor.DELETED);
-    PROCESSORS.put(HgFileStatusEnum.MISSING, HgChangeProcessor.MISSING);
-    PROCESSORS.put(HgFileStatusEnum.COPY, HgChangeProcessor.COPIED);
-    PROCESSORS.put(HgFileStatusEnum.MODIFIED, HgChangeProcessor.MODIFIED);
-    PROCESSORS.put(HgFileStatusEnum.UNMODIFIED, HgChangeProcessor.UNMODIFIED);
-    PROCESSORS.put(HgFileStatusEnum.UNVERSIONED, HgChangeProcessor.UNVERSIONED);
+    public static final FileStatus COPIED
+      = FileStatusFactory.getInstance().createFileStatus("COPIED", HgBundle.messagePointer("hg4idea.file.status.copied"), OUR_PLUGIN_ID);
+    public static final FileStatus RENAMED
+      = FileStatusFactory.getInstance().createFileStatus("RENAMED", HgBundle.messagePointer("hg4idea.file.status.renamed"), OUR_PLUGIN_ID);
+
+    private static final EnumMap<HgFileStatusEnum, HgChangeProcessor> PROCESSORS =
+      new EnumMap<>(HgFileStatusEnum.class);
+
+    static {
+      PROCESSORS.put(HgFileStatusEnum.ADDED, HgChangeProcessor.ADDED);
+      PROCESSORS.put(HgFileStatusEnum.DELETED, HgChangeProcessor.DELETED);
+      PROCESSORS.put(HgFileStatusEnum.MISSING, HgChangeProcessor.MISSING);
+      PROCESSORS.put(HgFileStatusEnum.COPY, HgChangeProcessor.COPIED);
+      PROCESSORS.put(HgFileStatusEnum.MODIFIED, HgChangeProcessor.MODIFIED);
+      PROCESSORS.put(HgFileStatusEnum.UNMODIFIED, HgChangeProcessor.UNMODIFIED);
+      PROCESSORS.put(HgFileStatusEnum.UNVERSIONED, HgChangeProcessor.UNVERSIONED);
+    }
   }
 
   public HgChangeProvider(Project project, VcsKey vcsKey) {
@@ -95,8 +129,7 @@ public class HgChangeProvider implements ChangeProvider {
     return hgChanges;
   }
 
-  @Nullable
-  private HgChange findChange(@NotNull HgRepository hgRepo, @NotNull HgNameWithHashInfo info) {
+  private @Nullable HgChange findChange(@NotNull HgRepository hgRepo, @NotNull HgNameWithHashInfo info) {
     File file = new File(hgRepo.getRoot().getPath(), info.getName());
     VirtualFile virtualSubrepoFile = VfsUtil.findFileByIoFile(file, false);
     HgRepository subrepo = HgUtil.getRepositoryForFile(myProject, virtualSubrepoFile);
@@ -131,7 +164,7 @@ public class HgChangeProvider implements ChangeProvider {
         continue;
       }
 
-      HgChangeProcessor processor = PROCESSORS.get(status);
+      HgChangeProcessor processor = FileStatuses.PROCESSORS.get(status);
       if (processor != null) {
         processor.process(myProject, myVcsKey, builder,
           workingRevision, parentRevision, beforeFile, afterFile);
@@ -178,7 +211,6 @@ public class HgChangeProvider implements ChangeProvider {
       }
     }
   }
-
 
   private enum HgChangeProcessor {
     ADDED() {
@@ -238,11 +270,11 @@ public class HgChangeProvider implements ChangeProvider {
             vcsKey
           );
         } else {
-          // The original file does not exists so this is a rename.
+          // The original file does not exist, so this is a renamed.
           processChange(
             HgContentRevision.create(project, beforeFile, parentRevision),
             HgCurrentContentRevision.create(afterFile, currentNumber),
-            RENAMED,
+            FileStatuses.RENAMED,
             builder,
             vcsKey
           );

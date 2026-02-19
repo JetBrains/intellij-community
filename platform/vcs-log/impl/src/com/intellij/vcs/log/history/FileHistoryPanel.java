@@ -1,44 +1,79 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.history;
 
+import com.intellij.diff.impl.DiffEditorViewer;
+import com.intellij.diff.tools.util.DiffDataKeys;
+import com.intellij.diff.util.DiffUtil;
+import com.intellij.ide.ui.customization.CustomActionsSchema;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionGroup;
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.ActionPlaces;
+import com.intellij.openapi.actionSystem.ActionToolbar;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.AnActionWrapper;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.CommonShortcuts;
+import com.intellij.openapi.actionSystem.DataSink;
+import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
+import com.intellij.openapi.actionSystem.UiDataProvider;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.ValueKey;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.history.VcsFileRevision;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.ui.*;
+import com.intellij.ui.GuiUtils;
+import com.intellij.ui.JBSplitter;
+import com.intellij.ui.OnePixelSplitter;
+import com.intellij.ui.PopupHandler;
 import com.intellij.ui.components.JBPanel;
+import com.intellij.ui.navigation.History;
+import com.intellij.ui.switcher.QuickActionProvider;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.vcs.log.CommitId;
+import com.intellij.util.ui.components.BorderLayoutPanel;
+import com.intellij.util.ui.table.ComponentsListFocusTraversalPolicy;
+import com.intellij.vcs.log.UnsupportedHistoryFiltersException;
 import com.intellij.vcs.log.VcsCommitMetadata;
 import com.intellij.vcs.log.VcsLogBundle;
 import com.intellij.vcs.log.data.VcsLogData;
 import com.intellij.vcs.log.impl.CommonUiProperties;
-import com.intellij.vcs.log.impl.VcsLogContentUtil;
+import com.intellij.vcs.log.impl.VcsLogNavigationUtil;
 import com.intellij.vcs.log.impl.VcsLogUiProperties;
+import com.intellij.vcs.log.impl.VcsProjectLog;
 import com.intellij.vcs.log.ui.AbstractVcsLogUi;
-import com.intellij.vcs.log.ui.VcsLogActionPlaces;
-import com.intellij.vcs.log.ui.VcsLogColorManagerImpl;
+import com.intellij.vcs.log.ui.VcsLogActionIds;
+import com.intellij.vcs.log.ui.VcsLogColorManager;
+import com.intellij.vcs.log.ui.VcsLogColorManagerFactory;
 import com.intellij.vcs.log.ui.VcsLogInternalDataKeys;
+import com.intellij.vcs.log.ui.details.CommitDetailsListPanel;
+import com.intellij.vcs.log.ui.details.commit.CommitDetailsPanel;
+import com.intellij.vcs.log.ui.frame.CommitDetailsLoader;
+import com.intellij.vcs.log.ui.frame.ComponentQuickActionProvider;
 import com.intellij.vcs.log.ui.frame.FrameDiffPreview;
-import com.intellij.vcs.log.ui.frame.VcsLogCommitDetailsListPanel;
+import com.intellij.vcs.log.ui.frame.VcsLogCommitSelectionListenerForDetails;
+import com.intellij.vcs.log.ui.table.GraphTableModel;
 import com.intellij.vcs.log.ui.table.VcsLogGraphTable;
+import com.intellij.vcs.log.ui.table.VcsLogTableCommitSelectionListener;
 import com.intellij.vcs.log.util.VcsLogUiUtil;
 import com.intellij.vcs.log.util.VcsLogUtil;
 import com.intellij.vcs.log.visible.VisiblePack;
+import kotlin.Unit;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JComponent;
+import javax.swing.JPanel;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.event.TableModelListener;
-import java.awt.*;
+import java.awt.BorderLayout;
+import java.awt.Component;
+import java.awt.Dimension;
 import java.awt.event.MouseEvent;
 import java.util.Arrays;
 import java.util.Collections;
@@ -47,106 +82,143 @@ import java.util.Objects;
 
 import static com.intellij.util.containers.ContainerUtil.getFirstItem;
 
-public class FileHistoryPanel extends JPanel implements DataProvider, Disposable {
-  @NotNull private final Project myProject;
-  @NotNull private final FilePath myFilePath;
-  @NotNull private final VirtualFile myRoot;
+class FileHistoryPanel extends JPanel implements UiDataProvider, Disposable {
+  private static final @NotNull @NonNls String HELP_ID = "reference.versionControl.toolwindow.history";
 
-  @NotNull private final FileHistoryModel myFileHistoryModel;
-  @NotNull private final VcsLogUiProperties myProperties;
+  private final @NotNull Project myProject;
+  private final @NotNull FilePath myFilePath;
+  private final @NotNull VirtualFile myRoot;
 
-  @NotNull private final VcsLogGraphTable myGraphTable;
+  private final @NotNull FileHistoryModel myFileHistoryModel;
+  private final @NotNull VcsLogUiProperties myProperties;
 
-  @NotNull private final VcsLogCommitDetailsListPanel myDetailsPanel;
-  @NotNull private final JBSplitter myDetailsSplitter;
+  private final @NotNull VcsLogGraphTable myGraphTable;
+  private final @NotNull FileHistorySpeedSearch mySpeedSearch;
 
-  public FileHistoryPanel(@NotNull AbstractVcsLogUi logUi, @NotNull FileHistoryModel fileHistoryModel, @NotNull VcsLogData logData,
-                          @NotNull FilePath filePath, boolean withDiffPreview, @NotNull Disposable disposable) {
+  private final @NotNull CommitDetailsListPanel myDetailsPanel;
+  private final @NotNull JBSplitter myDetailsSplitter;
+  private final @NotNull JComponent myToolbar;
+
+  private final @NotNull FrameDiffPreview myFrameDiffPreview;
+  private final @NotNull FileHistoryEditorDiffPreview myEditorDiffPreview;
+
+  private final @NotNull History myHistory;
+
+  FileHistoryPanel(@NotNull AbstractVcsLogUi logUi, @NotNull FileHistoryModel fileHistoryModel,
+                   @NotNull FileHistoryFilterUi filterUi, @NotNull VcsLogData logData,
+                   @NotNull FilePath filePath, @NotNull VirtualFile root,
+                   @NotNull VcsLogColorManager colorManager,
+                   @NotNull Disposable disposable) {
     myProject = logData.getProject();
 
     myFilePath = filePath;
-    myRoot = Objects.requireNonNull(VcsLogUtil.getActualRoot(myProject, myFilePath));
+    myRoot = root;
 
     myFileHistoryModel = fileHistoryModel;
     myProperties = logUi.getProperties();
 
-    myGraphTable = new VcsLogGraphTable(logUi.getId(), logData, logUi.getProperties(), logUi.getColorManager(),
-                                        logUi::requestMore, disposable) {
-      @Override
-      protected boolean isSpeedSearchEnabled() {
-        return true;
-      }
+    GraphTableModel graphTableModel = new GraphTableModel(
+      logData,
+      () -> logUi.requestMore(),
+      logUi.getProperties()
+    );
+    myGraphTable = new VcsLogGraphTable(logUi.getId(), graphTableModel, logUi.getProperties(), colorManager,
+                                        (commitHash) -> VcsLogNavigationUtil.jumpToHash(logUi, commitHash, false, true),
+                                        disposable) {
 
       @Override
       protected void updateEmptyText() {
         VisiblePack visiblePack = getModel().getVisiblePack();
-        if (visiblePack instanceof VisiblePack.ErrorVisiblePack) {
-          setErrorEmptyText(((VisiblePack.ErrorVisiblePack)visiblePack).getError(),
-                            VcsLogBundle.message("file.history.error.status"));
-          appendActionToEmptyText(VcsLogBundle.message("vcs.log.refresh.status.action"), () -> logUi.getRefresher().onRefresh());
+        if (visiblePack instanceof VisiblePack.ErrorVisiblePack errorVisiblePack) {
+          Throwable error = errorVisiblePack.getError();
+          setErrorEmptyText(error, VcsLogBundle.message("file.history.error.status"));
+          if (error instanceof UnsupportedHistoryFiltersException) {
+            appendActionToEmptyText(VcsLogBundle.message("file.history.reset.filters.status.action"),
+                                    () -> filterUi.resetFiltersToDefault());
+          }
+          else {
+            appendActionToEmptyText(VcsLogBundle.message("vcs.log.refresh.status.action"), () -> logUi.getRefresher().onRefresh());
+          }
         }
         else {
           getEmptyText().setText(VcsLogBundle.message("file.history.empty.status"));
         }
       }
     };
-    myGraphTable.setCompactReferencesView(true);
-    myGraphTable.setShowTagNames(false);
-    myGraphTable.setLabelsLeftAligned(false);
-    myGraphTable.setBorder(myGraphTable.createTopBottomBorder(1, 0));
+    mySpeedSearch = new FileHistorySpeedSearch(myProject, logData.getIndex(), logData.getStorage(), myGraphTable);
+    mySpeedSearch.setupListeners();
 
-    myDetailsPanel = new VcsLogCommitDetailsListPanel(logData, new VcsLogColorManagerImpl(Collections.singleton(myRoot)), this) {
+    myDetailsPanel = new CommitDetailsListPanel(myProject, this, () -> {
+      return new CommitDetailsPanel(commit -> {
+        VcsProjectLog.showRevisionInMainLog(myProject, commit.getRoot(), commit.getHash());
+        return Unit.INSTANCE;
+      });
+    });
+
+    CommitDetailsLoader<VcsCommitMetadata> commitDetailsLoader = new CommitDetailsLoader<>(logData.getMiniDetailsGetter(), this,
+                                                                                           VcsLogCommitSelectionListenerForDetails.MAX_COMMITS_TO_LOAD);
+
+    VcsLogCommitSelectionListenerForDetails listenerForDetails =
+      new VcsLogCommitSelectionListenerForDetails(logData, VcsLogColorManagerFactory.create(Collections.singleton(myRoot)),
+                                                  myDetailsPanel, this);
+    commitDetailsLoader.addListener(listenerForDetails);
+    VcsLogTableCommitSelectionListener tableCommitSelectionListener = new VcsLogTableCommitSelectionListener(myGraphTable) {
       @Override
-      protected void navigate(@NotNull CommitId commit) {
-        VcsLogContentUtil.runInMainLog(myProject, ui -> {
-          ui.jumpToCommit(commit.getHash(), commit.getRoot());
-        });
+      protected void handleSelection(@NotNull List<@NotNull Integer> commitIds) {
+        commitDetailsLoader.loadDetails(commitIds);
       }
     };
-    myDetailsPanel.setBorder(IdeBorderFactory.createBorder(SideBorder.LEFT));
+    myGraphTable.getSelectionModel().addListSelectionListener(tableCommitSelectionListener);
 
     myDetailsSplitter = new OnePixelSplitter(true, "vcs.log.history.details.splitter.proportion", 0.7f);
-    JComponent tableWithProgress = VcsLogUiUtil.installProgress(VcsLogUiUtil.setupScrolledGraph(myGraphTable, SideBorder.LEFT),
-                                                                logData, logUi.getId(), this);
+    JComponent tableWithProgress = VcsLogUiUtil.installScrollingAndProgress(myGraphTable, this);
     myDetailsSplitter.setFirstComponent(tableWithProgress);
     myDetailsSplitter.setSecondComponent(myProperties.get(CommonUiProperties.SHOW_DETAILS) ? myDetailsPanel : null);
 
-    myDetailsPanel.installCommitSelectionListener(myGraphTable);
-    VcsLogUiUtil.installDetailsListeners(myGraphTable, myDetailsPanel, logData, this);
+    myEditorDiffPreview = new FileHistoryEditorDiffPreview(myProject, this);
+    Disposer.register(this, myEditorDiffPreview);
 
-    JComponent actionsToolbar = createActionsToolbar();
+    myToolbar = createActionsToolbar(filterUi);
     JBPanel tablePanel = new JBPanel(new BorderLayout()) {
       @Override
       public Dimension getMinimumSize() {
-        return VcsLogUiUtil.expandToFitToolbar(super.getMinimumSize(), actionsToolbar);
+        return VcsLogUiUtil.expandToFitToolbar(super.getMinimumSize(), myToolbar);
       }
     };
     tablePanel.add(myDetailsSplitter, BorderLayout.CENTER);
-    tablePanel.add(actionsToolbar, BorderLayout.WEST);
+    tablePanel.add(myToolbar, BorderLayout.NORTH);
 
     setLayout(new BorderLayout());
-    if (withDiffPreview) {
-      add(new FrameDiffPreview<FileHistoryDiffProcessor>(createDiffPreview(false), myProperties, tablePanel,
-                                                         "vcs.history.diff.splitter.proportion", false, 0.7f) {
+    myFrameDiffPreview = new FrameDiffPreview(myProperties, tablePanel, "vcs.history.diff.splitter.proportion",
+                                              0.7f, this) {
+      @Override
+      protected @NotNull DiffEditorViewer createViewer() {
+        FileHistoryDiffProcessor processor = createDiffPreview(false);
+        processor.setToolbarVerticalSizeReferent(myToolbar);
+        return processor;
+      }
+    };
+    add(myFrameDiffPreview.getMainComponent(), BorderLayout.CENTER);
 
-        @Override
-        public void updatePreview(boolean state) {
-          getPreviewDiff().updatePreview(state);
-        }
-      }.getMainComponent(), BorderLayout.CENTER);
-    }
-    else {
-      add(tablePanel, BorderLayout.CENTER);
-    }
+    PopupHandler.installPopupMenu(myGraphTable, VcsLogActionIds.HISTORY_POPUP_ACTION_GROUP, ActionPlaces.VCS_HISTORY_PLACE);
+    invokeOnDoubleClick(ActionManager.getInstance().getAction(VcsLogActionIds.VCS_LOG_SHOW_DIFF_ACTION), tableWithProgress);
 
-    PopupHandler.installPopupHandler(myGraphTable, VcsLogActionPlaces.HISTORY_POPUP_ACTION_GROUP, VcsLogActionPlaces.VCS_HISTORY_PLACE);
-    invokeOnDoubleClick(ActionManager.getInstance().getAction(VcsLogActionPlaces.VCS_LOG_SHOW_DIFF_ACTION), tableWithProgress);
+    myHistory = VcsLogUiUtil.installNavigationHistory(logUi, myGraphTable);
 
     Disposer.register(disposable, this);
+
+    myGraphTable.resetDefaultFocusTraversalKeys();
+    setFocusCycleRoot(true);
+    setFocusTraversalPolicy(new ComponentsListFocusTraversalPolicy() {
+      @Override
+      protected @NotNull List<Component> getOrderedComponents() {
+        return ContainerUtil.skipNulls(Arrays.asList(myGraphTable, myFrameDiffPreview.getPreferredFocusedComponent(), myToolbar));
+      }
+    });
   }
 
   private void invokeOnDoubleClick(@NotNull AnAction action, @NotNull JComponent component) {
-    new EmptyAction.MyDelegatingAction(action) {
+    new AnActionWrapper(action) {
       @Override
       public void actionPerformed(@NotNull AnActionEvent e) {
         if (e.getInputEvent() instanceof MouseEvent && myGraphTable.isResizingColumns()) {
@@ -158,24 +230,40 @@ public class FileHistoryPanel extends JPanel implements DataProvider, Disposable
     }.registerCustomShortcutSet(CommonShortcuts.DOUBLE_CLICK_1, component);
   }
 
-  @NotNull
-  private JComponent createActionsToolbar() {
+  private @NotNull JComponent createActionsToolbar(@NotNull FileHistoryFilterUi filterUi) {
     DefaultActionGroup toolbarGroup = new DefaultActionGroup();
-    toolbarGroup.add(ActionManager.getInstance().getAction(VcsLogActionPlaces.FILE_HISTORY_TOOLBAR_ACTION_GROUP));
+    toolbarGroup.add(filterUi.createActionGroup());
+    toolbarGroup.addSeparator();
+    AnAction toolbarActions = CustomActionsSchema.getInstance().getCorrectedAction(VcsLogActionIds.FILE_HISTORY_TOOLBAR_ACTION_GROUP);
+    toolbarGroup.add(Objects.requireNonNull(toolbarActions));
 
-    ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar(VcsLogActionPlaces.VCS_HISTORY_TOOLBAR_PLACE,
-                                                                            toolbarGroup, false);
+    ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.VCS_HISTORY_TOOLBAR_PLACE,
+                                                                            toolbarGroup, true);
     toolbar.setTargetComponent(myGraphTable);
-    return toolbar.getComponent();
+
+    ActionGroup rightToolbarGroup = new DefaultActionGroup(ActionManager.getInstance().getAction(VcsLogActionIds.FILE_HISTORY_TOOLBAR_RIGHT_CORNER_ACTION_GROUP));
+    ActionToolbar rightCornerToolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.VCS_HISTORY_TOOLBAR_PLACE,
+                                                                                       rightToolbarGroup, true);
+    rightCornerToolbar.setTargetComponent(myGraphTable);
+
+    BorderLayoutPanel panel = new BorderLayoutPanel();
+    GuiUtils.installVisibilityReferent(panel, toolbar.getComponent());
+    panel.addToCenter(toolbar.getComponent());
+    panel.addToRight(rightCornerToolbar.getComponent());
+    return panel;
   }
 
-  @NotNull
-  public VcsLogGraphTable getGraphTable() {
+  public @NotNull VcsLogGraphTable getGraphTable() {
     return myGraphTable;
+  }
+
+  public @NotNull JComponent getToolbar() {
+    return myToolbar;
   }
 
   public void updateDataPack(@NotNull VisiblePack visiblePack, boolean permanentGraphChanged) {
     myGraphTable.updateDataPack(visiblePack, permanentGraphChanged);
+    mySpeedSearch.setVisiblePack(visiblePack);
   }
 
   public void showDetails(boolean show) {
@@ -185,9 +273,10 @@ public class FileHistoryPanel extends JPanel implements DataProvider, Disposable
   @NotNull
   FileHistoryDiffProcessor createDiffPreview(boolean isInEditor) {
     FileHistoryDiffProcessor diffPreview = new FileHistoryDiffProcessor(myProject, () -> getSelectedChange(), isInEditor, this);
+
     ListSelectionListener selectionListener = e -> {
       int[] selection = myGraphTable.getSelectedRows();
-      ApplicationManager.getApplication().invokeLater(() -> diffPreview.updatePreview(diffPreview.getComponent().isShowing()),
+      ApplicationManager.getApplication().invokeLater(() -> diffPreview.updatePreview(),
                                                       o -> !Arrays.equals(selection, myGraphTable.getSelectedRows()) ||
                                                            Disposer.isDisposed(diffPreview));
     };
@@ -196,59 +285,58 @@ public class FileHistoryPanel extends JPanel implements DataProvider, Disposable
 
     TableModelListener modelListener = e -> {
       if (e.getColumn() < 0) {
-        ApplicationManager.getApplication().invokeLater(() -> diffPreview.updatePreview(diffPreview.getComponent().isShowing()),
+        ApplicationManager.getApplication().invokeLater(() -> diffPreview.updatePreview(),
                                                         o -> Disposer.isDisposed(diffPreview));
       }
     };
     myGraphTable.getModel().addTableModelListener(modelListener);
     Disposer.register(diffPreview, () -> myGraphTable.getModel().removeTableModelListener(modelListener));
 
+    DiffUtil.installShowNotifyListener(diffPreview.getComponent(), () -> diffPreview.updatePreview());
+
     return diffPreview;
   }
 
-  @Nullable
   @Override
-  public Object getData(@NotNull String dataId) {
-    return ValueKey.match(dataId)
-      .ifEq(VcsDataKeys.CHANGES).or(VcsDataKeys.SELECTED_CHANGES).thenGet(() -> {
-        Change change = getSelectedChange();
-        if (change != null) {
-          return new Change[]{change};
-        }
-        return null;
-      })
-      .ifEq(VcsLogInternalDataKeys.LOG_UI_PROPERTIES).then(myProperties)
-      .ifEq(VcsDataKeys.VCS_FILE_REVISION).thenGet(() -> {
-        List<VcsCommitMetadata> details = getSelectedMetadata();
-        if (details.isEmpty()) return null;
-        return myFileHistoryModel.createRevision(getFirstItem(details));
-      })
-      .ifEq(VcsDataKeys.VCS_FILE_REVISIONS).thenGet(() -> {
-        List<VcsCommitMetadata> details = getSelectedMetadata();
-        if (details.isEmpty() || details.size() > VcsLogUtil.MAX_SELECTED_COMMITS) return null;
-        return ContainerUtil.mapNotNull(details, myFileHistoryModel::createRevision).toArray(new VcsFileRevision[0]);
-      })
-      .ifEq(VcsDataKeys.FILE_PATH).then(myFilePath)
-      .ifEq(VcsDataKeys.VCS_VIRTUAL_FILE).thenGet(() -> {
-        List<VcsCommitMetadata> details = getSelectedMetadata();
-        if (details.isEmpty()) return null;
-        VcsCommitMetadata detail = Objects.requireNonNull(getFirstItem(details));
-        return FileHistoryUtil.createVcsVirtualFile(myFileHistoryModel.createRevision(detail));
-      })
-      .ifEq(CommonDataKeys.VIRTUAL_FILE).thenGet(myFilePath::getVirtualFile)
-      .ifEq(VcsDataKeys.VCS_NON_LOCAL_HISTORY_SESSION).then(false)
-      .ifEq(VcsLogInternalDataKeys.LOG_DIFF_HANDLER).thenGet(() -> myFileHistoryModel.getDiffHandler())
-      .orNull();
+  public void uiDataSnapshot(@NotNull DataSink sink) {
+    Change change = getSelectedChange();
+    if (change != null) {
+      Change[] changes = {change};
+      sink.set(VcsDataKeys.CHANGES, changes);
+      sink.set(VcsDataKeys.SELECTED_CHANGES, changes);
+    }
+    sink.set(VcsLogInternalDataKeys.LOG_UI_PROPERTIES, myProperties);
+    sink.set(VcsDataKeys.FILE_PATH, myFilePath);
+    sink.set(VcsLogInternalDataKeys.VCS_LOG_VISIBLE_ROOTS, Collections.singleton(myRoot));
+    sink.set(VcsDataKeys.VCS_NON_LOCAL_HISTORY_SESSION, false);
+    sink.set(VcsLogInternalDataKeys.LOG_DIFF_HANDLER, myFileHistoryModel.getDiffHandler());
+    sink.set(DiffDataKeys.EDITOR_TAB_DIFF_PREVIEW, myEditorDiffPreview);
+    sink.set(VcsLogInternalDataKeys.FILE_HISTORY_MODEL, myFileHistoryModel.createSnapshot());
+    sink.set(QuickActionProvider.KEY, new ComponentQuickActionProvider(this));
+    sink.set(PlatformCoreDataKeys.HELP_ID, HELP_ID);
+    sink.set(History.KEY, myHistory);
+
+    List<VcsCommitMetadata> details = myGraphTable.getSelection().getCachedMetadata();
+    FileHistoryModel model = myFileHistoryModel.createSnapshot();
+    sink.lazy(VcsDataKeys.VCS_FILE_REVISION, () -> {
+      if (details.isEmpty()) return null;
+      return model.createRevision(getFirstItem(details));
+    });
+    sink.lazy(VcsDataKeys.VCS_FILE_REVISIONS, () -> {
+      if (details.isEmpty() || details.size() > VcsLogUtil.MAX_SELECTED_COMMITS) return null;
+      return ContainerUtil.mapNotNull(details, model::createRevision).toArray(new VcsFileRevision[0]);
+    });
+    sink.lazy(CommonDataKeys.VIRTUAL_FILE, myFilePath::getVirtualFile);
+    sink.lazy(VcsDataKeys.VCS_VIRTUAL_FILE, () -> {
+      if (details.isEmpty()) return null;
+      VcsCommitMetadata detail = Objects.requireNonNull(getFirstItem(details));
+      return FileHistoryUtil.createVcsVirtualFile(model.createRevision(detail));
+    });
   }
 
   @Nullable
-  private Change getSelectedChange() {
+  Change getSelectedChange() {
     return myFileHistoryModel.getSelectedChange(myGraphTable.getSelectedRows());
-  }
-
-  @NotNull
-  private List<VcsCommitMetadata> getSelectedMetadata() {
-    return myGraphTable.getModel().getCommitMetadata(myGraphTable.getSelectedRows());
   }
 
   @NotNull

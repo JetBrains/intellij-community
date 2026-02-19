@@ -1,0 +1,5 @@
+// FIX: Remove explicit type arguments
+
+fun <K> bar(x: K & Any) = foo(x)
+
+fun <T> foo(l: T) = l

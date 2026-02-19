@@ -1,92 +1,145 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing.impl;
 
+import com.intellij.util.Processor;
+import com.intellij.util.io.AppendablePersistentMap;
 import com.intellij.util.io.DataExternalizer;
+import com.intellij.util.io.InlineKeyDescriptor;
 import com.intellij.util.io.KeyDescriptor;
-import com.intellij.util.io.PersistentHashMap;
+import com.intellij.util.io.PersistentMapBase;
+import com.intellij.util.io.PersistentMapBuilder;
+import com.intellij.util.io.PersistentMapImpl;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.TestOnly;
 
-import java.io.DataInput;
-import java.io.DataInputStream;
 import java.io.DataOutput;
 import java.io.IOException;
 import java.nio.file.Path;
 
-/**
- * @author Dmitry Avdeev
- */
-class ValueContainerMap<Key, Value> extends PersistentHashMap<Key, UpdatableValueContainer<Value>> {
-  @NotNull private final DataExternalizer<Value> myValueExternalizer;
+final class ValueContainerMap<Key, Value> {
+  private final @NotNull PersistentMapBase<Key, UpdatableValueContainer<Value>> myPersistentMap;
+  private final @NotNull KeyDescriptor<Key> myKeyDescriptor;
+  private final @NotNull DataExternalizer<Value> myValueExternalizer;
   private final boolean myKeyIsUniqueForIndexedFile;
 
-  ValueContainerMap(@NotNull Path file,
-                    @NotNull KeyDescriptor<Key> keyKeyDescriptor,
+  ValueContainerMap(@NotNull PersistentMapBase<Key, UpdatableValueContainer<Value>> persistentMap,
+                    @NotNull KeyDescriptor<Key> keyDescriptor,
                     @NotNull DataExternalizer<Value> valueExternalizer,
-                    boolean keyIsUniqueForIndexedFile,
-                    @NotNull ValueContainerInputRemapping inputRemapping) throws IOException {
-    super(file, keyKeyDescriptor, new ValueContainerExternalizer<>(valueExternalizer, inputRemapping));
+                    boolean keyIsUniqueForIndexedFile) {
+    myPersistentMap = persistentMap;
+    myKeyDescriptor = keyDescriptor;
     myValueExternalizer = valueExternalizer;
     myKeyIsUniqueForIndexedFile = keyIsUniqueForIndexedFile;
   }
 
-  @Override
-  protected void doPut(Key key, UpdatableValueContainer<Value> container) throws IOException {
-    synchronized (getDataAccessLock()) {
-      final ChangeTrackingValueContainer<Value> valueContainer = (ChangeTrackingValueContainer<Value>)container;
+  ValueContainerMap(@NotNull Path file,
+                    @NotNull KeyDescriptor<Key> keyDescriptor,
+                    @NotNull DataExternalizer<Value> valueExternalizer,
+                    boolean keyIsUniqueForIndexedFile,
+                    @NotNull ValueContainerInputRemapping inputRemapping,
+                    boolean isReadonly,
+                    boolean compactOnClose) throws IOException {
+    myPersistentMap = new PersistentMapImpl<>(PersistentMapBuilder
+                                                .newBuilder(file, keyDescriptor,
+                                                            new ValueContainerExternalizer<>(valueExternalizer, inputRemapping))
+                                                .withReadonly(isReadonly)
+                                                .withCompactOnClose(compactOnClose));
+    myValueExternalizer = valueExternalizer;
+    myKeyDescriptor = keyDescriptor;
+    myKeyIsUniqueForIndexedFile = keyIsUniqueForIndexedFile;
+  }
 
-      // try to accumulate index value calculated for particular key to avoid fragmentation: usually keys are scattered across many files
-      // note that keys unique for indexed file have their value calculated at once (e.g. key is file id, index calculates something for particular
-      // file) and there is no benefit to accumulate values for particular key because only one value exists
-      if (!valueContainer.needsCompacting() && !myKeyIsUniqueForIndexedFile) {
-        appendData(key, new PersistentHashMap.ValueDataAppender() {
-          @Override
-          public void append(@NotNull final DataOutput out) throws IOException {
-            valueContainer.saveTo(out, myValueExternalizer);
-          }
-        });
-      }
-      else {
-        // rewrite the value container for defragmentation
-        super.doPut(key, valueContainer);
-      }
+  void merge(Key key,
+             ChangeTrackingValueContainer<Value> valueContainer) throws IOException {
+    // Try to accumulate index value calculated for particular key to avoid fragmentation: usually keys are scattered across many files.
+    // Note: keys unique for indexed file have their value calculated at once (e.g. key is file id, index calculates something for
+    // particular file) and there is no benefit to accumulate values for particular key because only one value exists.
+    if (!valueContainer.needsCompacting() && !myKeyIsUniqueForIndexedFile) {
+      myPersistentMap.appendData(key, new AppendablePersistentMap.ValueDataAppender() {
+        @Override
+        public void append(final @NotNull DataOutput out) throws IOException {
+          valueContainer.saveDiffTo(out, myValueExternalizer);
+        }
+      });
+    }
+    else {//needsCompacting || keyIsUniqueForIndexedFile
+      //FIXME RC: here WAS a hack -- this branch processed a case (keyIsUniqueForIndexedFile=true && !needsCompacting)
+      //          i.e. with diff and without mergedSnapshot. In this case the diff WAS written, but diff == snapshot
+      //          because keyIsUnique.
+      //          Currently CTValueContainer.saveTo() always store a merged snapshot -- which in this case creates a useless
+      //          overhead, because it involves _reading_ the current content first -- just for it to be entirely overwritten
+      //          by the new value.
+
+      //rewrite the value container for defragmentation
+      put(key, valueContainer);
     }
   }
 
-  private static final class ValueContainerExternalizer<T> implements DataExternalizer<UpdatableValueContainer<T>> {
-    @NotNull private final DataExternalizer<T> myValueExternalizer;
-    @NotNull private final ValueContainerInputRemapping myInputRemapping;
+  void put(Key key,
+           UpdatableValueContainer<Value> valueContainer) throws IOException {
+    myPersistentMap.put(key, valueContainer);
+  }
 
-    private ValueContainerExternalizer(@NotNull DataExternalizer<T> valueExternalizer, @NotNull ValueContainerInputRemapping inputRemapping) {
-      myValueExternalizer = valueExternalizer;
-      myInputRemapping = inputRemapping;
+  void remove(Key key) throws IOException {
+    myPersistentMap.remove(key);
+  }
+
+  boolean processKeys(@NotNull Processor<? super Key> processor) throws IOException {
+    return myKeyDescriptor instanceof InlineKeyDescriptor
+           // process keys and check that they're already present in map because we don't have separated key storage we must check keys
+           ? myPersistentMap.processExistingKeys(processor)
+           // optimization: process all keys, some of them might be already deleted but we don't care. We just read key storage file here
+           : myPersistentMap.processKeys(processor);
+  }
+
+  @NotNull
+  ChangeTrackingValueContainer<Value> getModifiableValueContainer(final Key key) {
+    return new ChangeTrackingValueContainer<>(() -> {
+      UpdatableValueContainer<Value> value;
+      try {
+        value = myPersistentMap.get(key);
+        if (value == null) {
+          value = ValueContainerImpl.createNewValueContainer();
+        }
+      }
+      catch (IOException e) {
+        throw new RuntimeException(e);
+      }
+      return value;
+    });
+  }
+
+  void force() {
+    try {
+      myPersistentMap.force();
     }
-
-    @Override
-    public void save(@NotNull final DataOutput out, @NotNull final UpdatableValueContainer<T> container) throws IOException {
-      container.saveTo(out, myValueExternalizer);
+    catch (IOException e) {
+      throw new RuntimeException(e);
     }
+  }
 
-    @NotNull
-    @Override
-    public UpdatableValueContainer<T> read(@NotNull final DataInput in) throws IOException {
-      final ValueContainerImpl<T> valueContainer = new ValueContainerImpl<>();
+  void close() throws IOException {
+    myPersistentMap.close();
+  }
 
-      valueContainer.readFrom((DataInputStream)in, myValueExternalizer, myInputRemapping);
-      return valueContainer;
-    }
+  void closeAndDelete() throws IOException {
+    myPersistentMap.closeAndDelete();
+  }
+
+  void markDirty() throws IOException {
+    myPersistentMap.markDirty();
+  }
+
+  boolean isClosed() {
+    return myPersistentMap.isClosed();
+  }
+
+  boolean isDirty() {
+    return myPersistentMap.isDirty();
+  }
+
+  @TestOnly
+  PersistentMapBase<Key, UpdatableValueContainer<Value>> getStorageMap() {
+    return myPersistentMap;
   }
 }

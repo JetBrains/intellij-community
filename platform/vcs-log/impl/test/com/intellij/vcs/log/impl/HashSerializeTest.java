@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.impl;
 
 import com.intellij.openapi.util.io.FileUtil;
@@ -6,7 +6,11 @@ import com.intellij.util.io.DataOutputStream;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Test;
 
-import java.io.*;
+import java.io.DataInputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -40,8 +44,7 @@ public class HashSerializeTest {
     assertEquals(Arrays.asList(hash1, hash2), hashes);
   }
 
-  @NotNull
-  private static File writeToTempFile(HashImpl @NotNull ... hashes) throws IOException {
+  private static @NotNull File writeToTempFile(HashImpl @NotNull ... hashes) throws IOException {
     File file = FileUtil.createTempFile("", "");
     try (DataOutputStream out = new DataOutputStream(new FileOutputStream(file))) {
       for (HashImpl hash : hashes) {
@@ -51,8 +54,7 @@ public class HashSerializeTest {
     return file;
   }
 
-  @NotNull
-  private static List<HashImpl> readFromFile(@NotNull File file) throws IOException {
+  private static @NotNull List<HashImpl> readFromFile(@NotNull File file) throws IOException {
     List<HashImpl> result = new ArrayList<>();
     try (DataInputStream in = new DataInputStream(new FileInputStream(file))) {
       while (in.available() > 0) {

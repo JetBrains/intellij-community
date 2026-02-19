@@ -9,8 +9,7 @@ class Test {
         return "default";
     }
 
-    @Nullable
-    private String newMethod(int z) {
+    private @Nullable String newMethod(int z) {
         if (z > 5) return null;
         if (z < 0) return "sample";
         return null;

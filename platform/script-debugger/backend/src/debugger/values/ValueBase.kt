@@ -15,4 +15,7 @@
  */
 package org.jetbrains.debugger.values
 
+import org.jetbrains.annotations.ApiStatus
+
+@ApiStatus.Internal
 abstract class ValueBase(override val type: ValueType) : Value

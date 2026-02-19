@@ -6,8 +6,9 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.Icon;
+import java.awt.Component;
+import java.awt.Graphics;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
@@ -15,38 +16,36 @@ import java.util.Set;
 /**
  * @author Alexander Lobas
  */
-class LazyPluginLogoIcon implements PluginLogoIconProvider {
-  private PluginLogoIconProvider myLogoIcon;
-  private final Map<String, LazyIcon> myIcons = new HashMap<>();
+final class LazyPluginLogoIcon implements PluginLogoIconProvider {
+  private PluginLogoIconProvider logoIcon;
+  private final Map<String, LazyIcon> icons = new HashMap<>();
 
   LazyPluginLogoIcon(@NotNull PluginLogoIconProvider logoIcon) {
-    myLogoIcon = logoIcon;
+    this.logoIcon = logoIcon;
   }
 
-  @NotNull
   @Override
-  public Icon getIcon(boolean big, boolean jb, boolean error, boolean disabled) {
-    String key = String.valueOf(big) + jb + error + disabled;
-    LazyIcon icon = myIcons.get(key);
+  public synchronized @NotNull Icon getIcon(boolean big, boolean error, boolean disabled) {
+    String key = String.valueOf(big) + error + disabled;
+    LazyIcon icon = icons.get(key);
     if (icon == null) {
-      myIcons.put(key, icon = new LazyIcon(new boolean[]{big, jb, error, disabled}));
-      icon.setIcon(myLogoIcon, false);
+      icons.put(key, icon = new LazyIcon(new boolean[]{big, error, disabled}));
+      icon.setIcon(logoIcon, false);
     }
     return icon;
   }
 
-  void setLogoIcon(@NotNull PluginLogoIconProvider logoIcon) {
-    myLogoIcon = logoIcon;
-
-    for (LazyIcon icon : myIcons.values()) {
+  synchronized void setLogoIcon(@NotNull PluginLogoIconProvider logoIcon) {
+    this.logoIcon = logoIcon;
+    for (LazyIcon icon : icons.values()) {
       icon.setIcon(logoIcon, true);
     }
   }
 
   private static final class LazyIcon implements Icon {
     private final boolean[] myState;
-    private Icon myIcon;
-    private Set<Component> myComponents = ContainerUtil.createWeakSet();
+    private Icon icon;
+    private Set<Component> components = ContainerUtil.createWeakSet();
 
     private LazyIcon(boolean @NotNull [] state) {
       myState = state;
@@ -56,8 +55,8 @@ class LazyPluginLogoIcon implements PluginLogoIconProvider {
       if (repaint) {
         ApplicationManager.getApplication().invokeLater(() -> {
           setIcon(logoIcon);
-          Set<Component> components = myComponents;
-          myComponents = null;
+          Set<Component> components = this.components;
+          this.components = null;
 
           for (Component component : components) {
             if (component.isShowing()) {
@@ -72,26 +71,26 @@ class LazyPluginLogoIcon implements PluginLogoIconProvider {
     }
 
     private void setIcon(@NotNull PluginLogoIconProvider logoIcon) {
-      myIcon = logoIcon.getIcon(myState[0], myState[1], myState[2], myState[3]);
+      icon = logoIcon.getIcon(myState[0], myState[1], myState[2]);
     }
 
     @Override
     public void paintIcon(Component component, Graphics g, int x, int y) {
-      myIcon.paintIcon(component, g, x, y);
+      icon.paintIcon(component, g, x, y);
 
-      if (myComponents != null) {
-        myComponents.add(component);
+      if (components != null) {
+        components.add(component);
       }
     }
 
     @Override
     public int getIconWidth() {
-      return myIcon.getIconWidth();
+      return icon.getIconWidth();
     }
 
     @Override
     public int getIconHeight() {
-      return myIcon.getIconHeight();
+      return icon.getIconHeight();
     }
   }
 }

@@ -1,0 +1,58 @@
+com.intellij.buildsystem.model.BuildDependency
+- com.intellij.buildsystem.model.OperationItem
+- a:getDisplayName():java.lang.String
+com.intellij.buildsystem.model.BuildDependency$Coordinates
+- a:getDisplayName():java.lang.String
+com.intellij.buildsystem.model.BuildDependencyRepository
+- com.intellij.buildsystem.model.OperationItem
+f:com.intellij.buildsystem.model.DeclaredDependency
+- <init>(com.intellij.buildsystem.model.unified.UnifiedDependency,com.intellij.openapi.actionSystem.DataContext):V
+- <init>(java.lang.String,java.lang.String,java.lang.String,java.lang.String,com.intellij.openapi.actionSystem.DataContext):V
+- b:<init>(java.lang.String,java.lang.String,java.lang.String,java.lang.String,com.intellij.openapi.actionSystem.DataContext,I,kotlin.jvm.internal.DefaultConstructorMarker):V
+- f:getCoordinates():com.intellij.buildsystem.model.unified.UnifiedCoordinates
+- f:getDataContext():com.intellij.openapi.actionSystem.DataContext
+- f:getPsiElement():com.intellij.psi.PsiElement
+- f:getUnifiedDependency():com.intellij.buildsystem.model.unified.UnifiedDependency
+com.intellij.buildsystem.model.OperationItem
+f:com.intellij.buildsystem.model.unified.UnifiedCoordinates
+- com.intellij.buildsystem.model.BuildDependency$Coordinates
+- <init>(java.lang.String,java.lang.String,java.lang.String):V
+- f:component1():java.lang.String
+- f:component2():java.lang.String
+- f:component3():java.lang.String
+- f:copy(java.lang.String,java.lang.String,java.lang.String):com.intellij.buildsystem.model.unified.UnifiedCoordinates
+- bs:copy$default(com.intellij.buildsystem.model.unified.UnifiedCoordinates,java.lang.String,java.lang.String,java.lang.String,I,java.lang.Object):com.intellij.buildsystem.model.unified.UnifiedCoordinates
+- equals(java.lang.Object):Z
+- f:getArtifactId():java.lang.String
+- getDisplayName():java.lang.String
+- f:getGroupId():java.lang.String
+- f:getVersion():java.lang.String
+- hashCode():I
+f:com.intellij.buildsystem.model.unified.UnifiedDependency
+- com.intellij.buildsystem.model.BuildDependency
+- <init>(com.intellij.buildsystem.model.unified.UnifiedCoordinates,java.lang.String):V
+- <init>(java.lang.String,java.lang.String,java.lang.String,java.lang.String):V
+- b:<init>(java.lang.String,java.lang.String,java.lang.String,java.lang.String,I,kotlin.jvm.internal.DefaultConstructorMarker):V
+- f:component1():com.intellij.buildsystem.model.unified.UnifiedCoordinates
+- f:component2():java.lang.String
+- f:copy(com.intellij.buildsystem.model.unified.UnifiedCoordinates,java.lang.String):com.intellij.buildsystem.model.unified.UnifiedDependency
+- bs:copy$default(com.intellij.buildsystem.model.unified.UnifiedDependency,com.intellij.buildsystem.model.unified.UnifiedCoordinates,java.lang.String,I,java.lang.Object):com.intellij.buildsystem.model.unified.UnifiedDependency
+- equals(java.lang.Object):Z
+- f:getCoordinates():com.intellij.buildsystem.model.unified.UnifiedCoordinates
+- getDisplayName():java.lang.String
+- f:getScope():java.lang.String
+- hashCode():I
+f:com.intellij.buildsystem.model.unified.UnifiedDependencyRepository
+- com.intellij.buildsystem.model.BuildDependencyRepository
+- <init>(java.lang.String,java.lang.String,java.lang.String):V
+- f:component1():java.lang.String
+- f:component2():java.lang.String
+- f:component3():java.lang.String
+- f:copy(java.lang.String,java.lang.String,java.lang.String):com.intellij.buildsystem.model.unified.UnifiedDependencyRepository
+- bs:copy$default(com.intellij.buildsystem.model.unified.UnifiedDependencyRepository,java.lang.String,java.lang.String,java.lang.String,I,java.lang.Object):com.intellij.buildsystem.model.unified.UnifiedDependencyRepository
+- equals(java.lang.Object):Z
+- f:getDisplayName():java.lang.String
+- f:getId():java.lang.String
+- f:getName():java.lang.String
+- f:getUrl():java.lang.String
+- hashCode():I

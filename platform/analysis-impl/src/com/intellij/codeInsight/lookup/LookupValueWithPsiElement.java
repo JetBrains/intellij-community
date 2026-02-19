@@ -22,7 +22,7 @@ import com.intellij.psi.PsiElement;
  * @author Maxim.Mossienko
  * @deprecated use {@link LookupElementBuilder}
  */
-@Deprecated
+@Deprecated(forRemoval = true)
 public interface LookupValueWithPsiElement {
   PsiElement getElement();
 }

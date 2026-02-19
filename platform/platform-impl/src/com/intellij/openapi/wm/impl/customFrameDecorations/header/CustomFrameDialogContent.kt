@@ -1,54 +1,54 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl.customFrameDecorations.header
 
 import java.awt.BorderLayout
 import java.awt.Container
 import java.awt.Window
-import javax.swing.*
+import javax.swing.JComponent
+import javax.swing.JDialog
+import javax.swing.JFrame
+import javax.swing.JPanel
+import javax.swing.JWindow
 
-class CustomFrameDialogContent private constructor(val window: Window, val header: CustomHeader, content: Container): JPanel() {
-    companion object {
-        @JvmStatic
-        fun getCustomContentHolder(window: Window,
-                                   content: JComponent): JComponent {
-            return CustomFrameDialogContent(window, CustomHeader.create(window), content)
-        }
-
-        @JvmStatic
-        fun getCustomContentHolder(window: Window,
-                                   content: JComponent,
-                                   header: CustomHeader): JComponent {
-            checkContent(window, content) ?: return content
-
-            return CustomFrameDialogContent(window, header, content)
-        }
-
-        private fun checkContent(window: Window,
-                                 content: JComponent): JComponent? {
-            if (content is CustomFrameDialogContent) return null
-
-            return when (window) {
-                is JWindow -> window.rootPane
-                is JDialog -> {
-                    if (window.isUndecorated) null
-                    else window.rootPane
-                }
-                is JFrame -> window.rootPane
-                else -> null
-            }
-        }
+internal class CustomFrameDialogContent private constructor(private val window: Window,
+                                                            private val header: CustomHeader, content: Container) : JPanel() {
+  companion object {
+    fun getCustomContentHolder(window: Window, content: JComponent, isForDockContainerProvider: Boolean): JComponent {
+      val header = if (window is JFrame) DefaultFrameHeader(window, isForDockContainerProvider) else DialogHeader(window)
+      return CustomFrameDialogContent(window = window, header = header, content = content)
     }
 
-    init {
-        layout = BorderLayout()
-        add(header, BorderLayout.NORTH)
-        add(content, BorderLayout.CENTER)
+    fun getCustomContentHolder(window: Window, content: JComponent, header: CustomHeader): JComponent {
+      checkContent(window, content) ?: return content
+      return CustomFrameDialogContent(window = window, header = header, content = content)
     }
 
-    fun updateLayout() {
-        if(window is JDialog && window.isUndecorated) header.isVisible = false
-    }
+    private fun checkContent(window: Window, content: JComponent): JComponent? {
+      if (content is CustomFrameDialogContent) {
+        return null
+      }
 
-    val headerHeight: Int
-        get() = if(header.isVisible) header.preferredSize.height else 0
+      return when (window) {
+        is JWindow -> window.rootPane
+        is JDialog -> window.rootPane.takeIf { !window.isUndecorated }
+        is JFrame -> window.rootPane
+        else -> null
+      }
+    }
+  }
+
+  init {
+    layout = BorderLayout()
+    add(header, BorderLayout.NORTH)
+    add(content, BorderLayout.CENTER)
+  }
+
+  fun updateLayout() {
+    if (window is JDialog && window.isUndecorated) {
+      header.isVisible = false
+    }
+  }
+
+  val headerHeight: Int
+    get() = if (header.isVisible) header.preferredSize.height else 0
 }

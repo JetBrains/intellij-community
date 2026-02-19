@@ -1,33 +1,43 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
-/*
- * @author max
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl.welcomeScreen;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionGroup;
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.ActionPlaces;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.actionSystem.IdeActions;
+import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
-import com.intellij.openapi.updateSettings.impl.UpdateChecker;
+import com.intellij.openapi.updateSettings.impl.UpdateCheckerFacade;
 import com.intellij.openapi.util.DimensionService;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.NlsActions;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.WelcomeScreen;
 import com.intellij.ui.ScreenUtil;
-import com.intellij.ui.components.labels.LinkLabel;
-import com.intellij.ui.components.labels.LinkListener;
+import com.intellij.ui.components.ActionLink;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.Icon;
+import javax.swing.JComponent;
+import javax.swing.JFrame;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.SwingConstants;
 import javax.swing.border.EmptyBorder;
-import java.awt.*;
+import java.awt.BorderLayout;
+import java.awt.Component;
+import java.awt.FlowLayout;
+import java.awt.Graphics;
+import java.awt.Point;
+import java.awt.Rectangle;
 
-public class NewWelcomeScreen extends JPanel implements WelcomeScreen {
-
+public final class NewWelcomeScreen extends JPanel implements WelcomeScreen {
   public NewWelcomeScreen() {
     super(new BorderLayout());
     add(createHeaderPanel(), BorderLayout.NORTH);
@@ -47,11 +57,6 @@ public class NewWelcomeScreen extends JPanel implements WelcomeScreen {
     root.add(buildRootGroup(AllIcons.General.Settings, IdeBundle.message("welcome.screen.configure.action.text"), IdeActions.GROUP_WELCOME_SCREEN_CONFIGURE));
     root.add(buildRootGroup(AllIcons.Actions.Help, IdeBundle.message("welcome.screen.action.docs.how.tos.action.text"), IdeActions.GROUP_WELCOME_SCREEN_DOC));
 
-    // so, we sure this is the last action
-    final AnAction register = actionManager.getAction("WelcomeScreen.Register");
-    if (register != null) {
-      root.add(register);
-    }
     return new WelcomePane(root, screen);
   }
 
@@ -82,17 +87,14 @@ public class NewWelcomeScreen extends JPanel implements WelcomeScreen {
     });
     footerPanel.add(versionLabel);
     footerPanel.add(makeSmallFont(new JLabel(".  ")));
-    footerPanel.add(makeSmallFont(new LinkLabel(IdeBundle.message("link.check"), null, new LinkListener() {
-      @Override
-      public void linkSelected(LinkLabel aSource, Object aLinkData) {
-        UpdateChecker.updateAndShowResult(null, null);
-      }
+    footerPanel.add(makeSmallFont(new ActionLink(IdeBundle.message("link.check"), e -> {
+      UpdateCheckerFacade.getInstance().updateAndShowResult(null);
     })));
     footerPanel.add(makeSmallFont(new JLabel(IdeBundle.message("welcome.screen.check.for.updates.comment"))));
     return footerPanel;
   }
 
-  private static JLabel makeSmallFont(JLabel label) {
+  private static JComponent makeSmallFont(JComponent label) {
     label.setFont(label.getFont().deriveFont((float)10));
     return label;
   }
@@ -100,7 +102,7 @@ public class NewWelcomeScreen extends JPanel implements WelcomeScreen {
   private static JPanel createHeaderPanel() {
     JPanel header = new JPanel(new BorderLayout());
     JLabel welcome = new JLabel(IdeBundle.message("label.welcome.to.0", ApplicationNamesInfo.getInstance().getFullProductName()),
-                                IconLoader.getIcon(ApplicationInfoEx.getInstanceEx().getWelcomeScreenLogoUrl()),
+                                IconLoader.getIcon(ApplicationInfoEx.getInstanceEx().getApplicationSvgIconUrl(), NewWelcomeScreen.class.getClassLoader()),
                                 SwingConstants.LEFT);
     welcome.setBorder(new EmptyBorder(10, 15, 10, 15));
     welcome.setFont(welcome.getFont().deriveFont((float) 32));
@@ -135,14 +137,14 @@ public class NewWelcomeScreen extends JPanel implements WelcomeScreen {
   }
 
   public static boolean isNewWelcomeScreen(@NotNull AnActionEvent e) {
-    return e.getPlace() == ActionPlaces.WELCOME_SCREEN;
+    return ActionPlaces.WELCOME_SCREEN.equals(e.getPlace());
   }
 
   public static void updateNewProjectIconIfWelcomeScreen(@NotNull AnActionEvent e) {
     if (isNewWelcomeScreen(e)) {
       Presentation presentation = e.getPresentation();
       presentation.setIcon(AllIcons.General.Add);
-      if (Registry.is("use.tabbed.welcome.screen")) {
+      if (FlatWelcomeFrame.USE_TABBED_WELCOME_SCREEN) {
         presentation.setIcon(AllIcons.Welcome.CreateNewProjectTab);
         presentation.setSelectedIcon(AllIcons.Welcome.CreateNewProjectTabSelected);
       }

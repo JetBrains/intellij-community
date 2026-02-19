@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.service.project.autoimport;
 
 import com.intellij.openapi.util.Comparing;
@@ -21,7 +7,13 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileVisitor;
 import com.intellij.openapi.vfs.newvfs.BulkFileListener;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
-import com.intellij.openapi.vfs.newvfs.events.*;
+import com.intellij.openapi.vfs.newvfs.events.VFileContentChangeEvent;
+import com.intellij.openapi.vfs.newvfs.events.VFileCopyEvent;
+import com.intellij.openapi.vfs.newvfs.events.VFileCreateEvent;
+import com.intellij.openapi.vfs.newvfs.events.VFileDeleteEvent;
+import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
+import com.intellij.openapi.vfs.newvfs.events.VFileMoveEvent;
+import com.intellij.openapi.vfs.newvfs.events.VFilePropertyChangeEvent;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -37,7 +29,7 @@ public abstract class FileChangeListenerBase implements BulkFileListener {
   protected abstract void apply();
 
   @Override
-  public void before(@NotNull List<? extends VFileEvent> events) {
+  public void before(@NotNull List<? extends @NotNull VFileEvent> events) {
     for (VFileEvent each : events) {
       if (each instanceof VFileDeleteEvent) {
         deleteRecursively(each.getFile(), each);
@@ -49,8 +41,7 @@ public abstract class FileChangeListenerBase implements BulkFileListener {
             deleteRecursively(each.getFile(), each);
           }
         }
-        else if (each instanceof VFileMoveEvent) {
-          VFileMoveEvent moveEvent = (VFileMoveEvent)each;
+        else if (each instanceof VFileMoveEvent moveEvent) {
           String newPath = moveEvent.getNewParent().getPath() + "/" + moveEvent.getFile().getName();
           if (!isRelevant(newPath)) {
             deleteRecursively(moveEvent.getFile(), each);
@@ -68,28 +59,25 @@ public abstract class FileChangeListenerBase implements BulkFileListener {
         return true;
       }
 
-      @Nullable
       @Override
-      public Iterable<VirtualFile> getChildrenIterable(@NotNull VirtualFile f) {
+      public @Nullable Iterable<VirtualFile> getChildrenIterable(@NotNull VirtualFile f) {
         return f.isDirectory() && f instanceof NewVirtualFile ? ((NewVirtualFile)f).iterInDbChildren() : null;
       }
     });
   }
 
   @Override
-  public void after(@NotNull List<? extends VFileEvent> events) {
+  public void after(@NotNull List<? extends @NotNull VFileEvent> events) {
     for (VFileEvent each : events) {
       if (!isRelevant(each.getPath())) continue;
 
-      if (each instanceof VFileCreateEvent) {
-        VFileCreateEvent createEvent = (VFileCreateEvent)each;
+      if (each instanceof VFileCreateEvent createEvent) {
         VirtualFile newChild = createEvent.getParent().findChild(createEvent.getChildName());
         if (newChild != null) {
           updateFile(newChild, each);
         }
       }
-      else if (each instanceof VFileCopyEvent) {
-        VFileCopyEvent copyEvent = (VFileCopyEvent)each;
+      else if (each instanceof VFileCopyEvent copyEvent) {
         VirtualFile newChild = copyEvent.getNewParent().findChild(copyEvent.getNewChildName());
         if (newChild != null) {
           updateFile(newChild, each);

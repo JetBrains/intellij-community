@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.build;
 
 import com.intellij.build.events.Failure;
@@ -7,23 +7,25 @@ import com.intellij.build.issue.BuildIssueQuickFix;
 import com.intellij.execution.filters.HyperlinkInfo;
 import com.intellij.execution.ui.ConsoleView;
 import com.intellij.execution.ui.ConsoleViewContentType;
+import com.intellij.ide.DataManager;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationListener;
 import com.intellij.notification.NotificationType;
-import com.intellij.openapi.actionSystem.DataProvider;
+import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.ComponentContainer;
+import com.intellij.openapi.util.AtomicNotNullLazyValue;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.IJSwingUtilities;
 import com.intellij.util.ObjectUtils;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.event.HyperlinkEvent;
-import java.awt.*;
+import java.awt.Component;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
@@ -40,7 +42,7 @@ public final class BuildConsoleUtils {
   private static final Pattern TAG_PATTERN = Pattern.compile("<[^>]*>");
   private static final Pattern A_PATTERN = Pattern.compile("<a ([^>]* )?href=[\"']([^>]*)[\"'][^>]*>");
   private static final String A_CLOSING = "</a>";
-  private static final Set<@NlsSafe String> NEW_LINES = ContainerUtil.set("<br>", "</br>", "<br/>", "<p>", "</p>", "<p/>", "<pre>", "</pre>");
+  private static final Set<@NlsSafe String> NEW_LINES = Set.of("<br>", "</br>", "<br/>", "<p>", "</p>", "<p/>", "<pre>", "</pre>");
 
   public static void printDetails(@NotNull ConsoleView consoleView, @Nullable Failure failure, @Nullable String details) {
     String text = failure == null ? details : ObjectUtils.chooseNotNull(failure.getDescription(), failure.getMessage());
@@ -49,16 +51,28 @@ public final class BuildConsoleUtils {
     }
     if (text == null) return;
     Notification notification = failure == null ? null : failure.getNotification();
-    print(consoleView, notification, text);
+    print(consoleView, notification, text, ConsoleViewContentType.ERROR_OUTPUT);
   }
 
   public static void print(@NotNull BuildTextConsoleView consoleView, @NotNull String group, @NotNull BuildIssue buildIssue) {
+    print(consoleView, group, buildIssue, ConsoleViewContentType.ERROR_OUTPUT);
+  }
+
+  @ApiStatus.Internal
+  public static void print(
+    @NotNull BuildTextConsoleView consoleView,
+    @NotNull String group,
+    @NotNull BuildIssue buildIssue,
+    @NotNull ConsoleViewContentType outputType
+  ) {
     Project project = consoleView.getProject();
     Map<String, NotificationListener> listenerMap = new LinkedHashMap<>();
     for (BuildIssueQuickFix quickFix : buildIssue.getQuickFixes()) {
       listenerMap.put(quickFix.getId(), (notification, event) -> {
         BuildView buildView = findBuildView(consoleView);
-        quickFix.runQuickFix(project, buildView == null ? consoleView : buildView);
+        Component component = buildView == null ? consoleView : buildView;
+        DataContext dataContext = DataManager.getInstance().getDataContext(component);
+        quickFix.runQuickFix(project, dataContext);
       });
     }
     NotificationListener listener = new NotificationListener.Adapter() {
@@ -73,24 +87,23 @@ public final class BuildConsoleUtils {
       }
     };
 
-    Notification notification = new Notification(group,
-                                                 buildIssue.getTitle(),
-                                                 buildIssue.getDescription(),
-                                                 NotificationType.WARNING,
-                                                 listener);
-    print(consoleView, notification, buildIssue.getDescription());
+    Notification notification = new Notification(group, buildIssue.getTitle(), buildIssue.getDescription(), NotificationType.WARNING)
+      .setListener(listener);
+    print(consoleView, notification, buildIssue.getDescription(), outputType);
   }
 
-  private static void print(@NotNull ConsoleView consoleView, @Nullable Notification notification, @NotNull String text) {
+  private static void print(
+    @NotNull ConsoleView consoleView, @Nullable Notification notification, @NotNull String text, @NotNull ConsoleViewContentType outputType
+  ) {
     String content = StringUtil.convertLineSeparators(text);
     while (true) {
       Matcher tagMatcher = TAG_PATTERN.matcher(content);
       if (!tagMatcher.find()) {
-        consoleView.print(content, ConsoleViewContentType.ERROR_OUTPUT);
+        consoleView.print(content, outputType);
         break;
       }
       String tagStart = tagMatcher.group();
-      consoleView.print(content.substring(0, tagMatcher.start()), ConsoleViewContentType.ERROR_OUTPUT);
+      consoleView.print(content.substring(0, tagMatcher.start()), outputType);
       Matcher aMatcher = A_PATTERN.matcher(tagStart);
       if (aMatcher.matches()) {
         final String href = aMatcher.group(2);
@@ -99,7 +112,7 @@ public final class BuildConsoleUtils {
           String linkText = content.substring(tagMatcher.end(), linkEnd).replaceAll(TAG_PATTERN.pattern(), "");
           consoleView.printHyperlink(linkText, new HyperlinkInfo() {
             @Override
-            public void navigate(Project project) {
+            public void navigate(@NotNull Project project) {
               if (notification != null && notification.getListener() != null) {
                 notification.getListener().hyperlinkUpdate(
                   notification, IJSwingUtilities.createHyperlinkEvent(href, consoleView.getComponent()));
@@ -114,7 +127,7 @@ public final class BuildConsoleUtils {
         consoleView.print("\n", ConsoleViewContentType.SYSTEM_OUTPUT);
       }
       else {
-        consoleView.print(content.substring(tagMatcher.start(), tagMatcher.end()), ConsoleViewContentType.ERROR_OUTPUT);
+        consoleView.print(content.substring(tagMatcher.start(), tagMatcher.end()), outputType);
       }
       content = content.substring(tagMatcher.end());
     }
@@ -123,46 +136,48 @@ public final class BuildConsoleUtils {
   }
 
   @ApiStatus.Internal
-  @NotNull
-  public static String getMessageTitle(@NotNull String message) {
+  public static @NotNull String getMessageTitle(@NotNull String message) {
     message = stripHtml(message, true);
     int sepIndex = message.indexOf(". ");
-    if (sepIndex < 0) {
-      sepIndex = message.indexOf("\n");
+    int eolIndex = message.indexOf("\n");
+    if (sepIndex < 0 || sepIndex > eolIndex && eolIndex > 0) {
+      sepIndex = eolIndex;
     }
     if (sepIndex > 0) {
       message = message.substring(0, sepIndex);
     }
-    return StringUtil.trimEnd(message, '.');
+    return StringUtil.trimEnd(message.trim(), '.');
   }
 
   @ApiStatus.Experimental
-  @NotNull
-  public static DataProvider getDataProvider(@NotNull Object buildId, @NotNull AbstractViewManager buildListener) {
+  public static @NotNull DataContext getDataContext(@NotNull Object buildId, @NotNull AbstractViewManager buildListener) {
     BuildView buildView = buildListener.getBuildView(buildId);
-    return (buildView != null) ? buildView : dataId -> null;
+    return buildView != null ? new MyDelegatingDataContext(buildView) : DataContext.EMPTY_CONTEXT;
   }
 
   @ApiStatus.Experimental
-  @NotNull
-  public static DataProvider getDataProvider(@NotNull Object buildId, @NotNull BuildProgressListener buildListener) {
-    DataProvider provider;
+  public static @NotNull DataContext getDataContext(@NotNull Object buildId, @NotNull BuildProgressListener buildListener,
+                                                    @Nullable ComponentContainer container) {
+    DataContext dataContext;
     if (buildListener instanceof BuildView) {
-      provider = (BuildView)buildListener;
+      dataContext = new MyDelegatingDataContext((BuildView)buildListener);
     }
     else if (buildListener instanceof AbstractViewManager) {
-      provider = getDataProvider(buildId, (AbstractViewManager)buildListener);
+      dataContext = getDataContext(buildId, (AbstractViewManager)buildListener);
+    }
+    else if (container != null) {
+      dataContext = new MyDelegatingDataContext(container);
     }
     else {
-      LOG.error("BuildView or AbstractViewManager expected to obtain proper DataProvider for build console quick fixes");
-      provider = dataId -> null;
+      LOG.error("BuildView or AbstractViewManager expected to obtain proper DataContext for build console quick fixes, " +
+                "listener class: " + buildListener.getClass().getName() + ", container: " + container);
+      dataContext = DataContext.EMPTY_CONTEXT;
     }
-    return provider;
+    return dataContext;
   }
 
 
-  @Nullable
-  private static BuildView findBuildView(@NotNull Component component) {
+  private static @Nullable BuildView findBuildView(@NotNull Component component) {
     Component parent = component;
     while ((parent = parent.getParent()) != null) {
       if (parent instanceof BuildView) {
@@ -170,5 +185,18 @@ public final class BuildConsoleUtils {
       }
     }
     return null;
+  }
+
+  private static final class MyDelegatingDataContext implements DataContext {
+    private final AtomicNotNullLazyValue<DataContext> myDelegatedDataContextValue;
+
+    private MyDelegatingDataContext(@NotNull ComponentContainer container) {
+      myDelegatedDataContextValue = AtomicNotNullLazyValue.createValue(() -> DataManager.getInstance().getDataContext(container.getComponent()));
+    }
+
+    @Override
+    public @Nullable Object getData(@NotNull String dataId) {
+      return myDelegatedDataContextValue.getValue().getData(dataId);
+    }
   }
 }

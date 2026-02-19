@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.configSlurper;
 
 import com.intellij.openapi.util.Pair;
@@ -16,16 +16,17 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrRefere
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
 import org.jetbrains.plugins.groovy.lang.resolve.api.GroovyMapProperty;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
-/**
- * @author Sergey Evdokimov
- */
-public class ConfigSlurperMapContentProvider extends GroovyMapContentProvider {
+public final class ConfigSlurperMapContentProvider extends GroovyMapContentProvider {
 
-  @Nullable
-  private static Pair<ConfigSlurperSupport.PropertiesProvider, List<String>> getInfo(@NotNull GrExpression qualifier,
-                                                                                     @Nullable PsiElement resolve) {
+  private static @Nullable Pair<ConfigSlurperSupport.PropertiesProvider, List<String>> getInfo(@NotNull GrExpression qualifier,
+                                                                                               @Nullable PsiElement resolve) {
     if (!InheritanceUtil.isInheritor(qualifier.getType(), GroovyCommonClassNames.GROOVY_UTIL_CONFIG_OBJECT)) {
       return null;
     }
@@ -35,9 +36,8 @@ public class ConfigSlurperMapContentProvider extends GroovyMapContentProvider {
     List<String> path = new ArrayList<>();
 
     while (resolveResult instanceof GroovyMapProperty) {
-      if (!(resolvedQualifier instanceof GrReferenceExpression)) return null;
+      if (!(resolvedQualifier instanceof GrReferenceExpression expr)) return null;
 
-      GrReferenceExpression expr = (GrReferenceExpression)resolvedQualifier;
       path.add(expr.getReferenceName());
 
       resolvedQualifier = expr.getQualifierExpression();
@@ -82,7 +82,7 @@ public class ConfigSlurperMapContentProvider extends GroovyMapContentProvider {
   }
 
   @Override
-  public PsiType getValueType(@NotNull GrExpression qualifier, @Nullable PsiElement resolve, @NotNull final String key) {
+  public PsiType getValueType(@NotNull GrExpression qualifier, @Nullable PsiElement resolve, final @NotNull String key) {
     Pair<ConfigSlurperSupport.PropertiesProvider, List<String>> info = getInfo(qualifier, resolve);
     if (info == null) return null;
 

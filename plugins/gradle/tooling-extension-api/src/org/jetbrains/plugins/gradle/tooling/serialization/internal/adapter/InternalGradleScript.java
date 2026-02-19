@@ -2,9 +2,11 @@
 package org.jetbrains.plugins.gradle.tooling.serialization.internal.adapter;
 
 import org.gradle.tooling.model.gradle.GradleScript;
+import org.jetbrains.annotations.ApiStatus;
 
 import java.io.File;
 
+@ApiStatus.Internal
 public final class InternalGradleScript implements GradleScript {
   private File sourceFile;
 

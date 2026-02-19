@@ -1,0 +1,7 @@
+// PRIORITY: LOW
+// AFTER-WARNING: The expression is unused
+// AFTER-WARNING: The expression is unused
+fun foo(i : Int) {
+    if (0 == i) 1
+    else 2
+}

@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.branchConfig;
 
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.Presentation;
@@ -19,6 +20,11 @@ import static org.jetbrains.idea.svn.SvnBundle.messagePointer;
 public class ConfigureBranchesAction extends DumbAwareAction {
   public ConfigureBranchesAction() {
     super(messagePointer("action.Subversion.ConfigureBranches.text"));
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 
   @Override
@@ -41,8 +47,10 @@ public class ConfigureBranchesAction extends DumbAwareAction {
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
-    Project project = e.getRequiredData(CommonDataKeys.PROJECT);
-    ChangeList[] changeLists = e.getRequiredData(VcsDataKeys.CHANGE_LISTS);
+    Project project = e.getData(CommonDataKeys.PROJECT);
+    if (project == null) return;
+    ChangeList[] changeLists = e.getData(VcsDataKeys.CHANGE_LISTS);
+    if (changeLists == null) return;
     SvnChangeList svnList = (SvnChangeList)changeLists[0];
 
     BranchConfigurationDialog.configureBranches(project, svnList.getRoot());

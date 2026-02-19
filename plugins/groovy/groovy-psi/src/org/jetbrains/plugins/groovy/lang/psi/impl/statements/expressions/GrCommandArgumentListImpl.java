@@ -8,9 +8,6 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrCommandArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.arguments.GrArgumentListImpl;
 
-/**
- * @author ilyas
- */
 public class GrCommandArgumentListImpl extends GrArgumentListImpl implements GrCommandArgumentList {
 
   public GrCommandArgumentListImpl(@NotNull ASTNode node) {

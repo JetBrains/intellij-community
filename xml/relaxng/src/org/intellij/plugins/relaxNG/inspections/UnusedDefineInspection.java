@@ -50,11 +50,12 @@ import org.intellij.plugins.relaxNG.model.resolve.RelaxIncludeIndex;
 import org.intellij.plugins.relaxNG.xml.dom.RngGrammar;
 import org.jetbrains.annotations.NotNull;
 
+import static com.intellij.util.ObjectUtils.doIfNotNull;
+
 public class UnusedDefineInspection extends BaseInspection {
 
   @Override
-  @NotNull
-  public RncElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
+  public @NotNull RncElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
     return new MyElementVisitor(holder);
   }
 
@@ -63,7 +64,7 @@ public class UnusedDefineInspection extends BaseInspection {
 
     private final XmlElementVisitor myXmlVisitor = new XmlElementVisitor() {
       @Override
-      public void visitXmlTag(XmlTag tag) {
+      public void visitXmlTag(@NotNull XmlTag tag) {
         MyElementVisitor.this.visitXmlTag(tag);
       }
     };
@@ -93,12 +94,12 @@ public class UnusedDefineInspection extends BaseInspection {
       if (processRncUsages(pattern, new LocalSearchScope(collector.toArray()))) return;
 
       final ASTNode astNode = ((RncDefineImpl)pattern).getNameNode();
-      myHolder.registerProblem(astNode.getPsi(), RelaxngBundle.message("relaxng.inspection.unused-define.message"), ProblemHighlightType.LIKE_UNUSED_SYMBOL, new MyFix<>(pattern));
+      myHolder.registerProblem(astNode.getPsi(), RelaxngBundle.message("relaxng.inspection.unused-define.message"), ProblemHighlightType.LIKE_UNUSED_SYMBOL, new MyFix<>());
     }
 
     private static boolean processRncUsages(PsiElement tag, LocalSearchScope scope) {
       final Query<PsiReference> query = ReferencesSearch.search(tag, scope);
-      for (PsiReference reference : query) {
+      for (PsiReference reference : query.asIterable()) {
         final PsiElement e = reference.getElement();
         final RncDefine t = PsiTreeUtil.getParentOfType(e, RncDefine.class, false);
         if (t == null || !PsiTreeUtil.isAncestor(tag, t, true)) {
@@ -130,7 +131,7 @@ public class UnusedDefineInspection extends BaseInspection {
       if (value == null) return;
 
       final String s = value.getValue();
-      if (s.length() == 0) {
+      if (s.isEmpty()) {
         return;
       }
       final PsiElement parent = value.getParent();
@@ -162,12 +163,12 @@ public class UnusedDefineInspection extends BaseInspection {
 
       if (processUsages(tag, value, new LocalSearchScope(collector.toArray()))) return;
 
-      myHolder.registerProblem(value, RelaxngBundle.message("relaxng.inspection.unused-define.message"), ProblemHighlightType.LIKE_UNUSED_SYMBOL, new MyFix<>(tag));
+      myHolder.registerProblem(value, RelaxngBundle.message("relaxng.inspection.unused-define.message"), ProblemHighlightType.LIKE_UNUSED_SYMBOL, new MyFix<>());
     }
 
     private static boolean processUsages(PsiElement tag, XmlAttributeValue value, LocalSearchScope scope) {
       final Query<PsiReference> query = ReferencesSearch.search(tag, scope, true);
-      for (PsiReference reference : query) {
+      for (PsiReference reference : query.asIterable()) {
         final PsiElement e = reference.getElement();
         if (e != value) {
           final XmlTag t = PsiTreeUtil.getParentOfType(e, XmlTag.class);
@@ -180,22 +181,16 @@ public class UnusedDefineInspection extends BaseInspection {
     }
 
     private static class MyFix<T extends PsiElement> implements LocalQuickFix {
-      private final T myTag;
-
-      MyFix(T tag) {
-        myTag = tag;
-      }
-
       @Override
-      @NotNull
-      public String getFamilyName() {
+      public @NotNull String getFamilyName() {
         return RelaxngBundle.message("relaxng.quickfix.remove-define");
       }
 
       @Override
       public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
+        PsiElement myTag = doIfNotNull(descriptor.getPsiElement(), PsiElement::getParent);
         try {
-          if (myTag.isValid()) {
+          if (myTag instanceof RncDefine && myTag.isValid()) {
             myTag.delete();
           }
         } catch (IncorrectOperationException e) {

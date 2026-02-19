@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.service.ui
 
 import com.intellij.openapi.application.ApplicationManager
@@ -9,7 +9,11 @@ import com.intellij.openapi.externalSystem.util.environment.Environment
 import com.intellij.openapi.externalSystem.util.environment.TestEnvironment
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.projectRoots.impl.JavaAwareProjectJdkTableImpl
-import com.intellij.openapi.roots.ui.configuration.*
+import com.intellij.openapi.roots.ui.configuration.SdkComboBox
+import com.intellij.openapi.roots.ui.configuration.SdkComboBoxTestCase
+import com.intellij.openapi.roots.ui.configuration.SdkListItem
+import com.intellij.openapi.roots.ui.configuration.SdkLookupProvider
+import com.intellij.openapi.roots.ui.configuration.SdkLookupProviderImpl
 import com.intellij.testFramework.replaceService
 
 abstract class ExternalSystemJdkComboBoxUtilTestCase : SdkComboBoxTestCase() {
@@ -30,12 +34,19 @@ abstract class ExternalSystemJdkComboBoxUtilTestCase : SdkComboBoxTestCase() {
   }
 
   override fun tearDown() {
-    invokeAndWaitIfNeeded {
-      runWriteAction {
-        JavaAwareProjectJdkTableImpl.removeInternalJdkInTests()
+    try {
+      invokeAndWaitIfNeeded {
+        runWriteAction {
+          JavaAwareProjectJdkTableImpl.removeInternalJdkInTests()
+        }
       }
     }
-    super.tearDown()
+    catch (e: Throwable) {
+      addSuppressedException(e)
+    }
+    finally {
+      super.tearDown()
+    }
   }
 
   open fun SdkComboBox.setSelectedJdkReference(jdkReference: String?) {
@@ -72,6 +83,6 @@ abstract class ExternalSystemJdkComboBoxUtilTestCase : SdkComboBoxTestCase() {
 
   fun assertReferenceItem(item: SdkListItem.SdkReferenceItem, name: String, isValid: Boolean) {
     assertEquals(name, item.name)
-    assertEquals(isValid, item.isValid)
+    assertEquals(isValid, item.hasValidPath)
   }
 }

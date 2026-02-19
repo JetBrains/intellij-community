@@ -1,0 +1,135 @@
+f:com.intellij.psi.codeStyle.AllOccurrencesMatcher
+- com.intellij.psi.codeStyle.MinusculeMatcher
+- sf:Companion:com.intellij.psi.codeStyle.AllOccurrencesMatcher$Companion
+- <init>(java.lang.String,com.intellij.psi.codeStyle.NameUtil$MatchingCaseSensitivity,java.lang.String):V
+- sf:create(java.lang.String,com.intellij.psi.codeStyle.NameUtil$MatchingCaseSensitivity,java.lang.String):com.intellij.psi.codeStyle.MinusculeMatcher
+- sf:create(java.lang.String,com.intellij.util.text.matching.MatchingMode,java.lang.String,com.intellij.util.text.matching.KeyboardLayoutConverter):com.intellij.psi.codeStyle.MinusculeMatcher
+- getPattern():java.lang.String
+- match(java.lang.String):java.util.List
+- matchingDegree(java.lang.String,Z,com.intellij.util.containers.FList):I
+- matchingDegree(java.lang.String,Z,java.util.List):I
+- matchingFragments(java.lang.String):com.intellij.util.containers.FList
+f:com.intellij.psi.codeStyle.AllOccurrencesMatcher$Companion
+- f:create(java.lang.String,com.intellij.psi.codeStyle.NameUtil$MatchingCaseSensitivity,java.lang.String):com.intellij.psi.codeStyle.MinusculeMatcher
+- f:create(java.lang.String,com.intellij.util.text.matching.MatchingMode,java.lang.String,com.intellij.util.text.matching.KeyboardLayoutConverter):com.intellij.psi.codeStyle.MinusculeMatcher
+c:com.intellij.psi.codeStyle.FixingLayoutMatcher
+- com.intellij.psi.codeStyle.MinusculeMatcher
+- sf:Companion:com.intellij.psi.codeStyle.FixingLayoutMatcher$Companion
+- <init>(java.lang.String,com.intellij.psi.codeStyle.NameUtil$MatchingCaseSensitivity,java.lang.String):V
+- <init>(java.lang.String,com.intellij.util.text.matching.MatchingMode,java.lang.String,com.intellij.util.text.matching.KeyboardLayoutConverter):V
+- sf:fixLayout(java.lang.String,com.intellij.util.text.matching.KeyboardLayoutConverter):java.lang.String
+f:com.intellij.psi.codeStyle.FixingLayoutMatcher$Companion
+- f:fixLayout(java.lang.String,com.intellij.util.text.matching.KeyboardLayoutConverter):java.lang.String
+f:com.intellij.psi.codeStyle.FixingLayoutTypoTolerantMatcher
+- sf:INSTANCE:com.intellij.psi.codeStyle.FixingLayoutTypoTolerantMatcher
+- sf:create(java.lang.String,com.intellij.util.text.matching.MatchingMode,java.lang.String,com.intellij.util.text.matching.KeyboardLayoutConverter):com.intellij.psi.codeStyle.MinusculeMatcher
+a:com.intellij.psi.codeStyle.MinusculeMatcher
+- com.intellij.util.text.Matcher
+- sf:Companion:com.intellij.psi.codeStyle.MinusculeMatcher$Companion
+- p:<init>():V
+- a:getPattern():java.lang.String
+- sf:isStartMatch(java.lang.Iterable):Z
+- isStartMatch(java.lang.String):Z
+- sf:isStartMatch(java.util.List):Z
+- match(java.lang.String):java.util.List
+- matches(java.lang.String):Z
+- matchingDegree(java.lang.String):I
+- matchingDegree(java.lang.String,Z):I
+- matchingDegree(java.lang.String,Z,com.intellij.util.containers.FList):I
+- matchingDegree(java.lang.String,Z,java.util.List):I
+- matchingFragments(java.lang.String):com.intellij.util.containers.FList
+f:com.intellij.psi.codeStyle.MinusculeMatcher$Companion
+- f:isStartMatch(java.lang.Iterable):Z
+- f:isStartMatch(java.util.List):Z
+f:com.intellij.psi.codeStyle.NameUtil
+- s:buildMatcher(java.lang.String):com.intellij.psi.codeStyle.NameUtil$MatcherBuilder
+- s:buildMatcher(java.lang.String,I,Z,Z):com.intellij.util.text.Matcher
+- s:buildMatcher(java.lang.String,com.intellij.psi.codeStyle.NameUtil$MatchingCaseSensitivity):com.intellij.psi.codeStyle.MinusculeMatcher
+- s:buildMatcher(java.lang.String,com.intellij.util.text.matching.MatchingMode):com.intellij.psi.codeStyle.MinusculeMatcher
+- s:buildMatcherWithFallback(java.lang.String,java.lang.String,com.intellij.util.text.matching.MatchingMode):com.intellij.psi.codeStyle.MinusculeMatcher
+- s:buildRegexp(java.lang.String,I,Z,Z):java.lang.String
+- s:buildRegexp(java.lang.String,I,Z,Z,Z,Z):java.lang.String
+- s:capitalizeAndUnderscore(java.lang.String):java.lang.String
+- s:getSuggestionsByName(java.lang.String,java.lang.String,java.lang.String,Z,Z,Z):java.util.List
+- s:nameToWordList(java.lang.String):java.util.List
+- s:nameToWords(java.lang.String):java.lang.String[]
+- s:nameToWordsLowerCase(java.lang.String):java.util.List
+- s:splitNameIntoWordList(java.lang.String):java.util.List
+- s:splitNameIntoWords(java.lang.String):java.lang.String[]
+- s:splitWords(java.lang.String,C,java.util.function.Function):java.lang.String
+f:com.intellij.psi.codeStyle.NameUtil$MatcherBuilder
+- <init>(java.lang.String):V
+- allOccurrences():com.intellij.psi.codeStyle.NameUtil$MatcherBuilder
+- build():com.intellij.psi.codeStyle.MinusculeMatcher
+- preferringStartMatches():com.intellij.psi.codeStyle.NameUtil$MatcherBuilder
+- typoTolerant():com.intellij.psi.codeStyle.NameUtil$MatcherBuilder
+- withCaseSensitivity(com.intellij.psi.codeStyle.NameUtil$MatchingCaseSensitivity):com.intellij.psi.codeStyle.NameUtil$MatcherBuilder
+- withMatchingMode(com.intellij.util.text.matching.MatchingMode):com.intellij.psi.codeStyle.NameUtil$MatcherBuilder
+- withSeparators(java.lang.String):com.intellij.psi.codeStyle.NameUtil$MatcherBuilder
+e:com.intellij.psi.codeStyle.NameUtil$MatchingCaseSensitivity
+- java.lang.Enum
+- sf:ALL:com.intellij.psi.codeStyle.NameUtil$MatchingCaseSensitivity
+- sf:FIRST_LETTER:com.intellij.psi.codeStyle.NameUtil$MatchingCaseSensitivity
+- sf:NONE:com.intellij.psi.codeStyle.NameUtil$MatchingCaseSensitivity
+- s:valueOf(java.lang.String):com.intellij.psi.codeStyle.NameUtil$MatchingCaseSensitivity
+- s:values():com.intellij.psi.codeStyle.NameUtil$MatchingCaseSensitivity[]
+f:com.intellij.psi.codeStyle.PinyinMatcher
+- com.intellij.psi.codeStyle.MinusculeMatcher
+- sf:Companion:com.intellij.psi.codeStyle.PinyinMatcher$Companion
+- sf:create(java.lang.String,com.intellij.psi.codeStyle.MinusculeMatcher):com.intellij.psi.codeStyle.MinusculeMatcher
+- getPattern():java.lang.String
+- match(java.lang.String):java.util.List
+- matchingDegree(java.lang.String,Z,com.intellij.util.containers.FList):I
+- matchingDegree(java.lang.String,Z,java.util.List):I
+- matchingFragments(java.lang.String):com.intellij.util.containers.FList
+f:com.intellij.psi.codeStyle.PinyinMatcher$Companion
+- f:create(java.lang.String,com.intellij.psi.codeStyle.MinusculeMatcher):com.intellij.psi.codeStyle.MinusculeMatcher
+- f:getDATA():java.lang.String
+- f:getENCODING():java.lang.String
+f:com.intellij.psi.codeStyle.PlatformKeyboardLayoutConverter
+- com.intellij.util.text.matching.KeyboardLayoutConverter
+- sf:INSTANCE:com.intellij.psi.codeStyle.PlatformKeyboardLayoutConverter
+- convert(C):java.lang.Character
+f:com.intellij.psi.codeStyle.PreferStartMatchMatcherWrapper
+- com.intellij.psi.codeStyle.MinusculeMatcher
+- <init>(com.intellij.psi.codeStyle.MinusculeMatcher):V
+- getPattern():java.lang.String
+- match(java.lang.String):java.util.List
+- matchingDegree(java.lang.String,Z,com.intellij.util.containers.FList):I
+- matchingDegree(java.lang.String,Z,java.util.List):I
+- matchingFragments(java.lang.String):com.intellij.util.containers.FList
+f:com.intellij.psi.codeStyle.WordPrefixMatcher
+- com.intellij.util.text.Matcher
+- <init>(java.lang.String,com.intellij.util.text.matching.KeyboardLayoutConverter):V
+- matches(java.lang.String):Z
+com.intellij.util.text.matching.KeyboardLayoutConverter
+- sf:Companion:com.intellij.util.text.matching.KeyboardLayoutConverter$Companion
+- a:convert(C):java.lang.Character
+f:com.intellij.util.text.matching.KeyboardLayoutConverter$Companion
+- f:getNoop():com.intellij.util.text.matching.KeyboardLayoutConverter
+f:com.intellij.util.text.matching.KeyboardLayoutUtil
+- <init>():V
+- s:getAsciiForChar(C):java.lang.Character
+- s:storeAsciiForChar(I,C,I,I):V
+f:com.intellij.util.text.matching.MatchedFragment
+- <init>(I,I,I):V
+- b:<init>(I,I,I,I,kotlin.jvm.internal.DefaultConstructorMarker):V
+- f:component1():I
+- f:component2():I
+- f:component3():I
+- f:copy(I,I,I):com.intellij.util.text.matching.MatchedFragment
+- bs:copy$default(com.intellij.util.text.matching.MatchedFragment,I,I,I,I,java.lang.Object):com.intellij.util.text.matching.MatchedFragment
+- equals(java.lang.Object):Z
+- f:getEndOffset():I
+- f:getErrorCount():I
+- f:getLength():I
+- f:getStartOffset():I
+- hashCode():I
+e:com.intellij.util.text.matching.MatchingMode
+- java.lang.Enum
+- sf:FIRST_LETTER:com.intellij.util.text.matching.MatchingMode
+- sf:IGNORE_CASE:com.intellij.util.text.matching.MatchingMode
+- sf:MATCH_CASE:com.intellij.util.text.matching.MatchingMode
+- s:getEntries():kotlin.enums.EnumEntries
+- s:valueOf(java.lang.String):com.intellij.util.text.matching.MatchingMode
+- s:values():com.intellij.util.text.matching.MatchingMode[]

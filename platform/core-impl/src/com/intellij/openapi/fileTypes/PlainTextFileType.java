@@ -1,13 +1,14 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileTypes;
 
 import com.intellij.core.CoreBundle;
-import com.intellij.icons.AllIcons;
+import com.intellij.ui.IconManager;
+import com.intellij.ui.PlatformIcons;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.Icon;
 
-public final class PlainTextFileType extends LanguageFileType implements PlainTextLikeFileType {
+public final class PlainTextFileType extends LanguageFileType implements PlainTextLikeFileType, OSFileIdeAssociation {
   public static final PlainTextFileType INSTANCE = new PlainTextFileType();
 
   private PlainTextFileType() {
@@ -15,25 +16,27 @@ public final class PlainTextFileType extends LanguageFileType implements PlainTe
   }
 
   @Override
-  @NotNull
-  public String getName() {
+  public @NotNull String getName() {
     return "PLAIN_TEXT";
   }
 
   @Override
-  @NotNull
-  public String getDescription() {
+  public @NotNull String getDescription() {
     return CoreBundle.message("filetype.plaintext.description");
   }
 
   @Override
-  @NotNull
-  public String getDefaultExtension() {
+  public @NotNull String getDefaultExtension() {
     return "txt";
   }
 
   @Override
   public Icon getIcon() {
-    return AllIcons.FileTypes.Text;
+    return IconManager.getInstance().getPlatformIcon(PlatformIcons.TextFileType);
+  }
+
+  @Override
+  public @NotNull ExtensionMode getExtensionMode() {
+    return ExtensionMode.Selected;
   }
 }

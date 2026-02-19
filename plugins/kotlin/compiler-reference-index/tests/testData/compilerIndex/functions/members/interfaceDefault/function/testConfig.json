@@ -1,0 +1,10 @@
+{
+    "mainFile": "KotlinInterface.kt",
+    "usages": [
+        "DefaultUsage.java",
+        "KotlinInterface.kt",
+        "TypeAliasUsage.kt",
+        "Usage.java",
+        "Usage.kt"
+    ]
+}

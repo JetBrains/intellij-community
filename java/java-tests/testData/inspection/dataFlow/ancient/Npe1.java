@@ -4,6 +4,6 @@ public class Npe {
       // Do something
     }
 
-    o.<warning descr="Method invocation 'equals' may produce 'NullPointerException'">equals</warning><error descr="'equals(java.lang.Object)' in 'java.lang.Object' cannot be applied to '()'">()</error>;
+    o.<warning descr="Method invocation 'equals' may produce 'NullPointerException'">equals</warning><error descr="Expected 1 argument but found 0">()</error>;
   }
 }

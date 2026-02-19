@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes.committed;
 
 import com.intellij.openapi.Disposable;
@@ -7,9 +7,10 @@ import com.intellij.openapi.ui.ThreeComponentsSplitter;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.SideBorder;
 
-import javax.swing.*;
+import javax.swing.JComponent;
+import javax.swing.JScrollPane;
 import javax.swing.border.Border;
-import java.awt.*;
+import java.awt.Dimension;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -26,7 +27,7 @@ public final class WiseSplitter implements Disposable {
     myRefresher = refresher;
     myParentSplitter = parentSplitter;
 
-    myInnerSplitter = new ThreeComponentsSplitter(this);
+    myInnerSplitter = new ThreeComponentsSplitter();
     myInnerSplitter.setHonorComponentsMinimumSize(true);
     myInnerSplitterContents = new HashMap<>();
     updateBorders();
@@ -67,7 +68,7 @@ public final class WiseSplitter implements Disposable {
   }
 
   private void updateBorders() {
-    boolean isEmpty = myInnerSplitterContents.size() == 0;
+    boolean isEmpty = myInnerSplitterContents.isEmpty();
     if (!isEmpty) {
       setBorder(myInnerSplitter.getFirstComponent(), true);
       setBorder(myInnerSplitter.getInnerComponent(), false);

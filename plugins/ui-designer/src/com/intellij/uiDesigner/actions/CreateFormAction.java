@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.uiDesigner.actions;
 
@@ -6,38 +6,47 @@ import com.intellij.ide.actions.TemplateKindCombo;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaDirectoryService;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiFileFactory;
+import com.intellij.psi.PsiPackage;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.uiDesigner.GuiDesignerConfiguration;
 import com.intellij.uiDesigner.GuiFormFileType;
 import com.intellij.uiDesigner.UIDesignerBundle;
+import com.intellij.uiDesigner.core.GridConstraints;
+import com.intellij.uiDesigner.core.GridLayoutManager;
 import com.intellij.uiDesigner.radComponents.LayoutManagerRegistry;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.PlatformIcons;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.AbstractButton;
+import javax.swing.JCheckBox;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JTextField;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import javax.swing.event.DocumentEvent;
+import java.awt.Dimension;
+import java.awt.Insets;
+import java.lang.reflect.Method;
+import java.util.ResourceBundle;
 
-/**
- * @author yole
- */
-public class CreateFormAction extends AbstractCreateFormAction {
+final class CreateFormAction extends AbstractCreateFormAction {
   private static final Logger LOG = Logger.getInstance(CreateFormAction.class);
 
   private String myLastClassName = null;
   private String myLastLayoutManager = null;
 
-  public CreateFormAction() {
-    super(UIDesignerBundle.messagePointer("action.gui.form.text"),
-          UIDesignerBundle.messagePointer("action.gui.form.description"), PlatformIcons.UI_FORM_ICON);
-  }
-
   @Override
-  protected PsiElement @NotNull [] invokeDialog(Project project, PsiDirectory directory) {
+  protected PsiElement @NotNull [] invokeDialog(@NotNull Project project, @NotNull PsiDirectory directory) {
     final MyInputValidator validator = new JavaNameValidator(project, directory);
 
     final DialogWrapper dialog = new MyDialog(project, validator);
@@ -47,7 +56,7 @@ public class CreateFormAction extends AbstractCreateFormAction {
   }
 
   @Override
-  protected PsiElement @NotNull [] create(@NotNull String newName, PsiDirectory directory) throws Exception {
+  protected PsiElement @NotNull [] create(@NotNull String newName, @NotNull PsiDirectory directory) throws Exception {
     PsiElement createdFile;
     PsiClass newClass = null;
     try {
@@ -56,12 +65,12 @@ public class CreateFormAction extends AbstractCreateFormAction {
       final String packageName = aPackage.getQualifiedName();
       String fqClassName = null;
       if (myLastClassName != null) {
-        fqClassName = packageName.length() == 0 ? myLastClassName : packageName + "." + myLastClassName;
+        fqClassName = packageName.isEmpty() ? myLastClassName : packageName + "." + myLastClassName;
       }
 
       final String formBody = createFormBody(fqClassName, "/com/intellij/uiDesigner/NewForm.xml",
                                              myLastLayoutManager);
-      @NonNls final String fileName = newName + ".form";
+      final @NonNls String fileName = newName + ".form";
       final PsiFile formFile = PsiFileFactory.getInstance(directory.getProject())
         .createFileFromText(fileName, GuiFormFileType.INSTANCE, formBody);
       createdFile = directory.add(formFile);
@@ -90,12 +99,12 @@ public class CreateFormAction extends AbstractCreateFormAction {
   }
 
   private class MyDialog extends DialogWrapper {
-    private JPanel myTopPanel;
-    private JTextField myFormNameTextField;
-    private JCheckBox myCreateBoundClassCheckbox;
-    private JTextField myClassNameTextField;
-    private TemplateKindCombo myBaseLayoutManagerCombo;
-    private JLabel myUpDownHintForm;
+    private final JPanel myTopPanel;
+    private final JTextField myFormNameTextField;
+    private final JCheckBox myCreateBoundClassCheckbox;
+    private final JTextField myClassNameTextField;
+    private final TemplateKindCombo myBaseLayoutManagerCombo;
+    private final JLabel myUpDownHintForm;
     private boolean myAdjusting = false;
     private boolean myNeedAdjust = true;
 
@@ -103,10 +112,67 @@ public class CreateFormAction extends AbstractCreateFormAction {
     private final MyInputValidator myValidator;
 
     MyDialog(final Project project,
-                    final MyInputValidator validator) {
+             final MyInputValidator validator) {
       super(project, true);
       myProject = project;
       myValidator = validator;
+      {
+        // GUI initializer generated by IntelliJ IDEA GUI Designer
+        // >>> IMPORTANT!! <<<
+        // DO NOT EDIT OR ADD ANY CODE HERE!
+        myTopPanel = new JPanel();
+        myTopPanel.setLayout(new GridLayoutManager(4, 3, new Insets(0, 0, 0, 0), -1, -1));
+        final JLabel label1 = new JLabel();
+        this.$$$loadLabelText$$$(label1, this.$$$getMessageFromBundle$$$("messages/UIDesignerBundle", "new.form.form.name.label"));
+        myTopPanel.add(label1, new GridConstraints(0, 0, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE,
+                                                   GridConstraints.SIZEPOLICY_FIXED, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0,
+                                                   false));
+        myFormNameTextField = new JTextField();
+        myTopPanel.add(myFormNameTextField, new GridConstraints(0, 1, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_HORIZONTAL,
+                                                                GridConstraints.SIZEPOLICY_WANT_GROW, GridConstraints.SIZEPOLICY_FIXED,
+                                                                null,
+                                                                new Dimension(150, -1), null, 0, false));
+        myCreateBoundClassCheckbox = new JCheckBox();
+        myCreateBoundClassCheckbox.setSelected(true);
+        this.$$$loadButtonText$$$(myCreateBoundClassCheckbox,
+                                  this.$$$getMessageFromBundle$$$("messages/UIDesignerBundle", "checkbox.create.bound.class"));
+        myTopPanel.add(myCreateBoundClassCheckbox, new GridConstraints(2, 0, 1, 2, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE,
+                                                                       GridConstraints.SIZEPOLICY_CAN_SHRINK |
+                                                                       GridConstraints.SIZEPOLICY_CAN_GROW,
+                                                                       GridConstraints.SIZEPOLICY_FIXED,
+                                                                       null, null, null, 0, false));
+        final JLabel label2 = new JLabel();
+        this.$$$loadLabelText$$$(label2, this.$$$getMessageFromBundle$$$("messages/UIDesignerBundle", "new.form.class.name.label"));
+        myTopPanel.add(label2, new GridConstraints(3, 0, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE,
+                                                   GridConstraints.SIZEPOLICY_FIXED, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 4,
+                                                   false));
+        myClassNameTextField = new JTextField();
+        myTopPanel.add(myClassNameTextField, new GridConstraints(3, 1, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_HORIZONTAL,
+                                                                 GridConstraints.SIZEPOLICY_WANT_GROW, GridConstraints.SIZEPOLICY_FIXED,
+                                                                 null,
+                                                                 new Dimension(150, -1), null, 0, false));
+        final JLabel label3 = new JLabel();
+        this.$$$loadLabelText$$$(label3,
+                                 this.$$$getMessageFromBundle$$$("messages/UIDesignerBundle", "new.form.base.layout.manager.label"));
+        myTopPanel.add(label3, new GridConstraints(1, 0, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE,
+                                                   GridConstraints.SIZEPOLICY_FIXED, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0,
+                                                   false));
+        myBaseLayoutManagerCombo = new TemplateKindCombo();
+        myTopPanel.add(myBaseLayoutManagerCombo,
+                       new GridConstraints(1, 1, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_HORIZONTAL,
+                                           GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_FIXED,
+                                           null, null, null, 0, false));
+        myUpDownHintForm = new JLabel();
+        myUpDownHintForm.setText("");
+        myUpDownHintForm.setToolTipText(this.$$$getMessageFromBundle$$$("messages/UIDesignerBundle",
+                                                                        "pressing.up.or.down.arrows.while.in.editor.changes.the.layout.manager"));
+        myTopPanel.add(myUpDownHintForm, new GridConstraints(0, 2, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE,
+                                                             GridConstraints.SIZEPOLICY_FIXED, GridConstraints.SIZEPOLICY_FIXED, null, null,
+                                                             null, 0, false));
+        label1.setLabelFor(myFormNameTextField);
+        label2.setLabelFor(myClassNameTextField);
+        label3.setLabelFor(myBaseLayoutManagerCombo);
+      }
       myBaseLayoutManagerCombo.registerUpDownHint(myFormNameTextField);
       myUpDownHintForm.setIcon(PlatformIcons.UP_DOWN_ARROWS);
       init();
@@ -123,7 +189,7 @@ public class CreateFormAction extends AbstractCreateFormAction {
       myFormNameTextField.getDocument().addDocumentListener(new DocumentAdapter() {
         @Override
         protected void textChanged(@NotNull DocumentEvent e) {
-          setOKActionEnabled(myFormNameTextField.getText().length() > 0);
+          setOKActionEnabled(!myFormNameTextField.getText().isEmpty());
           if (myNeedAdjust) {
             myAdjusting = true;
             myClassNameTextField.setText(myFormNameTextField.getText());
@@ -141,12 +207,84 @@ public class CreateFormAction extends AbstractCreateFormAction {
         }
       });
 
-      for (String layoutName: LayoutManagerRegistry.getNonDeprecatedLayoutManagerNames()) {
+      for (String layoutName : LayoutManagerRegistry.getNonDeprecatedLayoutManagerNames()) {
         String displayName = LayoutManagerRegistry.getLayoutManagerDisplayName(layoutName);
         myBaseLayoutManagerCombo.addItem(displayName, null, layoutName);
       }
       myBaseLayoutManagerCombo.setSelectedName(GuiDesignerConfiguration.getInstance(project).DEFAULT_LAYOUT_MANAGER);
     }
+
+    private static Method $$$cachedGetBundleMethod$$$ = null;
+
+    /** @noinspection ALL */
+    private String $$$getMessageFromBundle$$$(String path, String key) {
+      ResourceBundle bundle;
+      try {
+        Class<?> thisClass = this.getClass();
+        if ($$$cachedGetBundleMethod$$$ == null) {
+          Class<?> dynamicBundleClass = thisClass.getClassLoader().loadClass("com.intellij.DynamicBundle");
+          $$$cachedGetBundleMethod$$$ = dynamicBundleClass.getMethod("getBundle", String.class, Class.class);
+        }
+        bundle = (ResourceBundle)$$$cachedGetBundleMethod$$$.invoke(null, path, thisClass);
+      }
+      catch (Exception e) {
+        bundle = ResourceBundle.getBundle(path);
+      }
+      return bundle.getString(key);
+    }
+
+    /** @noinspection ALL */
+    private void $$$loadLabelText$$$(JLabel component, String text) {
+      StringBuffer result = new StringBuffer();
+      boolean haveMnemonic = false;
+      char mnemonic = '\0';
+      int mnemonicIndex = -1;
+      for (int i = 0; i < text.length(); i++) {
+        if (text.charAt(i) == '&') {
+          i++;
+          if (i == text.length()) break;
+          if (!haveMnemonic && text.charAt(i) != '&') {
+            haveMnemonic = true;
+            mnemonic = text.charAt(i);
+            mnemonicIndex = result.length();
+          }
+        }
+        result.append(text.charAt(i));
+      }
+      component.setText(result.toString());
+      if (haveMnemonic) {
+        component.setDisplayedMnemonic(mnemonic);
+        component.setDisplayedMnemonicIndex(mnemonicIndex);
+      }
+    }
+
+    /** @noinspection ALL */
+    private void $$$loadButtonText$$$(AbstractButton component, String text) {
+      StringBuffer result = new StringBuffer();
+      boolean haveMnemonic = false;
+      char mnemonic = '\0';
+      int mnemonicIndex = -1;
+      for (int i = 0; i < text.length(); i++) {
+        if (text.charAt(i) == '&') {
+          i++;
+          if (i == text.length()) break;
+          if (!haveMnemonic && text.charAt(i) != '&') {
+            haveMnemonic = true;
+            mnemonic = text.charAt(i);
+            mnemonicIndex = result.length();
+          }
+        }
+        result.append(text.charAt(i));
+      }
+      component.setText(result.toString());
+      if (haveMnemonic) {
+        component.setMnemonic(mnemonic);
+        component.setDisplayedMnemonicIndex(mnemonicIndex);
+      }
+    }
+
+    /** @noinspection ALL */
+    public JComponent $$$getRootComponent$$$() { return myTopPanel; }
 
     @Override
     protected JComponent createCenterPanel() {

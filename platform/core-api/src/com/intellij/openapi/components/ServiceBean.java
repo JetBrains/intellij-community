@@ -1,6 +1,7 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.components;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.PluginAware;
@@ -29,7 +30,7 @@ public final class ServiceBean implements PluginAware {
       }
       try {
         final Class<?> aClass = Class.forName(serviceClass, true, exportableBean.getPluginDescriptor().getPluginClassLoader());
-        final Object service = ServiceManager.getService(aClass);
+        final Object service = ApplicationManager.getApplication().getService(aClass);
         if (service == null) {
           LOG.error("Can't find service: " + serviceClass);
           continue;

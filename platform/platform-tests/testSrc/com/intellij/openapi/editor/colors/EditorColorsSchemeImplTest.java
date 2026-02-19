@@ -1,27 +1,41 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.colors;
 
 import com.intellij.codeHighlighting.RainbowHighlighter;
 import com.intellij.editor.EditorColorSchemeTestCase;
 import com.intellij.ide.ui.UISettings;
+import com.intellij.idea.TestFor;
 import com.intellij.lang.Language;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.DefaultLogger;
 import com.intellij.openapi.editor.DefaultLanguageHighlighterColors;
 import com.intellij.openapi.editor.colors.impl.AbstractColorsScheme;
 import com.intellij.openapi.editor.colors.impl.AppEditorFontOptions;
+import com.intellij.openapi.editor.colors.impl.EditorColorsManagerImpl;
 import com.intellij.openapi.editor.colors.impl.EditorColorsSchemeImpl;
 import com.intellij.openapi.editor.colors.impl.FontPreferencesImpl;
 import com.intellij.openapi.editor.markup.EffectType;
 import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.openapi.options.SchemeManager;
+import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.testFramework.ExpectedHighlightingData;
+import com.intellij.testFramework.TestLoggerKt;
+import com.intellij.util.ui.UIUtil;
 import org.assertj.core.api.Assertions;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
+import org.xml.sax.SAXException;
 
-import java.awt.*;
+import java.awt.Color;
+import java.awt.Font;
+import java.awt.GraphicsEnvironment;
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public class EditorColorsSchemeImplTest extends EditorColorSchemeTestCase {
   private EditorColorsSchemeImpl myScheme;
@@ -135,7 +149,7 @@ public class EditorColorsSchemeImplTest extends EditorColorSchemeTestCase {
     String fontName2 = FontPreferencesTest.getAnotherExistingNonDefaultFontName();
     myScheme.setEditorFontName(fontName1);
     myScheme.setConsoleFontName(fontName2);
-    int scaledSize = UISettings.restoreFontSize(FontPreferences.DEFAULT_FONT_SIZE, 1.0f);
+    float scaledSize = UISettings.restoreFontSize((float)FontPreferences.DEFAULT_FONT_SIZE, 1.0f);
 
     FontPreferencesTest.checkState(myScheme.getFontPreferences(),
                                    Collections.singletonList(fontName1),
@@ -143,14 +157,14 @@ public class EditorColorsSchemeImplTest extends EditorColorSchemeTestCase {
                                    fontName1,
                                    fontName1, scaledSize);
     assertEquals(fontName1, myScheme.getEditorFontName());
-    assertEquals(scaledSize, myScheme.getEditorFontSize());
+    assertEquals(scaledSize, myScheme.getEditorFontSize2D());
     FontPreferencesTest.checkState(myScheme.getConsoleFontPreferences(),
                                    Collections.singletonList(fontName2),
                                    Collections.singletonList(fontName2),
                                    fontName2,
                                    fontName2, scaledSize);
     assertEquals(fontName2, myScheme.getConsoleFontName());
-    assertEquals(scaledSize, myScheme.getConsoleFontSize());
+    assertEquals(scaledSize, myScheme.getConsoleFontSize2D());
   }
 
   public void testSetSize() {
@@ -221,24 +235,25 @@ public class EditorColorsSchemeImplTest extends EditorColorSchemeTestCase {
     assertEquals(21, myScheme.getConsoleFontSize());
   }
 
-  public void testWriteColorWithAlpha() throws Exception {
-    EditorColorsScheme defaultScheme = EditorColorsManager.getInstance().getScheme(EditorColorsScheme.DEFAULT_SCHEME_NAME);
+  public void testWriteColorWithAlpha() {
+    EditorColorsScheme defaultScheme = EditorColorsManager.getInstance().getScheme(EditorColorsScheme.getDefaultSchemeName());
     EditorColorsScheme scheme = (EditorColorsScheme)defaultScheme.clone();
     scheme.setName("test");
     scheme.setColor(ColorKey.createColorKey("BASE_COLOR"), new Color(0x80, 0x81, 0x82));
     scheme.setColor(ColorKey.createColorKey("ALPHA_COLOR"), new Color(0x80, 0x81, 0x82, 0x83));
     EditorColorSchemeTestCase.assertXmlOutputEquals(
-      "<scheme name=\"test\" version=\"142\" parent_scheme=\"Default\">\n" +
-      "  <colors>\n" +
-      "    <option name=\"ALPHA_COLOR\" value=\"80818283\" />\n" +
-      "    <option name=\"BASE_COLOR\" value=\"808182\" />\n" +
-      "  </colors>\n" +
-      "</scheme>",
+      """
+        <scheme name="test" version="142" parent_scheme="Default">
+          <colors>
+            <option name="ALPHA_COLOR" value="80818283" />
+            <option name="BASE_COLOR" value="808182" />
+          </colors>
+        </scheme>""",
       serialize(scheme));
   }
 
-  public void testWriteInheritedFromDefault() throws Exception {
-    EditorColorsScheme defaultScheme = EditorColorsManager.getInstance().getScheme(EditorColorsScheme.DEFAULT_SCHEME_NAME);
+  public void testWriteInheritedFromDefault() {
+    EditorColorsScheme defaultScheme = EditorColorsManager.getInstance().getScheme(EditorColorsScheme.getDefaultSchemeName());
     EditorColorsScheme editorColorsScheme = (EditorColorsScheme)defaultScheme.clone();
     editorColorsScheme.setName("test");
     EditorColorSchemeTestCase.assertXmlOutputEquals(
@@ -250,15 +265,16 @@ public class EditorColorsSchemeImplTest extends EditorColorSchemeTestCase {
     editorColorsScheme.setConsoleFontName(fontName);
     editorColorsScheme.setConsoleFontSize(10);
     EditorColorSchemeTestCase.assertXmlOutputEquals(
-      "<scheme name=\"test\" version=\"142\" parent_scheme=\"Default\">\n" +
-      "  <option name=\"CONSOLE_FONT_NAME\" value=\"Test\" />\n" +
-      "  <option name=\"CONSOLE_FONT_SIZE\" value=\"10\" />\n" +
-      "  <option name=\"CONSOLE_LINE_SPACING\" value=\"1.2\" />\n" +
-      "</scheme>",
+      """
+        <scheme name="test" version="142" parent_scheme="Default">
+          <option name="CONSOLE_FONT_NAME" value="Test" />
+          <option name="CONSOLE_FONT_SIZE" value="10" />
+          <option name="CONSOLE_LINE_SPACING" value="1.2" />
+        </scheme>""",
       serialize(editorColorsScheme));
   }
 
-  public void testWriteInheritedFromDarcula() throws Exception {
+  public void testWriteInheritedFromDarcula() {
     EditorColorsScheme darculaScheme = EditorColorsManager.getInstance().getScheme("Darcula");
     EditorColorsScheme editorColorsScheme = (EditorColorsScheme)darculaScheme.clone();
     editorColorsScheme.setName("test");
@@ -275,12 +291,13 @@ public class EditorColorsSchemeImplTest extends EditorColorSchemeTestCase {
   }
 
   public void testSaveNoInheritanceAndDefaults() {
-    EditorColorsScheme defaultScheme = EditorColorsManager.getInstance().getScheme(EditorColorsScheme.DEFAULT_SCHEME_NAME);
+    EditorColorsScheme defaultScheme = EditorColorsManager.getInstance().getScheme(EditorColorsScheme.getDefaultSchemeName());
     TextAttributes declarationAttrs = defaultScheme.getAttributes(DefaultLanguageHighlighterColors.IDENTIFIER).clone();
     assertEquals(DefaultLanguageHighlighterColors.IDENTIFIER, DefaultLanguageHighlighterColors.FUNCTION_DECLARATION.getFallbackAttributeKey());
     Pair<EditorColorsScheme, TextAttributes> result = doTestWriteRead(DefaultLanguageHighlighterColors.FUNCTION_DECLARATION, declarationAttrs);
     TextAttributes fallbackAttrs = result.first.getAttributes(DefaultLanguageHighlighterColors.FUNCTION_DECLARATION.getFallbackAttributeKey());
-    Assertions.assertThat(result.second).isEqualTo(fallbackAttrs);
+    Assertions.assertThat(result.second).isNotSameAs(fallbackAttrs);
+    Assertions.assertThat(ExpectedHighlightingData.sameTextAttributesByValue(result.second, fallbackAttrs)).isTrue();
   }
 
   public void testSaveInheritanceForEmptyAttrs() {
@@ -298,16 +315,15 @@ public class EditorColorsSchemeImplTest extends EditorColorSchemeTestCase {
     assertNotNull(fallbackKey);
 
     EditorColorsScheme scheme = EditorColorSchemeTestCase.loadScheme(
-      "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
-      "<scheme name=\"Test\" version=\"141\" parent_scheme=\"Default\">\n" +
-      "<attributes>" +
-      "   <option name=\"TEXT\">\n" +
-      "      <value>\n" +
-      "           option name=\"FOREGROUND\" value=\"ffaaaa\" />\n" +
-      "      </value>\n" +
-      "   </option>" +
-      "</attributes>" +
-      "</scheme>\n"
+      """
+        <?xml version="1.0" encoding="UTF-8"?>
+        <scheme name="Test" version="141" parent_scheme="Default">
+        <attributes>   <option name="TEXT">
+              <value>
+                   option name="FOREGROUND" value="ffaaaa" />
+              </value>
+           </option></attributes></scheme>
+        """
     );
 
     TextAttributes constAttrs = scheme.getAttributes(constKey);
@@ -321,7 +337,8 @@ public class EditorColorsSchemeImplTest extends EditorColorSchemeTestCase {
   }
 
   public void testPreventCyclicTextAttributeDependency() {
-    EditorColorsScheme defaultScheme = EditorColorsManager.getInstance().getScheme(EditorColorsScheme.DEFAULT_SCHEME_NAME);
+    DefaultLogger.disableStderrDumping(getTestRootDisposable());
+    EditorColorsScheme defaultScheme = EditorColorsManager.getInstance().getScheme(EditorColorsScheme.getDefaultSchemeName());
     EditorColorsScheme editorColorsScheme = (EditorColorsScheme)defaultScheme.clone();
     editorColorsScheme.setName("test");
     TextAttributesKey keyD = TextAttributesKey.createTextAttributesKey("D");
@@ -334,7 +351,7 @@ public class EditorColorsSchemeImplTest extends EditorColorSchemeTestCase {
     }
     catch (IllegalArgumentException e) {
       String s = e.getMessage();
-      assertTrue(s.contains("B->C->D"));
+      assertTrue(s, s.matches(".*B.*->C.*->.*D.*"));
 
       try {
         editorColorsScheme.getAttributes(keyA);
@@ -351,26 +368,29 @@ public class EditorColorsSchemeImplTest extends EditorColorSchemeTestCase {
     }
   }
 
-  public void testMustNotBePossibleToRegisterTextAttributeKeysWithDifferentFallBacks() {
-    TextAttributesKey keyB = TextAttributesKey.createTextAttributesKey("B");
-    TextAttributesKey keyD = TextAttributesKey.createTextAttributesKey("D");
-    TextAttributesKey keyC = TextAttributesKey.createTextAttributesKey("C", keyD);
-    try {
-      keyC = TextAttributesKey.createTextAttributesKey(keyC.getExternalName(), keyB);
-      fail("Must fail");
-    }
-    catch (IllegalStateException | AssertionError e) {
-      assertTrue(e.getMessage().contains("already registered"));
-    }
-    finally {
-      TextAttributesKey.removeTextAttributesKey(keyB.getExternalName());
-      TextAttributesKey.removeTextAttributesKey(keyC.getExternalName());
-      TextAttributesKey.removeTextAttributesKey(keyD.getExternalName());
-    }
+  public void testMustNotBePossibleToRegisterTextAttributeKeysWithDifferentFallBacks() throws Exception {
+    DefaultLogger.disableStderrDumping(getTestRootDisposable());
+    TestLoggerKt.rethrowLoggedErrorsIn(() -> {
+      TextAttributesKey keyB = TextAttributesKey.createTextAttributesKey("B");
+      TextAttributesKey keyD = TextAttributesKey.createTextAttributesKey("D");
+      TextAttributesKey keyC = TextAttributesKey.createTextAttributesKey("C", keyD);
+      try {
+        keyC = TextAttributesKey.createTextAttributesKey(keyC.getExternalName(), keyB);
+        fail("Must fail");
+      }
+      catch (IllegalStateException | AssertionError e) {
+        assertTrue(e.getMessage().contains("already registered"));
+      }
+      finally {
+        TextAttributesKey.removeTextAttributesKey(keyB.getExternalName());
+        TextAttributesKey.removeTextAttributesKey(keyC.getExternalName());
+        TextAttributesKey.removeTextAttributesKey(keyD.getExternalName());
+      }
+    });
   }
 
   public void testIdea152156() {
-    EditorColorsScheme defaultScheme = EditorColorsManager.getInstance().getScheme(EditorColorsScheme.DEFAULT_SCHEME_NAME);
+    EditorColorsScheme defaultScheme = EditorColorsManager.getInstance().getScheme(EditorColorsScheme.getDefaultSchemeName());
     EditorColorsScheme parentScheme = (EditorColorsScheme)defaultScheme.clone();
     parentScheme.setName("DefaultTest");
     AbstractColorsScheme editorColorsScheme = new EditorColorsSchemeImpl(parentScheme);
@@ -389,26 +409,57 @@ public class EditorColorsSchemeImplTest extends EditorColorSchemeTestCase {
         }
       }
       TextAttributes targetAttributes = targetScheme.getDirectlyDefinedAttributes(testKey);
-      assertTrue(targetAttributes == AbstractColorsScheme.INHERITED_ATTRS_MARKER);
+      assertSame(AbstractColorsScheme.INHERITED_ATTRS_MARKER, targetAttributes);
     }
     finally {
       TextAttributesKey.removeTextAttributesKey(testKey.getExternalName());
     }
   }
 
-  public void testWriteDefaultSemanticHighlighting() throws Exception {
-    EditorColorsScheme defaultScheme = EditorColorsManager.getInstance().getScheme(EditorColorsScheme.DEFAULT_SCHEME_NAME);
+  @TestFor(issues = "IJPL-26971")
+  public void testTransparencyHexPadding() {
+    // Opacity gets stored in color schemes without padding.
+    var testColor = new Color(0x88, 0x99, 0xAA, 0x01);
+    ensureColorRoundTrips(testColor);
+  }
+
+  @TestFor(issues = "IJPL-26971")
+  public void testColorZeroPadding() {
+    // Another consequence of IJPL-26971: the color components also lose paddings, which would break if the opacity component is not FF.
+    var testColor = new Color(0x00, 0x99, 0xAA, 0x00);
+    ensureColorRoundTrips(testColor);
+  }
+
+  private static void ensureColorRoundTrips(Color color) {
+    var defaultScheme = EditorColorsManager.getInstance().getScheme(EditorColorsScheme.getDefaultSchemeName());
+    var parentScheme = (EditorColorsScheme)defaultScheme.clone();
+    var editorColorsScheme = new EditorColorsSchemeImpl(parentScheme);
+    editorColorsScheme.setName("testEditorColorsScheme");
+
+    var testColorKey = ColorKey.createColorKey("testColorKey");
+    editorColorsScheme.setColor(testColorKey, color);
+
+    var root = new Element("scheme");
+    editorColorsScheme.writeExternal(root);
+    var targetScheme = new EditorColorsSchemeImpl(parentScheme);
+    targetScheme.readExternal(root);
+    var targetColor = targetScheme.getColor(testColorKey);
+    assertEquals(color, targetColor);
+  }
+
+  public void testWriteDefaultSemanticHighlighting() {
+    EditorColorsScheme defaultScheme = EditorColorsManager.getInstance().getScheme(EditorColorsScheme.getDefaultSchemeName());
     EditorColorsScheme editorColorsScheme = (EditorColorsScheme)defaultScheme.clone();
     editorColorsScheme.setName("rainbow");
 
     final String BEGIN =
-      "<scheme name=\"rainbow\" version=\"142\" parent_scheme=\"Default\">\n" +
-      "  <metaInfo>\n" +
-      "    <property name=\"created\" />\n" +
-      "    <property name=\"ide\" />\n" +
-      "    <property name=\"ideVersion\" />\n" +
-      "    <property name=\"modified\" />\n" +
-      "    <property name=\"originalScheme\" />\n";
+      """
+        <scheme name="rainbow" version="142" parent_scheme="Default">
+          <metaInfo>
+            <property name="ide" />
+            <property name="ideVersion" />
+            <property name="originalScheme" />
+        """;
     final String END =
       "  </metaInfo>\n" +
       "</scheme>";
@@ -416,7 +467,7 @@ public class EditorColorsSchemeImplTest extends EditorColorSchemeTestCase {
     boolean nonDefaultRainbow = !RainbowHighlighter.DEFAULT_RAINBOW_ON;
 
     RainbowHighlighter.setRainbowEnabled(editorColorsScheme, null, nonDefaultRainbow);
-    assertTrue(RainbowHighlighter.isRainbowEnabled(editorColorsScheme, null) == nonDefaultRainbow);
+    assertEquals(nonDefaultRainbow, (boolean)RainbowHighlighter.isRainbowEnabled(editorColorsScheme, null));
     EditorColorSchemeTestCase.assertXmlOutputEquals(
       BEGIN +
       "    <property name=\"rainbow Default language\">" + nonDefaultRainbow + "</property>\n" +
@@ -424,7 +475,7 @@ public class EditorColorsSchemeImplTest extends EditorColorSchemeTestCase {
       serializeWithFixedMeta(editorColorsScheme));
 
     RainbowHighlighter.setRainbowEnabled(editorColorsScheme, Language.ANY, nonDefaultRainbow);
-    assertTrue(RainbowHighlighter.isRainbowEnabled(editorColorsScheme, Language.ANY) == nonDefaultRainbow);
+    assertEquals(nonDefaultRainbow, (boolean)RainbowHighlighter.isRainbowEnabled(editorColorsScheme, Language.ANY));
     EditorColorSchemeTestCase.assertXmlOutputEquals(
       BEGIN +
       "    <property name=\"rainbow " + Language.ANY.getID() + "\">" + nonDefaultRainbow + "</property>\n" +
@@ -434,7 +485,7 @@ public class EditorColorsSchemeImplTest extends EditorColorSchemeTestCase {
 
     RainbowHighlighter.setRainbowEnabled(editorColorsScheme, Language.ANY, null);
     assertNull(RainbowHighlighter.isRainbowEnabled(editorColorsScheme, Language.ANY));
-    assertTrue(RainbowHighlighter.isRainbowEnabledWithInheritance(editorColorsScheme, Language.ANY) == nonDefaultRainbow);
+    assertEquals(nonDefaultRainbow, RainbowHighlighter.isRainbowEnabledWithInheritance(editorColorsScheme, Language.ANY));
     EditorColorSchemeTestCase.assertXmlOutputEquals(
       BEGIN +
       "    <property name=\"rainbow Default language\">" + nonDefaultRainbow + "</property>\n" +
@@ -442,15 +493,17 @@ public class EditorColorsSchemeImplTest extends EditorColorSchemeTestCase {
       serializeWithFixedMeta(editorColorsScheme));
 
     RainbowHighlighter.setRainbowEnabled(editorColorsScheme, null, RainbowHighlighter.DEFAULT_RAINBOW_ON);
-    assertTrue(RainbowHighlighter.isRainbowEnabledWithInheritance(editorColorsScheme, null) == RainbowHighlighter.DEFAULT_RAINBOW_ON);
-    assertTrue(RainbowHighlighter.isRainbowEnabledWithInheritance(editorColorsScheme, Language.ANY) == RainbowHighlighter.DEFAULT_RAINBOW_ON);
+    assertEquals((boolean)RainbowHighlighter.DEFAULT_RAINBOW_ON,
+                 RainbowHighlighter.isRainbowEnabledWithInheritance(editorColorsScheme, null));
+    assertEquals((boolean)RainbowHighlighter.DEFAULT_RAINBOW_ON,
+                 RainbowHighlighter.isRainbowEnabledWithInheritance(editorColorsScheme, Language.ANY));
     EditorColorSchemeTestCase.assertXmlOutputEquals(
       BEGIN + END,
       serializeWithFixedMeta(editorColorsScheme));
   }
 
   public void testSettingsEqual() {
-    EditorColorsScheme defaultScheme = EditorColorsManager.getInstance().getScheme(EditorColorsScheme.DEFAULT_SCHEME_NAME);
+    EditorColorsScheme defaultScheme = EditorColorsManager.getInstance().getScheme(EditorColorsScheme.getDefaultSchemeName());
     AbstractColorsScheme editorColorsScheme = (AbstractColorsScheme)defaultScheme.clone();
     editorColorsScheme.setName("Test");
     editorColorsScheme.setColor(EditorColors.TEARLINE_COLOR, new Color(255, 0, 0));
@@ -499,131 +552,132 @@ public class EditorColorsSchemeImplTest extends EditorColorSchemeTestCase {
   public void testOptimizeAttributes() throws Exception {
     TextAttributesKey staticFieldKey = TextAttributesKey.createTextAttributesKey("STATIC_FIELD_ATTRIBUTES");
     AbstractColorsScheme editorColorsScheme = (AbstractColorsScheme)EditorColorSchemeTestCase.loadScheme(
-      "<scheme name=\"IdeaLight\" version=\"142\" parent_scheme=\"Default\">\n" +
-      "  <colors>\n" +
-      "    <option name=\"CARET_ROW_COLOR\" value=\"f5f5f5\" />\n" +
-      "    <option name=\"CONSOLE_BACKGROUND_KEY\" value=\"fdfdfd\" />\n" +
-      "  </colors>\n" +
-      "  <attributes>\n" +
-      "    <option name=\"DEFAULT_ATTRIBUTE\">\n" +
-      "      <value>\n" +
-      "        <option name=\"FOREGROUND\" value=\"4c4fa1\" />\n" +
-      "        <option name=\"FONT_TYPE\" value=\"1\" />\n" +
-      "      </value>\n" +
-      "    </option>\n" +
-      "    <option name=\"DEFAULT_CLASS_NAME\">\n" +
-      "      <value>\n" +
-      "        <option name=\"FOREGROUND\" value=\"906f5d\" />\n" +
-      "      </value>\n" +
-      "    </option>\n" +
-      "    <option name=\"DEFAULT_CONSTANT\">\n" +
-      "      <value>\n" +
-      "        <option name=\"FOREGROUND\" value=\"776186\" />\n" +
-      "        <option name=\"FONT_TYPE\" value=\"3\" />\n" +
-      "      </value>\n" +
-      "    </option>\n" +
-      "    <option name=\"DEFAULT_FUNCTION_DECLARATION\">\n" +
-      "      <value>\n" +
-      "        <option name=\"FOREGROUND\" value=\"707070\" />\n" +
-      "      </value>\n" +
-      "    </option>\n" +
-      "    <option name=\"DEFAULT_GLOBAL_VARIABLE\">\n" +
-      "      <value>\n" +
-      "        <option name=\"FOREGROUND\" value=\"6e6cc2\" />\n" +
-      "        <option name=\"FONT_TYPE\" value=\"1\" />\n" +
-      "      </value>\n" +
-      "    </option>\n" +
-      "    <option name=\"DEFAULT_IDENTIFIER\">\n" +
-      "      <value>\n" +
-      "        <option name=\"FOREGROUND\" value=\"707070\" />\n" +
-      "      </value>\n" +
-      "    </option>\n" +
-      "    <option name=\"DEFAULT_INSTANCE_FIELD\">\n" +
-      "      <value>\n" +
-      "        <option name=\"FOREGROUND\" value=\"776186\" />\n" +
-      "      </value>\n" +
-      "    </option>\n" +
-      "    <option name=\"DEFAULT_INTERFACE_NAME\">\n" +
-      "      <value>\n" +
-      "        <option name=\"FOREGROUND\" value=\"906f5d\" />\n" +
-      "        <option name=\"FONT_TYPE\" value=\"2\" />\n" +
-      "      </value>\n" +
-      "    </option>\n" +
-      "    <option name=\"DEFAULT_KEYWORD\">\n" +
-      "      <value>\n" +
-      "        <option name=\"FOREGROUND\" value=\"707070\" />\n" +
-      "        <option name=\"FONT_TYPE\" value=\"1\" />\n" +
-      "      </value>\n" +
-      "    </option>\n" +
-      "    <option name=\"DEFAULT_LOCAL_VARIABLE\">\n" +
-      "      <value>\n" +
-      "        <option name=\"FOREGROUND\" value=\"6f8374\" />\n" +
-      "      </value>\n" +
-      "    </option>\n" +
-      "    <option name=\"DEFAULT_METADATA\">\n" +
-      "      <value>\n" +
-      "        <option name=\"FOREGROUND\" value=\"989800\" />\n" +
-      "      </value>\n" +
-      "    </option>\n" +
-      "    <option name=\"DEFAULT_NUMBER\">\n" +
-      "      <value>\n" +
-      "        <option name=\"FOREGROUND\" value=\"8281e8\" />\n" +
-      "      </value>\n" +
-      "    </option>\n" +
-      "    <option name=\"DEFAULT_OPERATION_SIGN\">\n" +
-      "      <value>\n" +
-      "        <option name=\"FOREGROUND\" value=\"9587a4\" />\n" +
-      "      </value>\n" +
-      "    </option>\n" +
-      "    <option name=\"DEFAULT_PARAMETER\">\n" +
-      "      <value>\n" +
-      "        <option name=\"FOREGROUND\" value=\"a05f72\" />\n" +
-      "      </value>\n" +
-      "    </option>\n" +
-      "    <option name=\"DEFAULT_PARENTHS\">\n" +
-      "      <value>\n" +
-      "        <option name=\"FOREGROUND\" value=\"7e7e7e\" />\n" +
-      "      </value>\n" +
-      "    </option>\n" +
-      "    <option name=\"DEFAULT_PREDEFINED_SYMBOL\">\n" +
-      "      <value>\n" +
-      "        <option name=\"FOREGROUND\" value=\"ab8381\" />\n" +
-      "        <option name=\"FONT_TYPE\" value=\"2\" />\n" +
-      "      </value>\n" +
-      "    </option>\n" +
-      "    <option name=\"DEFAULT_SEMICOLON\">\n" +
-      "      <value>\n" +
-      "        <option name=\"FOREGROUND\" value=\"9587a4\" />\n" +
-      "      </value>\n" +
-      "    </option>\n" +
-      "    <option name=\"DEFAULT_STATIC_FIELD\">\n" +
-      "      <value>\n" +
-      "        <option name=\"FOREGROUND\" value=\"776186\" />\n" +
-      "        <option name=\"FONT_TYPE\" value=\"2\" />\n" +
-      "      </value>\n" +
-      "    </option>\n" +
-      "    <option name=\"DEFAULT_STATIC_METHOD\">\n" +
-      "      <value>\n" +
-      "        <option name=\"FOREGROUND\" value=\"707070\" />\n" +
-      "        <option name=\"FONT_TYPE\" value=\"2\" />\n" +
-      "      </value>\n" +
-      "    </option>\n" +
-      "    <option name=\"DEFAULT_STRING\">\n" +
-      "      <value>\n" +
-      "        <option name=\"FOREGROUND\" value=\"58806b\" />\n" +
-      "      </value>\n" +
-      "    </option>\n" +
-      "    <option name=\"INSTANCE_FIELD_ATTRIBUTES\" baseAttributes=\"DEFAULT_INSTANCE_FIELD\" />\n" +
-      "    <option name=\"STATIC_FIELD_ATTRIBUTES\" baseAttributes=\"DEFAULT_STATIC_FIELD\" />\n" +
-      "    <option name=\"STATIC_FINAL_FIELD_ATTRIBUTES\" baseAttributes=\"STATIC_FIELD_ATTRIBUTES\" />\n" +
-      "    <option name=\"TEXT\">\n" +
-      "      <value>\n" +
-      "        <option name=\"FOREGROUND\" value=\"141414\" />\n" +
-      "        <option name=\"BACKGROUND\" value=\"fbfbfb\" />\n" +
-      "      </value>\n" +
-      "    </option>\n" +
-      "  </attributes>\n" +
-      "</scheme>"
+      """
+        <scheme name="IdeaLight" version="142" parent_scheme="Default">
+          <colors>
+            <option name="CARET_ROW_COLOR" value="f5f5f5" />
+            <option name="CONSOLE_BACKGROUND_KEY" value="fdfdfd" />
+          </colors>
+          <attributes>
+            <option name="DEFAULT_ATTRIBUTE">
+              <value>
+                <option name="FOREGROUND" value="4c4fa1" />
+                <option name="FONT_TYPE" value="1" />
+              </value>
+            </option>
+            <option name="DEFAULT_CLASS_NAME">
+              <value>
+                <option name="FOREGROUND" value="906f5d" />
+              </value>
+            </option>
+            <option name="DEFAULT_CONSTANT">
+              <value>
+                <option name="FOREGROUND" value="776186" />
+                <option name="FONT_TYPE" value="3" />
+              </value>
+            </option>
+            <option name="DEFAULT_FUNCTION_DECLARATION">
+              <value>
+                <option name="FOREGROUND" value="707070" />
+              </value>
+            </option>
+            <option name="DEFAULT_GLOBAL_VARIABLE">
+              <value>
+                <option name="FOREGROUND" value="6e6cc2" />
+                <option name="FONT_TYPE" value="1" />
+              </value>
+            </option>
+            <option name="DEFAULT_IDENTIFIER">
+              <value>
+                <option name="FOREGROUND" value="707070" />
+              </value>
+            </option>
+            <option name="DEFAULT_INSTANCE_FIELD">
+              <value>
+                <option name="FOREGROUND" value="776186" />
+              </value>
+            </option>
+            <option name="DEFAULT_INTERFACE_NAME">
+              <value>
+                <option name="FOREGROUND" value="906f5d" />
+                <option name="FONT_TYPE" value="2" />
+              </value>
+            </option>
+            <option name="DEFAULT_KEYWORD">
+              <value>
+                <option name="FOREGROUND" value="707070" />
+                <option name="FONT_TYPE" value="1" />
+              </value>
+            </option>
+            <option name="DEFAULT_LOCAL_VARIABLE">
+              <value>
+                <option name="FOREGROUND" value="6f8374" />
+              </value>
+            </option>
+            <option name="DEFAULT_METADATA">
+              <value>
+                <option name="FOREGROUND" value="989800" />
+              </value>
+            </option>
+            <option name="DEFAULT_NUMBER">
+              <value>
+                <option name="FOREGROUND" value="8281e8" />
+              </value>
+            </option>
+            <option name="DEFAULT_OPERATION_SIGN">
+              <value>
+                <option name="FOREGROUND" value="9587a4" />
+              </value>
+            </option>
+            <option name="DEFAULT_PARAMETER">
+              <value>
+                <option name="FOREGROUND" value="a05f72" />
+              </value>
+            </option>
+            <option name="DEFAULT_PARENTHS">
+              <value>
+                <option name="FOREGROUND" value="7e7e7e" />
+              </value>
+            </option>
+            <option name="DEFAULT_PREDEFINED_SYMBOL">
+              <value>
+                <option name="FOREGROUND" value="ab8381" />
+                <option name="FONT_TYPE" value="2" />
+              </value>
+            </option>
+            <option name="DEFAULT_SEMICOLON">
+              <value>
+                <option name="FOREGROUND" value="9587a4" />
+              </value>
+            </option>
+            <option name="DEFAULT_STATIC_FIELD">
+              <value>
+                <option name="FOREGROUND" value="776186" />
+                <option name="FONT_TYPE" value="2" />
+              </value>
+            </option>
+            <option name="DEFAULT_STATIC_METHOD">
+              <value>
+                <option name="FOREGROUND" value="707070" />
+                <option name="FONT_TYPE" value="2" />
+              </value>
+            </option>
+            <option name="DEFAULT_STRING">
+              <value>
+                <option name="FOREGROUND" value="58806b" />
+              </value>
+            </option>
+            <option name="INSTANCE_FIELD_ATTRIBUTES" baseAttributes="DEFAULT_INSTANCE_FIELD" />
+            <option name="STATIC_FIELD_ATTRIBUTES" baseAttributes="DEFAULT_STATIC_FIELD" />
+            <option name="STATIC_FINAL_FIELD_ATTRIBUTES" baseAttributes="STATIC_FIELD_ATTRIBUTES" />
+            <option name="TEXT">
+              <value>
+                <option name="FOREGROUND" value="141414" />
+                <option name="BACKGROUND" value="fbfbfb" />
+              </value>
+            </option>
+          </attributes>
+        </scheme>"""
     );
     editorColorsScheme.optimizeAttributeMap();
     //
@@ -637,12 +691,12 @@ public class EditorColorsSchemeImplTest extends EditorColorSchemeTestCase {
     TextAttributesKey TEST_KEY = TextAttributesKey.createTextAttributesKey("TEST_ATTRIBUTE_KEY", DefaultLanguageHighlighterColors.KEYWORD);
     try {
       AbstractColorsScheme editorColorsScheme = (AbstractColorsScheme)EditorColorSchemeTestCase.loadScheme(
-        "<scheme name=\"Super Scheme\" parent_scheme=\"Darcula\" version=\"1\">\n" +
-        "  <attributes>\n" +
-        "    <option name=\"DEFAULT_KEYWORD\" baseAttributes=\"TEXT\" />\n" +
-        "    <option name=\"TEST_ATTRIBUTE_KEY\" baseAttributes=\"TEXT\" />\n" +
-        "  </attributes>" +
-        "</scheme>");
+        """
+          <scheme name="Super Scheme" parent_scheme="Darcula" version="1">
+            <attributes>
+              <option name="DEFAULT_KEYWORD" baseAttributes="TEXT" />
+              <option name="TEST_ATTRIBUTE_KEY" baseAttributes="TEXT" />
+            </attributes></scheme>""");
       TextAttributes originalAttributes = editorColorsScheme.getAttributes(TEST_KEY);
 
       Element dumpedDom = editorColorsScheme.writeScheme();
@@ -656,7 +710,7 @@ public class EditorColorsSchemeImplTest extends EditorColorSchemeTestCase {
   }
 
   public void testIdea188308() {
-    EditorColorsScheme defaultScheme = EditorColorsManager.getInstance().getScheme(EditorColorsScheme.DEFAULT_SCHEME_NAME);
+    EditorColorsScheme defaultScheme = EditorColorsManager.getInstance().getScheme(EditorColorsScheme.getDefaultSchemeName());
     EditorColorsScheme initialScheme = (EditorColorsScheme)defaultScheme.clone();
     initialScheme.setLineSpacing(1.2f);
     initialScheme.setConsoleLineSpacing(1.0f);
@@ -672,7 +726,7 @@ public class EditorColorsSchemeImplTest extends EditorColorSchemeTestCase {
     float currSpacing = appPrefs.getLineSpacing();
     try {
       appPrefs.setLineSpacing(1.2f);
-      EditorColorsScheme defaultScheme = EditorColorsManager.getInstance().getScheme(EditorColorsScheme.DEFAULT_SCHEME_NAME);
+      EditorColorsScheme defaultScheme = EditorColorsManager.getInstance().getScheme(EditorColorsScheme.getDefaultSchemeName());
       EditorColorsScheme initialScheme = (EditorColorsScheme)defaultScheme.clone();
       initialScheme.setConsoleLineSpacing(1.0f);
       assertFalse(appPrefs.getLineSpacing() == initialScheme.getConsoleLineSpacing());
@@ -691,9 +745,114 @@ public class EditorColorsSchemeImplTest extends EditorColorSchemeTestCase {
   }
 
   public void testEa124005() {
-    EditorColorsScheme defaultScheme = EditorColorsManager.getInstance().getScheme(EditorColorsScheme.DEFAULT_SCHEME_NAME);
+    EditorColorsScheme defaultScheme = EditorColorsManager.getInstance().getScheme(EditorColorsScheme.getDefaultSchemeName());
     EditorColorsScheme editorColorsScheme = (EditorColorsScheme)defaultScheme.clone();
     editorColorsScheme.setColor(EditorColors.LINE_NUMBERS_COLOR, null);
     editorColorsScheme.setColor(EditorColors.LINE_NUMBERS_COLOR, new Color(255, 0, 0));
+  }
+
+  /**
+   * Previously saved schemes containing no "partialSave" attribute are considered to be valid and complete.
+   */
+  public void testMissingBundledSchemeNoException() throws Exception{
+    AbstractColorsScheme editorColorsScheme = (AbstractColorsScheme)EditorColorSchemeTestCase.loadScheme(
+      """
+        <scheme name="_@user_NonExistentBundled" version="142" parent_scheme="Darcula">
+          <metaInfo>
+            <property name="originalScheme">NonExistentBundled</property>
+          </metaInfo>
+          <attributes>
+            <option name="TEXT">
+              <value>
+                <option name="FOREGROUND" value="fcfcfa" />
+                <option name="BACKGROUND" value="261b28" />
+                <option name="EFFECT_TYPE" value="5" />
+              </value>
+            </option>
+          </attributes>
+        </scheme>
+        """
+    );
+    EditorColorsManager.getInstance().resolveSchemeParent(editorColorsScheme);
+  }
+
+  public void testMissingBundledSchemeError() throws Exception{
+    AbstractColorsScheme editorColorsScheme = (AbstractColorsScheme)EditorColorSchemeTestCase.loadScheme(
+      """
+        <scheme name="_@user_NonExistentBundled" version="142" parent_scheme="Darcula">
+          <metaInfo>
+            <property name="originalScheme">NonExistentBundled</property>
+            <property name="partialSave">true</property>
+          </metaInfo>
+          <attributes>
+            <option name="TEXT">
+              <value>
+                <option name="FOREGROUND" value="fcfcfa" />
+                <option name="BACKGROUND" value="261b28" />
+                <option name="EFFECT_TYPE" value="5" />
+              </value>
+            </option>
+          </attributes>
+        </scheme>
+        """
+    );
+    String exceptionMessage = null;
+    try {
+      EditorColorsManager.getInstance().resolveSchemeParent(editorColorsScheme);
+    }
+    catch (InvalidDataException ex) {
+      exceptionMessage = ex.getMessage();
+    }
+    assertEquals("NonExistentBundled", exceptionMessage);
+  }
+
+  @TestFor(issues = "IJPL-148477")
+  public void testAnnounceEditableCopy() throws IOException, SAXException, InterruptedException {
+    final String fontName = FontPreferencesTest.getExistingNonDefaultFontName();
+    EditorColorsScheme userScheme = EditorColorSchemeTestCase.loadScheme(
+      "<scheme name=\"_@user_Default\" version=\"142\" parent_scheme=\"Default\">\n" +
+      "  <option name=\"FONT_SCALE\" value=\"1.5\" />\n" +
+      "  <option name=\"EDITOR_FONT_SIZE\" value=\"18\" />\n" +
+      "  <option name=\"EDITOR_LIGATURES\" value=\"true\" />\n" +
+      "  <option name=\"EDITOR_FONT_NAME\" value=\"" + fontName + "\" />\n" +
+      "</scheme>"
+    );
+    EditorColorsManagerImpl editorColorsManagerImpl = (EditorColorsManagerImpl)EditorColorsManager.getInstance();
+    SchemeManager<EditorColorsScheme> schemeManager = editorColorsManagerImpl.getSchemeManager();
+    schemeManager.addScheme(userScheme, true);
+    schemeManager.save();
+
+    try {
+      final AtomicBoolean handlerProcessed = new AtomicBoolean();
+      ApplicationManager.getApplication().getMessageBus().connect(getTestRootDisposable()).subscribe(EditorColorsManager.TOPIC, scheme -> {
+        assertEquals("Should have received actual scheme", fontName, scheme.getEditorFontName());
+        handlerProcessed.set(true);
+      });
+      EditorColorsScheme bundledDefault = EditorColorsManager.getInstance().getScheme("Default");
+      assertNotSame("Should have have default font name in bundled scheme", fontName, bundledDefault.getEditorFontName());
+      EditorColorsManager.getInstance().setGlobalScheme(bundledDefault);
+      UIUtil.dispatchAllInvocationEvents();
+      assertTrue("Should have processed EditorColorsManager.TOPIC in 50ms", handlerProcessed.get());
+    }
+    finally {
+      schemeManager.removeScheme(userScheme);
+    }
+  }
+
+  public void testCopyDoesNotCatastrophicallyWipeOldAttributes() {
+    TextAttributesKey tempKey = TextAttributesKey.createTempTextAttributesKey("myxxx", null);
+
+    EditorColorsSchemeImpl scheme = new EditorColorsSchemeImpl(null);
+
+    try {
+      TextAttributes attributes = new TextAttributes(new Color(1, 2, 3), new Color(4, 5, 6), new Color(7, 8, 9), EffectType.BOLD_DOTTED_LINE, 5);
+      scheme.setAttributes(tempKey, attributes);
+      assertEquals(attributes, scheme.getAttributes(tempKey));
+      scheme.copyTo(new EditorColorsSchemeImpl(null));
+      assertEquals(attributes, scheme.getAttributes(tempKey));
+    }
+    finally {
+      TextAttributesKey.removeTextAttributesKey(tempKey.getExternalName());
+    }
   }
 }

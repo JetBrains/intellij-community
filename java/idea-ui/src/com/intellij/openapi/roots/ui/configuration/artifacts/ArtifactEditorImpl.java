@@ -1,21 +1,38 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.ui.configuration.artifacts;
 
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.hint.HintUtil;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.CommonActionsManager;
-import com.intellij.ide.DataManager;
 import com.intellij.ide.DefaultTreeExpander;
 import com.intellij.ide.JavaUiBundle;
-import com.intellij.ide.impl.TypeSafeDataProviderAdapter;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionGroup;
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.ActionToolbar;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.CommonShortcuts;
+import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.actionSystem.Separator;
+import com.intellij.openapi.actionSystem.UiDataProvider;
 import com.intellij.openapi.compiler.JavaCompilerBundle;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.libraries.Library;
-import com.intellij.openapi.roots.ui.configuration.artifacts.actions.*;
+import com.intellij.openapi.roots.ui.configuration.artifacts.actions.AddCompositeElementAction;
+import com.intellij.openapi.roots.ui.configuration.artifacts.actions.AddNewPackagingElementAction;
+import com.intellij.openapi.roots.ui.configuration.artifacts.actions.ExtractArtifactAction;
+import com.intellij.openapi.roots.ui.configuration.artifacts.actions.HideContentAction;
+import com.intellij.openapi.roots.ui.configuration.artifacts.actions.InlineArtifactAction;
+import com.intellij.openapi.roots.ui.configuration.artifacts.actions.LayoutTreeFindUsagesAction;
+import com.intellij.openapi.roots.ui.configuration.artifacts.actions.LayoutTreeNavigateAction;
+import com.intellij.openapi.roots.ui.configuration.artifacts.actions.MovePackagingElementAction;
+import com.intellij.openapi.roots.ui.configuration.artifacts.actions.RemovePackagingElementAction;
+import com.intellij.openapi.roots.ui.configuration.artifacts.actions.RenamePackagingElementAction;
+import com.intellij.openapi.roots.ui.configuration.artifacts.actions.ShowAddPackagingElementPopupAction;
+import com.intellij.openapi.roots.ui.configuration.artifacts.actions.SortElementsToggleAction;
+import com.intellij.openapi.roots.ui.configuration.artifacts.actions.SurroundElementWithAction;
 import com.intellij.openapi.roots.ui.configuration.artifacts.sourceItems.LibrarySourceItem;
 import com.intellij.openapi.roots.ui.configuration.artifacts.sourceItems.ModuleOutputSourceItem;
 import com.intellij.openapi.roots.ui.configuration.artifacts.sourceItems.SourceItemsTree;
@@ -29,14 +46,30 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.packaging.artifacts.ArtifactType;
 import com.intellij.packaging.artifacts.ModifiableArtifact;
-import com.intellij.packaging.elements.*;
+import com.intellij.packaging.elements.ComplexPackagingElementType;
+import com.intellij.packaging.elements.CompositePackagingElement;
+import com.intellij.packaging.elements.PackagingElement;
+import com.intellij.packaging.elements.PackagingElementFactory;
+import com.intellij.packaging.elements.PackagingElementType;
 import com.intellij.packaging.impl.artifacts.ArtifactUtil;
 import com.intellij.packaging.impl.elements.ArchivePackagingElement;
 import com.intellij.packaging.impl.elements.ManifestFileUtil;
 import com.intellij.packaging.ui.ManifestFileConfiguration;
-import com.intellij.ui.*;
+import com.intellij.ui.DocumentAdapter;
+import com.intellij.ui.HyperlinkAdapter;
+import com.intellij.ui.HyperlinkLabel;
+import com.intellij.ui.JBColor;
+import com.intellij.ui.JBSplitter;
+import com.intellij.ui.OnePixelSplitter;
+import com.intellij.ui.PopupHandler;
+import com.intellij.ui.ScrollPaneFactory;
+import com.intellij.ui.TabbedPaneWrapper;
+import com.intellij.ui.UIBundle;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.border.CustomLineBorder;
+import com.intellij.uiDesigner.core.GridConstraints;
+import com.intellij.uiDesigner.core.GridLayoutManager;
+import com.intellij.uiDesigner.core.Spacer;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.IconUtil;
 import com.intellij.util.ui.JBUI;
@@ -46,28 +79,39 @@ import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.AbstractButton;
+import javax.swing.BoxLayout;
+import javax.swing.JCheckBox;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.ToolTipManager;
 import javax.swing.border.CompoundBorder;
 import javax.swing.border.LineBorder;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.HyperlinkEvent;
-import java.awt.*;
+import java.awt.BorderLayout;
+import java.awt.Dimension;
+import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
+import java.util.ResourceBundle;
 
 public class ArtifactEditorImpl implements ArtifactEditorEx {
-  private JPanel myMainPanel;
-  private JCheckBox myBuildOnMakeCheckBox;
-  private TextFieldWithBrowseButton myOutputDirectoryField;
-  private JPanel myEditorPanel;
-  private JPanel myErrorPanelPlace;
-  private ThreeStateCheckBox myShowContentCheckBox;
-  private FixedSizeButton myShowSpecificContentOptionsButton;
-  private JPanel myTopPanel;
+  private final JPanel myPanel;
+  private final JCheckBox myBuildOnMakeCheckBox;
+  private final TextFieldWithBrowseButton myOutputDirectoryField;
+  private final JPanel myEditorPanel;
+  private final JPanel myErrorPanelPlace;
+  private final ThreeStateCheckBox myShowContentCheckBox;
+  private final FixedSizeButton myShowSpecificContentOptionsButton;
+  private final JPanel myTopPanel;
   private final ActionGroup myShowSpecificContentOptionsGroup;
   private final Project myProject;
   private final ComplexElementSubstitutionParameters mySubstitutionParameters = new ComplexElementSubstitutionParameters();
@@ -81,24 +125,97 @@ public class ArtifactEditorImpl implements ArtifactEditorEx {
   private final ArtifactValidationManagerImpl myValidationManager;
   private boolean myDisposed;
 
-  public ArtifactEditorImpl(final @NotNull ArtifactsStructureConfigurableContext context, @NotNull Artifact artifact, @NotNull ArtifactEditorSettings settings) {
+  private final JComponent myMainComponent;
+
+  public ArtifactEditorImpl(final @NotNull ArtifactsStructureConfigurableContext context,
+                            @NotNull Artifact artifact,
+                            @NotNull ArtifactEditorSettings settings) {
+    {
+      myShowContentCheckBox = new ThreeStateCheckBox();
+      myShowSpecificContentOptionsButton = new FixedSizeButton();
+    }
+    {
+      // GUI initializer generated by IntelliJ IDEA GUI Designer
+      // >>> IMPORTANT!! <<<
+      // DO NOT EDIT OR ADD ANY CODE HERE!
+      myPanel = new JPanel();
+      myPanel.setLayout(new GridLayoutManager(4, 1, new Insets(0, 0, 0, 0), -1, -1));
+      myTopPanel = new JPanel();
+      myTopPanel.setLayout(new GridLayoutManager(2, 2, new Insets(0, 0, 0, 0), -1, -1));
+      myPanel.add(myTopPanel, new GridConstraints(0, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_BOTH,
+                                                  GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, 1, null,
+                                                  null, null, 0, false));
+      final JLabel label1 = new JLabel();
+      this.$$$loadLabelText$$$(label1, this.$$$getMessageFromBundle$$$("messages/JavaUiBundle", "label.text.output.directory"));
+      myTopPanel.add(label1, new GridConstraints(0, 0, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE,
+                                                 GridConstraints.SIZEPOLICY_FIXED, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0,
+                                                 false));
+      myOutputDirectoryField = new TextFieldWithBrowseButton();
+      myTopPanel.add(myOutputDirectoryField, new GridConstraints(0, 1, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL,
+                                                                 GridConstraints.SIZEPOLICY_CAN_SHRINK |
+                                                                 GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_FIXED,
+                                                                 null, null, null, 0, false));
+      final JPanel panel1 = new JPanel();
+      panel1.setLayout(new GridLayoutManager(1, 2, new Insets(0, 0, 0, 0), -1, -1));
+      myTopPanel.add(panel1, new GridConstraints(1, 0, 1, 2, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_BOTH,
+                                                 GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
+                                                 GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, null, null,
+                                                 null, 0, false));
+      myBuildOnMakeCheckBox = new JCheckBox();
+      this.$$$loadButtonText$$$(myBuildOnMakeCheckBox,
+                                this.$$$getMessageFromBundle$$$("messages/JavaUiBundle", "checkbox.text.build.on.make"));
+      panel1.add(myBuildOnMakeCheckBox, new GridConstraints(0, 0, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE,
+                                                            GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
+                                                            GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
+      final Spacer spacer1 = new Spacer();
+      panel1.add(spacer1, new GridConstraints(0, 1, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL,
+                                              GridConstraints.SIZEPOLICY_WANT_GROW, 1, null, null, null, 0, false));
+      myEditorPanel = new JPanel();
+      myEditorPanel.setLayout(new BorderLayout(0, 0));
+      myEditorPanel.setEnabled(true);
+      myPanel.add(myEditorPanel, new GridConstraints(1, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_BOTH,
+                                                     GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
+                                                     GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, null,
+                                                     null, null, 0, false));
+      myErrorPanelPlace = new JPanel();
+      myErrorPanelPlace.setLayout(new BorderLayout(0, 0));
+      myPanel.add(myErrorPanelPlace, new GridConstraints(3, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_BOTH,
+                                                         GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, 1,
+                                                         null, null, null, 0, false));
+      final JPanel panel2 = new JPanel();
+      panel2.setLayout(new GridLayoutManager(1, 3, new Insets(0, 0, 0, 0), -1, -1));
+      myPanel.add(panel2, new GridConstraints(2, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_BOTH,
+                                              GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
+                                              GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
+      this.$$$loadButtonText$$$(myShowContentCheckBox,
+                                this.$$$getMessageFromBundle$$$("messages/JavaUiBundle", "checkbox.show.content.of.elements"));
+      panel2.add(myShowContentCheckBox, new GridConstraints(0, 0, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE,
+                                                            GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
+                                                            GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
+      panel2.add(myShowSpecificContentOptionsButton,
+                 new GridConstraints(0, 1, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_NONE, GridConstraints.SIZEPOLICY_FIXED,
+                                     GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
+      final Spacer spacer2 = new Spacer();
+      panel2.add(spacer2, new GridConstraints(0, 2, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL,
+                                              GridConstraints.SIZEPOLICY_WANT_GROW, 1, null, null, null, 0, false));
+    }
     myContext = createArtifactEditorContext(context);
     myOriginalArtifact = artifact;
     myProject = context.getProject();
     myValidationManager = new ArtifactValidationManagerImpl(this);
     mySubstitutionParameters.setTypesToShowContent(settings.getTypesToShowContent());
     mySourceItemsTree = new SourceItemsTree(myContext, this);
-    myLayoutTreeComponent = new LayoutTreeComponent(this, mySubstitutionParameters, myContext, myOriginalArtifact, settings.isSortElements());
+    myLayoutTreeComponent =
+      new LayoutTreeComponent(this, mySubstitutionParameters, myContext, myOriginalArtifact, settings.isSortElements());
     myPropertiesEditors = new ArtifactPropertiesEditors(myContext, myOriginalArtifact, myOriginalArtifact);
     Disposer.register(this, mySourceItemsTree);
     Disposer.register(this, myLayoutTreeComponent);
     myTopPanel.setBorder(JBUI.Borders.empty(0, 10));
     myBuildOnMakeCheckBox.setSelected(artifact.isBuildOnMake());
     final String outputPath = artifact.getOutputPath();
-    myOutputDirectoryField.addBrowseFolderListener(JavaCompilerBundle.message("dialog.title.output.directory.for.artifact"),
-                                                   JavaCompilerBundle.message("chooser.description.select.output.directory.for.0.artifact",
-                                                                              getArtifact().getName()), myProject,
-                                                   FileChooserDescriptorFactory.createSingleFolderDescriptor());
+    myOutputDirectoryField.addBrowseFolderListener(myProject, FileChooserDescriptorFactory.createSingleFolderDescriptor()
+      .withTitle(JavaCompilerBundle.message("dialog.title.output.directory.for.artifact"))
+      .withDescription(JavaCompilerBundle.message("chooser.description.select.output.directory.for.0.artifact", getArtifact().getName())));
     myOutputDirectoryField.getTextField().getDocument().addDocumentListener(new DocumentAdapter() {
       @Override
       protected void textChanged(@NotNull DocumentEvent e) {
@@ -110,12 +227,88 @@ public class ArtifactEditorImpl implements ArtifactEditorEx {
     myShowSpecificContentOptionsButton.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
-        ActionManager.getInstance().createActionPopupMenu(ActionPlaces.UNKNOWN, myShowSpecificContentOptionsGroup).getComponent().show(myShowSpecificContentOptionsButton, 0, 0);
+        ActionManager.getInstance().createActionPopupMenu("ArtifactEditor", myShowSpecificContentOptionsGroup).getComponent()
+          .show(myShowSpecificContentOptionsButton, 0, 0);
       }
+    });
+    myMainComponent = UiDataProvider.wrapComponent(myPanel, sink -> {
+      sink.set(ARTIFACTS_EDITOR_KEY, this);
     });
     setOutputPath(outputPath);
     updateShowContentCheckbox();
   }
+
+  private static Method $$$cachedGetBundleMethod$$$ = null;
+
+  /** @noinspection ALL */
+  private String $$$getMessageFromBundle$$$(String path, String key) {
+    ResourceBundle bundle;
+    try {
+      Class<?> thisClass = this.getClass();
+      if ($$$cachedGetBundleMethod$$$ == null) {
+        Class<?> dynamicBundleClass = thisClass.getClassLoader().loadClass("com.intellij.DynamicBundle");
+        $$$cachedGetBundleMethod$$$ = dynamicBundleClass.getMethod("getBundle", String.class, Class.class);
+      }
+      bundle = (ResourceBundle)$$$cachedGetBundleMethod$$$.invoke(null, path, thisClass);
+    }
+    catch (Exception e) {
+      bundle = ResourceBundle.getBundle(path);
+    }
+    return bundle.getString(key);
+  }
+
+  /** @noinspection ALL */
+  private void $$$loadLabelText$$$(JLabel component, String text) {
+    StringBuffer result = new StringBuffer();
+    boolean haveMnemonic = false;
+    char mnemonic = '\0';
+    int mnemonicIndex = -1;
+    for (int i = 0; i < text.length(); i++) {
+      if (text.charAt(i) == '&') {
+        i++;
+        if (i == text.length()) break;
+        if (!haveMnemonic && text.charAt(i) != '&') {
+          haveMnemonic = true;
+          mnemonic = text.charAt(i);
+          mnemonicIndex = result.length();
+        }
+      }
+      result.append(text.charAt(i));
+    }
+    component.setText(result.toString());
+    if (haveMnemonic) {
+      component.setDisplayedMnemonic(mnemonic);
+      component.setDisplayedMnemonicIndex(mnemonicIndex);
+    }
+  }
+
+  /** @noinspection ALL */
+  private void $$$loadButtonText$$$(AbstractButton component, String text) {
+    StringBuffer result = new StringBuffer();
+    boolean haveMnemonic = false;
+    char mnemonic = '\0';
+    int mnemonicIndex = -1;
+    for (int i = 0; i < text.length(); i++) {
+      if (text.charAt(i) == '&') {
+        i++;
+        if (i == text.length()) break;
+        if (!haveMnemonic && text.charAt(i) != '&') {
+          haveMnemonic = true;
+          mnemonic = text.charAt(i);
+          mnemonicIndex = result.length();
+        }
+      }
+      result.append(text.charAt(i));
+    }
+    component.setText(result.toString());
+    if (haveMnemonic) {
+      component.setMnemonic(mnemonic);
+      component.setDisplayedMnemonicIndex(mnemonicIndex);
+    }
+  }
+
+  /** @noinspection ALL */
+  public JComponent $$$getRootComponent$$$() { return myPanel; }
 
   protected ArtifactEditorContextImpl createArtifactEditorContext(ArtifactsStructureConfigurableContext parentContext) {
     return new ArtifactEditorContextImpl(parentContext, this);
@@ -134,17 +327,17 @@ public class ArtifactEditorImpl implements ArtifactEditorEx {
   }
 
   public void apply() {
-    final ModifiableArtifact modifiableArtifact = myContext.getOrCreateModifiableArtifactModel().getOrCreateModifiableArtifact(myOriginalArtifact);
+    final ModifiableArtifact modifiableArtifact =
+      myContext.getOrCreateModifiableArtifactModel().getOrCreateModifiableArtifact(myOriginalArtifact);
     modifiableArtifact.setBuildOnMake(myBuildOnMakeCheckBox.isSelected());
     modifiableArtifact.setOutputPath(getConfiguredOutputPath());
     myPropertiesEditors.applyProperties();
     myLayoutTreeComponent.saveElementProperties();
   }
 
-  @Nullable
-  private String getConfiguredOutputPath() {
+  private @Nullable String getConfiguredOutputPath() {
     String outputPath = FileUtil.toSystemIndependentName(myOutputDirectoryField.getText().trim());
-    if (outputPath.length() == 0) {
+    if (outputPath.isEmpty()) {
       outputPath = null;
     }
     return outputPath;
@@ -154,7 +347,7 @@ public class ArtifactEditorImpl implements ArtifactEditorEx {
     return mySourceItemsTree;
   }
 
-  public void addListener(@NotNull final ArtifactEditorListener listener) {
+  public void addListener(final @NotNull ArtifactEditorListener listener) {
     myDispatcher.addListener(listener);
   }
 
@@ -163,7 +356,7 @@ public class ArtifactEditorImpl implements ArtifactEditorEx {
     return myContext;
   }
 
-  public void removeListener(@NotNull final ArtifactEditorListener listener) {
+  public void removeListener(final @NotNull ArtifactEditorListener listener) {
     myDispatcher.removeListener(listener);
   }
 
@@ -190,8 +383,6 @@ public class ArtifactEditorImpl implements ArtifactEditorEx {
 
   public JComponent createMainComponent() {
     myLayoutTreeComponent.initTree();
-    DataManager.registerDataProvider(myMainPanel, new TypeSafeDataProviderAdapter(new MyDataProvider()));
-
     myErrorPanelPlace.add(myValidationManager.getMainErrorPanel(), BorderLayout.CENTER);
 
     final JBSplitter splitter = new OnePixelSplitter(false);
@@ -199,7 +390,8 @@ public class ArtifactEditorImpl implements ArtifactEditorEx {
     JPanel treePanel = myLayoutTreeComponent.getTreePanel();
     if (StartupUiUtil.isUnderDarcula()) {
       treePanel.setBorder(JBUI.Borders.emptyTop(3));
-    } else {
+    }
+    else {
       treePanel.setBorder(new LineBorder(JBColor.border()));
     }
     leftPanel.add(treePanel, BorderLayout.CENTER);
@@ -207,7 +399,8 @@ public class ArtifactEditorImpl implements ArtifactEditorEx {
       CompoundBorder border =
         new CompoundBorder(new CustomLineBorder(0, 0, 0, 1), JBUI.Borders.empty());
       leftPanel.setBorder(border);
-    } else {
+    }
+    else {
       leftPanel.setBorder(JBUI.Borders.empty(3, 3, 3, 0));
     }
     splitter.setFirstComponent(leftPanel);
@@ -222,12 +415,13 @@ public class ArtifactEditorImpl implements ArtifactEditorEx {
     link.setUseIconAsLink(true);
     link.addHyperlinkListener(new HyperlinkAdapter() {
       @Override
-      protected void hyperlinkActivated(HyperlinkEvent e) {
+      protected void hyperlinkActivated(@NotNull HyperlinkEvent e) {
         final JLabel label = new JLabel(JavaUiBundle.message("artifact.source.items.tree.tooltip"));
         label.setBorder(HintUtil.createHintBorder());
         label.setBackground(HintUtil.getInformationColor());
         label.setOpaque(true);
-        HintManager.getInstance().showHint(label, RelativePoint.getSouthWestOf(link), HintManager.HIDE_BY_ANY_KEY | HintManager.HIDE_BY_TEXT_CHANGE, -1);
+        HintManager.getInstance()
+          .showHint(label, RelativePoint.getSouthWestOf(link), HintManager.HIDE_BY_ANY_KEY | HintManager.HIDE_BY_TEXT_CHANGE, -1);
       }
     });
     labelPanel.add(link);
@@ -238,14 +432,16 @@ public class ArtifactEditorImpl implements ArtifactEditorEx {
     scrollPaneWrap.add(scrollPane, BorderLayout.CENTER);
     if (StartupUiUtil.isUnderDarcula()) {
       scrollPaneWrap.setBorder(JBUI.Borders.emptyTop(3));
-    } else {
+    }
+    else {
       scrollPaneWrap.setBorder(new LineBorder(JBColor.border()));
     }
 
     rightPanel.add(scrollPaneWrap, BorderLayout.CENTER);
     if (StartupUiUtil.isUnderDarcula()) {
       rightPanel.setBorder(new CompoundBorder(new CustomLineBorder(0, 1, 0, 0), JBUI.Borders.empty()));
-    } else {
+    }
+    else {
       rightPanel.setBorder(JBUI.Borders.empty(3, 0, 3, 3));
     }
     splitter.setSecondComponent(rightPanel);
@@ -272,13 +468,14 @@ public class ArtifactEditorImpl implements ArtifactEditorEx {
       }
     });
 
-    ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar("ProjectStructureArtifactEditor", createToolbarActionGroup(), true);
+    ActionToolbar toolbar =
+      ActionManager.getInstance().createActionToolbar("ProjectStructureArtifactEditor", createToolbarActionGroup(), true);
     JComponent toolbarComponent = toolbar.getComponent();
+    toolbar.setTargetComponent(treePanel);
     if (StartupUiUtil.isUnderDarcula()) {
       toolbarComponent.setBorder(new CustomLineBorder(0, 0, 1, 0));
     }
     leftPanel.add(toolbarComponent, BorderLayout.NORTH);
-    toolbar.updateActionsImmediately();
     rightTopPanel.setPreferredSize(new Dimension(-1, toolbarComponent.getPreferredSize().height));
 
     myTabbedPane = new TabbedPaneWrapper(this);
@@ -288,7 +485,7 @@ public class ArtifactEditorImpl implements ArtifactEditorEx {
 
     final LayoutTree tree = myLayoutTreeComponent.getLayoutTree();
     new ShowAddPackagingElementPopupAction(this).registerCustomShortcutSet(CommonShortcuts.getNew(), tree);
-    PopupHandler.installPopupHandler(tree, createPopupActionGroup(), ActionPlaces.UNKNOWN, ActionManager.getInstance());
+    PopupHandler.installPopupMenu(tree, createPopupActionGroup(), "ArtifactLayoutTreePopup");
     ToolTipManager.sharedInstance().registerComponent(tree);
     rebuildTries();
     return getMainComponent();
@@ -329,8 +526,10 @@ public class ArtifactEditorImpl implements ArtifactEditorEx {
     toolbarActionGroup.add(new RemovePackagingElementAction(this));
     toolbarActionGroup.add(Separator.getInstance());
     toolbarActionGroup.add(new SortElementsToggleAction(this.getLayoutTreeComponent()));
-    toolbarActionGroup.add(new MovePackagingElementAction(myLayoutTreeComponent, UIBundle.message("move.up.action.name"), "", IconUtil.getMoveUpIcon(), -1));
-    toolbarActionGroup.add(new MovePackagingElementAction(myLayoutTreeComponent, UIBundle.message("move.down.action.name"), "", IconUtil.getMoveDownIcon(), 1));
+    toolbarActionGroup.add(
+      new MovePackagingElementAction(myLayoutTreeComponent, UIBundle.message("move.up.action.name"), "", IconUtil.getMoveUpIcon(), -1));
+    toolbarActionGroup.add(
+      new MovePackagingElementAction(myLayoutTreeComponent, UIBundle.message("move.down.action.name"), "", IconUtil.getMoveDownIcon(), 1));
     return toolbarActionGroup;
   }
 
@@ -361,7 +560,7 @@ public class ArtifactEditorImpl implements ArtifactEditorEx {
     popupActionGroup.add(Separator.getInstance());
     popupActionGroup.add(new HideContentAction(this));
     popupActionGroup.add(new LayoutTreeNavigateAction(myLayoutTreeComponent));
-    popupActionGroup.add(new LayoutTreeFindUsagesAction(myLayoutTreeComponent, myProject, myContext.getParent()));
+    popupActionGroup.add(new LayoutTreeFindUsagesAction(myLayoutTreeComponent, myContext.getParent()));
 
     popupActionGroup.add(Separator.getInstance());
     CommonActionsManager actionsManager = CommonActionsManager.getInstance();
@@ -387,7 +586,7 @@ public class ArtifactEditorImpl implements ArtifactEditorEx {
 
   @Override
   public JComponent getMainComponent() {
-    return myMainPanel;
+    return myMainComponent;
   }
 
   @Override
@@ -402,18 +601,20 @@ public class ArtifactEditorImpl implements ArtifactEditorEx {
   }
 
   @Override
-  public void removePackagingElement(@NotNull final String pathToParent, @NotNull final PackagingElement<?> element) {
+  public void removePackagingElement(final @NotNull String pathToParent, final @NotNull PackagingElement<?> element) {
     doReplaceElement(pathToParent, element, null);
   }
 
   @Override
-  public void replacePackagingElement(@NotNull final String pathToParent,
-                                      @NotNull final PackagingElement<?> element,
-                                      @NotNull final PackagingElement<?> replacement) {
+  public void replacePackagingElement(final @NotNull String pathToParent,
+                                      final @NotNull PackagingElement<?> element,
+                                      final @NotNull PackagingElement<?> replacement) {
     doReplaceElement(pathToParent, element, replacement);
   }
 
-  private void doReplaceElement(final @NotNull String pathToParent, final @NotNull PackagingElement<?> element, final @Nullable PackagingElement<?> replacement) {
+  private void doReplaceElement(final @NotNull String pathToParent,
+                                final @NotNull PackagingElement<?> element,
+                                final @Nullable PackagingElement<?> replacement) {
     myLayoutTreeComponent.editLayout(() -> {
       final CompositePackagingElement<?> parent = findCompositeElementByPath(pathToParent);
       if (parent == null) return;
@@ -430,8 +631,7 @@ public class ArtifactEditorImpl implements ArtifactEditorEx {
     myLayoutTreeComponent.rebuildTree();
   }
 
-  @Nullable
-  private CompositePackagingElement<?> findCompositeElementByPath(String pathToElement) {
+  private @Nullable CompositePackagingElement<?> findCompositeElementByPath(String pathToElement) {
     CompositePackagingElement<?> element = getRootElement();
     for (String name : StringUtil.split(pathToElement, "/")) {
       element = element.findCompositeChild(name);
@@ -442,13 +642,14 @@ public class ArtifactEditorImpl implements ArtifactEditorEx {
 
   public boolean isModified() {
     return myBuildOnMakeCheckBox.isSelected() != myOriginalArtifact.isBuildOnMake()
-        || !Objects.equals(getConfiguredOutputPath(), myOriginalArtifact.getOutputPath())
-        || myPropertiesEditors.isModified()
-        || myLayoutTreeComponent.isPropertiesModified();
+           || !Objects.equals(getConfiguredOutputPath(), myOriginalArtifact.getOutputPath())
+           || myPropertiesEditors.isModified()
+           || myLayoutTreeComponent.isPropertiesModified();
   }
 
   @Override
   public void dispose() {
+    myPropertiesEditors.disposeUIResources();
     myDisposed = true;
   }
 
@@ -462,7 +663,7 @@ public class ArtifactEditorImpl implements ArtifactEditorEx {
     return myLayoutTreeComponent;
   }
 
-  public void updateOutputPath(@NotNull String oldArtifactName, @NotNull final String newArtifactName) {
+  public void updateOutputPath(@NotNull String oldArtifactName, final @NotNull String newArtifactName) {
     final String oldDefaultPath = ArtifactUtil.getDefaultArtifactOutputPath(oldArtifactName, myProject);
     if (Objects.equals(oldDefaultPath, getConfiguredOutputPath())) {
       setOutputPath(ArtifactUtil.getDefaultArtifactOutputPath(newArtifactName, myProject));
@@ -473,9 +674,10 @@ public class ArtifactEditorImpl implements ArtifactEditorEx {
       final String name = ((ArchivePackagingElement)root).getArchiveFileName();
       final String fileName = FileUtilRt.getNameWithoutExtension(name);
       final String extension = FileUtilRt.getExtension(name);
-      if (fileName.equals(oldFileName) && extension.length() > 0) {
+      if (fileName.equals(oldFileName) && !extension.isEmpty()) {
         myLayoutTreeComponent.editLayout(
-          () -> ((ArchivePackagingElement)getRootElement()).setArchiveFileName(ArtifactUtil.suggestArtifactFileName(newArtifactName) + "." + extension));
+          () -> ((ArchivePackagingElement)getRootElement()).setArchiveFileName(
+            ArtifactUtil.suggestArtifactFileName(newArtifactName) + "." + extension));
         myLayoutTreeComponent.updateRootNode();
       }
     }
@@ -518,7 +720,8 @@ public class ArtifactEditorImpl implements ArtifactEditorEx {
   }
 
   public void setArtifactType(ArtifactType artifactType) {
-    final ModifiableArtifact modifiableArtifact = myContext.getOrCreateModifiableArtifactModel().getOrCreateModifiableArtifact(myOriginalArtifact);
+    final ModifiableArtifact modifiableArtifact =
+      myContext.getOrCreateModifiableArtifactModel().getOrCreateModifiableArtifact(myOriginalArtifact);
     modifiableArtifact.setArtifactType(artifactType);
 
     myPropertiesEditors.removeTabs(myTabbedPane);
@@ -535,11 +738,6 @@ public class ArtifactEditorImpl implements ArtifactEditorEx {
     return myValidationManager;
   }
 
-  private void createUIComponents() {
-    myShowContentCheckBox = new ThreeStateCheckBox();
-    myShowSpecificContentOptionsButton = new FixedSizeButton();
-  }
-
   public String getHelpTopic() {
     final int tab = myTabbedPane.getSelectedIndex();
     if (tab == 0) {
@@ -548,14 +746,4 @@ public class ArtifactEditorImpl implements ArtifactEditorEx {
     String helpId = myPropertiesEditors.getHelpId(myTabbedPane.getSelectedTitle());
     return helpId != null ? helpId : "reference.settingsdialog.project.structure.artifacts";
   }
-
-  private class MyDataProvider implements TypeSafeDataProvider {
-    @Override
-    public void calcData(@NotNull DataKey key, @NotNull DataSink sink) {
-      if (ARTIFACTS_EDITOR_KEY.equals(key)) {
-        sink.put(ARTIFACTS_EDITOR_KEY, ArtifactEditorImpl.this);
-      }
-    }
-  }
-
 }

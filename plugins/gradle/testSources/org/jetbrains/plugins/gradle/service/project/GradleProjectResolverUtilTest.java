@@ -1,15 +1,27 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.service.project;
 
 import com.intellij.openapi.externalSystem.ExternalSystemModulePropertyManager;
-import com.intellij.openapi.externalSystem.ExternalSystemModulePropertyManagerImpl;
+import com.intellij.openapi.externalSystem.service.project.ExternalSystemModulePropertyManagerBridge;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ExternalProjectSystemRegistry;
+import com.intellij.platform.workspace.jps.entities.ModuleEntity;
+import com.intellij.platform.workspace.storage.MutableEntityStorage;
+import com.intellij.platform.workspace.storage.impl.VersionedEntityStorageOnSnapshot;
+import com.intellij.workspaceModel.ide.NonPersistentEntitySource;
+import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerBridgeImpl;
+import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge;
+import kotlin.Unit;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.junit.Test;
 
+import java.util.Collections;
+
+import static com.intellij.platform.workspace.jps.entities.ExternalSystemModuleOptionsEntityModifications.createExternalSystemModuleOptionsEntity;
+import static com.intellij.platform.workspace.jps.entities.ModuleEntityModifications.createModuleEntity;
+import static com.intellij.platform.workspace.jps.entities.ModuleEntityModifications.setExModuleOptions;
+import static org.jetbrains.plugins.gradle.service.project.GradleProjectResolverUtil.getGradleIdentityPathOrNull;
 import static org.jetbrains.plugins.gradle.util.GradleConstants.GRADLE_SOURCE_SET_MODULE_TYPE_KEY;
 import static org.jetbrains.plugins.gradle.util.GradleConstants.SYSTEM_ID;
 import static org.junit.Assert.assertEquals;
@@ -24,19 +36,19 @@ public class GradleProjectResolverUtilTest {
   @Test
   public void testGetGradlePath() {
     final Module rootModule = createModuleMock("rootModule");
-    assertEquals(":", GradleProjectResolverUtil.getGradlePath(rootModule));
+    assertEquals(":", getGradleIdentityPathOrNull(rootModule));
 
     final Module subModule = createModuleMock(":foo:subModule");
-    assertEquals(":foo:subModule", GradleProjectResolverUtil.getGradlePath(subModule));
+    assertEquals(":foo:subModule", getGradleIdentityPathOrNull(subModule));
 
     final Module compositeBuildSubModule = createModuleMock("composite:subModule");
-    assertEquals(":subModule", GradleProjectResolverUtil.getGradlePath(compositeBuildSubModule));
+    assertEquals(":subModule", getGradleIdentityPathOrNull(compositeBuildSubModule));
 
     final Module sourceSetModule = createModuleMock("rootModule:main", GRADLE_SOURCE_SET_MODULE_TYPE_KEY);
-    assertEquals(":", GradleProjectResolverUtil.getGradlePath(sourceSetModule));
+    assertEquals(":", getGradleIdentityPathOrNull(sourceSetModule));
 
     final Module sourceSetSubModule = createModuleMock(":foo:subModule:main", GRADLE_SOURCE_SET_MODULE_TYPE_KEY);
-    assertEquals(":foo:subModule", GradleProjectResolverUtil.getGradlePath(sourceSetSubModule));
+    assertEquals(":foo:subModule", getGradleIdentityPathOrNull(sourceSetSubModule));
   }
 
   @NotNull
@@ -46,15 +58,26 @@ public class GradleProjectResolverUtilTest {
 
   @NotNull
   private static Module createModuleMock(@Nullable String projectId, @Nullable String moduleType) {
-    Module module = mock(Module.class);
+    ModuleBridge module = mock(ModuleBridge.class);
     Project project = mock(Project.class);
     when(module.getProject()).thenReturn(project);
-    ExternalSystemModulePropertyManager modulePropertyManager = new ExternalSystemModulePropertyManagerImpl(module);
+    MutableEntityStorage builder = MutableEntityStorage.create();
+    ModuleEntity moduleEntity =
+      builder.addEntity(createModuleEntity("m", Collections.emptyList(), NonPersistentEntitySource.INSTANCE, moduleBuilder -> {
+        setExModuleOptions(moduleBuilder, createExternalSystemModuleOptionsEntity(NonPersistentEntitySource.INSTANCE, externalBuilder -> {
+          externalBuilder.setExternalSystem(SYSTEM_ID.getId());
+          externalBuilder.setExternalSystemModuleType(moduleType);
+          externalBuilder.setLinkedProjectId(projectId);
+          return Unit.INSTANCE;
+        }));
+        return Unit.INSTANCE;
+      }));
+    ModuleManagerBridgeImpl.Companion.getMutableModuleMap(builder).addMapping(moduleEntity, module);
+    when(module.getEntityStorage()).thenReturn(new VersionedEntityStorageOnSnapshot(builder.toSnapshot()));
+
+    ExternalSystemModulePropertyManager modulePropertyManager = new ExternalSystemModulePropertyManagerBridge(module);
     when(module.getService(ExternalSystemModulePropertyManager.class)).thenReturn(modulePropertyManager);
 
-    when(module.getOptionValue(ExternalProjectSystemRegistry.EXTERNAL_SYSTEM_ID_KEY)).thenReturn(SYSTEM_ID.getId());
-    when(module.getOptionValue("external.system.module.type")).thenReturn(moduleType);
-    when(module.getOptionValue("external.linked.project.id")).thenReturn(projectId);
     return module;
   }
 }

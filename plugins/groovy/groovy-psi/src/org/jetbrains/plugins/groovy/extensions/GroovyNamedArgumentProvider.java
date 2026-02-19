@@ -1,22 +1,12 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.extensions;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
-import com.intellij.psi.*;
+import com.intellij.psi.CommonClassNames;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiParameter;
+import com.intellij.psi.PsiType;
 import com.intellij.psi.util.InheritanceUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -35,13 +25,21 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * @author Sergey Evdokimov
+ * Represents an extension point for adding named arguments to method calls.
+ * A named argument is an argument of the form {@code foo(bar: 42)}
  */
+
 public abstract class GroovyNamedArgumentProvider {
 
   public static final ExtensionPointName<GroovyNamedArgumentProvider> EP_NAME =
     ExtensionPointName.create("org.intellij.groovy.namedArgumentProvider");
 
+  /**
+   * Computes named arguments for a call.
+   * The results are computed for a particular {@code resolveResult}, since for one call there may be multiple overload resolutions.
+   * @param argumentName the supposed name of the named argument. Might be {@code null} if used for type-checking or completion.
+   * @param result the accumulator of the results.
+   */
   public void getNamedArguments(@NotNull GrCall call,
                                 @NotNull GroovyResolveResult resolveResult,
                                 @Nullable String argumentName,
@@ -49,16 +47,14 @@ public abstract class GroovyNamedArgumentProvider {
                                 @NotNull Map<String, NamedArgumentDescriptor> result) {
   }
 
-  @NotNull
-  public Map<String, NamedArgumentDescriptor> getNamedArguments(@NotNull GrListOrMap literal) {
+  public @NotNull Map<String, NamedArgumentDescriptor> getNamedArguments(@NotNull GrListOrMap literal) {
     return Collections.emptyMap();
   }
 
-  @Nullable
-  public static Map<String, NamedArgumentDescriptor> getNamedArgumentsFromAllProviders(@NotNull GrCall call,
-                                                                                       @Nullable String argumentName,
-                                                                                       boolean forCompletion) {
-    Map<String, NamedArgumentDescriptor> namedArguments = new HashMap<String, NamedArgumentDescriptor>() {
+  public static @Nullable Map<String, NamedArgumentDescriptor> getNamedArgumentsFromAllProviders(@NotNull GrCall call,
+                                                                                                 @Nullable String argumentName,
+                                                                                                 boolean forCompletion) {
+    Map<String, NamedArgumentDescriptor> namedArguments = new HashMap<>() {
       @Override
       public NamedArgumentDescriptor put(String key, NamedArgumentDescriptor value) {
         NamedArgumentDescriptor oldValue = super.put(key, value);
@@ -86,8 +82,7 @@ public abstract class GroovyNamedArgumentProvider {
         PsiElement element = result.getElement();
         if (element instanceof GrAccessorMethod) continue;
 
-        if (element instanceof PsiMethod) {
-          PsiMethod method = (PsiMethod)element;
+        if (element instanceof PsiMethod method) {
           PsiParameter[] parameters = method.getParameterList().getParameters();
 
           if (!method.isConstructor() && !(parameters.length > 0 && canBeMap(parameters[0]))) continue;

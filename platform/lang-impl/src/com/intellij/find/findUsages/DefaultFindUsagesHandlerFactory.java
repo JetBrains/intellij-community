@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.find.findUsages;
 
 import com.intellij.lang.findUsages.LanguageFindUsages;
@@ -7,9 +7,6 @@ import com.intellij.psi.PsiFileSystemItem;
 import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author peter
-*/
 public final class DefaultFindUsagesHandlerFactory extends FindUsagesHandlerFactory {
 
   @Internal
@@ -20,7 +17,7 @@ public final class DefaultFindUsagesHandlerFactory extends FindUsagesHandlerFact
   }
 
   @Override
-  public boolean canFindUsages(@NotNull final PsiElement element) {
+  public boolean canFindUsages(final @NotNull PsiElement element) {
     if (!element.isValid()) {
       return false;
     }
@@ -31,7 +28,7 @@ public final class DefaultFindUsagesHandlerFactory extends FindUsagesHandlerFact
   }
 
   @Override
-  public FindUsagesHandler createFindUsagesHandler(@NotNull final PsiElement element, final boolean forHighlightUsages) {
+  public FindUsagesHandler createFindUsagesHandler(final @NotNull PsiElement element, final boolean forHighlightUsages) {
     return new DefaultFindUsagesHandler(element);
   }
 }

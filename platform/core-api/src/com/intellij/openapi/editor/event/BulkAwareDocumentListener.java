@@ -6,7 +6,7 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * Convenience interface for {@link DocumentListener}-s which only process notifications on document changes performed not in
- * {@link Document#setInBulkUpdate(boolean) bulk mode}.
+ * {@link Document#isInBulkUpdate()}  bulk mode}.
  * <br>
  * If possible, this interface should be used in preference to {@link DocumentListener}, to improve performance.
  */

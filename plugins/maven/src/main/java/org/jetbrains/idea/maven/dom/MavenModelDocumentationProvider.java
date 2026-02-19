@@ -1,8 +1,9 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.dom;
 
 import com.intellij.lang.documentation.DocumentationProvider;
 import com.intellij.lang.findUsages.DescriptiveNameUtil;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.ElementDescriptionLocation;
@@ -13,18 +14,20 @@ import com.intellij.psi.impl.FakePsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.usageView.UsageViewTypeLocation;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.dom.references.MavenPsiElementWrapper;
+import org.jetbrains.idea.maven.server.MavenDistributionsCache;
 import org.jetbrains.idea.maven.utils.MavenLog;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-public class MavenModelDocumentationProvider implements DocumentationProvider, ElementDescriptionProvider {
+public final class MavenModelDocumentationProvider implements DocumentationProvider, ElementDescriptionProvider {
   @Override
-  public String getQuickNavigateInfo(PsiElement element, PsiElement originalElement) {
+  public @Nls String getQuickNavigateInfo(PsiElement element, PsiElement originalElement) {
     return getDoc(element, false);
   }
 
@@ -41,23 +44,23 @@ public class MavenModelDocumentationProvider implements DocumentationProvider, E
   }
 
   @Override
-  public String generateDoc(PsiElement element, PsiElement originalElement) {
+  public @Nls String generateDoc(PsiElement element, PsiElement originalElement) {
     return getDoc(element, true);
   }
 
-  @Nullable
-  private static String getDoc(PsiElement element, boolean html) {
+  private static @Nullable @Nls String getDoc(PsiElement element, boolean html) {
     return getMavenElementDescription(element, DescKind.TYPE_NAME_VALUE, html);
   }
 
   @Override
-  public String getElementDescription(@NotNull PsiElement element, @NotNull ElementDescriptionLocation location) {
-    return getMavenElementDescription(element, location instanceof UsageViewTypeLocation ? DescKind.TYPE : DescKind.NAME, false);
+  public @Nls String getElementDescription(@NotNull PsiElement element, @NotNull ElementDescriptionLocation location) {
+    return ReadAction.compute(() ->
+                                getMavenElementDescription(element,
+                                                           location instanceof UsageViewTypeLocation ? DescKind.TYPE : DescKind.NAME, false)
+    );
   }
 
-  @Nullable
-  @NlsContexts.DetailedDescription
-  private static String getMavenElementDescription(PsiElement e, DescKind kind, boolean html) {
+  private static @Nullable @NlsContexts.DetailedDescription String getMavenElementDescription(PsiElement e, DescKind kind, boolean html) {
     e = getMavenElement(e);
     if (e == null) return null;
 
@@ -80,15 +83,27 @@ public class MavenModelDocumentationProvider implements DocumentationProvider, E
       if (e instanceof XmlTag) {
         valueSuffix = ": " + bold[0] + ((XmlTag)e).getValue().getTrimmedText() + bold[1];
       }
-      return type + br + name + valueSuffix;
+      var tip = getTip(name, kind, valueSuffix, e);
+      if (tip == null) {
+        return type + br + name + valueSuffix;
+      }
+      return type + br + name + valueSuffix + br + tip;
     }
 
     MavenLog.LOG.error("unexpected desc kind: " + kind);
     return null;
   }
 
-  @NlsContexts.DetailedDescription
-  private static String buildPropertyName(PsiElement e, boolean property) {
+  private static @Nullable @Nls String getTip(String name, DescKind kind, String suffix, PsiElement e) {
+    if (!"project.modelVersion".equals(name)) return null;
+    var project = e.getProject();
+    if (project.isDefault()) return null;
+    var mavenVersion = MavenDistributionsCache.getInstance(project)
+      .getMavenDistribution(e.getContainingFile().getVirtualFile());
+    return MavenDomBundle.message("maven.version.tip", mavenVersion.getVersion());
+  }
+
+  private static @NlsContexts.DetailedDescription String buildPropertyName(PsiElement e, boolean property) {
     if (property) return DescriptiveNameUtil.getDescriptiveName(e); //NON-NLS - suprress warning
 
     List<String> path = new ArrayList<>();

@@ -20,9 +20,8 @@ import com.intellij.lang.Language;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.Icon;
 
 public class RegExpFileType extends LanguageFileType {
     public static final RegExpFileType INSTANCE = new RegExpFileType();
@@ -31,34 +30,34 @@ public class RegExpFileType extends LanguageFileType {
         super(RegExpLanguage.INSTANCE);
     }
 
-    public RegExpFileType(@NotNull Language language) {
+    private RegExpFileType(@NotNull Language language) {
         super(language);
-        if (!(language.getBaseLanguage() instanceof RegExpLanguage)) throw new AssertionError();
+        if (!(language.getBaseLanguage() instanceof RegExpLanguage)) {
+            throw new IllegalArgumentException(String.valueOf(language.getBaseLanguage()));
+        }
     }
 
     @Override
-    @NotNull
-    @NonNls
-    public String getName() {
+    public @NotNull @NonNls String getName() {
         return "RegExp";
     }
 
     @Override
-    @NotNull
-    public String getDescription() {
-        return RegExpBundle.message("file.type.description.regular.expression");
+    public @NotNull String getDescription() {
+        return RegExpBundle.message("filetype.regular.expression.description");
     }
 
     @Override
-    @NotNull
-    @NonNls
-    public String getDefaultExtension() {
+    public @NotNull @NonNls String getDefaultExtension() {
         return "regexp";
     }
 
     @Override
-    @Nullable
     public Icon getIcon() {
         return getLanguage() == RegExpLanguage.INSTANCE ? AllIcons.FileTypes.Regexp : null;
+    }
+
+    public static @NotNull LanguageFileType forLanguage(@NotNull Language language) {
+        return new RegExpFileType(language);
     }
 }

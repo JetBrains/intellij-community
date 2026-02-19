@@ -40,6 +40,9 @@ public interface GitBranchUiHandler {
   @NotNull
   ProgressIndicator getProgressIndicator();
 
+  void notifyError(@NotNull @NlsContexts.NotificationTitle String title,
+                   @NotNull @NlsContexts.NotificationContent String message);
+
   boolean notifyErrorWithRollbackProposal(@NotNull @NlsContexts.DialogTitle String title,
                                           @NotNull @NlsContexts.DialogMessage String message,
                                           @NotNull @NlsContexts.Label String rollbackProposal);
@@ -47,8 +50,6 @@ public interface GitBranchUiHandler {
   /**
    * Shows notification about unmerged files preventing checkout, merge, etc.
    *
-   * @param operationName
-   * @param repositories
    */
   void showUnmergedFilesNotification(@NotNull @Nls String operationName, @NotNull Collection<? extends GitRepository> repositories);
 
@@ -56,8 +57,6 @@ public interface GitBranchUiHandler {
    * Shows a modal notification about unmerged files preventing an operation, with "Rollback" button.
    * Pressing "Rollback" would should the operation which has already successfully executed on other repositories.
    *
-   * @param operationName
-   * @param rollbackProposal
    * @return true if user has agreed to rollback, false if user denied the rollback proposal.
    */
   boolean showUnmergedFilesMessageWithRollback(@NotNull @Nls String operationName, @NotNull @NlsContexts.Label String rollbackProposal);
@@ -77,7 +76,6 @@ public interface GitBranchUiHandler {
   /**
    * Shows the dialog proposing to execute the operation (checkout or merge) smartly, i.e. stash-execute-unstash.
    *
-   * @param project
    * @param changes          local changes that would be overwritten by checkout or merge.
    * @param paths            paths reported by Git (in most cases this is covered by {@code changes}.
    * @param operation        operation name: checkout or merge
@@ -106,6 +104,7 @@ public interface GitBranchUiHandler {
   DeleteRemoteBranchDecision confirmRemoteBranchDeletion(@NotNull List<String> branchNames,
                                                          @NotNull Collection<String> trackingBranches,
                                                          @NotNull Collection<GitRepository> repositories);
+
   enum DeleteRemoteBranchDecision {
     CANCEL,
     DELETE,

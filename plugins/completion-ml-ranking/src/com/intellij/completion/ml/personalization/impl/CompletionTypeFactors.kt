@@ -17,7 +17,11 @@
 package com.intellij.completion.ml.personalization.impl
 
 import com.intellij.codeInsight.completion.CompletionType
-import com.intellij.completion.ml.personalization.*
+import com.intellij.completion.ml.personalization.FactorReader
+import com.intellij.completion.ml.personalization.FactorUpdater
+import com.intellij.completion.ml.personalization.UserFactor
+import com.intellij.completion.ml.personalization.UserFactorDescriptions
+import com.intellij.completion.ml.personalization.UserFactorStorage
 
 /**
  * @author Vitaliy.Bibaev
@@ -38,7 +42,7 @@ class CompletionTypeUpdater(private val factor: MutableDoubleFactor) : FactorUpd
 class CompletionTypeRatio(private val type: CompletionType) : UserFactor {
 
     override val id: String = "CompletionTypeRatioOf$type"
-    override fun compute(storage: UserFactorStorage): String? {
+    override fun compute(storage: UserFactorStorage): String {
         val reader = storage.getFactorReader(UserFactorDescriptions.COMPLETION_TYPE)
         val total = reader.getTotalCompletionCount()
         return if (total == 0.0) "0.0" else (reader.getCompletionCountByType(type) / total).toString()

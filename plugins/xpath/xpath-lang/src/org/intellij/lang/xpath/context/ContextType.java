@@ -26,9 +26,6 @@ public final class ContextType {
     public static final ContextType PLAIN = lookupOrCreate("PLAIN", XPathVersion.V1);
     public static final ContextType PLAIN_V2 = lookupOrCreate("PLAIN_V2", XPathVersion.V2);
 
-    /** @deprecated left here for compatibility with intellij.platform.langInjection */
-    @Deprecated public static final ContextType INTERACTIVE = lookupOrCreate("INTERACTIVE");
-
     private final String myName;
     private final XPathVersion myVersion;
 
@@ -62,6 +59,7 @@ public final class ContextType {
       return myVersion;
     }
 
+    @Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
@@ -73,10 +71,12 @@ public final class ContextType {
         return true;
     }
 
+    @Override
     public int hashCode() {
         return myName.hashCode();
     }
 
+    @Override
     public String toString() {
         return myName;
     }

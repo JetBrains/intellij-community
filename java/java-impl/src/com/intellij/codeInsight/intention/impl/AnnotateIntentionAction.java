@@ -1,40 +1,42 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.codeInsight.AnnotationUtil;
+import com.intellij.codeInsight.ExternalAnnotationsManager;
+import com.intellij.codeInsight.ExternalAnnotationsManager.AnnotationPlace;
 import com.intellij.codeInsight.ExternalAnnotationsManagerImpl;
 import com.intellij.codeInsight.externalAnnotation.AnnotationProvider;
 import com.intellij.codeInsight.intention.AddAnnotationPsiFix;
-import com.intellij.codeInsight.intention.LowPriorityAction;
+import com.intellij.codeInsight.intention.PriorityAction;
 import com.intellij.java.JavaBundle;
 import com.intellij.java.analysis.JavaAnalysisBundle;
+import com.intellij.modcommand.ActionContext;
+import com.intellij.modcommand.ModCommand;
+import com.intellij.modcommand.ModCommandAction;
+import com.intellij.modcommand.Presentation;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.popup.JBPopupFactory;
-import com.intellij.openapi.ui.popup.PopupStep;
-import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiModifierListOwner;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.IncorrectOperationException;
 import one.util.streamex.MoreCollectors;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
-public class AnnotateIntentionAction extends BaseIntentionAction implements LowPriorityAction {
+public final class AnnotateIntentionAction implements ModCommandAction {
   private String mySingleAnnotationName;
 
   @Override
-  @NotNull
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return JavaAnalysisBundle.message("intention.add.annotation.family");
   }
 
@@ -82,57 +84,36 @@ public class AnnotateIntentionAction extends BaseIntentionAction implements LowP
   }
 
   @Override
-  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    final PsiModifierListOwner owner = AddAnnotationPsiFix.getContainer(file, editor.getCaretModel().getOffset());
+  public @Nullable Presentation getPresentation(@NotNull ActionContext context) {
+    final PsiModifierListOwner owner = AddAnnotationPsiFix.getContainer(context.file(), context.offset());
     if (owner == null || owner.getModifierList() == null || !ExternalAnnotationsManagerImpl.areExternalAnnotationsApplicable(owner)) {
-      return false;
+      return null;
     }
-    List<AnnotationProvider> annotations = availableAnnotations(owner, project).limit(2).collect(Collectors.toList());
-    if (annotations.isEmpty()) return false;
-    if (mySingleAnnotationName != null && canAnnotateWith(file, owner, mySingleAnnotationName)) return true;
+    List<AnnotationProvider> annotations = availableAnnotations(owner, context.project()).limit(2).toList();
+    if (annotations.isEmpty()) return null;
+    if (mySingleAnnotationName != null && canAnnotateWith(context.file(), owner, mySingleAnnotationName)) {
+      return Presentation.of(AddAnnotationPsiFix.calcText(owner, mySingleAnnotationName)).withPriority(PriorityAction.Priority.LOW);
+    }
     if (annotations.size() == 1) {
-      String providerName = annotations.get(0).getName(project);
-      setText(AddAnnotationPsiFix.calcText(owner, providerName));
+      String providerName = annotations.get(0).getName(context.project());
+      return Presentation.of(AddAnnotationPsiFix.calcText(owner, providerName)).withPriority(PriorityAction.Priority.LOW);
     }
-    else {
-      setText(AddAnnotationPsiFix.calcText(owner, null));
-    }
-    return true;
+    return Presentation.of(AddAnnotationPsiFix.calcText(owner, null)).withPriority(PriorityAction.Priority.LOW);
   }
 
   @Override
-  public void invoke(@NotNull final Project project, Editor editor, final PsiFile file) throws IncorrectOperationException {
-    final PsiModifierListOwner owner = AddAnnotationPsiFix.getContainer(file, editor.getCaretModel().getOffset());
+  public @NotNull ModCommand perform(@NotNull ActionContext context) {
+    final PsiModifierListOwner owner = AddAnnotationPsiFix.getContainer(context.file(), context.offset());
     assert owner != null;
+    AnnotationPlace place = ExternalAnnotationsManager.getInstance(context.project()).chooseAnnotationsPlaceNoUi(owner);
+    List<ModCommandAction> actions;
+    Stream<AnnotationProvider> providers;
     if (mySingleAnnotationName != null) {
-      getProviderFor(file, owner, mySingleAnnotationName)
-        .ifPresent(provider -> provider.createFix(owner).invoke(project, editor, file));
-      return;
+      providers = getProviderFor(context.file(), owner, mySingleAnnotationName).stream();
+    } else {
+      providers = availableAnnotations(owner, context.project());
     }
-    List<AnnotationProvider> annotations = availableAnnotations(owner, project).collect(Collectors.toList());
-    if (annotations.isEmpty()) return;
-    JBPopupFactory.getInstance().createListPopup(
-      new BaseListPopupStep<>(JavaBundle.message("annotate.intention.chooser.title"), annotations) {
-        @Override
-        public PopupStep onChosen(final AnnotationProvider selectedValue, final boolean finalChoice) {
-          return doFinalStep(() -> selectedValue.createFix(owner).invoke(project, editor, file));
-        }
-
-        @Override
-        public boolean isSpeedSearchEnabled() {
-          return true;
-        }
-
-        @Override
-        @NotNull
-        public String getTextFor(final AnnotationProvider value) {
-          return value.getName(project);
-        }
-      }).showInBestPositionFor(editor);
-  }
-
-  @Override
-  public boolean startInWriteAction() {
-    return false;
+    actions = providers.map(provider -> provider.createFix(owner, place)).toList();
+    return ModCommand.chooseAction(JavaBundle.message("annotate.intention.chooser.title"), actions);
   }
 }

@@ -21,9 +21,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-/**
- * @author vlan
- */
 public class PyClassMROTest extends PyTestCase {
   public void testSimpleDiamond() {
     assertMRO(getClass("C"), "B1", "B2", "object");
@@ -153,6 +150,11 @@ public class PyClassMROTest extends PyTestCase {
       assertMRO(pyClass, "object");
       assertMetaClass(pyClass, "type");
     });
+  }
+
+  public void testTypingGenericAsFirstBaseClass() {
+    PyClass pyClass = getClass("MyClass");
+    assertMRO(pyClass, "Base", "Generic", "object");
   }
 
   // PY-21837

@@ -1,0 +1,9 @@
+// HIGHLIGHT: INFORMATION
+fun test() = 42
+
+fun foo() {
+    when (test()) {
+        1 -> 0
+        else -> 24
+    }
+}

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.uiDesigner;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
@@ -10,14 +10,24 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiType;
 import com.intellij.uiDesigner.designSurface.GuiEditor;
 import com.intellij.uiDesigner.inspections.FormInspectionTool;
 import com.intellij.uiDesigner.lw.IButtonGroup;
 import com.intellij.uiDesigner.lw.IComponent;
 import com.intellij.uiDesigner.lw.IContainer;
 import com.intellij.uiDesigner.lw.IRootContainer;
-import com.intellij.uiDesigner.quickFixes.*;
+import com.intellij.uiDesigner.quickFixes.ChangeFieldTypeFix;
+import com.intellij.uiDesigner.quickFixes.CreateClassToBindFix;
+import com.intellij.uiDesigner.quickFixes.CreateFieldFix;
+import com.intellij.uiDesigner.quickFixes.GenerateCreateComponentsFix;
+import com.intellij.uiDesigner.quickFixes.QuickFix;
 import com.intellij.uiDesigner.radComponents.RadComponent;
 import com.intellij.uiDesigner.radComponents.RadRootContainer;
 import com.intellij.util.IncorrectOperationException;
@@ -25,44 +35,43 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.util.*;
+import javax.swing.ButtonGroup;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Objects;
+import java.util.Set;
 
-/**
- * @author Anton Katilin
- * @author Vladimir Kondratyev
- */
 public final class ErrorAnalyzer {
   private static final Logger LOG = Logger.getInstance(ErrorAnalyzer.class);
 
   /**
    * Value {@link ErrorInfo}
    */
-  @NonNls
-  public static final String CLIENT_PROP_CLASS_TO_BIND_ERROR = "classToBindError";
+  public static final @NonNls String CLIENT_PROP_CLASS_TO_BIND_ERROR = "classToBindError";
   /**
    * Value {@link ErrorInfo}
    */
-  @NonNls
-  public static final String CLIENT_PROP_BINDING_ERROR = "bindingError";
+  public static final @NonNls String CLIENT_PROP_BINDING_ERROR = "bindingError";
 
-  @NonNls public static final String CLIENT_PROP_ERROR_ARRAY = "errorArray";
+  public static final @NonNls String CLIENT_PROP_ERROR_ARRAY = "errorArray";
 
   private ErrorAnalyzer() {
   }
 
-  static void analyzeErrors(@NotNull GuiEditor editor, final IRootContainer rootContainer, @Nullable final ProgressIndicator progress) {
+  static void analyzeErrors(@NotNull GuiEditor editor, final IRootContainer rootContainer, final @Nullable ProgressIndicator progress) {
     analyzeErrors(editor.getModule(), editor.getFile(), editor, rootContainer, progress);
   }
 
   /**
    * @param editor if null, no quick fixes are created. This is used in form to source compiler.
    */
-  public static void analyzeErrors(@NotNull final Module module,
-                                   @NotNull final VirtualFile formFile,
-                                   @Nullable final GuiEditor editor,
-                                   @NotNull final IRootContainer rootContainer,
-                                   @Nullable final ProgressIndicator progress) {
+  public static void analyzeErrors(final @NotNull Module module,
+                                   final @NotNull VirtualFile formFile,
+                                   final @Nullable GuiEditor editor,
+                                   final @NotNull IRootContainer rootContainer,
+                                   final @Nullable ProgressIndicator progress) {
     if (module.isDisposed()) {
       return;
     }
@@ -93,7 +102,7 @@ public final class ErrorAnalyzer {
     final Set<IButtonGroup> processedGroups = new HashSet<>();
     FormEditingUtil.iterate(
       rootContainer,
-      new FormEditingUtil.ComponentVisitor<IComponent>() {
+      new FormEditingUtil.ComponentVisitor<>() {
         @Override
         public boolean visit(final IComponent component) {
           if (progress != null && progress.isCanceled()) return false;
@@ -143,7 +152,7 @@ public final class ErrorAnalyzer {
     // Check that there are no panels in XY with children
     FormEditingUtil.iterate(
       rootContainer,
-      new FormEditingUtil.ComponentVisitor<IComponent>() {
+      new FormEditingUtil.ComponentVisitor<>() {
         @Override
         public boolean visit(final IComponent component) {
           if (progress != null && progress.isCanceled()) return false;
@@ -151,13 +160,11 @@ public final class ErrorAnalyzer {
           // Clear previous error (if any)
           component.putClientProperty(CLIENT_PROP_ERROR_ARRAY, null);
 
-          if (!(component instanceof IContainer)) {
+          if (!(component instanceof IContainer container)) {
             return true;
           }
 
-          final IContainer container = (IContainer)component;
-          if (container instanceof IRootContainer) {
-            final IRootContainer rootContainer = (IRootContainer)container;
+          if (container instanceof IRootContainer rootContainer) {
             if (rootContainer.getComponentCount() > 1) {
               // TODO[vova] implement
               putError(component, new ErrorInfo(
@@ -170,10 +177,10 @@ public final class ErrorAnalyzer {
           else if (container.isXY() && container.getComponentCount() > 0) {
             // TODO[vova] implement
             putError(component, new ErrorInfo(
-              component, null, UIDesignerBundle.message("error.panel.not.laid.out"),
-              HighlightDisplayLevel.ERROR,
-              QuickFix.EMPTY_ARRAY
-            )
+                       component, null, UIDesignerBundle.message("error.panel.not.laid.out"),
+                       HighlightDisplayLevel.ERROR,
+                       QuickFix.EMPTY_ARRAY
+                     )
             );
           }
           return true;
@@ -306,7 +313,10 @@ public final class ErrorAnalyzer {
     catch (IncorrectOperationException ignored) {
     }
 
-    if (component.isCustomCreate() && FormEditingUtil.findCreateComponentsMethod(psiClass) == null) {
+    if (component.isCustomCreate() &&
+        FormEditingUtil.findCreateComponentsMethod(psiClass) == null &&
+        // with generating final fields, initilization code lies in ctor, not in createComponent method
+        !GuiDesignerConfiguration.getInstance(psiClass.getProject()).GENERATE_SOURCES_FINAL_FIELDS) {
       final QuickFix[] fixes = editor != null ? new QuickFix[]{
         new GenerateCreateComponentsFix(editor, psiClass)
       } : QuickFix.EMPTY_ARRAY;
@@ -318,6 +328,7 @@ public final class ErrorAnalyzer {
           fixes));
       return true;
     }
+
     return false;
   }
 
@@ -335,8 +346,7 @@ public final class ErrorAnalyzer {
    * @return first ErrorInfo for the specified component. If component doesn't contain
    * any error then the method returns {@code null}.
    */
-  @Nullable
-  public static ErrorInfo getErrorForComponent(@NotNull final IComponent component){
+  public static @Nullable ErrorInfo getErrorForComponent(final @NotNull IComponent component){
     // Check bind to class errors
     {
       final ErrorInfo errorInfo = (ErrorInfo)component.getClientProperty(CLIENT_PROP_CLASS_TO_BIND_ERROR);
@@ -356,7 +366,7 @@ public final class ErrorAnalyzer {
     // General error
     {
       final ArrayList<ErrorInfo> errorInfo = getErrorInfos(component);
-      if(errorInfo != null && errorInfo.size() > 0){
+      if(errorInfo != null && !errorInfo.isEmpty()){
         return errorInfo.get(0);
       }
     }
@@ -386,8 +396,7 @@ public final class ErrorAnalyzer {
     return (ArrayList<ErrorInfo>)component.getClientProperty(CLIENT_PROP_ERROR_ARRAY);
   }
 
-  @Nullable
-  public static HighlightDisplayLevel getHighlightDisplayLevel(final Project project, @NotNull final RadComponent component) {
+  public static @Nullable HighlightDisplayLevel getHighlightDisplayLevel(final Project project, final @NotNull RadComponent component) {
     HighlightDisplayLevel displayLevel = null;
     for(ErrorInfo errInfo: getAllErrorsForComponent(component)) {
       if (displayLevel == null || SeverityRegistrar.getSeverityRegistrar(project).compare(errInfo.getHighlightDisplayLevel().getSeverity(), displayLevel.getSeverity()) > 0) {

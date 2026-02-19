@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.codeInsight.template.postfix.editable;
 
 import com.intellij.codeInsight.template.postfix.settings.PostfixTemplateStorage;
@@ -108,10 +108,16 @@ public class JavaEditablePostfixTemplateTest extends LightPlatformTestCase {
     assertSameElements(reloadConditions(templateWithCondition(condition)), condition);
   }
 
+  public void testArrayNotPrimitiveTypeCondition() {
+    JavaPostfixTemplateExpressionCondition condition =
+      new JavaPostfixTemplateExpressionCondition.JavaPostfixTemplateArrayReferenceExpressionCondition();
+    assertSameElements(reloadConditions(templateWithCondition(condition)), condition);
+  }
+
   public void testFqnCondition() {
     JavaPostfixTemplateExpressionCondition condition =
       new JavaPostfixTemplateExpressionCondition.JavaPostfixTemplateExpressionFqnCondition("test.class.Name");
-    Set<JavaPostfixTemplateExpressionCondition> conditions = reloadConditions(templateWithCondition(condition));
+    Set<? extends JavaPostfixTemplateExpressionCondition> conditions = reloadConditions(templateWithCondition(condition));
     JavaPostfixTemplateExpressionCondition reloadedCondition = ContainerUtil.getFirstItem(conditions);
     assertSameElements(conditions, condition);
     assertEquals("test.class.Name",
@@ -139,8 +145,7 @@ public class JavaEditablePostfixTemplateTest extends LightPlatformTestCase {
     return (JavaEditablePostfixTemplate)reloadTemplate(template);
   }
 
-  @NotNull
-  private static Set<JavaPostfixTemplateExpressionCondition> reloadConditions(@NotNull JavaEditablePostfixTemplate template) {
+  private static Set<? extends JavaPostfixTemplateExpressionCondition> reloadConditions(@NotNull JavaEditablePostfixTemplate template) {
     return reloadJavaTemplate(template).getExpressionConditions();
   }
 }

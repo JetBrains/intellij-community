@@ -13,10 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.intellij.plugins.relaxNG.model.resolve;
 
-import com.intellij.openapi.util.Factory;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.psi.PsiElement;
@@ -26,20 +24,29 @@ import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.xml.XmlFile;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xml.DomFileElement;
 import com.intellij.util.xml.DomManager;
-import gnu.trove.THashSet;
+import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
 import org.intellij.plugins.relaxNG.compact.psi.RncFile;
-import org.intellij.plugins.relaxNG.model.*;
+import org.intellij.plugins.relaxNG.model.CommonElement;
+import org.intellij.plugins.relaxNG.model.Define;
+import org.intellij.plugins.relaxNG.model.Div;
+import org.intellij.plugins.relaxNG.model.Grammar;
+import org.intellij.plugins.relaxNG.model.Include;
+import org.intellij.plugins.relaxNG.model.Pattern;
+import org.intellij.plugins.relaxNG.model.Ref;
 import org.intellij.plugins.relaxNG.xml.dom.RngGrammar;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 
 public final class DefinitionResolver extends CommonElement.Visitor implements
-        CachedValueProvider<Map<String, Set<Define>>>, Factory<Set<Define>> {
+        CachedValueProvider<Map<String, Set<Define>>> {
 
   private static final Key<CachedValue<Map<String, Set<Define>>>> KEY = Key.create("CACHED_DEFINES");
 
@@ -58,7 +65,7 @@ public final class DefinitionResolver extends CommonElement.Visitor implements
 
     final PsiFile value = include.getInclude();
     if (myVisitedFiles.get() == null) {
-      myVisitedFiles.set(ContainerUtil.newIdentityTroveSet());
+      myVisitedFiles.set(new ReferenceOpenHashSet<>());
     }
     if (value != null && myVisitedFiles.get().add(value)) {
       doVisitRncOrRngFile(value, this);
@@ -87,7 +94,7 @@ public final class DefinitionResolver extends CommonElement.Visitor implements
 
   @Override
   public void visitDefine(Define def) {
-    ContainerUtil.getOrCreate(myDefines.get(), def.getName(), this).add(def);
+    myDefines.get().computeIfAbsent(def.getName(), __ -> new HashSet<>()).add(def);
   }
 
   @Override
@@ -100,12 +107,6 @@ public final class DefinitionResolver extends CommonElement.Visitor implements
 
   @Override
   public void visitRef(Ref ref) {
-  }
-
-
-  @Override
-  public Set<Define> create() {
-    return new THashSet<>();
   }
 
   @Override
@@ -131,8 +132,7 @@ public final class DefinitionResolver extends CommonElement.Visitor implements
     }
   }
 
-  @Nullable
-  public static Set<Define> resolve(Grammar scope, final String value) {
+  public static @Nullable Set<Define> resolve(Grammar scope, final String value) {
     final Map<String, Set<Define>> map = getAllVariants(scope);
     if (map == null) {
       return null;
@@ -141,7 +141,7 @@ public final class DefinitionResolver extends CommonElement.Visitor implements
     final Set<Define> set = map.get(value);
 
     // actually we should always do this, but I'm a bit afraid of the performance impact
-    if (set == null || set.size() == 0) {
+    if (set == null || set.isEmpty()) {
       final PsiElement element = scope.getPsiElement();
       if (element != null) {
         final PsiFile file = element.getContainingFile();
@@ -156,8 +156,7 @@ public final class DefinitionResolver extends CommonElement.Visitor implements
     return set;
   }
 
-  @Nullable
-  public static Map<String, Set<Define>> getAllVariants(Grammar scope) {
+  public static @Nullable Map<String, Set<Define>> getAllVariants(Grammar scope) {
     final PsiElement psiElement = scope.getPsiElement();
     if (psiElement == null || !psiElement.isValid()) return null;
 
@@ -216,8 +215,7 @@ public final class DefinitionResolver extends CommonElement.Visitor implements
       return myResult == null;
     }
 
-    @Nullable
-    public Set<Define> getResult() {
+    public @Nullable Set<Define> getResult() {
       return myResult != null ? Collections.singleton(myResult) : null;
     }
   }

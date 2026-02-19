@@ -12,7 +12,7 @@ class S {
 -----
 class S {
     def r() {
-        Closure<Double> sin = <caret>testMethod()
+        Closure sin = <caret>testMethod()
 
 
         10.times {
@@ -21,7 +21,7 @@ class S {
 
     }
 
-    private Closure<Double> testMethod() {
+    private Closure testMethod() {
         Closure sin = { x -> Math.sin(x) }
         return sin
     }

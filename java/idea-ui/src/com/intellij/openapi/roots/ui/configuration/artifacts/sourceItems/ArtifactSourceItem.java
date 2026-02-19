@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.ui.configuration.artifacts.sourceItems;
 
 import com.intellij.openapi.project.Project;
@@ -40,9 +26,8 @@ public class ArtifactSourceItem extends PackagingSourceItem {
     myArtifact = artifact;
   }
 
-  @NotNull
   @Override
-  public SourceItemPresentation createPresentation(@NotNull ArtifactEditorContext context) {
+  public @NotNull SourceItemPresentation createPresentation(@NotNull ArtifactEditorContext context) {
     final ArtifactPointer pointer = ArtifactPointerManager.getInstance(context.getProject()).createPointer(myArtifact, context.getArtifactModel());
     return new DelegatedSourceItemPresentation(new ArtifactElementPresentation(pointer, context)) {
       @Override
@@ -53,20 +38,19 @@ public class ArtifactSourceItem extends PackagingSourceItem {
   }
 
   @Override
-  @NotNull
-  public List<? extends PackagingElement<?>> createElements(@NotNull ArtifactEditorContext context) {
+  public @NotNull List<? extends PackagingElement<?>> createElements(@NotNull ArtifactEditorContext context) {
     final Project project = context.getProject();
     final ArtifactPointer pointer = ArtifactPointerManager.getInstance(project).createPointer(myArtifact, context.getArtifactModel());
     return Collections.singletonList(PackagingElementFactory.getInstance().createArtifactElement(pointer, project));
   }
 
+  @Override
   public boolean equals(Object obj) {
     return obj instanceof ArtifactSourceItem && myArtifact.equals(((ArtifactSourceItem)obj).myArtifact);
   }
 
-  @NotNull
   @Override
-  public PackagingElementOutputKind getKindOfProducedElements() {
+  public @NotNull PackagingElementOutputKind getKindOfProducedElements() {
     return myArtifact.getArtifactType() instanceof JarArtifactType ? PackagingElementOutputKind.JAR_FILES : PackagingElementOutputKind.OTHER;
   }
 
@@ -74,6 +58,7 @@ public class ArtifactSourceItem extends PackagingSourceItem {
     return myArtifact;
   }
 
+  @Override
   public int hashCode() {
     return myArtifact.hashCode();
   }

@@ -1,9 +1,14 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.rt.testng;
 
 import com.intellij.rt.execution.junit.ComparisonFailureData;
 import com.intellij.rt.execution.junit.MapSerializerUtil;
-import org.testng.*;
+import org.testng.IClass;
+import org.testng.IInvokedMethod;
+import org.testng.ISuite;
+import org.testng.ITestContext;
+import org.testng.ITestNGMethod;
+import org.testng.ITestResult;
 import org.testng.annotations.Test;
 import org.testng.internal.ConstructorOrMethod;
 import org.testng.xml.XmlClass;
@@ -15,15 +20,21 @@ import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.lang.reflect.AccessibleObject;
 import java.lang.reflect.Method;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 
 public class IDEATestNGRemoteListener {
 
   private final PrintStream myPrintStream;
-  private final List<String> myCurrentSuites = new ArrayList<String>();
-  private final Map<String, Integer> myInvocationCounts = new HashMap<String, Integer>();
-  private final Map<ExposedTestResult, String> myParamsMap = new HashMap<ExposedTestResult, String>();
-  private final Map<ExposedTestResult, DelegatedResult> myResults = new HashMap<ExposedTestResult, DelegatedResult>();
+  private final List<String> myCurrentSuites = new ArrayList<>();
+  private final Map<String, Integer> myInvocationCounts = new HashMap<>();
+  private final Map<ExposedTestResult, String> myParamsMap = new HashMap<>();
+  private final Map<ExposedTestResult, DelegatedResult> myResults = new HashMap<>();
   private int mySkipped = 0;
 
   public IDEATestNGRemoteListener() {
@@ -227,10 +238,11 @@ public class IDEATestNGRemoteListener {
     }
     Throwable ex = result.getThrowable();
     String methodName = getTestMethodNameWithParams(result);
-    final Map<String, String> attrs = new LinkedHashMap<String, String>();
+    final Map<String, String> attrs = new LinkedHashMap<>();
     attrs.put("name", methodName);
     final String failureMessage = ex != null ? ex.getMessage() : null;
     if (ex != null) {
+      String expectedPrefix = " expected [";
       ComparisonFailureData notification;
       try {
         notification = ComparisonFailureData.create(ex);
@@ -247,7 +259,11 @@ public class IDEATestNGRemoteListener {
           notification = null;
         }
       }
-      ComparisonFailureData.registerSMAttributes(notification, getTrace(ex), failureMessage, attrs, ex);
+      else {
+        expectedPrefix = "expected:";
+      }
+
+      ComparisonFailureData.registerSMAttributes(notification, getTrace(ex), failureMessage, attrs, ex, "Comparison Failure: ", expectedPrefix);
     }
     else {
       attrs.put("message", "");
@@ -298,7 +314,7 @@ public class IDEATestNGRemoteListener {
             }
           }
           else {
-            paramString = "[" + parameter.toString() + "]";
+            paramString = "[" + parameter + "]";
           }
         }
       }
@@ -309,7 +325,7 @@ public class IDEATestNGRemoteListener {
     if (invocationCount > 0) {
       paramString += " (" + invocationCount + ")";
     }
-    return paramString.length() > 0 ? paramString : null;
+    return !paramString.isEmpty() ? paramString : null;
   }
 
   protected String getTrace(Throwable tr) {
@@ -354,7 +370,7 @@ public class IDEATestNGRemoteListener {
     myResults.put(newResult, newResult);
     return newResult;
   }
-  
+
   protected static class DelegatedResult implements ExposedTestResult {
     private final ITestResult myResult;
     private final String myTestName;
@@ -383,7 +399,7 @@ public class IDEATestNGRemoteListener {
       Test annotation = member.getAnnotation(Test.class);
       if (annotation == null) return method.getMethodName();
       String testNameFromAnnotation = annotation.testName();
-      return testNameFromAnnotation == null || testNameFromAnnotation.length() == 0 ? method.getMethodName() : testNameFromAnnotation;
+      return testNameFromAnnotation == null || testNameFromAnnotation.isEmpty() ? method.getMethodName() : testNameFromAnnotation;
     }
 
     @Override

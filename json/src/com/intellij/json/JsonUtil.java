@@ -1,10 +1,15 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.json;
 
 import com.intellij.ide.scratch.RootType;
 import com.intellij.ide.scratch.ScratchFileService;
 import com.intellij.ide.scratch.ScratchUtil;
-import com.intellij.json.psi.*;
+import com.intellij.json.psi.JsonArray;
+import com.intellij.json.psi.JsonElement;
+import com.intellij.json.psi.JsonFile;
+import com.intellij.json.psi.JsonObject;
+import com.intellij.json.psi.JsonProperty;
+import com.intellij.json.psi.JsonValue;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.project.Project;
@@ -37,9 +42,8 @@ public final class JsonUtil {
    * @param <T>        class to cast
    * @return expression casted to appropriate type (if could be casted). Null otherwise.
    */
-  @Nullable
   @SuppressWarnings("unchecked")
-  public static <T> T as(@Nullable final Object expression, @NotNull final Class<T> cls) {
+  public static @Nullable <T> T as(final @Nullable Object expression, final @NotNull Class<T> cls) {
     if (expression == null) {
       return null;
     }
@@ -49,9 +53,8 @@ public final class JsonUtil {
     return null;
   }
 
-  @Nullable
-  public static <T extends JsonElement> T getPropertyValueOfType(@NotNull final JsonObject object, @NotNull final String name,
-                                                                 @NotNull final Class<T> clazz) {
+  public static @Nullable <T extends JsonElement> T getPropertyValueOfType(final @NotNull JsonObject object, final @NotNull String name,
+                                                                           final @NotNull Class<T> clazz) {
     final JsonProperty property = object.findProperty(name);
     if (property == null) return null;
     return ObjectUtils.tryCast(property.getValue(), clazz);
@@ -73,9 +76,8 @@ public final class JsonUtil {
     return -1;
   }
 
-  @Contract(value = "null -> null")
-  @Nullable
-  public static JsonObject getTopLevelObject(@Nullable JsonFile jsonFile) {
+  @Contract("null -> null")
+  public static @Nullable JsonObject getTopLevelObject(@Nullable JsonFile jsonFile) {
     return jsonFile != null ? ObjectUtils.tryCast(jsonFile.getTopLevelValue(), JsonObject.class) : null;
   }
 

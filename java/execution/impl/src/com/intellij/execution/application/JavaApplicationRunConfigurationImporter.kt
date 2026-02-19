@@ -31,6 +31,7 @@ class JavaApplicationRunConfigurationImporter : RunConfigurationImporter {
     consumeIfCast(cfg["programParameters"], String::class.java) { runConfiguration.programParameters = it }
     consumeIfCast(cfg["envs"], Map::class.java) { runConfiguration.envs = it as MutableMap<String, String> }
     consumeIfCast(cfg["workingDirectory"], String::class.java) { runConfiguration.workingDirectory = it }
+    runConfiguration.setIncludeProvidedScope(cfg["includeProvidedDependencies"] as? Boolean ?: false)
 
     consumeIfCast(cfg["shortenCommandLine"], String::class.java) {
       try {
@@ -44,7 +45,7 @@ class JavaApplicationRunConfigurationImporter : RunConfigurationImporter {
   override fun canImport(typeName: String): Boolean = typeName == "application"
 
   override fun getConfigurationFactory(): ConfigurationFactory =
-    ConfigurationTypeUtil.findConfigurationType<ApplicationConfigurationType>(
+    ConfigurationTypeUtil.findConfigurationType(
       ApplicationConfigurationType::class.java)
       .configurationFactories[0]
 

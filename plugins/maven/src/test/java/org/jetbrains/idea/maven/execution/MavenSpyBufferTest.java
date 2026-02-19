@@ -63,6 +63,17 @@ public class MavenSpyBufferTest extends UsefulTestCase {
     });
   }
 
+  public void testShouldSplitLines() {
+    doTest(new String[]{
+      "some line\nwith another line\nwith",
+      " third line\n"
+    }, new String[]{
+      "some line\n",
+      "with another line\n",
+      "with third line\n"
+    });
+  }
+
   private static void doTest(String[] text, String[] expected) {
     List<String> actual = new ArrayList<>();
     MavenSpyEventsBuffer spyEventsBuffer =

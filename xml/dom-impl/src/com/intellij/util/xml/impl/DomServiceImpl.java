@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.util.xml.impl;
 
@@ -28,44 +14,60 @@ import com.intellij.psi.PsiManager;
 import com.intellij.psi.impl.PsiFileEx;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.stubs.ObjectStubTree;
-import com.intellij.psi.stubs.Stub;
 import com.intellij.psi.stubs.StubTreeLoader;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
-import com.intellij.psi.xml.*;
+import com.intellij.psi.xml.XmlDoctype;
+import com.intellij.psi.xml.XmlDocument;
+import com.intellij.psi.xml.XmlFile;
+import com.intellij.psi.xml.XmlProlog;
+import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.Function;
 import com.intellij.util.indexing.FileBasedIndex;
-import com.intellij.util.xml.*;
+import com.intellij.util.xml.DomAnchor;
+import com.intellij.util.xml.DomElement;
+import com.intellij.util.xml.DomFileDescription;
+import com.intellij.util.xml.DomFileElement;
+import com.intellij.util.xml.DomFileIndex;
+import com.intellij.util.xml.DomManager;
+import com.intellij.util.xml.DomService;
+import com.intellij.util.xml.EvaluatedXmlName;
+import com.intellij.util.xml.ModelMerger;
+import com.intellij.util.xml.ModelMergerImpl;
+import com.intellij.util.xml.NanoXmlUtil;
+import com.intellij.util.xml.XmlFileHeader;
 import com.intellij.util.xml.structure.DomStructureViewBuilder;
 import com.intellij.util.xml.stubs.FileStub;
+import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 /**
  * @author Gregory.Shrago
  */
 public class DomServiceImpl extends DomService {
 
-  @NotNull
-  private static XmlFileHeader calcXmlFileHeader(final XmlFile file) {
+  private static @NotNull XmlFileHeader calcXmlFileHeader(@NotNull XmlFile file) {
 
     if (file instanceof PsiFileEx && ((PsiFileEx)file).isContentsLoaded() && file.getNode().isParsed()) {
       return computeHeaderByPsi(file);
     }
 
-    if (FileBasedIndex.getInstance().getFileBeingCurrentlyIndexed() == null && file.getFileType() == XmlFileType.INSTANCE) {
+    if (FileBasedIndex.getInstance().getFileBeingCurrentlyIndexed() == null &&
+        XmlUtil.BUILDING_DOM_STUBS.get() != Boolean.TRUE &&
+        file.getFileType() == XmlFileType.INSTANCE) {
       VirtualFile virtualFile = file.getVirtualFile();
       if (virtualFile instanceof VirtualFileWithId) {
         ObjectStubTree<?> tree = StubTreeLoader.getInstance().readFromVFile(file.getProject(), virtualFile);
-        if (tree != null) {
-          Stub root = tree.getRoot();
-          if (root instanceof FileStub) {
-            return ((FileStub)root).getHeader();
-          }
+        if (tree != null && tree.getRoot() instanceof FileStub fileStub) {
+          return fileStub.getHeader();
         }
       }
     }
@@ -117,7 +119,7 @@ public class DomServiceImpl extends DomService {
   }
 
   @Override
-  public ModelMerger createModelMerger() {
+  public @NotNull ModelMerger createModelMerger() {
     return new ModelMergerImpl();
   }
 
@@ -127,8 +129,7 @@ public class DomServiceImpl extends DomService {
   }
 
   @Override
-  @NotNull
-  public XmlFile getContainingFile(@NotNull DomElement domElement) {
+  public @NotNull XmlFile getContainingFile(@NotNull DomElement domElement) {
     if (domElement instanceof DomFileElement) {
       return ((DomFileElement<?>)domElement).getFile();
     }
@@ -136,14 +137,12 @@ public class DomServiceImpl extends DomService {
   }
 
   @Override
-  @NotNull
-  public EvaluatedXmlName getEvaluatedXmlName(@NotNull final DomElement element) {
+  public @NotNull EvaluatedXmlName getEvaluatedXmlName(final @NotNull DomElement element) {
     return DomManagerImpl.getNotNullHandler(element).getXmlName();
   }
 
   @Override
-  @NotNull
-  public XmlFileHeader getXmlFileHeader(XmlFile file) {
+  public @NotNull XmlFileHeader getXmlFileHeader(@NotNull XmlFile file) {
     if (FileBasedIndex.getInstance().getFileBeingCurrentlyIndexed() != null) {
       return calcXmlFileHeader(file);
     }
@@ -152,15 +151,31 @@ public class DomServiceImpl extends DomService {
   }
 
   @Override
-  public Collection<VirtualFile> getDomFileCandidates(Class<? extends DomElement> rootElementClass,
-                                                      Project project,
-                                                      final GlobalSearchScope scope) {
-    return FileBasedIndex.getInstance().getContainingFiles(DomFileIndex.NAME, rootElementClass.getName(), scope);
+  public @NotNull Collection<VirtualFile> getDomFileCandidates(@NotNull Class<? extends DomElement> rootElementClass,
+                                                               @NotNull GlobalSearchScope scope) {
+    DomFileDescription<?> description = DomApplicationComponent
+      .getInstance()
+      .findFileDescription(rootElementClass);
+    if (description == null) return Collections.emptySet();
+
+    String[] namespaces = description.getAllPossibleRootTagNamespaces();
+    if (namespaces.length == 0) {
+      namespaces = new String[]{null};
+    }
+    String rootTagName = description.getRootTagName();
+
+    Set<VirtualFile> files = new HashSet<>();
+    for (String namespace : namespaces) {
+      files.addAll(DomFileIndex.findFiles(rootTagName, namespace, scope));
+    }
+    return files;
   }
 
   @Override
-  public <T extends DomElement> List<DomFileElement<T>> getFileElements(final Class<T> clazz, final Project project, @Nullable final GlobalSearchScope scope) {
-    final Collection<VirtualFile> list = getDomFileCandidates(clazz, project, scope != null ? scope : GlobalSearchScope.allScope(project));
+  public <T extends DomElement> @NotNull List<DomFileElement<T>> getFileElements(@NotNull Class<T> clazz, @NotNull Project project, @Nullable GlobalSearchScope scope) {
+    final Collection<VirtualFile> list = getDomFileCandidates(clazz, scope != null ? scope : GlobalSearchScope.allScope(project));
+    if (list.isEmpty()) return Collections.emptyList();
+
     final ArrayList<DomFileElement<T>> result = new ArrayList<>(list.size());
     for (VirtualFile file : list) {
       final PsiFile psiFile = PsiManager.getInstance(project).findFile(file);
@@ -171,13 +186,12 @@ public class DomServiceImpl extends DomService {
         }
       }
     }
-
     return result;
   }
 
 
   @Override
-  public StructureViewBuilder createSimpleStructureViewBuilder(final XmlFile file, final Function<DomElement, StructureViewMode> modeProvider) {
+  public @NotNull StructureViewBuilder createSimpleStructureViewBuilder(@NotNull XmlFile file, @NotNull Function<DomElement, StructureViewMode> modeProvider) {
     return new DomStructureViewBuilder(file, modeProvider);
   }
 }

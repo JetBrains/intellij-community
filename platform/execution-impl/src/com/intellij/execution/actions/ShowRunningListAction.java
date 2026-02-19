@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.actions;
 
 import com.intellij.execution.ExecutionBundle;
@@ -9,8 +9,9 @@ import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.execution.ui.RunContentManager;
 import com.intellij.icons.AllIcons;
-import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.ui.popup.Balloon;
@@ -32,8 +33,17 @@ import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.TimerUtil;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.Icon;
+import javax.swing.JComponent;
+import javax.swing.JFrame;
+import javax.swing.JLabel;
+import javax.swing.SwingConstants;
+import javax.swing.SwingUtilities;
+import javax.swing.Timer;
+import java.awt.Component;
+import java.awt.Cursor;
+import java.awt.GridLayout;
+import java.awt.Point;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseEvent;
@@ -42,14 +52,9 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 
-public final class ShowRunningListAction extends AnAction {
-  public ShowRunningListAction() {
-    super(ExecutionBundle.messagePointer("show.running.list.action.name"),
-          ExecutionBundle.messagePointer("show.running.list.action.description"), null);
-  }
-
+final class ShowRunningListAction extends DumbAwareAction {
   @Override
-  public void actionPerformed(@NotNull final AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     final Project project = e.getProject();
     if (project == null || project.isDisposed()) return;
     final Ref<Pair<? extends JComponent, String>> stateRef = new Ref<>();
@@ -65,9 +70,9 @@ public final class ShowRunningListAction extends AnAction {
           return;
         }
         ArrayList<Project> projects = new ArrayList<>(Arrays.asList(ProjectManager.getInstance().getOpenProjects()));
-        //List should begin with current project
+        //List should begin with the current project
         projects.remove(project);
-        projects.add(0, project);
+        projects.addFirst(project);
         Pair<? extends JComponent, String> state = getCurrentState(projects);
 
         Pair<? extends JComponent, String> prevState = stateRef.get();
@@ -90,19 +95,20 @@ public final class ShowRunningListAction extends AnAction {
         builder.setClickHandler(new ActionListener() {
           @Override
           public void actionPerformed(ActionEvent e) {
-            if (e.getSource() instanceof MouseEvent) {
-              MouseEvent mouseEvent = (MouseEvent)e.getSource();
+            if (e.getSource() instanceof MouseEvent mouseEvent) {
               Component component = mouseEvent.getComponent();
               component = SwingUtilities.getDeepestComponentAt(component, mouseEvent.getX(), mouseEvent.getY());
               Object value = ((JComponent)component).getClientProperty(KEY);
               if (value instanceof Trinity) {
-                Project aProject = (Project)((Trinity)value).first;
+                Project aProject = (Project)((Trinity<?, ?, ?>)value).first;
                 JFrame aFrame = WindowManager.getInstance().getFrame(aProject);
                 if (aFrame != null && !aFrame.isActive()) {
-                  IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(aFrame, true));
+                  IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
+                    IdeFocusManager.getGlobalInstance().requestFocus(aFrame, true);
+                  });
                 }
                 RunContentManager.getInstance(aProject).
-                  toFrontRunContent((Executor)((Trinity)value).second, (RunContentDescriptor)((Trinity)value).third);
+                  toFrontRunContent((Executor)((Trinity<?, ?, ?>)value).second, (RunContentDescriptor)((Trinity<?, ?, ?>)value).third);
               }
             }
           }
@@ -144,7 +150,7 @@ public final class ShowRunningListAction extends AnAction {
           Icon icon = (processHandler instanceof KillableProcess && processHandler.isProcessTerminating())
                       ? AllIcons.Debugger.KillProcess
                       : executor.getIcon();
-                    HyperlinkLabel label = new HyperlinkLabel(descriptor.getDisplayName());
+          HyperlinkLabel label = new HyperlinkLabel(descriptor.getDisplayName());
           label.setIcon(icon);
           label.setIconTextGap(JBUIScale.scale(2));
           label.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
@@ -164,7 +170,12 @@ public final class ShowRunningListAction extends AnAction {
       panel.add(label);
     }
 
-    return Pair.create(panel, state.toString());
+    return new Pair<>(panel, state.toString());
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 
   @Override

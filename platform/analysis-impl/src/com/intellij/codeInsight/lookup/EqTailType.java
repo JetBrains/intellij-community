@@ -1,44 +1,45 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.lookup;
 
+import com.intellij.application.options.CodeStyle;
+import com.intellij.codeInsight.ModNavigatorTailType;
 import com.intellij.codeInsight.TailType;
-import com.intellij.codeStyle.CodeStyleFacade;
 import com.intellij.lang.Language;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.ModNavigator;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.util.PsiEditorUtil;
+import com.intellij.psi.codeStyle.CodeStyleSettingsFacade;
 import com.intellij.psi.util.PsiUtilCore;
+import org.jetbrains.annotations.NotNull;
 
-public class EqTailType extends TailType {
+public class EqTailType extends ModNavigatorTailType {
   public static final TailType INSTANCE = new EqTailType();
 
-  protected boolean isSpaceAroundAssignmentOperators(Editor editor, int tailOffset) {
-    CodeStyleFacade codeStyleFacade = CodeStyleFacade.getInstance(editor.getProject());
-    PsiFile psiFile = PsiEditorUtil.getPsiFile(editor);
+  protected boolean isSpaceAroundAssignmentOperators(@NotNull PsiFile psiFile, int tailOffset) {
     Language language = PsiUtilCore.getLanguageAtOffset(psiFile, tailOffset);
-    return codeStyleFacade.useSpaceAroundAssignmentOperators(psiFile, language);
+    CodeStyleSettingsFacade codeStyleFacade = CodeStyle.getFacade(psiFile).withLanguage(language);
+    return codeStyleFacade.isSpaceAroundAssignmentOperators();
   }
 
   @Override
-  public int processTail(final Editor editor, int tailOffset) {
-    Document document = editor.getDocument();
+  public int processTail(@NotNull ModNavigator navigator, int tailOffset) {
+    Document document = navigator.getDocument();
     int textLength = document.getTextLength();
     CharSequence chars = document.getCharsSequence();
     if (tailOffset < textLength - 1 && chars.charAt(tailOffset) == ' ' && chars.charAt(tailOffset + 1) == '=') {
-      return moveCaret(editor, tailOffset, 2);
+      return moveCaret(navigator, tailOffset, 2);
     }
     if (tailOffset < textLength && chars.charAt(tailOffset) == '=') {
-      return moveCaret(editor, tailOffset, 1);
+      return moveCaret(navigator, tailOffset, 1);
     }
-    if (isSpaceAroundAssignmentOperators(editor, tailOffset)) {
+    if (isSpaceAroundAssignmentOperators(navigator.getPsiFile(), tailOffset)) {
       document.insertString(tailOffset, " =");
-      tailOffset = moveCaret(editor, tailOffset, 2);
-      tailOffset = insertChar(editor, tailOffset, ' ');
+      tailOffset = moveCaret(navigator, tailOffset, 2);
+      tailOffset = insertChar(navigator, tailOffset, ' ');
     }
     else {
       document.insertString(tailOffset, "=");
-      tailOffset = moveCaret(editor, tailOffset, 1);
+      tailOffset = moveCaret(navigator, tailOffset, 1);
     }
     return tailOffset;
   }

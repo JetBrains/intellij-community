@@ -1,15 +1,18 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions.searcheverywhere;
 
 import com.intellij.execution.Executor;
 import com.intellij.execution.ExecutorRegistry;
 import com.intellij.execution.RunnerAndConfigurationSettings;
+import com.intellij.execution.actions.ChooseRunConfigurationManager;
 import com.intellij.execution.actions.ChooseRunConfigurationPopup;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.executors.DefaultRunExecutor;
 import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeBundle;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
@@ -25,11 +28,17 @@ import com.intellij.util.Processor;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.intellij.lang.annotations.MagicConstant;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JList;
+import javax.swing.JPanel;
+import javax.swing.KeyStroke;
+import javax.swing.ListCellRenderer;
+import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.Component;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.util.Arrays;
@@ -37,15 +46,16 @@ import java.util.List;
 import java.util.Optional;
 import java.util.function.Supplier;
 
-public class RunConfigurationsSEContributor implements SearchEverywhereContributor<ChooseRunConfigurationPopup.ItemWrapper> {
+@ApiStatus.Internal
+public final class RunConfigurationsSEContributor implements SearchEverywhereContributor<ChooseRunConfigurationPopup.ItemWrapper> {
 
   private final SearchEverywhereCommandInfo RUN_COMMAND =
     new SearchEverywhereCommandInfo("run", IdeBundle.message("searcheverywhere.runconfigurations.command.run.description"), this);
   private final SearchEverywhereCommandInfo DEBUG_COMMAND =
     new SearchEverywhereCommandInfo("debug", IdeBundle.message("searcheverywhere.runconfigurations.command.debug.description"), this);
 
-  private final static int RUN_MODE = 0;
-  private final static int DEBUG_MODE = 1;
+  private static final int RUN_MODE = 0;
+  private static final int DEBUG_MODE = 1;
 
   private final Project myProject;
   private final Component myContextComponent;
@@ -57,15 +67,13 @@ public class RunConfigurationsSEContributor implements SearchEverywhereContribut
     myCommandSupplier = commandSupplier;
   }
 
-  @NotNull
   @Override
-  public String getSearchProviderId() {
+  public @NotNull String getSearchProviderId() {
     return getClass().getSimpleName();
   }
 
-  @NotNull
   @Override
-  public String getGroupName() {
+  public @NotNull String getGroupName() {
     return IdeBundle.message("searcheverywhere.run.configs.tab.name");
   }
 
@@ -94,21 +102,13 @@ public class RunConfigurationsSEContributor implements SearchEverywhereContribut
     return true;
   }
 
-  @Nullable
   @Override
-  public Object getDataForItem(@NotNull ChooseRunConfigurationPopup.ItemWrapper element, @NotNull String dataId) {
-    return null;
-  }
-
-  @NotNull
-  @Override
-  public ListCellRenderer<? super ChooseRunConfigurationPopup.ItemWrapper> getElementsRenderer() {
+  public @NotNull ListCellRenderer<? super ChooseRunConfigurationPopup.ItemWrapper> getElementsRenderer() {
     return renderer;
   }
 
-  @NotNull
   @Override
-  public List<SearchEverywhereCommandInfo> getSupportedCommands() {
+  public @NotNull List<SearchEverywhereCommandInfo> getSupportedCommands() {
     return Arrays.asList(RUN_COMMAND, DEBUG_COMMAND);
   }
 
@@ -121,7 +121,7 @@ public class RunConfigurationsSEContributor implements SearchEverywhereContribut
 
     pattern = filterString(pattern);
     MinusculeMatcher matcher = NameUtil.buildMatcher(pattern).build();
-    for (ChooseRunConfigurationPopup.ItemWrapper wrapper : ChooseRunConfigurationPopup.createFlatSettingsList(myProject)) {
+    for (ChooseRunConfigurationPopup.ItemWrapper<?> wrapper : ChooseRunConfigurationManager.createFlatSettingsList(myProject)) {
       if (matcher.matches(wrapper.getText()) && !consumer.process(wrapper)) {
         return;
       }
@@ -137,7 +137,7 @@ public class RunConfigurationsSEContributor implements SearchEverywhereContribut
       return RUN_MODE;
     }
     else {
-      return (modifiers & InputEvent.SHIFT_MASK) == 0 ? DEBUG_MODE : RUN_MODE;
+      return (modifiers & InputEvent.SHIFT_DOWN_MASK) == 0 ? DEBUG_MODE : RUN_MODE;
     }
   }
 
@@ -226,16 +226,16 @@ public class RunConfigurationsSEContributor implements SearchEverywhereContribut
       KeyStroke enterStroke = KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0);
       KeyStroke shiftEnterStroke = KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, InputEvent.SHIFT_DOWN_MASK);
       if (debugExecutor != null) {
-        executorInfo.append(debugExecutor.getId(), commandAttributes);
+        executorInfo.append(debugExecutor.getActionName(), commandAttributes);
         executorInfo.append("(" + KeymapUtil.getKeystrokeText(enterStroke) + ")", shortcutAttributes);
         if (runExecutor != null) {
-          executorInfo.append(" / " + runExecutor.getId(), commandAttributes);
+          executorInfo.append(" / " + runExecutor.getActionName(), commandAttributes);
           executorInfo.append("(" + KeymapUtil.getKeystrokeText(shiftEnterStroke) + ")", shortcutAttributes);
         }
       }
       else {
         if (runExecutor != null) {
-          executorInfo.append(runExecutor.getId(), commandAttributes);
+          executorInfo.append(runExecutor.getActionName(), commandAttributes);
           executorInfo.append("(" + KeymapUtil.getKeystrokeText(enterStroke) + ")", shortcutAttributes);
         }
       }
@@ -246,15 +246,14 @@ public class RunConfigurationsSEContributor implements SearchEverywhereContribut
       Optional.ofNullable(ObjectUtils.tryCast(wrapper.getValue(), RunnerAndConfigurationSettings.class))
         .map(settings -> findExecutor(settings, mode))
         .ifPresent(executor -> {
-          executorInfo.append(executor.getId(), attributes);
+          executorInfo.append(executor.getActionName(), attributes);
           executorInfo.setIcon(executor.getToolWindowIcon());
         });
     }
   }
 
-  @Nullable
-  private static Executor findExecutor(@NotNull RunnerAndConfigurationSettings settings,
-                                       @MagicConstant(intValues = {RUN_MODE, DEBUG_MODE}) int mode) {
+  private static @Nullable Executor findExecutor(@NotNull RunnerAndConfigurationSettings settings,
+                                                 @MagicConstant(intValues = {RUN_MODE, DEBUG_MODE}) int mode) {
     Executor runExecutor = DefaultRunExecutor.getRunExecutorInstance();
     Executor debugExecutor = ExecutorRegistry.getInstance().getExecutorById(ToolWindowId.DEBUG);
 
@@ -269,5 +268,24 @@ public class RunConfigurationsSEContributor implements SearchEverywhereContribut
     }
 
     return executor;
+  }
+
+  public static final class Factory implements SearchEverywhereContributorFactory<ChooseRunConfigurationPopup.ItemWrapper> {
+    @Override
+    public @NotNull SearchEverywhereContributor<ChooseRunConfigurationPopup.ItemWrapper> createContributor(@NotNull AnActionEvent initEvent) {
+      Project project = initEvent.getProject();
+      Component contextComponent = initEvent.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT);
+      Supplier<String> commandSupplier = () -> {
+        SearchEverywhereManager manager = SearchEverywhereManager.getInstance(project);
+        if (!manager.isShown()) return null;
+
+        SearchEverywherePopupInstance popupInstance = manager.getCurrentlyShownPopupInstance();
+        if (popupInstance != null) return popupInstance.getSearchText();
+        else return null;
+      };
+
+      return new RunConfigurationsSEContributor(project, contextComponent, commandSupplier);
+    }
+
   }
 }

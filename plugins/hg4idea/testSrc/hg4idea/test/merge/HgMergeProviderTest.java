@@ -14,8 +14,12 @@ import org.zmlx.hg4idea.HgVcs;
 
 import java.nio.charset.StandardCharsets;
 
-import static com.intellij.openapi.vcs.Executor.*;
-import static hg4idea.test.HgExecutor.*;
+import static com.intellij.openapi.vcs.Executor.cd;
+import static com.intellij.openapi.vcs.Executor.echo;
+import static com.intellij.openapi.vcs.Executor.touch;
+import static hg4idea.test.HgExecutor.hg;
+import static hg4idea.test.HgExecutor.hgMergeWith;
+import static hg4idea.test.HgExecutor.updateProject;
 
 public class HgMergeProviderTest extends HgPlatformTest {
   protected MergeProvider myMergeProvider;

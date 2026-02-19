@@ -1,15 +1,15 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+@file:Suppress("DEPRECATION")
+
 package com.intellij.grazie.grammar.strategy
 
 import com.intellij.grazie.grammar.strategy.GrammarCheckingStrategy.TextDomain
-import com.intellij.grazie.grammar.strategy.impl.ReplaceNewLines
 import com.intellij.grazie.ide.language.LanguageGrammarChecking
 import com.intellij.grazie.utils.LinkedSet
 import com.intellij.grazie.utils.Text
 import com.intellij.lang.LanguageExtensionPoint
 import com.intellij.lang.LanguageParserDefinitions
 import com.intellij.psi.PsiElement
-import com.intellij.psi.tree.IElementType
 import com.intellij.psi.util.elementType
 
 
@@ -17,7 +17,7 @@ object StrategyUtils {
   private val EMPTY_LINKED_SET = LinkedSet<Nothing>()
 
   @Suppress("UNCHECKED_CAST")
-  internal fun <T> emptyLinkedSet(): LinkedSet<T> = EMPTY_LINKED_SET as LinkedSet<T>
+  fun <T> emptyLinkedSet(): LinkedSet<T> = EMPTY_LINKED_SET as LinkedSet<T>
 
   /**
    * Get extension point of [strategy]
@@ -28,48 +28,16 @@ object StrategyUtils {
     return LanguageGrammarChecking.getExtensionPointByStrategy(strategy) ?: error("Strategy is not registered")
   }
 
-  internal fun getTextDomainOrDefault(root: PsiElement, default: TextDomain): TextDomain {
-    val parser = LanguageParserDefinitions.INSTANCE.forLanguage(root.language) ?: return default
+  fun getTextDomainOrDefault(strategy: GrammarCheckingStrategy, root: PsiElement, default: TextDomain): TextDomain {
+    val extension = getStrategyExtensionPoint(strategy)
+    if (extension.language != root.language.id) return default
 
+    val parser = LanguageParserDefinitions.INSTANCE.forLanguage(root.language) ?: return default
     return when {
       parser.stringLiteralElements.contains(root.elementType) -> TextDomain.LITERALS
       parser.commentTokens.contains(root.elementType) -> TextDomain.COMMENTS
       else -> default
     }
-  }
-
-  /**
-   * Delete leading and trailing quotes with spaces
-   *
-   * @return deleted leading offset
-   */
-  internal fun trimLeadingQuotesAndSpaces(str: StringBuilder): Int = with(str) {
-    var offset = quotesOffset(this)
-
-    setLength(length - offset) // remove closing quotes and whitespaces
-    while (isNotEmpty() && get(length - 1).isWhitespace()) deleteCharAt(length - 1)
-
-    while (offset < length && get(offset).isWhitespace()) offset++
-    repeat(offset) { deleteCharAt(0) } // remove opening quotes and whitespace
-
-    return offset
-  }
-
-  /**
-   * Convert double spaces into one after removing absorb/stealth elements
-   *
-   * @param position position in StringBuilder
-   * @return true if deleted
-   */
-  internal fun deleteRedundantSpace(str: StringBuilder, position: Int): Boolean = with(str) {
-    if (position in 1 until length) {
-      if (get(position - 1) == ' ' && (Text.isPunctuation(get(position)) || get(position) == ' ')) {
-        deleteCharAt(position - 1)
-        return true
-      }
-    }
-
-    return false
   }
 
   /**
@@ -104,44 +72,7 @@ object StrategyUtils {
     return result
   }
 
-  /**
-   * Get all siblings of [element] of specific [types]
-   * which are no further than one line
-   *
-   * @param element element whose siblings are to be found
-   * @param types possible types of siblings
-   * @return sequence of siblings with whitespace tokens
-   */
-  fun getNotSoDistantSiblingsOfTypes(strategy: GrammarCheckingStrategy, element: PsiElement, types: Set<IElementType>) = sequence {
-    fun PsiElement.process(types: Set<IElementType>, next: Boolean) = sequence<PsiElement> {
-      val whitespaceTokens = strategy.getWhiteSpaceTokens()
-      var newLinesBetweenSiblingsCount = 0
-
-      var sibling: PsiElement? = this@process
-      while (sibling != null) {
-        val candidate = if (next) sibling.nextSibling else sibling.prevSibling
-        sibling = when (candidate.elementType) {
-          in types -> {
-            newLinesBetweenSiblingsCount = 0
-            candidate
-          }
-          in whitespaceTokens -> {
-            newLinesBetweenSiblingsCount += candidate.text.count { char -> char == '\n' }
-            if (newLinesBetweenSiblingsCount > 1) null else candidate
-          }
-          else -> null
-        }
-
-        if (sibling != null) yield(sibling)
-      }
-    }
-
-    yieldAll(element.process(types, false).toList().asReversed())
-    yield(element)
-    yieldAll(element.process(types, true))
-  }
-
-  private fun quotesOffset(str: CharSequence): Int {
+  internal fun quotesOffset(str: CharSequence): Int {
     var index = 0
     while (index < str.length / 2) {
       if (str[index] != str[str.length - index - 1] || !Text.isQuote(str[index])) {

@@ -1,41 +1,39 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.icons;
 
 import com.intellij.openapi.util.ScalableIcon;
 import com.intellij.ui.scale.ScaleContext;
 import com.intellij.ui.scale.ScaleContextSupport;
 import com.intellij.ui.scale.UserScaleContext;
-import com.intellij.util.SVGLoader;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.Icon;
+import javax.swing.ImageIcon;
+import java.awt.Component;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
 import java.lang.ref.Reference;
 
-@SuppressWarnings("UnnecessaryFullyQualifiedName")
 @ApiStatus.Internal
-public abstract class LazyImageIcon extends ScaleContextSupport /* do not modify this FQN */
+public abstract class LazyImageIcon extends ScaleContextSupport
   implements CopyableIcon, ScalableIcon, DarkIconProvider, MenuBarIconProvider {
-  protected final Object myLock = new Object();
+  protected final Object lock = new Object();
 
-  @Nullable
-  protected volatile Object myRealIcon;
+  protected volatile @Nullable Object realIcon;
 
   protected LazyImageIcon() {
-    // For instance, ShadowPainter updates the context from outside.
+    // for instance, ShadowPainter updates the context from an outside
     getScaleContext().addUpdateListener(new UserScaleContext.UpdateListener() {
       @Override
       public void contextUpdated() {
-        myRealIcon = null;
+        realIcon = null;
       }
     });
   }
 
-  @Nullable
-  protected static ImageIcon unwrapIcon(Object realIcon) {
+  protected static @Nullable ImageIcon unwrapIcon(Object realIcon) {
     Object icon = realIcon;
     if (icon instanceof Reference) {
       //noinspection unchecked
@@ -44,21 +42,10 @@ public abstract class LazyImageIcon extends ScaleContextSupport /* do not modify
     return icon instanceof ImageIcon ? (ImageIcon)icon : null;
   }
 
-  @Nullable
-  @TestOnly
-  public final ImageIcon doGetRealIcon() {
-    return unwrapIcon(myRealIcon);
-  }
-
   @Override
   public final void paintIcon(Component c, Graphics g, int x, int y) {
     Graphics2D g2d = g instanceof Graphics2D ? (Graphics2D)g : null;
-    ScaleContext ctx = ScaleContext.create(g2d);
-    if (SVGLoader.isSelectionContext()) {
-      getRealIconForSelection(ctx).paintIcon(c, g, x, y);
-    } else {
-      getRealIcon(ctx).paintIcon(c, g, x, y);
-    }
+    getRealIcon(ScaleContext.create(g2d)).paintIcon(c, g, x, y);
   }
 
   @Override
@@ -77,15 +64,9 @@ public abstract class LazyImageIcon extends ScaleContextSupport /* do not modify
   }
 
   @ApiStatus.Internal
-  @NotNull
-  public final ImageIcon getRealIcon() {
+  public final @NotNull Icon getRealIcon() {
     return getRealIcon(null);
   }
 
-  @NotNull
-  protected abstract ImageIcon getRealIcon(@Nullable ScaleContext ctx);
-
-  protected ImageIcon getRealIconForSelection(@Nullable ScaleContext ctx) {
-    return getRealIcon(ctx);
-  }
+  protected abstract @NotNull Icon getRealIcon(@Nullable ScaleContext context);
 }

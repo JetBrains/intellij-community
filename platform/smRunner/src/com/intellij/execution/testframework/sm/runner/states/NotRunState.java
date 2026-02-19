@@ -2,7 +2,7 @@
 package com.intellij.execution.testframework.sm.runner.states;
 
 /**
-   * Default state for tests. Tes hasn't been started yet.
+ * Default state for tests. Test hasn't been started yet.
  */
 public final class NotRunState extends AbstractState {
   private static final NotRunState INSTANCE = new NotRunState();
@@ -13,7 +13,6 @@ public final class NotRunState extends AbstractState {
   /**
    * This state is common for all instances and doesn't contains
    * instance-specific information
-   * @return
    */
   public static NotRunState getInstance() {
     return INSTANCE;
@@ -52,7 +51,6 @@ public final class NotRunState extends AbstractState {
 
   @Override
   public String toString() {
-    //noinspection HardCodedStringLiteral
     return "NOT RUN";
   }
 }

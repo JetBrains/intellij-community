@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.compiler;
 
+import com.intellij.openapi.externalSystem.model.project.ExternalSystemSourceType;
 import org.junit.Test;
 
 import java.io.IOException;
@@ -44,12 +45,13 @@ public class GradleJpsResourceProcessingTest extends GradleJpsCompilingTestCase 
     createProjectSubFile("src/test/resources/dir/file-test.properties");
     createProjectSubFile("src/main/java/file.txt");
     importProject(
-      "apply plugin: 'java'\n" +
-      "sourceSets {\n" +
-      "  main {\n" +
-      "    resources.srcDir file('src/main/java')\n" +
-      "  }\n" +
-      "}"
+      """
+        apply plugin: 'java'
+        sourceSets {
+          main {
+            resources.srcDir file('src/main/java')
+          }
+        }"""
     );
     assertModules("project", "project.main", "project.test");
     compileModules("project.main", "project.test");
@@ -65,12 +67,13 @@ public class GradleJpsResourceProcessingTest extends GradleJpsCompilingTestCase 
     createProjectSubFile("src/test/resources/dir/file-test.properties");
     createProjectSubFile("src/main/java/file.txt");
     importProjectUsingSingeModulePerGradleProject(
-      "apply plugin: 'java'\n" +
-      "sourceSets {\n" +
-      "  main {\n" +
-      "    resources.srcDir file('src/main/java')\n" +
-      "  }\n" +
-      "}"
+      """
+        apply plugin: 'java'
+        sourceSets {
+          main {
+            resources.srcDir file('src/main/java')
+          }
+        }"""
     );
     assertModules("project");
     compileModules("project");
@@ -85,15 +88,16 @@ public class GradleJpsResourceProcessingTest extends GradleJpsCompilingTestCase 
     createProjectSubFile("src/main/resources/dir/file.properties");
     createProjectSubFile("src/test/resources/dir/file-test.properties");
     importProject(
-      "apply plugin: 'java'\n" +
-      "apply plugin: 'idea'\n" +
-      "idea {\n" +
-      "  module {\n" +
-      "    inheritOutputDirs = false\n" +
-      "    outputDir = file('muchBetterOutputDir')\n" +
-      "    testOutputDir = file('muchBetterTestOutputDir')\n" +
-      "  }\n" +
-      "}"
+      """
+        apply plugin: 'java'
+        apply plugin: 'idea'
+        idea {
+          module {
+            inheritOutputDirs = false
+            outputDir = file('muchBetterOutputDir')
+            testOutputDir = file('muchBetterTestOutputDir')
+          }
+        }"""
     );
     assertModules("project", "project.main", "project.test");
     compileModules("project.main", "project.test");
@@ -107,15 +111,16 @@ public class GradleJpsResourceProcessingTest extends GradleJpsCompilingTestCase 
     createProjectSubFile("src/main/resources/dir/file.properties");
     createProjectSubFile("src/test/resources/dir/file-test.properties");
     importProjectUsingSingeModulePerGradleProject(
-      "apply plugin: 'java'\n" +
-      "apply plugin: 'idea'\n" +
-      "idea {\n" +
-      "  module {\n" +
-      "    inheritOutputDirs = false\n" +
-      "    outputDir = file('muchBetterOutputDir')\n" +
-      "    testOutputDir = file('muchBetterTestOutputDir')\n" +
-      "  }\n" +
-      "}"
+      """
+        apply plugin: 'java'
+        apply plugin: 'idea'
+        idea {
+          module {
+            inheritOutputDirs = false
+            outputDir = file('muchBetterOutputDir')
+            testOutputDir = file('muchBetterTestOutputDir')
+          }
+        }"""
     );
     assertModules("project");
     compileModules("project");
@@ -129,26 +134,27 @@ public class GradleJpsResourceProcessingTest extends GradleJpsCompilingTestCase 
     createFilesForIncludesAndExcludesTest();
 
     importProject(
-      "apply plugin: 'java'\n" +
-      "\n" +
-      "sourceSets {\n" +
-      "  main {\n" +
-      "    resources {\n" +
-      "      include '**/*.yyy'\n" +
-      "      include '**/*.xxx'\n" +
-      "      exclude 'dir/*.yyy'\n" +
-      "      exclude '*.xxx'\n" +
-      "    }\n" +
-      "  }\n" +
-      "  test {\n" +
-      "    resources {\n" +
-      "      include '**/*.yyy'\n" +
-      "      include '**/*.xxx'\n" +
-      "      exclude 'dir/*.yyy'\n" +
-      "      exclude '*.xxx'\n" +
-      "    }\n" +
-      "  }\n" +
-      "}"
+      """
+        apply plugin: 'java'
+
+        sourceSets {
+          main {
+            resources {
+              include '**/*.yyy'
+              include '**/*.xxx'
+              exclude 'dir/*.yyy'
+              exclude '*.xxx'
+            }
+          }
+          test {
+            resources {
+              include '**/*.yyy'
+              include '**/*.xxx'
+              exclude 'dir/*.yyy'
+              exclude '*.xxx'
+            }
+          }
+        }"""
     );
     assertModules("project", "project.main", "project.test");
     compileModules("project.main", "project.test");
@@ -161,26 +167,27 @@ public class GradleJpsResourceProcessingTest extends GradleJpsCompilingTestCase 
     createFilesForIncludesAndExcludesTest();
 
     importProjectUsingSingeModulePerGradleProject(
-      "apply plugin: 'java'\n" +
-      "\n" +
-      "sourceSets {\n" +
-      "  main {\n" +
-      "    resources {\n" +
-      "      include '**/*.yyy'\n" +
-      "      include '**/*.xxx'\n" +
-      "      exclude 'dir/*.yyy'\n" +
-      "      exclude '*.xxx'\n" +
-      "    }\n" +
-      "  }\n" +
-      "  test {\n" +
-      "    resources {\n" +
-      "      include '**/*.yyy'\n" +
-      "      include '**/*.xxx'\n" +
-      "      exclude 'dir/*.yyy'\n" +
-      "      exclude '*.xxx'\n" +
-      "    }\n" +
-      "  }\n" +
-      "}"
+      """
+        apply plugin: 'java'
+
+        sourceSets {
+          main {
+            resources {
+              include '**/*.yyy'
+              include '**/*.xxx'
+              exclude 'dir/*.yyy'
+              exclude '*.xxx'
+            }
+          }
+          test {
+            resources {
+              include '**/*.yyy'
+              include '**/*.xxx'
+              exclude 'dir/*.yyy'
+              exclude '*.xxx'
+            }
+          }
+        }"""
     );
     assertModules("project");
     compileModules("project");
@@ -193,16 +200,17 @@ public class GradleJpsResourceProcessingTest extends GradleJpsCompilingTestCase 
     createFilesForIncludesAndExcludesTest();
 
     importProject(
-      "apply plugin: 'java'\n" +
-      "\n" +
-      "sourceSets.all {\n" +
-      "  resources {\n" +
-      "    include '**/*.yyy'\n" +
-      "    include '**/*.xxx'\n" +
-      "    exclude 'dir/*.yyy'\n" +
-      "    exclude '*.xxx'\n" +
-      "  }\n" +
-      "}"
+      """
+        apply plugin: 'java'
+
+        sourceSets.all {
+          resources {
+            include '**/*.yyy'
+            include '**/*.xxx'
+            exclude 'dir/*.yyy'
+            exclude '*.xxx'
+          }
+        }"""
     );
     assertModules("project", "project.main", "project.test");
     compileModules("project.main", "project.test");
@@ -215,16 +223,17 @@ public class GradleJpsResourceProcessingTest extends GradleJpsCompilingTestCase 
     createFilesForIncludesAndExcludesTest();
 
     importProjectUsingSingeModulePerGradleProject(
-      "apply plugin: 'java'\n" +
-      "\n" +
-      "sourceSets.all {\n" +
-      "  resources {\n" +
-      "    include '**/*.yyy'\n" +
-      "    include '**/*.xxx'\n" +
-      "    exclude 'dir/*.yyy'\n" +
-      "    exclude '*.xxx'\n" +
-      "  }\n" +
-      "}"
+      """
+        apply plugin: 'java'
+
+        sourceSets.all {
+          resources {
+            include '**/*.yyy'
+            include '**/*.xxx'
+            exclude 'dir/*.yyy'
+            exclude '*.xxx'
+          }
+        }"""
     );
     assertModules("project");
     compileModules("project");
@@ -237,21 +246,23 @@ public class GradleJpsResourceProcessingTest extends GradleJpsCompilingTestCase 
     createFilesForIncludesAndExcludesTest();
 
     importProject(
-      "apply plugin: 'java'\n" +
-      "\n" +
-      "processResources {\n" +
-      "  include '**/*.yyy'\n" +
-      "  include '**/*.xxx'\n" +
-      "  exclude 'dir/*.yyy'\n" +
-      "  exclude '*.xxx'\n" +
-      "}\n" +
-      "\n" +
-      "processTestResources {\n" +
-      "  include '**/*.yyy'\n" +
-      "  include '**/*.xxx'\n" +
-      "  exclude 'dir/*.yyy'\n" +
-      "  exclude '*.xxx'\n" +
-      "}\n"
+      """
+        apply plugin: 'java'
+
+        processResources {
+          include '**/*.yyy'
+          include '**/*.xxx'
+          exclude 'dir/*.yyy'
+          exclude '*.xxx'
+        }
+
+        processTestResources {
+          include '**/*.yyy'
+          include '**/*.xxx'
+          exclude 'dir/*.yyy'
+          exclude '*.xxx'
+        }
+        """
     );
     assertModules("project", "project.main", "project.test");
     compileModules("project.main", "project.test");
@@ -264,21 +275,23 @@ public class GradleJpsResourceProcessingTest extends GradleJpsCompilingTestCase 
     createFilesForIncludesAndExcludesTest();
 
     importProjectUsingSingeModulePerGradleProject(
-      "apply plugin: 'java'\n" +
-      "\n" +
-      "processResources {\n" +
-      "  include '**/*.yyy'\n" +
-      "  include '**/*.xxx'\n" +
-      "  exclude 'dir/*.yyy'\n" +
-      "  exclude '*.xxx'\n" +
-      "}\n" +
-      "\n" +
-      "processTestResources {\n" +
-      "  include '**/*.yyy'\n" +
-      "  include '**/*.xxx'\n" +
-      "  exclude 'dir/*.yyy'\n" +
-      "  exclude '*.xxx'\n" +
-      "}\n"
+      """
+        apply plugin: 'java'
+
+        processResources {
+          include '**/*.yyy'
+          include '**/*.xxx'
+          exclude 'dir/*.yyy'
+          exclude '*.xxx'
+        }
+
+        processTestResources {
+          include '**/*.yyy'
+          include '**/*.xxx'
+          exclude 'dir/*.yyy'
+          exclude '*.xxx'
+        }
+        """
     );
     assertModules("project");
     compileModules("project");
@@ -296,9 +309,11 @@ public class GradleJpsResourceProcessingTest extends GradleJpsCompilingTestCase 
                        "include ':bar:test'");
 
     importProjectUsingSingeModulePerGradleProject(
-      "subprojects {\n" +
-      "  apply plugin: 'java'\n" +
-      "}\n"
+      """
+        subprojects {
+          apply plugin: 'java'
+        }
+        """
     );
     assertModules("project", "project.bar", "project.bar.foo", "project.bar.test");
     compileModules("project", "project.bar", "project.bar.foo", "project.bar.test");
@@ -321,20 +336,28 @@ public class GradleJpsResourceProcessingTest extends GradleJpsCompilingTestCase 
     createProjectSubFile("src/integrationTest/resources/dir/file-integrationTest.properties");
 
     importProject(
-      "apply plugin: 'java'\n" +
-      "\n" +
-      "sourceSets {\n" +
-      "  integrationTest\n" +
-      "}\n"
+      """
+        apply plugin: 'java'
+
+        sourceSets {
+          integrationTest
+        }
+        """
     );
     assertModules("project", "project.main", "project.test", "project.integrationTest");
 
-    assertSources("project.main", "java");
-    assertResources("project.main", "resources");
-    assertTestSources("project.test", "java");
-    assertTestResources("project.test", "resources");
-    assertSources("project.integrationTest", "java");
-    assertResources("project.integrationTest", "resources");
+    assertSourceRoots("project.main", it -> it
+      .sourceRoots(ExternalSystemSourceType.SOURCE, path("src/main/java"))
+      .sourceRoots(ExternalSystemSourceType.RESOURCE, path("src/main/resources"))
+    );
+    assertSourceRoots("project.test", it -> it
+      .sourceRoots(ExternalSystemSourceType.TEST, path("src/test/java"))
+      .sourceRoots(ExternalSystemSourceType.TEST_RESOURCE, path("src/test/resources"))
+    );
+    assertSourceRoots("project.integrationTest", it -> it
+      .sourceRoots(ExternalSystemSourceType.SOURCE, path("src/integrationTest/java"))
+      .sourceRoots(ExternalSystemSourceType.RESOURCE, path("src/integrationTest/resources"))
+    );
 
     compileModules("project.main", "project.test", "project.integrationTest");
 
@@ -358,28 +381,35 @@ public class GradleJpsResourceProcessingTest extends GradleJpsCompilingTestCase 
     createProjectSubFile("src/integrationTest/resources/dir/file-integrationTest.properties");
 
     importProject(
-      "apply plugin: 'java'\n" +
-      "\n" +
-      "sourceSets {\n" +
-      "  integrationTest\n" +
-      "}\n" +
-      "\n" +
-      "apply plugin: 'idea'\n" +
-      "idea {\n" +
-      "  module {\n" +
-      "    inheritOutputDirs = false\n" +
-      "    outputDir = project.file('muchBetterOutputDir')\n" +
-      "  }\n" +
-      "}"
+      """
+        apply plugin: 'java'
+
+        sourceSets {
+          integrationTest
+        }
+
+        apply plugin: 'idea'
+        idea {
+          module {
+            inheritOutputDirs = false
+            outputDir = project.file('muchBetterOutputDir')
+          }
+        }"""
     );
     assertModules("project", "project.main", "project.test", "project.integrationTest");
 
-    assertSources("project.main", "java");
-    assertResources("project.main", "resources");
-    assertTestSources("project.test", "java");
-    assertTestResources("project.test", "resources");
-    assertSources("project.integrationTest", "java");
-    assertResources("project.integrationTest", "resources");
+    assertSourceRoots("project.main", it -> it
+      .sourceRoots(ExternalSystemSourceType.SOURCE, path("src/main/java"))
+      .sourceRoots(ExternalSystemSourceType.RESOURCE, path("src/main/resources"))
+    );
+    assertSourceRoots("project.test", it -> it
+      .sourceRoots(ExternalSystemSourceType.TEST, path("src/test/java"))
+      .sourceRoots(ExternalSystemSourceType.TEST_RESOURCE, path("src/test/resources"))
+    );
+    assertSourceRoots("project.integrationTest", it -> it
+      .sourceRoots(ExternalSystemSourceType.SOURCE, path("src/integrationTest/java"))
+      .sourceRoots(ExternalSystemSourceType.RESOURCE, path("src/integrationTest/resources"))
+    );
 
     compileModules("project.main", "project.test", "project.integrationTest");
 
@@ -405,28 +435,35 @@ public class GradleJpsResourceProcessingTest extends GradleJpsCompilingTestCase 
     createProjectSubFile("src/integrationTest/resources/dir/file-integrationTest.properties");
 
     importProject(
-      "apply plugin: 'java'\n" +
-      "\n" +
-      "sourceSets {\n" +
-      "  integrationTest\n" +
-      "}\n" +
-      "\n" +
-      "apply plugin: 'idea'\n" +
-      "idea {\n" +
-      "  module {\n" +
-      "    inheritOutputDirs = false\n" +
-      "    testOutputDir = project.file('muchBetterTestOutputDir')\n" +
-      "  }\n" +
-      "}"
+      """
+        apply plugin: 'java'
+
+        sourceSets {
+          integrationTest
+        }
+
+        apply plugin: 'idea'
+        idea {
+          module {
+            inheritOutputDirs = false
+            testOutputDir = project.file('muchBetterTestOutputDir')
+          }
+        }"""
     );
     assertModules("project", "project.main", "project.test", "project.integrationTest");
 
-    assertSources("project.main", "java");
-    assertResources("project.main", "resources");
-    assertTestSources("project.test", "java");
-    assertTestResources("project.test", "resources");
-    assertSources("project.integrationTest", "java");
-    assertResources("project.integrationTest", "resources");
+    assertSourceRoots("project.main", it -> it
+      .sourceRoots(ExternalSystemSourceType.SOURCE, path("src/main/java"))
+      .sourceRoots(ExternalSystemSourceType.RESOURCE, path("src/main/resources"))
+    );
+    assertSourceRoots("project.test", it -> it
+      .sourceRoots(ExternalSystemSourceType.TEST, path("src/test/java"))
+      .sourceRoots(ExternalSystemSourceType.TEST_RESOURCE, path("src/test/resources"))
+    );
+    assertSourceRoots("project.integrationTest", it -> it
+      .sourceRoots(ExternalSystemSourceType.SOURCE, path("src/integrationTest/java"))
+      .sourceRoots(ExternalSystemSourceType.RESOURCE, path("src/integrationTest/resources"))
+    );
 
     compileModules("project.main", "project.test", "project.integrationTest");
 
@@ -449,29 +486,46 @@ public class GradleJpsResourceProcessingTest extends GradleJpsCompilingTestCase 
     createProjectSubFile("src/integrationTest/java/IntegrationTest.java", "public class IntegrationTest {}");
     createProjectSubFile("src/integrationTest/resources/dir/file-integrationTest.properties");
 
+    String testRoots = isGradleAtLeast("7.4")
+                       ? """
+                       testSources.from(project.sourceSets.integrationTest.java.srcDirs)
+                       testSources.from(project.sourceSets.integrationTest.resources.srcDirs)
+                       """
+                       : """
+                       testSourceDirs += project.sourceSets.integrationTest.java.srcDirs
+                       testSourceDirs += project.sourceSets.integrationTest.resources.srcDirs
+                       """;
+
     importProject(
-      "apply plugin: 'java'\n" +
-      "\n" +
-      "sourceSets {\n" +
-      "  integrationTest\n" +
-      "}\n" +
-      "\n" +
-      "apply plugin: 'idea'\n" +
-      "idea {\n" +
-      "  module {\n" +
-      "    inheritOutputDirs = false\n" +
-      "    testSourceDirs += project.sourceSets.integrationTest.java.srcDirs\n" +
-      "    testSourceDirs += project.sourceSets.integrationTest.resources.srcDirs\n" +
-      "  }\n" +
-      "}"
+      """
+        apply plugin: 'java'
+
+        sourceSets {
+          integrationTest
+        }
+
+        apply plugin: 'idea'
+        idea {
+          module {
+            inheritOutputDirs = false
+            %s
+          }
+        }""".formatted(testRoots)
     );
     assertModules("project", "project.main", "project.test", "project.integrationTest");
-    assertSources("project.main", "java");
-    assertResources("project.main", "resources");
-    assertTestSources("project.test", "java");
-    assertTestResources("project.test", "resources");
-    assertTestSources("project.integrationTest", "java");
-    assertTestResources("project.integrationTest", "resources");
+
+    assertSourceRoots("project.main", it -> it
+      .sourceRoots(ExternalSystemSourceType.SOURCE, path("src/main/java"))
+      .sourceRoots(ExternalSystemSourceType.RESOURCE, path("src/main/resources"))
+    );
+    assertSourceRoots("project.test", it -> it
+      .sourceRoots(ExternalSystemSourceType.TEST, path("src/test/java"))
+      .sourceRoots(ExternalSystemSourceType.TEST_RESOURCE, path("src/test/resources"))
+    );
+    assertSourceRoots("project.integrationTest", it -> it
+      .sourceRoots(ExternalSystemSourceType.TEST, path("src/integrationTest/java"))
+      .sourceRoots(ExternalSystemSourceType.TEST_RESOURCE, path("src/integrationTest/resources"))
+    );
 
     compileModules("project.main", "project.test", "project.integrationTest");
 
@@ -479,8 +533,8 @@ public class GradleJpsResourceProcessingTest extends GradleJpsCompilingTestCase 
     assertCopied("out/production/resources/dir/file.properties");
     assertCopied("out/test/resources/dir/file-test.properties");
     assertCopied("out/test/classes/Test.class");
-    assertCopied("out/test/resources/dir/file-integrationTest.properties");
-    assertCopied("out/test/classes/IntegrationTest.class");
+    assertCopied("out/integrationTest/resources/dir/file-integrationTest.properties");
+    assertCopied("out/integrationTest/classes/IntegrationTest.class");
   }
 
   private void createFilesForIncludesAndExcludesTest() throws IOException {

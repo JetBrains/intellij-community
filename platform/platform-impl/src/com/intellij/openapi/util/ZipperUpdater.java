@@ -1,21 +1,18 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.util;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.progress.SomeQueue;
 import com.intellij.openapi.progress.util.BackgroundTaskUtil;
 import com.intellij.util.Alarm;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
 
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
-@SomeQueue
-public class ZipperUpdater {
+public final class ZipperUpdater {
   private final Alarm myAlarm;
   private boolean myRaised;
   private final Object myLock = new Object();
@@ -32,11 +29,11 @@ public class ZipperUpdater {
     myAlarm = new Alarm(threadToUse, parentDisposable);
   }
 
-  public void queue(@NotNull final Runnable runnable) {
+  public void queue(final @NotNull Runnable runnable) {
     queue(runnable, false, false);
   }
 
-  public void queue(@NotNull final Runnable runnable, final boolean urgent, final boolean anyModality) {
+  public void queue(final @NotNull Runnable runnable, final boolean urgent, final boolean anyModality) {
     synchronized (myLock) {
       if (myAlarm.isDisposed()) return;
       final boolean wasRaised = myRaised;
@@ -71,7 +68,7 @@ public class ZipperUpdater {
         myAlarm.addRequest(request, delay, ModalityState.any());
       }
       else if (!ApplicationManager.getApplication().isDispatchThread()) {
-        myAlarm.addRequest(request, delay, ModalityState.NON_MODAL);
+        myAlarm.addRequest(request, delay, ModalityState.nonModal());
       }
       else {
         myAlarm.addRequest(request, delay);
@@ -91,7 +88,7 @@ public class ZipperUpdater {
     try {
       myAlarm.waitForAllExecuted(timeout, unit);
     }
-    catch (InterruptedException | ExecutionException | TimeoutException e) {
+    catch (TimeoutException e) {
       throw new RuntimeException(e);
     }
   }

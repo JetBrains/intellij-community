@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.ui;
 
 import com.intellij.execution.CommonProgramRunConfigurationParameters;
@@ -13,7 +13,11 @@ import com.intellij.ide.macro.MacrosDialog;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.*;
+import com.intellij.openapi.ui.FixedSizeButton;
+import com.intellij.openapi.ui.LabeledComponent;
+import com.intellij.openapi.ui.TextComponentAccessor;
+import com.intellij.openapi.ui.TextFieldWithBrowseButton;
+import com.intellij.openapi.ui.VerticalFlowLayout;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.PanelWithAnchor;
@@ -23,11 +27,13 @@ import com.intellij.ui.components.fields.ExtendableTextField;
 import com.intellij.util.PathUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JComponent;
+import javax.swing.JPanel;
+import java.awt.BorderLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.HashMap;
@@ -70,8 +76,7 @@ public class CommonProgramParametersPanel extends JPanel implements PanelWithAnc
     myAnchor = UIUtil.mergeComponentsWithAnchor(myProgramParametersComponent, myWorkingDirectoryComponent, myEnvVariablesComponent);
   }
 
-  @Nullable
-  protected Project getProject() {
+  protected @Nullable Project getProject() {
     return myModuleContext != null ? myModuleContext.getProject() : null;
   }
 
@@ -82,17 +87,13 @@ public class CommonProgramParametersPanel extends JPanel implements PanelWithAnc
     // for backward compatibility: com.microsoft.tooling.msservices.intellij.azure:3.0.11
     myWorkingDirectoryField = new TextFieldWithBrowseButton();
 
-    //noinspection DialogTitleCapitalization
-    myWorkingDirectoryField.addBrowseFolderListener(ExecutionBundle.message("select.working.directory.message"), null,
-                                                    getProject(),
-                                                    FileChooserDescriptorFactory.createSingleFolderDescriptor(),
-                                                    TextComponentAccessor.TEXT_FIELD_WHOLE_TEXT);
-    myWorkingDirectoryComponent = LabeledComponent.create(myWorkingDirectoryField,
-                                                          ExecutionBundle.message("run.configuration.working.directory.label"));
+    var descriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor().withTitle(ExecutionBundle.message("select.working.directory.message"));
+    myWorkingDirectoryField.addBrowseFolderListener(getProject(), descriptor, TextComponentAccessor.TEXT_FIELD_WHOLE_TEXT);
+    myWorkingDirectoryComponent = LabeledComponent.create(myWorkingDirectoryField, ExecutionBundle.message("run.configuration.working.directory.label"));
 
-    myEnvVariablesComponent = new EnvironmentVariablesComponent();
-
+    myEnvVariablesComponent = createEnvironmentVariablesComponent();
     myEnvVariablesComponent.setLabelLocation(BorderLayout.WEST);
+
     myProgramParametersComponent.setLabelLocation(BorderLayout.WEST);
     myWorkingDirectoryComponent.setLabelLocation(BorderLayout.WEST);
 
@@ -101,16 +102,18 @@ public class CommonProgramParametersPanel extends JPanel implements PanelWithAnc
       initMacroSupport();
     }
 
-    setPreferredSize(new Dimension(10, 10));
-
     copyDialogCaption(myProgramParametersComponent);
+  }
+
+  protected @NotNull EnvironmentVariablesComponent createEnvironmentVariablesComponent() {
+    return new EnvironmentVariablesComponent();
   }
 
   /**
    * @deprecated use {@link MacroComboBoxWithBrowseButton}
    */
-  @Deprecated
-  protected JComponent createComponentWithMacroBrowse(@NotNull final TextFieldWithBrowseButton textAccessor) {
+  @Deprecated(forRemoval = true)
+  protected JComponent createComponentWithMacroBrowse(final @NotNull TextFieldWithBrowseButton textAccessor) {
     final FixedSizeButton button = new FixedSizeButton(textAccessor);
     button.setIcon(AllIcons.Actions.ListFiles);
     button.addActionListener(new ActionListener() {
@@ -183,7 +186,7 @@ public class CommonProgramParametersPanel extends JPanel implements PanelWithAnc
     component.getLabel().setLabelFor(rawCommandLineEditor.getTextField());
   }
 
-  public void setProgramParametersLabel(String textWithMnemonic) {
+  public void setProgramParametersLabel(@Nls String textWithMnemonic) {
     myProgramParametersComponent.setText(textWithMnemonic);
     copyDialogCaption(myProgramParametersComponent);
   }
@@ -237,12 +240,10 @@ public class CommonProgramParametersPanel extends JPanel implements PanelWithAnc
     configuration.setProgramParameters(fromTextField(myProgramParametersComponent.getComponent(), configuration));
     configuration.setWorkingDirectory(fromTextField(myWorkingDirectoryField, configuration));
 
-    configuration.setEnvs(myEnvVariablesComponent.getEnvs());
-    configuration.setPassParentEnvs(myEnvVariablesComponent.isPassParentEnvs());
+    myEnvVariablesComponent.apply(configuration);
   }
 
-  @Nullable
-  protected String fromTextField(@NotNull TextAccessor textAccessor, @NotNull CommonProgramRunConfigurationParameters configuration) {
+  protected @Nullable String fromTextField(@NotNull TextAccessor textAccessor, @NotNull CommonProgramRunConfigurationParameters configuration) {
     return textAccessor.getText();
   }
 
@@ -250,7 +251,6 @@ public class CommonProgramParametersPanel extends JPanel implements PanelWithAnc
     setProgramParameters(configuration.getProgramParameters());
     setWorkingDirectory(PathUtil.toSystemDependentName(configuration.getWorkingDirectory()));
 
-    myEnvVariablesComponent.setEnvs(configuration.getEnvs());
-    myEnvVariablesComponent.setPassParentEnvs(configuration.isPassParentEnvs());
+    myEnvVariablesComponent.reset(configuration);
   }
 }

@@ -21,7 +21,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.Icon;
 
 /**
  * Represents a node in debugger tree. This interface isn't supposed to be implemented by a plugin.
@@ -51,12 +51,6 @@ public interface XValueNode extends Obsolescent {
    * @param hasChildren {@code false} if the node is a leaf
    */
   void setPresentation(@Nullable Icon icon, @NotNull XValuePresentation presentation, boolean hasChildren);
-
-  /**
-   * @deprecated use {@link #setPresentation(Icon, XValuePresentation, boolean)}
-   */
-  @Deprecated
-  void setPresentation(@Nullable Icon icon, @NonNls @Nullable String type, @NonNls @NotNull String separator, @NonNls @Nullable String value, boolean hasChildren);
 
   /**
    * If string representation of the value is too long to show in the tree pass truncated value to {@link #setPresentation(Icon, String, String, boolean)}

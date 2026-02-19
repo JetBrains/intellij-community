@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.history;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -7,13 +7,32 @@ import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.containers.ContainerUtil;
 import git4idea.GitUtil;
 import git4idea.commands.GitHandler;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Date;
+import java.util.List;
+import java.util.Map;
 
-import static git4idea.history.GitLogParser.GitLogOption.*;
+import static git4idea.history.GitLogParser.GitLogOption.AUTHOR_EMAIL;
+import static git4idea.history.GitLogParser.GitLogOption.AUTHOR_NAME;
+import static git4idea.history.GitLogParser.GitLogOption.AUTHOR_TIME;
+import static git4idea.history.GitLogParser.GitLogOption.BODY;
+import static git4idea.history.GitLogParser.GitLogOption.COMMITTER_EMAIL;
+import static git4idea.history.GitLogParser.GitLogOption.COMMITTER_NAME;
+import static git4idea.history.GitLogParser.GitLogOption.COMMIT_TIME;
+import static git4idea.history.GitLogParser.GitLogOption.HASH;
+import static git4idea.history.GitLogParser.GitLogOption.PARENTS;
+import static git4idea.history.GitLogParser.GitLogOption.RAW_BODY;
+import static git4idea.history.GitLogParser.GitLogOption.REF_NAMES;
+import static git4idea.history.GitLogParser.GitLogOption.SHORT_REF_LOG_SELECTOR;
+import static git4idea.history.GitLogParser.GitLogOption.SUBJECT;
+import static git4idea.history.GitLogParser.GitLogOption.TREE;
 
 /**
  * One record (commit information) returned by git log output.
@@ -22,10 +41,11 @@ import static git4idea.history.GitLogParser.GitLogOption.*;
  *
  * @see GitLogParser
  */
-class GitLogRecord {
+@ApiStatus.Internal
+public class GitLogRecord {
   private static final Logger LOG = Logger.getInstance(GitLogRecord.class);
 
-  @NotNull protected final Map<GitLogParser.GitLogOption, String> myOptions;
+  protected final @NotNull Map<GitLogParser.GitLogOption, String> myOptions;
   protected final boolean mySupportsRawBody;
 
   protected GitHandler myHandler;
@@ -36,8 +56,7 @@ class GitLogRecord {
     mySupportsRawBody = supportsRawBody;
   }
 
-  @NotNull
-  private String lookup(@NotNull GitLogParser.GitLogOption key) {
+  private @NotNull String lookup(@NotNull GitLogParser.GitLogOption key) {
     String value = myOptions.get(key);
     if (value == null) {
       LOG.error("Missing value for option " + key + ", while executing " + myHandler);
@@ -48,100 +67,92 @@ class GitLogRecord {
 
   // trivial access methods
   @NotNull
-  String getHash() {
+  public String getHash() {
     return lookup(HASH);
   }
 
   @NotNull
-  String getTreeHash() {
+  public String getTreeHash() {
     return lookup(TREE);
   }
 
   @NotNull
-  String getAuthorName() {
+  public String getAuthorName() {
     return lookup(AUTHOR_NAME);
   }
 
   @NotNull
-  String getAuthorEmail() {
+  public String getAuthorEmail() {
     return lookup(AUTHOR_EMAIL);
   }
 
   @NotNull
-  String getCommitterName() {
+  public String getCommitterName() {
     return lookup(COMMITTER_NAME);
   }
 
-  @NotNull
-  String getCommitterEmail() {
+  public @NotNull String getCommitterEmail() {
     return lookup(COMMITTER_EMAIL);
   }
 
-  @NotNull
-  String getSubject() {
+  public @NotNull String getSubject() {
     return lookup(SUBJECT);
   }
 
-  @NotNull
-  String getBody() {
+  public @NotNull String getBody() {
     return lookup(BODY);
   }
 
-  @NotNull
-  String getRawBody() {
+  public @NotNull String getRawBody() {
     return lookup(RAW_BODY);
   }
 
-  @NotNull
-  String getShortenedRefLog() {
+  public @NotNull String getShortenedRefLog() {
     return lookup(SHORT_REF_LOG_SELECTOR);
   }
 
   // access methods with some formatting or conversion
 
-  @NotNull
-  Date getDate() {
+  public @NotNull Date getDate() {
     return new Date(getCommitTime());
   }
 
   long getCommitTime() {
     try {
-      return Long.parseLong(myOptions.get(COMMIT_TIME).trim()) * 1000;
+      return GitLogUtil.parseTime(myOptions.get(COMMIT_TIME));
     }
     catch (NumberFormatException e) {
-      LOG.error("Couldn't get commit time from " + toString() + ", while executing " + myHandler, e);
+      LOG.error("Couldn't get commit time from " + this + ", while executing " + myHandler, e);
       return 0;
     }
   }
 
-  long getAuthorTimeStamp() {
+  public long getAuthorTimeStamp() {
     try {
-      return Long.parseLong(myOptions.get(AUTHOR_TIME).trim()) * 1000;
+      return GitLogUtil.parseTime(myOptions.get(AUTHOR_TIME));
     }
     catch (NumberFormatException e) {
-      LOG.error("Couldn't get author time from " + toString() + ", while executing " + myHandler, e);
+      LOG.error("Couldn't get author time from " + this + ", while executing " + myHandler, e);
       return 0;
     }
   }
 
   String getFullMessage() {
-    return mySupportsRawBody ? getRawBody().trim() : ((getSubject() + "\n\n" + getBody()).trim());
+    return (mySupportsRawBody ? getRawBody() : getSubject() + "\n\n" + getBody()).stripTrailing();
   }
 
-  String @NotNull [] getParentsHashes() {
+  public String @NotNull [] getParentsHashes() {
     final String parents = lookup(PARENTS);
-    if (parents.trim().length() == 0) return ArrayUtilRt.EMPTY_STRING_ARRAY;
+    if (parents.trim().isEmpty()) return ArrayUtilRt.EMPTY_STRING_ARRAY;
     return parents.split(" ");
   }
 
-  @NotNull
-  public Collection<String> getRefs() {
+  public @NotNull Collection<String> getRefs() {
     final String decorate = myOptions.get(REF_NAMES);
     return parseRefNames(decorate);
   }
 
-  @NotNull
-  public Map<GitLogParser.GitLogOption, String> getOptions() {
+  public @NotNull Map<GitLogParser.GitLogOption, String> getOptions() {
     return myOptions;
   }
 
@@ -149,8 +160,7 @@ class GitLogRecord {
     return mySupportsRawBody;
   }
 
-  @NotNull
-  private static List<String> parseRefNames(@Nullable final String decoration) {
+  private static @NotNull List<String> parseRefNames(final @Nullable String decoration) {
     if (decoration == null) {
       return ContainerUtil.emptyList();
     }
@@ -182,9 +192,8 @@ class GitLogRecord {
     myHandler = handler;
   }
 
-  @NonNls
   @Override
-  public String toString() {
+  public @NonNls String toString() {
     return String.format("GitLogRecord{myOptions=%s, mySupportsRawBody=%s, myHandler=%s}",
                          myOptions, mySupportsRawBody, myHandler);
   }

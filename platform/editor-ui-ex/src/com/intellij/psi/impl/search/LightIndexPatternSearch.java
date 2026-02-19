@@ -19,13 +19,10 @@ import com.intellij.psi.search.IndexPatternOccurrence;
 import com.intellij.psi.search.searches.IndexPatternSearch;
 import com.intellij.util.QueryFactory;
 
-/**
- * @author irengrig
- */
-public class LightIndexPatternSearch extends QueryFactory<IndexPatternOccurrence, IndexPatternSearch.SearchParameters> {
+final class LightIndexPatternSearch extends QueryFactory<IndexPatternOccurrence, IndexPatternSearch.SearchParameters> {
   public static final LightIndexPatternSearch SEARCH = new LightIndexPatternSearch();
 
-  public LightIndexPatternSearch() {
+  LightIndexPatternSearch() {
     registerExecutor(new LightIndexPatternSearcher());
   }
 }

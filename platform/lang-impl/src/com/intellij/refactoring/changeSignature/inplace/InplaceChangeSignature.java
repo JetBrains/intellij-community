@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.changeSignature.inplace;
 
 import com.intellij.codeInsight.highlighting.HighlightManager;
@@ -7,7 +7,12 @@ import com.intellij.lang.findUsages.DescriptiveNameUtil;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.command.impl.FinishMarkAction;
 import com.intellij.openapi.command.impl.StartMarkAction;
-import com.intellij.openapi.editor.*;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.EditorFactory;
+import com.intellij.openapi.editor.RangeMarker;
+import com.intellij.openapi.editor.ScrollType;
+import com.intellij.openapi.editor.VisualPosition;
 import com.intellij.openapi.editor.colors.CodeInsightColors;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.event.DocumentEvent;
@@ -41,12 +46,13 @@ import com.intellij.util.ui.PositionTracker;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JPanel;
+import java.awt.BorderLayout;
+import java.awt.Point;
 import java.util.ArrayList;
 
-public class InplaceChangeSignature implements DocumentListener {
-  public static final Key<InplaceChangeSignature> INPLACE_CHANGE_SIGNATURE = Key.create("EditorInplaceChangeSignature");
+public final class InplaceChangeSignature implements DocumentListener {
+  private static final Key<InplaceChangeSignature> INPLACE_CHANGE_SIGNATURE = Key.create("EditorInplaceChangeSignature");
   private ChangeInfo myCurrentInfo;
   private ChangeInfo myStableChange;
   private String myInitialSignature;
@@ -102,8 +108,7 @@ public class InplaceChangeSignature implements DocumentListener {
     showBalloon();
   }
 
-  @Nullable
-  public static InplaceChangeSignature getCurrentRefactoring(@NotNull Editor editor) {
+  public static @Nullable InplaceChangeSignature getCurrentRefactoring(@NotNull Editor editor) {
     return editor.getUserData(INPLACE_CHANGE_SIGNATURE);
   }
 
@@ -119,8 +124,7 @@ public class InplaceChangeSignature implements DocumentListener {
     return myInitialSignature;
   }
 
-  @NotNull
-  public ChangeInfo getStableChange() {
+  public @NotNull ChangeInfo getStableChange() {
     return myStableChange;
   }
 
@@ -195,7 +199,7 @@ public class InplaceChangeSignature implements DocumentListener {
     }
   }
 
-  protected void showBalloon() {
+  private void showBalloon() {
     NonFocusableCheckBox checkBox = new NonFocusableCheckBox(RefactoringBundle.message("delegation.panel.delegate.via.overloading.method"));
     checkBox.addActionListener(e -> {
       myDelegate = checkBox.isSelected();
@@ -209,7 +213,7 @@ public class InplaceChangeSignature implements DocumentListener {
     final BalloonBuilder balloonBuilder = JBPopupFactory.getInstance().createDialogBalloonBuilder(content, null).setSmallVariant(true);
     myBalloon = balloonBuilder.createBalloon();
     myEditor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
-    myBalloon.show(new PositionTracker<Balloon>(myEditor.getContentComponent()) {
+    myBalloon.show(new PositionTracker<>(myEditor.getContentComponent()) {
       @Override
       public RelativePoint recalculateLocation(@NotNull Balloon object) {
         int offset = myStableChange.getMethod().getTextOffset();

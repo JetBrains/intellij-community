@@ -1,21 +1,21 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.engine.evaluation.expression;
 
 import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluateExceptionUtil;
 import com.intellij.debugger.engine.evaluation.EvaluateRuntimeException;
+import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
+import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.jdi.VirtualMachineProxyImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.sun.jdi.Value;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.HashMap;
 import java.util.Map;
 
-/**
- * @author lex
- */
-public class CodeFragmentEvaluator extends BlockStatementEvaluator{
+public class CodeFragmentEvaluator extends BlockStatementEvaluator {
   private static final Logger LOG = Logger.getInstance(CodeFragmentEvaluator.class);
 
   private final CodeFragmentEvaluator myParentFragmentEvaluator;
@@ -30,69 +30,73 @@ public class CodeFragmentEvaluator extends BlockStatementEvaluator{
     myStatements = evaluators;
   }
 
-  public Value getValue(String localName, VirtualMachineProxyImpl vm) throws EvaluateException {
-    if(!mySyntheticLocals.containsKey(localName)) {
-      if(myParentFragmentEvaluator != null){
-        return myParentFragmentEvaluator.getValue(localName, vm);
-      } else {
+  public Value getValue(@NotNull String localName, @NotNull EvaluationContextImpl context) throws EvaluateException {
+    if (!mySyntheticLocals.containsKey(localName)) {
+      if (myParentFragmentEvaluator != null) {
+        return myParentFragmentEvaluator.getValue(localName, context);
+      }
+      else {
         throw EvaluateExceptionUtil.createEvaluateException(JavaDebuggerBundle.message("evaluation.error.variable.not.declared", localName));
       }
     }
     Object value = mySyntheticLocals.get(localName);
-    if(value instanceof Value) {
+    if (value instanceof Value) {
       return (Value)value;
     }
-    else if(value == null) {
+    else if (value == null) {
       return null;
     }
-    else if(value instanceof Boolean) {
+
+    @NotNull VirtualMachineProxyImpl vm = context.getSuspendContext().getVirtualMachineProxy();
+    if (value instanceof Boolean) {
       return vm.mirrorOf(((Boolean)value).booleanValue());
     }
-    else if(value instanceof Byte) {
+    else if (value instanceof Byte) {
       return vm.mirrorOf(((Byte)value).byteValue());
     }
-    else if(value instanceof Character) {
+    else if (value instanceof Character) {
       return vm.mirrorOf(((Character)value).charValue());
     }
-    else if(value instanceof Short) {
+    else if (value instanceof Short) {
       return vm.mirrorOf(((Short)value).shortValue());
     }
-    else if(value instanceof Integer) {
+    else if (value instanceof Integer) {
       return vm.mirrorOf(((Integer)value).intValue());
     }
-    else if(value instanceof Long) {
+    else if (value instanceof Long) {
       return vm.mirrorOf(((Long)value).longValue());
     }
-    else if(value instanceof Float) {
+    else if (value instanceof Float) {
       return vm.mirrorOf(((Float)value).floatValue());
     }
-    else if(value instanceof Double) {
+    else if (value instanceof Double) {
       return vm.mirrorOf(((Double)value).doubleValue());
     }
-    else if(value instanceof String) {
-      return vm.mirrorOf((String)value);
+    else if (value instanceof String stringValue) {
+      return DebuggerUtilsEx.mirrorOfString(stringValue, context);
     }
-    else {
-      LOG.error("unknown default initializer type " + value.getClass().getName());
-      return null;
-    }
+
+    LOG.error("unknown default initializer type " + value.getClass().getName());
+    return null;
   }
 
   boolean hasValue(String localName) {
-    if(!mySyntheticLocals.containsKey(localName)) {
-      if(myParentFragmentEvaluator != null){
+    if (!mySyntheticLocals.containsKey(localName)) {
+      if (myParentFragmentEvaluator != null) {
         return myParentFragmentEvaluator.hasValue(localName);
-      } else {
+      }
+      else {
         return false;
       }
-    } else {
+    }
+    else {
       return true;
     }
   }
 
   public void setInitialValue(String localName, Object value) {
     LOG.assertTrue(!(value instanceof Value), "use setValue for jdi values");
-    if(hasValue(localName)) {
+    if (hasValue(localName)) {
       throw new EvaluateRuntimeException(
         EvaluateExceptionUtil.createEvaluateException(JavaDebuggerBundle.message("evaluation.error.variable.already.declared", localName)));
     }
@@ -100,10 +104,11 @@ public class CodeFragmentEvaluator extends BlockStatementEvaluator{
   }
 
   public void setValue(String localName, Value value) throws EvaluateException {
-    if(!mySyntheticLocals.containsKey(localName)) {
-      if(myParentFragmentEvaluator != null){
+    if (!mySyntheticLocals.containsKey(localName)) {
+      if (myParentFragmentEvaluator != null) {
         myParentFragmentEvaluator.setValue(localName, value);
-      } else {
+      }
+      else {
         throw EvaluateExceptionUtil.createEvaluateException(JavaDebuggerBundle.message("evaluation.error.variable.not.declared", localName));
       }
     }

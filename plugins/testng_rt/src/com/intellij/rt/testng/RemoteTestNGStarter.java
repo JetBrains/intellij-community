@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.rt.testng;
 
@@ -6,14 +6,18 @@ import com.beust.jcommander.JCommander;
 import com.intellij.rt.execution.testFrameworks.ForkedDebuggerHelper;
 import org.testng.CommandLineArgs;
 
-import java.io.*;
+import java.io.BufferedReader;
+import java.io.DataInputStream;
+import java.io.File;
+import java.io.FileReader;
+import java.io.IOException;
 import java.net.InetAddress;
 import java.net.Socket;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-public class RemoteTestNGStarter {
+public final class RemoteTestNGStarter {
   private static final String SOCKET = "-socket";
 
   public static void main(String[] args) throws Exception {
@@ -21,7 +25,7 @@ public class RemoteTestNGStarter {
     String param = null;
     String commandFileName = null;
     String workingDirs = null;
-    List<String> resultArgs = new ArrayList<String>();
+    List<String> resultArgs = new ArrayList<>();
     for (; i < args.length; i++) {
       String arg = args[i];
       if (arg.startsWith("@name")) {
@@ -43,12 +47,8 @@ public class RemoteTestNGStarter {
         final int port = Integer.parseInt(arg.substring(SOCKET.length()));
         try {
           final Socket socket = new Socket(InetAddress.getByName("127.0.0.1"), port);  //start collecting tests
-          final DataInputStream os = new DataInputStream(socket.getInputStream());
-          try {
+          try (DataInputStream os = new DataInputStream(socket.getInputStream())) {
             os.readBoolean();//wait for ready flag
-          }
-          finally {
-            os.close();
           }
         }
         catch (IOException e) {
@@ -66,7 +66,7 @@ public class RemoteTestNGStarter {
 
     final BufferedReader reader = new BufferedReader(new FileReader(temp));
 
-    final List<String> newArgs = new ArrayList<String>();
+    final List<String> newArgs = new ArrayList<>();
     try {
       final String cantRunMessage = "CantRunException";
       while (true) {

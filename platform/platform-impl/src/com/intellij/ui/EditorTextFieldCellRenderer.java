@@ -1,10 +1,12 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
 import com.intellij.ide.ui.UISettings;
+import com.intellij.ide.ui.UISettingsUtils;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageUtil;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.EditorSettings;
 import com.intellij.openapi.editor.SelectionModel;
@@ -15,7 +17,6 @@ import com.intellij.openapi.editor.colors.impl.DelegateColorScheme;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.editor.highlighter.EditorHighlighterFactory;
-import com.intellij.openapi.editor.impl.CaretModelImpl;
 import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.editor.impl.EditorTextFieldRendererDocument;
 import com.intellij.openapi.editor.markup.HighlighterLayer;
@@ -27,9 +28,9 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.LineTokenizer;
 import com.intellij.testFramework.LightVirtualFile;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.text.CharSequenceSubSequence;
 import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
@@ -38,9 +39,17 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.accessibility.AccessibleContext;
-import javax.swing.*;
+import javax.swing.JTable;
 import javax.swing.table.TableCellRenderer;
-import java.awt.*;
+import java.awt.Color;
+import java.awt.Component;
+import java.awt.Container;
+import java.awt.Dimension;
+import java.awt.Font;
+import java.awt.FontMetrics;
+import java.awt.Graphics;
+import java.awt.Insets;
+import java.awt.Rectangle;
 
 /**
  * @author gregsh
@@ -54,9 +63,9 @@ public abstract class EditorTextFieldCellRenderer implements TableCellRenderer, 
   private final boolean myInheritFontFromLaF;
 
   /** @deprecated Use {@link EditorTextFieldCellRenderer#EditorTextFieldCellRenderer(Project, Language, Disposable)}*/
-  @Deprecated
+  @Deprecated(forRemoval = true)
   protected EditorTextFieldCellRenderer(@Nullable Project project, @Nullable FileType fileType, @NotNull Disposable parent) {
-    this(project, LanguageUtil.getFileTypeLanguage(fileType), true, parent);
+    this(project, fileType == null ? null : LanguageUtil.getFileTypeLanguage(fileType), true, parent);
   }
 
   protected EditorTextFieldCellRenderer(@Nullable Project project, @Nullable Language language, @NotNull Disposable parent) {
@@ -73,13 +82,11 @@ public abstract class EditorTextFieldCellRenderer implements TableCellRenderer, 
 
   protected abstract String getText(JTable table, Object value, int row, int column);
 
-  @Nullable
-  protected TextAttributes getTextAttributes(JTable table, Object value, int row, int column) {
+  protected @Nullable TextAttributes getTextAttributes(JTable table, Object value, int row, int column) {
     return null;
   }
 
-  @NotNull
-  protected EditorColorsScheme getColorScheme(final JTable table) {
+  protected @NotNull EditorColorsScheme getColorScheme(final JTable table) {
     return getEditorPanel(table).getEditor().getColorsScheme();
   }
 
@@ -105,8 +112,7 @@ public abstract class EditorTextFieldCellRenderer implements TableCellRenderer, 
     return panel;
   }
 
-  @NotNull
-  private RendererComponent getEditorPanel(final JTable table) {
+  private @NotNull RendererComponent getEditorPanel(final JTable table) {
     RendererComponent panel = ComponentUtil.getClientProperty(table, MY_PANEL_PROPERTY);
     if (panel != null) {
       DelegateColorScheme scheme = (DelegateColorScheme)panel.getEditor().getColorsScheme();
@@ -122,8 +128,7 @@ public abstract class EditorTextFieldCellRenderer implements TableCellRenderer, 
     return panel;
   }
 
-  @NotNull
-  protected RendererComponent createRendererComponent(@Nullable Project project, @Nullable Language language, boolean inheritFontFromLaF) {
+  protected @NotNull RendererComponent createRendererComponent(@Nullable Project project, @Nullable Language language, boolean inheritFontFromLaF) {
     return new AbbreviatingRendererComponent(project, language, inheritFontFromLaF);
   }
 
@@ -136,17 +141,19 @@ public abstract class EditorTextFieldCellRenderer implements TableCellRenderer, 
     TextAttributes myTextAttributes;
     private boolean mySelected;
 
-    RendererComponent(Project project, @Nullable Language language, boolean inheritFontFromLaF) {
+    RendererComponent(@Nullable Project project, @Nullable Language language, boolean inheritFontFromLaF) {
       myEditor = createEditor(project, language, inheritFontFromLaF);
-      add(myEditor.getContentComponent());
+      addEditorToSelf(myEditor);
+      if (!UIUtil.isAncestor(this, myEditor.getContentComponent())) {
+        throw new AssertionError("Editor component is not added in `addEditorToSelf`");
+      }
     }
 
     public EditorEx getEditor() {
       return myEditor;
     }
 
-    @NotNull
-    private static EditorEx createEditor(Project project, @Nullable Language language, boolean inheritFontFromLaF) {
+    private static @NotNull EditorEx createEditor(Project project, @Nullable Language language, boolean inheritFontFromLaF) {
       Language adjustedLanguage = language != null ? language : PlainTextLanguage.INSTANCE;
       EditorTextFieldRendererDocument document = new EditorTextFieldRendererDocument();
 
@@ -174,14 +181,14 @@ public abstract class EditorTextFieldCellRenderer implements TableCellRenderer, 
                                 : colorsScheme.getDefaultBackground());
       if (inheritFontFromLaF) {
         ((EditorImpl)editor).setUseEditorAntialiasing(false);
-        Font font = UIUtil.getLabelFont();
+        Font font = StartupUiUtil.getLabelFont();
         colorsScheme.setEditorFontName(font.getFontName());
         colorsScheme.setEditorFontSize(font.getSize());
       }
       else {
         UISettings uiSettings = UISettings.getInstance();
         if (uiSettings.getPresentationMode()) {
-          editor.setFontSize(uiSettings.getPresentationModeFontSize());
+          editor.setFontSize(UISettingsUtils.with(uiSettings).getPresentationModeFontSize());
         }
       }
 
@@ -207,28 +214,33 @@ public abstract class EditorTextFieldCellRenderer implements TableCellRenderer, 
 
     @Override
     public void dispose() {
-      remove(myEditor.getContentComponent());
+      removeAll();
       EditorFactory.getInstance().releaseEditor(myEditor);
     }
 
+    void addEditorToSelf(@NotNull EditorEx editor) {
+      add(editor.getContentComponent());
+    }
+
     void setTextToEditor(String text) {
-      myEditor.getMarkupModel().removeAllHighlighters();
-      myEditor.getDocument().setText(text);
-      ((EditorImpl)myEditor).resetSizes();
-      myEditor.getHighlighter().setText(text);
+      EditorImpl editor = (EditorImpl)myEditor;
+      editor.getMarkupModel().removeAllHighlighters();
+      editor.getDocument().setText(text);
+      editor.resetSizes();
+      editor.getHighlighter().setText(text);
       if (myTextAttributes != null) {
-        myEditor.getMarkupModel().addRangeHighlighter(0, myEditor.getDocument().getTextLength(),
+        editor.getMarkupModel().addRangeHighlighter(0, editor.getDocument().getTextLength(),
                                                       HighlighterLayer.ADDITIONAL_SYNTAX, myTextAttributes, HighlighterTargetArea.EXACT_RANGE);
       }
 
-      ((EditorImpl)myEditor).setPaintSelection(mySelected);
-      SelectionModel selectionModel = myEditor.getSelectionModel();
-      selectionModel.setSelection(0, mySelected ? myEditor.getDocument().getTextLength() : 0);
-      ObjectUtils.consumeIfCast(myEditor.getCaretModel(), CaretModelImpl.class, CaretModelImpl::updateVisualPosition);
+      editor.setPaintSelection(mySelected);
+      SelectionModel selectionModel = editor.getSelectionModel();
+      selectionModel.setSelection(0, mySelected ? editor.getDocument().getTextLength() : 0);
+      editor.getCaretModel().updateVisualPosition();
     }
   }
 
-  public static class SimpleRendererComponent extends RendererComponent implements Disposable {
+  public static class SimpleRendererComponent extends RendererComponent {
     public SimpleRendererComponent(Project project, @Nullable Language language, boolean inheritFontFromLaF) {
       super(project, language, inheritFontFromLaF);
     }
@@ -239,39 +251,71 @@ public abstract class EditorTextFieldCellRenderer implements TableCellRenderer, 
     }
   }
 
-  public static class AbbreviatingRendererComponent extends RendererComponent {
+  public static class SimpleWithGutterRendererComponent extends SimpleRendererComponent {
+    public SimpleWithGutterRendererComponent(Project project, @Nullable Language language, boolean inheritFontFromLaF) {
+      super(project, language, inheritFontFromLaF);
+    }
+
+    @Override
+    void addEditorToSelf(@NotNull EditorEx editor) {
+      add(editor.getComponent());
+    }
+  }
+
+  public static final class AbbreviatingRendererComponent extends RendererComponent {
     private static final char ABBREVIATION_SUFFIX = '\u2026'; // 2026 '...'
     private static final char RETURN_SYMBOL = '\u23ce';
 
     private final StringBuilder myDocumentTextBuilder = new StringBuilder();
-    private final boolean myAppendEllipsis;
+    private boolean myAppendEllipsis;
     private final char myReturnSymbol;
+    private boolean myForceSingleLine;
 
     private Dimension myPreferredSize;
-    private String myRawText;
+
+    private @NlsSafe String myRawText;
 
     public AbbreviatingRendererComponent(Project project, @Nullable Language language, boolean inheritFontFromLaF) {
       this(project, language, inheritFontFromLaF, true);
     }
 
     public AbbreviatingRendererComponent(Project project, @Nullable Language language, boolean inheritFontFromLaF, boolean appendEllipsis) {
-      this(project, language, inheritFontFromLaF, appendEllipsis, RETURN_SYMBOL);
+      this(project, language, inheritFontFromLaF, appendEllipsis, false);
     }
 
     public AbbreviatingRendererComponent(Project project,
                                          @Nullable Language language,
                                          boolean inheritFontFromLaF,
                                          boolean appendEllipsis,
+                                         boolean forceSingleLine) {
+      this(project, language, inheritFontFromLaF, appendEllipsis, forceSingleLine, RETURN_SYMBOL);
+    }
+
+    public AbbreviatingRendererComponent(Project project,
+                                         @Nullable Language language,
+                                         boolean inheritFontFromLaF,
+                                         boolean appendEllipsis,
+                                         boolean forceSingleLine,
                                          char returnSymbol) {
       super(project, language, inheritFontFromLaF);
       myAppendEllipsis = appendEllipsis;
       myReturnSymbol = returnSymbol;
+      myForceSingleLine = forceSingleLine;
     }
 
     @Override
     public void setText(String text) {
       myRawText = text;
       myPreferredSize = null;
+    }
+
+    public void setForceSingleLine(boolean forceSingleLine) {
+      myForceSingleLine = forceSingleLine;
+      myPreferredSize = null;
+    }
+
+    public void setAppendEllipsis(boolean appendEllipsis) {
+      myAppendEllipsis = appendEllipsis;
     }
 
     @Override
@@ -286,8 +330,17 @@ public abstract class EditorTextFieldCellRenderer implements TableCellRenderer, 
         }
 
         FontMetrics fontMetrics = ((EditorImpl)getEditor()).getFontMetrics(myTextAttributes != null ? myTextAttributes.getFontType() : Font.PLAIN);
-        int preferredHeight = getEditor().getLineHeight() * Math.max(1, linesCount);
-        int preferredWidth = fontMetrics.charWidth('m') * maxLineLength;
+
+        int preferredHeight;
+        int preferredWidth;
+        if (myForceSingleLine) {
+          preferredHeight = getEditor().getLineHeight();
+          preferredWidth = fontMetrics.charWidth('m') * myRawText.length();
+        }
+        else {
+          preferredHeight = getEditor().getLineHeight() * Math.max(1, linesCount);
+          preferredWidth = fontMetrics.charWidth('m') * maxLineLength;
+        }
 
         Insets insets = getInsets();
         if (insets != null) {
@@ -302,18 +355,20 @@ public abstract class EditorTextFieldCellRenderer implements TableCellRenderer, 
 
     @Override
     protected void paintChildren(Graphics g) {
-      updateText(g.getClipBounds());
-      super.paintChildren(g);
+      ReadAction.run(() -> {
+        updateText(g.getClipBounds());
+        super.paintChildren(g);
+      });
     }
 
     private void updateText(Rectangle clip) {
       FontMetrics fontMetrics = ((EditorImpl)getEditor()).getFontMetrics(myTextAttributes != null ? myTextAttributes.getFontType() : Font.PLAIN);
       Insets insets = getInsets();
       int maxLineWidth = getWidth() - (insets != null ? insets.left + insets.right : 0);
-
       myDocumentTextBuilder.setLength(0);
 
-      boolean singleLineMode = getHeight() / (float)getEditor().getLineHeight() < 1.1f;
+      // 'a / b < factor' is a flawed approach, but I hesitate to perform a rework. I increase the factor to get rid of the bug
+      boolean singleLineMode = myForceSingleLine || getHeight() / (float)getEditor().getLineHeight() < 1.5f;
       if (singleLineMode) {
         appendAbbreviated(myDocumentTextBuilder, myRawText, 0, myRawText.length(), fontMetrics, maxLineWidth, true, myAppendEllipsis,
                           myReturnSymbol);

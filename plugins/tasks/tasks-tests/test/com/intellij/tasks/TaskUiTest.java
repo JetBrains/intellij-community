@@ -16,7 +16,15 @@
 package com.intellij.tasks;
 
 import com.intellij.ide.ui.customization.CustomActionsSchema;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionGroup;
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.ActionPlaces;
+import com.intellij.openapi.actionSystem.ActionUiKind;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.IdeActions;
+import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction;
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
 import com.intellij.openapi.actionSystem.impl.PresentationFactory;
@@ -24,10 +32,11 @@ import com.intellij.openapi.actionSystem.impl.Utils;
 import com.intellij.tasks.actions.SwitchTaskAction;
 import com.intellij.tasks.config.TaskSettings;
 import com.intellij.tasks.impl.LocalTaskImpl;
+import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.TestActionEvent;
 import com.intellij.testFramework.fixtures.CodeInsightFixtureTestCase;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 import java.util.List;
 
 /**
@@ -40,10 +49,10 @@ public class TaskUiTest extends CodeInsightFixtureTestCase {
     SwitchTaskAction combo = null;
     ActionGroup group = (ActionGroup)CustomActionsSchema.getInstance().getCorrectedAction(IdeActions.GROUP_MAIN_TOOLBAR);
     ActionToolbarImpl toolbar = (ActionToolbarImpl)ActionManager.getInstance().createActionToolbar(ActionPlaces.MAIN_TOOLBAR, group, true);
-    AnAction[] children = group.getChildren(new TestActionEvent());
+    AnAction[] children = group.getChildren(TestActionEvent.createTestEvent());
     for (AnAction child : children) {
       if (child instanceof ActionGroup) {
-        AnAction[] actions = ((ActionGroup)child).getChildren(new TestActionEvent());
+        AnAction[] actions = ((ActionGroup)child).getChildren(TestActionEvent.createTestEvent());
         for (AnAction action : actions) {
           if (action instanceof SwitchTaskAction) {
             combo = (SwitchTaskAction)action;
@@ -52,8 +61,9 @@ public class TaskUiTest extends CodeInsightFixtureTestCase {
       }
     }
 
-    List<AnAction> actions =
-      Utils.expandActionGroup(false, group, new PresentationFactory(), DataContext.EMPTY_CONTEXT, ActionPlaces.MAIN_TOOLBAR);
+    List<AnAction> actions = Utils.expandActionGroup(
+      group, new PresentationFactory(), DataContext.EMPTY_CONTEXT,
+      ActionPlaces.MAIN_TOOLBAR, ActionUiKind.TOOLBAR);
     assertFalse(actions.contains(combo));
 
     TaskManager manager = TaskManager.getManager(getProject());
@@ -61,7 +71,7 @@ public class TaskUiTest extends CodeInsightFixtureTestCase {
     assertTrue(defaultTask.isDefault());
     assertEquals(defaultTask.getCreated(), defaultTask.getUpdated());
 
-    toolbar.updateActionsImmediately();
+    PlatformTestUtil.waitForFuture(toolbar.updateActionsAsync());
     Presentation presentation = doTest(combo, toolbar);
     assertFalse(presentation.isVisible());
     assertNull(presentation.getClientProperty(CustomComponentAction.COMPONENT_KEY));
@@ -77,12 +87,13 @@ public class TaskUiTest extends CodeInsightFixtureTestCase {
 
     LocalTask task = manager.createLocalTask("test");
     manager.activateTask(task, false);
+    TaskSettings.getInstance().ALWAYS_DISPLAY_COMBO = true;
 
     presentation = doTest(combo, toolbar);
     assertTrue(presentation.isVisible());
     assertTrue(presentation.isEnabled());
 
-    toolbar.updateActionsImmediately();
+    PlatformTestUtil.waitForFuture(toolbar.updateActionsAsync());
     JComponent component = presentation.getClientProperty(CustomComponentAction.COMPONENT_KEY);
     assertNotNull(component);
     assertTrue(component.isVisible());
@@ -105,15 +116,20 @@ public class TaskUiTest extends CodeInsightFixtureTestCase {
   public void testUnderscore() {
     String summary = "foo_bar";
     TaskManager.getManager(getProject()).activateTask(new LocalTaskImpl("", summary), false);
-    TestActionEvent event = new TestActionEvent();
-    event.IsFromActionToolbar = true;
+    TaskSettings.getInstance().ALWAYS_DISPLAY_COMBO = true;
+    AnActionEvent event = TestActionEvent.createTestToolbarEvent(null);
     new SwitchTaskAction().update(event);
     assertEquals(summary, event.getPresentation().getText());
   }
 
+  @Override
+  protected void tearDown() throws Exception {
+    super.tearDown();
+    TaskSettings.getInstance().ALWAYS_DISPLAY_COMBO = false;
+  }
+
   private static Presentation doTest(AnAction action, ActionToolbarImpl toolbar) {
-    TestActionEvent event = new TestActionEvent(toolbar.getPresentation(action));
-    event.IsFromActionToolbar = true;
+    AnActionEvent event = TestActionEvent.createTestToolbarEvent(toolbar.getPresentation(action));
     action.update(event);
     return event.getPresentation();
   }

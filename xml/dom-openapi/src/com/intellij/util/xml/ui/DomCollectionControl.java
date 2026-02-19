@@ -1,8 +1,15 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.xml.ui;
 
 import com.intellij.codeInspection.util.InspectionMessage;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.ActionPlaces;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.DataKey;
+import com.intellij.openapi.actionSystem.DataProvider;
+import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.project.Project;
@@ -11,11 +18,11 @@ import com.intellij.openapi.util.NlsActions.ActionText;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.psi.xml.XmlElement;
+import com.intellij.serialization.ClassUtil;
 import com.intellij.ui.CommonActionsPanel;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.IconUtil;
-import com.intellij.util.ReflectionUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.xml.DomElement;
@@ -31,16 +38,18 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.Icon;
+import javax.swing.JComponent;
+import javax.swing.JTable;
+import java.awt.Container;
 import java.lang.reflect.Type;
+import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
-import java.util.*;
+import java.util.Objects;
+import java.util.Set;
 
-/**
- * @author peter
- */
-public class DomCollectionControl<T extends DomElement> extends DomUIControl implements Highlightable, TypeSafeDataProvider {
+public class DomCollectionControl<T extends DomElement> extends DomUIControl implements Highlightable, DataProvider {
   private static final DataKey<DomCollectionControl> DOM_COLLECTION_CONTROL = DataKey.create("DomCollectionControl");
 
   private final EventDispatcher<CommitListener> myDispatcher = EventDispatcher.create(CommitListener.class);
@@ -102,7 +111,7 @@ public class DomCollectionControl<T extends DomElement> extends DomUIControl imp
 
   @Override
   public boolean canNavigate(DomElement element) {
-    final Class<DomElement> aClass = (Class<DomElement>)ReflectionUtil.getRawType(myChildDescription.getType());
+    Class<DomElement> aClass = (Class<DomElement>)ClassUtil.getRawType(myChildDescription.getType());
 
     final DomElement domElement = element.getParentOfType(aClass, false);
 
@@ -111,7 +120,7 @@ public class DomCollectionControl<T extends DomElement> extends DomUIControl imp
 
   @Override
   public void navigate(DomElement element) {
-    final Class<DomElement> aClass = (Class<DomElement>)ReflectionUtil.getRawType(myChildDescription.getType());
+    final Class<DomElement> aClass = (Class<DomElement>)ClassUtil.getRawType(myChildDescription.getType());
     final DomElement domElement = element.getParentOfType(aClass, false);
 
     int index = myCollectionElements.indexOf(domElement);
@@ -121,19 +130,18 @@ public class DomCollectionControl<T extends DomElement> extends DomUIControl imp
   }
 
   @Override
-  public void calcData(@NotNull final DataKey key, @NotNull final DataSink sink) {
-    if (DOM_COLLECTION_CONTROL.equals(key)) {
-      sink.put(DOM_COLLECTION_CONTROL, this);
+  public @Nullable Object getData(@NotNull String dataId) {
+    if (DOM_COLLECTION_CONTROL.is(dataId)) {
+      return this;
     }
-  }
-
-  @Nullable @NonNls
-  protected String getHelpId() {
     return null;
   }
 
-  @Nullable @Nls
-  protected String getEmptyPaneText() {
+  protected @Nullable @NonNls String getHelpId() {
+    return null;
+  }
+
+  protected @Nullable @Nls String getEmptyPaneText() {
     return null;
   }
 
@@ -296,8 +304,7 @@ public class DomCollectionControl<T extends DomElement> extends DomUIControl imp
     };
   }
 
-  @Nullable
-  private static DomEditorManager getDomEditorManager(DomUIControl control) {
+  private static @Nullable DomEditorManager getDomEditorManager(DomUIControl control) {
     JComponent component = control.getComponent();
     while (component != null && !(component instanceof DomEditorManager)) {
       final Container parent = component.getParent();
@@ -357,7 +364,7 @@ public class DomCollectionControl<T extends DomElement> extends DomUIControl imp
     }
 
     @Override
-    protected final void afterAddition(@NotNull final T newElement) {
+    protected final void afterAddition(final @NotNull T newElement) {
       reset();
       afterAddition(myCollectionPanel.getTable(), myCollectionElements.size() - 1);
     }
@@ -435,6 +442,11 @@ public class DomCollectionControl<T extends DomElement> extends DomUIControl imp
       e.getPresentation().setVisible(visible);
       e.getPresentation().setEnabled(visible && control.getComponent().getTable().getSelectedRowCount() == 1);
     }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
+    }
   }
 
   public static class RemoveAction extends AnAction {
@@ -462,6 +474,11 @@ public class DomCollectionControl<T extends DomElement> extends DomUIControl imp
         enabled = false;
       }
       e.getPresentation().setEnabled(enabled);
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
     }
   }
 }

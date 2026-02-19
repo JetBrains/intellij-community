@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.build.events.impl;
 
 import com.intellij.build.events.DerivedResult;
@@ -9,23 +9,22 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.function.Supplier;
 
-public class DerivedResultImpl implements DerivedResult {
+public final class DerivedResultImpl implements DerivedResult {
 
-  @NotNull private final Supplier<EventResult> myOnDefault;
-  @NotNull private final Supplier<FailureResult> myFail;
+  private final @NotNull Supplier<? extends EventResult> myOnDefault;
+  private final @NotNull Supplier<? extends FailureResult> myFail;
 
   public DerivedResultImpl() {
     this(null, null);
   }
 
-  public DerivedResultImpl(@Nullable Supplier<EventResult> onDefault, @Nullable Supplier<FailureResult> onFail) {
+  public DerivedResultImpl(@Nullable Supplier<? extends EventResult> onDefault, @Nullable Supplier<? extends FailureResult> onFail) {
     myOnDefault = onDefault != null ? onDefault : SuccessResultImpl::new;
     myFail = onFail != null ? onFail : FailureResultImpl::new;
   }
 
-  @NotNull
   @Override
-  public FailureResult createFailureResult() {
+  public @NotNull FailureResult createFailureResult() {
     FailureResult result = myFail.get();
     if (result == null) {
       return new FailureResultImpl();
@@ -33,9 +32,8 @@ public class DerivedResultImpl implements DerivedResult {
     return result;
   }
 
-  @NotNull
   @Override
-  public EventResult createDefaultResult() {
+  public @NotNull EventResult createDefaultResult() {
     EventResult result = myOnDefault.get();
     if (result == null) {
       return new SuccessResultImpl();

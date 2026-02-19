@@ -7,7 +7,7 @@ import com.intellij.ui.TextAccessor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
@@ -56,6 +56,5 @@ public abstract class BrowseModuleValueActionListener<T extends JComponent> impl
     }
   }
 
-  @Nullable
-  protected abstract String showDialog();
+  protected abstract @Nullable String showDialog();
 }

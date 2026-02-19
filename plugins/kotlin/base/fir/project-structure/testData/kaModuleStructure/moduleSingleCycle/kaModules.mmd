@@ -1,0 +1,11 @@
+graph TD
+  KaLibraryModule_0(["KaLibraryModule(SDK)"])
+  KaSourceModule_1["KaSourceModule(A)<br />production<br />JVM (1.8)"]
+  KaSourceModule_2["KaSourceModule(A)<br />test<br />JVM (1.8)"]
+  style KaLibraryModule_0 fill:#CC2B52
+  style KaSourceModule_1 fill:#608BC1
+  style KaSourceModule_2 fill:#31511E
+  KaSourceModule_2 --> KaSourceModule_1
+  KaSourceModule_2 --friend--> KaSourceModule_1
+  linkStyle 0 stroke:black
+  linkStyle 1 stroke:#E6C767

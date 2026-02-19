@@ -1,102 +1,171 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
-import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.analysis.JavaHighlightUtil;
-import com.intellij.codeInsight.intention.FileModifier;
-import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.codeInsight.intention.CommonIntentionAction;
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.*;
+import com.intellij.modcommand.ActionContext;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.Presentation;
+import com.intellij.modcommand.PsiUpdateModCommandAction;
+import com.intellij.psi.JavaResolveResult;
+import com.intellij.psi.PsiEllipsisType;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiExpressionList;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiMethodCallExpression;
+import com.intellij.psi.PsiParameter;
+import com.intellij.psi.PsiSubstitutor;
+import com.intellij.psi.PsiType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.TypeConversionUtil;
-import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Arrays;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.function.Consumer;
 
-/**
- * @author Danila Ponomarenko
- */
-public final class RemoveRedundantArgumentsFix implements IntentionAction {
+public final class RemoveRedundantArgumentsFix extends PsiUpdateModCommandAction<PsiExpressionList> {
   private final PsiMethod myTargetMethod;
-  private final PsiExpression[] myArguments;
   private final PsiSubstitutor mySubstitutor;
 
   private RemoveRedundantArgumentsFix(@NotNull PsiMethod targetMethod,
-                                      PsiExpression @NotNull [] arguments,
+                                      @NotNull PsiExpressionList arguments,
                                       @NotNull PsiSubstitutor substitutor) {
+    super(arguments);
     myTargetMethod = targetMethod;
-    myArguments = arguments;
     mySubstitutor = substitutor;
   }
 
-  @NotNull
   @Override
-  public String getText() {
-    return QuickFixBundle.message("remove.redundant.arguments.text", JavaHighlightUtil.formatMethod(myTargetMethod));
-  }
-
-  @NotNull
-  @Override
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return QuickFixBundle.message("remove.redundant.arguments.family");
   }
 
   @Override
-  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    if (!myTargetMethod.isValid() || myTargetMethod.getContainingClass() == null) return false;
-    for (PsiExpression expression : myArguments) {
-      if (!expression.isValid()) return false;
+  protected @Nullable Presentation getPresentation(@NotNull ActionContext context, @NotNull PsiExpressionList args) {
+    if (!myTargetMethod.isValid() || myTargetMethod.getContainingClass() == null) return null;
+    if (!mySubstitutor.isValid()) return null;
+    PsiExpression[] redundant =
+      findRedundantArgument(args.getExpressions(), myTargetMethod.getParameterList().getParameters(), mySubstitutor);
+    if (redundant == null) {
+      return null;
     }
-    if (!mySubstitutor.isValid()) return false;
-
-    return findRedundantArgument(myArguments, myTargetMethod.getParameterList().getParameters(), mySubstitutor) != null;
+    return Presentation.of(QuickFixBundle.message("remove.redundant.arguments.text", JavaHighlightUtil.formatMethod(myTargetMethod), 
+                                                  redundant.length));
   }
 
+  /**
+   * @return array of redundant arguments or null if it is not possible to remove some elements from arguments list to make call compilable
+   */
   private static PsiExpression @Nullable [] findRedundantArgument(PsiExpression @NotNull [] arguments,
                                                                   PsiParameter @NotNull [] parameters,
                                                                   @NotNull PsiSubstitutor substitutor) {
-    if (arguments.length <= parameters.length) return null;
+    /*
+     * Greedy algorithm with linear complexity to find redundant arguments.
+     * Iterate through argument and parameter lists using separate indexes.
+     * Advance both indexes when argument type is assignable to parameter type,
+     * otherwise add current argument to redundant list and advance parameter index.
+     */
+    List<PsiExpression> reduntantArguments = new ArrayList<>();
+    PsiType varargsComponentType = varargsComponentType(parameters);
+    int argumentCount = arguments.length;
+    int parameterCount = parameters.length - (varargsComponentType == null ? 0 : 1);
+    if (argumentCount <= parameterCount) {
+      return null;
+    }
 
-    for (int i = 0; i < parameters.length; i++) {
-      final PsiExpression argument = arguments[i];
-      final PsiParameter parameter = parameters[i];
-
-      final PsiType argumentType = argument.getType();
-      if (argumentType == null) return null;
-      final PsiType parameterType = substitutor.substitute(parameter.getType());
-
-      if (!TypeConversionUtil.isAssignable(parameterType, argumentType)) {
+    int argumentIndex = 0;
+    int parameterIndex = 0;
+    while (argumentIndex < argumentCount && parameterIndex < parameterCount) {
+      PsiExpression argument = arguments[argumentIndex];
+      PsiType argumentType = argument.getType();
+      if (argumentType == null) {
         return null;
+      }
+      PsiType parameterType = substitutor.substitute(parameters[parameterIndex].getType());
+
+      if (TypeConversionUtil.isAssignable(parameterType, argumentType)) {
+        argumentIndex++;
+        parameterIndex++;
+      }
+      else {
+        reduntantArguments.add(argument);
+        argumentIndex++;
       }
     }
 
-    return Arrays.copyOfRange(arguments, parameters.length, arguments.length);
+    if (varargsComponentType != null) {
+      boolean matchedVarargsElement = false; // have we found argument which type is assignable to varargs component type
+      boolean matchedVarargsArray = false; // have we found argument which type is an array assignable to varrargs array
+      PsiType parameterType = substitutor.substitute(varargsComponentType);
+      while (argumentIndex < argumentCount) {
+        PsiExpression argument = arguments[argumentIndex];
+        PsiType argumentType = argument.getType();
+        if (argumentType == null) {
+          return null;
+        }
+        if (matchedVarargsArray) {
+          reduntantArguments.add(argument);
+        } else {
+          if (!matchedVarargsElement && isArgumentTypeAssignableToVarargsArrayType(parameters, substitutor, argumentType)) {
+            matchedVarargsArray = true;
+          } else {
+            if (!TypeConversionUtil.isAssignable(parameterType, argumentType)) {
+              reduntantArguments.add(argument);
+            } else {
+              matchedVarargsElement = true;
+            }
+          }
+        }
+        argumentIndex++;
+      }
+    }
+
+    if (parameterIndex < parameterCount) {
+      return null;
+    }
+
+    while (argumentIndex < argumentCount) {
+      reduntantArguments.add(arguments[argumentIndex++]);
+    }
+
+    return reduntantArguments.toArray(PsiExpression.EMPTY_ARRAY);
+  }
+
+  private static boolean isArgumentTypeAssignableToVarargsArrayType(PsiParameter @NotNull [] parameters,
+                                                                    @NotNull PsiSubstitutor substitutor,
+                                                                    PsiType argumentType) {
+    PsiType varargsArrayType = substitutor.substitute(varargsArrayType(parameters));
+    return varargsArrayType != null && TypeConversionUtil.isAssignable(varargsArrayType, argumentType);
+  }
+
+  private static @Nullable PsiType varargsComponentType(PsiParameter @NotNull [] parameters) {
+    int length = parameters.length;
+    if (length == 0) return null;
+    PsiType type = parameters[length - 1].getType();
+    if (type instanceof PsiEllipsisType ellipsisType) {
+      return ellipsisType.getComponentType();
+    }
+    return null;
+  }
+
+  private static @Nullable PsiType varargsArrayType(PsiParameter @NotNull [] parameters) {
+    int length = parameters.length;
+    if (length == 0) return null;
+    PsiType type = parameters[length - 1].getType();
+    if (type instanceof PsiEllipsisType ellipsisType) {
+      return ellipsisType.toArrayType();
+    }
+    return null;
   }
 
   @Override
-  public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-    final PsiExpression[] redundantArguments = findRedundantArgument(myArguments, myTargetMethod.getParameterList().getParameters(), mySubstitutor);
+  protected void invoke(@NotNull ActionContext context, @NotNull PsiExpressionList args, @NotNull ModPsiUpdater updater) {
+    final PsiExpression[] redundantArguments = findRedundantArgument(args.getExpressions(), 
+                                                                     myTargetMethod.getParameterList().getParameters(), mySubstitutor);
     if (redundantArguments != null) {
       for (PsiExpression argument : redundantArguments) {
         argument.delete();
@@ -104,38 +173,27 @@ public final class RemoveRedundantArgumentsFix implements IntentionAction {
     }
   }
 
-  @Override
-  public boolean startInWriteAction() {
-    return true;
-  }
-
   public static void registerIntentions(JavaResolveResult @NotNull [] candidates,
                                         @NotNull PsiExpressionList arguments,
-                                        @Nullable HighlightInfo highlightInfo,
-                                        TextRange fixRange) {
+                                        @NotNull Consumer<? super CommonIntentionAction> info) {
     for (JavaResolveResult candidate : candidates) {
-      registerIntention(arguments, highlightInfo, fixRange, candidate);
+      registerIntention(arguments, info, candidate);
     }
   }
 
   private static void registerIntention(@NotNull PsiExpressionList arguments,
-                                        @Nullable HighlightInfo highlightInfo,
-                                        TextRange fixRange,
+                                        @NotNull Consumer<? super CommonIntentionAction> info,
                                         @NotNull JavaResolveResult candidate) {
     if (!candidate.isStaticsScopeCorrect()) return;
     PsiMethod method = (PsiMethod)candidate.getElement();
     PsiSubstitutor substitutor = candidate.getSubstitutor();
-    if (method != null && BaseIntentionAction.canModify(method)) {
-      QuickFixAction
-        .registerQuickFixAction(highlightInfo, fixRange, new RemoveRedundantArgumentsFix(method, arguments.getExpressions(), substitutor));
+    if (method == null || !BaseIntentionAction.canModify(arguments)) return;
+    if (method.isConstructor() && arguments.getParent() instanceof PsiMethodCallExpression &&
+        ((PsiMethodCallExpression)arguments.getParent()).getMethodExpression().textMatches("this") &&
+        PsiTreeUtil.isAncestor(method, arguments, true)) {
+      // Avoid creating recursive constructor call
+      return;
     }
-  }
-
-  @Override
-  public @NotNull FileModifier getFileModifierForPreview(@NotNull PsiFile target) {
-    return new RemoveRedundantArgumentsFix(
-      PsiTreeUtil.findSameElementInCopy(myTargetMethod, target),
-      ContainerUtil.map2Array(myArguments, PsiExpression.class, arg -> PsiTreeUtil.findSameElementInCopy(arg, target)),
-      mySubstitutor);
+    info.accept(new RemoveRedundantArgumentsFix(method, arguments, substitutor));
   }
 }

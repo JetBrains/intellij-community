@@ -1,22 +1,22 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.inspections.flake8;
 
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.ImmutableSetMultimap;
-import com.google.common.collect.Sets;
 import com.intellij.codeInspection.InspectionSuppressor;
 import com.intellij.codeInspection.SuppressQuickFix;
 import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFileSystemItem;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.psi.PyFile;
+import com.jetbrains.python.psi.impl.PyPsiUtils;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
+import java.util.Locale;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -28,10 +28,10 @@ import java.util.regex.Pattern;
  *
  * @author jansorg
  */
-public class Flake8InspectionSuppressor implements InspectionSuppressor {
-  @NonNls public static final String NOQA = "noqa";
+public final class Flake8InspectionSuppressor implements InspectionSuppressor {
+  public static final @NonNls String NOQA = "noqa";
   // See flake8.defaults module
-  private static final Pattern NOQA_COMMENT_PATTERN = Pattern.compile("# noqa(?::[\\s]?(?<codes>([A-Z]+[0-9]+(?:[,\\s]+)?)+))?.*",
+  private static final Pattern NOQA_COMMENT_PATTERN = Pattern.compile("# noqa(?::\\s?(?<codes>([A-Z]+[0-9]+(?:[,\\s]+)?)+))?.*",
                                                                       Pattern.CASE_INSENSITIVE);
 
   private static final ImmutableSetMultimap<String, String> ourInspectionToFlake8Code =
@@ -51,6 +51,20 @@ public class Flake8InspectionSuppressor implements InspectionSuppressor {
       .put("F831", "PyUnusedLocal")
       .put("F841", "PyUnusedLocal")
       .put("C90", "PyUnusedLocal")
+      .put("N801", "PyPep8Naming")  // class names should use CapWords convention
+      .put("N802", "PyPep8Naming")  // function name should be lowercase
+      .put("N803", "PyPep8Naming")  // argument name should be lowercase
+      .put("N804", "PyPep8Naming")  // first argument of a classmethod should be named 'cls'
+      .put("N805", "PyPep8Naming")  // first argument of a method should be named 'self'
+      .put("N806", "PyPep8Naming")  // variable in function should be lowercase
+      .put("N807", "PyPep8Naming")  // function name should not start and end with '__'
+      .put("N811", "PyPep8Naming")  // constant imported as non constant
+      .put("N812", "PyPep8Naming")  // lowercase imported as non lowercase
+      .put("N813", "PyPep8Naming")  // camelcase imported as lowercase
+      .put("N814", "PyPep8Naming")  // camelcase imported as constant
+      .put("N815", "PyPep8Naming")  // mixedCase variable in class scope
+      .put("N816", "PyPep8Naming")  // mixedCase variable in global scope
+      .put("N817", "PyPep8Naming")  // camelcase imported as acronym
       // pycodestyle.py specific code
       .put("E711", "PyComparisonWithNone")
       .build()
@@ -62,7 +76,7 @@ public class Flake8InspectionSuppressor implements InspectionSuppressor {
       return false;
     }
 
-    final PsiComment comment = findSameLineComment(element);
+    final PsiComment comment = PyPsiUtils.findSameLineComment(element);
     if (comment != null) {
       final Set<String> givenCodes = extractNoqaCodes(comment);
       if (givenCodes != null) {
@@ -80,39 +94,28 @@ public class Flake8InspectionSuppressor implements InspectionSuppressor {
    * an empty list if it's "# noqa" comment but without any explicit codes,
    * {@code null} if the specified comment is not a "# noqa" comment.
    */
-  @Nullable
-  public static Set<String> extractNoqaCodes(@NotNull PsiComment comment) {
-    final Matcher matcher = NOQA_COMMENT_PATTERN.matcher(comment.getText());
+  public static @Nullable Set<String> extractNoqaCodes(@NotNull PsiComment comment) {
+    String commentText = comment.getText();
+    if (commentText == null) {
+      return null;
+    }
+
+    int noqaOffset = commentText.toLowerCase(Locale.ENGLISH).indexOf("# noqa");
+    if (noqaOffset < 0) {
+      return null;
+    }
+
+    String noqaSuffix = commentText.substring(noqaOffset);
+    Matcher matcher = NOQA_COMMENT_PATTERN.matcher(noqaSuffix);
     if (matcher.matches()) {
-      final String codeList = matcher.group("codes");
-      if (codeList != null) {
-        return Sets.newHashSet(codeList.split("[,\\s]+"));
-      }
-      return Collections.emptySet();
+      String codeList = matcher.group("codes");
+      return codeList == null ? Collections.emptySet() : Set.of(codeList.split("[,\\s]+"));
     }
     return null;
   }
 
-  @NotNull
   @Override
-  public SuppressQuickFix[] getSuppressActions(@Nullable PsiElement element, @NotNull String toolId) {
+  public SuppressQuickFix @NotNull [] getSuppressActions(@Nullable PsiElement element, @NotNull String toolId) {
     return SuppressQuickFix.EMPTY_ARRAY;
-  }
-
-  @Nullable
-  private static PsiComment findSameLineComment(@NotNull PsiElement elem) {
-    // If `elem` is a compound multi-line element, stick to its first line nonetheless
-    PsiElement next = PsiTreeUtil.getDeepestFirst(elem);
-    do {
-      if (next instanceof PsiComment) {
-        return (PsiComment)next;
-      }
-      if (next != elem && next.textContains('\n')) {
-        break;
-      }
-      next = PsiTreeUtil.nextLeaf(next);
-    }
-    while (next != null);
-    return null;
   }
 }

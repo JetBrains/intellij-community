@@ -14,9 +14,19 @@ import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.svn.api.Url;
 
-import javax.swing.*;
-import java.awt.*;
-import java.awt.event.*;
+import javax.swing.Action;
+import javax.swing.JComponent;
+import javax.swing.JPanel;
+import javax.swing.JPopupMenu;
+import javax.swing.JTextField;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
+import java.awt.event.FocusAdapter;
+import java.awt.event.FocusEvent;
+import java.awt.event.InputMethodEvent;
+import java.awt.event.InputMethodListener;
+import java.awt.event.KeyAdapter;
+import java.awt.event.KeyEvent;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -49,13 +59,11 @@ public class SelectCreateExternalTargetDialog extends RepositoryBrowserDialog {
     setTitle(message("dialog.title.select.target.for.external"));
     setOKButtonText(message("button.select"));
     getRepositoryBrowser().addChangeListener(e -> {
-      if (getOKAction() != null) {
-        final String selectedURL = getRepositoryBrowser().getSelectedURL();
-        if (myFollowRemoteTarget && selectedURL != null) {
-          myFolderName.setText(Url.tail(selectedURL));
-        }
-        checkEnabled();
+      final String selectedURL = getRepositoryBrowser().getSelectedURL();
+      if (myFollowRemoteTarget && selectedURL != null) {
+        myFolderName.setText(Url.tail(selectedURL));
       }
+      checkEnabled();
     });
     getOKAction().setEnabled(getRepositoryBrowser().getSelectedURL() != null);
   }
@@ -99,7 +107,7 @@ public class SelectCreateExternalTargetDialog extends RepositoryBrowserDialog {
     group.addSeparator();
     group.add(new RefreshAction(browser));
     group.add(new DiscardLocationAction(browser));
-    ActionPopupMenu menu = ActionManager.getInstance().createActionPopupMenu("", group);
+    ActionPopupMenu menu = ActionManager.getInstance().createActionPopupMenu("SelectCreateExternalTargetDialog", group);
     return menu.getComponent();
   }
 
@@ -141,9 +149,6 @@ public class SelectCreateExternalTargetDialog extends RepositoryBrowserDialog {
       }
     });
     myFolderName.addKeyListener(new KeyAdapter() {
-      @Override
-      public void keyTyped(KeyEvent e) {
-      }
 
       @Override
       public void keyReleased(KeyEvent e) {

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.testFramework.fixtures.impl;
 
@@ -12,7 +12,6 @@ import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -23,17 +22,19 @@ import com.intellij.testFramework.fixtures.ModuleFixture;
 import com.intellij.testFramework.fixtures.TestFixtureBuilder;
 import com.intellij.util.NotNullProducer;
 import com.intellij.util.SmartList;
+import com.intellij.util.UriUtil;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Assert;
 
 import java.nio.file.Path;
-import java.util.Arrays;
 import java.util.List;
+import java.util.function.Supplier;
 
 public abstract class ModuleFixtureBuilderImpl<T extends ModuleFixture> implements ModuleFixtureBuilder<T> {
   private static int ourIndex;
 
-  private final NotNullProducer<? extends ModuleType<?>> myModuleTypeProducer;
+  private final Supplier<? extends @NotNull ModuleType<?>> myModuleTypeSupplier;
   protected final List<String> myContentRoots = new SmartList<>();
   protected final List<String> mySourceRoots = new SmartList<>();
   protected final TestFixtureBuilder<? extends IdeaProjectTestFixture> myFixtureBuilder;
@@ -42,32 +43,47 @@ public abstract class ModuleFixtureBuilderImpl<T extends ModuleFixture> implemen
   protected String myTestOutputPath;
 
   public ModuleFixtureBuilderImpl(@NotNull ModuleType<?> moduleType, TestFixtureBuilder<? extends IdeaProjectTestFixture> fixtureBuilder) {
-    myModuleTypeProducer = () -> moduleType;
+    myModuleTypeSupplier = () -> moduleType;
     myFixtureBuilder = fixtureBuilder;
   }
 
-  public ModuleFixtureBuilderImpl(@NotNull final NotNullProducer<? extends ModuleType<?>> moduleTypeProducer, TestFixtureBuilder<? extends IdeaProjectTestFixture> fixtureBuilder) {
-    myModuleTypeProducer = moduleTypeProducer;
+  @SuppressWarnings("LambdaUnfriendlyMethodOverload")
+  protected ModuleFixtureBuilderImpl(@NotNull Supplier<? extends @NotNull ModuleType<?>> moduleTypeSupplier,
+                                     @NotNull TestFixtureBuilder<? extends IdeaProjectTestFixture> fixtureBuilder) {
+    myModuleTypeSupplier = moduleTypeSupplier;
     myFixtureBuilder = fixtureBuilder;
   }
 
-  @NotNull
+  /**
+   * @deprecated use {@link #ModuleFixtureBuilderImpl(Supplier, TestFixtureBuilder)} instead.
+   */
+  @SuppressWarnings("LambdaUnfriendlyMethodOverload")
+  @Deprecated
+  public ModuleFixtureBuilderImpl(final @NotNull NotNullProducer<? extends ModuleType<?>> moduleTypeProducer, TestFixtureBuilder<? extends IdeaProjectTestFixture> fixtureBuilder) {
+    myModuleTypeSupplier = moduleTypeProducer;
+    myFixtureBuilder = fixtureBuilder;
+  }
+
+  @NotNull 
+  public List<String> getContentRoots() {
+    return myContentRoots;
+  }
+
   @Override
-  public ModuleFixtureBuilder<T> addContentRoot(@NotNull final String contentRootPath) {
+  public @NotNull ModuleFixtureBuilder<T> addContentRoot(final @NotNull String contentRootPath) {
     myContentRoots.add(contentRootPath);
     return this;
   }
 
-  @NotNull
   @Override
-  public ModuleFixtureBuilder<T> addSourceRoot(@NotNull final String sourceRootPath) {
+  public @NotNull ModuleFixtureBuilder<T> addSourceRoot(final @NotNull String sourceRootPath) {
     Assert.assertFalse("content root should be added first", myContentRoots.isEmpty());
     mySourceRoots.add(sourceRootPath);
     return this;
   }
 
   @Override
-  public void setOutputPath(@NotNull final String outputPath) {
+  public void setOutputPath(final @NotNull String outputPath) {
     myOutputPath = outputPath;
   }
 
@@ -76,21 +92,19 @@ public abstract class ModuleFixtureBuilderImpl<T extends ModuleFixture> implemen
     myTestOutputPath = outputPath;
   }
 
-  @NotNull
-  protected Module createModule() {
+  protected @NotNull Module createModule() {
     Project project = myFixtureBuilder.getFixture().getProject();
     Assert.assertNotNull(project);
     Path moduleFilePath = ((ProjectStoreOwner)project).getComponentStore().getProjectBasePath().getParent().resolve(getNextIndex() + ModuleFileType.DOT_DEFAULT_EXTENSION);
-    return ModuleManager.getInstance(project).newModule(moduleFilePath, myModuleTypeProducer.produce().getId());
+    return ModuleManager.getInstance(project).newModule(moduleFilePath, myModuleTypeSupplier.get().getId());
   }
 
   private static int getNextIndex() {
     return ourIndex++;
   }
 
-  @NotNull
   @Override
-  public synchronized T getFixture() {
+  public synchronized @NotNull T getFixture() {
     if (myModuleFixture == null) {
       myModuleFixture = instantiateFixture();
     }
@@ -98,13 +112,12 @@ public abstract class ModuleFixtureBuilderImpl<T extends ModuleFixture> implemen
   }
 
   @Override
-  public void addSourceContentRoot(@NotNull final String path) {
+  public void addSourceContentRoot(final @NotNull String path) {
     addContentRoot(path);
     addSourceRoot(path);
   }
 
-  @NotNull
-  protected abstract T instantiateFixture();
+  protected abstract @NotNull T instantiateFixture();
 
   @NotNull
   Module buildModule() {
@@ -129,7 +142,7 @@ public abstract class ModuleFixtureBuilderImpl<T extends ModuleFixture> implemen
         final ContentEntry contentEntry = rootModel.addContentEntry(virtualFile);
 
         for (String sourceRoot: mySourceRoots) {
-          String s = StringUtil.trimTrailing(contentRoot + "/" + sourceRoot, '/');
+          String s = UriUtil.trimTrailingSlashes(contentRoot + "/" + sourceRoot);
 
           VirtualFile vf = LocalFileSystem.getInstance().refreshAndFindFileByPath(s);
           if (vf == null) {
@@ -140,7 +153,7 @@ public abstract class ModuleFixtureBuilderImpl<T extends ModuleFixture> implemen
           if (vf != null) {
             VirtualFile finalVf = vf;
 
-            if (Arrays.stream(contentEntry.getSourceFolders()).noneMatch(folder -> finalVf.equals(folder.getFile()))) {
+            if (!ContainerUtil.exists(contentEntry.getSourceFolders(), folder -> finalVf.equals(folder.getFile()))) {
               contentEntry.addSourceFolder(finalVf, false);
             }
           }
@@ -148,7 +161,7 @@ public abstract class ModuleFixtureBuilderImpl<T extends ModuleFixture> implemen
             // files are not created yet
 
             String url = VfsUtilCore.pathToUrl(s);
-            if (Arrays.stream(contentEntry.getSourceFolders()).noneMatch(folder -> url.equals(folder.getUrl()))) {
+            if (!ContainerUtil.exists(contentEntry.getSourceFolders(), folder -> url.equals(folder.getUrl()))) {
               contentEntry.addSourceFolder(url, false);
             }
           }

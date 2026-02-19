@@ -19,9 +19,6 @@ package com.intellij.ide.highlighter.custom.tokens;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.CustomHighlighterTokenType;
 
-/**
- * @author dsl
- */
 public final class NumberParser extends TokenParser {
   private final String mySuffices;
   private final boolean myIgnoreCase;
@@ -75,7 +72,7 @@ public final class NumberParser extends TokenParser {
     return c >= '0' && c <= '9';
   }
 
-  private boolean isDelimiter(char c) {
+  private static boolean isDelimiter(char c) {
     return !Character.isLetter(c);
   }
 

@@ -1,30 +1,43 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.search;
 
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
+import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author irengrig
- */
 public interface PsiTodoSearchHelper {
+
+  /**
+   * @deprecated use {@link PsiTodoSearchHelper#getInstance(Project)} instead
+   */
+  @Deprecated(forRemoval = true)
   final class SERVICE {
     private SERVICE() {
     }
 
     public static PsiTodoSearchHelper getInstance(Project project) {
-      return ServiceManager.getService(project, PsiTodoSearchHelper.class);
+      return PsiTodoSearchHelper.getInstance(project);
     }
   }
 
+  static PsiTodoSearchHelper getInstance(Project project) {
+    return project.getService(PsiTodoSearchHelper.class);
+  }
+
   /**
-   * Returns the list of all files in the project which have to do items.
+   * Returns the array of all files in the project which have to do items.
    *
-   * @return the list of files with to do items.
+   * @return the array of files with to do items.
+   * @deprecated Use {@link #processFilesWithTodoItems(Processor)} instead.
    */
-  PsiFile @NotNull [] findFilesWithTodoItems();
+  @Deprecated
+  @NotNull PsiFile @NotNull [] findFilesWithTodoItems();
+
+  /**
+   * Processes all files in the project which have to do items.
+   */
+  boolean processFilesWithTodoItems(@NotNull Processor<? super @NotNull PsiFile> processor);
 
   /**
    * Searches the specified file for to do items.
@@ -32,7 +45,7 @@ public interface PsiTodoSearchHelper {
    * @param file the file to search for to do items.
    * @return the array of found items.
    */
-  TodoItem @NotNull [] findTodoItems(@NotNull PsiFile file);
+  @NotNull TodoItem @NotNull [] findTodoItems(@NotNull PsiFile file);
 
   /**
    * Searches the specified range of text in the specified file for to do items.
@@ -42,10 +55,11 @@ public interface PsiTodoSearchHelper {
    * @param endOffset   the end offset of the text range to search to do items in.
    * @return the array of found items.
    */
-  TodoItem @NotNull [] findTodoItems(@NotNull PsiFile file, int startOffset, int endOffset);
+  @NotNull TodoItem @NotNull [] findTodoItems(@NotNull PsiFile file, int startOffset, int endOffset);
 
-  TodoItem @NotNull [] findTodoItemsLight(@NotNull PsiFile file);
-  TodoItem @NotNull [] findTodoItemsLight(@NotNull PsiFile file, int startOffset, int endOffset);
+  @NotNull TodoItem @NotNull [] findTodoItemsLight(@NotNull PsiFile file);
+
+  @NotNull TodoItem @NotNull [] findTodoItemsLight(@NotNull PsiFile file, int startOffset, int endOffset);
 
   /**
    * Returns the number of to do items in the specified file.

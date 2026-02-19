@@ -1,13 +1,21 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.application.options.schemes;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.HelpTooltip;
 import com.intellij.ide.IdeBundle;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.ide.actions.NonTrivialActionGroup;
+import com.intellij.openapi.actionSystem.ActionButtonComponent;
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.ActionToolbar;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.application.ApplicationBundle;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.editor.colors.Groups;
 import com.intellij.openapi.options.Scheme;
-import com.intellij.openapi.project.ProjectManager;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.ui.popup.BalloonBuilder;
@@ -15,16 +23,28 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsContexts;
+import com.intellij.ui.ContextHelpLabel;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.awt.RelativePoint;
+import com.intellij.ui.components.ActionLink;
+import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ui.JBDimension;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.Box;
+import javax.swing.BoxLayout;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JSeparator;
+import java.awt.Color;
+import java.awt.Component;
+import java.awt.Container;
+import java.awt.Dimension;
+import java.awt.Point;
 import java.util.Collection;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
@@ -43,7 +63,8 @@ public abstract class AbstractSchemesPanel<T extends Scheme, InfoComponent exten
   private AbstractSchemeActions<T> myActions;
   private JComponent myToolbar;
   InfoComponent myInfoComponent;
-  
+  private JPanel myActionLinkContainer;
+
   // region Colors (probably should be standard for platform UI)
   
   private static final Color HINT_FOREGROUND = JBColor.GRAY;
@@ -92,15 +113,14 @@ public abstract class AbstractSchemesPanel<T extends Scheme, InfoComponent exten
     return null;
   }
 
-  @Nullable
-  protected JComponent createBottomComponent() {
+  protected @Nullable JComponent createBottomComponent() {
     return null;
   }
 
-  @NotNull
-  private JPanel createControlsPanel() {
+  private @NotNull JPanel createControlsPanel() {
     JPanel controlsPanel = new JPanel();
     controlsPanel.setLayout(new BoxLayout(controlsPanel, BoxLayout.LINE_AXIS));
+    controlsPanel.setOpaque(false);
     String label = getComboBoxLabel();
     if (label != null) {
       controlsPanel.add(new JLabel(label));
@@ -108,34 +128,80 @@ public abstract class AbstractSchemesPanel<T extends Scheme, InfoComponent exten
     }
     myActions = createSchemeActions();
     mySchemesCombo = new EditableSchemesCombo<>(this);
+    mySchemesCombo.setComboBoxAccessibleName(label != null ? label : getSchemeTypeName());
     controlsPanel.add(mySchemesCombo.getComponent());
-    myToolbar = createToolbar();
+    ActionToolbar toolbar = createToolbar();
+    toolbar.setTargetComponent(mySchemesCombo.getComponent());
+    myToolbar = toolbar.getComponent();
+    myToolbar.setOpaque(false);
     controlsPanel.add(Box.createRigidArea(new JBDimension(4, 0)));
     controlsPanel.add(myToolbar);
     controlsPanel.add(Box.createRigidArea(new JBDimension(9, 0)));
+
+    myActionLinkContainer = new JPanel();
+    myActionLinkContainer.setLayout(new BoxLayout(myActionLinkContainer, BoxLayout.LINE_AXIS));
+    controlsPanel.add(myActionLinkContainer);
+    updateActionLinkContainer();
+
+    ContextHelpLabel contextHelpLabel = createContextHelpLabel();
+    if (contextHelpLabel != null) {
+      controlsPanel.add(contextHelpLabel);
+      controlsPanel.add(Box.createRigidArea(new JBDimension(9, 0)));
+    }
+
     myInfoComponent = createInfoComponent();
     controlsPanel.add(myInfoComponent);
     controlsPanel.add(Box.createHorizontalGlue());
 
-    mySchemesCombo.getComponent().setMaximumSize(mySchemesCombo.getComponent().getPreferredSize());
-
-    int height = mySchemesCombo.getComponent().getPreferredSize().height;
-    controlsPanel.setMaximumSize(new Dimension(controlsPanel.getMaximumSize().width, height));
+    updateComboboxMaximumSize();
     return controlsPanel;
   }
 
-  @NotNull
-  private JComponent createToolbar() {
+  @Override
+  public void updateUI() {
+    super.updateUI();
+    if (getParent() != null) {
+      updateComboboxMaximumSize();
+    }
+  }
+
+  private void updateComboboxMaximumSize() {
+    JComponent combobox = mySchemesCombo.getComponent();
+    Dimension preferredSize = combobox.getPreferredSize();
+
+    combobox.setMaximumSize(preferredSize);
+    Container container = combobox.getParent();
+    if (container != null) {
+      container.setMaximumSize(new Dimension(container.getMaximumSize().width,
+                                             preferredSize.height));
+    }
+    myToolbar.setMaximumSize(new Dimension(JBUIScale.scale(22), preferredSize.height));
+  }
+
+  private void updateActionLinkContainer() {
+    myActionLinkContainer.removeAll();
+
+    JLabel commentLabel = createActionLinkCommentLabel();
+    if (commentLabel != null) {
+      myActionLinkContainer.add(commentLabel);
+      myActionLinkContainer.add(Box.createRigidArea(new JBDimension(4, 0)));
+    }
+
+    ActionLink actionLink = createActionLink();
+    if (actionLink != null) {
+      myActionLinkContainer.add(actionLink);
+      myActionLinkContainer.add(Box.createRigidArea(new JBDimension(4, 0)));
+    }
+  }
+
+  private @NotNull ActionToolbar createToolbar() {
     DefaultActionGroup group = new DefaultActionGroup();
     group.add(new ShowSchemesActionsListAction(myActions));
-    ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.NAVIGATION_BAR_TOOLBAR, group, true);
+    ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar("SchemesPanelToolbar", group, true);
     toolbar.setReservePlaceAutoPopupIcon(false);
-    toolbar.setLayoutPolicy(ActionToolbar.NOWRAP_LAYOUT_POLICY);
     JComponent toolbarComponent = toolbar.getComponent();
-    Dimension maxSize = toolbarComponent.getMaximumSize();
-    toolbarComponent.setMaximumSize(JBUI.size(22, maxSize.height));
-    toolbarComponent.setBorder(JBUI.Borders.empty(3));
-    return toolbarComponent;
+    toolbarComponent.setBorder(JBUI.Borders.empty());
+    return toolbar;
   }
 
   public final JComponent getToolbar() {
@@ -147,8 +213,7 @@ public abstract class AbstractSchemesPanel<T extends Scheme, InfoComponent exten
    * @return Scheme actions associated with the panel.
    * @see AbstractSchemeActions
    */
-  @NotNull
-  protected abstract AbstractSchemeActions<T> createSchemeActions();
+  protected abstract @NotNull AbstractSchemeActions<T> createSchemeActions();
   
   public final T getSelectedScheme() {
     return mySchemesCombo.getSelectedScheme();
@@ -157,9 +222,19 @@ public abstract class AbstractSchemesPanel<T extends Scheme, InfoComponent exten
   public void selectScheme(@Nullable T scheme) {
     mySchemesCombo.selectScheme(scheme);
   }
+
+  private @Nullable ContextHelpLabel createContextHelpLabel() {
+    String text = getContextHelpLabelText();
+    if (text == null) return null;
+    return ContextHelpLabel.create(text);
+  }
   
   public final void resetSchemes(@NotNull Collection<? extends T> schemes) {
     mySchemesCombo.resetSchemes(schemes);
+  }
+
+  public final void resetGroupedSchemes(@NotNull Groups<? extends T> schemeGroups) {
+    mySchemesCombo.resetGroupedSchemes(schemeGroups);
   }
   
   public void disposeUIResources() {
@@ -205,25 +280,32 @@ public abstract class AbstractSchemesPanel<T extends Scheme, InfoComponent exten
 
   protected abstract void clearMessage();
 
-  @NotNull
-  public final AbstractSchemeActions<T> getActions() {
+  public final @NotNull AbstractSchemeActions<T> getActions() {
     return myActions;
   }
 
-  @NotNull
-  protected abstract InfoComponent createInfoComponent();
+  protected abstract @NotNull InfoComponent createInfoComponent();
+
+  protected @Nullable ActionLink createActionLink() {
+    return null;
+  }
+
+  protected @Nullable JLabel createActionLinkCommentLabel() {
+    return null;
+  }
+
+  protected @Nullable @Nls String getContextHelpLabelText() {
+    return null;
+  }
 
   /**
    * @return a string label to place before the combobox or {@code null} if it is not needed
    */
-  @Nullable
-  protected @NlsContexts.Label String getComboBoxLabel() {
+  protected @Nullable @NlsContexts.Label String getComboBoxLabel() {
     return getSchemeTypeName() + ":";
   }
 
-  @NotNull
-  @Nls
-  protected String getSchemeTypeName() {
+  protected @NotNull @Nls String getSchemeTypeName() {
     return ApplicationBundle.message("editbox.scheme.type.name");
   }
 
@@ -231,8 +313,7 @@ public abstract class AbstractSchemesPanel<T extends Scheme, InfoComponent exten
    * @return Schemes model implementation.
    * @see SchemesModel
    */
-  @NotNull
-  public abstract SchemesModel<T> getModel();
+  public abstract @NotNull SchemesModel<T> getModel();
 
   /**
    * Must be called when any settings are changed.
@@ -275,10 +356,10 @@ public abstract class AbstractSchemesPanel<T extends Scheme, InfoComponent exten
     final Balloon balloon = balloonBuilder.createBalloon();
     Point pointOnComponent = new Point(myToolbar.getWidth() / 4, myToolbar.getHeight() / 4);
     balloon.show(new RelativePoint(myToolbar, pointOnComponent), Balloon.Position.above);
-    Disposer.register(ProjectManager.getInstance().getDefaultProject(), balloon);
+    Disposer.register(ApplicationManager.getApplication(), balloon);
   }
 
-  private static class ShowSchemesActionsListAction extends DefaultActionGroup {
+  private static final class ShowSchemesActionsListAction extends NonTrivialActionGroup implements DumbAware {
     private final AbstractSchemeActions<?> mySchemeActions;
 
     ShowSchemesActionsListAction(AbstractSchemeActions<?> schemeActions) {
@@ -287,24 +368,19 @@ public abstract class AbstractSchemesPanel<T extends Scheme, InfoComponent exten
       getTemplatePresentation().setIcon(AllIcons.General.GearPlain);
       getTemplatePresentation().setText(IdeBundle.messagePointer("action.presentation.AbstractSchemesPanel.text"));
       getTemplatePresentation().setDescription(IdeBundle.messagePointer("action.presentation.AbstractSchemesPanel.description"));
+      getTemplatePresentation().setPerformGroup(true);
     }
 
     @Override
-    public boolean isDumbAware() {
-      return true;
-    }
-
-    @Override
-    public boolean canBePerformed(@NotNull DataContext context) {
-      return true;
+    public AnAction @NotNull [] getChildren(@Nullable AnActionEvent e) {
+      return mySchemeActions.getActions().toArray(EMPTY_ARRAY);
     }
 
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
-      DefaultActionGroup group = new DefaultActionGroup();
-      group.addAll(mySchemeActions.getActions());
       ListPopup popup = JBPopupFactory.getInstance().
-        createActionGroupPopup(null, group, e.getDataContext(), true, null, Integer.MAX_VALUE);
+        createActionGroupPopup(null, this, e.getDataContext(), true, null, Integer.MAX_VALUE);
+      popup.setShowSubmenuOnHover(true);
 
       HelpTooltip.setMasterPopup(e.getInputEvent().getComponent(), popup);
       Component component = e.getInputEvent().getComponent();
@@ -326,5 +402,16 @@ public abstract class AbstractSchemesPanel<T extends Scheme, InfoComponent exten
       messageType == MessageType.ERROR ? ERROR_MESSAGE_FOREGROUND :
       messageType.getTitleForeground();
     infoComponent.setForeground(foreground);
+  }
+
+  @Override
+  public void setEnabled(boolean enabled) {
+    boolean oldEnabled = isEnabled();
+    super.setEnabled(enabled);
+
+    mySchemesCombo.setEnabled(enabled);
+    if (oldEnabled != isEnabled()) {
+      updateActionLinkContainer();
+    }
   }
 }

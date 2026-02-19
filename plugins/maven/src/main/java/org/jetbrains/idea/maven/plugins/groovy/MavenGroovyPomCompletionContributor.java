@@ -1,8 +1,14 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.plugins.groovy;
 
 import com.intellij.codeInsight.actions.ReformatCodeProcessor;
-import com.intellij.codeInsight.completion.*;
+import com.intellij.codeInsight.completion.CompletionContributor;
+import com.intellij.codeInsight.completion.CompletionParameters;
+import com.intellij.codeInsight.completion.CompletionResultSet;
+import com.intellij.codeInsight.completion.CompletionService;
+import com.intellij.codeInsight.completion.CompletionType;
+import com.intellij.codeInsight.completion.InsertHandler;
+import com.intellij.codeInsight.completion.InsertionContext;
 import com.intellij.codeInsight.completion.impl.NegatingComparable;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
@@ -14,7 +20,12 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiFileFactory;
+import com.intellij.psi.PsiLiteral;
+import com.intellij.psi.PsiRecursiveElementVisitor;
+import com.intellij.psi.PsiReference;
 import com.intellij.psi.impl.source.tree.LeafElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlTag;
@@ -26,11 +37,11 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.dom.MavenVersionComparable;
 import org.jetbrains.idea.maven.dom.converters.MavenDependencyCompletionUtil;
-import org.jetbrains.idea.maven.indices.MavenProjectIndicesManager;
 import org.jetbrains.idea.maven.model.MavenConstants;
 import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import org.jetbrains.idea.maven.utils.library.RepositoryLibraryDescription;
+import org.jetbrains.idea.reposearch.DependencySearchService;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall;
@@ -44,7 +55,7 @@ import java.util.Set;
 /**
  * @author Vladislav.Soroka
  */
-public class MavenGroovyPomCompletionContributor extends CompletionContributor {
+public final class MavenGroovyPomCompletionContributor extends CompletionContributor {
   public static final Key<VirtualFile> ORIGINAL_POM_FILE = Key.create("ORIGINAL_POM_FILE");
 
   @Override
@@ -113,10 +124,10 @@ public class MavenGroovyPomCompletionContributor extends CompletionContributor {
     }
 
     if (completeDependency.get()) {
-      MavenProjectIndicesManager indicesManager = MavenProjectIndicesManager.getInstance(project);
+      DependencySearchService searchService = DependencySearchService.getInstance(project);
 
-      for (String groupId : indicesManager.getGroupIds()) {
-        for (String artifactId : indicesManager.getArtifactIds(groupId)) {
+      for (String groupId : searchService.getGroupIds("")) {
+        for (String artifactId : searchService.getArtifactIds(groupId)) {
           LookupElement builder = LookupElementBuilder.create(groupId + ':' + artifactId)
             .withIcon(AllIcons.Nodes.PpLib).withInsertHandler(MavenDependencyInsertHandler.INSTANCE);
           result.addElement(builder);
@@ -168,14 +179,11 @@ public class MavenGroovyPomCompletionContributor extends CompletionContributor {
     if (StringUtil.isEmptyOrSpaces(artifactId)) return;
     CompletionResultSet newResultSet = completionResultSet.withRelevanceSorter(CompletionService.getCompletionService().emptySorter().weigh(
       new LookupElementWeigher("mavenVersionWeigher") {
-        @Nullable
         @Override
-        public Comparable weigh(@NotNull LookupElement element) {
+        public @Nullable Comparable weigh(@NotNull LookupElement element) {
           return new NegatingComparable(new MavenVersionComparable(StringUtil.trimStart(element.getLookupString(), prefix)));
         }
       }));
-
-    MavenProjectIndicesManager indicesManager = MavenProjectIndicesManager.getInstance(project);
 
     Set<String> versions;
 
@@ -189,7 +197,7 @@ public class MavenGroovyPomCompletionContributor extends CompletionContributor {
       //}
     }
     else {
-      versions = indicesManager.getVersions(groupId, artifactId);
+      versions = DependencySearchService.getInstance(project).getVersions(groupId, artifactId);
     }
 
     for (String version : versions) {
@@ -227,7 +235,7 @@ public class MavenGroovyPomCompletionContributor extends CompletionContributor {
     private static final InsertHandler<LookupElement> INSTANCE = new MavenDependencyInsertHandler();
 
     @Override
-    public void handleInsert(@NotNull final InsertionContext context, @NotNull LookupElement item) {
+    public void handleInsert(final @NotNull InsertionContext context, @NotNull LookupElement item) {
       String s = item.getLookupString();
       int idx = s.indexOf(':');
       String groupId = s.substring(0, idx);

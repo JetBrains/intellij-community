@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.serviceContainer;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -9,6 +9,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
+@Transient
 public abstract class BaseKeyedLazyInstance<T> extends LazyExtensionInstance<T> implements PluginAware {
   @SuppressWarnings("FieldAccessedSynchronizedAndUnsynchronized")
   private PluginDescriptor pluginDescriptor;
@@ -21,7 +22,6 @@ public abstract class BaseKeyedLazyInstance<T> extends LazyExtensionInstance<T> 
     super(instance);
   }
 
-  @Transient
   public final @NotNull PluginDescriptor getPluginDescriptor() {
     return pluginDescriptor;
   }
@@ -31,6 +31,7 @@ public abstract class BaseKeyedLazyInstance<T> extends LazyExtensionInstance<T> 
     pluginDescriptor = value;
   }
 
+  @Override
   protected abstract @Nullable String getImplementationClassName();
 
   public final @NotNull T getInstance() {
@@ -39,6 +40,6 @@ public abstract class BaseKeyedLazyInstance<T> extends LazyExtensionInstance<T> 
 
   // todo get rid of it - pluginDescriptor must be not null
   public @NotNull ClassLoader getLoaderForClass() {
-    return pluginDescriptor == null ? getClass().getClassLoader() : pluginDescriptor.getPluginClassLoader();
+    return pluginDescriptor == null ? getClass().getClassLoader() : pluginDescriptor.getClassLoader();
   }
 }

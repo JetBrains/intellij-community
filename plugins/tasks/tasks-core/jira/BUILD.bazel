@@ -1,0 +1,59 @@
+### auto-generated section `build intellij.tasks.jira` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "jira_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "jira",
+  module_name = "intellij.tasks.jira",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form", "gen/**/*.kt", "gen/**/*.java"], allow_empty = True),
+  resources = [":jira_resources"],
+  deps = [
+    "//platform/analysis-api:analysis",
+    "//platform/core-api:core",
+    "//platform/editor-ui-api:editor-ui",
+    "//plugins/tasks/tasks-core:core",
+    "//plugins/tasks/tasks-compatibility:compatibility",
+    "//platform/lang-api:lang",
+    "//platform/platform-impl:ide-impl",
+    "//platform/lang-impl",
+    "//platform/tasks-platform-impl:tasks-impl",
+    "//plugins/tasks/tasks-api:tasks",
+    "//libraries/xml-rpc",
+    "//libraries/gson",
+    "//platform/core-ui",
+    "//platform/util/jdom",
+    "//platform/core-impl",
+  ]
+)
+
+jvm_library(
+  name = "jira_test_lib",
+  module_name = "intellij.tasks.jira",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    ":jira",
+    "//platform/analysis-api:analysis_test_lib",
+    "//platform/core-api:core_test_lib",
+    "//platform/editor-ui-api:editor-ui_test_lib",
+    "//plugins/tasks/tasks-core:core_test_lib",
+    "//plugins/tasks/tasks-compatibility:compatibility_test_lib",
+    "//platform/lang-api:lang_test_lib",
+    "//platform/platform-impl:ide-impl_test_lib",
+    "//platform/lang-impl:lang-impl_test_lib",
+    "//platform/tasks-platform-impl:tasks-impl_test_lib",
+    "//plugins/tasks/tasks-api:tasks_test_lib",
+    "//libraries/xml-rpc:xml-rpc_test_lib",
+    "//libraries/gson:gson_test_lib",
+    "//platform/core-ui:core-ui_test_lib",
+    "//platform/util/jdom:jdom_test_lib",
+    "//platform/core-impl:core-impl_test_lib",
+  ]
+)
+### auto-generated section `build intellij.tasks.jira` end

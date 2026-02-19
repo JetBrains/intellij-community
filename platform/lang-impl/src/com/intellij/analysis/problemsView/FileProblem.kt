@@ -10,8 +10,15 @@ interface FileProblem : Problem {
   val file: VirtualFile
 
   /**
-   * The offset in the file for navigation.
+   * Zero-based line number in the corresponding file,
+   * or -1 if there is no problem line to navigate.
    */
-  val offset: Int
+  val line: Int
+    get() = -1
+
+  /**
+   * Zero-based column number in the corresponding file.
+   */
+  val column: Int
     get() = -1
 }

@@ -4,19 +4,22 @@ package com.intellij.laf.win10;
 import com.intellij.ide.ui.laf.darcula.DarculaUIUtil;
 import com.intellij.ide.ui.laf.darcula.ui.DarculaCheckBoxUI;
 import com.intellij.ui.scale.JBUIScale;
-import com.intellij.util.ui.*;
+import com.intellij.util.ui.UIUtil;
 
-import javax.swing.*;
+import javax.swing.AbstractButton;
+import javax.swing.ButtonModel;
+import javax.swing.Icon;
+import javax.swing.JComponent;
 import javax.swing.plaf.ComponentUI;
-import java.awt.*;
+import java.awt.Graphics2D;
+import java.awt.Rectangle;
 import java.awt.geom.Path2D;
 import java.awt.geom.Rectangle2D;
 
 /**
  * @author Konstantin Bulenkov
  */
-public class WinIntelliJCheckBoxUI extends DarculaCheckBoxUI {
-  private static final Icon DEFAULT_ICON = JBUIScale.scaleIcon(EmptyIcon.create(13)).asUIResource();
+public final class WinIntelliJCheckBoxUI extends DarculaCheckBoxUI {
 
   @SuppressWarnings({"MethodOverridesStaticMethodOfSuperclass", "UnusedDeclaration"})
   public static ComponentUI createUI(JComponent c) {
@@ -26,14 +29,8 @@ public class WinIntelliJCheckBoxUI extends DarculaCheckBoxUI {
   }
 
   @Override
-  protected Rectangle updateViewRect(AbstractButton b, Rectangle viewRect) {
-    JBInsets.removeFrom(viewRect, b.getInsets());
-    return viewRect;
-  }
-
-  @Override
-  protected Dimension computeOurPreferredSize(JComponent c) {
-    return null;
+  protected boolean removeInsetsBeforeLayout(AbstractButton b) {
+    return true;
   }
 
   @Override
@@ -43,14 +40,14 @@ public class WinIntelliJCheckBoxUI extends DarculaCheckBoxUI {
       ButtonModel bm = b.getModel();
 
       String iconName = isIndeterminate(b) ? "checkBoxIndeterminate" : "checkBox";
-      Object op = b.getClientProperty("JComponent.outline");
+      DarculaUIUtil.Outline op = DarculaUIUtil.getOutline(b);
       boolean focused = op == null && c.hasFocus() || bm.isRollover() || isCellRollover(b);
       boolean pressed = bm.isPressed() || isCellPressed(b);
       Icon icon = WinIconLookup.getIcon(iconName, selected || isIndeterminate(b), focused, enabled, false, pressed);
       icon.paintIcon(c, g, iconRect.x, iconRect.y);
 
       if (op != null) {
-        DarculaUIUtil.Outline.valueOf(op.toString()).setGraphicsColor(g2, b.hasFocus());
+        op.setGraphicsColor(g2, b.hasFocus());
         Path2D outline = new Path2D.Float(Path2D.WIND_EVEN_ODD);
 
         outline.append(new Rectangle2D.Float(iconRect.x - JBUIScale.scale(1), iconRect.y - JBUIScale.scale(1), JBUIScale.scale(15),
@@ -73,16 +70,6 @@ public class WinIntelliJCheckBoxUI extends DarculaCheckBoxUI {
   private static boolean isCellPressed(AbstractButton checkBox) {
     Rectangle cellPosition = (Rectangle)checkBox.getClientProperty(UIUtil.CHECKBOX_PRESSED_PROPERTY);
     return cellPosition != null && cellPosition.getBounds().equals(checkBox.getBounds());
-  }
-
-  @Override
-  public Icon getDefaultIcon() {
-    return DEFAULT_ICON;
-  }
-
-  @Override
-  protected int textIconGap() {
-    return JBUIScale.scale(4);
   }
 
   @Override

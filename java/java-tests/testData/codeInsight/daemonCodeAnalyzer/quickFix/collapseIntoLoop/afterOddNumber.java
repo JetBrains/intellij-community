@@ -1,4 +1,4 @@
-// "Collapse into loop" "true"
+// "Collapse into loop" "true-preview"
 class X {
   void test() {
       for (int i = 1; i <= 9; i += 2) {

@@ -15,7 +15,11 @@
  */
 package org.jetbrains.plugins.groovy.codeInspection.threading;
 
-import com.intellij.psi.*;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiModifierListOwner;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyBundle;
@@ -25,17 +29,15 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrSynchronizedStatem
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 
-public class GroovyPublicFieldAccessedInSynchronizedContextInspection extends BaseInspection {
+public final class GroovyPublicFieldAccessedInSynchronizedContextInspection extends BaseInspection {
 
   @Override
-  @NotNull
-  protected String buildErrorString(Object... infos) {
+  protected @NotNull String buildErrorString(Object... infos) {
     return GroovyBundle.message("inspection.message.non.private.field.accessed.in.synchronized.context");
   }
 
-  @NotNull
   @Override
-  public BaseInspectionVisitor buildVisitor() {
+  public @NotNull BaseInspectionVisitor buildVisitor() {
     return new PublicFieldAccessedInSynchronizedContextVisitor();
   }
 
@@ -45,10 +47,9 @@ public class GroovyPublicFieldAccessedInSynchronizedContextInspection extends Ba
     @Override
     public void visitReferenceExpression(@NotNull GrReferenceExpression expression) {
       final PsiElement element = expression.resolve();
-      if (!(element instanceof PsiField)) {
+      if (!(element instanceof PsiField field)) {
         return;
       }
-      final PsiField field = (PsiField) element;
       if (field.hasModifierProperty(PsiModifier.PRIVATE) ||
           field.hasModifierProperty(PsiModifier.FINAL)) {
         return;

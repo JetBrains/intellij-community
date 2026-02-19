@@ -1,16 +1,17 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.sdk.add
 
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.ui.ValidationInfo
+import com.intellij.util.concurrency.annotations.RequiresEdt
 import org.jetbrains.annotations.Nls
 import java.awt.Component
 import javax.swing.Icon
 
-/**
- * Represents the view for adding new Python SDK. It is used in
- * [PyAddSdkDialog].
- */
+@Deprecated(
+  "Custom Python SDKs support was removed from python plugin for IDEA because of UI/UX unification with PyCharm",
+  level = DeprecationLevel.ERROR
+)
 interface PyAddSdkView {
   val panelName: String
     @Nls(capitalization = Nls.Capitalization.Title) get
@@ -25,31 +26,14 @@ interface PyAddSdkView {
    * The creation of the sdk may occur either in this method or in the
    * [complete] method a while back.
    */
+  @RequiresEdt
   fun getOrCreateSdk(): Sdk?
-
-  fun onSelected()
-
-  /**
-   * [PyAddSdkStateListener.onActionsStateChanged] is called after changes in
-   * [actions].
-   */
-  val actions: Map<PyAddSdkDialogFlowAction, Boolean>
 
   /**
    * The [component] *might* return the new [Component] after [next] or
    * [previous].
    */
   val component: Component
-
-  /**
-   * @throws IllegalStateException
-   */
-  fun previous()
-
-  /**
-   * @throws IllegalStateException
-   */
-  fun next()
 
   /**
    * Completes SDK creation.
@@ -66,7 +50,7 @@ interface PyAddSdkView {
    *
    * @throws Exception if SDK creation failed for some reason
    */
-  fun complete()
+  fun complete(): Unit = Unit
 
   /**
    * Returns the list of validation errors. The returned list is empty if there
@@ -74,7 +58,6 @@ interface PyAddSdkView {
    *
    * @see com.intellij.openapi.ui.DialogWrapper.doValidateAll
    */
+  @RequiresEdt
   fun validateAll(): List<ValidationInfo>
-
-  fun addStateListener(stateListener: PyAddSdkStateListener)
 }

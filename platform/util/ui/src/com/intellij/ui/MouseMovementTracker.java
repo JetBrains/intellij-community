@@ -4,7 +4,8 @@ package com.intellij.ui;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.*;
+import java.awt.Point;
+import java.awt.Rectangle;
 import java.awt.event.MouseEvent;
 import java.util.Arrays;
 
@@ -13,8 +14,8 @@ import java.util.Arrays;
  * region on screen. Due to 'rasterization' of mouse locations (mapping to a grid of finite-size pixels), keeping only the previous mouse
  * mouse location is not enough - a diagonal mouse movement can contain purely horizontal or vertical 'steps'.
  */
-public class MouseMovementTracker {
-  private static final int HISTORY_SIZE = 2;
+public final class MouseMovementTracker {
+  private static final int HISTORY_SIZE = 4;
   private static final int MOVEMENT_MARGIN_PX = 2;
 
   private final Point[] myHistory = new Point[HISTORY_SIZE];
@@ -26,7 +27,7 @@ public class MouseMovementTracker {
 
   public boolean isMovingTowards(@NotNull MouseEvent me, @Nullable Rectangle rectangleOnScreen) {
     Point currentLocation = me.getLocationOnScreen();
-    // finding previous location
+    // finding some previous location distant enough from the current one
     Point previousLocation = null;
     for (int i = 0; i < HISTORY_SIZE; i++) {
       Point p = myHistory[(myCurrentIndex - i + HISTORY_SIZE) % HISTORY_SIZE];
@@ -35,9 +36,13 @@ public class MouseMovementTracker {
         break;
       }
     }
-    // storing current location
-    myCurrentIndex = (myCurrentIndex + 1) % HISTORY_SIZE;
-    myHistory[myCurrentIndex] = currentLocation;
+
+    // store the current location if it differs enough from the previous one
+    Point prevHistory = myHistory[myCurrentIndex % HISTORY_SIZE];
+    if (prevHistory == null || currentLocation.distance(prevHistory) >= MOVEMENT_MARGIN_PX) {
+      myCurrentIndex = (myCurrentIndex + 1) % HISTORY_SIZE;
+      myHistory[myCurrentIndex] = currentLocation;
+    }
 
     return ScreenUtil.isMovementTowards(previousLocation, currentLocation, rectangleOnScreen);
   }

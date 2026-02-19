@@ -1,0 +1,37 @@
+### auto-generated section `build intellij.platform.ide.observable` start
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+jvm_library(
+  name = "observable",
+  module_name = "intellij.platform.ide.observable",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  deps = [
+    "//platform/util-ex",
+    "//platform/util:util-ui",
+    "//platform/util",
+    "//platform/core-api:core",
+    "//libraries/kotlinx/coroutines/core",
+    "//platform/util/concurrency",
+    "//platform/core-ui",
+    "@lib//:kotlin-stdlib",
+  ]
+)
+
+jvm_library(
+  name = "observable_test_lib",
+  module_name = "intellij.platform.ide.observable",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    ":observable",
+    "//platform/util-ex:util-ex_test_lib",
+    "//platform/util:util-ui_test_lib",
+    "//platform/util:util_test_lib",
+    "//platform/core-api:core_test_lib",
+    "//libraries/kotlinx/coroutines/core:core_test_lib",
+    "//platform/util/concurrency:concurrency_test_lib",
+    "//platform/core-ui:core-ui_test_lib",
+  ]
+)
+### auto-generated section `build intellij.platform.ide.observable` end

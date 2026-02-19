@@ -1,7 +1,11 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.tagTreeHighlighting;
 
-import com.intellij.codeHighlighting.*;
+import com.intellij.codeHighlighting.Pass;
+import com.intellij.codeHighlighting.TextEditorHighlightingPass;
+import com.intellij.codeHighlighting.TextEditorHighlightingPassFactory;
+import com.intellij.codeHighlighting.TextEditorHighlightingPassFactoryRegistrar;
+import com.intellij.codeHighlighting.TextEditorHighlightingPassRegistrar;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.project.Project;
@@ -15,12 +19,12 @@ final class XmlTagTreeHighlightingPassFactory implements TextEditorHighlightingP
   }
 
   @Override
-  public TextEditorHighlightingPass createHighlightingPass(@NotNull final PsiFile file, @NotNull final Editor editor) {
+  public TextEditorHighlightingPass createHighlightingPass(final @NotNull PsiFile psiFile, final @NotNull Editor editor) {
     if (editor.isOneLineMode()) return null;
 
-    if (!XmlTagTreeHighlightingUtil.isTagTreeHighlightingActive(file)) return null;
+    if (!XmlTagTreeHighlightingUtil.isTagTreeHighlightingActive(psiFile)) return null;
     if (!(editor instanceof EditorEx)) return null;
 
-    return new XmlTagTreeHighlightingPass(file, (EditorEx)editor);
+    return new XmlTagTreeHighlightingPass(psiFile, (EditorEx)editor);
   }
 }

@@ -1,16 +1,19 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application;
 
+import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.util.BuildNumber;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
+import java.time.ZonedDateTime;
 import java.util.Calendar;
 
 /**
- * Provides IDE version/help and vendor information.
+ * Provides product information.
  */
 public abstract class ApplicationInfo {
   public static ApplicationInfo getInstance() {
@@ -19,12 +22,32 @@ public abstract class ApplicationInfo {
 
   public abstract Calendar getBuildDate();
 
+  /**
+   * Retrieves the Unix timestamp in seconds of when the build was created.
+   */
+  @ApiStatus.Internal
+  @ApiStatus.Experimental
+  public abstract @NotNull ZonedDateTime getBuildTime();
+
   public abstract @NotNull BuildNumber getBuild();
+
+  @ApiStatus.Internal
+  @ApiStatus.Experimental
+  public @Nullable String getBuildBranchName() {
+    return null;
+  }
 
   public abstract @NotNull String getApiVersion();
 
   public abstract String getMajorVersion();
 
+  /**
+   * The application's minor version string.
+   * <p><b>Might include several numbers, do not try parsing this as an integer!</b></p>
+   * <p><b>Example:</b> for IDE version 2024.2.1, <code>getMinorVersion()</code> might return <code>"2.1"</code> for some products.</p>
+   *
+   * @see #getMinorVersionMainPart()
+   */
   public abstract String getMinorVersion();
 
   public abstract String getMicroVersion();
@@ -34,12 +57,13 @@ public abstract class ApplicationInfo {
   public abstract @NlsSafe String getVersionName();
 
   /**
-   * Returns the first number from 'minor' part of the version. This method is temporarily added because some products specify a composite number (like '1.3')
-   * in 'minor version' attribute instead of using 'micro version' (i.e. set minor='1' micro='3').
+   * Returns the first number from 'minor' part of the version.
+   * This method is temporarily added because some products specify a composite number (like '1.3')
+   * in 'minor version' attribute instead of using 'micro version' (i.e., set minor='1' micro='3').
    *
-   * @see org.jetbrains.intellij.build.ApplicationInfoProperties#minorVersionMainPart
+   * @see org.jetbrains.intellij.build.ApplicationInfoProperties#getMinorVersionMainPart
    */
-  public final String getMinorVersionMainPart() {
+  public final @NlsSafe String getMinorVersionMainPart() {
     String value = StringUtil.substringBefore(getMinorVersion(), ".");
     return value == null ? getMinorVersion() : value;
   }
@@ -53,7 +77,7 @@ public abstract class ApplicationInfo {
   public abstract @NlsSafe String getCompanyName();
 
   /**
-   * Use this method to refer to the company in a less formal way, e.g. in UI messages or directory names.
+   * Use this method to refer to the company in a less formal way, e.g., in UI messages or directory names.
    *
    * @return shortened name of the product vendor without 'Inc.' or similar suffixes, e.g. 'JetBrains' for JetBrains products
    * @see #getCompanyName()
@@ -62,34 +86,67 @@ public abstract class ApplicationInfo {
 
   public abstract String getCompanyURL();
 
-  public abstract String getJetBrainsTvUrl();
+  /** @deprecated always {@code true} */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval
+  public boolean hasHelp() {
+    return true;
+  }
 
-  public abstract String getEvalLicenseUrl();
-
-  public abstract String getKeyConversionUrl();
-
-  public abstract boolean hasHelp();
-
-  public abstract boolean hasContextHelp();
+  /** @deprecated always {@code true} */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval
+  public boolean hasContextHelp() {
+    return true;
+  }
 
   public abstract @NlsSafe @NotNull String getFullVersion();
 
+  /**
+   * "major.minor"; when the minor version is composite, only the first part is used.
+   */
+  public final @NlsSafe String getShortVersion() {
+    return getMajorVersion() + '.' + getMinorVersionMainPart();
+  }
+
   public abstract @NlsSafe @NotNull String getStrictVersion();
 
-  public static boolean helpAvailable() {
-    return ApplicationManager.getApplication() != null && getInstance() != null && getInstance().hasHelp();
-  }
-
-  public static boolean contextHelpAvailable() {
-    return ApplicationManager.getApplication() != null && getInstance() != null && getInstance().hasContextHelp();
-  }
-
-  /** @deprecated use {@link #getBuild()} */
+  /** @deprecated always {@code true} */
   @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
-  public String getBuildNumber() {
-    return getBuild().asString();
+  @ApiStatus.ScheduledForRemoval
+  public static boolean helpAvailable() {
+    return true;
+  }
+
+  /** @deprecated always {@code true} */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval
+  public static boolean contextHelpAvailable() {
+    return true;
+  }
+
+  public boolean isEAP() {
+    return false;
   }
 
   public abstract String getFullApplicationName();
+
+  public @Nullable String getSplashImageUrl() {
+    return null;
+  }
+
+  /**
+   * @return {@code true} if the specified plugin is an essential part of the IDE, so it cannot be disabled and isn't shown in <em>Settings | Plugins</em>.
+   */
+  @ApiStatus.Internal
+  public abstract boolean isEssentialPlugin(@NotNull String pluginId);
+
+  @ApiStatus.Internal
+  public abstract boolean isEssentialPlugin(@NotNull PluginId pluginId);
+
+  @ApiStatus.Internal
+  @ApiStatus.Experimental
+  public boolean isSimplifiedSplashSupported() {
+    return false;
+  }
 }

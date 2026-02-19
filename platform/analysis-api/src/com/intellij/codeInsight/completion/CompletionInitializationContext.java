@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion;
 
 import com.intellij.lang.Language;
@@ -12,39 +12,35 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Objects;
 
-/**
- * @author peter
- */
 public class CompletionInitializationContext {
   public static final OffsetKey START_OFFSET = OffsetKey.create("startOffset", false);
   public static final OffsetKey SELECTION_END_OFFSET = OffsetKey.create("selectionEnd");
   public static final OffsetKey IDENTIFIER_END_OFFSET = OffsetKey.create("identifierEnd");
 
   /**
-   * A default string that is inserted to the file before completion to guarantee that there'll always be some non-empty element there
+   * A default string that is inserted into the file before completion to guarantee that there'll always be some non-empty element there
    */
-  public static @NonNls final String DUMMY_IDENTIFIER = CompletionUtilCore.DUMMY_IDENTIFIER;
-  public static @NonNls final String DUMMY_IDENTIFIER_TRIMMED = CompletionUtilCore.DUMMY_IDENTIFIER_TRIMMED;
-  private final Editor myEditor;
-  @NotNull
-  private final Caret myCaret;
-  private final PsiFile myFile;
-  private final CompletionType myCompletionType;
+  public static final @NonNls String DUMMY_IDENTIFIER = CompletionUtilCore.DUMMY_IDENTIFIER;
+  public static final @NonNls String DUMMY_IDENTIFIER_TRIMMED = CompletionUtilCore.DUMMY_IDENTIFIER_TRIMMED;
+  private final @NotNull Editor myEditor;
+  private final @NotNull Caret myCaret;
+  private final @NotNull PsiFile myPsiFile;
+  private final @NotNull CompletionType myCompletionType;
   private final int myInvocationCount;
-  private final OffsetMap myOffsetMap;
+  private final @NotNull OffsetMap myOffsetMap;
   private String myDummyIdentifier = DUMMY_IDENTIFIER;
   private final Language myPositionLanguage;
 
-  public CompletionInitializationContext(final Editor editor,
-                                         final @NotNull Caret caret,
+  public CompletionInitializationContext(@NotNull Editor editor,
+                                         @NotNull Caret caret,
                                          Language language,
-                                         final PsiFile file,
-                                         final CompletionType completionType,
+                                         @NotNull PsiFile psiFile,
+                                         @NotNull CompletionType completionType,
                                          int invocationCount) {
     myEditor = editor;
     myCaret = caret;
     myPositionLanguage = language;
-    myFile = file;
+    myPsiFile = psiFile;
     myCompletionType = completionType;
     myInvocationCount = invocationCount;
     myOffsetMap = new OffsetMap(editor.getDocument());
@@ -76,8 +72,7 @@ public class CompletionInitializationContext {
     myDummyIdentifier = dummyIdentifier;
   }
 
-  @NotNull
-  public Language getPositionLanguage() {
+  public @NotNull Language getPositionLanguage() {
     return Objects.requireNonNull(myPositionLanguage);
   }
 
@@ -85,33 +80,27 @@ public class CompletionInitializationContext {
     return myDummyIdentifier;
   }
 
-  @NotNull
-  public Editor getEditor() {
+  public @NotNull Editor getEditor() {
     return myEditor;
   }
 
-  @NotNull
-  public Caret getCaret() {
+  public @NotNull Caret getCaret() {
     return myCaret;
   }
 
-  @NotNull
-  public CompletionType getCompletionType() {
+  public @NotNull CompletionType getCompletionType() {
     return myCompletionType;
   }
 
-  @NotNull
-  public Project getProject() {
-    return myFile.getProject();
+  public @NotNull Project getProject() {
+    return myPsiFile.getProject();
   }
 
-  @NotNull
-  public PsiFile getFile() {
-    return myFile;
+  public @NotNull PsiFile getFile() {
+    return myPsiFile;
   }
 
-  @NotNull
-  public OffsetMap getOffsetMap() {
+  public @NotNull OffsetMap getOffsetMap() {
     return myOffsetMap;
   }
 

@@ -1,33 +1,34 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.openapi.vcs;
 
-/**
- * @author yole
- */
+
+import org.jetbrains.annotations.NotNull;
+
 public class DefaultRepositoryLocation implements RepositoryLocation {
   private final String myURL;
   private final String myLocation;
 
-  public DefaultRepositoryLocation(final String URL) {
+  public DefaultRepositoryLocation(@NotNull String URL) {
     this(URL, URL);
   }
 
-  public DefaultRepositoryLocation(final String URL, final String location) {
+  public DefaultRepositoryLocation(@NotNull String URL, final String location) {
     myURL = URL;
     myLocation = location;
   }
 
-  public String getURL() {
+  public @NotNull String getURL() {
     return myURL;
   }
 
+  @Override
   public String toString() {
     return myLocation;
   }
 
   @Override
-  public String toPresentableString() {
+  public @NotNull String toPresentableString() {
     return myURL;
   }
 

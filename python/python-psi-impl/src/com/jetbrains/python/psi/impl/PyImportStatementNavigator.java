@@ -25,14 +25,13 @@ public final class PyImportStatementNavigator {
   private PyImportStatementNavigator() {
   }
 
-  @Nullable
-  public static PyImportStatementBase getImportStatementByElement(final PsiElement element){
+  public static @Nullable PyImportStatementBase getImportStatementByElement(final PsiElement element) {
     final PyImportStatementBase statement = PsiTreeUtil.getParentOfType(element, PyImportStatementBase.class, false);
     if (statement == null) {
       return null;
     }
     for (PyImportElement importElement : statement.getImportElements()) {
-      if (element == importElement || element == importElement.getImportReferenceExpression()){
+      if (element == importElement || element == importElement.getImportReferenceExpression()) {
         return statement;
       }
     }

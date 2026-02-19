@@ -8,7 +8,9 @@ import com.intellij.execution.actions.JavaRerunFailedTestsAction;
 import com.intellij.execution.configurations.RunProfileState;
 import com.intellij.execution.junit2.PsiMemberParameterizedLocation;
 import com.intellij.execution.runners.ExecutionEnvironment;
+import com.intellij.execution.target.TargetEnvironment;
 import com.intellij.execution.testframework.AbstractTestProxy;
+import com.intellij.execution.testframework.SearchForTestsTask;
 import com.intellij.execution.testframework.TestConsoleProperties;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
@@ -28,7 +30,11 @@ import com.theoryinpractice.testng.model.TestNGTestObject;
 import com.theoryinpractice.testng.util.TestNGUtil;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 
 public class RerunFailedTestsAction extends JavaRerunFailedTestsAction {
   public RerunFailedTestsAction(@NotNull ComponentContainer componentContainer, @NotNull TestConsoleProperties consoleProperties) {
@@ -48,9 +54,10 @@ public class RerunFailedTestsAction extends JavaRerunFailedTestsAction {
       @Override
       public RunProfileState getState(@NotNull Executor executor, @NotNull ExecutionEnvironment env) {
         return new TestNGRunnableState(env, configuration) {
+
           @Override
-          public SearchingForTestsTask createSearchingForTestsTask() {
-            return new SearchingForTestsTask(myServerSocket, getConfiguration(), myTempFile) {
+          public SearchForTestsTask createSearchingForTestsTask(@NotNull TargetEnvironment targetEnvironment) {
+            return new SearchingForTestsTask(getServerSocket(), getConfiguration(), myTempFile) {
               @Override
               protected void fillTestObjects(final Map<PsiClass, Map<PsiMethod, List<String>>> classes) throws CantRunException {
                 final HashMap<PsiClass, Map<PsiMethod, List<String>>> fullClassList = new HashMap<>();
@@ -83,8 +90,7 @@ public class RerunFailedTestsAction extends JavaRerunFailedTestsAction {
     final Location location = proxy.getLocation(project, scope);
     if (location != null) {
       final PsiElement element = location.getPsiElement();
-      if (element instanceof PsiMethod && element.isValid()) {
-        final PsiMethod psiMethod = (PsiMethod)element;
+      if (element instanceof PsiMethod psiMethod && element.isValid()) {
         PsiClass psiClass = psiMethod.getContainingClass();
         if (psiClass != null && psiClass.hasModifierProperty(PsiModifier.ABSTRACT)) {
           final AbstractTestProxy parent = proxy.getParent();

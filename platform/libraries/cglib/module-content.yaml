@@ -1,0 +1,6 @@
+- name: dist.all/lib/intellij.libraries.cglib.jar
+  modules:
+  - name: intellij.libraries.cglib
+    libraries:
+      cglib:
+      - name: $MAVEN_REPOSITORY$/cglib/cglib-nodep/3/cglib-nodep-3.jar

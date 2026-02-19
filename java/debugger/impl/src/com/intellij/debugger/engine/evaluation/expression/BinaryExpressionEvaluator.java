@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 /*
  * Class BinaryExpressionEvaluator
@@ -14,9 +14,17 @@ import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.jdi.VirtualMachineProxyImpl;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.tree.IElementType;
-import com.sun.jdi.*;
+import com.sun.jdi.BooleanValue;
+import com.sun.jdi.ByteValue;
+import com.sun.jdi.CharValue;
+import com.sun.jdi.IntegerValue;
+import com.sun.jdi.ObjectReference;
+import com.sun.jdi.PrimitiveValue;
+import com.sun.jdi.ShortValue;
+import com.sun.jdi.Value;
 import org.jetbrains.annotations.NotNull;
 
 class BinaryExpressionEvaluator implements Evaluator {
@@ -27,9 +35,9 @@ class BinaryExpressionEvaluator implements Evaluator {
   private final String myExpectedType; // a result of PsiType.getCanonicalText()
 
   BinaryExpressionEvaluator(@NotNull Evaluator leftOperand,
-                                   @NotNull Evaluator rightOperand,
-                                   @NotNull IElementType opType,
-                                   String expectedType) {
+                            @NotNull Evaluator rightOperand,
+                            @NotNull IElementType opType,
+                            String expectedType) {
     myLeftOperand = DisableGC.create(leftOperand);
     myRightOperand = DisableGC.create(rightOperand);
     myOpType = opType;
@@ -40,7 +48,6 @@ class BinaryExpressionEvaluator implements Evaluator {
   public Object evaluate(EvaluationContextImpl context) throws EvaluateException {
     Value leftResult = (Value)myLeftOperand.evaluate(context);
     return evaluateOperation(leftResult, myOpType, myRightOperand, myExpectedType, context);
-
   }
 
   @SuppressWarnings("IntegerMultiplicationImplicitCastToLong")
@@ -49,7 +56,7 @@ class BinaryExpressionEvaluator implements Evaluator {
                                   final Evaluator rightOperand,
                                   final String expectedType,
                                   final EvaluationContextImpl context) throws EvaluateException {
-    VirtualMachineProxyImpl vm = context.getDebugProcess().getVirtualMachineProxy();
+    VirtualMachineProxyImpl vm = context.getVirtualMachineProxy();
     if (leftResult instanceof BooleanValue) {
       boolean v1 = ((PrimitiveValue)leftResult).booleanValue();
       if (opType == JavaTokenType.OROR && v1) {
@@ -76,10 +83,10 @@ class BinaryExpressionEvaluator implements Evaluator {
         char v2 = ((CharValue)rightResult).charValue();
         return DebuggerUtilsEx.createValue(vm, expectedType, v1 + v2);
       }
-      if (leftResult instanceof StringReference || rightResult instanceof StringReference) {
+      if (CommonClassNames.JAVA_LANG_STRING.equals(expectedType)) {
         String v1 = DebuggerUtils.getValueAsString(context, leftResult);
         String v2 = DebuggerUtils.getValueAsString(context, rightResult);
-        return DebuggerUtilsEx.mirrorOfString(v1 + v2, vm, context);
+        return DebuggerUtilsEx.mirrorOfString(v1 + v2, context);
       }
       throw EvaluateExceptionUtil.createEvaluateException(JavaDebuggerBundle.message("evaluation.error.incompatible.types", "+"));
     }
@@ -226,7 +233,7 @@ class BinaryExpressionEvaluator implements Evaluator {
       if (leftResult instanceof BooleanValue && rightResult instanceof BooleanValue) {
         boolean v1 = ((PrimitiveValue)leftResult).booleanValue();
         boolean v2 = ((PrimitiveValue)rightResult).booleanValue();
-        return DebuggerUtilsEx.createValue(vm, expectedType, v1 & v2);
+        return DebuggerUtilsEx.createValue(vm, expectedType, v1 && v2);
       }
       throw EvaluateExceptionUtil.createEvaluateException(JavaDebuggerBundle.message("evaluation.error.incompatible.types", "&"));
     }
@@ -244,7 +251,7 @@ class BinaryExpressionEvaluator implements Evaluator {
       if (leftResult instanceof BooleanValue && rightResult instanceof BooleanValue) {
         boolean v1 = ((PrimitiveValue)leftResult).booleanValue();
         boolean v2 = ((PrimitiveValue)rightResult).booleanValue();
-        return DebuggerUtilsEx.createValue(vm, expectedType, v1 | v2);
+        return DebuggerUtilsEx.createValue(vm, expectedType, v1 || v2);
       }
       throw EvaluateExceptionUtil.createEvaluateException(JavaDebuggerBundle.message("evaluation.error.incompatible.types", "|"));
     }
@@ -267,14 +274,8 @@ class BinaryExpressionEvaluator implements Evaluator {
       throw EvaluateExceptionUtil.createEvaluateException(JavaDebuggerBundle.message("evaluation.error.incompatible.types", "^"));
     }
     else if (opType == JavaTokenType.EQEQ) {
-      if (leftResult == null && rightResult == null) {
-        return DebuggerUtilsEx.createValue(vm, expectedType, true);
-      }
-      if (leftResult == null) {
-        return DebuggerUtilsEx.createValue(vm, expectedType, rightResult.equals(null));
-      }
-      if (rightResult == null) {
-        return DebuggerUtilsEx.createValue(vm, expectedType, leftResult.equals(null));
+      if (leftResult == null || rightResult == null) {
+        return DebuggerUtilsEx.createValue(vm, expectedType, leftResult == rightResult);
       }
       if (DebuggerUtils.isInteger(leftResult) && DebuggerUtils.isInteger(rightResult)) {
         final long v1 = ((PrimitiveValue)leftResult).longValue();
@@ -296,9 +297,7 @@ class BinaryExpressionEvaluator implements Evaluator {
         char v2 = ((CharValue)rightResult).charValue();
         return DebuggerUtilsEx.createValue(vm, expectedType, v1 == v2);
       }
-      if (leftResult instanceof ObjectReference && rightResult instanceof ObjectReference) {
-        ObjectReference v1 = (ObjectReference)leftResult;
-        ObjectReference v2 = (ObjectReference)rightResult;
+      if (leftResult instanceof ObjectReference v1 && rightResult instanceof ObjectReference v2) {
         return DebuggerUtilsEx.createValue(vm, expectedType, v1.uniqueID() == v2.uniqueID());
       }
       throw EvaluateExceptionUtil.createEvaluateException(JavaDebuggerBundle.message("evaluation.error.incompatible.types", "=="));
@@ -320,9 +319,7 @@ class BinaryExpressionEvaluator implements Evaluator {
       throw EvaluateExceptionUtil.createEvaluateException(JavaDebuggerBundle.message("evaluation.error.incompatible.types", "&&"));
     }
     else if (opType == JavaTokenType.NE) {
-      if (leftResult == null && rightResult == null) return DebuggerUtilsEx.createValue(vm, expectedType, false);
-      if (leftResult == null) return DebuggerUtilsEx.createValue(vm, expectedType, !rightResult.equals(null));
-      if (rightResult == null) return DebuggerUtilsEx.createValue(vm, expectedType, !leftResult.equals(null));
+      if (leftResult == null || rightResult == null) return DebuggerUtilsEx.createValue(vm, expectedType, leftResult != rightResult);
       if (DebuggerUtils.isInteger(leftResult) && DebuggerUtils.isInteger(rightResult)) {
         final long v1 = ((PrimitiveValue)leftResult).longValue();
         final long v2 = ((PrimitiveValue)rightResult).longValue();
@@ -338,14 +335,12 @@ class BinaryExpressionEvaluator implements Evaluator {
         boolean v2 = ((PrimitiveValue)rightResult).booleanValue();
         return DebuggerUtilsEx.createValue(vm, expectedType, v1 != v2);
       }
-      if (leftResult instanceof CharValue && rightResult instanceof CharValue) {
-        char v1 = ((CharValue)leftResult).charValue();
-        char v2 = ((CharValue)rightResult).charValue();
+      if (leftResult instanceof CharValue c1 && rightResult instanceof CharValue c2) {
+        char v1 = c1.charValue();
+        char v2 = c2.charValue();
         return DebuggerUtilsEx.createValue(vm, expectedType, v1 != v2);
       }
-      if (leftResult instanceof ObjectReference && rightResult instanceof ObjectReference) {
-        ObjectReference v1 = (ObjectReference)leftResult;
-        ObjectReference v2 = (ObjectReference)rightResult;
+      if (leftResult instanceof ObjectReference v1 && rightResult instanceof ObjectReference v2) {
         return DebuggerUtilsEx.createValue(vm, expectedType, v1.uniqueID() != v2.uniqueID());
       }
       throw EvaluateExceptionUtil.createEvaluateException(JavaDebuggerBundle.message("evaluation.error.incompatible.types", "!="));
@@ -427,6 +422,4 @@ class BinaryExpressionEvaluator implements Evaluator {
 
     return null;
   }
-
-  
 }

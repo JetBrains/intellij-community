@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.bytecodeAnalysis;
 
 import org.jetbrains.annotations.NotNull;
@@ -26,8 +26,7 @@ public abstract class Direction {
    * @return Direction object
    * @see #asInt()
    */
-  @NotNull
-  static Direction fromInt(int directionKey) {
+  static @NotNull Direction fromInt(int directionKey) {
     if (directionKey < CONCRETE_DIRECTIONS_OFFSET) {
       return ourConcreteDirections.get(directionKey);
     }
@@ -53,6 +52,13 @@ public abstract class Direction {
    */
   abstract int asInt();
 
+  /**
+   * @return true if this is a null->fail direction (care should be taken to separate it from @NotNull annotation)
+   */
+  boolean isNullFail() {
+    return false;
+  }
+
   @Override
   public int hashCode() {
     return asInt();
@@ -65,8 +71,7 @@ public abstract class Direction {
     return asInt() == ((Direction)obj).asInt();
   }
 
-  @NotNull
-  private static Direction explicitDirection(String name) {
+  private static @NotNull Direction explicitDirection(String name) {
     return new Direction() {
       @Override
       int asInt() {
@@ -119,7 +124,7 @@ public abstract class Direction {
     }
   }
 
-  static abstract class ParamValueBasedDirection extends ParamIdBasedDirection {
+  abstract static class ParamValueBasedDirection extends ParamIdBasedDirection {
     final Value inValue;
 
     ParamValueBasedDirection(int paramIndex, Value inValue) {
@@ -127,7 +132,9 @@ public abstract class Direction {
       this.inValue = inValue;
     }
 
-    abstract ParamValueBasedDirection withIndex(int paramIndex);
+    abstract @NotNull ParamValueBasedDirection withIndex(int paramIndex);
+    
+    abstract @NotNull ParamValueBasedDirection withValue(int paramIndex, @NotNull Value inValue);
   }
 
   static final class InOut extends ParamValueBasedDirection {
@@ -136,7 +143,14 @@ public abstract class Direction {
     }
 
     @Override
+    @NotNull
     InOut withIndex(int paramIndex) {
+      return new InOut(paramIndex, inValue);
+    }
+
+    @Override
+    @NotNull
+    ParamValueBasedDirection withValue(int paramIndex, @NotNull Value inValue) {
       return new InOut(paramIndex, inValue);
     }
 
@@ -157,7 +171,19 @@ public abstract class Direction {
     }
 
     @Override
+    @NotNull
     InThrow withIndex(int paramIndex) {
+      return new InThrow(paramIndex, inValue);
+    }
+
+    @Override
+    boolean isNullFail() {
+      return inValue == Value.Null;
+    }
+
+    @Override
+    @NotNull
+    ParamValueBasedDirection withValue(int paramIndex, @NotNull Value inValue) {
       return new InThrow(paramIndex, inValue);
     }
 

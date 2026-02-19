@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.analysis.encoding;
 
 import com.intellij.lang.ASTNode;
@@ -21,18 +7,26 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.PsiReferenceProvider;
+import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.xml.XmlChildRole;
+import com.intellij.psi.xml.XmlTokenType;
 import com.intellij.util.ProcessingContext;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 public class XmlEncodingReferenceProvider extends PsiReferenceProvider {
   private static final Logger LOG = Logger.getInstance(XmlEncodingReferenceProvider.class);
-  @NonNls private static final String CHARSET_PREFIX = "charset=";
+  private static final TokenSet ATTRIBUTE_VALUE_STD_TOKENS = TokenSet.create(
+    XmlTokenType.XML_ATTRIBUTE_VALUE_START_DELIMITER,
+    XmlTokenType.XML_ATTRIBUTE_VALUE_END_DELIMITER,
+    XmlTokenType.XML_ATTRIBUTE_VALUE_TOKEN
+  );
+  private static final @NonNls String CHARSET_PREFIX = "charset=";
 
   @Override
-  public PsiReference @NotNull [] getReferencesByElement(@NotNull PsiElement element, @NotNull final ProcessingContext context) {
+  public PsiReference @NotNull [] getReferencesByElement(@NotNull PsiElement element, final @NotNull ProcessingContext context) {
     LOG.assertTrue(element instanceof XmlAttributeValue);
     XmlAttributeValue value = (XmlAttributeValue)element;
 
@@ -48,6 +42,9 @@ public class XmlEncodingReferenceProvider extends PsiReferenceProvider {
   }
 
   public static PsiReference[] extractFromContentAttribute(final XmlAttributeValue value) {
+    boolean hasNonStandardTokens =
+      ContainerUtil.exists(value.getChildren(), ch -> !ATTRIBUTE_VALUE_STD_TOKENS.contains(ch.getNode().getElementType()));
+    if (hasNonStandardTokens) return PsiReference.EMPTY_ARRAY;
     String text = value.getValue();
     int start = text.indexOf(CHARSET_PREFIX);
     if (start != -1) {

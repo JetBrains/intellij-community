@@ -1,22 +1,12 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.completion;
 
+import com.intellij.codeInsight.completion.CompletionContributor;
+import com.intellij.codeInsight.completion.CompletionParameters;
+import com.intellij.codeInsight.completion.CompletionProvider;
+import com.intellij.codeInsight.completion.CompletionResultSet;
+import com.intellij.codeInsight.completion.CompletionType;
 import com.intellij.codeInsight.lookup.EqTailType;
-import com.intellij.codeInsight.completion.*;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.codeInsight.lookup.TailTypeDecorator;
@@ -30,7 +20,11 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.configSlurper.ConfigSlurperSupport;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.*;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrBlockStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrForStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrIfStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrTryCatchStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrWhileStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssignmentExpression;
@@ -40,11 +34,14 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrRefere
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.literals.GrLiteralImpl;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
-/**
- * @author Sergey Evdokimov
- */
 class GroovyConfigSlurperCompletionProvider extends CompletionProvider<CompletionParameters> {
 
   private final boolean myAddPrefixes;
@@ -65,9 +62,7 @@ class GroovyConfigSlurperCompletionProvider extends CompletionProvider<Completio
                                 @NotNull ProcessingContext context,
                                 @NotNull CompletionResultSet result) {
     PsiFile file = parameters.getOriginalFile();
-    if (!(file instanceof GroovyFile)) return;
-
-    GroovyFile groovyFile = (GroovyFile)file;
+    if (!(file instanceof GroovyFile groovyFile)) return;
 
     if (!groovyFile.isScript()) return;
 
@@ -104,8 +99,7 @@ class GroovyConfigSlurperCompletionProvider extends CompletionProvider<Completio
           variants.remove(s);
         }
       }
-      else if (e instanceof GrMethodCall) {
-        GrMethodCall call = (GrMethodCall)e;
+      else if (e instanceof GrMethodCall call) {
         if (isPropertyCall(call)) {
           String name = extractPropertyName(call);
           if (name == null) continue;
@@ -152,8 +146,7 @@ class GroovyConfigSlurperCompletionProvider extends CompletionProvider<Completio
     }
   }
 
-  @Nullable
-  private static String refToString(GrReferenceExpression ref) {
+  private static @Nullable String refToString(GrReferenceExpression ref) {
     StringBuilder sb = new StringBuilder();
 
     while (ref != null) {
@@ -179,16 +172,13 @@ class GroovyConfigSlurperCompletionProvider extends CompletionProvider<Completio
     return sb.toString();
   }
 
-  @Nullable
-  public static List<String> getPrefix(GrReferenceExpression ref) {
+  public static @Nullable List<String> getPrefix(GrReferenceExpression ref) {
     List<String> res = new ArrayList<>();
 
     GrExpression qualifier = ref.getQualifierExpression();
 
     while (qualifier != null) {
-      if (!(qualifier instanceof GrReferenceExpression)) return null;
-
-      GrReferenceExpression r = (GrReferenceExpression)qualifier;
+      if (!(qualifier instanceof GrReferenceExpression r)) return null;
 
       String name = r.getReferenceName();
       if (name == null) return null;
@@ -200,21 +190,15 @@ class GroovyConfigSlurperCompletionProvider extends CompletionProvider<Completio
 
     PsiElement e = ref.getParent();
 
-    if (e instanceof GrAssignmentExpression) {
-      GrAssignmentExpression assignmentExpression = (GrAssignmentExpression)e;
+    if (e instanceof GrAssignmentExpression assignmentExpression) {
       if (assignmentExpression.getLValue() != ref) return null;
       e = assignmentExpression.getParent();
     }
 
-    while (true) {
-      if (e instanceof PsiFile) {
-        break;
-      }
-      else if (e instanceof GrClosableBlock) {
+    while (!(e instanceof PsiFile)) {
+      if (e instanceof GrClosableBlock) {
         PsiElement eCall = e.getParent();
-        if (!(eCall instanceof GrMethodCall)) return null;
-
-        GrMethodCall call = (GrMethodCall)eCall;
+        if (!(eCall instanceof GrMethodCall call)) return null;
 
         if (!isPropertyCall(call)) return null;
 
@@ -225,7 +209,7 @@ class GroovyConfigSlurperCompletionProvider extends CompletionProvider<Completio
         e = call.getParent();
       }
       else if (e instanceof GrBlockStatement || e instanceof GrOpenBlock || e instanceof GrIfStatement || e instanceof GrForStatement
-          || e instanceof GrWhileStatement || e instanceof GrTryCatchStatement) {
+               || e instanceof GrWhileStatement || e instanceof GrTryCatchStatement) {
         e = e.getParent();
       }
       else {
@@ -238,12 +222,10 @@ class GroovyConfigSlurperCompletionProvider extends CompletionProvider<Completio
     return res;
   }
 
-  @Nullable
-  private static String extractPropertyName(GrMethodCall call) {
+  private static @Nullable String extractPropertyName(GrMethodCall call) {
     GrExpression ie = call.getInvokedExpression();
 
-    if (ie instanceof GrReferenceExpression) {
-      GrReferenceExpression r = (GrReferenceExpression)ie;
+    if (ie instanceof GrReferenceExpression r) {
       if (r.isQualified()) return null;
 
       return r.getReferenceName();

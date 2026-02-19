@@ -12,7 +12,10 @@ import org.junit.Test;
 import java.util.Collection;
 
 import static org.hamcrest.Matchers.isIn;
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertThat;
 
 public class SvnConcurrentChangeListManagerTest extends SvnTestCase {
   private DuringChangeListManagerUpdateTestScheme myScheme;
@@ -104,21 +107,21 @@ public class SvnConcurrentChangeListManagerTest extends SvnTestCase {
     myScheme.doTest(() -> {
       final String intermediate = "intermediate text";
       changeListManager.editComment(list.getName(), intermediate);
-      assert changeListManager.findChangeList(listName) != null;
+      assertHasChangeList(listName);
       LocalChangeList list1 = changeListManager.findChangeList(listName);
-      assert intermediate.equals(list1.getComment());
+      assertEquals(intermediate, list1.getComment());
 
       changeListManager.editComment(list1.getName(), finalText);
       list1 = changeListManager.findChangeList(listName);
-      assert finalText.equals(list1.getComment());
+      assertEquals(finalText, list1.getComment());
     });
 
     LocalChangeList changedList = changeListManager.findChangeList(listName);
-    assert finalText.equals(changedList.getComment());
+    assertEquals(finalText, changedList.getComment());
 
     changeListManager.ensureUpToDate();
     changedList = changeListManager.findChangeList(listName);
-    assert finalText.equals(changedList.getComment());
+    assertEquals(finalText, changedList.getComment());
   }
 
   @Test
@@ -156,13 +159,13 @@ public class SvnConcurrentChangeListManagerTest extends SvnTestCase {
 
     myScheme.doTest(() -> {
       changeListManager.setDefaultChangeList(target);
-      assert changeListManager.getDefaultChangeList().getName().equals(target.getName());
+      assertIsDefaultChangeList(target.getName());
     });
 
-    assert changeListManager.getDefaultChangeList().getName().equals(target.getName());
+    assertIsDefaultChangeList(target.getName());
 
     changeListManager.ensureUpToDate();
-    assert changeListManager.getDefaultChangeList().getName().equals(target.getName());
+    assertIsDefaultChangeList(target.getName());
   }
 
   @Test
@@ -178,15 +181,15 @@ public class SvnConcurrentChangeListManagerTest extends SvnTestCase {
 
     myScheme.doTest(() -> {
       changeListManager.removeChangeList(list.getName());
-      assert changeListManager.findChangeList(list.getName()) == null;
+      assertNoChangeList(list.getName());
       checkFilesAreInList(myDefaulListName, file, fileB);
     });
 
-    assert changeListManager.findChangeList(list.getName()) == null;
+    assertNoChangeList(list.getName());
     checkFilesAreInList(myDefaulListName, file, fileB);
 
     changeListManager.ensureUpToDate();
-    assert changeListManager.findChangeList(list.getName()) == null;
+    assertNoChangeList(list.getName());
     checkFilesAreInList(myDefaulListName, file, fileB);
   }
 
@@ -319,10 +322,27 @@ public class SvnConcurrentChangeListManagerTest extends SvnTestCase {
     System.out.println("Checking files for list: " + listName);
     assertNotNull(changeListManager.findChangeList(listName));
     final Collection<Change> changes = changeListManager.findChangeList(listName).getChanges();
-    assertEquals(changes.size(), files.length);
+    assertEquals(changeListManager.getChangeLists().toString(), changes.size(), files.length);
 
     for (Change change : changes) {
       assertThat(change.getAfterRevision().getFile().getVirtualFile(), isIn(files));
     }
+  }
+
+  private void assertHasChangeList(String changeListName) {
+    assertNotNull("Changelist '" + changeListName + "' is not found in " + changeListManager.getChangeLists(),
+                  changeListManager.findChangeList(changeListName));
+  }
+
+  private void assertNoChangeList(String changeListName) {
+    assertNull("Changelist '" + changeListName + "' is found in " + changeListManager.getChangeLists(),
+               changeListManager.findChangeList(changeListName));
+  }
+
+  private void assertIsDefaultChangeList(String changeListName) {
+    LocalChangeList defaultChangeList = changeListManager.getDefaultChangeList();
+
+    assertEquals("Default changelist is '" + defaultChangeList.getName() + "' in " + changeListManager.getChangeLists(),
+                 defaultChangeList.getName(), changeListName);
   }
 }

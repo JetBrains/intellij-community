@@ -1,13 +1,24 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xml.util;
 
 import com.intellij.html.impl.RelaxedHtmlFromSchemaNSDescriptor;
-import com.intellij.psi.filters.*;
+import com.intellij.psi.filters.AndFilter;
+import com.intellij.psi.filters.ClassFilter;
+import com.intellij.psi.filters.ContentFilter;
+import com.intellij.psi.filters.OrFilter;
+import com.intellij.psi.filters.XmlTagFilter;
+import com.intellij.psi.filters.XmlTextFilter;
 import com.intellij.psi.filters.position.NamespaceFilter;
 import com.intellij.psi.filters.position.TargetNamespaceFilter;
 import com.intellij.psi.meta.MetaDataContributor;
 import com.intellij.psi.meta.MetaDataRegistrar;
-import com.intellij.psi.xml.*;
+import com.intellij.psi.xml.XmlAttributeDecl;
+import com.intellij.psi.xml.XmlConditionalSection;
+import com.intellij.psi.xml.XmlDocument;
+import com.intellij.psi.xml.XmlElementDecl;
+import com.intellij.psi.xml.XmlEntityDecl;
+import com.intellij.psi.xml.XmlEntityRef;
+import com.intellij.psi.xml.XmlMarkupDecl;
 import com.intellij.xml.impl.dtd.XmlNSDescriptorImpl;
 import com.intellij.xml.impl.schema.NamedObjectDescriptor;
 import com.intellij.xml.impl.schema.SchemaNSDescriptor;
@@ -20,7 +31,7 @@ import org.jetbrains.annotations.NotNull;
  */
 public class XmlApplicationComponent implements MetaDataContributor {
   @Override
-  public void contributeMetaData(@NotNull final MetaDataRegistrar registrar) {
+  public void contributeMetaData(final @NotNull MetaDataRegistrar registrar) {
     {
       registrar.registerMetaData(
           new AndFilter(

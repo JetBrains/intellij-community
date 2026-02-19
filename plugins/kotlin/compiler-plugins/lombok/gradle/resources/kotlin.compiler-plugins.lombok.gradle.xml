@@ -1,0 +1,17 @@
+<idea-plugin package="org.jetbrains.kotlin.idea.compilerPlugin.lombok.gradleJava">
+  <dependencies>
+    <module name="intellij.kotlin.gradle.tooling"/>
+    <module name="intellij.kotlin.gradle.gradle"/>
+    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+    <module name="kotlin.compiler-plugins.compiler-plugin-support.gradle"/>
+    <module name="kotlin.gradle.gradle-java"/>
+    <!-- endregion -->
+  </dependencies>
+
+  <extensions defaultExtensionNs="org.jetbrains.kotlin">
+    <gradleProjectImportHandler implementation="org.jetbrains.kotlin.idea.compilerPlugin.lombok.gradleJava.LombokGradleProjectImportHandler"/>
+  </extensions>
+  <extensions defaultExtensionNs="org.jetbrains.plugins.gradle">
+    <projectResolve implementation="org.jetbrains.kotlin.idea.compilerPlugin.lombok.gradleJava.LombokGradleProjectResolverExtension" order="last"/>
+  </extensions>
+</idea-plugin>

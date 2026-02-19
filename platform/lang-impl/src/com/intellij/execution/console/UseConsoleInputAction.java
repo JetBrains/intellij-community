@@ -5,6 +5,7 @@ import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.util.PropertiesComponent;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.LangDataKeys;
@@ -34,6 +35,11 @@ final class UseConsoleInputAction extends ToggleAction implements DumbAware {
   }
 
   @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.EDT;
+  }
+
+  @Override
   public void setSelected(@NotNull AnActionEvent event, boolean state) {
     useProcessStdIn = !state;
 
@@ -42,7 +48,7 @@ final class UseConsoleInputAction extends ToggleAction implements DumbAware {
     DaemonCodeAnalyzer daemonCodeAnalyzer = DaemonCodeAnalyzer.getInstance(consoleView.getProject());
     PsiFile file = consoleView.getFile();
     daemonCodeAnalyzer.setHighlightingEnabled(file, state);
-    daemonCodeAnalyzer.restart(file);
+    daemonCodeAnalyzer.restart(file, this);
     PropertiesComponent.getInstance().setValue(processInputStateKey, useProcessStdIn);
 
     List<AnAction> actions = ActionUtil.getActions(consoleView.getConsoleEditor().getComponent());

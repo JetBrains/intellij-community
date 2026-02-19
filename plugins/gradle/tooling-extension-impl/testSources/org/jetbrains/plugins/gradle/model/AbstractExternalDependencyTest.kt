@@ -38,10 +38,10 @@ private fun String.lib(): AbstractExternalDependency {
 }
 
 private class MyAbstractExternalDependency(group: String, name: String, version: String) :
-  AbstractExternalDependency(DefaultExternalDependencyId(group, name, version), "", null)
+  AbstractExternalDependency(DefaultExternalDependencyId(group, name, version))
 
 private fun AbstractExternalDependency.depends(vararg dependencies: AbstractExternalDependency): AbstractExternalDependency {
-  this.dependencies.addAll(dependencies)
+  this.dependencies += dependencies
   return this
 }
 

@@ -15,7 +15,16 @@
  */
 package com.intellij.java.codeInsight.daemon.lambda;
 
-import com.intellij.psi.*;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiConditionalExpression;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiLambdaExpression;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiMethodCallExpression;
+import com.intellij.psi.PsiMethodReferenceExpression;
+import com.intellij.psi.PsiNewExpression;
+import com.intellij.psi.PsiPostfixExpression;
 import com.intellij.psi.impl.source.resolve.graphInference.InferenceSession;
 import com.intellij.psi.impl.source.resolve.graphInference.PsiPolyExpressionUtil;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -82,14 +91,12 @@ public class PsiPolyExpressionUtilTest extends LightJavaCodeInsightFixtureTestCa
   }
 
   public void testConditional() {
-    myFixture.configureByText("Foo.java", "import java.util.function.Supplier;" +
-                                          "class Foo {" +
-                                          "    private static <R> void map(Supplier<R> fn) {}\n" +
-                                          "    public static void main(String[] args) {\n" +
-                                          "        Runnable r = null;\n" +
-                                          "        map(() -> (true <caret>? r : r));\n" +
-                                          "    }" +
-                                          "}");
+    myFixture.configureByText("Foo.java", """
+      import java.util.function.Supplier;class Foo {    private static <R> void map(Supplier<R> fn) {}
+          public static void main(String[] args) {
+              Runnable r = null;
+              map(() -> (true <caret>? r : r));
+          }}""");
     final PsiElement elementAtCaret = myFixture.getFile().findElementAt(myFixture.getCaretOffset());
     assertNotNull(elementAtCaret);
     final PsiExpression psiExpression = PsiTreeUtil.getParentOfType(elementAtCaret, PsiExpression.class);
@@ -98,13 +105,12 @@ public class PsiPolyExpressionUtilTest extends LightJavaCodeInsightFixtureTestCa
   }
 
   public void testConditionalInAssignment() {
-    myFixture.configureByText("Foo.java", "class Foo {" +
-                                          "    public static void main(String[] args) {\n" +
-                                          "        Object obj = new Object();\n" +
-                                          "        String str = \"\";\n" +
-                                          "        str += args.length == 0 <caret>? obj : args[0];\n" +
-                                          "    }" +
-                                          "}");
+    myFixture.configureByText("Foo.java", """
+      class Foo {    public static void main(String[] args) {
+              Object obj = new Object();
+              String str = "";
+              str += args.length == 0 <caret>? obj : args[0];
+          }}""");
     final PsiElement elementAtCaret = myFixture.getFile().findElementAt(myFixture.getCaretOffset());
     assertNotNull(elementAtCaret);
     final PsiExpression psiExpression = PsiTreeUtil.getParentOfType(elementAtCaret, PsiExpression.class);
@@ -146,13 +152,12 @@ public class PsiPolyExpressionUtilTest extends LightJavaCodeInsightFixtureTestCa
   }
 
   public void testPertinentNestedLambdaExpressionWhenTargetIsTypeParameterOfMethod() {
-    myFixture.configureByText("Foo.java", "interface Supplier<T> { T get();}" +
-                                          "class Foo {" +
-                                          "      { Supplier<Runnable> x = foo ((<caret>) -> () -> {});}\n" +
-                                          "      static <T> Supplier<T> foo(Supplier<T> delegate) {\n" +
-                                          "          return null;\n" +
-                                          "      }\n" +
-                                          "}");
+    myFixture.configureByText("Foo.java", """
+      interface Supplier<T> { T get();}class Foo {      { Supplier<Runnable> x = foo ((<caret>) -> () -> {});}
+            static <T> Supplier<T> foo(Supplier<T> delegate) {
+                return null;
+            }
+      }""");
     final PsiElement elementAtCaret = myFixture.getFile().findElementAt(myFixture.getCaretOffset());
     assertNotNull(elementAtCaret);
     final PsiExpression psiExpression = PsiTreeUtil.getParentOfType(elementAtCaret, PsiExpression.class);
@@ -160,7 +165,7 @@ public class PsiPolyExpressionUtilTest extends LightJavaCodeInsightFixtureTestCa
     final PsiClass aClass = myFixture.findClass("Foo");
     assertNotNull(aClass);
     final PsiMethod[] meths = aClass.findMethodsByName("foo", false);
-    assertTrue(meths.length == 1);
+    assertEquals(1, meths.length);
     assertFalse(InferenceSession.isPertinentToApplicability(psiExpression, meths[0]));
   }
 
@@ -202,7 +207,7 @@ public class PsiPolyExpressionUtilTest extends LightJavaCodeInsightFixtureTestCa
     final PsiClass aClass = myFixture.findClass("Foo");
     assertNotNull(aClass);
     final PsiMethod[] meths = aClass.findMethodsByName("foo", false);
-    assertTrue(meths.length == 1);
+    assertEquals(1, meths.length);
     return InferenceSession.isPertinentToApplicability(psiExpression, meths[0]);
   }
 }

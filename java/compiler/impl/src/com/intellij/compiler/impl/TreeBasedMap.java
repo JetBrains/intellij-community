@@ -1,14 +1,15 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.compiler.impl;
 
 import com.intellij.util.containers.Interner;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayDeque;
 import java.util.Collections;
+import java.util.Deque;
 import java.util.HashMap;
 import java.util.Iterator;
-import java.util.Stack;
 
 /**
  * @author Eugene Zhuravlev
@@ -47,13 +48,11 @@ public class TreeBasedMap<T> {
       return myMappingExists;
     }
 
-    @Nullable
-    public Node<T> findRelative(String text, boolean create, final Interner<String> table) {
+    public @Nullable Node<T> findRelative(String text, boolean create, final Interner<String> table) {
       return findRelative(text, 0, create, table);
     }
 
-    @Nullable
-    private Node<T> findRelative(final String text, final int nameStartIndex, final boolean create, final Interner<String> table) {
+    private @Nullable Node<T> findRelative(final String text, final int nameStartIndex, final boolean create, final Interner<String> table) {
       if (myChildren == null && !create) {
         return null;
       }
@@ -79,8 +78,7 @@ public class TreeBasedMap<T> {
       return null;
     }
 
-    @NotNull
-    private Node<T> addChild(final Interner<String> table, final String text, final int nameStartIndex, final int nameEndIndex) {
+    private @NotNull Node<T> addChild(final Interner<String> table, final String text, final int nameStartIndex, final int nameEndIndex) {
       if (myChildren == null) {
         myChildren = new HashMap<>(3, 0.95f);
       }
@@ -141,7 +139,7 @@ public class TreeBasedMap<T> {
 
 
   private class KeysIterator implements Iterator<String> {
-    private final Stack<PathElement<T>> myCurrentNodePath = new Stack<>();
+    private final Deque<PathElement<T>> myCurrentNodePath = new ArrayDeque<>();
     private final StringBuilder myCurrentName = new StringBuilder();
 
     KeysIterator() {
@@ -151,7 +149,7 @@ public class TreeBasedMap<T> {
 
     @Override
     public boolean hasNext() {
-      return myCurrentNodePath.size() > 0;
+      return !myCurrentNodePath.isEmpty();
     }
 
     @Override
@@ -169,7 +167,7 @@ public class TreeBasedMap<T> {
 
     private boolean pushNode(final @NotNull String name, @NotNull Node<T> node) {
       final HashMap<String, Node<T>> childrenMap = node.myChildren;
-      final boolean hasChildren = childrenMap != null && childrenMap.size() > 0;
+      final boolean hasChildren = childrenMap != null && !childrenMap.isEmpty();
       if (hasChildren || node.mappingExists()) {
         myCurrentNodePath.push(new PathElement<>(node, hasChildren ? childrenMap.keySet().iterator() : Collections.emptyIterator()));
         if (myCurrentNodePath.size() > 2) {
@@ -218,7 +216,7 @@ public class TreeBasedMap<T> {
   private class PathElement<T> {
     final @NotNull Iterator<String> iterator;
     final @NotNull Node<T> node;
-    PathElement(@NotNull final Node<T> node, Iterator<String> iterator) {
+    PathElement(final @NotNull Node<T> node, Iterator<String> iterator) {
       this.node = node;
       this.iterator = iterator;
     }

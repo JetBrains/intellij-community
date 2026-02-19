@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.svn;
 
 import com.intellij.openapi.vcs.FileStatus;
@@ -11,6 +11,7 @@ import org.junit.Test;
 
 import java.io.File;
 import java.util.List;
+import java.util.concurrent.TimeoutException;
 
 import static com.intellij.util.containers.ContainerUtil.ar;
 import static com.intellij.util.containers.ContainerUtil.map;
@@ -18,7 +19,9 @@ import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.hasItem;
 import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.jetbrains.idea.svn.SvnUtil.parseUrl;
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertThat;
 
 public class SvnExternalTest extends SvnTestCase {
   private Url myMainUrl;
@@ -156,7 +159,7 @@ public class SvnExternalTest extends SvnTestCase {
     uncommittedExternalCopyIsDetectedImpl();
   }
 
-  private void uncommittedExternalCopyIsDetectedImpl() {
+  private void uncommittedExternalCopyIsDetectedImpl() throws TimeoutException {
     imitUpdate();
     refreshSvnMappingsSynchronously();
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.projectRoots.ui;
 
 import com.intellij.icons.AllIcons;
@@ -13,16 +13,28 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.ex.http.HttpFileSystem;
 import com.intellij.openapi.vfs.newvfs.ArchiveFileSystem;
 import com.intellij.openapi.wm.IdeFocusManager;
-import com.intellij.ui.*;
+import com.intellij.ui.ColoredListCellRenderer;
+import com.intellij.ui.JBColor;
+import com.intellij.ui.ListUtil;
+import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.ui.ToolbarDecorator;
+import com.intellij.ui.TreeUIHelper;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.containers.ContainerUtil;
-import gnu.trove.TIntArrayList;
+import com.intellij.util.containers.IntArrayList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.DefaultListModel;
+import javax.swing.Icon;
+import javax.swing.JComponent;
+import javax.swing.JList;
+import javax.swing.JPanel;
+import javax.swing.ListCellRenderer;
+import javax.swing.SwingUtilities;
+import java.awt.Color;
+import java.awt.Component;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -66,7 +78,7 @@ public class PathEditor {
     return myModified;
   }
 
-  public VirtualFile[] getRoots() {
+  public VirtualFile @NotNull [] getRoots() {
     final int count = getRowCount();
     if (count == 0) {
       return VirtualFile.EMPTY_ARRAY;
@@ -154,7 +166,7 @@ public class PathEditor {
 
   protected void itemsRemoved(List<VirtualFile> removedItems) {
     myAllFiles.removeAll(removedItems);
-    if (removedItems.size() > 0) {
+    if (!removedItems.isEmpty()) {
       setModified(true);
     }
     requestDefaultFocus();
@@ -201,18 +213,17 @@ public class PathEditor {
     }
   }
 
-  public void removePaths(VirtualFile... paths) {
-    final Set<VirtualFile> pathsSet = ContainerUtil.set(paths);
+  public void removePaths(@NotNull VirtualFile @NotNull ... paths) {
+    final Set<VirtualFile> pathsSet = Set.of(paths);
     int size = getRowCount();
-    final TIntArrayList indicesToRemove = new TIntArrayList(paths.length);
+    IntArrayList indicesToRemove = new IntArrayList(paths.length);
     for (int idx = 0; idx < size; idx++) {
       VirtualFile path = getValueAt(idx);
-      if (pathsSet.contains(path)) {
+      if (path != null && pathsSet.contains(path)) {
         indicesToRemove.add(idx);
       }
     }
-    final List<VirtualFile> list = ListUtil.removeIndices(myList, indicesToRemove.toNativeArray());
-    itemsRemoved(list);
+    itemsRemoved(ListUtil.removeIndices(myList, indicesToRemove.toArray()));
   }
 
   /**
@@ -278,13 +289,13 @@ public class PathEditor {
   protected static class PathCellRenderer extends ColoredListCellRenderer<VirtualFile> {
     @Override
     protected void customizeCellRenderer(@NotNull JList<? extends VirtualFile> list, VirtualFile file, int index, boolean selected, boolean focused) {
-      String text = file != null ? file.getPresentableUrl() : "UNKNOWN OBJECT";
-      append(text, file != null && file.isValid() ? SimpleTextAttributes.REGULAR_ATTRIBUTES : SimpleTextAttributes.ERROR_ATTRIBUTES);
+      LOG.assertTrue(file != null);
+      String text = file.getPresentableUrl();
+      append(text, file.isValid() ? SimpleTextAttributes.REGULAR_ATTRIBUTES : SimpleTextAttributes.ERROR_ATTRIBUTES);
       setIcon(getItemIcon(file));
     }
 
-    protected Icon getItemIcon(VirtualFile file) {
-      if (file == null) return AllIcons.Nodes.EmptyNode;
+    protected Icon getItemIcon(@NotNull VirtualFile file) {
       if (!file.isValid()) return AllIcons.Nodes.PpInvalid;
       if (file.getFileSystem() instanceof HttpFileSystem) return PlatformIcons.WEB_ICON;
       if (file.getFileSystem() instanceof ArchiveFileSystem) return PlatformIcons.JAR_ICON;

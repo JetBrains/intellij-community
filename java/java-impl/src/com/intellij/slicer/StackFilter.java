@@ -5,15 +5,28 @@ import com.intellij.execution.filters.ExceptionAnalysisProvider;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiAnonymousClass;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiClassInitializer;
+import com.intellij.psi.PsiClassOwner;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiLambdaExpression;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiMember;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiParameter;
+import com.intellij.psi.PsiType;
 import com.intellij.psi.search.DelegatingGlobalSearchScope;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.util.ClassUtil;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.containers.ContainerUtil;
-import com.siyeh.ig.psiutils.ClassUtils;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -61,7 +74,7 @@ final class StackFilter {
       return myMethodName.equals(getExpectedName((PsiMember)parent)) && classMatches(((PsiMember)parent).getContainingClass());
     }
     if (parent instanceof PsiLambdaExpression) {
-      return myMethodName.startsWith("lambda$") && classMatches(ClassUtils.getContainingClass(parent));
+      return myMethodName.startsWith("lambda$") && classMatches(PsiUtil.getContainingClass(parent));
     }
     return false;
   }
@@ -108,7 +121,7 @@ final class StackFilter {
     } else {
       if (!afterDollar.matches("\\d+")) return false;
     }
-    PsiClass containingClass = ClassUtils.getContainingClass(aClass);
+    PsiClass containingClass = PsiUtil.getContainingClass(aClass);
     String prefix = StringUtil.substringBefore(shortName, "$");
     if (prefix == null) {
       return containingClass == null;

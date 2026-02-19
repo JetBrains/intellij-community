@@ -1,17 +1,20 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl;
 
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.wm.ToolWindowAnchor;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.Action;
+import javax.swing.BorderFactory;
+import javax.swing.Icon;
 import javax.swing.border.Border;
-import java.awt.event.MouseEvent;
+import java.awt.AWTEvent;
 
-public class StaticAnchoredButton extends AnchoredButton {
-  @NotNull
-  private ToolWindowAnchor myToolWindowAnchor;
+@ApiStatus.Internal
+public final class StaticAnchoredButton extends AnchoredButton {
+  private @NotNull ToolWindowAnchor myToolWindowAnchor;
   private int myMnemonic2;
 
   public StaticAnchoredButton(@NlsContexts.Button String text,
@@ -71,7 +74,7 @@ public class StaticAnchoredButton extends AnchoredButton {
     setBorder(border);
     setRolloverEnabled(true);
     setOpaque(false);
-    enableEvents(MouseEvent.MOUSE_EVENT_MASK);
+    enableEvents(AWTEvent.MOUSE_EVENT_MASK);
   }
 
   @Override

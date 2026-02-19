@@ -21,9 +21,13 @@ import com.intellij.usages.impl.UsagePreviewPanel;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
-import java.awt.*;
+import java.awt.Container;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
-import java.util.*;
+import java.util.Objects;
+import java.util.SortedSet;
+import java.util.TreeSet;
 import java.util.stream.Collectors;
 
 public final class ProblemPreviewEditorPresentation {
@@ -91,7 +95,7 @@ public final class ProblemPreviewEditorPresentation {
           Segment range = usage.getNavigationRange();
           if (element != null && range != null) {
             if (injectedLanguageManager.getInjectionHost(element) != null) {
-              range = injectedLanguageManager.injectedToHost(element, new TextRange(range.getStartOffset(), range.getEndOffset()));
+              range = injectedLanguageManager.injectedToHost(element, TextRange.create(range));
             }
             final Document document = editor.getDocument();
             final int offset = Math.min(range.getEndOffset() + VIEW_ADDITIONAL_OFFSET,

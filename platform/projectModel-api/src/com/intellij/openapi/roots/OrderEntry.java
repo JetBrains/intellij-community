@@ -21,12 +21,11 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.UnknownNullability;
 
 /**
  * Represents an entry in the classpath of a module (as shown in the "Order/Export" page
  * of the module configuration dialog).
- *
- * @author dsl
  */
 @ApiStatus.NonExtendable
 public interface OrderEntry extends Synthetic, Comparable<OrderEntry> {
@@ -36,29 +35,13 @@ public interface OrderEntry extends Synthetic, Comparable<OrderEntry> {
   OrderEntry[] EMPTY_ARRAY = new OrderEntry[0];
 
   /**
-   * Returns list of root {@link VirtualFile}s of given type for this entry.
-   * Those files should be traversed in order they are returned in.
-   * Note that actual OrderEntry (as seen in UI) may also contain invalid roots.
-   * If you want to get list of all roots, use {@link #getUrls(OrderRootType)} method. <br>
-   *
-   * Note that list of roots is project dependent.
-   *
-   * @param type  required root type.
-   * @return list of virtual files.
-   * @see #getUrls(OrderRootType)
+   * Returns the list of root {@link VirtualFile}s of the given type for this entry.
+   * @deprecated the meaning of this method is unclear. 
+   * If this instance represents dependency on a library or an SDK, use {@link LibraryOrSdkOrderEntry#getRootFiles(OrderRootType)} instead.
+   * In other cases, use {@link OrderEnumerator} and specify what files from dependencies of a module you want to get.
    */
+  @Deprecated
   VirtualFile @NotNull [] getFiles(@NotNull OrderRootType type);
-
-  /**
-   * Returns list of roots of given type for this entry. To validate returned roots,
-   * use {@link com.intellij.openapi.vfs.VirtualFileManager#findFileByUrl(String)} <br>
-   *
-   * Note that list of roots is project-dependent.
-   *
-   * @param rootType the type of roots which should be returned.
-   * @return the list of roots of the specified type.
-   */
-  String @NotNull [] getUrls(@NotNull OrderRootType rootType);
 
   /**
    * Returns the user-visible name of this OrderEntry.
@@ -91,5 +74,5 @@ public interface OrderEntry extends Synthetic, Comparable<OrderEntry> {
    * @param initialValue the default value to be returned by the visit process.
    * @return the value returned by the visitor.
    */
-  <R> R accept(@NotNull RootPolicy<R> policy, @Nullable R initialValue);
+  <R> @UnknownNullability R accept(@NotNull RootPolicy<R> policy, @Nullable R initialValue);
 }

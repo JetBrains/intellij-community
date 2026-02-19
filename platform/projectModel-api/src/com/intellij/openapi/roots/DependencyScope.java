@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.openapi.roots;
 
@@ -40,10 +26,9 @@ import java.util.function.Supplier;
  * </table>
  * <br>
  * 
- * In order to check whether a dependency should be included in a classpath use one of {@code isFor}
- * methods instead of direct comparison with the enum constants
- *
- * @author yole
+ * Note that the way dependencies are processed may be changed by plugins if the project is imported from a build system. So values from
+ * this enum are supposed to be used only to edit dependencies (via {@link ExportableOrderEntry#setScope}). If you need to determine which
+ * dependencies are included into a classpath, use {@link OrderEnumerator}.
  */
 public enum DependencyScope {
   COMPILE(ProjectModelBundle.messagePointer("dependency.scope.compile"), true, true, true, true),
@@ -70,8 +55,26 @@ public enum DependencyScope {
     myForTestRuntime = forTestRuntime;
   }
 
-  @NotNull
-  public static DependencyScope readExternal(@NotNull Element element) {
+  /**
+   * Returns a scope that covers every use-case that is covered by at least one of the given scopes. If multiple such scopes exist, this
+   * method will return the narrowest of them, i.e. the one that covers the least use-cases.
+   *
+   * @param scope1 The first scope.
+   * @param scope2 The second scope.
+   * @return The narrowest scope that covers every use-case that is covered by at least one of the given scopes.
+   * @see #coversUseCasesOf(DependencyScope)
+   */
+  public static @NotNull DependencyScope coveringUseCasesOf(@NotNull DependencyScope scope1, @NotNull DependencyScope scope2) {
+    if (scope1.coversUseCasesOf(scope2)) return scope1;
+    if (scope2.coversUseCasesOf(scope1)) return scope2;
+    // At this point, we know that `scope1` and `scope2` are different, neither is COMPILE, and they're not PROVIDED+TEST either.
+    // The remaining cases are:
+    // - PROVIDED+RUNTIME = COMPILE
+    // - TEST+RUNTIME = COMPILE (wider than necessary, but there's no better alternative)
+    return COMPILE;
+  }
+
+  public static @NotNull DependencyScope readExternal(@NotNull Element element) {
     String scope = element.getAttributeValue(SCOPE_ATTR);
     if (scope != null) {
       try {
@@ -92,25 +95,68 @@ public enum DependencyScope {
     }
   }
 
-  @NotNull
-  public @NlsContexts.ListItem String getDisplayName() {
+  public @NotNull
+  @NlsContexts.ListItem String getDisplayName() {
     return myDisplayName.get();
   }
 
+  /**
+   * Tells whether a dependency with this scope will be used in <em>Production Compile</em> use-cases or not.
+   */
   public boolean isForProductionCompile() {
     return myForProductionCompile;
   }
 
+  /**
+   * Tells whether a dependency with this scope will be used in <em>Production Runtime</em> use-cases or not.
+   */
   public boolean isForProductionRuntime() {
     return myForProductionRuntime;
   }
 
+  /**
+   * Tells whether a dependency with this scope will be used in <em>Test Compile</em> use-cases or not.
+   */
   public boolean isForTestCompile() {
     return myForTestCompile;
   }
 
+  /**
+   * Tells whether a dependency with this scope will be used in <em>Test Runtime</em> use-cases or not.
+   */
   public boolean isForTestRuntime() {
     return myForTestRuntime;
+  }
+
+  /**
+   * <p>Tells whether this scope covers every use-case covered by the given other scope (and potentially more) or not.</p>
+   *
+   * <p>The result of this method will be {@code true} if and only if the set of use-cases covered by this scope include every use-case
+   * covered by the other one. This scope may cover use-cases that the other scope does not, but not the other way around. To be exact:</p>
+   * <ul>
+   * <li>If {@code that.}{@link #isForProductionCompile()} is {@code true}, then {@code this.}{@link #isForProductionCompile()} must also be
+   * {@code true}.</li>
+   * <li>If {@code that.}{@link #isForProductionRuntime()} is {@code true}, then {@code this.}{@link #isForProductionRuntime()} must also be
+   * {@code true}.</li>
+   * <li>If {@code that.}{@link #isForTestCompile()} is {@code true}, then {@code this.}{@link #isForTestCompile()} must also be
+   * {@code true}.</li>
+   * <li>If {@code that.}{@link #isForTestRuntime()} is {@code true}, then {@code this.}{@link #isForTestRuntime()} must also be
+   * {@code true}.</li>
+   * </ul>
+   *
+   * @param that The other scope.
+   * @return {@code true} if {@code this} scope covers every use-case covered by {@code that} scope, {@code false} otherwise.
+   */
+  public boolean coversUseCasesOf(@NotNull DependencyScope that) {
+    if (this == that) return true;
+    // Check every use-case whether there's any that's covered by `that` but not `this`
+    boolean thatCoversUseCaseNotCoveredByThis =
+      (that.myForProductionCompile && !this.myForProductionCompile) ||
+      (that.myForProductionRuntime && !this.myForProductionRuntime) ||
+      (that.myForTestCompile && !this.myForTestCompile) ||
+      (that.myForTestRuntime && !this.myForTestRuntime);
+    // Return `true` if there's no such use-case
+    return !thatCoversUseCaseNotCoveredByThis;
   }
 
   @Override

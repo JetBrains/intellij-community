@@ -16,7 +16,6 @@ import com.intellij.psi.PsiPackage;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usages.TextChunk;
-import com.intellij.usages.Usage;
 import com.intellij.usages.UsageInfo2UsageAdapter;
 import com.intellij.util.containers.JBIterable;
 import org.jetbrains.annotations.NotNull;
@@ -66,12 +65,13 @@ public class UsagesInAnalyzingDependenciesTest extends LightJavaCodeInsightFixtu
   }
 
   @NotNull
-  private static String toString(@NotNull Usage usage) {
+  private static String toString(@NotNull UsageInfo2UsageAdapter usage) {
+    usage.updateCachedPresentation();
     JBIterable<TextChunk> it = JBIterable.of(usage.getPresentation().getText());
     TextChunk first = it.first();
     assert first != null;
     JBIterable<TextChunk> rest = it.skip(1);
-    return first.toString() + " " + StringUtil.join(rest, Object::toString, "");
+    return first + " " + StringUtil.join(rest, Object::toString, "");
   }
 
   public void testBackwardPackageScope() {

@@ -1,0 +1,4 @@
+fun test(f: JFoo<*>) {
+    val bar = f.bar
+    val a = bar.toByteOrNull()
+}

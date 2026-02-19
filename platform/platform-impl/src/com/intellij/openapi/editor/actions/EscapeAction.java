@@ -1,27 +1,30 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.openapi.editor.actions;
 
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
-import com.intellij.openapi.editor.*;
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
+import com.intellij.openapi.editor.Caret;
+import com.intellij.openapi.editor.CaretModel;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.ScrollType;
+import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.editor.actionSystem.EditorAction;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.editor.ex.EditorEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class EscapeAction extends EditorAction {
+public final class EscapeAction extends EditorAction {
   public EscapeAction() {
     super(new Handler());
     setInjectedContext(true);
   }
 
-  private static class Handler extends EditorActionHandler {
+  private static final class Handler extends EditorActionHandler {
     @Override
     public void doExecute(@NotNull Editor editor, @Nullable Caret caret, DataContext dataContext) {
-      if (editor instanceof EditorEx) {
-        EditorEx editorEx = (EditorEx)editor;
+      if (editor instanceof EditorEx editorEx) {
         if (editorEx.isStickySelection()) {
           editorEx.setStickySelection(false);
         }
@@ -42,7 +45,9 @@ public class EscapeAction extends EditorAction {
 
     @Override
     public boolean isEnabledForCaret(@NotNull Editor editor, @NotNull Caret caret, DataContext dataContext) {
-      if (editor.isOneLineMode() && Boolean.TRUE.equals(PlatformDataKeys.IS_MODAL_CONTEXT.getData(dataContext))) return false;
+      if (editor.isOneLineMode() && Boolean.TRUE.equals(PlatformCoreDataKeys.IS_MODAL_CONTEXT.getData(dataContext))) {
+        return false;
+      }
       SelectionModel selectionModel = editor.getSelectionModel();
       CaretModel caretModel = editor.getCaretModel();
       return selectionModel.hasSelection() || caretModel.getCaretCount() > 1;

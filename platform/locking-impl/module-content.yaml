@@ -1,0 +1,6 @@
+- name: dist.all/lib/intellij.platform.locking.impl.jar
+  modules:
+  - name: intellij.platform.locking.impl
+  library: jetbrains.intellij.deps.rwmutex.idea
+  files:
+  - name: $MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/rwmutex-idea/0/rwmutex-idea-0.jar

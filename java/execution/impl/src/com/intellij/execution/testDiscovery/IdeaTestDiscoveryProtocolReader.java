@@ -1,10 +1,11 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.testDiscovery;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.rt.coverage.data.api.TestDiscoveryProtocolReader;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.MultiMap;
+import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -17,10 +18,8 @@ import java.util.stream.Collectors;
 final class IdeaTestDiscoveryProtocolReader implements TestDiscoveryProtocolReader, TestDiscoveryProtocolReader.NameEnumeratorReader {
   private static final Logger LOG = Logger.getInstance(IdeaTestDiscoveryProtocolReader.class);
 
-  @NotNull
-  private final Int2ObjectOpenHashMap<String> myTestExecutionNameEnumerator = new Int2ObjectOpenHashMap<>();
-  @NotNull
-  private final TestDiscoveryIndex myIndex;
+  private final @NotNull Int2ObjectMap<String> myTestExecutionNameEnumerator = new Int2ObjectOpenHashMap<>();
+  private final @NotNull TestDiscoveryIndex myIndex;
   private final String myModuleName;
   private final byte myFrameworkId;
 

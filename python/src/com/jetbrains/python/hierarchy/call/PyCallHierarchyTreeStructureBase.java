@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.hierarchy.call;
 
 import com.intellij.ide.hierarchy.HierarchyNodeDescriptor;
@@ -15,8 +15,10 @@ import com.jetbrains.python.psi.PyFunction;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author novokrest
@@ -29,14 +31,12 @@ public abstract class PyCallHierarchyTreeStructureBase extends HierarchyTreeStru
     myScopeType = currentScopeType;
   }
 
-  @NotNull
-  protected abstract List<PsiElement> getChildren(@NotNull PyElement element);
+  protected abstract @NotNull Map<PsiElement, Collection<PsiElement>> getChildren(@NotNull PyElement element);
 
   @Override
   protected Object @NotNull [] buildChildren(@NotNull HierarchyNodeDescriptor descriptor) {
     final List<PyHierarchyNodeDescriptor> descriptors = new ArrayList<>();
-    if (descriptor instanceof PyHierarchyNodeDescriptor) {
-      final PyHierarchyNodeDescriptor pyDescriptor = (PyHierarchyNodeDescriptor)descriptor;
+    if (descriptor instanceof PyHierarchyNodeDescriptor pyDescriptor) {
       final PsiElement element = pyDescriptor.getPsiElement();
       final boolean isCallable = element instanceof PyFunction || element instanceof PyClass || element instanceof PyFile;
       HierarchyNodeDescriptor nodeDescriptor = getBaseDescriptor();
@@ -44,28 +44,22 @@ public abstract class PyCallHierarchyTreeStructureBase extends HierarchyTreeStru
         return ArrayUtilRt.EMPTY_OBJECT_ARRAY;
       }
 
-      final List<PsiElement> children = getChildren((PyElement)element);
+      final Map<PsiElement, Collection<PsiElement>> children = getChildren((PyElement)element);
 
       final HashMap<PsiElement, PyHierarchyNodeDescriptor> callerToDescriptorMap = new HashMap<>();
       PsiElement baseClass = element instanceof PyFunction ? ((PyFunction)element).getContainingClass() : null;
 
-      for (PsiElement caller : children) {
+      children.forEach((caller, usages) -> {
         if (isInScope(baseClass, caller, myScopeType)) {
           PyHierarchyNodeDescriptor callerDescriptor = callerToDescriptorMap.get(caller);
           if (callerDescriptor == null) {
-            callerDescriptor = new PyHierarchyNodeDescriptor(descriptor, caller, false);
+            callerDescriptor = new PyHierarchyNodeDescriptor(descriptor, caller, usages, false);
             callerToDescriptorMap.put(caller, callerDescriptor);
             descriptors.add(callerDescriptor);
           }
         }
-      }
-
+      });
     }
     return ArrayUtil.toObjectArray(descriptors);
-  }
-
-  @Override
-  public boolean isAlwaysShowPlus() {
-    return true;
   }
 }

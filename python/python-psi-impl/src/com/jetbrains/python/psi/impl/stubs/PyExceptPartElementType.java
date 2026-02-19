@@ -28,17 +28,14 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 
-/**
- * @author yole
- */
+
 public class PyExceptPartElementType extends PyStubElementType<PyExceptPartStub, PyExceptPart> {
   public PyExceptPartElementType() {
     super("EXCEPT_PART");
   }
 
-  @NotNull
   @Override
-  public PsiElement createElement(@NotNull ASTNode node) {
+  public @NotNull PsiElement createElement(@NotNull ASTNode node) {
     return new PyExceptPartImpl(node);
   }
 
@@ -47,9 +44,8 @@ public class PyExceptPartElementType extends PyStubElementType<PyExceptPartStub,
     return new PyExceptPartImpl(stub);
   }
 
-  @NotNull
   @Override
-  public PyExceptPartStub createStub(@NotNull PyExceptPart psi, StubElement parentStub) {
+  public @NotNull PyExceptPartStub createStub(@NotNull PyExceptPart psi, StubElement parentStub) {
     return new PyExceptPartStubImpl(parentStub);
   }
 
@@ -57,9 +53,8 @@ public class PyExceptPartElementType extends PyStubElementType<PyExceptPartStub,
   public void serialize(@NotNull PyExceptPartStub stub, @NotNull StubOutputStream dataStream) throws IOException {
   }
 
-  @NotNull
   @Override
-  public PyExceptPartStub deserialize(@NotNull StubInputStream dataStream, StubElement parentStub) throws IOException {
+  public @NotNull PyExceptPartStub deserialize(@NotNull StubInputStream dataStream, StubElement parentStub) throws IOException {
     return new PyExceptPartStubImpl(parentStub);
   }
 }

@@ -1,8 +1,7 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.util;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.progress.SomeQueue;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NotNull;
@@ -20,8 +19,7 @@ import java.util.Map;
  * - at the moment only one refresh action is being done
  * - if request had been submitted while refresh action was in progress, new refresh action is initiated right after first refresh action finishes
  */
-@SomeQueue
-public class RequestsMerger {
+public final class RequestsMerger {
   private static final Logger LOG = Logger.getInstance(RequestsMerger.class);
 
   private final Object myLock = new Object();
@@ -115,8 +113,7 @@ public class RequestsMerger {
   private enum MyState {
     empty() {
       @Override
-      @NotNull
-      public MyState transition(MyAction action) {
+      public @NotNull MyState transition(MyAction action) {
         if (MyAction.request.equals(action)) {
           return MyState.requestSubmitted;
         }
@@ -126,8 +123,7 @@ public class RequestsMerger {
     },
     inProgress() {
       @Override
-      @NotNull
-      public MyState transition(MyAction action) {
+      public @NotNull MyState transition(MyAction action) {
         if (MyAction.finish.equals(action)) {
           return empty;
         }
@@ -140,8 +136,7 @@ public class RequestsMerger {
     },
     inProgressRequestSubmitted() {
       @Override
-      @NotNull
-      public MyState transition(MyAction action) {
+      public @NotNull MyState transition(MyAction action) {
         if (MyAction.finish.equals(action)) {
           return MyState.requestSubmitted;
         }
@@ -153,8 +148,7 @@ public class RequestsMerger {
     },
     requestSubmitted() {
       @Override
-      @NotNull
-      public MyState transition(MyAction action) {
+      public @NotNull MyState transition(MyAction action) {
         if (MyAction.start.equals(action)) {
           return inProgress;
         }
@@ -168,8 +162,7 @@ public class RequestsMerger {
     };
 
     // under lock
-    @NotNull
-    public abstract MyState transition(final MyAction action);
+    public abstract @NotNull MyState transition(final MyAction action);
 
     private static void logWrongAction(final MyState state, final MyAction action) {
       LOG.info("Wrong action: state=" + state.name() + ", action=" + action.name());

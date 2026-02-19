@@ -1,8 +1,15 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.notification.impl.actions;
 
 import com.intellij.ide.util.PropertiesComponent;
-import com.intellij.notification.*;
+import com.intellij.notification.Notification;
+import com.intellij.notification.Notification.CollapseActionsDirection;
+import com.intellij.notification.NotificationGroup;
+import com.intellij.notification.NotificationGroupManager;
+import com.intellij.notification.NotificationListener;
+import com.intellij.notification.NotificationType;
+import com.intellij.notification.Notifications;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
@@ -12,15 +19,20 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.MessageDialogBuilder;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.util.messages.MessageBus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.AbstractAction;
+import javax.swing.Action;
+import javax.swing.Icon;
+import javax.swing.JComponent;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.JTextArea;
 import javax.swing.event.HyperlinkEvent;
 import javax.swing.text.BadLocationException;
-import java.awt.*;
+import java.awt.BorderLayout;
 import java.awt.event.ActionEvent;
 import java.util.ArrayList;
 import java.util.List;
@@ -28,17 +40,22 @@ import java.util.List;
 @SuppressWarnings("HardCodedStringLiteral")
 public final class NotificationTestAction extends AnAction implements DumbAware {
   public static final String TEST_GROUP_ID = "Test Notification";
-  private static class Holder {
+  private static final class Holder {
     private static final NotificationGroup TEST_STICKY_GROUP =
-      new NotificationGroup("Test Sticky Notification", NotificationDisplayType.STICKY_BALLOON);
+      NotificationGroupManager.getInstance().getNotificationGroup("Test Sticky Notification");
     private static final NotificationGroup TEST_TOOLWINDOW_GROUP =
-      NotificationGroup.toolWindowGroup("Test ToolWindow Notification", ToolWindowId.TODO_VIEW);
+      NotificationGroupManager.getInstance().getNotificationGroup("Test ToolWindow Notification");
   }
   private static final String MESSAGE_KEY = "NotificationTestAction_Message";
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent event) {
     new NotificationDialog(event.getProject()).show();
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 
   private static final class NotificationDialog extends DialogWrapper {
@@ -76,20 +93,50 @@ public final class NotificationTestAction extends AnAction implements DumbAware 
       Action balloon = new AbstractAction("Balloon Examples") {
         @Override
         public void actionPerformed(ActionEvent e) {
-          setExamples("// Example 1\nIcon:/toolwindows/toolWindowChanges.png\nTitle:Deleted Branch\nContent:Unmerged commits discarded\n" +
-                      "Actions:Restore,View Commits,Delete Tracked Branch\n\n" +
-                      "// Example 2\nType:warn\nTitle:Title\nSubtitle:Subtitle\nContent:Foo<br>Bar\nSticky\n--\n" +
-                      "// Description\nType:info/error/warn\nIcon:\nTitle:\nSubtitle:\n" +
-                      "Content:\nContent:\nActions:\nSticky\n--\n");
+          setExamples("""
+                        // Example 1
+                        Icon:/toolwindows/toolWindowChanges.png
+                        Title:Deleted Branch
+                        Content:Unmerged commits discarded
+                        Actions:Restore,View Commits,Delete Tracked Branch
+
+                        // Example 2
+                        Type:warn
+                        Title:Title
+                        Subtitle:Subtitle
+                        Content:Foo<br>Bar
+                        Sticky
+                        --
+                        // Description
+                        Type:info/error/warn
+                        Icon:
+                        Title:
+                        Subtitle:
+                        Content:
+                        Content:
+                        Actions:
+                        Sticky
+                        --
+                        """);
         }
       };
       Action toolwindow = new AbstractAction("Toolwindow Examples") {
         @Override
         public void actionPerformed(ActionEvent e) {
-          setExamples("// Example\nToolwindow\nContent:Build completed successfully in 7 s 851 ms\n--\n" +
-                      "// Description: Notifications shows for toolwindow TODO\n" +
-                      "Toolwindow\nType:info/error/warn\nIcon:\nTitle:\n" +
-                      "Content:\nContent:\n--\n");
+          setExamples("""
+                        // Example
+                        Toolwindow
+                        Content:Build completed successfully in 7 s 851 ms
+                        --
+                        // Description: Notifications shows for toolwindow TODO
+                        Toolwindow
+                        Type:info/error/warn
+                        Icon:
+                        Title:
+                        Content:
+                        Content:
+                        --
+                        """);
         }
       };
       return new Action[]{balloon, toolwindow};
@@ -119,7 +166,7 @@ public final class NotificationTestAction extends AnAction implements DumbAware 
       NotificationInfo notification = null;
 
       for (String line : StringUtil.splitByLines(text, false)) {
-        if (line.length() == 0) {
+        if (line.isEmpty()) {
           if (notification != null) {
             notification = null;
             continue;
@@ -150,6 +197,9 @@ public final class NotificationTestAction extends AnAction implements DumbAware 
         else if (line.startsWith("Subtitle:")) {
           notification.setSubtitle(StringUtil.substringAfter(line, ":"));
         }
+        else if (line.startsWith("Help:")) {
+          notification.setHelp(StringUtil.substringAfter(line, ":"));
+        }
         else if (line.startsWith("Actions:")) {
           String value = StringUtil.substringAfter(line, ":");
           if (value != null) {
@@ -158,6 +208,18 @@ public final class NotificationTestAction extends AnAction implements DumbAware 
         }
         else if (line.startsWith("Type:")) {
           notification.setType(StringUtil.substringAfter(line, ":"));
+        }
+        else if (line.startsWith("LaterId:")) {
+          notification.setRemindLaterHandlerId(StringUtil.substringAfter(line, ":"));
+        }
+        else if (line.equals("Suggestion")) {
+          notification.setSuggestionType(true);
+        }
+        else if (line.equals("ImportantSuggestion")) {
+          notification.setImportantSuggestion(true);
+        }
+        else if (line.equals("AddExtraAction")) {
+          notification.setAddExtraAction(true);
         }
         else if (line.equals("Sticky")) {
           notification.setSticky(true);
@@ -168,8 +230,8 @@ public final class NotificationTestAction extends AnAction implements DumbAware 
         else if (line.equals("Toolwindow")) {
           notification.setToolwindow(true);
         }
-        else if (line.equals("LeftCollapseActions")) {
-          notification.myRightActionsDirection = false;
+        else if (line.equals("RightCollapseActions")) {
+          notification.myLeftActionsDirection = false;
         }
       }
 
@@ -181,53 +243,69 @@ public final class NotificationTestAction extends AnAction implements DumbAware 
     }
   }
 
-  private static class NotificationInfo implements NotificationListener {
+  private static final class NotificationInfo implements NotificationListener {
     private String myIcon;
     private String myTitle;
     private String mySubtitle;
+    private String myHelp;
     private List<String> myContent;
     private List<String> myActions;
     private NotificationType myType = NotificationType.INFORMATION;
     private boolean mySticky;
     private boolean myAddListener;
     private boolean myToolwindow;
-    private boolean myRightActionsDirection = true;
+    private boolean myLeftActionsDirection = true;
+    private boolean mySuggestionType;
+    private boolean myAddExtraAction;
+    private boolean myImportantSuggestion;
 
     private Notification myNotification;
+    private String myRemindLaterHandlerId;
 
     public Notification getNotification() {
       if (myNotification == null) {
-        Icon icon = StringUtil.isEmpty(myIcon) ? null : IconLoader.findIcon(myIcon);
+        Icon icon = StringUtil.isEmpty(myIcon) ? null : IconLoader.findIcon(myIcon, NotificationInfo.class.getClassLoader());
 
         String displayId = mySticky ? Holder.TEST_STICKY_GROUP.getDisplayId() : TEST_GROUP_ID;
         if (myToolwindow) {
           displayId = Holder.TEST_TOOLWINDOW_GROUP.getDisplayId();
         }
 
-        String content = myContent == null ? "" : StringUtil.join(myContent, "\n");
+        String content = myContent == null ? "" : String.join("\n", myContent);
 
-        if (icon == null) {
-          myNotification =
-            new Notification(displayId, StringUtil.notNullize(myTitle), content, myType, getListener());
+        myNotification = new Notification(displayId, content, myType).setIcon(icon).setTitle(myTitle, mySubtitle);
+
+        NotificationListener listener = getListener();
+        if (listener != null) {
+          myNotification.setListener(listener);
         }
-        else {
-          myNotification = new Notification(displayId, icon, myTitle, mySubtitle, content, myType, getListener());
+
+        if (myRemindLaterHandlerId != null) {
+          myNotification.setRemindLaterHandlerId(myRemindLaterHandlerId);
         }
+
+        myNotification.setSuggestionType(mySuggestionType);
+        myNotification.setAddExtraAction(myAddExtraAction);
+        myNotification.setImportantSuggestion(myImportantSuggestion);
 
         if (myActions != null && !myToolwindow) {
           for (String action : myActions) {
             myNotification.addAction(new MyAnAction(action));
           }
         }
+        if (myHelp != null) {
+          myNotification.setContextHelpAction(new AnAction("", myHelp, null) {
+            @Override
+            public void actionPerformed(@NotNull AnActionEvent e) {
+            }
+          });
+        }
       }
-      myNotification.setCollapseActionsDirection(myRightActionsDirection
-                                                 ? Notification.CollapseActionsDirection.KEEP_RIGHTMOST
-                                                 : Notification.CollapseActionsDirection.KEEP_LEFTMOST);
+      myNotification.setCollapseDirection(myLeftActionsDirection ? CollapseActionsDirection.KEEP_LEFTMOST : CollapseActionsDirection.KEEP_RIGHTMOST);
       return myNotification;
     }
 
-    @Nullable
-    private NotificationListener getListener() {
+    private @Nullable NotificationListener getListener() {
       return myAddListener ? this : null;
     }
 
@@ -241,6 +319,10 @@ public final class NotificationTestAction extends AnAction implements DumbAware 
 
     public void setSubtitle(@Nullable String subtitle) {
       mySubtitle = subtitle;
+    }
+
+    private void setHelp(String help) {
+      myHelp = help;
     }
 
     public void setAddListener(boolean addListener) {
@@ -260,6 +342,22 @@ public final class NotificationTestAction extends AnAction implements DumbAware 
 
     public void setSticky(boolean sticky) {
       mySticky = sticky;
+    }
+
+    public void setRemindLaterHandlerId(String remindLaterHandlerId) {
+      myRemindLaterHandlerId = remindLaterHandlerId;
+    }
+
+    private void setSuggestionType(boolean suggestionType) {
+      mySuggestionType = suggestionType;
+    }
+
+    private void setImportantSuggestion(boolean importantSuggestion) {
+      myImportantSuggestion = importantSuggestion;
+    }
+
+    private void setAddExtraAction(boolean addExtraAction) {
+      myAddExtraAction = addExtraAction;
     }
 
     public void setToolwindow(boolean toolwindow) {
@@ -290,7 +388,7 @@ public final class NotificationTestAction extends AnAction implements DumbAware 
       private MyAnAction(@Nullable String text) {
         if (text != null) {
           if (text.endsWith(".png")) {
-            Icon icon = IconLoader.findIcon(text);
+            Icon icon = IconLoader.findIcon(text, MyAnAction.class.getClassLoader());
             if (icon != null) {
               getTemplatePresentation().setIcon(icon);
               return;

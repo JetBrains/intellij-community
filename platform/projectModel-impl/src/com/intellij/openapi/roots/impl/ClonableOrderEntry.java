@@ -22,12 +22,13 @@ import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-/**
- *  @author dsl
- */
 @FunctionalInterface
 @ApiStatus.Internal
 public interface ClonableOrderEntry {
+  /**
+   * Creates a detached copy of this order entry. The returned value may be passed to {@link ModifiableRootModel#addOrderEntry} method
+   * only and cannot be used in any other way.
+   */
   @NotNull
   OrderEntry cloneEntry(@NotNull ModifiableRootModel rootModel, @NotNull ProjectRootManagerImpl projectRootManager, @NotNull VirtualFilePointerManager filePointerManager);
 }

@@ -1,1 +1,1 @@
-<warning descr="No encoding specified for file"></warning>from typing import Any
+<warning descr="No encoding specified for file">from typing import Any</warning>

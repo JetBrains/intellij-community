@@ -1,8 +1,9 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source;
 
 import com.intellij.extapi.psi.ASTDelegatePsiElement;
 import com.intellij.lang.ASTNode;
+import com.intellij.lang.Language;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.impl.source.tree.TreeElement;
 import org.jetbrains.annotations.NotNull;
@@ -11,32 +12,31 @@ import org.jetbrains.annotations.Nullable;
 public final class SourceTreeToPsiMap {
   private SourceTreeToPsiMap() { }
 
-  @Nullable
-  public static PsiElement treeElementToPsi(@Nullable final ASTNode element) {
+  public static @Nullable PsiElement treeElementToPsi(@Nullable ASTNode element) {
     return element == null ? null : element.getPsi();
   }
 
-  @NotNull
-  public static <T extends PsiElement> T treeToPsiNotNull(@NotNull final ASTNode element) {
-    final PsiElement psi = element.getPsi();
-    assert psi != null : element;
+  public static @NotNull <T extends PsiElement> T treeToPsiNotNull(@NotNull ASTNode astNode) {
+    PsiElement psi = astNode.getPsi();
+    if (psi == null) {
+      Language language = astNode.getElementType().getLanguage();
+      throw new AssertionError("PSI is null for AST " + astNode + " (" + astNode.getClass() + "); language: " + language);
+    }
     //noinspection unchecked
     return (T)psi;
   }
 
-  @Nullable
-  public static ASTNode psiElementToTree(@Nullable final PsiElement psiElement) {
+  public static @Nullable ASTNode psiElementToTree(@Nullable PsiElement psiElement) {
     return psiElement == null ? null : psiElement.getNode();
   }
 
-  @NotNull
-  public static TreeElement psiToTreeNotNull(@NotNull final PsiElement psiElement) {
-    final ASTNode node = psiElement.getNode();
+  public static @NotNull TreeElement psiToTreeNotNull(@NotNull PsiElement psiElement) {
+    ASTNode node = psiElement.getNode();
     assert node instanceof TreeElement : psiElement + ", " + node;
     return (TreeElement)node;
   }
 
-  public static boolean hasTreeElement(@Nullable final PsiElement psiElement) {
+  public static boolean hasTreeElement(@Nullable PsiElement psiElement) {
     return psiElement instanceof TreeElement || psiElement instanceof ASTDelegatePsiElement || psiElement instanceof PsiFileImpl;
   }
 }

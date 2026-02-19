@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.ui.configuration.libraryEditor;
 
 import com.intellij.ide.JavaUiBundle;
@@ -12,12 +12,12 @@ import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryType;
 import com.intellij.openapi.roots.libraries.LibraryTypeService;
 import com.intellij.openapi.roots.libraries.NewLibraryConfiguration;
-import com.intellij.openapi.roots.ui.configuration.ProjectStructureConfigurable;
 import com.intellij.openapi.roots.ui.configuration.libraries.LibraryEditingUtil;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.BaseLibrariesConfigurable;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesModifiableModel;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ModuleStructureConfigurable;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectLibrariesConfigurable;
+import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.ProjectStructureValidator;
 import com.intellij.openapi.ui.MasterDetailsComponent;
 import com.intellij.openapi.util.NlsActions;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -25,7 +25,8 @@ import com.intellij.util.PlatformIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.Icon;
+import javax.swing.JComponent;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreeNode;
 import java.util.ArrayList;
@@ -48,9 +49,8 @@ public final class CreateNewLibraryAction extends DumbAwareAction {
     myProject = project;
   }
 
-  @Nullable
-  public static Library createLibrary(@Nullable final LibraryType type, @NotNull final JComponent parentComponent,
-                                      @NotNull final Project project, @NotNull final LibrariesModifiableModel modifiableModel) {
+  public static @Nullable Library createLibrary(final @Nullable LibraryType type, final @NotNull JComponent parentComponent,
+                                                final @NotNull Project project, final @NotNull LibrariesModifiableModel modifiableModel) {
     final NewLibraryConfiguration configuration = createNewLibraryConfiguration(type, parentComponent, project);
     if (configuration == null) return null;
     final LibraryType<?> libraryType = configuration.getLibraryType();
@@ -66,8 +66,7 @@ public final class CreateNewLibraryAction extends DumbAwareAction {
     return library;
   }
 
-  @Nullable
-  public static NewLibraryConfiguration createNewLibraryConfiguration(@Nullable LibraryType type, @NotNull JComponent parentComponent, @NotNull Project project) {
+  public static @Nullable NewLibraryConfiguration createNewLibraryConfiguration(@Nullable LibraryType type, @NotNull JComponent parentComponent, @NotNull Project project) {
     final NewLibraryConfiguration configuration;
     final VirtualFile baseDir = project.getBaseDir();
     if (type != null) {
@@ -87,7 +86,7 @@ public final class CreateNewLibraryAction extends DumbAwareAction {
     final LibraryType<?>[] extensions = LibraryType.EP_NAME.getExtensions();
     List<LibraryType<?>> suitableTypes = new ArrayList<>();
     if (librariesConfigurable instanceof ProjectLibrariesConfigurable || !project.isDefault()) {
-      final ModuleStructureConfigurable configurable = ModuleStructureConfigurable.getInstance(project);
+      final ModuleStructureConfigurable configurable = librariesConfigurable.getProjectStructureConfigurable().getModulesConfig();
       for (LibraryType<?> extension : extensions) {
         if (!LibraryEditingUtil.getSuitableModules(configurable, extension.getKind(), null).isEmpty()) {
           suitableTypes.add(extension);
@@ -118,10 +117,11 @@ public final class CreateNewLibraryAction extends DumbAwareAction {
       createLibrary(myType, myLibrariesConfigurable.getTree(), myProject, myLibrariesConfigurable.getModelProvider().getModifiableModel());
     if (library == null) return;
 
-    final BaseLibrariesConfigurable rootConfigurable = ProjectStructureConfigurable.getInstance(myProject).getConfigurableFor(library);
+    final BaseLibrariesConfigurable rootConfigurable = myLibrariesConfigurable.getProjectStructureConfigurable().getConfigurableFor(library);
     final DefaultMutableTreeNode
       libraryNode = MasterDetailsComponent.findNodeByObject((TreeNode)rootConfigurable.getTree().getModel().getRoot(), library);
     rootConfigurable.selectNodeInTree(libraryNode);
-    LibraryEditingUtil.showDialogAndAddLibraryToDependencies(library, myProject, true);
+    ProjectStructureValidator.showDialogAndAddLibraryToDependencies(library, myLibrariesConfigurable.getProjectStructureConfigurable(),
+                                                                    true);
   }
 }

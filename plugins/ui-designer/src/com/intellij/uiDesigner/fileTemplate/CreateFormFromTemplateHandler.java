@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.uiDesigner.fileTemplate;
 
 import com.intellij.ide.fileTemplates.DefaultCreateFromTemplateHandler;
@@ -10,12 +10,10 @@ import com.intellij.psi.PsiDirectory;
 import com.intellij.uiDesigner.GuiFormFileType;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author yole
- */
-public class CreateFormFromTemplateHandler extends DefaultCreateFromTemplateHandler {
+
+public final class CreateFormFromTemplateHandler extends DefaultCreateFromTemplateHandler {
   @Override
-  public boolean handlesTemplate(@NotNull final FileTemplate template) {
+  public boolean handlesTemplate(final @NotNull FileTemplate template) {
     FileType fileType = FileTypeManagerEx.getInstanceEx().getFileTypeByExtension(template.getExtension());
     return fileType.equals(GuiFormFileType.INSTANCE);
   }

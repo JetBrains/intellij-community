@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInsight.unwrap;
 
@@ -31,12 +17,12 @@ import org.jetbrains.annotations.NotNull;
 import java.util.ArrayList;
 import java.util.List;
 
-public class ScopeHighlighter {
+public final class ScopeHighlighter {
   public static final NotNullFunction<PsiElement,TextRange> NATURAL_RANGER = dom -> dom.getTextRange();
 
-  @NotNull private final Editor myEditor;
-  @NotNull private final List<RangeHighlighter> myActiveHighliters = new ArrayList<>();
-  @NotNull private final NotNullFunction<? super PsiElement, ? extends TextRange> myRanger;
+  private final @NotNull Editor myEditor;
+  private final @NotNull List<RangeHighlighter> myActiveHighliters = new ArrayList<>();
+  private final @NotNull NotNullFunction<? super PsiElement, ? extends TextRange> myRanger;
 
   public ScopeHighlighter(@NotNull Editor editor) {
     this(editor, NATURAL_RANGER);
@@ -61,11 +47,13 @@ public class ScopeHighlighter {
     List<TextRange> rangesToExtract = ranges.second;
     List<TextRange> rangesToRemove = RangeSplitter.split(wholeRange, rangesToExtract);
 
-    for (TextRange r : rangesToRemove) {
-      addHighlighter(r, UnwrapHandler.HIGHLIGHTER_LEVEL, EditorColors.DELETED_TEXT_ATTRIBUTES);
-    }
-    for (TextRange r : rangesToExtract) {
-      addHighlighter(r, UnwrapHandler.HIGHLIGHTER_LEVEL, EditorColors.SEARCH_RESULT_ATTRIBUTES);
+    addHighlights(rangesToRemove, EditorColors.DELETED_TEXT_ATTRIBUTES);
+    addHighlights(rangesToExtract, EditorColors.SEARCH_RESULT_ATTRIBUTES);
+  }
+
+  public void addHighlights(List<? extends TextRange> ranges, TextAttributesKey key) {
+    for (TextRange r : ranges) {
+      addHighlighter(r, UnwrapHandler.HIGHLIGHTER_LEVEL, key);
     }
   }
 

@@ -1,114 +1,122 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.incremental.storage;
 
-import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.util.io.FileUtil;
+import com.dynatrace.hash4j.hashing.Hashing;
+import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.EnumeratorIntegerDescriptor;
-import gnu.trove.TIntHashSet;
+import com.intellij.util.io.PersistentMapBuilder;
+import it.unimi.dsi.fastutil.ints.IntIterator;
+import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
+import it.unimi.dsi.fastutil.ints.IntSet;
+import it.unimi.dsi.fastutil.ints.IntSets;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.jps.builders.storage.SourceToOutputMapping;
 import org.jetbrains.jps.incremental.relativizer.PathRelativizerService;
 
-import java.io.*;
+import java.io.DataInput;
+import java.io.DataInputStream;
+import java.io.DataOutput;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
+import java.util.List;
 
-/**
- * @author Eugene Zhuravlev
- */
-public class OutputToTargetRegistry extends AbstractStateStorage<Integer, TIntHashSet> {
-  private final PathRelativizerService myRelativizer;
-
-  private static final DataExternalizer<TIntHashSet> DATA_EXTERNALIZER = new DataExternalizer<TIntHashSet>() {
+@ApiStatus.Internal
+public final class OutputToTargetRegistry extends AbstractStateStorage<Integer, IntSet> implements OutputToTargetMapping {
+  private static final DataExternalizer<IntSet> DATA_EXTERNALIZER = new DataExternalizer<>() {
     @Override
-    public void save(@NotNull final DataOutput out, TIntHashSet value) throws IOException {
-      final Ref<IOException> exRef = Ref.create(null);
-      value.forEach(value1 -> {
-        try {
-          out.writeInt(value1);
-        }
-        catch (IOException e) {
-          exRef.set(e);
-          return false;
-        }
-        return true;
-      });
-      final IOException error = exRef.get();
-      if (error != null) {
-        throw error;
+    public void save(@NotNull DataOutput out, IntSet value) throws IOException {
+      IntIterator iterator = value.iterator();
+      while (iterator.hasNext()) {
+        out.writeInt(iterator.nextInt());
       }
     }
 
     @Override
-    public TIntHashSet read(@NotNull DataInput in) throws IOException {
-      final TIntHashSet result = new TIntHashSet();
-      final DataInputStream stream = (DataInputStream)in;
+    public IntSet read(@NotNull DataInput in) throws IOException {
+      IntSet result = new IntOpenHashSet();
+      DataInputStream stream = (DataInputStream)in;
       while (stream.available() > 0) {
         result.add(in.readInt());
       }
       return result;
     }
   };
+  private final PathRelativizerService relativizer;
 
-  OutputToTargetRegistry(File storePath, PathRelativizerService relativizer) throws IOException {
-    super(storePath, EnumeratorIntegerDescriptor.INSTANCE, DATA_EXTERNALIZER);
-    myRelativizer = relativizer;
+  OutputToTargetRegistry(@NotNull Path storePath, PathRelativizerService relativizer) throws IOException {
+    super(PersistentMapBuilder.newBuilder(storePath, EnumeratorIntegerDescriptor.INSTANCE, DATA_EXTERNALIZER));
+
+    this.relativizer = relativizer;
   }
 
-  protected void addMapping(String outputPath, int buildTargetId) throws IOException {
-    addMapping(Collections.singleton(outputPath), buildTargetId);
+  void addMapping(@NotNull String outputPath, int buildTargetId) throws IOException {
+    appendData(pathHashCode(outputPath), IntSets.singleton(buildTargetId));
   }
 
-  protected void addMapping(Collection<String> outputPaths, int buildTargetId) throws IOException {
-    final TIntHashSet set = new TIntHashSet();
-    set.add(buildTargetId);
-    for (String outputPath : outputPaths) {
-      appendData(FileUtil.pathHashCode(relativePath(outputPath)), set);
+  void addMappings(int buildTargetId, @NotNull Collection<Path> outputPaths) throws IOException {
+    IntSet set = IntSets.singleton(buildTargetId);
+    for (Path outputPath : outputPaths) {
+      appendData(pathHashCode(outputPath), set);
     }
   }
 
-  public void removeMapping(String outputPath, int buildTargetId) throws IOException {
-    removeMapping(Collections.singleton(outputPath), buildTargetId);
-  }
-
-  public void removeMapping(Collection<String> outputPaths, int buildTargetId) throws IOException {
+  @Override
+  public void removeMappings(@NotNull Collection<String> outputPaths, int buildTargetId, @NotNull SourceToOutputMapping srcToOut) throws IOException {
     if (outputPaths.isEmpty()) {
       return;
     }
+
     for (String outputPath : outputPaths) {
-      final int key = FileUtil.pathHashCode(relativePath(outputPath));
-      synchronized (myDataLock) {
-        final TIntHashSet state = getState(key);
+      int key = pathHashCode(outputPath);
+      synchronized (dataLock) {
+        IntSet state = getState(key);
         if (state != null) {
-          final boolean removed = state.remove(buildTargetId);
+          boolean removed = state.remove(buildTargetId);
           if (state.isEmpty()) {
             remove(key);
           }
-          else {
-            if (removed) {
-              update(key, state);
-            }
+          else if (removed) {
+            update(key, state);
           }
         }
       }
     }
   }
 
-  public Collection<String> getSafeToDeleteOutputs(Collection<String> outputPaths, int currentTargetId) throws IOException {
-    final int size = outputPaths.size();
+  @Override
+  public @NotNull Collection<String> removeTargetAndGetSafeToDeleteOutputs(Collection<String> outputPaths,
+                                                                           int currentTargetId,
+                                                                           @NotNull SourceToOutputMapping srcToOut) throws IOException {
+    int size = outputPaths.size();
     if (size == 0) {
       return outputPaths;
     }
-    final Collection<String> result = new ArrayList<>(size);
+
+    List<String> result = new ArrayList<>(size);
     for (String outputPath : outputPaths) {
-      final int key = FileUtil.pathHashCode(relativePath(outputPath));
-      synchronized (myDataLock) {
-        final TIntHashSet associatedTargets = getState(key);
-        if (associatedTargets == null || associatedTargets.size() != 1) {
-          continue;
+      int key = pathHashCode(outputPath);
+      synchronized (dataLock) {
+        IntSet state = getState(key);
+        boolean isSafeToDelete = false;
+        if (state == null) {
+          isSafeToDelete = true;
         }
-        if (associatedTargets.contains(currentTargetId)) {
+        else {
+          boolean removed = state.remove(currentTargetId);
+          if (state.isEmpty()) {
+            remove(key);
+            isSafeToDelete = true;
+          }
+          else if (removed) {
+            update(key, state);
+          }
+        }
+        if (isSafeToDelete) {
           result.add(outputPath);
         }
       }
@@ -116,8 +124,23 @@ public class OutputToTargetRegistry extends AbstractStateStorage<Integer, TIntHa
     return result;
   }
 
-  @NotNull
-  private String relativePath(@NotNull String path) {
-    return myRelativizer.toRelative(path);
+  private int pathHashCode(@NotNull String path) {
+    String relativePath = relativizer.toRelative(path);
+    if (ProjectStamps.PORTABLE_CACHES) {
+      return Hashing.xxh3_64().hashBytesToInt(relativePath.getBytes(StandardCharsets.UTF_8));
+    }
+    else {
+      return FileUtilRt.pathHashCode(relativePath);
+    }
+  }
+
+  private int pathHashCode(@NotNull Path path) {
+    String relativePath = relativizer.toRelative(path);
+    if (ProjectStamps.PORTABLE_CACHES) {
+      return Hashing.xxh3_64().hashBytesToInt(relativePath.getBytes(StandardCharsets.UTF_8));
+    }
+    else {
+      return FileUtilRt.pathHashCode(relativePath);
+    }
   }
 }

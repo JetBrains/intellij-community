@@ -17,39 +17,30 @@ package com.jetbrains.python.psi.types;
 
 import com.jetbrains.python.PyNames;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
+import java.util.LinkedHashSet;
 
-/**
- * @author vlan
- */
 public final class PyDynamicallyEvaluatedType extends PyUnionType {
-  private PyDynamicallyEvaluatedType(@NotNull Collection<PyType> members) {
+  private PyDynamicallyEvaluatedType(@NotNull LinkedHashSet<@Nullable PyType> members) {
     super(members);
   }
 
-  @NotNull
-  public static PyDynamicallyEvaluatedType create(@NotNull PyType type) {
-    final List<PyType> members = new ArrayList<>();
-    if (type instanceof PyUnionType) {
-      final PyUnionType unionType = (PyUnionType)type;
+  public static @NotNull PyDynamicallyEvaluatedType create(@NotNull PyType type) {
+    final LinkedHashSet<PyType> members = new LinkedHashSet<>();
+    if (type instanceof PyUnionType unionType) {
       members.addAll(unionType.getMembers());
-      if (!unionType.isWeak()) {
-        members.add(null);
-      }
     }
     else {
       members.add(type);
-      members.add(null);
     }
+    members.add(null);
     return new PyDynamicallyEvaluatedType(members);
   }
 
   @Override
   public String getName() {
-    PyType res = excludeNull(TypeEvalContext.codeInsightFallback(null));
-    return res != null ? res.getName() : PyNames.UNKNOWN_TYPE;
+    PyType res = excludeNull();
+    return res != null ? res.getName() : PyNames.ANY_TYPE;
   }
 }

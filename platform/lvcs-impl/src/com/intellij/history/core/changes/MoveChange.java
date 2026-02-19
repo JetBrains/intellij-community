@@ -2,8 +2,8 @@
 
 package com.intellij.history.core.changes;
 
+import com.intellij.history.core.DataStreamUtil;
 import com.intellij.history.core.Paths;
-import com.intellij.history.core.StreamUtil;
 import com.intellij.history.core.tree.Entry;
 import com.intellij.history.core.tree.RootEntry;
 
@@ -11,7 +11,7 @@ import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
 
-public class MoveChange extends StructuralChange {
+public final class MoveChange extends StructuralChange {
   private final String myOldPath;
 
   public MoveChange(long id, String path, String oldParent) {
@@ -21,13 +21,13 @@ public class MoveChange extends StructuralChange {
 
   public MoveChange(DataInput in) throws IOException {
     super(in);
-    myOldPath = StreamUtil.readString(in);
+    myOldPath = DataStreamUtil.readString(in);
   }
 
   @Override
   public void write(DataOutput out) throws IOException {
     super.write(out);
-    StreamUtil.writeString(out, myOldPath);
+    DataStreamUtil.writeString(out, myOldPath);
   }
 
   @Override

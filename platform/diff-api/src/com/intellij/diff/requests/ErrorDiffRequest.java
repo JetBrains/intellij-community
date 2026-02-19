@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diff.requests;
 
 import com.intellij.diff.chains.DiffRequestProducer;
@@ -10,8 +10,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public final class ErrorDiffRequest extends MessageDiffRequest {
-  @Nullable private final DiffRequestProducer myProducer;
-  @Nullable private final Throwable myException;
+  private final @Nullable DiffRequestProducer myProducer;
+  private final @Nullable Throwable myException;
 
   public ErrorDiffRequest(@NotNull @Nls String message) {
     this(null, message, null, null);
@@ -46,19 +46,15 @@ public final class ErrorDiffRequest extends MessageDiffRequest {
     myException = e;
   }
 
-  @Nullable
-  public DiffRequestProducer getProducer() {
+  public @Nullable DiffRequestProducer getProducer() {
     return myProducer;
   }
 
-  @Nullable
-  public Throwable getException() {
+  public @Nullable Throwable getException() {
     return myException;
   }
 
-  @Nls
-  @NotNull
-  private static String getErrorMessage(@NotNull Throwable e) {
+  private static @Nls @NotNull String getErrorMessage(@NotNull Throwable e) {
     String message = e.getMessage();
     return StringUtil.isEmptyOrSpaces(message) ? DiffBundle.message("error.cant.show.diff.message") : message;
   }

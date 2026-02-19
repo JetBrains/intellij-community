@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.changeSignature;
 
 import com.intellij.codeInsight.completion.JavaCompletionUtil;
@@ -7,7 +7,14 @@ import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaCodeFragment;
+import com.intellij.psi.JavaCodeFragmentFactory;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiEllipsisType;
+import com.intellij.psi.PsiExpressionCodeFragment;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypeCodeFragment;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.impl.source.PsiExpressionCodeFragmentImpl;
 import com.intellij.refactoring.ui.JavaCodeFragmentTableCellEditor;
@@ -23,11 +30,13 @@ import com.intellij.util.ui.ColumnInfo;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JComponent;
+import javax.swing.JTable;
+import javax.swing.KeyStroke;
 import javax.swing.border.LineBorder;
 import javax.swing.table.TableCellEditor;
 import javax.swing.table.TableCellRenderer;
-import java.awt.*;
+import java.awt.Component;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.InputEvent;
@@ -53,7 +62,7 @@ public class JavaParameterTableModel extends ParameterTableModelBase<ParameterIn
          new AnyVarColumn<ParameterInfoImpl, ParameterTableModelItemBase<ParameterInfoImpl>>() {
         @Override
         public boolean isCellEditable(ParameterTableModelItemBase<ParameterInfoImpl> item) {
-          boolean isGenerateDelegate = ((ChangeSignatureDialogBase)dialog).isGenerateDelegate();
+          boolean isGenerateDelegate = ((ChangeSignatureDialogBase<?, ?, ?, ?, ?, ?>)dialog).isGenerateDelegate();
           return !isGenerateDelegate && super.isCellEditable(item);
         }
       });
@@ -103,8 +112,7 @@ public class JavaParameterTableModel extends ParameterTableModelBase<ParameterIn
       try {
         type = JavaPsiFacade.getElementFactory(myProject).createTypeFromText((String)aValue, myTypeContext);
       }
-      catch (IncorrectOperationException e) {
-        type = null;
+      catch (IncorrectOperationException ignored) {
       }
     }
 
@@ -114,8 +122,7 @@ public class JavaParameterTableModel extends ParameterTableModelBase<ParameterIn
     }
   }
 
-  @Nullable
-  private static PsiType getRowType(JTable table, int row) {
+  private static @Nullable PsiType getRowType(JTable table, int row) {
     try {
       return ((PsiTypeCodeFragment)((JavaParameterTableModel)table.getModel()).getItems().get(row).typeCodeFragment).getType();
     }
@@ -152,7 +159,6 @@ public class JavaParameterTableModel extends ParameterTableModelBase<ParameterIn
     private static void completeVariable(EditorTextField editorTextField, PsiType type) {
       Editor editor = editorTextField.getEditor();
       String prefix = editorTextField.getText();
-      if (prefix == null) prefix = "";
       Set<LookupElement> set = new LinkedHashSet<>();
       JavaCompletionUtil.completeVariableNameForRefactoring(editorTextField.getProject(), set, prefix, type, VariableKind.PARAMETER);
 

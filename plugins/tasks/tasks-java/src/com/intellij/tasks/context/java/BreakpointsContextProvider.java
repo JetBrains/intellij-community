@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.tasks.context.java;
 
 import com.intellij.debugger.DebuggerManager;
@@ -15,19 +15,14 @@ import com.intellij.tasks.context.WorkingContextProvider;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author Dmitry Avdeev
- */
-public final class BreakpointsContextProvider extends WorkingContextProvider {
-  @NotNull
+final class BreakpointsContextProvider extends WorkingContextProvider {
   @Override
-  public String getId() {
+  public @NotNull String getId() {
     return "javaDebugger";
   }
 
-  @NotNull
   @Override
-  public String getDescription() {
+  public @NotNull String getDescription() {
     return TaskBundle.message("java.debugger.breakpoints");
   }
 
@@ -36,8 +31,7 @@ public final class BreakpointsContextProvider extends WorkingContextProvider {
     getBreakpointManager(project).writeExternal(toElement);
   }
 
-  @NotNull
-  private static BreakpointManager getBreakpointManager(@NotNull Project project) {
+  private static @NotNull BreakpointManager getBreakpointManager(@NotNull Project project) {
     return DebuggerManagerEx.getInstanceEx(project).getBreakpointManager();
   }
 

@@ -15,17 +15,30 @@
  */
 package org.jetbrains.uast.java
 
-import com.intellij.psi.*
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiMethodReferenceExpression
+import com.intellij.psi.PsiNamedElement
+import com.intellij.psi.PsiType
+import com.intellij.psi.ResolveResult
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.uast.UCallableReferenceExpression
 import org.jetbrains.uast.UElement
 import org.jetbrains.uast.UExpression
 import org.jetbrains.uast.UMultiResolvable
+import org.jetbrains.uast.UastLazyPart
+import org.jetbrains.uast.getOrBuild
 
+@ApiStatus.Internal
 class JavaUCallableReferenceExpression(
   override val sourcePsi: PsiMethodReferenceExpression,
   givenParent: UElement?
 ) : JavaAbstractUExpression(givenParent), UCallableReferenceExpression, UMultiResolvable {
-  override val qualifierExpression: UExpression? by lz { JavaConverter.convertOrNull(sourcePsi.qualifierExpression, this) }
+
+  private val qualifierExpressionPart = UastLazyPart<UExpression?>()
+  private val referenceNameElementPart = UastLazyPart<UElement?>()
+
+  override val qualifierExpression: UExpression?
+    get() = qualifierExpressionPart.getOrBuild { JavaConverter.convertOrNull(sourcePsi.qualifierExpression, this) }
 
   override val qualifierType: PsiType?
     get() = sourcePsi.qualifierType?.type
@@ -40,9 +53,8 @@ class JavaUCallableReferenceExpression(
   override val resolvedName: String?
     get() = (sourcePsi.resolve() as? PsiNamedElement)?.name
 
-  override val referenceNameElement: UElement? by lz {
-    sourcePsi.referenceNameElement?.let { JavaUSimpleNameReferenceExpression(it, callableName, this, it.reference) }
-  }
-
-
+  override val referenceNameElement: UElement?
+    get() = referenceNameElementPart.getOrBuild {
+      sourcePsi.referenceNameElement?.let { JavaUSimpleNameReferenceExpression(it, callableName, this, it.reference) }
+    }
 }

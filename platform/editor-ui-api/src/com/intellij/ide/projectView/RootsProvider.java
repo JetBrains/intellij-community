@@ -17,10 +17,9 @@ package com.intellij.ide.projectView;
 
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Collection;
-import java.util.Collections;
-import java.util.Set;
 
 /**
  * Specifies that the element corresponds to several virtual files.
@@ -28,15 +27,10 @@ import java.util.Set;
  * or a resource bundle may correspond to several properties files.
  */
 public interface RootsProvider {
-  /**
-   * @deprecated use {@link Collections#emptySet()}
-   */
-  @Deprecated
-  Set<VirtualFile> EMPTY_ROOTS = Collections.emptySet();
 
   /**
    * @return a collection of corresponding virtual files
    */
-  @NotNull
+  @NotNull @Unmodifiable
   Collection<VirtualFile> getRoots();
 }

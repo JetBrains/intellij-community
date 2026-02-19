@@ -33,6 +33,9 @@ public final class HtmlBuilder {
 
   @Contract("_ -> this")
   public HtmlBuilder append(@NotNull HtmlBuilder builder) {
+    if (this == builder) {
+      throw new IllegalArgumentException("Cannot add builder to itself");
+    }
     myChunks.addAll(builder.myChunks);
     return this;
   }
@@ -82,7 +85,7 @@ public final class HtmlBuilder {
    * @return this builder
    */
   @Contract("_, _ -> this")
-  public HtmlBuilder appendWithSeparators(@NotNull HtmlChunk separator, @NotNull Iterable<HtmlChunk> children) {
+  public HtmlBuilder appendWithSeparators(@NotNull HtmlChunk separator, @NotNull Iterable<? extends HtmlChunk> children) {
     boolean first = true;
     for (HtmlChunk child : children) {
       if (!first) {
@@ -180,6 +183,12 @@ public final class HtmlBuilder {
    * @return a fragment chunk that contains all the chunks of this builder.
    */
   public HtmlChunk toFragment() {
+    if (myChunks.isEmpty()) {
+      return HtmlChunk.empty();
+    }
+    if (myChunks.size() == 1) {
+      return myChunks.get(0);
+    }
     return new HtmlChunk.Fragment(new ArrayList<>(myChunks));
   }
   
@@ -194,5 +203,14 @@ public final class HtmlBuilder {
       chunk.appendTo(sb);
     }
     return sb.toString();
+  }
+
+  public void clear() {
+    myChunks.clear();
+  }
+
+  public void clearAndAppend(@NotNull HtmlChunk chunk) {
+    clear();
+    append(chunk);
   }
 }

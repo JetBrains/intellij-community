@@ -1,15 +1,23 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes.ui.browser
 
 import com.intellij.diff.DiffContentFactory
 import com.intellij.diff.comparison.ComparisonManagerImpl
-import com.intellij.diff.comparison.trimExpandText
+import com.intellij.diff.comparison.trimExpand
 import com.intellij.diff.lang.DiffIgnoredRangeProvider
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.ActionGroup
+import com.intellij.openapi.actionSystem.ActionUpdateThread
+import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.DataKey
+import com.intellij.openapi.actionSystem.Separator
+import com.intellij.openapi.actionSystem.ToggleAction
+import com.intellij.openapi.actionSystem.Toggleable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
@@ -17,21 +25,26 @@ import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.FileStatus
 import com.intellij.openapi.vcs.VcsBundle
+import com.intellij.openapi.vcs.VcsException
 import com.intellij.openapi.vcs.changes.ByteBackedContentRevision
 import com.intellij.openapi.vcs.changes.Change
 import com.intellij.openapi.vcs.changes.ui.ChangesComparator
-import com.intellij.ui.GuiUtils
+import com.intellij.util.ModalityUiUtil
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.containers.ContainerUtil
+import com.intellij.util.ui.update.DisposableUpdate
 import com.intellij.util.ui.update.MergingUpdateQueue
-import com.intellij.util.ui.update.Update
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NotNull
 
+@ApiStatus.Internal
 class ChangesFilterer(val project: Project?, val listener: Listener) : Disposable {
   companion object {
     @JvmField
     val DATA_KEY: DataKey<ChangesFilterer> = DataKey.create("com.intellij.openapi.vcs.changes.ui.browser.ChangesFilterer")
+
+    private val LOG = logger<ChangesFilterer>()
   }
 
   private val LOCK = Any()
@@ -58,7 +71,9 @@ class ChangesFilterer(val project: Project?, val listener: Listener) : Disposabl
     if (oldChanges == null && changes == null) return
     if (oldChanges != null && changes != null && ContainerUtil.equalsIdentity(oldChanges, changes)) return
     rawChanges = changes?.toList()
-    restartLoading()
+    if (activeFilter != null) {
+      restartLoading()
+    }
   }
 
   @RequiresEdt
@@ -148,7 +163,13 @@ class ChangesFilterer(val project: Project?, val listener: Listener) : Disposabl
     for (change in changes) {
       ProgressManager.checkCanceled()
 
-      val accept = filter.accept(this, change)
+      val accept = try {
+        filter.accept(this, change)
+      }
+      catch (e: VcsException) {
+        LOG.warn(e)
+        true
+      }
 
       synchronized(LOCK) {
         ProgressManager.checkCanceled()
@@ -167,19 +188,17 @@ class ChangesFilterer(val project: Project?, val listener: Listener) : Disposabl
   }
 
   private fun queueUpdatePresentation() {
-    updateQueue.queue(object : Update("update") {
-      override fun run() {
-        updatePresentation()
-      }
+    updateQueue.queue(DisposableUpdate.createDisposable(updateQueue, "update") {
+      updatePresentation()
     })
   }
 
   private fun updatePresentation() {
-    GuiUtils.invokeLaterIfNeeded(
-      {
-        updateQueue.cancelAllUpdates()
-        listener.updateChanges()
-      }, ModalityState.any())
+    ModalityUiUtil.invokeLaterIfNeeded(
+      ModalityState.any()) {
+      updateQueue.cancelAllUpdates()
+      listener.updateChanges()
+    }
   }
 
   private fun resetFilter(): ProgressIndicator {
@@ -194,7 +213,7 @@ class ChangesFilterer(val project: Project?, val listener: Listener) : Disposabl
     }
   }
 
-  private interface Filter {
+  internal interface Filter {
     fun isAvailable(filterer: ChangesFilterer): Boolean = true
     fun accept(filterer: ChangesFilterer, change: Change): Boolean
 
@@ -249,8 +268,8 @@ class ChangesFilterer(val project: Project?, val listener: Listener) : Disposabl
       val content1 = bRev.content ?: return true
       val content2 = aRev.content ?: return true
 
-      val diffContent1 = DiffContentFactory.getInstance().create(project, content1, bRev.file.fileType)
-      val diffContent2 = DiffContentFactory.getInstance().create(project, content2, aRev.file.fileType)
+      val diffContent1 = DiffContentFactory.getInstance().create(project, content1, bRev.file)
+      val diffContent2 = DiffContentFactory.getInstance().create(project, content2, aRev.file)
 
       val provider = DiffIgnoredRangeProvider.EP_NAME.extensions.find {
         it.accepts(project, diffContent1) &&
@@ -264,7 +283,10 @@ class ChangesFilterer(val project: Project?, val listener: Listener) : Disposabl
       val ignored1 = ComparisonManagerImpl.collectIgnoredRanges(ignoredRanges1)
       val ignored2 = ComparisonManagerImpl.collectIgnoredRanges(ignoredRanges2)
 
-      val range = trimExpandText(content1, content2, 0, 0, content1.length, content2.length, ignored1, ignored2)
+      val range = trimExpand(0, 0, content1.length, content2.length,
+                             { index1, index2 -> content1[index1] == content2[index2] },
+                             { index -> ignored1[index] },
+                             { index -> ignored2[index] })
       return !range.isEmpty
     }
   }
@@ -283,11 +305,12 @@ class ChangesFilterer(val project: Project?, val listener: Listener) : Disposabl
     }
   }
 
-  class FilterGroup : DefaultActionGroup(), Toggleable, DumbAware {
+  class FilterGroup : ActionGroup(), Toggleable, DumbAware {
     init {
-      isPopup = true
+      isPopup = false
       templatePresentation.text = VcsBundle.message("action.filter.filter.by.text")
-      templatePresentation.icon = AllIcons.General.Filter
+      templatePresentation.setIconSupplier { AllIcons.General.Filter }
+      templatePresentation.isDisableGroupIfEmpty = false
     }
 
     override fun update(e: AnActionEvent) {
@@ -305,17 +328,22 @@ class ChangesFilterer(val project: Project?, val listener: Listener) : Disposabl
     override fun getChildren(e: AnActionEvent?): Array<AnAction> {
       val filterer = e?.getData(DATA_KEY) ?: return AnAction.EMPTY_ARRAY
 
-      return listOf(MovesOnlyFilter, NonImportantFilter)
-        .filter { it.isAvailable(filterer) }
-        .map { ToggleFilterAction(filterer, it) }
-        .toTypedArray()
+      return arrayOf<AnAction>(Separator(VcsBundle.message("action.filter.separator.text"))) +
+             listOf(MovesOnlyFilter, NonImportantFilter)
+               .filter { it.isAvailable(filterer) }
+               .map { ToggleFilterAction(filterer, it) }
+               .toTypedArray()
     }
 
-    override fun disableIfNoVisibleChildren(): Boolean = false
+    override fun getActionUpdateThread(): ActionUpdateThread {
+      return ActionUpdateThread.EDT
+    }
   }
 
-  private class ToggleFilterAction(val filterer: ChangesFilterer, val filter: Filter)
+  internal class ToggleFilterAction(val filterer: ChangesFilterer, val filter: Filter)
     : ToggleAction(filter.getText(), filter.getDescription(), null), DumbAware {
+    override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
+
     override fun isSelected(e: AnActionEvent): Boolean = filterer.activeFilter == filter
 
     override fun setSelected(e: AnActionEvent, state: Boolean) {

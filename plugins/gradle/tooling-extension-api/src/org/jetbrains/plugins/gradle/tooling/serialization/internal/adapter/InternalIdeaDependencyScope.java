@@ -2,12 +2,14 @@
 package org.jetbrains.plugins.gradle.tooling.serialization.internal.adapter;
 
 import org.gradle.tooling.model.idea.IdeaDependencyScope;
+import org.jetbrains.annotations.ApiStatus;
 
 import java.util.HashMap;
 import java.util.Map;
 
+@ApiStatus.Internal
 public final class InternalIdeaDependencyScope implements IdeaDependencyScope {
-  private static final Map<String, InternalIdeaDependencyScope> SCOPES_MAP = new HashMap<String, InternalIdeaDependencyScope>();
+  private static final Map<String, InternalIdeaDependencyScope> SCOPES_MAP = new HashMap<>();
 
   static {
     SCOPES_MAP.put("Compile", new InternalIdeaDependencyScope("Compile"));

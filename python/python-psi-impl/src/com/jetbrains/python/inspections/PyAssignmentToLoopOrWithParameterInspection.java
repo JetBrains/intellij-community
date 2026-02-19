@@ -12,7 +12,14 @@ import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
-import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.PyElsePart;
+import com.jetbrains.python.psi.PyExpression;
+import com.jetbrains.python.psi.PyForStatement;
+import com.jetbrains.python.psi.PySubscriptionExpression;
+import com.jetbrains.python.psi.PyUtil;
+import com.jetbrains.python.psi.PyWithItem;
+import com.jetbrains.python.psi.PyWithStatement;
+import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -29,18 +36,18 @@ import java.util.List;
  *
  * @author link
  */
-public class PyAssignmentToLoopOrWithParameterInspection extends PyInspection {
-  @NotNull
+public final class PyAssignmentToLoopOrWithParameterInspection extends PyInspection {
   @Override
-  public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder,
-                                        final boolean isOnTheFly,
-                                        @NotNull final LocalInspectionToolSession session) {
-    return new Visitor(holder, session);
+  public @NotNull PsiElementVisitor buildVisitor(final @NotNull ProblemsHolder holder,
+                                                 final boolean isOnTheFly,
+                                                 final @NotNull LocalInspectionToolSession session) {
+    return new Visitor(holder, PyInspectionVisitor.getContext(session));
   }
 
   private static final class Visitor extends PyInspectionVisitor {
-    private Visitor(@Nullable final ProblemsHolder holder, @NotNull final LocalInspectionToolSession session) {
-      super(holder, session);
+    private Visitor(final @Nullable ProblemsHolder holder,
+                    @NotNull TypeEvalContext context) {
+      super(holder, context);
     }
 
     @Override
@@ -57,7 +64,7 @@ public class PyAssignmentToLoopOrWithParameterInspection extends PyInspection {
      * Finds first parent of specific type (See {@link #isRequiredStatement(PsiElement)})
      * that declares one of names, declared in this statement
      */
-    private void checkNotReDeclaringUpperLoopOrStatement(@NotNull final PsiElement statement) {
+    private void checkNotReDeclaringUpperLoopOrStatement(final @NotNull PsiElement statement) {
       for (PyExpression declaredVar : getNamedElementsOfForAndWithStatements(statement)) {
         final Filter filter = new Filter(handleSubscriptionsAndResolveSafely(declaredVar));
         final PsiElement firstParent = PsiTreeUtil.findFirstParent(statement, true, filter);
@@ -80,7 +87,7 @@ public class PyAssignmentToLoopOrWithParameterInspection extends PyInspection {
    * @param forStatement   statement to obtain "else" part from
    * @return true if declared in "Else" block
    */
-  private static boolean isDeclaredInElse(@NotNull final PsiElement elementToCheck, @NotNull final PyForStatement forStatement) {
+  private static boolean isDeclaredInElse(final @NotNull PsiElement elementToCheck, final @NotNull PyForStatement forStatement) {
     final PyElsePart elsePart = forStatement.getElsePart();
     if (elsePart != null) {
       if (PsiTreeUtil.isAncestor(elsePart, elementToCheck, false)) {
@@ -129,8 +136,7 @@ public class PyAssignmentToLoopOrWithParameterInspection extends PyInspection {
    * @param element element to open and resolve
    * @return opened and resolved element
    */
-  @NotNull
-  private static PsiElement handleSubscriptionsAndResolveSafely(@NotNull PyExpression element) {
+  private static @NotNull PsiElement handleSubscriptionsAndResolveSafely(@NotNull PyExpression element) {
     if (element instanceof PySubscriptionExpression) {
       element = ((PySubscriptionExpression)element).getRootOperand();
     }
@@ -148,16 +154,13 @@ public class PyAssignmentToLoopOrWithParameterInspection extends PyInspection {
     return (element instanceof PyWithStatement) || (element instanceof PyForStatement);
   }
 
-  @NotNull
-  private static List<PyExpression> getNamedElementsOfForAndWithStatements(@NotNull PsiElement element) {
-    if (element instanceof PyForStatement) {
-      final PyForStatement forStatement = (PyForStatement)element;
+  private static @NotNull List<PyExpression> getNamedElementsOfForAndWithStatements(@NotNull PsiElement element) {
+    if (element instanceof PyForStatement forStatement) {
       final PyExpression target = forStatement.getForPart().getTarget();
 
       return dropUnderscores(PyUtil.flattenedParensAndStars(target));
     }
-    else if (element instanceof PyWithStatement) {
-      final PyWithStatement withStatement = (PyWithStatement)element;
+    else if (element instanceof PyWithStatement withStatement) {
       final List<PyExpression> result = new ArrayList<>();
 
       for (PyWithItem item : withStatement.getWithItems()) {
@@ -173,8 +176,7 @@ public class PyAssignmentToLoopOrWithParameterInspection extends PyInspection {
     return Collections.emptyList();
   }
 
-  @NotNull
-  private static List<PyExpression> dropUnderscores(@NotNull List<PyExpression> expressions) {
+  private static @NotNull List<PyExpression> dropUnderscores(@NotNull List<PyExpression> expressions) {
     return ContainerUtil.filter(expressions,
                                 expression -> !PyNames.UNDERSCORE.equals(expression.getText()));
   }

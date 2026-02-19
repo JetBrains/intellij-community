@@ -1,35 +1,50 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.facet.impl
 
-import com.intellij.facet.*
+import com.intellij.facet.Facet
+import com.intellij.facet.FacetConfiguration
+import com.intellij.facet.FacetManager
+import com.intellij.facet.FacetManagerBase
+import com.intellij.facet.FacetType
+import com.intellij.facet.FacetTypeId
+import com.intellij.facet.FacetTypeRegistry
+import com.intellij.facet.ModifiableFacetModel
+import com.intellij.facet.ProjectFacetManager
 import com.intellij.facet.impl.invalid.InvalidFacetManager
 import com.intellij.facet.impl.invalid.InvalidFacetType
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.extensions.ExtensionPointListener
 import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectBundle
 import com.intellij.openapi.project.ProjectManager
+import com.intellij.openapi.project.RootsChangeRescanningInfo
+import com.intellij.openapi.roots.ex.ProjectRootManagerEx
+import com.intellij.workspaceModel.ide.impl.legacyBridge.facet.FacetManagerBridge
 import org.jetbrains.jps.model.serialization.facet.FacetState
-import java.util.*
+import java.util.Arrays
 
-class FacetTypeRegistryImpl : FacetTypeRegistry() {
-  private val myTypeIds: MutableMap<String, FacetTypeId<*>> = HashMap()
-  private val myFacetTypes: MutableMap<FacetTypeId<*>, FacetType<*, *>> = HashMap()
-  @Volatile private var myExtensionsLoaded = false
-  private val myTypeRegistrationLock = Object()
+private val LOG = Logger.getInstance(FacetTypeRegistryImpl::class.java)
+private val FACET_TYPE_COMPARATOR = Comparator { o1: FacetType<*, *>, o2: FacetType<*, *> ->
+  o1.presentableName.compareTo(o2.presentableName, ignoreCase = true)
+}
+
+internal class FacetTypeRegistryImpl : FacetTypeRegistry() {
+  private val typeIds = HashMap<String, FacetTypeId<*>>()
+  private val facetTypes = HashMap<FacetTypeId<*>, FacetType<*, *>>()
+  @Volatile private var extensionsLoaded = false
+  private val typeRegistrationLock = Object()
 
   @Synchronized
-  override fun registerFacetType(facetType: FacetType<*, *>) {
+  private fun registerFacetType(facetType: FacetType<*, *>) {
     val typeId = facetType.id
     val id = facetType.stringId
     LOG.assertTrue(!id.contains("/"), "Facet type id '$id' contains illegal character '/'")
-    LOG.assertTrue(!myFacetTypes.containsKey(typeId), "Facet type '$id' is already registered")
-    myFacetTypes[typeId] = facetType
-    LOG.assertTrue(!myTypeIds.containsKey(id), "Facet type id '$id' is already registered")
-    myTypeIds[id] = typeId
+    LOG.assertTrue(!facetTypes.containsKey(typeId), "Facet type '$id' is already registered")
+    facetTypes[typeId] = facetType
+    LOG.assertTrue(!typeIds.containsKey(id), "Facet type id '$id' is already registered")
+    typeIds[id] = typeId
   }
 
   private fun loadInvalidFacetsOfType(project: Project, facetType: FacetType<*, *>) {
@@ -40,8 +55,7 @@ class FacetTypeRegistryImpl : FacetTypeRegistry() {
       val model = FacetManager.getInstance(module).createModifiableModel()
       val invalidFacets = model.getFacetsByType(InvalidFacetType.TYPE_ID).filter { it.configuration.facetState.facetType == facetType.stringId }
       for (invalidFacet in invalidFacets) {
-        val newFacet = FacetManagerImpl.createFacetFromStateRaw(module, facetType, invalidFacet.configuration.facetState,
-                                                                invalidFacet.underlyingFacet)
+        val newFacet = FacetUtil.createFacetFromStateRawJ(module, facetType, invalidFacet)
         model.replaceFacet(invalidFacet, newFacet)
         for (subFacet in invalidFacet.configuration.facetState.subFacets) {
           model.addFacet(FacetManagerBase.createInvalidFacet(module, subFacet, newFacet, invalidFacet.configuration.errorMessage, false, false))
@@ -52,18 +66,14 @@ class FacetTypeRegistryImpl : FacetTypeRegistry() {
   }
 
   @Synchronized
-  override fun unregisterFacetType(facetType: FacetType<*, *>) {
-    try {
-      ProjectManager.getInstance().openProjects.forEach {
-        convertFacetsToInvalid(it, facetType)
-      }
-    }
-    finally {
-      val id = facetType.id
-      val stringId = facetType.stringId
-      LOG.assertTrue(myFacetTypes.remove(id) != null, "Facet type '$stringId' is not registered")
-      myFacetTypes.remove(id)
-      myTypeIds.remove(stringId)
+  private fun unregisterFacetType(facetType: FacetType<*, *>) {
+    val id = facetType.id
+    val stringId = facetType.stringId
+    LOG.assertTrue(facetTypes.remove(id) != null, "Facet type '$stringId' is not registered")
+    facetTypes.remove(id)
+    typeIds.remove(stringId)
+    ProjectManager.getInstance().openProjects.forEach {
+      convertFacetsToInvalid(it, facetType)
     }
   }
 
@@ -84,6 +94,11 @@ class FacetTypeRegistryImpl : FacetTypeRegistry() {
       }
       model.commit()
     }
+    if (modulesWithFacets.isNotEmpty()) {
+      /* this is needed to recompute RootIndex; otherwise its DirectoryInfoImpl instances will keep references to SourceFolderBridges,
+         which will keep references to Facet instances from unloaded plugin via WorkspaceEntityStorage making it impossible to unload plugins without a restart */
+      ProjectRootManagerEx.getInstanceEx(project).makeRootsChange({}, RootsChangeRescanningInfo.NO_RESCAN_NEEDED)
+    }
   }
 
   private fun removeAllSubFacets(model: ModifiableFacetModel, facet: Facet<*>, subFacets: Map<Facet<*>, List<Facet<*>>>) {
@@ -94,8 +109,8 @@ class FacetTypeRegistryImpl : FacetTypeRegistry() {
     }
   }
 
-  private fun saveFacetWithSubFacets(facet: Facet<*>?, subFacets: Map<Facet<FacetConfiguration>, List<Facet<*>>>): FacetState? {
-    val state = FacetManagerImpl.saveFacetConfiguration(facet) ?: return null
+  private fun saveFacetWithSubFacets(facet: Facet<*>, subFacets: Map<Facet<FacetConfiguration>, List<Facet<*>>>): FacetState? {
+    val state = FacetManagerBridge.saveFacetConfiguration(facet) ?: return null
     (subFacets[facet] ?: emptyList()).mapNotNullTo(state.subFacets) { saveFacetWithSubFacets(it, subFacets) }
     return state
   }
@@ -103,19 +118,19 @@ class FacetTypeRegistryImpl : FacetTypeRegistry() {
   @Synchronized
   override fun getFacetTypeIds(): Array<FacetTypeId<*>> {
     loadExtensions()
-    return myFacetTypes.keys.toTypedArray()
+    return facetTypes.keys.toTypedArray()
   }
 
   @Synchronized
   override fun getFacetTypes(): Array<FacetType<*, *>> {
     loadExtensions()
-    val facetTypes = myFacetTypes.values.toTypedArray()
+    val facetTypes = facetTypes.values.toTypedArray()
     Arrays.sort(facetTypes, FACET_TYPE_COMPARATOR)
     return facetTypes
   }
 
   override fun getSortedFacetTypes(): Array<FacetType<*, *>> {
-    val types = facetTypes
+    val types = getFacetTypes()
     Arrays.sort(types, FACET_TYPE_COMPARATOR)
     return types
   }
@@ -123,54 +138,51 @@ class FacetTypeRegistryImpl : FacetTypeRegistry() {
   @Synchronized
   override fun findFacetType(id: String): FacetType<*, *>? {
     loadExtensions()
-    val typeId = myTypeIds[id] ?: return null
-    return myFacetTypes[typeId]
+    val typeId = typeIds[id] ?: return null
+    return facetTypes[typeId]
   }
 
   @Synchronized
   override fun <F : Facet<C>?, C : FacetConfiguration?> findFacetType(typeId: FacetTypeId<F>): FacetType<F, C> {
     loadExtensions()
     @Suppress("UNCHECKED_CAST")
-    val type = myFacetTypes[typeId] as FacetType<F, C>?
+    val type = facetTypes.get(typeId) as FacetType<F, C>?
     LOG.assertTrue(type != null, "Cannot find facet by id '$typeId'")
     return type!!
   }
 
   private fun loadExtensions() {
-    if (myExtensionsLoaded) {
+    if (extensionsLoaded) {
       return
     }
 
-    synchronized(myTypeRegistrationLock) {
-      if (myExtensionsLoaded) return
+    synchronized(typeRegistrationLock) {
+      if (extensionsLoaded) {
+        return
+      }
 
-      FacetType.EP_NAME.forEachExtensionSafe {
-        registerFacetType(it)
+      //we cannot use forEachExtensionSafe here because it may throw ProcessCanceledException during iteration,
+      // and we'll get a partially initialized state here
+      for (type in FacetType.EP_NAME.extensionList) {
+        registerFacetType(type)
       }
       FacetType.EP_NAME.addExtensionPointListener(
-        object : ExtensionPointListener<FacetType<*, *>?> {
+        object : ExtensionPointListener<FacetType<*, *>> {
           override fun extensionAdded(extension: FacetType<*, *>, pluginDescriptor: PluginDescriptor) {
             registerFacetType(extension)
-            runWriteAction {
-              ProjectManager.getInstance().openProjects.forEach {
+            val projectManager = ProjectManager.getInstance()
+            ApplicationManager.getApplication().runWriteAction {
+              for (it in projectManager.openProjects) {
                 loadInvalidFacetsOfType(it, extension)
               }
             }
           }
 
-          override fun extensionRemoved(extension: FacetType<*, *>,
-                                        pluginDescriptor: PluginDescriptor) {
+          override fun extensionRemoved(extension: FacetType<*, *>, pluginDescriptor: PluginDescriptor) {
             unregisterFacetType(extension)
           }
         }, null)
-      myExtensionsLoaded = true
-    }
-  }
-
-  companion object {
-    private val LOG = Logger.getInstance(FacetTypeRegistryImpl::class.java)
-    private val FACET_TYPE_COMPARATOR = Comparator { o1: FacetType<*, *>, o2: FacetType<*, *> ->
-      o1.presentableName.compareTo(o2.presentableName, ignoreCase = true)
+      extensionsLoaded = true
     }
   }
 }

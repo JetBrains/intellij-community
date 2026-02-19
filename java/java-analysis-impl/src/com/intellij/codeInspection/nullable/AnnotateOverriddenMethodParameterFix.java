@@ -1,36 +1,26 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.nullable;
 
-import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.FileModificationService;
-import com.intellij.codeInsight.intention.AddAnnotationPsiFix;
-import com.intellij.codeInspection.AnnotateMethodFix;
+import com.intellij.codeInsight.Nullability;
+import com.intellij.codeInsight.NullabilityAnnotationInfo;
+import com.intellij.codeInsight.NullableNotNullManager;
+import com.intellij.codeInsight.intention.AddAnnotationModCommandAction;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.java.analysis.JavaAnalysisBundle;
+import com.intellij.modcommand.ActionContext;
+import com.intellij.modcommand.ModCommand;
+import com.intellij.modcommand.ModCommandAction;
+import com.intellij.modcommand.ModCommandExecutor;
+import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiInvalidElementAccessException;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiParameter;
-import com.intellij.psi.util.ClassUtil;
+import com.intellij.psi.search.searches.OverridingMethodsSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ArrayUtilRt;
-import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -38,18 +28,17 @@ import java.util.List;
 import java.util.function.Consumer;
 
 public class AnnotateOverriddenMethodParameterFix implements LocalQuickFix {
-  private final String myAnnotation;
-  private final String[] myAnnosToRemove;
+  private final Nullability myTargetNullability;
 
-  AnnotateOverriddenMethodParameterFix(@NotNull String annotationFQN, String @NotNull ... annosToRemove) {
-    myAnnotation = annotationFQN;
-    myAnnosToRemove = annosToRemove;
+  AnnotateOverriddenMethodParameterFix(@NotNull Nullability targetNullability) {
+    myTargetNullability = targetNullability;
   }
 
   @Override
-  @NotNull
-  public String getName() {
-    return JavaAnalysisBundle.message("annotate.overridden.methods.parameters", ClassUtil.extractClassName(myAnnotation));
+  public @NotNull String getName() {
+    return myTargetNullability == Nullability.NOT_NULL ?
+           JavaAnalysisBundle.message("annotate.overridden.methods.parameters.nonnull") :
+           JavaAnalysisBundle.message("annotate.overridden.methods.parameters.nullable");
   }
 
   @Override
@@ -62,33 +51,25 @@ public class AnnotateOverriddenMethodParameterFix implements LocalQuickFix {
     List<PsiParameter> toAnnotate = new ArrayList<>();
 
     PsiParameter parameter = PsiTreeUtil.getParentOfType(descriptor.getPsiElement(), PsiParameter.class, false);
-    if (parameter == null || !processParameterInheritorsUnderProgress(parameter, param -> {
-      if (AddAnnotationPsiFix.isAvailable(param, myAnnotation)) {
-        toAnnotate.add(param);
-      }
-    })) {
+    if (parameter == null || !processParameterInheritorsUnderProgress(parameter, toAnnotate::add)) {
       return;
     }
 
     FileModificationService.getInstance().preparePsiElementsForWrite(toAnnotate);
-    RuntimeException exception = null;
+    ActionContext actionContext = ActionContext.from(descriptor);
     for (PsiParameter psiParam : toAnnotate) {
       assert psiParam != null : toAnnotate;
-      try {
-        if (AnnotationUtil.isAnnotatingApplicable(psiParam, myAnnotation)) {
-          AddAnnotationPsiFix fix = new AddAnnotationPsiFix(myAnnotation, psiParam, myAnnosToRemove);
-          PsiFile containingFile = psiParam.getContainingFile();
-          if (psiParam.isValid() && fix.isAvailable(project, containingFile, psiParam, psiParam)) {
-            fix.invoke(project, containingFile, psiParam, psiParam);
-          }
+      ModCommandExecutor.executeInteractively(actionContext, getFamilyName(), null, () -> {
+        NullabilityAnnotationInfo info = NullableNotNullManager.getInstance(project).findEffectiveNullabilityInfo(psiParam);
+        if (info != null && info.getNullability() == myTargetNullability &&
+            info.getInheritedFrom() == null && !info.isInferred()) {
+          return ModCommand.nop();
         }
-      }
-      catch (PsiInvalidElementAccessException|IncorrectOperationException e) {
-        exception = e;
-      }
-      if (exception != null) {
-        throw exception;
-      }
+        ModCommandAction action = myTargetNullability == Nullability.NOT_NULL
+                                  ? AddAnnotationModCommandAction.createAddNotNullFix(psiParam)
+                                  : AddAnnotationModCommandAction.createAddNullableFix(psiParam);
+        return action == null || action.getPresentation(actionContext) == null ? ModCommand.nop() : action.perform(actionContext);
+      });
     }
   }
 
@@ -98,7 +79,7 @@ public class AnnotateOverriddenMethodParameterFix implements LocalQuickFix {
     PsiParameter[] parameters = method.getParameterList().getParameters();
     int index = ArrayUtilRt.find(parameters, parameter);
 
-    return AnnotateMethodFix.processModifiableInheritorsUnderProgress(method, psiMethod -> {
+    return processModifiableInheritorsUnderProgress(method, psiMethod -> {
       PsiParameter[] psiParameters = psiMethod.getParameterList().getParameters();
       if (index < psiParameters.length) {
         consumer.accept(psiParameters[index]);
@@ -107,8 +88,19 @@ public class AnnotateOverriddenMethodParameterFix implements LocalQuickFix {
   }
 
   @Override
-  @NotNull
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return JavaAnalysisBundle.message("annotate.overridden.methods.parameters.family.name");
+  }
+
+  public static boolean processModifiableInheritorsUnderProgress(@NotNull PsiMethod method, @NotNull Consumer<? super PsiMethod> consumer) {
+    return ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
+      for (PsiMethod psiMethod : OverridingMethodsSearch.search(method).asIterable()) {
+        ReadAction.run(() -> {
+          if (psiMethod.isPhysical() && !NullableStuffInspectionBase.shouldSkipOverriderAsGenerated(psiMethod)) {
+            consumer.accept(psiMethod);
+          }
+        });
+      }
+    }, JavaAnalysisBundle.message("searching.for.overriding.methods"), true, method.getProject());
   }
 }

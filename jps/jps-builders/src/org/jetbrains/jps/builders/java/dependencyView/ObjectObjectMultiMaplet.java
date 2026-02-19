@@ -1,20 +1,21 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.builders.java.dependencyView;
 
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.text.StringUtil;
-import gnu.trove.TObjectObjectProcedure;
+import com.intellij.util.PairProcessor;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.LinkedList;
+import java.util.List;
 
-/**
- * @author: db
- */
-abstract class ObjectObjectMultiMaplet<K, V> implements Streamable, CloseableMaplet {
+@ApiStatus.Internal
+public abstract class ObjectObjectMultiMaplet<K, V> implements Streamable, CloseableMaplet {
   abstract boolean containsKey(final K key);
 
   abstract Collection<V> get(final K key);
@@ -35,7 +36,7 @@ abstract class ObjectObjectMultiMaplet<K, V> implements Streamable, CloseableMap
 
   abstract void removeAll(final K key, final Collection<V> value);
 
-  abstract void forEachEntry(TObjectObjectProcedure<K, Collection<V>> procedure);
+  abstract void forEachEntry(@NotNull PairProcessor<? super K, ? super Collection<V>> procedure);
 
   abstract void flush(boolean memoryCachesOnly);
 
@@ -43,15 +44,12 @@ abstract class ObjectObjectMultiMaplet<K, V> implements Streamable, CloseableMap
   public void toStream(final DependencyContext context, final PrintStream stream) {
 
     final List<Pair<K, String>> keys = new ArrayList<>();
-    forEachEntry(new TObjectObjectProcedure<K, Collection<V>>() {
-      @Override
-      public boolean execute(final K a, final Collection<V> b) {
-        keys.add(Pair.create(a, debugString(a)));
-        return true;
-      }
+    forEachEntry((a, b) -> {
+      keys.add(Pair.create(a, debugString(a)));
+      return true;
     });
 
-    keys.sort(Comparator.comparing(o -> o.second));
+    keys.sort(Pair.comparingBySecond());
 
     for (final Pair<K, String> a: keys) {
       final Collection<V> b = get(a.first);
@@ -81,8 +79,7 @@ abstract class ObjectObjectMultiMaplet<K, V> implements Streamable, CloseableMap
     }
   }
 
-  @NotNull
-  protected String debugString(K k) {
+  protected @NotNull String debugString(K k) {
     return k.toString();
   }
 }

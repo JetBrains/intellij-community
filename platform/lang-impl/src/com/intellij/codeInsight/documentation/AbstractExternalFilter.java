@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.documentation;
 
 import com.intellij.ide.BrowserUtil;
@@ -14,10 +14,18 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.io.HttpRequests;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.VisibleForTesting;
 
-import java.io.*;
+import java.io.BufferedReader;
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.Reader;
+import java.io.StringReader;
+import java.io.UnsupportedEncodingException;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.regex.Matcher;
@@ -33,7 +41,7 @@ public abstract class AbstractExternalFilter {
 
   private static final Pattern CLASS_DATA_START = Pattern.compile("START OF CLASS DATA", Pattern.CASE_INSENSITIVE);
   private static final Pattern CLASS_DATA_END = Pattern.compile("SUMMARY ========", Pattern.CASE_INSENSITIVE);
-  private static final Pattern NON_CLASS_DATA_END = Pattern.compile("<A (NAME|ID)=", Pattern.CASE_INSENSITIVE);
+  private static final Pattern NON_CLASS_DATA_END = Pattern.compile(" (NAME|ID)=", Pattern.CASE_INSENSITIVE);
   private static final Pattern ANNIHILATOR = Pattern.compile("/[^/^.]*/[.][.]/");
   private static final Pattern CHARSET_META = Pattern.compile("<meta[^>]+\\s*charset=\"?([\\w\\-]*)\\s*\">", Pattern.CASE_INSENSITIVE);
 
@@ -49,7 +57,7 @@ public abstract class AbstractExternalFilter {
   private static final String BR = "<BR>";
   private static final String DT = "<DT>";
 
-  protected static abstract class RefConvertor {
+  protected abstract static class RefConvertor {
     final Pattern mySelector;
 
     public RefConvertor(@NotNull Pattern selector) {
@@ -98,13 +106,10 @@ public abstract class AbstractExternalFilter {
 
   protected abstract RefConvertor[] getRefConverters();
 
-  @Nullable
-  public String getExternalDocInfo(String url) throws Exception {
+  public @Nullable String getExternalDocInfo(String url) throws Exception {
     Application app = ApplicationManager.getApplication();
-    if (!app.isUnitTestMode() && app.isDispatchThread() || app.isWriteAccessAllowed()) {
-      LOG.error("May block indefinitely: shouldn't be called from EDT or under write lock");
-      return null;
-    }
+    // May block indefinitely: shouldn't be called from EDT or under write lock
+    app.assertIsNonDispatchThread();
 
     if (url == null || !MyJavadocFetcher.ourFree) {
       return null;
@@ -127,8 +132,7 @@ public abstract class AbstractExternalFilter {
     return correctDocText(url, fetcher.data);
   }
 
-  @NotNull
-  protected String correctDocText(@NotNull String url, @NotNull CharSequence data) {
+  protected @NotNull String correctDocText(@NotNull String url, @NotNull CharSequence data) {
     CharSequence docText = correctRefs(ourAnchorSuffix.matcher(url).replaceAll(""), data);
     if (LOG.isDebugEnabled()) {
       LOG.debug("Filtered JavaDoc: " + docText + "\n");
@@ -136,8 +140,7 @@ public abstract class AbstractExternalFilter {
     return PlatformDocumentationUtil.fixupText(docText);
   }
 
-  @Nullable
-  public String getExternalDocInfoForElement(String docURL, PsiElement element) throws Exception {
+  public @Nullable String getExternalDocInfoForElement(String docURL, PsiElement element) throws Exception {
     return getExternalDocInfo(docURL);
   }
 
@@ -156,21 +159,21 @@ public abstract class AbstractExternalFilter {
     if (baseUrl != null) {
       data.append("<base href=\"").append(baseUrl).append("\">");
     }
-    data.append("<style type=\"text/css\">" +
-                "  ul.inheritance {\n" +
-                "      margin:0;\n" +
-                "      padding:0;\n" +
-                "  }\n" +
-                "  ul.inheritance li {\n" +
-                "       display:inline;\n" +
-                "       list-style-type:none;\n" +
-                "  }\n" +
-                "  ul.inheritance li ul.inheritance {\n" +
-                "    margin-left:15px;\n" +
-                "    padding-left:15px;\n" +
-                "    padding-top:1px;\n" +
-                "  }\n" +
-                "</style>");
+    data.append("""
+                  <style type="text/css">  ul.inheritance {
+                        margin:0;
+                        padding:0;
+                    }
+                    ul.inheritance li {
+                         display:inline;
+                         list-style-type:none;
+                    }
+                    ul.inheritance li ul.inheritance {
+                      margin-left:15px;
+                      padding-left:15px;
+                      padding-top:1px;
+                    }
+                  </style>""");
 
     String read;
     String contentEncoding = null;
@@ -261,6 +264,10 @@ public abstract class AbstractExternalFilter {
       }
     }
 
+    if (data.toString().endsWith("<li>\n")) {
+      data.delete(data.length() - 5, data.length());
+    }
+
     data.append(HTML_CLOSE);
   }
 
@@ -270,8 +277,7 @@ public abstract class AbstractExternalFilter {
            StringUtil.containsIgnoreCase(read, "<li class=\"blockList\">");
   }
 
-  @NotNull
-  protected ParseSettings getParseSettings(@NotNull String url) {
+  protected @NotNull ParseSettings getParseSettings(@NotNull String url) {
     Pattern startSection = CLASS_DATA_START;
     Pattern endSection = CLASS_DATA_END;
     boolean anchorPresent = false;
@@ -279,7 +285,7 @@ public abstract class AbstractExternalFilter {
     Matcher anchorMatcher = ourAnchorSuffix.matcher(url);
     if (anchorMatcher.find()) {
       anchorPresent = true;
-      startSection = Pattern.compile("<a (name|id)=\"" + Pattern.quote(StringUtil.escapeXmlEntities(anchorMatcher.group(1))) + "\"",
+      startSection = Pattern.compile(" (name|id)=\"" + Pattern.quote(StringUtil.escapeXmlEntities(anchorMatcher.group(1))) + "\"",
                                      Pattern.CASE_INSENSITIVE);
       endSection = NON_CLASS_DATA_END;
     }
@@ -298,8 +304,9 @@ public abstract class AbstractExternalFilter {
     return false;
   }
 
-  @Nullable
-  static String parseContentEncoding(@NotNull String htmlLine) {
+  @VisibleForTesting
+  @ApiStatus.Internal
+  public static @Nullable String parseContentEncoding(@NotNull String htmlLine) {
     if (htmlLine.contains("charset")) {
       Matcher matcher = CHARSET_META.matcher(htmlLine);
       if (matcher.find()) {
@@ -318,7 +325,7 @@ public abstract class AbstractExternalFilter {
     void buildFromStream(String url, Reader input, StringBuilder result) throws IOException;
   }
 
-  private static class MyJavadocFetcher implements Runnable {
+  private static final class MyJavadocFetcher implements Runnable {
     private static boolean ourFree = true;
     private final StringBuilder data = new StringBuilder();
     private final String url;
@@ -383,26 +390,30 @@ public abstract class AbstractExternalFilter {
     }
   }
 
-  private static class MyReader extends InputStreamReader {
+  protected static final class MyReader extends InputStreamReader {
     private final ByteArrayInputStream myInputStream;
 
-    MyReader(ByteArrayInputStream in) {
+    public MyReader(ByteArrayInputStream in) {
       super(in);
       in.reset();
       myInputStream = in;
     }
 
-    MyReader(ByteArrayInputStream in, String charsetName) throws UnsupportedEncodingException {
+    public MyReader(ByteArrayInputStream in, String charsetName) throws UnsupportedEncodingException {
       super(in, charsetName);
       in.reset();
       myInputStream = in;
+    }
+
+    public ByteArrayInputStream getInputStream() {
+      return myInputStream;
     }
   }
 
   /**
    * Settings used for parsing of external documentation
    */
-  protected static class ParseSettings {
+  protected static final class ParseSettings {
     /**
      * Pattern defining the start of target fragment.
      */

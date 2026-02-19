@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions.runAnything;
 
 import com.intellij.ide.actions.runAnything.activity.RunAnythingProvider;
@@ -8,19 +8,21 @@ import com.intellij.ide.actions.runAnything.groups.RunAnythingHelpGroup;
 import com.intellij.ide.actions.runAnything.groups.RunAnythingRecentGroup;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.ui.CollectionListModel;
+import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import one.util.streamex.StreamEx;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 
 @SuppressWarnings("unchecked")
 public abstract class RunAnythingSearchListModel extends CollectionListModel<Object> {
-  @NotNull
-  protected abstract List<RunAnythingGroup> getGroups();
+  protected abstract @NotNull List<RunAnythingGroup> getGroups();
 
   @Nullable
   RunAnythingGroup findGroupByMoreIndex(int index) {
@@ -70,36 +72,36 @@ public abstract class RunAnythingSearchListModel extends CollectionListModel<Obj
     fireContentsChanged(this, 0, getSize() - 1);
   }
 
-  static class RunAnythingMainListModel extends RunAnythingSearchListModel {
-    @NotNull private final List<RunAnythingGroup> myGroups = new ArrayList<>();
+  static final class RunAnythingMainListModel extends RunAnythingSearchListModel {
+    private final @NotNull List<RunAnythingGroup> myGroups = new ArrayList<>();
 
     RunAnythingMainListModel() {
       myGroups.add(new RunAnythingRecentGroup());
       myGroups.addAll(RunAnythingCompletionGroup.createCompletionGroups());
     }
 
-    @NotNull
     @Override
-    public List<RunAnythingGroup> getGroups() {
+    public @NotNull List<RunAnythingGroup> getGroups() {
       return myGroups;
     }
   }
 
-  static class RunAnythingHelpListModel extends RunAnythingSearchListModel {
+  static final class RunAnythingHelpListModel extends RunAnythingSearchListModel {
     private final List<RunAnythingGroup> myGroups;
 
     RunAnythingHelpListModel() {
-      myGroups = ContainerUtil.map(StreamEx.of(RunAnythingProvider.EP_NAME.extensions())
+      Function<Map.Entry<@Nls String, List<RunAnythingProvider>>, RunAnythingGroup> mapping =
+        entry -> new RunAnythingHelpGroup(entry.getKey(), entry.getValue());
+
+      myGroups = ContainerUtil.concat(ContainerUtil.map(StreamEx.of(RunAnythingProvider.EP_NAME.getExtensionList().stream())
                                      .filter(provider -> provider.getHelpGroupTitle() != null)
                                      .groupingBy(provider -> provider.getHelpGroupTitle())
-                                     .entrySet(), entry -> new RunAnythingHelpGroup(entry.getKey(), entry.getValue()));
-
-      myGroups.addAll(RunAnythingHelpGroup.EP_NAME.getExtensionList());
+                                     .entrySet(), mapping),
+      RunAnythingHelpGroup.EP_NAME.getExtensionList());
     }
 
-    @NotNull
     @Override
-    protected List<RunAnythingGroup> getGroups() {
+    protected @NotNull List<RunAnythingGroup> getGroups() {
       return myGroups;
     }
   }

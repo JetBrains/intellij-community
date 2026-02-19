@@ -18,16 +18,15 @@ package com.intellij.openapi.editor.actionSystem;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.util.Producer;
+import org.jetbrains.annotations.Nullable;
 
 import java.awt.datatransfer.Transferable;
 
 /**
  * {@link EditorActionHandler Handlers} for {@link com.intellij.openapi.actionSystem.IdeActions#ACTION_EDITOR_PASTE EditorPaste} action
  * should implement this interface if they want to affect text drag-n-drop behaviour in editor.
- *
- * @author pegov
  */
 public interface EditorTextInsertHandler {
   
-  void execute(final Editor editor, final DataContext dataContext, final Producer<Transferable> producer);  
+  void execute(final Editor editor, final DataContext dataContext, @Nullable Producer<? extends Transferable> producer);
 }

@@ -1,4 +1,4 @@
-// "Move 'Number' to the beginning" "true"
+// "Move 'Number' to the beginning" "true-preview"
 class C {
   {
     Object x = null;

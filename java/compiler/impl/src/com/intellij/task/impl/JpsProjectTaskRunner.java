@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.task.impl;
 
 import com.intellij.compiler.impl.CompileDriver;
@@ -7,7 +7,12 @@ import com.intellij.compiler.impl.CompositeScope;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.impl.ExecutionManagerImpl;
 import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.compiler.*;
+import com.intellij.openapi.compiler.CompilationStatusListener;
+import com.intellij.openapi.compiler.CompileContext;
+import com.intellij.openapi.compiler.CompileScope;
+import com.intellij.openapi.compiler.CompileStatusNotification;
+import com.intellij.openapi.compiler.CompilerManager;
+import com.intellij.openapi.compiler.CompilerTopics;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
@@ -21,16 +26,35 @@ import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.packaging.impl.compiler.ArtifactCompileScope;
 import com.intellij.packaging.impl.compiler.ArtifactsCompiler;
 import com.intellij.packaging.impl.compiler.ArtifactsWorkspaceSettings;
-import com.intellij.task.*;
-import com.intellij.ui.GuiUtils;
+import com.intellij.task.EmptyCompileScopeBuildTask;
+import com.intellij.task.ModuleBuildTask;
+import com.intellij.task.ModuleFilesBuildTask;
+import com.intellij.task.ModuleResourcesBuildTask;
+import com.intellij.task.ProjectModelBuildTask;
+import com.intellij.task.ProjectTask;
+import com.intellij.task.ProjectTaskContext;
+import com.intellij.task.ProjectTaskRunner;
+import com.intellij.task.TaskRunnerResults;
+import com.intellij.tracing.Tracer;
+import com.intellij.util.ModalityUiUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.SimpleMessageBusConnection;
+import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.concurrency.AsyncPromise;
+import org.jetbrains.concurrency.Promise;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -38,7 +62,7 @@ import java.util.stream.Stream;
 /**
  * @author Vladislav.Soroka
  */
-public class JpsProjectTaskRunner extends ProjectTaskRunner {
+public final class JpsProjectTaskRunner extends ProjectTaskRunner {
   private static final Logger LOG = Logger.getInstance(JpsProjectTaskRunner.class);
   @ApiStatus.Internal
   public static final Key<JpsBuildData> JPS_BUILD_DATA_KEY = KeyWithDefaultValue.create("jps_build_data", () -> new MyJpsBuildData());
@@ -46,44 +70,40 @@ public class JpsProjectTaskRunner extends ProjectTaskRunner {
   public static final Key<Object> EXECUTION_SESSION_ID_KEY = ExecutionManagerImpl.EXECUTION_SESSION_ID_KEY;
 
   @Override
-  public void run(@NotNull Project project,
-                  @NotNull ProjectTaskContext context,
-                  @Nullable ProjectTaskNotification callback,
-                  @NotNull Collection<? extends ProjectTask> tasks) {
+  public Promise<Result> run(@NotNull Project project, @NotNull ProjectTaskContext context, ProjectTask @NotNull ... tasks) {
+    AsyncPromise<Result> promise = new AsyncPromise<>();
+    Tracer.Span jpsRunnerStart = Tracer.start("jps runner");
     context.putUserData(JPS_BUILD_DATA_KEY, new MyJpsBuildData());
-    SimpleMessageBusConnection fileGeneratedTopicConnection;
     if (context.isCollectionOfGeneratedFilesEnabled()) {
-      fileGeneratedTopicConnection = project.getMessageBus().simpleConnect();
+      SimpleMessageBusConnection fileGeneratedTopicConnection = project.getMessageBus().simpleConnect();
       fileGeneratedTopicConnection.subscribe(CompilerTopics.COMPILATION_STATUS, new CompilationStatusListener() {
         @Override
         public void fileGenerated(@NotNull String outputRoot, @NotNull String relativePath) {
           context.fileGenerated(outputRoot, relativePath);
         }
       });
+      promise.onProcessed(result -> {
+        fileGeneratedTopicConnection.disconnect();
+      });
     }
-    else {
-      fileGeneratedTopicConnection = null;
-    }
-    Map<Class<? extends ProjectTask>, List<ProjectTask>> taskMap = groupBy(tasks);
-    GuiUtils.invokeLaterIfNeeded(() -> {
-      try (MyNotificationCollector notificationCollector = new MyNotificationCollector(context, callback, () -> {
-        if (fileGeneratedTopicConnection != null) {
-          fileGeneratedTopicConnection.disconnect();
-        }
-      })) {
+    Map<Class<? extends ProjectTask>, List<ProjectTask>> taskMap = groupBy(Arrays.asList(tasks));
+    ModalityUiUtil.invokeLaterIfNeeded(ModalityState.defaultModalityState(), project.getDisposed(), () -> {
+      try (MyNotificationCollector notificationCollector = new MyNotificationCollector(context, promise)) {
         runModulesResourcesBuildTasks(project, context, notificationCollector, taskMap);
         runModulesBuildTasks(project, context, notificationCollector, taskMap);
         runFilesBuildTasks(project, notificationCollector, taskMap);
         runEmptyBuildTask(project, context, notificationCollector, taskMap);
         runArtifactsBuildTasks(project, context, notificationCollector, taskMap);
       }
-    }, ModalityState.defaultModalityState(), project.getDisposed());
+    });
+    jpsRunnerStart.complete();
+    return promise;
   }
 
   @Override
   public boolean canRun(@NotNull ProjectTask projectTask) {
     return projectTask instanceof ModuleBuildTask || projectTask instanceof EmptyCompileScopeBuildTask ||
-           (projectTask instanceof ProjectModelBuildTask && ((ProjectModelBuildTask)projectTask).getBuildableElement() instanceof Artifact);
+           (projectTask instanceof ProjectModelBuildTask && ((ProjectModelBuildTask<?>)projectTask).getBuildableElement() instanceof Artifact);
   }
 
   @Override
@@ -107,19 +127,21 @@ public class JpsProjectTaskRunner extends ProjectTaskRunner {
                                            @NotNull MyNotificationCollector notificationCollector,
                                            @NotNull Map<Class<? extends ProjectTask>, List<ProjectTask>> tasksMap) {
     Collection<? extends ProjectTask> buildTasks = tasksMap.get(ModuleBuildTask.class);
-    if (ContainerUtil.isEmpty(buildTasks)) return;
+    if (ContainerUtil.isEmpty(buildTasks)) {
+      return;
+    }
 
-    ModulesBuildSettings modulesBuildSettings = assembleModulesBuildSettings(buildTasks);
+    ModulesBuildSettings buildSettings = assembleModulesBuildSettings(buildTasks);
     CompilerManager compilerManager = CompilerManager.getInstance(project);
 
-    if (modulesBuildSettings.isRebuild()){
-      compilerManager.rebuild(new MyCompileStatusNotification(notificationCollector));
+    if (buildSettings.isRebuild()) {
+      compilerManager.rebuildClean(new MyCompileStatusNotification(notificationCollector));
     }
     else {
       CompileScope scope = createScope(
-        compilerManager, context, modulesBuildSettings.modules, modulesBuildSettings.includeDependentModules, modulesBuildSettings.includeRuntimeDependencies
+        compilerManager, context, buildSettings.modules, buildSettings.includeDependentModules, buildSettings.includeRuntimeDependencies, buildSettings.includeTests
       );
-      if (modulesBuildSettings.isIncrementalBuild) {
+      if (buildSettings.isIncrementalBuild) {
         compilerManager.make(scope, new MyCompileStatusNotification(notificationCollector));
       }
       else {
@@ -132,10 +154,12 @@ public class JpsProjectTaskRunner extends ProjectTaskRunner {
                                         @NotNull MyNotificationCollector notificationCollector,
                                         @NotNull Map<Class<? extends ProjectTask>, List<ProjectTask>> tasksMap) {
     Collection<? extends ProjectTask> buildTasks = tasksMap.get(EmptyCompileScopeBuildTask.class);
-    if (ContainerUtil.isEmpty(buildTasks)) return;
+    if (ContainerUtil.isEmpty(buildTasks)) {
+      return;
+    }
 
     CompilerManager compilerManager = CompilerManager.getInstance(project);
-    CompileScope scope = createScope(compilerManager, context, Collections.emptySet(), false, false);
+    CompileScope scope = createScope(compilerManager, context, Collections.emptySet(), false, false, true);
     // this will effectively run all before- and after- compilation tasks registered within CompilerManager
     EmptyCompileScopeBuildTask task = (EmptyCompileScopeBuildTask)buildTasks.iterator().next();
     if (task.isIncrementalBuild()) {
@@ -155,15 +179,14 @@ public class JpsProjectTaskRunner extends ProjectTaskRunner {
 
     CompilerManager compilerManager = CompilerManager.getInstance(project);
 
-    ModulesBuildSettings modulesBuildSettings = assembleModulesBuildSettings(buildTasks);
-    CompileScope scope = createScope(compilerManager, context,
-                                     modulesBuildSettings.modules,
-                                     modulesBuildSettings.includeDependentModules,
-                                     modulesBuildSettings.includeRuntimeDependencies);
-    List<String> moduleNames = ContainerUtil.map(modulesBuildSettings.modules, Module::getName);
+    ModulesBuildSettings buildSettings = assembleModulesBuildSettings(buildTasks);
+    CompileScope scope = createScope(
+      compilerManager, context, buildSettings.modules, buildSettings.includeDependentModules, buildSettings.includeRuntimeDependencies, buildSettings.includeTests
+    );
+    List<String> moduleNames = ContainerUtil.map(buildSettings.modules, Module::getName);
     CompileScopeUtil.setResourcesScopeForExternalBuild(scope, moduleNames);
 
-    if (modulesBuildSettings.isIncrementalBuild) {
+    if (buildSettings.isIncrementalBuild) {
       compilerManager.make(scope, new MyCompileStatusNotification(notificationCollector));
     }
     else {
@@ -171,22 +194,8 @@ public class JpsProjectTaskRunner extends ProjectTaskRunner {
     }
   }
 
-  private static class ModulesBuildSettings {
-    final boolean isIncrementalBuild;
-    final boolean includeDependentModules;
-    final boolean includeRuntimeDependencies;
-    final Collection<? extends Module> modules;
-
-    ModulesBuildSettings(boolean isIncrementalBuild,
-                         boolean includeDependentModules,
-                         boolean includeRuntimeDependencies,
-                         Collection<? extends Module> modules) {
-      this.isIncrementalBuild = isIncrementalBuild;
-      this.includeDependentModules = includeDependentModules;
-      this.includeRuntimeDependencies = includeRuntimeDependencies;
-      this.modules = modules;
-    }
-
+  private record ModulesBuildSettings(boolean isIncrementalBuild, boolean includeDependentModules, boolean includeRuntimeDependencies,
+                                      boolean includeTests, Collection<? extends Module> modules) {
     boolean isRebuild() {
       if (!isIncrementalBuild && !modules.isEmpty()) {
         final Module someModule = modules.iterator().next();
@@ -202,6 +211,7 @@ public class JpsProjectTaskRunner extends ProjectTaskRunner {
     Collection<ModuleBuildTask> incrementalTasks = new SmartList<>();
     Collection<ModuleBuildTask> excludeDependentTasks = new SmartList<>();
     Collection<ModuleBuildTask> excludeRuntimeTasks = new SmartList<>();
+    Collection<ModuleBuildTask> excludeTests = new SmartList<>();
 
     for (ProjectTask buildProjectTask : buildTasks) {
       ModuleBuildTask moduleBuildTask = (ModuleBuildTask)buildProjectTask;
@@ -216,11 +226,15 @@ public class JpsProjectTaskRunner extends ProjectTaskRunner {
       if (!moduleBuildTask.isIncludeRuntimeDependencies()) {
         excludeRuntimeTasks.add(moduleBuildTask);
       }
+      if (!moduleBuildTask.isIncludeTests()) {
+        excludeTests.add(moduleBuildTask);
+      }
     }
 
     boolean isIncrementalBuild = incrementalTasks.size() == buildTasks.size();
     boolean includeDependentModules = excludeDependentTasks.size() != buildTasks.size();
     boolean includeRuntimeDependencies = excludeRuntimeTasks.size() != buildTasks.size();
+    boolean includeTests = excludeTests.size() != buildTasks.size();
 
     if (!isIncrementalBuild && !incrementalTasks.isEmpty()) {
       assertModuleBuildSettingsConsistent(incrementalTasks, "will be built ignoring incremental build setting");
@@ -231,7 +245,10 @@ public class JpsProjectTaskRunner extends ProjectTaskRunner {
     if (includeRuntimeDependencies && !excludeRuntimeTasks.isEmpty()) {
       assertModuleBuildSettingsConsistent(excludeRuntimeTasks, "will be built along with runtime dependencies");
     }
-    return new ModulesBuildSettings(isIncrementalBuild, includeDependentModules, includeRuntimeDependencies, modules);
+    if (includeTests && !excludeTests.isEmpty()) {
+      assertModuleBuildSettingsConsistent(excludeTests, "will be built along with test classes");
+    }
+    return new ModulesBuildSettings(isIncrementalBuild, includeDependentModules, includeRuntimeDependencies, includeTests, modules);
   }
 
   private static void assertModuleBuildSettingsConsistent(Collection<? extends ModuleBuildTask> moduleBuildTasks, String warnMsg) {
@@ -243,9 +260,10 @@ public class JpsProjectTaskRunner extends ProjectTaskRunner {
                                           ProjectTaskContext context,
                                           Collection<? extends Module> modules,
                                           boolean includeDependentModules,
-                                          boolean includeRuntimeDependencies) {
+                                          boolean includeRuntimeDependencies,
+                                          boolean includeTests) {
     CompileScope scope = !modules.isEmpty()?
-      compilerManager.createModulesCompileScope(modules.toArray(Module.EMPTY_ARRAY), includeDependentModules, includeRuntimeDependencies):
+      compilerManager.createModulesCompileScope(modules.toArray(Module.EMPTY_ARRAY), includeDependentModules, includeRuntimeDependencies, includeTests):
       new CompositeScope(CompileScope.EMPTY_ARRAY);
 
     if (context.isAutoRun()) {
@@ -315,55 +333,65 @@ public class JpsProjectTaskRunner extends ProjectTaskRunner {
   }
 
   private static final class MyNotificationCollector implements AutoCloseable {
-    @NotNull private final ProjectTaskContext myContext;
-    @Nullable private final ProjectTaskNotification myTaskNotification;
-    @NotNull private final Runnable myOnFinished;
+    private static final Result FAILED_AND_ABORTED = new Result() {
+      @Override
+      public boolean isAborted() {
+        return true;
+      }
+
+      @Override
+      public boolean hasErrors() {
+        return true;
+      }
+    };
+    private final @NotNull ProjectTaskContext myContext;
+    private final AsyncPromise<Result> myPromise;
     private boolean myCollectingStopped;
 
-    private final Set<MyCompileStatusNotification> myNotifications = ContainerUtil.newIdentityTroveSet();
+    private final Set<MyCompileStatusNotification> myNotifications = new ReferenceOpenHashSet<>();
     private int myErrors;
-    private int myWarnings;
     private boolean myAborted;
 
-
-    private MyNotificationCollector(@NotNull ProjectTaskContext context,
-                                    @Nullable ProjectTaskNotification taskNotification,
-                                    @NotNull Runnable onFinished) {
+    private MyNotificationCollector(@NotNull ProjectTaskContext context, @NotNull AsyncPromise<Result> promise) {
       myContext = context;
-      myTaskNotification = taskNotification;
-      myOnFinished = onFinished;
+      myPromise = promise;
     }
 
     @Override
-    synchronized public void close() {
-      myCollectingStopped = true;
-    }
-
-    synchronized private void notifyFinished() {
-      if (myTaskNotification != null) {
-        myTaskNotification.finished(new ProjectTaskResult(myAborted, myErrors, myWarnings));
-      }
-      myOnFinished.run();
-    }
-
-    synchronized private void appendJpsBuildResult(boolean aborted, int errors, int warnings,
-                                                   @NotNull CompileContext compileContext,
-                                                   @NotNull MyCompileStatusNotification notification) {
-      if (!myNotifications.remove(notification)) {
-        LOG.error("Multiple invocation of the same callback");
-      }
-      myErrors += errors;
-      myWarnings += warnings;
-      if (aborted) myAborted = true;
-      MyJpsBuildData jpsBuildData = (MyJpsBuildData)JPS_BUILD_DATA_KEY.get(myContext);
-      jpsBuildData.add(compileContext);
-
-      if (myCollectingStopped && myNotifications.isEmpty()) {
+    public synchronized void close() {
+      if (!myCollectingStopped) {
+        myCollectingStopped = true;
         notifyFinished();
       }
     }
 
-    synchronized private void add(@NotNull MyCompileStatusNotification notification) {
+    private void notifyFinished() {
+      if (myCollectingStopped && myNotifications.isEmpty()) {
+        myPromise.setResult(myAborted && myErrors > 0 ? FAILED_AND_ABORTED :
+                            myAborted ? TaskRunnerResults.ABORTED : 
+                            myErrors > 0 ? TaskRunnerResults.FAILURE : 
+                            TaskRunnerResults.SUCCESS);
+      }
+    }
+
+    private synchronized void appendJpsBuildResult(boolean aborted, int errors,
+                                                   @NotNull CompileContext compileContext,
+                                                   @NotNull MyCompileStatusNotification notification) {
+      final boolean notificationRemoved = myNotifications.remove(notification);
+      if (!notificationRemoved) {
+        LOG.error("Multiple invocation of the same callback");
+      }
+      myErrors += errors;
+      if (aborted) myAborted = true;
+      MyJpsBuildData jpsBuildData = (MyJpsBuildData)JPS_BUILD_DATA_KEY.get(myContext);
+      jpsBuildData.add(compileContext);
+
+      if (notificationRemoved) {
+        notifyFinished();
+      }
+    }
+
+    private synchronized void add(@NotNull MyCompileStatusNotification notification) {
       assert !myCollectingStopped;
       if (!myNotifications.add(notification)) {
         LOG.error("Do not use the same callback for different JPS invocations");
@@ -375,6 +403,7 @@ public class JpsProjectTaskRunner extends ProjectTaskRunner {
 
     private final MyNotificationCollector myCollector;
     private final AtomicBoolean finished = new AtomicBoolean();
+    private final Tracer.Span mySpan = Tracer.start("jps task"); // which?
 
     private MyCompileStatusNotification(@NotNull MyNotificationCollector collector) {
       myCollector = collector;
@@ -384,7 +413,8 @@ public class JpsProjectTaskRunner extends ProjectTaskRunner {
     @Override
     public void finished(boolean aborted, int errors, int warnings, @NotNull CompileContext compileContext) {
       if (finished.compareAndSet(false, true)) {
-        myCollector.appendJpsBuildResult(aborted, errors, warnings, compileContext, this);
+        myCollector.appendJpsBuildResult(aborted, errors, compileContext, this);
+        mySpan.complete();
       } else {
         // can be invoked by CompileDriver for rerun action
         LOG.debug("Multiple invocation of the same CompileStatusNotification.");
@@ -395,9 +425,8 @@ public class JpsProjectTaskRunner extends ProjectTaskRunner {
   private static class MyJpsBuildData implements JpsBuildData {
     private final List<CompileContext> myContexts = new ArrayList<>();
 
-    @NotNull
     @Override
-    public Set<String> getArtifactsWrittenPaths() {
+    public @NotNull Set<String> getArtifactsWrittenPaths() {
       return myContexts.stream()
         .map(ctx -> ArtifactsCompiler.getWrittenPaths(ctx))
         .filter(Objects::nonNull)
@@ -405,9 +434,8 @@ public class JpsProjectTaskRunner extends ProjectTaskRunner {
         .collect(Collectors.toSet());
     }
 
-    @NotNull
     @Override
-    public List<CompileContext> getFinishedBuildsContexts() {
+    public @NotNull List<CompileContext> getFinishedBuildsContexts() {
       return Collections.unmodifiableList(myContexts);
     }
 

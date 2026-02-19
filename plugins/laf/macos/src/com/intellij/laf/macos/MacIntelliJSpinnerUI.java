@@ -5,12 +5,19 @@ import com.intellij.ide.ui.laf.darcula.ui.DarculaSpinnerUI;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.JBUI;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.Icon;
+import javax.swing.JComponent;
+import javax.swing.JSpinner;
 import javax.swing.plaf.ComponentUI;
 import javax.swing.plaf.basic.BasicArrowButton;
-import java.awt.*;
+import java.awt.Container;
+import java.awt.Dimension;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.Insets;
+import java.awt.Rectangle;
 import java.awt.geom.Path2D;
 
 import static com.intellij.ide.ui.laf.darcula.DarculaUIUtil.maximize;
@@ -18,7 +25,7 @@ import static com.intellij.ide.ui.laf.darcula.DarculaUIUtil.maximize;
 /**
  * @author Konstantin Bulenkov
  */
-public class MacIntelliJSpinnerUI extends DarculaSpinnerUI {
+public final class MacIntelliJSpinnerUI extends DarculaSpinnerUI {
   private static final Icon DEFAULT_ICON = EmptyIcon.create(MacIconLookup.getIcon("spinnerRight"));
 
   @SuppressWarnings({"MethodOverridesStaticMethodOfSuperclass", "UnusedDeclaration"})
@@ -59,14 +66,16 @@ public class MacIntelliJSpinnerUI extends DarculaSpinnerUI {
   }
 
   @Override
-  protected void paintArrowButton(Graphics g, BasicArrowButton button, int direction) {}
+  protected void paintArrowButton(Graphics g, BasicArrowButton button, int direction) { }
 
   @Override
   protected Dimension getSizeWithButtons(Insets i, Dimension size) {
     int iconWidth = DEFAULT_ICON.getIconWidth() + i.right;
     int iconHeight = DEFAULT_ICON.getIconHeight() + i.top + i.bottom;
 
-    Dimension minSize = new Dimension(i.left + DarculaSpinnerUI.MINIMUM_WIDTH.get() + i.right, iconHeight);
+    Dimension themeMinimumSize = JBUI.CurrentTheme.Spinner.minimumSize();
+    Dimension minSize = new Dimension(i.left + themeMinimumSize.width + i.right,
+                                      Math.max(i.top + themeMinimumSize.height + i.bottom, iconHeight));
     size = maximize(size, minSize);
 
     Dimension editorSize = spinner.getEditor() != null ? spinner.getEditor().getPreferredSize() : JBUI.emptySize();
@@ -79,21 +88,22 @@ public class MacIntelliJSpinnerUI extends DarculaSpinnerUI {
   @Override
   protected void layout() {
     JComponent editor = spinner.getEditor();
-    if (editor != null) {
-      Insets i = spinner.getInsets();
-      Insets m = editorMargins();
-      int editorHeight = editor.getPreferredSize().height;
-      int editorOffset = (spinner.getHeight() - i.top - i.bottom - m.top - m.bottom - editorHeight) / 2;
-
-      editor.setBounds(i.left + m.left,
-                       i.top + m.top + editorOffset,
-                       spinner.getWidth() - (i.left + i.right + DEFAULT_ICON.getIconWidth() + m.right + m.left),
-                       editor.getPreferredSize().height);
+    if (editor == null) {
+      return;
     }
+
+    Insets i = spinner.getInsets();
+    Insets m = editorMargins();
+    int editorHeight = editor.getPreferredSize().height;
+    int editorOffset = (spinner.getHeight() - i.top - i.bottom - m.top - m.bottom - editorHeight) / 2;
+
+    editor.setBounds(i.left + m.left,
+                     i.top + m.top + editorOffset,
+                     spinner.getWidth() - (i.left + i.right + DEFAULT_ICON.getIconWidth() + m.right + m.left),
+                     editor.getPreferredSize().height);
   }
 
-  @Nullable
-  Rectangle getArrowButtonBounds() {
+  @NotNull Rectangle getArrowButtonBounds() {
     Insets i = spinner.getInsets();
     return new Rectangle(spinner.getWidth() - DEFAULT_ICON.getIconWidth() - i.right, i.top,
                          DEFAULT_ICON.getIconWidth(), DEFAULT_ICON.getIconHeight());

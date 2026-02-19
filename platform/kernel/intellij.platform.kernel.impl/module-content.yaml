@@ -1,0 +1,3 @@
+- name: dist.all/lib/intellij.platform.kernel.impl.jar
+  modules:
+  - name: intellij.platform.kernel.impl

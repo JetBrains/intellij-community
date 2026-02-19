@@ -1,9 +1,13 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.compiler.artifacts.ui;
 
 import com.intellij.compiler.artifacts.PackagingElementsTestCase;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.roots.ui.configuration.artifacts.*;
+import com.intellij.openapi.roots.ui.configuration.artifacts.ArtifactEditorContextImpl;
+import com.intellij.openapi.roots.ui.configuration.artifacts.ArtifactEditorImpl;
+import com.intellij.openapi.roots.ui.configuration.artifacts.ArtifactEditorSettings;
+import com.intellij.openapi.roots.ui.configuration.artifacts.ArtifactsStructureConfigurableContext;
+import com.intellij.openapi.roots.ui.configuration.artifacts.LayoutTreeComponent;
 import com.intellij.openapi.roots.ui.configuration.artifacts.nodes.ComplexPackagingElementNode;
 import com.intellij.openapi.roots.ui.configuration.artifacts.nodes.PackagingElementNode;
 import com.intellij.openapi.ui.TestDialog;
@@ -63,8 +67,8 @@ public abstract class ArtifactEditorTestCase extends PackagingElementsTestCase {
     final LayoutTreeComponent layoutTreeComponent = myArtifactEditor.getLayoutTreeComponent();
     layoutTreeComponent.getLayoutTree().clearSelection();
     Promise<TreePath> selection = layoutTreeComponent.selectNode(PathUtil.getParentPath(path), PathUtil.getFileName(path));
-    PlatformTestUtil.assertPromiseSucceeds(selection);
-    assertFalse("Node " + path + " not found", layoutTreeComponent.getSelection().getNodes().isEmpty());
+    TreePath result = PlatformTestUtil.assertPromiseSucceeds(selection);
+    assertFalse("Node " + path + " not found, result=" + result, layoutTreeComponent.getSelection().getNodes().isEmpty());
   }
 
   protected void assertLayout(String expected) {

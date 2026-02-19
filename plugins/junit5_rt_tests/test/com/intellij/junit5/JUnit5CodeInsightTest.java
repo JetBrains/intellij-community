@@ -1,39 +1,41 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.junit5;
 
-import com.intellij.testFramework.EdtTestUtil;
-import com.intellij.testFramework.TestRunnerUtil;
-import com.intellij.testFramework.fixtures.*;
+import com.intellij.testFramework.IdeaTestUtil;
+import com.intellij.testFramework.LightPlatformTestCase;
+import com.intellij.testFramework.PlatformTestUtil;
+import com.intellij.testFramework.fixtures.DefaultLightProjectDescriptor;
+import com.intellij.testFramework.fixtures.IdeaProjectTestFixture;
+import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory;
+import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.JavaTestFixtureFactory;
+import com.intellij.testFramework.fixtures.TestFixtureBuilder;
 import com.intellij.testFramework.fixtures.impl.LightTempDirTestFixtureImpl;
-import com.intellij.util.ThrowableRunnable;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.testFramework.junit5.RunInEdt;
+import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 
-abstract class JUnit5CodeInsightTest {
+@RunInEdt(writeIntent = true)
+public abstract class JUnit5CodeInsightTest {
   protected JavaCodeInsightTestFixture myFixture;
 
   @BeforeEach
   void setUp() throws Exception {
     IdeaTestFixtureFactory factory = IdeaTestFixtureFactory.getFixtureFactory();
-    TestFixtureBuilder<IdeaProjectTestFixture> fixtureBuilder = factory.createLightFixtureBuilder(new DefaultLightProjectDescriptor());
+    TestFixtureBuilder<IdeaProjectTestFixture> fixtureBuilder = factory.createLightFixtureBuilder(
+      new DefaultLightProjectDescriptor(IdeaTestUtil::getMockJdk21), "JUnit5CodeInsightTest"
+    );
     final IdeaProjectTestFixture fixture = fixtureBuilder.getFixture();
     myFixture = JavaTestFixtureFactory.getFixtureFactory().createCodeInsightFixture(fixture, new LightTempDirTestFixtureImpl(true));
     myFixture.setUp();
+
+    //init junit 5 framework
+    myFixture.addClass("package org.junit.platform.commons.annotation; public @interface Testable {}");
+    myFixture.addClass("package org.junit.jupiter.api; @org.junit.platform.commons.annotation.Testable public @interface Test {}");
+    myFixture.addClass("package org.junit.jupiter.api; public @interface Nested {}");
+    myFixture.addClass("package org.junit.jupiter.api; @org.junit.platform.commons.annotation.Testable public @interface TestFactory {}");
+    myFixture.addClass("package org.junit.jupiter.params.provider; public @interface MethodSource {}");
   }
 
   @AfterEach
@@ -41,16 +43,11 @@ abstract class JUnit5CodeInsightTest {
     myFixture.tearDown();
   }
 
-  protected <T extends Throwable> void doTest(@NotNull ThrowableRunnable<T> run) throws T {
-    TestRunnerUtil.replaceIdeEventQueueSafely();
-    //init junit 5 framework
-    EdtTestUtil.runInEdtAndWait(() -> {
-      myFixture.addClass("package org.junit.platform.commons.annotation; public @interface Testable {}");
-      myFixture.addClass("package org.junit.jupiter.api; public @interface Test {}");
-      myFixture.addClass("package org.junit.jupiter.api; public @interface Nested {}");
-      myFixture.addClass("package org.junit.jupiter.api; public @interface TestFactory {}");
-      myFixture.addClass("package org.junit.jupiter.params.provider; public @interface MethodSource {}");
-    });
-    EdtTestUtil.runInEdtAndWait(run);
+  @AfterAll
+  static void afterAll() {
+    // CodeInsightFixture use a light project.
+    // We have to clean it up after suite because it could conflict with tests which use TestApplication with a full project.
+    LightPlatformTestCase.closeAndDeleteProject();
+    PlatformTestUtil.dispatchAllEventsInIdeEventQueue();
   }
 }

@@ -4,6 +4,7 @@ package org.jetbrains.plugins.groovy.intentions.style.inference.graph
 import com.intellij.psi.PsiClassType
 import com.intellij.psi.PsiIntersectionType
 import com.intellij.psi.PsiType
+import com.intellij.psi.PsiTypes
 import com.intellij.psi.PsiWildcardType
 import com.intellij.psi.impl.source.resolve.graphInference.InferenceVariablesOrder
 import org.jetbrains.plugins.groovy.intentions.style.inference.InferenceGraphNode
@@ -91,7 +92,7 @@ private fun condense(graph: InferenceUnitGraph): InferenceUnitGraph {
   val components = InferenceVariablesOrder.initNodes(nodeMap.values).map { it.value!! }
   val builder = InferenceUnitGraphBuilder()
   for (component in components) {
-    val representative = component.minBy(InferenceUnitNode::toString)!!
+    val representative = component.minByOrNull(InferenceUnitNode::toString)!!
     component.forEach {
       representativeMap[it.core] = representative.core
       if (it != representative) {
@@ -228,7 +229,7 @@ private fun propagateTypeInstantiations(unitGraph: InferenceUnitGraph): Inferenc
   val instantiations = mutableMapOf<InferenceUnit, PsiType>()
 
   for (unit in unitGraph.units) {
-    if (unit.typeInstantiation != PsiType.NULL && !unitGraph.dependsOnNode(unit.typeInstantiation)) {
+    if (unit.typeInstantiation != PsiTypes.nullType() && !unitGraph.dependsOnNode(unit.typeInstantiation)) {
       var currentUnit: InferenceUnitNode = unit
       while (currentUnit.parent != null) {
         currentUnit = currentUnit.parent!!
@@ -256,8 +257,8 @@ private fun propagateTypeInstantiations(unitGraph: InferenceUnitGraph): Inferenc
 
 private fun mergeTypes(firstType: PsiType, secondType: PsiType): PsiType {
   // it is possible to diagnose errors here
-  if (firstType == PsiType.NULL) return secondType
-  if (secondType == PsiType.NULL) return firstType
+  if (firstType == PsiTypes.nullType()) return secondType
+  if (secondType == PsiTypes.nullType()) return firstType
   val context = firstType.resolve() ?: return firstType
   if (firstType is PsiWildcardType && secondType is PsiWildcardType) {
     if (firstType.isExtends && secondType.isExtends) {

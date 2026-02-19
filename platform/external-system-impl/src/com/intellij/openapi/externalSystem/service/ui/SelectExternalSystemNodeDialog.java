@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.service.ui;
 
 import com.intellij.openapi.externalSystem.model.DataNode;
@@ -7,10 +7,15 @@ import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.model.project.ProjectData;
 import com.intellij.openapi.externalSystem.service.project.ProjectDataManager;
 import com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsManagerImpl;
-import com.intellij.openapi.externalSystem.view.*;
+import com.intellij.openapi.externalSystem.view.ExternalProjectsStructure;
+import com.intellij.openapi.externalSystem.view.ExternalProjectsView;
+import com.intellij.openapi.externalSystem.view.ExternalProjectsViewAdapter;
+import com.intellij.openapi.externalSystem.view.ExternalProjectsViewImpl;
+import com.intellij.openapi.externalSystem.view.ExternalSystemNode;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ex.ToolWindowEx;
 import com.intellij.ui.ScrollPaneFactory;
@@ -18,13 +23,14 @@ import com.intellij.ui.tree.TreeVisitor;
 import com.intellij.ui.treeStructure.SimpleNode;
 import com.intellij.ui.treeStructure.SimpleTree;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.openapi.util.NlsContexts;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.tree.TreeUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JComponent;
+import javax.swing.JScrollPane;
 import javax.swing.tree.TreeSelectionModel;
 import java.awt.event.InputEvent;
 import java.util.Collection;
@@ -34,22 +40,18 @@ import java.util.function.Predicate;
 /**
  * @author Vladislav.Soroka
  */
+@ApiStatus.Internal
 public class SelectExternalSystemNodeDialog extends DialogWrapper {
-
-  @NotNull
-  private final SimpleTree myTree;
-  @Nullable
-  private final Predicate<SimpleNode> mySelector;
-  @Nullable
-  protected Boolean groupTasks;
-  @Nullable
-  protected Boolean useTasksNode;
+  private final @NotNull SimpleTree myTree;
+  private final @Nullable Predicate<? super SimpleNode> mySelector;
+  protected @Nullable Boolean groupTasks;
+  protected @Nullable Boolean useTasksNode;
 
   public SelectExternalSystemNodeDialog(@NotNull ProjectSystemId systemId,
                                         @NotNull Project project,
-                                        @NotNull String title,
-                                        Class<? extends ExternalSystemNode> nodeClass,
-                                        @Nullable Predicate<SimpleNode> selector) {
+                                        @NotNull @NlsContexts.DialogTitle String title,
+                                        Class<? extends ExternalSystemNode<?>> nodeClass,
+                                        @Nullable Predicate<? super SimpleNode> selector) {
     //noinspection unchecked
     this(systemId, project, title, new Class[]{nodeClass}, selector);
   }
@@ -57,8 +59,8 @@ public class SelectExternalSystemNodeDialog extends DialogWrapper {
   public SelectExternalSystemNodeDialog(@NotNull ProjectSystemId systemId,
                                         @NotNull Project project,
                                         @NotNull @NlsContexts.DialogTitle String title,
-                                        final Class<? extends ExternalSystemNode>[] nodeClasses,
-                                        @Nullable Predicate<SimpleNode> selector) {
+                                        final Class<? extends ExternalSystemNode<?>>[] nodeClasses,
+                                        @Nullable Predicate<? super SimpleNode> selector) {
     super(project, false);
     mySelector = selector;
     setTitle(title);
@@ -70,29 +72,26 @@ public class SelectExternalSystemNodeDialog extends DialogWrapper {
     if (projectsView == null) {
       ToolWindow toolWindow = ExternalToolWindowManager.getToolWindow(project, systemId);
       if (toolWindow instanceof ToolWindowEx) {
-        projectsView = new ExternalProjectsViewImpl(project, (ToolWindowEx)toolWindow, systemId);
-        Disposer.register(getDisposable(), (ExternalProjectsViewImpl)projectsView);
+        projectsView = new ExternalProjectsViewImpl(getDisposable(), project, (ToolWindowEx)toolWindow, systemId);
       }
     }
     if(projectsView != null) {
       final ExternalProjectsStructure treeStructure = new ExternalProjectsStructure(project, myTree) {
         @Override
-        protected Class<? extends ExternalSystemNode>[] getVisibleNodesClasses() {
+        protected Class<? extends ExternalSystemNode<?>>[] getVisibleNodesClasses() {
           return nodeClasses;
         }
 
-        @NotNull
         @Override
-        public Object getRootElement() {
+        public @NotNull Object getRootElement() {
           Object rootElement = super.getRootElement();
           return customizeProjectsTreeRoot(rootElement);
         }
       };
       Disposer.register(myDisposable, treeStructure);
       treeStructure.init(new ExternalProjectsViewAdapter(projectsView) {
-        @Nullable
         @Override
-        public ExternalProjectsStructure getStructure() {
+        public @NotNull ExternalProjectsStructure getStructure() {
           return treeStructure;
         }
 
@@ -140,13 +139,12 @@ public class SelectExternalSystemNodeDialog extends DialogWrapper {
     return rootElement;
   }
 
-  @Nullable
   @Override
-  public JComponent getPreferredFocusedComponent() {
+  public @Nullable JComponent getPreferredFocusedComponent() {
     return myTree;
   }
 
-  protected void handleDoubleClickOrEnter(@NotNull ExternalSystemNode node, @Nullable String actionId, InputEvent inputEvent) {
+  protected void handleDoubleClickOrEnter(@NotNull ExternalSystemNode<?> node, @Nullable String actionId, InputEvent inputEvent) {
   }
 
   protected SimpleNode getSelectedNode() {
@@ -154,8 +152,7 @@ public class SelectExternalSystemNodeDialog extends DialogWrapper {
   }
 
   @Override
-  @Nullable
-  protected JComponent createCenterPanel() {
+  protected @Nullable JComponent createCenterPanel() {
     final JScrollPane pane = ScrollPaneFactory.createScrollPane(myTree);
     pane.setPreferredSize(JBUI.size(320, 400));
     return pane;

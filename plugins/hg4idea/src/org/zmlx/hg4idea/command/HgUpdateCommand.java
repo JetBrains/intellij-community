@@ -43,6 +43,8 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import static org.zmlx.hg4idea.HgNotificationIdsHolder.UPDATE_ERROR;
+import static org.zmlx.hg4idea.HgNotificationIdsHolder.UPDATE_UNRESOLVED_CONFLICTS_ERROR;
 import static org.zmlx.hg4idea.util.HgErrorUtil.hasUncommittedChangesConflict;
 import static org.zmlx.hg4idea.util.HgUtil.getRepositoryManager;
 
@@ -68,8 +70,7 @@ public class HgUpdateCommand {
   }
 
 
-  @Nullable
-  public HgCommandResult execute() {
+  public @Nullable HgCommandResult execute() {
     List<String> arguments = new LinkedList<>();
     if (clean) {
       arguments.add("--clean");
@@ -99,10 +100,10 @@ public class HgUpdateCommand {
     return result;
   }
 
-  public static int showDiscardChangesConfirmation(@NotNull final Project project,
+  public static int showDiscardChangesConfirmation(final @NotNull Project project,
                                                    @NotNull @NlsContexts.DialogTitle String confirmationMessage) {
     final AtomicInteger exitCode = new AtomicInteger();
-    UIUtil.invokeAndWaitIfNeeded((Runnable)() -> {
+    UIUtil.invokeAndWaitIfNeeded(() -> {
       exitCode.set(Messages.showOkCancelDialog(project, confirmationMessage, HgBundle.message("hg4idea.update.uncommitted.problem"),
                                                HgBundle.message("changes.discard"), CommonBundle.message("button.cancel.c"),
                                                Messages.getWarningIcon()));
@@ -110,9 +111,9 @@ public class HgUpdateCommand {
     return exitCode.get();
   }
 
-  public static void updateTo(@NotNull final @NonNls String targetRevision,
+  public static void updateTo(final @NotNull @NonNls String targetRevision,
                               @NotNull List<? extends HgRepository> repos,
-                              @Nullable final Runnable callInAwtLater) {
+                              final @Nullable Runnable callInAwtLater) {
     FileDocumentManager.getInstance().saveAllDocuments();
     for (HgRepository repo : repos) {
       final VirtualFile repository = repo.getRoot();
@@ -121,18 +122,18 @@ public class HgUpdateCommand {
     }
   }
 
-  public static void updateRepoTo(@NotNull final Project project,
-                                  @NotNull final VirtualFile repository,
-                                  @NotNull final @NonNls String targetRevision,
-                                  @Nullable final Runnable callInAwtLater) {
+  public static void updateRepoTo(final @NotNull Project project,
+                                  final @NotNull VirtualFile repository,
+                                  final @NotNull @NonNls String targetRevision,
+                                  final @Nullable Runnable callInAwtLater) {
     updateRepoTo(project, repository, targetRevision, false, callInAwtLater);
   }
 
-  public static void updateRepoTo(@NotNull final Project project,
-                                  @NotNull final VirtualFile repository,
-                                  @NotNull final @NonNls String targetRevision,
+  public static void updateRepoTo(final @NotNull Project project,
+                                  final @NotNull VirtualFile repository,
+                                  final @NotNull @NonNls String targetRevision,
                                   final boolean clean,
-                                  @Nullable final Runnable callInAwtLater) {
+                                  final @Nullable Runnable callInAwtLater) {
     new Task.Backgroundable(project, HgBundle.message("action.hg4idea.updateTo.description")) {
       @Override
       public void onSuccess() {
@@ -148,9 +149,9 @@ public class HgUpdateCommand {
     }.queue();
   }
 
-  public static boolean updateRepoToInCurrentThread(@NotNull final Project project,
-                                                    @NotNull final VirtualFile repository,
-                                                    @NotNull final @NonNls String targetRevision,
+  public static boolean updateRepoToInCurrentThread(final @NotNull Project project,
+                                                    final @NotNull VirtualFile repository,
+                                                    final @NotNull @NonNls String targetRevision,
                                                     final boolean clean) {
     final HgUpdateCommand hgUpdateCommand = new HgUpdateCommand(project, repository);
     hgUpdateCommand.setRevision(targetRevision);
@@ -161,11 +162,11 @@ public class HgUpdateCommand {
     boolean hasUnresolvedConflicts = HgConflictResolver.hasConflicts(project, repository);
     if (!success) {
       new HgCommandResultNotifier(project)
-        .notifyError("hg.update.error", result, "", HgBundle.message("hg4idea.update.failed"));
+        .notifyError(UPDATE_ERROR, result, "", HgBundle.message("hg4idea.update.failed"));
     }
     else if (hasUnresolvedConflicts) {
       new VcsNotifier(project)
-        .notifyImportantWarning("hg.update.unresolved.conflicts.error",
+        .notifyImportantWarning(UPDATE_UNRESOLVED_CONFLICTS_ERROR,
                                 HgBundle.message("hg4idea.update.unresolved.conflicts"),
                                 HgBundle.message("hg4idea.update.warning.merge.conflicts", repository.getPath()));
     }

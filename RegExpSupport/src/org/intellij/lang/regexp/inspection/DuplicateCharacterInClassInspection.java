@@ -1,14 +1,23 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.intellij.lang.regexp.inspection;
 
 import com.intellij.codeInspection.LocalInspectionTool;
-import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.lang.injection.InjectedLanguageManager;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.PsiFile;
 import org.intellij.lang.regexp.RegExpBundle;
-import org.intellij.lang.regexp.psi.*;
+import org.intellij.lang.regexp.psi.RegExpChar;
+import org.intellij.lang.regexp.psi.RegExpClass;
+import org.intellij.lang.regexp.psi.RegExpClassElement;
+import org.intellij.lang.regexp.psi.RegExpElement;
+import org.intellij.lang.regexp.psi.RegExpElementVisitor;
+import org.intellij.lang.regexp.psi.RegExpIntersection;
+import org.intellij.lang.regexp.psi.RegExpSimpleClass;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.HashSet;
@@ -34,6 +43,8 @@ public class DuplicateCharacterInClassInspection extends LocalInspectionTool {
 
     @Override
     public void visitRegExpClass(RegExpClass regExpClass) {
+      PsiFile file = regExpClass.getContainingFile();
+      if (file == null || InjectedLanguageManager.getInstance(file.getProject()).isFrankensteinInjection(file)) return;
       final HashSet<Object> seen = new HashSet<>();
       for (RegExpClassElement element : regExpClass.getElements()) {
         checkForDuplicates(element, seen);
@@ -41,8 +52,7 @@ public class DuplicateCharacterInClassInspection extends LocalInspectionTool {
     }
 
     private void checkForDuplicates(RegExpClassElement element, Set<Object> seen) {
-      if (element instanceof RegExpChar) {
-        final RegExpChar regExpChar = (RegExpChar)element;
+      if (element instanceof RegExpChar regExpChar) {
         final int value = regExpChar.getValue();
         if (value != -1 && !seen.add(value)) {
           myHolder.registerProblem(regExpChar,
@@ -50,8 +60,7 @@ public class DuplicateCharacterInClassInspection extends LocalInspectionTool {
                                    new DuplicateCharacterInClassFix(regExpChar));
         }
       }
-      else if (element instanceof RegExpSimpleClass) {
-        final RegExpSimpleClass regExpSimpleClass = (RegExpSimpleClass)element;
+      else if (element instanceof RegExpSimpleClass regExpSimpleClass) {
         final RegExpSimpleClass.Kind kind = regExpSimpleClass.getKind();
         if (!seen.add(kind)) {
           final String text = regExpSimpleClass.getText();
@@ -60,10 +69,16 @@ public class DuplicateCharacterInClassInspection extends LocalInspectionTool {
                                    new DuplicateCharacterInClassFix(regExpSimpleClass));
         }
       }
+      else if (element instanceof RegExpIntersection intersection) {
+        final HashSet<Object> visited = new HashSet<>();
+        for (RegExpClassElement operand : intersection.getOperands()) {
+          checkForDuplicates(operand, visited);
+        }
+      }
     }
   }
 
-  private static final class DuplicateCharacterInClassFix implements LocalQuickFix {
+  private static final class DuplicateCharacterInClassFix extends PsiUpdateModCommandQuickFix {
 
     private final String myText;
 
@@ -82,8 +97,8 @@ public class DuplicateCharacterInClassInspection extends LocalInspectionTool {
     }
 
     @Override
-    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      descriptor.getPsiElement().delete();
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
+      element.delete();
     }
   }
 }

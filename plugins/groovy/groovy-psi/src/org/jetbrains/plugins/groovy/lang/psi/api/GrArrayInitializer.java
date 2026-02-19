@@ -4,18 +4,23 @@ package org.jetbrains.plugins.groovy.lang.psi.api;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 
 import java.util.List;
 
-public interface GrArrayInitializer extends GroovyPsiElement {
+/**
+ * Represents an array initializer expression.
+ */
+public interface GrArrayInitializer extends GrExpression {
 
   @NotNull
   PsiElement getLBrace();
 
   boolean isEmpty();
 
+  /**
+   * Returns the list of expressions initializing members of the .
+   */
   @NotNull
   List<GrExpression> getExpressions();
 

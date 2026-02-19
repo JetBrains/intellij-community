@@ -1,9 +1,12 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.commands
 
 import com.intellij.credentialStore.Credentials
 import com.intellij.dvcs.DvcsRememberedInputs
+import com.intellij.externalProcessAuthHelper.AuthenticationMode
+import com.intellij.externalProcessAuthHelper.PassthroughAuthenticationGate
 import com.intellij.ide.passwordSafe.PasswordSafe
+import com.intellij.ide.ui.laf.setEarlyUiLaF
 import com.intellij.openapi.components.service
 import com.intellij.openapi.ui.DialogWrapper
 import git4idea.commands.GitHttpGuiAuthenticator.PasswordSafeProvider.credentialAttributes
@@ -11,8 +14,7 @@ import git4idea.commands.GitHttpGuiAuthenticator.PasswordSafeProvider.makeKey
 import git4idea.remote.GitRememberedInputs
 import git4idea.test.GitPlatformTest
 import git4idea.test.TestDialogHandler
-import java.io.File
-import javax.swing.UIManager
+import java.nio.file.Path
 
 class GitHttpGuiAuthenticatorTest : GitPlatformTest() {
   private lateinit var rememberedInputs: DvcsRememberedInputs
@@ -20,24 +22,27 @@ class GitHttpGuiAuthenticatorTest : GitPlatformTest() {
 
   private var dialogShown = false
 
-  @Throws(Exception::class)
-  public override fun setUp() {
+  override fun setUp() {
     super.setUp()
     // otherwise login dialog doesn't work (missing LaF for JBOptionButton)
-    UIManager.setLookAndFeel("com.intellij.ide.ui.laf.darcula.DarculaLaf")
+    setEarlyUiLaF()
 
     rememberedInputs = service<GitRememberedInputs>()
     passwordSafe = service()
   }
 
-  @Throws(Exception::class)
-  public override fun tearDown() {
-    dialogShown = false
-
-    rememberedInputs.clear()
-    passwordSafe.set(CREDENTIAL_ATTRIBUTES, null)
-
-    super.tearDown()
+  override fun tearDown() {
+    try {
+      dialogShown = false
+      rememberedInputs.clear()
+      passwordSafe.set(CREDENTIAL_ATTRIBUTES, null)
+    }
+    catch (e: Throwable) {
+      addSuppressedException(e)
+    }
+    finally {
+      super.tearDown()
+    }
   }
 
   fun `test data saved when correct`() {
@@ -90,9 +95,9 @@ class GitHttpGuiAuthenticatorTest : GitPlatformTest() {
   fun `test single dialog shown`() {
     registerDialogHandler(true)
 
-    val authenticator = GitHttpGuiAuthenticator(project, listOf(TEST_URL), File(""),
-                                                GitPassthroughAuthenticationGate.instance,
-                                                GitAuthenticationMode.FULL)
+    val authenticator = GitHttpGuiAuthenticator(project, listOf(TEST_URL), Path.of(""),
+                                                PassthroughAuthenticationGate.instance,
+                                                AuthenticationMode.FULL)
     authenticator.askUsername(TEST_URL)
     assertTrue(dialogShown)
 
@@ -113,9 +118,9 @@ class GitHttpGuiAuthenticatorTest : GitPlatformTest() {
   }
 
   private fun runAuthenticator(assumeCorrect: Boolean): GitHttpGuiAuthenticator {
-    val authenticator = GitHttpGuiAuthenticator(project, listOf(TEST_URL), File(""),
-                                                GitPassthroughAuthenticationGate.instance,
-                                                GitAuthenticationMode.FULL)
+    val authenticator = GitHttpGuiAuthenticator(project, listOf(TEST_URL), Path.of(""),
+                                                PassthroughAuthenticationGate.instance,
+                                                AuthenticationMode.FULL)
     val username = authenticator.askUsername(TEST_URL)
     val password = authenticator.askPassword(TEST_URL)
     if (assumeCorrect) {

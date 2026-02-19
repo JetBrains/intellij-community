@@ -1,0 +1,15 @@
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+
+package org.jetbrains.kotlin.idea.refactoring.move
+
+import com.intellij.usageView.UsageInfo
+import org.jetbrains.kotlin.K1Deprecation
+import org.jetbrains.kotlin.psi.KtObjectDeclaration
+import org.jetbrains.kotlin.psi.KtSimpleNameExpression
+
+@K1Deprecation
+class ImplicitCompanionAsDispatchReceiverUsageInfo(
+    callee: KtSimpleNameExpression,
+    val companionObject: KtObjectDeclaration
+) : UsageInfo(callee)
+

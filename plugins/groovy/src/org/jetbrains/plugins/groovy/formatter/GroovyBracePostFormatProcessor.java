@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.formatter;
 
 import com.intellij.openapi.util.TextRange;
@@ -11,9 +11,8 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 
 final class GroovyBracePostFormatProcessor implements PostFormatProcessor {
-  @NotNull
   @Override
-  public PsiElement processElement(@NotNull PsiElement source, @NotNull CodeStyleSettings settings) {
+  public @NotNull PsiElement processElement(@NotNull PsiElement source, @NotNull CodeStyleSettings settings) {
     if (source instanceof GroovyPsiElement) {
       return new GroovyBraceEnforcer(settings).process(((GroovyPsiElement)source));
     }
@@ -22,9 +21,8 @@ final class GroovyBracePostFormatProcessor implements PostFormatProcessor {
     }
   }
 
-  @NotNull
   @Override
-  public TextRange processText(@NotNull PsiFile source, @NotNull TextRange rangeToReformat, @NotNull CodeStyleSettings settings) {
+  public @NotNull TextRange processText(@NotNull PsiFile source, @NotNull TextRange rangeToReformat, @NotNull CodeStyleSettings settings) {
     if (source instanceof GroovyFile) {
       return new GroovyBraceEnforcer(settings).processText(((GroovyFile)source), rangeToReformat);
     }

@@ -1,10 +1,15 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.actions;
 
 import com.intellij.application.options.schemes.SchemeNameGenerator;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.util.PropertiesComponent;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.ActionPlaces;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.IdeActions;
+import com.intellij.openapi.actionSystem.KeyboardShortcut;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.keymap.KeyMapBundle;
 import com.intellij.openapi.keymap.Keymap;
@@ -15,7 +20,7 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.*;
+import java.awt.AWTEvent;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.util.HashSet;
@@ -23,21 +28,19 @@ import java.util.Set;
 
 public final class CtrlYActionChooser {
   private static final String ASK_ABOUT_SHORTCUT = "ask.about.ctrl.y.shortcut.v2";
-  private static final Set<String> TARGET_KEYMAPS = new HashSet<String>() {{
+  private static final Set<String> TARGET_KEYMAPS = new HashSet<>() {{
     add(KeymapManager.DEFAULT_IDEA_KEYMAP);
     add(KeymapManager.X_WINDOW_KEYMAP);
     add(KeymapManager.KDE_KEYMAP);
     add(KeymapManager.GNOME_KEYMAP);
   }};
 
-  @Nullable
-  private static Keymap getCurrentKeymap() {
+  private static @Nullable Keymap getCurrentKeymap() {
     KeymapManager keymapManager = KeymapManager.getInstance();
     return keymapManager == null ? null : keymapManager.getActiveKeymap();
   }
 
-  @NotNull
-  private static Keymap getRootKeymap(@NotNull Keymap keymap) {
+  private static @NotNull Keymap getRootKeymap(@NotNull Keymap keymap) {
     while (keymap.canModify()) {
       Keymap parent = keymap.getParent();
       if (parent == null) {
@@ -51,8 +54,7 @@ public final class CtrlYActionChooser {
   }
 
   private static boolean isCtrlY(AWTEvent event) {
-    if (!(event instanceof KeyEvent)) return false;
-    KeyEvent keyEvent = (KeyEvent)event;
+    if (!(event instanceof KeyEvent keyEvent)) return false;
     int modifiers = keyEvent.getModifiers();
     return (keyEvent.getKeyCode() == KeyEvent.VK_Y &&
             ((modifiers & InputEvent.CTRL_MASK) != 0) &&

@@ -1,17 +1,28 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.actionSystem.impl;
 
-import com.apple.eawt.event.*;
+import com.apple.eawt.event.GestureAdapter;
+import com.apple.eawt.event.GesturePhaseEvent;
+import com.apple.eawt.event.GestureUtilities;
+import com.apple.eawt.event.MagnificationEvent;
+import com.apple.eawt.event.SwipeEvent;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.ui.components.Magnificator;
 import com.intellij.ui.components.ZoomableViewport;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JComponent;
+import javax.swing.SwingUtilities;
+import java.awt.Component;
+import java.awt.Container;
+import java.awt.MouseInfo;
+import java.awt.Point;
+import java.awt.PointerInfo;
 import java.awt.event.ActionEvent;
 import java.awt.event.MouseEvent;
+import java.util.ArrayList;
+import java.util.List;
 
 final class MacGestureAdapter extends GestureAdapter {
   double magnification;
@@ -36,8 +47,8 @@ final class MacGestureAdapter extends GestureAdapter {
 
     Point mouse = new Point(pointerInfo.getLocation());
     SwingUtilities.convertPointFromScreen(mouse, myFrame.getComponent());
-    Component deepest = SwingUtilities.getDeepestComponentAt(myFrame.getComponent(), mouse.x, mouse.y);
-    ZoomableViewport viewport = (ZoomableViewport) SwingUtilities.getAncestorOfClass(ZoomableViewport.class, deepest);
+    List<Component> componentsUnderMouse = getAllComponentsAt(myFrame.getComponent(), mouse.x, mouse.y);
+    ZoomableViewport viewport = findMagnifyingViewport(componentsUnderMouse);
     if (viewport != null) {
       Magnificator magnificator = viewport.getMagnificator();
 
@@ -93,5 +104,36 @@ final class MacGestureAdapter extends GestureAdapter {
 
   public void remove(JComponent cmp) {
     GestureUtilities.removeGestureListenerFrom(cmp, this);
+  }
+
+  public List<Component> getAllComponentsAt(Component parent, int x, int y) {
+    List<Component> components = new ArrayList<>();
+    if (!parent.contains(x, y)) return components;
+
+    if (parent instanceof Container) {
+      Component[] comps = ((Container)parent).getComponents();
+      for (int i = comps.length - 1; i >= 0; i--) {
+        Component comp = comps[i];
+        if (comp == null || !comp.isVisible()) continue;
+        Point loc = comp.getLocation();
+        if (!comp.contains(x - loc.x, y - loc.y)) continue;
+        components.add(comp);
+        if (comp instanceof Container) {
+          components.addAll(getAllComponentsAt(comp, x - loc.x, y - loc.y));
+        }
+      }
+    }
+    components.add(parent);
+    return components;
+  }
+
+  private static ZoomableViewport findMagnifyingViewport(List<Component> components) {
+    for (Component comp : components) {
+      ZoomableViewport viewport = (ZoomableViewport)SwingUtilities.getAncestorOfClass(ZoomableViewport.class, comp);
+      if (viewport != null && viewport.getMagnificator() != null) {
+        return viewport;
+      }
+    }
+    return null;
   }
 }

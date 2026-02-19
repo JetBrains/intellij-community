@@ -23,7 +23,6 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.SmartPointerManager;
 import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.refactoring.rename.ResolveSnapshotProvider;
-import java.util.HashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyRecursiveElementVisitor;
@@ -31,6 +30,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrRefere
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMember;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
+import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -78,8 +78,7 @@ public class GroovyResolveSnapshot extends ResolveSnapshotProvider.ResolveSnapsh
   }
 
   private static void qualify(PsiElement referent, PsiElement referee, String hidingLocalName) {
-    if (referent instanceof GrReferenceExpression && referee instanceof GrMember) {
-      GrReferenceExpression ref = ((GrReferenceExpression)referent);
+    if (referent instanceof GrReferenceExpression ref && referee instanceof GrMember) {
       if (!ref.isQualified() && hidingLocalName.equals(ref.getReferenceName())) {
         PsiUtil.qualifyMemberReference(ref, (GrMember)referee, hidingLocalName);
       }

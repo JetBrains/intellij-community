@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.actions;
 
 import com.intellij.execution.RunnerAndConfigurationSettings;
@@ -20,6 +6,7 @@ import com.intellij.execution.configurations.ConfigurationType;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -28,23 +15,20 @@ import java.util.Comparator;
 /**
  * Describes a run configuration being created by a context run action.
  *
- * @author yole
  * @see RunConfigurationProducer
  */
 public abstract class ConfigurationFromContext {
 
   private boolean myIsFromAlternativeLocation;
 
-  @Nullable
-  private String myAlternativeLocationDisplayName;
+  private @Nullable @Nls String myAlternativeLocationDisplayName;
 
   /**
    * Returns the created run configuration settings.
    *
    * @return the created run configuration settings.
    */
-  @NotNull
-  public abstract RunnerAndConfigurationSettings getConfigurationSettings();
+  public abstract @NotNull RunnerAndConfigurationSettings getConfigurationSettings();
 
   public abstract void setConfigurationSettings(RunnerAndConfigurationSettings configurationSettings);
 
@@ -53,8 +37,7 @@ public abstract class ConfigurationFromContext {
    *
    * @return the run configuration object.
    */
-  @NotNull
-  public RunConfiguration getConfiguration() {
+  public @NotNull RunConfiguration getConfiguration() {
     return getConfigurationSettings().getConfiguration();
   }
 
@@ -63,8 +46,7 @@ public abstract class ConfigurationFromContext {
    *
    * @return the configuration type.
    */
-  @NotNull
-  public ConfigurationType getConfigurationType() {
+  public @NotNull ConfigurationType getConfigurationType() {
     return getConfiguration().getType();
   }
 
@@ -74,8 +56,7 @@ public abstract class ConfigurationFromContext {
    *
    * @return the PSI element from which the configuration was created.
    */
-  @NotNull
-  public abstract PsiElement getSourceElement();
+  public abstract @NotNull PsiElement getSourceElement();
 
   /**
    * Called before the configuration created from context is first executed. Can be used to show additional UI for customizing the
@@ -142,12 +123,11 @@ public abstract class ConfigurationFromContext {
    *
    * @return Location display name, null if name was not provided or this configuration is not from alternative location.
    */
-  @Nullable
-  public String getAlternativeLocationDisplayName() {
+  public @Nullable @Nls String getAlternativeLocationDisplayName() {
     return myAlternativeLocationDisplayName;
   }
 
-  public void setAlternativeLocationDisplayName(@Nullable String alternativeLocationDisplayName) {
+  public void setAlternativeLocationDisplayName(@Nullable @Nls String alternativeLocationDisplayName) {
     this.myAlternativeLocationDisplayName = alternativeLocationDisplayName;
   }
 
@@ -161,6 +141,10 @@ public abstract class ConfigurationFromContext {
     }
     if (PsiTreeUtil.isAncestor(configuration2.getSourceElement(), configuration1.getSourceElement(), true)) {
       return -1;
+    }
+    // If neither configuration1 nor configuration2 are preferred to each other, then these are considered equal.
+    if (!configuration1.isPreferredTo(configuration2) && !configuration2.isPreferredTo(configuration1)) {
+      return 0;
     }
     if (!configuration1.isPreferredTo(configuration2)) {
       return 1;

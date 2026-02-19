@@ -1,10 +1,15 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.properties.structureView;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.structureView.StructureViewTreeElement;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
-import com.intellij.ide.util.treeView.smartTree.*;
+import com.intellij.ide.util.treeView.smartTree.ActionPresentation;
+import com.intellij.ide.util.treeView.smartTree.ActionPresentationData;
+import com.intellij.ide.util.treeView.smartTree.Group;
+import com.intellij.ide.util.treeView.smartTree.Grouper;
+import com.intellij.ide.util.treeView.smartTree.Sorter;
+import com.intellij.ide.util.treeView.smartTree.TreeElement;
 import com.intellij.lang.properties.IProperty;
 import com.intellij.lang.properties.PropertiesBundle;
 import com.intellij.lang.properties.editor.PropertyStructureViewElement;
@@ -12,15 +17,21 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.SmartList;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
 
 public class GroupByWordPrefixes implements Grouper, Sorter {
   private static final Logger LOG = Logger.getInstance(GroupByWordPrefixes.class);
-  @NonNls public static final String ID = "GROUP_BY_PREFIXES";
+  public static final @NonNls String ID = "GROUP_BY_PREFIXES";
   private String mySeparator;
 
   public GroupByWordPrefixes(String separator) {
@@ -36,8 +47,7 @@ public class GroupByWordPrefixes implements Grouper, Sorter {
   }
 
   @Override
-  @NotNull
-  public Collection<Group> group(@NotNull AbstractTreeNode<?> parent, @NotNull Collection<TreeElement> children) {
+  public @NotNull @Unmodifiable Collection<Group> group(@NotNull AbstractTreeNode<?> parent, @NotNull Collection<TreeElement> children) {
     List<Key> keys = new ArrayList<>();
 
     String parentPrefix;
@@ -58,6 +68,9 @@ public class GroupByWordPrefixes implements Grouper, Sorter {
       List<String> words = StringUtil.split(text, mySeparator);
       keys.add(new Key(words, element));
     }
+
+    if (keys.isEmpty()) return ContainerUtil.emptyList();
+
     keys.sort((k1, k2) -> {
       List<String> o1 = k1.words;
       List<String> o2 = k2.words;
@@ -124,22 +137,20 @@ public class GroupByWordPrefixes implements Grouper, Sorter {
   }
 
   @Override
-  @NotNull
-  public ActionPresentation getPresentation() {
+  public @NotNull ActionPresentation getPresentation() {
     return new ActionPresentationData(PropertiesBundle.message("structure.view.group.by.prefixes.action.name"),
                                       PropertiesBundle.message("structure.view.group.by.prefixes.action.description"),
                                       AllIcons.Actions.GroupByPrefix);
   }
 
   @Override
-  @NotNull
-  public String getName() {
+  public @NotNull String getName() {
     return ID;
   }
 
-  @NotNull
+  @SuppressWarnings("rawtypes")
   @Override
-  public Comparator getComparator() {
+  public @NotNull Comparator getComparator() {
     return Sorter.ALPHA_SORTER.getComparator();
   }
 
@@ -148,23 +159,10 @@ public class GroupByWordPrefixes implements Grouper, Sorter {
     return true;
   }
 
-  private static class Key {
-    final List<String> words;
-    final TreeElement node;
-
-    Key(final List<String> words, final TreeElement node) {
-      this.words = words;
-      this.node = node;
-    }
-
-    @Override
-    public String toString() {
-      return "Key{words=" + words + ", node=" + node + '}';
-    }
+  private record Key(List<String> words, TreeElement node) {
   }
 
-  @Nullable
-  static String getPropertyUnescapedKey(@NotNull TreeElement element) {
+  static @Nullable String getPropertyUnescapedKey(@NotNull TreeElement element) {
     if (!(element instanceof StructureViewTreeElement)) {
       return null;
     }

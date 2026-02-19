@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.uiDesigner.radComponents;
 
@@ -8,12 +8,21 @@ import com.intellij.uiDesigner.GridChangeUtil;
 import com.intellij.uiDesigner.UIFormXmlConstants;
 import com.intellij.uiDesigner.XmlWriter;
 import com.intellij.uiDesigner.core.GridConstraints;
-import com.intellij.uiDesigner.designSurface.*;
+import com.intellij.uiDesigner.designSurface.ComponentDropLocation;
+import com.intellij.uiDesigner.designSurface.FirstComponentInsertLocation;
+import com.intellij.uiDesigner.designSurface.GridDropLocation;
+import com.intellij.uiDesigner.designSurface.GridInsertLocation;
+import com.intellij.uiDesigner.designSurface.GridInsertMode;
+import com.intellij.uiDesigner.designSurface.GridReplaceDropLocation;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.*;
+import java.awt.Color;
+import java.awt.Graphics2D;
+import java.awt.LayoutManager;
+import java.awt.Point;
+import java.awt.Rectangle;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
@@ -21,9 +30,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-/**
- * @author yole
- */
+
 public abstract class RadAbstractGridLayoutManager extends RadLayoutManager {
   protected final Map<RadComponent, MyPropertyChangeListener> myListenerMap = new HashMap<>();
 
@@ -63,13 +70,11 @@ public abstract class RadAbstractGridLayoutManager extends RadLayoutManager {
   public abstract int[] getGridCellCoords(RadContainer container, boolean isRow);
   public abstract int[] getGridCellSizes(RadContainer container, boolean isRow);
 
-  @Nullable
-  public CustomPropertiesPanel getRowColumnPropertiesPanel(RadContainer container, boolean isRow, int[] selectedIndices) {
+  public @Nullable CustomPropertiesPanel getRowColumnPropertiesPanel(RadContainer container, boolean isRow, int[] selectedIndices) {
     return null;
   }
 
-  @Nullable
-  public static RadComponent getComponentAtGrid(RadContainer container, final int row, final int column) {
+  public static @Nullable RadComponent getComponentAtGrid(RadContainer container, final int row, final int column) {
     // If the target cell is not empty does not allow drop.
     for(int i=0; i<container.getComponentCount(); i++){
       final RadComponent component = container.getComponent(i);
@@ -122,8 +127,7 @@ public abstract class RadAbstractGridLayoutManager extends RadLayoutManager {
     return false;
   }
 
-  @Nullable
-  public ActionGroup getCaptionActions() {
+  public @Nullable ActionGroup getCaptionActions() {
     return null;
   }
 
@@ -184,8 +188,7 @@ public abstract class RadAbstractGridLayoutManager extends RadLayoutManager {
     return true;
   }
 
-  @Nullable
-  public String getCellResizeTooltip(RadContainer container, boolean isRow, int cell, int newSize) {
+  public @Nullable String getCellResizeTooltip(RadContainer container, boolean isRow, int cell, int newSize) {
     return null;
   }
   public void processCellResized(RadContainer container, final boolean isRow, final int cell, final int newSize) {
@@ -231,8 +234,8 @@ public abstract class RadAbstractGridLayoutManager extends RadLayoutManager {
   }
 
 
-  @Override @NotNull
-  public ComponentDropLocation getDropLocation(RadContainer container, @Nullable final Point location) {
+  @Override
+  public @NotNull ComponentDropLocation getDropLocation(RadContainer container, final @Nullable Point location) {
     if (container.getGridRowCount() == 1 && container.getGridColumnCount() == 1 &&
         getComponentAtGrid(container, 0, 0) == null) {
       final Rectangle rc = getGridCellRangeRect(container, 0, 0, 0, 0);

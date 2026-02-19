@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.jvm.types;
 
 import org.jetbrains.annotations.Contract;
@@ -10,7 +10,15 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
-import static com.intellij.psi.CommonClassNames.*;
+import static com.intellij.psi.CommonClassNames.JAVA_LANG_BOOLEAN;
+import static com.intellij.psi.CommonClassNames.JAVA_LANG_BYTE;
+import static com.intellij.psi.CommonClassNames.JAVA_LANG_CHARACTER;
+import static com.intellij.psi.CommonClassNames.JAVA_LANG_DOUBLE;
+import static com.intellij.psi.CommonClassNames.JAVA_LANG_FLOAT;
+import static com.intellij.psi.CommonClassNames.JAVA_LANG_INTEGER;
+import static com.intellij.psi.CommonClassNames.JAVA_LANG_LONG;
+import static com.intellij.psi.CommonClassNames.JAVA_LANG_SHORT;
+import static com.intellij.psi.CommonClassNames.JAVA_LANG_VOID;
 
 public final class JvmPrimitiveTypeKind {
   public static final JvmPrimitiveTypeKind BOOLEAN = new JvmPrimitiveTypeKind("boolean", JAVA_LANG_BOOLEAN, "Z");
@@ -34,20 +42,17 @@ public final class JvmPrimitiveTypeKind {
   }
 
   @Contract(pure = true)
-  @NotNull
-  public String getName() {
+  public @NotNull String getName() {
     return myName;
   }
 
   @Contract(pure = true)
-  @NotNull
-  public String getBoxedFqn() {
+  public @NotNull String getBoxedFqn() {
     return myBoxedFqn;
   }
 
   @Contract(pure = true)
-  @NotNull
-  public String getBinaryName() {
+  public @NotNull String getBinaryName() {
     return myBinaryName;
   }
 
@@ -67,20 +72,17 @@ public final class JvmPrimitiveTypeKind {
   }
 
   @Contract(value = "null -> null", pure = true)
-  @Nullable
-  public static JvmPrimitiveTypeKind getKindByName(@Nullable String name) {
+  public static @Nullable JvmPrimitiveTypeKind getKindByName(@Nullable String name) {
     return ourNameToKind.get(name);
   }
 
   @Contract(value = "null -> null", pure = true)
-  @Nullable
-  public static JvmPrimitiveTypeKind getKindByFqn(@Nullable String fqn) {
+  public static @Nullable JvmPrimitiveTypeKind getKindByFqn(@Nullable String fqn) {
     return ourFqnToKind.get(fqn);
   }
 
   @Contract(pure = true)
-  @NotNull
-  public static Collection<String> getBoxedFqns() {
+  public static @NotNull Collection<String> getBoxedFqns() {
     return Collections.unmodifiableCollection(ourFqnToKind.keySet());
   }
 }

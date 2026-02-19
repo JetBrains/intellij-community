@@ -1,0 +1,23 @@
+f:org.jetbrains.jewel.detekt.JewelRuleSetProvider
+- io.gitlab.arturbosch.detekt.api.RuleSetProvider
+- <init>():V
+- getRuleSetId():java.lang.String
+- instance(io.gitlab.arturbosch.detekt.api.Config):io.gitlab.arturbosch.detekt.api.RuleSet
+f:org.jetbrains.jewel.detekt.rules.EqualityMembersRule
+- io.gitlab.arturbosch.detekt.api.Rule
+- <init>(io.gitlab.arturbosch.detekt.api.Config):V
+- getIssue():io.gitlab.arturbosch.detekt.api.Issue
+- visitClass(org.jetbrains.kotlin.psi.KtClass):V
+f:org.jetbrains.jewel.detekt.rules.MissingApiStatusAnnotationRule
+- io.gitlab.arturbosch.detekt.api.Rule
+- <init>(io.gitlab.arturbosch.detekt.api.Config):V
+- getIssue():io.gitlab.arturbosch.detekt.api.Issue
+- visitClassInitializer(org.jetbrains.kotlin.psi.KtClassInitializer):V
+- visitClassOrObject(org.jetbrains.kotlin.psi.KtClassOrObject):V
+- visitNamedFunction(org.jetbrains.kotlin.psi.KtNamedFunction):V
+- visitParameter(org.jetbrains.kotlin.psi.KtParameter):V
+- visitPrimaryConstructor(org.jetbrains.kotlin.psi.KtPrimaryConstructor):V
+- visitProperty(org.jetbrains.kotlin.psi.KtProperty):V
+- visitPropertyAccessor(org.jetbrains.kotlin.psi.KtPropertyAccessor):V
+- visitSecondaryConstructor(org.jetbrains.kotlin.psi.KtSecondaryConstructor):V
+- visitTypeAlias(org.jetbrains.kotlin.psi.KtTypeAlias):V

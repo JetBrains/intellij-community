@@ -1,10 +1,9 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.tasks.pivotal;
 
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.tasks.CustomTaskState;
 import com.intellij.tasks.Task;
@@ -33,6 +32,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -55,7 +55,7 @@ public class PivotalTrackerRepository extends NewBaseRepositoryImpl {
                                                                           "unscheduled");
 
   // @formatter:off
-  private static final TypeToken<List<PivotalTrackerStory>> LIST_OF_STORIES_TYPE = new TypeToken<List<PivotalTrackerStory>>() {};
+  private static final TypeToken<List<PivotalTrackerStory>> LIST_OF_STORIES_TYPE = new TypeToken<>() {};
   // @formatter:on
 
   public static final Gson ourGson = TaskGsonUtil.createDefaultBuilder().create();
@@ -87,15 +87,13 @@ public class PivotalTrackerRepository extends NewBaseRepositoryImpl {
     setProjectId(other.myProjectId);
   }
 
-  @NotNull
   @Override
-  public String getRestApiPathPrefix() {
+  public @NotNull String getRestApiPathPrefix() {
     return API_V5_PATH;
   }
 
-  @Nullable
   @Override
-  protected HttpRequestInterceptor createRequestInterceptor() {
+  protected @Nullable HttpRequestInterceptor createRequestInterceptor() {
     return new HttpRequestInterceptor() {
       @Override
       public void process(HttpRequest request, HttpContext context) throws HttpException, IOException {
@@ -104,9 +102,8 @@ public class PivotalTrackerRepository extends NewBaseRepositoryImpl {
     };
   }
 
-  @Nullable
   @Override
-  public CancellableConnection createCancellableConnection() {
+  public @Nullable CancellableConnection createCancellableConnection() {
     return new HttpTestConnection(new HttpGet()) {
       @Override
       protected void doTest() throws Exception {
@@ -131,8 +128,7 @@ public class PivotalTrackerRepository extends NewBaseRepositoryImpl {
     return ContainerUtil.map2Array(stories, PivotalTrackerTask.class, story -> new PivotalTrackerTask(this, story));
   }
 
-  @NotNull
-  protected HttpGet createStoriesRequest(@Nullable String query, int offset, int limit, boolean withClosed) throws URISyntaxException {
+  protected @NotNull HttpGet createStoriesRequest(@Nullable String query, int offset, int limit, boolean withClosed) throws URISyntaxException {
     URI endpointUrl = new URIBuilder(getRestApiUrl("projects", myProjectId, "stories"))
       .addParameter("filter", (withClosed ? "" : "state:started,unstarted,unscheduled,rejected") +
                               (StringUtil.isEmpty(query) ? "" : " \"" + query + "\""))
@@ -143,9 +139,8 @@ public class PivotalTrackerRepository extends NewBaseRepositoryImpl {
     return new HttpGet(endpointUrl);
   }
 
-  @Nullable
   @Override
-  public Task findTask(@NotNull final String id) throws Exception {
+  public @Nullable Task findTask(final @NotNull String id) throws Exception {
     final Matcher matcher = TASK_ID_REGEX.matcher(id);
     if (!matcher.matches()) {
       LOG.warn("Illegal PivotalTracker ID pattern " + id);
@@ -159,8 +154,7 @@ public class PivotalTrackerRepository extends NewBaseRepositoryImpl {
   }
 
   @Override
-  @Nullable
-  public String extractId(@NotNull final String taskName) {
+  public @Nullable String extractId(final @NotNull String taskName) {
     Matcher matcher = TASK_ID_REGEX.matcher(taskName);
     return matcher.matches() ? taskName : null;
   }
@@ -175,20 +169,18 @@ public class PivotalTrackerRepository extends NewBaseRepositoryImpl {
     final String projectId = matcher.group("projectId");
     final String storyId = matcher.group("storyId");
     final HttpPut request = new HttpPut(getRestApiUrl("projects", projectId, "stories", storyId));
-    String payload = ourGson.toJson(ContainerUtil.newHashMap(Pair.create("current_state", state.getId())));
+    String payload = ourGson.toJson(Map.of("current_state", state.getId()));
     request.setEntity(new StringEntity(payload, ContentType.APPLICATION_JSON));
     getHttpClient().execute(request);
   }
 
-  @NotNull
   @Override
-  public Set<CustomTaskState> getAvailableTaskStates(@NotNull Task task) throws Exception {
+  public @NotNull Set<CustomTaskState> getAvailableTaskStates(@NotNull Task task) throws Exception {
     return ContainerUtil.map2Set(STANDARD_STORY_STATES, name -> new CustomTaskState(name, name));
   }
 
-  @NotNull
   @Override
-  public BaseRepository clone() {
+  public @NotNull BaseRepository clone() {
     return new PivotalTrackerRepository(this);
   }
 
@@ -200,28 +192,6 @@ public class PivotalTrackerRepository extends NewBaseRepositoryImpl {
     myProjectId = projectId;
   }
 
-  /**
-   * Don't use this getter, it's left only to preserve compatibility with existing settings.
-   * Actual API token is saved in Password Safe and accessible via {@link #getPassword()}.
-   *
-   * @deprecated Use {@link #getPassword()}
-   */
-  @Deprecated
-  public String getAPIKey() {
-    return null;
-  }
-
-  /**
-   * Don't use this setter, it's left only to preserve compatibility with existing settings.
-   * Actual API token is saved in Password Safe and accessible via {@link #getPassword()}.
-   *
-   * @deprecated Use {@link #setPassword(String)}
-   */
-  @Deprecated
-  public void setAPIKey(final String APIKey) {
-    setPassword(APIKey);
-  }
-
   @Override
   public String getPresentableName() {
     final String name = super.getPresentableName();
@@ -231,9 +201,8 @@ public class PivotalTrackerRepository extends NewBaseRepositoryImpl {
   @Override
   public boolean equals(final Object o) {
     if (!super.equals(o)) return false;
-    if (!(o instanceof PivotalTrackerRepository)) return false;
+    if (!(o instanceof PivotalTrackerRepository that)) return false;
 
-    final PivotalTrackerRepository that = (PivotalTrackerRepository)o;
     if (getProjectId() != null ? !getProjectId().equals(that.getProjectId()) : that.getProjectId() != null) return false;
     return true;
   }

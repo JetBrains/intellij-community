@@ -1,3 +1,4 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.dom.generate;
 
 import com.intellij.openapi.editor.Editor;
@@ -15,9 +16,9 @@ import org.jetbrains.idea.maven.dom.MavenDomUtil;
 import org.jetbrains.idea.maven.dom.model.MavenDomProjectModel;
 
 public class MavenGenerateTemplateAction extends GenerateDomElementAction {
-  public MavenGenerateTemplateAction(@NotNull @NlsContexts.DetailedDescription final String description,
-                                     @NotNull final Class<? extends DomElement> childElementClass,
-                                     @Nullable final String mappingId,
+  public MavenGenerateTemplateAction(final @NotNull @NlsContexts.DetailedDescription String description,
+                                     final @NotNull Class<? extends DomElement> childElementClass,
+                                     final @Nullable String mappingId,
                                      @NotNull Function<? super MavenDomProjectModel, ? extends DomElement> parentFunction) {
     super(new MavenGenerateDomElementProvider(description, childElementClass, mappingId, parentFunction));
 
@@ -25,7 +26,7 @@ public class MavenGenerateTemplateAction extends GenerateDomElementAction {
   }
 
   @Override
-  protected boolean isValidForFile(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
-    return file instanceof XmlFile && MavenDomUtil.getMavenDomModel(file, MavenDomProjectModel.class) != null;
+  protected boolean isValidForFile(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile psiFile) {
+    return psiFile instanceof XmlFile && MavenDomUtil.getMavenDomModel(psiFile, MavenDomProjectModel.class) != null;
   }
 }

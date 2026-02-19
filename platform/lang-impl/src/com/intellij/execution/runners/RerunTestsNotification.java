@@ -1,6 +1,7 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.runners;
 
+import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.impl.ConsoleViewImpl;
 import com.intellij.execution.ui.ConsoleView;
 import com.intellij.execution.ui.ExecutionConsole;
@@ -17,13 +18,17 @@ import com.intellij.ui.GotItMessage;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.concurrency.EdtExecutorService;
-import com.intellij.util.ui.*;
+import com.intellij.util.ui.JBDimension;
+import com.intellij.util.ui.JBInsets;
+import com.intellij.util.ui.PositionTracker;
+import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.UiNotifyConnector;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JComponent;
+import java.awt.Dimension;
+import java.awt.Insets;
 import java.awt.event.HierarchyEvent;
 import java.awt.event.HierarchyListener;
 import java.util.concurrent.TimeUnit;
@@ -55,7 +60,7 @@ public final class RerunTestsNotification {
 
       ConsoleView consoleView = UIUtil.findComponentOfType(executionConsole.getComponent(), ConsoleViewImpl.class);
       if (consoleView != null) {
-        GotItMessage message = GotItMessage.createMessage("Rerun tests with " + shortcutText, "");
+        GotItMessage message = GotItMessage.createMessage(ExecutionBundle.message("popup.content.rerun.tests.with", shortcutText), "");
         Disposable disposable = Disposer.newDisposable();
         Disposer.register(executionConsole, disposable);
         message.setDisposable(disposable);
@@ -63,12 +68,12 @@ public final class RerunTestsNotification {
         message.setShowCallout(false);
         JComponent consoleComponent = consoleView.getComponent();
         message.show(
-          new PositionTracker<Balloon>(consoleComponent) {
+          new PositionTracker<>(consoleComponent) {
             @Override
             public RelativePoint recalculateLocation(@NotNull Balloon balloon) {
               RelativePoint point = RelativePoint.getSouthEastOf(consoleComponent);
               Insets shadowInsets = balloon instanceof BalloonImpl ? ((BalloonImpl)balloon).getShadowBorderInsets()
-                                                                   : JBUI.emptyInsets();
+                                                                   : JBInsets.emptyInsets();
               Dimension balloonContentSize = JBDimension.create(balloon.getPreferredSize(), true);
               JBInsets.removeFrom(balloonContentSize, shadowInsets);
 

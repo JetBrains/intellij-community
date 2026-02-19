@@ -24,7 +24,8 @@ public class ExpectedHighlightingDataFunctionalTest extends BasePlatformTestCase
     catch (ComparisonFailure failure) {
       String message = failure.getMessage();
       String firstLine = message.split("\n")[0];
-      assertSameLines("hello.txt: extra (1:1/14): 'just some text' (Magic problem) [HighlightInfoTypeImpl[severity=WARNING, key=WARNING_ATTRIBUTES]]", firstLine);
+      assertSameLines(
+        "hello.txt: extra (1:1/14 at offset 0): 'just some text' (Magic problem) [HighlightInfoTypeImpl[severity=WARNING, key=WARNING_ATTRIBUTES]]", firstLine);
     }
   }
 
@@ -35,14 +36,8 @@ public class ExpectedHighlightingDataFunctionalTest extends BasePlatformTestCase
     catch (ComparisonFailure failure) {
       String message = failure.getMessage();
       String firstLine = message.split("\n")[0];
-      assertSameLines("hello.txt: duplicated (1:1/14): 'just some text' (Magic problem)", firstLine);
+      assertSameLines("hello.txt: duplicated (1:1/14 at offset 0): 'just some text' (Magic problem)", firstLine);
     }
-  }
-
-  public void testDoNotCheckDoubleMessage() {
-    ExpectedHighlightingData.expectedDuplicatedHighlighting(
-      () -> doTest("<warning descr=\"Magic problem\">just some text</warning>", new MyDoubleInspection())
-    );
   }
 
   public void testExpectedDuplicationWasNotFound() {

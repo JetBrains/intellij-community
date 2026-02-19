@@ -47,9 +47,15 @@ import org.intellij.plugins.relaxNG.RelaxngBundle;
 import org.intellij.plugins.relaxNG.compact.RncElementTypes;
 import org.intellij.plugins.relaxNG.compact.RncFileType;
 import org.intellij.plugins.relaxNG.compact.RncTokenTypes;
-import org.intellij.plugins.relaxNG.compact.psi.*;
+import org.intellij.plugins.relaxNG.compact.psi.RncDecl;
+import org.intellij.plugins.relaxNG.compact.psi.RncElement;
+import org.intellij.plugins.relaxNG.compact.psi.RncElementVisitor;
+import org.intellij.plugins.relaxNG.compact.psi.RncFile;
+import org.intellij.plugins.relaxNG.compact.psi.RncGrammar;
+import org.intellij.plugins.relaxNG.compact.psi.RncName;
 import org.intellij.plugins.relaxNG.compact.psi.util.EscapeUtil;
 import org.intellij.plugins.relaxNG.compact.psi.util.RenameUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -65,15 +71,13 @@ public class RncNameImpl extends RncElementImpl implements RncName, PsiReference
   }
 
   @Override
-  @Nullable
-  public String getPrefix() {
+  public @Nullable String getPrefix() {
     final String[] parts = EscapeUtil.unescapeText(getNode()).split(":", 2);
     return parts.length == 2 ? parts[0] : null;
   }
 
   @Override
-  @NotNull
-  public String getLocalPart() {
+  public @NotNull String getLocalPart() {
     final String[] parts = EscapeUtil.unescapeText(getNode()).split(":", 2);
     return parts.length == 1 ? parts[0] : parts[1];
   }
@@ -88,21 +92,18 @@ public class RncNameImpl extends RncElementImpl implements RncName, PsiReference
     return getPrefix() == null ? null : this;
   }
 
-  @NotNull
   @Override
-  public PsiElement getElement() {
+  public @NotNull PsiElement getElement() {
     return this;
   }
 
-  @NotNull
   @Override
-  public TextRange getRangeInElement() {
+  public @NotNull TextRange getRangeInElement() {
     return TextRange.from(0, getText().indexOf(':'));
   }
 
   @Override
-  @Nullable
-  public PsiElement resolve() {
+  public @Nullable PsiElement resolve() {
     final MyResolver resolver = new MyResolver(getPrefix(), getKind());
     getContainingFile().processDeclarations(resolver, ResolveState.initial(), this, this);
     return resolver.getResult();
@@ -118,8 +119,7 @@ public class RncNameImpl extends RncElementImpl implements RncName, PsiReference
   }
 
   @Override
-  @NotNull
-  public String getCanonicalText() {
+  public @NotNull String getCanonicalText() {
     return getRangeInElement().substring(getText());
   }
 
@@ -148,15 +148,14 @@ public class RncNameImpl extends RncElementImpl implements RncName, PsiReference
   }
 
   @Override
-  @NotNull
-  public String getUnresolvedMessagePattern() {
+  public @NotNull String getUnresolvedMessagePattern() {
     //The format substitution is performed at the call site
     //noinspection UnresolvedPropertyKey
     return RelaxngBundle.message("relaxng.annotator.unresolved-namespace-prefix");
   }
 
   @Override
-  public LocalQuickFix @Nullable [] getQuickFixes() {
+  public @NotNull LocalQuickFix @Nullable [] getQuickFixes() {
     if (getPrefix() != null) {
       return new LocalQuickFix[] { new CreateDeclFix(this) };
     }
@@ -206,26 +205,26 @@ public class RncNameImpl extends RncElementImpl implements RncName, PsiReference
   }
 
   public static class CreateDeclFix implements LocalQuickFix {
-    private final RncNameImpl myReference;
+    private final @NotNull @Nls String myName;
 
     public CreateDeclFix(RncNameImpl reference) {
-      myReference = reference;
+      myName = RelaxngBundle.message("relaxng.quickfix.create-declaration.name", StringUtil.toLowerCase(reference.getKind().name()),
+                                     reference.getPrefix());
     }
 
     @Override
-    @NotNull
-    public String getName() {
-      return RelaxngBundle.message("relaxng.quickfix.create-declaration.name", StringUtil.toLowerCase(myReference.getKind().name()), myReference.getPrefix());
+    public @NotNull String getName() {
+      return myName;
     }
 
     @Override
-    @NotNull
-    public String getFamilyName() {
+    public @NotNull String getFamilyName() {
       return XmlPsiBundle.message("xml.quickfix.create.namespace.declaration.family");
     }
 
     @Override
     public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
+      RncNameImpl myReference = (RncNameImpl)descriptor.getPsiElement();
       final String prefix = myReference.getPrefix();
       final PsiFileFactory factory = PsiFileFactory.getInstance(myReference.getProject());
       final RncFile psiFile = (RncFile)factory.createFileFromText("dummy.rnc",

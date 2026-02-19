@@ -1,28 +1,41 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.ui.tree.render;
 
 import com.intellij.debugger.JavaDebuggerBundle;
-import com.intellij.debugger.engine.DebugProcess;
+import com.intellij.debugger.engine.DebugProcessImpl;
 import com.intellij.debugger.engine.DebuggerUtils;
+import com.intellij.debugger.engine.PossiblySyncCommand;
+import com.intellij.debugger.engine.SuspendContextImpl;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluateExceptionUtil;
 import com.intellij.debugger.engine.evaluation.EvaluationContext;
+import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.debugger.engine.evaluation.TextWithImports;
 import com.intellij.debugger.engine.evaluation.expression.ExpressionEvaluator;
+import com.intellij.debugger.engine.evaluation.statistics.JavaDebuggerEvaluatorStatisticsCollector;
+import com.intellij.debugger.ui.impl.watch.ValueDescriptorImpl;
+import com.intellij.debugger.ui.overhead.OverheadTimings;
 import com.intellij.debugger.ui.tree.ValueDescriptor;
 import com.intellij.openapi.util.DefaultJDOMExternalizer;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.xdebugger.impl.evaluate.XEvaluationOrigin;
+import com.intellij.xdebugger.impl.ui.XDebuggerUIConstants;
 import com.sun.jdi.Value;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import java.util.concurrent.TimeUnit;
 
 public class LabelRenderer extends ReferenceRenderer implements ValueLabelRenderer, OnDemandRenderer {
   public static final @NonNls String UNIQUE_ID = "LabelRenderer";
   public boolean ON_DEMAND;
 
   private CachedEvaluator myLabelExpression = createCachedEvaluator();
+  private String myPrefix;
 
   public LabelRenderer() {
     super();
@@ -46,37 +59,59 @@ public class LabelRenderer extends ReferenceRenderer implements ValueLabelRender
     throws EvaluateException {
 
     if (!isShowValue(descriptor, evaluationContext)) {
-      return "";
+      return prefix("");
     }
 
-    final Value value = descriptor.getValue();
+    Value value = descriptor.getValue();
+    if (value == null) {
+      return prefix("null");
+    }
 
-    String result;
-    final DebugProcess debugProcess = evaluationContext.getDebugProcess();
-    if (value != null) {
-      try {
-        final ExpressionEvaluator evaluator = myLabelExpression.getEvaluator(debugProcess.getProject());
+    EvaluationContextImpl evaluationContextImpl = (EvaluationContextImpl)evaluationContext;
+    DebugProcessImpl debugProcess = evaluationContextImpl.getDebugProcess();
+    evaluationContextImpl.getManagerThread().schedule(new PossiblySyncCommand(evaluationContextImpl.getSuspendContext()) {
+      @Override
+      public void syncAction(@NotNull SuspendContextImpl suspendContext) {
+        ExpressionEvaluator evaluator = null;
+        long startNs = System.nanoTime();
+        try {
+          evaluator = myLabelExpression.getEvaluator(debugProcess.getProject());
 
-        if(!debugProcess.isAttached()) {
-          throw EvaluateExceptionUtil.PROCESS_EXITED;
+          if (!debugProcess.isAttached()) {
+            throw EvaluateExceptionUtil.PROCESS_EXITED;
+          }
+          EvaluationContextImpl thisEvaluationContext = evaluationContextImpl.createEvaluationContext(value);
+          XEvaluationOrigin.setOrigin(thisEvaluationContext, XEvaluationOrigin.RENDERER);
+          Value labelValue = evaluator.evaluate(thisEvaluationContext);
+          JavaDebuggerEvaluatorStatisticsCollector.logEvaluationResult(debugProcess.getProject(), evaluator, true, XEvaluationOrigin.RENDERER);
+          String result = StringUtil.notNullize(DebuggerUtils.getValueAsString(thisEvaluationContext, labelValue));
+          descriptor.setValueLabel(prefix(result));
         }
-        EvaluationContext thisEvaluationContext = evaluationContext.createEvaluationContext(value);
-        Value labelValue = evaluator.evaluate(thisEvaluationContext);
-        result = DebuggerUtils.getValueAsString(thisEvaluationContext, labelValue);
+        catch (EvaluateException ex) {
+          JavaDebuggerEvaluatorStatisticsCollector.logEvaluationResult(debugProcess.getProject(), evaluator, false, XEvaluationOrigin.RENDERER);
+          descriptor.setValueLabelFailed(
+            new EvaluateException(JavaDebuggerBundle.message("error.unable.to.evaluate.expression") + " " + ex.getMessage(), ex));
+        }
+        finally {
+          long timeMs = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - startNs);
+          if (descriptor instanceof ValueDescriptorImpl valueDescriptor
+              && valueDescriptor.getLastRenderer() instanceof NodeRendererImpl nodeRenderer
+              && nodeRenderer.hasOverhead()) {
+            OverheadTimings.add(debugProcess, new NodeRendererImpl.Overhead(nodeRenderer), 0, timeMs);
+          }
+        }
+        labelListener.labelChanged();
       }
-      catch (final EvaluateException ex) {
-        throw new EvaluateException(JavaDebuggerBundle.message("error.unable.to.evaluate.expression") + " " + ex.getMessage(), ex);
-      }
-    }
-    else {
-      result = "null";
-    }
-    return result;
+    });
+    return XDebuggerUIConstants.getCollectingDataMessage();
   }
 
-  @NotNull
+  private String prefix(String result) {
+    return myPrefix != null ? myPrefix + result : result;
+  }
+
   @Override
-  public String getLinkText() {
+  public @NotNull String getLinkText() {
     return "… " + getLabelExpression().getText();
   }
 
@@ -103,6 +138,10 @@ public class LabelRenderer extends ReferenceRenderer implements ValueLabelRender
 
   public void setLabelExpression(TextWithImports expression) {
     myLabelExpression.setReferenceExpression(expression);
+  }
+
+  public void setPrefix(@Nullable String prefix) {
+    myPrefix = prefix;
   }
 
   @Override

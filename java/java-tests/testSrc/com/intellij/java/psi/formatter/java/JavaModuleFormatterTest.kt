@@ -1,14 +1,13 @@
 // Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.psi.formatter.java
 
-import com.intellij.openapi.roots.LanguageLevelProjectExtension
 import com.intellij.pom.java.LanguageLevel
-import com.intellij.testFramework.LightPlatformTestCase
+import com.intellij.testFramework.IdeaTestUtil
 
 class JavaModuleFormatterTest : AbstractJavaFormatterTest() {
   override fun setUp() {
     super.setUp()
-    LanguageLevelProjectExtension.getInstance(getProject()).languageLevel = LanguageLevel.JDK_1_9
+    IdeaTestUtil.setProjectLanguageLevel(project, LanguageLevel.JDK_1_9)
   }
 
   fun testEmpty() {
@@ -34,5 +33,35 @@ class JavaModuleFormatterTest : AbstractJavaFormatterTest() {
   fun testAnnotatedModule() {
     doTextTest("@Deprecated\nmodule m { }", "@Deprecated\nmodule m {\n}")
     doTextTest("@Deprecated(forRemoval = true)  module m { }", "@Deprecated(forRemoval = true)\nmodule m {\n}")
+  }
+
+  fun testComposedModulesNamesAreCollapsed() {
+    doTextTest("""
+      module m   .  b   .
+         c { exports a  .  b to m1  .
+            m2 ,m2  .  m3, m3
+              .  m4; }
+    """.trimIndent(),
+               """
+                 module m.b.
+                         c {
+                     exports a.b to m1.
+                             m2, m2.m3, m3
+                             .m4;
+                 }
+               """.trimIndent())
+  }
+
+  fun testComposedImportModuleNamesAreCollapsed() {
+    doTextTest("""
+      import module m   .  b . c
+      import module m2 . b  .
+                   c
+    """.trimIndent(),
+               """
+      import module m.b.c
+      import module m2.b.
+              c
+    """.trimIndent()   )
   }
 }

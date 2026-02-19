@@ -1,11 +1,26 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.tooling.serialization;
 
 import com.amazon.ion.IonReader;
 import com.amazon.ion.IonType;
 import com.amazon.ion.IonWriter;
 import com.amazon.ion.system.IonReaderBuilder;
-import com.intellij.openapi.externalSystem.model.project.dependencies.*;
+import com.intellij.openapi.externalSystem.model.project.dependencies.AbstractDependencyNode;
+import com.intellij.openapi.externalSystem.model.project.dependencies.ArtifactDependencyNode;
+import com.intellij.openapi.externalSystem.model.project.dependencies.ArtifactDependencyNodeImpl;
+import com.intellij.openapi.externalSystem.model.project.dependencies.ComponentDependencies;
+import com.intellij.openapi.externalSystem.model.project.dependencies.ComponentDependenciesImpl;
+import com.intellij.openapi.externalSystem.model.project.dependencies.DependencyNode;
+import com.intellij.openapi.externalSystem.model.project.dependencies.DependencyScopeNode;
+import com.intellij.openapi.externalSystem.model.project.dependencies.FileCollectionDependencyNode;
+import com.intellij.openapi.externalSystem.model.project.dependencies.FileCollectionDependencyNodeImpl;
+import com.intellij.openapi.externalSystem.model.project.dependencies.ProjectDependencies;
+import com.intellij.openapi.externalSystem.model.project.dependencies.ProjectDependenciesImpl;
+import com.intellij.openapi.externalSystem.model.project.dependencies.ProjectDependencyNode;
+import com.intellij.openapi.externalSystem.model.project.dependencies.ProjectDependencyNodeImpl;
+import com.intellij.openapi.externalSystem.model.project.dependencies.ReferenceNode;
+import com.intellij.openapi.externalSystem.model.project.dependencies.ResolutionState;
+import com.intellij.openapi.externalSystem.model.project.dependencies.UnknownDependencyNode;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.tooling.util.IntObjectMap;
 import org.jetbrains.plugins.gradle.tooling.util.ObjectCollector;
@@ -15,37 +30,40 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 
-import static org.jetbrains.plugins.gradle.tooling.serialization.ToolingStreamApiUtils.*;
+import static org.jetbrains.plugins.gradle.tooling.serialization.ToolingStreamApiUtils.OBJECT_ID_FIELD;
+import static org.jetbrains.plugins.gradle.tooling.serialization.ToolingStreamApiUtils.assertFieldName;
+import static org.jetbrains.plugins.gradle.tooling.serialization.ToolingStreamApiUtils.assertNotNull;
+import static org.jetbrains.plugins.gradle.tooling.serialization.ToolingStreamApiUtils.createIonWriter;
+import static org.jetbrains.plugins.gradle.tooling.serialization.ToolingStreamApiUtils.readInt;
+import static org.jetbrains.plugins.gradle.tooling.serialization.ToolingStreamApiUtils.readLong;
+import static org.jetbrains.plugins.gradle.tooling.serialization.ToolingStreamApiUtils.readString;
+import static org.jetbrains.plugins.gradle.tooling.serialization.ToolingStreamApiUtils.writeLong;
+import static org.jetbrains.plugins.gradle.tooling.serialization.ToolingStreamApiUtils.writeString;
 
 /**
  * @author Vladislav.Soroka
  */
 public final class ProjectDependenciesSerializationService implements SerializationService<ProjectDependencies> {
+  private static final ResolutionState[] RESOLUTION_STATES = ResolutionState.values();
   private final WriteContext myWriteContext = new WriteContext();
   private final ReadContext myReadContext = new ReadContext();
 
   @Override
   public byte[] write(ProjectDependencies dependencies, Class<? extends ProjectDependencies> modelClazz) throws IOException {
     ByteArrayOutputStream out = new ByteArrayOutputStream();
-    IonWriter writer = createIonWriter().build(out);
-    try {
+    try (IonWriter writer = createIonWriter().build(out)) {
       write(writer, myWriteContext, dependencies);
-    }
-    finally {
-      writer.close();
     }
     return out.toByteArray();
   }
 
   @Override
   public ProjectDependencies read(byte[] object, Class<? extends ProjectDependencies> modelClazz) throws IOException {
-    IonReader reader = IonReaderBuilder.standard().build(object);
-    try {
+    try (IonReader reader = IonReaderBuilder.standard().build(object)) {
       return read(reader, myReadContext);
-    }
-    finally {
-      reader.close();
     }
   }
 
@@ -139,6 +157,7 @@ public final class ProjectDependenciesSerializationService implements Serializat
           writer.writeString(ProjectDependencyNode.class.getSimpleName());
           writeDependencyCommonFields(writer, node);
           writeString(writer, "projectName", node.getProjectName());
+          writeString(writer, "projectPath", node.getProjectPath());
           writeDependenciesField(writer, context, node);
         }
         writer.stepOut();
@@ -262,7 +281,10 @@ public final class ProjectDependenciesSerializationService implements Serializat
   private static void writeDependencyCommonFields(IonWriter writer, DependencyNode node)
     throws IOException {
     writeLong(writer, "id", node.getId());
-    writeString(writer, "resolutionState", node.getResolutionState());
+    ResolutionState state = node.getResolutionState();
+    int ordinal = state == null ? -1 : state.ordinal();
+    writeLong(writer, "resolutionState", ordinal);
+    writeString(writer, "selectionReason", node.getSelectionReason());
   }
 
   private static void writeDependenciesField(IonWriter writer,
@@ -276,8 +298,7 @@ public final class ProjectDependenciesSerializationService implements Serializat
     writer.stepOut();
   }
 
-  @Nullable
-  private static ProjectDependencies read(final IonReader reader, final ReadContext context) {
+  private static @Nullable ProjectDependencies read(final IonReader reader, final ReadContext context) {
     if (reader.next() == null) return null;
     reader.stepIn();
 
@@ -299,7 +320,7 @@ public final class ProjectDependenciesSerializationService implements Serializat
   }
 
   private static List<ComponentDependencies> readComponentsDependencies(IonReader reader, ReadContext context) {
-    List<ComponentDependencies> list = new ArrayList<ComponentDependencies>();
+    List<ComponentDependencies> list = new ArrayList<>();
     reader.next();
     reader.stepIn();
     ComponentDependencies componentDependencies;
@@ -310,8 +331,7 @@ public final class ProjectDependenciesSerializationService implements Serializat
     return list;
   }
 
-  @Nullable
-  private static ComponentDependencies readComponentDependencies(final IonReader reader, final ReadContext context) {
+  private static @Nullable ComponentDependencies readComponentDependencies(final IonReader reader, final ReadContext context) {
     if (reader.next() == null) return null;
     reader.stepIn();
     ComponentDependencies dependency =
@@ -340,36 +360,39 @@ public final class ProjectDependenciesSerializationService implements Serializat
 
           @Override
           public DependencyNode newInstance() {
-            String type = readString(reader, "_type");
+            String type = readString(reader, "_type", context.stringCache);
             long id = readLong(reader, "id");
-            String resolutionState = readString(reader, "resolutionState");
+            int resolutionStateOrdinal = readInt(reader, "resolutionState");
+            ResolutionState resolutionState = resolutionStateOrdinal == -1 ? null : RESOLUTION_STATES[resolutionStateOrdinal];
+            String selectionReason = readString(reader, "selectionReason", context.stringCache);
             DependencyNode node;
             if (ProjectDependencyNode.class.getSimpleName().equals(type)) {
-              String projectName = assertNotNull(readString(reader, "projectName"));
-              node = new ProjectDependencyNodeImpl(id, projectName);
+              String projectName = assertNotNull(readString(reader, "projectName", context.stringCache));
+              String projectPath = assertNotNull(readString(reader, "projectPath", context.stringCache));
+              node = new ProjectDependencyNodeImpl(id, projectName, projectPath);
             }
             else if (ArtifactDependencyNode.class.getSimpleName().equals(type)) {
-              String group = assertNotNull(readString(reader, "group"));
-              String module = assertNotNull(readString(reader, "module"));
-              String version = assertNotNull(readString(reader, "version"));
+              String group = assertNotNull(readString(reader, "group", context.stringCache));
+              String module = assertNotNull(readString(reader, "module", context.stringCache));
+              String version = assertNotNull(readString(reader, "version", context.stringCache));
               node = new ArtifactDependencyNodeImpl(id, group, module, version);
             }
             else if (FileCollectionDependencyNode.class.getSimpleName().equals(type)) {
-              String displayName = assertNotNull(readString(reader, "displayName"));
-              String path = assertNotNull(readString(reader, "path"));
+              String displayName = assertNotNull(readString(reader, "displayName", context.stringCache));
+              String path = assertNotNull(readString(reader, "path", context.stringCache));
               node = new FileCollectionDependencyNodeImpl(id, displayName, path);
             }
             else if (DependencyScopeNode.class.getSimpleName().equals(type)) {
-              String scope = assertNotNull(readString(reader, "scope"));
-              String displayName = assertNotNull(readString(reader, "displayName"));
-              String description = assertNotNull(readString(reader, "description"));
+              String scope = assertNotNull(readString(reader, "scope", context.stringCache));
+              String displayName = assertNotNull(readString(reader, "displayName", context.stringCache));
+              String description = assertNotNull(readString(reader, "description", context.stringCache));
               node = new DependencyScopeNode(id, scope, displayName, description);
             }
             else if (ReferenceNode.class.getSimpleName().equals(type)) {
               node = new ReferenceNode(id);
             }
             else if (UnknownDependencyNode.class.getSimpleName().equals(type)) {
-              String name = assertNotNull(readString(reader, "name"));
+              String name = assertNotNull(readString(reader, "name", context.stringCache));
               node = new UnknownDependencyNode(id, name);
             }
             else {
@@ -377,6 +400,7 @@ public final class ProjectDependenciesSerializationService implements Serializat
             }
             if (node instanceof AbstractDependencyNode) {
               ((AbstractDependencyNode)node).setResolutionState(resolutionState);
+              ((AbstractDependencyNode)node).setSelectionReason(selectionReason);
             }
             return node;
           }
@@ -393,7 +417,7 @@ public final class ProjectDependenciesSerializationService implements Serializat
   }
 
   private static Collection<? extends DependencyNode> readDependencyNodes(IonReader reader, ReadContext context) {
-    List<DependencyNode> list = new ArrayList<DependencyNode>();
+    List<DependencyNode> list = new ArrayList<>();
     reader.next();
     reader.stepIn();
     DependencyNode node;
@@ -405,18 +429,19 @@ public final class ProjectDependenciesSerializationService implements Serializat
   }
 
   private static class ReadContext {
-    private final IntObjectMap<ProjectDependenciesImpl> objectMap = new IntObjectMap<ProjectDependenciesImpl>();
-    private final IntObjectMap<ComponentDependencies> componentDependenciesMap = new IntObjectMap<ComponentDependencies>();
-    private final IntObjectMap<DependencyNode> nodesMap = new IntObjectMap<DependencyNode>();
+    private final IntObjectMap<ProjectDependenciesImpl> objectMap = new IntObjectMap<>();
+    private final IntObjectMap<ComponentDependencies> componentDependenciesMap = new IntObjectMap<>();
+    private final IntObjectMap<DependencyNode> nodesMap = new IntObjectMap<>();
+    private final ConcurrentMap<String, String> stringCache = new ConcurrentHashMap<>();
   }
 
   private static class WriteContext {
     private final ObjectCollector<ProjectDependencies, IOException> objectCollector =
-      new ObjectCollector<ProjectDependencies, IOException>();
+      new ObjectCollector<>();
     private final ObjectCollector<ComponentDependencies, IOException> componentDependenciesCollector =
-      new ObjectCollector<ComponentDependencies, IOException>();
+      new ObjectCollector<>();
     private final ObjectCollector<DependencyNode, IOException> dependencyNodeCollector =
-      new ObjectCollector<DependencyNode, IOException>();
+      new ObjectCollector<>();
   }
 }
 

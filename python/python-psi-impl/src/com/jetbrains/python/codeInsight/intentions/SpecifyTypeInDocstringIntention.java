@@ -14,15 +14,16 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiEditorUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.ObjectUtils;
-import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyPsiBundle;
-import com.jetbrains.python.debugger.PySignature;
-import com.jetbrains.python.debugger.PySignatureCacheManager;
+import com.jetbrains.python.codeInsight.intentions.PyTypeHintGenerationUtil.AnnotationInfo;
 import com.jetbrains.python.documentation.docstrings.DocStringFormat;
 import com.jetbrains.python.documentation.docstrings.DocStringUtil;
 import com.jetbrains.python.documentation.docstrings.PyDocstringGenerator;
-import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.PyFunction;
+import com.jetbrains.python.psi.PyNamedParameter;
+import com.jetbrains.python.psi.PyStringLiteralExpression;
+import com.jetbrains.python.psi.PyUtil;
+import com.jetbrains.python.psi.StructuredDocString;
 import com.jetbrains.python.toolbox.Substring;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -32,10 +33,9 @@ import org.jetbrains.annotations.Nullable;
  * <p/>
  * Helps to specify type
  */
-public class SpecifyTypeInDocstringIntention extends TypeIntention {
+public final class SpecifyTypeInDocstringIntention extends TypeIntention {
   @Override
-  @NotNull
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return PyPsiBundle.message("INTN.NAME.specify.type.in.docstring");
   }
 
@@ -67,21 +67,14 @@ public class SpecifyTypeInDocstringIntention extends TypeIntention {
     if (!PyGenerateDocstringIntention.ensureNotPlainDocstringFormat(pyFunction)) return;
 
     final PyDocstringGenerator docstringGenerator = PyDocstringGenerator.forDocStringOwner(pyFunction);
-    String type = PyNames.OBJECT;
+
     if (param != null) {
-      final String paramName = StringUtil.notNullize(param.getName());
-      final PySignature signature = PySignatureCacheManager.getInstance(pyFunction.getProject()).findSignature(pyFunction);
-      if (signature != null) {
-        type = ObjectUtils.chooseNotNull(signature.getArgTypeQualifiedName(paramName), type);
-      }
+      String type = SpecifyTypeInPy3AnnotationsIntention.parameterType(param);
       docstringGenerator.withParamTypedByName(param, type);
     }
     else {
-      final PySignature signature = PySignatureCacheManager.getInstance(pyFunction.getProject()).findSignature(pyFunction);
-      if (signature != null) {
-        type = ObjectUtils.chooseNotNull(signature.getReturnTypeQualifiedName(), type);
-      }
-      docstringGenerator.withReturnValue(type);
+      AnnotationInfo info = SpecifyTypeInPy3AnnotationsIntention.returnType(pyFunction);
+      docstringGenerator.withReturnValue(info.getAnnotationText());
     }
 
     WriteAction.run(() -> {
@@ -117,7 +110,7 @@ public class SpecifyTypeInDocstringIntention extends TypeIntention {
 
   public static void startTemplate(PyDocstringGenerator generator) {
     Preconditions.checkNotNull(generator.getDocStringOwner(), "For this action docstring owner must be supplied");
-    final PyStringLiteralExpression docStringExpression = generator.getDocStringExpression();
+    final PyStringLiteralExpression docStringExpression = (PyStringLiteralExpression)generator.getDocStringExpression();
     assert docStringExpression != null;
 
     final TemplateBuilder builder = TemplateBuilderFactory.getInstance().createTemplateBuilder(docStringExpression);
@@ -153,7 +146,6 @@ public class SpecifyTypeInDocstringIntention extends TypeIntention {
         builder.run(targetEditor, true);
         return null;
       });
-
     }
   }
 }

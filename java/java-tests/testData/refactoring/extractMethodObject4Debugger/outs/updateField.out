@@ -1,4 +1,4 @@
-call text: new Test(instance).invoke();
+call text: int result = new Test(instance).invoke();
 class: 
 public class GeneratedEvaluationClass {
     private Object instance;
@@ -7,7 +7,7 @@ public class GeneratedEvaluationClass {
         this.instance = instance;
     }
 
-    public static void accessToFieldField1(Object object, Object value) {
+    public static int accessToFieldField1(Object object, int value) {
         try {
             Class<?> klass = Class.forName("WithReflectionAccess");
             java.lang.reflect.Field member = null;
@@ -33,12 +33,13 @@ public class GeneratedEvaluationClass {
             }
             member.setAccessible(true);
             member.set(object, value);
+            return value;
         } catch (ReflectiveOperationException e) {
             throw new RuntimeException(e);
         }
     }
 
-    public void invoke() {
-        accessToFieldField1(instance, 50);
+    public int invoke() {
+        return accessToFieldField1(instance, 50);
     }
 }

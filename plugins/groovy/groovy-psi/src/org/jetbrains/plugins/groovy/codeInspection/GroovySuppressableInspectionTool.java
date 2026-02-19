@@ -1,5 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.codeInspection;
 
 import com.intellij.codeInspection.BatchSuppressManager;
@@ -30,10 +29,13 @@ import java.util.regex.Matcher;
 
 import static com.intellij.codeInsight.daemon.impl.HighlightInfoType.UNUSED_SYMBOL_SHORT_NAME;
 
-/**
- * @author peter
- */
 public abstract class GroovySuppressableInspectionTool extends LocalInspectionTool {
+
+  /**
+   * @deprecated don't extend this class, extend {@link LocalInspectionTool} instead
+   */
+  @Deprecated(forRemoval = true)
+  public GroovySuppressableInspectionTool() {}
 
   public static SuppressQuickFix @NotNull [] getSuppressActions(@NotNull String toolId) {
     if (GroovyUnusedDeclarationInspection.SHORT_NAME.equals(toolId)) {
@@ -42,6 +44,7 @@ public abstract class GroovySuppressableInspectionTool extends LocalInspectionTo
     }
     return new SuppressQuickFix[]{
       new SuppressByGroovyCommentFix(toolId),
+      new SuppressByGroovyFileCommentFix(toolId),
       new SuppressForMemberFix(toolId, false),
       new SuppressForMemberFix(toolId, true),
     };
@@ -51,8 +54,7 @@ public abstract class GroovySuppressableInspectionTool extends LocalInspectionTo
     return getElementToolSuppressedIn(place, toolId) != null;
   }
 
-  @Nullable
-  public static PsiElement getElementToolSuppressedIn(final PsiElement place, @NotNull String toolId) {
+  public static @Nullable PsiElement getElementToolSuppressedIn(final PsiElement place, @NotNull String toolId) {
     if (place == null) return null;
     if (GroovyUnusedDeclarationInspection.SHORT_NAME.equals(toolId)) {
       PsiElement forUnused = getElementToolSuppressedIn(place, UNUSED_SYMBOL_SHORT_NAME);
@@ -78,6 +80,11 @@ public abstract class GroovySuppressableInspectionTool extends LocalInspectionTo
             return prev;
           }
         }
+      }
+
+      PsiElement fileLevelSuppression = SuppressByGroovyFileCommentFixKt.fileLevelSuppression(place, toolId);
+      if (fileLevelSuppression != null) {
+        return fileLevelSuppression;
       }
 
       GrMember member = null;
@@ -107,8 +114,7 @@ public abstract class GroovySuppressableInspectionTool extends LocalInspectionTo
     });
   }
 
-  @NotNull
-  private static Collection<String> getInspectionIdsSuppressedInAnnotation(final GrModifierList modifierList) {
+  private static @NotNull Collection<String> getInspectionIdsSuppressedInAnnotation(final GrModifierList modifierList) {
     if (modifierList == null) {
       return Collections.emptyList();
     }
@@ -135,8 +141,7 @@ public abstract class GroovySuppressableInspectionTool extends LocalInspectionTo
     return result;
   }
 
-  @Nullable
-  private static String getInspectionIdSuppressedInAnnotationAttribute(GrAnnotationMemberValue element) {
+  private static @Nullable String getInspectionIdSuppressedInAnnotationAttribute(GrAnnotationMemberValue element) {
     if (element instanceof GrLiteral) {
       final Object value = ((GrLiteral)element).getValue();
       if (value instanceof String) {
@@ -145,7 +150,4 @@ public abstract class GroovySuppressableInspectionTool extends LocalInspectionTo
     }
     return null;
   }
-
-
-
 }

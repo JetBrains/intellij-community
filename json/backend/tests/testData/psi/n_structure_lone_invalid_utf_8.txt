@@ -1,0 +1,3 @@
+JsonFile: n_structure_lone_invalid_utf_8.json
+  PsiErrorElement:<value> expected, got '�'
+    PsiElement(BAD_CHARACTER)('�')

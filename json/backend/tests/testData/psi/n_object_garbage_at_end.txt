@@ -1,0 +1,18 @@
+JsonFile: n_object_garbage_at_end.json
+  JsonObject
+    PsiElement({)('{')
+    JsonProperty
+      JsonStringLiteral
+        PsiElement(DOUBLE_QUOTED_STRING)('"a"')
+      PsiElement(:)(':')
+      JsonStringLiteral
+        PsiElement(DOUBLE_QUOTED_STRING)('"a"')
+    PsiErrorElement:',' or '}' expected, got '123'
+      <empty list>
+    PsiWhiteSpace(' ')
+    JsonProperty
+      JsonNumberLiteral
+        PsiElement(NUMBER)('123')
+      PsiErrorElement:':' expected, got '}'
+        <empty list>
+    PsiElement(})('}')

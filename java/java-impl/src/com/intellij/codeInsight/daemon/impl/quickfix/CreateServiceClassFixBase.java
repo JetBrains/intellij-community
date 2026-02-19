@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.CodeInsightUtil;
@@ -12,7 +10,14 @@ import com.intellij.openapi.roots.JavaProjectRootsUtil;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiJavaCodeReferenceElement;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiPackage;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.ui.SimpleListCellRenderer;
@@ -20,7 +25,7 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JList;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
@@ -28,9 +33,6 @@ import java.util.Objects;
 
 import static com.intellij.codeInsight.daemon.impl.quickfix.CreateFromUsageUtils.scheduleFileOrPackageCreationFailedMessageBox;
 
-/**
- * @author Pavel.Dolgov
- */
 public abstract class CreateServiceClassFixBase implements IntentionAction {
   public static final Key<PsiDirectory> SERVICE_ROOT_DIR = Key.create("SERVICE_ROOT_DIR");
   public static final Key<CreateClassKind> SERVICE_CLASS_KIND = Key.create("SERVICE_CLASS_KIND");
@@ -41,8 +43,7 @@ public abstract class CreateServiceClassFixBase implements IntentionAction {
     return false;
   }
 
-  @NotNull
-  protected static PsiJavaCodeReferenceElement findTopmostReference(@NotNull PsiJavaCodeReferenceElement referenceElement){
+  protected static @NotNull PsiJavaCodeReferenceElement findTopmostReference(@NotNull PsiJavaCodeReferenceElement referenceElement){
     PsiElement parent = referenceElement.getParent();
     while (parent instanceof PsiJavaCodeReferenceElement) {
       referenceElement = (PsiJavaCodeReferenceElement)parent;
@@ -69,8 +70,7 @@ public abstract class CreateServiceClassFixBase implements IntentionAction {
     return false;
   }
 
-  @NotNull
-  protected static PsiClass createClassInOuterImpl(@NotNull String name, @NotNull PsiClass outerClass, @Nullable String superClassName) {
+  protected static @NotNull PsiClass createClassInOuterImpl(@NotNull String name, @NotNull PsiClass outerClass, @Nullable String superClassName) {
     Project project = outerClass.getProject();
     PsiClass psiClass = JavaPsiFacade.getElementFactory(project).createClass(name);
     psiClass = (PsiClass)outerClass.addBefore(psiClass, outerClass.getRBrace());
@@ -82,8 +82,7 @@ public abstract class CreateServiceClassFixBase implements IntentionAction {
     return psiClass;
   }
 
-  @Nullable
-  public static PsiDirectory getOrCreatePackageDirInRoot(@NotNull String packageName, @NotNull PsiDirectory rootDir) {
+  public static @Nullable PsiDirectory getOrCreatePackageDirInRoot(@NotNull String packageName, @NotNull PsiDirectory rootDir) {
     if (packageName.isEmpty()) {
       return rootDir;
     }
@@ -107,12 +106,11 @@ public abstract class CreateServiceClassFixBase implements IntentionAction {
     return directory;
   }
 
-  @Nullable
-  protected static PsiClass createClassInRoot(@NotNull String classFQN,
-                                              @NotNull CreateClassKind classKind,
-                                              @NotNull PsiDirectory rootDir,
-                                              @NotNull PsiElement contextElement,
-                                              @Nullable String superClassName) {
+  protected static @Nullable PsiClass createClassInRoot(@NotNull String classFQN,
+                                                        @NotNull CreateClassKind classKind,
+                                                        @NotNull PsiDirectory rootDir,
+                                                        @NotNull PsiElement contextElement,
+                                                        @Nullable String superClassName) {
     String packageName = StringUtil.getPackageName(classFQN);
     int lastDot = classFQN.lastIndexOf('.');
     String className = lastDot >= 0 ? classFQN.substring(lastDot + 1) : classFQN;

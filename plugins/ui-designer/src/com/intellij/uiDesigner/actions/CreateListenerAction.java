@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.uiDesigner.actions;
 
@@ -11,8 +11,8 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -24,10 +24,21 @@ import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFocusManager;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.JavaRecursiveElementWalkingVisitor;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiCodeBlock;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementFactory;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiStatement;
+import com.intellij.psi.SmartPointerManager;
+import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiUtilCore;
@@ -41,18 +52,17 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 import java.beans.BeanInfo;
 import java.beans.EventSetDescriptor;
 import java.beans.IntrospectionException;
 import java.beans.Introspector;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Comparator;
 import java.util.List;
 
-/**
- * @author yole
- */
+
 public class CreateListenerAction extends AbstractGuiEditorAction {
   private static final Logger LOG = Logger.getInstance(CreateListenerAction.class);
 
@@ -68,7 +78,7 @@ public class CreateListenerAction extends AbstractGuiEditorAction {
     FormEditingUtil.showPopupUnderComponent(popup, selection.get(0));
   }
 
-  private DefaultActionGroup prepareActionGroup(final List<? extends RadComponent> selection) {
+  private static DefaultActionGroup prepareActionGroup(final List<? extends RadComponent> selection) {
     final DefaultActionGroup actionGroup = new DefaultActionGroup();
     final EventSetDescriptor[] eventSetDescriptors;
     try {
@@ -79,9 +89,8 @@ public class CreateListenerAction extends AbstractGuiEditorAction {
       LOG.error(e);
       return null;
     }
-    EventSetDescriptor[] sortedDescriptors = new EventSetDescriptor[eventSetDescriptors.length];
-    System.arraycopy(eventSetDescriptors, 0, sortedDescriptors, 0, eventSetDescriptors.length);
-    Arrays.sort(sortedDescriptors, (o1, o2) -> o1.getListenerType().getName().compareTo(o2.getListenerType().getName()));
+    EventSetDescriptor[] sortedDescriptors = eventSetDescriptors.clone();
+    Arrays.sort(sortedDescriptors, Comparator.comparing(o -> o.getListenerType().getName()));
     for(EventSetDescriptor descriptor: sortedDescriptors) {
       actionGroup.add(new MyCreateListenerAction(selection, descriptor));
     }
@@ -94,7 +103,7 @@ public class CreateListenerAction extends AbstractGuiEditorAction {
   }
 
   private static boolean canCreateListener(final ArrayList<? extends RadComponent> selection) {
-    if (selection.size() == 0) return false;
+    if (selection.isEmpty()) return false;
     final RadRootContainer root = (RadRootContainer)FormEditingUtil.getRoot(selection.get(0));
     if (root.getClassToBind() == null) return false;
     String componentClass = selection.get(0).getComponentClassName();
@@ -105,24 +114,25 @@ public class CreateListenerAction extends AbstractGuiEditorAction {
     return true;
   }
 
+  private static @NlsSafe String getEventDescriptorName(EventSetDescriptor descriptor) {
+    return descriptor.getListenerType().getSimpleName();
+  }
+
   private static class MyCreateListenerAction extends AnAction {
     private final List<? extends RadComponent> mySelection;
     private final EventSetDescriptor myDescriptor;
-    @NonNls private static final String LISTENER_SUFFIX = "Listener";
-    @NonNls private static final String ADAPTER_SUFFIX = "Adapter";
+    private static final @NonNls String LISTENER_SUFFIX = "Listener";
+    private static final @NonNls String ADAPTER_SUFFIX = "Adapter";
 
     MyCreateListenerAction(final List<? extends RadComponent> selection, EventSetDescriptor descriptor) {
-      super(descriptor.getListenerType().getSimpleName());
+      super(getEventDescriptorName(descriptor));
       mySelection = selection;
       myDescriptor = descriptor;
     }
 
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
-      CommandProcessor.getInstance().executeCommand(
-        mySelection.get(0).getProject(),
-        () -> ApplicationManager.getApplication().runWriteAction(() -> createListener()), UIDesignerBundle.message("create.listener.command"), null
-      );
+      CommandProcessor.getInstance().executeCommand(e.getProject(), () -> createListener(), UIDesignerBundle.message("create.listener.command"), null);
     }
 
     private void createListener() {
@@ -159,8 +169,9 @@ public class CreateListenerAction extends AbstractGuiEditorAction {
         LOG.assertTrue(body != null);
 
         @NonNls StringBuilder builder = new StringBuilder();
-        @NonNls String variableName = null;
+        @NonNls String variableName;
         if (boundFields.length == 1) {
+          variableName = null;
           builder.append(boundFields[0].getName());
           builder.append(".");
           builder.append(myDescriptor.getAddListenerMethod().getName());
@@ -187,21 +198,23 @@ public class CreateListenerAction extends AbstractGuiEditorAction {
           builder.append(";");
         }
 
-        PsiStatement stmt = factory.createStatementFromText(builder.toString(), constructor);
-        stmt = (PsiStatement)body.addAfter(stmt, body.getLastBodyElement());
-        stmt = (PsiStatement)JavaCodeStyleManager.getInstance(body.getProject()).shortenClassReferences(stmt);
-
-        if (boundFields.length > 1) {
-          PsiElement anchor = stmt;
-          for (PsiField field : boundFields) {
-            PsiElement addStmt = factory
-              .createStatementFromText(field.getName() + "." + myDescriptor.getAddListenerMethod().getName() + "(" + variableName + ");",
-                                       constructor);
-            addStmt = body.addAfter(addStmt, anchor);
-            anchor = addStmt;
+        PsiStatement stmt = WriteAction.compute(() -> {
+          PsiStatement temp = factory.createStatementFromText(builder.toString(), constructor);
+          temp = (PsiStatement)body.addAfter(temp, body.getLastBodyElement());
+          temp = (PsiStatement)JavaCodeStyleManager.getInstance(body.getProject()).shortenClassReferences(temp);
+          if (boundFields.length > 1) {
+            PsiElement anchor = temp;
+            for (PsiField field : boundFields) {
+              PsiElement addStmt = factory
+                .createStatementFromText(field.getName() + "." + myDescriptor.getAddListenerMethod().getName() + "(" + variableName + ");",
+                                         constructor);
+              addStmt = body.addAfter(addStmt, anchor);
+              anchor = addStmt;
+            }
           }
-        }
-
+          return temp;
+        });
+        
         final SmartPsiElementPointer ptr = SmartPointerManager.getInstance(myClass.getProject()).createSmartPsiElementPointer(stmt);
         final VirtualFile virtualFile = PsiUtilCore.getVirtualFile(myClass);
         final FileEditor[] fileEditors =
@@ -217,7 +230,7 @@ public class CreateListenerAction extends AbstractGuiEditorAction {
             final Ref<PsiClass> newClassRef = new Ref<>();
             anonymousClassStatement.accept(new JavaRecursiveElementWalkingVisitor() {
               @Override
-              public void visitClass(PsiClass aClass) {
+              public void visitClass(@NotNull PsiClass aClass) {
                 newClassRef.set(aClass);
               }
             });
@@ -257,14 +270,16 @@ public class CreateListenerAction extends AbstractGuiEditorAction {
       }
     }
 
-    private PsiMethod findConstructorToInsert(final PsiClass aClass) throws IncorrectOperationException {
+    private static PsiMethod findConstructorToInsert(final PsiClass aClass) throws IncorrectOperationException {
       final PsiMethod[] constructors = aClass.getConstructors();
       if (constructors.length == 0) {
-        PsiElementFactory factory = JavaPsiFacade.getInstance(aClass.getProject()).getElementFactory();
-        PsiMethod newConstructor = factory.createMethodFromText("public " + aClass.getName() + "() { }", aClass);
-        final PsiMethod[] psiMethods = aClass.getMethods();
-        PsiMethod firstMethod = (psiMethods.length == 0) ? null : psiMethods [0];
-        return (PsiMethod) aClass.addBefore(newConstructor, firstMethod);
+        return WriteAction.compute(() -> {
+          PsiElementFactory factory = JavaPsiFacade.getInstance(aClass.getProject()).getElementFactory();
+          PsiMethod newConstructor = factory.createMethodFromText("public " + aClass.getName() + "() { }", aClass);
+          final PsiMethod[] psiMethods = aClass.getMethods();
+          PsiMethod firstMethod = (psiMethods.length == 0) ? null : psiMethods[0];
+          return (PsiMethod)aClass.addBefore(newConstructor, firstMethod);
+        });
       }
       for(PsiMethod method: constructors) {
         if (method.getParameterList().isEmpty()) {

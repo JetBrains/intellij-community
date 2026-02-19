@@ -1,0 +1,7 @@
+// WITH_STDLIB
+// PROBLEM: Java collection 'ArrayBlockingQueue' is parameterized with a nullable type
+import java.util.concurrent.ArrayBlockingQueue
+
+class MyQueue<T> {
+    val queue = ArrayBlockingQueue<<caret>T>(1)
+}

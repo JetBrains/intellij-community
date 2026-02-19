@@ -1,23 +1,30 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.profile.codeInspection.ui.inspectionsTree;
 
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInspection.ex.Descriptor;
 import com.intellij.openapi.util.ClearableLazyValue;
-import com.intellij.openapi.util.Getter;
 import com.intellij.profile.codeInspection.ui.ToolDescriptors;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreeNode;
-import java.util.*;
+import java.util.ArrayDeque;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Deque;
+import java.util.HashSet;
+import java.util.Set;
+import java.util.function.Supplier;
 import java.util.stream.IntStream;
 
+@ApiStatus.Internal
 public abstract class InspectionConfigTreeNode extends DefaultMutableTreeNode {
   private final ClearableLazyValue<Boolean> myProperSetting = ClearableLazyValue.create(this::calculateIsProperSettings);
 
-  public static class Group extends InspectionConfigTreeNode {
+  public static final class Group extends InspectionConfigTreeNode {
     public Group(@NotNull String label) {
       setUserObject(label);
     }
@@ -27,22 +34,20 @@ public abstract class InspectionConfigTreeNode extends DefaultMutableTreeNode {
       return IntStream.range(0, getChildCount()).mapToObj(i -> (InspectionConfigTreeNode)getChildAt(i)).anyMatch(InspectionConfigTreeNode::isProperSetting);
     }
 
-    @NotNull
     @Override
-    public String getText() {
+    public @NotNull String getText() {
       return getGroupName();
     }
 
-    @NotNull
-    public String getGroupName() {
+    public @NotNull String getGroupName() {
       return (String)getUserObject();
     }
   }
 
   public static class Tool extends InspectionConfigTreeNode {
-    private final Getter<ToolDescriptors> myGetter;
+    private final Supplier<ToolDescriptors> myGetter;
 
-    public Tool(Getter<ToolDescriptors> getter) {
+    public Tool(Supplier<ToolDescriptors> getter) {
       myGetter = getter;
     }
 
@@ -57,9 +62,8 @@ public abstract class InspectionConfigTreeNode extends DefaultMutableTreeNode {
       return defaultDescriptor.getInspectionProfile().isProperSetting(defaultDescriptor.getToolWrapper().getShortName());
     }
 
-    @NotNull
     @Override
-    public String getText() {
+    public @NotNull String getText() {
       return getDefaultDescriptor().getText();
     }
 
@@ -67,19 +71,16 @@ public abstract class InspectionConfigTreeNode extends DefaultMutableTreeNode {
       return getDefaultDescriptor().getKey();
     }
 
-    @NotNull
-    public Descriptor getDefaultDescriptor() {
+    public @NotNull Descriptor getDefaultDescriptor() {
       return getDescriptors().getDefaultDescriptor();
     }
 
-    @NotNull
-    public ToolDescriptors getDescriptors() {
+    public @NotNull ToolDescriptors getDescriptors() {
       return (ToolDescriptors)getUserObject();
     }
 
 
-    @Nullable
-    public String getScopeName() {
+    public @Nullable String getScopeName() {
       return getDescriptors().getDefaultScopeToolState().getScopeName();
     }
   }
@@ -95,8 +96,7 @@ public abstract class InspectionConfigTreeNode extends DefaultMutableTreeNode {
 
   protected abstract boolean calculateIsProperSettings();
 
-  @NotNull
-  public abstract String getText();
+  public abstract @NotNull String getText();
 
   @Override
   public String toString() {

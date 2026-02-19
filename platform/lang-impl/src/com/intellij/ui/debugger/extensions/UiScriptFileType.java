@@ -1,12 +1,13 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.debugger.extensions;
 
+import com.intellij.lang.LangBundle;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.Icon;
 
 public final class UiScriptFileType implements FileType {
   private static UiScriptFileType myInstance;
@@ -22,22 +23,19 @@ public final class UiScriptFileType implements FileType {
   }
 
   @Override
-  @NotNull
-  public String getName() {
+  public @NotNull String getName() {
     return "UI Script";
   }
 
   @Override
-  @NotNull
-  public String getDescription() {
-    return "UI test script";
+  public @NotNull String getDescription() {
+    return LangBundle.message("filetype.ui.script.description");
   }
 
   public static final String myExtension = "ijs";
 
   @Override
-  @NotNull
-  public String getDefaultExtension() {
+  public @NotNull String getDefaultExtension() {
     return myExtension;
   }
 
@@ -52,12 +50,7 @@ public final class UiScriptFileType implements FileType {
   }
 
   @Override
-  public boolean isReadOnly() {
-    return false;
-  }
-
-  @Override
-  public String getCharset(@NotNull VirtualFile file, byte @NotNull [] content) {
+  public String getCharset(@NotNull VirtualFile file, final byte @NotNull [] content) {
     return CharsetToolkit.UTF8;
   }
 }

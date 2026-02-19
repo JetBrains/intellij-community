@@ -169,8 +169,7 @@ public final class XsltDebuggerSession implements Disposable {
     resume();
   }
 
-  @Nullable
-  public static Editor openLocation(Project project, @NotNull String uri, int lineNumber) {
+  public static @Nullable Editor openLocation(Project project, @NotNull String uri, int lineNumber) {
     try {
       final VirtualFile file = VfsUtil.findFileByURL(new URI(uri).toURL());
       final OpenFileDescriptor descriptor = new OpenFileDescriptor(project, file, lineNumber, 0);
@@ -201,8 +200,7 @@ public final class XsltDebuggerSession implements Disposable {
     detach(myProcess);
   }
 
-  @NotNull
-  public static XsltDebuggerSession create(Project project, @NotNull ProcessHandler process, Debugger client) {
+  public static @NotNull XsltDebuggerSession create(Project project, @NotNull ProcessHandler process, Debugger client) {
     final XsltDebuggerSession session = new XsltDebuggerSession(project, process, client);
     process.putUserData(DEBUGGER_SESSION, session);
     return session;

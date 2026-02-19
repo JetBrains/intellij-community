@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.tagTreeHighlighting;
 
 import com.intellij.application.options.editor.WebEditorOptions;
@@ -41,31 +41,30 @@ import com.intellij.xml.breadcrumbs.PsiFileBreadcrumbsCollector;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.*;
+import java.awt.Color;
+import java.awt.Font;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * @author Eugene.Kudelevsky
- */
 public class XmlTagTreeHighlightingPass extends TextEditorHighlightingPass {
   private static final Key<List<RangeHighlighter>> TAG_TREE_HIGHLIGHTERS_IN_EDITOR_KEY = Key.create("TAG_TREE_HIGHLIGHTERS_IN_EDITOR_KEY");
 
   public static final TextAttributesKey TAG_TREE_HIGHLIGHTING_KEY = TextAttributesKey.createTextAttributesKey("TAG_TREE_HIGHLIGHTING_KEY");
-  private static final HighlightInfoType TYPE = new HighlightInfoType.HighlightInfoTypeImpl(HighlightSeverity.INFORMATION,
-                                                                                            TAG_TREE_HIGHLIGHTING_KEY);
+  private static class Holder {
+    private static final HighlightInfoType TYPE = new HighlightInfoType.HighlightInfoTypeImpl(HighlightSeverity.INFORMATION, TAG_TREE_HIGHLIGHTING_KEY);
+  }
 
-  private final PsiFile myFile;
+  private final PsiFile myPsiFile;
   private final EditorEx myEditor;
   private final BreadcrumbsProvider myInfoProvider;
 
   private final List<Pair<TextRange, TextRange>> myPairsToHighlight = new ArrayList<>();
 
-  XmlTagTreeHighlightingPass(@NotNull PsiFile file, @NotNull EditorEx editor) {
-    super(file.getProject(), editor.getDocument(), true);
-    myFile = file;
+  XmlTagTreeHighlightingPass(@NotNull PsiFile psiFile, @NotNull EditorEx editor) {
+    super(psiFile.getProject(), editor.getDocument(), true);
+    myPsiFile = psiFile;
     myEditor = editor;
-    FileViewProvider viewProvider = file.getManager().findViewProvider(file.getVirtualFile());
+    FileViewProvider viewProvider = psiFile.getManager().findViewProvider(psiFile.getVirtualFile());
     myInfoProvider = BreadcrumbsUtilEx.findProvider(false, viewProvider);
   }
 
@@ -81,11 +80,11 @@ public class XmlTagTreeHighlightingPass extends TextEditorHighlightingPass {
 
     int offset = myEditor.getCaretModel().getOffset();
     PsiElement[] elements =
-      PsiFileBreadcrumbsCollector.getLinePsiElements(myEditor.getDocument(), offset, myFile.getVirtualFile(), myProject, myInfoProvider);
+      PsiFileBreadcrumbsCollector.getLinePsiElements(myEditor.getDocument(), offset, myPsiFile.getVirtualFile(), myProject, myInfoProvider);
 
     if (elements == null || elements.length == 0 || !XmlTagTreeHighlightingUtil.containsTagsWithSameName(elements)) {
       elements = PsiElement.EMPTY_ARRAY;
-      FileViewProvider provider = myFile.getViewProvider();
+      FileViewProvider provider = myPsiFile.getViewProvider();
       for (Language language : provider.getLanguages()) {
         PsiElement element = provider.findElementAt(offset, language);
         if (!isTagStartOrEnd(element)) {
@@ -117,14 +116,12 @@ public class XmlTagTreeHighlightingPass extends TextEditorHighlightingPass {
     return type == XmlTokenType.XML_START_TAG_START || type == XmlTokenType.XML_END_TAG_START || type == XmlTokenType.XML_TAG_END;
   }
 
-  @NotNull
-  private static Pair<TextRange, TextRange> getTagRanges(XmlTag tag) {
+  private static @NotNull Pair<TextRange, TextRange> getTagRanges(XmlTag tag) {
     ASTNode tagNode = tag.getNode();
     return Pair.create(getStartTagRange(tagNode), getEndTagRange(tagNode));
   }
 
-  @Nullable
-  private static TextRange getStartTagRange(ASTNode tagNode) {
+  private static @Nullable TextRange getStartTagRange(ASTNode tagNode) {
     ASTNode startTagStart = XmlChildRole.START_TAG_START_FINDER.findChild(tagNode);
     if (startTagStart == null) {
       return null;
@@ -143,8 +140,7 @@ public class XmlTagTreeHighlightingPass extends TextEditorHighlightingPass {
     return new TextRange(startTagStart.getStartOffset(), tagName.getTextRange().getEndOffset());
   }
 
-  @Nullable
-  private static TextRange getEndTagRange(ASTNode tagNode) {
+  private static @Nullable TextRange getEndTagRange(ASTNode tagNode) {
     ASTNode endTagStart = XmlChildRole.CLOSING_TAG_START_FINDER.findChild(tagNode);
     if (endTagStart == null) {
       return null;
@@ -165,7 +161,7 @@ public class XmlTagTreeHighlightingPass extends TextEditorHighlightingPass {
   @Override
   public void doApplyInformationToEditor() {
     List<HighlightInfo> infos = getHighlights();
-    UpdateHighlightersUtil.setHighlightersToSingleEditor(myProject, myEditor, 0, myFile.getTextLength(), infos, getColorsScheme(), getId());
+    UpdateHighlightersUtil.setHighlightersToSingleEditor(myProject, myEditor, 0, myPsiFile.getTextLength(), infos, getColorsScheme(), getId());
   }
 
   public List<HighlightInfo> getHighlights() {
@@ -235,14 +231,13 @@ public class XmlTagTreeHighlightingPass extends TextEditorHighlightingPass {
     }
   }
 
-  @NotNull
-  private static HighlightInfo createHighlightInfo(Color color, @NotNull TextRange range) {
+  private static @NotNull HighlightInfo createHighlightInfo(Color color, @NotNull TextRange range) {
     TextAttributes attributes = new TextAttributes(null, color, null, null, Font.PLAIN);
-    return HighlightInfo.newHighlightInfo(TYPE).range(range).textAttributes(attributes).severity(HighlightSeverity.INFORMATION).createUnconditionally();
+    return HighlightInfo.newHighlightInfo(Holder.TYPE).range(range).textAttributes(attributes)
+      .severity(HighlightInfoType.ELEMENT_UNDER_CARET_SEVERITY).createUnconditionally();
   }
 
-  @NotNull
-  private static RangeHighlighter createHighlighter(MarkupModel mm, @NotNull TextRange range, Color color) {
+  private static @NotNull RangeHighlighter createHighlighter(MarkupModel mm, @NotNull TextRange range, Color color) {
     RangeHighlighter highlighter =
       mm.addRangeHighlighter(null, range.getStartOffset(), range.getEndOffset(), 0, HighlighterTargetArea.LINES_IN_RANGE);
 
@@ -299,7 +294,7 @@ public class XmlTagTreeHighlightingPass extends TextEditorHighlightingPass {
     for (RangeHighlighter highlighter : markupModel.getAllHighlighters()) {
       HighlightInfo info = HighlightInfo.fromRangeHighlighter(highlighter);
       if (info == null) continue;
-      if (info.type == TYPE) {
+      if (info.type == Holder.TYPE) {
         highlighter.dispose();
       }
     }

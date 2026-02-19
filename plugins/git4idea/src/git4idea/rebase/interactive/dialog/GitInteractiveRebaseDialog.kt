@@ -1,10 +1,14 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.rebase.interactive.dialog
 
-import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.ActionToolbarPosition
+import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.DefaultActionGroup
+import com.intellij.openapi.actionSystem.Presentation
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction
 import com.intellij.openapi.application.ModalityState
-import com.intellij.openapi.project.DumbAware
+import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.Messages
@@ -12,7 +16,6 @@ import com.intellij.openapi.vcs.VcsException
 import com.intellij.openapi.vcs.changes.Change
 import com.intellij.openapi.vcs.changes.committed.CommittedChangesTreeBrowser
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.ui.AnActionButton
 import com.intellij.ui.OnePixelSplitter
 import com.intellij.ui.PopupHandler
 import com.intellij.ui.ToolbarDecorator
@@ -27,22 +30,27 @@ import com.intellij.vcs.log.ui.details.FullCommitDetailsListPanel
 import git4idea.history.GitCommitRequirements
 import git4idea.history.GitLogUtil
 import git4idea.i18n.GitBundle
+import git4idea.rebase.GitRebaseEntry
 import git4idea.rebase.GitRebaseEntryWithDetails
 import git4idea.rebase.interactive.GitRebaseTodoModel
+import git4idea.rebase.interactive.dialog.view.MoveTableItemRunnable
+import org.jetbrains.annotations.ApiStatus
 import java.awt.BorderLayout
 import java.awt.Dimension
 import javax.swing.JComponent
 import javax.swing.JSeparator
 import javax.swing.SwingConstants
 
-internal class GitInteractiveRebaseDialog<T : GitRebaseEntryWithDetails>(
+@ApiStatus.Internal
+const val GIT_INTERACTIVE_REBASE_DIALOG_DIMENSION_KEY = "Git.Interactive.Rebase.Dialog"
+
+internal class GitInteractiveRebaseDialog<T : GitRebaseEntry>(
   private val project: Project,
   root: VirtualFile,
   entries: List<T>
 ) : DialogWrapper(project, true) {
   companion object {
     private const val DETAILS_PROPORTION = "Git.Interactive.Rebase.Details.Proportion"
-    private const val DIMENSION_KEY = "Git.Interactive.Rebase.Dialog"
     internal const val PLACE = "Git.Interactive.Rebase.Dialog"
 
     private const val DIALOG_HEIGHT = 550
@@ -95,8 +103,13 @@ internal class GitInteractiveRebaseDialog<T : GitRebaseEntryWithDetails>(
   private var modified = false
 
   init {
+    fun getCommitDetailsFromRow(row: Int): VcsCommitMetadata? {
+      val entryWithDetails = commitsTableModel.getEntry(row) as? GitRebaseEntryWithDetails
+      return entryWithDetails?.commitDetails
+    }
     commitsTable.selectionModel.addListSelectionListener { _ ->
-      fullCommitDetailsListPanel.commitsSelected(commitsTable.selectedRows.map { commitsTableModel.getEntry(it).commitDetails })
+      val commitDetailsList = commitsTable.selectedRows.map { getCommitDetailsFromRow(it) }.filterNotNull()
+      fullCommitDetailsListPanel.commitsSelected(commitDetailsList)
     }
     commitsTableModel.addTableModelListener { resetEntriesLabel.isVisible = true }
     commitsTableModel.addTableModelListener { modified = true }
@@ -111,20 +124,24 @@ internal class GitInteractiveRebaseDialog<T : GitRebaseEntryWithDetails>(
         addSeparator()
         addAll(contextMenuOnlyActions)
       },
-      PLACE,
-      ActionManager.getInstance()
+      PLACE
     )
+
+    val diffAction = fullCommitDetailsListPanel.changesBrowser.diffAction
+    diffAction.registerCustomShortcutSet(commitsTable, null);
 
     title = GitBundle.message("rebase.interactive.dialog.title")
     setOKButtonText(GitBundle.message("rebase.interactive.dialog.start.rebase"))
     init()
   }
 
-  override fun getDimensionServiceKey() = DIMENSION_KEY
+  override fun getDimensionServiceKey() = GIT_INTERACTIVE_REBASE_DIALOG_DIMENSION_KEY
 
   override fun createCenterPanel() = BorderLayoutPanel().apply {
     val decorator = ToolbarDecorator.createDecorator(commitsTable)
       .setToolbarPosition(ActionToolbarPosition.TOP)
+      .setMoveUpAction(MoveTableItemRunnable(-1, commitsTable))
+      .setMoveDownAction(MoveTableItemRunnable(1, commitsTable))
       .setPanelBorder(JBUI.Borders.empty())
       .setScrollPaneBorder(JBUI.Borders.empty())
       .disableAddAction()
@@ -177,11 +194,11 @@ internal class GitInteractiveRebaseDialog<T : GitRebaseEntryWithDetails>(
     super.doCancelAction()
   }
 
-  override fun getHelpId(): String? {
+  override fun getHelpId(): String {
     return "reference.VersionControl.Git.RebaseCommits"
   }
 
-  private class AnActionButtonSeparator : AnActionButton(), CustomComponentAction, DumbAware {
+  internal class AnActionButtonSeparator : DumbAwareAction(), CustomComponentAction {
     companion object {
       private val SEPARATOR_HEIGHT = JBUI.scale(20)
     }

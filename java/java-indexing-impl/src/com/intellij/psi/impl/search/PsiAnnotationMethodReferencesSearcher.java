@@ -1,9 +1,15 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.search;
 
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.ReadActionProcessor;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiAnnotation;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiJavaCodeReferenceElement;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiNameValuePair;
+import com.intellij.psi.PsiReference;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiUtil;
@@ -12,9 +18,9 @@ import com.intellij.util.Query;
 import com.intellij.util.QueryExecutor;
 import org.jetbrains.annotations.NotNull;
 
-public class PsiAnnotationMethodReferencesSearcher implements QueryExecutor<PsiReference, ReferencesSearch.SearchParameters> {
+public final class PsiAnnotationMethodReferencesSearcher implements QueryExecutor<PsiReference, ReferencesSearch.SearchParameters> {
   @Override
-  public boolean execute(@NotNull final ReferencesSearch.SearchParameters p, @NotNull final Processor<? super PsiReference> consumer) {
+  public boolean execute(final @NotNull ReferencesSearch.SearchParameters p, final @NotNull Processor<? super PsiReference> consumer) {
     final PsiElement refElement = p.getElementToSearch();
     boolean isAnnotation = ReadAction.compute(() -> PsiUtil.isAnnotationMethod(refElement));
     if (isAnnotation) {
@@ -34,19 +40,16 @@ public class PsiAnnotationMethodReferencesSearcher implements QueryExecutor<PsiR
     return true;
   }
 
-  @NotNull
-  static ReadActionProcessor<PsiReference> createImplicitDefaultAnnotationMethodConsumer(@NotNull Processor<? super PsiReference> consumer) {
+  static @NotNull ReadActionProcessor<PsiReference> createImplicitDefaultAnnotationMethodConsumer(@NotNull Processor<? super PsiReference> consumer) {
     return new ReadActionProcessor<>() {
       @Override
       public boolean processInReadAction(final PsiReference reference) {
-        if (reference instanceof PsiJavaCodeReferenceElement) {
-          PsiJavaCodeReferenceElement javaReference = (PsiJavaCodeReferenceElement)reference;
-          if (javaReference.getParent() instanceof PsiAnnotation) {
-            PsiNameValuePair[] members = ((PsiAnnotation)javaReference.getParent()).getParameterList().getAttributes();
-            if (members.length == 1 && members[0].getNameIdentifier() == null) {
-              PsiReference t = members[0].getReference();
-              if (t != null && !consumer.process(t)) return false;
-            }
+        if (reference instanceof PsiJavaCodeReferenceElement javaReference &&
+            javaReference.getParent() instanceof PsiAnnotation annotation) {
+          PsiNameValuePair[] members = annotation.getParameterList().getAttributes();
+          if (members.length == 1 && members[0].getNameIdentifier() == null) {
+            PsiReference t = members[0].getReference();
+            return t == null || consumer.process(t);
           }
         }
         return true;

@@ -1,12 +1,21 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.parsing;
 
 import com.intellij.lang.LanguageASTFactory;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.python.community.helpersLocator.PythonHelpersLocator;
 import com.intellij.testFramework.ParsingTestCase;
 import com.intellij.testFramework.TestDataPath;
-import com.jetbrains.python.*;
+import com.jetbrains.python.PyElementTypesFacade;
+import com.jetbrains.python.PyElementTypesFacadeImpl;
+import com.jetbrains.python.PyLanguageFacade;
+import com.jetbrains.python.PyLanguageFacadeImpl;
+import com.jetbrains.python.PythonDialectsTokenSetContributor;
+import com.jetbrains.python.PythonLanguage;
+import com.jetbrains.python.PythonParserDefinition;
+import com.jetbrains.python.PythonTokenSetContributor;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.psi.PyPsiFacade;
@@ -17,9 +26,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
 
-/**
- * @author yole
- */
+
 @TestDataPath("$CONTENT_ROOT/../testData/psi/")
 public class PythonParsingTest extends ParsingTestCase {
   private LanguageLevel myLanguageLevel = LanguageLevel.getDefault();
@@ -36,10 +43,13 @@ public class PythonParsingTest extends ParsingTestCase {
   @Override
   protected void setUp() throws Exception {
     super.setUp();
+    Registry.markAsLoaded();
     registerExtensionPoint(PythonDialectsTokenSetContributor.EP_NAME, PythonDialectsTokenSetContributor.class);
     registerExtension(PythonDialectsTokenSetContributor.EP_NAME, new PythonTokenSetContributor());
     addExplicitExtension(LanguageASTFactory.INSTANCE, PythonLanguage.getInstance(), new PythonASTFactory());
     getProject().registerService(PyPsiFacade.class, PyPsiFacadeImpl.class);
+    getApplication().registerService(PyElementTypesFacade.class, PyElementTypesFacadeImpl.class);
+    getApplication().registerService(PyLanguageFacade.class, PyLanguageFacadeImpl.class);
   }
 
   @Override
@@ -79,6 +89,30 @@ public class PythonParsingTest extends ParsingTestCase {
     doTest();
   }
 
+  public void testTryExceptAs() {   // PY-293
+    doTest();
+  }
+
+  // PY-52930
+  public void testTryExceptStarNoExpression() {
+    doTest();
+  }
+
+  // PY-84077
+  public void testTryExceptMultipleNoParensPre314() {
+    doTest(LanguageLevel.PYTHON26);
+  }
+
+  // PY-84077
+  public void testTryExceptMultipleNoParensPost314() {
+    doTest(LanguageLevel.PYTHON314);
+  }
+
+  // PY-84077
+  public void testTryExceptMultipleWithParens() {
+    doTest();
+  }
+
   public void testTryFinally() {
     doTest();
   }
@@ -105,20 +139,8 @@ public class PythonParsingTest extends ParsingTestCase {
     doTest();
   }
 
-  public void testWithStatement() {
-    doTest();
-  }
-
   public void testDecoratedFunction() {
     doTest();
-  }
-
-  public void testTryExceptAs() {   // PY-293
-    doTest();
-  }
-
-  public void testWithStatement26() {
-    doTest(LanguageLevel.PYTHON26);
   }
 
   public void testPrintAsFunction26() {
@@ -203,10 +225,6 @@ public class PythonParsingTest extends ParsingTestCase {
 
   public void testFloorDiv() {
     doTest();
-  }
-
-  public void testWithStatement31() {
-    doTest(LanguageLevel.PYTHON34);
   }
 
   public void testLongString() {
@@ -421,10 +439,6 @@ public class PythonParsingTest extends ParsingTestCase {
     doTest();
   }
 
-  public void testWithMissingID() {  // PY-9853
-    doTest(LanguageLevel.PYTHON27);
-  }
-
   public void testOverIndentedComment() {  // PY-1909
     doTest();
   }
@@ -509,7 +523,7 @@ public class PythonParsingTest extends ParsingTestCase {
   public void testFStringWithSimpleFragment() {
     doTest(LanguageLevel.PYTHON36);
   }
-  
+
   public void testFStringGluedWithLiteralStringNodes() {
     doTest(LanguageLevel.PYTHON36);
   }
@@ -553,7 +567,7 @@ public class PythonParsingTest extends ParsingTestCase {
   public void testFStringFragmentIncompleteTypeConversionBeforeColon() {
     doTest(LanguageLevel.PYTHON36);
   }
-  
+
   public void testFStringFragmentIncompleteTypeConversionBeforeClosingBrace() {
     doTest(LanguageLevel.PYTHON36);
   }
@@ -586,67 +600,67 @@ public class PythonParsingTest extends ParsingTestCase {
     doTest(LanguageLevel.PYTHON36);
   }
 
-  public void testFStringTerminatedByQuoteOfStringLiteral() {
+  public void testFStringNotTerminatedByQuoteOfStringLiteral() {
     doTest(LanguageLevel.PYTHON36);
   }
 
-  public void testFStringTerminatedByQuoteInsideStringLiteral() {
+  public void testFStringNotTerminatedByQuoteInsideStringLiteral() {
     doTest(LanguageLevel.PYTHON36);
   }
 
-  public void testFStringTerminatedByQuoteOfNestedStringLiteral() {
+  public void testFStringNotTerminatedByQuoteOfNestedStringLiteral() {
     doTest(LanguageLevel.PYTHON36);
   }
 
-  public void testFStringTerminatedByQuoteInsideNestedStringLiteral() {
+  public void testFStringNotTerminatedByQuoteInsideNestedStringLiteral() {
     doTest(LanguageLevel.PYTHON36);
   }
 
-  public void testFStringTerminatedByQuoteOfFStringLiteral() {
+  public void testFStringNotTerminatedByQuoteOfFStringLiteral() {
     doTest(LanguageLevel.PYTHON36);
   }
 
-  public void testFStringTerminatedByQuoteInsideFStringLiteral() {
+  public void testFStringNotTerminatedByQuoteInsideFStringLiteral() {
     doTest(LanguageLevel.PYTHON36);
   }
 
-  public void testFStringTerminatedByQuoteOfNestedFStringLiteral() {
+  public void testFStringNotTerminatedByQuoteOfNestedFStringLiteral() {
     doTest(LanguageLevel.PYTHON36);
   }
 
-  public void testFStringTerminatedByQuoteInsideNestedFStringLiteral() {
+  public void testFStringNotTerminatedByQuoteInsideNestedFStringLiteral() {
     doTest(LanguageLevel.PYTHON36);
   }
 
-  public void testFStringTerminatedByQuoteOfStringLiteralInFormatPart() {
+  public void testFStringNotTerminatedByQuoteOfStringLiteralInFormatPart() {
+    doTest(LanguageLevel.getLatest());
+  }
+
+  public void testFStringNotTerminatedByQuoteInsideStringLiteralInFormatPart() {
     doTest(LanguageLevel.PYTHON36);
   }
 
-  public void testFStringTerminatedByQuoteInsideStringLiteralInFormatPart() {
+  public void testFStringNotTerminatedByQuoteOfNestedStringLiteralInFormatPart() {
     doTest(LanguageLevel.PYTHON36);
   }
 
-  public void testFStringTerminatedByQuoteOfNestedStringLiteralInFormatPart() {
+  public void testFStringNotTerminatedByQuoteInsideNestedStringLiteralInFormatPart() {
     doTest(LanguageLevel.PYTHON36);
   }
 
-  public void testFStringTerminatedByQuoteInsideNestedStringLiteralInFormatPart() {
+  public void testFStringNotTerminatedByQuoteOfFStringLiteralInFormatPart() {
     doTest(LanguageLevel.PYTHON36);
   }
 
-  public void testFStringTerminatedByQuoteOfFStringLiteralInFormatPart() {
+  public void testFStringNotTerminatedByQuoteInsideFStringLiteralInFormatPart() {
     doTest(LanguageLevel.PYTHON36);
   }
 
-  public void testFStringTerminatedByQuoteInsideFStringLiteralInFormatPart() {
+  public void testFStringNotTerminatedByQuoteOfNestedFStringLiteralInFormatPart() {
     doTest(LanguageLevel.PYTHON36);
   }
 
-  public void testFStringTerminatedByQuoteOfNestedFStringLiteralInFormatPart() {
-    doTest(LanguageLevel.PYTHON36);
-  }
-
-  public void testFStringTerminatedByQuoteInsideNestedFStringLiteralInFormatPart() {
+  public void testFStringNotTerminatedByQuoteInsideNestedFStringLiteralInFormatPart() {
     doTest(LanguageLevel.PYTHON36);
   }
 
@@ -654,7 +668,7 @@ public class PythonParsingTest extends ParsingTestCase {
     doTest(LanguageLevel.PYTHON36);
   }
 
-  public void testFStringTerminatedByQuoteInNestedLiteralPart() {
+  public void testFStringNotTerminatedByQuoteInNestedLiteralPart() {
     doTest(LanguageLevel.PYTHON36);
   }
 
@@ -662,43 +676,43 @@ public class PythonParsingTest extends ParsingTestCase {
     doTest(LanguageLevel.PYTHON36);
   }
 
-  public void testFStringTerminatedByQuoteInNestedFormatPart() {
+  public void testFStringNotTerminatedByQuoteInNestedFormatPart() {
     doTest(LanguageLevel.PYTHON36);
   }
 
   public void testFStringTerminatedByLineBreakInLiteralPart() {
     doTest(LanguageLevel.PYTHON36);
   }
-  
+
   public void testFStringTerminatedByLineBreakInNestedLiteralPart() {
     doTest(LanguageLevel.PYTHON36);
   }
-  
+
   public void testFStringTerminatedByLineBreakInFormatPart() {
     doTest(LanguageLevel.PYTHON36);
   }
-  
+
   public void testFStringTerminatedByLineBreakInNestedFormatPart() {
     doTest(LanguageLevel.PYTHON36);
   }
 
-  public void testFStringTerminatedByLineBreakInExpression() {
+  public void testFStringNotTerminatedByLineBreakInExpression() {
     doTest(LanguageLevel.PYTHON36);
   }
 
-  public void testFStringTerminatedByLineBreakInNestedExpression() {
+  public void testFStringNotTerminatedByLineBreakInNestedExpression() {
     doTest(LanguageLevel.PYTHON36);
   }
 
-  public void testFStringTerminatedByLineBreakInExpressionInFormatPart() {
+  public void testFStringNotTerminatedByLineBreakInExpressionInFormatPart() {
     doTest(LanguageLevel.PYTHON36);
   }
 
-  public void testFStringTerminatedByLineBreakInNestedExpressionInFormatPart() {
+  public void testFStringNotTerminatedByLineBreakInNestedExpressionInFormatPart() {
     doTest(LanguageLevel.PYTHON36);
   }
 
-  public void testFStringTerminatedByLineBreakInStringLiteral() {
+  public void testFStringNotTerminatedByLineBreakInStringLiteral() {
     doTest(LanguageLevel.PYTHON36);
   }
 
@@ -708,7 +722,7 @@ public class PythonParsingTest extends ParsingTestCase {
     doTest(LanguageLevel.PYTHON36);
   }
 
-  public void testFStringTerminatedByLineBreakInStringLiteralInFormatPart() {
+  public void testFStringNotTerminatedByLineBreakInStringLiteralInFormatPart() {
     doTest(LanguageLevel.PYTHON36);
   }
 
@@ -716,11 +730,11 @@ public class PythonParsingTest extends ParsingTestCase {
     doTest(LanguageLevel.PYTHON36);
   }
 
-  public void testMultilineFStringTerminatedByQuotesOfStringLiteral() {
+  public void testMultilineFStringNotTerminatedByQuotesOfStringLiteral() {
     doTest(LanguageLevel.PYTHON36);
   }
 
-  public void testMultilineFStringTerminatedByQuotesInsideParenthesizedExpression() {
+  public void testFStringNotTerminatedByQuotesInsideParenthesizedExpression() {
     doTest(LanguageLevel.PYTHON36);
   }
 
@@ -740,11 +754,11 @@ public class PythonParsingTest extends ParsingTestCase {
     doTest(LanguageLevel.PYTHON36);
   }
 
-  public void testSingleQuotedFStringInsideMultilineFStringTerminatedByLineBreakInExpression() {
+  public void testSingleQuotedFStringInsideMultilineFStringNotTerminatedByLineBreakInExpression() {
     doTest(LanguageLevel.PYTHON36);
   }
 
-  public void testSingleQuotedFStringInsideMultilineFStringTerminatedByLineBreakInExpressionInParentheses() {
+  public void testSingleQuotedFStringInsideMultilineFStringNotTerminatedByLineBreakInExpressionInParentheses() {
     doTest(LanguageLevel.PYTHON36);
   }
 
@@ -872,6 +886,23 @@ public class PythonParsingTest extends ParsingTestCase {
     doTest(LanguageLevel.PYTHON36);
   }
 
+  public void testIncompleteFStringFragmentRecoveryStoppedAtStatementOnlyKeyword() {
+    doTest(LanguageLevel.PYTHON36);
+  }
+
+  // PY-63393
+  public void testCompleteFStringFragmentTerminatedAtStatementOnlyKeyword() {
+    doTest(LanguageLevel.PYTHON36);
+  }
+
+  public void testNestedIncompleteFStringFragmentRecoveryStoppedAtStatementOnlyKeyword() {
+    doTest(LanguageLevel.PYTHON36);
+  }
+
+  public void testFormatPartFStringFragmentRecoveryStoppedAtStatementOnlyKeyword() {
+    doTest(LanguageLevel.PYTHON36);
+  }
+
   // PY-19036
   public void testAwaitInNonAsyncNestedFunction() {
     doTest(LanguageLevel.PYTHON35);
@@ -882,6 +913,11 @@ public class PythonParsingTest extends ParsingTestCase {
   }
 
   public void testVariableAnnotations() {
+    doTest(LanguageLevel.PYTHON36);
+  }
+
+  // PY-64304 EA-247016 
+  public void testVariableAnnotationRecoveryAwaitExpressionAsTarget() {
     doTest(LanguageLevel.PYTHON36);
   }
 
@@ -930,6 +966,11 @@ public class PythonParsingTest extends ParsingTestCase {
     doTest(LanguageLevel.PYTHON38);
   }
 
+  // PY-33886, PY-36478
+  public void testInvalidNonParenthesizedAssignmentExpressions() {
+    doTest(LanguageLevel.getLatest());
+  }
+
   // PY-33886
   public void testAssignmentExpressionsInFString() {
     doTest(LanguageLevel.PYTHON38);
@@ -943,6 +984,456 @@ public class PythonParsingTest extends ParsingTestCase {
   // PY-41305
   public void testExpressionsInDecorators() {
     doTest(LanguageLevel.getLatest());
+  }
+
+  public void testPatternMatchingMatchAndCaseKeywordsFollowedByNamesakeIdentifiers() {
+    doTest(LanguageLevel.PYTHON310);
+  }
+
+  public void testPatternMatchingMatchLooksLikeBinaryExpression() {
+    doTest(LanguageLevel.PYTHON310);
+  }
+
+  public void testPatternMatchingMatchLooksLikeCallWithMultipleArguments() {
+    doTest(LanguageLevel.PYTHON310);
+  }
+
+  public void testPatternMatchingMatchLooksLikeCallWithSingleArgument() {
+    doTest(LanguageLevel.PYTHON310);
+  }
+
+  public void testPatternMatchingMatchLooksLikeCallWithoutArguments() {
+    doTest(LanguageLevel.PYTHON310);
+  }
+
+  public void testPatternMatchingMatchLooksLikeIndexing() {
+    doTest(LanguageLevel.PYTHON310);
+  }
+
+  public void testPatternMatchingLiteralPatterns() {
+    doTest(LanguageLevel.PYTHON310);
+  }
+
+  public void testPatternMatchingRecoveryFStringsInLiteralPatterns() {
+    doTest(LanguageLevel.PYTHON310);
+  }
+
+  public void testPatternMatchingRecoveryIllegalNumericExpressionsInLiteralPatterns() {
+    doTest(LanguageLevel.PYTHON310);
+  }
+
+  public void testPatternMatchingRecoveryNoSubjectAfterMatch() {
+    doTest(LanguageLevel.PYTHON310);
+  }
+
+  public void testPatternMatchingRecoveryNoPatternAfterCase() {
+    doTest(LanguageLevel.PYTHON310);
+  }
+
+  public void testPatternMatchingRecoveryNoPatternAfterCaseInIntermediateCaseClause() {
+    doTest(LanguageLevel.PYTHON310);
+  }
+
+  public void testPatternMatchingRecoveryIllegalStatementsInsideMatch() {
+    doTest(LanguageLevel.PYTHON310);
+  }
+
+  public void testPatternMatchingRecoveryDanglingBracketsInNestedPatterns() {
+    doTest(LanguageLevel.PYTHON310);
+  }
+
+  public void testPatternMatchingRecoveryMatchStatementWithoutClauses() {
+    doTest(LanguageLevel.PYTHON310);
+  }
+
+  public void testPatternMatchingRecoveryMatchStatementWithoutClausesWithComment() {
+    doTest(LanguageLevel.PYTHON310);
+  }
+
+  public void testPatternMatchingRecoveryMatchStatementWithoutClausesAtEndOfFile() {
+    doTest(LanguageLevel.PYTHON310);
+  }
+
+  public void testPatternMatchingRecoveryMatchStatementWithoutClausesWithCommentAtEndOfFile() {
+    doTest(LanguageLevel.PYTHON310);
+  }
+
+  public void testPatternMatchingSingleCapturePattern() {
+    doTest(LanguageLevel.PYTHON310);
+  }
+
+  public void testPatternMatchingSingleValuePattern() {
+    doTest(LanguageLevel.PYTHON310);
+  }
+
+  public void testPatternMatchingValuePatternStartingWithUnderscore() {
+    doTest(LanguageLevel.PYTHON310);
+  }
+
+  public void testPatternMatchingRecoveryIncompleteValuePattern() {
+    doTest(LanguageLevel.PYTHON310);
+  }
+
+  public void testPatternMatchingSingleWildcardPattern() {
+    doTest(LanguageLevel.PYTHON310);
+  }
+
+  public void testPatternMatchingGroupAndParenthesizedSequencePatterns() {
+    doTest(LanguageLevel.PYTHON310);
+  }
+
+  public void testPatternMatchingRecoveryIncompleteGroupAndParenthesizedSequencePatterns() {
+    // XXX Missing statement breaks after "pass" here are odd
+    doTest(LanguageLevel.PYTHON310);
+  }
+
+  public void testPatternMatchingSequencePatternsInBrackets() {
+    doTest(LanguageLevel.PYTHON310);
+  }
+
+  public void testPatternMatchingRecoveryIncompleteSequencePatternsInBrackets() {
+    doTest(LanguageLevel.PYTHON310);
+  }
+
+  public void testPatternMatchingRecoverySequencePatternsMissingCommas() {
+    doTest(LanguageLevel.PYTHON310);
+  }
+
+  public void testPatternMatchingRecoverySequenceAndGroupPatternsFollowedByIllegalContent() {
+    doTest(LanguageLevel.PYTHON310);
+  }
+
+  public void testPatternMatchingRecoveryIllegalExpressionInSequencePatternItem() {
+    doTest(LanguageLevel.PYTHON310);
+  }
+
+  public void testPatternMatchingStarPatternsInSequences() {
+    doTest(LanguageLevel.PYTHON310);
+  }
+
+  public void testPatternMatchingRecoveryStarPatternMissingIdentifier() {
+    doTest(LanguageLevel.PYTHON310);
+  }
+
+  public void testPatternMatchingRecoveryStarPatternFollowedByQualifiedReference() {
+    doTest(LanguageLevel.PYTHON310);
+  }
+
+  public void testPatternMatchingMatchStatementFollowedByAnotherStatement() {
+    doTest(LanguageLevel.PYTHON310);
+  }
+
+  public void testPatternMatchingRecoveryExtraCommasInSequencePatterns() {
+    doTest(LanguageLevel.PYTHON310);
+  }
+
+  public void testPatternMatchingMappingPatterns() {
+    doTest(LanguageLevel.PYTHON310);
+  }
+
+  public void testPatternMatchingRecoveryIncompleteMappingPatterns() {
+    doTest(LanguageLevel.PYTHON310);
+  }
+
+  public void testPatternMatchingRecoveryExtraCommasInMappingPatterns() {
+    doTest(LanguageLevel.PYTHON310);
+  }
+
+  public void testPatternMatchingRecoveryDoubleStarWildcardPattern() {
+    doTest(LanguageLevel.PYTHON310);
+  }
+
+  public void testPatternMatchingClassPatterns() {
+    doTest(LanguageLevel.PYTHON310);
+  }
+
+  public void testPatternMatchingRecoveryIncompleteClassPatterns() {
+    doTest(LanguageLevel.PYTHON310);
+  }
+
+  public void testPatternMatchingRecoveryExtraCommasInClassPatterns() {
+    doTest(LanguageLevel.PYTHON310);
+  }
+
+  public void testPatternMatchingRecoveryClassPatternsFollowedByIllegalContent() {
+    doTest(LanguageLevel.PYTHON310);
+  }
+
+  public void testPatternMatchingOrPatterns() {
+    doTest(LanguageLevel.PYTHON310);
+  }
+
+  public void testPatternMatchingRecoveryIncompleteOrPatterns() {
+    doTest(LanguageLevel.PYTHON310);
+  }
+
+  public void testPatternMatchingRecoveryExtraBarsInOrPatterns() {
+    doTest(LanguageLevel.PYTHON310);
+  }
+
+  public void testPatternMatchingAsPatterns() {
+    doTest(LanguageLevel.PYTHON310);
+  }
+
+  public void testPatternMatchingRecoveryIncompleteAsPatterns() {
+    doTest(LanguageLevel.PYTHON310);
+  }
+
+  public void testPatternMatchingRecoveryAsPatternAsOrPatternComponent() {
+    doTest(LanguageLevel.PYTHON310);
+  }
+
+  public void testPatternMatchingRecoveryAsPatternsWithIllegalTarget() {
+    doTest(LanguageLevel.PYTHON310);
+  }
+
+  public void testPatternMatchingTopLevelSequencePatterns() {
+    doTest(LanguageLevel.PYTHON310);
+  }
+
+  public void testPatternMatchingRecoveryExtraCommasInTopLevelSequencePatterns() {
+    doTest(LanguageLevel.PYTHON310);
+  }
+
+  public void testPatternMatchingCaseGuards() {
+    doTest(LanguageLevel.PYTHON310);
+  }
+
+  public void testPatternMatchingRecoveryIncompleteCaseGuards() {
+    doTest(LanguageLevel.PYTHON310);
+  }
+
+  public void testPatternMatchingLeadingAndTrailingComments() {
+    doTest(LanguageLevel.PYTHON310);
+  }
+
+  // PY-49990
+  public void testPatternMatchingVariableTypeDeclarationLooksLikeIncompleteMatchStatement() {
+    doTest(LanguageLevel.PYTHON310);
+  }
+
+  // PY-49990
+  public void testPatternMatchingAnnotatedAssignmentLooksLikeIncompleteMatchStatement() {
+    doTest(LanguageLevel.PYTHON310);
+  }
+
+  // PY-49990
+  public void testPatternMatchingRecoveryMatchWithColonParsedAsVariableTypeDeclaration() {
+    doTest(LanguageLevel.PYTHON310);
+  }
+
+  // PY-48940
+  public void testAssignmentExpressionsInSet() {
+    doTest(LanguageLevel.getLatest());
+  }
+
+  // PY-48940
+  public void testAssignmentExpressionsInIndexes() {
+    doTest(LanguageLevel.getLatest());
+  }
+
+  // PY-42200
+  public void testWithStatementParenthesizedWithItems() {
+    doTest(LanguageLevel.getLatest());
+  }
+
+  // PY-43505
+  public void testWithStatementMultipleWithItemsWithoutParentheses() {
+    doTest(LanguageLevel.getLatest());
+  }
+
+  // PY-42200
+  public void testWithStatementWithItemsOwnParentheses() {
+    doTest(LanguageLevel.getLatest());
+  }
+
+  // PY-42200
+  public void testWithStatementContextExpressionStartsWithParenthesis() {
+    doTest(LanguageLevel.getLatest());
+  }
+
+  public void testWithStatementRecoveryDanglingComma() {
+    doTest(LanguageLevel.getLatest());
+  }
+
+  public void testWithStatementRecoveryIncompleteParentheses() {
+    doTest(LanguageLevel.getLatest());
+  }
+
+  public void testWithStatementRecoveryMissingColon() {
+    doTest(LanguageLevel.getLatest());
+  }
+
+  public void testWithStatementRecoveryEmptyParentheses() {
+    doTest(LanguageLevel.getLatest());
+  }
+
+  // PY-9853
+  public void testWithStatementRecoveryMissingAsName() {
+    doTest(LanguageLevel.getLatest());
+  }
+
+  public void testWithStatementRecoveryNoWithItems() {
+    doTest(LanguageLevel.getLatest());
+  }
+
+  public void testTypeAliasStatementWithoutTypeParameterList() {
+    doTest(LanguageLevel.PYTHON312);
+  }
+
+  public void testTypeAliasStatementWithTypeParameterList() {
+    doTest(LanguageLevel.PYTHON312);
+  }
+
+  public void testTypeAliasStatementWithTypeVarTuple() {
+    doTest(LanguageLevel.PYTHON312);
+  }
+
+  public void testTypeAliasStatementWithParamSpec() {
+    doTest(LanguageLevel.PYTHON312);
+  }
+
+  public void testTypeAliasStatementWithBoundedTypeParameter() {
+    doTest(LanguageLevel.PYTHON312);
+  }
+
+  public void testTypeAliasStatementWithTypeParameterBoundedWithExpression() {
+    doTest(LanguageLevel.PYTHON312);
+  }
+
+  public void testTypeAliasStatementWithTypeParameterAndDanglingComma() {
+    // Valid case
+    doTest(LanguageLevel.PYTHON312);
+  }
+
+  public void testTypeAliasStatementWithBoundedTypeParameterAndDanglingComma() {
+    // Valid case
+    doTest(LanguageLevel.PYTHON312);
+  }
+
+  public void testTypeAliasStatementRecoveryWithEmptyTypeParameterList() {
+    doTest(LanguageLevel.PYTHON312);
+  }
+
+  public void testTypeAliasStatementRecoveryWithNoAssignedType() {
+    doTest(LanguageLevel.PYTHON312);
+  }
+
+  public void testTypeAliasStatementRecoveryWithEqSignButNoAssignedType() {
+    doTest(LanguageLevel.PYTHON312);
+  }
+
+  public void testTypeParameterInTypeAliasStatementRecoveryIncompleteBound() {
+    doTest(LanguageLevel.PYTHON312);
+  }
+
+  public void testTypeParameterListInTypeAliasStatementRecoveryNotClosedRightBracket() {
+    doTest(LanguageLevel.PYTHON312);
+  }
+
+  // PY-71002
+  public void testTypeParameterListInTypeAliasStatementRecoveryNotClosedRightBracketAfterDefault() {
+    doTest(LanguageLevel.PYTHON313);
+  }
+
+  public void testTypeParameterListInTypeAliasStatementRecoveryUnexpectedSymbolAfterComma() {
+    doTest(LanguageLevel.PYTHON312);
+  }
+
+  public void testTypeParameterListInFunctionDeclaration() {
+    doTest(LanguageLevel.PYTHON312);
+  }
+
+  public void testTypeParameterListInFunctionDeclarationRecoveryNotClosedRightBracket() {
+    doTest(LanguageLevel.PYTHON312);
+  }
+
+  public void testTypeParameterListInClassDeclaration() {
+    doTest(LanguageLevel.PYTHON312);
+  }
+
+  // PY-71002
+  public void testTypeVarTypeParameterDefaultInClassDeclaration() {
+    doTest(LanguageLevel.PYTHON313);
+  }
+
+  // PY-71002
+  public void testTypeVarTypeParameterDefaultInTypeAliasStatement() {
+    doTest(LanguageLevel.PYTHON313);
+  }
+
+  // PY-71002
+  public void testParamSpecTypeParameterDefaultInClassDeclaration() {
+    doTest(LanguageLevel.PYTHON313);
+  }
+
+  // PY-71002
+  public void testTypeVarTupleTypeParameterDefaultInClassDeclaration() {
+    doTest(LanguageLevel.PYTHON313);
+  }
+
+  // PY-71002
+  public void testTypeVarTypeParameterWithDefaultAndBoundInClassDeclaration() {
+    doTest(LanguageLevel.PYTHON313);
+  }
+
+  // PY-71002
+  public void testTypeVarTypeParameterDefaultMissingExpression() {
+    doTest(LanguageLevel.PYTHON313);
+  }
+
+  // PY-71002
+  public void testTypeVarTypeParameterWithBoundAndDefaultMissingExpression() {
+    doTest(LanguageLevel.PYTHON313);
+  }
+
+  // PY-74231
+  public void testTypeAliasStatementInClassBody() {
+    doTest(LanguageLevel.PYTHON312);
+  }
+
+  // PY-74231
+  public void testTypeAliasStatementInFunctionBody() {
+    doTest(LanguageLevel.PYTHON312);
+  }
+
+  // PY-74321
+  public void testTypeAliasStatementInsideStatementListContainers() {
+    doTest(LanguageLevel.PYTHON312);
+  }
+
+  public void testTypeKeywordAsIdentifier() {
+    doTest(LanguageLevel.PYTHON312);
+  }
+
+  // PY-79967
+  public void testTemplateStrings() {
+    doTest(LanguageLevel.PYTHON314);
+  }
+
+  // PY-79967
+  public void testTemplateStringWithFragment() {
+    doTest(LanguageLevel.PYTHON314);
+  }
+
+  // PY-79967
+  public void testEmptyTemplateStrings() {
+    doTest(LanguageLevel.PYTHON314);
+  }
+
+  // PY-79967
+  public void testNestedTemplateStrings() {
+    doTest(LanguageLevel.PYTHON314);
+  }
+
+  // PY-79967
+  public void testTemplateStringInsideFString() {
+    doTest(LanguageLevel.PYTHON314);
+  }
+
+  // PY-79967
+  public void testFStringInsideTemplateString() {
+    doTest(LanguageLevel.PYTHON314);
   }
 
   public void doTest() {

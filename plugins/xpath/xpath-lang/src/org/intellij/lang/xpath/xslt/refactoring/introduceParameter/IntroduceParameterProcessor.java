@@ -40,7 +40,11 @@ import org.intellij.lang.xpath.xslt.util.XsltCodeInsightUtil;
 import org.intellij.plugins.xpathView.XPathBundle;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.Set;
 
 class IntroduceParameterProcessor extends BaseRefactoringProcessor {
     private final XPathExpression myExpression;
@@ -63,8 +67,7 @@ class IntroduceParameterProcessor extends BaseRefactoringProcessor {
 
 
     @Override
-    @NotNull
-    protected UsageViewDescriptor createUsageViewDescriptor(UsageInfo @NotNull [] usageInfos) {
+    protected @NotNull UsageViewDescriptor createUsageViewDescriptor(UsageInfo @NotNull [] usageInfos) {
         return new MyUsageViewDescriptorAdapter();
     }
 
@@ -125,9 +128,8 @@ class IntroduceParameterProcessor extends BaseRefactoringProcessor {
 
             XmlTag anchorParam = null;
             for (UsageInfo info : usageInfos) {
-                if (info instanceof XPathUsageInfo) {
-                    final XPathUsageInfo x = (XPathUsageInfo)info;
-                    final XPathVariableReference variableReference = XPathChangeUtil.createVariableReference(x.getExpression(), mySettings.getName());
+                if (info instanceof XPathUsageInfo x) {
+                  final XPathVariableReference variableReference = XPathChangeUtil.createVariableReference(x.getExpression(), mySettings.getName());
                     final XmlAttribute attribute = x.getAttribute();
                     assert attribute != null;
 
@@ -162,8 +164,7 @@ class IntroduceParameterProcessor extends BaseRefactoringProcessor {
     }
 
     @Override
-    @NotNull
-    protected String getCommandName() {
+    protected @NotNull String getCommandName() {
         return XPathBundle.message("command.name.introduce.xslt.parameter");
     }
 
@@ -176,7 +177,7 @@ class IntroduceParameterProcessor extends BaseRefactoringProcessor {
 
         @Override
         public String getProcessedElementsHeader() {
-            return "Adding parameter to template";
+            return XPathBundle.message("header.adding.parameter.to.template");
         }
     }
 }

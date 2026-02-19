@@ -15,13 +15,14 @@
  */
 package com.jetbrains.python.psi;
 
+import com.jetbrains.python.ast.PyAstPossibleClassMember;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * Element that may belong to class like field (target expression) or method (function)
  * @author Ilya.Kazakevich
  */
-public interface PyPossibleClassMember {
-  @Nullable
-  PyClass getContainingClass();
+public interface PyPossibleClassMember extends PyAstPossibleClassMember {
+  @Override
+  @Nullable PyClass getContainingClass();
 }

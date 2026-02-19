@@ -1,10 +1,9 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.search;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.psi.PsiManager;
@@ -13,130 +12,188 @@ import com.intellij.util.Processor;
 import com.intellij.util.Processors;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.CollectionFactory;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.HashingStrategy;
+import com.intellij.util.containers.Java11Shim;
 import com.intellij.util.indexing.FileBasedIndex;
 import com.intellij.util.indexing.ID;
 import com.intellij.util.indexing.IdFilter;
+import com.intellij.util.indexing.ProcessorWithThrottledCancellationCheck;
 import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.Set;
 
-/**
- * @author yole
- */
 public final class FilenameIndex {
+  /** @deprecated Use {@link FilenameIndex} methods instead **/
+  @Deprecated(forRemoval = true)
   @ApiStatus.Internal
-  @NonNls
   public static final ID<String, Void> NAME = ID.create("FilenameIndex");
 
-  public static @NotNull String @NotNull [] getAllFilenames(@Nullable Project project) {
-    Set<String> names = new HashSet<>();
+  private FilenameIndex() {
+  }
+
+  public static @NotNull String @NotNull [] getAllFilenames(@NotNull Project project) {
+    Set<String> names = CollectionFactory.createSmallMemoryFootprintSet();
     processAllFileNames((String s) -> {
       names.add(s);
       return true;
-    }, project == null ? new EverythingGlobalScope() : GlobalSearchScope.allScope(project), null);
+    }, GlobalSearchScope.allScope(project), null);
     return ArrayUtilRt.toStringArray(names);
   }
 
-  public static void processAllFileNames(@NotNull Processor<? super String> processor, @NotNull GlobalSearchScope scope, @Nullable IdFilter filter) {
+  public static void processAllFileNames(@NotNull Processor<? super String> processor,
+                                         @NotNull GlobalSearchScope scope,
+                                         @Nullable IdFilter filter) {
+    var withThrottledCancellationCheck = new ProcessorWithThrottledCancellationCheck<>(
+      (CharSequence s) -> processor.process(s.toString())
+    );
+    processAllFileNameCharSequences(withThrottledCancellationCheck, scope, filter);
+  }
+
+  private static void processAllFileNameCharSequences(@NotNull Processor<? super CharSequence> processor,
+                                                      @NotNull GlobalSearchScope scope,
+                                                      @Nullable IdFilter filter) {
     FileBasedIndex.getInstance().processAllKeys(NAME, processor, scope, filter);
   }
 
-  @NotNull
-  public static Collection<VirtualFile> getVirtualFilesByName(final Project project, @NotNull String name, @NotNull GlobalSearchScope scope) {
-    return getVirtualFilesByName(name, scope, null);
+  /** @deprecated Use {@link FilenameIndex#getVirtualFilesByName(String, GlobalSearchScope)} */
+  @SuppressWarnings("unused")
+  @Deprecated
+  public static @NotNull @Unmodifiable Collection<VirtualFile> getVirtualFilesByName(Project project,
+                                                                                     @NotNull String name,
+                                                                                     @NotNull GlobalSearchScope scope) {
+    return getVirtualFilesByName(name, scope);
   }
 
-  @NotNull
-  public static Collection<VirtualFile> getVirtualFilesByName(final Project project,
-                                                              @NotNull String name,
-                                                              boolean caseSensitively,
-                                                              @NotNull GlobalSearchScope scope) {
-    if (caseSensitively) return getVirtualFilesByName(project, name, scope);
-    return getVirtualFilesByNameIgnoringCase(name, scope, null);
+  /**
+   * BEWARE: if you use this method to check if _any_ matching file exist, or to get the _first_ file -- consider using
+   * {@link #hasVirtualFileWithName(String, boolean, GlobalSearchScope, IdFilter)} or {@link #firstVirtualFileWithName(String, boolean, GlobalSearchScope, IdFilter)}
+   * methods instead
+   */
+  public static @NotNull @Unmodifiable Collection<VirtualFile> getVirtualFilesByName(@NotNull String name,
+                                                                                     @NotNull GlobalSearchScope scope) {
+    return getVirtualFilesByNames(Set.of(name), scope, null);
   }
 
-  public static @NotNull PsiFile @NotNull [] getFilesByName(@NotNull Project project, @NotNull String name, @NotNull GlobalSearchScope scope) {
+  /** @deprecated Use {@link FilenameIndex#getVirtualFilesByName(String, boolean, GlobalSearchScope)} */
+  @SuppressWarnings("unused")
+  @Deprecated
+  public static @NotNull @Unmodifiable Collection<VirtualFile> getVirtualFilesByName(Project project,
+                                                                                     @NotNull String name,
+                                                                                     boolean caseSensitively,
+                                                                                     @NotNull GlobalSearchScope scope) {
+    return getVirtualFilesByName(name, caseSensitively, scope);
+  }
+
+  public static @NotNull @Unmodifiable Collection<VirtualFile> getVirtualFilesByName(@NotNull String name,
+                                                                                     boolean caseSensitively,
+                                                                                     @NotNull GlobalSearchScope scope) {
+    if (caseSensitively) return getVirtualFilesByName(name, scope);
+    return getVirtualFilesByNamesIgnoringCase(Set.of(name), scope, null);
+  }
+
+  /** @deprecated Use {@link #getVirtualFilesByName(String, GlobalSearchScope)} **/
+  @Deprecated
+  public static @NotNull PsiFile @NotNull [] getFilesByName(@NotNull Project project,
+                                                            @NotNull String name,
+                                                            @NotNull GlobalSearchScope scope) {
     return (PsiFile[])getFilesByName(project, name, scope, false);
   }
 
-  public static boolean processFilesByName(@NotNull final String name,
+  /** @deprecated Use {@link #processFilesByName(String, boolean, GlobalSearchScope, Processor)} **/
+  @Deprecated(forRemoval = true)
+  public static boolean processFilesByName(@NotNull String name,
+                                           boolean directories,
+                                           @NotNull Processor<? super PsiFileSystemItem> processor,
+                                           @NotNull GlobalSearchScope scope,
+                                           @NotNull Project project) {
+    return processFilesByName(name, directories, processor, scope, project, null);
+  }
+
+  /** @deprecated Use {@link #processFilesByName(String, boolean, GlobalSearchScope, Processor)} **/
+  @Deprecated
+  public static boolean processFilesByName(@NotNull String name,
                                            boolean directories,
                                            @NotNull Processor<? super PsiFileSystemItem> processor,
                                            @NotNull GlobalSearchScope scope,
                                            @NotNull Project project,
                                            @Nullable IdFilter idFilter) {
-    return processFilesByName(name, directories, true, processor, scope, project, idFilter);
+    PsiManager psiManager = PsiManager.getInstance(project);
+    boolean[] result = {false}; // keep old semantics
+    processFilesByNames(Set.of(name), true, scope, idFilter, file -> {
+      if (!file.isValid()) return true;
+      if (directories != file.isDirectory()) return true;
+      PsiFileSystemItem psi = directories ? psiManager.findDirectory(file) : psiManager.findFile(file);
+      if (psi == null) return true;
+      result[0] = true;
+      return processor.process(psi);
+    });
+    return result[0];
   }
 
-  public static boolean processFilesByName(@NotNull final String name,
-                                           boolean directories,
+  /**
+   * @param caseSensitively BEWARE: <b>case-insensitive lookup is quite expensive</b>, it involves full-scan over index!
+   * @return true if all the matching files were scanned, false if scanning was stopped early because the processor returns false
+   */
+  public static boolean processFilesByName(@NotNull String name,
                                            boolean caseSensitively,
-                                           @NotNull Processor<? super PsiFileSystemItem> processor,
-                                           @NotNull final GlobalSearchScope scope,
-                                           @NotNull final Project project,
-                                           @Nullable IdFilter idFilter) {
-    final Collection<VirtualFile> files;
+                                           @NotNull GlobalSearchScope scope,
+                                           @NotNull Processor<? super VirtualFile> processor) {
+    return processFilesByNames(Set.of(name), caseSensitively, scope, null, processor);
+  }
+
+  /**
+   * @param caseSensitively BEWARE: <b>case-insensitive lookup is quite expensive</b>, it involves full-scan over index!
+   * @return true if all the matching files were scanned, false if scanning was stopped early because the processor returns false
+   */
+  public static boolean processFilesByNames(@NotNull Set<String> names,
+                                            boolean caseSensitively,
+                                            @NotNull GlobalSearchScope scope,
+                                            @Nullable IdFilter idFilter,
+                                            @NotNull Processor<? super VirtualFile> processor) {
+    if (names.isEmpty()) return true;
 
     if (caseSensitively) {
-      files = getVirtualFilesByName(name, scope, idFilter);
+      return FileBasedIndex.getInstance().processFilesContainingAnyKey(
+        NAME, names, scope, idFilter, /*valueChecker: */null,
+        new ProcessorWithThrottledCancellationCheck<>(processor)
+      );
     }
     else {
-      files = getVirtualFilesByNameIgnoringCase(name, scope, idFilter);
+      Collection<VirtualFile> files = getVirtualFilesByNamesIgnoringCase(names, scope, idFilter);
+      return ContainerUtil.process(files, processor);
     }
-
-    if (files.isEmpty()) return false;
-    PsiManager psiManager = PsiManager.getInstance(project);
-    int processedFiles = 0;
-
-    for(VirtualFile file: files) {
-      if (!file.isValid()) continue;
-      if (!directories && !file.isDirectory()) {
-        PsiFile psiFile = psiManager.findFile(file);
-        if (psiFile != null) {
-          if(!processor.process(psiFile)) return true;
-          ++processedFiles;
-        }
-      } else if (directories && file.isDirectory()) {
-        PsiDirectory dir = psiManager.findDirectory(file);
-        if (dir != null) {
-          if(!processor.process(dir)) return true;
-          ++processedFiles;
-        }
-      }
-    }
-    return processedFiles > 0;
   }
 
-  @NotNull
-  private static Set<VirtualFile> getVirtualFilesByNameIgnoringCase(@NotNull final String name,
-                                                                    @NotNull final GlobalSearchScope scope,
-                                                                    @Nullable final IdFilter idFilter) {
+  private static @NotNull @Unmodifiable Set<VirtualFile> getVirtualFilesByNamesIgnoringCase(@NotNull Set<String> names,
+                                                                                            @NotNull GlobalSearchScope scope,
+                                                                                            @Nullable IdFilter idFilter) {
+    Set<String> nameSet = CollectionFactory.createCustomHashingStrategySet(HashingStrategy.caseInsensitive());
+    nameSet.addAll(names);
     Set<String> keys = CollectionFactory.createSmallMemoryFootprintSet();
     processAllFileNames(value -> {
-      if (name.equalsIgnoreCase(value)) {
+      if (nameSet.contains(value)) {
         keys.add(value);
       }
       return true;
     }, scope, idFilter);
-
-    // values accessed outside of processAllKeys
-    Set<VirtualFile> files = CollectionFactory.createSmallMemoryFootprintSet();
-    for (String each : keys) {
-      files.addAll(getVirtualFilesByName(each, scope, idFilter));
-    }
-    return files;
+    return getVirtualFilesByNames(keys, scope, idFilter);
   }
 
+  /** @deprecated Use {@link #getVirtualFilesByName(String, GlobalSearchScope)} **/
+  @Deprecated
   public static @NotNull PsiFileSystemItem @NotNull [] getFilesByName(@NotNull Project project,
                                                                       @NotNull String name,
-                                                                      @NotNull final GlobalSearchScope scope,
+                                                                      final @NotNull GlobalSearchScope scope,
                                                                       boolean directories) {
     SmartList<PsiFileSystemItem> result = new SmartList<>();
     Processor<PsiFileSystemItem> processor = Processors.cancelableCollectProcessor(result);
-    processFilesByName(name, directories, processor, scope, project, null);
+    processFilesByName(name, directories, processor, scope, project);
 
     if (directories) {
       return result.toArray(new PsiFileSystemItem[0]);
@@ -147,45 +204,71 @@ public final class FilenameIndex {
 
   /**
    * Returns all files in the project by extension
-   * @author Konstantin Bulenkov
    *
    * @param project current project
-   * @param ext file extension without leading dot e.q. "txt", "wsdl"
+   * @param ext     file extension without leading dot e.q. "txt", "wsdl"
    * @return all files with provided extension
+   * @author Konstantin Bulenkov
    */
-  @NotNull
-  public static Collection<VirtualFile> getAllFilesByExt(@NotNull Project project, @NotNull String ext) {
+  public static @NotNull @Unmodifiable Collection<VirtualFile> getAllFilesByExt(@NotNull Project project, @NotNull String ext) {
     return getAllFilesByExt(project, ext, GlobalSearchScope.allScope(project));
   }
 
-  @NotNull
-  public static Collection<VirtualFile> getAllFilesByExt(@NotNull Project project, @NotNull String ext, @NotNull GlobalSearchScope searchScope) {
-    int len = ext.length();
-
-    if (len == 0) return Collections.emptyList();
-
-    ext = "." + ext;
-    len++;
-
-    final List<VirtualFile> files = new ArrayList<>();
-    for (String name : getAllFilenames(project)) {
-      final int length = name.length();
-      if (length > len && name.substring(length - len).equalsIgnoreCase(ext)) {
-        files.addAll(getVirtualFilesByName(project, name, searchScope));
-      }
+  public static @NotNull @Unmodifiable Collection<VirtualFile> getAllFilesByExt(@NotNull Project project,
+                                                                                @NotNull String ext,
+                                                                                @NotNull GlobalSearchScope searchScope) {
+    if (ext.isEmpty()) {
+      return Java11Shim.INSTANCE.listOf();
     }
+
+    String dotExt = "." + ext;
+    int len = ext.length() + 1;
+
+    Set<String> names = new HashSet<>();
+    processAllFileNames(name -> {
+      int length = name.length();
+      if (length > len && name.regionMatches(true, length - len, dotExt, 0, len)) {
+        names.add(name);
+      }
+      return true;
+    }, GlobalSearchScope.allScope(project), null);
+    return getVirtualFilesByNames(names, searchScope, null);
+  }
+
+  private static @NotNull @Unmodifiable Set<VirtualFile> getVirtualFilesByNames(@NotNull Set<String> names,
+                                                                                @NotNull GlobalSearchScope scope,
+                                                                                @Nullable IdFilter filter) {
+    Set<VirtualFile> files = CollectionFactory.createSmallMemoryFootprintSet();
+    FileBasedIndex.getInstance().processFilesContainingAnyKey(
+      NAME, names, scope, filter, null,
+      new ProcessorWithThrottledCancellationCheck<>(file -> {
+        files.add(file);
+        return true;
+      })
+    );
     return files;
   }
 
-  @NotNull
-  private static Collection<VirtualFile> getVirtualFilesByName(@NotNull String name,
-                                                              @NotNull GlobalSearchScope scope,
-                                                              IdFilter filter) {
-    Set<VirtualFile> files = CollectionFactory.createSmallMemoryFootprintSet();
-    FileBasedIndex.getInstance().processValues(NAME, name, null, (file, value) -> {
-      files.add(file);
-      return true;
-    }, scope, filter);
-    return files;
+  /** @param caseSensitively BEWARE: <b>case-insensitive lookup is quite expensive</b>, it involves full-scan over index! */
+  @ApiStatus.Experimental
+  public static boolean hasVirtualFileWithName(@NotNull String name,
+                                               boolean caseSensitively,
+                                               @NotNull GlobalSearchScope scope,
+                                               @Nullable IdFilter filter) {
+    return !processFilesByNames(Set.of(name), caseSensitively, scope, filter, file -> false);
+  }
+
+  /** @param caseSensitively BEWARE: <b>case-insensitive lookup is quite expensive</b>, it involves full-scan over index! */
+  @ApiStatus.Experimental
+  public static @Nullable VirtualFile firstVirtualFileWithName(@NotNull String name,
+                                                               boolean caseSensitively,
+                                                               @NotNull GlobalSearchScope scope,
+                                                               @Nullable IdFilter filter) {
+    Ref<VirtualFile> found = new Ref<>(null);
+    processFilesByNames(Set.of(name), caseSensitively, scope, filter, file -> {
+      found.set(file);
+      return false;
+    });
+    return found.get();
   }
 }

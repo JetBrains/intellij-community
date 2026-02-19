@@ -4,18 +4,19 @@ package org.jetbrains.uast.java.declarations
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiMethodCallExpression
 import com.intellij.psi.PsiReferenceExpression
-import org.jetbrains.uast.*
+import org.jetbrains.uast.LazyParentUIdentifier
+import org.jetbrains.uast.UCallExpression
+import org.jetbrains.uast.UElement
+import org.jetbrains.uast.toUElement
+import org.jetbrains.uast.toUElementOfType
 
-internal class JavaLazyParentUIdentifier(psi: PsiElement?, givenParent: UElement?) : LazyParentUIdentifier(psi, givenParent) {
-
-  override val uastParent: UElement? by lazy {
-    givenParent?.let { return@lazy it }
-
-    val parent = sourcePsi?.parent ?: return@lazy null
+internal class JavaLazyParentUIdentifier(psi: PsiElement?, givenParent: UElement?)
+  : LazyParentUIdentifier(psi, givenParent) {
+  override fun computeParent(): UElement? {
+    val parent = sourcePsi?.parent ?: return null
     if (parent is PsiReferenceExpression && parent.parent is PsiMethodCallExpression) {
-      return@lazy parent.parent.toUElementOfType<UCallExpression>() ?: parent.toUElement()
+      return parent.parent.toUElementOfType<UCallExpression>() ?: parent.toUElement()
     }
-    parent.toUElement()
+    return parent.toUElement()
   }
-
 }

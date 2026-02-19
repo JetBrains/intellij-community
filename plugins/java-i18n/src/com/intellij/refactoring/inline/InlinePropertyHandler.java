@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.inline;
 
 import com.intellij.java.i18n.JavaI18nBundle;
@@ -10,7 +10,14 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsActions;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.JavaTokenType;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiExpressionList;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiLiteral;
+import com.intellij.psi.PsiMethodCallExpression;
+import com.intellij.psi.PsiReference;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.HelpID;
@@ -22,12 +29,16 @@ import com.intellij.refactoring.util.RefactoringMessageDialog;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
 
 /**
  * @author gregsh
  */
-public class InlinePropertyHandler extends JavaInlineActionHandler {
+public final class InlinePropertyHandler extends JavaInlineActionHandler {
   public static final String REFACTORING_ID = "refactoring.inline.property";
 
   @Override
@@ -41,9 +52,8 @@ public class InlinePropertyHandler extends JavaInlineActionHandler {
 
   @Override
   public void inlineElement(final Project project, Editor editor, PsiElement psiElement) {
-    if (!(psiElement instanceof IProperty)) return;
+    if (!(psiElement instanceof IProperty property)) return;
 
-    IProperty property = (IProperty)psiElement;
     final String propertyValue = property.getValue();
     if (propertyValue == null) return;
 
@@ -98,9 +108,8 @@ public class InlinePropertyHandler extends JavaInlineActionHandler {
     });
   }
 
-  @Nullable
   @Override
-  public String getActionName(PsiElement element) {
+  public @Nullable String getActionName(PsiElement element) {
     return getRefactoringName();
   }
 

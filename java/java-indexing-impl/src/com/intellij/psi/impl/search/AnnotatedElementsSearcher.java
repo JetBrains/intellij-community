@@ -1,9 +1,15 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.search;
 
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiAnnotation;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiJavaCodeReferenceElement;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiModifierList;
+import com.intellij.psi.PsiModifierListOwner;
 import com.intellij.psi.impl.java.stubs.index.JavaAnnotationIndex;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.LocalSearchScope;
@@ -18,9 +24,9 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-public class AnnotatedElementsSearcher implements QueryExecutor<PsiModifierListOwner, AnnotatedElementsSearch.Parameters> {
+public final class AnnotatedElementsSearcher implements QueryExecutor<PsiModifierListOwner, AnnotatedElementsSearch.Parameters> {
   @Override
-  public boolean execute(@NotNull final AnnotatedElementsSearch.Parameters p, @NotNull final Processor<? super PsiModifierListOwner> consumer) {
+  public boolean execute(final @NotNull AnnotatedElementsSearch.Parameters p, final @NotNull Processor<? super PsiModifierListOwner> consumer) {
     final PsiClass annClass = p.getAnnotationClass();
     if (!annClass.isAnnotationType()) throw new IllegalArgumentException("Annotation type should be passed to annotated members search but got: "+annClass);
 
@@ -64,12 +70,11 @@ public class AnnotatedElementsSearcher implements QueryExecutor<PsiModifierListO
     return true;
   }
 
-  @NotNull
-  private static Collection<PsiAnnotation> getAnnotationCandidates(@NotNull PsiClass annClass,
-                                                                   @NotNull SearchScope useScope, @NotNull Project project) {
+  private static @NotNull Collection<PsiAnnotation> getAnnotationCandidates(@NotNull PsiClass annClass,
+                                                                            @NotNull SearchScope useScope, @NotNull Project project) {
     return ReadAction.compute(() -> {
       if (useScope instanceof GlobalSearchScope) {
-        return JavaAnnotationIndex.getInstance().get(annClass.getName(), project, (GlobalSearchScope)useScope);
+        return JavaAnnotationIndex.getInstance().getAnnotations(annClass.getName(), project, (GlobalSearchScope)useScope);
       }
 
       List<PsiAnnotation> result = new ArrayList<>();

@@ -29,39 +29,40 @@ import static com.intellij.tasks.TaskTestUtil.assertTasksEqual;
 public class AssemblaIntegrationTest extends GenericSubtypeTestCase {
 
   public static final String TASK_LIST_RESPONSE =
-    "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
-    "<tickets type=\"array\">\n" +
-    "<ticket>\n" +
-    "  <assigned-to-id>dsNkyYr0Gr4iEBeJe5cbCb</assigned-to-id>\n" +
-    "  <completed-date type=\"datetime\"></completed-date>\n" +
-    "  <component-id type=\"integer\"></component-id>\n" +
-    "  <created-on type=\"datetime\">2013-04-01T10:45:06+03:00</created-on>\n" +
-    "  <description></description>\n" +
-    "  <from-support type=\"integer\">0</from-support>\n" +
-    "  <id type=\"integer\">50351983</id>\n" +
-    "  <importance type=\"integer\">-1</importance>\n" +
-    "  <importance-float type=\"float\">-1.0</importance-float>\n" +
-    "  <is-story type=\"boolean\">false</is-story>\n" +
-    "  <milestone-id type=\"integer\"></milestone-id>\n" +
-    "  <notification-list>dsNkyYr0Gr4iEBeJe5cbCb</notification-list>\n" +
-    "  <number type=\"integer\">1</number>\n" +
-    "  <priority type=\"integer\">3</priority>\n" +
-    "  <reporter-id>dsNkyYr0Gr4iEBeJe5cbCb</reporter-id>\n" +
-    "  <space-id>ab1WOCMQar4QGgacwqjQWU</space-id>\n" +
-    "  <status type='integer'>0</status>\n" +
-    "  <status-name>New</status-name>\n" +
-    "  <story-importance type=\"integer\">0</story-importance>\n" +
-    "  <summary>&#1055;&#1088;&#1080;&#1074;&#1077;&#1090;</summary>\n" +
-    "  <updated-at type=\"datetime\">2013-04-01T10:48:19+03:00</updated-at>\n" +
-    "  <working-hours type=\"float\">0.0</working-hours>\n" +
-    "  <working-hour type=\"float\" warning=\"deprecated\">0.0</working-hour>\n" +
-    "  <estimate type=\"string\">Small</estimate>\n" +
-    "  <total-estimate type=\"float\">1.0</total-estimate>\n" +
-    "  <invested-hours type=\"float\">0.0</invested-hours>\n" +
-    "  <assigned-to><id>dsNkyYr0Gr4iEBeJe5cbCb</id><login>avdeev.dmitry</login><login_name warning=\"deprecated\">avdeev.dmitry</login_name><name>avdeev.dmitry</name></assigned-to>\n" +
-    "  <reporter><id>dsNkyYr0Gr4iEBeJe5cbCb</id><login>avdeev.dmitry</login><login_name warning=\"deprecated\">avdeev.dmitry</login_name><name>avdeev.dmitry</name></reporter>\n" +
-    "</ticket>\n" +
-    "</tickets>";
+    """
+      <?xml version="1.0" encoding="UTF-8"?>
+      <tickets type="array">
+      <ticket>
+        <assigned-to-id>dsNkyYr0Gr4iEBeJe5cbCb</assigned-to-id>
+        <completed-date type="datetime"></completed-date>
+        <component-id type="integer"></component-id>
+        <created-on type="datetime">2013-04-01T10:45:06+03:00</created-on>
+        <description></description>
+        <from-support type="integer">0</from-support>
+        <id type="integer">50351983</id>
+        <importance type="integer">-1</importance>
+        <importance-float type="float">-1.0</importance-float>
+        <is-story type="boolean">false</is-story>
+        <milestone-id type="integer"></milestone-id>
+        <notification-list>dsNkyYr0Gr4iEBeJe5cbCb</notification-list>
+        <number type="integer">1</number>
+        <priority type="integer">3</priority>
+        <reporter-id>dsNkyYr0Gr4iEBeJe5cbCb</reporter-id>
+        <space-id>ab1WOCMQar4QGgacwqjQWU</space-id>
+        <status type='integer'>0</status>
+        <status-name>New</status-name>
+        <story-importance type="integer">0</story-importance>
+        <summary>&#1055;&#1088;&#1080;&#1074;&#1077;&#1090;</summary>
+        <updated-at type="datetime">2013-04-01T10:48:19+03:00</updated-at>
+        <working-hours type="float">0.0</working-hours>
+        <working-hour type="float" warning="deprecated">0.0</working-hour>
+        <estimate type="string">Small</estimate>
+        <total-estimate type="float">1.0</total-estimate>
+        <invested-hours type="float">0.0</invested-hours>
+        <assigned-to><id>dsNkyYr0Gr4iEBeJe5cbCb</id><login>avdeev.dmitry</login><login_name warning="deprecated">avdeev.dmitry</login_name><name>avdeev.dmitry</name></assigned-to>
+        <reporter><id>dsNkyYr0Gr4iEBeJe5cbCb</id><login>avdeev.dmitry</login><login_name warning="deprecated">avdeev.dmitry</login_name><name>avdeev.dmitry</name></reporter>
+      </ticket>
+      </tickets>""";
 
   @NotNull
   @Override

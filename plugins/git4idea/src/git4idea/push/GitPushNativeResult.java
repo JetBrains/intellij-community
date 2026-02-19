@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.push;
 
 import com.intellij.openapi.util.text.StringUtil;
@@ -25,10 +11,9 @@ import org.jetbrains.annotations.Nullable;
  * @see GitPushNativeResultParser
  * @see GitPushRepoResult
  */
-public class GitPushNativeResult {
-
+public final class GitPushNativeResult {
   public static final String NO_FF_REJECT_REASON = "non-fast-forward";
-  static final String FETCH_FIRST_REASON = "fetch first";
+  public static final String FETCH_FIRST_REASON = "fetch first";
   static final String STALE_INFO_REASON = "stale info";
   static final String FAILED_LOCK_REASON = "failed to lock";
 
@@ -42,10 +27,10 @@ public class GitPushNativeResult {
     ERROR
   }
 
-  @NotNull private final Type myType;
+  private final @NotNull Type myType;
   private final String mySourceRef;
-  @Nullable private final String myReason;
-  @Nullable private final String myRange;
+  private final @Nullable String myReason;
+  private final @Nullable String myRange;
 
   public GitPushNativeResult(@NotNull Type type, String sourceRef) {
     this(type, sourceRef, null, null);
@@ -58,13 +43,11 @@ public class GitPushNativeResult {
     myRange = range;
   }
 
-  @NotNull
-  public Type getType() {
+  public @NotNull Type getType() {
     return myType;
   }
 
-  @Nullable
-  public String getRange() {
+  public @Nullable String getRange() {
     return myRange;
   }
 
@@ -72,16 +55,15 @@ public class GitPushNativeResult {
     return mySourceRef;
   }
 
-  @Nullable
-  public String getReason() {
+  public @Nullable String getReason() {
     return myReason;
   }
 
   boolean isNonFFUpdate() {
-    return myType == Type.REJECTED && myReason != null &&
-           (StringUtil.containsIgnoreCase(myReason, NO_FF_REJECT_REASON) ||
-            StringUtil.containsIgnoreCase(myReason, FETCH_FIRST_REASON)) ||
-            StringUtil.containsIgnoreCase(myReason, FAILED_LOCK_REASON);
+    if (myReason == null || myType != Type.REJECTED) return false;
+    return StringUtil.containsIgnoreCase(myReason, NO_FF_REJECT_REASON) ||
+           StringUtil.containsIgnoreCase(myReason, FETCH_FIRST_REASON) ||
+           StringUtil.containsIgnoreCase(myReason, FAILED_LOCK_REASON);
   }
 
   boolean isStaleInfo() {

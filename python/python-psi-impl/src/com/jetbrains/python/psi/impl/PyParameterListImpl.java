@@ -18,27 +18,34 @@ package com.jetbrains.python.psi.impl;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiListLikeElement;
 import com.intellij.psi.stubs.IStubElementType;
 import com.intellij.util.ArrayUtil;
-import com.jetbrains.python.PyElementTypes;
+import com.jetbrains.python.PyStubElementTypes;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.PythonDialectsTokenSetProvider;
-import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.PyCallable;
+import com.jetbrains.python.psi.PyElementVisitor;
+import com.jetbrains.python.psi.PyNamedParameter;
+import com.jetbrains.python.psi.PyParameter;
+import com.jetbrains.python.psi.PyParameterList;
+import com.jetbrains.python.psi.PyUtil;
 import com.jetbrains.python.psi.stubs.PyParameterListStub;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author yole
- */
-public class PyParameterListImpl extends PyBaseElementImpl<PyParameterListStub> implements PyParameterList {
+import java.util.Arrays;
+import java.util.List;
+
+
+public class PyParameterListImpl extends PyBaseElementImpl<PyParameterListStub> implements PyParameterList, PsiListLikeElement {
   public PyParameterListImpl(ASTNode astNode) {
     super(astNode);
   }
 
   public PyParameterListImpl(final PyParameterListStub stub) {
-    this(stub, PyElementTypes.PARAMETER_LIST);
+    this(stub, PyStubElementTypes.PARAMETER_LIST);
   }
 
   public PyParameterListImpl(final PyParameterListStub stub, IStubElementType nodeType) {
@@ -69,8 +76,7 @@ public class PyParameterListImpl extends PyBaseElementImpl<PyParameterListStub> 
           isLast = false;
           break;
         }
-        if (p instanceof PyNamedParameter) {
-          PyNamedParameter named = (PyNamedParameter)p;
+        if (p instanceof PyNamedParameter named) {
           if (named.isKeywordContainer() || named.isPositionalContainer()) {
             beforeWhat = p.getNode();
             isLast = false;
@@ -80,15 +86,15 @@ public class PyParameterListImpl extends PyBaseElementImpl<PyParameterListStub> 
       }
       final ASTNode previous = PyPsiUtils.getPrevNonWhitespaceSibling(beforeWhat);
       PyUtil.addListNode(this, param, beforeWhat, !isLast || params.length == 0 ||
-                                          previous.getElementType() == PyTokenTypes.COMMA, isLast,
-                                          beforeWhat.getElementType() != PyTokenTypes.RPAR);
+                                                  previous.getElementType() == PyTokenTypes.COMMA, isLast,
+                         beforeWhat.getElementType() != PyTokenTypes.RPAR);
     }
   }
 
   @Override
   public boolean hasPositionalContainer() {
-    for (PyParameter parameter: getParameters()) {
-      if (parameter instanceof PyNamedParameter && ((PyNamedParameter) parameter).isPositionalContainer()) {
+    for (PyParameter parameter : getParameters()) {
+      if (parameter instanceof PyNamedParameter && ((PyNamedParameter)parameter).isPositionalContainer()) {
         return true;
       }
     }
@@ -97,8 +103,8 @@ public class PyParameterListImpl extends PyBaseElementImpl<PyParameterListStub> 
 
   @Override
   public boolean hasKeywordContainer() {
-    for (PyParameter parameter: getParameters()) {
-      if (parameter instanceof PyNamedParameter && ((PyNamedParameter) parameter).isKeywordContainer()) {
+    for (PyParameter parameter : getParameters()) {
+      if (parameter instanceof PyNamedParameter && ((PyNamedParameter)parameter).isKeywordContainer()) {
         return true;
       }
     }
@@ -106,8 +112,7 @@ public class PyParameterListImpl extends PyBaseElementImpl<PyParameterListStub> 
   }
 
   @Override
-  @Nullable
-  public PyNamedParameter findParameterByName(@NotNull final String name) {
+  public @Nullable PyNamedParameter findParameterByName(final @NotNull String name) {
     final Ref<PyNamedParameter> result = new Ref<>();
     ParamHelper.walkDownParamArray(getParameters(), new ParamHelper.ParamVisitor() {
       @Override
@@ -121,16 +126,14 @@ public class PyParameterListImpl extends PyBaseElementImpl<PyParameterListStub> 
   }
 
   @Override
-  @NotNull
-  public String getPresentableText(boolean includeDefaultValue, @Nullable TypeEvalContext context) {
+  public @NotNull String getPresentableText(boolean includeDefaultValue, @Nullable TypeEvalContext context) {
     return ParamHelper.getPresentableText(getParameters(), includeDefaultValue, context);
   }
 
-  @Nullable
   @Override
-  public PyFunction getContainingFunction() {
+  public @Nullable PyCallable getContainingCallable() {
     final PsiElement parent = getParentByStub();
-    return parent instanceof PyFunction ? (PyFunction) parent : null;
+    return parent instanceof PyCallable callable ? callable : null;
   }
 
   @Override
@@ -139,5 +142,10 @@ public class PyParameterListImpl extends PyBaseElementImpl<PyParameterListStub> 
       PyPsiUtils.deleteAdjacentCommaWithWhitespaces(this, node.getPsi());
     }
     super.deleteChildInternal(node);
+  }
+
+  @Override
+  public @NotNull List<? extends PsiElement> getComponents() {
+    return Arrays.asList(getParameters());
   }
 }

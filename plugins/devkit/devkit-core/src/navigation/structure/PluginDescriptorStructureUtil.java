@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.navigation.structure;
 
 import com.intellij.icons.AllIcons;
@@ -22,10 +22,25 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.DevKitBundle;
 import org.jetbrains.idea.devkit.dom.Action;
-import org.jetbrains.idea.devkit.dom.*;
+import org.jetbrains.idea.devkit.dom.ActionOrGroup;
+import org.jetbrains.idea.devkit.dom.AddToGroup;
+import org.jetbrains.idea.devkit.dom.Component;
+import org.jetbrains.idea.devkit.dom.Dependency;
+import org.jetbrains.idea.devkit.dom.Extension;
+import org.jetbrains.idea.devkit.dom.ExtensionPoint;
+import org.jetbrains.idea.devkit.dom.ExtensionPoints;
+import org.jetbrains.idea.devkit.dom.Extensions;
+import org.jetbrains.idea.devkit.dom.Group;
+import org.jetbrains.idea.devkit.dom.IdeaPlugin;
+import org.jetbrains.idea.devkit.dom.IdeaVersion;
+import org.jetbrains.idea.devkit.dom.KeyboardShortcut;
+import org.jetbrains.idea.devkit.dom.PluginModule;
+import org.jetbrains.idea.devkit.dom.Separator;
+import org.jetbrains.idea.devkit.dom.Vendor;
+import org.jetbrains.idea.devkit.dom.With;
 import org.jetbrains.idea.devkit.dom.impl.ExtensionDomExtender;
 
-import javax.swing.*;
+import javax.swing.Icon;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -33,30 +48,27 @@ import java.util.Set;
 public final class PluginDescriptorStructureUtil {
   public static final Icon DEFAULT_ICON = AllIcons.Nodes.Tag;
 
-  @NonNls 
-  private static final Set<String> KNOWN_TOP_LEVEL_NODE_NAMES =
-    ContainerUtil.immutableSet("id", "name", "version", "category", "resource-bundle");
+  private static final @NonNls Set<String> KNOWN_TOP_LEVEL_NODE_NAMES =
+    Set.of("id", "name", "version", "category", "resource-bundle");
 
-  @NonNls
-  private static final Map<String, String> TAG_DISPLAY_NAME_REPLACEMENTS = new ContainerUtil.ImmutableMapBuilder<String, String>()
-    .put("psi", "PSI")
-    .put("dom", "DOM")
-    .put("sdk", "SDK")
-    .put("junit", "JUnit")
-    .put("idea", "IDEA")
-    .put("javaee", "JavaEE")
-    .put("jsf", "JSF")
-    .put("mvc", "MVC")
-    .put("el", "EL")
-    .put("id", "ID")
-    .put("jsp", "JSP")
-    .put("xml", "XML")
-    .put("ast", "AST")
-    .put("gdsl", "GDSL")
-    .put("pom", "POM")
-    .put("html", "HTML")
-    .put("php", "PHP")
-    .build();
+  private static final @NonNls Map<String, String> TAG_DISPLAY_NAME_REPLACEMENTS = Map.ofEntries(
+    Map.entry("psi", "PSI"),
+    Map.entry("dom", "DOM"),
+    Map.entry("sdk", "SDK"),
+    Map.entry("junit", "JUnit"),
+    Map.entry("idea", "IDEA"),
+    Map.entry("javaee", "JavaEE"),
+    Map.entry("jsf", "JSF"),
+    Map.entry("mvc", "MVC"),
+    Map.entry("el", "EL"),
+    Map.entry("id", "ID"),
+    Map.entry("jsp", "JSP"),
+    Map.entry("xml", "XML"),
+    Map.entry("ast", "AST"),
+    Map.entry("gdsl", "GDSL"),
+    Map.entry("pom", "POM"),
+    Map.entry("html", "HTML"),
+    Map.entry("php", "PHP"));
 
   private PluginDescriptorStructureUtil() {
   }
@@ -67,14 +79,13 @@ public final class PluginDescriptorStructureUtil {
       return safeGetTagDisplayText(tag);
     }
 
-    if (element instanceof Action) {
-      String actionId = ((Action)element).getId().getStringValue();
+    if (element instanceof Action action) {
+      String actionId = action.getEffectiveId();
       if (StringUtil.isNotEmpty(actionId)) {
         return actionId;
       }
     }
-    else if (element instanceof ExtensionPoint) {
-      ExtensionPoint epElement = (ExtensionPoint)element;
+    else if (element instanceof ExtensionPoint epElement) {
       String epName = epElement.getName().getStringValue();
       if (StringUtil.isNotEmpty(epName)) {
         return epName;
@@ -161,7 +172,8 @@ public final class PluginDescriptorStructureUtil {
   private static @Nullable String getIdeaVersionLocation(IdeaVersion element) {
     String since = element.getSinceBuild().getStringValue();
     if (StringUtil.isNotEmpty(since)) {
-      String until = element.getUntilBuild().getStringValue();
+      String strictUntil = element.getStrictUntilBuild().getStringValue();
+      String until = strictUntil != null ? strictUntil : element.getUntilBuild().getStringValue();
       return since + " - " + (StringUtil.isNotEmpty(until) ? until : "...");
     }
     return null;
@@ -201,7 +213,7 @@ public final class PluginDescriptorStructureUtil {
   }
 
   private static @Nullable String getGroupLocation(ActionOrGroup element) {
-    return element.getId().getStringValue();
+    return element.getEffectiveId();
   }
 
   private static @Nullable String getAddToGroupLocation(AddToGroup element) {
@@ -251,8 +263,7 @@ public final class PluginDescriptorStructureUtil {
   }
 
   private static @Nullable String getTopLevelNodeLocation(GenericDomValue<?> element) {
-    if (element instanceof Dependency) {
-      Dependency dependency = (Dependency)element;
+    if (element instanceof Dependency dependency) {
       @NonNls String result = dependency.getRawText();
 
       Boolean optional = dependency.getOptional().getValue();
@@ -336,14 +347,10 @@ public final class PluginDescriptorStructureUtil {
   private static @NotNull @NlsSafe String toDisplayName(@NotNull @NonNls String tagName) {
     String result = tagName.replaceAll("-", " ").replaceAll("\\.", "|");
 
-    String[] words = NameUtil.nameToWords(result);
-    for (int i = 0; i < words.length; i++) {
-      @NonNls String word = words[i];
+    List<@NotNull String> words = ContainerUtil.map(NameUtil.nameToWordList(result), word -> {
       String replacement = TAG_DISPLAY_NAME_REPLACEMENTS.get(StringUtil.toLowerCase(word));
-      if (replacement != null) {
-        words[i] = replacement;
-      }
-    }
+      return replacement != null ? replacement : word;
+    });
 
     result = StringUtil.join(words, " ");
     result = StringUtil.capitalizeWords(result, true);

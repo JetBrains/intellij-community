@@ -1,11 +1,19 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.source.resolve.reference.impl;
 
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.patterns.ElementPattern;
 import com.intellij.patterns.PsiJavaElementPattern;
 import com.intellij.patterns.PsiJavaPatterns;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiExpressionList;
+import com.intellij.psi.PsiLiteral;
+import com.intellij.psi.PsiLiteralExpression;
+import com.intellij.psi.PsiReference;
+import com.intellij.psi.PsiReferenceContributor;
+import com.intellij.psi.PsiReferenceExpression;
+import com.intellij.psi.PsiReferenceRegistrar;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.JavaClassReferenceProvider;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.JavaClassReferenceSet;
 import com.intellij.util.ProcessingContext;
@@ -17,12 +25,26 @@ import static com.intellij.patterns.PsiJavaPatterns.psiMethod;
 import static com.intellij.patterns.StandardPatterns.or;
 import static com.intellij.patterns.StandardPatterns.string;
 import static com.intellij.psi.CommonClassNames.JAVA_LANG_CLASS;
-import static com.intellij.psi.impl.source.resolve.reference.impl.JavaReflectionReferenceUtil.*;
+import static com.intellij.psi.impl.source.resolve.reference.impl.JavaReflectionReferenceUtil.ATOMIC_INTEGER_FIELD_UPDATER;
+import static com.intellij.psi.impl.source.resolve.reference.impl.JavaReflectionReferenceUtil.ATOMIC_LONG_FIELD_UPDATER;
+import static com.intellij.psi.impl.source.resolve.reference.impl.JavaReflectionReferenceUtil.ATOMIC_REFERENCE_FIELD_UPDATER;
+import static com.intellij.psi.impl.source.resolve.reference.impl.JavaReflectionReferenceUtil.FIND_CLASS;
+import static com.intellij.psi.impl.source.resolve.reference.impl.JavaReflectionReferenceUtil.FOR_NAME;
+import static com.intellij.psi.impl.source.resolve.reference.impl.JavaReflectionReferenceUtil.GET_DECLARED_FIELD;
+import static com.intellij.psi.impl.source.resolve.reference.impl.JavaReflectionReferenceUtil.GET_DECLARED_METHOD;
+import static com.intellij.psi.impl.source.resolve.reference.impl.JavaReflectionReferenceUtil.GET_FIELD;
+import static com.intellij.psi.impl.source.resolve.reference.impl.JavaReflectionReferenceUtil.GET_METHOD;
+import static com.intellij.psi.impl.source.resolve.reference.impl.JavaReflectionReferenceUtil.HANDLE_FACTORY_METHOD_NAMES;
+import static com.intellij.psi.impl.source.resolve.reference.impl.JavaReflectionReferenceUtil.JAVA_LANG_CLASS_LOADER;
+import static com.intellij.psi.impl.source.resolve.reference.impl.JavaReflectionReferenceUtil.JAVA_LANG_CONSTANT_CLASS_DESC;
+import static com.intellij.psi.impl.source.resolve.reference.impl.JavaReflectionReferenceUtil.JAVA_LANG_INVOKE_METHOD_HANDLES_LOOKUP;
+import static com.intellij.psi.impl.source.resolve.reference.impl.JavaReflectionReferenceUtil.LOAD_CLASS;
+import static com.intellij.psi.impl.source.resolve.reference.impl.JavaReflectionReferenceUtil.NEW_UPDATER;
 
 /**
  * @author Konstantin Bulenkov
  */
-public class JavaReflectionReferenceContributor extends PsiReferenceContributor {
+public final class JavaReflectionReferenceContributor extends PsiReferenceContributor {
   static final class Holder {
     public static final PsiJavaElementPattern.Capture<PsiLiteral> PATTERN =
       psiLiteral().methodCallParameter(psiMethod().withName(GET_FIELD, GET_DECLARED_FIELD, GET_METHOD, GET_DECLARED_METHOD)
@@ -31,6 +53,7 @@ public class JavaReflectionReferenceContributor extends PsiReferenceContributor 
     static final PsiJavaElementPattern.Capture<PsiLiteral> CLASS_PATTERN =
       psiLiteral().methodCallParameter(0, or(
         psiMethod().withName(FOR_NAME).definedInClass(JAVA_LANG_CLASS),
+        psiMethod().withName("of").definedInClass(JAVA_LANG_CONSTANT_CLASS_DESC),
         psiMethod().withName(LOAD_CLASS).definedInClass(JAVA_LANG_CLASS_LOADER),
         psiMethod().withName(FIND_CLASS).definedInClass(JAVA_LANG_INVOKE_METHOD_HANDLES_LOOKUP)));
 
@@ -91,7 +114,7 @@ public class JavaReflectionReferenceContributor extends PsiReferenceContributor 
     }
 
     @Override
-    public PsiReference @NotNull [] getReferencesByString(String str, @NotNull PsiElement position, int offsetInPosition) {
+    public PsiReference @NotNull [] getReferencesByString(@NotNull String str, @NotNull PsiElement position, int offsetInPosition) {
       if (StringUtil.isEmpty(str)) {
         return PsiReference.EMPTY_ARRAY;
       }

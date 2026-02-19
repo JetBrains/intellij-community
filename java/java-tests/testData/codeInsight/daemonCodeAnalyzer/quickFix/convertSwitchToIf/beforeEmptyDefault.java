@@ -1,4 +1,4 @@
-// "Replace 'switch' with 'if'" "true"
+// "Replace 'switch' with 'if'" "true-preview"
 class X {
   int m(String s, boolean r) {
     switc<caret>h(s) {

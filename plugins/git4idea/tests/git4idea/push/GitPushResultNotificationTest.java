@@ -2,6 +2,7 @@
 package git4idea.push;
 
 import com.intellij.notification.NotificationType;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vcs.update.UpdatedFiles;
@@ -12,6 +13,8 @@ import com.intellij.util.containers.ContainerUtil;
 import git4idea.GitLocalBranch;
 import git4idea.GitRemoteBranch;
 import git4idea.GitStandardRemoteBranch;
+import git4idea.GitTag;
+import git4idea.i18n.GitBundle;
 import git4idea.repo.GitRemote;
 import git4idea.repo.GitRepository;
 import git4idea.test.GitPlatformTest;
@@ -25,15 +28,19 @@ import java.util.HashMap;
 import java.util.Map;
 
 import static com.intellij.vcs.test.UtilsKt.assertNotification;
-import static git4idea.push.GitPushNativeResult.Type.*;
+import static git4idea.push.GitPushNativeResult.Type.ERROR;
+import static git4idea.push.GitPushNativeResult.Type.FORCED_UPDATE;
+import static git4idea.push.GitPushNativeResult.Type.NEW_REF;
+import static git4idea.push.GitPushNativeResult.Type.REJECTED;
+import static git4idea.push.GitPushNativeResult.Type.SUCCESS;
+import static git4idea.push.GitPushNativeResult.Type.UP_TO_DATE;
 import static git4idea.push.GitPushRepoResult.convertFromNative;
 import static git4idea.push.GitPushResultNotification.emulateTitle;
 import static java.util.Arrays.asList;
 import static java.util.Collections.singletonList;
 
 public class GitPushResultNotificationTest extends GitPlatformTest {
-  private static final String UPDATE_WITH_RESOLVED_CONFLICTS = "Push has been cancelled, because there were conflicts during update.<br/>" +
-                                                               "Check that conflicts were resolved correctly, and invoke push again.";
+  private static final String UPDATE_WITH_RESOLVED_CONFLICTS = GitBundle.message("push.notification.description.rejected.and.conflicts");
 
   private static Project ourProject; // for static map initialization
 
@@ -65,23 +72,23 @@ public class GitPushResultNotificationTest extends GitPlatformTest {
   }
 
   public void test_success_and_fail() {
-    GitPushResultNotification notification = notification(new HashMap<GitRepository, GitPushRepoResult>() {{
+    GitPushResultNotification notification = notification(new HashMap<>() {{
       put(repo("ultimate"), repoResult(SUCCESS, "master", "origin/master", 1));
       put(repo("community"), repoResult(ERROR, "master", "origin/master", "Permission denied"));
     }});
     assertPushNotification(NotificationType.ERROR, "Push partially failed",
-                       "ultimate: Pushed 1 commit to origin/master<br/>" +
-                       "community: Permission denied", notification);
+                           "ultimate: Pushed 1 commit to origin/master<br/>" +
+                           "community: Permission denied", notification);
   }
 
   public void test_success_and_reject() {
-    GitPushResultNotification notification = notification(new HashMap<GitRepository, GitPushRepoResult>() {{
+    GitPushResultNotification notification = notification(new HashMap<>() {{
       put(repo("ultimate"), repoResult(SUCCESS, "master", "origin/master", 1));
       put(repo("community"), repoResult(REJECTED, "master", "origin/master", -1));
     }});
     assertPushNotification(NotificationType.WARNING, "Push partially rejected",
-                       "ultimate: Pushed 1 commit to origin/master<br/>" +
-                       "community: Push to origin/master was rejected", notification);
+                           "ultimate: Pushed 1 commit to origin/master<br/>" +
+                           "community: Push to origin/master was rejected", notification);
   }
 
   public void test_success_with_update() {
@@ -90,17 +97,16 @@ public class GitPushResultNotificationTest extends GitPlatformTest {
   }
 
   public void test_success_and_resolved_conflicts() {
-    GitPushResultNotification notification = notification(new HashMap<GitRepository, GitPushRepoResult>() {{
+    GitPushResultNotification notification = notification(new HashMap<>() {{
       put(repo("community"), repoResult(REJECTED, "master", "origin/master", -1, GitUpdateResult.SUCCESS_WITH_RESOLVED_CONFLICTS));
       put(repo("contrib"), repoResult(REJECTED, "master", "origin/master", -1, GitUpdateResult.SUCCESS_WITH_RESOLVED_CONFLICTS));
       put(repo("ultimate"), repoResult(SUCCESS, "master", "origin/master", 1));
     }});
     assertPushNotification(NotificationType.WARNING, "Push partially rejected",
-                       "ultimate: Pushed 1 commit to origin/master<br/>" +
-                       "community: " + UPDATE_WITH_RESOLVED_CONFLICTS + "<br/>" +
-                       "contrib: " + UPDATE_WITH_RESOLVED_CONFLICTS,
+                           "ultimate: Pushed 1 commit to origin/master<br/>" +
+                           "community: " + UPDATE_WITH_RESOLVED_CONFLICTS + "<br/>" +
+                           "contrib: " + UPDATE_WITH_RESOLVED_CONFLICTS,
                            notification);
-
   }
 
   public void test_commits_and_tags() {
@@ -115,7 +121,7 @@ public class GitPushResultNotificationTest extends GitPlatformTest {
     GitPushNativeResult branchResult = new GitPushNativeResult(UP_TO_DATE, "refs/heads/master");
     GitPushResultNotification notification = notification(convertFromNative(branchResult, Collections.emptyList(),
                                                                             0, from("master"), to("origin/master")));
-    assertPushNotification(NotificationType.INFORMATION, "Everything is up-to-date", "", notification);
+    assertPushNotification(NotificationType.INFORMATION, "Everything is up to date", "", notification);
   }
 
   public void test_only_tags() {
@@ -133,14 +139,14 @@ public class GitPushResultNotificationTest extends GitPlatformTest {
     final GitPushRepoResult comRes = convertFromNative(branchSuccess, singletonList(tagResult), 1, from("master"), to("origin/master"));
     final GitPushRepoResult ultRes = convertFromNative(branchUpToDate, singletonList(tagResult), 0, from("master"), to("origin/master"));
 
-    GitPushResultNotification notification = notification(new HashMap<GitRepository, GitPushRepoResult>() {{
+    GitPushResultNotification notification = notification(new HashMap<>() {{
       put(repo("community"), comRes);
       put(repo("ultimate"), ultRes);
     }});
 
     assertPushNotification(NotificationType.INFORMATION, "Push successful",
-                       "community: Pushed 1 commit to origin/master, and tag v0.1 to origin<br/>" +
-                       "ultimate: Pushed tag v0.1 to origin", notification);
+                           "community: Pushed 1 commit to origin/master, and tag v0.1 to origin<br/>" +
+                           "ultimate: Pushed tag v0.1 to origin", notification);
   }
 
   public void test_two_tags() {
@@ -152,12 +158,37 @@ public class GitPushResultNotificationTest extends GitPlatformTest {
     assertPushNotification(NotificationType.INFORMATION, "Pushed 2 tags to origin", "", notification);
   }
 
+  public void test_tag_no_commits() {
+    GitPushResultNotification notification = pushSingleTagNotification(NEW_REF);
+    assertPushNotification(NotificationType.INFORMATION, "Pushed tag v0.1 to origin", "", notification);
+  }
+
+  public void test_tag_no_commits_up_to_date() {
+    GitPushResultNotification notification = pushSingleTagNotification(UP_TO_DATE);
+    assertPushNotification(NotificationType.INFORMATION, "Everything is up to date", "", notification);
+  }
+
+  public void test_tag_no_commits_already_exists() {
+    GitPushResultNotification notification = pushSingleTagNotification(REJECTED);
+    assertPushNotification(NotificationType.WARNING, "Push rejected", "Push of v0.1 was rejected by the remote", notification);
+  }
+
+  private GitPushResultNotification pushSingleTagNotification(GitPushNativeResult.Type upToDate) {
+    String tagRef = "refs/tags/v0.1";
+    GitPushNativeResult nativeResult = new GitPushNativeResult(upToDate, tagRef);
+    GitPushRepoResult result = GitPushRepoResult.tagPushResult(nativeResult,
+                                                               new GitPushSource.Tag(new GitTag(tagRef)),
+                                                               new GitSpecialRefRemoteBranch(tagRef, remote("origin")));
+    GitPushResultNotification notification = notification(result);
+    return notification;
+  }
+
   private static Map<GitRepository, GitPushRepoResult> singleResult(final GitPushNativeResult.Type type,
-                                                                       final String from,
-                                                                       final String to,
-                                                                       final int commits,
-                                                                       @Nullable final GitUpdateResult updateResult) {
-    return new HashMap<GitRepository, GitPushRepoResult>() {{
+                                                                    final String from,
+                                                                    final String to,
+                                                                    final int commits,
+                                                                    @Nullable final GitUpdateResult updateResult) {
+    return new HashMap<>() {{
       put(repo("community"), repoResult(type, from, to, commits, updateResult));
     }};
   }
@@ -176,8 +207,8 @@ public class GitPushResultNotificationTest extends GitPlatformTest {
   }
 
   private static Map<GitRepository, GitPushRepoResult> singleResult(final GitPushNativeResult.Type type,
-                                                                       final String from,
-                                                                       final String to, final int commits) {
+                                                                    final String from,
+                                                                    final String to, final int commits) {
     return singleResult(type, from, to, commits, null);
   }
 
@@ -187,15 +218,19 @@ public class GitPushResultNotificationTest extends GitPlatformTest {
     return GitPushRepoResult.error(from(from), to(to), errorText);
   }
 
-  private static GitLocalBranch from(String from) {
-    return new GitLocalBranch(from);
+  private static GitPushSource from(String from) {
+    return GitPushSource.create(new GitLocalBranch(from));
   }
 
   private static GitRemoteBranch to(String to) {
     int firstSlash = to.indexOf('/');
-    GitRemote remote = new GitRemote(to.substring(0, firstSlash), Collections.emptyList(), Collections.emptyList(),
-                                     Collections.emptyList(), Collections.emptyList());
+    GitRemote remote = remote(to.substring(0, firstSlash));
     return new GitStandardRemoteBranch(remote, to.substring(firstSlash + 1));
+  }
+
+  private static @NotNull GitRemote remote(String name) {
+    return new GitRemote(name, Collections.emptyList(), Collections.emptyList(),
+                         Collections.emptyList(), Collections.emptyList());
   }
 
   private GitPushResultNotification notification(GitPushRepoResult singleResult) {
@@ -208,8 +243,12 @@ public class GitPushResultNotificationTest extends GitPlatformTest {
     if (wasUpdatePerformed) {
       updatedFiles.getTopLevelGroups().get(0).add("file.txt", "Git", null);
     }
-    return GitPushResultNotification.create(myProject, new GitPushResult(map, updatedFiles, null, null, Collections.emptyMap()),
-                                            null, map.size() > 1, null);
+    Ref<GitPushResultNotification> ref = new Ref<>();
+    ApplicationManager.getApplication().invokeAndWait(() -> {
+      ref.set(GitPushResultNotification.create(myProject, new GitPushResult(map, updatedFiles, null, null, Collections.emptyMap()),
+                                               null, map.size() > 1, null, Collections.emptyMap()));
+    });
+    return ref.get();
   }
 
   private static void assertPushNotification(@NotNull NotificationType type,

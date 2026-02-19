@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.options.newEditor;
 
 import com.intellij.ide.ui.laf.darcula.ui.DarculaTextBorder;
@@ -10,7 +10,10 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.SearchTextField;
 
-import javax.swing.*;
+import javax.swing.InputMap;
+import javax.swing.JTextField;
+import javax.swing.JTree;
+import javax.swing.KeyStroke;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
@@ -44,7 +47,7 @@ abstract class SettingsSearch extends SearchTextField implements KeyListener {
     if (!myDelegatingNow) {
       KeyStroke stroke = KeyStroke.getKeyStrokeForEvent(event);
       String strokeString = stroke.toString();
-      if ("pressed ESCAPE".equals(strokeString) && getText().length() > 0) {
+      if ("pressed ESCAPE".equals(strokeString) && !getText().isEmpty()) {
         setText(""); // reset filter on ESC
         return true;
       }
@@ -83,8 +86,7 @@ abstract class SettingsSearch extends SearchTextField implements KeyListener {
   @Override
   public void keyTyped(KeyEvent event) {
     Object source = event.getSource();
-    if (source instanceof JTree) {
-      JTree tree = (JTree)source;
+    if (source instanceof JTree tree) {
       if (!hasAction(KeyStroke.getKeyStrokeForEvent(event), tree.getInputMap())) {
         delegateKeyEvent(event);
       }

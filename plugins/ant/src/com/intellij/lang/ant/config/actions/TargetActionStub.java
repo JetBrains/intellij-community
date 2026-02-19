@@ -1,7 +1,8 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.lang.ant.config.actions;
 
+import com.intellij.lang.ant.AntBundle;
 import com.intellij.lang.ant.AntDisposable;
 import com.intellij.lang.ant.config.AntConfiguration;
 import com.intellij.lang.ant.config.AntConfigurationListener;
@@ -24,7 +25,7 @@ public class TargetActionStub extends AnAction implements Disposable {
   private final AtomicBoolean myActionInvoked = new AtomicBoolean(false);
 
   public TargetActionStub(String actionId, Project project) {
-    super("ant target action stub");
+    super(AntBundle.message("action.ant.target.action.stub.text"));
     myActionId = actionId;
     myProject = project;
     Disposer.register(AntDisposable.getInstance(project), this);
@@ -37,7 +38,7 @@ public class TargetActionStub extends AnAction implements Disposable {
   }
 
   @Override
-  public void actionPerformed(@NotNull final AnActionEvent e) {
+  public void actionPerformed(final @NotNull AnActionEvent e) {
     if (myProject == null) {
       return;
     }

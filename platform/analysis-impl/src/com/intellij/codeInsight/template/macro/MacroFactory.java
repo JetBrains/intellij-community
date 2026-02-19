@@ -35,7 +35,7 @@ public final class MacroFactory {
     for (Macro macro: Macro.EP_NAME.getExtensionList()) {
       result.putValue(macro.getName(), macro);
     }
-    Macro.EP_NAME.addExtensionPointListener(new ExtensionPointListener<Macro>() {
+    Macro.EP_NAME.addExtensionPointListener(new ExtensionPointListener<>() {
       @Override
       public void extensionAdded(@NotNull Macro extension, @NotNull PluginDescriptor pluginDescriptor) {
         myMacroTable.putValue(extension.getName(), extension);

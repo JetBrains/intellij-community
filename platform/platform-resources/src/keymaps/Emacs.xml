@@ -101,9 +101,7 @@
   <action id="GotoClass">
     <keyboard-shortcut first-keystroke="shift alt G"/>
   </action>
-  <action id="GotoChangedFile">
-    <keyboard-shortcut first-keystroke="shift alt G"/>
-  </action>
+  <action id="GotoChangedFile"/>
   <action id="Switcher">
     <keyboard-shortcut first-keystroke="control X" second-keystroke="B"/>
   </action>
@@ -159,12 +157,10 @@
     <keyboard-shortcut first-keystroke="alt shift RIGHT"/>
   </action>
   <action id="Diff.PrevChange">
-    <keyboard-shortcut first-keystroke="alt LEFT"/>
-    <keyboard-shortcut first-keystroke="control X" second-keystroke="P"/>
+    <keyboard-shortcut first-keystroke="alt shift LEFT"/>
   </action>
   <action id="Diff.NextChange">
-    <keyboard-shortcut first-keystroke="alt RIGHT"/>
-    <keyboard-shortcut first-keystroke="control X" second-keystroke="N"/>
+    <keyboard-shortcut first-keystroke="alt shift RIGHT"/>
   </action>
   <action id="GotoLine">
     <keyboard-shortcut first-keystroke="alt G"/>
@@ -296,7 +292,7 @@
     <keyboard-shortcut first-keystroke="control M"/>
   </action>
   <action id="SelectVirtualTemplateElement">
-    <keyboard-shortcut first-keystroke="TAB"/>
+    <keyboard-shortcut first-keystroke="Alt Shift O"/>
   </action>
   <action id="NextTemplateVariable">
     <keyboard-shortcut first-keystroke="TAB"/>
@@ -326,6 +322,7 @@
   <action id="EditorDeleteLine"/>
   <action id="PreviousProjectWindow"/>
   <action id="Vcs.ToggleAmendCommitMode"/>
+  <action id="ChangesView.ShowCommitOptions"/>
   <action id="Vcs.ShowMessageHistory"/>
   <action id="GotoImplementation"/>
   <action id="EditorScrollUp"/>
@@ -336,4 +333,10 @@
   <action id="MoveStatementDown"/>
   <action id="ToggleRenderedDocPresentation"/>
   <action id="EditorAddCaretPerSelectedLine"/>
+  <action id="GoGenerateFileAction"/>
+  <action id="Diff.ApplyLeftSide"/>
+  <action id="Diff.ApplyRightSide"/>
+  <action id="EditorDecreaseFontSizeGlobal"/>
+  <action id="EditorIncreaseFontSizeGlobal"/>
+  <action id="ZoomOutIdeAction"/>
 </keymap>

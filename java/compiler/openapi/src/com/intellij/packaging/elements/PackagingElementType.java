@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.packaging.elements;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
@@ -10,24 +10,23 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
-import javax.swing.*;
+import javax.swing.Icon;
 import java.util.List;
 import java.util.function.Supplier;
 
+/**
+ * Describes an element's type in an artifact's output layout.
+ *
+ * @see Artifact
+ * @see PackagingElementFactory
+ * @param <E>
+ */
 public abstract class PackagingElementType<E extends PackagingElement<?>> {
   public static final ExtensionPointName<PackagingElementType> EP_NAME = ExtensionPointName.create("com.intellij.packaging.elementType");
   private final String myId;
   private final Supplier<@Nls(capitalization = Nls.Capitalization.Title) String> myPresentableName;
-
-  /**
-   * @deprecated This constructor is meant to provide the binary compatibility with the external plugins.
-   * Please use the constructor that accepts a messagePointer for {@link PackagingElementType#myPresentableName}
-   */
-  @Deprecated
-  protected PackagingElementType(@NotNull @NonNls String id, @NotNull @Nls(capitalization = Nls.Capitalization.Title) String presentableName) {
-    this(id, () -> presentableName);
-  }
 
   protected PackagingElementType(@NotNull @NonNls String id, @NotNull Supplier<@Nls(capitalization = Nls.Capitalization.Title) String> presentableName) {
     myId = id;
@@ -42,19 +41,16 @@ public abstract class PackagingElementType<E extends PackagingElement<?>> {
     return myPresentableName.get();
   }
 
-  @Nullable
-  public Icon getCreateElementIcon() {
+  public @Nullable Icon getCreateElementIcon() {
     return null;
   }
 
   public abstract boolean canCreate(@NotNull ArtifactEditorContext context, @NotNull Artifact artifact);
 
-  @NotNull
-  public abstract List<? extends PackagingElement<?>> chooseAndCreate(@NotNull ArtifactEditorContext context, @NotNull Artifact artifact,
-                                                                      @NotNull CompositePackagingElement<?> parent);
+  public abstract @NotNull @Unmodifiable List<? extends PackagingElement<?>> chooseAndCreate(@NotNull ArtifactEditorContext context, @NotNull Artifact artifact,
+                                                                                             @NotNull CompositePackagingElement<?> parent);
 
-  @NotNull
-  public abstract E createEmpty(@NotNull Project project);
+  public abstract @NotNull E createEmpty(@NotNull Project project);
 
   protected static <T extends PackagingElementType<?>> T getInstance(final Class<T> aClass) {
     for (PackagingElementType type : EP_NAME.getExtensionList()) {
@@ -65,8 +61,7 @@ public abstract class PackagingElementType<E extends PackagingElement<?>> {
     throw new AssertionError();
   }
 
-  @Nullable
-  public PackagingElementPropertiesPanel createElementPropertiesPanel(@NotNull E element, @NotNull ArtifactEditorContext context) {
+  public @Nullable PackagingElementPropertiesPanel createElementPropertiesPanel(@NotNull E element, @NotNull ArtifactEditorContext context) {
     return null;
   }
 }

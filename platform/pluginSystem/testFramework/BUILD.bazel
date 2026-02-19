@@ -1,0 +1,52 @@
+### auto-generated section `build intellij.platform.pluginSystem.testFramework` start
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+jvm_library(
+  name = "testFramework",
+  module_name = "intellij.platform.pluginSystem.testFramework",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:jetbrains-annotations",
+    "//platform/util",
+    "//platform/core-api:core",
+    "//platform/core-impl",
+    "//platform/util-class-loader:util-classLoader",
+    "//platform/diagnostic",
+    "//platform/pluginSystem/parser/impl",
+    "//platform/util-ex",
+    "//platform/platform-impl/bootstrap",
+    "//platform/util/xmlDom",
+    "//libraries/aalto-xml",
+    "//platform/runtime/product",
+    "//jps/model-api:model",
+    "//xml/dom-openapi:dom",
+    "//platform/util/jdom",
+  ]
+)
+
+jvm_library(
+  name = "testFramework_test_lib",
+  module_name = "intellij.platform.pluginSystem.testFramework",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    ":testFramework",
+    "//platform/util:util_test_lib",
+    "//platform/core-api:core_test_lib",
+    "//platform/core-impl:core-impl_test_lib",
+    "//platform/util-class-loader:util-classLoader_test_lib",
+    "//platform/diagnostic:diagnostic_test_lib",
+    "//platform/pluginSystem/parser/impl:impl_test_lib",
+    "//platform/util-ex:util-ex_test_lib",
+    "//platform/platform-impl/bootstrap:bootstrap_test_lib",
+    "//platform/util/xmlDom:xmlDom_test_lib",
+    "//libraries/aalto-xml:aalto-xml_test_lib",
+    "//platform/runtime/product:product_test_lib",
+    "//jps/model-api:model_test_lib",
+    "//xml/dom-openapi:dom_test_lib",
+    "//platform/util/jdom:jdom_test_lib",
+  ]
+)
+### auto-generated section `build intellij.platform.pluginSystem.testFramework` end

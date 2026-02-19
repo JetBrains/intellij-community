@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.projectView.impl;
 
 import com.intellij.codeInsight.template.TemplateManager;
@@ -6,9 +6,9 @@ import com.intellij.ide.projectView.ProjectViewNode;
 import com.intellij.ide.projectView.SelectableTreeStructureProvider;
 import com.intellij.ide.projectView.ViewSettings;
 import com.intellij.ide.projectView.impl.nodes.ClassTreeNode;
+import com.intellij.ide.projectView.impl.nodes.FileNodeWithNestedFileNodes;
 import com.intellij.ide.projectView.impl.nodes.PsiFileNode;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
-import com.intellij.ide.util.treeView.AbstractTreeUi;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.progress.ProgressManager;
@@ -17,8 +17,24 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.*;
+import com.intellij.psi.FileViewProvider;
+import com.intellij.psi.PsiAnonymousClass;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiClassOwner;
+import com.intellij.psi.PsiCompiledElement;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiFileSystemItem;
+import com.intellij.psi.PsiImplicitClass;
+import com.intellij.psi.PsiJavaFile;
+import com.intellij.psi.PsiJavaModule;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.ServerPageFile;
+import com.intellij.psi.SyntheticElement;
+import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.util.ClassUtil;
+import com.intellij.psi.util.JavaImplicitClassUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -26,33 +42,27 @@ import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 
-public class ClassesTreeStructureProvider implements SelectableTreeStructureProvider, DumbAware {
+public final class ClassesTreeStructureProvider implements SelectableTreeStructureProvider, DumbAware {
   private final Project myProject;
 
   public ClassesTreeStructureProvider(@NotNull Project project) {
     myProject = project;
   }
 
-  @NotNull
   @Override
-  public Collection<AbstractTreeNode<?>> modify(@NotNull AbstractTreeNode<?> parent,
-                                             @NotNull Collection<AbstractTreeNode<?>> children,
-                                             ViewSettings settings) {
-    return AbstractTreeUi.calculateYieldingToWriteAction(() -> doModify(parent, children));
-  }
-
-  @NotNull
-  private Collection<AbstractTreeNode<?>> doModify(@NotNull AbstractTreeNode<?> parent, @NotNull Collection<? extends AbstractTreeNode<?>> children) {
+  public @NotNull Collection<AbstractTreeNode<?>> modify(@NotNull AbstractTreeNode<?> parent,
+                                                         @NotNull Collection<AbstractTreeNode<?>> children,
+                                                         ViewSettings settings) {
     List<AbstractTreeNode<?>> result = new ArrayList<>();
     for (AbstractTreeNode<?> child : children) {
       ProgressManager.checkCanceled();
 
       Object o = child.getValue();
-      if (o instanceof PsiClassOwner && !(o instanceof ServerPageFile)) {
-        ViewSettings settings1 = ((ProjectViewNode)parent).getSettings();
-        PsiClassOwner classOwner = (PsiClassOwner)o;
+      if (o instanceof PsiClassOwner classOwner && !(o instanceof ServerPageFile)) {
+        ViewSettings settings1 = ((ProjectViewNode<?>)parent).getSettings();
         VirtualFile file = classOwner.getVirtualFile();
 
         if (!(classOwner instanceof PsiCompiledElement)) {
@@ -60,8 +70,7 @@ public class ClassesTreeStructureProvider implements SelectableTreeStructureProv
           ProjectFileIndex fileIndex = ProjectRootManager.getInstance(myProject).getFileIndex();
           if (file != null && fileIndex.isInLibrarySource(file)) {
             PsiElement originalElement = classOwner.getOriginalElement();
-            if (originalElement instanceof PsiFile) {
-              PsiFile classFile = (PsiFile)originalElement;
+            if (originalElement instanceof PsiFile classFile) {
               VirtualFile virtualClassFile = classFile.getVirtualFile();
               if (virtualClassFile != null && fileIndex.isInLibraryClasses(virtualClassFile)
                   && !classOwner.getManager().areElementsEquivalent(classOwner, classFile)
@@ -74,10 +83,15 @@ public class ClassesTreeStructureProvider implements SelectableTreeStructureProv
 
         if (classOwner instanceof PsiCompiledElement || fileInRoots(file)) {
           PsiClass[] classes = ReadAction.compute(classOwner::getClasses);
+          Collection<? extends AbstractTreeNode<?>> nestedFileNodes = child instanceof FileNodeWithNestedFileNodes
+                                                                      ? ((FileNodeWithNestedFileNodes)child).getNestedFileNodes()
+                                                                      : Collections.emptyList();
           if (classes.length == 1 && isClassForTreeNode(file, classes[0])) {
-            result.add(new ClassTreeNode(myProject, classes[0], settings1, child.getChildren()));
-          } else {
-            result.add(new PsiClassOwnerTreeNode(classOwner, settings1, child.getChildren()));
+            result.add(new ClassTreeNode(myProject, classes[0], settings1, nestedFileNodes));
+          }
+          else {
+            boolean isImplicitClass = classes.length == 1 && classes[0] instanceof PsiImplicitClass;
+            result.add(new PsiClassOwnerTreeNode(classOwner, settings1, nestedFileNodes, isImplicitClass));
           }
           continue;
         }
@@ -88,7 +102,7 @@ public class ClassesTreeStructureProvider implements SelectableTreeStructureProv
   }
 
   private static boolean isClassForTreeNode(VirtualFile file, PsiClass psiClass) {
-    if (psiClass == null || psiClass instanceof SyntheticElement) return false;
+    if (psiClass == null || psiClass instanceof SyntheticElement || psiClass instanceof PsiImplicitClass) return false;
     if (file == null || file.getNameWithoutExtension().equals(psiClass.getName())) return true;
     TemplateManager templateManager = TemplateManager.getInstance(psiClass.getProject());
     return ContainerUtil.exists(EditorFactory.getInstance().getAllEditors(), editor -> templateManager.getActiveTemplate(editor) != null);
@@ -136,8 +150,7 @@ public class ClassesTreeStructureProvider implements SelectableTreeStructureProv
     return false;
   }
 
-  @Nullable
-  private static PsiFile getBaseRootFile(PsiElement element) {
+  private static @Nullable PsiFile getBaseRootFile(PsiElement element) {
     PsiFile containingFile = element.getContainingFile();
     if (containingFile == null) return null;
 
@@ -149,31 +162,58 @@ public class ClassesTreeStructureProvider implements SelectableTreeStructureProv
     return element instanceof PsiClass && ClassUtil.isTopLevelClass((PsiClass)element);
   }
 
-  private static class PsiClassOwnerTreeNode extends PsiFileNode {
-    @NotNull
-    private final Collection<? extends AbstractTreeNode<?>> myMandatoryChildren;
+  private static class PsiClassOwnerTreeNode extends PsiFileNode implements FileNodeWithNestedFileNodes {
+    private final @NotNull Collection<? extends AbstractTreeNode<?>> myNestedFileNodes;
+    private final boolean myIsImplicitClass;
 
     PsiClassOwnerTreeNode(@NotNull PsiClassOwner classOwner,
                           ViewSettings settings,
-                          @NotNull Collection<? extends AbstractTreeNode<?>> mandatoryChildren) {
+                          @NotNull Collection<? extends AbstractTreeNode<?>> nestedFileNodes,
+                          boolean isImplicitClass) {
       super(classOwner.getProject(), classOwner, settings);
+      myIsImplicitClass = isImplicitClass;
+      myNestedFileNodes = nestedFileNodes;
+    }
 
-      myMandatoryChildren = mandatoryChildren;
+    @Override
+    public boolean expandOnDoubleClick() {
+      if (myIsImplicitClass) return false;
+      return super.expandOnDoubleClick();
+    }
+
+    @Override
+    public @NotNull Collection<? extends AbstractTreeNode<?>> getNestedFileNodes() {
+      return myNestedFileNodes;
     }
 
     @Override
     public Collection<AbstractTreeNode<?>> getChildrenImpl() {
-      List<AbstractTreeNode<?>> result = new ArrayList<>(myMandatoryChildren);
+      List<AbstractTreeNode<?>> result = new ArrayList<>(myNestedFileNodes);
       PsiFile value = getValue();
       if (value instanceof PsiClassOwner) {
         ViewSettings settings = getSettings();
-        for (PsiClass aClass : ((PsiClassOwner)value).getClasses()) {
-          if (!(aClass instanceof SyntheticElement)) {
-            result.add(new ClassTreeNode(myProject, aClass, settings));
+        PsiImplicitClass implicitClass = JavaImplicitClassUtil.getImplicitClassFor(value);
+        if (implicitClass != null) {
+          result.addAll(ClassTreeNode.computeChildren(implicitClass, settings, myProject, true));
+        } else {
+          for (PsiClass aClass : ((PsiClassOwner)value).getClasses()) {
+            if (!(aClass instanceof SyntheticElement)) {
+              result.add(new ClassTreeNode(myProject, aClass, settings));
+            }
           }
         }
       }
       return result;
+    }
+
+    @Override
+    protected boolean isDeprecated() {
+      PsiFile file = getValue();
+      if (file == null || !file.isValid() || !(file instanceof PsiJavaFile)) {
+        return super.isDeprecated();
+      }
+      PsiJavaModule javaModule = ((PsiJavaFile)file).getModuleDeclaration();
+      return javaModule != null && PsiImplUtil.isDeprecated(javaModule);
     }
   }
 }

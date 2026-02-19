@@ -1,10 +1,12 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.util;
 
+import com.intellij.openapi.util.ProperTextRange;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -16,13 +18,12 @@ public final class NonCodeUsageInfo extends MoveRenameUsageInfo{
     this.newText = newText;
   }
 
-  @Nullable
-  public static NonCodeUsageInfo create(@NotNull PsiFile file,
-                                        int startOffset,
-                                        int endOffset,
-                                        PsiElement referencedElement,
-                                        String newText) {
-    PsiElement element = file.findElementAt(startOffset);
+  public static @Nullable NonCodeUsageInfo create(@NotNull PsiFile psiFile,
+                                                  int startOffset,
+                                                  int endOffset,
+                                                  PsiElement referencedElement,
+                                                  String newText) {
+    PsiElement element = psiFile.findElementAt(startOffset);
     while(element != null){
       TextRange range = element.getTextRange();
       if (range.getEndOffset() < endOffset){
@@ -42,12 +43,13 @@ public final class NonCodeUsageInfo extends MoveRenameUsageInfo{
   }
 
   @Override
-  @Nullable
-  public PsiReference getReference() {
+  public @Nullable PsiReference getReference() {
     return null;
   }
 
-  public NonCodeUsageInfo replaceElement(PsiElement newElement) {
-    return new NonCodeUsageInfo(newElement, getRangeInElement().getStartOffset(), getRangeInElement().getEndOffset(), getReferencedElement(), newText);
+  @Contract("_ -> new")
+  public @NotNull NonCodeUsageInfo replaceElement(@NotNull PsiElement newElement) {
+    ProperTextRange rangeInElement = getRangeInElement();
+    return new NonCodeUsageInfo(newElement, rangeInElement.getStartOffset(), rangeInElement.getEndOffset(), getReferencedElement(), newText);
   }
 }

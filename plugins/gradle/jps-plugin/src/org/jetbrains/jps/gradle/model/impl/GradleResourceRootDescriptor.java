@@ -1,21 +1,9 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.gradle.model.impl;
 
-import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.io.FileFilters;
+import com.intellij.openapi.util.io.FileUtilRt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.builders.BuildRootDescriptor;
 
@@ -25,7 +13,8 @@ import java.io.FileFilter;
 /**
  * @author Vladislav.Soroka
  */
-public class GradleResourceRootDescriptor extends BuildRootDescriptor {
+public final class GradleResourceRootDescriptor extends BuildRootDescriptor {
+  private static final Logger LOG = Logger.getInstance(GradleResourceRootDescriptor.class);
   private final GradleResourcesTarget myTarget;
   private final ResourceRootConfiguration myConfig;
   private final File myFile;
@@ -40,7 +29,7 @@ public class GradleResourceRootDescriptor extends BuildRootDescriptor {
                                       boolean overwrite) {
     myTarget = target;
     myConfig = config;
-    final String path = FileUtil.toCanonicalPath(config.directory);
+    final String path = FileUtilRt.toCanonicalPath(config.directory, File.separatorChar, true);
     myFile = new File(path);
     myId = path;
     myIndexInPom = indexInPom;
@@ -52,29 +41,29 @@ public class GradleResourceRootDescriptor extends BuildRootDescriptor {
   }
 
   @Override
-  public String getRootId() {
+  public @NotNull String getRootId() {
     return myId;
   }
 
   @Override
-  public File getRootFile() {
+  public @NotNull File getRootFile() {
     return myFile;
   }
 
   @Override
-  public GradleResourcesTarget getTarget() {
+  public @NotNull GradleResourcesTarget getTarget() {
     return myTarget;
   }
 
-  @NotNull
   @Override
-  public FileFilter createFileFilter() {
-    return new GradleResourceFileFilter(myFile, myConfig);
-  }
-
-  @Override
-  public boolean canUseFileCache() {
-    return true;
+  public @NotNull FileFilter createFileFilter() {
+    try {
+      return new GradleResourceFileFilter(myFile, myConfig);
+    }
+    catch (Throwable e) {
+      LOG.warn("Can not create resource file filter", e);
+    }
+    return FileFilters.EVERYTHING;
   }
 
   public int getIndexInPom() {

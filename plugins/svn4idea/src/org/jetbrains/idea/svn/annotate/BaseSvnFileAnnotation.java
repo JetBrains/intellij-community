@@ -1,10 +1,15 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.svn.annotate;
 
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsKey;
-import com.intellij.openapi.vcs.annotate.*;
+import com.intellij.openapi.vcs.annotate.AnnotationSource;
+import com.intellij.openapi.vcs.annotate.AnnotationSourceSwitcher;
+import com.intellij.openapi.vcs.annotate.DefaultLineModificationDetailsProvider;
+import com.intellij.openapi.vcs.annotate.FileAnnotation;
+import com.intellij.openapi.vcs.annotate.LineAnnotationAspect;
+import com.intellij.openapi.vcs.annotate.LineAnnotationAspectAdapter;
 import com.intellij.openapi.vcs.history.VcsFileRevision;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
@@ -26,8 +31,8 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
+import static com.intellij.openapi.vcs.annotate.AnnotationTooltipBuilder.buildSimpleTooltip;
 import static com.intellij.xml.util.XmlStringUtil.escapeString;
-import static git4idea.annotate.AnnotationTooltipBuilder.buildSimpleTooltip;
 
 public abstract class BaseSvnFileAnnotation extends FileAnnotation {
   private final String myContents;
@@ -126,15 +131,13 @@ public abstract class BaseSvnFileAnnotation extends FileAnnotation {
     return new LineAnnotationAspect[]{REVISION_ASPECT, DATE_ASPECT, AUTHOR_ASPECT};
   }
 
-  @Nullable
   @Override
-  public String getToolTip(int lineNumber) {
+  public @Nullable String getToolTip(int lineNumber) {
     return getToolTip(lineNumber, false);
   }
 
-  @Nullable
   @Override
-  public String getHtmlToolTip(int lineNumber) {
+  public @Nullable String getHtmlToolTip(int lineNumber) {
     return getToolTip(lineNumber, true);
   }
 
@@ -161,8 +164,7 @@ public abstract class BaseSvnFileAnnotation extends FileAnnotation {
   }
 
   @Override
-  @Nullable
-  public VcsRevisionNumber originalRevision(final int lineNumber) {
+  public @Nullable VcsRevisionNumber originalRevision(final int lineNumber) {
     SvnFileRevision revision = myInfos.isValid(lineNumber) ? myRevisionMap.get(myInfos.originalRevision(lineNumber)) : null;
 
     return revision != null ? revision.getRevisionNumber() : null;
@@ -190,13 +192,11 @@ public abstract class BaseSvnFileAnnotation extends FileAnnotation {
   }
 
   @Override
-  @Nullable
-  public AnnotationSourceSwitcher getAnnotationSourceSwitcher() {
-    if (! myShowMergeSources) return null;
+  public @Nullable AnnotationSourceSwitcher getAnnotationSourceSwitcher() {
+    if (!myShowMergeSources) return null;
     return new AnnotationSourceSwitcher() {
       @Override
-      @NotNull
-      public AnnotationSource getAnnotationSource(int lineNumber) {
+      public @NotNull AnnotationSource getAnnotationSource(int lineNumber) {
         return myInfos.getAnnotationSource(lineNumber);
       }
 
@@ -206,14 +206,12 @@ public abstract class BaseSvnFileAnnotation extends FileAnnotation {
       }
 
       @Override
-      @NotNull
-      public LineAnnotationAspect getRevisionAspect() {
+      public @NotNull LineAnnotationAspect getRevisionAspect() {
         return ORIGINAL_REVISION_ASPECT;
       }
 
       @Override
-      @NotNull
-      public AnnotationSource getDefaultSource() {
+      public @NotNull AnnotationSource getDefaultSource() {
         return AnnotationSource.getInstance(myShowMergeSources);
       }
 
@@ -331,9 +329,13 @@ public abstract class BaseSvnFileAnnotation extends FileAnnotation {
     }
   }
 
-  @Nullable
   @Override
-  public VcsRevisionNumber getCurrentRevision() {
+  public @Nullable VcsRevisionNumber getCurrentRevision() {
     return myBaseRevision;
+  }
+
+  @Override
+  public @Nullable LineModificationDetailsProvider getLineModificationDetailsProvider() {
+    return DefaultLineModificationDetailsProvider.create(this);
   }
 }

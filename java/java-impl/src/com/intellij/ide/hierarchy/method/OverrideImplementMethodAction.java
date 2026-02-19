@@ -1,11 +1,17 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.hierarchy.method;
 
 import com.intellij.codeInsight.generation.OverrideImplementExploreUtil;
 import com.intellij.codeInsight.generation.OverrideImplementUtil;
+import com.intellij.ide.hierarchy.HierarchyBrowserBaseEx;
 import com.intellij.ide.hierarchy.HierarchyNodeDescriptor;
-import com.intellij.ide.hierarchy.MethodHierarchyBrowserBase;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
+import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
@@ -14,10 +20,17 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindowManager;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiSubstitutor;
+import com.intellij.psi.PsiSyntheticClass;
 import com.intellij.psi.util.MethodSignature;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -27,33 +40,33 @@ abstract class OverrideImplementMethodAction extends AnAction {
   private static final Logger LOG = Logger.getInstance(OverrideImplementMethodAction.class);
 
   @Override
-  public final void actionPerformed(@NotNull final AnActionEvent event) {
-    final DataContext dataContext = event.getDataContext();
-    final MethodHierarchyBrowser methodHierarchyBrowser = (MethodHierarchyBrowser)MethodHierarchyBrowserBase.DATA_KEY.getData(dataContext);
+  public final void actionPerformed(@NotNull AnActionEvent event) {
+    DataContext dataContext = event.getDataContext();
+    MethodHierarchyBrowser methodHierarchyBrowser = getMethodHierarchyBrowser(event);
     if (methodHierarchyBrowser == null) return;
-    final Project project = CommonDataKeys.PROJECT.getData(dataContext);
+    Project project = CommonDataKeys.PROJECT.getData(dataContext);
     if (project == null) return;
 
-    final String commandName = event.getPresentation().getText();
+    String commandName = event.getPresentation().getText();
     ApplicationManager.getApplication().runWriteAction(() -> CommandProcessor.getInstance().executeCommand(project, () -> {
 
       try{
-        final HierarchyNodeDescriptor[] selectedDescriptors = methodHierarchyBrowser.getSelectedDescriptors();
+        HierarchyNodeDescriptor[] selectedDescriptors = methodHierarchyBrowser.getSelectedDescriptors();
         if (selectedDescriptors.length > 0) {
-          final List<VirtualFile> files = new ArrayList<>(selectedDescriptors.length);
+          List<VirtualFile> files = new ArrayList<>(selectedDescriptors.length);
           for (HierarchyNodeDescriptor selectedDescriptor : selectedDescriptors) {
-            final PsiFile containingFile = ((MethodHierarchyNodeDescriptor)selectedDescriptor).getPsiClass().getContainingFile();
+            PsiFile containingFile = ((MethodHierarchyNodeDescriptor)selectedDescriptor).getPsiClass().getContainingFile();
             if (containingFile != null) {
-              final VirtualFile vFile = containingFile.getVirtualFile();
+              VirtualFile vFile = containingFile.getVirtualFile();
               if (vFile != null) {
                 files.add(vFile);
               }
             }
           }
-          final ReadonlyStatusHandler.OperationStatus status = ReadonlyStatusHandler.getInstance(project).ensureFilesWritable(files);
+          ReadonlyStatusHandler.OperationStatus status = ReadonlyStatusHandler.getInstance(project).ensureFilesWritable(files);
           if (!status.hasReadonlyFiles()) {
             for (HierarchyNodeDescriptor selectedDescriptor : selectedDescriptors) {
-              final PsiElement aClass = ((MethodHierarchyNodeDescriptor)selectedDescriptor).getPsiClass();
+              PsiElement aClass = ((MethodHierarchyNodeDescriptor)selectedDescriptor).getPsiClass();
               if (aClass instanceof PsiClass) {
                 OverrideImplementUtil.overrideOrImplement((PsiClass)aClass, methodHierarchyBrowser.getBaseMethod());
               }
@@ -73,26 +86,28 @@ abstract class OverrideImplementMethodAction extends AnAction {
   }
 
   @Override
-  public final void update(@NotNull final AnActionEvent e) {
-    final Presentation presentation = e.getPresentation();
-    final DataContext dataContext = e.getDataContext();
+  public final void update(@NotNull AnActionEvent e) {
+    Presentation presentation = e.getPresentation();
+    DataContext dataContext = e.getDataContext();
 
-    final MethodHierarchyBrowser methodHierarchyBrowser = (MethodHierarchyBrowser)MethodHierarchyBrowserBase.DATA_KEY.getData(dataContext);
+    MethodHierarchyBrowser methodHierarchyBrowser = getMethodHierarchyBrowser(e);
     if (methodHierarchyBrowser == null) {
       presentation.setEnabledAndVisible(false);
       return;
     }
-    final Project project = CommonDataKeys.PROJECT.getData(dataContext);
+    Project project = CommonDataKeys.PROJECT.getData(dataContext);
     if (project == null) {
       presentation.setEnabledAndVisible(false);
       return;
     }
 
-    final HierarchyNodeDescriptor[] selectedDescriptors = methodHierarchyBrowser.getSelectedDescriptors();
+    Object[] data = PlatformCoreDataKeys.SELECTED_ITEMS.getData(dataContext);
+    HierarchyNodeDescriptor[] selectedDescriptors = data instanceof HierarchyNodeDescriptor[] ? ((HierarchyNodeDescriptor[])data) 
+                                                                                              : HierarchyNodeDescriptor.EMPTY_ARRAY;
     int toImplement = 0;
     int toOverride = 0;
 
-    for (final HierarchyNodeDescriptor descriptor : selectedDescriptors) {
+    for (HierarchyNodeDescriptor descriptor : selectedDescriptors) {
       if (canImplementOverride((MethodHierarchyNodeDescriptor)descriptor, methodHierarchyBrowser, true)) {
         if (toOverride > 0) {
           // no mixed actions allowed
@@ -121,26 +136,28 @@ abstract class OverrideImplementMethodAction extends AnAction {
     update(presentation, toImplement, toOverride);
   }
 
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
+  }
+
+  private static @Nullable MethodHierarchyBrowser getMethodHierarchyBrowser(@NotNull AnActionEvent event) {
+    return ObjectUtils.tryCast(event.getData(HierarchyBrowserBaseEx.HIERARCHY_BROWSER), MethodHierarchyBrowser.class);
+  }
+
   protected abstract void update(Presentation presentation, int toImplement, int toOverride);
 
-  private static boolean canImplementOverride(final MethodHierarchyNodeDescriptor descriptor, final MethodHierarchyBrowser methodHierarchyBrowser, final boolean toImplement) {
-    final PsiElement psiElement = descriptor.getPsiClass();
-    if (!(psiElement instanceof PsiClass)) return false;
-    final PsiClass psiClass = (PsiClass)psiElement;
+  private static boolean canImplementOverride(MethodHierarchyNodeDescriptor descriptor, MethodHierarchyBrowser methodHierarchyBrowser, boolean toImplement) {
+    PsiElement psiElement = descriptor.getPsiClass();
+    if (!(psiElement instanceof PsiClass psiClass)) return false;
     if (psiClass instanceof PsiSyntheticClass) return false;
-    final PsiMethod baseMethod = methodHierarchyBrowser.getBaseMethod();
+    PsiMethod baseMethod = methodHierarchyBrowser.getBaseMethod();
     if (baseMethod == null) return false;
-    final MethodSignature signature = baseMethod.getSignature(PsiSubstitutor.EMPTY);
+    MethodSignature signature = baseMethod.getSignature(PsiSubstitutor.EMPTY);
 
     Collection<MethodSignature> allOriginalSignatures = toImplement
                                                         ? OverrideImplementExploreUtil.getMethodSignaturesToImplement(psiClass)
                                                         : OverrideImplementExploreUtil.getMethodSignaturesToOverride(psiClass);
-    for (final MethodSignature originalSignature : allOriginalSignatures) {
-      if (originalSignature.equals(signature)) {
-        return true;
-      }
-    }
-
-    return false;
+    return allOriginalSignatures.contains(signature);
   }
 }

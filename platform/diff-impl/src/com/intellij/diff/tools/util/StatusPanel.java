@@ -1,12 +1,23 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diff.tools.util;
 
+import com.intellij.openapi.diff.DiffBundle;
 import com.intellij.openapi.util.NlsContexts;
-import com.intellij.util.ui.*;
+import com.intellij.util.ui.AnimatedIcon;
+import com.intellij.util.ui.AsyncProcessIcon;
+import com.intellij.util.ui.GridBag;
+import com.intellij.util.ui.JBInsets;
+import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.Icon;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import java.awt.Color;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
 
 public class StatusPanel extends JPanel {
   private final JLabel myTextLabel;
@@ -18,6 +29,7 @@ public class StatusPanel extends JPanel {
     myTextLabel.setVisible(false);
     myBusySpinner = new AsyncProcessIcon("StatusPanelSpinner");
     myBusySpinner.setVisible(false);
+    myBusySpinner.setToolTipText(DiffBundle.message("diff.progress.spinner.tooltip.text"));
 
     GridBag bag = new GridBag().setDefaultInsets(JBInsets.create(0, 2)).setDefaultFill(GridBagConstraints.BOTH)
       .setDefaultWeightY(1.0);
@@ -30,6 +42,8 @@ public class StatusPanel extends JPanel {
     String message = getMessage();
     myTextLabel.setVisible(message != null);
     myTextLabel.setText(message);
+    myTextLabel.setIcon(getStatusIcon());
+    myTextLabel.setForeground(getStatusForeground());
   }
 
   public void setBusy(boolean busy) {
@@ -43,9 +57,13 @@ public class StatusPanel extends JPanel {
     }
   }
 
-  @NlsContexts.Label
-  @Nullable
-  protected String getMessage() {
+  protected @NlsContexts.Label @Nullable String getMessage() {
     return null;
+  }
+
+  protected @Nullable Icon getStatusIcon() { return null; }
+
+  protected @NotNull Color getStatusForeground() {
+    return UIUtil.getLabelForeground();
   }
 }

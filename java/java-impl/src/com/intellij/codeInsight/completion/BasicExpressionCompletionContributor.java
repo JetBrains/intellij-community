@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.guess.GuessManager;
@@ -7,10 +7,23 @@ import com.intellij.codeInsight.lookup.KeywordLookupItem;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.VariableLookupItem;
 import com.intellij.codeInsight.template.SmartCompletionContextType;
+import com.intellij.codeInsight.template.impl.TemplateContextTypes;
 import com.intellij.codeInsight.template.impl.TemplateImpl;
 import com.intellij.codeInsight.template.impl.TemplateSettings;
+import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiLocalVariable;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiMethodCallExpression;
+import com.intellij.psi.PsiReferenceExpression;
+import com.intellij.psi.PsiSubstitutor;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypeCastExpression;
+import com.intellij.psi.PsiVariable;
+import com.intellij.psi.ResolveState;
 import com.intellij.psi.filters.getters.ClassLiteralGetter;
 import com.intellij.psi.filters.getters.ThisGetter;
 import com.intellij.psi.scope.PsiScopeProcessor;
@@ -21,16 +34,13 @@ import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author peter
- */
 public final class BasicExpressionCompletionContributor {
 
   private static void addKeyword(final Consumer<? super LookupElement> result, final PsiElement element, final String s) {
     result.consume(createKeywordLookupItem(element, s));
   }
 
-  public static LookupElement createKeywordLookupItem(final PsiElement element, final String s) {
+  public static @NotNull LookupElement createKeywordLookupItem(@NotNull PsiElement element, @NotNull String s) {
     return new KeywordLookupItem(JavaPsiFacade.getElementFactory(element.getProject()).createKeyword(s, element), element);
   }
 
@@ -39,8 +49,8 @@ public final class BasicExpressionCompletionContributor {
                                             PrefixMatcher matcher) {
     final PsiElement element = parameters.getPosition();
     if (JavaKeywordCompletion.isAfterTypeDot(element)) {
-      addKeyword(result, element, PsiKeyword.CLASS);
-      addKeyword(result, element, PsiKeyword.THIS);
+      addKeyword(result, element, JavaKeywords.CLASS);
+      addKeyword(result, element, JavaKeywords.THIS);
 
     }
 
@@ -54,16 +64,17 @@ public final class BasicExpressionCompletionContributor {
       ClassLiteralGetter.addCompletions(parameters, result, matcher);
 
       final PsiElement position = parameters.getPosition();
-        final PsiType expectedType = parameters.getExpectedType();
+      final PsiType expectedType = parameters.getExpectedType();
 
+        SmartCompletionContextType smartCompletionContextType = TemplateContextTypes.getByClass(SmartCompletionContextType.class);
         for (final TemplateImpl template : TemplateSettings.getInstance().getTemplates()) {
-          if (!template.isDeactivated() && template.getTemplateContext().isEnabled(new SmartCompletionContextType())) {
+          if (!template.isDeactivated() && template.getTemplateContext().isEnabled(smartCompletionContextType)) {
             result.consume(new SmartCompletionTemplateItem(template, position));
           }
         }
 
-        addKeyword(result, position, PsiKeyword.TRUE);
-        addKeyword(result, position, PsiKeyword.FALSE);
+        addKeyword(result, position, JavaKeywords.TRUE);
+        addKeyword(result, position, JavaKeywords.FALSE);
 
         if (!JavaCompletionContributor.IN_SWITCH_LABEL.accepts(position)) {
           for (PsiExpression expression : ThisGetter.getThisExpressionVariants(position)) {
@@ -73,7 +84,6 @@ public final class BasicExpressionCompletionContributor {
 
         processDataflowExpressionTypes(parameters, expectedType, matcher, result);
     }
-
   }
 
   static void processDataflowExpressionTypes(JavaSmartCompletionParameters parameters, @Nullable PsiType expectedType, final PrefixMatcher matcher, Consumer<? super LookupElement> consumer) {
@@ -88,19 +98,16 @@ public final class BasicExpressionCompletionContributor {
     PsiScopesUtil.treeWalkUp(new PsiScopeProcessor() {
       @Override
       public boolean execute(@NotNull PsiElement element, @NotNull ResolveState state) {
-        if (element instanceof PsiLocalVariable) {
-          if (!matcher.prefixMatches(((PsiLocalVariable)element).getName())) {
+        if (element instanceof PsiLocalVariable var) {
+          if (!matcher.prefixMatches(var.getName())) {
             return true;
           }
 
-          final PsiExpression expression = ((PsiLocalVariable)element).getInitializer();
-          if (expression instanceof PsiTypeCastExpression) {
-            PsiTypeCastExpression typeCastExpression = (PsiTypeCastExpression)expression;
+          final PsiExpression expression = var.getInitializer();
+          if (expression instanceof PsiTypeCastExpression typeCastExpression) {
             final PsiExpression operand = typeCastExpression.getOperand();
-            if (operand != null) {
-              if (map.get(operand).contains(typeCastExpression.getType())) {
-                map.remove(operand);
-              }
+            if (operand != null && map.get(operand).contains(typeCastExpression.getType())) {
+              map.remove(operand);
             }
           }
         }
@@ -118,26 +125,16 @@ public final class BasicExpressionCompletionContributor {
     }
   }
 
-  @NotNull
-  private static LookupElement expressionToLookupElement(@NotNull PsiExpression expression) {
-    if (expression instanceof PsiReferenceExpression) {
-      final PsiReferenceExpression refExpr = (PsiReferenceExpression)expression;
-      if (!refExpr.isQualified()) {
-        final PsiElement target = refExpr.resolve();
-        if (target instanceof PsiVariable) {
-          final VariableLookupItem item = new VariableLookupItem((PsiVariable)target);
-          item.setSubstitutor(PsiSubstitutor.EMPTY);
-          return item;
-        }
-      }
+  private static @NotNull LookupElement expressionToLookupElement(@NotNull PsiExpression expression) {
+    if (expression instanceof PsiReferenceExpression refExpr && !refExpr.isQualified() && refExpr.resolve() instanceof PsiVariable var) {
+      final VariableLookupItem item = new VariableLookupItem(var);
+      item.setSubstitutor(PsiSubstitutor.EMPTY);
+      return item;
     }
-    if (expression instanceof PsiMethodCallExpression) {
-      final PsiMethodCallExpression call = (PsiMethodCallExpression)expression;
-      if (!call.getMethodExpression().isQualified()) {
-        final PsiMethod method = call.resolveMethod();
-        if (method != null) {
-          return new JavaMethodCallElement(method);
-        }
+    if (expression instanceof PsiMethodCallExpression call && !call.getMethodExpression().isQualified()) {
+      final PsiMethod method = call.resolveMethod();
+      if (method != null) {
+        return new JavaMethodCallElement(method);
       }
     }
 

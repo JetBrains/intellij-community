@@ -1,0 +1,23 @@
+# =========
+# Temporary
+# =========
+
+# Incompatible changes introduced in Python 3.10.20
+# (Remove once 3.10.20 becomes available for GitHub Actions)
+html.parser.HTMLParser.__init__ # parameter `scripting`
+pyexpat.XMLParserType.SetAllocTrackerActivationThreshold
+pyexpat.XMLParserType.SetAllocTrackerMaximumAmplification
+xml.parsers.expat.XMLParserType.SetAllocTrackerActivationThreshold
+xml.parsers.expat.XMLParserType.SetAllocTrackerMaximumAmplification
+
+
+# =============================================================
+# Allowlist entries that cannot or should not be fixed; <= 3.12
+# =============================================================
+
+# doesn't exist on linux
+_msi
+msilib(.[a-z]+)?
+
+# doesn't exist in all installations
+(nis)?

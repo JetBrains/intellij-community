@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.openapi.fileChooser.impl;
 
@@ -15,10 +15,11 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ArrayUtilRt;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.Icon;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -26,7 +27,8 @@ import java.util.Set;
 /**
  * @author Yura Cangea
  */
-public class FileTreeStructure extends AbstractTreeStructure {
+@ApiStatus.Internal
+public final class FileTreeStructure extends AbstractTreeStructure {
   private static final Logger LOG = Logger.getInstance(FileTreeStructure.class);
 
   private final RootFileElement myRootElement;
@@ -44,30 +46,29 @@ public class FileTreeStructure extends AbstractTreeStructure {
   }
 
   @Override
-  public boolean isToBuildChildrenInBackground(@NotNull final Object element) {
+  public boolean isToBuildChildrenInBackground(final @NotNull Object element) {
     return true;
   }
 
-  public final boolean areHiddenShown() {
+  public boolean areHiddenShown() {
     return myShowHidden;
   }
 
-  public final void showHidden(final boolean showHidden) {
+  public void showHidden(final boolean showHidden) {
     myShowHidden = showHidden;
   }
 
   @Override
-  public final @NotNull Object getRootElement() {
+  public @NotNull Object getRootElement() {
     return myRootElement;
   }
 
   @Override
   public Object @NotNull [] getChildElements(@NotNull Object nodeElement) {
-    if (!(nodeElement instanceof FileElement)) {
+    if (!(nodeElement instanceof FileElement element)) {
       return ArrayUtilRt.EMPTY_OBJECT_ARRAY;
     }
 
-    FileElement element = (FileElement)nodeElement;
     VirtualFile file = element.getFile();
 
     if (file == null || !file.isValid()) {
@@ -110,8 +111,7 @@ public class FileTreeStructure extends AbstractTreeStructure {
 
   @Override
   public @Nullable Object getParentElement(@NotNull Object element) {
-    if (element instanceof FileElement) {
-      final FileElement fileElement = (FileElement)element;
+    if (element instanceof FileElement fileElement) {
 
       final VirtualFile elementFile = getValidFile(fileElement);
       VirtualFile rootElementFile = myRootElement.getFile();
@@ -151,10 +151,10 @@ public class FileTreeStructure extends AbstractTreeStructure {
   }
 
   @Override
-  public final void commit() { }
+  public void commit() { }
 
   @Override
-  public final boolean hasSomethingToCommit() {
+  public boolean hasSomethingToCommit() {
     return false;
   }
 

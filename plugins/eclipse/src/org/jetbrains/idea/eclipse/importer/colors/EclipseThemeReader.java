@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.eclipse.importer.colors;
 
 import com.intellij.openapi.editor.markup.EffectType;
@@ -27,15 +13,16 @@ import org.xml.sax.helpers.DefaultHandler;
 
 import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
-import java.awt.*;
+import java.awt.Color;
+import java.awt.Font;
 import java.io.InputStream;
 import java.util.HashMap;
 import java.util.Map;
 
 @SuppressWarnings("UseJBColor")
 public class EclipseThemeReader extends DefaultHandler implements EclipseColorThemeElements {
-  @Nullable private final OptionHandler myOptionHandler;
-  @Nullable private String myThemeName;
+  private final @Nullable OptionHandler myOptionHandler;
+  private @Nullable String myThemeName;
   
   private static final Map<String, Integer> ECLIPSE_DEFAULT_FONT_STYLES = new HashMap<>();
   static {
@@ -48,7 +35,7 @@ public class EclipseThemeReader extends DefaultHandler implements EclipseColorTh
 
 
   void readSettings(InputStream input) throws SchemeImportException {
-    SAXParserFactory spf = SAXParserFactory.newInstance();
+    SAXParserFactory spf = SAXParserFactory.newDefaultInstance();
     spf.setValidating(false);
     try {
       SAXParser parser = spf.newSAXParser();
@@ -120,13 +107,11 @@ public class EclipseThemeReader extends DefaultHandler implements EclipseColorTh
     return false;
   }
 
-  @Nullable
-  public String getThemeName() {
+  public @Nullable String getThemeName() {
     return myThemeName;
   }
   
-  @Nullable
-  private static Color getColor(Attributes attributes) throws SAXException {
+  private static @Nullable Color getColor(Attributes attributes) throws SAXException {
     String colorString = attributes.getValue(COLOR_ATTR);
     if (colorString != null && !colorString.isEmpty()) {
       try {
@@ -162,8 +147,7 @@ public class EclipseThemeReader extends DefaultHandler implements EclipseColorTh
     return ECLIPSE_DEFAULT_FONT_STYLES.getOrDefault(tag, Font.PLAIN);
   }
   
-  @Nullable
-  private static EffectType getEffectType(@NotNull Attributes attributes) {
+  private static @Nullable EffectType getEffectType(@NotNull Attributes attributes) {
     String strikeThrough = attributes.getValue(STRIKETHROUGH_ATTR);
     if (Boolean.parseBoolean(strikeThrough)) {
       return EffectType.STRIKEOUT;

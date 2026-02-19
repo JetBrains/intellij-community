@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.lang.ant.config.impl;
 
@@ -10,7 +10,11 @@ import com.intellij.lang.ant.config.AntConfiguration;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.ui.*;
+import com.intellij.ui.ColoredTreeCellRenderer;
+import com.intellij.ui.DoubleClickListener;
+import com.intellij.ui.ScrollPaneFactory;
+import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.ui.TreeSpeedSearch;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.tree.TreeUtil;
@@ -19,7 +23,8 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JComponent;
+import javax.swing.JTree;
 import javax.swing.event.TreeSelectionEvent;
 import javax.swing.event.TreeSelectionListener;
 import javax.swing.tree.DefaultMutableTreeNode;
@@ -42,8 +47,7 @@ public class TargetChooserDialog extends DialogWrapper {
   }
 
   @Override
-  @Nullable
-  protected JComponent createCenterPanel() {
+  protected @Nullable JComponent createCenterPanel() {
     myTree = initTree();
     myTree.addKeyListener(new KeyAdapter() {
       @Override
@@ -69,7 +73,7 @@ public class TargetChooserDialog extends DialogWrapper {
   }
 
   private Tree initTree() {
-    @NonNls final DefaultMutableTreeNode root = new DefaultMutableTreeNode("Root");
+    final @NonNls DefaultMutableTreeNode root = new DefaultMutableTreeNode("Root");
     final Tree tree = new Tree(root);
     tree.getSelectionModel().addTreeSelectionListener(new TreeSelectionListener() {
       @Override
@@ -78,8 +82,7 @@ public class TargetChooserDialog extends DialogWrapper {
         if (selectionPath != null) {
           final DefaultMutableTreeNode node = (DefaultMutableTreeNode)selectionPath.getLastPathComponent();
           final Object userObject = node.getUserObject();
-          if (userObject instanceof AntTargetNodeDescriptor) {
-            final AntTargetNodeDescriptor antBuildTarget = (AntTargetNodeDescriptor)userObject;
+          if (userObject instanceof AntTargetNodeDescriptor antBuildTarget) {
             mySelectedTarget = antBuildTarget.getAntTarget();
           }
           else {
@@ -92,7 +95,7 @@ public class TargetChooserDialog extends DialogWrapper {
     tree.setRootVisible(false);
     tree.setShowsRootHandles(true);
     TreeUtil.installActions(tree);
-    new TreeSpeedSearch(tree, path -> {
+    TreeSpeedSearch.installOn(tree, false, path -> {
       final Object userObject = ((DefaultMutableTreeNode)path.getLastPathComponent()).getUserObject();
       if (userObject instanceof AntTargetNodeDescriptor) {
         final AntBuildTarget target = ((AntTargetNodeDescriptor)userObject).getAntTarget();
@@ -144,8 +147,7 @@ public class TargetChooserDialog extends DialogWrapper {
            mySelectedTarget.getModel().getBuildFile() == descriptor.getBuildFile();
   }
 
-  @Nullable
-  public AntBuildTarget getSelectedTarget() {
+  public @Nullable AntBuildTarget getSelectedTarget() {
     return mySelectedTarget;
   }
 
@@ -170,21 +172,19 @@ public class TargetChooserDialog extends DialogWrapper {
 
   private static class MyTreeCellRenderer extends ColoredTreeCellRenderer {
     @Override
-    public void customizeCellRenderer(JTree tree,
+    public void customizeCellRenderer(@NotNull JTree tree,
                                       Object value,
                                       boolean selected,
                                       boolean expanded,
                                       boolean leaf,
                                       int row,
                                       boolean hasFocus) {
-      if (value instanceof DefaultMutableTreeNode) {
-        final DefaultMutableTreeNode treeNode = (DefaultMutableTreeNode)value;
+      if (value instanceof DefaultMutableTreeNode treeNode) {
         final Object userObject = treeNode.getUserObject();
         if (userObject instanceof AntBuildFile) {
           append(((AntBuildFile)userObject).getPresentableName(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
         }
-        else if (userObject instanceof AntTargetNodeDescriptor) {
-          final AntTargetNodeDescriptor descriptor = (AntTargetNodeDescriptor)userObject;
+        else if (userObject instanceof AntTargetNodeDescriptor descriptor) {
           final AntBuildTarget antTarget = descriptor.getAntTarget();
           final String antTargetName = antTarget.getName();
           append(antTargetName, SimpleTextAttributes.REGULAR_ATTRIBUTES);

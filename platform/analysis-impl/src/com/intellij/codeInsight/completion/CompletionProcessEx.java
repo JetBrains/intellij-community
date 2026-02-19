@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.lookup.Lookup;
@@ -8,18 +8,18 @@ import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.UserDataHolderEx;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.Icon;
 import java.util.function.Supplier;
 
-/**
- * @author yole
- */
+
 @ApiStatus.Internal
-public interface CompletionProcessEx extends CompletionProcessBase {
+public interface CompletionProcessEx extends CompletionProcessBase, UserDataHolderEx {
   @NotNull
   Project getProject();
 
@@ -38,17 +38,28 @@ public interface CompletionProcessEx extends CompletionProcessBase {
   @Nullable
   Lookup getLookup();
 
+  /**
+   * Allows registering a child disposable that will be disposed of when the completion process finishes.
+   * {@code child} is called only if the completion process is not already finished and disposed.
+   */
   void registerChildDisposable(@NotNull Supplier<? extends Disposable> child);
 
-  void itemSelected(LookupElement item, char aChar);
-
+  /**
+   * called when an item is selected in the lookup or lookup is closed.
+   *
+   * @param item           selected item or null if lookup was closed, or no item was selected, or the item is invalid, etc.
+   * @param completionChar completion char
+   */
+  void itemSelected(@Nullable LookupElement item, char completionChar);
 
   void addAdvertisement(@NotNull @NlsContexts.PopupAdvertisement String message, @Nullable Icon icon);
 
+  /** Not null after initialization is finished */
   CompletionParameters getParameters();
 
   void setParameters(@NotNull CompletionParameters parameters);
 
+  @RequiresEdt
   void scheduleRestart();
 
   void prefixUpdated();

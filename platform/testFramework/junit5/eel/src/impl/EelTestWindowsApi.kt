@@ -1,0 +1,57 @@
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.platform.testFramework.junit5.eel.impl
+
+import com.intellij.platform.eel.EelArchiveApi
+import com.intellij.platform.eel.EelDescriptor
+import com.intellij.platform.eel.EelExecWindowsApi
+import com.intellij.platform.eel.EelPlatform
+import com.intellij.platform.eel.EelResult
+import com.intellij.platform.eel.EelTunnelsWindowsApi
+import com.intellij.platform.eel.EelUserWindowsInfo
+import com.intellij.platform.eel.EelWindowsApi
+import com.intellij.platform.eel.fs.EelFileSystemApi
+import com.intellij.platform.eel.impl.fs.WindowsNioBasedEelFileSystemApi
+import com.intellij.platform.eel.impl.local.EelLocalExecWindowsApi
+import com.intellij.platform.eel.path.EelPath
+import com.intellij.platform.eel.provider.asEelPath
+import com.intellij.platform.eel.provider.utils.toEelArch
+import com.intellij.platform.testFramework.junit5.eel.impl.nio.EelUnitTestFileSystem
+import com.intellij.util.system.CpuArch
+import java.nio.file.Files
+import java.nio.file.Path
+
+internal class EelTestWindowsApi(override val descriptor: EelTestDescriptor, fileSystem: EelUnitTestFileSystem, localPrefix: String) : EelWindowsApi {
+  override val userInfo: EelUserWindowsInfo = EelTestWindowsUserInfo(descriptor)
+
+  override val platform: EelPlatform.Windows = EelPlatform.Windows(CpuArch.CURRENT.toEelArch())
+
+  override val fs: WindowsNioBasedEelFileSystemApi = EelTestFileSystemWindowsApi(descriptor, fileSystem)
+
+  override val archive: EelArchiveApi
+    get() = TODO()
+  override val tunnels: EelTunnelsWindowsApi
+    get() = TODO()
+  override val exec: EelExecWindowsApi = EelLocalExecWindowsApi()
+
+}
+
+private class EelTestFileSystemWindowsApi(override val descriptor: EelDescriptor, fileSystem: EelUnitTestFileSystem) : WindowsNioBasedEelFileSystemApi(fileSystem, EelTestWindowsUserInfo(descriptor)) {
+
+  override suspend fun createTemporaryDirectory(options: EelFileSystemApi.CreateTemporaryEntryOptions): EelResult<EelPath, EelFileSystemApi.CreateTemporaryEntryError> {
+    return wrapIntoEelResult {
+      val nioTempDir = Files.createTempDirectory(options.prefix)
+      Path.of(nioTempDir.toString()).asEelPath()
+    }
+  }
+
+  override suspend fun createTemporaryFile(options: EelFileSystemApi.CreateTemporaryEntryOptions): EelResult<EelPath, EelFileSystemApi.CreateTemporaryEntryError> {
+    return wrapIntoEelResult {
+      val nioTempFile = Files.createTempFile(options.prefix, options.suffix)
+      Path.of(nioTempFile.toString()).asEelPath()
+    }
+  }
+}
+
+private class EelTestWindowsUserInfo(descriptor: EelDescriptor) : EelUserWindowsInfo {
+  override val home: EelPath = EelPath.parse("C:\\Users\\Test.User", descriptor)
+}

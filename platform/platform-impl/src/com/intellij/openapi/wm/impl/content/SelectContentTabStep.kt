@@ -18,7 +18,9 @@ package com.intellij.openapi.wm.impl.content
 import com.intellij.openapi.ui.popup.PopupStep
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep
 import com.intellij.ui.content.TabbedContent
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 class SelectContentTabStep(val content: TabbedContent) : BaseListPopupStep<Int>(null) {
 
   private val myTabs = content.tabs

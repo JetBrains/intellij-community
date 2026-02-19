@@ -1,6 +1,0 @@
-<idea-plugin>
-  <extensions defaultExtensionNs="com.intellij.properties">
-    <implicitPropertyUsageProvider
-      implementation="org.jetbrains.plugins.gradle.service.project.GradleWrapperImplicitPropertyUsageProvider"/>
-  </extensions>
-</idea-plugin>

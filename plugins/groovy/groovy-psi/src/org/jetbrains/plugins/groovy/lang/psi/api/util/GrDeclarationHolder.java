@@ -18,8 +18,5 @@ package org.jetbrains.plugins.groovy.lang.psi.api.util;
 
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 
-/**
- * @author peter
- */
 public interface GrDeclarationHolder extends GroovyPsiElement {
 }

@@ -34,11 +34,10 @@ class JavaFolding9Test : JavaFoldingTestCase() {
     configure(text)
 
     val regions = myFixture.editor.foldingModel.allFoldRegions
-    assertThat(regions).hasSize(4)
+    assertThat(regions).hasSize(3)
 
     assertThat(regions.map { it.startOffset to it.endOffset }).containsExactly(
       range(text, "/**", "*/"),
-      range(text, "@D", ")"),
       range(text, "@S", ")"),
       range(text, "{", "}"))
 

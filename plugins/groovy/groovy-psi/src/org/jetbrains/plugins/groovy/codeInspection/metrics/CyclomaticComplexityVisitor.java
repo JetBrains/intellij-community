@@ -18,7 +18,11 @@ package org.jetbrains.plugins.groovy.codeInspection.metrics;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyRecursiveElementVisitor;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.*;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrForStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrIfStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrSwitchStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrWhileStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrCaseSection;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrConditionalExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
@@ -64,7 +68,7 @@ class CyclomaticComplexityVisitor extends GroovyRecursiveElementVisitor {
     final GrCaseSection[] caseClauses = statement.getCaseSections();
     for (GrCaseSection clause : caseClauses) {
       final GrStatement[] statements = clause.getStatements();
-      if (statements != null && statements.length != 0) {
+      if (statements.length != 0) {
         complexity++;
       }
     }

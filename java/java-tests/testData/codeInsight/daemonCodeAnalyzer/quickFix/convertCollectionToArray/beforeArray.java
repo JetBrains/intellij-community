@@ -1,4 +1,4 @@
-// "Apply conversion '.toArray(new int[0][])'" "true"
+// "Apply conversion '.toArray(new int[0][])'" "true-preview"
 
 import java.util.*;
 class Array {

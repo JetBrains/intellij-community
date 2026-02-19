@@ -16,6 +16,7 @@
 
 package org.intellij.plugins.relaxNG.xml.dom.impl;
 
+import com.intellij.codeInsight.intention.FileModifier;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
@@ -34,6 +35,7 @@ import org.intellij.plugins.relaxNG.RelaxNgMetaDataContributor;
 import org.intellij.plugins.relaxNG.RelaxngBundle;
 import org.intellij.plugins.relaxNG.xml.dom.RngGrammar;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 // XXX: the tests rely on this still being an intention action
 class CreatePatternFix implements IntentionAction, LocalQuickFix {
@@ -44,20 +46,17 @@ class CreatePatternFix implements IntentionAction, LocalQuickFix {
   }
 
   @Override
-  @NotNull
-  public String getText() {
+  public @NotNull String getText() {
     return RelaxngBundle.message("relaxng.quickfix.create-pattern.name", myReference.getCanonicalText());
   }
 
   @Override
-  @NotNull
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return RelaxngBundle.message("relaxng.quickfix.create-pattern.family");
   }
 
   @Override
-  @NotNull
-  public String getName() {
+  public @NotNull String getName() {
     return getText();
   }
 
@@ -74,7 +73,7 @@ class CreatePatternFix implements IntentionAction, LocalQuickFix {
   }
 
   @Override
-  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
+  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile psiFile) {
     return isAvailable();
   }
 
@@ -93,7 +92,7 @@ class CreatePatternFix implements IntentionAction, LocalQuickFix {
   }
 
   @Override
-  public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
+  public void invoke(@NotNull Project project, Editor editor, PsiFile psiFile) throws IncorrectOperationException {
     doFix();
   }
 
@@ -127,13 +126,9 @@ class CreatePatternFix implements IntentionAction, LocalQuickFix {
     return true;
   }
 
-  public static XmlTag getAncestorTag(XmlTag tag, String name, String namespace) {
-    if (tag == null) {
-      return null;
-    }
-    if (tag.getLocalName().equals(name) && tag.getNamespace().equals(namespace)) {
-      return tag;
-    }
-    return getAncestorTag(tag.getParentTag(), name, namespace);
+  @Override
+  public @Nullable FileModifier getFileModifierForPreview(@NotNull PsiFile target) {
+    PsiElement copy = PsiTreeUtil.findSameElementInCopy(myReference.getElement(), target);
+    return new CreatePatternFix(copy.getReference());
   }
 }

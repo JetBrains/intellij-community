@@ -1,23 +1,44 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.rmi.ssl;
 
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.security.*;
+import java.security.Key;
+import java.security.KeyStore;
+import java.security.KeyStoreException;
+import java.security.KeyStoreSpi;
+import java.security.NoSuchAlgorithmException;
+import java.security.Provider;
+import java.security.Security;
+import java.security.UnrecoverableKeyException;
 import java.security.cert.Certificate;
 import java.security.cert.CertificateException;
 import java.util.Date;
 import java.util.Enumeration;
 
+@ApiStatus.Internal
 public class DelegateKeyStore extends KeyStoreSpi {
   protected static Provider ourProvider = new Provider("IDEA", 1, "IDEA Key Store") {{
     Security.addProvider(this);
   }};
 
-  protected final KeyStore delegate;
+  private final KeyStore delegate;
 
+  protected KeyStore getDelegate() {
+    validate(delegate);
+    return delegate;
+  }
+
+  protected void validate(KeyStore keyStore) {
+
+  }
 
   @SuppressWarnings("SpellCheckingInspection")
   static String getDefaultKeyStorePath() {
@@ -26,7 +47,7 @@ public class DelegateKeyStore extends KeyStoreSpi {
     return jssecacerts.exists() ? jssecacerts.getPath() : new File(base, "cacerts").getPath();
   }
 
-  public DelegateKeyStore(String type) {
+  DelegateKeyStore(String type) {
     try {
       delegate = KeyStore.getInstance(type);
     }
@@ -35,14 +56,14 @@ public class DelegateKeyStore extends KeyStoreSpi {
     }
   }
 
-  public DelegateKeyStore(KeyStore delegate) {
+  DelegateKeyStore(KeyStore delegate) {
     this.delegate = delegate;
   }
 
   @Override
   public Key engineGetKey(String alias, char[] password) throws NoSuchAlgorithmException, UnrecoverableKeyException {
     try {
-      return delegate.getKey(alias, password);
+      return getDelegate().getKey(alias, password);
     }
     catch (KeyStoreException e) {
       throw new IllegalStateException(e);
@@ -52,7 +73,7 @@ public class DelegateKeyStore extends KeyStoreSpi {
   @Override
   public java.security.cert.Certificate[] engineGetCertificateChain(String alias) {
     try {
-      return delegate.getCertificateChain(alias);
+      return getDelegate().getCertificateChain(alias);
     }
     catch (KeyStoreException e) {
       throw new IllegalStateException(e);
@@ -62,7 +83,7 @@ public class DelegateKeyStore extends KeyStoreSpi {
   @Override
   public java.security.cert.Certificate engineGetCertificate(String alias) {
     try {
-      return delegate.getCertificate(alias);
+      return getDelegate().getCertificate(alias);
     }
     catch (KeyStoreException e) {
       throw new IllegalStateException(e);
@@ -72,7 +93,7 @@ public class DelegateKeyStore extends KeyStoreSpi {
   @Override
   public Date engineGetCreationDate(String alias) {
     try {
-      return delegate.getCreationDate(alias);
+      return getDelegate().getCreationDate(alias);
     }
     catch (KeyStoreException e) {
       throw new IllegalStateException(e);
@@ -81,28 +102,28 @@ public class DelegateKeyStore extends KeyStoreSpi {
 
   @Override
   public void engineSetKeyEntry(String alias, Key key, char[] password, java.security.cert.Certificate[] chain) throws KeyStoreException {
-    delegate.setKeyEntry(alias, key, password, chain);
+    getDelegate().setKeyEntry(alias, key, password, chain);
   }
 
   @Override
   public void engineSetKeyEntry(String alias, byte[] key, java.security.cert.Certificate[] chain) throws KeyStoreException {
-    delegate.setKeyEntry(alias, key, chain);
+    getDelegate().setKeyEntry(alias, key, chain);
   }
 
   @Override
   public void engineSetCertificateEntry(String alias, java.security.cert.Certificate cert) throws KeyStoreException {
-    delegate.setCertificateEntry(alias, cert);
+    getDelegate().setCertificateEntry(alias, cert);
   }
 
   @Override
   public void engineDeleteEntry(String alias) throws KeyStoreException {
-    delegate.deleteEntry(alias);
+    getDelegate().deleteEntry(alias);
   }
 
   @Override
   public Enumeration<String> engineAliases() {
     try {
-      return delegate.aliases();
+      return getDelegate().aliases();
     }
     catch (KeyStoreException e) {
       throw new IllegalStateException(e);
@@ -112,7 +133,7 @@ public class DelegateKeyStore extends KeyStoreSpi {
   @Override
   public boolean engineContainsAlias(String alias) {
     try {
-      return delegate.containsAlias(alias);
+      return getDelegate().containsAlias(alias);
     }
     catch (KeyStoreException e) {
       throw new IllegalStateException(e);
@@ -122,7 +143,7 @@ public class DelegateKeyStore extends KeyStoreSpi {
   @Override
   public int engineSize() {
     try {
-      return delegate.size();
+      return getDelegate().size();
     }
     catch (KeyStoreException e) {
       throw new IllegalStateException(e);
@@ -132,7 +153,7 @@ public class DelegateKeyStore extends KeyStoreSpi {
   @Override
   public boolean engineIsKeyEntry(String alias) {
     try {
-      return delegate.isKeyEntry(alias);
+      return getDelegate().isKeyEntry(alias);
     }
     catch (KeyStoreException e) {
       throw new IllegalStateException(e);
@@ -142,7 +163,7 @@ public class DelegateKeyStore extends KeyStoreSpi {
   @Override
   public boolean engineIsCertificateEntry(String alias) {
     try {
-      return delegate.isCertificateEntry(alias);
+      return getDelegate().isCertificateEntry(alias);
     }
     catch (KeyStoreException e) {
       throw new IllegalStateException(e);
@@ -152,7 +173,7 @@ public class DelegateKeyStore extends KeyStoreSpi {
   @Override
   public String engineGetCertificateAlias(Certificate cert) {
     try {
-      return delegate.getCertificateAlias(cert);
+      return getDelegate().getCertificateAlias(cert);
     }
     catch (KeyStoreException e) {
       throw new IllegalStateException(e);
@@ -162,7 +183,7 @@ public class DelegateKeyStore extends KeyStoreSpi {
   @Override
   public void engineStore(OutputStream stream, char[] password) throws IOException, NoSuchAlgorithmException, CertificateException {
     try {
-      delegate.store(stream, password);
+      getDelegate().store(stream, password);
     }
     catch (KeyStoreException e) {
       throw new IllegalStateException(e);
@@ -172,5 +193,18 @@ public class DelegateKeyStore extends KeyStoreSpi {
   @Override
   public void engineLoad(InputStream stream, char[] password) throws IOException, NoSuchAlgorithmException, CertificateException {
     delegate.load(stream, password);
+  }
+
+
+  @Nullable
+  protected static KeyStore loadKeyStore(@NotNull String path, char[] password)
+    throws KeyStoreException, IOException, NoSuchAlgorithmException, CertificateException {
+    File file = new File(path);
+    if (!file.exists()) return null;
+    KeyStore tmpStore = KeyStore.getInstance(KeyStore.getDefaultType());
+    try (InputStream stream = new FileInputStream(file)) {
+      tmpStore.load(stream, password);
+    }
+    return tmpStore;
   }
 }

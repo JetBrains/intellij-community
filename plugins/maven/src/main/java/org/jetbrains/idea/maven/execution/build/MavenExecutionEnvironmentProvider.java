@@ -10,7 +10,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * @author ibessonov
+ * Extension point allows to delegate execution of any Run Configuration to maven exec goal.
+ * Usage on execute maven goal. {@link MavenProjectTaskRunner}
  */
 public interface MavenExecutionEnvironmentProvider {
 
@@ -20,7 +21,8 @@ public interface MavenExecutionEnvironmentProvider {
   boolean isApplicable(@NotNull ExecuteRunConfigurationTask task);
 
   @Nullable
-  ExecutionEnvironment createExecutionEnvironment(@NotNull Project project, @NotNull ExecuteRunConfigurationTask task,
+  ExecutionEnvironment createExecutionEnvironment(@NotNull Project project,
+                                                  @NotNull ExecuteRunConfigurationTask task,
                                                   @Nullable Executor executor);
 }
 

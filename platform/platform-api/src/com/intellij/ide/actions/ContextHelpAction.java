@@ -1,70 +1,59 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions;
 
 import com.intellij.CommonBundle;
 import com.intellij.icons.AllIcons;
-import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.application.ApplicationInfo;
+import com.intellij.openapi.actionSystem.ActionPlaces;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
+import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification;
 import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.project.DumbAware;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class ContextHelpAction extends AnAction implements DumbAware {
+public class ContextHelpAction extends AnAction implements DumbAware, ActionRemoteBehaviorSpecification.Frontend {
   private final String myHelpID;
 
   public ContextHelpAction() {
     this(null);
   }
 
-  public ContextHelpAction(@NonNls @Nullable String helpID) {
+  public ContextHelpAction(@Nullable String helpID) {
     myHelpID = helpID;
   }
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
-    DataContext dataContext = e.getDataContext();
-    final String helpId = getHelpId(dataContext);
+    var dataContext = e.getDataContext();
+    var helpId = getHelpId(dataContext);
     if (helpId != null) {
       HelpManager.getInstance().invokeHelp(helpId);
     }
   }
 
-  @Nullable
-  protected String getHelpId(DataContext dataContext) {
-    return myHelpID != null ? myHelpID : PlatformDataKeys.HELP_ID.getData(dataContext);
+  protected @Nullable String getHelpId(DataContext dataContext) {
+    return myHelpID != null ? myHelpID : PlatformCoreDataKeys.HELP_ID.getData(dataContext);
   }
 
   @Override
   public void update(@NotNull AnActionEvent event){
-    Presentation presentation = event.getPresentation();
-    if (!ApplicationInfo.contextHelpAvailable()) {
-      presentation.setVisible(false);
-      return;
-    }
-
+    var presentation = event.getPresentation();
     if (ActionPlaces.isMainMenuOrActionSearch(event.getPlace())) {
-      DataContext dataContext = event.getDataContext();
+      var dataContext = event.getDataContext();
       presentation.setEnabled(getHelpId(dataContext) != null);
     }
     else {
       presentation.setIcon(AllIcons.Actions.Help);
       presentation.setText(CommonBundle.getHelpButtonText());
     }
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.EDT;
   }
 }

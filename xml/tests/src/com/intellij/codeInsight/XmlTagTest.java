@@ -25,11 +25,20 @@ import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VfsUtil;
-import com.intellij.openapi.vfs.VirtualFileManager;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiFileFactory;
+import com.intellij.psi.PsiLanguageInjectionHost;
+import com.intellij.psi.XmlElementFactory;
 import com.intellij.psi.codeStyle.CodeStyleManager;
-import com.intellij.psi.xml.*;
+import com.intellij.psi.xml.XmlAttribute;
+import com.intellij.psi.xml.XmlFile;
+import com.intellij.psi.xml.XmlTag;
+import com.intellij.psi.xml.XmlTagChild;
+import com.intellij.psi.xml.XmlText;
 import com.intellij.testFramework.LightJavaCodeInsightTestCase;
+import com.intellij.testFramework.VfsTestUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.LocalTimeCounter;
@@ -39,9 +48,6 @@ import java.io.File;
 import java.net.MalformedURLException;
 import java.util.Arrays;
 
-/**
- * @author peter
- */
 @SuppressWarnings({"ConstantConditions", "EmptyCatchBlock"})
 public class XmlTagTest extends LightJavaCodeInsightTestCase {
   private XmlTag createTag(String value) throws IncorrectOperationException {
@@ -751,7 +757,7 @@ public class XmlTagTest extends LightJavaCodeInsightTestCase {
     FileUtil.writeToFile(tempFile, text);
 
     ApplicationManager.getApplication().runWriteAction(() -> CommandProcessor.getInstance().executeCommand(getProject(), () -> {
-      VirtualFileManager.getInstance().syncRefresh();
+      VfsTestUtil.syncRefresh();
       XmlFile file ;//createTemporaryFile("wpd.xml", text));
       try {
         file = (XmlFile)getPsiManager().findFile(VfsUtil.findFileByURL(tempFile.toURL()));

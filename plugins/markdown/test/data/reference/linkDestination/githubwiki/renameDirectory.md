@@ -1,0 +1,1 @@
+[link](https://github.com/any_username/any_repository/wiki/topDir/innerDir/stub_in_inner_dir.md)

@@ -1,6 +1,6 @@
 import java.util.Objects;
 
-// "Convert record to class" "true"
+// "Convert record to class" "true-preview"
 final class Rec {
     private final int x;
     private final int y;

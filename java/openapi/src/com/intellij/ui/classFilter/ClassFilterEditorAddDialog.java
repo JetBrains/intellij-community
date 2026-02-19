@@ -1,21 +1,7 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 /*
- * @author: Eugene Zhuravlev
+ * @author Eugene Zhuravlev
  */
 package com.intellij.ui.classFilter;
 
@@ -26,20 +12,28 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiManager;
 import com.intellij.psi.search.GlobalSearchScope;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JTextField;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
+import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
 class ClassFilterEditorAddDialog extends DialogWrapper {
   private final Project myProject;
   private TextFieldWithBrowseButton myClassName;
-  @Nullable
-  private final String myHelpId;
+  private final @Nullable String myHelpId;
 
   ClassFilterEditorAddDialog(Project project, @Nullable String helpId) {
     super(project, true);
@@ -91,7 +85,7 @@ class ClassFilterEditorAddDialog extends DialogWrapper {
   private PsiClass getSelectedClass() {
     final PsiManager psiManager = PsiManager.getInstance(myProject);
     String classQName = myClassName.getText();
-    if ("".equals(classQName)) {
+    if (classQName.isEmpty()) {
       return null;
     }
     return JavaPsiFacade.getInstance(psiManager.getProject()).findClass(classQName, GlobalSearchScope.allScope(myProject));
@@ -111,8 +105,8 @@ class ClassFilterEditorAddDialog extends DialogWrapper {
     return "#com.intellij.debugger.ui.breakpoints.BreakpointsConfigurationDialogFactory.BreakpointsConfigurationDialog.AddFieldBreakpointDialog";
   }
 
-  @Override @Nullable
-  protected String getHelpId() {
+  @Override
+  protected @Nullable String getHelpId() {
     return myHelpId;
   }
 }

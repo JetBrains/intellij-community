@@ -20,24 +20,23 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * User: ktisha
- *
+ * <p>
  * QuickFix to add parameter to unresolved reference
  */
 public class UnresolvedReferenceAddParameterQuickFix implements LocalQuickFix {
   private final String myName;
+
   public UnresolvedReferenceAddParameterQuickFix(String name) {
     myName = name;
   }
 
   @Override
-  @NotNull
-  public String getName() {
+  public @NotNull String getName() {
     return PyPsiBundle.message("QFIX.unresolved.reference.add.param", myName);
   }
 
   @Override
-  @NotNull
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return PyPsiBundle.message("QFIX.NAME.unresolved.reference.add.param");
   }
 

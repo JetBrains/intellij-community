@@ -3,8 +3,7 @@ class C {
     void foo(int n) {
         switch (n) {
             // comment
-            case 1:
-            case 2:
+            case 1, 2:
                 bar("A");
                 break;
         }

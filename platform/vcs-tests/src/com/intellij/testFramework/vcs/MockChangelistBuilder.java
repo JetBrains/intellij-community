@@ -1,22 +1,26 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.testFramework.vcs;
 
 import com.intellij.openapi.util.Factory;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsKey;
-import com.intellij.openapi.vcs.changes.*;
+import com.intellij.openapi.vcs.changes.Change;
+import com.intellij.openapi.vcs.changes.ChangeList;
+import com.intellij.openapi.vcs.changes.ChangelistBuilder;
+import com.intellij.openapi.vcs.changes.ChangesUtil;
+import com.intellij.openapi.vcs.changes.LocallyDeletedChange;
+import com.intellij.openapi.vcs.changes.LogicalLock;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
-/**
- * @author yole
- */
+
 public class MockChangelistBuilder implements ChangelistBuilder {
   private final List<Change> myChanges = new ArrayList<>();
   private final List<FilePath> myUnversionedFiles = new ArrayList<>();
@@ -25,17 +29,17 @@ public class MockChangelistBuilder implements ChangelistBuilder {
   private final List<FilePath> myIgnoredFiles = new ArrayList<>();
 
   @Override
-  public void processChange(Change change, VcsKey vcsKey) {
+  public void processChange(@NotNull Change change, VcsKey vcsKey) {
     myChanges.add(change);
   }
 
   @Override
-  public void processChangeInList(Change change, @Nullable ChangeList changeList, VcsKey vcsKey) {
+  public void processChangeInList(@NotNull Change change, @Nullable ChangeList changeList, VcsKey vcsKey) {
     myChanges.add(change);
   }
 
   @Override
-  public void processChangeInList(Change change, String changeListName, VcsKey vcsKey) {
+  public void processChangeInList(@NotNull Change change, String changeListName, VcsKey vcsKey) {
     myChanges.add(change);
   }
 

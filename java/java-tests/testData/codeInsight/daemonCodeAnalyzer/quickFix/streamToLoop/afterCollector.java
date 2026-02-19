@@ -77,7 +77,7 @@ public class Main {
 
   static Integer testReducing3() {
       Integer totalLength = 0;
-      for (String s : Arrays.asList("a", "bb", "ccc")) {
+      for (String s : asList("a", "bb", "ccc")) {
           Integer length = s.length();
           totalLength = totalLength + length;
       }
@@ -115,7 +115,7 @@ public class Main {
 
   // Unresolved reference
   void f(Collection<? extends Foo> c) {
-      R treeSet = new TreeSet();
+      TreeSet treeSet = new TreeSet();
       for (Foo foo : c) {
           treeSet.add(foo);
       }

@@ -6,6 +6,6 @@ interface I<T> {
 class C implements I<String> {
     @Override
     public String foo(String x) {
-        <selection>return null;</selection>
+        <selection>return "";</selection>
     }
 }

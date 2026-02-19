@@ -1,15 +1,14 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide;
 
-import com.intellij.analysis.AnalysisScope;
 import com.intellij.ide.impl.PatchProjectUtil;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.nio.file.Path;
 import java.util.function.Predicate;
@@ -17,8 +16,15 @@ import java.util.function.Predicate;
 /**
  * Extension point that helps prepare project for opening in headless or automated environments.
  * Implementation must be stateless.
- * @author yole
+ * Consider using {@link com.intellij.platform.backend.observation.ActivityTracker}
+ *
+ * This interface is obsolete and is not going to be maintained.
+ * Its primary use is in the script `inspect.sh`, where it is used to prepare project for inspections.
+ * We provide an additional method {@link CommandLineInspectionProjectConfigurator#shouldBeInvokedAlongsideActivityTracking()}
+ * that enables a configurator to run before the tracker-based configuration process. If you need time to migrate from configurators,
+ * you may temporarily enable your configurator.
  */
+@ApiStatus.Obsolete(since = "2024.1")
 public interface CommandLineInspectionProjectConfigurator {
   ExtensionPointName<CommandLineInspectionProjectConfigurator> EP_NAME = ExtensionPointName.create("com.intellij.commandLineInspectionProjectConfigurator");
 
@@ -53,15 +59,6 @@ public interface CommandLineInspectionProjectConfigurator {
         return path != null && filesPredicate.test(path);
       };
     }
-
-    /**
-     * Allows to grab additional information from the context about the current inspections running,
-     * if available
-     */
-    @Nullable
-    default AnalysisScope getAnalyzerScope() {
-      return null;
-    }
   }
 
   /**
@@ -78,7 +75,16 @@ public interface CommandLineInspectionProjectConfigurator {
   String getDescription();
 
   /**
-   * @returns true if any additional configuration is required to inspect the project at the given path.
+   * Makes this configurator available for running with activity trackers.
+   * It is preferable that this method returns {@code false}, which would mean that the logic here would not be invoked
+   * during configuration process.
+   */
+  default boolean shouldBeInvokedAlongsideActivityTracking() {
+    return false;
+  }
+
+  /**
+   * @return true if any additional configuration is required to inspect the project at the given path.
    */
   default boolean isApplicable(@NotNull ConfiguratorContext context) {
     return true;
@@ -92,7 +98,14 @@ public interface CommandLineInspectionProjectConfigurator {
   }
 
   /**
-   * This method is for {@link #isApplicable(ConfiguratorContext)} inspections
+   * This method is for {@link #isApplicable(ConfiguratorContext)} extensions
+   * after project is opened.
+   */
+  default void preConfigureProject(@NotNull Project project, @NotNull ConfiguratorContext context) {
+
+  }
+  /**
+   * This method is for {@link #isApplicable(ConfiguratorContext)} extensions
    * after project is opened.
    */
   default void configureProject(@NotNull Project project,

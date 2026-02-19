@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.tree.java;
 
 import com.intellij.lang.ASTNode;
@@ -7,9 +7,26 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.Ref;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaElementVisitor;
+import com.intellij.psi.JavaTokenType;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiCodeBlock;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.PsiJavaToken;
+import com.intellij.psi.PsiLocalVariable;
+import com.intellij.psi.PsiPatternVariable;
+import com.intellij.psi.PsiStatement;
+import com.intellij.psi.PsiSwitchBlock;
+import com.intellij.psi.PsiSwitchLabelStatementBase;
+import com.intellij.psi.PsiVariable;
+import com.intellij.psi.ResolveState;
 import com.intellij.psi.impl.PsiImplUtil;
-import com.intellij.psi.impl.source.tree.*;
+import com.intellij.psi.impl.source.tree.ChildRole;
+import com.intellij.psi.impl.source.tree.JavaElementType;
+import com.intellij.psi.impl.source.tree.LazyParseablePsiElement;
+import com.intellij.psi.impl.source.tree.TreeElement;
+import com.intellij.psi.impl.source.tree.TreeUtil;
 import com.intellij.psi.scope.ElementClassHint;
 import com.intellij.psi.scope.NameHint;
 import com.intellij.psi.scope.PatternResolveState;
@@ -17,14 +34,14 @@ import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.scope.util.PsiScopesUtil;
 import com.intellij.psi.tree.ChildRoleBase;
 import com.intellij.psi.tree.IElementType;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.Set;
 
-public class PsiCodeBlockImpl extends LazyParseablePsiElement implements PsiCodeBlock {
+public final class PsiCodeBlockImpl extends LazyParseablePsiElement implements PsiCodeBlock {
   private static final Logger LOG = Logger.getInstance(PsiCodeBlockImpl.class);
 
   public PsiCodeBlockImpl(CharSequence text) {
@@ -101,14 +118,13 @@ public class PsiCodeBlockImpl extends LazyParseablePsiElement implements PsiCode
   private volatile boolean myConflict;
 
   // return Pair(classes, locals) or null if there was conflict
-  @Nullable
-  private Couple<Set<String>> buildMaps() {
+  private @Nullable Couple<Set<String>> buildMaps() {
     Set<String> set1 = myClassesSet;
     Set<String> set2 = myVariablesSet;
     boolean wasConflict = myConflict;
     if (set1 == null || set2 == null) {
-      final Set<String> localsSet = new THashSet<>();
-      final Set<String> classesSet = new THashSet<>();
+      final Set<String> localsSet = new HashSet<>();
+      final Set<String> classesSet = new HashSet<>();
       final Ref<Boolean> conflict = new Ref<>(Boolean.FALSE);
       PsiScopesUtil.walkChildrenScopes(this, new PsiScopeProcessor() {
         @Override
@@ -180,14 +196,14 @@ public class PsiCodeBlockImpl extends LazyParseablePsiElement implements PsiCode
   public ASTNode findChildByRole(int role) {
     LOG.assertTrue(ChildRole.isUnique(role));
     switch(role){
-      default:
-        return null;
-
       case ChildRole.LBRACE:
         return findChildByType(JavaTokenType.LBRACE);
 
       case ChildRole.RBRACE:
         return TreeUtil.findChildBackward(this, JavaTokenType.RBRACE);
+
+      default:
+        return null;
     }
   }
 
@@ -264,7 +280,7 @@ public class PsiCodeBlockImpl extends LazyParseablePsiElement implements PsiCode
     }
 
     if (child == null) {
-      child = ((PsiElement)this).getLastChild();
+      child = this.getLastChild();
     }
 
     while (child != null) {
@@ -275,11 +291,5 @@ public class PsiCodeBlockImpl extends LazyParseablePsiElement implements PsiCode
       child = child.getPrevSibling();
     }
     return true;
-  }
-
-  @Override
-  public boolean shouldChangeModificationCount(PsiElement place) {
-    PsiElement parent = getParent();
-    return !(parent instanceof PsiMethod || parent instanceof PsiClassInitializer);
   }
 }

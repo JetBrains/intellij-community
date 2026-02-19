@@ -15,13 +15,12 @@
  */
 package org.jetbrains.plugins.groovy.codeInspection.threading;
 
-import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiLiteralExpression;
 import com.intellij.psi.PsiModifier;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspection;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspectionVisitor;
@@ -35,29 +34,27 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrRefere
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrUnaryExpression;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
-import javax.swing.*;
+import static com.intellij.codeInspection.options.OptPane.checkbox;
+import static com.intellij.codeInspection.options.OptPane.pane;
 
-public class GroovyWhileLoopSpinsOnFieldInspection extends BaseInspection {
+public final class GroovyWhileLoopSpinsOnFieldInspection extends BaseInspection {
 
   @SuppressWarnings({"PublicField", "WeakerAccess"})
   public boolean ignoreNonEmtpyLoops = false;
 
   @Override
-  @NotNull
-  protected String buildErrorString(Object... infos) {
+  protected @NotNull String buildErrorString(Object... infos) {
     return GroovyBundle.message("inspection.message.ref.loop.spins.on.field");
   }
 
   @Override
-  @Nullable
-  public JComponent createOptionsPanel() {
-    return new SingleCheckboxOptionsPanel(GroovyBundle.message("checkbox.only.warn.if.loop.empty"),
-                                          this, "ignoreNonEmtpyLoops");
+  public @NotNull OptPane getGroovyOptionsPane() {
+    return pane(
+      checkbox("ignoreNonEmtpyLoops", GroovyBundle.message("checkbox.only.warn.if.loop.empty")));
   }
 
-  @NotNull
   @Override
-  public BaseInspectionVisitor buildVisitor() {
+  public @NotNull BaseInspectionVisitor buildVisitor() {
     return new WhileLoopSpinsOnFieldVisitor();
   }
 
@@ -87,22 +84,17 @@ public class GroovyWhileLoopSpinsOnFieldInspection extends BaseInspection {
         return true;
       }
 
-      if (condition instanceof GrUnaryExpression && ((GrUnaryExpression)condition).isPostfix()) {
-        final GrUnaryExpression postfixExpression = (GrUnaryExpression) condition;
+      if (condition instanceof GrUnaryExpression postfixExpression && postfixExpression.isPostfix()) {
         final GrExpression operand =
             postfixExpression.getOperand();
         return isSimpleFieldComparison(operand);
       }
-      if (condition instanceof GrUnaryExpression) {
-        final GrUnaryExpression unaryExpression =
-            (GrUnaryExpression) condition;
+      if (condition instanceof GrUnaryExpression unaryExpression) {
         final GrExpression operand =
             unaryExpression.getOperand();
         return isSimpleFieldComparison(operand);
       }
-      if (condition instanceof GrBinaryExpression) {
-        final GrBinaryExpression binaryExpression =
-            (GrBinaryExpression) condition;
+      if (condition instanceof GrBinaryExpression binaryExpression) {
         final GrExpression lOperand = binaryExpression.getLeftOperand();
         final GrExpression rOperand = binaryExpression.getRightOperand();
         if (isLiteral(rOperand)) {
@@ -116,7 +108,7 @@ public class GroovyWhileLoopSpinsOnFieldInspection extends BaseInspection {
       return false;
     }
 
-    private boolean isLiteral(GrExpression expression) {
+    private static boolean isLiteral(GrExpression expression) {
       expression = (GrExpression)PsiUtil.skipParentheses(expression, false);
       if (expression == null) {
         return false;
@@ -124,36 +116,31 @@ public class GroovyWhileLoopSpinsOnFieldInspection extends BaseInspection {
       return expression instanceof PsiLiteralExpression;
     }
 
-    private boolean isSimpleFieldAccess(GrExpression expression) {
+    private static boolean isSimpleFieldAccess(GrExpression expression) {
       expression = (GrExpression)PsiUtil.skipParentheses(expression, false);
       if (expression == null) {
         return false;
       }
-      if (!(expression instanceof GrReferenceExpression)) {
+      if (!(expression instanceof GrReferenceExpression reference)) {
         return false;
       }
-      final GrReferenceExpression reference =
-          (GrReferenceExpression) expression;
       final GrExpression qualifierExpression =
           reference.getQualifierExpression();
       if (qualifierExpression != null) {
         return false;
       }
       final PsiElement referent = reference.resolve();
-      if (!(referent instanceof PsiField)) {
+      if (!(referent instanceof PsiField field)) {
         return false;
       }
-      final PsiField field = (PsiField) referent;
       return !field.hasModifierProperty(PsiModifier.VOLATILE);
     }
 
-    private boolean statementIsEmpty(GrStatement statement) {
+    private static boolean statementIsEmpty(GrStatement statement) {
       if (statement == null) {
         return false;
       }
-      if (statement instanceof GrBlockStatement) {
-        final GrBlockStatement blockStatement =
-            (GrBlockStatement) statement;
+      if (statement instanceof GrBlockStatement blockStatement) {
         final GrOpenBlock codeBlock = blockStatement.getBlock();
         final GrStatement[] codeBlockStatements = codeBlock.getStatements();
         for (GrStatement codeBlockStatement : codeBlockStatements) {

@@ -1,14 +1,19 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.util;
 
 import com.intellij.openapi.components.BaseComponent;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.module.ModuleComponent;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiClassType;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiParameter;
+import com.intellij.psi.PsiType;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.psi.xml.XmlTagValue;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.PsiNavigateUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.PropertyKey;
@@ -16,7 +21,7 @@ import org.jetbrains.idea.devkit.DevKitBundle;
 import org.jetbrains.idea.devkit.dom.IdeaPlugin;
 
 public enum ComponentType {
-  @SuppressWarnings("deprecation")
+
   MODULE(ModuleComponent.class, "module-components", "new.menu.module.component.text"),
   @SuppressWarnings("deprecation")
   PROJECT(ProjectComponent.class, "project-components", "new.menu.project.component.text"),
@@ -24,8 +29,7 @@ public enum ComponentType {
   APPLICATION(BaseComponent.class, "application-components", "new.menu.application.component.text");
 
   public final String myClassName;
-  @PropertyKey(resourceBundle = DevKitBundle.BUNDLE)
-  public final String myPropertyKey;
+  public final @PropertyKey(resourceBundle = DevKitBundle.BUNDLE) String myPropertyKey;
   private final String myName;
 
   public interface Processor {
@@ -63,6 +67,8 @@ public enum ComponentType {
           }
         }
       }
+
+      PsiNavigateUtil.navigate(cmp);
     }
   }
 

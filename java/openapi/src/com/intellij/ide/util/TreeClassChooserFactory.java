@@ -1,21 +1,7 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.util;
 
-import com.intellij.openapi.components.ServiceManager;
+import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
@@ -26,82 +12,68 @@ import com.intellij.psi.search.GlobalSearchScope;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Comparator;
+
 public abstract class TreeClassChooserFactory {
 
   public static TreeClassChooserFactory getInstance(Project project) {
-    return ServiceManager.getService(project, TreeClassChooserFactory.class);
+    return project.getService(TreeClassChooserFactory.class);
   }
 
 
-  @NotNull
-  public abstract TreeClassChooser createWithInnerClassesScopeChooser(@NlsContexts.DialogTitle String title,
-                                                                      GlobalSearchScope scope,
-                                                                      final ClassFilter classFilter,
-                                                                      @Nullable PsiClass initialClass);
+  public abstract @NotNull TreeClassChooser createWithInnerClassesScopeChooser(@NlsContexts.DialogTitle String title,
+                                                                               GlobalSearchScope scope,
+                                                                               final ClassFilter classFilter,
+                                                                               @Nullable PsiClass initialClass);
 
 
-  @NotNull
-  public abstract TreeClassChooser createNoInnerClassesScopeChooser(@NlsContexts.DialogTitle String title,
-                                                                    GlobalSearchScope scope,
-                                                                    ClassFilter classFilter,
-                                                                    @Nullable PsiClass initialClass);
+  public abstract @NotNull TreeClassChooser createNoInnerClassesScopeChooser(@NlsContexts.DialogTitle String title,
+                                                                             GlobalSearchScope scope,
+                                                                             ClassFilter classFilter,
+                                                                             @Nullable PsiClass initialClass);
 
 
-  @NotNull
-  public abstract TreeClassChooser createProjectScopeChooser(@NlsContexts.DialogTitle String title, @Nullable PsiClass initialClass);
+  public abstract @NotNull TreeClassChooser createProjectScopeChooser(@NlsContexts.DialogTitle String title, @Nullable PsiClass initialClass);
 
 
-  @NotNull
-  public abstract TreeClassChooser createProjectScopeChooser(@NlsContexts.DialogTitle String title);
+  public abstract @NotNull TreeClassChooser createProjectScopeChooser(@NlsContexts.DialogTitle String title);
 
 
-  @NotNull
-  public abstract TreeClassChooser createAllProjectScopeChooser(@NlsContexts.DialogTitle String title);
+  public abstract @NotNull TreeClassChooser createAllProjectScopeChooser(@NlsContexts.DialogTitle String title);
 
 
-  @NotNull
-  public abstract TreeClassChooser createInheritanceClassChooser(@NlsContexts.DialogTitle String title,
-                                                                 GlobalSearchScope scope,
-                                                                 PsiClass base,
-                                                                 boolean acceptsSelf,
-                                                                 boolean acceptInner,
-                                                                 @Nullable
+  public abstract @NotNull TreeClassChooser createInheritanceClassChooser(@NlsContexts.DialogTitle String title,
+                                                                          GlobalSearchScope scope,
+                                                                          PsiClass base,
+                                                                          boolean acceptsSelf,
+                                                                          boolean acceptInner,
+                                                                          @Nullable
                                                                  Condition<? super PsiClass> additionalCondition);
 
-  @NotNull
-  public abstract TreeClassChooser createInheritanceClassChooser(@NlsContexts.DialogTitle String title,
-                                                                 GlobalSearchScope scope,
-                                                                 PsiClass base,
-                                                                 PsiClass initialClass);
+  public abstract @NotNull TreeClassChooser createInheritanceClassChooser(@NlsContexts.DialogTitle String title,
+                                                                          GlobalSearchScope scope,
+                                                                          PsiClass base,
+                                                                          PsiClass initialClass);
 
-  @NotNull
-  public abstract TreeClassChooser createInheritanceClassChooser(@NlsContexts.DialogTitle String title,
-                                                                 GlobalSearchScope scope,
-                                                                 PsiClass base,
-                                                                 PsiClass initialClass,
-                                                                 ClassFilter classFilter);
+  public abstract @NotNull TreeClassChooser createInheritanceClassChooser(@NlsContexts.DialogTitle String title,
+                                                                          GlobalSearchScope scope,
+                                                                          PsiClass base,
+                                                                          PsiClass initialClass,
+                                                                          ClassFilter classFilter);
 
+  public abstract @NotNull TreeClassChooser createInheritanceClassChooser(@NlsContexts.DialogTitle String title,
+                                                                          GlobalSearchScope scope,
+                                                                          PsiClass base,
+                                                                          PsiClass initialClass,
+                                                                          ClassFilter classFilter,
+                                                                          @Nullable Comparator<? super NodeDescriptor<?>> comparator);
 
-  @NotNull
-  public abstract TreeFileChooser createFileChooser(@NotNull @NlsContexts.DialogTitle String title,
+  /**
+   * @deprecated Use {@link TreeFileChooserFactory#createFileChooser(String, PsiFile, FileType, TreeFileChooser.PsiFileFilter)}
+   */
+  @Deprecated
+  public abstract @NotNull TreeFileChooser createFileChooser(@NotNull @NlsContexts.DialogTitle String title,
                                                     @Nullable PsiFile initialFile,
                                                     @Nullable FileType fileType,
                                                     @Nullable TreeFileChooser.PsiFileFilter filter);
-
-
-  @NotNull
-  public abstract TreeFileChooser createFileChooser(@NotNull @NlsContexts.DialogTitle String title,
-                                                    @Nullable PsiFile initialFile,
-                                                    @Nullable FileType fileType,
-                                                    @Nullable TreeFileChooser.PsiFileFilter filter,
-                                                    boolean disableStructureProviders);
-
-
-  @NotNull
-  public abstract TreeFileChooser createFileChooser(@NotNull @NlsContexts.DialogTitle String title,
-                                                    @Nullable PsiFile initialFile,
-                                                    @Nullable FileType fileType,
-                                                    @Nullable TreeFileChooser.PsiFileFilter filter,
-                                                    boolean disableStructureProviders,
-                                                    boolean showLibraryContents);
 }

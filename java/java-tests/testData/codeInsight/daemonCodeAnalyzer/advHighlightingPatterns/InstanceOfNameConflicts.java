@@ -22,6 +22,11 @@ class X {
     boolean b6 = !(o1 instanceof String s1) ? o2 instanceof String s : o3 instanceof String <error descr="Variable 's' is already defined in the scope">s</error>;
   }
   
+  void ternary2(Object o) {
+    boolean b1 = (o instanceof String a) ? false : (o instanceof String <error descr="Variable 'a' is already defined in the scope">a</error>);
+    boolean b2 = (o instanceof String a) ? false : ((o instanceof String a) ? false : true);
+  }
+  
   void ifElse(Object o1, Object o2) {
     if (o1 instanceof String s) {
       if (o2 instanceof String <error descr="Variable 's' is already defined in the scope">s</error>) {

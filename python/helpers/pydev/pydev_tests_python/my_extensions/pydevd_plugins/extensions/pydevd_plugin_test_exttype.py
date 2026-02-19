@@ -13,7 +13,7 @@ class RectResolver(TypeResolveProvider):
 
 
 class RectToString(StrPresentationProvider):
-    def get_str(self, val):
+    def get_str(self, val, do_trim=True):
         return "Rectangle[Length: %s, Width: %s , Area: %s]" % (val.length, val.width, val.length * val.width)
 
     def can_provide(self, type_object, type_name):

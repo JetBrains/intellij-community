@@ -1,0 +1,19 @@
+// WITH_STDLIB
+// PROBLEM: none
+
+data class A(val <caret>a: IntArray) {
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (javaClass != other?.javaClass) return false
+
+        other as A
+
+        if (!a.contentEquals(other.a)) return false
+
+        return true
+    }
+
+    override fun hashCode(): Int {
+        return a.contentHashCode()
+    }
+}

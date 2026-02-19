@@ -10,9 +10,13 @@ import com.intellij.psi.ResolveState
 import com.intellij.psi.scope.PsiScopeProcessor
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase
-import org.jetbrains.plugins.groovy.lang.resolve.*
+import org.jetbrains.plugins.groovy.lang.resolve.checkName
 import org.jetbrains.plugins.groovy.lang.resolve.imports.impl.resolve
+import org.jetbrains.plugins.groovy.lang.resolve.isNonAnnotationResolve
+import org.jetbrains.plugins.groovy.lang.resolve.processClassesInFile
+import org.jetbrains.plugins.groovy.lang.resolve.processClassesInPackage
 import org.jetbrains.plugins.groovy.lang.resolve.processors.ClassProcessor
+import org.jetbrains.plugins.groovy.lang.resolve.shouldProcessClasses
 
 /**
  * Represents regular import, possibly aliased.

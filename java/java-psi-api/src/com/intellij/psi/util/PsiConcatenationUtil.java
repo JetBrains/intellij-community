@@ -1,8 +1,22 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.util;
 
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementFactory;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiExpressionList;
+import com.intellij.psi.PsiJavaCodeReferenceElement;
+import com.intellij.psi.PsiLiteralExpression;
+import com.intellij.psi.PsiNewExpression;
+import com.intellij.psi.PsiParenthesizedExpression;
+import com.intellij.psi.PsiPolyadicExpression;
+import com.intellij.psi.PsiPrimitiveType;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypeCastExpression;
+import com.intellij.psi.PsiTypes;
+import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
@@ -26,19 +40,6 @@ public final class PsiConcatenationUtil {
   }
 
   // externally used
-
-  /**
-   * @deprecated use {@code buildUnescapedFormatString} instead and use either
-   * {@link StringUtil#escapeStringCharacters(String)}
-   * or
-   * {@link PsiLiteralUtil#escapeTextBlockCharacters(String)}
-   * to escape the resulting string.
-   */
-  @Deprecated
-  public static void buildFormatString(PsiExpression expression, StringBuilder formatString,
-                                       List<? super PsiExpression> formatParameters, boolean printfFormat) {
-    buildFormatString(expression, formatString, formatParameters, printfFormat, true);
-  }
 
   private static void buildFormatString(PsiExpression expression, StringBuilder formatString,
                                        List<? super PsiExpression> formatParameters, boolean printfFormat, boolean escape) {
@@ -75,7 +76,7 @@ public final class PsiConcatenationUtil {
             addFormatParameter(subExpression, formatString, formatParameters, printfFormat);
           }
           if (stringStarted) {
-            if (optype != null && (optype.equalsToText(JAVA_LANG_STRING) || PsiType.CHAR.equals(optype))) {
+            if (optype != null && (optype.equalsToText(JAVA_LANG_STRING) || PsiTypes.charType().equals(optype))) {
               buildFormatString(op, formatString, formatParameters, printfFormat, escape);
             }
             else {
@@ -94,8 +95,7 @@ public final class PsiConcatenationUtil {
     }
   }
 
-  @NotNull
-  public static String formatString(String text, boolean printfFormat) {
+  public static @NotNull String formatString(String text, boolean printfFormat) {
     if (printfFormat) {
       return text.replace("%", "%%").replace("\\'", "'");
     }
@@ -130,7 +130,7 @@ public final class PsiConcatenationUtil {
       return arg;
     }
     final PsiType type = arg.getType();
-    if (!(type instanceof PsiPrimitiveType) || type.equals(PsiType.NULL)) {
+    if (!(type instanceof PsiPrimitiveType) || type.equals(PsiTypes.nullType())) {
       return arg;
     }
     final PsiPrimitiveType primitiveType = (PsiPrimitiveType)type;
@@ -151,8 +151,7 @@ public final class PsiConcatenationUtil {
     return newExpr;
   }
 
-  @Nullable
-  private static PsiExpression unwrapExpression(@NotNull PsiExpression expression) {
+  private static @Nullable PsiExpression unwrapExpression(@NotNull PsiExpression expression) {
     while (true) {
       if (expression instanceof PsiParenthesizedExpression) {
         expression = ((PsiParenthesizedExpression)expression).getExpression();

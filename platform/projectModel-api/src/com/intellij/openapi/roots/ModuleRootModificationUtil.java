@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -11,6 +11,7 @@ import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
+import com.intellij.util.EmptyConsumer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -20,6 +21,9 @@ import java.util.List;
 import java.util.function.Function;
 
 public final class ModuleRootModificationUtil {
+  private ModuleRootModificationUtil() { 
+  }
+
   public static void addContentRoot(@NotNull Module module, @NotNull String path) {
     updateModel(module, model -> model.addContentEntry(VfsUtilCore.pathToUrl(path)));
   }
@@ -59,6 +63,17 @@ public final class ModuleRootModificationUtil {
                                       @NotNull List<String> excludedRootUrls,
                                       @NotNull DependencyScope scope,
                                       boolean exported) {
+    addModuleLibrary(module, libName, classesRootUrls, sourceRootUrls, excludedRootUrls, scope, exported, EmptyConsumer.getInstance());
+  }
+
+  public static void addModuleLibrary(@NotNull Module module,
+                                      @Nullable String libName,
+                                      @NotNull List<String> classesRootUrls,
+                                      @NotNull List<String> sourceRootUrls,
+                                      @NotNull List<String> excludedRootUrls,
+                                      @NotNull DependencyScope scope,
+                                      boolean exported,
+                                      Consumer<? super LibraryEx.ModifiableModelEx> postProcessor) {
     updateModel(module, model -> {
       LibraryEx library = (LibraryEx)model.getModuleLibraryTable().createLibrary(libName);
       LibraryEx.ModifiableModelEx libraryModel = library.getModifiableModel();
@@ -78,6 +93,8 @@ public final class ModuleRootModificationUtil {
       entry.setScope(scope);
       entry.setExported(exported);
 
+      postProcessor.consume(libraryModel);
+
       ApplicationManager.getApplication().invokeAndWait(() -> WriteAction.run(libraryModel::commit));
     });
   }
@@ -92,6 +109,16 @@ public final class ModuleRootModificationUtil {
   public static void addDependency(@NotNull Module module, @NotNull Library library) {
     addDependency(module, library, DependencyScope.COMPILE, false);
   }
+  
+  public static void removeDependency(@NotNull Module module, @NotNull Library library) {
+    updateModel(module, model -> {
+      LibraryOrderEntry entry = model.findLibraryOrderEntry(library);
+      if (entry == null) {
+        throw new IllegalArgumentException("Library " + library.getName() + " is not found in dependencies of module " + module.getName());
+      }
+      model.removeOrderEntry(entry);
+    });
+  }
 
   public static void addDependency(@NotNull Module module, @NotNull Library library, @NotNull DependencyScope scope, boolean exported) {
     updateModel(module, model -> {
@@ -102,7 +129,9 @@ public final class ModuleRootModificationUtil {
   }
 
   public static void setModuleSdk(@NotNull Module module, @Nullable Sdk sdk) {
-    updateModel(module, model -> model.setSdk(sdk));
+    updateModel(module, model -> {
+      model.setSdk(sdk);
+    });
   }
 
   public static void setSdkInherited(@NotNull Module module) {
@@ -114,10 +143,15 @@ public final class ModuleRootModificationUtil {
   }
 
   public static void addDependency(@NotNull Module from, @NotNull Module to, @NotNull DependencyScope scope, boolean exported) {
+    addDependency(from, to, scope, exported, false);
+  }
+
+  public static void addDependency(@NotNull Module from, @NotNull Module to, @NotNull DependencyScope scope, boolean exported, boolean productionOnTest) {
     updateModel(from, model -> {
       ModuleOrderEntry entry = model.addModuleOrderEntry(to);
       entry.setScope(scope);
       entry.setExported(exported);
+      entry.setProductionOnTestDependency(productionOnTest);
     });
   }
 

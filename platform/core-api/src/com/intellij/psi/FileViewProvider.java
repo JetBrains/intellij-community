@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi;
 
 import com.intellij.lang.Language;
@@ -9,6 +9,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.LightVirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.List;
 import java.util.Set;
@@ -18,7 +19,7 @@ import java.util.Set;
  * <p/>
  * Custom providers are registered via {@link FileViewProviderFactory}.
  * <p/>
- * Please see <a href="https://www.jetbrains.org/intellij/sdk/docs/basics/architectural_overview/file_view_providers.html">File View Providers</a>
+ * Please see <a href="https://plugins.jetbrains.com/docs/intellij/file-view-providers.html">File View Providers</a>
  * for high-level overview.
  *
  * @see PsiFile#getViewProvider()
@@ -38,7 +39,6 @@ public interface FileViewProvider extends Cloneable, UserDataHolderEx {
    * @see PsiBinaryFile
    * @see #isEventSystemEnabled()
    */
-  @Nullable
   Document getDocument();
 
   /**
@@ -70,11 +70,12 @@ public interface FileViewProvider extends Cloneable, UserDataHolderEx {
    * @see #getPsi(Language)
    */
   @NotNull
+  @Unmodifiable
   Set<Language> getLanguages();
 
   /**
-   * Check if given language is supported.
-   * Implementations may provide more effective way to check without getting all languages.
+   * Check if the given language is supported.
+   * Implementations may provide a more effective way to check without getting all languages.
    */
   default boolean hasLanguage(@NotNull Language language) {
     return getLanguages().contains(language);
@@ -83,15 +84,16 @@ public interface FileViewProvider extends Cloneable, UserDataHolderEx {
   /**
    * @return PsiFile for given language, or {@code null} if the language is not present
    */
-  PsiFile getPsi(@NotNull Language target);
+  @Nullable PsiFile getPsi(@NotNull Language target);
 
   /**
    * @return all PSI files for this view provider. In most cases, just one main file. For multi-root languages, several files. The files' languages
-   * should be the same as {@link #getLanguages()}. The main file which corresponds to {@link #getBaseLanguage()}, should be the first one. Otherwise
-   * the order is non-deterministic and should not be relied upon.
+   * should be the same as {@link #getLanguages()}. The main file which corresponds to {@link #getBaseLanguage()}, should be the first one.
+   * Otherwise, the order is non-deterministic and should not be relied upon.
    */
   @NotNull
-  List<PsiFile> getAllFiles();
+  @Unmodifiable
+  List<@NotNull PsiFile> getAllFiles();
 
   /**
    * @return whether PSI events are fired when changes occur inside PSI in this view provider. {@code true} for physical files and for some non-physical as well.
@@ -208,7 +210,7 @@ public interface FileViewProvider extends Cloneable, UserDataHolderEx {
   FileViewProvider createCopy(@NotNull VirtualFile copy);
 
   /**
-   * @return the PSI root for which stubs are to be built if supported. By default it's the main root.
+   * @return the PSI root for which stubs are to be built if supported. By default, it's the main root.
    * @see #getBaseLanguage()
    */
   @NotNull

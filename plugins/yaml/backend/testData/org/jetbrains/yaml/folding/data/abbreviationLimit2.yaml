@@ -1,0 +1,21 @@
+<fold text='---'>---
+<fold text='ve…: <2 items>'>veryLongKeyName:
+  - one
+  - two</fold>
+
+key: <fold text='ve…'>|
+  very
+  very
+  very
+  long
+  value
+</fold></fold>
+<fold text='---'>---
+- <fold text='ju…'>|
+  just
+  long
+  scalar
+  value
+  without
+  key</fold>
+...</fold>

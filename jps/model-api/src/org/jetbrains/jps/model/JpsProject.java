@@ -15,7 +15,9 @@
  */
 package org.jetbrains.jps.model;
 
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.library.JpsLibrary;
 import org.jetbrains.jps.model.library.JpsLibraryCollection;
 import org.jetbrains.jps.model.library.JpsLibraryType;
@@ -31,21 +33,28 @@ import java.util.List;
 
 public interface JpsProject extends JpsCompositeElement, JpsReferenceableElement<JpsProject> {
 
+  @ApiStatus.Internal
   @NotNull
   <P extends JpsElement, ModuleType extends JpsModuleType<P> & JpsElementTypeWithDefaultProperties<P>>
   JpsModule addModule(@NotNull String name, @NotNull ModuleType moduleType);
 
+  @ApiStatus.Internal
   void addModule(@NotNull JpsModule module);
 
+  @ApiStatus.Internal
   void removeModule(@NotNull JpsModule module);
 
   @NotNull
   List<JpsModule> getModules();
+  
+  @Nullable 
+  JpsModule findModuleByName(@NotNull String name);
 
   @NotNull
   <P extends JpsElement>
   Iterable<JpsTypedModule<P>> getModules(JpsModuleType<P> type);
 
+  @ApiStatus.Internal
   @NotNull
   <P extends JpsElement, LibraryType extends JpsLibraryType<P> & JpsElementTypeWithDefaultProperties<P>>
   JpsLibrary addLibrary(@NotNull String name, @NotNull LibraryType libraryType);
@@ -63,12 +72,14 @@ public interface JpsProject extends JpsCompositeElement, JpsReferenceableElement
   @NotNull
   List<JpsRunConfiguration> getRunConfigurations();
 
+  @ApiStatus.Internal
   @NotNull
   <P extends JpsElement>
   JpsTypedRunConfiguration<P> addRunConfiguration(@NotNull String name, @NotNull JpsRunConfigurationType<P> type, @NotNull P properties);
 
   @NotNull String getName();
 
+  @ApiStatus.Internal
   void setName(@NotNull String name);
 
   @NotNull

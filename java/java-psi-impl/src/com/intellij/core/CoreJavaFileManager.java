@@ -1,37 +1,34 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.core;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Predicates;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiClassOwner;
+import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiJavaModule;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiPackage;
 import com.intellij.psi.impl.file.PsiPackageImpl;
 import com.intellij.psi.impl.file.impl.JavaFileManager;
 import com.intellij.psi.search.GlobalSearchScope;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Iterator;
+import java.util.List;
+import java.util.function.Predicate;
 
-/**
- * @author yole
- */
+
 public class CoreJavaFileManager implements JavaFileManager {
   private static final Logger LOG = Logger.getInstance(CoreJavaFileManager.class);
 
@@ -40,6 +37,10 @@ public class CoreJavaFileManager implements JavaFileManager {
 
   public CoreJavaFileManager(PsiManager psiManager) {
     myPsiManager = psiManager;
+  }
+
+  public CoreJavaFileManager(Project project) {
+    myPsiManager = PsiManager.getInstance(project);
   }
 
   private List<VirtualFile> roots() {
@@ -67,8 +68,7 @@ public class CoreJavaFileManager implements JavaFileManager {
     return result;
   }
 
-  @Nullable
-  public PsiPackage getPackage(PsiDirectory dir) {
+  public @Nullable PsiPackage getPackage(PsiDirectory dir) {
     final VirtualFile file = dir.getVirtualFile();
     for (VirtualFile root : myClasspath) {
       if (VfsUtilCore.isAncestor(root, file, false)) {
@@ -91,11 +91,10 @@ public class CoreJavaFileManager implements JavaFileManager {
     return null;
   }
 
-  @Nullable
-  public static PsiClass findClassInClasspathRoot(@NotNull String qName,
-                                                  @NotNull VirtualFile root,
-                                                  @NotNull PsiManager psiManager,
-                                                  @NotNull GlobalSearchScope scope) {
+  public static @Nullable PsiClass findClassInClasspathRoot(@NotNull String qName,
+                                                            @NotNull VirtualFile root,
+                                                            @NotNull PsiManager psiManager,
+                                                            @NotNull GlobalSearchScope scope) {
     String pathRest = qName;
     VirtualFile cur = root;
 
@@ -136,8 +135,7 @@ public class CoreJavaFileManager implements JavaFileManager {
     return findClassInPsiFile(classNameWithInnerClasses, (PsiClassOwner)file);
   }
 
-  @NotNull
-  private static String substringBeforeFirstDot(@NotNull String classNameWithInnerClasses) {
+  private static @NotNull String substringBeforeFirstDot(@NotNull String classNameWithInnerClasses) {
     int dot = classNameWithInnerClasses.indexOf('.');
     if (dot < 0) {
       return classNameWithInnerClasses;
@@ -147,8 +145,7 @@ public class CoreJavaFileManager implements JavaFileManager {
     }
   }
 
-  @Nullable
-  private static PsiClass findClassInPsiFile(@NotNull String classNameWithInnerClassesDotSeparated, @NotNull PsiClassOwner file) {
+  private static @Nullable PsiClass findClassInPsiFile(@NotNull String classNameWithInnerClassesDotSeparated, @NotNull PsiClassOwner file) {
     for (PsiClass topLevelClass : file.getClasses()) {
       PsiClass candidate = findClassByTopLevelClass(classNameWithInnerClassesDotSeparated, topLevelClass);
       if (candidate != null) {
@@ -158,8 +155,7 @@ public class CoreJavaFileManager implements JavaFileManager {
     return null;
   }
 
-  @Nullable
-  private static PsiClass findClassByTopLevelClass(@NotNull String className, @NotNull PsiClass topLevelClass) {
+  private static @Nullable PsiClass findClassByTopLevelClass(@NotNull String className, @NotNull PsiClass topLevelClass) {
     if (className.indexOf('.') < 0) {
       return className.equals(topLevelClass.getName()) ? topLevelClass : null;
     }
@@ -192,15 +188,23 @@ public class CoreJavaFileManager implements JavaFileManager {
     return result.toArray(PsiClass.EMPTY_ARRAY);
   }
 
-  @NotNull
   @Override
-  public Collection<String> getNonTrivialPackagePrefixes() {
+  public boolean hasClass(@NotNull String qName, @NotNull GlobalSearchScope scope, @NotNull Predicate<PsiClass> filter) {
+    PsiClass[] classes = findClasses(qName, scope);
+    if (filter == Predicates.<PsiClass>alwaysTrue()) return classes.length > 0;
+    for (PsiClass aClass : classes) {
+      if (filter.test(aClass)) return true;
+    }
+    return false;
+  }
+
+  @Override
+  public @NotNull Collection<String> getNonTrivialPackagePrefixes() {
     return Collections.emptyList();
   }
 
-  @NotNull
   @Override
-  public Collection<PsiJavaModule> findModules(@NotNull String moduleName, @NotNull GlobalSearchScope scope) {
+  public @NotNull Collection<PsiJavaModule> findModules(@NotNull String moduleName, @NotNull GlobalSearchScope scope) {
     return Collections.emptySet();
   }
 

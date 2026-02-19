@@ -1,16 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o.
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-// http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.engine;
 
 import com.intellij.debugger.PositionManager;
@@ -21,19 +9,26 @@ import com.intellij.debugger.engine.managerThread.DebuggerManagerThread;
 import com.intellij.debugger.requests.RequestManager;
 import com.intellij.execution.ExecutionResult;
 import com.intellij.execution.process.ProcessHandler;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.sun.jdi.*;
+import com.sun.jdi.ArrayReference;
+import com.sun.jdi.ArrayType;
+import com.sun.jdi.ClassLoaderReference;
+import com.sun.jdi.ClassType;
+import com.sun.jdi.Method;
+import com.sun.jdi.ObjectReference;
+import com.sun.jdi.ReferenceType;
+import com.sun.jdi.Value;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-/**
- * @author lex
- */
+@ApiStatus.NonExtendable
 public interface DebugProcess extends UserDataHolder {
   @NonNls String JAVA_STRATUM = "Java";
 
@@ -44,7 +39,16 @@ public interface DebugProcess extends UserDataHolder {
   @NotNull
   PositionManager getPositionManager();
 
+  /**
+   * Get the current VM proxy connected to the process.
+   * The VM can change due to a single debug process can be connected to several VMs.
+   * <p>
+   * Use {@link VirtualMachineProxy#getCurrent()}
+   */
+  @ApiStatus.Obsolete
   VirtualMachineProxy getVirtualMachineProxy();
+
+  void addDebugProcessListener(DebugProcessListener listener, Disposable parentDisposable);
 
   void addDebugProcessListener(DebugProcessListener listener);
 
@@ -54,6 +58,7 @@ public interface DebugProcess extends UserDataHolder {
    * The usual place to call this method is vmAttachedEvent. No additional actions are needed in this case.
    * If position manager is appended later, when DebugSession is up and running, one might need to call BreakpointManager.updateAllRequests()
    * to ensure that just added position manager was considered when creating breakpoint requests
+   *
    * @param positionManager to be appended
    */
   void appendPositionManager(PositionManager positionManager);
@@ -66,6 +71,13 @@ public interface DebugProcess extends UserDataHolder {
 
   ExecutionResult getExecutionResult();
 
+  /**
+   * Get the current DebuggerManagerThread.
+   * The thread can change due to a single debug process can be connected to several VMs.
+   * Prefer {@link SuspendContextImpl#getManagerThread()} or
+   * {@link com.intellij.debugger.engine.events.DebuggerCommandImpl#getCommandManagerThread()} when possible.
+   */
+  @ApiStatus.Obsolete
   DebuggerManagerThread getManagerThread();
 
   Value invokeMethod(EvaluationContext evaluationContext,

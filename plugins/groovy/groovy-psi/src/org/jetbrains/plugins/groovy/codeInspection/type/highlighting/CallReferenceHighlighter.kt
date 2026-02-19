@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.codeInspection.type.highlighting
 
 import com.intellij.codeInspection.LocalQuickFix
@@ -14,9 +14,16 @@ import org.jetbrains.plugins.groovy.highlighting.HighlightSink
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyMethodResult
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrGdkMethod
-import org.jetbrains.plugins.groovy.lang.resolve.api.*
-import org.jetbrains.plugins.groovy.lang.resolve.api.Applicability.*
-import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.GroovyInferenceSessionBuilder
+import org.jetbrains.plugins.groovy.lang.resolve.api.Applicability.applicable
+import org.jetbrains.plugins.groovy.lang.resolve.api.Applicability.canBeApplicable
+import org.jetbrains.plugins.groovy.lang.resolve.api.Applicability.inapplicable
+import org.jetbrains.plugins.groovy.lang.resolve.api.Applicability.totalApplicability
+import org.jetbrains.plugins.groovy.lang.resolve.api.ApplicabilityResult
+import org.jetbrains.plugins.groovy.lang.resolve.api.Arguments
+import org.jetbrains.plugins.groovy.lang.resolve.api.ErasedArgument
+import org.jetbrains.plugins.groovy.lang.resolve.api.ExpressionArgument
+import org.jetbrains.plugins.groovy.lang.resolve.api.GroovyCallReference
+import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.buildTopLevelSession
 
 abstract class CallReferenceHighlighter(protected val reference: GroovyCallReference, protected val sink: HighlightSink) {
 
@@ -53,6 +60,9 @@ abstract class CallReferenceHighlighter(protected val reference: GroovyCallRefer
 
     val methodName = method.name
     val highlightElement = highlightElement
+    if (!highlightElement.isPhysical) {
+      return
+    }
     val argumentsString = argumentsString(arguments)
     if (containingClass == null) {
       highlightCannotApplyError(methodName, argumentsString)
@@ -148,10 +158,12 @@ abstract class CallReferenceHighlighter(protected val reference: GroovyCallRefer
     val applicabilities = candidate.argumentMapping?.highlightingApplicabilities(result.substitutor) ?: return emptyList()
     val notApplicableArguments = applicabilities.argumentApplicabilities.filter { (_, data) -> data.applicability == inapplicable }.keys
 
-    val substitutor = GroovyInferenceSessionBuilder(result.element, candidate, result.contextSubstitutor)
-      .resolveMode(false)
-      .ignoreArguments(notApplicableArguments)
-      .build().inferSubst()
+    val callElement = reference.element
+    val substitutor =
+      buildTopLevelSession(callElement,
+                           skipClosureBlock = false,
+                           expressionPredicates = setOf { ExpressionArgument(it) !in notApplicableArguments })
+        .inferSubst()
 
     return notApplicableArguments.filterIsInstance<ExpressionArgument>().mapNotNull { argument ->
       val fixType = substitutor.substitute(mapping.expectedType(argument))

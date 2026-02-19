@@ -4,7 +4,7 @@ package com.intellij.openapi.fileTypes.impl;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
-import com.intellij.openapi.vfs.newvfs.BulkFileListener;
+import com.intellij.openapi.vfs.newvfs.BulkFileListenerBackgroundable;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFilePropertyChangeEvent;
@@ -13,28 +13,26 @@ import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
+import java.util.function.Predicate;
 
-/**
- * @author peter
- */
 final class IgnoredFileCache {
-  private final ConcurrentBitSet myNonIgnoredIds = new ConcurrentBitSet();
-  private final IgnoredPatternSet myIgnoredPatterns;
+  private final ConcurrentBitSet myNonIgnoredIds = ConcurrentBitSet.create();
+  private final Predicate<? super CharSequence> myIsIgnored;
   private int myVfsEventNesting;
 
-  IgnoredFileCache(@NotNull IgnoredPatternSet ignoredPatterns) {
-    myIgnoredPatterns = ignoredPatterns;
+  IgnoredFileCache(@NotNull Predicate<? super CharSequence> isIgnored) {
+    myIsIgnored = isIgnored;
     MessageBusConnection connect = ApplicationManager.getApplication().getMessageBus().connect();
-    connect.subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener() {
+    connect.subscribe(VirtualFileManager.VFS_CHANGES_BG, new BulkFileListenerBackgroundable() {
       @Override
-      public void before(@NotNull List<? extends VFileEvent> events) {
+      public void before(@NotNull List<? extends @NotNull VFileEvent> events) {
         // during VFS event processing the system may be in inconsistent state, don't cache it
         myVfsEventNesting++;
         clearCacheForChangedFiles(events);
       }
 
       @Override
-      public void after(@NotNull List<? extends VFileEvent> events) {
+      public void after(@NotNull List<? extends @NotNull VFileEvent> events) {
         clearCacheForChangedFiles(events);
         myVfsEventNesting--;
       }
@@ -78,7 +76,7 @@ final class IgnoredFileCache {
     return result;
   }
 
-  private boolean calcIgnored(VirtualFile file) {
-    return myIgnoredPatterns.isIgnored(file.getNameSequence());
+  private boolean calcIgnored(@NotNull VirtualFile file) {
+    return myIsIgnored.test(file.getNameSequence());
   }
 }

@@ -1,9 +1,8 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.util;
 
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationAction;
-import com.intellij.notification.NotificationListener;
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
@@ -24,19 +23,23 @@ import com.intellij.ui.components.JBLabel;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xml.util.XmlStringUtil;
 import git4idea.DialogManager;
+import git4idea.GitNotificationIdsHolder;
 import git4idea.GitUtil;
 import git4idea.i18n.GitBundle;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.Action;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
 import javax.swing.border.EmptyBorder;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-import static com.intellij.openapi.vcs.VcsNotifier.IMPORTANT_ERROR_NOTIFICATION;
+import static com.intellij.openapi.vcs.VcsNotifier.importantNotification;
 
 public final class GitUntrackedFilesHelper {
 
@@ -48,8 +51,6 @@ public final class GitUntrackedFilesHelper {
   /**
    * Displays notification about {@code untracked files would be overwritten by checkout} error.
    * Clicking on the link in the notification opens a simple dialog with the list of these files.
-   * @param root
-   * @param relativePaths
    * @param operation   the name of the Git operation that caused the error: {@code rebase, merge, checkout}.
    * @param description the content of the notification or null if the default content is to be used.
    */
@@ -58,7 +59,7 @@ public final class GitUntrackedFilesHelper {
                                                        @NotNull Collection<String> relativePaths,
                                                        @NotNull @Nls String operation,
                                                        @Nullable @NlsContexts.DetailedDescription String description) {
-    notifyUntrackedFilesOverwrittenBy(project, root, relativePaths, operation, description, null);
+    notifyUntrackedFilesOverwrittenBy(project, root, relativePaths, operation, description, new NotificationAction[0]);
   }
 
   public static void notifyUntrackedFilesOverwrittenBy(@NotNull Project project,
@@ -66,9 +67,8 @@ public final class GitUntrackedFilesHelper {
                                                        @NotNull Collection<String> relativePaths,
                                                        @NotNull @Nls String operation,
                                                        @Nullable @NlsContexts.DetailedDescription String description,
-                                                       @Nullable NotificationListener listener,
                                                        NotificationAction @NotNull ... actions) {
-    Notification notification = getUntrackedFilesOverwrittenByNotification(project, root, relativePaths, operation, description, listener);
+    Notification notification = getUntrackedFilesOverwrittenByNotification(project, root, relativePaths, operation, description);
     for (NotificationAction action : actions) {
       notification.addAction(action);
     }
@@ -85,11 +85,11 @@ public final class GitUntrackedFilesHelper {
    *
    * @return true if the user agrees to rollback, false if the user decides to keep things as is and simply close the dialog.
    */
-  public static boolean showUntrackedFilesDialogWithRollback(@NotNull final Project project,
+  public static boolean showUntrackedFilesDialogWithRollback(final @NotNull Project project,
                                                              @NotNull @Nls String operationName,
                                                              @NotNull @NlsContexts.Label String rollbackProposal,
                                                              @NotNull VirtualFile root,
-                                                             @NotNull final Collection<String> relativePaths) {
+                                                             final @NotNull Collection<String> relativePaths) {
     Collection<String> absolutePaths = GitUtil.toAbsolute(root, relativePaths);
     List<VirtualFile> untrackedFiles = ContainerUtil.mapNotNull(absolutePaths,
                                                                       absolutePath -> GitUtil.findRefreshFileOrLog(absolutePath));
@@ -116,13 +116,11 @@ public final class GitUntrackedFilesHelper {
     return rollback.get();
   }
 
-  @NotNull
-  private static Notification getUntrackedFilesOverwrittenByNotification(@NotNull Project project,
-                                                                         @NotNull VirtualFile root,
-                                                                         @NotNull Collection<String> relativePaths,
-                                                                         @NotNull @Nls String operation,
-                                                                         @Nullable @NlsContexts.DetailedDescription String description,
-                                                                         @Nullable NotificationListener listener) {
+  private static @NotNull Notification getUntrackedFilesOverwrittenByNotification(@NotNull Project project,
+                                                                                  @NotNull VirtualFile root,
+                                                                                  @NotNull Collection<String> relativePaths,
+                                                                                  @NotNull @Nls String operation,
+                                                                                  @Nullable @NlsContexts.DetailedDescription String description) {
     if (description == null) description = "";
     String notificationTitle = GitBundle.message("notification.title.untracked.files.prevent.operation", StringUtil.capitalize(operation));
     String notificationDesc = GitBundle.message("notification.content.untracked.files.prevent.operation.move.or.commit",
@@ -133,8 +131,9 @@ public final class GitUntrackedFilesHelper {
       return GitUtil.findRefreshFileOrLog(absolutePath);
     });
 
-    Notification notification = IMPORTANT_ERROR_NOTIFICATION.createNotification(notificationTitle, notificationDesc,
-                                                                                NotificationType.ERROR, listener, "untracked.files.overwritten");
+    Notification notification = importantNotification()
+      .createNotification(notificationTitle, notificationDesc, NotificationType.ERROR)
+      .setDisplayId(GitNotificationIdsHolder.UNTRACKED_FIES_OVERWITTEN);
 
     notification.addAction(new NotificationAction(VcsBundle.messagePointer("action.NotificationAction.VFSListener.text.view.files")) {
       @Override
@@ -171,9 +170,9 @@ public final class GitUntrackedFilesHelper {
   }
 
   private static class UntrackedFilesRollBackDialog extends DialogWrapper {
-    @NotNull private final JComponent myFilesBrowser;
-    @NotNull private final @NlsContexts.Label String myPrompt;
-    @NotNull private final @NlsContexts.Label String myRollbackProposal;
+    private final @NotNull JComponent myFilesBrowser;
+    private final @NotNull @NlsContexts.Label String myPrompt;
+    private final @NotNull @NlsContexts.Label String myRollbackProposal;
 
     UntrackedFilesRollBackDialog(@NotNull Project project,
                                  @NotNull JComponent filesBrowser,
@@ -199,15 +198,13 @@ public final class GitUntrackedFilesHelper {
       return panel;
     }
 
-    @Nullable
     @Override
-    protected JComponent createCenterPanel() {
+    protected @Nullable JComponent createCenterPanel() {
       return myFilesBrowser;
     }
 
-    @Nullable
     @Override
-    protected JComponent createNorthPanel() {
+    protected @Nullable JComponent createNorthPanel() {
       JLabel label = new JLabel(myPrompt);
       label.setUI(new MultiLineLabelUI());
       label.setBorder(new EmptyBorder(5, 1, 5, 1));

@@ -1,12 +1,15 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInsight.editorActions;
 
 import com.intellij.codeInsight.highlighting.BraceMatchingUtil;
 import com.intellij.codeInsight.highlighting.CodeBlockSupportHandler;
 import com.intellij.lang.Language;
-import com.intellij.openapi.editor.*;
-import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.IndentGuideDescriptor;
+import com.intellij.openapi.editor.LogicalPosition;
+import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory;
 import com.intellij.openapi.fileTypes.FileType;
@@ -16,8 +19,10 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.tree.IElementType;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
+@ApiStatus.Internal
 public final class CodeBlockUtil {
   private CodeBlockUtil() {
   }
@@ -120,7 +125,7 @@ public final class CodeBlockUtil {
     Document document = editor.getDocument();
     int offset = editor.getCaretModel().getOffset();
     final FileType fileType = getFileType(file, offset);
-    HighlighterIterator iterator = ((EditorEx)editor).getHighlighter().createIterator(offset);
+    HighlighterIterator iterator = editor.getHighlighter().createIterator(offset);
     if (iterator.atEnd()) return -1;
 
     int depth = 0;
@@ -190,7 +195,7 @@ public final class CodeBlockUtil {
 
     Document document = editor.getDocument();
     final FileType fileType = getFileType(file, offset);
-    HighlighterIterator iterator = ((EditorEx)editor).getHighlighter().createIterator(offset);
+    HighlighterIterator iterator = editor.getHighlighter().createIterator(offset);
 
     int depth = 0;
     Language braceType;
@@ -234,8 +239,7 @@ public final class CodeBlockUtil {
     return isAfterRBrace ? iterator.getStart() : iterator.getEnd();
   }
 
-  @NotNull
-  private static FileType getFileType(PsiFile file, int offset) {
+  private static @NotNull FileType getFileType(PsiFile file, int offset) {
     PsiElement psiElement = file.findElementAt(offset);
     if (psiElement != null) {
       return psiElement.getContainingFile().getFileType();

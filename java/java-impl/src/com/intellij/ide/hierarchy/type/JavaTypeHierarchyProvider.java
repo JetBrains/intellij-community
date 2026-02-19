@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.hierarchy.type;
 
 import com.intellij.codeInsight.TargetElementUtil;
@@ -10,38 +10,42 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiAnonymousClass;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiClassOwner;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiSyntheticClass;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author yole
- */
+
 public class JavaTypeHierarchyProvider implements HierarchyProvider {
   private static final Logger LOG = Logger.getInstance(JavaTypeHierarchyProvider.class);
   @Override
-  public PsiElement getTarget(@NotNull final DataContext dataContext) {
-    final Project project = CommonDataKeys.PROJECT.getData(dataContext);
+  public PsiClass getTarget(@NotNull DataContext dataContext) {
+    Project project = CommonDataKeys.PROJECT.getData(dataContext);
     if (project == null) return null;
 
-    final Editor editor = CommonDataKeys.EDITOR.getData(dataContext);
+    Editor editor = CommonDataKeys.EDITOR.getData(dataContext);
     if (LOG.isDebugEnabled()) {
       LOG.debug("editor " + editor);
     }
     if (editor != null) {
-      final PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
+      PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
       if (file == null) return null;
 
-      final PsiElement targetElement = TargetElementUtil.findTargetElement(editor, TargetElementUtil.ELEMENT_NAME_ACCEPTED |
+      PsiElement targetElement = TargetElementUtil.findTargetElement(editor, TargetElementUtil.ELEMENT_NAME_ACCEPTED |
                                                                                    TargetElementUtil.REFERENCED_ELEMENT_ACCEPTED |
                                                                                    TargetElementUtil.LOOKUP_ITEM_ACCEPTED);
       if (LOG.isDebugEnabled()) {
         LOG.debug("target element " + targetElement);
       }
       if (targetElement instanceof PsiClass) {
-        return targetElement;
+        return (PsiClass)targetElement;
       }
 
-      final int offset = editor.getCaretModel().getOffset();
+      int offset = editor.getCaretModel().getOffset();
       PsiElement element = file.findElementAt(offset);
       while (element != null) {
         if (LOG.isDebugEnabled()) {
@@ -49,11 +53,11 @@ public class JavaTypeHierarchyProvider implements HierarchyProvider {
         }
         if (element instanceof PsiFile) {
           if (!(element instanceof PsiClassOwner)) return null;
-          final PsiClass[] classes = ((PsiClassOwner)element).getClasses();
+          PsiClass[] classes = ((PsiClassOwner)element).getClasses();
           return classes.length == 1 ? classes[0] : null;
         }
         if (element instanceof PsiClass && !(element instanceof PsiAnonymousClass) && !(element instanceof PsiSyntheticClass)) {
-          return element;
+          return (PsiClass)element;
         }
         element = element.getParent();
       }
@@ -61,21 +65,20 @@ public class JavaTypeHierarchyProvider implements HierarchyProvider {
       return null;
     }
     else {
-      final PsiElement element = CommonDataKeys.PSI_ELEMENT.getData(dataContext);
+      PsiElement element = CommonDataKeys.PSI_ELEMENT.getData(dataContext);
       return element instanceof PsiClass ? (PsiClass)element : null;
     }
   }
 
   @Override
-  @NotNull
-  public HierarchyBrowser createHierarchyBrowser(@NotNull PsiElement target) {
+  public @NotNull HierarchyBrowser createHierarchyBrowser(@NotNull PsiElement target) {
     return new TypeHierarchyBrowser(target.getProject(), (PsiClass) target);
   }
 
   @Override
-  public void browserActivated(@NotNull final HierarchyBrowser hierarchyBrowser) {
-    final TypeHierarchyBrowser browser = (TypeHierarchyBrowser)hierarchyBrowser;
-    final String typeName =
+  public void browserActivated(@NotNull HierarchyBrowser hierarchyBrowser) {
+    TypeHierarchyBrowser browser = (TypeHierarchyBrowser)hierarchyBrowser;
+    String typeName =
       browser.isInterface() ? TypeHierarchyBrowserBase.getSubtypesHierarchyType() : TypeHierarchyBrowserBase.getTypeHierarchyType();
     browser.changeView(typeName);
   }

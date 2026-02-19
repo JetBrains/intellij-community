@@ -1,10 +1,11 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.incremental.artifacts.instructions;
 
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.PathUtilRt;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.cmdline.ProjectDescriptor;
@@ -16,6 +17,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.List;
 
+@ApiStatus.Internal
 public abstract class ArtifactCompilerInstructionCreatorBase implements ArtifactCompilerInstructionCreator {
   protected final ArtifactInstructionsBuilderImpl myInstructionsBuilder;
 
@@ -30,7 +32,7 @@ public abstract class ArtifactCompilerInstructionCreatorBase implements Artifact
 
   @Override
   public void addDirectoryCopyInstructions(@NotNull File directory, @Nullable SourceFileFilter filter) {
-    addDirectoryCopyInstructions(directory, filter, FileCopyingHandler.DEFAULT);
+    addDirectoryCopyInstructions(directory, filter, FilterCopyHandler.DEFAULT);
   }
 
   @Override
@@ -57,10 +59,9 @@ public abstract class ArtifactCompilerInstructionCreatorBase implements Artifact
                                              @NotNull Condition<? super String> pathInJarFilter) {
     //an entry of a jar file is excluded if and only if the jar file itself is excluded. In that case we should unpack entries to the artifact
     //because the jar itself is explicitly added to the artifact layout.
-    boolean includeExcluded = true;
 
     final SourceFileFilterImpl filter = new SourceFileFilterImpl(null, myInstructionsBuilder.getRootsIndex(),
-                                                                 myInstructionsBuilder.getIgnoredFileIndex(), includeExcluded);
+                                                                 myInstructionsBuilder.getIgnoredFileIndex(), true);
     DestinationInfo destination = createDirectoryDestination();
     if (destination != null) {
       ArtifactRootDescriptor descriptor = myInstructionsBuilder.createJarBasedRoot(jarFile, pathInJar, filter, destination, pathInJarFilter);
@@ -83,10 +84,9 @@ public abstract class ArtifactCompilerInstructionCreatorBase implements Artifact
     return current;
   }
 
-
   @Override
   public void addFileCopyInstruction(@NotNull File file, @NotNull String outputFileName) {
-    addFileCopyInstruction(file, outputFileName, FileCopyingHandler.DEFAULT);
+    addFileCopyInstruction(file, outputFileName, FilterCopyHandler.DEFAULT);
   }
 
   @Override
@@ -105,8 +105,7 @@ public abstract class ArtifactCompilerInstructionCreatorBase implements Artifact
     return myInstructionsBuilder;
   }
 
-  @Nullable
-  protected abstract DestinationInfo createDirectoryDestination();
+  protected abstract @Nullable DestinationInfo createDirectoryDestination();
 
   protected abstract DestinationInfo createFileDestination(@NotNull String outputFileName);
 

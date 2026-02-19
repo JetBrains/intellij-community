@@ -1,70 +1,117 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.lookup;
 
 import com.intellij.codeInsight.AutoPopupController;
-import com.intellij.codeInsight.TailType;
-import com.intellij.codeInsight.completion.*;
-import com.intellij.codeInsight.daemon.impl.JavaColorProvider;
-import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
+import com.intellij.codeInsight.TailTypes;
+import com.intellij.codeInsight.completion.CodeCompletionFeatures;
+import com.intellij.codeInsight.completion.CompletionUtil;
+import com.intellij.codeInsight.completion.InsertionContext;
+import com.intellij.codeInsight.completion.JavaCompletionUtil;
+import com.intellij.codeInsight.completion.MemberLookupHelper;
+import com.intellij.codeInsight.completion.PrioritizedLookupElement;
+import com.intellij.codeInsight.completion.StaticallyImportable;
+import com.intellij.codeInsight.daemon.impl.quickfix.BringVariableIntoScopeFix;
 import com.intellij.codeInsight.lookup.impl.JavaElementLookupRenderer;
+import com.intellij.codeInspection.dataFlow.jvm.descriptors.PlainDescriptor;
 import com.intellij.featureStatistics.FeatureUsageTracker;
+import com.intellij.modcommand.ActionContext;
+import com.intellij.modcommand.ModCommandExecutor;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.RangeMarker;
-import com.intellij.openapi.util.RecursionManager;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.*;
+import com.intellij.pom.java.JavaFeature;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.JspPsiUtil;
+import com.intellij.psi.PsiCaseLabelElementList;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiClassType;
+import com.intellij.psi.PsiConditionalExpression;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiEnumConstant;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiExpressionList;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiJavaCodeReferenceElement;
+import com.intellij.psi.PsiLocalVariable;
+import com.intellij.psi.PsiMethodCallExpression;
+import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiParameter;
+import com.intellij.psi.PsiReference;
+import com.intellij.psi.PsiReferenceExpression;
+import com.intellij.psi.PsiSubstitutor;
+import com.intellij.psi.PsiSwitchBlock;
+import com.intellij.psi.PsiSwitchLabelStatementBase;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiVariable;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
+import com.intellij.psi.controlFlow.ControlFlowUtil;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.psi.impl.source.PsiFieldImpl;
+import com.intellij.psi.impl.source.resolve.JavaResolveUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.util.ui.ColorIcon;
-import com.intellij.util.ui.JBUI;
+import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.*;
 import java.util.HashMap;
 import java.util.Objects;
 
-/**
-* @author peter
-*/
 public class VariableLookupItem extends LookupItem<PsiVariable> implements TypedLookupItem, StaticallyImportable {
-  private static final String EQ = " = ";
-  @Nullable private final MemberLookupHelper myHelper;
-  private final Color myColor;
+  @ApiStatus.Internal
+  public static final String EQ = " = ";
+  private final @Nullable MemberLookupHelper myHelper;
   private final String myTailText;
   private final boolean myNegatable;
   private PsiSubstitutor mySubstitutor = PsiSubstitutor.EMPTY;
   private String myForcedQualifier;
+  private PsiClass myQualifierClass;
 
   public VariableLookupItem(PsiVariable var) {
-    this(var, null);
+    this(var, null, null);
   }
 
   public VariableLookupItem(PsiField field, boolean shouldImport) {
-    this(field, new MemberLookupHelper(field, field.getContainingClass(), shouldImport, false));
+    this(field, new MemberLookupHelper(field, field.getContainingClass(), shouldImport, false), null);
   }
 
-  private VariableLookupItem(@NotNull PsiVariable var, @Nullable MemberLookupHelper helper) {
+  /**
+   * @param var      variable to lookup
+   * @param tailText specific tail text to insert (initializer text is used if not specified)
+   */
+  public VariableLookupItem(@NotNull PsiVariable var, @NotNull @Nls String tailText) {
+    this(var, null, tailText);
+  }
+
+  private VariableLookupItem(@NotNull PsiVariable var, @Nullable MemberLookupHelper helper, @Nullable @Nls String tailText) {
     super(var, Objects.requireNonNull(var.getName()));
     myHelper = helper;
-    myColor = getInitializerColor(var);
-    myTailText = getInitializerText(var);
-    myNegatable = PsiType.BOOLEAN.isAssignableFrom(var.getType());
+    myTailText = tailText == null ? getInitializerText(var) : tailText;
+    myNegatable = TypeConversionUtil.isBooleanType(var.getType());
   }
 
   @ApiStatus.Internal
-  public LookupElement qualifyIfNeeded(@Nullable PsiReference position) {
+  public LookupElement qualifyIfNeeded(@Nullable PsiReference position, @Nullable PsiClass origClass) {
     PsiVariable var = getObject();
     if (var instanceof PsiField && !willBeImported() && shouldQualify((PsiField)var, position)) {
       boolean isInstanceField = !var.hasModifierProperty(PsiModifier.STATIC);
       PsiClass aClass = ((PsiField)var).getContainingClass();
+      if (aClass != null && origClass != null &&
+          !JavaResolveUtil.isAccessible(aClass, aClass.getContainingClass(), aClass.getModifierList(), position.getElement(), null, null) &&
+          JavaResolveUtil.isAccessible(origClass, origClass.getContainingClass(), origClass.getModifierList(), position.getElement(), null,
+                                       null) &&
+          var.isEquivalentTo(origClass.findFieldByName(var.getName(), true))) {
+        aClass = origClass;
+      }
       String className = aClass == null ? null : aClass.getName();
       if (className != null) {
         String infix = isInstanceField ? ".this." : ".";
+        myQualifierClass = aClass;
         myForcedQualifier = className + infix;
         for (String s : JavaCompletionUtil.getAllLookupStrings(aClass)) {
           setLookupString(s + infix + var.getName());
@@ -77,9 +124,14 @@ public class VariableLookupItem extends LookupItem<PsiVariable> implements Typed
     return this;
   }
 
-  @Nullable
-  private String getInitializerText(PsiVariable var) {
-    if (myColor != null || !var.hasModifierProperty(PsiModifier.FINAL) || !var.hasModifierProperty(PsiModifier.STATIC)) return null;
+  /**
+   * @param var variable to get its initializer text
+   * @return the initializer text to display in completion popup; null if not applicable
+   */
+  @ApiStatus.Internal
+  public static @Nullable String getInitializerText(PsiVariable var) {
+    if (!var.hasModifierProperty(PsiModifier.FINAL) || !var.hasModifierProperty(PsiModifier.STATIC)) return null;
+    if (PlainDescriptor.hasInitializationHacks(var)) return null;
 
     PsiElement initializer = var instanceof PsiEnumConstant ? ((PsiEnumConstant)var).getArgumentList() : getInitializer(var);
     String initText = initializer == null ? null : initializer.getText();
@@ -98,28 +150,12 @@ public class VariableLookupItem extends LookupItem<PsiVariable> implements Typed
     return PsiFieldImpl.getDetachedInitializer(var);
   }
 
-  @Nullable
-  private static Color getInitializerColor(@NotNull PsiVariable var) {
-    if (!JavaColorProvider.isColorType(var.getType())) return null;
-
-    PsiExpression expression = getInitializer(var);
-    if (expression instanceof PsiReferenceExpression) {
-      final PsiElement target = ((PsiReferenceExpression)expression).resolve();
-      if (target instanceof PsiVariable) {
-        return RecursionManager.doPreventingRecursion(expression, true, () -> getInitializerColor((PsiVariable)target));
-      }
-    }
-    return JavaColorProvider.getJavaColorFromExpression(expression);
-  }
-
   @Override
-  @NotNull
-  public PsiType getType() {
+  public @NotNull PsiType getType() {
     return getSubstitutor().substitute(getObject().getType());
   }
 
-  @NotNull
-  public PsiSubstitutor getSubstitutor() {
+  public @NotNull PsiSubstitutor getSubstitutor() {
     return mySubstitutor;
   }
 
@@ -127,7 +163,7 @@ public class VariableLookupItem extends LookupItem<PsiVariable> implements Typed
     mySubstitutor = substitutor;
     return this;
   }
-  
+
   @Override
   public void setShouldBeImported(boolean shouldImportStatic) {
     assert myHelper != null;
@@ -145,7 +181,7 @@ public class VariableLookupItem extends LookupItem<PsiVariable> implements Typed
   }
 
   @Override
-  public void renderElement(LookupElementPresentation presentation) {
+  public void renderElement(@NotNull LookupElementPresentation presentation) {
     boolean qualify = myHelper != null && !myHelper.willBeImported() || myForcedQualifier != null;
 
     PsiVariable variable = getObject();
@@ -168,11 +204,7 @@ public class VariableLookupItem extends LookupItem<PsiVariable> implements Typed
     if (myHelper != null) {
       myHelper.renderElement(presentation, qualify, true, getSubstitutor());
     }
-    if (myColor != null) {
-      presentation.setTypeText("", JBUI.scale(new ColorIcon(12, myColor)));
-    } else {
-      presentation.setTypeText(getType().getPresentableText());
-    }
+    presentation.setTypeText(getType().getPresentableText());
   }
 
   public boolean isNegatable() {
@@ -187,7 +219,7 @@ public class VariableLookupItem extends LookupItem<PsiVariable> implements Typed
     document.replaceString(context.getStartOffset(), context.getTailOffset(), variable.getName());
     context.commitDocument();
 
-    if (variable instanceof PsiField) {
+    if (variable instanceof PsiField field) {
       if (willBeImported()) {
         RangeMarker toDelete = JavaCompletionUtil.insertTemporary(context.getTailOffset(), document, " ");
         context.commitDocument();
@@ -196,7 +228,7 @@ public class VariableLookupItem extends LookupItem<PsiVariable> implements Typed
           if (ref.isQualified()) {
             return; // shouldn't happen, but sometimes we see exceptions because of this
           }
-          ref.bindToElementViaStaticImport(((PsiField)variable).getContainingClass());
+          ref.bindToElementViaStaticImport(field.getContainingClass());
           PostprocessReformattingAspect.getInstance(ref.getProject()).doPostponedFormatting();
         }
         if (toDelete != null && toDelete.isValid()) {
@@ -204,8 +236,8 @@ public class VariableLookupItem extends LookupItem<PsiVariable> implements Typed
         }
         context.commitDocument();
       }
-      else if (shouldQualify((PsiField)variable, context)) {
-        qualifyFieldReference(context, (PsiField)variable);
+      else if (shouldQualify(field, context)) {
+        qualifyFieldReference(context, field);
       }
     }
 
@@ -219,23 +251,33 @@ public class VariableLookupItem extends LookupItem<PsiVariable> implements Typed
     if (target instanceof PsiLocalVariable || target instanceof PsiParameter) {
       makeFinalIfNeeded(context, (PsiVariable)target);
     }
+    if (target == null && ref != null &&
+        JavaPsiFacade.getInstance(context.getProject()).getResolveHelper().resolveReferencedVariable(variable.getName(), ref) == null) {
+      BringVariableIntoScopeFix fix = BringVariableIntoScopeFix.fromReference(ref);
+      if (fix != null) {
+        ActionContext actionContext = ActionContext.from(context.getEditor(), context.getFile());
+        if (fix.getPresentation(actionContext) != null) {
+          ModCommandExecutor.getInstance().executeInteractively(actionContext, fix.perform(actionContext), context.getEditor());
+        }
+      }
+    }
 
     final char completionChar = context.getCompletionChar();
     if (completionChar == '=') {
       context.setAddCompletionChar(false);
       EqTailType.INSTANCE.processTail(context.getEditor(), context.getTailOffset());
     }
-    else if (completionChar == ',' && getAttribute(LookupItem.TAIL_TYPE_ATTR) != TailType.UNKNOWN) {
+    else if (completionChar == ',' && getAttribute(LookupItem.TAIL_TYPE_ATTR) != TailTypes.unknownType()) {
       context.setAddCompletionChar(false);
       CommaTailType.INSTANCE.processTail(context.getEditor(), context.getTailOffset());
       AutoPopupController.getInstance(context.getProject()).autoPopupParameterInfo(context.getEditor(), null);
     }
-    else if (completionChar == ':' && getAttribute(LookupItem.TAIL_TYPE_ATTR) != TailType.UNKNOWN && isTernaryCondition(ref)) {
+    else if (completionChar == ':' && getAttribute(LookupItem.TAIL_TYPE_ATTR) != TailTypes.unknownType() && isTernaryCondition(ref)) {
       context.setAddCompletionChar(false);
-      TailType.COND_EXPR_COLON.processTail(context.getEditor(), context.getTailOffset());
+      TailTypes.conditionalExpressionColonType().processTail(context.getEditor(), context.getTailOffset());
     }
     else if (completionChar == '.') {
-      AutoPopupController.getInstance(context.getProject()).autoPopupMemberLookup(context.getEditor(), null);
+      AutoPopupController.getInstance(context.getProject()).scheduleAutoPopup(context.getEditor());
     }
     else if (completionChar == '!' && myNegatable) {
       context.setAddCompletionChar(false);
@@ -254,6 +296,7 @@ public class VariableLookupItem extends LookupItem<PsiVariable> implements Typed
     if (ref != null && ref.getParent() instanceof PsiMethodCallExpression) {
       PsiExpressionList argList = ((PsiMethodCallExpression)ref.getParent()).getArgumentList();
       if (argList.getExpressionCount() == 0) {
+        PsiDocumentManager.getInstance(argList.getProject()).doPostponedOperationsAndUnblockDocument(context.getDocument());
         context.getDocument().deleteString(argList.getTextRange().getStartOffset(), argList.getTextRange().getEndOffset());
       }
     }
@@ -270,12 +313,12 @@ public class VariableLookupItem extends LookupItem<PsiVariable> implements Typed
 
   public static void makeFinalIfNeeded(@NotNull InsertionContext context, @NotNull PsiVariable variable) {
     PsiElement place = context.getFile().findElementAt(context.getTailOffset() - 1);
-    if (place == null || PsiUtil.isLanguageLevel8OrHigher(place) || JspPsiUtil.isInJspFile(place)) {
+    if (place == null || PsiUtil.isAvailable(JavaFeature.EFFECTIVELY_FINAL, place) || JspPsiUtil.isInJspFile(place)) {
       return;
     }
 
-    if (HighlightControlFlowUtil.getInnerClassVariableReferencedFrom(variable, place) != null &&
-        !HighlightControlFlowUtil.isReassigned(variable, new HashMap<>())) {
+    if (ControlFlowUtil.getScopeEnforcingEffectiveFinality(variable, place) != null &&
+        !ControlFlowUtil.isReassigned(variable, new HashMap<>())) {
       PsiUtil.setModifierProperty(variable, PsiModifier.FINAL, true);
     }
   }
@@ -288,9 +331,18 @@ public class VariableLookupItem extends LookupItem<PsiVariable> implements Typed
     return shouldQualify(field, context.getFile().findReferenceAt(context.getTailOffset() - 1));
   }
 
-  private static boolean shouldQualify(@NotNull PsiField field, @Nullable PsiReference context) {
-    if (context instanceof PsiReferenceExpression && !((PsiReferenceExpression)context).isQualified()) {
-      PsiVariable target = JavaPsiFacade.getInstance(context.getElement().getProject()).getResolveHelper()
+  /**
+   * @param field field to check
+   * @param context context where it's about to be used
+   * @return whether the field access should be qualified in a given context
+   */
+  @ApiStatus.Internal
+  public static boolean shouldQualify(@NotNull PsiField field, @Nullable PsiReference context) {
+    if ((context instanceof PsiReferenceExpression ref && !ref.isQualified()) ||
+        (context instanceof PsiJavaCodeReferenceElement codeRef && !codeRef.isQualified())) {
+      PsiElement element = context.getElement();
+      if (isEnumInSwitch(field, element)) return false;
+      PsiVariable target = JavaPsiFacade.getInstance(element.getProject()).getResolveHelper()
         .resolveReferencedVariable(field.getName(), (PsiElement)context);
       return !field.getManager().areElementsEquivalent(target, field) &&
              !field.getManager().areElementsEquivalent(target, CompletionUtil.getOriginalOrSelf(field));
@@ -298,7 +350,20 @@ public class VariableLookupItem extends LookupItem<PsiVariable> implements Typed
     return false;
   }
 
-  private static void qualifyFieldReference(InsertionContext context, PsiField field) {
+  private static boolean isEnumInSwitch(@NotNull PsiField field, PsiElement element) {
+    if (!(field instanceof PsiEnumConstant) || !(element.getParent() instanceof PsiCaseLabelElementList)) return false;
+    PsiClass enumClass = field.getContainingClass();
+    PsiSwitchLabelStatementBase label = ObjectUtils.tryCast(element.getParent().getParent(), PsiSwitchLabelStatementBase.class);
+    if (label == null || enumClass == null) return false;
+    PsiSwitchBlock block = label.getEnclosingSwitchBlock();
+    if (block == null) return false;
+    PsiExpression expression = block.getExpression();
+    if (expression == null) return false;
+    PsiType type = expression.getType();
+    return type instanceof PsiClassType && enumClass.getManager().areElementsEquivalent(enumClass, ((PsiClassType)type).resolve());
+  }
+
+  private void qualifyFieldReference(InsertionContext context, PsiField field) {
     context.commitDocument();
     PsiFile file = context.getFile();
     final PsiReference reference = file.findReferenceAt(context.getStartOffset());
@@ -306,11 +371,16 @@ public class VariableLookupItem extends LookupItem<PsiVariable> implements Typed
       return;
     }
 
-    PsiClass containingClass = field.getContainingClass();
+    PsiClass containingClass = myQualifierClass != null && myQualifierClass.isValid() ? myQualifierClass : field.getContainingClass();
     if (containingClass != null && containingClass.getName() != null) {
       context.getDocument().insertString(context.getStartOffset(), field.hasModifierProperty(PsiModifier.STATIC) ? "." : ".this.");
       JavaCompletionUtil.insertClassReference(containingClass, file, context.getStartOffset());
       PsiDocumentManager.getInstance(context.getProject()).commitDocument(context.getDocument());
     }
+  }
+
+  @Override
+  public boolean isWorthShowingInAutoPopup() {
+    return myTailText != null;
   }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.service.execution;
 
 import com.intellij.execution.Location;
@@ -17,13 +17,6 @@ import org.jetbrains.annotations.Nullable;
  * @author Vladislav.Soroka
  */
 public abstract class AbstractExternalSystemRunConfigurationProducer extends RunConfigurationProducer<ExternalSystemRunConfiguration> {
-  /**
-   * @deprecated Override {@link #getConfigurationFactory()}.
-   */
-  @Deprecated
-  public AbstractExternalSystemRunConfigurationProducer(@NotNull AbstractExternalSystemTaskConfigurationType type) {
-    super(type);
-  }
 
   protected AbstractExternalSystemRunConfigurationProducer() {
     super(true);
@@ -74,18 +67,16 @@ public abstract class AbstractExternalSystemRunConfigurationProducer extends Run
     return true;
   }
 
-  @Nullable
-  private static ExternalSystemTaskExecutionSettings getTaskSettingsFromContext(ConfigurationContext context) {
-    final Location contextLocation = context.getLocation();
+  private static @Nullable ExternalSystemTaskExecutionSettings getTaskSettingsFromContext(ConfigurationContext context) {
+    final Location<?> contextLocation = context.getLocation();
     if (!(contextLocation instanceof ExternalSystemTaskLocation)) {
       return null;
     }
     return ((ExternalSystemTaskLocation)contextLocation).getTaskInfo().getSettings();
   }
 
-  @Nullable
-  private static Project getProjectFromContext(ConfigurationContext context) {
-    final Location contextLocation = context.getLocation();
+  private static @Nullable Project getProjectFromContext(ConfigurationContext context) {
+    final Location<?> contextLocation = context.getLocation();
     if (!(contextLocation instanceof ExternalSystemTaskLocation)) {
       return null;
     }

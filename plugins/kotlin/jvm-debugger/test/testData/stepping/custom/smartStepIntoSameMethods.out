@@ -1,0 +1,13 @@
+LineBreakpoint created at smartStepIntoSameMethods.kt:14
+LineBreakpoint created at smartStepIntoSameMethods.kt:20
+Run Java
+Connected to the target VM
+smartStepIntoSameMethods.kt:14
+smartStepIntoSameMethods.kt:2
+smartStepIntoSameMethods.kt:3
+smartStepIntoSameMethods.kt:20
+smartStepIntoSameMethods.kt:2
+smartStepIntoSameMethods.kt:5
+Disconnected from the target VM
+
+Process finished with exit code 0

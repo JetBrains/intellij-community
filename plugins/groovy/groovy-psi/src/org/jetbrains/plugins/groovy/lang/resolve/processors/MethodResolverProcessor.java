@@ -1,9 +1,13 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.plugins.groovy.lang.resolve.processors;
 
 import com.intellij.openapi.util.NotNullComputable;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiSubstitutor;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.ResolveState;
 import com.intellij.psi.scope.JavaScopeProcessorEvent;
 import com.intellij.psi.util.TypeConversionUtil;
 import org.jetbrains.annotations.NotNull;
@@ -16,14 +20,15 @@ import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.GrMethodComparator;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Set;
 
 import static org.jetbrains.plugins.groovy.lang.resolve.processors.ClassHint.RESOLVE_CONTEXT;
 import static org.jetbrains.plugins.groovy.lang.resolve.processors.ClassHint.RESOLVE_KINDS_METHOD_PROPERTY;
 
-/**
- * @author ven
- */
 public class MethodResolverProcessor extends ResolverProcessor<GroovyMethodResult> implements GrMethodComparator.Context {
 
   private final PsiType @Nullable [] myArgumentTypes;
@@ -57,7 +62,7 @@ public class MethodResolverProcessor extends ResolverProcessor<GroovyMethodResul
     super(name, RESOLVE_KINDS_METHOD_PROPERTY, place);
     myIsConstructor = isConstructor;
     mySubstitutorComputer = new SubstitutorComputer(thisType, argumentTypes, typeArguments, myPlace, myPlace.getParent());
-    myArgumentTypes = argumentTypes == null ? null : Arrays.copyOf(argumentTypes, argumentTypes.length);
+    myArgumentTypes = argumentTypes == null ? null : argumentTypes.clone();
     if (myArgumentTypes != null) {
       for (int i = 0; i < myArgumentTypes.length; i++) {
         myArgumentTypes[i] = TypeConversionUtil.erasure(myArgumentTypes[i]);
@@ -72,8 +77,7 @@ public class MethodResolverProcessor extends ResolverProcessor<GroovyMethodResul
     if (myStopExecuting) {
       return false;
     }
-    if (element instanceof PsiMethod) {
-      final PsiMethod method = (PsiMethod)element;
+    if (element instanceof PsiMethod method) {
 
       if (method.isConstructor() != myIsConstructor) return true;
 
@@ -110,8 +114,7 @@ public class MethodResolverProcessor extends ResolverProcessor<GroovyMethodResul
     return myInapplicableCandidates.add(candidate);
   }
 
-  @NotNull
-  protected static PsiSubstitutor getSubstitutor(@NotNull final ResolveState state) {
+  protected static @NotNull PsiSubstitutor getSubstitutor(final @NotNull ResolveState state) {
     PsiSubstitutor substitutor = state.get(PsiSubstitutor.KEY);
     if (substitutor == null) substitutor = PsiSubstitutor.EMPTY;
     return substitutor;
@@ -194,9 +197,8 @@ public class MethodResolverProcessor extends ResolverProcessor<GroovyMethodResul
     }
   }
 
-  @NotNull
   @Override
-  public PsiElement getPlace() {
+  public @NotNull PsiElement getPlace() {
     return myPlace;
   }
 

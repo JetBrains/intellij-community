@@ -1,8 +1,20 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.resolve.graphInference;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.psi.*;
+import com.intellij.psi.GenericsUtil;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.LambdaUtil;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiClassType;
+import com.intellij.psi.PsiElementFactory;
+import com.intellij.psi.PsiLambdaExpression;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiParameter;
+import com.intellij.psi.PsiSubstitutor;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypeParameter;
+import com.intellij.psi.PsiWildcardType;
 import com.intellij.psi.impl.source.resolve.graphInference.constraints.TypeEqualityConstraint;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.TypeConversionUtil;
@@ -15,12 +27,8 @@ public final class FunctionalInterfaceParameterizationUtil {
   private static final Logger LOG = Logger.getInstance(FunctionalInterfaceParameterizationUtil.class);
 
   public static boolean isWildcardParameterized(@Nullable PsiType classType) {
+    classType = LambdaUtil.normalizeFunctionalType(classType);
     if (classType == null) return false;
-    if (classType instanceof PsiIntersectionType) {
-      for (PsiType type : ((PsiIntersectionType)classType).getConjuncts()) {
-        if (!isWildcardParameterized(type)) return false;
-      }
-    }
     if (classType instanceof PsiClassType) {
       final PsiClassType.ClassResolveResult result = ((PsiClassType)classType).resolveGenerics();
       final PsiClass aClass = result.getElement();
@@ -37,18 +45,16 @@ public final class FunctionalInterfaceParameterizationUtil {
     return false;
   }
 
-  @Nullable
-  public static PsiType getGroundTargetType(@Nullable PsiType psiClassType) {
+  public static @Nullable PsiType getGroundTargetType(@Nullable PsiType psiClassType) {
     return getGroundTargetType(psiClassType, null);
   }
 
-  @Nullable
-  public static PsiType getGroundTargetType(@Nullable PsiType psiClassType, @Nullable PsiLambdaExpression expr) {
+  public static @Nullable PsiType getGroundTargetType(@Nullable PsiType psiClassType, @Nullable PsiLambdaExpression expr) {
     return getGroundTargetType(psiClassType, expr, true);
   }
 
-  @Nullable
-  public static PsiType getGroundTargetType(@Nullable PsiType psiClassType, @Nullable PsiLambdaExpression expr, boolean performFinalCheck) {
+  public static @Nullable PsiType getGroundTargetType(@Nullable PsiType psiClassType, @Nullable PsiLambdaExpression expr, boolean performFinalCheck) {
+    psiClassType = LambdaUtil.normalizeFunctionalType(psiClassType);
     if (!isWildcardParameterized(psiClassType)) {
       return psiClassType;
     }
@@ -63,14 +69,6 @@ public final class FunctionalInterfaceParameterizationUtil {
    */
   private static PsiType getFunctionalTypeExplicit(PsiType psiClassType, PsiLambdaExpression expr, boolean performFinalCheck) {
     final PsiParameter[] lambdaParams = expr.getParameterList().getParameters();
-    if (psiClassType instanceof PsiIntersectionType) {
-      for (PsiType psiType : ((PsiIntersectionType)psiClassType).getConjuncts()) {
-        final PsiType functionalType = getFunctionalTypeExplicit(psiType, expr, performFinalCheck);
-        if (functionalType != null) return functionalType;
-      }
-      return null;
-    }
-
     LOG.assertTrue(psiClassType instanceof PsiClassType, "Unexpected type: " + psiClassType);
     final PsiType[] parameters = ((PsiClassType)psiClassType).getParameters();
     final PsiClassType.ClassResolveResult resolveResult = ((PsiClassType)psiClassType).resolveGenerics();
@@ -159,8 +157,7 @@ public final class FunctionalInterfaceParameterizationUtil {
      If Ai is a upper-bounded wildcard ? extends Ui, then Ti = glb(Ui, Bi).
      If Ai is a lower-bounded wildcard ? super Li, then Ti = Li.
    */
-  @Nullable
-  public static PsiType getNonWildcardParameterization(PsiClassType psiClassType) {
+  public static @Nullable PsiType getNonWildcardParameterization(PsiClassType psiClassType) {
     final PsiClassType.ClassResolveResult result = psiClassType.resolveGenerics();
     final PsiClass psiClass = result.getElement();
     if (psiClass != null) {
@@ -175,6 +172,9 @@ public final class FunctionalInterfaceParameterizationUtil {
           final PsiType bound = ((PsiWildcardType)paramType).getBound();
           for (PsiClassType paramBound : typeParameters[i].getExtendsListTypes()) {
             if (PsiTypesUtil.mentionsTypeParameters(paramBound, typeParametersSet)) {
+              if (bound == null) {
+                return null;
+              }
               newParameters[i] = bound;
               continue next;
             }

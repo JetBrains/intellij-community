@@ -1,0 +1,16 @@
+<idea-plugin>
+  <dependencies>
+    <module name="intellij.platform.backend"/>
+    <module name="intellij.platform.kernel.backend"/>
+    <module name="intellij.platform.recentFiles"/>
+  </dependencies>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <registryKey key="switcher.presentation.update.debounce.interval.ms" defaultValue="300"
+                 description="A time period to skip before updating name/color/etc for the next file batch for the switcher/recent files model, measured in millis"/>
+
+    <platform.rpc.backend.remoteApiProvider implementation="com.intellij.platform.recentFiles.backend.RecentFilesBackendApiProvider"/>
+    <vfs.asyncListener id="RecentFileRemovalListener" implementation="com.intellij.platform.recentFiles.backend.RecentFilesVfsListener"/>
+    <postStartupActivity implementation="com.intellij.platform.recentFiles.backend.BackendRecentFileModelSynchronizer"/>
+  </extensions>
+</idea-plugin>

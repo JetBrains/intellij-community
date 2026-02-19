@@ -1,28 +1,15 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi;
 
+import com.intellij.pom.java.LanguageLevel;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import com.intellij.pom.java.LanguageLevel;
 
 /**
  * Represents a Java, JSP or .class file.
  */
-public interface PsiJavaFile extends PsiImportHolder, PsiClassOwner {
+public interface PsiJavaFile extends PsiImportHolder, PsiClassOwner, AbstractBasicJavaFile {
   /**
    * Returns the package statement contained in the file.
    *
@@ -50,38 +37,43 @@ public interface PsiJavaFile extends PsiImportHolder, PsiClassOwner {
   PsiImportList getImportList();
 
   /**
-   * Returns the list of classes or packages which have been
-   * imported on demand (for example, javax.swing.*)
+   * Returns the array of classes or packages which have been
+   * imported on non-static demand (for example, javax.swing.*)
    *
    * @param includeImplicit if true, implicitly imported packages (like java.lang) are included.
    * @param checkIncludes   deprecated, no longer used
-   * @return the list of PsiClass or PsiPackage elements for the imports.
+   * @return the array of PsiClass or PsiPackage elements for the imports.
+   * @deprecated please use other methods to check imports, the method doesn't support module imports
    */
+  @Deprecated
   PsiElement @NotNull [] getOnDemandImports(boolean includeImplicit, @Deprecated boolean checkIncludes);
 
   /**
-   * Returns the list of classes which have been imported as
+   * Returns the array of classes which have been imported as
    * single-class imports.
    *
    * @param checkIncludes deprecated, no longer used.
-   * @return the list of PsiClass elements for the import.
+   * @return the array of PsiClass elements for the import.
    */
   PsiClass @NotNull [] getSingleClassImports(@Deprecated boolean checkIncludes);
 
   /**
-   * Returns the list of names of implicitly imported packages
+   * Returns the array of names of implicitly imported packages
    * (for example, java.lang).
    *
-   * @return the list of implicitly imported package names.
+   * @return the array of implicitly imported package names.
    */
   String @NotNull [] getImplicitlyImportedPackages();
 
   /**
-   * returns the list of reference elements for the
+   * returns the array of reference elements for the
    * implicitly imported packages (for example, java.lang).
    *
-   * @return the list of implicitly imported package reference elements.
+   * @return the array of implicitly imported package reference elements.
+   * @deprecated Use {@link PsiJavaFile#getImplicitlyImportedPackages()} instead
    */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval
   PsiJavaCodeReferenceElement @NotNull [] getImplicitlyImportedPackageReferences();
 
   /**
@@ -102,4 +94,13 @@ public interface PsiJavaFile extends PsiImportHolder, PsiClassOwner {
    */
   @Nullable
   PsiJavaModule getModuleDeclaration();
+
+  /**
+   * @return the array of implicitly imported elements.
+   * This array doesn't include elements from {@link #getImplicitlyImportedPackages()}
+   */
+  @ApiStatus.Experimental
+  default @NotNull ImplicitlyImportedElement @NotNull [] getImplicitlyImportedElements() {
+    return ImplicitlyImportedElement.EMPTY_ARRAY;
+  }
 }

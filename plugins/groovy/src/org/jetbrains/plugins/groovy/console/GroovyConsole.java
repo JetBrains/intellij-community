@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.console;
 
 import com.intellij.execution.ExecutionException;
@@ -7,7 +7,11 @@ import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.configurations.JavaParameters;
 import com.intellij.execution.executors.DefaultRunExecutor;
 import com.intellij.execution.impl.ConsoleViewImpl;
-import com.intellij.execution.process.*;
+import com.intellij.execution.process.BaseOSProcessHandler;
+import com.intellij.execution.process.ColoredProcessHandler;
+import com.intellij.execution.process.ProcessEvent;
+import com.intellij.execution.process.ProcessHandler;
+import com.intellij.execution.process.ProcessListener;
 import com.intellij.execution.ui.ConsoleView;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.execution.ui.RunContentDescriptor;
@@ -27,22 +31,24 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
+import com.intellij.util.io.BaseOutputReader;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.runner.DefaultGroovyScriptRunner;
 import org.jetbrains.plugins.groovy.runner.GroovyScriptRunConfiguration;
 import org.jetbrains.plugins.groovy.runner.GroovyScriptRunner;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JComponent;
+import javax.swing.JPanel;
+import java.awt.BorderLayout;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 
+import static com.intellij.openapi.util.RemoveUserDataKt.removeUserData;
 import static org.jetbrains.plugins.groovy.console.GroovyConsoleUtilKt.getWorkingDirectory;
 import static org.jetbrains.plugins.groovy.console.GroovyConsoleUtilKt.hasNeededDependenciesToRunConsole;
-import static org.jetbrains.plugins.groovy.util.UserDataHolderUtilKt.removeUserData;
 
 public final class GroovyConsole {
 
@@ -108,9 +114,9 @@ public final class GroovyConsole {
     }
   }
 
-  public static void getOrCreateConsole(@NotNull final Project project,
-                                        @NotNull final VirtualFile contentFile,
-                                        @NotNull final Consumer<? super GroovyConsole> callback) {
+  public static void getOrCreateConsole(final @NotNull Project project,
+                                        final @NotNull VirtualFile contentFile,
+                                        final @NotNull Consumer<? super GroovyConsole> callback) {
     final GroovyConsole existingConsole = contentFile.getUserData(GROOVY_CONSOLE);
     if (existingConsole != null) {
       callback.consume(existingConsole);
@@ -139,10 +145,9 @@ public final class GroovyConsole {
     });
   }
 
-  @Nullable
-  public static GroovyConsole createConsole(@NotNull final Project project,
-                                            @NotNull final VirtualFile contentFile,
-                                            @NotNull Module module) {
+  public static @Nullable GroovyConsole createConsole(final @NotNull Project project,
+                                                      final @NotNull VirtualFile contentFile,
+                                                      @NotNull Module module) {
     final ProcessHandler processHandler = createProcessHandler(module);
     if (processHandler == null) return null;
 
@@ -174,7 +179,7 @@ public final class GroovyConsole {
     ui.add(consoleViewComponent, BorderLayout.CENTER);
     ui.add(toolbar.getComponent(), BorderLayout.WEST);
 
-    processHandler.addProcessListener(new ProcessAdapter() {
+    processHandler.addProcessListener(new ProcessListener() {
       @Override
       public void processTerminated(@NotNull ProcessEvent event) {
         if (contentFile.getUserData(GROOVY_CONSOLE) == console) {
@@ -196,7 +201,13 @@ public final class GroovyConsole {
     try {
       final JavaParameters javaParameters = createJavaParameters(module);
       final GeneralCommandLine commandLine = javaParameters.toCommandLine();
-      return new OSProcessHandler.Silent(commandLine) {
+      return new ColoredProcessHandler(commandLine) {
+
+        @Override
+        protected @NotNull BaseOutputReader.Options readerOptions() {
+          return BaseOutputReader.Options.forMostlySilentProcess();
+        }
+
         @Override
         public boolean isSilentlyDestroyOnClose() {
           return true;
@@ -213,8 +224,7 @@ public final class GroovyConsole {
     JavaParameters res = GroovyScriptRunConfiguration.createJavaParametersWithSdk(module);
     DefaultGroovyScriptRunner.configureGenericGroovyRunner(
       res, module, "groovy.ui.GroovyMain",
-      !hasNeededDependenciesToRunConsole(module), true, true, false
-    );
+      !hasNeededDependenciesToRunConsole(module), true, true);
     res.getProgramParametersList().addAll("-p", GroovyScriptRunner.getPathInConf("console.groovy"));
     res.setWorkingDirectory(getWorkingDirectory(module));
     res.setUseDynamicClasspath(true);

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.zmlx.hg4idea.push;
 
 import com.intellij.dvcs.push.PushSpec;
@@ -24,6 +10,7 @@ import com.intellij.openapi.vcs.VcsNotifier;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.VisibleForTesting;
 import org.zmlx.hg4idea.HgBundle;
 import org.zmlx.hg4idea.action.HgCommandResultNotifier;
 import org.zmlx.hg4idea.command.HgPushCommand;
@@ -35,8 +22,11 @@ import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public class HgPusher extends Pusher<HgRepository, HgPushSource, HgTarget> {
+import static org.zmlx.hg4idea.HgNotificationIdsHolder.NOTHING_TO_PUSH;
+import static org.zmlx.hg4idea.HgNotificationIdsHolder.PUSH_ERROR;
+import static org.zmlx.hg4idea.HgNotificationIdsHolder.PUSH_SUCCESS;
 
+public final class HgPusher extends Pusher<HgRepository, HgPushSource, HgTarget> {
   private static final Logger LOG = Logger.getInstance(HgPusher.class);
   private static final String ONE = "one";
   private static final Pattern PUSH_COMMITS_PATTERN = Pattern.compile(".*(?:added|pushed) (\\d+|" + ONE + ") changeset.*");
@@ -73,7 +63,7 @@ public class HgPusher extends Pusher<HgRepository, HgPushSource, HgTarget> {
     }
   }
 
-  public static void pushSynchronously(@NotNull final Project project, @NotNull HgPushCommand command) {
+  public static void pushSynchronously(final @NotNull Project project, @NotNull HgPushCommand command) {
     final VirtualFile repo = command.getRepo();
     HgCommandResult result = command.executeInCurrentThread();
     if (result == null) {
@@ -86,20 +76,21 @@ public class HgPusher extends Pusher<HgRepository, HgPushSource, HgTarget> {
       String successDescription = HgBundle.message("action.hg4idea.push.success.msg",
                                                    commitsNum,
                                                    repo.getPresentableName());
-      VcsNotifier.getInstance(project).notifySuccess("hg.pushed.successfully", successTitle, successDescription);
+      VcsNotifier.getInstance(project).notifySuccess(PUSH_SUCCESS, successTitle, successDescription);
     }
     else if (result.getExitValue() == NOTHING_TO_PUSH_EXIT_VALUE) {
-      VcsNotifier.getInstance(project).notifySuccess("hg.nothing.to.push", "", HgBundle.message("action.hg4idea.push.nothing"));
+      VcsNotifier.getInstance(project).notifySuccess(NOTHING_TO_PUSH, "", HgBundle.message("action.hg4idea.push.nothing"));
     }
     else {
-      new HgCommandResultNotifier(project).notifyError("hg.push.error",
+      new HgCommandResultNotifier(project).notifyError(PUSH_ERROR,
                                                        result,
                                                        HgBundle.message("action.hg4idea.push.error"),
                                                        HgBundle.message("action.hg4idea.push.error.msg", repo.getPresentableName()));
     }
   }
 
-  static int getNumberOfPushedCommits(@NotNull HgCommandResult result) {
+  @VisibleForTesting
+  public static int getNumberOfPushedCommits(@NotNull HgCommandResult result) {
     int numberOfCommitsInAllSubrepos = 0;
     final List<String> outputLines = result.getOutputLines();
     for (String outputLine : outputLines) {

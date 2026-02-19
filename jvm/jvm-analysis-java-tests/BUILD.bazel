@@ -1,0 +1,55 @@
+### auto-generated section `build intellij.jvm.analysis.java.tests` start
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+jvm_library(
+  name = "analysis-java-tests",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True)
+)
+
+jvm_library(
+  name = "analysis-java-tests_test_lib",
+  module_name = "intellij.jvm.analysis.java.tests",
+  visibility = ["//visibility:public"],
+  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java", "testSrc/**/*.form"], allow_empty = True),
+  deps = [
+    "//java/openapi:java",
+    "//java/openapi:java_test_lib",
+    "//java/testFramework",
+    "//java/testFramework:testFramework_test_lib",
+    "//platform/analysis-api:analysis",
+    "//platform/analysis-api:analysis_test_lib",
+    "//platform/code-style-api:codeStyle",
+    "//platform/code-style-api:codeStyle_test_lib",
+    "//platform/core-api:core",
+    "//platform/core-api:core_test_lib",
+    "//platform/editor-ui-api:editor-ui",
+    "//platform/editor-ui-api:editor-ui_test_lib",
+    "//jps/model-api:model",
+    "//jps/model-api:model_test_lib",
+    "//platform/projectModel-api:projectModel",
+    "//platform/projectModel-api:projectModel_test_lib",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test_lib",
+    "//jvm/jvm-analysis-impl:analysis-impl",
+    "//jvm/jvm-analysis-impl:analysis-impl_test_lib",
+    "//jvm/jvm-analysis-testFramework:analysis-testFramework",
+    "//jvm/jvm-analysis-testFramework:analysis-testFramework_test_lib",
+    "//java/java-impl-refactorings:impl-refactorings",
+    "//java/java-impl-refactorings:impl-refactorings_test_lib",
+    "//jvm/jvm-analysis-internal-testFramework:analysis-internal-testFramework",
+    "//jvm/jvm-analysis-internal-testFramework:analysis-internal-testFramework_test_lib",
+    "@lib//:jet_check",
+  ],
+  runtime_deps = [":analysis-java-tests"]
+)
+### auto-generated section `build intellij.jvm.analysis.java.tests` end
+
+### auto-generated section `test intellij.jvm.analysis.java.tests` start
+load("@community//build:tests-options.bzl", "jps_test")
+
+jps_test(
+  name = "analysis-java-tests_test",
+  runtime_deps = [":analysis-java-tests_test_lib"]
+)
+### auto-generated section `test intellij.jvm.analysis.java.tests` end

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring;
 
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
@@ -25,11 +11,16 @@ import com.intellij.lang.ImportOptimizer;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiRecursiveElementVisitor;
+import com.intellij.psi.SmartPsiElementPointer;
+import com.intellij.psi.XmlElementVisitor;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.xml.XmlBundle;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -41,7 +32,7 @@ import java.util.Map;
  * @author Dmitry Avdeev
  */
 public class XmlImportOptimizer implements ImportOptimizer {
-  
+
   private final XmlUnusedNamespaceInspection myInspection = new XmlUnusedNamespaceInspection();
   private final Condition<ProblemDescriptor> myCondition = descriptor -> {
     PsiElement element = descriptor.getPsiElement();
@@ -51,46 +42,45 @@ public class XmlImportOptimizer implements ImportOptimizer {
 
   @Override
   public boolean supports(@NotNull PsiFile file) {
-    return file instanceof XmlFile;
+    return file instanceof XmlFile && !"JSP".equals(file.getLanguage().getID());
   }
 
-  @NotNull
   @Override
-  public CollectingInfoRunnable processFile(@NotNull final PsiFile file) {
+  public @NotNull CollectingInfoRunnable processFile(final @NotNull PsiFile file) {
+    XmlFile xmlFile = (XmlFile)file;
+    Project project = xmlFile.getProject();
+    HighlightDisplayKey key = HighlightDisplayKey.find(myInspection.getShortName());
+    Map<XmlUnusedNamespaceInspection.RemoveNamespaceDeclarationFix, ProblemDescriptor> fixes = new LinkedHashMap<>();
+    if (InspectionProjectProfileManager.getInstance(project).getCurrentProfile().isToolEnabled(key, xmlFile)) {
+      ProblemsHolder holder = new ProblemsHolder(InspectionManager.getInstance(project), xmlFile, false);
+      final XmlElementVisitor visitor = (XmlElementVisitor)myInspection.buildVisitor(holder, false);
+      new PsiRecursiveElementVisitor() {
+        @Override
+        public void visitElement(@NotNull PsiElement element) {
+          if (element instanceof XmlAttribute) {
+            visitor.visitXmlAttribute((XmlAttribute)element);
+          }
+          else {
+            super.visitElement(element);
+          }
+        }
+      }.visitFile(xmlFile);
+      ProblemDescriptor[] results = holder.getResultsArray();
+      List<ProblemDescriptor> list = ContainerUtil.filter(results, myCondition);
+
+      for (ProblemDescriptor result : list) {
+        for (QuickFix fix : result.getFixes()) {
+          if (fix instanceof XmlUnusedNamespaceInspection.RemoveNamespaceDeclarationFix) {
+            fixes.put((XmlUnusedNamespaceInspection.RemoveNamespaceDeclarationFix)fix, result);
+          }
+        }
+      }
+    }
     return new CollectingInfoRunnable() {
       int myRemovedNameSpaces = 0;
 
       @Override
       public void run() {
-        XmlFile xmlFile = (XmlFile)file;
-        Project project = xmlFile.getProject();
-        HighlightDisplayKey key = HighlightDisplayKey.find(myInspection.getShortName());
-        if (!InspectionProjectProfileManager.getInstance(project).getCurrentProfile().isToolEnabled(key, xmlFile)) return;
-        ProblemsHolder holder = new ProblemsHolder(InspectionManager.getInstance(project), xmlFile, false);
-        final XmlElementVisitor visitor = (XmlElementVisitor)myInspection.buildVisitor(holder, false);
-        new PsiRecursiveElementVisitor() {
-          @Override
-          public void visitElement(@NotNull PsiElement element) {
-            if (element instanceof XmlAttribute) {
-              visitor.visitXmlAttribute((XmlAttribute)element);
-            }
-            else {
-              super.visitElement(element);
-            }
-          }
-        }.visitFile(xmlFile);
-        ProblemDescriptor[] results = holder.getResultsArray();
-        List<ProblemDescriptor> list = ContainerUtil.filter(results, myCondition);
-
-        Map<XmlUnusedNamespaceInspection.RemoveNamespaceDeclarationFix, ProblemDescriptor> fixes = new LinkedHashMap<>();
-        for (ProblemDescriptor result : list) {
-          for (QuickFix fix : result.getFixes()) {
-            if (fix instanceof XmlUnusedNamespaceInspection.RemoveNamespaceDeclarationFix) {
-              fixes.put((XmlUnusedNamespaceInspection.RemoveNamespaceDeclarationFix)fix, result);
-            }
-          }
-        }
-
         SmartPsiElementPointer<XmlTag> pointer = null;
         for (Map.Entry<XmlUnusedNamespaceInspection.RemoveNamespaceDeclarationFix, ProblemDescriptor> fix : fixes.entrySet()) {
           pointer = fix.getKey().doFix(project, fix.getValue(), false);
@@ -101,11 +91,10 @@ public class XmlImportOptimizer implements ImportOptimizer {
         }
       }
 
-      @Nullable
       @Override
-      public String getUserNotificationInfo() {
+      public @Nullable String getUserNotificationInfo() {
         return myRemovedNameSpaces > 0
-               ? "Removed " + myRemovedNameSpaces + " namespace" + (myRemovedNameSpaces > 1 ? "s" : "")
+               ? XmlBundle.message("hint.text.removed.namespace", myRemovedNameSpaces, myRemovedNameSpaces > 1 ? 0 : 1)
                : null;
       }
     };

@@ -1,4 +1,4 @@
-// "Convert '2.' to float" "true"
+// "Convert argument to 'float'" "true-preview"
 class Test {
   void bar() {
     foo(2<caret>.);

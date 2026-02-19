@@ -22,15 +22,41 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.codeInspection.utils.BoolUtils;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.*;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrBlockStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrCatchClause;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrFinallyClause;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrForStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrIfStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrSwitchStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrSynchronizedStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrTryCatchStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrWhileStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArgument;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrCodeBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.*;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrAssertStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrBreakStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrContinueStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrReturnStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrThrowStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrCaseSection;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrForClause;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrArrayDeclaration;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssignmentExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrBinaryExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrConditionalExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrElvisExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrInstanceOfExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrNewExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrParenthesizedExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrTypeCastExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrUnaryExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrCallExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrIndexProperty;
@@ -58,9 +84,7 @@ class RecursionUtils {
         statement instanceof GrAssertStatement ||
         statement instanceof GrVariableDeclaration) {
       return false;
-    } else if (statement instanceof GrReturnStatement) {
-      final GrReturnStatement returnStatement =
-          (GrReturnStatement) statement;
+    } else if (statement instanceof GrReturnStatement returnStatement) {
       final GrExpression returnValue = returnStatement.getReturnValue();
       if (returnValue != null) {
         if (expressionDefinitelyRecurses(returnValue, method)) {
@@ -78,9 +102,7 @@ class RecursionUtils {
       final GrCodeBlock body = ((GrSynchronizedStatement) statement)
           .getBody();
       return codeBlockMayReturnBeforeRecursing(body, method, false);
-    } else if (statement instanceof GrBlockStatement) {
-      final GrBlockStatement blockStatement =
-          (GrBlockStatement) statement;
+    } else if (statement instanceof GrBlockStatement blockStatement) {
       final GrCodeBlock codeBlock = blockStatement.getBlock();
       return codeBlockMayReturnBeforeRecursing(codeBlock, method, false);
     } else if (statement instanceof GrIfStatement) {
@@ -295,7 +317,8 @@ class RecursionUtils {
     }
     final IElementType tokenType = expression.getOperationTokenType();
     if (GroovyTokenTypes.mLAND.equals(tokenType) ||
-        GroovyTokenTypes.mLOR.equals(tokenType)) {
+        GroovyTokenTypes.mLOR.equals(tokenType) ||
+        GroovyTokenTypes.mIMPL.equals(tokenType)) {
       return false;
     }
     final GrExpression rhs = expression.getRightOperand();
@@ -385,8 +408,7 @@ class RecursionUtils {
   private static boolean methodCallExpressionDefinitelyRecurses(
       GrMethodCallExpression exp, GrMethod method) {
     final GrExpression invoked = exp.getInvokedExpression();
-    if (invoked instanceof GrReferenceExpression) {
-      final GrReferenceExpression methodExpression = (GrReferenceExpression) invoked;
+    if (invoked instanceof GrReferenceExpression methodExpression) {
       final PsiMethod referencedMethod = exp.resolveMethod();
       if (referencedMethod == null) {
         return false;
@@ -419,25 +441,18 @@ class RecursionUtils {
         statement instanceof GrThrowStatement ||
         statement instanceof GrAssertStatement) {
       return false;
-    } else if (statement instanceof GrExpression) {
-      final GrExpression expression =
-          (GrExpression) statement;
+    } else if (statement instanceof GrExpression expression) {
       return expressionDefinitelyRecurses(expression, method);
-    } else if (statement instanceof GrVariableDeclaration) {
-      final GrVariableDeclaration declaration =
-          (GrVariableDeclaration) statement;
-      final GrVariable[] declaredElements =
-          declaration.getVariables();
-      for (final GrVariable variable : declaredElements) {
-        final GrExpression initializer = (GrExpression) variable.getInitializer();
+    } else if (statement instanceof GrVariableDeclaration declaration) {
+      final GrVariable[] declaredElements = declaration.getVariables();
+      for (GrVariable variable : declaredElements) {
+        final GrExpression initializer = variable.getInitializerGroovy();
         if (expressionDefinitelyRecurses(initializer, method)) {
           return true;
         }
       }
       return false;
-    } else if (statement instanceof GrReturnStatement) {
-      final GrReturnStatement returnStatement =
-          (GrReturnStatement) statement;
+    } else if (statement instanceof GrReturnStatement returnStatement) {
       final GrExpression returnValue = returnStatement.getReturnValue();
       if (returnValue != null) {
         if (expressionDefinitelyRecurses(returnValue, method)) {

@@ -4,11 +4,19 @@ package org.jetbrains.plugins.groovy.annotator.intentions.elements
 import com.intellij.lang.java.beans.PropertyKind
 import com.intellij.lang.jvm.JvmClass
 import com.intellij.lang.jvm.JvmModifier
-import com.intellij.lang.jvm.actions.*
+import com.intellij.lang.jvm.actions.CreateMethodRequest
+import com.intellij.lang.jvm.actions.ExpectedParameter
+import com.intellij.lang.jvm.actions.ExpectedType
+import com.intellij.lang.jvm.actions.ExpectedTypes
+import com.intellij.lang.jvm.actions.expectedType
 import com.intellij.lang.jvm.types.JvmSubstitutor
 import com.intellij.openapi.project.Project
-import com.intellij.psi.*
+import com.intellij.psi.JvmPsiConversionHelper
+import com.intellij.psi.PsiModifier
 import com.intellij.psi.PsiModifier.ModifierConstant
+import com.intellij.psi.PsiSubstitutor
+import com.intellij.psi.PsiTypeParameter
+import com.intellij.psi.PsiTypes
 import com.intellij.psi.impl.compiled.ClsClassImpl
 import com.intellij.psi.impl.light.LightElement
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition
@@ -76,7 +84,7 @@ internal fun JvmSubstitutor.toPsiSubstitutor(project: Project): PsiSubstitutor {
 internal fun CreateMethodRequest.createPropertyTypeConstraints(kind: PropertyKind): ExpectedTypes {
   return when (kind) {
     PropertyKind.GETTER -> returnType
-    PropertyKind.BOOLEAN_GETTER -> listOf(expectedType(PsiType.BOOLEAN))
+    PropertyKind.BOOLEAN_GETTER -> listOf(expectedType(PsiTypes.booleanType()))
     PropertyKind.SETTER -> expectedParameters.single().expectedTypes
   }
 }

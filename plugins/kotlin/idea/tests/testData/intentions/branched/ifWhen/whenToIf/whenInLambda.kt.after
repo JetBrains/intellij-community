@@ -1,0 +1,11 @@
+// PRIORITY: LOW
+
+fun foo(xs: List<Int>) {
+    xs.forEach {
+        val n = it.unaryMinus()
+        if (n == 1) println("one")
+        else if (n == 2) println("two")
+    }
+}
+
+// IGNORE_K1

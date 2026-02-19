@@ -1,15 +1,42 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.PsiEquivalenceUtil;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.java.analysis.JavaAnalysisBundle;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.pom.java.LanguageLevel;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaElementVisitor;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.JavaTokenType;
+import com.intellij.psi.PsiAssignmentExpression;
+import com.intellij.psi.PsiBinaryExpression;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiClassType;
+import com.intellij.psi.PsiConditionalExpression;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiExpressionList;
+import com.intellij.psi.PsiIfStatement;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiMethodCallExpression;
+import com.intellij.psi.PsiNewExpression;
+import com.intellij.psi.PsiPrimitiveType;
+import com.intellij.psi.PsiReferenceExpression;
+import com.intellij.psi.PsiReturnStatement;
+import com.intellij.psi.PsiStatement;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypeCastExpression;
+import com.intellij.psi.PsiTypes;
+import com.intellij.psi.PsiVariable;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.TypeConversionUtil;
 import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.ControlFlowUtils;
 import com.siyeh.ig.psiutils.ExpressionUtils;
@@ -26,18 +53,27 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import static com.intellij.codeInspection.options.OptPane.checkbox;
+import static com.intellij.codeInspection.options.OptPane.pane;
 import static com.intellij.util.ObjectUtils.tryCast;
 
-public class UseCompareMethodInspection extends AbstractBaseJavaLocalInspectionTool {
-  @NotNull
+public final class UseCompareMethodInspection extends AbstractBaseJavaLocalInspectionTool {
+  public boolean suggestFloatingCompare = true;
+
   @Override
-  public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      checkbox("suggestFloatingCompare", JavaAnalysisBundle.message("inspection.use.compare.method.option.double")));
+  }
+
+  @Override
+  public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
     if (!PsiUtil.getLanguageLevel(holder.getFile()).isAtLeast(LanguageLevel.JDK_1_4)) {
       return PsiElementVisitor.EMPTY_VISITOR;
     }
     return new JavaElementVisitor() {
       @Override
-      public void visitMethodCallExpression(PsiMethodCallExpression call) {
+      public void visitMethodCallExpression(@NotNull PsiMethodCallExpression call) {
         CompareInfo info = fromCall(call);
         PsiElement nameElement = call.getMethodExpression().getReferenceNameElement();
         if (info != null && nameElement != null) {
@@ -46,7 +82,7 @@ public class UseCompareMethodInspection extends AbstractBaseJavaLocalInspectionT
       }
 
       @Override
-      public void visitIfStatement(PsiIfStatement statement) {
+      public void visitIfStatement(@NotNull PsiIfStatement statement) {
         CompareInfo info = fromIf(statement);
         PsiElement keyword = statement.getFirstChild();
         if (info != null && keyword != null) {
@@ -55,7 +91,7 @@ public class UseCompareMethodInspection extends AbstractBaseJavaLocalInspectionT
       }
 
       @Override
-      public void visitConditionalExpression(PsiConditionalExpression expression) {
+      public void visitConditionalExpression(@NotNull PsiConditionalExpression expression) {
         CompareInfo info = fromTernary(expression);
         if (info != null) {
           register(info, expression);
@@ -63,8 +99,12 @@ public class UseCompareMethodInspection extends AbstractBaseJavaLocalInspectionT
       }
 
       private void register(CompareInfo info, PsiElement nameElement) {
-        holder.registerProblem(nameElement, JavaAnalysisBundle.message("inspection.can.be.replaced.with.message", info.myClass.getClassName() + ".compare"),
-                               new ReplaceWithPrimitiveCompareFix(info.getReplacementText()));
+        if (!suggestFloatingCompare && info.myMayChangeSemantics) return;
+        LocalQuickFix turnOffFloating = info.myMayChangeSemantics ? LocalQuickFix.from(new UpdateInspectionOptionFix(
+          UseCompareMethodInspection.this, "suggestFloatingCompare",
+          JavaAnalysisBundle.message("inspection.use.compare.method.turn.off.double"), false)) : null;
+        holder.registerProblem(nameElement, JavaAnalysisBundle.message("inspection.expression.can.be.replaced.with.message", info.myClass.getClassName() + ".compare"),
+                               LocalQuickFix.notNullElements(new ReplaceWithPrimitiveCompareFix(info.getReplacementText()), turnOffFloating));
       }
     };
   }
@@ -116,15 +156,16 @@ public class UseCompareMethodInspection extends AbstractBaseJavaLocalInspectionT
     return tryCast(next, PsiStatement.class);
   }
 
-  @Nullable
-  private static Map<Integer, PsiExpression> extractConditions(PsiConditionalExpression ternary) {
+  private static @Nullable Map<Integer, PsiExpression> extractConditions(PsiConditionalExpression ternary) {
     Map<Integer, PsiExpression> result = new HashMap<>(3);
     if (!storeCondition(result, ternary.getCondition(), ternary.getThenExpression())) return null;
     PsiExpression elseExpression = PsiUtil.skipParenthesizedExprDown(ternary.getElseExpression());
     if (elseExpression instanceof PsiConditionalExpression) {
       Map<Integer, PsiExpression> m = extractConditions((PsiConditionalExpression)elseExpression);
       if (m == null) return null;
-      result.putAll(m);
+      for (var entry : m.entrySet()) {
+        if (result.put(entry.getKey(), entry.getValue()) != null) return null;
+      }
       return result;
     }
     return storeCondition(result, null, elseExpression) ? result : null;
@@ -142,7 +183,7 @@ public class UseCompareMethodInspection extends AbstractBaseJavaLocalInspectionT
   }
 
   private static CompareInfo fromTernary(PsiConditionalExpression ternary) {
-    if (!PsiType.INT.equals(ternary.getType())) return null;
+    if (!PsiTypes.intType().equals(ternary.getType())) return null;
     Map<Integer, PsiExpression> map = extractConditions(ternary);
     return fromMap(map, ternary, ternary);
   }
@@ -184,13 +225,13 @@ public class UseCompareMethodInspection extends AbstractBaseJavaLocalInspectionT
     PsiClassType boxedType = leftType instanceof PsiPrimitiveType ? ((PsiPrimitiveType)leftType).getBoxedType(expression) :
                              tryCast(leftType, PsiClassType.class);
     if (boxedType == null) return null;
-    return new CompareInfo(template, expression, canonicalPair.getFirst(), canonicalPair.getSecond(), boxedType);
+    return new CompareInfo(template, expression, canonicalPair.getFirst(), canonicalPair.getSecond(), boxedType,
+                           TypeConversionUtil.isFloatOrDoubleType(boxedType));
   }
 
   private static Pair<PsiExpression, PsiExpression> getOperands(PsiExpression expression, IElementType expectedToken) {
     expression = PsiUtil.skipParenthesizedExprDown(expression);
-    if (!(expression instanceof PsiBinaryExpression)) return null;
-    PsiBinaryExpression binOp = (PsiBinaryExpression)expression;
+    if (!(expression instanceof PsiBinaryExpression binOp)) return null;
     PsiExpression left = PsiUtil.skipParenthesizedExprDown(binOp.getLOperand());
     PsiExpression right = PsiUtil.skipParenthesizedExprDown(binOp.getROperand());
     if (left == null || right == null) return null;
@@ -224,11 +265,10 @@ public class UseCompareMethodInspection extends AbstractBaseJavaLocalInspectionT
     if (left == null) return null;
     PsiExpression right = extractPrimitive(boxedType, primitiveType, arg);
     if (right == null) return null;
-    return new CompareInfo(call, call, left, right, boxedType);
+    return new CompareInfo(call, call, left, right, boxedType, false);
   }
 
-  @Nullable
-  static PsiClassType getBoxedType(PsiMethodCallExpression call) {
+  static @Nullable PsiClassType getBoxedType(PsiMethodCallExpression call) {
     PsiMethod method = call.resolveMethod();
     if (method == null) return null;
     PsiClass aClass = method.getContainingClass();
@@ -236,15 +276,13 @@ public class UseCompareMethodInspection extends AbstractBaseJavaLocalInspectionT
     return JavaPsiFacade.getElementFactory(call.getProject()).createType(aClass);
   }
 
-  @Nullable
-  static PsiExpression extractPrimitive(PsiClassType type, PsiPrimitiveType primitiveType, PsiExpression expression) {
+  static @Nullable PsiExpression extractPrimitive(PsiClassType type, PsiPrimitiveType primitiveType, PsiExpression expression) {
     expression = PsiUtil.skipParenthesizedExprDown(expression);
     if (expression == null) return null;
     if (primitiveType.equals(expression.getType())) {
       return expression;
     }
-    if (expression instanceof PsiMethodCallExpression) {
-      PsiMethodCallExpression call = (PsiMethodCallExpression)expression;
+    if (expression instanceof PsiMethodCallExpression call) {
       if (!"valueOf".equals(call.getMethodExpression().getReferenceName())) return null;
       PsiExpression[] args = call.getArgumentList().getExpressions();
       if (args.length != 1) return null;
@@ -252,13 +290,11 @@ public class UseCompareMethodInspection extends AbstractBaseJavaLocalInspectionT
       if (method == null || type.resolve() != method.getContainingClass()) return null;
       return checkPrimitive(args[0]);
     }
-    if (expression instanceof PsiTypeCastExpression) {
-      PsiTypeCastExpression cast = (PsiTypeCastExpression)expression;
+    if (expression instanceof PsiTypeCastExpression cast) {
       if (!type.equals(cast.getType())) return null;
       return checkPrimitive(cast.getOperand());
     }
-    if (expression instanceof PsiNewExpression) {
-      PsiNewExpression newExpression = (PsiNewExpression)expression;
+    if (expression instanceof PsiNewExpression newExpression) {
       if (!type.equals(newExpression.getType())) return null;
       PsiExpressionList argumentList = newExpression.getArgumentList();
       if (argumentList == null) return null;
@@ -277,8 +313,8 @@ public class UseCompareMethodInspection extends AbstractBaseJavaLocalInspectionT
   @Contract("null, _ -> false")
   private static boolean isTypeConvertible(PsiType type, PsiElement context) {
     type = PsiPrimitiveType.getOptionallyUnboxedType(type);
-    return type != null && (PsiType.DOUBLE.equals(type) ||
-                            PsiType.FLOAT.equals(type) ||
+    return type != null && (PsiTypes.doubleType().equals(type) ||
+                            PsiTypes.floatType().equals(type) ||
                             PsiUtil.isLanguageLevel7OrHigher(context));
   }
 
@@ -288,17 +324,20 @@ public class UseCompareMethodInspection extends AbstractBaseJavaLocalInspectionT
     final @NotNull PsiExpression myLeft;
     final @NotNull PsiExpression myRight;
     final @NotNull PsiClassType myClass;
+    final boolean myMayChangeSemantics;
 
     CompareInfo(@NotNull PsiElement template,
                 @NotNull PsiExpression toReplace,
                 @NotNull PsiExpression left,
                 @NotNull PsiExpression right,
-                @NotNull PsiClassType aClass) {
+                @NotNull PsiClassType aClass,
+                boolean mayChangeSemantics) {
       myTemplate = template;
       myToReplace = toReplace;
       myLeft = left;
       myRight = right;
       myClass = aClass;
+      myMayChangeSemantics = mayChangeSemantics;
     }
 
     private @NotNull PsiElement replace(PsiElement toReplace, CommentTracker ct) {
@@ -322,30 +361,25 @@ public class UseCompareMethodInspection extends AbstractBaseJavaLocalInspectionT
     }
   }
 
-  private static class ReplaceWithPrimitiveCompareFix implements LocalQuickFix {
+  private static class ReplaceWithPrimitiveCompareFix extends PsiUpdateModCommandQuickFix {
     private final String myReplacementText;
 
     ReplaceWithPrimitiveCompareFix(String replacementText) {
       myReplacementText = replacementText;
     }
 
-    @Nls
-    @NotNull
     @Override
-    public String getName() {
+    public @Nls @NotNull String getName() {
       return CommonQuickFixBundle.message("fix.replace.with.x", myReplacementText);
     }
 
-    @Nls
-    @NotNull
     @Override
-    public String getFamilyName() {
+    public @Nls @NotNull String getFamilyName() {
       return JavaAnalysisBundle.message("inspection.use.compare.method.fix.family.name");
     }
 
     @Override
-    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      PsiElement element = descriptor.getStartElement();
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
       PsiElement toReplace;
       List<PsiElement> toDelete = new ArrayList<>();
       CompareInfo info;

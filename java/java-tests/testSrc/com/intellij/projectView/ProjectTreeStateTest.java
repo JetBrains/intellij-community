@@ -1,14 +1,14 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.projectView;
 
-import com.intellij.ide.projectView.impl.AbstractProjectViewPSIPane;
+import com.intellij.ide.projectView.impl.AbstractProjectViewPane;
 import com.intellij.ide.projectView.impl.ClassesTreeStructureProvider;
 import com.intellij.ide.util.treeView.TreeState;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.uiDesigner.projectView.FormMergerTreeStructureProvider;
 import org.jdom.Element;
 
-import javax.swing.*;
+import javax.swing.JTree;
 
 public class ProjectTreeStateTest extends BaseProjectViewTestCase {
   private String myExpectedTree;
@@ -16,7 +16,7 @@ public class ProjectTreeStateTest extends BaseProjectViewTestCase {
   public void testUpdateProjectView() {
     getProjectTreeStructure().setProviders(new ClassesTreeStructureProvider(myProject), new FormMergerTreeStructureProvider(myProject));
 
-    AbstractProjectViewPSIPane pane = myStructure.createPane();
+    AbstractProjectViewPane pane = myStructure.createPane();
 
     JTree tree = pane.getTree();
     PlatformTestUtil.assertTreeEqual(tree, myExpectedTree, true);
@@ -43,8 +43,10 @@ public class ProjectTreeStateTest extends BaseProjectViewTestCase {
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    myExpectedTree = "-Project\n" +
-                     " +PsiDirectory: updateProjectView\n" +
-                     " +External Libraries\n";
+    myExpectedTree = """
+      -Project
+       +PsiDirectory: updateProjectView
+       +External Libraries
+      """;
   }
 }

@@ -11,7 +11,7 @@ import org.jetbrains.idea.maven.importing.MavenCompilerExtension
  * @author Vladislav.Soroka
  */
 class MavenCompilerErrorProneExtension : MavenCompilerExtension {
-  override fun getMavenCompilerId(): String = "javac-with-errorprone"
+  override val mavenCompilerId: String = "javac-with-errorprone"
 
   override fun getCompiler(project: Project): BackendCompiler? {
     val compilerConfiguration = CompilerConfiguration.getInstance(project) as CompilerConfigurationImpl

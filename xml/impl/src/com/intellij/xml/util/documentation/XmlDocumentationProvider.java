@@ -1,27 +1,53 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xml.util.documentation;
 
+import com.intellij.documentation.mdn.MdnDocumentationKt;
 import com.intellij.lang.Language;
 import com.intellij.lang.documentation.DocumentationProvider;
 import com.intellij.lang.documentation.DocumentationUtil;
 import com.intellij.lang.xhtml.XHTMLLanguage;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.*;
+import com.intellij.psi.FileViewProvider;
+import com.intellij.psi.PsiComment;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiErrorElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiWhiteSpace;
+import com.intellij.psi.XmlElementFactory;
 import com.intellij.psi.html.HtmlTag;
 import com.intellij.psi.impl.source.xml.SchemaPrefix;
 import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.templateLanguages.TemplateLanguageFileViewProvider;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.xml.*;
+import com.intellij.psi.xml.XmlAttribute;
+import com.intellij.psi.xml.XmlAttributeDecl;
+import com.intellij.psi.xml.XmlAttributeValue;
+import com.intellij.psi.xml.XmlElementDecl;
+import com.intellij.psi.xml.XmlEntityDecl;
+import com.intellij.psi.xml.XmlFile;
+import com.intellij.psi.xml.XmlTag;
+import com.intellij.psi.xml.XmlToken;
+import com.intellij.psi.xml.XmlTokenType;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Processor;
-import com.intellij.xml.*;
-import com.intellij.xml.impl.schema.*;
+import com.intellij.xml.XmlAttributeDescriptor;
+import com.intellij.xml.XmlBundle;
+import com.intellij.xml.XmlElementDescriptor;
+import com.intellij.xml.XmlExtension;
+import com.intellij.xml.XmlNSDescriptor;
+import com.intellij.xml.impl.schema.AnyXmlElementDescriptor;
+import com.intellij.xml.impl.schema.ComplexTypeDescriptor;
+import com.intellij.xml.impl.schema.TypeDescriptor;
+import com.intellij.xml.impl.schema.XmlAttributeDescriptorImpl;
+import com.intellij.xml.impl.schema.XmlElementDescriptorImpl;
 import com.intellij.xml.util.XmlUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -37,13 +63,11 @@ public class XmlDocumentationProvider implements DocumentationProvider {
 
   private static final Logger LOG = Logger.getInstance(XmlDocumentationProvider.class);
 
-  @NonNls private static final String NAME_ATTR_NAME = "name";
-  @NonNls private static final String BASE_SITEPOINT_URL = "http://reference.sitepoint.com/html/";
+  private static final @NonNls String NAME_ATTR_NAME = "name";
 
 
   @Override
-  @Nullable
-  public String getQuickNavigateInfo(PsiElement element, PsiElement originalElement) {
+  public @Nullable @Nls String getQuickNavigateInfo(PsiElement element, PsiElement originalElement) {
     if (element instanceof SchemaPrefix) {
       return ((SchemaPrefix)element).getQuickNavigateInfo();
     }
@@ -56,8 +80,7 @@ public class XmlDocumentationProvider implements DocumentationProvider {
 
   @Override
   public List<String> getUrlFor(PsiElement element, PsiElement originalElement) {
-    if (element instanceof XmlTag) {
-      XmlTag tag = (XmlTag)element;
+    if (element instanceof XmlTag tag) {
 
       MyPsiElementProcessor processor = new MyPsiElementProcessor();
       XmlUtil.processXmlElements(tag,processor, true);
@@ -76,7 +99,7 @@ public class XmlDocumentationProvider implements DocumentationProvider {
   }
 
   @Override
-  public String generateDoc(PsiElement element, final PsiElement originalElement) {
+  public @Nls String generateDoc(PsiElement element, final PsiElement originalElement) {
     if (element instanceof XmlElementDecl) {
       PsiElement curElement = XmlUtil.findPreviousComment(element);
 
@@ -84,17 +107,15 @@ public class XmlDocumentationProvider implements DocumentationProvider {
         return formatDocFromComment(curElement, ((XmlElementDecl)element).getNameElement().getText());
       }
     }
-    else if (element instanceof XmlTag) {
-      XmlTag tag = (XmlTag)element;
+    else if (element instanceof XmlTag tag) {
       MyPsiElementProcessor processor = new MyPsiElementProcessor();
       String name = tag.getAttributeValue(NAME_ATTR_NAME);
       String typeName = null;
 
-      if (originalElement != null && originalElement.getParent() instanceof XmlAttributeValue) {
-        XmlAttributeValue value = (XmlAttributeValue)originalElement.getParent();
+      if (originalElement != null && originalElement.getParent() instanceof XmlAttributeValue value) {
         String toSearch = value.getValue();
         XmlTag enumerationTag;
-        
+
         if (XmlUtil.ENUMERATION_TAG_NAME.equals(tag.getLocalName())) {
           enumerationTag = tag;
           name = enumerationTag.getAttributeValue(XmlUtil.VALUE_ATTR_NAME);
@@ -142,7 +163,7 @@ public class XmlDocumentationProvider implements DocumentationProvider {
       final PsiElement previousComment = XmlUtil.findPreviousComment(parent);
       final String referenceName = ((XmlAttributeDecl)element).getNameElement().getText();
 
-      if (previousComment instanceof PsiComment) {
+      if (previousComment != null) {
         final PsiElement prevSibling = previousComment.getPrevSibling();
 
         if (prevSibling == null ||
@@ -155,8 +176,7 @@ public class XmlDocumentationProvider implements DocumentationProvider {
       }
 
       return findDocRightAfterElement(parent, referenceName);
-    } else if (element instanceof XmlEntityDecl) {
-      final XmlEntityDecl entityDecl = (XmlEntityDecl)element;
+    } else if (element instanceof XmlEntityDecl entityDecl) {
 
       return findDocRightAfterElement(element, entityDecl.getName());
     }
@@ -189,43 +209,7 @@ public class XmlDocumentationProvider implements DocumentationProvider {
     return enumerationTag.get();
   }
 
-  static String generateHtmlAdditionalDocTemplate(@NotNull PsiElement element) {
-    StringBuilder buf = new StringBuilder();
-    final PsiFile containingFile = element.getContainingFile();
-    if (containingFile != null) {
-      final XmlTag tag = PsiTreeUtil.getParentOfType(element, XmlTag.class, false);
-      boolean append;
-      if (tag instanceof HtmlTag) {
-        append = true;
-      }
-      else {
-        final FileViewProvider provider = containingFile.getViewProvider();
-        Language language;
-        if (provider instanceof TemplateLanguageFileViewProvider) {
-          language = ((TemplateLanguageFileViewProvider)provider).getTemplateDataLanguage();
-        }
-        else {
-          language = provider.getBaseLanguage();
-        }
-
-        append = language == XHTMLLanguage.INSTANCE;
-      }
-
-      if (tag != null) {
-        EntityDescriptor descriptor = HtmlDescriptorsTable.getTagDescriptor(tag.getName());
-        if (descriptor != null && append) {
-          buf.append("<br>");
-          buf.append(XmlBundle.message("html.quickdoc.additional.template",
-                                       descriptor.getHelpRef(),
-                                       BASE_SITEPOINT_URL + tag.getName()));
-        }
-      }
-    }
-
-    return buf.toString();
-  }
-
-  public String findDocRightAfterElement(final PsiElement parent, final String referenceName) {
+  public @NlsSafe String findDocRightAfterElement(final PsiElement parent, final String referenceName) {
     // Check for comment right after the xml attlist decl
     PsiElement uncleElement = parent.getNextSibling();
     if (uncleElement instanceof PsiWhiteSpace && uncleElement.getText().indexOf('\n') == -1) uncleElement = uncleElement.getNextSibling();
@@ -235,11 +219,27 @@ public class XmlDocumentationProvider implements DocumentationProvider {
     return null;
   }
 
-  private String formatDocFromComment(final PsiElement curElement, final String name) {
+  private @NlsSafe String formatDocFromComment(final PsiElement curElement, final String name) {
     String text = curElement.getText();
     text = text.substring("<!--".length(),text.length()-"-->".length()).trim();
     text = escapeDocumentationTextText(text);
     return generateDoc(text, name,null, null);
+  }
+
+  protected @NlsSafe String generateDoc(String str, String name, String typeName, String version) {
+    if (str == null) return null;
+    StringBuilder buf = new StringBuilder(str.length() + 20);
+
+    DocumentationUtil.formatEntityName(typeName == null ? XmlBundle.message("xml.javadoc.tag.name.message"):typeName,name,buf);
+
+    final String indent = "  ";
+    final StringBuilder builder = buf.append(XmlBundle.message("xml.javadoc.description.message")).append(indent).
+        append(HtmlDocumentationProvider.NBSP).append(str);
+    if (version != null) {
+      builder.append(HtmlDocumentationProvider.BR).append(XmlBundle.message("xml.javadoc.version.message")).append(indent)
+          .append(HtmlDocumentationProvider.NBSP).append(version);
+    }
+    return builder.toString();
   }
 
   private static XmlTag getComplexOrSimpleTypeDefinition(PsiElement element, PsiElement originalElement) {
@@ -285,20 +285,38 @@ public class XmlDocumentationProvider implements DocumentationProvider {
     return null;
   }
 
-  protected String generateDoc(String str, String name, String typeName, String version) {
-    if (str == null) return null;
-    StringBuilder buf = new StringBuilder(str.length() + 20);
+  static @NlsSafe String generateHtmlAdditionalDocTemplate(@NotNull PsiElement element) {
+    StringBuilder buf = new StringBuilder();
+    final PsiFile containingFile = element.getContainingFile();
+    if (containingFile != null) {
+      final XmlTag tag = PsiTreeUtil.getParentOfType(element, XmlTag.class, false);
+      boolean append;
+      if (tag instanceof HtmlTag) {
+        append = true;
+      }
+      else {
+        final FileViewProvider provider = containingFile.getViewProvider();
+        Language language;
+        if (provider instanceof TemplateLanguageFileViewProvider) {
+          language = ((TemplateLanguageFileViewProvider)provider).getTemplateDataLanguage();
+        }
+        else {
+          language = provider.getBaseLanguage();
+        }
 
-    DocumentationUtil.formatEntityName(typeName == null ? XmlBundle.message("xml.javadoc.tag.name.message"):typeName,name,buf);
+        append = language == XHTMLLanguage.INSTANCE;
+      }
 
-    final String indent = "  ";
-    final StringBuilder builder = buf.append(XmlBundle.message("xml.javadoc.description.message")).append(indent).
-        append(HtmlDocumentationProvider.NBSP).append(str);
-    if (version != null) {
-      builder.append(HtmlDocumentationProvider.BR).append(XmlBundle.message("xml.javadoc.version.message")).append(indent)
-          .append(HtmlDocumentationProvider.NBSP).append(version);
+      if (tag != null && append) {
+        var documentation = MdnDocumentationKt.getHtmlMdnDocumentation(tag, tag);
+        if (documentation != null && documentation.getUrl() != null) {
+          buf.append("<br>");
+          buf.append(XmlBundle.message("html.quickdoc.additional.template", documentation.getUrl()));
+        }
+      }
     }
-    return builder.toString();
+
+    return buf.toString();
   }
 
   @Override
@@ -319,11 +337,17 @@ public class XmlDocumentationProvider implements DocumentationProvider {
       } else if (element.getParent() instanceof XmlAttribute) {
         isAttrCompletion = true;
       }
+    } else if (!isAttrCompletion && element instanceof PsiWhiteSpace) {
+      PsiElement prevSibling = element.getPrevSibling();
+      if (prevSibling instanceof XmlTag && prevSibling.getLastChild() instanceof PsiErrorElement) {
+        isAttrCompletion = true;
+        element = prevSibling;
+      }
     }
 
     element = PsiTreeUtil.getParentOfType(element, XmlTag.class, false);
 
-    if (element instanceof XmlTag) {
+    if (element != null) {
       XmlTag xmlTag = (XmlTag)element;
       XmlElementDescriptor elementDescriptor;
 
@@ -345,9 +369,9 @@ public class XmlDocumentationProvider implements DocumentationProvider {
         String namespacePrefix = XmlUtil.findPrefixByQualifiedName(object.toString());
         String namespace = xmlTag.getNamespaceByPrefix(namespacePrefix);
 
-        if (namespace!=null && namespace.length() > 0) {
+        if (!namespace.isEmpty()) {
           tagText.append(" xmlns");
-          if (namespacePrefix.length() > 0) tagText.append(":").append(namespacePrefix);
+          if (!namespacePrefix.isEmpty()) tagText.append(":").append(namespacePrefix);
           tagText.append("=\"").append(namespace).append("\"");
         }
 
@@ -370,9 +394,9 @@ public class XmlDocumentationProvider implements DocumentationProvider {
 
         // The very special case of xml file
         final PsiFile containingFile = xmlTag.getContainingFile();
-        final XmlFile xmlFile = XmlUtil.getContainingFile(xmlTag);
-        if (xmlFile != containingFile) {
-          final XmlTag rootTag = xmlFile.getDocument().getRootTag();
+        @Nullable XmlFile xmlFile = XmlUtil.getContainingFile(xmlTag);
+        if (xmlFile != null && xmlFile != containingFile) {
+          final XmlTag rootTag = xmlFile.getRootTag();
           if (rootTag != null) {
             final XmlNSDescriptor nsDescriptor = rootTag.getNSDescriptor(rootTag.getNamespaceByPrefix(namespacePrefix), true);
             elementDescriptor = (nsDescriptor != null) ? nsDescriptor.getElementDescriptor(tagFromText) : null;
@@ -393,7 +417,7 @@ public class XmlDocumentationProvider implements DocumentationProvider {
     if (object instanceof String && originalElement != null) {
       PsiElement result = findDeclWithName((String)object, originalElement);
 
-      if (result == null && element instanceof XmlTag) {
+      if (result == null && element != null) {
         XmlAttribute attribute = PsiTreeUtil.getParentOfType(originalElement, XmlAttribute.class, false);
         if (attribute != null) {
           XmlAttributeDescriptor descriptor = attribute.getDescriptor();
@@ -422,15 +446,13 @@ public class XmlDocumentationProvider implements DocumentationProvider {
         xmlFile,
         new PsiElementProcessor() {
           @Override
-          public boolean execute(@NotNull final PsiElement element) {
-            if (element instanceof XmlEntityDecl) {
-              final XmlEntityDecl entityDecl = (XmlEntityDecl)element;
+          public boolean execute(final @NotNull PsiElement element) {
+            if (element instanceof XmlEntityDecl entityDecl) {
               if (entityDecl.isInternalReference() && name.equals(entityDecl.getName())) {
                 result[0] = entityDecl;
                 return false;
               }
-            } else if (element instanceof XmlElementDecl) {
-              final XmlElementDecl entityDecl = (XmlElementDecl)element;
+            } else if (element instanceof XmlElementDecl entityDecl) {
               if (name.equals(entityDecl.getName())) {
                 result[0] = entityDecl;
                 return false;
@@ -451,16 +473,15 @@ public class XmlDocumentationProvider implements DocumentationProvider {
     String result;
     String version;
     String url;
-    @NonNls public static final String DOCUMENTATION_ELEMENT_LOCAL_NAME = "documentation";
-    private @NonNls static final String CDATA_PREFIX = "<![CDATA[";
-    private @NonNls static final String CDATA_SUFFIX = "]]>";
+    public static final @NonNls String DOCUMENTATION_ELEMENT_LOCAL_NAME = "documentation";
+    private static final @NonNls String CDATA_PREFIX = "<![CDATA[";
+    private static final @NonNls String CDATA_SUFFIX = "]]>";
 
     @Override
     public boolean execute(@NotNull PsiElement element) {
-      if (element instanceof XmlTag &&
-          ((XmlTag)element).getLocalName().equals(DOCUMENTATION_ELEMENT_LOCAL_NAME)
+      if (element instanceof XmlTag tag &&
+          tag.getLocalName().equals(DOCUMENTATION_ELEMENT_LOCAL_NAME)
       ) {
-        final XmlTag tag = ((XmlTag)element);
         result = tag.getValue().getText().trim();
         boolean withCData = false;
 

@@ -1,0 +1,14 @@
+Original text:
+---------------
+class Clazz():
+    def method(self): ...
+
+Clazz().method()
+---------------
+Subtree: Language: Python
+---------------
+class Clazz():
+    def method(self): ...
+
+Clazz().<reparse>metINSERTEDhod</reparse>()
+---------------

@@ -1,0 +1,624 @@
+The *dirstate* is what Mercurial uses internally to track
+the state of files in the working directory,
+such as set by commands like `hg add` and `hg rm`.
+It also contains some cached data that help make `hg status` faster.
+The name refers both to `.hg/dirstate` on the filesystem
+and the corresponding data structure in memory while a Mercurial process
+is running.
+
+The original file format, retroactively dubbed `dirstate-v1`,
+is described at https://www.mercurial-scm.org/wiki/DirState.
+It is made of a flat sequence of unordered variable-size entries,
+so accessing any information in it requires parsing all of it.
+Similarly, saving changes requires rewriting the entire file.
+
+The newer `dirstate-v2` file format is designed to fix these limitations
+and make `hg status` faster.
+
+User guide
+==========
+
+Compatibility
+-------------
+
+The file format is experimental and may still change.
+Different versions of Mercurial may not be compatible with each other
+when working on a local repository that uses this format.
+When using an incompatible version with the experimental format,
+anything can happen including data corruption.
+
+Since the dirstate is entirely local and not relevant to the wire protocol,
+`dirstate-v2` does not affect compatibility with remote Mercurial versions.
+
+When `share-safe` is enabled, different repositories sharing the same store
+can use different dirstate formats.
+
+Enabling `dirstate-v2` for new local repositories
+------------------------------------------------
+
+When creating a new local repository such as with `hg init` or `hg clone`,
+the `use-dirstate-v2` boolean in the `format` configuration section
+controls whether to use this file format.
+This is disabled by default as of this writing.
+To enable it for a single repository, run for example::
+
+    $ hg init my-project --config format.use-dirstate-v2=1
+
+Checking the format of an existing local repository
+--------------------------------------------------
+
+The `debugformat` commands prints information about
+which of multiple optional formats are used in the current repository,
+including `dirstate-v2`::
+
+    $ hg debugformat
+    format-variant     repo
+    fncache:            yes
+    dirstate-v2:        yes
+    […]
+
+Upgrading or downgrading an existing local repository
+-----------------------------------------------------
+
+The `debugupgrade` command does various upgrades or downgrades
+on a local repository
+based on the current Mercurial version and on configuration.
+The same `format.use-dirstate-v2` configuration is used again.
+
+Example to upgrade::
+
+    $ hg debugupgrade --config format.use-dirstate-v2=1
+
+Example to downgrade to `dirstate-v1`::
+
+    $ hg debugupgrade --config format.use-dirstate-v2=0
+
+Both of this commands do nothing but print a list of proposed changes,
+which may include changes unrelated to the dirstate.
+Those other changes are controlled by their own configuration keys.
+Add `--run` to a command to actually apply the proposed changes.
+
+Backups of `.hg/requires` and `.hg/dirstate` are created
+in a `.hg/upgradebackup.*` directory.
+If something goes wrong, restoring those files should undo the change.
+
+Note that upgrading affects compatibility with older versions of Mercurial
+as noted above.
+This can be relevant when a repository’s files are on a USB drive
+or some other removable media, or shared over the network, etc.
+
+Internal filesystem representation
+==================================
+
+Requirements file
+-----------------
+
+The `.hg/requires` file indicates which of various optional file formats
+are used by a given repository.
+Mercurial aborts when seeing a requirement it does not know about,
+which avoids older version accidentally messing up a repository
+that uses a format that was introduced later.
+For versions that do support a format, the presence or absence of
+the corresponding requirement indicates whether to use that format.
+
+When the file contains a `dirstate-v2` line,
+the `dirstate-v2` format is used.
+With no such line `dirstate-v1` is used.
+
+High level description
+----------------------
+
+Whereas `dirstate-v1` uses a single `.hg/dirstate` file,
+in `dirstate-v2` that file is a "docket" file
+that only contains some metadata
+and points to separate data file named `.hg/dirstate.{ID}`,
+where `{ID}` is a random identifier.
+
+This separation allows making data files append-only
+and therefore safer to memory-map.
+Creating a new data file (occasionally to clean up unused data)
+can be done with a different ID
+without disrupting another Mercurial process
+that could still be using the previous data file.
+
+Both files have a format designed to reduce the need for parsing,
+by using fixed-size binary components as much as possible.
+For data that is not fixed-size,
+references to other parts of a file can be made by storing "pseudo-pointers":
+integers counted in bytes from the start of a file.
+For read-only access no data structure is needed,
+only a bytes buffer (possibly memory-mapped directly from the filesystem)
+with specific parts read on demand.
+
+The data file contains "nodes" organized in a tree.
+Each node represents a file or directory inside the working directory
+or its parent changeset.
+This tree has the same structure as the filesystem,
+so a node representing a directory has child nodes representing
+the files and subdirectories contained directly in that directory.
+
+The docket file format
+----------------------
+
+This is implemented in `rust/hg-core/src/dirstate_tree/on_disk.rs`
+and `mercurial/dirstateutils/docket.py`.
+
+Components of the docket file are found at fixed offsets,
+counted in bytes from the start of the file:
+
+* Offset 0:
+  The 12-bytes marker string "dirstate-v2\n" ending with a newline character.
+  This makes it easier to tell a dirstate-v2 file from a dirstate-v1 file,
+  although it is not strictly necessary
+  since `.hg/requires` determines which format to use.
+
+* Offset 12:
+  The changeset node ID on the first parent of the working directory,
+  as up to 32 binary bytes.
+  If a node ID is shorter (20 bytes for SHA-1),
+  it is start-aligned and the rest of the bytes are set to zero.
+
+* Offset 44:
+  The changeset node ID on the second parent of the working directory,
+  or all zeros if there isn’t one.
+  Also 32 binary bytes.
+
+* Offset 76:
+  Tree metadata on 44 bytes, described below.
+  Its separation in this documentation from the rest of the docket
+  reflects a detail of the current implementation.
+  Since tree metadata is also made of fields at fixed offsets, those could
+  be inlined here by adding 76 bytes to each offset.
+
+* Offset 120:
+  The used size of the data file, as a 32-bit big-endian integer.
+  The actual size of the data file may be larger
+  (if another Mercurial process is appending to it
+  but has not updated the docket yet).
+  That extra data must be ignored.
+
+* Offset 124:
+  The length of the data file identifier, as a 8-bit integer.
+
+* Offset 125:
+  The data file identifier.
+
+* Any additional data is current ignored, and dropped when updating the file.
+
+Tree metadata in the docket file
+--------------------------------
+
+Tree metadata is similarly made of components at fixed offsets.
+These offsets are counted in bytes from the start of tree metadata,
+which is 76 bytes after the start of the docket file.
+
+This metadata can be thought of as the singular root of the tree
+formed by nodes in the data file.
+
+* Offset 0:
+  Pseudo-pointer to the start of root nodes,
+  counted in bytes from the start of the data file,
+  as a 32-bit big-endian integer.
+  These nodes describe files and directories found directly
+  at the root of the working directory.
+
+* Offset 4:
+  Number of root nodes, as a 32-bit big-endian integer.
+
+* Offset 8:
+  Total number of nodes in the entire tree that "have a dirstate entry",
+  as a 32-bit big-endian integer.
+  Those nodes represent files that would be present at all in `dirstate-v1`.
+  This is typically less than the total number of nodes.
+  This counter is used to implement `len(dirstatemap)`.
+
+* Offset 12:
+  Number of nodes in the entire tree that have a copy source,
+  as a 32-bit big-endian integer.
+  At the next commit, these files are recorded
+  as having been copied or moved/renamed from that source.
+  (A move is recorded as a copy and separate removal of the source.)
+  This counter is used to implement `len(dirstatemap.copymap)`.
+
+* Offset 16:
+  An estimation of how many bytes of the data file
+  (within its used size) are unused, as a 32-bit big-endian integer.
+  When appending to an existing data file,
+  some existing nodes or paths can be unreachable from the new root
+  but they still take up space.
+  This counter is used to decide when to write a new data file from scratch
+  instead of appending to an existing one,
+  in order to get rid of that unreachable data
+  and avoid unbounded file size growth.
+
+* Offset 20:
+  These four bytes are currently ignored
+  and reset to zero when updating a docket file.
+  This is an attempt at forward compatibility:
+  future Mercurial versions could use this as a bit field
+  to indicate that a dirstate has additional data or constraints.
+  Finding a dirstate file with the relevant bit unset indicates that
+  it was written by a then-older version
+  which is not aware of that future change.
+
+* Offset 24:
+  Either 20 zero bytes, or a SHA-1 hash as 20 binary bytes.
+  When present, the hash is of ignore patterns
+  that were used for some previous run of the `status` algorithm.
+
+* (Offset 44: end of tree metadata)
+
+Optional hash of ignore patterns
+--------------------------------
+
+The implementation of `status` at `rust/hg-core/src/dirstate_tree/status.rs`
+has been optimized such that its run time is dominated by calls
+to `stat` for reading the filesystem metadata of a file or directory,
+and to `readdir` for listing the contents of a directory.
+In some cases the algorithm can skip calls to `readdir`
+(saving significant time)
+because the dirstate already contains enough of the relevant information
+to build the correct `status` results.
+
+The default configuration of `hg status` is to list unknown files
+but not ignored files.
+In this case, it matters for the `readdir`-skipping optimization
+if a given file used to be ignored but became unknown
+because `.hgignore` changed.
+To detect the possibility of such a change,
+the tree metadata contains an optional hash of all ignore patterns.
+
+We define:
+
+* "Root" ignore files as:
+
+  - `.hgignore` at the root of the repository if it exists
+  - And all files from `ui.ignore.*` config.
+
+  This set of files is sorted by the string representation of their path.
+
+* The "expanded contents" of an ignore files is the byte string made
+  by the concatenation of its contents followed by the "expanded contents"
+  of other files included with `include:` or `subinclude:` directives,
+  in inclusion order. This definition is recursive, as included files can
+  themselves include more files.
+
+* "filepath" as the bytes of the ignore file path
+  relative to the root of the repository if inside the repository,
+  or the untouched path as defined in the configuration.
+
+This hash is defined as the SHA-1 of the following line format:
+
+<filepath> <sha1 of the "expanded contents">\n
+
+for each "root" ignore file. (in sorted order)
+
+(Note that computing this does not require actually concatenating
+into a single contiguous byte sequence.
+Instead a SHA-1 hasher object can be created
+and fed separate chunks one by one.)
+
+The data file format
+--------------------
+
+This is implemented in `rust/hg-core/src/dirstate_tree/on_disk.rs`
+and `mercurial/dirstateutils/v2.py`.
+
+The data file contains two types of data: paths and nodes.
+
+Paths and nodes can be organized in any order in the file, except that sibling
+nodes must be next to each other and sorted by their path.
+Contiguity lets the parent refer to them all
+by their count and a single pseudo-pointer,
+instead of storing one pseudo-pointer per child node.
+Sorting allows using binary search to find a child node with a given name
+in `O(log(n))` byte sequence comparisons.
+
+The current implementation writes paths and child node before a given node
+for ease of figuring out the value of pseudo-pointers by the time the are to be
+written, but this is not an obligation and readers must not rely on it.
+
+A path is stored as a byte string anywhere in the file, without delimiter.
+It is referred to by one or more node by a pseudo-pointer to its start, and its
+length in bytes. Since there is no delimiter,
+when a path is a substring of another the same bytes could be reused,
+although the implementation does not exploit this as of this writing.
+
+A node is stored on 43 bytes with components at fixed offsets. Paths and
+child nodes relevant to a node are stored externally and referenced though
+pseudo-pointers.
+
+All integers are stored in big-endian. All pseudo-pointers are 32-bit integers
+counting bytes from the start of the data file. Path lengths and positions
+are 16-bit integers, also counted in bytes.
+
+Node components are:
+
+* Offset 0:
+  Pseudo-pointer to the full path of this node,
+  from the working directory root.
+
+* Offset 4:
+  Length of the full path.
+
+* Offset 6:
+  Position of the last `/` path separator within the full path,
+  in bytes from the start of the full path,
+  or zero if there isn’t one.
+  The part of the full path after this position is the "base name".
+  Since sibling nodes have the same parent, only their base name vary
+  and needs to be considered when doing binary search to find a given path.
+
+* Offset 8:
+  Pseudo-pointer to the "copy source" path for this node,
+  or zero if there is no copy source.
+
+* Offset 12:
+  Length of the copy source path, or zero if there isn’t one.
+
+* Offset 14:
+  Pseudo-pointer to the start of child nodes.
+
+* Offset 18:
+  Number of child nodes, as a 32-bit integer.
+  They occupy 43 times this number of bytes
+  (not counting space for paths, and further descendants).
+
+* Offset 22:
+  Number as a 32-bit integer of descendant nodes in this subtree,
+  not including this node itself,
+  that "have a dirstate entry".
+  Those nodes represent files that would be present at all in `dirstate-v1`.
+  This is typically less than the total number of descendants.
+  This counter is used to implement `has_dir`.
+
+* Offset 26:
+  Number as a 32-bit integer of descendant nodes in this subtree,
+  not including this node itself,
+  that represent files tracked in the working directory.
+  (For example, `hg rm` makes a file untracked.)
+  This counter is used to implement `has_tracked_dir`.
+
+* Offset 30:
+  A `flags` fields  that packs some boolean values as bits of a 16-bit integer.
+  Starting from least-significant, bit masks are::
+
+    WDIR_TRACKED = 1 << 0
+    P1_TRACKED = 1 << 1
+    P2_INFO = 1 << 2
+    MODE_EXEC_PERM = 1 << 3
+    MODE_IS_SYMLINK = 1 << 4
+    HAS_FALLBACK_EXEC = 1 << 5
+    FALLBACK_EXEC = 1 << 6
+    HAS_FALLBACK_SYMLINK = 1 << 7
+    FALLBACK_SYMLINK = 1 << 8
+    EXPECTED_STATE_IS_MODIFIED = 1 << 9
+    HAS_MODE_AND_SIZE = 1 << 10
+    HAS_MTIME = 1 << 11
+    MTIME_SECOND_AMBIGUOUS = 1 << 12
+    DIRECTORY = 1 << 13
+    ALL_UNKNOWN_RECORDED = 1 << 14
+    ALL_IGNORED_RECORDED = 1 << 15
+
+  The meaning of each bit is described below.
+
+  Other bits are unset.
+  They may be assigned meaning if the future,
+  with the limitation that Mercurial versions that pre-date such meaning
+  will always reset those bits to unset when writing nodes.
+  (A new node is written for any mutation in its subtree,
+  leaving the bytes of the old node unreachable
+  until the data file is rewritten entirely.)
+
+* Offset 32:
+  A `size` field described below, as a 32-bit integer.
+  Unlike in dirstate-v1, negative values are not used.
+
+* Offset 36:
+  The seconds component of an `mtime` field described below,
+  as a 32-bit integer.
+  Unlike in dirstate-v1, negative values are not used.
+  When `mtime` is used, this is number of seconds since the Unix epoch
+  truncated to its lower 31 bits.
+
+* Offset 40:
+  The nanoseconds component of an `mtime` field described below,
+  as a 32-bit integer.
+  When `mtime` is used,
+  this is the number of nanoseconds since `mtime.seconds`,
+  always strictly less than one billion.
+
+  This may be zero if more precision is not available.
+  (This can happen because of limitations in any of Mercurial, Python,
+  libc, the operating system, …)
+
+  When comparing two mtimes and either has this component set to zero,
+  the sub-second precision of both should be ignored.
+  False positives when checking mtime equality due to clock resolution
+  are always possible and the status algorithm needs to deal with them,
+  but having too many false negatives could be harmful too.
+
+* (Offset 44: end of this node)
+
+The meaning of the boolean values packed in `flags` is:
+
+`WDIR_TRACKED`
+    Set if the working directory contains a tracked file at this node’s path.
+    This is typically set and unset by `hg add` and `hg rm`.
+
+`P1_TRACKED`
+    Set if the working directory’s first parent changeset
+    (whose node identifier is found in tree metadata)
+    contains a tracked file at this node’s path.
+    This is a cache to reduce manifest lookups.
+
+`P2_INFO`
+    Set if the file has been involved in some merge operation.
+    Either because it was actually merged,
+    or because the version in the second parent p2 version was ahead,
+    or because some rename moved it there.
+    In either case `hg status` will want it displayed as modified.
+
+Files that would be mentioned at all in the `dirstate-v1` file format
+have a node with at least one of the above three bits set in `dirstate-v2`.
+Let’s call these files "tracked anywhere",
+and "untracked" the nodes with all three of these bits unset.
+Untracked nodes are typically for directories:
+they hold child nodes and form the tree structure.
+Additional untracked nodes may also exist.
+Although implementations should strive to clean up nodes
+that are entirely unused, other untracked nodes may also exist.
+For example, a future version of Mercurial might in some cases
+add nodes for untracked files or/and ignored files in the working directory
+in order to optimize `hg status`
+by enabling it to skip `readdir` in more cases.
+
+`HAS_MODE_AND_SIZE`
+    Must be unset for untracked nodes.
+    For files tracked anywhere, if this is set:
+    - The `size` field is the expected file size,
+      in bytes truncated its lower to 31 bits.
+    - The expected execute permission for the file’s owner
+      is given by `MODE_EXEC_PERM`
+    - The expected file type is given by `MODE_IS_SIMLINK`:
+      a symbolic link if set, or a normal file if unset.
+    If this is unset the expected size, permission, and file type are unknown.
+    The `size` field is unused (set to zero).
+
+`HAS_MTIME`
+    The nodes contains a "valid" last modification time in the `mtime` field.
+
+
+    It means the `mtime` was already strictly in the past when observed,
+    meaning that later changes cannot happen in the same clock tick
+    and must cause a different modification time
+    (unless the system clock jumps back and we get unlucky,
+    which is not impossible but deemed unlikely enough).
+
+    This means that if `std::fs::symlink_metadata` later reports
+    the same modification time
+    and ignored patterns haven’t changed,
+    we can assume the node to be unchanged on disk.
+
+    The `mtime` field can then be used to skip more expensive lookup when
+    checking the status of "tracked" nodes.
+
+    It can also be set for node where `DIRECTORY` is set.
+    See `DIRECTORY` documentation for details.
+
+`DIRECTORY`
+    When set, this entry will match a directory that exists or existed on the
+    file system.
+
+    * When `HAS_MTIME` is set a directory has been seen on the file system and
+      `mtime` matches its last modification time. However, `HAS_MTIME` not
+      being set does not indicate the lack of directory on the file system.
+
+    * When not tracked anywhere, this node does not represent an ignored or
+      unknown file on disk.
+
+    If `HAS_MTIME` is set
+    and `mtime` matches the last modification time of the directory on disk,
+    the directory is unchanged
+    and we can skip calling `std::fs::read_dir` again for this directory,
+    and iterate child dirstate nodes instead.
+    (as long as `ALL_UNKNOWN_RECORDED` and `ALL_IGNORED_RECORDED` are taken
+    into account)
+
+`MODE_EXEC_PERM`
+    Must be unset if `HAS_MODE_AND_SIZE` is unset.
+    If `HAS_MODE_AND_SIZE` is set,
+    this indicates whether the file’s own is expected
+    to have execute permission.
+
+    Beware that on system without fs support for this information, the value
+    stored in the dirstate might be wrong and should not be relied on.
+
+`MODE_IS_SYMLINK`
+    Must be unset if `HAS_MODE_AND_SIZE` is unset.
+    If `HAS_MODE_AND_SIZE` is set,
+    this indicates whether the file is expected to be a symlink
+    as opposed to a normal file.
+
+    Beware that on system without fs support for this information, the value
+    stored in the dirstate might be wrong and should not be relied on.
+
+`EXPECTED_STATE_IS_MODIFIED`
+    Must be unset for untracked nodes.
+    For:
+    - a file tracked anywhere
+    - that has expected metadata (`HAS_MODE_AND_SIZE` and `HAS_MTIME`)
+    - if that metadata matches
+      metadata found in the working directory with `stat`
+    This bit indicates the status of the file.
+    If set, the status is modified. If unset, it is clean.
+
+    In cases where `hg status` needs to read the contents of a file
+    because metadata is ambiguous, this bit lets it record the result
+    if the result is modified so that a future run of `hg status`
+    does not need to do the same again.
+    It is valid to never set this bit,
+    and consider expected metadata ambiguous if it is set.
+
+`ALL_UNKNOWN_RECORDED`
+    If set, all "unknown" children existing on disk (at the time of the last
+    status) have been recorded and the `mtime` associated with
+    `DIRECTORY` can be used for optimization even when "unknown" file
+    are listed.
+
+    Note that the amount recorded "unknown" children can still be zero if None
+    where present.
+
+    Also note that having this flag unset does not imply that no "unknown"
+    children have been recorded. Some might be present, but there is
+    no guarantee that is will be all of them.
+
+`ALL_IGNORED_RECORDED`
+    If set, all "ignored" children existing on disk (at the time of the last
+    status) have been recorded and the `mtime` associated with
+    `DIRECTORY` can be used for optimization even when "ignored" file
+    are listed.
+
+    Note that the amount recorded "ignored" children can still be zero if None
+    where present.
+
+    Also note that having this flag unset does not imply that no "ignored"
+    children have been recorded. Some might be present, but there is
+    no guarantee that is will be all of them.
+
+`HAS_FALLBACK_EXEC`
+    If this flag is set, the entry carries "fallback" information for the
+    executable bit in the `FALLBACK_EXEC` flag.
+
+    Fallback information can be stored in the dirstate to keep track of
+    filesystem attribute tracked by Mercurial when the underlying file
+    system or operating system does not support that property, (e.g.
+    Windows).
+
+`FALLBACK_EXEC`
+    Should be ignored if `HAS_FALLBACK_EXEC` is unset. If set the file for this
+    entry should be considered executable if that information cannot be
+    extracted from the file system. If unset it should be considered
+    non-executable instead.
+
+`HAS_FALLBACK_SYMLINK`
+    If this flag is set, the entry carries "fallback" information for symbolic
+    link status in the `FALLBACK_SYMLINK` flag.
+
+    Fallback information can be stored in the dirstate to keep track of
+    filesystem attribute tracked by Mercurial when the underlying file
+    system or operating system does not support that property, (e.g.
+    Windows).
+
+`FALLBACK_SYMLINK`
+    Should be ignored if `HAS_FALLBACK_SYMLINK` is unset. If set the file for
+    this entry should be considered a symlink if that information cannot be
+    extracted from the file system. If unset it should be considered a normal
+    file instead.
+
+`MTIME_SECOND_AMBIGUOUS`
+    This flag is relevant only when `HAS_FILE_MTIME` is set.  When set, the
+    `mtime` stored in the entry is only valid for comparison with timestamps
+    that have nanosecond information. If available timestamp does not carries
+    nanosecond information, the `mtime` should be ignored and no optimization
+    can be applied.

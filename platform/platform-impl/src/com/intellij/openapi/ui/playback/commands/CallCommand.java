@@ -1,9 +1,11 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.ui.playback.commands;
 
 import com.intellij.openapi.ui.playback.PlaybackContext;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.concurrency.AsyncPromise;
 import org.jetbrains.concurrency.Promise;
 import org.jetbrains.concurrency.Promises;
@@ -15,7 +17,8 @@ import java.util.Set;
 /**
  * Author: kirillk
  */
-public class CallCommand extends AbstractCommand {
+@ApiStatus.Internal
+public final class CallCommand extends AbstractCommand {
 
   public static final String PREFIX = CMD_PREFIX + "call";
 
@@ -24,7 +27,7 @@ public class CallCommand extends AbstractCommand {
   }
 
   @Override
-  protected Promise<Object> _execute(final PlaybackContext context) {
+  protected @NotNull Promise<Object> _execute(final @NotNull PlaybackContext context) {
     final String cmd = getText().substring(PREFIX.length()).trim();
     final int open = cmd.indexOf("(");
     if (open == -1) {
@@ -40,7 +43,7 @@ public class CallCommand extends AbstractCommand {
 
     final String methodName = cmd.substring(0, open);
     String[] args = cmd.substring(open + 1, close).split(",");
-    final boolean noArgs = args.length == 1 && args[0].length() == 0;
+    final boolean noArgs = args.length == 1 && args[0].isEmpty();
     Class[] types = noArgs ? new Class[1] : new Class[args.length + 1];
     types[0] = PlaybackContext.class;
     for (int i = 1; i < types.length; i++) {

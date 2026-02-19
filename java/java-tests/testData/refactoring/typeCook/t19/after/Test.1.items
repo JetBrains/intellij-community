@@ -1,3 +1,0 @@
-LinkedList<LinkedList>\nPsiField:x
-LinkedList<java.lang.Object>\nPsiField:y
-LinkedList\nPsiTypeCastExpression:(LinkedList) x.get()

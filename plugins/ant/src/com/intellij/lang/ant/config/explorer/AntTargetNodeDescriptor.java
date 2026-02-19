@@ -4,7 +4,12 @@ package com.intellij.lang.ant.config.explorer;
 import com.intellij.execution.RunManagerEx;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.util.treeView.NodeDescriptor;
-import com.intellij.lang.ant.config.*;
+import com.intellij.lang.ant.AntBundle;
+import com.intellij.lang.ant.config.AntBuildFile;
+import com.intellij.lang.ant.config.AntBuildModelBase;
+import com.intellij.lang.ant.config.AntBuildTargetBase;
+import com.intellij.lang.ant.config.AntConfigurationBase;
+import com.intellij.lang.ant.config.ExecutionEvent;
 import com.intellij.lang.ant.config.impl.AntBeforeRunTask;
 import com.intellij.lang.ant.config.impl.AntBeforeRunTaskProvider;
 import com.intellij.lang.ant.config.impl.ExecuteCompositeTargetEvent;
@@ -12,8 +17,6 @@ import com.intellij.lang.ant.config.impl.MetaTarget;
 import com.intellij.openapi.actionSystem.Shortcut;
 import com.intellij.openapi.editor.markup.EffectType;
 import com.intellij.openapi.editor.markup.TextAttributes;
-import com.intellij.openapi.keymap.Keymap;
-import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ui.CellAppearanceEx;
@@ -27,7 +30,8 @@ import com.intellij.util.ui.UIUtil;
 import icons.AntIcons;
 import org.jetbrains.annotations.NotNull;
 
-import java.awt.*;
+import java.awt.Color;
+import java.awt.Font;
 import java.util.ArrayList;
 
 final class AntTargetNodeDescriptor extends AntNodeDescriptor {
@@ -88,7 +92,7 @@ final class AntTargetNodeDescriptor extends AntNodeDescriptor {
     if (vFile != null) {
       for (AntBeforeRunTask task : RunManagerEx.getInstanceEx(myProject).getBeforeRunTasks(AntBeforeRunTaskProvider.ID)) {
         if (task.isRunningTarget(myTarget)) {
-          myHighlightedText.getEnding().addText(" (Before Run/Debug)", ourPostfixAttributes);
+          myHighlightedText.getEnding().addText(AntBundle.message("ant.target.node.before.run.debug"), ourPostfixAttributes);
           break;
         }
       }

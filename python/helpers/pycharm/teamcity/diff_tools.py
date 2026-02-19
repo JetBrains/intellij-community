@@ -1,3 +1,4 @@
+import os
 import pprint
 import sys
 import unittest
@@ -31,17 +32,20 @@ def patch_unittest_diff(test_filter=None):
         try:
             old(self, first, second, msg)
             return
-        except AssertionError as native_error:
+        except AssertionError as e:
             if not test_filter or test_filter(self):
-                error = EqualsAssertionError(first, second, msg)
+                error = EqualsAssertionError(first, second, msg, real_exception=e)
                 if error.can_be_serialized():
-                    raise error
-            raise native_error
+                    from .jb_local_exc_store import store_exception
+                    store_exception(error)
+            raise
 
     unittest.TestCase.assertEqual = _patched_equals
 
 
 def _format_and_convert(val):
+    if "_JB_PPRINT_PRIMITIVES" in os.environ:
+        return pprint.pformat(val)
     # No need to pretty-print primitives
     return val if any(x for x in _PRIMITIVES if isinstance(val, x)) else pprint.pformat(val)
 
@@ -50,7 +54,9 @@ class EqualsAssertionError(AssertionError):
     MESSAGE_SEP = " :: "
     NOT_EQ_SEP = " != "
 
-    def __init__(self, expected, actual, msg=None, preformated=False):
+    # Real exception could be provided, but not serialized
+    def __init__(self, expected, actual, msg=None, preformated=False, real_exception=None):
+        self.real_exception = real_exception
         self.expected = expected
         self.actual = actual
         self.msg = text_type(msg)

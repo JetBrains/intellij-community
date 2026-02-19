@@ -1,9 +1,15 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.ui.layout.impl;
 
-import com.intellij.execution.ui.layout.*;
+import com.intellij.execution.ui.layout.CellTransform;
+import com.intellij.execution.ui.layout.Grid;
+import com.intellij.execution.ui.layout.PlaceInGrid;
+import com.intellij.execution.ui.layout.Tab;
+import com.intellij.execution.ui.layout.View;
+import com.intellij.execution.ui.layout.ViewContext;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.DataProvider;
+import com.intellij.openapi.actionSystem.DataSink;
+import com.intellij.openapi.actionSystem.UiDataProvider;
 import com.intellij.openapi.ui.NullableComponent;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.ui.ThreeComponentsSplitter;
@@ -11,19 +17,28 @@ import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.ui.content.Content;
-import com.intellij.ui.tabs.JBTabsPresentation;
+import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.accessibility.ScreenReader;
-import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.VisibleForTesting;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JComponent;
+import javax.swing.LayoutFocusTraversalPolicy;
+import java.awt.Component;
+import java.awt.Container;
+import java.awt.Rectangle;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.EnumMap;
+import java.util.HashMap;
 import java.util.List;
-import java.util.*;
+import java.util.Map;
 
-public class GridImpl extends Wrapper implements Grid, Disposable, DataProvider {
-  private final ThreeComponentsSplitter myTopSplit = new ThreeComponentsSplitter(false, true, this);
+@ApiStatus.Internal
+public final class GridImpl extends Wrapper implements Grid, Disposable, UiDataProvider {
+  private final ThreeComponentsSplitter myTopSplit = new ThreeComponentsSplitter(false, true);
   private final Splitter mySplitter = new Splitter(true);
 
   private final Map<PlaceInGrid, GridCellImpl> myPlaceInGrid2Cell = new EnumMap<>(PlaceInGrid.class);
@@ -35,7 +50,7 @@ public class GridImpl extends Wrapper implements Grid, Disposable, DataProvider 
 
   private final ViewContextEx myViewContext;
 
-  public GridImpl(ViewContextEx viewContext, String sessionName) {
+  public GridImpl(@NotNull ViewContextEx viewContext, String sessionName) {
     myViewContext = viewContext;
 
     Disposer.register(myViewContext, this);
@@ -66,7 +81,9 @@ public class GridImpl extends Wrapper implements Grid, Disposable, DataProvider 
   public void addNotify() {
     super.addNotify();
 
-    processAddToUi(true);
+    if (UIUtil.getParentOfType(JBRunnerTabs.class, this) != null) {
+      processAddToUi(true);
+    }
   }
 
   @Override
@@ -144,8 +161,13 @@ public class GridImpl extends Wrapper implements Grid, Disposable, DataProvider 
   }
 
   public boolean updateGridUI() {
+    var isHidden = myViewContext.getLayoutSettings().isTabLabelsHidden();
     for (final GridCellImpl cell : myPlaceInGrid2Cell.values()) {
-      cell.setHideTabs(myContents.size() == 1);
+      if (isHidden) {
+        cell.setHideTabs(cell.getContentCount() == 1);
+      } else {
+        cell.setHideTabs(myContents.size() == 1);
+      }
     }
 
     final Content onlyContent = myContents.get(0);
@@ -158,7 +180,7 @@ public class GridImpl extends Wrapper implements Grid, Disposable, DataProvider 
   }
 
   public ActionCallback restoreLastUiState() {
-    final ActionCallback result = new ActionCallback(myPlaceInGrid2Cell.values().size());
+    final ActionCallback result = new ActionCallback(myPlaceInGrid2Cell.size());
     for (final GridCellImpl cell : myPlaceInGrid2Cell.values()) {
       cell.restoreLastUiState().notifyWhenDone(result);
     }
@@ -172,8 +194,7 @@ public class GridImpl extends Wrapper implements Grid, Disposable, DataProvider 
     }
   }
 
-  @Nullable
-  public Tab getTabIndex() {
+  public @Nullable Tab getTabIndex() {
     return getTab();
   }
 
@@ -186,8 +207,7 @@ public class GridImpl extends Wrapper implements Grid, Disposable, DataProvider 
     cell.processAlert(content, activate);
   }
 
-  @Nullable
-  public GridCellImpl findCell(final Content content) {
+  public @Nullable GridCellImpl findCell(final Content content) {
     return myContent2Cell.get(content);
   }
 
@@ -209,8 +229,8 @@ public class GridImpl extends Wrapper implements Grid, Disposable, DataProvider 
     Content[] getContents();
   }
 
-  static class Placeholder extends Wrapper implements NullableComponent {
-
+  @ApiStatus.Internal
+  public static final class Placeholder extends Wrapper implements NullableComponent {
     private ContentProvider myContentProvider;
     private JComponent myComponent;
 
@@ -240,7 +260,7 @@ public class GridImpl extends Wrapper implements Grid, Disposable, DataProvider 
             Content[] contents = myContentProvider.getContents();
             if (contents != null && contents.length > 0) {
               Component preferred = contents[first ? 0 : contents.length - 1].getPreferredFocusableComponent();
-              if (preferred != null && accept(preferred)) {
+              if (preferred != null && preferred.isShowing() && accept(preferred)) {
                 return preferred;
               }
             }
@@ -250,7 +270,8 @@ public class GridImpl extends Wrapper implements Grid, Disposable, DataProvider 
       });
     }
 
-    void setContentProvider(@NotNull ContentProvider provider) {
+    @VisibleForTesting
+    public void setContentProvider(@NotNull ContentProvider provider) {
       myContentProvider = provider;
     }
 
@@ -275,20 +296,6 @@ public class GridImpl extends Wrapper implements Grid, Disposable, DataProvider 
           return ActionCallback.DONE;
         }
       };
-    }
-
-    @Override
-    public void doLayout() {
-      super.doLayout();
-      Component child = getComponentCount() == 1 ? getComponent(0) : null;
-      if (child instanceof JBTabsPresentation) {
-        if (!((JBTabsPresentation)child).isHideTabs()) {
-          Rectangle bounds = child.getBounds();
-          bounds.y --;
-          bounds.height ++;
-          child.setBounds(bounds);
-        }
-      }
     }
   }
 
@@ -324,8 +331,7 @@ public class GridImpl extends Wrapper implements Grid, Disposable, DataProvider 
     }
   }
 
-  @Nullable
-  public Tab getTab() {
+  public @Nullable Tab getTab() {
     return myViewContext.getTabFor(this);
   }
 
@@ -336,17 +342,10 @@ public class GridImpl extends Wrapper implements Grid, Disposable, DataProvider 
     final TabImpl tab = (TabImpl)getTab();
     if (tab != null) {
       switch (placeInGrid) {
-        case left:
-          setLeftProportion(tab.getLeftProportion());
-          break;
-        case right:
-          setRightProportion(tab.getRightProportion());
-          break;
-        case bottom:
-          mySplitter.setProportion(tab.getBottomProportion());
-          break;
-        case center:
-          break;
+        case left -> setLeftProportion(tab.getLeftProportion());
+        case right -> setRightProportion(tab.getRightProportion());
+        case bottom -> mySplitter.setProportion(tab.getBottomProportion());
+        case center -> {}
       }
     }
   }
@@ -384,12 +383,12 @@ public class GridImpl extends Wrapper implements Grid, Disposable, DataProvider 
     myTopSplit.setLastSize((int)(proportion * (float)(componentSize - 2 * myTopSplit.getDividerWidth())));
   }
 
-  public List<Content> getAttachedContents() {
-    return new ArrayList<>(getContents());
+  public @NotNull ViewContextEx getViewContext() {
+    return myViewContext;
   }
 
   @Override
-  public List<Content> getContents() {
+  public @NotNull List<Content> getContents() {
     return myContents;
   }
 
@@ -403,15 +402,8 @@ public class GridImpl extends Wrapper implements Grid, Disposable, DataProvider 
   }
 
   @Override
-  @Nullable
-  public Object getData(@NotNull @NonNls final String dataId) {
-    if (ViewContext.CONTEXT_KEY.is(dataId)) {
-      return myViewContext;
-    }
-    else if (ViewContext.CONTENT_KEY.is(dataId)) {
-      List<Content> contents = getContents();
-      return contents.toArray(new Content[0]);
-    }
-    return null;
+  public void uiDataSnapshot(@NotNull DataSink sink) {
+    sink.set(ViewContext.CONTEXT_KEY, myViewContext);
+    sink.set(ViewContext.CONTENT_KEY, myContents.toArray(new Content[0]));
   }
 }

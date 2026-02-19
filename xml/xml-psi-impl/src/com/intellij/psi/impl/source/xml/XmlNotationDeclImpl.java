@@ -2,36 +2,20 @@
 package com.intellij.psi.impl.source.xml;
 
 import com.intellij.lang.ASTNode;
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.psi.tree.ChildRoleBase;
-import com.intellij.psi.xml.*;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.psi.xml.XmlElementContentSpec;
+import com.intellij.psi.xml.XmlNotationDecl;
 
-public class XmlNotationDeclImpl extends XmlElementImpl implements XmlNotationDecl, XmlElementType {
-  private static final Logger LOG = Logger.getInstance(XmlElementDeclImpl.class);
+import static com.intellij.psi.xml.XmlElementType.XML_ELEMENT_CONTENT_SPEC;
+import static com.intellij.psi.xml.XmlElementType.XML_NOTATION_DECL;
 
+public class XmlNotationDeclImpl extends XmlElementImpl implements XmlNotationDecl {
   public XmlNotationDeclImpl() {
     super(XML_NOTATION_DECL);
   }
 
   @Override
-  public int getChildRole(@NotNull ASTNode child) {
-    LOG.assertTrue(child.getTreeParent() == this);
-    if (child.getElementType() == XML_ELEMENT_CONTENT_SPEC) {
-      return XmlChildRole.XML_ELEMENT_CONTENT_SPEC;
-    }
-    else {
-      return ChildRoleBase.NONE;
-    }
-  }
-
-  @Override
-  public XmlElement getNameElement() {
-    return (XmlElement)findChildByRoleAsPsiElement(XmlChildRole.XML_NAME);
-  }
-
-  @Override
   public XmlElementContentSpec getContentSpecElement() {
-    return (XmlElementContentSpec)findChildByRoleAsPsiElement(XmlChildRole.XML_ELEMENT_CONTENT_SPEC);
+    ASTNode child = getNode().findChildByType(XML_ELEMENT_CONTENT_SPEC);
+    return child != null ? child.getPsi(XmlElementContentSpec.class) : null;
   }
 }

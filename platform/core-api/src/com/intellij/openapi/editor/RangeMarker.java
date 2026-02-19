@@ -1,21 +1,8 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor;
 
 import com.intellij.openapi.util.Segment;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.UserDataHolder;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -28,8 +15,14 @@ import java.util.Comparator;
  * shifts the marker forward or backward; adding or deleting text within the marker
  * increases or decreases the length of the marked range by the respective offset. Adding
  * text at the start or end of the marker optionally extends the marker, depending on
- * {@link #setGreedyToLeft(boolean)} and {@link #setGreedyToRight(boolean)} settings. Deleting
- * the entire text range containing the marker causes the marker to become invalid.
+ * {@link #setGreedyToLeft(boolean)} and {@link #setGreedyToRight(boolean)} settings.
+ * Deleting the entire text range containing the marker causes the marker to become invalid.
+ * <p>
+ * <b>A note about lifetime.</b>
+ * Range markers are weakly referenced and eventually got garbage-collected
+ * after a long and painful fight with the garbage collector.
+ * So calling its {@link #dispose()} method is not strictly necessary, but might help GC, especially in high allocation rate cases.
+ * After {@link #dispose()} call the {@link #isValid()} method returns {@code false}, all other methods are <a href="https://en.wikipedia.org/wiki/Undefined_behavior">UB</a>.
  *
  * @see Document#createRangeMarker(int, int)
  */
@@ -61,8 +54,8 @@ public interface RangeMarker extends UserDataHolder, Segment {
   int getEndOffset();
 
   /**
-   * Checks if the marker has been invalidated by deleting the entire fragment of text
-   * containing the marker.
+   * Checks whether the marker is still alive, or it has been invalidated, either by deleting
+   * the entire fragment of text containing the marker, or by an explicit call to {@link #dispose()}.
    *
    * @return true if the marker is valid, false if it has been invalidated.
    */
@@ -87,8 +80,33 @@ public interface RangeMarker extends UserDataHolder, Segment {
 
   Comparator<? super RangeMarker> BY_START_OFFSET = BY_START_OFFSET_THEN_END_OFFSET;
 
+  /**
+   * @return true if the range marker should increase its length when a character is inserted at the {@link #getEndOffset()} offset.
+   */
   boolean isGreedyToRight();
+
+  /**
+   * @return true if the range marker should increase its length when a character is inserted at the {@link #getStartOffset()} offset.
+   */
   boolean isGreedyToLeft();
 
+  /**
+   * Destroys and de-registers the range marker.
+   * <p>
+   * From the moment this method is called, {@link #isValid()} starts returning {@code false},
+   * and the behaviour of all other methods becomes undefined, which means they can throw exceptions.
+   * Calling this method is not strictly necessary because range markers are garbage-collectable,
+   * but may help improve performance in case of a high GC pressure (see the {@link RangeMarker} javadoc).
+   */
   void dispose();
+
+  /**
+   * @return a {@link TextRange} with offsets of this range marker.
+   * This method is preferable because the most implementations are thread-safe, so the returned range is always consistent, whereas
+   * the more conventional {@code TextRange.create(getStartOffset(), getEndOffset())} could return inconsistent range when the selection
+   * changed between {@link #getStartOffset()} and {@link #getEndOffset()} calls.
+   */
+  default @NotNull TextRange getTextRange() {
+    return new TextRange(getStartOffset(), getEndOffset());
+  }
 }

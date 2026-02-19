@@ -22,7 +22,16 @@ import com.intellij.psi.util.PsiTreeUtil;
 import org.intellij.lang.xpath.XPath2ElementTypes;
 import org.intellij.lang.xpath.XPathElementTypes;
 import org.intellij.lang.xpath.XPathTokenTypes;
-import org.intellij.lang.xpath.psi.*;
+import org.intellij.lang.xpath.psi.XPath2SequenceType;
+import org.intellij.lang.xpath.psi.XPath2Type;
+import org.intellij.lang.xpath.psi.XPathAxisSpecifier;
+import org.intellij.lang.xpath.psi.XPathElementVisitor;
+import org.intellij.lang.xpath.psi.XPathExpression;
+import org.intellij.lang.xpath.psi.XPathFilterExpression;
+import org.intellij.lang.xpath.psi.XPathNodeTest;
+import org.intellij.lang.xpath.psi.XPathPredicate;
+import org.intellij.lang.xpath.psi.XPathStep;
+import org.intellij.lang.xpath.psi.XPathType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -33,8 +42,7 @@ public class XPathStepImpl extends XPathElementImpl implements XPathStep {
   }
 
   @Override
-  @NotNull
-  public XPathType getType() {
+  public @NotNull XPathType getType() {
     if (getNode().getElementType() == XPath2ElementTypes.CONTEXT_ITEM) {
       final XPathPredicate predicate = PsiTreeUtil.getParentOfType(this, XPathPredicate.class);
       if (predicate != null) {
@@ -67,8 +75,7 @@ public class XPathStepImpl extends XPathElementImpl implements XPathStep {
     }
   }
 
-  @Nullable
-  private <T extends PsiElement> T findFromXPath2FilterExpr(IElementType type, Class<T> clazz) {
+  private @Nullable <T extends PsiElement> T findFromXPath2FilterExpr(IElementType type, Class<T> clazz) {
     final XPathExpression f = getPreviousStep();
     if (f instanceof XPathFilterExpression) {
       final ASTNode node = f.getNode();
@@ -99,8 +106,7 @@ public class XPathStepImpl extends XPathElementImpl implements XPathStep {
   }
 
   @Override
-  @Nullable
-  public XPathExpression getPreviousStep() {
+  public @Nullable XPathExpression getPreviousStep() {
     final XPathExpression[] nodes = findChildrenByClass(XPathExpression.class);
 
     if (nodes.length > 0) {
@@ -110,8 +116,7 @@ public class XPathStepImpl extends XPathElementImpl implements XPathStep {
   }
 
   @Override
-  @Nullable
-  public XPathExpression getStep() {
+  public @Nullable XPathExpression getStep() {
     final XPathExpression[] nodes = findChildrenByClass(XPathExpression.class);
 
     if (nodes.length > 1) {

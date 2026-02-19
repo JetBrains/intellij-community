@@ -1,0 +1,8 @@
+// "Convert string to character literal" "true"
+fun foo(x: Char) {}
+
+fun bar() {
+    foo('.')
+}
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.ConvertStringToCharLiteralFix
+// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.fixes.ConvertStringToCharLiteralFixFactory$ConvertStringToCharLiteralFix

@@ -1,23 +1,12 @@
-#!/bin/sh
+#!/bin/bash
+# Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+set -euo pipefail
 
-compile_clang() { clang -O2 -Wall -Wextra -Wpedantic -std=c11 -D_DEFAULT_SOURCE "$@"; }
-compile_cc() { cc -O2 -Wall -Wextra -Wpedantic -Wno-unknown-pragmas -std=c11 -D_DEFAULT_SOURCE "$@"; }
-
-VER=$(date "+%Y%m%d.%H%M")
-sed -i.bak "s/#define VERSION .*/#define VERSION \"${VER}\"/" fsnotifier.h && rm fsnotifier.h.bak
-ARCH=$(uname -m)
-
-if [ "$ARCH" = "x86_64" ] || [ "$ARCH" = "amd64" ]; then
-  echo "*** Compiling amd64 version (fsnotifier64) ..."
-  compile_clang -o fsnotifier64 main.c inotify.c util.c && \
-    chmod 755 fsnotifier64
-
-  # dependencies: libc6-dev:i386 libgcc-9-dev:i386
-  printf "\n\n*** Compiling i386 version (fsnotifier) ...\n"
-  compile_clang -target i686-linux-elf -o fsnotifier main.c inotify.c util.c && \
-    chmod 755 fsnotifier
-else
-  echo "*** Compiling platform-specific version (fsnotifier-$ARCH)..."
-  compile_cc -o fsnotifier-"$ARCH" main.c inotify.c util.c && \
-    chmod 755 fsnotifier-"$ARCH"
+VER="${1:-}"
+if [ -z "${VER:-}" ]; then
+  VER=$(date "+%Y%m%d.%H%M")
 fi
+
+rm -f fsnotifier
+${CC:-clang} -static -O2 -Wall -Wextra -Wpedantic -D "VERSION=\"$VER\"" -std=c11 main.c inotify.c util.c -o fsnotifier
+chmod 755 fsnotifier

@@ -1,16 +1,33 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.find;
 
-import com.intellij.find.editorHeaderActions.*;
-import com.intellij.ide.IdeEventQueue;
-import com.intellij.ide.impl.DataManagerImpl;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.find.editorHeaderActions.AddOccurrenceAction;
+import com.intellij.find.editorHeaderActions.NextOccurrenceAction;
+import com.intellij.find.editorHeaderActions.PrevOccurrenceAction;
+import com.intellij.find.editorHeaderActions.RemoveOccurrenceAction;
+import com.intellij.find.editorHeaderActions.SelectAllAction;
+import com.intellij.ide.DataManager;
+import com.intellij.ide.impl.HeadlessDataManager;
+import com.intellij.openapi.actionSystem.ActionPlaces;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.IdeActions;
+import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.testFramework.fixtures.BasePlatformTestCase;
+import com.intellij.util.ui.UIUtil;
 
 import javax.swing.text.JTextComponent;
 
 public abstract class AbstractFindInEditorTest extends BasePlatformTestCase {
+
+  @Override
+  protected void setUp() throws Exception {
+    super.setUp();
+    HeadlessDataManager.fallbackToProductionDataManager(getTestRootDisposable());
+  }
+
   protected void setTextToFind(String text) {
     EditorSearchSession editorSearchSession = getEditorSearchComponent();
     assertNotNull(editorSearchSession);
@@ -18,7 +35,7 @@ public abstract class AbstractFindInEditorTest extends BasePlatformTestCase {
     assertNotNull(searchField);
     for (int i = 0; i <= text.length(); i++) {
       searchField.setText(text.substring(0, i)); // emulate typing chars one by one
-      IdeEventQueue.getInstance().flushQueue();
+      UIUtil.dispatchAllInvocationEvents();
     }
   }
 
@@ -68,11 +85,11 @@ public abstract class AbstractFindInEditorTest extends BasePlatformTestCase {
   }
 
   protected void executeHeaderAction(AnAction action) {
-    DataContext context = new DataManagerImpl.MyDataContext(getEditorSearchComponent().getComponent());
+    DataContext context = DataManager.getInstance().getDataContext(getEditorSearchComponent().getComponent());
     AnActionEvent e = AnActionEvent.createFromDataContext(ActionPlaces.EDITOR_TOOLBAR, null, context);
-    action.beforeActionPerformedUpdate(e);
-    if (e.getPresentation().isEnabled() && e.getPresentation().isVisible()) {
-      action.actionPerformed(e);
+    ActionUtil.updateAction(action, e);
+    if (e.getPresentation().isEnabledAndVisible()) {
+      ActionUtil.performAction(action, e);
     }
   }
 

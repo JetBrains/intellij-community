@@ -1,4 +1,4 @@
-// "Replace with text block" "true"
+// "Replace with text block" "true-preview"
 
 class TextBlockMigration {
 
@@ -7,7 +7,9 @@ class TextBlockMigration {
             this concatenation contains
              three quotes
             one after another
-            ""\"""";
+            "\
+            "\
+            \"""";
   }
 
 }

@@ -14,15 +14,17 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.PsiManager;
-import com.intellij.ui.GuiUtils;
 import com.intellij.ui.breadcrumbs.BreadcrumbsUtil;
+import com.intellij.util.ModalityUiUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.xml.breadcrumbs.BreadcrumbsPanel;
 import com.intellij.xml.breadcrumbs.BreadcrumbsUtilEx;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+@ApiStatus.Internal
 public abstract class DiffBreadcrumbsPanel extends BreadcrumbsPanel {
   private boolean myCrumbsShown;
 
@@ -46,7 +48,9 @@ public abstract class DiffBreadcrumbsPanel extends BreadcrumbsPanel {
   }
 
   private void updateVisibility() {
-    GuiUtils.invokeLaterIfNeeded(() -> {
+    ModalityUiUtil.invokeLaterIfNeeded(ModalityState.stateForComponent(this), () -> {
+      if (Disposer.isDisposed(this)) return;
+
       boolean hasCollectors = updateCollectors(myCrumbsShown);
       if (hasCollectors != isVisible()) {
         setVisible(hasCollectors);
@@ -54,15 +58,12 @@ public abstract class DiffBreadcrumbsPanel extends BreadcrumbsPanel {
         repaint();
       }
       queueUpdate();
-    }, ModalityState.stateForComponent(this));
+    });
   }
 
   protected abstract boolean updateCollectors(boolean enabled);
 
-  @Nullable
-  protected FileBreadcrumbsCollector findCollector(@Nullable VirtualFile file) {
-    if (file == null) return null;
-
+  private @Nullable FileBreadcrumbsCollector findCollector(@NotNull VirtualFile file) {
     FileViewProvider viewProvider = PsiManager.getInstance(myProject).findViewProvider(file);
     if (viewProvider == null) return null;
 
@@ -71,7 +72,7 @@ public abstract class DiffBreadcrumbsPanel extends BreadcrumbsPanel {
       return null;
     }
 
-    return findCollectorFor(myProject, file, this);
+    return FileBreadcrumbsCollector.findBreadcrumbsCollector(myProject, file);
   }
 
   @Override
@@ -80,5 +81,35 @@ public abstract class DiffBreadcrumbsPanel extends BreadcrumbsPanel {
       return 0;
     }
     return super.getLeftOffset();
+  }
+
+  protected class DiffBreadcrumbCollectorHolder {
+    private volatile FileBreadcrumbsCollector myBreadcrumbsCollector;
+    private @NotNull Disposable myCollectorListenerDisposable = Disposer.newDisposable();
+
+    public DiffBreadcrumbCollectorHolder() {
+    }
+
+    public boolean update(@Nullable VirtualFile file, boolean enable) {
+      Disposer.dispose(myCollectorListenerDisposable);
+
+      FileBreadcrumbsCollector newCollector = enable && file != null ? findCollector(file) : null;
+
+      if (newCollector != null) {
+        Disposable newDisposable = Disposer.newDisposable(DiffBreadcrumbsPanel.this);
+        newCollector.watchForChanges(file, myEditor, newDisposable, () -> queueUpdate());
+        myBreadcrumbsCollector = newCollector;
+        myCollectorListenerDisposable = newDisposable;
+        return true;
+      }
+      else {
+        myBreadcrumbsCollector = null;
+        return false;
+      }
+    }
+
+    public @Nullable FileBreadcrumbsCollector getBreadcrumbsCollector() {
+      return myBreadcrumbsCollector;
+    }
   }
 }

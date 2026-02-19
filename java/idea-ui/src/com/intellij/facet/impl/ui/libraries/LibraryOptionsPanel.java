@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.facet.impl.ui.libraries;
 
 import com.intellij.framework.library.DownloadableLibraryDescription;
@@ -35,23 +35,40 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.SortedComboBoxModel;
 import com.intellij.ui.components.JBLabel;
+import com.intellij.uiDesigner.core.GridConstraints;
+import com.intellij.uiDesigner.core.GridLayoutManager;
+import com.intellij.uiDesigner.core.Spacer;
 import com.intellij.util.PathUtil;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.download.DownloadableFileSetVersions;
 import com.intellij.util.ui.RadioButtonEnumModel;
+import com.intellij.util.ui.UIUtil;
 import com.intellij.xml.util.XmlStringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.AbstractButton;
+import javax.swing.ButtonGroup;
+import javax.swing.JButton;
+import javax.swing.JComboBox;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
+import javax.swing.JList;
+import javax.swing.JPanel;
+import javax.swing.JRadioButton;
+import javax.swing.SwingUtilities;
+import java.awt.CardLayout;
+import java.awt.Dimension;
+import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.ResourceBundle;
 
 /**
  * @author Dmitry Avdeev
@@ -59,21 +76,21 @@ import java.util.List;
 public class LibraryOptionsPanel implements Disposable {
   private static final Logger LOG = Logger.getInstance(LibraryOptionsPanel.class);
 
-  private JBLabel myMessageLabel;
-  private JPanel myPanel;
-  private JButton myConfigureButton;
-  private JComboBox<LibraryEditor> myExistingLibraryComboBox;
-  private JRadioButton myDoNotCreateRadioButton;
-  private JPanel myConfigurationPanel;
-  private JButton myCreateButton;
-  private JRadioButton myDownloadRadioButton;
-  private JRadioButton myUseLibraryRadioButton;
-  private JLabel myUseLibraryLabel;
-  private JLabel myHiddenLabel;
-  private JPanel myRootPanel;
-  private JRadioButton myUseFromProviderRadioButton;
-  private JPanel mySimplePanel;
-  private ButtonGroup myButtonGroup;
+  private final JBLabel myMessageLabel;
+  private final JPanel myPanel;
+  private final JButton myConfigureButton;
+  private final JComboBox<LibraryEditor> myExistingLibraryComboBox;
+  private final JRadioButton myDoNotCreateRadioButton;
+  private final JPanel myConfigurationPanel;
+  private final JButton myCreateButton;
+  private final JRadioButton myDownloadRadioButton;
+  private final JRadioButton myUseLibraryRadioButton;
+  private final JLabel myUseLibraryLabel;
+  private final JLabel myHiddenLabel;
+  private final JPanel myRootPanel;
+  private final JRadioButton myUseFromProviderRadioButton;
+  private final JPanel mySimplePanel;
+  private final ButtonGroup myButtonGroup;
 
   private LibraryCompositionSettings mySettings;
   private final CustomLibraryDescription myLibraryDescription;
@@ -91,28 +108,155 @@ public class LibraryOptionsPanel implements Disposable {
 
   private RadioButtonEnumModel<Choice> myButtonEnumModel;
 
-  public LibraryOptionsPanel(@NotNull final CustomLibraryDescription libraryDescription,
-                             @NotNull final String path,
-                             @NotNull final FrameworkLibraryVersionFilter versionFilter,
-                             @NotNull final LibrariesContainer librariesContainer,
+  public LibraryOptionsPanel(final @NotNull CustomLibraryDescription libraryDescription,
+                             final @NotNull String path,
+                             final @NotNull FrameworkLibraryVersionFilter versionFilter,
+                             final @NotNull LibrariesContainer librariesContainer,
                              final boolean showDoNotCreateOption) {
 
     this(libraryDescription, () -> path, versionFilter, librariesContainer, showDoNotCreateOption);
   }
 
-  public LibraryOptionsPanel(@NotNull final CustomLibraryDescription libraryDescription,
-                             @NotNull final NotNullComputable<String> pathProvider,
-                             @NotNull final FrameworkLibraryVersionFilter versionFilter,
-                             @NotNull final LibrariesContainer librariesContainer,
+  public LibraryOptionsPanel(final @NotNull CustomLibraryDescription libraryDescription,
+                             final @NotNull NotNullComputable<String> pathProvider,
+                             final @NotNull FrameworkLibraryVersionFilter versionFilter,
+                             final @NotNull LibrariesContainer librariesContainer,
                              final boolean showDoNotCreateOption) {
     myLibraryDescription = libraryDescription;
     myLibrariesContainer = librariesContainer;
+    {
+      // GUI initializer generated by IntelliJ IDEA GUI Designer
+      // >>> IMPORTANT!! <<<
+      // DO NOT EDIT OR ADD ANY CODE HERE!
+      final JPanel panel1 = new JPanel();
+      panel1.setLayout(new GridLayoutManager(1, 1, new Insets(0, 0, 0, 0), -1, -1));
+      myRootPanel = new JPanel();
+      myRootPanel.setLayout(new CardLayout(0, 0));
+      panel1.add(myRootPanel, new GridConstraints(0, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_BOTH,
+                                                  GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
+                                                  GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, null, null,
+                                                  null, 0, false));
+      myPanel = new JPanel();
+      myPanel.setLayout(new GridLayoutManager(6, 1, new Insets(0, 0, 0, 0), -1, -1));
+      myPanel.setEnabled(false);
+      myRootPanel.add(myPanel, "editing");
+      myDownloadRadioButton = new JRadioButton();
+      myDownloadRadioButton.setSelected(false);
+      this.$$$loadButtonText$$$(myDownloadRadioButton, this.$$$getMessageFromBundle$$$("messages/JavaUiBundle", "radio.button.download"));
+      myPanel.add(myDownloadRadioButton, new GridConstraints(2, 0, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE,
+                                                             GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
+                                                             GridConstraints.SIZEPOLICY_FIXED, null, new Dimension(207, 22), null, 0,
+                                                             false));
+      myDoNotCreateRadioButton = new JRadioButton();
+      this.$$$loadButtonText$$$(myDoNotCreateRadioButton,
+                                this.$$$getMessageFromBundle$$$("messages/JavaUiBundle", "radio.button.set.up.library.later"));
+      myPanel.add(myDoNotCreateRadioButton, new GridConstraints(3, 0, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE,
+                                                                GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
+                                                                GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
+      final Spacer spacer1 = new Spacer();
+      myPanel.add(spacer1, new GridConstraints(5, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_VERTICAL, 1,
+                                               GridConstraints.SIZEPOLICY_WANT_GROW, null, null, null, 0, false));
+      final JPanel panel2 = new JPanel();
+      panel2.setLayout(new GridLayoutManager(1, 3, new Insets(0, 0, 0, 0), -1, -1));
+      myPanel.add(panel2, new GridConstraints(0, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_BOTH,
+                                              GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
+                                              GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, null, null, null,
+                                              0, false));
+      mySimplePanel = new JPanel();
+      mySimplePanel.setLayout(new GridLayoutManager(1, 2, new Insets(0, 0, 0, 0), -1, -1));
+      panel2.add(mySimplePanel, new GridConstraints(0, 2, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_BOTH,
+                                                    GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
+                                                    GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, null, null,
+                                                    null, 0, false));
+      myExistingLibraryComboBox = new JComboBox();
+      mySimplePanel.add(myExistingLibraryComboBox,
+                        new GridConstraints(0, 0, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_HORIZONTAL,
+                                            GridConstraints.SIZEPOLICY_WANT_GROW, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0,
+                                            false));
+      myCreateButton = new JButton();
+      this.$$$loadButtonText$$$(myCreateButton, this.$$$getMessageFromBundle$$$("messages/JavaUiBundle", "button.create"));
+      mySimplePanel.add(myCreateButton, new GridConstraints(0, 1, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL,
+                                                            GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
+                                                            GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
+      myUseLibraryRadioButton = new JRadioButton();
+      myUseLibraryRadioButton.setSelected(true);
+      this.$$$loadButtonText$$$(myUseLibraryRadioButton,
+                                this.$$$getMessageFromBundle$$$("messages/JavaUiBundle", "radio.button.use.library"));
+      panel2.add(myUseLibraryRadioButton, new GridConstraints(0, 0, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE,
+                                                              GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
+                                                              GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
+      myUseLibraryLabel = new JLabel();
+      this.$$$loadLabelText$$$(myUseLibraryLabel, this.$$$getMessageFromBundle$$$("messages/JavaUiBundle", "label.use.library"));
+      myUseLibraryLabel.setVisible(true);
+      panel2.add(myUseLibraryLabel,
+                 new GridConstraints(0, 1, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE, GridConstraints.SIZEPOLICY_FIXED,
+                                     GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
+      myConfigurationPanel = new JPanel();
+      myConfigurationPanel.setLayout(new CardLayout(0, 0));
+      myPanel.add(myConfigurationPanel, new GridConstraints(4, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_BOTH,
+                                                            GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
+                                                            GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
+                                                            null, null, null, 0, false));
+      final JPanel panel3 = new JPanel();
+      panel3.setLayout(new GridLayoutManager(1, 3, new Insets(10, 0, 0, 0), -1, -1));
+      myConfigurationPanel.add(panel3, "configure");
+      myConfigureButton = new JButton();
+      this.$$$loadButtonText$$$(myConfigureButton, this.$$$getMessageFromBundle$$$("messages/JavaUiBundle", "button.configure"));
+      panel3.add(myConfigureButton, new GridConstraints(0, 2, 1, 1, GridConstraints.ANCHOR_NORTH, GridConstraints.FILL_HORIZONTAL,
+                                                        GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
+                                                        GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
+      final JPanel panel4 = new JPanel();
+      panel4.setLayout(new CardLayout(0, 0));
+      panel3.add(panel4, new GridConstraints(0, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_BOTH,
+                                             GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
+                                             GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, null, null, null,
+                                             0, false));
+      myMessageLabel = new JBLabel();
+      myMessageLabel.setComponentStyle(UIUtil.ComponentStyle.SMALL);
+      myMessageLabel.setEnabled(true);
+      myMessageLabel.setFontColor(UIUtil.FontColor.BRIGHTER);
+      this.$$$loadLabelText$$$(myMessageLabel,
+                               this.$$$getMessageFromBundle$$$("messages/JavaUiBundle", "label.library.will.be.created.description.text"));
+      panel4.add(myMessageLabel, "message");
+      myHiddenLabel = new JLabel();
+      this.$$$loadLabelText$$$(myHiddenLabel, this.$$$getMessageFromBundle$$$("messages/JavaUiBundle", "label.label"));
+      panel4.add(myHiddenLabel, "hidden");
+      final Spacer spacer2 = new Spacer();
+      panel3.add(spacer2, new GridConstraints(0, 1, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL,
+                                              GridConstraints.SIZEPOLICY_WANT_GROW, 1, null, null, null, 0, false));
+      final JPanel panel5 = new JPanel();
+      panel5.setLayout(new GridLayoutManager(1, 1, new Insets(0, 0, 0, 0), -1, -1));
+      myConfigurationPanel.add(panel5, "empty");
+      myUseFromProviderRadioButton = new JRadioButton();
+      this.$$$loadButtonText$$$(myUseFromProviderRadioButton,
+                                this.$$$getMessageFromBundle$$$("messages/JavaUiBundle", "radio.button.use.library.from.0"));
+      myPanel.add(myUseFromProviderRadioButton, new GridConstraints(1, 0, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE,
+                                                                    GridConstraints.SIZEPOLICY_CAN_SHRINK |
+                                                                    GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_FIXED,
+                                                                    null, null, null, 0, false));
+      final JPanel panel6 = new JPanel();
+      panel6.setLayout(new GridLayoutManager(2, 1, new Insets(0, 0, 0, 0), -1, -1));
+      myRootPanel.add(panel6, "loading");
+      final JLabel label1 = new JLabel();
+      this.$$$loadLabelText$$$(label1, this.$$$getMessageFromBundle$$$("messages/JavaUiBundle", "label.loading.versions"));
+      panel6.add(label1,
+                 new GridConstraints(0, 0, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE, GridConstraints.SIZEPOLICY_FIXED,
+                                     GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
+      final Spacer spacer3 = new Spacer();
+      panel6.add(spacer3, new GridConstraints(1, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_VERTICAL, 1,
+                                              GridConstraints.SIZEPOLICY_WANT_GROW, null, null, null, 0, false));
+      myButtonGroup = new ButtonGroup();
+      myButtonGroup.add(myUseLibraryRadioButton);
+      myButtonGroup.add(myDownloadRadioButton);
+      myButtonGroup.add(myDoNotCreateRadioButton);
+      myButtonGroup.add(myUseFromProviderRadioButton);
+    }
     final DownloadableLibraryDescription description = getDownloadableDescription(libraryDescription);
     if (description != null) {
       showCard("loading");
       description.fetchVersions(new DownloadableFileSetVersions.FileSetVersionsCallback<>() {
         @Override
-        public void onSuccess(@NotNull final List<? extends FrameworkLibraryVersion> versions) {
+        public void onSuccess(final @NotNull List<? extends FrameworkLibraryVersion> versions) {
           SwingUtilities.invokeLater(() -> {
             if (!myDisposed) {
               showSettingsPanel(libraryDescription, pathProvider, versionFilter, showDoNotCreateOption, versions);
@@ -128,23 +272,92 @@ public class LibraryOptionsPanel implements Disposable {
     }
   }
 
-  @Nullable
-  private String getPresentableVersion() {
+  private static Method $$$cachedGetBundleMethod$$$ = null;
+
+  /** @noinspection ALL */
+  private String $$$getMessageFromBundle$$$(String path, String key) {
+    ResourceBundle bundle;
+    try {
+      Class<?> thisClass = this.getClass();
+      if ($$$cachedGetBundleMethod$$$ == null) {
+        Class<?> dynamicBundleClass = thisClass.getClassLoader().loadClass("com.intellij.DynamicBundle");
+        $$$cachedGetBundleMethod$$$ = dynamicBundleClass.getMethod("getBundle", String.class, Class.class);
+      }
+      bundle = (ResourceBundle)$$$cachedGetBundleMethod$$$.invoke(null, path, thisClass);
+    }
+    catch (Exception e) {
+      bundle = ResourceBundle.getBundle(path);
+    }
+    return bundle.getString(key);
+  }
+
+  /** @noinspection ALL */
+  private void $$$loadLabelText$$$(JLabel component, String text) {
+    StringBuffer result = new StringBuffer();
+    boolean haveMnemonic = false;
+    char mnemonic = '\0';
+    int mnemonicIndex = -1;
+    for (int i = 0; i < text.length(); i++) {
+      if (text.charAt(i) == '&') {
+        i++;
+        if (i == text.length()) break;
+        if (!haveMnemonic && text.charAt(i) != '&') {
+          haveMnemonic = true;
+          mnemonic = text.charAt(i);
+          mnemonicIndex = result.length();
+        }
+      }
+      result.append(text.charAt(i));
+    }
+    component.setText(result.toString());
+    if (haveMnemonic) {
+      component.setDisplayedMnemonic(mnemonic);
+      component.setDisplayedMnemonicIndex(mnemonicIndex);
+    }
+  }
+
+  /** @noinspection ALL */
+  private void $$$loadButtonText$$$(AbstractButton component, String text) {
+    StringBuffer result = new StringBuffer();
+    boolean haveMnemonic = false;
+    char mnemonic = '\0';
+    int mnemonicIndex = -1;
+    for (int i = 0; i < text.length(); i++) {
+      if (text.charAt(i) == '&') {
+        i++;
+        if (i == text.length()) break;
+        if (!haveMnemonic && text.charAt(i) != '&') {
+          haveMnemonic = true;
+          mnemonic = text.charAt(i);
+          mnemonicIndex = result.length();
+        }
+      }
+      result.append(text.charAt(i));
+    }
+    component.setText(result.toString());
+    if (haveMnemonic) {
+      component.setMnemonic(mnemonic);
+      component.setDisplayedMnemonicIndex(mnemonicIndex);
+    }
+  }
+
+  private @Nullable String getPresentableVersion() {
     switch (myButtonEnumModel.getSelected()) {
-      case DOWNLOAD:
+      case DOWNLOAD -> {
         LibraryDownloadSettings settings = mySettings.getDownloadSettings();
         if (settings != null) {
           return settings.getVersion().getVersionNumber();
         }
-        break;
-      case USE_LIBRARY:
+      }
+      case USE_LIBRARY -> {
         LibraryEditor item = myLibraryComboBoxModel.getSelectedItem();
         if (item instanceof ExistingLibraryEditor) {
           return item.getName();
         }
-        break;
-      default:
+      }
+      default -> {
         return null;
+      }
     }
     return null;
   }
@@ -156,8 +369,7 @@ public class LibraryOptionsPanel implements Disposable {
     return mySimplePanel;
   }
 
-  @Nullable
-  private static DownloadableLibraryDescription getDownloadableDescription(CustomLibraryDescription libraryDescription) {
+  private static @Nullable DownloadableLibraryDescription getDownloadableDescription(CustomLibraryDescription libraryDescription) {
     final DownloadableLibraryType type = libraryDescription.getDownloadableLibraryType();
     if (type != null) return type.getLibraryDescription();
     if (libraryDescription instanceof OldCustomLibraryDescription) {
@@ -174,7 +386,7 @@ public class LibraryOptionsPanel implements Disposable {
                                  NotNullComputable<String> pathProvider,
                                  FrameworkLibraryVersionFilter versionFilter,
                                  boolean showDoNotCreateOption, final List<? extends FrameworkLibraryVersion> versions) {
-    //todo[nik] create mySettings only in apply() method
+    //todo create mySettings only in apply() method
     mySettings = new LibraryCompositionSettings(libraryDescription, pathProvider, versionFilter, versions);
     Disposer.register(this, mySettings);
     List<Library> libraries = calculateSuitableLibraries();
@@ -291,17 +503,20 @@ public class LibraryOptionsPanel implements Disposable {
 
   private void doConfigure() {
     switch (myButtonEnumModel.getSelected()) {
-      case DOWNLOAD:
+      case DOWNLOAD -> {
         final LibraryDownloadSettings oldDownloadSettings = mySettings.getDownloadSettings();
         LOG.assertTrue(oldDownloadSettings != null);
+        List<? extends FrameworkLibraryVersion> versions = mySettings.getCompatibleVersions();
+        if (versions.isEmpty()) {
+          LOG.error("No compatible version for " + mySettings.getLibraryDescription() + " with filter " + mySettings.getVersionFilter());
+        }
         final LibraryDownloadSettings newDownloadSettings = DownloadingOptionsDialog.showDialog(myPanel, oldDownloadSettings,
-                                                                                                mySettings.getCompatibleVersions(), true);
+                                                                                                versions, true);
         if (newDownloadSettings != null) {
           mySettings.setDownloadSettings(newDownloadSettings);
         }
-        break;
-
-      case USE_LIBRARY:
+      }
+      case USE_LIBRARY -> {
         final Object item = myExistingLibraryComboBox.getSelectedItem();
         if (item instanceof LibraryEditor) {
           EditLibraryDialog dialog = new EditLibraryDialog(myPanel, mySettings, (LibraryEditor)item);
@@ -310,17 +525,16 @@ public class LibraryOptionsPanel implements Disposable {
             WriteAction.run(() -> ((ExistingLibraryEditor)item).commit());
           }
         }
-        break;
-
-      case USE_FROM_PROVIDER:
-      case SETUP_LIBRARY_LATER:
-        break;
+      }
+      case USE_FROM_PROVIDER, SETUP_LIBRARY_LATER -> {
+      }
     }
     updateState();
   }
 
   public void setLibraryProvider(@Nullable FrameworkLibraryProvider provider) {
-    if (provider != null && !ContainerUtil.intersects(provider.getAvailableLibraryKinds(), myLibraryDescription.getSuitableLibraryKinds())) {
+    if (provider != null &&
+        !ContainerUtil.intersects(provider.getAvailableLibraryKinds(), myLibraryDescription.getSuitableLibraryKinds())) {
       provider = null;
     }
 
@@ -349,7 +563,8 @@ public class LibraryOptionsPanel implements Disposable {
                                                          ? myLibraryDescription.createNewLibraryWithDefaultSettings(getBaseDirectory())
                                                          : myLibraryDescription.createNewLibrary(myCreateButton, getBaseDirectory());
     if (libraryConfiguration != null) {
-      final NewLibraryEditor libraryEditor = new NewLibraryEditor(libraryConfiguration.getLibraryType(), libraryConfiguration.getProperties());
+      final NewLibraryEditor libraryEditor =
+        new NewLibraryEditor(libraryConfiguration.getLibraryType(), libraryConfiguration.getProperties());
       libraryEditor.setName(myLibrariesContainer.suggestUniqueLibraryName(libraryConfiguration.getDefaultLibraryName()));
       libraryConfiguration.addRoots(libraryEditor);
       if (myLibraryComboBoxModel.get(0) == null) {
@@ -366,15 +581,16 @@ public class LibraryOptionsPanel implements Disposable {
     for (Library library : myLibrariesContainer.getAllLibraries()) {
       if (myLibraryDescription instanceof OldCustomLibraryDescription &&
           ((OldCustomLibraryDescription)myLibraryDescription).isSuitableLibrary(library, myLibrariesContainer)
-          || LibraryPresentationManager.getInstance().isLibraryOfKind(library, myLibrariesContainer, myLibraryDescription.getSuitableLibraryKinds())) {
+          ||
+          LibraryPresentationManager.getInstance()
+            .isLibraryOfKind(library, myLibrariesContainer, myLibraryDescription.getSuitableLibraryKinds())) {
         suitableLibraries.add(library);
       }
     }
     return suitableLibraries;
   }
 
-  @Nullable
-  private VirtualFile getBaseDirectory() {
+  private @Nullable VirtualFile getBaseDirectory() {
     String path = mySettings.getBaseDirectoryPath();
     VirtualFile dir = LocalFileSystem.getInstance().findFileByPath(path);
     if (dir == null) {
@@ -407,34 +623,30 @@ public class LibraryOptionsPanel implements Disposable {
     String message = "";
     boolean showConfigurePanel = true;
     switch (myButtonEnumModel.getSelected()) {
-      case DOWNLOAD:
-        message = getDownloadFilesMessage();
-        break;
-      case USE_FROM_PROVIDER:
+      case DOWNLOAD -> message = getDownloadFilesMessage();
+      case USE_FROM_PROVIDER -> {
         if (myLibraryProvider != null) {
           message =
             JavaUiBundle.message("library.options.panel.update.state.library.from.0.will.be.used", myLibraryProvider.getPresentableName());
         }
         myConfigureButton.setVisible(false);
-        break;
-      case USE_LIBRARY:
+      }
+      case USE_LIBRARY -> {
         final Object item = myExistingLibraryComboBox.getSelectedItem();
         if (item == null) {
           myMessageLabel.setIcon(AllIcons.General.BalloonError);
           message = JavaUiBundle.message("library.options.panel.update.state.error.library.is.not.specified");
           myConfigureButton.setVisible(false);
         }
-        else if (item instanceof NewLibraryEditor) {
-          final LibraryEditor libraryEditor = (LibraryEditor)item;
+        else if (item instanceof NewLibraryEditor libraryEditor) {
           message = JavaUiBundle.message("label.library.will.be.created.description.text", mySettings.getNewLibraryLevel(),
-                                      libraryEditor.getName(), libraryEditor.getFiles(OrderRootType.CLASSES).length);
+                                         libraryEditor.getName(), libraryEditor.getFiles(OrderRootType.CLASSES).length);
         }
         else {
           message = JavaUiBundle.message("label.existing.library.will.be.used", ((ExistingLibraryEditor)item).getName());
         }
-        break;
-      default:
-        showConfigurePanel = false;
+      }
+      default -> showConfigurePanel = false;
     }
 
     if (myLibraryProvider != null) {
@@ -447,7 +659,7 @@ public class LibraryOptionsPanel implements Disposable {
     }
     else {
       myHiddenLabel.setText(JavaUiBundle.message("label.library.will.be.created.description.text", mySettings.getNewLibraryLevel(),
-                                              "name", 10));
+                                                 "name", 10));
     }
     ((CardLayout)myConfigurationPanel.getLayout()).show(myConfigurationPanel, showConfigurePanel ? "configure" : "empty");
     myMessageLabel.setText(XmlStringUtil.wrapInHtml(message));
@@ -477,8 +689,7 @@ public class LibraryOptionsPanel implements Disposable {
     return mySettings;
   }
 
-  @Nullable
-  public LibraryCompositionSettings apply() {
+  public @Nullable LibraryCompositionSettings apply() {
     if (mySettings == null) return null;
 
     final Choice option = myButtonEnumModel.getSelected();

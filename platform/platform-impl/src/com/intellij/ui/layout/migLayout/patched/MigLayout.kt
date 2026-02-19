@@ -33,13 +33,35 @@
  */
 package com.intellij.ui.layout.migLayout.patched
 
-import net.miginfocom.layout.*
-import java.awt.*
+import net.miginfocom.layout.AC
+import net.miginfocom.layout.BoundSize
+import net.miginfocom.layout.CC
+import net.miginfocom.layout.ComponentWrapper
+import net.miginfocom.layout.ContainerWrapper
+import net.miginfocom.layout.Grid
+import net.miginfocom.layout.LC
+import net.miginfocom.layout.LayoutUtil
+import org.jetbrains.annotations.ApiStatus
+import java.awt.Component
+import java.awt.Container
+import java.awt.Dimension
+import java.awt.LayoutManager2
+import java.awt.Point
+import java.awt.Window
 import java.awt.event.ActionListener
-import javax.swing.*
+import javax.swing.BoxLayout
+import javax.swing.JComponent
+import javax.swing.JEditorPane
+import javax.swing.JPopupMenu
+import javax.swing.JTextArea
+import javax.swing.OverlayLayout
+import javax.swing.SwingUtilities
+import javax.swing.Timer
 import kotlin.math.max
 import kotlin.math.roundToInt
 
+@ApiStatus.ScheduledForRemoval
+@Deprecated("Mig Layout is going to be removed, IDEA-306719")
 open class MigLayout @JvmOverloads constructor(val layoutConstraints: LC = LC(), val columnConstraints: AC = AC(), val rowConstraints: AC = AC()) : LayoutManager2 {
   @Transient
   private var cacheParentW: ContainerWrapper? = null

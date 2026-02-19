@@ -17,9 +17,6 @@ package com.intellij.psi;
 
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author ven
- */
 public class PsiTypeVisitorEx<A> extends PsiTypeVisitor<A> {
   public A visitTypeVariable(@NotNull PsiTypeVariable var) {
     return visitType(var);

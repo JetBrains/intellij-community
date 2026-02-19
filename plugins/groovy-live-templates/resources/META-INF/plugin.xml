@@ -1,0 +1,14 @@
+<idea-plugin>
+  <id>org.intellij.groovy.live.templates</id>
+  <name>Groovy Live Templates</name>
+  <description><![CDATA[
+  Adds support for Groovy in IDE live templates.
+  ]]></description>
+  <vendor>JetBrains</vendor>
+
+  <depends>com.intellij.modules.platform</depends>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <liveTemplateMacro implementation="com.intellij.groovy.live.templates.GroovyScriptMacro"/>
+  </extensions>
+</idea-plugin>

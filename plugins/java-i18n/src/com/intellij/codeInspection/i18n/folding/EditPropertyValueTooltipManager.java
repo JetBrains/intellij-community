@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.i18n.folding;
 
 import com.intellij.codeInsight.hint.HintManagerImpl;
@@ -7,11 +7,18 @@ import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.FoldRegion;
-import com.intellij.openapi.editor.event.*;
+import com.intellij.openapi.editor.event.CaretEvent;
+import com.intellij.openapi.editor.event.CaretListener;
+import com.intellij.openapi.editor.event.EditorMouseEvent;
+import com.intellij.openapi.editor.event.EditorMouseEventArea;
+import com.intellij.openapi.editor.event.EditorMouseListener;
+import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.editor.impl.FoldingPopupManager;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.util.Key;
@@ -26,13 +33,17 @@ import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JComponent;
+import javax.swing.JRootPane;
+import javax.swing.SwingUtilities;
 import javax.swing.event.HyperlinkEvent;
-import javax.swing.event.HyperlinkListener;
-import java.awt.*;
+import java.awt.Point;
 import java.util.Arrays;
 
-import static com.intellij.codeInsight.hint.HintManager.*;
+import static com.intellij.codeInsight.hint.HintManager.ABOVE;
+import static com.intellij.codeInsight.hint.HintManager.HIDE_BY_ANY_KEY;
+import static com.intellij.codeInsight.hint.HintManager.HIDE_BY_SCROLLING;
+import static com.intellij.codeInsight.hint.HintManager.HIDE_BY_TEXT_CHANGE;
 import static com.intellij.openapi.actionSystem.IdeActions.ACTION_EDIT_PROPERTY_VALUE;
 import static com.intellij.openapi.actionSystem.IdeActions.ACTION_EXPAND_REGION;
 
@@ -40,9 +51,9 @@ public final class EditPropertyValueTooltipManager implements EditorMouseListene
   private static final Key<Boolean> INITIALIZED = Key.create("PropertyEditTooltipManager");
   private static final long TOOLTIP_DELAY_MS = 500;
 
-  private final Alarm myAlarm = new Alarm();
+  private final Alarm myCalculateShowTooltipAlarm;
 
-  public static void initializeForDocument(@NotNull Document document) {
+  static void initializeForDocument(@NotNull Document document) {
     EditorFactory.getInstance().editors(document).forEach(EditPropertyValueTooltipManager::initializeForEditor);
   }
 
@@ -55,27 +66,32 @@ public final class EditPropertyValueTooltipManager implements EditorMouseListene
   private EditPropertyValueTooltipManager(@NotNull Editor editor) {
     editor.getCaretModel().addCaretListener(this);
     editor.addEditorMouseListener(this);
+    myCalculateShowTooltipAlarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, ((EditorImpl)editor).getDisposable());
   }
 
   @Override
   public void mouseReleased(@NotNull EditorMouseEvent event) {
-    Editor editor = event.getEditor();
-    if (event.getArea() == EditorMouseEventArea.EDITING_AREA && shouldShowTooltip(editor)) {
-      event.consume();
-      myAlarm.cancelAllRequests();
-      showTooltip(editor);
+    if (event.getArea() == EditorMouseEventArea.EDITING_AREA) {
+      submitCalculateShowingTooltipInBGT(event.getEditor());
     }
   }
 
   @Override
   public void caretPositionChanged(@NotNull CaretEvent event) {
-    myAlarm.cancelAllRequests();
-    Editor editor = event.getEditor();
-    if (shouldShowTooltip(editor)) myAlarm.addRequest(() -> showTooltip(editor), TOOLTIP_DELAY_MS);
+    submitCalculateShowingTooltipInBGT(event.getEditor());
+  }
+
+  private void submitCalculateShowingTooltipInBGT(@NotNull Editor editor) {
+    myCalculateShowTooltipAlarm.cancelAllRequests();
+    myCalculateShowTooltipAlarm.addRequest(() -> {
+      if (ReadAction.compute(() -> shouldShowTooltip(editor))) {
+        ApplicationManager.getApplication().invokeLater(() -> showTooltip(editor));
+      }
+    }, TOOLTIP_DELAY_MS);
   }
 
   private static boolean shouldShowTooltip(@NotNull Editor editor) {
-    return EditPropertyValueAction.isEnabled(editor);
+    return !editor.isDisposed() && EditPropertyValueAction.isEnabled(editor);
   }
 
   private static void showTooltip(@NotNull Editor editor) {
@@ -83,28 +99,24 @@ public final class EditPropertyValueTooltipManager implements EditorMouseListene
                                                     createActionText(ACTION_EDIT_PROPERTY_VALUE, "edit")),
                                       "&nbsp;&nbsp;&nbsp;&nbsp;");
     if (hintText.isEmpty()) return;
-    JComponent component = HintUtil.createInformationLabel("<html>" + hintText, new HyperlinkListener() {
-      @Override
-      public void hyperlinkUpdate(HyperlinkEvent e) {
-        if (e.getEventType() != HyperlinkEvent.EventType.ACTIVATED) return;
-        String actionId = null;
-        switch (e.getDescription()) {
-          case "expand": actionId = ACTION_EXPAND_REGION; break;
-          case "edit": actionId = ACTION_EDIT_PROPERTY_VALUE; break;
-        }
-        if (actionId != null) {
-          AnAction action = ActionManager.getInstance().getAction(actionId);
-          if (action != null) {
-            ActionUtil.invokeAction(action, editor.getContentComponent(), ActionPlaces.UNKNOWN, e.getInputEvent(), null);
-          }
+    JComponent component = HintUtil.createInformationLabel("<html>" + hintText, e -> {
+      if (e.getEventType() != HyperlinkEvent.EventType.ACTIVATED) return;
+      String actionId = switch (e.getDescription()) {
+        case "expand" -> ACTION_EXPAND_REGION;
+        case "edit" -> ACTION_EDIT_PROPERTY_VALUE;
+        default -> null;
+      };
+      if (actionId != null) {
+        AnAction action = ActionManager.getInstance().getAction(actionId);
+        if (action != null) {
+          ActionUtil.invokeAction(action, editor.getContentComponent(), ActionPlaces.UNKNOWN, e.getInputEvent(), null);
         }
       }
     }, null, null);
     showTooltip(editor, component, false);
   }
 
-  @Nullable
-  private static String createActionText(@NotNull String actionId, @NotNull String href) {
+  private static @Nullable String createActionText(@NotNull String actionId, @NotNull String href) {
     AnAction action = ActionManager.getInstance().getAction(actionId);
     if (action == null) return null;
     String text = action.getTemplateText();
@@ -126,7 +138,7 @@ public final class EditPropertyValueTooltipManager implements EditorMouseListene
     Point relativePoint = new Point((start.x + end.x) / 2, start.y);
     Point point = SwingUtilities.convertPoint(editorComponent, relativePoint, rootPane.getLayeredPane());
     LightweightHint hint = new LightweightHint(component);
-    HintHint hintHint = HintManagerImpl.createHintHint(editor, point, hint, ABOVE).setShowImmediately(true);
+    HintHint hintHint = HintManagerImpl.createHintHint(editor, point, hint, ABOVE).setShowImmediately(true).setStatus(HintHint.Status.Info);
     int flags = HIDE_BY_TEXT_CHANGE | HIDE_BY_SCROLLING;
     if (tenacious) {
       hintHint.setExplicitClose(true);

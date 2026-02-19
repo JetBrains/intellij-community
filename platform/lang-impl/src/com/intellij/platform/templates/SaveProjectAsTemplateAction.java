@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.templates;
 
 import com.intellij.CommonBundle;
@@ -14,6 +14,7 @@ import com.intellij.lang.LangBundle;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
@@ -22,7 +23,10 @@ import com.intellij.openapi.components.PathMacroManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.progress.*;
+import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ContentIterator;
@@ -33,6 +37,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtilRt;
+import com.intellij.openapi.util.io.NioFiles;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
@@ -42,9 +47,11 @@ import com.intellij.util.PlatformUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.Compressor;
 import com.intellij.util.io.PathKt;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.EdtInvocationManager;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import org.jdom.Element;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.serialization.PathMacroUtil;
@@ -53,18 +60,23 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
  * @author Dmitry Avdeev
  */
-public class SaveProjectAsTemplateAction extends AnAction implements DumbAware {
+@ApiStatus.Internal
+public final class SaveProjectAsTemplateAction extends AnAction implements DumbAware {
   private static final Logger LOG = Logger.getInstance(SaveProjectAsTemplateAction.class);
-  private static final String PROJECT_TEMPLATE_XML = "project-template.xml";
+  private static final @NonNls String PROJECT_TEMPLATE_XML = "project-template.xml";
 
-  static final String FILE_HEADER_TEMPLATE_PLACEHOLDER = "<IntelliJ_File_Header>";
+  static final @NonNls String FILE_HEADER_TEMPLATE_PLACEHOLDER = "<IntelliJ_File_Header>";
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
@@ -85,9 +97,9 @@ public class SaveProjectAsTemplateAction extends AnAction implements DumbAware {
 
       FileDocumentManager.getInstance().saveAllDocuments();
 
-      ProgressManager.getInstance().run(new Task.Backgroundable(project, LangBundle.message("progress.title.saving.project.as.template"), true, PerformInBackgroundOption.DEAF) {
+      ProgressManager.getInstance().run(new Task.Backgroundable(project, LangBundle.message("progress.title.saving.project.as.template"), true) {
         @Override
-        public void run(@NotNull final ProgressIndicator indicator) {
+        public void run(final @NotNull ProgressIndicator indicator) {
           saveProject(project, file, moduleToSave, description, dialog.isReplaceParameters(), indicator, shouldEscape());
         }
 
@@ -106,11 +118,6 @@ public class SaveProjectAsTemplateAction extends AnAction implements DumbAware {
             notification.addAction(manageAction);
           }
           notification.notify(getProject());
-        }
-
-        @Override
-        public boolean shouldStartInBackground() {
-          return true;
         }
 
         @Override
@@ -141,35 +148,39 @@ public class SaveProjectAsTemplateAction extends AnAction implements DumbAware {
     VirtualFile dir = getDirectoryToSave(project, moduleToSave);
     List<LocalArchivedTemplate.RootDescription> roots = collectStructure(project, moduleToSave);
     LocalArchivedTemplate.RootDescription basePathRoot = findOrAddBaseRoot(roots, dir);
-    PathKt.createDirectories(zipFile.getParent());
-    try (Compressor stream = new Compressor.Zip(zipFile.toFile())) {
-      writeFile(LocalArchivedTemplate.DESCRIPTION_PATH, description, project, basePathRoot.myRelativePath, stream, true);
+    try {
+      NioFiles.createDirectories(zipFile.getParent());
+      try (Compressor stream = new Compressor.Zip(zipFile)) {
+        writeFile(LocalArchivedTemplate.DESCRIPTION_PATH, description, project, basePathRoot.myRelativePath, stream, true);
 
-      if (replaceParameters) {
-        String text = getInputFieldsText(parameters);
-        writeFile(LocalArchivedTemplate.TEMPLATE_DESCRIPTOR, text, project, basePathRoot.myRelativePath, stream, false);
-      }
+        if (replaceParameters) {
+          String text = getInputFieldsText(parameters);
+          writeFile(LocalArchivedTemplate.TEMPLATE_DESCRIPTOR, text, project, basePathRoot.myRelativePath, stream, false);
+        }
 
-      String metaDescription = getTemplateMetaText(shouldEscape, roots);
-      writeFile(LocalArchivedTemplate.META_TEMPLATE_DESCRIPTOR_PATH, metaDescription, project, basePathRoot.myRelativePath, stream, true);
+        String metaDescription = getTemplateMetaText(shouldEscape, roots);
+        writeFile(LocalArchivedTemplate.META_TEMPLATE_DESCRIPTOR_PATH, metaDescription, project, basePathRoot.myRelativePath, stream, true);
 
-      FileIndex index = moduleToSave == null
-                        ? ProjectRootManager.getInstance(project).getFileIndex()
-                        : ModuleRootManager.getInstance(moduleToSave).getFileIndex();
-      MyContentIterator iterator = new MyContentIterator(indicator, stream, project, parameters, shouldEscape);
-      for (LocalArchivedTemplate.RootDescription root : roots) {
-        String prefix = LocalArchivedTemplate.ROOT_FILE_NAME + root.myIndex;
-        VirtualFile rootFile = root.myFile;
-        iterator.setRootAndPrefix(rootFile, prefix);
-        index.iterateContentUnderDirectory(rootFile, iterator);
+        FileIndex index = moduleToSave == null
+                          ? ProjectRootManager.getInstance(project).getFileIndex()
+                          : ModuleRootManager.getInstance(moduleToSave).getFileIndex();
+        MyContentIterator iterator = new MyContentIterator(indicator, stream, project, parameters, shouldEscape);
+        for (LocalArchivedTemplate.RootDescription root : roots) {
+          String prefix = LocalArchivedTemplate.ROOT_FILE_NAME + root.myIndex;
+          VirtualFile rootFile = root.myFile;
+          iterator.setRootAndPrefix(rootFile, prefix);
+          index.iterateContentUnderDirectory(rootFile, iterator);
+        }
       }
     }
     catch (ProcessCanceledException ignored) { }
-    catch (Exception ex) {
-      LOG.error(ex);
-      UIUtil.invokeLaterIfNeeded(() -> Messages.showErrorDialog(project,
-                                                                LangBundle.message("dialog.message.can.t.save.project.as.template"),
-                                                                LangBundle.message("dialog.message.internal.error")));
+    catch (Exception e) {
+      LOG.error(e);
+      EdtInvocationManager.invokeLaterIfNeeded(() -> {
+        Messages.showErrorDialog(project,
+                                 LangBundle.message("dialog.message.can.t.save.project.as.template"),
+                                 LangBundle.message("dialog.message.internal.error"));
+      });
     }
   }
 
@@ -197,7 +208,7 @@ public class SaveProjectAsTemplateAction extends AnAction implements DumbAware {
     if (PlatformUtils.isGoIde()) {
       return FileTemplateBase.getQualifiedName("Go File", "go");
     }
-    throw new IllegalStateException("Provide file header template for your IDE");
+    throw new IllegalStateException("Provide file header template for your IDE: " + PlatformUtils.getPlatformPrefix());
   }
 
   static String getNewProjectActionId() {
@@ -283,8 +294,7 @@ public class SaveProjectAsTemplateAction extends AnAction implements DumbAware {
     }
   }
 
-  @NotNull
-  private static List<LocalArchivedTemplate.RootDescription> collectStructure(Project project, Module moduleToSave) {
+  private static @NotNull List<LocalArchivedTemplate.RootDescription> collectStructure(Project project, Module moduleToSave) {
     List<LocalArchivedTemplate.RootDescription> result = new ArrayList<>();
     if (moduleToSave != null) {
       PathMacroManager macroManager = PathMacroManager.getInstance(moduleToSave);
@@ -361,7 +371,7 @@ public class SaveProjectAsTemplateAction extends AnAction implements DumbAware {
     return JDOMUtil.writeElement(element);
   }
 
-  private static String getTemplateMetaText(boolean shouldEncode, List<LocalArchivedTemplate.RootDescription> roots) {
+  private static String getTemplateMetaText(boolean shouldEncode, List<? extends LocalArchivedTemplate.RootDescription> roots) {
     Element element = new Element(ArchivedProjectTemplate.TEMPLATE);
     element.setAttribute(LocalArchivedTemplate.UNENCODED_ATTRIBUTE, String.valueOf(!shouldEncode));
 
@@ -380,7 +390,12 @@ public class SaveProjectAsTemplateAction extends AnAction implements DumbAware {
     e.getPresentation().setEnabled(project != null && !project.isDefault());
   }
 
-  private static class MyContentIterator implements ContentIterator {
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
+  }
+
+  private static final class MyContentIterator implements ContentIterator {
     private static final Set<String> ALLOWED_FILES = ContainerUtil.newHashSet(
       "description.html", PROJECT_TEMPLATE_XML, LocalArchivedTemplate.TEMPLATE_META_XML, "misc.xml", "modules.xml", "workspace.xml");
 
@@ -409,18 +424,26 @@ public class SaveProjectAsTemplateAction extends AnAction implements DumbAware {
     public boolean processFile(@NotNull VirtualFile virtualFile) {
       myIndicator.checkCanceled();
 
-      if (!virtualFile.isDirectory()) {
+      String relativePath = VfsUtilCore.getRelativePath(virtualFile, myRootDir, '/');
+      if (relativePath == null) {
+        throw new RuntimeException("Can't find relative path for " + virtualFile + " in " + myRootDir);
+      }
+      String entryName = myPrefix + '/' + relativePath;
+
+      if (virtualFile.isDirectory()) {
+        try {
+          myStream.addDirectory(entryName);
+        }
+        catch (IOException e) {
+          LOG.error(e);
+        }
+      }
+      else {
         String fileName = virtualFile.getName();
         myIndicator.setText2(fileName);
 
-        String relativePath = VfsUtilCore.getRelativePath(virtualFile, myRootDir, '/');
-        if (relativePath == null) {
-          throw new RuntimeException("Can't find relative path for " + virtualFile + " in " + myRootDir);
-        }
-
         boolean system = Project.DIRECTORY_STORE_FOLDER.equals(virtualFile.getParent().getName());
         if (!system || ALLOWED_FILES.contains(fileName) || fileName.endsWith(".iml")) {
-          String entryName = myPrefix + '/' + relativePath;
           try {
             if (virtualFile.getFileType().isBinary() || PROJECT_TEMPLATE_XML.equals(virtualFile.getName())) {
               myStream.addFile(entryName, new File(virtualFile.getPath()));

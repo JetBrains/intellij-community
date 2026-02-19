@@ -1,0 +1,11 @@
+# These __init__ methods have *args, **kwargs arguments on some platforms, but not others
+pynput.mouse.Controller.__init__
+
+# Platform specific private utils:
+pynput._util.xorg_keysyms
+pynput._util.xorg
+pynput._util.win32_vks
+pynput._util.win32
+pynput._util.uinput
+pynput._util.darwin_vks
+pynput._util.darwin

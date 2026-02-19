@@ -21,9 +21,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.awt.datatransfer.DataFlavor;
 
-/**
- * @author Denis Zhdanov
- */
 public class KillRingSaveActionTest extends AbstractRegionToKillRingTest {
 
   @Override

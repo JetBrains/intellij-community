@@ -2,6 +2,7 @@
 
 package com.intellij.testFramework.builders;
 
+import com.intellij.openapi.roots.DependencyScope;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.testFramework.fixtures.ModuleFixture;
@@ -30,7 +31,38 @@ public interface JavaModuleFixtureBuilder<T extends ModuleFixture> extends Modul
   JavaModuleFixtureBuilder addLibraryJars(@NonNls String libraryName, @NonNls @NotNull String basePath, @NonNls String @NotNull ... jarNames);
 
   @NotNull
+  JavaModuleFixtureBuilder addMavenLibrary(@NotNull MavenLib lib);
+
+  @NotNull
   JavaModuleFixtureBuilder addJdk(@NonNls @NotNull String jdkPath);
 
   void setMockJdkLevel(@NotNull MockJdkLevel level);
+
+  final class MavenLib {
+    private final String myCoordinates;
+    private final boolean myIncludeTransitiveDependencies;
+    private final DependencyScope myDependencyScope;
+
+    public MavenLib(String coordinates) {
+      this(coordinates, true, DependencyScope.COMPILE);
+    }
+
+    public MavenLib(String coordinates, boolean includeTransitiveDependencies, DependencyScope dependencyScope) {
+      myCoordinates = coordinates;
+      myIncludeTransitiveDependencies = includeTransitiveDependencies;
+      myDependencyScope = dependencyScope;
+    }
+
+    public String getCoordinates() {
+      return myCoordinates;
+    }
+
+    public boolean isIncludeTransitiveDependencies() {
+      return myIncludeTransitiveDependencies;
+    }
+
+    public DependencyScope getDependencyScope() {
+      return myDependencyScope;
+    }
+  }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions;
 
 import com.intellij.lang.ASTNode;
@@ -34,35 +34,36 @@ public abstract class GrMethodCallImpl extends GrCallExpressionImpl implements G
     super(node);
   }
 
-  @Nullable
   @Override
-  public GroovyMethodCallReference getImplicitCallReference() {
+  public @Nullable GroovyMethodCallReference getImplicitCallReference() {
     return isImplicitCall(this) ? myImplicitCallReference : null;
   }
 
-  @Nullable
   @Override
-  public GroovyMethodCallReference getExplicitCallReference() {
+  public @Nullable GroovyMethodCallReference getExplicitCallReference() {
     return isExplicitCall(this) ? myExplicitCallReference : null;
   }
 
-  @Nullable
   @Override
-  public GroovyMethodCallReference getCallReference() {
+  public @Nullable GroovyMethodCallReference getCallReference() {
     GroovyMethodCallReference explicitCallReference = getExplicitCallReference();
     return explicitCallReference == null ? getImplicitCallReference() : explicitCallReference;
   }
 
   @Override
   public GroovyResolveResult @NotNull [] getCallVariants(@Nullable GrExpression upToArgument) {
-    final GrExpression invoked = getInvokedExpression();
-    if (!(invoked instanceof GrReferenceExpression)) return GroovyResolveResult.EMPTY_ARRAY;
-    return ((GrReferenceExpression)invoked).multiResolve(true);
+    return getCallVariants(upToArgument, true);
   }
 
   @Override
-  @NotNull
-  public GrExpression getInvokedExpression() {
+  public @NotNull GroovyResolveResult[] getCallVariants(@Nullable GrExpression upToArgument, boolean incompleteCode) {
+    final GrExpression invoked = getInvokedExpression();
+    if (!(invoked instanceof GrReferenceExpression)) return GroovyResolveResult.EMPTY_ARRAY;
+    return ((GrReferenceExpression)invoked).multiResolve(incompleteCode);
+  }
+
+  @Override
+  public @NotNull GrExpression getInvokedExpression() {
     for (PsiElement cur = this.getFirstChild(); cur != null; cur = cur.getNextSibling()) {
       if (cur instanceof GrExpression) return (GrExpression)cur;
     }
@@ -78,7 +79,7 @@ public abstract class GrMethodCallImpl extends GrCallExpressionImpl implements G
   }
 
   @Override
-  public GroovyResolveResult @NotNull [] multiResolve(boolean incompleteCode) {
+  public GroovyResolveResult @NotNull [] multiResolveGroovy(boolean incompleteCode) {
     final GroovyMethodCallReference implicitCallReference = getImplicitCallReference();
     if (implicitCallReference != null) {
       return implicitCallReference.multiResolve(incompleteCode);
@@ -95,9 +96,8 @@ public abstract class GrMethodCallImpl extends GrCallExpressionImpl implements G
     return ItemPresentationProviders.getItemPresentation(this);
   }
 
-  @NotNull
   @Override
-  public GrArgumentList getArgumentList() {
+  public @NotNull GrArgumentList getArgumentList() {
     return findNotNullChildByClass(GrArgumentList.class);
   }
 

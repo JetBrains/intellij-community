@@ -21,6 +21,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
 
 import java.util.List;
@@ -29,8 +30,6 @@ import java.util.Set;
 /**
  * Interface providing root information model for a given module.
  * It's implemented by {@link ModuleRootManager}.
- *
- * @author dsl
  */
 @ApiStatus.NonExtendable
 public interface ModuleRootModel {
@@ -46,7 +45,7 @@ public interface ModuleRootModel {
    * Use this method to obtain all content entries of a module. Entries are given in
    * lexicographical order of their paths.
    *
-   * @return list of content entries for this module
+   * @return array of content entries for this module
    * @see ContentEntry
    */
   ContentEntry @NotNull [] getContentEntries();
@@ -54,7 +53,7 @@ public interface ModuleRootModel {
   /**
    * Use this method to obtain order of roots of a module. Order of entries is important.
    *
-   * @return list of order entries for this module
+   * @return array of order entries for this module
    */
   OrderEntry @NotNull [] getOrderEntries();
 
@@ -109,7 +108,8 @@ public interface ModuleRootModel {
   String @NotNull [] getExcludeRootUrls();
 
   /**
-   * Returns an array of source roots from all content entries.
+   * Returns an array consisting of source roots of all types from all content entries. 
+   * If you're interested in a specific type of source root, use {@link #getSourceRoots(JpsModuleSourceRootType)} instead.  
    *
    * @return the array of source roots.
    * @see #getContentEntries()
@@ -119,6 +119,9 @@ public interface ModuleRootModel {
 
   /**
    * Returns an array of source roots from all content entries.
+   * If {@code includingTests} is {@code true}, this is equivalent to {@link #getSourceRoots()}. 
+   * Otherwise, the returned array doesn't contain roots of types designated for tests (e.g., Java test source roots and Java test resource
+   * roots).
    *
    * @param includingTests determines whether test source roots should be included in the result
    * @return the array of source roots.
@@ -133,6 +136,7 @@ public interface ModuleRootModel {
    * @return list of source roots
    */
   @NotNull
+  @Unmodifiable
   List<VirtualFile> getSourceRoots(@NotNull JpsModuleSourceRootType<?> rootType);
 
   /**
@@ -142,10 +146,11 @@ public interface ModuleRootModel {
    * @return list of source roots
    */
   @NotNull
-  List<VirtualFile> getSourceRoots(@NotNull Set<? extends JpsModuleSourceRootType<?>> rootTypes);
+  @Unmodifiable List<VirtualFile> getSourceRoots(@NotNull Set<? extends JpsModuleSourceRootType<?>> rootTypes);
 
   /**
-   * Returns an array of source root urls from all content entries.
+   * Returns an array consisting of source roots of all types from all content entries.
+   * The result includes URLs of all files returned by {@link #getSourceRoots()}, and also includes URLs of non-existing source roots.
    *
    * @return the array of source root URLs.
    * @see #getContentEntries()
@@ -154,7 +159,9 @@ public interface ModuleRootModel {
   String @NotNull [] getSourceRootUrls();
 
   /**
-   * Returns an array of source root urls from all content entries.
+   * Returns an array of source root urls from all content entries, with optionally excluded test roots.
+   * The result includes URLs of all files returned by {@link #getSourceRoots(boolean)}, and also includes URLs of non-existing source 
+   * roots.
    *
    * @param includingTests determines whether test source root urls should be included in the result
    * @return the array of source root URLs.
@@ -184,7 +191,7 @@ public interface ModuleRootModel {
   /**
    * Returns list of module names <i>this module</i> depends on.
    *
-   * @return the list of module names this module depends on.
+   * @return the array of module names this module depends on.
    */
   String @NotNull [] getDependencyModuleNames();
 

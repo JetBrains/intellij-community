@@ -15,6 +15,7 @@
  */
 package org.jetbrains.debugger.values
 
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.concurrency.Obsolescent
 import java.util.concurrent.atomic.AtomicInteger
 
@@ -25,7 +26,8 @@ import java.util.concurrent.atomic.AtomicInteger
 
  * Currently WIP implementation doesn't keep such map due to protocol issue. But V8 does.
  */
-abstract class ValueManager() : Obsolescent {
+@ApiStatus.Internal
+abstract class ValueManager : Obsolescent {
   private val cacheStamp = AtomicInteger()
   @Volatile private var obsolete = false
 

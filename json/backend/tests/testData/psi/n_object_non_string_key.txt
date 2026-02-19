@@ -1,0 +1,10 @@
+JsonFile: n_object_non_string_key.json
+  JsonObject
+    PsiElement({)('{')
+    JsonProperty
+      JsonNumberLiteral
+        PsiElement(NUMBER)('1')
+      PsiElement(:)(':')
+      JsonNumberLiteral
+        PsiElement(NUMBER)('1')
+    PsiElement(})('}')

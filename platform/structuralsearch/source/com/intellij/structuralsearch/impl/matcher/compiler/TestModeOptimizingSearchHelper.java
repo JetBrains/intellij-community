@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.structuralsearch.impl.matcher.compiler;
 
 import com.intellij.openapi.vfs.VirtualFile;
@@ -70,15 +70,13 @@ class TestModeOptimizingSearchHelper extends OptimizingSearchHelperBase {
     return false;
   }
 
-  @NotNull
   @Override
-  public Set<VirtualFile> getFilesSetToScan() {
+  public @NotNull Set<VirtualFile> getFilesSetToScan() {
     assert !myTransactionStarted;
     return Collections.emptySet();
   }
 
-  @NotNull
-  public String getSearchPlan() {
+  public @NotNull String getSearchPlan() {
     assert !myTransactionStarted;
     final String plan = builder.toString();
     builder.setLength(0);

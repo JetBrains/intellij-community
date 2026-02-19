@@ -1,0 +1,3 @@
+- name: lib/vcs-git-commit-modal.jar
+  modules:
+  - name: intellij.vcs.git.commit.modal

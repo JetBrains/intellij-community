@@ -26,19 +26,17 @@ package com.intellij.openapi.vcs.changes.ignore.lang;
 
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.Icon;
 
 /**
  * Describes Ignore file type.
  */
 public class IgnoreFileType extends LanguageFileType {
 
-  @NotNull
-  public static final IgnoreFileType INSTANCE = new IgnoreFileType();
+  public static final @NotNull IgnoreFileType INSTANCE = new IgnoreFileType();
 
-  protected IgnoreFileType() {
+  private IgnoreFileType() {
     this(IgnoreLanguage.INSTANCE);
   }
 
@@ -51,9 +49,8 @@ public class IgnoreFileType extends LanguageFileType {
    *
    * @return The file type name.
    */
-  @NotNull
   @Override
-  public String getName() {
+  public @NotNull String getName() {
     return getLanguage().getID() + " file";
   }
 
@@ -62,9 +59,8 @@ public class IgnoreFileType extends LanguageFileType {
    *
    * @return The file type description.
    */
-  @NotNull
   @Override
-  public String getDescription() {
+  public @NotNull String getDescription() {
     return getLanguage().getDisplayName();
   }
 
@@ -73,9 +69,8 @@ public class IgnoreFileType extends LanguageFileType {
    *
    * @return The extension, not including the leading '.'.
    */
-  @NotNull
   @Override
-  public String getDefaultExtension() {
+  public @NotNull String getDefaultExtension() {
     return getIgnoreLanguage().getExtension();
   }
 
@@ -84,7 +79,6 @@ public class IgnoreFileType extends LanguageFileType {
    *
    * @return The icon instance, or null if no icon should be shown.
    */
-  @Nullable
   @Override
   public Icon getIcon() {
     return getIgnoreLanguage().getIcon();
@@ -95,8 +89,7 @@ public class IgnoreFileType extends LanguageFileType {
    *
    * @return associated language.
    */
-  @NotNull
-  public IgnoreLanguage getIgnoreLanguage() {
+  public @NotNull IgnoreLanguage getIgnoreLanguage() {
     return (IgnoreLanguage)getLanguage();
   }
 }

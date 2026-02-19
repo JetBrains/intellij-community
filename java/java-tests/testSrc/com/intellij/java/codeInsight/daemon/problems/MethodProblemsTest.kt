@@ -3,7 +3,16 @@ package com.intellij.java.codeInsight.daemon.problems
 
 import com.intellij.codeInsight.daemon.problems.pass.ProjectProblemUtils
 import com.intellij.openapi.command.WriteCommandAction
-import com.intellij.psi.*
+import com.intellij.psi.CommonClassNames
+import com.intellij.psi.JavaPsiFacade
+import com.intellij.psi.PsiAssignmentExpression
+import com.intellij.psi.PsiClass
+import com.intellij.psi.PsiDeclarationStatement
+import com.intellij.psi.PsiElementFactory
+import com.intellij.psi.PsiJavaCodeReferenceElement
+import com.intellij.psi.PsiMethod
+import com.intellij.psi.PsiModifier
+import com.intellij.psi.PsiTypes
 import com.siyeh.ig.psiutils.TypeUtils
 
 internal class MethodProblemsTest : ProjectProblemsViewTest() {
@@ -13,7 +22,7 @@ internal class MethodProblemsTest : ProjectProblemsViewTest() {
   }
 
   fun testChangeReturnType() = doMethodTest { method, factory ->
-    method.returnTypeElement?.replace(factory.createTypeElement(PsiPrimitiveType.BOOLEAN))
+    method.returnTypeElement?.replace(factory.createTypeElement(PsiTypes.booleanType()))
   }
 
   fun testMakeMethodPackagePrivate() = doMethodTest { method, _ ->
@@ -30,12 +39,12 @@ internal class MethodProblemsTest : ProjectProblemsViewTest() {
   }
 
   fun testAddParameter() = doMethodTest { method, factory ->
-    val parameter = factory.createParameter("i", PsiPrimitiveType.INT)
+    val parameter = factory.createParameter("i", PsiTypes.intType())
     method.parameterList.add(parameter)
   }
 
   fun testChangeParameterType() = doMethodTest { method, factory ->
-    method.parameterList.getParameter(0)?.typeElement?.replace(factory.createTypeElement(PsiPrimitiveType.BOOLEAN))
+    method.parameterList.getParameter(0)?.typeElement?.replace(factory.createTypeElement(PsiTypes.booleanType()))
   }
 
   fun testMakeOverrideMethodPrivateInAbstractClass() {
@@ -139,6 +148,43 @@ internal class MethodProblemsTest : ProjectProblemsViewTest() {
       }
 
       assertTrue(hasReportedProblems<PsiMethod>(refClass))
+    }
+  }
+
+  fun testAddExceptionAndRemoveFromThrowsList() {
+    val targetClass = myFixture.addClass("""
+      package foo;
+      
+      import java.io.IOException;
+
+      public class A {
+        public void foo() {}
+      }
+    """.trimIndent())
+
+    val refClass = myFixture.addClass("""
+      package foo;
+      
+      public class B {
+        public void test(A a) {
+          a.foo();
+        }
+      }
+    """.trimIndent())
+
+    doTest(targetClass) {
+      changeMethod(targetClass) { method, factory ->
+        val exceptionRef = factory.createReferenceElementByFQClassName(CommonClassNames.JAVA_LANG_EXCEPTION, method.resolveScope)
+        method.throwsList.add(exceptionRef)
+      }
+
+      assertTrue(hasReportedProblems<PsiMethod>(refClass))
+
+      changeMethod(targetClass) { method, factory ->
+        method.throwsList.replace(factory.createReferenceList(PsiJavaCodeReferenceElement.EMPTY_ARRAY))
+      }
+
+      assertFalse(hasReportedProblems<PsiMethod>(refClass))
     }
   }
 
@@ -371,12 +417,118 @@ internal class MethodProblemsTest : ProjectProblemsViewTest() {
       changeMethod(aClass.allInnerClasses[0]) { method, _ ->
         method.parameterList.getParameter(0)?.delete()
       }
-      val reportedElements = ProjectProblemUtils.getReportedProblems(
-        myFixture.editor).keys
+      val reportedElements = ProjectProblemUtils.getReportedProblems(myFixture.editor).keys
       assertSize(1, reportedElements)
       assertTrue(reportedElements.first() is PsiMethod)
     }
   }
+
+  fun testIncompatibleTypeParam() {
+    val targetClass = myFixture.addClass("""
+      public class TargetClass {
+        static <T extends Integer> T id(T t) {
+          return t;
+        }
+      }
+    """.trimIndent())
+
+    myFixture.addClass("""
+      public class RefClass extends TargetClass {
+        void test() {
+          TargetClass.id("foo");
+        }
+      }
+    """.trimIndent())
+
+    doTest(targetClass) {
+      changeMethod(targetClass) { psiMethod, _ ->
+        psiMethod.modifierList.setModifierProperty(PsiModifier.PUBLIC, true)
+      }
+
+      assertSize(1, ProjectProblemUtils.getReportedProblems(myFixture.editor).entries)
+
+      changeMethod(targetClass) { psiMethod, factory ->
+        val typeParameterList = factory.createTypeParameterList()
+        typeParameterList.add(factory.createTypeParameterFromText("T", psiMethod))
+        psiMethod.typeParameterList?.replace(typeParameterList)
+      }
+
+      assertEmpty(ProjectProblemUtils.getReportedProblems(myFixture.editor).entries)
+    }
+  }
+
+  fun testRenameMethodAndRecreate() {
+    val targetClass = myFixture.addClass("""
+      public class A {
+        void m1() {}
+      }
+    """.trimIndent())
+
+    myFixture.addClass("""
+      public class RefClass {
+        void test(A a) {
+          a.m1();
+        }
+      }
+    """.trimIndent())
+
+    doTest(targetClass) {
+      changeMethod(targetClass) { psiMethod, _ ->
+        psiMethod.name = "m2"
+      }
+
+      assertSize(1, ProjectProblemUtils.getReportedProblems(myFixture.editor).entries)
+
+      WriteCommandAction.runWriteCommandAction(project) {
+        val factory = JavaPsiFacade.getInstance(project).elementFactory
+        targetClass.add(factory.createMethodFromText("void m1() {}", targetClass))
+      }
+      myFixture.doHighlighting()
+
+      assertEmpty(ProjectProblemUtils.getReportedProblems(myFixture.editor).entries)
+    }
+  }
+
+  fun testRenameMethodCreateOneMoreAndRenameItToInitial() {
+    val targetClass = myFixture.addClass("""
+      public class A {
+        void m1() {}
+      }
+    """.trimIndent())
+
+    myFixture.addClass("""
+      public class RefClass {
+        void test(A a) {
+          a.m1();
+        }
+      }
+    """.trimIndent())
+
+    doTest(targetClass) {
+      changeMethod(targetClass) { psiMethod, _ ->
+        psiMethod.name = "m2"
+      }
+
+      assertSize(1, ProjectProblemUtils.getReportedProblems(myFixture.editor).entries)
+
+      WriteCommandAction.runWriteCommandAction(project) {
+        val factory = JavaPsiFacade.getInstance(project).elementFactory
+        targetClass.add(factory.createMethodFromText("void m3() {}", targetClass))
+      }
+      myFixture.doHighlighting()
+
+      assertSize(1, ProjectProblemUtils.getReportedProblems(myFixture.editor).entries)
+
+      WriteCommandAction.runWriteCommandAction(project) {
+        val method = targetClass.findMethodsByName("m3", false)[0]
+        method.name = "m1"
+      }
+      myFixture.doHighlighting()
+
+      assertEmpty(ProjectProblemUtils.getReportedProblems(myFixture.editor).entries)
+    }
+  }
+
 
   private fun doMethodTest(methodChangeAction: (PsiMethod, PsiElementFactory) -> Unit) {
 

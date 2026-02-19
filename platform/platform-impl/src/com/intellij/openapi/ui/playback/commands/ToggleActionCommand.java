@@ -1,21 +1,29 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.ui.playback.commands;
 
 import com.intellij.ide.DataManager;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.ActionPlaces;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.Presentation;
+import com.intellij.openapi.actionSystem.ToggleAction;
+import com.intellij.openapi.actionSystem.Toggleable;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
-import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.ui.playback.PlaybackContext;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.IdeFocusManager;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.concurrency.Promise;
 import org.jetbrains.concurrency.Promises;
 
-import java.awt.*;
+import java.awt.KeyboardFocusManager;
 import java.awt.event.InputEvent;
 
-public class ToggleActionCommand extends AbstractCommand {
+@ApiStatus.Internal
+public final class ToggleActionCommand extends AbstractCommand {
 
   public static final String PREFIX = CMD_PREFIX + "toggle";
 
@@ -27,7 +35,7 @@ public class ToggleActionCommand extends AbstractCommand {
   }
 
   @Override
-  protected Promise<Object> _execute(PlaybackContext context) {
+  protected @NotNull Promise<Object> _execute(@NotNull PlaybackContext context) {
     String[] args = getText().substring(PREFIX.length()).trim().split(" ");
     String syntaxText = "Syntax error, expected: " + PREFIX + " " + ON + "|" + OFF + " actionName";
     if (args.length != 2) {
@@ -71,11 +79,11 @@ public class ToggleActionCommand extends AbstractCommand {
               .getDataContext(KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner()), ActionPlaces.UNKNOWN,
                             presentation, ActionManager.getInstance(), 0);
 
-      ActionUtil.performDumbAwareUpdate(LaterInvocator.isInModalContext(), action, event, false);
-
+      ActionUtil.performDumbAwareUpdate(action, event, true);
       boolean state = Toggleable.isSelected(event.getPresentation());
       if (state != on) {
-        ActionManager.getInstance().tryToExecute(action, inputEvent, null, ActionPlaces.UNKNOWN, true).doWhenProcessed(result.createSetDoneRunnable());
+        ActionManager.getInstance().tryToExecute(action, inputEvent, null, ActionPlaces.UNKNOWN, true)
+          .doWhenProcessed(result.createSetDoneRunnable());
       }
       else {
         result.setDone();

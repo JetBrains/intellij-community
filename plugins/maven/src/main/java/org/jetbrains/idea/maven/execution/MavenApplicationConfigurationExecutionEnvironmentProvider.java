@@ -1,11 +1,23 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.execution;
 
 import com.intellij.debugger.impl.RemoteConnectionBuilder;
 import com.intellij.debugger.settings.DebuggerSettings;
-import com.intellij.execution.*;
+import com.intellij.execution.CantRunException;
+import com.intellij.execution.ExecutionBundle;
+import com.intellij.execution.ExecutionException;
+import com.intellij.execution.Executor;
+import com.intellij.execution.RunManager;
+import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.application.ApplicationConfiguration;
-import com.intellij.execution.configurations.*;
+import com.intellij.execution.configurations.ConfigurationFactory;
+import com.intellij.execution.configurations.JavaParameters;
+import com.intellij.execution.configurations.LogFileOptions;
+import com.intellij.execution.configurations.ParametersList;
+import com.intellij.execution.configurations.PredefinedLogFile;
+import com.intellij.execution.configurations.RemoteConnection;
+import com.intellij.execution.configurations.RemoteConnectionCreator;
+import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.executors.DefaultRunExecutor;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ExecutionEnvironmentBuilder;
@@ -36,10 +48,7 @@ import static com.intellij.openapi.util.text.StringUtil.isEmpty;
 import static com.intellij.openapi.util.text.StringUtil.isNotEmpty;
 import static com.intellij.util.containers.ContainerUtil.indexOf;
 
-/**
- * @author ibessonov
- */
-public class MavenApplicationConfigurationExecutionEnvironmentProvider implements MavenExecutionEnvironmentProvider {
+public final class MavenApplicationConfigurationExecutionEnvironmentProvider implements MavenExecutionEnvironmentProvider {
 
   @Override
   public boolean isApplicable(@NotNull ExecuteRunConfigurationTask task) {
@@ -47,9 +56,8 @@ public class MavenApplicationConfigurationExecutionEnvironmentProvider implement
   }
 
   @Override
-  @Nullable
-  public ExecutionEnvironment createExecutionEnvironment(@NotNull Project project, @NotNull ExecuteRunConfigurationTask task,
-                                                         @Nullable Executor executor) {
+  public @Nullable ExecutionEnvironment createExecutionEnvironment(@NotNull Project project, @NotNull ExecuteRunConfigurationTask task,
+                                                                   @Nullable Executor executor) {
 
     ApplicationConfiguration applicationConfiguration = (ApplicationConfiguration)task.getRunProfile();
     ConfigurationFactory configurationFactory = new MavenExecConfigurationFactory(applicationConfiguration);
@@ -98,13 +106,14 @@ public class MavenApplicationConfigurationExecutionEnvironmentProvider implement
 
     String workingDirectory = ProgramParametersUtil.getWorkingDir(applicationConfiguration, project, module);
 
-    List<String> goals = runnerParameters.getGoals();
+    List<String> goals = new ArrayList<>(runnerParameters.getGoals());
     if (isNotEmpty(workingDirectory)) {
       goals.add("-Dexec.workingdir=" + workingDirectory);
     }
     goals.add("-Dexec.args=" + execArgs.getParametersString());
     goals.add("-Dexec.executable=" + toSystemDependentName(execExecutable));
     goals.add("exec:exec");
+    runnerParameters.setGoals(goals);
 
     if (executor == null) {
       executor = DefaultRunExecutor.getRunExecutorInstance();
@@ -177,9 +186,8 @@ public class MavenApplicationConfigurationExecutionEnvironmentProvider implement
       myApplicationConfiguration = applicationConfiguration;
     }
 
-    @NotNull
     @Override
-    public RemoteConnectionCreator createRemoteConnectionCreator(JavaParameters javaParameters) {
+    public @NotNull RemoteConnectionCreator createRemoteConnectionCreator(JavaParameters javaParameters) {
       return new RemoteConnectionCreator() {
 
         @Override
@@ -190,7 +198,6 @@ public class MavenApplicationConfigurationExecutionEnvironmentProvider implement
             RemoteConnection connection = new RemoteConnectionBuilder(false, DebuggerSettings.getInstance().getTransport(), "")
               .asyncAgent(true)
               .project(environment.getProject())
-              .memoryAgent(DebuggerSettings.getInstance().ENABLE_MEMORY_AGENT)
               .create(parameters);
 
             ParametersList programParametersList = javaParameters.getProgramParametersList();
@@ -236,15 +243,13 @@ public class MavenApplicationConfigurationExecutionEnvironmentProvider implement
       return "Maven";
     }
 
-    @NotNull
     @Override
-    public RunConfiguration createTemplateConfiguration(@NotNull Project project) {
+    public @NotNull RunConfiguration createTemplateConfiguration(@NotNull Project project) {
       return new MyExecRunConfiguration(project, this, myApplicationConfiguration);
     }
 
-    @NotNull
     @Override
-    public RunConfiguration createConfiguration(@Nullable String name, @NotNull RunConfiguration template) {
+    public @NotNull RunConfiguration createConfiguration(@Nullable String name, @NotNull RunConfiguration template) {
       return new MyExecRunConfiguration(template.getProject(), this, myApplicationConfiguration);
     }
   }

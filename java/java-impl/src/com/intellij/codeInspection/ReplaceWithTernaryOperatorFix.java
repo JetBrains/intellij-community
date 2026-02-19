@@ -1,30 +1,23 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
-import com.intellij.codeInsight.template.TemplateBuilder;
-import com.intellij.codeInsight.template.TemplateBuilderFactory;
-import com.intellij.codeInsight.template.impl.ConstantNode;
 import com.intellij.java.JavaBundle;
-import com.intellij.lang.injection.InjectedLanguageManager;
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.LambdaUtil;
+import com.intellij.psi.PsiCallExpression;
+import com.intellij.psi.PsiConditionalExpression;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementFactory;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiExpressionStatement;
+import com.intellij.psi.PsiJavaCodeReferenceElement;
+import com.intellij.psi.PsiLambdaExpression;
+import com.intellij.psi.PsiMethodReferenceExpression;
+import com.intellij.psi.PsiParameter;
+import com.intellij.psi.PsiType;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -34,15 +27,11 @@ import com.intellij.util.ObjectUtils;
 import com.siyeh.ig.psiutils.ParenthesesUtils;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author Danila Ponomarenko
- */
-public class ReplaceWithTernaryOperatorFix implements LocalQuickFix {
+public class ReplaceWithTernaryOperatorFix extends PsiUpdateModCommandQuickFix {
   private final String myText;
 
   @Override
-  @NotNull
-  public String getName() {
+  public @NotNull String getName() {
     return JavaBundle.message("inspection.replace.ternary.quickfix", myText);
   }
 
@@ -50,15 +39,13 @@ public class ReplaceWithTernaryOperatorFix implements LocalQuickFix {
     myText = ParenthesesUtils.getText(expressionToAssert, ParenthesesUtils.BINARY_AND_PRECEDENCE);
   }
 
-  @NotNull
   @Override
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return JavaBundle.message("inspection.surround.if.family");
   }
 
   @Override
-  public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-    PsiElement element = descriptor.getPsiElement();
+  protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
     while (true) {
       PsiElement parent = element.getParent();
       if (parent instanceof PsiCallExpression || parent instanceof PsiJavaCodeReferenceElement) {
@@ -68,41 +55,27 @@ public class ReplaceWithTernaryOperatorFix implements LocalQuickFix {
         break;
       }
     }
-    if (!(element instanceof PsiExpression)) {
+    if (!(element instanceof PsiExpression expression)) {
       return;
     }
-    final PsiExpression expression = (PsiExpression)element;
 
-    final PsiFile file = expression.getContainingFile();
     PsiConditionalExpression conditionalExpression =
       replaceWithConditionalExpression(project, myText + "!=null", expression, suggestDefaultValue(expression));
 
-    selectElseBranch(file, conditionalExpression);
+    selectElseBranch(conditionalExpression, updater);
   }
 
-  static void selectElseBranch(PsiFile file, PsiConditionalExpression conditionalExpression) {
+  private static void selectElseBranch(PsiConditionalExpression conditionalExpression, @NotNull ModPsiUpdater updater) {
     PsiExpression elseExpression = conditionalExpression.getElseExpression();
     if (elseExpression != null) {
-      Project project = file.getProject();
-      Editor editor = FileEditorManager.getInstance(project).getSelectedTextEditor();
-      if (editor != null) {
-        Document document = editor.getDocument();
-        PsiFile topLevelFile = InjectedLanguageManager.getInstance(project).getTopLevelFile(file);
-        if (topLevelFile != null && document == topLevelFile.getViewProvider().getDocument()) {
-          PsiDocumentManager.getInstance(project).doPostponedOperationsAndUnblockDocument(document);
-          TemplateBuilder builder = TemplateBuilderFactory.getInstance().createTemplateBuilder(elseExpression);
-          builder.replaceElement(elseExpression, new ConstantNode(elseExpression.getText()));
-          builder.run(editor, true);
-        }
-      }
+      updater.templateBuilder().field(elseExpression, elseExpression.getText());
     }
   }
 
-  @NotNull
-  private static PsiConditionalExpression replaceWithConditionalExpression(@NotNull Project project,
-                                                                           @NotNull String condition,
-                                                                           @NotNull PsiExpression expression,
-                                                                           @NotNull String defaultValue) {
+  private static @NotNull PsiConditionalExpression replaceWithConditionalExpression(@NotNull Project project,
+                                                                                    @NotNull String condition,
+                                                                                    @NotNull PsiExpression expression,
+                                                                                    @NotNull String defaultValue) {
     final PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
 
     final PsiElement parent = expression.getParent();
@@ -128,16 +101,15 @@ public class ReplaceWithTernaryOperatorFix implements LocalQuickFix {
     return PsiTypesUtil.getDefaultValueOfType(type);
   }
 
-  public static class ReplaceMethodRefWithTernaryOperatorFix implements LocalQuickFix {
-    @NotNull
+  public static class ReplaceMethodRefWithTernaryOperatorFix extends PsiUpdateModCommandQuickFix {
     @Override
-    public String getFamilyName() {
+    public @NotNull String getFamilyName() {
       return JavaBundle.message("inspection.replace.methodref.ternary.quickfix");
     }
 
     @Override
-    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      PsiMethodReferenceExpression element = ObjectUtils.tryCast(descriptor.getPsiElement(), PsiMethodReferenceExpression.class);
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement startElement, @NotNull ModPsiUpdater updater) {
+      PsiMethodReferenceExpression element = ObjectUtils.tryCast(startElement, PsiMethodReferenceExpression.class);
       if (element == null) return;
       PsiLambdaExpression lambda =
         LambdaRefactoringUtil.convertMethodReferenceToLambda(element, false, true);
@@ -147,11 +119,9 @@ public class ReplaceWithTernaryOperatorFix implements LocalQuickFix {
       PsiParameter parameter = ArrayUtil.getFirstElement(lambda.getParameterList().getParameters());
       if (parameter == null) return;
       String text = parameter.getName();
-      final PsiFile file = expression.getContainingFile();
       PsiConditionalExpression conditionalExpression = replaceWithConditionalExpression(project, text + "!=null", expression,
                                                                                         suggestDefaultValue(expression));
-
-      selectElseBranch(file, conditionalExpression);
+      selectElseBranch(conditionalExpression, updater);
     }
   }
 }

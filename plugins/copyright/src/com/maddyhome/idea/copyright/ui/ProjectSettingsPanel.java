@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.maddyhome.idea.copyright.ui;
 
 import com.intellij.copyright.CopyrightBundle;
@@ -20,24 +20,38 @@ import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.psi.search.scope.packageSet.NamedScopesHolder;
 import com.intellij.ui.HyperlinkLabel;
 import com.intellij.ui.JBColor;
-import com.intellij.ui.SimpleListCellRenderer;
 import com.intellij.ui.ToolbarDecorator;
 import com.intellij.ui.components.editors.JBComboBoxTableCellEditorComponent;
+import com.intellij.ui.dsl.listCellRenderer.BuilderKt;
 import com.intellij.ui.table.TableView;
-import com.intellij.util.ui.*;
+import com.intellij.util.ui.AbstractTableCellEditor;
+import com.intellij.util.ui.ColumnInfo;
+import com.intellij.util.ui.ElementProducer;
+import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.ListTableModel;
+import com.intellij.util.ui.UIUtil;
 import com.maddyhome.idea.copyright.CopyrightProfile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.DefaultComboBoxModel;
+import javax.swing.JComboBox;
+import javax.swing.JComponent;
+import javax.swing.JTable;
 import javax.swing.event.HyperlinkEvent;
 import javax.swing.event.HyperlinkListener;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.TableCellEditor;
 import javax.swing.table.TableCellRenderer;
-import java.awt.*;
+import java.awt.BorderLayout;
+import java.awt.Component;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
-import java.util.*;
+import java.util.Map;
+import java.util.Set;
 
 public class ProjectSettingsPanel {
   private final Project myProject;
@@ -75,9 +89,10 @@ public class ProjectSettingsPanel {
     ColumnInfo[] columns = {new ScopeColumn(), new SettingColumn()};
     myScopeMappingModel = new ListTableModel<>(columns, new ArrayList<>(), 0);
     myScopeMappingTable = new TableView<>(myScopeMappingModel);
+    myScopeMappingTable.setShowGrid(false);
 
     reloadCopyrightProfiles();
-    myProfilesComboBox.setRenderer(SimpleListCellRenderer.create(CopyrightBundle.message("copyright.no.text"), CopyrightProfile::getName));
+    myProfilesComboBox.setRenderer(BuilderKt.textListCellRenderer(CopyrightBundle.message("copyright.no.text"), CopyrightProfile::getName));
 
     myScopesLink.setVisible(!myProject.isDefault());
     myScopesLink.setHyperlinkText(CopyrightBundle.message("copyright.select.scopes.label"));
@@ -112,7 +127,7 @@ public class ProjectSettingsPanel {
     component.setText(CopyrightBundle.message("copyright.default.project.copyright"));
     component.setLabelLocation(BorderLayout.WEST);
     component.setComponent(myProfilesComboBox);
-    ElementProducer<ScopeSetting> producer = new ElementProducer<ScopeSetting>() {
+    ElementProducer<ScopeSetting> producer = new ElementProducer<>() {
       @Override
       public ScopeSetting createElement() {
         return new ScopeSetting(CustomScopesProviderEx.getAllScope(), myProfilesModel.getAllProfiles().values().iterator().next());
@@ -179,6 +194,10 @@ public class ProjectSettingsPanel {
       myManager.unmapCopyright(scopeName);
     }
     myScopeMappingModel.setItems(mappings);
+  }
+
+  public boolean hasAnyCopyrights() {
+    return myProfilesComboBox.getSelectedItem() != null || !myScopeMappingModel.getItems().isEmpty();
   }
 
   private class ScopeSetting {
@@ -314,8 +333,7 @@ public class ProjectSettingsPanel {
         private PackageSetChooserCombo myScopeChooser;
 
         @Override
-        @Nullable
-        public Object getCellEditorValue() {
+        public @Nullable Object getCellEditorValue() {
           return myScopeChooser.getSelectedScope();
         }
 
@@ -348,7 +366,7 @@ public class ProjectSettingsPanel {
     }
   }
 
-  private static abstract class MyColumnInfo<T> extends ColumnInfo<ScopeSetting, T> {
+  private abstract static class MyColumnInfo<T> extends ColumnInfo<ScopeSetting, T> {
     protected MyColumnInfo(final @NlsContexts.ColumnName String name) {
       super(name);
     }

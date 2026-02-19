@@ -1,12 +1,16 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.util.ui;
 
 import org.intellij.lang.annotations.JdkConstants;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JComponent;
+import javax.swing.JScrollBar;
+import javax.swing.JScrollPane;
+import java.awt.Adjustable;
+import java.awt.Component;
+import java.awt.Rectangle;
 
 /**
  * @author Konstantin Bulenkov
@@ -15,24 +19,20 @@ public final class ScrollUtil {
   private ScrollUtil() {}
 
 
-  @Nullable
-  public static JScrollPane findScrollPane(JComponent c) {
+  public static @Nullable JScrollPane findScrollPane(JComponent c) {
     if (c == null) return null;
     return UIUtil.findComponentOfType(c, JScrollPane.class);
   }
 
-  @Nullable
-  public static JScrollBar findVerticalScrollBar(JComponent c) {
+  public static @Nullable JScrollBar findVerticalScrollBar(JComponent c) {
     return findScrollBar(c, Adjustable.VERTICAL);
   }
 
-  @Nullable
-  public static JScrollBar findHorizontalScrollBar(JComponent c) {
+  public static @Nullable JScrollBar findHorizontalScrollBar(JComponent c) {
     return findScrollBar(c, Adjustable.HORIZONTAL);
   }
 
-  @Nullable
-  private static JScrollBar findScrollBar(JComponent c, @JdkConstants.AdjustableOrientation int orientation) {
+  private static @Nullable JScrollBar findScrollBar(JComponent c, @JdkConstants.AdjustableOrientation int orientation) {
     if (c == null) return null;
     if (c instanceof JScrollBar && ((JScrollBar)c).getOrientation() == orientation) {
       return (JScrollBar)c;

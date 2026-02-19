@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.documentation.actions.ShowQuickDocInfoAction;
@@ -27,9 +13,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author peter
- */
+import static com.intellij.codeInsight.completion.FusCompletionKeys.LOOKUP_ELEMENT_CONTRIBUTOR;
+
 public class DefaultCompletionContributor extends CompletionContributor implements DumbAware {
 
   static void addDefaultAdvertisements(LookupImpl lookup, boolean includePsiFeatures) {
@@ -38,7 +23,7 @@ public class DefaultCompletionContributor extends CompletionContributor implemen
       lookup.addAdvertisement(LangBundle.message("completion.dot.etc.ad"), null);
     }
     if (!includePsiFeatures) return;
-    
+
     if (CompletionUtil.shouldShowFeature(project, CodeCompletionFeatures.EDITING_COMPLETION_FINISH_BY_SMART_ENTER)) {
       final String shortcut = KeymapUtil.getFirstKeyboardShortcutText(IdeActions.ACTION_CHOOSE_LOOKUP_ITEM_COMPLETE_STATEMENT);
       if (StringUtil.isNotEmpty(shortcut)) {
@@ -65,14 +50,26 @@ public class DefaultCompletionContributor extends CompletionContributor implemen
 
   @Override
   public AutoCompletionDecision handleAutoCompletionPossibility(@NotNull AutoCompletionContext context) {
-    final LookupElement[] items = context.getItems();
-    if (items.length == 1) {
-      final LookupElement item = items[0];
-      if (!StringUtil.isEmpty(context.getLookup().itemPattern(item)) || context.getParameters().getCompletionType() == CompletionType.SMART) {
-        return AutoCompletionDecision.insertItem(item);
+    LookupElement[] items = context.getItems();
+    if (items.length == 0) return null;
+    LookupElement first = items[0];
+    String firstPattern = context.getLookup().itemPattern(first);
+    if (StringUtil.isEmpty(firstPattern) &&
+        context.getParameters().getCompletionType() != CompletionType.SMART) return null;
+    for (int i = 1; i < items.length; i++) {
+      LookupElement item = items[i];
+      // same strings with different decorators produce different results
+      // word completion is known to be very simple
+      if (!(item.getUserData(LOOKUP_ELEMENT_CONTRIBUTOR) instanceof WordCompletionContributor)) {
+        return null;
       }
+      String itemPattern = context.getLookup().itemPattern(item);
+      // check if the word item has the same text
+      String firstSuffix = StringUtil.trimStart(first.getLookupString(), firstPattern);
+      String itemSuffix = StringUtil.trimStart(item.getLookupString(), itemPattern);
+      if (!firstSuffix.equals(itemSuffix)) return null;
     }
-    return null;
+    return AutoCompletionDecision.insertItem(first);
   }
 
 }

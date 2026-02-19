@@ -1,0 +1,35 @@
+PyFile:EmptyTemplateStrings.py
+  PyAssignmentStatement
+    PyTargetExpression: s
+      PsiElement(Py:IDENTIFIER)('s')
+    PsiWhiteSpace(' ')
+    PsiElement(Py:EQ)('=')
+    PsiWhiteSpace(' ')
+    PyParenthesizedExpression
+      PsiElement(Py:LPAR)('(')
+      PyTupleExpression
+        PyStringLiteralExpression: 
+          PyFormattedStringElement
+            PsiElement(Py:FSTRING_START)('t'')
+            PsiElement(Py:FSTRING_END)(''')
+        PsiElement(Py:COMMA)(',')
+        PsiWhiteSpace('\n     ')
+        PyStringLiteralExpression: 
+          PyFormattedStringElement
+            PsiElement(Py:FSTRING_START)('T"')
+            PsiElement(Py:FSTRING_END)('"')
+        PsiElement(Py:COMMA)(',')
+        PsiWhiteSpace('\n     ')
+        PyStringLiteralExpression: 
+          PyFormattedStringElement
+            PsiElement(Py:FSTRING_START)('rt"""')
+            PsiElement(Py:FSTRING_END)('"""')
+        PsiElement(Py:COMMA)(',')
+        PsiWhiteSpace('\n     ')
+        PyStringLiteralExpression: 
+          PyFormattedStringElement
+            PsiElement(Py:FSTRING_START)('TR'''')
+            PsiElement(Py:FSTRING_END)(''''')
+        PsiElement(Py:COMMA)(',')
+      PsiWhiteSpace('\n     ')
+      PsiElement(Py:RPAR)(')')

@@ -1,11 +1,9 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.model.search.impl
 
 import com.intellij.lang.LanguageMatcher
-import com.intellij.model.search.LeafOccurrenceMapper
+import com.intellij.model.search.LeafOccurrence
 import com.intellij.model.search.SearchParameters
-import com.intellij.psi.PsiElement
-import com.intellij.psi.impl.search.LeafOccurrence
 import com.intellij.psi.impl.search.OccurrenceProcessor
 import com.intellij.psi.impl.search.WordRequestInfoImpl
 import com.intellij.util.Processor
@@ -66,6 +64,7 @@ internal class WordRequest<out R>(
 
 internal sealed class InjectionInfo {
   object NoInjection : InjectionInfo()
+  object IncludeInjections : InjectionInfo()
   class InInjection(val languageInfo: LanguageInfo) : InjectionInfo()
 }
 
@@ -90,12 +89,6 @@ private fun <B, I, R> QueryRequest<B, I>.andThen(t: XTransformation<I, R>): Quer
 
 private fun <B, I, R> ParametersRequest<B, I>.andThen(t: XTransformation<I, R>): ParametersRequest<B, R> {
   return ParametersRequest(params, transformation.karasique(t))
-}
-
-internal fun <T> LeafOccurrenceMapper<out T>.asTransformation(): Transformation<LeafOccurrence, T> {
-  return { (scope: PsiElement, start: PsiElement, offsetInStart: Int) ->
-    this@asTransformation.mapOccurrence(scope, start, offsetInStart)
-  }
 }
 
 internal fun <R> WordRequest<R>.occurrenceProcessor(processor: Processor<in XResult<R>>): OccurrenceProcessor {

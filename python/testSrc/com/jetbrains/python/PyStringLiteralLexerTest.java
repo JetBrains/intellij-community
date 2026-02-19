@@ -1,25 +1,27 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python;
 
-import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.fixtures.PyLexerTestCase;
+import com.jetbrains.python.lexer.PyFStringLiteralLexer;
 import com.jetbrains.python.lexer.PyStringLiteralLexer;
+import org.junit.jupiter.api.Test;
 
-/**
- * @author yole
- */
+
 public class PyStringLiteralLexerTest extends PyLexerTestCase {
+  @Test
   public void testBackslashN() {  // PY-1313
     PyLexerTestCase.doLexerTest("u\"\\N{LATIN SMALL LETTER B}\"", new PyStringLiteralLexer(PyTokenTypes.SINGLE_QUOTED_UNICODE),
                                 "Py:SINGLE_QUOTED_UNICODE", "VALID_STRING_ESCAPE_TOKEN", "Py:SINGLE_QUOTED_UNICODE");
   }
 
+  @Test
   public void testRawBackslashN() {
     doLexerTest("r'[\\w\\']'", new PyStringLiteralLexer(PyTokenTypes.SINGLE_QUOTED_STRING), true,
                 "r'[\\w\\']'");
   }
 
   // PY-20921
+  @Test
   public void testIllegalPrefixes() {
     doLexerTest("ff'foo'", new PyStringLiteralLexer(PyTokenTypes.SINGLE_QUOTED_UNICODE), "Py:SINGLE_QUOTED_UNICODE");
     doLexerTest("fff'foo'", new PyStringLiteralLexer(PyTokenTypes.SINGLE_QUOTED_UNICODE), "Py:SINGLE_QUOTED_UNICODE");
@@ -27,6 +29,7 @@ public class PyStringLiteralLexerTest extends PyLexerTestCase {
   }
 
   // PY-21399
+  @Test
   public void testBackslashBreaksAnyEscapeSequence() {
     doLexerTest("'\\u\\')", new PyStringLiteralLexer(PyTokenTypes.SINGLE_QUOTED_UNICODE), true, "'", "\\u", "\\'", ")");
     doLexerTest("'\\u\\')", new PyStringLiteralLexer(PyTokenTypes.SINGLE_QUOTED_UNICODE),
@@ -42,5 +45,12 @@ public class PyStringLiteralLexerTest extends PyLexerTestCase {
     doLexerTest("'\\N{F\\')", new PyStringLiteralLexer(PyTokenTypes.SINGLE_QUOTED_UNICODE),
                 "Py:SINGLE_QUOTED_UNICODE", "INVALID_UNICODE_ESCAPE_TOKEN", "VALID_STRING_ESCAPE_TOKEN",
                 "Py:SINGLE_QUOTED_UNICODE");
+  }
+
+  // PY-40863
+  @Test
+  public void testFStringDoubleCurleyBrace() {
+    doLexerTest("a{{b", new PyFStringLiteralLexer(PyTokenTypes.FSTRING_TEXT), true, "a", "{{", "b");
+    doLexerTest("a\\}}b", new PyFStringLiteralLexer(PyTokenTypes.FSTRING_RAW_TEXT), true, "a", "\\", "}}", "b");
   }
 }

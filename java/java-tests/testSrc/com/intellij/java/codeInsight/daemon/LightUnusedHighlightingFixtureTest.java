@@ -6,9 +6,12 @@ import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.daemon.ImplicitUsageProvider;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.deadCode.UnusedDeclarationInspection;
+import com.intellij.pom.java.JavaFeature;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiNamedElement;
+import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import org.jetbrains.annotations.NotNull;
@@ -54,6 +57,27 @@ public class LightUnusedHighlightingFixtureTest extends LightJavaCodeInsightFixt
     assertNotNull(action);
     myFixture.launchAction(action);
     myFixture.checkResultByFile(testFileName + "_after.java", true);
+  }
+
+  public void testBrokenClassToImplicitClass() {
+    IdeaTestUtil.withLevel(getModule(), JavaFeature.IMPLICIT_CLASSES.getStandardLevel(), ()->{
+      myFixture.configureByFile(getTestName(false) + ".java");
+      myFixture.checkHighlighting();
+    });
+  }
+
+  public void testSeveralMainMethods() {
+    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_25, ()->{
+      myFixture.configureByFile(getTestName(false) + ".java");
+      myFixture.checkHighlighting();
+    });
+  }
+
+  public void testMainMethodInInterface() {
+    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_25, ()->{
+      myFixture.configureByFile(getTestName(false) + ".java");
+      myFixture.checkHighlighting();
+    });
   }
 
   @Override

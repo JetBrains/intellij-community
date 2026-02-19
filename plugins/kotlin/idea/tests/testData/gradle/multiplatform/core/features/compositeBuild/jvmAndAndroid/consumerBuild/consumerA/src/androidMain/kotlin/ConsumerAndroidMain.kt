@@ -1,0 +1,5 @@
+object ConsumerAndroidMain {
+    init {
+        ProducerAndroidMain
+    }
+}

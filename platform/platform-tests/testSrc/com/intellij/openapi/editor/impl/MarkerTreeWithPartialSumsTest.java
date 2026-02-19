@@ -4,7 +4,13 @@ package com.intellij.openapi.editor.impl;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.util.text.StringUtil;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
+import java.util.Random;
+import java.util.SortedMap;
+import java.util.TreeMap;
 import java.util.function.IntSupplier;
 
 public class MarkerTreeWithPartialSumsTest extends AbstractEditorTest {
@@ -20,6 +26,7 @@ public class MarkerTreeWithPartialSumsTest extends AbstractEditorTest {
                                                                     new RemoveCharacters(),
                                                                     new MoveCharacters());
   private final Random myRandom = new Random() {{
+    //noinspection ConstantValue
     setSeed(mySeed = SEED_OVERRIDE == null ? nextLong() : SEED_OVERRIDE);
   }};
   private long mySeed;
@@ -37,7 +44,7 @@ public class MarkerTreeWithPartialSumsTest extends AbstractEditorTest {
   @Override
   public void tearDown() throws Exception {
     try {
-      if (myTree != null) myTree.dispose(myDocument);
+      if (myTree != null) myTree.disposeInTests(myDocument);
     }
     catch (Throwable e) {
       addSuppressedException(e);
@@ -197,7 +204,7 @@ public class MarkerTreeWithPartialSumsTest extends AbstractEditorTest {
     MyRange(int offset, int value, boolean stickToRight) {
       super(myDocument, offset, offset, false, true);
       myValue = value;
-      myTree.addInterval(this, offset, offset, false, false, stickToRight, 0);
+      myTree.addIntervalTestAccessor(this, offset, offset, false, false, stickToRight, 0);
     }
 
     @Override

@@ -1,4 +1,4 @@
-Except where otherwise noted (default/iepngfix.htc), all files in this
+Except where otherwise noted, all files in this
 directory have been released into the Public Domain.
 
 These files are based on files from S5 1.1, released into the Public

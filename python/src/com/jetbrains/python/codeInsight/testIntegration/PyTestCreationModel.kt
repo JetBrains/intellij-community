@@ -2,6 +2,7 @@
 package com.jetbrains.python.codeInsight.testIntegration
 
 import com.intellij.openapi.module.ModuleUtil
+import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiNamedElement
@@ -12,6 +13,7 @@ import com.jetbrains.python.psi.PyClass
 import com.jetbrains.python.psi.PyFile
 import com.jetbrains.python.psi.PyFunction
 import com.jetbrains.python.testing.PythonUnitTestDetectorsBasedOnSettings
+import java.util.Locale
 
 /**
  * Created with [createByElement], then modified my user and provided to [PyTestCreator.createTest] to create test
@@ -28,7 +30,7 @@ class PyTestCreationModel(var fileName: String,
   companion object {
     private val String.asFunName
       get():String {
-        return replace(Regex("([a-z])([A-Z])"), "$1_$2").toLowerCase()
+        return replace(Regex("([a-z])([A-Z])"), "$1_$2").lowercase(Locale.getDefault())
       }
 
     /**
@@ -77,9 +79,12 @@ class PyTestCreationModel(var fileName: String,
 
     private fun getTestFolder(element: PsiElement): VirtualFile =
       ModuleUtil.findModuleForPsiElement(element)?.let { module ->
-        FilenameIndex.getVirtualFilesByName(element.project, "tests", module.moduleContentScope).firstOrNull()
+        // No need to create tests in site-packages (aka classes root)
+        val fileIndex = ProjectFileIndex.getInstance(element.project)
+        return@let FilenameIndex.getVirtualFilesByName("tests", module.moduleContentScope).firstOrNull { possibleRoot ->
+          possibleRoot.isDirectory && !fileIndex.isInLibrary(possibleRoot)
+        }
       } ?: element.containingFile.containingDirectory.virtualFile
-
   }
 
 }

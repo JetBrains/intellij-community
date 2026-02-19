@@ -18,22 +18,42 @@ package com.intellij.openapi.vcs.changes.ui;
 import com.intellij.ui.content.Content;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 
+/**
+ * @see ChangesViewContentEP#className
+ */
 public interface ChangesViewContentProvider {
+  /**
+   * Called when content tab is selected in toolwindow.
+   */
   default void initTabContent(@NotNull Content content) {
     content.setComponent(initContent());
     content.setDisposer(() -> disposeContent());
   }
 
+  /**
+   * Called from {@link #initTabContent} to create tab content.
+   * Unused if {@link #initTabContent} is overridden.
+   */
   default JComponent initContent() {
     throw new UnsupportedOperationException();
   }
 
+  /**
+   * Called from {@link #initTabContent} register default tab disposal handler.
+   * Unused if {@link #initTabContent} is overridden.
+   */
   default void disposeContent() {
   }
 
+  /**
+   * @see ChangesViewContentEP#preloaderClassName
+   */
   interface Preloader {
+    /**
+     * Called when content tab is created.
+     */
     default void preloadTabContent(@NotNull Content content) {
     }
   }

@@ -1,3 +1,4 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.tasks.redmine;
 
 import com.intellij.openapi.project.Project;
@@ -8,28 +9,25 @@ import com.intellij.util.Consumer;
 import icons.TasksCoreIcons;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.Icon;
 
 /**
  * @author Dennis.Ushakov
  */
 public class RedmineRepositoryType extends BaseRepositoryType<RedmineRepository> {
 
-  @NotNull
   @Override
-  public String getName() {
+  public @NotNull String getName() {
     return "Redmine";
   }
 
-  @NotNull
   @Override
-  public Icon getIcon() {
+  public @NotNull Icon getIcon() {
     return TasksCoreIcons.Redmine;
   }
 
-  @NotNull
   @Override
-  public TaskRepository createRepository() {
+  public @NotNull TaskRepository createRepository() {
     return new RedmineRepository(this);
   }
 
@@ -38,11 +36,10 @@ public class RedmineRepositoryType extends BaseRepositoryType<RedmineRepository>
     return RedmineRepository.class;
   }
 
-  @NotNull
   @Override
-  public TaskRepositoryEditor createEditor(RedmineRepository repository,
-                                           Project project,
-                                           Consumer<RedmineRepository> changeListener) {
+  public @NotNull TaskRepositoryEditor createEditor(RedmineRepository repository,
+                                                    Project project,
+                                                    Consumer<? super RedmineRepository> changeListener) {
     return new RedmineRepositoryEditor(project, repository, changeListener);
   }
 }

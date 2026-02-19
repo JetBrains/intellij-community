@@ -18,9 +18,11 @@ package com.intellij.ui;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.WideSelectionTreeUI;
 
-import javax.swing.*;
+import javax.swing.JList;
+import javax.swing.JTree;
+import javax.swing.ListCellRenderer;
 import javax.swing.tree.TreeCellRenderer;
-import java.awt.*;
+import java.awt.Component;
 
 public class HighlightableCellRenderer extends HighlightableComponent implements TreeCellRenderer, ListCellRenderer {
   @Override
@@ -56,6 +58,7 @@ public class HighlightableCellRenderer extends HighlightableComponent implements
 
   @Override
   public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
+    //noinspection HardCodedStringLiteral
     setText((value == null) ? "" : value.toString());
     setFont(UIUtil.getListFont());
     setIcon(null);

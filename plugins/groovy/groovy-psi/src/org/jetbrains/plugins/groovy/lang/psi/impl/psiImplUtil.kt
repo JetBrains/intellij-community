@@ -1,14 +1,19 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.psi.impl
 
+import com.intellij.java.syntax.parser.JavaKeywords
 import com.intellij.openapi.util.Key
-import com.intellij.psi.*
+import com.intellij.psi.PsiClass
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiRecursiveElementWalkingVisitor
+import com.intellij.psi.PsiType
 import com.intellij.psi.stubs.StubElement
 import com.intellij.psi.util.CachedValue
 import com.intellij.psi.util.CachedValueProvider.Result
 import com.intellij.psi.util.CachedValuesManager
 import com.intellij.psi.util.PsiTreeUtil.findFirstParent
 import com.intellij.psi.util.PsiTreeUtil.getParentOfType
+import com.intellij.psi.util.parents
 import com.intellij.util.containers.toArray
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes
 import org.jetbrains.plugins.groovy.lang.psi.GrControlFlowOwner
@@ -74,8 +79,7 @@ private fun GroovyFileImpl.doCollectScriptDeclarations(topLevelOnly: Boolean): A
 }
 
 fun GrCodeReferenceElement.doGetKind(): CodeReferenceKind {
-  val parent = parent
-  return when (parent) {
+  return when (val parent = parent) {
     is GrPackageDefinition -> CodeReferenceKind.PACKAGE_REFERENCE
     is GrImportStatement -> CodeReferenceKind.IMPORT_REFERENCE
     is GrCodeReferenceElement -> parent.kind
@@ -137,9 +141,15 @@ fun GrCodeReferenceElement.shouldInferTypeArguments(): Boolean {
   val typeArgumentList = typeArgumentList
   return when {
     typeArgumentList == null -> isInClosureSafeCast() // treat `Function` in `{} as Function` as a diamond
-    typeArgumentList.isDiamond -> true
+    typeArgumentList.isDiamond -> isUsageInCodeBlock() // diamonds in parameter lists are not inferrable
     else -> false // explicit type arguments
   }
+}
+
+private fun GrCodeReferenceElement.isUsageInCodeBlock(): Boolean {
+  return parents(false)
+    .takeWhile { it !is GrControlFlowOwner }
+    .all { it !is GrParameter }
 }
 
 /**
@@ -168,5 +178,5 @@ fun GrVariable.isDeclaredIn(block: GrControlFlowOwner): Boolean {
 fun isThisRef(expression: GrExpression?): Boolean {
   return expression is GrReferenceExpression &&
          expression.qualifier == null &&
-         PsiKeyword.THIS == expression.referenceName
+         JavaKeywords.THIS == expression.referenceName
 }

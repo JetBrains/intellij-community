@@ -1,9 +1,11 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.util.gotoByName;
 
 import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.ArrayUtilRt;
+import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -12,10 +14,12 @@ import org.jetbrains.annotations.Nullable;
  */
 public abstract class SimpleChooseByNameModel implements ChooseByNameModel {
   private final Project myProject;
-  private final String myPrompt;
-  private final String myHelpId;
+  private final @Nls(capitalization = Nls.Capitalization.Sentence) String myPrompt;
+  private final @NonNls String myHelpId;
 
-  protected SimpleChooseByNameModel(@NotNull Project project, @NotNull String prompt, @Nullable String helpId) {
+  protected SimpleChooseByNameModel(@NotNull Project project,
+                                    @NotNull @Nls(capitalization = Nls.Capitalization.Sentence) String prompt,
+                                    @Nullable @NonNls String helpId) {
     myProject = project;
     myPrompt = prompt;
     myHelpId = helpId;
@@ -35,15 +39,13 @@ public abstract class SimpleChooseByNameModel implements ChooseByNameModel {
     return myPrompt;
   }
 
-  @NotNull
   @Override
-  public String getNotInMessage() {
+  public @NotNull String getNotInMessage() {
     return InspectionsBundle.message("nothing.found");
   }
 
-  @NotNull
   @Override
-  public String getNotFoundMessage() {
+  public @NotNull String getNotFoundMessage() {
     return InspectionsBundle.message("nothing.found");
   }
 

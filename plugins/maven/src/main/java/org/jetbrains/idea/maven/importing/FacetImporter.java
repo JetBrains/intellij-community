@@ -1,7 +1,11 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.importing;
 
-import com.intellij.facet.*;
+import com.intellij.facet.Facet;
+import com.intellij.facet.FacetConfiguration;
+import com.intellij.facet.FacetModel;
+import com.intellij.facet.FacetType;
+import com.intellij.facet.ModifiableFacetModel;
 import com.intellij.framework.FrameworkType;
 import com.intellij.framework.detection.DetectionExcludesConfiguration;
 import com.intellij.framework.detection.impl.FrameworkDetectionUtil;
@@ -10,19 +14,28 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.ArrayUtilRt;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenProjectChanges;
 import org.jetbrains.idea.maven.project.MavenProjectsProcessorTask;
 import org.jetbrains.idea.maven.project.MavenProjectsTree;
 
 import java.io.File;
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * Deprecated.
+ * Use {@link org.jetbrains.idea.maven.importing.MavenWorkspaceFacetConfigurator}
+ * or {@link org.jetbrains.idea.maven.importing.MavenWorkspaceConfigurator} instead.
+ * <p>
+ * Extension point for custom facet import.
+ * @deprecated FacetImporter is a part of the legacy import mechanism, which was deprecated and removed from the Maven plugin.
+ * MavenWorkspaceFacetConfigurator and MavenWorkspaceConfigurator are the new alternatives.
+ */
+@SuppressWarnings("DeprecatedIsStillUsed")
+@Deprecated
 public abstract class FacetImporter<FACET_TYPE extends Facet, FACET_CONFIG_TYPE extends FacetConfiguration, FACET_TYPE_TYPE extends FacetType<FACET_TYPE, FACET_CONFIG_TYPE>>
   extends MavenImporter {
   protected final FACET_TYPE_TYPE myFacetType;
@@ -54,8 +67,6 @@ public abstract class FacetImporter<FACET_TYPE extends Facet, FACET_CONFIG_TYPE 
                          MavenProject mavenProject,
                          MavenProjectChanges changes,
                          IdeModifiableModelsProvider modifiableModelsProvider) {
-    prepareImporter(mavenProject);
-
     if (!isFacetDetectionDisabled(module.getProject())) {
       disableFacetAutodetection(module, modifiableModelsProvider);
       ensureFacetExists(module, mavenProject, modifiableModelsProvider);
@@ -71,9 +82,6 @@ public abstract class FacetImporter<FACET_TYPE extends Facet, FACET_CONFIG_TYPE 
     f = myFacetType.createFacet(module, myDefaultFacetName, myFacetType.createDefaultConfiguration(), null);
     model.addFacet(f, MavenRootModelAdapter.getMavenExternalSource());
     setupFacet(f, mavenProject);
-  }
-
-  protected void prepareImporter(MavenProject p) {
   }
 
   /**
@@ -98,17 +106,18 @@ public abstract class FacetImporter<FACET_TYPE extends Facet, FACET_CONFIG_TYPE 
     }
   }
 
-  protected abstract void setupFacet(FACET_TYPE f, MavenProject mavenProject);
+  protected void setupFacet(FACET_TYPE f, MavenProject mavenProject) {
+  }
 
   @Override
-  public void process(IdeModifiableModelsProvider modifiableModelsProvider,
-                      Module module,
-                      MavenRootModelAdapter rootModel,
-                      MavenProjectsTree mavenModel,
-                      MavenProject mavenProject,
-                      MavenProjectChanges changes,
-                      Map<MavenProject, String> mavenProjectToModuleName,
-                      List<MavenProjectsProcessorTask> postTasks) {
+  public void process(@NotNull IdeModifiableModelsProvider modifiableModelsProvider,
+                      @NotNull Module module,
+                      @NotNull MavenRootModelAdapter rootModel,
+                      @NotNull MavenProjectsTree mavenModel,
+                      @NotNull MavenProject mavenProject,
+                      @NotNull MavenProjectChanges changes,
+                      @NotNull Map<MavenProject, String> mavenProjectToModuleName,
+                      @NotNull List<MavenProjectsProcessorTask> postTasks) {
     FACET_TYPE f = findFacet(modifiableModelsProvider.getModifiableFacetModel(module));
     if (f == null) return; // facet may has been removed between preProcess and process calls
 
@@ -127,15 +136,15 @@ public abstract class FacetImporter<FACET_TYPE extends Facet, FACET_CONFIG_TYPE 
     return result;
   }
 
-  protected abstract void reimportFacet(IdeModifiableModelsProvider modelsProvider,
-                                        Module module,
-                                        MavenRootModelAdapter rootModel,
-                                        FACET_TYPE facet,
-                                        MavenProjectsTree mavenTree,
-                                        MavenProject mavenProject,
-                                        MavenProjectChanges changes,
-                                        Map<MavenProject, String> mavenProjectToModuleName,
-                                        List<MavenProjectsProcessorTask> postTasks);
+  protected abstract void reimportFacet(@NotNull IdeModifiableModelsProvider modelsProvider,
+                                        @NotNull Module module,
+                                        @NotNull MavenRootModelAdapter rootModel,
+                                        @NotNull FACET_TYPE facet,
+                                        @NotNull MavenProjectsTree mavenTree,
+                                        @NotNull MavenProject mavenProject,
+                                        @NotNull MavenProjectChanges changes,
+                                        @NotNull Map<MavenProject, String> mavenProjectToModuleName,
+                                        @NotNull List<MavenProjectsProcessorTask> postTasks);
 
   protected String getTargetName(MavenProject p) {
     return p.getFinalName();
@@ -153,17 +162,10 @@ public abstract class FacetImporter<FACET_TYPE extends Facet, FACET_CONFIG_TYPE 
     return makePath(p, p.getBuildDirectory(), getTargetName(p) + suffix);
   }
 
-  protected String getTargetOutputPath(MavenProject p, String... subFoldersAndFile) {
-    List<String> elements = new ArrayList<>();
-    elements.add(p.getBuildDirectory());
-    Collections.addAll(elements, subFoldersAndFile);
-    return makePath(p, ArrayUtilRt.toStringArray(elements));
-  }
-
   protected String makePath(MavenProject p, String... elements) {
     StringBuilder tailBuff = new StringBuilder();
     for (String e : elements) {
-      if (tailBuff.length() > 0) tailBuff.append("/");
+      if (!tailBuff.isEmpty()) tailBuff.append("/");
       tailBuff.append(e);
     }
     String tail = tailBuff.toString();
@@ -176,7 +178,7 @@ public abstract class FacetImporter<FACET_TYPE extends Facet, FACET_CONFIG_TYPE 
     return p.getPackaging();
   }
 
-  protected boolean isFacetDetectionDisabled(Project project) {
+  public boolean isFacetDetectionDisabled(Project project) {
     final DetectionExcludesConfiguration excludesConfiguration = DetectionExcludesConfiguration.getInstance(project);
     final FrameworkType frameworkType = FrameworkDetectionUtil.findFrameworkTypeForFacetDetector(myFacetType);
     if (frameworkType == null) return false;

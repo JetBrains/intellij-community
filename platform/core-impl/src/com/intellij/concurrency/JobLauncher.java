@@ -1,18 +1,21 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.concurrency;
 
+import com.intellij.diagnostic.PluginException;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.ApplicationEx;
-import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.util.Consumer;
+import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.util.Processor;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 import java.util.concurrent.Future;
+import java.util.function.Consumer;
 
 /**
  * Invitation-only service for running short-lived computing-intensive IO-free tasks on all available CPU cores.
@@ -20,9 +23,10 @@ import java.util.concurrent.Future;
  * {@link com.intellij.openapi.application.Application#executeOnPooledThread},
  * {@link com.intellij.execution.process.ProcessIOExecutorService} and {@link com.intellij.util.concurrency.NonUrgentExecutor} for that.
  */
+@ApiStatus.Internal
 public abstract class JobLauncher {
   public static JobLauncher getInstance() {
-    return ServiceManager.getService(JobLauncher.class);
+    return ApplicationManager.getApplication().getService(JobLauncher.class);
   }
 
   /**
@@ -48,6 +52,19 @@ public abstract class JobLauncher {
     ApplicationEx app = (ApplicationEx)ApplicationManager.getApplication();
     return invokeConcurrentlyUnderProgress(things, progress, app.isReadAccessAllowed(), app.isInImpatientReader(), thingProcessor);
   }
+
+  /**
+   * The same as {@link #invokeConcurrentlyUnderProgress(List, ProgressIndicator, Processor)}, but tries to infer {@link ProgressIndicator}
+   * from the caller context.
+   */
+  public <T> boolean invokeConcurrentlyUnderContextProgress(@NotNull List<? extends T> things,
+                                                            @NotNull Processor<? super T> thingProcessor) throws ProcessCanceledException {
+    ApplicationEx app = ApplicationManagerEx.getApplicationEx();
+    return ConcurrencyUtils.runWithIndicatorOrContextCancellation(
+      indicator ->
+        invokeConcurrentlyUnderProgress(things, ProgressIndicatorProvider.getGlobalProgressIndicator(), app.isReadAccessAllowed(), app.isInImpatientReader(), thingProcessor));
+  }
+
   /**
    * Schedules concurrent execution of #thingProcessor over each element of #things and waits for completion
    * With checkCanceled in each thread delegated to our current progress
@@ -64,10 +81,12 @@ public abstract class JobLauncher {
    * @deprecated use {@link #invokeConcurrentlyUnderProgress(List, ProgressIndicator, Processor)} instead
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval
   public <T> boolean invokeConcurrentlyUnderProgress(@NotNull List<? extends T> things,
                                                      ProgressIndicator progress,
                                                      boolean failFastOnAcquireReadAction,
                                                      @NotNull Processor<? super T> thingProcessor) throws ProcessCanceledException {
+    PluginException.reportDeprecatedUsage("invokeConcurrentlyUnderProgress", "do not use");
     return invokeConcurrentlyUnderProgress(things, progress, ApplicationManager.getApplication().isReadAccessAllowed(),
                                            failFastOnAcquireReadAction, thingProcessor);
   }
@@ -84,6 +103,19 @@ public abstract class JobLauncher {
    * This will cause deadlock since this thread pool is an easily exhaustible resource.
    * Use {@link com.intellij.openapi.application.Application#executeOnPooledThread(Runnable)} instead
    */
-  @NotNull
-  public abstract Job<Void> submitToJobThread(@NotNull final Runnable action, @Nullable Consumer<? super Future<?>> onDoneCallback);
+  @ApiStatus.Internal
+  public abstract @NotNull Job submitToJobThread(final @NotNull Runnable action, @Nullable Consumer<? super Future<?>> onDoneCallback);
+
+  /**
+   * Process each element in {@code items} with {@code thingProcessor} under {@code progress} in a background in an async manner,
+   * while running {@code runnable} synchronously.
+   * All processing is finished when the method returns, unless PCE is thrown, in which case there are no guarantees
+   */
+  @ApiStatus.Internal
+  public <T> boolean processConcurrentlyAsync(@NotNull ProgressIndicator progress,
+                                              @NotNull List<? extends T> items,
+                                              @NotNull Processor<? super T> thingProcessor,
+                                              @NotNull Runnable runnable) throws ProcessCanceledException {
+    return false;
+  }
 }

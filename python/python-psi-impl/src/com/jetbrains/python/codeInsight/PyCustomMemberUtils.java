@@ -35,8 +35,7 @@ public final class PyCustomMemberUtils {
    * @param typeText type text (if any)
    * @return lookup element
    */
-  @NotNull
-  public static LookupElementBuilder toLookUpElement(@NotNull final PyCustomMember member, @Nullable final String typeText) {
+  public static @NotNull LookupElementBuilder toLookUpElement(final @NotNull PyCustomMember member, final @Nullable String typeText) {
 
     LookupElementBuilder lookupElementBuilder = LookupElementBuilder.create(member.getName())
       .withIcon(member.getIcon())

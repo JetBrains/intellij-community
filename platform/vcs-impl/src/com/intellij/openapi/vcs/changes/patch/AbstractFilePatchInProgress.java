@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes.patch;
 
 import com.intellij.diff.chains.DiffRequestProducer;
@@ -7,6 +7,7 @@ import com.intellij.openapi.diff.impl.patch.PatchReader;
 import com.intellij.openapi.diff.impl.patch.formove.PathMerger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Couple;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.FileStatus;
@@ -19,7 +20,11 @@ import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.List;
+import java.util.Objects;
 
 public abstract class AbstractFilePatchInProgress<T extends FilePatch> implements Strippable {
   protected final T myPatch;
@@ -51,7 +56,7 @@ public abstract class AbstractFilePatchInProgress<T extends FilePatch> implement
     }
   }
 
-  public void setAutoBases(@NotNull final Collection<? extends VirtualFile> autoBases) {
+  public void setAutoBases(final @NotNull Collection<? extends VirtualFile> autoBases) {
     final String path = myPatch.getBeforeName() == null ? myPatch.getAfterName() : myPatch.getBeforeName();
     for (VirtualFile autoBase : autoBases) {
       final VirtualFile willBeBase = PathMerger.getBase(autoBase, path);
@@ -135,8 +140,12 @@ public abstract class AbstractFilePatchInProgress<T extends FilePatch> implement
 
   protected abstract ContentRevision getNewContentRevision();
 
-  @NotNull
-  protected FilePath detectNewFilePathForMovedOrModified() {
+  protected @NotNull FilePath getFilePath() {
+    return FilePatchStatus.ADDED.equals(myStatus) ? VcsUtil.getFilePath(myIoCurrentBase, false)
+                                                  : detectNewFilePathForMovedOrModified();
+  }
+
+  protected @NotNull FilePath detectNewFilePathForMovedOrModified() {
     return FilePatchStatus.MOVED_OR_RENAMED.equals(myStatus)
            ? VcsUtil.getFilePath(Objects.requireNonNull(PathMerger.getFile(new File(myBase.getPath()), myPatch.getAfterName())), false)
            : (myCurrentBase != null) ? VcsUtil.getFilePath(myCurrentBase) : VcsUtil.getFilePath(myIoCurrentBase, false);
@@ -184,8 +193,7 @@ public abstract class AbstractFilePatchInProgress<T extends FilePatch> implement
     }
   }
 
-  @NotNull
-  public abstract DiffRequestProducer getDiffRequestProducers(Project project, PatchReader baseContents);
+  public abstract @NotNull DiffRequestProducer getDiffRequestProducers(Project project, PatchReader baseContents);
 
   public List<VirtualFile> getAutoBasesCopy() {
     List<VirtualFile> result = new ArrayList<>(myAutoBases.size() + 1);
@@ -237,12 +245,11 @@ public abstract class AbstractFilePatchInProgress<T extends FilePatch> implement
   }
 
   @Override
-  public String getCurrentPath() {
+  public @NlsSafe String getCurrentPath() {
     return myStrippable.getCurrentPath();
   }
 
-  @NotNull
-  public String getOriginalBeforePath() {
+  public @NotNull String getOriginalBeforePath() {
     return myStrippable.getOriginalBeforePath();
   }
 
@@ -318,8 +325,7 @@ public abstract class AbstractFilePatchInProgress<T extends FilePatch> implement
       return mySourcePath.substring(myParts[myCurrentStrip]);
     }
 
-    @NotNull
-    private String getOriginalPath() {
+    private @NotNull String getOriginalPath() {
       return mySourcePath.toString();
     }
 
@@ -418,8 +424,7 @@ public abstract class AbstractFilePatchInProgress<T extends FilePatch> implement
       return myParts[0].getCurrentPath();
     }
 
-    @NotNull
-    private String getOriginalBeforePath() {
+    private @NotNull String getOriginalBeforePath() {
       return myParts[myBeforeIdx].getOriginalPath();
     }
 

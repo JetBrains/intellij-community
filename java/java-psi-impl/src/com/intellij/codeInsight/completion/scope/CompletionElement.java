@@ -1,34 +1,30 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion.scope;
 
 import com.intellij.codeInsight.completion.CompletionUtilCoreImpl;
+import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Trinity;
-import com.intellij.psi.*;
+import com.intellij.psi.GenericsUtil;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiClassType;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiMethodReferenceType;
+import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiPackage;
+import com.intellij.psi.PsiSubstitutor;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiVariable;
 import com.intellij.psi.util.MethodSignature;
 import com.intellij.psi.util.MethodSignatureUtil;
-import com.intellij.psi.util.TypeConversionUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
 
-public class CompletionElement{
+public final class CompletionElement{
   private final Object myElement;
   private final PsiSubstitutor mySubstitutor;
   private final Object myEqualityObject;
@@ -39,7 +35,8 @@ public class CompletionElement{
     this(element, substitutor, "", null);
   }
 
-  CompletionElement(Object element, PsiSubstitutor substitutor, @NotNull String qualifierText, @Nullable PsiType methodRefType) {
+  @ApiStatus.Internal
+  public CompletionElement(Object element, PsiSubstitutor substitutor, @NotNull String qualifierText, @Nullable PsiType methodRefType) {
     myElement = element;
     mySubstitutor = substitutor;
     myQualifierText = qualifierText;
@@ -47,8 +44,7 @@ public class CompletionElement{
     myEqualityObject = getUniqueId();
   }
 
-  @NotNull
-  public String getQualifierText() {
+  public @NotNull String getQualifierText() {
     return myQualifierText;
   }
 
@@ -60,8 +56,7 @@ public class CompletionElement{
     return myElement;
   }
 
-  @Nullable
-  private Object getUniqueId(){
+  private @Nullable Object getUniqueId(){
     if(myElement instanceof PsiClass){
       String qName = ((PsiClass)myElement).getQualifiedName();
       return qName == null ? ((PsiClass)myElement).getName() : qName;
@@ -71,7 +66,7 @@ public class CompletionElement{
     }
     if(myElement instanceof PsiMethod){
       if (myMethodRefType != null) {
-        return ((PsiMethod)myElement).isConstructor() ? PsiKeyword.NEW : ((PsiMethod)myElement).getName();
+        return ((PsiMethod)myElement).isConstructor() ? JavaKeywords.NEW : ((PsiMethod)myElement).getName();
       }
 
       return Trinity.create(((PsiMethod)myElement).getName(),
@@ -93,7 +88,7 @@ public class CompletionElement{
     Object thatObj = ((CompletionElement)obj).myEqualityObject;
     if (myEqualityObject instanceof MethodSignature) {
       return thatObj instanceof MethodSignature &&
-             MethodSignatureUtil.METHOD_PARAMETERS_ERASURE_EQUALITY.equals((MethodSignature)myEqualityObject, (MethodSignature)thatObj);
+             MethodSignatureUtil.areSignaturesErasureEqual((MethodSignature)myEqualityObject, (MethodSignature)thatObj);
     }
     return Comparing.equal(myEqualityObject, thatObj);
   }
@@ -101,14 +96,13 @@ public class CompletionElement{
   @Override
   public int hashCode() {
     if (myEqualityObject instanceof MethodSignature) {
-      return MethodSignatureUtil.METHOD_PARAMETERS_ERASURE_EQUALITY.computeHashCode((MethodSignature)myEqualityObject);
+      return myEqualityObject.hashCode();
     }
     return myEqualityObject != null ? myEqualityObject.hashCode() : 0;
   }
 
-  @Nullable
   @ApiStatus.Internal
-  public PsiType getMethodRefType() {
+  public @Nullable PsiType getMethodRefType() {
     return myMethodRefType;
   }
 
@@ -126,9 +120,11 @@ public class CompletionElement{
       return false;
     }
 
-    PsiType prevType = TypeConversionUtil.erasure(another.getSubstitutor().substitute(((PsiMethod)anotherElement).getReturnType()));
-    PsiType candidateType = mySubstitutor.substitute(((PsiMethod)myElement).getReturnType());
-    return prevType != null && candidateType != null && !prevType.equals(candidateType) && prevType.isAssignableFrom(candidateType);
+    PsiType prevType =
+      GenericsUtil.getVariableTypeByExpressionType(another.getSubstitutor().substitute(((PsiMethod)anotherElement).getReturnType()));
+    PsiType candidateType = GenericsUtil.getVariableTypeByExpressionType(mySubstitutor.substitute(((PsiMethod)myElement).getReturnType()));
+    return prevType != null && candidateType != null && !prevType.equals(candidateType) &&
+           prevType.isAssignableFrom(candidateType);
   }
 
 }

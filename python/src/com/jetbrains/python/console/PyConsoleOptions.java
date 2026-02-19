@@ -1,23 +1,33 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.console;
 
 import com.google.common.collect.Maps;
-import com.intellij.openapi.components.*;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.State;
+import com.intellij.openapi.components.Storage;
+import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.util.PathMappingSettings;
+import com.intellij.util.PlatformUtils;
 import com.intellij.util.containers.ComparatorUtil;
 import com.intellij.util.xmlb.annotations.Attribute;
 import com.intellij.util.xmlb.annotations.Tag;
 import com.intellij.util.xmlb.annotations.XCollection;
 import com.intellij.util.xmlb.annotations.XMap;
+import com.jetbrains.python.console.actions.CommandQueueForPythonConsoleService;
 import com.jetbrains.python.run.AbstractPyCommonOptionsForm;
 import com.jetbrains.python.run.AbstractPythonRunConfigurationParams;
 import com.jetbrains.python.run.PythonRunParams;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 
 @State(
@@ -29,8 +39,7 @@ import java.util.Map;
 public class PyConsoleOptions implements PersistentStateComponent<PyConsoleOptions.State> {
   private final State myState = new State();
 
-  @NotNull
-  public PyConsoleSettings getPythonConsoleSettings() {
+  public @NotNull PyConsoleSettings getPythonConsoleSettings() {
     return myState.myPythonConsoleState;
   }
 
@@ -66,8 +75,31 @@ public class PyConsoleOptions implements PersistentStateComponent<PyConsoleOptio
     myState.myUseExistingConsole = enabled;
   }
 
+  public void setCommandQueueEnabled(boolean selected) {
+    myState.myCommandQueueEnabled = selected;
+    if (!selected) {
+      ApplicationManager.getApplication().getService(CommandQueueForPythonConsoleService.class).disableCommandQueue();
+    }
+  }
+
+  public boolean isCommandQueueEnabled() {
+    return myState.myCommandQueueEnabled;
+  }
+
+  public void setCodeCompletionOption(PyConsoleOptionsConfigurable.CodeCompletionOption selected) {
+    myState.myCodeCompletionOption = selected;
+  }
+
+  public PyConsoleOptionsConfigurable.CodeCompletionOption getCodeCompletionOption() {
+    return myState.myCodeCompletionOption;
+  }
+
+  public boolean isRuntimeCodeCompletion() {
+    return myState.myCodeCompletionOption == PyConsoleOptionsConfigurable.CodeCompletionOption.RUNTIME;
+  }
+
   public static PyConsoleOptions getInstance(Project project) {
-    return ServiceManager.getService(project, PyConsoleOptions.class);
+    return project.getService(PyConsoleOptions.class);
   }
 
   @Override
@@ -82,6 +114,8 @@ public class PyConsoleOptions implements PersistentStateComponent<PyConsoleOptio
     myState.myPythonConsoleState = state.myPythonConsoleState;
     myState.myIpythonEnabled = state.myIpythonEnabled;
     myState.myUseExistingConsole = state.myUseExistingConsole;
+    myState.myCommandQueueEnabled = state.myCommandQueueEnabled;
+    myState.myCodeCompletionOption = state.myCodeCompletionOption;
   }
 
   public static class State {
@@ -91,23 +125,27 @@ public class PyConsoleOptions implements PersistentStateComponent<PyConsoleOptio
     public boolean myShowVariablesByDefault = true;
     public boolean myIpythonEnabled = true;
     public boolean myUseExistingConsole = false;
+    public boolean myCommandQueueEnabled = PlatformUtils.isDataSpell();
+    public PyConsoleOptionsConfigurable.CodeCompletionOption myCodeCompletionOption = PyConsoleOptionsConfigurable.CodeCompletionOption.STATIC;
   }
 
   @Tag("console-settings")
   public static class PyConsoleSettings implements PythonRunParams {
     public String myCustomStartScript = PydevConsoleRunnerImpl.CONSOLE_START_COMMAND;
     public String mySdkHome = null;
+    public Sdk mySdk = null;
     public String myInterpreterOptions = "";
     public boolean myUseModuleSdk;
     public String myModuleName = null;
     public Map<String, String> myEnvs = Maps.newHashMap();
+    public @NotNull List<String> myEnvFiles = Collections.emptyList();
     public boolean myPassParentEnvs = true;
     public String myWorkingDirectory = "";
     public boolean myAddContentRoots = true;
     public boolean myAddSourceRoots = true;
-    @NotNull
-    private PathMappingSettings myMappings = new PathMappingSettings();
+    private @NotNull PathMappingSettings myMappings = new PathMappingSettings();
     private boolean myUseSoftWraps = false;
+    private boolean myDebugJustMyCode = false;
 
     public PyConsoleSettings() {
     }
@@ -118,12 +156,15 @@ public class PyConsoleOptions implements PersistentStateComponent<PyConsoleOptio
 
     public void apply(AbstractPythonRunConfigurationParams form) {
       mySdkHome = form.getSdkHome();
+      mySdk = form.getSdk();
       myInterpreterOptions = form.getInterpreterOptions();
       myEnvs = form.getEnvs();
+      myEnvFiles = form.getEnvFilePaths();
       myPassParentEnvs = form.isPassParentEnvs();
       myUseModuleSdk = form.isUseModuleSdk();
       myModuleName = form.getModule() == null ? null : form.getModule().getName();
       myWorkingDirectory = form.getWorkingDirectory();
+
 
       myAddContentRoots = form.shouldAddContentRoots();
       myAddSourceRoots = form.shouldAddSourceRoots();
@@ -134,6 +175,7 @@ public class PyConsoleOptions implements PersistentStateComponent<PyConsoleOptio
       return !ComparatorUtil.equalsNullable(mySdkHome, form.getSdkHome()) ||
              !myInterpreterOptions.equals(form.getInterpreterOptions()) ||
              !myEnvs.equals(form.getEnvs()) ||
+             !myEnvFiles.equals(form.getEnvFilePaths()) ||
              myPassParentEnvs != form.isPassParentEnvs() ||
              myUseModuleSdk != form.isUseModuleSdk() ||
              myAddContentRoots != form.shouldAddContentRoots() ||
@@ -145,9 +187,11 @@ public class PyConsoleOptions implements PersistentStateComponent<PyConsoleOptio
 
     public void reset(Project project, AbstractPythonRunConfigurationParams form) {
       form.setEnvs(myEnvs);
+      form.setEnvFilePaths(myEnvFiles);
       form.setPassParentEnvs(myPassParentEnvs);
       form.setInterpreterOptions(myInterpreterOptions);
       form.setSdkHome(mySdkHome);
+      form.setSdk(mySdk);
       form.setUseModuleSdk(myUseModuleSdk);
       form.setAddContentRoots(myAddContentRoots);
       form.setAddSourceRoots(myAddSourceRoots);
@@ -180,6 +224,11 @@ public class PyConsoleOptions implements PersistentStateComponent<PyConsoleOptio
     @Attribute("sdk-home")
     public String getSdkHome() {
       return mySdkHome;
+    }
+
+    @Override
+    public @Nullable Sdk getSdk() {
+      return mySdk;
     }
 
     @Override
@@ -224,9 +273,8 @@ public class PyConsoleOptions implements PersistentStateComponent<PyConsoleOptio
       return myInterpreterOptions;
     }
 
-    @NotNull
     @XCollection
-    public PathMappingSettings getMappings() {
+    public @NotNull PathMappingSettings getMappings() {
       return myMappings;
     }
 
@@ -237,6 +285,11 @@ public class PyConsoleOptions implements PersistentStateComponent<PyConsoleOptio
     @Override
     public void setSdkHome(String sdkHome) {
       mySdkHome = sdkHome;
+    }
+
+    @Override
+    public void setSdk(@Nullable Sdk sdk) {
+      mySdk = sdk;
     }
 
     @Override
@@ -274,9 +327,8 @@ public class PyConsoleOptions implements PersistentStateComponent<PyConsoleOptio
       myEnvs = envs;
     }
 
-    @Nullable
     @Override
-    public PathMappingSettings getMappingSettings() {
+    public @Nullable PathMappingSettings getMappingSettings() {
       return getMappings();
     }
 
@@ -300,6 +352,18 @@ public class PyConsoleOptions implements PersistentStateComponent<PyConsoleOptio
       myAddSourceRoots = addSourceRoots;
     }
 
+    @Override
+    @ApiStatus.Internal
+    public boolean shouldDebugJustMyCode() {
+      return myDebugJustMyCode;
+    }
+
+    @Override
+    @ApiStatus.Internal
+    public void setDebugJustMyCode(boolean debugJustMyCode) {
+      myDebugJustMyCode = debugJustMyCode;
+    }
+
     public void setMappings(@Nullable PathMappingSettings mappings) {
       myMappings = mappings != null ? mappings : new PathMappingSettings();
     }
@@ -310,6 +374,16 @@ public class PyConsoleOptions implements PersistentStateComponent<PyConsoleOptio
 
     public void setUseSoftWraps(boolean useSoftWraps) {
       myUseSoftWraps = useSoftWraps;
+    }
+
+    @Override
+    public @NotNull List<String> getEnvFilePaths() {
+      return myEnvFiles;
+    }
+
+    @Override
+    public void setEnvFilePaths(@NotNull List<String> strings) {
+      myEnvFiles = strings;
     }
   }
 }

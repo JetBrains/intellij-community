@@ -15,13 +15,20 @@
  */
 package com.jetbrains.python.quickFixes;
 
+import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.TestDataPath;
 import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.PyQuickFixTestCase;
 import com.jetbrains.python.inspections.PyOldStyleClassesInspection;
+import org.jetbrains.annotations.Nullable;
 
 @TestDataPath("$CONTENT_ROOT/../testData/quickFixes/PyConvertToNewStyleQuickFixTest/")
 public class PyConvertToNewStyleQuickFixTest extends PyQuickFixTestCase {
+
+  @Override
+  protected @Nullable LightProjectDescriptor getProjectDescriptor() {
+    return ourPy2Descriptor;
+  }
 
   public void testEmptySuperClassList() {
     doQuickFixTest(PyOldStyleClassesInspection.class, PyPsiBundle.message("QFIX.convert.to.new.style"));

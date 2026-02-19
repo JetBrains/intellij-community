@@ -1,25 +1,18 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.console;
 
 import com.intellij.psi.PsiFile;
-import com.jetbrains.python.inspections.*;
+import com.jetbrains.python.inspections.PyCompatibilityInspection;
+import com.jetbrains.python.inspections.PyIncorrectDocstringInspection;
+import com.jetbrains.python.inspections.PyMandatoryEncodingInspection;
+import com.jetbrains.python.inspections.PyMissingOrEmptyDocstringInspection;
+import com.jetbrains.python.inspections.PyPep8Inspection;
+import com.jetbrains.python.inspections.PySingleQuotedDocstringInspection;
+import com.jetbrains.python.inspections.PyStatementEffectInspection;
+import com.jetbrains.python.inspections.PyUnboundLocalVariableInspection;
 import com.jetbrains.python.inspections.unusedLocal.PyUnusedLocalInspection;
 import com.jetbrains.python.psi.PythonVisitorFilter;
-import com.jetbrains.python.validation.DocStringAnnotator;
+import com.jetbrains.python.validation.PyDocStringHighlightingAnnotator;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -27,11 +20,11 @@ import org.jetbrains.annotations.NotNull;
  *
  * filter out some python inspections and annotations if we're in console
  */
-public class ConsoleVisitorFilter implements PythonVisitorFilter {
+public final class ConsoleVisitorFilter implements PythonVisitorFilter {
   @Override
-  public boolean isSupported(@NotNull final Class visitorClass, @NotNull final PsiFile file) {
+  public boolean isSupported(final @NotNull Class visitorClass, final @NotNull PsiFile file) {
     //if we're in console
-    if (PydevConsoleRunner.isInPydevConsole(file)) {
+    if (PydevConsoleRunnerUtil.isInPydevConsole(file)) {
       //inspections
       if (visitorClass == PyUnusedLocalInspection.class || visitorClass == PyUnboundLocalVariableInspection.class ||
           visitorClass == PyStatementEffectInspection.class || visitorClass == PySingleQuotedDocstringInspection.class ||
@@ -42,7 +35,7 @@ public class ConsoleVisitorFilter implements PythonVisitorFilter {
       }
 
       //annotators
-      if (visitorClass == DocStringAnnotator.class) {
+      if (visitorClass == PyDocStringHighlightingAnnotator.class) {
         return false;
       }
     }

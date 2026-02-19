@@ -19,8 +19,19 @@ package org.intellij.plugins.xsltDebugger.rt.engine.local.saxon;
 import com.icl.saxon.Bindery;
 import com.icl.saxon.Binding;
 import com.icl.saxon.Context;
-import com.icl.saxon.expr.*;
-import com.icl.saxon.om.*;
+import com.icl.saxon.expr.Expression;
+import com.icl.saxon.expr.FragmentValue;
+import com.icl.saxon.expr.NodeSetValue;
+import com.icl.saxon.expr.ObjectValue;
+import com.icl.saxon.expr.SingletonNodeSet;
+import com.icl.saxon.expr.StaticContext;
+import com.icl.saxon.expr.TextFragmentValue;
+import com.icl.saxon.expr.XPathException;
+import com.icl.saxon.om.DocumentInfo;
+import com.icl.saxon.om.NamePool;
+import com.icl.saxon.om.Navigator;
+import com.icl.saxon.om.NodeEnumeration;
+import com.icl.saxon.om.NodeInfo;
 import com.icl.saxon.output.GeneralOutputter;
 import com.icl.saxon.style.ExpressionContext;
 import com.icl.saxon.style.StyleElement;
@@ -69,14 +80,16 @@ class SaxonFrameImpl extends AbstractSaxonFrame<Debugger.StyleFrame, StyleElemen
     myFrameId = context.getBindery().getFrameId();
   }
 
+  @Override
   public String getInstruction() {
     return myElement.getDisplayName();
   }
 
+  @Override
   public List<Debugger.Variable> getVariables() {
     assert isValid();
 
-    final ArrayList<Debugger.Variable> variables = new ArrayList<Debugger.Variable>();
+    final ArrayList<Debugger.Variable> variables = new ArrayList<>();
     final Enumeration[] variableNames = myElement.getVariableNames();
 
     this.addVariables(myElement, variables, variableNames[0], true);
@@ -87,6 +100,7 @@ class SaxonFrameImpl extends AbstractSaxonFrame<Debugger.StyleFrame, StyleElemen
     return variables;
   }
 
+  @Override
   public Value eval(String expr) throws Debugger.EvaluationException {
     assert isValid();
 
@@ -151,10 +165,12 @@ class SaxonFrameImpl extends AbstractSaxonFrame<Debugger.StyleFrame, StyleElemen
       myType = mapType(type);
     }
 
+    @Override
     public Object getValue() {
       return myValue;
     }
 
+    @Override
     public Type getType() {
       return myType;
     }
@@ -205,7 +221,7 @@ class SaxonFrameImpl extends AbstractSaxonFrame<Debugger.StyleFrame, StyleElemen
           return new MyValue(v.asString(), com.icl.saxon.expr.Value.STRING);
         }
 
-        final List<Node> list = new ArrayList<Node>();
+        final List<Node> list = new ArrayList<>();
         final NodeEnumeration nodeEnumeration = ((NodeSetValue)v).enumerate();
         while (nodeEnumeration.hasMoreElements()) {
           final NodeInfo node = nodeEnumeration.nextElement();

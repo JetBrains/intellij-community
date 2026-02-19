@@ -1,19 +1,45 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.dom;
 
 import com.intellij.ide.presentation.Presentation;
+import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.psi.PsiClass;
-import com.intellij.psi.xml.XmlFile;
-import com.intellij.util.xml.*;
+import com.intellij.util.xml.Attribute;
+import com.intellij.util.xml.Convert;
+import com.intellij.util.xml.DomUtil;
+import com.intellij.util.xml.ExtendClass;
+import com.intellij.util.xml.GenericAttributeValue;
+import com.intellij.util.xml.Required;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.dom.impl.ActionOrGroupPresentationProvider;
 import org.jetbrains.idea.devkit.dom.impl.KeymapConverter;
 import org.jetbrains.idea.devkit.dom.impl.PluginPsiClassConverter;
+import org.jetbrains.idea.devkit.dom.keymap.KeymapXmlRootElement;
 
 import java.util.List;
 
 @Presentation(typeName = DevkitDomPresentationConstants.ACTION, provider = ActionOrGroupPresentationProvider.class)
 public interface Action extends ActionOrGroup {
+
+  @Override
+  @Nullable
+  default String getEffectiveId() {
+    String id = ActionOrGroup.super.getEffectiveId();
+    if (id != null) return id;
+
+    String clazzValue = getClazz().getStringValue();
+    return clazzValue != null ? StringUtilRt.getShortName(clazzValue) : null;
+  }
+
+  @Override
+  default GenericAttributeValue<?> getEffectiveIdAttribute() {
+    if (DomUtil.hasXml(getId())) {
+      return getId();
+    }
+
+    return getClazz();
+  }
 
   @NotNull
   @Attribute("class")
@@ -48,17 +74,17 @@ public interface Action extends ActionOrGroup {
   AddToGroup addAddToGroup();
 
   @NotNull
-  List<OverrideText> getOverrideTexts();
-  OverrideText addOverrideText();
-
-  @NotNull
   List<Synonym> getSynonyms();
+
   Synonym addSynonym();
 
   @NotNull
   @Convert(KeymapConverter.class)
-  GenericAttributeValue<XmlFile> getKeymap();
+  GenericAttributeValue<KeymapXmlRootElement> getKeymap();
 
+  /**
+   * @see com.intellij.openapi.project.ProjectTypeService
+   */
   @NotNull
   GenericAttributeValue<String> getProjectType();
 }

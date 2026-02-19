@@ -1,26 +1,55 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.compiler;
 
-import com.intellij.compiler.impl.*;
+import com.intellij.compiler.impl.CompileDriver;
+import com.intellij.compiler.impl.CompositeScope;
+import com.intellij.compiler.impl.FileProcessingCompilerAdapterTask;
+import com.intellij.compiler.impl.ModuleCompileScope;
+import com.intellij.compiler.impl.OneProjectItemCompileScope;
+import com.intellij.compiler.impl.ProjectCompileScope;
 import com.intellij.compiler.impl.javaCompiler.BackendCompiler;
 import com.intellij.compiler.server.BuildManager;
 import com.intellij.execution.process.ProcessIOExecutorService;
-import com.intellij.ide.IdeEventQueue;
-import com.intellij.openapi.Disposable;
+import com.intellij.execution.wsl.WSLDistribution;
+import com.intellij.ide.IdleTracker;
+import com.intellij.java.JavaPluginDisposable;
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.compiler.ClassObject;
+import com.intellij.openapi.compiler.CompilableFileTypesProvider;
+import com.intellij.openapi.compiler.CompilationException;
+import com.intellij.openapi.compiler.CompilationStatusListener;
+import com.intellij.openapi.compiler.CompileContext;
+import com.intellij.openapi.compiler.CompileScope;
+import com.intellij.openapi.compiler.CompileStatusNotification;
+import com.intellij.openapi.compiler.CompileTask;
 import com.intellij.openapi.compiler.Compiler;
-import com.intellij.openapi.compiler.*;
+import com.intellij.openapi.compiler.CompilerFactory;
+import com.intellij.openapi.compiler.CompilerManager;
+import com.intellij.openapi.compiler.CompilerMessageCategory;
+import com.intellij.openapi.compiler.CompilerPaths;
+import com.intellij.openapi.compiler.CompilerTopics;
+import com.intellij.openapi.compiler.FileProcessingCompiler;
+import com.intellij.openapi.compiler.SourceInstrumentingCompiler;
+import com.intellij.openapi.compiler.Validator;
 import com.intellij.openapi.compiler.util.InspectionValidator;
 import com.intellij.openapi.compiler.util.InspectionValidatorWrapper;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPointListener;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.extensions.ProjectExtensionPointName;
+import com.intellij.openapi.extensions.impl.ExtensionPointImpl;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleType;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.projectRoots.*;
+import com.intellij.openapi.projectRoots.JavaSdkType;
+import com.intellij.openapi.projectRoots.JavaSdkVersion;
+import com.intellij.openapi.projectRoots.JdkUtil;
+import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.projectRoots.SdkTypeId;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Pair;
@@ -28,32 +57,47 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.serviceContainer.NonInjectable;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FileCollectionFactory;
-import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.net.NetUtils;
+import com.intellij.util.ui.EDT;
+import kotlin.Unit;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.jps.api.CanceledStatus;
 import org.jetbrains.jps.builders.impl.java.JavacCompilerTool;
 import org.jetbrains.jps.incremental.BinaryContent;
-import org.jetbrains.jps.javac.*;
+import org.jetbrains.jps.javac.CompilationPaths;
+import org.jetbrains.jps.javac.DiagnosticOutputConsumer;
+import org.jetbrains.jps.javac.ExternalJavacManager;
+import org.jetbrains.jps.javac.ModulePath;
+import org.jetbrains.jps.javac.OutputFileConsumer;
+import org.jetbrains.jps.javac.OutputFileObject;
 import org.jetbrains.jps.javac.ast.api.JavacFileData;
 
-import javax.tools.*;
+import javax.tools.Diagnostic;
+import javax.tools.JavaFileObject;
 import java.io.File;
 import java.io.IOException;
 import java.net.URI;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
 
 // cannot be final - extended by Bazel plugin
 public class CompilerManagerImpl extends CompilerManager {
@@ -78,19 +122,12 @@ public class CompilerManagerImpl extends CompilerManager {
   private final Set<LocalFileSystem.WatchRequest> myWatchRoots;
   private volatile ExternalJavacManager myExternalJavacManager;
 
-  @SuppressWarnings("MissingDeprecatedAnnotation")
-  @NonInjectable
-  @Deprecated
-  public CompilerManagerImpl(@NotNull Project project, @SuppressWarnings("unused") @NotNull MessageBus messageBus) {
-    this(project);
-  }
-
   public CompilerManagerImpl(@NotNull Project project) {
     myProject = project;
     myEventPublisher = project.getMessageBus().syncPublisher(CompilerTopics.COMPILATION_STATUS);
     // predefined compilers
     for (ProjectExtensionPointName<?> ep : Arrays.asList(COMPILABLE_TYPE_EP, BackendCompiler.EP_NAME)) {
-      ep.addChangeListener(project, () -> {myCachedCompilableTypes = null;}, project);
+      ep.addChangeListener(project, () -> {myCachedCompilableTypes = null;}, JavaPluginDisposable.getInstance(project));
     }
     COMPILER_FACTORY_EP.getPoint(project).addExtensionPointListener(new ExtensionPointListener<>() {
       @Override
@@ -123,7 +160,7 @@ public class CompilerManagerImpl extends CompilerManager {
     projectGeneratedSrcRoot.mkdirs();
     final LocalFileSystem lfs = LocalFileSystem.getInstance();
     myWatchRoots = lfs.addRootsToWatch(Collections.singletonList(FileUtil.toCanonicalPath(projectGeneratedSrcRoot.getPath())), true);
-    Disposer.register(project, () -> {
+    Disposer.register(JavaPluginDisposable.getInstance(project), () -> {
       final ExternalJavacManager manager = myExternalJavacManager;
       myExternalJavacManager = null;
       if (manager != null) {
@@ -162,7 +199,7 @@ public class CompilerManagerImpl extends CompilerManager {
     addCompiler(compiler, NO_FACTORY_ID);
   }
 
-  private void addCompiler(@NotNull Compiler compiler, @NotNull final String factoryId) {
+  private void addCompiler(@NotNull Compiler compiler, final @NotNull String factoryId) {
     myCompilers.put(compiler, factoryId);
     // supporting file instrumenting compilers and validators for external build
     // Since these compilers are IDE-specific and use PSI, it is ok to run them before and after the build in the IDE
@@ -176,12 +213,6 @@ public class CompilerManagerImpl extends CompilerManager {
 
   private static String getFactoryId(@Nullable CompilerFactory factory) {
     return factory == null? NO_FACTORY_ID : factory.getClass().getName();
-  }
-
-  @Override
-  @Deprecated
-  public void addTranslatingCompiler(@NotNull TranslatingCompiler compiler, Set<FileType> inputTypes, Set<FileType> outputTypes) {
-    // empty
   }
 
   @Override
@@ -205,22 +236,16 @@ public class CompilerManagerImpl extends CompilerManager {
       }
     }
     if (compilerClass.isAssignableFrom(InspectionValidatorWrapper.class)) {
-      InspectionValidator.EP_NAME.extensions(myProject).forEach(
-        validator -> compilers.add(compilerClass.cast(InspectionValidatorWrapper.create(myProject, validator)))
-      );
+      for (InspectionValidator validator : InspectionValidator.EP_NAME.getExtensions(myProject)) {
+        compilers.add(compilerClass.cast(InspectionValidatorWrapper.create(myProject, validator)));
+      }
     }
-    final T[] array = ArrayUtil.newArray(compilerClass, compilers.size());
-    return compilers.toArray(array);
+    return compilers.toArray(ArrayUtil.newArray(compilerClass, compilers.size()));
   }
 
   @Override
   public void addCompilableFileType(@NotNull FileType type) {
     myCompilableTypes.add(type);
-  }
-
-  @Override
-  public void removeCompilableFileType(@NotNull FileType type) {
-    myCompilableTypes.remove(type);
   }
 
   @Override
@@ -254,33 +279,53 @@ public class CompilerManagerImpl extends CompilerManager {
 
   @Override
   public @NotNull List<CompileTask> getBeforeTasks() {
-    final List<Compiler> extCompilers = Compiler.EP_NAME.getExtensions(myProject);
-    return ContainerUtil.concat(
-      myBeforeTasks,
-      extCompilers.stream().filter(compiler -> compiler instanceof SourceInstrumentingCompiler).map(compiler -> new FileProcessingCompilerAdapterTask((SourceInstrumentingCompiler)compiler)).collect(Collectors.toList()),
-      getExtensionsTasks(CompileTaskBean.CompileTaskExecutionPhase.BEFORE)
-    );
+    List<CompileTask> result = new ArrayList<>();
+    //noinspection CollectionAddAllCanBeReplacedWithConstructor
+    result.addAll(myBeforeTasks);
+
+    //noinspection deprecation
+    for (Compiler compiler : Compiler.EP_NAME.getExtensions(myProject)) {
+      if (compiler instanceof SourceInstrumentingCompiler) {
+        FileProcessingCompilerAdapterTask task = new FileProcessingCompilerAdapterTask((SourceInstrumentingCompiler)compiler);
+        result.add(task);
+      }
+    }
+    collectExtensionTasks(CompileTaskBean.CompileTaskExecutionPhase.BEFORE, result);
+    return result;
   }
 
   @Override
   public @NotNull List<CompileTask> getAfterTaskList() {
-    final List<Compiler> extCompilers = Compiler.EP_NAME.getExtensions(myProject);
-    return ContainerUtil.concat(
-      myAfterTasks,
-      extCompilers.stream().filter(compiler -> compiler instanceof Validator).map(compiler -> new FileProcessingCompilerAdapterTask((Validator)compiler)).collect(Collectors.toList()),
-      InspectionValidator.EP_NAME.extensions(myProject).map(validator -> new FileProcessingCompilerAdapterTask(InspectionValidatorWrapper.create(myProject, validator))).collect(Collectors.toList()),
-      getExtensionsTasks(CompileTaskBean.CompileTaskExecutionPhase.AFTER)
-    );
+    List<CompileTask> result = new ArrayList<>();
+    //noinspection CollectionAddAllCanBeReplacedWithConstructor
+    result.addAll(myAfterTasks);
+
+    //noinspection deprecation
+    for (Compiler extCompiler : Compiler.EP_NAME.getExtensions(myProject)) {
+      if (extCompiler instanceof Validator) {
+        FileProcessingCompilerAdapterTask task = new FileProcessingCompilerAdapterTask((Validator)extCompiler);
+        result.add(task);
+      }
+    }
+
+    for (InspectionValidator validator : InspectionValidator.EP_NAME.getExtensions(myProject)) {
+      FileProcessingCompilerAdapterTask task =
+        new FileProcessingCompilerAdapterTask(InspectionValidatorWrapper.create(myProject, validator));
+      result.add(task);
+    }
+
+    collectExtensionTasks(CompileTaskBean.CompileTaskExecutionPhase.AFTER, result);
+    return result;
   }
 
-  private @NotNull List<CompileTask> getExtensionsTasks(@NotNull CompileTaskBean.CompileTaskExecutionPhase phase) {
-    List<CompileTask> list = new ArrayList<>();
-    COMPILER_TASK_EP.processWithPluginDescriptor(myProject, (ext, pluginDescriptor) -> {
-      if (ext.executionPhase == phase) {
-        list.add(ext.getInstance(myProject, pluginDescriptor));
-      }
-    });
-    return list;
+  private void collectExtensionTasks(@NotNull CompileTaskBean.CompileTaskExecutionPhase phase, @NotNull List<CompileTask> to) {
+    ((ExtensionPointImpl<CompileTaskBean>)COMPILER_TASK_EP.getPoint(myProject))
+      .processWithPluginDescriptor((extension, pluginDescriptor) -> {
+        if (extension.executionPhase == phase) {
+          to.add(extension.getInstance(myProject, pluginDescriptor));
+        }
+        return Unit.INSTANCE;
+      });
   }
 
   @Override
@@ -325,12 +370,25 @@ public class CompilerManagerImpl extends CompilerManager {
 
   @Override
   public boolean isUpToDate(@NotNull CompileScope scope) {
-    return new CompileDriver(myProject).isUpToDate(scope);
+    // if called from background process on pooled thread (non-EDT), run synchronously, in the calling thread
+    // if called from EDT, explicitly pass null indicator to force starting new background thread with progress
+    ProgressIndicator progress = EDT.isCurrentThreadEdt() ? null : ProgressIndicatorProvider.getInstance().getProgressIndicator();
+    return progress != null? isUpToDate(scope, progress) : new CompileDriver(myProject).isUpToDate(scope, null);
+  }
+
+  @Override
+  public boolean isUpToDate(@NotNull CompileScope scope, @NotNull ProgressIndicator progress) {
+    return new CompileDriver(myProject).isUpToDate(scope, progress);
   }
 
   @Override
   public void rebuild(CompileStatusNotification callback) {
-    new CompileDriver(myProject).rebuild(new ListenerNotificator(callback));
+    new CompileDriver(myProject).rebuild(new ListenerNotificator(callback), false);
+  }
+
+  @Override
+  public void rebuildClean(@Nullable CompileStatusNotification callback) {
+    new CompileDriver(myProject).rebuild(new ListenerNotificator(callback), true);
   }
 
   @Override
@@ -345,12 +403,6 @@ public class CompilerManagerImpl extends CompilerManager {
   public void addCompilationStatusListener(@NotNull CompilationStatusListener listener) {
     final MessageBusConnection connection = myProject.getMessageBus().connect();
     myListenerAdapters.put(listener, connection);
-    connection.subscribe(CompilerTopics.COMPILATION_STATUS, listener);
-  }
-
-  @Override
-  public void addCompilationStatusListener(@NotNull CompilationStatusListener listener, @NotNull Disposable parentDisposable) {
-    final MessageBusConnection connection = myProject.getMessageBus().connect(parentDisposable);
     connection.subscribe(CompilerTopics.COMPILATION_STATUS, listener);
   }
 
@@ -377,18 +429,8 @@ public class CompilerManagerImpl extends CompilerManager {
   }
 
   @Override
-  public @NotNull CompileScope createModuleCompileScope(final @NotNull Module module, final boolean includeDependentModules) {
-    return createModulesCompileScope(new Module[] {module}, includeDependentModules);
-  }
-
-  @Override
-  public @NotNull CompileScope createModulesCompileScope(final Module @NotNull [] modules, final boolean includeDependentModules) {
-    return createModulesCompileScope(modules, includeDependentModules, false);
-  }
-
-  @Override
-  public @NotNull CompileScope createModulesCompileScope(Module @NotNull [] modules, boolean includeDependentModules, boolean includeRuntimeDependencies) {
-    return new ModuleCompileScope(myProject, modules, includeDependentModules, includeRuntimeDependencies);
+  public @NotNull CompileScope createModulesCompileScope(Module @NotNull [] modules, boolean includeDependentModules, boolean includeRuntimeDependencies, boolean includeTests) {
+    return new ModuleCompileScope(myProject, Arrays.asList(modules), Collections.emptyList(), includeDependentModules, includeRuntimeDependencies, includeTests);
   }
 
   @Override
@@ -499,13 +541,11 @@ public class CompilerManagerImpl extends CompilerManager {
   }
 
   private static CompilerMessageCategory kindToCategory(Diagnostic.Kind kind) {
-    switch (kind) {
-      case ERROR: return CompilerMessageCategory.ERROR;
-      case MANDATORY_WARNING:
-      case WARNING: return CompilerMessageCategory.WARNING;
-      case NOTE:
-      default: return CompilerMessageCategory.INFORMATION;
-    }
+    return switch (kind) {
+      case ERROR -> CompilerMessageCategory.ERROR;
+      case MANDATORY_WARNING, WARNING -> CompilerMessageCategory.WARNING;
+      default -> CompilerMessageCategory.INFORMATION;
+    };
   }
 
 
@@ -523,9 +563,11 @@ public class CompilerManagerImpl extends CompilerManager {
           manager = new ExternalJavacManager(
             compilerWorkingDir, ProcessIOExecutorService.INSTANCE, Registry.intValue("compiler.external.javac.keep.alive.timeout", 5*60*1000)
           );
+          manager.setWslExecutablePath(WSLDistribution.findWslExe());
           manager.start(listenPort);
           myExternalJavacManager = manager;
-          IdeEventQueue.getInstance().addIdleListener(new IdleTask(manager), IdleTask.CHECK_PERIOD);
+          IdleTask task = new IdleTask(manager);
+          task.removeIdleListener = IdleTracker.getInstance().addIdleListener(IdleTask.CHECK_PERIOD, task);
         }
       }
     }
@@ -535,19 +577,17 @@ public class CompilerManagerImpl extends CompilerManager {
   @Override
   public @Nullable File getJavacCompilerWorkingDir() {
     final File projectBuildDir = BuildManager.getInstance().getProjectSystemDirectory(myProject);
-    if (projectBuildDir == null) {
-      return null;
-    }
     projectBuildDir.mkdirs();
     return projectBuildDir;
   }
 
-  private static class CompiledClass implements ClassObject {
+  @ApiStatus.Internal
+  public static final class CompiledClass implements ClassObject {
     private final String myPath;
     private final String myClassName;
     private final byte[] myBytes;
 
-    CompiledClass(String path, String className, byte[] bytes) {
+    public CompiledClass(String path, String className, byte[] bytes) {
       myPath = path;
       myClassName = className;
       myBytes = bytes;
@@ -641,9 +681,11 @@ public class CompilerManagerImpl extends CompilerManager {
     }
   }
 
-  private static class IdleTask implements Runnable {
-    private static final int CHECK_PERIOD = 10000; // check idle javac processes every 10 second when IDE is idle
+  private static final class IdleTask implements Runnable {
+    // check idle javac processes every 10 seconds when IDE is idle
+    private static final int CHECK_PERIOD = 10_000;
     private final ExternalJavacManager myManager;
+    AccessToken removeIdleListener;
 
     IdleTask(@NotNull ExternalJavacManager manager) {
       myManager = manager;
@@ -654,8 +696,8 @@ public class CompilerManagerImpl extends CompilerManager {
       if (myManager.isRunning()) {
         myManager.shutdownIdleProcesses();
       }
-      else {
-        IdeEventQueue.getInstance().removeIdleListener(this);
+      else if (removeIdleListener != null) {
+        removeIdleListener.close();
       }
     }
   }

@@ -1,19 +1,17 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl.view;
 
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import org.jetbrains.annotations.NotNull;
 
-import java.awt.*;
+import java.awt.Graphics2D;
 import java.util.function.Consumer;
 
 /**
  * A single Tab character
  */
-class TabFragment implements LineFragment {
+final class TabFragment implements LineFragment {
   private final EditorView myView;
   private final Editor myEditor;
 
@@ -40,13 +38,12 @@ class TabFragment implements LineFragment {
   }
 
   @Override
-  public Consumer<Graphics2D> draw(float x, float y, int startColumn, int endColumn) {
+  public @NotNull Consumer<Graphics2D> draw(float x, float y, int startColumn, int endColumn) {
     return g -> {};
   }
 
-  @NotNull
   @Override
-  public LineFragment subFragment(int startOffset, int endOffset) {
+  public @NotNull LineFragment subFragment(int startOffset, int endOffset) {
     return this;
   }
 
@@ -76,7 +73,7 @@ class TabFragment implements LineFragment {
   }
 
   @Override
-  public int[] xToVisualColumn(float startX, float x) {
+  public int @NotNull [] xToVisualColumn(float startX, float x) {
     if (x <= startX) return new int[] {0, 0};
     float nextTabStop = getNextTabStop(startX);
     if (x > nextTabStop) return new int[] {getVisualColumnCount(startX), 1};

@@ -2,11 +2,10 @@
 package com.jetbrains.python.inspections.quickfix;
 
 import com.intellij.codeInsight.intention.HighPriorityAction;
-import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.SmartPointerManager;
-import com.intellij.psi.SmartPsiElementPointer;
+import com.intellij.psi.PsiElement;
 import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.PyElementGenerator;
@@ -14,41 +13,39 @@ import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.PyReferenceExpression;
 import org.jetbrains.annotations.NotNull;
 
+import static com.jetbrains.python.psi.PyUtil.as;
+
 /**
  * User: catherine
  *
  * QuickFix to add self to unresolved reference
  */
-public class UnresolvedReferenceAddSelfQuickFix implements LocalQuickFix, HighPriorityAction {
+public class UnresolvedReferenceAddSelfQuickFix extends PsiUpdateModCommandQuickFix implements HighPriorityAction {
   private final String myQualifier;
-  private final SmartPsiElementPointer<PyReferenceExpression> myElement;
+  private final String myAttributeName;
 
-  public UnresolvedReferenceAddSelfQuickFix(@NotNull final PyReferenceExpression element, @NotNull final String qualifier) {
-    myElement = SmartPointerManager.createPointer(element);
+  public UnresolvedReferenceAddSelfQuickFix(@NotNull PyReferenceExpression element, @NotNull String qualifier) {
+    myAttributeName = element.getName();
     myQualifier = qualifier;
   }
 
   @Override
-  @NotNull
-  public String getName() {
-    final PyReferenceExpression element = myElement.getElement();
-    if (element == null) return "";
-    return PyPsiBundle.message("QFIX.unresolved.reference", element.getText(), myQualifier);
+  public @NotNull String getName() {
+    return PyPsiBundle.message("QFIX.unresolved.reference", myAttributeName, myQualifier);
   }
 
   @Override
-  @NotNull
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return PyPsiBundle.message("QFIX.add.qualifier");
   }
 
   @Override
-  public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-    final PyReferenceExpression element = myElement.getElement();
-    if (element == null) return;
+  public void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
+    final PyReferenceExpression reference = as(element, PyReferenceExpression.class);
+    if (reference == null) return;
     PyElementGenerator elementGenerator = PyElementGenerator.getInstance(project);
-    PyExpression expression = elementGenerator.createExpressionFromText(LanguageLevel.forElement(element),
-                                                                        myQualifier + "." + element.getText());
-    element.replace(expression);
+    PyExpression expression = elementGenerator.createExpressionFromText(LanguageLevel.forElement(reference),
+                                                                        myQualifier + "." + reference.getText());
+    reference.replace(expression);
   }
 }

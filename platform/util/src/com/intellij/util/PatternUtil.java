@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -21,6 +21,8 @@ public final class PatternUtil {
 
   private static final Map<String, String> ourEscapeRules = new LinkedHashMap<>();
 
+  private static final String REGEX_META_CHARS = ".$|()[{^?*+\\";
+
   static {
     // '.' should be escaped first
     ourEscapeRules.put("*", ".*");
@@ -30,8 +32,7 @@ public final class PatternUtil {
     }
   }
 
-  @NotNull
-  public static String convertToRegex(@NotNull String mask) {
+  public static @NotNull String convertToRegex(@NotNull String mask) {
     List<String> strings = StringUtil.split(mask, "\\");
     StringBuilder pattern = new StringBuilder();
     String separator = "";
@@ -48,10 +49,13 @@ public final class PatternUtil {
     return pattern.toString();
   }
 
-  @NotNull
-  public static Pattern fromMask(@NotNull String mask) {
+  public static @NotNull Pattern fromMask(@NotNull String mask) {
+    return fromMask(mask, 0);
+  }
+
+  public static @NotNull Pattern fromMask(@NotNull String mask, int flags) {
     try {
-      return Pattern.compile(convertToRegex(mask));
+      return Pattern.compile(convertToRegex(mask), flags);
     }
     catch (PatternSyntaxException e) {
       LOG.error(mask, e);
@@ -75,8 +79,7 @@ public final class PatternUtil {
    * @param regex pattern to match to.
    * @return pattern's first matched group, or entire matched string if pattern has no groups, or null.
    */
-  @Nullable
-  public static String getFirstMatch(List<String> lines, Pattern regex) {
+  public static @Nullable String getFirstMatch(List<String> lines, Pattern regex) {
     if (lines == null) return null;
     for (String s : lines) {
       Matcher m = regex.matcher(s);
@@ -87,5 +90,11 @@ public final class PatternUtil {
       }
     }
     return null;
+  }
+
+  /// @return whether [text] contains a REGEX meta-character like * or |.
+  @Contract(pure = true)
+  public static boolean containsMetaChar(@NotNull String text) {
+    return StringUtil.containsAnyChar(text, REGEX_META_CHARS);
   }
 }

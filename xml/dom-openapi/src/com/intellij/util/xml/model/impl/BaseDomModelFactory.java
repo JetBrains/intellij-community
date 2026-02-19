@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.xml.model.impl;
 
 import com.intellij.openapi.project.Project;
@@ -31,7 +17,12 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Set;
 
 public abstract class BaseDomModelFactory<S extends UserDataHolder, T extends DomElement, M extends DomModel<T>, C extends PsiElement>
     extends DomModelFactoryHelper<T> implements SimpleModelFactory<T, M>, MultipleDomModelFactory<S, T, M> {
@@ -43,8 +34,7 @@ public abstract class BaseDomModelFactory<S extends UserDataHolder, T extends Do
     myProject = project;
   }
 
-  @Nullable
-  public M getModel(@NotNull C context){
+  public @Nullable M getModel(@NotNull C context){
     final PsiFile psiFile = context.getContainingFile();
     if (psiFile instanceof XmlFile) {
       return getModelByConfigFile((XmlFile)psiFile);
@@ -52,8 +42,7 @@ public abstract class BaseDomModelFactory<S extends UserDataHolder, T extends Do
     return null;
   }
 
-  @Nullable
-  protected M computeModel(@NotNull XmlFile psiFile, @Nullable S scope) {
+  protected @Nullable M computeModel(@NotNull XmlFile psiFile, @Nullable S scope) {
     if (scope == null) {
       return null;
     }
@@ -67,9 +56,8 @@ public abstract class BaseDomModelFactory<S extends UserDataHolder, T extends Do
     return null;
   }
 
-  @Nullable
   @Override
-  public M getModelByConfigFile(@Nullable XmlFile file) {
+  public @Nullable M getModelByConfigFile(@Nullable XmlFile file) {
     if (file == null) return null;
     final XmlFile originalFile = (XmlFile)file.getOriginalFile();
     final S scope = getModelScope(originalFile);
@@ -87,8 +75,7 @@ public abstract class BaseDomModelFactory<S extends UserDataHolder, T extends Do
 
   protected abstract S getModelScope(final XmlFile file);
 
-  @Nullable
-  protected abstract List<M> computeAllModels(@NotNull S scope);
+  protected abstract @Nullable List<M> computeAllModels(@NotNull S scope);
 
   protected abstract M createCombinedModel(Set<XmlFile> configFiles, DomFileElement<T> mergedModel, M firstModel, final S scope);
 
@@ -108,29 +95,28 @@ public abstract class BaseDomModelFactory<S extends UserDataHolder, T extends Do
     return xmlFiles;
   }
 
-  @Nullable
   @Override
-  public M getCombinedModel(@Nullable S s) {
+  public @Nullable M getCombinedModel(@Nullable S s) {
     if (s == null) return null;
     final List<M> models = getAllModels(s);
-    switch (models.size()) {
-      case 0:
-        return null;
-      case 1:
-        return models.get(0);
-    }
-    final Set<XmlFile> configFiles = new LinkedHashSet<>();
-    final LinkedHashSet<DomFileElement<T>> list = new LinkedHashSet<>(models.size());
-    for (M model: models) {
-      final Set<XmlFile> files = model.getConfigFiles();
-      for (XmlFile file: files) {
-        ContainerUtil.addIfNotNull(list, getDomRoot(file));
+    return switch (models.size()) {
+      case 0 -> null;
+      case 1 -> models.get(0);
+      default -> {
+        final Set<XmlFile> configFiles = new LinkedHashSet<>();
+        final LinkedHashSet<DomFileElement<T>> list = new LinkedHashSet<>(models.size());
+        for (M model: models) {
+          final Set<XmlFile> files = model.getConfigFiles();
+          for (XmlFile file: files) {
+            ContainerUtil.addIfNotNull(list, getDomRoot(file));
+          }
+          configFiles.addAll(files);
+        }
+        final DomFileElement<T> mergedModel = getModelMerger().mergeModels(DomFileElement.class, list);
+        final M firstModel = models.get(0);
+        yield createCombinedModel(configFiles, mergedModel, firstModel, s);
       }
-      configFiles.addAll(files);
-    }
-    final DomFileElement<T> mergedModel = getModelMerger().mergeModels(DomFileElement.class, list);
-    final M firstModel = models.get(0);
-    return createCombinedModel(configFiles, mergedModel, firstModel, s);
+    };
   }
 
   protected Project getProject() {

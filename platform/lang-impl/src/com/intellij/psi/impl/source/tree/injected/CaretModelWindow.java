@@ -1,30 +1,35 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.psi.impl.source.tree.injected;
 
 import com.intellij.injected.editor.EditorWindow;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.editor.*;
+import com.intellij.openapi.editor.Caret;
+import com.intellij.openapi.editor.CaretAction;
+import com.intellij.openapi.editor.CaretActionListener;
+import com.intellij.openapi.editor.CaretModel;
+import com.intellij.openapi.editor.CaretState;
+import com.intellij.openapi.editor.LogicalPosition;
+import com.intellij.openapi.editor.VisualPosition;
 import com.intellij.openapi.editor.event.CaretEvent;
 import com.intellij.openapi.editor.event.CaretListener;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.markup.TextAttributes;
-import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.WeakHashMap;
 
-class CaretModelWindow implements CaretModel {
+final class CaretModelWindow implements CaretModel {
   private final CaretModel myDelegate;
   private final EditorEx myHostEditor;
   private final EditorWindow myEditorWindow;
-  private final Map<Caret, InjectedCaret> myInjectedCaretMap = new WeakHashMap<>();
+  private final Map<Caret, InjectedCaret> myInjectedCaretMap = new HashMap<>(); // guarded by myInjectedCaretMap
 
-  CaretModelWindow(CaretModel delegate, EditorWindow editorWindow) {
+  CaretModelWindow(@NotNull CaretModel delegate, @NotNull EditorWindow editorWindow) {
     myDelegate = delegate;
     myHostEditor = (EditorEx)editorWindow.getDelegate();
     myEditorWindow = editorWindow;
@@ -32,7 +37,7 @@ class CaretModelWindow implements CaretModel {
 
   private final ListenerWrapperMap<CaretListener> myCaretListeners = new ListenerWrapperMap<>();
   @Override
-  public void addCaretListener(@NotNull final CaretListener listener) {
+  public void addCaretListener(final @NotNull CaretListener listener) {
     CaretListener wrapper = new CaretListener() {
       @Override
       public void caretPositionChanged(@NotNull CaretEvent e) {
@@ -50,14 +55,14 @@ class CaretModelWindow implements CaretModel {
   }
 
   @Override
-  public void removeCaretListener(@NotNull final CaretListener listener) {
+  public void removeCaretListener(final @NotNull CaretListener listener) {
     CaretListener wrapper = myCaretListeners.removeWrapper(listener);
     if (wrapper != null) {
       myDelegate.removeCaretListener(wrapper);
     }
   }
 
-  public void disposeModel() {
+  void disposeModel() {
     for (CaretListener wrapper : myCaretListeners.wrappers()) {
       myDelegate.removeCaretListener(wrapper);
     }
@@ -79,15 +84,13 @@ class CaretModelWindow implements CaretModel {
     return myDelegate.getMaxCaretCount();
   }
 
-  @NotNull
   @Override
-  public Caret getCurrentCaret() {
+  public @NotNull Caret getCurrentCaret() {
     return createInjectedCaret(myDelegate.getCurrentCaret());
   }
 
-  @NotNull
   @Override
-  public Caret getPrimaryCaret() {
+  public @NotNull Caret getPrimaryCaret() {
     return createInjectedCaret(myDelegate.getPrimaryCaret());
   }
 
@@ -96,9 +99,8 @@ class CaretModelWindow implements CaretModel {
     return myDelegate.getCaretCount();
   }
 
-  @NotNull
   @Override
-  public List<Caret> getAllCarets() {
+  public @NotNull List<Caret> getAllCarets() {
     List<Caret> hostCarets = myDelegate.getAllCarets();
     List<Caret> carets = new ArrayList<>(hostCarets.size());
     for (Caret hostCaret : hostCarets) {
@@ -107,33 +109,31 @@ class CaretModelWindow implements CaretModel {
     return carets;
   }
 
-  @Nullable
   @Override
-  public Caret getCaretAt(@NotNull VisualPosition pos) {
+  public @Nullable Caret getCaretAt(@NotNull VisualPosition pos) {
     LogicalPosition hostPos = myEditorWindow.injectedToHost(myEditorWindow.visualToLogicalPosition(pos));
     Caret caret = myDelegate.getCaretAt(myHostEditor.logicalToVisualPosition(hostPos));
-    return createInjectedCaret(caret);
+    return caret == null ? null : createInjectedCaret(caret);
   }
 
-  @Nullable
   @Override
-  public Caret addCaret(@NotNull VisualPosition pos, boolean makePrimary) {
+  public @Nullable Caret addCaret(@NotNull VisualPosition pos, boolean makePrimary) {
     LogicalPosition hostPos = myEditorWindow.injectedToHost(myEditorWindow.visualToLogicalPosition(pos));
     Caret caret = myDelegate.addCaret(myHostEditor.logicalToVisualPosition(hostPos));
-    return createInjectedCaret(caret);
+    return caret == null ? null : createInjectedCaret(caret);
   }
 
   @Override
   public @Nullable Caret addCaret(@NotNull LogicalPosition pos, boolean makePrimary) {
     LogicalPosition hostPos = myEditorWindow.injectedToHost(pos);
     Caret caret = myDelegate.addCaret(hostPos, makePrimary);
-    return createInjectedCaret(caret);
+    return caret == null ? null : createInjectedCaret(caret);
   }
 
   @Override
   public boolean removeCaret(@NotNull Caret caret) {
     if (caret instanceof InjectedCaret) {
-      caret = ((InjectedCaret)caret).myDelegate;
+      caret = ((InjectedCaret)caret).getDelegate();
     }
     return myDelegate.removeCaret(caret);
   }
@@ -169,9 +169,8 @@ class CaretModelWindow implements CaretModel {
     return position == null ? null : myEditorWindow.injectedToHost(position);
   }
 
-  @NotNull
   @Override
-  public List<CaretState> getCaretsAndSelections() {
+  public @NotNull List<CaretState> getCaretsAndSelections() {
     List<CaretState> caretsAndSelections = myDelegate.getCaretsAndSelections();
     List<CaretState> convertedStates = new ArrayList<>(caretsAndSelections.size());
     for (CaretState state : caretsAndSelections) {
@@ -186,18 +185,9 @@ class CaretModelWindow implements CaretModel {
     return position == null ? null : myEditorWindow.hostToInjected(position);
   }
 
-  @Contract("null -> null; !null -> !null")
-  private InjectedCaret createInjectedCaret(Caret caret) {
-    if (caret == null) {
-      return null;
-    }
+  private @NotNull InjectedCaret createInjectedCaret(@NotNull Caret caret) {
     synchronized (myInjectedCaretMap) {
-      InjectedCaret injectedCaret = myInjectedCaretMap.get(caret);
-      if (injectedCaret == null) {
-        injectedCaret = new InjectedCaret(myEditorWindow, caret);
-        myInjectedCaretMap.put(caret, injectedCaret);
-      }
-      return injectedCaret;
+      return myInjectedCaretMap.computeIfAbsent(caret, c -> new InjectedCaret(myEditorWindow, c));
     }
   }
 
@@ -207,7 +197,7 @@ class CaretModelWindow implements CaretModel {
   }
 
   @Override
-  public void runForEachCaret(@NotNull final CaretAction action, boolean reverseOrder) {
+  public void runForEachCaret(final @NotNull CaretAction action, boolean reverseOrder) {
     myDelegate.runForEachCaret(caret -> action.perform(createInjectedCaret(caret)), reverseOrder);
   }
 

@@ -3,16 +3,10 @@ package com.intellij.openapi.roots.ui;
 
 import com.intellij.openapi.util.NlsContexts.ListItem;
 import com.intellij.ui.SimpleColoredComponent;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 public interface CellAppearanceEx {
   @NotNull @ListItem String getText();
-
-  /** @deprecated don't implement this method - it's never called */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  default void customize(@SuppressWarnings("ALL") com.intellij.ui.HtmlListCellRenderer renderer) { }
 
   void customize(@NotNull SimpleColoredComponent component);
 }

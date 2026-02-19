@@ -11,11 +11,27 @@ import com.intellij.psi.PsiReference;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.inspections.quickfix.RemoveArgumentEqualDefaultQuickFix;
-import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.PyBinaryExpression;
+import com.jetbrains.python.psi.PyBoolLiteralExpression;
+import com.jetbrains.python.psi.PyCallExpression;
+import com.jetbrains.python.psi.PyCallable;
+import com.jetbrains.python.psi.PyDecorator;
+import com.jetbrains.python.psi.PyEllipsisLiteralExpression;
+import com.jetbrains.python.psi.PyExpression;
+import com.jetbrains.python.psi.PyFunction;
+import com.jetbrains.python.psi.PyKeywordArgument;
+import com.jetbrains.python.psi.PyNamedParameter;
+import com.jetbrains.python.psi.PyNoneLiteralExpression;
+import com.jetbrains.python.psi.PyNumericLiteralExpression;
+import com.jetbrains.python.psi.PyPrefixExpression;
+import com.jetbrains.python.psi.PyReferenceExpression;
+import com.jetbrains.python.psi.PyStringLiteralExpression;
+import com.jetbrains.python.psi.PyUtil;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.types.PyCallableParameter;
 import com.jetbrains.python.psi.types.PyCallableType;
 import com.jetbrains.python.psi.types.PyClassType;
+import com.jetbrains.python.psi.types.TypeEvalContext;
 import com.jetbrains.python.pyi.PyiUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -27,30 +43,25 @@ import java.util.Set;
 
 /**
  * User: catherine
- *
+ * <p>
  * Inspection to detect situations, where argument passed to function
  * is equal to default parameter value
  * for instance,
  * dict().get(x, None) --> None is default value for second param in dict().get function
  */
-public class PyArgumentEqualDefaultInspection extends PyInspection {
-
-  @NotNull
-  @Override
-  public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder,
-                                        boolean isOnTheFly,
-                                        @NotNull LocalInspectionToolSession session) {
-    return new Visitor(holder, session);
-  }
+public final class PyArgumentEqualDefaultInspection extends PyInspection {
 
   @Override
-  public boolean isEnabledByDefault() {
-    return false;
+  public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder,
+                                                 boolean isOnTheFly,
+                                                 @NotNull LocalInspectionToolSession session) {
+    return new Visitor(holder, PyInspectionVisitor.getContext(session));
   }
 
   private static class Visitor extends PyInspectionVisitor {
-    Visitor(@Nullable ProblemsHolder holder, @NotNull LocalInspectionToolSession session) {
-      super(holder, session);
+    Visitor(@Nullable ProblemsHolder holder,
+            @NotNull TypeEvalContext context) {
+      super(holder, context);
     }
 
     @Override
@@ -106,26 +117,26 @@ public class PyArgumentEqualDefaultInspection extends PyInspection {
         }
       }
       boolean canDelete = true;
-      for (int i = arguments.length-1; i != -1; --i) {
+      for (int i = arguments.length - 1; i != -1; --i) {
         if (problemElements.contains(arguments[i])) {
-          if (canDelete)
+          if (canDelete) {
             registerProblem(arguments[i], PyPsiBundle.message("INSP.argument.equals.to.default"),
                             new RemoveArgumentEqualDefaultQuickFix(problemElements));
-          else
+          }
+          else {
             registerProblem(arguments[i], PyPsiBundle.message("INSP.argument.equals.to.default"));
-
+          }
         }
         else if (!(arguments[i] instanceof PyKeywordArgument)) canDelete = false;
       }
     }
 
-    @Nullable
-    private static PyExpression findDefaultValue(@NotNull PyCallExpression.PyArgumentsMapping mapping,
-                                                 @NotNull PyCallableParameter parameter) {
+    private static @Nullable PyExpression findDefaultValue(@NotNull PyCallExpression.PyArgumentsMapping mapping,
+                                                           @NotNull PyCallableParameter parameter) {
       final String name = parameter.getName();
       final PyExpression value = parameter.getDefaultValue();
 
-      if (name == null || !(value instanceof PyNoneLiteralExpression) || !((PyNoneLiteralExpression)value).isEllipsis()) return value;
+      if (name == null || !(value instanceof PyEllipsisLiteralExpression)) return value;
 
       final PyCallableType callableType = mapping.getCallableType();
       if (callableType == null) return value;
@@ -149,12 +160,14 @@ public class PyArgumentEqualDefaultInspection extends PyInspection {
           isBothInstanceOf(key, defaultValue, PyBinaryExpression.class) ||
           isBothInstanceOf(key, defaultValue, PyNoneLiteralExpression.class) ||
           isBothInstanceOf(key, defaultValue, PyBoolLiteralExpression.class)) {
-        if (key.getText().equals(defaultValue.getText()))
+        if (key.getText().equals(defaultValue.getText())) {
           return true;
+        }
       }
       else if (key instanceof PyStringLiteralExpression && defaultValue instanceof PyStringLiteralExpression) {
-        if (((PyStringLiteralExpression)key).getStringValue().equals(((PyStringLiteralExpression)defaultValue).getStringValue()))
+        if (((PyStringLiteralExpression)key).getStringValue().equals(((PyStringLiteralExpression)defaultValue).getStringValue())) {
           return true;
+        }
       }
       else if (key instanceof PyReferenceExpression && PyUtil.isPy2ReservedWord((PyReferenceExpression)key) &&
                key.getText().equals(defaultValue.getText())) {
@@ -178,9 +191,9 @@ public class PyArgumentEqualDefaultInspection extends PyInspection {
       return false;
     }
 
-    private static boolean isBothInstanceOf(@NotNull final PyExpression key,
-                                            @NotNull final PyExpression defaultValue,
-                                            @NotNull final Class clazz) {
+    private static boolean isBothInstanceOf(final @NotNull PyExpression key,
+                                            final @NotNull PyExpression defaultValue,
+                                            final @NotNull Class clazz) {
       return clazz.isInstance(key) && clazz.isInstance(defaultValue);
     }
   }

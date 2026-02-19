@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInsight;
 
@@ -8,18 +8,23 @@ import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.ide.util.EditSourceUtil;
 import com.intellij.navigation.NavigationItem;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.EditorCoreUtil;
 import com.intellij.openapi.editor.ex.EditorEx;
-import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.pom.Navigatable;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiPolyVariantReference;
+import com.intellij.psi.PsiReference;
+import com.intellij.psi.ResolveResult;
 import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.util.BitUtil;
+import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -47,8 +52,9 @@ public class TargetElementUtil  {
    */
   public static final int LOOKUP_ITEM_ACCEPTED = 0x08;
 
+  @Contract(pure = true)
   public static TargetElementUtil getInstance() {
-    return ServiceManager.getService(TargetElementUtil.class);
+    return ApplicationManager.getApplication().getService(TargetElementUtil.class);
   }
 
   public int getAllAccepted() {
@@ -75,8 +81,7 @@ public class TargetElementUtil  {
     return result;
   }
 
-  @Nullable
-  public static PsiReference findReference(@NotNull Editor editor) {
+  public static @Nullable PsiReference findReference(@NotNull Editor editor) {
     int offset = editor.getCaretModel().getOffset();
     PsiReference result = findReference(editor, offset);
     if (result == null) {
@@ -88,8 +93,7 @@ public class TargetElementUtil  {
     return result;
   }
 
-  @Nullable
-  public static PsiReference findReference(@NotNull Editor editor, int offset) {
+  public static @Nullable PsiReference findReference(@NotNull Editor editor, int offset) {
     return TargetElementUtilBase.findReference(editor, offset);
   }
 
@@ -99,7 +103,7 @@ public class TargetElementUtil  {
 
   public static boolean inVirtualSpace(@NotNull Editor editor, int offset) {
     return offset == editor.getCaretModel().getOffset()
-           && EditorUtil.inVirtualSpace(editor, editor.getCaretModel().getLogicalPosition());
+           && EditorCoreUtil.inVirtualSpace(editor, editor.getCaretModel().getLogicalPosition());
   }
 
   /**
@@ -110,8 +114,7 @@ public class TargetElementUtil  {
    * depending on the flags passed.
    * @see #findTargetElement(Editor, int, int)
    */
-  @Nullable
-  public static PsiElement findTargetElement(Editor editor, int flags) {
+  public static @Nullable PsiElement findTargetElement(Editor editor, @MagicConstant(flagsFromClass = TargetElementUtil.class) int flags) {
     int offset = editor.getCaretModel().getOffset();
     final PsiElement result = getInstance().findTargetElement(editor, flags, offset);
     if (result != null) return result;
@@ -132,8 +135,9 @@ public class TargetElementUtil  {
    * depending on the flags passed.
    * @see #findTargetElement(Editor, int)
    */
-  @Nullable
-  public PsiElement findTargetElement(@NotNull Editor editor, int flags, int offset) {
+  public @Nullable PsiElement findTargetElement(@NotNull Editor editor,
+                                                @MagicConstant(flagsFromClass = TargetElementUtil.class) int flags,
+                                                int offset) {
     Project project = editor.getProject();
     if (project == null) return null;
 
@@ -152,18 +156,24 @@ public class TargetElementUtil  {
     Lookup activeLookup = LookupManager.getInstance(project).getActiveLookup();
     if (activeLookup != null) {
       LookupElement item = activeLookup.getCurrentItem();
-      if (item != null && item.isValid()) {
-        final PsiElement psi = CompletionUtil.getTargetElement(item);
-        if (psi != null && psi.isValid()) {
-          return psi;
-        }
+      PsiElement psi = targetElementFromLookupElement(item);
+      if (psi != null) return psi;
+    }
+    return null;
+  }
+
+  @Internal
+  public static @Nullable PsiElement targetElementFromLookupElement(@Nullable LookupElement item) {
+    if (item != null && item.isValid()) {
+      final PsiElement psi = CompletionUtil.getTargetElement(item);
+      if (psi != null && psi.isValid()) {
+        return psi;
       }
     }
     return null;
   }
 
-  @Nullable
-  public PsiElement adjustElement(final Editor editor, final int flags, @Nullable PsiElement element, @Nullable PsiElement contextElement) {
+  public @Nullable PsiElement adjustElement(final Editor editor, final int flags, @Nullable PsiElement element, @Nullable PsiElement contextElement) {
     PsiElement langElement = element == null ? contextElement : element;
     TargetElementEvaluatorEx2 evaluator = langElement != null ? TargetElementUtilBase.getElementEvaluatorsEx2(langElement.getLanguage()) : null;
     if (evaluator != null) {
@@ -172,26 +182,22 @@ public class TargetElementUtil  {
     return element;
   }
 
-  @Nullable
-  public PsiElement adjustReference(@NotNull PsiReference ref) {
+  public @Nullable PsiElement adjustReference(@NotNull PsiReference ref) {
     PsiElement element = ref.getElement();
     TargetElementEvaluatorEx2 evaluator = TargetElementUtilBase.getElementEvaluatorsEx2(element.getLanguage());
     return evaluator != null ? evaluator.adjustReference(ref) : null;
   }
 
-  @Nullable
-  public PsiElement getNamedElement(@Nullable final PsiElement element, final int offsetInElement) {
+  public @Nullable PsiElement getNamedElement(final @Nullable PsiElement element, final int offsetInElement) {
     return TargetElementUtilBase.getNamedElement(element, offsetInElement);
   }
 
   @Internal
-  @Nullable
-  public static PsiElement getNamedElement(@Nullable final PsiElement element) {
+  public static @Nullable PsiElement getNamedElement(final @Nullable PsiElement element) {
     return TargetElementUtilBase.getNamedElement(element);
   }
 
-  @NotNull
-  public Collection<PsiElement> getTargetCandidates(@NotNull PsiReference reference) {
+  public @NotNull Collection<PsiElement> getTargetCandidates(@NotNull PsiReference reference) {
     PsiElement refElement = reference.getElement();
     TargetElementEvaluatorEx2 evaluator = TargetElementUtilBase.getElementEvaluatorsEx2(refElement.getLanguage());
     if (evaluator != null) {
@@ -234,7 +240,7 @@ public class TargetElementUtil  {
     return navElement;
   }
 
-  public boolean includeSelfInGotoImplementation(@NotNull final PsiElement element) {
+  public boolean includeSelfInGotoImplementation(final @NotNull PsiElement element) {
     TargetElementEvaluator evaluator = TargetElementUtilBase.TARGET_ELEMENT_EVALUATOR.forLanguage(element.getLanguage());
     return evaluator == null || evaluator.includeSelfInGotoImplementation(element);
   }
@@ -244,8 +250,7 @@ public class TargetElementUtil  {
     return evaluator == null || evaluator.acceptImplementationForReference(reference, element);
   }
 
-  @NotNull
-  public SearchScope getSearchScope(Editor editor, @NotNull PsiElement element) {
+  public @NotNull SearchScope getSearchScope(Editor editor, @NotNull PsiElement element) {
     TargetElementEvaluatorEx2 evaluator = TargetElementUtilBase.getElementEvaluatorsEx2(element.getLanguage());
     SearchScope result = evaluator != null ? evaluator.getSearchScope(editor, element) : null;
     if (result != null) return result;

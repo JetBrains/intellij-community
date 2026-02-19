@@ -2,15 +2,16 @@
 package git4idea.merge.dialog
 
 import com.intellij.ide.ui.laf.darcula.DarculaUIUtil
+import com.intellij.ide.ui.laf.darcula.DarculaUIUtil.BW
 import com.intellij.ide.ui.laf.darcula.ui.DarculaComboBoxUI
-import com.intellij.ide.ui.laf.darcula.ui.DarculaJBPopupComboPopup
 import com.intellij.openapi.util.NlsContexts
-import com.intellij.ui.popup.list.ComboBoxPopup
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.ui.ComponentWithEmptyText
 import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.JBUI
+import com.intellij.util.ui.JBValue
 import com.intellij.util.ui.StatusText
+import com.intellij.util.ui.UIUtil
 import java.awt.Component
 import java.awt.Graphics2D
 import java.awt.Insets
@@ -18,7 +19,6 @@ import java.awt.Rectangle
 import java.awt.geom.Line2D
 import java.awt.geom.Rectangle2D
 import java.awt.geom.RectangularShape
-import java.util.function.Consumer
 import javax.swing.JButton
 import javax.swing.JComboBox
 import javax.swing.JComponent
@@ -36,7 +36,7 @@ internal class FlatComboBoxUI(var border: Insets = Insets(1, 1, 1, 1),
                               var outerInsets: Insets = JBInsets.create(DarculaUIUtil.BW.get(), DarculaUIUtil.BW.get()),
                               @NlsContexts.StatusText private val popupEmptyText: String = StatusText.getDefaultEmptyText(),
                               private val popupComponentProvider: ((JComponent) -> JComponent)? = null)
-  : DarculaComboBoxUI(0f, Insets(1, 0, 1, 0), false) {
+  : DarculaComboBoxUI(0f, Insets(0, 0, 0, 0), false) {
 
   override fun paintArrow(g2: Graphics2D, btn: JButton) {
     g2.color = JBUI.CurrentTheme.Arrow.foregroundColor(comboBox.isEnabled)
@@ -61,6 +61,10 @@ internal class FlatComboBoxUI(var border: Insets = Insets(1, 1, 1, 1),
   }
 
   override fun getOuterShape(r: Rectangle, bw: Float, arc: Float): RectangularShape {
+    if (hasFocus) {
+      val tunedBw = if (UIUtil.isUnderDefaultMacTheme()) macOsBw.float else bw
+      return super.getOuterShape(r, tunedBw, arc)
+    }
     return Rectangle2D.Float(outerInsets.left.toFloat(),
                              outerInsets.top.toFloat(),
                              r.width - outerInsets.left.toFloat() - outerInsets.right.toFloat(),
@@ -68,6 +72,10 @@ internal class FlatComboBoxUI(var border: Insets = Insets(1, 1, 1, 1),
   }
 
   override fun getInnerShape(r: Rectangle, bw: Float, lw: Float, arc: Float): RectangularShape {
+    if (hasFocus) {
+      val tunedBw = if (UIUtil.isUnderDefaultMacTheme()) macOsBw.float else bw
+      return super.getInnerShape(r, tunedBw, lw, arc)
+    }
     return Rectangle2D.Float(outerInsets.left + lw * border.left,
                              outerInsets.top + lw,
                              r.width - (outerInsets.left + lw * border.left) - (outerInsets.right + lw * border.right),
@@ -77,15 +85,11 @@ internal class FlatComboBoxUI(var border: Insets = Insets(1, 1, 1, 1),
   override fun getBorderInsets(c: Component?) = outerInsets
 
   override fun createPopup(): ComboPopup {
-    val popup: ComboPopup = if (useJBPopup())
-      MyComboBoxPopup(comboBox, popupComponentProvider)
-    else
-      CustomComboPopup(comboBox)
-
-    return popup.apply { configureList(list) }
+    return MyComboBoxPopup(comboBox).apply {
+      configureList(list)
+      configurePopupComponent(popupComponentProvider)
+    }
   }
-
-  private fun useJBPopup() = comboBox.getClientProperty(DarculaJBPopupComboPopup.CLIENT_PROP) != null
 
   private fun configureList(list: JList<*>) {
     (list as? ComponentWithEmptyText)?.let {
@@ -93,17 +97,19 @@ internal class FlatComboBoxUI(var border: Insets = Insets(1, 1, 1, 1),
     }
   }
 
-  private class MyComboBoxPopup<T>(private val comboBox: JComboBox<T>,
-                                   private val popupComponentProvider: ((JComponent) -> JComponent)? = null)
-    : DarculaJBPopupComboPopup<T>(comboBox) {
+  private class MyComboBoxPopup(comboBox: JComboBox<*>) : CustomComboPopup(comboBox) {
 
-
-    override fun createPopup(selectedItem: T?) = object : ComboBoxPopup<T>(this,
-                                                                           selectedItem,
-                                                                           Consumer { value: T -> comboBox.setSelectedItem(value) }) {
-
-      override fun createPopupComponent(content: JComponent) = popupComponentProvider?.invoke(super.createPopupComponent(content))
-                                                                ?: super.createPopupComponent(content)
+    fun configurePopupComponent(popupComponentProvider: ((JComponent) -> JComponent)? = null) {
+      val popupComponent = popupComponentProvider?.invoke(scroller)
+      if (popupComponent != null) {
+        removeAll()
+        add(popupComponent)
+      }
     }
   }
+
+  // DarculaUIUtil.BW in case of native MacOS theme is 4 (defined in macintellijlaf.theme.json -> Component.focusWidth
+  // Outline focus width in case of MacOS theme is 3 (hardcoded int com.intellij.ide.ui.laf.darcula.DarculaUIUtil.doPaint)
+  // Compensation border of FlatComboBoxUI is 0, not 1 as in Darcula and MacOs, so we need to align it
+  private val macOsBw: JBValue.Float = JBValue.Float(BW.unscaled - DEFAULT_BORDER_COMPENSATION)
 }

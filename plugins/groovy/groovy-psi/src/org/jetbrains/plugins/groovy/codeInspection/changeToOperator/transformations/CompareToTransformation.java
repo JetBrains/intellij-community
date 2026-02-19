@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.codeInspection.changeToOperator.transformations;
 
 import com.intellij.psi.PsiElement;
@@ -12,12 +12,17 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethod
 
 import static java.lang.String.format;
 import static org.jetbrains.plugins.groovy.codeInspection.GrInspectionUtil.replaceExpression;
-import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.*;
+import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mCOMPARE_TO;
+import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mEQUAL;
+import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mNOT_EQUAL;
 import static org.jetbrains.plugins.groovy.lang.psi.impl.utils.ComparisonUtils.isComparison;
-import static org.jetbrains.plugins.groovy.lang.psi.impl.utils.ParenthesesUtils.*;
+import static org.jetbrains.plugins.groovy.lang.psi.impl.utils.ParenthesesUtils.RELATIONAL_PRECEDENCE;
+import static org.jetbrains.plugins.groovy.lang.psi.impl.utils.ParenthesesUtils.checkPrecedence;
+import static org.jetbrains.plugins.groovy.lang.psi.impl.utils.ParenthesesUtils.checkPrecedenceForNonBinaryOps;
+import static org.jetbrains.plugins.groovy.lang.psi.impl.utils.ParenthesesUtils.parenthesize;
 import static org.jetbrains.plugins.groovy.lang.psi.util.LiteralUtilKt.isZero;
 
-class CompareToTransformation extends BinaryTransformation {
+final class CompareToTransformation extends BinaryTransformation {
   @Override
   public void apply(@NotNull GrMethodCall methodCall, @NotNull Options options) {
     GrExpression rhs = getRhs(methodCall);
@@ -31,8 +36,7 @@ class CompareToTransformation extends BinaryTransformation {
     replaceExpression(replacedElement, format("%s %s %s", getLhs(methodCall).getText(), changeToOperator, rhsParenthesized.getText()));
   }
 
-  @Nullable
-  private static IElementType shouldChangeToOperator(@NotNull GrMethodCall call, Options options) {
+  private static @Nullable IElementType shouldChangeToOperator(@NotNull GrMethodCall call, Options options) {
     PsiElement parent = call.getParent();
     if (isComparison(parent) && isZero(((GrBinaryExpression)parent).getRightOperand())) {
       IElementType token = ((GrBinaryExpression)parent).getOperationTokenType();

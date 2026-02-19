@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution;
 
 import com.intellij.CommonBundle;
@@ -6,16 +6,23 @@ import com.intellij.execution.executors.DefaultRunExecutor;
 import com.intellij.execution.filters.Filter;
 import com.intellij.execution.filters.TextConsoleBuilder;
 import com.intellij.execution.filters.TextConsoleBuilderFactory;
-import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.process.ProcessHandler;
+import com.intellij.execution.process.ProcessListener;
 import com.intellij.execution.ui.ConsoleView;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.execution.ui.RunContentManager;
 import com.intellij.execution.ui.actions.CloseAction;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionGroup;
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.ActionToolbar;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonShortcuts;
+import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.DumbAware;
@@ -26,17 +33,16 @@ import com.intellij.openapi.util.NlsContexts;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JComponent;
+import javax.swing.JPanel;
+import java.awt.BorderLayout;
 import java.util.ArrayList;
 import java.util.List;
 
 /**
  * Runs a process and prints the output in a content tab within the Run toolwindow.
- *
- * @author yole
  */
-public class RunContentExecutor implements Disposable {
+public final class RunContentExecutor implements Disposable {
   private final Project myProject;
   private final ProcessHandler myProcess;
   private final List<Filter> myFilterList = new ArrayList<>();
@@ -44,7 +50,7 @@ public class RunContentExecutor implements Disposable {
   private Runnable myStopAction;
   private Runnable myAfterCompletion;
   private Computable<Boolean> myStopEnabled;
-  private @NlsContexts.TabTitle String myTitle = "Output";
+  private @NlsContexts.TabTitle String myTitle = ExecutionBundle.message("output.tab.default.title");
   private String myHelpId = null;
   private boolean myActivateToolWindow = true;
   private boolean myFocusToolWindow = true;
@@ -63,7 +69,7 @@ public class RunContentExecutor implements Disposable {
     return this;
   }
 
-  public RunContentExecutor withTitle(String title) {
+  public RunContentExecutor withTitle(@NlsContexts.TabTitle String title) {
     myTitle = title;
     return this;
   }
@@ -133,7 +139,7 @@ public class RunContentExecutor implements Disposable {
     ConsoleView view = (myUserProvidedConsole != null ? myUserProvidedConsole :  createConsole());
     view.attachToProcess(myProcess);
     if (myAfterCompletion != null) {
-      myProcess.addProcessListener(new ProcessAdapter() {
+      myProcess.addProcessListener(new ProcessListener() {
         @Override
         public void processTerminated(@NotNull ProcessEvent event) {
           ApplicationManager.getApplication().invokeLater(myAfterCompletion);
@@ -147,13 +153,10 @@ public class RunContentExecutor implements Disposable {
     JPanel panel = new JPanel();
     panel.setLayout(new BorderLayout());
     panel.add(view.getComponent(), BorderLayout.CENTER);
-    panel.add(createToolbar(actions), BorderLayout.WEST);
-    return panel;
-  }
-
-  private static JComponent createToolbar(ActionGroup actions) {
     ActionToolbar actionToolbar = ActionManager.getInstance().createActionToolbar("RunContentExecutor", actions, false);
-    return actionToolbar.getComponent();
+    actionToolbar.setTargetComponent(panel);
+    panel.add(actionToolbar.getComponent(), BorderLayout.WEST);
+    return panel;
   }
 
   @Override
@@ -163,13 +166,12 @@ public class RunContentExecutor implements Disposable {
   /**
    * @param console console to use instead of new one. Pass null to always create new
    */
-  @NotNull
-  public RunContentExecutor withConsole(@Nullable ConsoleView console) {
+  public @NotNull RunContentExecutor withConsole(@Nullable ConsoleView console) {
     myUserProvidedConsole = console;
     return this;
   }
 
-  private class RerunAction extends AnAction {
+  private final class RerunAction extends AnAction {
     RerunAction(JComponent consolePanel) {
       super(CommonBundle.message("action.text.rerun"), CommonBundle.message("action.text.rerun"), AllIcons.Actions.Restart);
       registerCustomShortcutSet(CommonShortcuts.getRerun(), consolePanel);
@@ -186,12 +188,17 @@ public class RunContentExecutor implements Disposable {
     }
 
     @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
+    }
+
+    @Override
     public boolean isDumbAware() {
       return true;
     }
   }
 
-  private class StopAction extends AnAction implements DumbAware {
+  private final class StopAction extends AnAction implements DumbAware {
   StopAction() {
     super(ExecutionBundle.messagePointer("action.AnAction.text.stop"),
           ExecutionBundle.messagePointer("action.AnAction.description.stop"), AllIcons.Actions.Suspend);
@@ -206,6 +213,11 @@ public class RunContentExecutor implements Disposable {
     public void update(@NotNull AnActionEvent e) {
       e.getPresentation().setVisible(myStopAction != null);
       e.getPresentation().setEnabled(myStopEnabled != null && myStopEnabled.compute());
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
     }
   }
 }

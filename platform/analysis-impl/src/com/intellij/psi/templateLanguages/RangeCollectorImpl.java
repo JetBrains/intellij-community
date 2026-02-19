@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.templateLanguages;
 
 import com.intellij.lang.ASTFactory;
@@ -11,10 +11,16 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.impl.DebugUtil;
-import com.intellij.psi.impl.source.tree.*;
+import com.intellij.psi.impl.source.tree.CompositeElement;
+import com.intellij.psi.impl.source.tree.LazyParseableElement;
+import com.intellij.psi.impl.source.tree.LeafElement;
+import com.intellij.psi.impl.source.tree.SharedImplUtil;
+import com.intellij.psi.impl.source.tree.TreeElement;
+import com.intellij.psi.impl.source.tree.TreeUtil;
 import com.intellij.psi.templateLanguages.TemplateDataElementType.OuterLanguageRangePatcher;
 import com.intellij.util.CharTable;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -23,7 +29,8 @@ import java.util.List;
 import java.util.ListIterator;
 import java.util.function.Function;
 
-public class RangeCollectorImpl extends TemplateDataElementType.RangeCollector {
+@ApiStatus.Internal
+public final class RangeCollectorImpl extends TemplateDataElementType.RangeCollector {
   private final TemplateDataElementType myTemplateDataElementType;
   private final List<TextRange> myOuterAndRemoveRanges;
 
@@ -88,7 +95,7 @@ public class RangeCollectorImpl extends TemplateDataElementType.RangeCollector {
       patcher = OuterLanguageRangePatcher.EXTENSION.forLanguage(templateLanguage);
     if (patcher != null) {
       StringBuilder builder =
-        templateSourceCode instanceof StringBuilder ? (StringBuilder)templateSourceCode : new StringBuilder(templateSourceCode);
+        templateSourceCode instanceof StringBuilder b ? b : new StringBuilder(templateSourceCode);
       insertDummyStringIntoInsertionRanges(patcher, originalSourceCode, builder);
     }
   }
@@ -149,7 +156,6 @@ public class RangeCollectorImpl extends TemplateDataElementType.RangeCollector {
    * but their contents are modified considering outer elements and RangeCollector is put to their user data to be applied when this
    * chameleon is expanded.
    *
-   * @param language
    * @param templateFileElement parsed template data language file without outer elements and with possible custom additions
    * @param sourceCode          original source code (include template data language and template language)
    */
@@ -196,9 +202,9 @@ public class RangeCollectorImpl extends TemplateDataElementType.RangeCollector {
         currentLeafOrLazyParseable = removeElementsForRange(currentLeafOrLazyParseable, currentLeafOffset, rangeToProcess, charTable);
       }
       else {
-        if (currentLeafOrLazyParseable instanceof LeafElement && currentLeafOffset < rangeStartOffset) {
+        if (currentLeafOrLazyParseable instanceof LeafElement leaf && currentLeafOffset < rangeStartOffset) {
           int splitOffset = rangeStartOffset - currentLeafOffset;
-          currentLeafOrLazyParseable = templateTreePatcher.split((LeafElement)currentLeafOrLazyParseable, splitOffset, charTable);
+          currentLeafOrLazyParseable = templateTreePatcher.split(leaf, splitOffset, charTable);
           currentLeafOffset = rangeStartOffset;
         }
         if (currentLeafOrLazyParseable == null) {
@@ -221,7 +227,7 @@ public class RangeCollectorImpl extends TemplateDataElementType.RangeCollector {
   }
 
   private void addRangeToLazyParseableCollector(@NotNull TreeElement leafOrLazyParseable, @NotNull TextRange rangeWithinLazyParseable) {
-    if (rangeWithinLazyParseable instanceof RangeToRemove && ((RangeToRemove)rangeWithinLazyParseable).myTextToRemove == null) return;
+    if (rangeWithinLazyParseable instanceof RangeToRemove remove && remove.myTextToRemove == null) return;
     RangeCollectorImpl lazyParseableCollector = leafOrLazyParseable.getUserData(OUTER_ELEMENT_RANGES);
     if (lazyParseableCollector != null) {
       assert lazyParseableCollector != this;
@@ -309,8 +315,7 @@ public class RangeCollectorImpl extends TemplateDataElementType.RangeCollector {
     return newLeaf;
   }
 
-  @NotNull
-  private TreeElement newLazyParseable(@NotNull TreeElement currentLeaf, @NotNull CharSequence text) {
+  private @NotNull TreeElement newLazyParseable(@NotNull TreeElement currentLeaf, @NotNull CharSequence text) {
     TemplateDataElementType.TemplateAwareElementType elementType =
       (TemplateDataElementType.TemplateAwareElementType)currentLeaf.getElementType();
     TreeElement newElement = elementType.createTreeElement(text);
@@ -323,8 +328,7 @@ public class RangeCollectorImpl extends TemplateDataElementType.RangeCollector {
   /**
    * @return null if all elements up to the end are removed, or a leaf which is in place of startLeaf after removal
    */
-  @Nullable
-  private TreeElement removeElementsForRange(@NotNull TreeElement startLeaf,
+  private @Nullable TreeElement removeElementsForRange(@NotNull TreeElement startLeaf,
                                              int startLeafOffset,
                                              @NotNull TextRange rangeToRemove,
                                              @NotNull CharTable charTable) {
@@ -386,20 +390,18 @@ public class RangeCollectorImpl extends TemplateDataElementType.RangeCollector {
     }
 
     ASTNode root = parser.apply(stringBuilder.toString());
-    DebugUtil.performPsiModification("lazy parseable outer elements insertion", () -> {
-      insertOuterElementsAndRemoveRanges((TreeElement)root, chars, SharedImplUtil.findCharTableByTree(chameleon), language);
-    });
+    DebugUtil.performPsiModification("lazy parseable outer elements insertion", () ->
+      insertOuterElementsAndRemoveRanges((TreeElement)root, chars, SharedImplUtil.findCharTableByTree(chameleon), language));
 
     return root;
   }
 
-  @NotNull
-  private StringBuilder applyOuterAndRemoveRanges(CharSequence chars) {
+  private @NotNull StringBuilder applyOuterAndRemoveRanges(CharSequence chars) {
     StringBuilder stringBuilder = new StringBuilder(chars);
     int shift = 0;
     for (TextRange outerElementRange : myOuterAndRemoveRanges) {
-      if (outerElementRange instanceof RangeToRemove) {
-        CharSequence textToRemove = ((RangeToRemove)outerElementRange).myTextToRemove;
+      if (outerElementRange instanceof RangeToRemove remove) {
+        CharSequence textToRemove = remove.myTextToRemove;
         if (textToRemove != null) {
           stringBuilder.insert(outerElementRange.getStartOffset() + shift, textToRemove);
           shift += textToRemove.length();
@@ -418,8 +420,7 @@ public class RangeCollectorImpl extends TemplateDataElementType.RangeCollector {
    * Removes "middle" part of the leaf and returns the new leaf with content of the right and left parts
    * e.g. if we process whitespace leaf " \n " and range "1, 2" the result will be new leaf with content "  "
    */
-  @NotNull
-  private TreeElement removeRange(@NotNull TreeElement leaf,
+  private @NotNull TreeElement removeRange(@NotNull TreeElement leaf,
                                   @NotNull TextRange rangeToRemove,
                                   @NotNull CharTable table) {
     CharSequence chars = leaf.getChars();
@@ -436,10 +437,10 @@ public class RangeCollectorImpl extends TemplateDataElementType.RangeCollector {
     List<TextRange> ranges = modifications.myOuterAndRemoveRanges;
     if (ranges.isEmpty()) return sourceCode;
     for (TextRange range : ranges) {
-      if (range instanceof RangeToRemove) {
+      if (range instanceof RangeToRemove remove) {
         if (range.isEmpty()) continue;
         assertRangeOrder(range);
-        CharSequence textToRemove = ((RangeToRemove)range).myTextToRemove;
+        CharSequence textToRemove = remove.myTextToRemove;
         assert textToRemove != null;
         myOuterAndRemoveRanges.add(new RangeToRemove(range.getStartOffset(), textToRemove));
       }
@@ -452,7 +453,7 @@ public class RangeCollectorImpl extends TemplateDataElementType.RangeCollector {
   }
 
 
-  final static class RangeToRemove extends TextRange {
+  static final class RangeToRemove extends TextRange {
     /**
      * We need this text to propagate dummy strings through lazy parseables. If this text is null, dummy identifier won't be propagated.
      */

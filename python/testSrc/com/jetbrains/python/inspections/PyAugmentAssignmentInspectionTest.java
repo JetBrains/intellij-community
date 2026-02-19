@@ -75,6 +75,9 @@ public class PyAugmentAssignmentInspectionTest extends PyInspectionTestCase {
     runWithLanguageLevel(LanguageLevel.PYTHON35, this::doTest);
   }
 
+  // PY-15985
+  public void testNotSuggestedForChainedTarget() { doTest(); }
+
   @NotNull
   @Override
   protected Class<? extends PyInspection> getInspectionClass() {

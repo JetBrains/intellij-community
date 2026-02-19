@@ -1,0 +1,124 @@
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package org.jetbrains.kotlin.idea.k2.codeinsight.fixes.imprt.factories
+
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
+import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.diagnostics.KaDiagnosticWithPsi
+import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
+import org.jetbrains.kotlin.analysis.api.types.KaErrorType
+import org.jetbrains.kotlin.idea.base.analysis.api.utils.KtSymbolFromIndexProvider
+import org.jetbrains.kotlin.idea.codeinsight.utils.qualifiedCalleeExpressionTextRangeInThis
+import org.jetbrains.kotlin.idea.k2.codeinsight.fixes.imprt.CallableImportCandidatesProvider
+import org.jetbrains.kotlin.idea.k2.codeinsight.fixes.imprt.ImportCandidate
+import org.jetbrains.kotlin.idea.k2.codeinsight.fixes.imprt.ImportContext
+import org.jetbrains.kotlin.idea.k2.codeinsight.fixes.imprt.ImportContextWithFixedReceiverType
+import org.jetbrains.kotlin.idea.k2.codeinsight.fixes.imprt.ImportPositionType
+import org.jetbrains.kotlin.name.Name
+import org.jetbrains.kotlin.psi.KtCallExpression
+import org.jetbrains.kotlin.psi.KtExpression
+import org.jetbrains.kotlin.psi.KtPsiFactory
+import org.jetbrains.kotlin.psi.psiUtil.getQualifiedExpressionForSelectorOrThis
+import org.jetbrains.kotlin.util.OperatorNameConventions
+
+internal object InvokeImportQuickFixFactory : AbstractImportQuickFixFactory() {
+    override fun KaSession.detectPositionContext(diagnostic: KaDiagnosticWithPsi<*>): ImportContext? {
+        val psiElement = diagnostic.psi as? KtExpression ?: return null
+
+        val invokeCallReceiver = when {
+            // Cases like `(... /* anything complex here */)()` (see KT-61638)
+            psiElement is KtCallExpression -> psiElement.calleeExpression
+
+            // Cases like `simpleName()` (see KT-76531)
+            psiElement.isCalleeExpression -> psiElement
+
+            else -> null
+        } ?: return null
+
+        val invokeCall = invokeCallReceiver.getCallExpressionForCallee() ?: return null
+        val qualifiedInvokeCall = invokeCall.getQualifiedExpressionForSelectorOrThis()
+
+        @OptIn(KaExperimentalApi::class)
+        val invokeReceiverType = when (diagnostic) {
+            is KaFirDiagnostic.FunctionExpected -> {
+                diagnostic.type
+            }
+
+            is KaFirDiagnostic.UnresolvedReference,
+            is KaFirDiagnostic.NoneApplicable -> {
+                /*
+                For these diagnostics, we copy the receiver expression of the `invoke` call
+                and analyze it "in the air" to get the correct type of the receiver expression.
+
+                We have to do this because Analysis API fails to return the correct `expressionType`
+                on the original PSI elements in these cases - instead it just returns `null`.
+
+                Only by stripping the implicit `invoke` operator call and analyzing the expression without it,
+                we can get the correct type of the receiver expression.
+                */
+
+                val invokeCallReceiverCopy = qualifiedInvokeCall.copyQualifiedCalleeExpression() ?: return null
+
+                val invokeCallReceiverTypePointer = analyze(invokeCallReceiverCopy) {
+                    invokeCallReceiverCopy.expressionType?.createPointer()
+                }
+
+                invokeCallReceiverTypePointer?.restore()
+            }
+
+            is KaFirDiagnostic.UnresolvedReferenceWrongReceiver -> {
+                // for this diagnostic, Analysis API can provide the receiver type just fine
+                invokeCallReceiver.expressionType
+            }
+
+            else -> null
+        } ?: return null
+
+        if (invokeReceiverType is KaErrorType) return null
+
+        return ImportContextWithFixedReceiverType(
+            psiElement,
+            ImportPositionType.OperatorCall,
+            explicitReceiverType = invokeReceiverType,
+        )
+    }
+
+    override fun provideUnresolvedNames(diagnostic: KaDiagnosticWithPsi<*>, importContext: ImportContext): Set<Name> =
+        setOf(OperatorNameConventions.INVOKE)
+
+    override fun KaSession.provideImportCandidates(
+        unresolvedName: Name,
+        importContext: ImportContext,
+        indexProvider: KtSymbolFromIndexProvider
+    ): List<ImportCandidate> {
+        val provider = CallableImportCandidatesProvider(importContext)
+        return provider.collectCandidates(unresolvedName, indexProvider)
+    }
+}
+
+private val KtExpression.isCalleeExpression: Boolean
+    get() = getCallExpressionForCallee() != null
+
+private fun KtExpression.getCallExpressionForCallee(): KtCallExpression? {
+    return (parent as? KtCallExpression)?.takeIf { it.calleeExpression === this }
+}
+
+/**
+ * For [KtExpression] representing a possibly qualified function call,
+ * returns a copy [KtExpression] representing only the callee expression with a possible qualifier.
+ *
+ * See [qualifiedCalleeExpressionTextRangeInThis] for example.
+ *
+ * N.B. The returned PSI expression is created using [org.jetbrains.kotlin.psi.KtExpressionCodeFragment].
+ */
+private fun KtExpression.copyQualifiedCalleeExpression(): KtExpression? {
+    val possiblyQualifiedCall = this
+
+    val calleeRelativeRange = possiblyQualifiedCall.qualifiedCalleeExpressionTextRangeInThis ?: return null
+    val calleeText = calleeRelativeRange.substring(possiblyQualifiedCall.text)
+
+    val factory = KtPsiFactory.contextual(possiblyQualifiedCall)
+    val calleeExpressionFragment = factory.createExpressionCodeFragment(calleeText, context = possiblyQualifiedCall)
+
+    return calleeExpressionFragment.getContentElement()
+}

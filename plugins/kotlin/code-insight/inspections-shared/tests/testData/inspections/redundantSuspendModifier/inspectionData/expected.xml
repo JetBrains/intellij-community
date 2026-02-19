@@ -1,0 +1,107 @@
+<problems>
+    <problem>
+        <file>test.kt</file>
+        <line>8</line>
+        <module>light_idea_test_case</module>
+        <entry_point TYPE="file" FQNAME="temp:///src/test.kt" />
+        <problem_class severity="WARNING" attribute_key="NOT_USED_ELEMENT_ATTRIBUTES">Redundant 'suspend' modifier</problem_class>
+        <description>Redundant 'suspend' modifier</description>
+    </problem>
+    <problem>
+        <file>test.kt</file>
+        <line>22</line>
+        <module>light_idea_test_case</module>
+        <entry_point TYPE="file" FQNAME="temp:///src/test.kt" />
+        <problem_class severity="WARNING" attribute_key="NOT_USED_ELEMENT_ATTRIBUTES">Redundant 'suspend' modifier</problem_class>
+        <description>Redundant 'suspend' modifier</description>
+    </problem>
+    <problem>
+        <file>test.kt</file>
+        <line>42</line>
+        <module>light_idea_test_case</module>
+        <entry_point TYPE="file" FQNAME="temp:///src/test.kt" />
+        <problem_class severity="WARNING" attribute_key="NOT_USED_ELEMENT_ATTRIBUTES">Redundant 'suspend' modifier</problem_class>
+        <description>Redundant 'suspend' modifier</description>
+    </problem>
+    <problem>
+        <file>test.kt</file>
+        <line>44</line>
+        <module>light_idea_test_case</module>
+        <entry_point TYPE="file" FQNAME="temp:///src/test.kt" />
+        <problem_class severity="WARNING" attribute_key="NOT_USED_ELEMENT_ATTRIBUTES">Redundant 'suspend' modifier</problem_class>
+        <description>Redundant 'suspend' modifier</description>
+    </problem>
+    <problem>
+        <file>test.kt</file>
+        <line>49</line>
+        <module>light_idea_test_case</module>
+        <entry_point TYPE="file" FQNAME="temp:///src/test.kt" />
+        <problem_class severity="WARNING" attribute_key="NOT_USED_ELEMENT_ATTRIBUTES">Redundant 'suspend' modifier</problem_class>
+        <description>Redundant 'suspend' modifier</description>
+    </problem>
+    <problem>
+        <file>test.kt</file>
+        <line>56</line>
+        <module>light_idea_test_case</module>
+        <entry_point TYPE="file" FQNAME="temp:///src/test.kt" />
+        <problem_class severity="WARNING" attribute_key="NOT_USED_ELEMENT_ATTRIBUTES">Redundant 'suspend' modifier</problem_class>
+        <description>Redundant 'suspend' modifier</description>
+    </problem>
+    <problem>
+        <file>test.kt</file>
+        <line>76</line>
+        <module>light_idea_test_case</module>
+        <entry_point TYPE="file" FQNAME="temp:///src/test.kt" />
+        <problem_class severity="WARNING" attribute_key="NOT_USED_ELEMENT_ATTRIBUTES">Redundant 'suspend' modifier</problem_class>
+        <description>Redundant 'suspend' modifier</description>
+    </problem>
+    <problem>
+        <file>operators.kt</file>
+        <line>5</line>
+        <module>light_idea_test_case</module>
+        <entry_point TYPE="file" FQNAME="temp:///src/operators.kt" />
+        <problem_class severity="WARNING" attribute_key="NOT_USED_ELEMENT_ATTRIBUTES">Redundant 'suspend' modifier</problem_class>
+        <description>Redundant 'suspend' modifier</description>
+    </problem>
+    <problem>
+        <file>operators.kt</file>
+        <line>23</line>
+        <module>light_idea_test_case</module>
+        <entry_point TYPE="file" FQNAME="temp:///src/operators.kt" />
+        <problem_class severity="WARNING" attribute_key="NOT_USED_ELEMENT_ATTRIBUTES">Redundant 'suspend' modifier</problem_class>
+        <description>Redundant 'suspend' modifier</description>
+    </problem>
+    <problem>
+        <file>operators.kt</file>
+        <line>37</line>
+        <module>light_idea_test_case</module>
+        <entry_point TYPE="file" FQNAME="temp:///src/operators.kt" />
+        <problem_class severity="WARNING" attribute_key="NOT_USED_ELEMENT_ATTRIBUTES">Redundant 'suspend' modifier</problem_class>
+        <description>Redundant 'suspend' modifier</description>
+    </problem>
+    <problem>
+      <file>operators.kt</file>
+      <line>77</line>
+      <module>light_idea_test_case</module>
+      <entry_point TYPE="method" FQNAME="operators.ContainsOperator java.lang.Object contains(operators.ContainsOperator $this$contains, java.lang.String o, kotlin.coroutines.Continuation&lt;? super java.lang.Boolean&gt; $completion)" />
+      <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Redundant 'suspend' modifier</problem_class>
+      <description>Redundant 'suspend' modifier</description>
+    </problem>
+    <problem>
+      <file>operators.kt</file>
+      <line>94</line>
+      <module>light_idea_test_case</module>
+      <package>operators</package>
+      <entry_point TYPE="method" FQNAME="operators.OperatorsKt java.lang.Object component2(operators.DataClass $this$component2, kotlin.coroutines.Continuation&lt;? super java.lang.String&gt; $completion)" />
+      <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Redundant 'suspend' modifier</problem_class>
+      <description>Redundant 'suspend' modifier</description>
+    </problem>
+    <problem>
+      <file>operators.kt</file>
+      <line>95</line>
+      <module>light_idea_test_case</module>
+      <entry_point TYPE="method" FQNAME="operators.OperatorsKt java.lang.Object component1(operators.DataClass $this$component1, kotlin.coroutines.Continuation&lt;? super java.lang.Integer&gt; $completion)" />
+      <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Redundant 'suspend' modifier</problem_class>
+      <description>Redundant 'suspend' modifier</description>
+    </problem>
+</problems>

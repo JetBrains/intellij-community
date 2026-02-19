@@ -3,9 +3,9 @@ enum Operation {
   static int s = 0;
   public static final String constS = "";
   Operation() {
-    int i = <error descr="It is illegal to access static member 's' from enum constructor or instance initializer">Operation.s</error>;
-    i = <error descr="It is illegal to access static member 's' from enum constructor or instance initializer">s</error>;
-    <error descr="It is illegal to access static member 's' from enum constructor or instance initializer">s</error> = 0;
+    int i = <error descr="Accessing static field from enum constructor is not allowed">Operation.s</error>;
+    i = <error descr="Accessing static field from enum constructor is not allowed">s</error>;
+    <error descr="Accessing static field from enum constructor is not allowed">s</error> = 0;
     final int x = Integer.MAX_VALUE;
     String co = constS;
     // TODO: unclear
@@ -18,12 +18,12 @@ enum Operation {
     final int x = Integer.MAX_VALUE;
     String co = constS;
     // TODO: unclear
-    //Operation o = X;
+    Operation o = X;
   }
   {
-    int i = <error descr="It is illegal to access static member 's' from enum constructor or instance initializer">Operation.s</error>;
-    i = <error descr="It is illegal to access static member 's' from enum constructor or instance initializer">s</error>;
-    <error descr="It is illegal to access static member 's' from enum constructor or instance initializer">s</error> = 0;
+    int i = <error descr="Accessing static field from enum instance initializer is not allowed">Operation.s</error>;
+    i = <error descr="Accessing static field from enum instance initializer is not allowed">s</error>;
+    <error descr="Accessing static field from enum instance initializer is not allowed">s</error> = 0;
     final int x = Integer.MAX_VALUE;
     String co = constS;
     // TODO: unclear
@@ -41,10 +41,10 @@ enum Operation {
 enum enumWithTypeParameterInValueOf {
   ;
 
-  <error descr="'valueOf(String)' clashes with 'valueOf(String)'; both methods have same erasure"><error descr="'valueOf(String)' is already defined in 'enumWithTypeParameterInValueOf'">static <T> void valueOf(String s)</error></error> {}
+  <error descr="'valueOf(String)' clashes with 'valueOf(String)'; both methods have same erasure">static <T> void valueOf(String s)</error> {}
 }
 
-<error descr="There is no default constructor available in 'Operation'">class exte extends <error descr="Cannot inherit from enum 'Operation'">Operation</error></error> {
+class exte extends <error descr="Cannot inherit from enum 'Operation'">Operation</error> {
 }
 
 enum withConstant {
@@ -103,13 +103,16 @@ enum OurEnum {
 
 enum TestEnum
 {
-    A(<error descr="Illegal forward reference">B</error>), B(A);
+    A(<error descr="Cannot refer to enum constant 'B' before its definition">B</error>), B(A);
     TestEnum(TestEnum other) {
-      <error descr="Call to super is not allowed in enum constructor">super(null, 0)</error>;
+      <error descr="Call to 'super' is not allowed in enum constructor">super(null, 0)</error>;
     }
 }
 
-<error descr="Class 'abstr' must either be declared abstract or implement abstract method 'run()' in 'Runnable'">enum abstr implements Runnable</error> {
+<error descr="Class 'abstr' must implement abstract method 'run()' in 'Runnable'">enum abstr implements Runnable</error> {
+}
+<error descr="Modifier 'abstract' not allowed here">abstract</error> enum XX {
+  A, B;
 }
 
 //this one is OK, enum constants are checked instead of enum itself
@@ -129,8 +132,8 @@ class X extends <error descr="Classes cannot directly extend 'java.lang.Enum'">E
 
 enum StaticInEnumConstantInitializer {
     AN {
-        <error descr="Inner classes cannot have static declarations"><error descr="Modifier 'static' not allowed here">static</error></error> class s { }
-        private <error descr="Inner classes cannot have static declarations">static</error> final String t = String.valueOf(1);
+        <error descr="Static declarations in inner classes are not supported at language level '5'">static</error> class s { }
+        private <error descr="Static declarations in inner classes are not supported at language level '5'">static</error> final String t = String.valueOf(1);
     };
 }
 
@@ -138,7 +141,7 @@ interface Barz {
     void baz();
 }
 
-<error descr="Class 'Fooz' must either be declared abstract or implement abstract method 'baz()' in 'Barz'">enum Fooz implements Barz</error> {
+<error descr="Class 'Fooz' must implement abstract method 'baz()' in 'Barz'">enum Fooz implements Barz</error> {
     FOO;
 }
 
@@ -204,7 +207,7 @@ class NestedEnums {
   enum E1 { }
 
   class C2 {
-    <error descr="Inner classes cannot have static declarations">enum E2</error> { }
+    <error descr="Static declarations in inner classes are not supported at language level '5'">enum</error> E2 { }
   }
 
   static class C3 {
@@ -213,14 +216,14 @@ class NestedEnums {
 
   {
     new C3() {
-      <error descr="Inner classes cannot have static declarations">enum E2</error> { }
+      <error descr="Static declarations in inner classes are not supported at language level '5'">enum</error> E2 { }
     };
   }
 }
 
 enum EnumWithoutExpectedArguments {
-  <error descr="'EnumWithoutExpectedArguments(int)' in 'EnumWithoutExpectedArguments' cannot be applied to '()'">ONE</error>, //comment
-  <error descr="'EnumWithoutExpectedArguments(int)' in 'EnumWithoutExpectedArguments' cannot be applied to '()'">TWO</error>
+  <error descr="Expected 1 argument but found 0">ONE</error>, //comment
+  <error descr="Expected 1 argument but found 0">TWO</error>
   ;
   EnumWithoutExpectedArguments(int a) {}
 }

@@ -16,7 +16,6 @@
 package com.intellij.formatting.engine
 
 import com.intellij.application.options.CodeStyle
-import com.intellij.psi.codeStyle.CodeStyleSettings
 import com.intellij.testFramework.LightPlatformTestCase
 import org.junit.Test
 

@@ -13,9 +13,9 @@ Groovy script
         PsiWhiteSpace(' ')
         Variable
           PsiElement(identifier)('a')
-      PsiErrorElement:')', ',', ';' or new line expected, got '{'
+      PsiElement(new line)('\n')
+      PsiErrorElement:')', ';' or new line expected, got '{'
         <empty list>
-    PsiWhiteSpace('\n')
     Open block
       PsiElement({)('{')
       PsiElement(})('}')

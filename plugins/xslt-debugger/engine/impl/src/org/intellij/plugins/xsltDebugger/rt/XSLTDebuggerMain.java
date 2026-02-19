@@ -23,12 +23,17 @@ import org.intellij.plugins.xsltDebugger.rt.engine.local.saxon9.Saxon9Support;
 import org.intellij.plugins.xsltDebugger.rt.engine.local.xalan.XalanSupport;
 import org.intellij.plugins.xsltDebugger.rt.engine.remote.DebuggerServer;
 
-import javax.xml.transform.*;
+import javax.xml.transform.Result;
+import javax.xml.transform.Source;
+import javax.xml.transform.Transformer;
+import javax.xml.transform.TransformerException;
+import javax.xml.transform.TransformerFactory;
 import java.rmi.RemoteException;
 
 
 public class XSLTDebuggerMain implements XSLTMain {
 
+  @Override
   public TransformerFactory createTransformerFactory() throws ClassNotFoundException, InstantiationException, IllegalAccessException {
     final String type = System.getProperty("xslt.transformer.type");
     if ("xalan".equalsIgnoreCase(type)) {
@@ -43,6 +48,7 @@ public class XSLTDebuggerMain implements XSLTMain {
     return XalanSupport.prepareFactory(XSLTRunner.createTransformerFactoryStatic());
   }
 
+  @Override
   public void start(Transformer transformer, Source source, Result result) throws TransformerException {
     try {
       DebuggerServer.create(transformer, source, result, Integer.getInteger("xslt.debugger.port"));

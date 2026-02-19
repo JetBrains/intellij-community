@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.crlf;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -17,7 +17,13 @@ import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * Given a number of files, detects if CRLF line separators in them are about to be committed to Git. That is:
@@ -41,13 +47,12 @@ public final class GitCrlfProblemsDetector {
   private static final Logger LOG = Logger.getInstance(GitCrlfProblemsDetector.class);
   private static final String CRLF = "\r\n";
 
-  @NotNull private final Git myGit;
-  @NotNull private final GitRepositoryManager myRepositoryManager;
+  private final @NotNull Git myGit;
+  private final @NotNull GitRepositoryManager myRepositoryManager;
 
   private final boolean myShouldWarn;
 
-  @NotNull
-  public static GitCrlfProblemsDetector detect(@NotNull Project project, @NotNull Git git, @NotNull Collection<VirtualFile> files) {
+  public static @NotNull GitCrlfProblemsDetector detect(@NotNull Project project, @NotNull Git git, @NotNull Collection<VirtualFile> files) {
     return new GitCrlfProblemsDetector(project, git, files);
   }
 
@@ -83,8 +88,7 @@ public final class GitCrlfProblemsDetector {
     return filesWithoutAttrsByRoot;
   }
 
-  @NotNull
-  private Collection<VirtualFile> findFilesWithoutAttrs(@NotNull VirtualFile root, @NotNull Collection<? extends VirtualFile> files) {
+  private @NotNull Collection<VirtualFile> findFilesWithoutAttrs(@NotNull VirtualFile root, @NotNull Collection<? extends VirtualFile> files) {
     GitRepository repository = myRepositoryManager.getRepositoryForRoot(root);
     if (repository == null) {
       LOG.warn("Repository is null for " + root);
@@ -110,9 +114,8 @@ public final class GitCrlfProblemsDetector {
     return filesWithoutAttrs;
   }
 
-  @NotNull
-  private static Map<VirtualFile, Collection<VirtualFile>> findFilesWithCrlf(@NotNull Map<VirtualFile, List<VirtualFile>> allFilesByRoots,
-                                                                             @NotNull Collection<VirtualFile> rootsWithIncorrectAutoCrlf) {
+  private static @NotNull Map<VirtualFile, Collection<VirtualFile>> findFilesWithCrlf(@NotNull Map<VirtualFile, List<VirtualFile>> allFilesByRoots,
+                                                                                      @NotNull Collection<VirtualFile> rootsWithIncorrectAutoCrlf) {
     Map<VirtualFile, Collection<VirtualFile>> filesWithCrlfByRoots = new HashMap<>();
     for (Map.Entry<VirtualFile, List<VirtualFile>> entry : allFilesByRoots.entrySet()) {
       VirtualFile root = entry.getKey();
@@ -127,8 +130,7 @@ public final class GitCrlfProblemsDetector {
     return filesWithCrlfByRoots;
   }
 
-  @NotNull
-  private static Collection<VirtualFile> findFilesWithCrlf(@NotNull Collection<? extends VirtualFile> files) {
+  private static @NotNull Collection<VirtualFile> findFilesWithCrlf(@NotNull Collection<? extends VirtualFile> files) {
     Collection<VirtualFile> filesWithCrlf = new ArrayList<>();
     for (VirtualFile file : files) {
       ProgressIndicatorProvider.checkCanceled();
@@ -140,8 +142,7 @@ public final class GitCrlfProblemsDetector {
     return filesWithCrlf;
   }
 
-  @NotNull
-  private Collection<VirtualFile> getRootsWithIncorrectAutoCrlf(@NotNull Map<VirtualFile, List<VirtualFile>> filesByRoots) {
+  private @NotNull Collection<VirtualFile> getRootsWithIncorrectAutoCrlf(@NotNull Map<VirtualFile, List<VirtualFile>> filesByRoots) {
     Collection<VirtualFile> rootsWithIncorrectAutoCrlf = new ArrayList<>();
     for (Map.Entry<VirtualFile, List<VirtualFile>> entry : filesByRoots.entrySet()) {
       VirtualFile root = entry.getKey();

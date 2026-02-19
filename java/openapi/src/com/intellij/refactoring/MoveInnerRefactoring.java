@@ -17,9 +17,6 @@ package com.intellij.refactoring;
 
 import com.intellij.psi.PsiClass;
 
-/**
- * @author dsl
- */
 public interface MoveInnerRefactoring extends Refactoring {
 
   PsiClass getInnerClass();

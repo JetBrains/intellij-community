@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.execution.build;
 
 import com.intellij.execution.Executor;
@@ -6,10 +6,11 @@ import com.intellij.execution.configurations.ModuleBasedConfiguration;
 import com.intellij.execution.configurations.ParametersList;
 import com.intellij.execution.configurations.RunConfigurationModule;
 import com.intellij.execution.configurations.RunProfile;
-import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.process.ProcessHandler;
+import com.intellij.execution.process.ProcessListener;
 import com.intellij.execution.runners.ExecutionEnvironment;
+import com.intellij.execution.scratch.JavaScratchConfiguration;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.module.Module;
@@ -19,10 +20,21 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.packaging.artifacts.ArtifactProperties;
 import com.intellij.packaging.artifacts.ArtifactPropertiesProvider;
-import com.intellij.task.*;
+import com.intellij.task.ExecuteRunConfigurationTask;
+import com.intellij.task.ModuleBuildTask;
+import com.intellij.task.ModuleFilesBuildTask;
+import com.intellij.task.ModuleResourcesBuildTask;
+import com.intellij.task.ProjectModelBuildTask;
+import com.intellij.task.ProjectTask;
+import com.intellij.task.ProjectTaskContext;
+import com.intellij.task.ProjectTaskNotification;
+import com.intellij.task.ProjectTaskResult;
+import com.intellij.task.ProjectTaskRunner;
 import com.intellij.task.impl.JpsProjectTaskRunner;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.concurrency.AsyncPromise;
+import org.jetbrains.concurrency.Promise;
 import org.jetbrains.idea.maven.execution.MavenRunConfigurationType;
 import org.jetbrains.idea.maven.execution.MavenRunner;
 import org.jetbrains.idea.maven.execution.MavenRunnerParameters;
@@ -30,34 +42,43 @@ import org.jetbrains.idea.maven.model.MavenExplicitProfiles;
 import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 import static java.util.Collections.emptyList;
 import static java.util.stream.Collectors.joining;
 import static org.jetbrains.idea.maven.utils.MavenUtil.isMavenModule;
 
-/**
- * @author ibessonov
- */
-public class MavenProjectTaskRunner extends ProjectTaskRunner {
-
+public final class MavenProjectTaskRunner extends ProjectTaskRunner {
   @Override
-  public void run(@NotNull Project project,
-                  @NotNull ProjectTaskContext context,
-                  @Nullable ProjectTaskNotification callback,
-                  @NotNull Collection<? extends ProjectTask> tasks) {
-    Map<Class<? extends ProjectTask>, List<ProjectTask>> taskMap = JpsProjectTaskRunner.groupBy(tasks);
+  public Promise<Result> run(@NotNull Project project, @NotNull ProjectTaskContext context, ProjectTask @NotNull ... tasks) {
+    AsyncPromise<Result> promise = new AsyncPromise<>();
+    ProjectTaskNotification callback = new ProjectTaskNotificationAdapter(promise);
+    Map<Class<? extends ProjectTask>, List<ProjectTask>> taskMap = JpsProjectTaskRunner.groupBy(Arrays.asList(tasks));
 
     buildModuleFiles(project, context, callback, getFromGroupedMap(taskMap, ModuleFilesBuildTask.class, emptyList()));
     buildModules(project, context, callback, getFromGroupedMap(taskMap, ModuleResourcesBuildTask.class, emptyList()));
     buildModules(project, context, callback, getFromGroupedMap(taskMap, ModuleBuildTask.class, emptyList()));
 
     buildArtifacts(project, context, callback, getFromGroupedMap(taskMap, ProjectModelBuildTask.class, emptyList()));
+    return promise;
   }
 
   @Override
   public boolean canRun(@NotNull ProjectTask projectTask) {
     throw new UnsupportedOperationException("MavenProjectTaskRunner#canRun(ProjectTask)");
+  }
+
+  @Override
+  public boolean canRun(@NotNull Project project, @NotNull ProjectTask projectTask, @Nullable ProjectTaskContext context) {
+    if (context != null && context.getRunConfiguration() instanceof JavaScratchConfiguration) {
+      return false;
+    }
+    return canRun(project, projectTask);
   }
 
   @Override
@@ -71,10 +92,8 @@ public class MavenProjectTaskRunner extends ProjectTaskRunner {
       return isMavenModule(module);
     }
 
-    if (projectTask instanceof ProjectModelBuildTask) {
-      ProjectModelBuildTask buildTask = (ProjectModelBuildTask)projectTask;
-      if (buildTask.getBuildableElement() instanceof Artifact) {
-        Artifact artifact = (Artifact)buildTask.getBuildableElement();
+    if (projectTask instanceof ProjectModelBuildTask buildTask) {
+      if (buildTask.getBuildableElement() instanceof Artifact artifact) {
         MavenArtifactProperties properties = null;
         for (ArtifactPropertiesProvider provider : artifact.getPropertiesProviders()) {
           if (provider instanceof MavenArtifactPropertiesProvider) {
@@ -102,11 +121,13 @@ public class MavenProjectTaskRunner extends ProjectTaskRunner {
       }
     }
 
-    if (projectTask instanceof ExecuteRunConfigurationTask) {
-      ExecuteRunConfigurationTask task = (ExecuteRunConfigurationTask)projectTask;
+    if (projectTask instanceof ExecuteRunConfigurationTask task) {
       RunProfile runProfile = task.getRunProfile();
+      if (runProfile instanceof JavaScratchConfiguration) {
+        return false;
+      }
       if (runProfile instanceof ModuleBasedConfiguration) {
-        RunConfigurationModule module = ((ModuleBasedConfiguration)runProfile).getConfigurationModule();
+        RunConfigurationModule module = ((ModuleBasedConfiguration<?, ?>)runProfile).getConfigurationModule();
         if (!isMavenModule(module.getModule())) {
           return false;
         }
@@ -121,11 +142,10 @@ public class MavenProjectTaskRunner extends ProjectTaskRunner {
     return false;
   }
 
-  @Nullable
   @Override
-  public ExecutionEnvironment createExecutionEnvironment(@NotNull Project project,
-                                                         @NotNull ExecuteRunConfigurationTask task,
-                                                         @Nullable Executor executor) {
+  public @Nullable ExecutionEnvironment createExecutionEnvironment(@NotNull Project project,
+                                                                   @NotNull ExecuteRunConfigurationTask task,
+                                                                   @Nullable Executor executor) {
     for (MavenExecutionEnvironmentProvider environmentProvider : MavenExecutionEnvironmentProvider.EP_NAME.getExtensions()) {
       if (environmentProvider.isApplicable(task)) {
         return environmentProvider.createExecutionEnvironment(project, task, executor);
@@ -202,8 +222,7 @@ public class MavenProjectTaskRunner extends ProjectTaskRunner {
     runBatch(project, mavenRunner, "Maven Build", commands, context, callback);
   }
 
-  @NotNull
-  private static String getGoal(boolean buildOnlyResources, boolean compileOnly) {
+  private static @NotNull String getGoal(boolean buildOnlyResources, boolean compileOnly) {
     if (buildOnlyResources) {
       return "resources:resources";
     }
@@ -228,7 +247,7 @@ public class MavenProjectTaskRunner extends ProjectTaskRunner {
           }
           ProcessHandler handler = descriptor.getProcessHandler();
           if (handler != null) {
-            handler.addProcessListener(new ProcessAdapter() {
+            handler.addProcessListener(new ProcessListener() {
               @Override
               public void processTerminated(@NotNull ProcessEvent event) {
                 if (event.getExitCode() == 0) {
@@ -264,6 +283,29 @@ public class MavenProjectTaskRunner extends ProjectTaskRunner {
           }
         }
       }
+    }
+  }
+
+  private static final class ProjectTaskNotificationAdapter implements ProjectTaskNotification {
+    private final @NotNull AsyncPromise<? super Result> myPromise;
+
+    private ProjectTaskNotificationAdapter(@NotNull AsyncPromise<? super Result> promise) {
+      myPromise = promise;
+    }
+
+    @Override
+    public void finished(@SuppressWarnings("deprecation") @NotNull ProjectTaskResult taskResult) {
+      myPromise.setResult(new Result() {
+        @Override
+        public boolean isAborted() {
+          return taskResult.isAborted();
+        }
+
+        @Override
+        public boolean hasErrors() {
+          return taskResult.getErrors() > 0;
+        }
+      });
     }
   }
 }

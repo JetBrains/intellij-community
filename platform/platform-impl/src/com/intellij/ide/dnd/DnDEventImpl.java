@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.dnd;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -10,10 +10,14 @@ import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.awt.RelativeRectangle;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JLayeredPane;
+import javax.swing.SwingUtilities;
+import java.awt.Component;
+import java.awt.Cursor;
+import java.awt.Point;
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.Transferable;
 import java.awt.datatransfer.UnsupportedFlavorException;
@@ -21,7 +25,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.List;
 
-public class DnDEventImpl extends UserDataHolderBase implements Transferable, DnDEvent {
+public final class DnDEventImpl extends UserDataHolderBase implements Transferable, DnDEvent {
   private static final Logger LOG = Logger.getInstance(DnDEventImpl.class);
 
   public static final DataFlavor ourDataFlavor = FileCopyPasteUtil.createDataFlavor(DataFlavor.javaJVMLocalObjectMimeType);
@@ -56,7 +60,7 @@ public class DnDEventImpl extends UserDataHolderBase implements Transferable, Dn
   }
 
   @Override
-  public void updateAction(DnDAction action) {
+  public void updateAction(@NotNull DnDAction action) {
     myAction = action;
   }
 
@@ -106,7 +110,7 @@ public class DnDEventImpl extends UserDataHolderBase implements Transferable, Dn
   }
 
   @Override
-  public Object getTransferData(DataFlavor flavor) throws UnsupportedFlavorException, IOException {
+  public @NotNull Object getTransferData(DataFlavor flavor) throws UnsupportedFlavorException, IOException {
     if (myAttachedObject instanceof Transferable) {
       return ((Transferable)myAttachedObject).getTransferData(flavor);
     }
@@ -172,7 +176,7 @@ public class DnDEventImpl extends UserDataHolderBase implements Transferable, Dn
     return myDropHandler != null;
   }
 
-  protected void handleDrop() {
+  void handleDrop() {
     myDropHandler.performDrop(this);
   }
 
@@ -198,7 +202,6 @@ public class DnDEventImpl extends UserDataHolderBase implements Transferable, Dn
 
   @Override
   public void setHighlighting(RelativeRectangle rectangle, int aType) {
-    getHandlerComponent();
     myManager.showHighlighter(rectangle, aType, this);
     myHighlighting = aType;
   }
@@ -283,11 +286,9 @@ public class DnDEventImpl extends UserDataHolderBase implements Transferable, Dn
     if( this == o ) {
       return true;
     }
-    if( !(o instanceof DnDEventImpl) ) {
+    if( !(o instanceof DnDEventImpl event) ) {
       return false;
     }
-
-    final DnDEventImpl event = (DnDEventImpl) o;
 
     if( myDropPossible != event.myDropPossible ) {
       return false;
@@ -321,8 +322,7 @@ public class DnDEventImpl extends UserDataHolderBase implements Transferable, Dn
   }
 
   @Override
-  @NonNls
-  public String toString() {
+  public @NonNls String toString() {
     return "DnDEvent[attachedObject: " + myAttachedObject + ", delegatedTarget: " + myDelegatedTarget + ", dropHandler: " + myDropHandler + "]";
   }
 

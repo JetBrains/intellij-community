@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.remoteServer.impl.runtime.log;
 
 import com.intellij.openapi.Disposable;
@@ -21,6 +7,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.remoteServer.runtime.deployment.DeploymentLogManager;
 import com.intellij.remoteServer.runtime.log.LoggingHandler;
 import com.intellij.remoteServer.runtime.log.TerminalHandler;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -54,9 +41,8 @@ public class DeploymentLogManagerImpl implements DeploymentLogManager {
     });
   }
 
-  @NotNull
   @Override
-  public Project getProject() {
+  public @NotNull Project getProject() {
     return myProject;
   }
 
@@ -69,15 +55,13 @@ public class DeploymentLogManagerImpl implements DeploymentLogManager {
     return myMainHandlerVisible;
   }
 
-  @NotNull
   @Override
-  public LoggingHandlerImpl getMainLoggingHandler() {
+  public @NotNull LoggingHandlerImpl getMainLoggingHandler() {
     return myMainLoggingHandler;
   }
 
-  @NotNull
   @Override
-  public LoggingHandler addAdditionalLog(@NotNull String presentableName) {
+  public @NotNull LoggingHandler addAdditionalLog(@NotNull String presentableName) {
     synchronized (myLogsDisposed) {
       if (myLogsDisposed.get()) {
         throw new IllegalStateException("Already disposed, can't add " + presentableName);
@@ -97,8 +81,7 @@ public class DeploymentLogManagerImpl implements DeploymentLogManager {
     myChangeListener.run();
   }
 
-  @NotNull
-  public LoggingHandler findOrCreateAdditionalLog(@NotNull String presentableName) {
+  public @NotNull LoggingHandler findOrCreateAdditionalLog(@NotNull String presentableName) {
     synchronized (myAdditionalLoggingHandlers) {
       for (LoggingHandlerBase next : myAdditionalLoggingHandlers) {
         if (next instanceof LoggingHandler && presentableName.equals(next.getPresentableName())) {
@@ -110,8 +93,7 @@ public class DeploymentLogManagerImpl implements DeploymentLogManager {
   }
 
   @Override
-  @Nullable
-  public TerminalHandler addTerminal(@NotNull final String presentableName, InputStream terminalOutput, OutputStream terminalInput) {
+  public @Nullable TerminalHandler addTerminal(final @NotNull @Nls String presentableName, InputStream terminalOutput, OutputStream terminalInput) {
     synchronized (myLogsDisposed) {
       if (myLogsDisposed.get()) {
         return null;
@@ -143,8 +125,10 @@ public class DeploymentLogManagerImpl implements DeploymentLogManager {
     myChangeListener.run();
   }
 
-  @NotNull
-  public List<LoggingHandlerBase> getAdditionalLoggingHandlers() {
+  /*
+    FIXME: memory leak. We need to remove closed handlers
+   */
+  public @NotNull List<LoggingHandlerBase> getAdditionalLoggingHandlers() {
     List<LoggingHandlerBase> result;
     synchronized (myAdditionalLoggingHandlers) {
       result = new ArrayList<>(myAdditionalLoggingHandlers);

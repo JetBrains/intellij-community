@@ -1,23 +1,14 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.tree.java;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaElementVisitor;
+import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypeCastExpression;
+import com.intellij.psi.PsiTypeElement;
 import com.intellij.psi.impl.source.Constants;
 import com.intellij.psi.impl.source.tree.ChildRole;
 import com.intellij.psi.tree.ChildRoleBase;
@@ -44,7 +35,7 @@ public class PsiTypeCastExpressionImpl extends ExpressionPsiElement implements P
   }
 
   @Override
-  @Nullable public PsiType getType() {
+  public @Nullable PsiType getType() {
     final PsiTypeElement castType = getCastType();
     if (castType == null) return null;
     return PsiUtil.captureToplevelWildcards(castType.getType(), this);
@@ -54,9 +45,6 @@ public class PsiTypeCastExpressionImpl extends ExpressionPsiElement implements P
   public ASTNode findChildByRole(int role) {
     LOG.assertTrue(ChildRole.isUnique(role));
     switch(role){
-      default:
-        return null;
-
       case ChildRole.LPARENTH:
         return findChildByType(LPARENTH);
 
@@ -68,6 +56,9 @@ public class PsiTypeCastExpressionImpl extends ExpressionPsiElement implements P
 
       case ChildRole.OPERAND:
         return findChildByType(EXPRESSION_BIT_SET);
+
+      default:
+        return null;
     }
   }
 

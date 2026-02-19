@@ -1,32 +1,22 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.javaFX.fxml.codeInsight.intentions;
 
+import com.intellij.codeInsight.intention.FileModifier;
 import com.intellij.codeInsight.intention.PsiElementBaseIntentionAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.XmlElementFactory;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.javaFX.JavaFXBundle;
 import org.jetbrains.plugins.javaFX.fxml.FxmlConstants;
 
-public class JavaFxWrapWithDefineIntention extends PsiElementBaseIntentionAction {
+public final class JavaFxWrapWithDefineIntention extends PsiElementBaseIntentionAction {
   private final XmlTag myTag;
   private final String myId;
 
@@ -35,9 +25,8 @@ public class JavaFxWrapWithDefineIntention extends PsiElementBaseIntentionAction
     myId = id;
   }
 
-  @NotNull
   @Override
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return JavaFXBundle.message("javafx.wrap.with.fx.define.intention.family.name");
   }
 
@@ -55,7 +44,7 @@ public class JavaFxWrapWithDefineIntention extends PsiElementBaseIntentionAction
   }
 
   @Override
-  public boolean startInWriteAction() {
-    return true;
+  public @Nullable FileModifier getFileModifierForPreview(@NotNull PsiFile target) {
+    return new JavaFxWrapWithDefineIntention(PsiTreeUtil.findSameElementInCopy(myTag, target), myId);
   }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.application.options.colors;
 
@@ -12,32 +12,40 @@ import com.intellij.openapi.options.ex.Settings;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.psi.codeStyle.DisplayPriority;
-import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.JBInsets;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JButton;
+import javax.swing.JComponent;
+import javax.swing.JPanel;
+import java.awt.Dimension;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
-class ScopeColorsPageFactory implements ColorAndFontPanelFactoryEx {
-  @NotNull
+final class ScopeColorsPageFactory implements ColorAndFontPanelFactoryEx {
   @Override
-  public NewColorAndFontPanel createPanel(@NotNull ColorAndFontOptions options) {
+  public @NotNull NewColorAndFontPanel createPanel(@NotNull ColorAndFontOptions options) {
     final JPanel scopePanel = createChooseScopePanel();
     return NewColorAndFontPanel.create(new PreviewPanel.Empty(){
       @Override
-      public Component getPanel() {
+      public JComponent getPanel() {
         return scopePanel;
       }
 
     }, ColorAndFontOptions.getScopesGroup(), options, null, null);
   }
 
-  @NotNull
   @Override
-  public String getPanelDisplayName() {
+  public @NotNull String getPanelDisplayName() {
     return ColorAndFontOptions.getScopesGroup();
+  }
+
+  @Override
+  public @NotNull @NonNls String getConfigurableId() {
+    return "ByScope";
   }
 
   private static JPanel createChooseScopePanel() {
@@ -46,7 +54,7 @@ class ScopeColorsPageFactory implements ColorAndFontPanelFactoryEx {
     //panel.setBorder(new LineBorder(Color.red));
     if (projects.length == 0) return panel;
     GridBagConstraints gc = new GridBagConstraints(0, 0, 1, 1, 0, 0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE,
-                                                   JBUI.emptyInsets(), 0, 0);
+                                                   JBInsets.emptyInsets(), 0, 0);
 
     JButton button = new JButton(LangBundle.message("manage.scopes"));
     button.setPreferredSize(new Dimension(230, button.getPreferredSize().height));

@@ -1,0 +1,44 @@
+### auto-generated section `build fleet.ktor.network.tls` start
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+jvm_library(
+  name = "tls",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True, exclude = ["**/module-info.java"]),
+  exports = [
+    "@lib//:fleet-io-ktor-http",
+    "@lib//:fleet-io-ktor-io",
+    "@lib//:fleet-io-ktor-network",
+    "@lib//:fleet-io-ktor-network-tls",
+    "@lib//:fleet-io-ktor-utils",
+  ],
+  runtime_deps = [
+    "@lib//:fleet-io-ktor-http",
+    "@lib//:fleet-io-ktor-io",
+    "@lib//:fleet-io-ktor-network",
+    "@lib//:fleet-io-ktor-network-tls",
+    "@lib//:fleet-io-ktor-utils",
+    "@lib//:jetbrains-annotations",
+    "@lib//:kotlin-stdlib",
+    "@lib//:kotlinx-coroutines-core",
+    "@lib//:kotlinx-io-core",
+    "@lib//:kotlinx-serialization-core",
+    "@lib//:slf4j-api",
+  ]
+)
+
+jvm_library(
+  name = "tls_test_lib",
+  module_name = "fleet.ktor.network.tls",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True, exclude = ["**/module-info.java"]),
+  exports = [
+    "@lib//:fleet-io-ktor-http",
+    "@lib//:fleet-io-ktor-io",
+    "@lib//:fleet-io-ktor-network",
+    "@lib//:fleet-io-ktor-network-tls",
+    "@lib//:fleet-io-ktor-utils",
+  ],
+  runtime_deps = [":tls"]
+)
+### auto-generated section `build fleet.ktor.network.tls` end

@@ -1,8 +1,10 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.serialization
 
+import com.intellij.openapi.util.Disposer
 import com.intellij.testFramework.assertions.Assertions.assertThat
 import com.intellij.testFramework.assertions.Assertions.assertThatThrownBy
+import com.intellij.testFramework.rethrowLoggedErrorsIn
 import com.intellij.testFramework.rules.InMemoryFsRule
 import com.intellij.util.io.write
 import org.junit.Rule
@@ -27,7 +29,7 @@ class NonDefaultConstructorTest {
 
   @Test
   fun `property mapping provider`() {
-    @Suppress("UNUSED_PARAMETER", "unused")
+    @Suppress("unused")
     class NoDefaultConstructorAndNoAnnotationBean(@JvmField val someParameter: String, @JvmField val intList: List<Int>)
 
     test(NoDefaultConstructorAndNoAnnotationBean("foo", arrayListOf(42, 21)), testName, defaultTestWriteConfiguration, ReadConfiguration(resolvePropertyMapping = {
@@ -43,7 +45,6 @@ class NonDefaultConstructorTest {
 
   @Test
   fun `kotlin data class`() {
-    @Suppress("UNUSED_PARAMETER", "unused")
     data class NoDefaultConstructorAndNoAnnotationBean(@JvmField val someParameter: String, @JvmField val intList: List<Int>)
 
     test(NoDefaultConstructorAndNoAnnotationBean("foo", arrayListOf(42, 21)))
@@ -79,9 +80,13 @@ class NonDefaultConstructorTest {
   }
 
   @Test
-  fun `remove versioned file on parameter error`() {
-    val file = VersionedFile(fsRule.fs.getPath("/cache.ion"), 42, isCompressed = false)
-    file.file.write("""
+  fun `remove versioned file on parameter error`(): Unit = rethrowLoggedErrorsIn {
+    val disposable = Disposer.newDisposable()
+    com.intellij.openapi.diagnostic.DefaultLogger.disableStderrDumping(disposable)
+    try {
+
+      val file = VersionedFile(fsRule.fs.getPath("/cache.ion"), 42, isCompressed = false)
+      file.file.write("""
       {
         version:42,
         formatVersion:3,
@@ -89,12 +94,16 @@ class NonDefaultConstructorTest {
         }
       }
     """.trimIndent())
-    assertThatThrownBy {
-      file.read(NoDefaultConstructorBean::class.java)
+      assertThatThrownBy {
+        file.read(NoDefaultConstructorBean::class.java)
+      }
+        .isInstanceOf(AssertionError::class.java)
+        .hasCauseInstanceOf(SerializationException::class.java)
+      assertThat(file.file).doesNotExist()
     }
-      .isInstanceOf(AssertionError::class.java)
-      .hasCauseInstanceOf(SerializationException::class.java)
-    assertThat(file.file).doesNotExist()
+    finally {
+      Disposer.dispose(disposable)
+    }
   }
 
   @Test
@@ -149,9 +158,9 @@ private class Bean3 {
   var b: Bean2? = null
 }
 
-@Suppress("UNUSED_PARAMETER", "unused")
+@Suppress("unused")
 private class NoDefaultConstructorBean @PropertyMapping("someParameter", "intList") constructor(@JvmField val someParameter: String,
                                                                                                   @JvmField val intList: List<Int>)
 
-@Suppress("UNUSED_PARAMETER", "unused")
+@Suppress("unused")
 private class NullableArgBean @PropertyMapping("p", "p2", "p3") constructor(@JvmField val p: String?, @JvmField val p2: String?, @JvmField val p3: String?)

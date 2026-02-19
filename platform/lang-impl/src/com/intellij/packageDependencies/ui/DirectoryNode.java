@@ -1,7 +1,8 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.packageDependencies.ui;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.projectView.impl.ProjectRootsUtil;
 import com.intellij.ide.projectView.impl.nodes.ProjectViewDirectoryHelper;
 import com.intellij.openapi.project.Project;
@@ -21,11 +22,11 @@ import com.intellij.psi.search.scope.packageSet.FilePatternPackageSet;
 import com.intellij.util.PlatformIcons;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.Icon;
 import java.util.Map;
 import java.util.Set;
 
-public class DirectoryNode extends PackageDependenciesNode {
+public final class DirectoryNode extends PackageDependenciesNode {
 
   private final String myDirName;
   private PsiDirectory myDirectory;
@@ -36,6 +37,8 @@ public class DirectoryNode extends PackageDependenciesNode {
   private boolean myCompactPackages = true;
   private String myFQName = null;
   private final VirtualFile myVDirectory;
+  private Icon myIcon = AllIcons.Nodes.Package;
+  private String myComment;
 
   public DirectoryNode(VirtualFile aDirectory,
                        Project project,
@@ -137,6 +140,7 @@ public class DirectoryNode extends PackageDependenciesNode {
     return false;
   }
 
+  @Override
   public String toString() {
     if (myFQName != null) return myFQName;
     if (myCompactPackages) {
@@ -167,7 +171,7 @@ public class DirectoryNode extends PackageDependenciesNode {
       return "";
     }
     if (contentRoot == null) {
-      return "";
+      return toString();
     }
     return VfsUtilCore.getRelativePath(directory, contentRoot, '/');
   }
@@ -177,8 +181,7 @@ public class DirectoryNode extends PackageDependenciesNode {
     return getTargetDirectory();
   }
 
-  @Nullable
-  private PsiDirectory getPsiDirectory() {
+  private @Nullable PsiDirectory getPsiDirectory() {
     if (myDirectory == null) {
       if (myVDirectory.isValid() && !myProject.isDisposed()) {
         myDirectory = PsiManager.getInstance(myProject).findDirectory(myVDirectory);
@@ -202,31 +205,54 @@ public class DirectoryNode extends PackageDependenciesNode {
     return 3;
   }
 
+  @Override
   public boolean equals(Object o) {
     if (isEquals()) {
       return super.equals(o);
     }
     if (this == o) return true;
-    if (!(o instanceof DirectoryNode)) return false;
-
-    final DirectoryNode packageNode = (DirectoryNode)o;
+    if (!(o instanceof DirectoryNode packageNode)) return false;
 
     if (!toString().equals(packageNode.toString())) return false;
+
+    if (!myVDirectory.equals(packageNode.myVDirectory)) return false;
 
     return true;
   }
 
+  @Override
   public int hashCode() {
     return toString().hashCode();
   }
 
   @Override
   public Icon getIcon() {
+    return myIcon;
+  }
+
+  @Override
+  public void update() {
+    super.update();
+    myIcon = doGetIcon();
+    myComment = doGetComment();
+  }
+
+  private Icon doGetIcon() {
     if (myVDirectory != null) {
       final VirtualFile jarRoot = JarFileSystem.getInstance().getRootByEntry(myVDirectory);
       return myVDirectory.equals(jarRoot) ? PlatformIcons.JAR_ICON : SourceRootIconProvider.getDirectoryIcon(myVDirectory, myProject);
     }
-    return PlatformIcons.PACKAGE_ICON;
+    return AllIcons.Nodes.Package;
+  }
+
+  private @Nullable String doGetComment() {
+    if (myVDirectory != null && myVDirectory.isValid() && !myProject.isDisposed()) {
+      final PsiDirectory directory = getPsiDirectory();
+      if (directory != null) {
+        return ProjectViewDirectoryHelper.getInstance(myProject).getLocationString(directory);
+      }
+    }
+    return null;
   }
 
   public void setCompactedDirNode(final DirectoryNode compactedDirNode) {
@@ -243,8 +269,7 @@ public class DirectoryNode extends PackageDependenciesNode {
     return myWrapper;
   }
 
-  @Nullable
-  public DirectoryNode getCompactedDirNode() {
+  public @Nullable DirectoryNode getCompactedDirNode() {
     return myCompactPackages ? myCompactedDirNode : null;
   }
 
@@ -265,13 +290,7 @@ public class DirectoryNode extends PackageDependenciesNode {
 
   @Override
   public String getComment() {
-    if (myVDirectory != null && myVDirectory.isValid() && !myProject.isDisposed()) {
-      final PsiDirectory directory = getPsiDirectory();
-      if (directory != null) {
-        return ProjectViewDirectoryHelper.getInstance(myProject).getLocationString(directory);
-      }
-    }
-    return super.getComment();
+    return myComment;
   }
 
   @Override

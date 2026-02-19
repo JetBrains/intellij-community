@@ -1,0 +1,10 @@
+// NAME: T
+
+typealias T = suspend (String) -> Unit
+
+// SIBLING:
+fun testFun() {
+    val action: T = { /* no-op */ _ -> }
+}
+
+// IGNORE_K1

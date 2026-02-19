@@ -1,23 +1,9 @@
-/*
- * Copyright 2000-2011 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.ui.configuration.classpath;
 
 import com.intellij.ide.JavaUiBundle;
+import com.intellij.openapi.module.JavaModuleType;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.StdModuleTypes;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ui.configuration.ChooseModulesDialog;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.StructureConfigurableContext;
@@ -32,15 +18,13 @@ import java.util.Set;
 
 class AddModuleDependencyAction extends AddItemPopupAction<Module> {
   private final StructureConfigurableContext myContext;
-  private final ClasspathPanel myClasspathPanel;
 
   AddModuleDependencyAction(final ClasspathPanel classpathPanel,
                                    int actionIndex,
                                    StructureConfigurableContext context) {
     super(classpathPanel, actionIndex, JavaUiBundle.message("classpath.add.module.dependency.action"),
-          StdModuleTypes.JAVA.getIcon());
+          JavaModuleType.getModuleType().getIcon());
     myContext = context;
-    myClasspathPanel = classpathPanel;
   }
 
   @Override
@@ -50,7 +34,7 @@ class AddModuleDependencyAction extends AddItemPopupAction<Module> {
 
   private List<Module> getNotAddedModules() {
     final ModifiableRootModel rootModel = myClasspathPanel.getRootModel();
-    Set<Module> addedModules = ContainerUtil.set(rootModel.getModuleDependencies(true));
+    Set<Module> addedModules = ContainerUtil.newHashSet(rootModel.getModuleDependencies(true));
     addedModules.add(rootModel.getModule());
 
     final Module[] modules = myClasspathPanel.getModuleConfigurationState().getModulesProvider().getModules();
@@ -92,8 +76,7 @@ class AddModuleDependencyAction extends AddItemPopupAction<Module> {
     }
 
     @Override
-    @NotNull
-    public List<Module> chooseElements() {
+    public @NotNull List<Module> chooseElements() {
       ChooseModulesDialog dialog = new ChooseModulesDialog(myClasspathPanel.getComponent(), myItems, myTitle, myDescription);
       dialog.show();
       return dialog.getChosenElements();

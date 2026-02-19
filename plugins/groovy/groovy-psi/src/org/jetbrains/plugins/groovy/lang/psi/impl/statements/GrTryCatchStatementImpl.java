@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements;
 
 import com.intellij.lang.ASTNode;
@@ -15,9 +15,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrTryCatchStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
 
-/**
- * @author ilyas
- */
 public class GrTryCatchStatementImpl extends GroovyPsiElementImpl implements GrTryCatchStatement {
   public GrTryCatchStatementImpl(@NotNull ASTNode node) {
     super(node);
@@ -33,15 +30,13 @@ public class GrTryCatchStatementImpl extends GroovyPsiElementImpl implements GrT
     return "Try statement";
   }
 
-  @Nullable
   @Override
-  public GrTryResourceList getResourceList() {
+  public @Nullable GrTryResourceList getResourceList() {
     return findChildByClass(GrTryResourceList.class);
   }
 
   @Override
-  @Nullable
-  public GrOpenBlock getTryBlock() {
+  public @Nullable GrOpenBlock getTryBlock() {
     return findChildByClass(GrOpenBlock.class);
   }
 
@@ -50,9 +45,8 @@ public class GrTryCatchStatementImpl extends GroovyPsiElementImpl implements GrT
     return findChildrenByClass(GrCatchClause.class);
   }
 
-  @Nullable
   @Override
-  public GrFinallyClause getFinallyClause() {
+  public @Nullable GrFinallyClause getFinallyClause() {
     return findChildByClass(GrFinallyClause.class);
   }
 

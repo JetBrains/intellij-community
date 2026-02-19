@@ -1,33 +1,48 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.util.projectWizard;
 
 import com.intellij.openapi.ui.LabeledComponent;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Pair;
+import com.intellij.util.PathUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
-import javax.swing.*;
+import javax.swing.JComponent;
+import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
-public class WebProjectSettingsStepWrapper implements SettingsStep {
+public final class WebProjectSettingsStepWrapper implements SettingsStep {
   private final List<Pair<String, JComponent>> myFields = new ArrayList<>();
   private final List<JComponent> myComponents = new ArrayList<>();
+  private final @Nullable ProjectSettingsStepBase<?> myStepBase;
+
+  /**
+   * @deprecated Use {@link #WebProjectSettingsStepWrapper(ProjectSettingsStepBase)} instead
+   */
+  @Deprecated(forRemoval = true)
+  public WebProjectSettingsStepWrapper() {
+    this(null);
+  }
+
+  public WebProjectSettingsStepWrapper(@Nullable ProjectSettingsStepBase<?> stepBase) {
+    myStepBase = stepBase;
+  }
 
   public List<JComponent> getComponents() {
     return myComponents;
   }
 
   @Override
-  @Nullable
-  public WizardContext getContext() {
-    return null;
+  public @Nullable WizardContext getContext() {
+    return myStepBase != null ? myStepBase.getWizardContext() : null;
   }
 
-  public List<LabeledComponent<? extends JComponent>> getFields() {
+  public @Unmodifiable List<LabeledComponent<? extends JComponent>> getFields() {
     return ContainerUtil.map(myFields, (Pair<@NotNull @Nls String, @NotNull JComponent> pair) -> LabeledComponent.create(pair.second, pair.first));
   }
 
@@ -51,13 +66,33 @@ public class WebProjectSettingsStepWrapper implements SettingsStep {
     throw new UnsupportedOperationException();
   }
 
-  @Override
-  @Nullable
-  public JTextField getModuleNameField() {
-    return null;
-  }
-
   public boolean isEmpty() {
     return myFields.isEmpty() && myComponents.isEmpty();
+  }
+
+  @Override
+  public @Nullable ModuleNameLocationSettings getModuleNameLocationSettings() {
+    if (myStepBase == null) return null;
+    return new ModuleNameLocationSettings() {
+      @Override
+      public @NotNull String getModuleName() {
+        return PathUtil.getFileName(myStepBase.getProjectLocation());
+      }
+
+      @Override
+      public void setModuleName(@NotNull String moduleName) {
+        myStepBase.setLocation(PathUtil.getParentPath(myStepBase.getProjectLocation()) + File.separatorChar + moduleName);
+      }
+
+      @Override
+      public @NotNull String getModuleContentRoot() {
+        return myStepBase.getProjectLocation();
+      }
+
+      @Override
+      public void setModuleContentRoot(@NotNull String path) {
+        myStepBase.setLocation(path);
+      }
+    };
   }
 }

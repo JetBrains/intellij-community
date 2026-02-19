@@ -1,0 +1,4 @@
+PsiJavaFile:Javadoc1Markdown.java
+  PsiComment(C_STYLE_COMMENT)('/**/')
+  PsiImportList
+    <empty list>

@@ -1,9 +1,8 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.navigation.impl
 
-import com.intellij.codeInsight.navigation.BaseCtrlMouseInfo
-import com.intellij.codeInsight.navigation.CtrlMouseDocInfo
-import com.intellij.codeInsight.navigation.CtrlMouseInfo
+import com.intellij.codeInsight.navigation.CtrlMouseData
+import com.intellij.codeInsight.navigation.rangeOnlyCtrlMouseData
 import com.intellij.navigation.DirectNavigationProvider
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
@@ -11,25 +10,26 @@ import com.intellij.psi.util.elementsAroundOffsetUp
 
 internal fun fromDirectNavigation(file: PsiFile, offset: Int): GTDActionData? {
   for ((element, _) in file.elementsAroundOffsetUp(offset)) {
-    val directNavigationElement = directNavigationElement(element) ?: continue
-    return DirectNavigationData(element, directNavigationElement)
+    for (provider in DirectNavigationProvider.EP_NAME.extensions) {
+      val navigationElement = provider.getNavigationElement(element)
+      if (navigationElement != null) {
+        return DirectNavigationData(element, navigationElement, provider)
+      }
+    }
   }
   return null
 }
 
-private fun directNavigationElement(element: PsiElement): PsiElement? {
-  for (provider in DirectNavigationProvider.EP_NAME.extensions) {
-    return provider.getNavigationElement(element) ?: continue
+private class DirectNavigationData(
+  private val sourceElement: PsiElement,
+  private val targetElement: PsiElement,
+  private val navigationProvider: DirectNavigationProvider
+) : GTDActionData {
+
+  override fun ctrlMouseData(): CtrlMouseData = rangeOnlyCtrlMouseData(listOf(sourceElement.textRange))
+
+  override fun result(): NavigationActionResult? {
+    val request = targetElement.psiNavigatable()?.navigationRequest() ?: return null
+    return NavigationActionResult.SingleTarget({ request }, navigationProvider)
   }
-  return null
-}
-
-private class DirectNavigationData(private val sourceElement: PsiElement, private val targetElement: PsiElement) : GTDActionData {
-
-  override fun ctrlMouseInfo(): CtrlMouseInfo = object : BaseCtrlMouseInfo(listOf(sourceElement.textRange)) {
-    override fun getDocInfo(): CtrlMouseDocInfo = CtrlMouseDocInfo.EMPTY
-    override fun isValid(): Boolean = true
-  }
-
-  override fun result(): GTDActionResult? = psiNavigatable(targetElement)?.let(GTDActionResult::SingleTarget)
 }

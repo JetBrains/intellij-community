@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.io.fastCgi
 
 import com.intellij.openapi.util.io.FileUtil
@@ -9,9 +9,10 @@ import io.netty.channel.Channel
 import io.netty.handler.codec.http.FullHttpRequest
 import io.netty.handler.codec.http.HttpHeaderNames
 import org.jetbrains.builtInWebServer.PathInfo
+import org.jetbrains.io.serverHeaderValue
 import java.net.InetSocketAddress
 import java.nio.CharBuffer
-import java.util.*
+import java.util.Locale
 import kotlin.math.min
 
 private const val PARAMS = 4
@@ -74,6 +75,7 @@ class FastCgiRequest(val requestId: Int, allocator: ByteBufAllocator) {
     addHeader("REMOTE_PORT", remote.port.toString())
 
     val local = clientChannel.localAddress() as InetSocketAddress
+    addHeader("SERVER_NAME", serverHeaderValue)
 
     addHeader("SERVER_ADDR", local.address.hostAddress)
     addHeader("SERVER_PORT", local.port.toString())
@@ -100,7 +102,7 @@ class FastCgiRequest(val requestId: Int, allocator: ByteBufAllocator) {
 
     for ((key, value) in request.headers().iteratorAsString()) {
       if (!key.equals("keep-alive", ignoreCase = true) && !key.equals("connection", ignoreCase = true)) {
-        addHeader("HTTP_${key.replace('-', '_').toUpperCase(Locale.ENGLISH)}", value)
+        addHeader("HTTP_${key.replace('-', '_').uppercase(Locale.ENGLISH)}", value)
       }
     }
   }

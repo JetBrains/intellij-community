@@ -1,27 +1,33 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.colors;
 
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.ui.ColorUtil;
 import com.intellij.util.Function;
 import com.intellij.util.containers.MultiMap;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.*;
+import java.awt.Color;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Comparator;
 import java.util.List;
-import java.util.*;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * Contains colors used in editor color scheme.
  */
+@ApiStatus.Internal
 public abstract class EditorColorPalette {
   protected final EditorColorsScheme myColorsScheme;
   private final MultiMap<Color, TextAttributesKey> myColors = new MultiMap<>();
 
-  public final static Comparator<Color> ORDER_NONE = Comparator.comparingInt(EditorColorPalette::getDefaultOrder);
-  public final static Comparator<Color> ORDER_BY_INTENSITY = Comparator.comparingInt(EditorColorPalette::getIntensity);
+  public static final Comparator<Color> ORDER_NONE = Comparator.comparingInt(EditorColorPalette::getDefaultOrder);
+  public static final Comparator<Color> ORDER_BY_INTENSITY = Comparator.comparingInt(EditorColorPalette::getIntensity);
 
   public EditorColorPalette(EditorColorsScheme colorsScheme) {
     myColorsScheme = colorsScheme;
@@ -52,8 +58,7 @@ public abstract class EditorColorPalette {
     return comparator == ORDER_NONE ? myColors.keySet() : orderBy(comparator);
   }
 
-  @NotNull
-  public Set<Map.Entry<Color, Collection<TextAttributesKey>>> getEntries() {
+  public @NotNull Set<Map.Entry<Color, Collection<TextAttributesKey>>> getEntries() {
     return myColors.entrySet();
   }
 
@@ -61,7 +66,7 @@ public abstract class EditorColorPalette {
    * Collects colors from known color setup pages.
    *
    * @param attrColorReader the function to extract the color from attribute (ex. foreground or background)
-   * @return the pallete with collected colors
+   * @return the palette with collected colors
    */
   public EditorColorPalette collectColors(@NotNull Function<? super TextAttributes, ? extends Color> attrColorReader) {
     return collectColorsWithFilter(attrColorReader, false);
@@ -73,7 +78,7 @@ public abstract class EditorColorPalette {
    * @param attrColorReader          the function to extract the color from attribute (ex. foreground or background)
    * @param filterOutRainbowAttrKeys the flag to filter out the attributes that can be overwritten by semantic highlighting
    *                                 or not conflicting with semantic highlighting
-   * @return the pallete with collected colors
+   * @return the palette with collected colors
    */
   public EditorColorPalette collectColorsWithFilter(@NotNull Function<? super TextAttributes, ? extends Color> attrColorReader,
                                                     boolean filterOutRainbowAttrKeys) {
@@ -98,8 +103,7 @@ public abstract class EditorColorPalette {
    * @return An adjusted color or the sample color if it doesn't conflict with the palette or {@code null} if non-conflicting
    * color can't be found with used algorithms of brightness adjustment.
    */
-  @Nullable
-  public Color getClosestNonConflictingColor(@NotNull Color sampleColor) {
+  public @Nullable Color getClosestNonConflictingColor(@NotNull Color sampleColor) {
     boolean searchBrighter = ColorUtil.isDark(sampleColor);
     Color foundColor = getClosestNonConflictingColor(sampleColor, getAdjuster(searchBrighter));
     if (foundColor == null) {
@@ -121,8 +125,7 @@ public abstract class EditorColorPalette {
    * @return An adjusted color or the sample color if it doesn't conflict with the palette or {@code null} if non-conflicting
    * color can't be found with used algorithms of brightness adjustment.
    */
-  @Nullable
-  public Color getClosestNonConflictingColor(@NotNull Color sampleColor, @NotNull Function<? super Color, ? extends Color> colorAdjuster) {
+  public @Nullable Color getClosestNonConflictingColor(@NotNull Color sampleColor, @NotNull Function<? super Color, ? extends Color> colorAdjuster) {
     if (myColors.containsKey(sampleColor)) {
       Color newColor = colorAdjuster.fun(sampleColor);
       return !sampleColor.equals(newColor) ? getClosestNonConflictingColor(newColor, colorAdjuster) : null;

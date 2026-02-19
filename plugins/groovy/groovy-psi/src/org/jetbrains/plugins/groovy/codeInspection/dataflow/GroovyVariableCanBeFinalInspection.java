@@ -1,14 +1,19 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.codeInspection.dataflow;
 
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemsHolder;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiModifierList;
+import com.intellij.psi.PsiReference;
+import com.intellij.psi.PsiVariable;
+import com.intellij.psi.impl.light.LightElement;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.Function;
-import gnu.trove.TObjectIntHashMap;
-import gnu.trove.TObjectIntProcedure;
+import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.codeInspection.GroovyLocalInspectionBase;
@@ -27,8 +32,7 @@ import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import java.util.Collection;
 import java.util.List;
 
-public class GroovyVariableCanBeFinalInspection extends GroovyLocalInspectionBase {
-
+public final class GroovyVariableCanBeFinalInspection extends GroovyLocalInspectionBase {
   private static final Function<ProblemDescriptor, PsiModifierList> ID_MODIFIER_LIST_PROVIDER =
     descriptor -> {
       final PsiElement identifier = descriptor.getPsiElement();
@@ -37,6 +41,7 @@ public class GroovyVariableCanBeFinalInspection extends GroovyLocalInspectionBas
     };
 
   private static void process(@NotNull GrControlFlowOwner owner, @NotNull GrVariable variable, @NotNull ProblemsHolder problemsHolder) {
+    if (variable instanceof LightElement) return;
     if (variable.hasModifierProperty(PsiModifier.FINAL)) return;
     if (!checkVariableDeclaredInsideScope(owner, variable)) return;
     if (checkVariableAssignedInsideClosureOrAnonymous(owner, variable)) return;
@@ -62,8 +67,7 @@ public class GroovyVariableCanBeFinalInspection extends GroovyLocalInspectionBas
     final Collection<PsiReference> references = ReferencesSearch.search(variable, variable.getUseScope()).findAll();
     for (final PsiReference reference : references) {
       final PsiElement element = reference.getElement();
-      if (!(element instanceof GroovyPsiElement)) continue;
-      final GroovyPsiElement groovyElement = (GroovyPsiElement)element;
+      if (!(element instanceof GroovyPsiElement groovyElement)) continue;
       final GroovyPsiElement closure = PsiTreeUtil.getParentOfType(groovyElement, GrClosableBlock.class, GrAnonymousClassDefinition.class);
       if (closure == null || !PsiTreeUtil.isAncestor(owner, closure, false)) continue;
       if (PsiUtil.isLValue(groovyElement)) return true;
@@ -79,24 +83,22 @@ public class GroovyVariableCanBeFinalInspection extends GroovyLocalInspectionBas
   }
 
   @Override
-  public void check(@NotNull final GrControlFlowOwner owner, @NotNull final ProblemsHolder problemsHolder) {
+  public void check(final @NotNull GrControlFlowOwner owner, final @NotNull ProblemsHolder problemsHolder) {
     final Instruction[] flow = owner.getControlFlow();
-    final DFAEngine<TObjectIntHashMap<GrVariable>> engine = new DFAEngine<>(
+    final DFAEngine<Object2IntMap<GrVariable>> engine = new DFAEngine<>(
       flow,
       new WritesCounterDFAInstance(),
-      new WritesCounterSemilattice<>()
+      new WritesCounterSemilattice()
     );
-    final List<TObjectIntHashMap<GrVariable>> dfaResult = engine.performDFAWithTimeout();
-    if (dfaResult == null || dfaResult.isEmpty()) return;
+    List<Object2IntMap<GrVariable>> dfaResult = engine.performDFAWithTimeout();
+    if (dfaResult == null || dfaResult.isEmpty() || dfaResult.get(dfaResult.size() - 1) == null) {
+      return;
+    }
 
-    dfaResult.get(dfaResult.size() - 1).forEachEntry(new TObjectIntProcedure<GrVariable>() {
-      @Override
-      public boolean execute(GrVariable variable, int writesCount) {
-        if (writesCount == 1) {
-          process(owner, variable, problemsHolder);
-        }
-        return true;
+    for (Object2IntMap.Entry<GrVariable> entry : dfaResult.get(dfaResult.size() - 1).object2IntEntrySet()) {
+      if (entry.getIntValue() == 1) {
+        process(owner, entry.getKey(), problemsHolder);
       }
-    });
+    }
   }
 }

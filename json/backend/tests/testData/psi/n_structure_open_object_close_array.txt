@@ -1,0 +1,5 @@
+JsonFile: n_structure_open_object_close_array.json
+  JsonObject
+    PsiElement({)('{')
+    PsiErrorElement:<property> expected, got ']'
+      PsiElement(])(']')

@@ -4,7 +4,12 @@
 
 package com.intellij.openapi.externalSystem.service.ui
 
-import com.intellij.openapi.externalSystem.service.execution.ExternalSystemJdkUtil.*
+import com.intellij.openapi.externalSystem.service.execution.ExternalSystemJdkUtil.JAVA_HOME
+import com.intellij.openapi.externalSystem.service.execution.ExternalSystemJdkUtil.USE_JAVA_HOME
+import com.intellij.openapi.externalSystem.service.execution.ExternalSystemJdkUtil.USE_PROJECT_JDK
+import com.intellij.openapi.externalSystem.service.execution.ExternalSystemJdkUtil.getJavaHome
+import com.intellij.openapi.externalSystem.service.execution.ExternalSystemJdkUtil.getJavaSdkType
+import com.intellij.openapi.externalSystem.service.execution.ExternalSystemJdkUtil.isValidJdk
 import com.intellij.openapi.externalSystem.util.ExternalSystemBundle
 import com.intellij.openapi.roots.ui.configuration.SdkComboBox
 import com.intellij.openapi.roots.ui.configuration.SdkListItem
@@ -34,9 +39,9 @@ fun SdkComboBox.setSelectedJdkReference(sdkLookupProvider: SdkLookupProvider, jd
 
 fun SdkComboBox.addJdkReferenceItem(name: String, homePath: String?): SdkListItem {
   val type = getJavaSdkType()
-  val versionString = homePath?.let(type::getVersionString)
   val isValid = isValidJdk(homePath)
-  return addJdkReferenceItem(name, versionString, isValid)
+  val versionString = if (isValid) type.getVersionString(homePath!!) else null
+  return addSdkReferenceItem(type, name, versionString, isValid)
 }
 
 fun SdkComboBox.addJdkReferenceItem(name: String, versionString: String?, isValid: Boolean): SdkListItem {

@@ -104,9 +104,9 @@ public final class ScreenReader {
    * Adds property change listener. Supported properties:
    * {@link #SCREEN_READER_ACTIVE_PROPERTY}
    */
-  public static void addPropertyChangeListener(@NotNull final String propertyName,
+  public static void addPropertyChangeListener(final @NotNull String propertyName,
                                                @NotNull Disposable parent,
-                                               @NotNull final PropertyChangeListener listener) {
+                                               final @NotNull PropertyChangeListener listener) {
     PCS.addPropertyChangeListener(propertyName, listener);
     Disposer.register(parent, new Disposable() {
       @Override

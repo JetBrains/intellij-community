@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.application.options.colors;
 
@@ -14,21 +14,32 @@ import com.intellij.openapi.options.ex.Settings;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.ui.JBColor;
-import com.intellij.ui.components.labels.LinkLabel;
-import com.intellij.ui.components.labels.LinkListener;
+import com.intellij.ui.components.ActionLink;
 import com.intellij.util.ui.JBDimension;
+import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.BorderFactory;
+import javax.swing.Box;
+import javax.swing.JCheckBox;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import java.awt.Component;
+import java.awt.Dimension;
+import java.awt.FlowLayout;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
+@ApiStatus.Internal
 public class FontOptions extends AbstractFontOptionsPanel {
 
-  @NotNull private final ColorAndFontOptions myOptions;
+  private final @NotNull ColorAndFontOptions myOptions;
 
   private @Nullable JCheckBox myOverwriteCheckBox;
   private @Nullable JLabel myBaseFontInfoLabel;
@@ -39,8 +50,7 @@ public class FontOptions extends AbstractFontOptionsPanel {
     myOptions = options;
   }
 
-  @Nullable
-  protected @NlsContexts.LinkLabel String getInheritedFontTitle() {
+  protected @Nullable @NlsContexts.LinkLabel String getInheritedFontTitle() {
     return ApplicationBundle.message("settings.editor.font.default");
   }
 
@@ -63,11 +73,11 @@ public class FontOptions extends AbstractFontOptionsPanel {
       c.gridy = 1;
       c.gridx = 0;
       c.gridwidth = 1;
-      c.insets = JBUI.emptyInsets();
+      c.insets = JBInsets.emptyInsets();
       topPanel.add(Box.createRigidArea(JBDimension.create(new Dimension(FONT_PANEL_LEFT_OFFSET, 0))), c);
       c.gridx = 1;
       c.anchor = GridBagConstraints.NORTHWEST;
-      topPanel.add(createFontSettingsPanel(), c);
+      topPanel.add(createBaseAndSecondaryFontPanel(), c);
       return topPanel;
     }
     else {
@@ -75,8 +85,28 @@ public class FontOptions extends AbstractFontOptionsPanel {
     }
   }
 
-  @Nullable
-  private Component createOverwriteCheckBox() {
+  private JPanel createBaseAndSecondaryFontPanel() {
+    JPanel fontSettingsPanel = createFontSettingsPanel();
+
+    JPanel secondaryPanel = new JPanel(new GridBagLayout());
+    GridBagConstraints c = new GridBagConstraints();
+    c.gridx = 0;
+    c.gridy = 0;
+    createSecondaryFontComboAndLabel(secondaryPanel, c);
+
+    JPanel panel = new JPanel(new GridBagLayout());
+    GridBagConstraints c2 = new GridBagConstraints();
+    c2.gridx = 0;
+    c2.gridy = 0;
+    c2.insets = JBUI.insets(0, BASE_INSET * 2);
+    c2.anchor = GridBagConstraints.NORTH;
+    panel.add(fontSettingsPanel, c2);
+    c2.gridx ++;
+    panel.add(secondaryPanel, c2);
+    return panel;
+  }
+
+  protected @Nullable Component createOverwriteCheckBox() {
     if (getInheritedFontTitle() != null) {
       JPanel overwritePanel = new JPanel(new FlowLayout(FlowLayout.LEADING, 0,0 ));
       overwritePanel.setBorder(BorderFactory.createEmptyBorder());
@@ -113,13 +143,9 @@ public class FontOptions extends AbstractFontOptionsPanel {
     return AppEditorFontOptions.getInstance().getFontPreferences();
   }
 
-  @NotNull
-  private JLabel createHyperlinkLabel() {
-    return new LinkLabel<>(getInheritedFontTitle(), null, new LinkListener<Object>() {
-      @Override
-      public void linkSelected(LinkLabel<Object> aSource, Object aLinkData) {
+  private @NotNull ActionLink createHyperlinkLabel() {
+    return new ActionLink(getInheritedFontTitle(), e -> {
         navigateToParentFontConfigurable();
-      }
     });
   }
 
@@ -157,14 +183,18 @@ public class FontOptions extends AbstractFontOptionsPanel {
     return getFontPreferences() instanceof DelegatingFontPreferences;
   }
 
-  @NotNull
   @Override
-  protected FontPreferences getFontPreferences() {
+  protected @NotNull FontPreferences getFontPreferences() {
     return getCurrentScheme().getFontPreferences();
   }
 
   @Override
   protected void setFontSize(int fontSize) {
+    setFontSize((float)fontSize);
+  }
+
+  @Override
+  protected void setFontSize(float fontSize) {
     getCurrentScheme().setEditorFontSize(fontSize);
   }
 

@@ -1,0 +1,7 @@
+deprecated: attachDebugger.svg; to be removed (use AllIcons.Debugger.AttacthToProcess)
+deprecated: function.svg; to be removed (use AllIcons.Nodes.Function)
+deprecated: ssh.svg; to be removed (use AllIcons.Nodes.Ssh)
+deprecated: executeCurrentStatement.svg; to be removed (use AllIcons.Debugger.ExecuteCurrentStatement)
+deprecated: templateRoot.svg; to be removed (use AllIcons.Nodes.TemplateRoot)
+deprecated: viewAsImage.svg; to be removed (use AllIcons.Actions.ViewAsImage)
+deprecated: tensorFlow.svg; to be removed (use AllIcons.Providers.TensorFlow)

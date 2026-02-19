@@ -16,6 +16,7 @@
 package com.intellij.ui.treeStructure.treetable;
 
 import com.intellij.ui.components.panels.OpaquePanel;
+import com.intellij.ui.render.RenderingUtil;
 import com.intellij.util.ui.ClientPropertyHolder;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.accessibility.AccessibleContextDelegate;
@@ -24,11 +25,15 @@ import javax.accessibility.Accessible;
 import javax.accessibility.AccessibleContext;
 import javax.accessibility.AccessibleState;
 import javax.accessibility.AccessibleStateSet;
-import javax.swing.*;
+import javax.swing.JComponent;
+import javax.swing.JPanel;
+import javax.swing.JTable;
 import javax.swing.border.Border;
 import javax.swing.table.TableCellRenderer;
 import javax.swing.tree.TreeCellRenderer;
-import java.awt.*;
+import java.awt.BorderLayout;
+import java.awt.Component;
+import java.awt.Container;
 
 /**
  * A TreeCellRenderer that displays a JTree.
@@ -54,15 +59,16 @@ public class TreeTableCellRenderer implements TableCellRenderer, ClientPropertyH
     if (myTreeCellRenderer != null)
       myTree.setCellRenderer(myTreeCellRenderer);
     if (isSelected){
-      myTree.setBackground(lineHasFocus ? table.getSelectionBackground() : UIUtil.getTreeUnfocusedSelectionBackground());
-      myTree.setForeground(table.getSelectionForeground());
+      myTree.setBackground(lineHasFocus ? RenderingUtil.getSelectionBackground(table) : UIUtil.getTreeUnfocusedSelectionBackground());
+      myTree.setForeground(RenderingUtil.getSelectionForeground(table));
     }
     else {
-      myTree.setBackground(table.getBackground());
-      myTree.setForeground(table.getForeground());
+      myTree.setBackground(RenderingUtil.getBackground(table));
+      myTree.setForeground(RenderingUtil.getForeground(table));
     }
 
-    myCellRendererComponent.setBackground(isSelected ? table.getSelectionBackground() : table.getBackground());
+    myCellRendererComponent.setBackground(isSelected ? RenderingUtil.getSelectionBackground(table) : RenderingUtil.getBackground(table));
+    myCellRendererComponent.setForeground(isSelected ? RenderingUtil.getSelectionForeground(table) : RenderingUtil.getForeground(table));
 
     //TableModel model = myTreeTable.getModel();
     //myTree.setTreeTableTreeBorder(hasFocus && model.getColumnClass(column).equals(TreeTableModel.class) ? myDefaultBorder : null);

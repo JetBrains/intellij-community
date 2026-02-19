@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.build;
 
 import com.intellij.build.events.BuildEventsNls;
@@ -24,10 +10,12 @@ import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.util.Consumer;
 import com.intellij.util.SmartList;
+import com.intellij.util.ThreeState;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -41,12 +29,15 @@ import java.util.function.Supplier;
 public class DefaultBuildDescriptor implements BuildDescriptor {
 
   private final Object myId;
+
+  private final Object myGroupId;
   private final @BuildEventsNls.Title String myTitle;
   private final String myWorkingDir;
   private final long myStartTime;
 
-  private boolean myActivateToolWindowWhenAdded;
+  private boolean myActivateToolWindowWhenAdded = false;
   private boolean myActivateToolWindowWhenFailed = true;
+  private @NotNull ThreeState myNavigateToError = ThreeState.UNSURE;
   private boolean myAutoFocusContent = false;
 
   private final @NotNull List<AnAction> myActions = new SmartList<>();
@@ -63,19 +54,28 @@ public class DefaultBuildDescriptor implements BuildDescriptor {
                                 @NotNull @BuildEventsNls.Title String title,
                                 @NotNull String workingDir,
                                 long startTime) {
+    this(id, null, title, workingDir, startTime);
+  }
+
+  public DefaultBuildDescriptor(@NotNull Object id,
+                                @Nullable Object groupId,
+                                @NotNull @BuildEventsNls.Title String title,
+                                @NotNull String workingDir,
+                                long startTime) {
     myId = id;
+    myGroupId = groupId;
     myTitle = title;
     myWorkingDir = workingDir;
     myStartTime = startTime;
   }
 
-  public DefaultBuildDescriptor(@Nullable @NotNull BuildDescriptor descriptor) {
-    this(descriptor.getId(), descriptor.getTitle(), descriptor.getWorkingDir(), descriptor.getStartTime());
-    if (descriptor instanceof DefaultBuildDescriptor) {
-      DefaultBuildDescriptor defaultBuildDescriptor = (DefaultBuildDescriptor)descriptor;
+  public DefaultBuildDescriptor(@NotNull BuildDescriptor descriptor) {
+    this(descriptor.getId(), descriptor.getGroupId(), descriptor.getTitle(), descriptor.getWorkingDir(), descriptor.getStartTime());
+    if (descriptor instanceof DefaultBuildDescriptor defaultBuildDescriptor) {
       myActivateToolWindowWhenAdded = defaultBuildDescriptor.myActivateToolWindowWhenAdded;
       myActivateToolWindowWhenFailed = defaultBuildDescriptor.myActivateToolWindowWhenFailed;
       myAutoFocusContent = defaultBuildDescriptor.myAutoFocusContent;
+      myNavigateToError = defaultBuildDescriptor.myNavigateToError;
 
       defaultBuildDescriptor.myRestartActions.forEach(this::withRestartAction);
       defaultBuildDescriptor.myActions.forEach(this::withAction);
@@ -89,21 +89,23 @@ public class DefaultBuildDescriptor implements BuildDescriptor {
     }
   }
 
-  @NotNull
   @Override
-  public Object getId() {
+  public @NotNull Object getId() {
     return myId;
   }
 
-  @NotNull
   @Override
-  public String getTitle() {
+  public Object getGroupId() {
+    return myGroupId;
+  }
+
+  @Override
+  public @NotNull String getTitle() {
     return myTitle;
   }
 
-  @NotNull
   @Override
-  public String getWorkingDir() {
+  public @NotNull String getWorkingDir() {
     return myWorkingDir;
   }
 
@@ -113,26 +115,22 @@ public class DefaultBuildDescriptor implements BuildDescriptor {
   }
 
   @ApiStatus.Experimental
-  @NotNull
-  public List<AnAction> getActions() {
+  public @NotNull List<AnAction> getActions() {
     return Collections.unmodifiableList(myActions);
   }
 
   @ApiStatus.Experimental
-  @NotNull
-  public List<AnAction> getRestartActions() {
+  public @NotNull List<AnAction> getRestartActions() {
     return Collections.unmodifiableList(myRestartActions);
   }
 
   @ApiStatus.Experimental
-  @NotNull
-  public List<AnAction> getContextActions(@NotNull ExecutionNode node) {
+  public @Unmodifiable @NotNull List<AnAction> getContextActions(@NotNull ExecutionNode node) {
     return ContainerUtil.map(myContextActions, function -> function.apply(node));
   }
 
   @ApiStatus.Experimental
-  @NotNull
-  public List<Filter> getExecutionFilters() {
+  public @NotNull List<Filter> getExecutionFilters() {
     return Collections.unmodifiableList(myExecutionFilters);
   }
 
@@ -144,12 +142,28 @@ public class DefaultBuildDescriptor implements BuildDescriptor {
     myActivateToolWindowWhenAdded = activateToolWindowWhenAdded;
   }
 
+  /// Return whether the build toolwindow should be activated when the build failed.
   public boolean isActivateToolWindowWhenFailed() {
     return myActivateToolWindowWhenFailed;
   }
 
+  /// Set whether the build toolwindow should be activated when the build failed.
   public void setActivateToolWindowWhenFailed(boolean activateToolWindowWhenFailed) {
     myActivateToolWindowWhenFailed = activateToolWindowWhenFailed;
+  }
+
+  /**
+   * If result is {@link ThreeState#YES} then IDEA has to navigate to error in file if that exists;
+   * <p>If result is {@link ThreeState#NO} then IDEA must not navigate to errors in any case.
+   * <p>If result is {@link ThreeState#UNSURE} then
+   * it means that this value should be got from {@link BuildWorkspaceConfiguration#isShowFirstErrorInEditor()};
+   */
+  public @NotNull ThreeState isNavigateToError() {
+    return myNavigateToError;
+  }
+
+  public void setNavigateToError(@NotNull ThreeState navigateToError) {
+    myNavigateToError = navigateToError;
   }
 
   public boolean isAutoFocusContent() {
@@ -160,18 +174,15 @@ public class DefaultBuildDescriptor implements BuildDescriptor {
     myAutoFocusContent = autoFocusContent;
   }
 
-  @Nullable
-  public BuildProcessHandler getProcessHandler() {
+  public @Nullable BuildProcessHandler getProcessHandler() {
     return myProcessHandler;
   }
 
-  @Nullable
-  public ExecutionEnvironment getExecutionEnvironment() {
+  public @Nullable ExecutionEnvironment getExecutionEnvironment() {
     return myExecutionEnvironment;
   }
 
-  @Nullable
-  public Supplier<? extends RunContentDescriptor> getContentDescriptorSupplier() {
+  public @Nullable Supplier<? extends RunContentDescriptor> getContentDescriptorSupplier() {
     return myContentDescriptorSupplier;
   }
 
@@ -182,6 +193,12 @@ public class DefaultBuildDescriptor implements BuildDescriptor {
   @ApiStatus.Experimental
   public DefaultBuildDescriptor withAction(@NotNull AnAction action) {
     myActions.add(action);
+    return this;
+  }
+
+  @ApiStatus.Experimental
+  public DefaultBuildDescriptor withActions(AnAction @NotNull ... actions) {
+    myActions.addAll(Arrays.asList(actions));
     return this;
   }
 
@@ -214,6 +231,12 @@ public class DefaultBuildDescriptor implements BuildDescriptor {
   @ApiStatus.Experimental
   public DefaultBuildDescriptor withExecutionFilter(@NotNull Filter filter) {
     myExecutionFilters.add(filter);
+    return this;
+  }
+
+  @ApiStatus.Experimental
+  public DefaultBuildDescriptor withExecutionFilters(Filter @NotNull ... filters) {
+    myExecutionFilters.addAll(Arrays.asList(filters));
     return this;
   }
 

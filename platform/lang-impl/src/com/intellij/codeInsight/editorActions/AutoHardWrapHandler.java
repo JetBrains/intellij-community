@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.editorActions;
 
 import com.intellij.codeInsight.template.TemplateManager;
@@ -7,7 +7,14 @@ import com.intellij.ide.DataManager;
 import com.intellij.lang.Language;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.IdeActions;
-import com.intellij.openapi.editor.*;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.editor.CaretModel;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.EditorSettings;
+import com.intellij.openapi.editor.LanguageLineWrapPositionStrategy;
+import com.intellij.openapi.editor.LineWrapPositionStrategy;
+import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.actionSystem.EditorActionManager;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
@@ -18,15 +25,13 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.formatter.WhiteSpaceFormattingStrategy;
 import com.intellij.psi.formatter.WhiteSpaceFormattingStrategyFactory;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Map;
+import java.util.WeakHashMap;
 
 /**
  * Encapsulates logic for processing {@link EditorSettings#isWrapWhenTypingReachesRightMargin(Project)} option.
- *
- * @author Denis Zhdanov
  */
 public class AutoHardWrapHandler {
 
@@ -36,8 +41,6 @@ public class AutoHardWrapHandler {
    * @see CodeStyleSettings#isWrapOnTyping(Language)
    */
   public static final Key<Boolean> AUTO_WRAP_LINE_IN_PROGRESS_KEY = new Key<>("AUTO_WRAP_LINE_IN_PROGRESS");
-
-  private static final AutoHardWrapHandler INSTANCE = new AutoHardWrapHandler();
 
   /**
    * There is a possible case that the user configured editor to
@@ -49,10 +52,10 @@ public class AutoHardWrapHandler {
    * Hence, we remember last auto-wrap change per-document and merge it with the new auto-wrap if necessary. Current collection
    * holds that {@code 'document -> last auto-wrap change'} mappings.
    */
-  private final Map<Document, AutoWrapChange> myAutoWrapChanges = ContainerUtil.createWeakMap();
+  private final Map<Document, AutoWrapChange> myAutoWrapChanges = new WeakHashMap<>();
 
   public static AutoHardWrapHandler getInstance() {
-    return INSTANCE;
+    return ApplicationManager.getApplication().getService(AutoHardWrapHandler.class);
   }
 
   /**
@@ -183,7 +186,7 @@ public class AutoHardWrapHandler {
         return event.getNewLength() <= event.getOldLength() && endsWithSpaces;
       }
     };
-
+    preprocessLineWrap(editor);
     caretModel.moveToOffset(wrapOffset);
     DataManager.getInstance().saveInDataContext(dataContext, AUTO_WRAP_LINE_IN_PROGRESS_KEY, true);
     document.addDocumentListener(listener);
@@ -204,7 +207,9 @@ public class AutoHardWrapHandler {
     caretModel.moveToOffset(baseCaretOffset + caretOffsetDiff[0]);
   }
 
-  private static class AutoWrapChange {
+  protected void preprocessLineWrap(@NotNull Editor editor) {}
+
+  private static final class AutoWrapChange {
 
     final TextChangeImpl change = new TextChangeImpl("", 0, 0);
     int visualLine;

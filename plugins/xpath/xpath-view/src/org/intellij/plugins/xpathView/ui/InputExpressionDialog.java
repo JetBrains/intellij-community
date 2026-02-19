@@ -25,7 +25,12 @@ import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Pair;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiFileFactory;
+import com.intellij.psi.PsiRecursiveElementVisitor;
+import com.intellij.psi.PsiReference;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlFile;
@@ -38,7 +43,11 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.LocalTimeCounter;
 import com.intellij.util.containers.BidirectionalMap;
 import org.intellij.lang.xpath.XPathFileType;
-import org.intellij.lang.xpath.context.*;
+import org.intellij.lang.xpath.context.ContextProvider;
+import org.intellij.lang.xpath.context.ContextType;
+import org.intellij.lang.xpath.context.NamespaceContext;
+import org.intellij.lang.xpath.context.SimpleVariableContext;
+import org.intellij.lang.xpath.context.VariableContext;
 import org.intellij.lang.xpath.psi.PrefixReference;
 import org.intellij.lang.xpath.psi.QNameElement;
 import org.intellij.lang.xpath.psi.XPathElement;
@@ -53,13 +62,22 @@ import org.intellij.plugins.xpathView.util.Variable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JComponent;
+import javax.swing.SwingUtilities;
 import javax.swing.event.ListDataEvent;
 import javax.swing.event.ListDataListener;
 import javax.xml.namespace.QName;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 @SuppressWarnings("unchecked")
 public abstract class InputExpressionDialog<FormType extends InputForm> extends ModeSwitchableDialog {
@@ -75,7 +93,7 @@ public abstract class InputExpressionDialog<FormType extends InputForm> extends 
     private final EditorComboBox myComboBox;
     private JComponent myEditorComponent;
 
-    @Nullable private Set<Namespace> myNamespaceCache;
+    private @Nullable Set<Namespace> myNamespaceCache;
     private InteractiveContextProvider myContextProvider;
     private final PsiFile myXPathFile;
 
@@ -112,7 +130,7 @@ public abstract class InputExpressionDialog<FormType extends InputForm> extends 
                 if (item != null) {
                     myContextProvider.getNamespaceContext().setMap(asMap(item.namespaces));
                     if (myXPathFile != null) {
-                      analyzer.restart(myXPathFile);
+                      analyzer.restart(myXPathFile, this);
                     }
                 }
             }
@@ -202,7 +220,7 @@ public abstract class InputExpressionDialog<FormType extends InputForm> extends 
         }
 
         final DaemonCodeAnalyzer analyzer = DaemonCodeAnalyzer.getInstance(myProject);
-        analyzer.restart(myXPathFile);
+        analyzer.restart(myXPathFile, this);
     }
 
     private Set<String> findUnresolvedPrefixes() {
@@ -214,9 +232,8 @@ public abstract class InputExpressionDialog<FormType extends InputForm> extends 
                 if (element instanceof QNameElement) {
                     final PsiReference[] references = element.getReferences();
                     for (PsiReference reference : references) {
-                        if (reference instanceof PrefixReference) {
-                            final PrefixReference prefixReference = (PrefixReference)reference;
-                            if (prefixReference.isUnresolved()) {
+                        if (reference instanceof PrefixReference prefixReference) {
+                          if (prefixReference.isUnresolved()) {
                                 prefixes.add(prefixReference.getPrefix());
                             }
                         }
@@ -245,8 +262,7 @@ public abstract class InputExpressionDialog<FormType extends InputForm> extends 
         return myEditor.getField().getDocument().getTextLength() > 0;
     }
 
-    @Nullable
-    protected Editor getEditor() {
+    protected @Nullable Editor getEditor() {
         if (getMode() == Mode.ADVANCED) {
             return myEditor.getField().getEditor();
         } else {
@@ -434,20 +450,17 @@ public abstract class InputExpressionDialog<FormType extends InputForm> extends 
         }
 
         @Override
-        @NotNull
-        public ContextType getContextType() {
+        public @NotNull ContextType getContextType() {
             return XPathSupport.TYPE;
         }
 
         @Override
-        @Nullable
-        public XmlElement getContextElement() {
+        public @Nullable XmlElement getContextElement() {
             return myContextElement;
         }
 
         @Override
-        @NotNull
-        public EvalExpressionDialog.MyNamespaceContext getNamespaceContext() {
+        public @NotNull EvalExpressionDialog.MyNamespaceContext getNamespaceContext() {
             return myNamespaceContext;
         }
 
@@ -466,9 +479,9 @@ public abstract class InputExpressionDialog<FormType extends InputForm> extends 
             for (Iterator<QName> it = set.iterator(); it.hasNext();) {
                 final QName name = it.next();
                 final String prefix = name.getPrefix();
-                if (prefix == null || prefix.length() == 0) {
+                if (prefix == null || prefix.isEmpty()) {
                     final String uri = name.getNamespaceURI();
-                    if (uri != null && uri.length() > 0) {
+                    if (uri != null && !uri.isEmpty()) {
                         final String assignedPrefix = myNamespaceContext.getPrefixForURI(uri, null);
                         if (assignedPrefix == null) {
                             it.remove();
@@ -489,31 +502,27 @@ public abstract class InputExpressionDialog<FormType extends InputForm> extends 
         private BidirectionalMap<String, String> myMap;
 
         @Override
-        @Nullable
-        public String getNamespaceURI(String prefix, XmlElement context) {
+        public @Nullable String getNamespaceURI(String prefix, XmlElement context) {
             final String s = myMap.get(prefix);
-            if (s == null && prefix.length() == 0) {
+            if (s == null && prefix.isEmpty()) {
                 return "";
             }
             return s;
         }
 
         @Override
-        @Nullable
-        public String getPrefixForURI(String uri, XmlElement context) {
+        public @Nullable String getPrefixForURI(String uri, XmlElement context) {
             final List<String> list = myMap.getKeysByValue(uri);
             return list != null && !list.isEmpty() ? list.get(0) : null;
         }
 
         @Override
-        @NotNull
-        public Collection<String> getKnownPrefixes(XmlElement context) {
+        public @NotNull Collection<String> getKnownPrefixes(XmlElement context) {
             return myMap.keySet();
         }
 
         @Override
-        @Nullable
-        public PsiElement resolve(String prefix, XmlElement context) {
+        public @Nullable PsiElement resolve(String prefix, XmlElement context) {
             return null;
         }
 
@@ -546,24 +555,22 @@ public abstract class InputExpressionDialog<FormType extends InputForm> extends 
         }
 
         @Override
-        @NotNull
-        public String getText() {
+        public @NotNull String getText() {
             return getFamilyName();
         }
 
         @Override
-        @NotNull
-        public String getFamilyName() {
+        public @NotNull String getFamilyName() {
             return XPathBundle.message("intention.family.name.register.namespace.prefix");
         }
 
         @Override
-        public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
+        public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile psiFile) {
             return myReference instanceof PrefixReference && myReference.getElement().isValid() && ((PrefixReference)myReference).isUnresolved();
         }
 
         @Override
-        public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
+        public void invoke(@NotNull Project project, Editor editor, PsiFile psiFile) throws IncorrectOperationException {
             final Set<String> prefix = Collections.singleton(myReference.getCanonicalText());
 
             final Map<String, String> myMap = myContextProvider.getNamespaceContext().myMap;

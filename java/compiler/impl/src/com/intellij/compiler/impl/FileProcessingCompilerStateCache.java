@@ -15,7 +15,7 @@
  */
 
 /*
- * @author: Eugene Zhuravlev
+ * @author Eugene Zhuravlev
  */
 package com.intellij.compiler.impl;
 
@@ -25,8 +25,11 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.*;
-import java.util.Collection;
+import java.io.DataInput;
+import java.io.DataOutput;
+import java.io.File;
+import java.io.IOException;
+import java.io.Serializable;
 
 public class FileProcessingCompilerStateCache {
   private static final Logger LOG = Logger.getInstance(FileProcessingCompilerStateCache.class);
@@ -73,10 +76,6 @@ public class FileProcessingCompilerStateCache {
 
   public void force() {
     myCache.force();
-  }
-
-  public Collection<String> getUrls() throws IOException {
-    return myCache.getUrls();
   }
 
   public boolean wipe() {

@@ -8,10 +8,23 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
+ * This extension point <pre>{@code <lang.syntaxHighlighterFactory>}</pre> allows highlighting subsystem to provide syntax highlighting for the particular file.
+ * By "syntax highlighting" we mean highlighting of keywords, comments, braces etc. where lexing the file content is enough.
+ *
+ * To provide rich highlighting based on PSI see {@link com.intellij.codeInspection.LocalInspectionTool} or {@link com.intellij.lang.annotation.Annotator}
  * @see SingleLazyInstanceSyntaxHighlighterFactory
  */
 public abstract class SyntaxHighlighterFactory {
+
+  /**
+   * @deprecated use {@link #getLanguageFactory()} instead
+   */
+  @Deprecated
   public static final SyntaxHighlighterLanguageFactory LANGUAGE_FACTORY = new SyntaxHighlighterLanguageFactory();
+
+  public static SyntaxHighlighterLanguageFactory getLanguageFactory() {
+    return LANGUAGE_FACTORY;
+  }
 
   /**
    * Returns syntax highlighter for the given language.
@@ -22,7 +35,7 @@ public abstract class SyntaxHighlighterFactory {
    * @return {@code SyntaxHighlighter} interface implementation for the given file type
    */
   public static SyntaxHighlighter getSyntaxHighlighter(@NotNull Language language, @Nullable Project project, @Nullable VirtualFile file) {
-    return LANGUAGE_FACTORY.forLanguage(language).getSyntaxHighlighter(project, file);
+    return getLanguageFactory().forLanguage(language).getSyntaxHighlighter(project, file);
   }
 
   /**

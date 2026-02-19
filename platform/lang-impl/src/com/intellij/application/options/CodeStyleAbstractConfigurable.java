@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.application.options;
 
 import com.intellij.application.options.codeStyle.CodeStyleSchemesModel;
@@ -9,18 +9,19 @@ import com.intellij.psi.codeStyle.CodeStyleConfigurable;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 import java.util.Map;
 import java.util.Set;
 
 public abstract class CodeStyleAbstractConfigurable implements CodeStyleConfigurable, OptionsContainingConfigurable {
   private CodeStyleAbstractPanel myPanel;
-  private final CodeStyleSettings mySettings;
+  private final @NotNull CodeStyleSettings mySettings;
   private final CodeStyleSettings myCloneSettings;
   private final @NlsContexts.ConfigurableName String myDisplayName;
 
-  public CodeStyleAbstractConfigurable(@NotNull CodeStyleSettings settings, CodeStyleSettings cloneSettings,
-                                       final @NlsContexts.ConfigurableName String displayName) {
+  public CodeStyleAbstractConfigurable(@NotNull CodeStyleSettings settings,
+                                       @NotNull CodeStyleSettings cloneSettings,
+                                       @NlsContexts.ConfigurableName String displayName) {
     mySettings = settings;
     myCloneSettings = cloneSettings;
     myDisplayName = displayName;
@@ -37,7 +38,7 @@ public abstract class CodeStyleAbstractConfigurable implements CodeStyleConfigur
     return myPanel.getPanel();
   }
 
-  protected abstract CodeStyleAbstractPanel createPanel(final CodeStyleSettings settings);
+  protected abstract @NotNull CodeStyleAbstractPanel createPanel(@NotNull CodeStyleSettings settings);
 
   @Override
   public void apply() throws ConfigurationException {
@@ -96,9 +97,8 @@ public abstract class CodeStyleAbstractConfigurable implements CodeStyleConfigur
     myPanel.onSomethingChanged();
   }
 
-  @NotNull
   @Override
-  public Set<String> processListOptions() {
+  public @NotNull Set<String> processListOptions() {
     return myPanel.getOptionIndexer().processListOptions();
   }
 

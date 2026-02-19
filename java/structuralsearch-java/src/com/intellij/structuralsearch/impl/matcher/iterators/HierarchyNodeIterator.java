@@ -1,8 +1,13 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.structuralsearch.impl.matcher.iterators;
 
 import com.intellij.dupLocator.iterators.NodeIterator;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiAnonymousClass;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiJavaCodeReferenceElement;
+import com.intellij.psi.PsiReference;
+import com.intellij.psi.PsiReferenceList;
 import com.intellij.psi.impl.PsiClassImplUtil;
 import com.intellij.structuralsearch.impl.matcher.MatchUtils;
 import com.intellij.util.SmartList;
@@ -35,9 +40,8 @@ public class HierarchyNodeIterator extends NodeIterator {
     }
 
     PsiElement element = current instanceof PsiReference ? ((PsiReference)current).resolve() : current;
-    if (element instanceof PsiClass) {
+    if (element instanceof PsiClass clazz) {
       if (visited.contains(element)) return;
-      final PsiClass clazz = (PsiClass)element;
 
       if (acceptInterfaces || !clazz.isInterface()) visited.add(element);
 

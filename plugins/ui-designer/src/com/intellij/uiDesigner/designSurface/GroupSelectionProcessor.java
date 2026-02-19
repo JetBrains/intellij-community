@@ -7,15 +7,19 @@ import com.intellij.uiDesigner.radComponents.RadComponent;
 import com.intellij.uiDesigner.radComponents.RadContainer;
 import com.intellij.uiDesigner.radComponents.RadRootContainer;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JComponent;
+import javax.swing.SwingUtilities;
+import java.awt.AlphaComposite;
+import java.awt.Color;
+import java.awt.Component;
+import java.awt.Composite;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.Point;
+import java.awt.Rectangle;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 
-/**
- * @author Anton Katilin
- * @author Vladimir Kondratyev
- */
 public final class GroupSelectionProcessor extends EventProcessor {
   private final GuiEditor myEditor;
   private final RadComponent myComponent;
@@ -121,8 +125,7 @@ public final class GroupSelectionProcessor extends EventProcessor {
       }
     }
 
-    if (component instanceof RadContainer){
-      final RadContainer container = (RadContainer)component;
+    if (component instanceof RadContainer container){
       // [anton] it is very important to iterate through a STORED array because setSelected can
       // change order of components so iteration via getComponent(i) is incorrect
       final RadComponent[] components = container.getComponents();

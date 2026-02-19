@@ -6,7 +6,7 @@ PsiJavaFile:Symbols01.java
       PsiDocToken:DOC_COMMENT_START('/**')
       PsiWhiteSpace('\n ')
       PsiDocToken:DOC_COMMENT_LEADING_ASTERISKS('*')
-      PsiDocToken:DOC_COMMENT_DATA(' ~`!@#$%^&*()_+|\=-')
+      PsiDocToken:DOC_COMMENT_DATA(' ~`!@#$%^&*##()_+|\=-')
       PsiDocToken:DOC_COMMENT_DATA('}')
       PsiDocToken:DOC_COMMENT_DATA('{')
       PsiDocToken:DOC_COMMENT_DATA('[]":;'?><,./')

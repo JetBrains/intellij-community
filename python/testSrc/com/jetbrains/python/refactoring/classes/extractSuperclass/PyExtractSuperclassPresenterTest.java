@@ -1,6 +1,7 @@
 // Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.refactoring.classes.extractSuperclass;
 
+import com.intellij.refactoring.classMembers.MemberInfoChange;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyElement;
@@ -24,7 +25,7 @@ import java.util.List;
  *
  * @author Ilya.Kazakevich
  */
-public class PyExtractSuperclassPresenterTest
+public final class PyExtractSuperclassPresenterTest
   extends PyRefactoringPresenterTestCase<PyExtractSuperclassInitializationInfo, PyExtractSuperclassView> {
 
   public PyExtractSuperclassPresenterTest() {
@@ -36,7 +37,7 @@ public class PyExtractSuperclassPresenterTest
    * Also checks that static method could NOT be made abstract in Py2K
    */
   public void testStaticNoObjectPy2() {
-    ensureStaticNoObject(false);
+    runWithLanguageLevel(LanguageLevel.PYTHON27, () -> ensureStaticNoObject(false));
   }
 
   /**
@@ -44,7 +45,7 @@ public class PyExtractSuperclassPresenterTest
    * Also checks that static method COULD be made abstract in Py3K
    */
   public void testStaticNoObjectPy3() {
-    runWithLanguageLevel(LanguageLevel.PYTHON34, () -> ensureStaticNoObject(true));
+    ensureStaticNoObject(true);
   }
 
   /**
@@ -105,7 +106,6 @@ public class PyExtractSuperclassPresenterTest
   /**
    * Creates capture ready to capture error message and configures view to return it
    *
-   * @return
    */
   @NotNull
   private Capture<String> configureViewToCaptureError() {
@@ -122,6 +122,16 @@ public class PyExtractSuperclassPresenterTest
     final Matcher<Iterable<? extends PyPresenterTestMemberEntry>> matcher = Matchers
       .containsInAnyOrder(new PyPresenterTestMemberEntry("foo(self)", true, false, true));
     compareMembers(members, matcher);
+  }
+
+  public void testCantAbstractWhenDependentProperty() {
+    var functionName = "__add__";
+    launchAndGetMembers("ExtractMe");
+    var function = getMemberEntryByName(functionName);
+    Assert.assertTrue("Property is not checked, method must be open to be abstract", function.mayBeAbstract());
+    selectMember("__radd__");
+    function = getMemberEntryByName(functionName);
+    Assert.assertFalse("Property is checked, method can't be abstract", function.mayBeAbstract());
   }
 
   /**
@@ -167,4 +177,19 @@ public class PyExtractSuperclassPresenterTest
     return new PyExtractSuperclassPresenterImpl(myView, childClass, storage);
   }
 
+  private void selectMember(@NotNull String name) {
+    var info = myViewConfigCapture.getValue();
+    var infos = info.getMemberInfos();
+    for (var i : infos) {
+      if (i.getDisplayName().startsWith(name)) {
+        i.setChecked(true);
+      }
+    }
+    info.getMemberInfoModel().memberInfoChanged(new MemberInfoChange<>(infos));
+  }
+
+  @NotNull
+  private PyPresenterTestMemberEntry getMemberEntryByName(@NotNull String memberName) {
+    return getMembers().stream().filter(o -> o.getName().startsWith(memberName)).findFirst().orElseThrow();
+  }
 }

@@ -19,9 +19,6 @@ import com.intellij.psi.xml.XmlFile;
 import com.intellij.xml.XmlElementDescriptor;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author peter
- */
 public interface TldDescriptor extends JspNsDescriptor {
   XmlElementDescriptor getElementDescriptor(String name);
 

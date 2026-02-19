@@ -1,0 +1,3 @@
+def foo(a: int, b: int,  c: str = "default"): ...
+
+foo(1, 2, <arg1>)

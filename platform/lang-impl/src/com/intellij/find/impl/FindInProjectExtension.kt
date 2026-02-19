@@ -8,10 +8,11 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.search.scope.packageSet.NamedScope
 import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 interface FindInProjectExtension {
   companion object {
     @JvmField
-    val EP_NAME = ExtensionPointName.create<FindInProjectExtension>("com.intellij.findInProjectExtension")
+    val EP_NAME: ExtensionPointName<FindInProjectExtension> = ExtensionPointName.create("com.intellij.findInProjectExtension")
   }
 
   /**

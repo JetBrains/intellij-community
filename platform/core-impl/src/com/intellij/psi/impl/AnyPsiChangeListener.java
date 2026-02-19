@@ -7,11 +7,4 @@ public interface AnyPsiChangeListener {
 
   default void afterPsiChanged(boolean isPhysical) {
   }
-
-  /**
-   * @deprecated Use {@link AnyPsiChangeListener} directly.
-   */
-  @Deprecated
-  abstract class Adapter implements AnyPsiChangeListener {
-  }
 }

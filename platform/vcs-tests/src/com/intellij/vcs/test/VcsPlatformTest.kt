@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.test
 
 import com.intellij.notification.Notification
@@ -21,13 +21,18 @@ import com.intellij.openapi.vcs.impl.projectlevelman.NewMappings
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.project.stateStore
-import com.intellij.testFramework.*
+import com.intellij.testFramework.HeavyPlatformTestCase
+import com.intellij.testFramework.RunAll
+import com.intellij.testFramework.TestLoggerFactory
+import com.intellij.testFramework.UsefulTestCase
+import com.intellij.testFramework.replaceService
+import com.intellij.testFramework.runInEdtAndWait
 import com.intellij.util.ArrayUtil
 import com.intellij.util.ThrowableRunnable
 import com.intellij.vfs.AsyncVfsEventsPostProcessorImpl
 import java.io.File
 import java.nio.file.Path
-import java.util.*
+import java.time.Duration
 import java.util.concurrent.Future
 import java.util.concurrent.TimeUnit
 
@@ -46,7 +51,7 @@ abstract class VcsPlatformTest : HeavyPlatformTestCase() {
     get() = FileUtil.toSystemIndependentName(projectNioRoot.toString())
 
   protected val projectNioRoot: Path
-    get() = project.stateStore.getProjectBasePath()
+    get() = project.stateStore.projectBasePath
 
   private lateinit var testStartedIndicator: String
   private val asyncTasks = mutableSetOf<AsyncTask>()
@@ -57,9 +62,7 @@ abstract class VcsPlatformTest : HeavyPlatformTestCase() {
 
   @Throws(Exception::class)
   override fun setUp() {
-    runInEdtAndWait {
-      super.setUp()
-    }
+    super.setUp()
 
     VfsUtil.markDirtyAndRefresh(false, true, false, testRoot)
 
@@ -75,22 +78,22 @@ abstract class VcsPlatformTest : HeavyPlatformTestCase() {
   }
 
   override fun tearDown() {
-    RunAll()
-      .append(ThrowableRunnable { selfTearDownRunnable() })
-      .append(ThrowableRunnable { clearFields(this) })
-      .append(ThrowableRunnable { runInEdtAndWait { super@VcsPlatformTest.tearDown() } })
-      .run()
+    RunAll(
+      ThrowableRunnable { selfTearDownRunnable() },
+      ThrowableRunnable { clearFields(this) },
+      ThrowableRunnable { runInEdtAndWait { super@VcsPlatformTest.tearDown() } }
+    ).run()
   }
 
   private fun selfTearDownRunnable() {
     var tearDownErrorDetected = false
     try {
-      RunAll()
-        .append(ThrowableRunnable { AsyncVfsEventsPostProcessorImpl.waitEventsProcessed() })
-        .append(ThrowableRunnable { changeListManager.waitEverythingDoneInTestMode() })
-        .append(ThrowableRunnable { if (::vcsNotifier.isInitialized) vcsNotifier.cleanup() })
-        .append(ThrowableRunnable { waitForPendingTasks() })
-        .run()
+      RunAll(
+        ThrowableRunnable { AsyncVfsEventsPostProcessorImpl.waitEventsProcessed() },
+        ThrowableRunnable { changeListManager.waitEverythingDoneAndStopInTestMode() },
+        ThrowableRunnable { if (::vcsNotifier.isInitialized) vcsNotifier.cleanup() },
+        ThrowableRunnable { waitForPendingTasks() }
+      ).run()
     }
     catch (e: Throwable) {
       tearDownErrorDetected = true
@@ -115,6 +118,10 @@ abstract class VcsPlatformTest : HeavyPlatformTestCase() {
       "#" + NewMappings::class.java.name,
       "#" + VcsInitialization::class.java.name
     )
+  }
+
+  override fun getIndexingTimeout(): Duration {
+    return Duration.ofMinutes(1)
   }
 
   override fun getProjectDirOrFile(isDirectoryBasedProject: Boolean): Path {
@@ -166,9 +173,9 @@ abstract class VcsPlatformTest : HeavyPlatformTestCase() {
 
   private fun checkTestRootIsEmpty(testRoot: File) {
     val files = testRoot.listFiles()
-    if (files != null && files.isNotEmpty()) {
+    if (!files.isNullOrEmpty()) {
       LOG.warn("Test root was not cleaned up during some previous test run. " + "testRoot: " + testRoot +
-          ", files: " + Arrays.toString(files))
+               ", files: " + files.contentToString())
       for (file in files) {
         LOG.assertTrue(FileUtil.delete(file))
       }
@@ -187,23 +194,20 @@ abstract class VcsPlatformTest : HeavyPlatformTestCase() {
   }
 
 
-  protected fun assertSuccessfulNotification(title: String, message: String) : Notification {
-    return assertNotification(NotificationType.INFORMATION, title, message, vcsNotifier.lastNotification)
+  protected fun assertSuccessfulNotification(title: String = "", message: String, actions: List<String>? = null): Notification {
+    return assertHasNotification(NotificationType.INFORMATION, title, message, actions, vcsNotifier.notifications)
   }
 
-  protected fun assertSuccessfulNotification(message: String) : Notification {
-    return assertSuccessfulNotification("", message)
+  protected fun assertSuccessfulNotification(message: String, actions: List<String>? = null): Notification {
+    return assertSuccessfulNotification("", message, actions)
   }
 
-  protected fun assertWarningNotification(title: String, message: String) {
-    assertNotification(NotificationType.WARNING, title, message, vcsNotifier.lastNotification)
+  protected fun assertWarningNotification(title: String, message: String): Notification {
+    return assertHasNotification(NotificationType.WARNING, title, message, vcsNotifier.notifications)
   }
 
-  protected fun assertErrorNotification(title: String, message: String) : Notification {
-    val notification = vcsNotifier.lastNotification
-    assertNotNull("No notification was shown", notification)
-    assertNotification(NotificationType.ERROR, title, message, notification)
-    return notification
+  protected fun assertErrorNotification(title: String, message: String, actions: List<String>? = null): Notification {
+    return assertHasNotification(NotificationType.ERROR, title, message, actions, vcsNotifier.notifications)
   }
 
   protected fun assertNoNotification() {

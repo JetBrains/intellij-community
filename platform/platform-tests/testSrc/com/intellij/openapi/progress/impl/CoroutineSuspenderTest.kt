@@ -1,60 +1,84 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.progress.impl
 
+import com.intellij.openapi.progress.asContextElement
 import com.intellij.openapi.progress.checkCanceled
 import com.intellij.openapi.progress.coroutineSuspender
-import com.intellij.testFramework.LightPlatformTestCase
-import com.intellij.util.concurrency.Semaphore
-import kotlinx.coroutines.*
+import com.intellij.testFramework.UsefulTestCase.assertSize
+import com.intellij.testFramework.common.timeoutRunBlocking
+import com.intellij.util.ConcurrencyUtil
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.cancelAndJoin
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.fail
 
-class CoroutineSuspenderTest : LightPlatformTestCase() {
+class CoroutineSuspenderTest {
 
-  fun `test cancel paused coroutines`(): Unit = runBlocking {
+  @Test
+  fun `cancel paused coroutines`(): Unit = timeoutRunBlocking {
     val count = 10
-    val started = Semaphore(count)
+    val started = Channel<Unit>()
     val suspender = coroutineSuspender(false)
-    val job = launch(Dispatchers.Default + suspender) {
+    assertTrue(suspender.isPaused())
+    val job = launch(Dispatchers.Default + suspender.asContextElement()) {
       repeat(count) {
         launch {
-          started.up()
+          started.send(Unit)
           checkCanceled()
           fail("must not be called")
         }
       }
     }
-    assertTrue(started.waitFor(1000))
-    withTimeout(1000) {
-      job.cancelAndJoin()
+    repeat(count) {
+      started.receive()
     }
+    // all coroutines are started
+    letBackgroundThreadsSuspend()
+    job.cancelAndJoin()
   }
 
-  fun `test resume paused coroutines`(): Unit = runBlocking {
+  @Test
+  fun `resume paused coroutines`(): Unit = timeoutRunBlocking {
     val count = 10
-    val started = Semaphore(count)
-    val stop = Semaphore(1)
+    val started = Channel<Unit>()
+    val paused = Channel<Unit>()
     val suspender = coroutineSuspender()
-    val result = async(Dispatchers.Default + suspender) {
+    assertFalse(suspender.isPaused())
+    val result = async(Dispatchers.Default + suspender.asContextElement()) {
       (1..count).map {
         async { // coroutine context (including CoroutineSuspender) is inherited
-          started.up()
-          while (!stop.waitFor(1)) {
-            checkCanceled()
-            yield()
-          }
+          checkCanceled() // won't suspend
+          started.send(Unit)
+          paused.receive()
+          checkCanceled() // should suspend here
           it
         }
       }.awaitAll().sum()
     }
-    assertTrue(started.waitFor(1000))
-    suspender.pause()
-    delay(10) // letBackgroundThreadsSuspend
-    stop.up()
+    repeat(count) {
+      started.receive()
+    }
+    // all coroutines are started
+    suspender.pause() // pause suspender before next checkCanceled
+    assertTrue(suspender.isPaused())
+    repeat(count) {
+      paused.send(Unit) // let coroutines pause in next checkCanceled
+    }
+    letBackgroundThreadsSuspend()
     val children = result.children.toList()
     assertSize(count, children)
     assertFalse(children.any { it.isCompleted })
     suspender.resume()
-    withTimeout(1000) {
-      assertEquals(55, result.await())
-    }
+    assertEquals(55, result.await())
   }
+
+  private suspend fun letBackgroundThreadsSuspend(): Unit = delay(ConcurrencyUtil.DEFAULT_TIMEOUT_MS)
 }

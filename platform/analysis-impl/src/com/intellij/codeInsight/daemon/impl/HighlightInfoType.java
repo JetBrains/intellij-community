@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.analysis.AnalysisBundle;
@@ -6,7 +6,7 @@ import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInspection.DeprecationUtil;
 import com.intellij.codeInspection.InspectionProfile;
 import com.intellij.lang.annotation.HighlightSeverity;
-import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.HighlighterColors;
 import com.intellij.openapi.editor.colors.CodeInsightColors;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
@@ -15,14 +15,13 @@ import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.PsiElement;
-import com.intellij.util.containers.ContainerUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.Icon;
 import java.util.Set;
 
 import static org.jetbrains.annotations.Nls.Capitalization.Sentence;
@@ -36,12 +35,16 @@ public interface HighlightInfoType {
   @Deprecated HighlightInfoType INFO = new HighlightInfoTypeImpl(HighlightSeverity.INFO, CodeInsightColors.INFO_ATTRIBUTES);
   HighlightInfoType WEAK_WARNING = new HighlightInfoTypeImpl(HighlightSeverity.WEAK_WARNING, CodeInsightColors.WEAK_WARNING_ATTRIBUTES);
   HighlightInfoType INFORMATION = new HighlightInfoTypeImpl(HighlightSeverity.INFORMATION, CodeInsightColors.INFORMATION_ATTRIBUTES);
+  /**
+   * An unresolved reference, which might be not resolved because the project is not completely loaded yet.
+   * Used in {@linkplain com.intellij.openapi.project.IncompleteDependenciesService incomplete dependencies} mode only.
+   */
+  HighlightInfoType PENDING_REFERENCE = new HighlightInfoTypeImpl(HighlightSeverity.INFORMATION, CodeInsightColors.INFORMATION_ATTRIBUTES);
+  HighlightInfoType TEXT_ATTRIBUTES = new HighlightInfoTypeImpl(HighlightSeverity.TEXT_ATTRIBUTES, CodeInsightColors.CONSIDERATION_ATTRIBUTES);
 
   HighlightInfoType WRONG_REF = new HighlightInfoTypeImpl(HighlightSeverity.ERROR, CodeInsightColors.WRONG_REFERENCES_ATTRIBUTES);
 
   HighlightInfoType GENERIC_WARNINGS_OR_ERRORS_FROM_SERVER = new HighlightInfoTypeImpl(HighlightSeverity.GENERIC_SERVER_ERROR_OR_WARNING, CodeInsightColors.GENERIC_SERVER_ERROR_OR_WARNING);
-
-  HighlightInfoType DUPLICATE_FROM_SERVER = new HighlightInfoTypeImpl(HighlightSeverity.INFORMATION, CodeInsightColors.DUPLICATE_FROM_SERVER);
 
   HighlightInfoType UNUSED_SYMBOL = new HighlightInfoTypeSeverityByKey(
     HighlightDisplayKey.findOrRegister(UNUSED_SYMBOL_SHORT_NAME, getUnusedSymbolDisplayName(), UNUSED_SYMBOL_SHORT_NAME),
@@ -59,31 +62,6 @@ public interface HighlightInfoType {
 
   HighlightSeverity SYMBOL_TYPE_SEVERITY = new HighlightSeverity("SYMBOL_TYPE_SEVERITY", HighlightSeverity.INFORMATION.myVal-2);
 
-  /**
-   * @deprecated For Java use JavaHighlightInfoTypes.LOCAL_VARIABLE or create a language-specific HighlightInfoType.
-   * The field will be removed in version 17.
-   */
-  @Deprecated
-  HighlightInfoType LOCAL_VARIABLE = new HighlightInfoTypeImpl(SYMBOL_TYPE_SEVERITY, CodeInsightColors.LOCAL_VARIABLE_ATTRIBUTES);
-  /**
-   * @deprecated For Java use JavaHighlightInfoTypes.METHOD_CALL or create a language-specific HighlightInfoType.
-   * The field will be removed in version 17.
-   */
-  @Deprecated
-  HighlightInfoType METHOD_CALL = new HighlightInfoTypeImpl(SYMBOL_TYPE_SEVERITY, CodeInsightColors.METHOD_CALL_ATTRIBUTES);
-  /**
-   * @deprecated For Java use JavaHighlightInfoTypes.STATIC_METHOD or create a language-specific HighlightInfoType.
-   * The field will be removed in version 17.
-   */
-  @Deprecated
-  HighlightInfoType STATIC_METHOD = new HighlightInfoTypeImpl(SYMBOL_TYPE_SEVERITY, CodeInsightColors.STATIC_METHOD_ATTRIBUTES);
-  /**
-   * @deprecated For Java use JavaHighlightInfoTypes.CLASS_NAME or create a language-specific HighlightInfoType.
-   * The field will be removed in version 17.
-   */
-  @Deprecated
-  HighlightInfoType CLASS_NAME = new HighlightInfoTypeImpl(SYMBOL_TYPE_SEVERITY, CodeInsightColors.CLASS_NAME_ATTRIBUTES);
-
   HighlightInfoType TODO = new HighlightInfoTypeImpl(HighlightSeverity.INFORMATION, CodeInsightColors.TODO_DEFAULT_ATTRIBUTES);  // these are default attributes, can be configured differently for specific patterns
   HighlightInfoType UNHANDLED_EXCEPTION = new HighlightInfoTypeImpl(HighlightSeverity.ERROR, CodeInsightColors.ERRORS_ATTRIBUTES);
 
@@ -91,6 +69,8 @@ public interface HighlightInfoType {
   HighlightSeverity INJECTED_FRAGMENT_SEVERITY = new HighlightSeverity("INJECTED_FRAGMENT", SYMBOL_TYPE_SEVERITY.myVal - 1);
   HighlightInfoType INJECTED_LANGUAGE_FRAGMENT = new HighlightInfoTypeImpl(INJECTED_FRAGMENT_SYNTAX_SEVERITY, CodeInsightColors.INFORMATION_ATTRIBUTES);
   HighlightInfoType INJECTED_LANGUAGE_BACKGROUND = new HighlightInfoTypeImpl(INJECTED_FRAGMENT_SEVERITY, CodeInsightColors.INFORMATION_ATTRIBUTES);
+  
+  HighlightInfoType POSSIBLE_PROBLEM = new HighlightInfoTypeImpl(SYMBOL_TYPE_SEVERITY, HighlighterColors.NO_HIGHLIGHTING);
 
   HighlightSeverity ELEMENT_UNDER_CARET_SEVERITY = new HighlightSeverity("ELEMENT_UNDER_CARET", HighlightSeverity.ERROR.myVal + 1);
   HighlightInfoType ELEMENT_UNDER_CARET_READ = new HighlightInfoType.HighlightInfoTypeImpl(ELEMENT_UNDER_CARET_SEVERITY, EditorColors.IDENTIFIER_UNDER_CARET_ATTRIBUTES);
@@ -103,7 +83,7 @@ public interface HighlightInfoType {
   /**
    * @see com.intellij.openapi.editor.impl.RangeHighlighterImpl#VISIBLE_IF_FOLDED
    */
-  Set<HighlightInfoType> VISIBLE_IF_FOLDED = ContainerUtil.immutableSet(
+  Set<HighlightInfoType> VISIBLE_IF_FOLDED = Set.of(
     ELEMENT_UNDER_CARET_READ, 
     ELEMENT_UNDER_CARET_WRITE,
     WARNING,
@@ -117,43 +97,54 @@ public interface HighlightInfoType {
   @NotNull
   TextAttributesKey getAttributesKey();
 
-  class HighlightInfoTypeImpl implements HighlightInfoType, HighlightInfoType.UpdateOnTypingSuppressible {
+  default boolean isInspectionHighlightInfoType() {
+    return false;
+  }
+
+  class HighlightInfoTypeImpl implements HighlightInfoType {
     private final HighlightSeverity mySeverity;
-    private final TextAttributesKey myAttributesKey;
-    private final boolean myNeedsUpdateOnTyping;
+    private final TextAttributesKey attributeKey;
 
     //read external only
     HighlightInfoTypeImpl(@NotNull Element element) {
       mySeverity = new HighlightSeverity(element);
-      myAttributesKey = new TextAttributesKey(element);
-      myNeedsUpdateOnTyping = false;
+      attributeKey = new TextAttributesKey(element);
     }
 
+    /**
+     * Do not call from static initializer during component loading, which can overlap with HighlightInfoType initialization because of the possible deadlock
+     */
     public HighlightInfoTypeImpl(@NotNull HighlightSeverity severity, @NotNull TextAttributesKey attributesKey) {
-      this(severity, attributesKey, true);
+      mySeverity = severity;
+      attributeKey = attributesKey;
     }
 
+    /**
+     * @deprecated use {@link HighlightInfoTypeImpl#HighlightInfoTypeImpl(HighlightSeverity, TextAttributesKey)}
+     */
     public HighlightInfoTypeImpl(@NotNull HighlightSeverity severity, @NotNull TextAttributesKey attributesKey, boolean needsUpdateOnTyping) {
       mySeverity = severity;
-      myAttributesKey = attributesKey;
-      myNeedsUpdateOnTyping = needsUpdateOnTyping;
+      attributeKey = attributesKey;
+    }
+
+    /** Whether the corresponding severity should be available for choosing and editing in inspection settings */
+    public boolean isApplicableToInspections() {
+      return true;
     }
 
     @Override
-    @NotNull
-    public HighlightSeverity getSeverity(@Nullable PsiElement psiElement) {
+    public @NotNull HighlightSeverity getSeverity(@Nullable PsiElement psiElement) {
       return mySeverity;
     }
 
-    @NotNull
     @Override
-    public TextAttributesKey getAttributesKey() {
-      return myAttributesKey;
+    public @NotNull TextAttributesKey getAttributesKey() {
+      return attributeKey;
     }
 
     @Override
     public String toString() {
-      return "HighlightInfoTypeImpl[severity=" + mySeverity + ", key=" + myAttributesKey + "]";
+      return "HighlightInfoTypeImpl[severity=" + mySeverity.getName() + ", key=" + attributeKey + "]";
     }
 
     public void writeExternal(Element element) {
@@ -163,17 +154,15 @@ public interface HighlightInfoType {
       catch (WriteExternalException e) {
         throw new RuntimeException(e);
       }
-      myAttributesKey.writeExternal(element);
+      attributeKey.writeExternal(element);
     }
 
     @Override
     public boolean equals(Object o) {
       if (this == o) return true;
-      if (!(o instanceof HighlightInfoTypeImpl)) return false;
+      if (!(o instanceof HighlightInfoTypeImpl that)) return false;
 
-      HighlightInfoTypeImpl that = (HighlightInfoTypeImpl)o;
-
-      if (!Comparing.equal(myAttributesKey, that.myAttributesKey)) return false;
+      if (!Comparing.equal(attributeKey, that.attributeKey)) return false;
       if (!mySeverity.equals(that.mySeverity)) return false;
 
       return true;
@@ -182,31 +171,22 @@ public interface HighlightInfoType {
     @Override
     public int hashCode() {
       int result = mySeverity.hashCode();
-      result = 29 * result + myAttributesKey.hashCode();
+      result = 29 * result + attributeKey.hashCode();
       return result;
-    }
-
-    @Override
-    public boolean needsUpdateOnTyping() {
-      return myNeedsUpdateOnTyping;
     }
   }
 
-  class HighlightInfoTypeSeverityByKey implements HighlightInfoType {
-    @SuppressWarnings("unused")
-    static final Logger LOG = Logger.getInstance(HighlightInfoTypeSeverityByKey.class);
-
-    private final TextAttributesKey myAttributesKey;
+  final class HighlightInfoTypeSeverityByKey implements HighlightInfoType {
+    private final TextAttributesKey attributeKey;
     private final HighlightDisplayKey myToolKey;
 
     public HighlightInfoTypeSeverityByKey(@NotNull HighlightDisplayKey severityKey, @NotNull TextAttributesKey attributesKey) {
       myToolKey = severityKey;
-      myAttributesKey = attributesKey;
+      attributeKey = attributesKey;
     }
 
     @Override
-    @NotNull
-    public HighlightSeverity getSeverity(PsiElement psiElement) {
+    public @NotNull HighlightSeverity getSeverity(PsiElement psiElement) {
       InspectionProfile profile = psiElement == null
                                   ? InspectionProfileManager.getInstance().getCurrentProfile()
                                   : InspectionProjectProfileManager.getInstance(psiElement.getProject()).getCurrentProfile();
@@ -214,14 +194,13 @@ public interface HighlightInfoType {
     }
 
     @Override
-    @NotNull
-    public TextAttributesKey getAttributesKey() {
-      return myAttributesKey;
+    public @NotNull TextAttributesKey getAttributesKey() {
+      return attributeKey;
     }
 
     @Override
     public String toString() {
-      return "HighlightInfoTypeSeverityByKey[severity=" + myToolKey + ", key=" + myAttributesKey + "]";
+      return "HighlightInfoTypeSeverityByKey[severity=" + myToolKey + ", key=" + attributeKey + "]";
     }
 
     public HighlightDisplayKey getSeverityKey() {
@@ -233,11 +212,6 @@ public interface HighlightInfoType {
   interface Iconable {
     @NotNull
     Icon getIcon();
-  }
-
-  @FunctionalInterface
-  interface UpdateOnTypingSuppressible {
-    boolean needsUpdateOnTyping();
   }
 
   static @Nls(capitalization = Sentence) String getUnusedSymbolDisplayName() {

@@ -13,7 +13,7 @@ import com.intellij.openapi.project.Project
 class NewInlaySettingsProvider : InlaySettingsProvider {
   override fun createModels(project: Project, language: Language): List<InlayProviderSettingsModel> {
     val config = InlayHintsSettings.instance()
-    return HintUtils.getHintProvidersForLanguage(language, project)
+    return HintUtils.getHintProvidersForLanguage(language)
       .filter { it.provider.isVisibleInSettings }
       .map {
         NewInlayProviderSettingsModel(it.withSettingsCopy(), config)
@@ -21,6 +21,6 @@ class NewInlaySettingsProvider : InlaySettingsProvider {
   }
 
   override fun getSupportedLanguages(project: Project): Collection<Language> {
-    return HintUtils.getLanguagesWithNewInlayHints(project)
+    return HintUtils.getLanguagesWithNewInlayHints()
   }
 }

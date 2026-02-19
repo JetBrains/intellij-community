@@ -11,7 +11,11 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorModificationUtil;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiParameter;
+import com.intellij.psi.PsiType;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.javadoc.PsiDocTag;
@@ -33,12 +37,11 @@ public class GroovyMethodSignatureInsertHandler implements InsertHandler<LookupE
 
   @Override
   public void handleInsert(@NotNull InsertionContext context, @NotNull LookupElement item) {
-    if (!(item.getObject() instanceof PsiMethod)) {
+    if (!(item.getObject() instanceof PsiMethod method)) {
       return;
     }
     PsiDocumentManager.getInstance(context.getProject()).commitDocument(context.getEditor().getDocument());
     final Editor editor = context.getEditor();
-    final PsiMethod method = (PsiMethod)item.getObject();
 
     final PsiParameter[] parameters = method.getParameterList().getParameters();
     final StringBuilder buffer = new StringBuilder();

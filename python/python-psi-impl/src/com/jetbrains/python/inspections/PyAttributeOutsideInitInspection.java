@@ -17,40 +17,57 @@ package com.jetbrains.python.inspections;
 
 import com.intellij.codeInspection.LocalInspectionToolSession;
 import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.MultiMap;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.codeInsight.controlflow.ControlFlowCache;
+import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
+import com.jetbrains.python.inspections.quickfix.AddFieldQuickFix;
 import com.jetbrains.python.inspections.quickfix.PyMoveAttributeToInitQuickFix;
-import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.Property;
+import com.jetbrains.python.psi.PyClass;
+import com.jetbrains.python.psi.PyExpression;
+import com.jetbrains.python.psi.PyFunction;
+import com.jetbrains.python.psi.PyParameter;
+import com.jetbrains.python.psi.PyReferenceExpression;
+import com.jetbrains.python.psi.PyTargetExpression;
+import com.jetbrains.python.psi.PyUtil;
 import com.jetbrains.python.psi.impl.PyClassImpl;
+import com.jetbrains.python.psi.resolve.PyResolveUtil;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import com.jetbrains.python.testing.PythonUnitTestDetectorsKt;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * User: ktisha
- *
+ * <p>
  * Inspection to detect situations, where instance attribute is defined outside __init__ function.
  */
-public class PyAttributeOutsideInitInspection extends PyInspection {
+public final class PyAttributeOutsideInitInspection extends PyInspection {
 
-  @NotNull
   @Override
-  public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder,
-                                        boolean isOnTheFly,
-                                        @NotNull LocalInspectionToolSession session) {
-    return new Visitor(holder, session);
+  public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder,
+                                                 boolean isOnTheFly,
+                                                 @NotNull LocalInspectionToolSession session) {
+    return new Visitor(holder, PyInspectionVisitor.getContext(session));
   }
 
 
   private static class Visitor extends PyInspectionVisitor {
-    Visitor(@Nullable ProblemsHolder holder, @NotNull LocalInspectionToolSession session) {
-      super(holder, session);
+    Visitor(@Nullable ProblemsHolder holder,
+            @NotNull TypeEvalContext context) {
+      super(holder, context);
     }
 
     @Override
@@ -67,12 +84,12 @@ public class PyAttributeOutsideInitInspection extends PyInspection {
       }
 
       final Map<String, Property> localProperties = containingClass.getProperties();
-      final Map<String, PyTargetExpression> declaredAttributes = new HashMap<>();
+      final MultiMap<String, PyTargetExpression> declaredAttributes = new MultiMap<>();
       final Set<String> inheritedProperties = new HashSet<>();
 
       StreamEx.of(containingClass.getClassAttributes())
-              .filter(attribute -> !localProperties.containsKey(attribute.getName()))
-              .forEach(attribute -> declaredAttributes.put(attribute.getName(), attribute));
+        .filter(attribute -> !localProperties.containsKey(attribute.getName()))
+        .forEach(attribute -> declaredAttributes.putValue(attribute.getName(), attribute));
 
       final PyFunction initMethod = containingClass.findMethodByName(PyNames.INIT, false, myTypeEvalContext);
       if (initMethod != null) {
@@ -85,13 +102,13 @@ public class PyAttributeOutsideInitInspection extends PyInspection {
         }
 
         for (PyTargetExpression classAttr : superClass.getClassAttributes()) {
-          declaredAttributes.put(classAttr.getName(), classAttr);
+          declaredAttributes.putValue(classAttr.getName(), classAttr);
         }
 
         inheritedProperties.addAll(superClass.getProperties().keySet());
       }
 
-      final Map<String, PyTargetExpression> attributes = new HashMap<>();
+      final MultiMap<String, PyTargetExpression> attributes = new MultiMap<>();
       PyClassImpl.collectInstanceAttributes(node, attributes);
 
       for (PyTargetExpression attribute : attributes.values()) {
@@ -101,19 +118,41 @@ public class PyAttributeOutsideInitInspection extends PyInspection {
             !inheritedProperties.contains(attributeName) &&
             !localProperties.containsKey(attributeName) &&
             !isDefinedByProperty(attribute, localProperties.values(), declaredAttributes)) {
-          registerProblem(attribute, PyPsiBundle.message("INSP.attribute.outside.init", attributeName),
-                          new PyMoveAttributeToInitQuickFix());
+          final PyExpression assignedValue = attribute.findAssignedValue();
+          if (assignedValue == null) continue;
+
+          if (expressionReferencesLocalName(assignedValue, node)) {
+            registerProblem(attribute, PyPsiBundle.message("INSP.attribute.outside.init", attributeName),
+                            new AddFieldQuickFix(attributeName, "None", containingClass.getName(), false));
+          }
+          else {
+            registerProblem(attribute, PyPsiBundle.message("INSP.attribute.outside.init", attributeName),
+                            new PyMoveAttributeToInitQuickFix(),
+                            new AddFieldQuickFix(attributeName, "None", containingClass.getName(), false));
+          }
         }
       }
     }
   }
 
+  private static boolean expressionReferencesLocalName(@NotNull PyExpression assignedValue, @NotNull PyFunction function) {
+    Collection<PyReferenceExpression> references = PsiTreeUtil.collectElementsOfType(assignedValue, PyReferenceExpression.class);
+    for (PyReferenceExpression reference : references) {
+      if (reference.isQualified()) continue;
+      Collection<PsiElement> resolved = PyResolveUtil.resolveLocally(reference);
+      if (resolved.isEmpty()) continue;
+      if (ContainerUtil.exists(resolved, it -> it instanceof PyParameter && ((PyParameter)it).isSelf())) continue;
+      if (ContainerUtil.exists(resolved, it -> function == ScopeUtil.getScopeOwner(it))) return true;
+    }
+    return false;
+  }
+
   private static boolean isDefinedByProperty(@NotNull PyTargetExpression attribute,
                                              @NotNull Collection<Property> properties,
-                                             @NotNull Map<String, PyTargetExpression> attributesInInit) {
+                                             @NotNull MultiMap<String, PyTargetExpression> attributesInInit) {
     return StreamEx.of(properties)
-                   .filter(it -> isSetBy(attribute, it))
-                   .anyMatch(it -> attributesInInit.containsKey(it.getName()));
+      .filter(it -> isSetBy(attribute, it))
+      .anyMatch(it -> attributesInInit.containsKey(it.getName()));
   }
 
   private static boolean isApplicable(@NotNull PyClass containingClass, @NotNull TypeEvalContext context) {
@@ -121,8 +160,7 @@ public class PyAttributeOutsideInitInspection extends PyInspection {
            !containingClass.isSubclass("django.db.models.base.Model", context);
   }
 
-  @Nullable
-  private static Collection<PyTargetExpression> getSetterTargetExpressions(@NotNull Property property) {
+  private static @Nullable Collection<PyTargetExpression> getSetterTargetExpressions(@NotNull Property property) {
     if (!property.getSetter().isDefined() || property.getSetter().value() == null) {
       return null;
     }
@@ -143,8 +181,8 @@ public class PyAttributeOutsideInitInspection extends PyInspection {
     return propertyTargetExpressions != null &&
            attribute.getName() != null &&
            StreamEx.of(propertyTargetExpressions)
-                   .map(targetExpression -> targetExpression.getName())
-                   .nonNull()
-                   .anyMatch(name -> name.equals(attribute.getName()));
+             .map(targetExpression -> targetExpression.getName())
+             .nonNull()
+             .anyMatch(name -> name.equals(attribute.getName()));
   }
 }

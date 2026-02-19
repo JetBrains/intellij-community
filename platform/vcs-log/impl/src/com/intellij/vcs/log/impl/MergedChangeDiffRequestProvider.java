@@ -1,11 +1,14 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.impl;
 
+import com.intellij.diff.DiffEditorTitleCustomizer;
 import com.intellij.diff.chains.DiffRequestProducerException;
 import com.intellij.diff.requests.DiffRequest;
 import com.intellij.diff.requests.SimpleDiffRequest;
 import com.intellij.diff.util.DiffUserDataKeys;
 import com.intellij.diff.util.DiffUserDataKeysEx;
+import com.intellij.diff.util.DiffUtil;
+import com.intellij.openapi.diff.impl.DiffTitleWithDetailsCustomizers;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
@@ -21,6 +24,7 @@ import com.intellij.openapi.vcs.changes.actions.diff.ChangeDiffRequestProducer;
 import com.intellij.openapi.vcs.changes.actions.diff.ChangeDiffRequestProvider;
 import com.intellij.openapi.vcs.changes.ui.ChangeDiffRequestChain;
 import com.intellij.util.ThreeState;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -31,10 +35,10 @@ import java.util.Map;
 
 import static com.intellij.openapi.vcs.changes.actions.diff.ChangeDiffRequestProducer.getRequestTitle;
 
+@ApiStatus.Internal
 public class MergedChangeDiffRequestProvider implements ChangeDiffRequestProvider {
-  @NotNull
   @Override
-  public ThreeState isEquals(@NotNull Change change1, @NotNull Change change2) {
+  public @NotNull ThreeState isEquals(@NotNull Change change1, @NotNull Change change2) {
     return ThreeState.UNSURE;
   }
 
@@ -43,45 +47,44 @@ public class MergedChangeDiffRequestProvider implements ChangeDiffRequestProvide
     return change instanceof MergedChange && ((MergedChange)change).getSourceChanges().size() == 2;
   }
 
-  @NotNull
   @Override
-  public DiffRequest process(@NotNull ChangeDiffRequestProducer presentable,
-                             @NotNull UserDataHolder context,
-                             @NotNull ProgressIndicator indicator) throws ProcessCanceledException, DiffRequestProducerException {
+  public @NotNull DiffRequest process(@NotNull ChangeDiffRequestProducer presentable,
+                                      @NotNull UserDataHolder context,
+                                      @NotNull ProgressIndicator indicator) throws ProcessCanceledException, DiffRequestProducerException {
     return new MyProducer(presentable.getProject(), (MergedChange)presentable.getChange()).process(context, indicator);
   }
 
-  @NotNull
-  private static SimpleDiffRequest createTwoSideRequest(@Nullable Project project,
-                                                        @Nullable ContentRevision leftRevision,
-                                                        @Nullable ContentRevision rightRevision,
-                                                        @NotNull @NlsContexts.DialogTitle String requestTitle,
-                                                        @NotNull @NlsContexts.Label String leftTitle,
-                                                        @NotNull @NlsContexts.Label String rightTitle,
-                                                        @NotNull UserDataHolder context,
-                                                        @NotNull ProgressIndicator indicator)
+  private static @NotNull SimpleDiffRequest createTwoSideRequest(@Nullable Project project,
+                                                                 @Nullable ContentRevision leftRevision,
+                                                                 @Nullable ContentRevision rightRevision,
+                                                                 @NotNull @NlsContexts.DialogTitle String requestTitle,
+                                                                 @NotNull @NlsContexts.Label String leftTitle,
+                                                                 @NotNull @NlsContexts.Label String rightTitle,
+                                                                 @NotNull UserDataHolder context,
+                                                                 @NotNull ProgressIndicator indicator)
     throws DiffRequestProducerException {
-    return new SimpleDiffRequest(requestTitle,
-                                 ChangeDiffRequestProducer.createContent(project, leftRevision, context, indicator),
-                                 ChangeDiffRequestProducer.createContent(project, rightRevision, context, indicator),
-                                 leftTitle, rightTitle);
+    SimpleDiffRequest request = new SimpleDiffRequest(requestTitle,
+                                                      ChangeDiffRequestProducer.createContent(project, leftRevision, context, indicator),
+                                                      ChangeDiffRequestProducer.createContent(project, rightRevision, context, indicator),
+                                                      leftTitle, rightTitle);
+    List<DiffEditorTitleCustomizer> titleCustomizers =
+      DiffTitleWithDetailsCustomizers.getTitleCustomizers(project, leftRevision, leftTitle, rightRevision, rightTitle);
+    return DiffUtil.addTitleCustomizers(request, titleCustomizers);
   }
 
-  @NotNull
-  @Nls
-  private static String getRevisionTitle(@NotNull Map<Key<?>, Object> context,
-                                         @NotNull Key<@Nls String> key,
-                                         @Nullable ContentRevision revision,
-                                         @NotNull @Nls String defaultTitle) {
+  private static @NotNull @Nls String getRevisionTitle(@NotNull Map<Key<?>, Object> context,
+                                                       @NotNull Key<@Nls String> key,
+                                                       @Nullable ContentRevision revision,
+                                                       @NotNull @Nls String defaultTitle) {
     @Nls String titleFromContext = (String)context.get(key);
     if (titleFromContext != null) return titleFromContext;
     return ChangeDiffRequestProducer.getRevisionTitle(revision, defaultTitle);
   }
 
   public static final class MyProducer implements ChangeDiffRequestChain.Producer {
-    @Nullable private final Project myProject;
-    @NotNull private final MergedChange myMergedChange;
-    @NotNull private final Map<Key<?>, Object> myContext;
+    private final @Nullable Project myProject;
+    private final @NotNull MergedChange myMergedChange;
+    private final @NotNull Map<Key<?>, Object> myContext;
 
     public MyProducer(@Nullable Project project,
                       @NotNull MergedChange mergedChange,
@@ -97,22 +100,20 @@ public class MergedChangeDiffRequestProvider implements ChangeDiffRequestProvide
       this(project, mergedChange, Collections.emptyMap());
     }
 
-    @NotNull
     @Override
-    public DiffRequest process(@NotNull UserDataHolder context, @NotNull ProgressIndicator indicator)
+    public @NotNull DiffRequest process(@NotNull UserDataHolder context, @NotNull ProgressIndicator indicator)
       throws DiffRequestProducerException, ProcessCanceledException {
       List<Change> sourceChanges = myMergedChange.getSourceChanges();
       SimpleDiffRequest request = createRequest(myProject, sourceChanges.get(0), sourceChanges.get(1), context, indicator);
-      request.putUserData(DiffUserDataKeys.THREESIDE_DIFF_WITH_RESULT, true);
+      request.putUserData(DiffUserDataKeys.THREESIDE_DIFF_COLORS_MODE, DiffUserDataKeys.ThreeSideDiffColors.MERGE_RESULT);
       return request;
     }
 
-    @NotNull
-    private SimpleDiffRequest createRequest(@Nullable Project project,
-                                            @NotNull Change leftChange,
-                                            @NotNull Change rightChange,
-                                            @NotNull UserDataHolder context,
-                                            @NotNull ProgressIndicator indicator)
+    private @NotNull SimpleDiffRequest createRequest(@Nullable Project project,
+                                                     @NotNull Change leftChange,
+                                                     @NotNull Change rightChange,
+                                                     @NotNull UserDataHolder context,
+                                                     @NotNull ProgressIndicator indicator)
       throws DiffRequestProducerException {
       String requestTitle = getRequestTitle(leftChange);
 
@@ -136,28 +137,34 @@ public class MergedChangeDiffRequestProvider implements ChangeDiffRequestProvide
       else if (centerRevision == null) {
         return createTwoSideRequest(project, leftRevision, rightRevision, requestTitle, leftTitle, rightTitle, context, indicator);
       }
-      return new SimpleDiffRequest(requestTitle,
-                                   ChangeDiffRequestProducer.createContent(project, leftRevision, context, indicator),
-                                   ChangeDiffRequestProducer.createContent(project, centerRevision, context, indicator),
-                                   ChangeDiffRequestProducer.createContent(project, rightRevision, context, indicator),
-                                   leftTitle, centerTitle, rightTitle);
+
+      SimpleDiffRequest request = new SimpleDiffRequest(requestTitle,
+                                                        ChangeDiffRequestProducer.createContent(project, leftRevision, context, indicator),
+                                                        ChangeDiffRequestProducer.createContent(project, centerRevision, context,
+                                                                                                indicator),
+                                                        ChangeDiffRequestProducer.createContent(project, rightRevision, context, indicator),
+                                                        leftTitle, centerTitle, rightTitle);
+
+      return DiffUtil.addTitleCustomizers(request, DiffTitleWithDetailsCustomizers.getTitleCustomizers(
+        project,
+        leftRevision, leftTitle,
+        centerRevision, centerTitle,
+        rightRevision, rightTitle)
+      );
     }
 
-    @NotNull
     @Override
-    public String getName() {
+    public @NotNull String getName() {
       return getRequestTitle(myMergedChange);
     }
 
-    @NotNull
     @Override
-    public FilePath getFilePath() {
+    public @NotNull FilePath getFilePath() {
       return ChangesUtil.getFilePath(myMergedChange);
     }
 
-    @NotNull
     @Override
-    public FileStatus getFileStatus() {
+    public @NotNull FileStatus getFileStatus() {
       return myMergedChange.getFileStatus();
     }
   }

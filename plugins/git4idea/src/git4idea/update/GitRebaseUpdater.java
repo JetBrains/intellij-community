@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.update;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -10,13 +10,17 @@ import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.impl.LocalChangesUnderRoots;
 import com.intellij.openapi.vcs.update.UpdatedFiles;
 import com.intellij.util.containers.ContainerUtil;
+import git4idea.GitNotificationIdsHolder;
 import git4idea.GitUtil;
 import git4idea.branch.GitBranchPair;
+import git4idea.branch.GitRebaseParams;
 import git4idea.commands.Git;
 import git4idea.commands.GitCommandResult;
 import git4idea.i18n.GitBundle;
+import git4idea.rebase.GitRebaseProcess;
 import git4idea.rebase.GitRebaser;
 import git4idea.repo.GitRepository;
+import git4idea.repo.GitRepositoryManager;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
@@ -28,8 +32,7 @@ import java.util.List;
  */
 public final class GitRebaseUpdater extends GitUpdater {
   private static final Logger LOG = Logger.getInstance(GitRebaseUpdater.class.getName());
-  private final GitRebaser myRebaser;
-  @NotNull private final GitBranchPair myBranchPair;
+  private final @NotNull GitBranchPair myBranchPair;
 
   public GitRebaseUpdater(@NotNull Project project,
                           @NotNull Git git,
@@ -38,7 +41,6 @@ public final class GitRebaseUpdater extends GitUpdater {
                           @NotNull ProgressIndicator progressIndicator,
                           @NotNull UpdatedFiles updatedFiles) {
     super(project, git, repository, progressIndicator, updatedFiles);
-    myRebaser = new GitRebaser(myProject, git, myProgressIndicator);
     myBranchPair = branchPair;
   }
 
@@ -55,24 +57,36 @@ public final class GitRebaseUpdater extends GitUpdater {
     }
   }
 
-  @NotNull
   @Override
-  protected GitUpdateResult doUpdate() {
+  protected @NotNull GitUpdateResult doUpdate() {
     LOG.info("doUpdate ");
+    if (!checkForRebasingPublishedCommits()) {
+      return GitUpdateResult.CANCEL;
+    }
+
     String remoteBranch = getRemoteBranchToMerge();
     List<String> params = Collections.singletonList(remoteBranch);
-    return myRebaser.rebase(myRoot, params, () -> cancel(), null);
+    GitUpdateResult result = new GitRebaser(myProject, myGit, myProgressIndicator).rebase(myRoot, params, null);
+    if (result == GitUpdateResult.CANCEL) {
+      new GitRebaser(myProject, myGit, myProgressIndicator).abortRebase(myRoot);
+    }
+    return result;
   }
 
-  @NotNull
-  private String getRemoteBranchToMerge() {
+  private boolean checkForRebasingPublishedCommits() {
+    GitBranchPair sourceAndTarget = getSourceAndTarget();
+    String currentRef = sourceAndTarget.getSource().getFullName();
+    String baseRef = sourceAndTarget.getTarget().getFullName();
+    GitRebaseParams.RebaseUpstream upstream = GitRebaseParams.RebaseUpstream.Companion.fromRefString(baseRef);
+
+    if (GitRebaseProcess.isRebasingPublishedCommit(myRepository, upstream, currentRef)) {
+      return GitRebaseProcess.askIfShouldRebasePublishedCommit();
+    }
+    return true;
+  }
+
+  private @NotNull String getRemoteBranchToMerge() {
     return myBranchPair.getTarget().getName();
-  }
-
-  public void cancel() {
-    myRebaser.abortRebase(myRoot);
-    myProgressIndicator.setText2(GitBundle.message("progress.details.refreshing.files.for.root", myRoot.getPath()));
-    myRoot.refresh(false, true);
   }
 
   @NotNull
@@ -91,7 +105,7 @@ public final class GitRebaseUpdater extends GitUpdater {
    */
   public boolean fastForwardMerge() {
     LOG.info("Trying fast-forward merge for " + myRoot);
-    GitRepository repository = GitUtil.getRepositoryManager(myProject).getRepositoryForRoot(myRoot);
+    GitRepository repository = GitRepositoryManager.getInstance(myProject).getRepositoryForRoot(myRoot);
     if (repository == null) {
       LOG.error("Repository is null for " + myRoot);
       return false;
@@ -114,7 +128,7 @@ public final class GitRebaseUpdater extends GitUpdater {
       // so we just notify the user about problems with collecting the updated changes.
       LOG.info("Couldn't mark end for repository " + repository, e);
       VcsNotifier.getInstance(myProject).
-        notifyMinorWarning("git.rebase.collect.updated.changes.error",
+        notifyMinorWarning(GitNotificationIdsHolder.COLLECT_UPDATED_CHANGES_ERROR,
                            GitBundle.message("notification.title.couldnt.collect.updated.files.info"),
                            GitBundle.message("notification.content.couldnt.collect.updated.files.info", repository));
     }

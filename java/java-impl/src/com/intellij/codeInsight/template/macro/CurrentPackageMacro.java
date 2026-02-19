@@ -15,32 +15,27 @@
  */
 package com.intellij.codeInsight.template.macro;
 
-import com.intellij.codeInsight.template.*;
-import com.intellij.java.JavaBundle;
-import com.intellij.openapi.project.Project;
-import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.PsiFile;
+import com.intellij.codeInsight.template.Expression;
+import com.intellij.codeInsight.template.ExpressionContext;
+import com.intellij.codeInsight.template.JavaCodeContextType;
+import com.intellij.codeInsight.template.Macro;
+import com.intellij.codeInsight.template.Result;
+import com.intellij.codeInsight.template.TemplateContextType;
+import com.intellij.codeInsight.template.TextResult;
 import com.intellij.psi.PsiJavaFile;
 import org.jetbrains.annotations.NotNull;
 
 
-class CurrentPackageMacro extends Macro {
+final class CurrentPackageMacro extends Macro {
   @Override
   public String getName() {
     return "currentPackage";
   }
 
   @Override
-  public String getPresentableName() {
-    return JavaBundle.message("macro.current.package");
-  }
-
-  @Override
   public Result calculateResult(Expression @NotNull [] params, ExpressionContext context) {
-    Project project = context.getProject();
-    PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(context.getEditor().getDocument());
-    if (!(file instanceof PsiJavaFile)) return new TextResult ("");
-    return new TextResult (((PsiJavaFile)file).getPackageName());
+    if (!(context.getPsiFile() instanceof PsiJavaFile javaFile)) return new TextResult("");
+    return new TextResult(javaFile.getPackageName());
   }
 
   @Override

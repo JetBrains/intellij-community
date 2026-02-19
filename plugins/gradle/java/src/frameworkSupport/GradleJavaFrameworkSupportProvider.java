@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.frameworkSupport;
 
 import com.intellij.framework.FrameworkTypeEx;
@@ -10,35 +10,31 @@ import com.intellij.openapi.roots.ModifiableModelsProvider;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.Icon;
 
 /**
  * @author Vladislav.Soroka
  */
-public class GradleJavaFrameworkSupportProvider extends GradleFrameworkSupportProvider {
+public final class GradleJavaFrameworkSupportProvider extends GradleFrameworkSupportProvider {
 
   public static final String ID = "java";
 
-  @NotNull
   @Override
-  public FrameworkTypeEx getFrameworkType() {
+  public @NotNull FrameworkTypeEx getFrameworkType() {
     return new FrameworkTypeEx(ID) {
-      @NotNull
       @Override
-      public FrameworkSupportInModuleProvider createProvider() {
+      public @NotNull FrameworkSupportInModuleProvider createProvider() {
         return GradleJavaFrameworkSupportProvider.this;
       }
 
-      @NotNull
       @Override
-      public String getPresentableName() {
+      public @NotNull String getPresentableName() {
         //noinspection HardCodedStringLiteral
         return "Java"; //NON-NLS
       }
 
-      @NotNull
       @Override
-      public Icon getIcon() {
+      public @NotNull Icon getIcon() {
         return AllIcons.Nodes.Module;
       }
     };
@@ -51,8 +47,7 @@ public class GradleJavaFrameworkSupportProvider extends GradleFrameworkSupportPr
                          @NotNull ModifiableModelsProvider modifiableModelsProvider,
                          @NotNull BuildScriptDataBuilder buildScriptData) {
     buildScriptData
-      .addPluginDefinitionInPluginsGroup("id 'java'")
-      .addRepositoriesDefinition("mavenCentral()")
-      .addDependencyNotation("testCompile group: 'junit', name: 'junit', version: '4.12'");
+      .withJavaPlugin()
+      .withJUnit();
   }
 }

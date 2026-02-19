@@ -1,7 +1,8 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.lang.FileASTNode;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.pom.PomManager;
@@ -10,35 +11,59 @@ import com.intellij.pom.event.PomModelEvent;
 import com.intellij.pom.impl.PomTransactionBase;
 import com.intellij.pom.tree.TreeAspect;
 import com.intellij.pom.tree.events.impl.TreeChangeEventImpl;
-import com.intellij.psi.*;
+import com.intellij.psi.AbstractFileViewProvider;
+import com.intellij.psi.FileViewProvider;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiInvalidElementAccessException;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.impl.source.tree.CompositeElement;
 import com.intellij.psi.impl.source.tree.FileElement;
-import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.impl.source.tree.TreeUtil;
 import com.intellij.util.diff.DiffTreeChangeBuilder;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * A utility class for making and managing changes to an Abstract Syntax Tree (AST).
+ * This class works like a tool for building and applying updates to the tree structure,
+ * using a delayed execution approach to handle the changes efficiently.
+ * <p>
+ * The class works with AST structures represented by {@link ASTNode}. It supports
+ * actions like replacing, deleting, and inserting nodes. Changes are logged and
+ * applied in batches to keep things consistent and reduce processing time.
+ *
+ * <h2>How It Works</h2>
+ * Changes are stored as "log entries", which are special objects created from the
+ * {@link LogEntry} class. Each type of change (like replacing or deleting a node)
+ * has its own subclass of {@code LogEntry} with specific logic for that change. These log
+ * entries are saved in a list and only applied later when needed.
+ *
+ * <h2>Main Features</h2>
+ * - Keeps track of all changes made to the AST.
+ * - Delays and batches changes for efficient execution.
+ * - Handles common AST tasks like replacing, inserting, or deleting nodes.
+ * - Ensures the AST stays correct and consistent after updates.
+ *
+ * <h2>Thread Safety</h2>
+ * This class is not thread-safe. It should only be used in a single-threaded environment,
+ * like under locks or in the IntelliJ platform's PSI handling thread.
+ */
+@ApiStatus.Internal
 public class DiffLog implements DiffTreeChangeBuilder<ASTNode,ASTNode> {
   public DiffLog() { }
 
-  private abstract static class LogEntry {
-    protected LogEntry() {
-      ProgressIndicatorProvider.checkCanceled();
-    }
-    abstract void doActualPsiChange(@NotNull PsiFile file, @NotNull TreeChangeEventImpl event);
-  }
-
   private final List<LogEntry> myEntries = new ArrayList<>();
 
-  @NotNull
-  public TreeChangeEventImpl performActualPsiChange(@NotNull PsiFile file) {
+  public @NotNull TreeChangeEventImpl performActualPsiChange(@NotNull PsiFile file) {
     TreeAspect modelAspect = PomManager.getModel(file.getProject()).getModelAspect(TreeAspect.class);
-    TreeChangeEventImpl event = new TreeChangeEventImpl(modelAspect, ((PsiFileImpl)file).calcTreeElement());
+    TreeChangeEventImpl event = new TreeChangeEventImpl(modelAspect, file.getNode());
     for (LogEntry entry : myEntries) {
       entry.doActualPsiChange(file, event);
     }
@@ -48,8 +73,8 @@ public class DiffLog implements DiffTreeChangeBuilder<ASTNode,ASTNode> {
 
   @Override
   public void nodeReplaced(@NotNull ASTNode oldNode, @NotNull ASTNode newNode) {
-    if (oldNode instanceof FileElement && newNode instanceof FileElement) {
-      appendReplaceFileElement((FileElement)oldNode, (FileElement)newNode);
+    if (oldNode instanceof FileASTNode && newNode instanceof FileASTNode) {
+      appendReplaceFileElement((FileASTNode)oldNode, (FileASTNode)newNode);
     }
     else {
       myEntries.add(new ReplaceEntry(oldNode, newNode));
@@ -60,7 +85,7 @@ public class DiffLog implements DiffTreeChangeBuilder<ASTNode,ASTNode> {
     myEntries.add(new ReplaceElementWithEvents(oldRoot, newRoot));
   }
 
-  void appendReplaceFileElement(@NotNull FileElement oldNode, @NotNull FileElement newNode) {
+  void appendReplaceFileElement(@NotNull FileASTNode oldNode, @NotNull FileASTNode newNode) {
     myEntries.add(new ReplaceFileElement(oldNode, newNode));
   }
 
@@ -75,49 +100,41 @@ public class DiffLog implements DiffTreeChangeBuilder<ASTNode,ASTNode> {
   }
 
   private static final class ReplaceEntry extends LogEntry {
-    private final TreeElement myOldChild;
-    private final TreeElement myNewChild;
+    private final ASTNode myOldChild;
+    private final ASTNode myNewChild;
 
     private ReplaceEntry(@NotNull ASTNode oldNode, @NotNull ASTNode newNode) {
-      myOldChild = (TreeElement)oldNode;
-      myNewChild = (TreeElement)newNode;
+      myOldChild = oldNode;
+      myNewChild = newNode;
       ensureOldParent();
     }
 
     @Override
-    void doActualPsiChange(@NotNull PsiFile file, @NotNull TreeChangeEventImpl changeEvent) {
-      CompositeElement parent = ensureOldParent();
+    void doActualPsiChange(@NotNull PsiFile psiFile, @NotNull TreeChangeEventImpl changeEvent) {
+      ASTNode parent = ensureOldParent();
 
-      final PsiElement psiParent = parent.getPsi();
-      final PsiElement psiOldChild = file.isPhysical() ? myOldChild.getPsi() : null;
+      PsiElement psiParent = parent.getPsi();
+      PsiElement psiOldChild = psiFile.isPhysical() ? myOldChild.getPsi() : null;
       if (psiParent != null && psiOldChild != null) {
-        final PsiTreeChangeEventImpl event = new PsiTreeChangeEventImpl(file.getManager());
+        PsiTreeChangeEventImpl event = new PsiTreeChangeEventImpl(psiFile.getManager());
         event.setParent(psiParent);
-        event.setFile(file);
+        event.setFile(psiFile);
         event.setOldChild(psiOldChild);
-        PsiElement psiNewChild = getPsi(myNewChild, file);
+        PsiElement psiNewChild = getPsi(myNewChild, psiFile);
         event.setNewChild(psiNewChild);
-        ((PsiManagerEx)file.getManager()).beforeChildReplacement(event);
+        ((PsiManagerEx)psiFile.getManager()).beforeChildReplacement(event);
       }
 
       if (!(myOldChild instanceof FileElement) || !(myNewChild instanceof FileElement)) {
         changeEvent.addElementaryChange(myOldChild.getTreeParent());
       }
-
-      myNewChild.rawRemove();
-      myOldChild.rawReplaceWithList(myNewChild);
-
-      myNewChild.clearCaches();
-      if (!(myNewChild instanceof FileElement)) {
-        myNewChild.getTreeParent().subtreeChanged();
-      }
+      ((ReparseableASTNode) myOldChild).applyReplaceOnReparse(myNewChild);
 
       DebugUtil.checkTreeStructure(parent);
     }
 
-    @NotNull
-    private CompositeElement ensureOldParent() {
-      CompositeElement parent = myOldChild.getTreeParent();
+    private @NotNull ASTNode ensureOldParent() {
+      ASTNode parent = myOldChild.getTreeParent();
       if (parent == null) {
         throw PsiInvalidElementAccessException.createByNode(myOldChild, "new:" + myNewChild);
       }
@@ -126,89 +143,73 @@ public class DiffLog implements DiffTreeChangeBuilder<ASTNode,ASTNode> {
   }
 
   private static final class DeleteEntry extends LogEntry {
-    @NotNull private final CompositeElement myOldParent;
-    @NotNull private final TreeElement myOldNode;
+    private final @NotNull ASTNode myOldParent;
+    private final @NotNull ASTNode myOldNode;
 
     private DeleteEntry(@NotNull ASTNode oldParent, @NotNull ASTNode oldNode) {
-      myOldParent = (CompositeElement)oldParent;
-      myOldNode = (TreeElement)oldNode;
+      myOldParent = oldParent;
+      myOldNode = oldNode;
     }
 
     @Override
-    void doActualPsiChange(@NotNull PsiFile file, @NotNull TreeChangeEventImpl changeEvent) {
+    void doActualPsiChange(@NotNull PsiFile psiFile, @NotNull TreeChangeEventImpl changeEvent) {
       PsiElement psiParent = myOldParent.getPsi();
-      PsiElement psiChild = file.isPhysical() ? myOldNode.getPsi() : null;
+      PsiElement psiChild = psiFile.isPhysical() ? myOldNode.getPsi() : null;
 
       if (psiParent != null && psiChild != null) {
-        PsiTreeChangeEventImpl event = new PsiTreeChangeEventImpl(file.getManager());
+        PsiTreeChangeEventImpl event = new PsiTreeChangeEventImpl(psiFile.getManager());
         event.setParent(psiParent);
         event.setChild(psiChild);
-        event.setFile(file);
-        ((PsiManagerEx)file.getManager()).beforeChildRemoval(event);
+        event.setFile(psiFile);
+        ((PsiManagerEx)psiFile.getManager()).beforeChildRemoval(event);
       }
 
       changeEvent.addElementaryChange(myOldParent);
-
-      myOldNode.rawRemove();
-      myOldParent.subtreeChanged();
+      ((ReparseableASTNode) myOldParent).applyDeleteOnReparse(myOldNode);
 
       DebugUtil.checkTreeStructure(myOldParent);
     }
   }
 
   private static final class InsertEntry extends LogEntry {
-    @NotNull private final CompositeElement myOldParent;
-    @NotNull private final TreeElement myNewNode;
+    private final @NotNull ASTNode myOldParent;
+    private final @NotNull ASTNode myNewNode;
     private final int myPos;
 
     private InsertEntry(@NotNull ASTNode oldParent, @NotNull ASTNode newNode, int pos) {
       assert pos>=0 : pos;
-      myOldParent = (CompositeElement)oldParent;
-      myNewNode = (TreeElement)newNode;
+      myOldParent = oldParent;
+      myNewNode = newNode;
       myPos = pos;
     }
 
     @Override
-    void doActualPsiChange(@NotNull PsiFile file, @NotNull TreeChangeEventImpl changeEvent) {
-      TreeElement anchor = null;
-      TreeElement firstChildNode = myOldParent.getFirstChildNode();
+    void doActualPsiChange(@NotNull PsiFile psiFile, @NotNull TreeChangeEventImpl changeEvent) {
+      ASTNode anchor = null;
+      ASTNode firstChildNode = myOldParent.getFirstChildNode();
       for (int i = 0; i < myPos; i++) {
         anchor = anchor == null ? firstChildNode : anchor.getTreeNext();
       }
 
       PsiElement psiParent = myOldParent.getPsi();
-      PsiElement psiChild = getPsi(myNewNode, file);
+      PsiElement psiChild = getPsi(myNewNode, psiFile);
       if (psiParent != null && psiChild != null) {
-        PsiTreeChangeEventImpl event = new PsiTreeChangeEventImpl(file.getManager());
+        PsiTreeChangeEventImpl event = new PsiTreeChangeEventImpl(psiFile.getManager());
         event.setParent(psiParent);
         event.setChild(psiChild);
-        event.setFile(file);
-        ((PsiManagerEx)file.getManager()).beforeChildAddition(event);
+        event.setFile(psiFile);
+        ((PsiManagerEx)psiFile.getManager()).beforeChildAddition(event);
       }
 
       changeEvent.addElementaryChange(myOldParent);
 
-      myNewNode.rawRemove();
-      if (anchor != null) {
-        anchor.rawInsertAfterMe(myNewNode);
-      }
-      else {
-        if (firstChildNode != null) {
-          firstChildNode.rawInsertBeforeMe(myNewNode);
-        }
-        else {
-          myOldParent.rawAddChildren(myNewNode);
-        }
-      }
-
-      myNewNode.clearCaches();
-      myOldParent.subtreeChanged();
+      ((ReparseableASTNode) myOldParent).applyInsertOnReparse(myNewNode, anchor);
 
       DebugUtil.checkTreeStructure(myOldParent);
     }
   }
 
-  private static PsiElement getPsi(ASTNode node, PsiFile file) {
+  private static @Nullable PsiElement getPsi(@NotNull ASTNode node, @NotNull PsiFile file) {
     node.putUserData(TreeUtil.CONTAINING_FILE_KEY_AFTER_REPARSE, ((PsiFileImpl)file).getTreeElement());
     PsiElement psiChild = file.isPhysical() ? node.getPsi() : null;
     node.putUserData(TreeUtil.CONTAINING_FILE_KEY_AFTER_REPARSE, null);
@@ -216,29 +217,24 @@ public class DiffLog implements DiffTreeChangeBuilder<ASTNode,ASTNode> {
   }
 
   private static final class ReplaceFileElement extends LogEntry {
-    @NotNull private final FileElement myOldNode;
-    @NotNull private final FileElement myNewNode;
+    private final @NotNull FileASTNode myOldNode;
+    private final @NotNull FileASTNode myNewNode;
 
-    private ReplaceFileElement(@NotNull FileElement oldNode, @NotNull FileElement newNode) {
+    private ReplaceFileElement(@NotNull FileASTNode oldNode, @NotNull FileASTNode newNode) {
       myOldNode = oldNode;
       myNewNode = newNode;
     }
 
     @Override
     void doActualPsiChange(@NotNull PsiFile file, @NotNull TreeChangeEventImpl event) {
-      PsiFileImpl fileImpl = (PsiFileImpl)file;
       event.addElementaryChange(myOldNode);
-      if (myOldNode.getFirstChildNode() != null) myOldNode.rawRemoveAllChildren();
-      final TreeElement firstChildNode = myNewNode.getFirstChildNode();
-      if (firstChildNode != null) myOldNode.rawAddChildren(firstChildNode);
-      fileImpl.calcTreeElement().setCharTable(myNewNode.getCharTable());
-      myOldNode.subtreeChanged();
+      ((ReparseableASTNode) myOldNode).applyReplaceFileOnReparse(file, myNewNode);
     }
   }
 
   private static final class ReplaceElementWithEvents extends LogEntry {
-    @NotNull private final CompositeElement myOldRoot;
-    @NotNull private final CompositeElement myNewRoot;
+    private final @NotNull CompositeElement myOldRoot;
+    private final @NotNull CompositeElement myNewRoot;
 
     private ReplaceElementWithEvents(@NotNull CompositeElement oldRoot, @NotNull CompositeElement newRoot) {
       myOldRoot = oldRoot;
@@ -260,12 +256,12 @@ public class DiffLog implements DiffTreeChangeBuilder<ASTNode,ASTNode> {
       synchronized (((AbstractFileViewProvider)viewProvider).getFilePsiLock()) {
         viewProvider.beforeContentsSynchronized();
 
-        final Document document = viewProvider.getDocument();
-        PsiDocumentManagerBase documentManager = (PsiDocumentManagerBase)PsiDocumentManager.getInstance(file.getProject());
+        Document document = viewProvider.getDocument();
+        PsiDocumentManagerEx documentManager = (PsiDocumentManagerEx)PsiDocumentManager.getInstance(file.getProject());
         PsiToDocumentSynchronizer.DocumentChangeTransaction transaction = documentManager.getSynchronizer().getTransaction(document);
 
         if (transaction == null) {
-          final PomModel model = PomManager.getModel(file.getProject());
+          PomModel model = PomManager.getModel(file.getProject());
 
           model.runTransaction(new PomTransactionBase(file) {
             @Override
@@ -279,5 +275,13 @@ public class DiffLog implements DiffTreeChangeBuilder<ASTNode,ASTNode> {
         }
       }
     });
+  }
+
+  private abstract static class LogEntry {
+    LogEntry() {
+      ProgressIndicatorProvider.checkCanceled();
+    }
+
+    abstract void doActualPsiChange(@NotNull PsiFile file, @NotNull TreeChangeEventImpl event);
   }
 }

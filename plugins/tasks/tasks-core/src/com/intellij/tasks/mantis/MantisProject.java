@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.tasks.mantis;
 
 import com.intellij.tasks.mantis.model.ProjectData;
@@ -50,8 +48,7 @@ public final class MantisProject {
   }
 
   @Attribute("name")
-  @NotNull
-  public String getName() {
+  public @NotNull String getName() {
     return myName;
   }
 
@@ -60,7 +57,7 @@ public final class MantisProject {
   }
 
 
-  public final boolean isUnspecified() {
+  public boolean isUnspecified() {
     return getId() == UNSPECIFIED_PROJECT_ID;
   }
 
@@ -72,8 +69,7 @@ public final class MantisProject {
    * are opened or user hit "Login" button. Thus they are not persisted in settings.
    */
   @Transient
-  @NotNull
-  public List<MantisFilter> getFilters() {
+  public @NotNull List<MantisFilter> getFilters() {
     return myFilters == null ? Collections.emptyList() : myFilters;
   }
 
@@ -83,7 +79,7 @@ public final class MantisProject {
 
 
   @Override
-  public final boolean equals(Object o) {
+  public boolean equals(Object o) {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
 
@@ -95,7 +91,7 @@ public final class MantisProject {
   }
 
   @Override
-  public final int hashCode() {
+  public int hashCode() {
     return myId;
   }
 

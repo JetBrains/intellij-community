@@ -1,11 +1,11 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.model.search;
 
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
-public interface TextOccurrence {
+public sealed interface TextOccurrence {
 
   @NotNull
   PsiElement getElement();
@@ -13,13 +13,12 @@ public interface TextOccurrence {
   int getOffsetInElement();
 
   @Contract(value = "_, _ -> new", pure = true)
-  @NotNull
-  static TextOccurrence of(@NotNull PsiElement element, int offsetInElement) {
+  static @NotNull TextOccurrence of(@NotNull PsiElement element, int offsetInElement) {
     return new Impl(element, offsetInElement);
   }
 }
 
-class Impl implements TextOccurrence {
+final class Impl implements TextOccurrence {
 
   private final PsiElement myElement;
   private final int myOffsetInElement;
@@ -29,9 +28,8 @@ class Impl implements TextOccurrence {
     myOffsetInElement = offsetInElement;
   }
 
-  @NotNull
   @Override
-  public PsiElement getElement() {
+  public @NotNull PsiElement getElement() {
     return myElement;
   }
 

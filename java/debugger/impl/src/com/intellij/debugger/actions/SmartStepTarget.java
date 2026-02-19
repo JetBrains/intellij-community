@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.actions;
 
 import com.intellij.openapi.util.NlsSafe;
@@ -8,11 +8,11 @@ import com.intellij.util.Range;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.Icon;
 
 /**
-* @author Eugene Zhuravlev
-*/
+ * @author Eugene Zhuravlev
+ */
 public abstract class SmartStepTarget {
   private final PsiElement myHighlightElement;
   private final String myLabel;
@@ -26,14 +26,11 @@ public abstract class SmartStepTarget {
     myExpressionLines = expressionLines;
   }
 
-  @Nullable
-  public PsiElement getHighlightElement() {
+  public @Nullable PsiElement getHighlightElement() {
     return myHighlightElement;
   }
 
-  @Nullable
-  @NlsSafe
-  public String getLabel() {
+  public @Nullable @NlsSafe String getLabel() {
     return myLabel;
   }
 
@@ -41,8 +38,7 @@ public abstract class SmartStepTarget {
     return myNeedBreakpointRequest;
   }
 
-  @Nullable
-  public Range<Integer> getCallingExpressionLines() {
+  public @Nullable Range<Integer> getCallingExpressionLines() {
     return myExpressionLines;
   }
 
@@ -50,14 +46,15 @@ public abstract class SmartStepTarget {
     myExpressionLines = expressionLines;
   }
 
-  @Nullable
-  public Icon getIcon() {
+  public @Nullable Icon getIcon() {
     return null;
   }
 
-  @NotNull
-  @NlsSafe
-  public String getPresentation() {
+  public @Nullable String getClassName() {
+    return null;
+  }
+
+  public @NotNull @NlsSafe String getPresentation() {
     return StringUtil.notNullize(getLabel());
   }
 

@@ -1,0 +1,13 @@
+(39,125)
+{
+            val a = 1
+            val b = a + 1
+            println(a - b)
+        }
+
+(143,229)
+{
+            val b = 1
+            val a = b + 1
+            println(b - a)
+        }

@@ -1,21 +1,23 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.svn.integrate;
 
 import com.intellij.CommonBundle;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.NamedColorUtil;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.BoxLayout;
+import javax.swing.JButton;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
 
-/**
- * @author irengrig
- */
 public abstract class MoreAction extends DumbAwareAction implements CustomComponentAction {
   protected final JLabel myLabel;
   private final JPanel myPanel;
@@ -32,14 +34,13 @@ public abstract class MoreAction extends DumbAwareAction implements CustomCompon
     myLoadMoreBtn.addActionListener(__ -> perform());
     myPanel.add(myLoadMoreBtn);
     myLabel = new JLabel(CommonBundle.getLoadingTreeNodeText());
-    myLabel.setForeground(UIUtil.getInactiveTextColor());
+    myLabel.setForeground(NamedColorUtil.getInactiveTextColor());
     myLabel.setBorder(JBUI.Borders.empty(1, 3, 1, 1));
     myPanel.add(myLabel);
   }
 
-  @NotNull
   @Override
-  public JComponent createCustomComponent(@NotNull Presentation presentation, @NotNull String place) {
+  public @NotNull JComponent createCustomComponent(@NotNull Presentation presentation, @NotNull String place) {
     return myPanel;
   }
 
@@ -47,6 +48,11 @@ public abstract class MoreAction extends DumbAwareAction implements CustomCompon
     myEnabled = enabled;
     myLoadMoreBtn.setVisible(myEnabled);
     myLabel.setVisible(! myEnabled);
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.EDT;
   }
 
   @Override

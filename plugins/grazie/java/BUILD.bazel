@@ -1,0 +1,50 @@
+### auto-generated section `build intellij.grazie.java` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "java_resources",
+  srcs = glob(["src/main/resources/**/*"]),
+  strip_prefix = "src/main/resources"
+)
+
+jvm_library(
+  name = "java",
+  module_name = "intellij.grazie.java",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/main/kotlin/**/*.kt", "src/main/kotlin/**/*.java", "src/main/kotlin/**/*.form"], allow_empty = True),
+  resources = [":java_resources"],
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "//plugins/grazie/src:core",
+    "//java/openapi:java",
+    "//java/java-impl:impl",
+    "//java/java-psi-api:psi",
+    "//java/java-psi-impl:psi-impl",
+    "//java/java-analysis-impl:analysis-impl",
+    "//platform/core-api:core",
+    "//platform/util-ex",
+    "//platform/analysis-api:analysis",
+    "//spellchecker",
+  ]
+)
+
+jvm_library(
+  name = "java_test_lib",
+  module_name = "intellij.grazie.java",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    ":java",
+    "//plugins/grazie/src:core_test_lib",
+    "//java/openapi:java_test_lib",
+    "//java/java-impl:impl_test_lib",
+    "//java/java-psi-api:psi_test_lib",
+    "//java/java-psi-impl:psi-impl_test_lib",
+    "//java/java-analysis-impl:analysis-impl_test_lib",
+    "//platform/core-api:core_test_lib",
+    "//platform/util-ex:util-ex_test_lib",
+    "//platform/analysis-api:analysis_test_lib",
+    "//spellchecker:spellchecker_test_lib",
+  ]
+)
+### auto-generated section `build intellij.grazie.java` end

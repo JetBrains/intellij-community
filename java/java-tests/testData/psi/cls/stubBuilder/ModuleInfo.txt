@@ -1,5 +1,5 @@
 PsiJavaFileStub []
-  PsiJavaModuleStub:M.N
+  PsiJavaModuleStub[name=M.N, resolution=0]
     PsiModifierListStub[mask=0]
       PsiAnnotationStub[@java.lang.Deprecated]
     PsiRequiresStatementStub:java.desktop

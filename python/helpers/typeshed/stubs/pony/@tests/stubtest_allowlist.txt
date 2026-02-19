@@ -1,0 +1,14 @@
+# Tests should not be part of the stubs
+pony.orm.tests.*
+
+# Modules with ImportError, cannot import third-party libraries:
+pony.flask.*
+pony.orm.dbproviders.cockroach
+pony.orm.dbproviders.mysql
+pony.orm.dbproviders.oracle
+pony.orm.dbproviders.postgres
+pony.orm.integration.bottle_plugin
+pony.orm.examples.bottle_example
+
+# TODO: Incomplete issues in examples dir:
+pony.orm.examples.*

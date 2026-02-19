@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.inline;
 
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
@@ -12,7 +12,7 @@ public abstract class AbstractInlineLocalDialog extends InlineOptionsDialog {
   public AbstractInlineLocalDialog(Project project, PsiElement variable, final PsiReference ref, int occurrencesCount) {
     super(project, true, variable);
     if (ref == null || occurrencesCount == 1) {
-      setDoNotAskOption(new DoNotAskOption() {
+      setDoNotAskOption(new com.intellij.openapi.ui.DoNotAskOption() {
         @Override
         public boolean isToBeShown() {
           return EditorSettingsExternalizable.getInstance().isShowInlineLocalDialog();
@@ -33,9 +33,8 @@ public abstract class AbstractInlineLocalDialog extends InlineOptionsDialog {
           return false;
         }
 
-        @NotNull
         @Override
-        public String getDoNotShowMessage() {
+        public @NotNull String getDoNotShowMessage() {
           return UIBundle.message("dialog.options.do.not.show");
         }
       });

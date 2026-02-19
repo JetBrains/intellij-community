@@ -1,12 +1,14 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.analysis.problemsView
 
-import com.intellij.icons.AllIcons
+import com.intellij.codeHighlighting.HighlightDisplayLevel
+import com.intellij.codeInsight.multiverse.CodeInsightContext
+import org.jetbrains.annotations.ApiStatus
 import javax.swing.Icon
 
 interface Problem {
   /**
-   * The problems provider that the problem belongs to.
+   * The problem provider that the problem belongs to.
    */
   val provider: ProblemsProvider
 
@@ -16,14 +18,27 @@ interface Problem {
   val text: String
 
   /**
+   * A name used to group problems.
+   */
+  val group: String?
+    get() = null
+
+  /**
+   * A name used to group problems by context.
+   */
+  val contextGroup: CodeInsightContext?
+    @ApiStatus.Experimental
+    get() = null
+
+  /**
    * Detailed description of the problem if needed.
    */
   val description: String?
     get() = null
 
   /**
-   * The problems icon.
+   * The problem icon.
    */
   val icon: Icon
-    get() = AllIcons.General.InspectionsError
+    get() = HighlightDisplayLevel.ERROR.icon
 }

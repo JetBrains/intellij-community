@@ -1,6 +1,8 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.smartPointers;
 
+import com.intellij.codeInsight.multiverse.CodeInsightContext;
+import com.intellij.codeInsight.multiverse.CodeInsightContextUtil;
 import com.intellij.lang.Language;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.Document;
@@ -8,40 +10,60 @@ import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.impl.FrozenDocument;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.ProperTextRange;
+import com.intellij.openapi.util.Segment;
+import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.UnfairTextRange;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.*;
-import com.intellij.psi.impl.PsiDocumentManagerBase;
+import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.SmartPointerManager;
+import com.intellij.psi.impl.PsiDocumentManagerEx;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
+@ApiStatus.Internal
 public class SelfElementInfo extends SmartPointerElementInfo {
   private static final FileDocumentManager ourFileDocManager = FileDocumentManager.getInstance();
+
+  private final @NotNull CodeInsightContext myContext;
   private volatile Identikit myIdentikit;
-  private final VirtualFile myFile;
+  private final VirtualFile myVirtualFile;
   private final boolean myForInjected;
   private int myStartOffset;
   private int myEndOffset;
 
+  // todo IJPL-339 layout of the object got bigger +8bytes
+
   SelfElementInfo(@Nullable ProperTextRange range,
                   @NotNull Identikit identikit,
-                  @NotNull PsiFile containingFile,
+                  @NotNull PsiFile containingPsiFile,
                   boolean forInjected) {
     myForInjected = forInjected;
     myIdentikit = identikit;
 
-    myFile = containingFile.getViewProvider().getVirtualFile();
+    myVirtualFile = containingPsiFile.getViewProvider().getVirtualFile();
+    myContext = CodeInsightContextUtil.getCodeInsightContext(containingPsiFile);
     setRange(range);
+  }
+
+  @ApiStatus.Experimental
+  public @NotNull CodeInsightContext getContext() {
+    return myContext;
   }
 
   void switchToAnchor(@NotNull PsiElement element) {
     switchTo(element, findAnchor(element));
   }
 
-  @Nullable
-  private Pair<Identikit.ByAnchor, PsiElement> findAnchor(@NotNull PsiElement element) {
+  private @Nullable Pair<Identikit.ByAnchor, PsiElement> findAnchor(@NotNull PsiElement element) {
     Language language = myIdentikit.getFileLanguage();
     if (language == null) return null;
     return Identikit.withAnchor(element, language);
@@ -102,7 +124,7 @@ public class SelfElementInfo extends SmartPointerElementInfo {
   }
 
   @Override
-  PsiElement restoreElement(@NotNull SmartPointerManagerImpl manager) {
+  PsiElement restoreElement(@NotNull SmartPointerManagerEx manager) {
     Segment segment = getPsiRange(manager);
     if (segment == null) return null;
 
@@ -114,7 +136,7 @@ public class SelfElementInfo extends SmartPointerElementInfo {
 
   @Nullable
   @Override
-  TextRange getPsiRange(@NotNull SmartPointerManagerImpl manager) {
+  TextRange getPsiRange(@NotNull SmartPointerManagerEx manager) {
     return calcPsiRange();
   }
 
@@ -122,17 +144,16 @@ public class SelfElementInfo extends SmartPointerElementInfo {
     return myForInjected;
   }
 
-  @Nullable
-  private TextRange calcPsiRange() {
+  private @Nullable TextRange calcPsiRange() {
     return hasRange() ? new UnfairTextRange(myStartOffset, myEndOffset) : null;
   }
 
   @Override
   @Nullable
-  PsiFile restoreFile(@NotNull SmartPointerManagerImpl manager) {
+  PsiFile restoreFile(@NotNull SmartPointerManagerEx manager) {
     Language language = myIdentikit.getFileLanguage();
     if (language == null) return null;
-    return restoreFileFromVirtual(getVirtualFile(), manager.getProject(), language);
+    return restoreFileFromVirtual(getVirtualFile(), getContext() ,manager.getProject(), language);
   }
 
   @Override
@@ -140,13 +161,15 @@ public class SelfElementInfo extends SmartPointerElementInfo {
     setRange(null);
   }
 
-  @Nullable
-  public static PsiFile restoreFileFromVirtual(@NotNull VirtualFile virtualFile, @NotNull Project project, @NotNull Language language) {
+  public static @Nullable PsiFile restoreFileFromVirtual(@NotNull VirtualFile virtualFile,
+                                                         @NotNull CodeInsightContext context,
+                                                         @NotNull Project project,
+                                                         @NotNull Language language) {
     return ReadAction.compute(() -> {
       if (project.isDisposed()) return null;
       VirtualFile child = restoreVFile(virtualFile);
       if (child == null || !child.isValid()) return null;
-      PsiFile file = PsiManager.getInstance(project).findFile(child);
+      PsiFile file = PsiManager.getInstance(project).findFile(child, context);
       if (file != null) {
         return file.getViewProvider().getPsi(language == Language.ANY ? file.getViewProvider().getBaseLanguage() : language);
       }
@@ -155,8 +178,7 @@ public class SelfElementInfo extends SmartPointerElementInfo {
     });
   }
 
-  @Nullable
-  public static PsiDirectory restoreDirectoryFromVirtual(@NotNull VirtualFile virtualFile, @NotNull final Project project) {
+  public static @Nullable PsiDirectory restoreDirectoryFromVirtual(@NotNull VirtualFile virtualFile, @NotNull Project project) {
     return ReadAction.compute(() -> {
       if (project.isDisposed()) return null;
       VirtualFile child = restoreVFile(virtualFile);
@@ -167,8 +189,7 @@ public class SelfElementInfo extends SmartPointerElementInfo {
     });
   }
 
-  @Nullable
-  private static VirtualFile restoreVFile(@NotNull VirtualFile virtualFile) {
+  private static @Nullable VirtualFile restoreVFile(@NotNull VirtualFile virtualFile) {
     VirtualFile child;
     if (virtualFile.isValid()) {
       child = virtualFile;
@@ -188,9 +209,9 @@ public class SelfElementInfo extends SmartPointerElementInfo {
   }
 
   @Override
-  boolean pointsToTheSameElementAs(@NotNull SmartPointerElementInfo other, @NotNull SmartPointerManagerImpl manager) {
+  boolean pointsToTheSameElementAs(@NotNull SmartPointerElementInfo other, @NotNull SmartPointerManagerEx manager) {
     if (other instanceof SelfElementInfo) {
-      final SelfElementInfo otherInfo = (SelfElementInfo)other;
+      SelfElementInfo otherInfo = (SelfElementInfo)other;
       if (!getVirtualFile().equals(other.getVirtualFile()) || myIdentikit != otherInfo.myIdentikit) return false;
 
       return ReadAction.compute(() -> {
@@ -205,18 +226,17 @@ public class SelfElementInfo extends SmartPointerElementInfo {
   }
 
   @Override
-  @NotNull
-  final VirtualFile getVirtualFile() {
-    return myFile;
+  final @NotNull VirtualFile getVirtualFile() {
+    return myVirtualFile;
   }
 
   @Override
   @Nullable
-  Segment getRange(@NotNull SmartPointerManagerImpl manager) {
+  Segment getRange(@NotNull SmartPointerManagerEx manager) {
     if (hasRange()) {
       Document document = getDocumentToSynchronize();
       if (document != null) {
-        PsiDocumentManagerBase documentManager = manager.getPsiDocumentManager();
+        PsiDocumentManagerEx documentManager = manager.getPsiDocumentManager();
         List<DocumentEvent> events = documentManager.getEventsSinceCommit(document);
         if (!events.isEmpty()) {
           SmartPointerTracker tracker = manager.getTracker(getVirtualFile());
@@ -236,10 +256,10 @@ public class SelfElementInfo extends SmartPointerElementInfo {
 
   public static Segment calcActualRangeAfterDocumentEvents(@NotNull PsiFile containingFile, @NotNull Document document, @NotNull Segment segment, boolean isSegmentGreedy) {
     Project project = containingFile.getProject();
-    PsiDocumentManagerBase documentManager = (PsiDocumentManagerBase)PsiDocumentManager.getInstance(project);
+    PsiDocumentManagerEx documentManager = (PsiDocumentManagerEx)PsiDocumentManager.getInstance(project);
     List<DocumentEvent> events = documentManager.getEventsSinceCommit(document);
     if (!events.isEmpty()) {
-      SmartPointerManagerImpl pointerManager = (SmartPointerManagerImpl)SmartPointerManager.getInstance(project);
+      SmartPointerManagerEx pointerManager = (SmartPointerManagerEx)SmartPointerManager.getInstance(project);
       SmartPointerTracker tracker = pointerManager.getTracker(containingFile.getViewProvider().getVirtualFile());
       if (tracker != null) {
         return tracker.getUpdatedRange(containingFile, segment, isSegmentGreedy, (FrozenDocument)documentManager.getLastCommittedDocument(document), events);

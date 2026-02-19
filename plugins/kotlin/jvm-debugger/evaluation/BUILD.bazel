@@ -1,0 +1,79 @@
+### auto-generated section `build kotlin.jvm-debugger.evaluation` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "evaluation_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "evaluation",
+  module_name = "kotlin.jvm-debugger.evaluation",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":evaluation_resources"],
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "//libraries/asm",
+    "@lib//:kotlinc-kotlin-compiler-common",
+    "@lib//:kotlinc-analysis-api",
+    "@lib//:kotlinc-analysis-api-platform-interface",
+    "//platform/util",
+    "//platform/core-api:core",
+    "//plugins/kotlin/base/util",
+    "//plugins/kotlin/base/project-structure",
+    "//plugins/kotlin/base/analysis",
+    "//plugins/kotlin/base/code-insight",
+    "//plugins/kotlin/base/statistics",
+    "//plugins/kotlin/jvm-debugger/base/util",
+    "//java/debugger/openapi:java-debugger",
+    "//plugins/kotlin/jvm-debugger/eval4j",
+    "//plugins/kotlin/jvm-debugger/core",
+    "//platform/xdebugger-impl:debugger-impl",
+    "//platform/xdebugger-impl/shared",
+    "//java/java-psi-impl:psi-impl",
+    "//java/debugger/impl",
+    "//plugins/kotlin/jvm-debugger/coroutines",
+    "//platform/statistics",
+    "//plugins/kotlin/base/facet",
+    "//platform/xdebugger-impl/rpc",
+    "//platform/editor-ui-api:editor-ui",
+    "//plugins/kotlin/j2k/shared",
+    "//platform/platform-api:ide",
+  ]
+)
+
+jvm_library(
+  name = "evaluation_test_lib",
+  module_name = "kotlin.jvm-debugger.evaluation",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    ":evaluation",
+    "//libraries/asm:asm_test_lib",
+    "//platform/util:util_test_lib",
+    "//platform/core-api:core_test_lib",
+    "//plugins/kotlin/base/util:util_test_lib",
+    "//plugins/kotlin/base/project-structure:project-structure_test_lib",
+    "//plugins/kotlin/base/analysis:analysis_test_lib",
+    "//plugins/kotlin/base/code-insight:code-insight_test_lib",
+    "//plugins/kotlin/base/statistics:statistics_test_lib",
+    "//plugins/kotlin/jvm-debugger/base/util:util_test_lib",
+    "//java/debugger/openapi:java-debugger_test_lib",
+    "//plugins/kotlin/jvm-debugger/eval4j:eval4j_test_lib",
+    "//plugins/kotlin/jvm-debugger/core:core_test_lib",
+    "//platform/xdebugger-impl:debugger-impl_test_lib",
+    "//platform/xdebugger-impl/shared:shared_test_lib",
+    "//java/java-psi-impl:psi-impl_test_lib",
+    "//java/debugger/impl:impl_test_lib",
+    "//plugins/kotlin/jvm-debugger/coroutines:coroutines_test_lib",
+    "//platform/statistics:statistics_test_lib",
+    "//plugins/kotlin/base/facet:facet_test_lib",
+    "//platform/xdebugger-impl/rpc:rpc_test_lib",
+    "//platform/editor-ui-api:editor-ui_test_lib",
+    "//plugins/kotlin/j2k/shared:shared_test_lib",
+    "//platform/platform-api:ide_test_lib",
+  ]
+)
+### auto-generated section `build kotlin.jvm-debugger.evaluation` end

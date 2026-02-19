@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.uiDesigner.propertyInspector;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -8,15 +8,11 @@ import com.intellij.uiDesigner.quickFixes.QuickFixManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JViewport;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
-import java.awt.*;
+import java.awt.Rectangle;
 
-/**
- * @author Anton Katilin
- * @author Vladimir Kondratyev
- */
 final class QuickFixManagerImpl extends QuickFixManager <PropertyInspectorTable>{
   private static final Logger LOG = Logger.getInstance(QuickFixManagerImpl.class);
 
@@ -26,15 +22,13 @@ final class QuickFixManagerImpl extends QuickFixManager <PropertyInspectorTable>
   }
 
   @Override
-  @Nullable
-  public Rectangle getErrorBounds() {
+  public @Nullable Rectangle getErrorBounds() {
     final int selectedRow = myComponent.getSelectedRow();
     if(selectedRow < 0 || selectedRow >= myComponent.getRowCount()){
       return null;
     }
 
     final Rectangle rowRect = myComponent.getCellRect(selectedRow, 0, true);
-    LOG.assertTrue(rowRect != null);
     final Rectangle visibleRect = myComponent.getVisibleRect();
     if(visibleRect.intersects(rowRect)){
       return visibleRect.intersection(rowRect);

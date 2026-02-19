@@ -5,23 +5,27 @@ import com.intellij.openapi.util.NlsContexts
 import com.intellij.vcs.log.Hash
 import com.intellij.vcs.log.impl.HashImpl
 import git4idea.GitUtil
+import git4idea.branch.GitRebaseParams
 import git4idea.commands.Git
 import git4idea.findProtectedRemoteBranchContainingCommit
 import git4idea.history.GitLogUtil
+import git4idea.rebase.GitRebaseUtils.getCommitsRangeToRebase
 import git4idea.repo.GitRepository
 import git4idea.reset.GitResetMode
 
 internal sealed class GitCommitEditingOperationResult {
   class Complete(
     val repository: GitRepository,
-    private val base: String,
+    private val base: GitRebaseParams.RebaseUpstream,
     private val oldHead: String,
-    private val newHead: String
+    private val newHead: String,
+    val commitToFocus: Hash? = null,
+    val commitToFocusOnUndo: Hash? = null,
   ) : GitCommitEditingOperationResult() {
-    private val firstChangedHash = findFirstChangedHash()
+    val firstChangedHash = findFirstChangedHash()
 
     private fun findFirstChangedHash(): Hash? {
-      val changedCommitsRange = "$base..$newHead"
+      val changedCommitsRange = getCommitsRangeToRebase(base, newHead)
       val changedCommits = GitLogUtil.collectMetadata(repository.project, repository.root, changedCommitsRange).commits
       return changedCommits.lastOrNull()?.id
     }
@@ -52,6 +56,13 @@ internal sealed class GitCommitEditingOperationResult {
       else {
         UndoResult.Error(res.errorOutputAsHtmlString)
       }
+    }
+
+    fun withFocusCommits(
+      newCommitToFocus: Hash? = this.commitToFocus,
+      newCommitToFocusOnUndo: Hash? = this.commitToFocusOnUndo
+    ): Complete {
+      return Complete(repository, base, oldHead, newHead, newCommitToFocus, newCommitToFocusOnUndo)
     }
 
     sealed class UndoResult {

@@ -1,30 +1,43 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.junit;
 
 import com.intellij.execution.CantRunException;
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.JUnitBundle;
 import com.intellij.execution.Location;
+import com.intellij.execution.PsiLocation;
 import com.intellij.execution.configurations.RuntimeConfigurationError;
 import com.intellij.execution.configurations.RuntimeConfigurationException;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.testframework.AbstractJavaTestConfigurationProducer;
 import com.intellij.execution.testframework.SourceScope;
+import com.intellij.execution.testframework.TestRunnerBundle;
 import com.intellij.execution.util.JavaParametersUtil;
 import com.intellij.execution.util.ProgramParametersUtil;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaDirectoryService;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiClassOwner;
+import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiPackage;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.GlobalSearchScopesCore;
-import com.intellij.util.PathUtil;
+import com.intellij.util.containers.JBTreeTraverser;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
@@ -35,9 +48,8 @@ class TestDirectory extends TestPackage {
     super(configuration, environment);
   }
 
-  @Nullable
   @Override
-  public SourceScope getSourceScope() {
+  public @Nullable SourceScope getSourceScope() {
     final String dirName = getConfiguration().getPersistentData().getDirName();
     final VirtualFile file = LocalFileSystem.getInstance().findFileByPath(FileUtil.toSystemIndependentName(dirName));
     final Project project = getConfiguration().getProject();
@@ -67,6 +79,17 @@ class TestDirectory extends TestPackage {
         return validModules.toArray(Module.EMPTY_ARRAY);
       }
     };
+  }
+
+  @Override
+  protected Module getModuleWithTestsToFilter(Module module) {
+    try {
+      PsiDirectory directory = getDirectory(getConfiguration().getPersistentData());
+      return ModuleUtilCore.findModuleForPsiElement(directory);
+    }
+    catch (CantRunException e) {
+      return module;
+    }
   }
 
   @Override
@@ -104,7 +127,7 @@ class TestDirectory extends TestPackage {
   }
 
   @Override
-  protected void searchTests5(Module module, TestClassFilter classFilter, Set<Location<?>> classes) throws CantRunException {
+  protected void searchTests5(Module module, Set<? super Location<?>> classes) throws CantRunException {
     if (module != null) {
       PsiDirectory directory = getDirectory(getConfiguration().getPersistentData());
       PsiPackage aPackage = AbstractJavaTestConfigurationProducer.checkPackage(directory);
@@ -124,7 +147,7 @@ class TestDirectory extends TestPackage {
   }
 
   @Override
-  protected String getFilters(Set<Location<?>> foundClasses, String packageName) {
+  protected String getFilters(Set<? extends Location<?>> foundClasses, String packageName) {
     return foundClasses.isEmpty()
            ? super.getFilters(foundClasses, packageName)
            : StringUtil.join(foundClasses, CLASS_NAME_FUNCTION, "||");
@@ -133,14 +156,14 @@ class TestDirectory extends TestPackage {
   @Override
   protected void collectClassesRecursively(TestClassFilter classFilter,
                                            Condition<? super PsiClass> acceptClassCondition,
-                                           Set<Location<?>> classes) throws CantRunException {
+                                           Set<? super Location<?>> classes) throws CantRunException {
     collectClassesRecursively(getDirectory(getConfiguration().getPersistentData()), acceptClassCondition, classes);
   }
 
 
   private static void collectClassesRecursively(PsiDirectory directory,
                                                 Condition<? super PsiClass> acceptAsTest,
-                                                Set<Location<?>> classes) {
+                                                Set<? super Location<?>> classes) {
     PsiDirectory[] subDirectories = ReadAction.compute(() -> directory.getSubdirectories());
     for (PsiDirectory subDirectory : subDirectories) {
       collectClassesRecursively(subDirectory, acceptAsTest, classes);
@@ -155,10 +178,28 @@ class TestDirectory extends TestPackage {
     }
   }
 
+  private static void collectInnerClasses(PsiClass aClass, Condition<? super PsiClass> acceptAsTest, Set<? super Location<?>> classes) {
+    if (Registry.is("junit4.accept.inner.classes", true)) {
+      classes.addAll(ReadAction.compute(() -> JBTreeTraverser.of(PsiClass::getInnerClasses)
+        .withRoot(aClass).filter(acceptAsTest).map(psiClass -> PsiLocation.fromPsiElement(psiClass))
+        .toList()));
+    }
+    else if (acceptAsTest.value(aClass)) {
+      classes.add(PsiLocation.fromPsiElement(aClass));
+    }
+  }
+
   @Override
-  protected PsiPackage getPackage(JUnitConfiguration.Data data) throws CantRunException {
-    final PsiDirectory directory = getDirectory(data);
-    return ReadAction.compute(() -> JavaDirectoryService.getInstance().getPackageInSources(directory));
+  protected @NotNull PsiPackage getPackage() throws CantRunException {
+    final PsiDirectory directory = getDirectory(getConfiguration().getPersistentData());
+    PsiPackage aPackage = ReadAction.compute(() -> JavaDirectoryService.getInstance().getPackageInSources(directory));
+    if (aPackage == null) throw CantRunException.packageNotFound(directory.getName());
+    return aPackage;
+  }
+
+  @Override
+  protected @NotNull String getPackageName(JUnitConfiguration.Data data) throws CantRunException {
+    return getPackage().getQualifiedName();
   }
 
   private PsiDirectory getDirectory(JUnitConfiguration.Data data) throws CantRunException {
@@ -178,7 +219,7 @@ class TestDirectory extends TestPackage {
   public String suggestActionName() {
     final JUnitConfiguration.Data data = getConfiguration().getPersistentData();
     final String dirName = data.getDirName();
-    return dirName.isEmpty() ? JUnitBundle.message("all.tests.scope.presentable.text")
+    return dirName.isEmpty() ? TestRunnerBundle.message("all.tests.scope.presentable.text")
                              : ExecutionBundle.message("test.in.scope.presentable.text", StringUtil.getShortName(FileUtil.toSystemIndependentName(dirName), '/'));
   }
 
@@ -190,6 +231,6 @@ class TestDirectory extends TestPackage {
                                        PsiDirectory testDir) {
     return JUnitConfiguration.TEST_DIRECTORY.equals(configuration.getPersistentData().TEST_OBJECT) &&
            testDir != null &&
-           PathUtil.pathEqualsTo(testDir.getVirtualFile(), configuration.getPersistentData().getDirName());
+           VfsUtilCore.pathEqualsTo(testDir.getVirtualFile(), configuration.getPersistentData().getDirName());
   }
 }

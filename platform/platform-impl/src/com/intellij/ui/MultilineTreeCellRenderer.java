@@ -1,11 +1,13 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
+import com.intellij.ide.ui.AntialiasingType;
 import com.intellij.ide.ui.UISettings;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.util.ArrayUtilRt;
-import com.intellij.util.SystemProperties;
+import com.intellij.util.ui.GraphicsUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.WideSelectionTreeUI;
 import org.jetbrains.annotations.NonNls;
@@ -14,12 +16,22 @@ import org.jetbrains.annotations.NotNull;
 import javax.accessibility.Accessible;
 import javax.accessibility.AccessibleContext;
 import javax.accessibility.AccessibleRole;
-import javax.swing.*;
+import javax.swing.Icon;
+import javax.swing.JComponent;
+import javax.swing.JScrollPane;
+import javax.swing.JTree;
+import javax.swing.ScrollPaneConstants;
 import javax.swing.plaf.TreeUI;
 import javax.swing.plaf.basic.BasicTreeUI;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreeCellRenderer;
-import java.awt.*;
+import java.awt.Color;
+import java.awt.Component;
+import java.awt.Dimension;
+import java.awt.Font;
+import java.awt.FontMetrics;
+import java.awt.Graphics;
+import java.awt.Insets;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
 import java.awt.font.TextAttribute;
@@ -49,7 +61,7 @@ public abstract class MultilineTreeCellRenderer extends JComponent implements Ac
   private String myPrefix;
   private int myTextLength;
   private int myPrefixWidth;
-  @NonNls protected static final String FONT_PROPERTY_NAME = "font";
+  protected static final @NonNls String FONT_PROPERTY_NAME = "font";
   private JTree myTree;
 
 
@@ -76,7 +88,7 @@ public abstract class MultilineTreeCellRenderer extends JComponent implements Ac
 
   @Override
   public void updateUI() {
-    UISettings.setupComponentAntialiasing(this);
+    GraphicsUtil.setAntialiasingType(this, AntialiasingType.getAATextInfoForSwingComponent());
   }
 
   protected void setMinHeight(int height) {
@@ -322,10 +334,9 @@ public abstract class MultilineTreeCellRenderer extends JComponent implements Ac
     }
   }
 
-  private int getChildIndent(JTree tree) {
+  private static int getChildIndent(JTree tree) {
     TreeUI newUI = tree.getUI();
-    if (newUI instanceof BasicTreeUI) {
-      BasicTreeUI btreeui = (BasicTreeUI)newUI;
+    if (newUI instanceof BasicTreeUI btreeui) {
       return btreeui.getLeftChildIndent() + btreeui.getRightChildIndent();
     }
     else {
@@ -333,7 +344,7 @@ public abstract class MultilineTreeCellRenderer extends JComponent implements Ac
     }
   }
 
-  private int getAvailableWidth(Object forValue, JTree tree) {
+  private static int getAvailableWidth(Object forValue, JTree tree) {
     DefaultMutableTreeNode node = (DefaultMutableTreeNode)forValue;
     int busyRoom = tree.getInsets().left + tree.getInsets().right + getChildIndent(tree) * node.getLevel();
     return tree.getVisibleRect().width - busyRoom - 2;
@@ -384,7 +395,6 @@ public abstract class MultilineTreeCellRenderer extends JComponent implements Ac
 
   /**
    * Returns {@code true} if icon should be vertically centered. Otherwise, icon will be placed on top
-   * @return
    */
   protected boolean isIconVerticallyCentered() {
     return false;
@@ -428,8 +438,8 @@ public abstract class MultilineTreeCellRenderer extends JComponent implements Ac
         myAddRemoveCounter--;
       }
     };
-    scrollpane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_ALWAYS);
-    scrollpane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
+    scrollpane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_ALWAYS);
+    scrollpane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
 
     tree.setCellRenderer(renderer);
 
@@ -451,8 +461,7 @@ public abstract class MultilineTreeCellRenderer extends JComponent implements Ac
     return scrollpane;
   }
 
-  @NotNull
-  public String getText() {
+  public @NotNull String getText() {
     StringBuilder sb = new StringBuilder();
     myWraps.forEach(o -> sb.append(o.toString() + "\n"));
     return sb.toString();
@@ -503,10 +512,10 @@ public abstract class MultilineTreeCellRenderer extends JComponent implements Ac
     return accessibleContext;
   }
 
-  protected class AccessibleMultilineTreeCellRenderer extends AccessibleJComponent {
+  protected final class AccessibleMultilineTreeCellRenderer extends AccessibleJComponent {
     @Override
     public String getAccessibleName() {
-      String name = accessibleName;
+      @NlsSafe String name = accessibleName;
       if (name == null) {
         name = (String)getClientProperty(AccessibleContext.ACCESSIBLE_NAME_PROPERTY);
       }
@@ -515,9 +524,9 @@ public abstract class MultilineTreeCellRenderer extends JComponent implements Ac
         StringBuilder sb = new StringBuilder();
         for (String aLine : myLines) {
           sb.append(aLine);
-          sb.append(SystemProperties.getLineSeparator());
+          sb.append(System.lineSeparator());
         }
-        if (sb.length() > 0) name = sb.toString();
+        if (!sb.isEmpty()) name = sb.toString();
       }
 
       if (name == null) {
@@ -530,6 +539,18 @@ public abstract class MultilineTreeCellRenderer extends JComponent implements Ac
     public AccessibleRole getAccessibleRole() {
       return AccessibleRole.LABEL;
     }
+  }
+
+  public Icon getIcon() {
+    return myIcon;
+  }
+
+  public String getPrefix() {
+    return myPrefix;
+  }
+
+  public String[] getLines() {
+    return myLines;
   }
 }
 

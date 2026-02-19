@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.dnd;
 
 import com.intellij.openapi.Disposable;
@@ -6,8 +6,8 @@ import com.intellij.openapi.application.ApplicationManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JComponent;
+import java.awt.Component;
 
 public abstract class DnDManager {
   public static DnDManager getInstance() {
@@ -30,6 +30,5 @@ public abstract class DnDManager {
 
   public abstract void unregisterTarget(DnDTarget target, JComponent component);
 
-  @Nullable
-  public abstract Component getLastDropHandler();
+  public abstract @Nullable Component getLastDropHandler();
 }

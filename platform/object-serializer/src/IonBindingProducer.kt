@@ -1,22 +1,29 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("ReplacePutWithAssignment")
+
 package com.intellij.serialization
 
 import com.amazon.ion.Timestamp
-import com.intellij.util.containers.ContainerUtil
-import gnu.trove.THashMap
+import it.unimi.dsi.fastutil.ints.Int2IntMap
 import java.io.File
-import java.lang.reflect.*
+import java.lang.reflect.GenericArrayType
+import java.lang.reflect.Modifier
+import java.lang.reflect.ParameterizedType
+import java.lang.reflect.Proxy
+import java.lang.reflect.Type
+import java.lang.reflect.TypeVariable
 import java.nio.file.FileSystems
 import java.nio.file.Path
-import java.util.*
+import java.util.Date
+import java.util.IdentityHashMap
 
 internal typealias NestedBindingFactory = (accessor: MutableAccessor) -> Binding
 internal typealias RootBindingFactory = () -> Binding
 
 internal class IonBindingProducer(override val propertyCollector: PropertyCollector) : BindingProducer() {
   companion object {
-    private val classToNestedBindingFactory = THashMap<Class<*>, NestedBindingFactory>(32, ContainerUtil.identityStrategy())
-    private val classToRootBindingFactory = THashMap<Class<*>, RootBindingFactory>(32, ContainerUtil.identityStrategy())
+    private val classToNestedBindingFactory = IdentityHashMap<Class<*>, NestedBindingFactory>(32)
+    private val classToRootBindingFactory = IdentityHashMap<Class<*>, RootBindingFactory>(32)
 
     init {
       // for root resolved factory doesn't make sense because root bindings will be cached
@@ -26,14 +33,14 @@ internal class IonBindingProducer(override val propertyCollector: PropertyCollec
       classToRootBindingFactory.put(ByteArray::class.java) { ByteArrayBinding() }
 
       classToRootBindingFactory.put(java.lang.Short::class.java) { ShortNumberAsObjectBinding() }
+      @Suppress("RemoveRedundantQualifierName")
       classToRootBindingFactory.put(java.lang.Integer::class.java) { IntNumberAsObjectBinding() }
       classToRootBindingFactory.put(java.lang.Long::class.java) { LongNumberAsObjectBinding() }
 
       registerPrimitiveBindings(classToRootBindingFactory, classToNestedBindingFactory)
 
-      classToRootBindingFactory.forEachEntry { key, factory ->
+      for ((key, factory) in classToRootBindingFactory) {
         classToNestedBindingFactory.put(key) { factory() }
-        true
       }
     }
   }
@@ -51,12 +58,17 @@ internal class IonBindingProducer(override val propertyCollector: PropertyCollec
     }
 
     return when {
-      Collection::class.java.isAssignableFrom(aClass) -> {
-        CollectionBinding(type as ParameterizedType, this)
+      Collection::class.java.isAssignableFrom(aClass) && type is ParameterizedType -> {
+        CollectionBinding(type, this)
       }
       Map::class.java.isAssignableFrom(aClass) -> {
-        val typeArguments = (type as ParameterizedType).actualTypeArguments
-        MapBinding(typeArguments[0], typeArguments[1], this)
+        if (Int2IntMap::class.java.isAssignableFrom(aClass)) {
+          Int2IntMapBinding()
+        }
+        else {
+          val typeArguments = (type as ParameterizedType).actualTypeArguments
+          MapBinding(typeArguments[0], typeArguments[1], this)
+        }
       }
       aClass.isArray -> {
         ArrayBinding(aClass.componentType, this)
@@ -69,10 +81,7 @@ internal class IonBindingProducer(override val propertyCollector: PropertyCollec
         PolymorphicBinding(aClass)
       }
       java.lang.Number::class.java.isAssignableFrom(aClass) -> IntNumberAsObjectBinding()
-      aClass is Proxy -> {
-        throw SerializationException("$aClass class is not supported")
-      }
-      aClass == Class::class.java -> {
+      aClass == Class::class.java || Proxy::class.java.isAssignableFrom(aClass) -> {
         // Class can be supported, but it will be implemented only when will be a real use case
         throw SerializationException("$aClass class is not supported")
       }
@@ -87,9 +96,6 @@ internal class IonBindingProducer(override val propertyCollector: PropertyCollec
     val type = accessor.genericType
 
     val isGenericArray = type is GenericArrayType
-          //GenericArrayType genericArrayType = (GenericArrayType)type;
-          //TypeVariable typeVariable = (TypeVariable)genericArrayType.getGenericComponentType();
-          //return (Class<?>)typeVariable.getBounds()[0];
 
     // PrimitiveBinding can serialize conditionally, but for the sake of optimization, use special bindings to avoid comparison for each value
     // yes - if field typed as Object, Number and Boolean types are not supported (because bean binding will be created)

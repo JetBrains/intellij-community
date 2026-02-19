@@ -1,0 +1,111 @@
+public class TestEnumLowLevel {
+   public TestEnumLowLevel() {
+      super();// 1
+   }
+
+   public static void main(String[] args) {
+      System.out.println("hello");// 3
+   }// 4
+
+   public static final class ExampleNestedEnum extends Enum<ExampleNestedEnum> {
+      public static final ExampleNestedEnum RED = new ExampleNestedEnum("RED", 0);
+      public static final ExampleNestedEnum GREEN = new ExampleNestedEnum("GREEN", 1);
+      public static final ExampleNestedEnum BLUE = new ExampleNestedEnum("BLUE", 2);
+      // $FF: synthetic field
+      private static final ExampleNestedEnum[] $VALUES = $values();
+
+      public static ExampleNestedEnum[] values() {
+         return (ExampleNestedEnum[])$VALUES.clone();
+      }
+
+      public static ExampleNestedEnum valueOf(String name) {
+         return (ExampleNestedEnum)Enum.valueOf(ExampleNestedEnum.class, name);
+      }
+
+      private ExampleNestedEnum(String var1, int var2) {
+         super(var1, var2);
+      }
+
+      // $FF: synthetic method
+      private static ExampleNestedEnum[] $values() {
+         return new ExampleNestedEnum[]{RED, GREEN, BLUE};// 6
+      }
+   }
+}
+
+class 'TestEnumLowLevel' {
+   method '<init> ()V' {
+      1      2
+      2      2
+      3      2
+      4      3
+   }
+
+   method 'main ([Ljava/lang/String;)V' {
+      0      6
+      1      6
+      2      6
+      3      6
+      4      6
+      5      6
+      6      6
+      7      6
+      8      7
+   }
+}
+
+class 'TestEnumLowLevel$ExampleNestedEnum' {
+   method 'values ()[LTestEnumLowLevel$ExampleNestedEnum;' {
+      0      17
+      1      17
+      2      17
+      3      17
+      4      17
+      5      17
+      6      17
+      7      17
+      8      17
+      9      17
+   }
+
+   method 'valueOf (Ljava/lang/String;)LTestEnumLowLevel$ExampleNestedEnum;' {
+      0      21
+      1      21
+      2      21
+      3      21
+      4      21
+      5      21
+      6      21
+      7      21
+      8      21
+      9      21
+   }
+
+   method '<init> (Ljava/lang/String;I)V' {
+      1      25
+      2      25
+      3      25
+      4      25
+      5      25
+      6      26
+   }
+
+   method '$values ()[LTestEnumLowLevel$ExampleNestedEnum;' {
+      6      30
+      7      30
+      8      30
+      c      30
+      d      30
+      e      30
+      12      30
+      13      30
+      14      30
+      16      30
+   }
+}
+
+Lines mapping:
+1 <-> 3
+3 <-> 7
+4 <-> 8
+6 <-> 31

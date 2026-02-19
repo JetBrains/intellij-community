@@ -1,78 +1,84 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.codeInsight.intentions;
 
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.project.Project;
+import com.intellij.modcommand.ActionContext;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.Presentation;
+import com.intellij.modcommand.PsiUpdateModCommandAction;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.util.IncorrectOperationException;
 import com.jetbrains.python.PyPsiBundle;
-import com.jetbrains.python.psi.*;
-import com.jetbrains.python.psi.impl.PyStatementListImpl;
+import com.jetbrains.python.psi.LanguageLevel;
+import com.jetbrains.python.psi.PyAssignmentStatement;
+import com.jetbrains.python.psi.PyComprehensionComponent;
+import com.jetbrains.python.psi.PyComprehensionForComponent;
+import com.jetbrains.python.psi.PyComprehensionIfComponent;
+import com.jetbrains.python.psi.PyElementGenerator;
+import com.jetbrains.python.psi.PyExpression;
+import com.jetbrains.python.psi.PyFile;
+import com.jetbrains.python.psi.PyForStatement;
+import com.jetbrains.python.psi.PyListCompExpression;
+import com.jetbrains.python.psi.PyPrintStatement;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-public class ReplaceListComprehensionWithForIntention extends PyBaseIntentionAction {
-  @Override
-  @NotNull
-  public String getText() {
-    return PyPsiBundle.message("INTN.replace.list.comprehensions.with.for");
+public final class ReplaceListComprehensionWithForIntention extends PsiUpdateModCommandAction<PsiElement> {
+  ReplaceListComprehensionWithForIntention() {
+    super(PsiElement.class);
   }
 
   @Override
-  @NotNull
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return PyPsiBundle.message("INTN.replace.list.comprehensions.with.for");
   }
 
+
   @Override
-  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    if (!(file instanceof PyFile)) {
-      return false;
+  protected @Nullable Presentation getPresentation(@NotNull ActionContext context, @NotNull PsiElement element) {
+    if (!(context.file() instanceof PyFile)) {
+      return null;
     }
 
     PyListCompExpression expression =
-      PsiTreeUtil.getTopmostParentOfType(file.findElementAt(editor.getCaretModel().getOffset()), PyListCompExpression.class);
+      PsiTreeUtil.getTopmostParentOfType(element, PyListCompExpression.class);
     if (expression == null) {
-      return false;
+      return null;
     }
-    if (expression.getComponents().isEmpty()) return false;
+    if (expression.getComponents().isEmpty()) return null;
     PsiElement parent = expression.getParent();
     if (parent instanceof PyAssignmentStatement || parent instanceof PyPrintStatement) {
-      return true;
+      return super.getPresentation(context, element);
     }
-    return false;
+    return null;
   }
 
+
   @Override
-  public void doInvoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-    PyListCompExpression expression = PsiTreeUtil.getTopmostParentOfType(
-        file.findElementAt(editor.getCaretModel().getOffset()), PyListCompExpression.class);
+  protected void invoke(@NotNull ActionContext context, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
+    PyListCompExpression expression = PsiTreeUtil.getTopmostParentOfType(element, PyListCompExpression.class);
     if (expression == null) {
       return;
     }
     PsiElement parent = expression.getParent();
-    PyElementGenerator elementGenerator = PyElementGenerator.getInstance(project);
+    PyElementGenerator elementGenerator = PyElementGenerator.getInstance(context.project());
 
     if (parent instanceof PyAssignmentStatement) {
       final PsiElement leftExpr = ((PyAssignmentStatement)parent).getLeftHandSideExpression();
       if (leftExpr == null) return;
-      PyAssignmentStatement initAssignment = elementGenerator.createFromText(LanguageLevel.forElement(expression), PyAssignmentStatement.class,
-                                                                         leftExpr.getText() + " = []");
+      PyAssignmentStatement initAssignment =
+        elementGenerator.createFromText(LanguageLevel.forElement(expression), PyAssignmentStatement.class,
+                                        leftExpr.getText() + " = []");
       PyForStatement forStatement = createForLoop(expression, elementGenerator,
-                                                  leftExpr.getText() + ".append("+ expression.getResultExpression().getText() +")");
+                                                  leftExpr.getText() + ".append(" + expression.getResultExpression().getText() + ")");
 
-      PyStatementList stList = new PyStatementListImpl(initAssignment.getNode());
-      stList.add(initAssignment);
-      stList.add(forStatement);
-      stList.getStatements()[0].delete();
-      parent.replace(stList);
-
+      parent.getParent().addBefore(initAssignment, parent);
+      parent.replace(forStatement);
     }
     else if (parent instanceof PyPrintStatement) {
-      PyForStatement forStatement = createForLoop(expression, elementGenerator, "print " + "(" + expression.getResultExpression().getText() +")");
+      PyForStatement forStatement =
+        createForLoop(expression, elementGenerator, "print " + "(" + expression.getResultExpression().getText() + ")");
       parent.replace(forStatement);
     }
   }
@@ -98,12 +104,11 @@ public class ReplaceListComprehensionWithForIntention extends PyBaseIntentionAct
           stringBuilder.append(":\n");
         }
       }
-      for (int i = 0; i != slashNum; ++i)
-        stringBuilder.append("\t");
+      stringBuilder.append("\t".repeat(slashNum));
       ++slashNum;
     }
     stringBuilder.append(result);
     return elementGenerator.createFromText(LanguageLevel.forElement(expression), PyForStatement.class,
-                             stringBuilder.toString());
+                                           stringBuilder.toString());
   }
 }

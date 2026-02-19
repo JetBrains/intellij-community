@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.intellij.lang.xpath.xslt.impl;
 
 import com.intellij.codeInsight.daemon.EmptyResolveMessageProvider;
@@ -8,7 +8,11 @@ import com.intellij.codeInspection.LocalQuickFixProvider;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.patterns.XmlTagPattern;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiReference;
+import com.intellij.psi.PsiReferenceContributor;
+import com.intellij.psi.PsiReferenceProvider;
+import com.intellij.psi.PsiReferenceRegistrar;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.TypeOrElementOrAttributeReference;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlAttributeValue;
@@ -30,9 +34,7 @@ import static com.intellij.patterns.StandardPatterns.string;
 import static com.intellij.patterns.XmlPatterns.xmlAttributeValue;
 import static com.intellij.patterns.XmlPatterns.xmlTag;
 
-/**
- * @author yole
- */
+
 public final class XsltReferenceContributor {
   private XsltReferenceContributor() {
   }
@@ -81,7 +83,7 @@ public final class XsltReferenceContributor {
     }
 
     @Override
-    public LocalQuickFix @Nullable [] getQuickFixes() {
+    public @NotNull LocalQuickFix @Nullable [] getQuickFixes() {
       final XmlAttributeValue valueElement = myAttribute.getValueElement();
       if (valueElement != null) {
         return new LocalQuickFix[] {
@@ -105,8 +107,7 @@ public final class XsltReferenceContributor {
       super(element, range, ReferenceType.TypeReference);
     }
 
-    @Nullable
-    private static TextRange getTextRange(PsiElement element) {
+    private static @Nullable TextRange getTextRange(PsiElement element) {
       final Matcher matcher = NAME_PATTERN.matcher(element.getText());
       if (matcher.find()) {
         return TextRange.create(matcher.start(), matcher.end());
@@ -125,14 +126,12 @@ public final class XsltReferenceContributor {
       return name.equals(text) || text.endsWith(":" + name);
     }
 
-    @NotNull
     @Override
-    public String getUnresolvedMessagePattern() {
+    public @NotNull String getUnresolvedMessagePattern() {
       return XPathBundle.message("inspection.message.unknown.type");
     }
 
-    @Nullable
-    public static SchemaTypeReference create(PsiElement element) {
+    public static @Nullable SchemaTypeReference create(PsiElement element) {
       final TextRange range = getTextRange(element);
       return range != null ? new SchemaTypeReference(element, range) : null;
     }

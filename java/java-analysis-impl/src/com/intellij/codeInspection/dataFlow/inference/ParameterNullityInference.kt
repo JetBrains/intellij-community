@@ -7,10 +7,50 @@ import com.intellij.psi.CommonClassNames
 import com.intellij.psi.JavaTokenType
 import com.intellij.psi.impl.source.JavaLightTreeUtil
 import com.intellij.psi.impl.source.tree.ElementType
-import com.intellij.psi.impl.source.tree.JavaElementType.*
+import com.intellij.psi.impl.source.tree.JavaElementType.ARRAY_ACCESS_EXPRESSION
+import com.intellij.psi.impl.source.tree.JavaElementType.ASSERT_STATEMENT
+import com.intellij.psi.impl.source.tree.JavaElementType.ASSIGNMENT_EXPRESSION
+import com.intellij.psi.impl.source.tree.JavaElementType.BINARY_EXPRESSION
+import com.intellij.psi.impl.source.tree.JavaElementType.BLOCK_STATEMENT
+import com.intellij.psi.impl.source.tree.JavaElementType.CASE_LABEL_ELEMENT_LIST
+import com.intellij.psi.impl.source.tree.JavaElementType.CATCH_SECTION
+import com.intellij.psi.impl.source.tree.JavaElementType.CLASS
+import com.intellij.psi.impl.source.tree.JavaElementType.CODE_BLOCK
+import com.intellij.psi.impl.source.tree.JavaElementType.CONDITIONAL_EXPRESSION
+import com.intellij.psi.impl.source.tree.JavaElementType.DECLARATION_STATEMENT
+import com.intellij.psi.impl.source.tree.JavaElementType.DO_WHILE_STATEMENT
+import com.intellij.psi.impl.source.tree.JavaElementType.EMPTY_STATEMENT
+import com.intellij.psi.impl.source.tree.JavaElementType.EXPRESSION_LIST
+import com.intellij.psi.impl.source.tree.JavaElementType.EXPRESSION_STATEMENT
+import com.intellij.psi.impl.source.tree.JavaElementType.FIELD
+import com.intellij.psi.impl.source.tree.JavaElementType.FOREACH_STATEMENT
+import com.intellij.psi.impl.source.tree.JavaElementType.FOR_STATEMENT
+import com.intellij.psi.impl.source.tree.JavaElementType.IF_STATEMENT
+import com.intellij.psi.impl.source.tree.JavaElementType.JAVA_CODE_REFERENCE
+import com.intellij.psi.impl.source.tree.JavaElementType.LAMBDA_EXPRESSION
+import com.intellij.psi.impl.source.tree.JavaElementType.LITERAL_EXPRESSION
+import com.intellij.psi.impl.source.tree.JavaElementType.LOCAL_VARIABLE
+import com.intellij.psi.impl.source.tree.JavaElementType.METHOD
+import com.intellij.psi.impl.source.tree.JavaElementType.METHOD_REF_EXPRESSION
+import com.intellij.psi.impl.source.tree.JavaElementType.PARAMETER
+import com.intellij.psi.impl.source.tree.JavaElementType.PARAMETER_LIST
+import com.intellij.psi.impl.source.tree.JavaElementType.POLYADIC_EXPRESSION
+import com.intellij.psi.impl.source.tree.JavaElementType.REFERENCE_EXPRESSION
+import com.intellij.psi.impl.source.tree.JavaElementType.RESOURCE_LIST
+import com.intellij.psi.impl.source.tree.JavaElementType.RETURN_STATEMENT
+import com.intellij.psi.impl.source.tree.JavaElementType.SWITCH_EXPRESSION
+import com.intellij.psi.impl.source.tree.JavaElementType.SWITCH_LABELED_RULE
+import com.intellij.psi.impl.source.tree.JavaElementType.SWITCH_LABEL_STATEMENT
+import com.intellij.psi.impl.source.tree.JavaElementType.SWITCH_STATEMENT
+import com.intellij.psi.impl.source.tree.JavaElementType.SYNCHRONIZED_STATEMENT
+import com.intellij.psi.impl.source.tree.JavaElementType.THROW_STATEMENT
+import com.intellij.psi.impl.source.tree.JavaElementType.TRY_STATEMENT
+import com.intellij.psi.impl.source.tree.JavaElementType.TYPE
+import com.intellij.psi.impl.source.tree.JavaElementType.WHILE_STATEMENT
 import com.intellij.psi.impl.source.tree.LightTreeUtil
 import com.intellij.psi.tree.TokenSet
-import java.util.*
+import java.util.ArrayDeque
+import java.util.BitSet
 
 internal fun inferNotNullParameters(tree: LighterAST, parameterNames: List<String?>, statements: List<LighterASTNode>): BitSet {
   val canBeNulls = parameterNames.filterNotNullTo(HashSet())
@@ -19,8 +59,7 @@ internal fun inferNotNullParameters(tree: LighterAST, parameterNames: List<Strin
   val queue = ArrayDeque(statements)
   while (queue.isNotEmpty() && canBeNulls.isNotEmpty()) {
     val element = queue.removeFirst()
-    val type = element.tokenType
-    when (type) {
+    when (val type = element.tokenType) {
       CONDITIONAL_EXPRESSION, EXPRESSION_STATEMENT -> JavaLightTreeUtil.findExpressionChild(tree, element)?.let(queue::addFirst)
       RETURN_STATEMENT -> {
         queue.clear()
@@ -49,7 +88,20 @@ internal fun inferNotNullParameters(tree: LighterAST, parameterNames: List<Strin
           dereference(tree, expression, canBeNulls, notNulls, queue)
         }
       }
-      FOREACH_STATEMENT, SWITCH_STATEMENT, IF_STATEMENT, THROW_STATEMENT -> {
+      SWITCH_STATEMENT, SWITCH_EXPRESSION -> {
+        queue.clear()
+        val expression = JavaLightTreeUtil.findExpressionChild(tree, element)
+        val hasExplicitNullCheck = findCaseLabelElementList(tree, element)
+          .flatMap { node -> LightTreeUtil.getChildrenOfType(tree, node, LITERAL_EXPRESSION) }
+          .any { node -> JavaLightTreeUtil.isNullLiteralExpression(tree, node) }
+        if (hasExplicitNullCheck) {
+          ignore(tree, expression, canBeNulls)
+        }
+        else {
+          dereference(tree, expression, canBeNulls, notNulls, queue)
+        }
+      }
+      FOREACH_STATEMENT, IF_STATEMENT, THROW_STATEMENT -> {
         queue.clear()
         val expression = JavaLightTreeUtil.findExpressionChild(tree, element)
         dereference(tree, expression, canBeNulls, notNulls, queue)
@@ -132,7 +184,7 @@ private val NPE_CATCHERS = setOf("Throwable", "Exception", "RuntimeException", "
                                  CommonClassNames.JAVA_LANG_THROWABLE, CommonClassNames.JAVA_LANG_EXCEPTION,
                                  CommonClassNames.JAVA_LANG_RUNTIME_EXCEPTION, CommonClassNames.JAVA_LANG_NULL_POINTER_EXCEPTION)
 
-fun canCatchNpe(tree: LighterAST, type: LighterASTNode?): Boolean {
+public fun canCatchNpe(tree: LighterAST, type: LighterASTNode?): Boolean {
   if (type == null) return false
   val codeRef = LightTreeUtil.firstChildOfType(tree, type, JAVA_CODE_REFERENCE)
   val name = JavaLightTreeUtil.getNameIdentifierText(tree, codeRef)
@@ -179,4 +231,11 @@ internal fun getParameterNames(tree: LighterAST, method: LighterASTNode): List<S
     if (LightTreeUtil.firstChildOfType(tree, it, ElementType.PRIMITIVE_TYPE_BIT_SET) != null) null
     else JavaLightTreeUtil.getNameIdentifierText(tree, it)
   }
+}
+
+private fun findCaseLabelElementList(tree: LighterAST, switchNode: LighterASTNode): List<LighterASTNode> {
+  val codeBlock = LightTreeUtil.firstChildOfType(tree, switchNode, CODE_BLOCK) ?: return emptyList()
+  var rules: List<LighterASTNode> = LightTreeUtil.getChildrenOfType(tree, codeBlock, SWITCH_LABELED_RULE)
+  rules += LightTreeUtil.getChildrenOfType(tree, codeBlock, SWITCH_LABEL_STATEMENT)
+  return rules.mapNotNull { node -> LightTreeUtil.firstChildOfType(tree, node, CASE_LABEL_ELEMENT_LIST) }
 }

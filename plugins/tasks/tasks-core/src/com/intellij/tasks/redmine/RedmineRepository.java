@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.tasks.redmine;
 
 import com.google.gson.Gson;
@@ -33,7 +33,9 @@ import java.util.Objects;
 import java.util.regex.Pattern;
 
 import static com.intellij.tasks.impl.httpclient.TaskResponseUtil.GsonSingleObjectDeserializer;
-import static com.intellij.tasks.redmine.model.RedmineResponseWrapper.*;
+import static com.intellij.tasks.redmine.model.RedmineResponseWrapper.IssueWrapper;
+import static com.intellij.tasks.redmine.model.RedmineResponseWrapper.IssuesWrapper;
+import static com.intellij.tasks.redmine.model.RedmineResponseWrapper.ProjectsWrapper;
 
 /**
  * @author Mikhail Golubev
@@ -47,18 +49,15 @@ public class RedmineRepository extends NewBaseRepositoryImpl {
 
   public static final RedmineProject UNSPECIFIED_PROJECT = createUnspecifiedProject();
 
-  @NotNull
-  private static RedmineProject createUnspecifiedProject() {
+  private static @NotNull RedmineProject createUnspecifiedProject() {
     final RedmineProject unspecified = new RedmineProject() {
-      @NotNull
       @Override
-      public String getName() {
+      public @NotNull String getName() {
         return "-- from all projects --";
       }
 
-      @NotNull
       @Override
-      public String getIdentifier() {
+      public @NotNull String getIdentifier() {
         return getName();
       }
     };
@@ -101,23 +100,20 @@ public class RedmineRepository extends NewBaseRepositoryImpl {
   @Override
   public boolean equals(Object o) {
     if (!super.equals(o)) return false;
-    if (!(o instanceof RedmineRepository)) return false;
-    RedmineRepository that = (RedmineRepository)o;
+    if (!(o instanceof RedmineRepository that)) return false;
     if (!Objects.equals(getAPIKey(), that.getAPIKey())) return false;
     if (!Comparing.equal(getCurrentProject(), that.getCurrentProject())) return false;
     if (isAssignedToMe() != that.isAssignedToMe()) return false;
     return true;
   }
 
-  @NotNull
   @Override
-  public RedmineRepository clone() {
+  public @NotNull RedmineRepository clone() {
     return new RedmineRepository(this);
   }
 
-  @Nullable
   @Override
-  public CancellableConnection createCancellableConnection() {
+  public @Nullable CancellableConnection createCancellableConnection() {
     return new NewBaseRepositoryImpl.HttpTestConnection(new HttpGet()) {
       @Override
       protected void test() throws Exception {
@@ -210,17 +206,15 @@ public class RedmineRepository extends NewBaseRepositoryImpl {
     return Collections.unmodifiableList(myProjects);
   }
 
-  @NotNull
-  private URI getProjectsUrl(int offset, int limit) throws URISyntaxException {
+  private @NotNull URI getProjectsUrl(int offset, int limit) throws URISyntaxException {
     URIBuilder builder = createUriBuilderWithApiKey("projects.json");
     builder.addParameter("offset", String.valueOf(offset));
     builder.addParameter("limit", String.valueOf(limit));
     return builder.build();
   }
 
-  @Nullable
   @Override
-  public Task findTask(@NotNull String id) throws Exception {
+  public @Nullable Task findTask(@NotNull String id) throws Exception {
     ensureProjectsDiscovered();
     HttpGet method = new HttpGet(createUriBuilderWithApiKey("issues", id + ".json").build());
     IssueWrapper wrapper = getHttpClient().execute(method, new GsonSingleObjectDeserializer<>(GSON, IssueWrapper.class, true));
@@ -250,8 +244,7 @@ public class RedmineRepository extends NewBaseRepositoryImpl {
     return !isUseHttpAuthentication() && StringUtil.isNotEmpty(myAPIKey);
   }
 
-  @NotNull
-  private URIBuilder createUriBuilderWithApiKey(Object @NotNull ... pathParts) throws URISyntaxException {
+  private @NotNull URIBuilder createUriBuilderWithApiKey(Object @NotNull ... pathParts) throws URISyntaxException {
     final URIBuilder builder = new URIBuilder(getRestApiUrl(pathParts));
     if (isUseApiKeyAuthentication()) {
       builder.addParameter("key", myAPIKey);
@@ -272,14 +265,13 @@ public class RedmineRepository extends NewBaseRepositoryImpl {
   public boolean isConfigured() {
     if (!super.isConfigured()) return false;
     if (isUseHttpAuthentication()) {
-      return StringUtil.isNotEmpty(myPassword) && StringUtil.isNotEmpty(myUsername);
+      return StringUtil.isNotEmpty(getPassword()) && StringUtil.isNotEmpty(getUsername());
     }
-    return StringUtil.isNotEmpty(myAPIKey);
+    return StringUtil.isNotEmpty(getAPIKey());
   }
 
-  @Nullable
   @Override
-  public String extractId(@NotNull String taskName) {
+  public @Nullable String extractId(@NotNull String taskName) {
     return ID_PATTERN.matcher(taskName).matches() ? taskName : null;
   }
 
@@ -288,8 +280,7 @@ public class RedmineRepository extends NewBaseRepositoryImpl {
     return super.getFeatures() & ~NATIVE_SEARCH | BASIC_HTTP_AUTHORIZATION;
   }
 
-  @Nullable
-  public RedmineProject getCurrentProject() {
+  public @Nullable RedmineProject getCurrentProject() {
     return myCurrentProject;
   }
 
@@ -297,8 +288,7 @@ public class RedmineRepository extends NewBaseRepositoryImpl {
     myCurrentProject = project != null && project.getId() == -1 ? UNSPECIFIED_PROJECT : project;
   }
 
-  @NotNull
-  public List<RedmineProject> getProjects() {
+  public @NotNull List<RedmineProject> getProjects() {
     try {
       ensureProjectsDiscovered();
     }

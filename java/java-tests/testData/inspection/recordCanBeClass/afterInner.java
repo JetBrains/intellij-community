@@ -1,4 +1,4 @@
-// "Convert record to class" "true"
+// "Convert record to class" "true-preview"
 class X {
     private static final class R {
         private R() {

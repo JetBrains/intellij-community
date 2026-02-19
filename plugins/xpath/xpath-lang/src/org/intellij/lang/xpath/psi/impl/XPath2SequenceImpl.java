@@ -16,7 +16,12 @@
 package org.intellij.lang.xpath.psi.impl;
 
 import com.intellij.lang.ASTNode;
-import org.intellij.lang.xpath.psi.*;
+import org.intellij.lang.xpath.psi.XPath2ElementVisitor;
+import org.intellij.lang.xpath.psi.XPath2Sequence;
+import org.intellij.lang.xpath.psi.XPath2SequenceType;
+import org.intellij.lang.xpath.psi.XPath2Type;
+import org.intellij.lang.xpath.psi.XPathExpression;
+import org.intellij.lang.xpath.psi.XPathType;
 import org.jetbrains.annotations.NotNull;
 
 public class XPath2SequenceImpl extends XPath2ElementImpl implements XPath2Sequence {
@@ -29,9 +34,8 @@ public class XPath2SequenceImpl extends XPath2ElementImpl implements XPath2Seque
     return findChildrenByClass(XPathExpression.class);
   }
 
-  @NotNull
   @Override
-  public XPathType getType() {
+  public @NotNull XPathType getType() {
     final XPathExpression[] sequence = getSequence();
     if (sequence.length == 0) {
       return XPath2Type.SEQUENCE;

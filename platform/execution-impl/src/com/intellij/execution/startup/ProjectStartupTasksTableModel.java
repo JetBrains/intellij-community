@@ -1,18 +1,24 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.startup;
 
+import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.util.Processor;
 import com.intellij.util.ui.EditableModel;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.table.AbstractTableModel;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Comparator;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Set;
 
-/**
- * @author Irina.Chernushina on 8/26/2015.
- */
-public class ProjectStartupTasksTableModel extends AbstractTableModel implements EditableModel {
+@ApiStatus.Internal
+public final class ProjectStartupTasksTableModel extends AbstractTableModel implements EditableModel {
   public static final int NAME_COLUMN = 0;
   public static final int IS_SHARED_COLUMN = 1;
 
@@ -69,9 +75,8 @@ public class ProjectStartupTasksTableModel extends AbstractTableModel implements
     return 2;
   }
 
-  @NotNull
   @Override
-  public Class<?> getColumnClass(int columnIndex) {
+  public @NotNull Class<?> getColumnClass(int columnIndex) {
     if (IS_SHARED_COLUMN == columnIndex) {
       return Boolean.class;
     }
@@ -100,11 +105,10 @@ public class ProjectStartupTasksTableModel extends AbstractTableModel implements
     }
   }
 
-  @NotNull
   @Override
-  public String getColumnName(int column) {
-    if (NAME_COLUMN == column) return "Run Configuration";
-    if (IS_SHARED_COLUMN == column) return "Shared";
+  public @NotNull String getColumnName(int column) {
+    if (NAME_COLUMN == column) return ExecutionBundle.message("project.startup.task.table.name.column");
+    if (IS_SHARED_COLUMN == column) return ExecutionBundle.message("project.startup.task.table.is.shared.column");
     return "";
   }
 
@@ -143,7 +147,7 @@ public class ProjectStartupTasksTableModel extends AbstractTableModel implements
     }
   }
 
-  public static class RunnerAndConfigurationSettingsComparator implements Comparator<RunnerAndConfigurationSettings> {
+  public static final class RunnerAndConfigurationSettingsComparator implements Comparator<RunnerAndConfigurationSettings> {
     private static final RunnerAndConfigurationSettingsComparator ourInstance = new RunnerAndConfigurationSettingsComparator();
 
     public static RunnerAndConfigurationSettingsComparator getInstance() {

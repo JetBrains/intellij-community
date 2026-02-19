@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.ui
 
+import java.awt.Component
 import java.awt.Container
 import java.awt.Dimension
 import java.awt.FlowLayout
@@ -8,6 +9,7 @@ import javax.swing.JScrollPane
 import javax.swing.SwingUtilities
 import kotlin.math.floor
 import kotlin.math.max
+import kotlin.math.min
 
 /**
  * FlowLayout subclass that fully supports wrapping of components.
@@ -24,8 +26,8 @@ open class WrapLayout : FlowLayout {
    * Constructs a new `FlowLayout` with the specified
    * alignment and a default 5-unit horizontal and vertical gap.
    * The value of the alignment argument must be one of
-   * `WrapLayout`, `WrapLayout`,
-   * or `WrapLayout`.
+   * `FlowLayout.LEFT`, `FlowLayout.RIGHT`,
+   * or `FlowLayout.CENTER`.
    * @param align the alignment value
    */
   constructor(align: Int) : super(align)
@@ -36,8 +38,8 @@ open class WrapLayout : FlowLayout {
    *
    *
    * The value of the alignment argument must be one of
-   * `WrapLayout`, `WrapLayout`,
-   * or `WrapLayout`.
+   * `FlowLayout.LEFT`, `FlowLayout.RIGHT`,
+   * or `FlowLayout.CENTER`.
    * @param align the alignment value
    * @param hgap the horizontal gap between components
    * @param vgap the vertical gap between components
@@ -110,7 +112,7 @@ open class WrapLayout : FlowLayout {
         val m = target.getComponent(i)
 
         if (m.isVisible) {
-          val d = if (preferred) m.preferredSize else m.minimumSize
+          val d =  if (preferred) preferredSize(m) else m.minimumSize
 
           //  Can't add the component to current row. Start a new row.
           if (rowWidth + hgap + d.width > maxWidth) {
@@ -143,6 +145,7 @@ open class WrapLayout : FlowLayout {
         dim.width -= hgap + 1
       }
 
+      dim.width = min(dim.width, maxWidth)
       return dim
     }
   }
@@ -181,7 +184,7 @@ open class WrapLayout : FlowLayout {
       for (i in 0 until nmembers) {
         val m = target.getComponent(i)
         if (m.isVisible) {
-          val d = m.preferredSize
+          val d = preferredSize(m)
           m.setSize(d.width, d.height)
           if (useBaseline) {
             val baseline = m.getBaseline(d.width, d.height)
@@ -194,17 +197,14 @@ open class WrapLayout : FlowLayout {
             }
           }
           if (x == 0 || x + d.width <= maxwidth) {
-            if (x > 0) {
-              x += hgap
-            }
-            x += d.width
+            x += d.width + hgap
             rowh = max(rowh, d.height)
           }
           else {
             rowh = moveComponents(target, insets.left + hgap, y,
                                   maxwidth - x, rowh, start, i, ltr,
                                   useBaseline, ascent, descent)
-            x = d.width
+            x = d.width + hgap
             y += vgap + rowh
             rowh = d.height
             start = i
@@ -215,6 +215,9 @@ open class WrapLayout : FlowLayout {
                      start, nmembers, ltr, useBaseline, ascent, descent)
     }
   }
+
+  private fun preferredSize(m: Component) =
+    Dimension(max(m.preferredSize.width, m.minimumSize.width), max(m.preferredSize.height, m.minimumSize.height))
 
   private fun moveComponents(target: Container, _x: Int, y: Int, width: Int, _height: Int,
                                   rowStart: Int, rowEnd: Int, ltr: Boolean,
@@ -257,7 +260,7 @@ open class WrapLayout : FlowLayout {
       for (i in rowStart until rowEnd) {
         val m = target.getComponent(i)
         if (m.isVisible) {
-          sum += m.minimumSize.width
+          sum += max(m.preferredSize.width, m.minimumSize.width)
         }
       }
       expand = target.width.toDouble() / sum
@@ -272,7 +275,7 @@ open class WrapLayout : FlowLayout {
         else {
           y + (height - m.height) / 2
         }
-        val w = if (fillWidth) floor(m.minimumSize.width * expand).toInt() else m.width
+        val w = if (fillWidth) floor(max(m.preferredSize.width, m.minimumSize.width) * expand).toInt() else m.width
         if (ltr) {
           m.setBounds(x, cy, w, m.height)
         }

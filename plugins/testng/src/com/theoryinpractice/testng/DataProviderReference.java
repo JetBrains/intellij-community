@@ -1,24 +1,18 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.theoryinpractice.testng;
 
 import com.intellij.codeInsight.AnnotationUtil;
-import com.intellij.codeInsight.lookup.LookupValueFactory;
+import com.intellij.codeInsight.lookup.LookupElementBuilder;
+import com.intellij.codeInspection.reference.PsiMemberReference;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiAnnotation;
+import com.intellij.psi.PsiAnnotationMemberValue;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiLiteral;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiReferenceBase;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
@@ -31,7 +25,7 @@ import org.testng.annotations.DataProvider;
 import java.util.ArrayList;
 import java.util.List;
 
-public class DataProviderReference extends PsiReferenceBase<PsiLiteral> {
+public class DataProviderReference extends PsiReferenceBase<PsiLiteral> implements PsiMemberReference {
 
   public DataProviderReference(PsiLiteral element) {
     super(element, false);
@@ -46,8 +40,7 @@ public class DataProviderReference extends PsiReferenceBase<PsiLiteral> {
   }
 
   @Override
-  @Nullable
-  public PsiElement resolve() {
+  public @Nullable PsiElement resolve() {
     final PsiClass cls = TestNGUtil.getProviderClass(getElement(), PsiUtil.getTopLevelClass(getElement()));
     if (cls != null) {
       PsiMethod[] methods = cls.getAllMethods();
@@ -88,15 +81,13 @@ public class DataProviderReference extends PsiReferenceBase<PsiLiteral> {
         if (dataProviderAnnotation != null) {
           final PsiAnnotationMemberValue memberValue = dataProviderAnnotation.findDeclaredAttributeValue("name");
           if (memberValue != null) {
-            list.add(LookupValueFactory.createLookupValue(StringUtil.unquoteString(memberValue.getText()), null));
+            list.add(LookupElementBuilder.create(StringUtil.unquoteString(memberValue.getText())));
           } else {
-            list.add(LookupValueFactory.createLookupValue(method.getName(), null));
+            list.add(LookupElementBuilder.create(method.getName()));
           }
         }
       }
     }
     return list.toArray();
   }
-
-
 }

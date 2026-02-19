@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions;
 
 import com.intellij.ide.fileTemplates.FileTemplate;
@@ -6,29 +6,33 @@ import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.ide.fileTemplates.FileTemplateUtil;
 import com.intellij.ide.fileTemplates.impl.FileTemplateConfigurable;
 import com.intellij.ide.fileTemplates.impl.FileTemplateManagerImpl;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.text.Strings;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiManager;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Arrays;
-import java.util.Objects;
+import java.util.List;
 
 final class SaveFileAsTemplateAction extends AnAction {
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
-    Project project = Objects.requireNonNull(e.getData(CommonDataKeys.PROJECT));
-    String fileText = Objects.requireNonNull(e.getData(PlatformDataKeys.FILE_TEXT));
-    VirtualFile file = Objects.requireNonNull(e.getData(CommonDataKeys.VIRTUAL_FILE));
-    String extension = StringUtil.notNullize(file.getExtension());
+    Project project = e.getProject();
+    VirtualFile file = project == null ? null : e.getData(CommonDataKeys.VIRTUAL_FILE);
+    Document document = file == null ? null : FileDocumentManager.getInstance().getDocument(file);
+    if (document == null) return;
+    String fileText = document.getText();
+    String extension = Strings.notNullize(file.getExtension());
     String nameWithoutExtension = file.getNameWithoutExtension();
-    PsiFile psiFile = e.getData(CommonDataKeys.PSI_FILE);
+    PsiFile psiFile = PsiManager.getInstance(project).findFile(file);
     for (SaveFileAsTemplateHandler handler : SaveFileAsTemplateHandler.EP_NAME.getExtensionList()) {
       String textFromHandler = handler.getTemplateText(psiFile, fileText, nameWithoutExtension);
       if (textFromHandler != null) {
@@ -46,12 +50,20 @@ final class SaveFileAsTemplateAction extends AnAction {
     configurable.setTemplate(template, FileTemplateManagerImpl.getInstanceImpl(project).getDefaultTemplateDescription());
     SaveFileAsTemplateDialog dialog = new SaveFileAsTemplateDialog(project, configurable);
     if (dialog.showAndGet()) {
-      templateManager.setTemplates(FileTemplateManager.DEFAULT_TEMPLATES_CATEGORY, Arrays.asList(ArrayUtil.append(templates, template)));
+      templateManager.setTemplates(FileTemplateManager.DEFAULT_TEMPLATES_CATEGORY, List.of(ArrayUtil.append(templates, template)));
     }
   }
 
   @Override
   public void update(@NotNull AnActionEvent e) {
-    e.getPresentation().setEnabled(e.getData(CommonDataKeys.VIRTUAL_FILE) != null && e.getData(PlatformDataKeys.FILE_TEXT) != null);
+    Project project = e.getProject();
+    VirtualFile virtualFile = project == null ? null : e.getData(CommonDataKeys.VIRTUAL_FILE);
+    Document document = virtualFile == null ? null : FileDocumentManager.getInstance().getDocument(virtualFile);
+    e.getPresentation().setEnabled(document != null);
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 }

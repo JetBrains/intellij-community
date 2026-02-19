@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.debugger
 
 import com.intellij.codeInsight.hint.HintManager
@@ -26,10 +12,9 @@ import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Pair
 import com.intellij.xdebugger.XDebugSession
-import com.intellij.xdebugger.impl.DebuggerSupport
-import com.intellij.xdebugger.impl.XDebuggerUtilImpl
 import com.intellij.xdebugger.impl.actions.XDebuggerActionBase
 import com.intellij.xdebugger.impl.actions.XDebuggerSuspendedActionHandler
+import com.intellij.xdebugger.impl.ui.DebuggerUIUtil.getCaretPosition
 import com.jetbrains.python.debugger.pydev.PyDebugCallback
 
 class PySetNextStatementAction : XDebuggerActionBase(true) {
@@ -39,7 +24,7 @@ class PySetNextStatementAction : XDebuggerActionBase(true) {
     setNextStatementActionHandler = object : XDebuggerSuspendedActionHandler() {
       override fun perform(session: XDebugSession, dataContext: DataContext) {
         val debugProcess = session.debugProcess as? PyDebugProcess ?: return
-        val position = XDebuggerUtilImpl.getCaretPosition(session.project, dataContext) ?: return
+        val position = getCaretPosition(dataContext) ?: return
         val editor = CommonDataKeys.EDITOR.getData(dataContext) ?: FileEditorManager.getInstance(session.project).selectedTextEditor
         val suspendContext = debugProcess.session.suspendContext
         ApplicationManager.getApplication().executeOnPooledThread(Runnable {
@@ -63,19 +48,19 @@ class PySetNextStatementAction : XDebuggerActionBase(true) {
       }
 
       override fun isEnabled(project: Project, event: AnActionEvent): Boolean {
-        return super.isEnabled(project, event) && PyDebugSupportUtils.isCurrentPythonDebugProcess(project)
+        return super.isEnabled(project, event) && PyDebugSupportUtils.isCurrentPythonDebugProcess(event)
       }
     }
   }
 
-  override fun getHandler(debuggerSupport: DebuggerSupport): XDebuggerSuspendedActionHandler = setNextStatementActionHandler
+  override fun getHandler(): XDebuggerSuspendedActionHandler = setNextStatementActionHandler
 
   override fun isHidden(event: AnActionEvent): Boolean {
     val project = event.getData(CommonDataKeys.PROJECT)
-    return project == null || !PyDebugSupportUtils.isCurrentPythonDebugProcess(project)
+    return project == null || !PyDebugSupportUtils.isCurrentPythonDebugProcess(event)
   }
 
   companion object {
-    private val LOG = Logger.getInstance("#com.jetbrains.python.debugger.PySetNextStatementAction")
+    private val LOG = Logger.getInstance(PySetNextStatementAction::class.java)
   }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.highlighter.custom.impl;
 
 import com.intellij.CommonBundle;
@@ -16,11 +16,20 @@ import com.intellij.util.ui.FormBuilder;
 import com.intellij.util.ui.GridBag;
 import com.intellij.util.ui.UIUtil;
 import one.util.streamex.StreamEx;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.BorderFactory;
+import javax.swing.JCheckBox;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JTextArea;
+import javax.swing.JTextField;
 import javax.swing.event.DocumentEvent;
-import java.awt.*;
+import java.awt.BorderLayout;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
 import java.util.Arrays;
 import java.util.Locale;
 import java.util.stream.Stream;
@@ -28,7 +37,8 @@ import java.util.stream.Stream;
 /**
  * @author Yura Cangea, dsl
  */
-public class CustomFileTypeEditor extends SettingsEditor<AbstractFileType> {
+@ApiStatus.Internal
+public final class CustomFileTypeEditor extends SettingsEditor<AbstractFileType> {
   private final JTextField myFileTypeName = new JTextField();
   private final JTextField myFileTypeDescr = new JTextField();
   private final JCheckBox myIgnoreCase = new JCheckBox(IdeBundle.message("checkbox.customfiletype.ignore.case"));
@@ -67,37 +77,35 @@ public class CustomFileTypeEditor extends SettingsEditor<AbstractFileType> {
 
     SyntaxTable table = fileType.getSyntaxTable();
 
-    if (table != null) {
-      myLineComment.setText(table.getLineComment());
-      myBlockCommentEnd.setText(table.getEndComment());
-      myBlockCommentStart.setText(table.getStartComment());
-      myHexPrefix.setText(table.getHexPrefix());
-      myNumPostfixes.setText(table.getNumPostfixChars());
-      myIgnoreCase.setSelected(table.isIgnoreCase());
-      myCommentAtLineStart.setSelected(table.lineCommentOnlyAtStart);
+    myLineComment.setText(table.getLineComment());
+    myBlockCommentEnd.setText(table.getEndComment());
+    myBlockCommentStart.setText(table.getStartComment());
+    myHexPrefix.setText(table.getHexPrefix());
+    myNumPostfixes.setText(table.getNumPostfixChars());
+    myIgnoreCase.setSelected(table.isIgnoreCase());
+    myCommentAtLineStart.setSelected(table.lineCommentOnlyAtStart);
 
-      mySupportBraces.setSelected(table.isHasBraces());
-      mySupportBrackets.setSelected(table.isHasBrackets());
-      mySupportParens.setSelected(table.isHasParens());
-      mySupportEscapes.setSelected(table.isHasStringEscapes());
+    mySupportBraces.setSelected(table.isHasBraces());
+    mySupportBrackets.setSelected(table.isHasBrackets());
+    mySupportParens.setSelected(table.isHasParens());
+    mySupportEscapes.setSelected(table.isHasStringEscapes());
 
-      myKeywordsLists[0].setText(StreamEx.of(table.getKeywords1()).sorted().joining("\n"));
-      myKeywordsLists[1].setText(StreamEx.of(table.getKeywords2()).sorted().joining("\n"));
-      myKeywordsLists[2].setText(StreamEx.of(table.getKeywords3()).sorted().joining("\n"));
-      myKeywordsLists[3].setText(StreamEx.of(table.getKeywords4()).sorted().joining("\n"));
-      for (int i = 0; i < 4; i++) {
-        myKeywordsLists[i].setCaretPosition(0);
-      }
+    myKeywordsLists[0].setText(StreamEx.of(table.getKeywords1()).sorted().joining("\n"));
+    myKeywordsLists[1].setText(StreamEx.of(table.getKeywords2()).sorted().joining("\n"));
+    myKeywordsLists[2].setText(StreamEx.of(table.getKeywords3()).sorted().joining("\n"));
+    myKeywordsLists[3].setText(StreamEx.of(table.getKeywords4()).sorted().joining("\n"));
+    for (int i = 0; i < 4; i++) {
+      myKeywordsLists[i].setCaretPosition(0);
     }
   }
 
   @Override
   public void applyEditorTo(@NotNull AbstractFileType type) throws ConfigurationException {
-    if (myFileTypeName.getText().trim().length() == 0) {
+    if (myFileTypeName.getText().trim().isEmpty()) {
       throw new ConfigurationException(IdeBundle.message("error.name.cannot.be.empty"),
                                        CommonBundle.getErrorTitle());
     }
-    else if (myFileTypeDescr.getText().trim().length() == 0) {
+    else if (myFileTypeDescr.getText().trim().isEmpty()) {
       myFileTypeDescr.setText(myFileTypeName.getText());
     }
     type.setName(myFileTypeName.getText());
@@ -106,8 +114,7 @@ public class CustomFileTypeEditor extends SettingsEditor<AbstractFileType> {
   }
 
   @Override
-  @NotNull
-  public JComponent createEditor() {
+  public @NotNull JComponent createEditor() {
     JPanel panel = new JPanel(new BorderLayout());
 
     JPanel fileTypePanel = new JPanel(new BorderLayout());
@@ -172,8 +179,7 @@ public class CustomFileTypeEditor extends SettingsEditor<AbstractFileType> {
     return panel;
   }
 
-  @NotNull
-  public SyntaxTable getSyntaxTable() {
+  public @NotNull SyntaxTable getSyntaxTable() {
     SyntaxTable syntaxTable = new SyntaxTable();
     syntaxTable.setLineComment(myLineComment.getText());
     syntaxTable.setStartComment(myBlockCommentStart.getText());
@@ -199,6 +205,8 @@ public class CustomFileTypeEditor extends SettingsEditor<AbstractFileType> {
   }
 
   private static Stream<String> splitKeywordLines(boolean ignoreCase, JTextArea list) {
-    return Arrays.stream(StringUtil.splitByLines(list.getText())).map(s -> ignoreCase ? s.toLowerCase(Locale.getDefault()) : s);
+    return Arrays.stream(StringUtil.splitByLines(list.getText()))
+      .filter(StringUtil::isNotEmpty)
+      .map(s -> ignoreCase ? s.toLowerCase(Locale.getDefault()) : s);
   }
 }

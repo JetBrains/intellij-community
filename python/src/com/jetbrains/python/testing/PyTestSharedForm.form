@@ -8,6 +8,9 @@
     <properties>
       <enabled value="false"/>
     </properties>
+    <clientProperties>
+      <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory$PlainSmallWithIndent"/>
+    </clientProperties>
     <border type="none" title-resource-bundle="messages/PyBundle" title-key="form.test.shared.test"/>
     <children>
       <grid id="a3ef6" layout-manager="GridLayoutManager" row-count="1" column-count="2" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">

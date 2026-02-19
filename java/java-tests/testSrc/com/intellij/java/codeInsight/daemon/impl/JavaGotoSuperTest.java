@@ -27,12 +27,21 @@ import com.intellij.codeInsight.daemon.impl.MarkerType;
 import com.intellij.ide.DataManager;
 import com.intellij.lang.CodeInsightActions;
 import com.intellij.lang.java.JavaLanguage;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.IdeActions;
+import com.intellij.openapi.actionSystem.Shortcut;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiJavaFile;
+import com.intellij.psi.PsiMethod;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -73,7 +82,7 @@ public class JavaGotoSuperTest extends LightDaemonAnalyzerTestCase {
     if (CodeInsightTestFixtureImpl.processGuttersAtCaret(getEditor(), getProject(), mark -> {
       Shortcut shortcut = ActionManager.getInstance().getAction(IdeActions.ACTION_GOTO_SUPER).getShortcutSet().getShortcuts()[0];
       assertEquals(
-        "<html><body><p>Overrides method in <a href=\"#element/I#run\"><code>I</code></a></p><p style='margin-top:8px;'><font size='2' color='#787878'>Press " +
+        "<html><body><p>Overrides method in <code><a href=\"#element/I#run\"><span style=\"color:#000000;\">I</span></a></code></p><p style='margin-top:8px;'><font size='2' color='#787878'>Press " +
         KeymapUtil.getShortcutText(shortcut) +
         " to navigate</font></p></body></html>",
         mark.getTooltipText());
@@ -140,6 +149,17 @@ public class JavaGotoSuperTest extends LightDaemonAnalyzerTestCase {
     assertTrue(event.getPresentation().isEnabledAndVisible());
     action.actionPerformed(event);
     checkResultByFile(getBasePath() + "SiblingInheritance.java");
+  }
+
+  public void testGoToImplementations() {
+    configureByFile(getBasePath() + "GoToImplementations.java");
+    AnAction action = ActionManager.getInstance().getAction(IdeActions.ACTION_GOTO_IMPLEMENTATION);
+    AnActionEvent event = AnActionEvent.createFromAnAction(action, null, "", DataManager.getInstance().getDataContextFromFocus().getResultSync());
+    action.update(event);
+    assertTrue(event.getPresentation().isEnabledAndVisible());
+    action.actionPerformed(event);
+    PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
+    checkResultByFile(getBasePath() + "GoToImplementations.after.java");
   }
 
   public void testSiblingInheritanceAndGenerics() {

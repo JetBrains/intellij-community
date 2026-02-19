@@ -1,0 +1,183 @@
+LineBreakpoint created at veryLongCoroutineStack.kt:21
+Run Java
+Connected to the target VM
+veryLongCoroutineStack.kt:21
+veryLongCoroutineStack.kt:11
+Packets sent: 23, methods called: 2
+veryLongCoroutineStack.kt:14
+Packets sent: 15, methods called: 2
+veryLongCoroutineStack.kt:11
+Packets sent: 18, methods called: 2
+veryLongCoroutineStack.kt:14
+Packets sent: 16, methods called: 2
+veryLongCoroutineStack.kt:11
+Packets sent: 18, methods called: 2
+veryLongCoroutineStack.kt:14
+Packets sent: 17, methods called: 2
+veryLongCoroutineStack.kt:11
+Packets sent: 19, methods called: 2
+veryLongCoroutineStack.kt:14
+Packets sent: 18, methods called: 2
+veryLongCoroutineStack.kt:11
+Packets sent: 20, methods called: 2
+veryLongCoroutineStack.kt:14
+Packets sent: 19, methods called: 2
+veryLongCoroutineStack.kt:11
+Packets sent: 21, methods called: 2
+veryLongCoroutineStack.kt:14
+Packets sent: 20, methods called: 2
+veryLongCoroutineStack.kt:11
+Packets sent: 22, methods called: 2
+veryLongCoroutineStack.kt:14
+Packets sent: 21, methods called: 2
+veryLongCoroutineStack.kt:11
+Packets sent: 23, methods called: 2
+veryLongCoroutineStack.kt:14
+Packets sent: 22, methods called: 2
+veryLongCoroutineStack.kt:11
+Packets sent: 25, methods called: 2
+veryLongCoroutineStack.kt:14
+Packets sent: 24, methods called: 2
+veryLongCoroutineStack.kt:11
+Packets sent: 27, methods called: 2
+veryLongCoroutineStack.kt:14
+Packets sent: 26, methods called: 2
+veryLongCoroutineStack.kt:11
+Packets sent: 29, methods called: 2
+veryLongCoroutineStack.kt:14
+Packets sent: 28, methods called: 2
+veryLongCoroutineStack.kt:11
+Packets sent: 31, methods called: 2
+veryLongCoroutineStack.kt:14
+Packets sent: 30, methods called: 2
+veryLongCoroutineStack.kt:11
+Packets sent: 33, methods called: 2
+veryLongCoroutineStack.kt:14
+Packets sent: 32, methods called: 2
+veryLongCoroutineStack.kt:11
+Packets sent: 35, methods called: 2
+veryLongCoroutineStack.kt:14
+Packets sent: 34, methods called: 2
+veryLongCoroutineStack.kt:11
+Packets sent: 37, methods called: 2
+veryLongCoroutineStack.kt:14
+Packets sent: 36, methods called: 2
+veryLongCoroutineStack.kt:11
+Packets sent: 39, methods called: 2
+veryLongCoroutineStack.kt:14
+Packets sent: 38, methods called: 2
+veryLongCoroutineStack.kt:11
+Packets sent: 41, methods called: 2
+veryLongCoroutineStack.kt:14
+Packets sent: 40, methods called: 2
+veryLongCoroutineStack.kt:11
+Packets sent: 43, methods called: 2
+veryLongCoroutineStack.kt:14
+Packets sent: 42, methods called: 2
+veryLongCoroutineStack.kt:11
+Packets sent: 45, methods called: 2
+veryLongCoroutineStack.kt:14
+Packets sent: 44, methods called: 2
+veryLongCoroutineStack.kt:11
+Packets sent: 47, methods called: 2
+veryLongCoroutineStack.kt:14
+Packets sent: 46, methods called: 2
+veryLongCoroutineStack.kt:11
+Packets sent: 49, methods called: 2
+veryLongCoroutineStack.kt:12
+Packets sent: 48, methods called: 2
+veryLongCoroutineStack.kt:12
+Packets sent: 57, methods called: 3
+veryLongCoroutineStack.kt:16
+Packets sent: 36, methods called: 2
+veryLongCoroutineStack.kt:17
+Packets sent: 36, methods called: 2
+veryLongCoroutineStack.kt:16
+Packets sent: 36, methods called: 2
+veryLongCoroutineStack.kt:17
+Packets sent: 35, methods called: 2
+veryLongCoroutineStack.kt:16
+Packets sent: 34, methods called: 2
+veryLongCoroutineStack.kt:17
+Packets sent: 34, methods called: 2
+veryLongCoroutineStack.kt:16
+Packets sent: 33, methods called: 2
+veryLongCoroutineStack.kt:17
+Packets sent: 33, methods called: 2
+veryLongCoroutineStack.kt:16
+Packets sent: 32, methods called: 2
+veryLongCoroutineStack.kt:17
+Packets sent: 32, methods called: 2
+veryLongCoroutineStack.kt:16
+Packets sent: 31, methods called: 2
+veryLongCoroutineStack.kt:17
+Packets sent: 31, methods called: 2
+veryLongCoroutineStack.kt:16
+Packets sent: 30, methods called: 2
+veryLongCoroutineStack.kt:17
+Packets sent: 30, methods called: 2
+veryLongCoroutineStack.kt:16
+Packets sent: 29, methods called: 2
+veryLongCoroutineStack.kt:17
+Packets sent: 29, methods called: 2
+veryLongCoroutineStack.kt:16
+Packets sent: 28, methods called: 2
+veryLongCoroutineStack.kt:17
+Packets sent: 28, methods called: 2
+veryLongCoroutineStack.kt:16
+Packets sent: 27, methods called: 2
+veryLongCoroutineStack.kt:17
+Packets sent: 27, methods called: 2
+veryLongCoroutineStack.kt:16
+Packets sent: 26, methods called: 2
+veryLongCoroutineStack.kt:17
+Packets sent: 26, methods called: 2
+veryLongCoroutineStack.kt:16
+Packets sent: 25, methods called: 2
+veryLongCoroutineStack.kt:17
+Packets sent: 25, methods called: 2
+veryLongCoroutineStack.kt:16
+Packets sent: 24, methods called: 2
+veryLongCoroutineStack.kt:17
+Packets sent: 24, methods called: 2
+veryLongCoroutineStack.kt:16
+Packets sent: 23, methods called: 2
+veryLongCoroutineStack.kt:17
+Packets sent: 23, methods called: 2
+veryLongCoroutineStack.kt:16
+Packets sent: 22, methods called: 2
+veryLongCoroutineStack.kt:17
+Packets sent: 22, methods called: 2
+veryLongCoroutineStack.kt:16
+Packets sent: 21, methods called: 2
+veryLongCoroutineStack.kt:17
+Packets sent: 21, methods called: 2
+veryLongCoroutineStack.kt:16
+Packets sent: 20, methods called: 2
+veryLongCoroutineStack.kt:17
+Packets sent: 20, methods called: 2
+veryLongCoroutineStack.kt:16
+Packets sent: 19, methods called: 2
+veryLongCoroutineStack.kt:17
+Packets sent: 19, methods called: 2
+veryLongCoroutineStack.kt:16
+Packets sent: 18, methods called: 2
+veryLongCoroutineStack.kt:17
+Packets sent: 18, methods called: 2
+veryLongCoroutineStack.kt:16
+Packets sent: 17, methods called: 2
+veryLongCoroutineStack.kt:17
+Packets sent: 17, methods called: 2
+veryLongCoroutineStack.kt:16
+Packets sent: 16, methods called: 2
+veryLongCoroutineStack.kt:17
+Packets sent: 16, methods called: 2
+veryLongCoroutineStack.kt:22
+Packets sent: 29, methods called: 4
+veryLongCoroutineStack.kt:19
+Packets sent: 3, methods called: 1
+veryLongCoroutineStack.kt:22
+Packets sent: 0, methods called: 0
+Disconnected from the target VM
+
+Process finished with exit code 0

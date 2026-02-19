@@ -1,9 +1,10 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.codeInsight.intention;
 
 import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.ide.highlighter.JavaFileType;
+import com.intellij.openapi.application.impl.NonBlockingReadActionImpl;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.psi.codeStyle.PackageEntry;
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
@@ -30,18 +31,28 @@ public class AddSingleStaticImportActionTest extends JavaCodeInsightFixtureTestC
     doTest("Add import for 'foo.Class1.Inner2'");
   }
 
+  public void testDisabledInsideParameterizedQualifierReference() {
+    myFixture.configureByFile(getTestName(false) + ".java");
+    assertNull(myFixture.getAvailableIntention("Add import for 'foo.Outer.Inner'"));
+  }
+
+  public void testDisabledInsideParameterizedQualifierReferenceDeep() {
+    myFixture.configureByFile(getTestName(false) + ".java");
+    assertNull(myFixture.getAvailableIntention("Add import for 'foo.Outer.Inner.Inner1'"));
+  }
+
   public void testWrongCandidateAfterImport() {
     myFixture.addClass("package foo; class Empty {}"); //to ensure package is in the project
     doTest("Add static import for 'foo.Test.X.test'");
   }
 
   public void testAllowStaticImportWhenAlreadyImported() {
-    myFixture.addClass("package foo; " +
-                       "public class Clazz {\n" +
-                       "      public  enum Foo{\n" +
-                       "        Const_1, Const_2\n" +
-                       "    }\n" +
-                       "}");
+    myFixture.addClass("""
+                         package foo; public class Clazz {
+                               public  enum Foo{
+                                 Const_1, Const_2
+                             }
+                         }""");
     doTest("Add import for 'foo.Clazz.Foo'");
   }
 
@@ -92,8 +103,11 @@ public class AddSingleStaticImportActionTest extends JavaCodeInsightFixtureTestC
   }
 
   public void testInvalidInput() {
-    myFixture.configureByText(JavaFileType.INSTANCE, "class X {\n  Character.\n" +
-                                                     "            Sub<caret>set\n}");
+    myFixture.configureByText(JavaFileType.INSTANCE, """
+      class X {
+        Character.
+                  Sub<caret>set
+      }""");
     myFixture.getAvailableIntentions();
   }
 
@@ -130,10 +144,11 @@ public class AddSingleStaticImportActionTest extends JavaCodeInsightFixtureTestC
   public void testInaccessibleClassReferencedInsideJavadocLink() {
     myFixture.addClass("package foo; class Foo {static class Baz {}}");
     myFixture.configureByText("a.java",
-                              "/**\n" +
-                       " * {@link foo.Foo.Baz<caret>}\n" +
-                       " */\n" +
-                       " class InaccessibleClassReferencedInsideJavadocLink { }");
+                              """
+                                /**
+                                 * {@link foo.Foo.Baz<caret>}
+                                 */
+                                 class InaccessibleClassReferencedInsideJavadocLink { }""");
     IntentionAction intention = myFixture.getAvailableIntention("Add import for 'foo.Foo.Baz'");
     assertNull(intention);
   }
@@ -151,6 +166,7 @@ public class AddSingleStaticImportActionTest extends JavaCodeInsightFixtureTestC
     IntentionAction intention = myFixture.findSingleIntention(intentionName);
     assertNotNull(intention);
     myFixture.launchAction(intention);
+    NonBlockingReadActionImpl.waitForAsyncTaskCompletion();
     myFixture.checkResultByFile(getTestName(false) + "_after.java");
   }
 

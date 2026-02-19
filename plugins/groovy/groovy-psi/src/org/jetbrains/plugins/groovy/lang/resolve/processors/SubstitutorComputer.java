@@ -1,15 +1,25 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.resolve.processors;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.NotNullLazyValue;
-import com.intellij.openapi.util.VolatileNotNullLazyValue;
 import com.intellij.pom.java.LanguageLevel;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiArrayType;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiClassType;
 import com.intellij.psi.PsiClassType.ClassResolveResult;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiResolveHelper;
+import com.intellij.psi.PsiSubstitutor;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypeParameter;
+import com.intellij.psi.PsiTypes;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiTypesUtil;
+import com.intellij.util.ArrayUtil;
 import kotlin.Lazy;
 import kotlin.LazyKt;
 import org.jetbrains.annotations.NotNull;
@@ -37,7 +47,13 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUt
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
-import java.util.*;
+import java.util.ArrayDeque;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Deque;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 import static com.intellij.util.containers.ContainerUtil.emptyList;
 import static org.jetbrains.plugins.groovy.lang.sam.SamConversionKt.findSingleAbstractMethod;
@@ -76,7 +92,7 @@ public class SubstitutorComputer {
     myTypeArguments = typeArguments;
     myPlace = place;
     myPlaceToInferContext = placeToInferContext;
-    myExitPoints = VolatileNotNullLazyValue.createValue(() -> {
+    myExitPoints = NotNullLazyValue.volatileLazy(() -> {
       if (canBeExitPoint(place)) {
         GrControlFlowOwner flowOwner = ControlFlowUtils.findControlFlowOwner(place);
         return new HashSet<>(ControlFlowUtils.collectReturns(flowOwner));
@@ -89,8 +105,7 @@ public class SubstitutorComputer {
     myHelper = JavaPsiFacade.getInstance(myPlace.getProject()).getResolveHelper();
   }
 
-  @Nullable
-  protected PsiType inferContextType() {
+  protected @Nullable PsiType inferContextType() {
     final PsiElement parent = myPlaceToInferContext.getParent();
     if (parent instanceof GrReturnStatement || myExitPoints.getValue().contains(myPlaceToInferContext)) {
       final GrMethod method = PsiTreeUtil.getParentOfType(parent, GrMethod.class, true, GrClosableBlock.class);
@@ -139,10 +154,7 @@ public class SubstitutorComputer {
       PsiType[] argTypes = myArgumentTypes;
       if (method instanceof GrGdkMethod) {
         //type inference should be performed from static method
-        PsiType[] newArgTypes = PsiType.createArray(argTypes.length + 1);
-        newArgTypes[0] = myThisType.getValue();
-        System.arraycopy(argTypes, 0, newArgTypes, 1, argTypes.length);
-        argTypes = newArgTypes;
+        argTypes = ArrayUtil.prepend(myThisType.getValue(), argTypes);
 
         method = ((GrGdkMethod)method).getStaticMethod();
         LOG.assertTrue(method.isValid());
@@ -189,11 +201,10 @@ public class SubstitutorComputer {
     return partialSubstitutor.putAll(substitutor);
   }
 
-  @NotNull
-  private Deque<InferenceStep> buildInferenceQueue(@NotNull PsiMethod method,
-                                                   PsiTypeParameter @NotNull [] typeParameters,
-                                                   GrClosureParameter[] params,
-                                                   GrClosureSignatureUtil.ArgInfo<PsiType>[] argInfos) {
+  private @NotNull Deque<InferenceStep> buildInferenceQueue(@NotNull PsiMethod method,
+                                                            PsiTypeParameter @NotNull [] typeParameters,
+                                                            GrClosureParameter[] params,
+                                                            GrClosureSignatureUtil.ArgInfo<PsiType>[] argInfos) {
     Deque<InferenceStep> inferenceQueue = new ArrayDeque<>();
 
     List<PsiType> parameterTypes = new ArrayList<>();
@@ -228,7 +239,7 @@ public class SubstitutorComputer {
       }
       else {
         parameterTypes.add(paramType);
-        argumentTypes.add(PsiType.NULL);
+        argumentTypes.add(PsiTypes.nullType());
       }
     }
     PsiType[] parameterArray = parameterTypes.toArray(PsiType.EMPTY_ARRAY);
@@ -260,10 +271,9 @@ public class SubstitutorComputer {
   }
 
 
-  @NotNull
-  private InferenceStep handleConversionOfSAMType(@Nullable PsiType targetType,
-                                                  @NotNull PsiType closure,
-                                                  PsiTypeParameter[] typeParameters) {
+  private @NotNull InferenceStep handleConversionOfSAMType(@Nullable PsiType targetType,
+                                                           @NotNull PsiType closure,
+                                                           PsiTypeParameter[] typeParameters) {
     if (!(closure instanceof PsiClassType)) return InferenceStep.EMPTY;
     if (!(targetType instanceof PsiClassType)) return InferenceStep.EMPTY;
 
@@ -316,7 +326,7 @@ public class SubstitutorComputer {
 
     final PsiType inferred =
       myHelper.getSubstitutionForTypeParameter(typeParameter, lType, inferContextType(), false, LanguageLevel.JDK_1_8);
-    if (inferred != PsiType.NULL) {
+    if (inferred != PsiTypes.nullType()) {
       return substitutor.put(typeParameter, inferred);
     }
     return substitutor;

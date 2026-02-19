@@ -1,9 +1,8 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.test
 
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.openapi.util.io.systemIndependentPath
 import com.intellij.openapi.vcs.Executor
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.FileStatus
@@ -25,7 +24,7 @@ import git4idea.repo.GitRepository
 import org.assertj.core.api.Assertions
 import org.junit.Assert.assertEquals
 import java.io.File
-import java.util.*
+import kotlin.io.path.invariantSeparatorsPathString
 
 fun GitRepository.assertStatus(file: VirtualFile, status: Char) {
   assertStatus(getFilePath(file), status)
@@ -86,6 +85,17 @@ fun GitRepository.assertCommitted(depth: Int = 1, changes: ChangesBuilder.() -> 
   assertTrue(actualChanges.isEmpty())
 }
 
+fun GitRepository.assertCurrentBranch(name: String) {
+  assertEquals("Current branch is incorrect in ${this}", name, this.currentBranchName)
+}
+
+fun GitRepository.assertCurrentRevision(reference: String) {
+  val expectedRef = git("rev-parse HEAD")
+  val currentRef = git("rev-parse $reference")
+
+  assertEquals("Current revision is incorrect in ${this}", expectedRef, currentRef)
+}
+
 fun GitPlatformTest.assertLastMessage(actual: String, failMessage: String = "Last commit is incorrect") {
   assertMessage(actual, lastMessage(), failMessage)
 }
@@ -119,7 +129,7 @@ fun ChangeListManager.waitScheduledChangelistDeletions() {
 }
 
 fun ChangeListManager.assertChangeListExists(comment: String): LocalChangeList {
-  val changeLists = changeListsCopy
+  val changeLists = changeLists
   val list = changeLists.find { it.comment == comment }
   HeavyPlatformTestCase.assertNotNull("Didn't find changelist with comment '$comment' among: ${dumpChangeLists()}", list)
   return list!!
@@ -226,4 +236,4 @@ class ChangesBuilder {
 }
 
 private val FilePath?.relativePath: String
-  get() = FileUtil.getRelativePath(Executor.ourCurrentDir().systemIndependentPath, this!!.path, '/')!!
+  get() = FileUtil.getRelativePath(Executor.ourCurrentDir().invariantSeparatorsPathString, this!!.path, '/')!!

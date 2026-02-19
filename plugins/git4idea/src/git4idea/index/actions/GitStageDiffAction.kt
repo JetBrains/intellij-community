@@ -1,63 +1,77 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.index.actions
 
 import com.intellij.diff.DiffDialogHints
 import com.intellij.diff.DiffManager
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.AnActionExtensionProvider
+import com.intellij.openapi.project.DumbAwareAction
+import com.intellij.openapi.vcs.VcsDataKeys
 import com.intellij.openapi.vcs.changes.Change
-import com.intellij.openapi.vcs.changes.actions.CreatePatchFromChangesAction
+import com.intellij.openapi.vcs.changes.actions.diff.ChangeDiffRequestProducer
 import com.intellij.openapi.vcs.changes.ui.ChangeDiffRequestChain
-import com.intellij.util.containers.addIfNotNull
-import com.intellij.util.containers.isEmpty
-import git4idea.index.ContentVersion
-import git4idea.index.createChange
+import com.intellij.ui.ExperimentalUI
+import com.intellij.util.containers.asJBIterable
 import git4idea.index.createThreeSidesDiffRequestProducer
-import git4idea.index.ui.GIT_FILE_STATUS_NODES_STREAM
-import git4idea.index.ui.GIT_STAGE_TRACKER
+import git4idea.index.createTwoSidesDiffRequestProducer
+import git4idea.index.ui.GitFileStatusNode
+import git4idea.index.ui.GitStageDataKeys
 import git4idea.index.ui.NodeKind
-import kotlin.streams.toList
 
 class GitStageDiffAction : AnActionExtensionProvider {
-  override fun isActive(e: AnActionEvent): Boolean = e.getData(GIT_STAGE_TRACKER) != null
+  override fun getActionUpdateThread(): ActionUpdateThread {
+    return ActionUpdateThread.BGT
+  }
+
+  override fun isActive(e: AnActionEvent): Boolean = e.getData(GitStageDataKeys.GIT_STAGE_TREE) != null
 
   override fun update(e: AnActionEvent) {
-    e.presentation.isEnabled = e.project != null && !e.getData(GIT_FILE_STATUS_NODES_STREAM).isEmpty()
-    e.presentation.isVisible = e.presentation.isEnabled || e.isFromActionToolbar
+    updateStageDiffAvailability(e)
   }
 
   override fun actionPerformed(e: AnActionEvent) {
-    val producers = e.getRequiredData(GIT_FILE_STATUS_NODES_STREAM).map { createThreeSidesDiffRequestProducer(e.project!!, it) }.toList()
-    DiffManager.getInstance().showDiff(e.project, ChangeDiffRequestChain(producers, 0), DiffDialogHints.DEFAULT)
+    val project = e.project ?: return
+    val stageTree = e.getData(GitStageDataKeys.GIT_STAGE_TREE) ?: return
+    val producers = stageTree.listSelection(true).map {
+      when (it) {
+        is GitFileStatusNode -> createTwoSidesDiffRequestProducer(e.project!!, it, forDiffPreview = false)
+        is Change -> ChangeDiffRequestProducer.create(project, it)
+        else -> null
+      }
+    }
+    DiffManager.getInstance().showDiff(project, ChangeDiffRequestChain(producers), DiffDialogHints.DEFAULT)
   }
 }
 
-open class GitStageCreatePatchActionProvider private constructor(private val silentClipboard: Boolean) : AnActionExtensionProvider {
-  class Dialog : GitStageCreatePatchActionProvider(false)
-  class Clipboard : GitStageCreatePatchActionProvider(true)
-
-  override fun isActive(e: AnActionEvent): Boolean = e.getData(GIT_STAGE_TRACKER) != null
+class GitStageThreeSideDiffAction : DumbAwareAction() {
+  override fun getActionUpdateThread(): ActionUpdateThread {
+    return ActionUpdateThread.BGT
+  }
 
   override fun update(e: AnActionEvent) {
-    e.presentation.isEnabled = e.project != null && e
-      .getData(GIT_FILE_STATUS_NODES_STREAM)?.anyMatch { it.kind == NodeKind.STAGED || it.kind == NodeKind.UNSTAGED } ?: false
+    val nodes = e.getData(GitStageDataKeys.GIT_FILE_STATUS_NODES).asJBIterable()
+    e.presentation.isEnabled = e.project != null &&
+                               e.getData(GitStageDataKeys.GIT_STAGE_TREE) != null &&
+                               nodes.filter { it.kind != NodeKind.IGNORED }.isNotEmpty
     e.presentation.isVisible = e.presentation.isEnabled || e.isFromActionToolbar
   }
 
   override fun actionPerformed(e: AnActionEvent) {
-    val project = e.project!!
-    val nodes = e.getRequiredData(GIT_FILE_STATUS_NODES_STREAM).toList()
-
-    val stagedNodesMap = nodes.filter { it.kind == NodeKind.STAGED }.mapTo(mutableSetOf()) { Pair(it.root, it.status) }
-    val unstagedNodesMap = nodes.filter { it.kind == NodeKind.UNSTAGED }.mapTo(mutableSetOf()) { Pair(it.root, it.status) }
-
-    val changes = mutableListOf<Change>()
-    for (pair in (stagedNodesMap + unstagedNodesMap)) {
-      val beforeVersion = if (stagedNodesMap.contains(pair)) ContentVersion.HEAD else ContentVersion.STAGED
-      val afterVersion = if (unstagedNodesMap.contains(pair)) ContentVersion.LOCAL else ContentVersion.STAGED
-      changes.addIfNotNull(createChange(project, pair.first, pair.second, beforeVersion, afterVersion))
+    val stageTree = e.getData(GitStageDataKeys.GIT_STAGE_TREE) ?: return
+    val producers = stageTree.statusNodesListSelection(false).map {
+      createThreeSidesDiffRequestProducer(e.project!!, it, forDiffPreview = false)
     }
-
-    CreatePatchFromChangesAction.createPatch(e.project, null, changes, silentClipboard)
+    DiffManager.getInstance().showDiff(e.project, ChangeDiffRequestChain(producers), DiffDialogHints.DEFAULT)
   }
+}
+
+fun updateStageDiffAvailability(e: AnActionEvent) {
+  val nodes = e.getData(GitStageDataKeys.GIT_FILE_STATUS_NODES).asJBIterable()
+  val changes = e.getData(VcsDataKeys.CHANGES)
+  e.presentation.isEnabled = e.project != null &&
+                             (nodes.filter { it.kind != NodeKind.IGNORED }.isNotEmpty || !changes.isNullOrEmpty())
+  e.presentation.isVisible =
+    if (e.isFromActionToolbar && ExperimentalUI.isNewUI()) false
+    else e.presentation.isEnabled || e.isFromActionToolbar
 }

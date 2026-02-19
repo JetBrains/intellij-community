@@ -1,14 +1,20 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.java.stubs.index;
 
 import com.intellij.ide.highlighter.ArchiveFileType;
 import com.intellij.ide.highlighter.JavaClassFileType;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.impl.light.LightJavaModule;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.util.indexing.*;
+import com.intellij.util.indexing.DataIndexer;
+import com.intellij.util.indexing.DefaultFileTypeSpecificInputFilter;
+import com.intellij.util.indexing.FileBasedIndex;
+import com.intellij.util.indexing.FileContent;
+import com.intellij.util.indexing.ID;
+import com.intellij.util.indexing.ScalarIndexExtension;
 import com.intellij.util.io.EnumeratorStringDescriptor;
 import com.intellij.util.io.KeyDescriptor;
 import org.jetbrains.annotations.NotNull;
@@ -18,7 +24,7 @@ import java.util.Collections;
 
 import static java.util.Collections.singletonMap;
 
-public class JavaAutoModuleNameIndex extends ScalarIndexExtension<String> {
+public final class JavaAutoModuleNameIndex extends ScalarIndexExtension<String> {
   private static final ID<String, Void> NAME = ID.create("java.auto.module.name");
 
   private final FileBasedIndex.InputFilter myFilter = new DefaultFileTypeSpecificInputFilter(ArchiveFileType.INSTANCE) {
@@ -28,27 +34,25 @@ public class JavaAutoModuleNameIndex extends ScalarIndexExtension<String> {
     }
   };
 
-  private final DataIndexer<String, Void, FileContent> myIndexer = data -> singletonMap(LightJavaModule.moduleName(data.getFile()), null);
+  private final DataIndexer<String, Void, FileContent> myIndexer = data -> singletonMap(LightJavaModule.moduleName(FileUtilRt.getNameWithoutExtension(data.getFileName())), null);
 
   @Override
   public boolean indexDirectories() {
     return true;
   }
 
-  @NotNull
   @Override
-  public ID<String, Void> getName() {
+  public @NotNull ID<String, Void> getName() {
     return NAME;
   }
 
   @Override
   public int getVersion() {
-    return 5;
+    return 6;
   }
 
-  @NotNull
   @Override
-  public KeyDescriptor<String> getKeyDescriptor() {
+  public @NotNull KeyDescriptor<String> getKeyDescriptor() {
     return EnumeratorStringDescriptor.INSTANCE;
   }
 
@@ -57,31 +61,26 @@ public class JavaAutoModuleNameIndex extends ScalarIndexExtension<String> {
     return false;
   }
 
-  @NotNull
   @Override
-  public FileBasedIndex.InputFilter getInputFilter() {
+  public @NotNull FileBasedIndex.InputFilter getInputFilter() {
     return myFilter;
   }
 
-  @NotNull
   @Override
-  public DataIndexer<String, Void, FileContent> getIndexer() {
+  public @NotNull DataIndexer<String, Void, FileContent> getIndexer() {
     return myIndexer;
   }
 
-  @NotNull
   @Override
-  public Collection<FileType> getFileTypesWithSizeLimitNotApplicable() {
+  public @NotNull Collection<FileType> getFileTypesWithSizeLimitNotApplicable() {
     return Collections.singleton(JavaClassFileType.INSTANCE);
   }
 
-  @NotNull
-  public static Collection<VirtualFile> getFilesByKey(@NotNull String moduleName, @NotNull GlobalSearchScope scope) {
+  public static @NotNull Collection<VirtualFile> getFilesByKey(@NotNull String moduleName, @NotNull GlobalSearchScope scope) {
     return FileBasedIndex.getInstance().getContainingFiles(NAME, moduleName, new JavaAutoModuleFilterScope(scope));
   }
 
-  @NotNull
-  public static Collection<String> getAllKeys(@NotNull Project project) {
+  public static @NotNull Collection<String> getAllKeys(@NotNull Project project) {
     return FileBasedIndex.getInstance().getAllKeys(NAME, project);
   }
 }

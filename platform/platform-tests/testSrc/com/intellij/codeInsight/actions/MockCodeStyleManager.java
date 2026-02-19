@@ -18,7 +18,11 @@ import com.intellij.util.ThrowableRunnable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Set;
 
 public class MockCodeStyleManager extends CodeStyleManager {
   private Map<PsiFile, ChangedLines[]> myFormattedLinesForFile = new HashMap<>();
@@ -38,7 +42,7 @@ public class MockCodeStyleManager extends CodeStyleManager {
   }
 
   @Override
-  public void reformatText(@NotNull PsiFile file, @NotNull Collection<TextRange> ranges) throws IncorrectOperationException {
+  public void reformatText(@NotNull PsiFile file, @NotNull Collection<? extends TextRange> ranges) throws IncorrectOperationException {
     ChangedLines[] formattedLines = new ChangedLines[ranges.size()];
     int i = 0;
     for (TextRange range : ranges) {

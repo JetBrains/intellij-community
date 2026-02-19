@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor;
 
 import com.intellij.lang.Language;
@@ -10,9 +10,13 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 import java.util.function.Supplier;
 
+@ApiStatus.NonExtendable
 public interface EditorSettings {
   boolean isRightMarginShown();
   void setRightMarginShown(boolean val);
+  
+  boolean isHighlightSelectionOccurrences();
+  void setHighlightSelectionOccurrences(boolean val);
 
   boolean isWhitespacesShown();
   void setWhitespacesShown(boolean val);
@@ -26,7 +30,10 @@ public interface EditorSettings {
   boolean isTrailingWhitespaceShown();
   void setTrailingWhitespaceShown(boolean val);
 
-  int getRightMargin(Project project);
+  boolean isSelectionWhitespaceShown();
+  void setSelectionWhitespaceShown(boolean val);
+
+  int getRightMargin(@Nullable Project project);
   void setRightMargin(int myRightMargin);
 
   /**
@@ -40,7 +47,7 @@ public interface EditorSettings {
   /**
    * Explicitly sets soft margins (visual indent guides) to be used in the editor instead of obtaining them from code style settings via
    * {@code CodeStyleSettings.getSoftMargins()} method. It is important to distinguish and empty list from {@code null} value: the first
-   * will define no soft margins for the eidtor while the latter will restore the default behavior of using them from code style settings.
+   * will define no soft margins for the editor while the latter will restore the default behavior of using them from code style settings.
    * @param softMargins A list of soft margins or {@code null} to use margins from code style settings.
    */
   void setSoftMargins(@Nullable List<Integer> softMargins);
@@ -50,6 +57,9 @@ public interface EditorSettings {
 
   boolean isLineNumbersShown();
   void setLineNumbersShown(boolean val);
+
+  boolean isLineNumbersAfterIcons();
+  void setLineNumbersAfterIcons(boolean val);
 
   int getAdditionalLinesCount();
   void setAdditionalLinesCount(int additionalLinesCount);
@@ -72,7 +82,7 @@ public interface EditorSettings {
   boolean isUseTabCharacter(Project project);
   void setUseTabCharacter(boolean useTabCharacter);
 
-  int getTabSize(Project project);
+  int getTabSize(@Nullable Project project);
   void setTabSize(int tabSize);
 
   boolean isSmartHome();
@@ -80,6 +90,32 @@ public interface EditorSettings {
 
   boolean isVirtualSpace();
   void setVirtualSpace(boolean allow);
+
+  /**
+   * Vertical scroll offset - number of lines to keep above and below the caret.
+   * If the number is too big for the editor height, the caret will be centered.
+   */
+  int getVerticalScrollOffset();
+  void setVerticalScrollOffset(int val);
+
+  /**
+   * Vertical scroll jump - minimum number of lines to scroll at a time.
+   */
+  int getVerticalScrollJump();
+  void setVerticalScrollJump(int val);
+
+  /**
+   * Horizontal scroll offset - number of characters to keep to the left and right of the caret.
+   * If the number is too big for the editor width, the caret will be centered.
+   */
+  int getHorizontalScrollOffset();
+  void setHorizontalScrollOffset(int val);
+
+  /**
+   * Horizontal scroll jump - minimum number of characters to scroll horizontally at a time.
+   */
+  int getHorizontalScrollJump();
+  void setHorizontalScrollJump(int val);
 
   boolean isCaretInsideTabs();
   void setCaretInsideTabs(boolean allow);
@@ -90,8 +126,22 @@ public interface EditorSettings {
   int getCaretBlinkPeriod();
   void setCaretBlinkPeriod(int blinkPeriod);
 
+  @ApiStatus.Experimental
+  boolean isSmoothCaretBlinking();
+  @ApiStatus.Experimental
+  void setSmoothCaretBlinking(boolean smoothCaretBlinking);
+
   boolean isBlockCursor();
   void setBlockCursor(boolean blockCursor);
+
+  boolean isFullLineHeightCursor();
+  void setFullLineHeightCursor(boolean fullLineHeightCursor);
+
+  @ApiStatus.Experimental
+  boolean isAnimatedCaret();
+
+  @ApiStatus.Experimental
+  EditorSettings.CaretEasing getCaretEasing();
 
   boolean isCaretRowShown();
   void setCaretRowShown(boolean caretRowShown);
@@ -115,6 +165,7 @@ public interface EditorSettings {
 
   boolean isWheelFontChangeEnabled();
   void setWheelFontChangeEnabled(boolean val);
+  void resetWheelFontChangeEnabled();
 
   boolean isMouseClickSelectionHonorsCamelWords();
   void setMouseClickSelectionHonorsCamelWords(boolean val);
@@ -132,6 +183,12 @@ public interface EditorSettings {
   boolean isUseSoftWraps();
   void setUseSoftWraps(boolean use);
   boolean isAllSoftWrapsShown();
+
+  default boolean isPaintSoftWraps() {
+    return true;
+  }
+  default void setPaintSoftWraps(boolean val) {}
+
   boolean isUseCustomSoftWrapIndent();
   void setUseCustomSoftWrapIndent(boolean useCustomSoftWrapIndent);
   int getCustomSoftWrapIndent();
@@ -167,4 +224,50 @@ public interface EditorSettings {
 
   boolean isShowingSpecialChars();
   void setShowingSpecialChars(boolean value);
+
+  LineNumerationType getLineNumerationType();
+  void setLineNumerationType(LineNumerationType value);
+
+  boolean isInsertParenthesesAutomatically();
+
+  boolean areStickyLinesShown();
+  int getStickyLinesLimit();
+
+  /**
+   * Returns the width of single-width characters
+   *
+   * @see #setCharacterGridWidthMultiplier(Float)
+   * @return the width of single-width characters or {@code null} if cell grid alignment is disabled
+   */
+  @ApiStatus.Internal
+  @Nullable Float getCharacterGridWidthMultiplier();
+
+  /**
+   * Sets the width of single-width characters and enables the character grid mode
+   * <p>
+   *   Settings this to a non-null value enables a special mode in which the editor tries to align all
+   *   characters to a grid of cells with their width determined by multiplying this value
+   *   by {@link com.intellij.openapi.editor.impl.view.EditorView#getMaxCharWidth() EditorView.getMaxCharWidth}.
+   *   Double-width characters take two cells each.
+   * </p>
+   * <p>
+   *   If this mode is enabled, all kinds of grid properties can be queried by calling
+   *   {@link com.intellij.openapi.editor.impl.EditorImpl#getCharacterGrid()}.
+   * </p>
+   * @param value the width of single-width characters or {@code null} to disable cell grid alignment
+   */
+  @ApiStatus.Internal
+  void setCharacterGridWidthMultiplier(@Nullable Float value);
+
+  enum LineNumerationType {
+    ABSOLUTE,
+    RELATIVE,
+    HYBRID,
+  }
+
+  @ApiStatus.Experimental
+  enum CaretEasing {
+    NINJA,
+    EASE
+  }
 }

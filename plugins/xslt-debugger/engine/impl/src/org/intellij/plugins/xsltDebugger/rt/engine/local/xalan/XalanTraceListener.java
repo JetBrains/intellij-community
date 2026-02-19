@@ -73,10 +73,8 @@ public class XalanTraceListener extends PrintTraceListener {
 
     // xsl:choose (and maybe others) don't generate traceEnd()-events
     final String instr = XalanStyleFrame.getInstruction(ev.m_styleNode);
-    if (instr != null) {
-      while (!instr.equals(myDebugger.getCurrentFrame().getInstruction())) {
-        leave();
-      }
+    while (!instr.equals(myDebugger.getCurrentFrame().getInstruction())) {
+      leave();
     }
 
     super.traceEnd(ev);
@@ -138,14 +136,17 @@ public class XalanTraceListener extends PrintTraceListener {
       myMatchedNode = node;
     }
 
+    @Override
     public String getXPath() {
       return myPath;
     }
 
+    @Override
     public String getURI() {
       return mySystemId;
     }
 
+    @Override
     public int getLineNumber() {
       return myLineNumber;
     }

@@ -1,7 +1,7 @@
-import sys
-import traceback
 import getopt
 import os
+import sys
+import traceback
 
 ERROR_WRONG_USAGE = 1
 ERROR_NO_PIP = 2
@@ -21,7 +21,7 @@ def exit(retcode):
 
 
 def usage():
-    sys.stderr.write('Usage: packaging_tool.py <list|install|uninstall|pyvenv>\n')
+    sys.stderr.write('Usage: packaging_tool.py <list|list_outdated|install|uninstall|pyvenv>\n')
     sys.stderr.flush()
     exit(ERROR_WRONG_USAGE)
 
@@ -41,26 +41,18 @@ def error_no_pip():
 
 
 def do_list():
-    try:
-        import pkg_resources
-    except ImportError:
-        error("Python packaging tool 'setuptools' not found", ERROR_NO_SETUPTOOLS)
-    for pkg in pkg_resources.working_set:
-        try:
-            requirements = pkg.requires()
-        except Exception:
-            requirements = []
-        requires = ':'.join([str(x) for x in requirements])
-        sys.stdout.write('\t'.join([pkg.project_name, pkg.version, pkg.location, requires])+chr(10))
-    sys.stdout.flush()
+    run_pip(['list', "--format=json", "--disable-pip-version-check"])
 
+
+def do_list_outdated():
+    run_pip(['list', "--outdated", "--format=json", "--disable-pip-version-check"])
 
 def do_install(pkgs):
     run_pip(['install'] + pkgs)
 
 
 def do_uninstall(pkgs):
-    run_pip(['uninstall', '-y'] + pkgs)
+    run_pip(['uninstall', '-y', "--disable-pip-version-check"] + pkgs)
 
 
 def run_pip(args):
@@ -89,20 +81,6 @@ def do_pyvenv(args):
         error("Standard Python 'venv' module not found", ERROR_EXCEPTION)
 
 
-def mkdtemp_ifneeded():
-    try:
-        ind = sys.argv.index('--build-dir')
-        if not os.path.exists(sys.argv[ind + 1]):
-            import tempfile
-
-            sys.argv[ind + 1] = tempfile.mkdtemp('pycharm-packaging')
-            return sys.argv[ind + 1]
-    except:
-        pass
-
-    return None
-
-
 def main():
     try:
         # As a workaround for #885 in setuptools, don't expose other helpers
@@ -120,19 +98,16 @@ def main():
             if len(sys.argv) != 2:
                 usage()
             do_list()
+        elif cmd == 'list_outdated':
+            if len(sys.argv) != 2:
+                usage()
+            do_list_outdated()
         elif cmd == 'install':
             if len(sys.argv) < 2:
                 usage()
 
-            rmdir = mkdtemp_ifneeded()
-
             pkgs = sys.argv[2:]
-            try:
-                do_install(pkgs)
-            finally:
-                if rmdir is not None:
-                    import shutil
-                    shutil.rmtree(rmdir)
+            do_install(pkgs)
 
         elif cmd == 'uninstall':
             if len(sys.argv) < 2:

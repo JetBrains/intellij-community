@@ -1,21 +1,6 @@
-/*
- * Copyright 2000-2010 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.spellchecker.inspections;
 
-import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.spellchecker.util.Strings;
 import com.intellij.util.Consumer;
@@ -35,15 +20,13 @@ public class IdentifierSplitter extends BaseSplitter {
     return INSTANCE;
   }
 
-  @NonNls
-  private static final Pattern WORD = Pattern.compile("\\b\\p{L}*'?\\p{L}*");
+  public static final int MINIMAL_TYPO_LENGTH = 4;
 
-
-  @NonNls
-  private static final Pattern WORD_IN_QUOTES = Pattern.compile("'([^']*)'");
+  private static final @NonNls Pattern WORD = Pattern.compile("(?U)(\\p{L}\\p{M}*)+('?(\\p{L}\\p{M}*)+)?");
+  private static final @NonNls Pattern WORD_IN_QUOTES = Pattern.compile("'([^']*)'");
 
   @Override
-  public void split(@Nullable String text, @NotNull TextRange range, Consumer<TextRange> consumer) {
+  public void split(@Nullable String text, @NotNull TextRange range, @NotNull Consumer<TextRange> consumer) {
     if (text == null || range.getLength() < 1 || range.getStartOffset() < 0) {
       return;
     }
@@ -53,7 +36,7 @@ public class IdentifierSplitter extends BaseSplitter {
     for (TextRange textRange : extracted) {
       List<TextRange> words = splitByCase(text, textRange);
 
-      if (words.size() == 0) {
+      if (words.isEmpty()) {
         continue;
       }
 
@@ -81,15 +64,14 @@ public class IdentifierSplitter extends BaseSplitter {
             addWord(consumer, flag, found);
           }
         }
-        catch (ProcessCanceledException e) {
+        catch (TooLongBombedMatchingException e) {
           return;
         }
       }
     }
   }
 
-  @NotNull
-  private static List<TextRange> splitByCase(@NotNull String text, @NotNull TextRange range) {
+  private static @NotNull List<TextRange> splitByCase(@NotNull String text, @NotNull TextRange range) {
     //System.out.println("text = " + text + " range = " + range);
     List<TextRange> result = new ArrayList<>();
     int i = range.getStartOffset();
@@ -101,7 +83,8 @@ public class IdentifierSplitter extends BaseSplitter {
           ch >= '\u30A0' && ch <= '\u30ff' || // Katakana
           ch >= '\u4E00' && ch <= '\u9FFF' || // CJK Unified ideographs
           ch >= '\uF900' && ch <= '\uFAFF' || // CJK Compatibility Ideographs
-          ch >= '\uFF00' && ch <= '\uFFEF' //Halfwidth and Fullwidth Forms of Katakana & Fullwidth ASCII variants
+          ch >= '\uFF00' && ch <= '\uFFEF' || // Halfwidth and Fullwidth Forms of Katakana & Fullwidth ASCII variants
+          ch >= '\uAC00' && ch <= '\uD7AF'    // Hangul Syllables (Korean)
       ) {
         if (s >= 0) {
           add(text, result, i, s);
@@ -118,7 +101,9 @@ public class IdentifierSplitter extends BaseSplitter {
           type == Character.TITLECASE_LETTER ||
           type == Character.OTHER_LETTER ||
           type == Character.MODIFIER_LETTER ||
-          type == Character.OTHER_PUNCTUATION
+          type == Character.NON_SPACING_MARK ||
+          type == Character.OTHER_PUNCTUATION ||
+          ch == '\u2019' // right single quotation mark
       ) {
         //letter
         if (s < 0) {
@@ -152,8 +137,8 @@ public class IdentifierSplitter extends BaseSplitter {
   }
 
   private static void add(String text, List<TextRange> result, int i, int s) {
-    if (i - s > 3) {
-      final TextRange textRange = new TextRange(s, i);
+    if (i - s >= MINIMAL_TYPO_LENGTH) {
+      TextRange textRange = new TextRange(s, i);
       //System.out.println("textRange = " + textRange + " = "+ textRange.substring(text));
       result.add(textRange);
     }

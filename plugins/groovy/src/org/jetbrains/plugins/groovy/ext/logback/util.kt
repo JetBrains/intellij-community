@@ -12,7 +12,12 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GroovyScriptClass
 import org.jetbrains.plugins.groovy.lang.psi.patterns.GroovyPatterns.groovyLiteralExpression
 import org.jetbrains.plugins.groovy.lang.psi.patterns.psiMethod
-import org.jetbrains.plugins.groovy.lang.resolve.imports.*
+import org.jetbrains.plugins.groovy.lang.resolve.imports.GroovyImport
+import org.jetbrains.plugins.groovy.lang.resolve.imports.RegularImport
+import org.jetbrains.plugins.groovy.lang.resolve.imports.StarImport
+import org.jetbrains.plugins.groovy.lang.resolve.imports.StaticImport
+import org.jetbrains.plugins.groovy.lang.resolve.imports.StaticStarImport
+import java.util.Locale
 
 internal const val configDelegateFqn = "ch.qos.logback.classic.gaffer.ConfigurationDelegate"
 internal const val componentDelegateFqn = "ch.qos.logback.classic.gaffer.ComponentDelegate"
@@ -68,7 +73,7 @@ internal fun buildImports(): List<GroovyImport> {
     this += RegularImport("ch.qos.logback.classic.encoder.PatternLayoutEncoder")
     this += StaticStarImport(levelFqn)
     levels.mapTo(this) {
-      StaticImport(levelFqn, it, it.toLowerCase())
+      StaticImport(levelFqn, it, it.lowercase(Locale.getDefault()))
     }
   }
 }

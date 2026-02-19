@@ -1,0 +1,3 @@
+class B : JavaBaseClass() {
+    fun test(p: NestedClass) {}
+}

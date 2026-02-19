@@ -1,14 +1,23 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.codeInspection.bugs;
 
+import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsSafe;
-import com.intellij.psi.*;
+import com.intellij.psi.CommonClassNames;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiClassType;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiType;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.VisibleForTesting;
 import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspection;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspectionVisitor;
@@ -27,19 +36,19 @@ import java.util.List;
 /**
  * @author Maxim.Medvedev
  */
-public class GroovyRangeTypeCheckInspection extends BaseInspection {
+public final class GroovyRangeTypeCheckInspection extends BaseInspection {
 
-  @NotNull
   @Override
-  protected BaseInspectionVisitor buildVisitor() {
+  protected @NotNull BaseInspectionVisitor buildVisitor() {
     return new MyVisitor();
   }
 
+  @VisibleForTesting
   @Override
-  protected GroovyFix buildFix(@NotNull PsiElement location) {
+  public LocalQuickFix buildFix(@NotNull PsiElement location) {
     final GrRangeExpression range = (GrRangeExpression)location;
     final PsiType type = range.getType();
-    final List<GroovyFix> fixes = new ArrayList<>(3);
+    final List<LocalQuickFix> fixes = new ArrayList<>(3);
     if (type instanceof GrRangeType) {
       PsiType iterationType = ((GrRangeType)type).getIterationType();
       if (!(iterationType instanceof PsiClassType)) return null;
@@ -66,21 +75,18 @@ public class GroovyRangeTypeCheckInspection extends BaseInspection {
       return new GroovyFix() {
         @Override
         protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) throws IncorrectOperationException {
-          for (GroovyFix fix : fixes) {
+          for (LocalQuickFix fix : fixes) {
             fix.applyFix(project, descriptor);
           }
         }
 
-        @NotNull
         @Override
-        public String getName() {
+        public @NotNull String getName() {
           return GroovyBundle.message("fix.class", psiClass.getName());
         }
 
-        @Nls
-        @NotNull
         @Override
-        public String getFamilyName() {
+        public @Nls @NotNull String getFamilyName() {
           return GroovyBundle.message("intention.family.name.fix.range.class");
         }
       };
@@ -101,19 +107,16 @@ public class GroovyRangeTypeCheckInspection extends BaseInspection {
 
   @Override
   protected String buildErrorString(Object... args) {
-    switch (args.length) {
-      case 1:
-        return GroovyBundle.message("type.doesnt.implement.comparable", args);
-      case 2:
-        return GroovyBundle.message("type.doesnt.contain.method", args);
-      default:
-        throw new IncorrectOperationException("incorrect args:" + Arrays.toString(args));
-    }
+    return switch (args.length) {
+      case 1 -> GroovyBundle.message("type.doesnt.implement.comparable", args);
+      case 2 -> GroovyBundle.message("type.doesnt.contain.method", args);
+      default -> throw new IncorrectOperationException("incorrect args:" + Arrays.toString(args));
+    };
   }
 
   private static class MyVisitor extends BaseInspectionVisitor {
-    @NlsSafe private static final String CALL_NEXT = "next()";
-    @NlsSafe private static final String CALL_PREVIOUS = "previous()";
+    private static final @NlsSafe String CALL_NEXT = "next()";
+    private static final @NlsSafe String CALL_PREVIOUS = "previous()";
 
     @Override
     public void visitRangeExpression(@NotNull GrRangeExpression range) {

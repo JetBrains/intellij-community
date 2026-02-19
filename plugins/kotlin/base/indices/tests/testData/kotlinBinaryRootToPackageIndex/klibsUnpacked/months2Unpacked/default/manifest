@@ -1,0 +1,7 @@
+builtins_platform=NATIVE
+unique_name=months2
+compiler_version=1.9.10
+depends=stdlib
+abi_version=1.8.0
+native_targets=macos_arm64
+metadata_version=1.4.1

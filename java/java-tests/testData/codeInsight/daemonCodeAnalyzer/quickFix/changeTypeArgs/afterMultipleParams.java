@@ -1,4 +1,4 @@
-// "Change type arguments to <String, Integer>" "true"
+// "Change type arguments to <String, Integer>" "true-preview"
 class Generic<E, K> {
   Generic(E arg, K arg1) {
   }

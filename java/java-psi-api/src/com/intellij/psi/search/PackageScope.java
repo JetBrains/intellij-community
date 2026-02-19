@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 /*
  * @author max
@@ -22,18 +8,21 @@ package com.intellij.psi.search;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.PackageIndex;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClassOwner;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiPackage;
+import com.intellij.util.Query;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.HashSet;
 import java.util.Set;
 
 public class PackageScope extends GlobalSearchScope {
   private final Set<VirtualFile> myDirs;
+  private final Set<VirtualFile> myFiles;
   private final PsiPackage myPackage;
   private final boolean myIncludeSubpackages;
   private final boolean myIncludeLibraries;
@@ -42,16 +31,44 @@ public class PackageScope extends GlobalSearchScope {
   private final String myPackageQNamePrefix;
 
   public PackageScope(@NotNull PsiPackage aPackage, boolean includeSubpackages, final boolean includeLibraries) {
+    this(aPackage, includeSubpackages, includeLibraries, null);
+  }
+
+  private PackageScope(@NotNull PsiPackage aPackage,
+                       boolean includeSubpackages,
+                       final boolean includeLibraries,
+                       @Nullable GlobalSearchScope packageScope) {
     super(aPackage.getProject());
     myPackage = aPackage;
     myIncludeSubpackages = includeSubpackages;
 
     Project project = myPackage.getProject();
     myPackageQualifiedName = myPackage.getQualifiedName();
-    myDirs = new HashSet<>(PackageIndex.getInstance(project).getDirsByPackageName(myPackageQualifiedName, true).findAll());
+
+    PackageIndex packageIndex = PackageIndex.getInstance(project);
+    Query<VirtualFile> dirs = packageScope != null
+                              ? packageIndex.getDirsByPackageName(myPackageQualifiedName, packageScope)
+                              : packageIndex.getDirsByPackageName(myPackageQualifiedName, true);
+
+    myDirs = VfsUtilCore.createCompactVirtualFileSet();
+    dirs.forEach(e -> {
+      myDirs.add(e);
+      return true;
+    });
+    
+    Query<VirtualFile> files = packageIndex.getFilesByPackageName(myPackageQualifiedName);
+    if (packageScope != null) {
+      files = files.filtering(packageScope::contains);
+    }
+    myFiles = VfsUtilCore.createCompactVirtualFileSet();
+    files.forEach(e -> {
+      myFiles.add(e);
+      return true;
+    });
+
     myIncludeLibraries = includeLibraries;
 
-    myPartOfPackagePrefix = JavaPsiFacade.getInstance(getProject()).isPartOfPackagePrefix(myPackageQualifiedName);
+    myPartOfPackagePrefix = JavaPsiFacade.getInstance(project).isPartOfPackagePrefix(myPackageQualifiedName);
     myPackageQNamePrefix = myPackageQualifiedName + ".";
   }
 
@@ -60,7 +77,8 @@ public class PackageScope extends GlobalSearchScope {
     VirtualFile dir = file.isDirectory() ? file : file.getParent();
     if (!myIncludeSubpackages) {
       if (myDirs.contains(dir)) return true;
-    } else {
+    }
+    else {
       while (dir != null) {
         if (myDirs.contains(dir)) return true;
         dir = dir.getParent();
@@ -72,10 +90,12 @@ public class PackageScope extends GlobalSearchScope {
       if (psiFile instanceof PsiClassOwner) {
         final String packageName = ((PsiClassOwner)psiFile).getPackageName();
         if (myPackageQualifiedName.equals(packageName) ||
-            packageName.startsWith(myPackageQNamePrefix)) return true;
+            packageName.startsWith(myPackageQNamePrefix)) {
+          return true;
+        }
       }
     }
-    return false;
+    return myFiles.contains(file);
   }
 
   @Override
@@ -90,18 +110,21 @@ public class PackageScope extends GlobalSearchScope {
 
   @Override
   public String toString() {
-    //noinspection HardCodedStringLiteral
     return "package scope: " + myPackage +
            ", includeSubpackages = " + myIncludeSubpackages;
   }
 
-  @NotNull
-  public static GlobalSearchScope packageScope(@NotNull PsiPackage aPackage, boolean includeSubpackages) {
+  public static @NotNull GlobalSearchScope packageScope(@NotNull PsiPackage aPackage, boolean includeSubpackages) {
     return new PackageScope(aPackage, includeSubpackages, true);
   }
 
-  @NotNull
-  public static GlobalSearchScope packageScopeWithoutLibraries(@NotNull PsiPackage aPackage, boolean includeSubpackages) {
+  public static @NotNull GlobalSearchScope packageScope(@NotNull PsiPackage aPackage,
+                                                        boolean includeSubpackages,
+                                                        @NotNull GlobalSearchScope packageScope) {
+    return new PackageScope(aPackage, includeSubpackages, true, packageScope);
+  }
+
+  public static @NotNull GlobalSearchScope packageScopeWithoutLibraries(@NotNull PsiPackage aPackage, boolean includeSubpackages) {
     return new PackageScope(aPackage, includeSubpackages, false);
   }
 }

@@ -6,11 +6,17 @@ import com.intellij.ui.JBColor;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.JBValue;
 
-import javax.swing.*;
+import javax.swing.JComponent;
+import javax.swing.JSeparator;
+import javax.swing.LookAndFeel;
+import javax.swing.SwingConstants;
 import javax.swing.plaf.ComponentUI;
 import javax.swing.plaf.UIResource;
 import javax.swing.plaf.basic.BasicSeparatorUI;
-import java.awt.*;
+import java.awt.Color;
+import java.awt.Dimension;
+import java.awt.Graphics;
+import java.awt.Rectangle;
 
 public class DarculaSeparatorUI extends BasicSeparatorUI {
   private static final JBValue STRIPE_WIDTH = new JBValue.Float(1);
@@ -33,14 +39,19 @@ public class DarculaSeparatorUI extends BasicSeparatorUI {
 
   @Override
   public void paint(Graphics g, JComponent c) {
+    if (c.isOpaque()) {
+      g.setColor(c.getBackground());
+      g.fillRect(0, 0, c.getWidth(), c.getHeight());
+    }
+
     Rectangle r = new Rectangle(c.getSize());
     g.setColor(c.getForeground());
-
     if (((JSeparator)c).getOrientation() == SwingConstants.VERTICAL) {
       g.fillRect(r.x + getStripeIndent(), r.y, getStripeWidth(), r.height);
     }
     else {
-      g.fillRect(r.x, r.y + getStripeIndent(), r.width, getStripeWidth());
+      int withToEdge = getWithToEdge();
+      g.fillRect(r.x + withToEdge, r.y + getStripeIndent(), r.width - withToEdge * 2, getStripeWidth());
     }
   }
 
@@ -56,6 +67,10 @@ public class DarculaSeparatorUI extends BasicSeparatorUI {
 
   protected int getStripeWidth() {
     return STRIPE_WIDTH.get();
+  }
+
+  protected int getWithToEdge() {
+    return 0;
   }
 
   protected String getColorResourceName() {

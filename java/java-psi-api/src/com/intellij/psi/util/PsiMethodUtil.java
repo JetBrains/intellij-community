@@ -1,66 +1,83 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.util;
 
-import com.intellij.codeInsight.runner.JavaMainMethodProvider;
 import com.intellij.openapi.util.Condition;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiMethod;
+import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public final class PsiMethodUtil {
-
-  public static final Condition<PsiClass> MAIN_CLASS = psiClass -> {
-    if (psiClass instanceof PsiAnonymousClass) return false;
-    if (psiClass.isAnnotationType()) return false;
-    if (psiClass.isInterface() && !PsiUtil.isLanguageLevel8OrHigher(psiClass)) return false;
-    return psiClass.getContainingClass() == null || psiClass.hasModifierProperty(PsiModifier.STATIC);
-  };
+  /// Returns a predicate that evaluates to true when passed a class that _can be_ a main class, i.e., a class that has a main method.
+  ///
+  /// It does not check whether the class actually has a main method. For that, use [#hasMainMethod(PsiClass)].
+  public static final Condition<@NotNull PsiClass> MAIN_CLASS = JvmMainMethodSearcher.MAIN_CLASS;
 
   private PsiMethodUtil() { }
 
-  @Nullable
-  public static PsiMethod findMainMethod(final PsiClass aClass) {
-    for (JavaMainMethodProvider provider : JavaMainMethodProvider.EP_NAME.getExtensionList()) {
-      if (provider.isApplicable(aClass)) {
-        return provider.findMainInClass(aClass);
-      }
-    }
-    final PsiMethod[] mainMethods = aClass.findMethodsByName("main", true);
-    return findMainMethod(mainMethods);
+  public static @Nullable PsiMethod findMainMethod(@NotNull final PsiClass aClass) {
+    return JavaMainMethodSearcher.INSTANCE.findMainMethod(aClass);
   }
 
-  @Nullable
-  private static PsiMethod findMainMethod(final PsiMethod[] mainMethods) {
-    for (final PsiMethod mainMethod : mainMethods) {
-      if (isMainMethod(mainMethod)) return mainMethod;
-    }
-    return null;
+  /**
+   * see {@link JavaMainMethodSearcher#findMainMethodInClassOrParent(PsiClass)}
+   */
+  public static @Nullable PsiMethod findMainMethodInClassOrParent(PsiClass aClass) {
+    return JavaMainMethodSearcher.INSTANCE.findMainMethodInClassOrParent(aClass);
   }
 
-  public static boolean isMainMethod(final PsiMethod method) {
-    if (method == null || method.getContainingClass() == null) return false;
-    if (!PsiType.VOID.equals(method.getReturnType())) return false;
-    if (!method.hasModifierProperty(PsiModifier.STATIC)) return false;
-    if (!method.hasModifierProperty(PsiModifier.PUBLIC)) return false;
-    final PsiParameter[] parameters = method.getParameterList().getParameters();
-    if (parameters.length != 1) return false;
-    final PsiType type = parameters[0].getType();
-    if (!(type instanceof PsiArrayType)) return false;
-    final PsiType componentType = ((PsiArrayType)type).getComponentType();
-    return componentType.equalsToText(CommonClassNames.JAVA_LANG_STRING);
+  /**
+   * see {@link JavaMainMethodSearcher#isMainMethod(PsiMethod)}
+   */
+  @Contract("null -> false")
+  public static boolean isMainMethod(final @Nullable PsiMethod method) {
+    return JavaMainMethodSearcher.INSTANCE.isMainMethod(method);
   }
 
+  /**
+   * see {@link JavaMainMethodSearcher#hasMainMethod(PsiClass)}
+   */
   public static boolean hasMainMethod(final PsiClass psiClass) {
-    for (JavaMainMethodProvider provider : JavaMainMethodProvider.EP_NAME.getExtensionList()) {
-      if (provider.isApplicable(psiClass)) {
-        return provider.hasMainMethod(psiClass);
-      }
-    }
-    return findMainMethod(psiClass.findMethodsByName("main", true)) != null;
+    return JavaMainMethodSearcher.INSTANCE.hasMainMethod(psiClass);
   }
 
-  @Nullable
-  public static PsiMethod findMainInClass(final PsiClass aClass) {
-    if (!MAIN_CLASS.value(aClass)) return null;
-    return findMainMethod(aClass);
+  /**
+   * see {@link JavaMainMethodSearcher#isMainMethodWithProvider(PsiClass, PsiElement)}
+   */
+  public static boolean isMainMethodWithProvider(@NotNull PsiClass psiClass, @NotNull PsiElement psiElement) {
+    return JavaMainMethodSearcher.INSTANCE.isMainMethodWithProvider(psiClass, psiElement);
+  }
+
+  /**
+   * see {@link JavaMainMethodSearcher#getMainJVMClassName(PsiClass)}
+   *
+   * @deprecated Use {@link #getMainClassQualifiedName(PsiClass)} instead.
+   */
+  @Deprecated
+  public static @Nullable String getMainJVMClassName(@NotNull PsiClass psiClass) {
+    return JavaMainMethodSearcher.INSTANCE.getMainJVMClassName(psiClass);
+  }
+
+  /**
+   * see {@link JavaMainMethodSearcher#getMainClassQualifiedName(PsiClass)}
+   */
+  public static @Nullable String getMainClassQualifiedName(@NotNull PsiClass psiClass) {
+    return JavaMainMethodSearcher.INSTANCE.getMainClassQualifiedName(psiClass);
+  }
+
+  /**
+   * see {@link JavaMainMethodSearcher#findMainInClass(PsiClass)
+   */
+  public static @Nullable PsiMethod findMainInClass(final @NotNull PsiClass aClass) {
+    return JavaMainMethodSearcher.INSTANCE.findMainInClass(aClass);
+  }
+
+  /**
+   * see {@link JavaMainMethodSearcher#hasMainInClass(PsiClass)}
+   */
+  public static boolean hasMainInClass(final @NotNull PsiClass aClass) {
+    return JavaMainMethodSearcher.INSTANCE.hasMainInClass(aClass);
   }
 }

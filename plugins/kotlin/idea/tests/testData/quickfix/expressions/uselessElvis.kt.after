@@ -1,0 +1,7 @@
+// "Remove redundant elvis operator" "true"
+fun foo(a: String) {
+    val b : String = a<caret>
+}
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.RemoveUselessElvisFix
+// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.RemoveUselessElvisFix

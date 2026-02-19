@@ -1,43 +1,36 @@
-/*
- * Copyright 2000-2011 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.dualView;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.ui.HighlightableCellRenderer;
-import com.intellij.ui.table.ItemsProvider;
 import com.intellij.ui.table.SelectionProvider;
-import com.intellij.ui.treeStructure.treetable.*;
+import com.intellij.ui.treeStructure.treetable.ListTreeTableModelOnColumns;
+import com.intellij.ui.treeStructure.treetable.TreeTable;
+import com.intellij.ui.treeStructure.treetable.TreeTableCellRenderer;
+import com.intellij.ui.treeStructure.treetable.TreeTableModel;
+import com.intellij.ui.treeStructure.treetable.TreeTableTree;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.SortableColumnModel;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
-import javax.swing.*;
+import javax.swing.JComponent;
+import javax.swing.JTable;
+import javax.swing.JTree;
 import javax.swing.table.TableCellEditor;
 import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableColumn;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreeCellRenderer;
 import javax.swing.tree.TreePath;
-import java.awt.*;
+import java.awt.Color;
+import java.awt.Component;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-public class TreeTableView extends TreeTable implements ItemsProvider, SelectionProvider {
+public class TreeTableView extends TreeTable implements SelectionProvider {
   private static final Logger LOG = Logger.getInstance(TreeTableView.class);
 
   public TreeTableView(ListTreeTableModelOnColumns treeTableModel) {
@@ -98,7 +91,7 @@ public class TreeTableView extends TreeTable implements ItemsProvider, Selection
 
   @Override
   public TreeTableCellRenderer createTableRenderer(TreeTableModel treeTableModel) {
-    return new TreeTableCellRenderer(TreeTableView.this, getTree()) {
+    return new TreeTableCellRenderer(this, getTree()) {
       @Override
       public Component getTableCellRendererComponent(JTable table,
                                                      Object value,
@@ -118,7 +111,7 @@ public class TreeTableView extends TreeTable implements ItemsProvider, Selection
     return (ListTreeTableModelOnColumns)getTableModel();
   }
 
-  public List<DualTreeElement> getFlattenItems() {
+  public @Unmodifiable List<DualTreeElement> getFlattenItems() {
     List<DualTreeElement> items = getTreeViewModel().getItems();
     return ContainerUtil.findAll(items, object -> object.shouldBeInTheFlatView());
   }
@@ -138,7 +131,6 @@ public class TreeTableView extends TreeTable implements ItemsProvider, Selection
     return getTreeViewModel().getColumnInfos()[convertColumnIndexToModel(column)];
   }
 
-  @Override
   public List getItems() {
     return getTreeViewModel().getItems();
   }
@@ -164,15 +156,14 @@ public class TreeTableView extends TreeTable implements ItemsProvider, Selection
   }
 
   public static class CellRendererWrapper implements TableCellRendererWrapper {
-    @NotNull private final TableCellRenderer myBaseRenderer;
+    private final @NotNull TableCellRenderer myBaseRenderer;
 
     public CellRendererWrapper(@NotNull TableCellRenderer baseRenderer) {
       myBaseRenderer = baseRenderer;
     }
 
     @Override
-    @NotNull
-    public TableCellRenderer getBaseRenderer() {
+    public @NotNull TableCellRenderer getBaseRenderer() {
       return myBaseRenderer;
     }
 

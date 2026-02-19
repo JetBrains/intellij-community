@@ -1,21 +1,35 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.suggested
 
-import com.intellij.ide.ui.AntialiasingType
 import com.intellij.ide.ui.UISettings
 import com.intellij.openapi.diff.DiffColors
 import com.intellij.openapi.editor.colors.EditorColorsScheme
 import com.intellij.refactoring.suggested.SignatureChangePresentationModel.Effect
 import com.intellij.refactoring.suggested.SignatureChangePresentationModel.TextFragment
 import com.intellij.ui.JBColor
-import java.awt.*
+import org.jetbrains.annotations.ApiStatus
+import java.awt.BasicStroke
+import java.awt.Color
+import java.awt.Dimension
+import java.awt.Font
+import java.awt.Graphics2D
+import java.awt.Point
+import java.awt.Rectangle
 import java.awt.font.FontRenderContext
-import java.awt.geom.AffineTransform
 import java.awt.geom.Arc2D
 import java.awt.geom.GeneralPath
 import java.awt.geom.Point2D
-import kotlin.math.*
+import kotlin.math.PI
+import kotlin.math.abs
+import kotlin.math.absoluteValue
+import kotlin.math.atan
+import kotlin.math.ceil
+import kotlin.math.max
+import kotlin.math.min
+import kotlin.math.roundToInt
+import kotlin.math.sin
 
+@ApiStatus.Internal
 class SignatureChangePresentation(
   private val model: SignatureChangePresentationModel,
   private val font: Font,
@@ -30,16 +44,10 @@ class SignatureChangePresentation(
   private val connectionStroke = BasicStroke(connectionLineThickness.toFloat())
   private val connectionColor = modifiedAttributes.backgroundColor ?: defaultForegroundColor
 
-  private val dummyFontRenderContext = FontRenderContext(
-    AffineTransform(),
-    AntialiasingType.getKeyForCurrentScope(false),
-    UISettings.PREFERRED_FRACTIONAL_METRICS_VALUE
-  )
-
-  val requiredSize by lazy {
-    val oldSignatureSize = signatureDimensions(model.oldSignature, dummyFontRenderContext)
-    val newSignatureSize = signatureDimensions(model.newSignature, dummyFontRenderContext)
-    if (verticalMode) {
+  fun requiredSize(frc: FontRenderContext): Dimension {
+    val oldSignatureSize = signatureDimensions(model.oldSignature, frc)
+    val newSignatureSize = signatureDimensions(model.newSignature, frc)
+    return if (verticalMode) {
       Dimension(
         oldSignatureSize.width + newSignatureSize.width + betweenSignaturesHSpace + leftSpace + rightSpace,
         max(oldSignatureSize.height, newSignatureSize.height) + topSpace + bottomSpace
@@ -51,7 +59,7 @@ class SignatureChangePresentation(
         oldSignatureSize.height + newSignatureSize.height + betweenSignaturesVSpace + topSpace + bottomSpace
       )
       if (model.oldSignature.any { it.connectionId != null }) {
-        val router = renderAll(null, dummyFontRenderContext, Rectangle(Point(), size)) as HorizontalModeConnectionRouter
+        val router = renderAll(null, frc, Rectangle(Point(), size)) as HorizontalModeConnectionRouter
         if (router.hSegmentLevelsRequired > 0) {
           size.height += betweenSignaturesVSpaceWithOneHSegment - betweenSignaturesVSpace +
                          betweenHSegmentsVSpace * (router.hSegmentLevelsRequired - 1)
@@ -93,7 +101,7 @@ class SignatureChangePresentation(
         when (fragment) {
           is TextFragment.Group -> { } // children processed by forAllFragments()
           is TextFragment.Leaf -> width += font.getStringBounds(fragment.text, context).width.ceilToInt()
-          is TextFragment.LineBreak -> width += font.getStringBounds(fragment.spaceInHorizontalMode, context).width.ceilToInt()
+          is TextFragment.LineBreak -> if (fragment.spaceInHorizontalMode.isNotEmpty()) width += font.getStringBounds(fragment.spaceInHorizontalMode, context).width.ceilToInt()
         }
       }
       return Dimension(width, lineHeight(context))
@@ -101,14 +109,11 @@ class SignatureChangePresentation(
   }
 
   fun paint(g: Graphics2D, bounds: Rectangle) {
+    UISettings.setupAntialiasing(g)
     renderAll(g, g.fontRenderContext, bounds)
   }
 
   private fun renderAll(g: Graphics2D?, fontRenderContext: FontRenderContext, bounds: Rectangle): ConnectionRouter {
-    if (g != null) {
-      UISettings.setupAntialiasing(g)
-    }
-
     val lineHeight = lineHeight(fontRenderContext)
     val oldSignatureSize = signatureDimensions(model.oldSignature, fontRenderContext)
     val newSignatureSize = signatureDimensions(model.newSignature, fontRenderContext)
@@ -240,7 +245,7 @@ class SignatureChangePresentation(
 
       val metrics = font.getLineMetrics(text, fontRenderContext)
 
-      val newX = x + font.getStringBounds(text, fontRenderContext).width.ceilToInt()
+      val newX = x + if (text.isNotEmpty()) font.getStringBounds(text, fontRenderContext).width.ceilToInt() else 0
 
       if (g != null) {
         if (backgroundColor != null) {

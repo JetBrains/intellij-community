@@ -1,0 +1,10 @@
+fun foo() {
+    val a: String
+    val b = <selection><caret>run</selection> {
+        a = "aaa"
+        "bbb"
+    }
+
+    a.get(1)
+    b.get(1)
+}

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeEditor.printing;
 
 import com.intellij.CommonBundle;
@@ -21,11 +21,21 @@ import com.intellij.openapi.editor.colors.EditorColorsUtil;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.fileTypes.FileTypes;
-import com.intellij.openapi.progress.*;
+import com.intellij.openapi.progress.PerformInBackgroundOption;
+import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiBinaryFile;
+import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiManager;
 import com.intellij.util.ObjectUtils;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -38,7 +48,8 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
-public class TextPrintHandler extends PrintActionHandler {
+@ApiStatus.Internal
+public final class TextPrintHandler extends PrintActionHandler {
   private static final Logger LOG = Logger.getInstance(TextPrintHandler.class);
 
   @Override
@@ -253,7 +264,7 @@ public class TextPrintHandler extends PrintActionHandler {
                            psiFile.getFileType(), psiFile.getProject(), CodeStyle.getSettings(psiFile));
   }
 
-  private static TextPainter initTextPainter(@NotNull final DocumentEx doc, final @NotNull Project project,
+  private static TextPainter initTextPainter(final @NotNull DocumentEx doc, final @NotNull Project project,
                                              final @NotNull String fileName) {
     final TextPainter[] res = new TextPainter[1];
     ApplicationManager.getApplication().runReadAction(
@@ -264,7 +275,7 @@ public class TextPrintHandler extends PrintActionHandler {
     return res[0];
   }
 
-  private static TextPainter doInitTextPainter(@NotNull final DocumentEx doc, @NotNull Project project, @NotNull String fileName) {
+  private static TextPainter doInitTextPainter(final @NotNull DocumentEx doc, @NotNull Project project, @NotNull String fileName) {
     EditorHighlighter highlighter = HighlighterFactory.createHighlighter(EditorColorsUtil.getColorSchemeForPrinting(), "unknown", project);
     return new TextPainter(doc, highlighter, fileName, fileName, FileTypes.PLAIN_TEXT, null, CodeStyle.getSettings(project));
   }

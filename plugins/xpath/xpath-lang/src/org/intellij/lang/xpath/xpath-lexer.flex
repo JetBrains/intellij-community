@@ -4,9 +4,7 @@ package org.intellij.lang.xpath;
 import com.intellij.lexer.FlexLexer;
 import com.intellij.psi.tree.IElementType;
 
-@SuppressWarnings({"ALL"})
 %%
-
 %class _XPathLexer
 %abstract
 %implements FlexLexer

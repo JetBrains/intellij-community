@@ -18,8 +18,5 @@ package com.jetbrains.python.psi.stubs;
 import com.intellij.psi.stubs.StubElement;
 import com.jetbrains.python.psi.PyStarImportElement;
 
-/**
- * @author vlan
- */
 public interface PyStarImportElementStub extends StubElement<PyStarImportElement> {
 }

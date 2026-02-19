@@ -1,19 +1,19 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.codeInspection.assignment;
 
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.util.IntentionName;
+import com.intellij.modcommand.ModCommand;
+import com.intellij.modcommand.ModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.SmartPointerManager;
 import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
-import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyBundle;
-import org.jetbrains.plugins.groovy.codeInspection.GroovyFix;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrSafeCastExpression;
@@ -24,16 +24,13 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 /**
  * @author Maxim.Medvedev
  */
-public class GrCastFix extends GroovyFix {
+public class GrCastFix extends ModCommandQuickFix {
   private final PsiType myExpectedType;
   private final boolean mySafe;
 
-  @NotNull
-  private final SmartPsiElementPointer<GrExpression> pointer;
+  private final @NotNull SmartPsiElementPointer<GrExpression> pointer;
 
-  @NotNull
-  @IntentionName
-  private final String myName;
+  private final @NotNull @IntentionName String myName;
 
   public GrCastFix(PsiType expectedType, GrExpression expression) {
     this(expectedType, expression, true);
@@ -51,11 +48,17 @@ public class GrCastFix extends GroovyFix {
   }
 
   @Override
-  protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) throws IncorrectOperationException {
+  public @NotNull ModCommand perform(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
     GrExpression expression = pointer.getElement();
-    if (expression == null) return;
-    if (mySafe) doSafeCast(project, myExpectedType, expression);
-      else doCast(project, myExpectedType, expression);
+    if (expression == null) return ModCommand.nop();
+    return ModCommand.psiUpdate(expression, e -> {
+      if (mySafe) {
+        doSafeCast(project, myExpectedType, e);
+      }
+      else {
+        doCast(project, myExpectedType, e);
+      }
+    });
   }
 
   private static void doCast(Project project, PsiType type, GrExpression expr) {
@@ -89,16 +92,13 @@ public class GrCastFix extends GroovyFix {
     JavaCodeStyleManager.getInstance(project).shortenClassReferences(replaced);
   }
 
-  @NotNull
   @Override
-  public String getName() {
+  public @NotNull String getName() {
     return myName;
   }
 
-  @Nls
-  @NotNull
   @Override
-  public String getFamilyName() {
+  public @Nls @NotNull String getFamilyName() {
     return GroovyBundle.message("intention.family.name.add.cast");
   }
 }

@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.codeInsight.template.postfix.templates;
 
+import com.intellij.testFramework.NeedsIndex;
 import org.jetbrains.annotations.NotNull;
 
 public class NewExpressionPostfixTemplateTest extends PostfixTemplateTestCase {
@@ -60,6 +61,49 @@ public class NewExpressionPostfixTemplateTest extends PostfixTemplateTestCase {
   }
 
   public void testNewAfterNew() {
+    doTest();
+  }
+
+  public void testNewInsideVarargCall() {
+    doTest();
+  }
+
+  public void testNewInsideVarargCall2() {
+    doTest();
+  }
+
+  @NeedsIndex.Full
+  public void testNewNestedClass() {
+    doTest();
+  }
+
+  public void testNewNestedClass2() {
+    doTest();
+  }
+
+  public void testNewFQN() {
+    doTest();
+  }
+
+  public void testNewFQNConflict() {
+    doTest();
+  }
+
+  public void testNewFQNImport() {
+    doTest();
+  }
+
+  public void testNewInaccessible() {
+    myFixture.addClass("class Test {private Test() {}}");
+    doTest();
+  }
+  
+  @NeedsIndex.ForStandardLibrary
+  public void testNewNonImported() {
+    doTest();
+  }
+  
+  public void testNewNonExisting() {
     doTest();
   }
 }

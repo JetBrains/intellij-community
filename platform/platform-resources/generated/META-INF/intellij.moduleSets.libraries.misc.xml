@@ -1,0 +1,15 @@
+<!-- DO NOT EDIT: This file is auto-generated from Kotlin code -->
+<!-- To regenerate, run: `Generate Product Layouts` or `bazel run //platform/buildScripts:plugin-model-tool` -->
+<!-- Source: see moduleSet("libraries.misc") function in UltimateModuleSets.kt -->
+<!-- Note: Files are kept under VCS to support running products without dev mode (deprecated) -->
+<idea-plugin>
+  <content namespace="jetbrains">
+    <module name="intellij.libraries.javax.activation"/>
+    <module name="intellij.libraries.xml.rpc"/>
+    <module name="intellij.libraries.kotlinx.document.store.mvstore"/>
+    <module name="intellij.libraries.opencsv"/>
+    <module name="intellij.libraries.lucene.common"/>
+    <module name="intellij.libraries.plexus.utils"/>
+    <module name="intellij.libraries.maven.resolver.provider"/>
+  </content>
+</idea-plugin>

@@ -15,7 +15,7 @@
  */
 package com.intellij.util.xml.ui;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 
 public class Warning {
   private final String myWarning;
@@ -27,6 +27,7 @@ public class Warning {
   }
 
 
+  @Override
   public String toString() {
     return getWarning();
   }

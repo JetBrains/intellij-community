@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.refactoring.memberPullUp;
 
 import com.intellij.openapi.actionSystem.CommonDataKeys;
@@ -10,7 +10,13 @@ import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaDirectoryService;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiPackage;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.RefactoringBundle;
@@ -71,15 +77,14 @@ public class GrPullUpHandler implements RefactoringActionHandler, GrPullUpDialog
   }
 
   @Override
-  public void invoke(@NotNull final Project project, PsiElement @NotNull [] elements, DataContext dataContext) {
+  public void invoke(final @NotNull Project project, PsiElement @NotNull [] elements, DataContext dataContext) {
     if (elements.length != 1) return;
 
     myProject = project;
 
     PsiElement element = elements[0];
 
-    if (element instanceof GrTypeDefinition) {
-      GrTypeDefinition aClass = (GrTypeDefinition)element;
+    if (element instanceof GrTypeDefinition aClass) {
       invokeImpl(project, dataContext, aClass, null);
     }
     else if (element instanceof GrMethod || element instanceof GrField) {
@@ -116,7 +121,7 @@ public class GrPullUpHandler implements RefactoringActionHandler, GrPullUpDialog
 
 
     mySubclass = aClass;
-    GrMemberInfoStorage memberInfoStorage = new GrMemberInfoStorage((GrTypeDefinition)mySubclass, new MemberInfoBase.Filter<GrMember>() {
+    GrMemberInfoStorage memberInfoStorage = new GrMemberInfoStorage((GrTypeDefinition)mySubclass, new MemberInfoBase.Filter<>() {
       @Override
       public boolean includeMember(GrMember element) {
         return true;

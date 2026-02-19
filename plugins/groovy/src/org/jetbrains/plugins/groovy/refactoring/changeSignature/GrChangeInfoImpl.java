@@ -1,23 +1,20 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.refactoring.changeSignature;
 
 import com.intellij.lang.Language;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiArrayType;
+import com.intellij.psi.PsiCallExpression;
+import com.intellij.psi.PsiClassType;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementFactory;
+import com.intellij.psi.PsiEllipsisType;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiIdentifier;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiSubstitutor;
+import com.intellij.psi.PsiType;
 import com.intellij.refactoring.changeSignature.JavaChangeInfo;
 import com.intellij.refactoring.changeSignature.JavaParameterInfo;
 import com.intellij.refactoring.changeSignature.ThrownExceptionInfo;
@@ -41,7 +38,7 @@ import java.util.Objects;
 public class GrChangeInfoImpl implements JavaChangeInfo {
   private GrMethod method;
   private final String newName;
-  @Nullable private final CanonicalTypes.Type returnType;
+  private final @Nullable CanonicalTypes.Type returnType;
   private final String visibilityModifier;
   private final List<? extends GrParameterInfo> parameters;
   private final boolean myAreParametersChanged;
@@ -176,14 +173,12 @@ public class GrChangeInfoImpl implements JavaChangeInfo {
     PsiElementFactory factory = JavaPsiFacade.getInstance(method.getProject()).getElementFactory();
     defaultValues = new PsiExpression[parameters.size()];
     for (int i = 0; i < parameters.size(); i++) {
-      JavaParameterInfo info = parameters.get(i);
+      GrParameterInfo info = parameters.get(i);
       if (info.getOldIndex() < 0 && !info.isVarargType()) {
-        if (info.getDefaultValue() == null) continue;
         try {
           defaultValues[i] = factory.createExpressionFromText(info.getDefaultValue(), method);
         }
-        catch (IncorrectOperationException e) {
-//          LOG.error(e);
+        catch (IncorrectOperationException ignored) {
         }
       }
     }
@@ -224,9 +219,8 @@ public class GrChangeInfoImpl implements JavaChangeInfo {
     return parameters.toArray(new GrParameterInfo[0]);
   }
 
-  @NotNull
   @Override
-  public String getNewVisibility() {
+  public @NotNull String getNewVisibility() {
     return visibilityModifier;
   }
 

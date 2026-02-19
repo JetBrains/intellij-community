@@ -1,0 +1,46 @@
+PsiJavaFile:MarkdownWithDocCommentAfterMarkdown.java
+  PsiPackageStatement:test.pkg
+    PsiKeyword:package('package')
+    PsiWhiteSpace(' ')
+    PsiJavaCodeReferenceElement:test.pkg
+      PsiJavaCodeReferenceElement:test
+        PsiIdentifier:test('test')
+        PsiReferenceParameterList
+          <empty list>
+      PsiJavaToken:DOT('.')
+      PsiIdentifier:pkg('pkg')
+      PsiReferenceParameterList
+        <empty list>
+    PsiJavaToken:SEMICOLON(';')
+  PsiWhiteSpace('\n\n')
+  PsiDocComment
+    PsiDocToken:DOC_COMMENT_START('/**')
+    PsiWhiteSpace('\n ')
+    PsiDocToken:DOC_COMMENT_LEADING_ASTERISKS('*')
+    PsiDocToken:DOC_COMMENT_DATA(' Doc')
+    PsiWhiteSpace('\n ')
+    PsiDocToken:DOC_COMMENT_END('*/')
+  PsiWhiteSpace('\n')
+  PsiImportList
+    <empty list>
+  PsiClass:Test
+    PsiDocComment
+      PsiDocToken:DOC_COMMENT_LEADING_ASTERISKS('///')
+      PsiWhiteSpace(' ')
+      PsiDocToken:DOC_COMMENT_DATA('Inline comment as markdown')
+    PsiWhiteSpace('\n')
+    PsiModifierList:public
+      PsiKeyword:public('public')
+    PsiWhiteSpace(' ')
+    PsiKeyword:class('class')
+    PsiWhiteSpace(' ')
+    PsiIdentifier:Test('Test')
+    PsiTypeParameterList
+      <empty list>
+    PsiReferenceList
+      <empty list>
+    PsiReferenceList
+      <empty list>
+    PsiWhiteSpace(' ')
+    PsiJavaToken:LBRACE('{')
+    PsiJavaToken:RBRACE('}')

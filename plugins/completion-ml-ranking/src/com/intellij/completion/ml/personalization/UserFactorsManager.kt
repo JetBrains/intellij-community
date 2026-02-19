@@ -16,7 +16,6 @@
 
 package com.intellij.completion.ml.personalization
 
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.service
 
 /**
@@ -24,8 +23,6 @@ import com.intellij.openapi.components.service
  */
 interface UserFactorsManager {
   companion object {
-    val ENABLE_USER_FACTORS = ApplicationManager.getApplication().isEAP
-
     fun getInstance(): UserFactorsManager = service()
   }
 

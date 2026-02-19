@@ -9,7 +9,7 @@ import com.intellij.openapi.util.NlsContexts;
 import com.intellij.ui.SimpleListCellRenderer;
 import com.intellij.util.ui.FormBuilder;
 
-import javax.swing.*;
+import javax.swing.JPanel;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
@@ -63,7 +63,7 @@ public class FrameworkVersionComponent {
     }
     myVersionsPanel.setVisible(!versions.isEmpty());
     if (!versions.isEmpty()) {
-      FrameworkVersion toSelect = oldSelection != null && versions.contains(oldSelection) ? oldSelection : versions.get(versions.size() - 1);
+      FrameworkVersion toSelect = oldSelection != null && versions.contains(oldSelection) ? oldSelection : versions.getLast();
       myVersionsBox.setSelectedItem(toSelect);
       myModel.setSelectedVersion(myFrameworkOrGroupId, toSelect);
     }

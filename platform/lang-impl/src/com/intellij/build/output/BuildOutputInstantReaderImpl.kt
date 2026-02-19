@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.build.output
 
 import com.intellij.build.BuildProgressListener
@@ -10,7 +10,7 @@ import com.intellij.util.ConcurrencyUtil.underThreadNameRunnable
 import org.jetbrains.annotations.ApiStatus
 import java.io.Closeable
 import java.io.IOException
-import java.util.*
+import java.util.LinkedList
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.LinkedBlockingQueue
 import java.util.concurrent.TimeUnit
@@ -82,7 +82,7 @@ open class BuildOutputInstantReaderImpl @JvmOverloads constructor(
 
   private val appendedLineProcessor = object : LineProcessor() {
     override fun process(line: String) {
-      require(state.get() != State.Closed) { LangBundle.message("error.can.t.append.to.closed.stream") }
+      require(state.get() != State.Closed) { LangBundle.message("error.can.t.append.to.closed.stream", line) }
       try {
         while (state.get() != State.Closed) {
           if (state.compareAndSet(State.Idle, State.Running)) {
@@ -99,7 +99,7 @@ open class BuildOutputInstantReaderImpl @JvmOverloads constructor(
     }
   }
 
-  override fun getParentEventId() = parentEventId
+  override fun getParentEventId(): Any = parentEventId
 
   override fun append(csq: CharSequence): BuildOutputInstantReaderImpl {
     appendedLineProcessor.append(csq)
@@ -143,7 +143,7 @@ open class BuildOutputInstantReaderImpl @JvmOverloads constructor(
       if (line != null || state.get() == State.Closed) break
       if (!waitIfNotClosed) return null
     }
-    if (line == null) return line
+    if (line == null) return null
     readLinesBuffer.addFirst(line)
     if (readLinesBuffer.size > pushBackBufferSize) {
       readLinesBuffer.removeLast()
@@ -151,7 +151,7 @@ open class BuildOutputInstantReaderImpl @JvmOverloads constructor(
     return line
   }
 
-  override fun pushBack() = pushBack(1)
+  override fun pushBack(): Unit = pushBack(1)
 
   override fun pushBack(numberOfLines: Int) {
     readLinesBufferPosition += numberOfLines
@@ -198,6 +198,7 @@ open class BuildOutputInstantReaderImpl @JvmOverloads constructor(
   }
 }
 
+@ApiStatus.Internal
 @ApiStatus.Experimental
 class BuildOutputCollector(private val reader: BuildOutputInstantReader) : BuildOutputInstantReader {
   private val readLines = LinkedList<String>()

@@ -4,7 +4,12 @@ package org.jetbrains.plugins.groovy.lang.resolve.imports.impl
 import com.intellij.util.containers.reverse
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement
-import org.jetbrains.plugins.groovy.lang.resolve.imports.*
+import org.jetbrains.plugins.groovy.lang.resolve.imports.GroovyFileImports
+import org.jetbrains.plugins.groovy.lang.resolve.imports.GroovyImport
+import org.jetbrains.plugins.groovy.lang.resolve.imports.RegularImport
+import org.jetbrains.plugins.groovy.lang.resolve.imports.StarImport
+import org.jetbrains.plugins.groovy.lang.resolve.imports.StaticImport
+import org.jetbrains.plugins.groovy.lang.resolve.imports.StaticStarImport
 
 class GroovyImportCollector(private val file: GroovyFileBase) {
 

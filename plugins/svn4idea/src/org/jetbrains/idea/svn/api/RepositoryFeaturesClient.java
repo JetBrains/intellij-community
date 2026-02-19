@@ -4,9 +4,6 @@ package org.jetbrains.idea.svn.api;
 import com.intellij.openapi.vcs.VcsException;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author Konstantin Kolosovsky.
- */
 public interface RepositoryFeaturesClient extends SvnClient {
 
   boolean supportsMergeTracking(@NotNull Url url) throws VcsException;

@@ -1,0 +1,2 @@
+File internalSource.kt uses property internalTargetVal which will be inaccessible after move
+Property sourceVal uses property internalTargetVal which will be inaccessible after move

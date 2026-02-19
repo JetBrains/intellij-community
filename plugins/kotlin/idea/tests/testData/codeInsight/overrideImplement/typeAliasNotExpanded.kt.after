@@ -1,0 +1,17 @@
+// FIR_IDENTICAL
+typealias Foo = Int
+
+interface Bar {
+    fun test(foo: Foo) = Unit
+}
+
+class Bar2 : Bar {
+    override fun test(foo: Foo) {
+        <selection><caret>super.test(foo)</selection>
+    }
+}
+
+// MEMBER: "test(foo: Foo /* = Int */): Unit"
+// MEMBER: "equals(other: Any?): Boolean"
+// MEMBER: "hashCode(): Int"
+// MEMBER: "toString(): String"

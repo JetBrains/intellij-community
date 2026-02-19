@@ -1,0 +1,9 @@
+<idea-plugin visibility="internal">
+  <extensionPoints>
+    <extensionPoint name="equivalenceDescriptorProvider" interface="com.intellij.dupLocator.equivalence.EquivalenceDescriptorProvider" dynamic="true"/>
+  </extensionPoints>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <applicationService serviceImplementation="com.intellij.dupLocator.DuplocatorSettings"/>
+  </extensions>
+</idea-plugin>

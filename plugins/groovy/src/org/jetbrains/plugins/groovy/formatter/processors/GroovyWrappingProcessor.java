@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.formatter.processors;
 
 import com.intellij.formatting.Wrap;
@@ -20,7 +20,22 @@ import org.jetbrains.plugins.groovy.lang.parser.GroovyStubElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotation;
 
-import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.*;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.APPLICATION_ARGUMENT_LIST;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.ARGUMENT_LIST;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.ARRAY_INITIALIZER;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.CLOSURE;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.KW_IN;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.KW_INSTANCEOF;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.PARAMETER_LIST;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.TRY_RESOURCE_LIST;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.T_LBRACE;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.T_LBRACK;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.T_LPAREN;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.T_NOT_IN;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.T_NOT_INSTANCEOF;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.T_RBRACE;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.T_RBRACK;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.T_RPAREN;
 
 /**
  * @author Max Medvedev
@@ -41,7 +56,7 @@ public class GroovyWrappingProcessor {
 
     myCommonWrap = createCommonWrap();
   }
-  
+
   private static final TokenSet SKIP = TokenSet.create(
     GroovyTokenTypes.mCOMMA, GroovyTokenTypes.mQUESTION, GroovyTokenTypes.mSEMI,
 
@@ -59,25 +74,29 @@ public class GroovyWrappingProcessor {
 
     GroovyTokenTypes.mBAND, GroovyTokenTypes.mBOR, GroovyTokenTypes.mBXOR, GroovyTokenTypes.mDIV, GroovyTokenTypes.mEQUAL,
     GroovyTokenTypes.mGE, GroovyTokenTypes.mGT, GroovyTokenTypes.mLOR, GroovyTokenTypes.mLT, GroovyTokenTypes.mLE, GroovyTokenTypes.mMINUS,
-    GroovyTokenTypes.kAS, GroovyTokenTypes.kIN,
+    GroovyTokenTypes.kAS,
     GroovyTokenTypes.mMOD, GroovyTokenTypes.mPLUS, GroovyTokenTypes.mSTAR, GroovyTokenTypes.mSTAR_STAR, GroovyTokenTypes.mNOT_EQUAL,
-    GroovyTokenTypes.mCOMPARE_TO, GroovyTokenTypes.mLAND, GroovyTokenTypes.kINSTANCEOF,
+    GroovyTokenTypes.mCOMPARE_TO, GroovyTokenTypes.mLAND, KW_INSTANCEOF, T_NOT_INSTANCEOF,
     GroovyElementTypes.COMPOSITE_LSHIFT_SIGN, GroovyElementTypes.COMPOSITE_RSHIFT_SIGN, GroovyElementTypes.COMPOSITE_TRIPLE_SHIFT_SIGN,
-    GroovyTokenTypes.mREGEX_FIND, GroovyTokenTypes.mREGEX_MATCH, GroovyTokenTypes.mRANGE_INCLUSIVE, GroovyTokenTypes.mRANGE_EXCLUSIVE,
+    GroovyTokenTypes.mREGEX_FIND, GroovyTokenTypes.mREGEX_MATCH,
+    GroovyTokenTypes.mRANGE_INCLUSIVE, GroovyTokenTypes.mRANGE_EXCLUSIVE_LEFT,
+    GroovyTokenTypes.mRANGE_EXCLUSIVE_RIGHT, GroovyTokenTypes.mRANGE_EXCLUSIVE_BOTH,
 
     GroovyTokenTypes.mBNOT, GroovyTokenTypes.mLNOT, GroovyTokenTypes.mMINUS, GroovyTokenTypes.mDEC, GroovyTokenTypes.mPLUS,
     GroovyTokenTypes.mINC,
 
-    GroovyTokenTypes.mSPREAD_DOT, GroovyTokenTypes.mOPTIONAL_DOT, GroovyTokenTypes.mMEMBER_POINTER, GroovyTokenTypes.mDOT,
+    GroovyTokenTypes.mSPREAD_DOT, GroovyTokenTypes.mOPTIONAL_DOT, GroovyTokenTypes.mMEMBER_POINTER, GroovyTokenTypes.mOPTIONAL_CHAIN_DOT, GroovyTokenTypes.mDOT,
 
     GroovyElementTypes.COMPOSITE_LSHIFT_SIGN, GroovyElementTypes.COMPOSITE_RSHIFT_SIGN, GroovyElementTypes.COMPOSITE_TRIPLE_SHIFT_SIGN,
 
-    GroovyTokenTypes.mLT, GroovyTokenTypes.mGT, GroovyTokenTypes.mLE, GroovyTokenTypes.mGE, GroovyTokenTypes.kIN,
+    GroovyTokenTypes.mLT, GroovyTokenTypes.mGT, GroovyTokenTypes.mLE, GroovyTokenTypes.mGE, KW_IN, T_NOT_IN,
 
-    GroovyTokenTypes.kIN, GroovyTokenTypes.mCOLON,
+    GroovyTokenTypes.mCOLON,
 
     GroovyTokenTypes.mGSTRING_CONTENT, GroovyTokenTypes.mGSTRING_END, GroovyElementTypes.GSTRING_INJECTION, GroovyTokenTypes.mREGEX_CONTENT,
-    GroovyTokenTypes.mREGEX_END, GroovyTokenTypes.mDOLLAR_SLASH_REGEX_CONTENT, GroovyTokenTypes.mDOLLAR_SLASH_REGEX_END
+    GroovyTokenTypes.mREGEX_END, GroovyTokenTypes.mDOLLAR_SLASH_REGEX_CONTENT, GroovyTokenTypes.mDOLLAR_SLASH_REGEX_END,
+
+    GroovyTokenTypes.mIMPL
   );
 
   public Wrap getChildWrap(ASTNode childNode) {
@@ -159,8 +178,7 @@ public class GroovyWrappingProcessor {
     return getCommonWrap();
   }
 
-  @Nullable
-  private static IElementType getLeftSiblingType(ASTNode node) {
+  private static @Nullable IElementType getLeftSiblingType(ASTNode node) {
     ASTNode prev = getLeftSibling(node);
     return prev != null ? prev.getElementType() : null;
   }
@@ -202,8 +220,7 @@ public class GroovyWrappingProcessor {
     return Wrap.createWrap(WrapType.NONE, false);
   }
 
-  @Nullable
-  private Wrap createCommonWrap() {
+  private @Nullable Wrap createCommonWrap() {
     if (myParentType == GroovyStubElementTypes.EXTENDS_CLAUSE || myParentType == GroovyStubElementTypes.IMPLEMENTS_CLAUSE) {
       myUsedDefaultWrap = true;
       return Wrap.createWrap(mySettings.EXTENDS_LIST_WRAP, true);

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.intellij.lang.xpath;
 
 import com.intellij.lang.ASTNode;
@@ -11,29 +11,41 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.IFileElementType;
 import com.intellij.psi.tree.TokenSet;
-import org.intellij.lang.xpath.psi.impl.*;
+import org.intellij.lang.xpath.psi.impl.XPath2CastImpl;
+import org.intellij.lang.xpath.psi.impl.XPath2CastableImpl;
+import org.intellij.lang.xpath.psi.impl.XPath2ForImpl;
+import org.intellij.lang.xpath.psi.impl.XPath2IfImpl;
+import org.intellij.lang.xpath.psi.impl.XPath2InstanceOfImpl;
+import org.intellij.lang.xpath.psi.impl.XPath2QuantifiedExprImpl;
+import org.intellij.lang.xpath.psi.impl.XPath2RangeExpressionImpl;
+import org.intellij.lang.xpath.psi.impl.XPath2SequenceImpl;
+import org.intellij.lang.xpath.psi.impl.XPath2TreatAsImpl;
+import org.intellij.lang.xpath.psi.impl.XPath2TypeElementImpl;
+import org.intellij.lang.xpath.psi.impl.XPath2VariableDeclarationImpl;
+import org.intellij.lang.xpath.psi.impl.XPath2VariableImpl;
+import org.intellij.lang.xpath.psi.impl.XPathStepImpl;
 import org.jetbrains.annotations.NotNull;
 
 public class XPath2ParserDefinition extends XPathParserDefinition {
-  @NotNull
+  public static final IFileElementType FILE = new IFileElementType("XPATH2_FILE", XPathFileType.XPATH2.getLanguage());
+
   @Override
-  public Lexer createLexer(Project project) {
+  public @NotNull Lexer createLexer(Project project) {
     return XPathLexer.create(true);
   }
 
   @Override
-  public IFileElementType getFileNodeType() {
-    return XPath2ElementTypes.FILE;
+  public @NotNull IFileElementType getFileNodeType() {
+    return FILE;
   }
 
   @Override
-  public PsiParser createParser(Project project) {
+  public @NotNull PsiParser createParser(Project project) {
     return new XPath2Parser();
   }
 
-  @NotNull
   @Override
-  public TokenSet getCommentTokens() {
+  public @NotNull TokenSet getCommentTokens() {
     return TokenSet.create(XPath2TokenTypes.COMMENT);
   }
 
@@ -76,7 +88,7 @@ public class XPath2ParserDefinition extends XPathParserDefinition {
   }
 
   @Override
-  public PsiFile createFile(FileViewProvider viewProvider) {
+  public @NotNull PsiFile createFile(@NotNull FileViewProvider viewProvider) {
     return new XPathFile(viewProvider, XPathFileType.XPATH2);
   }
 }

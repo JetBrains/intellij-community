@@ -1,7 +1,8 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.uiDesigner.propertyInspector.properties;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.uiDesigner.StringDescriptorManager;
 import com.intellij.uiDesigner.UIDesignerBundle;
@@ -16,37 +17,42 @@ import com.intellij.uiDesigner.propertyInspector.editors.ColorEditor;
 import com.intellij.uiDesigner.propertyInspector.editors.FontEditor;
 import com.intellij.uiDesigner.propertyInspector.editors.IntEnumEditor;
 import com.intellij.uiDesigner.propertyInspector.editors.string.StringEditor;
-import com.intellij.uiDesigner.propertyInspector.renderers.*;
+import com.intellij.uiDesigner.propertyInspector.renderers.ColorRenderer;
+import com.intellij.uiDesigner.propertyInspector.renderers.FontRenderer;
+import com.intellij.uiDesigner.propertyInspector.renderers.IntEnumRenderer;
+import com.intellij.uiDesigner.propertyInspector.renderers.LabelPropertyRenderer;
+import com.intellij.uiDesigner.propertyInspector.renderers.StringRenderer;
 import com.intellij.uiDesigner.radComponents.RadComponent;
 import com.intellij.uiDesigner.radComponents.RadContainer;
 import com.intellij.uiDesigner.shared.BorderType;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import java.awt.*;
+import java.awt.Insets;
+import java.util.function.Supplier;
 
-/**
- * @author Anton Katilin
- * @author Vladimir Kondratyev
- */
 public final class BorderProperty extends Property<RadContainer, BorderType> {
-  @NonNls public static final String NAME = "border";
+  public static final @NonNls String NAME = "border";
 
   private final Project myProject;
   private final Property[] myChildren;
 
-  private final NotNullLazyValue<PropertyRenderer<BorderType>> myRenderer = new NotNullLazyValue<PropertyRenderer<BorderType>>() {
-    @NotNull
-    @Override
-    protected PropertyRenderer<BorderType> compute() {
-      return new LabelPropertyRenderer<BorderType>() {
-        @Override
-        protected void customize(@NotNull final BorderType value) {
-          setText(value.getName());
-        }
-      };
-    }
-  };
+  // Converting this anonymous class to lambda causes javac 11 failure (should compile fine in later javac)
+  // suppression can be removed when we migrate to newer Java
+  @SuppressWarnings("Convert2Lambda")
+  private final NotNullLazyValue<PropertyRenderer<BorderType>> myRenderer = NotNullLazyValue.lazy(
+    new Supplier<>() {
+      @Override
+      public PropertyRenderer<BorderType> get() {
+        return new LabelPropertyRenderer<>() {
+          @Override
+          protected void customize(final @NotNull BorderType value) {
+            @NlsSafe String name = value.getName();
+            setText(name);
+          }
+        };
+      }
+    });
 
   public BorderProperty(final Project project) {
     super(null, NAME);
@@ -82,8 +88,7 @@ public final class BorderProperty extends Property<RadContainer, BorderType> {
   }
 
   @Override
-  @NotNull
-  public PropertyRenderer<BorderType> getRenderer() {
+  public @NotNull PropertyRenderer<BorderType> getRenderer() {
     return myRenderer.getValue();
   }
 
@@ -124,8 +129,7 @@ public final class BorderProperty extends Property<RadContainer, BorderType> {
     }
 
     @Override
-    @NotNull
-    public PropertyRenderer<BorderType> getRenderer() {
+    public @NotNull PropertyRenderer<BorderType> getRenderer() {
       return myRenderer.getValue();
     }
 
@@ -177,15 +181,14 @@ public final class BorderProperty extends Property<RadContainer, BorderType> {
     @Override
     protected void setValueImpl(final RadContainer component, final StringDescriptor value) throws Exception {
       StringDescriptor title = value;
-      if (title != null && StringDescriptorManager.getInstance(component.getModule()).resolve(component, title).length() == 0) {
+      if (title != null && StringDescriptorManager.getInstance(component.getModule()).resolve(component, title).isEmpty()) {
         title = null;
       }
       component.setBorderTitle(title);
     }
 
     @Override
-    @NotNull
-    public PropertyRenderer<StringDescriptor> getRenderer() {
+    public @NotNull PropertyRenderer<StringDescriptor> getRenderer() {
       if (myRenderer == null) {
         myRenderer = new StringRenderer();
       }
@@ -233,7 +236,7 @@ public final class BorderProperty extends Property<RadContainer, BorderType> {
     private IntEnumEditor myEditor;
     private final boolean myJustification;
 
-    MyTitleIntEnumProperty(final Property parent, @NonNls final String name, final boolean isJustification) {
+    MyTitleIntEnumProperty(final Property parent, final @NonNls String name, final boolean isJustification) {
       super(parent, name);
       myJustification = isJustification;
     }
@@ -254,8 +257,7 @@ public final class BorderProperty extends Property<RadContainer, BorderType> {
     }
 
     @Override
-    @NotNull
-    public PropertyRenderer<Integer> getRenderer() {
+    public @NotNull PropertyRenderer<Integer> getRenderer() {
       if (myRenderer == null) {
         myRenderer = new IntEnumRenderer(myJustification ? ourJustificationPairs : ourPositionPairs);
       }
@@ -300,8 +302,7 @@ public final class BorderProperty extends Property<RadContainer, BorderType> {
     }
 
     @Override
-    @NotNull
-    public PropertyRenderer<FontDescriptor> getRenderer() {
+    public @NotNull PropertyRenderer<FontDescriptor> getRenderer() {
       if (myRenderer == null) {
         myRenderer = new FontRenderer();
       }
@@ -353,8 +354,7 @@ public final class BorderProperty extends Property<RadContainer, BorderType> {
     }
 
     @Override
-    @NotNull
-    public PropertyRenderer<ColorDescriptor> getRenderer() {
+    public @NotNull PropertyRenderer<ColorDescriptor> getRenderer() {
       if (myRenderer == null) {
         myRenderer = new ColorRenderer();
       }

@@ -1,28 +1,56 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.intention.impl.singlereturn;
 
 import com.intellij.codeInsight.BlockUtils;
 import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.RuntimeExceptionWithAttachments;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.*;
-import com.intellij.psi.controlFlow.*;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiBlockStatement;
+import com.intellij.psi.PsiCatchSection;
+import com.intellij.psi.PsiCodeBlock;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementFactory;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiIfStatement;
+import com.intellij.psi.PsiJavaToken;
+import com.intellij.psi.PsiLabeledStatement;
+import com.intellij.psi.PsiLocalVariable;
+import com.intellij.psi.PsiLoopStatement;
+import com.intellij.psi.PsiReferenceExpression;
+import com.intellij.psi.PsiReturnStatement;
+import com.intellij.psi.PsiStatement;
+import com.intellij.psi.PsiSwitchStatement;
+import com.intellij.psi.PsiWhiteSpace;
+import com.intellij.psi.controlFlow.AnalysisCanceledException;
+import com.intellij.psi.controlFlow.ControlFlow;
+import com.intellij.psi.controlFlow.ControlFlowFactory;
+import com.intellij.psi.controlFlow.ControlFlowOptions;
+import com.intellij.psi.controlFlow.ControlFlowUtil;
+import com.intellij.psi.controlFlow.LocalsControlFlowPolicy;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
-import com.siyeh.ig.psiutils.*;
-import one.util.streamex.StreamEx;
+import com.siyeh.ig.psiutils.BoolUtils;
+import com.siyeh.ig.psiutils.CommentTracker;
+import com.siyeh.ig.psiutils.ControlFlowUtils;
+import com.siyeh.ig.psiutils.ExpressionUtils;
+import com.siyeh.ig.psiutils.SideEffectChecker;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 import static com.intellij.util.ObjectUtils.tryCast;
 import static java.util.Objects.requireNonNull;
 
 /**
- * Performs replacement of single return statement as the part of {@link ConvertToSingleReturnAction}.
+ * Performs replacement of a single return statement as the part of {@link ConvertToSingleReturnAction}.
  */
 final class ReturnReplacementContext {
   private final Project myProject;
@@ -56,8 +84,7 @@ final class ReturnReplacementContext {
     replace();
   }
 
-  @Nullable
-  private PsiStatement goUp() {
+  private @Nullable PsiStatement goUp() {
     PsiElement parent = myReturnStatement.getParent();
     while (parent instanceof PsiCodeBlock) {
       PsiElement grandParent = parent.getParent();
@@ -96,20 +123,18 @@ final class ReturnReplacementContext {
       }
       break;
     }
-    if (!(parent instanceof PsiStatement)) {
+    if (!(parent instanceof PsiStatement currentContext)) {
       throw new RuntimeExceptionWithAttachments("Unexpected structure: " + parent.getClass(),
                                                 new Attachment("body.txt", myBlock.getText()),
                                                 new Attachment("context.txt", parent.getText()));
     }
-    PsiStatement currentContext = (PsiStatement)parent;
     PsiStatement loopOrSwitch = PsiTreeUtil.getNonStrictParentOfType(currentContext, PsiLoopStatement.class, PsiSwitchStatement.class);
     if (loopOrSwitch != null && PsiTreeUtil.isAncestor(myBlock, loopOrSwitch, true)) {
       myReplacements.add("break;");
       return loopOrSwitch;
     }
     while (true) {
-      if (currentContext instanceof PsiIfStatement) {
-        PsiIfStatement ifStatement = (PsiIfStatement)currentContext;
+      if (currentContext instanceof PsiIfStatement ifStatement) {
         boolean inThen = PsiTreeUtil.isAncestor(ifStatement.getThenBranch(), myReturnStatement, false);
         PsiElement ifParent = currentContext.getParent();
         if (ifParent instanceof PsiCodeBlock) {
@@ -127,8 +152,7 @@ final class ReturnReplacementContext {
     }
   }
 
-  @Nullable
-  private PsiStatement advance(PsiStatement currentContext) {
+  private @Nullable PsiStatement advance(PsiStatement currentContext) {
     PsiElement contextParent = currentContext.getParent();
     if (contextParent instanceof PsiLoopStatement) {
       Object mark = new Object();
@@ -147,7 +171,7 @@ final class ReturnReplacementContext {
         currentContext = loopOrSwitch;
         return currentContext;
       }
-      List<PsiStatement> statements = StreamEx.of(tail).select(PsiStatement.class).toList();
+      List<PsiStatement> statements = ContainerUtil.filterIsInstance(tail, PsiStatement.class);
       if (!statements.isEmpty()) {
         PsiStatement statement = statements.get(0);
         if (statements.size() == 1 && myExitContext.isDefaultReturn(statement)) {
@@ -241,7 +265,7 @@ final class ReturnReplacementContext {
                                    PsiIfStatement ifStatement,
                                    boolean inThen, PsiCodeBlock ifParent) {
     PsiElement[] tail = extractTail(currentContext, ifParent);
-    if (Arrays.stream(tail).noneMatch(PsiStatement.class::isInstance)) return null;
+    if (!ContainerUtil.exists(tail, PsiStatement.class::isInstance)) return null;
     PsiBlockStatement blockForTail = getBlockFromIf(ifStatement, inThen);
     PsiCodeBlock codeBlock = blockForTail.getCodeBlock();
     PsiJavaToken brace = requireNonNull(codeBlock.getRBrace());
@@ -254,8 +278,7 @@ final class ReturnReplacementContext {
     return codeBlock;
   }
 
-  @NotNull
-  private PsiBlockStatement getBlockFromIf(PsiIfStatement ifStatement, boolean inThen) {
+  private @NotNull PsiBlockStatement getBlockFromIf(PsiIfStatement ifStatement, boolean inThen) {
     if (inThen) {
       PsiStatement elseBranch = ifStatement.getElseBranch();
       if (elseBranch == null) {
@@ -302,7 +325,7 @@ final class ReturnReplacementContext {
         if (parentIf != null && parentIf.getElseBranch() == place) {
           PsiIfStatement childIf = tryCast(ControlFlowUtils.stripBraces((PsiStatement)place), PsiIfStatement.class);
           if (childIf != null) {
-            place = place.replace(childIf);
+            place = new CommentTracker().replaceAndRestoreComments(place, childIf);
           }
         }
       }

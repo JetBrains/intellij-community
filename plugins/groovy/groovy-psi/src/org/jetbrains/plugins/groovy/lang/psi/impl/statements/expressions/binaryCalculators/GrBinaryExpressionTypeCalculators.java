@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.binaryCalculators;
 
 import com.intellij.psi.PsiType;
@@ -13,8 +13,10 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrOperat
 import java.util.LinkedHashMap;
 import java.util.Map;
 
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.KW_IN;
 import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.T_ID;
 import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.T_NID;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.T_NOT_IN;
 import static org.jetbrains.plugins.groovy.lang.psi.util.PsiUtilKt.isFake;
 
 public final class GrBinaryExpressionTypeCalculators {
@@ -41,6 +43,7 @@ public final class GrBinaryExpressionTypeCalculators {
 
     MAP.put(GroovyTokenTypes.mLOR, GrBooleanExpressionTypeCalculator.INSTANCE);
     MAP.put(GroovyTokenTypes.mLAND, GrBooleanExpressionTypeCalculator.INSTANCE);
+    MAP.put(GroovyTokenTypes.mIMPL, GrBooleanExpressionTypeCalculator.INSTANCE);
     MAP.put(GroovyTokenTypes.mEQUAL, GrBooleanExpressionTypeCalculator.INSTANCE);
     MAP.put(GroovyTokenTypes.mNOT_EQUAL, GrBooleanExpressionTypeCalculator.INSTANCE);
     MAP.put(T_ID, GrBooleanExpressionTypeCalculator.INSTANCE);
@@ -49,14 +52,14 @@ public final class GrBinaryExpressionTypeCalculators {
     MAP.put(GroovyTokenTypes.mGE, GrBooleanExpressionTypeCalculator.INSTANCE);
     MAP.put(GroovyTokenTypes.mLT, GrBooleanExpressionTypeCalculator.INSTANCE);
     MAP.put(GroovyTokenTypes.mLE, GrBooleanExpressionTypeCalculator.INSTANCE);
-    MAP.put(GroovyTokenTypes.kIN, GrBooleanExpressionTypeCalculator.INSTANCE);
+    MAP.put(KW_IN, GrBooleanExpressionTypeCalculator.INSTANCE);
+    MAP.put(T_NOT_IN, GrBooleanExpressionTypeCalculator.INSTANCE);
 
     MAP.put(GroovyTokenTypes.mREGEX_FIND, GrMatcherTypeCalculator.INSTANCE);
     MAP.put(GroovyTokenTypes.mREGEX_MATCH, GrBooleanExpressionTypeCalculator.INSTANCE);
   }
 
-  @Nullable
-  public static PsiType computeType(@NotNull GrOperatorExpression e) {
+  public static @Nullable PsiType computeType(@NotNull GrOperatorExpression e) {
     if (isFake(e)) return null;
     final Function<GrOperatorExpression, PsiType> function = MAP.get(e.getOperator());
     assert function != null : e.getOperator();

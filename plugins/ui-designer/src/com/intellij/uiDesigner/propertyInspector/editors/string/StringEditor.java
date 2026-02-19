@@ -1,9 +1,10 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.uiDesigner.propertyInspector.editors.string;
 
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonShortcuts;
+import com.intellij.openapi.application.WriteIntentReadAction;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -21,20 +22,18 @@ import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JComponent;
+import javax.swing.JTextField;
+import javax.swing.SwingUtilities;
 import javax.swing.event.DocumentEvent;
-import java.awt.*;
+import java.awt.Dimension;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
-/**
- * @author Anton Katilin
- * @author Vladimir Kondratyev
- */
 public final class StringEditor extends PropertyEditor<StringDescriptor> {
   private static final Logger LOG = Logger.getInstance(StringEditor.class);
 
-  @Nullable private final IntroStringProperty myProperty;
+  private final @Nullable IntroStringProperty myProperty;
   private final TextFieldWithBrowseButton myTfWithButton;
   /* Initial value of string property that was passed into getComponent() method */
   private StringDescriptor myValue;
@@ -57,14 +56,16 @@ public final class StringEditor extends PropertyEditor<StringDescriptor> {
       new ActionListener() {
         @Override
         public void actionPerformed(final ActionEvent e) {
-          fireValueCommitted(false, false);
+          WriteIntentReadAction.run(() -> {
+            fireValueCommitted(false, false);
+          });
         }
       }
     );
     textField.getDocument().addDocumentListener(
       new DocumentAdapter() {
         @Override
-        protected void textChanged(@NotNull final DocumentEvent e) {
+        protected void textChanged(final @NotNull DocumentEvent e) {
           // Order of document listeners invocation is not defined in Swing. In practice, custom listeners like this one are invoked
           // before internal JTextField listeners, so at this point the internal state of JTextField can be inconsistent.
           // That's the reason for using 'invokeLater' here.
@@ -118,7 +119,7 @@ public final class StringEditor extends PropertyEditor<StringDescriptor> {
   }
 
   @Override
-  public JComponent getPreferredFocusedComponent(@NotNull final JComponent component) {
+  public JComponent getPreferredFocusedComponent(final @NotNull JComponent component) {
     return ((TextFieldWithBrowseButton)component).getTextField();
   }
 
@@ -140,7 +141,7 @@ public final class StringEditor extends PropertyEditor<StringDescriptor> {
     if(myValue == null || (myValue.getValue() != null && myTextFieldModified)) {
       // editor is for "trivial" StringDescriptor
       final String value = myTfWithButton.getText();
-      if (myValue == null && value.length() == 0) {
+      if (myValue == null && value.isEmpty()) {
         return null;
       }
       else{
@@ -158,7 +159,7 @@ public final class StringEditor extends PropertyEditor<StringDescriptor> {
 
   private final class MyCancelEditingAction extends AnAction{
     @Override
-    public void actionPerformed(@NotNull final AnActionEvent e) {
+    public void actionPerformed(final @NotNull AnActionEvent e) {
       fireEditingCancelled();
     }
   }
@@ -166,40 +167,42 @@ public final class StringEditor extends PropertyEditor<StringDescriptor> {
   private final class MyActionListener implements ActionListener{
     @Override
     public void actionPerformed(final ActionEvent e) {
-      // 1. Show editor dialog
+      WriteIntentReadAction.run(() -> {
+        // 1. Show editor dialog
 
-      final GuiEditor guiEditor = DesignerToolWindowManager.getInstance(myProject).getActiveFormEditor();
-      LOG.assertTrue(guiEditor != null);
+        final GuiEditor guiEditor = DesignerToolWindowManager.getInstance(myProject).getActiveFormEditor();
+        LOG.assertTrue(guiEditor != null);
 
-      final StringEditorDialog dialog = new StringEditorDialog(
-        myTfWithButton.getTextField(),
-        getValue(), // we have pass here "live" (modified) value
-        guiEditor.getStringDescriptorLocale(),
-        guiEditor
-      );
+        final StringEditorDialog dialog = new StringEditorDialog(
+          myTfWithButton.getTextField(),
+          getValue(), // we have pass here "live" (modified) value
+          guiEditor.getStringDescriptorLocale(),
+          guiEditor
+        );
 
-      CommandProcessor.getInstance().executeCommand(
-        myProject,
-        () -> {
-          if (!guiEditor.ensureEditable()) {
-            return;
-          }
-          if (!dialog.showAndGet()) {
-            return;
-          }
+        CommandProcessor.getInstance().executeCommand(
+          myProject,
+          () -> {
+            if (!guiEditor.ensureEditable()) {
+              return;
+            }
+            if (!dialog.showAndGet()) {
+              return;
+            }
 
-          // 2. Apply new value
-          final StringDescriptor descriptor = dialog.getDescriptor();
-          if (descriptor == null) {
-            return;
-          }
-          setValue(descriptor);
-          fireValueCommitted(true, false);
-          if (myProperty != null) {
-            myProperty.refreshValue(myComponent);
-          }
-          guiEditor.refreshAndSave(false);
-        }, UIDesignerBundle.message("command.edit.string.property"), null);
+            // 2. Apply new value
+            final StringDescriptor descriptor = dialog.getDescriptor();
+            if (descriptor == null) {
+              return;
+            }
+            setValue(descriptor);
+            fireValueCommitted(true, false);
+            if (myProperty != null) {
+              myProperty.refreshValue(myComponent);
+            }
+            guiEditor.refreshAndSave(false);
+          }, UIDesignerBundle.message("command.edit.string.property"), null);
+      });
     }
   }
 }

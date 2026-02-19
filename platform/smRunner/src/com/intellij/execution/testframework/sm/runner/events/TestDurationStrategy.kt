@@ -1,8 +1,8 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.testframework.sm.runner.events
 
-fun getDurationStrategy(durationStrategy: String?) = durationStrategy?.let { strategy ->
-  TestDurationStrategy.values().firstOrNull { it.name.equals(strategy, ignoreCase = true) }
+fun getDurationStrategy(durationStrategy: String?): TestDurationStrategy = durationStrategy?.let { strategy ->
+  TestDurationStrategy.entries.firstOrNull { it.name.equals(strategy, ignoreCase = true) }
 } ?: TestDurationStrategy.AUTOMATIC
 
 /**

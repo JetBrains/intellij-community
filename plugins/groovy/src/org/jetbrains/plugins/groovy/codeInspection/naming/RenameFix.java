@@ -15,37 +15,14 @@
  */
 package org.jetbrains.plugins.groovy.codeInspection.naming;
 
-import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.codeInspection.RefactoringQuickFix;
-import com.intellij.openapi.project.Project;
-import com.intellij.psi.PsiElement;
-import com.intellij.refactoring.RefactoringActionHandler;
-import com.intellij.refactoring.RefactoringActionHandlerFactory;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.groovy.GroovyBundle;
-import org.jetbrains.plugins.groovy.codeInspection.GroovyFix;
-
-public class RenameFix extends GroovyFix implements RefactoringQuickFix {
+/**
+ * @deprecated use {@link GrRenameFix}
+ */
+@Deprecated(forRemoval = true)
+public class RenameFix extends GrRenameFix  {
 
   public RenameFix() {
     super();
   }
 
-  @NotNull
-  @Override
-  public String getFamilyName() {
-    return GroovyBundle.message("intention.family.name.rename");
-  }
-
-  @Override
-  public void doFix(@NotNull final Project project, @NotNull ProblemDescriptor descriptor) {
-    final PsiElement element = descriptor.getPsiElement();
-    doFix(element);
-  }
-
-  @NotNull
-  @Override
-  public RefactoringActionHandler getHandler() {
-    return RefactoringActionHandlerFactory.getInstance().createRenameHandler();
-  }
 }

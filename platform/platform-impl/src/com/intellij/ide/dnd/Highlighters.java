@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.dnd;
 
 import com.intellij.icons.AllIcons;
@@ -6,15 +6,24 @@ import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.ui.JBColor;
 import com.intellij.ui.awt.RelativePoint;
+import com.intellij.util.ui.JBUI;
+import org.jetbrains.annotations.ApiStatus;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.BorderFactory;
+import javax.swing.Icon;
+import javax.swing.JLayeredPane;
+import javax.swing.JPanel;
+import java.awt.BorderLayout;
+import java.awt.Container;
+import java.awt.Graphics;
+import java.awt.Point;
+import java.awt.Rectangle;
 import java.util.ArrayList;
 import java.util.List;
 
-public class Highlighters implements DnDEvent.DropTargetHighlightingType {
+@ApiStatus.Internal
+public final class Highlighters implements DnDEvent.DropTargetHighlightingType {
   private static final List<DropTargetHighlighter> ourHightlighters = new ArrayList<>();
 
   private static final ArrayList<DropTargetHighlighter> ourCurrentHighlighters = new ArrayList<>();
@@ -26,6 +35,7 @@ public class Highlighters implements DnDEvent.DropTargetHighlightingType {
     ourHightlighters.add(new TextHighlighter());
     ourHightlighters.add(new ErrorTextHighlighter());
     ourHightlighters.add(new VerticalLinesHighlighter());
+    ourHightlighters.add(new BottomHighlighter());
   }
 
   static void show(int aType, JLayeredPane aPane, Rectangle aRectangle, DnDEvent aEvent) {
@@ -80,10 +90,10 @@ public class Highlighters implements DnDEvent.DropTargetHighlightingType {
   }
 
   static boolean isVisible() {
-    return ourCurrentHighlighters.size() > 0;
+    return !ourCurrentHighlighters.isEmpty();
   }
 
-  private static abstract class AbstractComponentHighlighter extends JPanel implements DropTargetHighlighter {
+  private abstract static class AbstractComponentHighlighter extends JPanel implements DropTargetHighlighter {
 
     protected AbstractComponentHighlighter() {
       setOpaque(false);
@@ -130,7 +140,7 @@ public class Highlighters implements DnDEvent.DropTargetHighlightingType {
       if (!Registry.is("ide.dnd.textHints")) return;
 
       final String result = aEvent.getExpectedDropResult();
-      if (result != null && result.length() > 0) {
+      if (result != null && !result.isEmpty()) {
         RelativePoint point  = null;
         for (DropTargetHighlighter each : ourHightlighters) {
           if (each instanceof AbstractComponentHighlighter) {
@@ -163,7 +173,7 @@ public class Highlighters implements DnDEvent.DropTargetHighlightingType {
 
   }
 
-  public static class TextHighlighter extends BaseTextHighlighter {
+  public static final class TextHighlighter extends BaseTextHighlighter {
 
     public TextHighlighter() {
       super(MessageType.INFO);
@@ -175,7 +185,7 @@ public class Highlighters implements DnDEvent.DropTargetHighlightingType {
     }
   }
 
-  private static class ErrorTextHighlighter extends BaseTextHighlighter {
+  private static final class ErrorTextHighlighter extends BaseTextHighlighter {
     ErrorTextHighlighter() {
       super(MessageType.ERROR);
     }
@@ -186,12 +196,12 @@ public class Highlighters implements DnDEvent.DropTargetHighlightingType {
     }
   }
 
-  private static class FilledRectangleHighlighter extends AbstractComponentHighlighter {
+  private static final class FilledRectangleHighlighter extends AbstractComponentHighlighter {
     FilledRectangleHighlighter() {
       super();
       setOpaque(true);
-      setBorder(BorderFactory.createLineBorder(JBColor.RED));
-      setBackground(JBColor.RED);
+      setBorder(BorderFactory.createLineBorder(JBUI.CurrentTheme.DragAndDrop.BORDER_COLOR));
+      setBackground(JBUI.CurrentTheme.DragAndDrop.BORDER_COLOR);
     }
 
     @Override
@@ -205,11 +215,11 @@ public class Highlighters implements DnDEvent.DropTargetHighlightingType {
     }
   }
 
-  private static class RectangleHighlighter extends AbstractComponentHighlighter {
+  private static final class RectangleHighlighter extends AbstractComponentHighlighter {
     RectangleHighlighter() {
       super();
       setOpaque(false);
-      setBorder(BorderFactory.createLineBorder(JBColor.RED));
+      setBorder(BorderFactory.createLineBorder(JBUI.CurrentTheme.DragAndDrop.BORDER_COLOR));
     }
 
     @Override
@@ -221,9 +231,16 @@ public class Highlighters implements DnDEvent.DropTargetHighlightingType {
     public int getMask() {
       return RECTANGLE;
     }
+
+    @Override
+    protected void paintComponent(Graphics g) {
+      g.setColor(JBUI.CurrentTheme.DragAndDrop.ROW_BACKGROUND);
+      g.fillRect(0, 0, getWidth(), getHeight());
+      super.paintComponent(g);
+    }
   }
 
-  private static class HorizontalLinesHighlighter extends AbstractComponentHighlighter {
+  private static final class HorizontalLinesHighlighter extends AbstractComponentHighlighter {
 
     @Override
     protected void _show(JLayeredPane aPane, Rectangle aRectangle, DnDEvent aEvent) {
@@ -245,7 +262,7 @@ public class Highlighters implements DnDEvent.DropTargetHighlightingType {
     }
   }
 
-  private static class VerticalLinesHighlighter extends AbstractComponentHighlighter {
+  private static final class VerticalLinesHighlighter extends AbstractComponentHighlighter {
     private static final Icon TOP = AllIcons.General.ArrowDown;
     private static final Icon BOTTOM = AllIcons.General.ArrowUp;
 
@@ -267,4 +284,23 @@ public class Highlighters implements DnDEvent.DropTargetHighlightingType {
       return V_ARROWS;
     }
   }
+
+  private static final class BottomHighlighter extends AbstractComponentHighlighter {
+    BottomHighlighter() {
+      super();
+      setOpaque(false);
+      setBorder(JBUI.Borders.customLine(JBUI.CurrentTheme.DragAndDrop.BORDER_COLOR, 0, 0, 2, 0));
+    }
+
+    @Override
+    protected void _show(JLayeredPane aPane, Rectangle aRectangle, DnDEvent aEvent) {
+      setBounds(aRectangle);
+    }
+
+    @Override
+    public int getMask() {
+      return BOTTOM;
+    }
+  }
+
 }

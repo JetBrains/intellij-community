@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.xml.ui;
 
 import com.intellij.lang.annotation.HighlightSeverity;
@@ -23,26 +9,43 @@ import com.intellij.openapi.util.Factory;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.text.Strings;
 import com.intellij.ui.JBColor;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.xml.*;
+import com.intellij.util.xml.AbstractConvertContext;
+import com.intellij.util.xml.Converter;
+import com.intellij.util.xml.DomElement;
+import com.intellij.util.xml.ElementPresentationManager;
+import com.intellij.util.xml.GenericDomValue;
+import com.intellij.util.xml.NamedEnumUtil;
+import com.intellij.util.xml.ResolvingConverter;
 import com.intellij.util.xml.highlighting.DomElementAnnotationsManager;
 import com.intellij.util.xml.highlighting.DomElementProblemDescriptor;
 import com.intellij.util.xml.highlighting.DomElementsProblemsHolder;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.DefaultListCellRenderer;
+import javax.swing.Icon;
+import javax.swing.JComboBox;
+import javax.swing.JList;
+import java.awt.Color;
+import java.awt.Component;
+import java.awt.Dimension;
+import java.awt.Font;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.List;
-import java.util.*;
+import java.util.Map;
+import java.util.Set;
 
-/**
- * @author peter
- */
 public class ComboControl extends BaseModifiableControl<JComboBox<Pair<String, Icon>>, String> {
   private static final Pair<String, Icon> EMPTY = new ComboBoxItem(" ", null);
   private final Factory<? extends List<Pair<String, Icon>>> myDataFactory;
@@ -90,8 +93,7 @@ public class ComboControl extends BaseModifiableControl<JComboBox<Pair<String, I
       if (converter instanceof ResolvingConverter) {
         final AbstractConvertContext context = new AbstractConvertContext() {
           @Override
-          @NotNull
-          public DomElement getInvocationElement() {
+          public @NotNull DomElement getInvocationElement() {
             return reference;
           }
         };
@@ -114,8 +116,8 @@ public class ComboControl extends BaseModifiableControl<JComboBox<Pair<String, I
   }
 
   static Factory<List<Pair<String, Icon>>> createEnumFactory(final Class<? extends Enum> aClass) {
-    return () -> ContainerUtil.<Enum, Pair<String, Icon>>map2List(
-      aClass.getEnumConstants(), s -> Pair.create(NamedEnumUtil.getEnumValueByElement(s), ElementPresentationManager.getIcon(s)));
+    return () -> ContainerUtil.map(aClass.getEnumConstants(), s -> Pair.create(
+      NamedEnumUtil.getEnumValueByElement(s), ElementPresentationManager.getIcon(s)));
   }
 
   public static <T extends Enum<?>> JComboBox<Pair<String, Icon>> createEnumComboBox(final Class<T> type) {
@@ -143,6 +145,7 @@ public class ComboControl extends BaseModifiableControl<JComboBox<Pair<String, I
       super(pair.first, pair.second);
     }
 
+    @Override
     public String toString() {
       return StringUtil.notNullize(first);
     }
@@ -178,7 +181,7 @@ public class ComboControl extends BaseModifiableControl<JComboBox<Pair<String, I
   }
 
   public boolean isValidValue(final String object) {
-    return myNullable && object == EMPTY.first || myIcons.containsKey(object);
+    return myNullable && Strings.areSameInstance(object, EMPTY.first) || myIcons.containsKey(object);
   }
 
   private boolean dataChanged(List<? extends Pair<String, Icon>> newData) {
@@ -233,8 +236,7 @@ public class ComboControl extends BaseModifiableControl<JComboBox<Pair<String, I
   }
 
   @Override
-  @Nullable
-  protected final String getValue() {
+  protected final @Nullable String getValue() {
     final Pair<String, Icon> pair = (Pair<String, Icon>)getComponent().getSelectedItem();
     return pair == null || pair == EMPTY ? null : pair.first;
   }
@@ -273,18 +275,18 @@ public class ComboControl extends BaseModifiableControl<JComboBox<Pair<String, I
       Color background = getDefaultBackground();
       comboBox.setToolTipText(null);
 
-      if (errorProblems.size() > 0) {
+      if (!errorProblems.isEmpty()) {
         background = getErrorBackground();
         comboBox.setToolTipText(TooltipUtils.getTooltipText(errorProblems));
       }
-      else if (warningProblems.size() > 0) {
+      else if (!warningProblems.isEmpty()) {
         background = getWarningBackground();
         comboBox.setToolTipText(TooltipUtils.getTooltipText(warningProblems));
       }
 
       final Pair<String, Icon> pair = (Pair<String, Icon>)comboBox.getSelectedItem();
       final String s = Pair.getFirst(pair);
-      background = s != null && s.trim().length() > 0 ? getDefaultBackground() : background;
+      background = s != null && !s.trim().isEmpty() ? getDefaultBackground() : background;
 
       comboBox.setBackground(background);
       comboBox.getEditor().getEditorComponent().setBackground(background);

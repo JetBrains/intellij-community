@@ -1,28 +1,58 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.ui;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInspection.reference.RefEntity;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.util.containers.BidirectionalMap;
-import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.HashingStrategy;
 import com.intellij.util.containers.Interner;
 import com.intellij.util.containers.WeakInterner;
-import gnu.trove.TObjectHashingStrategy;
-import gnu.trove.TObjectIntHashMap;
+import it.unimi.dsi.fastutil.objects.Object2IntMap;
+import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.Icon;
 import javax.swing.tree.TreeNode;
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.Enumeration;
+import java.util.List;
 
+/**
+ * Represents nodes of the {@link InspectionTree}.
+ *
+ * <ul>
+ *   <li>Nodes for sorting:</li>
+ *     <ul>
+ *       <li>{@link InspectionRootNode}</li>
+ *       <li>{@link InspectionPackageNode}</li>
+ *       <li>{@link InspectionModuleNode}</li>
+ *       <li>{@link InspectionSeverityGroupNode}</li>
+ *       <li>{@link InspectionGroupNode} for <b>Editor | Inspections</b> categories</li>
+ *     </ul>
+ *   <li>Nodes for inspection tools:</li>
+ *     <ul>
+ *       <li> {@link InspectionNode}</li>
+ *     </ul>
+ *   <li>Nodes for problems:</li>
+ *     <ul>
+ *       <li>{@link SuppressableInspectionTreeNode}</li>
+ *       <ul>
+ *         <li>{@link RefElementNode} for the element concerned by the problem</li>
+ *         <li>{@link ProblemDescriptionNode} for the description of the problem</li>
+ *         <li>{@link com.intellij.codeInspection.offlineViewer.OfflineProblemDescriptorNode}</li>
+ *       </ul>
+ *     </ul>
+ * </ul>
+ */
 public abstract class InspectionTreeNode implements TreeNode {
-  private static final Interner<LevelAndCount[]> LEVEL_AND_COUNT_INTERNER = new WeakInterner<>(new TObjectHashingStrategy<LevelAndCount[]>() {
+  private static final Interner<LevelAndCount[]> LEVEL_AND_COUNT_INTERNER = new WeakInterner<>(new HashingStrategy<>() {
     @Override
-    public int computeHashCode(LevelAndCount[] object) {
+    public int hashCode(LevelAndCount[] object) {
       return Arrays.hashCode(object);
     }
 
@@ -32,9 +62,8 @@ public abstract class InspectionTreeNode implements TreeNode {
     }
   });
 
-  protected final ProblemLevels myProblemLevels = new ProblemLevels();
-  @Nullable
-  volatile Children myChildren;
+  final ProblemLevels myProblemLevels = new ProblemLevels();
+  volatile @Nullable Children myChildren;
   final InspectionTreeNode myParent;
 
   protected InspectionTreeNode(InspectionTreeNode parent) {
@@ -45,36 +74,26 @@ public abstract class InspectionTreeNode implements TreeNode {
     return false;
   }
 
-  @Nullable
-  public Icon getIcon(boolean expanded) {
+  public @Nullable Icon getIcon(boolean expanded) {
     return null;
   }
 
   LevelAndCount @NotNull [] getProblemLevels() {
-    if (!isProblemCountCacheValid()) {
-      dropProblemCountCaches();
-    }
     return myProblemLevels.getValue();
   }
 
   void dropProblemCountCaches() {
     InspectionTreeNode current = this;
-    while (current != null && getParent() != null) {
+    while (current != null) {
       current.myProblemLevels.drop();
       current = current.getParent();
     }
   }
 
-  protected boolean isProblemCountCacheValid() {
-    return true;
-  }
-
-  protected void visitProblemSeverities(@NotNull TObjectIntHashMap<HighlightDisplayLevel> counter) {
+  protected void visitProblemSeverities(@NotNull Object2IntMap<HighlightDisplayLevel> counter) {
     for (InspectionTreeNode child : getChildren()) {
       for (LevelAndCount levelAndCount : child.getProblemLevels()) {
-        if (!counter.adjustValue(levelAndCount.getLevel(), levelAndCount.getCount())) {
-          counter.put(levelAndCount.getLevel(), levelAndCount.getCount());
-        }
+        counter.mergeInt(levelAndCount.getLevel(), levelAndCount.getCount(), Math::addExact);
       }
     }
   }
@@ -98,8 +117,7 @@ public abstract class InspectionTreeNode implements TreeNode {
     return false;
   }
 
-  @Nullable
-  public String getTailText() {
+  public @Nullable @Nls(capitalization = Nls.Capitalization.Sentence) String getTailText() {
     return null;
   }
 
@@ -136,10 +154,9 @@ public abstract class InspectionTreeNode implements TreeNode {
 
   public abstract @Nls String getPresentableText();
 
-  @NotNull
-  public List<? extends InspectionTreeNode> getChildren() {
+  public @NotNull List<? extends InspectionTreeNode> getChildren() {
     Children children = myChildren;
-    return children == null ? Collections.emptyList() : ContainerUtil.immutableList(children.myChildren);
+    return children == null ? Collections.emptyList() : List.of(children.myChildren);
   }
 
   @Override
@@ -168,7 +185,7 @@ public abstract class InspectionTreeNode implements TreeNode {
   }
 
   @Override
-  public Enumeration children() {
+  public Enumeration<? extends TreeNode> children() {
     return Collections.enumeration(getChildren());
   }
 
@@ -177,11 +194,7 @@ public abstract class InspectionTreeNode implements TreeNode {
     return getPresentableText();
   }
 
-  void uiRequested() {
-
-  }
-
-  static class Children {
+  static final class Children {
     private static final InspectionTreeNode[] EMPTY_ARRAY = new InspectionTreeNode[0];
 
     volatile InspectionTreeNode[] myChildren = EMPTY_ARRAY;
@@ -193,20 +206,20 @@ public abstract class InspectionTreeNode implements TreeNode {
     }
   }
 
-  class ProblemLevels {
+  final class ProblemLevels {
     private volatile LevelAndCount[] myLevels;
 
     private LevelAndCount @NotNull [] compute() {
-      TObjectIntHashMap<HighlightDisplayLevel> counter = new TObjectIntHashMap<>();
+      Object2IntMap<HighlightDisplayLevel> counter=new Object2IntOpenHashMap<>();
       visitProblemSeverities(counter);
       LevelAndCount[] arr = new LevelAndCount[counter.size()];
-      final int[] i = {0};
-      counter.forEachEntry((l, c) -> {
-        arr[i[0]++] = new LevelAndCount(l, c);
-        return true;
-      });
-      Arrays.sort(arr, Comparator.<LevelAndCount, HighlightSeverity>comparing(levelAndCount -> levelAndCount.getLevel().getSeverity())
-        .reversed());
+      int i = 0;
+      for (Object2IntMap.Entry<HighlightDisplayLevel> entry : counter.object2IntEntrySet()) {
+        arr[i++] = new LevelAndCount(entry.getKey(), entry.getIntValue());
+      }
+      Comparator<LevelAndCount> comparator =
+        Comparator.<LevelAndCount, HighlightSeverity>comparing(levelAndCount -> levelAndCount.getLevel().getSeverity()).reversed();
+      Arrays.sort(arr, comparator);
       return doesNeedInternProblemLevels() ? LEVEL_AND_COUNT_INTERNER.intern(arr) : arr;
     }
 

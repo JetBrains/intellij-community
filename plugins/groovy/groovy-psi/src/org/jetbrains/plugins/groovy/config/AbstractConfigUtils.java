@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.config;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -15,6 +15,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.VisibleForTesting;
 import org.jetbrains.plugins.groovy.util.LibrariesUtil;
 
 import java.io.File;
@@ -29,34 +30,27 @@ import java.util.jar.Manifest;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-/**
- * @author ilyas
- */
 public abstract class AbstractConfigUtils {
 
   private static final Logger LOG = Logger.getInstance(AbstractConfigUtils.class);
 
-  @NlsSafe
-  protected static final String VERSION_GROUP_NAME = "version";
+  @VisibleForTesting
+  public static final @NlsSafe String VERSION_GROUP_NAME = "version";
 
   private final Condition<Library> LIB_SEARCH_CONDITION = library -> isSDKLibrary(library);
 
   // Common entities
-  @NlsSafe public static final String UNDEFINED_VERSION = "undefined";
-  @NlsSafe public static final String MANIFEST_PATH = "META-INF/MANIFEST.MF";
+  public static final @NlsSafe String UNDEFINED_VERSION = "undefined";
+  public static final @NlsSafe String MANIFEST_PATH = "META-INF/MANIFEST.MF";
 
 
   /**
    * Define, whether  given home is appropriate SDK home
    *
-   * @param file
-   * @return
    */
   public abstract boolean isSDKHome(final VirtualFile file);
 
-  @NotNull
-  @NlsSafe
-  public String getSDKVersion(@NlsSafe @NotNull String path) {
+  public @NotNull @NlsSafe String getSDKVersion(@NlsSafe @NotNull String path) {
     String version = getSDKVersionOrNull(path);
     return version == null ? UNDEFINED_VERSION : version;
   }
@@ -72,14 +66,12 @@ public abstract class AbstractConfigUtils {
    * @param manifestPath path to manifest file in jar file
    * @return value of Implementation-Version attribute, null if not found
    */
-  @Nullable
-  public static String getSDKJarVersion(String jarPath, final String jarRegex, String manifestPath) {
+  public static @Nullable String getSDKJarVersion(String jarPath, final String jarRegex, String manifestPath) {
     return getSDKJarVersion(jarPath, Pattern.compile(jarRegex), manifestPath);
   }
 
 
-  @Nullable
-  public static String getSDKJarVersion(String jarPath, final Pattern jarPattern, String manifestPath) {
+  public static @Nullable String getSDKJarVersion(String jarPath, final Pattern jarPattern, String manifestPath) {
     return getSDKJarVersion(jarPath, jarPattern, manifestPath, VERSION_GROUP_NAME);
   }
 
@@ -93,8 +85,7 @@ public abstract class AbstractConfigUtils {
    * @param versionGroupName group name to get from matcher
    * @return value of Implementation-Version attribute, null if not found
    */
-  @Nullable
-  public static String getSDKJarVersion(String jarPath, final Pattern jarPattern, String manifestPath, String versionGroupName) {
+  public static @Nullable String getSDKJarVersion(String jarPath, final Pattern jarPattern, String manifestPath, String versionGroupName) {
     try {
       File[] jars = LibrariesUtil.getFilesInDirectoryByPattern(jarPath, jarPattern);
       if (jars.length == 0) {

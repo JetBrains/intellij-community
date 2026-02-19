@@ -22,7 +22,12 @@ import com.intellij.codeInsight.generation.PsiGenerationInfo;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiElementFactory;
+import com.intellij.psi.PsiFileFactory;
+import com.intellij.psi.PsiJavaFile;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiTypes;
 import com.intellij.testFramework.LightJavaCodeInsightTestCase;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -61,7 +66,7 @@ public class GenerateMembersUtilTest extends LightJavaCodeInsightTestCase {
   private void doTest() {
     configureByFile(BASE_PATH + getTestName(false) + ".java");
     PsiElementFactory factory = JavaPsiFacade.getElementFactory(getProject());
-    PsiMethod method = factory.createMethod("foo", PsiType.VOID);
+    PsiMethod method = factory.createMethod("foo", PsiTypes.voidType());
     int offset = getEditor().getCaretModel().getOffset();
     List<GenerationInfo> list = Collections.singletonList(new PsiGenerationInfo<>(method));
     List<GenerationInfo> members =
@@ -84,9 +89,10 @@ public class GenerateMembersUtilTest extends LightJavaCodeInsightTestCase {
     ApplicationManager.getApplication().runWriteAction(() -> {
       PsiMethod newMethod = file.getClasses()[1].getMethods()[0];
       GenerateMembersUtil.setupGeneratedMethod(newMethod);
-      assertEquals("@Override void foo() {\n" +
-                   "    super.foo();\n" +
-                   "    }", newMethod.getText());
+      assertEquals("""
+                     @Override void foo() {
+                         super.foo();
+                         }""", newMethod.getText());
     });
   }
 
@@ -97,9 +103,10 @@ public class GenerateMembersUtilTest extends LightJavaCodeInsightTestCase {
     ApplicationManager.getApplication().runWriteAction(() -> {
       PsiMethod newMethod = file.getClasses()[1].getMethods()[0];
       GenerateMembersUtil.setupGeneratedMethod(newMethod);
-      assertEquals("@Override void foo()  {\n" +
-                   "    super.foo();\n" +
-                   "    }", newMethod.getText());
+      assertEquals("""
+                     @Override void foo()  {
+                         super.foo();
+                         }""", newMethod.getText());
     });
   }
 }

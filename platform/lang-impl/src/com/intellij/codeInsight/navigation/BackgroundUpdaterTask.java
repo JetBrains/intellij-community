@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.navigation;
 
 import com.intellij.openapi.application.ReadAction;
@@ -16,7 +16,7 @@ import java.util.Comparator;
 
 public abstract class BackgroundUpdaterTask extends BackgroundUpdaterTaskBase<PsiElement> {
 
-  public BackgroundUpdaterTask(@Nullable Project project, @ProgressTitle @NotNull String title, @Nullable Comparator<PsiElement> comparator) {
+  public BackgroundUpdaterTask(@Nullable Project project, @ProgressTitle @NotNull String title, @Nullable Comparator<? super PsiElement> comparator) {
     super(project, title, comparator);
   }
 
@@ -35,6 +35,7 @@ public abstract class BackgroundUpdaterTask extends BackgroundUpdaterTaskBase<Ps
     return new UsageInfo2UsageAdapter(new UsageInfo(element));
   }
 
+  @Deprecated(forRemoval = true)
   @Override
   public boolean updateComponent(@NotNull PsiElement element, @Nullable Comparator comparator) {
     //Ensures that method with signature `updateComponent(PsiElement, Comparator)` is present in bytecode,
@@ -42,6 +43,7 @@ public abstract class BackgroundUpdaterTask extends BackgroundUpdaterTaskBase<Ps
     return super.updateComponent(element, comparator);
   }
 
+  @SuppressWarnings("RedundantMethodOverride")
   @Override
   public boolean updateComponent(@NotNull PsiElement element) {
     //Ensures that method with signature `updateComponent(PsiElement)` is present in bytecode,
@@ -49,9 +51,8 @@ public abstract class BackgroundUpdaterTask extends BackgroundUpdaterTaskBase<Ps
     return super.updateComponent(element);
   }
 
-  @Nullable
   @Override
-  protected PsiElement getTheOnlyOneElement() {
+  protected @Nullable PsiElement getTheOnlyOneElement() {
     return super.getTheOnlyOneElement();
   }
 }

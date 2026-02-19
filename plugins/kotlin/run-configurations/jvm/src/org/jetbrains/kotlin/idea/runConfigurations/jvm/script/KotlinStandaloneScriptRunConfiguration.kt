@@ -1,0 +1,235 @@
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+
+package org.jetbrains.kotlin.idea.runConfigurations.jvm.script
+
+import com.intellij.execution.CantRunException
+import com.intellij.execution.CommonJavaRunConfigurationParameters
+import com.intellij.execution.ExecutionBundle
+import com.intellij.execution.Executor
+import com.intellij.execution.JavaRunConfigurationExtensionManager
+import com.intellij.execution.configurations.CompositeParameterTargetedValue
+import com.intellij.execution.configurations.ConfigurationFactory
+import com.intellij.execution.configurations.JavaParameters
+import com.intellij.execution.configurations.JavaRunConfigurationModule
+import com.intellij.execution.configurations.RefactoringListenerProvider
+import com.intellij.execution.configurations.RunConfiguration
+import com.intellij.execution.configurations.RunProfileState
+import com.intellij.execution.configurations.RuntimeConfigurationWarning
+import com.intellij.execution.runners.ExecutionEnvironment
+import com.intellij.execution.util.JavaParametersUtil
+import com.intellij.execution.util.ProgramParametersUtil
+import com.intellij.ide.projectView.impl.ProjectRootsUtil
+import com.intellij.openapi.module.Module
+import com.intellij.openapi.module.ModuleUtilCore
+import com.intellij.openapi.options.SettingsEditor
+import com.intellij.openapi.options.SettingsEditorGroup
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.roots.OrderEnumerator
+import com.intellij.openapi.util.DefaultJDOMExternalizer
+import com.intellij.openapi.util.NlsSafe
+import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.psi.PsiElement
+import com.intellij.refactoring.listeners.RefactoringElementAdapter
+import com.intellij.refactoring.listeners.RefactoringElementListener
+import com.intellij.util.PathUtil
+import org.jdom.Element
+import org.jetbrains.annotations.Nls
+import org.jetbrains.kotlin.idea.KotlinRunConfigurationsBundle
+import org.jetbrains.kotlin.idea.base.plugin.artifacts.KotlinArtifacts
+import org.jetbrains.kotlin.idea.base.projectStructure.RootKindFilter
+import org.jetbrains.kotlin.idea.base.projectStructure.matches
+import org.jetbrains.kotlin.idea.compiler.configuration.KotlinPluginLayout
+import org.jetbrains.kotlin.idea.core.script.shared.ScriptAfterRunCallbackProvider
+import org.jetbrains.kotlin.idea.core.script.v1.ScriptDependencyAware
+import org.jetbrains.kotlin.idea.run.KotlinRunConfiguration
+import org.jetbrains.kotlin.idea.runConfigurations.jvm.script.KotlinStandaloneScriptRunConfigurationProducer.Companion.pathFromPsiElement
+import org.jetbrains.kotlin.psi.KtFile
+import org.jetbrains.kotlin.scripting.definitions.ScriptDefinitionProvider
+import org.jetbrains.kotlin.scripting.resolve.VirtualFileScriptSource
+import java.io.File
+
+class KotlinStandaloneScriptRunConfiguration(
+    project: Project,
+    factory: ConfigurationFactory,
+    name: String?
+) : KotlinRunConfiguration(name, JavaRunConfigurationModule(project, true), factory), CommonJavaRunConfigurationParameters,
+    RefactoringListenerProvider {
+
+    /**
+     * A path to the script file. Please use with caution!
+     *
+     * There is no guarantee about path format and separators. Using the value of this variable without preprocessing may lead to problems
+     * on specific platform. If possible, please don't read it directly, and use [systemIndependentPath] instead.
+     */
+    @JvmField
+    @NlsSafe
+    var filePath: String? = null
+
+    /**
+     * System-independent path to the script file.
+     */
+    val systemIndependentPath: String?
+        get() = filePath?.let { FileUtil.toSystemIndependentName(it) }
+
+    override fun getState(executor: Executor, executionEnvironment: ExecutionEnvironment): RunProfileState {
+        systemIndependentPath?.let {
+            executionEnvironment.callback = ScriptAfterRunCallbackProvider.getCallback(project, it)
+        }
+        return ScriptCommandLineState(executionEnvironment, this)
+    }
+
+    override fun suggestedName() = filePath?.substringAfterLast('/')
+
+    override fun isBuildBeforeLaunchAddedByDefault(): Boolean = false
+
+    override fun getConfigurationEditor(): SettingsEditor<out RunConfiguration> {
+        val group = SettingsEditorGroup<KotlinStandaloneScriptRunConfiguration>()
+        group.addEditor(
+            ExecutionBundle.message("run.configuration.configuration.tab.title"),
+            KotlinStandaloneScriptRunConfigurationEditor(project)
+        )
+        return group
+    }
+
+    override fun writeExternal(element: Element) {
+        super.writeExternal(element)
+        JavaRunConfigurationExtensionManager.instance.writeExternal(this, element)
+        DefaultJDOMExternalizer.writeExternal(this, element)
+    }
+
+    override fun readExternal(element: Element) {
+        super.readExternal(element)
+        JavaRunConfigurationExtensionManager.instance.readExternal(this, element)
+        DefaultJDOMExternalizer.readExternal(this, element)
+    }
+
+    override fun getModules(): Array<Module> {
+        val scriptVFile = filePath?.let { LocalFileSystem.getInstance().findFileByIoFile(File(it)) }
+        return scriptVFile?.module(project)?.let { arrayOf(it) } ?: emptyArray()
+    }
+
+    override fun checkConfiguration() {
+        JavaParametersUtil.checkAlternativeJRE(this)
+        ProgramParametersUtil.checkWorkingDirectoryExist(this, project, null)
+        JavaRunConfigurationExtensionManager.checkConfigurationIsValid(this)
+
+        if (filePath.isNullOrEmpty()) {
+            runtimeConfigurationWarning(KotlinRunConfigurationsBundle.message("file.was.not.specified"))
+        }
+        val virtualFile = LocalFileSystem.getInstance().findFileByIoFile(File(filePath))
+        if (virtualFile == null || virtualFile.isDirectory) {
+            runtimeConfigurationWarning(KotlinRunConfigurationsBundle.message("could.not.find.script.file.0", filePath.toString()))
+        }
+    }
+
+    private fun runtimeConfigurationWarning(@Nls message: String): Nothing {
+        throw RuntimeConfigurationWarning(message)
+    }
+
+    // NOTE: this is needed for coverage
+    override fun getRunClass(): String? = null
+
+    override fun getPackage(): String? = null
+
+    override fun getRefactoringElementListener(element: PsiElement): RefactoringElementListener? {
+        val file = element as? KtFile ?: return null
+        val pathFromElement = pathFromPsiElement(file) ?: return null
+
+        if (filePath != pathFromElement) {
+            return null
+        }
+
+        return object : RefactoringElementAdapter() {
+            override fun undoElementMovedOrRenamed(newElement: PsiElement, oldQualifiedName: String) {
+                setupFilePath(pathFromPsiElement(newElement) ?: return)
+            }
+
+            override fun elementRenamedOrMoved(newElement: PsiElement) {
+                setupFilePath(pathFromPsiElement(newElement) ?: return)
+            }
+        }
+    }
+
+    override fun defaultWorkingDirectory(): String? {
+        return PathUtil.getParentPath(filePath ?: return null)
+    }
+
+    fun setupFilePath(filePath: String) {
+        val wasDefaultWorkingDirectory = workingDirectory == null || workingDirectory == defaultWorkingDirectory()
+        this.filePath = filePath
+        if (wasDefaultWorkingDirectory) {
+            this.workingDirectory = defaultWorkingDirectory()
+        }
+    }
+}
+
+private class ScriptCommandLineState(
+    environment: ExecutionEnvironment,
+    configuration: KotlinStandaloneScriptRunConfiguration
+) : com.intellij.execution.application.BaseJavaApplicationCommandLineState<KotlinStandaloneScriptRunConfiguration>(
+    environment,
+    configuration
+) {
+
+    override fun createJavaParameters(): JavaParameters {
+        val params = commonParameters()
+
+        val filePath = configuration.filePath
+            ?: throw CantRunException(KotlinRunConfigurationsBundle.message("dialog.message.script.file.was.not.specified"))
+
+        val virtualFile = LocalFileSystem.getInstance().findFileByIoFile(File(filePath))
+            ?: throw CantRunException(KotlinRunConfigurationsBundle.message("dialog.message.script.file.was.not.found.in.project"))
+
+        params.classPath.add(KotlinArtifacts.kotlinCompiler)
+        params.mainClass = "org.jetbrains.kotlin.cli.jvm.K2JVMCompiler"
+
+        ScriptDefinitionProvider.getInstance(environment.project)?.findDefinition(VirtualFileScriptSource(virtualFile))?.let {
+            params.programParametersList.prepend("plugin:kotlin.scripting:script-definitions=${it.baseClassType.typeName}")
+            params.programParametersList.prepend("-P")
+        }
+
+        params.programParametersList.prepend(CompositeParameterTargetedValue().addPathPart(filePath))
+        params.programParametersList.prepend("-script")
+        params.programParametersList.prepend(CompositeParameterTargetedValue().addPathPart(KotlinPluginLayout.kotlinc.absolutePath))
+        params.programParametersList.prepend("-kotlin-home")
+
+        val classpath = buildSet {
+            addAll(
+                ScriptDependencyAware.getInstance(environment.project).getScriptDependenciesClassFiles(virtualFile)
+                    .map { it.presentableUrl })
+            val module = virtualFile.module(environment.project)
+            if (module != null) {
+                val orderEnumerator = OrderEnumerator.orderEntries(module).withoutSdk().recursively().let {
+                    if (!ProjectRootsUtil.isInTestSource(virtualFile, environment.project)) it.productionOnly() else it
+                }
+
+                addAll(orderEnumerator.classes().pathsList.pathList)
+            }
+        }
+
+        if (classpath.isNotEmpty()) {
+            params.programParametersList.prepend(classpath.joinToString(separator = File.pathSeparator) { it })
+            params.programParametersList.prepend("-cp")
+        }
+
+        return params
+    }
+
+    private fun commonParameters(): JavaParameters {
+        val params = JavaParameters()
+        JavaParametersUtil.configureConfiguration(params, myConfiguration)
+        setupJavaParameters(params)
+        val jreHome = if (configuration.isAlternativeJrePathEnabled) myConfiguration.alternativeJrePath else null
+        JavaParametersUtil.configureProject(environment.project, params, JavaParameters.JDK_ONLY, jreHome)
+        return params
+    }
+}
+
+private fun VirtualFile.module(project: Project): Module? {
+    if (RootKindFilter.projectSources.matches(project, this)) {
+        return ModuleUtilCore.findModuleForFile(this, project)
+    }
+    return null
+}

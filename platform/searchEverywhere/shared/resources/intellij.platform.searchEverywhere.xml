@@ -1,0 +1,21 @@
+<idea-plugin visibility="public" package="com.intellij.platform.searchEverywhere">
+  <dependencies>
+    <module name="intellij.platform.scopes"/>
+  </dependencies>
+  <extensionPoints>
+    <extensionPoint name="searchEverywhere.itemsProviderFactory"
+                    interface="com.intellij.platform.searchEverywhere.SeItemsProviderFactory"
+                    dynamic="true"/>
+
+    <extensionPoint name="searchEverywhere.legacyItemPresentationProvider"
+                    interface="com.intellij.platform.searchEverywhere.SeLegacyItemPresentationProvider"
+                    dynamic="true"/>
+  </extensionPoints>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <platform.entityTypes implementation="com.intellij.platform.searchEverywhere.SeEntityTypeProvider"/>
+    <remote.customDataContextSerializer implementation="com.intellij.platform.searchEverywhere.data.SeSelectedItemsDataContextSerializer" />
+    <remote.customDataContextSerializer implementation="com.intellij.platform.searchEverywhere.data.SeSessionDataContextSerializer" />
+    <remote.customDataContextSerializer implementation="com.intellij.platform.searchEverywhere.data.SeIsAllTabDataContextSerializer" />
+  </extensions>
+</idea-plugin>

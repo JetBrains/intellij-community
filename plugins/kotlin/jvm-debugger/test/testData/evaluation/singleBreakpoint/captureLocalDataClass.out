@@ -1,0 +1,8 @@
+LineBreakpoint created at captureLocalDataClass.kt:5
+Run Java
+Connected to the target VM
+captureLocalDataClass.kt:5
+Compile bytecode for DC(42).a
+Disconnected from the target VM
+
+Process finished with exit code 0

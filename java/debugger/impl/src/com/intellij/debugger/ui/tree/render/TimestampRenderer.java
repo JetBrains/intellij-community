@@ -12,7 +12,7 @@ import java.sql.Timestamp;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
 
-public class TimestampRenderer extends CompoundRendererProvider {
+public final class TimestampRenderer extends CompoundRendererProvider {
   @Override
   protected String getName() {
     return "Timestamp";

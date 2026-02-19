@@ -2,8 +2,10 @@
 package com.intellij.psi.stubs;
 
 import com.intellij.openapi.util.io.DataInputOutputUtilRt;
+import it.unimi.dsi.fastutil.ints.Int2IntMap;
 import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
+import it.unimi.dsi.fastutil.ints.IntList;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
@@ -14,8 +16,8 @@ import java.util.function.IntUnaryOperator;
 
 @ApiStatus.Internal
 final class IntEnumerator {
-  private final Int2IntOpenHashMap myEnumerates;
-  private final IntArrayList myIds;
+  private final Int2IntMap myEnumerates;
+  private final IntList myIds;
   private int myNext;
 
   IntEnumerator() {
@@ -48,9 +50,9 @@ final class IntEnumerator {
 
   void dump(@NotNull DataOutput stream, @NotNull IntUnaryOperator idRemapping) throws IOException {
     DataInputOutputUtilRt.writeINT(stream, myIds.size());
-    int[] elements = myIds.elements();
-    for (int i = 0, n = myIds.size(); i < n; i++) {
-      int id = elements[i];
+    int[] elements = new int[myIds.size()];
+    myIds.getElements(0, elements, 0, elements.length);
+    for (int id : elements) {
       int remapped = idRemapping.applyAsInt(id);
       if (remapped == 0) {
         throw new IOException("remapping is not found for " + id);
@@ -62,7 +64,7 @@ final class IntEnumerator {
   static IntEnumerator read(@NotNull DataInput stream) throws IOException {
     int size = DataInputOutputUtilRt.readINT(stream);
     IntEnumerator enumerator = new IntEnumerator(false);
-    for (int i = 1; i < size + 1; i++) {
+    for (int i = 0; i < size; i++) {
       enumerator.myIds.add(DataInputOutputUtilRt.readINT(stream));
     }
     return enumerator;

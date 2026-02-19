@@ -1,22 +1,60 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
-import com.jetbrains.python.inspections.PyNonAsciiCharInspection;
+import com.intellij.testFramework.LightProjectDescriptor;
 import com.jetbrains.python.documentation.docstrings.DocStringFormat;
 import com.jetbrains.python.fixtures.PyTestCase;
-import com.jetbrains.python.inspections.*;
+import com.jetbrains.python.inspections.PyArgumentEqualDefaultInspection;
+import com.jetbrains.python.inspections.PyBroadExceptionInspection;
+import com.jetbrains.python.inspections.PyByteLiteralInspection;
+import com.jetbrains.python.inspections.PyChainedComparisonsInspection;
+import com.jetbrains.python.inspections.PyClassicStyleClassInspection;
+import com.jetbrains.python.inspections.PyComparisonWithNoneInspection;
+import com.jetbrains.python.inspections.PyDecoratorInspection;
+import com.jetbrains.python.inspections.PyDefaultArgumentInspection;
+import com.jetbrains.python.inspections.PyDictCreationInspection;
+import com.jetbrains.python.inspections.PyDictDuplicateKeysInspection;
+import com.jetbrains.python.inspections.PyExceptClausesOrderInspection;
+import com.jetbrains.python.inspections.PyExceptionInheritInspection;
+import com.jetbrains.python.inspections.PyFromFutureImportInspection;
+import com.jetbrains.python.inspections.PyInconsistentIndentationInspection;
+import com.jetbrains.python.inspections.PyIncorrectDocstringInspection;
+import com.jetbrains.python.inspections.PyInitNewSignatureInspection;
+import com.jetbrains.python.inspections.PyInspection;
+import com.jetbrains.python.inspections.PyListCreationInspection;
+import com.jetbrains.python.inspections.PyMandatoryEncodingInspection;
+import com.jetbrains.python.inspections.PyMethodFirstArgAssignmentInspection;
+import com.jetbrains.python.inspections.PyMethodParametersInspection;
+import com.jetbrains.python.inspections.PyMissingOrEmptyDocstringInspection;
+import com.jetbrains.python.inspections.PyNestedDecoratorsInspection;
+import com.jetbrains.python.inspections.PyNonAsciiCharInspection;
+import com.jetbrains.python.inspections.PyPropertyDefinitionInspection;
+import com.jetbrains.python.inspections.PyReturnFromInitInspection;
+import com.jetbrains.python.inspections.PySetFunctionToLiteralInspection;
+import com.jetbrains.python.inspections.PyShadowingBuiltinsInspection;
+import com.jetbrains.python.inspections.PyShadowingNamesInspection;
+import com.jetbrains.python.inspections.PySimplifyBooleanCheckInspection;
+import com.jetbrains.python.inspections.PySingleQuotedDocstringInspection;
+import com.jetbrains.python.inspections.PySuperArgumentsInspection;
+import com.jetbrains.python.inspections.PyTrailingSemicolonInspection;
+import com.jetbrains.python.inspections.PyTupleItemAssignmentInspection;
+import com.jetbrains.python.inspections.PyUnnecessaryBackslashInspection;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.sdk.PythonSdkType;
-import com.jetbrains.python.sdk.PythonSdkUtil;
+import com.jetbrains.python.sdk.legacy.PythonSdkUtil;
+import org.jetbrains.annotations.Nullable;
 
-/**
- * @author yole
- */
+
 public class PythonInspectionsTest extends PyTestCase {
+
+  @Override
+  protected @Nullable LightProjectDescriptor getProjectDescriptor() {
+    return ourPy2Descriptor;
+  }
 
   public void testReturnValueFromInit() {
     LocalInspectionTool inspection = new PyReturnFromInitInspection();
@@ -44,14 +82,6 @@ public class PythonInspectionsTest extends PyTestCase {
 
   public void testPyMethodParametersInspection() {
     doHighlightingTest(PyMethodParametersInspection.class);
-  }
-
-  public void testPyMethodParametersInspectionMetacls() {
-    PyMethodParametersInspection inspection = new PyMethodParametersInspection();
-    inspection.MCS = "metacls";
-    myFixture.configureByFile("inspections/" + getTestName(false) + "/test.py");
-    myFixture.enableInspections(inspection);
-    myFixture.checkHighlighting(true, false, true);
   }
 
   public void testPyMethodParametersInspectionInitSubclass() {
@@ -104,7 +134,7 @@ public class PythonInspectionsTest extends PyTestCase {
 
   //PY-3373
   public void testPyDocstringParametersInspection() {
-    runWithDocStringFormat(DocStringFormat.EPYTEXT, () -> doHighlightingTest(PyIncorrectDocstringInspection.class, LanguageLevel.PYTHON34));
+    runWithDocStringFormat(DocStringFormat.REST, () -> doHighlightingTest(PyIncorrectDocstringInspection.class, LanguageLevel.PYTHON34));
   }
 
   // PY-9795
@@ -114,6 +144,10 @@ public class PythonInspectionsTest extends PyTestCase {
 
   public void testPySimplifyBooleanCheckInspection() {
     doHighlightingTest(PySimplifyBooleanCheckInspection.class, LanguageLevel.PYTHON26);
+  }
+
+  public void testPySimplifyBooleanCheckInspectionAnnotations() {
+    doHighlightingTest(PySimplifyBooleanCheckInspection.class, LanguageLevel.PYTHON313);
   }
 
   public void testPyFromFutureImportInspection() {
@@ -128,11 +162,6 @@ public class PythonInspectionsTest extends PyTestCase {
 
   public void testPyComparisonWithNoneInspection() {
     LocalInspectionTool inspection = new PyComparisonWithNoneInspection();
-    doTest(getTestName(false), inspection);
-  }
-
-  public void testPyStringExceptionInspection() {
-    LocalInspectionTool inspection = new PyStringExceptionInspection();
     doTest(getTestName(false), inspection);
   }
 
@@ -157,10 +186,6 @@ public class PythonInspectionsTest extends PyTestCase {
     myFixture.configureFromTempProjectFile("test.py");
     myFixture.enableInspections(PyInitNewSignatureInspection.class);
     myFixture.checkHighlighting(true, false, true);
-  }
-
-  public void testPyCallByClassInspection() {
-    doHighlightingTest(PyCallByClassInspection.class); // ok, we can handle insanely long lines :)
   }
 
   private void doHighlightingTest(final Class<? extends PyInspection> inspectionClass) {
@@ -190,6 +215,11 @@ public class PythonInspectionsTest extends PyTestCase {
   // PY-11426
   public void testPyPropertyDefinitionInspection33() {
     doHighlightingTest(PyPropertyDefinitionInspection.class, LanguageLevel.PYTHON34);
+  }
+
+  // PY-40180
+  public void testEmptyProtocolProperty() {
+    doHighlightingTest(PyPropertyDefinitionInspection.class, LanguageLevel.getLatest());
   }
 
   public void testInconsistentIndentation() {
@@ -233,11 +263,12 @@ public class PythonInspectionsTest extends PyTestCase {
 
     runWithAdditionalFileInLibDir(
       PyBuiltinCache.getBuiltinsFileName(languageLevel),
-      "class property(object):\n" +
-      "  def __init__(self, fget=None, fset=None, fdel=None, doc=None):\n" +
-      "    pass\n" +
-      "def open(file, mode='r', buffering=None, encoding=None, errors=None, newline=None, closefd=True):\n" +
-      "  pass",
+      """
+        class property(object):
+          def __init__(self, fget=None, fset=None, fdel=None, doc=None):
+            pass
+        def open(file, mode='r', buffering=None, encoding=None, errors=None, newline=None, closefd=True):
+          pass""",
       (__) -> doHighlightingTest(PyArgumentEqualDefaultInspection.class)
     );
   }
@@ -275,9 +306,9 @@ public class PythonInspectionsTest extends PyTestCase {
   public void testInspectionsDisabledInFunctionTypeComments() {
     myFixture.enableInspections(PyIncorrectDocstringInspection.class);
     myFixture.enableInspections(PyMissingOrEmptyDocstringInspection.class);
-    myFixture.enableInspections(PySingleQuotedDocstringInspection.class); 
-    myFixture.enableInspections(PyByteLiteralInspection.class); 
-    myFixture.enableInspections(PyMandatoryEncodingInspection.class); 
+    myFixture.enableInspections(PySingleQuotedDocstringInspection.class);
+    myFixture.enableInspections(PyByteLiteralInspection.class);
+    myFixture.enableInspections(PyMandatoryEncodingInspection.class);
     myFixture.enableInspections(PyNonAsciiCharInspection.class);
 
     myFixture.configureByFile("inspections/" + getTestName(false) + "/test.py");

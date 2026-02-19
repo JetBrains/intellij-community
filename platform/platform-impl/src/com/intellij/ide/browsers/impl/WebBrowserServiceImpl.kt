@@ -1,7 +1,12 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.browsers.impl
 
-import com.intellij.ide.browsers.*
+import com.intellij.ide.browsers.OpenInBrowserRequest
+import com.intellij.ide.browsers.ReloadMode
+import com.intellij.ide.browsers.WebBrowserService
+import com.intellij.ide.browsers.WebBrowserUrlProvider
+import com.intellij.ide.browsers.WebBrowserXmlService
+import com.intellij.ide.browsers.createOpenInBrowserRequest
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.DumbService
 import com.intellij.psi.PsiElement
@@ -9,17 +14,15 @@ import com.intellij.testFramework.LightVirtualFile
 import com.intellij.util.Url
 import com.intellij.util.Urls
 import com.intellij.util.containers.ContainerUtil
-import java.util.*
-import java.util.stream.Stream
 
 private val URL_PROVIDER_EP = ExtensionPointName<WebBrowserUrlProvider>("com.intellij.webBrowserUrlProvider")
 
 class WebBrowserServiceImpl : WebBrowserService() {
   companion object {
-    fun getProviders(request: OpenInBrowserRequest): Stream<WebBrowserUrlProvider> {
+    fun getProviders(request: OpenInBrowserRequest): Sequence<WebBrowserUrlProvider> {
       val dumbService = DumbService.getInstance(request.project)
-      return URL_PROVIDER_EP.extensions().filter {
-        (!dumbService.isDumb || DumbService.isDumbAware(it)) && it.canHandleElement(request)
+      return URL_PROVIDER_EP.extensionList.asSequence().filter {
+        dumbService.isUsableInCurrentContext(it) && it.canHandleElement(request)
       }
     }
 
@@ -32,9 +35,11 @@ class WebBrowserServiceImpl : WebBrowserService() {
         else {
           // it is client responsibility to set token
           request.isAppendAccessToken = false
+          request.reloadMode = ReloadMode.DISABLED
           return getProviders(request)
-            .map { getUrls(it, request) }
-            .filter(Collection<*>::isNotEmpty).findFirst().orElse(Collections.emptyList())
+                   .map { getUrls(it, request) }
+                   .filter(Collection<*>::isNotEmpty).firstOrNull()
+                 ?: emptyList()
         }
       }
       catch (ignored: WebBrowserUrlProvider.BrowserException) {
@@ -51,7 +56,7 @@ class WebBrowserServiceImpl : WebBrowserService() {
     if (!preferLocalUrl || !isHtmlOrXml) {
       val dumbService = DumbService.getInstance(request.project)
       for (urlProvider in URL_PROVIDER_EP.extensionList) {
-        if ((!dumbService.isDumb || DumbService.isDumbAware(urlProvider)) && urlProvider.canHandleElement(request)) {
+        if (dumbService.isUsableInCurrentContext(urlProvider) && urlProvider.canHandleElement(request)) {
           val urls = getUrls(urlProvider, request)
           if (!urls.isEmpty()) {
             return urls

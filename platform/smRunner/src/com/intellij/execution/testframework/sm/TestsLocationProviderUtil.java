@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.testframework.sm;
 
 import com.intellij.navigation.ChooseByNameContributor;
@@ -48,20 +48,16 @@ public final class TestsLocationProviderUtil {
     if (fileName == null) {
       return Collections.emptyList();
     }
-    final List<VirtualFile> target = findFilesClosestToTarget(folders, collectCandidates(project, fileName, true), MIN_PROXIMITY_THRESHOLD);
-    return target.isEmpty() && file != null ? Collections.singletonList(file) : target;
+    return findFilesClosestToTarget(folders, collectCandidates(project, fileName, true), MIN_PROXIMITY_THRESHOLD);
   }
 
   /**
    * Looks for files with given name which are close to given path
    * @param targetParentFolders folders path
-   * @param candidates
-   * @param minProximityThreshold
-   * @return
    */
-  public static List<VirtualFile> findFilesClosestToTarget(@NotNull final List<String> targetParentFolders,
-                                                           final List<? extends FileInfo> candidates,
-                                                           final int minProximityThreshold) {
+  public static @NotNull List<VirtualFile> findFilesClosestToTarget(final @NotNull List<String> targetParentFolders,
+                                                                    final @NotNull List<? extends FileInfo> candidates,
+                                                                    final int minProximityThreshold) {
     // let's find all files with similar relative path
 
     if (candidates.isEmpty()) {
@@ -117,8 +113,7 @@ public final class TestsLocationProviderUtil {
     return filesInfo;
   }
 
-  @Nullable
-  private static VirtualFile getByFullPath(String filePath) {
+  private static @Nullable VirtualFile getByFullPath(String filePath) {
     final VirtualFile fileByPath = LocalFileSystem.getInstance().findFileByPath(filePath);
     if (fileByPath != null) {
       return fileByPath;

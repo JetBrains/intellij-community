@@ -16,11 +16,12 @@
 package com.jetbrains.python.psi;
 
 import com.intellij.psi.StubBasedPsiElement;
+import com.jetbrains.python.ast.PyAstStarImportElement;
 import com.jetbrains.python.psi.stubs.PyStarImportElementStub;
 
 /**
  * Marks the star in "from foo import *".
- * User: dcheryasov
  */
-public interface PyStarImportElement extends PyImplicitImportNameDefiner, StubBasedPsiElement<PyStarImportElementStub> {
+public interface PyStarImportElement
+  extends PyAstStarImportElement, PyImplicitImportNameDefiner, StubBasedPsiElement<PyStarImportElementStub> {
 }

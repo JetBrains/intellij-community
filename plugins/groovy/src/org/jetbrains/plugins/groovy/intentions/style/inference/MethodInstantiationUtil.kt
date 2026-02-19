@@ -1,14 +1,30 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.plugins.groovy.intentions.style.inference
 
-import com.intellij.psi.*
+import com.intellij.psi.PsiArrayType
+import com.intellij.psi.PsiClass
+import com.intellij.psi.PsiClassType
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiIntersectionType
+import com.intellij.psi.PsiSubstitutor
+import com.intellij.psi.PsiType
+import com.intellij.psi.PsiTypeMapper
+import com.intellij.psi.PsiTypeParameter
+import com.intellij.psi.PsiTypeParameterList
+import com.intellij.psi.PsiTypes
+import com.intellij.psi.PsiWildcardType
+import com.intellij.psi.SmartPsiElementPointer
 import org.jetbrains.plugins.groovy.intentions.style.inference.driver.InferenceDriver
 import org.jetbrains.plugins.groovy.intentions.style.inference.driver.TypeUsageInformation
 import org.jetbrains.plugins.groovy.intentions.style.inference.driver.getJavaLangObject
 import org.jetbrains.plugins.groovy.intentions.style.inference.graph.InferenceUnitGraph
 import org.jetbrains.plugins.groovy.intentions.style.inference.graph.InferenceUnitNode
-import org.jetbrains.plugins.groovy.intentions.style.inference.graph.InferenceUnitNode.Companion.InstantiationHint.*
+import org.jetbrains.plugins.groovy.intentions.style.inference.graph.InferenceUnitNode.Companion.InstantiationHint.ENDPOINT_TYPE_PARAMETER
+import org.jetbrains.plugins.groovy.intentions.style.inference.graph.InferenceUnitNode.Companion.InstantiationHint.EXTENDS_WILDCARD
+import org.jetbrains.plugins.groovy.intentions.style.inference.graph.InferenceUnitNode.Companion.InstantiationHint.NEW_TYPE_PARAMETER
+import org.jetbrains.plugins.groovy.intentions.style.inference.graph.InferenceUnitNode.Companion.InstantiationHint.REIFIED_AS_PROPER_TYPE
+import org.jetbrains.plugins.groovy.intentions.style.inference.graph.InferenceUnitNode.Companion.InstantiationHint.REIFIED_AS_TYPE_PARAMETER
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod
 import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.putAll
@@ -54,7 +70,7 @@ class SubstitutorTypeMapper(private val substitutor: PsiSubstitutor) : PsiTypeMa
     return substitutor.substitute(correctClassType)
   }
 
-  override fun visitArrayType(type: PsiArrayType): PsiType? {
+  override fun visitArrayType(type: PsiArrayType): PsiType {
     val substitution = removeWildcard(type.componentType.accept(this))
     return substitution.createArrayType()
 
@@ -126,7 +142,7 @@ fun createCompleteSubstitutor(method: GrMethod,
       REIFIED_AS_TYPE_PARAMETER ->
         instantiation.apply { collector.typeParameterList.add(unit.core.initialTypeParameter) }
       EXTENDS_WILDCARD ->
-        if (instantiation == PsiType.NULL || instantiation == getJavaLangObject(method)) {
+        if (instantiation == PsiTypes.nullType() || instantiation == getJavaLangObject(method)) {
           PsiWildcardType.createUnbounded(method.manager)
         }
         else {
@@ -156,7 +172,7 @@ private fun buildResidualTypeParameterList(resultMethod: GrMethod,
   val outerClassParameters = collectClassParameters(resultMethod.containingClass).map { it.name!! }.toSet()
   val visitor = object : PsiTypeMapper() {
 
-    override fun visitClassType(classType: PsiClassType): PsiType? {
+    override fun visitClassType(classType: PsiClassType): PsiType {
       val resolvedTypeParameter = classType.typeParameter()
       if (resolvedTypeParameter != null &&
           resolvedTypeParameter.name.run { this !in outerClassParameters && this !in necessaryTypeNames }) {

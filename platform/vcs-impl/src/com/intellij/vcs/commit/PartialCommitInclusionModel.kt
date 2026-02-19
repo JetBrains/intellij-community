@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.commit
 
 import com.intellij.openapi.Disposable
@@ -14,9 +14,10 @@ import com.intellij.openapi.vcs.impl.PartialChangesUtil
 import com.intellij.openapi.vcs.impl.PartialChangesUtil.convertExclusionState
 import com.intellij.openapi.vcs.impl.PartialChangesUtil.getPartialTracker
 import com.intellij.util.ui.ThreeStateCheckBox
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 class PartialCommitInclusionModel(private val project: Project) : BaseInclusionModel(), Disposable {
-
   var changeLists: Collection<LocalChangeList> = emptyList()
     set(value) {
       field = value
@@ -36,10 +37,7 @@ class PartialCommitInclusionModel(private val project: Project) : BaseInclusionM
   override fun addInclusion(items: Collection<Any>) = stateHolder.includeElements(items)
   override fun removeInclusion(items: Collection<Any>) = stateHolder.excludeElements(items)
   override fun setInclusion(items: Collection<Any>) = stateHolder.setIncludedElements(items)
-  override fun retainInclusion(items: Collection<Any>) {
-    val toRemove = getInclusion() - items
-    if (toRemove.isNotEmpty()) removeInclusion(toRemove)
-  }
+  override fun retainInclusion(items: Collection<Any>) = stateHolder.retainElements(items)
 
   override fun clearInclusion() {
     if (getInclusion().isNotEmpty()) setInclusion(emptySet())
@@ -58,9 +56,8 @@ class PartialCommitInclusionModel(private val project: Project) : BaseInclusionM
     override fun findTrackerFor(element: Any): PartialLocalLineStatusTracker? =
       (element as? Change)?.let { getPartialTracker(project, it) }
 
-    override fun updateExclusionStates() {
-      super.updateExclusionStates()
-      fireInclusionChanged()
+    override fun fireInclusionChanged() {
+      this@PartialCommitInclusionModel.fireInclusionChanged()
     }
   }
 }

@@ -1,4 +1,4 @@
-// "Access static 'AClass.R.rr' via class 'AClass.R' reference" "false"
+// "Qualify static 'rr' access with reference to class 'AClass.R'" "false"
 
 class AClass
 {

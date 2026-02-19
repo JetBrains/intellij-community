@@ -28,6 +28,9 @@ public interface TestEventXmlView {
   String getTestName() throws XmlParserException;
 
   @NotNull
+  String getTestDisplayName() throws XmlParserException;
+
+  @NotNull
   String getTestParentId() throws XmlParserException;
 
   @NotNull
@@ -70,6 +73,9 @@ public interface TestEventXmlView {
 
   @NotNull
   String getEventTestResultFailureType() throws XmlParserException;
+
+  @NotNull
+  String getEventTestResultExceptionName() throws XmlParserException;
 
   @NotNull
   String getEventTestResultStackTrace() throws XmlParserException;

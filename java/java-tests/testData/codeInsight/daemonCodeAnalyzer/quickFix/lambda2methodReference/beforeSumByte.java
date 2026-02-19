@@ -1,4 +1,4 @@
-// "Replace lambda with method reference" "true"
+// "Replace lambda with method reference" "true-preview"
 class Bar {
   interface Foo {
     int sum(Byte b1, Byte b2);

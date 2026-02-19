@@ -16,7 +16,11 @@
 package org.intellij.lang.xpath;
 
 import com.intellij.util.ArrayUtil;
-import org.intellij.lang.xpath.validation.inspections.*;
+import org.intellij.lang.xpath.validation.inspections.CheckNodeTest;
+import org.intellij.lang.xpath.validation.inspections.HardwiredNamespacePrefix;
+import org.intellij.lang.xpath.validation.inspections.ImplicitTypeConversion;
+import org.intellij.lang.xpath.validation.inspections.IndexZeroPredicate;
+import org.intellij.lang.xpath.validation.inspections.RedundantTypeConversion;
 
 public class XPathHighlightingTest extends TestBase {
     @Override

@@ -24,7 +24,9 @@ import org.zmlx.hg4idea.provider.annotate.HgAnnotationProvider;
 
 import java.io.File;
 
-import static com.intellij.openapi.vcs.Executor.*;
+import static com.intellij.openapi.vcs.Executor.cd;
+import static com.intellij.openapi.vcs.Executor.echo;
+import static com.intellij.openapi.vcs.Executor.touch;
 import static hg4idea.test.HgExecutor.hg;
 
 public class HgAnnotationTest extends HgPlatformTest {
@@ -39,8 +41,10 @@ public class HgAnnotationTest extends HgPlatformTest {
   public void setUp() throws Exception {
     super.setUp();
     cd(myRepository);
-    appendToHgrc(myRepository, "[extensions]\n" +
-                                "largefiles=!\n");
+    appendToHgrc(myRepository, """
+      [extensions]
+      largefiles=!
+      """);
     touch(aName, "a1");
     myRepository.refresh(false, true);
     hg("add " + aName);

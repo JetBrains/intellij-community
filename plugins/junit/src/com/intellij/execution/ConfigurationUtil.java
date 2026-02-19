@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.execution;
 
@@ -11,22 +11,28 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiAnonymousClass;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiModifier;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiShortNamesCache;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.psi.search.searches.ClassesWithAnnotatedMembersSearch;
 import com.intellij.psi.util.PsiUtilCore;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.HashSet;
 import java.util.Set;
 
-public class ConfigurationUtil {
+public final class ConfigurationUtil {
   // return true if there is JUnit4 test
-  public static boolean findAllTestClasses(final TestClassFilter testClassFilter,
-                                           @Nullable final Module module,
-                                           final Set<? super PsiClass> found) {
+  public static boolean findAllTestClasses(final @NotNull TestClassFilter testClassFilter,
+                                           final @Nullable Module module,
+                                           final @NotNull Set<? super PsiClass> found) {
     final PsiManager manager = testClassFilter.getPsiManager();
 
     final Project project = manager.getProject();
@@ -35,7 +41,7 @@ public class ConfigurationUtil {
 
     final PsiClass base = testClassFilter.getBase();
     if (base != null) {
-      ClassInheritorsSearch.search(base, scope, true, true, false).forEach(new ReadActionProcessor<PsiClass>() {
+      ClassInheritorsSearch.search(base, scope, true, true, false).forEach(new ReadActionProcessor<>() {
         @Override
         public boolean processInReadAction(PsiClass aClass) {
           if (testClassFilter.isAccepted(aClass)) found.add(aClass);
@@ -69,7 +75,7 @@ public class ConfigurationUtil {
 
   private static boolean addAnnotatedMethodsAnSubclasses(final GlobalSearchScope scope,
                                                          final TestClassFilter testClassFilter,
-                                                         @Nullable final Module module,
+                                                         final @Nullable Module module,
                                                          final Set<? super PsiClass> found,
                                                          final Set<? super PsiClass> processed,
                                                          final String annotation,
@@ -96,7 +102,7 @@ public class ConfigurationUtil {
           return true;
         });
         if (!success) return true;
-        ClassInheritorsSearch.search(annotated, scope, true, true, false).forEach(new ReadActionProcessor<PsiClass>() {
+        ClassInheritorsSearch.search(annotated, scope, true, true, false).forEach(new ReadActionProcessor<>() {
           @Override
           public boolean processInReadAction(PsiClass aClass) {
             if (testClassFilter.isAccepted(aClass)) {

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.ui.impl;
 
 import com.intellij.openapi.ui.DialogWrapper;
@@ -21,8 +7,14 @@ import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.impl.IdeFocusManagerHeadless;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JDialog;
+import javax.swing.JRootPane;
+import java.awt.Component;
+import java.awt.Container;
+import java.awt.Dialog;
+import java.awt.Dimension;
+import java.awt.Point;
+import java.awt.Window;
 import java.awt.event.KeyListener;
 import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
@@ -30,8 +22,8 @@ import java.awt.event.MouseMotionListener;
 /**
 * @author Konstantin Bulenkov
 */
-class HeadlessDialog implements AbstractDialog {
-  @NotNull private final DialogWrapper myWrapper;
+final class HeadlessDialog implements AbstractDialog {
+  private final @NotNull DialogWrapper myWrapper;
   private @NlsContexts.DialogTitle String myTitle;
 
   HeadlessDialog(@NotNull DialogWrapper wrapper) {
@@ -153,9 +145,8 @@ class HeadlessDialog implements AbstractDialog {
   public void setResizable(boolean resizable) {
   }
 
-  @NotNull
   @Override
-  public Point getLocation() {
+  public @NotNull Point getLocation() {
     return new Point(0,0);
   }
 
@@ -186,9 +177,8 @@ class HeadlessDialog implements AbstractDialog {
     myWrapper.close(DialogWrapper.OK_EXIT_CODE);
   }
 
-  @NotNull
   @Override
-  public IdeFocusManager getFocusManager() {
+  public @NotNull IdeFocusManager getFocusManager() {
     return new IdeFocusManagerHeadless();
   }
 

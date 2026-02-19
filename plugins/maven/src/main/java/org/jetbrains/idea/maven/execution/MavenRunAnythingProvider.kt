@@ -1,8 +1,11 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.execution
 
 import com.intellij.ide.actions.runAnything.RunAnythingContext
-import com.intellij.ide.actions.runAnything.RunAnythingContext.*
+import com.intellij.ide.actions.runAnything.RunAnythingContext.BrowseRecentDirectoryContext
+import com.intellij.ide.actions.runAnything.RunAnythingContext.ModuleContext
+import com.intellij.ide.actions.runAnything.RunAnythingContext.ProjectContext
+import com.intellij.ide.actions.runAnything.RunAnythingContext.RecentDirectoryContext
 import com.intellij.ide.actions.runAnything.RunAnythingUtil.fetchProject
 import com.intellij.ide.actions.runAnything.activity.RunAnythingCommandLineProvider
 import com.intellij.ide.actions.runAnything.activity.RunAnythingProvider
@@ -18,13 +21,16 @@ class MavenRunAnythingProvider : RunAnythingCommandLineProvider() {
 
   override fun getHelpCommand() = HELP_COMMAND
 
-  override fun getHelpIcon(): Icon? = OpenapiIcons.RepositoryLibraryLogo
+  override fun getHelpIcon(): Icon = OpenapiIcons.RepositoryLibraryLogo
 
-  override fun getHelpGroupTitle() = "Maven"
 
-  override fun getIcon(value: String): Icon? = OpenapiIcons.RepositoryLibraryLogo
+  override fun getHelpGroupTitle():  String {
+    return "Maven" //NON-NLS
+  }
 
-  override fun getCompletionGroupTitle() = "Maven goals"
+  override fun getIcon(value: String): Icon = OpenapiIcons.RepositoryLibraryLogo
+
+  override fun getCompletionGroupTitle() = RunnerBundle.message("popup.title.maven.goals")
 
   override fun getHelpCommandPlaceholder() = "mvn <goals...> <options...>"
 
@@ -86,9 +92,9 @@ class MavenRunAnythingProvider : RunAnythingCommandLineProvider() {
     val projectsManager = MavenProjectsManager.getInstance(project)
     if (!projectsManager.isMavenizedProject) return emptySequence()
     val mavenProject = context.getMavenProject(projectsManager) ?: return emptySequence()
-    val localRepository = projectsManager.localRepository
-    return mavenProject.declaredPlugins.asSequence()
-      .mapNotNull { MavenArtifactUtil.readPluginInfo(localRepository, it.mavenId) }
+    val localRepository = projectsManager.repositoryPath
+    return mavenProject.declaredPluginInfos.asSequence()
+      .mapNotNull { MavenArtifactUtil.readPluginInfo(it.artifact) }
       .flatMap { it.mojos.asSequence() }
       .map { it.displayName }
       .filter { it !in commandLine }

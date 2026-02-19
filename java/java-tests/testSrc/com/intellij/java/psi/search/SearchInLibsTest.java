@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.psi.search;
 
 import com.intellij.JavaTestUtil;
@@ -22,10 +8,12 @@ import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
+import com.intellij.testFramework.IndexingTestUtil;
 import com.intellij.testFramework.JavaPsiTestCase;
 import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.usageView.UsageInfo;
@@ -37,7 +25,10 @@ import com.intellij.util.Processor;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
+
+import static org.junit.Assert.assertNotEquals;
 
 public class SearchInLibsTest extends JavaPsiTestCase {
   @Override
@@ -64,6 +55,7 @@ public class SearchInLibsTest extends JavaPsiTestCase {
     List<String> sourceRoots = Arrays.asList(libSrcRoot.getUrl(), libSrc2Root.getUrl());
     List<String> classesRoots = Collections.singletonList(libClassesRoot.getUrl());
     ModuleRootModificationUtil.addModuleLibrary(myModule, "lib", classesRoots, sourceRoots);
+    IndexingTestUtil.waitUntilIndexesAreReady(getProject());
   }
 
   public void testFindUsagesInProject() {
@@ -98,7 +90,7 @@ public class SearchInLibsTest extends JavaPsiTestCase {
 
     List<UsageInfo> usages = Collections.synchronizedList(new ArrayList<>());
     Processor<UsageInfo> consumer = new CommonProcessors.CollectProcessor<>(usages);
-    FindUsagesProcessPresentation presentation = FindInProjectUtil.setupProcessPresentation(getProject(), false, FindInProjectUtil.setupViewPresentation(false, model));
+    FindUsagesProcessPresentation presentation = FindInProjectUtil.setupProcessPresentation(false, FindInProjectUtil.setupViewPresentation(false, model));
     FindInProjectUtil.findUsages(model, getProject(), consumer, presentation);
 
     assertSize(2, usages);
@@ -116,7 +108,7 @@ public class SearchInLibsTest extends JavaPsiTestCase {
 
     List<UsageInfo> usages = Collections.synchronizedList(new ArrayList<>());
     Processor<UsageInfo> consumer = new CommonProcessors.CollectProcessor<>(usages);
-    FindUsagesProcessPresentation presentation = FindInProjectUtil.setupProcessPresentation(getProject(), false, FindInProjectUtil.setupViewPresentation(false, model));
+    FindUsagesProcessPresentation presentation = FindInProjectUtil.setupProcessPresentation(false, FindInProjectUtil.setupViewPresentation(false, model));
     FindInProjectUtil.findUsages(model, getProject(), consumer, presentation);
 
     assertEquals(3, usages.size());
@@ -128,7 +120,7 @@ public class SearchInLibsTest extends JavaPsiTestCase {
     assertNotNull(aClass);
     String classDirPath = aClass.getContainingFile().getContainingDirectory().getVirtualFile().getPath();
     String sourceDirPath = ((PsiFile)aClass.getContainingFile().getNavigationElement()).getContainingDirectory().getVirtualFile().getPath();
-    assertFalse(classDirPath.equals(sourceDirPath));
+    assertNotEquals(classDirPath, sourceDirPath);
     model.setDirectoryName(sourceDirPath);
     model.setCaseSensitive(true);
     model.setCustomScope(false);
@@ -137,7 +129,7 @@ public class SearchInLibsTest extends JavaPsiTestCase {
 
     List<UsageInfo> usages = Collections.synchronizedList(new ArrayList<>());
     CommonProcessors.CollectProcessor<UsageInfo> consumer = new CommonProcessors.CollectProcessor<>(usages);
-    FindUsagesProcessPresentation presentation = FindInProjectUtil.setupProcessPresentation(getProject(), false, FindInProjectUtil.setupViewPresentation(false, model));
+    FindUsagesProcessPresentation presentation = FindInProjectUtil.setupProcessPresentation(false, FindInProjectUtil.setupViewPresentation(false, model));
     FindInProjectUtil.findUsages(model, getProject(), consumer, presentation);
 
     UsageInfo info = assertOneElement(usages);
@@ -164,7 +156,7 @@ public class SearchInLibsTest extends JavaPsiTestCase {
 
     assertEquals("files count", expectedFileNames.length, files.size());
 
-    Collections.sort(files, (o1, o2) -> o1.getName().compareTo(o2.getName()));
+    Collections.sort(files, Comparator.comparing(PsiFileSystemItem::getName));
     Arrays.sort(expectedFileNames);
 
     for (int i = 0; i < expectedFileNames.length; i++) {

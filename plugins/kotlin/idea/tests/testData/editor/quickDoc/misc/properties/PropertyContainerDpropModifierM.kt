@@ -1,0 +1,4 @@
+actual class PropertyContainerD {
+    actual var <caret>propModifierM = ""
+}
+//INFO: <div class='definition'><pre><span style="color:#000080;font-weight:bold;">public</span> <span style="color:#000080;font-weight:bold;">actual</span> <span style="color:#000080;font-weight:bold;">final</span> <span style="color:#000080;font-weight:bold;">var</span> <span style="color:#660e7a;font-weight:bold;">propModifierM</span><span style="">: </span><span style="color:#000000;"><a href="psi_element://kotlin.String">String</a></span><span style=""> = </span><span style="color:#008000;font-weight:bold;">""</span></pre></div><div class='bottom'><icon src="KotlinBaseResourcesIcons.ClassKotlin"/>&nbsp;<a href="psi_element://PropertyContainerD"><code><span style="color:#000000;">PropertyContainerD</span></code></a><br/></div>

@@ -19,9 +19,6 @@ import com.intellij.psi.PsiMember;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.stubs.NamedStub;
 
-/**
- * @author peter
- */
 public interface PsiMemberStub<T extends PsiMember & PsiNamedElement> extends NamedStub<T> {
   /**
    * @return whether the stubbed element is deprecated by javadoc tag

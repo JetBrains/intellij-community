@@ -22,14 +22,17 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.psi.TokenType;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.text.CharArrayCharSequence;
-import com.intellij.util.text.CharArrayUtil;
-import gnu.trove.TIntIntHashMap;
+import it.unimi.dsi.fastutil.ints.Int2IntMap;
+import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap;
 import org.intellij.plugins.relaxNG.compact.RncTokenTypes;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.kohsuke.rngom.parse.compact.*;
+import org.kohsuke.rngom.parse.compact.CharStream;
+import org.kohsuke.rngom.parse.compact.CompactSyntaxConstants;
+import org.kohsuke.rngom.parse.compact.CompactSyntaxTokenManager;
+import org.kohsuke.rngom.parse.compact.Token;
+import org.kohsuke.rngom.parse.compact.TokenMgrError;
 
-import java.io.CharArrayReader;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.Reader;
@@ -44,7 +47,7 @@ import java.util.LinkedList;
  *
  * Not sure if it was easier to write this than hacking my own lexer...
  */
-public class CompactSyntaxLexerAdapter extends LexerBase {
+public final class CompactSyntaxLexerAdapter extends LexerBase {
   private static final Logger LOG = Logger.getInstance(CompactSyntaxLexerAdapter.class.getName());
 
   private static final Field myStateField;
@@ -69,14 +72,14 @@ public class CompactSyntaxLexerAdapter extends LexerBase {
   private IElementType myCurrentTokenType;
   private CharSequence myBuffer;
   private int myEndOffset;
-  private TIntIntHashMap myLengthMap;
+  private Int2IntMap myLengthMap;
 
   @Override
   public void advance() {
     try {
       myCurrentToken = nextToken();
       myCurrentOffset = myCurrentEnd;
-      
+
       if (myCurrentToken != null) {
 
         myCurrentEnd = myCurrentOffset + myCurrentToken.image.length();
@@ -111,7 +114,7 @@ public class CompactSyntaxLexerAdapter extends LexerBase {
   }
 
   private Token nextToken() {
-    if (myTokenQueue.size() > 0) {
+    if (!myTokenQueue.isEmpty()) {
       return myTokenQueue.removeFirst();
     }
 
@@ -127,14 +130,8 @@ public class CompactSyntaxLexerAdapter extends LexerBase {
     }
   }
 
-  @Deprecated
-  public char[] getBuffer() {
-    return CharArrayUtil.fromSequence(myBuffer);
-  }
-
-  @NotNull
   @Override
-  public CharSequence getBufferSequence() {
+  public @NotNull CharSequence getBufferSequence() {
     return myBuffer;
   }
 
@@ -163,21 +160,12 @@ public class CompactSyntaxLexerAdapter extends LexerBase {
   }
 
   @Override
-  @Nullable
-  public IElementType getTokenType() {
+  public @Nullable IElementType getTokenType() {
     if (myCurrentToken == null) {
       return null;
     } else {
       return myCurrentTokenType;
     }
-  }
-
-  @Deprecated
-  public void start(char[] buffer, int startOffset, int endOffset, int initialState) {
-    myBuffer = new CharArrayCharSequence(buffer, startOffset, endOffset);
-
-    final CharArrayReader reader = new CharArrayReader(buffer, startOffset, endOffset - startOffset);
-    init(startOffset, endOffset, reader, initialState);
   }
 
   @Override
@@ -190,7 +178,7 @@ public class CompactSyntaxLexerAdapter extends LexerBase {
 
   private void init(int startOffset, int endOffset, Reader reader, int initialState) {
     myEndOffset = endOffset;
-    myLengthMap = new TIntIntHashMap();
+    myLengthMap = new Int2IntOpenHashMap();
 
     myLexer = createTokenManager(initialState, new EscapePreprocessor(reader, startOffset, myLengthMap));
 

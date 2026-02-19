@@ -16,18 +16,24 @@ import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
-import com.intellij.ui.*;
+import com.intellij.ui.AnActionButton;
+import com.intellij.ui.AnActionButtonRunnable;
+import com.intellij.ui.SimpleListCellRenderer;
+import com.intellij.ui.SortedListModel;
+import com.intellij.ui.ToolbarDecorator;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+@ApiStatus.Internal
 public final class CompoundRunConfigurationSettingsEditor extends SettingsEditor<CompoundRunConfiguration> {
   private final Project myProject;
   private final JBList<Pair<RunConfiguration, ExecutionTarget>> myList;
@@ -48,13 +54,11 @@ public final class CompoundRunConfigurationSettingsEditor extends SettingsEditor
   }
 
 
-  private boolean canBeAdded(@NotNull RunConfiguration candidate, @NotNull final CompoundRunConfiguration root) {
+  private boolean canBeAdded(@NotNull RunConfiguration candidate, final @NotNull CompoundRunConfiguration root) {
     if (candidate.getType() == root.getType() && candidate.getName().equals(root.getName())) return false;
     List<BeforeRunTask<?>> tasks = RunManagerImplKt.doGetBeforeRunTasks(candidate);
     for (BeforeRunTask<?> task : tasks) {
-      if (task instanceof RunConfigurationBeforeRunProvider.RunConfigurableBeforeRunTask) {
-        RunConfigurationBeforeRunProvider.RunConfigurableBeforeRunTask runTask
-          = (RunConfigurationBeforeRunProvider.RunConfigurableBeforeRunTask)task;
+      if (task instanceof RunConfigurationBeforeRunProvider.RunConfigurableBeforeRunTask runTask) {
         RunnerAndConfigurationSettings settings = runTask.getSettings();
         if (settings != null) {
          if (!canBeAdded(settings.getConfiguration(), root)) return false;
@@ -74,13 +78,14 @@ public final class CompoundRunConfigurationSettingsEditor extends SettingsEditor
   @Override
   protected void resetEditorFrom(@NotNull CompoundRunConfiguration compoundRunConfiguration) {
     myModel.clear();
-    myModel.addAll(ContainerUtil.map2List(compoundRunConfiguration.getConfigurationsWithTargets(myRunManager)));
+    Map<RunConfiguration, ExecutionTarget> map = compoundRunConfiguration.getConfigurationsWithTargets(myRunManager);
+    myModel.addAll(ContainerUtil.map(map.entrySet(), entry -> Pair.create(entry.getKey(), entry.getValue())));
     mySnapshot = compoundRunConfiguration;
   }
 
   @Override
   protected void applyEditorTo(@NotNull CompoundRunConfiguration compoundConfiguration) throws ConfigurationException {
-    Map<RunConfiguration, ExecutionTarget> checked = new HashMap<>();
+    Map<RunConfiguration, ExecutionTarget> checked = new LinkedHashMap<>();
     for (int i = 0; i < myModel.getSize(); i++) {
       Pair<RunConfiguration, ExecutionTarget> configurationAndTarget = myModel.get(i);
       RunConfiguration configuration = configurationAndTarget.first;
@@ -95,9 +100,8 @@ public final class CompoundRunConfigurationSettingsEditor extends SettingsEditor
     compoundConfiguration.setConfigurationsWithTargets(checked);
   }
 
-  @NotNull
   @Override
-  protected JComponent createEditor() {
+  protected @NotNull JComponent createEditor() {
     ToolbarDecorator decorator = ToolbarDecorator.createDecorator(myList)
       .setToolbarPosition(ActionToolbarPosition.TOP)
       .setPanelBorder(JBUI.Borders.empty())

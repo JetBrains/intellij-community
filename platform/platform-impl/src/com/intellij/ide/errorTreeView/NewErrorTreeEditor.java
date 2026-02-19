@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.errorTreeView;
 
 import com.intellij.ui.CustomizeColoredTreeCellRenderer;
@@ -8,14 +8,19 @@ import com.intellij.ui.render.RenderingUtil;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.WideSelectionTreeUI;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.AbstractCellEditor;
+import javax.swing.JPanel;
+import javax.swing.JTree;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreeCellEditor;
 import javax.swing.tree.TreeCellRenderer;
 import javax.swing.tree.TreePath;
-import java.awt.*;
+import java.awt.BorderLayout;
+import java.awt.Component;
+import java.awt.Point;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseMotionListener;
 import java.util.EventObject;
@@ -23,6 +28,7 @@ import java.util.EventObject;
 /**
  * @author Vladislav.Soroka
  */
+@ApiStatus.Internal
 public final class NewErrorTreeEditor extends AbstractCellEditor implements TreeCellEditor, MouseMotionListener {
 
   public static void install(Tree tree) {
@@ -61,8 +67,7 @@ public final class NewErrorTreeEditor extends AbstractCellEditor implements Tree
   @Override
   public Component getTreeCellEditorComponent(JTree tree, Object value, boolean selected, boolean expanded, boolean leaf, int row) {
     final ErrorTreeElement element = getElement(value);
-    if (element instanceof EditableMessageElement) {
-      EditableMessageElement editableMessageElement = (EditableMessageElement)element;
+    if (element instanceof EditableMessageElement editableMessageElement) {
       final CustomizeColoredTreeCellRenderer leftSelfRenderer = editableMessageElement.getLeftSelfRenderer();
       final TreeCellEditor rightSelfEditor = editableMessageElement.getRightSelfEditor();
       myColoredTreeCellRenderer.setCurrentCallback(leftSelfRenderer);
@@ -99,15 +104,14 @@ public final class NewErrorTreeEditor extends AbstractCellEditor implements Tree
     }
   }
 
-  @Nullable
-  private static ErrorTreeElement getElement(@Nullable Object value) {
+  private static @Nullable ErrorTreeElement getElement(@Nullable Object value) {
     if (!(value instanceof DefaultMutableTreeNode)) return null;
     final Object userObject = ((DefaultMutableTreeNode)value).getUserObject();
     if (!(userObject instanceof ErrorTreeNodeDescriptor)) return null;
     return ((ErrorTreeNodeDescriptor)userObject).getElement();
   }
 
-  private static class MyWrapperEditor extends AbstractCellEditor implements TreeCellEditor {
+  private static final class MyWrapperEditor extends AbstractCellEditor implements TreeCellEditor {
     private final TreeCellRenderer myLeft;
     private final TreeCellEditor myRight;
     private final JPanel myPanel;
@@ -133,15 +137,15 @@ public final class NewErrorTreeEditor extends AbstractCellEditor implements Tree
       myPanel.add(myRight.getTreeCellEditorComponent(tree, value, selected, expanded, leaf, row), BorderLayout.EAST);
 
       if (UIUtil.isFullRowSelectionLAF()) {
-        myPanel.setBackground(selected ? UIUtil.getTreeSelectionBackground() : null);
+        myPanel.setBackground(selected ? UIUtil.getTreeSelectionBackground(true) : null);
       }
       else if (WideSelectionTreeUI.isWideSelection(tree)) {
         if (selected) {
-          myPanel.setBackground(UIUtil.getTreeSelectionBackground());
+          myPanel.setBackground(UIUtil.getTreeSelectionBackground(true));
         }
       }
       else if (selected) {
-        myPanel.setBackground(UIUtil.getTreeSelectionBackground());
+        myPanel.setBackground(UIUtil.getTreeSelectionBackground(true));
       }
       else {
         myPanel.setBackground(null);
@@ -167,7 +171,7 @@ public final class NewErrorTreeEditor extends AbstractCellEditor implements Tree
   }
 
 
-  private static class CellEditorDelegate extends AbstractCellEditor implements TreeCellEditor {
+  private static final class CellEditorDelegate extends AbstractCellEditor implements TreeCellEditor {
     private TreeCellEditor myCurrentCallback;
 
     @Override

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.ui
 
 import com.intellij.ide.util.PropertiesComponent
@@ -18,14 +18,9 @@ class PersistentThreeComponentSplitter(
   private val project: Project?,
   private val defaultFirstProportion: Float = 0.3f,
   private val defaultLastProportion: Float = 0.5f
-) : ThreeComponentsSplitter(vertical, onePixelDivider, disposable) {
-
-  companion object {
-    private val logger = logger<PersistentThreeComponentSplitter>()
-  }
-
+) : ThreeComponentsSplitter(vertical, onePixelDivider) {
   // hack
-  var maxRetryCount = 100
+  private var maxRetryCount = 100
 
   @NonNls private val firstProportionKey = "${proportionKey}_PTCS_FirstProportionKey"
   @NonNls private val lastProportionKey = "${proportionKey}_PTCS_LastProportionKey"
@@ -71,7 +66,7 @@ class PersistentThreeComponentSplitter(
     lastProportion = lastSize / (totalSize - 2.0f * dividerWidth)
   }
 
-  fun restoreProportions() {
+  private fun restoreProportions() {
     setFirstSize()
     setLastSize()
   }
@@ -85,16 +80,16 @@ class PersistentThreeComponentSplitter(
     }
   }
 
+  @Suppress("DuplicatedCode")
   private fun invokeLaterWhen(condition: () -> Boolean, timestamp: Long, count: Int = 0, action: () -> Unit) {
     if (addNotifyTimestamp != timestamp) return
 
     SwingUtilities.invokeLater {
       when {
         Disposer.isDisposed(disposable) -> return@invokeLater
-
         condition() -> action()
         count > maxRetryCount -> {
-          logger.error("Could not restore proportions in $maxRetryCount times. ${dump()}")
+          logger<PersistentThreeComponentSplitter>().error("Could not restore proportions in $maxRetryCount times. ${dump()}")
           action()
         }
         else -> invokeLaterWhen(condition, timestamp, count + 1, action)
@@ -134,9 +129,8 @@ class PersistentThreeComponentSplitter(
     lastSize = (lastProportion * (totalSize - 2 * dividerWidth)).roundToInt()
   }
 
-  private fun dump(): String {
-    return "totalMinSize=$totalMinSize, totalSize=$totalSize, firstSize=($firstSize, visible=${firstVisible()}), lastSize=($lastSize, visible=${lastVisible()})"
-  }
+  @NonNls private fun dump() =
+    "totalMinSize=$totalMinSize, totalSize=$totalSize, firstSize=($firstSize, visible=${firstVisible()}), lastSize=($lastSize, visible=${lastVisible()})"
 
   private fun checkSize(): Boolean {
     return totalMinSize < totalSize && (firstSize > 0 || !firstVisible()) && (lastSize > 0 || !lastVisible())

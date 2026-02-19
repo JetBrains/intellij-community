@@ -16,9 +16,6 @@ import org.intellij.plugins.relaxNG.compact.psi.RncNsDecl;
 import org.intellij.plugins.relaxNG.compact.psi.impl.RncDocument;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author Eugene.Kudelevsky
- */
 public class RngHtml5MetaDataContributor implements MetaDataContributor {
   @Override
   public void contributeMetaData(@NotNull MetaDataRegistrar registrar) {

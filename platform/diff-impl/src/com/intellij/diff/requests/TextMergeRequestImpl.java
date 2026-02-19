@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diff.requests;
 
 import com.intellij.diff.contents.DocumentContent;
@@ -25,21 +11,23 @@ import com.intellij.diff.util.ThreeSide;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
+@ApiStatus.Internal
 public class TextMergeRequestImpl extends TextMergeRequest {
-  @Nullable private final Project myProject;
-  @NotNull private final DocumentContent myOutput;
-  @NotNull private final List<DocumentContent> myContents;
+  private final @Nullable Project myProject;
+  private final @NotNull DocumentContent myOutput;
+  private final @NotNull List<DocumentContent> myContents;
 
-  @NotNull private final CharSequence myOriginalContent;
+  private final @NotNull CharSequence myOriginalContent;
 
-  @Nullable private final @NlsContexts.DialogTitle String myTitle;
-  @NotNull private final List<String> myTitles;
+  private final @Nullable @NlsContexts.DialogTitle String myTitle;
+  private final @NotNull List<String> myTitles;
 
   public TextMergeRequestImpl(@Nullable Project project,
                               @NotNull DocumentContent output,
@@ -57,74 +45,54 @@ public class TextMergeRequestImpl extends TextMergeRequest {
     myContents = contents;
     myTitles = contentTitles;
     myTitle = title;
-
-    onAssigned(true);
   }
 
-  @NotNull
   @Override
-  public DocumentContent getOutputContent() {
+  public @NotNull DocumentContent getOutputContent() {
     return myOutput;
   }
 
-  @NotNull
   @Override
-  public List<DocumentContent> getContents() {
+  public @NotNull List<DocumentContent> getContents() {
     return myContents;
   }
 
-  @Nullable
   @Override
-  public String getTitle() {
+  public @Nullable String getTitle() {
     return myTitle;
   }
 
-  @NotNull
   @Override
-  public List<String> getContentTitles() {
+  public @NotNull List<String> getContentTitles() {
     return myTitles;
   }
 
   @Override
   public void applyResult(@NotNull MergeResult result) {
-    try {
-      final CharSequence applyContent;
-      switch (result) {
-        case CANCEL:
-          applyContent = MergeUtil.shouldRestoreOriginalContentOnCancel(this) ? myOriginalContent : null;
-          break;
-        case LEFT:
-          CharSequence leftContent = ThreeSide.LEFT.select(getContents()).getDocument().getImmutableCharSequence();
-          applyContent = StringUtil.convertLineSeparators(leftContent.toString());
-          break;
-        case RIGHT:
-          CharSequence rightContent = ThreeSide.RIGHT.select(getContents()).getDocument().getImmutableCharSequence();
-          applyContent = StringUtil.convertLineSeparators(rightContent.toString());
-          break;
-        case RESOLVED:
-          applyContent = null;
-          break;
-        default:
-          throw new IllegalArgumentException(result.toString());
+    final CharSequence applyContent;
+    switch (result) {
+      case CANCEL -> applyContent = MergeUtil.shouldRestoreOriginalContentOnCancel(this) ? myOriginalContent : null;
+      case LEFT -> {
+        CharSequence leftContent = ThreeSide.LEFT.select(getContents()).getDocument().getImmutableCharSequence();
+        applyContent = StringUtil.convertLineSeparators(leftContent.toString());
       }
-
-      if (applyContent != null) {
-        DiffUtil.executeWriteCommand(myOutput.getDocument(), myProject, null, () -> myOutput.getDocument().setText(applyContent));
+      case RIGHT -> {
+        CharSequence rightContent = ThreeSide.RIGHT.select(getContents()).getDocument().getImmutableCharSequence();
+        applyContent = StringUtil.convertLineSeparators(rightContent.toString());
       }
+      case RESOLVED -> applyContent = null;
+      default -> throw new IllegalArgumentException(result.toString());
+    }
 
-      MergeCallback.getCallback(this).applyResult(result);
+    if (applyContent != null) {
+      DiffUtil.executeWriteCommand(myOutput.getDocument(), myProject, null, () -> myOutput.getDocument().setText(applyContent));
     }
-    finally {
-      onAssigned(false);
-    }
+
+    MergeCallback.getCallback(this).applyResult(result);
   }
 
   @Override
-  public void resultRetargeted() {
-    onAssigned(false);
-  }
-
-  private void onAssigned(boolean assigned) {
+  public void onAssigned(boolean assigned) {
     myOutput.onAssigned(assigned);
     for (DocumentContent content : myContents) {
       content.onAssigned(assigned);

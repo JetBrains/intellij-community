@@ -1,11 +1,10 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.externalSystemIntegration.output;
 
 import com.intellij.build.events.BuildEvent;
 import com.intellij.build.events.impl.FailureResultImpl;
 import com.intellij.build.events.impl.FinishBuildEventImpl;
 import com.intellij.build.events.impl.OutputBuildEventImpl;
-import com.intellij.build.events.impl.SuccessResultImpl;
 import com.intellij.build.output.BuildOutputInstantReader;
 import com.intellij.build.output.BuildOutputParser;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId;
@@ -14,39 +13,50 @@ import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.maven.execution.MavenRunConfiguration;
+import org.jetbrains.idea.maven.externalSystemIntegration.output.parsers.Maven3SpyOutputExtractor;
+import org.jetbrains.idea.maven.externalSystemIntegration.output.parsers.Maven4SpyOutputExtractor;
 import org.jetbrains.idea.maven.externalSystemIntegration.output.parsers.MavenSpyOutputParser;
 import org.jetbrains.idea.maven.externalSystemIntegration.output.parsers.MavenTaskFailedResultImpl;
 
 import java.util.List;
 import java.util.function.Consumer;
+import java.util.function.Function;
 
 
 @ApiStatus.Experimental
 public class MavenLogOutputParser implements BuildOutputParser {
 
-  private boolean myCompleted = false;
   private final List<MavenLoggedEventParser> myRegisteredEvents;
   private final ExternalSystemTaskId myTaskId;
 
   private final MavenSpyOutputParser mavenSpyOutputParser;
   private final MavenParsingContext myParsingContext;
 
+  public MavenLogOutputParser(@NotNull MavenRunConfiguration runConfiguration,
+                              @NotNull ExternalSystemTaskId taskId,
+                              @NotNull List<MavenLoggedEventParser> registeredEvents,
+                              boolean useWrapperedLogging) {
+    this(runConfiguration, taskId, Function.identity(), registeredEvents, useWrapperedLogging);
+  }
 
-  public MavenLogOutputParser(ExternalSystemTaskId taskId,
-                              List<MavenLoggedEventParser> registeredEvents) {
+  public MavenLogOutputParser(@NotNull MavenRunConfiguration runConfiguration,
+                              @NotNull ExternalSystemTaskId taskId,
+                              @NotNull Function<String, String> targetFileMapper,
+                              @NotNull List<MavenLoggedEventParser> registeredEvents,
+                              boolean useWrapperedLogging) {
     myRegisteredEvents = registeredEvents;
     myTaskId = taskId;
-    myParsingContext = new MavenParsingContext(taskId);
-    mavenSpyOutputParser = new MavenSpyOutputParser(myParsingContext);
+    myParsingContext = new MavenParsingContext(runConfiguration, taskId, targetFileMapper);
+    mavenSpyOutputParser =
+      new MavenSpyOutputParser(myParsingContext, useWrapperedLogging ? new Maven4SpyOutputExtractor() : new Maven3SpyOutputExtractor());
   }
 
   public synchronized void finish(Consumer<? super BuildEvent> messageConsumer) {
     completeParsers(messageConsumer);
 
-    if (!myCompleted) {
-      messageConsumer
-        .accept(new FinishBuildEventImpl(myTaskId, null, System.currentTimeMillis(), "",
-                                         new MavenTaskFailedResultImpl("Process terminated")));
+    if (!myParsingContext.getSessionEnded()) {
+      messageConsumer.accept(new FinishBuildEventImpl(myTaskId, null, System.currentTimeMillis(), "", new MavenTaskFailedResultImpl(null)));
     }
   }
 
@@ -62,13 +72,17 @@ public class MavenLogOutputParser implements BuildOutputParser {
 
   @Override
   public boolean parse(String line, BuildOutputInstantReader reader, Consumer<? super BuildEvent> messageConsumer) {
-    if (myCompleted) return false;
+    if (myParsingContext.getSessionEnded()) {
+      checkErrorAfterMavenSessionEnded(line, messageConsumer);
+      return false;
+    }
 
     if (line == null || StringUtil.isEmptyOrSpaces(line)) {
       return false;
     }
-    if (MavenSpyOutputParser.isSpyLog(line)) {
+    if (mavenSpyOutputParser.isSpyLog(line)) {
       mavenSpyOutputParser.processLine(line, messageConsumer);
+      if (myParsingContext.getSessionEnded()) completeParsers(messageConsumer);
       return true;
     }
     else {
@@ -81,13 +95,21 @@ public class MavenLogOutputParser implements BuildOutputParser {
         if (!event.supportsType(logLine.myType)) {
           continue;
         }
-        if (event.checkLogLine(myParsingContext.getLastId(), logLine, mavenLogReader, messageConsumer)) {
+        if (event.checkLogLine(myParsingContext.getLastId(), myParsingContext, logLine, mavenLogReader, messageConsumer)) {
           return true;
         }
       }
-      if (checkComplete(messageConsumer, logLine, mavenLogReader)) return true;
     }
     return false;
+  }
+
+  private void checkErrorAfterMavenSessionEnded(String line, Consumer<? super BuildEvent> messageConsumer) {
+    if (!myParsingContext.getProjectFailure()) {
+      if (line.contains("[ERROR]")) {
+        myParsingContext.setProjectFailure(true);
+        messageConsumer.accept(new FinishBuildEventImpl(myTaskId, null, System.currentTimeMillis(), "", new FailureResultImpl()));
+      }
+    }
   }
 
   private void sendMessageToAllParents(@NlsSafe String line, Consumer<? super BuildEvent> messageConsumer) {
@@ -114,37 +136,14 @@ public class MavenLogOutputParser implements BuildOutputParser {
         reader.pushBack();
       }
 
-      @Nullable
       @Override
-      public MavenLogEntry readLine() {
+      public @Nullable MavenLogEntry readLine() {
         return nextLine(reader.readLine());
       }
     };
   }
 
-  private synchronized boolean checkComplete(Consumer<? super BuildEvent> messageConsumer,
-                                MavenLogEntryReader.MavenLogEntry logLine,
-                                MavenLogEntryReader mavenLogReader) {
-    if (logLine.myLine.equals("BUILD FAILURE")) {
-      completeParsers(messageConsumer);
-      messageConsumer
-        .accept(new FinishBuildEventImpl(myTaskId, null, System.currentTimeMillis(), "",
-                                         new FailureResultImpl()));
-      myCompleted = true;
-      return true;
-    }
-    if (logLine.myLine.equals("BUILD SUCCESS")) {
-      completeParsers(messageConsumer);
-      messageConsumer
-        .accept(new FinishBuildEventImpl(myTaskId, null, System.currentTimeMillis(), "", new SuccessResultImpl()));
-      myCompleted = true;
-      return true;
-    }
-    return false;
-  }
-
-  @Nullable
-  private static MavenLogEntryReader.MavenLogEntry nextLine(String line) {
+  private static @Nullable MavenLogEntryReader.MavenLogEntry nextLine(String line) {
     if (line == null) {
       return null;
     }

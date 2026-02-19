@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions;
 
 import com.intellij.openapi.actionSystem.ActionManager;
@@ -7,14 +7,14 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.psi.PsiDirectory;
 
-import javax.swing.*;
+import javax.swing.Icon;
 
 /**
  * @author Dmitry Avdeev
  */
 public abstract class TemplateKindProvider {
 
-  private final static ExtensionPointName<TemplateKindProvider> EP_NAME =
+  private static final ExtensionPointName<TemplateKindProvider> EP_NAME =
     ExtensionPointName.create("com.intellij.javaee.templateKindProvider");
 
   public static void addAdditionalKinds(AnAction action, PsiDirectory dir, CreateFileFromTemplateDialog.Builder builder) {
@@ -28,15 +28,6 @@ public abstract class TemplateKindProvider {
   public abstract boolean isAvailable(Class<? extends AnAction> actionClass);
   public abstract Kind[] getAdditionalKinds(PsiDirectory dir);
 
-  public static class Kind {
-    public final @NlsContexts.ListItem String name;
-    public final String templateName;
-    public final Icon icon;
-
-    public Kind(@NlsContexts.ListItem String name, String templateName, Icon icon) {
-      this.name = name;
-      this.templateName = templateName;
-      this.icon = icon;
-    }
+  public record Kind(@NlsContexts.ListItem String name, String templateName, Icon icon) {
   }
 }

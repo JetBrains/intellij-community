@@ -1,0 +1,13 @@
+// PROBLEM: Suspicious cascading 'if' expression
+// FIX: Add clarifying braces to nested 'else' statement
+// PRIORITY: LOW
+// IGNORE_K1
+fun test() {
+    <caret>if (true) {
+        1
+    } else if (true) {
+        2
+    } else {
+        3
+    } + 4
+}

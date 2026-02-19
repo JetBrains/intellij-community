@@ -30,7 +30,11 @@ import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.IncorrectOperationException;
 import org.intellij.lang.xpath.XPathFileType;
 import org.intellij.lang.xpath.context.NamespaceContext;
-import org.intellij.lang.xpath.psi.*;
+import org.intellij.lang.xpath.psi.XPath2Type;
+import org.intellij.lang.xpath.psi.XPathExpression;
+import org.intellij.lang.xpath.psi.XPathType;
+import org.intellij.lang.xpath.psi.XPathVariable;
+import org.intellij.lang.xpath.psi.XPathVariableReference;
 import org.intellij.lang.xpath.psi.impl.XPathChangeUtil;
 import org.intellij.lang.xpath.validation.ExpectedTypeUtil;
 import org.intellij.lang.xpath.xslt.XsltSupport;
@@ -95,7 +99,7 @@ public class XsltExtractFunctionAction extends BaseIntroduceAction<RefactoringOp
             }
             RefactoringUtil.addParameter(xmlTag, param);
 
-            if (argList.length() > 0) {
+            if (!argList.isEmpty()) {
               argList.append(", ");
             }
             argList.append("$").append(variable.getName());
@@ -129,7 +133,7 @@ public class XsltExtractFunctionAction extends BaseIntroduceAction<RefactoringOp
     if (type instanceof XPath2Type) {
       final QName name = ((XPath2Type)type).getQName();
       final String uri = name.getNamespaceURI();
-      if (uri.length() > 0) {
+      if (!uri.isEmpty()) {
         final String prefix = context.getPrefixByNamespace(uri);
         if (prefix != null) {
           return (prefix + ":" + name.getLocalPart());

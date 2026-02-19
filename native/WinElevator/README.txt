@@ -1,40 +1,41 @@
-This project consists of two tools: "launcher and elevator" and "appxreparse".
-
-
 Launcher and elevator:
 
-With UAC enabled even administrator has limited access token and can't modify some folders like "Program Files".
-The only official way to elevate token for process is to launch app as elevated using shell api so user will have chance to accept it. 
-Since it may lead to security risks it is not recomended to run whole app as elevated, but run only certain tools instead.
+With UAC enabled, even an administrator has a limited access token and can't modify some folders like "Program Files".
+The only official way to elevate token for process is to launch app as elevated using shell api, so users will have a chance to accept it.
+Since it may lead to security risks, it is not recommended to run whole app as elevated, but run only certain tools instead.
 
 This app consists of 2 apps:
 * launcher: accepts command line to run as elevated and launches "elevator" using shell api
-* elevator: has "UAC execution level" set "administrator" in its manifest, so UAC is displayed. It then runs provided command line.
+* elevator: has "UAC execution level" set to "administrator" in its manifest, so UAC is displayed. It then runs provided command line.
 
-Since elevator is launched with elevated priviliges, it has separate console in conhost (technically it is not child of launcher but of AppInfo instead), 
-so there is some machinery to connect elevated process to console and its pipes.
+Since the elevator is launched with elevated privileges, it has a separate console in conhost (technically it is not child of launcher but of AppInfo instead),
+so there is some machinery to connect the elevated process to the console and its pipes.
 
-Launcher provides its pid to elevator and elevator attaches to its console.
+Launcher provides its pid to the elevator, and the elevator attaches to its console.
 
-But if std(out|err|in) are redirected to files or pipes, attaching to console is not enough.
-In this case launcher creates named pipes, elevator connects to them and provides their handlers as handlers for newly created process.
-Launcher then creates threads to read/write them to console.
+But if std(out|err|in) are redirected to files or pipes, attaching to a console is not enough.
+In this case, the launcher creates named pipes, the elevator connects to them and provides their handlers as handlers for the newly created process.
+The launcher then creates threads to read/write them to the console.
 
-For "AppxReparse" see README inside of project
 
 -------
 How to build.
 
+CMake: 3.16 or newer
 ToolChain: VisualStudio 2017
 SDK: 8.1 (for "launcher and elevator")
-Win10 10.0.18362 (for "appx reparse")
 
-You may open .sln from Visual Studio or use msbuild from VS command prompt:
- msbuild Elevator.sln /p:Configuration=release /property:Platform=x86
+```
+if exist build rmdir /s /q build
+mkdir build && cd build
 
+cmake -F "Visual Studio 15 2017" -T v141 -A Win32 -DCMAKE_SYSTEM_VERSION="8.1" ..
+cmake --build . --config RelWithDebInfo -- -clp:ShowCommandLine
 
-Building and signing on TC:
-To sign binary you need to build and sign it on TC.
+```
+
+Building and signing on TeamCity:
+To sign binary you need to build and sign it on TeamCity.
 Run https://buildserver.labs.intellij.net/viewType.html?buildTypeId=ijplatform_master_Idea_NativeHelpers_WindowsFileWatcher
 Download artifact and store in VCS
 
@@ -56,5 +57,5 @@ Check no error
 
 --------
 How to check errors.
-Both tools report errors as error codes, stderr and event log under "Application".
-No event ids are registered, but you can check eventId and find appropriate ReportEvent call.
+Tool reports errors as error codes, stderr and event log under "Application".
+No event ids are registered, but you can check eventId and find an appropriate ReportEvent call.

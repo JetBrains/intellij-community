@@ -1,12 +1,11 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.branchConfig
 
 import com.intellij.openapi.application.ApplicationManager.getApplication
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.components.PersistentStateComponent
-import com.intellij.openapi.components.ServiceManager
+import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.State
-import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.util.BackgroundTaskUtil.syncPublisher
 import com.intellij.openapi.project.Project
@@ -21,10 +20,11 @@ import org.jetbrains.idea.svn.SvnUtil.createUrl
 import org.jetbrains.idea.svn.SvnVcs
 import org.jetbrains.idea.svn.api.Url
 import org.jetbrains.idea.svn.commandLine.SvnBindException
-import java.util.*
+import java.util.TreeMap
 
 private val LOG = logger<SvnBranchConfigurationManager>()
 
+@Service(Service.Level.PROJECT)
 @State(name = "SvnBranchConfigurationManager")
 internal class SvnBranchConfigurationManager(private val project: Project) : PersistentStateComponent<SvnBranchConfigurationManager.ConfigurationBean> {
   private val branchesLoader = ProgressManagerQueue(project, message("progress.title.svn.branches.preloader"))
@@ -114,7 +114,7 @@ internal class SvnBranchConfigurationManager(private val project: Project) : Per
       isUserInfoInUrl = persistedConfiguration.isUserinfoInUrl
     }
 
-    val storage = project.service<SvnLoadedBranchesStorage>()
+    val storage = SvnLoadedBranchesStorage.getInstance(project)
     for (branchLocation in persistedConfiguration.branchUrls.mapNotNull { addUserInfo(it, false, userInfo) }) {
       val storedBranches = storage.get(branchLocation)?.sorted() ?: mutableListOf()
       result.addBranches(branchLocation,
@@ -173,6 +173,6 @@ internal class SvnBranchConfigurationManager(private val project: Project) : Per
   companion object {
     @JvmStatic
     fun getInstance(project: Project): SvnBranchConfigurationManager =
-      ServiceManager.getService(project, SvnBranchConfigurationManager::class.java)!!.apply { initialize() }
+      project.getService(SvnBranchConfigurationManager::class.java)!!.apply { initialize() }
   }
 }

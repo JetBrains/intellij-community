@@ -18,9 +18,9 @@ class Test {
 class Usages {
   void bar() {
     Test t = new Test();
-    Test.<weak_warning descr="'Test.Foo' is deprecated and marked for removal(LIKE_DEPRECATED)">Foo</weak_warning> f =
-      new Test.<weak_warning descr="'Test.Foo' is deprecated and marked for removal(LIKE_DEPRECATED)">Foo</weak_warning>();
-    int i = t.<weak_warning descr="'foo' is deprecated and marked for removal(LIKE_DEPRECATED)">foo</weak_warning>;
-    t.<weak_warning descr="'foo()' is deprecated and marked for removal(LIKE_DEPRECATED)">foo</weak_warning>();
+    Test.<weak_warning descr="'Test.Foo' is deprecated and marked for removal">Foo</weak_warning> f =
+      new Test.<weak_warning descr="'Test.Foo' is deprecated and marked for removal">Foo</weak_warning>();
+    int i = t.<weak_warning descr="'foo' is deprecated and marked for removal">foo</weak_warning>;
+    t.<weak_warning descr="'foo()' is deprecated and marked for removal">foo</weak_warning>();
   }
 }

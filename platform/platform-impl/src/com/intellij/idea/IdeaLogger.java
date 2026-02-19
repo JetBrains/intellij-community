@@ -1,138 +1,239 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.idea;
 
-import com.intellij.diagnostic.LogMessage;
-import com.intellij.ide.plugins.IdeaPluginDescriptor;
+import com.github.benmanes.caffeine.cache.Cache;
+import com.github.benmanes.caffeine.cache.Caffeine;
+import com.intellij.diagnostic.DefaultIdeaErrorLogger;
+import com.intellij.diagnostic.LoadingState;
+import com.intellij.featureStatistics.fusCollectors.LifecycleUsageTriggerCollector;
 import com.intellij.ide.plugins.PluginManagerCore;
+import com.intellij.ide.plugins.PluginUtil;
 import com.intellij.ide.plugins.PluginUtilImpl;
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ex.ApplicationInfoEx;
-import com.intellij.openapi.application.impl.ApplicationImpl;
+import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Attachment;
-import com.intellij.openapi.diagnostic.ControlFlowException;
-import com.intellij.openapi.diagnostic.IdeaLoggingEvent;
-import com.intellij.openapi.diagnostic.Log4jBasedLogger;
+import com.intellij.openapi.diagnostic.JulLogger;
+import com.intellij.openapi.diagnostic.RuntimeExceptionWithAttachments;
+import com.intellij.openapi.diagnostic.UnhandledException;
+import com.intellij.openapi.util.objectTree.ThrowableInterner;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ExceptionUtil;
-import org.apache.log4j.DefaultThrowableRenderer;
-import org.apache.log4j.Logger;
-import org.apache.log4j.spi.LoggerRepository;
-import org.apache.log4j.spi.ThrowableRenderer;
-import org.apache.log4j.spi.ThrowableRendererSupport;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.VisibleForTesting;
 
-import java.util.Properties;
+import java.awt.Component;
+import java.awt.Graphics;
+import java.util.concurrent.CancellationException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Supplier;
+import java.util.logging.Logger;
 
-public final class IdeaLogger extends Log4jBasedLogger {
+public final class IdeaLogger extends JulLogger {
   @SuppressWarnings("StaticNonFinalField") public static String ourLastActionId = "";
   // when not null, holds the first of errors that occurred
   @SuppressWarnings("StaticNonFinalField") public static Exception ourErrorsOccurred;
 
+  /**
+   * We try to report exceptions thrown from frequently called methods (e.g. {@link Component#paint(Graphics)}) judiciously,
+   * so that instead of polluting the log with hundreds of identical {@link com.intellij.openapi.diagnostic.Logger#error(Throwable) LOG.errors}
+   * we print the error message and the stacktrace once in a while.
+   * <p>
+   * {@code -Didea.logger.exception.expiration.minutes=5} means to forget about this particular exception if it didn't occur for five minutes.
+   * <p>
+   * To disable the "mute frequent exceptions" feature completely, specify {@code -Didea.logger.exception.expiration.minutes=0}
+   */
+  private static final int EXPIRE_FREQUENT_EXCEPTIONS_AFTER_MINUTES = Integer.getInteger("idea.logger.exception.expiration.minutes", 8*60);
+
+  // must be as a separate class to avoid initialization as part of start-up (file logger configuration)
+  private static final class MyCache {
+    private static final Cache<@NotNull String, @NotNull AtomicInteger> cache = Caffeine.newBuilder()
+      .maximumSize(1000)
+      .expireAfterAccess(Math.max(EXPIRE_FREQUENT_EXCEPTIONS_AFTER_MINUTES, 0), TimeUnit.MINUTES)
+      .build();
+
+    private static @NotNull AtomicInteger getOrCreate(int hash, @NotNull Throwable t) {
+      return cache.get(hash + ":" + t, __ -> new AtomicInteger());
+    }
+  }
+
+  public static void dropFrequentExceptionsCaches() {
+    MyCache.cache.invalidateAll();
+    MyCache.cache.cleanUp();
+  }
+
+  private boolean isTooFrequentException(@Nullable Throwable t) {
+    if (t == null || !isMutingFrequentExceptionsEnabled() || !LoadingState.COMPONENTS_LOADED.isOccurred() || isDebugEnabled() || isTraceEnabled()) {
+      return false;
+    }
+
+    var hash = ThrowableInterner.computeAccurateTraceHashCode(t);
+    var counter = MyCache.getOrCreate(hash, t);
+    var occurrences = counter.incrementAndGet();
+    if (isFascinatingNumber(occurrences)) {
+      warn("Suppressed a frequent exception logged for the " + occurrences + (occurrences == 2 ? "nd" : "th") + " time: " +
+           shortenErrorMessage(t.getMessage()));
+    }
+    return occurrences != 1;
+  }
+
+  /**
+   * 2, 5, 10, 20, 50, 100, ...
+   */
+  private static boolean isFascinatingNumber(int number) {
+    if (number <= 1) return false;
+    while (number % 10 == 0) number /= 10;
+    return number == 1 || number == 2 || number == 5;
+  }
+
+  private static @NotNull String shortenErrorMessage(@Nullable String message) {
+    if (message == null) return "null";
+    int newLine = message.indexOf('\n');
+    message = message.substring(0, newLine != -1 ? newLine : message.length());
+    return StringUtil.shortenTextWithEllipsis(message, 300, 0);
+  }
+
+  private static void reportToFus(@NotNull Throwable t) {
+    if (!LoadingState.COMPONENTS_LOADED.isOccurred()) {
+      return;
+    }
+
+    Application app = ApplicationManager.getApplication();
+    if (app == null || app.isUnitTestMode() || app.isDisposed()) {
+      return;
+    }
+
+    PluginUtil pluginUtil;
+    try {
+      pluginUtil = PluginUtil.getInstance();
+    }
+    catch (CancellationException e) {
+      return;
+    }
+
+    if (pluginUtil != null) {
+      var pluginId = pluginUtil.findPluginId(t);
+      var kind = DefaultIdeaErrorLogger.getOOMErrorKind(t);
+      LifecycleUsageTriggerCollector.onError(pluginId, t, kind);
+    }
+  }
+
+  @VisibleForTesting
+  @ApiStatus.Internal
+  public static boolean isMutingFrequentExceptionsEnabled() {
+    return EXPIRE_FREQUENT_EXCEPTIONS_AFTER_MINUTES > 0;
+  }
+
   private static final Supplier<String> ourApplicationInfoProvider = () -> {
-    ApplicationInfoEx info = ApplicationInfoImpl.getShadowInstance();
+    var info = ApplicationInfoImpl.getShadowInstance();
     return info.getFullApplicationName() + "  " + "Build #" + info.getBuild().asString();
   };
 
-  private static final ThrowableRenderer ourThrowableRenderer = t -> {
-    String[] lines = DefaultThrowableRenderer.render(t);
-    int maxStackSize = 1024;
-    int maxExtraSize = 256;
-    if (lines.length > maxStackSize + maxExtraSize) {
-      String[] res = new String[maxStackSize + maxExtraSize + 1];
-      System.arraycopy(lines, 0, res, 0, maxStackSize);
-      res[maxStackSize] = "\t...";
-      System.arraycopy(lines, lines.length - maxExtraSize, res, maxStackSize + 1, maxExtraSize);
-      return res;
-    }
-    return lines;
-  };
-
-  public static @NotNull ThrowableRenderer getThrowableRenderer() {
-    return ourThrowableRenderer;
-  }
-
-  IdeaLogger(@NotNull Logger logger) {
+  @VisibleForTesting
+  @ApiStatus.Internal
+  public IdeaLogger(@NotNull Logger logger) {
     super(logger);
-    LoggerRepository repository = myLogger.getLoggerRepository();
-    if (repository instanceof ThrowableRendererSupport) {
-      ((ThrowableRendererSupport)repository).setThrowableRenderer(ourThrowableRenderer);
-    }
   }
 
   @Override
-  public void error(Object message) {
-    if (message instanceof IdeaLoggingEvent) {
-      myLogger.error(message);
-    }
-    else {
-      super.error(message);
-    }
-  }
-
-  @Override
-  public void error(String message, @Nullable Throwable t, Attachment @NotNull ... attachments) {
-    myLogger.error(LogMessage.createEvent(t != null ? t : new Throwable(), message, attachments));
+  public void info(String message, @Nullable Throwable t) {
+    if (isTooFrequentException(t)) return;
+    super.info(message, ensureNotControlFlow(t));
   }
 
   @Override
   public void warn(String message, @Nullable Throwable t) {
-    super.warn(message, checkException(t));
+    if (isTooFrequentException(t)) return;
+    super.warn(message, ensureNotControlFlow(t));
+  }
+
+  @Override
+  public void error(String message, @Nullable Throwable t, Attachment @NotNull ... attachments) {
+    if (isTooFrequentException(t)) return;
+
+    Throwable errorWithAttachment;
+    if (attachments.length == 0) {
+      errorWithAttachment = t;
+    }
+    else if (t != null) {
+      errorWithAttachment = new RuntimeExceptionWithAttachments(ensureNotControlFlow(t), attachments);
+    }
+    else {
+      errorWithAttachment = new RuntimeExceptionWithAttachments(new Throwable(), attachments);
+    }
+
+    error(message, errorWithAttachment);
   }
 
   @Override
   public void error(String message, @Nullable Throwable t, String @NotNull ... details) {
-    if (t instanceof ControlFlowException) {
-      myLogger.error(message, checkException(t));
-      ExceptionUtil.rethrow(t);
+    if (isTooFrequentException(t)) {
+      return;
     }
 
-    String detailString = String.join("\n", details);
+    var detailString = String.join("\n", details);
     if (!detailString.isEmpty()) {
       detailString = "\nDetails: " + detailString;
     }
 
     if (ourErrorsOccurred == null) {
-      String mess = "Logger errors occurred. See IDEA logs for details. " +
-                    (message == null || message.isEmpty() ? "" : "Error message is '" + message + "'");
+      var mess = "Logger errors occurred. See IDEA logs for details. " +
+                 (message == null || message.isEmpty() ? "" : "Error message is '" + message + "'");
       //noinspection AssignmentToStaticFieldFromInstanceMethod
       ourErrorsOccurred = new Exception(mess + detailString, t);
     }
-    myLogger.error(message + detailString, t);
+
+    logSevere(message + detailString, ensureNotControlFlow(t));
     logErrorHeader(t);
+
+    if (t != null && shouldRethrow(t)) {
+      ExceptionUtil.rethrow(t);
+    }
+
+    // Unhandled exception wraps real exception which might be control flow exception
+    if (t instanceof UnhandledException uh && shouldRethrow(uh.getCause())) {
+      ExceptionUtil.rethrow(uh.getCause());
+    }
+
+    if (t != null) {
+      reportToFus(t);
+    }
   }
 
   private void logErrorHeader(@Nullable Throwable t) {
-    myLogger.error(ourApplicationInfoProvider.get());
+    logSevere(ourApplicationInfoProvider.get());
 
-    Properties properties = System.getProperties();
-    myLogger.error("JDK: " + properties.getProperty("java.version", "unknown") +
-                   "; VM: " + properties.getProperty("java.vm.name", "unknown") +
-                   "; Vendor: " + properties.getProperty("java.vendor", "unknown"));
-    myLogger.error("OS: " + properties.getProperty("os.name", "unknown"));
+    var properties = System.getProperties();
+    logSevere("JDK: " + properties.getProperty("java.version", "unknown") +
+              "; VM: " + properties.getProperty("java.vm.name", "unknown") +
+              "; Vendor: " + properties.getProperty("java.vendor", "unknown"));
+    logSevere("OS: " + properties.getProperty("os.name", "unknown"));
 
     // do not use getInstance here - container maybe already disposed
     if (t != null && PluginManagerCore.arePluginsInitialized()) {
-      IdeaPluginDescriptor plugin = PluginManagerCore.getPlugin(PluginUtilImpl.doFindPluginId(t));
+      var plugin = PluginManagerCore.getPlugin(PluginUtilImpl.doFindPluginId(t));
       if (plugin != null && (!plugin.isBundled() || plugin.allowBundledUpdate())) {
-        myLogger.error("Plugin to blame: " + plugin.getName() + " version: " + plugin.getVersion());
+        logSevere("Plugin to blame: " + plugin.getName() + " version: " + plugin.getVersion());
       }
     }
 
-    ApplicationImpl application = (ApplicationImpl)ApplicationManager.getApplication();
-    if (application != null && application.getComponentCreated() && !application.isDisposed()) {
-      String lastPreformedActionId = ourLastActionId;
+    var application = ApplicationManagerEx.getApplicationEx();
+    if (application != null && application.isComponentCreated() && !application.isDisposed()) {
+      var lastPreformedActionId = ourLastActionId;
       if (lastPreformedActionId != null) {
-        myLogger.error("Last Action: " + lastPreformedActionId);
+        logSevere("Last Action: " + lastPreformedActionId);
       }
 
-      CommandProcessor commandProcessor = application.getServiceIfCreated(CommandProcessor.class);
+      var commandProcessor = application.getServiceIfCreated(CommandProcessor.class);
       if (commandProcessor != null) {
-        String currentCommandName = commandProcessor.getCurrentCommandName();
+        var currentCommandName = commandProcessor.getCurrentCommandName();
         if (currentCommandName != null) {
-          myLogger.error("Current Command: " + currentCommandName);
+          logSevere("Current Command: " + currentCommandName);
         }
       }
     }

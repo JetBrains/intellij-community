@@ -6,23 +6,31 @@ import com.intellij.history.core.LocalHistoryFacade;
 import com.intellij.history.core.changes.Change;
 import com.intellij.history.integration.IdeaGateway;
 import com.intellij.history.integration.revertion.UndoChangeRevertingVisitor;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 
-public class ChangeRange {
+@ApiStatus.Internal
+public final class ChangeRange {
+  private static final Logger LOG = Logger.getInstance(ChangeRange.class);
+
+  private final @Nullable Project myProject;
   private final IdeaGateway myGateway;
   private final LocalHistoryFacade myVcs;
   private final Long myFromChangeId;
-  @Nullable private final Long myToChangeId;
+  private final @Nullable Long myToChangeId;
 
-  public ChangeRange(IdeaGateway gw, LocalHistoryFacade vcs, @NotNull Long changeId) {
-    this(gw, vcs, changeId, changeId);
+  public ChangeRange(@Nullable Project project, IdeaGateway gw, LocalHistoryFacade vcs, @NotNull Long changeId) {
+    this(project, gw, vcs, changeId, changeId);
   }
 
-  private ChangeRange(IdeaGateway gw, LocalHistoryFacade vcs, @Nullable Long fromChangeId, @Nullable Long toChangeId) {
+  private ChangeRange(@Nullable Project project, IdeaGateway gw, LocalHistoryFacade vcs, @Nullable Long fromChangeId, @Nullable Long toChangeId) {
+    myProject = project;
     myGateway = gw;
     myVcs = vcs;
     myFromChangeId = fromChangeId;
@@ -41,7 +49,8 @@ public class ChangeRange {
     };
     myVcs.addListener(l, null);
     try {
-      myVcs.accept(new UndoChangeRevertingVisitor(myGateway, myToChangeId, myFromChangeId));
+      LOG.debug("Reverting: " + myFromChangeId + " -> " + myToChangeId);
+      myVcs.accept(new UndoChangeRevertingVisitor(myProject, myGateway, myToChangeId, myFromChangeId));
     }
     catch (UndoChangeRevertingVisitor.RuntimeIOException e) {
       throw (IOException)e.getCause();
@@ -54,6 +63,6 @@ public class ChangeRange {
       if (first.isNull()) first.set(reverse.myFromChangeId);
       if (last.isNull()) last.set(reverse.myToChangeId);
     }
-    return new ChangeRange(myGateway, myVcs, first.get(), last.get());
+    return new ChangeRange(myProject, myGateway, myVcs, first.get(), last.get());
   }
 }

@@ -1,15 +1,19 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
-/*
- * @author max
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.search;
 
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiAnnotation;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiJavaCodeReferenceElement;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiModifierList;
+import com.intellij.psi.PsiPackage;
+import com.intellij.psi.PsiPackageStatement;
 import com.intellij.psi.impl.java.stubs.index.JavaAnnotationIndex;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiSearchHelper;
@@ -21,11 +25,11 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
 
-public class AnnotatedPackagesSearcher implements QueryExecutor<PsiPackage, AnnotatedPackagesSearch.Parameters> {
+public final class AnnotatedPackagesSearcher implements QueryExecutor<PsiPackage, AnnotatedPackagesSearch.Parameters> {
   private static final Logger LOG = Logger.getInstance(AnnotatedPackagesSearcher.class);
 
   @Override
-  public boolean execute(@NotNull final AnnotatedPackagesSearch.Parameters p, @NotNull final Processor<? super PsiPackage> consumer) {
+  public boolean execute(final @NotNull AnnotatedPackagesSearch.Parameters p, final @NotNull Processor<? super PsiPackage> consumer) {
     final PsiClass annClass = p.getAnnotationClass();
     assert annClass.isAnnotationType() : "Annotation type should be passed to annotated packages search";
 
@@ -38,25 +42,22 @@ public class AnnotatedPackagesSearcher implements QueryExecutor<PsiPackage, Anno
     final String annotationShortName = ReadAction.compute(() -> annClass.getName());
     assert annotationShortName != null;
 
-    final Collection<PsiAnnotation> annotations = JavaAnnotationIndex.getInstance().get(annotationShortName, psiManager.getProject(),
+    final Collection<PsiAnnotation> annotations = JavaAnnotationIndex.getInstance().getAnnotations(annotationShortName, psiManager.getProject(),
                                                                                         useScope);
 
     for (final PsiAnnotation annotation : annotations) {
       boolean accepted = ReadAction.compute(() -> {
         PsiModifierList modList = (PsiModifierList)annotation.getParent();
         final PsiElement owner = modList.getParent();
-        if (owner instanceof PsiClass) {
-          PsiClass candidate = (PsiClass)owner;
-          if ("package-info".equals(candidate.getName())) {
-            LOG.assertTrue(candidate.isValid());
-            final PsiJavaCodeReferenceElement ref = annotation.getNameReferenceElement();
-            if (ref != null && psiManager.areElementsEquivalent(ref.resolve(), annClass) &&
-                useScope.contains(candidate.getContainingFile().getVirtualFile())) {
-              final String qname = candidate.getQualifiedName();
-              if (qname != null && !consumer.process(JavaPsiFacade.getInstance(psiManager.getProject()).findPackage(
-                qname.substring(0, qname.lastIndexOf('.'))))) {
-                return false;
-              }
+        if (owner instanceof PsiClass candidate && "package-info".equals(candidate.getName())) {
+          LOG.assertTrue(candidate.isValid());
+          final PsiJavaCodeReferenceElement ref = annotation.getNameReferenceElement();
+          if (ref != null && psiManager.areElementsEquivalent(ref.resolve(), annClass) &&
+              useScope.contains(candidate.getContainingFile().getVirtualFile())) {
+            final String qname = candidate.getQualifiedName();
+            if (qname != null && !consumer.process(JavaPsiFacade.getInstance(psiManager.getProject()).findPackage(
+              qname.substring(0, qname.lastIndexOf('.'))))) {
+              return false;
             }
           }
         }
@@ -96,7 +97,7 @@ public class AnnotatedPackagesSearcher implements QueryExecutor<PsiPackage, Anno
   private static class PackageInfoFilesOnly extends GlobalSearchScope {
 
     @Override
-    public boolean contains(@NotNull final VirtualFile file) {
+    public boolean contains(final @NotNull VirtualFile file) {
       return "package-info.java".equals(file.getName());
     }
 
@@ -106,7 +107,7 @@ public class AnnotatedPackagesSearcher implements QueryExecutor<PsiPackage, Anno
     }
 
     @Override
-    public boolean isSearchInModuleContent(@NotNull final Module aModule) {
+    public boolean isSearchInModuleContent(final @NotNull Module aModule) {
       return true;
     }
   }

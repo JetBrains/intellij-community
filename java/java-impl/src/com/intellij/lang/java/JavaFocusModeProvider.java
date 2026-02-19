@@ -1,18 +1,24 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.java;
 
 import com.intellij.codeInsight.daemon.impl.focusMode.FocusModeProvider;
 import com.intellij.openapi.util.Segment;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiAnonymousClass;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiClassInitializer;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.SyntaxTraverser;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.List;
 
-public class JavaFocusModeProvider implements FocusModeProvider {
-  @NotNull
+public final class JavaFocusModeProvider implements FocusModeProvider {
   @Override
-  public List<? extends Segment> calcFocusZones(@NotNull PsiFile file) {
-    return SyntaxTraverser.psiTraverser(file)
+  public @Unmodifiable @NotNull List<? extends Segment> calcFocusZones(@NotNull PsiFile psiFile) {
+    return SyntaxTraverser.psiTraverser(psiFile)
       .postOrderDfsTraversal()
       .filter(e -> e instanceof PsiClass || e instanceof PsiMethod || e instanceof PsiClassInitializer)
       .filter(e -> {

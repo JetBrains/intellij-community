@@ -1,4 +1,5 @@
 # coding=utf-8
+import _jb_utils
 
 
 class ParallelTreeManager(object):
@@ -68,6 +69,6 @@ class ParallelTreeManager(object):
         :return: (current_node_id, parent_node_id) or None, None if message must be ignored
         """
         try:
-            return self._branches[tuple(test_name.split("."))]
+            return self._branches[tuple(_jb_utils.test_to_list(test_name))]
         except KeyError:
             return None, None

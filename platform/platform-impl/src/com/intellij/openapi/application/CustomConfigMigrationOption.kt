@@ -1,16 +1,14 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application
 
-import com.google.common.annotations.VisibleForTesting
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.util.io.delete
-import com.intellij.util.io.exists
-import com.intellij.util.io.systemIndependentPath
-import com.intellij.util.io.write
+import com.intellij.openapi.util.io.NioFiles
+import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.VisibleForTesting
+import java.io.IOException
 import java.nio.file.Files
+import java.nio.file.NoSuchFileException
 import java.nio.file.Path
-
-private val log = logger<CustomConfigMigrationOption>()
 
 /**
  * [A marker file](com.intellij.openapi.application.ConfigImportHelper.CUSTOM_MARKER_FILE_NAME) is created in the config directory
@@ -18,6 +16,7 @@ private val log = logger<CustomConfigMigrationOption>()
  *
  * - If we need to start with a clean config ("Restore Default Settings" action), the file is empty.
  * - If we need to import config from the given place ("Import Settings" action), the format is `import <path>`.
+ * - If we need to import config from a previous version the same as it happens if the config directory is absent, the format is `merge-configs`.
  * - If the import has already been performed, but the IDE was restarted (because custom vmoptions were added or removed),
  * and we need to restore some values of system properties indicating the first start after importing the config,
  * then the format is `properties <system properties separated by space`, e.g.
@@ -25,13 +24,17 @@ private val log = logger<CustomConfigMigrationOption>()
  * properties intellij.first.ide.session intellij.config.imported.in.current.session
  * ```
  */
+@ApiStatus.Internal
 sealed class CustomConfigMigrationOption {
-  fun writeConfigMarkerFile() {
-    val markerFile = getCustomConfigMarkerFilePath(PathManager.getConfigDir())
-    if (markerFile.exists()) {
+  @JvmOverloads
+  @Throws(IOException::class)
+  fun writeConfigMarkerFile(configDir: Path = PathManager.getOriginalConfigDir()) {
+    val markerFile = getCustomConfigMarkerFilePath(configDir)
+    if (Files.exists(markerFile)) {
       log.error("Marker file $markerFile shouldn't exist")
     }
-    markerFile.write(getStringPresentation())
+    NioFiles.createDirectories(markerFile.parent)
+    Files.writeString(markerFile, getStringPresentation(), Charsets.UTF_8)
   }
 
   abstract fun getStringPresentation(): String
@@ -40,75 +43,103 @@ sealed class CustomConfigMigrationOption {
 
   object StartWithCleanConfig : CustomConfigMigrationOption() {
     override fun getStringPresentation(): String = ""
-
     override fun toString(): String = "Start with clean config"
   }
 
   class MigrateFromCustomPlace(val location: Path) : CustomConfigMigrationOption() {
-    override fun getStringPresentation(): String = IMPORT_PREFIX + location.systemIndependentPath
+    override fun getStringPresentation(): String = IMPORT_PREFIX + location.toString().replace('\\', '/')
   }
 
-  class SetProperties(val properties: List<String>) : CustomConfigMigrationOption() {
-    override fun getStringPresentation(): String = PROPERTIES_PREFIX + properties.joinToString(separator = " ")
+  /**
+   * A variant of [MigrateFromCustomPlace] which migrates plugins only. 
+   * This option is supposed to be used only to migrate plugins from a regular IDE to its frontend process. 
+   * It'll be removed when the frontend process starts loading plugins from the same directory as a regular IDE (RDCT-1738).  
+   */
+  class MigratePluginsFromCustomPlace(val configLocation: Path) : CustomConfigMigrationOption() {
+    override fun getStringPresentation(): String = MIGRATE_PLUGINS_PREFIX + configLocation.toString().replace('\\', '/')
+  }
+
+  class SetProperties(val properties: List<Pair<String, String>>) : CustomConfigMigrationOption() {
+    override fun getStringPresentation(): String = SET_PROPERTIES_PREFIX + properties.joinToString(separator = ";") { (k, v) -> "$k $v" }
+  }
+
+  object MergeConfigs : CustomConfigMigrationOption() {
+    override fun getStringPresentation(): String = MERGE_CONFIGS_COMMAND
   }
 
   companion object {
+    private val log = logger<CustomConfigMigrationOption>()
+
     private const val IMPORT_PREFIX = "import "
-    private const val PROPERTIES_PREFIX = "properties "
+    private const val MIGRATE_PLUGINS_PREFIX = "migrate-plugins "
+    private const val SET_PROPERTIES_PREFIX = "set-properties "
+    private const val MERGE_CONFIGS_COMMAND = "merge-configs"
 
     @JvmStatic
     fun readCustomConfigMigrationOptionAndRemoveMarkerFile(configDir: Path): CustomConfigMigrationOption? {
       val markerFile = getCustomConfigMarkerFilePath(configDir)
-      if (!markerFile.exists()) return null
 
       try {
-        val lines = Files.readAllLines(markerFile)
-        if (lines.isEmpty()) return StartWithCleanConfig
-        val line = lines.first()
-        when {
-          line.isEmpty() -> return StartWithCleanConfig
+        val lines = Files.readAllLines(markerFile, Charsets.UTF_8)
+        val line = lines.firstOrNull()
+        return when {
+          line.isNullOrEmpty() -> StartWithCleanConfig
 
           line.startsWith(IMPORT_PREFIX) -> {
             val path = markerFile.fileSystem.getPath(line.removePrefix(IMPORT_PREFIX))
-            if (!path.exists()) {
-              log.warn("$markerFile points to non-existent config: [$lines]")
-              return null
+            if (Files.exists(path)) {
+              MigrateFromCustomPlace(path)
             }
-            return MigrateFromCustomPlace(path)
+            else {
+              log.warn("$markerFile points to non-existent config: [$lines]")
+              null
+            }
           }
 
-          line.startsWith(PROPERTIES_PREFIX) -> {
-            val properties = line.removePrefix(PROPERTIES_PREFIX).split(' ')
-            return SetProperties(properties)
+          line.startsWith(MIGRATE_PLUGINS_PREFIX) -> {
+            MigratePluginsFromCustomPlace(markerFile.fileSystem.getPath(line.removePrefix(MIGRATE_PLUGINS_PREFIX)))
           }
+
+          // legacy SetProperties parsing
+          line.startsWith("properties ") -> {
+            SetProperties(line.removePrefix("properties ").split(' ').map { it to "true" })
+          }
+
+          line.startsWith(SET_PROPERTIES_PREFIX) -> {
+            SetProperties(line.removePrefix(SET_PROPERTIES_PREFIX).split(';').mapNotNull {
+              val list = it.split(' ', limit = 2)
+              if (list.size < 2) null else list[0] to list[1]
+            })
+          }
+
+          line == MERGE_CONFIGS_COMMAND -> MergeConfigs
 
           else -> {
             log.error("Invalid format of $markerFile: $lines")
-            return null
+            null
           }
         }
       }
-      catch (e: Exception) {
+      catch (_: NoSuchFileException) {
+        return null
+      }
+      catch (_: Exception) {
         log.warn("Couldn't load content of $markerFile")
         return null
       }
       finally {
-        removeMarkerFile(markerFile)
-      }
-    }
-
-    private fun removeMarkerFile(markerFile: Path) {
-      try {
-        markerFile.delete()
-      }
-      catch (e: Exception) {
-        log.warn("Couldn't delete the custom config migration file $markerFile", e)
+        try {
+          Files.deleteIfExists(markerFile)
+        }
+        catch (e: Exception) {
+          log.warn("Couldn't delete the custom config migration file $markerFile", e)
+        }
       }
     }
 
     @VisibleForTesting
-    fun getCustomConfigMarkerFilePath(configDir: Path): Path {
-      return configDir.resolve(ConfigImportHelper.CUSTOM_MARKER_FILE_NAME)
-    }
+    fun getCustomConfigMarkerFilePath(configDir: Path): Path = configDir.resolve(InitialConfigImportState.CUSTOM_MARKER_FILE_NAME)
+    
+    fun doesCustomConfigMarkerExist(configDir: Path): Boolean = Files.exists(getCustomConfigMarkerFilePath(configDir))
   }
 }

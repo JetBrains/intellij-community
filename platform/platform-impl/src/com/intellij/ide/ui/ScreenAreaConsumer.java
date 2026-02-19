@@ -4,7 +4,8 @@ package com.intellij.ide.ui;
 import com.intellij.openapi.Disposable;
 import org.jetbrains.annotations.NotNull;
 
-import java.awt.*;
+import java.awt.Rectangle;
+import java.awt.Window;
 
 public interface ScreenAreaConsumer extends Disposable {
   @NotNull

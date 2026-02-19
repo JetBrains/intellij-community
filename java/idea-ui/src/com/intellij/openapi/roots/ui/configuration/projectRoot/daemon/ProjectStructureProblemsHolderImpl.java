@@ -1,16 +1,17 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.ui.configuration.projectRoot.daemon;
 
 import com.intellij.ide.JavaUiBundle;
-import com.intellij.lang.LangBundle;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.HtmlBuilder;
+import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.util.SmartList;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xml.util.XmlStringUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collections;
 import java.util.List;
 
 public class ProjectStructureProblemsHolderImpl implements ProjectStructureProblemsHolder {
@@ -22,8 +23,14 @@ public class ProjectStructureProblemsHolderImpl implements ProjectStructureProbl
                               @NotNull ProjectStructureProblemType problemType,
                               @NotNull PlaceInProjectStructure place,
                               @Nullable ConfigurationErrorQuickFix fix) {
-    final List<ConfigurationErrorQuickFix> fixes = fix != null ? Collections.singletonList(fix) : Collections.emptyList();
-    registerProblem(new ProjectStructureProblemDescription(message, description, place, problemType, fixes));
+    final List<ConfigurationErrorQuickFix> fixes = ContainerUtil.createMaybeSingletonList(fix);
+    registerProblem(new ProjectStructureProblemDescription(message,
+                                                           description != null ? HtmlChunk.raw(description) : HtmlChunk.empty(),
+                                                           place,
+                                                           problemType,
+                                                           ProjectStructureProblemDescription.ProblemLevel.PROJECT,
+                                                           fixes,
+                                                           true));
   }
 
   @Override
@@ -71,8 +78,7 @@ public class ProjectStructureProblemsHolderImpl implements ProjectStructureProbl
     }
   }
 
-  @Nullable
-  public List<ProjectStructureProblemDescription> getProblemDescriptions() {
+  public @Nullable List<ProjectStructureProblemDescription> getProblemDescriptions() {
     return myProblemDescriptions;
   }
 }

@@ -15,8 +15,8 @@
  */
 package org.intellij.lang.xpath.psi;
 
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public interface XPathStep extends XPathExpression {
     @Nullable

@@ -1,4 +1,4 @@
-// "Change 'new Object()' to 'new String()'" "true"
+// "Change 'new Object()' to 'new String()'" "true-preview"
 public class TTT {
     void f() {
         String s = new String(<caret>);

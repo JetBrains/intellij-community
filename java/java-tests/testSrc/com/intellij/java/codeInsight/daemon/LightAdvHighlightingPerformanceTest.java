@@ -15,7 +15,10 @@ import com.intellij.openapi.extensions.ExtensionsArea;
 import com.intellij.openapi.extensions.impl.ExtensionPointImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectCoreUtil;
+import com.intellij.openapi.project.ProjectManager;
+import com.intellij.openapi.project.ex.ProjectEx;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
+import com.intellij.openapi.project.impl.ProjectManagerImpl;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
@@ -23,27 +26,29 @@ import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiRecursiveElementVisitor;
 import com.intellij.psi.impl.source.tree.injected.ConcatenationInjectorManager;
 import com.intellij.testFramework.IdeaTestUtil;
+import com.intellij.testFramework.PerformanceUnitTest;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.SkipSlowTestLocally;
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl;
-import com.intellij.util.TimeoutUtil;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.tools.ide.metrics.benchmark.Benchmark;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
 import java.util.List;
 
 @SkipSlowTestLocally
+@PerformanceUnitTest
 public class LightAdvHighlightingPerformanceTest extends LightDaemonAnalyzerTestCase {
   @Override
   protected void setUp() throws Exception {
     super.setUp();
 
     ExtensionsArea rootArea = ApplicationManager.getApplication().getExtensionArea();
-    blockUntil(rootArea.getExtensionPoint(LanguageAnnotators.EP_NAME), getTestRootDisposable());
-    blockUntil(rootArea.getExtensionPoint(LineMarkerProviders.EP_NAME), getTestRootDisposable());
-    blockUntil(ConcatenationInjectorManager.EP_NAME.getPoint(getProject()), getTestRootDisposable());
-    blockUntil(MultiHostInjector.MULTIHOST_INJECTOR_EP_NAME.getPoint(getProject()), getTestRootDisposable());
+    blockExtensionUntil(rootArea.getExtensionPoint(LanguageAnnotators.EP_NAME), getTestRootDisposable());
+    blockExtensionUntil(rootArea.getExtensionPoint(LineMarkerProviders.EP_NAME), getTestRootDisposable());
+    blockExtensionUntil(ConcatenationInjectorManager.EP_NAME.getPoint(getProject()), getTestRootDisposable());
+    blockExtensionUntil(MultiHostInjector.MULTIHOST_INJECTOR_EP_NAME.getPoint(getProject()), getTestRootDisposable());
 
     IntentionManager.getInstance().getAvailableIntentions();  // hack to avoid slowdowns in PyExtensionFactory
     PathManagerEx.getTestDataPath(); // to cache stuff
@@ -54,7 +59,7 @@ public class LightAdvHighlightingPerformanceTest extends LightDaemonAnalyzerTest
     return IdeaTestUtil.getMockJdk17(); // has to have awt
   }
 
-  private static <T> void blockUntil(@NotNull ExtensionPoint<T> extensionPoint, @NotNull Disposable parent) {
+  private static <T> void blockExtensionUntil(@NotNull ExtensionPoint<T> extensionPoint, @NotNull Disposable parent) {
     ((ExtensionPointImpl<T>)extensionPoint).maskAll(Collections.emptyList(), parent, false);
   }
 
@@ -62,75 +67,81 @@ public class LightAdvHighlightingPerformanceTest extends LightDaemonAnalyzerTest
     return LightAdvHighlightingTest.BASE_PATH + "/" + getTestName(true) + suffix + ".java";
   }
 
-  private List<HighlightInfo> doTest(int maxMillis) {
-    configureByFile(getFilePath(""));
-    return startTest(maxMillis);
-  }
-
-  private List<HighlightInfo> startTest(int maxMillis) {
+  private void startTest() {
     PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
     assertNotNull(getFile().getText()); //to load text
     CodeInsightTestFixtureImpl.ensureIndexesUpToDate(getProject());
 
-    PlatformTestUtil.startPerformanceTest(getTestName(false), maxMillis, this::doHighlighting)
+    Benchmark.newBenchmark(getTestName(false), this::doHighlighting)
       .setup(() -> PsiManager.getInstance(getProject()).dropPsiCaches())
-      .reattemptUntilJitSettlesDown()
-      .usesAllCPUCores().assertTiming();
-
-    return highlightErrors();
+      .start();
   }
 
   public void testAThinlet() {
-    List<HighlightInfo> errors = doTest(8_000);
-    if (1170 != errors.size()) {
+    configureByFile(getFilePath(""));
+    List<HighlightInfo> errors = highlightErrors();
+    if (1165 != errors.size()) {
       doTest(getFilePath("_hl"), false, false);
       fail("Actual: " + errors.size());
     }
+    startTest();
   }
 
   public void testAClassLoader() {
-    List<HighlightInfo> errors = doTest(800);
-    if (92 != errors.size()) {
+    configureByFile(getFilePath(""));
+    List<HighlightInfo> errors = highlightErrors();
+    if (90 != errors.size()) {
       doTest(getFilePath("_hl"), false, false);
       fail("Actual: " + errors.size());
     }
+    startTest();
   }
 
   public void testDuplicateMethods() {
     int N = 1000;
     StringBuilder text = new StringBuilder(N * 100).append("class X {\n");
-    for (int i = 0; i < N; i++) text.append("public void visit(C").append(i).append(" param) {}\n");
-    for (int i = 0; i < N; i++) text.append("class C").append(i).append(" {}\n");
+    for (int i = 0; i < N; i++) {
+      text.append("public void visit(C").append(i).append(" param) {}\n");
+    }
+    for (int i = 0; i < N; i++) {
+      text.append("class C").append(i).append(" {}\n");
+    }
     text.append("}");
     configureFromFileText("x.java", text.toString());
-
-    List<HighlightInfo> infos = startTest(3_300);
-    assertEmpty(infos);
+    assertEmpty(highlightErrors());
+    startTest();
   }
 
   public void testGetProjectPerformance() {
     configureByFile("/psi/resolve/ThinletBig.java");
+    ProjectManager.getInstance().getDefaultProject();
     // wait for default project to dispose, otherwise it will be very slow
+    // in the process, test that "the only open project" optimization is not broken
     while (ProjectManagerEx.getInstanceEx().isDefaultProjectInitialized()) {
-      UIUtil.dispatchAllInvocationEvents();
-      if (System.currentTimeMillis() % 10_000 < 100) {
-        System.out.println("waiting for default project dispose...");
-        TimeoutUtil.sleep(100);
-      }
+      LOG.debug("waiting for default project dispose...");
+      ((ProjectManagerImpl)ProjectManager.getInstance()).disposeDefaultProjectAndCleanupComponentsForDynamicPluginTests();
+      PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
     }
-    assertNotNull(ProjectCoreUtil.theOnlyOpenProject());
+    String message = ContainerUtil.map(ProjectManagerEx.getInstance().getOpenProjects(), p -> p + "; creation trace:"+((ProjectEx)p).getCreationTrace()+"\n").toString();
+    assertNotNull(message, ProjectCoreUtil.theOnlyOpenProject());
     getFile().accept(new PsiRecursiveElementVisitor() {});
     Project myProject = getProject();
-    PlatformTestUtil.startPerformanceTest("getProject() for nested elements", 300, () -> {
-      getFile().accept(new PsiRecursiveElementVisitor() {
-        @Override
-        public void visitElement(@NotNull PsiElement element) {
-          for (int i = 0; i < 10; i++) {
-            assertSame(myProject, element.getProject());
+    Benchmark.newBenchmark("getProject() for nested elements", () -> {
+      for (int k=0; k<5; k++) {
+        getFile().accept(new PsiRecursiveElementVisitor() {
+          int c;
+          @Override
+          public void visitElement(@NotNull PsiElement element) {
+            for (int i = 0; i < 100; i++) {
+              assertSame(myProject, element.getProject());
+            }
+            if (c++ % 100 == 0) {
+              assertNotNull(ProjectCoreUtil.theOnlyOpenProject());
+            }
+            super.visitElement(element);
           }
-          super.visitElement(element);
-        }
-      });
-    }).assertTiming();
+        });
+      }
+    }).start();
   }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.zmlx.hg4idea.branch;
 
 import com.intellij.CommonBundle;
@@ -10,10 +10,10 @@ import com.intellij.dvcs.ui.NewBranchAction;
 import com.intellij.dvcs.ui.PopupElementWithAdditionalInfo;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.ActionGroup;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
-import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.progress.util.BackgroundTaskUtil;
@@ -21,8 +21,12 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.VcsBundle;
-import com.intellij.openapi.vcs.changes.*;
+import com.intellij.openapi.vcs.changes.Change;
+import com.intellij.openapi.vcs.changes.ChangeListManager;
+import com.intellij.openapi.vcs.changes.ChangesUtil;
+import com.intellij.openapi.vcs.changes.LocalChangeList;
 import com.intellij.openapi.vcs.changes.ui.CommitChangeListDialog;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -51,17 +55,18 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 
 import static com.intellij.dvcs.ui.BranchActionGroupPopup.wrapWithMoreActionIfNeeded;
 import static com.intellij.dvcs.ui.BranchActionUtil.FAVORITE_BRANCH_COMPARATOR;
 import static com.intellij.dvcs.ui.BranchActionUtil.getNumOfTopShownBranches;
+import static org.zmlx.hg4idea.HgNotificationIdsHolder.BRANCH_CREATION_ERROR;
 import static org.zmlx.hg4idea.util.HgUtil.getNewBranchNameFromUser;
 import static org.zmlx.hg4idea.util.HgUtil.getSortedNamesWithoutHashes;
 
-public class HgBranchPopupActions {
-
-  @NotNull private final Project myProject;
-  @NotNull private final HgRepository myRepository;
+public final class HgBranchPopupActions {
+  private final @NotNull Project myProject;
+  private final @NotNull HgRepository myRepository;
 
   HgBranchPopupActions(@NotNull Project project, @NotNull HgRepository repository) {
     myProject = project;
@@ -93,7 +98,8 @@ public class HgBranchPopupActions {
       .toList();
     int topShownBookmarks = getNumOfTopShownBranches(bookmarkActions);
     if (currentBookmark != null) {
-      bookmarkActions.add(0, new CurrentActiveBookmark(myProject, Collections.singletonList(myRepository), currentBookmark));
+      bookmarkActions = ContainerUtil.prepend(bookmarkActions, new CurrentActiveBookmark(myProject, Collections.singletonList(myRepository),
+                                                                                         currentBookmark));
       topShownBookmarks++;
     }
     wrapWithMoreActionIfNeeded(myProject, popupGroup, bookmarkActions, topShownBookmarks,
@@ -102,21 +108,22 @@ public class HgBranchPopupActions {
     //only opened branches have to be shown
     popupGroup.addSeparator(specificRepository == null ?
                             HgBundle.message("hg4idea.branch.branches.separator") :
-                            HgBundle.message("hg4idea.branch.branches.in.repo.separator", DvcsUtil.getShortRepositoryName(specificRepository)));
+                            HgBundle.message("hg4idea.branch.branches.in.repo.separator",
+                                             DvcsUtil.getShortRepositoryName(specificRepository)));
     List<BranchActions> branchActions = StreamEx.of(myRepository.getOpenedBranches())
       .sorted(StringUtil::naturalCompare)
       .filter(b -> !b.equals(myRepository.getCurrentBranch()))
       .map(b -> new BranchActions(myProject, Collections.singletonList(myRepository), b))
       .sorted(FAVORITE_BRANCH_COMPARATOR)
+      .prepend(new CurrentBranch(myProject, Collections.singletonList(myRepository), myRepository.getCurrentBranch()))
       .toList();
-    branchActions.add(0, new CurrentBranch(myProject, Collections.singletonList(myRepository), myRepository.getCurrentBranch()));
     wrapWithMoreActionIfNeeded(myProject, popupGroup, branchActions, getNumOfTopShownBranches(branchActions) + 1,
                                firstLevelGroup ? HgBranchPopup.SHOW_ALL_BRANCHES_KEY : null, firstLevelGroup);
     return popupGroup;
   }
 
   public static class HgNewBranchAction extends NewBranchAction<HgRepository> {
-    @NotNull final HgRepository myPreselectedRepo;
+    final @NotNull HgRepository myPreselectedRepo;
 
     public HgNewBranchAction(@NotNull Project project, @NotNull List<HgRepository> repositories, @NotNull HgRepository preselectedRepo) {
       super(project, repositories);
@@ -137,14 +144,14 @@ public class HgBranchPopupActions {
       }.queue();
     }
 
-    public void createNewBranchInCurrentThread(@NotNull final String name) {
+    public void createNewBranchInCurrentThread(final @NotNull String name) {
       for (final HgRepository repository : myRepositories) {
         try {
           HgCommandResult result = new HgBranchCreateCommand(myProject, repository.getRoot(), name).executeInCurrentThread();
           repository.update();
           if (HgErrorUtil.hasErrorsInCommandExecution(result)) {
             new HgCommandResultNotifier(myProject)
-              .notifyError("hg.branch.creation.error",
+              .notifyError(BRANCH_CREATION_ERROR,
                            result,
                            HgBundle.message("hg4idea.branch.creation.error"),
                            HgBundle.message("hg4idea.branch.creation.error.msg", name));
@@ -152,7 +159,7 @@ public class HgBranchPopupActions {
         }
         catch (HgCommandException exception) {
           HgErrorUtil.handleException(myProject,
-                                      "hg.branch.creation.error",
+                                      BRANCH_CREATION_ERROR,
                                       HgBundle.message("hg4idea.branch.cannot.create"),
                                       exception);
         }
@@ -160,9 +167,9 @@ public class HgBranchPopupActions {
     }
   }
 
-  public static class HgCloseBranchAction extends DumbAwareAction {
-    @NotNull private final List<HgRepository> myRepositories;
-    @NotNull final HgRepository myPreselectedRepo;
+  static final class HgCloseBranchAction extends DumbAwareAction {
+    private final @NotNull List<HgRepository> myRepositories;
+    final @NotNull HgRepository myPreselectedRepo;
 
     HgCloseBranchAction(@NotNull List<HgRepository> repositories, @NotNull HgRepository preselectedRepo) {
       super(HgBundle.messagePointer("action.hg4idea.branch.close", repositories.size()),
@@ -176,13 +183,12 @@ public class HgBranchPopupActions {
     public void actionPerformed(@NotNull AnActionEvent e) {
       final Project project = myPreselectedRepo.getProject();
       StoreUtil.saveDocumentsAndProjectSettings(project);
-      ChangeListManager.getInstance(project)
-        .invokeAfterUpdate(() -> commitAndCloseBranch(project), InvokeAfterUpdateMode.SYNCHRONOUS_CANCELLABLE, VcsBundle
-                             .message("waiting.changelists.update.for.show.commit.dialog.message"),
-                                                               ModalityState.current());
+      ChangeListManager.getInstance(project).invokeAfterUpdateWithModal(
+        true, VcsBundle.message("waiting.changelists.update.for.show.commit.dialog.message"),
+        () -> commitAndCloseBranch(project));
     }
 
-    private void commitAndCloseBranch(@NotNull final Project project) {
+    private void commitAndCloseBranch(final @NotNull Project project) {
       final LocalChangeList activeChangeList = ChangeListManager.getInstance(project).getDefaultChangeList();
       HgVcs vcs = HgVcs.getInstance(project);
       assert vcs != null;
@@ -190,10 +196,16 @@ public class HgBranchPopupActions {
       List<Change> changesForRepositories = ContainerUtil.filter(activeChangeList.getChanges(),
                                                                  change -> myRepositories.contains(repositoryManager.getRepositoryForFile(
                                                                    ChangesUtil.getFilePath(change))));
-      HgCloseBranchExecutor closeBranchExecutor = vcs.getCloseBranchExecutor();
-      closeBranchExecutor.setRepositories(myRepositories);
-      CommitChangeListDialog.commitChanges(project, changesForRepositories, changesForRepositories, activeChangeList,
-                                           Collections.singletonList(closeBranchExecutor), false, vcs, "Close Branch", null, false); //NON-NLS
+      Set<AbstractVcs> affectedVcses = Collections.singleton(vcs);
+      List<HgCloseBranchExecutor> executors = Collections.singletonList(new HgCloseBranchExecutor(myRepositories));
+      String commitMessage = "Close Branch"; //NON-NLS
+      CommitChangeListDialog.showCommitDialog(project, affectedVcses, changesForRepositories, activeChangeList,
+                                              executors, false, commitMessage, null);
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.BGT;
     }
 
     @Override
@@ -204,9 +216,9 @@ public class HgBranchPopupActions {
     }
   }
 
-  public static class HgNewBookmarkAction extends DumbAwareAction {
-    @NotNull protected final List<HgRepository> myRepositories;
-    @NotNull final HgRepository myPreselectedRepo;
+  static final class HgNewBookmarkAction extends DumbAwareAction {
+    final @NotNull List<HgRepository> myRepositories;
+    final @NotNull HgRepository myPreselectedRepo;
 
     HgNewBookmarkAction(@NotNull List<HgRepository> repositories, @NotNull HgRepository preselectedRepo) {
       super(HgBundle.messagePointer("action.hg4idea.bookmark.new"),
@@ -217,11 +229,13 @@ public class HgBranchPopupActions {
     }
 
     @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.BGT;
+    }
+
+    @Override
     public void update(@NotNull AnActionEvent e) {
-      if (DvcsUtil.anyRepositoryIsFresh(myRepositories)) {
-        e.getPresentation().setEnabled(false);
-        e.getPresentation().setDescription(HgBundle.message("action.hg4idea.bookmark.not.possible.before.commit"));
-      }
+      DvcsUtil.disableActionIfAnyRepositoryIsFresh(e, myRepositories, HgBundle.message("action.not.possible.in.fresh.repo.new.bookmark"));
     }
 
     @Override
@@ -238,9 +252,9 @@ public class HgBranchPopupActions {
   }
 
   public static class HgShowUnnamedHeadsForCurrentBranchAction extends ActionGroup implements DumbAware {
-    @NotNull final HgRepository myRepository;
-    @NotNull final String myCurrentBranchName;
-    @NotNull Collection<Hash> myHeads;
+    final @NotNull HgRepository myRepository;
+    final @NotNull String myCurrentBranchName;
+    final @NotNull Collection<Hash> myHeads;
 
     public HgShowUnnamedHeadsForCurrentBranchAction(@NotNull HgRepository repository) {
       super(Presentation.NULL_STRING, true);
@@ -250,8 +264,7 @@ public class HgBranchPopupActions {
       myHeads = filterUnnamedHeads();
     }
 
-    @NotNull
-    private Collection<Hash> filterUnnamedHeads() {
+    private @NotNull Collection<Hash> filterUnnamedHeads() {
       Collection<Hash> branchWithHashes = myRepository.getBranches().get(myCurrentBranchName);
       String currentHead = myRepository.getCurrentRevision();
       if (branchWithHashes == null || currentHead == null || myRepository.getState() != Repository.State.NORMAL) {
@@ -277,7 +290,12 @@ public class HgBranchPopupActions {
     }
 
     @Override
-    public void update(@NotNull final AnActionEvent e) {
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.BGT;
+    }
+
+    @Override
+    public void update(final @NotNull AnActionEvent e) {
       if (myRepository.isFresh() || myHeads.isEmpty()) {
         e.getPresentation().setEnabledAndVisible(false);
       }
@@ -293,8 +311,8 @@ public class HgBranchPopupActions {
     }
   }
 
-  public static class CurrentBranch extends BranchActions implements PopupElementWithAdditionalInfo {
-    public CurrentBranch(@NotNull Project project, @NotNull List<HgRepository> repositories, @NotNull String branchName) {
+  static final class CurrentBranch extends BranchActions implements PopupElementWithAdditionalInfo {
+    CurrentBranch(@NotNull Project project, @NotNull List<HgRepository> repositories, @NotNull String branchName) {
       super(project, repositories, branchName);
       setIcons(DvcsImplIcons.CurrentBranchFavoriteLabel, DvcsImplIcons.CurrentBranchLabel, AllIcons.Nodes.Favorite,
                AllIcons.Nodes.NotFavoriteOnHover);
@@ -310,7 +328,6 @@ public class HgBranchPopupActions {
    * Actions available for  bookmarks.
    */
   static class BookmarkActions extends HgCommonBranchActions {
-
     BookmarkActions(@NotNull Project project, @NotNull List<HgRepository> repositories, @NotNull String branchName) {
       super(project, repositories, branchName, HgBranchType.BOOKMARK);
     }
@@ -320,8 +337,7 @@ public class HgBranchPopupActions {
       return ArrayUtil.append(super.getChildren(e), new DeleteBookmarkAction(myProject, myRepositories, myBranchName));
     }
 
-    private static class DeleteBookmarkAction extends HgBranchAbstractAction {
-
+    private static final class DeleteBookmarkAction extends HgBranchAbstractAction {
       DeleteBookmarkAction(@NotNull Project project, @NotNull List<HgRepository> repositories, @NotNull String branchName) {
         super(project, CommonBundle.messagePointer("button.delete"), repositories, branchName);
       }
@@ -337,9 +353,8 @@ public class HgBranchPopupActions {
     }
   }
 
-  public static class CurrentActiveBookmark extends BookmarkActions implements PopupElementWithAdditionalInfo {
-
-    public CurrentActiveBookmark(@NotNull Project project, @NotNull List<HgRepository> repositories, @NotNull String branchName) {
+  static final class CurrentActiveBookmark extends BookmarkActions implements PopupElementWithAdditionalInfo {
+    CurrentActiveBookmark(@NotNull Project project, @NotNull List<HgRepository> repositories, @NotNull String branchName) {
       super(project, repositories, branchName);
       setIcons(DvcsImplIcons.CurrentBranchFavoriteLabel, DvcsImplIcons.CurrentBranchLabel, AllIcons.Nodes.Favorite,
                AllIcons.Nodes.NotFavoriteOnHover);

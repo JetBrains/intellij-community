@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.unscramble;
 
 import com.intellij.execution.filters.FileHyperlinkInfo;
@@ -6,6 +6,7 @@ import com.intellij.execution.filters.HyperlinkInfo;
 import com.intellij.execution.impl.ConsoleViewImpl;
 import com.intellij.execution.impl.EditorHyperlinkSupport;
 import com.intellij.lang.LangBundle;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.LangDataKeys;
@@ -25,8 +26,15 @@ import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vcs.*;
+import com.intellij.openapi.vcs.AbstractVcs;
+import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.vcs.ProjectLevelVcsManager;
+import com.intellij.openapi.vcs.VcsBundle;
+import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vcs.VcsKey;
+import com.intellij.openapi.vcs.actions.AnnotateToggleAction;
 import com.intellij.openapi.vcs.actions.VcsContextFactory;
 import com.intellij.openapi.vcs.annotate.AnnotationSource;
 import com.intellij.openapi.vcs.annotate.FileAnnotation;
@@ -35,6 +43,8 @@ import com.intellij.openapi.vcs.history.VcsFileRevision;
 import com.intellij.openapi.vcs.history.VcsHistoryProvider;
 import com.intellij.openapi.vcs.history.VcsHistorySession;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
+import com.intellij.openapi.vcs.impl.BackgroundableActionLock;
+import com.intellij.openapi.vcs.impl.VcsBackgroundableActions;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
@@ -50,36 +60,121 @@ import com.intellij.xml.util.XmlStringUtil;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
+import it.unimi.dsi.fastutil.ints.IntList;
 import it.unimi.dsi.fastutil.ints.IntListIterator;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.*;
+import java.awt.Color;
+import java.awt.Cursor;
+import java.util.Collections;
+import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
-import java.util.*;
+import java.util.Map;
 
+@ApiStatus.Internal
 public final class AnnotateStackTraceAction extends DumbAwareAction {
   private static final Logger LOG = Logger.getInstance(AnnotateStackTraceAction.class);
 
-  private boolean myIsLoading = false;
-
   @Override
-  public void update(@NotNull AnActionEvent e) {
-    ConsoleViewImpl consoleView = ObjectUtils.tryCast(e.getData(LangDataKeys.CONSOLE_VIEW), ConsoleViewImpl.class);
-    boolean isShown = consoleView != null && consoleView.getEditor().getGutter().isAnnotationsShown();
-    e.getPresentation().setEnabled(consoleView != null && !isShown && !myIsLoading);
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.EDT;
   }
 
   @Override
-  public void actionPerformed(@NotNull final AnActionEvent e) {
-    myIsLoading = true;
-    ConsoleViewImpl consoleView = (ConsoleViewImpl)e.getData(LangDataKeys.CONSOLE_VIEW);
+  public void update(@NotNull AnActionEvent e) {
+    ConsoleViewImpl consoleView = getConsoleView(e);
+    e.getPresentation().setEnabled(consoleView != null && isEnabled(consoleView) && !isLoading(consoleView));
+  }
+
+  @Override
+  public void actionPerformed(final @NotNull AnActionEvent e) {
+    ConsoleViewImpl consoleView = getConsoleView(e);
     if (consoleView == null) return;
+    showStackTraceAnnotations(consoleView);
+  }
+
+  @ApiStatus.Internal
+  public static class Provider implements AnnotateToggleAction.Provider {
+    @Override
+    public boolean isEnabled(@NotNull AnActionEvent e) {
+      ConsoleViewImpl consoleView = getConsoleView(e);
+      if (consoleView == null) return false;
+
+      return AnnotateStackTraceAction.isEnabled(consoleView);
+    }
+
+    @Override
+    public boolean isSuspended(@NotNull AnActionEvent e) {
+      ConsoleViewImpl consoleView = getConsoleView(e);
+      if (consoleView == null) return false;
+
+      return AnnotateStackTraceAction.isLoading(consoleView);
+    }
+
+    @Override
+    public boolean isAnnotated(AnActionEvent e) {
+      ConsoleViewImpl consoleView = getConsoleView(e);
+      if (consoleView == null) return false;
+      Editor editor = consoleView.getEditor();
+      if (editor == null) return false;
+
+      List<TextAnnotationGutterProvider> annotations = editor.getGutter().getTextAnnotations();
+      return !ContainerUtil.filterIsInstance(annotations, MyActiveAnnotationGutter.class).isEmpty();
+    }
+
+    @Override
+    public void perform(@NotNull AnActionEvent e, boolean selected) {
+      ConsoleViewImpl consoleView = getConsoleView(e);
+      if (consoleView == null) return;
+
+      if (selected) {
+        showStackTraceAnnotations(consoleView);
+      }
+      else {
+        closeStackTraceAnnotations(consoleView);
+      }
+    }
+  }
+
+  private static boolean isEnabled(@NotNull ConsoleViewImpl consoleView) {
     Editor editor = consoleView.getEditor();
+    if (editor == null) return false;
+
+    return !editor.getGutter().isAnnotationsShown();
+  }
+
+  private static boolean isLoading(@NotNull ConsoleViewImpl consoleView) {
+    Editor editor = consoleView.getEditor();
+    if (editor == null) return false;
+
+    return createActionLock(consoleView.getProject(), consoleView).isLocked();
+  }
+
+  private static void closeStackTraceAnnotations(@NotNull ConsoleViewImpl consoleView) {
+    Editor editor = consoleView.getEditor();
+    if (editor == null) return;
+
+    List<TextAnnotationGutterProvider> annotations = editor.getGutter().getTextAnnotations();
+    if (ContainerUtil.filterIsInstance(annotations, MyActiveAnnotationGutter.class).isEmpty()) return;
+
+    editor.getGutter().closeAllAnnotations();
+  }
+
+  private static void showStackTraceAnnotations(@NotNull ConsoleViewImpl consoleView) {
+    Editor editor = consoleView.getEditor();
+    if (editor == null) return;
+
+    Project project = consoleView.getProject();
     EditorHyperlinkSupport hyperlinks = consoleView.getHyperlinks();
 
-    ProgressManager.getInstance().run(new Task.Backgroundable(editor.getProject(),
-                                                              LangBundle.message("progress.title.getting.file.history"), true) {
+    BackgroundableActionLock actionLock = createActionLock(project, consoleView);
+    actionLock.lock();
+
+    ProgressManager.getInstance().run(new Task.Backgroundable(
+      project, LangBundle.message("progress.title.getting.file.history"), true) {
       private final Object LOCK = new Object();
       private final MergingUpdateQueue myUpdateQueue = new MergingUpdateQueue("AnnotateStackTraceAction", 200, true, null);
 
@@ -92,13 +187,13 @@ public final class AnnotateStackTraceAction extends DumbAwareAction {
 
       @Override
       public void onFinished() {
-        myIsLoading = false;
+        actionLock.unlock();
         Disposer.dispose(myUpdateQueue);
       }
 
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
-        Map<VirtualFile, IntArrayList> files2lines = CollectionFactory.createSmallMemoryFootprintMap();
+        Map<VirtualFile, IntList> files2lines = CollectionFactory.createSmallMemoryFootprintMap();
         Int2ObjectMap<LastRevision> revisions = new Int2ObjectOpenHashMap<>();
 
         ApplicationManager.getApplication().runReadAction(() -> {
@@ -111,9 +206,9 @@ public final class AnnotateStackTraceAction extends DumbAwareAction {
           }
         });
 
-        for (Map.Entry<VirtualFile, IntArrayList> entry : files2lines.entrySet()) {
+        for (Map.Entry<VirtualFile, IntList> entry : files2lines.entrySet()) {
           VirtualFile file = entry.getKey();
-          IntArrayList value = entry.getValue();
+          IntList value = entry.getValue();
           indicator.checkCanceled();
           LastRevision revision = getLastRevision(file);
           if (revision == null) {
@@ -155,16 +250,15 @@ public final class AnnotateStackTraceAction extends DumbAwareAction {
         ((EditorGutterComponentEx)editor.getGutter()).revalidateMarkup();
       }
 
-      @Nullable
-      private LastRevision getLastRevision(@NotNull VirtualFile file) {
+      private @Nullable LastRevision getLastRevision(@NotNull VirtualFile file) {
         try {
-          AbstractVcs vcs = VcsUtil.getVcsFor(editor.getProject(), file);
+          AbstractVcs vcs = VcsUtil.getVcsFor(project, file);
           if (vcs == null) return null;
 
           VcsHistoryProvider historyProvider = vcs.getVcsHistoryProvider();
           if (historyProvider == null) return null;
 
-          FilePath filePath = VcsContextFactory.SERVICE.getInstance().createFilePathOn(file);
+          FilePath filePath = VcsContextFactory.getInstance().createFilePathOn(file);
 
           if (historyProvider instanceof VcsHistoryProviderEx) {
             VcsFileRevision revision = ((VcsHistoryProviderEx)historyProvider).getLastRevision(filePath);
@@ -181,17 +275,16 @@ public final class AnnotateStackTraceAction extends DumbAwareAction {
             return LastRevision.create(list.get(0));
           }
         }
-        catch (VcsException ignored) {
-          LOG.warn(ignored);
+        catch (VcsException e) {
+          LOG.warn(e);
           return null;
         }
       }
     });
   }
 
-  @Nullable
   @RequiresReadLock
-  private static VirtualFile getHyperlinkVirtualFile(@NotNull List<RangeHighlighter> links) {
+  private static @Nullable VirtualFile getHyperlinkVirtualFile(@NotNull List<? extends RangeHighlighter> links) {
     RangeHighlighter key = ContainerUtil.getLastItem(links);
     if (key == null) return null;
     HyperlinkInfo info = EditorHyperlinkSupport.getHyperlinkInfo(key);
@@ -200,11 +293,19 @@ public final class AnnotateStackTraceAction extends DumbAwareAction {
     return descriptor != null ? descriptor.getFile() : null;
   }
 
+  private static @Nullable ConsoleViewImpl getConsoleView(@NotNull AnActionEvent e) {
+    return ObjectUtils.tryCast(e.getData(LangDataKeys.CONSOLE_VIEW), ConsoleViewImpl.class);
+  }
+
+  private static @NotNull BackgroundableActionLock createActionLock(@NotNull Project project, @NotNull ConsoleViewImpl consoleView) {
+    return BackgroundableActionLock.getLock(project, VcsBackgroundableActions.ANNOTATE, consoleView);
+  }
+
   private static class LastRevision {
-    @NotNull private final VcsRevisionNumber myNumber;
-    @NotNull private final String myAuthor;
-    @NotNull private final Date myDate;
-    @NotNull private final String myMessage;
+    private final @NotNull VcsRevisionNumber myNumber;
+    private final @NotNull String myAuthor;
+    private final @NotNull Date myDate;
+    private final @NotNull String myMessage;
 
     LastRevision(@NotNull VcsRevisionNumber number, @NotNull String author, @NotNull Date date, @NotNull String message) {
       myNumber = number;
@@ -213,8 +314,7 @@ public final class AnnotateStackTraceAction extends DumbAwareAction {
       myMessage = message;
     }
 
-    @NotNull
-    public static LastRevision create(@NotNull VcsFileRevision revision) {
+    public static @NotNull LastRevision create(@NotNull VcsFileRevision revision) {
       VcsRevisionNumber number = revision.getRevisionNumber();
       String author = StringUtil.notNullize(revision.getAuthor(), VcsBundle.message("vfs.revision.author.unknown"));
       Date date = revision.getRevisionDate();
@@ -222,39 +322,35 @@ public final class AnnotateStackTraceAction extends DumbAwareAction {
       return new LastRevision(number, author, date, message);
     }
 
-    @NotNull
-    public VcsRevisionNumber getNumber() {
+    public @NotNull VcsRevisionNumber getNumber() {
       return myNumber;
     }
 
-    @NotNull
-    public String getAuthor() {
+    public @NotNull @NlsSafe String getAuthor() {
       return myAuthor;
     }
 
-    @NotNull
-    public Date getDate() {
+    public @NotNull Date getDate() {
       return myDate;
     }
 
-    @NotNull
-    public String getMessage() {
+    public @NotNull String getMessage() {
       return myMessage;
     }
   }
 
   private static class MyActiveAnnotationGutter implements TextAnnotationGutterProvider, EditorGutterAction {
-    @NotNull private final Project myProject;
-    @NotNull private final EditorHyperlinkSupport myHyperlinks;
-    @NotNull private final ProgressIndicator myIndicator;
+    private final @NotNull Project myProject;
+    private final @NotNull EditorHyperlinkSupport myHyperlinks;
+    private final @NotNull ProgressIndicator myIndicator;
 
-    @NotNull private Map<Integer, LastRevision> myRevisions = Collections.emptyMap();
+    private @NotNull Map<Integer, LastRevision> myRevisions = Collections.emptyMap();
     private Date myNewestDate = null;
     private int myMaxDateLength = 0;
 
     MyActiveAnnotationGutter(@NotNull Project project,
-                                    @NotNull EditorHyperlinkSupport hyperlinks,
-                                    @NotNull ProgressIndicator indicator) {
+                             @NotNull EditorHyperlinkSupport hyperlinks,
+                             @NotNull ProgressIndicator indicator) {
       myProject = project;
       myHyperlinks = hyperlinks;
       myIndicator = indicator;

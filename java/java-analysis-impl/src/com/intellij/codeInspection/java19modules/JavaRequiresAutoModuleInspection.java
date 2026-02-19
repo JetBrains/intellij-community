@@ -1,33 +1,56 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.java19modules;
 
 import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool;
 import com.intellij.codeInspection.ProblemsHolder;
-import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.java.analysis.JavaAnalysisBundle;
-import com.intellij.psi.*;
+import com.intellij.pom.java.JavaFeature;
+import com.intellij.psi.JavaElementVisitor;
+import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.PsiJavaModule;
+import com.intellij.psi.PsiJavaModuleReferenceElement;
+import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiRequiresStatement;
 import com.intellij.psi.impl.light.LightJavaModule;
 import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import java.util.Set;
 
-public class JavaRequiresAutoModuleInspection extends AbstractBaseJavaLocalInspectionTool {
+import static com.intellij.codeInspection.options.OptPane.checkbox;
+import static com.intellij.codeInspection.options.OptPane.pane;
+
+public final class JavaRequiresAutoModuleInspection extends AbstractBaseJavaLocalInspectionTool {
   public boolean TRANSITIVE_ONLY = true;
 
-  @Nullable
   @Override
-  public JComponent createOptionsPanel() {
-    return new SingleCheckboxOptionsPanel(JavaAnalysisBundle.message("inspection.requires.auto.module.option"), this, "TRANSITIVE_ONLY");
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      checkbox("TRANSITIVE_ONLY", JavaAnalysisBundle.message("inspection.requires.auto.module.option")));
   }
 
-  @NotNull
   @Override
-  public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
+  public @Nullable String getAlternativeID() {
+    return "JavaRequiresAutoModule";
+  }
+
+  @Override
+  public @NotNull String getID() {
+    return "requires-transitive-automatic";
+  }
+
+  @Override
+  public @NotNull Set<@NotNull JavaFeature> requiredFeatures() {
+    return Set.of(JavaFeature.MODULES);
+  }
+
+  @Override
+  public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
     return !PsiUtil.isModuleFile(holder.getFile()) ? PsiElementVisitor.EMPTY_VISITOR : new JavaElementVisitor() {
       @Override
-      public void visitRequiresStatement(PsiRequiresStatement statement) {
+      public void visitRequiresStatement(@NotNull PsiRequiresStatement statement) {
         super.visitRequiresStatement(statement);
         PsiJavaModuleReferenceElement refElement = statement.getReferenceElement();
         if (refElement != null) {

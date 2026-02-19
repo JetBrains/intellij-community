@@ -1,9 +1,7 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.projectView;
 
-import com.intellij.ide.projectView.impl.AbstractProjectViewPane;
 import com.intellij.ide.projectView.impl.nodes.ProjectViewDirectoryHelper;
-import com.intellij.ide.util.treeView.AbstractTreeStructure;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -15,6 +13,10 @@ public interface ProjectViewSettings extends ViewSettings {
 
   default boolean isShowVisibilityIcons() {
     return false;
+  }
+
+  default @NotNull NodeSortKey getSortKey() {
+    return NodeSortKey.BY_NAME;
   }
 
   /**
@@ -103,14 +105,20 @@ public interface ProjectViewSettings extends ViewSettings {
 
     @Override
     public boolean isUseFileNestingRules() {
-      ProjectViewSettings settings = getProjectViewSettings();
-      return settings != null && settings.isUseFileNestingRules();
+      ProjectView view = getProjectView();
+      return view != null && view.isUseFileNestingRules(getPaneID(view));
     }
 
     @Override
     public boolean isFoldersAlwaysOnTop() {
       ProjectView view = getProjectView();
       return view != null && view.isFoldersAlwaysOnTop(getPaneID(view));
+    }
+
+    @Override
+    public @NotNull NodeSortKey getSortKey() {
+      ProjectView view = getProjectView();
+      return view != null ? view.getSortKey(getPaneID(view)) : NodeSortKey.BY_NAME;
     }
 
     @Override
@@ -123,6 +131,12 @@ public interface ProjectViewSettings extends ViewSettings {
     public boolean isShowModules() {
       ProjectView view = getProjectView();
       return view != null && view.isShowModules(getPaneID(view));
+    }
+
+    @Override
+    public boolean isShowScratchesAndConsoles() {
+      ProjectView view = getProjectView();
+      return view != null && view.isShowScratchesAndConsoles(getPaneID(view));
     }
 
     @Override
@@ -171,32 +185,16 @@ public interface ProjectViewSettings extends ViewSettings {
       return view != null && view.isShowLibraryContents(getPaneID(view));
     }
 
-    @Nullable
-    private ProjectViewDirectoryHelper getProjectViewDirectoryHelper() {
+    private @Nullable ProjectViewDirectoryHelper getProjectViewDirectoryHelper() {
       return project.isDisposed() ? null : ProjectViewDirectoryHelper.getInstance(project);
     }
 
-    @Nullable
-    private ProjectView getProjectView() {
+    private @Nullable ProjectView getProjectView() {
       return project.isDisposed() ? null : ProjectView.getInstance(project);
     }
 
-    @Nullable
-    private String getPaneID(@NotNull ProjectView view) {
+    private @Nullable String getPaneID(@NotNull ProjectView view) {
       return id != null ? id : view.getCurrentViewId();
-    }
-
-    @Nullable
-    private AbstractTreeStructure getStructure(@NotNull ProjectView view) {
-      AbstractProjectViewPane pane = id == null ? view.getCurrentProjectViewPane() : view.getProjectViewPaneById(id);
-      return pane == null ? null : pane.getTreeStructure();
-    }
-
-    @Nullable
-    private ProjectViewSettings getProjectViewSettings() {
-      ProjectView view = getProjectView();
-      AbstractTreeStructure structure = view == null ? null : getStructure(view);
-      return structure instanceof ProjectViewSettings ? (ProjectViewSettings)structure : null;
     }
   }
 }

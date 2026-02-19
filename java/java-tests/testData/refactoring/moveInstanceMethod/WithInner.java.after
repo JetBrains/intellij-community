@@ -1,5 +1,5 @@
 class Foreign {
-    void foo(Test1.Inner i, Test1 test1) {
+    void foo (Test1.Inner i, Test1 test1) {
       test1.new Inner();
     }
 

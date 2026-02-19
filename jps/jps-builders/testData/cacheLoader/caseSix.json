@@ -1,0 +1,30 @@
+{
+  "java-test": {
+    "intellij.cidr.externalSystem": {
+      "h": 90345695402943,
+      "relativePath": "$BUILD_DIR$/test/intellij.cidr.externalSystem"
+    }
+  },
+  "resources-test": {
+    "intellij.cidr.externalSystem": {
+      "h": 90345695402943,
+      "relativePath": "$BUILD_DIR$/test/intellij.cidr.externalSystem"
+    }
+  },
+  "java-production": {
+    "intellij.cidr.externalSystem": {
+      "h": 4514032945642354,
+      "relativePath": "$BUILD_DIR$/production/intellij.cidr.externalSystem"
+    }
+  },
+  "resources-production": {
+    "intellij.cidr.externalSystem": {
+      "h": 8764333034314,
+      "relativePath": "$BUILD_DIR$/production/intellij.cidr.externalSystem"
+    },
+    "intellij.sh.plugin": {
+      "h": 8764333034314,
+      "relativePath": "$BUILD_DIR$/production/intellij.sh.plugin"
+    }
+  }
+}

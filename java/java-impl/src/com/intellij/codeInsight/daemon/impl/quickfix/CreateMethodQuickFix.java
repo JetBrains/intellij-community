@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.ExpectedTypeInfo;
@@ -7,7 +7,16 @@ import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
-import com.intellij.psi.*;
+import com.intellij.psi.JVMElementFactories;
+import com.intellij.psi.JVMElementFactory;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiSubstitutor;
+import com.intellij.psi.PsiType;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.psi.util.PsiFormatUtilBase;
@@ -20,18 +29,17 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 
 public final class CreateMethodQuickFix extends LocalQuickFixAndIntentionActionOnPsiElement {
-  protected final String mySignature;
-  protected final String myBody;
+  private final String mySignature;
+  private final String myBody;
 
-  private CreateMethodQuickFix(final PsiClass targetClass, @NonNls final String signature, @NonNls final String body) {
+  private CreateMethodQuickFix(final PsiClass targetClass, final @NonNls String signature, final @NonNls String body) {
     super(targetClass);
     mySignature = signature;
     myBody = body;
   }
 
   @Override
-  @NotNull
-  public String getText() {
+  public @NotNull String getText() {
     PsiClass myTargetClass = (PsiClass)getStartElement();
     String signature = myTargetClass == null ? "" :
                        PsiFormatUtil.formatMethod(createMethod(myTargetClass), PsiSubstitutor.EMPTY,
@@ -44,14 +52,13 @@ public final class CreateMethodQuickFix extends LocalQuickFixAndIntentionActionO
   }
 
   @Override
-  @NotNull
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return QuickFixBundle.message("create.method.from.usage.family");
   }
 
   @Override
   public void invoke(@NotNull Project project,
-                     @NotNull PsiFile file,
+                     @NotNull PsiFile psiFile,
                      @Nullable Editor editor,
                      @NotNull PsiElement startElement,
                      @NotNull PsiElement endElement) {
@@ -59,7 +66,7 @@ public final class CreateMethodQuickFix extends LocalQuickFixAndIntentionActionO
 
     PsiMethod method = createMethod(myTargetClass);
     List<Pair<PsiExpression, PsiType>> arguments =
-      ContainerUtil.map2List(method.getParameterList().getParameters(), psiParameter -> Pair.create(null, psiParameter.getType()));
+      ContainerUtil.map(method.getParameterList().getParameters(), psiParameter -> Pair.create(null, psiParameter.getType()));
 
     method = (PsiMethod)JavaCodeStyleManager.getInstance(project).shortenClassReferences(myTargetClass.add(method));
     CreateMethodFromUsageFix.doCreate(myTargetClass, method, arguments, PsiSubstitutor.EMPTY, ExpectedTypeInfo.EMPTY_ARRAY, method);
@@ -75,8 +82,7 @@ public final class CreateMethodQuickFix extends LocalQuickFixAndIntentionActionO
     return elementFactory.createMethodFromText(methodText, null);
   }
 
-  @Nullable
-  public static CreateMethodQuickFix createFix(@NotNull PsiClass targetClass, @NonNls final String signature, @NonNls final String body) {
+  public static @Nullable CreateMethodQuickFix createFix(@NotNull PsiClass targetClass, final @NonNls String signature, final @NonNls String body) {
     CreateMethodQuickFix fix = new CreateMethodQuickFix(targetClass, signature, body);
     try {
       fix.createMethod(targetClass);

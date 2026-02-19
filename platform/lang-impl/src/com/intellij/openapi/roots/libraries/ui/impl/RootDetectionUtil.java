@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.libraries.ui.impl;
 
 import com.intellij.ide.util.ChooseElementsDialog;
@@ -27,10 +27,14 @@ import com.intellij.xml.util.XmlStringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.Icon;
+import java.awt.Component;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
-import java.util.*;
+import java.util.Map;
 
 public final class RootDetectionUtil {
   private static final Logger LOG = Logger.getInstance(RootDetectionUtil.class);
@@ -38,19 +42,17 @@ public final class RootDetectionUtil {
   private RootDetectionUtil() {
   }
 
-  @NotNull
-  public static List<OrderRoot> detectRoots(@NotNull final Collection<? extends VirtualFile> rootCandidates,
-                                            @Nullable Component parentComponent,
-                                            @Nullable Project project,
-                                            @NotNull final LibraryRootsComponentDescriptor rootsComponentDescriptor) {
+  public static @NotNull List<OrderRoot> detectRoots(final @NotNull Collection<? extends VirtualFile> rootCandidates,
+                                                     @Nullable Component parentComponent,
+                                                     @Nullable Project project,
+                                                     final @NotNull LibraryRootsComponentDescriptor rootsComponentDescriptor) {
     return detectRoots(rootCandidates, parentComponent, project, rootsComponentDescriptor.getRootsDetector(),
                        rootsComponentDescriptor.getRootTypes());
   }
 
-  @NotNull
-  public static List<OrderRoot> detectRoots(@NotNull final Collection<? extends VirtualFile> rootCandidates, @Nullable Component parentComponent,
-                                            @Nullable Project project, @NotNull final LibraryRootsDetector detector,
-                                            OrderRootType @NotNull [] rootTypesAllowedToBeSelectedByUserIfNothingIsDetected) {
+  public static @NotNull List<OrderRoot> detectRoots(final @NotNull Collection<? extends VirtualFile> rootCandidates, @Nullable Component parentComponent,
+                                                     @Nullable Project project, final @NotNull LibraryRootsDetector detector,
+                                                     OrderRootType @NotNull [] rootTypesAllowedToBeSelectedByUserIfNothingIsDetected) {
     final List<OrderRoot> result = new ArrayList<>();
     final List<SuggestedChildRootInfo> suggestedRoots = new ArrayList<>();
     new Task.Modal(project, ProjectBundle.message("progress.title.scanning.for.roots"), true) {
@@ -155,7 +157,7 @@ public final class RootDetectionUtil {
     return true;
   }
 
-  private static class ChooseRootTypeElementsDialog extends ChooseElementsDialog<String> {
+  private static final class ChooseRootTypeElementsDialog extends ChooseElementsDialog<String> {
     ChooseRootTypeElementsDialog(Project project, List<String> names, @DialogTitle String title, @NlsContexts.Label String description) {
       super(project, names, title, description, true);
     }
@@ -172,9 +174,8 @@ public final class RootDetectionUtil {
       return item;
     }
 
-    @Nullable
     @Override
-    protected Icon getItemIcon(String item) {
+    protected @Nullable Icon getItemIcon(String item) {
       return null;
     }
   }

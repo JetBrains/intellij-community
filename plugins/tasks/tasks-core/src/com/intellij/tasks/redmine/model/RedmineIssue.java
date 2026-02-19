@@ -1,3 +1,4 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.tasks.redmine.model;
 
 import com.google.gson.annotations.SerializedName;
@@ -41,13 +42,11 @@ public class RedmineIssue {
     return status;
   }
 
-  @NotNull
-  public @NlsSafe String getSubject() {
+  public @NotNull @NlsSafe String getSubject() {
     return subject;
   }
 
-  @Nullable
-  public @NlsSafe String getDescription() {
+  public @Nullable @NlsSafe String getDescription() {
     return description;
   }
 
@@ -55,18 +54,15 @@ public class RedmineIssue {
     return doneRatio;
   }
 
-  @NotNull
-  public Date getCreated() {
+  public @NotNull Date getCreated() {
     return created;
   }
 
-  @NotNull
-  public Date getUpdated() {
+  public @NotNull Date getUpdated() {
     return updated;
   }
 
-  @Nullable
-  public RedmineProject getProject() {
+  public @Nullable RedmineProject getProject() {
     return project;
   }
 
@@ -80,8 +76,7 @@ public class RedmineIssue {
       return id;
     }
 
-    @NotNull
-    public String getName() {
+    public @NotNull String getName() {
       return name;
     }
   }

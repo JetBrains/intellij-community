@@ -2,7 +2,9 @@
 package com.intellij.diagnostic;
 
 import com.intellij.openapi.diagnostic.Logger;
+import org.jetbrains.annotations.ApiStatus;
 
+@ApiStatus.Internal
 public final class Diagnostic {
   public static void trace(String category, String message) {
     Logger.getInstance(category).debug(message);
@@ -18,6 +20,7 @@ public final class Diagnostic {
 
   public static boolean assertTrue(String category, String message, boolean condition) {
     if (condition) return true;
-    return Logger.getInstance(category).assertTrue(condition, message);
+    Logger.getInstance(category).error(message);
+    return false;
   }
 }

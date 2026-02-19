@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.psi.impl.smartPointers;
 
@@ -7,35 +7,33 @@ import com.intellij.openapi.util.Segment;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-abstract class SmartPointerElementInfo {
+@ApiStatus.Internal
+public abstract class SmartPointerElementInfo {
   @Nullable
   Document getDocumentToSynchronize() {
     return null;
   }
 
-  void fastenBelt(@NotNull SmartPointerManagerImpl manager) {
+  void fastenBelt(@NotNull SmartPointerManagerEx manager) {
   }
 
-  @Nullable
-  abstract PsiElement restoreElement(@NotNull SmartPointerManagerImpl manager);
+  abstract @Nullable PsiElement restoreElement(@NotNull SmartPointerManagerEx manager);
 
-  @Nullable
-  abstract PsiFile restoreFile(@NotNull SmartPointerManagerImpl manager);
+  abstract @Nullable PsiFile restoreFile(@NotNull SmartPointerManagerEx manager);
 
   abstract int elementHashCode(); // must be immutable
-  abstract boolean pointsToTheSameElementAs(@NotNull SmartPointerElementInfo other, @NotNull SmartPointerManagerImpl manager);
+  abstract boolean pointsToTheSameElementAs(@NotNull SmartPointerElementInfo other, @NotNull SmartPointerManagerEx manager);
 
   abstract VirtualFile getVirtualFile();
 
-  @Nullable
-  abstract Segment getRange(@NotNull SmartPointerManagerImpl manager);
+  abstract @Nullable Segment getRange(@NotNull SmartPointerManagerEx manager);
+
+  abstract @Nullable Segment getPsiRange(@NotNull SmartPointerManagerEx manager);
 
   void cleanup() {
   }
-
-  @Nullable
-  abstract Segment getPsiRange(@NotNull SmartPointerManagerImpl manager);
 }

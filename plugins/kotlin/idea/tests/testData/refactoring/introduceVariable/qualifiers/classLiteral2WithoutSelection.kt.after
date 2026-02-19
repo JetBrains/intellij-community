@@ -1,0 +1,9 @@
+// INPLACE_VARIABLE_NAME: klass
+class A {
+    companion object
+}
+
+fun test() {
+    val klass = A::class
+    klass.java.getDeclaredField("name")
+}

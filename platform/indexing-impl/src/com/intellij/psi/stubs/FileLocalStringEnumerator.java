@@ -1,10 +1,10 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.stubs;
 
 import com.intellij.util.io.AbstractStringEnumerator;
 import com.intellij.util.io.DataInputOutputUtil;
 import com.intellij.util.io.IOUtil;
-import gnu.trove.TObjectIntHashMap;
+import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -16,19 +16,22 @@ import java.util.ArrayList;
 import java.util.function.UnaryOperator;
 
 @ApiStatus.Internal
-final class FileLocalStringEnumerator implements AbstractStringEnumerator {
-  private final TObjectIntHashMap<String> myEnumerates;
+public final class FileLocalStringEnumerator implements AbstractStringEnumerator {
+  @SuppressWarnings("SSBasedInspection")
+  private final Object2IntOpenHashMap<String> myEnumerates;
   private final ArrayList<String> myStrings = new ArrayList<>();
 
-  FileLocalStringEnumerator(boolean forSavingStub) {
-    myEnumerates = forSavingStub ? new TObjectIntHashMap<>() : null;
+  public FileLocalStringEnumerator(boolean forSavingStub) {
+    myEnumerates = forSavingStub ? new Object2IntOpenHashMap<>() : null;
   }
 
   @Override
   public int enumerate(@Nullable String value) {
-    if (value == null) return 0;
+    if (value == null) {
+      return 0;
+    }
     assert myEnumerates != null; // enumerate possible only when writing stub
-    int i = myEnumerates.get(value);
+    int i = myEnumerates.getInt(value);
     if (i == 0) {
       myEnumerates.put(value, i = myStrings.size() + 1);
       myStrings.add(value);
@@ -42,7 +45,7 @@ final class FileLocalStringEnumerator implements AbstractStringEnumerator {
     return myStrings.get(idx - 1);
   }
 
-  void write(@NotNull DataOutput stream) throws IOException {
+  public void write(@NotNull DataOutput stream) throws IOException {
     assert myEnumerates != null;
     DataInputOutputUtil.writeINT(stream, myStrings.size());
     for(String s: myStrings) {
@@ -55,7 +58,7 @@ final class FileLocalStringEnumerator implements AbstractStringEnumerator {
   }
 
   @Override
-  public void close() throws IOException {
+  public void close() {
   }
 
   @Override
@@ -72,6 +75,14 @@ final class FileLocalStringEnumerator implements AbstractStringEnumerator {
     myStrings.ensureCapacity(myStrings.size() + numberOfStrings);
     for (int i = 0; i < numberOfStrings; i++) {
       myStrings.add(mapping.apply(IOUtil.readUTF(stream)));
+    }
+  }
+
+  public void read(@NotNull DataInput stream) throws IOException {
+    int numberOfStrings = DataInputOutputUtil.readINT(stream);
+    myStrings.ensureCapacity(myStrings.size() + numberOfStrings);
+    for (int i = 0; i < numberOfStrings; i++) {
+      myStrings.add(IOUtil.readUTF(stream));
     }
   }
 }

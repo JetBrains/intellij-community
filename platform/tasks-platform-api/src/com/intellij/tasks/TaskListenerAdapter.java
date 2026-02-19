@@ -1,21 +1,22 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.tasks;
 
 import org.jetbrains.annotations.NotNull;
 
 public class TaskListenerAdapter implements TaskListener {
   @Override
-  public void taskDeactivated(@NotNull final LocalTask task) {
+  public void taskDeactivated(final @NotNull LocalTask task) {
   }
 
   @Override
-  public void taskActivated(@NotNull final LocalTask task) {
+  public void taskActivated(final @NotNull LocalTask task) {
   }
 
   @Override
-  public void taskAdded(@NotNull final LocalTask task) {
+  public void taskAdded(final @NotNull LocalTask task) {
   }
 
   @Override
-  public void taskRemoved(@NotNull final LocalTask task) {
+  public void taskRemoved(final @NotNull LocalTask task) {
   }
 }

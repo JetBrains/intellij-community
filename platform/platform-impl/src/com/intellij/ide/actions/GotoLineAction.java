@@ -1,19 +1,26 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions;
 
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.lightEdit.LightEditCompatible;
 import com.intellij.ide.util.EditorGotoLineNumberDialog;
 import com.intellij.ide.util.GotoLineNumberDialog;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
+import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-public class GotoLineAction extends AnAction implements DumbAware, LightEditCompatible {
+@ApiStatus.Internal
+public final class GotoLineAction extends AnAction implements DumbAware, LightEditCompatible {
   public GotoLineAction() {
     setEnabledInModalContext(true);
   }
@@ -23,7 +30,7 @@ public class GotoLineAction extends AnAction implements DumbAware, LightEditComp
     Project project = e.getData(CommonDataKeys.PROJECT);
     assert project != null;
     Editor editor = e.getData(CommonDataKeys.EDITOR_EVEN_IF_INACTIVE);
-    if (Boolean.TRUE.equals(e.getData(PlatformDataKeys.IS_MODAL_CONTEXT))) {
+    if (Boolean.TRUE.equals(e.getData(PlatformCoreDataKeys.IS_MODAL_CONTEXT))) {
       GotoLineNumberDialog dialog = new EditorGotoLineNumberDialog(project, editor);
       dialog.show();
     }
@@ -51,5 +58,10 @@ public class GotoLineAction extends AnAction implements DumbAware, LightEditComp
     }
     Editor editor = event.getData(CommonDataKeys.EDITOR_EVEN_IF_INACTIVE);
     presentation.setEnabledAndVisible(editor != null);
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 }

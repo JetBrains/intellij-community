@@ -1,0 +1,17 @@
+<idea-plugin>
+  <dependencies>
+    <plugin id="org.jetbrains.plugins.terminal"/>
+    <module name="intellij.java.execution.impl"/>
+    <module name="intellij.java.impl"/>
+
+    <module name="intellij.platform.backend"/>
+  </dependencies>
+  <extensions defaultExtensionNs="org.jetbrains.plugins.terminal">
+    <commandSpecsProvider implementation="com.intellij.java.terminal.JavaShellCommandSpecsProvider"/>
+    <commandSpecsProvider implementation="com.intellij.java.terminal.JavacShellCommandSpecsProvider"/>
+  </extensions>
+
+  <extensions defaultExtensionNs="com.intellij.openapi.projectRoots">
+    <externalJavaConfigurationMissingAction implementation="com.intellij.java.terminal.ExternalJavaConfigurationDownloadInTerminalAction"/>
+  </extensions>
+</idea-plugin>

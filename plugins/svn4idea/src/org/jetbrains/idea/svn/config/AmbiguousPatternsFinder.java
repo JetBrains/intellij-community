@@ -1,17 +1,23 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.svn.config;
 
 import com.intellij.openapi.util.NlsContexts.DialogMessage;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
+import static com.intellij.openapi.util.text.StringUtil.ELLIPSIS;
+import static com.intellij.openapi.util.text.StringUtil.join;
 import static org.jetbrains.idea.svn.SvnBundle.message;
 
 public class AmbiguousPatternsFinder {
   private final Map<String, Set<String>> urls2groups;
 
-  private final static int ourMessageLen = 30;
+  private static final int ourMessageLen = 30;
 
   public AmbiguousPatternsFinder() {
     urls2groups = new HashMap<>();
@@ -22,7 +28,8 @@ public class AmbiguousPatternsFinder {
       final Set<String> set;
       if (urls2groups.containsKey(url)) {
         set = urls2groups.get(url);
-      } else {
+      }
+      else {
         set = new HashSet<>();
         urls2groups.put(url, set);
       }
@@ -33,30 +40,22 @@ public class AmbiguousPatternsFinder {
   public @DialogMessage @Nullable String validate() {
     StringBuilder sb = null;
     for (Map.Entry<String, Set<String>> entry : urls2groups.entrySet()) {
-      if (entry.getValue().size() > 1) {
-        if (sb == null) {
-          sb = new StringBuilder();
-        }
-        else {
-          if (sb.length() > ourMessageLen) {
-            sb.append("...");
-            break;
-          }
-          sb.append("; ");
-        }
-        StringBuilder innerBuilder = null;
-        for (String groupName : entry.getValue()) {
-          if (innerBuilder == null) {
-            innerBuilder = new StringBuilder();
-          }
-          else {
-            innerBuilder.append(", ");
-          }
-          innerBuilder.append(groupName);
-        }
-        sb.append(
-          message("dialog.edit.http.proxies.settings.error.ambiguous.group.patterns.to.text", entry.getKey(), innerBuilder.toString()));
+      Set<String> groups = entry.getValue();
+      if (groups.size() <= 1) continue;
+
+      if (sb == null) {
+        sb = new StringBuilder();
       }
+      else {
+        if (sb.length() > ourMessageLen) {
+          sb.append(ELLIPSIS);
+          break;
+        }
+        sb.append("; ");
+      }
+
+      String groupsText = join(groups, ", ");
+      sb.append(message("dialog.edit.http.proxies.settings.error.ambiguous.group.patterns.to.text", entry.getKey(), groupsText));
     }
 
     return sb != null ? message("dialog.edit.http.proxies.settings.error.ambiguous.group.patterns.text", sb.toString()) : null;

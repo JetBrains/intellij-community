@@ -1,22 +1,9 @@
-/*
- * Copyright 2000-2010 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.dom.inspections;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.lang.annotation.HighlightSeverity;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.MultiMap;
@@ -32,14 +19,14 @@ import org.jetbrains.idea.maven.project.MavenProjectBundle;
 import java.util.Collection;
 import java.util.Map;
 
-public class MavenDuplicatePluginInspection extends DomElementsInspection<MavenDomProjectModel> {
+public final class MavenDuplicatePluginInspection extends DomElementsInspection<MavenDomProjectModel> implements DumbAware {
   public MavenDuplicatePluginInspection() {
     super(MavenDomProjectModel.class);
   }
 
   @Override
-  public void checkFileElement(DomFileElement<MavenDomProjectModel> domFileElement,
-                               DomElementAnnotationHolder holder) {
+  public void checkFileElement(@NotNull DomFileElement<MavenDomProjectModel> domFileElement,
+                               @NotNull DomElementAnnotationHolder holder) {
     MavenDomProjectModel projectModel = domFileElement.getRootElement();
 
     MultiMap<Pair<String,String>, MavenDomPlugin> duplicates = MultiMap.createSet();
@@ -69,20 +56,17 @@ public class MavenDuplicatePluginInspection extends DomElementsInspection<MavenD
   }
 
   @Override
-  @NotNull
-  public String getGroupDisplayName() {
+  public @NotNull String getGroupDisplayName() {
     return MavenDomBundle.message("inspection.group");
   }
 
   @Override
-  @NotNull
-  public String getShortName() {
+  public @NotNull String getShortName() {
     return "MavenDuplicatePluginInspection";
   }
 
   @Override
-  @NotNull
-  public HighlightDisplayLevel getDefaultLevel() {
+  public @NotNull HighlightDisplayLevel getDefaultLevel() {
     return HighlightDisplayLevel.WARNING;
   }
 }

@@ -6,7 +6,9 @@ import com.intellij.openapi.application.QueryExecutorBase;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.RequestResultProcessor;
 import com.intellij.psi.search.SearchScope;
+import com.intellij.psi.search.SingleTargetRequestResultProcessor;
 import com.intellij.psi.search.UsageSearchContext;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.util.Processor;
@@ -14,14 +16,13 @@ import com.jetbrains.python.PythonFileType;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.psi.PyUtil;
+import com.jetbrains.python.psi.impl.PyCallExpressionNavigator;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author yole
- */
-public class PyInitReferenceSearchExecutor extends QueryExecutorBase<PsiReference, ReferencesSearch.SearchParameters> {
+
+public final class PyInitReferenceSearchExecutor extends QueryExecutorBase<PsiReference, ReferencesSearch.SearchParameters> {
   @Override
-  public void processQuery(@NotNull ReferencesSearch.SearchParameters queryParameters, @NotNull final Processor<? super PsiReference> consumer) {
+  public void processQuery(@NotNull ReferencesSearch.SearchParameters queryParameters, @NotNull Processor<? super PsiReference> consumer) {
     PsiElement element = queryParameters.getElementToSearch();
     if (!(element instanceof PyFunction)) {
       return;
@@ -46,7 +47,29 @@ public class PyInitReferenceSearchExecutor extends QueryExecutorBase<PsiReferenc
       }
 
 
-      queryParameters.getOptimizer().searchWord(className, searchScope, UsageSearchContext.IN_CODE, true, function);
+      final var processor = new ClassInitializationProcessor(pyClass);
+      queryParameters.getOptimizer().searchWord(className, searchScope, UsageSearchContext.IN_CODE, true, pyClass, processor);
     });
+  }
+
+  private static class ClassInitializationProcessor extends RequestResultProcessor {
+
+    private final @NotNull SingleTargetRequestResultProcessor myProcessor;
+
+    private ClassInitializationProcessor(@NotNull PyClass cls) {
+      super(cls);
+      myProcessor = new SingleTargetRequestResultProcessor(cls);
+    }
+
+    @Override
+    public boolean processTextOccurrence(@NotNull PsiElement element,
+                                         int offsetInElement,
+                                         @NotNull Processor<? super PsiReference> consumer) {
+      if (PyCallExpressionNavigator.getPyCallExpressionByCallee(element) != null) {
+        return myProcessor.processTextOccurrence(element, offsetInElement, consumer);
+      }
+
+      return true;
+    }
   }
 }

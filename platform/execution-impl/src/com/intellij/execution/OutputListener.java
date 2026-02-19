@@ -17,7 +17,7 @@ public class OutputListener extends ProcessAdapter {
     err = new StringBuilder();
   }
 
-  public OutputListener(@NotNull final StringBuilder out, @NotNull final StringBuilder err) {
+  public OutputListener(final @NotNull StringBuilder out, final @NotNull StringBuilder err) {
     this.out = out;
     this.err = err;
   }

@@ -1,0 +1,22 @@
+// Copyright 2000-${YEAR} JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+
+package org.jetbrains.kotlin.tools.projectWizard.compatibility
+
+/**
+ * NOTE THIS FILE IS AUTO-GENERATED
+ * DO NOT EDIT IT BY HAND, run "Generate Kotlin Wizard Default Data" configuration instead
+ */
+internal val DEFAULT_GRADLE_PLUGINS_DATA = GradleToPluginsCompatibilityState(
+    listOf(
+        #foreach($entry in $PLUGINS)
+            GradleToPluginCompatibilityEntry(
+                id = "$entry.id",
+                compatibility = listOf(
+                    #foreach($compatibility in $entry.compatibility)
+                        GradleToPluginVersionMapping(gradle = "${compatibility.gradleVersions}", plugin = "${compatibility.pluginVersion}"),
+                    #end
+                )
+            ),
+        #end
+    )
+)

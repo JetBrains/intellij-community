@@ -31,7 +31,8 @@ perspective
     * List item that should be reflowed
       since it is too long
 
-> Here is a pretty big block quote that should not be reflowed
+> Here is a pretty big block quote that
+should not be reflowed
 
 *Here is a pretty big italic block that
 should be reflowed*

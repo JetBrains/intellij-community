@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.openapi.Disposable;
@@ -10,14 +10,18 @@ import com.intellij.util.ui.ImageUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
-import java.awt.*;
+import java.awt.AlphaComposite;
+import java.awt.Component;
+import java.awt.Graphics2D;
+import java.awt.Image;
+import java.awt.Point;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-class GutterIconDropAnimator extends AbstractPainter {
+final class GutterIconDropAnimator extends AbstractPainter {
   private final Point myExplosionLocation;
   private final Image myImage;
-  @NotNull private final Disposable myPainterListenersDisposable;
+  private final @NotNull Disposable myPainterListenersDisposable;
 
   private static final long TIME_PER_FRAME = 30;
   private final int myWidth;
@@ -37,7 +41,7 @@ class GutterIconDropAnimator extends AbstractPainter {
   }
 
   @Override
-  public void executePaint(Component component, Graphics2D g) {
+  public void executePaint(@NotNull Component component, @NotNull Graphics2D g) {
     if (!nrp.get()) return;
 
     long currentTimeMillis = System.currentTimeMillis();

@@ -1,0 +1,5 @@
+package ppp;
+
+public abstract class NamedValue {
+  protected final String myName = "fixed";
+}

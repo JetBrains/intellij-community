@@ -6,17 +6,18 @@ import com.intellij.openapi.actionSystem.MouseShortcut;
 import com.intellij.openapi.keymap.KeyMapBundle;
 import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapUtil;
+import com.intellij.ui.JBColor;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.BorderFactory;
+import javax.swing.JLabel;
+import javax.swing.SwingConstants;
+import java.awt.BorderLayout;
+import java.awt.Component;
 import java.util.Collection;
 
-/**
- * @author Vladimir Kondratyev
- */
 final class MouseShortcutDialog extends ShortcutDialog<MouseShortcut> {
   private final JLabel myText = new JLabel("", SwingConstants.CENTER);
 
@@ -26,7 +27,7 @@ final class MouseShortcutDialog extends ShortcutDialog<MouseShortcut> {
     myShortcutPanel.add(BorderLayout.NORTH, new JLabel(AllIcons.General.Mouse, SwingConstants.CENTER));
     myShortcutPanel.add(BorderLayout.CENTER, myText);
     myShortcutPanel.setBorder(BorderFactory.createCompoundBorder(
-      JBUI.Borders.customLine(MouseShortcutPanel.BORDER, 1, 0, 1, 0),
+      JBUI.Borders.customLine(JBColor.border(), 1, 0, 1, 0),
       JBUI.Borders.empty(20)
     ));
 
@@ -47,7 +48,7 @@ final class MouseShortcutDialog extends ShortcutDialog<MouseShortcut> {
   void setShortcut(MouseShortcut shortcut) {
     super.setShortcut(shortcut);
     if (shortcut == null) {
-      myText.setForeground(MouseShortcutPanel.FOREGROUND);
+      myText.setForeground(UIUtil.getContextHelpForeground());
       myText.setText(KeyMapBundle.message("dialog.mouse.pad.default.text"));
     }
     else {

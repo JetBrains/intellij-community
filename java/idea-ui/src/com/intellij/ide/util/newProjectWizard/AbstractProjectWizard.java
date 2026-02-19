@@ -1,9 +1,10 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.util.newProjectWizard;
 
-import com.google.common.annotations.VisibleForTesting;
 import com.intellij.ide.highlighter.ModuleFileType;
 import com.intellij.ide.highlighter.ProjectFileType;
+import com.intellij.ide.projectWizard.NewProjectWizardCollector;
+import com.intellij.ide.projectWizard.ProjectSettingsStep;
 import com.intellij.ide.util.projectWizard.ModuleBuilder;
 import com.intellij.ide.util.projectWizard.ModuleWizardStep;
 import com.intellij.ide.util.projectWizard.ProjectBuilder;
@@ -16,38 +17,46 @@ import com.intellij.openapi.components.StorageScheme;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
+import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.platform.templates.TemplateModuleBuilder;
 import com.intellij.util.ui.JBUI;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.VisibleForTesting;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JComponent;
+import java.awt.Component;
 import java.io.File;
 import java.nio.file.Paths;
+import java.util.MissingResourceException;
 
 /**
  * @author Dmitry Avdeev
  */
 public abstract class AbstractProjectWizard extends AbstractWizard<ModuleWizardStep> {
   protected final WizardContext myWizardContext;
-  @Nullable
-  private WizardDelegate myDelegate;
+  private @Nullable WizardDelegate myDelegate;
 
-  public AbstractProjectWizard(@Nls String title, Project project, String defaultPath) {
+  public AbstractProjectWizard(@Nls String title, @Nullable Project project, String defaultPath) {
     super(title, project);
     myWizardContext = initContext(project, defaultPath, getDisposable());
-    myWizardContext.setWizard(this);
+    myWizardContext.putUserData(KEY, this);
   }
 
-  public AbstractProjectWizard(@NlsContexts.DialogTitle String title, Project project, Component dialogParent) {
+  public AbstractProjectWizard(@NlsContexts.DialogTitle String title, @Nullable Project project, Component dialogParent) {
     super(title, dialogParent);
     myWizardContext = initContext(project, null, getDisposable());
-    myWizardContext.setWizard(this);
+    myWizardContext.putUserData(KEY, this);
   }
 
   @Override
@@ -62,32 +71,53 @@ public abstract class AbstractProjectWizard extends AbstractWizard<ModuleWizardS
 
   private static WizardContext initContext(@Nullable Project project, @Nullable String defaultPath, Disposable parentDisposable) {
     WizardContext context = new WizardContext(project, parentDisposable);
+    if (defaultPath == null && project != null) {
+      defaultPath = project.getBasePath();
+    }
     if (defaultPath != null) {
       context.setProjectFileDirectory(Paths.get(defaultPath), true);
       context.setProjectName(defaultPath.substring(FileUtil.toSystemIndependentName(defaultPath).lastIndexOf("/") + 1));
     }
-   return context;
+    return context;
   }
 
-  @Nullable
-  public static Sdk getNewProjectJdk(WizardContext context) {
+  public static @Nullable Sdk getNewProjectJdk(WizardContext context) {
     if (context.getProjectJdk() != null) {
       return context.getProjectJdk();
     }
     return getProjectSdkByDefault(context);
   }
 
-  public static Sdk getProjectSdkByDefault(WizardContext context) {
-    final Project project = context.getProject() == null ? ProjectManager.getInstance().getDefaultProject() : context.getProject();
-    final Sdk projectJdk = ProjectRootManager.getInstance(project).getProjectSdk();
-    if (projectJdk != null) {
-      return projectJdk;
+  public static @Nullable Sdk getProjectSdkByDefault(WizardContext context) {
+    Project project = context.getProject();
+    if (project == null) {
+      return getDefaultSdk();
     }
-    return null;
+    else {
+      return ProjectRootManager.getInstance(project).getProjectSdk();
+    }
   }
 
-  @NotNull
-  public String getNewProjectFilePath() {
+  private static @Nullable Sdk getDefaultSdk() {
+    // this is a fallback to simulate old behavior. Please delete this code (always return null). Wizard should have its own
+    // "default sdk" setting if needed instead of relying on registry option or default project: project sdk is stored in the WSM now,
+    // but default projects do not have workspace model (at least for now).
+    Project defaultProject = ProjectManager.getInstance().getDefaultProject();
+    try {
+      String sdkName = Registry.stringValue("default.project.jdk.name");
+      if (sdkName.isBlank()) {
+        return null;
+      }
+      else {
+        return ProjectJdkTable.getInstance(defaultProject).findJdk(sdkName);
+      }
+    }
+    catch (MissingResourceException ignored) {
+      return null;
+    }
+  }
+
+  public @NotNull String getNewProjectFilePath() {
     if (myWizardContext.getProjectStorageFormat() == StorageScheme.DEFAULT) {
       return myWizardContext.getProjectFileDirectory() + File.separator + myWizardContext.getProjectName() + ProjectFileType.DOT_DEFAULT_EXTENSION;
     }
@@ -96,8 +126,7 @@ public abstract class AbstractProjectWizard extends AbstractWizard<ModuleWizardS
     }
   }
 
-  @NotNull
-  public StorageScheme getStorageScheme() {
+  public @NotNull StorageScheme getStorageScheme() {
     return myWizardContext.getProjectStorageFormat();
   }
 
@@ -109,13 +138,11 @@ public abstract class AbstractProjectWizard extends AbstractWizard<ModuleWizardS
     return myWizardContext.getProjectName();
   }
 
-  @Nullable
-  public Sdk getNewProjectJdk() {
+  public @Nullable Sdk getNewProjectJdk() {
     return getNewProjectJdk(myWizardContext);
   }
 
-  @NotNull
-  public String getNewCompileOutput() {
+  public @NotNull String getNewCompileOutput() {
     final String projectFilePath = myWizardContext.getProjectFileDirectory();
     @NonNls String path = myWizardContext.getCompilerOutputDirectory();
     if (path == null) {
@@ -124,11 +151,9 @@ public abstract class AbstractProjectWizard extends AbstractWizard<ModuleWizardS
     return path;
   }
 
-  @Nullable
-  public ProjectBuilder getBuilder(Project project) {
+  public @Nullable ProjectBuilder getBuilder(Project project) {
     final ProjectBuilder builder = getProjectBuilder();
-    if (builder instanceof ModuleBuilder) {
-      final ModuleBuilder moduleBuilder = (ModuleBuilder)builder;
+    if (builder instanceof ModuleBuilder moduleBuilder) {
       if (moduleBuilder.getName() == null) {
         moduleBuilder.setName(getProjectName());
       }
@@ -174,6 +199,7 @@ public abstract class AbstractProjectWizard extends AbstractWizard<ModuleWizardS
   public boolean doFinishAction() {
     if (myDelegate != null) {
       myDelegate.doFinishAction();
+      NewProjectWizardCollector.logGeneratorFinished(myWizardContext);
       return true;
     }
     int idx = getCurrentStep();
@@ -215,14 +241,13 @@ public abstract class AbstractProjectWizard extends AbstractWizard<ModuleWizardS
       myCurrentStep = idx;
       updateStep();
     }
+    NewProjectWizardCollector.logGeneratorFinished(myWizardContext);
     return true;
   }
 
   private void handleCommitException(CommitStepException e) {
     String message = e.getMessage();
-    if (message != null) {
-      Messages.showErrorDialog(getCurrentStepComponent(), message);
-    }
+    Messages.showErrorDialog(getCurrentStepComponent(), message);
   }
 
   protected boolean commitStepData(final ModuleWizardStep step) {
@@ -251,11 +276,13 @@ public abstract class AbstractProjectWizard extends AbstractWizard<ModuleWizardS
     }
     step.onStepLeaving();
     super.doNextAction();
+    myWizardContext.setScreen(2);
+    NewProjectWizardCollector.logNext(myWizardContext, -1);
   }
 
 
   @Override
-  protected String getHelpID() {
+  protected String getHelpId() {
     ModuleWizardStep step = getCurrentStepObject();
     if (step != null) {
       return step.getHelpId();
@@ -268,8 +295,7 @@ public abstract class AbstractProjectWizard extends AbstractWizard<ModuleWizardS
     return isLastStep();
   }
 
-  @NonNls
-  public String getModuleFilePath() {
+  public @NonNls String getModuleFilePath() {
     return myWizardContext.getProjectFileDirectory() + File.separator + myWizardContext.getProjectName() + ModuleFileType.DOT_DEFAULT_EXTENSION;
   }
 
@@ -285,6 +311,7 @@ public abstract class AbstractProjectWizard extends AbstractWizard<ModuleWizardS
       ((StepWithSubSteps)step).doPreviousAction();
     }
     super.doPreviousAction();
+    NewProjectWizardCollector.logPrev(myWizardContext, -1);
   }
 
   @Override
@@ -305,6 +332,10 @@ public abstract class AbstractProjectWizard extends AbstractWizard<ModuleWizardS
   }
 
   private boolean isLastStep(int step) {
+    if (mySteps.get(getNextStep(step)) instanceof ProjectSettingsStep
+        && myWizardContext.getProjectBuilder() instanceof TemplateModuleBuilder) {
+      return true;
+    }
     return getNextStep(step) == step && !isStepWithNotCompletedSubSteps(mySteps.get(step));
   }
 
@@ -354,5 +385,15 @@ public abstract class AbstractProjectWizard extends AbstractWizard<ModuleWizardS
 
   public void setDelegate(@Nullable WizardDelegate delegate) {
     myDelegate = delegate;
+  }
+
+  public @NotNull WizardContext getWizardContext() {
+    return myWizardContext;
+  }
+
+  @Override
+  protected void doHelpAction() {
+    super.doHelpAction();
+    NewProjectWizardCollector.logHelpNavigation(myWizardContext);
   }
 }

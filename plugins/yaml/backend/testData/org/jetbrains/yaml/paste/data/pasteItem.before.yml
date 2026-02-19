@@ -1,0 +1,4 @@
+top:
+  someKey:
+  # use double list for clear indent
+  - - <caret>

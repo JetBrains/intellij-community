@@ -1,9 +1,10 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.diff.impl.patch;
 
 import com.intellij.util.ObjectUtils;
 import com.intellij.vcs.log.VcsUser;
-import com.intellij.vcs.log.impl.VcsUserImpl;
+import com.intellij.vcs.log.util.VcsUserUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 
 import java.util.Iterator;
@@ -12,13 +13,14 @@ import java.util.regex.Pattern;
 
 import static com.intellij.openapi.diff.impl.patch.PatchReader.HASH_PATTERN;
 
+@ApiStatus.Internal
 public final class PatchFileHeaderParser {
 
-  @NonNls private static final Pattern ourBaseRevisionPattern = Pattern.compile("From\\s+(" + HASH_PATTERN + ")\\s+.*");
-  @NonNls private static final Pattern ourAuthorPattern = Pattern.compile("From:\\s+(.*?)\\s*(?:<(.*)>\\s*)?");
+  private static final @NonNls Pattern ourBaseRevisionPattern = Pattern.compile("From\\s+(" + HASH_PATTERN + ")\\s+.*");
+  private static final @NonNls Pattern ourAuthorPattern = Pattern.compile("From:\\s+(.*?)\\s*(?:<(.*)>\\s*)?");
 
-  @NonNls private static final Pattern ourSubjectPattern = Pattern.compile("Subject:(?:\\s+\\[PATCH.*])?\\s*(.+)");
-  @NonNls private static final Pattern ourHeaderEndMarker = Pattern.compile("---\\s*");
+  private static final @NonNls Pattern ourSubjectPattern = Pattern.compile("Subject:(?:\\s+\\[PATCH.*])?\\s*(.+)");
+  private static final @NonNls Pattern ourHeaderEndMarker = Pattern.compile("---\\s*");
 
   public static PatchFileHeaderInfo parseHeader(Iterator<String> iterator) {
     String lineSeparator = "\n";
@@ -43,7 +45,7 @@ public final class PatchFileHeaderParser {
         revision = revisionMatcher.group(1);
       }
       else if (authorMatcher.matches()) {
-        author = new VcsUserImpl(authorMatcher.group(1), ObjectUtils.chooseNotNull(authorMatcher.group(2), ""));
+        author = VcsUserUtil.createUser(authorMatcher.group(1), ObjectUtils.chooseNotNull(authorMatcher.group(2), ""));
       }
       else if (subjectMatcher.matches()) {
         message.append(subjectMatcher.group(1));

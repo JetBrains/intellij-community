@@ -1,16 +1,23 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.model.settings;
 
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.util.UserDataHolderBase;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.SystemProperties;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.Serializable;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * Holds execution settings of particular invocation of an external system.
@@ -21,24 +28,50 @@ public class ExternalSystemExecutionSettings implements Serializable, UserDataHo
   public static final String REMOTE_PROCESS_IDLE_TTL_IN_MS_KEY = "external.system.remote.process.idle.ttl.ms";
   private static final int DEFAULT_REMOTE_PROCESS_TTL_MS = -1;
 
+  public static final Key<Boolean> DEBUG_SERVER_PROCESS_KEY = Key.create("DEBUG_SERVER_PROCESS");
+
   private static final long serialVersionUID = 1L;
 
   private long myRemoteProcessIdleTtlInMs;
   private boolean myVerboseProcessing;
-  @NotNull private final List<String> myJvmArguments;
-  @NotNull private final List<String> myArguments;
-  @NotNull
-  private final Map<String, String> myEnv;
-  private boolean myPassParentEnvs = true;
+  private final @NotNull List<String> myJvmArguments;
+  private @NotNull List<String> myTasks;
+  private final @NotNull List<String> myArguments;
+  private final @NotNull Map<String, String> myEnv;
+  private boolean myPassParentEnvs;
 
-  @NotNull private final transient UserDataHolderBase myUserData = new UserDataHolderBase();
+  private @Nullable String myJvmParameters;
+
+  private final transient @NotNull UserDataHolderBase myUserData = new UserDataHolderBase();
 
   public ExternalSystemExecutionSettings() {
-    int ttl = SystemProperties.getIntProperty(REMOTE_PROCESS_IDLE_TTL_IN_MS_KEY, DEFAULT_REMOTE_PROCESS_TTL_MS);
-    setRemoteProcessIdleTtlInMs(ttl);
+    myRemoteProcessIdleTtlInMs = SystemProperties.getIntProperty(REMOTE_PROCESS_IDLE_TTL_IN_MS_KEY, DEFAULT_REMOTE_PROCESS_TTL_MS);
+
+    myVerboseProcessing = false;
+
     myJvmArguments = new ArrayList<>();
+    myTasks = new ArrayList<>();
     myArguments = new ArrayList<>();
     myEnv = new LinkedHashMap<>();
+    myPassParentEnvs = true;
+
+    myJvmParameters = null;
+  }
+
+  public ExternalSystemExecutionSettings(@NotNull ExternalSystemExecutionSettings settings) {
+    myRemoteProcessIdleTtlInMs = settings.myRemoteProcessIdleTtlInMs;
+
+    myVerboseProcessing = settings.myVerboseProcessing;
+
+    myJvmArguments = new ArrayList<>(settings.myJvmArguments);
+    myTasks = new ArrayList<>(settings.myTasks);
+    myArguments = new ArrayList<>(settings.myArguments);
+    myEnv = new LinkedHashMap<>(settings.myEnv);
+    myPassParentEnvs = settings.myPassParentEnvs;
+
+    myJvmParameters = settings.myJvmParameters;
+
+    settings.myUserData.copyUserDataTo(myUserData);
   }
 
   /**
@@ -60,33 +93,33 @@ public class ExternalSystemExecutionSettings implements Serializable, UserDataHo
     myVerboseProcessing = verboseProcessing;
   }
 
-  /**
-   * @deprecated use {@link #getJvmArguments()}
-   */
-  @Deprecated
-  @NotNull
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020.1")
-  public Set<String> getVmOptions() {
-    return new LinkedHashSet<>(myJvmArguments);
-  }
-
-  @NotNull
-  public List<String> getJvmArguments() {
+  public @NotNull List<String> getJvmArguments() {
     return Collections.unmodifiableList(myJvmArguments);
   }
 
-  @NotNull
-  public List<String> getArguments() {
+  public @NotNull List<String> getTasks() {
+    return Collections.unmodifiableList(myTasks);
+  }
+
+  public void setTasks(List<String> tasks) {
+    myTasks = new ArrayList<>(tasks);
+  }
+
+  public @NotNull List<String> getArguments() {
     return Collections.unmodifiableList(myArguments);
   }
 
-  @NotNull
-  public Map<String, String> getEnv() {
+  public @NotNull Map<String, String> getEnv() {
     return Collections.unmodifiableMap(myEnv);
   }
 
   public boolean isPassParentEnvs() {
     return myPassParentEnvs;
+  }
+
+  public boolean isDebugServerProcess() {
+    var value = getUserData(DEBUG_SERVER_PROCESS_KEY);
+    return ObjectUtils.chooseNotNull(value, false);
   }
 
   public ExternalSystemExecutionSettings withVmOptions(Collection<String> vmOptions) {
@@ -119,6 +152,14 @@ public class ExternalSystemExecutionSettings implements Serializable, UserDataHo
     return this;
   }
 
+  public void prependArguments(String... arguments) {
+    myArguments.addAll(0, Arrays.asList(arguments));
+  }
+
+  public void addEnvironmentVariable(@NotNull String name, @NotNull String value) {
+    myEnv.put(name, value);
+  }
+
   public ExternalSystemExecutionSettings withEnvironmentVariables(Map<String, String> envs) {
     myEnv.putAll(envs);
     return this;
@@ -129,9 +170,18 @@ public class ExternalSystemExecutionSettings implements Serializable, UserDataHo
     return this;
   }
 
-  @Nullable
+  @ApiStatus.Internal
+  public @Nullable String getJvmParameters() {
+    return myJvmParameters;
+  }
+
+  @ApiStatus.Internal
+  public void setJvmParameters(@Nullable String jvmParameters) {
+    myJvmParameters = jvmParameters;
+  }
+
   @Override
-  public <U> U getUserData(@NotNull Key<U> key) {
+  public @Nullable <U> U getUserData(@NotNull Key<U> key) {
     return myUserData.getUserData(key);
   }
 
@@ -142,7 +192,7 @@ public class ExternalSystemExecutionSettings implements Serializable, UserDataHo
 
   @Override
   public int hashCode() {
-    int result = (int)(myRemoteProcessIdleTtlInMs ^ (myRemoteProcessIdleTtlInMs >>> 32));
+    int result = Long.hashCode(myRemoteProcessIdleTtlInMs);
     result = 31 * result + (myVerboseProcessing ? 1 : 0);
     result = 31 * result + myJvmArguments.hashCode();
     result = 31 * result + myArguments.hashCode();

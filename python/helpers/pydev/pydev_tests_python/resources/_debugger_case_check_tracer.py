@@ -68,7 +68,7 @@ def thread_func():
 
 
 th = threading.Thread(target=thread_func)
-th.setDaemon(True)
+th.daemon = True
 th.start()
 
 event = threading.Event()

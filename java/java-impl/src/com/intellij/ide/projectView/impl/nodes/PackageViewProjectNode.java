@@ -1,24 +1,28 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.projectView.impl.nodes;
 
 import com.intellij.ide.projectView.ViewSettings;
 import com.intellij.ide.projectView.impl.ModuleGroup;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleDescription;
-import com.intellij.openapi.module.ModuleManager;
-import com.intellij.openapi.module.impl.LoadedModuleDescriptionImpl;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.JavaDirectoryService;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiPackage;
+import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+
+import static com.intellij.ide.projectView.impl.nodes.ImplKt.moduleDescriptions;
 
 public class PackageViewProjectNode extends AbstractProjectNode {
   public PackageViewProjectNode(@NotNull Project project, ViewSettings viewSettings) {
@@ -29,32 +33,22 @@ public class PackageViewProjectNode extends AbstractProjectNode {
   public boolean canRepresent(Object element) {
     Project project = getValue();
     if (project == element) return true;
-    if (element instanceof PsiDirectory) {
-      PsiDirectory directory = (PsiDirectory)element;
+    if (element instanceof PsiDirectory directory) {
       element = directory.getVirtualFile();
     }
     if (element instanceof VirtualFile) {
       ProjectRootManager manager = project == null || project.isDisposed() ? null : ProjectRootManager.getInstance(project);
       if (manager != null) {
-        for (VirtualFile root : manager.getContentSourceRoots()) {
-          if (element.equals(root)) return true;
-        }
+        return ArrayUtil.contains(element, manager.getContentSourceRoots());
       }
     }
     return false;
   }
 
   @Override
-  @NotNull
-  public Collection<AbstractTreeNode<?>> getChildren() {
+  public @Unmodifiable @NotNull Collection<AbstractTreeNode<?>> getChildren() {
     if (getSettings().isShowModules()) {
-      List<ModuleDescription> modulesWithSourceRoots = new ArrayList<>();
-      for (Module module : ModuleManager.getInstance(getProject()).getModules()) {
-        if (ModuleRootManager.getInstance(module).getSourceRoots().length > 0) {
-          modulesWithSourceRoots.add(new LoadedModuleDescriptionImpl(module));
-        }
-      }
-      return modulesAndGroups(modulesWithSourceRoots);
+      return modulesAndGroups(moduleDescriptions(myProject));
     }
     else {
       final ProjectRootManager projectRootManager = ProjectRootManager.getInstance(myProject);
@@ -86,8 +80,9 @@ public class PackageViewProjectNode extends AbstractProjectNode {
         }
       }
 
+      var nodeBuilder = new PackageNodeBuilder(null, false);
       for (final PsiPackage psiPackage : topLevelPackages) {
-        PackageUtil.addPackageAsChild(children, psiPackage, null, getSettings(), false);
+        nodeBuilder.addPackageAsChild(children, psiPackage, getSettings());
       }
 
       if (getSettings().isShowLibraryContents()) {
@@ -100,15 +95,13 @@ public class PackageViewProjectNode extends AbstractProjectNode {
 
   }
 
-  @NotNull
   @Override
-  protected AbstractTreeNode createModuleGroup(@NotNull final Module module) {
+  protected @NotNull AbstractTreeNode createModuleGroup(final @NotNull Module module) {
     return new PackageViewModuleNode(getProject(), module, getSettings());
   }
 
-  @NotNull
   @Override
-  protected AbstractTreeNode createModuleGroupNode(@NotNull final ModuleGroup moduleGroup) {
+  protected @NotNull AbstractTreeNode createModuleGroupNode(final @NotNull ModuleGroup moduleGroup) {
     return new PackageViewModuleGroupNode(getProject(),  moduleGroup, getSettings());
   }
 

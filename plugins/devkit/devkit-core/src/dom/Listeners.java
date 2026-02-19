@@ -1,9 +1,15 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.dom;
 
-import com.intellij.ide.plugins.IdeaPluginDescriptorImpl;
+import com.intellij.openapi.extensions.ExtensionDescriptor;
 import com.intellij.psi.PsiClass;
-import com.intellij.util.xml.*;
+import com.intellij.util.xml.Attribute;
+import com.intellij.util.xml.Convert;
+import com.intellij.util.xml.DomElement;
+import com.intellij.util.xml.ExtendClass;
+import com.intellij.util.xml.GenericAttributeValue;
+import com.intellij.util.xml.Required;
+import com.intellij.util.xml.SubTagList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.devkit.dom.impl.PluginPsiClassConverter;
 
@@ -11,7 +17,7 @@ import java.util.List;
 
 public interface Listeners extends DomElement {
   @SubTagList("listener")
-  @NotNull List<Listener> getListeners();
+  @NotNull List<? extends Listener> getListeners();
 
   interface Listener extends DomElement {
     @Attribute("class")
@@ -33,6 +39,6 @@ public interface Listeners extends DomElement {
     GenericAttributeValue<Boolean> isActiveInHeadlessMode();
 
     @Attribute("os")
-    GenericAttributeValue<IdeaPluginDescriptorImpl.OS> getOs();
+    GenericAttributeValue<ExtensionDescriptor.Os> getOs();
   }
 }

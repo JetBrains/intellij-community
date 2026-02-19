@@ -7,9 +7,6 @@ import com.intellij.codeInsight.lookup.LookupElementWeigher;
 import com.intellij.codeInsight.lookup.WeighingContext;
 import org.jetbrains.annotations.NotNull;
 
-/**
-* @author Peter
-*/
 public class RealPrefixMatchingWeigher extends LookupElementWeigher {
 
   public RealPrefixMatchingWeigher() {

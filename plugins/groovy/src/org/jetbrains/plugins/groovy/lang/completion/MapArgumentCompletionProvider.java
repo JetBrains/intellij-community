@@ -1,16 +1,21 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.completion;
 
-import com.intellij.codeInsight.completion.*;
+import com.intellij.codeInsight.completion.CompletionContributor;
+import com.intellij.codeInsight.completion.CompletionParameters;
+import com.intellij.codeInsight.completion.CompletionProvider;
+import com.intellij.codeInsight.completion.CompletionResultSet;
+import com.intellij.codeInsight.completion.CompletionType;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
-import com.intellij.icons.AllIcons;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.patterns.ElementPattern;
 import com.intellij.patterns.PlatformPatterns;
 import com.intellij.patterns.StandardPatterns;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiRecursiveElementWalkingVisitor;
+import com.intellij.ui.IconManager;
+import com.intellij.ui.PlatformIcons;
 import com.intellij.util.ProcessingContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -29,14 +34,11 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrRefere
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyNamesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
-import java.awt.*;
+import java.awt.Color;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
-/**
- * @author peter
- */
 final class MapArgumentCompletionProvider extends CompletionProvider<CompletionParameters> {
 
   // @formatter:off
@@ -45,9 +47,10 @@ final class MapArgumentCompletionProvider extends CompletionProvider<CompletionP
   // [<some values, initializers or named arguments>, <caret>]
   // foo <caret>
   // foo (<caret>)
+  // foo (aa<caret> bb)
   public static final ElementPattern<PsiElement> IN_ARGUMENT_LIST_OF_CALL = PlatformPatterns
     .psiElement().withParent(PlatformPatterns.psiElement(GrReferenceExpression.class).withParent(
-    StandardPatterns.or(PlatformPatterns.psiElement(GrArgumentList.class), PlatformPatterns.psiElement(GrListOrMap.class)))
+    StandardPatterns.or(PlatformPatterns.psiElement(GrArgumentList.class), PlatformPatterns.psiElement().withParent(GrArgumentList.class), PlatformPatterns.psiElement(GrListOrMap.class)))
   );
 
   // [<caret> : ]
@@ -100,7 +103,7 @@ final class MapArgumentCompletionProvider extends CompletionProvider<CompletionP
         }
       }
       else {
-        lookup = lookup.withIcon(AllIcons.Nodes.Property);
+        lookup = lookup.withIcon(IconManager.getInstance().getPlatformIcon(PlatformIcons.Property));
       }
 
       LookupElement customized = entry.getValue().customizeLookupElement(lookup);
@@ -113,8 +116,7 @@ final class MapArgumentCompletionProvider extends CompletionProvider<CompletionP
     return mapOrArgumentList instanceof GrListOrMap && ((GrListOrMap)mapOrArgumentList).getNamedArguments().length > 0;
   }
 
-  @Nullable
-  private static PsiElement findMapOrArgumentList(CompletionParameters parameters) {
+  private static @Nullable PsiElement findMapOrArgumentList(CompletionParameters parameters) {
     PsiElement parent = parameters.getPosition().getParent();
     if (parent instanceof GrReferenceExpression) {
       if (((GrReferenceExpression)parent).getQualifier() != null) return null;
@@ -126,8 +128,7 @@ final class MapArgumentCompletionProvider extends CompletionProvider<CompletionP
     return parent.getParent().getParent();
   }
 
-  @NotNull
-  private static Map<String, NamedArgumentDescriptor> findOtherNamedArgumentsInFile(PsiElement mapOrArgumentList) {
+  private static @NotNull Map<String, NamedArgumentDescriptor> findOtherNamedArgumentsInFile(PsiElement mapOrArgumentList) {
     final Map<String, NamedArgumentDescriptor> map = new HashMap<>();
     mapOrArgumentList.getContainingFile().accept(new PsiRecursiveElementWalkingVisitor() {
       @Override
@@ -159,8 +160,7 @@ final class MapArgumentCompletionProvider extends CompletionProvider<CompletionP
     return GrNamedArgument.EMPTY_ARRAY;
   }
 
-  @NotNull
-  private static Map<String, NamedArgumentDescriptor> calculateNamedArguments(@NotNull PsiElement mapOrArgumentList) {
+  private static @NotNull Map<String, NamedArgumentDescriptor> calculateNamedArguments(@NotNull PsiElement mapOrArgumentList) {
     Map<String, NamedArgumentDescriptor> map = calcNamedArgumentsForCall(mapOrArgumentList);
 
     if ((map == null || map.isEmpty()) && mapOrArgumentList instanceof GrListOrMap) {
@@ -174,8 +174,7 @@ final class MapArgumentCompletionProvider extends CompletionProvider<CompletionP
     return map;
   }
 
-  @Nullable
-  private static Map<String, NamedArgumentDescriptor> calcNamedArgumentsForCall(@NotNull PsiElement mapOrArgumentList) {
+  private static @Nullable Map<String, NamedArgumentDescriptor> calcNamedArgumentsForCall(@NotNull PsiElement mapOrArgumentList) {
     PsiElement argumentList = mapOrArgumentList instanceof GrArgumentList ? mapOrArgumentList : mapOrArgumentList.getParent();
     if (argumentList instanceof GrArgumentList) {
       if (mapOrArgumentList instanceof GrListOrMap) {

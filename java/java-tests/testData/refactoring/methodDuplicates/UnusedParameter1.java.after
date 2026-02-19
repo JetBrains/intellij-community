@@ -4,6 +4,6 @@ class Test {
   }
 
   void bar() {
-      foo(null);
+      foo("");
   }
 }

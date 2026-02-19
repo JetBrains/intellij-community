@@ -30,7 +30,10 @@ import org.zmlx.hg4idea.util.HgUtil;
 import java.io.File;
 import java.util.List;
 
-import static com.intellij.openapi.vcs.Executor.*;
+import static com.intellij.openapi.vcs.Executor.cd;
+import static com.intellij.openapi.vcs.Executor.echo;
+import static com.intellij.openapi.vcs.Executor.mkdir;
+import static com.intellij.openapi.vcs.Executor.touch;
 import static hg4idea.test.HgExecutor.hg;
 
 public class HgHistoryTest extends HgPlatformTest {
@@ -41,8 +44,10 @@ public class HgHistoryTest extends HgPlatformTest {
   public void setUp() throws Exception {
     super.setUp();
     cd(myRepository);
-    appendToHgrc(myRepository, "[extensions]\n" +
-                                "largefiles=!\n");
+    appendToHgrc(myRepository, """
+      [extensions]
+      largefiles=!
+      """);
     mkdir(subDirName);
     cd(subDirName);
     touch(names[0], "f1");

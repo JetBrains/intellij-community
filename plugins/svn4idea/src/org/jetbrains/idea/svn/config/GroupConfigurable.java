@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.svn.config;
 
 import com.intellij.openapi.options.ConfigurationException;
@@ -6,7 +6,7 @@ import com.intellij.openapi.ui.NamedConfigurable;
 import com.intellij.openapi.util.NlsContexts.DialogMessage;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 import java.util.List;
 
 import static org.jetbrains.idea.svn.SvnBundle.message;
@@ -48,7 +48,7 @@ public class GroupConfigurable extends NamedConfigurable<ProxyGroup> {
 
   @Override
   public String getDisplayName() {
-    return myProxyGroup.getName();
+    return myProxyGroup.getDisplayName();
   }
 
   @Override
@@ -101,7 +101,7 @@ public class GroupConfigurable extends NamedConfigurable<ProxyGroup> {
     }
     try {
       final String portString = value.trim();
-      if (portString.length() > 0) {
+      if (!portString.isEmpty()) {
         Integer.valueOf(portString);
       }
     }

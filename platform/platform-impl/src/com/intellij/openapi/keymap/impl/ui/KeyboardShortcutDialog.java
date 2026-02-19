@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.keymap.impl.ui;
 
 import com.intellij.icons.AllIcons;
@@ -10,10 +10,16 @@ import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JComponent;
+import javax.swing.JPanel;
+import javax.swing.KeyStroke;
+import java.awt.BorderLayout;
+import java.awt.Component;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
-import java.util.*;
+import java.util.Map;
 
 final class KeyboardShortcutDialog extends ShortcutDialog<KeyboardShortcut> {
   private final JComponent myPreferredFocusedComponent;
@@ -55,19 +61,16 @@ final class KeyboardShortcutDialog extends ShortcutDialog<KeyboardShortcut> {
   }
 
   @Override
-  @NotNull
-  Collection<String> getConflicts(KeyboardShortcut shortcut, String actionId, Keymap keymap) {
+  @NotNull Collection<String> getConflicts(KeyboardShortcut shortcut, String actionId, Keymap keymap) {
     String sysAct = getSystemShortcutAction(shortcut.getFirstKeyStroke());
     Collection<String> keymapConflicts = keymap.getConflicts(actionId, shortcut).keySet();
     if (sysAct == null) {
       return keymapConflicts;
     }
-    if (keymapConflicts == null || keymapConflicts.isEmpty()) {
+    if (keymapConflicts.isEmpty()) {
       return Collections.singletonList(sysAct);
     }
-
-    List<String> result = new ArrayList<>();
-    result.addAll(keymapConflicts);
+    List<String> result = new ArrayList<>(keymapConflicts);
     result.add(sysAct);
     return result;
   }
@@ -75,8 +78,8 @@ final class KeyboardShortcutDialog extends ShortcutDialog<KeyboardShortcut> {
   @Override
   protected void addSystemActionsIfPresented(Group group) {
     if (mySystemShortcuts != null) {
-      Group macOsSysGroup = new Group(IdeBundle.message("action.group.macos.shortcuts.text"), AllIcons.Nodes.KeymapOther);
-      mySystemShortcuts.forEach((ks, actid) -> macOsSysGroup.addActionId(actid));
+      @SuppressWarnings("DialogTitleCapitalization") Group macOsSysGroup = new Group(IdeBundle.message("action.group.macos.shortcuts.text"), null, () -> AllIcons.Nodes.KeymapOther);
+      mySystemShortcuts.forEach((ks, id) -> macOsSysGroup.addActionId(id));
       group.addGroup(macOsSysGroup);
     }
   }

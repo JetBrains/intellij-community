@@ -4,7 +4,7 @@ public enum Test {
   void test() {
     Integer code = getCode();
     switch (code) {
-      case VALUE.value()<EOLError descr="':' expected"></EOLError>
+      case <error descr="Constant expression, pattern or null is required">VALUE.<error descr="Cannot resolve symbol 'value'">value</error>()</error><EOLError descr="':' or '->' expected"></EOLError>
     }
     if (code == VALUE.value()) {
       getCode();

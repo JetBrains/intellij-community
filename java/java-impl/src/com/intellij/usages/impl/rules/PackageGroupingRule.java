@@ -1,10 +1,9 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.usages.impl.rules;
 
 import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.actionSystem.DataSink;
-import com.intellij.openapi.actionSystem.TypeSafeDataProvider;
+import com.intellij.openapi.actionSystem.UiDataProvider;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.FileStatusManager;
@@ -14,18 +13,17 @@ import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiPackage;
 import com.intellij.usages.UsageGroup;
-import com.intellij.usages.UsageView;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.Icon;
 
-public class PackageGroupingRule extends DirectoryGroupingRule {
+public final class PackageGroupingRule extends DirectoryGroupingRule {
   public PackageGroupingRule(@NotNull Project project) {
     super(project);
   }
 
   @Override
-  protected UsageGroup getGroupForFile(@NotNull final VirtualFile dir) {
+  protected UsageGroup getGroupForFile(final @NotNull VirtualFile dir) {
     PsiDirectory psiDirectory = PsiManager.getInstance(myProject).findDirectory(dir);
     if (psiDirectory != null) {
       PsiPackage aPackage = JavaDirectoryService.getInstance().getPackage(psiDirectory);
@@ -43,7 +41,7 @@ public class PackageGroupingRule extends DirectoryGroupingRule {
     return "UsageGrouping.Package";
   }
 
-  private final class PackageGroup implements UsageGroup, TypeSafeDataProvider {
+  private final class PackageGroup implements UsageGroup, UiDataProvider {
     private final PsiPackage myPackage;
     private Icon myIcon;
 
@@ -60,13 +58,12 @@ public class PackageGroupingRule extends DirectoryGroupingRule {
     }
 
     @Override
-    public Icon getIcon(boolean isOpen) {
+    public Icon getIcon() {
       return myIcon;
     }
 
     @Override
-    @NotNull
-    public String getText(UsageView view) {
+    public @NotNull String getPresentableGroupText() {
       return myPackage.getQualifiedName();
     }
 
@@ -93,15 +90,11 @@ public class PackageGroupingRule extends DirectoryGroupingRule {
     }
 
     @Override
-    public boolean canNavigateToSource() {
-      return false;
+    public int compareTo(@NotNull UsageGroup usageGroup) {
+      return getPresentableGroupText().compareToIgnoreCase(usageGroup.getPresentableGroupText());
     }
 
     @Override
-    public int compareTo(@NotNull UsageGroup usageGroup) {
-      return getText(null).compareToIgnoreCase(usageGroup.getText(null));
-    }
-
     public boolean equals(Object o) {
       if (this == o) return true;
       if (!(o instanceof PackageGroup)) return false;
@@ -109,16 +102,16 @@ public class PackageGroupingRule extends DirectoryGroupingRule {
       return myPackage.equals(((PackageGroup)o).myPackage);
     }
 
+    @Override
     public int hashCode() {
       return myPackage.hashCode();
     }
 
     @Override
-    public void calcData(@NotNull final DataKey key, @NotNull final DataSink sink) {
-      if (!isValid()) return;
-      if (CommonDataKeys.PSI_ELEMENT == key) {
-        sink.put(CommonDataKeys.PSI_ELEMENT, myPackage);
-      }
+    public void uiDataSnapshot(@NotNull DataSink sink) {
+      sink.lazy(CommonDataKeys.PSI_ELEMENT, () -> {
+        return myPackage;
+      });
     }
   }
 }

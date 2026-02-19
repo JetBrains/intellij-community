@@ -1,0 +1,3 @@
+- name: dist.all/lib/fleet.rhizomedb.transactor.rebase.jar
+  modules:
+  - name: fleet.rhizomedb.transactor.rebase

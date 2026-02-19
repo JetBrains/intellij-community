@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.ui;
 
 import com.intellij.application.options.ModuleDescriptionsComboBox;
@@ -32,15 +18,16 @@ import com.intellij.openapi.util.NlsContexts;
 import com.intellij.psi.PsiClass;
 import com.intellij.ui.ComboboxSpeedSearch;
 import com.intellij.ui.SortedComboBoxModel;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JComboBox;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
 public class ConfigurationModuleSelector {
-  private final Project myProject;
+  private final @NotNull Project myProject;
   /** this field is {@code null} if and only if {@link #myModulesList} is not null */
   private final ModulesCombo myModulesDescriptionsComboBox;
   /** this field is {@code null} if and only if {@link #myModulesDescriptionsComboBox} is not null */
@@ -49,58 +36,55 @@ public class ConfigurationModuleSelector {
   /**
    * @deprecated use {@link #ConfigurationModuleSelector(Project, ModulesComboBox)} instead
    */
-  @Deprecated
-  public ConfigurationModuleSelector(final Project project, final JComboBox<? extends Module> modulesList) {
-    this(project, modulesList, JavaPsiBundle.message("list.item.no.module"));
-  }
-
-  public ConfigurationModuleSelector(Project project, ModulesComboBox modulesComboBox) {
-    this(project, modulesComboBox, JavaPsiBundle.message("list.item.no.module"));
-  }
-
-  public ConfigurationModuleSelector(Project project, ModuleDescriptionsComboBox modulesDescriptionsComboBox) {
-    this(project, modulesDescriptionsComboBox, JavaPsiBundle.message("list.item.no.module"));
-  }
-
-  public ConfigurationModuleSelector(Project project, ModulesCombo modulesDescriptionsComboBox) {
-    this(project, modulesDescriptionsComboBox, JavaPsiBundle.message("list.item.no.module"));
-  }
-
-  public ConfigurationModuleSelector(Project project, ModulesCombo modulesDescriptionsComboBox, @NlsContexts.ListItem String emptySelectionText) {
-    myProject = project;
-    myModulesDescriptionsComboBox = modulesDescriptionsComboBox;
-    myModulesList = null;
-    modulesDescriptionsComboBox.allowEmptySelection(emptySelectionText);
-  }
-
-  public ConfigurationModuleSelector(Project project, ModulesComboBox modulesComboBox, @NlsContexts.ListItem String noModule) {
-    myProject = project;
-    myModulesList = modulesComboBox;
-    myModulesDescriptionsComboBox = null;
-    modulesComboBox.allowEmptySelection(noModule);
-  }
-
-  /**
-   * @deprecated use {@link #ConfigurationModuleSelector(Project, ModulesComboBox, String)} instead
-   */
-  @Deprecated
-  public ConfigurationModuleSelector(final Project project, final JComboBox<? extends Module> modulesList, final @NlsContexts.ListItem String noModule) {
+  @Deprecated(forRemoval = true)
+  public ConfigurationModuleSelector(@NotNull Project project, final JComboBox<? extends Module> modulesList) {
+    String noModule = JavaPsiBundle.message("list.item.no.module");
     myProject = project;
     myModulesList = modulesList;
     myModulesDescriptionsComboBox = null;
-    new ComboboxSpeedSearch(modulesList){
+    ComboboxSpeedSearch search = new ComboboxSpeedSearch(modulesList, null) {
       @Override
       protected String getElementText(Object element) {
-        if (element instanceof Module){
+        if (element instanceof Module) {
           return ((Module)element).getName();
-        } else if (element == null) {
+        }
+        else if (element == null) {
           return noModule;
         }
         return super.getElementText(element);
       }
     };
+    search.setupListeners();
     myModulesList.setModel(new SortedComboBoxModel<>(ModulesAlphaComparator.INSTANCE));
     myModulesList.setRenderer(new ModuleListCellRenderer(noModule));
+  }
+
+  public ConfigurationModuleSelector(@NotNull Project project, ModulesComboBox modulesComboBox) {
+    this(project, modulesComboBox, JavaPsiBundle.message("list.item.no.module"));
+  }
+
+  public ConfigurationModuleSelector(@NotNull Project project, ModuleDescriptionsComboBox modulesDescriptionsComboBox) {
+    this(project, modulesDescriptionsComboBox, JavaPsiBundle.message("list.item.no.module"));
+  }
+
+  public ConfigurationModuleSelector(@NotNull Project project, ModulesCombo modulesDescriptionsComboBox) {
+    this(project, modulesDescriptionsComboBox, JavaPsiBundle.message("list.item.no.module"));
+  }
+
+  private ConfigurationModuleSelector(@NotNull Project project, ModulesCombo modulesDescriptionsComboBox, @NlsContexts.ListItem @Nullable String emptySelectionText) {
+    myProject = project;
+    myModulesDescriptionsComboBox = modulesDescriptionsComboBox;
+    myModulesList = null;
+    if (emptySelectionText != null) {
+      modulesDescriptionsComboBox.allowEmptySelection(emptySelectionText);
+    }
+  }
+
+  public ConfigurationModuleSelector(@NotNull Project project, ModulesComboBox modulesComboBox, @NlsContexts.ListItem String noModule) {
+    myProject = project;
+    myModulesList = modulesComboBox;
+    myModulesDescriptionsComboBox = null;
+    modulesComboBox.allowEmptySelection(noModule);
   }
 
   public void applyTo(final ModuleBasedConfiguration configurationModule) {
@@ -165,8 +149,7 @@ public class ConfigurationModuleSelector {
     return myModulesDescriptionsComboBox != null ? myModulesDescriptionsComboBox.getSelectedModule() : (Module) myModulesList.getSelectedItem();
   }
 
-  @Nullable
-  public PsiClass findClass(final String className) {
+  public @Nullable PsiClass findClass(final String className) {
     return getConfigurationModule().findClass(className);
   }
 

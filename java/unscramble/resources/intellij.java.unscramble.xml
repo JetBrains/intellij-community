@@ -1,0 +1,15 @@
+<idea-plugin visibility="internal">
+  <dependencies>
+    <module name="intellij.platform.vcs.impl"/>
+    <module name="intellij.java"/>
+    <module name="intellij.java.impl"/>
+
+    <module name="intellij.platform.backend"/>
+  </dependencies>
+
+  <actions resource-bundle="messages.ActionsBundle">
+    <action id="Unscramble" class="com.intellij.unscramble.UnscrambleAction" overrides="true">
+      <override-text place="EditorPopup"/>
+    </action>
+  </actions>
+</idea-plugin>

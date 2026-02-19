@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.build;
 
 import com.intellij.openapi.Disposable;
@@ -8,13 +8,13 @@ import com.intellij.ui.components.ProgressBarLoadingDecorator;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JComponent;
+import javax.swing.JProgressBar;
+import java.awt.BorderLayout;
 
 @ApiStatus.Internal
-class BuildProgressStripe extends JBPanel {
-  @NotNull
-  private final JBPanel myPanel;
+final class BuildProgressStripe extends JBPanel {
+  private final @NotNull JBPanel myPanel;
   private final NotNullLazyValue<ProgressBarLoadingDecorator> myCreateLoadingDecorator;
   private ProgressBarLoadingDecorator myDecorator;
 
@@ -23,7 +23,7 @@ class BuildProgressStripe extends JBPanel {
     myPanel = new JBPanel(new BorderLayout());
     myPanel.setOpaque(false);
     myPanel.add(targetComponent);
-    myCreateLoadingDecorator = NotNullLazyValue.createValue(() -> {
+    myCreateLoadingDecorator = NotNullLazyValue.lazy(() -> {
       return new ProgressBarLoadingDecorator(myPanel, parent, startDelayMs);
     });
     createLoadingDecorator();

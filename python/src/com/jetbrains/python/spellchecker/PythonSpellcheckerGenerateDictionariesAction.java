@@ -1,38 +1,24 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.spellchecker;
 
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.LangDataKeys;
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.jetbrains.python.sdk.PythonSdkUtil;
+import com.jetbrains.python.PyNames;
+import com.jetbrains.python.sdk.legacy.PythonSdkUtil;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author yole
- */
+
 public class PythonSpellcheckerGenerateDictionariesAction extends AnAction {
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
-    Module module = e.getData(LangDataKeys.MODULE);
+    Module module = e.getData(PlatformCoreDataKeys.MODULE);
     if (module == null) {
       return;
     }
@@ -53,9 +39,9 @@ public class PythonSpellcheckerGenerateDictionariesAction extends AnAction {
       if (root.getName().equals("Lib")) {
         generator.addFolder("python", root);
         generator.excludeFolder(root.findChild("test"));
-        generator.excludeFolder(root.findChild("site-packages"));
+        generator.excludeFolder(root.findChild(PyNames.SITE_PACKAGES));
       }
-      else if (root.getName().equals("site-packages")) {
+      else if (root.getName().equals(PyNames.SITE_PACKAGES)) {
         VirtualFile djangoRoot = root.findChild("django");
         if (djangoRoot != null) {
           generator.addFolder("django", djangoRoot);
@@ -64,5 +50,10 @@ public class PythonSpellcheckerGenerateDictionariesAction extends AnAction {
     }
 
     generator.generate();
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 }

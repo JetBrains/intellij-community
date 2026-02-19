@@ -1,0 +1,14 @@
+// "Create member property 'Foo.foo'" "true"
+// IGNORE_K2
+
+expect class Foo {
+    val foo: Int
+}
+
+fun test(f: Foo) {
+    takeInt(f.foo)
+}
+
+fun takeInt(n: Int) {
+
+}

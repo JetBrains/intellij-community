@@ -12,6 +12,7 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.EditorTestUtil;
 import com.intellij.testFramework.LightPlatformCodeInsightTestCase;
+import com.intellij.testFramework.common.EditorCaretTestUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -242,7 +243,7 @@ public class TrailingSpacesStripperTest extends LightPlatformCodeInsightTestCase
     final Document document = manager.getDocument(myVFile);
     manager.reloadFromDisk(document);
     Editor editor = createEditor(myVFile);
-    EditorTestUtil.CaretAndSelectionState caretsState = EditorTestUtil.extractCaretAndSelectionMarkers(document);
+    EditorCaretTestUtil.CaretAndSelectionState caretsState = EditorTestUtil.extractCaretAndSelectionMarkers(document);
     EditorTestUtil.setCaretsAndSelection(editor, caretsState);
     return editor;
   }

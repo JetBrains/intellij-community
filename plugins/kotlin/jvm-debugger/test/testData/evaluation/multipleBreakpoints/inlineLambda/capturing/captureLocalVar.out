@@ -1,0 +1,14 @@
+LineBreakpoint created at captureLocalVar.kt:16
+LineBreakpoint created at captureLocalVar.kt:27
+LineBreakpoint created at captureLocalVar.kt:37
+Run Java
+Connected to the target VM
+captureLocalVar.kt:16
+Compile bytecode for block()
+captureLocalVar.kt:27
+Compile bytecode for block()
+captureLocalVar.kt:37
+Compile bytecode for block()
+Disconnected from the target VM
+
+Process finished with exit code 0

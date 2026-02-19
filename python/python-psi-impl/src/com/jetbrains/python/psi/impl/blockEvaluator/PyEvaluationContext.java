@@ -30,8 +30,7 @@ import java.util.Map;
  * @author Ilya.Kazakevich
  */
 public class PyEvaluationContext {
-  @NotNull
-  private final Map<PyFile, PyEvaluationResult> myResultMap = new HashMap<>();
+  private final @NotNull Map<PyFile, PyEvaluationResult> myResultMap = new HashMap<>();
 
   PyEvaluationContext() {
   }
@@ -42,7 +41,7 @@ public class PyEvaluationContext {
    * @return eval result
    */
   @Nullable
-  PyEvaluationResult getCachedResult(@NotNull final PyFile file) {
+  PyEvaluationResult getCachedResult(final @NotNull PyFile file) {
     return myResultMap.get(file);
   }
 
@@ -51,7 +50,7 @@ public class PyEvaluationContext {
    * @param file file
    * @param result evaluation result
    */
-  void cache(@NotNull final PyFile file, @NotNull final PyEvaluationResult result) {
+  void cache(final @NotNull PyFile file, final @NotNull PyEvaluationResult result) {
     myResultMap.put(file, result);
   }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.svn.api;
 
 import org.jetbrains.annotations.Nls;
@@ -21,7 +21,7 @@ public enum Depth {
   @XmlEnumValue("empty") EMPTY("empty"),
   @XmlEnumValue("exclude") EXCLUDE("exclude");
 
-  @NotNull private static final Map<String, Depth> ourAllDepths = new HashMap<>();
+  private static final @NotNull Map<String, Depth> ourAllDepths = new HashMap<>();
 
   static {
     for (Depth action : values()) {
@@ -40,20 +40,14 @@ public enum Depth {
   }
 
   public @Nls @NotNull String getDisplayName() {
-    switch (this) {
-      case INFINITY:
-        return message("label.depth.infinity");
-      case IMMEDIATES:
-        return message("label.depth.immediates");
-      case FILES:
-        return message("label.depth.files");
-      case EMPTY:
-        return message("label.depth.empty");
-      case EXCLUDE:
-        return message("label.depth.exclude");
-      default:
-        return message("label.depth.unknown");
-    }
+    return message(switch (this) {
+      case INFINITY -> "label.depth.infinity";
+      case IMMEDIATES -> "label.depth.immediates";
+      case FILES -> "label.depth.files";
+      case EMPTY -> "label.depth.empty";
+      case EXCLUDE -> "label.depth.exclude";
+      default -> "label.depth.unknown";
+    });
   }
 
   @Override
@@ -65,8 +59,7 @@ public enum Depth {
     ourAllDepths.put(depth.myName, depth);
   }
 
-  @NotNull
-  public static Depth from(@NonNls @NotNull String depthName) {
+  public static @NotNull Depth from(@NonNls @NotNull String depthName) {
     Depth result = ourAllDepths.get(depthName);
 
     if (result == null) {
@@ -76,13 +69,11 @@ public enum Depth {
     return result;
   }
 
-  @NotNull
-  public static Depth allOrFiles(boolean recursive) {
+  public static @NotNull Depth allOrFiles(boolean recursive) {
     return recursive ? INFINITY : FILES;
   }
 
-  @NotNull
-  public static Depth allOrEmpty(boolean recursive) {
+  public static @NotNull Depth allOrEmpty(boolean recursive) {
     return recursive ? INFINITY : EMPTY;
   }
 

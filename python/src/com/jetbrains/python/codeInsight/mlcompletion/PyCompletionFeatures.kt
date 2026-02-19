@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.codeInsight.mlcompletion
 
 import com.intellij.codeInsight.completion.CompletionLocation
@@ -17,8 +17,16 @@ import com.intellij.psi.PsiWhiteSpace
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.elementType
 import com.jetbrains.python.PyTokenTypes
-import com.jetbrains.python.psi.*
-import com.jetbrains.python.sdk.PythonSdkUtil
+import com.jetbrains.python.psi.PyArgumentList
+import com.jetbrains.python.psi.PyClass
+import com.jetbrains.python.psi.PyConditionalStatementPart
+import com.jetbrains.python.psi.PyFile
+import com.jetbrains.python.psi.PyForPart
+import com.jetbrains.python.psi.PyFunction
+import com.jetbrains.python.psi.PyStatementList
+import com.jetbrains.python.psi.StringLiteralExpression
+import com.jetbrains.python.sdk.legacy.PythonSdkUtil
+import com.jetbrains.python.sdk.skeleton.PySkeletonUtil
 
 object PyCompletionFeatures {
   fun isDictKey(element: LookupElement): Boolean {
@@ -27,7 +35,7 @@ object PyCompletionFeatures {
   }
 
   fun getElementPsiLocationFeatures(element: LookupElement, location: CompletionLocation): Map<String, MLFeatureValue> {
-    val caretPsiPosition = location.completionParameters.position
+    val caretPsiPosition = location.baseCompletionParameters.position
     val elementPsiPosition = element.psiElement ?: return emptyMap()
 
     val caretFile = caretPsiPosition.containingFile?.originalFile ?: return emptyMap()
@@ -90,7 +98,7 @@ object PyCompletionFeatures {
       sdk = PythonSdkUtil.findPythonSdk(containingFile)
     }
     if (vFile != null) {
-      val isFromStdLib = PythonSdkUtil.isStdLib(vFile, sdk)
+      val isFromStdLib = PySkeletonUtil.isStdLib(vFile, sdk)
       val canFindModule = ModuleUtilCore.findModuleForFile(vFile, psiElement.project) != null
       return ElementModuleCompletionFeatures(isFromStdLib, canFindModule)
     }
@@ -188,7 +196,7 @@ object PyCompletionFeatures {
     return res
   }
 
-  fun getNumberOfOccurrencesInScope(kind: PyCompletionMlElementKind, contextFeatures: ContextFeatures, lookupString: String): Int? {
+  fun getNumberOfOccurrencesInScope(kind: PyCompletionMlElementKind, contextFeatures: ContextFeatures, lookupString: String): Int {
     return when (kind) {
              PyCompletionMlElementKind.FUNCTION,
              PyCompletionMlElementKind.TYPE_OR_CLASS,

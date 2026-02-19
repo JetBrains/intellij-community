@@ -23,7 +23,7 @@ import org.jetbrains.annotations.NotNull;
 
 public abstract class AbstractEmptyIntentionAction implements IntentionAction {
   @Override
-  public final void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {}
+  public final void invoke(@NotNull Project project, Editor editor, PsiFile psiFile) throws IncorrectOperationException {}
 
   @Override
   public final boolean startInWriteAction() {

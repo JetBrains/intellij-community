@@ -22,7 +22,11 @@ import com.intellij.psi.PsiElementVisitor;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.inspections.quickfix.PyRemoveCallQuickFix;
-import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.PyCallExpression;
+import com.jetbrains.python.psi.PyDecorator;
+import com.jetbrains.python.psi.PyElement;
+import com.jetbrains.python.psi.PyExpression;
+import com.jetbrains.python.psi.PyQualifiedExpression;
 import com.jetbrains.python.psi.types.PyClassType;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.PyTypeChecker;
@@ -30,22 +34,20 @@ import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author yole
- */
-public class PyCallingNonCallableInspection extends PyInspection {
 
-  @NotNull
+public final class PyCallingNonCallableInspection extends PyInspection {
+
   @Override
-  public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder,
-                                        boolean isOnTheFly,
-                                        @NotNull LocalInspectionToolSession session) {
-    return new Visitor(holder, session);
+  public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder,
+                                                 boolean isOnTheFly,
+                                                 @NotNull LocalInspectionToolSession session) {
+    return new Visitor(holder, PyInspectionVisitor.getContext(session));
   }
 
   public static class Visitor extends PyInspectionVisitor {
-    public Visitor(@Nullable ProblemsHolder holder, @NotNull LocalInspectionToolSession session) {
-      super(holder, session);
+    public Visitor(@Nullable ProblemsHolder holder,
+                   @NotNull TypeEvalContext context) {
+      super(holder, context);
     }
 
     @Override
@@ -84,8 +86,7 @@ public class PyCallingNonCallableInspection extends PyInspection {
     }
   }
 
-  @Nullable
-  private static Boolean isCallable(@NotNull PyExpression element, @NotNull TypeEvalContext context) {
+  private static @Nullable Boolean isCallable(@NotNull PyExpression element, @NotNull TypeEvalContext context) {
     if (element instanceof PyQualifiedExpression && PyNames.__CLASS__.equals(element.getName())) {
       return true;
     }

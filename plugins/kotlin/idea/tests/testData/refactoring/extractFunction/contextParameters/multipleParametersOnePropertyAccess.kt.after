@@ -1,0 +1,16 @@
+// COMPILER_ARGUMENTS: -Xcontext-parameters
+context(x: String, y: Int)
+fun foo() {
+    __dummyTestFun__()
+}
+
+context(x: String, y: Int)
+private fun __dummyTestFun__() {
+    val p1 = p
+}
+
+context(x: String, y: Int)
+val p: String
+    get() = ""
+
+// IGNORE_K1

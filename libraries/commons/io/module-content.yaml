@@ -1,0 +1,6 @@
+- name: dist.all/lib/intellij.libraries.commons.io.jar
+  modules:
+  - name: intellij.libraries.commons.io
+  library: commons-io
+  files:
+  - name: $MAVEN_REPOSITORY$/commons-io/commons-io/2/commons-io-2.jar

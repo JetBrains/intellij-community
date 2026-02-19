@@ -1,0 +1,8 @@
+// COMPILER_ARGUMENTS: -Xwhen-guards
+
+fun test(a: Any) {
+    when (a) {
+        is String if (a[0] == 'f' || a[0] == 'b') -> Unit
+        else -> Unit
+    }
+}

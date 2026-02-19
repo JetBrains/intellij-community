@@ -1,23 +1,27 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.uiDesigner.quickFixes;
 
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.uiDesigner.designSurface.GuiEditor;
 import com.intellij.uiDesigner.propertyInspector.DesignerToolWindowManager;
 import com.intellij.uiDesigner.propertyInspector.PropertyInspector;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 
-/**
- * @author Anton Katilin
- * @author Vladimir Kondratyev
- */
 final class ShowHintAction extends AnAction {
   private final QuickFixManager myManager;
 
-  ShowHintAction(@NotNull final QuickFixManager manager, @NotNull final JComponent component) {
+  ShowHintAction(final @NotNull QuickFixManager manager) {
     myManager = manager;
+  }
+
+  void registerShortcutSet(@NotNull JComponent component) {
     registerCustomShortcutSet(
       ActionManager.getInstance().getAction(IdeActions.ACTION_SHOW_INTENTION_ACTIONS).getShortcutSet(),
       component
@@ -25,7 +29,7 @@ final class ShowHintAction extends AnAction {
   }
 
   @Override
-  public void actionPerformed(@NotNull final AnActionEvent e) {
+  public void actionPerformed(final @NotNull AnActionEvent e) {
     final GuiEditor editor = myManager.getEditor();
     if (editor == null) return;
 
@@ -38,6 +42,11 @@ final class ShowHintAction extends AnAction {
       propertyInspector.stopEditing();
     }
     myManager.showIntentionPopup();
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.EDT;
   }
 
   @Override

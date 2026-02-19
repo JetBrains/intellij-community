@@ -22,7 +22,7 @@ import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil;
 
-public class GroovySurroundDescriptor implements SurroundDescriptor {
+public final class GroovySurroundDescriptor implements SurroundDescriptor {
   private static final Surrounder[] ourSurrounders = new Surrounder[]{
     //statements: like in java
     new IfSurrounder(),

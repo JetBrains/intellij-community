@@ -1,15 +1,19 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.framework.detection;
 
 import com.intellij.facet.Facet;
 import com.intellij.facet.FacetManager;
-import com.intellij.facet.mock.*;
+import com.intellij.facet.mock.MockFacet;
+import com.intellij.facet.mock.MockFacetConfiguration;
+import com.intellij.facet.mock.MockFacetDetector;
+import com.intellij.facet.mock.MockFacetType;
+import com.intellij.facet.mock.MockSubFacetType;
 import com.intellij.framework.detection.impl.FacetBasedDetectedFrameworkDescription;
 import com.intellij.framework.detection.impl.FrameworkDetectionManager;
-import com.intellij.ide.plugins.DynamicPluginsTestUtilKt;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.platform.testFramework.DynamicPluginTestUtilsKt;
 import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.testFramework.VfsTestUtil;
 
@@ -52,9 +56,9 @@ public class FrameworkDetectionTest extends FrameworkDetectionTestCase {
     VirtualFile file = createFrameworkConfig("my-config.xml");
     assertNoFrameworksDetected();
 
-    Disposer.register(getTestRootDisposable(), DynamicPluginsTestUtilKt.loadExtensionWithText(
+    Disposer.register(getTestRootDisposable(), DynamicPluginTestUtilsKt.loadExtensionWithText(
       "<framework.detector implementation=\"" + MockFacetDetector.class.getName() + "\"/>",
-      MockFacetDetector.class.getClassLoader()));
+      "com.intellij"));
 
     assertFrameworkDetectedIn(file);
   }

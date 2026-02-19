@@ -1,24 +1,36 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.text.TextWithMnemonic;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.AbstractAction;
+import javax.swing.Icon;
+import javax.swing.JComponent;
+import javax.swing.JPanel;
+import javax.swing.KeyStroke;
+import javax.swing.SwingUtilities;
+import java.awt.BorderLayout;
+import java.awt.Cursor;
+import java.awt.Dimension;
+import java.awt.Window;
 import java.awt.event.ActionEvent;
 import java.awt.event.InputEvent;
+import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.util.Locale;
 
 /**
  * @author evgeny zakrevsky
+ *
+ * @deprecated Use Kotlin UI DSL 2, see Panel#collapsibleGroup
  */
+@Deprecated
 public class HideableDecorator {
   private static final String ACTION_KEY = "Collapse/Expand on mnemonic";
 
@@ -47,6 +59,7 @@ public class HideableDecorator {
         registerMnemonic();
       }
     };
+    UIUtil.applyDeprecatedBackground(myTitledSeparator);
 
     JPanel northPanel = new JPanel(new BorderLayout());
     northPanel.add(myTitledSeparator, BorderLayout.CENTER);
@@ -100,8 +113,7 @@ public class HideableDecorator {
     myTitledSeparator.setText(title);
   }
 
-  @NlsContexts.Separator
-  public String getTitle() {
+  public @NlsContexts.Separator String getTitle() {
     return myTitledSeparator.getText();
   }
 
@@ -163,15 +175,15 @@ public class HideableDecorator {
   }
 
   private void registerMnemonic() {
-    int mnemonicIndex = UIUtil.getDisplayMnemonicIndex(getTitle());
-    if (mnemonicIndex != -1) {
+    TextWithMnemonic text = TextWithMnemonic.parse(getTitle());
+    int c = text.getMnemonicCode();
+    if (c != KeyEvent.VK_UNDEFINED) {
       myPanel.getActionMap().put(ACTION_KEY, new AbstractAction() {
         @Override
         public void actionPerformed(ActionEvent e) {
           if (myOn) off(); else on();
         }
       });
-      char c = UIUtil.removeMnemonic(getTitle()).toUpperCase(Locale.getDefault()).charAt(mnemonicIndex);
       myPanel.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(KeyStroke.getKeyStroke(c, InputEvent.ALT_MASK, false), ACTION_KEY);
     }
   }

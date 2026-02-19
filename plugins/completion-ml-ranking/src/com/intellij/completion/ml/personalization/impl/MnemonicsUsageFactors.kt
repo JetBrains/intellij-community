@@ -16,7 +16,11 @@
 
 package com.intellij.completion.ml.personalization.impl
 
-import com.intellij.completion.ml.personalization.*
+import com.intellij.completion.ml.personalization.DateUtil
+import com.intellij.completion.ml.personalization.UserFactorBase
+import com.intellij.completion.ml.personalization.UserFactorDescriptions
+import com.intellij.completion.ml.personalization.UserFactorReaderBase
+import com.intellij.completion.ml.personalization.UserFactorUpdaterBase
 
 /**
  * @author Vitaliy.Bibaev
@@ -34,8 +38,8 @@ class MnemonicsUsageReader(factor: DailyAggregatedDoubleFactor) : UserFactorRead
 class MnemonicsUsageUpdater(factor: MutableDoubleFactor) : UserFactorUpdaterBase(factor) {
     fun fireCompletionFinished(isMnemonicsUsed: Boolean) {
         factor.updateOnDate(DateUtil.today()) {
-            compute("total", { _, before -> if (before == null) 1.0 else before + 1 })
-            val valueBefore = computeIfAbsent("withMnemonics", { 0.0 })
+            compute("total") { _, before -> if (before == null) 1.0 else before + 1 }
+            val valueBefore = computeIfAbsent("withMnemonics") { 0.0 }
             if (isMnemonicsUsed) {
                 set("withMnemonics", valueBefore + 1.0)
             }

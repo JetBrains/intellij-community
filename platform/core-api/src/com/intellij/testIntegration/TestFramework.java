@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2011 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.testIntegration;
 
@@ -20,25 +6,42 @@ import com.intellij.ide.fileTemplates.FileTemplateDescriptor;
 import com.intellij.lang.Language;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.project.PossiblyDumbAware;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.Icon;
 
-public interface TestFramework {
+/**
+ * Allows tests generation from production code.
+ * 
+ * Also is used in multiple inspections, intentions, etc. when test framework should be detected. 
+ */
+public interface TestFramework extends PossiblyDumbAware {
   ExtensionPointName<TestFramework> EXTENSION_NAME = ExtensionPointName.create("com.intellij.testFramework");
 
+  /**
+   * @return presentable framework name
+   */
   @NotNull @NlsSafe
   String getName();
 
   @NotNull
   Icon getIcon();
 
+  /**
+   * @return true if module dependencies contain framework library 
+   */
   boolean isLibraryAttached(@NotNull Module module);
 
+  /**
+   * @return path to the library when known (e.g. bundled in the distribution),
+   *         null otherwise (e.g. when library should be downloaded from maven)
+   */
   @Nullable
   String getLibraryPath();
 
@@ -47,6 +50,9 @@ public interface TestFramework {
 
   boolean isTestClass(@NotNull PsiElement clazz);
 
+  /**
+   * When testClass check is slow, {@code true} can be returned under test source root
+   */
   boolean isPotentialTestClass(@NotNull PsiElement clazz);
 
   @Nullable
@@ -65,8 +71,7 @@ public interface TestFramework {
   @NotNull
   FileTemplateDescriptor getTestMethodFileTemplateDescriptor();
 
-  @Nullable
-  default PsiElement findBeforeClassMethod(@NotNull PsiElement clazz) {
+  default @Nullable PsiElement findBeforeClassMethod(@NotNull PsiElement clazz) {
     return null;
   }
 
@@ -74,12 +79,21 @@ public interface TestFramework {
     return null;
   }
 
-  @Nullable
-  default PsiElement findAfterClassMethod(@NotNull PsiElement clazz) {
+  default @Nullable PsiElement findAfterClassMethod(@NotNull PsiElement clazz) {
     return null;
   }
 
   default FileTemplateDescriptor getAfterClassMethodFileTemplateDescriptor() {
+    return null;
+  }
+
+  @ApiStatus.Experimental
+  default @Nullable PsiElement findBeforeSuiteMethod(@NotNull PsiElement clazz) {
+    return null;
+  }
+
+  @ApiStatus.Experimental
+  default @Nullable PsiElement findAfterSuiteMethod(@NotNull PsiElement clazz) {
     return null;
   }
 

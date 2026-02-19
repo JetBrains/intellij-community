@@ -97,7 +97,7 @@ class Thinlet extends Container //java
 		if (MOUSE_WHEEL != 0) { // disable global focus-manager for this component in 1.4
 			try {
 				getClass().getMethod("setFocusTraversalKeysEnabled", new Class[] { Boolean.TYPE }).
-					<error descr="Cannot resolve method 'invoke(Thinlet, java.lang.Object[])'">invoke</error>(this, new Object[] { Boolean.FALSE });
+					<error descr="Cannot resolve method 'invoke(Thinlet, Object[])'">invoke</error>(this, new Object[] { Boolean.FALSE });
 			} catch (Exception exc) { /* never */ }
 		}
 		enableEvents(<error descr="Cannot resolve symbol 'AWTEvent'">AWTEvent</error>.COMPONENT_EVENT_MASK |
@@ -183,11 +183,11 @@ class Thinlet extends Container //java
 				j = text.indexOf('\n', i);
 				if (i != j) { // && i != text.length()
 					String line = (j != -1) ? text.substring(i, j) : text.substring(i); //java
-					width = Math.max(width, fm.<error descr="Cannot resolve method 'stringWidth(java.lang.String)'">stringWidth</error>(line)); //java
+					width = Math.max(width, fm.<error descr="Cannot resolve method 'stringWidth(String)'">stringWidth</error>(line)); //java
 					//midp width = font.substringWidth(text, i, ((j != -1) ? j : text.length()) - i);
 				}
 				if ((end >= i) && ((j == -1) || (end <= j))) {
-					caretx = fm.<error descr="Cannot resolve method 'stringWidth(java.lang.String)'">stringWidth</error>(text.substring(i, end)); //java
+					caretx = fm.<error descr="Cannot resolve method 'stringWidth(String)'">stringWidth</error>(text.substring(i, end)); //java
 					//midp caretx = font.substringWidth(text, i, end - i);
 					carety = height;
 				}
@@ -592,7 +592,7 @@ class Thinlet extends Container //java
 			else { tooltipowner = insidepart; }
 		if (text != null) {
 			<error descr="Cannot resolve symbol 'FontMetrics'">FontMetrics</error> fm = getFontMetrics(getFont());
-			int width = fm.<error descr="Cannot resolve method 'stringWidth(java.lang.String)'">stringWidth</error>(text) + 4;
+			int width = fm.<error descr="Cannot resolve method 'stringWidth(String)'">stringWidth</error>(text) + 4;
 			int height = fm.<error descr="Cannot resolve method 'getAscent()'">getAscent</error>() + fm.<error descr="Cannot resolve method 'getDescent()'">getDescent</error>() + 4;
 			if (tooltipowner == null) { tooltipowner = mouseinside; }
 			setRectangle(tooltipowner, "tooltipbounds", mousex + 10, mousey + 10, width, height);
@@ -626,7 +626,7 @@ class Thinlet extends Container //java
 		int off = offset;
 		<error descr="Cannot resolve symbol 'FontMetrics'">FontMetrics</error> fm = getFontMetrics(getFont());
 		int caret = hidden ? (fm.<error descr="Cannot resolve method 'charWidth(char)'">charWidth</error>('*') * end) :
-			fm.<error descr="Cannot resolve method 'stringWidth(java.lang.String)'">stringWidth</error>(text.substring(0, end)); //java
+			fm.<error descr="Cannot resolve method 'stringWidth(String)'">stringWidth</error>(text.substring(0, end)); //java
 			//midp font.substringWidth(text, 0, end);
 		if (off > caret) {
 			off = caret;
@@ -635,7 +635,7 @@ class Thinlet extends Container //java
 			off = caret - width + 4;
 		}
 		off = Math.max(0, Math.min(off, (hidden ? (fm.<error descr="Cannot resolve method 'charWidth(char)'">charWidth</error>('*') *
-			text.length()) : fm.<error descr="Cannot resolve method 'stringWidth(java.lang.String)'">stringWidth</error>(text)) - width + 4));
+			text.length()) : fm.<error descr="Cannot resolve method 'stringWidth(String)'">stringWidth</error>(text)) - width + 4));
 		if (off != offset) {
 			setInteger(component, "offset", off, 0);
 		}
@@ -1020,7 +1020,7 @@ class Thinlet extends Container //java
 		int tw = 0; int th = 0;
 		if (text != null) {
 			<error descr="Cannot resolve symbol 'FontMetrics'">FontMetrics</error> fm = getFontMetrics(getFont());
-			tw = fm.<error descr="Cannot resolve method 'stringWidth(java.lang.String)'">stringWidth</error>(text);
+			tw = fm.<error descr="Cannot resolve method 'stringWidth(String)'">stringWidth</error>(text);
 			th = fm.<error descr="Cannot resolve method 'getAscent()'">getAscent</error>() + fm.<error descr="Cannot resolve method 'getDescent()'">getDescent</error>();
 		}
 		<error descr="Cannot resolve symbol 'Image'">Image</error> icon = getIcon(component, "icon", null);
@@ -1255,7 +1255,7 @@ class Thinlet extends Container //java
 					if (yto <= ascent) { break; }
 					if (wrap) {
 						if (((k == n) || ((c = text.charAt(k)) == '\n') || (c == ' ')) &&
-								(j  > i) && (fm.<error descr="Cannot resolve method 'stringWidth(java.lang.String)'">stringWidth</error>(text.substring(i, k)) > viewport.<error descr="Cannot resolve symbol 'width'">width</error> - 4)) {
+								(j  > i) && (fm.<error descr="Cannot resolve method 'stringWidth(String)'">stringWidth</error>(text.substring(i, k)) > viewport.<error descr="Cannot resolve symbol 'width'">width</error> - 4)) {
 							k--; // draw line to the begin of the current word (+ spaces) if it is out of width
 						}
 						else if ((k == n) || (c == '\n')) { // draw line to the text/line end
@@ -1274,19 +1274,19 @@ class Thinlet extends Container //java
 						String line = (j != -1) ? text.substring(i, j) : text.substring(i); //java
 						if (focus && (is != ie) && (ie >= i) && ((j == -1) || (is <= j))) {
 							int xs = (is < i) ? -1 : (((j != -1) && (is > j)) ? (view.<error descr="Cannot resolve symbol 'width'">width</error> - 1) :
-								fm.<error descr="Cannot resolve method 'stringWidth(java.lang.String)'">stringWidth</error>(text.substring(i, is))); //java
+								fm.<error descr="Cannot resolve method 'stringWidth(String)'">stringWidth</error>(text.substring(i, is))); //java
 								//midp font.substringWidth(text, i, is - i));
 							int xe = ((j != -1) && (ie > j)) ? (view.<error descr="Cannot resolve symbol 'width'">width</error> - 1) :
-								fm.<error descr="Cannot resolve method 'stringWidth(java.lang.String)'">stringWidth</error>(text.substring(i, ie)); //java
+								fm.<error descr="Cannot resolve method 'stringWidth(String)'">stringWidth</error>(text.substring(i, ie)); //java
 								//midp font.substringWidth(text, i, ie - i);
 							g.<error descr="Cannot resolve method 'setColor(Color)'">setColor</error>(c_select);
 							g.<error descr="Cannot resolve method 'fillRect(int, int, int, int)'">fillRect</error>(1 + xs, ascent, xe - xs, fontheight);
 						}
 						g.<error descr="Cannot resolve method 'setColor(Color)'">setColor</error>(enabled ? c_text : c_disable);
-						g.<error descr="Cannot resolve method 'drawString(java.lang.String, int, int)'">drawString</error>(line, 1, ascent + fontascent); //java
+						g.<error descr="Cannot resolve method 'drawString(String, int, int)'">drawString</error>(line, 1, ascent + fontascent); //java
 						//midp g.drawSubstring(text, i, ((j != -1) ? j : text.length()) - i, 1, ascent, Graphics.LEFT | Graphics.TOP);
 						if (focus && (end >= i) && ((j == -1) || (end <= j))) {
-							int caret = fm.<error descr="Cannot resolve method 'stringWidth(java.lang.String)'">stringWidth</error>(text.substring(i, end)); //java
+							int caret = fm.<error descr="Cannot resolve method 'stringWidth(String)'">stringWidth</error>(text.substring(i, end)); //java
 							//midp int caret = font.substringWidth(text, i, end - i);
 							g.<error descr="Cannot resolve method 'setColor(Color)'">setColor</error>(c_focus);
 							g.<error descr="Cannot resolve method 'fillRect(int, int, int, int)'">fillRect</error>(caret, ascent, 1, fontheight);
@@ -1376,7 +1376,7 @@ class Thinlet extends Container //java
 					c_border, c_bg, true, true, true, true);
 				String text = getString(tooltipowner, "tooltip", null);
 				g.<error descr="Cannot resolve method 'setColor(Color)'">setColor</error>(c_text);
-				g.<error descr="Cannot resolve method 'drawString(java.lang.String, ?, ?)'">drawString</error>(text, r.<error descr="Cannot resolve symbol 'x'">x</error> + 2, r.<error descr="Cannot resolve symbol 'y'">y</error> + g.<error descr="Cannot resolve method 'getFontMetrics()'">getFontMetrics</error>().getAscent() + 2); //java
+				g.<error descr="Cannot resolve method 'drawString(String, ?, ?)'">drawString</error>(text, r.<error descr="Cannot resolve symbol 'x'">x</error> + 2, r.<error descr="Cannot resolve symbol 'y'">y</error> + g.<error descr="Cannot resolve method 'getFontMetrics()'">getFontMetrics</error>().getAscent() + 2); //java
 				//midp g.drawString(text, r.x + 2, r.y + (r.height - font.getHeight()) / 2, Graphics.LEFT | Graphics.TOP);
 			}
 		}
@@ -1702,11 +1702,11 @@ class Thinlet extends Container //java
 			int start = getInteger(component, "start", 0);
 			int end = getInteger(component, "end", 0);
 			caret = hidden ? (fm.<error descr="Cannot resolve method 'charWidth(char)'">charWidth</error>('*') * end) :
-				fm.<error descr="Cannot resolve method 'stringWidth(java.lang.String)'">stringWidth</error>(text.substring(0, end)); //java
+				fm.<error descr="Cannot resolve method 'stringWidth(String)'">stringWidth</error>(text.substring(0, end)); //java
 				//midp font.substringWidth(text, 0, end);
 			if (start != end) {
 				int is = hidden ? (fm.<error descr="Cannot resolve method 'charWidth(char)'">charWidth</error>('*') * start) :
-					fm.<error descr="Cannot resolve method 'stringWidth(java.lang.String)'">stringWidth</error>(text.substring(0, start)); //java
+					fm.<error descr="Cannot resolve method 'stringWidth(String)'">stringWidth</error>(text.substring(0, start)); //java
 					//midp font.substringWidth(text, 0, start);
 				g.<error descr="Cannot resolve method 'setColor(Color)'">setColor</error>(c_select);
 				g.<error descr="Cannot resolve method 'fillRect(int, int, int, int)'">fillRect</error>(2 + left - offset + Math.min(is, caret), 1,
@@ -1726,12 +1726,12 @@ class Thinlet extends Container //java
 		if (hidden) {
 			int fh = fm.<error descr="Cannot resolve method 'charWidth(char)'">charWidth</error>('*');
 			for (int i = text.length(); i > 0; i--) {
-				g.<error descr="Cannot resolve method 'drawString(java.lang.String, int, int)'">drawString</error>("*", fx, fy); //java
+				g.<error descr="Cannot resolve method 'drawString(String, int, int)'">drawString</error>("*", fx, fy); //java
 				//midp g.drawChar('*', fx, fy, Graphics.LEFT | Graphics.TOP);
 				fx += fh;
 			}
 		} else {
-			g.<error descr="Cannot resolve method 'drawString(java.lang.String, int, int)'">drawString</error>(text, fx, fy); //java
+			g.<error descr="Cannot resolve method 'drawString(String, int, int)'">drawString</error>(text, fx, fy); //java
 			//midp g.drawString(text, fx, fy, Graphics.LEFT | Graphics.TOP);
 		}
 		g.<error descr="Cannot resolve method 'setClip(int, int, int, int)'">setClip</error>(clipx, clipy, clipwidth, clipheight);
@@ -1933,7 +1933,7 @@ class Thinlet extends Container //java
 		int ta = 0; //java
 		if (text != null) {
 			fm = g.<error descr="Cannot resolve method 'getFontMetrics()'">getFontMetrics</error>(); //java
-			tw = fm.<error descr="Cannot resolve method 'stringWidth(java.lang.String)'">stringWidth</error>(text);
+			tw = fm.<error descr="Cannot resolve method 'stringWidth(String)'">stringWidth</error>(text);
 			ta = fm.<error descr="Cannot resolve method 'getAscent()'">getAscent</error>(); //java
 			th = fm.<error descr="Cannot resolve method 'getDescent()'">getDescent</error>() + ta; //java
 			//midp th = font.getHeight();
@@ -1958,12 +1958,12 @@ class Thinlet extends Container //java
 		}
 		if (text != null) {
 			int ty = y + (height - th) / 2 + ta; //java
-			g.<error descr="Cannot resolve method 'drawString(java.lang.String, int, int)'">drawString</error>(text, cx, ty); //java
+			g.<error descr="Cannot resolve method 'drawString(String, int, int)'">drawString</error>(text, cx, ty); //java
 			//midp g.drawString(text, cx, y + (height - th) / 2, Graphics.LEFT | Graphics.TOP);
 			if (checkmnemonic) {
 				int mnemonic = getInteger(component, "mnemonic", -1);
 				if ((mnemonic != -1) && (mnemonic < text.length())) {
-					int mx = cx + fm.<error descr="Cannot resolve method 'stringWidth(java.lang.String)'">stringWidth</error>(text.substring(0, mnemonic)); //java
+					int mx = cx + fm.<error descr="Cannot resolve method 'stringWidth(String)'">stringWidth</error>(text.substring(0, mnemonic)); //java
 					//midp int mx = cx + font.substringWidth(text, 0, mnemonic);
 					//midp int ty = (height + th) / 2;
 					g.<error descr="Cannot resolve method 'drawLine(int, int, ?, int)'">drawLine</error>(mx, ty + 1, mx + fm.<error descr="Cannot resolve method 'charWidth(char)'">charWidth</error>(text.charAt(mnemonic)), ty + 1);
@@ -4834,11 +4834,11 @@ class Thinlet extends Container //java
 			set(component, key, Integer.valueOf(value));
 		}
 		else if ("icon" == definition[0]) {
-			set(component, key, <error descr="'set(java.lang.Object, java.lang.Object, java.lang.Object)' in 'Thinlet' cannot be applied to '(java.lang.Object, java.lang.String, Image)'">getIcon(value)</error>);
+			set(component, key, getIcon(value));
 		}
 		else if ("method" == definition[0]) {
 			try { //java
-				set(component, key, <error descr="'set(java.lang.Object, java.lang.Object, java.lang.Object)' in 'Thinlet' cannot be applied to '(java.lang.Object, java.lang.String, java.lang.reflect.Method)'">getClass().getMethod(value, null)</error>); //java
+				set(component, key, getClass().getMethod(value, null)); //java
 			} catch (Exception exc) { System.err.println(value); exc.printStackTrace(); } //java
 			//midp setMethod(component, key, value);
 		}
@@ -4974,7 +4974,7 @@ class Thinlet extends Container //java
 	 */
 	public void setIcon(Object component, String key, <error descr="Cannot resolve symbol 'Image'">Image</error> icon) {
 		Object[] definition = getDefinition(component, key, "icon");
-		if (set(component, (String) definition[1], <error descr="'set(java.lang.Object, java.lang.Object, java.lang.Object)' in 'Thinlet' cannot be applied to '(java.lang.Object, java.lang.String, Image)'">icon</error>)) {
+		if (set(component, (String) definition[1], icon)) {
 			update(component, definition[2]);
 		}
 	}
@@ -4993,7 +4993,7 @@ class Thinlet extends Container //java
 	public void setMethod(Object component, String key, <error descr="Cannot resolve symbol 'Method'">Method</error> method) { //java
 	//midp public void setMethod(Object component, String key, String method) {
 		Object[] definition = getDefinition(component, key, "method");
-		if (set(component, (String) definition[1], <error descr="'set(java.lang.Object, java.lang.Object, java.lang.Object)' in 'Thinlet' cannot be applied to '(java.lang.Object, java.lang.String, Method)'">method</error>)) {
+		if (set(component, (String) definition[1], method)) {
 			update(component, definition[2]);
 		}
 	}
@@ -5117,7 +5117,7 @@ class Thinlet extends Container //java
 	 */
 	private boolean setIcon(Object component,
 			String key, String path, <error descr="Cannot resolve symbol 'Image'">Image</error> defaultvalue) {
-		return set(component, key, <error descr="'set(java.lang.Object, java.lang.Object, java.lang.Object)' in 'Thinlet' cannot be applied to '(java.lang.Object, java.lang.String, Image)'">(path != null) ? getIcon(path) : defaultvalue</error>);
+		return set(component, key, (path != null) ? getIcon(path) : defaultvalue);
 	}
 
 	/**

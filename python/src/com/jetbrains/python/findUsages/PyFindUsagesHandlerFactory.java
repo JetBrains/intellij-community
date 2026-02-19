@@ -1,24 +1,20 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.findUsages;
 
-import com.intellij.find.findUsages.*;
+import com.intellij.find.findUsages.AbstractFindUsagesDialog;
+import com.intellij.find.findUsages.CommonFindUsagesDialog;
+import com.intellij.find.findUsages.FindUsagesHandler;
+import com.intellij.find.findUsages.FindUsagesHandlerBase;
+import com.intellij.find.findUsages.FindUsagesHandlerFactory;
+import com.intellij.find.findUsages.FindUsagesHandlerUi;
+import com.intellij.find.findUsages.FindUsagesHelper;
+import com.intellij.find.findUsages.FindUsagesOptions;
+import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFileSystemItem;
+import com.intellij.psi.PsiReference;
+import com.intellij.psi.search.SearchScope;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleTextAttributes;
 import com.jetbrains.python.PyBundle;
@@ -26,35 +22,48 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collection;
+
 /**
  * @author traff
  */
-public class PyFindUsagesHandlerFactory extends FindUsagesHandlerFactory implements PyPsiFindUsagesHandlerFactory {
+public final class PyFindUsagesHandlerFactory extends FindUsagesHandlerFactory implements PyPsiFindUsagesHandlerFactory {
 
   @Override
   public boolean canFindUsages(@NotNull PsiElement element) {
     return PyPsiFindUsagesHandlerFactory.super.canFindUsages(element);
   }
 
-  private static FindUsagesHandler proxy(final FindUsagesHandlerBase base) {
-    if (base instanceof FindUsagesHandler) {
+  private static @Nullable FindUsagesHandler proxy(final @Nullable FindUsagesHandlerBase base) {
+    if (base == null) {
+      return null;
+    }
+    else if (base instanceof FindUsagesHandler) {
       return (FindUsagesHandler)base;
     }
     else if (base instanceof PyFindUsagesHandler) {
+      // Important note: override methods that are overridden in PyFindUsagesHandler inheritors.
+
       return new FindUsagesHandler(base.getPsiElement()) {
         @Override
-        public @NotNull FindUsagesOptions getFindUsagesOptions() {
-          return base.getFindUsagesOptions();
+        public @NotNull FindUsagesOptions getFindUsagesOptions(@Nullable DataContext dataContext) {
+          return base.getFindUsagesOptions(dataContext);
         }
 
         @Override
         protected boolean isSearchForTextOccurrencesAvailable(@NotNull PsiElement psiElement, boolean isSingleFile) {
-          return ((PyFindUsagesHandler)base).isSearchForTextOccurrencesAvailable(psiElement, isSingleFile);
+          return FindUsagesHelper.isSearchForTextOccurrencesAvailable(base, psiElement, isSingleFile);
         }
 
         @Override
         public PsiElement @NotNull [] getPrimaryElements() {
           return base.getPrimaryElements();
+        }
+
+        @Override
+        public @NotNull Collection<PsiReference> findReferencesToHighlight(@NotNull PsiElement target,
+                                                                           @NotNull SearchScope searchScope) {
+          return base.findReferencesToHighlight(target, searchScope);
         }
 
         @Override
@@ -72,7 +81,7 @@ public class PyFindUsagesHandlerFactory extends FindUsagesHandlerFactory impleme
       };
     }
     else {
-      @NonNls String msg = base.toString() + " is of unexpected type.";
+      @NonNls String msg = base + " is of unexpected type.";
       throw new IllegalArgumentException(msg);
     }
   }
@@ -87,15 +96,18 @@ public class PyFindUsagesHandlerFactory extends FindUsagesHandlerFactory impleme
     return new PyModuleFindUsagesHandlerUi(element);
   }
 
-  static class PyModuleFindUsagesHandlerUi extends PyModuleFindUsagesHandler implements FindUsagesHandlerUi {
-    protected PyModuleFindUsagesHandlerUi(@NotNull PsiFileSystemItem file) {
+  /**
+   * Important note: please update PyFindUsagesHandlerFactory#proxy on any changes here.
+   */
+  private static final class PyModuleFindUsagesHandlerUi extends PyModuleFindUsagesHandler implements FindUsagesHandlerUi {
+    PyModuleFindUsagesHandlerUi(@NotNull PsiFileSystemItem file) {
       super(file);
     }
 
-    @NotNull
     @Override
-    public AbstractFindUsagesDialog getFindUsagesDialog(boolean isSingleFile, boolean toShowInNewTab, boolean mustOpenInNewTab) {
-      return new CommonFindUsagesDialog(myElement,
+    public @NotNull AbstractFindUsagesDialog getFindUsagesDialog(boolean isSingleFile, boolean toShowInNewTab, boolean mustOpenInNewTab) {
+      PsiFileSystemItem element = myElement;
+      return new CommonFindUsagesDialog(element,
                                         getProject(),
                                         getFindUsagesOptions(),
                                         toShowInNewTab,
@@ -103,12 +115,12 @@ public class PyFindUsagesHandlerFactory extends FindUsagesHandlerFactory impleme
                                         isSingleFile,
                                         this) {
         @Override
-        public void configureLabelComponent(@NonNls @NotNull final SimpleColoredComponent coloredComponent) {
-          coloredComponent.append(myElement instanceof PsiDirectory
+        public void configureLabelComponent(final @NonNls @NotNull SimpleColoredComponent coloredComponent) {
+          coloredComponent.append(element instanceof PsiDirectory
                                   ? PyBundle.message("python.find.module.usages.dialog.label.prefix.package")
                                   : PyBundle.message("python.find.module.usages.dialog.label.prefix.module"));
           coloredComponent.append(" ");
-          coloredComponent.append(myElement.getName(), SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
+          coloredComponent.append(element.getName(), SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
         }
       };
     }

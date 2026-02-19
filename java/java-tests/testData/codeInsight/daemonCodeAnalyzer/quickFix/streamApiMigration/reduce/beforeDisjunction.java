@@ -1,4 +1,4 @@
-// "Replace with reduce()" "true"
+// "Collapse loop with stream 'reduce()'" "true-preview"
 
 import java.util.*;
 

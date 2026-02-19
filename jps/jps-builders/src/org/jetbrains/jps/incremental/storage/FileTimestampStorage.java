@@ -1,9 +1,10 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.incremental.storage;
 
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.io.DataExternalizer;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.builders.BuildTarget;
 import org.jetbrains.jps.incremental.FSOperations;
 
@@ -11,71 +12,48 @@ import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Path;
 import java.nio.file.attribute.BasicFileAttributes;
 
-import static org.jetbrains.jps.incremental.storage.FileTimestampStorage.Timestamp;
+import static org.jetbrains.jps.incremental.storage.FileTimestampStorage.FileTimestamp;
 import static org.jetbrains.jps.incremental.storage.FileTimestampStorage.TimestampPerTarget;
 
-/**
- * @author Eugene Zhuravlev
- */
-public class FileTimestampStorage extends AbstractStateStorage<File, TimestampPerTarget[]> implements StampsStorage<Timestamp> {
-  private final BuildTargetsState myTargetsState;
-  private final File myTimestampsRoot;
+final class FileTimestampStorage extends AbstractStateStorage<File, TimestampPerTarget[]> implements StampsStorage<FileTimestamp> {
+  private final BuildTargetStateManager targetStateManager;
+  private final Path timestampRoot;
 
-  public FileTimestampStorage(File dataStorageRoot, BuildTargetsState targetsState) throws IOException {
-    super(new File(calcStorageRoot(dataStorageRoot), "data"), new FileKeyDescriptor(), new StateExternalizer());
-    myTimestampsRoot = calcStorageRoot(dataStorageRoot);
-    myTargetsState = targetsState;
+  FileTimestampStorage(@NotNull Path dataStorageRoot, @NotNull BuildTargetStateManager targetStateManager) throws IOException {
+    super(calcStorageRoot(dataStorageRoot).resolve("data").toFile(), new FileKeyDescriptor(), new StateExternalizer());
+    timestampRoot = calcStorageRoot(dataStorageRoot);
+    this.targetStateManager = targetStateManager;
   }
 
-  @NotNull
-  private static File calcStorageRoot(File dataStorageRoot) {
-    return new File(dataStorageRoot, "timestamps");
+  private static @NotNull Path calcStorageRoot(Path dataStorageRoot) {
+    return dataStorageRoot.resolve("timestamps");
   }
 
   @Override
-  public File getStorageRoot() {
-    return myTimestampsRoot;
-  }
+  public FileTimestamp getCurrentStampIfUpToDate(@NotNull Path file, @NotNull BuildTarget<?> target, @Nullable BasicFileAttributes attrs) throws IOException {
+    TimestampPerTarget[] state = getState(file.toFile());
+    if (state == null) {
+      return null;
+    }
 
-  @Override
-  public Timestamp getPreviousStamp(File file, BuildTarget<?> target) throws IOException {
-    final TimestampPerTarget[] state = getState(file);
-    if (state != null) {
-      int targetId = myTargetsState.getBuildTargetId(target);
-      for (TimestampPerTarget timestampPerTarget : state) {
-        if (timestampPerTarget.targetId == targetId) {
-          return Timestamp.fromLong(timestampPerTarget.timestamp);
-        }
+    int targetId = targetStateManager.getBuildTargetId(target);
+    for (TimestampPerTarget timestampPerTarget : state) {
+      if (timestampPerTarget.targetId == targetId) {
+        long current = timestampPerTarget.timestamp;
+        return current == FSOperations.lastModified(file, attrs)? FileTimestamp.fromLong(current) : null;
       }
     }
-    return Timestamp.MINUS_ONE;
+    return null;
   }
 
   @Override
-  public Timestamp getCurrentStamp(File file) {
-    return Timestamp.fromLong(FSOperations.lastModified(file));
-  }
-
-  @Override
-  public boolean isDirtyStamp(@NotNull Stamp stamp, File file) {
-    if (!(stamp instanceof Timestamp)) return true;
-    return ((Timestamp) stamp).myTimestamp != FSOperations.lastModified(file);
-  }
-
-  @Override
-  public boolean isDirtyStamp(Stamp stamp, File file, @NotNull BasicFileAttributes attrs) {
-    if (!(stamp instanceof Timestamp)) return true;
-    Timestamp timestamp = (Timestamp) stamp;
-    // for symlinks the attr structure reflects the symlink's timestamp and not symlink's target timestamp
-    return attrs.isRegularFile() ? attrs.lastModifiedTime().toMillis() != timestamp.myTimestamp : isDirtyStamp(timestamp, file);
-  }
-
-  @Override
-  public void saveStamp(File file, BuildTarget<?> buildTarget, Timestamp stamp) throws IOException {
-    int targetId = myTargetsState.getBuildTargetId(buildTarget);
-    update(file, updateTimestamp(getState(file), targetId, stamp.asLong()));
+  public void updateStamp(@NotNull Path file, BuildTarget<?> buildTarget, long currentFileTimestamp) throws IOException {
+    int targetId = targetStateManager.getBuildTargetId(buildTarget);
+    File ioFile = file.toFile();
+    update(ioFile, updateTimestamp(getState(ioFile), targetId, currentFileTimestamp));
   }
 
   private static TimestampPerTarget @NotNull [] updateTimestamp(TimestampPerTarget[] oldState, final int targetId, long timestamp) {
@@ -93,19 +71,20 @@ public class FileTimestampStorage extends AbstractStateStorage<File, TimestampPe
   }
 
   @Override
-  public void removeStamp(File file, BuildTarget<?> buildTarget) throws IOException {
-    TimestampPerTarget[] state = getState(file);
+  public void removeStamp(@NotNull Path file, BuildTarget<?> buildTarget) throws IOException {
+    File ioFile = file.toFile();
+    TimestampPerTarget[] state = getState(ioFile);
     if (state != null) {
-      int targetId = myTargetsState.getBuildTargetId(buildTarget);
+      int targetId = targetStateManager.getBuildTargetId(buildTarget);
       for (int i = 0; i < state.length; i++) {
         TimestampPerTarget timestampPerTarget = state[i];
         if (timestampPerTarget.targetId == targetId) {
           if (state.length == 1) {
-            remove(file);
+            remove(ioFile);
           }
           else {
             TimestampPerTarget[] newState = ArrayUtil.remove(state, i);
-            update(file, newState);
+            update(ioFile, newState);
             break;
           }
         }
@@ -123,7 +102,7 @@ public class FileTimestampStorage extends AbstractStateStorage<File, TimestampPe
     }
   }
 
-  private static class StateExternalizer implements DataExternalizer<TimestampPerTarget[]> {
+  private static final class StateExternalizer implements DataExternalizer<TimestampPerTarget[]> {
     @Override
     public void save(@NotNull DataOutput out, TimestampPerTarget[] value) throws IOException {
       out.writeInt(value.length);
@@ -146,27 +125,20 @@ public class FileTimestampStorage extends AbstractStateStorage<File, TimestampPe
     }
   }
 
-  static class Timestamp implements StampsStorage.Stamp {
-    static final Timestamp MINUS_ONE = new Timestamp(-1L);
+  static final class FileTimestamp {
     private final long myTimestamp;
 
-    Timestamp(long timestamp) {
+    FileTimestamp(long timestamp) {
       myTimestamp = timestamp;
     }
 
-    long asLong() {
-      return myTimestamp;
-    }
-
-    static Timestamp fromLong(long l) {
-      return new Timestamp(l);
+    static @NotNull FileTimestamp fromLong(long l) {
+      return new FileTimestamp(l);
     }
 
     @Override
     public String toString() {
-      return "Timestamp{" +
-             "myTimestamp=" + myTimestamp +
-             '}';
+      return "Timestamp{myTimestamp=" + myTimestamp + '}';
     }
   }
 }

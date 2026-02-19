@@ -1,18 +1,24 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.uiDesigner.radComponents;
 
 import com.intellij.uiDesigner.core.GridConstraints;
-import com.intellij.uiDesigner.designSurface.*;
+import com.intellij.uiDesigner.designSurface.ComponentDragObject;
+import com.intellij.uiDesigner.designSurface.ComponentDropLocation;
+import com.intellij.uiDesigner.designSurface.FeedbackLayer;
+import com.intellij.uiDesigner.designSurface.GuiEditor;
+import com.intellij.uiDesigner.designSurface.VertInsertFeedbackPainter;
 import org.intellij.lang.annotations.JdkConstants;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JComponent;
+import java.awt.Component;
+import java.awt.Dimension;
+import java.awt.FlowLayout;
+import java.awt.Point;
+import java.awt.Rectangle;
 
-/**
- * @author yole
- */
+
 public class FlowDropLocation implements ComponentDropLocation {
   private int myInsertIndex;
   private final String myInsertBeforeId;
@@ -107,7 +113,7 @@ public class FlowDropLocation implements ComponentDropLocation {
       }
       feedbackLayer.putFeedback(myContainer.getDelegee(), rc, myContainer.getDisplayName());
     }
-    else if (myInsertIndex == myContainer.getComponentCount() && isRightAlign()) {
+    else if (myInsertIndex == myContainer.getComponentCount()) {
       Rectangle bounds = myContainer.getComponent(myInsertIndex-1).getBounds();
       Rectangle rc = new Rectangle(bounds.x+bounds.width, bounds.y, 8, bounds.height);
       feedbackLayer.putFeedback(myContainer.getDelegee(), rc, VertInsertFeedbackPainter.INSTANCE, myContainer.getDisplayName());
@@ -148,8 +154,7 @@ public class FlowDropLocation implements ComponentDropLocation {
   }
 
   @Override
-  @Nullable
-  public ComponentDropLocation getAdjacentLocation(Direction direction) {
+  public @Nullable ComponentDropLocation getAdjacentLocation(Direction direction) {
     return null;
   }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.codeInspection.bugs
 
 import com.intellij.openapi.util.TextRange
@@ -12,10 +12,11 @@ import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.
 import org.jetbrains.plugins.groovy.lang.resolve.GroovyStringLiteralManipulator
 import org.jetbrains.plugins.groovy.lang.resolve.ast.AffectedMembersCache
 import org.jetbrains.plugins.groovy.lang.resolve.ast.constructorGeneratingAnnotations
+import org.jetbrains.plugins.groovy.lang.resolve.ast.getAffectedMembersCache
 
 class GrAnnotationReferencingUnknownIdentifiers : BaseInspection() {
 
-  override fun buildErrorString(vararg args: Any?): String? {
+  override fun buildErrorString(vararg args: Any?): String {
     return GroovyBundle.message("inspection.message.couldnt.find.property.field.with.this.name")
   }
 
@@ -49,6 +50,8 @@ class GrAnnotationReferencingUnknownIdentifiers : BaseInspection() {
 
     private fun processAttribute(identifiers: Set<String>, annotation: GrAnnotation, attributeName: String) {
       val value = annotation.findAttributeValue(attributeName) ?: return
+      // protection against default annotation values stored in annotation's .class file
+      if (value.containingFile != annotation.containingFile) return
       for (range in iterateOverIdentifierList(value, identifiers)) {
         registerRangeError(value, range)
       }
@@ -57,8 +60,8 @@ class GrAnnotationReferencingUnknownIdentifiers : BaseInspection() {
     override fun visitAnnotation(annotation: GrAnnotation) {
       super.visitAnnotation(annotation)
       if (!constructorGeneratingAnnotations.contains(annotation.qualifiedName)) return
-      val cache = AffectedMembersCache(annotation)
-      val affectedMembers = cache.getAllAffectedMembers().mapNotNullTo(mutableSetOf()) { it.name }
+      val cache = getAffectedMembersCache(annotation)
+      val affectedMembers = cache.getAllAffectedMembers().mapNotNullTo(mutableSetOf(), AffectedMembersCache.Companion::getExternalName)
       processAttribute(affectedMembers, annotation, "includes")
       processAttribute(affectedMembers, annotation, "excludes")
     }

@@ -1,8 +1,8 @@
-// "Remove local variable 'oo'" "true"
+// "Remove local variable 'oo'" "true-preview"
 import java.io.*;
 
 class a {
-    int k;
+    boolean k = new File("1.tmp").delete();
     private int run() {
         new a();
 

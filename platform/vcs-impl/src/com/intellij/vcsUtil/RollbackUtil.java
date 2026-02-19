@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcsUtil;
 
 import com.intellij.openapi.project.Project;
@@ -8,6 +8,7 @@ import com.intellij.openapi.vcs.rollback.DefaultRollbackEnvironment;
 import com.intellij.openapi.vcs.rollback.RollbackEnvironment;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Collection;
 
@@ -30,9 +31,7 @@ public final class RollbackUtil {
    * @param vcses affected VCSs.
    * @return name for the "rollback" operation to be used in the UI.
    */
-  @NotNull
-  @Nls(capitalization = Nls.Capitalization.Title)
-  public static String getRollbackOperationName(@NotNull Collection<? extends AbstractVcs> vcses) {
+  public static @NotNull @Nls(capitalization = Nls.Capitalization.Title) String getRollbackOperationName(@NotNull @Unmodifiable Collection<? extends AbstractVcs> vcses) {
     String operationName = null;
     for (AbstractVcs vcs : vcses) {
       final RollbackEnvironment rollbackEnvironment = vcs.getRollbackEnvironment();
@@ -53,9 +52,7 @@ public final class RollbackUtil {
    * Finds the appropriate name for the "rollback" operation, looking through all VCSs registered in the project.
    * @see #getRollbackOperationName(Collection)
    */
-  @NotNull
-  @Nls(capitalization = Nls.Capitalization.Title)
-  public static String getRollbackOperationName(@NotNull Project project) {
+  public static @NotNull @Nls(capitalization = Nls.Capitalization.Title) String getRollbackOperationName(@NotNull Project project) {
     return getRollbackOperationName(asList(ProjectLevelVcsManager.getInstance(project).getAllActiveVcss()));
   }
 

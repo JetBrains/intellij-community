@@ -20,7 +20,11 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFileSystemItem;
 import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.PythonUiService;
-import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.PyClass;
+import com.jetbrains.python.psi.PyFile;
+import com.jetbrains.python.psi.PyFunction;
+import com.jetbrains.python.psi.PyTargetExpression;
+import com.jetbrains.python.psi.PyUtil;
 import com.jetbrains.python.psi.impl.PyImportedModule;
 import com.jetbrains.python.psi.search.PySuperMethodsSearch;
 import com.jetbrains.python.psi.types.TypeEvalContext;
@@ -31,9 +35,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-/**
- * @author yole
- */
+
 public interface PyPsiFindUsagesHandlerFactory {
   default boolean canFindUsages(@NotNull PsiElement element) {
     return element instanceof PyClass ||
@@ -43,8 +45,7 @@ public interface PyPsiFindUsagesHandlerFactory {
            element instanceof PyTargetExpression;
   }
 
-  @Nullable
-  default FindUsagesHandlerBase createFindUsagesHandler(@NotNull PsiElement element, boolean forHighlightUsages) {
+  default @Nullable FindUsagesHandlerBase createFindUsagesHandler(@NotNull PsiElement element, boolean forHighlightUsages) {
     if (element instanceof PyImportedModule) {
       final PsiElement resolved = ((PyImportedModule)element).resolve();
       if (resolved != null) {
@@ -58,7 +59,7 @@ public interface PyPsiFindUsagesHandlerFactory {
       if (!forHighlightUsages) {
         TypeEvalContext context = TypeEvalContext.userInitiated(element.getProject(), null);
         final Collection<PsiElement> superMethods = PySuperMethodsSearch.search((PyFunction)element, true, context).findAll();
-        if (superMethods.size() > 0) {
+        if (!superMethods.isEmpty()) {
           final PsiElement next = superMethods.iterator().next();
           // TODO should do this for Jython functions overriding Java methods too
           if (next instanceof PyFunction && !isInObject((PyFunction)next)) {
@@ -88,8 +89,7 @@ public interface PyPsiFindUsagesHandlerFactory {
     return null;
   }
 
-  @NotNull
-  default PyModuleFindUsagesHandler createModuleFindUsagesHandler(@NotNull PsiFileSystemItem element) {
+  default @NotNull PyModuleFindUsagesHandler createModuleFindUsagesHandler(@NotNull PsiFileSystemItem element) {
     return new PyModuleFindUsagesHandler(element);
   }
 

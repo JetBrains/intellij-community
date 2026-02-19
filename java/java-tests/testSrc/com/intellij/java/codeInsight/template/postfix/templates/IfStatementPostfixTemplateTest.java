@@ -15,6 +15,7 @@
  */
 package com.intellij.java.codeInsight.template.postfix.templates;
 
+import com.intellij.testFramework.NeedsIndex;
 import org.jetbrains.annotations.NotNull;
 
 public class IfStatementPostfixTemplateTest extends PostfixTemplateTestCase {
@@ -29,6 +30,7 @@ public class IfStatementPostfixTemplateTest extends PostfixTemplateTestCase {
     doTest();
   }
 
+  @NeedsIndex.ForStandardLibrary
   public void testBoxedBooleanVariable() {
     doTest();
   }
@@ -57,6 +59,10 @@ public class IfStatementPostfixTemplateTest extends PostfixTemplateTestCase {
     doTest();
   }
 
+  public void testExtraParentheses() {
+    doTest();
+  }
+
   public void testInstanceofBeforeReturnStatement() {
     doTest();
   }
@@ -70,6 +76,10 @@ public class IfStatementPostfixTemplateTest extends PostfixTemplateTestCase {
   }
 
   public void testIncompleteExpression() {
+    doTest();
+  }
+
+  public void testLesserOperatorExpression() {
     doTest();
   }
 }

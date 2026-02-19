@@ -1,7 +1,6 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.largeFilesEditor.editor;
 
-import com.intellij.codeHighlighting.BackgroundEditorHighlighter;
 import com.intellij.largeFilesEditor.PlatformActionsReplacer;
 import com.intellij.largeFilesEditor.encoding.LargeFileEditorAccess;
 import com.intellij.largeFilesEditor.file.LargeFileManager;
@@ -20,11 +19,12 @@ import com.intellij.openapi.editor.EditorBundle;
 import com.intellij.openapi.editor.event.CaretEvent;
 import com.intellij.openapi.editor.event.CaretListener;
 import com.intellij.openapi.editor.ex.DocumentEx;
+import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.editor.impl.DocumentImpl;
-import com.intellij.openapi.fileEditor.FileEditorLocation;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.FileEditorState;
 import com.intellij.openapi.fileEditor.FileEditorStateLevel;
+import com.intellij.openapi.fileEditor.impl.FileDocumentManagerBase;
 import com.intellij.openapi.fileEditor.impl.FileDocumentManagerImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
@@ -32,17 +32,19 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 import java.beans.PropertyChangeListener;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.charset.Charset;
 import java.util.List;
 
-public class LargeFileEditorImpl extends UserDataHolderBase implements LargeFileEditor {
+@ApiStatus.Internal
+public final class LargeFileEditorImpl extends UserDataHolderBase implements LargeFileEditor {
 
   private static final Logger logger = Logger.getInstance(LargeFileEditorImpl.class);
   private final Project project;
@@ -63,6 +65,7 @@ public class LargeFileEditorImpl extends UserDataHolderBase implements LargeFile
     editorModel = new EditorModel(document, project, implementDataProviderForEditorModel());
     editorModel.putUserDataToEditor(LARGE_FILE_EDITOR_MARK_KEY, new Object());
     editorModel.putUserDataToEditor(LARGE_FILE_EDITOR_KEY, this);
+    editorModel.putUserDataToEditor(LARGE_FILE_EDITOR_SOFT_WRAP_KEY, true);
 
     try {
       fileManager = new LargeFileManagerImpl(vFile, customPageSize, customBorderShift);
@@ -100,36 +103,31 @@ public class LargeFileEditorImpl extends UserDataHolderBase implements LargeFile
     return searchManager;
   }
 
-  @NotNull
   @Override
-  public JComponent getComponent() {
+  public @NotNull JComponent getComponent() {
     return editorModel.getComponent();
   }
 
-  @Nullable
   @Override
-  public JComponent getPreferredFocusedComponent() {
+  public @Nullable JComponent getPreferredFocusedComponent() {
     return editorModel.getEditor().getContentComponent();
   }
 
-  @NotNull
   @Override
-  public String getName() {
+  public @NotNull String getName() {
     return EditorBundle.message("large.file.editor.title");
   }
 
   @Override
   public void setState(@NotNull FileEditorState state) {
-    if (state instanceof LargeFileEditorState) {
-      LargeFileEditorState largeFileEditorState = (LargeFileEditorState)state;
+    if (state instanceof LargeFileEditorState largeFileEditorState) {
       editorModel.setCaretAndShow(largeFileEditorState.caretPageNumber,
                                   largeFileEditorState.caretSymbolOffsetInPage);
     }
   }
 
-  @NotNull
   @Override
-  public FileEditorState getState(@NotNull FileEditorStateLevel level) {
+  public @NotNull FileEditorState getState(@NotNull FileEditorStateLevel level) {
     LargeFileEditorState state = new LargeFileEditorState();
     state.caretPageNumber = editorModel.getCaretPageNumber();
     state.caretSymbolOffsetInPage = editorModel.getCaretPageOffset();
@@ -147,31 +145,11 @@ public class LargeFileEditorImpl extends UserDataHolderBase implements LargeFile
   }
 
   @Override
-  public void selectNotify() {
-  }
-
-  @Override
-  public void deselectNotify() {
-  }
-
-  @Override
   public void addPropertyChangeListener(@NotNull PropertyChangeListener listener) {
   }
 
   @Override
   public void removePropertyChangeListener(@NotNull PropertyChangeListener listener) {
-  }
-
-  @Nullable
-  @Override
-  public BackgroundEditorHighlighter getBackgroundHighlighter() {
-    return null;
-  }
-
-  @Nullable
-  @Override
-  public FileEditorLocation getCurrentLocation() {
-    return null;
   }
 
   @Override
@@ -184,7 +162,7 @@ public class LargeFileEditorImpl extends UserDataHolderBase implements LargeFile
     }
     editorModel.dispose();
 
-    vFile.putUserData(FileDocumentManagerImpl.HARD_REF_TO_DOCUMENT_KEY, null);
+    vFile.putUserData(FileDocumentManagerBase.HARD_REF_TO_DOCUMENT_KEY, null);
   }
 
   @RequiresEdt
@@ -196,6 +174,11 @@ public class LargeFileEditorImpl extends UserDataHolderBase implements LargeFile
   @Override
   public Project getProject() {
     return project;
+  }
+
+  @Override
+  public void trySetHighlighter(@NotNull EditorHighlighter highlighter) {
+    editorModel.trySetHighlighter(highlighter);
   }
 
   @Override
@@ -221,15 +204,13 @@ public class LargeFileEditorImpl extends UserDataHolderBase implements LargeFile
   @Override
   public LargeFileEditorAccess createAccessForEncodingWidget() {
     return new LargeFileEditorAccess() {
-      @NotNull
       @Override
-      public VirtualFile getVirtualFile() {
+      public @NotNull VirtualFile getVirtualFile() {
         return getFile();
       }
 
-      @NotNull
       @Override
-      public Editor getEditor() {
+      public @NotNull Editor getEditor() {
         return LargeFileEditorImpl.this.getEditor();
       }
 
@@ -266,9 +247,8 @@ public class LargeFileEditorImpl extends UserDataHolderBase implements LargeFile
     return fileManager.getFileDataProviderForSearch();
   }
 
-  @NotNull
   @Override
-  public EditorModel getEditorModel() {
+  public @NotNull EditorModel getEditorModel() {
     return editorModel;
   }
 
@@ -285,7 +265,7 @@ public class LargeFileEditorImpl extends UserDataHolderBase implements LargeFile
     return doc;
   }
 
-  private class MyCaretListener implements CaretListener {
+  private final class MyCaretListener implements CaretListener {
     @Override
     public void caretPositionChanged(@NotNull CaretEvent e) {
       searchManager.onCaretPositionChanged(e);

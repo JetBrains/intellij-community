@@ -1,11 +1,16 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing.impl.forward;
 
 import com.intellij.util.indexing.IndexExtension;
 import com.intellij.util.indexing.StorageException;
-import com.intellij.util.indexing.impl.*;
+import com.intellij.util.indexing.impl.DirectInputDataDiffBuilder;
+import com.intellij.util.indexing.impl.EmptyInputDataDiffBuilder;
+import com.intellij.util.indexing.impl.InputData;
+import com.intellij.util.indexing.impl.InputDataDiffBuilder;
+import com.intellij.util.indexing.impl.InputIndexDataExternalizer;
+import com.intellij.util.indexing.impl.UpdatedEntryProcessor;
 import com.intellij.util.io.DataExternalizer;
-import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -14,8 +19,8 @@ import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
 
-@ApiStatus.Experimental
-public class KeyCollectionForwardIndexAccessor<Key, Value> extends AbstractForwardIndexAccessor<Key, Value, Collection<Key>> {
+@Internal
+public final class KeyCollectionForwardIndexAccessor<Key, Value> extends AbstractForwardIndexAccessor<Key, Value, Collection<Key>> {
   public KeyCollectionForwardIndexAccessor(@NotNull DataExternalizer<Collection<Key>> externalizer) {
     super(externalizer);
   }
@@ -29,9 +34,8 @@ public class KeyCollectionForwardIndexAccessor<Key, Value> extends AbstractForwa
     return new KeyCollectionInputDataDiffBuilder<>(inputId, keys != null ? keys : Collections.emptySet());
   }
 
-  @Nullable
   @Override
-  public Collection<Key> convertToDataType(@NotNull InputData<Key, Value> data) {
+  public @Nullable Collection<Key> convertToDataType(@NotNull InputData<Key, Value> data) {
     Set<Key> keys = data.getKeyValues().keySet();
     return keys.isEmpty() ? null : keys;
   }
@@ -43,8 +47,7 @@ public class KeyCollectionForwardIndexAccessor<Key, Value> extends AbstractForwa
 
   // Marks all keys as removed and then all new key-values as added. Does not try to find keys that haven't changed.
   private static final class KeyCollectionInputDataDiffBuilder<Key, Value> extends DirectInputDataDiffBuilder<Key, Value> {
-    @NotNull
-    private final Collection<Key> myKeys;
+    private final @NotNull Collection<Key> myKeys;
 
     KeyCollectionInputDataDiffBuilder(int inputId, @NotNull Collection<Key> keys) {
       super(inputId);
@@ -53,20 +56,17 @@ public class KeyCollectionForwardIndexAccessor<Key, Value> extends AbstractForwa
 
     @Override
     public boolean differentiate(@NotNull Map<Key, Value> newData,
-                                 @NotNull KeyValueUpdateProcessor<? super Key, ? super Value> addProcessor,
-                                 @NotNull KeyValueUpdateProcessor<? super Key, ? super Value> updateProcessor,
-                                 @NotNull RemovedKeyProcessor<? super Key> removeProcessor) throws StorageException {
+                                 @NotNull UpdatedEntryProcessor<? super Key, ? super Value> changesProcessor) throws StorageException {
       for (Key key : myKeys) {
-        removeProcessor.process(key, myInputId);
+        changesProcessor.removed(key, myInputId);
       }
-      boolean anyAdded = EmptyInputDataDiffBuilder.processAllKeyValuesAsAdded(myInputId, newData, addProcessor);
+      boolean anyAdded = EmptyInputDataDiffBuilder.processAllKeyValuesAsAdded(myInputId, newData, changesProcessor);
       boolean anyRemoved = !myKeys.isEmpty();
       return anyAdded || anyRemoved;
     }
 
-    @NotNull
     @Override
-    public Collection<Key> getKeys() {
+    public @NotNull Collection<Key> getKeys() {
       return myKeys;
     }
   }

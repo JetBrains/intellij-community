@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.packaging.impl.elements;
 
 import com.intellij.icons.AllIcons;
@@ -14,7 +14,7 @@ import com.intellij.packaging.ui.ArtifactEditorContext;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.Icon;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -38,9 +38,8 @@ public class ArtifactElementType extends ComplexPackagingElementType<ArtifactPac
   }
 
   @Override
-  @NotNull
-  public List<? extends ArtifactPackagingElement> chooseAndCreate(@NotNull ArtifactEditorContext context, @NotNull Artifact artifact,
-                                                                   @NotNull CompositePackagingElement<?> parent) {
+  public @NotNull List<? extends ArtifactPackagingElement> chooseAndCreate(@NotNull ArtifactEditorContext context, @NotNull Artifact artifact,
+                                                                           @NotNull CompositePackagingElement<?> parent) {
     final Project project = context.getProject();
     List<Artifact> artifacts = context.chooseArtifacts(getAvailableArtifacts(context, artifact, false), JavaCompilerBundle
       .message("dialog.title.choose.artifacts"));
@@ -51,11 +50,10 @@ public class ArtifactElementType extends ComplexPackagingElementType<ArtifactPac
     return elements;
   }
 
-  @NotNull
-  public static List<? extends Artifact> getAvailableArtifacts(@NotNull final ArtifactEditorContext context,
-                                                               @NotNull final Artifact artifact,
-                                                               final boolean notIncludedOnly) {
-    final Set<Artifact> result = ContainerUtil.set(context.getArtifactModel().getArtifacts());
+  public static @NotNull List<? extends Artifact> getAvailableArtifacts(final @NotNull ArtifactEditorContext context,
+                                                                        final @NotNull Artifact artifact,
+                                                                        final boolean notIncludedOnly) {
+    final Set<Artifact> result = ContainerUtil.newHashSet(context.getArtifactModel().getArtifacts());
     if (notIncludedOnly) {
       ArtifactUtil.processPackagingElements(artifact, ARTIFACT_ELEMENT_TYPE, artifactPackagingElement -> {
         result.remove(artifactPackagingElement.findArtifact(context));
@@ -79,8 +77,7 @@ public class ArtifactElementType extends ComplexPackagingElementType<ArtifactPac
   }
 
   @Override
-  @NotNull
-  public ArtifactPackagingElement createEmpty(@NotNull Project project) {
+  public @NotNull ArtifactPackagingElement createEmpty(@NotNull Project project) {
     return new ArtifactPackagingElement(project);
   }
 

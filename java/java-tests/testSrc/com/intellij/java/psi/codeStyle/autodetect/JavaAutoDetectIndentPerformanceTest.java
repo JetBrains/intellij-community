@@ -18,14 +18,16 @@ package com.intellij.java.psi.codeStyle.autodetect;
 import com.intellij.JavaTestUtil;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.autodetect.AbstractIndentAutoDetectionTest;
-import com.intellij.testFramework.PlatformTestUtil;
+import com.intellij.testFramework.PerformanceUnitTest;
 import com.intellij.testFramework.TeamCityLogger;
+import com.intellij.tools.ide.metrics.benchmark.Benchmark;
 import com.intellij.util.TimeoutUtil;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Assert;
 
 import static com.intellij.psi.codeStyle.CommonCodeStyleSettings.IndentOptions;
 
+@PerformanceUnitTest
 public class JavaAutoDetectIndentPerformanceTest extends AbstractIndentAutoDetectionTest {
 
   @NotNull
@@ -44,7 +46,7 @@ public class JavaAutoDetectIndentPerformanceTest extends AbstractIndentAutoDetec
     Ref<IndentOptions> ref = Ref.create();
     long fileLoadTime = TimeoutUtil.measureExecutionTime(() -> configureByFile(getFileNameWithExtension()));
 
-    long detectingTime = TimeoutUtil.measureExecutionTime(() -> ref.set(detectIndentOptions(getFile())));
+    long detectingTime = TimeoutUtil.measureExecutionTime(() -> ref.set(detectIndentOptions(getVFile(), getEditor().getDocument())));
     double ratio = (double)detectingTime / fileLoadTime;
     if (ratio > 0.3) {
       TeamCityLogger.error("Detecting indent have taken too much time proportionally to file read time " + ratio);
@@ -60,18 +62,17 @@ public class JavaAutoDetectIndentPerformanceTest extends AbstractIndentAutoDetec
   
   public void testBigHotFile() {
     configureByFile(getFileNameWithExtension());
-    detectIndentOptions(getFile());
-    
-    PlatformTestUtil
-      .startPerformanceTest("Detecting indent on hot file", 180,
-                            () -> AbstractIndentAutoDetectionTest.detectIndentOptions(getFile()))
-      .assertTiming();
+    detectIndentOptions(getVFile(), getEditor().getDocument());
+
+    Benchmark
+      .newBenchmark("Detecting indent on hot file", () -> detectIndentOptions(getVFile(), getEditor().getDocument()))
+      .start();
   }
   
   public void testBigOneLineFile() {
     configureByFile("oneLine.json");
     long time = TimeoutUtil.measureExecutionTime(
-      () -> AbstractIndentAutoDetectionTest.detectIndentOptions(getFile()));
+      () -> detectIndentOptions(getVFile(), getEditor().getDocument()));
     assertTrue(time < 40);
   }
 }

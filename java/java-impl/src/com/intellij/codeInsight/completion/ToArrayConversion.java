@@ -1,34 +1,42 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion;
 
 import com.intellij.application.options.CodeStyle;
 import com.intellij.codeInsight.lookup.ExpressionLookupItem;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.featureStatistics.FeatureUsageTracker;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiArrayType;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiClassType;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiReferenceExpression;
+import com.intellij.psi.PsiType;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.ui.IconManager;
 import com.intellij.util.Consumer;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.PlatformIcons;
 import com.siyeh.ig.psiutils.ConstructionUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import static com.intellij.codeInsight.completion.ReferenceExpressionCompletionContributor.*;
+import static com.intellij.codeInsight.completion.ReferenceExpressionCompletionContributor.createExpression;
+import static com.intellij.codeInsight.completion.ReferenceExpressionCompletionContributor.getQualifierText;
+import static com.intellij.codeInsight.completion.ReferenceExpressionCompletionContributor.getSpace;
 
-/**
- * @author peter
- */
 public final class ToArrayConversion {
   static void addConversions(final @NotNull PsiFile file,
                              final PsiElement element, final String prefix, final PsiType itemType,
-                             final Consumer<? super LookupElement> result, @Nullable final PsiElement qualifier,
+                             final Consumer<? super LookupElement> result, final @Nullable PsiElement qualifier,
                              final PsiType expectedType) {
     final PsiType componentType = PsiUtil.extractIterableTypeParameter(itemType, true);
-    if (componentType == null || !(expectedType instanceof PsiArrayType)) return;
+    if (componentType == null || !(expectedType instanceof PsiArrayType type)) return;
 
-    final PsiArrayType type = (PsiArrayType)expectedType;
     if (!type.getComponentType().isAssignableFrom(componentType) ||
         componentType instanceof PsiClassType && ((PsiClassType) componentType).hasParameters()) {
       return;
@@ -72,7 +80,7 @@ public final class ToArrayConversion {
   private static void addToArrayConversion(@NotNull PsiFile file,
                                            final PsiElement element,
                                            final String prefix,
-                                           @NonNls final String expressionString,
+                                           final @NonNls String expressionString,
                                            @NonNls String presentableString,
                                            final Consumer<? super LookupElement> result,
                                            PsiElement qualifier) {
@@ -89,7 +97,7 @@ public final class ToArrayConversion {
 
     String[] lookupStrings = {prefix + ".toArray(" + getSpace(callSpace) + expressionString +
                               getSpace(callSpace) + ")", presentableString};
-    result.consume(new ExpressionLookupItem(conversion, PlatformIcons.METHOD_ICON, prefix + ".toArray(" + presentableString + ")", lookupStrings) {
+    result.consume(new ExpressionLookupItem(conversion, IconManager.getInstance().getPlatformIcon(com.intellij.ui.PlatformIcons.Method), prefix + ".toArray(" + presentableString + ")", lookupStrings) {
         @Override
         public void handleInsert(@NotNull InsertionContext context) {
           FeatureUsageTracker.getInstance().triggerFeatureUsed(JavaCompletionFeatures.SECOND_SMART_COMPLETION_TOAR);

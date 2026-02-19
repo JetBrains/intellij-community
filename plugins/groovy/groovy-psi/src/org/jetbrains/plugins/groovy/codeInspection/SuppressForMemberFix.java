@@ -1,12 +1,17 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.codeInspection;
 
-import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
-import com.intellij.codeInsight.daemon.impl.actions.AbstractBatchSuppressByNoInspectionCommentFix;
+import com.intellij.codeInsight.daemon.impl.actions.AbstractBatchSuppressByNoInspectionCommentModCommandFix;
 import com.intellij.codeInspection.BatchSuppressManager;
 import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiAnnotation;
+import com.intellij.psi.PsiAnnotationMemberValue;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiModifierListOwner;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
@@ -23,10 +28,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrAnonymousC
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeParameter;
 
-/**
- * @author peter
- */
-public class SuppressForMemberFix extends AbstractBatchSuppressByNoInspectionCommentFix {
+public class SuppressForMemberFix extends AbstractBatchSuppressByNoInspectionCommentModCommandFix {
   private @PropertyKey(resourceBundle = "messages.JavaAnalysisBundle") String myKey = "suppress.inspection.member";
   private final boolean myForClass;
 
@@ -36,8 +38,7 @@ public class SuppressForMemberFix extends AbstractBatchSuppressByNoInspectionCom
   }
 
   @Override
-  @Nullable
-  public GrDocCommentOwner getContainer(final PsiElement context) {
+  public @Nullable GrDocCommentOwner getContainer(final PsiElement context) {
     if (context == null || context instanceof PsiFile) {
       return null;
     }
@@ -69,23 +70,22 @@ public class SuppressForMemberFix extends AbstractBatchSuppressByNoInspectionCom
   }
 
   @Override
-  @NotNull
-  public String getText() {
+  public @NotNull String getText() {
     return JavaAnalysisBundle.message(myKey);
   }
 
 
   @Override
-  public boolean isAvailable(@NotNull final Project project, @NotNull final PsiElement context) {
+  public boolean isAvailable(final @NotNull Project project, final @NotNull PsiElement context) {
     final GrDocCommentOwner container = getContainer(context);
     myKey = container instanceof PsiClass ? "suppress.inspection.class"
                                           : container instanceof PsiMethod ? "suppress.inspection.method"
                                                                            : "suppress.inspection.field";
-    return container != null && context.getManager().isInProject(context);
+    return container != null && context.getManager().isInProject(context.getContainingFile().getOriginalFile());
   }
 
   @Override
-  protected boolean replaceSuppressionComments(PsiElement container) {
+  protected boolean replaceSuppressionComments(@NotNull PsiElement container) {
     return false;
   }
 
@@ -96,7 +96,6 @@ public class SuppressForMemberFix extends AbstractBatchSuppressByNoInspectionCom
     if (modifierList != null) {
       addSuppressAnnotation(project, modifierList, myID);
     }
-    DaemonCodeAnalyzer.getInstance(project).restart();
   }
 
   private static void addSuppressAnnotation(Project project, GrModifierList modifierList, String id) throws IncorrectOperationException {

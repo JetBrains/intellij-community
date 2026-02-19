@@ -1,12 +1,28 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.refactoring.memberPullUp;
 
 import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiClassOwner;
+import com.intellij.psi.PsiCompiledElement;
+import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiMember;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiModifierList;
+import com.intellij.psi.PsiPackage;
+import com.intellij.psi.PsiSubstitutor;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
-import com.intellij.psi.util.*;
+import com.intellij.psi.util.MethodSignature;
+import com.intellij.psi.util.MethodSignatureUtil;
+import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.classMembers.MemberInfoBase;
 import com.intellij.refactoring.util.RefactoringHierarchyUtil;
@@ -45,9 +61,9 @@ public final class GrPullUpConflictsUtil {
   }
 
   public static MultiMap<PsiElement, @Nls String> checkConflicts(final MemberInfoBase<? extends GrMember>[] infos,
-                                                                 @NotNull final PsiClass subclass,
+                                                                 final @NotNull PsiClass subclass,
                                                                  @Nullable PsiClass superClass,
-                                                                 @NotNull final PsiPackage targetPackage,
+                                                                 final @NotNull PsiPackage targetPackage,
                                                                  @NotNull PsiDirectory targetDirectory,
                                                                  final InterfaceContainmentVerifier interfaceContainmentVerifier,
                                                                  boolean movedMembers2Super) {
@@ -225,11 +241,10 @@ public final class GrPullUpConflictsUtil {
         conflictsList.putValue(superClass, message);
       }
 
-      if (member instanceof PsiMethod) {
-        final PsiMethod method = (PsiMethod)member;
+      if (member instanceof PsiMethod method) {
         final PsiModifierList modifierList = method.getModifierList();
         if (!modifierList.hasModifierProperty(PsiModifier.PRIVATE)) {
-          for (PsiClass subClass : ClassInheritorsSearch.search(superClass)) {
+          for (PsiClass subClass : ClassInheritorsSearch.search(superClass).asIterable()) {
             if (method.getContainingClass() != subClass) {
               MethodSignature signature = ((PsiMethod) member).getSignature(TypeConversionUtil.getSuperClassSubstitutor(superClass, subClass, PsiSubstitutor.EMPTY));
               final PsiMethod wouldBeOverriden = MethodSignatureUtil.findMethodBySignature(subClass, signature, false);
@@ -349,8 +364,7 @@ public final class GrPullUpConflictsUtil {
     }
 
     private boolean existsInSuperClass(PsiElement classMember) {
-      if (!(classMember instanceof PsiMethod)) return false;
-      final PsiMethod method = ((PsiMethod)classMember);
+      if (!(classMember instanceof PsiMethod method)) return false;
       if (myInterfaceContainmentVerifier.checkedInterfacesContain(method)) return true;
       if (mySuperClass == null) return false;
       final PsiMethod methodBySignature = mySuperClass.findMethodBySignature(method, true);

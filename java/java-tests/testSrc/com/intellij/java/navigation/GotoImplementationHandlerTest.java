@@ -1,17 +1,26 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.navigation;
 
 import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.TargetElementUtil;
 import com.intellij.codeInsight.navigation.GotoTargetHandler;
 import com.intellij.ide.highlighter.JavaFileType;
+import com.intellij.openapi.application.WriteAction;
+import com.intellij.openapi.projectRoots.ProjectJdkTable;
+import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiAnonymousClass;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiJavaFile;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiModifier;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.testFramework.IdeaTestUtil;
-import com.intellij.testFramework.PlatformTestUtil;
+import com.intellij.testFramework.IndexingTestUtil;
 import com.intellij.testFramework.fixtures.CodeInsightTestUtil;
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
 import com.intellij.util.containers.ContainerUtil;
@@ -67,65 +76,6 @@ public class GotoImplementationHandlerTest extends JavaCodeInsightFixtureTestCas
 
     final PsiElement[] impls = getTargets(file);
     assertEquals(2, impls.length);
-  }
-
-  public void testToStringOnUnqualifiedPerformance() {
-    @Language("JAVA") @SuppressWarnings("ALL")
-    String fileText = "public class Fix {\n" +
-                  "    {\n" +
-                  "        <caret>toString();\n" +
-                  "    }\n" +
-                  "}\n" +
-                  "class FixImpl1 extends Fix {\n" +
-                  "    @Override\n" +
-                  "    public String toString() {\n" +
-                  "        return \"Impl1\";\n" +
-                  "    }\n" +
-                  "}\n" +
-                  "class FixImpl2 extends Fix {\n" +
-                  "    @Override\n" +
-                  "    public String toString() {\n" +
-                  "        return \"Impl2\";\n" +
-                  "    }\n" +
-                  "}";
-    final PsiFile file = myFixture.addFileToProject("Foo.java", fileText);
-    myFixture.configureFromExistingVirtualFile(file.getVirtualFile());
-
-     PlatformTestUtil.startPerformanceTest(getTestName(false), 150, () -> {
-       PsiElement[] impls = getTargets(file);
-       assertEquals(3, impls.length);
-     }).usesAllCPUCores().assertTiming();
-  }
-
-  public void testToStringOnQualifiedPerformance() {
-    @SuppressWarnings("ALL") @Language("JAVA")
-    String fileText = "public class Fix {\n" +
-                  "    {\n" +
-                  "        Fix ff = getFix();\n" +
-                  "        ff.<caret>toString();\n" +
-                  "    }\n" +
-                  "    \n" +
-                  "    Fix getFix() {return new FixImpl1();}\n" +
-                  "}\n" +
-                  "class FixImpl1 extends Fix {\n" +
-                  "    @Override\n" +
-                  "    public String toString() {\n" +
-                  "        return \"Impl1\";\n" +
-                  "    }\n" +
-                  "}\n" +
-                  "class FixImpl2 extends Fix {\n" +
-                  "    @Override\n" +
-                  "    public String toString() {\n" +
-                  "        return \"Impl2\";\n" +
-                  "    }\n" +
-                  "}";
-    final PsiFile file = myFixture.addFileToProject("Foo.java", fileText);
-    myFixture.configureFromExistingVirtualFile(file.getVirtualFile());
-
-    PlatformTestUtil.startPerformanceTest(getTestName(false), 150, () -> {
-      PsiElement[] impls = getTargets(file);
-      assertEquals(3, impls.length);
-    }).usesAllCPUCores().assertTiming();
   }
 
   public void testShowSelfNonAbstract() {
@@ -301,10 +251,10 @@ public class GotoImplementationHandlerTest extends JavaCodeInsightFixtureTestCas
 
   public void testPrivateClassInheritors() {
     @Language("JAVA")
-    String fileText = "class C {\n" +
-                  "  private static class Pr<caret>ivate {}\n" +
-                  "  public static class Public extends Private {}" +
-                  "}";
+    String fileText = """
+      class C {
+        private static class Pr<caret>ivate {}
+        public static class Public extends Private {}}""";
     PsiFile file = myFixture.addFileToProject("Foo.java",
                                               fileText);
     myFixture.addClass("class Inheritor extends C.Public {}");
@@ -314,7 +264,10 @@ public class GotoImplementationHandlerTest extends JavaCodeInsightFixtureTestCas
   }
 
   public void testPrivateClassInheritorsInJdkDecompiled() {
-    ModuleRootModificationUtil.setModuleSdk(getModule(), IdeaTestUtil.getMockJdk18());
+    Sdk sdk = IdeaTestUtil.getMockJdk18();
+    WriteAction.run(() -> ProjectJdkTable.getInstance().addJdk(sdk, getTestRootDisposable()));
+    ModuleRootModificationUtil.setModuleSdk(getModule(), sdk);
+    IndexingTestUtil.waitUntilIndexesAreReady(getProject());
 
     PsiClass aClass = myFixture.getJavaFacade().findClass("java.util.ResourceBundle.CacheKeyReference");
     PsiFile file = aClass.getContainingFile();
@@ -342,12 +295,14 @@ public class GotoImplementationHandlerTest extends JavaCodeInsightFixtureTestCas
       "jar://" + JavaTestUtil.getJavaTestDataPath() + "/codeInsight/navigation/MyInterfaceLibrary.jar!/"
     );
     @Language("JAVA")
-    String fileText = "import com.company.MyInterface;\n" +
-                      "\n" +
-                      "public class MyInterfaceImplementation implements My<caret>Interface {\n" +
-                      "    @Override\n" +
-                      "    public void doIt() {}\n" +
-                      "}\n";
+    String fileText = """
+      import com.company.MyInterface;
+
+      public class MyInterfaceImplementation implements My<caret>Interface {
+          @Override
+          public void doIt() {}
+      }
+      """;
     PsiFile psiFile = myFixture.addFileToProject("MyInterfaceImplementation.java",
                                                  fileText);
 

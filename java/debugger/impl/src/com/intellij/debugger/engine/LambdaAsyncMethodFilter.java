@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.engine;
 
 import com.intellij.debugger.SourcePosition;
@@ -35,7 +35,7 @@ public class LambdaAsyncMethodFilter extends BasicStepMethodFilter {
       Value lambdaReference = getLambdaReference(frameProxy);
       if (lambdaReference instanceof ObjectReference) {
         Method lambdaMethod = MethodBytecodeUtil.getLambdaMethod(
-          ((ObjectReference)lambdaReference).referenceType(), process.getVirtualMachineProxy().getClassesByNameProvider());
+          ((ObjectReference)lambdaReference).referenceType(), lambdaReference.virtualMachine()::classesByName);
         Location newLocation = lambdaMethod != null ? ContainerUtil.getFirstItem(DebuggerUtilsEx.allLineLocations(lambdaMethod)) : null;
         return newLocation != null && myMethodFilter.locationMatches(process, newLocation);
       }
@@ -66,8 +66,7 @@ public class LambdaAsyncMethodFilter extends BasicStepMethodFilter {
     return RequestHint.STOP;
   }
 
-  @Nullable
-  private Value getLambdaReference(StackFrameProxyImpl proxy) throws EvaluateException {
+  private @Nullable Value getLambdaReference(StackFrameProxyImpl proxy) throws EvaluateException {
     return ContainerUtil.getOrElse(proxy.getArgumentValues(), myParamNo, null);
   }
 
@@ -75,9 +74,9 @@ public class LambdaAsyncMethodFilter extends BasicStepMethodFilter {
     private final long myLambdaId;
 
     LambdaInstanceBreakpoint(@NotNull Project project,
-                                    long lambdaId,
-                                    @NotNull SourcePosition pos,
-                                    @NotNull BreakpointStepMethodFilter filter) {
+                             long lambdaId,
+                             @NotNull SourcePosition pos,
+                             @NotNull BreakpointStepMethodFilter filter) {
       super(project, pos, filter);
       myLambdaId = lambdaId;
     }

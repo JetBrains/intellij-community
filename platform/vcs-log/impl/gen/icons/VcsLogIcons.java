@@ -1,28 +1,24 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package icons;
 
-import com.intellij.ui.IconManager;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
 /**
- * NOTE THIS FILE IS AUTO-GENERATED
- * DO NOT EDIT IT BY HAND, run "Generate icon classes" configuration instead
+ * @deprecated Do not use.
  */
+@Deprecated(forRemoval = true)
 public final class VcsLogIcons {
-  private static @NotNull Icon load(@NotNull String path) {
-    return IconManager.getInstance().getIcon(path, VcsLogIcons.class);
-  }
-
-  /** 16x16 */ public static final @NotNull Icon IntelliSort = load("/icons/IntelliSort.svg");
-
-  public final static class Process {
-    /** 16x16 */ public static final @NotNull Icon Dots_1 = load("/icons/process/dots_1.svg");
-    /** 16x16 */ public static final @NotNull Icon Dots_2 = load("/icons/process/dots_2.svg");
-    /** 16x16 */ public static final @NotNull Icon Dots_3 = load("/icons/process/dots_3.svg");
-    /** 16x16 */ public static final @NotNull Icon Dots_4 = load("/icons/process/dots_4.svg");
-    /** 16x16 */ public static final @NotNull Icon Dots_5 = load("/icons/process/dots_5.svg");
-
+  /**
+   * @deprecated Do not use.
+   */
+  @Deprecated(forRemoval = true)
+  public static final class Process {
+    /** 16x16 */ public static final @NotNull Icon Dots_1 = com.intellij.vcs.log.impl.VcsLogIcons.Process.Dots_1;
+    /** 16x16 */ public static final @NotNull Icon Dots_2 = com.intellij.vcs.log.impl.VcsLogIcons.Process.Dots_2;
+    /** 16x16 */ public static final @NotNull Icon Dots_3 = com.intellij.vcs.log.impl.VcsLogIcons.Process.Dots_3;
+    /** 16x16 */ public static final @NotNull Icon Dots_4 = com.intellij.vcs.log.impl.VcsLogIcons.Process.Dots_4;
+    /** 16x16 */ public static final @NotNull Icon Dots_5 = com.intellij.vcs.log.impl.VcsLogIcons.Process.Dots_5;
   }
 }

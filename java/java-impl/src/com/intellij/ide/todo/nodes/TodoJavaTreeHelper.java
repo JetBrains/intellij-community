@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.ide.todo.nodes;
 
@@ -12,15 +12,25 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaDirectoryService;
+import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiPackage;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Set;
 
-public class TodoJavaTreeHelper extends TodoTreeHelper {
+public final class TodoJavaTreeHelper extends TodoTreeHelper {
+
   public TodoJavaTreeHelper(final Project project) {
     super(project);
   }
@@ -32,8 +42,7 @@ public class TodoJavaTreeHelper extends TodoTreeHelper {
 
   @Override
   public PsiElement getSelectedElement(final Object userObject) {
-    if (userObject instanceof TodoPackageNode) {
-      TodoPackageNode descriptor = (TodoPackageNode)userObject;
+    if (userObject instanceof TodoPackageNode descriptor) {
       final PackageElement packageElement = descriptor.getValue();
       return packageElement != null ? packageElement.getPackage() : null;
     }
@@ -51,14 +60,17 @@ public class TodoJavaTreeHelper extends TodoTreeHelper {
   }
 
   @Override
-  public void addPackagesToChildren(final ArrayList<? super AbstractTreeNode<?>> children, final Module module, final TodoTreeBuilder builder) {
+  public void addPackagesToChildren(final @NotNull ArrayList<? super AbstractTreeNode<?>> children,
+                                    final @Nullable Module module,
+                                    final @NotNull TodoTreeBuilder builder) {
     Project project = getProject();
     final PsiManager psiManager = PsiManager.getInstance(project);
     final List<VirtualFile> sourceRoots = new ArrayList<>();
     if (module == null) {
       final ProjectRootManager projectRootManager = ProjectRootManager.getInstance(project);
       ContainerUtil.addAll(sourceRoots, projectRootManager.getContentSourceRoots());
-    } else {
+    }
+    else {
       ModuleRootManager moduleRootManager = ModuleRootManager.getInstance(module);
       ContainerUtil.addAll(sourceRoots, moduleRootManager.getSourceRoots());
     }
@@ -127,13 +139,12 @@ public class TodoJavaTreeHelper extends TodoTreeHelper {
         }
       }
     }
-    final List<VirtualFile> roots = collectContentRoots(module);
+    final List<? extends VirtualFile> roots = collectContentRoots(module);
     roots.removeAll(sourceRoots);
     addDirsToChildren(roots, children, builder);
   }
 
-   @Nullable
-  public static PsiPackage findNonEmptyPackage(@NotNull PsiPackage rootPackage, Module module, Project project, TodoTreeBuilder builder, GlobalSearchScope scope){
+   public static @Nullable PsiPackage findNonEmptyPackage(@NotNull PsiPackage rootPackage, Module module, Project project, TodoTreeBuilder builder, GlobalSearchScope scope){
     if (!isPackageEmpty(new PackageElement(module, rootPackage, false), builder, project)){
       return rootPackage;
     }

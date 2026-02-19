@@ -20,7 +20,7 @@ internal class MapReader(private val componentParser: ValueReader) : ValueReader
     out.append(')')
   }
 
-  override fun writeArrayReadCode(scope: ClassScope, subtyping: Boolean, out: TextOutput) {
+  override fun writeArrayReadCode(scope: ClassScope, subtyping: Boolean, allowSingleValue: Boolean, out: TextOutput) {
     beginReadCall("ObjectArray", subtyping, out)
     out.comma().append("mapFactory(")
     if (componentParser is ObjectValueReader) {

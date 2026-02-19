@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.externalSystemIntegration.output.parsers;
 
 import com.intellij.build.FilePosition;
@@ -8,7 +8,6 @@ import com.intellij.build.events.MessageEvent;
 import com.intellij.build.events.impl.FileMessageEventImpl;
 import com.intellij.build.events.impl.MessageEventImpl;
 import com.intellij.openapi.util.NlsSafe;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -17,6 +16,7 @@ import org.jetbrains.idea.maven.execution.RunnerBundle;
 import org.jetbrains.idea.maven.externalSystemIntegration.output.LogMessageType;
 import org.jetbrains.idea.maven.externalSystemIntegration.output.MavenLogEntryReader;
 import org.jetbrains.idea.maven.externalSystemIntegration.output.MavenLoggedEventParser;
+import org.jetbrains.idea.maven.externalSystemIntegration.output.MavenParsingContext;
 
 import java.io.File;
 import java.util.function.Consumer;
@@ -28,7 +28,7 @@ public abstract class BuildErrorNotification implements MavenLoggedEventParser {
   private static final Pattern LINE_ONLY = Pattern.compile("[^\\d]+?(\\d+)");
   private final String myLanguage;
   private final String myExtension;
-  private @BuildEventsNls.Title final String myMessageGroup;
+  private final @BuildEventsNls.Title String myMessageGroup;
 
   protected BuildErrorNotification(@NonNls String language, @NonNls String extension, @BuildEventsNls.Title String messageGroup) {
     myLanguage = language;
@@ -43,6 +43,7 @@ public abstract class BuildErrorNotification implements MavenLoggedEventParser {
 
   @Override
   public boolean checkLogLine(@NotNull Object parentId,
+                              @NotNull MavenParsingContext parsingContext,
                               @NotNull MavenLogEntryReader.MavenLogEntry logLine,
                               @NotNull MavenLogEntryReader logEntryReader,
                               @NotNull Consumer<? super BuildEvent> messageConsumer) {
@@ -61,8 +62,9 @@ public abstract class BuildErrorNotification implements MavenLoggedEventParser {
     if (fullFileNameIdx < 0) {
       return false;
     }
-    int start = SystemInfo.isWindows && line.charAt(0) == '/' ? 1 : 0;
-    String filename = FileUtil.toSystemDependentName(line.substring(start, fileNameIdx) + "." + myExtension);
+    String targetFileNameWithoutExtension = line.substring(0, fileNameIdx);
+    String localFileNameWithoutExtension = parsingContext.getTargetFileMapper().apply(targetFileNameWithoutExtension);
+    String filename = FileUtil.toSystemDependentName(localFileNameWithoutExtension + "." + myExtension);
 
     File parsedFile = new File(filename);
     String lineWithPosition = line.substring(fullFileNameIdx);
@@ -86,7 +88,7 @@ public abstract class BuildErrorNotification implements MavenLoggedEventParser {
     return true;
   }
 
-  private Matcher getMatcher(String string) {
+  private static Matcher getMatcher(String string) {
     Matcher result = LINE_AND_COLUMN.matcher(string);
     if (result.lookingAt()) {
       return result;
@@ -98,9 +100,7 @@ public abstract class BuildErrorNotification implements MavenLoggedEventParser {
     return null;
   }
 
-  @NotNull
-  @NlsSafe
-  private String getErrorMessage(@NotNull FilePosition position, @NotNull String message) {
+  private static @NotNull @NlsSafe String getErrorMessage(@NotNull FilePosition position, @NotNull String message) {
     message = message.trim();
     while (message.startsWith(":") || message.startsWith("]") || message.startsWith(")")) {
       message = message.substring(1);
@@ -110,8 +110,7 @@ public abstract class BuildErrorNotification implements MavenLoggedEventParser {
     return message;
   }
 
-  @NotNull
-  private static FilePosition withLineAndColumn(File toTest, Matcher matcher) {
+  private static @NotNull FilePosition withLineAndColumn(File toTest, Matcher matcher) {
     if (matcher.groupCount() == 2) {
       return new FilePosition(toTest, atoi(matcher.group(1)) - 1, atoi(matcher.group(2)) - 1);
     }
@@ -125,7 +124,7 @@ public abstract class BuildErrorNotification implements MavenLoggedEventParser {
 
   private static int atoi(String s) {
     try {
-      return Integer.valueOf(s);
+      return Integer.parseInt(s);
     }
     catch (NumberFormatException ignore) {
       return 0;

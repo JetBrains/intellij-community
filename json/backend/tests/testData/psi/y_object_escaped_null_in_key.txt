@@ -1,0 +1,11 @@
+JsonFile: y_object_escaped_null_in_key.json
+  JsonObject
+    PsiElement({)('{')
+    JsonProperty
+      JsonStringLiteral
+        PsiElement(DOUBLE_QUOTED_STRING)('"foo\u0000bar"')
+      PsiElement(:)(':')
+      PsiWhiteSpace(' ')
+      JsonNumberLiteral
+        PsiElement(NUMBER)('42')
+    PsiElement(})('}')

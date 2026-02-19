@@ -1,11 +1,27 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.tasks.jira.jql;
 
 import com.intellij.extapi.psi.ASTWrapperPsiElement;
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.tree.IFileElementType;
-import com.intellij.tasks.jira.jql.psi.impl.*;
+import com.intellij.tasks.jira.jql.psi.impl.JqlAndClauseImpl;
+import com.intellij.tasks.jira.jql.psi.impl.JqlArgumentListImpl;
+import com.intellij.tasks.jira.jql.psi.impl.JqlChangedClauseImpl;
+import com.intellij.tasks.jira.jql.psi.impl.JqlEmptyValueImpl;
+import com.intellij.tasks.jira.jql.psi.impl.JqlFunctionCallImpl;
+import com.intellij.tasks.jira.jql.psi.impl.JqlHistoryPredicateImpl;
+import com.intellij.tasks.jira.jql.psi.impl.JqlIdentifierImpl;
+import com.intellij.tasks.jira.jql.psi.impl.JqlListImpl;
+import com.intellij.tasks.jira.jql.psi.impl.JqlLiteralImpl;
+import com.intellij.tasks.jira.jql.psi.impl.JqlNotClauseImpl;
+import com.intellij.tasks.jira.jql.psi.impl.JqlOrClauseImpl;
+import com.intellij.tasks.jira.jql.psi.impl.JqlOrderByImpl;
+import com.intellij.tasks.jira.jql.psi.impl.JqlQueryImpl;
+import com.intellij.tasks.jira.jql.psi.impl.JqlSimpleClauseImpl;
+import com.intellij.tasks.jira.jql.psi.impl.JqlSortKeyImpl;
+import com.intellij.tasks.jira.jql.psi.impl.JqlSubClauseImpl;
+import com.intellij.tasks.jira.jql.psi.impl.JqlWasClauseImpl;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -71,7 +87,6 @@ import org.jetbrains.annotations.NotNull;
  *
  */
 public interface JqlElementTypes {
-  IFileElementType FILE = new IFileElementType(JqlLanguage.INSTANCE);
   IElementType QUERY = new JqlElementType("QUERY");
   IElementType OR_CLAUSE = new JqlElementType("OR_CLAUSE");
   IElementType AND_CLAUSE = new JqlElementType("AND_CLAUSE");
@@ -95,9 +110,8 @@ public interface JqlElementTypes {
   IElementType EMPTY = new JqlElementType("EMPTY");
   IElementType HISTORY_PREDICATE = new JqlElementType("HISTORY_PREDICATE");
 
-  class Factory {
-    @NotNull
-    public static PsiElement createElement(@NotNull ASTNode node) {
+  final class Factory {
+    public static @NotNull PsiElement createElement(@NotNull ASTNode node) {
       final IElementType type = node.getElementType();
       if (type == QUERY) {
         return new JqlQueryImpl(node);

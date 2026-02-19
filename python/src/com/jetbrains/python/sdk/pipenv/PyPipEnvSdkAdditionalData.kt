@@ -7,7 +7,6 @@ import org.jdom.Element
 /**
  * Additional Pipenv data associated with an SDK.
  *
- * @author vlan
  */
 class PyPipEnvSdkAdditionalData : PythonSdkAdditionalData {
   constructor() : super(PyPipEnvSdkFlavor)

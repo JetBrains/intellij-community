@@ -1,8 +1,19 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.scope;
 
 import com.intellij.openapi.util.Key;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaTokenType;
+import com.intellij.psi.PsiDeconstructionList;
+import com.intellij.psi.PsiDeconstructionPattern;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiInstanceOfExpression;
+import com.intellij.psi.PsiParenthesizedExpression;
+import com.intellij.psi.PsiPattern;
+import com.intellij.psi.PsiPatternVariable;
+import com.intellij.psi.PsiPolyadicExpression;
+import com.intellij.psi.PsiPrefixExpression;
+import com.intellij.psi.ResolveState;
 import org.jetbrains.annotations.NotNull;
 
 public enum PatternResolveState {
@@ -29,15 +40,12 @@ public enum PatternResolveState {
     return rs.put(KEY, this);
   }
 
-  @NotNull
-  public static PatternResolveState stateAtParent(PsiPatternVariable element, PsiExpression parent) {
+  public static @NotNull PatternResolveState stateAtParent(PsiPatternVariable element, PsiExpression parent) {
     PsiPattern pattern = element.getPattern();
-    if (pattern == null) {
-      throw new IllegalArgumentException("Variable has no pattern associated");
-    }
     PatternResolveState state = WHEN_TRUE;
     for (PsiElement prev = pattern, current = prev.getParent(); prev != parent; prev = current, current = current.getParent()) {
       if (current instanceof PsiInstanceOfExpression || current instanceof PsiParenthesizedExpression ||
+          current instanceof PsiDeconstructionList || current instanceof PsiDeconstructionPattern ||
           current instanceof PsiPolyadicExpression &&
           (((PsiPolyadicExpression)current).getOperationTokenType() == JavaTokenType.ANDAND ||
            ((PsiPolyadicExpression)current).getOperationTokenType() == JavaTokenType.OROR)) {

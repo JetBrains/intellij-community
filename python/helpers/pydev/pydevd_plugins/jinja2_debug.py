@@ -230,7 +230,7 @@ def has_line_breaks(plugin):
             return True
     return False
 
-def can_not_skip(plugin, pydb, pydb_frame, frame, info):
+def can_not_skip(plugin, pydb, frame, info):
     if pydb.jinja2_breakpoints and _is_jinja2_render_call(frame):
         filename = _get_jinja2_template_filename(frame)
         jinja2_breakpoints_for_file = pydb.jinja2_breakpoints.get(filename)
@@ -325,7 +325,7 @@ def stop(plugin, pydb, frame, event, args, stop_info, arg, step_cmd):
     return False
 
 
-def get_breakpoint(plugin, pydb, pydb_frame, frame, event, args):
+def get_breakpoint(plugin, pydb, frame, event, args):
     pydb= args[0]
     filename = args[1]
     info = args[2]
@@ -356,7 +356,7 @@ def suspend(plugin, pydb, thread, frame, bp_type):
     return None
 
 
-def exception_break(plugin, pydb, pydb_frame, frame, args, arg):
+def exception_break(plugin, pydb, frame, args, arg):
     pydb = args[0]
     thread = args[3]
     exception, value, trace = arg
@@ -378,7 +378,7 @@ def exception_break(plugin, pydb, pydb_frame, frame, args, arg):
             name = frame.f_code.co_name
             if name in ('template', 'top-level template code', '<module>') or name.startswith('block '):
                 #Jinja2 translates exception info and creates fake frame on his own
-                pydb_frame.set_suspend(thread, CMD_ADD_EXCEPTION_BREAK)
+                pydb.set_suspend(thread, CMD_ADD_EXCEPTION_BREAK)
                 add_exception_to_frame(frame, (exception, value, trace))
                 thread.additional_info.suspend_type = JINJA2_SUSPEND
                 thread.additional_info.pydev_message = str(exception_type)

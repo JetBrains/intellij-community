@@ -1,29 +1,20 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.progress.SomeQueue;
 import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.util.Getter;
 import com.intellij.openapi.util.Pair;
 import com.intellij.util.Consumer;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Set;
+import java.util.function.LongSupplier;
 
 /**
  * need to update:
@@ -31,13 +22,13 @@ import java.util.*;
  * 2. if checker returns TRUE -> those whose timestamp is older than required
  *
  */
-@SomeQueue
 // TODO: Used only in RemoteRevisionsNumberCache
-public class LazyRefreshingSelfQueue<T> {
+@ApiStatus.Internal
+public final class LazyRefreshingSelfQueue<T> {
   private static final Logger LOG = Logger.getInstance(LazyRefreshingSelfQueue.class);
 
   // provides update interval in milliseconds.
-  private final Getter<Long> myUpdateInterval;
+  private final LongSupplier myUpdateInterval;
   // structure:
   // 1) pairs with First == null
   // 2) pairs with First != null sorted by First ascending
@@ -52,7 +43,7 @@ public class LazyRefreshingSelfQueue<T> {
   private final Consumer<? super T> myUpdater;
   private final Object myLock;
 
-  public LazyRefreshingSelfQueue(final Getter<Long> updateInterval, final Computable<Boolean> shouldUpdateOldChecker, final Consumer<? super T> updater) {
+  public LazyRefreshingSelfQueue(LongSupplier updateInterval, final Computable<Boolean> shouldUpdateOldChecker, final Consumer<? super T> updater) {
     myUpdateInterval = updateInterval;
     myShouldUpdateOldChecker = shouldUpdateOldChecker;
     myUpdater = updater;
@@ -62,14 +53,14 @@ public class LazyRefreshingSelfQueue<T> {
   }
 
   // adds item that should be updated at next updateStep() call
-  public void addRequest(@NotNull final T t) {
+  public void addRequest(final @NotNull T t) {
     synchronized (myLock) {
       myQueue.addFirst(new Pair<>(null, t));
     }
   }
 
   // unschedules item from update at next updateStep() call
-  public void forceRemove(@NotNull final T t) {
+  public void forceRemove(final @NotNull T t) {
     synchronized (myLock) {
       for (Iterator<Pair<Long, T>> iterator = myQueue.iterator(); iterator.hasNext();) {
         final Pair<Long, T> pair = iterator.next();
@@ -83,7 +74,7 @@ public class LazyRefreshingSelfQueue<T> {
 
   // called by outside timer or something
   public void updateStep() {
-    final long startTime = System.currentTimeMillis() - myUpdateInterval.get();
+    final long startTime = System.currentTimeMillis() - myUpdateInterval.getAsLong();
     boolean onlyAbsolute = true;
     // TODO: Actually we could store items with pair.First == null in separate list.
     // checks item that has smallest update time - i.e. was not updated by the most time

@@ -1,0 +1,8 @@
+{
+  "type": "AUTO_DETECT",
+  "mainFile": "JavaClass.java",
+  "newName": "copyNew",
+  "withRuntime": "true",
+  "hint": "Rename is not applicable to synthetic declaration",
+   "enabledInK2": true
+}

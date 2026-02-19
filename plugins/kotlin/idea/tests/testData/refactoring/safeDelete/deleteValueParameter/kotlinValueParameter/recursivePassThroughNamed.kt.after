@@ -1,0 +1,7 @@
+fun rec(n: Int): Int =
+    if (n <= 1) 1 else rec(n = n - 1)
+
+fun test() {
+    rec(5)
+}
+// IGNORE_K1

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
 import com.intellij.util.ui.AbstractLayoutManager;
@@ -22,19 +8,20 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.accessibility.Accessible;
 import javax.accessibility.AccessibleContext;
-import javax.swing.*;
+import javax.swing.JComponent;
 import javax.swing.border.Border;
-import java.awt.*;
+import java.awt.Component;
+import java.awt.Container;
+import java.awt.Dimension;
+import java.awt.Insets;
+import java.awt.Point;
+import java.awt.Rectangle;
 import java.awt.event.MouseEvent;
 
 public class ExpandedItemRendererComponentWrapper extends JComponent {
   JComponent owner;
 
-  /**
-   * @deprecated use {@link #wrap(Component)}} instead to create an instance
-   */
-  @Deprecated
-  private ExpandedItemRendererComponentWrapper(@NotNull final Component rendererComponent) {
+  private ExpandedItemRendererComponentWrapper(final @NotNull Component rendererComponent) {
     add(rendererComponent);
     setOpaque(false);
     setLayout(new AbstractLayoutManager() {
@@ -56,21 +43,17 @@ public class ExpandedItemRendererComponentWrapper extends JComponent {
       }
     });
   }
-  private ExpandedItemRendererComponentWrapper() {}
 
-  @NotNull
-  public static ExpandedItemRendererComponentWrapper wrap(@NotNull Component rendererComponent) {
+  public static @NotNull ExpandedItemRendererComponentWrapper wrap(@NotNull Component rendererComponent) {
     if (rendererComponent instanceof Accessible) {
       return new MyComponent(rendererComponent, (Accessible)rendererComponent);
     }
     return new ExpandedItemRendererComponentWrapper(rendererComponent);
   }
 
-  @NotNull
-  public static Component unwrap(@NotNull Component rendererComponent) {
+  public static @Nullable Component unwrap(@NotNull Component rendererComponent) {
     if (rendererComponent instanceof ExpandedItemRendererComponentWrapper) {
-      Component component = ((ExpandedItemRendererComponentWrapper)rendererComponent).getDelegate();
-      return component;
+      return ((ExpandedItemRendererComponentWrapper)rendererComponent).getDelegate();
     }
     return rendererComponent;
   }
@@ -104,9 +87,8 @@ public class ExpandedItemRendererComponentWrapper extends JComponent {
      * needs to come from the default implementation to avoid infinite parent/child cycle.
      */
     protected class AccessibleMyComponent extends AbstractAccessibleContextDelegate {
-      @NotNull
       @Override
-      protected AccessibleContext getDelegate() {
+      protected @NotNull AccessibleContext getDelegate() {
         return myAccessible.getAccessibleContext();
       }
 
@@ -159,11 +141,7 @@ public class ExpandedItemRendererComponentWrapper extends JComponent {
     return super.getToolTipLocation(event);
   }
 
-  @Nullable
-  private Component getDelegate() {
-    if (getComponentCount() == 1) {
-      return getComponent(0);
-    }
-    return null;
+  public @Nullable Component getDelegate() {
+    return getComponentCount() == 1 ? getComponent(0) : null;
   }
 }

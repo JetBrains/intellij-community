@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.ui;
 
 import java.io.File;
@@ -8,7 +8,7 @@ import java.util.List;
 /**
  * author: lesya
  */
-public class SplitBySeparatorPolicy extends FilePathSplittingPolicy {
+public final class SplitBySeparatorPolicy extends FilePathSplittingPolicy {
   @Override
   public String getPresentableName(File file, int length) {
     String absolutePath = file.getPath();

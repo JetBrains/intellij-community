@@ -1,24 +1,11 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.intellij.lang.regexp;
 
 import com.intellij.lang.LanguageExtension;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Use an RegExpMatcherProvider implementation to replace the regexp matcher used for the Check RegExp intention.
@@ -37,10 +24,10 @@ public interface RegExpMatcherProvider {
    * @param elementInHost  the host language element the regexp is injected in
    * @param sampleText  the text to match on
    * @param timeoutMillis  stop the matching after this time, if the regexp engine is interruptible in some way
-   *                       (see e.g. {@link com.intellij.openapi.util.text.StringUtil#newBombedCharSequence(java.lang.CharSequence, long)}
+   *                       (see e.g. {@link StringUtil#newBombedCharSequence(java.lang.CharSequence, long)}
    * @return the result of the match
    */
-  @NotNull
+  @Nullable
   RegExpMatchResult matches(String regExp,
                             PsiFile regExpFile,
                             PsiElement elementInHost,

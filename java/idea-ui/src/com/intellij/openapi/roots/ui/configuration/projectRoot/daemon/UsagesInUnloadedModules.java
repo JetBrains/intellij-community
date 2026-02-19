@@ -5,14 +5,13 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ide.JavaUiBundle;
 import com.intellij.openapi.module.UnloadedModuleDescription;
 import com.intellij.openapi.roots.ui.configuration.GeneralProjectSettingsElement;
-import com.intellij.openapi.roots.ui.configuration.ProjectStructureConfigurable;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.StructureConfigurableContext;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.ui.navigation.Place;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.Icon;
 import java.util.Collection;
 import java.util.Objects;
 
@@ -50,7 +49,7 @@ public class UsagesInUnloadedModules extends ProjectStructureElementUsage {
 
   @Override
   public PlaceInProjectStructure getPlace() {
-    Place configurablePlace = ProjectStructureConfigurable.getInstance(myContext.getProject()).createProjectConfigurablePlace();
+    Place configurablePlace = myContext.getModulesConfigurator().getProjectStructureConfigurable().createProjectConfigurablePlace();
     return new PlaceInProjectStructureBase(myContext.getProject(), configurablePlace, myContainingElement, false);
   }
 

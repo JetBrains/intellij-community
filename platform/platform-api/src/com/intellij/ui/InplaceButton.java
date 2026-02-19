@@ -1,27 +1,48 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
 import com.intellij.openapi.ui.popup.IconButton;
 import com.intellij.openapi.util.NlsContexts.Tooltip;
-import com.intellij.openapi.util.Pass;
 import com.intellij.ui.awt.RelativePoint;
-import com.intellij.util.ui.*;
+import com.intellij.ui.scale.JBUIScale;
+import com.intellij.util.ui.BaseButtonBehavior;
+import com.intellij.util.ui.CenteredIcon;
+import com.intellij.util.ui.JBDimension;
+import com.intellij.util.ui.JBInsets;
+import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.TimedDeadzone;
+import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.accessibility.AccessibleContextUtil;
 import com.intellij.util.ui.accessibility.ScreenReader;
 import org.jetbrains.annotations.NotNull;
 
-import javax.accessibility.*;
-import javax.swing.*;
-import java.awt.*;
+import javax.accessibility.Accessible;
+import javax.accessibility.AccessibleAction;
+import javax.accessibility.AccessibleContext;
+import javax.accessibility.AccessibleExtendedComponent;
+import javax.accessibility.AccessibleKeyBinding;
+import javax.accessibility.AccessibleRole;
+import javax.accessibility.AccessibleState;
+import javax.accessibility.AccessibleStateSet;
+import javax.swing.AbstractButton;
+import javax.swing.Icon;
+import javax.swing.JComponent;
+import java.awt.Color;
+import java.awt.Component;
+import java.awt.Dimension;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.Point;
+import java.awt.Rectangle;
+import java.awt.RenderingHints;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseEvent;
-import java.util.ArrayList;
+import java.awt.geom.RoundRectangle2D;
 import java.util.function.Consumer;
 
 public class InplaceButton extends JComponent implements ActiveComponent, Accessible {
   private boolean myPainting = true;
-  private boolean myActive = true;
 
   private final BaseButtonBehavior myBehavior;
   private final ActionListener myListener;
@@ -40,22 +61,16 @@ public class InplaceButton extends JComponent implements ActiveComponent, Access
   private boolean myHoveringEnabled;
 
   public InplaceButton(@Tooltip String tooltip, Icon icon, ActionListener listener) {
-    this(new IconButton(tooltip, icon, icon), listener, (Consumer<? super MouseEvent>)null, TimedDeadzone.DEFAULT);
+    this(new IconButton(tooltip, icon, icon), listener, null, TimedDeadzone.DEFAULT);
   }
 
   public InplaceButton(IconButton source, ActionListener listener) {
-    this(source, listener, (Consumer<? super MouseEvent>)null, TimedDeadzone.DEFAULT);
-  }
-
-  /** @deprecated use {@link #InplaceButton(IconButton, ActionListener, Consumer, TimedDeadzone.Length)} */
-  @Deprecated
-  public InplaceButton(IconButton source, ActionListener listener, Pass<? super MouseEvent> pass, TimedDeadzone.Length mouseDeadzone) {
-    this(source, listener, (Consumer<? super MouseEvent>)pass, mouseDeadzone);
+    this(source, listener, null, TimedDeadzone.DEFAULT);
   }
 
   public InplaceButton(IconButton source, ActionListener listener, Consumer<? super MouseEvent> consumer, TimedDeadzone.Length mouseDeadzone) {
     myListener = listener;
-    myBehavior = new BaseButtonBehavior(this, mouseDeadzone) {
+    myBehavior = new BaseButtonBehavior(this, mouseDeadzone, null) {
       @Override
       protected void execute(MouseEvent e) {
         doClick(e);
@@ -73,6 +88,7 @@ public class InplaceButton extends JComponent implements ActiveComponent, Access
         }
       }
     };
+    myBehavior.setupListeners();
 
     setIcons(source);
 
@@ -95,7 +111,7 @@ public class InplaceButton extends JComponent implements ActiveComponent, Access
   }
 
   public void doClick(final MouseEvent e) {
-    if (myListener != null) {
+    if (myListener != null && isEnabled()) {
       myListener.actionPerformed(new ActionEvent(e, ActionEvent.ACTION_PERFORMED, "execute", e.getModifiers()));
     }
   }
@@ -125,10 +141,13 @@ public class InplaceButton extends JComponent implements ActiveComponent, Access
     }
     mySize = size;
 
+    Icon oldIcon = myIcon;
     myIcon = regular;
     myRegular = new CenteredIcon(regular, width, height);
     myHovered = new CenteredIcon(hovered, width, height);
     myInactive = new CenteredIcon(inactive, width, height);
+
+    firePropertyChange(AbstractButton.ICON_CHANGED_PROPERTY, oldIcon, regular);
   }
 
   @Override
@@ -152,7 +171,7 @@ public class InplaceButton extends JComponent implements ActiveComponent, Access
 
   @Override
   public void setActive(final boolean active) {
-    myActive = active;
+    setEnabled(active);
     repaint();
   }
 
@@ -164,9 +183,8 @@ public class InplaceButton extends JComponent implements ActiveComponent, Access
     return myIcon;
   }
 
-  @NotNull
   @Override
-  public JComponent getComponent() {
+  public @NotNull JComponent getComponent() {
     return this;
   }
 
@@ -183,25 +201,44 @@ public class InplaceButton extends JComponent implements ActiveComponent, Access
 
     g.translate(myXTransform, myYTransform);
 
-
-    if ((myBehavior.isHovered() && myHoveringEnabled) || hasFocus()) {
-      if (myBehavior.isPressedByMouse()) {
-        myHovered.paintIcon(this, g, 1, 1);
-      }
-      else {
-        myHovered.paintIcon(this, g, 0, 0);
-      }
+    if (!isEnabled()) {
+      myInactive.paintIcon(this, g, 0, 0);
+    }
+    else if ((myBehavior.isHovered() && myHoveringEnabled) || hasFocus()) {
+      paintHover(g);
+      myHovered.paintIcon(this, g, 0, 0);
     }
     else {
-      if (isActive()) {
-        myRegular.paintIcon(this, g, 0, 0);
-      }
-      else {
-        myInactive.paintIcon(this, g, 0, 0);
-      }
+      myRegular.paintIcon(this, g, 0, 0);
     }
 
     g.translate(0, 0);
+  }
+
+  protected void paintHover(Graphics g) {
+  }
+
+  protected void paintHover(Graphics g, boolean click) {
+    paintHover(g, click ? JBUI.CurrentTheme.ActionButton.pressedBackground() : JBUI.CurrentTheme.ActionButton.hoverBorder());
+  }
+
+  protected void paintHover(Graphics g, Color color) {
+    Graphics2D g2 = (Graphics2D)g.create();
+
+    try {
+      g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+      g2.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, RenderingHints.VALUE_STROKE_NORMALIZE);
+      g2.setColor(color);
+
+      Rectangle rect = new Rectangle(getSize());
+      JBInsets.removeFrom(rect, getInsets());
+
+      int arc = JBUIScale.scale(JBUI.getInt("Button.arc", 6));
+      g2.fill(new RoundRectangle2D.Float(rect.x, rect.y, rect.width, rect.height, arc, arc));
+    }
+    finally {
+      g2.dispose();
+    }
   }
 
   public void setTransform(int x, int y) {
@@ -214,7 +251,7 @@ public class InplaceButton extends JComponent implements ActiveComponent, Access
   }
 
   public boolean isActive() {
-    return myActive;
+    return isEnabled();
   }
 
   @Override
@@ -283,25 +320,6 @@ public class InplaceButton extends JComponent implements ActiveComponent, Access
     @Override
     public AccessibleAction getAccessibleAction() {
       return this;
-    }
-
-    @Override
-    public AccessibleIcon[] getAccessibleIcon() {
-      Icon[] icons = {myRegular, myInactive, myHovered};
-      ArrayList<AccessibleIcon> accessibleIconList = new ArrayList<>();
-      for (Icon icon : icons) {
-        if (icon instanceof Accessible) {
-          AccessibleContext ac = ((Accessible)icon).getAccessibleContext();
-          if (ac instanceof AccessibleIcon) {
-            accessibleIconList.add((AccessibleIcon)ac);
-          }
-        }
-      }
-      if (accessibleIconList.size() == 0) {
-        return null;
-      }
-
-      return accessibleIconList.toArray(new AccessibleIcon[0]);
     }
 
     @Override

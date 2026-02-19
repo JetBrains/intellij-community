@@ -1,10 +1,11 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.ant.config.execution;
 
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtilRt;
 import org.intellij.lang.annotations.MagicConstant;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -14,13 +15,13 @@ public final class AntMessage {
   private final AntBuildMessageView.MessageType myType;
   @Priority
   private final int myPriority;
-  private final String myText;
-  private final String[] myTextLines;
+  private final @Nls String myText;
+  private final @Nls String[] myTextLines;
   private final VirtualFile myFile;
   private final int myLine;
   private final int myColumn;
 
-  public AntMessage(AntBuildMessageView.MessageType type, @Priority int priority, String text, VirtualFile file, int line, int column) {
+  public AntMessage(AntBuildMessageView.MessageType type, @Priority int priority, @Nls String text, VirtualFile file, int line, int column) {
     myType = type;
     myPriority = priority;
     myFile = file;
@@ -35,7 +36,7 @@ public final class AntMessage {
     myTextLines = ArrayUtilRt.toStringArray(lines);
   }
 
-  public AntMessage(AntBuildMessageView.MessageType type, @Priority int priority, String[] lines, VirtualFile file, int line, int column) {
+  public AntMessage(AntBuildMessageView.MessageType type, @Priority int priority, @Nls String[] lines, VirtualFile file, int line, int column) {
     myType = type;
     myPriority = priority;
     myFile = file;
@@ -54,11 +55,11 @@ public final class AntMessage {
     return myPriority;
   }
 
-  public String getText() {
+  public @Nls String getText() {
     return myText;
   }
 
-  public String[] getTextLines() {
+  public @Nls String[] getTextLines() {
     return myTextLines;
   }
 
@@ -74,8 +75,7 @@ public final class AntMessage {
     return myColumn;
   }
 
-  @NotNull
-  public AntMessage withText(@NotNull String text) {
+  public @NotNull AntMessage withText(@NotNull @Nls String text) {
     return new AntMessage(getType(), getPriority(), text, getFile(), getLine(), getColumn());
   }
 

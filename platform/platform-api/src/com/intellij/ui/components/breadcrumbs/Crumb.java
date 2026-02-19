@@ -1,14 +1,19 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.components.breadcrumbs;
 
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.ui.breadcrumbs.BreadcrumbsProvider;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.Action;
+import javax.swing.Icon;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -24,14 +29,12 @@ public interface Crumb {
   /**
    * @return synchronously calculated tooltip text
    */
-  @Nullable
-  default @NlsContexts.Tooltip String getTooltip() { return null; }
+  default @Nullable @NlsContexts.Tooltip String getTooltip() { return null; }
 
   /**
    * @return a list of actions for context menu
    */
-  @NotNull
-  default List<? extends Action> getContextActions() {
+  default @NotNull List<? extends Action> getContextActions() {
     return Collections.emptyList();
   }
 
@@ -40,8 +43,7 @@ public interface Crumb {
     private final @Nls String text;
     private final @NlsContexts.Tooltip String tooltip;
 
-    @NotNull
-    private final List<? extends Action> actions;
+    private final @NotNull List<? extends Action> actions;
 
     public Impl(@NotNull BreadcrumbsProvider provider, @NotNull PsiElement element) {
       this(provider.getElementIcon(element),
@@ -71,21 +73,34 @@ public interface Crumb {
       return tooltip;
     }
 
-    @Nls
     @Override
-    public String getText() {
+    public @Nls String getText() {
       return text;
     }
 
-    @NotNull
     @Override
-    public List<? extends Action> getContextActions() {
+    public @NotNull List<? extends Action> getContextActions() {
       return actions;
     }
 
     @Override
     public String toString() {
       return getText();
+    }
+
+    @ApiStatus.Internal
+    public static void moveEditorCaretTo(@NotNull Editor editor, int offset) {
+      if (offset >= 0) {
+        editor.getCaretModel().moveToOffset(offset);
+        editor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
+      }
+    }
+
+    @ApiStatus.Internal
+    public static void select(@NotNull Editor editor, @Nullable TextRange range) {
+      if (range != null) {
+        editor.getSelectionModel().setSelection(range.getStartOffset(), range.getEndOffset());
+      }
     }
   }
 }

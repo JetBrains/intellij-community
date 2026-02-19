@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.intellij.lang.xpath.xslt.impl.references;
 
 import com.intellij.javaee.ExternalResourceManager;
@@ -17,13 +17,27 @@ import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlDocument;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
-import com.intellij.util.*;
+import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
+import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.ProcessingContext;
+import com.intellij.util.SmartList;
 import com.intellij.util.io.URLUtil;
 import org.intellij.lang.xpath.psi.impl.ResolveUtil;
 import org.intellij.lang.xpath.xslt.XsltSupport;
 import org.intellij.lang.xpath.xslt.impl.XsltIncludeIndex;
-import org.intellij.lang.xpath.xslt.psi.*;
-import org.intellij.lang.xpath.xslt.util.*;
+import org.intellij.lang.xpath.xslt.psi.XsltApplyTemplates;
+import org.intellij.lang.xpath.xslt.psi.XsltCallTemplate;
+import org.intellij.lang.xpath.xslt.psi.XsltElement;
+import org.intellij.lang.xpath.xslt.psi.XsltElementFactory;
+import org.intellij.lang.xpath.xslt.psi.XsltFunction;
+import org.intellij.lang.xpath.xslt.psi.XsltParameter;
+import org.intellij.lang.xpath.xslt.psi.XsltTemplate;
+import org.intellij.lang.xpath.xslt.util.ArgumentMatcher;
+import org.intellij.lang.xpath.xslt.util.MatchTemplateMatcher;
+import org.intellij.lang.xpath.xslt.util.NamedTemplateMatcher;
+import org.intellij.lang.xpath.xslt.util.ParamMatcher;
+import org.intellij.lang.xpath.xslt.util.XsltCodeInsightUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -44,8 +58,7 @@ public class XsltReferenceProvider extends PsiReferenceProvider {
   @Override
   public PsiReference @NotNull [] getReferencesByElement(@NotNull PsiElement e, @NotNull ProcessingContext context) {
     final PsiElement element = e.getParent();
-    if (element instanceof XmlAttribute) {
-      final XmlAttribute attribute = (XmlAttribute)element;
+    if (element instanceof XmlAttribute attribute) {
 
       CachedValue<PsiReference[]> cachedValue = attribute.getUserData(CACHED_XSLT_REFS);
       if (cachedValue == null) {
@@ -105,7 +118,7 @@ public class XsltReferenceProvider extends PsiReferenceProvider {
         }
       } else if (XsltSupport.isParam(attribute) && isInsideUnnamedTemplate(tag)) {
         final XsltParameter myParam = myXsltElementFactory.wrapElement(tag, XsltParameter.class);
-        psiReferences = new PsiReference[]{ new MySelfReference(attribute, myParam) };
+        psiReferences = new PsiReference[]{new MySelfReference(attribute, myParam)};
       } else if (XsltSupport.isVariableOrParamName(attribute) || XsltSupport.isTemplateName(attribute)) {
         final XsltElement myElement = myXsltElementFactory.wrapElement(tag, XsltElement.class);
         psiReferences = createReferencesWithPrefix(attribute, SelfReference.create(attribute, myElement));
@@ -115,8 +128,7 @@ public class XsltReferenceProvider extends PsiReferenceProvider {
       } else if (XsltSupport.isIncludeOrImportHref(attribute)) {
         final String href = attribute.getValue();
         final String resourceLocation = ExternalResourceManager.getInstance().getResourceLocation(href, attribute.getProject());
-        //noinspection StringEquality
-        if (href == resourceLocation) {
+        if (href.equals(resourceLocation)) {
           // not a configured external resource
           if (!URLUtil.containsScheme(href)) {
             // a local file reference
@@ -152,7 +164,7 @@ public class XsltReferenceProvider extends PsiReferenceProvider {
       return psiReferences;
     }
 
-    private PsiReference[] createReferencesWithPrefix(XmlAttribute attribute, PsiReference reference) {
+    private static PsiReference[] createReferencesWithPrefix(XmlAttribute attribute, PsiReference reference) {
       if (attribute.getValue().contains(":")) {
         return new PsiReference[]{ new PrefixReference(attribute), reference };
       } else {
@@ -160,7 +172,7 @@ public class XsltReferenceProvider extends PsiReferenceProvider {
       }
     }
 
-    private class MySelfReference extends SelfReference {
+    private static class MySelfReference extends SelfReference {
       private final XsltParameter myParam;
       private final XmlTag myTag;
 
@@ -188,9 +200,8 @@ public class XsltReferenceProvider extends PsiReferenceProvider {
         assert !super.isReferenceTo(element);
 
         if (element == myParam) return false;
-        if (!(element instanceof XsltParameter)) return false;
+        if (!(element instanceof XsltParameter param)) return false;
 
-        final XsltParameter param = ((XsltParameter)element);
         final String name = param.getName();
         if (name == null || !name.equals(myParam.getName())) return false;
 

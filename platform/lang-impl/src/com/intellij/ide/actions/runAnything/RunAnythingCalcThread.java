@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions.runAnything;
 
 import com.intellij.ide.actions.runAnything.groups.RunAnythingCompletionGroup;
@@ -15,10 +15,10 @@ import org.jetbrains.annotations.NotNull;
 import java.util.ArrayList;
 import java.util.List;
 
-class RunAnythingCalcThread implements Computable<RunAnythingSearchListModel> {
-  @NotNull private final String myPattern;
-  @NotNull private final DataContext myDataContext;
-  @NotNull private final Project myProject;
+final class RunAnythingCalcThread implements Computable<RunAnythingSearchListModel> {
+  private final @NotNull String myPattern;
+  private final @NotNull DataContext myDataContext;
+  private final @NotNull Project myProject;
 
   RunAnythingCalcThread(@NotNull Project project, @NotNull DataContext context, @NotNull String pattern) {
     myProject = project;
@@ -88,8 +88,7 @@ class RunAnythingCalcThread implements Computable<RunAnythingSearchListModel> {
     }
   }
 
-  @NotNull
-  private List<RunAnythingItem> buildHelpGroups(@NotNull RunAnythingSearchListModel.RunAnythingHelpListModel model) {
+  private @NotNull List<RunAnythingItem> buildHelpGroups(@NotNull RunAnythingSearchListModel.RunAnythingHelpListModel model) {
     List<RunAnythingItem> items = new ArrayList<>();
 
     model.getGroups().forEach(group -> {
@@ -99,10 +98,9 @@ class RunAnythingCalcThread implements Computable<RunAnythingSearchListModel> {
     return items;
   }
 
-  @NotNull
-  private List<RunAnythingItem> buildAllGroups(@NotNull RunAnythingSearchListModel model) {
+  private @NotNull List<RunAnythingItem> buildAllGroups(@NotNull RunAnythingSearchListModel model) {
     List<RunAnythingItem> items = new ArrayList<>();
-    if (myPattern.trim().length() == 0) {
+    if (myPattern.trim().isEmpty()) {
       RunAnythingGroup recentGroup =
         model.getGroups().stream().filter(group -> group instanceof RunAnythingRecentGroup).findFirst().orElse(null);
       assert recentGroup != null;

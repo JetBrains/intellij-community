@@ -1,0 +1,16 @@
+<!--suppress PluginXmlDynamicPlugin -->
+<idea-plugin>
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <module name="intellij.libraries.kotlinx.coroutines.core"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.ide.core"/>
+    <module name="intellij.platform.projectModel"/>
+    <module name="intellij.platform.util.ui"/>
+  </dependencies>
+  <!-- endregion -->
+
+  <extensionPoints>
+    <extensionPoint name="projectFrameCapabilitiesProvider" interface="com.intellij.openapi.wm.ex.ProjectFrameCapabilitiesProvider"/>
+  </extensionPoints>
+</idea-plugin>

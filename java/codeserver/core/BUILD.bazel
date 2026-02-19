@@ -1,0 +1,58 @@
+### auto-generated section `build intellij.java.codeserver.core` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "core_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "core",
+  module_name = "intellij.java.codeserver.core",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":core_resources"],
+  deps = [
+    "@lib//:jetbrains-annotations",
+    "//libraries/stream",
+    "//platform/core-api:core",
+    "//jps/model-api:model",
+    "//platform/util",
+    "//platform/projectModel-api:projectModel",
+    "//platform/indexing-api:indexing",
+    "//platform/workspace/jps",
+    "//platform/backend/workspace",
+    "//java/java-frontback-psi-api:frontback-psi",
+    "//java/java-psi-api:psi",
+    "//java/java-psi-impl:psi-impl",
+    "//platform/workspace/storage",
+    "//java/java-indexing-api:indexing",
+  ],
+  runtime_deps = ["//platform/backend"]
+)
+
+jvm_library(
+  name = "core_test_lib",
+  module_name = "intellij.java.codeserver.core",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    ":core",
+    "//libraries/stream:stream_test_lib",
+    "//platform/core-api:core_test_lib",
+    "//jps/model-api:model_test_lib",
+    "//platform/util:util_test_lib",
+    "//platform/projectModel-api:projectModel_test_lib",
+    "//platform/indexing-api:indexing_test_lib",
+    "//platform/workspace/jps:jps_test_lib",
+    "//platform/backend/workspace:workspace_test_lib",
+    "//java/java-frontback-psi-api:frontback-psi_test_lib",
+    "//java/java-psi-api:psi_test_lib",
+    "//java/java-psi-impl:psi-impl_test_lib",
+    "//platform/workspace/storage:storage_test_lib",
+    "//java/java-indexing-api:indexing_test_lib",
+    "//platform/backend:backend_test_lib",
+  ]
+)
+### auto-generated section `build intellij.java.codeserver.core` end

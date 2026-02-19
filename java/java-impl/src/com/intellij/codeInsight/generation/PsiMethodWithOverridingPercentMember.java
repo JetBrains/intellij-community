@@ -1,34 +1,35 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.generation;
 
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiArrayType;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiClassType;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiParameter;
+import com.intellij.psi.PsiParameterList;
+import com.intellij.psi.PsiPrimitiveType;
+import com.intellij.psi.PsiType;
 import com.intellij.psi.impl.source.PsiExtensibleClass;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
-import javax.swing.*;
-import java.util.*;
+import javax.swing.JTree;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * @author Dmitry Batkovich <dmitry.batkovich@jetbrains.com>
@@ -46,6 +47,11 @@ public class PsiMethodWithOverridingPercentMember extends PsiMethodMember {
   public void renderTreeNode(final SimpleColoredComponent component, final JTree tree) {
     component.append(myOverridingPercent + "% ", SimpleTextAttributes.GRAY_ATTRIBUTES);
     super.renderTreeNode(component, tree);
+  }
+
+  @Override
+  public @Nls @Nullable String getSecondaryText() {
+    return myOverridingPercent + "% " + super.getSecondaryText();
   }
 
   @TestOnly
@@ -72,7 +78,7 @@ public class PsiMethodWithOverridingPercentMember extends PsiMethodMember {
     return String.CASE_INSENSITIVE_ORDER.compare(e1.getText(), e2.getText());
   };
 
-  public static PsiMethodWithOverridingPercentMember @NotNull [] calculateOverridingPercents(@NotNull final Collection<? extends CandidateInfo> candidateInfos) {
+  public static PsiMethodWithOverridingPercentMember @NotNull [] calculateOverridingPercents(final @NotNull Collection<? extends CandidateInfo> candidateInfos) {
     final List<PsiMethodWithOverridingPercentMember> result = new ArrayList<>(candidateInfos.size());
     final Map<String, Collection<PsiClass>> classShortNames2Inheritors = new HashMap<>();
     for (final CandidateInfo candidateInfo : candidateInfos) {
@@ -123,7 +129,7 @@ public class PsiMethodWithOverridingPercentMember extends PsiMethodMember {
     return counter;
   }
 
-  private static boolean maybeSuper(@NotNull final PsiMethod superMethod, @NotNull final PsiMethod method) {
+  private static boolean maybeSuper(final @NotNull PsiMethod superMethod, final @NotNull PsiMethod method) {
     if (!superMethod.getName().equals(method.getName())) {
       return false;
     }
@@ -142,8 +148,7 @@ public class PsiMethodWithOverridingPercentMember extends PsiMethodMember {
     return true;
   }
 
-  @Nullable
-  private static String getTypeShortName(@NotNull final PsiType type) {
+  private static @Nullable String getTypeShortName(final @NotNull PsiType type) {
     if (type instanceof PsiPrimitiveType) {
       return ((PsiPrimitiveType)type).getBoxedTypeName();
     }

@@ -1,0 +1,14 @@
+// FIR_COMPARISON
+class Cn<T>
+
+fun <T, C : Cn<T>> C.some(arg: (type: T) -> Unit): C {
+    return this
+}
+
+fun main(args: Array<String>) {
+    val x = Cn<String>()
+    x.some { <caret> }
+}
+
+//ELEMENT: some
+// TAIL_TEXT: " { arg: (String) -> Unit } for C in <root>"

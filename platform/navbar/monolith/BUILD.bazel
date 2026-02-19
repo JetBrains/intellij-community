@@ -1,0 +1,42 @@
+### auto-generated section `build intellij.platform.navbar.monolith` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "monolith_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "monolith",
+  module_name = "intellij.platform.navbar.monolith",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":monolith_resources"],
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "//platform/core-api:core",
+    "//platform/core-ui",
+    "//platform/lang-impl",
+    "//platform/navbar/backend",
+    "//platform/navbar/frontend",
+    "//platform/platform-api:ide",
+  ]
+)
+
+jvm_library(
+  name = "monolith_test_lib",
+  module_name = "intellij.platform.navbar.monolith",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    ":monolith",
+    "//platform/core-api:core_test_lib",
+    "//platform/core-ui:core-ui_test_lib",
+    "//platform/lang-impl:lang-impl_test_lib",
+    "//platform/navbar/backend:backend_test_lib",
+    "//platform/navbar/frontend:frontend_test_lib",
+    "//platform/platform-api:ide_test_lib",
+  ]
+)
+### auto-generated section `build intellij.platform.navbar.monolith` end

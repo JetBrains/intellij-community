@@ -1,0 +1,7 @@
+// HIGHLIGHT: INFORMATION
+
+class MirrorOfCoroutineInfo(val sequenceNumber: String?)
+
+fun instance(mirror: MirrorOfCoroutineInfo) {
+    "${mirror.sequenceNumber<caret>}"
+}

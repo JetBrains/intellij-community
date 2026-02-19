@@ -1,8 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
-/*
- * @author max
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.ui;
 
 import com.intellij.openapi.util.NlsContexts;
@@ -10,15 +6,32 @@ import com.intellij.ui.components.JBLabel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.Box;
+import javax.swing.JButton;
+import javax.swing.JComboBox;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.JSeparator;
+import javax.swing.JSpinner;
+import javax.swing.JTextField;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
 
 import static com.intellij.util.ui.UIUtil.DEFAULT_HGAP;
 import static com.intellij.util.ui.UIUtil.DEFAULT_VGAP;
-import static java.awt.GridBagConstraints.*;
+import static java.awt.GridBagConstraints.BOTH;
+import static java.awt.GridBagConstraints.CENTER;
+import static java.awt.GridBagConstraints.EAST;
+import static java.awt.GridBagConstraints.HORIZONTAL;
+import static java.awt.GridBagConstraints.NONE;
+import static java.awt.GridBagConstraints.NORTHEAST;
+import static java.awt.GridBagConstraints.NORTHWEST;
+import static java.awt.GridBagConstraints.WEST;
 
 /**
- * also consider using {@link UI.PanelFactory} for non-trivial forms  
+ * also consider using {@link UI.PanelFactory} for non-trivial forms
  */
 public class FormBuilder {
   private boolean myAlignLabelOnRight;
@@ -73,14 +86,8 @@ public class FormBuilder {
     return addLabeledComponent(label, component, topInset, labelOnTop);
   }
 
-  @NotNull
-  private static JLabel createLabelForComponent(@NotNull @NlsContexts.Label String labelText, @NotNull JComponent component) {
-    JLabel label = new JLabel(UIUtil.removeMnemonic(labelText));
-    final int index = UIUtil.getDisplayMnemonicIndex(labelText);
-    if (index != -1) {
-      label.setDisplayedMnemonic(labelText.charAt(index + 1));
-      label.setDisplayedMnemonicIndex(index);
-    }
+  private static @NotNull JLabel createLabelForComponent(@NotNull @NlsContexts.Label String labelText, @NotNull JComponent component) {
+    JLabel label = new JLabel(UIUtil.replaceMnemonicAmpersand(labelText));
     label.setLabelFor(component);
     return label;
   }
@@ -93,8 +100,7 @@ public class FormBuilder {
     return addLabeledComponent((JLabel)null, component, topInset, false);
   }
 
-  @NotNull
-  public FormBuilder addComponentFillVertically(@NotNull JComponent component, int topInset) {
+  public @NotNull FormBuilder addComponentFillVertically(@NotNull JComponent component, int topInset) {
     return addLabeledComponent(null, component, topInset, false, true);
   }
 
@@ -108,7 +114,7 @@ public class FormBuilder {
 
   public FormBuilder addVerticalGap(final int height) {
     if (height == -1) {
-      myPanel.add(new JLabel(), new GridBagConstraints(0, myLineCount++, 2, 1, 0, 1, CENTER, NONE, JBUI.emptyInsets(), 0, 0));
+      myPanel.add(new JLabel(), new GridBagConstraints(0, myLineCount++, 2, 1, 0, 1, CENTER, NONE, JBInsets.emptyInsets(), 0, 0));
       return this;
     }
 
@@ -122,11 +128,11 @@ public class FormBuilder {
     return addComponentToRightColumn(label, 1);
   }
 
-  public FormBuilder addComponentToRightColumn(@NotNull final JComponent component) {
+  public FormBuilder addComponentToRightColumn(final @NotNull JComponent component) {
     return addComponentToRightColumn(component, myVerticalGap);
   }
 
-  public FormBuilder addComponentToRightColumn(@NotNull final JComponent component, final int topInset) {
+  public FormBuilder addComponentToRightColumn(final @NotNull JComponent component, final int topInset) {
     return addLabeledComponent(new JLabel(), component, topInset);
   }
 

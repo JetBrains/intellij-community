@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.service.project;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -30,16 +30,13 @@ import java.util.Map;
 /**
  * @author Vladislav.Soroka
  */
-public class ExternalModuleStructureExtension extends ModuleStructureExtension {
+public final class ExternalModuleStructureExtension extends ModuleStructureExtension {
 
   private static final Logger LOG = Logger.getInstance(ExternalModuleStructureExtension.class);
-  @Nullable
-  private Project myProject;
+  private @Nullable Project myProject;
   private boolean isExternalSystemsInvolved;
-  @Nullable
-  private Map<String, Pair<ProjectSystemId, ExternalProjectSettings>> myExternalProjectsToRestore;
-  @Nullable
-  private Map<String, ProjectSystemId> myOrphanProjectsCandidates;
+  private @Nullable Map<String, Pair<ProjectSystemId, ExternalProjectSettings>> myExternalProjectsToRestore;
+  private @Nullable Map<String, ProjectSystemId> myOrphanProjectsCandidates;
 
   @Override
   public void reset(Project project) {
@@ -133,8 +130,7 @@ public class ExternalModuleStructureExtension extends ModuleStructureExtension {
     myExternalProjectsToRestore = getLinkedProjects(myProject);
   }
 
-  @Nullable
-  private static ModulesConfigurator getModulesConfigurator(Project project) {
+  private static @Nullable ModulesConfigurator getModulesConfigurator(Project project) {
     if (ApplicationManager.getApplication().isHeadlessEnvironment()) return null;
     final ProjectStructureConfigurable structureConfigurable = ProjectStructureConfigurable.getInstance(project);
     StructureConfigurableContext context = structureConfigurable.isUiInitialized() ? structureConfigurable.getContext() : null;
@@ -148,9 +144,8 @@ public class ExternalModuleStructureExtension extends ModuleStructureExtension {
       AbstractExternalSystemSettings systemSettings = ExternalSystemApiUtil.getSettings(project, systemId);
       Collection projectsSettings = systemSettings.getLinkedProjectsSettings();
       for (Object settings : projectsSettings) {
-        if (settings instanceof ExternalProjectSettings) {
-          ExternalProjectSettings projectSettings = (ExternalProjectSettings)settings;
-          result.put((projectSettings).getExternalProjectPath(), Pair.create(systemId, projectSettings));
+        if (settings instanceof ExternalProjectSettings projectSettings) {
+          result.put(projectSettings.getExternalProjectPath(), Pair.create(systemId, projectSettings));
         }
       }
     }

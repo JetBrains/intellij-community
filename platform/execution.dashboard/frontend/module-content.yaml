@@ -1,0 +1,3 @@
+- name: dist.all/lib/intellij.platform.execution.dashboard.frontend.jar
+  modules:
+  - name: intellij.platform.execution.dashboard.frontend

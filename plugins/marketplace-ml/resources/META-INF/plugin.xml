@@ -1,0 +1,43 @@
+<idea-plugin package="com.intellij.marketplaceMl">
+  <id>com.intellij.marketplace.ml</id>
+  <name>Machine Learning in Marketplace</name>
+  <vendor>JetBrains</vendor>
+  <category>Local AI/ML Tools</category>
+
+  <description><![CDATA[
+    <p>The plugin improves the Marketplace search feature by ordering the search results using machine learning,
+    making more relevant results appear higher up the list.
+    </p>
+    <br>
+    <i>Machine learning ranking is currently in experimental mode</i>
+  ]]></description>
+
+  <resource-bundle>messages.marketplaceMlBundle</resource-bundle>
+
+  <dependencies>
+    <module name="intellij.platform.ml.impl"/>
+  </dependencies>
+  <!--suppress PluginXmlValidity -->
+  <content namespace="jetbrains">
+    <!-- The implicit main module of the plugin depends on internal modules (intellij.platform.ml.impl), so it's required to set the namespace for it
+         todo: extract elements and dependencies to an explicit content module (see IJPL-212351) -->
+  </content>
+  
+  <extensions defaultExtensionNs="com.intellij">
+    <registryKey
+      defaultValue="-1"
+      description="Manual machine learning ranking experiment group in the Plugin Manager"
+      key="marketplace.ml.ranking.experiment.group"/>
+
+    <registryKey
+      defaultValue="true"
+      description="Disable machine learning ranking experiment in the Plugin Manager"
+      key="marketplace.ml.ranking.disable.experiments"/>
+
+    <marketplaceLocalRanker implementation="com.intellij.marketplaceMl.MarketplaceLocalRankerImpl"/>
+    <marketplaceTextualFeaturesProvider implementation="com.intellij.marketplaceMl.features.MarketplaceTextualFeaturesProviderImpl"/>
+  </extensions>
+
+  <extensionPoints>
+  </extensionPoints>
+</idea-plugin>

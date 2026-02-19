@@ -1,0 +1,8 @@
+class Clazz:
+
+    """
+    This function does nothing
+    Accepts nothing
+    Returns nothing
+    """
+    def foo(): ...

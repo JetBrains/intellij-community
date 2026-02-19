@@ -1,206 +1,84 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl;
 
+import com.intellij.codeInsight.daemon.impl.HighlightInfo;
+import com.intellij.internal.statistic.service.fus.collectors.UIEventLogger;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.ex.ErrorStripeEvent;
 import com.intellij.openapi.editor.ex.ErrorStripeListener;
 import com.intellij.openapi.editor.ex.MarkupIterator;
+import com.intellij.openapi.editor.ex.MarkupModelEx;
 import com.intellij.openapi.editor.ex.RangeHighlighterEx;
-import com.intellij.openapi.editor.impl.event.MarkupModelListener;
-import com.intellij.openapi.editor.markup.HighlighterTargetArea;
+import com.intellij.openapi.editor.markup.MarkupModel;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
+import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.event.MouseEvent;
-import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.List;
-import java.util.NoSuchElementException;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
- * A mirror of highlighters which should be rendered on the error stripe.
- * */
-class ErrorStripeMarkersModel implements MarkupModelListener {
-  private static final Logger LOG = Logger.getInstance(ErrorStripeMarkersModel.class);
-
-  private final EditorImpl myEditor;
-  private final ErrorStripeRangeMarkerTree myTree;
-  private final ErrorStripeRangeMarkerTree myTreeForLines;
+ * Some utility methods for highlighters which should be rendered on the error stripe.
+ */
+final class ErrorStripeMarkersModel {
+  private final @NotNull EditorImpl myEditor;
   private final List<ErrorStripeListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
 
   ErrorStripeMarkersModel(@NotNull EditorImpl editor) {
     myEditor = editor;
-    myTree = new ErrorStripeRangeMarkerTree(myEditor.getDocument());
-    myTreeForLines = new ErrorStripeRangeMarkerTree(myEditor.getDocument());
   }
 
-  void addErrorMarkerListener(ErrorStripeListener listener, Disposable parent) {
+  void fireErrorMarkerClicked(@NotNull RangeHighlighter highlighter, @NotNull MouseEvent e) {
+    ThreadingAssertions.assertEventDispatchThread();
+    ErrorStripeEvent event = new ErrorStripeEvent(myEditor, e, highlighter);
+    logMarkerClicked(event);
+    myListeners.forEach(listener -> listener.errorMarkerClicked(event));
+  }
+  void addErrorMarkerClickListener(@NotNull Disposable parent, @NotNull ErrorStripeListener listener) {
     ContainerUtil.add(listener, myListeners, parent);
   }
 
-  void fireErrorMarkerClicked(RangeHighlighter highlighter, MouseEvent e) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
-    ErrorStripeEvent event = new ErrorStripeEvent(myEditor, e, highlighter);
-    myListeners.forEach(listener -> listener.errorMarkerClicked(event));
+  static boolean isErrorStripeHighlighter(@NotNull RangeHighlighterEx highlighter, @NotNull EditorImpl editor) {
+    return highlighter.getEditorFilter().avaliableIn(editor) &&
+           editor.isHighlighterAvailable(highlighter) &&
+           highlighter.getErrorStripeMarkColor(editor.getColorsScheme()) != null;
   }
 
-  @Override
-  public void afterAdded(@NotNull RangeHighlighterEx highlighter) {
-    if (isAvailable(highlighter))
-    if (highlighter.getErrorStripeMarkColor(myEditor.getColorsScheme()) != null) {
-      createErrorStripeMarker(highlighter);
-    }
-  }
-
-  @Override
-  public void beforeRemoved(@NotNull RangeHighlighterEx highlighter) {
-    ErrorStripeMarkerImpl errorStripeMarker = findErrorStripeMarker(highlighter);
-    if (errorStripeMarker != null) {
-      removeErrorStripeMarker(errorStripeMarker);
-    }
-    else {
-      LOG.assertTrue(!isAvailable(highlighter));
+  private void logMarkerClicked(@NotNull ErrorStripeEvent event) {
+    Project project = event.getEditor().getProject();
+    if (project != null) {
+      HighlightInfo info = HighlightInfo.fromRangeHighlighter(event.getHighlighter());
+      int severity = info != null ? info.getSeverity().myVal : -1;
+      VirtualFile vFile = event.getEditor().getVirtualFile();
+      ApplicationManager.getApplication().executeOnPooledThread(() -> {
+        int totalMarkersInFile = ReadAction.compute(()-> countErrorStripeMarkers());
+        FileType fileType = vFile != null && vFile.isValid() ? vFile.getFileType() : null;
+        UIEventLogger.ErrorStripeNavigate.log(project, severity, totalMarkersInFile, fileType);
+      });
     }
   }
 
-  @Override
-  public void attributesChanged(@NotNull RangeHighlighterEx highlighter, boolean renderersChanged, boolean fontStyleOrColorChanged) {
-    ErrorStripeMarkerImpl existingErrorStripeMarker = findErrorStripeMarker(highlighter);
-    boolean hasErrorStripe = isAvailable(highlighter);
-
-    if (existingErrorStripeMarker == null) {
-      if (hasErrorStripe) {
-        createErrorStripeMarker(highlighter);
-      }
-      return;
+  private int countErrorStripeMarkers() {
+    if (myEditor.isDisposed()) {
+      return 0;
     }
-
-    if (!hasErrorStripe) {
-      removeErrorStripeMarker(existingErrorStripeMarker);
-      return;
-    }
-
-    existingErrorStripeMarker.setGreedyToLeft(highlighter.isGreedyToLeft());
-    existingErrorStripeMarker.setGreedyToRight(highlighter.isGreedyToRight());
-    if (highlighter instanceof RangeMarkerImpl) {
-      existingErrorStripeMarker.setStickingToRight(((RangeMarkerImpl)highlighter).isStickingToRight());
-    }
-    myListeners.forEach(l -> l.errorMarkerChanged(new ErrorStripeEvent(myEditor, null, highlighter)));
+    return countErrorStripeMarkers(DocumentMarkupModel.forDocument(myEditor.getDocument(), myEditor.getProject(), true))
+      + countErrorStripeMarkers(myEditor.getMarkupModel());
   }
 
-  private boolean isAvailable(@NotNull RangeHighlighterEx highlighter) {
-    return highlighter.getEditorFilter().avaliableIn(myEditor) &&
-           myEditor.isHighlighterAvailable(highlighter) &&
-           highlighter.getErrorStripeMarkColor(myEditor.getColorsScheme()) != null;
-  }
-
-  private void createErrorStripeMarker(@NotNull RangeHighlighterEx highlighter) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
-    ErrorStripeMarkerImpl marker = new ErrorStripeMarkerImpl(myEditor.getDocument(), highlighter);
-    RangeHighlighterEx ex = marker.getHighlighter();
-    boolean isStickingToRight = (ex instanceof RangeMarkerImpl) && ((RangeMarkerImpl)highlighter).isStickingToRight();
-    treeFor(ex).addInterval(marker, ex.getStartOffset(), ex.getEndOffset(),
-                                      ex.isGreedyToLeft(), ex.isGreedyToRight(), isStickingToRight, ex.getLayer());
-    myListeners.forEach(l -> l.errorMarkerChanged(new ErrorStripeEvent(myEditor, null, highlighter)));
-  }
-
-  private void removeErrorStripeMarker(ErrorStripeMarkerImpl errorStripeMarker) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
-    RangeHighlighterEx highlighter = errorStripeMarker.getHighlighter();
-    treeFor(highlighter).removeInterval(errorStripeMarker);
-    myListeners.forEach(l -> l.errorMarkerChanged(new ErrorStripeEvent(myEditor, null, highlighter)));
-  }
-
-  private ErrorStripeMarkerImpl findErrorStripeMarker(@NotNull RangeHighlighterEx highlighter) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
-    int offset = highlighter.getStartOffset();
-    MarkupIterator<ErrorStripeMarkerImpl> iterator = treeFor(highlighter).overlappingIterator(new TextRangeInterval(offset, offset), null);
-    try {
-      return ContainerUtil.find(iterator, marker -> marker.getHighlighter() == highlighter);
+  private int countErrorStripeMarkers(@NotNull MarkupModel model) {
+    AtomicInteger c = new AtomicInteger();
+    try (MarkupIterator<RangeHighlighterEx> iterator =
+      ((MarkupModelEx)model).overlappingErrorStripeIterator(0, model.getDocument().getTextLength())) {
+      ContainerUtil.process(iterator, __ -> c.getAndIncrement() >= 0);
     }
-    finally {
-      iterator.dispose();
-    }
-  }
-
-  MarkupIterator<RangeHighlighterEx> highlighterIterator(int startOffset, int endOffset) {
-    return new HighlighterIterator(startOffset, endOffset);
-  }
-
-  private ErrorStripeRangeMarkerTree treeFor(@NotNull RangeHighlighter highlighter) {
-    return highlighter.getTargetArea() == HighlighterTargetArea.EXACT_RANGE ? myTree : myTreeForLines;
-  }
-
-  void clear() {
-    ApplicationManager.getApplication().assertIsDispatchThread();
-    myTree.clear();
-    myTreeForLines.clear();
-  }
-
-  private static final Comparator<ErrorStripeMarkerImpl> BY_AFFECTED_START_OFFSET =
-    Comparator.comparingInt(marker -> {
-      RangeHighlighterEx highlighter = marker.getHighlighter();
-      return highlighter.isValid() ? highlighter.getAffectedAreaStartOffset() : -1;
-    });
-
-  private class HighlighterIterator implements MarkupIterator<RangeHighlighterEx> {
-    private final MarkupIterator<ErrorStripeMarkerImpl> myDelegate;
-    private final List<ErrorStripeMarkerImpl> myToRemove = new ArrayList<>();
-    private RangeHighlighterEx myNext;
-
-    private HighlighterIterator(int startOffset, int endOffset) {
-      startOffset = Math.max(0, startOffset);
-      endOffset = Math.max(startOffset, endOffset);
-
-      MarkupIterator<ErrorStripeMarkerImpl> exact = myTree
-        .overlappingIterator(new TextRangeInterval(startOffset, endOffset), null);
-      MarkupIterator<ErrorStripeMarkerImpl> lines = myTreeForLines
-        .overlappingIterator(MarkupModelImpl.roundToLineBoundaries(myEditor.getDocument(), startOffset, endOffset), null);
-      myDelegate = MarkupIterator.mergeIterators(exact, lines, BY_AFFECTED_START_OFFSET);
-
-      advance();
-    }
-
-    @Override
-    public void dispose() {
-      myDelegate.dispose();
-      myToRemove.forEach(m -> treeFor(m.getHighlighter()).removeInterval(m));
-    }
-
-    @Override
-    public RangeHighlighterEx peek() throws NoSuchElementException {
-      return myNext;
-    }
-
-    @Override
-    public boolean hasNext() {
-      return myNext != null;
-    }
-
-    @Override
-    public RangeHighlighterEx next() {
-      RangeHighlighterEx result = myNext;
-      advance();
-      return result;
-    }
-
-    private void advance() {
-      while (myDelegate.hasNext()) {
-        ErrorStripeMarkerImpl next = myDelegate.next();
-        RangeHighlighterEx highlighter = next.getHighlighter();
-        if (highlighter.isValid()) {
-          myNext = highlighter;
-          return;
-        }
-        else {
-          LOG.error("Dangling highlighter found: " + highlighter + " (" + next + ")");
-          myToRemove.add(next);
-        }
-      }
-      myNext = null;
-    }
+    return c.get();
   }
 }

@@ -1,0 +1,3 @@
+version = "~=2.0.1"
+upstream_repository = "https://github.com/kurtraschke/pyRFC3339"
+obsolete_since = "2.1.0" # Released on 2025-08-23

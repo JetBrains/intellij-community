@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.structuralsearch.inspection;
 
 import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
@@ -18,9 +18,19 @@ public class StructuralSearchInspectionToolWrapper extends LocalInspectionToolWr
     super(new StructuralSearchFakeInspection(configurations));
   }
 
-  @NotNull
   @Override
-  public LocalInspectionToolWrapper createCopy() {
+  public int hashCode() {
+    return myTool.getShortName().hashCode();
+  }
+
+  @Override
+  public boolean equals(Object obj) {
+    return obj.getClass() == StructuralSearchInspectionToolWrapper.class &&
+           ((StructuralSearchInspectionToolWrapper)obj).myTool.getShortName().equals(myTool.getShortName());
+  }
+
+  @Override
+  public @NotNull LocalInspectionToolWrapper createCopy() {
     final StructuralSearchFakeInspection inspection = (StructuralSearchFakeInspection)getTool();
     final List<Configuration> copies = new SmartList<>();
     for (Configuration configuration : inspection.getConfigurations()) {
@@ -29,9 +39,8 @@ public class StructuralSearchInspectionToolWrapper extends LocalInspectionToolWr
     return new StructuralSearchInspectionToolWrapper(copies);
   }
 
-  @NotNull
   @Override
-  public String getDisplayName() {
+  public @NotNull String getDisplayName() {
     return getTool().getDisplayName();
   }
 
@@ -41,13 +50,17 @@ public class StructuralSearchInspectionToolWrapper extends LocalInspectionToolWr
   }
 
   @Override
-  public String getID() {
+  public @NotNull String getID() {
     return getTool().getID();
   }
 
-  @NotNull
   @Override
-  public String getGroupDisplayName() {
+  public @NotNull String getGroupDisplayName() {
     return getTool().getGroupDisplayName();
+  }
+
+  @Override
+  public boolean isCleanupTool() {
+    return ((StructuralSearchFakeInspection)myTool).isCleanup();
   }
 }

@@ -1,41 +1,52 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.roots;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vcs.*;
+import com.intellij.openapi.vcs.AbstractVcs;
+import com.intellij.openapi.vcs.ProjectLevelVcsManager;
+import com.intellij.openapi.vcs.VcsBundle;
+import com.intellij.openapi.vcs.VcsDirectoryMapping;
+import com.intellij.openapi.vcs.VcsNotifier;
+import com.intellij.openapi.vcs.VcsRoot;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 
+import static com.intellij.openapi.vcs.VcsNotificationIdsHolder.ROOT_ADDED;
 import static java.util.stream.Collectors.toList;
 
 public abstract class VcsIntegrationEnabler {
+  protected final @NotNull Project myProject;
+  private final @NotNull AbstractVcs myVcs;
+  private final @Nullable VirtualFile myTargetDirectory;
 
-  @NotNull protected final Project myProject;
-  @NotNull private final AbstractVcs myVcs;
-
+  @SuppressWarnings("unused") // Used in 3rd-party plugins
   protected VcsIntegrationEnabler(@NotNull AbstractVcs vcs) {
+    this(vcs, null);
+  }
+
+  protected VcsIntegrationEnabler(@NotNull AbstractVcs vcs, @Nullable VirtualFile targetDirectory) {
     myProject = vcs.getProject();
     myVcs = vcs;
+    myTargetDirectory = targetDirectory;
+  }
+
+  public void detectAndEnable() {
+    Collection<VcsRoot> roots = myTargetDirectory != null
+                                ? VcsRootDetector.getInstance(myProject).detect(myTargetDirectory)
+                                : VcsRootDetector.getInstance(myProject).detect();
+    enable(roots);
   }
 
   public void enable(@NotNull Collection<? extends VcsRoot> vcsRoots) {
@@ -46,13 +57,13 @@ public abstract class VcsIntegrationEnabler {
       }).
       map(VcsRoot::getPath).collect(toList());
 
-    VirtualFile projectDir = myProject.getBaseDir();
-    assert projectDir != null : "Base dir is unexpectedly null for project: " + myProject;
+    VirtualFile directoryToInitVcs = myTargetDirectory != null ? myTargetDirectory :  ProjectUtil.guessProjectDir(myProject);
+    assert directoryToInitVcs != null : "Base dir is unexpectedly null for project: " + myProject;
 
     if (roots.isEmpty()) {
-      boolean succeeded = initOrNotifyError(projectDir);
+      boolean succeeded = initOrNotifyError(directoryToInitVcs);
       if (succeeded) {
-        addVcsRoots(Collections.singleton(projectDir));
+        addVcsRoots(Collections.singleton(directoryToInitVcs));
       }
     }
     else {
@@ -68,16 +79,15 @@ public abstract class VcsIntegrationEnabler {
     return ContainerUtil.exists(roots, root -> VfsUtilCore.isAncestor(root, myProject.getBaseDir(), true));
   }
 
-  @NotNull
-  public static String joinRootsPaths(@NotNull Collection<? extends VirtualFile> roots) {
+  public static @NotNull String joinRootsPaths(@NotNull Collection<? extends VirtualFile> roots) {
     return StringUtil.join(roots, VirtualFile::getPresentableUrl, ", ");
   }
 
-  protected abstract boolean initOrNotifyError(@NotNull final VirtualFile projectDir);
+  protected abstract boolean initOrNotifyError(final @NotNull VirtualFile directory);
 
   protected void notifyAddedRoots(Collection<? extends VirtualFile> roots) {
     String message = VcsBundle.message("roots.notification.content.added.vcs.name.roots", myVcs.getName(), roots.size(), joinRootsPaths(roots));
-    VcsNotifier.getInstance(myProject).notifySuccess("vcs.root.added", "", message);
+    VcsNotifier.getInstance(myProject).notifySuccess(ROOT_ADDED, "", message);
   }
 
   private void addVcsRoots(@NotNull Collection<? extends VirtualFile> roots) {

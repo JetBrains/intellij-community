@@ -1,9 +1,12 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots
 
+import com.intellij.ide.plugins.PluginManager
+import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.runWriteAction
-import com.intellij.openapi.module.ModuleManager
+import com.intellij.openapi.components.service
+import com.intellij.openapi.roots.impl.LegacyModuleExtensionRegistry
 import com.intellij.openapi.util.Disposer
 import com.intellij.testFramework.HeavyPlatformTestCase
 
@@ -34,9 +37,8 @@ class ModuleExtensionRegistrationTest : HeavyPlatformTestCase() {
         Disposer.dispose(moduleTypeDisposable)
       }
     })
-    for (module in ModuleManager.getInstance(myProject).modules) {
-      ModuleRootManagerEx.MODULE_EXTENSION_NAME.getPoint(module).registerExtension(MockModuleExtension(), moduleTypeDisposable)
-    }
+    val pluginDescriptor = PluginManager.getPluginByClass(javaClass) ?: PluginManagerCore.getPlugin(PluginManagerCore.CORE_ID)!!
+    service<LegacyModuleExtensionRegistry>().registerModuleExtension(MockModuleExtension::class.java, pluginDescriptor, moduleTypeDisposable)
   }
 }
 
@@ -46,9 +48,6 @@ private class MockModuleExtension : ModuleExtension() {
   }
 
   override fun commit() {
-  }
-
-  override fun dispose() {
   }
 
   override fun isChanged(): Boolean {

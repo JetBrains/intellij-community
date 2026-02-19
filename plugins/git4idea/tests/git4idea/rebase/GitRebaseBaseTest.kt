@@ -12,11 +12,18 @@ import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.testFramework.OpenProjectTaskBuilder
 import git4idea.GitUtil
 import git4idea.branch.GitRebaseParams
-import git4idea.config.GitVersion
 import git4idea.repo.GitRepository
-import git4idea.test.*
+import git4idea.test.GitPlatformTest
+import git4idea.test.UNKNOWN_ERROR_TEXT
+import git4idea.test.build
+import git4idea.test.cd
+import git4idea.test.createRepository
+import git4idea.test.file
+import git4idea.test.git
+import git4idea.test.resolveConflicts
 import java.nio.file.Path
 import java.nio.file.Paths
+import java.util.Locale
 
 abstract class GitRebaseBaseTest : GitPlatformTest() {
   override fun getOpenProjectOptions(): OpenProjectTaskBuilder {
@@ -28,7 +35,7 @@ abstract class GitRebaseBaseTest : GitPlatformTest() {
     return Paths.get(FileUtil.getTempDirectory(), "p.ipr")
   }
 
-  private val saved = getDefaultSaveChangesPolicy().name.toLowerCase().let { save ->
+  private val saved = getDefaultSaveChangesPolicy().name.lowercase(Locale.getDefault()).let { save ->
     if (save.endsWith("e")) "${save}d" else "${save}ed"
   }
 
@@ -116,7 +123,7 @@ abstract class GitRebaseBaseTest : GitPlatformTest() {
     }
   }
 
-  protected fun assertSuccessfulRebaseNotification(message: String) : Notification {
+  protected fun assertSuccessfulRebaseNotification(message: String): Notification {
     return assertSuccessfulNotification("Rebase successful", message)
   }
 
@@ -157,7 +164,7 @@ abstract class GitRebaseBaseTest : GitPlatformTest() {
     assertEquals("There should be no local changes!", "", gitStatus())
   }
 
-  protected fun GitRepository.hasConflict(file: String) : Boolean {
+  protected fun GitRepository.hasConflict(file: String): Boolean {
     return ("UU $file") == gitStatus()
   }
 
@@ -186,7 +193,7 @@ abstract class GitRebaseBaseTest : GitPlatformTest() {
         """)
   }
 
-  protected fun `assert unknown error notification with link to abort`(afterContinue : Boolean = false) {
+  protected fun `assert unknown error notification with link to abort`(afterContinue: Boolean = false) {
     val expectedTitle = if (afterContinue) "Continue rebase failed" else "Rebase failed"
     assertErrorNotification(expectedTitle,
         """
@@ -202,15 +209,10 @@ abstract class GitRebaseBaseTest : GitPlatformTest() {
         """)
   }
 
-  protected fun `assert error about unstaged file before continue rebase`(file : String) {
-    val fileLine = if (vcs.version.isLaterOrEqual(GitVersion(1, 7, 3, 0)) &&
-                       vcs.version.isOlderOrEqual(GitVersion(2, 19, 2, 0))) "$file: needs update" else ""
+  protected fun `assert error about unstaged file before continue rebase`() {
     assertErrorNotification("Continue rebase failed",
-          """
-          $fileLine
-          You must edit all merge conflicts
-          and then mark them as resolved using git add
-          """)
+                            "There are unstaged changes in tracked files preventing rebase from continuing",
+                            actions = listOf("Stage and Retry", "Show Files", "Abort"))
   }
 
   protected fun keepCommitMessageAfterConflict() {
@@ -220,7 +222,7 @@ abstract class GitRebaseBaseTest : GitPlatformTest() {
   }
 
   inner class LocalChange(val repository: GitRepository, private val filePath: String, val content: String = "Some content") {
-    fun generate() : LocalChange {
+    fun generate(): LocalChange {
       cd(repository)
       val file = repository.file(filePath).create(content)
       file.add()

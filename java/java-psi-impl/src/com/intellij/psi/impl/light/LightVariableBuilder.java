@@ -1,29 +1,38 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.light;
 
 import com.intellij.lang.Language;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.navigation.NavigationItem;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaElementVisitor;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.OriginInfoAwareElement;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiIdentifier;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiModifierList;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypeElement;
+import com.intellij.psi.PsiVariable;
 import com.intellij.psi.impl.ElementPresentationUtil;
 import com.intellij.ui.IconManager;
+import com.intellij.ui.PlatformIcons;
 import com.intellij.ui.icons.RowIcon;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.PlatformIcons;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.Icon;
+import java.util.function.Supplier;
 
-/**
- * @author peter
- */
-public class LightVariableBuilder<T extends LightVariableBuilder> extends LightElement implements PsiVariable, NavigationItem, OriginInfoAwareElement {
+public class LightVariableBuilder<T extends LightVariableBuilder<?>> extends LightElement implements PsiVariable, NavigationItem, OriginInfoAwareElement {
   private final String myName;
-  private final PsiType myType;
+  private final Supplier<? extends PsiType> myTypeSupplier;
   private volatile LightModifierList myModifierList;
-  private volatile Icon myBaseIcon = PlatformIcons.VARIABLE_ICON;
+  private volatile Icon myBaseIcon = IconManager.getInstance().getPlatformIcon(PlatformIcons.Variable);
   private String myOriginInfo;
 
   public LightVariableBuilder(@NotNull String name, @NotNull String type, @NotNull PsiElement navigationElement) {
@@ -36,36 +45,62 @@ public class LightVariableBuilder<T extends LightVariableBuilder> extends LightE
   }
 
   public LightVariableBuilder(PsiManager manager, @NotNull String name, @NotNull PsiType type, @NotNull Language language) {
-    super(manager, language);
-    myName = name;
-    myType = type;
-    myModifierList = new LightModifierList(manager);
+    this(manager, name, type, language, new LightModifierList(manager));
   }
 
+  public LightVariableBuilder(PsiManager manager, @NotNull String name, @NotNull PsiType type,
+                              @NotNull Language language, @NotNull LightModifierList modifierList) {
+    super(manager, language);
+    myName = name;
+    myTypeSupplier = () -> type;
+    myModifierList = modifierList;
+  }
+
+  protected LightVariableBuilder(PsiManager manager,
+                                 @NotNull String name,
+                                 @NotNull Supplier<? extends @NotNull PsiType> typeSupplier,
+                                 @NotNull Language language,
+                                 @NotNull LightModifierList modifierList
+  ) {
+    super(manager, language);
+    myName = name;
+    myTypeSupplier = typeSupplier;
+    myModifierList = modifierList;
+  }
+
+  @Override
+  public void accept(@NotNull PsiElementVisitor visitor) {
+    if (visitor instanceof JavaElementVisitor) {
+      ((JavaElementVisitor)visitor).visitVariable(this);
+    }
+    else {
+      visitor.visitElement(this);
+    }
+  }
   @Override
   public String toString() {
     return "LightVariableBuilder:" + getName();
   }
 
-  @NotNull
   @Override
-  public PsiType getType() {
-    return myType;
+  public @NotNull PsiType getType() {
+    return myTypeSupplier.get();
   }
 
   @Override
-  @NotNull
-  public PsiModifierList getModifierList() {
+  public @NotNull PsiModifierList getModifierList() {
     return myModifierList;
   }
 
-  public T setModifiers(String... modifiers) {
+  public @NotNull T setModifiers(@NotNull String @NotNull ... modifiers) {
     myModifierList = new LightModifierList(getManager(), getLanguage(), modifiers);
+    //noinspection unchecked
     return (T)this;
   }
 
-  public T setModifierList(LightModifierList modifierList) {
+  public @NotNull T setModifierList(LightModifierList modifierList) {
     myModifierList = modifierList;
+    //noinspection unchecked
     return (T)this;
   }
 
@@ -74,9 +109,8 @@ public class LightVariableBuilder<T extends LightVariableBuilder> extends LightE
     return myModifierList.hasModifierProperty(name);
   }
 
-  @NotNull
   @Override
-  public String getName() {
+  public @NotNull String getName() {
     return myName;
   }
 
@@ -125,14 +159,14 @@ public class LightVariableBuilder<T extends LightVariableBuilder> extends LightE
     return ElementPresentationUtil.addVisibilityIcon(this, flags, baseIcon);
   }
 
+  @SuppressWarnings("unchecked")
   public T setBaseIcon(Icon baseIcon) {
     myBaseIcon = baseIcon;
     return (T)this;
   }
 
-  @Nullable
   @Override
-  public String getOriginInfo() {
+  public @Nullable String getOriginInfo() {
     return myOriginInfo;
   }
 

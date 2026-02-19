@@ -4,7 +4,16 @@ package com.intellij.java.codeInsight.daemon.problems
 import com.intellij.codeInsight.daemon.problems.pass.ProjectProblemUtils
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.psi.*
+import com.intellij.psi.CommonClassNames
+import com.intellij.psi.JavaPsiFacade
+import com.intellij.psi.PsiAssignmentExpression
+import com.intellij.psi.PsiClass
+import com.intellij.psi.PsiDeclarationStatement
+import com.intellij.psi.PsiElementFactory
+import com.intellij.psi.PsiField
+import com.intellij.psi.PsiLocalVariable
+import com.intellij.psi.PsiModifier
+import com.intellij.psi.PsiStatement
 
 internal class FieldProblemsTest : ProjectProblemsViewTest() {
 
@@ -330,6 +339,46 @@ internal class FieldProblemsTest : ProjectProblemsViewTest() {
         identifier.replace(factory.createIdentifier("BAR"))
       }
       assertTrue(hasReportedProblems<PsiDeclarationStatement>(refClass))
+    }
+  }
+
+  fun testFieldWithTypeParameter() {
+    myFixture.addClass("""
+      public class Id<T> {
+        T id(T t) {
+          return t;
+        }
+      }
+    """.trimIndent())
+
+    val targetClass = myFixture.addClass("""
+      public class TargetClass {
+        final static Id<Integer> ID = new ID(); 
+      }
+    """.trimIndent())
+
+    myFixture.addClass("""
+      public class RefClass {
+        void test() {
+          TargetClass.ID.id("foo");
+        }
+      }
+    """.trimIndent())
+
+    doTest(targetClass) {
+      changeField(targetClass) { psiField ->
+        psiField.modifierList?.setModifierProperty(PsiModifier.PUBLIC, true)
+      }
+
+      assertSize(1, ProjectProblemUtils.getReportedProblems(myFixture.editor).entries)
+
+      changeField(targetClass) { psiField ->
+        val factory = JavaPsiFacade.getInstance(project).elementFactory
+        val typeElement = factory.createTypeElementFromText("Id<String>", targetClass)
+        psiField.typeElement?.replace(typeElement)
+      }
+
+      assertEmpty(ProjectProblemUtils.getReportedProblems(myFixture.editor).entries)
     }
   }
 

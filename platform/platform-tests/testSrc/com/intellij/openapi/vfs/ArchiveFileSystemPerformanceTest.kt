@@ -3,12 +3,14 @@ package com.intellij.openapi.vfs
 
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.vfs.newvfs.ArchiveFileSystem
-import com.intellij.testFramework.PlatformTestUtil
+import com.intellij.testFramework.PerformanceUnitTest
 import com.intellij.testFramework.fixtures.BareTestFixtureTestCase
+import com.intellij.tools.ide.metrics.benchmark.Benchmark
 import org.junit.Assert.assertEquals
 import org.junit.Before
 import org.junit.Test
 
+@PerformanceUnitTest
 class ArchiveFileSystemPerformanceTest : BareTestFixtureTestCase() {
   private lateinit var fs: ArchiveFileSystem
   private lateinit var entry: VirtualFile
@@ -20,19 +22,19 @@ class ArchiveFileSystemPerformanceTest : BareTestFixtureTestCase() {
 
   @Test fun getRootByEntry() {
     val root = fs.getRootByEntry(entry)!!
-    PlatformTestUtil.startPerformanceTest("ArchiveFileSystem.getRootByEntry()", 100) {
+    Benchmark.newBenchmark("ArchiveFileSystem.getRootByEntry()") {
       for (i in 0..100000) {
         assertEquals(root, fs.getRootByEntry(entry))
       }
-    }.assertTiming()
+    }.start()
   }
 
   @Test fun getLocalByEntry() {
     val local = fs.getLocalByEntry(entry)!!
-    PlatformTestUtil.startPerformanceTest("ArchiveFileSystem.getLocalByEntry()", 40) {
+    Benchmark.newBenchmark("ArchiveFileSystem.getLocalByEntry()") {
       for (i in 0..100000) {
         assertEquals(local, fs.getLocalByEntry(entry))
       }
-    }.assertTiming()
+    }.start()
   }
 }

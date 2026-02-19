@@ -1,11 +1,14 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.junit2.configuration;
 
 import com.intellij.execution.JUnitBundle;
 import com.intellij.execution.MethodBrowser;
 import com.intellij.execution.application.ClassEditorField;
 import com.intellij.execution.configuration.BrowseModuleValueActionListener;
+import com.intellij.execution.configurations.RuntimeConfigurationException;
 import com.intellij.execution.junit.JUnitConfiguration;
+import com.intellij.execution.junit.TestMethod;
+import com.intellij.execution.junit.TestObject;
 import com.intellij.execution.ui.CommandLinePanel;
 import com.intellij.execution.ui.ConfigurationModuleSelector;
 import com.intellij.execution.ui.SettingsEditorFragment;
@@ -17,11 +20,16 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.ComponentWithBrowseButton;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
+import com.intellij.openapi.ui.ValidationInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.JavaCodeFragment;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
-import com.intellij.ui.*;
+import com.intellij.ui.EditorTextFieldWithBrowseButton;
+import com.intellij.ui.InsertPathAction;
+import com.intellij.ui.RawCommandLineEditor;
+import com.intellij.ui.SimpleListCellRenderer;
+import com.intellij.ui.TextAccessor;
 import com.intellij.ui.components.fields.ExpandableTextField;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IconUtil;
@@ -29,32 +37,51 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
-import static com.intellij.execution.junit2.configuration.JUnitConfigurationModel.*;
+import static com.intellij.execution.junit2.configuration.JUnitConfigurationModel.ALL_IN_PACKAGE;
+import static com.intellij.execution.junit2.configuration.JUnitConfigurationModel.BY_SOURCE_CHANGES;
+import static com.intellij.execution.junit2.configuration.JUnitConfigurationModel.BY_SOURCE_POSITION;
+import static com.intellij.execution.junit2.configuration.JUnitConfigurationModel.CATEGORY;
+import static com.intellij.execution.junit2.configuration.JUnitConfigurationModel.CLASS;
+import static com.intellij.execution.junit2.configuration.JUnitConfigurationModel.DIR;
+import static com.intellij.execution.junit2.configuration.JUnitConfigurationModel.METHOD;
+import static com.intellij.execution.junit2.configuration.JUnitConfigurationModel.PATTERN;
+import static com.intellij.execution.junit2.configuration.JUnitConfigurationModel.TAGS;
+import static com.intellij.execution.junit2.configuration.JUnitConfigurationModel.UNIQUE_ID;
+import static com.intellij.execution.junit2.configuration.JUnitConfigurationModel.getKindName;
 
 public class JUnitTestKindFragment extends SettingsEditorFragment<JUnitConfiguration, JPanel> {
 
   private final JUnitConfigurationModel myModel;
   private final ConfigurationModuleSelector myModuleSelector;
   private final ComboBox<Integer> myTypeChooser;
-  private final JComponent[] myFields = new JComponent[6];
+  private final JComponent[] myFields = new JComponent[BY_SOURCE_CHANGES + 1];
   private final Map<JComponent, String> myHints = new HashMap<>();
+  private final RawCommandLineEditor myUniqueIdField;
+  private final RawCommandLineEditor myTagsField;
+  private final ComboBox<String> myChangeLists;
+  private final ClassEditorField myClassField;
 
   public JUnitTestKindFragment(Project project, ConfigurationModuleSelector moduleSelector) {
     super("junit.test.kind", null, null, new JPanel(new GridBagLayout()), 90, null, null, configuration -> true);
     myModel = new JUnitConfigurationModel(project);
-    myModel.setListener(kind -> kindChanged(kind));
+    myModel.setListener((oldKind, kind) -> kindChanged(oldKind, kind));
     myModuleSelector = moduleSelector;
     myTypeChooser = new ComboBox<>();
     CommandLinePanel.setMinimumWidth(component(), 500);
     component().add(myTypeChooser, new GridBagConstraints());
-    myModel.reloadTestKindModel(myTypeChooser, myModuleSelector.getModule());
-    myTypeChooser.addActionListener(e -> myModel.setType(myTypeChooser.getItem()));
+    myModel.reloadTestKindModel(myTypeChooser, myModuleSelector.getModule(), () -> {
+      myTypeChooser.addActionListener(e -> myModel.setType(myTypeChooser.getItem()));
+    });
     myTypeChooser.setRenderer(SimpleListCellRenderer.create("", value -> getKindName(value)));
 
     EditorTextFieldWithBrowseButton packageField = new EditorTextFieldWithBrowseButton(project, false);
@@ -79,7 +106,7 @@ public class JUnitTestKindFragment extends SettingsEditorFragment<JUnitConfigura
 
     BrowseModuleValueActionListener<?>[] browsers = JUnitConfigurable.createBrowsers(project, moduleSelector, packageField, pattern, category, () -> getClassName());
     JavaCodeFragment.VisibilityChecker classVisibilityChecker = JUnitConfigurable.createClassVisibilityChecker((JUnitConfigurable.TestClassBrowser)browsers[CLASS]);
-    EditorTextField classField = ClassEditorField.createClassField(project, () -> moduleSelector.getModule(), classVisibilityChecker, browsers[CLASS]);
+    myClassField = ClassEditorField.createClassField(project, () -> moduleSelector.getModule(), classVisibilityChecker, browsers[CLASS]);
     EditorTextFieldWithBrowseButton methodField = new EditorTextFieldWithBrowseButton(project, true,
                                                                                       JavaCodeFragment.VisibilityChecker.EVERYTHING_VISIBLE,
                                                                                       PlainTextLanguage.INSTANCE.getAssociatedFileType());
@@ -87,13 +114,41 @@ public class JUnitTestKindFragment extends SettingsEditorFragment<JUnitConfigura
     myHints.put(myTypeChooser, JUnitBundle.message("test.kind.hint"));
     setupField(ALL_IN_PACKAGE, packageField, packageField.getChildComponent().getDocument(), browsers[ALL_IN_PACKAGE],
                JUnitBundle.message("test.package.hint"));
-    setupField(CLASS, classField, classField.getDocument(), null, JUnitBundle.message("test.class.hint"));
+    setupField(CLASS, myClassField, myClassField.getDocument(), null, JUnitBundle.message("test.class.hint"));
     ((MethodBrowser)browsers[METHOD]).installCompletion(methodField.getChildComponent());
     setupField(METHOD, methodField, methodField.getChildComponent().getDocument(), browsers[METHOD],
                JUnitBundle.message("test.method.hint"));
     setupField(PATTERN, pattern, pattern.getTextField().getDocument(), browsers[PATTERN], JUnitBundle.message("test.pattern.hint"));
     setupField(DIR, directoryField, directoryField.getTextField().getDocument(), browsers[DIR], null);
     setupField(CATEGORY, category, category.getChildComponent().getDocument(), browsers[CATEGORY], null);
+
+    myUniqueIdField = new RawCommandLineEditor(text -> Arrays.asList(text.split("\u001B")),
+                                              strings -> StringUtil.join(strings, "\u001B"));
+    setupField(UNIQUE_ID, myUniqueIdField, null, null, null);
+
+    myTagsField = new RawCommandLineEditor();
+    setupField(TAGS, myTagsField, null, null, null);
+
+    myChangeLists = new ComboBox<>();
+    JUnitConfigurable.setupChangeLists(project, myChangeLists);
+    setupField(BY_SOURCE_CHANGES, myChangeLists, null, null, null);
+    setupField(BY_SOURCE_POSITION, new JLabel(), null, null, null); // empty stub
+    setValidation((configuration) -> {
+      ArrayList<ValidationInfo> infos = new ArrayList<>();
+      TestObject testObject = configuration.getTestObject();
+      JComponent field = myFields[getTestKind()];
+      JComponent component = field instanceof ComponentWithBrowseButton ? ((ComponentWithBrowseButton<?>)field).getChildComponent() : field;
+      if (testObject instanceof TestMethod) {
+        ValidationInfo info = RuntimeConfigurationException.validate(myFields[CLASS], () -> ((TestMethod)testObject).checkClass());
+        infos.add(info);
+        if (!info.message.isEmpty()) {
+          infos.add(new ValidationInfo("", component));
+          return infos;
+        }
+      }
+      infos.add(RuntimeConfigurationException.validate(component, () -> testObject.checkConfiguration()));
+      return infos;
+    });
   }
 
   @Override
@@ -102,14 +157,19 @@ public class JUnitTestKindFragment extends SettingsEditorFragment<JUnitConfigura
   }
 
   public int getTestKind() {
-    return myTypeChooser.getItem();
+    Integer item = myTypeChooser.getItem();
+    return item == null ? 0 : item;
   }
 
-  private void setupField(int kind,
-                          JComponent field,
-                          Object document,
-                          @Nullable BrowseModuleValueActionListener<?> browser,
-                          @Nls String hint) {
+  public boolean disableModuleClasspath(boolean wholeProjectSelected) {
+    return myModel.disableModuleClasspath(wholeProjectSelected);
+  }
+
+  private <T extends JComponent> void setupField(int kind,
+                                                 JComponent field,
+                                                 @Nullable Object document,
+                                                 @Nullable BrowseModuleValueActionListener<T> browser,
+                                                 @Nls String hint) {
     GridBagConstraints constraints = new GridBagConstraints();
     constraints.fill = GridBagConstraints.BOTH;
     constraints.weightx = 1;
@@ -118,9 +178,11 @@ public class JUnitTestKindFragment extends SettingsEditorFragment<JUnitConfigura
     myHints.put(field, hint);
     if (browser != null) {
       //noinspection unchecked
-      browser.setField((ComponentWithBrowseButton)field);
+      browser.setField((ComponentWithBrowseButton<T>)field);
     }
-    myModel.setJUnitDocument(kind, document);
+    if (document != null) {
+      myModel.setJUnitDocument(kind, document);
+    }
   }
 
   @Override
@@ -128,12 +190,15 @@ public class JUnitTestKindFragment extends SettingsEditorFragment<JUnitConfigura
     return component == null ? null : myHints.get(component);
   }
 
-  private void kindChanged(int kind) {
+  private void kindChanged(int oldKind, int kind) {
     myTypeChooser.setItem(kind);
     Arrays.stream(myFields).forEach(field -> field.setVisible(false));
     myFields[kind].setVisible(true);
     if (METHOD == kind) {
       myFields[CLASS].setVisible(true);
+    }
+    if (PATTERN == kind  && (oldKind == CLASS || oldKind == METHOD) && StringUtil.isEmpty(((TextAccessor)myFields[PATTERN]).getText())) {
+      ((TextAccessor)myFields[PATTERN]).setText(getClassName());
     }
     fireEditorStateChanged();
   }
@@ -144,11 +209,19 @@ public class JUnitTestKindFragment extends SettingsEditorFragment<JUnitConfigura
 
   @Override
   protected void resetEditorFrom(@NotNull JUnitConfiguration s) {
+    String[] ids = s.getPersistentData().getUniqueIds();
+    myUniqueIdField.setText(ids != null ? StringUtil.join(ids, "\u001B") : null);
+    myTagsField.setText(s.getPersistentData().getTags());
+    myChangeLists.setSelectedItem(s.getPersistentData().getChangeList());
     myModel.reset(s);
   }
 
   @Override
   protected void applyEditorTo(@NotNull JUnitConfiguration s) {
-    myModel.apply(myModuleSelector.getModule(), s);
+    s.getPersistentData().setUniqueIds(JUnitConfigurable.setArrayFromText(myUniqueIdField.getText()));
+    s.getPersistentData().setTags(myTagsField.getText());
+    s.getPersistentData().setChangeList(myChangeLists.getItem());
+    myModel.apply(myModuleSelector.getModule(), s, myClassField);
+    validate(s);
   }
 }

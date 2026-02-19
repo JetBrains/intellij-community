@@ -1,0 +1,3 @@
+version = "0.7.*"
+upstream_repository = "https://github.com/ponyorm/pony"
+requires = ["types-psycopg2", "types-PyMySQL"]

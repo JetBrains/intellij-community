@@ -1,12 +1,20 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application;
 
 import com.intellij.openapi.diagnostic.Logger;
+import org.jetbrains.annotations.ApiStatus;
 
 /**
+ * Please use the registry to enable/disable experimental features, see {@code com.intellij.registryKey} extension point
+ *
  * @author Konstantin Bulenkov
  */
 public final class ExperimentalFeatureImpl extends ExperimentalFeature{
+  @ApiStatus.Internal
+  public ExperimentalFeatureImpl() {
+  }
+
+  @ApiStatus.Internal
   @Override
   public boolean isEnabled() {
     Application app = ApplicationManager.getApplication();
@@ -21,7 +29,7 @@ public final class ExperimentalFeatureImpl extends ExperimentalFeature{
     }
     if (app.isUnitTestMode()) return false;
 
-    int hash = (PermanentInstallationID.get() + id).hashCode();
+    int hash = (JetBrainsPermanentInstallationID.get() + id).hashCode();
     return Math.floorMod(hash, 100) <= percentOfUsers;
   }
 }

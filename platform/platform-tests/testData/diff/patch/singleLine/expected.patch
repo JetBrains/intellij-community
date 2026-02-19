@@ -1,7 +1,8 @@
-Index: before/1.txt
+Index: 1.txt
 ===================================================================
---- before/1.txt	(revision before)
-+++ after/1.txt	(revision after)
+diff --git a/1.txt b/1.txt
+--- a/1.txt	(revision before)
++++ b/1.txt	(revision after)
 @@ -1,1 +1,1 @@
 -qqq
 +www

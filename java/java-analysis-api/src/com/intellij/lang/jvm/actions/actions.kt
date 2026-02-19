@@ -4,12 +4,17 @@
 package com.intellij.lang.jvm.actions
 
 import com.intellij.codeInsight.intention.IntentionAction
+import com.intellij.codeInspection.util.IntentionFamilyName
+import com.intellij.codeInspection.util.IntentionName
+import com.intellij.lang.jvm.JvmAnnotation
 import com.intellij.lang.jvm.JvmClass
+import com.intellij.lang.jvm.JvmField
 import com.intellij.lang.jvm.JvmMethod
 import com.intellij.lang.jvm.JvmModifiersOwner
+import com.intellij.lang.jvm.JvmParameter
 import com.intellij.openapi.extensions.ExtensionPointName
 
-val EP_NAME: ExtensionPointName<JvmElementActionsFactory> = ExtensionPointName.create(
+public val EP_NAME: ExtensionPointName<JvmElementActionsFactory> = ExtensionPointName.create(
   "com.intellij.lang.jvm.actions.jvmElementActionsFactory"
 )
 
@@ -19,38 +24,79 @@ private inline fun createActions(crossinline actions: (JvmElementActionsFactory)
   }
 }
 
-fun createMethodActions(target: JvmClass, request: CreateMethodRequest): List<IntentionAction> {
+public fun createMethodActions(target: JvmClass, request: CreateMethodRequest): List<IntentionAction> {
   return createActions {
     it.createAddMethodActions(target, request)
   }
 }
 
-fun createConstructorActions(target: JvmClass, request: CreateConstructorRequest): List<IntentionAction> {
+public fun createConstructorActions(target: JvmClass, request: CreateConstructorRequest): List<IntentionAction> {
   return createActions {
     it.createAddConstructorActions(target, request)
   }
 }
 
-fun createAddAnnotationActions(target: JvmModifiersOwner, request: AnnotationRequest): List<IntentionAction> {
+public fun createAddAnnotationActions(target: JvmModifiersOwner, request: AnnotationRequest): List<IntentionAction> {
   return createActions {
     it.createAddAnnotationActions(target, request)
   }
 }
 
-fun createModifierActions(target: JvmModifiersOwner, request: ChangeModifierRequest): List<IntentionAction> {
+public fun createRemoveAnnotationActions(target: JvmModifiersOwner, request: AnnotationRequest): List<IntentionAction> {
+  return createActions {
+    it.createRemoveAnnotationActions(target, request)
+  }
+}
+
+public fun createChangeAnnotationAttributeActions(annotation: JvmAnnotation,
+                                           attributeIndex: Int,
+                                           request: AnnotationAttributeRequest,
+                                           @IntentionName text: String,
+                                           @IntentionFamilyName familyName: String): List<IntentionAction> {
+  return createActions {
+    it.createChangeAnnotationAttributeActions(annotation, attributeIndex, request, text, familyName)
+  }
+}
+
+public fun createModifierActions(target: JvmModifiersOwner, request: ChangeModifierRequest): List<IntentionAction> {
   return createActions {
     it.createChangeModifierActions(target, request)
   }
 }
 
-fun createAddFieldActions(target: JvmClass, request: CreateFieldRequest): List<IntentionAction> {
+public fun createChangeOverrideActions(target: JvmModifiersOwner, shouldBePresent: Boolean): List<IntentionAction> {
+  return createActions {
+    it.createChangeOverrideActions(target, shouldBePresent)
+  }
+}
+
+
+public fun createAddFieldActions(target: JvmClass, request: CreateFieldRequest): List<IntentionAction> {
   return createActions {
     it.createAddFieldActions(target, request)
   }
 }
 
-fun createChangeParametersActions(target: JvmMethod, request: ChangeParametersRequest): List<IntentionAction> {
+public fun createChangeParametersActions(target: JvmMethod, request: ChangeParametersRequest): List<IntentionAction> {
   return createActions {
     it.createChangeParametersActions(target, request)
+  }
+}
+
+public fun createChangeTypeActions(target: JvmMethod, request: ChangeTypeRequest): List<IntentionAction> {
+  return createActions {
+    it.createChangeTypeActions(target, request)
+  }
+}
+
+public fun createChangeTypeActions(target: JvmParameter, request: ChangeTypeRequest): List<IntentionAction> {
+  return createActions {
+    it.createChangeTypeActions(target, request)
+  }
+}
+
+public fun createChangeTypeActions(target: JvmField, request: ChangeTypeRequest): List<IntentionAction> {
+  return createActions {
+    it.createChangeTypeActions(target, request)
   }
 }

@@ -1,4 +1,4 @@
-// "Move type annotation" "true"
+// "Move type annotation" "true-preview"
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Target;

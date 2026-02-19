@@ -11,6 +11,7 @@ import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.psi.PyFromImportStatement;
 import com.jetbrains.python.psi.PyImportElement;
 import com.jetbrains.python.psi.PyImportedNameDefiner;
+import com.jetbrains.python.psi.PyTypeParameter;
 import com.jetbrains.python.psi.PyUtil;
 import com.jetbrains.python.psi.impl.ResolveResultList;
 import org.jetbrains.annotations.NotNull;
@@ -21,15 +22,13 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
-/**
- * @author vlan
- */
 public class PyResolveProcessor implements PsiScopeProcessor {
-  @NotNull private final String myName;
+  private final @NotNull String myName;
   private final boolean myLocalResolve;
-  @NotNull private final Map<PsiElement, PyImportedNameDefiner> myResults = Maps.newLinkedHashMap();
-  @NotNull private final Map<PsiElement, PyImportedNameDefiner> myImplicitlyImportedResults = Maps.newLinkedHashMap();
-  @Nullable private ScopeOwner myOwner;
+  private final @NotNull Map<PsiElement, PyImportedNameDefiner> myResults = Maps.newLinkedHashMap();
+  private final @NotNull Map<PsiElement, PyImportedNameDefiner> myImplicitlyImportedResults = Maps.newLinkedHashMap();
+  protected @Nullable ScopeOwner myOwner;
+  private boolean myTypeParameterScope;
 
   public PyResolveProcessor(@NotNull String name) {
     this(name, false);
@@ -70,23 +69,23 @@ public class PyResolveProcessor implements PsiScopeProcessor {
     return myOwner == null || myOwner == ScopeUtil.getScopeOwner(element);
   }
 
-  @NotNull
-  public Map<PsiElement, PyImportedNameDefiner> getResults() {
+  public @NotNull Map<PsiElement, PyImportedNameDefiner> getResults() {
     return myResults.isEmpty() ? myImplicitlyImportedResults : myResults;
   }
 
-  @NotNull
-  public Collection<PsiElement> getElements() {
+  public @NotNull Collection<PsiElement> getElements() {
     return getResults().keySet();
   }
 
-  @Nullable
-  public ScopeOwner getOwner() {
+  public @Nullable ScopeOwner getOwner() {
     return myOwner;
   }
 
-  @NotNull
-  private List<RatedResolveResult> resolveInImportedNameDefiner(@NotNull PyImportedNameDefiner definer) {
+  public boolean isTypeParameterScope() {
+    return myTypeParameterScope;
+  }
+
+  private @NotNull List<RatedResolveResult> resolveInImportedNameDefiner(@NotNull PyImportedNameDefiner definer) {
     if (myLocalResolve) {
       final PyImportElement importElement = PyUtil.as(definer, PyImportElement.class);
       if (importElement != null) {
@@ -99,21 +98,26 @@ public class PyResolveProcessor implements PsiScopeProcessor {
     return definer.multiResolveName(myName);
   }
 
-  private boolean tryAddResult(@Nullable PsiElement element, @Nullable PyImportedNameDefiner definer) {
+  protected boolean tryAddResult(@Nullable PsiElement element, @Nullable PyImportedNameDefiner definer) {
     final ScopeOwner owner = ScopeUtil.getScopeOwner(definer != null ? definer : element);
     if (myOwner == null) {
       myOwner = owner;
+      myTypeParameterScope = element instanceof PyTypeParameter;
     }
-    final boolean sameScope = owner == myOwner;
+    final boolean sameScope = owner == myOwner && (element instanceof PyTypeParameter) == myTypeParameterScope;
     if (sameScope) {
-      // XXX: In 'from foo import foo' inside __init__.py the preferred result is explicitly imported 'foo'
-      if (definer instanceof PyFromImportStatement) {
-        myImplicitlyImportedResults.put(element, definer);
-      }
-      else {
-        myResults.put(element, definer);
-      }
+      addResult(element, definer);
     }
     return sameScope;
+  }
+
+  protected final void addResult(@Nullable PsiElement element, @Nullable PyImportedNameDefiner definer) {
+    // XXX: In 'from foo import foo' inside __init__.py the preferred result is explicitly imported 'foo'
+    if (definer instanceof PyFromImportStatement) {
+      myImplicitlyImportedResults.put(element, definer);
+    }
+    else {
+      myResults.put(element, definer);
+    }
   }
 }

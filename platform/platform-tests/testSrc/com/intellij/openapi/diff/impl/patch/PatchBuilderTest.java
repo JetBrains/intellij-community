@@ -4,6 +4,7 @@ package com.intellij.openapi.diff.impl.patch;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
@@ -26,7 +27,11 @@ import java.io.StringWriter;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 @TestDataPath("$CONTENT_ROOT/testData/diff/patch/")
 public class PatchBuilderTest extends LightPlatformTestCase {
@@ -67,7 +72,7 @@ public class PatchBuilderTest extends LightPlatformTestCase {
   }
 
   public void testModifyWithCRLF() throws Exception {
-    doTest(getProject(), false, LineSeparator.CRLF.getSeparatorString());
+    doTest(getProject(), true, LineSeparator.CRLF.getSeparatorString());
   }
 
   public void testModifyLine() throws Exception {
@@ -126,8 +131,14 @@ public class PatchBuilderTest extends LightPlatformTestCase {
     doTest(getProject(), true);
   }
 
+  public void testContextLineCount() throws Exception {
+    Registry.get("patch.context.line.count").setValue(5);
+    doTest(getProject(), true, null);
+    Registry.get("patch.context.line.count").resetToDefault();
+  }
+
   private void doTest() throws IOException, VcsException {
-    doTest(getProject(), false);
+    doTest(getProject(), true);
   }
 
   private void doTest(@Nullable Project project, boolean relativePaths) throws IOException, VcsException {

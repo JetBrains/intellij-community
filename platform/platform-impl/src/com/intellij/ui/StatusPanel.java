@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
 import com.intellij.icons.AllIcons;
@@ -14,19 +14,19 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.Icon;
 import javax.swing.border.EmptyBorder;
-import java.awt.*;
+import java.awt.BorderLayout;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.ReentrantLock;
 
-public class StatusPanel extends JBPanel {
+public final class StatusPanel extends JBPanel {
   private final ReentrantLock myLock = new ReentrantLock();
-  @Nullable private @Nls String myError;
+  private @Nullable @Nls String myError;
   /**
    * Guarded by {@link #myLock}.
    */
-  @Nullable private Action myCurrentAction;
+  private @Nullable Action myCurrentAction;
 
   public StatusPanel() {
     super(new BorderLayout());
@@ -55,8 +55,7 @@ public class StatusPanel extends JBPanel {
    * @param message informational message (not shown)
    * @return new action with methods to be invoked to notify about its result
    */
-  @NotNull
-  public Action progress(@NotNull String message) {
+  public @NotNull Action progress(@NotNull @Nls String message) {
     return progress(message, true);
   }
 
@@ -67,8 +66,7 @@ public class StatusPanel extends JBPanel {
    * @param addProgressIconBelow put animated progress below all components. Can be omitted if form provides its own progress.
    * @return new action with methods to be invoked to notify about its result
    */
-  @NotNull
-  public Action progress(@NotNull String message, boolean addProgressIconBelow) {
+  public @NotNull Action progress(@NotNull @Nls String message, boolean addProgressIconBelow) {
     myLock.lock();
     try {
       cancelCurrentAction();
@@ -151,12 +149,11 @@ public class StatusPanel extends JBPanel {
     ApplicationManager.getApplication().invokeLater(runnable, ModalityState.stateForComponent(this));
   }
 
-  @Nullable
-  public @NlsContexts.DialogMessage String getError() {
+  public @Nullable @NlsContexts.DialogMessage String getError() {
     return myError;
   }
 
-  public class Action {
+  public final class Action {
     /**
      * Guarded by {@link #myLock}.
      */

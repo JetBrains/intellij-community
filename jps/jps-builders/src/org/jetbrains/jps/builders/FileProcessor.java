@@ -15,6 +15,8 @@
  */
 package org.jetbrains.jps.builders;
 
+import org.jetbrains.annotations.NotNull;
+
 import java.io.File;
 import java.io.IOException;
 
@@ -25,5 +27,5 @@ public interface FileProcessor<R extends BuildRootDescriptor, T extends BuildTar
   /**
    * @return true if processing should continue, false if should stop
    */
-  boolean apply(T target, File file, R root) throws IOException;
+  boolean apply(@NotNull T target, @NotNull File file, @NotNull R root) throws IOException;
 }

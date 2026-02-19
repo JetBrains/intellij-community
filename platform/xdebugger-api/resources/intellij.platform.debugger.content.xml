@@ -1,0 +1,28 @@
+<!--
+  This file contains extensions, actions, services, etc. without v2 dependencies,
+  so it can be included in Analyzer dependencies where V2 is not yet supported.
+
+  All new extensions, actions, services, extension points, etc. should be added to this file.
+-->
+<idea-plugin>
+  <extensionPoints>
+    <extensionPoint qualifiedName="com.intellij.xdebugger.settings" interface="com.intellij.xdebugger.settings.XDebuggerSettings" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.xdebugger.breakpointType" interface="com.intellij.xdebugger.breakpoints.XBreakpointType" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.xdebugger.breakpointGroupingRule" interface="com.intellij.xdebugger.breakpoints.ui.XBreakpointGroupingRule" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.xdebugger.configurableProvider" interface="com.intellij.xdebugger.settings.DebuggerConfigurableProvider" dynamic="true"/>
+
+    <extensionPoint qualifiedName="com.intellij.xdebugger.inlineBreakpointsDisabler" interface="com.intellij.xdebugger.breakpoints.InlineBreakpointsDisabler" dynamic="true"/>
+
+    <extensionPoint qualifiedName="com.intellij.xdebugger.textValueVisualizer" interface="com.intellij.xdebugger.ui.TextValueVisualizer" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.xdebugger.controlExceptionBreakpointSupport" interface="com.intellij.xdebugger.codeinsight.ControlExceptionBreakpointSupport" dynamic="true"/>
+
+    <extensionPoint qualifiedName="com.intellij.xdebugger.hotSwapInDebugSessionEnabler" interface="com.intellij.xdebugger.hotswap.HotSwapInDebugSessionEnabler" dynamic="true"/>
+
+    <extensionPoint qualifiedName="com.intellij.xdebugger.customXDescriptorSerializerProvider"
+                    interface="com.intellij.xdebugger.frame.CustomXDescriptorSerializerProvider" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.xdebugger.splitDebuggerModeEnabler" interface="com.intellij.xdebugger.XDebuggerSplitModeEnabler"
+                    dynamic="false"/>
+    <extensionPoint qualifiedName="com.intellij.xdebugger.xTextValueModificationPreparatorProvider" interface="com.intellij.xdebugger.frame.XValueTextModificationPreparatorProvider"
+                    dynamic="true"/>
+  </extensionPoints>
+</idea-plugin>

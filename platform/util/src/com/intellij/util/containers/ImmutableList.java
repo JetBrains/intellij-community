@@ -1,21 +1,27 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.containers;
 
-import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.AbstractCollection;
+import java.util.AbstractList;
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.List;
+import java.util.ListIterator;
+import java.util.NoSuchElementException;
+import java.util.Objects;
 
 /**
  * A base class for immutable list implementations.
  * <p/>
  * Copied from {@link AbstractList} with modCount field removed, because the implementations are supposed to be immutable, so
  * it makes no sense to waste memory on modCount.
+ * @param <E> the list element type
  */
 public abstract class ImmutableList<E> extends AbstractCollection<E> implements List<E> {
-  @NotNull
   @Override
-  public Iterator<E> iterator() {
+  public @NotNull Iterator<E> iterator() {
     return new Itr();
   }
 
@@ -79,26 +85,22 @@ public abstract class ImmutableList<E> extends AbstractCollection<E> implements 
     return -1;
   }
 
-  @NotNull
   @Override
-  public ListIterator<E> listIterator() {
+  public @NotNull ListIterator<E> listIterator() {
     return listIterator(0);
   }
 
-  @NotNull
   @Override
-  public ListIterator<E> listIterator(int index) {
+  public @NotNull ListIterator<E> listIterator(int index) {
     return new ListItr(index);
   }
 
-  @NotNull
   @Override
-  public ImmutableList<E> subList(int fromIndex, int toIndex) {
+  public @NotNull ImmutableList<E> subList(int fromIndex, int toIndex) {
     // optimization: do not excessively nest SubLists one into the other
     if (this instanceof SubList) {
-      //noinspection unchecked
-      List<E> original = ((SubList)this).l;
-      int originalOffset = ((SubList)this).offset;
+      List<? extends E> original = ((SubList<? extends E>)this).l;
+      int originalOffset = ((SubList<?>)this).offset;
       return new SubList<>(original, fromIndex + originalOffset, toIndex + originalOffset);
     }
     return new SubList<>(this, fromIndex, toIndex);
@@ -114,10 +116,11 @@ public abstract class ImmutableList<E> extends AbstractCollection<E> implements 
     }
 
     ListIterator<E> e1 = listIterator();
-    ListIterator e2 = ((List)o).listIterator();
+    //noinspection unchecked
+    ListIterator<E> e2 = ((List<E>)o).listIterator();
     while (e1.hasNext() && e2.hasNext()) {
       E o1 = e1.next();
-      Object o2 = e2.next();
+      E o2 = e2.next();
       if (!Objects.equals(o1, o2)) {
         return false;
       }
@@ -172,7 +175,7 @@ public abstract class ImmutableList<E> extends AbstractCollection<E> implements 
     }
   }
 
-  private class ListItr extends Itr implements ListIterator<E> {
+  private final class ListItr extends Itr implements ListIterator<E> {
     ListItr(int index) {
       cursor = index;
     }
@@ -216,7 +219,7 @@ public abstract class ImmutableList<E> extends AbstractCollection<E> implements 
     }
   }
 
-  private static class SubList<E> extends ImmutableList<E> {
+  private static final class SubList<E> extends ImmutableList<E> {
     private final List<? extends E> l;
     private final int offset;
     private final int size;
@@ -248,32 +251,6 @@ public abstract class ImmutableList<E> extends AbstractCollection<E> implements 
     @Override
     public int size() {
       return size;
-    }
-  }
-
-  @NotNull
-  @Contract("_ -> new")
-  public static <T> ImmutableList<T> singleton(T element) {
-    return new Singleton<>(element);
-  }
-  private static class Singleton<E> extends ImmutableList<E> {
-    private final E element;
-
-    Singleton(E e) {
-      element = e;
-    }
-
-    @Override
-    public int size() {
-      return 1;
-    }
-
-    @Override
-    public E get(int index) {
-      if (index != 0) {
-        throw new IndexOutOfBoundsException("Index: " + index + ", Size: " + size());
-      }
-      return element;
     }
   }
 }

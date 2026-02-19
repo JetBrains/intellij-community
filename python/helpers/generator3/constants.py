@@ -184,23 +184,12 @@ if version[0] > 2:
 else:
     fopen = open
 
-if sys.platform == 'cli':
-    #noinspection PyUnresolvedReferences
-    from System import DateTime
+class Timer(object):
+    def __init__(self):
+        self.started = time.time()
 
-    class Timer(object):
-        def __init__(self):
-            self.started = DateTime.Now
-
-        def elapsed(self):
-            return (DateTime.Now - self.started).TotalMilliseconds
-else:
-    class Timer(object):
-        def __init__(self):
-            self.started = time.time()
-
-        def elapsed(self):
-            return int((time.time() - self.started) * 1000)
+    def elapsed(self):
+        return int((time.time() - self.started) * 1000)
 
 IS_JAVA = hasattr(os, "java")
 
@@ -212,8 +201,6 @@ STR_CHAR_PATTERN = r"[0-9A-Za-z_.,\+\-&\*% ]"
 DOC_FUNC_RE = re.compile(r"(?:.*\.)?(\w+)\(([^\)]*)\).*") # $1 = function name, $2 = arglist
 
 SANE_REPR_RE = re.compile(IDENT_PATTERN + r"(?:\(.*\))?") # identifier with possible (...), go catches
-
-IDENT_RE = re.compile("(" + IDENT_PATTERN + ")") # $1 = identifier
 
 STARS_IDENT_RE = re.compile(r"(\*?\*?" + IDENT_PATTERN + ")") # $1 = identifier, maybe with a * or **
 
@@ -230,6 +217,12 @@ SIMPLE_VALUE_RE = re.compile(
     r"(True|False|None)"
 ) # $? = sane default value
 
+if version[0] < 3:
+    _PYTHON2_IDENT_RE = re.compile(IDENT_PATTERN + "$")
+
+    is_identifier = _PYTHON2_IDENT_RE.match
+else:
+    is_identifier = str.isidentifier
 
 # Some values are known to be of no use in source and needs to be suppressed.
 # Dict is keyed by module names, with "*" meaning "any module";
@@ -694,6 +687,8 @@ TYPELIB_MODULE_FNAME_PAT = re.compile("([a-zA-Z_]+[0-9a-zA-Z]*)[0-9a-zA-Z-.]*\\.
 
 MODULES_INSPECT_DIR = ['gi.repository']
 TENSORFLOW_CONTRIB_OPS_MODULE_PATTERN = re.compile(r'tensorflow\.contrib\.(?:.+)\.(?:python\.ops\.|_dataset_ops$)')
+
+DEBUGPY_PATTERN = re.compile(r"debugpy(?:..+)?$")
 
 CLASS_ATTR_BLACKLIST = [
     'google.protobuf.pyext._message.Message._extensions_by_name',

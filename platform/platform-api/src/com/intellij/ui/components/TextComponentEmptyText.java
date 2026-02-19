@@ -1,38 +1,40 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.components;
 
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ObjectUtils;
-import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.StatusText;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 import javax.swing.text.JTextComponent;
-import java.awt.*;
+import java.awt.Dimension;
+import java.awt.Graphics;
+import java.awt.Insets;
+import java.awt.Rectangle;
 import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
+import java.util.function.Predicate;
 
-class TextComponentEmptyText extends StatusText {
+public class TextComponentEmptyText extends StatusText {
+  /**
+   * Client property to determine visibility of the status text.
+   * <p>
+   * Expecting an instance of {@link Predicate}&lt;{@link JTextComponent}&gt; like:
+   * <p>
+   * {@code jbTextField.putClientProperty(TextComponentEmptyText.STATUS_VISIBLE_FUNCTION, (Predicate<JBTextField>)f -> StringUtil.isEmpty(f.getText()));}
+   */
+  public static final String STATUS_VISIBLE_FUNCTION = "StatusVisibleFunction";
+
   private final JTextComponent myOwner;
+  private final boolean myDynamicStatus;
   private String myStatusTriggerText = "";
 
-  TextComponentEmptyText(JTextComponent owner) {
+  TextComponentEmptyText(JTextComponent owner, boolean dynamicStatus) {
     super(owner);
     myOwner = owner;
+    myDynamicStatus = dynamicStatus;
     clear();
     myOwner.addFocusListener(new FocusListener() {
       @Override
@@ -51,8 +53,7 @@ class TextComponentEmptyText extends StatusText {
     myStatusTriggerText = defaultText;
   }
 
-  @NotNull
-  public String getStatusTriggerText() {
+  public @NotNull String getStatusTriggerText() {
     return myStatusTriggerText;
   }
 
@@ -63,16 +64,28 @@ class TextComponentEmptyText extends StatusText {
     paint(myOwner, g);
   }
 
+  public void resetFontToOwnerFont() {
+    setFont(myOwner.getFont());
+  }
+
   @Override
+  @SuppressWarnings({"unchecked"})
   protected boolean isStatusVisible() {
+    if (myDynamicStatus) {
+      Object function = myOwner.getClientProperty(STATUS_VISIBLE_FUNCTION);
+      if (function instanceof Predicate) {
+        return ((Predicate<JTextComponent>)function).test(myOwner);
+      }
+    }
+
     return myOwner.getText().equals(myStatusTriggerText) && !myOwner.isFocusOwner();
   }
 
   @Override
   protected Rectangle getTextComponentBound() {
     Rectangle b = myOwner.getBounds();
-    Insets insets = ObjectUtils.notNull(myOwner.getInsets(), JBUI.emptyInsets());
-    Insets margin = ObjectUtils.notNull(myOwner.getMargin(), JBUI.emptyInsets());
+    Insets insets = ObjectUtils.notNull(myOwner.getInsets(), JBInsets.emptyInsets());
+    Insets margin = ObjectUtils.notNull(myOwner.getMargin(), JBInsets.emptyInsets());
     Insets ipad = getComponent().getIpad();
     int left = insets.left + margin.left - ipad.left;
     int right = insets.right + margin.right - ipad.right;
@@ -83,12 +96,21 @@ class TextComponentEmptyText extends StatusText {
                          b.height - top - bottom);
   }
 
-  @NotNull
   @Override
-  protected Rectangle adjustComponentBounds(@NotNull JComponent component, @NotNull Rectangle bounds) {
+  protected @NotNull Rectangle adjustComponentBounds(@NotNull JComponent component, @NotNull Rectangle bounds) {
     Dimension size = component.getPreferredSize();
+    int width = Math.min(size.width, bounds.width);
+
     return component == getComponent()
-           ? new Rectangle(bounds.x, bounds.y, size.width, bounds.height)
-           : new Rectangle(bounds.x + bounds.width - size.width, bounds.y, size.width, bounds.height);
+           ? new Rectangle(bounds.x, bounds.y, width, bounds.height)
+           : new Rectangle(bounds.x + bounds.width - width, bounds.y, width, bounds.height);
+  }
+
+  /**
+   * Show placeholder when the text component is empty.
+   * @param textComponent target text component.
+   */
+  public static void setupPlaceholderVisibility(@NotNull JTextComponent textComponent) {
+    textComponent.putClientProperty(STATUS_VISIBLE_FUNCTION, (Predicate<JTextComponent>)f -> StringUtil.isEmpty(f.getText()));
   }
 }

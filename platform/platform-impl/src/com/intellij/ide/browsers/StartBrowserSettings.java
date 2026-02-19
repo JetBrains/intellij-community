@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.browsers;
 
 import com.google.common.base.CharMatcher;
@@ -6,6 +6,7 @@ import com.intellij.configurationStore.XmlSerializer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.xmlb.annotations.Attribute;
 import com.intellij.util.xmlb.annotations.Tag;
+import com.intellij.util.xmlb.annotations.Transient;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -13,7 +14,7 @@ import org.jetbrains.annotations.Nullable;
 @Tag("browser")
 public class StartBrowserSettings {
   private boolean mySelected;
-  private WebBrowser myBrowser;
+  private String myBrowserReference;
 
   private String myUrl;
   private boolean myStartJavaScriptDebugger;
@@ -27,19 +28,26 @@ public class StartBrowserSettings {
     mySelected = selected;
   }
 
-  @Nullable
-  @Attribute(value = "name", converter = WebBrowserReferenceConverter.class)
-  public WebBrowser getBrowser() {
-    return myBrowser;
+  @Attribute(value = "name")
+  public @Nullable String getBrowserReference() {
+    return myBrowserReference;
+  }
+
+  public void setBrowserReference(@Nullable String value) {
+    myBrowserReference = value;
+  }
+
+  @Transient
+  public @Nullable WebBrowser getBrowser() {
+    return WebBrowserManager.getInstance().findBrowserById(myBrowserReference);
   }
 
   public void setBrowser(@Nullable WebBrowser value) {
-    myBrowser = value;
+    myBrowserReference = value != null ? value.getId().toString() : null;
   }
 
-  @Nullable
   @Attribute
-  public String getUrl() {
+  public @Nullable String getUrl() {
     return myUrl;
   }
 
@@ -60,8 +68,7 @@ public class StartBrowserSettings {
     myStartJavaScriptDebugger = value;
   }
 
-  @NotNull
-  public static StartBrowserSettings readExternal(@NotNull Element parent) {
+  public static @NotNull StartBrowserSettings readExternal(@NotNull Element parent) {
     Element state = parent.getChild("browser");
     StartBrowserSettings settings = new StartBrowserSettings();
     if (state != null) {

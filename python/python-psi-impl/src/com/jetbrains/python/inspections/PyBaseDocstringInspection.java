@@ -17,7 +17,12 @@ package com.jetbrains.python.inspections;
 
 import com.intellij.codeInspection.LocalInspectionToolSession;
 import com.intellij.codeInspection.ProblemsHolder;
-import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.Property;
+import com.jetbrains.python.psi.PyClass;
+import com.jetbrains.python.psi.PyDocStringOwner;
+import com.jetbrains.python.psi.PyFile;
+import com.jetbrains.python.psi.PyFunction;
+import com.jetbrains.python.psi.types.TypeEvalContext;
 import com.jetbrains.python.testing.PythonUnitTestDetectorsKt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -26,13 +31,15 @@ import org.jetbrains.annotations.Nullable;
  * @author Mikhail Golubev
  */
 public abstract class PyBaseDocstringInspection extends PyInspection {
-  @NotNull
   @Override
-  public abstract Visitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly, @NotNull LocalInspectionToolSession session);
+  public abstract @NotNull Visitor buildVisitor(@NotNull ProblemsHolder holder,
+                                                boolean isOnTheFly,
+                                                @NotNull LocalInspectionToolSession session);
 
-  protected static abstract class Visitor extends PyInspectionVisitor {
-    public Visitor(@Nullable ProblemsHolder holder, @NotNull LocalInspectionToolSession session) {
-      super(holder, session);
+  protected abstract static class Visitor extends PyInspectionVisitor {
+    public Visitor(@Nullable ProblemsHolder holder,
+                   @NotNull TypeEvalContext context) {
+      super(holder, context);
     }
 
     @Override

@@ -1,13 +1,14 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.largeFilesEditor.actions;
 
 import com.intellij.largeFilesEditor.editor.LargeFileEditor;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.diagnostic.Logger;
 import org.jetbrains.annotations.NotNull;
 
-public class LfeActionDisabled extends LfeBaseProxyAction {
+public final class LfeActionDisabled extends LfeBaseProxyAction {
 
   private static final Logger logger = Logger.getInstance(LfeActionDisabled.class);
 
@@ -18,6 +19,11 @@ public class LfeActionDisabled extends LfeBaseProxyAction {
   @Override
   protected void updateForLfe(AnActionEvent e, @NotNull LargeFileEditor largeFileEditor) {
     e.getPresentation().setEnabled(false);
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.EDT;
   }
 
   @Override

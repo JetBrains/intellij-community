@@ -1,11 +1,14 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.settingsRepository.git
 
 import com.intellij.openapi.diagnostic.debug
-import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.platform.util.progress.reportRawProgress
 import com.intellij.util.SmartList
-import com.intellij.util.containers.hash.LinkedHashMap
+import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.ensureActive
+import kotlinx.coroutines.job
 import org.eclipse.jgit.api.MergeCommand.FastForwardMode
 import org.eclipse.jgit.api.MergeResult
 import org.eclipse.jgit.api.MergeResult.MergeStatus
@@ -17,7 +20,12 @@ import org.eclipse.jgit.diff.RawText
 import org.eclipse.jgit.diff.Sequence
 import org.eclipse.jgit.dircache.DirCacheCheckout
 import org.eclipse.jgit.internal.JGitText
-import org.eclipse.jgit.lib.*
+import org.eclipse.jgit.lib.Constants
+import org.eclipse.jgit.lib.ObjectId
+import org.eclipse.jgit.lib.Ref
+import org.eclipse.jgit.lib.RefUpdate
+import org.eclipse.jgit.lib.Repository
+import org.eclipse.jgit.lib.RepositoryState
 import org.eclipse.jgit.merge.MergeMessageFormatter
 import org.eclipse.jgit.merge.MergeStrategy
 import org.eclipse.jgit.merge.ResolveMerger
@@ -28,9 +36,16 @@ import org.eclipse.jgit.transport.CredentialsProvider
 import org.eclipse.jgit.transport.RemoteConfig
 import org.eclipse.jgit.transport.TrackingRefUpdate
 import org.eclipse.jgit.treewalk.FileTreeIterator
-import org.jetbrains.settingsRepository.*
+import org.jetbrains.settingsRepository.EMPTY_UPDATE_RESULT
+import org.jetbrains.settingsRepository.IcsCredentialsStore
+import org.jetbrains.settingsRepository.ImmutableUpdateResult
+import org.jetbrains.settingsRepository.LOG
+import org.jetbrains.settingsRepository.MutableUpdateResult
+import org.jetbrains.settingsRepository.UpdateResult
+import org.jetbrains.settingsRepository.resolveConflicts
 import java.io.IOException
 import java.text.MessageFormat
+import kotlin.coroutines.coroutineContext
 
 interface GitRepositoryClient {
   val repository: Repository
@@ -44,7 +59,7 @@ class GitRepositoryClientImpl(override val repository: Repository, private val c
   }
 }
 
-internal open class Pull(val manager: GitRepositoryClient, val indicator: ProgressIndicator?, val commitMessageFormatter: CommitMessageFormatter = IdeaCommitMessageFormatter()) {
+internal open class Pull(val manager: GitRepositoryClient, val commitMessageFormatter: CommitMessageFormatter = IdeaCommitMessageFormatter()) {
   val repository = manager.repository
 
   // we must use the same StoredConfig instance during the operation
@@ -52,7 +67,7 @@ internal open class Pull(val manager: GitRepositoryClient, val indicator: Progre
   val remoteConfig = RemoteConfig(config, Constants.DEFAULT_REMOTE_NAME)
 
   suspend fun pull(mergeStrategy: MergeStrategy = MergeStrategy.RECURSIVE, commitMessage: String? = null, prefetchedRefToMerge: Ref? = null): UpdateResult? {
-    indicator?.checkCanceled()
+    coroutineContext.ensureActive()
 
     LOG.debug("Pull")
 
@@ -74,10 +89,16 @@ internal open class Pull(val manager: GitRepositoryClient, val indicator: Progre
     }
   }
 
-  fun fetch(prevRefUpdateResult: RefUpdate.Result? = null, refUpdateProcessor: ((TrackingRefUpdate) -> Unit)? = null): Ref? {
-    indicator?.checkCanceled()
+  suspend fun fetch(
+    prevRefUpdateResult: RefUpdate.Result? = null,
+    refUpdateProcessor: ((TrackingRefUpdate) -> Unit)? = null
+  ): Ref? {
+    coroutineContext.ensureActive()
 
-    val fetchResult = repository.fetch(remoteConfig, manager.credentialsProvider, indicator.asProgressMonitor()) ?: return null
+    val fetchResult = reportRawProgress { reporter ->
+      val progressMonitor = JGitCoroutineProgressMonitor(currentCoroutineContext().job, reporter)
+      repository.fetch(remoteConfig, manager.credentialsProvider, progressMonitor)
+    } ?: return null
 
     if (LOG.isDebugEnabled) {
       printMessages(fetchResult)
@@ -86,7 +107,7 @@ internal open class Pull(val manager: GitRepositoryClient, val indicator: Progre
       }
     }
 
-    indicator?.checkCanceled()
+    coroutineContext.ensureActive()
 
     var hasChanges = false
     for (fetchRefSpec in remoteConfig.fetchRefSpecs) {
@@ -104,7 +125,7 @@ internal open class Pull(val manager: GitRepositoryClient, val indicator: Progre
         }
 
         LOG.warn("Ref update result ${refUpdateResult.name}, trying again after 500 ms")
-        Thread.sleep(500)
+        delay(500)
         return fetch(refUpdateResult)
       }
 
@@ -127,14 +148,16 @@ internal open class Pull(val manager: GitRepositoryClient, val indicator: Progre
     return fetchResult.getAdvertisedRef(config.getRemoteBranchFullName()) ?: throw IllegalStateException("Could not get advertised ref")
   }
 
-  fun merge(unpeeledRef: Ref,
-            mergeStrategy: MergeStrategy = MergeStrategy.RECURSIVE,
-            commit: Boolean = true,
-            fastForwardMode: FastForwardMode = FastForwardMode.FF,
-            squash: Boolean = false,
-            forceMerge: Boolean = false,
-            commitMessage: String? = null): MergeResultEx {
-    indicator?.checkCanceled()
+  suspend fun merge(
+    unpeeledRef: Ref,
+    mergeStrategy: MergeStrategy = MergeStrategy.RECURSIVE,
+    commit: Boolean = true,
+    fastForwardMode: FastForwardMode = FastForwardMode.FF,
+    squash: Boolean = false,
+    forceMerge: Boolean = false,
+    commitMessage: String? = null,
+  ): MergeResultEx {
+    coroutineContext.ensureActive()
 
     val head = repository.findRef(Constants.HEAD) ?: throw NoHeadException(JGitText.get().commitOnRepoWithoutHEADCurrentlyNotSupported)
 
@@ -277,8 +300,7 @@ private fun updateHead(refLogMessage: StringBuilder, newHeadId: ObjectId, oldHea
   refUpdate.setNewObjectId(newHeadId)
   refUpdate.setRefLogMessage(refLogMessage.toString(), false)
   refUpdate.setExpectedOldObjectId(oldHeadID)
-  val rc = refUpdate.update()
-  when (rc) {
+  when (val rc = refUpdate.update()) {
     RefUpdate.Result.NEW, RefUpdate.Result.FAST_FORWARD -> return
     RefUpdate.Result.REJECTED, RefUpdate.Result.LOCK_FAILURE -> throw ConcurrentRefUpdateException(JGitText.get().couldNotLockHEAD, refUpdate.ref, rc)
     else -> throw JGitInternalException(MessageFormat.format(JGitText.get().updatingRefFailed, Constants.HEAD, newHeadId.toString(), rc))

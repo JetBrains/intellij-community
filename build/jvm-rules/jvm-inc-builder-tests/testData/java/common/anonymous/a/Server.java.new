@@ -1,0 +1,4 @@
+class Server{
+  static void foo(int a){
+  }
+}

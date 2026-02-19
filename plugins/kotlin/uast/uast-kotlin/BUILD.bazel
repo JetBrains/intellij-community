@@ -1,0 +1,42 @@
+### auto-generated section `build kotlin.uast.uast-kotlin` start
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+jvm_library(
+  name = "uast-kotlin",
+  module_name = "kotlin.uast.uast-kotlin",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  kotlinc_opts = "@community//:k11",
+  deps = [
+    "//platform/core-api:core",
+    "@lib//:kotlin-stdlib",
+    "//libraries/asm",
+    "@lib//:kotlinc-kotlin-compiler-common",
+    "@lib//:kotlinc-kotlin-compiler-fe10",
+    "//platform/util",
+    "//uast/uast-common:uast",
+    "//java/java-psi-impl:psi-impl",
+    "//uast/uast-java:java-uast",
+    "@lib//:kotlinc-analysis-api",
+    "//plugins/kotlin/uast/uast-kotlin-base:kotlin-uast-base",
+  ]
+)
+
+jvm_library(
+  name = "uast-kotlin_test_lib",
+  module_name = "kotlin.uast.uast-kotlin",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  kotlinc_opts = "@community//:k11",
+  runtime_deps = [
+    ":uast-kotlin",
+    "//platform/core-api:core_test_lib",
+    "//libraries/asm:asm_test_lib",
+    "//platform/util:util_test_lib",
+    "//uast/uast-common:uast_test_lib",
+    "//java/java-psi-impl:psi-impl_test_lib",
+    "//uast/uast-java:java-uast_test_lib",
+    "//plugins/kotlin/uast/uast-kotlin-base:kotlin-uast-base_test_lib",
+  ]
+)
+### auto-generated section `build kotlin.uast.uast-kotlin` end

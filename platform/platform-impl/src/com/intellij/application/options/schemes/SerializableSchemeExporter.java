@@ -1,25 +1,20 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.application.options.schemes;
 
 import com.intellij.configurationStore.SerializableScheme;
 import com.intellij.openapi.options.Scheme;
 import com.intellij.openapi.options.SchemeExporter;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.JDOMUtil;
 import org.jdom.Element;
-import org.jdom.output.Format;
-import org.jdom.output.XMLOutputter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.io.OutputStream;
-import java.io.OutputStreamWriter;
-import java.nio.charset.StandardCharsets;
 
 /**
  * Exports (copies) a scheme to an external file as is.
- *
- * @author Rustam Vishnyakov
  */
 public class SerializableSchemeExporter extends SchemeExporter<Scheme> {
   @Override
@@ -48,9 +43,6 @@ public class SerializableSchemeExporter extends SchemeExporter<Scheme> {
   }
 
   private static void writeToStream(@NotNull OutputStream outputStream, @NotNull Element element) throws IOException {
-    OutputStreamWriter writer = new OutputStreamWriter(outputStream, StandardCharsets.UTF_8);
-    Format format = Format.getPrettyFormat();
-    format.setLineSeparator("\n");
-    new XMLOutputter(format).output(element, writer);
+    JDOMUtil.write(element, outputStream);
   }
 }

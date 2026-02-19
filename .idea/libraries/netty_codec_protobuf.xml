@@ -1,0 +1,18 @@
+<component name="libraryTable">
+  <library name="netty-codec-protobuf" type="repository">
+    <properties include-transitive-deps="false" maven-id="io.netty:netty-codec-protobuf:4.2.0.RC2">
+      <verification>
+        <artifact url="file://$MAVEN_REPOSITORY$/io/netty/netty-codec-protobuf/4.2.0.RC2/netty-codec-protobuf-4.2.0.RC2.jar">
+          <sha256sum>c5fb188895ffdfd529473c5e7ba1c58da2f514a44134b15ad0d51efe3f28bb38</sha256sum>
+        </artifact>
+      </verification>
+    </properties>
+    <CLASSES>
+      <root url="jar://$MAVEN_REPOSITORY$/io/netty/netty-codec-protobuf/4.2.0.RC2/netty-codec-protobuf-4.2.0.RC2.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES>
+      <root url="jar://$MAVEN_REPOSITORY$/io/netty/netty-codec-protobuf/4.2.0.RC2/netty-codec-protobuf-4.2.0.RC2-sources.jar!/" />
+    </SOURCES>
+  </library>
+</component>

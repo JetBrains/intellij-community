@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements.branch;
 
@@ -12,9 +12,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrReturnState
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
 
-/**
- * @author ilyas
- */
 public class GrReturnStatementImpl extends GroovyPsiElementImpl implements GrReturnStatement {
   public GrReturnStatementImpl(@NotNull ASTNode node) {
     super(node);
@@ -31,14 +28,12 @@ public class GrReturnStatementImpl extends GroovyPsiElementImpl implements GrRet
   }
 
   @Override
-  @Nullable
-  public GrExpression getReturnValue() {
+  public @Nullable GrExpression getReturnValue() {
     return findExpressionChild(this);
   }
 
-  @NotNull
   @Override
-  public PsiElement getReturnWord() {
+  public @NotNull PsiElement getReturnWord() {
     return findNotNullChildByType(GroovyTokenTypes.kRETURN);
   }
 }

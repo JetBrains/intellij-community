@@ -1,23 +1,11 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.hint.api.impls;
 
-import com.intellij.codeInsight.lookup.LookupElement;
-import com.intellij.codeInsight.lookup.MutableLookupElement;
-import com.intellij.lang.parameterInfo.*;
+import com.intellij.lang.html.HtmlCompatibleFile;
+import com.intellij.lang.parameterInfo.CreateParameterInfoContext;
+import com.intellij.lang.parameterInfo.ParameterInfoHandler;
+import com.intellij.lang.parameterInfo.ParameterInfoUIContext;
+import com.intellij.lang.parameterInfo.UpdateParameterInfoContext;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -36,19 +24,8 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Arrays;
 import java.util.Comparator;
 
-/**
- * @author Maxim.Mossienko
- */
-public class XmlParameterInfoHandler implements ParameterInfoHandler<XmlTag,XmlElementDescriptor> {
+public final class XmlParameterInfoHandler implements ParameterInfoHandler<XmlTag,XmlElementDescriptor> {
   private static final Comparator<XmlAttributeDescriptor> COMPARATOR = Comparator.comparing(PsiMetaData::getName);
-
-  @Override
-  public Object[] getParametersForLookup(LookupElement item, ParameterInfoContext context) {
-    if (!(item instanceof MutableLookupElement)) return null;
-    final Object lookupItem = item.getObject();
-    if (lookupItem instanceof XmlElementDescriptor) return new Object[]{lookupItem};
-    return null;
-  }
 
   public static XmlAttributeDescriptor[] getSortedDescriptors(final XmlElementDescriptor p) {
     final XmlAttributeDescriptor[] xmlAttributeDescriptors = p.getAttributesDescriptors(null);
@@ -57,12 +34,7 @@ public class XmlParameterInfoHandler implements ParameterInfoHandler<XmlTag,XmlE
   }
 
   @Override
-  public boolean couldShowInLookup() {
-    return true;
-  }
-
-  @Override
-  public XmlTag findElementForParameterInfo(@NotNull final CreateParameterInfoContext context) {
+  public XmlTag findElementForParameterInfo(final @NotNull CreateParameterInfoContext context) {
     final XmlTag tag = findXmlTag(context.getFile(), context.getOffset());
     final XmlElementDescriptor descriptor = tag != null ? tag.getDescriptor() : null;
 
@@ -75,12 +47,12 @@ public class XmlParameterInfoHandler implements ParameterInfoHandler<XmlTag,XmlE
   }
 
   @Override
-  public void showParameterInfo(final @NotNull XmlTag element, @NotNull final CreateParameterInfoContext context) {
+  public void showParameterInfo(final @NotNull XmlTag element, final @NotNull CreateParameterInfoContext context) {
     context.showHint(element, element.getTextRange().getStartOffset() + 1, this);
   }
 
   @Override
-  public XmlTag findElementForUpdatingParameterInfo(@NotNull final UpdateParameterInfoContext context) {
+  public XmlTag findElementForUpdatingParameterInfo(final @NotNull UpdateParameterInfoContext context) {
     final XmlTag tag = findXmlTag(context.getFile(), context.getOffset());
     if (tag != null) {
       final PsiElement currentXmlTag = context.getParameterOwner();
@@ -91,21 +63,19 @@ public class XmlParameterInfoHandler implements ParameterInfoHandler<XmlTag,XmlE
   }
 
   @Override
-  public void updateParameterInfo(@NotNull final XmlTag parameterOwner, @NotNull final UpdateParameterInfoContext context) {
+  public void updateParameterInfo(final @NotNull XmlTag parameterOwner, final @NotNull UpdateParameterInfoContext context) {
     context.setParameterOwner(parameterOwner);
   }
 
-  @Nullable
-  private static XmlTag findXmlTag(PsiFile file, int offset){
-    if (!(file instanceof XmlFile)) return null;
+  private static @Nullable XmlTag findXmlTag(PsiFile file, int offset){
+    if (!(file instanceof XmlFile) || file instanceof HtmlCompatibleFile) return null;
 
     PsiElement element = file.findElementAt(offset);
     if (element == null) return null;
     element = element.getParent();
 
     while (element != null) {
-      if (element instanceof XmlTag) {
-        XmlTag tag = (XmlTag)element;
+      if (element instanceof XmlTag tag) {
 
         final PsiElement[] children = tag.getChildren();
 
@@ -113,10 +83,9 @@ public class XmlParameterInfoHandler implements ParameterInfoHandler<XmlTag,XmlE
 
         for (PsiElement child : children) {
           final TextRange range = child.getTextRange();
-          if (range.getStartOffset() <= offset && range.getEndOffset() > offset) return tag;
+          if (range.contains(offset)) return tag;
 
-          if (child instanceof XmlToken) {
-            XmlToken token = (XmlToken)child;
+          if (child instanceof XmlToken token) {
             if (token.getTokenType() == XmlTokenType.XML_TAG_END) return null;
           }
         }
@@ -131,18 +100,9 @@ public class XmlParameterInfoHandler implements ParameterInfoHandler<XmlTag,XmlE
   }
 
   @Override
-  public void updateUI(XmlElementDescriptor o, @NotNull final ParameterInfoUIContext context) {
-    updateElementDescriptor(
-      o,
-      context,
-      new Function<String, Boolean>() {
-        final XmlTag parameterOwner  = (XmlTag)context.getParameterOwner();
-
-        @Override
-        public Boolean fun(String s) {
-          return parameterOwner != null && parameterOwner.getAttributeValue(s) != null;
-        }
-      });
+  public void updateUI(XmlElementDescriptor o, final @NotNull ParameterInfoUIContext context) {
+    XmlTag parameterOwner  = (XmlTag)context.getParameterOwner();
+    updateElementDescriptor(o, context, s -> parameterOwner != null && parameterOwner.getAttributeValue(s) != null);
   }
 
   public static void updateElementDescriptor(XmlElementDescriptor descriptor, ParameterInfoUIContext context,

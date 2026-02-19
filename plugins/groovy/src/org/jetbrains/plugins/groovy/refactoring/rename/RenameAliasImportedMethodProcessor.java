@@ -1,11 +1,17 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.refactoring.rename;
 
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiMirrorElement;
+import com.intellij.psi.PsiReference;
+import com.intellij.psi.PsiReferenceExpression;
+import com.intellij.psi.SyntheticElement;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.searches.OverridingMethodsSearch;
 import com.intellij.refactoring.RefactoringBundle;
@@ -28,7 +34,11 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrRefere
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyPropertyUtils;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringBundle;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.ListIterator;
+import java.util.Map;
 
 /**
  * @author Maxim.Medvedev
@@ -39,17 +49,15 @@ public class RenameAliasImportedMethodProcessor extends RenameJavaMethodProcesso
     return element instanceof GroovyPsiElement && super.canProcessElement(element);
   }
 
-  @NotNull
   @Override
-  public Collection<PsiReference> findReferences(@NotNull PsiElement element,
-                                                 @NotNull SearchScope searchScope,
-                                                 boolean searchInCommentsAndStrings) {
+  public @NotNull Collection<PsiReference> findReferences(@NotNull PsiElement element,
+                                                          @NotNull SearchScope searchScope,
+                                                          boolean searchInCommentsAndStrings) {
     return RenameAliasedUsagesUtil.filterAliasedRefs(super.findReferences(element, searchScope, searchInCommentsAndStrings), element);
   }
 
-  @NotNull
   @Override
-  public RenameDialog createRenameDialog(@NotNull Project project, @NotNull PsiElement element, PsiElement nameSuggestionContext, Editor editor) {
+  public @NotNull RenameDialog createRenameDialog(@NotNull Project project, @NotNull PsiElement element, PsiElement nameSuggestionContext, Editor editor) {
     return new RenameDialog(project, element, nameSuggestionContext, editor) {
       @Override
       protected boolean areButtonsValid() {
@@ -128,11 +136,10 @@ public class RenameAliasImportedMethodProcessor extends RenameJavaMethodProcesso
 
   @Override
   public void findCollisions(@NotNull PsiElement element,
-                             @NotNull final String newName,
-                             @NotNull final Map<? extends PsiElement, String> allRenames,
-                             @NotNull final List<UsageInfo> result) {
-    if (element instanceof PsiMethod) {
-      final PsiMethod method = (PsiMethod)element;
+                             final @NotNull String newName,
+                             final @NotNull Map<? extends PsiElement, String> allRenames,
+                             final @NotNull List<UsageInfo> result) {
+    if (element instanceof PsiMethod method) {
       OverridingMethodsSearch.search(method).forEach(overrider -> {
         PsiElement original = overrider;
         if (overrider instanceof PsiMirrorElement) {
@@ -164,9 +171,8 @@ public class RenameAliasImportedMethodProcessor extends RenameJavaMethodProcesso
     }
   }
 
-  @Nullable
   @Override
-  protected PsiElement processRef(PsiReference ref, String newName) {
+  protected @Nullable PsiElement processRef(PsiReference ref, String newName) {
     PsiElement element = ref.getElement();
     if (RenameUtil.isValidName(element.getProject(), element, newName) || element instanceof GrReferenceElement) {
       return super.processRef(ref, newName);

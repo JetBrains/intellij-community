@@ -1,5 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.tree.injected;
 
 import com.intellij.ide.CopyProvider;
@@ -11,16 +10,36 @@ import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.injected.editor.EditorWindow;
 import com.intellij.injected.editor.MarkupModelWindow;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.editor.*;
+import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.editor.CaretModel;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.EditorGutter;
+import com.intellij.openapi.editor.EditorKind;
+import com.intellij.openapi.editor.EditorSettings;
+import com.intellij.openapi.editor.FoldRegion;
+import com.intellij.openapi.editor.IndentsModel;
+import com.intellij.openapi.editor.InlayModel;
+import com.intellij.openapi.editor.LineExtensionInfo;
+import com.intellij.openapi.editor.LogicalPosition;
+import com.intellij.openapi.editor.SelectionModel;
+import com.intellij.openapi.editor.VisualPosition;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.event.EditorMouseEvent;
 import com.intellij.openapi.editor.event.EditorMouseEventArea;
 import com.intellij.openapi.editor.event.EditorMouseListener;
 import com.intellij.openapi.editor.event.EditorMouseMotionListener;
-import com.intellij.openapi.editor.ex.*;
+import com.intellij.openapi.editor.ex.DocumentEx;
+import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.openapi.editor.ex.EditorGutterComponentEx;
+import com.intellij.openapi.editor.ex.EditorPopupHandler;
+import com.intellij.openapi.editor.ex.FocusChangeListener;
+import com.intellij.openapi.editor.ex.FoldingModelEx;
+import com.intellij.openapi.editor.ex.MarkupModelEx;
+import com.intellij.openapi.editor.ex.ScrollingModelEx;
+import com.intellij.openapi.editor.ex.SoftWrapModelEx;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.editor.highlighter.LightHighlighterClient;
@@ -31,33 +50,37 @@ import com.intellij.openapi.fileTypes.SyntaxHighlighter;
 import com.intellij.openapi.fileTypes.SyntaxHighlighterFactory;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiUtilCore;
-import com.intellij.util.containers.UnsafeWeakList;
 import com.intellij.util.ui.ButtonlessScrollBarUI;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JComponent;
+import javax.swing.JScrollPane;
 import javax.swing.border.Border;
-import java.awt.*;
+import java.awt.Color;
+import java.awt.Cursor;
+import java.awt.Dimension;
+import java.awt.Insets;
+import java.awt.Point;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 import java.awt.geom.Point2D;
 import java.beans.PropertyChangeListener;
 import java.util.Collection;
-import java.util.Iterator;
 import java.util.function.IntFunction;
 
-final class EditorWindowImpl extends com.intellij.injected.editor.EditorWindowImpl implements EditorWindow, EditorEx {
+final class EditorWindowImpl extends UserDataHolderBase implements EditorWindow, EditorEx {
   private final DocumentWindowImpl myDocumentWindow;
   private final EditorImpl myDelegate;
-  private volatile PsiFile myInjectedFile;
+  volatile PsiFile myInjectedFile;
   private final boolean myOneLine;
   private final CaretModelWindow myCaretModelDelegate;
   private final SelectionModelWindow mySelectionModelDelegate;
-  private static final Collection<EditorWindowImpl> allEditors = new UnsafeWeakList<>(); // guarded by allEditors
   private volatile boolean myDisposed;
   private final MarkupModelWindow myMarkupModelDelegate;
   private final MarkupModelWindow myDocumentMarkupModelDelegate;
@@ -65,37 +88,16 @@ final class EditorWindowImpl extends com.intellij.injected.editor.EditorWindowIm
   private final SoftWrapModelWindow mySoftWrapModel;
   private final InlayModelWindow myInlayModel;
 
-  @NotNull
-  static Editor create(@NotNull final DocumentWindowImpl documentRange, @NotNull final EditorImpl editor, @NotNull final PsiFile injectedFile) {
-    assert documentRange.isValid();
-    assert injectedFile.isValid();
-    EditorWindowImpl window;
-    synchronized (allEditors) {
-      for (EditorWindowImpl editorWindow : allEditors) {
-        if (editorWindow.getDocument() == documentRange && editorWindow.getDelegate() == editor) {
-          editorWindow.myInjectedFile = injectedFile;
-          if (editorWindow.isValid()) {
-            return editorWindow;
-          }
-        }
-      }
-      window = new EditorWindowImpl(documentRange, editor, injectedFile, documentRange.isOneLine());
-      allEditors.add(window);
-    }
-    window.checkValid();
-    return window;
-  }
-
-  private EditorWindowImpl(@NotNull DocumentWindowImpl documentWindow,
-                           @NotNull final EditorImpl delegate,
-                           @NotNull PsiFile injectedFile,
-                           boolean oneLine) {
+  EditorWindowImpl(@NotNull DocumentWindowImpl documentWindow,
+                   final @NotNull EditorImpl delegate,
+                   @NotNull PsiFile injectedFile,
+                   boolean oneLine) {
     myDocumentWindow = documentWindow;
     myDelegate = delegate;
     myInjectedFile = injectedFile;
     myOneLine = oneLine;
     myCaretModelDelegate = new CaretModelWindow(myDelegate.getCaretModel(), this);
-    mySelectionModelDelegate = new SelectionModelWindow(myDelegate, myDocumentWindow,this);
+    mySelectionModelDelegate = new SelectionModelWindow(myDelegate, myDocumentWindow, this);
     myMarkupModelDelegate = new MarkupModelWindow(myDelegate.getMarkupModel(), myDocumentWindow);
     myDocumentMarkupModelDelegate = new MarkupModelWindow(myDelegate.getFilteredDocumentMarkupModel(), myDocumentWindow);
     myFoldingModelWindow = new FoldingModelWindow(delegate.getFoldingModel(), documentWindow, this);
@@ -103,40 +105,12 @@ final class EditorWindowImpl extends com.intellij.injected.editor.EditorWindowIm
     myInlayModel = new InlayModelWindow();
   }
 
-  static void disposeInvalidEditors() {
-    ApplicationManager.getApplication().assertWriteAccessAllowed();
-    synchronized (allEditors) {
-      Iterator<EditorWindowImpl> iterator = allEditors.iterator();
-      while (iterator.hasNext()) {
-        EditorWindowImpl editorWindow = iterator.next();
-        if (!editorWindow.isValid()) {
-          editorWindow.dispose();
-          iterator.remove();
-        }
-      }
-    }
-  }
-
-  static void disposeEditorFor(@NotNull DocumentWindow documentWindow) {
-    synchronized (allEditors) {
-      for (Iterator<EditorWindowImpl> iterator = allEditors.iterator(); iterator.hasNext(); ) {
-        EditorWindowImpl editor = iterator.next();
-        if (InjectionRegistrarImpl.intersect(editor.getDocument(), (DocumentWindowImpl)documentWindow)) {
-          editor.dispose();
-          iterator.remove();
-          break;
-        }
-      }
-    }
-  }
-
-
   @Override
   public boolean isValid() {
     return !isDisposed() && !myInjectedFile.getProject().isDisposed() && myInjectedFile.isValid() && myDocumentWindow.isValid();
   }
 
-  private void checkValid() {
+  void assertValid() {
     PsiUtilCore.ensureValid(myInjectedFile);
     if (!isValid()) {
       StringBuilder reason = new StringBuilder("Not valid");
@@ -149,17 +123,16 @@ final class EditorWindowImpl extends com.intellij.injected.editor.EditorWindowIm
   }
 
   @Override
-  @NotNull
-  public PsiFile getInjectedFile() {
+  public @NotNull PsiFile getInjectedFile() {
     return myInjectedFile;
   }
 
   @Override
-  @NotNull
-  public LogicalPosition hostToInjected(@NotNull LogicalPosition hPos) {
-    checkValid();
+  public @NotNull LogicalPosition hostToInjected(@NotNull LogicalPosition hPos) {
+    assertValid();
     DocumentEx hostDocument = myDelegate.getDocument();
-    int hLineEndOffset = hPos.line >= hostDocument.getLineCount() ? hostDocument.getTextLength() : hostDocument.getLineEndOffset(hPos.line);
+    int hLineEndOffset =
+      hPos.line >= hostDocument.getLineCount() ? hostDocument.getTextLength() : hostDocument.getLineEndOffset(hPos.line);
     LogicalPosition hLineEndPos = myDelegate.offsetToLogicalPosition(hLineEndOffset);
     if (hLineEndPos.column < hPos.column) {
       // in virtual space
@@ -175,9 +148,8 @@ final class EditorWindowImpl extends com.intellij.injected.editor.EditorWindowIm
   }
 
   @Override
-  @NotNull
-  public LogicalPosition injectedToHost(@NotNull LogicalPosition pos) {
-    checkValid();
+  public @NotNull LogicalPosition injectedToHost(@NotNull LogicalPosition pos) {
+    assertValid();
 
     int offset = logicalPositionToOffset(pos);
     LogicalPosition samePos = offsetToLogicalPosition(offset);
@@ -189,7 +161,7 @@ final class EditorWindowImpl extends com.intellij.injected.editor.EditorWindowIm
     return new LogicalPosition(hostPos.line, hostPos.column + virtualSpaceDelta);
   }
 
-  private void dispose() {
+  void dispose() {
     assert !myDisposed;
     myCaretModelDelegate.disposeModel();
 
@@ -205,7 +177,7 @@ final class EditorWindowImpl extends com.intellij.injected.editor.EditorWindowIm
     myDisposed = true;
     Disposer.dispose(myDocumentWindow);
 
-    InjectedLanguageUtil.clearCaches(myInjectedFile.getProject(), getDocument());
+    InjectedLanguageUtilBase.clearCaches(myInjectedFile.getProject(), getDocument());
   }
 
   @Override
@@ -229,7 +201,7 @@ final class EditorWindowImpl extends com.intellij.injected.editor.EditorWindowIm
   }
 
   @Override
-  public void setFile(final VirtualFile vFile) {
+  public void setFile(final @NotNull VirtualFile vFile) {
     myDelegate.setFile(vFile);
   }
 
@@ -244,73 +216,62 @@ final class EditorWindowImpl extends com.intellij.injected.editor.EditorWindowIm
   }
 
   @Override
-  @Nullable
-  public JComponent getHeaderComponent() {
+  public @Nullable JComponent getHeaderComponent() {
     return null;
   }
 
   @Override
-  public TextDrawingCallback getTextDrawingCallback() {
+  public @NotNull TextDrawingCallback getTextDrawingCallback() {
     return myDelegate.getTextDrawingCallback();
   }
 
   @Override
-  @NotNull
-  public SelectionModel getSelectionModel() {
+  public @NotNull SelectionModel getSelectionModel() {
     return mySelectionModelDelegate;
   }
 
   @Override
-  @NotNull
-  public MarkupModelEx getMarkupModel() {
+  public @NotNull MarkupModelEx getMarkupModel() {
     return myMarkupModelDelegate;
   }
 
-  @NotNull
   @Override
-  public MarkupModelEx getFilteredDocumentMarkupModel() {
+  public @NotNull MarkupModelEx getFilteredDocumentMarkupModel() {
     return myDocumentMarkupModelDelegate;
   }
 
   @Override
-  @NotNull
-  public FoldingModelEx getFoldingModel() {
+  public @NotNull FoldingModelEx getFoldingModel() {
     return myFoldingModelWindow;
   }
 
   @Override
-  @NotNull
-  public CaretModel getCaretModel() {
+  public @NotNull CaretModel getCaretModel() {
     return myCaretModelDelegate;
   }
 
   @Override
-  @NotNull
-  public ScrollingModelEx getScrollingModel() {
+  public @NotNull ScrollingModelEx getScrollingModel() {
     return myDelegate.getScrollingModel();
   }
 
   @Override
-  @NotNull
-  public SoftWrapModelEx getSoftWrapModel() {
+  public @NotNull SoftWrapModelEx getSoftWrapModel() {
     return mySoftWrapModel;
   }
 
   @Override
-  @NotNull
-  public EditorSettings getSettings() {
+  public @NotNull EditorSettings getSettings() {
     return myDelegate.getSettings();
   }
 
-  @NotNull
   @Override
-  public InlayModel getInlayModel() {
+  public @NotNull InlayModel getInlayModel() {
     return myInlayModel;
   }
 
-  @NotNull
   @Override
-  public EditorKind getEditorKind() {
+  public @NotNull EditorKind getEditorKind() {
     return myDelegate.getEditorKind();
   }
 
@@ -325,13 +286,17 @@ final class EditorWindowImpl extends com.intellij.injected.editor.EditorWindowIm
   }
 
   @Override
-  public void setHighlighter(@NotNull final EditorHighlighter highlighter) {
+  public void setFontSize(final float fontSize) {
+    myDelegate.setFontSize(fontSize);
+  }
+
+  @Override
+  public void setHighlighter(final @NotNull EditorHighlighter highlighter) {
     myDelegate.setHighlighter(highlighter);
   }
 
-  @NotNull
   @Override
-  public EditorHighlighter getHighlighter() {
+  public @NotNull EditorHighlighter getHighlighter() {
     EditorColorsScheme scheme = EditorColorsManager.getInstance().getGlobalScheme();
     SyntaxHighlighter syntaxHighlighter =
       SyntaxHighlighterFactory.getSyntaxHighlighter(myInjectedFile.getLanguage(), getProject(), myInjectedFile.getVirtualFile());
@@ -352,19 +317,17 @@ final class EditorWindowImpl extends com.intellij.injected.editor.EditorWindowIm
   }
 
   @Override
-  @NotNull
-  public JComponent getContentComponent() {
+  public @NotNull JComponent getContentComponent() {
     return myDelegate.getContentComponent();
   }
 
-  @NotNull
   @Override
-  public EditorGutterComponentEx getGutterComponentEx() {
+  public @NotNull EditorGutterComponentEx getGutterComponentEx() {
     return myDelegate.getGutterComponentEx();
   }
 
   @Override
-  public void addPropertyChangeListener(@NotNull final PropertyChangeListener listener) {
+  public void addPropertyChangeListener(final @NotNull PropertyChangeListener listener) {
     myDelegate.addPropertyChangeListener(listener);
   }
 
@@ -374,7 +337,7 @@ final class EditorWindowImpl extends com.intellij.injected.editor.EditorWindowIm
   }
 
   @Override
-  public void removePropertyChangeListener(@NotNull final PropertyChangeListener listener) {
+  public void removePropertyChangeListener(final @NotNull PropertyChangeListener listener) {
     myDelegate.removePropertyChangeListener(listener);
   }
 
@@ -399,75 +362,65 @@ final class EditorWindowImpl extends com.intellij.injected.editor.EditorWindowIm
   }
 
   @Override
-  @NotNull
-  public VisualPosition xyToVisualPosition(@NotNull final Point p) {
+  public @NotNull VisualPosition xyToVisualPosition(final @NotNull Point p) {
     return logicalToVisualPosition(xyToLogicalPosition(p));
   }
 
-  @NotNull
   @Override
-  public VisualPosition xyToVisualPosition(@NotNull Point2D p) {
-    checkValid();
+  public @NotNull VisualPosition xyToVisualPosition(@NotNull Point2D p) {
+    assertValid();
     Point2D pp = p.getX() >= 0 && p.getY() >= 0 ? p : new Point2D.Double(Math.max(p.getX(), 0), Math.max(p.getY(), 0));
     LogicalPosition hostPos = myDelegate.visualToLogicalPosition(myDelegate.xyToVisualPosition(pp));
     return logicalToVisualPosition(hostToInjected(hostPos));
   }
 
   @Override
-  @NotNull
-  public VisualPosition offsetToVisualPosition(final int offset) {
+  public @NotNull VisualPosition offsetToVisualPosition(final int offset) {
     return logicalToVisualPosition(offsetToLogicalPosition(offset));
   }
 
   @Override
-  @NotNull
-  public VisualPosition offsetToVisualPosition(int offset, boolean leanForward, boolean beforeSoftWrap) {
+  public @NotNull VisualPosition offsetToVisualPosition(int offset, boolean leanForward, boolean beforeSoftWrap) {
     return logicalToVisualPosition(offsetToLogicalPosition(offset).leanForward(leanForward));
   }
 
   @Override
-  @NotNull
-  public LogicalPosition offsetToLogicalPosition(final int offset) {
-    checkValid();
+  public @NotNull LogicalPosition offsetToLogicalPosition(final int offset) {
+    assertValid();
     int lineNumber = myDocumentWindow.getLineNumber(offset);
     int lineStartOffset = myDocumentWindow.getLineStartOffset(lineNumber);
-    int column = calcLogicalColumnNumber(offset-lineStartOffset, lineNumber, lineStartOffset);
+    int column = calcLogicalColumnNumber(offset - lineStartOffset, lineNumber, lineStartOffset);
     return new LogicalPosition(lineNumber, column);
   }
 
-  @NotNull
   @Override
-  public EditorColorsScheme createBoundColorSchemeDelegate(@Nullable EditorColorsScheme customGlobalScheme) {
+  public @NotNull EditorColorsScheme createBoundColorSchemeDelegate(@Nullable EditorColorsScheme customGlobalScheme) {
     return myDelegate.createBoundColorSchemeDelegate(customGlobalScheme);
   }
 
   @Override
-  @NotNull
-  public LogicalPosition xyToLogicalPosition(@NotNull final Point p) {
-    checkValid();
+  public @NotNull LogicalPosition xyToLogicalPosition(final @NotNull Point p) {
+    assertValid();
     LogicalPosition hostPos = myDelegate.xyToLogicalPosition(p);
     return hostToInjected(hostPos);
   }
 
   @Override
-  @NotNull
-  public Point logicalPositionToXY(@NotNull final LogicalPosition pos) {
-    checkValid();
+  public @NotNull Point logicalPositionToXY(final @NotNull LogicalPosition pos) {
+    assertValid();
     LogicalPosition hostPos = injectedToHost(pos);
     return myDelegate.logicalPositionToXY(hostPos);
   }
 
   @Override
-  @NotNull
-  public Point visualPositionToXY(@NotNull final VisualPosition pos) {
-    checkValid();
+  public @NotNull Point visualPositionToXY(final @NotNull VisualPosition pos) {
+    assertValid();
     return logicalPositionToXY(visualToLogicalPosition(pos));
   }
 
-  @NotNull
   @Override
-  public Point2D visualPositionToPoint2D(@NotNull VisualPosition pos) {
-    checkValid();
+  public @NotNull Point2D visualPositionToPoint2D(@NotNull VisualPosition pos) {
+    assertValid();
     LogicalPosition hostLogical = injectedToHost(visualToLogicalPosition(pos));
     VisualPosition hostVisual = myDelegate.logicalToVisualPosition(hostLogical);
     return myDelegate.visualPositionToPoint2D(hostVisual);
@@ -475,26 +428,25 @@ final class EditorWindowImpl extends com.intellij.injected.editor.EditorWindowIm
 
   @Override
   public void repaint(final int startOffset, final int endOffset) {
-    checkValid();
+    assertValid();
     myDelegate.repaint(myDocumentWindow.injectedToHost(startOffset), myDocumentWindow.injectedToHost(endOffset));
   }
 
   @Override
-  @NotNull
-  public DocumentWindowImpl getDocument() {
+  public @NotNull DocumentWindowImpl getDocument() {
     return myDocumentWindow;
   }
 
   @Override
-  @NotNull
-  public JComponent getComponent() {
+  public @NotNull JComponent getComponent() {
     return myDelegate.getComponent();
   }
 
   private final ListenerWrapperMap<EditorMouseListener> myEditorMouseListeners = new ListenerWrapperMap<>();
+
   @Override
-  public void addEditorMouseListener(@NotNull final EditorMouseListener listener) {
-    checkValid();
+  public void addEditorMouseListener(final @NotNull EditorMouseListener listener) {
+    assertValid();
     EditorMouseListener wrapper = new EditorMouseListener() {
       @Override
       public void mousePressed(@NotNull EditorMouseEvent e) {
@@ -527,7 +479,7 @@ final class EditorWindowImpl extends com.intellij.injected.editor.EditorWindowIm
   }
 
   @Override
-  public void removeEditorMouseListener(@NotNull final EditorMouseListener listener) {
+  public void removeEditorMouseListener(final @NotNull EditorMouseListener listener) {
     EditorMouseListener wrapper = myEditorMouseListeners.removeWrapper(listener);
     // HintManager might have an old editor instance
     if (wrapper != null) {
@@ -536,9 +488,10 @@ final class EditorWindowImpl extends com.intellij.injected.editor.EditorWindowIm
   }
 
   private final ListenerWrapperMap<EditorMouseMotionListener> myEditorMouseMotionListeners = new ListenerWrapperMap<>();
+
   @Override
-  public void addEditorMouseMotionListener(@NotNull final EditorMouseMotionListener listener) {
-    checkValid();
+  public void addEditorMouseMotionListener(final @NotNull EditorMouseMotionListener listener) {
+    assertValid();
     EditorMouseMotionListener wrapper = new EditorMouseMotionListener() {
       @Override
       public void mouseMoved(@NotNull EditorMouseEvent e) {
@@ -555,22 +508,24 @@ final class EditorWindowImpl extends com.intellij.injected.editor.EditorWindowIm
   }
 
   @Override
-  public void removeEditorMouseMotionListener(@NotNull final EditorMouseMotionListener listener) {
+  public void removeEditorMouseMotionListener(final @NotNull EditorMouseMotionListener listener) {
     EditorMouseMotionListener wrapper = myEditorMouseMotionListeners.removeWrapper(listener);
     if (wrapper != null) {
       myDelegate.removeEditorMouseMotionListener(wrapper);
     }
   }
 
-  private EditorMouseEvent convertEvent(EditorMouseEvent originalEvent) {
-    LogicalPosition logicalPosition = hostToInjected(originalEvent.getLogicalPosition());
-    int offset = logicalPositionToOffset(logicalPosition);
-    VisualPosition visualPosition = logicalToVisualPosition(logicalPosition);
-    FoldRegion hostFoldRegion = originalEvent.getCollapsedFoldRegion();
-    return new EditorMouseEvent(this, originalEvent.getMouseEvent(), originalEvent.getArea(),
-                                offset, logicalPosition, visualPosition, true,
-                                hostFoldRegion == null ? null : FoldingRegionWindow.getInjectedRegion(hostFoldRegion), null, null);
-  }
+  private @NotNull EditorMouseEvent convertEvent(@NotNull EditorMouseEvent originalEvent) {
+    return ReadAction.compute(() -> {
+      LogicalPosition logicalPosition = hostToInjected(originalEvent.getLogicalPosition());
+      int offset = logicalPositionToOffset(logicalPosition);
+      VisualPosition visualPosition = logicalToVisualPosition(logicalPosition);
+      FoldRegion hostFoldRegion = originalEvent.getCollapsedFoldRegion();
+      return new EditorMouseEvent(this, originalEvent.getMouseEvent(), originalEvent.getArea(),
+                                  offset, logicalPosition, visualPosition, true,
+                                  hostFoldRegion == null ? null : FoldingRegionWindow.getInjectedRegion(hostFoldRegion), null, null);
+    });
+    }
 
   @Override
   public boolean isDisposed() {
@@ -582,9 +537,8 @@ final class EditorWindowImpl extends com.intellij.injected.editor.EditorWindowIm
     myDelegate.setBackgroundColor(color);
   }
 
-  @NotNull
   @Override
-  public Color getBackgroundColor() {
+  public @NotNull Color getBackgroundColor() {
     return myDelegate.getBackgroundColor();
   }
 
@@ -603,9 +557,8 @@ final class EditorWindowImpl extends com.intellij.injected.editor.EditorWindowIm
     return myDelegate.getContentSize();
   }
 
-  @NotNull
   @Override
-  public JScrollPane getScrollPane() {
+  public @NotNull JScrollPane getScrollPane() {
     return myDelegate.getScrollPane();
   }
 
@@ -620,7 +573,7 @@ final class EditorWindowImpl extends com.intellij.injected.editor.EditorWindowIm
   }
 
   @Override
-  public int logicalPositionToOffset(@NotNull final LogicalPosition pos) {
+  public int logicalPositionToOffset(final @NotNull LogicalPosition pos) {
     int lineStartOffset = myDocumentWindow.getLineStartOffset(pos.line);
     return calcOffset(pos.column, pos.line, lineStartOffset);
   }
@@ -628,12 +581,12 @@ final class EditorWindowImpl extends com.intellij.injected.editor.EditorWindowIm
   private int calcLogicalColumnNumber(int offsetInLine, int lineNumber, int lineStartOffset) {
     if (myDocumentWindow.getTextLength() == 0) return 0;
 
-    if (offsetInLine==0) return 0;
+    if (offsetInLine == 0) return 0;
     int end = myDocumentWindow.getLineEndOffset(lineNumber);
-    if (offsetInLine > end- lineStartOffset) offsetInLine = end - lineStartOffset;
+    if (offsetInLine > end - lineStartOffset) offsetInLine = end - lineStartOffset;
 
     CharSequence text = myDocumentWindow.getCharsSequence();
-    return EditorUtil.calcColumnNumber(this, text, lineStartOffset, lineStartOffset +offsetInLine);
+    return EditorUtil.calcColumnNumber(this, text, lineStartOffset, lineStartOffset + offsetInLine);
   }
 
   private int calcOffset(int col, int lineNumber, int lineStartOffset) {
@@ -656,27 +609,24 @@ final class EditorWindowImpl extends com.intellij.injected.editor.EditorWindowIm
 
   // assuming there is no folding in injected documents
   @Override
-  @NotNull
-  public VisualPosition logicalToVisualPosition(@NotNull final LogicalPosition pos) {
-    checkValid();
+  public @NotNull VisualPosition logicalToVisualPosition(final @NotNull LogicalPosition pos) {
+    assertValid();
     return new VisualPosition(pos.line, pos.column);
   }
 
   @Override
-  @NotNull
-  public LogicalPosition visualToLogicalPosition(@NotNull final VisualPosition pos) {
-    checkValid();
+  public @NotNull LogicalPosition visualToLogicalPosition(final @NotNull VisualPosition pos) {
+    assertValid();
     return new LogicalPosition(pos.line, pos.column);
   }
 
-  @NotNull
   @Override
-  public DataContext getDataContext() {
+  public @NotNull DataContext getDataContext() {
     return myDelegate.getDataContext();
   }
 
   @Override
-  public EditorMouseEventArea getMouseEventArea(@NotNull final MouseEvent e) {
+  public EditorMouseEventArea getMouseEventArea(final @NotNull MouseEvent e) {
     return myDelegate.getMouseEventArea(e);
   }
 
@@ -691,7 +641,7 @@ final class EditorWindowImpl extends com.intellij.injected.editor.EditorWindowIm
   }
 
   @Override
-  public void addFocusListener(@NotNull final FocusChangeListener listener) {
+  public void addFocusListener(final @NotNull FocusChangeListener listener) {
     myDelegate.addFocusListener(listener);
   }
 
@@ -726,38 +676,39 @@ final class EditorWindowImpl extends com.intellij.injected.editor.EditorWindowIm
   }
 
   @Override
+  @Nullable
+  @ApiStatus.Obsolete
   public VirtualFile getVirtualFile() {
     return myDelegate.getVirtualFile();
   }
 
   @Override
-  public CopyProvider getCopyProvider() {
+  public @NotNull CopyProvider getCopyProvider() {
     return myDelegate.getCopyProvider();
   }
 
   @Override
-  public CutProvider getCutProvider() {
+  public @NotNull CutProvider getCutProvider() {
     return myDelegate.getCutProvider();
   }
 
   @Override
-  public PasteProvider getPasteProvider() {
+  public @NotNull PasteProvider getPasteProvider() {
     return myDelegate.getPasteProvider();
   }
 
   @Override
-  public DeleteProvider getDeleteProvider() {
+  public @NotNull DeleteProvider getDeleteProvider() {
     return myDelegate.getDeleteProvider();
   }
 
   @Override
-  public void setColorsScheme(@NotNull final EditorColorsScheme scheme) {
+  public void setColorsScheme(final @NotNull EditorColorsScheme scheme) {
     myDelegate.setColorsScheme(scheme);
   }
 
   @Override
-  @NotNull
-  public EditorColorsScheme getColorsScheme() {
+  public @NotNull EditorColorsScheme getColorsScheme() {
     return myDelegate.getColorsScheme();
   }
 
@@ -782,13 +733,12 @@ final class EditorWindowImpl extends com.intellij.injected.editor.EditorWindowIm
   }
 
   @Override
-  public boolean processKeyTyped(@NotNull final KeyEvent e) {
+  public boolean processKeyTyped(final @NotNull KeyEvent e) {
     return myDelegate.processKeyTyped(e);
   }
 
   @Override
-  @NotNull
-  public EditorGutter getGutter() {
+  public @NotNull EditorGutter getGutter() {
     return myDelegate.getGutter();
   }
 
@@ -808,15 +758,13 @@ final class EditorWindowImpl extends com.intellij.injected.editor.EditorWindowIm
     return myDocumentWindow.hashCode();
   }
 
-  @NotNull
   @Override
-  public Editor getDelegate() {
+  public @NotNull Editor getDelegate() {
     return myDelegate;
   }
 
-  @NotNull
   @Override
-  public IndentsModel getIndentsModel() {
+  public @NotNull IndentsModel getIndentsModel() {
     return myDelegate.getIndentsModel();
   }
 
@@ -856,7 +804,7 @@ final class EditorWindowImpl extends com.intellij.injected.editor.EditorWindowIm
   }
 
   @Override
-  public void registerLineExtensionPainter(IntFunction<Collection<LineExtensionInfo>> lineExtensionPainter) {
+  public void registerLineExtensionPainter(@NotNull IntFunction<? extends @NotNull Collection<? extends LineExtensionInfo>> lineExtensionPainter) {
     throw new UnsupportedOperationException();
   }
 
@@ -877,7 +825,7 @@ final class EditorWindowImpl extends com.intellij.injected.editor.EditorWindowIm
 
   @Override
   public String toString() {
-    return super.toString() + "[disposed=" + myDisposed + "; valid=" + isValid() + "]";
+    return super.toString() + "[disposed=" + myDisposed + "; valid=" + ReadAction.compute(()->isValid()) + "]";
   }
 
   @Override
@@ -890,9 +838,8 @@ final class EditorWindowImpl extends com.intellij.injected.editor.EditorWindowIm
     myDelegate.setContextMenuGroupId(groupId);
   }
 
-  @Nullable
   @Override
-  public String getContextMenuGroupId() {
+  public @Nullable String getContextMenuGroupId() {
     return myDelegate.getContextMenuGroupId();
   }
 
@@ -904,6 +851,11 @@ final class EditorWindowImpl extends com.intellij.injected.editor.EditorWindowIm
   @Override
   public void uninstallPopupHandler(@NotNull EditorPopupHandler popupHandler) {
     myDelegate.installPopupHandler(popupHandler);
+  }
+
+  @Override
+  public @Nullable ActionGroup getPopupActionGroup(@NotNull EditorMouseEvent event) {
+    return myDelegate.getPopupActionGroup(event);
   }
 
   @Override

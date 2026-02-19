@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.model.project;
 
 import com.intellij.openapi.roots.DependencyScope;
@@ -10,8 +10,8 @@ import java.io.ObjectInputStream;
 public abstract class AbstractDependencyData<T extends AbstractExternalEntityData & Named> extends AbstractExternalEntityData
   implements DependencyData<T>, Named, OrderAware {
 
-  @NotNull private ModuleData ownerModule;
-  @NotNull private T target;
+  private @NotNull ModuleData ownerModule;
+  private @NotNull T target;
 
   private DependencyScope scope = DependencyScope.COMPILE;
 
@@ -26,8 +26,7 @@ public abstract class AbstractDependencyData<T extends AbstractExternalEntityDat
   }
 
   @Override
-  @NotNull
-  public ModuleData getOwnerModule() {
+  public @NotNull ModuleData getOwnerModule() {
     return ownerModule;
   }
 
@@ -36,8 +35,7 @@ public abstract class AbstractDependencyData<T extends AbstractExternalEntityDat
   }
 
   @Override
-  @NotNull
-  public T getTarget() {
+  public @NotNull T getTarget() {
     return target;
   }
 
@@ -46,8 +44,7 @@ public abstract class AbstractDependencyData<T extends AbstractExternalEntityDat
   }
 
   @Override
-  @NotNull
-  public DependencyScope getScope() {
+  public @NotNull DependencyScope getScope() {
     return scope;
   }
 
@@ -64,28 +61,8 @@ public abstract class AbstractDependencyData<T extends AbstractExternalEntityDat
     this.exported = exported;
   }
 
-  /**
-   * @deprecated use {@link #getExternalName()} or {@link #getInternalName()} instead
-   */
-  @NotNull
-  @Deprecated
   @Override
-  public String getName() {
-    return target.getName();
-  }
-
-  /**
-   * @deprecated  use {@link #setExternalName(String)} or {@link #setInternalName(String)} instead
-   */
-  @Deprecated
-  @Override
-  public void setName(@NotNull String name) {
-    target.setName(name);
-  }
-
-  @NotNull
-  @Override
-  public String getExternalName() {
+  public @NotNull String getExternalName() {
     return target.getExternalName();
   }
 
@@ -94,9 +71,8 @@ public abstract class AbstractDependencyData<T extends AbstractExternalEntityDat
     target.setExternalName(name);
   }
 
-  @NotNull
   @Override
-  public String getInternalName() {
+  public @NotNull String getInternalName() {
     return target.getInternalName();
   }
 

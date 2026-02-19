@@ -1,0 +1,65 @@
+### auto-generated section `build intellij.platform.workspace.storage` start
+load("//build:compiler-options.bzl", "create_kotlinc_options")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+create_kotlinc_options(
+  name = "custom_storage",
+  jvm_target = "11",
+  opt_in = [
+    "com.intellij.openapi.util.IntellijInternalApi",
+    "com.intellij.platform.workspace.storage.WorkspaceEntityInternalApi",
+    "com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentationApi",
+  ],
+  x_explicit_api_mode = "strict"
+)
+
+resourcegroup(
+  name = "storage_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "storage",
+  module_name = "intellij.platform.workspace.storage",
+  visibility = ["//visibility:public"],
+  srcs = glob(["gen/**/*.kt", "gen/**/*.java", "src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":storage_resources"],
+  kotlinc_opts = ":custom_storage",
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "//libraries/guava",
+    "//libraries/kotlin/reflect",
+    "//platform/util",
+    "//libraries/fastutil",
+    "//libraries/caffeine",
+    "//libraries/kryo5",
+    "//platform/diagnostic/telemetry",
+    "@lib//:opentelemetry",
+    "@lib//:opentelemetry-semconv",
+    "//platform/diagnostic",
+    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
+  ]
+)
+
+jvm_library(
+  name = "storage_test_lib",
+  module_name = "intellij.platform.workspace.storage",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  kotlinc_opts = ":custom_storage",
+  runtime_deps = [
+    ":storage",
+    "//libraries/guava:guava_test_lib",
+    "//libraries/kotlin/reflect:reflect_test_lib",
+    "//platform/util:util_test_lib",
+    "@lib//:junit4",
+    "//libraries/fastutil:fastutil_test_lib",
+    "//libraries/caffeine:caffeine_test_lib",
+    "//libraries/kryo5:kryo5_test_lib",
+    "//platform/diagnostic/telemetry:telemetry_test_lib",
+    "//platform/diagnostic:diagnostic_test_lib",
+    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
+  ]
+)
+### auto-generated section `build intellij.platform.workspace.storage` end

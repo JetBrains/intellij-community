@@ -3,7 +3,7 @@ import com.intellij.util.xml.DomElementVisitor;
 
 public class ImplicitUsagesDomElementVisitor implements DomElementVisitor {
 
-  public static void main(String[] args) {} // suppress class unused
+  public static void main() {} // suppress class unused
 
   interface MyDom extends DomElement {}
 
@@ -21,7 +21,7 @@ public class ImplicitUsagesDomElementVisitor implements DomElementVisitor {
 
   public static class NonDomElementVisitorClass {
 
-    public static void main(String[] args) {} // suppress class unused
+    public static void main() {} // suppress class unused
 
     public void <warning descr="Method 'visitMyDom(ImplicitUsagesDomElementVisitor.MyDom)' is never used">visitMyDom</warning>(MyDom myDom) { myDom = null; }
 

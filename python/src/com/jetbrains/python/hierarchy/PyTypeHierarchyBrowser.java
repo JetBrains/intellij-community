@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.hierarchy;
 
 import com.intellij.ide.hierarchy.HierarchyNodeDescriptor;
@@ -12,10 +12,12 @@ import com.jetbrains.python.hierarchy.treestructures.PySubTypesHierarchyTreeStru
 import com.jetbrains.python.hierarchy.treestructures.PySuperTypesHierarchyTreeStructure;
 import com.jetbrains.python.hierarchy.treestructures.PyTypeHierarchyTreeStructure;
 import com.jetbrains.python.psi.PyClass;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JPanel;
+import javax.swing.JTree;
 import java.util.Comparator;
 import java.util.Map;
 
@@ -27,8 +29,7 @@ public class PyTypeHierarchyBrowser extends TypeHierarchyBrowserBase {
   }
 
   @Override
-  @Nullable
-  protected PsiElement getElementFromDescriptor(@NotNull HierarchyNodeDescriptor descriptor) {
+  protected @Nullable PsiElement getElementFromDescriptor(@NotNull HierarchyNodeDescriptor descriptor) {
     if (!(descriptor instanceof PyHierarchyNodeDescriptor)) {
       return null;
     }
@@ -36,13 +37,12 @@ public class PyTypeHierarchyBrowser extends TypeHierarchyBrowserBase {
   }
 
   @Override
-  protected void createTrees(@NotNull Map<String, JTree> trees) {
+  protected void createTrees(@NotNull Map<? super @Nls String, ? super JTree> trees) {
     createTreeAndSetupCommonActions(trees, IdeActions.GROUP_TYPE_HIERARCHY_POPUP);
   }
 
   @Override
-  @Nullable
-  protected JPanel createLegendPanel() {
+  protected @Nullable JPanel createLegendPanel() {
     return null;
   }
 
@@ -52,8 +52,7 @@ public class PyTypeHierarchyBrowser extends TypeHierarchyBrowserBase {
   }
 
   @Override
-  @Nullable
-  protected HierarchyTreeStructure createHierarchyTreeStructure(@NotNull String typeName, @NotNull PsiElement psiElement) {
+  protected @Nullable HierarchyTreeStructure createHierarchyTreeStructure(@NotNull String typeName, @NotNull PsiElement psiElement) {
     if (getSupertypesHierarchyType().equals(typeName)) {
       return new PySuperTypesHierarchyTreeStructure((PyClass)psiElement);
     }
@@ -70,8 +69,7 @@ public class PyTypeHierarchyBrowser extends TypeHierarchyBrowserBase {
   }
 
   @Override
-  @Nullable
-  protected Comparator<NodeDescriptor<?>> getComparator() {
+  protected @Nullable Comparator<NodeDescriptor<?>> getComparator() {
     return PyHierarchyUtils.getComparator(myProject);
   }
 
@@ -86,10 +84,9 @@ public class PyTypeHierarchyBrowser extends TypeHierarchyBrowserBase {
   }
 
   @Override
-  @NotNull
-  protected String getQualifiedName(PsiElement psiElement) {
+  protected @NotNull String getQualifiedName(PsiElement psiElement) {
     if (psiElement instanceof PyClass) {
-      final String name = ((PyClass)psiElement).getName();
+      String name = ((PyClass)psiElement).getName();
       if (name != null) {
         return name;
       }

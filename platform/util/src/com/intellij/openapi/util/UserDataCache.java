@@ -18,6 +18,14 @@ package com.intellij.openapi.util;
 
 import org.jetbrains.annotations.NonNls;
 
+/**
+ * @deprecated For recalculate-able caches, use {@link com.intellij.psi.util.CachedValuesManager#getCachedValue},
+ * {@link com.intellij.psi.util.CachedValuesManager#getProjectPsiDependentCache}
+ * or other similar methods, as a less verbose and often more correct alternative.
+ * For lazy values calculated just once, consider {@code *LazyValue} classes
+ * or explicit {@link UserDataHolder#getUserData} and {@link UserDataHolder#putUserData} calls for less verbosity.
+ */
+@Deprecated
 public abstract class UserDataCache<T, Owner extends UserDataHolder, Param> extends FieldCache<T, Owner, Key<T>, Param> {
   private final Key<T> myKey;
 
@@ -48,13 +56,13 @@ public abstract class UserDataCache<T, Owner extends UserDataHolder, Param> exte
   }
 
   @Override
-  public T get(Key<T> a, Owner owner, Param p) {
-    T value = owner.getUserData(a);
+  public T get(Key<T> key, Owner owner, Param p) {
+    T value = owner.getUserData(key);
     if (value == null) {
       RecursionGuard.StackStamp stamp = RecursionManager.markStack();
       value = compute(owner, p);
       if (stamp.mayCacheNow()) {
-        value = ((UserDataHolderEx)owner).putUserDataIfAbsent(a, value);
+        value = ((UserDataHolderEx)owner).putUserDataIfAbsent(key, value);
       }
     }
     return value;

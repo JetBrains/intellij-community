@@ -42,6 +42,18 @@ class JsonObjectBuilder(val builder: StringBuilder, var indentLevel: Int = 0, va
     }
   }
 
+  infix fun String.to(value: Int) {
+    appendNameAndValue(this) {
+      builder.append(value)
+    }
+  }
+
+  infix fun String.to(value: Long) {
+    appendNameAndValue(this) {
+      builder.append(value)
+    }
+  }
+
   infix fun String.to(value: StringBuilder) {
     if (value === builder) {
       return
@@ -173,7 +185,7 @@ private fun appendCommaIfNeeded(builder: StringBuilder): Boolean {
   }
 
   val lastChar = builder.last()
-  if (lastChar == '"' || lastChar == '}' || lastChar == ']' || lastChar == 'e' /* true or false */) {
+  if (lastChar == '"' || lastChar == '}' || lastChar == ']' || lastChar == 'e' /* true or false */ || lastChar.isDigit()) {
     builder.append(',')
     return true
   }

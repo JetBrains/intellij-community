@@ -46,8 +46,7 @@ public class RncDocument extends RncElementImpl implements XmlDocument {
   }
 
   @Override
-  @Nullable
-  public XmlTag getRootTag() {
+  public @Nullable XmlTag getRootTag() {
     return null;
   }
 
@@ -62,8 +61,7 @@ public class RncDocument extends RncElementImpl implements XmlDocument {
   }
 
   @Override
-  @Nullable
-  public PsiMetaData getMetaData() {
+  public @Nullable PsiMetaData getMetaData() {
     return MetaRegistry.getMeta(this);
   }
 

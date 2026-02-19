@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xml.impl.dom;
 
 import com.intellij.codeInsight.daemon.impl.analysis.XmlHighlightingAwareElementDescriptor;
@@ -11,7 +11,12 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
-import com.intellij.util.xml.*;
+import com.intellij.util.xml.DomElement;
+import com.intellij.util.xml.DomManager;
+import com.intellij.util.xml.DomNameStrategy;
+import com.intellij.util.xml.DomService;
+import com.intellij.util.xml.ElementPresentationTemplate;
+import com.intellij.util.xml.XmlName;
 import com.intellij.util.xml.reflect.DomChildrenDescription;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -24,12 +29,12 @@ import java.util.List;
 public class DomElementXmlDescriptor extends AbstractDomChildrenDescriptor implements XmlHighlightingAwareElementDescriptor {
   private final DomChildrenDescription myChildrenDescription;
 
-  public DomElementXmlDescriptor(@NotNull final DomElement domElement) {
+  public DomElementXmlDescriptor(final @NotNull DomElement domElement) {
     super(domElement.getManager());
     myChildrenDescription = new MyRootDomChildrenDescription(domElement);
   }
 
-  public DomElementXmlDescriptor(@NotNull final DomChildrenDescription childrenDescription, final DomManager manager) {
+  public DomElementXmlDescriptor(final @NotNull DomChildrenDescription childrenDescription, final DomManager manager) {
     super(manager);
     myChildrenDescription = childrenDescription;
   }
@@ -40,17 +45,14 @@ public class DomElementXmlDescriptor extends AbstractDomChildrenDescriptor imple
   }
 
   @Override
-  @Nullable
-  public PsiElement getDeclaration() {
+  public @Nullable PsiElement getDeclaration() {
     return myChildrenDescription.getDeclaration(myManager.getProject());
   }
 
   @Override
-  @NonNls
-  public String getName(final PsiElement context) {
+  public @NonNls String getName(final PsiElement context) {
     final String name = getDefaultName();
-    if (context instanceof XmlTag) {
-      XmlTag tag = (XmlTag)context;
+    if (context instanceof XmlTag tag) {
       final PsiFile file = tag.getContainingFile();
       DomElement element = myManager.getDomElement(tag);
       if (element == null && tag.getParentTag() != null) {
@@ -96,64 +98,42 @@ public class DomElementXmlDescriptor extends AbstractDomChildrenDescriptor imple
     }
 
     @Override
-    public void navigate(boolean requestFocus) {
-    }
-
-    @Override
-    public boolean canNavigate() {
-      return false;
-    }
-
-    @Override
-    public boolean canNavigateToSource() {
-      return false;
-    }
-
-    @Override
-    @NotNull
-    public XmlName getXmlName() {
+    public @NotNull XmlName getXmlName() {
       throw new UnsupportedOperationException("Method getXmlName not implemented in " + getClass());
     }
 
     @Override
-    @NotNull
-    public String getXmlElementName() {
+    public @NotNull String getXmlElementName() {
       return myDomElement.getXmlElementName();
     }
 
     @Override
-    @NotNull
-    public String getCommonPresentableName(@NotNull final DomNameStrategy strategy) {
+    public @NotNull String getCommonPresentableName(final @NotNull DomNameStrategy strategy) {
       throw new UnsupportedOperationException("Method getCommonPresentableName not implemented in " + getClass());
     }
 
     @Override
-    @NotNull
-    public String getCommonPresentableName(@NotNull final DomElement parent) {
+    public @NotNull String getCommonPresentableName(final @NotNull DomElement parent) {
       throw new UnsupportedOperationException("Method getCommonPresentableName not implemented in " + getClass());
     }
 
     @Override
-    @NotNull
-    public List<? extends DomElement> getValues(@NotNull final DomElement parent) {
+    public @NotNull List<? extends DomElement> getValues(final @NotNull DomElement parent) {
       throw new UnsupportedOperationException("Method getValues not implemented in " + getClass());
     }
 
     @Override
-    @NotNull
-    public List<? extends DomElement> getStableValues(@NotNull final DomElement parent) {
+    public @NotNull List<? extends DomElement> getStableValues(final @NotNull DomElement parent) {
       throw new UnsupportedOperationException("Method getStableValues not implemented in " + getClass());
     }
 
     @Override
-    @NotNull
-    public Type getType() {
+    public @NotNull Type getType() {
       throw new UnsupportedOperationException("Method getType not implemented in " + getClass());
     }
 
     @Override
-    @NotNull
-    public DomNameStrategy getDomNameStrategy(@NotNull final DomElement parent) {
+    public @NotNull DomNameStrategy getDomNameStrategy(final @NotNull DomElement parent) {
       throw new UnsupportedOperationException("Method getDomNameStrategy not implemented in " + getClass());
     }
 
@@ -168,14 +148,12 @@ public class DomElementXmlDescriptor extends AbstractDomChildrenDescriptor imple
     }
 
     @Override
-    @Nullable
-    public <T extends Annotation> T getAnnotation(final Class<T> annotationClass) {
+    public @Nullable <T extends Annotation> T getAnnotation(final Class<T> annotationClass) {
       throw new UnsupportedOperationException("Method getAnnotation not implemented in " + getClass());
     }
 
     @Override
-    @Nullable
-    public PsiElement getDeclaration(final Project project) {
+    public @Nullable PsiElement getDeclaration(final Project project) {
       return PomService.convertToPsi(project, this);
     }
 

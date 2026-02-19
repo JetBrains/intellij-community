@@ -1,11 +1,30 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.psi;
 
 import com.intellij.openapi.application.ex.PathManagerEx;
-import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.openapi.vfs.VirtualFileFilter;
 import com.intellij.pom.java.LanguageLevel;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaRecursiveElementWalkingVisitor;
+import com.intellij.psi.PsiAnonymousClass;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiClassType;
+import com.intellij.psi.PsiEnumConstant;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiExpressionList;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiImportList;
+import com.intellij.psi.PsiImportStatement;
+import com.intellij.psi.PsiImportStatementBase;
+import com.intellij.psi.PsiImportStaticStatement;
+import com.intellij.psi.PsiJavaCodeReferenceElement;
+import com.intellij.psi.PsiJavaFile;
+import com.intellij.psi.PsiMember;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiNewExpression;
+import com.intellij.psi.PsiPackage;
+import com.intellij.psi.PsiReferenceExpression;
+import com.intellij.psi.PsiSubstitutor;
 import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.AnnotatedMembersSearch;
@@ -20,19 +39,15 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.HashSet;
 import java.util.Set;
 
-/**
- * @author dsl
- */
 @HeavyPlatformTestCase.WrapInCommand
 public class Src15RepositoryUseTest extends JavaPsiTestCase {
   @Override
   protected void setUp() throws Exception {
     super.setUp();
 
-    LanguageLevelProjectExtension.getInstance(myProject).setLanguageLevel(LanguageLevel.JDK_1_5);
+    IdeaTestUtil.setProjectLanguageLevel(myProject, LanguageLevel.JDK_1_5);
     String root = PathManagerEx.getTestDataPath() + "/psi/repositoryUse/src15";
     PsiTestUtil.removeAllRoots(myModule, IdeaTestUtil.getMockJdk17());
     createTestProjectStructure( root);
@@ -41,7 +56,7 @@ public class Src15RepositoryUseTest extends JavaPsiTestCase {
   @Override
   protected void tearDown() throws Exception {
     try {
-      LanguageLevelProjectExtension.getInstance(myProject).setLanguageLevel(LanguageLevel.JDK_1_5);
+      IdeaTestUtil.setProjectLanguageLevel(myProject, LanguageLevel.JDK_1_5);
     }
     catch (Throwable e) {
       addSuppressedException(e);
@@ -51,11 +66,10 @@ public class Src15RepositoryUseTest extends JavaPsiTestCase {
     }
   }
 
-
   public void testStaticImports() {
     setupLoadingFilter();
-    final PsiClass aClass = findClass("staticImports.StaticImports");
-    final PsiJavaFile javaFile = (PsiJavaFile)aClass.getContainingFile();
+    PsiClass aClass = findClass("staticImports.StaticImports");
+    PsiJavaFile javaFile = (PsiJavaFile)aClass.getContainingFile();
     doTestStaticImports(javaFile, false);
     tearDownLoadingFilter();
     doTestStaticImports(javaFile, true);
@@ -64,7 +78,7 @@ public class Src15RepositoryUseTest extends JavaPsiTestCase {
   public void testDeprecatedAnnotation() {
     setupLoadingFilter();
 
-    final PsiClass aClass = findClass("annotations.DeprecatedAnnotation");
+    PsiClass aClass = findClass("annotations.DeprecatedAnnotation");
     assertTrue(aClass.isDeprecated());
     PsiMethod method = aClass.getMethods()[0];
     assertTrue(method.isDeprecated());
@@ -76,24 +90,24 @@ public class Src15RepositoryUseTest extends JavaPsiTestCase {
   public void testEnumImplements() {
     setupLoadingFilter();
 
-    final PsiClass aClass = findClass("enumImplements.MyEnum");
-    final PsiClassType[] implementsListTypes = aClass.getImplementsListTypes();
+    PsiClass aClass = findClass("enumImplements.MyEnum");
+    PsiClassType[] implementsListTypes = aClass.getImplementsListTypes();
     assertEquals(1, implementsListTypes.length);
 
-    final PsiClass baseInterface = implementsListTypes[0].resolve();
+    PsiClass baseInterface = implementsListTypes[0].resolve();
     assertNotNull(baseInterface);
     assertEquals("I", baseInterface.getName());
     tearDownLoadingFilter();
   }
 
-  private static void doTestStaticImports(final PsiJavaFile javaFile, boolean okToLoadTree) {
-    final PsiImportList importList = javaFile.getImportList();
+  private static void doTestStaticImports(PsiJavaFile javaFile, boolean okToLoadTree) {
+    PsiImportList importList = javaFile.getImportList();
     assertNotNull(importList);
-    final PsiImportStatementBase[] allImportStatements = importList.getAllImportStatements();
+    PsiImportStatementBase[] allImportStatements = importList.getAllImportStatements();
     assertEquals(6, allImportStatements.length);
-    final PsiImportStatement[] importStatements = importList.getImportStatements();
+    PsiImportStatement[] importStatements = importList.getImportStatements();
     assertEquals(2, importStatements.length);
-    final PsiImportStaticStatement[] importStaticStatements = importList.getImportStaticStatements();
+    PsiImportStaticStatement[] importStaticStatements = importList.getImportStaticStatements();
     assertEquals(4, importStaticStatements.length);
     assertFalse(importStatements[0].isOnDemand());
     assertTrue(importStaticStatements[0].isOnDemand());
@@ -105,16 +119,15 @@ public class Src15RepositoryUseTest extends JavaPsiTestCase {
     assertEquals("sort", importStaticStatements[2].getReferenceName());
     assertEquals("sort", importStaticStatements[3].getReferenceName());
 
-    final PsiImportStaticStatement classReference1 = importStaticStatements[1];
-    final PsiClass element1 = classReference1.resolveTargetClass();
+    PsiImportStaticStatement classReference1 = importStaticStatements[1];
+    PsiClass element1 = classReference1.resolveTargetClass();
     assertNotNull(element1);
-    assertTrue(element1 instanceof PsiClass);
+
     assertEquals("java.util.Arrays", element1.getQualifiedName());
 
-    final PsiImportStaticStatement classReference3 = importStaticStatements[3];
-    final PsiClass element3 = classReference3.resolveTargetClass();
+    PsiImportStaticStatement classReference3 = importStaticStatements[3];
+    PsiClass element3 = classReference3.resolveTargetClass();
     assertNotNull(element3);
-    assertTrue(element3 instanceof PsiClass);
     assertEquals("java.util.Arrays", element3.getQualifiedName());
 
     if (okToLoadTree) {
@@ -126,28 +139,28 @@ public class Src15RepositoryUseTest extends JavaPsiTestCase {
   }
 
   private static String getText(PsiImportStaticStatement statement) {
-    final PsiJavaCodeReferenceElement reference = statement.getImportReference();
+    PsiJavaCodeReferenceElement reference = statement.getImportReference();
     return reference != null ? reference.getText() : "(null ref)";
   }
 
   public void testEnum() {
     setupLoadingFilter();
-    final PsiClass enumClass = findClass("enums.OurEnum");
+    PsiClass enumClass = findClass("enums.OurEnum");
     assertTrue(enumClass.isEnum());
-    final PsiClass superClass = enumClass.getSuperClass();
+    PsiClass superClass = enumClass.getSuperClass();
     assertNotNull(superClass);
     assertEquals("java.lang.Enum", superClass.getQualifiedName());
     assertTrue(enumClass.isInheritor(superClass, false));
-    final PsiClassType[] superTypes = enumClass.getSuperTypes();
+    PsiClassType[] superTypes = enumClass.getSuperTypes();
     assertEquals(1, superTypes.length);
     assertEquals("java.lang.Enum<enums.OurEnum>", superTypes[0].getCanonicalText());
-    final PsiClass[] supers = enumClass.getSupers();
+    PsiClass[] supers = enumClass.getSupers();
     assertEquals(1, supers.length);
     assertEquals("java.lang.Enum", supers[0].getQualifiedName());
-    final PsiClassType[] extendsListTypes = enumClass.getExtendsListTypes();
+    PsiClassType[] extendsListTypes = enumClass.getExtendsListTypes();
     assertEquals(1, extendsListTypes.length);
     assertEquals("java.lang.Enum<enums.OurEnum>", extendsListTypes[0].getCanonicalText());
-    final PsiSubstitutor superClassSubstitutor = TypeConversionUtil.getSuperClassSubstitutor(superClass, enumClass, PsiSubstitutor.EMPTY);
+    PsiSubstitutor superClassSubstitutor = TypeConversionUtil.getSuperClassSubstitutor(superClass, enumClass, PsiSubstitutor.EMPTY);
     assertEquals("java.lang.Enum<enums.OurEnum>", myJavaFacade.getElementFactory().createType(superClass, superClassSubstitutor).getCanonicalText());
     tearDownLoadingFilter();
   }
@@ -163,7 +176,7 @@ public class Src15RepositoryUseTest extends JavaPsiTestCase {
 
   public void testEnumWithInitializedConstants() {
     setupLoadingFilter();
-    final GlobalSearchScope moduleScope = GlobalSearchScope.moduleScope(myModule);
+    GlobalSearchScope moduleScope = GlobalSearchScope.moduleScope(myModule);
 
     PsiClass enumClass = findClass("enums.OurEnumWithInitializedConstants");
     assertTrue(enumClass.isEnum());
@@ -175,23 +188,23 @@ public class Src15RepositoryUseTest extends JavaPsiTestCase {
     PsiAnonymousClass initializingClass0 = ((PsiEnumConstant)fields[0]).getInitializingClass();
     assertNotNull(initializingClass0);
     PsiClass baseClass0 = initializingClass0.getBaseClassType().resolve();
-    assertTrue(baseClass0 == enumClass);
+    assertSame(baseClass0, enumClass);
 
     PsiAnonymousClass initializingClass1 = ((PsiEnumConstant)fields[1]).getInitializingClass();
     assertNotNull(initializingClass1);
     PsiClass baseClass1 = initializingClass1.getBaseClassType().resolve();
-    assertTrue(baseClass1 == enumClass);
+    assertSame(baseClass1, enumClass);
 
     PsiAnonymousClass initializingClass2 = ((PsiEnumConstant)fields[1]).getInitializingClass();
     assertNotNull(initializingClass2);
     PsiClass baseClass2 = initializingClass2.getBaseClassType().resolve();
-    assertTrue(baseClass2 == enumClass);
+    assertSame(baseClass2, enumClass);
 
     assertTrue(initializingClass0.isInheritor(enumClass, false));
     assertTrue(initializingClass1.isInheritor(enumClass, false));
     assertTrue(initializingClass2.isInheritor(enumClass, false));
 
-    final PsiClass[] enumInheritors = ClassInheritorsSearch.search(enumClass, moduleScope, false).toArray(PsiClass.EMPTY_ARRAY);
+    PsiClass[] enumInheritors = ClassInheritorsSearch.search(enumClass, moduleScope, false).toArray(PsiClass.EMPTY_ARRAY);
     assertEquals(3, enumInheritors.length);
     assertTrue(Arrays.asList(enumInheritors).contains(initializingClass0));
     assertTrue(Arrays.asList(enumInheritors).contains(initializingClass1));
@@ -202,24 +215,24 @@ public class Src15RepositoryUseTest extends JavaPsiTestCase {
     assertEquals(1, methods1.length);
     assertEquals("foo", methods1[0].getName());
 
-    final PsiClass baseInterfaceClass = findClass("enums.OurBaseInterface");
+    PsiClass baseInterfaceClass = findClass("enums.OurBaseInterface");
 
-    final PsiClass[] inheritors = ClassInheritorsSearch.search(baseInterfaceClass, moduleScope, false).toArray(PsiClass.EMPTY_ARRAY);
+    PsiClass[] inheritors = ClassInheritorsSearch.search(baseInterfaceClass, moduleScope, false).toArray(PsiClass.EMPTY_ARRAY);
     assertEquals(1, inheritors.length);
     assertTrue(inheritors[0] instanceof PsiAnonymousClass);
 
     tearDownLoadingFilter();
 
     assertTrue(inheritors[0].getParent().getParent() instanceof PsiExpressionList);
-    assertTrue(inheritors[0].getParent().getParent().getParent() == fields[2]);
+    assertSame(inheritors[0].getParent().getParent().getParent(), fields[2]);
 
-    final PsiExpressionList argumentList = ((PsiEnumConstant)fields[2]).getArgumentList();
+    PsiExpressionList argumentList = ((PsiEnumConstant)fields[2]).getArgumentList();
     assertNotNull(argumentList);
-    final PsiExpression[] expressions2 = argumentList.getExpressions();
+    PsiExpression[] expressions2 = argumentList.getExpressions();
     assertEquals(1, expressions2.length);
     assertTrue(expressions2[0] instanceof PsiNewExpression);
-    final PsiAnonymousClass anonymousClass2 = ((PsiNewExpression)expressions2[0]).getAnonymousClass();
-    assertTrue(anonymousClass2 != null);
+    PsiAnonymousClass anonymousClass2 = ((PsiNewExpression)expressions2[0]).getAnonymousClass();
+    assertNotNull(anonymousClass2);
     assertTrue(anonymousClass2.isInheritor(baseInterfaceClass, false));
   }
 
@@ -271,16 +284,15 @@ public class Src15RepositoryUseTest extends JavaPsiTestCase {
 
     assertEquals("public static final int A1 = 10;", fields[3].getText());
     enumClass.accept(new JavaRecursiveElementWalkingVisitor(){
-      @Override public void visitReferenceExpression(PsiReferenceExpression expression) {
+      @Override public void visitReferenceExpression(@NotNull PsiReferenceExpression expression) {
         visitExpression(expression);
       }
     });
-    enumClass.getText();
   }
 
   public void testAnnotationType() {
     setupLoadingFilter();
-    final PsiClass annotationTypeClass = findClass("annotations.AnnotationType");
+    PsiClass annotationTypeClass = findClass("annotations.AnnotationType");
     assertTrue(annotationTypeClass.isAnnotationType());
     tearDownLoadingFilter();
   }
@@ -288,18 +300,18 @@ public class Src15RepositoryUseTest extends JavaPsiTestCase {
   public void testAnnotationIndex() {
     PsiManagerEx.getInstanceEx(getProject()).setAssertOnFileLoadingFilter(file -> !"package-info.java".equals(file.getName()), getTestRootDisposable());
 
-    final PsiClass annotationTypeClass = findClass("annotations.AnnotationType");
+    PsiClass annotationTypeClass = findClass("annotations.AnnotationType");
     assertTrue(annotationTypeClass.isAnnotationType());
 
-    final Collection<PsiMember> all = AnnotatedMembersSearch.search(annotationTypeClass, GlobalSearchScope.moduleScope(myModule)).findAll();
+    Collection<PsiMember> all = AnnotatedMembersSearch.search(annotationTypeClass, GlobalSearchScope.moduleScope(myModule)).findAll();
 
     assertEquals(2, all.size());
-    Set<String> correctNames = new HashSet<>(Arrays.asList("AnnotatedClass", "correctMethod"));
+    Set<String> correctNames = Set.of("AnnotatedClass", "correctMethod");
     for (PsiMember member : all) {
       assertTrue(correctNames.contains(member.getName()));
     }
 
-    final Collection<PsiPackage> packages =
+    Collection<PsiPackage> packages =
       AnnotatedPackagesSearch.search(annotationTypeClass, GlobalSearchScope.moduleScope(myModule)).findAll();
     assertEquals(1, packages.size());
     assertEquals("annotated", packages.iterator().next().getQualifiedName());
@@ -315,8 +327,7 @@ public class Src15RepositoryUseTest extends JavaPsiTestCase {
     PsiManagerEx.getInstanceEx(getProject()).setAssertOnFileLoadingFilter(VirtualFileFilter.NONE, getTestRootDisposable());
   }
 
-  @NotNull
-  private PsiClass findClass(final String name) {
+  private PsiClass findClass(String name) {
     PsiClass aClass = myJavaFacade.findClass(name, GlobalSearchScope.moduleScope(myModule));
     assertNotNull(name, aClass);
     return aClass;

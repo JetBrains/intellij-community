@@ -1,58 +1,76 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.daemon.JavaErrorBundle;
-import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaElementVisitor;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.JavaTokenType;
+import com.intellij.psi.PsiArrayAccessExpression;
+import com.intellij.psi.PsiBinaryExpression;
+import com.intellij.psi.PsiCallExpression;
+import com.intellij.psi.PsiConstantEvaluationHelper;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiMethodCallExpression;
+import com.intellij.psi.PsiReferenceExpression;
 import com.intellij.psi.util.ConstantEvaluationOverflowException;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import static com.intellij.codeInspection.options.OptPane.checkbox;
+import static com.intellij.codeInspection.options.OptPane.pane;
 
-public class NumericOverflowInspection extends AbstractBaseJavaLocalInspectionTool {
+public final class NumericOverflowInspection extends AbstractBaseJavaLocalInspectionTool {
   private static final Key<String> HAS_OVERFLOW_IN_CHILD = Key.create("HAS_OVERFLOW_IN_CHILD");
 
   public boolean ignoreLeftShiftWithNegativeResult = true;
 
-  @Nullable
   @Override
-  public JComponent createOptionsPanel() {
-    return new SingleCheckboxOptionsPanel(JavaAnalysisBundle.message("ignore.operation.which.results.in.negative.value"), this,
-                                          "ignoreLeftShiftWithNegativeResult");
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      checkbox("ignoreLeftShiftWithNegativeResult", JavaAnalysisBundle.message("ignore.operation.which.results.in.negative.value")));
   }
 
-  @Nls
-  @NotNull
   @Override
-  public String getGroupDisplayName() {
+  public @Nls @NotNull String getGroupDisplayName() {
     return InspectionsBundle.message("group.names.numeric.issues");
   }
 
-  @NotNull
   @Override
-  public String getShortName() {
+  public @NotNull String getShortName() {
     return "NumericOverflow";
   }
 
-  @NotNull
   @Override
-  public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, boolean isOnTheFly) {
+  public @NotNull PsiElementVisitor buildVisitor(final @NotNull ProblemsHolder holder, boolean isOnTheFly) {
     return new JavaElementVisitor() {
       @Override
-      public void visitReferenceExpression(PsiReferenceExpression expression) {
-        visitExpression(expression);
+      public void visitReferenceExpression(@NotNull PsiReferenceExpression expression) {
+        if (!(expression.getParent() instanceof PsiMethodCallExpression)) {
+          visitExpression(expression);
+        }
       }
 
       @Override
-      public void visitExpression(PsiExpression expression) {
+      public void visitArrayAccessExpression(@NotNull PsiArrayAccessExpression expression) {
+        // never constant
+      }
+
+      @Override
+      public void visitCallExpression(@NotNull PsiCallExpression callExpression) {
+        // never constant
+      }
+
+      @Override
+      public void visitExpression(@NotNull PsiExpression expression) {
         boolean hasOverflow = hasOverflow(expression, holder.getProject());
         if (hasOverflow && (!ignoreLeftShiftWithNegativeResult || !isLeftShiftWithNegativeResult(expression, holder.getProject()))) {
           holder.registerProblem(expression, JavaErrorBundle.message("numeric.overflow.in.expression"), ProblemHighlightType.GENERIC_ERROR_OR_WARNING);

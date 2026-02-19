@@ -1,8 +1,9 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.impl.libraries;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.roots.libraries.LibraryKind;
+import com.intellij.openapi.roots.libraries.LibraryKindRegistry;
 import com.intellij.openapi.roots.libraries.LibraryProperties;
 import com.intellij.openapi.roots.libraries.PersistentLibraryKind;
 import com.intellij.openapi.roots.libraries.TemporaryLibraryKind;
@@ -28,14 +29,13 @@ public final class UnknownLibraryKind extends PersistentLibraryKind<UnknownLibra
     return obj instanceof UnknownLibraryKind && ((UnknownLibraryKind)obj).getKindId().equals(getKindId());
   }
 
-  @NotNull
   @Override
-  public UnknownLibraryProperties createDefaultProperties() {
+  public @NotNull UnknownLibraryProperties createDefaultProperties() {
     return new UnknownLibraryProperties();
   }
 
   public static UnknownLibraryKind getOrCreate(@NotNull String kindId) {
-    LibraryKind kind = LibraryKind.findById(kindId);
+    LibraryKind kind = LibraryKindRegistry.getInstance().findKindById(kindId);
     if (kind instanceof UnknownLibraryKind) {
       return (UnknownLibraryKind)kind;
     }
@@ -75,9 +75,8 @@ public final class UnknownLibraryKind extends PersistentLibraryKind<UnknownLibra
       return JDOMUtil.hashCode(myConfiguration, false);
     }
 
-    @Nullable
     @Override
-    public Element getState() {
+    public @Nullable Element getState() {
       return myConfiguration;
     }
 

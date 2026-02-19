@@ -63,7 +63,7 @@ class MyTest {
         I1 i1 = this::_1;
         I1 i2 = this::<error descr="Cannot resolve method '_2'">_2</error>;
         I1 i3 = this::<error descr="Incompatible types: int is not convertible to String">_3</error>;
-        I1 i4 = this::<error descr="Cannot resolve method '_4'">_4</error>;
+        I1 i4 = this::<error descr="Reference to '_4' is ambiguous, both '_4(String...)' and '_4(String...)' match">_4</error>;
 
         I2 i21 = MyTest::<error descr="Cannot resolve method 'm1'">m1</error>;
         I2 i22 = MyTest::<error descr="Cannot resolve method 'm2'">m2</error>;

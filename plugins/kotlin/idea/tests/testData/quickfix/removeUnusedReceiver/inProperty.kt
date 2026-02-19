@@ -1,0 +1,9 @@
+// "Remove redundant receiver parameter" "true"
+val <caret>Any.v: Int
+    get() = 123
+
+fun test() {
+    "".v
+}
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.inspections.UnusedReceiverParameterInspection$RemoveReceiverFix
+// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.inspections.UnusedReceiverParameterInspection$RemoveReceiverFix

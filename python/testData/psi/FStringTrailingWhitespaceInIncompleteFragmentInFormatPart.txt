@@ -5,7 +5,7 @@ PyFile:FStringTrailingWhitespaceInIncompleteFragmentInFormatPart.py
     PsiWhiteSpace(' ')
     PsiElement(Py:EQ)('=')
     PsiWhiteSpace(' ')
-    PyStringLiteralExpression: {42:{ 
+    PyStringLiteralExpression: {42:{ '
       PyFormattedStringElement
         PsiElement(Py:FSTRING_START)('f'')
         PyFStringFragment
@@ -16,8 +16,10 @@ PyFile:FStringTrailingWhitespaceInIncompleteFragmentInFormatPart.py
             PsiElement(Py:FSTRING_FRAGMENT_FORMAT_START)(':')
             PyFStringFragment
               PsiElement(Py:FSTRING_FRAGMENT_START)('{')
-              PsiErrorElement:Expression expected
-                PsiWhiteSpace(' ')
-              PsiErrorElement:'}' expected
+              PsiWhiteSpace(' ')
+              PyStringLiteralExpression: 
+                PsiElement(Py:SINGLE_QUOTED_STRING)(''')
+              PsiErrorElement:Type conversion, ':' or '}' expected
                 <empty list>
-        PsiElement(Py:FSTRING_END)(''')
+        PsiErrorElement:' expected
+          <empty list>

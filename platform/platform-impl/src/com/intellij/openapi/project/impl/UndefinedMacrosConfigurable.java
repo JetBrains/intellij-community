@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.project.impl;
 
 import com.intellij.application.options.pathMacros.PathMacroConfigurable;
@@ -10,14 +10,16 @@ import com.intellij.openapi.ui.MultiLineLabelUI;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.util.ui.JBUI;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import java.awt.BorderLayout;
 import java.util.Collection;
 
 /**
  * @author Eugene Zhuravlev
  */
-public class UndefinedMacrosConfigurable implements Configurable{
+public final class UndefinedMacrosConfigurable implements Configurable{
   private PathMacroListEditor myEditor;
   private final @NlsContexts.Label String myText;
   private final Collection<String> myUndefinedMacroNames;

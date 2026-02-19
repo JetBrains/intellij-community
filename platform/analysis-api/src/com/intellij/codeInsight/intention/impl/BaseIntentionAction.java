@@ -1,9 +1,9 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.util.IntentionName;
-import com.intellij.ide.scratch.ScratchFileHelper;
+import com.intellij.ide.scratch.ScratchUtil;
 import com.intellij.openapi.vfs.NonPhysicalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
@@ -15,9 +15,7 @@ public abstract class BaseIntentionAction implements IntentionAction {
   private @IntentionName String myText = "";
 
   @Override
-  @IntentionName
-  @NotNull
-  public String getText() {
+  public @NotNull @IntentionName String getText() {
     return myText;
   }
 
@@ -42,6 +40,6 @@ public abstract class BaseIntentionAction implements IntentionAction {
     VirtualFile virtualFile = PsiUtilCore.getVirtualFile(element);
     PsiFile containingFile = element.getContainingFile();
     return element.getManager().isInProject(element)
-           || ScratchFileHelper.isScratchFile(virtualFile)
+           || ScratchUtil.isScratch(virtualFile)
            || (containingFile != null && containingFile.getViewProvider().getVirtualFile().getFileSystem() instanceof NonPhysicalFileSystem);
   }}

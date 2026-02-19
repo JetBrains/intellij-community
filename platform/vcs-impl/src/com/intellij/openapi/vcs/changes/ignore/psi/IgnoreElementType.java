@@ -26,12 +26,14 @@ package com.intellij.openapi.vcs.changes.ignore.psi;
 
 import com.intellij.openapi.vcs.changes.ignore.lang.IgnoreLanguage;
 import com.intellij.psi.tree.IElementType;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * Custom element type.
  */
+@ApiStatus.Internal
 public class IgnoreElementType extends IElementType {
   public IgnoreElementType(@NotNull @NonNls String debugName) {
     super(debugName, IgnoreLanguage.INSTANCE);

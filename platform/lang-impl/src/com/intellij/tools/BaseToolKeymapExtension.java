@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.tools;
 
 import com.intellij.icons.AllIcons;
@@ -14,20 +14,19 @@ import com.intellij.openapi.util.NlsActions;
 import java.util.List;
 
 public abstract class BaseToolKeymapExtension implements KeymapExtension {
-
   @Override
-  public KeymapGroup createGroup(final Condition<AnAction> filtered, final Project project) {
+  public KeymapGroup createGroup(final Condition<? super AnAction> filtered, final Project project) {
     final ActionManagerEx actionManager = ActionManagerEx.getInstanceEx();
     Group rootGroup = new Group(getRootGroupName(), getRootGroupId(), AllIcons.Nodes.KeymapTools);
     List<ToolsGroup<Tool>> groups = ToolManager.getInstance().getGroups();
 
     for (ToolsGroup<Tool> toolsGroup : groups) {
       String groupName = toolsGroup.getName();
-      Group group = new Group(groupName, getGroupIdPrefix() + groupName, null);
+      Group group = new Group(groupName, getGroupIdPrefix() + groupName);
       List<? extends Tool> tools = getToolsIdsByGroupName(groupName);
       for (Tool tool : tools) {
         if (filtered != null && !filtered.value(actionManager.getActionOrStub(tool.getActionId()))) continue;
-        group.addGroup(new Group(tool.getName(), tool.getActionId(), null));
+        group.addActionId(tool.getActionId());
       }
       if (group.getSize() > 0) {
         rootGroup.addGroup(group);

@@ -1,31 +1,30 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.ExpressionUtil;
 import com.intellij.codeInsight.daemon.ImplicitUsageProvider;
-import com.intellij.psi.*;
+import com.intellij.codeInsight.hint.api.impls.MethodParameterInfoHandler;
+import com.intellij.java.syntax.parser.JavaKeywords;
+import com.intellij.psi.JavaRecursiveElementWalkingVisitor;
+import com.intellij.psi.PsiAssignmentExpression;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiJavaCodeReferenceElement;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiMethodCallExpression;
+import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiReferenceExpression;
+import com.intellij.psi.PsiStatement;
 import com.intellij.psi.filters.ElementFilter;
-import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.JavaPsiConstructorUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.psiutils.VariableAccessUtils;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -33,26 +32,24 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
-/**
- * @author peter
- */
-class CheckInitialized implements ElementFilter {
+@ApiStatus.Internal
+public class CheckInitialized implements ElementFilter {
   private final Set<PsiField> myNonInitializedFields;
   private final boolean myInsideConstructorCall;
 
-  CheckInitialized(@NotNull PsiElement position) {
+  public CheckInitialized(@NotNull PsiElement position) {
     myNonInitializedFields = getNonInitializedFields(position);
     myInsideConstructorCall = isInsideConstructorCall(position);
   }
 
-  static boolean isInsideConstructorCall(@NotNull PsiElement position) {
+  public static boolean isInsideConstructorCall(@NotNull PsiElement position) {
     return JavaPsiConstructorUtil.isConstructorCall(PsiTreeUtil.getParentOfType(position, PsiMethodCallExpression.class)) &&
            !JavaKeywordCompletion.AFTER_DOT.accepts(position);
   }
 
   private static boolean isInitializedImplicitly(PsiField field) {
     field = CompletionUtil.getOriginalOrSelf(field);
-    for(ImplicitUsageProvider provider: ImplicitUsageProvider.EP_NAME.getExtensions()) {
+    for(ImplicitUsageProvider provider: ImplicitUsageProvider.EP_NAME.getExtensionList()) {
       if (provider.isImplicitWrite(field)) {
         return true;
       }
@@ -107,7 +104,7 @@ class CheckInitialized implements ElementFilter {
     Set<PsiField> assigned = new HashSet<>();
     method.accept(new JavaRecursiveElementWalkingVisitor() {
       @Override
-      public void visitAssignmentExpression(PsiAssignmentExpression expression) {
+      public void visitAssignmentExpression(@NotNull PsiAssignmentExpression expression) {
         PsiExpression lExpression = expression.getLExpression();
         if (lExpression instanceof PsiReferenceExpression && ExpressionUtil.isEffectivelyUnqualified((PsiReferenceExpression)lExpression)) {
           PsiElement target = ((PsiReferenceExpression)lExpression).resolve();
@@ -125,10 +122,10 @@ class CheckInitialized implements ElementFilter {
       }
 
       @Override
-      public void visitMethodCallExpression(PsiMethodCallExpression expression) {
+      public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {
         if (expression.getTextRange().getStartOffset() < statement.getTextRange().getStartOffset()) {
           final PsiReferenceExpression methodExpression = expression.getMethodExpression();
-          if (methodExpression.textMatches(PsiKeyword.THIS)) {
+          if (methodExpression.textMatches(JavaKeywords.THIS)) {
             fields.clear();
           }
         }
@@ -158,8 +155,9 @@ class CheckInitialized implements ElementFilter {
 
   @Override
   public boolean isAcceptable(Object element, @Nullable PsiElement context) {
-    if (element instanceof CandidateInfo) {
-      element = ((CandidateInfo)element).getElement();
+    PsiMethod method = MethodParameterInfoHandler.tryGetMethodFromCandidate(element);
+    if (method != null) {
+      element = method;
     }
     if (element instanceof PsiField) {
       return !myNonInitializedFields.contains(element);

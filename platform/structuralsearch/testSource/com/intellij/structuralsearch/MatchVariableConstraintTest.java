@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.structuralsearch;
 
 import com.intellij.openapi.util.JDOMUtil;
@@ -17,6 +17,7 @@ public class MatchVariableConstraintTest extends LightPlatformTestCase {
                  "java.lang.String", MatchVariableConstraint.convertRegExpTypeToTypeString("java.lang.String"));
     assertEquals("", MatchVariableConstraint.convertRegExpTypeToTypeString("start.*"));
     assertEquals("parentheses", "int|long", MatchVariableConstraint.convertRegExpTypeToTypeString("(int|long)"));
+    assertEquals("", MatchVariableConstraint.convertRegExpTypeToTypeString("\\w"));
   }
 
   public void testConvertTypeStringToRegExp() {
@@ -65,7 +66,7 @@ public class MatchVariableConstraintTest extends LightPlatformTestCase {
     assertEquals(String.valueOf(constraint2.getAllAdditionalConstraints()), 1, constraint2.getAllAdditionalConstraints().size());
 
     constraint.putAdditionalConstraint("test", null);
-    assertTrue(constraint.equals(new MatchVariableConstraint()));
+    assertEquals(new MatchVariableConstraint(), constraint);
   }
 
 }

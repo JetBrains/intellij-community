@@ -1,14 +1,16 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInsight.template.impl;
 
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.RangeMarker;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 
-class TemplateSegments {
+@ApiStatus.Internal
+public class TemplateSegments {
   private final ArrayList<RangeMarker> mySegments = new ArrayList<>();
   private final @NotNull Document myDocument;
 
@@ -16,12 +18,12 @@ class TemplateSegments {
     myDocument = document;
   }
 
-  int getSegmentStart(int i) {
+  public int getSegmentStart(int i) {
     RangeMarker rangeMarker = mySegments.get(i);
     return rangeMarker.getStartOffset();
   }
 
-  int getSegmentEnd(int i) {
+  public int getSegmentEnd(int i) {
     RangeMarker rangeMarker = mySegments.get(i);
     return rangeMarker.getEndOffset();
   }

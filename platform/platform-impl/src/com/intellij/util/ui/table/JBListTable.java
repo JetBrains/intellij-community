@@ -1,11 +1,11 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.ui.table;
 
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorFontType;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.DottedBorder;
@@ -21,22 +21,39 @@ import com.intellij.util.ui.UIUtil;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
-import it.unimi.dsi.fastutil.objects.ObjectIterator;
+import it.unimi.dsi.fastutil.ints.IntList;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.JComponent;
+import javax.swing.JPanel;
+import javax.swing.JTable;
+import javax.swing.KeyStroke;
+import javax.swing.Timer;
 import javax.swing.event.ChangeEvent;
 import javax.swing.table.TableCellEditor;
 import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableColumn;
 import javax.swing.table.TableModel;
-import java.awt.*;
-import java.awt.event.*;
+import java.awt.BorderLayout;
+import java.awt.Component;
+import java.awt.Font;
+import java.awt.KeyboardFocusManager;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.FocusAdapter;
+import java.awt.event.FocusEvent;
+import java.awt.event.KeyEvent;
+import java.awt.event.MouseEvent;
 import java.util.EventObject;
 import java.util.List;
 import java.util.function.IntConsumer;
 
-import static java.awt.event.KeyEvent.*;
+import static java.awt.event.KeyEvent.KEY_PRESSED;
+import static java.awt.event.KeyEvent.VK_DOWN;
+import static java.awt.event.KeyEvent.VK_ENTER;
+import static java.awt.event.KeyEvent.VK_ESCAPE;
+import static java.awt.event.KeyEvent.VK_TAB;
+import static java.awt.event.KeyEvent.VK_UP;
 
 /**
  * @author Konstantin Bulenkov
@@ -53,7 +70,7 @@ public abstract class JBListTable {
     myInternalTable = t;
     myMainTable = new MyTable();
     myMainTable.setTableHeader(null);
-    myMainTable.setStriped(true);
+    myMainTable.setShowGrid(false);
     myRowResizeAnimator = new RowResizeAnimator(myMainTable);
     Disposer.register(parent, myRowResizeAnimator);
   }
@@ -69,7 +86,7 @@ public abstract class JBListTable {
   private static void installPaddingAndBordersForEditors(JBTableRowEditor editor) {
     final List<EditorTextField> editors = UIUtil.findComponentsOfType(editor, EditorTextField.class);
     for (EditorTextField textField : editors) {
-      textField.putClientProperty("JComboBox.isTableCellEditor", Boolean.FALSE);
+      textField.putClientProperty(ComboBox.IS_TABLE_CELL_EDITOR_PROPERTY, Boolean.FALSE);
       textField.putClientProperty("JBListTable.isTableCellEditor", Boolean.TRUE);
     }
   }
@@ -112,14 +129,14 @@ public abstract class JBListTable {
       }
     };
 
-    Font font = EditorColorsManager.getInstance().getGlobalScheme().getFont(EditorFontType.PLAIN);
+    Font font = EditorFontType.getGlobalPlainFont();
     font = new Font(font.getFontName(), font.getStyle(), JBUIScale.scaleFontSize((float)12));
     field.setFont(font);
     field.addSettingsProvider(EditorSettingsProvider.NO_WHITESPACE);
 
     if (selected && focused) {
       panel.setBackground(UIUtil.getTableSelectionBackground(true));
-      field.setAsRendererWithSelection(UIUtil.getTableSelectionBackground(true), UIUtil.getTableSelectionForeground());
+      field.setAsRendererWithSelection(UIUtil.getTableSelectionBackground(true), UIUtil.getTableSelectionForeground(true));
     } else {
       panel.setBackground(UIUtil.getTableBackground());
       if (selected) {
@@ -130,7 +147,7 @@ public abstract class JBListTable {
     return panel;
   }
 
-  private class MyCellEditor extends AbstractTableCellEditor {
+  private final class MyCellEditor extends AbstractTableCellEditor {
     private final JBTableRowEditor myEditor;
 
     MyCellEditor(JBTableRowEditor editor) {
@@ -151,6 +168,7 @@ public abstract class JBListTable {
         @Override
         public void addNotify() {
           super.addNotify();
+          validate();
           int height = getPreferredSize().height;
           if (height > table.getRowHeight(row)) {
             myRowResizeAnimator.resize(row, height);
@@ -217,9 +235,10 @@ public abstract class JBListTable {
     private static final int ANIMATION_STEP_MILLIS = 15;
     private static final int RESIZE_AMOUNT_PER_STEP = 5;
 
-    private final Int2ObjectOpenHashMap<RowAnimationState> myRowAnimationStates = new Int2ObjectOpenHashMap<>();
+    private final Int2ObjectMap<RowAnimationState> myRowAnimationStates = new Int2ObjectOpenHashMap<>();
     private final Timer myAnimationTimer = TimerUtil.createNamedTimer("JBListTableTimer", ANIMATION_STEP_MILLIS, this);
     private final JTable myTable;
+    private boolean myDisposed;
 
     RowResizeAnimator(JTable table) {
       myTable = table;
@@ -235,15 +254,20 @@ public abstract class JBListTable {
       doAnimationStep(e.getWhen());
     }
 
+    void revive() {
+      myDisposed = false;
+    }
+
     @Override
     public void dispose() {
+      myDisposed = true;
       stopAnimation();
       // enforce all animations are completed
       doAnimationStep(Long.MAX_VALUE);
     }
 
     private void startAnimation() {
-      if (!myAnimationTimer.isRunning()) {
+      if (!myAnimationTimer.isRunning() && !myDisposed) {
         myAnimationTimer.start();
       }
     }
@@ -253,9 +277,8 @@ public abstract class JBListTable {
     }
 
     private void doAnimationStep(long updateTime) {
-      IntArrayList completeRows = new IntArrayList(myRowAnimationStates.size());
-      for (ObjectIterator<Int2ObjectMap.Entry<RowAnimationState>> iterator = myRowAnimationStates.int2ObjectEntrySet().fastIterator(); iterator.hasNext(); ) {
-        Int2ObjectMap.Entry<RowAnimationState> entry = iterator.next();
+      IntList completeRows = new IntArrayList(myRowAnimationStates.size());
+      for (Int2ObjectMap.Entry<RowAnimationState> entry : myRowAnimationStates.int2ObjectEntrySet()) {
         if (entry.getValue().doAnimationStep(updateTime)) {
           completeRows.add(entry.getIntKey());
         }
@@ -300,7 +323,7 @@ public abstract class JBListTable {
     }
   }
 
-  private class MyTable extends JBTable {
+  private final class MyTable extends JBTable {
 
     MyTable() {
       super(new MyTableModel(myInternalTable.getModel()));
@@ -309,6 +332,12 @@ public abstract class JBListTable {
     @Override
     public MyTableModel getModel() {
       return (MyTableModel)super.getModel();
+    }
+
+    @Override
+    public void changeSelection(int rowIndex, int columnIndex, boolean toggle, boolean extend) {
+      super.changeSelection(rowIndex, columnIndex, toggle, extend);
+      scrollRectToVisible(getCellRect(rowIndex, columnIndex, false));
     }
 
     @Override
@@ -459,7 +488,7 @@ public abstract class JBListTable {
         return myCellEditor;
       }
       myCellEditor = null;
-      return myCellEditor;
+      return null;
     }
 
     @Override
@@ -470,13 +499,19 @@ public abstract class JBListTable {
     }
 
     @Override
+    public void addNotify() {
+      super.addNotify();
+      myRowResizeAnimator.revive();
+    }
+
+    @Override
     public void removeNotify() {
       super.removeNotify();
       Disposer.dispose(myRowResizeAnimator);
     }
   }
 
-  private class MyTableModel extends JBListTableModel {
+  private final class MyTableModel extends JBListTableModel {
 
     MyTableModel(TableModel model) {
       super(model);

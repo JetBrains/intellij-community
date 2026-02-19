@@ -1,7 +1,15 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.resolve
 
-import com.intellij.psi.*
+import com.intellij.psi.JavaPsiFacade
+import com.intellij.psi.PsiClass
+import com.intellij.psi.PsiClassOwner
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiFile
+import com.intellij.psi.PsiNamedElement
+import com.intellij.psi.PsiPackage
+import com.intellij.psi.PsiSubstitutor
+import com.intellij.psi.ResolveState
 import com.intellij.psi.scope.PsiScopeProcessor
 import com.intellij.psi.util.parentOfType
 import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement
@@ -14,7 +22,9 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrExtendsCla
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrImplementsClause
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement
-import org.jetbrains.plugins.groovy.lang.psi.api.types.CodeReferenceKind.*
+import org.jetbrains.plugins.groovy.lang.psi.api.types.CodeReferenceKind.IMPORT_REFERENCE
+import org.jetbrains.plugins.groovy.lang.psi.api.types.CodeReferenceKind.PACKAGE_REFERENCE
+import org.jetbrains.plugins.groovy.lang.psi.api.types.CodeReferenceKind.REFERENCE
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeParameter
 import org.jetbrains.plugins.groovy.lang.psi.impl.explicitTypeArguments
@@ -27,6 +37,7 @@ import org.jetbrains.plugins.groovy.lang.resolve.imports.StaticImport
 import org.jetbrains.plugins.groovy.lang.resolve.processors.ClassProcessor
 import org.jetbrains.plugins.groovy.lang.resolve.processors.CollectElementsProcessor
 import org.jetbrains.plugins.groovy.lang.resolve.processors.TypeParameterProcessor
+import org.jetbrains.plugins.groovy.transformations.inline.getHierarchicalInlineTransformationPerformer
 
 // https://issues.apache.org/jira/browse/GROOVY-8358
 // https://issues.apache.org/jira/browse/GROOVY-8359
@@ -37,12 +48,12 @@ import org.jetbrains.plugins.groovy.lang.resolve.processors.TypeParameterProcess
 
 internal object GrCodeReferenceResolver : GroovyResolver<GrCodeReferenceElement> {
 
-  override fun resolve(ref: GrCodeReferenceElement, incomplete: Boolean): Collection<GroovyResolveResult> {
+  override fun resolve(ref: GrCodeReferenceElement, incomplete: Boolean): Array<GroovyResolveResult> {
     return when (ref.kind) {
       PACKAGE_REFERENCE -> ref.resolveAsPackageReference()
       IMPORT_REFERENCE -> ref.resolveAsImportReference()
       REFERENCE -> ref.resolveAsReference()
-    }
+    }.toTypedArray()
   }
 }
 
@@ -94,6 +105,16 @@ private fun resolveImportReference(file: GroovyFile, import: GroovyImport): Coll
 private fun GrCodeReferenceElement.resolveAsReference(): Collection<GroovyResolveResult> {
   val name = referenceName ?: return emptyList()
 
+  if (canDelegateToInlineTransformation()) {
+    val macroPerformer = getHierarchicalInlineTransformationPerformer(this)
+    if (macroPerformer != null) {
+      val reference = macroPerformer.computeStaticReference(this)
+      if (reference != null) {
+        return listOf(reference)
+      }
+    }
+  }
+
   if (canResolveToTypeParameter()) {
     val typeParameters = resolveToTypeParameter(this, name)
     if (typeParameters.isNotEmpty()) return typeParameters
@@ -129,7 +150,6 @@ private fun GrCodeReferenceElement.resolveAsReference(): Collection<GroovyResolv
 
 private fun GrReferenceElement<*>.canResolveToTypeParameter(): Boolean {
   if (isQualified) return false
-  val parent = parent
   return when (parent) {
     is GrReferenceElement<*>,
     is GrExtendsClause,
@@ -137,8 +157,14 @@ private fun GrReferenceElement<*>.canResolveToTypeParameter(): Boolean {
     is GrAnnotation,
     is GrImportStatement,
     is GrNewExpression,
-    is GrAnonymousClassDefinition,
-    is GrCodeReferenceElement -> false
+    is GrAnonymousClassDefinition -> false
+    else -> true
+  }
+}
+
+private fun GrReferenceElement<*>.canDelegateToInlineTransformation(): Boolean {
+  return when(parent) {
+    is GrAnnotation -> false
     else -> true
   }
 }

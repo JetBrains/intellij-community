@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.customFolding;
 
 import com.intellij.ide.IdeBundle;
@@ -10,21 +10,19 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
+import com.intellij.util.containers.Stack;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
-import java.util.Stack;
 
-/**
- * @author Rustam Vishnyakov
- */
+@ApiStatus.Internal
 public final class CustomFoldingRegionsPopup {
-  public static void show(@NotNull final Collection<? extends FoldingDescriptor> descriptors,
-                          @NotNull final Editor editor,
-                          @NotNull final Project project) {
+  public static void show(final @NotNull Collection<? extends FoldingDescriptor> descriptors,
+                          final @NotNull Editor editor,
+                          final @NotNull Project project) {
     List<MyFoldingDescriptorWrapper> model = orderByPosition(descriptors);
     JBPopupFactory.getInstance()
       .createPopupChooserBuilder(model)
@@ -51,12 +49,10 @@ public final class CustomFoldingRegionsPopup {
       myIndent = indent;
     }
 
-    @NotNull
-    public FoldingDescriptor getDescriptor() {
+    public @NotNull FoldingDescriptor getDescriptor() {
       return myDescriptor;
     }
 
-    @Nullable
     @Override
     public String toString() {
       return StringUtil.repeat("   ", myIndent) + myDescriptor.getPlaceholderText();

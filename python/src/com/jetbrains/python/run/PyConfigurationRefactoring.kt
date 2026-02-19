@@ -9,7 +9,7 @@ import com.intellij.refactoring.listeners.UndoRefactoringElementAdapter
 
 /**
  * Tools to support refactoring for configurations
- * that implements [com.intellij.execution.configurations.RefactoringListenerProvider]
+ * that implements RefactoringListenerProvider
  */
 
 

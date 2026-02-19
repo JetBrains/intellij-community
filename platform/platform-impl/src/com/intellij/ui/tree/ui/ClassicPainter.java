@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.tree.ui;
 
 import com.intellij.ide.ui.UISettings;
@@ -6,20 +6,27 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.paint.LinePainter2D;
 import com.intellij.ui.paint.PaintUtil;
 import com.intellij.ui.scale.JBUIScale;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.VisibleForTesting;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.UIManager;
+import java.awt.Component;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.RenderingHints;
 
-final class ClassicPainter implements Control.Painter {
+@ApiStatus.Internal
+public final class ClassicPainter implements Control.Painter {
   private static final int GAP = 2; // minimal space between a control icon and a renderer component
   private final Boolean myPaintLines;
   private final Integer myLeftIndent;
   private final Integer myRightIndent;
   private final Integer myLeafIndent;
 
-  ClassicPainter(@Nullable Boolean paintLines, @Nullable Integer leftIndent, @Nullable Integer rightIndent, @Nullable Integer leafIndent) {
+  @VisibleForTesting
+  public ClassicPainter(@Nullable Boolean paintLines, @Nullable Integer leftIndent, @Nullable Integer rightIndent, @Nullable Integer leafIndent) {
     myPaintLines = paintLines;
     myLeftIndent = leftIndent;
     myRightIndent = rightIndent;
@@ -99,8 +106,7 @@ final class ClassicPainter implements Control.Painter {
   }
 
   private static void paintLine(@NotNull Graphics g, int x, int y, int width, int height) {
-    if (g instanceof Graphics2D) {
-      Graphics2D g2d = (Graphics2D)g;
+    if (g instanceof Graphics2D g2d) {
       double dx = x + width / 2.0 - PaintUtil.devPixel(g2d);
       LinePainter2D.paint(g2d, dx, y, dx, y + height, LinePainter2D.StrokeType.CENTERED, 1, RenderingHints.VALUE_ANTIALIAS_ON);
     }

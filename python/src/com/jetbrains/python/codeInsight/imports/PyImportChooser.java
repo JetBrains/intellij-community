@@ -3,8 +3,12 @@ package com.jetbrains.python.codeInsight.imports;
 
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
+import com.intellij.openapi.editor.colors.EditorFontType;
+import com.intellij.openapi.ui.popup.IPopupChooserBuilder;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.psi.PsiElement;
 import com.intellij.ui.SimpleColoredComponent;
@@ -13,44 +17,52 @@ import com.intellij.util.Consumer;
 import com.jetbrains.python.PyPsiBundle;
 import org.jetbrains.concurrency.AsyncPromise;
 import org.jetbrains.concurrency.Promise;
+import org.jetbrains.concurrency.Promises;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.Icon;
+import javax.swing.JList;
+import javax.swing.ListCellRenderer;
+import java.awt.Component;
+import java.awt.Font;
 import java.util.List;
 
 public class PyImportChooser implements ImportChooser {
 
   @Override
-  public Promise<ImportCandidateHolder> selectImport(List<? extends ImportCandidateHolder> sources,
-                                                     String name,
-                                                     boolean useQualifiedImport) {
+  public Promise<ImportCandidateHolder> selectImport(List<? extends ImportCandidateHolder> sources, boolean useQualifiedImport) {
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      return Promises.resolvedPromise(sources.get(0));
+    }
 
     AsyncPromise<ImportCandidateHolder> result = new AsyncPromise<>();
 
     // GUI part
-    DataManager.getInstance().getDataContextFromFocus().doWhenDone((Consumer<DataContext>)dataContext -> JBPopupFactory.getInstance()
+    DataManager.getInstance().getDataContextFromFocus().doWhenDone((Consumer<DataContext>)dataContext -> {
+      var popup = JBPopupFactory.getInstance()
       .createPopupChooserBuilder(sources)
-      .setRenderer(new CellRenderer(name))
-      .setTitle(useQualifiedImport ? PyPsiBundle.message("ACT.qualify.with.module") : PyPsiBundle.message("ACT.from.some.module.import"))
       .setItemChosenCallback(item -> {
         result.setResult(item);
-      })
-      .setNamerForFiltering(o -> o.getPresentableText(name))
-      .createPopup()
-      .showInBestPositionFor(dataContext));
-
+      });
+      processPopup(popup, useQualifiedImport);
+      popup.createPopup()
+      .showInBestPositionFor(dataContext);
+    });
     return result;
+  }
+
+  protected void processPopup(IPopupChooserBuilder<? extends ImportCandidateHolder> popup, boolean useQualifiedImport) {
+    popup.setRenderer(new CellRenderer())
+      .setTitle(useQualifiedImport ? PyPsiBundle.message("ACT.qualify.with.module") : PyPsiBundle.message("ACT.from.some.module.import"))
+      .setNamerForFiltering(o -> o.getPresentableText());
   }
 
   // Stolen from FQNameCellRenderer
   private static class CellRenderer extends SimpleColoredComponent implements ListCellRenderer<ImportCandidateHolder> {
     private final Font FONT;
-    private final String myName;
 
-    CellRenderer(String name) {
-      myName = name;
+    CellRenderer() {
       EditorColorsScheme scheme = EditorColorsManager.getInstance().getGlobalScheme();
-      FONT = new Font(scheme.getEditorFontName(), Font.PLAIN, scheme.getEditorFontSize());
+      FONT = scheme.getFont(EditorFontType.PLAIN);
       setOpaque(true);
     }
 
@@ -64,9 +76,10 @@ public class PyImportChooser implements ImportChooser {
 
       PsiElement importable = value.getImportable();
       if (importable != null) {
-        setIcon(importable.getIcon(0));
+        Icon icon = ReadAction.compute(() -> importable.getIcon(0));
+        setIcon(icon);
       }
-      String item_name = value.getPresentableText(myName);
+      String item_name = value.getPresentableText();
       append(item_name, SimpleTextAttributes.REGULAR_ATTRIBUTES);
 
       setFont(FONT);

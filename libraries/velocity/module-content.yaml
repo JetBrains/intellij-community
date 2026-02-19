@@ -1,0 +1,6 @@
+- name: dist.all/lib/intellij.libraries.velocity.jar
+  modules:
+  - name: intellij.libraries.velocity
+    libraries:
+      Velocity:
+      - name: $MAVEN_REPOSITORY$/org/apache/velocity/velocity-engine-core/2/velocity-engine-core-2.jar

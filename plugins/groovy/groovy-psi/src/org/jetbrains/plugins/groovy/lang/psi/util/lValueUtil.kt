@@ -5,7 +5,11 @@ package org.jetbrains.plugins.groovy.lang.psi.util
 
 import com.intellij.psi.PsiType
 import org.jetbrains.plugins.groovy.lang.lexer.TokenSets.POSTFIX_UNARY_OP_SET
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssignmentExpression
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrParenthesizedExpression
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrTuple
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrUnaryExpression
 import org.jetbrains.plugins.groovy.lang.resolve.api.Argument
 import org.jetbrains.plugins.groovy.lang.resolve.api.ExpressionArgument
 import org.jetbrains.plugins.groovy.lang.resolve.api.UnknownArgument
@@ -22,8 +26,7 @@ fun GrExpression.isRValue(): Boolean {
  * The expression is a lValue when it's on the left of whatever assignment.
  */
 fun GrExpression.isLValue(): Boolean {
-  val parent = parent
-  return when (parent) {
+  return when (val parent = parent) {
     is GrTuple -> true
     is GrAssignmentExpression -> this == parent.lValue
     is GrUnaryExpression -> parent.operationTokenType in POSTFIX_UNARY_OP_SET

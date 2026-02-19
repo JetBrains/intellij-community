@@ -17,18 +17,15 @@ package com.intellij.java.codeInspection
 
 import com.intellij.JavaTestUtil
 import com.intellij.codeInspection.reflectiveAccess.JavaReflectionInvocationInspection
-import com.intellij.openapi.roots.LanguageLevelProjectExtension
 import com.intellij.pom.java.LanguageLevel
+import com.intellij.testFramework.IdeaTestUtil
 import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 
-/**
- * @author Pavel.Dolgov
- */
 class JavaReflectionInvocationTest : LightJavaCodeInsightFixtureTestCase() {
   override fun setUp() {
     super.setUp()
-    LanguageLevelProjectExtension.getInstance(project).languageLevel = LanguageLevel.JDK_1_5
+    IdeaTestUtil.setProjectLanguageLevel(project, LanguageLevel.JDK_1_5)
     myFixture.enableInspections(JavaReflectionInvocationInspection())
   }
 
@@ -41,6 +38,9 @@ class JavaReflectionInvocationTest : LightJavaCodeInsightFixtureTestCase() {
 
   fun testConstructorParamCount() = doTest()
   fun testConstructorParamTypes() = doTest()
+  fun testConstructorParamTypesTernary() = doTest()
+
+  fun testNonVarargCall() = doTest()
 
   private fun doTest() {
     myFixture.testHighlighting("${getTestName(false)}.java")

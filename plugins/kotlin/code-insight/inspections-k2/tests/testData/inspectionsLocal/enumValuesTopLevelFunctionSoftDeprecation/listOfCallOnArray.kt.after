@@ -1,0 +1,5 @@
+import kotlin.enums.enumEntries
+
+enum class MyEnum
+
+val a : List<Array<MyEnum>> = listOf(enumEntries<MyEnum>().toTypedArray())

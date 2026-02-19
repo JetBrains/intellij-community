@@ -12,6 +12,7 @@ import z
 from
 from a import C1
 from alphabet import *
+from alphabet import A
 from alphabet import B, A
 from alphabet import C
 from alphabet import D

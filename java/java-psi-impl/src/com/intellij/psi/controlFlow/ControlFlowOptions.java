@@ -3,25 +3,39 @@ package com.intellij.psi.controlFlow;
 
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Objects;
-
 /**
  * Options for ControlFlow generation.
+ *
  * @see ControlFlowFactory
  * @see ControlFlowAnalyzer
  */
 public class ControlFlowOptions {
-  public static final @NotNull ControlFlowOptions NO_CONST_EVALUATE = new ControlFlowOptions(false, false);
-  
+  private static final ControlFlowOptions[] DATA = {
+    new ControlFlowOptions(false, false, false),
+    new ControlFlowOptions(false, false, true),
+    new ControlFlowOptions(false, true, false),
+    new ControlFlowOptions(false, true, true),
+    new ControlFlowOptions(true, false, false),
+    new ControlFlowOptions(true, false, true),
+    new ControlFlowOptions(true, true, false),
+    new ControlFlowOptions(true, true, true),
+  };
+
+  public static final @NotNull ControlFlowOptions NO_CONST_EVALUATE = create(false, false, true);
+
   private final boolean myEnableShortCircuit;
   private final boolean myEvaluateConstantIfCondition;
   private final boolean myExceptionAfterAssignment;
 
-  public ControlFlowOptions(boolean enableShortCircuit, boolean evaluateConstantIfCondition) {
-    this(enableShortCircuit, evaluateConstantIfCondition, true);
+  public static ControlFlowOptions create(boolean enableShortCircuit,
+                                          boolean evaluateConstantIfCondition,
+                                          boolean exceptionAfterAssignment) {
+    return DATA[(enableShortCircuit ? 4 : 0) +
+                (evaluateConstantIfCondition ? 2 : 0) +
+                (exceptionAfterAssignment ? 1 : 0)];
   }
 
-  public ControlFlowOptions(boolean enableShortCircuit, boolean evaluateConstantIfCondition, boolean exceptionAfterAssignment) {
+  private ControlFlowOptions(boolean enableShortCircuit, boolean evaluateConstantIfCondition, boolean exceptionAfterAssignment) {
     myEnableShortCircuit = enableShortCircuit;
     myEvaluateConstantIfCondition = evaluateConstantIfCondition;
     myExceptionAfterAssignment = exceptionAfterAssignment;
@@ -56,8 +70,8 @@ public class ControlFlowOptions {
    * @see #shouldEvaluateConstantIfCondition() 
    */
   public ControlFlowOptions dontEvaluateConstantIfCondition() {
-    return myEvaluateConstantIfCondition ? 
-           new ControlFlowOptions(myEnableShortCircuit, false, myExceptionAfterAssignment) : this;
+    return myEvaluateConstantIfCondition ?
+           create(myEnableShortCircuit, false, myExceptionAfterAssignment) : this;
   }
 
   @Override
@@ -72,6 +86,10 @@ public class ControlFlowOptions {
 
   @Override
   public int hashCode() {
-    return Objects.hash(myEnableShortCircuit, myEvaluateConstantIfCondition, myExceptionAfterAssignment);
+    int result = 1;
+    result = 31 * result + (myEnableShortCircuit ? 1231 : 1237);
+    result = 31 * result + (myEvaluateConstantIfCondition ? 1231 : 1237);
+    result = 31 * result + (myExceptionAfterAssignment ? 1231 : 1237);
+    return result;
   }
 }

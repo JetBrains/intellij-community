@@ -1,13 +1,20 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes.ui;
 
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionGroup;
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.ActionToolbar;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JComponent;
+import javax.swing.JPanel;
+import java.awt.BorderLayout;
+import java.awt.Component;
 import java.util.Arrays;
 import java.util.List;
 
@@ -23,7 +30,7 @@ public class TreeActionsToolbarPanel extends JPanel {
   }
 
   public TreeActionsToolbarPanel(@NotNull Component toolbarComponent, @NotNull ChangesTree tree) {
-    this(toolbarComponent, new DefaultActionGroup(createTreeActions(tree)), tree);
+    this(toolbarComponent, new DefaultActionGroup(createTreeActions()), tree);
   }
 
   public TreeActionsToolbarPanel(@NotNull Component toolbarComponent, @NotNull ActionGroup group, @Nullable JComponent targetComponent) {
@@ -37,8 +44,12 @@ public class TreeActionsToolbarPanel extends JPanel {
     add(additionalToolbar.getComponent(), BorderLayout.EAST);
   }
 
-  @NotNull
-  public static List<AnAction> createTreeActions(@NotNull ChangesTree tree) {
+  public static @NotNull List<AnAction> createTreeActions() {
+    return Arrays.asList(ActionManager.getInstance().getAction(IdeActions.ACTION_EXPAND_ALL),
+                         ActionManager.getInstance().getAction(IdeActions.ACTION_COLLAPSE_ALL));
+  }
+
+  public static @NotNull List<AnAction> createTreeActions(@NotNull ChangesTree tree) {
     return Arrays.asList(tree.createExpandAllAction(true),
                          tree.createCollapseAllAction(true));
   }

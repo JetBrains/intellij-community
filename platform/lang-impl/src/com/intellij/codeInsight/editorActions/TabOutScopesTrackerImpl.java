@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.editorActions;
 
 import com.intellij.codeInsight.CodeInsightSettings;
@@ -9,25 +9,29 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.EditorThreading;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.util.Key;
+import com.intellij.util.ConcurrencyUtil;
+import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
-public class TabOutScopesTrackerImpl implements TabOutScopesTracker {
+@ApiStatus.Internal
+public final class TabOutScopesTrackerImpl implements TabOutScopesTracker {
   private static final Key<Integer> CARET_SHIFT = Key.create("tab.out.caret.shift");
 
   @Override
   public void registerScopeRange(@NotNull Editor editor, int rangeStart, int rangeEnd, int tabOutOffset) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    EditorThreading.assertWriteAllowed();
 
-    if (editor.isDisposed()) throw new IllegalArgumentException("Editor is already disposed");
+    if (editor.isDisposed()) throw new IllegalArgumentException(editor + " is already disposed");
     if (rangeStart > rangeEnd) {
       final String message = String.format("regionEnd (%d) should be larger than regionStart (%d)", rangeEnd, rangeStart);
       throw new IllegalArgumentException(message);
@@ -58,13 +62,19 @@ public class TabOutScopesTrackerImpl implements TabOutScopesTracker {
   }
 
   @Override
+  public int getScopeEndingAt(@NotNull Editor editor, int offset) {
+    int caretShift = checkOrRemoveScopeEndingAt(editor, offset, false);
+    return caretShift > 0 ? offset + caretShift : -1;
+  }
+
+  @Override
   public int removeScopeEndingAt(@NotNull Editor editor, int offset) {
     int caretShift = checkOrRemoveScopeEndingAt(editor, offset, true);
     return caretShift > 0 ? offset + caretShift : -1;
   }
 
   private static int checkOrRemoveScopeEndingAt(@NotNull Editor editor, int offset, boolean removeScope) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ApplicationManager.getApplication().assertReadAccessAllowed();
 
     if (!CodeInsightSettings.getInstance().TAB_EXITS_BRACKETS_AND_QUOTES) return 0;
 
@@ -98,20 +108,18 @@ public class TabOutScopesTrackerImpl implements TabOutScopesTracker {
     private Tracker(@NotNull EditorImpl editor) {
       myEditor = editor;
       Disposable editorDisposable = editor.getDisposable();
-      myEditor.getDocument().addDocumentListener(this, editorDisposable);
+      myEditor.getUiDocument().addDocumentListener(this, editorDisposable);
     }
 
     private List<RangeMarker> getCurrentScopes(boolean create) {
       Caret currentCaret = myEditor.getCaretModel().getCurrentCaret();
-      List<RangeMarker> result = currentCaret.getUserData(TRACKED_SCOPES);
-      if (result == null && create) {
-        currentCaret.putUserData(TRACKED_SCOPES, result = new ArrayList<>());
-      }
-      return result;
+      return create ?
+             ConcurrencyUtil.computeIfAbsent(currentCaret, TRACKED_SCOPES, ()->ContainerUtil.createLockFreeCopyOnWriteList())
+             : currentCaret.getUserData(TRACKED_SCOPES);
     }
 
     private void registerScope(final int offsetStart, final int offsetEnd, final int caretShift) {
-      RangeMarker marker = myEditor.getDocument().createRangeMarker(offsetStart, offsetEnd);
+      RangeMarker marker = myEditor.getUiDocument().createRangeMarker(offsetStart, offsetEnd);
       marker.setGreedyToLeft(true);
       marker.setGreedyToRight(true);
       if (caretShift > 1) marker.putUserData(CARET_SHIFT, caretShift);

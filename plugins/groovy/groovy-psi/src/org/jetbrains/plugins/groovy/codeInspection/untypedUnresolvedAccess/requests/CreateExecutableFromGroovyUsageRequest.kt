@@ -3,15 +3,19 @@ package org.jetbrains.plugins.groovy.codeInspection.untypedUnresolvedAccess.requ
 
 import com.intellij.codeInsight.daemon.impl.quickfix.CreateFromUsageBaseFix.getTargetSubstitutor
 import com.intellij.lang.jvm.JvmModifier
-import com.intellij.lang.jvm.actions.*
-import com.intellij.openapi.components.service
+import com.intellij.lang.jvm.actions.AnnotationRequest
+import com.intellij.lang.jvm.actions.CreateExecutableRequest
+import com.intellij.lang.jvm.actions.ExpectedParameter
+import com.intellij.lang.jvm.actions.ExpectedType
+import com.intellij.lang.jvm.actions.expectedParameter
+import com.intellij.lang.jvm.actions.expectedTypes
 import com.intellij.psi.PsiClassType
 import com.intellij.psi.PsiJvmSubstitutor
 import com.intellij.psi.PsiType
+import com.intellij.psi.SmartPointerManager
 import com.intellij.psi.SmartPsiElementPointer
 import com.intellij.psi.codeStyle.JavaCodeStyleManager
 import com.intellij.psi.codeStyle.VariableKind.PARAMETER
-import com.intellij.psi.util.createSmartPointer
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrCall
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrAnonymousClassDefinition
@@ -28,7 +32,7 @@ internal abstract class CreateExecutableFromGroovyUsageRequest<out T : GrCall>(
 
   private val psiManager = call.manager
   private val project = psiManager.project
-  private val callPointer: SmartPsiElementPointer<T> = call.createSmartPointer(project)
+  private val callPointer: SmartPsiElementPointer<T> = SmartPointerManager.getInstance(project).createSmartPsiElementPointer(call)
   protected val call: T get() = callPointer.element ?: error("dead pointer")
 
   abstract fun getArguments(): List<Argument>?
@@ -44,7 +48,7 @@ internal abstract class CreateExecutableFromGroovyUsageRequest<out T : GrCall>(
   override fun getExpectedParameters(): List<ExpectedParameter> {
     val argumentTypes = getArgumentTypes() ?: return emptyList()
 
-    val codeStyleManager: JavaCodeStyleManager = project.service()
+    val codeStyleManager = JavaCodeStyleManager.getInstance(project)
 
     val names = argumentTypes.map { (type, _) -> type to codeStyleManager.suggestNames(emptyList(), PARAMETER, type).names.toList() }
 
@@ -71,8 +75,6 @@ internal abstract class CreateExecutableFromGroovyUsageRequest<out T : GrCall>(
     val resolved = type.resolve()
     return if (resolved is GrAnonymousClassDefinition) resolved.baseClassType else type
   }
-
-  override fun getParameters() = getParameters(expectedParameters, project)
 
   private class ParametersNameSupplier(suggested: List<Pair<PsiType, List<String>>>) {
 

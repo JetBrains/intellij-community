@@ -1,35 +1,66 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.svn
 
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.command.WriteCommandAction.writeCommandAction
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.io.FileUtil.toSystemDependentName
 import com.intellij.openapi.vcs.FileStatus
 import com.intellij.openapi.vcs.VcsConfiguration
 import com.intellij.openapi.vcs.changes.Change
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.testFramework.RunAll
+import com.intellij.testFramework.TestLoggerFactory
 import com.intellij.testFramework.UsefulTestCase.assertDoesntExist
 import com.intellij.testFramework.UsefulTestCase.assertExists
-import com.intellij.util.io.systemIndependentPath
+import com.intellij.testFramework.runInEdtAndWait
+import com.intellij.util.ThrowableRunnable
 import org.hamcrest.CoreMatchers.allOf
 import org.hamcrest.CoreMatchers.nullValue
 import org.hamcrest.FeatureMatcher
 import org.hamcrest.Matcher
-import org.hamcrest.Matchers.*
+import org.hamcrest.Matchers.contains
+import org.hamcrest.Matchers.containsInAnyOrder
+import org.hamcrest.Matchers.equalToIgnoringCase
+import org.hamcrest.Matchers.startsWith
 import org.jetbrains.annotations.NonNls
-import org.junit.Assert.*
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertThat
+import org.junit.Assume
 import org.junit.Test
 import java.io.File
 import java.io.IOException
 import java.nio.file.Paths
+import kotlin.io.path.invariantSeparatorsPathString
 
 @NonNls
 private const val LOG_SEPARATOR_START = "-------------"
 
 class SvnRenameTest : SvnTestCase() {
+  private var testRootDisposable: Disposable? = null
+
   override fun before() {
     super.before()
 
     enableSilentOperation(VcsConfiguration.StandardConfirmation.ADD)
+
+    testRootDisposable = Disposer.newDisposable("SvnRenameTest")
+    TestLoggerFactory.enableDebugLogging(testRootDisposable!!,
+                                         "#com.intellij.openapi.command.impl",
+                                         "#com.intellij.history.integration.revertion.UndoChangeRevertingVisitor",
+                                         "#com.intellij.openapi.command.impl.ChangeRange",
+                                         "#com.intellij.openapi.command.impl.UndoableGroup")
+  }
+
+  override fun after() {
+    RunAll.runAll(
+      ThrowableRunnable<Throwable> {
+        testRootDisposable?.let { Disposer.dispose(it) }
+        testRootDisposable = null
+      },
+      ThrowableRunnable<Throwable> { super.after() }
+    )
   }
 
   @Test
@@ -99,6 +130,8 @@ class SvnRenameTest : SvnTestCase() {
 
     refreshVfs()   // wait for end of refresh operations initiated from SvnFileSystemListener
     changeListManager.ensureUpToDate()
+
+    Assume.assumeTrue("Suspecting blinking IDEA-182560. Test aborted.", child.isValid)
     assertChanges(
       "child" to "childnew",
       "child/a.txt" to "childnew/a.txt",
@@ -215,6 +248,17 @@ class SvnRenameTest : SvnTestCase() {
 
     refreshVfs()   // wait for end of refresh operations initiated from SvnFileSystemListener
     changeListManager.ensureUpToDate()
+
+    runAndVerifyStatus(
+      "D child", "> moved to newchild",
+      "D child/a.txt",
+      "D child/grandChild",
+      "D child/grandChild/b.txt",
+      "A + newchild", "> moved from child",
+      "D + newchild/a.txt", "> moved to newchild/anew.txt",
+      "A + newchild/anew.txt", "> moved from newchild/a.txt"
+    )
+
     commit(changeListManager.defaultChangeList.changes.toList(), "test")
   }
 
@@ -228,10 +272,15 @@ class SvnRenameTest : SvnTestCase() {
     checkin()
 
     moveFileInCommand(child, parent2)
-    undo()
-    val childPath = File(parent1.path, "child")
-    assertExists(childPath)
-    assertExists(File(childPath, "a.txt"))
+
+    makeVfsRefreshBehaveMaybe {
+      undoFileMove()
+      Assume.assumeTrue("Suspecting blinking IDEA-182560. Test aborted.", child.isValid)
+
+      val childPath = File(parent1.path, "child")
+      assertExists(childPath)
+      assertExists(File(childPath, "a.txt"))
+    }
   }
 
   // IDEADEV-19552
@@ -241,9 +290,12 @@ class SvnRenameTest : SvnTestCase() {
     checkin()
 
     renameFileInCommand(file, "b.txt")
-    undo()
-    assertExists(File(myWorkingCopyDir.path, "a.txt"))
-    assertDoesntExist(File(myWorkingCopyDir.path, "b.txt"))
+
+    makeVfsRefreshBehaveMaybe {
+      undoFileRename()
+      assertExists(File(myWorkingCopyDir.path, "a.txt"))
+      assertDoesntExist(File(myWorkingCopyDir.path, "b.txt"))
+    }
   }
 
   @Test
@@ -253,11 +305,14 @@ class SvnRenameTest : SvnTestCase() {
 
     renameFileInCommand(file, "b.txt")
     checkin()
-    undo()
-    runAndVerifyStatus(
-      "A + a.txt", "> moved from b.txt",
-      "D b.txt", "> moved to a.txt"
-    )
+
+    makeVfsRefreshBehaveMaybe {
+      undoFileRename()
+      runAndVerifyStatus(
+        "A + a.txt", "> moved from b.txt",
+        "D b.txt", "> moved to a.txt"
+      )
+    }
   }
 
   // IDEADEV-19336
@@ -273,12 +328,16 @@ class SvnRenameTest : SvnTestCase() {
     moveFileInCommand(child, parent2)
     checkin()
 
-    undo()
-    runAndVerifyStatus(
-      "A + parent1/child", "> moved from parent2/child",
-      "D parent2/child", "> moved to parent1/child",
-      "D parent2/child/a.txt"
-    )
+    makeVfsRefreshBehaveMaybe {
+      undoFileMove()
+      Assume.assumeTrue("Suspecting blinking IDEA-182560. Test aborted.", child.isValid)
+
+      runAndVerifyStatus(
+        "A + parent1/child", "> moved from parent2/child",
+        "D parent2/child", "> moved to parent1/child",
+        "D parent2/child/a.txt"
+      )
+    }
   }
 
   @Test
@@ -310,8 +369,12 @@ class SvnRenameTest : SvnTestCase() {
     moveFileInCommand(child, unversioned)
     runAndVerifyStatusSorted("? unversioned", "D child", "D child/a.txt")
 
-    undo()
-    runAndVerifyStatusSorted("? unversioned")
+    makeVfsRefreshBehaveMaybe {
+      undoFileMove()
+      Assume.assumeTrue("Suspecting blinking IDEA-182560. Test aborted.", child.isValid)
+
+      runAndVerifyStatusSorted("? unversioned")
+    }
   }
 
   @Test
@@ -322,8 +385,13 @@ class SvnRenameTest : SvnTestCase() {
     val unversioned = createDirInCommand(myWorkingCopyDir, "unversioned")
     moveFileInCommand(file, unversioned)
     runAndVerifyStatusSorted("? unversioned")
-    undo()
-    runAndVerifyStatusSorted("? a.txt", "? unversioned")
+
+    makeVfsRefreshBehaveMaybe {
+      undoFileMove()
+      Assume.assumeTrue("Suspecting blinking IDEA-182560. Test aborted.", file.isValid)
+
+      runAndVerifyStatusSorted("? a.txt", "? unversioned")
+    }
   }
 
   @Test
@@ -334,8 +402,13 @@ class SvnRenameTest : SvnTestCase() {
     val unversioned = createDirInCommand(myWorkingCopyDir, "unversioned")
     moveFileInCommand(file, unversioned)
     runAndVerifyStatusSorted("? unversioned")
-    undo()
-    runAndVerifyStatusSorted("? a.txt", "? unversioned")
+
+    makeVfsRefreshBehaveMaybe {
+      undoFileMove()
+      Assume.assumeTrue("Suspecting blinking IDEA-182560. Test aborted.", file.isValid)
+
+      runAndVerifyStatusSorted("? a.txt", "? unversioned")
+    }
   }
 
   @Test
@@ -353,8 +426,12 @@ class SvnRenameTest : SvnTestCase() {
     runAndVerifyStatusSorted("? unversioned", "D child", "D child/a.txt")
     checkin()
 
-    undo()
-    runAndVerifyStatusSorted("? child", "? unversioned")
+    makeVfsRefreshBehaveMaybe {
+      undoFileMove()
+      Assume.assumeTrue("Suspecting blinking IDEA-182560. Test aborted.", child.isValid)
+
+      runAndVerifyStatusSorted("? child", "? unversioned")
+    }
   }
 
   // IDEA-92941
@@ -368,8 +445,13 @@ class SvnRenameTest : SvnTestCase() {
     runAndVerifyStatusSorted("A child/a.txt")
     moveFileInCommand(file, sink)
     runAndVerifyStatusSorted("A sink/a.txt")
-    undo()
-    runAndVerifyStatusSorted("A child/a.txt")
+
+    makeVfsRefreshBehaveMaybe {
+      undoFileMove()
+      Assume.assumeTrue("Suspecting blinking IDEA-182560. Test aborted.", file.isValid)
+
+      runAndVerifyStatusSorted("A child/a.txt")
+    }
   }
 
   // todo undo, undo committed?
@@ -393,11 +475,13 @@ class SvnRenameTest : SvnTestCase() {
   }
 
   private fun moveToNewPackage(file: VirtualFile, packageName: String) =
-    writeCommandAction(myProject).compute<VirtualFile, IOException> {
-      val packageDirectory = myWorkingCopyDir.createChildDirectory(this, packageName)
-      file.move(this, packageDirectory)
-      packageDirectory
-    }
+    writeCommandAction(myProject)
+      .withName("SvnRenameTest MoveToNewPackage") //NON-NLS
+      .compute<VirtualFile, IOException> {
+        val packageDirectory = myWorkingCopyDir.createChildDirectory(this, packageName)
+        file.move(this, packageDirectory)
+        packageDirectory
+      }
 
   private fun assertChanges(vararg expected: Pair<String?, String?>) {
     val changes = changeListManager.defaultChangeList.changes.toMutableList()
@@ -417,5 +501,12 @@ class SvnRenameTest : SvnTestCase() {
     }
 
   fun pathMatcher(path: String?): Matcher<in String?> = if (path == null) nullValue()
-  else equalToIgnoringCase(Paths.get(myWorkingCopyDir.path).resolve(toSystemDependentName(path)).systemIndependentPath)
+  else equalToIgnoringCase(Paths.get(myWorkingCopyDir.path).resolve(toSystemDependentName(path)).invariantSeparatorsPathString)
+
+  /*
+   * Try to workaround IDEA-182560
+   */
+  private fun makeVfsRefreshBehaveMaybe(runnable: () -> Unit) {
+    runInEdtAndWait(runnable)
+  }
 }

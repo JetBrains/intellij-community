@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.ex;
 
 import com.intellij.analysis.AnalysisBundle;
@@ -6,10 +6,14 @@ import com.intellij.codeInspection.CommonProblemDescriptor;
 import com.intellij.codeInspection.HTMLComposer;
 import com.intellij.codeInspection.lang.HTMLComposerExtension;
 import com.intellij.codeInspection.lang.InspectionExtensionsFactory;
-import com.intellij.codeInspection.reference.*;
+import com.intellij.codeInspection.reference.RefDirectory;
+import com.intellij.codeInspection.reference.RefElement;
+import com.intellij.codeInspection.reference.RefElementImpl;
+import com.intellij.codeInspection.reference.RefEntity;
+import com.intellij.codeInspection.reference.RefFile;
+import com.intellij.codeInspection.reference.RefVisitor;
 import com.intellij.lang.Language;
 import com.intellij.openapi.project.ProjectUtilCore;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
@@ -23,29 +27,25 @@ import java.util.HashMap;
 import java.util.Map;
 
 public abstract class HTMLComposerImpl extends HTMLComposer {
-  private final int[] myListStack;
-  private int myListStackTop;
-  private final Map<Key, HTMLComposerExtension> myExtensions = new HashMap<>();
-  private final Map<Language, HTMLComposerExtension> myLanguageExtensions = new HashMap<>();
-  @NonNls protected static final String BR = "<br>";
-  @NonNls public static final String NBSP = "&nbsp;";
-  @NonNls public static final String CODE_CLOSING = "</code>";
-  @NonNls public static final String CODE_OPENING = "<code>";
-  @NonNls public static final String B_OPENING = "<b>";
-  @NonNls public static final String B_CLOSING = "</b>";
+  private final Map<Key<? extends HTMLComposerExtension<?>>, HTMLComposerExtension<?>> myExtensions = new HashMap<>();
+  private final Map<Language, HTMLComposerExtension<?>> myLanguageExtensions = new HashMap<>();
+  protected static final @NonNls String BR = "<br>";
+  public static final @NonNls String NBSP = "&nbsp;";
+  public static final @NonNls String CODE_CLOSING = "</code>";
+  public static final @NonNls String CODE_OPENING = "<code>";
+  public static final @NonNls String B_OPENING = "<b>";
+  public static final @NonNls String B_CLOSING = "</b>";
 
-  @NonNls protected static final String CLOSE_TAG = "\">";
-  @NonNls public static final String A_HREF_OPENING = "<a HREF=\"";
-  @NonNls public static final String A_CLOSING = "</a>";
+  protected static final @NonNls String CLOSE_TAG = "\">";
+  public static final @NonNls String A_HREF_OPENING = "<a href=\"";
+  public static final @NonNls String A_CLOSING = "</a>";
 
   protected HTMLComposerImpl() {
-    myListStack = new int[5];
-    myListStackTop = -1;
     for (InspectionExtensionsFactory factory : InspectionExtensionsFactory.EP_NAME.getExtensionList()) {
-      final HTMLComposerExtension extension = factory.createHTMLComposerExtension(this);
+      final HTMLComposerExtension<?> extension = factory.createHTMLComposerExtension(this);
       if (extension != null) {
         myExtensions.put(extension.getID(), extension);
-        myLanguageExtensions.put(extension.getLanguage(), extension);
+        extension.getLanguages().forEach(l -> myLanguageExtensions.put(l, extension));
       }
     }
   }
@@ -55,8 +55,7 @@ public abstract class HTMLComposerImpl extends HTMLComposer {
   public void compose(@NotNull StringBuilder buf, RefEntity refElement, CommonProblemDescriptor descriptor) {}
 
   protected void genPageHeader(@NotNull StringBuilder buf, RefEntity refEntity) {
-    if (refEntity instanceof RefElement) {
-      RefElement refElement = (RefElement)refEntity;
+    if (refEntity instanceof RefElement refElement) {
 
       appendHeading(buf, AnalysisBundle.message("inspection.export.results.capitalized.location"));
       buf.append("<div class=\"location\">");
@@ -65,12 +64,11 @@ public abstract class HTMLComposerImpl extends HTMLComposer {
       buf.append("in ");
       appendLocation(buf, refElement);
       buf.append("</div>");
-      buf.append(BR).append(BR);
     }
   }
 
   private void appendLocation(@NotNull StringBuilder buf, final RefElement refElement) {
-    final HTMLComposerExtension extension = getLanguageExtension(refElement);
+    final HTMLComposerExtension<?> extension = getLanguageExtension(refElement);
     if (extension != null) {
       extension.appendLocation(refElement, buf);
     }
@@ -79,16 +77,20 @@ public abstract class HTMLComposerImpl extends HTMLComposer {
       buf.append(NBSP);
       appendElementReference(buf, refElement, false);
     }
+    else if (refElement instanceof RefDirectory){
+      buf.append(AnalysisBundle.message("inspection.export.results.directory"));
+      buf.append(NBSP);
+      appendElementReference(buf, refElement, false);
+    }
   }
 
-  @Nullable
-  private HTMLComposerExtension getLanguageExtension(final RefElement refElement) {
+  private @Nullable HTMLComposerExtension<?> getLanguageExtension(final RefElement refElement) {
     final PsiElement element = refElement.getPsiElement();
     return element != null ? myLanguageExtensions.get(element.getLanguage()) : null;
   }
 
   private void appendShortName(@NotNull StringBuilder buf, RefElement refElement) {
-    final HTMLComposerExtension extension = getLanguageExtension(refElement);
+    final HTMLComposerExtension<?> extension = getLanguageExtension(refElement);
     if (extension != null) {
       extension.appendShortName(refElement, buf);
     } else {
@@ -103,37 +105,6 @@ public abstract class HTMLComposerImpl extends HTMLComposer {
         }
       });
     }
-  }
-
-  public void appendQualifiedName(@NotNull StringBuilder buf, RefEntity refEntity) {
-    if (refEntity == null) return;
-
-    StringBuilder qName = new StringBuilder();
-
-    while (!(refEntity instanceof RefProject)) {
-      if (qName.length() > 0) qName.insert(0, ".");
-
-      String name = null;
-      if (refEntity instanceof RefElement) {
-        final HTMLComposerExtension extension = getLanguageExtension((RefElement)refEntity);
-        if (extension != null) {
-          name = extension.getQualifiedName(refEntity);
-        }
-      }
-
-      if (name == null) {
-        name = refEntity.getName();
-      }
-
-      qName.insert(0, name);
-      if (Comparing.strEqual(refEntity.getName(), refEntity.getQualifiedName())) {
-        buf.append(qName);
-        return;
-      }
-      refEntity = refEntity.getOwner();
-    }
-
-    buf.append(qName);
   }
 
   @Override
@@ -154,7 +125,7 @@ public abstract class HTMLComposerImpl extends HTMLComposer {
     buf.append(A_HREF_OPENING);
     buf.append(url);
     if (frameName != null) {
-      @NonNls final String target = "\" target=\"";
+      final @NonNls String target = "\" target=\"";
       buf.append(target);
       buf.append(frameName);
     }
@@ -164,22 +135,20 @@ public abstract class HTMLComposerImpl extends HTMLComposer {
     buf.append(A_CLOSING);
   }
 
+  @SuppressWarnings("MethodMayBeStatic")
   protected void appendQuickFix(@NotNull StringBuilder buf, String text) {
     buf.append(text);
   }
 
   @Override
   public void appendElementReference(@NotNull StringBuilder buf, RefElement refElement, boolean isPackageIncluded) {
-    final HTMLComposerExtension extension = getLanguageExtension(refElement);
+    final HTMLComposerExtension<?> extension = getLanguageExtension(refElement);
 
     if (extension != null) {
       extension.appendReferencePresentation(refElement, buf, isPackageIncluded);
-    } else if (refElement instanceof RefFile) {
-      buf.append(A_HREF_OPENING);
+    } else if (refElement instanceof RefFile || refElement instanceof RefDirectory) {
+      buf.append(A_HREF_OPENING).append(((RefElementImpl)refElement).getURL()).append("\">");
 
-      buf.append(((RefElementImpl)refElement).getURL());
-
-      buf.append("\">");
       String refElementName = refElement.getName();
       final PsiElement element = refElement.getPsiElement();
       if (element != null) {
@@ -196,9 +165,7 @@ public abstract class HTMLComposerImpl extends HTMLComposer {
   @Override
   public String composeNumereables(int n, String statement, String singleEnding, String multipleEnding) {
     final StringBuilder buf = new StringBuilder();
-    buf.append(n);
-    buf.append(' ');
-    buf.append(statement);
+    buf.append(n).append(' ').append(statement);
 
     if (n % 10 == 1 && n % 100 != 11) {
       buf.append(singleEnding);
@@ -211,26 +178,12 @@ public abstract class HTMLComposerImpl extends HTMLComposer {
 
   @Override
   public void appendElementInReferences(@NotNull StringBuilder buf, RefElement refElement) {
-    if (refElement.getInReferences().size() > 0) {
-      appendHeading(buf, AnalysisBundle.message("inspection.export.results.used.from"));
-      startList(buf);
-      for (RefElement refCaller : refElement.getInReferences()) {
-        appendListItem(buf, refCaller);
-      }
-      doneList(buf);
-    }
+    appendSection(buf, AnalysisBundle.message("inspection.export.results.used.from"), refElement.getInReferences());
   }
 
   @Override
   public void appendElementOutReferences(@NotNull StringBuilder buf, RefElement refElement) {
-    if (refElement.getOutReferences().size() > 0) {
-      appendHeading(buf, AnalysisBundle.message("inspection.export.results.uses"));
-      startList(buf);
-      for (RefElement refCallee : refElement.getOutReferences()) {
-        appendListItem(buf, refCallee);
-      }
-      doneList(buf);
-    }
+    appendSection(buf, AnalysisBundle.message("inspection.export.results.uses"), refElement.getOutReferences());
   }
 
   @Override
@@ -267,37 +220,31 @@ public abstract class HTMLComposerImpl extends HTMLComposer {
     }
   }
 
-
   @Override
   public void startList(@NotNull StringBuilder buf) {
-    if (myListStackTop == -1) {
-      buf.append("<div class=\"problem-description\">");
-    }
-    buf.append("<ul>");
-    myListStackTop++;
-    myListStack[myListStackTop] = 0;
+    buf.append("\n<ul>");
   }
 
   @Override
   public void doneList(@NotNull StringBuilder buf) {
-    buf.append("</ul>");
-    if (myListStack[myListStackTop] != 0) {
-      buf.append("<table cellpadding=\"0\" border=\"0\" cellspacing=\"0\"><tr><td>&nbsp;</td></tr></table>");
-    }
-    if (myListStackTop == 0) {
-      buf.append("</div>");
-    }
-    myListStackTop--;
+    buf.append("\n</ul>");
   }
 
   @Override
   public void startListItem(@NotNull StringBuilder buf) {
-    myListStack[myListStackTop]++;
-    buf.append("<li>");
+    buf.append("\n<li>");
   }
 
-  public static void doneListItem(@NotNull StringBuilder buf) {
-    buf.append("</li>");
+  public static void doneListItem(@NotNull StringBuilder buf) {}
+
+  @Override
+  public void startProblemDescription(@NotNull StringBuilder buf) {
+    buf.append("\n<div class=\"problem-description\">");
+  }
+
+  @Override
+  public void doneProblemDescription(@NotNull StringBuilder buf) {
+    buf.append("\n</div>");
   }
 
   @Override
@@ -309,6 +256,7 @@ public abstract class HTMLComposerImpl extends HTMLComposer {
 
   @Override
   public <T> T getExtension(Key<T> key) {
+    //noinspection unchecked
     return (T)myExtensions.get(key);
   }
 }

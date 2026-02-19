@@ -17,13 +17,13 @@ package git4idea.branch
 
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.text.HtmlBuilder
-import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.openapi.vcs.VcsNotifier
+import git4idea.GitNotificationIdsHolder.Companion.BRANCH_CREATE_ROLLBACK_ERROR
+import git4idea.GitNotificationIdsHolder.Companion.BRANCH_CREATE_ROLLBACK_SUCCESS
 import git4idea.commands.Git
 import git4idea.commands.GitCompoundResult
 import git4idea.i18n.GitBundle
 import git4idea.repo.GitRepository
-import git4idea.util.GitUIUtil.bold
 import git4idea.util.GitUIUtil.code
 import org.jetbrains.annotations.Nls
 
@@ -46,7 +46,7 @@ internal class GitCreateBranchOperation(
         markSuccessful(repository)
       }
       else {
-        fatalError(GitBundle.message("create.branch.operation.could.not.create.new.branch", branchName), result.errorOutputAsJoinedString)
+        fatalError(GitBundle.message("create.branch.operation.could.not.create.new.branch", branchName), result)
         fatalErrorHappened = true
       }
     }
@@ -67,12 +67,12 @@ internal class GitCreateBranchOperation(
 
     val vcsNotifier = VcsNotifier.getInstance(myProject)
     if (deleteResult.totalSuccess()) {
-      vcsNotifier.notifySuccess("git.created.branch.rollback.successful",
+      vcsNotifier.notifySuccess(BRANCH_CREATE_ROLLBACK_SUCCESS,
                                 GitBundle.message("create.branch.operation.rollback.successful"),
                                 GitBundle.message("create.branch.operation.deleted.branch", branchName))
     }
     else {
-      vcsNotifier.notifyError("git.created.branch.rollback.error",
+      vcsNotifier.notifyError(BRANCH_CREATE_ROLLBACK_ERROR,
                               GitBundle.message("create.branch.operation.error.during.rollback"),
                               deleteResult.errorOutputWithReposIndication,
                               true)
@@ -80,7 +80,7 @@ internal class GitCreateBranchOperation(
   }
 
   override fun getSuccessMessage(): String = GitBundle.message("create.branch.operation.branch.created",
-                                                               bold(code(branchName)))
+                                                               code(branchName))
 
   override fun getRollbackProposal(): String =
     HtmlBuilder()

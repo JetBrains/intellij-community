@@ -21,7 +21,11 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.TokenType;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.xml.*;
+import com.intellij.psi.xml.XmlConditionalSection;
+import com.intellij.psi.xml.XmlElementType;
+import com.intellij.psi.xml.XmlEntityDecl;
+import com.intellij.psi.xml.XmlEntityRef;
+import com.intellij.psi.xml.XmlTokenType;
 
 /**
  * @author maxim.mossienko
@@ -55,9 +59,8 @@ public class XmlConditionalSectionImpl extends XmlElementImpl implements XmlCond
 
           PsiElement psiElement = targetFile != null ? XmlEntityCache.getCachedEntity(targetFile, name): null;
 
-          if (psiElement instanceof XmlEntityDecl) {
-            final XmlEntityDecl decl = (XmlEntityDecl)psiElement;
-            
+          if (psiElement instanceof XmlEntityDecl decl) {
+
             if(decl.isInternalReference()) {
               for (ASTNode e = decl.getNode().getFirstChildNode(); e != null; e = e.getTreeNext()) {
                 if (e.getElementType() == XmlElementType.XML_ATTRIBUTE_VALUE) {

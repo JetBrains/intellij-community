@@ -1,0 +1,14 @@
+LineBreakpoint created at smartStepIntoCoroutineScope.kt:12
+Run Java
+Connected to the target VM
+smartStepIntoCoroutineScope.kt:12
+smartStepIntoCoroutineScope.kt:14
+smartStepIntoCoroutineScope.kt:15
+smartStepIntoCoroutineScope.kt:16
+smartStepIntoCoroutineScope.kt:17
+smartStepIntoCoroutineScope.kt:18
+smartStepIntoCoroutineScope.kt:19
+Compile bytecode for i
+Disconnected from the target VM
+
+Process finished with exit code 0

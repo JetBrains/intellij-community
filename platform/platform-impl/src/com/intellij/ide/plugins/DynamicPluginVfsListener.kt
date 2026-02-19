@@ -1,14 +1,17 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins
 
-import com.intellij.ide.FrameStateListener
+import com.intellij.ide.ApplicationActivity
 import com.intellij.ide.IdeBundle
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.application.ApplicationActivationListener
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.extensions.ExtensionNotApplicableException
 import com.intellij.openapi.vfs.AsyncFileListener
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VfsUtilCore
@@ -16,35 +19,53 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.newvfs.RefreshQueue
 import com.intellij.openapi.vfs.newvfs.events.VFileContentChangeEvent
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
-import com.intellij.util.PathUtil
-import com.intellij.util.SystemProperties
+import com.intellij.openapi.wm.IdeFrame
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import java.nio.file.Path
 
-/**
- * @author yole
- */
 private const val AUTO_RELOAD_PLUGINS_SYSTEM_PROPERTY = "idea.auto.reload.plugins"
 
-class DynamicPluginVfsListener : AsyncFileListener {
-  private var initialRefreshDone = false
+private var initialRefreshDone = false
 
+private val LOG: Logger
+  get() = logger<DynamicPluginVfsListener>()
+
+internal class DynamicPluginVfsListenerInitializer : ApplicationActivity {
   init {
-    if (SystemProperties.`is`(AUTO_RELOAD_PLUGINS_SYSTEM_PROPERTY)) {
-      val pluginsPath = PathManager.getPluginsPath()
-      LocalFileSystem.getInstance().addRootToWatch(pluginsPath, true)
-      val pluginsRoot = LocalFileSystem.getInstance().findFileByPath(pluginsPath)
-      if (pluginsRoot != null) {
-        // ensure all plugins are in VFS
-        VfsUtilCore.processFilesRecursively(pluginsRoot) { true }
-        RefreshQueue.getInstance().refresh(true, true, Runnable { initialRefreshDone = true }, pluginsRoot)
-      }
+    if (!java.lang.Boolean.getBoolean(AUTO_RELOAD_PLUGINS_SYSTEM_PROPERTY) || ApplicationManager.getApplication().isHeadlessEnvironment) {
+      throw ExtensionNotApplicableException.create()
     }
   }
 
-  override fun prepareChange(events: List<VFileEvent>): AsyncFileListener.ChangeApplier? {
-    if (!SystemProperties.`is`(AUTO_RELOAD_PLUGINS_SYSTEM_PROPERTY)) return null
-    if (!initialRefreshDone) return null
+  override suspend fun execute() {
+    val pluginsPath = PathManager.getPluginsPath()
+    val localFileSystem = LocalFileSystem.getInstance()
+    localFileSystem.addRootToWatch(pluginsPath, true)
+    val pluginRoot = withContext(Dispatchers.IO) {
+      localFileSystem.refreshAndFindFileByNioFile(Path.of(pluginsPath))
+    }
+    if (pluginRoot == null) {
+      LOG.info("Dynamic plugin VFS listener not active, couldn't find plugins root in VFS")
+    }
+    else {
+      // ensure all plugins are in VFS
+      VfsUtilCore.processFilesRecursively(pluginRoot) { true }
+      RefreshQueue.getInstance().refresh(true, true, Runnable { initialRefreshDone = true }, pluginRoot)
+    }
+  }
+}
 
-    val pluginsToReload = hashSetOf<IdeaPluginDescriptorImpl>()
+internal class DynamicPluginVfsListener : AsyncFileListener {
+  override fun prepareChange(events: List<VFileEvent>): AsyncFileListener.ChangeApplier? {
+    if (!java.lang.Boolean.getBoolean(AUTO_RELOAD_PLUGINS_SYSTEM_PROPERTY)) {
+      return null
+    }
+    if (!initialRefreshDone) {
+      return null
+    }
+
+    val pluginsToReload = hashSetOf<PluginMainDescriptor>()
     for (event in events) {
       if (!event.isFromRefresh) continue
       if (event is VFileContentChangeEvent) {
@@ -54,12 +75,11 @@ class DynamicPluginVfsListener : AsyncFileListener {
         }
       }
     }
-    val descriptorsToReload = pluginsToReload
-      .filter { it.isEnabled }
-      .map { PluginDescriptorLoader.loadFullDescriptor(it) }
-      .filter { DynamicPlugins.allowLoadUnloadWithoutRestart(it) }
 
-    if (descriptorsToReload.isEmpty()) return null
+    val descriptorsToReload = pluginsToReload.filter { it.isEnabled && DynamicPlugins.allowLoadUnloadWithoutRestart(it) }
+    if (descriptorsToReload.isEmpty()) {
+      return null
+    }
 
     return object : AsyncFileListener.ChangeApplier {
       override fun afterVfsChange() {
@@ -67,7 +87,8 @@ class DynamicPluginVfsListener : AsyncFileListener {
           val reloaded = mutableListOf<String>()
           val unloadFailed = mutableListOf<String>()
           for (pluginDescriptor in descriptorsToReload) {
-            if (!DynamicPlugins.unloadPlugin(pluginDescriptor, DynamicPlugins.UnloadPluginOptions(isUpdate = true, waitForClassloaderUnload = true))) {
+            if (!DynamicPlugins.unloadPlugin(pluginDescriptor,
+                                             DynamicPlugins.UnloadPluginOptions(isUpdate = true, waitForClassloaderUnload = true))) {
               unloadFailed.add(pluginDescriptor.name)
               continue
             }
@@ -75,12 +96,13 @@ class DynamicPluginVfsListener : AsyncFileListener {
             DynamicPlugins.loadPlugin(pluginDescriptor)
           }
           if (unloadFailed.isNotEmpty()) {
-            DynamicPlugins.notify(IdeBundle.message("failed.to.unload.modified.plugins", unloadFailed.joinToString()), NotificationType.INFORMATION,
-              object : AnAction(IdeBundle.message("ide.restart.action")) {
-                override fun actionPerformed(e: AnActionEvent) {
-                  ApplicationManager.getApplication().restart()
-                }
-              })
+            DynamicPlugins.notify(IdeBundle.message("failed.to.unload.modified.plugins", unloadFailed.joinToString()),
+                                  NotificationType.INFORMATION,
+                                  object : AnAction(IdeBundle.message("ide.restart.action")) {
+                                    override fun actionPerformed(e: AnActionEvent) {
+                                      ApplicationManager.getApplication().restart()
+                                    }
+                                  })
           }
           else if (reloaded.isNotEmpty()) {
             DynamicPlugins.notify(IdeBundle.message("plugins.reloaded.successfully", reloaded.joinToString()), NotificationType.INFORMATION)
@@ -90,25 +112,24 @@ class DynamicPluginVfsListener : AsyncFileListener {
     }
   }
 
-  private fun findPluginByPath(file: VirtualFile): IdeaPluginDescriptorImpl? {
-    if (!PathUtil.isAncestorOrSelf(PathManager.getPluginsPath(), file)) {
+  private fun findPluginByPath(file: VirtualFile): PluginMainDescriptor? {
+    if (!VfsUtilCore.isAncestorOrSelf(PathManager.getPluginsPath(), file)) {
       return null
     }
-    return PluginManager.getPlugins().firstOrNull {
-      PathUtil.isAncestorOrSelf(it.pluginPath.toAbsolutePath().toString(), file)
-    } as IdeaPluginDescriptorImpl?
-  }
-
-  companion object {
-    val LOG = Logger.getInstance(DynamicPluginVfsListener::class.java)
+    return PluginManagerCore.getPluginSet().allPlugins.firstOrNull {
+      VfsUtilCore.isAncestorOrSelf(it.pluginPath.toAbsolutePath().toString(), file)
+    }
   }
 }
 
-class DynamicPluginsFrameStateListener : FrameStateListener {
-  override fun onFrameActivated() {
-    if (!SystemProperties.`is`(AUTO_RELOAD_PLUGINS_SYSTEM_PROPERTY)) return
+private class DynamicPluginsFrameStateListener : ApplicationActivationListener {
+  init {
+    if (!java.lang.Boolean.getBoolean(AUTO_RELOAD_PLUGINS_SYSTEM_PROPERTY)) {
+      throw ExtensionNotApplicableException.create()
+    }
+  }
 
-    val pluginsRoot = LocalFileSystem.getInstance().findFileByPath(PathManager.getPluginsPath())
-    pluginsRoot?.refresh(true, true)
+  override fun applicationActivated(ideFrame: IdeFrame) {
+    LocalFileSystem.getInstance().findFileByPath(PathManager.getPluginsPath())?.refresh(true, true)
   }
 }

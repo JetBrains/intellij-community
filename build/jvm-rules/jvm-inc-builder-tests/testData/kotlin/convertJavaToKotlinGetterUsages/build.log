@@ -1,0 +1,22 @@
+================ Step #1 =================
+Cleaning output files:
+  TheClass.class
+End of files
+Compiling files:
+  kotlin/convertJavaToKotlinGetterUsages/a/TheClass.kt
+End of files
+Cleaning output files:
+  Usage.class
+End of files
+Compiling files:
+  kotlin/convertJavaToKotlinGetterUsages/a/Usage.java
+End of files
+Cleaning output files:
+  META-INF/kotlin_convertJavaToKotlinGetterUsages-b.kotlin_module
+  UsageInKotlinKt.class
+End of files
+Compiling files:
+  kotlin/convertJavaToKotlinGetterUsages/b/usageInKotlin.kt
+End of files
+------------------------------------------
+Exit code: ERROR

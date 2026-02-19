@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.designer.designSurface;
 
 import com.intellij.designer.DesignerBundle;
@@ -22,8 +22,15 @@ import com.intellij.uiDesigner.core.GridLayoutManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.SwingUtilities;
+import java.awt.AWTEvent;
+import java.awt.Component;
+import java.awt.Dimension;
+import java.awt.Font;
+import java.awt.Rectangle;
 import java.awt.event.FocusEvent;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
@@ -31,8 +38,6 @@ import java.util.List;
 
 /**
  * @author Alexander Lobas
- * @author Anton Katilin
- * @author Vladimir Kondratyev
  */
 public class InplaceEditingLayer extends JComponent {
   private static final Logger LOG = Logger.getInstance(InplaceEditingLayer.class);
@@ -46,7 +51,7 @@ public class InplaceEditingLayer extends JComponent {
         return;
       }
       // [vova] we need LaterInvocator here to prevent write-access assertions
-      ApplicationManager.getApplication().invokeLater(() -> finishEditing(true), ModalityState.NON_MODAL);
+      ApplicationManager.getApplication().invokeLater(() -> finishEditing(true), ModalityState.nonModal());
     }
   };
   private final ComponentSelectionListener mySelectionListener = new ComponentSelectionListener() {

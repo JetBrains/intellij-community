@@ -1,0 +1,12 @@
+<idea-plugin>
+  <dependencies>
+    <module name="intellij.platform.backend"/>
+  </dependencies>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <!-- preload because in any case will be requested to reopen last projects -->
+    <applicationService serviceInterface="com.intellij.ide.RecentProjectsManager"
+                        serviceImplementation="com.intellij.ide.RecentProjectsManagerBase"
+                        overrides="true" preload="notHeadless"/>
+  </extensions>
+</idea-plugin>

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.xml;
 
 import com.intellij.lang.xml.XMLLanguage;
@@ -24,13 +10,19 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFileFactory;
 import com.intellij.psi.impl.PsiManagerEx;
-import com.intellij.psi.impl.file.impl.FileManagerImpl;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.xml.events.DomEvent;
-import com.intellij.util.xml.impl.*;
+import com.intellij.util.xml.impl.CollectionChildDescriptionImpl;
+import com.intellij.util.xml.impl.DomApplicationComponent;
+import com.intellij.util.xml.impl.DomFileElementImpl;
+import com.intellij.util.xml.impl.DomManagerImpl;
+import com.intellij.util.xml.impl.DomTestCase;
+import com.intellij.util.xml.impl.FixedChildDescriptionImpl;
+import com.intellij.util.xml.impl.MockDomFileDescription;
+import com.intellij.util.xml.impl.StaticGenericInfo;
 import com.intellij.util.xml.reflect.DomAttributeChildDescription;
 import com.intellij.util.xml.reflect.DomCollectionChildDescription;
 import com.intellij.util.xml.reflect.DomFixedChildDescription;
@@ -38,11 +30,12 @@ import com.intellij.util.xml.reflect.DomGenericInfo;
 import org.jetbrains.annotations.NotNull;
 
 import java.lang.reflect.ParameterizedType;
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
-/**
- * @author peter
- */
 public class DomBasicsTest extends DomTestCase {
   @Override
   protected void runTestRunnable(final @NotNull ThrowableRunnable<Throwable> testRunnable) throws Throwable {
@@ -309,6 +302,8 @@ public class DomBasicsTest extends DomTestCase {
   }
 
   public void testInstanceImplementation() {
+    DomApplicationComponent.getInstance().registerImplementation(MyElement.class, Impl.class, getTestRootDisposable());
+    DomApplicationComponent.getInstance().registerImplementation(InheritedElement.class, AnotherImpl.class, getTestRootDisposable());
     MyElement element = createElement("");
     final Object o = new Object();
     element.setObject(o);
@@ -321,6 +316,8 @@ public class DomBasicsTest extends DomTestCase {
   }
 
   public void testSeveralInstanceImplementations() {
+    DomApplicationComponent.getInstance().registerImplementation(MyElement.class, Impl.class, getTestRootDisposable());
+    DomApplicationComponent.getInstance().registerImplementation(InheritedElement.class, AnotherImpl.class, getTestRootDisposable());
     InheritedElement element = createElement("", InheritedElement.class);
     final Object o = new Object();
     element.setObject(o);
@@ -441,7 +438,8 @@ public class DomBasicsTest extends DomTestCase {
       }
     });
     assertNotNull(element[0]);
-    assertSame(element[0], ((StableElement)stable).getWrappedElement());
+    //noinspection CastToIncompatibleInterface
+    assertSame(element[0], ((StableElement<?>)stable).getWrappedElement());
     assertEquals(element[0], stable);
     assertEquals(stable, element[0]);
     MyElement oldElement = element[0];
@@ -473,25 +471,26 @@ public class DomBasicsTest extends DomTestCase {
 
     oldElement = element[0];
     oldChild1 = oldElement.getChild();
-    ((StableElement)stable).invalidate();
+    ((StableElement<?>)stable).invalidate();
     assertTrue(oldElement.isValid());
     assertTrue(oldChild1.isValid());
-    assertFalse(oldElement.equals(((StableElement)stable).getWrappedElement()));
+    assertFalse(oldElement.equals(((StableElement<?>)stable).getWrappedElement()));
   }
 
   public void testStable_Revalidate() {
     final MyElement[] element = new MyElement[]{createElement("")};
     final MyElement stable = getDomManager().createStableValue(() -> element[0]);
     MyElement oldElement = element[0];
-    ((StableElement) stable).revalidate();
-    assertSame(oldElement, ((StableElement) stable).getWrappedElement());
+    //noinspection CastToIncompatibleInterface
+    ((StableElement<?>) stable).revalidate();
+    assertSame(oldElement, ((StableElement<?>) stable).getWrappedElement());
     
     element[0] = createElement("");
     assertTrue(oldElement.isValid());
-    ((StableElement) stable).revalidate();
+    ((StableElement<?>) stable).revalidate();
     assertTrue(oldElement.isValid());
-    assertNotSame(oldElement, ((StableElement) stable).getWrappedElement());
-    assertSame(element[0], ((StableElement) stable).getWrappedElement());
+    assertNotSame(oldElement, ((StableElement<?>) stable).getWrappedElement());
+    assertSame(element[0], ((StableElement<?>) stable).getWrappedElement());
   }
 
   public void testStable_Invalidate() {
@@ -499,7 +498,8 @@ public class DomBasicsTest extends DomTestCase {
     final MyElement[] element = new MyElement[]{oldElement};
     final MyElement stable = getDomManager().createStableValue(() -> element[0]);
     element[0] = null;
-    ((StableElement) stable).invalidate();
+    //noinspection CastToIncompatibleInterface
+    ((StableElement<?>) stable).invalidate();
     assertEquals(stable, stable);
     assertEquals(oldElement.toString(), stable.toString());
   }
@@ -527,13 +527,12 @@ public class DomBasicsTest extends DomTestCase {
     MyElement element = getDomManager().getFileElement(xmlFile, MyElement.class).getRootElement().getChildElements().get(1);
     MyElement copy = element.createStableCopy();
 
-    ApplicationManager.getApplication().runWriteAction(() -> ((FileManagerImpl)PsiManagerEx.getInstanceEx(getProject()).getFileManager()).forceReload(file));
+    ApplicationManager.getApplication().runWriteAction(() -> PsiManagerEx.getInstanceEx(getProject()).getFileManagerEx().forceReload(file));
     
     assertFalse(element.isValid());
     assertTrue(copy.isValid());
   }
 
-  @Implementation(Impl.class)
   public interface MyElement extends DomElement {
     GenericAttributeValue<String> getAttr();
 
@@ -604,7 +603,6 @@ public class DomBasicsTest extends DomTestCase {
 
   public static abstract class EmptyImpl extends BaseImpl implements AnotherElement{}
 
-  @Implementation(AnotherImpl.class)
   public interface InheritedElement extends MyElement, DomElement {
     String getString();
 

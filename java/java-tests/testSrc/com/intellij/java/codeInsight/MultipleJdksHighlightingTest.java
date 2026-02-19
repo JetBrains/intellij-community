@@ -17,24 +17,36 @@
 package com.intellij.java.codeInsight;
 
 import com.intellij.codeInsight.highlighting.HighlightUsagesHandler;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.projectRoots.ProjectJdkTable;
+import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.FileIndexFacade;
 import com.intellij.openapi.roots.LanguageLevelModuleExtension;
 import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiJavaFile;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiReference;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.psi.search.searches.MethodReferencesSearch;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.testFramework.IdeaTestUtil;
+import com.intellij.testFramework.IndexingTestUtil;
 import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
-import com.intellij.testFramework.fixtures.*;
+import com.intellij.testFramework.fixtures.IdeaProjectTestFixture;
+import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory;
+import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.JavaTestFixtureFactory;
+import com.intellij.testFramework.fixtures.TestFixtureBuilder;
 
 import java.io.File;
 import java.io.IOException;
@@ -94,6 +106,7 @@ public class MultipleJdksHighlightingTest extends UsefulTestCase {
     ModuleRootModificationUtil.updateModel(myJava3Module, model -> model.addContentEntry(java3Root).addSourceFolder(java3Root, false));
     ModuleRootModificationUtil.updateModel(myJava7Module, model -> model.addContentEntry(java7Root).addSourceFolder(java7Root, false));
     ModuleRootModificationUtil.updateModel(myJava8Module, model -> model.addContentEntry(java8Root).addSourceFolder(java8Root, false));
+    IndexingTestUtil.waitUntilIndexesAreReady(myFixture.getProject());
   }
 
   private void addDependencies_37_78() {
@@ -107,7 +120,11 @@ public class MultipleJdksHighlightingTest extends UsefulTestCase {
   }
 
   public void testAutoCloseable() {
-    ModuleRootModificationUtil.updateModel(myJava8Module, model -> model.setSdk(IdeaTestUtil.getMockJdk14()));
+    Sdk mockJdk14 = IdeaTestUtil.getMockJdk14();
+    ModuleRootModificationUtil.updateModel(myJava8Module, model -> {
+      WriteAction.runAndWait(() -> ProjectJdkTable.getInstance().addJdk(mockJdk14, model.getProject()));
+      model.setSdk(mockJdk14);
+    });
     addDependencies_37_78();
     final String name = getTestName(false);
     for (Module module : new Module[] {myJava7Module, myJava8Module}) {
@@ -319,11 +336,9 @@ public class MultipleJdksHighlightingTest extends UsefulTestCase {
                                               "class My extends MyLoader {{ " +
                                               "  <caret>getClassLoadingLock(\"\"); " +
                                               "}}\n" +
-                                              "" +
                                               "class Standard extends ClassLoader {{ " +
                                               "  getClassLoadingLock(\"\"); " +
-                                              "}}" +
-                                              "");
+                                              "}}");
     myFixture.configureFromExistingVirtualFile(file.getVirtualFile());
     myFixture.checkHighlighting();
 

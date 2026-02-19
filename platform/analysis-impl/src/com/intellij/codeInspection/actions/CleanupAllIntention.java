@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInspection.actions;
 
@@ -7,7 +7,6 @@ import com.intellij.analysis.AnalysisScope;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 public final class CleanupAllIntention extends CleanupIntention {
 
@@ -15,15 +14,13 @@ public final class CleanupAllIntention extends CleanupIntention {
 
   private CleanupAllIntention() {}
 
-  @NotNull
   @Override
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return AnalysisBundle.message("cleanup.in.file");
   }
 
-  @Nullable
   @Override
-  protected AnalysisScope getScope(Project project, PsiFile file) {
-    return new AnalysisScope(file);
+  protected @NotNull AnalysisScope getScope(Project project, PsiFile psiFile) {
+    return new AnalysisScope(psiFile);
   }
 }

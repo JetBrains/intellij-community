@@ -1,7 +1,8 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.openapi.editor.CaretModel;
 import com.intellij.openapi.editor.Editor;
@@ -13,7 +14,7 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.Icon;
 
 public abstract class SuppressIntentionAction implements Iconable, IntentionAction {
   private @IntentionName String myText = "";
@@ -25,9 +26,7 @@ public abstract class SuppressIntentionAction implements Iconable, IntentionActi
   }
 
   @Override
-  @IntentionName
-  @NotNull
-  public String getText() {
+  public @IntentionName @NotNull String getText() {
     return myText;
   }
 
@@ -46,8 +45,8 @@ public abstract class SuppressIntentionAction implements Iconable, IntentionActi
   }
 
   @Override
-  public final void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-    PsiElement element = getElement(editor, file);
+  public final void invoke(@NotNull Project project, Editor editor, PsiFile psiFile) throws IncorrectOperationException {
+    PsiElement element = getElement(editor, psiFile);
     if (element != null) {
       invoke(project, editor, element);
     }
@@ -64,9 +63,9 @@ public abstract class SuppressIntentionAction implements Iconable, IntentionActi
   public abstract void invoke(@NotNull Project project, Editor editor, @NotNull PsiElement element) throws IncorrectOperationException;
 
   @Override
-  public final boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    if (file == null || editor == null) return false;
-    PsiElement element = getElement(editor, file);
+  public final boolean isAvailable(@NotNull Project project, Editor editor, PsiFile psiFile) {
+    if (psiFile == null || editor == null) return false;
+    PsiElement element = getElement(editor, psiFile);
     return element != null && isAvailable(project, editor, element);
   }
 
@@ -85,10 +84,15 @@ public abstract class SuppressIntentionAction implements Iconable, IntentionActi
     return false;
   }
 
-  @Nullable
-  private static PsiElement getElement(@NotNull Editor editor, @NotNull PsiFile file) {
+  private static @Nullable PsiElement getElement(@NotNull Editor editor, @NotNull PsiFile file) {
     CaretModel caretModel = editor.getCaretModel();
     int position = caretModel.getOffset();
     return file.findElementAt(position);
+  }
+
+  @Override
+  public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile psiFile) {
+    // No preview is necessary for suppress action
+    return IntentionPreviewInfo.EMPTY;
   }
 }

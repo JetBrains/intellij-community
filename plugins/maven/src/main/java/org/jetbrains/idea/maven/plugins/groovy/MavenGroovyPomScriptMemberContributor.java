@@ -1,7 +1,11 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.plugins.groovy;
 
-import com.intellij.psi.*;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.ResolveState;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.util.xml.DomManager;
@@ -11,24 +15,20 @@ import org.jetbrains.idea.maven.dom.MavenDomProjectModelDescription;
 import org.jetbrains.plugins.groovy.lang.resolve.NonCodeMembersContributor;
 import org.jetbrains.plugins.groovy.util.dynamicMembers.DynamicMemberUtils;
 
-/**
- * @author Sergey Evdokimov
- */
-public class MavenGroovyPomScriptMemberContributor extends NonCodeMembersContributor {
+public final class MavenGroovyPomScriptMemberContributor extends NonCodeMembersContributor {
 
-  private static final String CLASS_SOURCE = "class PomElements {\n" +
-                                             "  org.apache.maven.project.MavenProject project;\n" +
-                                             "  org.apache.maven.project.MavenProject pom;\n" +
-                                             "  org.apache.maven.execution.MavenSession session;\n" +
-                                             "  org.apache.maven.settings.Settings settings;\n" +
-                                             "  org.slf4j.Logger log;\n" +
-                                             "  groovy.util.AntBuilder ant;\n" +
-                                             "  public void fail() {}" +
-                                             "}";
+  private static final String CLASS_SOURCE = """
+    class PomElements {
+      org.apache.maven.project.MavenProject project;
+      org.apache.maven.project.MavenProject pom;
+      org.apache.maven.execution.MavenSession session;
+      org.apache.maven.settings.Settings settings;
+      org.slf4j.Logger log;
+      groovy.util.AntBuilder ant;
+      public void fail() {}}""";
 
-  @Nullable
   @Override
-  protected String getParentClassName() {
+  protected @Nullable String getParentClassName() {
     return "pom";
   }
 

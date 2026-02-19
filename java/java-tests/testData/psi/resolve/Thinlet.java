@@ -932,6 +932,7 @@ class Thinlet extends Container //java
    *
    */
   private int[][] getGrid(Object component, int gap) {
+    java.lang.ref.Reference.reachabilityFence(gap);
     int count = 0;
     for (Object comp = get(component, "component"); comp != null;
          comp = get(comp, ":next")) {
@@ -1105,6 +1106,7 @@ class Thinlet extends Container //java
    */
   private Dimension getFieldSize(Object component) {
     String text = getString(component, "text", "");
+    java.lang.ref.Reference.reachabilityFence(text);
     int columns = getInteger(component, "columns", 0);
     FontMetrics fm = getFontMetrics(getFont());
     return new Dimension(((columns > 0) ?
@@ -1117,6 +1119,7 @@ class Thinlet extends Container //java
    */
   private Dimension getSize(Object component,
                             int dx, int dy, String defaultalignment) {
+    java.lang.ref.Reference.reachabilityFence(defaultalignment);
     String text = getString(component, "text", null);
     int tw = 0;
     int th = 0;
@@ -1856,6 +1859,8 @@ class Thinlet extends Container //java
                           int clipx, int clipy, int clipwidth, int clipheight, Object component,
                           int width, int height, boolean inside, boolean pressed,
                           boolean focus, boolean enabled, boolean hidden, int left) {
+    java.lang.ref.Reference.reachabilityFence(inside);
+    java.lang.ref.Reference.reachabilityFence(pressed);
     boolean editable = getBoolean(component, "editable", true);
     paintRect(g, 0, 0, width, height, enabled ? c_border : c_disable,
               editable ? c_textbg : c_bg, true, true, true, true);
@@ -3616,6 +3621,7 @@ class Thinlet extends Container //java
             !popuptrigger) { // e.getClickCount()
           Rectangle view = getRectangle(component, ":view");
           Rectangle viewport = getRectangle(component, ":port");
+          java.lang.ref.Reference.reachabilityFence(viewport);
           int my = mousey + view.y - referencey;
           String itemname = ("list" == classname) ? "item" :
                             (("table" == classname) ? "row" : "node");
@@ -3822,6 +3828,7 @@ class Thinlet extends Container //java
   private void processField(int x, int y, int clickcount,
                             int id, Object component,
                             Object part, boolean multiline, boolean hidden, int left) {
+    java.lang.ref.Reference.reachabilityFence(part);
     if (id == MouseEvent.MOUSE_PRESSED) {
       setReference(component, 2 + left, 2);
       int mx = x - referencex;
@@ -4239,6 +4246,7 @@ class Thinlet extends Container //java
    */
   private boolean findScrollPane(Object component,
                                  int x, int y, Rectangle bounds) {
+    java.lang.ref.Reference.reachabilityFence(bounds);
     Rectangle port = getRectangle(component, ":port");
     if ((x < port.x) || (y < port.y) ||
         ((x >= port.x + port.width) && (y >= port.y + port.height))) {
@@ -4763,9 +4771,9 @@ class Thinlet extends Container //java
   /**
    *
    */
-  private void addItem(Object parent, Object key, Object component) {
-    insertItem(parent, key, component, -1);
-  }
+  //private void addItem(Object parent, Object key, Object component) {
+  //  insertItem(parent, key, component, -1);
+  //}
 
   /**
    *
@@ -4989,12 +4997,15 @@ class Thinlet extends Container //java
    *
    */
   protected void startElement(String name, Hashtable attributelist) {
+    java.lang.ref.Reference.reachabilityFence(name);
+    java.lang.ref.Reference.reachabilityFence(attributelist);
   }
 
   /**
    *
    */
   protected void characters(String text) {
+    java.lang.ref.Reference.reachabilityFence(text);
   }
 
   /**
@@ -5212,13 +5223,6 @@ class Thinlet extends Container //java
       }
     }
     throw new IllegalArgumentException();
-  }
-
-  /**
-   * Convert entities.
-   */
-  private static String convert(StringBuffer text) {
-    return null;
   }
 
     /*private InputStream inputreader;
@@ -5576,7 +5580,8 @@ class Thinlet extends Container //java
    */
   private boolean setString(Object component,
                             String key, String value, String defaultvalue) {
-        /*boolean changed = set(component, key, value);
+    java.lang.ref.Reference.reachabilityFence(defaultvalue);
+        boolean changed = set(component, key, value);
         if (changed && ("name" == key)) {
             //for (Class cls = getClass(); cls != null; cls = cls.getSuperclass()) {
             Field[] fields = getClass().getDeclaredFields();
@@ -5594,8 +5599,7 @@ class Thinlet extends Container //java
                 getClass().getField(value).set(this, component);
             } catch (Exception exc) {}
         }
-        return changed;*/
-    return set(component, key, value);
+        return changed;
   }
 
   /**
@@ -5621,14 +5625,6 @@ class Thinlet extends Container //java
       }
     }
     throw new IllegalArgumentException("unknown " + value + " for " + key);
-  }
-
-  /**
-   *
-   */
-  private boolean setIcon(Object component,
-                          String key, String path, Image defaultvalue) {
-    return set(component, key, (path != null) ? getIcon(path) : defaultvalue);
   }
 
   /**

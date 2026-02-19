@@ -12,7 +12,7 @@ import org.jetbrains.annotations.NotNull;
 
 public class CompileProjectAction extends CompileActionBase {
   @Override
-  protected void doAction(DataContext dataContext, final Project project) {
+  protected void doAction(@NotNull DataContext dataContext, final Project project) {
     ProjectTaskManager.getInstance(project)
       .rebuildAllModules()
       .onSuccess(result -> {

@@ -1,0 +1,18 @@
+// WITH_STDLIB
+// AFTER-WARNING: Variable 'i' is never used
+// AFTER-WARNING: Variable 's' is never used
+// AFTER-WARNING: Variable 's1' is never used
+class Foo(val id: Int, val name: String)
+
+operator fun Foo.component1() = id
+operator fun Foo.component2() = name
+operator fun Foo.component3() = "$name: $id"
+
+fun test() {
+    for (value in listOf(Foo(123, "def"), Foo(456, "abc"))) {
+        <caret>
+    }
+}
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.intentions.IterateExpressionIntention
+// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.intentions.IterateExpressionIntention

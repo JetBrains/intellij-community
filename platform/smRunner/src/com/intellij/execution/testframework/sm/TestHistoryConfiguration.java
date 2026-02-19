@@ -1,19 +1,22 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.testframework.sm;
 
 import com.intellij.execution.configurations.ConfigurationType;
 import com.intellij.execution.configurations.ConfigurationTypeUtil;
 import com.intellij.execution.testframework.sm.runner.history.actions.AbstractImportTestsAction;
-import com.intellij.openapi.components.*;
+import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.State;
+import com.intellij.openapi.components.Storage;
+import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.project.Project;
-import com.intellij.util.xmlb.annotations.Attribute;
 import com.intellij.util.xmlb.annotations.Property;
-import com.intellij.util.xmlb.annotations.Tag;
 import com.intellij.util.xmlb.annotations.XMap;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.Icon;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
@@ -22,32 +25,19 @@ public class TestHistoryConfiguration implements PersistentStateComponent<TestHi
 
   public static class State {
 
-    private Map<String, ConfigurationBean> myHistoryElements = new LinkedHashMap<>();
+    private final Map<String, ConfigurationBean> myHistoryElements = Collections.synchronizedMap(new LinkedHashMap<>());
 
     @Property(surroundWithTag = false)
     @XMap(entryTagName = "history-entry", keyAttributeName = "file")
     public Map<String, ConfigurationBean> getHistoryElements() {
       return myHistoryElements;
     }
-
-    public void setHistoryElements(final Map<String, ConfigurationBean> elements) {
-      myHistoryElements = elements;
-    }
-  }
-
-  @Tag("configuration")
-  public static class ConfigurationBean {
-
-    @Attribute("name")
-    public String name;
-    @Attribute("configurationId")
-    public String configurationId;
   }
 
   private State myState = new State();
 
   public static TestHistoryConfiguration getInstance(Project project) {
-    return ServiceManager.getService(project, TestHistoryConfiguration.class);
+    return project.getService(TestHistoryConfiguration.class);
   }
 
   @Override
@@ -61,7 +51,7 @@ public class TestHistoryConfiguration implements PersistentStateComponent<TestHi
   }
 
   public Collection<String> getFiles() {
-    return myState.getHistoryElements().keySet();
+    return new ArrayList<>(myState.getHistoryElements().keySet());
   }
 
   public String getConfigurationName(String file) {

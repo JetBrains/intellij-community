@@ -1,19 +1,23 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.plaf.beg;
 
 
-import javax.swing.*;
+import org.jetbrains.annotations.ApiStatus;
+
+import javax.swing.BorderFactory;
 import javax.swing.border.Border;
 import javax.swing.border.LineBorder;
 import javax.swing.plaf.BorderUIResource;
 import javax.swing.plaf.UIResource;
 import javax.swing.plaf.metal.MetalLookAndFeel;
 import javax.swing.text.JTextComponent;
-import java.awt.*;
+import java.awt.Component;
+import java.awt.Graphics;
 
 /**
  * @author Eugene Belyaev
  */
+@ApiStatus.Internal
 public final class BegBorders {
   private static Border ourTextFieldBorder;
   private static Border ourScrollPaneBorder;
@@ -34,7 +38,7 @@ public final class BegBorders {
     return ourScrollPaneBorder;
   }
 
-  public static class TextFieldBorder extends LineBorder implements UIResource {
+  public static final class TextFieldBorder extends LineBorder implements UIResource {
     public TextFieldBorder() {
       super(null, 1);
     }

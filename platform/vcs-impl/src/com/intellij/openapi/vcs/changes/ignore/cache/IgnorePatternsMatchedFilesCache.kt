@@ -1,11 +1,11 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.ignore.cache
 
-import com.google.common.cache.CacheBuilder
+import com.github.benmanes.caffeine.cache.Caffeine
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.runReadAction
-import com.intellij.openapi.components.ServiceManager
+import com.intellij.openapi.components.Service
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ProjectFileIndex
@@ -14,14 +14,18 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileListener
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.vfs.newvfs.BulkFileListener
-import com.intellij.openapi.vfs.newvfs.events.*
+import com.intellij.openapi.vfs.newvfs.events.VFileCopyEvent
+import com.intellij.openapi.vfs.newvfs.events.VFileCreateEvent
+import com.intellij.openapi.vfs.newvfs.events.VFileDeleteEvent
+import com.intellij.openapi.vfs.newvfs.events.VFileEvent
+import com.intellij.openapi.vfs.newvfs.events.VFileMoveEvent
+import com.intellij.openapi.vfs.newvfs.events.VFilePropertyChangeEvent
 import com.intellij.psi.search.FilenameIndex
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.util.Alarm
 import com.intellij.util.ui.update.DisposableUpdate
 import com.intellij.util.ui.update.MergingUpdateQueue
 import com.intellij.util.ui.update.Update
-import gnu.trove.THashSet
 import java.util.concurrent.TimeUnit
 import java.util.regex.Pattern
 
@@ -33,11 +37,12 @@ import java.util.regex.Pattern
  * * after entries have been expired: entries becomes expired if no read/write operations happened with the corresponding key during some amount of time (10 minutes).
  * * after project dispose
  */
-class IgnorePatternsMatchedFilesCache(private val project: Project) : Disposable {
+@Service(Service.Level.PROJECT)
+internal class IgnorePatternsMatchedFilesCache(private val project: Project) : Disposable {
   private val projectFileIndex = ProjectFileIndex.getInstance(project)
 
   private val cache =
-    CacheBuilder.newBuilder()
+    Caffeine.newBuilder()
       .expireAfterAccess(10, TimeUnit.MINUTES)
       .build<String, Collection<VirtualFile>>()
 
@@ -48,7 +53,9 @@ class IgnorePatternsMatchedFilesCache(private val project: Project) : Disposable
     ApplicationManager.getApplication().messageBus.connect(this)
       .subscribe(VirtualFileManager.VFS_CHANGES, object : BulkFileListener {
         override fun after(events: List<VFileEvent>) {
-          if (cache.size() == 0L) return
+          if (cache.estimatedSize() == 0L) {
+            return
+          }
 
           for (event in events) {
             if (event is VFileCreateEvent ||
@@ -108,17 +115,19 @@ class IgnorePatternsMatchedFilesCache(private val project: Project) : Disposable
       override fun doRun() = cache.put(key, doSearch(pattern))
     })
 
-  private fun doSearch(pattern: Pattern): THashSet<VirtualFile> {
-    val files = THashSet<VirtualFile>(1000)
+  private fun doSearch(pattern: Pattern): Set<VirtualFile> {
+    val files = HashSet<VirtualFile>(1000)
     val parts = RegexUtil.getParts(pattern)
-    if (parts.isEmpty()) return files
+    if (parts.isEmpty()) {
+      return files
+    }
 
     val projectScope = GlobalSearchScope.projectScope(project)
     projectFileIndex.iterateContent { fileOrDir ->
       ProgressManager.checkCanceled()
       val name = fileOrDir.name
       if (RegexUtil.matchAnyPart(parts, name)) {
-        for (file in runReadAction { FilenameIndex.getVirtualFilesByName(project, name, projectScope) }) {
+        for (file in runReadAction { FilenameIndex.getVirtualFilesByName(name, projectScope) }) {
           if (file.isValid && RegexUtil.matchAllParts(parts, file.path)) {
             files.add(file)
           }
@@ -132,7 +141,7 @@ class IgnorePatternsMatchedFilesCache(private val project: Project) : Disposable
   companion object {
     @JvmStatic
     fun getInstance(project: Project): IgnorePatternsMatchedFilesCache {
-      return ServiceManager.getService(project, IgnorePatternsMatchedFilesCache::class.java)
+      return project.getService(IgnorePatternsMatchedFilesCache::class.java)
     }
   }
 }

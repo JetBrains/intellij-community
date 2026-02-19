@@ -16,7 +16,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.externalSystem.model.execution.ExternalSystemTaskExecutionSettings;
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemBeforeRunTask;
 import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider;
-import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProviderImpl;
+import com.intellij.openapi.externalSystem.service.project.ProjectDataManager;
 import com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsManagerImpl;
 import com.intellij.openapi.externalSystem.service.project.manage.ExternalSystemTaskActivator;
 import com.intellij.openapi.externalSystem.service.project.manage.SourceFolderManager;
@@ -34,42 +34,56 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.encoding.EncodingProjectManager;
 import com.intellij.openapi.vfs.encoding.EncodingProjectManagerImpl;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
+import com.intellij.project.ProjectStoreOwner;
 import com.intellij.testFramework.ExtensionTestUtil;
 import com.intellij.testFramework.PlatformTestUtil;
+import com.intellij.util.PathUtil;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.gradle.settings.GradleProjectSettings;
 import org.jetbrains.plugins.gradle.settings.GradleSettings;
 import org.jetbrains.plugins.gradle.settings.TestRunner;
+import org.jetbrains.plugins.gradle.tooling.annotation.TargetVersions;
 import org.junit.Test;
 
+import java.io.File;
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.jetbrains.plugins.gradle.importing.TestGradleBuildScriptBuilder.extPluginVersionIsAtLeast;
 
 /**
  * Created by Nikita.Skvortsov
  */
 public class GradleSettingsImportingTest extends GradleSettingsImportingTestCase {
   @Test
+  @TargetVersions("4.7+") // The idea ext plugin is only compatible with Gradle 4.7+
   public void testInspectionSettingsImport() throws Exception {
     importProject(
       withGradleIdeaExtPlugin(
-        "import org.jetbrains.gradle.ext.*\n" +
-        "idea {\n" +
-        "  project.settings {\n" +
-        "    inspections {\n" +
-        "      myInspection { enabled = false }\n" +
-        "    }\n" +
-        "  }\n" +
-        "}")
+        """
+          import org.jetbrains.gradle.ext.*
+          idea {
+            project.settings {
+              inspections {
+                myInspection { enabled = false }
+              }
+            }
+          }""")
     );
 
-    final InspectionProfileImpl profile = InspectionProfileManager.getInstance(myProject).getCurrentProfile();
+    final InspectionProfileImpl profile = InspectionProfileManager.getInstance(getMyProject()).getCurrentProfile();
     assertEquals("Gradle Imported", profile.getName());
   }
 
   @Test
+  @TargetVersions("4.7+") // The idea ext plugin is only compatible with Gradle 4.7+
   public void testApplicationRunConfigurationSettingsImport() throws Exception {
     TestRunConfigurationImporter testExtension = new TestRunConfigurationImporter("application");
     maskRunImporter(testExtension);
@@ -77,22 +91,23 @@ public class GradleSettingsImportingTest extends GradleSettingsImportingTestCase
     createSettingsFile("rootProject.name = 'moduleName'");
     importProject(
       withGradleIdeaExtPlugin(
-        "import org.jetbrains.gradle.ext.*\n" +
-        "idea {\n" +
-        "  project.settings {\n" +
-        "    runConfigurations {\n" +
-        "       app1(Application) {\n" +
-        "           mainClass = 'my.app.Class'\n" +
-        "           jvmArgs =   '-Xmx1g'\n" +
-        "           moduleName = 'moduleName'\n" +
-        "       }\n" +
-        "       app2(Application) {\n" +
-        "           mainClass = 'my.app.Class2'\n" +
-        "           moduleName = 'moduleName'\n" +
-        "       }\n" +
-        "    }\n" +
-        "  }\n" +
-        "}")
+        """
+          import org.jetbrains.gradle.ext.*
+          idea {
+            project.settings {
+              runConfigurations {
+                 app1(Application) {
+                     mainClass = 'my.app.Class'
+                     jvmArgs =   '-Xmx1g'
+                     moduleName = 'moduleName'
+                 }
+                 app2(Application) {
+                     mainClass = 'my.app.Class2'
+                     moduleName = 'moduleName'
+                 }
+              }
+            }
+          }""")
     );
 
     final Map<String, Map<String, Object>> configs = testExtension.getConfigs();
@@ -108,14 +123,15 @@ public class GradleSettingsImportingTest extends GradleSettingsImportingTestCase
   }
 
   @Test
+  @TargetVersions("4.7+") // The idea ext plugin is only compatible with Gradle 4.7+
   public void testGradleRunConfigurationSettingsImport() throws Exception {
     TestRunConfigurationImporter testExtension = new TestRunConfigurationImporter("gradle");
     maskRunImporter(testExtension);
 
     createSettingsFile("rootProject.name = 'moduleName'");
     importProject(
-      new GradleBuildScriptBuilderEx()
-        .withGradleIdeaExtPluginIfCan(IDEA_EXT_PLUGIN_VERSION)
+      createBuildScriptBuilder()
+        .withGradleIdeaExtPluginIfCan()
         .addPostfix(
           "import org.jetbrains.gradle.ext.*",
           "idea.project.settings {",
@@ -137,10 +153,10 @@ public class GradleSettingsImportingTest extends GradleSettingsImportingTestCase
     assertContain(new ArrayList<>(configs.keySet()), "gr1");
     Map<String, Object> gradleSettings = configs.get("gr1");
 
-    assertEquals(myProjectRoot.getPath(), ((String)gradleSettings.get("projectPath")).replace('\\', '/'));
-    assertTrue(((List)gradleSettings.get("taskNames")).contains(":cleanTest"));
+    assertEquals(getMyProjectRoot().getPath(), ((String)gradleSettings.get("projectPath")).replace('\\', '/'));
+    assertTrue(((List<?>)gradleSettings.get("taskNames")).contains(":cleanTest"));
     assertEquals("-DvmKey=vmVal", gradleSettings.get("jvmArgs"));
-    assertTrue(((Map)gradleSettings.get("envs")).containsKey("env_key"));
+    assertTrue(((Map<?, ?>)gradleSettings.get("envs")).containsKey("env_key"));
   }
 
   private void maskRunImporter(@NotNull RunConfigurationImporter testExtension) {
@@ -148,25 +164,27 @@ public class GradleSettingsImportingTest extends GradleSettingsImportingTestCase
   }
 
   @Test
+  @TargetVersions("4.7+") // The idea ext plugin is only compatible with Gradle 4.7+
   public void testDefaultRCSettingsImport() throws Exception {
     RunConfigurationImporter appcConfigImporter = new JavaApplicationRunConfigurationImporter();
     maskRunImporter(appcConfigImporter);
 
     importProject(
       withGradleIdeaExtPlugin(
-        "import org.jetbrains.gradle.ext.*\n" +
-        "idea {\n" +
-        "  project.settings {\n" +
-        "    runConfigurations {\n" +
-        "       defaults(Application) {\n" +
-        "           jvmArgs = '-DmyKey=myVal'\n" +
-        "       }\n" +
-        "    }\n" +
-        "  }\n" +
-        "}")
+        """
+          import org.jetbrains.gradle.ext.*
+          idea {
+            project.settings {
+              runConfigurations {
+                 defaults(Application) {
+                     jvmArgs = '-DmyKey=myVal'
+                 }
+              }
+            }
+          }""")
     );
 
-    final RunManager runManager = RunManager.getInstance(myProject);
+    final RunManager runManager = RunManager.getInstance(getMyProject());
     final RunnerAndConfigurationSettings template = runManager.getConfigurationTemplate(appcConfigImporter.getConfigurationFactory());
     final String parameters = ((ApplicationConfiguration)template.getConfiguration()).getVMParameters();
 
@@ -175,6 +193,7 @@ public class GradleSettingsImportingTest extends GradleSettingsImportingTestCase
   }
 
   @Test
+  @TargetVersions("4.7+") // The idea ext plugin is only compatible with Gradle 4.7+
   public void testDefaultsAreUsedDuringImport() throws Exception {
     RunConfigurationImporter appcConfigImporter = new JavaApplicationRunConfigurationImporter();
     maskRunImporter(appcConfigImporter);
@@ -182,23 +201,24 @@ public class GradleSettingsImportingTest extends GradleSettingsImportingTestCase
     createSettingsFile("rootProject.name = 'moduleName'");
     importProject(
       withGradleIdeaExtPlugin(
-        "import org.jetbrains.gradle.ext.*\n" +
-        "idea {\n" +
-        "  project.settings {\n" +
-        "    runConfigurations {\n" +
-        "       defaults(Application) {\n" +
-        "           jvmArgs = '-DmyKey=myVal'\n" +
-        "       }\n" +
-        "       'My Run'(Application) {\n" +
-        "           mainClass = 'my.app.Class'\n" +
-        "           moduleName = 'moduleName'\n" +
-        "       }\n" +
-        "    }\n" +
-        "  }\n" +
-        "}")
+        """
+          import org.jetbrains.gradle.ext.*
+          idea {
+            project.settings {
+              runConfigurations {
+                 defaults(Application) {
+                     jvmArgs = '-DmyKey=myVal'
+                 }
+                 'My Run'(Application) {
+                     mainClass = 'my.app.Class'
+                     moduleName = 'moduleName'
+                 }
+              }
+            }
+          }""")
     );
 
-    final RunManager runManager = RunManager.getInstance(myProject);
+    final RunManager runManager = RunManager.getInstance(getMyProject());
     final RunnerAndConfigurationSettings template = runManager.getConfigurationTemplate(appcConfigImporter.getConfigurationFactory());
     final String parameters = ((ApplicationConfiguration)template.getConfiguration()).getVMParameters();
 
@@ -214,6 +234,7 @@ public class GradleSettingsImportingTest extends GradleSettingsImportingTestCase
   }
 
   @Test
+  @TargetVersions("4.7+") // The idea ext plugin is only compatible with Gradle 4.7+
   public void testBeforeRunTaskImport() throws Exception {
     RunConfigurationImporter appcConfigImporter = new JavaApplicationRunConfigurationImporter();
     maskRunImporter(appcConfigImporter);
@@ -221,23 +242,24 @@ public class GradleSettingsImportingTest extends GradleSettingsImportingTestCase
     createSettingsFile("rootProject.name = 'moduleName'");
     importProject(
       withGradleIdeaExtPlugin(
-        "import org.jetbrains.gradle.ext.*\n" +
-        "idea {\n" +
-        "  project.settings {\n" +
-        "    runConfigurations {\n" +
-        "       'My Run'(Application) {\n" +
-        "           mainClass = 'my.app.Class'\n" +
-        "           moduleName = 'moduleName'\n" +
-        "           beforeRun {\n" +
-        "               gradle(GradleTask) { task = tasks['projects'] }\n" +
-        "           }\n" +
-        "       }\n" +
-        "    }\n" +
-        "  }\n" +
-        "}")
+        """
+          import org.jetbrains.gradle.ext.*
+          idea {
+            project.settings {
+              runConfigurations {
+                 'My Run'(Application) {
+                     mainClass = 'my.app.Class'
+                     moduleName = 'moduleName'
+                     beforeRun {
+                         gradle(GradleTask) { task = tasks['projects'] }
+                     }
+                 }
+              }
+            }
+          }""")
     );
 
-    final RunManagerEx runManager = RunManagerEx.getInstanceEx(myProject);
+    final RunManagerEx runManager = RunManagerEx.getInstanceEx(getMyProject());
     final ApplicationConfiguration myRun = (ApplicationConfiguration)runManager.findConfigurationByName("My Run").getConfiguration();
     assertNotNull(myRun);
 
@@ -252,14 +274,15 @@ public class GradleSettingsImportingTest extends GradleSettingsImportingTestCase
   }
 
   @Test
+  @TargetVersions("4.7+") // The idea ext plugin is only compatible with Gradle 4.7+
   public void testJarApplicationRunConfigurationSettingsImport() throws Exception {
     TestRunConfigurationImporter testExtension = new TestRunConfigurationImporter("jarApplication");
     maskRunImporter(testExtension);
 
     createSettingsFile("rootProject.name = 'moduleName'");
     importProject(
-      new GradleBuildScriptBuilderEx()
-      .withGradleIdeaExtPluginIfCan(IDEA_EXT_PLUGIN_VERSION)
+      createBuildScriptBuilder()
+      .withGradleIdeaExtPluginIfCan()
       .addPostfix(
         "import org.jetbrains.gradle.ext.*",
         "idea.project.settings {",
@@ -290,6 +313,7 @@ public class GradleSettingsImportingTest extends GradleSettingsImportingTestCase
   }
 
   @Test
+  @TargetVersions("4.7+") // The idea ext plugin is only compatible with Gradle 4.7+
   public void testJarApplicationBeforeRunGradleTaskImport() throws Exception {
     RunConfigurationImporter jarAppConfigImporter = new JarApplicationRunConfigurationImporter();
     maskRunImporter(jarAppConfigImporter);
@@ -297,22 +321,23 @@ public class GradleSettingsImportingTest extends GradleSettingsImportingTestCase
     createSettingsFile("rootProject.name = 'moduleName'");
     importProject(
       withGradleIdeaExtPlugin(
-        "import org.jetbrains.gradle.ext.*\n" +
-        "idea.project.settings {\n" +
-        "  runConfigurations {\n" +
-        "    'jarApp'(JarApplication) {\n" +
-        "      beforeRun {\n" +
-        "        'gradleTask'(GradleTask) {\n" +
-        "          task = tasks['projects']\n" +
-        "        }\n" +
-        "      }\n" +
-        "    }\n" +
-        "  }\n" +
-        "}"
+        """
+          import org.jetbrains.gradle.ext.*
+          idea.project.settings {
+            runConfigurations {
+              'jarApp'(JarApplication) {
+                beforeRun {
+                  'gradleTask'(GradleTask) {
+                    task = tasks['projects']
+                  }
+                }
+              }
+            }
+          }"""
       )
     );
 
-    RunManagerEx runManager = RunManagerEx.getInstanceEx(myProject);
+    RunManagerEx runManager = RunManagerEx.getInstanceEx(getMyProject());
     RunConfiguration jarApp = runManager.findConfigurationByName("jarApp").getConfiguration();
     assertNotNull(jarApp);
 
@@ -327,6 +352,7 @@ public class GradleSettingsImportingTest extends GradleSettingsImportingTestCase
   }
 
   @Test
+  @TargetVersions("4.7+") // The idea ext plugin is only compatible with Gradle 4.7+
   public void testFacetSettingsImport() throws Exception {
     TestFacetConfigurationImporter testExtension = new TestFacetConfigurationImporter("spring");
     ExtensionTestUtil
@@ -334,24 +360,24 @@ public class GradleSettingsImportingTest extends GradleSettingsImportingTestCase
                       getTestRootDisposable());
     importProject(
       withGradleIdeaExtPlugin(
-        "import org.jetbrains.gradle.ext.*\n" +
-        "idea {\n" +
-        "  module.settings {\n" +
-        "    facets {\n" +
-        "       spring(SpringFacet) {\n" +
-        "         contexts {\n" +
-        "            myParent {\n" +
-        "              file = 'parent_ctx.xml'\n" +
-        "            }\n" +
-        "            myChild {\n" +
-        "              file = 'child_ctx.xml'\n" +
-        "              parent = 'myParent'" +
-        "            }\n" +
-        "         }\n" +
-        "       }\n" +
-        "    }\n" +
-        "  }\n" +
-        "}")
+        """
+          import org.jetbrains.gradle.ext.*
+          idea {
+            module.settings {
+              facets {
+                 spring(SpringFacet) {
+                   contexts {
+                      myParent {
+                        file = 'parent_ctx.xml'
+                      }
+                      myChild {
+                        file = 'child_ctx.xml'
+                        parent = 'myParent'            }
+                   }
+                 }
+              }
+            }
+          }""")
     );
 
     final Map<String, Map<String, Object>> facetConfigs = testExtension.getConfigs();
@@ -376,26 +402,28 @@ public class GradleSettingsImportingTest extends GradleSettingsImportingTestCase
   }
 
   @Test
+  @TargetVersions("4.7+") // The idea ext plugin is only compatible with Gradle 4.7+
   public void testTaskTriggersImport() throws Exception {
     importProject(
       withGradleIdeaExtPlugin(
-        "import org.jetbrains.gradle.ext.*\n" +
-        "idea {\n" +
-        "  project.settings {\n" +
-        "    taskTriggers {\n" +
-        "      beforeSync tasks.getByName('projects'), tasks.getByName('tasks')\n" +
-        "    }\n" +
-        "  }\n" +
-        "}")
+        """
+          import org.jetbrains.gradle.ext.*
+          idea {
+            project.settings {
+              taskTriggers {
+                beforeSync tasks.getByName('projects'), tasks.getByName('tasks')
+              }
+            }
+          }""")
     );
 
     final List<ExternalProjectsManagerImpl.ExternalProjectsStateProvider.TasksActivation> activations =
-      ExternalProjectsManagerImpl.getInstance(myProject).getStateProvider().getAllTasksActivation();
+      ExternalProjectsManagerImpl.getInstance(getMyProject()).getStateProvider().getAllTasksActivation();
 
     assertSize(1, activations);
 
     final ExternalProjectsManagerImpl.ExternalProjectsStateProvider.TasksActivation activation = activations.get(0);
-    assertEquals(GradleSettings.getInstance(myProject).getLinkedProjectsSettings().iterator().next().getExternalProjectPath(),
+    assertEquals(GradleSettings.getInstance(getMyProject()).getLinkedProjectsSettings().iterator().next().getExternalProjectPath(),
                  activation.projectPath);
     final List<String> beforeSyncTasks = activation.state.getTasks(ExternalSystemTaskActivator.Phase.BEFORE_SYNC);
 
@@ -408,28 +436,76 @@ public class GradleSettingsImportingTest extends GradleSettingsImportingTestCase
   }
 
   @Test
+  // The idea ext plugin is only compatible with Gradle 4.7+
+  // The idea ext plugin uses API that was deprecated in Gradle 6.0.
+  @TargetVersions({"4.7+", "!6.0"})
+  public void testIdeaPostProcessingHook() throws Exception {
+    File layoutFile = new File(getProjectPath(), "test_output.txt");
+    assertThat(layoutFile).doesNotExist();
+
+    importProject(
+      createBuildScriptBuilder()
+        .withGradleIdeaExtPlugin()
+        .addPostfix("""
+                      import org.jetbrains.gradle.ext.*
+                      idea {
+                        project.settings {
+                          withIDEADir { File dir ->
+                              def f = file("test_output.txt")
+                              f.createNewFile()
+                              f.text = "Expected file content"
+                          } \s
+                        }
+                      }""")
+        .generate()
+    );
+    final List<ExternalProjectsManagerImpl.ExternalProjectsStateProvider.TasksActivation> activations =
+      ExternalProjectsManagerImpl.getInstance(getMyProject()).getStateProvider().getAllTasksActivation();
+
+    assertThat(activations)
+      .extracting("projectPath")
+      .containsExactly(GradleSettings.getInstance(getMyProject()).getLinkedProjectsSettings().iterator().next().getExternalProjectPath());
+
+    final List<String> afterSyncTasks = activations.get(0).state.getTasks(ExternalSystemTaskActivator.Phase.AFTER_SYNC);
+
+    assertThat(afterSyncTasks).containsExactly("processIdeaSettings");
+
+    String ideaDir = PathUtil.toSystemIndependentName(((ProjectStoreOwner)getMyProject()).getComponentStore()
+      .getProjectFilePath().getParent().toAbsolutePath().toString());
+
+    String moduleFile = getModule("project").getModuleFilePath();
+    assertThat(layoutFile)
+      .exists()
+      .hasContent("Expected file content");
+  }
+
+  @Test
+  // The idea ext plugin is only compatible with Gradle 4.7+
+  // The idea ext plugin uses API that was deprecated in Gradle 6.0.
+  @TargetVersions({"4.7+", "!6.0"})
   public void testImportEncodingSettings() throws IOException {
     {
       importProject(
-        new GradleBuildScriptBuilderEx()
-          .withGradleIdeaExtPlugin(IDEA_EXT_PLUGIN_VERSION)
+        createBuildScriptBuilder()
+          .withGradleIdeaExtPlugin()
           .addImport("org.jetbrains.gradle.ext.EncodingConfiguration.BomPolicy")
-          .addPostfix("idea {")
-          .addPostfix("  project {")
-          .addPostfix("    settings {")
-          .addPostfix("      encodings {")
-          .addPostfix("        encoding = 'IBM-Thai'")
-          .addPostfix("        bomPolicy = BomPolicy.WITH_NO_BOM")
-          .addPostfix("        properties {")
-          .addPostfix("          encoding = 'GB2312'")
-          .addPostfix("          transparentNativeToAsciiConversion = true")
-          .addPostfix("        }")
-          .addPostfix("      }")
-          .addPostfix("    }")
-          .addPostfix("  }")
-          .addPostfix("}")
+          .addPostfix(
+            "idea {",
+            "  project {",
+            "    settings {",
+            "      encodings {",
+            "        encoding = 'IBM-Thai'",
+            "        bomPolicy = BomPolicy.WITH_NO_BOM",
+            "        properties {",
+            "          encoding = 'GB2312'",
+            "          transparentNativeToAsciiConversion = true",
+            "        }",
+            "      }",
+            "    }",
+            "  }",
+            "}")
           .generate());
-      EncodingProjectManagerImpl encodingManager = (EncodingProjectManagerImpl)EncodingProjectManager.getInstance(myProject);
+      EncodingProjectManagerImpl encodingManager = (EncodingProjectManagerImpl)EncodingProjectManager.getInstance(getMyProject());
       assertEquals("IBM-Thai", encodingManager.getDefaultCharset().name());
       assertEquals("GB2312", encodingManager.getDefaultCharsetForPropertiesFiles(null).name());
       assertTrue(encodingManager.isNative2AsciiForPropertiesFiles());
@@ -437,25 +513,26 @@ public class GradleSettingsImportingTest extends GradleSettingsImportingTestCase
     }
     {
       importProject(
-        new GradleBuildScriptBuilderEx()
-          .withGradleIdeaExtPlugin(IDEA_EXT_PLUGIN_VERSION)
+        createBuildScriptBuilder()
+          .withGradleIdeaExtPlugin()
           .addImport("org.jetbrains.gradle.ext.EncodingConfiguration.BomPolicy")
-          .addPostfix("idea {")
-          .addPostfix("  project {")
-          .addPostfix("    settings {")
-          .addPostfix("      encodings {")
-          .addPostfix("        encoding = 'UTF-8'")
-          .addPostfix("        bomPolicy = BomPolicy.WITH_BOM")
-          .addPostfix("        properties {")
-          .addPostfix("          encoding = 'UTF-8'")
-          .addPostfix("          transparentNativeToAsciiConversion = false")
-          .addPostfix("        }")
-          .addPostfix("      }")
-          .addPostfix("    }")
-          .addPostfix("  }")
-          .addPostfix("}")
+          .addPostfix(
+            "idea {",
+            "  project {",
+            "    settings {",
+            "      encodings {",
+            "        encoding = 'UTF-8'",
+            "        bomPolicy = BomPolicy.WITH_BOM",
+            "        properties {",
+            "          encoding = 'UTF-8'",
+            "          transparentNativeToAsciiConversion = false",
+            "        }",
+            "      }",
+            "    }",
+            "  }",
+            "}")
           .generate());
-      EncodingProjectManagerImpl encodingManager = (EncodingProjectManagerImpl)EncodingProjectManager.getInstance(myProject);
+      EncodingProjectManagerImpl encodingManager = (EncodingProjectManagerImpl)EncodingProjectManager.getInstance(getMyProject());
       assertEquals("UTF-8", encodingManager.getDefaultCharset().name());
       assertEquals("UTF-8", encodingManager.getDefaultCharsetForPropertiesFiles(null).name());
       assertFalse(encodingManager.isNative2AsciiForPropertiesFiles());
@@ -464,6 +541,9 @@ public class GradleSettingsImportingTest extends GradleSettingsImportingTestCase
   }
 
   @Test
+  // The idea ext plugin is only compatible with Gradle 4.7+
+  // The idea ext plugin uses API that was deprecated in Gradle 6.0.
+  @TargetVersions({"4.7+", "!6.0"})
   public void testImportFileEncodingSettings() throws IOException {
     VirtualFile aDir = createProjectSubDir("src/main/java/a");
     VirtualFile bDir = createProjectSubDir("src/main/java/b");
@@ -474,27 +554,28 @@ public class GradleSettingsImportingTest extends GradleSettingsImportingTestCase
     createProjectSubFile("../sub-project/src/main/java/Main.java");
     {
       importProject(
-        new GradleBuildScriptBuilderEx()
+        createBuildScriptBuilder()
           .withJavaPlugin()
-          .withGradleIdeaExtPlugin(IDEA_EXT_PLUGIN_VERSION)
+          .withGradleIdeaExtPlugin()
           .addImport("org.jetbrains.gradle.ext.EncodingConfiguration.BomPolicy")
-          .addPostfix("sourceSets {")
-          .addPostfix("  main.java.srcDirs += '../sub-project/src/main/java'")
-          .addPostfix("}")
-          .addPostfix("idea {")
-          .addPostfix("  project {")
-          .addPostfix("    settings {")
-          .addPostfix("      encodings {")
-          .addPostfix("        mapping['src/main/java/a'] = 'ISO-8859-9'")
-          .addPostfix("        mapping['src/main/java/b'] = 'x-EUC-TW'")
-          .addPostfix("        mapping['src/main/java/c'] = 'UTF-8'")
-          .addPostfix("        mapping['../sub-project/src/main/java'] = 'KOI8-R'")
-          .addPostfix("      }")
-          .addPostfix("    }")
-          .addPostfix("  }")
-          .addPostfix("}")
+          .addPostfix(
+            "sourceSets {",
+            "  main.java.srcDirs += '../sub-project/src/main/java'",
+            "}",
+            "idea {",
+            "  project {",
+            "    settings {",
+            "      encodings {",
+            "        mapping['src/main/java/a'] = 'ISO-8859-9'",
+            "        mapping['src/main/java/b'] = 'x-EUC-TW'",
+            "        mapping['src/main/java/c'] = 'UTF-8'",
+            "        mapping['../sub-project/src/main/java'] = 'KOI8-R'",
+            "      }",
+            "    }",
+            "  }",
+            "}")
           .generate());
-      EncodingProjectManagerImpl encodingManager = (EncodingProjectManagerImpl)EncodingProjectManager.getInstance(myProject);
+      EncodingProjectManagerImpl encodingManager = (EncodingProjectManagerImpl)EncodingProjectManager.getInstance(getMyProject());
       Map<String, String> allMappings = encodingManager.getAllMappings().entrySet().stream()
         .collect(Collectors.toMap(it -> it.getKey().getCanonicalPath(), it -> it.getValue().name()));
       assertEquals("ISO-8859-9", allMappings.get(aDir.getCanonicalPath()));
@@ -504,26 +585,27 @@ public class GradleSettingsImportingTest extends GradleSettingsImportingTestCase
     }
     {
       importProject(
-        new GradleBuildScriptBuilderEx()
+        createBuildScriptBuilder()
           .withJavaPlugin()
-          .withGradleIdeaExtPlugin(IDEA_EXT_PLUGIN_VERSION)
+          .withGradleIdeaExtPlugin()
           .addImport("org.jetbrains.gradle.ext.EncodingConfiguration.BomPolicy")
-          .addPostfix("sourceSets {")
-          .addPostfix("  main.java.srcDirs += '../sub-project/src/main/java'")
-          .addPostfix("}")
-          .addPostfix("idea {")
-          .addPostfix("  project {")
-          .addPostfix("    settings {")
-          .addPostfix("      encodings {")
-          .addPostfix("        mapping['src/main/java/a'] = '<System Default>'")
-          .addPostfix("        mapping['src/main/java/b'] = '<System Default>'")
-          .addPostfix("        mapping['../sub-project/src/main/java'] = '<System Default>'")
-          .addPostfix("      }")
-          .addPostfix("    }")
-          .addPostfix("  }")
-          .addPostfix("}")
+          .addPostfix(
+            "sourceSets {",
+            "  main.java.srcDirs += '../sub-project/src/main/java'",
+            "}",
+            "idea {",
+            "  project {",
+            "    settings {",
+            "      encodings {",
+            "        mapping['src/main/java/a'] = '<System Default>'",
+            "        mapping['src/main/java/b'] = '<System Default>'",
+            "        mapping['../sub-project/src/main/java'] = '<System Default>'",
+            "      }",
+            "    }",
+            "  }",
+            "}")
           .generate());
-      EncodingProjectManagerImpl encodingManager = (EncodingProjectManagerImpl)EncodingProjectManager.getInstance(myProject);
+      EncodingProjectManagerImpl encodingManager = (EncodingProjectManagerImpl)EncodingProjectManager.getInstance(getMyProject());
       Map<String, String> allMappings = encodingManager.getAllMappings().entrySet().stream()
         .collect(Collectors.toMap(it -> it.getKey().getCanonicalPath(), it -> it.getValue().name()));
       assertNull(allMappings.get(aDir.getCanonicalPath()));
@@ -534,33 +616,35 @@ public class GradleSettingsImportingTest extends GradleSettingsImportingTestCase
   }
 
   @Test
+  @TargetVersions("4.7+") // The idea ext plugin is only compatible with Gradle 4.7+
   public void testActionDelegationImport() throws Exception {
     importProject(
       withGradleIdeaExtPlugin(
-        "import org.jetbrains.gradle.ext.*\n" +
-        "import static org.jetbrains.gradle.ext.ActionDelegationConfig.TestRunner.*\n" +
-        "idea {\n" +
-        "  project.settings {\n" +
-        "    delegateActions {\n" +
-        "      delegateBuildRunToGradle = true\n" +
-        "      testRunner = CHOOSE_PER_TEST\n" +
-        "    }\n" +
-        "  }\n" +
-        "}")
+        """
+          import org.jetbrains.gradle.ext.*
+          import static org.jetbrains.gradle.ext.ActionDelegationConfig.TestRunner.*
+          idea {
+            project.settings {
+              delegateActions {
+                delegateBuildRunToGradle = true
+                testRunner = CHOOSE_PER_TEST
+              }
+            }
+          }""")
     );
 
     String projectPath = getCurrentExternalProjectSettings().getExternalProjectPath();
-    assertTrue(GradleProjectSettings.isDelegatedBuildEnabled(myProject, projectPath));
-    assertEquals(TestRunner.CHOOSE_PER_TEST, GradleProjectSettings.getTestRunner(myProject, projectPath));
+    assertTrue(GradleProjectSettings.isDelegatedBuildEnabled(getMyProject(), projectPath));
+    assertEquals(TestRunner.CHOOSE_PER_TEST, GradleProjectSettings.getTestRunner(getMyProject(), projectPath));
   }
 
   @Test
   public void testSavePackagePrefixAfterReOpenProject() throws IOException {
-    @Language("Groovy") String buildScript = new GradleBuildScriptBuilderEx().withJavaPlugin().generate();
+    @Language("Groovy") String buildScript = createBuildScriptBuilder().withJavaPlugin().generate();
     createProjectSubFile("src/main/java/Main.java", "");
     importProject(buildScript);
     Application application = ApplicationManager.getApplication();
-    IdeModifiableModelsProvider modelsProvider = new IdeModifiableModelsProviderImpl(myProject);
+    IdeModifiableModelsProvider modelsProvider = ProjectDataManager.getInstance().createModifiableModelsProvider(getMyProject());
     try {
       Module module = modelsProvider.findIdeModule("project.main");
       ModifiableRootModel modifiableRootModel = modelsProvider.getModifiableRootModel(module);
@@ -578,23 +662,24 @@ public class GradleSettingsImportingTest extends GradleSettingsImportingTestCase
 
   @Test
   public void testRemovingSourceFolderManagerMemLeaking() throws IOException {
-    SourceFolderManagerImpl sourceFolderManager = (SourceFolderManagerImpl)SourceFolderManager.getInstance(myProject);
-    String javaSourcePath = FileUtil.toCanonicalPath(myProjectRoot.getPath() + "/java");
+    SourceFolderManagerImpl sourceFolderManager = (SourceFolderManagerImpl)SourceFolderManager.getInstance(getMyProject());
+    String javaSourcePath = FileUtil.toCanonicalPath(getMyProjectRoot().getPath() + "/java");
     String javaSourceUrl = VfsUtilCore.pathToUrl(javaSourcePath);
     {
       importProject(
-        new GradleBuildScriptBuilderEx()
+        createBuildScriptBuilder()
           .withJavaPlugin()
-          .addPostfix("sourceSets {")
-          .addPostfix("  main.java.srcDirs += 'java'")
-          .addPostfix("}")
+          .addPostfix(
+            "sourceSets {",
+            "  main.java.srcDirs += 'java'",
+            "}")
           .generate());
       Set<String> sourceFolders = sourceFolderManager.getSourceFolders("project.main");
       assertTrue(sourceFolders.contains(javaSourceUrl));
     }
     {
       importProject(
-        new GradleBuildScriptBuilderEx()
+        createBuildScriptBuilder()
           .withJavaPlugin()
           .generate());
       Set<String> sourceFolders = sourceFolderManager.getSourceFolders("project.main");
@@ -604,10 +689,10 @@ public class GradleSettingsImportingTest extends GradleSettingsImportingTestCase
 
   @Test
   public void testSourceFolderIsDisposedAfterProjectDisposing() throws IOException {
-    importProject(new GradleBuildScriptBuilder().generate());
+    importProject(createBuildScriptBuilder().generate());
     Application application = ApplicationManager.getApplication();
     Ref<Project> projectRef = new Ref<>();
-    application.invokeAndWait(() -> projectRef.set(ProjectUtil.openOrImport(myProjectRoot.toNioPath())));
+    application.invokeAndWait(() -> projectRef.set(ProjectUtil.openOrImport(getMyProjectRoot().toNioPath())));
     Project project = projectRef.get();
     SourceFolderManagerImpl sourceFolderManager = (SourceFolderManagerImpl)SourceFolderManager.getInstance(project);
     try {
@@ -622,29 +707,31 @@ public class GradleSettingsImportingTest extends GradleSettingsImportingTestCase
   }
 
   @Test
+  @TargetVersions("4.7+") // The idea ext plugin is only compatible with Gradle 4.7+
   public void testPostponedImportPackagePrefix() throws Exception {
     createProjectSubFile("src/main/java/Main.java", "");
     importProject(
-      new GradleBuildScriptBuilderEx()
-        .withGradleIdeaExtPlugin(IDEA_EXT_PLUGIN_VERSION)
+      createBuildScriptBuilder()
+        .withGradleIdeaExtPlugin()
         .withJavaPlugin()
-        .withKotlinPlugin("1.3.50")
-        .addPostfix("idea {")
-        .addPostfix("  module {")
-        .addPostfix("    settings {")
-        .addPostfix("      packagePrefix['src/main/java'] = 'prefix.package.some'")
-        .addPostfix("      packagePrefix['src/main/kotlin'] = 'prefix.package.other'")
-        .addPostfix("      packagePrefix['src/test/java'] = 'prefix.package.some.test'")
-        .addPostfix("    }")
-        .addPostfix("  }")
-        .addPostfix("}")
+        .withKotlinJvmPlugin()
+        .addPostfix(
+          "idea {",
+          "  module {",
+          "    settings {",
+          "      packagePrefix['src/main/java'] = 'prefix.package.some'",
+          "      packagePrefix['src/main/kotlin'] = 'prefix.package.other'",
+          "      packagePrefix['src/test/java'] = 'prefix.package.some.test'",
+          "    }",
+          "  }",
+          "}")
         .generate());
     assertSourcePackagePrefix("project.main", "src/main/java", "prefix.package.some");
     assertSourceNotExists("project.main", "src/main/kotlin");
     assertSourceNotExists("project.test", "src/test/java");
     createProjectSubFile("src/main/kotlin/Main.kt", "");
     edt(() -> {
-      ((SourceFolderManagerImpl)SourceFolderManager.getInstance(myProject)).consumeBulkOperationsState(future -> {
+      ((SourceFolderManagerImpl)SourceFolderManager.getInstance(getMyProject())).consumeBulkOperationsState(future -> {
         PlatformTestUtil.waitForFuture(future, 1000);
         return null;
       });
@@ -655,45 +742,49 @@ public class GradleSettingsImportingTest extends GradleSettingsImportingTestCase
   }
 
   @Test
+  @TargetVersions("4.7+") // The idea ext plugin is only compatible with Gradle 4.7+
   public void testPartialImportPackagePrefix() throws IOException {
     createProjectSubFile("src/main/java/Main.java", "");
     createProjectSubFile("src/main/kotlin/Main.kt", "");
     importProject(
-      new GradleBuildScriptBuilderEx()
-        .withGradleIdeaExtPlugin(IDEA_EXT_PLUGIN_VERSION)
+      createBuildScriptBuilder()
+        .withGradleIdeaExtPlugin()
         .withJavaPlugin()
-        .withKotlinPlugin("1.3.50")
-        .addPostfix("idea {")
-        .addPostfix("  module {")
-        .addPostfix("    settings {")
-        .addPostfix("      packagePrefix['src/main/java'] = 'prefix.package.some'")
-        .addPostfix("    }")
-        .addPostfix("  }")
-        .addPostfix("}")
+        .withKotlinJvmPlugin()
+        .addPostfix(
+          "idea {",
+          "  module {",
+          "    settings {",
+          "      packagePrefix['src/main/java'] = 'prefix.package.some'",
+          "    }",
+          "  }",
+          "}")
         .generate());
     assertSourcePackagePrefix("project.main", "src/main/java", "prefix.package.some");
     assertSourcePackagePrefix("project.main", "src/main/kotlin", "");
   }
 
   @Test
+  @TargetVersions("4.7+") // The idea ext plugin is only compatible with Gradle 4.7+
   public void testImportPackagePrefixWithRemoteSourceRoot() throws IOException {
     createProjectSubFile("src/test/java/Main.java", "");
     createProjectSubFile("../subproject/src/test/java/Main.java", "");
     importProject(
-      new GradleBuildScriptBuilderEx()
-        .withGradleIdeaExtPlugin(IDEA_EXT_PLUGIN_VERSION)
+      createBuildScriptBuilder()
+        .withGradleIdeaExtPlugin()
         .withJavaPlugin()
-        .addPostfix("sourceSets {")
-        .addPostfix("  test.java.srcDirs += '../subproject/src/test/java'")
-        .addPostfix("}")
-        .addPostfix("idea {")
-        .addPostfix("  module {")
-        .addPostfix("    settings {")
-        .addPostfix("      packagePrefix['src/test/java'] = 'prefix.package.some'")
-        .addPostfix("      packagePrefix['../subproject/src/test/java'] = 'prefix.package.other'")
-        .addPostfix("    }")
-        .addPostfix("  }")
-        .addPostfix("}")
+        .addPostfix(
+          "sourceSets {",
+          "  test.java.srcDirs += '../subproject/src/test/java'",
+          "}",
+          "idea {",
+          "  module {",
+          "    settings {",
+          "      packagePrefix['src/test/java'] = 'prefix.package.some'",
+          "      packagePrefix['../subproject/src/test/java'] = 'prefix.package.other'",
+          "    }",
+          "  }",
+          "}")
         .generate());
     printProjectStructure();
     assertSourcePackagePrefix("project.test", "src/test/java", "prefix.package.some");
@@ -701,51 +792,78 @@ public class GradleSettingsImportingTest extends GradleSettingsImportingTestCase
   }
 
   @Test
+  @TargetVersions("4.7+") // The idea ext plugin is only compatible with Gradle 4.7+
   public void testImportPackagePrefix() throws IOException {
     createProjectSubFile("src/main/java/Main.java", "");
     importProject(
-      new GradleBuildScriptBuilderEx()
-        .withGradleIdeaExtPlugin(IDEA_EXT_PLUGIN_VERSION)
+      createBuildScriptBuilder()
+        .withGradleIdeaExtPlugin()
         .withJavaPlugin()
-        .addPostfix("idea {")
-        .addPostfix("  module {")
-        .addPostfix("    settings {")
-        .addPostfix("      packagePrefix['src/main/java'] = 'prefix.package.some'")
-        .addPostfix("    }")
-        .addPostfix("  }")
-        .addPostfix("}")
+        .addPostfix(
+          "idea {",
+          "  module {",
+          "    settings {",
+          "      packagePrefix['src/main/java'] = 'prefix.package.some'",
+          "    }",
+          "  }",
+          "}")
         .generate());
     assertSourcePackagePrefix("project.main", "src/main/java", "prefix.package.some");
   }
 
   @Test
+  // The idea ext plugin is only compatible with Gradle 4.7+
+  // The idea ext plugin uses API that was deprecated in Gradle 6.0.
+  @TargetVersions({"4.7+", "!6.0"})
   public void testChangeImportPackagePrefix() throws IOException {
     createProjectSubFile("src/main/java/Main.java", "");
     importProject(
-      new GradleBuildScriptBuilderEx()
-        .withGradleIdeaExtPlugin(IDEA_EXT_PLUGIN_VERSION)
+      createBuildScriptBuilder()
+        .withGradleIdeaExtPlugin()
         .withJavaPlugin()
-        .addPostfix("idea {")
-        .addPostfix("  module {")
-        .addPostfix("    settings {")
-        .addPostfix("      packagePrefix['src/main/java'] = 'prefix.package.some'")
-        .addPostfix("    }")
-        .addPostfix("  }")
-        .addPostfix("}")
+        .addPostfix(
+          "idea {",
+          "  module {",
+          "    settings {",
+          "      packagePrefix['src/main/java'] = 'prefix.package.some'",
+          "    }",
+          "  }",
+          "}")
         .generate());
     assertSourcePackagePrefix("project.main", "src/main/java", "prefix.package.some");
     importProject(
-      new GradleBuildScriptBuilderEx()
-        .withGradleIdeaExtPlugin(IDEA_EXT_PLUGIN_VERSION)
+      createBuildScriptBuilder()
+        .withGradleIdeaExtPlugin()
         .withJavaPlugin()
-        .addPostfix("idea {")
-        .addPostfix("  module {")
-        .addPostfix("    settings {")
-        .addPostfix("      packagePrefix['src/main/java'] = 'prefix.package.other'")
-        .addPostfix("    }")
-        .addPostfix("  }")
-        .addPostfix("}")
+        .addPostfix(
+          "idea {",
+          "  module {",
+          "    settings {",
+          "      packagePrefix['src/main/java'] = 'prefix.package.other'",
+          "    }",
+          "  }",
+          "}")
         .generate());
     assertSourcePackagePrefix("project.main", "src/main/java", "prefix.package.other");
+  }
+
+
+  @Test
+  @TargetVersions("4.7+") // The idea ext plugin is only compatible with Gradle 4.7+
+  public void testModuleTypesImport() throws Exception {
+    importProject(
+      createBuildScriptBuilder()
+        .withGradleIdeaExtPluginIfCan()
+        .withJavaPlugin()
+        .addPostfix(
+          "import org.jetbrains.gradle.ext.*",
+          "idea.module.settings {",
+          "    rootModuleType = 'EMPTY_MODULE'",
+          "    moduleType[sourceSets.main] = 'WEB_MODULE'",
+          "    }"
+        ).generate());
+    assertThat(getModule("project").getModuleTypeName()).isEqualTo("EMPTY_MODULE");
+    assertThat(getModule("project.main").getModuleTypeName()).isEqualTo("WEB_MODULE");
+    assertThat(getModule("project.test").getModuleTypeName()).isEqualTo("JAVA_MODULE");
   }
 }

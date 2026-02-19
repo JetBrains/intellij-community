@@ -6,7 +6,7 @@ class B<T> {
     }
 
     void m(Iterable<? extends T> it, Predicate<? super T> p) {
-        <error descr="Incompatible types. Found: 'B<capture<? extends T>>', required: 'B<T>'">B<T> B = from(it).bar(not(p));</error>
+        B<T> B = from(it).<error descr="Incompatible types. Found: 'B<capture<? extends T>>', required: 'B<T>'">bar</error>(not(p));
     }
 
     B<T> bar(Predicate<? super T> p) {

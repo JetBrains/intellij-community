@@ -23,9 +23,15 @@ import com.intellij.execution.configurations.RuntimeConfigurationWarning;
 import com.intellij.execution.testframework.SourceScope;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiModifierListOwner;
 import com.intellij.psi.util.ClassUtil;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.indexing.DumbModeAccessType;
+import com.intellij.util.indexing.FileBasedIndex;
 import com.theoryinpractice.testng.TestngBundle;
 import com.theoryinpractice.testng.configuration.TestNGConfiguration;
 import com.theoryinpractice.testng.util.TestNGUtil;
@@ -74,12 +80,18 @@ public class TestNGTestClass extends TestNGTestObject {
     }
     final PsiManager manager = PsiManager.getInstance(myConfig.getProject());
     String testClassName = data.getMainClassName();
-    final PsiClass psiClass = ClassUtil.findPsiClass(manager, testClassName, null, true, scope.getGlobalSearchScope());
-    if (psiClass == null) throw new RuntimeConfigurationException(
-      TestngBundle.message("testng.dialog.message.class.not.found.exception", testClassName));
-    if (!TestNGUtil.isTestNGClass(psiClass)) {
-      throw new RuntimeConfigurationWarning(ExecutionBundle.message("class.isnt.test.class.error.message", testClassName));
-    }
+    FileBasedIndex.getInstance().ignoreDumbMode(DumbModeAccessType.RELIABLE_DATA_ONLY,
+                                                () -> {
+                                                  final PsiClass psiClass = ClassUtil.findPsiClass(manager, testClassName, null, true, scope.getGlobalSearchScope());
+                                                  if (psiClass == null) {
+                                                    throw new RuntimeConfigurationException(TestngBundle.message("testng.dialog.message.class.not.found.exception", testClassName));
+                                                  }
+                                                  if (!TestNGUtil.isTestNGClass(psiClass)) {
+                                                    throw new RuntimeConfigurationWarning(ExecutionBundle.message("class.isnt.test.class.error.message", testClassName));
+                                                  }
+                                                  return true;
+                                                });
+    
   }
 
   @Override

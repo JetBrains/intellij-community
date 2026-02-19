@@ -1,10 +1,12 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.hints;
 
+import com.intellij.codeHighlighting.Pass;
 import com.intellij.codeHighlighting.TextEditorHighlightingPass;
 import com.intellij.codeHighlighting.TextEditorHighlightingPassFactory;
 import com.intellij.codeHighlighting.TextEditorHighlightingPassFactoryRegistrar;
 import com.intellij.codeHighlighting.TextEditorHighlightingPassRegistrar;
+import com.intellij.codeInsight.daemon.impl.TextEditorHighlightingPassRegistrarImpl;
 import com.intellij.lang.Language;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
@@ -15,24 +17,25 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class ParameterHintsPassFactory implements TextEditorHighlightingPassFactory, TextEditorHighlightingPassFactoryRegistrar {
-  protected static final Key<Long> PSI_MODIFICATION_STAMP = Key.create("psi.modification.stamp");
+  private static final Key<Long> PSI_MODIFICATION_STAMP = Key.create("psi.modification.stamp");
 
   @Override
   public void registerHighlightingPassFactory(@NotNull TextEditorHighlightingPassRegistrar registrar, @NotNull Project project) {
-    registrar.registerTextEditorHighlightingPass(this, null, null, false, -1);
+    boolean serialized = ((TextEditorHighlightingPassRegistrarImpl)registrar).isSerializeCodeInsightPasses();
+    int[] ghl = serialized ? new int[]{Pass.UPDATE_ALL} : null;
+    registrar.registerTextEditorHighlightingPass(this, ghl, null, false, -1);
   }
 
-  @Nullable
   @Override
-  public TextEditorHighlightingPass createHighlightingPass(@NotNull PsiFile file, @NotNull Editor editor) {
+  public @Nullable TextEditorHighlightingPass createHighlightingPass(@NotNull PsiFile psiFile, @NotNull Editor editor) {
     if (editor.isOneLineMode()) return null;
-    long currentStamp = getCurrentModificationStamp(file);
+    long currentStamp = getCurrentModificationStamp(psiFile);
     Long savedStamp = editor.getUserData(PSI_MODIFICATION_STAMP);
     if (savedStamp != null && savedStamp == currentStamp) return null;
-    Language language = file.getLanguage();
+    Language language = psiFile.getLanguage();
     InlayParameterHintsProvider provider = InlayParameterHintsExtension.INSTANCE.forLanguage(language);
     if (provider == null) return null;
-    return new ParameterHintsPass(file, editor, MethodInfoBlacklistFilter.forLanguage(language), false);
+    return new ParameterHintsPass(psiFile, editor, MethodInfoExcludeListFilter.forLanguage(language), false);
   }
 
   public static long getCurrentModificationStamp(@NotNull PsiFile file) {
@@ -49,7 +52,7 @@ public class ParameterHintsPassFactory implements TextEditorHighlightingPassFact
     editor.putUserData(PSI_MODIFICATION_STAMP, null);
   }
 
-  protected static void putCurrentPsiModificationStamp(@NotNull Editor editor, @NotNull PsiFile file) {
+  static void putCurrentPsiModificationStamp(@NotNull Editor editor, @NotNull PsiFile file) {
     editor.putUserData(PSI_MODIFICATION_STAMP, getCurrentModificationStamp(file));
   }
 }

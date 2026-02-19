@@ -1,7 +1,8 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.properties.references;
 
 import com.intellij.codeInsight.daemon.EmptyResolveMessageProvider;
+import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.lang.properties.IProperty;
 import com.intellij.lang.properties.PropertiesBundle;
 import com.intellij.lang.properties.PropertiesImplUtil;
@@ -12,7 +13,12 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.pom.PomTargetPsiElement;
 import com.intellij.pom.references.PomService;
-import com.intellij.psi.*;
+import com.intellij.psi.ElementManipulators;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementResolveResult;
+import com.intellij.psi.PsiPolyVariantReference;
+import com.intellij.psi.PsiTarget;
+import com.intellij.psi.ResolveResult;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
@@ -24,17 +30,16 @@ import java.util.List;
 import java.util.Set;
 
 public abstract class PropertyReferenceBase implements PsiPolyVariantReference, EmptyResolveMessageProvider {
-
   protected final String myKey;
   protected final PsiElement myElement;
-  protected boolean mySoft;
+  private final boolean mySoft;
   private final TextRange myTextRange;
 
-  public PropertyReferenceBase(@NotNull String key, final boolean soft, @NotNull PsiElement element) {
+  public PropertyReferenceBase(@NotNull String key, boolean soft, @NotNull PsiElement element) {
     this(key, soft, element, ElementManipulators.getValueTextRange(element));
   }
 
-  public PropertyReferenceBase(@NotNull String key, final boolean soft, @NotNull PsiElement element, TextRange range) {
+  public PropertyReferenceBase(@NotNull String key, boolean soft, @NotNull PsiElement element, TextRange range) {
     myKey = key;
     mySoft = soft;
     myElement = element;
@@ -43,21 +48,19 @@ public abstract class PropertyReferenceBase implements PsiPolyVariantReference, 
 
   @Override
   public PsiElement resolve() {
-    ResolveResult[] resolveResults = multiResolve(false);
+    var resolveResults = multiResolve(false);
     return resolveResults.length == 1 ? resolveResults[0].getElement() : null;
   }
 
-  @NotNull
-  protected String getKeyText() {
+  protected @NotNull String getKeyText() {
     return myKey;
   }
 
   @Override
-  public boolean equals(final Object o) {
+  public boolean equals(Object o) {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
-    PropertyReferenceBase other = (PropertyReferenceBase)o;
-
+    var other = (PropertyReferenceBase)o;
     return getElement() == other.getElement() && getKeyText().equals(other.getKeyText());
   }
 
@@ -67,20 +70,17 @@ public abstract class PropertyReferenceBase implements PsiPolyVariantReference, 
   }
 
   @Override
-  @NotNull
-  public PsiElement getElement() {
+  public @NotNull PsiElement getElement() {
     return myElement;
   }
 
   @Override
-  @NotNull
-  public TextRange getRangeInElement() {
+  public @NotNull TextRange getRangeInElement() {
     return myTextRange;
   }
 
   @Override
-  @NotNull
-  public String getCanonicalText() {
+  public @NotNull String getCanonicalText() {
     return myKey;
   }
 
@@ -97,8 +97,8 @@ public abstract class PropertyReferenceBase implements PsiPolyVariantReference, 
   @Override
   public boolean isReferenceTo(@NotNull PsiElement element) {
     if (!isProperty(element)) return false;
-    for (ResolveResult result : multiResolve(false)) {
-      final PsiElement el = result.getElement();
+    for (var result : multiResolve(false)) {
+      var el = result.getElement();
       if (el != null && el.isEquivalentTo(element)) return true;
     }
     return false;
@@ -108,61 +108,51 @@ public abstract class PropertyReferenceBase implements PsiPolyVariantReference, 
     variants.add(property);
   }
 
-  protected void setSoft(final boolean soft) {
-    mySoft = soft;
-  }
-
   @Override
   public boolean isSoft() {
     return mySoft;
   }
 
   @Override
-  @NotNull
-  public String getUnresolvedMessagePattern() {
+  public @InspectionMessage @NotNull String getUnresolvedMessagePattern() {
     return PropertiesBundle.message("unresolved.property.key");
   }
 
   @Override
-  public ResolveResult @NotNull [] multiResolve(final boolean incompleteCode) {
-    final String key = getKeyText();
+  public ResolveResult @NotNull [] multiResolve(boolean incompleteCode) {
+    var key = getKeyText();
 
     List<IProperty> properties;
-    final List<PropertiesFile> propertiesFiles = getPropertiesFiles();
+    var propertiesFiles = getPropertiesFiles();
     if (propertiesFiles == null) {
       properties = PropertiesImplUtil.findPropertiesByKey(getElement().getProject(), key);
     }
     else {
       properties = new ArrayList<>();
-      for (PropertiesFile propertiesFile : propertiesFiles) {
+      for (var propertiesFile : propertiesFiles) {
         properties.addAll(propertiesFile.findPropertiesByKey(key));
       }
     }
-    // put default properties file first
-    ContainerUtil.quickSort(properties, (o1, o2) -> {
-      String name1 = o1.getPropertiesFile().getName();
-      String name2 = o2.getPropertiesFile().getName();
-      return Comparing.compare(name1, name2);
-    });
-    return getResolveResults(properties);
-  }
-
-  private static ResolveResult @NotNull [] getResolveResults(List<? extends IProperty> properties) {
     if (properties.isEmpty()) return ResolveResult.EMPTY_ARRAY;
 
-    final ResolveResult[] results = new ResolveResult[properties.size()];
-    for (int i = 0; i < properties.size(); i++) {
-      IProperty property = properties.get(i);
-      results[i] = new PsiElementResolveResult(property instanceof PsiElement ? (PsiElement)property : PomService.convertToPsi(
-                        (PsiTarget)property));
+    // put default properties file first
+    ContainerUtil.quickSort(properties, (o1, o2) -> {
+      var name1 = o1.getPropertiesFile().getName();
+      var name2 = o2.getPropertiesFile().getName();
+      return Comparing.compare(name1, name2);
+    });
+
+    var results = new ResolveResult[properties.size()];
+    for (var i = 0; i < properties.size(); i++) {
+      var property = properties.get(i);
+      results[i] = new PsiElementResolveResult(property instanceof PsiElement psi ? psi : PomService.convertToPsi((PsiTarget)property));
     }
     return results;
   }
 
-  @Nullable
-  protected abstract List<PropertiesFile> getPropertiesFiles();
+  protected abstract @Nullable List<PropertiesFile> getPropertiesFiles();
 
-  private static boolean isProperty(PsiElement element) {
+  protected boolean isProperty(PsiElement element) {
     if (element instanceof IProperty) {
       return true;
     }

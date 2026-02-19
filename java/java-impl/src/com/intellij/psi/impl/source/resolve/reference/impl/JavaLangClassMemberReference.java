@@ -1,28 +1,62 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.resolve.reference.impl;
 
 import com.intellij.codeInsight.completion.InsertHandler;
 import com.intellij.codeInsight.completion.InsertionContext;
 import com.intellij.codeInsight.completion.JavaLookupElementBuilder;
 import com.intellij.codeInsight.lookup.LookupElement;
-import com.intellij.psi.*;
+import com.intellij.codeInspection.reference.PsiMemberReference;
+import com.intellij.lang.jvm.JvmModifier;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiLiteralExpression;
+import com.intellij.psi.PsiMember;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiMethodCallExpression;
+import com.intellij.psi.PsiModifierListOwner;
+import com.intellij.psi.PsiReferenceBase;
+import com.intellij.psi.PsiType;
 import com.intellij.psi.util.MethodSignatureBackedByPsiMethod;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
-import gnu.trove.THashSet;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.Comparator;
+import java.util.List;
 
-import static com.intellij.psi.impl.source.resolve.reference.impl.JavaReflectionReferenceUtil.*;
+import static com.intellij.psi.impl.source.resolve.reference.impl.JavaReflectionReferenceUtil.GET_DECLARED_FIELD;
+import static com.intellij.psi.impl.source.resolve.reference.impl.JavaReflectionReferenceUtil.GET_DECLARED_METHOD;
+import static com.intellij.psi.impl.source.resolve.reference.impl.JavaReflectionReferenceUtil.GET_FIELD;
+import static com.intellij.psi.impl.source.resolve.reference.impl.JavaReflectionReferenceUtil.GET_METHOD;
+import static com.intellij.psi.impl.source.resolve.reference.impl.JavaReflectionReferenceUtil.NEW_UPDATER;
+import static com.intellij.psi.impl.source.resolve.reference.impl.JavaReflectionReferenceUtil.ReflectiveClass;
+import static com.intellij.psi.impl.source.resolve.reference.impl.JavaReflectionReferenceUtil.ReflectiveSignature;
+import static com.intellij.psi.impl.source.resolve.reference.impl.JavaReflectionReferenceUtil.ReflectiveType;
+import static com.intellij.psi.impl.source.resolve.reference.impl.JavaReflectionReferenceUtil.getMemberType;
+import static com.intellij.psi.impl.source.resolve.reference.impl.JavaReflectionReferenceUtil.getMethodSortOrder;
+import static com.intellij.psi.impl.source.resolve.reference.impl.JavaReflectionReferenceUtil.getReflectiveClass;
+import static com.intellij.psi.impl.source.resolve.reference.impl.JavaReflectionReferenceUtil.getReflectiveType;
+import static com.intellij.psi.impl.source.resolve.reference.impl.JavaReflectionReferenceUtil.getVarargs;
+import static com.intellij.psi.impl.source.resolve.reference.impl.JavaReflectionReferenceUtil.isAtomicallyUpdateable;
+import static com.intellij.psi.impl.source.resolve.reference.impl.JavaReflectionReferenceUtil.isPublic;
+import static com.intellij.psi.impl.source.resolve.reference.impl.JavaReflectionReferenceUtil.isRegularMethod;
+import static com.intellij.psi.impl.source.resolve.reference.impl.JavaReflectionReferenceUtil.lookupMethod;
+import static com.intellij.psi.impl.source.resolve.reference.impl.JavaReflectionReferenceUtil.replaceText;
+import static com.intellij.psi.impl.source.resolve.reference.impl.JavaReflectionReferenceUtil.withPriority;
 
 /**
  * @author Konstantin Bulenkov
  */
-public class JavaLangClassMemberReference extends PsiReferenceBase<PsiLiteralExpression> implements InsertHandler<LookupElement> {
+public class JavaLangClassMemberReference extends PsiReferenceBase<PsiLiteralExpression>
+  implements InsertHandler<LookupElement>, PsiMemberReference {
   private final PsiExpression myContext;
 
   public JavaLangClassMemberReference(@NotNull PsiLiteralExpression literal, @NotNull PsiExpression context) {
@@ -38,61 +72,52 @@ public class JavaLangClassMemberReference extends PsiReferenceBase<PsiLiteralExp
   @Override
   public PsiElement resolve() {
     final Object value = myElement.getValue();
-    if (value instanceof String) {
-      final String name = (String)value;
+    if (value instanceof String name) {
       final String type = getMemberType(myElement);
 
       if (type != null) {
         final ReflectiveClass ownerClass = getOwnerClass();
         if (ownerClass != null) {
-          switch (type) {
-
-            case GET_FIELD: {
-              return ownerClass.getPsiClass().findFieldByName(name, true);
-            }
-
-            case GET_DECLARED_FIELD: {
+          return switch (type) {
+            case GET_FIELD -> ownerClass.getPsiClass().findFieldByName(name, true);
+            case GET_DECLARED_FIELD -> {
               final PsiField field = ownerClass.getPsiClass().findFieldByName(name, false);
-              return isPotentiallyAccessible(field, ownerClass) ? field : null;
+              yield isPotentiallyAccessible(field, ownerClass) ? field : null;
             }
-
-            case GET_METHOD: {
+            case GET_METHOD -> {
               PsiMethod[] methods = ownerClass.getPsiClass().findMethodsByName(name, true);
               if (methods.length > 1) {
                 methods =
                   ContainerUtil.filter(methods, method -> isRegularMethod(method) && isPublic(method))
                     .toArray(PsiMethod.EMPTY_ARRAY);
                 if (methods.length > 1) {
-                  return findOverloadedMethod(methods);
+                  yield findOverloadedMethod(methods);
                 }
               }
-              return methods.length != 0 ? methods[0] : null;
+              yield methods.length != 0 ? methods[0] : null;
             }
-
-            case GET_DECLARED_METHOD: {
+            case GET_DECLARED_METHOD -> {
               PsiMethod[] methods = ownerClass.getPsiClass().findMethodsByName(name, false);
               if (methods.length > 1) {
                 methods =
                   ContainerUtil.filter(methods, method -> isRegularMethod(method) && isPotentiallyAccessible(method, ownerClass))
                     .toArray(PsiMethod.EMPTY_ARRAY);
                 if (methods.length > 1) {
-                  return findOverloadedMethod(methods);
+                  yield findOverloadedMethod(methods);
                 }
               }
-              return methods.length != 0 ? methods[0] : null;
+              yield methods.length != 0 ? methods[0] : null;
             }
-
-            case NEW_UPDATER:
-              return ownerClass.getPsiClass().findFieldByName(name, false);
-          }
+            case NEW_UPDATER -> ownerClass.getPsiClass().findFieldByName(name, false);
+            default -> null;
+          };
         }
       }
     }
     return null;
   }
 
-  @Nullable
-  private ReflectiveClass getOwnerClass() {
+  private @Nullable ReflectiveClass getOwnerClass() {
     return getReflectiveClass(myContext);
   }
 
@@ -102,49 +127,36 @@ public class JavaLangClassMemberReference extends PsiReferenceBase<PsiLiteralExp
     if (type != null) {
       final ReflectiveClass ownerClass = getOwnerClass();
       if (ownerClass != null) {
-        switch (type) {
-
-          case GET_DECLARED_FIELD:
-            return Arrays.stream(ownerClass.getPsiClass().getFields())
-              .sorted(Comparator.comparing(PsiField::getName))
-              .map(field -> JavaLookupElementBuilder.forField(field))
-              .toArray();
-
-          case GET_FIELD: {
-            final Set<String> uniqueNames = new THashSet<>();
-            return Arrays.stream(ownerClass.getPsiClass().getAllFields())
-              .filter(field -> isPotentiallyAccessible(field, ownerClass) && uniqueNames.add(field.getName()))
-              .sorted(Comparator.comparingInt((PsiField field) -> isPublic(field) ? 0 : 1).thenComparing(PsiField::getName))
-              .map(field -> withPriority(JavaLookupElementBuilder.forField(field), isPublic(field)))
-              .toArray();
-          }
-
-          case GET_DECLARED_METHOD:
-            return Arrays.stream(ownerClass.getPsiClass().getMethods())
-              .filter(method -> isRegularMethod(method))
-              .sorted(Comparator.comparing(PsiMethod::getName))
-              .map(method -> lookupMethod(method, this))
-              .filter(Objects::nonNull)
-              .toArray();
-
-          case GET_METHOD: {
-            return ownerClass.getPsiClass().getVisibleSignatures()
-              .stream()
-              .map(MethodSignatureBackedByPsiMethod::getMethod)
-              .filter(method -> isRegularMethod(method) && isPotentiallyAccessible(method, ownerClass))
-              .sorted(Comparator.comparingInt((PsiMethod method) -> getMethodSortOrder(method)).thenComparing(PsiMethod::getName))
-              .map(method -> withPriority(lookupMethod(method, this), -getMethodSortOrder(method)))
-              .filter(Objects::nonNull)
-              .toArray();
-          }
-
-          case NEW_UPDATER: {
-            return Arrays.stream(ownerClass.getPsiClass().getFields())
-              .sorted(Comparator.comparingInt((PsiField field) -> isAtomicallyUpdateable(field) ? 0 : 1).thenComparing(PsiField::getName))
-              .map(field -> withPriority(JavaLookupElementBuilder.forField(field), isAtomicallyUpdateable(field)))
-              .toArray();
-          }
-        }
+        return switch (type) {
+          case GET_DECLARED_FIELD -> Arrays.stream(ownerClass.getPsiClass().getFields())
+            .sorted(Comparator.comparing(PsiField::getName))
+            .map(field -> JavaLookupElementBuilder.forField(field))
+            .toArray();
+          case GET_FIELD -> StreamEx.of(ownerClass.getPsiClass().getAllFields())
+            .filter(field -> isPotentiallyAccessible(field, ownerClass))
+            .distinct(field -> field.getName())
+            .sorted(Comparator.comparingInt((PsiField field) -> isPublic(field) ? 0 : 1).thenComparing(PsiField::getName))
+            .map(field -> withPriority(JavaLookupElementBuilder.forField(field), isPublic(field)))
+            .toArray();
+          case GET_DECLARED_METHOD -> StreamEx.of(ownerClass.getPsiClass().getMethods())
+            .filter(method -> isRegularMethod(method))
+            .sorted(Comparator.comparing(PsiMethod::getName))
+            .map(method -> lookupMethod(method, this))
+            .nonNull()
+            .toArray();
+          case GET_METHOD -> StreamEx.of(ownerClass.getPsiClass().getVisibleSignatures())
+            .map(MethodSignatureBackedByPsiMethod::getMethod)
+            .filter(method -> isRegularMethod(method) && isPotentiallyAccessible(method, ownerClass))
+            .sorted(Comparator.comparingInt((PsiMethod method) -> getMethodSortOrder(method)).thenComparing(PsiMethod::getName))
+            .map(method -> withPriority(lookupMethod(method, this), -getMethodSortOrder(method)))
+            .nonNull()
+            .toArray();
+          case NEW_UPDATER -> Arrays.stream(ownerClass.getPsiClass().getFields())
+            .sorted(Comparator.comparingInt((PsiField field) -> isAtomicallyUpdateable(field) ? 0 : 1).thenComparing(PsiField::getName))
+            .map(field -> withPriority(JavaLookupElementBuilder.forField(field), isAtomicallyUpdateable(field)))
+            .toArray();
+          default -> EMPTY_ARRAY;
+        };
       }
     }
     return EMPTY_ARRAY;
@@ -159,8 +171,7 @@ public class JavaLangClassMemberReference extends PsiReferenceBase<PsiLiteralExp
     return member != null && (member.getContainingClass() == psiClass.getPsiClass() || isPublic(member));
   }
 
-  @Nullable
-  private PsiElement findOverloadedMethod(PsiMethod[] methods) {
+  private @Nullable PsiElement findOverloadedMethod(PsiMethod[] methods) {
     final PsiMethodCallExpression definitionCall = PsiTreeUtil.getParentOfType(myElement, PsiMethodCallExpression.class);
     if (definitionCall != null) {
       final List<PsiExpression> arguments = getReflectionMethodArguments(definitionCall, 1);
@@ -175,16 +186,14 @@ public class JavaLangClassMemberReference extends PsiReferenceBase<PsiLiteralExp
   @Override
   public void handleInsert(@NotNull InsertionContext context, @NotNull LookupElement item) {
     final Object object = item.getObject();
-    if (object instanceof ReflectiveSignature) {
-      final ReflectiveSignature signature = (ReflectiveSignature)object;
+    if (object instanceof ReflectiveSignature signature) {
       final String text = signature.getText(false, false, type -> type + ".class");
       replaceText(context, text.isEmpty() ? "" : ", " + text);
     }
   }
 
 
-  @Nullable
-  public static PsiMethod matchMethod(PsiMethod @NotNull [] methods, @NotNull List<? extends ReflectiveType> argumentTypes) {
+  public static @Nullable PsiMethod matchMethod(PsiMethod @NotNull [] methods, @NotNull List<ReflectiveType> argumentTypes) {
     int mismatchCount = Integer.MAX_VALUE;
     PsiMethod bestGuess = null;
     for (PsiMethod method : methods) {
@@ -203,27 +212,47 @@ public class JavaLangClassMemberReference extends PsiReferenceBase<PsiLiteralExp
     return bestGuess;
   }
 
-  private static int matchMethodArguments(PsiMethod method, List<? extends ReflectiveType> argumentTypes) {
-    final PsiParameter[] parameters = method.getParameterList().getParameters();
-    if (parameters.length != argumentTypes.size()) {
+  private static int matchMethodArguments(PsiMethod method, List<ReflectiveType> argumentTypes) {
+    List<PsiType> allTypes = ContainerUtil.map(method.getParameterList().getParameters(), p -> p.getType());
+    if (method.isConstructor()) {
+      PsiType enclosingType = enclosingArgumentType(method);
+      if (enclosingType != null) {
+        allTypes = ContainerUtil.prepend(allTypes, enclosingType);
+      }
+    }
+
+    if (allTypes.size() != argumentTypes.size()) {
       return -1;
     }
     int mismatchCount = 0;
-    for (int i = 0; i < parameters.length; i++) {
+    for (int i = 0; i < allTypes.size(); i++) {
       final ReflectiveType argumentType = argumentTypes.get(i);
       if (argumentType == null) {
         mismatchCount++;
         continue;
       }
-      if (!argumentType.isEqualTo(parameters[i].getType())) {
+      if (!argumentType.isEqualTo(allTypes.get(i))) {
         return -1;
       }
     }
     return mismatchCount;
   }
 
-  @Nullable
-  public static List<PsiExpression> getReflectionMethodArguments(@NotNull PsiMethodCallExpression definitionCall, int argumentOffset) {
+  /**
+   * Returns the type of the containing class, if the method is not declared in a static context.
+   */
+  private static PsiType enclosingArgumentType(PsiMethod method) {
+    PsiClass containing = PsiTreeUtil.getParentOfType(method, PsiClass.class, true);
+    if (containing == null || containing.hasModifier(JvmModifier.STATIC)) return null;
+    PsiElement enclosing = PsiTreeUtil.findFirstParent(containing, true, element -> {
+      return element instanceof PsiClass || (element instanceof PsiModifierListOwner owner && owner.hasModifier(JvmModifier.STATIC));
+    });
+    if (enclosing instanceof PsiModifierListOwner owner && owner.hasModifier(JvmModifier.STATIC)) return null;
+    if (!(enclosing instanceof PsiClass psiClass)) return null;
+    return JavaPsiFacade.getInstance(method.getProject()).getElementFactory().createType(psiClass);
+  }
+
+  public static @Nullable List<PsiExpression> getReflectionMethodArguments(@NotNull PsiMethodCallExpression definitionCall, int argumentOffset) {
     final PsiExpression[] arguments = definitionCall.getArgumentList().getExpressions();
 
     if (arguments.length == argumentOffset + 1) {

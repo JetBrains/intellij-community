@@ -1,0 +1,6 @@
+- name: dist.all/lib/intellij.libraries.xml.rpc.jar
+  modules:
+  - name: intellij.libraries.xml.rpc
+    libraries:
+      xml-rpc:
+      - name: $MAVEN_REPOSITORY$/org/apache/ws/xmlrpc/xmlrpc/2/xmlrpc-2.jar

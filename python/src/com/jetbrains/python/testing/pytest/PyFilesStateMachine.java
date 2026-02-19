@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.testing.pytest;
 
 import com.intellij.openapi.util.Pair;
@@ -71,7 +71,7 @@ final class PyFilesStateMachine {
 
     if (charToCheck == '"') {
       // If machine in quote mode, and file and line are already found, machine is finished!
-      if (myQuoteMode && myFileName.length() > 0 && myLineNumber.length() > 0) {
+      if (myQuoteMode && !myFileName.isEmpty() && !myLineNumber.isEmpty()) {
         return true;
       }
       resetState();
@@ -87,7 +87,7 @@ final class PyFilesStateMachine {
         myFileName.append(' ');
         return false;
       }
-      if (!myQuoteMode && myFileName.length() > 0 && myLineNumber.length() > 0) { //In other modes in may indicate end
+      if (!myQuoteMode && !myFileName.isEmpty() && !myLineNumber.isEmpty()) { //In other modes in may indicate end
         return true;
       }
       resetState();
@@ -117,7 +117,7 @@ final class PyFilesStateMachine {
         myLineNumber.append(charToCheck);
         return false;
       }
-      if (myFileName.length() == 0) {
+      if (myFileName.isEmpty()) {
         // Can't start with digit
         resetState();
         return false;
@@ -126,7 +126,7 @@ final class PyFilesStateMachine {
       return false;
     }
     // Any unknown char is success end if we already have file name and line number
-    if (myFileName.length() > 0 && myLineNumber.length() > 0) {
+    if (!myFileName.isEmpty() && !myLineNumber.isEmpty()) {
       return true;
     }
     resetState();
@@ -165,6 +165,6 @@ final class PyFilesStateMachine {
     if (myQuoteMode) {
       return false;
     }
-    return myFileName.length() > 0 && myLineNumber.length() > 0;
+    return !myFileName.isEmpty() && !myLineNumber.isEmpty();
   }
 }

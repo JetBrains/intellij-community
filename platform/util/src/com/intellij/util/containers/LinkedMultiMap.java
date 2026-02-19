@@ -8,5 +8,6 @@ package com.intellij.util.containers;
 public class LinkedMultiMap<K, V> extends MultiMap<K, V> {
   public LinkedMultiMap() {
     super(CollectionFactory.createSmallMemoryFootprintLinkedMap());
+    //DeprecatedMethodException.report("Use MultiMap.createLinked() instead");
   }
 }

@@ -1,8 +1,6 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.search.scope.packageSet;
 
-import com.intellij.ProjectTopics;
-import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.ModuleListener;
 import com.intellij.openapi.project.Project;
@@ -14,15 +12,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-public final class UpdatingScopeOnProjectStructureChangeListener implements ProjectComponent, ModuleListener {
-  public UpdatingScopeOnProjectStructureChangeListener(@NotNull Project project) {
-    project.getMessageBus().connect().subscribe(ProjectTopics.MODULES, this);
-  }
-
+final class UpdatingScopeOnProjectStructureChangeListener implements ModuleListener {
   @Override
   public void modulesRenamed(@NotNull Project project,
-                             @NotNull List<Module> modules,
-                             @NotNull Function<Module, String> oldNameProvider) {
+                             @NotNull List<? extends Module> modules,
+                             @NotNull Function<? super Module, String> oldNameProvider) {
     Map<String, String> moduleMap = modules.stream().collect(Collectors.toMap(oldNameProvider::fun, Module::getName));
     for (NamedScopesHolder holder : NamedScopesHolder.getAllNamedScopeHolders(project)) {
       NamedScope[] oldScopes = holder.getEditableScopes();
@@ -41,11 +35,11 @@ public final class UpdatingScopeOnProjectStructureChangeListener implements Proj
     if (oldSet == null) return scope;
 
     PackageSet newSet = oldSet.map(packageSet -> {
-      if (packageSet instanceof PatternBasedPackageSet) {
-        String modulePattern = ((PatternBasedPackageSet)packageSet).getModulePattern();
+      if (packageSet instanceof PatternBasedPackageSet pattern) {
+        String modulePattern = pattern.getModulePattern();
         String newName = nameMapping.get(modulePattern);
         if (newName != null) {
-          return ((PatternBasedPackageSet)packageSet).updateModulePattern(modulePattern, newName);
+          return pattern.updateModulePattern(modulePattern, newName);
         }
       }
       return packageSet;

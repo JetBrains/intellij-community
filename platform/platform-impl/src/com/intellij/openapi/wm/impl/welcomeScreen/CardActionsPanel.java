@@ -1,14 +1,17 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
-/*
- * @author max
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl.welcomeScreen;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeBundle;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionGroup;
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.ActionPlaces;
+import com.intellij.openapi.actionSystem.ActionToolbar;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.actionSystem.impl.ActionButtonWithText;
 import com.intellij.openapi.actionSystem.impl.PresentationFactory;
 import com.intellij.openapi.ui.GraphicsConfig;
@@ -19,15 +22,27 @@ import com.intellij.ui.JBColor;
 import com.intellij.ui.LightColors;
 import com.intellij.util.ui.CenteredIcon;
 import com.intellij.util.ui.GraphicsUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.Icon;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.SwingConstants;
 import javax.swing.border.EmptyBorder;
-import java.awt.*;
+import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.Component;
+import java.awt.Dimension;
+import java.awt.Graphics;
+import java.awt.GridLayout;
+import java.awt.Rectangle;
 import java.util.ArrayList;
 import java.util.List;
 
+@ApiStatus.Internal
 public class CardActionsPanel extends JPanel {
   private static final boolean USE_ICONS = true;
   private final JBCardLayout myLayout = new JBCardLayout();
@@ -81,8 +96,7 @@ public class CardActionsPanel extends JPanel {
       if (!USE_ICONS) {
         presentation.setIcon(null);
       }
-      if (action instanceof ActionGroup) {
-        ActionGroup childGroup = (ActionGroup)action;
+      if (action instanceof ActionGroup childGroup) {
         if (childGroup.isPopup()) {
           final String id = String.valueOf(++nCards);
           createCardForGroup(childGroup, id, parentId);
@@ -143,7 +157,7 @@ public class CardActionsPanel extends JPanel {
     }
   }
 
-  private static class Button extends ActionButtonWithText {
+  private static final class Button extends ActionButtonWithText {
     private static final Icon DEFAULT_ICON = new Icon() {
       @Override
       public void paintIcon(Component c, Graphics g, int x, int y) {
@@ -224,7 +238,7 @@ public class CardActionsPanel extends JPanel {
     }
   }
 
-  private class ActivateCard extends AnAction {
+  private final class ActivateCard extends AnAction {
     private final String myId;
 
     ActivateCard(String id) {

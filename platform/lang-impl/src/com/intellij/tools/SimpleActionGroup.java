@@ -24,8 +24,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
-import java.util.Objects;
 
+/** @deprecated Use {@link com.intellij.openapi.actionSystem.DefaultActionGroup} or {@link ActionGroup} directly */
+@Deprecated
 public class SimpleActionGroup extends ActionGroup {
   private final ArrayList<AnAction> myChildren = new ArrayList<>();
 
@@ -48,17 +49,6 @@ public class SimpleActionGroup extends ActionGroup {
 
   public void removeAll() {
     myChildren.clear();
-  }
-
-  @Override
-  public boolean equals(Object obj) {
-    if (myChildren.isEmpty()) return super.equals(obj);
-    return obj instanceof SimpleActionGroup && myChildren.equals(((SimpleActionGroup)obj).myChildren);
-  }
-
-  @Override
-  public int hashCode() {
-    return Objects.hash(myChildren);
   }
 }
 

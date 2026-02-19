@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2019 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.table;
 
 import com.intellij.ui.BooleanTableCellRenderer;
@@ -27,15 +13,29 @@ import com.intellij.util.ui.TableViewModel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.DefaultCellEditor;
+import javax.swing.Icon;
+import javax.swing.JLabel;
+import javax.swing.JTable;
+import javax.swing.ListSelectionModel;
+import javax.swing.RowSorter;
+import javax.swing.UIDefaults;
+import javax.swing.UIManager;
+import javax.swing.border.Border;
 import javax.swing.event.TableModelEvent;
-import javax.swing.table.*;
-import java.awt.*;
+import javax.swing.table.JTableHeader;
+import javax.swing.table.TableCellEditor;
+import javax.swing.table.TableCellRenderer;
+import javax.swing.table.TableColumn;
+import javax.swing.table.TableColumnModel;
+import javax.swing.table.TableModel;
+import java.awt.Component;
+import java.awt.Insets;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
-public class TableView<Item> extends BaseTableView implements ItemsProvider, SelectionProvider {
+public class TableView<Item> extends BaseTableView implements SelectionProvider {
 
   private boolean myInStopEditing = false;
 
@@ -49,17 +49,9 @@ public class TableView<Item> extends BaseTableView implements ItemsProvider, Sel
   }
 
   @Override
-  public void setModel(@NotNull final TableModel dataModel) {
+  public void setModel(final @NotNull TableModel dataModel) {
     assert dataModel instanceof SortableColumnModel : "SortableColumnModel required";
     super.setModel(dataModel);
-  }
-
-  /**
-   * @deprecated use {@link #setModelAndUpdateColumns(ListTableModel<Item>)} instead
-   */
-  @Deprecated
-  public void setModel(final ListTableModel<Item> model) {
-    setModelAndUpdateColumns(model);
   }
 
   public void setModelAndUpdateColumns(final ListTableModel<Item> model) {
@@ -95,7 +87,7 @@ public class TableView<Item> extends BaseTableView implements ItemsProvider, Sel
     super.tableChanged(e);
   }
 
-  public void setSelection(Collection<Item> selection) {
+  public void setSelection(Collection<? extends Item> selection) {
     clearSelection();
     for (Object aSelection : selection) {
       addSelection(aSelection);
@@ -119,6 +111,10 @@ public class TableView<Item> extends BaseTableView implements ItemsProvider, Sel
     int varCount = 0;
 
     Icon sortIcon = UIManager.getIcon("Table.ascendingSortIcon");
+    Border border = UIManager.getBorder("Table.cellNoFocusBorder");
+    Insets borderInsets = border == null ? null : border.getBorderInsets(this);
+    int borderWidth = borderInsets == null ? 0 : borderInsets.left + borderInsets.right;
+    if (getShowVerticalLines()) borderWidth += 2;
 
     // calculate
     for (int i = 0; i < visibleColumnCount; i++) {
@@ -142,10 +138,10 @@ public class TableView<Item> extends BaseTableView implements ItemsProvider, Sel
       }
       final String maxStringValue;
       final String preferredValue;
-      if (columnInfo.getWidth(this) > 0) {
+      int columnWidth = columnInfo.getWidth(this);
+      if (columnWidth > 0) {
         sizeMode[i] = 1;
-        int width = columnInfo.getWidth(this);
-        widths[i] = width;
+        widths[i] = columnWidth;
       }
       else if ((maxStringValue = columnInfo.getMaxStringValue()) != null) {
         sizeMode[i] = 2;
@@ -157,6 +153,7 @@ public class TableView<Item> extends BaseTableView implements ItemsProvider, Sel
         widths[i] = getFontMetrics(getFont()).stringWidth(preferredValue) + columnInfo.getAdditionalWidth();
         varCount ++;
       }
+      widths[i] += borderWidth;
       allColumnWidth += widths[i];
       allColumnCurrent += column.getPreferredWidth();
     }
@@ -199,15 +196,13 @@ public class TableView<Item> extends BaseTableView implements ItemsProvider, Sel
     return getSelectedObjects();
   }
 
-  @Nullable
-  public Item getSelectedObject() {
+  public @Nullable Item getSelectedObject() {
     final int row = getSelectedRow();
     ListTableModel<Item> model = getListTableModel();
     return row >= 0 && row < model.getRowCount() ? model.getRowValue(convertRowIndexToModel(row)) : null;
   }
 
-  @NotNull
-  public List<Item> getSelectedObjects() {
+  public @NotNull List<Item> getSelectedObjects() {
     ListSelectionModel selectionModel = getSelectionModel();
     int minSelectionIndex = selectionModel.getMinSelectionIndex();
     int maxSelectionIndex = selectionModel.getMaxSelectionIndex();
@@ -248,7 +243,6 @@ public class TableView<Item> extends BaseTableView implements ItemsProvider, Sel
     return editor == null ? super.getCellEditor(row, column) : editor;
   }
 
-  @Override
   public List<Item> getItems() {
     return getListTableModel().getItems();
   }

@@ -1,0 +1,8 @@
+Types:
+PsiMethod:x : void
+
+Conversions:
+notSoPureFunction(10) + 1 -> $
+
+New expression type changes:
+Fails:

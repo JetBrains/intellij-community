@@ -18,7 +18,8 @@ package org.intellij.images.options;
 import com.intellij.openapi.util.registry.Registry;
 import org.jetbrains.annotations.NonNls;
 
-import java.awt.*;
+import java.awt.Dimension;
+import java.awt.Rectangle;
 
 /**
  * Options for zooming feature.
@@ -26,26 +27,52 @@ import java.awt.*;
  * @author <a href="mailto:aefimov.box@gmail.com">Alexey Efimov</a>
  */
 public interface ZoomOptions extends Cloneable {
-    @NonNls
-    String ATTR_PREFIX = "Editor.Zoom.";
-    @NonNls
-    String ATTR_PREFFERED_WIDTH = ATTR_PREFIX + "prefferedWidth";
-    @NonNls
-    String ATTR_PREFFERED_HEIGHT = ATTR_PREFIX + "prefferedHeight";
+  @NonNls
+  String ATTR_PREFIX = "Editor.Zoom.";
+  @NonNls
+  String ATTR_PREFFERED_WIDTH = ATTR_PREFIX + "prefferedWidth";
+  @NonNls
+  String ATTR_PREFFERED_HEIGHT = ATTR_PREFIX + "prefferedHeight";
 
-    Dimension DEFAULT_PREFFERED_SIZE = new Dimension(128, 128);
+  Dimension DEFAULT_PREFFERED_SIZE = new Dimension(128, 128);
 
-    default boolean isWheelZooming() {
-        return Registry.is("ide.images.wheel.zooming", true);
+  default boolean isWheelZooming() {
+    return Registry.is("ide.images.wheel.zooming", true);
+  }
+
+  default boolean isSmartZooming() {
+    return isWheelZooming();
+  }
+
+  default Double getSmartZoomFactor(Rectangle imageSize, Dimension viewPort, int inset) {
+    if (imageSize == null) return null;
+    if (imageSize.getWidth() == 0 || imageSize.getHeight() == 0) return null;
+    int width = imageSize.width;
+    int height = imageSize.height;
+
+    Dimension preferredMinimumSize = getPrefferedSize();
+    if (width < preferredMinimumSize.width &&
+        height < preferredMinimumSize.height) {
+      double factor = (preferredMinimumSize.getWidth() / (double)width +
+                       preferredMinimumSize.getHeight() / (double)height) / 2.0d;
+      return Math.ceil(factor);
     }
 
-    default boolean isSmartZooming() {
-        return isWheelZooming();
+    viewPort.height -= inset * 2;
+    viewPort.width -= inset * 2;
+    if (viewPort.width <= 0 || viewPort.height <= 0) return null;
+
+    if (viewPort.width < width || viewPort.height < height) {
+      return Math.min((double)viewPort.height / height,
+                      (double)viewPort.width / width);
     }
 
-    Dimension getPrefferedSize();
+    return 1.0d;
+  }
 
-    void inject(ZoomOptions options);
+  Dimension getPrefferedSize();
 
-    boolean setOption(String name, Object value);
+  void inject(ZoomOptions options);
+
+  boolean setOption(String name, Object value);
 }

@@ -1,9 +1,13 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.richcopy;
 
 import com.intellij.ide.highlighter.HighlighterFactory;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.editor.*;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.EditorFactory;
+import com.intellij.openapi.editor.LogicalPosition;
+import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.impl.DocumentImpl;
 import com.intellij.openapi.editor.richcopy.model.ColorRegistry;
@@ -19,22 +23,22 @@ import com.intellij.psi.PsiFileFactory;
 import com.intellij.testFramework.fixtures.BasePlatformTestCase;
 import com.intellij.ui.JBColor;
 
-/**
- * @author Denis Zhdanov
- */
+import java.awt.Color;
+
 public class SyntaxInfoConstructionTest extends BasePlatformTestCase {
   public void testBlockSelection() {
     String text =
-      "package org;\n" +
-      "\n" +
-      "public class TestClass {\n" +
-      "\n" +
-      "    int field;\n" +
-      "\n" +
-      "    public int getField() {\n" +
-      "        return field;\n" +
-      "    }\n" +
-      "}";
+      """
+        package org;
+
+        public class TestClass {
+
+            int field;
+
+            public int getField() {
+                return field;
+            }
+        }""";
     init(text);
 
     int blockSelectionStartOffset = text.indexOf("public int");
@@ -45,31 +49,34 @@ public class SyntaxInfoConstructionTest extends BasePlatformTestCase {
       editor.offsetToLogicalPosition(text.indexOf('{', blockSelectionStartOffset)).column + 1);
     editor.getSelectionModel().setBlockSelection(blockSelectionStartPosition, blockSelectionEndPosition);
 
-    verifySyntaxInfo("foreground=java.awt.Color[r=0,g=0,b=128],fontStyle=1,text=public int \n" +
-                     "foreground=java.awt.Color[r=0,g=0,b=0],fontStyle=0,text=getField() {\n" +
-                     "text=\n" +
-                     "\n" +
-                     "text=    \n" +
-                     "foreground=java.awt.Color[r=0,g=0,b=128],fontStyle=1,text=return \n" +
-                     "foreground=java.awt.Color[r=102,g=14,b=122],text=field\n" +
-                     "foreground=java.awt.Color[r=0,g=0,b=0],fontStyle=0,text=;\n" +
-                     "text=\n" +
-                     "\n" +
-                     "text=}\n");
+    verifySyntaxInfo("""
+                       foreground=java.awt.Color[r=0,g=0,b=128],fontStyle=1,text=public int\s
+                       foreground=java.awt.Color[r=0,g=0,b=0],fontStyle=0,text=getField() {
+                       text=
+
+                       text=   \s
+                       foreground=java.awt.Color[r=0,g=0,b=128],fontStyle=1,text=return\s
+                       foreground=java.awt.Color[r=102,g=14,b=122],text=field
+                       foreground=java.awt.Color[r=0,g=0,b=0],fontStyle=0,text=;
+                       text=
+
+                       text=}
+                       """);
   }
 
   public void testColumnModeBlockSelection() {
     String text =
-      "package org;\n" +
-      "\n" +
-      "public class TestClass {\n" +
-      "\n" +
-      "    int field;\n" +
-      "\n" +
-      "    public int getField() {\n" +
-      "        return field;\n" +
-      "    }\n" +
-      "}";
+      """
+        package org;
+
+        public class TestClass {
+
+            int field;
+
+            public int getField() {
+                return field;
+            }
+        }""";
     init(text);
 
     int blockSelectionStartOffset = text.indexOf("public int");
@@ -81,27 +88,30 @@ public class SyntaxInfoConstructionTest extends BasePlatformTestCase {
       editor.offsetToLogicalPosition(text.indexOf('{', blockSelectionStartOffset)).column + 1);
     editor.getSelectionModel().setBlockSelection(blockSelectionStartPosition, blockSelectionEndPosition);
 
-    verifySyntaxInfo("foreground=java.awt.Color[r=0,g=0,b=128],fontStyle=1,text=public int \n" +
-                     "foreground=java.awt.Color[r=0,g=0,b=0],fontStyle=0,text=getField() {\n" +
-                     "text=\n" +
-                     "\n" +
-                     "text=    \n" +
-                     "foreground=java.awt.Color[r=0,g=0,b=128],fontStyle=1,text=return \n" +
-                     "foreground=java.awt.Color[r=102,g=14,b=122],text=field\n" +
-                     "foreground=java.awt.Color[r=0,g=0,b=0],fontStyle=0,text=;\n" +
-                     "text=\n" +
-                     "\n" +
-                     "text=}\n");
+    verifySyntaxInfo("""
+                       foreground=java.awt.Color[r=0,g=0,b=128],fontStyle=1,text=public int\s
+                       foreground=java.awt.Color[r=0,g=0,b=0],fontStyle=0,text=getField() {
+                       text=
+
+                       text=   \s
+                       foreground=java.awt.Color[r=0,g=0,b=128],fontStyle=1,text=return\s
+                       foreground=java.awt.Color[r=102,g=14,b=122],text=field
+                       foreground=java.awt.Color[r=0,g=0,b=0],fontStyle=0,text=;
+                       text=
+
+                       text=}
+                       """);
   }
 
   public void testColumnModeBlockSelectionWithGaps() {
     String text =
-      "public class TestClass {\n" +
-      "\n" +
-      "    int field;\n" +
-      "\n" +
-      "    int otherField;\n" +
-      "}";
+      """
+        public class TestClass {
+
+            int field;
+
+            int otherField;
+        }""";
     init(text);
 
     int blockSelectionStartOffset = text.indexOf("int");
@@ -111,31 +121,34 @@ public class SyntaxInfoConstructionTest extends BasePlatformTestCase {
     LogicalPosition blockSelectionEndPosition = new LogicalPosition(blockSelectionStartPosition.line + 2, blockSelectionStartPosition.column + 16);
     editor.getSelectionModel().setBlockSelection(blockSelectionStartPosition, blockSelectionEndPosition);
 
-    verifySyntaxInfo("foreground=java.awt.Color[r=0,g=0,b=128],fontStyle=1,text=int \n" +
-                     "foreground=java.awt.Color[r=102,g=14,b=122],text=field\n" +
-                     "foreground=java.awt.Color[r=0,g=0,b=0],fontStyle=0,text=;\n" +
-                     "text=\n" +
-                     "\n" +
-                     "text=\n" +
-                     "\n" +
-                     "foreground=java.awt.Color[r=0,g=0,b=128],fontStyle=1,text=int \n" +
-                     "foreground=java.awt.Color[r=102,g=14,b=122],text=otherField\n" +
-                     "foreground=java.awt.Color[r=0,g=0,b=0],fontStyle=0,text=;\n");
+    verifySyntaxInfo("""
+                       foreground=java.awt.Color[r=0,g=0,b=128],fontStyle=1,text=int\s
+                       foreground=java.awt.Color[r=102,g=14,b=122],text=field
+                       foreground=java.awt.Color[r=0,g=0,b=0],fontStyle=0,text=;
+                       text=
+
+                       text=
+
+                       foreground=java.awt.Color[r=0,g=0,b=128],fontStyle=1,text=int\s
+                       foreground=java.awt.Color[r=102,g=14,b=122],text=otherField
+                       foreground=java.awt.Color[r=0,g=0,b=0],fontStyle=0,text=;
+                       """);
   }
 
   public void testRegularSelection() {
     // We want to exclude unnecessary indents from the pasted results.
     String text =
-      "package org;\n" +
-      "\n" +
-      "public class TestClass {\n" +
-      "\n" +
-      "    int field;\n" +
-      "\n" +
-      "    public int getField() {\n" +
-      "        return field;\n" +
-      "    }\n" +
-      "}";
+      """
+        package org;
+
+        public class TestClass {
+
+            int field;
+
+            public int getField() {
+                return field;
+            }
+        }""";
     init(text);
 
     int selectionStart = text.indexOf("public int");
@@ -143,15 +156,17 @@ public class SyntaxInfoConstructionTest extends BasePlatformTestCase {
     SelectionModel selectionModel = myFixture.getEditor().getSelectionModel();
     selectionModel.setSelection(selectionStart, selectionEnd);
 
-    String expected = "foreground=java.awt.Color[r=0,g=0,b=128],fontStyle=1,text=public int \n" +
-                      "foreground=java.awt.Color[r=0,g=0,b=0],fontStyle=0,text=getField() {\n" +
-                      "\n" +
-                      "text=    \n" +
-                      "foreground=java.awt.Color[r=0,g=0,b=128],fontStyle=1,text=return \n" +
-                      "foreground=java.awt.Color[r=102,g=14,b=122],text=field\n" +
-                      "foreground=java.awt.Color[r=0,g=0,b=0],fontStyle=0,text=;\n" +
-                      "\n" +
-                      "text=}\n";
+    String expected = """
+      foreground=java.awt.Color[r=0,g=0,b=128],fontStyle=1,text=public int\s
+      foreground=java.awt.Color[r=0,g=0,b=0],fontStyle=0,text=getField() {
+
+      text=   \s
+      foreground=java.awt.Color[r=0,g=0,b=128],fontStyle=1,text=return\s
+      foreground=java.awt.Color[r=102,g=14,b=122],text=field
+      foreground=java.awt.Color[r=0,g=0,b=0],fontStyle=0,text=;
+
+      text=}
+      """;
 
     verifySyntaxInfo(expected);
     
@@ -170,61 +185,70 @@ public class SyntaxInfoConstructionTest extends BasePlatformTestCase {
 
   public void testJavadoc() {
     init(
-      "package org;\n" +
-      "\n" +
-      "import java.io.Serializable;\n" +
-      "\n" +
-      "<selection>/**\n" +
-      " * Code in <code>here</code>\n" +
-      " * <strong>Hi</strong> man\n" +
-      " * @param <T>\n" +
-      " </selection>*/\n" +
-      "public interface SampleTest<T> extends Serializable {\n" +
-      "    boolean isNotNull();\n" +
-      "    T getValue();\n" +
-      "}"
+      """
+        package org;
+
+        import java.io.Serializable;
+
+        <selection>/**
+         * Code in <code>here</code>
+         * <strong>Hi</strong> man
+         * @param <T>
+         </selection>*/
+        public interface SampleTest<T> extends Serializable {
+            boolean isNotNull();
+            T getValue();
+        }"""
     );
-    verifySyntaxInfo("foreground=java.awt.Color[r=128,g=128,b=128],fontStyle=2,text=/**\n" +
-                     "\n" +
-                     "text= * Code in \n" +
-                     "background=java.awt.Color[r=226,g=255,b=226],text=<code>\n" +
-                     "background=java.awt.Color[r=255,g=255,b=255],text=here\n" +
-                     "background=java.awt.Color[r=226,g=255,b=226],text=</code>\n" +
-                     "background=java.awt.Color[r=255,g=255,b=255],text=\n" +
-                     "\n" +
-                     "text= * \n" +
-                     "background=java.awt.Color[r=226,g=255,b=226],text=<strong>\n" +
-                     "background=java.awt.Color[r=255,g=255,b=255],text=Hi\n" +
-                     "background=java.awt.Color[r=226,g=255,b=226],text=</strong>\n" +
-                     "background=java.awt.Color[r=255,g=255,b=255],text= man\n" +
-                     "\n" +
-                     "text= * \n" +
-                     "fontStyle=3,text=@param \n" +
-                     "foreground=java.awt.Color[r=61,g=61,b=61],text=<T>\n" +
-                     "\n" +
-                     "text= \n");
+    verifySyntaxInfo("""
+                       foreground=java.awt.Color[r=128,g=128,b=128],fontStyle=2,text=/**
+
+                       text= * Code in\s
+                       background=java.awt.Color[r=226,g=255,b=226],text=<code>
+                       background=java.awt.Color[r=255,g=255,b=255],text=here
+                       background=java.awt.Color[r=226,g=255,b=226],text=</code>
+                       background=java.awt.Color[r=255,g=255,b=255],text=
+
+                       text= *\s
+                       background=java.awt.Color[r=226,g=255,b=226],text=<strong>
+                       background=java.awt.Color[r=255,g=255,b=255],text=Hi
+                       background=java.awt.Color[r=226,g=255,b=226],text=</strong>
+                       background=java.awt.Color[r=255,g=255,b=255],text= man
+
+                       text= *\s
+                       fontStyle=3,text=@param\s
+                       foreground=java.awt.Color[r=61,g=61,b=61],text=<T>
+
+                       text=\s
+                       """);
   }
 
   public void testIndentStrippingWhenFirstLineIsMostIndented() {
-    init("public class Test {\n" +
-         "<selection>  int field;\n" +
-         "}</selection>");
-    verifySyntaxInfo("text=  \n" +
-                     "foreground=java.awt.Color[r=0,g=0,b=128],fontStyle=1,text=int \n" +
-                     "foreground=java.awt.Color[r=102,g=14,b=122],text=field\n" +
-                     "foreground=java.awt.Color[r=0,g=0,b=0],fontStyle=0,text=;\n" +
-                     "\n" +
-                     "text=}\n");
+    init("""
+           public class Test {
+           <selection>  int field;
+           }</selection>""");
+    verifySyntaxInfo("""
+                       text= \s
+                       foreground=java.awt.Color[r=0,g=0,b=128],fontStyle=1,text=int\s
+                       foreground=java.awt.Color[r=102,g=14,b=122],text=field
+                       foreground=java.awt.Color[r=0,g=0,b=0],fontStyle=0,text=;
+
+                       text=}
+                       """);
   }
 
   public void testIndentStrippingWhenSelectionEndIsBeforeNonWsCharactersOnTheLine() {
-    init("public class Test {\n" +
-         "<selection>  int field;\n" +
-         "</selection>}");
-    verifySyntaxInfo("foreground=java.awt.Color[r=0,g=0,b=128],fontStyle=1,text=int \n" +
-                     "foreground=java.awt.Color[r=102,g=14,b=122],text=field\n" +
-                     "foreground=java.awt.Color[r=0,g=0,b=0],fontStyle=0,text=;\n" +
-                     "\n");
+    init("""
+           public class Test {
+           <selection>  int field;
+           </selection>}""");
+    verifySyntaxInfo("""
+                       foreground=java.awt.Color[r=0,g=0,b=128],fontStyle=1,text=int\s
+                       foreground=java.awt.Color[r=102,g=14,b=122],text=field
+                       foreground=java.awt.Color[r=0,g=0,b=0],fontStyle=0,text=;
+
+                       """);
   }
 
   public void testSlashRSeparator() {
@@ -243,42 +267,47 @@ public class SyntaxInfoConstructionTest extends BasePlatformTestCase {
     int selectionEnd = text.indexOf('}', selectionStart);
     myFixture.getEditor().getSelectionModel().setSelection(selectionStart, selectionEnd);
 
-    verifySyntaxInfo("foreground=java.awt.Color[r=0,g=0,b=128],fontStyle=1,text=public int \n" +
-                     "foreground=java.awt.Color[r=0,g=0,b=0],fontStyle=0,text=getField() {\n" +
-                     "\n" +
-                     "text=    \n" +
-                     "foreground=java.awt.Color[r=0,g=0,b=128],fontStyle=1,text=return \n" +
-                     "foreground=java.awt.Color[r=102,g=14,b=122],text=field\n" +
-                     "foreground=java.awt.Color[r=0,g=0,b=0],fontStyle=0,text=;\n" +
-                     "\n" +
-                     "text=}\n");
+    verifySyntaxInfo("""
+                       foreground=java.awt.Color[r=0,g=0,b=128],fontStyle=1,text=public int\s
+                       foreground=java.awt.Color[r=0,g=0,b=0],fontStyle=0,text=getField() {
+
+                       text=   \s
+                       foreground=java.awt.Color[r=0,g=0,b=128],fontStyle=1,text=return\s
+                       foreground=java.awt.Color[r=102,g=14,b=122],text=field
+                       foreground=java.awt.Color[r=0,g=0,b=0],fontStyle=0,text=;
+
+                       text=}
+                       """);
   }
 
   public void testSlashRSlashNSeparator() {
-    String text = "package org;\r\n" +
-                  "\r\n" +
-                  "public class TestClass {\r\n" +
-                  "\r\n" +
-                  "    int field;\r\n" +
-                  "\r\n" +
-                  "    public int getField() {\r\n" +
-                  "        return field;\r\n" +
-                  "    }\r\n" +
-                  "}";
+    String text = """
+      package org;\r
+      \r
+      public class TestClass {\r
+      \r
+          int field;\r
+      \r
+          public int getField() {\r
+              return field;\r
+          }\r
+      }""";
     initWithCustomLineSeparators(text);
     int selectionStart = text.indexOf("public int");
     int selectionEnd = text.indexOf('}', selectionStart);
     myFixture.getEditor().getSelectionModel().setSelection(selectionStart, selectionEnd);
 
-    verifySyntaxInfo("foreground=java.awt.Color[r=0,g=0,b=128],fontStyle=1,text=public int \n" +
-                     "foreground=java.awt.Color[r=0,g=0,b=0],fontStyle=0,text=getField() {\n" +
-                     "\n" +
-                     "text=    \n" +
-                     "foreground=java.awt.Color[r=0,g=0,b=128],fontStyle=1,text=return \n" +
-                     "foreground=java.awt.Color[r=102,g=14,b=122],text=field\n" +
-                     "foreground=java.awt.Color[r=0,g=0,b=0],fontStyle=0,text=;\n" +
-                     "\n" +
-                     "text=}\n");
+    verifySyntaxInfo("""
+                       foreground=java.awt.Color[r=0,g=0,b=128],fontStyle=1,text=public int\s
+                       foreground=java.awt.Color[r=0,g=0,b=0],fontStyle=0,text=getField() {
+
+                       text=   \s
+                       foreground=java.awt.Color[r=0,g=0,b=128],fontStyle=1,text=return\s
+                       foreground=java.awt.Color[r=102,g=14,b=122],text=field
+                       foreground=java.awt.Color[r=0,g=0,b=0],fontStyle=0,text=;
+
+                       text=}
+                       """);
   }
   
   public void testNonPhysicalFile() {
@@ -294,8 +323,10 @@ public class SyntaxInfoConstructionTest extends BasePlatformTestCase {
     try {
       editor.getSelectionModel().setSelection(0, document.getTextLength());
       String syntaxInfo = getSyntaxInfo(editor, psiFile);
-      assertEquals("foreground=java.awt.Color[r=0,g=0,b=128],fontStyle=1,text=class \n" +
-                   "foreground=java.awt.Color[r=0,g=0,b=0],fontStyle=0,text=Test {}\n", syntaxInfo);
+      assertEquals("""
+                     foreground=java.awt.Color[r=0,g=0,b=128],fontStyle=1,text=class\s
+                     foreground=java.awt.Color[r=0,g=0,b=0],fontStyle=0,text=Test {}
+                     """, syntaxInfo);
     }
     finally {
       editorFactory.releaseEditor(editor);
@@ -315,7 +346,7 @@ public class SyntaxInfoConstructionTest extends BasePlatformTestCase {
 
     TextWithMarkupProcessor processor = new TextWithMarkupProcessor() {
       @Override
-      void createResult(SyntaxInfo syntaxInfo, Editor editor) {
+      protected void createResult(SyntaxInfo syntaxInfo, Editor editor) {
         final ColorRegistry colorRegistry = syntaxInfo.getColorRegistry();
         assertEquals(JBColor.BLACK, colorRegistry.dataById(syntaxInfo.getDefaultForeground()));
         assertEquals(JBColor.WHITE, colorRegistry.dataById(syntaxInfo.getDefaultBackground()));
@@ -328,12 +359,18 @@ public class SyntaxInfoConstructionTest extends BasePlatformTestCase {
 
           @Override
           public void handleForeground(int foregroundId) {
-            builder.append("foreground=").append(colorRegistry.dataById(foregroundId)).append(',');
+            Color color = colorRegistry.dataById(foregroundId);
+            builder.append("foreground=").append(toCanonicalString(color)).append(',');
           }
 
           @Override
           public void handleBackground(int backgroundId) {
-            builder.append("background=").append(colorRegistry.dataById(backgroundId)).append(',');
+            Color color = colorRegistry.dataById(backgroundId);
+            builder.append("background=").append(toCanonicalString(color)).append(',');
+          }
+
+          private static String toCanonicalString(Color color) {
+            return new Color(color.getRGB(), true).toString();
           }
 
           @Override

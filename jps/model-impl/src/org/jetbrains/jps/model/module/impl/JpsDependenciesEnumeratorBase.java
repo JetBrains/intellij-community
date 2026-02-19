@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.model.module.impl;
 
 import com.intellij.openapi.util.Condition;
@@ -10,9 +10,16 @@ import com.intellij.util.containers.CollectionFactory;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.library.JpsLibrary;
-import org.jetbrains.jps.model.module.*;
+import org.jetbrains.jps.model.module.JpsDependenciesEnumerator;
+import org.jetbrains.jps.model.module.JpsDependencyElement;
+import org.jetbrains.jps.model.module.JpsLibraryDependency;
+import org.jetbrains.jps.model.module.JpsModule;
+import org.jetbrains.jps.model.module.JpsModuleDependency;
+import org.jetbrains.jps.model.module.JpsModuleSourceDependency;
+import org.jetbrains.jps.model.module.JpsSdkDependency;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
@@ -22,67 +29,62 @@ public abstract class JpsDependenciesEnumeratorBase<Self extends JpsDependencies
   private boolean myWithoutDepModules;
   private boolean myWithoutModuleSourceEntries;
   protected boolean myRecursively;
-  private final Collection<JpsModule> myRootModules;
+  private final Set<JpsModule> myRootModules;
   private Condition<? super JpsDependencyElement> myCondition;
 
   protected JpsDependenciesEnumeratorBase(Collection<JpsModule> rootModules) {
-    myRootModules = rootModules;
+    myRootModules = Collections.unmodifiableSet(
+      rootModules instanceof Set? (Set<JpsModule>)rootModules : new LinkedHashSet<>(rootModules)
+    );
   }
 
-  @NotNull
   @Override
-  public Self withoutLibraries() {
+  public @NotNull Self withoutLibraries() {
     myWithoutLibraries = true;
     return self();
   }
 
-  @NotNull
   @Override
-  public Self withoutDepModules() {
+  public @NotNull Self withoutDepModules() {
     myWithoutDepModules = true;
     return self();
   }
 
-  @NotNull
   @Override
-  public Self withoutSdk() {
+  public @NotNull Self withoutSdk() {
     myWithoutSdk = true;
     return self();
   }
 
-  @NotNull
   @Override
-  public Self withoutModuleSourceEntries() {
+  public @NotNull Self withoutModuleSourceEntries() {
     myWithoutModuleSourceEntries = true;
     return self();
   }
 
-  @NotNull
   @Override
-  public Self satisfying(@NotNull Condition<? super JpsDependencyElement> condition) {
+  public @NotNull Self satisfying(@NotNull Condition<? super JpsDependencyElement> condition) {
     myCondition = condition;
     return self();
   }
 
-  @NotNull
   @Override
-  public Self recursively() {
+  public @NotNull Self recursively() {
     myRecursively = true;
     return self();
   }
 
   protected abstract Self self();
 
-  @NotNull
   @Override
-  public Set<JpsModule> getModules() {
+  public @NotNull Set<JpsModule> getModules() {
     Set<JpsModule> result = new LinkedHashSet<>();
     processModules(new CollectConsumer<>(result));
     return result;
   }
 
   @Override
-  public void processModules(@NotNull final Consumer<? super JpsModule> consumer) {
+  public void processModules(final @NotNull Consumer<? super JpsModule> consumer) {
     processModuleAndLibraries(consumer, EmptyConsumer.getInstance());
   }
 
@@ -123,7 +125,9 @@ public abstract class JpsDependenciesEnumeratorBase<Self extends JpsDependencies
         if (myRecursively && shouldProcessDependenciesRecursively()) {
           JpsModule depModule = ((JpsModuleDependency)element).getModule();
           if (depModule != null) {
-            doProcessDependencies(depModule, processor, processed);
+            if (!doProcessDependencies(depModule, processor, processed)) {
+              return false;
+            }
             continue;
           }
         }
@@ -146,21 +150,20 @@ public abstract class JpsDependenciesEnumeratorBase<Self extends JpsDependencies
     return myRootModules.contains(module);
   }
 
-  @NotNull
   @Override
-  public Set<JpsLibrary> getLibraries() {
+  public @NotNull Set<JpsLibrary> getLibraries() {
     Set<JpsLibrary> libraries = new LinkedHashSet<>();
     processLibraries(new CollectConsumer<>(libraries));
     return libraries;
   }
 
   @Override
-  public void processLibraries(@NotNull final Consumer<? super JpsLibrary> consumer) {
+  public void processLibraries(final @NotNull Consumer<? super JpsLibrary> consumer) {
     processModuleAndLibraries(EmptyConsumer.getInstance(), consumer);
   }
 
   @Override
-  public void processModuleAndLibraries(@Nullable final Consumer<? super JpsModule> moduleConsumer, @Nullable final Consumer<? super JpsLibrary> libraryConsumer) {
+  public void processModuleAndLibraries(final @Nullable Consumer<? super JpsModule> moduleConsumer, final @Nullable Consumer<? super JpsLibrary> libraryConsumer) {
     processDependencies(dependencyElement -> {
       if (moduleConsumer != null) {
         if (myRecursively && dependencyElement instanceof JpsModuleSourceDependency) {

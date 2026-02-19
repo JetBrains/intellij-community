@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.impl
 
 import com.intellij.configurationStore.LazySchemeProcessor
@@ -18,7 +18,12 @@ import java.util.function.Function
 
 private val LOG = logger<RunConfigurationSchemeManager>()
 
-internal class RunConfigurationSchemeManager(private val manager: RunManagerImpl, private val templateDifferenceHelper: TemplateDifferenceHelper, private val isShared: Boolean, private val isWrapSchemeIntoComponentElement: Boolean) :
+internal class RunConfigurationSchemeManager(
+  private val manager: RunManagerImpl,
+  private val templateDifferenceHelper: TemplateDifferenceHelper,
+  private val isShared: Boolean,
+  private val isWrapSchemeIntoComponentElement: Boolean,
+) :
   LazySchemeProcessor<RunnerAndConfigurationSettingsImpl, RunnerAndConfigurationSettingsImpl>(), SchemeContentChangedHandler<RunnerAndConfigurationSettingsImpl> {
 
   override fun getSchemeKey(scheme: RunnerAndConfigurationSettingsImpl): String {
@@ -29,8 +34,8 @@ internal class RunConfigurationSchemeManager(private val manager: RunManagerImpl
           scheme.name
         }
         else {
-          // do not use name as scheme key for Unknown RC or for Rider (some Rider RC types can use RC with not unique names)
-          // using isManaged not strictly correct but separate API will be overkill for now
+          // do not use name as a scheme key for Unknown RC or for Rider (some Rider RC types can use RC with not unique names)
+          // using isManaged not strictly correct, but separate API will be an overkill for now
           scheme.uniqueID
         }
       }
@@ -38,14 +43,18 @@ internal class RunConfigurationSchemeManager(private val manager: RunManagerImpl
     }
   }
 
-  override fun createScheme(dataHolder: SchemeDataHolder<RunnerAndConfigurationSettingsImpl>, name: String, attributeProvider: Function<in String, String?>, isBundled: Boolean): RunnerAndConfigurationSettingsImpl {
+  override fun createScheme(dataHolder: SchemeDataHolder<RunnerAndConfigurationSettingsImpl>,
+                            name: String,
+                            attributeProvider: (String) -> String?,
+                            isBundled: Boolean): RunnerAndConfigurationSettingsImpl {
     val settings = RunnerAndConfigurationSettingsImpl(manager)
     val element = readData(settings, dataHolder)
     manager.addConfiguration(element, settings, isCheckRecentsLimit = false)
     return settings
   }
 
-  private fun readData(settings: RunnerAndConfigurationSettingsImpl, dataHolder: SchemeDataHolder<RunnerAndConfigurationSettingsImpl>): Element {
+  private fun readData(settings: RunnerAndConfigurationSettingsImpl,
+                       dataHolder: SchemeDataHolder<RunnerAndConfigurationSettingsImpl>): Element {
     var element = dataHolder.read()
 
     if (isShared && element.name == "component") {
@@ -93,7 +102,7 @@ internal class RunConfigurationSchemeManager(private val manager: RunManagerImpl
         name += " of type ${it}"
       }
     }
-    else if (name != null && !isShared) {
+    else if (!isShared) {
       val typeId = attributeProvider.apply("type")
       LOG.assertTrue(typeId != null)
       return "$typeId-${name}"
@@ -114,7 +123,7 @@ internal class RunConfigurationSchemeManager(private val manager: RunManagerImpl
   }
 
   override fun onSchemeDeleted(scheme: RunnerAndConfigurationSettingsImpl) {
-    manager.removeConfiguration(scheme)
+    manager.removeConfigurations(listOf(scheme), onSchemeManagerDeleteEvent = true)
   }
 
   override fun writeScheme(scheme: RunnerAndConfigurationSettingsImpl): Element? {

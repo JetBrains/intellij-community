@@ -1,0 +1,26 @@
+merge
+mergeAdd: expui/general/close.svg
+mergeAdd: expui/general/closeSmall.svg
+mergeAdd: expui/general/closeSmallHovered.svg
+mergeAdd: expui/general/copy.svg
+mergeAdd: expui/general/delete.svg
+mergeAdd: expui/general/export.svg
+mergeAdd: expui/general/history.svg
+mergeAdd: expui/general/pin.svg
+mergeAdd: expui/general/previewHorizontally.svg
+mergeAdd: expui/general/refresh.svg
+mergeAdd: expui/general/show.svg
+mergeAdd: expui/general/vcs.svg
+mergeAdd: expui/general/windowsMenu@20x20.svg
+mergeAdd: expui/nodes/library.svg
+mergeAdd: expui/run/restart.svg
+mergeAdd: expui/run/showIgnored.svg
+mergeAdd: expui/run/stop.svg
+skip: /**/*14x14.svg
+skip: stub@20x20.svg
+skip: general/settings@20x20.svg
+skip: general/search@20x20.svg
+skip: general/moreHorizontal@20x20.svg
+skip: toolbar/*20x20.svg
+skip: toolwindows/*20x20.svg
+skip: codeWithMe/*20x20.svg

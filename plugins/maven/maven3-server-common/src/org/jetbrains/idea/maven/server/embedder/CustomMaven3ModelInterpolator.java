@@ -28,7 +28,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import static org.jetbrains.idea.maven.server.embedder.CustomMaven3ModelInterpolator2.*;
+import static org.jetbrains.idea.maven.server.embedder.CustomMaven3ModelInterpolator2.CHANGELIST_PROPERTY;
+import static org.jetbrains.idea.maven.server.embedder.CustomMaven3ModelInterpolator2.REVISION_PROPERTY;
+import static org.jetbrains.idea.maven.server.embedder.CustomMaven3ModelInterpolator2.SHA1_PROPERTY;
 
 public class CustomMaven3ModelInterpolator extends StringSearchModelInterpolator {
   public CustomMaven3ModelInterpolator() {

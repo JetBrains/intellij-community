@@ -1,23 +1,33 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.util.User32Ex;
-import com.intellij.util.io.jna.DisposableMemory;
+import com.intellij.util.ui.EDT;
 import com.sun.jna.Function;
+import com.sun.jna.Memory;
 import com.sun.jna.Pointer;
-import com.sun.jna.platform.win32.*;
+import com.sun.jna.platform.win32.Guid;
+import com.sun.jna.platform.win32.ObjBase;
+import com.sun.jna.platform.win32.Ole32;
+import com.sun.jna.platform.win32.Ole32Util;
+import com.sun.jna.platform.win32.User32;
+import com.sun.jna.platform.win32.WinDef;
+import com.sun.jna.platform.win32.WinError;
+import com.sun.jna.platform.win32.WinNT;
 import com.sun.jna.ptr.PointerByReference;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import sun.awt.AWTAccessor;
 
-import javax.swing.*;
+import javax.swing.JFrame;
+import java.awt.Window;
 import java.awt.peer.ComponentPeer;
 import java.lang.reflect.Method;
 
 /**
+ * This class is not thread safe, and must be accessed from EDT only.
+ *
  * @author Alexander Lobas
  */
 final class Win7TaskBar {
@@ -56,14 +66,15 @@ final class Win7TaskBar {
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       return false;
     }
+    EDT.assertIsEdt();
 
     Ole32 ole32 = Ole32.INSTANCE;
-    ole32.CoInitializeEx(Pointer.NULL, 0);
+    ole32.CoInitializeEx(Pointer.NULL, Ole32.COINIT_APARTMENTTHREADED);
 
     Guid.GUID CLSID_TaskBarList = Ole32Util.getGUIDFromString("{56FDF344-FD6D-11d0-958A-006097C9A090}");
     Guid.GUID IID_ITaskBarList3 = Ole32Util.getGUIDFromString("{EA1AFB91-9E28-4B86-90E9-9E9F8A5EEFAF}");
     PointerByReference p = new PointerByReference();
-    WinNT.HRESULT hr = ole32.CoCreateInstance(CLSID_TaskBarList, Pointer.NULL, ObjBase.CLSCTX_ALL, IID_ITaskBarList3, p);
+    WinNT.HRESULT hr = ole32.CoCreateInstance(CLSID_TaskBarList, Pointer.NULL, ObjBase.CLSCTX_INPROC, IID_ITaskBarList3, p);
     if (!WinError.S_OK.equals(hr)) {
       LOG.error("Win7TaskBar CoCreateInstance(IID_ITaskBarList3) hResult: " + hr);
       return false;
@@ -116,9 +127,7 @@ final class Win7TaskBar {
       return null;
     }
 
-    DisposableMemory memory = new DisposableMemory(ico.length);
-
-    try {
+    try (Memory memory = new Memory(ico.length)) {
       memory.write(0, ico, 0, ico.length);
 
       int nSize = 100;
@@ -128,9 +137,6 @@ final class Win7TaskBar {
       }
 
       return null;
-    }
-    finally {
-      memory.dispose();
     }
   }
 
@@ -142,9 +148,17 @@ final class Win7TaskBar {
     User32Ex.INSTANCE.FlashWindow(getHandle(frame), true);
   }
 
-  private static WinDef.HWND getHandle(@NotNull JFrame frame) {
+  static void setForegroundWindow(@NotNull Window window) {
+    if (!ourInitialized || !window.isShowing()) {
+      return;
+    }
+
+    User32Ex.INSTANCE.SetForegroundWindow(getHandle(window));
+  }
+
+  private static WinDef.HWND getHandle(@NotNull Window window) {
     try {
-      ComponentPeer peer = AWTAccessor.getComponentAccessor().getPeer(frame);
+      ComponentPeer peer = AWTAccessor.getComponentAccessor().getPeer(window);
       Method getHWnd = peer.getClass().getMethod("getHWnd");
       return new WinDef.HWND(new Pointer((Long)getHWnd.invoke(peer)));
     }

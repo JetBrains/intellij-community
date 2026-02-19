@@ -1,29 +1,30 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl;
 
-import com.intellij.psi.*;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiSubstitutor;
+import com.intellij.psi.PsiSubstitutorFactory;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypeParameter;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Map;
 
 @ApiStatus.Internal
-public class PsiSubstitutorFactoryImpl extends PsiSubstitutorFactory {
-  @NotNull
+public final class PsiSubstitutorFactoryImpl extends PsiSubstitutorFactory {
   @Override
-  protected PsiSubstitutor createSubstitutor(@NotNull PsiTypeParameter typeParameter, PsiType mapping) {
+  protected @NotNull PsiSubstitutor createSubstitutor(@NotNull PsiTypeParameter typeParameter, PsiType mapping) {
     return new PsiSubstitutorImpl(typeParameter, mapping);
   }
 
-  @NotNull
   @Override
-  protected PsiSubstitutor createSubstitutor(@NotNull PsiClass aClass, PsiType[] mappings) {
+  protected @NotNull PsiSubstitutor createSubstitutor(@NotNull PsiClass aClass, PsiType[] mappings) {
     return new PsiSubstitutorImpl(aClass, mappings);
   }
   
-  @NotNull
   @Override
-  protected PsiSubstitutor createSubstitutor(@NotNull Map<? extends PsiTypeParameter, ? extends PsiType> map) {
+  protected @NotNull PsiSubstitutor createSubstitutor(@NotNull Map<? extends PsiTypeParameter, ? extends PsiType> map) {
     return new PsiSubstitutorImpl(map);
   }
 }

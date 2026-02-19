@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.xml;
 
 import com.intellij.ide.TypePresentationService;
@@ -14,21 +14,15 @@ import com.intellij.util.ReflectionUtil;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ConcurrentFactoryMap;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.Icon;
 import java.lang.reflect.Method;
-import java.util.ArrayList;
 import java.util.Collection;
-import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentMap;
 
-/**
- * @author peter
- */
 public abstract class ElementPresentationManager {
   private static final ConcurrentMap<Class<?>, Optional<Method>> ourNameValueMethods = ConcurrentFactoryMap.create(key -> ReflectionUtil
       .getClassPublicMethods(key)
@@ -36,7 +30,7 @@ public abstract class ElementPresentationManager {
       .filter(method -> JavaMethod.getMethod(key, method).getAnnotation(NameValue.class) != null)
       .findFirst(), CollectionFactory::createConcurrentWeakKeySoftValueMap);
 
-  private final static Function<Object, String> DEFAULT_NAMER = element -> getElementName(element);
+  private static final Function<Object, String> DEFAULT_NAMER = element -> getElementName(element);
 
   public static ElementPresentationManager getInstance() {
     return ApplicationManager.getApplication().getService(ElementPresentationManager.class);
@@ -63,24 +57,6 @@ public abstract class ElementPresentationManager {
   public abstract <T> Object @NotNull [] createVariants(Collection<? extends T> elements, Function<? super T, String> namer, int iconFlags);
 
 
-  private static final List<Function<Object, String>> ourNameProviders = new ArrayList<>();
-  private static final List<Function<Object, String>> ourDocumentationProviders = new ArrayList<>();
-
-  /**
-   * @deprecated use {@link com.intellij.ide.presentation.Presentation#provider()}
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020.3")
-  public static void registerNameProvider(Function<Object, String> function) { ourNameProviders.add(function); }
-
-  /**
-   * @deprecated use {@link Documentation}
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020.3")
-  public static void registerDocumentationProvider(Function<Object, String> function) { ourDocumentationProviders.add(function); }
-
-
   public static <T>NullableFunction<T, String> NAMER() {
     return o -> getElementName(o);
   }
@@ -91,18 +67,10 @@ public abstract class ElementPresentationManager {
     return (NullableFunction<T, String>)NAMER;
   }
 
-  @Nullable
-  public static String getElementName(@NotNull Object element) {
-    for (final Function<Object, String> function : ourNameProviders) {
-      final String s = function.fun(element);
-      if (s != null) {
-        return s;
-      }
-    }
+  public static @Nullable String getElementName(@NotNull Object element) {
     Object o = invokeNameValueMethod(element);
     if (o == null || o instanceof String) return (String)o;
-    if (o instanceof GenericValue) {
-      final GenericValue gv = (GenericValue)o;
+    if (o instanceof GenericValue gv) {
       final String s = gv.getStringValue();
       if (s == null) {
         final Object value = gv.getValue();
@@ -115,30 +83,17 @@ public abstract class ElementPresentationManager {
     return null;
   }
 
-  @Nullable
-  public static String getDocumentationForElement(Object element) {
-    for (final Function<Object, String> function : ourDocumentationProviders) {
-      final String s = function.fun(element);
-      if (s != null) {
-        return s;
-      }
-    }
-    return null;
-  }
 
-  @Nullable
-  public static Object invokeNameValueMethod(@NotNull final Object element) {
+  public static @Nullable Object invokeNameValueMethod(final @NotNull Object element) {
     return ourNameValueMethods.get(element.getClass()).map(method -> DomReflectionUtil.invokeMethod(method, element)).orElse(null);
   }
 
-  @NlsSafe
-  public static String getTypeNameForObject(Object o) {
+  public static @NlsSafe String getTypeNameForObject(Object o) {
     final Object firstImpl = ModelMergerUtil.getFirstImplementation(o);
     o = firstImpl != null ? firstImpl : o;
     String typeName = TypePresentationService.getService().getTypeName(o);
     if (typeName != null) return typeName;
-    if (o instanceof DomElement) {
-      final DomElement element = (DomElement)o;
+    if (o instanceof DomElement element) {
       return StringUtil.capitalizeWords(element.getNameStrategy().splitIntoWords(element.getXmlElementName()), true);
     }
     return TypePresentationService.getDefaultTypeName(o.getClass());
@@ -158,19 +113,16 @@ public abstract class ElementPresentationManager {
     return getIconOld(o);
   }
 
-  @Nullable
-  public static Icon getIconOld(Object o) {
+  public static @Nullable Icon getIconOld(Object o) {
     return getFirst(getIconsForClass(o.getClass(), o));
   }
 
-  @Nullable
-  private static <T> T getFirst(final T @Nullable [] array) {
+  private static @Nullable <T> T getFirst(final T @Nullable [] array) {
     return array == null || array.length == 0 ? null : array[0];
   }
 
 
-  @Nullable
-  public static Icon getIconForClass(Class clazz) {
+  public static @Nullable Icon getIconForClass(Class clazz) {
     return getFirst(getIconsForClass(clazz, null));
   }
 
@@ -184,8 +136,7 @@ public abstract class ElementPresentationManager {
     return null;
   }
 
-  @Nullable
-  public static <T> T findByName(Collection<T> collection, final String name) {
+  public static @Nullable <T> T findByName(Collection<T> collection, final String name) {
     return ContainerUtil.find(collection, object -> Comparing.equal(name, getElementName(object), true));
   }
 

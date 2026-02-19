@@ -1,0 +1,9 @@
+*:com.intellij.coverage.CoverageEditorAnnotator
+- com.intellij.openapi.Disposable
+- a:hideCoverage():V
+- a:showCoverage(com.intellij.coverage.CoverageSuitesBundle):V
+a:com.intellij.coverage.view.CoverageViewExtension
+- *:createExtraToolbarActions():java.util.List
+f:com.intellij.coverage.view.CoverageViewManager$StateBean
+- *f:isShowOnlyModified():Z
+- *f:setShowOnlyModified(Z):V

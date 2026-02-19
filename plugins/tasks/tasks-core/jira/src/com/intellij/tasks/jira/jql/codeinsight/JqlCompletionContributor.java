@@ -1,7 +1,11 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.tasks.jira.jql.codeinsight;
 
-import com.intellij.codeInsight.completion.*;
+import com.intellij.codeInsight.completion.CompletionContributor;
+import com.intellij.codeInsight.completion.CompletionParameters;
+import com.intellij.codeInsight.completion.CompletionProvider;
+import com.intellij.codeInsight.completion.CompletionResultSet;
+import com.intellij.codeInsight.completion.CompletionType;
 import com.intellij.codeInsight.completion.util.ParenthesesInsertHandler;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.openapi.diagnostic.Logger;
@@ -14,7 +18,16 @@ import com.intellij.psi.filters.position.FilterPattern;
 import com.intellij.psi.impl.DebugUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.tasks.jira.jql.JqlTokenTypes;
-import com.intellij.tasks.jira.jql.psi.*;
+import com.intellij.tasks.jira.jql.psi.JqlClauseWithHistoryPredicates;
+import com.intellij.tasks.jira.jql.psi.JqlFunctionCall;
+import com.intellij.tasks.jira.jql.psi.JqlHistoryPredicate;
+import com.intellij.tasks.jira.jql.psi.JqlIdentifier;
+import com.intellij.tasks.jira.jql.psi.JqlList;
+import com.intellij.tasks.jira.jql.psi.JqlNotClause;
+import com.intellij.tasks.jira.jql.psi.JqlOrderBy;
+import com.intellij.tasks.jira.jql.psi.JqlSortKey;
+import com.intellij.tasks.jira.jql.psi.JqlSubClause;
+import com.intellij.tasks.jira.jql.psi.JqlTerminalClause;
 import com.intellij.util.ProcessingContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -30,8 +43,7 @@ public class JqlCompletionContributor extends CompletionContributor {
   private static final FilterPattern BEGINNING_OF_LINE = new FilterPattern(new ElementFilter() {
     @Override
     public boolean isAcceptable(Object element, @Nullable PsiElement context) {
-      if (!(element instanceof PsiElement)) return false;
-      PsiElement p = (PsiElement)element;
+      if (!(element instanceof PsiElement p)) return false;
       PsiFile file = p.getContainingFile().getOriginalFile();
       char[] chars = file.textToCharArray();
       for (int offset = p.getTextOffset() - 1; offset >= 0; offset--) {
@@ -173,7 +185,7 @@ public class JqlCompletionContributor extends CompletionContributor {
 
   @Override
   public void fillCompletionVariants(@NotNull CompletionParameters parameters, @NotNull CompletionResultSet result) {
-    LOG.debug(DebugUtil.psiToString(parameters.getOriginalFile(), true));
+    LOG.debug(DebugUtil.psiToString(parameters.getOriginalFile(), false));
     super.fillCompletionVariants(parameters, result);
   }
 
@@ -265,20 +277,12 @@ public class JqlCompletionContributor extends CompletionContributor {
       if (predicate != null) {
         listFunctionExpected = false;
         JqlHistoryPredicate.Type predicateType = predicate.getType();
-        switch (predicateType) {
-          case BEFORE:
-          case AFTER:
-          case DURING:
-          case ON:
-            operandType = JqlFieldType.DATE;
-            break;
-          case BY:
-            operandType = JqlFieldType.USER;
-            break;
+        operandType = switch (predicateType) {
+          case BEFORE, AFTER, DURING, ON -> JqlFieldType.DATE;
+          case BY -> JqlFieldType.USER;
           // from, to
-          default:
-            operandType = findTypeOfField(curElem);
-        }
+          default -> findTypeOfField(curElem);
+        };
       }
       else {
         operandType = findTypeOfField(curElem);

@@ -1,11 +1,17 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.tabs.impl;
 
-import java.awt.*;
+import org.jetbrains.annotations.ApiStatus;
+
+import java.awt.Color;
+import java.awt.Graphics2D;
+import java.awt.Rectangle;
 
 /**
  * @author Konstantin Bulenkov
  */
+@ApiStatus.Internal
+@Deprecated(forRemoval = true)
 public class DefaultEditorTabsPainter extends JBEditorTabsPainter {
 
   public DefaultEditorTabsPainter(JBEditorTabs tabs) {
@@ -33,13 +39,6 @@ public class DefaultEditorTabsPainter extends JBEditorTabsPainter {
   public void doPaintBackground(Graphics2D g, Rectangle clip, boolean vertical, Rectangle rectangle) {
     g.setColor(getBackgroundColor());
     g.fill(clip);
-  }
-
-  @Override
-  public void fillSelectionAndBorder(Graphics2D g, JBTabsImpl.ShapeInfo selectedShape, Color tabColor, int x, int y, int height) {
-    g.setColor(tabColor != null ? tabColor : getDefaultTabColor());
-    g.fill(selectedShape.fillPath.getShape());
-    //g.draw(selectedShape.fillPath.getShape());
   }
 
   @Override

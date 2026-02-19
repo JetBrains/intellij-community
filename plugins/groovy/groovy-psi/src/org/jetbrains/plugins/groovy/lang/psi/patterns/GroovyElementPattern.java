@@ -1,21 +1,11 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.psi.patterns;
 
-import com.intellij.patterns.*;
+import com.intellij.patterns.ElementPattern;
+import com.intellij.patterns.InitialPatternCondition;
+import com.intellij.patterns.PatternCondition;
+import com.intellij.patterns.PsiJavaElementPattern;
+import com.intellij.patterns.PsiNamePatternCondition;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import com.intellij.util.ProcessingContext;
@@ -26,42 +16,44 @@ import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrBinaryExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrCall;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrNewExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrUnaryExpression;
 
 public class GroovyElementPattern<T extends GroovyPsiElement,Self extends GroovyElementPattern<T,Self>> extends PsiJavaElementPattern<T,Self> {
   public GroovyElementPattern(final Class<T> aClass) {
     super(aClass);
   }
 
-  public GroovyElementPattern(@NotNull final InitialPatternCondition<T> condition) {
+  public GroovyElementPattern(final @NotNull InitialPatternCondition<T> condition) {
     super(condition);
   }
 
-  @NotNull
   @Override
-  public Self methodCallParameter(final int index, final ElementPattern<? extends PsiMethod> methodPattern) {
+  public @NotNull Self methodCallParameter(final int index, final ElementPattern<? extends PsiMethod> methodPattern) {
     final PsiNamePatternCondition nameCondition = ContainerUtil.findInstance(methodPattern.getCondition().getConditions(), PsiNamePatternCondition.class);
 
-    return with(new PatternCondition<T>("methodCallParameter") {
+    return with(new PatternCondition<>("methodCallParameter") {
       @Override
-      public boolean accepts(@NotNull final T literal, final ProcessingContext context) {
+      public boolean accepts(final @NotNull T literal, final ProcessingContext context) {
         final PsiElement parent = literal.getParent();
-        if (parent instanceof GrArgumentList) {
+        if (parent instanceof GrArgumentList psiExpressionList) {
           if (!(literal instanceof GrExpression)) return false;
 
-          final GrArgumentList psiExpressionList = (GrArgumentList)parent;
           if (psiExpressionList.getExpressionArgumentIndex((GrExpression)literal) != index) return false;
 
           final PsiElement element = psiExpressionList.getParent();
           if (element instanceof GrCall) {
             final GroovyPsiElement expression =
               element instanceof GrMethodCall ? ((GrMethodCall)element).getInvokedExpression() :
-              element instanceof GrNewExpression? ((GrNewExpression)element).getReferenceElement() :
+              element instanceof GrNewExpression ? ((GrNewExpression)element).getReferenceElement() :
               null;
 
 
-            if (expression instanceof GrReferenceElement) {
-              final GrReferenceElement ref = (GrReferenceElement)expression;
+            if (expression instanceof GrReferenceElement ref) {
 
               if (nameCondition != null && "withName".equals(nameCondition.getDebugMethodName())) {
                 final String methodName = ref.getReferenceName();
@@ -84,15 +76,18 @@ public class GroovyElementPattern<T extends GroovyPsiElement,Self extends Groovy
     });
   }
 
-  @NotNull
-  public Self regExpOperatorArgument() {
-    return with(new PatternCondition<T>("regExpOperatorArg") {
+  public @NotNull Self regExpOperatorArgument() {
+    return with(new PatternCondition<>("regExpOperatorArg") {
       @Override
       public boolean accepts(@NotNull T t, ProcessingContext context) {
         PsiElement parent = t.getParent();
         return parent instanceof GrUnaryExpression && ((GrUnaryExpression)parent).getOperationTokenType() == GroovyTokenTypes.mBNOT ||
-               parent instanceof GrBinaryExpression && t == ((GrBinaryExpression)parent).getRightOperand() && ((GrBinaryExpression)parent).getOperationTokenType() == GroovyTokenTypes.mREGEX_FIND ||
-               parent instanceof GrBinaryExpression && t == ((GrBinaryExpression)parent).getRightOperand() && ((GrBinaryExpression)parent).getOperationTokenType() == GroovyTokenTypes.mREGEX_MATCH;
+               parent instanceof GrBinaryExpression &&
+               t == ((GrBinaryExpression)parent).getRightOperand() &&
+               ((GrBinaryExpression)parent).getOperationTokenType() == GroovyTokenTypes.mREGEX_FIND ||
+               parent instanceof GrBinaryExpression &&
+               t == ((GrBinaryExpression)parent).getRightOperand() &&
+               ((GrBinaryExpression)parent).getOperationTokenType() == GroovyTokenTypes.mREGEX_MATCH;
       }
     });
   }
@@ -104,7 +99,7 @@ public class GroovyElementPattern<T extends GroovyPsiElement,Self extends Groovy
       super(aClass);
     }
 
-    public Capture(@NotNull final InitialPatternCondition<T> condition) {
+    public Capture(final @NotNull InitialPatternCondition<T> condition) {
       super(condition);
     }
   }

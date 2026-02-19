@@ -2,6 +2,7 @@
 
 package org.jetbrains.idea.svn.actions;
 
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
@@ -12,18 +13,25 @@ import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.svn.SvnVcs;
 
-import static com.intellij.util.containers.ContainerUtil.immutableList;
+import java.util.List;
+
 import static org.jetbrains.idea.svn.SvnBundle.message;
 
 public class CleanupProjectAction extends AnAction implements DumbAware {
 
   @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
+  }
+
+  @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
-    Project project = e.getRequiredData(CommonDataKeys.PROJECT);
+    Project project = e.getData(CommonDataKeys.PROJECT);
+    if (project == null) return;
     SvnVcs vcs = SvnVcs.getInstance(project);
     VirtualFile[] roots = ProjectLevelVcsManager.getInstance(project).getRootsUnderVcs(vcs);
 
-    new CleanupWorker(vcs, immutableList(roots), message("progress.title.cleanup.project")).execute();
+    new CleanupWorker(vcs, List.of(roots), message("progress.title.cleanup.project")).execute();
   }
 
   @Override

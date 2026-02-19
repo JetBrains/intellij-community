@@ -11,19 +11,12 @@ open class AlienLocalChangeList(private val myChanges: List<Change>, @Nls privat
   override fun getChanges(): Collection<Change> = myChanges
 
   override fun getName(): String = myName
-  override fun setName(@Nls name: String) {
-    myName = name
-  }
 
   override fun getComment(): String? = myComment
-  override fun setComment(comment: String?) {
-    myComment = comment
-  }
 
   override fun isDefault(): Boolean = false
 
   override fun isReadOnly(): Boolean = false
-  override fun setReadOnly(isReadOnly: Boolean) = throw UnsupportedOperationException()
 
   override fun getData(): Any? = throw UnsupportedOperationException()
 

@@ -44,44 +44,39 @@ import org.jetbrains.lang.manifest.psi.impl.ManifestFileImpl;
 /**
  * @author Robert F. Beeger (robert@beeger.net)
  */
-public class ManifestParserDefinition implements ParserDefinition {
-  @NotNull
+public final class ManifestParserDefinition implements ParserDefinition {
   @Override
-  public Lexer createLexer(Project project) {
+  public @NotNull Lexer createLexer(Project project) {
     return new ManifestLexer();
   }
 
   @Override
-  public PsiParser createParser(Project project) {
+  public @NotNull PsiParser createParser(Project project) {
     return new ManifestParser();
   }
 
   @Override
-  public IFileElementType getFileNodeType() {
+  public @NotNull IFileElementType getFileNodeType() {
     return ManifestElementType.FILE;
   }
 
-  @NotNull
   @Override
-  public TokenSet getWhitespaceTokens() {
+  public @NotNull TokenSet getWhitespaceTokens() {
     return TokenSet.EMPTY;
   }
 
-  @NotNull
   @Override
-  public TokenSet getCommentTokens() {
+  public @NotNull TokenSet getCommentTokens() {
     return TokenSet.EMPTY;
   }
 
-  @NotNull
   @Override
-  public TokenSet getStringLiteralElements() {
+  public @NotNull TokenSet getStringLiteralElements() {
     return TokenSet.EMPTY;
   }
 
-  @NotNull
   @Override
-  public PsiElement createElement(ASTNode node) {
+  public @NotNull PsiElement createElement(ASTNode node) {
     IElementType type = node.getElementType();
     if (type instanceof ManifestElementType) {
       return ((ManifestElementType)type).createPsi(node);
@@ -91,12 +86,12 @@ public class ManifestParserDefinition implements ParserDefinition {
   }
 
   @Override
-  public PsiFile createFile(FileViewProvider viewProvider) {
+  public @NotNull PsiFile createFile(@NotNull FileViewProvider viewProvider) {
     return new ManifestFileImpl(viewProvider);
   }
 
   @Override
-  public SpaceRequirements spaceExistenceTypeBetweenTokens(ASTNode left, ASTNode right) {
+  public @NotNull SpaceRequirements spaceExistenceTypeBetweenTokens(ASTNode left, ASTNode right) {
     return left.getPsi() instanceof Header || right.getPsi() instanceof Header ?
            SpaceRequirements.MUST_LINE_BREAK : SpaceRequirements.MUST_NOT;
   }

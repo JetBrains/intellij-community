@@ -1,9 +1,10 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.psi.impl.source.resolve.reference.impl.providers;
 
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
-import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.components.Service;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
@@ -14,37 +15,30 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.Icon;
 
-/**
- * @author spleaner
- */
+@Service
 public final class FileInfoManager {
   public static FileInfoManager getFileInfoManager() {
-    return ServiceManager.getService(FileInfoManager.class);
+    return ApplicationManager.getApplication().getService(FileInfoManager.class);
   }
 
   public static Object getFileLookupItem(PsiElement psiElement) {
-    if (!(psiElement instanceof PsiFile) || !(psiElement.isPhysical())) {
+    if (!(psiElement instanceof PsiFile psiFile) || !(psiElement.isPhysical())) {
       return psiElement;
     }
 
-    final PsiFile file = (PsiFile)psiElement;
-    return _getLookupItem(file, file.getName(), file.getIcon(0));
+    return _getLookupItem(psiFile, psiFile.getName(), psiFile.getIcon(0));
   }
 
-  @Nullable
-  public static String getFileAdditionalInfo(PsiElement psiElement) {
+  public static @Nullable String getFileAdditionalInfo(PsiElement psiElement) {
     return _getInfo(psiElement);
   }
 
-  @Nullable
-  private static String _getInfo(PsiElement psiElement) {
-    if (!(psiElement instanceof PsiFile) || !(psiElement.isPhysical())) {
+  private static @Nullable String _getInfo(PsiElement psiElement) {
+    if (!(psiElement instanceof PsiFile psiFile) || !(psiElement.isPhysical())) {
       return null;
     }
-
-    final PsiFile psiFile = (PsiFile)psiElement;
 
     FileLookupInfoProvider provider =
       ContainerUtil.find(FileLookupInfoProvider.EP_NAME.getExtensionList(),
@@ -62,13 +56,13 @@ public final class FileInfoManager {
   }
 
   public static LookupElementBuilder getFileLookupItem(PsiElement psiElement, String encoded, Icon icon) {
-    if (!(psiElement instanceof PsiFile) || !(psiElement.isPhysical())) {
+    if (!(psiElement instanceof PsiFile psiFile) || !(psiElement.isPhysical())) {
       return LookupElementBuilder.create(psiElement, encoded).withIcon(icon);
     }
-    return _getLookupItem((PsiFile)psiElement, encoded, icon);
+    return _getLookupItem(psiFile, encoded, icon);
   }
 
-  public static LookupElementBuilder _getLookupItem(@NotNull final PsiFile file, String name, Icon icon) {
+  public static LookupElementBuilder _getLookupItem(final @NotNull PsiFile file, String name, Icon icon) {
     LookupElementBuilder builder = LookupElementBuilder.create(file, name).withIcon(icon);
 
     final String info = _getInfo(file);

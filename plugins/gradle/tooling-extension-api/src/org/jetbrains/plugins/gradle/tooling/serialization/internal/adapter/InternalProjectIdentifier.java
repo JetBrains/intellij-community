@@ -2,9 +2,12 @@
 package org.jetbrains.plugins.gradle.tooling.serialization.internal.adapter;
 
 import org.gradle.tooling.model.ProjectIdentifier;
+import org.jetbrains.annotations.ApiStatus;
 
 import java.io.File;
+import java.util.Objects;
 
+@ApiStatus.Internal
 public final class InternalProjectIdentifier implements ProjectIdentifier {
   private final InternalBuildIdentifier build;
   private final String projectPath;
@@ -12,6 +15,10 @@ public final class InternalProjectIdentifier implements ProjectIdentifier {
   public InternalProjectIdentifier(InternalBuildIdentifier build, String projectPath) {
     this.build = build;
     this.projectPath = projectPath;
+  }
+
+  public InternalProjectIdentifier(File rootDir, String projectPath) {
+    this(new InternalBuildIdentifier(rootDir), projectPath);
   }
 
   @Override
@@ -28,8 +35,9 @@ public final class InternalProjectIdentifier implements ProjectIdentifier {
     return this.build.getRootDir();
   }
 
+  @Override
   public String toString() {
-    return String.format("project=%s, %s", this.projectPath, this.build);
+    return String.format("project=%s, %s", projectPath, build);
   }
 
   @Override
@@ -37,8 +45,8 @@ public final class InternalProjectIdentifier implements ProjectIdentifier {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
     InternalProjectIdentifier that = (InternalProjectIdentifier)o;
-    if (build != null ? !build.equals(that.build) : that.build != null) return false;
-    if (projectPath != null ? !projectPath.equals(that.projectPath) : that.projectPath != null) return false;
+    if (!Objects.equals(build, that.build)) return false;
+    if (!Objects.equals(projectPath, that.projectPath)) return false;
     return true;
   }
 

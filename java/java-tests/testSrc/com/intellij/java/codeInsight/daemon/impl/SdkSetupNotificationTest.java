@@ -3,19 +3,11 @@ package com.intellij.java.codeInsight.daemon.impl;
 
 import com.intellij.codeInsight.daemon.impl.JavaProjectSdkSetupValidator;
 import com.intellij.idea.TestFor;
-import com.intellij.openapi.application.WriteAction;
-import com.intellij.openapi.projectRoots.*;
-import com.intellij.openapi.roots.ModifiableRootModel;
-import com.intellij.openapi.roots.ModuleRootManager;
-import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.ui.EditorNotificationPanel;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-/**
- * @author Pavel.Dolgov
- */
 @TestFor(classes = JavaProjectSdkSetupValidator.class)
 public class SdkSetupNotificationTest extends SdkSetupNotificationTestBase {
   public void testProjectSdk() {

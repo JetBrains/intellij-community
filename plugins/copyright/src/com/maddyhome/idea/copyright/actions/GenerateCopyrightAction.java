@@ -1,12 +1,18 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.maddyhome.idea.copyright.actions;
 
 import com.intellij.copyright.CopyrightBundle;
 import com.intellij.copyright.CopyrightManager;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
+import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.options.ShowSettingsUtil;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.psi.PsiDocumentManager;
@@ -16,7 +22,7 @@ import com.maddyhome.idea.copyright.util.FileTypeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class GenerateCopyrightAction extends AnAction {
+public class GenerateCopyrightAction extends DumbAwareAction {
   @Override
   public void update(@NotNull AnActionEvent e) {
     Presentation presentation = e.getPresentation();
@@ -33,8 +39,12 @@ public class GenerateCopyrightAction extends AnAction {
     }
   }
 
-  @Nullable
-  private static PsiFile getFile(DataContext context, Project project) {
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
+  }
+
+  private static @Nullable PsiFile getFile(DataContext context, Project project) {
     PsiFile file = CommonDataKeys.PSI_FILE.getData(context);
     if (file == null) {
       Editor editor = CommonDataKeys.EDITOR.getData(context);
@@ -50,7 +60,7 @@ public class GenerateCopyrightAction extends AnAction {
     DataContext context = e.getDataContext();
     Project project = e.getProject();
     assert project != null;
-    Module module = e.getData(LangDataKeys.MODULE);
+    Module module = e.getData(PlatformCoreDataKeys.MODULE);
     PsiDocumentManager.getInstance(project).commitAllDocuments();
 
 

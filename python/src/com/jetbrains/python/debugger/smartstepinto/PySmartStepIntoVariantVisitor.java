@@ -1,16 +1,26 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.debugger.smartstepinto;
 
-import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Maps;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiElement;
 import com.jetbrains.python.PyTokenTypes;
-import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.LanguageLevel;
+import com.jetbrains.python.psi.PyBinaryExpression;
+import com.jetbrains.python.psi.PyCallExpression;
+import com.jetbrains.python.psi.PyComprehensionElement;
+import com.jetbrains.python.psi.PyDecorator;
+import com.jetbrains.python.psi.PyDecoratorList;
+import com.jetbrains.python.psi.PyElementType;
+import com.jetbrains.python.psi.PyExpression;
+import com.jetbrains.python.psi.PyFile;
+import com.jetbrains.python.psi.PyFunction;
+import com.jetbrains.python.psi.PyPrefixExpression;
+import com.jetbrains.python.psi.PyRecursiveElementVisitor;
+import com.jetbrains.python.psi.PyReferenceOwner;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import com.jetbrains.python.pyi.PyiFile;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.HashSet;
@@ -18,21 +28,48 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import static com.jetbrains.python.PyNames.BUILTINS_MODULES;
+
 public class PySmartStepIntoVariantVisitor extends PyRecursiveElementVisitor {
-  @NotNull @NonNls private static final ImmutableSet<String> BUILTINS_MODULES = ImmutableSet.of("builtins.py", "__builtin__.py");
+  private static final String RERAISE = "RERAISE";
 
   int myVariantIndex = -1;
-  @NotNull private final List<PySmartStepIntoVariant> myCollector;
-  @NotNull private final List<Pair<String, Boolean>> myVariantsFromPython;
-  @NotNull private final PySmartStepIntoContext myContext;
-  @NotNull private final Map<String, Integer> mySeenVariants = Maps.newHashMap();
-  @NotNull private final Set<PsiElement> alreadyVisited = new HashSet<PsiElement>();
+  private final @NotNull List<PySmartStepIntoVariant> myCollector;
+  private final @NotNull List<Pair<String, Boolean>> myVariantsFromPython;
+  private final @NotNull PySmartStepIntoContext myContext;
+  private final @NotNull Map<String, Integer> mySeenVariants = Maps.newHashMap();
+  private final @NotNull Set<PsiElement> alreadyVisited = new HashSet<>();
 
   public PySmartStepIntoVariantVisitor(@NotNull List<PySmartStepIntoVariant> collector,
                                        @NotNull List<Pair<String, Boolean>> variantsFromPython,
                                        @NotNull PySmartStepIntoContext context) {
     myCollector = collector;
-    myVariantsFromPython = variantsFromPython;
+    boolean shouldJump = false;
+    int mid = (variantsFromPython.size() - 1) / 2;
+    if (variantsFromPython.get(variantsFromPython.size() - 1).first.equals(RERAISE)) {
+      int i = 0;
+      while (i < mid) {
+        if (!variantsFromPython.get(i).first.equals(variantsFromPython.get(mid + i).first) ||
+            !(variantsFromPython.get(i).second && !variantsFromPython.get(mid + i).second)) {
+          break;
+        }
+        i++;
+      }
+      if (i == mid) {
+        shouldJump = true;
+      }
+    }
+
+    if (shouldJump) {
+      myVariantsFromPython = variantsFromPython.subList(mid, variantsFromPython.size() - 1);
+    }
+    else if (variantsFromPython.get(variantsFromPython.size() - 1).first.equals(RERAISE)) {
+      myVariantsFromPython = variantsFromPython.subList(0, variantsFromPython.size() - 1);
+    }
+    else {
+      myVariantsFromPython = variantsFromPython;
+    }
+
     myContext = context;
   }
 
@@ -48,8 +85,6 @@ public class PySmartStepIntoVariantVisitor extends PyRecursiveElementVisitor {
     PyExpression callee = node.getCallee();
     if (callee == null || callee.getName() == null) return;
 
-    if (!callee.getName().equals(myVariantsFromPython.get(myVariantIndex + 1).first)) return;
-
     myVariantIndex++;
     int callOrder = getCallOrder();
     mySeenVariants.put(myVariantsFromPython.get(myVariantIndex).first, ++callOrder);
@@ -57,19 +92,14 @@ public class PySmartStepIntoVariantVisitor extends PyRecursiveElementVisitor {
     PsiElement ref = callee.getReference() != null ? callee.getReference().resolve() : null;
     if (ref != null && isBuiltIn(ref)) return;
 
-    if (ref instanceof PyFunction && ((((PyFunction)ref).isAsync()) || ((PyFunction)ref).isGenerator())) return;
+    if (LanguageLevel.forElement(node).isOlderThan(LanguageLevel.PYTHON312)
+        && ref instanceof PyFunction && ((((PyFunction)ref).isAsync()) || ((PyFunction)ref).isGenerator())) {
+      return;
+    }
 
-    if (isAlreadySeen()) return;
+    if (isAlreadyCalled()) return;
 
     myCollector.add(new PySmartStepIntoVariantCallExpression(node, callOrder, myContext));
-  }
-
-  @Override
-  public void visitElement(@NotNull PsiElement element) {
-    if (element instanceof PyDecorator) {
-      visitPyCallExpression((PyDecorator)element);
-    }
-    super.visitElement(element);
   }
 
   @Override
@@ -77,7 +107,6 @@ public class PySmartStepIntoVariantVisitor extends PyRecursiveElementVisitor {
     PyDecorator[] decorators = node.getDecorators();
     if (decorators.length > 0) {
       decorators[0].accept(this);
-      visitPyCallExpression(decorators[0]);
     }
   }
 
@@ -96,7 +125,7 @@ public class PySmartStepIntoVariantVisitor extends PyRecursiveElementVisitor {
     int callOrder = getCallOrder();
     mySeenVariants.put(myVariantsFromPython.get(myVariantIndex).first, ++callOrder);
 
-    if (isAlreadySeen()) return;
+    if (isAlreadyCalled()) return;
 
     myCollector.add(new PySmartStepIntoVariantComprehension(node, callOrder, myContext));
   }
@@ -141,11 +170,10 @@ public class PySmartStepIntoVariantVisitor extends PyRecursiveElementVisitor {
     int callOrder = getCallOrder();
     mySeenVariants.put(myVariantsFromPython.get(myVariantIndex).first, ++callOrder);
 
-    PsiElement resolved = expression.getReference(
-      PyResolveContext.defaultContext().withTypeEvalContext(TypeEvalContext.userInitiated(
-        expression.getProject(), expression.getContainingFile()))).resolve();
+    var context = TypeEvalContext.userInitiated(expression.getProject(), expression.getContainingFile());
+    PsiElement resolved = expression.getReference(PyResolveContext.defaultContext(context)).resolve();
 
-    if (resolved == null || isBuiltIn(resolved) || isAlreadySeen()) return;
+    if (resolved == null || isBuiltIn(resolved) || isAlreadyCalled()) return;
 
     PsiElement psiOperator = isBinaryOperator ? ((PyBinaryExpression)expression).getPsiOperator() : expression;
     if (psiOperator != null) myCollector.add(new PySmartStepIntoVariantOperator(psiOperator, callOrder, myContext));
@@ -157,7 +185,7 @@ public class PySmartStepIntoVariantVisitor extends PyRecursiveElementVisitor {
             || navFile instanceof PyiFile);
   }
 
-  private boolean isAlreadySeen() {
+  private boolean isAlreadyCalled() {
     return myVariantsFromPython.get(myVariantIndex).second;
   }
 

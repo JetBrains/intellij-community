@@ -4,12 +4,22 @@ package com.intellij.debugger.ui.tree.render;
 import com.intellij.debugger.engine.evaluation.EvaluationContext;
 import com.intellij.debugger.ui.tree.ValueDescriptor;
 import com.intellij.openapi.diagnostic.Logger;
-import com.sun.jdi.*;
+import com.sun.jdi.ByteType;
+import com.sun.jdi.ByteValue;
+import com.sun.jdi.IntegerType;
+import com.sun.jdi.IntegerValue;
+import com.sun.jdi.LongType;
+import com.sun.jdi.LongValue;
+import com.sun.jdi.PrimitiveValue;
+import com.sun.jdi.ShortType;
+import com.sun.jdi.ShortValue;
+import com.sun.jdi.Type;
+import com.sun.jdi.Value;
 
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
 
-public class BinaryRenderer extends CompoundRendererProvider {
+public final class BinaryRenderer extends CompoundRendererProvider {
   private static final Logger LOG = Logger.getInstance(BinaryRenderer.class);
 
   @Override
@@ -52,9 +62,7 @@ public class BinaryRenderer extends CompoundRendererProvider {
         // add leading zeros
         int remainder = valueStr.length() % 8;
         if (remainder != 0) {
-          for (int i = 0; i < 8 - remainder; i++) {
-            buf.append('0');
-          }
+          buf.append("0".repeat(8 - remainder));
         }
 
         buf.append(valueStr);

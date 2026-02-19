@@ -1,7 +1,14 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.psi.util;
 
-import com.intellij.psi.*;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiClassType;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiSubstitutor;
+import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
@@ -18,16 +25,13 @@ public final class GrInnerClassConstructorUtil {
                                                                   @NotNull PsiClass enclosingClass,
                                                                   GrParameter @NotNull [] originalParams,
                                                                   boolean isOptional) {
-    final GrParameter[] parameters = new GrParameter[originalParams.length + 1];
     final PsiClassType enclosingClassType = JavaPsiFacade.getElementFactory(method.getProject()).createType(enclosingClass, PsiSubstitutor.EMPTY);
     final GrLightParameter enclosing = new GrLightParameter("enclosing", enclosingClassType, method);
     if (isOptional) {
       enclosing.setOptional(true);
       enclosing.setInitializerGroovy(GroovyPsiElementFactory.getInstance(method.getProject()).createExpressionFromText("null"));
     }
-    parameters[0] = enclosing;
-    System.arraycopy(originalParams, 0, parameters, 1, originalParams.length);
-    return parameters;
+    return ArrayUtil.prepend(enclosing, originalParams);
   }
 
   public static boolean isInnerClassConstructorUsedOutsideOfItParent(@NotNull PsiMethod method, PsiElement place) {
@@ -45,24 +49,7 @@ public final class GrInnerClassConstructorUtil {
     return false;
   }
 
-  public static PsiType @NotNull [] addEnclosingArgIfNeeded(PsiType @NotNull [] types, @NotNull PsiElement place, @NotNull PsiClass aClass) {
-    if (!aClass.hasModifierProperty(PsiModifier.STATIC)) {
-      PsiClass containingClass = aClass.getContainingClass();
-      if (containingClass != null) {
-        PsiElementFactory factory = JavaPsiFacade.getElementFactory(place.getProject());
-        if (PsiUtil.hasEnclosingInstanceInScope(containingClass, place, true)) {
-          PsiType[] newTypes = PsiType.createArray(types.length + 1);
-          newTypes[0] = factory.createType(containingClass);
-          System.arraycopy(types, 0, newTypes, 1, types.length);
-          types = newTypes;
-        }
-      }
-    }
-    return types;
-  }
-
-  @Nullable
-  public static PsiClass enclosingClass(@NotNull PsiElement place, @NotNull PsiClass aClass) {
+  public static @Nullable PsiClass enclosingClass(@NotNull PsiElement place, @NotNull PsiClass aClass) {
     if (!aClass.hasModifierProperty(PsiModifier.STATIC)) {
       PsiClass containingClass = aClass.getContainingClass();
       if (containingClass != null) {

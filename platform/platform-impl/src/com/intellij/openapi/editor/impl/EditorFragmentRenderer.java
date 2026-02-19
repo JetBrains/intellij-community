@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
@@ -7,24 +7,42 @@ import com.intellij.codeInsight.hint.HintManagerImpl;
 import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
+import com.intellij.openapi.editor.colors.EditorFontType;
 import com.intellij.openapi.editor.ex.EditorGutterComponentEx;
 import com.intellij.openapi.editor.ex.RangeHighlighterEx;
 import com.intellij.openapi.editor.ex.util.EditorUIUtil;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.ui.*;
+import com.intellij.ui.BalloonImpl;
+import com.intellij.ui.DirtyUI;
+import com.intellij.ui.EditorTextField;
+import com.intellij.ui.ExperimentalUI;
+import com.intellij.ui.Gray;
+import com.intellij.ui.HintHint;
+import com.intellij.ui.JBColor;
+import com.intellij.ui.LightweightHint;
 import com.intellij.ui.scale.JBUIScale;
-import com.intellij.util.Alarm;
+import com.intellij.util.concurrency.EdtScheduler;
 import com.intellij.util.ui.GraphicsUtil;
 import com.intellij.util.ui.ImageUtil;
 import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
-import gnu.trove.TIntIntHashMap;
+import it.unimi.dsi.fastutil.ints.Int2IntMap;
+import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JPanel;
+import javax.swing.SwingUtilities;
+import java.awt.Color;
+import java.awt.Dimension;
+import java.awt.Font;
+import java.awt.GradientPaint;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.Point;
+import java.awt.Rectangle;
+import java.awt.Shape;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Area;
 import java.awt.geom.Ellipse2D;
@@ -35,7 +53,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 
-class EditorFragmentRenderer {
+final class EditorFragmentRenderer {
   static final int PREVIEW_LINES = Math.max(2, Math.min(25, Integer.getInteger("preview.lines", 5)));// Actually preview has myPreviewLines * 2 + 1 lines (above + below + current one)
   static final int EDITOR_FRAGMENT_POPUP_BORDER = 1;
   private static final int CACHE_PREVIEW_LINES = 100;// Actually cache image has myCachePreviewLines * 2 + 1 lines (above + below + current one)
@@ -117,12 +135,12 @@ class EditorFragmentRenderer {
     myHintHolder.set(hintInfo);
     if (needDelay && !showInstantly) {
       myDelayed = true;
-      Alarm alarm = new Alarm();
-      alarm.addRequest(() -> {
-        if (myEditorPreviewHint == null || !myDelayed) return;
-        showEditorHint(hintManager, myPointHolder.get(), myHintHolder.get());
-        myDelayed = false;
-      }, /*Registry.intValue("ide.tooltip.initialDelay")*/300);
+      EdtScheduler.getInstance().schedule(300, () -> {
+        if (myEditorPreviewHint != null && myDelayed) {
+          showEditorHint(hintManager, myPointHolder.get(), myHintHolder.get());
+          myDelayed = false;
+        }
+      });
     }
     else if (!myDelayed) {
       showEditorHint(hintManager, point, hintInfo);
@@ -236,11 +254,11 @@ class EditorFragmentRenderer {
         translateInstance.preConcatenate(transform);
         g2d.setTransform(translateInstance);
         UIUtil.drawImage(g2d, myCacheLevel2, -gutterWidth, 0, null);
-        TIntIntHashMap rightEdges = new TIntIntHashMap();
+        Int2IntMap rightEdges = new Int2IntOpenHashMap();
         int h = lineHeight - 2;
 
         EditorColorsScheme colorsScheme = myEditor.getColorsScheme();
-        Font font = UIUtil.getFontWithFallback(colorsScheme.getEditorFontName(), Font.PLAIN, colorsScheme.getEditorFontSize());
+        Font font = UIUtil.getFontWithFallback(colorsScheme.getFont(EditorFontType.PLAIN));
         g2d.setFont(font.deriveFont(font.getSize() * .8F));
 
         for (RangeHighlighterEx ex : myHighlighters) {
@@ -282,7 +300,7 @@ class EditorFragmentRenderer {
         GraphicsUtil.setupAAPainting(g2);
         g2.setClip(new RoundRectangle2D.Double(0, 0, size.width - .5, size.height - .5, 2, 2));
         UIUtil.drawImage(g2, myCacheLevel1, 0, 0, this);
-        if (StartupUiUtil.isUnderDarcula()) {
+        if (StartupUiUtil.isUnderDarcula() && !ExperimentalUI.isNewUI()) {
           //Add glass effect
           Shape s = new Rectangle(0, 0, size.width, size.height);
           double cx = size.width / 2.0;

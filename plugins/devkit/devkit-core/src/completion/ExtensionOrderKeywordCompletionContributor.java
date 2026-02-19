@@ -1,7 +1,12 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.completion;
 
-import com.intellij.codeInsight.completion.*;
+import com.intellij.codeInsight.completion.AddSpaceInsertHandler;
+import com.intellij.codeInsight.completion.CompletionContributor;
+import com.intellij.codeInsight.completion.CompletionParameters;
+import com.intellij.codeInsight.completion.CompletionProvider;
+import com.intellij.codeInsight.completion.CompletionResultSet;
+import com.intellij.codeInsight.completion.CompletionType;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.extensions.LoadingOrder;
@@ -21,7 +26,7 @@ import org.jetbrains.idea.devkit.util.PsiUtil;
 
 import static com.intellij.patterns.PlatformPatterns.psiElement;
 
-public class ExtensionOrderKeywordCompletionContributor extends CompletionContributor {
+final class ExtensionOrderKeywordCompletionContributor extends CompletionContributor {
   private static final LookupElementBuilder KEYWORD_VARIANT_FIRST = LookupElementBuilder.create(LoadingOrder.FIRST_STR);
   private static final LookupElementBuilder KEYWORD_VARIANT_LAST = LookupElementBuilder.create(LoadingOrder.LAST_STR);
   private static final LookupElementBuilder KEYWORD_VARIANT_BEFORE = LookupElementBuilder.create(LoadingOrder.BEFORE_STR.trim())
@@ -29,8 +34,8 @@ public class ExtensionOrderKeywordCompletionContributor extends CompletionContri
   private static final LookupElementBuilder KEYWORD_VARIANT_AFTER = LookupElementBuilder.create(LoadingOrder.AFTER_STR.trim())
     .withInsertHandler(AddSpaceInsertHandler.INSTANCE_WITH_AUTO_POPUP);
 
-  public ExtensionOrderKeywordCompletionContributor() {
-    extend(CompletionType.BASIC, getCapture(), new CompletionProvider<CompletionParameters>() {
+  ExtensionOrderKeywordCompletionContributor() {
+    extend(CompletionType.BASIC, getCapture(), new CompletionProvider<>() {
       @Override
       protected void addCompletions(@NotNull CompletionParameters parameters,
                                     @NotNull ProcessingContext context,
@@ -49,12 +54,11 @@ public class ExtensionOrderKeywordCompletionContributor extends CompletionContri
     });
   }
 
-  @NotNull
-  private static PsiElementPattern.Capture<PsiElement> getCapture() {
+  private static @NotNull PsiElementPattern.Capture<PsiElement> getCapture() {
     //TODO write a method for attribute value in XmlPatterns
     return psiElement().inside(
       XmlPatterns.xmlAttributeValue("order").inside(
-        XmlPatterns.xmlTag().with(new PatternCondition<XmlTag>("extension tag") {
+        XmlPatterns.xmlTag().with(new PatternCondition<>("extension tag") {
           @Override
           public boolean accepts(@NotNull XmlTag tag, ProcessingContext context) {
             if (!PsiUtil.isPluginXmlPsiElement(tag)) {
@@ -67,8 +71,7 @@ public class ExtensionOrderKeywordCompletionContributor extends CompletionContri
         })));
   }
 
-  @NotNull
-  private static String getCompletionPrefix(@NotNull CompletionParameters parameters) {
+  private static @NotNull String getCompletionPrefix(@NotNull CompletionParameters parameters) {
     XmlElement position = (XmlElement)parameters.getPosition();
     int startOffset = position.getTextOffset();
     int endOffset = parameters.getOffset();
@@ -76,9 +79,8 @@ public class ExtensionOrderKeywordCompletionContributor extends CompletionContri
     return document.getText(new TextRange(startOffset, endOffset));
   }
 
-  @NotNull
-  private static String getPrefixLastPart(@NotNull String prefix) {
-    String lastPart = StringUtil.substringAfterLast(prefix, LoadingOrder.ORDER_RULE_SEPARATOR);
+  private static @NotNull String getPrefixLastPart(@NotNull String prefix) {
+    String lastPart = StringUtil.substringAfterLast(prefix, String.valueOf(LoadingOrder.ORDER_RULE_SEPARATOR));
     if (lastPart == null) {
       lastPart = prefix;
     }
@@ -91,7 +93,7 @@ public class ExtensionOrderKeywordCompletionContributor extends CompletionContri
   }
 
   private static boolean shouldProposeFirstLastKeywordsAfterPrefix(@NotNull String prefix) {
-    String[] parts = prefix.split(LoadingOrder.ORDER_RULE_SEPARATOR);
+    String[] parts = prefix.split(String.valueOf(LoadingOrder.ORDER_RULE_SEPARATOR));
     for (String part : parts) {
       if (part.trim().equalsIgnoreCase(LoadingOrder.FIRST_STR) || part.trim().equalsIgnoreCase(LoadingOrder.LAST_STR)) {
         return false;
@@ -103,7 +105,7 @@ public class ExtensionOrderKeywordCompletionContributor extends CompletionContri
   @Override
   public void fillCompletionVariants(@NotNull CompletionParameters parameters, @NotNull CompletionResultSet result) {
     String prefix = result.getPrefixMatcher().getPrefix();
-    if (prefix.endsWith(LoadingOrder.ORDER_RULE_SEPARATOR)) {
+    if (prefix.endsWith(String.valueOf(LoadingOrder.ORDER_RULE_SEPARATOR))) {
       result = result.withPrefixMatcher(""); // keywords should be proposed after comma even without space
     }
     else {

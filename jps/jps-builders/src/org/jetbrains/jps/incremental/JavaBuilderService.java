@@ -1,6 +1,7 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.incremental;
 
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.backwardRefs.JavaBackwardReferenceIndexBuilder;
 import org.jetbrains.jps.builders.BuildTargetType;
@@ -12,28 +13,25 @@ import org.jetbrains.jps.incremental.instrumentation.NotNullInstrumentingBuilder
 import org.jetbrains.jps.incremental.instrumentation.RmiStubsGenerator;
 import org.jetbrains.jps.incremental.java.JavaBuilder;
 import org.jetbrains.jps.incremental.resources.ResourcesBuilder;
-import org.jetbrains.jps.service.SharedThreadPool;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
-public class JavaBuilderService extends BuilderService {
-  @NotNull
+@ApiStatus.Internal
+public final class JavaBuilderService extends BuilderService {
   @Override
-  public List<? extends BuildTargetType<?>> getTargetTypes() {
-    List<BuildTargetType<?>> types = new ArrayList<>();
+  public @NotNull List<? extends BuildTargetType<?>> getTargetTypes() {
+    List<BuildTargetType<?>> types = new ArrayList<>(5);
     types.addAll(JavaModuleBuildTargetType.ALL_TYPES);
     types.addAll(ResourcesTargetType.ALL_TYPES);
     types.add(ProjectDependenciesResolver.ProjectDependenciesResolvingTargetType.INSTANCE);
     return types;
   }
 
-  @NotNull
   @Override
-  public List<? extends ModuleLevelBuilder> createModuleLevelBuilders() {
-    return Arrays.asList(
-      new JavaBuilder(SharedThreadPool.getInstance()),
+  public @NotNull List<? extends ModuleLevelBuilder> createModuleLevelBuilders() {
+    return List.of(
+      new JavaBuilder(),
       new NotNullInstrumentingBuilder(),
       new RmiStubsGenerator(),
       new DependencyResolvingBuilder(),
@@ -41,9 +39,8 @@ public class JavaBuilderService extends BuilderService {
     );
   }
 
-  @NotNull
   @Override
-  public List<? extends TargetBuilder<?, ?>> createBuilders() {
-    return Arrays.asList(new ResourcesBuilder(), new ProjectDependenciesResolver());
+  public @NotNull List<? extends TargetBuilder<?, ?>> createBuilders() {
+    return List.of(new ResourcesBuilder(), new ProjectDependenciesResolver());
   }
 }

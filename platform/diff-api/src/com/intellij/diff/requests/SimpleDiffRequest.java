@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diff.requests;
 
 import com.intellij.diff.DiffContentFactory;
@@ -11,12 +11,17 @@ import java.util.Arrays;
 import java.util.List;
 
 /**
+ * Default {@link DiffRequest} implementation suitable for most purposes.
+ * <p>
+ * {@link com.intellij.diff.DiffTool} implementations are encouraged to cast to the {@link ContentDiffRequest} instead.
+ *
  * @see DiffContentFactory
+ * @see com.intellij.diff.DiffManager
  */
 public class SimpleDiffRequest extends ContentDiffRequest {
-  @Nullable private final @NlsContexts.DialogTitle String myTitle;
-  @NotNull private final List<DiffContent> myContents;
-  @NotNull private final List<String> myContentTitles;
+  private final @Nullable @NlsContexts.DialogTitle String myTitle;
+  private final @NotNull List<DiffContent> myContents;
+  private final @NotNull List<String> myContentTitles;
 
   /**
    * Pass {@link DiffContentFactory#createEmpty()} to create request for additions/deletions.
@@ -49,22 +54,18 @@ public class SimpleDiffRequest extends ContentDiffRequest {
     myContentTitles = titles;
   }
 
-  @NotNull
   @Override
-  public List<DiffContent> getContents() {
+  public @NotNull List<DiffContent> getContents() {
     return myContents;
   }
 
-  @NotNull
   @Override
-  public List<String> getContentTitles() {
+  public @NotNull List<String> getContentTitles() {
     return myContentTitles;
   }
 
-  @NlsContexts.DialogTitle
-  @Nullable
   @Override
-  public String getTitle() {
+  public @NlsContexts.DialogTitle @Nullable String getTitle() {
     return myTitle;
   }
 
@@ -73,5 +74,10 @@ public class SimpleDiffRequest extends ContentDiffRequest {
     for (DiffContent content : myContents) {
       content.onAssigned(isAssigned);
     }
+  }
+
+  @Override
+  public String toString() {
+    return super.toString() + ":" + getContents();
   }
 }

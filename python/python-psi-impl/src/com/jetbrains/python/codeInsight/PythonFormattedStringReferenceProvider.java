@@ -28,7 +28,7 @@ import java.util.List;
 
 public class PythonFormattedStringReferenceProvider extends PsiReferenceProvider {
   @Override
-  public PsiReference @NotNull [] getReferencesByElement(@NotNull final PsiElement element, @NotNull final ProcessingContext context) {
+  public PsiReference @NotNull [] getReferencesByElement(final @NotNull PsiElement element, final @NotNull ProcessingContext context) {
     if (PythonFormattedStringReferenceContributor.Holder.FORMAT_STRING_PATTERN.accepts(element)) {
       return getReferencesFromFormatString((PyStringLiteralExpression)element);
     }
@@ -37,20 +37,20 @@ public class PythonFormattedStringReferenceProvider extends PsiReferenceProvider
     }
   }
 
-  private static PySubstitutionChunkReference[] getReferencesFromFormatString(@NotNull final PyStringLiteralExpression element) {
+  private static PySubstitutionChunkReference[] getReferencesFromFormatString(final @NotNull PyStringLiteralExpression element) {
     final List<PyStringFormatParser.SubstitutionChunk> chunks = PyStringFormatParser.filterSubstitutions(
       PyStringFormatParser.parseNewStyleFormat(element.getText()));
     return getReferencesFromChunks(element, chunks);
   }
 
-  private static PySubstitutionChunkReference[] getReferencesFromPercentString(@NotNull final PyStringLiteralExpression element) {
+  private static PySubstitutionChunkReference[] getReferencesFromPercentString(final @NotNull PyStringLiteralExpression element) {
     final List<PyStringFormatParser.SubstitutionChunk>
       chunks = PyStringFormatParser.filterSubstitutions(PyStringFormatParser.parsePercentFormat(element.getText()));
     return getReferencesFromChunks(element, chunks);
   }
 
-  public static PySubstitutionChunkReference @NotNull [] getReferencesFromChunks(@NotNull final PyStringLiteralExpression element,
-                                                                                 @NotNull final List<? extends PyStringFormatParser.SubstitutionChunk> chunks) {
+  public static PySubstitutionChunkReference @NotNull [] getReferencesFromChunks(final @NotNull PyStringLiteralExpression element,
+                                                                                 final @NotNull List<? extends PyStringFormatParser.SubstitutionChunk> chunks) {
     return ContainerUtil.map2Array(chunks, PySubstitutionChunkReference.class, chunk -> new PySubstitutionChunkReference(element, chunk));
   }
 }

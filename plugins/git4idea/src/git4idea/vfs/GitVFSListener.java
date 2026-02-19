@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.vfs;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -7,14 +7,12 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vcs.VcsShowConfirmationOption.Value;
 import com.intellij.openapi.vcs.VcsVFSListener;
-import com.intellij.openapi.vcs.changes.ChangeListManagerImpl;
 import com.intellij.openapi.vcs.update.RefreshVFsSynchronously;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.ui.AppUIUtil;
 import com.intellij.vcsUtil.VcsFileUtil;
 import com.intellij.vcsUtil.VcsUtil;
 import git4idea.GitUtil;
@@ -22,62 +20,59 @@ import git4idea.GitVcs;
 import git4idea.commands.Git;
 import git4idea.commands.GitCommand;
 import git4idea.commands.GitLineHandler;
-import git4idea.i18n.GitBundle;
+import git4idea.index.GitStageManagerKt;
 import git4idea.util.GitFileUtils;
 import git4idea.util.GitVcsConsoleWriter;
+import kotlinx.coroutines.CoroutineScope;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.Unmodifiable;
 
-import java.io.File;
-import java.util.*;
+import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import static com.intellij.util.containers.ContainerUtil.map;
 import static com.intellij.util.containers.ContainerUtil.map2Map;
+import static git4idea.i18n.GitBundle.message;
 
 public final class GitVFSListener extends VcsVFSListener {
-
-  private GitVFSListener(@NotNull GitVcs vcs) {
-    super(vcs);
+  private GitVFSListener(@NotNull GitVcs vcs, @NotNull CoroutineScope coroutineScope) {
+    super(vcs, coroutineScope);
   }
 
-  @NotNull
-  public static GitVFSListener createInstance(@NotNull GitVcs vcs) {
-    GitVFSListener listener = new GitVFSListener(vcs);
+  public static @NotNull GitVFSListener createInstance(@NotNull GitVcs vcs, @NotNull CoroutineScope coroutineScope) {
+    GitVFSListener listener = new GitVFSListener(vcs, coroutineScope);
     listener.installListeners();
     return listener;
   }
 
-  @NotNull
   @Override
-  protected String getAddTitle() {
-    return GitBundle.getString("vfs.listener.add.title");
-  }
-
-  @NotNull
-  @Override
-  protected String getSingleFileAddTitle() {
-    return GitBundle.getString("vfs.listener.add.single.title");
-  }
-
-  @NotNull
-  @Override
-  protected String getSingleFileAddPromptTemplate() {
-    return GitBundle.getString("vfs.listener.add.single.prompt");
+  protected @NotNull String getAddTitle() {
+    return message("vfs.listener.add.title");
   }
 
   @Override
-  protected void executeAdd(@NotNull final List<VirtualFile> addedFiles, @NotNull final Map<VirtualFile, VirtualFile> copiedFiles) {
-    executeAddWithoutIgnores(addedFiles, copiedFiles,
-                             (notIgnoredAddedFiles, copiedFilesMap) -> originalExecuteAdd(notIgnoredAddedFiles, copiedFilesMap));
+  protected @NotNull String getSingleFileAddTitle() {
+    return message("vfs.listener.add.single.title");
   }
 
   @Override
-  protected void executeAddWithoutIgnores(@NotNull List<VirtualFile> addedFiles,
-                                          @NotNull Map<VirtualFile, VirtualFile> copyFromMap,
-                                          @NotNull ExecuteAddCallback executeAddCallback) {
+  @SuppressWarnings("UnresolvedPropertyKey")
+  protected @NotNull String getSingleFileAddPromptTemplate() {
+    return message("vfs.listener.add.single.prompt");
+  }
+
+  @Override
+  protected void executeAdd(final @NotNull List<VirtualFile> addedFiles, final @NotNull Map<VirtualFile, VirtualFile> copyFromMap) {
     saveUnsavedVcsIgnoreFiles();
-    final ProgressManager progressManager = ProgressManager.getInstance();
-    progressManager.run(new Task.Backgroundable(myProject, GitBundle.getString("vfs.listener.checking.ignored"), true) {
+
+    ProgressManager.getInstance().run(new Task.Backgroundable(myProject, message("vfs.listener.checking.ignored"), true) {
       @Override
       public void run(@NotNull ProgressIndicator pi) {
         // Filter added files before further processing
@@ -96,82 +91,66 @@ public final class GitVFSListener extends VcsVFSListener {
         }
         addedFiles.retainAll(retainedFiles);
 
-        AppUIUtil.invokeLaterIfProjectAlive(myProject, () -> executeAddCallback.executeAdd(addedFiles, copyFromMap));
+        performAddingWithConfirmation(addedFiles, copyFromMap);
       }
     });
   }
 
-  /**
-   * The version of execute add before overriding
-   *
-   * @param addedFiles  the added files
-   * @param copiedFiles the copied files
-   */
-  private void originalExecuteAdd(List<VirtualFile> addedFiles, final Map<VirtualFile, VirtualFile> copiedFiles) {
-    super.executeAdd(addedFiles, copiedFiles);
-  }
-
   @Override
-  protected void performAdding(@NotNull final Collection<VirtualFile> addedFiles, @NotNull final Map<VirtualFile, VirtualFile> copyFromMap) {
+  protected void performAdding(final @NotNull Collection<VirtualFile> addedFiles,
+                               final @NotNull Map<VirtualFile, VirtualFile> copyFromMap) {
     // copied files (copyFromMap) are ignored, because they are included into added files.
     performAdding(map(addedFiles, VcsUtil::getFilePath));
   }
 
   private void performAdding(Collection<? extends FilePath> filesToAdd) {
-    performBackgroundOperation(filesToAdd, GitBundle.getString("add.adding"), new LongOperationPerRootExecutor() {
+    performBackgroundOperation(filesToAdd, message("add.adding"), new LongOperationPerRootExecutor() {
       @Override
       public void execute(@NotNull VirtualFile root, @NotNull List<? extends FilePath> files) throws VcsException {
-        executeAdding(root, files);
+        if (isStageEnabled()) {
+          executeAddingToIndex(root, files);
+        }
+        else {
+          executeAdding(root, files);
+        }
         if (!myProject.isDisposed()) {
           VcsFileUtil.markFilesDirty(myProject, files);
         }
       }
-
-      @Override
-      public Collection<File> getFilesToRefresh() {
-        return Collections.emptyList();
-      }
     });
   }
 
-  @NotNull
   @Override
-  protected String getDeleteTitle() {
-    return GitBundle.getString("vfs.listener.delete.title");
+  protected @NotNull String getDeleteTitle() {
+    return message("vfs.listener.delete.title");
   }
 
   @Override
   protected String getSingleFileDeleteTitle() {
-    return GitBundle.getString("vfs.listener.delete.single.title");
+    return message("vfs.listener.delete.single.title");
   }
 
   @Override
+  @SuppressWarnings("UnresolvedPropertyKey")
   protected String getSingleFileDeletePromptTemplate() {
-    return GitBundle.getString("vfs.listener.delete.single.prompt");
+    return message("vfs.listener.delete.single.prompt");
   }
 
   @Override
-  protected void performDeletion(@NotNull final List<FilePath> filesToDelete) {
-    performBackgroundOperation(filesToDelete, GitBundle.getString("remove.removing"), new LongOperationPerRootExecutor() {
-      final Set<File> filesToRefresh = new HashSet<>();
-
+  protected void performDeletion(final @NotNull List<FilePath> filesToDelete) {
+    performBackgroundOperation(filesToDelete, message("remove.removing"), new LongOperationPerRootExecutor() {
       @Override
       public void execute(@NotNull VirtualFile root, @NotNull List<? extends FilePath> files) throws VcsException {
-        filesToRefresh.addAll(executeDeletion(root, files));
+        executeDeletion(root, files);
         if (!myProject.isDisposed()) {
           VcsFileUtil.markFilesDirty(myProject, files);
         }
-      }
-
-      @Override
-      public Collection<File> getFilesToRefresh() {
-        return filesToRefresh;
       }
     });
   }
 
   @Override
-  protected void performMoveRename(@NotNull final List<MovedFileInfo> movedFiles) {
+  protected void performMoveRename(final @NotNull List<MovedFileInfo> movedFiles) {
     List<FilePath> toAdd = new ArrayList<>();
     List<FilePath> toRemove = new ArrayList<>();
     List<MovedFileInfo> toForceMove = new ArrayList<>();
@@ -182,40 +161,61 @@ public final class GitVFSListener extends VcsVFSListener {
         toForceMove.add(movedInfo);
       }
       else {
-        toRemove.add(VcsUtil.getFilePath(oldPath));
-        toAdd.add(VcsUtil.getFilePath(newPath));
+        toRemove.add(movedInfo.getOldPath());
+        toAdd.add(movedInfo.getNewPath());
       }
     }
+
+    Collection<FilePath> selectedToAdd;
+    Collection<FilePath> selectedToRemove;
+    if (isStageEnabled()) {
+      selectedToAdd = selectFilePathsToAdd(toAdd);
+      selectedToRemove = selectFilePathsToDelete(toRemove);
+    }
+    else if (Value.DO_NOTHING_SILENTLY.equals(myRemoveOption.getValue()) &&
+             Value.DO_NOTHING_SILENTLY.equals(myAddOption.getValue())) {
+      selectedToAdd = Collections.emptyList();
+      selectedToRemove = Collections.emptyList();
+    }
+    else {
+      selectedToAdd = toAdd;
+      selectedToRemove = toRemove;
+    }
+    if (toAdd.isEmpty() && toRemove.isEmpty() && toForceMove.isEmpty()) return;
+
     LOG.debug("performMoveRename. \ntoAdd: " + toAdd + "\ntoRemove: " + toRemove + "\ntoForceMove: " + toForceMove);
-    GitVcs.runInBackground(new Task.Backgroundable(myProject, GitBundle.getString("progress.title.moving.files")) {
+    GitVcs.runInBackground(new Task.Backgroundable(myProject, message("progress.title.moving.files")) {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
         try {
           List<FilePath> dirtyPaths = new ArrayList<>();
-          List<File> toRefresh = new ArrayList<>();
+          List<Path> toRefresh = new ArrayList<>();
           //perform adding
-          for (Map.Entry<VirtualFile, List<FilePath>> toAddEntry : GitUtil.sortFilePathsByGitRootIgnoringMissing(myProject, toAdd).entrySet()) {
+          for (Map.Entry<VirtualFile, List<FilePath>> toAddEntry :
+            GitUtil.sortFilePathsByGitRootIgnoringMissing(myProject, selectedToAdd).entrySet()) {
             List<FilePath> files = toAddEntry.getValue();
             executeAdding(toAddEntry.getKey(), files);
             dirtyPaths.addAll(files);
           }
           //perform deletion
-          for (Map.Entry<VirtualFile, List<FilePath>> toRemoveEntry : GitUtil.sortFilePathsByGitRootIgnoringMissing(myProject, toRemove).entrySet()) {
+          for (Map.Entry<VirtualFile, List<FilePath>> toRemoveEntry :
+            GitUtil.sortFilePathsByGitRootIgnoringMissing(myProject, selectedToRemove).entrySet()) {
             List<FilePath> paths = toRemoveEntry.getValue();
-            toRefresh.addAll(executeDeletion(toRemoveEntry.getKey(), paths));
+            executeDeletion(toRemoveEntry.getKey(), paths);
             dirtyPaths.addAll(paths);
           }
           //perform force move if needed
-          Map<FilePath, MovedFileInfo> filesToForceMove = map2Map(toForceMove, info -> Pair.create(VcsUtil.getFilePath(info.myNewPath), info));
-          dirtyPaths.addAll(map(toForceMove, fileInfo -> VcsUtil.getFilePath(fileInfo.myOldPath)));
-          for (Map.Entry<VirtualFile, List<FilePath>> toForceMoveEntry : GitUtil.sortFilePathsByGitRootIgnoringMissing(myProject, filesToForceMove.keySet()).entrySet()) {
+          Map<FilePath, MovedFileInfo> filesToForceMove = map2Map(toForceMove, info -> Pair.create(info.getNewPath(), info));
+          dirtyPaths.addAll(map(toForceMove, fileInfo -> fileInfo.getOldPath()));
+          for (Map.Entry<VirtualFile, List<FilePath>> toForceMoveEntry :
+            GitUtil.sortFilePathsByGitRootIgnoringMissing(myProject, filesToForceMove.keySet()).entrySet()) {
             List<FilePath> paths = toForceMoveEntry.getValue();
             toRefresh.addAll(executeForceMove(toForceMoveEntry.getKey(), paths, filesToForceMove));
             dirtyPaths.addAll(paths);
           }
 
           VcsFileUtil.markFilesDirty(myProject, dirtyPaths);
-          RefreshVFsSynchronously.refreshFiles(toRefresh);
+          RefreshVFsSynchronously.INSTANCE.refreshFiles(toRefresh);
         }
         catch (VcsException ex) {
           GitVcsConsoleWriter.getInstance(myProject).showMessage(ex.getMessage());
@@ -230,40 +230,36 @@ public final class GitVFSListener extends VcsVFSListener {
     GitFileUtils.addPaths(myProject, root, files, false, false);
   }
 
-  private Set<File> executeDeletion(@NotNull VirtualFile root, @NotNull List<? extends FilePath> files)
+  private void executeAddingToIndex(@NotNull VirtualFile root, @NotNull List<? extends FilePath> files)
     throws VcsException {
-    GitFileUtils.deletePaths(myProject, root, files, "--ignore-unmatch", "--cached", "-r");
-    Set<File> filesToRefresh = new HashSet<>();
-    File rootFile = new File(root.getPath());
-    for (FilePath p : files) {
-      for (File f = p.getIOFile(); f != null && !FileUtil.filesEqual(f, rootFile); f = f.getParentFile()) {
-        filesToRefresh.add(f);
-      }
-    }
-
-    return filesToRefresh;
+    LOG.debug("Git: adding files to index: " + files);
+    GitFileUtils.addPathsToIndex(myProject, root, files);
   }
 
-  private Set<File> executeForceMove(@NotNull VirtualFile root,
+  private void executeDeletion(@NotNull VirtualFile root, @NotNull List<? extends FilePath> files)
+    throws VcsException {
+    GitFileUtils.deletePaths(myProject, root, files, "--ignore-unmatch", "--cached", "-r");
+  }
+
+  private Set<Path> executeForceMove(@NotNull VirtualFile root,
                                      @NotNull List<? extends FilePath> files,
-                                     @NotNull Map<FilePath, MovedFileInfo> filesToMove) {
-    Set<File> toRefresh = new HashSet<>();
+                                     @Unmodifiable @NotNull Map<FilePath, MovedFileInfo> filesToMove) {
+    Set<Path> toRefresh = new HashSet<>();
     for (FilePath file : files) {
       MovedFileInfo info = filesToMove.get(file);
       GitLineHandler h = new GitLineHandler(myProject, root, GitCommand.MV);
       h.addParameters("-f");
-      h.addRelativePaths(VcsUtil.getFilePath(info.myOldPath), VcsUtil.getFilePath(info.myNewPath));
+      h.addRelativePaths(info.getOldPath(), info.getNewPath());
       Git.getInstance().runCommand(h);
-      toRefresh.add(new File(info.myOldPath));
-      toRefresh.add(new File(info.myNewPath));
+      toRefresh.add(Path.of(info.myOldPath));
+      toRefresh.add(Path.of(info.myNewPath));
     }
 
     return toRefresh;
   }
 
-  @Override
-  protected boolean isDirectoryVersioningSupported() {
-    return false;
+  private boolean isStageEnabled() {
+    return GitStageManagerKt.isStagingAreaAvailable(myProject);
   }
 
   @Override
@@ -277,42 +273,44 @@ public final class GitVFSListener extends VcsVFSListener {
   }
 
   @Override
-  protected Collection<FilePath> selectFilePathsToDelete(@NotNull final List<FilePath> deletedFiles) {
-    // For git asking about vcs delete does not make much sense. The result is practically identical.
-    return deletedFiles;
+  protected @NotNull List<FilePath> selectFilePathsToDelete(final @NotNull List<FilePath> deletedFiles) {
+    if (isStageEnabled()) {
+      return super.selectFilePathsToDelete(deletedFiles);
+    }
+    if (Value.DO_NOTHING_SILENTLY.equals(myRemoveOption.getValue())) {
+      return Collections.emptyList();
+    }
+    else {
+      // For git asking about vcs delete does not make much sense. The result is practically identical. Remove silently.
+      return deletedFiles;
+    }
   }
 
   private void performBackgroundOperation(@NotNull Collection<? extends FilePath> files,
                                           @NotNull @NlsContexts.ProgressTitle String operationTitle,
                                           @NotNull LongOperationPerRootExecutor executor) {
-    Map<VirtualFile, List<FilePath>> sortedFiles = GitUtil.sortFilePathsByGitRootIgnoringMissing(myProject, files);
-
     GitVcs.runInBackground(new Task.Backgroundable(myProject, operationTitle) {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
-        for (Map.Entry<VirtualFile, List<FilePath>> e : sortedFiles.entrySet()) {
+        GitUtil.sortFilePathsByGitRootIgnoringMissing(myProject, files).forEach((root, filePaths) -> {
           try {
-            executor.execute(e.getKey(), e.getValue());
+            executor.execute(root, filePaths);
           }
           catch (final VcsException ex) {
             GitVcsConsoleWriter.getInstance(myProject).showMessage(ex.getMessage());
           }
-        }
-        RefreshVFsSynchronously.refreshFiles(executor.getFilesToRefresh());
+        });
       }
     });
   }
 
   private interface LongOperationPerRootExecutor {
     void execute(@NotNull VirtualFile root, @NotNull List<? extends FilePath> files) throws VcsException;
-    Collection<File> getFilesToRefresh();
   }
 
   @TestOnly
-  public void waitForAllEventsProcessedInTestMode() {
+  public void waitForExternalFilesEventsProcessedInTestMode() {
     assert ApplicationManager.getApplication().isUnitTestMode();
-    ((ChangeListManagerImpl)myChangeListManager).waitEverythingDoneInTestMode();
-    myExternalFilesProcessor.waitForEventsProcessedInTestMode();
+    waitForEventsProcessedInTestMode();
   }
-
 }

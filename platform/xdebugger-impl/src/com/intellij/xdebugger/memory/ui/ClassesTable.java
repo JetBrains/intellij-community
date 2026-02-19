@@ -1,9 +1,15 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.memory.ui;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CustomShortcutSet;
+import com.intellij.openapi.actionSystem.DataKey;
+import com.intellij.openapi.actionSystem.DataSink;
+import com.intellij.openapi.actionSystem.KeyboardShortcut;
+import com.intellij.openapi.actionSystem.UiDataProvider;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts;
@@ -16,7 +22,9 @@ import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.speedSearch.SpeedSearchUtil;
 import com.intellij.ui.table.JBTable;
-import com.intellij.util.containers.FList;
+import com.intellij.util.concurrency.ThreadingAssertions;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.text.matching.MatchedFragment;
 import com.intellij.util.ui.JBDimension;
 import com.intellij.util.ui.StatusText;
 import com.intellij.util.ui.update.MergingUpdateQueue;
@@ -27,31 +35,37 @@ import com.intellij.xdebugger.memory.tracking.TrackerForNewInstancesBase;
 import com.intellij.xdebugger.memory.tracking.TrackingType;
 import com.intellij.xdebugger.memory.utils.AbstractTableColumnDescriptor;
 import com.intellij.xdebugger.memory.utils.AbstractTableModelWithColumns;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import javax.swing.border.Border;
+import javax.swing.JTable;
+import javax.swing.KeyStroke;
+import javax.swing.ListSelectionModel;
+import javax.swing.RowFilter;
+import javax.swing.RowSorter;
+import javax.swing.SortOrder;
+import javax.swing.SwingConstants;
 import javax.swing.border.EmptyBorder;
 import javax.swing.table.TableColumn;
 import javax.swing.table.TableColumnModel;
 import javax.swing.table.TableRowSorter;
-import java.awt.*;
+import java.awt.Cursor;
 import java.awt.event.InputEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.*;
+import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-public class ClassesTable extends JBTable implements DataProvider, Disposable {
+public class ClassesTable extends JBTable implements UiDataProvider, Disposable {
   public static final DataKey<TypeInfo> SELECTED_CLASS_KEY = DataKey.create("ClassesTable.SelectedClass");
   public static final DataKey<ReferenceCountProvider> REF_COUNT_PROVIDER_KEY =
     DataKey.create("ClassesTable.ReferenceCountProvider");
-
-  private static final JBColor CLICKABLE_COLOR = new JBColor(new Color(250, 251, 252), new Color(62, 66, 69));
 
   private static final SimpleTextAttributes LINK_ATTRIBUTES =
     new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, SimpleTextAttributes.LINK_ATTRIBUTES.getFgColor());
@@ -124,8 +138,7 @@ public class ClassesTable extends JBTable implements DataProvider, Disposable {
     };
   }
 
-  @NotNull
-  protected DiffViewTableModel getTableModel() {
+  protected @NotNull DiffViewTableModel getTableModel() {
     return new DiffViewTableModel();
   }
 
@@ -143,7 +156,7 @@ public class ClassesTable extends JBTable implements DataProvider, Disposable {
     diffColumn.setMinWidth(JBUIScale.scale(DIFF_COLUMN_MIN_WIDTH));
 
     TableRowSorter<DiffViewTableModel> sorter = new TableRowSorter<>(myModel);
-    sorter.setRowFilter(new RowFilter<DiffViewTableModel, Integer>() {
+    sorter.setRowFilter(new RowFilter<>() {
       @Override
       public boolean include(Entry<? extends DiffViewTableModel, ? extends Integer> entry) {
         int ix = entry.getIdentifier();
@@ -151,8 +164,8 @@ public class ClassesTable extends JBTable implements DataProvider, Disposable {
         DiffValue diff = myCounts.getOrDefault(ref, UNKNOWN_VALUE);
 
         boolean isFilteringOptionsRefused = myOnlyWithDiff && diff.diff() == 0
-          || myOnlyWithInstances && !diff.hasInstance()
-          || myOnlyTracked && myParent.getStrategy(ref) == null;
+                                            || myOnlyWithInstances && !diff.hasInstance()
+                                            || myOnlyTracked && myParent.getStrategy(ref) == null;
         return !(isFilteringOptionsRefused) && myMatcher.matches(ref.name());
       }
     });
@@ -162,8 +175,7 @@ public class ClassesTable extends JBTable implements DataProvider, Disposable {
     setRowSorter(sorter);
   }
 
-  @NotNull
-  protected List<RowSorter.SortKey> getTableSortingKeys() {
+  protected @NotNull List<RowSorter.SortKey> getTableSortingKeys() {
     return Arrays.asList(
       new RowSorter.SortKey(DiffViewTableModel.DIFF_COLUMN_INDEX, SortOrder.DESCENDING),
       new RowSorter.SortKey(DiffViewTableModel.COUNT_COLUMN_INDEX, SortOrder.DESCENDING),
@@ -180,8 +192,7 @@ public class ClassesTable extends JBTable implements DataProvider, Disposable {
     int getNewInstancesCount(@NotNull TypeInfo ref);
   }
 
-  @Nullable
-  public TypeInfo getSelectedClass() {
+  public @Nullable TypeInfo getSelectedClass() {
     int selectedRow = getSelectedRow();
     if (selectedRow != -1) {
       int ix = convertRowIndexToModel(selectedRow);
@@ -191,8 +202,7 @@ public class ClassesTable extends JBTable implements DataProvider, Disposable {
     return null;
   }
 
-  @Nullable
-  public TypeInfo getClassByName(@NotNull String name) {
+  public @Nullable TypeInfo getClassByName(@NotNull String name) {
     for (TypeInfo ref : myItems) {
       if (name.equals(ref.name())) {
         return ref;
@@ -239,7 +249,6 @@ public class ClassesTable extends JBTable implements DataProvider, Disposable {
 
       @Override
       void updateTable(boolean mouseOnTable) {
-        setBackground(mouseOnTable ? CLICKABLE_COLOR : JBColor.background());
         SimpleTextAttributes linkAttributes = mouseOnTable ? UNDERLINE_LINK_ATTRIBUTES : LINK_ATTRIBUTES;
         getEmptyText().clear()
                       .appendText(XDebuggerBundle.message("memory.view.no.classes.loaded")).appendText(" ")
@@ -264,12 +273,11 @@ public class ClassesTable extends JBTable implements DataProvider, Disposable {
   }
 
   private void releaseMouseListener() {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     if (isInClickableMode()) {
       removeMouseListener(myMouseListener);
       myMouseListener = null;
       setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
-      setBackground(JBColor.background());
     }
   }
 
@@ -350,7 +358,7 @@ public class ClassesTable extends JBTable implements DataProvider, Disposable {
     final TypeInfo selectedClass = myModel.getSelectedClassBeforeHide();
     int newSelectedIndex = -1;
     final boolean isInitialized = !myItems.isEmpty();
-    myItems = Collections.unmodifiableList(new ArrayList<>(class2Count.keySet()));
+    myItems = List.copyOf(class2Count.keySet());
 
     int i = 0;
     for (final TypeInfo ref : class2Count.keySet()) {
@@ -377,18 +385,11 @@ public class ClassesTable extends JBTable implements DataProvider, Disposable {
     fireTableDataChanged();
   }
 
-  @Nullable
   @Override
-  public Object getData(@NotNull @NonNls String dataId) {
-    if (SELECTED_CLASS_KEY.is(dataId)) {
-      return getSelectedClass();
-    }
-
-    if (REF_COUNT_PROVIDER_KEY.is(dataId)) {
-      return myCountProvider;
-    }
-
-    return myParent.getData(dataId);
+  public void uiDataSnapshot(@NotNull DataSink sink) {
+    sink.set(SELECTED_CLASS_KEY, getSelectedClass());
+    sink.set(REF_COUNT_PROVIDER_KEY, myCountProvider);
+    DataSink.uiDataSnapshot(sink, myParent);
   }
 
   public void clean(@NotNull @NlsContexts.StatusText String emptyText) {
@@ -412,13 +413,12 @@ public class ClassesTable extends JBTable implements DataProvider, Disposable {
     try {
       return getMousePosition() != null;
     }
-    catch (NullPointerException e) { // A workaround for https://bugs.openjdk.java.net/browse/JDK-6840067
+    catch (NullPointerException e) { // A workaround for https://bugs.openjdk.org/browse/JDK-6840067
       return false;
     }
   }
 
-  @Nullable
-  private TrackingType getTrackingType(int row) {
+  private @Nullable TrackingType getTrackingType(int row) {
     TypeInfo ref = (TypeInfo)getValueAt(row, convertColumnIndexToView(DiffViewTableModel.CLASSNAME_COLUMN_INDEX));
     return myInstancesTracker.getTrackingType(ref.name());
   }
@@ -428,9 +428,9 @@ public class ClassesTable extends JBTable implements DataProvider, Disposable {
   }
 
   public class DiffViewTableModel extends AbstractTableModelWithColumns {
-    public final static int CLASSNAME_COLUMN_INDEX = 0;
-    final static int COUNT_COLUMN_INDEX = 1;
-    public final static int DIFF_COLUMN_INDEX = 2;
+    public static final int CLASSNAME_COLUMN_INDEX = 0;
+    static final int COUNT_COLUMN_INDEX = 1;
+    public static final int DIFF_COLUMN_INDEX = 2;
 
     // Workaround: save selection after content of classes table has been hided
     private TypeInfo mySelectedClassWhenHidden = null;
@@ -580,10 +580,12 @@ public class ClassesTable extends JBTable implements DataProvider, Disposable {
       String presentation = ((TypeInfo)value).name();
       append(" ");
       if (isSelected) {
-        FList<TextRange> textRanges = myMatcher.matchingFragments(presentation);
-        if (textRanges != null) {
+        @Nullable List<@NotNull MatchedFragment> fragments = myMatcher.match(presentation);
+        if (fragments != null) {
           SimpleTextAttributes attributes = new SimpleTextAttributes(getBackground(), getForeground(), null,
                                                                      SimpleTextAttributes.STYLE_SEARCH_MATCH);
+
+          Iterable<TextRange> textRanges = ContainerUtil.map(fragments, f -> TextRange.create(f.getStartOffset(), f.getEndOffset()));
           SpeedSearchUtil.appendColoredFragments(this, presentation, textRanges,
                                                  SimpleTextAttributes.REGULAR_ATTRIBUTES, attributes);
         }

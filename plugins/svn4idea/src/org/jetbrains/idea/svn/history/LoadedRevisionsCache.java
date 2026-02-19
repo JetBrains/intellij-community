@@ -1,9 +1,8 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.svn.history;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.RepositoryLocation;
@@ -11,12 +10,18 @@ import com.intellij.openapi.vcs.changes.committed.ChangesBunch;
 import com.intellij.openapi.vcs.changes.committed.CommittedChangesCache;
 import com.intellij.openapi.vcs.changes.committed.CommittedChangesListener;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
-import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.concurrency.ThreadingAssertions;
+import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
 
 public final class LoadedRevisionsCache implements Disposable {
   private static final Logger LOG = Logger.getInstance(LoadedRevisionsCache.class);
@@ -28,12 +33,12 @@ public final class LoadedRevisionsCache implements Disposable {
   private final MessageBusConnection myConnection;
 
   public static LoadedRevisionsCache getInstance(final Project project) {
-    return ServiceManager.getService(project, LoadedRevisionsCache.class);
+    return project.getService(LoadedRevisionsCache.class);
   }
 
   private LoadedRevisionsCache(final Project project) {
     myProject = project;
-    myMap = (ApplicationManager.getApplication().isUnitTestMode()) ? new HashMap<>() : ContainerUtil.createSoftMap();
+    myMap = ApplicationManager.getApplication().isUnitTestMode() ? new HashMap<String, Bunch>() : CollectionFactory.createSoftMap();
 
     myConnection = project.getMessageBus().connect();
     myConnection.subscribe(CommittedChangesCache.COMMITTED_TOPIC, new CommittedChangesListener() {
@@ -72,8 +77,7 @@ public final class LoadedRevisionsCache implements Disposable {
     myMap.clear();
   }
 
-  @NotNull
-  private static List<List<CommittedChangeList>> split(final List<CommittedChangeList> list, final int size) {
+  private static @NotNull List<List<CommittedChangeList>> split(final List<CommittedChangeList> list, final int size) {
     final int listSize = list.size();
     if (listSize < size) {
       return Collections.singletonList(list);
@@ -91,8 +95,7 @@ public final class LoadedRevisionsCache implements Disposable {
     return result;
   }
 
-  @Nullable
-  public Bunch put(final List<CommittedChangeList> data, final boolean consistentWithPrevious, final Bunch bindTo) {
+  public @Nullable Bunch put(final List<CommittedChangeList> data, final boolean consistentWithPrevious, final Bunch bindTo) {
     if (data.isEmpty()) {
       return null;
     }
@@ -121,12 +124,13 @@ public final class LoadedRevisionsCache implements Disposable {
       consistent = true;
     }
 
-    myMap.put(location, bindToBunch);
+    if (bindToBunch != null) {
+      myMap.put(location, bindToBunch);
+    }
     return bindToBunch;
   }
 
-  @Nullable
-  public Iterator<ChangesBunch> iterator(final String location) {
+  public @Nullable Iterator<ChangesBunch> iterator(final String location) {
     final Bunch bunch = myMap.get(location);
     if (bunch == null) {
       return null;
@@ -144,7 +148,7 @@ public final class LoadedRevisionsCache implements Disposable {
     }
 
     private void checkValidity() {
-      ApplicationManager.getApplication().assertIsDispatchThread();
+      ThreadingAssertions.assertEventDispatchThread();
 
       if (myCreationTime <= getRefreshTime()) {
         throw new SwitchRevisionsProviderException();

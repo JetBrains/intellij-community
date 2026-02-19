@@ -1,16 +1,15 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.projectImport
 
 import com.intellij.CommonBundle
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.JavaUiBundle
 import com.intellij.ide.highlighter.ProjectFileType
-import com.intellij.ide.impl.NewProjectUtil
 import com.intellij.ide.impl.OpenProjectTask
 import com.intellij.ide.impl.ProjectUtil
 import com.intellij.ide.util.projectWizard.WizardContext
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.invokeAndWaitIfNeeded
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.StorageScheme
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
@@ -18,6 +17,7 @@ import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.openapi.projectRoots.JavaSdk
 import com.intellij.openapi.projectRoots.ProjectJdkTable
+import com.intellij.openapi.projectRoots.ex.JavaSdkUtil
 import com.intellij.openapi.roots.CompilerProjectExtension
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider
@@ -25,49 +25,45 @@ import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.platform.ide.progress.ModalTaskOwner
+import com.intellij.platform.ide.progress.TaskCancellation
+import com.intellij.platform.ide.progress.withModalProgress
+import com.intellij.platform.util.progress.withRawProgressReporter
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import java.io.IOException
 import java.nio.file.Files
 import javax.swing.Icon
 
-abstract class ProjectOpenProcessorBase<T : ProjectImportBuilder<*>> : ProjectOpenProcessor {
+abstract class ProjectOpenProcessorBase<T : ProjectImportBuilder<*>> protected constructor() : ProjectOpenProcessor() {
   companion object {
     @JvmStatic
-    protected fun canOpenFile(file: VirtualFile, supported: Array<String>): Boolean {
-      return supported.contains(file.name)
-    }
+    protected fun canOpenFile(file: VirtualFile, supported: Array<String>): Boolean = supported.contains(file.name)
 
     @JvmStatic
     fun getUrl(path: String): String {
-      var resolvedPath: String
-      try {
-        resolvedPath = FileUtil.resolveShortWindowsName(path)
+      val resolvedPath = try {
+        FileUtil.resolveShortWindowsName(path)
       }
-      catch (ignored: IOException) {
-        resolvedPath = path
+      catch (_: IOException) {
+        path
       }
       return VfsUtilCore.pathToUrl(resolvedPath)
     }
   }
 
-  private val myBuilder: T?
-
-  @Deprecated("Override {@link #doGetBuilder()} and use {@code ProjectImportBuilder.EXTENSIONS_POINT_NAME.findExtensionOrFail(yourClass.class)}.")
-  protected constructor(builder: T) {
-    myBuilder = builder
-  }
-
-  protected constructor() {
-    myBuilder = null
-  }
+  private val myBuilder: T? = null
 
   open val builder: T
     get() = doGetBuilder()
 
   protected open fun doGetBuilder(): T = myBuilder!!
 
-  override fun getName(): String = builder.name
+  override val name: String
+    get() = builder.name
 
-  override fun getIcon(): Icon? = builder.icon
+  override val icon: Icon?
+    get() = builder.icon
 
   override fun canOpenProject(file: VirtualFile): Boolean {
     val supported = supportedExtensions
@@ -83,10 +79,10 @@ abstract class ProjectOpenProcessorBase<T : ProjectImportBuilder<*>> : ProjectOp
 
   abstract val supportedExtensions: Array<String>
 
-  override fun doOpenProject(virtualFile: VirtualFile, projectToClose: Project?, forceOpenInNewFrame: Boolean): Project? {
+  override suspend fun openProjectAsync(virtualFile: VirtualFile, projectToClose: Project?, forceOpenInNewFrame: Boolean): Project? {
     try {
       val wizardContext = WizardContext(null, null)
-      builder.isUpdate = false
+      builder.setUpdate(false)
 
       var resolvedVirtualFile = virtualFile
       if (virtualFile.isDirectory) {
@@ -100,7 +96,7 @@ abstract class ProjectOpenProcessorBase<T : ProjectImportBuilder<*>> : ProjectOp
       }
       wizardContext.setProjectFileDirectory(resolvedVirtualFile.parent.toNioPath(), false)
 
-      if (!doQuickImport(resolvedVirtualFile, wizardContext)) {
+      if (!withContext(Dispatchers.EDT) { doQuickImport(resolvedVirtualFile, wizardContext) }) {
         return null
       }
 
@@ -121,14 +117,14 @@ abstract class ProjectOpenProcessorBase<T : ProjectImportBuilder<*>> : ProjectOp
       var pathToOpen = if (wizardContext.projectStorageFormat == StorageScheme.DEFAULT) projectFile.toAbsolutePath() else dotIdeaFile.parent
       var shouldOpenExisting = false
       var importToProject = true
-      if (Files.exists(projectFile) || Files.exists(dotIdeaFile)) {
+      if (withContext(Dispatchers.IO) { Files.exists(projectFile) || Files.exists(dotIdeaFile) }) {
         if (ApplicationManager.getApplication().isHeadlessEnvironment) {
           shouldOpenExisting = true
           importToProject = true
         }
         else {
           val existingName: String
-          if (Files.exists(dotIdeaFile)) {
+          if (withContext(Dispatchers.IO) { Files.exists(dotIdeaFile) }) {
             existingName = "an existing project"
             pathToOpen = dotIdeaFile.parent
           }
@@ -154,17 +150,24 @@ abstract class ProjectOpenProcessorBase<T : ProjectImportBuilder<*>> : ProjectOp
         }
       }
 
-      var options = OpenProjectTask(projectToClose = projectToClose, forceOpenInNewFrame = forceOpenInNewFrame, projectName = wizardContext.projectName)
+      var options = OpenProjectTask {
+        this.projectToClose = projectToClose
+        this.forceOpenInNewFrame = forceOpenInNewFrame
+        this.projectName = wizardContext.projectName
+      }
       if (!shouldOpenExisting) {
         options = options.copy(isNewProject = true)
       }
 
-      if (importToProject) {
-        options = options.copy(beforeOpen = { project -> importToProject(project, projectToClose, wizardContext) })
-      }
-
       try {
-        val project = ProjectManagerEx.getInstanceEx().openProject(pathToOpen, options)
+        val project = withModalProgress(ModalTaskOwner.guess(), IdeBundle.message("title.open.project"), TaskCancellation.cancellable()) {
+          withRawProgressReporter {
+            if (importToProject) {
+              options = options.copy(beforeOpen = { project -> importToProject(project, projectToClose, wizardContext) })
+            }
+            ProjectManagerEx.getInstanceEx().openProjectAsync(pathToOpen, options)
+          }
+        }
         ProjectUtil.updateLastProjectLocation(pathToOpen)
         return project
       }
@@ -179,15 +182,15 @@ abstract class ProjectOpenProcessorBase<T : ProjectImportBuilder<*>> : ProjectOp
     return null
   }
 
-  private fun importToProject(projectToOpen: Project, projectToClose: Project?, wizardContext: WizardContext): Boolean {
-    return invokeAndWaitIfNeeded {
+  private suspend fun importToProject(projectToOpen: Project, projectToClose: Project?, wizardContext: WizardContext): Boolean {
+    return withContext(Dispatchers.EDT) {
       if (!builder.validate(projectToClose, projectToOpen)) {
-        return@invokeAndWaitIfNeeded false
+        return@withContext false
       }
 
       ApplicationManager.getApplication().runWriteAction {
         wizardContext.projectJdk?.let {
-          NewProjectUtil.applyJdkToProject(projectToOpen, it)
+          JavaSdkUtil.applyJdkToProject(projectToOpen, it)
         }
 
         val projectDirPath = wizardContext.projectFileDirectory

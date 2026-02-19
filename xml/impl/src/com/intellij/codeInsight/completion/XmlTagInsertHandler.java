@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion;
 
 import com.intellij.application.options.CodeStyle;
@@ -10,6 +10,8 @@ import com.intellij.codeInsight.editorActions.XmlTagNameSynchronizer;
 import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupItem;
+import com.intellij.codeInsight.template.Expression;
+import com.intellij.codeInsight.template.Macro;
 import com.intellij.codeInsight.template.Template;
 import com.intellij.codeInsight.template.TemplateEditingAdapter;
 import com.intellij.codeInsight.template.TemplateManager;
@@ -19,13 +21,17 @@ import com.intellij.codeInsight.template.macro.CompleteSmartMacro;
 import com.intellij.codeInspection.InspectionProfile;
 import com.intellij.codeInspection.htmlInspections.XmlEntitiesInspection;
 import com.intellij.lang.ASTNode;
+import com.intellij.lang.xml.XMLLanguage;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.ScrollType;
+import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
@@ -55,7 +61,11 @@ import kotlin.collections.ArraysKt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+import java.util.StringTokenizer;
 
 public class XmlTagInsertHandler implements InsertHandler<LookupElement> {
   public static final XmlTagInsertHandler INSTANCE = new XmlTagInsertHandler();
@@ -140,7 +150,10 @@ public class XmlTagInsertHandler implements InsertHandler<LookupElement> {
 
     // temp code
     PsiFile containingFile = tag.getContainingFile();
-    boolean htmlCode = HtmlUtil.hasHtml(containingFile) || HtmlUtil.supportsXmlTypedHandlers(containingFile);
+    boolean fileHasHtml = HtmlUtil.hasHtml(containingFile);
+    // Non-html code like Pug embedded in HTML template
+    if (fileHasHtml && !tag.getLanguage().isKindOf(XMLLanguage.INSTANCE)) return;
+    boolean htmlCode = fileHasHtml || HtmlUtil.supportsXmlTypedHandlers(containingFile);
     template.setToReformat(!htmlCode);
 
     StringBuilder indirectRequiredAttrs = addRequiredAttributes(descriptor, tag, template, containingFile);
@@ -156,7 +169,7 @@ public class XmlTagInsertHandler implements InsertHandler<LookupElement> {
       }
 
       @Override
-      public void templateFinished(@NotNull final Template template, boolean brokenOff) {
+      public void templateFinished(final @NotNull Template template, boolean brokenOff) {
         final int offset = editor.getCaretModel().getOffset();
 
         if (chooseAttributeName && offset > 0) {
@@ -186,11 +199,10 @@ public class XmlTagInsertHandler implements InsertHandler<LookupElement> {
     });
   }
 
-  @Nullable
-  private static StringBuilder addRequiredAttributes(XmlElementDescriptor descriptor,
-                                                     @Nullable XmlTag tag,
-                                                     Template template,
-                                                     PsiFile containingFile) {
+  private static @Nullable StringBuilder addRequiredAttributes(XmlElementDescriptor descriptor,
+                                                               @Nullable XmlTag tag,
+                                                               Template template,
+                                                               PsiFile containingFile) {
 
     Set<String> notRequiredAttributes = Collections.emptySet();
 
@@ -207,7 +219,12 @@ public class XmlTagInsertHandler implements InsertHandler<LookupElement> {
       }
     }
 
-    XmlAttributeDescriptor[] attributes = descriptor.getAttributesDescriptors(tag);
+    XmlAttributeDescriptor[] attributes = getAttributesDescriptors(descriptor, tag);
+
+    if (attributes == null || attributes.length == 0) {
+      return null;
+    }
+
     StringBuilder indirectRequiredAttrs = null;
 
     if (WebEditorOptions.getInstance().isAutomaticallyInsertRequiredAttributes()) {
@@ -226,7 +243,7 @@ public class XmlTagInsertHandler implements InsertHandler<LookupElement> {
           if (!notRequiredAttributes.contains(attributeName)) {
             if (!extension.isIndirectSyntax(attributeDecl)) {
               template.addTextSegment(" " + attributeName + "=" + presenter.getPrefix());
-              template.addVariable(presenter.showAutoPopup() ? new MacroCallNode(new CompleteMacro()) : new EmptyExpression(), true);
+              template.addVariable(getAttributeValueExpression(presenter), true);
               template.addTextSegment(presenter.getPostfix());
             }
             else {
@@ -242,6 +259,18 @@ public class XmlTagInsertHandler implements InsertHandler<LookupElement> {
       }
     }
     return indirectRequiredAttrs;
+  }
+
+  private static @NotNull Expression getAttributeValueExpression(AttributeValuePresentation presenter) {
+    if (presenter.showAutoPopup()) {
+      Macro completeMacro = switch (presenter.getAutoPopupCompletionType()) {
+        case BASIC -> new CompleteMacro();
+        case SMART -> new CompleteSmartMacro();
+        default -> throw new IllegalArgumentException("Unsupported completion type: " + presenter.getAutoPopupCompletionType());
+      };
+      return new MacroCallNode(completeMacro);
+    }
+    return new EmptyExpression();
   }
 
   protected static boolean addTail(char completionChar,
@@ -272,14 +301,14 @@ public class XmlTagInsertHandler implements InsertHandler<LookupElement> {
     }
     else if (completionChar == ' ' && template.getSegmentsCount() == 0) {
       if (WebEditorOptions.getInstance().isAutomaticallyStartAttribute() &&
-          (descriptor.getAttributesDescriptors(tag).length > 0 || isTagFromHtml(tag) && !HtmlUtil.isTagWithoutAttributes(tag.getName()))) {
+          (getAttributesDescriptors(descriptor, tag).length > 0 || isTagFromHtml(tag) && !HtmlUtil.isTagWithoutAttributes(tag.getName()))) {
         completeAttribute(tag.getContainingFile(), template);
         return true;
       }
     }
     else if (completionChar == Lookup.AUTO_INSERT_SELECT_CHAR || completionChar == Lookup.NORMAL_SELECT_CHAR || completionChar == Lookup.REPLACE_SELECT_CHAR) {
       if (WebEditorOptions.getInstance().isAutomaticallyInsertClosingTag() && isHtmlCode && HtmlUtil.isSingleHtmlTag(tag, true)) {
-        if (hasOwnAttributes(descriptor, tag)) {
+        if (runWithTimeoutOrNull(() -> hasOwnAttributes(descriptor, tag)) == Boolean.TRUE) {
           template.addEndVariable();
         }
         template.addTextSegment(HtmlUtil.isHtmlTag(tag) ? ">" : closeTag(tag));
@@ -299,8 +328,7 @@ public class XmlTagInsertHandler implements InsertHandler<LookupElement> {
     return false;
   }
 
-  @NotNull
-  private static String closeTag(XmlTag tag) {
+  private static @NotNull String closeTag(XmlTag tag) {
     CodeStyleSettings settings = CodeStyle.getSettings(tag.getContainingFile());
     boolean html = HtmlUtil.isHtmlTag(tag);
     boolean needsSpace = (html && settings.getCustomSettings(HtmlCodeStyleSettings.class).HTML_SPACE_INSIDE_EMPTY_TAG) ||
@@ -363,44 +391,43 @@ public class XmlTagInsertHandler implements InsertHandler<LookupElement> {
     boolean completeIt = (!firstLevel || !canHaveAttributes(descriptor, context))
                          && (file == null || XmlExtension.getExtension(file).shouldCompleteTag(context));
     switch (descriptor.getContentType()) {
-      case XmlElementDescriptor.CONTENT_TYPE_UNKNOWN:
-        return;
-      case XmlElementDescriptor.CONTENT_TYPE_EMPTY:
+      case XmlElementDescriptor.CONTENT_TYPE_UNKNOWN -> {}
+      case XmlElementDescriptor.CONTENT_TYPE_EMPTY -> {
         if (completeIt) {
           template.addTextSegment(closeTag(context));
         }
-        break;
-      case XmlElementDescriptor.CONTENT_TYPE_MIXED:
-         if (completeIt) {
-           template.addTextSegment(">");
-           if (firstLevel) {
-             template.addEndVariable();
-           }
-           else {
-             template.addVariable(new MacroCallNode(new CompleteMacro()), true);
-           }
-           addTagEnd(template, descriptor, context);
-         }
-         break;
-       default:
-         if (!addRequiredSubTags(template, descriptor, file, context)) {
-           if (completeIt) {
-             template.addTextSegment(">");
-             template.addEndVariable();
-             addTagEnd(template, descriptor, context);
-           }
-         }
-         break;
+      }
+      case XmlElementDescriptor.CONTENT_TYPE_MIXED -> {
+        if (completeIt) {
+          template.addTextSegment(">");
+          if (firstLevel) {
+            template.addEndVariable();
+          }
+          else {
+            template.addVariable(new MacroCallNode(new CompleteMacro()), true);
+          }
+          addTagEnd(template, descriptor, context);
+        }
+      }
+      default -> {
+        if (!addRequiredSubTags(template, descriptor, file, context)) {
+          if (completeIt) {
+            template.addTextSegment(">");
+            template.addEndVariable();
+            addTagEnd(template, descriptor, context);
+          }
+        }
+      }
     }
   }
 
   private static boolean hasOwnAttributes(XmlElementDescriptor descriptor, XmlTag tag) {
-    return ContainerUtil.find(descriptor.getAttributesDescriptors(tag),
+    return ContainerUtil.find(getAttributesDescriptors(descriptor, tag),
                               attr -> attr instanceof HtmlAttributeDescriptorImpl && HtmlUtil.isOwnHtmlAttribute(attr)) != null;
   }
 
   private static boolean canHaveAttributes(XmlElementDescriptor descriptor, XmlTag context) {
-    XmlAttributeDescriptor[] attributes = descriptor.getAttributesDescriptors(context);
+    XmlAttributeDescriptor[] attributes = getAttributesDescriptors(descriptor, context);
     int required = WebEditorOptions.getInstance().isAutomaticallyInsertRequiredAttributes() ?
                    ArraysKt.count(attributes, (attribute) -> attribute.isRequired() && context.getAttribute(attribute.getName()) == null) :
                    0;
@@ -415,4 +442,17 @@ public class XmlTagInsertHandler implements InsertHandler<LookupElement> {
     final String ns = tag.getNamespace();
     return XmlUtil.XHTML_URI.equals(ns) || XmlUtil.HTML_URI.equals(ns);
   }
+
+  private static XmlAttributeDescriptor[] getAttributesDescriptors(XmlElementDescriptor descriptor, XmlTag tag) {
+    var result = runWithTimeoutOrNull(() -> descriptor.getAttributesDescriptors( tag));
+    return result != null ? result : XmlAttributeDescriptor.EMPTY;
+  }
+
+  public static <T> @Nullable T runWithTimeoutOrNull(Computable<@NotNull T> block) {
+    if (ApplicationManager.getApplication().isHeadlessEnvironment() || ApplicationManager.getApplication().isUnitTestMode())
+      return block.get();
+    else
+      return ProgressIndicatorUtils.withTimeout(250, block);
+  }
+
 }

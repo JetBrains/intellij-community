@@ -103,7 +103,7 @@
               </grid>
             </constraints>
             <properties>
-              <text value="HEAD"/>
+              <text value="HEAD" noi18n="true"/>
               <toolTipText resource-bundle="messages/GitBundle" key="reset.commit.tooltip"/>
             </properties>
           </component>

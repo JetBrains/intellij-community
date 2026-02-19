@@ -1,22 +1,20 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.terminal;
 
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.DumbAware;
-import com.intellij.openapi.project.DumbAwareToggleAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowFactory;
 import com.intellij.openapi.wm.ex.ToolWindowEx;
+import com.intellij.ui.ExperimentalUI;
+import com.intellij.util.PlatformUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.terminal.TerminalCommandHandlerCustomizer.TerminalCommandHandlerOptions;
 import org.jetbrains.plugins.terminal.arrangement.TerminalArrangementManager;
 
 public final class TerminalToolWindowFactory implements ToolWindowFactory, DumbAware {
-  @NonNls public static final String TOOL_WINDOW_ID = "Terminal";
+  public static final @NonNls String TOOL_WINDOW_ID = "Terminal";
 
   @Override
   public void createToolWindowContent(@NotNull Project project, @NotNull ToolWindow toolWindow) {
@@ -24,25 +22,20 @@ public final class TerminalToolWindowFactory implements ToolWindowFactory, DumbA
       return;
     }
 
-    TerminalView terminalView = TerminalView.getInstance(project);
-    terminalView.initToolWindow((ToolWindowEx)toolWindow);
-    TerminalCommandHandlerOptions options = new TerminalCommandHandlerOptions(project);
-    ((ToolWindowEx)toolWindow).setAdditionalGearActions(
-      new DefaultActionGroup(new DumbAwareToggleAction(TerminalBundle.message("settings.terminal.smart.command.handling")) {
-        @Override
-        public boolean isSelected(@NotNull AnActionEvent e) {
-          return options.getEnabled();
-        }
+    var toolWindowEx = (ToolWindowEx)toolWindow;
+    TerminalToolWindowManager terminalToolWindowManager = TerminalToolWindowManager.getInstance(project);
+    terminalToolWindowManager.initToolWindow(toolWindowEx);
+    TerminalToolWindowInitializer.performInitialization(toolWindowEx);
 
-        @Override
-        public void setSelected(@NotNull AnActionEvent e, boolean state) {
-          options.setEnabled(state);
-        }
-      }));
-
-    TerminalArrangementManager terminalArrangementManager = TerminalArrangementManager.getInstance(project);
-    terminalView.restoreTabs(terminalArrangementManager.getArrangementState());
-    // allow to save tabs after the tabs are restored
-    terminalArrangementManager.setToolWindow(toolWindow);
+    boolean useReworkedTerminal = ExperimentalUI.isNewUI() &&
+                                  TerminalOptionsProvider.getInstance().getTerminalEngine() == TerminalEngine.REWORKED;
+    // Reworked Terminal tabs are restored in TerminalToolWindowInitializer.
+    // If it is the frontend, do not restore classic tabs there, they are restored on the backend and then synchronized.
+    if (!useReworkedTerminal && !PlatformUtils.isJetBrainsClient()) {
+      TerminalArrangementManager terminalArrangementManager = TerminalArrangementManager.getInstance(project);
+      terminalToolWindowManager.restoreTabsLocal(terminalArrangementManager.getArrangementState());
+      // Allow saving tabs after the tabs are restored.
+      terminalArrangementManager.setToolWindow(toolWindow);
+    }
   }
 }

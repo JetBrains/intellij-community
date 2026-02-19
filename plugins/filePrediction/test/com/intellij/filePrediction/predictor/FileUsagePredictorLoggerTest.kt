@@ -1,3 +1,4 @@
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.filePrediction.predictor
 
 import com.intellij.filePrediction.FilePredictionSessionManager
@@ -9,15 +10,17 @@ import com.intellij.filePrediction.predictor.model.disableFilePredictionModel
 import com.intellij.filePrediction.predictor.model.setConstantFilePredictionModel
 import com.intellij.filePrediction.predictor.model.setCustomCandidateProviderModel
 import com.intellij.filePrediction.predictor.model.setPredefinedProbabilityModel
-import com.intellij.internal.statistic.*
-import com.intellij.internal.statistic.FUCounterCollectorTestCase.collectLogEvents
+import com.intellij.internal.statistic.FUCollectorTestCase.collectLogEvents
+import com.intellij.internal.statistic.TestStatisticsEventValidatorBuilder
+import com.intellij.internal.statistic.TestStatisticsEventsValidator
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.testFramework.builders.ModuleFixtureBuilder
 import com.intellij.testFramework.fixtures.CodeInsightFixtureTestCase
 import com.intellij.testFramework.fixtures.ModuleFixture
 import com.intellij.util.PathUtil.getFileName
-import org.junit.Test
+import java.util.concurrent.TimeUnit
 
 class FileUsagePredictorLoggerTest : CodeInsightFixtureTestCase<ModuleFixtureBuilder<ModuleFixture>>() {
 
@@ -123,9 +126,11 @@ class FileUsagePredictorLoggerTest : CodeInsightFixtureTestCase<ModuleFixtureBui
 
     setCustomCandidateProviderModel(testRootDisposable, FilePredictionReferenceProvider(), FilePredictionNeighborFilesProvider())
     val predictor = predictorProvider.invoke(testRootDisposable)
-    val events = collectLogEvents {
-      predictor.onSessionStarted(myFixture.project, file!!)
-      predictor.onSessionStarted(myFixture.project, nextFile!!)
+    val events = collectLogEvents(testRootDisposable) {
+      ApplicationManager.getApplication().executeOnPooledThread{
+        predictor.onSessionStarted(myFixture.project, file!!)
+        predictor.onSessionStarted(myFixture.project, nextFile!!)
+      }.get(1, TimeUnit.SECONDS)
     }
     val candidateEvents = events.filter { it.event.id == "calculated" }
     assertEquals(expectedEvents, candidateEvents.size)
@@ -272,7 +277,6 @@ class FileUsagePredictorLoggerTest : CodeInsightFixtureTestCase<ModuleFixtureBui
       "com/test/Foo3.txt"
     )
 
-    @Suppress("UNCHECKED_CAST")
     val validator = TestFileCandidatesValidatorBuilder()
       .hasField("opened", 0) { (it["features"] as String).contains("JAVA").not() }
       .hasField("opened", 1) { (it["features"] as String).contains("JAVA") }.build()

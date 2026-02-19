@@ -1,62 +1,81 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.references;
 
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
-import com.intellij.codeInspection.unused.ImplicitPropertyUsageProvider;
 import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.lang.properties.PropertiesFileType;
+import com.intellij.lang.properties.codeInspection.unused.ImplicitPropertyUsageProvider;
 import com.intellij.lang.properties.psi.Property;
 import com.intellij.lang.properties.psi.impl.PropertyKeyImpl;
 import com.intellij.openapi.components.State;
+import com.intellij.openapi.project.IntelliJProjectUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.wm.ToolWindowEP;
 import com.intellij.patterns.PlatformPatterns;
 import com.intellij.patterns.StandardPatterns;
 import com.intellij.patterns.VirtualFilePattern;
 import com.intellij.pom.references.PomService;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiAnnotation;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementResolveResult;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiPolyVariantReference;
+import com.intellij.psi.PsiPolyVariantReferenceBase;
+import com.intellij.psi.PsiReference;
+import com.intellij.psi.PsiReferenceBase;
+import com.intellij.psi.PsiReferenceContributor;
+import com.intellij.psi.PsiReferenceProvider;
+import com.intellij.psi.PsiReferenceRegistrar;
+import com.intellij.psi.ResolveResult;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.GlobalSearchScopesCore;
-import com.intellij.psi.search.ProjectScope;
 import com.intellij.psi.search.searches.AnnotatedElementsSearch;
-import com.intellij.util.*;
+import com.intellij.util.PairProcessor;
+import com.intellij.util.ProcessingContext;
+import com.intellij.util.Query;
+import com.intellij.util.SmartList;
+import com.intellij.util.ThreeState;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.xml.DomTarget;
+import com.intellij.util.xml.ElementPresentationManager;
 import com.intellij.util.xml.GenericAttributeValue;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 import org.jetbrains.idea.devkit.DevKitBundle;
-import org.jetbrains.idea.devkit.dom.ActionOrGroup;
-import org.jetbrains.idea.devkit.dom.Extension;
-import org.jetbrains.idea.devkit.dom.index.IdeaPluginRegistrationIndex;
+import org.jetbrains.idea.devkit.dom.IdeaPlugin;
+import org.jetbrains.idea.devkit.util.DescriptorUtil;
 import org.jetbrains.idea.devkit.util.PsiUtil;
 
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
 import static com.intellij.patterns.PlatformPatterns.virtualFile;
 
-public class MessageBundleReferenceContributor extends PsiReferenceContributor {
+final class MessageBundleReferenceContributor extends PsiReferenceContributor {
+  private static final @NonNls String ACTION = "action.";
+  private static final @NonNls String GROUP = "group.";
+  private static final @NonNls String TEXT = ".text";
+  private static final @NonNls String DESCRIPTION = ".description";
+  private static final @NonNls String TRAILING_LABEL = ".trailingLabel";
+  public static final @NonNls String ADVANCED_SETTING = "advanced.setting.";
+  public static final @NonNls String BUNDLE_PROPERTIES = "Bundle.properties";
 
-  @NonNls private static final String ACTION = "action.";
-  @NonNls private static final String GROUP = "group.";
-  @NonNls private static final String TEXT = ".text";
-  @NonNls private static final String DESC = ".description";
-  @NonNls private static final String BUNDLE_PROPERTIES = "Bundle.properties";
+  private static final @NonNls String TOOLWINDOW_STRIPE_PREFIX = "toolwindow.stripe.";
+  private static final @NonNls String EXPORTABLE_PREFIX = "exportable.";
+  private static final @NonNls String EXPORTABLE_SUFFIX = ".presentable.name";
 
-  @NonNls private static final String TOOLWINDOW_STRIPE_PREFIX = "toolwindow.stripe.";
-  @NonNls private static final String EXPORTABLE_PREFIX = "exportable.";
-  @NonNls private static final String EXPORTABLE_SUFFIX = ".presentable.name";
-
-  public static final PsiElementResolveResult[] EMPTY_RESOLVE_RESULT = new PsiElementResolveResult[0];
+  private static final @NonNls String PLUGIN = "plugin.";
 
   @Override
   public void registerReferenceProviders(@NotNull PsiReferenceRegistrar registrar) {
@@ -68,41 +87,65 @@ public class MessageBundleReferenceContributor extends PsiReferenceContributor {
         public PsiReference @NotNull [] getReferencesByElement(@NotNull PsiElement element,
                                                                @NotNull ProcessingContext context) {
           if (!(element instanceof PropertyKeyImpl)) return PsiReference.EMPTY_ARRAY;
-          if (!PsiUtil.isPluginProject(element.getProject())) return PsiReference.EMPTY_ARRAY;
+          if (!isPluginProject(element)) return PsiReference.EMPTY_ARRAY;
 
           String text = ((PropertyKeyImpl)element).getText();
           return JBIterable.of(
-            createActionReference(element, text, ACTION, TEXT),
-            createActionReference(element, text, ACTION, DESC),
-            createActionReference(element, text, GROUP, TEXT),
-            createActionReference(element, text, GROUP, DESC),
+            createActionOrGroupIdReference(element, text),
             createToolwindowIdReference(element, text),
-            createExportableIdReference(element, text)
+            createExportableIdReference(element, text),
+            createPluginIdReference(element, text),
+            createAdvancedSettingReference(element, text)
           ).filter(Objects::nonNull).toArray(PsiReference.EMPTY_ARRAY);
         }
 
-        @Nullable
-        private PsiReference createActionReference(@NotNull PsiElement element, String text, String prefix, String suffix) {
-          if (!text.startsWith(prefix) || !text.endsWith(suffix)) return null;
+        private static @Nullable PsiReference createActionOrGroupIdReference(@NotNull PsiElement element, String text) {
+          if (!isActionOrGroupKey(text)) return null;
 
-          String id = text.replace(prefix, "").replace(suffix, "");
-          return new DevKitActionReference(id, prefix, element);
+          final int dotAfterPrefix = text.indexOf('.');
+          if (dotAfterPrefix == -1) return null;
+          final int prefixEndIdx = dotAfterPrefix + 1;
+
+          final int dotBeforeSuffix = text.lastIndexOf('.');
+          if (dotBeforeSuffix == -1) return null;
+          if (dotBeforeSuffix <= prefixEndIdx) return null;
+
+          String id = text.substring(prefixEndIdx, dotBeforeSuffix);
+          String prefix = text.substring(0, prefixEndIdx);
+
+          ThreeState isAction = prefix.equals(ACTION) ? ThreeState.YES : ThreeState.NO;
+          return new ActionOrGroupIdReference(element, TextRange.allOf(id).shiftRight(prefix.length()), id, isAction);
         }
 
-        @Nullable
-        private PsiReference createToolwindowIdReference(@NotNull PsiElement element, String text) {
-          if (!text.startsWith(TOOLWINDOW_STRIPE_PREFIX)) return null;
+        private static @Nullable PsiReference createToolwindowIdReference(@NotNull PsiElement element, String text) {
+          if (!isToolwindowKey(text)) return null;
 
           String id = StringUtil.notNullize(StringUtil.substringAfter(text, TOOLWINDOW_STRIPE_PREFIX)).replace('_', ' ');
           return new ToolwindowIdReference(element, id);
         }
 
-        @Nullable
-        private PsiReference createExportableIdReference(@NotNull PsiElement element, String text) {
-          if (!text.startsWith(EXPORTABLE_PREFIX) || !text.endsWith(EXPORTABLE_SUFFIX)) return null;
+        private static @Nullable PsiReference createExportableIdReference(@NotNull PsiElement element, String text) {
+          if (!isExportableKey(text)) return null;
 
           String id = text.replace(EXPORTABLE_PREFIX, "").replace(EXPORTABLE_SUFFIX, "");
           return new ExportableIdReference(element, id);
+        }
+
+        private static @Nullable PsiReference createPluginIdReference(@NotNull PsiElement element, String text) {
+          if (!isPluginDescriptionKey(text)) return null;
+
+          String id = StringUtil.substringAfter(StringUtil.notNullize(StringUtil.substringBefore(text, DESCRIPTION)), PLUGIN);
+          return new PluginIdReference(element, id);
+        }
+
+        private static @Nullable PsiReference createAdvancedSettingReference(@NotNull PsiElement element, String text) {
+          if (!isAdvancedSettingKey(text)) return null;
+
+          String s = StringUtil.notNullize(StringUtil.substringAfter(text, ADVANCED_SETTING));
+          String id = s.endsWith(DESCRIPTION) ? StringUtil.trimEnd(s, DESCRIPTION) :
+                      (s.endsWith(TRAILING_LABEL) ? StringUtil.trimEnd(s, TRAILING_LABEL) : s);
+          TextRange range = TextRange.allOf(id).shiftRight(ADVANCED_SETTING.length());
+          return new AdvancedSettingsIdContributor.AdvancedSettingReference(element, range);
         }
       });
   }
@@ -111,53 +154,79 @@ public class MessageBundleReferenceContributor extends PsiReferenceContributor {
     return virtualFile().ofType(PropertiesFileType.INSTANCE).withName(StandardPatterns.string().endsWith(BUNDLE_PROPERTIES));
   }
 
-  private static final class DevKitActionReference extends PsiPolyVariantReferenceBase<PsiElement> {
-    private final String myId;
-    private final boolean myIsAction;
+  private static boolean isPluginProject(PsiElement property) {
+    return PsiUtil.isPluginProject(property.getProject());
+  }
 
-    private DevKitActionReference(String id, String prefix, @NotNull PsiElement element) {
-      super(element, TextRange.allOf(id).shiftRight(prefix.length()));
-      myIsAction = prefix.equals(ACTION);
-      myId = id;
+  private static boolean isActionOrGroupKey(String name) {
+    return (name.startsWith(ACTION) || name.startsWith(GROUP)) &&
+           (name.endsWith(TEXT) || name.endsWith(DESCRIPTION));
+  }
+
+  private static boolean isExportableKey(String name) {
+    return name.startsWith(EXPORTABLE_PREFIX) && name.endsWith(EXPORTABLE_SUFFIX);
+  }
+
+  private static boolean isToolwindowKey(String name) {
+    return name.startsWith(TOOLWINDOW_STRIPE_PREFIX);
+  }
+
+  private static boolean isPluginDescriptionKey(String name) {
+    return name.startsWith(PLUGIN) && name.endsWith(DESCRIPTION);
+  }
+
+  private static boolean isAdvancedSettingKey(String name) {
+    return name.startsWith(ADVANCED_SETTING);
+  }
+
+
+  private static class PluginIdReference extends PsiPolyVariantReferenceBase<PsiElement> {
+
+    private PluginIdReference(@NotNull PsiElement element, String id) {
+      super(element, TextRange.allOf(id).shiftRight(PLUGIN.length()));
     }
 
-    @NotNull
     @Override
     public ResolveResult @NotNull [] multiResolve(boolean incompleteCode) {
-      Project project = getElement().getProject();
+      List<PsiElement> psiElements = new SmartList<>();
+      final String id = getValue();
 
-      CommonProcessors.CollectUniquesProcessor<ActionOrGroup> processor = new CommonProcessors.CollectUniquesProcessor<>();
-      if (myIsAction) {
-        IdeaPluginRegistrationIndex.processAction(project, myId, ProjectScope.getContentScope(project), processor);
+      final Project project = getElement().getProject();
+      for (IdeaPlugin plugin : getRelevantPlugins()) {
+        if (id.equals(plugin.getPluginId())) {
+          final DomTarget target = DomTarget.getTarget(plugin);
+          assert target != null;
+          psiElements.add(PomService.convertToPsi(project, target));
+        }
       }
-      else {
-        IdeaPluginRegistrationIndex.processGroup(project, myId, ProjectScope.getContentScope(project), processor);
-      }
+      return PsiElementResolveResult.createResults(psiElements);
+    }
 
-      return JBIterable
-        .from(processor.getResults())
-        .map(actionOrGroup -> {
-          final DomTarget target = DomTarget.getTarget(actionOrGroup);
-          return target == null ? null : new PsiElementResolveResult(PomService.convertToPsi(project, target));
-        }).filter(Objects::nonNull).toArray(EMPTY_RESOLVE_RESULT);
+    @Override
+    public Object @NotNull [] getVariants() {
+      return ContainerUtil.map2Array(getRelevantPlugins(), LookupElement.class,
+                                     plugin -> LookupElementBuilder.create(Objects.requireNonNull(plugin.getPluginId()))
+                                       .withPsiElement(plugin.getXmlElement())
+                                       .withTailText(" " + StringUtil.notNullize(plugin.getName().getValue()))
+                                       .withIcon(ElementPresentationManager.getIcon(plugin)));
+    }
+
+    private @Unmodifiable Collection<IdeaPlugin> getRelevantPlugins() {
+      return ContainerUtil.filter(DescriptorUtil.getPlugins(getElement().getProject(), getElement().getResolveScope()),
+                                  plugin -> plugin.hasRealPluginId() && Boolean.TRUE != plugin.getImplementationDetail().getValue());
     }
   }
 
 
-  private static class ToolwindowIdReference extends ExtensionPointReferenceBase {
+  private static class ToolwindowIdReference extends ExtensionReferenceBase {
 
     private ToolwindowIdReference(@NotNull PsiElement element, String id) {
       super(element, TextRange.allOf(id).shiftRight(TOOLWINDOW_STRIPE_PREFIX.length()));
     }
 
     @Override
-    protected String getExtensionPointClassname() {
-      return ToolWindowEP.class.getName();
-    }
-
-    @Override
-    protected GenericAttributeValue<?> getNameElement(Extension extension) {
-      return extension.getId();
+    protected String getExtensionPointFqn() {
+      return "com.intellij.toolWindow";
     }
 
     @Override
@@ -224,7 +293,7 @@ public class MessageBundleReferenceContributor extends PsiReferenceContributor {
 
     private void processStateAnnoClasses(PairProcessor<PsiClass, String> processor) {
       final Project project = myElement.getProject();
-      final GlobalSearchScope searchScope = PsiUtil.isIdeaProject(project) ?
+      final GlobalSearchScope searchScope = IntelliJProjectUtil.isIntelliJPlatformProject(project) ?
                                             GlobalSearchScopesCore.projectProductionScope(project) : getElement().getResolveScope();
       final PsiClass statePsiClass = JavaPsiFacade.getInstance(project).findClass(State.class.getName(), searchScope);
       if (statePsiClass == null) {
@@ -247,33 +316,41 @@ public class MessageBundleReferenceContributor extends PsiReferenceContributor {
   }
 
 
-  public static class ImplicitUsageProvider extends ImplicitPropertyUsageProvider {
+  static final class ImplicitUsageProvider implements ImplicitPropertyUsageProvider {
 
-    @NonNls public static final String ICON_TOOLTIP_PREFIX = "icon.";
-    @NonNls public static final String ICON_TOOLTIP_SUFFIX = ".tooltip";
+    private static final @NonNls String ICON_TOOLTIP_PREFIX = "icon.";
+    private static final @NonNls String ICON_TOOLTIP_SUFFIX = ".tooltip";
 
     @Override
-    protected boolean isUsed(@NotNull Property property) {
+    public boolean isUsed(@NotNull Property property) {
       PsiFile file = property.getContainingFile();
       String fileName = file.getName();
       if (!fileName.endsWith(BUNDLE_PROPERTIES)) return false;
+
       String name = property.getName();
       if (name == null) return false;
 
-      if ((name.startsWith(ACTION) || name.startsWith(GROUP)) &&
-          (name.endsWith(TEXT) || name.endsWith(DESC)) ||
-          (name.startsWith(EXPORTABLE_PREFIX) && name.endsWith(EXPORTABLE_SUFFIX)) ||
-          name.startsWith(TOOLWINDOW_STRIPE_PREFIX)) {
+      if (isActionOrGroupKey(name) ||
+          isExportableKey(name) ||
+          isToolwindowKey(name) ||
+          isPluginDescriptionKey(name) ||
+          isAdvancedSettingKey(name)) {
         PsiElement key = property.getFirstChild();
         PsiReference[] references = key == null ? PsiReference.EMPTY_ARRAY : key.getReferences();
-        return ContainerUtil.exists(references, reference -> {
+
+        boolean hasResolve = ContainerUtil.exists(references, reference -> {
           boolean unresolved = reference instanceof PsiPolyVariantReference
                                ? ((PsiPolyVariantReference)reference).multiResolve(false).length == 0
                                : reference.resolve() == null;
           return !unresolved;
         });
+        return hasResolve && isPluginProject(property);
       }
 
+      return isIconTooltipKey(name) && isPluginProject(property);
+    }
+
+    private static boolean isIconTooltipKey(String name) {
       return name.startsWith(ICON_TOOLTIP_PREFIX) && name.endsWith(ICON_TOOLTIP_SUFFIX);
     }
   }

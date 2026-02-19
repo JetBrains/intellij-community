@@ -7,7 +7,9 @@ import com.intellij.psi.ResolveState
 import com.intellij.psi.scope.PsiScopeProcessor
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase
-import org.jetbrains.plugins.groovy.lang.psi.util.GroovyPropertyUtils.*
+import org.jetbrains.plugins.groovy.lang.psi.util.GroovyPropertyUtils.getGetterNameBoolean
+import org.jetbrains.plugins.groovy.lang.psi.util.GroovyPropertyUtils.getGetterNameNonBoolean
+import org.jetbrains.plugins.groovy.lang.psi.util.GroovyPropertyUtils.getSetterName
 import org.jetbrains.plugins.groovy.lang.resolve.getName
 import org.jetbrains.plugins.groovy.lang.resolve.imports.impl.NonFqnImport
 import org.jetbrains.plugins.groovy.lang.resolve.isAnnotationResolve
@@ -29,7 +31,7 @@ import org.jetbrains.plugins.groovy.lang.resolve.shouldProcessMembers
  * - [name] = `Bar`
  * - [isAliased] = `false`
  */
-data class StaticImport constructor(
+data class StaticImport(
   override val classFqn: String,
   val memberName: String,
   override val name: String

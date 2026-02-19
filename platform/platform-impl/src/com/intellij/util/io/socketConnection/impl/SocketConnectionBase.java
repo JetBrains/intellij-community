@@ -1,11 +1,21 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.io.socketConnection.impl;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.util.EventDispatcher;
-import com.intellij.util.io.socketConnection.*;
+import com.intellij.util.io.socketConnection.AbstractRequest;
+import com.intellij.util.io.socketConnection.AbstractResponse;
+import com.intellij.util.io.socketConnection.AbstractResponseHandler;
+import com.intellij.util.io.socketConnection.AbstractResponseToRequestHandler;
+import com.intellij.util.io.socketConnection.ConnectionState;
+import com.intellij.util.io.socketConnection.ConnectionStatus;
+import com.intellij.util.io.socketConnection.RequestResponseExternalizerFactory;
+import com.intellij.util.io.socketConnection.RequestWriter;
+import com.intellij.util.io.socketConnection.SocketConnection;
+import com.intellij.util.io.socketConnection.SocketConnectionListener;
+import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -29,7 +39,7 @@ public abstract class SocketConnectionBase<Request extends AbstractRequest, Resp
   private final List<Thread> myThreadsToInterrupt = new ArrayList<>();
   private final RequestResponseExternalizerFactory<Request, Response> myExternalizerFactory;
   private final LinkedBlockingQueue<Request> myRequests = new LinkedBlockingQueue<>();
-  private final Int2ObjectOpenHashMap<TimeoutInfo> myTimeouts = new Int2ObjectOpenHashMap<>();
+  private final Int2ObjectMap<TimeoutInfo> myTimeouts = new Int2ObjectOpenHashMap<>();
   private final ResponseProcessor<Response> myResponseProcessor;
 
   public SocketConnectionBase(@NotNull RequestResponseExternalizerFactory<Request, Response> factory) {
@@ -123,8 +133,7 @@ public abstract class SocketConnectionBase<Request extends AbstractRequest, Resp
   }
 
   @Override
-  @NotNull
-  public ConnectionState getState() {
+  public @NotNull ConnectionState getState() {
     synchronized (myLock) {
       return myState.get();
     }

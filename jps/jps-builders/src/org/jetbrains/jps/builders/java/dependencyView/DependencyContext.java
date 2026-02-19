@@ -1,10 +1,11 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.builders.java.dependencyView;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.io.FileUtilRt;
+import com.intellij.openapi.util.text.Strings;
 import com.intellij.util.io.PersistentStringEnumerator;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.builders.storage.BuildDataCorruptedException;
 import org.jetbrains.jps.incremental.relativizer.PathRelativizerService;
@@ -14,11 +15,9 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
-/**
- * @author: db
- */
-class DependencyContext implements NamingContext {
-  private final static String STRING_TABLE_NAME = "strings.tab";
+@ApiStatus.Internal
+public final class DependencyContext implements NamingContext {
+  private static final String STRING_TABLE_NAME = "strings.tab";
   private final PersistentStringEnumerator myEnumerator;
 
   private final Map<TypeRepr.AbstractType, TypeRepr.AbstractType> myTypeMap = new HashMap<>();
@@ -37,8 +36,9 @@ class DependencyContext implements NamingContext {
      return r;
    }
 
-  TypeRepr.AbstractType getType(final TypeRepr.AbstractType t) {
-    final TypeRepr.AbstractType r = myTypeMap.get(t);
+  <T extends TypeRepr.AbstractType> T getType(final T t) {
+    //noinspection unchecked
+    final T r = (T)myTypeMap.get(t);
 
     if (r != null) {
       return r;
@@ -55,8 +55,8 @@ class DependencyContext implements NamingContext {
   }
 
   static File getTableFile (final File rootDir, final String name) {
-    final File file = new File(FileUtil.toSystemIndependentName(rootDir.getAbsoluteFile() + File.separator + name));
-    FileUtil.createIfDoesntExist(file);
+    final File file = new File(FileUtilRt.toSystemIndependentName(rootDir.getAbsoluteFile() + File.separator + name));
+    FileUtilRt.createIfNotExists(file);
     return file;
   }
 
@@ -68,8 +68,7 @@ class DependencyContext implements NamingContext {
   }
 
   @Override
-  @Nullable
-  public String getValue(final int s) {
+  public @Nullable String getValue(final int s) {
     try {
       String value = myEnumerator.valueOf(s);
       return value == null ? null : myRelativizer.toFull(value);
@@ -82,7 +81,7 @@ class DependencyContext implements NamingContext {
   @Override
   public int get(final String s) {
     try {
-      return StringUtil.isEmpty(s) ? myEmptyName : myEnumerator.enumerate(myRelativizer.toRelative(s));
+      return Strings.isEmpty(s) ? myEmptyName : myEnumerator.enumerate(myRelativizer.toRelative(s));
     }
     catch (IOException e) {
       throw new BuildDataCorruptedException(e);
@@ -103,7 +102,7 @@ class DependencyContext implements NamingContext {
   }
 
   public LoggerWrapper<Integer> getLogger(final Logger log) {
-    return new LoggerWrapper<Integer>() {
+    return new LoggerWrapper<>() {
       @Override
       public boolean isDebugEnabled() {
         return log.isDebugEnabled();
@@ -118,7 +117,7 @@ class DependencyContext implements NamingContext {
 
       @Override
       public void debug(String comment, String t) {
-        if (isDebugEnabled()){
+        if (isDebugEnabled()) {
           log.debug(comment + t);
         }
       }

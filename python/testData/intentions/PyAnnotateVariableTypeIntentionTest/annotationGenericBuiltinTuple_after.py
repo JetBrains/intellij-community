@@ -1,0 +1,1 @@
+var: [tuple[int, int]] = (1, 2)

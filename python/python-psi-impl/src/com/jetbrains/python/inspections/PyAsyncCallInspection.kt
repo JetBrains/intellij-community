@@ -2,16 +2,25 @@
 package com.jetbrains.python.inspections
 
 import com.intellij.codeInspection.LocalInspectionToolSession
-import com.intellij.codeInspection.LocalQuickFix
-import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.codeInspection.ProblemsHolder
+import com.intellij.modcommand.ModPsiUpdater
+import com.intellij.modcommand.PsiUpdateModCommandQuickFix
 import com.intellij.openapi.project.Project
+import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiElementVisitor
 import com.jetbrains.python.PyNames
 import com.jetbrains.python.PyPsiBundle
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider
-import com.jetbrains.python.psi.*
+import com.jetbrains.python.psi.LanguageLevel
+import com.jetbrains.python.psi.PyCallExpression
+import com.jetbrains.python.psi.PyElementGenerator
+import com.jetbrains.python.psi.PyExpression
+import com.jetbrains.python.psi.PyExpressionStatement
+import com.jetbrains.python.psi.PyFunction
+import com.jetbrains.python.psi.PyKnownDecoratorUtil
+import com.jetbrains.python.psi.PyReferenceExpression
+import com.jetbrains.python.psi.PyUtil
 import com.jetbrains.python.psi.resolve.PyResolveContext
 import com.jetbrains.python.psi.types.PyABCUtil
 import com.jetbrains.python.psi.types.PyClassLikeType
@@ -22,28 +31,23 @@ import com.jetbrains.python.refactoring.PyReplaceExpressionUtil
 class PyAsyncCallInspection : PyInspection() {
 
   override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean, session: LocalInspectionToolSession): PsiElementVisitor {
-    return Visitor(holder, session)
+    return Visitor(holder, PyInspectionVisitor.getContext(session))
   }
 
-  private class Visitor(holder: ProblemsHolder, session: LocalInspectionToolSession) : PyInspectionVisitor(holder, session) {
+  private class Visitor(holder: ProblemsHolder, context: TypeEvalContext) : PyInspectionVisitor(holder, context) {
 
     override fun visitPyExpressionStatement(node: PyExpressionStatement) {
       val expr = node.expression
       if (expr is PyCallExpression && isAwaitableCall(expr) && !isIgnored(expr)) {
         val awaitableType = when {
-          isOuterFunctionAsync(
-            expr) -> AwaitableType.AWAITABLE
-          isOuterFunctionCoroutine(expr,
-                                                                                                                       myTypeEvalContext) -> AwaitableType.COROUTINE
+          isOuterFunctionAsync(expr) -> AwaitableType.AWAITABLE
+          isOuterFunctionCoroutine(expr, myTypeEvalContext) -> AwaitableType.COROUTINE
           else -> return
         }
         // no need to check whether await or yield from is missed, because it's PyCallExpression already, not PyPrefixExpression
-        val functionName = getCalledCoroutineName(expr,
-                                                                                                                                      resolveContext)
-                           ?: return
+        val functionName = getCalledCoroutineName(expr, resolveContext) ?: return
         registerProblem(node, PyPsiBundle.message("INSP.NAME.coroutine.is.not.awaited", functionName),
-                        PyAddAwaitCallForCoroutineFix(
-                          awaitableType))
+                        PyAddAwaitCallForCoroutineFix(awaitableType))
       }
     }
 
@@ -71,7 +75,11 @@ class PyAsyncCallInspection : PyInspection() {
       AWAITABLE, COROUTINE
     }
 
-    val ignoreReturnedType = listOf("asyncio.tasks.Task")
+    val ignoreReturnedType = listOf(
+      "asyncio.tasks.Task",
+      "asyncio.Task",
+      "_asyncio.Task"
+    )
     val ignoreBuiltinFunctions = listOf("asyncio.events.AbstractEventLoop.run_in_executor",
                                         "asyncio.tasks.ensure_future",
                                         "asyncio.ensure_future")
@@ -92,29 +100,28 @@ class PyAsyncCallInspection : PyInspection() {
     }
   }
 
-  private class PyAddAwaitCallForCoroutineFix(val type: AwaitableType) : LocalQuickFix {
+  private class PyAddAwaitCallForCoroutineFix(val type: AwaitableType) : PsiUpdateModCommandQuickFix() {
     override fun getFamilyName() = PyPsiBundle.message("QFIX.coroutine.is.not.awaited")
 
-    override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
-      val psiElement = descriptor.psiElement
-      if (psiElement is PyExpressionStatement) {
+    override fun applyFix(project: Project, element: PsiElement, updater: ModPsiUpdater) {
+      if (element is PyExpressionStatement) {
         val sb = StringBuilder()
         when (type) {
           AwaitableType.AWAITABLE -> {
             sb.append("""async def foo():
-                         |    """.trimMargin()).append(PyNames.AWAIT).append(" ").append(psiElement.text)
+                         |    """.trimMargin()).append(PyNames.AWAIT).append(" ").append(element.text)
           }
           AwaitableType.COROUTINE -> {
             sb.append("""def foo():
                          |    """.trimMargin()).append(PyNames.YIELD).append(" ").append(PyNames.FROM).append(" ")
-              .append(psiElement.text)
+              .append(element.text)
           }
         }
         val generator = PyElementGenerator.getInstance(project)
-        val function = generator.createFromText(LanguageLevel.forElement(psiElement), PyFunction::class.java, sb.toString())
+        val function = generator.createFromText(LanguageLevel.forElement(element), PyFunction::class.java, sb.toString())
         val awaitedStatement = function.statementList.statements.firstOrNull()
         if (awaitedStatement != null) {
-          PyReplaceExpressionUtil.replaceExpression(psiElement, awaitedStatement)
+          PyReplaceExpressionUtil.replaceExpression(element, awaitedStatement)
         }
       }
     }

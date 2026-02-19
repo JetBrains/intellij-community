@@ -1,7 +1,6 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.repo;
 
-import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.VcsKey;
 import com.intellij.vcs.VcsRepositoryInitializer;
@@ -11,20 +10,18 @@ import git4idea.commands.GitCommand;
 import git4idea.commands.GitLineHandler;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.File;
+import java.nio.file.Path;
 
 public class GitRepositoryInitializer implements VcsRepositoryInitializer {
 
   @Override
-  public void initRepository(@NotNull File rootDir) throws VcsException {
-    // TODO remove the fake project instance when GitHandler knows how to run without project
-    GitLineHandler handler = new GitLineHandler(ProjectManager.getInstance().getDefaultProject(), rootDir, GitCommand.INIT);
+  public void initRepository(@NotNull Path rootDir) throws VcsException {
+    GitLineHandler handler = new GitLineHandler(null, rootDir, GitCommand.INIT);
     Git.getInstance().runCommand(handler).throwOnError();
   }
 
-  @NotNull
   @Override
-  public VcsKey getSupportedVcs() {
+  public @NotNull VcsKey getSupportedVcs() {
     return GitVcs.getKey();
   }
 }

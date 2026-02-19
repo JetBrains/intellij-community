@@ -15,7 +15,13 @@
  */
 package com.intellij.execution.testframework.sm.runner;
 
-import com.intellij.execution.testframework.sm.runner.events.*;
+import com.intellij.execution.testframework.sm.runner.events.TestFailedEvent;
+import com.intellij.execution.testframework.sm.runner.events.TestFinishedEvent;
+import com.intellij.execution.testframework.sm.runner.events.TestIgnoredEvent;
+import com.intellij.execution.testframework.sm.runner.events.TestOutputEvent;
+import com.intellij.execution.testframework.sm.runner.events.TestStartedEvent;
+import com.intellij.execution.testframework.sm.runner.events.TestSuiteFinishedEvent;
+import com.intellij.execution.testframework.sm.runner.events.TestSuiteStartedEvent;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
@@ -108,10 +114,6 @@ public class MockGeneralTestEventsProcessorAdapter extends GeneralTestEventsProc
 
   @Override
   public void addEventsListener(@NotNull SMTRunnerEventsListener listener) {
-  }
-
-  @Override
-  public void onFinishTesting() {
   }
 
   @Override

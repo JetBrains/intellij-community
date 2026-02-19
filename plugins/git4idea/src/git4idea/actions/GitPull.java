@@ -1,25 +1,11 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.actions;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.containers.ContainerUtil;
+import git4idea.GitOperationsCollector;
 import git4idea.GitRemoteBranch;
 import git4idea.GitUtil;
 import git4idea.branch.GitBranchPair;
@@ -43,47 +29,47 @@ import java.util.Map;
 import java.util.Set;
 import java.util.function.Supplier;
 
-import static git4idea.commands.GitImpl.REBASE_CONFIG_PARAMS;
+import static git4idea.GitNotificationIdsHolder.PULL_FAILED;
 import static java.util.Collections.singletonList;
 
-public class GitPull extends GitMergeAction {
+final class GitPull extends GitMergeAction<GitPullOption> {
   private static final Logger LOG = Logger.getInstance(GitPull.class);
-  @NonNls private static final String INTERACTIVE = "interactive";
+  private static final @NonNls String INTERACTIVE = "interactive";
 
   @Override
-  @NotNull
-  protected String getActionName() {
+  protected @NotNull String getActionName() {
     return GitBundle.message("pull.action.name");
   }
 
   @Override
-  protected DialogState displayDialog(@NotNull Project project, @NotNull List<VirtualFile> gitRoots,
-                                      @NotNull VirtualFile defaultRoot) {
+  protected DialogState<GitPullOption> displayDialog(@NotNull Project project, @NotNull List<VirtualFile> gitRoots,
+                                                      @NotNull VirtualFile defaultRoot) {
     final GitPullDialog dialog = new GitPullDialog(project, gitRoots, defaultRoot);
     if (!dialog.showAndGet()) {
       return null;
     }
 
-    GitRepositoryManager repositoryManager = GitUtil.getRepositoryManager(project);
-    GitRepository repository = repositoryManager.getRepositoryForRootQuick(dialog.gitRoot());
-    assert repository != null : "Repository can't be null for root " + dialog.gitRoot();
+    GitRepository repository = dialog.getSelectedRepository();
+    if (repository != null) {
+      GitOperationsCollector.logPullFromDialog(project, repository, dialog.getSelectedBranch(), dialog.getSelectedOptions());
+    }
 
-    return new DialogState(dialog.gitRoot(),
-                           GitBundle.message("pulling.title", dialog.getSelectedRemote().getName()),
-                           getHandlerProvider(project, dialog),
-                           dialog.getSelectedBranch(),
-                           dialog.isCommitAfterMerge(),
-                           ContainerUtil.map(dialog.getSelectedOptions(), option -> option.getOption()));
+    return new DialogState<>(dialog.gitRoot(),
+                             GitBundle.message("pulling.title", dialog.getSelectedRemote().getName()),
+                             getHandlerProvider(project, dialog),
+                             dialog.getSelectedBranch(),
+                             dialog.isCommitAfterMerge(),
+                             dialog.getSelectedOptions());
   }
 
   @Override
   protected String getNotificationErrorDisplayId() {
-    return "git.pull.failed";
+    return PULL_FAILED;
   }
 
   @Override
-  protected void perform(@NotNull DialogState dialogState, @NotNull Project project) {
-    if (!dialogState.selectedOptions.contains(GitPullOption.REBASE.getOption())) {
+  protected void perform(@NotNull DialogState<GitPullOption> dialogState, @NotNull Project project) {
+    if (!dialogState.selectedOptions.contains(GitPullOption.REBASE)) {
       super.perform(dialogState, project);
     }
     else {
@@ -91,7 +77,7 @@ public class GitPull extends GitMergeAction {
     }
   }
 
-  private static void performRebase(@NotNull Project project, DialogState dialogState) {
+  private static void performRebase(@NotNull Project project, @NotNull DialogState<GitPullOption> dialogState) {
     VirtualFile selectedRoot = dialogState.selectedRoot;
     GitRemoteBranch selectedBranch = ((GitRemoteBranch)dialogState.selectedBranch);
 
@@ -108,12 +94,11 @@ public class GitPull extends GitMergeAction {
       return;
     }
 
-    new GitUpdateExecutionProcess(project,
-                                  singletonList(repository),
-                                  Map.of(repository, new GitBranchPair(repository.getCurrentBranch(), selectedBranch)),
-                                  UpdateMethod.REBASE,
-                                  false)
-      .execute();
+    GitUpdateExecutionProcess.launchUpdate(project,
+                                           singletonList(repository),
+                                           Map.of(repository, new GitBranchPair(repository.getCurrentBranch(), selectedBranch)),
+                                           UpdateMethod.REBASE,
+                                           false);
   }
 
   @Override
@@ -128,8 +113,7 @@ public class GitPull extends GitMergeAction {
     return INTERACTIVE.equals(value);
   }
 
-  @NotNull
-  protected Supplier<GitLineHandler> getHandlerProvider(Project project, GitPullDialog dialog) {
+  @NotNull Supplier<GitLineHandler> getHandlerProvider(Project project, GitPullDialog dialog) {
     GitRemote remote = dialog.getSelectedRemote();
     String remoteName = remote.getName();
 
@@ -140,7 +124,7 @@ public class GitPull extends GitMergeAction {
     return () -> {
       final List<String> urls = remote.getUrls();
 
-      GitLineHandler h = new GitLineHandler(project, root, GitCommand.PULL, REBASE_CONFIG_PARAMS);
+      GitLineHandler h = new GitLineHandler(project, root, GitCommand.PULL);
       h.setUrls(urls);
       h.addParameters("--no-stat");
 

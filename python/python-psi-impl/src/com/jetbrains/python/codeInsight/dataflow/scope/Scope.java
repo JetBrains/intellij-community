@@ -20,26 +20,36 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNamedElement;
 import com.jetbrains.python.psi.PyImportedNameDefiner;
 import com.jetbrains.python.psi.PyTargetExpression;
+import com.jetbrains.python.psi.types.TypeEvalContext;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.Set;
 
 public interface Scope {
   /*
    * @return defined scope local/instance/class variables and parameters, using reaching defs
+   *
+   * it uses obsolete dfa analysis under the hood for pretty unclear reasons
    */
   @Nullable
-  ScopeVariable getDeclaredVariable(@NotNull PsiElement anchorElement, @NotNull String name) throws DFALimitExceededException;
+  @Deprecated
+  @ApiStatus.Internal
+  ScopeVariable getDeclaredVariable(@NotNull PsiElement anchorElement,
+                                    @NotNull String name,
+                                    @NotNull TypeEvalContext typeEvalContext) throws DFALimitExceededException;
 
   boolean hasGlobals();
+
   boolean isGlobal(String name);
 
   boolean hasNonLocals();
+
   boolean isNonlocal(String name);
 
-  boolean hasNestedScopes();
   boolean containsDeclaration(String name);
 
   @NotNull
@@ -53,4 +63,8 @@ public interface Scope {
 
   @NotNull
   Collection<PyTargetExpression> getTargetExpressions();
+
+  @ApiStatus.Experimental
+  @NotNull
+  Set<String> getGlobals();
 }

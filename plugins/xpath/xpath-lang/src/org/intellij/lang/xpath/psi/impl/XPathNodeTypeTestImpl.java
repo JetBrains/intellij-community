@@ -31,8 +31,7 @@ public class XPathNodeTypeTestImpl extends XPathFunctionCallImpl implements XPat
     }
 
     @Override
-    @NotNull
-    public XPathType getType() {
+    public @NotNull XPathType getType() {
         return XPathType.NODESET;
     }
 
@@ -42,14 +41,12 @@ public class XPathNodeTypeTestImpl extends XPathFunctionCallImpl implements XPat
     }
 
     @Override
-    @Nullable
-    protected ASTNode getPrefixNode() {
+    protected @Nullable ASTNode getPrefixNode() {
         return null;
     }
 
     @Override
-    @Nullable
-    protected ASTNode getNameNode() {
+    protected @Nullable ASTNode getNameNode() {
         return getNode().findChildByType(XPathTokenTypes.NODE_TYPE);
     }
 

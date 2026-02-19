@@ -1,14 +1,13 @@
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.util;
 
-import com.intellij.codeInsight.lookup.CommaTailType;
+import com.intellij.application.options.CodeStyle;
 import com.intellij.codeInsight.TailType;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
+import org.jetbrains.annotations.NotNull;
 
-/**
- * @author Sergey Evdokimov
- */
 public class FieldInitializerTailTypes extends TailType {
 
   public static final TailType EQ_CLOSURE = new FieldInitializerTailTypes("{}", 1);
@@ -25,8 +24,8 @@ public class FieldInitializerTailTypes extends TailType {
   }
 
   @Override
-  public int processTail(Editor editor, int tailOffset) {
-    CommonCodeStyleSettings styleSettings = CommonCodeStyleSettings.getLocalCodeStyleSettings(editor, tailOffset);
+  public int processTail(@NotNull Editor editor, int tailOffset) {
+    CommonCodeStyleSettings styleSettings = CodeStyle.getLocalLanguageSettings(editor, tailOffset);
     Document document = editor.getDocument();
     CharSequence chars = document.getCharsSequence();
     int textLength = chars.length();

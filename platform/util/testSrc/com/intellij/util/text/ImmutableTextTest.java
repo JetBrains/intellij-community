@@ -2,8 +2,9 @@
 package com.intellij.util.text;
 
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.testFramework.PlatformTestUtil;
+import com.intellij.testFramework.PerformanceUnitTest;
 import com.intellij.testFramework.UsefulTestCase;
+import com.intellij.tools.ide.metrics.benchmark.Benchmark;
 
 public class ImmutableTextTest extends UsefulTestCase {
 
@@ -20,22 +21,23 @@ public class ImmutableTextTest extends UsefulTestCase {
     assertBalanced(xabc.myNode);
   }
 
+  @PerformanceUnitTest
   public void testDeleteAllPerformance() {
     ImmutableText original = ImmutableText.valueOf(StringUtil.repeat("abcdefghij", 1_900_000));
 
-    PlatformTestUtil.startPerformanceTest("Deletion of all contents must be fast", 100, () -> {
+    Benchmark.newBenchmark("Deletion of all contents must be fast", () -> {
       for (int iter = 0; iter < 100000; iter++) {
         ImmutableText another = original.delete(0, original.length());
         assertEquals(0, another.length());
         assertEquals("", another.toString());
       }
-    }).assertTiming();
+    }).start();
   }
 
-  private static void assertBalanced(ImmutableText.Node node) {
+  private static void assertBalanced(CharSequence node) {
     if (node instanceof ImmutableText.CompositeNode) {
-      ImmutableText.Node head = ((ImmutableText.CompositeNode)node).head;
-      ImmutableText.Node tail = ((ImmutableText.CompositeNode)node).tail;
+      CharSequence head = ((ImmutableText.CompositeNode)node).head;
+      CharSequence tail = ((ImmutableText.CompositeNode)node).tail;
       int headLength = head.length();
       int tailLength = tail.length();
       assertTrue("unbalanced: head " + headLength + ", tail " + tailLength,
@@ -43,5 +45,11 @@ public class ImmutableTextTest extends UsefulTestCase {
       assertBalanced(head);
       assertBalanced(tail);
     }
+  }
+
+  public void testEquals() {
+    ImmutableText i1 = ImmutableText.valueOf("anything");
+    ImmutableText i2 = ImmutableText.valueOf("");
+    assertFalse(i1.equals(i2));
   }
 }

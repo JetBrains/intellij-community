@@ -1,4 +1,4 @@
-from .importsForTypeAnnotations1_import import Foo
+from importsForTypeAnnotations1_import import Foo
 
 
 class Bar(Foo):

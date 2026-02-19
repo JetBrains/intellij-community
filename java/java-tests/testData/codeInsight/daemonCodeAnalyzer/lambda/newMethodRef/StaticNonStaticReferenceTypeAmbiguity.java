@@ -10,6 +10,6 @@ class Test {
   static void m(Test t, Object s) {}
 
   static void test() {
-    I i = Test::<error descr="Cannot resolve method 'm'">m</error>;
+    I i = Test::<error descr="Reference to 'm' is ambiguous, both 'm(String)' and 'm(Test, String)' match">m</error>;
   }
 }

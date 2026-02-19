@@ -1,19 +1,21 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.light
 
-import com.intellij.ide.FrameStateListener
 import com.intellij.ide.lightEdit.LightEditService
 import com.intellij.ide.lightEdit.LightEditorInfo
 import com.intellij.ide.lightEdit.LightEditorListener
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.ApplicationActivationListener
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.components.ServiceManager
+import com.intellij.openapi.components.Service
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vcs.VcsException
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.vfs.newvfs.BulkFileListener
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
+import com.intellij.openapi.wm.IdeFrame
 import com.intellij.util.EventDispatcher
 import com.intellij.vcs.log.BaseSingleTaskController
 import com.intellij.vcs.log.runInEdt
@@ -28,11 +30,13 @@ import git4idea.util.lastInstance
 import git4idea.util.toShortenedLogString
 import git4idea.util.without
 import org.jetbrains.annotations.NonNls
-import java.util.*
+import java.util.EventListener
 
 private val LOG = Logger.getInstance("#git4idea.light.LightGitTracker")
 
-class LightGitTracker : Disposable {
+@Service
+internal class LightGitTracker : Disposable {
+  private val disposableFlag = Disposer.newCheckedDisposable()
   private val lightEditService = LightEditService.getInstance()
   private val lightEditorManager = lightEditService.editorManager
   private val eventDispatcher = EventDispatcher.create(LightGitTrackerListener::class.java)
@@ -56,17 +60,18 @@ class LightGitTracker : Disposable {
 
   init {
     lightEditorManager.addListener(listener, this)
-    ApplicationManager.getApplication().messageBus.connect(this).subscribe(FrameStateListener.TOPIC,
+    ApplicationManager.getApplication().messageBus.connect(this).subscribe(ApplicationActivationListener.TOPIC,
                                                                            MyFrameStateListener())
     ApplicationManager.getApplication().messageBus.connect(this).subscribe(VirtualFileManager.VFS_CHANGES,
                                                                            MyBulkFileListener())
 
     highlighterManager = LightGitEditorHighlighterManager(this)
 
+    Disposer.register(this, disposableFlag)
+
     singleTaskController.request(Request.CheckGit)
-    runInEdt(this) {
-      singleTaskController.sendRequests(locationRequest(lightEditService.selectedFile),
-                                        statusRequest(lightEditorManager.openFiles))
+    runInEdt(disposableFlag) {
+      singleTaskController.sendRequests(locationRequest(lightEditService.getSelectedFile()), statusRequest(lightEditorManager.openFiles))
     }
   }
 
@@ -103,7 +108,7 @@ class LightGitTracker : Disposable {
 
   private fun checkGit() {
     try {
-      val version = GitExecutableManager.getInstance().identifyVersion(gitExecutable)
+      val version = GitExecutableManager.getInstance().identifyVersion(null, gitExecutable)
       hasGit = version.isSupported
     }
     catch (e: GitVersionIdentificationException) {
@@ -146,10 +151,10 @@ class LightGitTracker : Disposable {
     }
   }
 
-  private inner class MyFrameStateListener : FrameStateListener {
-    override fun onFrameActivated() {
+  private inner class MyFrameStateListener : ApplicationActivationListener {
+    override fun applicationActivated(ideFrame: IdeFrame) {
       singleTaskController.sendRequests(Request.CheckGit,
-                                        locationRequest(lightEditService.selectedFile),
+                                        locationRequest(lightEditService.getSelectedFile()),
                                         statusRequest(lightEditorManager.openFiles))
     }
   }
@@ -162,7 +167,7 @@ class LightGitTracker : Disposable {
 
       val selectedFile = editorInfo?.file
       if (!singleTaskController.sendRequests(locationRequest(selectedFile), statusRequest(listOf(selectedFile)))) {
-        runInEdt(this@LightGitTracker) { eventDispatcher.multicaster.update() }
+        runInEdt(disposableFlag) { eventDispatcher.multicaster.update() }
       }
     }
 
@@ -172,7 +177,7 @@ class LightGitTracker : Disposable {
   }
 
   private inner class MySingleTaskController :
-    BaseSingleTaskController<Request, StateUpdater>("light.tracker", this::updateCurrentState, this) {
+    BaseSingleTaskController<Request, StateUpdater>("light.tracker", this::updateCurrentState, disposableFlag) {
     override fun process(requests: List<Request>, previousResult: StateUpdater?): StateUpdater {
       if (requests.contains(Request.CheckGit)) {
         checkGit()
@@ -180,7 +185,7 @@ class LightGitTracker : Disposable {
       if (!hasGit) return StateUpdater.Clear
 
       val locationFile = requests.lastInstance(Request.Location::class.java)?.file
-      val files = requests.filterIsInstance(Request.Status::class.java).flatMapTo(mutableSetOf()) { it.files }
+      val files = requests.filterIsInstance<Request.Status>().flatMapTo(mutableSetOf()) { it.files }
 
       val location: String? = if (locationFile != null) {
         try {
@@ -223,9 +228,7 @@ class LightGitTracker : Disposable {
   }
 
   private sealed class StateUpdater(val state: State) {
-    object Clear : StateUpdater(State.Blank) {
-      override fun toString(): @NonNls String = "Clear"
-    }
+    data object Clear : StateUpdater(State.Blank)
 
     class Update(s: State, val updateLocation: Boolean) : StateUpdater(s) {
       override fun toString(): @NonNls String {
@@ -248,14 +251,12 @@ class LightGitTracker : Disposable {
       }
     }
 
-    object CheckGit : Request() {
-      override fun toString(): @NonNls String = "CheckGit"
-    }
+    data object CheckGit : Request()
   }
 
   companion object {
     fun getInstance(): LightGitTracker {
-      return ServiceManager.getService(LightGitTracker::class.java)
+      return ApplicationManager.getApplication().getService(LightGitTracker::class.java)
     }
   }
 }

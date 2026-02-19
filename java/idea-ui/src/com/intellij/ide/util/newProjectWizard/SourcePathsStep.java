@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.util.newProjectWizard;
 
 import com.intellij.CommonBundle;
@@ -17,6 +17,7 @@ import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.MultiLineLabelUI;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
@@ -27,21 +28,38 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.FieldPanel;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.StartupUiUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.BorderFactory;
+import javax.swing.ButtonGroup;
+import javax.swing.Icon;
+import javax.swing.JButton;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JRadioButton;
+import javax.swing.JTextField;
 import javax.swing.event.DocumentEvent;
-import java.awt.*;
+import java.awt.CardLayout;
+import java.awt.Font;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
+import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.ItemEvent;
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
-import java.util.*;
+import java.util.Objects;
 
 /**
  * @author Eugene Zhuravlev
@@ -51,8 +69,8 @@ public class SourcePathsStep extends AbstractStepWithProgress<List<JavaModuleSou
   private static final Logger LOG = Logger.getInstance(SourcePathsStep.class);
 
   private String myCurrentMode;
-  @NonNls private static final String CREATE_SOURCE_PANEL = "create_source";
-  @NonNls private static final String CHOOSE_SOURCE_PANEL = "choose_source";
+  private static final @NonNls String CREATE_SOURCE_PANEL = "create_source";
+  private static final @NonNls String CHOOSE_SOURCE_PANEL = "choose_source";
 
   private final SourcePathsBuilder myBuilder;
   private final Icon myIcon;
@@ -97,8 +115,9 @@ public class SourcePathsStep extends AbstractStepWithProgress<List<JavaModuleSou
     final JLabel srcPathLabel = new JLabel(JavaUiBundle.message("prompt.enter.relative.path.to.module.content.root", File.separator));
     panel.add(srcPathLabel, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL,
                                                    JBUI.insets(8, 30, 0, 0), 0, 0));
-    final FileChooserDescriptor chooserDescriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor();
-    chooserDescriptor.withTreeRootVisible(true);
+    var chooserDescriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor()
+      .withTitle(JavaUiBundle.message("prompt.select.source.directory"))
+      .withTreeRootVisible(true);
     final FieldPanel fieldPanel = createFieldPanel(myTfSourceDirectoryName, null, new BrowsePathListener(myTfSourceDirectoryName, chooserDescriptor));
     panel.add(fieldPanel, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL,
                                                  JBUI.insets(8, 30, 0, 10), 0, 0));
@@ -268,8 +287,7 @@ public class SourcePathsStep extends AbstractStepWithProgress<List<JavaModuleSou
     return true;
   }
 
-  @Nullable
-  private String getSourceDirectoryPath() {
+  private @Nullable String getSourceDirectoryPath() {
     final String contentEntryPath = getContentRootPath();
     if (contentEntryPath != null) {
       final String dirName = myTfSourceDirectoryName.getText().trim().replace(File.separatorChar, '/');
@@ -285,9 +303,10 @@ public class SourcePathsStep extends AbstractStepWithProgress<List<JavaModuleSou
 
   @Override
   protected void onFinished(final List<JavaModuleSourceRoot> foundPaths, final boolean canceled) {
-    if (!foundPaths.isEmpty()) {
+    List<JavaModuleSourceRoot> paths = ContainerUtil.notNullize(foundPaths);
+    if (!paths.isEmpty()) {
       myCurrentMode = CHOOSE_SOURCE_PANEL;
-      mySourcePathsChooser.setElements(foundPaths, true);
+      mySourcePathsChooser.setElements(paths, true);
     }
     else {
       myCurrentMode = CREATE_SOURCE_PANEL;
@@ -295,7 +314,7 @@ public class SourcePathsStep extends AbstractStepWithProgress<List<JavaModuleSou
     }
     updateStepUI(canceled ? null : getContentRootPath());
     if (CHOOSE_SOURCE_PANEL.equals(myCurrentMode)) {
-      mySourcePathsChooser.selectElements(foundPaths.subList(0, 1));
+      mySourcePathsChooser.selectElements(paths.subList(0, 1));
     }
     else if (CREATE_SOURCE_PANEL.equals(myCurrentMode)) {
       myTfSourceDirectoryName.selectAll();
@@ -318,16 +337,14 @@ public class SourcePathsStep extends AbstractStepWithProgress<List<JavaModuleSou
     return new ArrayList<>(calculateSourceRoots(getContentRootPath()));
   }
 
-  @NotNull
-  public static Collection<JavaModuleSourceRoot> calculateSourceRoots(final String contentRootPath) {
+  public static @NotNull Collection<JavaModuleSourceRoot> calculateSourceRoots(final String contentRootPath) {
     if (contentRootPath == null) {
       return Collections.emptyList();
     }
     return JavaSourceRootDetectionUtil.suggestRoots(new File(contentRootPath));
   }
 
-  @Nullable
-  private String getContentRootPath() {
+  private @Nullable String getContentRootPath() {
     return myBuilder.getContentEntryPath();
   }
 
@@ -337,18 +354,21 @@ public class SourcePathsStep extends AbstractStepWithProgress<List<JavaModuleSou
     return JavaUiBundle.message("progress.searching.for.sources", root != null? root.replace('/', File.separatorChar) : "") ;
   }
 
+  public static FieldPanel createFieldPanel(final JTextField field, final @NlsContexts.Label String labelText, final BrowseFilesListener browseButtonActionListener) {
+    final FieldPanel fieldPanel = new FieldPanel(field, labelText, null, browseButtonActionListener, null);
+    fieldPanel.getFieldLabel().setFont(StartupUiUtil.getLabelFont().deriveFont(Font.BOLD));
+    return fieldPanel;
+  }
+
   private class BrowsePathListener extends BrowseFilesListener {
-    private final FileChooserDescriptor myChooserDescriptor;
     private final JTextField myField;
 
     BrowsePathListener(JTextField textField, final FileChooserDescriptor chooserDescriptor) {
-      super(textField, JavaUiBundle.message("prompt.select.source.directory"), "", chooserDescriptor);
-      myChooserDescriptor = chooserDescriptor;
+      super(textField, chooserDescriptor);
       myField = textField;
     }
 
-    @Nullable
-    private VirtualFile getContentEntryDir() {
+    private @Nullable VirtualFile getContentEntryDir() {
       final String contentEntryPath = getContentRootPath();
       if (contentEntryPath != null) {
         return WriteAction

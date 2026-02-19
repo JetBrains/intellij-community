@@ -1,8 +1,9 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.plugins;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.PersistentStateComponent;
-import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.components.SettingsCategory;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.progress.PerformInBackgroundOption;
@@ -11,13 +12,14 @@ import org.jetbrains.annotations.NotNull;
 
 @State(
   name = "PluginManagerConfigurable",
-  storages = @Storage("plugin_ui.xml")
+  storages = @Storage("plugin_ui.xml"),
+  category = SettingsCategory.UI
 )
-public class PluginManagerUISettings implements PersistentStateComponent<PluginManagerUISettings>, PerformInBackgroundOption {
+public final class PluginManagerUISettings implements PersistentStateComponent<PluginManagerUISettings>, PerformInBackgroundOption {
   public boolean UPDATE_IN_BACKGROUND;
 
   public static PluginManagerUISettings getInstance() {
-    return ServiceManager.getService(PluginManagerUISettings.class);
+    return ApplicationManager.getApplication().getService(PluginManagerUISettings.class);
   }
 
   @Override

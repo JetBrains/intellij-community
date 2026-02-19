@@ -1,0 +1,2 @@
+// WITH_STDLIB
+val p: Int = run { 1 }

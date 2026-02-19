@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.uiDesigner.propertyInspector.properties;
 
@@ -6,13 +6,20 @@ import com.intellij.codeInsight.FileModificationService;
 import com.intellij.ide.util.PsiNavigationSupport;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiCodeBlock;
+import com.intellij.psi.PsiComment;
+import com.intellij.psi.PsiElementFactory;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.SmartPointerManager;
+import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.uiDesigner.FormEditingUtil;
@@ -30,17 +37,16 @@ import com.intellij.uiDesigner.radComponents.RadComponent;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.JCheckBox;
+import javax.swing.JComponent;
 import java.util.List;
 
-/**
- * @author yole
- */
+
 public class CustomCreateProperty extends Property<RadComponent, Boolean> {
   private static final Logger LOG = Logger.getInstance(CustomCreateProperty.class);
 
   public static CustomCreateProperty getInstance(Project project) {
-    return ServiceManager.getService(project, CustomCreateProperty.class);
+    return project.getService(CustomCreateProperty.class);
   }
 
   private final BooleanRenderer myRenderer = new BooleanRenderer();
@@ -71,8 +77,7 @@ public class CustomCreateProperty extends Property<RadComponent, Boolean> {
   }
 
   @Override
-  @NotNull
-  public PropertyRenderer<Boolean> getRenderer() {
+  public @NotNull PropertyRenderer<Boolean> getRenderer() {
    return myRenderer;
   }
 

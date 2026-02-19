@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.intentions.aliasImport;
 
 import com.intellij.codeInsight.lookup.LookupFocusDegree;
@@ -13,7 +13,13 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiMember;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiNamedElement;
+import com.intellij.psi.PsiReference;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.MethodReferencesSearch;
@@ -40,19 +46,22 @@ import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatem
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyPropertyUtils;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Objects;
 
 /**
  * @author Max Medvedev
  */
-public class GrAliasImportIntention extends Intention {
+public final class GrAliasImportIntention extends Intention {
 
   @Override
   protected void processIntention(@NotNull PsiElement element, @NotNull Project project, Editor editor) throws IncorrectOperationException {
     final GrImportStatement context;
     final PsiMember resolved;
-    if (element instanceof GrReferenceExpression) {
-      GrReferenceExpression ref = (GrReferenceExpression)element;
+    if (element instanceof GrReferenceExpression ref) {
       GroovyResolveResult result = ref.advancedResolve();
       context = (GrImportStatement)result.getCurrentFileResolveContext();
       assert context != null;
@@ -180,8 +189,7 @@ public class GrAliasImportIntention extends Intention {
 
         if (usageElement.getParent() instanceof GrImportStatement) return;
 
-        if (usageElement instanceof GrReferenceElement) {
-          final GrReferenceElement ref = (GrReferenceElement)usageElement;
+        if (usageElement instanceof GrReferenceElement ref) {
           final PsiElement qualifier = ref.getQualifier();
 
           if (qualifier == null) {
@@ -261,9 +269,8 @@ public class GrAliasImportIntention extends Intention {
   }
 
 
-  @NotNull
   @Override
-  protected PsiElementPredicate getElementPredicate() {
+  protected @NotNull PsiElementPredicate getElementPredicate() {
     return AliasImportIntentionPredicate.INSTANCE;
   }
 }

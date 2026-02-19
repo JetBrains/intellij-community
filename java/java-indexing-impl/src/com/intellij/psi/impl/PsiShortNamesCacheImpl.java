@@ -1,10 +1,15 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl;
 
 import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiMember;
+import com.intellij.psi.PsiMethod;
 import com.intellij.psi.impl.java.stubs.index.JavaFieldNameIndex;
 import com.intellij.psi.impl.java.stubs.index.JavaMethodNameIndex;
 import com.intellij.psi.impl.java.stubs.index.JavaShortClassNameIndex;
@@ -18,19 +23,24 @@ import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.CommonProcessors;
 import com.intellij.util.Processor;
 import com.intellij.util.SmartList;
+import com.intellij.util.containers.CollectionFactory;
+import com.intellij.util.containers.HashingStrategy;
 import com.intellij.util.indexing.IdFilter;
-import gnu.trove.THashMap;
-import gnu.trove.THashSet;
-import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
-public class PsiShortNamesCacheImpl extends PsiShortNamesCache {
-  private final Project myProject;
+public final class PsiShortNamesCacheImpl extends PsiShortNamesCache {
+  private final @NotNull Project myProject;
 
-  public PsiShortNamesCacheImpl(Project project) {
+  public PsiShortNamesCacheImpl(@NotNull Project project) {
     myProject = project;
   }
 
@@ -46,11 +56,11 @@ public class PsiShortNamesCacheImpl extends PsiShortNamesCache {
 
   @Override
   public @NotNull PsiClass @NotNull [] getClassesByName(@NotNull String name, @NotNull GlobalSearchScope scope) {
-    Collection<PsiClass> classes = JavaShortClassNameIndex.getInstance().get(name, myProject, scope);
+    Collection<PsiClass> classes = JavaShortClassNameIndex.getInstance().getClasses(name, myProject, scope);
     if (classes.isEmpty()) return PsiClass.EMPTY_ARRAY;
 
     List<PsiClass> result = new ArrayList<>(classes.size());
-    Map<String, List<PsiClass>> uniqueQName2Classes = new THashMap<>(classes.size());
+    Map<String, List<PsiClass>> uniqueQName2Classes = new HashMap<>(classes.size());
     Set<PsiClass> hiddenClassesToRemove = null;
 
     OuterLoop:
@@ -72,7 +82,9 @@ public class PsiShortNamesCacheImpl extends PsiShortNamesCache {
             }
             else if (res < 0) {
               // aClass hides previousClass in classpath, so remove it from list later
-              if (hiddenClassesToRemove == null) hiddenClassesToRemove = new THashSet<>();
+              if (hiddenClassesToRemove == null) {
+                hiddenClassesToRemove = new HashSet<>();
+              }
               hiddenClassesToRemove.add(previousClass);
               qNamedClasses.add(aClass);
             }
@@ -123,7 +135,7 @@ public class PsiShortNamesCacheImpl extends PsiShortNamesCache {
 
   @Override
   public @NotNull PsiMethod @NotNull [] getMethodsByName(@NotNull String name, @NotNull GlobalSearchScope scope) {
-    Collection<PsiMethod> methods = JavaMethodNameIndex.getInstance().get(name, myProject, scope);
+    Collection<PsiMethod> methods = JavaMethodNameIndex.getInstance().getMethods(name, myProject, scope);
     return filterMembers(methods, scope, PsiMethod.EMPTY_ARRAY);
   }
 
@@ -165,7 +177,7 @@ public class PsiShortNamesCacheImpl extends PsiShortNamesCache {
 
   @Override
   public @NotNull PsiField @NotNull [] getFieldsByName(@NotNull String name, @NotNull GlobalSearchScope scope) {
-    Collection<PsiField> fields = JavaFieldNameIndex.getInstance().get(name, myProject, scope);
+    Collection<PsiField> fields = JavaFieldNameIndex.getInstance().getFields(name, myProject, scope);
     return filterMembers(fields, scope, PsiField.EMPTY_ARRAY);
   }
 
@@ -207,9 +219,9 @@ public class PsiShortNamesCacheImpl extends PsiShortNamesCache {
     }
 
     PsiManager myManager = PsiManager.getInstance(myProject);
-    Set<PsiMember> set = new THashSet<>(members.size(), new TObjectHashingStrategy<>() {
+    Set<PsiMember> set = CollectionFactory.createCustomHashingStrategySet(new HashingStrategy<>() {
       @Override
-      public int computeHashCode(PsiMember member) {
+      public int hashCode(PsiMember member) {
         int code = 0;
         final PsiClass clazz = member.getContainingClass();
         if (clazz != null) {

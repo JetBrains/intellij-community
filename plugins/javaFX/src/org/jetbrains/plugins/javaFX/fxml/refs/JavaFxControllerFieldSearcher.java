@@ -1,11 +1,16 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.javaFX.fxml.refs;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiReference;
+import com.intellij.psi.XmlRecursiveElementVisitor;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiUtilCore;
@@ -19,12 +24,11 @@ import org.jetbrains.plugins.javaFX.indexing.JavaFxControllerClassIndex;
 
 import java.util.List;
 
-public class JavaFxControllerFieldSearcher implements QueryExecutor<PsiReference, ReferencesSearch.SearchParameters>{
+public final class JavaFxControllerFieldSearcher implements QueryExecutor<PsiReference, ReferencesSearch.SearchParameters>{
   @Override
-  public boolean execute(@NotNull final ReferencesSearch.SearchParameters queryParameters, @NotNull final Processor<? super PsiReference> consumer) {
+  public boolean execute(final @NotNull ReferencesSearch.SearchParameters queryParameters, final @NotNull Processor<? super PsiReference> consumer) {
     final PsiElement elementToSearch = queryParameters.getElementToSearch();
-    if (elementToSearch instanceof PsiField) {
-      final PsiField field = (PsiField)elementToSearch;
+    if (elementToSearch instanceof PsiField field) {
       final PsiClass containingClass = ReadAction.compute(() -> field.getContainingClass());
       if (containingClass != null) {
         final String qualifiedName = ReadAction.compute(() -> containingClass.getQualifiedName());
@@ -40,14 +44,13 @@ public class JavaFxControllerFieldSearcher implements QueryExecutor<PsiReference
               if (searchScope.contains(virtualFile)) {
                 file.accept(new XmlRecursiveElementVisitor() {
                   @Override
-                  public void visitXmlAttributeValue(final XmlAttributeValue value) {
+                  public void visitXmlAttributeValue(final @NotNull XmlAttributeValue value) {
                     final PsiReference reference = value.getReference();
                     if (reference != null) {
                       final PsiElement resolve = reference.resolve();
                       if (resolve instanceof XmlAttributeValue) {
                         final PsiElement parent = resolve.getParent();
-                        if (parent instanceof XmlAttribute) {
-                          final XmlAttribute attribute = (XmlAttribute)parent;
+                        if (parent instanceof XmlAttribute attribute) {
                           if (FxmlConstants.FX_ID.equals(attribute.getName()) && fieldName.equals(attribute.getValue())) {
                             consumer.process(reference);
                           }

@@ -1,4 +1,4 @@
-// "Rename reference" "true"
+// "Rename reference" "true-preview"
 class FooInterface {
   private int myInt;
 }

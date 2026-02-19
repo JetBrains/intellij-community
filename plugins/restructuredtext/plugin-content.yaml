@@ -1,0 +1,6 @@
+- name: lib/modules/intellij.restructuredtext.python.jar
+  contentModules:
+  - name: intellij.restructuredtext.python
+- name: lib/restructuredtext.jar
+  modules:
+  - name: intellij.restructuredtext

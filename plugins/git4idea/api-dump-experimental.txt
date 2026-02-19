@@ -1,0 +1,131 @@
+f:git4idea.annotate.GitAnnotationProvider
+- com.intellij.vcs.AnnotationProviderEx
+- com.intellij.vcs.CacheableAnnotationProvider
+- *:cache(com.intellij.openapi.vcs.FilePath,com.intellij.openapi.vcs.history.VcsRevisionNumber,git4idea.annotate.GitFileAnnotation):V
+- *:getCached(com.intellij.openapi.vcs.FilePath,com.intellij.openapi.vcs.history.VcsRevisionNumber,com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.vfs.VirtualFile):git4idea.annotate.GitFileAnnotation
+*:git4idea.annotate.GitAnnotationProvider$GitRawAnnotationProvider
+- sf:EP_NAME:com.intellij.openapi.extensions.ProjectExtensionPointName
+- a:annotate(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.vcs.FilePath,com.intellij.openapi.vcs.history.VcsRevisionNumber,com.intellij.openapi.vfs.VirtualFile):git4idea.annotate.GitFileAnnotation
+- annotate(com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.vcs.history.VcsFileRevision):git4idea.annotate.GitFileAnnotation
+- a:getId():java.lang.String
+- s:isDefault(java.lang.String):Z
+*:git4idea.changes.GitBranchComparisonResult
+- *sf:Companion:git4idea.changes.GitBranchComparisonResult$Companion
+- a:getBaseSha():java.lang.String
+- a:getChanges():java.util.List
+- a:getChangesByCommits():java.util.Map
+- a:getCommits():java.util.List
+- a:getHeadSha():java.lang.String
+- a:getMergeBaseSha():java.lang.String
+- a:getPatchesByChange():java.util.Map
+*f:git4idea.changes.GitBranchComparisonResult$Companion
+- f:create(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile,java.lang.String,java.lang.String,java.util.List,java.util.List):git4idea.changes.GitBranchComparisonResult
+f:git4idea.changes.GitBranchComparisonResultKt
+- *sf:createVcsChange(com.intellij.collaboration.util.RefComparisonChange,com.intellij.openapi.project.Project):com.intellij.openapi.vcs.changes.Change
+- *sf:findCumulativeChange(git4idea.changes.GitBranchComparisonResult,java.lang.String,java.lang.String):com.intellij.collaboration.util.RefComparisonChange
+- *sf:getDiffComputer(git4idea.changes.GitTextFilePatchWithHistory):com.intellij.diff.util.DiffUserDataKeysEx$DiffComputer
+*f:git4idea.changes.GitCommitShaWithPatches
+- <init>(java.lang.String,java.util.List,java.util.List):V
+- equals(java.lang.Object):Z
+- f:getParents():java.util.List
+- f:getPatches():java.util.List
+- f:getSha():java.lang.String
+- hashCode():I
+*:git4idea.changes.GitFileHistory
+- java.util.Comparator
+- a:compare(java.lang.String,java.lang.String):I
+- a:contains(java.lang.String,java.lang.String):Z
+- a:findFirstParent(java.lang.String):java.lang.String
+- a:findStartCommit():java.lang.String
+- a:getPatchesBetween(java.lang.String,java.lang.String):java.util.List
+*f:git4idea.changes.GitTextFilePatchWithHistory
+- *sf:Companion:git4idea.changes.GitTextFilePatchWithHistory$Companion
+- <init>(com.intellij.openapi.diff.impl.patch.TextFilePatch,Z,git4idea.changes.GitFileHistory):V
+- f:contains(java.lang.String,java.lang.String):Z
+- f:forcefullyMapLine(java.lang.String,I,com.intellij.diff.util.Side):java.lang.Integer
+- f:getFileHistory():git4idea.changes.GitFileHistory
+- f:getPatch():com.intellij.openapi.diff.impl.patch.TextFilePatch
+- f:isCumulative():Z
+- f:mapLine(java.lang.String,I,com.intellij.diff.util.Side):kotlin.Pair
+*f:git4idea.changes.GitTextFilePatchWithHistory$Companion
+*:git4idea.checkout.GitCheckoutListener
+- com.intellij.openapi.vcs.CheckoutProvider$Listener
+- *sf:Companion:git4idea.checkout.GitCheckoutListener$Companion
+- a:checkoutFailed(git4idea.commands.GitCommandResult):V
+- s:wrap(com.intellij.openapi.vcs.CheckoutProvider$Listener):git4idea.checkout.GitCheckoutListener
+*f:git4idea.checkout.GitCheckoutListener$Companion
+- f:wrap(com.intellij.openapi.vcs.CheckoutProvider$Listener):git4idea.checkout.GitCheckoutListener
+*f:git4idea.commit.GitMyRecentCommitsProvider
+- *sf:Companion:git4idea.commit.GitMyRecentCommitsProvider$Companion
+- <init>(com.intellij.openapi.project.Project,kotlinx.coroutines.CoroutineScope):V
+- f:getRecentCommits(com.intellij.openapi.vfs.VirtualFile,I,kotlin.coroutines.Continuation):java.lang.Object
+*f:git4idea.commit.GitMyRecentCommitsProvider$Companion
+- f:getInstance(com.intellij.openapi.project.Project):git4idea.commit.GitMyRecentCommitsProvider
+git4idea.push.GitPushListener
+- *:onCompleted(git4idea.repo.GitRepository,git4idea.push.GitPushRepoResult,java.util.Map):V
+f:git4idea.push.GitPushNotificationCustomizerKt
+- *sf:isSuccessful(git4idea.push.GitPushRepoResult):Z
+*f:git4idea.remote.hosting.GitCodeReviewUtils
+- sf:INSTANCE:git4idea.remote.hosting.GitCodeReviewUtils
+- f:fetch(git4idea.repo.GitRepository,git4idea.repo.GitRemote,java.lang.String,kotlin.coroutines.Continuation):java.lang.Object
+- f:testIsAncestor(git4idea.repo.GitRepository,java.lang.String,java.lang.String,kotlin.coroutines.Continuation):java.lang.Object
+- f:testRevisionsExist(git4idea.repo.GitRepository,java.util.List,kotlin.coroutines.Continuation):java.lang.Object
+*:git4idea.remote.hosting.HostedGitRepositoryMapping
+- a:getRemote():git4idea.remote.GitRemoteUrlCoordinates
+- a:getRepository():git4idea.remote.hosting.HostedRepositoryCoordinates
+*:git4idea.remote.hosting.HostedRepositoryCoordinates
+- a:getServerPath():com.intellij.collaboration.api.ServerPath
+- a:getWebURI():java.net.URI
+*a:git4idea.remote.hosting.http.HostedGitAuthenticationFailureManager
+- com.intellij.openapi.Disposable
+- <init>(kotlin.jvm.functions.Function0,kotlinx.coroutines.CoroutineScope):V
+- dispose():V
+- f:ignoreAccount(java.lang.String,com.intellij.collaboration.auth.Account):V
+- f:isAccountIgnored(java.lang.String,com.intellij.collaboration.auth.Account):Z
+*a:git4idea.remote.hosting.http.SilentHostedGitHttpAuthDataProvider
+- git4idea.remote.GitHttpAuthDataProvider
+- *sf:Companion:git4idea.remote.hosting.http.SilentHostedGitHttpAuthDataProvider$Companion
+- <init>():V
+- forgetPassword(com.intellij.openapi.project.Project,java.lang.String,com.intellij.util.AuthData):V
+- a:getAccountLogin(com.intellij.collaboration.auth.ServerAccount,java.lang.String,kotlin.coroutines.Continuation):java.lang.Object
+- a:getAccountManager():com.intellij.collaboration.auth.AccountManager
+- getAuthData(com.intellij.openapi.project.Project,java.lang.String):com.intellij.util.AuthData
+- getAuthData(com.intellij.openapi.project.Project,java.lang.String,java.lang.String):com.intellij.util.AuthData
+- a:getAuthFailureManager(com.intellij.openapi.project.Project):git4idea.remote.hosting.http.HostedGitAuthenticationFailureManager
+- a:getDefaultAccountHolder(com.intellij.openapi.project.Project):com.intellij.collaboration.auth.DefaultAccountHolder
+- a:getProviderId():java.lang.String
+- isSilent():Z
+*f:git4idea.remote.hosting.http.SilentHostedGitHttpAuthDataProvider$Companion
+- f:getAccountsWithTokens(com.intellij.collaboration.auth.AccountManager,git4idea.remote.hosting.http.HostedGitAuthenticationFailureManager,java.lang.String,kotlin.coroutines.Continuation):java.lang.Object
+*f:git4idea.repo.GitConfigurationCache
+- git4idea.repo.GitConfigurationCacheBase
+- *sf:Companion:git4idea.repo.GitConfigurationCache$Companion
+- <init>():V
+- sf:getInstance():git4idea.repo.GitConfigurationCache
+*f:git4idea.repo.GitConfigurationCache$Companion
+- f:getInstance():git4idea.repo.GitConfigurationCache
+*f:git4idea.repo.GitProjectConfigurationCache
+- git4idea.repo.GitConfigurationCacheBase
+- *sf:Companion:git4idea.repo.GitProjectConfigurationCache$Companion
+- <init>(com.intellij.openapi.project.Project):V
+- f:clearForRepo(git4idea.repo.GitRepository):V
+- sf:getInstance(com.intellij.openapi.project.Project):git4idea.repo.GitProjectConfigurationCache
+- f:getProject():com.intellij.openapi.project.Project
+- f:readRepositoryConfig(com.intellij.openapi.vfs.VirtualFile,java.lang.String):java.lang.String
+*f:git4idea.repo.GitProjectConfigurationCache$Companion
+- f:getInstance(com.intellij.openapi.project.Project):git4idea.repo.GitProjectConfigurationCache
+*f:git4idea.repo.GitProjectConfigurationCache$RepositoryConfigKey
+- git4idea.repo.GitRepositoryConfigKey
+- <init>(com.intellij.openapi.vfs.VirtualFile,java.lang.String):V
+- f:component1():com.intellij.openapi.vfs.VirtualFile
+- f:component2():java.lang.String
+- f:copy(com.intellij.openapi.vfs.VirtualFile,java.lang.String):git4idea.repo.GitProjectConfigurationCache$RepositoryConfigKey
+- bs:copy$default(git4idea.repo.GitProjectConfigurationCache$RepositoryConfigKey,com.intellij.openapi.vfs.VirtualFile,java.lang.String,I,java.lang.Object):git4idea.repo.GitProjectConfigurationCache$RepositoryConfigKey
+- equals(java.lang.Object):Z
+- f:getKey():java.lang.String
+- getRoot():com.intellij.openapi.vfs.VirtualFile
+- hashCode():I
+f:git4idea.ui.branch.GitCurrentBranchPresenter$Companion
+- *f:getPRESENTATION_UPDATED():com.intellij.util.messages.Topic
+*:git4idea.ui.branch.GitCurrentBranchPresenter$PresentationUpdatedListener
+- a:presentationUpdated():V

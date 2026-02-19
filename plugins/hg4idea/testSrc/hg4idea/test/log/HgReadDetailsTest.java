@@ -139,18 +139,10 @@ public class HgReadDetailsTest extends HgPlatformTest {
                                        @Nullable String before,
                                        @Nullable String after) {
     switch (type) {
-      case MODIFICATION:
-        sb.append("M ").append(after);
-        break;
-      case NEW:
-        sb.append("A ").append(after);
-        break;
-      case DELETED:
-        sb.append("D ").append(before);
-        break;
-      case MOVED:
-        sb.append("R ").append(before).append(" -> ").append(after);
-        break;
+      case MODIFICATION -> sb.append("M ").append(after);
+      case NEW -> sb.append("A ").append(after);
+      case DELETED -> sb.append("D ").append(before);
+      case MOVED -> sb.append("R ").append(before).append(" -> ").append(after);
     }
     sb.append("\n");
   }

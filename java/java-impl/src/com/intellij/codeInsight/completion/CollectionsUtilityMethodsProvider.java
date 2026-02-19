@@ -1,27 +1,41 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.lookup.AutoCompletionPolicy;
 import com.intellij.codeInsight.lookup.LookupElement;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiClassType;
+import com.intellij.psi.PsiConditionalExpression;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiImportList;
+import com.intellij.psi.PsiImportStaticStatement;
+import com.intellij.psi.PsiJavaFile;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiReferenceExpression;
+import com.intellij.psi.PsiReturnStatement;
+import com.intellij.psi.PsiType;
 import com.intellij.util.Consumer;
+import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import static com.intellij.psi.CommonClassNames.*;
+import static com.intellij.psi.CommonClassNames.JAVA_UTIL_COLLECTION;
+import static com.intellij.psi.CommonClassNames.JAVA_UTIL_COLLECTIONS;
+import static com.intellij.psi.CommonClassNames.JAVA_UTIL_LIST;
+import static com.intellij.psi.CommonClassNames.JAVA_UTIL_MAP;
+import static com.intellij.psi.CommonClassNames.JAVA_UTIL_SET;
+import static com.intellij.psi.CommonClassNames.JAVA_UTIL_SORTED_SET;
 
-/**
-* @author peter
-*/
 class CollectionsUtilityMethodsProvider {
   private final PsiElement myElement;
   private final PsiType myExpectedType;
   private final PsiType myDefaultType;
-  @NotNull private final Consumer<? super LookupElement> myResult;
+  private final @NotNull Consumer<? super LookupElement> myResult;
 
   CollectionsUtilityMethodsProvider(PsiElement position,
                                     PsiType expectedType,
-                                    PsiType defaultType, @NotNull final Consumer<? super LookupElement> result) {
+                                    PsiType defaultType, final @NotNull Consumer<? super LookupElement> result) {
     myResult = result;
     myElement = position;
     myExpectedType = expectedType;
@@ -32,9 +46,22 @@ class CollectionsUtilityMethodsProvider {
     final PsiElement parent = myElement.getParent();
     if (parent instanceof PsiReferenceExpression && ((PsiReferenceExpression)parent).getQualifierExpression() != null) return;
 
+    PsiJavaFile file = ObjectUtils.tryCast(parent.getContainingFile(), PsiJavaFile.class);
+    if (file == null) return;
     final PsiClass collectionsClass =
-        JavaPsiFacade.getInstance(myElement.getProject()).findClass(JAVA_UTIL_COLLECTIONS, myElement.getResolveScope());
+        JavaPsiFacade.getInstance(file.getProject()).findClass(JAVA_UTIL_COLLECTIONS, file.getResolveScope());
     if (collectionsClass == null) return;
+    PsiImportList importList = file.getImportList();
+    if (importList != null) {
+      for (PsiImportStaticStatement statement : importList.getImportStaticStatements()) {
+        PsiClass aClass = statement.resolveTargetClass();
+        if (aClass != null && file.getManager().areElementsEquivalent(aClass, collectionsClass)) {
+          // The Collections class is already statically imported;
+          // should be suggested anyway in JavaStaticMemberProcessor
+          return;
+        }
+      }
+    }
 
     final PsiElement pparent = parent.getParent();
     if (showAll ||
@@ -61,7 +88,7 @@ class CollectionsUtilityMethodsProvider {
   }
 
   private void addCollectionMethod(final String baseClassName,
-                                   @NonNls final String method, @NotNull final PsiClass collectionsClass) {
+                                   final @NonNls String method, final @NotNull PsiClass collectionsClass) {
     if (isClassType(myExpectedType, baseClassName) || isClassType(myExpectedType, JAVA_UTIL_COLLECTION)) {
       addMethodItem(myExpectedType, method, collectionsClass);
     } else if (isClassType(myDefaultType, baseClassName) || isClassType(myDefaultType, JAVA_UTIL_COLLECTION)) {

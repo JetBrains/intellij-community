@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.application.options;
 
 import com.intellij.ide.IdeBundle;
@@ -8,12 +8,22 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.ui.CollectionListModel;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
+import javax.swing.JList;
+import javax.swing.JPanel;
+import javax.swing.ListCellRenderer;
+import javax.swing.ListSelectionModel;
+import javax.swing.SwingConstants;
+import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.Component;
 import java.util.Collection;
 
+@ApiStatus.Internal
 public abstract class SchemesToImportPopup<T> {
   private final Component myParent;
 
@@ -40,12 +50,12 @@ public abstract class SchemesToImportPopup<T> {
   private void showList(JList list, Runnable selectAction) {
     JBPopupFactory.getInstance().createListPopupBuilder(list).
       setTitle(IdeBundle.message("popup.title.import.scheme")).
-      setItemChoosenCallback(selectAction).
+      setItemChosenCallback(selectAction).
       createPopup().
       showInCenterOf(myParent);
   }
 
-  private static class SchemesToImportListCellRenderer implements ListCellRenderer {
+  private static final class SchemesToImportListCellRenderer implements ListCellRenderer {
     private final JPanel myPanel = new JPanel(new BorderLayout());
     private final JLabel myNameLabel = new JLabel("", SwingConstants.LEFT);
 
@@ -56,7 +66,7 @@ public abstract class SchemesToImportPopup<T> {
     @Override
     public Component getListCellRendererComponent(@NotNull JList list, Object val, int i, boolean isSelected, boolean cellHasFocus) {
       Scheme c = (Scheme)val;
-      myNameLabel.setText(c.getName());
+      myNameLabel.setText(c.getDisplayName());
 
       updateColors(isSelected);
       return myPanel;
@@ -64,7 +74,7 @@ public abstract class SchemesToImportPopup<T> {
 
     private void updateColors(boolean isSelected) {
       Color bg = isSelected ? UIUtil.getTableSelectionBackground(true) : UIUtil.getTableBackground();
-      Color fg = isSelected ? UIUtil.getTableSelectionForeground() : UIUtil.getTableForeground();
+      Color fg = isSelected ? UIUtil.getTableSelectionForeground(true) : UIUtil.getTableForeground();
 
       setColors(bg, fg, myPanel, myNameLabel);
     }
@@ -77,5 +87,5 @@ public abstract class SchemesToImportPopup<T> {
     }
   }
 
-  abstract protected void onSchemeSelected(T scheme);
+  protected abstract void onSchemeSelected(T scheme);
 }

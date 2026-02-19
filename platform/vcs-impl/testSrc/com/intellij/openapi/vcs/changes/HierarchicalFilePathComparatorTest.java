@@ -4,12 +4,19 @@ package com.intellij.openapi.vcs.changes;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.LocalFilePath;
+import com.intellij.testFramework.PerformanceUnitTest;
 import com.intellij.testFramework.PlatformTestUtil;
+import com.intellij.tools.ide.metrics.benchmark.Benchmark;
 import com.intellij.util.containers.ContainerUtil;
 import junit.framework.TestCase;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Random;
+import java.util.TreeSet;
 
 public class HierarchicalFilePathComparatorTest extends TestCase {
   public void testInOneDirectory() {
@@ -35,8 +42,8 @@ public class HierarchicalFilePathComparatorTest extends TestCase {
     assertEquals("Equal paths should compare to 0", 0, compare("~/project/aaa/A.java", "~/project/aaa/A.java"));
   }
 
-  public void testEmptyPaths() {
-    assertEquals(0, compare("", ""));
+  public void testRootPaths() {
+    assertEquals(0, compare("/", "/"));
   }
 
   public void testSamePrefixFolder() {
@@ -249,7 +256,7 @@ public class HierarchicalFilePathComparatorTest extends TestCase {
 
   public void testTransitive() {
     List<String> paths = Arrays
-      .asList("", "/", "~", "/~", "/~/", "~/project/A.java", "~/project/B.java", "~/project/Z.java", "~/project/a.java", "~/project/b.java",
+      .asList("/", "~", "/~", "/~/", "~/project/A.java", "~/project/B.java", "~/project/Z.java", "~/project/a.java", "~/project/b.java",
               "~/project/z.java", "/aaa/", "/aaa-qwe/", "/ZZ.java", "A.java", "~/project/zzz/", "~/project/zzz", "~/project/zzz-qwe.java",
               "~/project/zzz-qwe.java/", "~/project/zzz-qwe.java/test", "~/project/aaa/", "~/project/aaa", "~/project/aaa",
               "~/project/aaa a", "~/project/aaa a/", "~/project/aaa a/bb", "~/project/aaa-qwe/", "~/project/aaa-qwe", "~/project/aaa-qwE",
@@ -273,25 +280,28 @@ public class HierarchicalFilePathComparatorTest extends TestCase {
     assertComparisonContractNotViolated(filePaths, HierarchicalFilePathComparator.CASE_INSENSITIVE);
   }
 
+  @PerformanceUnitTest
   public void testNaturalPerformance() {
     List<FilePath> filePaths = generatePerformanceTestFilePaths();
-    PlatformTestUtil.startPerformanceTest("Natural hierarchical comparator", 7000, () -> {
+    Benchmark.newBenchmark("Natural hierarchical comparator", () -> {
       assertComparisonContractNotViolated(filePaths, HierarchicalFilePathComparator.NATURAL);
-    }).assertTiming();
+    }).start();
   }
 
+  @PerformanceUnitTest
   public void testCaseInsensitivePerformance() {
     List<FilePath> filePaths = generatePerformanceTestFilePaths();
-    PlatformTestUtil.startPerformanceTest("Case-insensitive hierarchical comparator", 4000, () -> {
+    Benchmark.newBenchmark("Case-insensitive hierarchical comparator", () -> {
       assertComparisonContractNotViolated(filePaths, HierarchicalFilePathComparator.CASE_INSENSITIVE);
-    }).assertTiming();
+    }).start();
   }
 
+  @PerformanceUnitTest
   public void testCaseSensitivePerformance() {
     List<FilePath> filePaths = generatePerformanceTestFilePaths();
-    PlatformTestUtil.startPerformanceTest("Case-sensitive hierarchical comparator", 3000, () -> {
+    Benchmark.newBenchmark("Case-sensitive hierarchical comparator", () -> {
       assertComparisonContractNotViolated(filePaths, HierarchicalFilePathComparator.CASE_SENSITIVE);
-    }).assertTiming();
+    }).start();
   }
 
   private static List<FilePath> generatePerformanceTestFilePaths() {

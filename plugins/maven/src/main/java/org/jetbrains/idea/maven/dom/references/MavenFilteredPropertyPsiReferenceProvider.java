@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.dom.references;
 
 import com.intellij.lang.properties.references.PropertyReferenceBase;
@@ -23,6 +9,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.PsiReferenceProvider;
 import com.intellij.psi.xml.XmlAttribute;
+import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.ProcessingContext;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
@@ -44,11 +31,10 @@ public class MavenFilteredPropertyPsiReferenceProvider extends PsiReferenceProvi
 
   @Override
   public boolean acceptsTarget(@NotNull PsiElement target) {
-    return PropertyReferenceBase.isPropertyPsi(target);
+    return PropertyReferenceBase.isPropertyPsi(target) || target instanceof XmlTag;
   }
 
-  @NotNull
-  public static Pattern getDelimitersPattern(MavenProject mavenProject) {
+  public static @NotNull Pattern getDelimitersPattern(MavenProject mavenProject) {
     Pattern res = mavenProject.getCachedValue(KEY);
     if (res == null) {
       Element cfg = mavenProject.getPluginConfiguration("org.apache.maven.plugins", "maven-resources-plugin");
@@ -100,7 +86,7 @@ public class MavenFilteredPropertyPsiReferenceProvider extends PsiReferenceProvi
   }
   
   private static void appendDelimiter(StringBuilder pattern, String prefix, String suffix) {
-    if (pattern.length() > 0) {
+    if (!pattern.isEmpty()) {
       pattern.append('|');
     }
     pattern.append(Pattern.quote(prefix)).append("(.+?)").append(Pattern.quote(suffix));

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.ui.configuration
 
 import com.intellij.CommonBundle
@@ -20,6 +6,7 @@ import com.intellij.icons.AllIcons
 import com.intellij.ide.projectView.impl.ModuleGroup
 import com.intellij.ide.projectView.impl.ModuleGroupingImplementation
 import com.intellij.ide.projectView.impl.ModuleGroupingTreeHelper
+import com.intellij.openapi.components.ComponentManagerEx
 import com.intellij.openapi.module.ModuleDescription
 import com.intellij.openapi.module.ModuleGrouper
 import com.intellij.openapi.module.ModuleManager
@@ -31,6 +18,7 @@ import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.ui.VerticalFlowLayout
 import com.intellij.openapi.util.NlsContexts
+import com.intellij.openapi.util.NlsContexts.DialogMessage
 import com.intellij.openapi.util.text.NaturalComparator
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.ui.ColoredTreeCellRenderer
@@ -40,22 +28,33 @@ import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.JBScrollPane
 import com.intellij.ui.treeStructure.Tree
 import com.intellij.util.containers.ContainerUtil
-import com.intellij.util.graph.*
+import com.intellij.util.graph.CachingSemiGraph
+import com.intellij.util.graph.Graph
+import com.intellij.util.graph.GraphAlgorithms
+import com.intellij.util.graph.GraphGenerator
+import com.intellij.util.graph.InboundSemiGraph
 import com.intellij.util.ui.GridBag
 import com.intellij.util.ui.tree.TreeUtil
 import com.intellij.xml.util.XmlStringUtil
+import kotlinx.coroutines.launch
+import org.jetbrains.annotations.ApiStatus
 import java.awt.BorderLayout
 import java.awt.Dimension
 import java.awt.GridBagConstraints
 import java.awt.GridBagLayout
 import java.awt.event.MouseEvent
-import java.util.*
-import javax.swing.*
+import javax.swing.Icon
+import javax.swing.JButton
+import javax.swing.JComponent
+import javax.swing.JPanel
+import javax.swing.JTree
 import javax.swing.tree.DefaultMutableTreeNode
 import javax.swing.tree.DefaultTreeModel
 import javax.swing.tree.MutableTreeNode
 import javax.swing.tree.TreePath
+import kotlin.math.max
 
+@ApiStatus.Internal
 class ConfigureUnloadedModulesDialog(private val project: Project, selectedModuleName: String?) : DialogWrapper(project) {
   private val loadedModulesTree = ModuleDescriptionsTree(project)
   private val unloadedModulesTree = ModuleDescriptionsTree(project)
@@ -91,7 +90,7 @@ class ConfigureUnloadedModulesDialog(private val project: Project, selectedModul
     }))
   }
 
-  override fun createCenterPanel(): JComponent? {
+  override fun createCenterPanel(): JComponent {
     val buttonsPanel = JPanel(VerticalFlowLayout())
     val moveToUnloadedButton = JButton(ProjectBundle.message("module.unload.button.text"))
     val moveToLoadedButton = JButton(ProjectBundle.message("module.load.button.text"))
@@ -129,7 +128,7 @@ class ConfigureUnloadedModulesDialog(private val project: Project, selectedModul
     statusLabel.text = XmlStringUtil.wrapInHtml(ProjectBundle.message("module.unloaded.explanation"))
     mainPanel.add(statusLabel, BorderLayout.SOUTH)
     //current label text looks better when it's split on 2.5 lines, so set size of the whole component accordingly
-    mainPanel.preferredSize = Dimension(Math.max(treesPanel.preferredSize.width, statusLabel.preferredSize.width*2/5), treesPanel.preferredSize.height)
+    mainPanel.preferredSize = Dimension(max(treesPanel.preferredSize.width, statusLabel.preferredSize.width * 2 / 5), treesPanel.preferredSize.height)
     return mainPanel
   }
 
@@ -161,7 +160,7 @@ class ConfigureUnloadedModulesDialog(private val project: Project, selectedModul
 
   private fun includeMissingModules(selected: List<ModuleDescription>, availableTargetModules: List<ModuleDescription>,
                                     dependenciesGraph: Graph<ModuleDescription>,
-                                    @NlsContexts.DialogTitle dialogTitle: String, dialogMessage: (Int, Int, String) -> String,
+                                    @NlsContexts.DialogTitle dialogTitle: String, dialogMessage: (Int, Int, String) -> @DialogMessage String,
                                     @NlsContexts.Button yesButtonText: String,
                                     @NlsContexts.Button noButtonText: String): Collection<ModuleDescription> {
     val additional = computeDependenciesToMove(selected, availableTargetModules, dependenciesGraph)
@@ -208,12 +207,15 @@ class ConfigureUnloadedModulesDialog(private val project: Project, selectedModul
     }
   }
 
-  override fun getPreferredFocusedComponent(): JComponent? {
+  override fun getPreferredFocusedComponent(): JComponent {
     return initiallyFocusedTree.tree
   }
 
   override fun doOKAction() {
-    ModuleManager.getInstance(project).setUnloadedModules(unloadedModulesTree.getAllModules().map { it.name })
+    val unloadedModuleNames = unloadedModulesTree.getAllModules().map { it.name }
+    (project as ComponentManagerEx).getCoroutineScope().launch {
+      ModuleManager.getInstance(project).setUnloadedModules(unloadedModuleNames)
+    }
     super.doOKAction()
   }
 }
@@ -227,7 +229,7 @@ private class ModuleDescriptionsTree(project: Project) {
   init {
     tree.isRootVisible = false
     tree.showsRootHandles = true
-    TreeSpeedSearch(tree, { treePath -> (treePath.lastPathComponent as? ModuleDescriptionTreeNode)?.text ?: "" }, true)
+    TreeSpeedSearch.installOn(tree, true) { treePath -> (treePath.lastPathComponent as? ModuleDescriptionTreeNode)?.text ?: "" }
     tree.cellRenderer = ModuleDescriptionTreeRenderer()
   }
 
@@ -236,14 +238,14 @@ private class ModuleDescriptionsTree(project: Project) {
         ?.mapNotNull { it.lastPathComponent }
         ?.filterIsInstance<ModuleDescriptionTreeNode>()
         ?.flatMap { getAllModulesUnder(it) }
-        ?: emptyList<ModuleDescription>()
+        ?: emptyList()
 
   fun getAllModules() = getAllModulesUnder(root)
 
   fun installDoubleClickListener(action: () -> Unit) {
     object : DoubleClickListener() {
       override fun onDoubleClick(event: MouseEvent): Boolean {
-        if (tree.selectionPaths?.all { (it?.lastPathComponent as? ModuleDescriptionTreeNode)?.isLeaf == true } ?: false) {
+        if (tree.selectionPaths?.all { (it?.lastPathComponent as? ModuleDescriptionTreeNode)?.isLeaf == true } == true) {
           action()
           return true
         }
@@ -254,12 +256,12 @@ private class ModuleDescriptionsTree(project: Project) {
 
   private fun getAllModulesUnder(node: ModuleDescriptionTreeNode): List<ModuleDescription> {
     val modules = ArrayList<ModuleDescription>()
-    TreeUtil.traverse(node, { node ->
+    TreeUtil.traverse(node) { node ->
       if (node is ModuleDescriptionNode) {
         modules.add(node.moduleDescription)
       }
       return@traverse true
-    })
+    }
     return modules
   }
 
@@ -278,7 +280,7 @@ private class ModuleDescriptionsTree(project: Project) {
   }
 
   fun removeModules(modules: Collection<ModuleDescription>) {
-    val names = modules.mapTo(HashSet<String>()) { it.name }
+    val names = modules.mapTo(HashSet()) { it.name }
     val toRemove = findNodes { it.moduleDescription.name in names }
     for (node in toRemove) {
       helper.removeNode(node, root, model)
@@ -288,12 +290,12 @@ private class ModuleDescriptionsTree(project: Project) {
 
   private fun findNodes(condition: (ModuleDescriptionNode) -> Boolean): List<ModuleDescriptionNode> {
     val result = ArrayList<ModuleDescriptionNode>()
-    TreeUtil.traverse(root, { node ->
+    TreeUtil.traverse(root) { node ->
       if (node is ModuleDescriptionNode && condition(node)) {
         result.add(node)
       }
       return@traverse true
-    })
+    }
     return result
   }
 

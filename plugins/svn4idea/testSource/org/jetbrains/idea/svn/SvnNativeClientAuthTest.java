@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.svn;
 
 import com.intellij.openapi.progress.EmptyProgressIndicator;
@@ -19,7 +19,12 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.svn.api.Depth;
 import org.jetbrains.idea.svn.api.Revision;
 import org.jetbrains.idea.svn.api.Url;
-import org.jetbrains.idea.svn.auth.*;
+import org.jetbrains.idea.svn.auth.AcceptResult;
+import org.jetbrains.idea.svn.auth.AuthenticationData;
+import org.jetbrains.idea.svn.auth.CertificateAuthenticationData;
+import org.jetbrains.idea.svn.auth.PasswordAuthenticationData;
+import org.jetbrains.idea.svn.auth.SvnAuthenticationManager;
+import org.jetbrains.idea.svn.auth.SvnAuthenticationNotifier;
 import org.jetbrains.idea.svn.checkout.SvnCheckoutProvider;
 import org.junit.Before;
 import org.junit.Ignore;
@@ -30,10 +35,13 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.TimeoutException;
 
 import static com.intellij.testFramework.UsefulTestCase.assertExists;
 import static org.jetbrains.idea.svn.SvnUtil.parseUrl;
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 
 @Ignore
 public class SvnNativeClientAuthTest extends SvnTestCase {
@@ -496,7 +504,7 @@ public class SvnNativeClientAuthTest extends SvnTestCase {
     return file;
   }
 
-  private File testCheckoutImpl(@NotNull Url url) throws IOException {
+  private File testCheckoutImpl(@NotNull Url url) throws IOException, TimeoutException {
     final File root = FileUtil.createTempDirectory("checkoutRoot", "");
     root.deleteOnExit();
     assertExists(root);

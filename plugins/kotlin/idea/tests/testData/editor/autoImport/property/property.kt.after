@@ -1,0 +1,7 @@
+package my
+
+import pkg.magicValue
+
+fun test() {
+    val q = magicValue
+}

@@ -18,16 +18,28 @@ package com.intellij.codeInsight.template.postfix.templates;
 import com.intellij.codeInsight.guess.GuessManager;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.PsiTypeLookupItem;
-import com.intellij.codeInsight.template.*;
+import com.intellij.codeInsight.template.Expression;
+import com.intellij.codeInsight.template.PsiTypeResult;
+import com.intellij.codeInsight.template.Result;
+import com.intellij.codeInsight.template.Template;
+import com.intellij.codeInsight.template.TemplateManager;
 import com.intellij.codeInsight.template.impl.ConstantNode;
 import com.intellij.codeInsight.template.postfix.util.JavaPostfixTemplatesUtils;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.ScrollType;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaTokenType;
+import com.intellij.psi.PsiAssignmentExpression;
+import com.intellij.psi.PsiConditionalExpression;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiPolyadicExpression;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.introduceField.ElementToWorkOn;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
@@ -36,7 +48,7 @@ import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
-public class InstanceofExpressionPostfixTemplate extends PostfixTemplate {
+public class InstanceofExpressionPostfixTemplate extends PostfixTemplate implements DumbAware {
 
   public InstanceofExpressionPostfixTemplate() {
     this("instanceof");
@@ -48,7 +60,7 @@ public class InstanceofExpressionPostfixTemplate extends PostfixTemplate {
 
   @Override
   public boolean isApplicable(@NotNull PsiElement context, @NotNull Document copyDocument, int newOffset) {
-    if (context instanceof PsiJavaToken && ((PsiJavaToken)context).getTokenType().equals(JavaTokenType.STRING_LITERAL)) {
+    if (PsiUtil.isJavaToken(context, JavaTokenType.STRING_LITERAL)) {
       // Do not suggest inside String literals as it could be confusing if literal is interpreted as the reference
       return false;
     }
@@ -81,7 +93,7 @@ public class InstanceofExpressionPostfixTemplate extends PostfixTemplate {
         PostfixTemplatesUtils.showErrorHint(project, editor);
         return;
       }
-      range = new TextRange(rangeMarker.getStartOffset(), rangeMarker.getEndOffset());
+      range = rangeMarker.getTextRange();
     }
     editor.getDocument().deleteString(range.getStartOffset(), range.getEndOffset());
     editor.getCaretModel().moveToOffset(range.getStartOffset());

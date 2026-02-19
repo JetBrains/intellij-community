@@ -19,8 +19,6 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * Visitor which can be used to visit Java types.
- * 
- * @author dsl
  */
 public class PsiTypeVisitor<A> {
   public A visitType(@NotNull PsiType type) {

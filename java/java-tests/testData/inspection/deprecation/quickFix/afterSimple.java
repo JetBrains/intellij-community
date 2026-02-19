@@ -1,4 +1,4 @@
-// "Replace method call with Test.nnn" "true"
+// "Replace method call with 'Test.nnn()'" "true-preview"
 public class Test {
 
   void foo() {

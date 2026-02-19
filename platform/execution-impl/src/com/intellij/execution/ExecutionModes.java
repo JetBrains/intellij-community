@@ -18,27 +18,28 @@ package com.intellij.execution;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.process.ProcessOutput;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.NlsContexts;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 
 /**
  * @author Roman.Chernyatchik, oleg
  */
-public class ExecutionModes {
+public final class ExecutionModes {
   private static final Logger LOG = Logger.getInstance(ExecutionMode.class);
 
   /**
    * Process will be run in back ground mode
    */
-  public static class BackGroundMode extends ExecutionMode {
+  public static final class BackGroundMode extends ExecutionMode {
 
-    public BackGroundMode(final boolean cancelable, @Nullable final String title) {
+    public BackGroundMode(final boolean cancelable, final @Nullable @NlsContexts.ProgressTitle String title) {
       super(cancelable, title, null, true, false, null);
     }
 
-    public BackGroundMode(@Nullable final String title) {
+    public BackGroundMode(final @Nullable @NlsContexts.ProgressTitle String title) {
       this(true, title);
     }
   }
@@ -46,17 +47,18 @@ public class ExecutionModes {
   /**
    * Process will be run in modal dialog
    */
-  public static class ModalProgressMode extends ExecutionMode {
+  public static final class ModalProgressMode extends ExecutionMode {
 
-    public ModalProgressMode(final boolean cancelable, @Nullable final String title, JComponent progressParentComponent) {
+    public ModalProgressMode(final boolean cancelable, final @Nullable @NlsContexts.ProgressTitle String title,
+                             JComponent progressParentComponent) {
       super(cancelable, title, null, false, true, progressParentComponent);
     }
 
-    public ModalProgressMode(@Nullable final String title) {
+    public ModalProgressMode(final @Nullable @NlsContexts.ProgressTitle String title) {
       this(true, title, null);
     }
 
-    public ModalProgressMode(@Nullable final String title, JComponent progressParentComponent) {
+    public ModalProgressMode(final @Nullable @NlsContexts.ProgressTitle String title, JComponent progressParentComponent) {
       this(true, title, progressParentComponent);
     }
   }
@@ -68,18 +70,17 @@ public class ExecutionModes {
     private final int myTimeout;
 
     public SameThreadMode(final boolean cancelable,
-                          @Nullable final String title2,
+                          final @Nullable @NlsContexts.ProgressTitle String title2,
                           final int timeout) {
       super(cancelable, null, title2, false, false, null);
       myTimeout = timeout;
     }
 
-    public SameThreadMode(@Nullable final String title2) {
+    public SameThreadMode(final @Nullable @NlsContexts.ProgressTitle String title2) {
       this(true, title2, -1);
     }
 
     /**
-     * @param cancelable
      */
     public SameThreadMode(final boolean cancelable) {
       this(cancelable, null, -1);

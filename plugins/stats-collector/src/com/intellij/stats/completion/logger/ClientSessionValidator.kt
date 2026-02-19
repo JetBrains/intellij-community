@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2018 JetBrains s.r.o.
+ * Copyright 2000-2020 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,20 +17,18 @@
 package com.intellij.stats.completion.logger
 
 import com.intellij.stats.completion.LogEventSerializer
-import com.intellij.stats.completion.ValidationStatus
 import com.intellij.stats.completion.events.LogEvent
 import com.intellij.stats.validation.InputSessionValidator
-import com.intellij.stats.validation.SimpleSessionValidationResult
 
 /**
  * @author Vitaliy.Bibaev
  */
 class ClientSessionValidator : SessionValidator {
+    private val validator: InputSessionValidator = InputSessionValidator()
+
     override fun validate(session: List<LogEvent>) {
-        val validationResult = SimpleSessionValidationResult()
-        val line2event = session.associateTo(linkedMapOf(), { LogEventSerializer.toString(it) to it })
-        InputSessionValidator(validationResult).validate(line2event.keys.toList())
-        validationResult.errorLines.forEach { line2event[it]!!.validationStatus = ValidationStatus.INVALID }
-        validationResult.validLines.forEach { line2event[it]!!.validationStatus = ValidationStatus.VALID }
+        val lines = session.map { LogEventSerializer.toString(it) }
+        val result = validator.validate(lines)
+        session.forEach { it.validationStatus = result.validationStatus }
     }
 }

@@ -1,5 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.refactoring.extract.method;
 
 import com.intellij.openapi.editor.event.DocumentEvent;
@@ -8,18 +7,28 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.ui.ValidationInfo;
-import com.intellij.psi.*;
+import com.intellij.openapi.util.NlsContexts;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiSubstitutor;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypes;
+import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.ui.ComboBoxVisibilityPanel;
-import com.intellij.refactoring.ui.ConflictsDialog;
 import com.intellij.refactoring.ui.MethodSignatureComponent;
-import com.intellij.refactoring.util.CommonRefactoringUtil;
+import com.intellij.refactoring.util.RefactoringUIUtil;
 import com.intellij.ui.EditorTextField;
 import com.intellij.ui.IdeBorderFactory;
+import com.intellij.uiDesigner.core.GridConstraints;
+import com.intellij.uiDesigner.core.GridLayoutManager;
+import com.intellij.uiDesigner.core.Spacer;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.ArrayUtilRt;
+import com.intellij.util.containers.HashingStrategy;
+import com.intellij.util.containers.MultiMap;
 import com.intellij.util.ui.JBUI;
-import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -36,38 +45,135 @@ import org.jetbrains.plugins.groovy.refactoring.ui.GrMethodSignatureComponent;
 import org.jetbrains.plugins.groovy.refactoring.ui.GroovyComboboxVisibilityPanel;
 import org.jetbrains.plugins.groovy.settings.GroovyApplicationSettings;
 
-import javax.swing.*;
+import javax.swing.AbstractButton;
+import javax.swing.JCheckBox;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import javax.swing.event.EventListenerList;
+import java.awt.Dimension;
+import java.awt.Insets;
 import java.awt.event.KeyEvent;
-import java.util.ArrayList;
+import java.lang.reflect.Method;
 import java.util.EventListener;
 import java.util.List;
 import java.util.Map;
+import java.util.ResourceBundle;
 
-/**
- * @author ilyas
- */
 public class GroovyExtractMethodDialog extends DialogWrapper {
   private final ExtractMethodInfoHelper myHelper;
 
   private final EventListenerList myListenerList = new EventListenerList();
 
-  private JPanel contentPane;
-  private EditorTextField myNameField;
-  private JCheckBox myCbSpecifyType;
-  private JLabel myNameLabel;
-  private MethodSignatureComponent mySignature;
-  private ComboBoxVisibilityPanel<String> myVisibilityPanel;
-  private Splitter mySplitter;
-  private JCheckBox myForceReturnCheckBox;
-  private GrParameterTablePanel myParameterTablePanel;
-  private final Project myProject;
+  private final JPanel contentPane;
+  private final EditorTextField myNameField;
+  private final JCheckBox myCbSpecifyType;
+  private final JLabel myNameLabel;
+  private final MethodSignatureComponent mySignature;
+  private final ComboBoxVisibilityPanel<String> myVisibilityPanel;
+  private final Splitter mySplitter;
+  private final JCheckBox myForceReturnCheckBox;
+  private final GrParameterTablePanel myParameterTablePanel;
 
   public GroovyExtractMethodDialog(InitialInfo info, PsiClass owner) {
     super(info.getProject(), true);
-    myProject = info.getProject();
+
+    Project project = info.getProject();
+
+    {
+      mySignature = new GrMethodSignatureComponent("", project);
+      mySignature.setPreferredSize(JBUI.size(500, 100));
+      mySignature.setMinimumSize(JBUI.size(500, 100));
+      mySignature.setBorder(
+        IdeBorderFactory.createTitledBorder(GroovyRefactoringBundle.message("signature.preview.border.title"), false));
+      mySignature.setFocusable(false);
+
+      myNameField = new EditorTextField("", project, GroovyFileType.GROOVY_FILE_TYPE);
+      myVisibilityPanel = new GroovyComboboxVisibilityPanel();
+
+      String visibility = GroovyApplicationSettings.getInstance().EXTRACT_METHOD_VISIBILITY;
+      if (visibility == null) {
+        visibility = PsiModifier.PRIVATE;
+      }
+      myVisibilityPanel.setVisibility(visibility);
+      myVisibilityPanel.addListener(new ChangeListener() {
+        @Override
+        public void stateChanged(ChangeEvent e) {
+          myHelper.setVisibility(myVisibilityPanel.getVisibility());
+          updateSignature();
+        }
+      });
+
+      myParameterTablePanel = new GrParameterTablePanel() {
+        @Override
+        protected void updateSignature() {
+          GroovyExtractMethodDialog.this.updateSignature();
+        }
+
+        @Override
+        protected void doEnterAction() {
+          GroovyExtractMethodDialog.this.clickDefaultButton();
+        }
+
+        @Override
+        protected void doCancelAction() {
+          GroovyExtractMethodDialog.this.doCancelAction();
+        }
+      };
+    }
+    {
+      // GUI initializer generated by IntelliJ IDEA GUI Designer
+      // >>> IMPORTANT!! <<<
+      // DO NOT EDIT OR ADD ANY CODE HERE!
+      contentPane = new JPanel();
+      contentPane.setLayout(new GridLayoutManager(4, 1, new Insets(0, 0, 0, 0), -1, -1));
+      myCbSpecifyType = new JCheckBox();
+      this.$$$loadButtonText$$$(myCbSpecifyType, this.$$$getMessageFromBundle$$$("messages/GroovyRefactoringBundle", "specify.type.label"));
+      contentPane.add(myCbSpecifyType, new GridConstraints(1, 0, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE,
+                                                           GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
+                                                           GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
+      final JPanel panel1 = new JPanel();
+      panel1.setLayout(new GridLayoutManager(1, 2, new Insets(0, 0, 0, 0), -1, -1));
+      contentPane.add(panel1, new GridConstraints(0, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_BOTH,
+                                                  GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
+                                                  GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, null, null,
+                                                  null, 0, false));
+      panel1.add(myVisibilityPanel, new GridConstraints(0, 0, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE,
+                                                        GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
+                                                        GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, null,
+                                                        null, null, 0, false));
+      final JPanel panel2 = new JPanel();
+      panel2.setLayout(new GridLayoutManager(2, 2, new Insets(0, 0, 0, 0), -1, -1));
+      panel1.add(panel2, new GridConstraints(0, 1, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_BOTH,
+                                             GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_WANT_GROW,
+                                             GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, null, null, null,
+                                             0, false));
+      myNameLabel = new JLabel();
+      this.$$$loadLabelText$$$(myNameLabel, this.$$$getMessageFromBundle$$$("messages/GroovyRefactoringBundle", "name.label"));
+      panel2.add(myNameLabel,
+                 new GridConstraints(0, 0, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE, GridConstraints.SIZEPOLICY_FIXED,
+                                     GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
+      final Spacer spacer1 = new Spacer();
+      panel2.add(spacer1, new GridConstraints(0, 1, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL,
+                                              GridConstraints.SIZEPOLICY_WANT_GROW, 1, null, null, null, 0, false));
+      panel2.add(myNameField, new GridConstraints(1, 0, 1, 2, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_HORIZONTAL,
+                                                  GridConstraints.SIZEPOLICY_WANT_GROW, GridConstraints.SIZEPOLICY_FIXED, null,
+                                                  new Dimension(150, -1), null, 0, false));
+      mySplitter = new Splitter();
+      contentPane.add(mySplitter, new GridConstraints(3, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_BOTH,
+                                                      GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_WANT_GROW,
+                                                      GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_WANT_GROW, null,
+                                                      null, null, 0, false));
+      myForceReturnCheckBox = new JCheckBox();
+      this.$$$loadButtonText$$$(myForceReturnCheckBox, this.$$$getMessageFromBundle$$$("messages/GroovyRefactoringBundle",
+                                                                                       "extract.method.dialog.explicit.return.checkbox"));
+      contentPane.add(myForceReturnCheckBox, new GridConstraints(2, 0, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE,
+                                                                 GridConstraints.SIZEPOLICY_CAN_SHRINK |
+                                                                 GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_FIXED,
+                                                                 null, null, null, 0, false));
+    }
     myHelper = new ExtractMethodInfoHelper(info, "", owner, false);
 
     myParameterTablePanel.init(myHelper);
@@ -79,6 +185,78 @@ public class GroovyExtractMethodDialog extends DialogWrapper {
     setUpDialog();
     update();
   }
+
+  private static Method $$$cachedGetBundleMethod$$$ = null;
+
+  /** @noinspection ALL */
+  private String $$$getMessageFromBundle$$$(String path, String key) {
+    ResourceBundle bundle;
+    try {
+      Class<?> thisClass = this.getClass();
+      if ($$$cachedGetBundleMethod$$$ == null) {
+        Class<?> dynamicBundleClass = thisClass.getClassLoader().loadClass("com.intellij.DynamicBundle");
+        $$$cachedGetBundleMethod$$$ = dynamicBundleClass.getMethod("getBundle", String.class, Class.class);
+      }
+      bundle = (ResourceBundle)$$$cachedGetBundleMethod$$$.invoke(null, path, thisClass);
+    }
+    catch (Exception e) {
+      bundle = ResourceBundle.getBundle(path);
+    }
+    return bundle.getString(key);
+  }
+
+  /** @noinspection ALL */
+  private void $$$loadLabelText$$$(JLabel component, String text) {
+    StringBuffer result = new StringBuffer();
+    boolean haveMnemonic = false;
+    char mnemonic = '\0';
+    int mnemonicIndex = -1;
+    for (int i = 0; i < text.length(); i++) {
+      if (text.charAt(i) == '&') {
+        i++;
+        if (i == text.length()) break;
+        if (!haveMnemonic && text.charAt(i) != '&') {
+          haveMnemonic = true;
+          mnemonic = text.charAt(i);
+          mnemonicIndex = result.length();
+        }
+      }
+      result.append(text.charAt(i));
+    }
+    component.setText(result.toString());
+    if (haveMnemonic) {
+      component.setDisplayedMnemonic(mnemonic);
+      component.setDisplayedMnemonicIndex(mnemonicIndex);
+    }
+  }
+
+  /** @noinspection ALL */
+  private void $$$loadButtonText$$$(AbstractButton component, String text) {
+    StringBuffer result = new StringBuffer();
+    boolean haveMnemonic = false;
+    char mnemonic = '\0';
+    int mnemonicIndex = -1;
+    for (int i = 0; i < text.length(); i++) {
+      if (text.charAt(i) == '&') {
+        i++;
+        if (i == text.length()) break;
+        if (!haveMnemonic && text.charAt(i) != '&') {
+          haveMnemonic = true;
+          mnemonic = text.charAt(i);
+          mnemonicIndex = result.length();
+        }
+      }
+      result.append(text.charAt(i));
+    }
+    component.setText(result.toString());
+    if (haveMnemonic) {
+      component.setMnemonic(mnemonic);
+      component.setDisplayedMnemonicIndex(mnemonicIndex);
+    }
+  }
+
+  /** @noinspection ALL */
+  public JComponent $$$getRootComponent$$$() { return contentPane; }
 
   @Override
   protected void init() {
@@ -94,8 +272,7 @@ public class GroovyExtractMethodDialog extends DialogWrapper {
     myHelper.setForceReturn(myForceReturnCheckBox.isSelected());
     String name = getEnteredName();
     if (name == null) return;
-    GrMethod method = ExtractUtil.createMethod(myHelper);
-    if (method != null && !validateMethod(method, myHelper)) {
+    if (!validateMethod(myHelper)) {
       return;
     }
     final GroovyApplicationSettings settings = GroovyApplicationSettings.getInstance();
@@ -130,7 +307,7 @@ public class GroovyExtractMethodDialog extends DialogWrapper {
     myNameLabel.setLabelFor(myNameField);
 
     final PsiType type = myHelper.getOutputType();
-    if (!PsiType.VOID.equals(type)) {
+    if (!PsiTypes.voidType().equals(type)) {
       myForceReturnCheckBox.setSelected(GroovyApplicationSettings.getInstance().FORCE_RETURN);
     }
     else {
@@ -152,8 +329,7 @@ public class GroovyExtractMethodDialog extends DialogWrapper {
   }
 
   @Override
-  @Nullable
-  protected JComponent createCenterPanel() {
+  protected @Nullable JComponent createCenterPanel() {
     return contentPane;
   }
 
@@ -162,8 +338,7 @@ public class GroovyExtractMethodDialog extends DialogWrapper {
     return contentPane;
   }
 
-  @NotNull
-  protected ExtractMethodInfoHelper getHelper() {
+  protected @NotNull ExtractMethodInfoHelper getHelper() {
     return myHelper;
   }
 
@@ -178,10 +353,9 @@ public class GroovyExtractMethodDialog extends DialogWrapper {
     return null;
   }
 
-  @Nullable
-  protected String getEnteredName() {
+  protected @Nullable String getEnteredName() {
     String text = myNameField.getText();
-    if (text != null && !text.trim().isEmpty()) {
+    if (!text.trim().isEmpty()) {
       return text.trim();
     }
     else {
@@ -199,61 +373,23 @@ public class GroovyExtractMethodDialog extends DialogWrapper {
     return HelpID.EXTRACT_METHOD;
   }
 
-  private void createUIComponents() {
-    mySignature = new GrMethodSignatureComponent("", myProject);
-    mySignature.setPreferredSize(JBUI.size(500, 100));
-    mySignature.setMinimumSize(JBUI.size(500, 100));
-    mySignature.setBorder(
-      IdeBorderFactory.createTitledBorder(GroovyRefactoringBundle.message("signature.preview.border.title"), false));
-    mySignature.setFocusable(false);
-
-    myNameField = new EditorTextField("", myProject, GroovyFileType.GROOVY_FILE_TYPE);
-    myVisibilityPanel = new GroovyComboboxVisibilityPanel();
-
-    String visibility = GroovyApplicationSettings.getInstance().EXTRACT_METHOD_VISIBILITY;
-    if (visibility == null) {
-      visibility = PsiModifier.PRIVATE;
-    }
-    myVisibilityPanel.setVisibility(visibility);
-    myVisibilityPanel.addListener(new ChangeListener(){
-      @Override
-      public void stateChanged(ChangeEvent e) {
-        myHelper.setVisibility(myVisibilityPanel.getVisibility());
-        updateSignature();
-      }
-    });
-
-    myParameterTablePanel = new GrParameterTablePanel() {
-      @Override
-      protected void updateSignature(){
-        GroovyExtractMethodDialog.this.updateSignature();
-      }
-
-      @Override
-      protected void doEnterAction(){
-        GroovyExtractMethodDialog.this.clickDefaultButton();
-      }
-
-      @Override
-      protected void doCancelAction(){
-        GroovyExtractMethodDialog.this.doCancelAction();
-      }
-    };
-  }
-
-  private static boolean validateMethod(GrMethod method, ExtractMethodInfoHelper helper) {
-    ArrayList<String> conflicts = new ArrayList<>();
+  private static boolean validateMethod(ExtractMethodInfoHelper helper) {
+    MultiMap<PsiElement, @NlsContexts.DialogMessage String> conflicts = new MultiMap<>();
+    GrMethod method = ExtractUtil.createMethod(helper);
     PsiClass owner = helper.getOwner();
     PsiMethod[] methods = ArrayUtil.mergeArrays(owner.getAllMethods(), new PsiMethod[]{method}, PsiMethod.ARRAY_FACTORY);
-    final Map<PsiMethod, List<PsiMethod>> map = DuplicatesUtil.factorDuplicates(methods, new TObjectHashingStrategy<PsiMethod>() {
+    final Map<PsiMethod, List<PsiMethod>> map = DuplicatesUtil.factorDuplicates(methods, new HashingStrategy<>() {
       @Override
-      public int computeHashCode(PsiMethod method) {
-        return method.getSignature(PsiSubstitutor.EMPTY).hashCode();
+      public int hashCode(@Nullable PsiMethod method) {
+        return method == null ? 0 : method.getSignature(PsiSubstitutor.EMPTY).hashCode();
       }
 
       @Override
-      public boolean equals(PsiMethod method1, PsiMethod method2) {
-        return method1.getSignature(PsiSubstitutor.EMPTY).equals(method2.getSignature(PsiSubstitutor.EMPTY));
+      public boolean equals(@Nullable PsiMethod method1, @Nullable PsiMethod method2) {
+        return method1 == method2 ||
+               (method1 != null &&
+                method2 != null &&
+                method1.getSignature(PsiSubstitutor.EMPTY).equals(method2.getSignature(PsiSubstitutor.EMPTY)));
       }
     });
 
@@ -263,21 +399,18 @@ public class GroovyExtractMethodDialog extends DialogWrapper {
       if (psiMethod != method) {
         PsiClass containingClass = psiMethod.getContainingClass();
         if (containingClass == null) return true;
-        String message = containingClass instanceof GroovyScriptClass ?
-            GroovyRefactoringBundle.message("method.is.already.defined.in.script", GroovyRefactoringUtil.getMethodSignature(method),
-                CommonRefactoringUtil.htmlEmphasize(containingClass.getQualifiedName())) :
-            GroovyRefactoringBundle.message("method.is.already.defined.in.class", GroovyRefactoringUtil.getMethodSignature(method),
-                CommonRefactoringUtil.htmlEmphasize(containingClass.getQualifiedName()));
-        conflicts.add(message);
+        String message = containingClass instanceof GroovyScriptClass
+                         ? GroovyRefactoringBundle.message("method.is.already.defined.in.script",
+                                                           GroovyRefactoringUtil.getMethodSignature(psiMethod),
+                                                           RefactoringUIUtil.getDescription(containingClass, false))
+                         : GroovyRefactoringBundle.message("method.is.already.defined.in.class",
+                                                           GroovyRefactoringUtil.getMethodSignature(psiMethod),
+                                                           RefactoringUIUtil.getDescription(containingClass, false));
+        conflicts.putValue(psiMethod, message);
       }
     }
 
-    return conflicts.size() <= 0 || reportConflicts(conflicts, helper.getProject());
-  }
-
-  private static boolean reportConflicts(final ArrayList<String> conflicts, final Project project) {
-    ConflictsDialog conflictsDialog = new ConflictsDialog(project, ArrayUtilRt.toStringArray(conflicts));
-    return conflictsDialog.showAndGet();
+    return conflicts.isEmpty() || BaseRefactoringProcessor.processConflicts(helper.getProject(), conflicts);
   }
 
   class DataChangedListener implements EventListener {
@@ -336,8 +469,7 @@ public class GroovyExtractMethodDialog extends DialogWrapper {
     }
 
     @Override
-    @NotNull
-    public ExtractMethodInfoHelper getHelper() {
+    public @NotNull ExtractMethodInfoHelper getHelper() {
       return myHelper;
     }
 

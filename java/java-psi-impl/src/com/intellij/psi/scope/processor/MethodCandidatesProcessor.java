@@ -1,8 +1,21 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.scope.processor;
 
 import com.intellij.pom.java.LanguageLevel;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaResolveResult;
+import com.intellij.psi.PsiAnonymousClass;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiExpressionList;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiImportStaticStatement;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiMethodCallExpression;
+import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiSubstitutor;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypeParameter;
+import com.intellij.psi.ResolveState;
 import com.intellij.psi.impl.source.resolve.JavaResolveUtil;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.infos.MethodCandidateInfo;
@@ -10,9 +23,11 @@ import com.intellij.psi.scope.PsiConflictResolver;
 import com.intellij.psi.scope.conflictResolvers.DuplicateConflictResolver;
 import com.intellij.psi.util.ImportsUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Arrays;
 import java.util.List;
 
 public class MethodCandidatesProcessor extends MethodsProcessor{
@@ -84,9 +99,8 @@ public class MethodCandidatesProcessor extends MethodsProcessor{
     return false;
   }
 
-  @NotNull
-  protected MethodCandidateInfo createCandidateInfo(@NotNull PsiMethod method, @NotNull PsiSubstitutor substitutor,
-                                                    final boolean staticProblem, final boolean accessible, final boolean varargs) {
+  protected @NotNull MethodCandidateInfo createCandidateInfo(@NotNull PsiMethod method, @NotNull PsiSubstitutor substitutor,
+                                                             boolean staticProblem, boolean accessible, boolean varargs) {
     return new VarargsAwareMethodCandidateInfo(method, substitutor, accessible, staticProblem, getArgumentList(), myCurrentFileContext,
                                                getTypeArguments(), getLanguageLevel(), varargs);
   }
@@ -113,9 +127,10 @@ public class MethodCandidatesProcessor extends MethodsProcessor{
   private boolean isShadowed(@NotNull PsiMethod candidate) {
     if (myCurrentFileContext instanceof PsiImportStaticStatement) {
       for (JavaResolveResult result : getResults()) {
-        if (result.getElement() != candidate &&
-            result.isAccessible() &&
-            !(result.getCurrentFileResolveScope() instanceof PsiImportStaticStatement)) return true;
+        PsiMethod method = ObjectUtils.tryCast(result.getElement(), PsiMethod.class);
+        if (method != null && method != candidate && result.isAccessible() &&
+            !(result.getCurrentFileResolveScope() instanceof PsiImportStaticStatement) &&
+            isInterfaceStaticMethodAccessibleThroughInheritance(method)) return true;
       }
     }
     return false;
@@ -124,10 +139,7 @@ public class MethodCandidatesProcessor extends MethodsProcessor{
   public CandidateInfo @NotNull [] getCandidates() {
     final JavaResolveResult[] resolveResult = getResult();
     if (resolveResult.length == 0) return CandidateInfo.EMPTY_ARRAY;
-    final CandidateInfo[] infos = new CandidateInfo[resolveResult.length];
-    //noinspection SuspiciousSystemArraycopy
-    System.arraycopy(resolveResult, 0, infos, 0, resolveResult.length);
-    return infos;
+    return Arrays.copyOf(resolveResult, resolveResult.length, CandidateInfo[].class);
   }
 
   private static class VarargsAwareMethodCandidateInfo extends MethodCandidateInfo {
@@ -162,5 +174,10 @@ public class MethodCandidatesProcessor extends MethodsProcessor{
     public boolean isVarargs() {
       return myVarargs;
     }
+  }
+
+  @Override
+  public void forceAddResult(@NotNull PsiMethod method) {
+    add(createCandidateInfo(method, PsiSubstitutor.EMPTY, false, true, method.isVarArgs()));
   }
 }

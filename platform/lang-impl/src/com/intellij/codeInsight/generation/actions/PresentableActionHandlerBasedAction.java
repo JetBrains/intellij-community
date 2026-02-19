@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInsight.generation.actions;
 
@@ -39,34 +39,33 @@ public abstract class PresentableActionHandlerBasedAction extends BaseCodeInsigh
     event.getPresentation().copyFrom(getTemplatePresentation());
     applyTextOverride(event);
     super.update(event);
-    
-    // for Undo to show the correct action name, we remember it here to return from getCommandName(), which lack context of AnActionEvent 
+
+    // for Undo to show the correct action name, we remember it here to return from getCommandName(), which lack context of AnActionEvent
     myCurrentActionName = event.getPresentation().getText();
   }
 
   @Override
   protected void update(@NotNull Presentation presentation, @NotNull Project project,
-                        @NotNull Editor editor, @NotNull PsiFile file, @NotNull DataContext dataContext, @Nullable String actionPlace) {
+                        @NotNull Editor editor, @NotNull PsiFile psiFile, @NotNull DataContext dataContext, @Nullable String actionPlace) {
     // avoid evaluating isValidFor several times unnecessary
-    
-    CodeInsightActionHandler handler = getValidHandler(editor, file);
+
+    CodeInsightActionHandler handler = getValidHandler(editor, psiFile);
     presentation.setEnabled(handler != null);
     if (handler instanceof ContextAwareActionHandler && !ActionPlaces.isMainMenuOrActionSearch(actionPlace)) {
-      presentation.setVisible(((ContextAwareActionHandler)handler).isAvailableForQuickList(editor, file, dataContext));
+      presentation.setVisible(((ContextAwareActionHandler)handler).isAvailableForQuickList(editor, psiFile, dataContext));
     }
 
     if (presentation.isVisible() && handler instanceof PresentableCodeInsightActionHandler) {
-      ((PresentableCodeInsightActionHandler)handler).update(editor, file, presentation, actionPlace);
+      ((PresentableCodeInsightActionHandler)handler).update(editor, psiFile, presentation, actionPlace);
     }
   }
 
   @Override
-  protected boolean isValidForFile(@NotNull Project project, @NotNull Editor editor, @NotNull final PsiFile file) {
-    return getValidHandler(editor, file) != null;
+  protected boolean isValidForFile(@NotNull Project project, @NotNull Editor editor, final @NotNull PsiFile psiFile) {
+    return getValidHandler(editor, psiFile) != null;
   }
 
-  @Nullable
-  private CodeInsightActionHandler getValidHandler(@NotNull Editor editor, @NotNull PsiFile file) {
+  private @Nullable CodeInsightActionHandler getValidHandler(@NotNull Editor editor, @NotNull PsiFile file) {
     Language language = PsiUtilCore.getLanguageAtOffset(file, editor.getCaretModel().getOffset());
     final CodeInsightActionHandler codeInsightActionHandler = getLanguageExtension().forLanguage(language);
     if (codeInsightActionHandler != null) {
@@ -82,6 +81,5 @@ public abstract class PresentableActionHandlerBasedAction extends BaseCodeInsigh
     return null;
   }
 
-  @NotNull
-  protected abstract LanguageExtension<? extends CodeInsightActionHandler> getLanguageExtension();
+  protected abstract @NotNull LanguageExtension<? extends CodeInsightActionHandler> getLanguageExtension();
 }

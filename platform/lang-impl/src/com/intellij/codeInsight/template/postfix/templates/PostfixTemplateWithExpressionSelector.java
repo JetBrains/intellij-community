@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.template.postfix.templates;
 
 import com.intellij.codeInsight.CodeInsightBundle;
@@ -7,26 +7,27 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Pass;
 import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.IntroduceTargetChooser;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
 public abstract class PostfixTemplateWithExpressionSelector extends PostfixTemplate {
-  @NotNull
-  private final PostfixTemplateExpressionSelector mySelector;
+  private final @NotNull PostfixTemplateExpressionSelector mySelector;
 
   /**
    * @deprecated use {@link #PostfixTemplateWithExpressionSelector(String, String, String, String, PostfixTemplateExpressionSelector, PostfixTemplateProvider)}
    */
-  @Deprecated
-  protected PostfixTemplateWithExpressionSelector(@NotNull String name,
-                                                  @NotNull String key,
-                                                  @NotNull String example,
+  @Deprecated(forRemoval = true)
+  protected PostfixTemplateWithExpressionSelector(@NotNull @NlsSafe String name,
+                                                  @NotNull @NlsSafe String key,
+                                                  @NotNull @NlsSafe String example,
                                                   @NotNull PostfixTemplateExpressionSelector selector) {
     this(null, name, key, example, selector, null);
   }
@@ -34,26 +35,26 @@ public abstract class PostfixTemplateWithExpressionSelector extends PostfixTempl
   /**
    * @deprecated use {@link #PostfixTemplateWithExpressionSelector(String, String, String, PostfixTemplateExpressionSelector, PostfixTemplateProvider)}
    */
-  @Deprecated
-  protected PostfixTemplateWithExpressionSelector(@NotNull String name,
-                                                  @NotNull String example,
+  @Deprecated(forRemoval = true)
+  protected PostfixTemplateWithExpressionSelector(@NotNull @NlsSafe String name,
+                                                  @NotNull @NlsSafe String example,
                                                   @NotNull PostfixTemplateExpressionSelector selector) {
     this(null, name, example, selector, null);
   }
 
-  protected PostfixTemplateWithExpressionSelector(@Nullable String id,
-                                                  @NotNull String name,
-                                                  @NotNull String example,
+  protected PostfixTemplateWithExpressionSelector(@Nullable @NonNls String id,
+                                                  @NotNull @NlsSafe String name,
+                                                  @NotNull @NlsSafe String example,
                                                   @NotNull PostfixTemplateExpressionSelector selector,
                                                   @Nullable PostfixTemplateProvider provider) {
     super(id, name, example, provider);
     mySelector = selector;
   }
 
-  protected PostfixTemplateWithExpressionSelector(@Nullable String id,
-                                                  @NotNull String name,
-                                                  @NotNull String key,
-                                                  @NotNull String example,
+  protected PostfixTemplateWithExpressionSelector(@Nullable @NonNls String id,
+                                                  @NotNull @NlsSafe String name,
+                                                  @NotNull @NlsSafe String key,
+                                                  @NotNull @NlsSafe String example,
                                                   @NotNull PostfixTemplateExpressionSelector selector,
                                                   @Nullable PostfixTemplateProvider provider) {
     super(id, name, key, example, provider);
@@ -61,12 +62,12 @@ public abstract class PostfixTemplateWithExpressionSelector extends PostfixTempl
   }
 
   @Override
-  public final boolean isApplicable(@NotNull PsiElement context, @NotNull Document copyDocument, int newOffset) {
+  public boolean isApplicable(@NotNull PsiElement context, @NotNull Document copyDocument, int newOffset) {
     return mySelector.hasExpression(context, copyDocument, newOffset);
   }
 
   @Override
-  public final void expand(@NotNull PsiElement context, @NotNull final Editor editor) {
+  public final void expand(@NotNull PsiElement context, final @NotNull Editor editor) {
     List<PsiElement> expressions = mySelector.getExpressions(context,
                                                              editor.getDocument(),
                                                              editor.getCaretModel().getOffset());
@@ -90,9 +91,9 @@ public abstract class PostfixTemplateWithExpressionSelector extends PostfixTempl
 
     IntroduceTargetChooser.showChooser(
       editor, expressions,
-      new Pass<PsiElement>() {
+      new Pass<>() {
         @Override
-        public void pass(@NotNull final PsiElement e) {
+        public void pass(final @NotNull PsiElement e) {
           prepareAndExpandForChooseExpression(e, editor);
         }
       },

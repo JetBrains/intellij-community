@@ -1,10 +1,9 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.update;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.intellij.dvcs.DvcsUtil;
 import com.intellij.dvcs.branch.DvcsSyncSettings;
-import com.intellij.notification.NotificationAction;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
@@ -12,18 +11,20 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsSafe;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.vcs.ProjectLevelVcsManager;
+import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.VcsNotifier;
 import com.intellij.openapi.vcs.changes.Change;
-import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.impl.LocalChangesUnderRoots;
 import com.intellij.openapi.vcs.update.UpdatedFiles;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
+import git4idea.GitBranch;
 import git4idea.GitLocalBranch;
+import git4idea.GitRemoteBranch;
 import git4idea.GitUtil;
 import git4idea.branch.GitBranchPair;
 import git4idea.branch.GitBranchUtil;
@@ -34,22 +35,34 @@ import git4idea.i18n.GitBundle;
 import git4idea.merge.GitConflictResolver;
 import git4idea.merge.GitMergeCommittingConflictResolver;
 import git4idea.merge.GitMerger;
+import git4idea.rebase.GitRebaseUtils;
 import git4idea.rebase.GitRebaser;
 import git4idea.repo.GitBranchTrackInfo;
+import git4idea.repo.GitRemote;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitSubmodule;
 import git4idea.repo.GitSubmoduleKt;
 import git4idea.util.GitPreservingProcess;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 
 import static com.intellij.dvcs.DvcsUtil.getShortRepositoryName;
+import static git4idea.GitNotificationIdsHolder.UPDATE_ERROR;
 import static git4idea.GitUtil.getRootsFromRepositories;
 import static git4idea.GitUtil.mention;
 import static git4idea.fetch.GitFetchSupport.fetchSupport;
+import static git4idea.update.GitUpdateNotificationsKt.notifyDetachedHeadError;
+import static git4idea.update.GitUpdateNotificationsKt.notifyNoTrackedBranchError;
 import static git4idea.util.GitUIUtil.code;
 
 /**
@@ -57,39 +70,28 @@ import static git4idea.util.GitUIUtil.code;
  *
  * The class is not thread-safe and is stateful. It is intended to be used only once.
  */
+@ApiStatus.Internal
 public final class GitUpdateProcess {
   private static final Logger LOG = Logger.getInstance(GitUpdateProcess.class);
 
-  @NotNull private final Project myProject;
-  @NotNull private final Git myGit;
-  @NotNull private final ProjectLevelVcsManager myVcsManager;
-  @NotNull private final ChangeListManager myChangeListManager;
+  private final @NotNull Project myProject;
+  private final @NotNull Git myGit;
 
-  @NotNull private final List<GitRepository> myRepositories;
-  @NotNull private final Map<GitRepository, GitSubmodule> mySubmodulesInDetachedHead;
+  private final @Unmodifiable @NotNull List<GitRepository> myRepositories;
+  private final @NotNull Map<GitRepository, GitSubmodule> mySubmodulesInDetachedHead;
   private final boolean myCheckRebaseOverMergeProblem;
   private final boolean myCheckForTrackedBranchExistence;
   private final UpdatedFiles myUpdatedFiles;
   private final Map<GitRepository, GitBranchPair> myUpdateConfig;
-  @NotNull private final ProgressIndicator myProgressIndicator;
-  @NotNull private final GitMerger myMerger;
+  private final @NotNull ProgressIndicator myProgressIndicator;
+  private final @NotNull GitMerger myMerger;
 
-  @NotNull private final Map<GitRepository, @Nls String> mySkippedRoots = new LinkedHashMap<>();
-  @Nullable private Map<GitRepository, HashRange> myUpdatedRanges;
-
-  @SuppressWarnings("unused") //used in a 3-party plugin
-  public GitUpdateProcess(@NotNull Project project,
-                          @Nullable ProgressIndicator progressIndicator,
-                          @NotNull Collection<GitRepository> repositories,
-                          @NotNull UpdatedFiles updatedFiles,
-                          boolean checkRebaseOverMergeProblem,
-                          boolean checkForTrackedBranchExistence) {
-    this(project, progressIndicator, repositories, updatedFiles, null, checkRebaseOverMergeProblem, checkForTrackedBranchExistence);
-  }
+  private final @NotNull Map<GitRepository, @Nls String> mySkippedRoots = new LinkedHashMap<>();
+  private @Nullable Map<GitRepository, HashRange> myUpdatedRanges;
 
   public GitUpdateProcess(@NotNull Project project,
                           @Nullable ProgressIndicator progressIndicator,
-                          @NotNull Collection<GitRepository> repositories,
+                          @NotNull @Unmodifiable Collection<GitRepository> repositories,
                           @NotNull UpdatedFiles updatedFiles,
                           @Nullable Map<GitRepository, GitBranchPair> updateConfig,
                           boolean checkRebaseOverMergeProblem,
@@ -98,8 +100,6 @@ public final class GitUpdateProcess {
     myCheckRebaseOverMergeProblem = checkRebaseOverMergeProblem;
     myCheckForTrackedBranchExistence = checkForTrackedBranchExistence;
     myGit = Git.getInstance();
-    myChangeListManager = ChangeListManager.getInstance(project);
-    myVcsManager = ProjectLevelVcsManager.getInstance(project);
     myUpdatedFiles = updatedFiles;
     myUpdateConfig = updateConfig;
 
@@ -109,15 +109,20 @@ public final class GitUpdateProcess {
 
     GitUtil.updateRepositories(repositories);
 
-    mySubmodulesInDetachedHead = new LinkedHashMap<>();
-    for (GitRepository repository : myRepositories) {
-      if (!repository.isOnBranch()) {
-        GitSubmodule submodule = GitSubmoduleKt.asSubmodule(repository);
-        if (submodule != null) {
-          mySubmodulesInDetachedHead.put(repository, submodule);
-        }
+    mySubmodulesInDetachedHead = collectDetachedSubmodules(myRepositories);
+  }
+
+  private static @NotNull Map<GitRepository, GitSubmodule> collectDetachedSubmodules(@NotNull @Unmodifiable List<GitRepository> repositories) {
+    Map<GitRepository, GitSubmodule> detachedSubmodules = new LinkedHashMap<>();
+    for (GitRepository repository : repositories) {
+      if (repository.isOnBranch()) continue;
+
+      GitSubmodule submodule = GitSubmoduleKt.asSubmodule(repository);
+      if (submodule != null) {
+        detachedSubmodules.put(repository, submodule);
       }
     }
+    return detachedSubmodules;
   }
 
   /**
@@ -127,42 +132,46 @@ public final class GitUpdateProcess {
    * Perform update on all roots.
    * 0. Blocks reloading project on external change, saving/syncing on frame deactivation.
    * 1. Checks if update is possible (rebase/merge in progress, no tracked branches...) and provides merge dialog to solve problems.
-   * 2. Finds updaters to use (merge or rebase).
+   * 2. Finds updaters to use (merge, rebase or reset).
    * 3. Preserves local changes if needed (not needed for merge sometimes).
    * 4. Updates via 'git pull' or equivalent.
    * 5. Restores local changes if update completed or failed with error. If update is incomplete, i.e. some unmerged files remain,
    * local changes are not restored.
    *
    */
-  @NotNull
-  public GitUpdateResult update(final UpdateMethod updateMethod) {
+  public @NotNull GitUpdateResult update(final UpdateMethod updateMethod) {
     LOG.info("update started|" + updateMethod);
     String oldText = myProgressIndicator.getText();
     myProgressIndicator.setText(GitBundle.message("update.process.progress.title"));
 
     // check if update is possible
-    if (checkRebaseInProgress() || isMergeInProgress() || areUnmergedFiles()) {
+    if (isUpdateNotReady()) {
       return GitUpdateResult.NOT_READY;
     }
+
     Map<GitRepository, GitBranchPair> trackedBranches = myUpdateConfig != null ? myUpdateConfig : checkTrackedBranchesConfiguration();
     if (ContainerUtil.isEmpty(trackedBranches)) {
       return GitUpdateResult.NOT_READY;
     }
 
-    if (!fetchAndNotify(myRepositories)) {
+    if (!fetchAndNotify(trackedBranches)) {
       return GitUpdateResult.NOT_READY;
     }
 
     GitUpdateResult result;
-    try (AccessToken ignore = DvcsUtil.workingTreeChangeStarted(myProject, GitBundle.message("activity.name.update"))) {
+    try (AccessToken ignore = DvcsUtil.workingTreeChangeStarted(myProject, VcsBundle.message("activity.name.update"))) {
       result = updateImpl(updateMethod);
     }
     myProgressIndicator.setText(oldText);
     return result;
   }
 
-  @NotNull
-  private GitUpdateResult updateImpl(@NotNull UpdateMethod updateMethod) {
+  public boolean isUpdateNotReady() {
+    return checkRebaseInProgress() || isMergeInProgress() || areUnmergedFiles();
+  }
+
+  private @NotNull GitUpdateResult updateImpl(@NotNull UpdateMethod updateMethod) {
+    // re-read after fetch, remote branch might have been deleted
     Map<GitRepository, GitBranchPair> trackedBranches = myUpdateConfig != null ? myUpdateConfig : checkTrackedBranchesConfiguration();
     if (trackedBranches == null) {
       return GitUpdateResult.NOT_READY;
@@ -175,7 +184,7 @@ public final class GitUpdateProcess {
     catch (VcsException e) {
       LOG.info(e);
       VcsNotifier.getInstance(myProject)
-        .notifyError("git.update.error", GitBundle.message("notification.title.update.failed"),
+        .notifyError(UPDATE_ERROR, GitBundle.message("notification.title.update.failed"),
                      e.getMessage(),
                      Collections.singleton(e)
         );
@@ -234,7 +243,7 @@ public final class GitUpdateProcess {
       final Map<GitRepository, GitUpdater> finalUpdaters = updaters;
       new GitPreservingProcess(myProject, myGit, myRootsToSave, GitBundle.message("git.update.operation"),
                                GitBundle.message("progress.update.destination.remote"),
-                               GitVcsSettings.getInstance(myProject).getSaveChangesPolicy(), myProgressIndicator, () -> {
+                               GitVcsSettings.getInstance(myProject).getSaveChangesPolicy(), myProgressIndicator, false, () -> {
         LOG.info("updateImpl: updating...");
         GitRepository currentlyUpdatedRoot = null;
         try {
@@ -254,7 +263,7 @@ public final class GitUpdateProcess {
           String rootName = (currentlyUpdatedRoot == null) ? "" : getShortRepositoryName(currentlyUpdatedRoot);
           LOG.info("Error updating changes for root " + currentlyUpdatedRoot, e);
           VcsNotifier.getInstance(myProject)
-                                     .notifyError("git.update.error", GitBundle.message("notification.title.error.updating.root", rootName),
+                                     .notifyError(UPDATE_ERROR, GitBundle.message("notification.title.error.updating.root", rootName),
                                GitBundle.message("notification.content.updating.root.failed.with.error", rootName,
                                                  e.getLocalizedMessage()));
         }
@@ -272,8 +281,7 @@ public final class GitUpdateProcess {
     }
   }
 
-  @NotNull
-  private Collection<GitRepository> findRootsRebasingOverMerge(@NotNull Map<GitRepository, GitUpdater> updaters) {
+  private @NotNull Collection<GitRepository> findRootsRebasingOverMerge(@NotNull Map<GitRepository, GitUpdater> updaters) {
     return ContainerUtil.mapNotNull(updaters.keySet(), repo -> {
       GitUpdater updater = updaters.get(repo);
       if (updater instanceof GitRebaseUpdater) {
@@ -286,17 +294,15 @@ public final class GitUpdateProcess {
     });
   }
 
-  @NotNull
-  private Map<GitRepository, GitUpdater> tryFastForwardMergeForRebaseUpdaters(@NotNull Map<GitRepository, GitUpdater> updaters) {
+  private @NotNull Map<GitRepository, GitUpdater> tryFastForwardMergeForRebaseUpdaters(@NotNull Map<GitRepository, GitUpdater> updaters) {
     Map<GitRepository, GitUpdater> modifiedUpdaters = new LinkedHashMap<>();
     Map<VirtualFile, Collection<Change>> changesUnderRoots = LocalChangesUnderRoots.getChangesUnderRoots(getRootsFromRepositories(updaters.keySet()), myProject);
     for (GitRepository repository : updaters.keySet()) {
       GitUpdater updater = updaters.get(repository);
       Collection<Change> changes = changesUnderRoots.get(repository.getRoot());
       LOG.debug("Changes under root '" + getShortRepositoryName(repository) + "': " + changes);
-      if (updater instanceof GitRebaseUpdater && changes != null && !changes.isEmpty()) {
+      if (updater instanceof GitRebaseUpdater rebaseUpdater && changes != null && !changes.isEmpty()) {
         // check only if there are local changes, otherwise stash won't happen anyway and there would be no optimization
-        GitRebaseUpdater rebaseUpdater = (GitRebaseUpdater) updater;
         if (rebaseUpdater.fastForwardMerge()) {
           continue;
         }
@@ -306,9 +312,8 @@ public final class GitUpdateProcess {
     return modifiedUpdaters;
   }
 
-  @NotNull
-  private Map<GitRepository, GitUpdater> defineUpdaters(@NotNull UpdateMethod updateMethod,
-                                                        @NotNull Map<GitRepository, GitBranchPair> trackedBranches) throws VcsException {
+  private @NotNull Map<GitRepository, GitUpdater> defineUpdaters(@NotNull UpdateMethod updateMethod,
+                                                                 @NotNull Map<GitRepository, GitBranchPair> trackedBranches) throws VcsException {
     Map<GitRepository, GitUpdater> updaters = new LinkedHashMap<>();
     for (GitRepository repository : trackedBranches.keySet()) {
       GitBranchPair branchAndTracked = trackedBranches.get(repository);
@@ -319,10 +324,14 @@ public final class GitUpdateProcess {
       }
     }
 
-    for (GitRepository repository : mySubmodulesInDetachedHead.keySet()) {
-      GitUpdater updater = new GitSubmoduleUpdater(myProject, myGit, mySubmodulesInDetachedHead.get(repository).getParent(), repository,
+    for (GitSubmodule submodule : mySubmodulesInDetachedHead.values()) {
+      GitRepository submoduleRepository = submodule.getRepository();
+      GitRepository parentRepository = submodule.getParent();
+      if (mySubmodulesInDetachedHead.containsKey(parentRepository)) continue; // updated recursively
+
+      GitUpdater updater = new GitSubmoduleUpdater(myProject, myGit, parentRepository, submoduleRepository,
                                                    myProgressIndicator, myUpdatedFiles);
-      updaters.put(repository, updater);
+      updaters.put(submoduleRepository, updater);
     }
 
     LOG.info("Updaters: " + updaters);
@@ -330,27 +339,33 @@ public final class GitUpdateProcess {
     return updaters;
   }
 
-  @NotNull
-  public Map<GitRepository, String> getSkippedRoots() {
+  public @NotNull Map<GitRepository, String> getSkippedRoots() {
     return mySkippedRoots;
   }
 
-  @Nullable
-  public Map<GitRepository, HashRange> getUpdatedRanges() {
+  public @Nullable Map<GitRepository, HashRange> getUpdatedRanges() {
     return myUpdatedRanges;
   }
 
-  @NotNull
-  private static GitUpdateResult joinResults(@Nullable GitUpdateResult compoundResult, GitUpdateResult result) {
+  private static @NotNull GitUpdateResult joinResults(@Nullable GitUpdateResult compoundResult, GitUpdateResult result) {
     if (compoundResult == null) {
       return result;
     }
     return compoundResult.join(result);
   }
 
-  // fetch all roots. If an error happens, return false and notify about errors.
-  private boolean fetchAndNotify(@NotNull Collection<GitRepository> repositories) {
-    return fetchSupport(myProject).fetchDefaultRemote(repositories)
+  private boolean fetchAndNotify(@NotNull Map<GitRepository, GitBranchPair> updateConfig) {
+    Collection<Pair<GitRepository, GitRemote>> remotes = ContainerUtil.mapNotNull(updateConfig.entrySet(), entry -> {
+      GitRepository repository = entry.getKey();
+      GitBranch target = entry.getValue().getTarget();
+      if (target instanceof GitRemoteBranch) {
+        return new Pair<>(repository, ((GitRemoteBranch)target).getRemote());
+      }
+      else {
+        return null; // No need to fetch non-remote branches. Shouldn't happen, but typesafe fix breaks binary compatibility.
+      }
+    });
+    return fetchSupport(myProject).fetchRemotes(remotes)
       .showNotificationIfFailed(GitBundle.message("notification.title.update.failed"));
   }
 
@@ -359,8 +374,7 @@ public final class GitUpdateProcess {
    * If it is not true for at least one of roots, notify and return null.
    * If branch configuration is OK for all roots, return the collected tracking branch information.
    */
-  @Nullable
-  private Map<GitRepository, GitBranchPair> checkTrackedBranchesConfiguration() {
+  private @Nullable Map<GitRepository, GitBranchPair> checkTrackedBranchesConfiguration() {
     LOG.info("checking tracked branch configuration...");
 
     Map<GitRepository, GitLocalBranch> currentBranches = new LinkedHashMap<>();
@@ -382,7 +396,7 @@ public final class GitUpdateProcess {
     }
 
     if (!detachedHeads.isEmpty() && (currentBranches.isEmpty() || isSyncControl())) {
-      notifyDetachedHeadError(detachedHeads.get(0));
+      notifyDetachedHeadError(VcsNotifier.getInstance(myProject), detachedHeads.get(0));
       return null;
     }
     else {
@@ -409,7 +423,7 @@ public final class GitUpdateProcess {
     if (myCheckForTrackedBranchExistence &&
         !noTrackedBranch.isEmpty() && (trackedBranches.isEmpty() || isSyncControl())) {
       GitRepository repo = noTrackedBranch.get(0);
-      notifyNoTrackedBranchError(repo, currentBranches.get(repo));
+      notifyNoTrackedBranchError(VcsNotifier.getInstance(myProject), repo, currentBranches.get(repo));
       return null;
     }
     else {
@@ -421,42 +435,8 @@ public final class GitUpdateProcess {
     return trackedBranches;
   }
 
-  private void notifyNoTrackedBranchError(@NotNull GitRepository repository, @NotNull GitLocalBranch currentBranch) {
-    VcsNotifier.getInstance(repository.getProject())
-      .notifyError(
-        "git.update.no.tracked.branch.error", GitBundle.message("update.notification.update.error"),
-        getNoTrackedBranchError(repository, currentBranch.getName()),
-        NotificationAction.createSimple(
-          GitBundle.message("update.notification.choose.upstream.branch"),
-          () -> {
-            showUpdateDialog(repository);
-          })
-      );
-  }
-
-  private void showUpdateDialog(@NotNull GitRepository repository) {
-    FixTrackedBranchDialog updateDialog = new FixTrackedBranchDialog(repository.getProject());
-
-    if (updateDialog.showAndGet()) {
-      new GitUpdateExecutionProcess(repository.getProject(),
-                                    myRepositories,
-                                    updateDialog.getUpdateConfig(),
-                                    updateDialog.getUpdateMethod(),
-                                    updateDialog.shouldSetAsTrackedBranch())
-        .execute();
-    }
-  }
-
-  private static void notifyDetachedHeadError(@NotNull GitRepository repository) {
-    VcsNotifier.getInstance(repository.getProject())
-      .notifyError("git.update.detached.head.error", GitBundle.message("notification.title.can.t.update.no.current.branch"),
-                         getDetachedHeadErrorNotificationContent(repository));
-  }
-
-  @NlsContexts.NotificationContent
   @VisibleForTesting
-  @NotNull
-  static String getDetachedHeadErrorNotificationContent(@NotNull GitRepository repository) {
+  public static @NlsContexts.NotificationContent @NotNull String getDetachedHeadErrorNotificationContent(@NotNull GitRepository repository) {
     return GitBundle.message("notification.content.detached.state.in.root.checkout.branch", mention(repository));
   }
 
@@ -464,10 +444,8 @@ public final class GitUpdateProcess {
     return GitVcsSettings.getInstance(myProject).getSyncSetting() == DvcsSyncSettings.Value.SYNC;
   }
 
-  @NlsContexts.NotificationContent
   @VisibleForTesting
-  @NotNull
-  static String getNoTrackedBranchError(@NotNull GitRepository repository, @NotNull @NlsSafe String branchName) {
+  public static @NlsContexts.NotificationContent @NotNull String getNoTrackedBranchError(@NotNull GitRepository repository, @NotNull @NlsSafe String branchName) {
     return GitBundle.message("notification.content.branch.in.repo.has.no.tracked.branch", code(branchName), mention(repository));
   }
 
@@ -485,7 +463,7 @@ public final class GitUpdateProcess {
     GitConflictResolver.Params params = new GitConflictResolver.Params(myProject);
     params.setErrorNotificationTitle(GitBundle.message("update.process.generic.error.title"));
     params.setMergeDescription(GitBundle.message("update.process.error.message.unfinished.merge"));
-    return !new GitMergeCommittingConflictResolver(myProject, myGit, myMerger, mergingRoots, params, false).merge();
+    return !new GitMergeCommittingConflictResolver(myProject, mergingRoots, params, false).merge();
   }
 
   /**
@@ -497,7 +475,7 @@ public final class GitUpdateProcess {
     GitConflictResolver.Params params = new GitConflictResolver.Params(myProject);
     params.setErrorNotificationTitle(GitBundle.message("update.process.generic.error.title"));
     params.setMergeDescription(GitBundle.message("update.process.error.message.unmerged.files"));
-    return !new GitMergeCommittingConflictResolver(myProject, myGit, myMerger, getRootsFromRepositories(myRepositories),
+    return !new GitMergeCommittingConflictResolver(myProject, getRootsFromRepositories(myRepositories),
                                                    params, false).merge();
   }
 
@@ -507,8 +485,7 @@ public final class GitUpdateProcess {
    */
   private boolean checkRebaseInProgress() {
     LOG.info("checkRebaseInProgress: checking if there is an unfinished rebase process...");
-    final GitRebaser rebaser = new GitRebaser(myProject, myGit, myProgressIndicator);
-    final Collection<VirtualFile> rebasingRoots = rebaser.getRebasingRoots();
+    Collection<VirtualFile> rebasingRoots = ContainerUtil.map(GitRebaseUtils.getRebasingRepositories(myProject), repo -> repo.getRoot());
     if (rebasingRoots.isEmpty()) {
       return false;
     }
@@ -520,12 +497,14 @@ public final class GitUpdateProcess {
     params.setErrorNotificationAdditionalDescription(GitBundle.message("update.process.error.additional.description.unfinished.rebase"));
     params.setReverse(true);
     return !new GitConflictResolver(myProject, rebasingRoots, params) {
-      @Override protected boolean proceedIfNothingToMerge() {
-        return rebaser.continueRebase(rebasingRoots);
+      @Override
+      protected boolean proceedIfNothingToMerge() {
+        return new GitRebaser(myProject, myGit, myProgressIndicator).continueRebase(rebasingRoots);
       }
 
-      @Override protected boolean proceedAfterAllMerged() {
-        return rebaser.continueRebase(rebasingRoots);
+      @Override
+      protected boolean proceedAfterAllMerged() {
+        return new GitRebaser(myProject, myGit, myProgressIndicator).continueRebase(rebasingRoots);
       }
     }.merge();
   }

@@ -17,7 +17,6 @@ import com.intellij.refactoring.rename.NameSuggestionProvider;
 import com.intellij.refactoring.rename.PreferrableNameSuggestionProvider;
 import com.intellij.testFramework.ServiceContainerUtil;
 import com.intellij.testFramework.TestDataPath;
-import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyQuickFixTestCase;
 import com.jetbrains.python.PythonLanguage;
@@ -146,10 +145,7 @@ public class PyRenameElementQuickFixTest extends PyQuickFixTestCase {
    * Python is injected into string literal before running test code.
    */
   private void testInInjectedLanguageFragment(@NotNull Runnable runnable) {
-    Disposable testDisposable = new Disposable() {
-      @Override
-      public void dispose() {}
-    };
+    Disposable testDisposable = Disposer.newDisposable();
     injectPythonLanguage(testDisposable);
     runnable.run();
     Disposer.dispose(testDisposable);
@@ -173,7 +169,7 @@ public class PyRenameElementQuickFixTest extends PyQuickFixTestCase {
       @NotNull
       @Override
       public List<Class<? extends PsiElement>> elementsToInjectIn() {
-        return ContainerUtil.newArrayList(PyStringLiteralExpression.class);
+        return List.of(PyStringLiteralExpression.class);
       }
     };
     manager.registerMultiHostInjector(multiHostInjector, testDisposable);

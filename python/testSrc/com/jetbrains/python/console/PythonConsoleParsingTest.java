@@ -1,27 +1,43 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.console;
 
+import com.intellij.lang.LanguageASTFactory;
 import com.intellij.mock.MockApplication;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.testFramework.ParsingTestCase;
 import com.intellij.testFramework.TestDataPath;
-import com.jetbrains.python.*;
+import com.jetbrains.python.PyElementTypesFacade;
+import com.jetbrains.python.PyElementTypesFacadeImpl;
+import com.jetbrains.python.PyLanguageFacade;
+import com.jetbrains.python.PyLanguageFacadeImpl;
+import com.jetbrains.python.PythonDialectsTokenSetContributor;
+import com.jetbrains.python.PythonLanguage;
+import com.jetbrains.python.PythonParserDefinition;
+import com.jetbrains.python.PythonRuntimeService;
+import com.jetbrains.python.PythonRuntimeServiceImpl;
+import com.jetbrains.python.PythonTestUtil;
+import com.jetbrains.python.PythonTokenSetContributor;
 import com.jetbrains.python.psi.LanguageLevel;
+import com.jetbrains.python.psi.PyPsiFacade;
+import com.jetbrains.python.psi.impl.PyPsiFacadeImpl;
+import com.jetbrains.python.psi.impl.PythonASTFactory;
 import com.jetbrains.python.psi.impl.PythonLanguageLevelPusher;
 import org.jetbrains.annotations.NotNull;
 
+import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 
 @TestDataPath("$CONTENT_ROOT/../testData/ipython/")
 public class PythonConsoleParsingTest extends ParsingTestCase {
   private LanguageLevel myLanguageLevel = LanguageLevel.getDefault();
 
-  private Disposable myServiceDisposable = null;
+  private Disposable myServiceDisposable;
 
 
   public PythonConsoleParsingTest() {
@@ -31,17 +47,17 @@ public class PythonConsoleParsingTest extends ParsingTestCase {
   @Override
   protected void setUp() throws Exception {
     super.setUp();
+    Registry.markAsLoaded();
+    registerExtensionPoint(PythonDialectsTokenSetContributor.EP_NAME, PythonDialectsTokenSetContributor.class);
     registerExtension(PythonDialectsTokenSetContributor.EP_NAME, new PythonTokenSetContributor());
+    addExplicitExtension(LanguageASTFactory.INSTANCE, PythonLanguage.getInstance(), new PythonASTFactory());
+    getProject().registerService(PyPsiFacade.class, PyPsiFacadeImpl.class);
+    getApplication().registerService(PyElementTypesFacade.class, PyElementTypesFacadeImpl.class);
+    getApplication().registerService(PyLanguageFacade.class, PyLanguageFacadeImpl.class);
 
     if (PythonRuntimeService.getInstance() == null) {
-      myServiceDisposable = new Disposable() {
-        @Override
-        public void dispose() {
-        }
-      };
+      myServiceDisposable = Disposer.newDisposable();
       ((MockApplication)ApplicationManager.getApplication()).registerService(PythonRuntimeService.class, new PythonRuntimeServiceImpl(), myServiceDisposable);
-    } else {
-      myServiceDisposable = null;
     }
   }
 
@@ -90,6 +106,40 @@ public class PythonConsoleParsingTest extends ParsingTestCase {
     assertFalse(PsiTreeUtil.hasErrorElements(psiFile));
   }
 
+  public void testConsoleSingleStringLiteral() throws IOException {
+    PsiFile psiFile = consoleFile("\"foo\"");
+    checkResult(getTestName(), psiFile);
+  }
+
+  public void testConsoleSingleStringLiteralTripleQuoted() throws IOException {
+    PsiFile psiFile = consoleFile("\"\"\"foo\"\"\"");
+    checkResult(getTestName(), psiFile);
+  }
+
+  public void testConsoleSingleBytesLiteral() throws IOException {
+    PsiFile psiFile = consoleFile("b\"foo\"");
+    checkResult(getTestName(), psiFile);
+  }
+
+  public void testConsoleSingleBytesLiteralTripleQuoted() throws IOException {
+    PsiFile psiFile = consoleFile("b\"\"\"foo\"\"\"");
+    checkResult(getTestName(), psiFile);
+  }
+
+  public void testConsoleSingleStringLiteralNewLineBefore() throws IOException {
+    PsiFile psiFile = consoleFile("\n\"foo\"");
+    checkResult(getTestName(), psiFile);
+  }
+
+  public void testConsoleSingleStringLiteralNewLineAfter() throws IOException {
+    PsiFile psiFile = consoleFile("\"foo\"\n");
+    checkResult(getTestName(), psiFile);
+  }
+
+  public void testConsoleSingleStringLiteralWhitespaceAfter() throws IOException {
+    PsiFile psiFile = consoleFile("\"foo\"    ");
+    checkResult(getTestName(), psiFile);
+  }
 
   public void doTest(LanguageLevel languageLevel) {
     LanguageLevel prev = myLanguageLevel;
@@ -103,7 +153,7 @@ public class PythonConsoleParsingTest extends ParsingTestCase {
   }
 
   private PsiFile consoleFile(String text) {
-    return createPsiFile("Console.py", text);
+    return createPsiFile("Console", text);
   }
 
   @Override

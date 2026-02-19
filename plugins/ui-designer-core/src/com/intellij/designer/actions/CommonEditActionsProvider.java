@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.designer.actions;
 
 import com.intellij.designer.DesignerBundle;
@@ -21,7 +7,6 @@ import com.intellij.designer.designSurface.DesignerEditorPanel;
 import com.intellij.designer.designSurface.EditableArea;
 import com.intellij.designer.designSurface.tools.ComponentPasteFactory;
 import com.intellij.designer.designSurface.tools.PasteTool;
-import com.intellij.designer.model.IComponentCopyProvider;
 import com.intellij.designer.model.IComponentDeletionParticipant;
 import com.intellij.designer.model.IGroupDeleteComponent;
 import com.intellij.designer.model.RadComponent;
@@ -30,6 +15,7 @@ import com.intellij.ide.CutProvider;
 import com.intellij.ide.DeleteProvider;
 import com.intellij.ide.PasteProvider;
 import com.intellij.ide.dnd.FileCopyPasteUtil;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.uiDesigner.SerializedComponentData;
@@ -54,6 +40,11 @@ public class CommonEditActionsProvider implements DeleteProvider, CopyProvider, 
 
   public CommonEditActionsProvider(DesignerEditorPanel designer) {
     myDesigner = designer;
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.EDT;
   }
 
   protected EditableArea getArea(DataContext dataContext) {
@@ -110,13 +101,11 @@ public class CommonEditActionsProvider implements DeleteProvider, CopyProvider, 
       RadComponent parent = entry.getKey();
       List<RadComponent> children = entry.getValue();
       boolean finished = false;
-      if (parent instanceof IComponentDeletionParticipant) {
-        IComponentDeletionParticipant handler = (IComponentDeletionParticipant)parent;
+      if (parent instanceof IComponentDeletionParticipant handler) {
         finished = handler.deleteChildren(parent, children);
       }
       else if (parent != null && /*check root*/
-               parent.getLayout() instanceof IComponentDeletionParticipant) {
-        IComponentDeletionParticipant handler = (IComponentDeletionParticipant)parent.getLayout();
+               parent.getLayout() instanceof IComponentDeletionParticipant handler) {
         finished = handler.deleteChildren(parent, children);
       }
 
@@ -127,8 +116,8 @@ public class CommonEditActionsProvider implements DeleteProvider, CopyProvider, 
   }
 
   private static void deleteComponents(List<RadComponent> components) throws Exception {
-    if (components.get(0) instanceof IGroupDeleteComponent) {
-      ((IGroupDeleteComponent)components.get(0)).delete(components);
+    if (components.get(0) instanceof IGroupDeleteComponent component) {
+      component.delete(components);
     }
     else {
       for (RadComponent component : components) {
@@ -154,8 +143,7 @@ public class CommonEditActionsProvider implements DeleteProvider, CopyProvider, 
     }
   }
 
-  @Nullable
-  private static RadComponent getNewSelection(RadComponent component, List<RadComponent> excludes) {
+  private static @Nullable RadComponent getNewSelection(RadComponent component, List<RadComponent> excludes) {
     RadComponent parent = component.getParent();
     if (parent == null) {
       return null;
@@ -193,13 +181,6 @@ public class CommonEditActionsProvider implements DeleteProvider, CopyProvider, 
     if (selection.isEmpty()) {
       return false;
     }
-
-    RadComponent rootComponent = myDesigner.getRootComponent();
-    if (rootComponent instanceof IComponentCopyProvider) {
-      IComponentCopyProvider copyProvider = (IComponentCopyProvider)rootComponent;
-      return copyProvider.isCopyEnabled(selection);
-    }
-
     return true;
   }
 
@@ -214,16 +195,8 @@ public class CommonEditActionsProvider implements DeleteProvider, CopyProvider, 
       root.setAttribute("target", myDesigner.getPlatformTarget());
 
       List<RadComponent> components = RadComponent.getPureSelection(getArea(dataContext).getSelection());
-      RadComponent rootComponent = myDesigner.getRootComponent();
-
-      if (rootComponent instanceof IComponentCopyProvider) {
-        IComponentCopyProvider copyProvider = (IComponentCopyProvider)rootComponent;
-        copyProvider.copyTo(root, components);
-      }
-      else {
-        for (RadComponent component : components) {
-          component.copyTo(root);
-        }
+      for (RadComponent component : components) {
+        component.copyTo(root);
       }
 
       SerializedComponentData data = new SerializedComponentData(new XMLOutputter().outputString(root));
@@ -232,7 +205,7 @@ public class CommonEditActionsProvider implements DeleteProvider, CopyProvider, 
       return true;
     }
     catch (Throwable e) {
-      myDesigner.showError("Copy error", e);
+      myDesigner.showError(DesignerBundle.message("designer.copy.error"), e);
       return false;
     }
   }
@@ -252,12 +225,10 @@ public class CommonEditActionsProvider implements DeleteProvider, CopyProvider, 
     return !myDesigner.getInplaceEditingLayer().isEditing() && getSerializedComponentData() != null;
   }
 
-  @Nullable
-  private String getSerializedComponentData() {
+  private @Nullable String getSerializedComponentData() {
     try {
       Object transferData = CopyPasteManager.getInstance().getContents(DATA_FLAVOR);
-      if (transferData instanceof SerializedComponentData) {
-        SerializedComponentData data = (SerializedComponentData)transferData;
+      if (transferData instanceof SerializedComponentData data) {
         String xmlComponents = data.getSerializedComponents();
         if (xmlComponents.startsWith("<designer target=\"" + myDesigner.getPlatformTarget() + "\">")) {
           return xmlComponents;

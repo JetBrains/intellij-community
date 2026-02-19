@@ -1,0 +1,8 @@
+
+public class Test {
+  public static final int CONST = foo();
+
+  private static int foo() {
+    return 0;
+  }
+}

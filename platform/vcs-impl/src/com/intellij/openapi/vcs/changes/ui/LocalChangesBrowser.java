@@ -1,29 +1,37 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes.ui;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.ex.CheckboxAction;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsActions;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsDataKeys;
-import com.intellij.openapi.vcs.changes.*;
+import com.intellij.openapi.vcs.changes.Change;
+import com.intellij.openapi.vcs.changes.ChangeListAdapter;
+import com.intellij.openapi.vcs.changes.ChangeListChange;
+import com.intellij.openapi.vcs.changes.ChangeListManager;
+import com.intellij.openapi.vcs.changes.LocalChangeList;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.update.DisposableUpdate;
 import com.intellij.util.ui.update.MergingUpdateQueue;
-import com.intellij.util.ui.update.Update;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.tree.DefaultTreeModel;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
-public class LocalChangesBrowser extends ChangesBrowserBase implements Disposable {
-  @NotNull private final ToggleChangeDiffAction myToggleChangeDiffAction;
-  @Nullable private Set<String> myChangeListNames;
+@ApiStatus.Internal
+public abstract class LocalChangesBrowser extends AsyncChangesBrowserBase implements Disposable {
+  private final @NotNull ToggleChangeDiffAction myToggleChangeDiffAction;
 
   public LocalChangesBrowser(@NotNull Project project) {
     super(project, true, true);
@@ -34,36 +42,22 @@ public class LocalChangesBrowser extends ChangesBrowserBase implements Disposabl
     init();
 
     myViewer.setInclusionModel(new DefaultInclusionModel(ChangeListChange.HASHING_STRATEGY));
-    myViewer.rebuildTree();
   }
 
   @Override
   public void dispose() {
+    shutdown();
   }
 
-  @NotNull
   @Override
-  protected List<AnAction> createDiffActions() {
+  protected @NotNull List<AnAction> createDiffActions() {
     return ContainerUtil.append(
       super.createDiffActions(),
       myToggleChangeDiffAction
     );
   }
 
-
-  @NotNull
-  @Override
-  protected DefaultTreeModel buildTreeModel() {
-    List<LocalChangeList> lists = ChangeListManager.getInstance(myProject).getChangeLists();
-    if (myChangeListNames != null) {
-      lists = ContainerUtil.filter(lists, list -> myChangeListNames.contains(list.getName()));
-    }
-
-    return TreeModelBuilder.buildFromChangeLists(myProject, getGrouping(), lists, Registry.is("vcs.skip.single.default.changelist"));
-  }
-
-
-  public void setIncludedChanges(@NotNull Collection<? extends Change> changes) {
+  public void setIncludedChangesBy(@NotNull Collection<? extends Change> changes) {
     List<Change> changesToInclude = new ArrayList<>(changes);
 
     Set<Change> otherChanges = new HashSet<>();
@@ -103,15 +97,15 @@ public class LocalChangesBrowser extends ChangesBrowserBase implements Disposabl
     myToggleChangeDiffAction.getTemplatePresentation().setText(title);
   }
 
-  public void setChangeLists(@Nullable List<? extends LocalChangeList> changeLists) {
-    myChangeListNames = changeLists != null ? ContainerUtil.map2Set(changeLists, LocalChangeList::getName) : null;
-    myViewer.rebuildTree();
-  }
-
 
   private class ToggleChangeDiffAction extends CheckboxAction implements DumbAware {
     ToggleChangeDiffAction() {
       super(VcsBundle.message("checkbox.include"));
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
     }
 
     @Override
@@ -128,30 +122,79 @@ public class LocalChangesBrowser extends ChangesBrowserBase implements Disposabl
 
       if (state) {
         myViewer.includeChange(change);
+        myViewer.logInclusionToggleEvents(false, e);
       }
       else {
         myViewer.excludeChange(change);
+        myViewer.logInclusionToggleEvents(true, e);
       }
     }
   }
 
   private class MyChangeListListener extends ChangeListAdapter {
-    @NotNull private final MergingUpdateQueue myUpdateQueue =
+    private final @NotNull MergingUpdateQueue myUpdateQueue =
       new MergingUpdateQueue("LocalChangesViewer", 300, true,
                              LocalChangesBrowser.this, LocalChangesBrowser.this);
 
     private void doUpdate() {
-      myUpdateQueue.queue(new Update("update") {
-        @Override
-        public void run() {
-          myViewer.rebuildTree();
-        }
-      });
+      myUpdateQueue.queue(DisposableUpdate.createDisposable(myUpdateQueue, "update", () -> {
+        myViewer.rebuildTree();
+      }));
     }
 
     @Override
     public void changeListsChanged() {
       doUpdate();
+    }
+  }
+
+  public static class NonEmptyChangeLists extends LocalChangesBrowser {
+    public NonEmptyChangeLists(@NotNull Project project) {
+      super(project);
+      myViewer.rebuildTree();
+    }
+
+    @Override
+    protected @NotNull AsyncChangesTreeModel getChangesTreeModel() {
+      return SimpleAsyncChangesTreeModel.create(grouping -> {
+        List<LocalChangeList> allLists = ChangeListManager.getInstance(myProject).getChangeLists();
+        List<LocalChangeList> selectedLists = ContainerUtil.filter(allLists, list -> !list.getChanges().isEmpty());
+        return TreeModelBuilder.buildFromChangeLists(myProject, grouping, selectedLists);
+      });
+    }
+  }
+
+  public static class SelectedChangeLists extends LocalChangesBrowser {
+    private final @NotNull Set<String> myChangeListNames;
+
+    public SelectedChangeLists(@NotNull Project project, @NotNull Collection<? extends LocalChangeList> changeLists) {
+      super(project);
+      myChangeListNames = ContainerUtil.map2Set(changeLists, LocalChangeList::getName);
+      myViewer.rebuildTree();
+    }
+
+    @Override
+    protected @NotNull AsyncChangesTreeModel getChangesTreeModel() {
+      return SimpleAsyncChangesTreeModel.create(grouping -> {
+        List<LocalChangeList> allLists = ChangeListManager.getInstance(myProject).getChangeLists();
+        List<LocalChangeList> selectedLists = ContainerUtil.filter(allLists, list -> myChangeListNames.contains(list.getName()));
+        return TreeModelBuilder.buildFromChangeLists(myProject, grouping, selectedLists);
+      });
+    }
+  }
+
+  public static class AllChanges extends LocalChangesBrowser {
+    public AllChanges(@NotNull Project project) {
+      super(project);
+      myViewer.rebuildTree();
+    }
+
+    @Override
+    protected @NotNull AsyncChangesTreeModel getChangesTreeModel() {
+      return SimpleAsyncChangesTreeModel.create(grouping -> {
+        Collection<Change> allChanges = ChangeListManager.getInstance(myProject).getAllChanges();
+        return TreeModelBuilder.buildFromChanges(myProject, grouping, allChanges, null);
+      });
     }
   }
 }

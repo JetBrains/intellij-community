@@ -1,11 +1,16 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.codeStyle.extractor;
 
 import com.intellij.application.options.CodeStyle;
 import com.intellij.lang.LangBundle;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageFormatting;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -23,7 +28,11 @@ import com.intellij.openapi.wm.WindowManager;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
-import com.intellij.psi.codeStyle.*;
+import com.intellij.psi.codeStyle.CodeStyleScheme;
+import com.intellij.psi.codeStyle.CodeStyleSchemes;
+import com.intellij.psi.codeStyle.CodeStyleSettings;
+import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
+import com.intellij.psi.codeStyle.LanguageCodeStyleSettingsProvider;
 import com.intellij.psi.codeStyle.extractor.differ.LangCodeStyleExtractor;
 import com.intellij.psi.codeStyle.extractor.processor.CodeStyleDeriveProcessor;
 import com.intellij.psi.codeStyle.extractor.processor.GenProcessor;
@@ -36,16 +45,20 @@ import com.intellij.ui.BalloonLayout;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.ui.PositionTracker;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.JOptionPane;
 import javax.swing.event.HyperlinkEvent;
 import javax.swing.event.HyperlinkListener;
-import java.awt.*;
+import java.awt.Component;
+import java.awt.Point;
+import java.awt.Window;
 import java.util.List;
 import java.util.Map;
 
-public class ExtractCodeStyleAction extends AnAction implements DumbAware {
+@ApiStatus.Internal
+public final class ExtractCodeStyleAction extends AnAction implements DumbAware {
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
@@ -97,12 +110,12 @@ public class ExtractCodeStyleAction extends AnAction implements DumbAware {
     ProgressManager.getInstance().run(task);
   }
 
-  public void reportResult(@NotNull final String htmlReport,
-                           @NotNull final ValuesExtractionResult calculatedValues,
-                           @NotNull final Project project,
-                           @NotNull final CodeStyleSettings cloneSettings,
-                           @NotNull final PsiFile file,
-                           @NotNull final Map<Value, Object> backup) {
+  public void reportResult(final @NotNull String htmlReport,
+                           final @NotNull ValuesExtractionResult calculatedValues,
+                           final @NotNull Project project,
+                           final @NotNull CodeStyleSettings cloneSettings,
+                           final @NotNull PsiFile file,
+                           final @NotNull Map<Value, Object> backup) {
     UIUtil.invokeLaterIfNeeded(() -> {
       final Balloon balloon = JBPopupFactory
         .getInstance()
@@ -114,17 +127,16 @@ public class ExtractCodeStyleAction extends AnAction implements DumbAware {
             public void hyperlinkUpdate(HyperlinkEvent e) {
               if (e.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
                 boolean apply = "apply".equals(e.getDescription());
-                ExtractedSettingsDialog myDialog = null;
                 if (!apply) {
                   final List<Value> values = calculatedValues.getValues();
                   Language language = file.getLanguage();
                   CodeStyleSettingsNameProvider nameProvider = new CodeStyleSettingsNameProvider();
-                  for (final LanguageCodeStyleSettingsProvider provider : LanguageCodeStyleSettingsProvider.EP_NAME.getExtensionList()) {
+                  for (final LanguageCodeStyleSettingsProvider provider : LanguageCodeStyleSettingsProvider.getAllProviders()) {
                     Language target = provider.getLanguage();
                     if (target.equals(language)) {
                       //this is our language
                       nameProvider.addSettings(provider);
-                      myDialog = new ExtractedSettingsDialog(project, nameProvider, values);
+                      ExtractedSettingsDialog myDialog = new ExtractedSettingsDialog(project, nameProvider, values);
                       apply = myDialog.showAndGet();
                       break;
                     }
@@ -165,7 +177,7 @@ public class ExtractCodeStyleAction extends AnAction implements DumbAware {
       if (window instanceof IdeFrame) {
         BalloonLayout layout = ((IdeFrame)window).getBalloonLayout();
         if (layout != null) {
-          balloon.show(new PositionTracker<Balloon>(((IdeFrame)window).getComponent()) {
+          balloon.show(new PositionTracker<>(((IdeFrame)window).getComponent()) {
             @Override
             public RelativePoint recalculateLocation(@NotNull Balloon object) {
               Component c = getComponent();
@@ -209,5 +221,10 @@ public class ExtractCodeStyleAction extends AnAction implements DumbAware {
     if (LanguageFormatting.INSTANCE.forContext(file) != null) {
       presentation.setEnabled(true);
     }
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 }

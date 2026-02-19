@@ -13,17 +13,26 @@ import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.ListTableModel;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.DefaultCellEditor;
+import javax.swing.JCheckBox;
+import javax.swing.JComponent;
+import javax.swing.JTable;
+import javax.swing.KeyStroke;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.TableCellEditor;
 import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableColumn;
-import java.awt.*;
+import java.awt.Component;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Comparator;
+import java.util.EventListener;
+import java.util.HashSet;
 import java.util.List;
-import java.util.*;
+import java.util.Set;
 
 public class DetectedRootsChooser {
   private static final int CHECKBOX_COLUMN_WIDTH = new JCheckBox().getPreferredSize().width + 4;
@@ -99,7 +108,7 @@ public class DetectedRootsChooser {
     @Override
     public TableCellEditor getEditor(DetectedRootData o) {
       ComboBox<DetectedProjectRoot> comboBox =
-        new ComboBox<>(new CollectionComboBoxModel<>(Arrays.asList(o.getAllRoots()), o.getSelectedRoot()));
+        new ComboBox<>(new CollectionComboBoxModel<>(new ArrayList<>(Arrays.asList(o.getAllRoots())), o.getSelectedRoot()));
       comboBox.setRenderer(SimpleListCellRenderer.create("", DetectedProjectRoot::getRootTypeName));
       return new DefaultCellEditor(comboBox);
     }

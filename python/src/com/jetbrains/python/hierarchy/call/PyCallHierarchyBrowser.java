@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.hierarchy.call;
 
 import com.intellij.ide.hierarchy.CallHierarchyBrowserBase;
@@ -8,6 +8,7 @@ import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.ActionPlaces;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.PsiElement;
@@ -17,10 +18,11 @@ import com.jetbrains.python.hierarchy.PyHierarchyUtils;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.psi.PyFunction;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JTree;
 import java.util.Comparator;
 import java.util.Map;
 
@@ -34,30 +36,28 @@ public class PyCallHierarchyBrowser extends CallHierarchyBrowserBase {
     super(function.getProject(), function);
   }
 
-  @Nullable
   @Override
-  protected PsiElement getElementFromDescriptor(@NotNull HierarchyNodeDescriptor descriptor) {
-    if (descriptor instanceof PyHierarchyNodeDescriptor) {
-      PyHierarchyNodeDescriptor pyDescriptor = (PyHierarchyNodeDescriptor)descriptor;
+  protected @Nullable PsiElement getElementFromDescriptor(@NotNull HierarchyNodeDescriptor descriptor) {
+    if (descriptor instanceof PyHierarchyNodeDescriptor pyDescriptor) {
       return pyDescriptor.getPsiElement();
     }
     return null;
   }
 
   @Override
-  protected void createTrees(@NotNull Map<String, JTree> type2TreeMap) {
+  protected void createTrees(@NotNull Map<? super @Nls String, ? super JTree> type2TreeMap) {
     ActionGroup group = (ActionGroup)ActionManager.getInstance().getAction(IdeActions.GROUP_CALL_HIERARCHY_POPUP);
 
-    final JTree callerTree = createHierarchyTree(group);
-    final JTree calleeTree = createHierarchyTree(group);
+    JTree callerTree = createHierarchyTree(group);
+    JTree calleeTree = createHierarchyTree(group);
 
     type2TreeMap.put(getCallerType(), callerTree);
     type2TreeMap.put(getCalleeType(), calleeTree);
   }
 
   private JTree createHierarchyTree(ActionGroup group) {
-    final JTree tree = createTree(false);
-    PopupHandler.installPopupHandler(tree, group, ActionPlaces.CALL_HIERARCHY_VIEW_POPUP, ActionManager.getInstance());
+    JTree tree = createTree(false);
+    PopupHandler.installPopupMenu(tree, group, ActionPlaces.CALL_HIERARCHY_VIEW_POPUP);
     return tree;
   }
 
@@ -66,9 +66,8 @@ public class PyCallHierarchyBrowser extends CallHierarchyBrowserBase {
     return element instanceof PyFunction || element instanceof PyClass || element instanceof PyFile;
   }
 
-  @Nullable
   @Override
-  protected HierarchyTreeStructure createHierarchyTreeStructure(@NotNull String typeName, @NotNull PsiElement psiElement) {
+  protected @Nullable HierarchyTreeStructure createHierarchyTreeStructure(@NotNull String typeName, @NotNull PsiElement psiElement) {
     if (getCallerType().equals(typeName)) {
       return new PyCallerFunctionTreeStructure(myProject, psiElement, getCurrentScopeType());
     }
@@ -81,9 +80,13 @@ public class PyCallHierarchyBrowser extends CallHierarchyBrowserBase {
     }
   }
 
-  @Nullable
   @Override
-  protected Comparator<NodeDescriptor<?>> getComparator() {
+  protected @Nullable Comparator<NodeDescriptor<?>> getComparator() {
     return PyHierarchyUtils.getComparator(myProject);
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.EDT;
   }
 }

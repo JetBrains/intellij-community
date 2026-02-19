@@ -1,6 +1,7 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.uiDesigner.actions;
 
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
@@ -14,15 +15,11 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 
-/**
- * @author Anton Katilin
- * @author Vladimir Kondratyev
- */
 public final class StartInplaceEditingAction extends AnAction{
 
   private GuiEditor myEditor;
 
-  public StartInplaceEditingAction(@Nullable final GuiEditor editor) {
+  public StartInplaceEditingAction(final @Nullable GuiEditor editor) {
     myEditor = editor;
   }
 
@@ -31,7 +28,7 @@ public final class StartInplaceEditingAction extends AnAction{
   }
 
   @Override
-  public void actionPerformed(@NotNull final AnActionEvent e) {
+  public void actionPerformed(final @NotNull AnActionEvent e) {
     final ArrayList<RadComponent> selection = FormEditingUtil.getAllSelectedComponents(myEditor);
     final RadComponent component = selection.get(0);
     final Property defaultInplaceProperty = component.getDefaultInplaceProperty();
@@ -40,7 +37,12 @@ public final class StartInplaceEditingAction extends AnAction{
   }
 
   @Override
-  public void update(@NotNull final AnActionEvent e) {
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.EDT;
+  }
+
+  @Override
+  public void update(final @NotNull AnActionEvent e) {
     final Presentation presentation = e.getPresentation();
     final ArrayList<RadComponent> selection = FormEditingUtil.getAllSelectedComponents(myEditor);
 

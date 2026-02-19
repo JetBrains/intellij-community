@@ -9,7 +9,16 @@ import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiCodeBlock;
+import com.intellij.psi.PsiElementFactory;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiStatement;
+import com.intellij.psi.PsiThrowStatement;
+import com.intellij.psi.SmartPointerManager;
+import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.testFramework.LightProjectDescriptor;
@@ -41,18 +50,19 @@ public class OptionalToIfConversionPropertyTest extends LightJavaCodeInsightFixt
 
   @Override
   protected @NotNull LightProjectDescriptor getProjectDescriptor() {
-    return JAVA_14;
+    return JAVA_15;
   }
 
   public void testCompilabilityAfterConversion() {
-    myFixture.addClass("package com.jetbrains;\n" +
-                       "import java.util.Optional;\n" +
-                       "import java.util.stream.Stream;\n" +
-                       "\n" +
-                       "class A {\n" +
-                       "  void foo() {\n" +
-                       "  }\n" +
-                       "}");
+    myFixture.addClass("""
+                         package com.jetbrains;
+                         import java.util.Optional;
+                         import java.util.stream.Stream;
+
+                         class A {
+                           void foo() {
+                           }
+                         }""");
     PropertyChecker.customized()
       .checkScenarios(() -> this::doTestCompilabilityAfterConversion);
   }
@@ -65,14 +75,17 @@ public class OptionalToIfConversionPropertyTest extends LightJavaCodeInsightFixt
     String methodText = context.generateOptionalCall(true);
     String afterStepText = context.afterStep;
     PsiMethod newMethod = replaceMethod(psiClass, methodText);
+    SmartPointerManager smartPointerManager = SmartPointerManager.getInstance(getProject());
     PsiStatement lastStatement = addLastStatement(afterStepText, newMethod);
+    SmartPsiElementPointer<PsiStatement> lastStatementPtr = lastStatement == null ?
+                                                            null : smartPointerManager.createSmartPsiElementPointer(lastStatement);
     env.logMessage("Code before conversion:\n" + psiClass.getText());
 
     Editor editor = myFixture.getEditor();
     applyConversion(newMethod, editor);
     env.logMessage("Code after conversion:\n" + psiClass.getText());
 
-    assertFalse(hasErrors(newMethod, editor, lastStatement));
+    assertFalse(hasErrors(newMethod, editor, lastStatementPtr));
   }
 
   private @Nullable PsiStatement addLastStatement(@Nullable String statementText, @NotNull PsiMethod method) {
@@ -106,11 +119,11 @@ public class OptionalToIfConversionPropertyTest extends LightJavaCodeInsightFixt
     myFixture.launchAction(actions.get(0));
   }
 
-  private boolean hasErrors(PsiMethod psiMethod, @NotNull Editor editor, @Nullable PsiStatement afterStatement) {
-    if (afterStatement != null) {
+  private boolean hasErrors(PsiMethod psiMethod, @NotNull Editor editor, @Nullable SmartPsiElementPointer<PsiStatement> afterStatementPtr) {
+    if (afterStatementPtr != null) {
       PsiStatement[] statements = psiMethod.getBody().getStatements();
       int nStatements = statements.length;
-      assertTrue(nStatements >= 1 && statements[nStatements - 1] == afterStatement);
+      assertTrue(nStatements >= 1 && statements[nStatements - 1] == afterStatementPtr.dereference());
       if (nStatements >= 2) {
         PsiStatement lastConverted = statements[nStatements - 2];
         if (lastConverted instanceof PsiThrowStatement) return false;

@@ -38,6 +38,6 @@ public class ConvertOldAnnotationInspectionTest extends BaseTestNGInspectionsTes
   }
 
   public void test1() {
-    doTest();
+    doTestWithPreview();
   }
 }

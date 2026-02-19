@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.refactoring;
 
 import com.intellij.JavaTestUtil;
@@ -23,7 +9,11 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileEvent;
 import com.intellij.openapi.vfs.VirtualFileListener;
 import com.intellij.openapi.vfs.VirtualFileManager;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiPackage;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.refactoring.MultiFileTestCase;
 import com.intellij.refactoring.move.moveClassesOrPackages.MoveDirectoryWithClassesProcessor;
@@ -50,47 +40,38 @@ public class MovePackageAsDirectoryTest extends MultiFileTestCase {
   }
 
   public void testMovePackage() {
-    doTest(createAction("pack1", "target"));
+    doTest(createMoveAction("pack1", "target"));
   }
 
   public void testRenamePackage() {
-    final PerformAction action = (rootDir, rootAfter) -> {
-      final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(myProject);
-      final PsiPackage sourcePackage = psiFacade.findPackage("pack1");
-      assertNotNull(sourcePackage);
-
-      RenamePsiPackageProcessor.createRenameMoveProcessor("pack1.pack2", sourcePackage, false, false).run();
-      FileDocumentManager.getInstance().saveAllDocuments();
-    };
-    doTest(action);
+    doTest(createRenameAction("pack1", "pack1.pack2"));
   }
 
   public void testRenamePackageUp() {
-    final PerformAction action = (rootDir, rootAfter) -> {
-      final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(myProject);
-      final PsiPackage sourcePackage = psiFacade.findPackage("pack1.pack2");
-      assertNotNull(sourcePackage);
-
-      RenamePsiPackageProcessor.createRenameMoveProcessor("pack1", sourcePackage, false, false).run();
-      FileDocumentManager.getInstance().saveAllDocuments();
-    };
-    doTest(action);
+    doTest(createRenameAction("pack1.pack2", "pack1"));
   }
 
   public void testRenamePackageStaticImportsToNestedClasses() {
-    final PerformAction action = (rootDir, rootAfter) -> {
+    doTest(createRenameAction("pack1.pack2", "pack0.pack2"));
+  }
+
+  public void testDeepRenamePackage() {
+    doTest(createRenameAction("c.d", "x.y"));
+  }
+
+  private @NotNull PerformAction createRenameAction(String oldName, String newName) {
+    return (rootDir, rootAfter) -> {
       final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(myProject);
-      final PsiPackage sourcePackage = psiFacade.findPackage("pack1.pack2");
+      final PsiPackage sourcePackage = psiFacade.findPackage(oldName);
       assertNotNull(sourcePackage);
 
-      RenamePsiPackageProcessor.createRenameMoveProcessor("pack0.pack2", sourcePackage, false, false).run();
+      RenamePsiPackageProcessor.createRenameMoveProcessor(newName, sourcePackage, false, false).run();
       FileDocumentManager.getInstance().saveAllDocuments();
     };
-    doTest(action);
   }
 
   public void testMovePackageWithTxtFilesInside() {
-    doTest(createAction("pack1", "target"));
+    doTest(createMoveAction("pack1", "target"));
   }
 
   public void testMultipleClassesInOneFile() {
@@ -103,7 +84,7 @@ public class MovePackageAsDirectoryTest extends MultiFileTestCase {
     };
     VirtualFileManager.getInstance().addVirtualFileListener(fileAdapter);
     try {
-      doTest(createAction("pack1", "target"));
+      doTest(createMoveAction("pack1", "target"));
     }
     finally {
       VirtualFileManager.getInstance().removeVirtualFileListener(fileAdapter);
@@ -113,11 +94,11 @@ public class MovePackageAsDirectoryTest extends MultiFileTestCase {
 
 
   public void testRemoveUnresolvedImports() {
-    doTest(createAction("pack1", "target"));
+    doTest(createMoveAction("pack1", "target"));
   }
 
   public void testXmlDirRefs() {
-    doTest(createAction("pack1", "target"));
+    doTest(createMoveAction("pack1", "target"));
   }
 
   private static final String EMPTY_TXT = "empty.txt";
@@ -166,7 +147,7 @@ public class MovePackageAsDirectoryTest extends MultiFileTestCase {
     });
   }
 
-  private MyPerformAction createAction(final String packageName, final String targetPackageName) {
+  private MyPerformAction createMoveAction(final String packageName, final String targetPackageName) {
     return new MyPerformAction(packageName, targetPackageName);
   }
 
@@ -198,7 +179,7 @@ public class MovePackageAsDirectoryTest extends MultiFileTestCase {
       final PsiPackage sourcePackage = psiFacade.findPackage(myPackageName);
       assertNotNull(sourcePackage);
       final PsiDirectory[] srcDirectories = sourcePackage.getDirectories();
-      assertEquals(srcDirectories.length, 2);
+      assertEquals(2, srcDirectories.length);
       Arrays.sort(srcDirectories, directoryComparator);
 
       final PsiPackage targetPackage = psiFacade.findPackage(myTargetPackageName);

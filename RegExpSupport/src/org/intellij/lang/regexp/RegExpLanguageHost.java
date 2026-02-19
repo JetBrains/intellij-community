@@ -1,29 +1,85 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.intellij.lang.regexp;
 
 import com.intellij.psi.PsiElement;
-import org.intellij.lang.regexp.psi.*;
+import org.intellij.lang.regexp.psi.RegExpAtom;
+import org.intellij.lang.regexp.psi.RegExpBoundary;
+import org.intellij.lang.regexp.psi.RegExpChar;
+import org.intellij.lang.regexp.psi.RegExpElement;
+import org.intellij.lang.regexp.psi.RegExpGroup;
+import org.intellij.lang.regexp.psi.RegExpNamedCharacter;
+import org.intellij.lang.regexp.psi.RegExpNamedGroupRef;
+import org.intellij.lang.regexp.psi.RegExpNumber;
+import org.intellij.lang.regexp.psi.RegExpSimpleClass;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.EnumSet;
 
-/**
- * @author yole
- */
+
 public interface RegExpLanguageHost {
 
   EnumSet<RegExpGroup.Type> EMPTY_NAMED_GROUP_TYPES = EnumSet.noneOf(RegExpGroup.Type.class);
   String[][] EMPTY_COMPLETION_ITEMS_ARRAY = new String[0][];
 
-  boolean characterNeedsEscaping(char c);
+  /**
+   * @deprecated Use {@link #characterNeedsEscaping(char, boolean)} instead.
+   */
+  @Deprecated
+  default boolean characterNeedsEscaping(char c) {
+    throw new UnsupportedOperationException("Override characterNeedsEscaping(char, boolean)");
+  }
+
+  /**
+   * Returns whether the given character needs to be escaped to be treated as a literal.
+   * @param c a character to be considered.
+   * @param isInClass whether the character is within a RegExpClass (ie, within "[...]").
+   */
+  default boolean characterNeedsEscaping(char c, boolean isInClass) {
+    return characterNeedsEscaping(c);
+  }
+
   boolean supportsPerl5EmbeddedComments();
-  boolean supportsPossessiveQuantifiers();
+  /**
+   * @deprecated use `supportsPossessiveQuantifiers(RegExpElement)`
+   */
+  @Deprecated
+  default boolean supportsPossessiveQuantifiers() {
+    return false;
+  }
+
+  /**
+   * Returns whether possessive quantifiers and atomic groups are supported.
+   * <p>
+   * Possessive quantifiers (e.g., {@code *+}, {@code ++}, {@code ?+}, {@code {n,m}+}) match as much as possible
+   * without backtracking.
+   * <p>
+   * Atomic groups (e.g., {@code (?>pattern)}) prevent backtracking within the group once it matches.
+   */
+  default boolean supportsPossessiveQuantifiers(RegExpElement context) {
+    return supportsPossessiveQuantifiers();
+  }
+
+  default boolean isDuplicateGroupNamesAllowed(@NotNull RegExpGroup group) {
+    return false;
+  }
+
+  /**
+   * @return true, if this dialects support conditionals, i.e. the following construct: {@code (?(1)then|else)}
+   */
   boolean supportsPythonConditionalRefs();
+
+  /**
+   * @param condition  a RegExpBackRef, RegExpNamedGroupRef or RegExpGroup instance.
+   * @return true, if this type of conditional condition is supported
+   */
+  default boolean supportConditionalCondition(RegExpAtom condition) {
+    return true;
+  }
+
   boolean supportsNamedGroupSyntax(RegExpGroup group);
   boolean supportsNamedGroupRefSyntax(RegExpNamedGroupRef ref);
-  @NotNull
-  default EnumSet<RegExpGroup.Type> getSupportedNamedGroupTypes(RegExpElement context) {
+  default @NotNull EnumSet<RegExpGroup.Type> getSupportedNamedGroupTypes(RegExpElement context) {
     return EMPTY_NAMED_GROUP_TYPES;
   }
   boolean supportsExtendedHexCharacter(RegExpChar regExpChar);
@@ -51,21 +107,10 @@ public interface RegExpLanguageHost {
   }
 
   default boolean supportsBoundary(RegExpBoundary boundary) {
-    switch (boundary.getType()) {
-      case UNICODE_EXTENDED_GRAPHEME:
-      case RESET_MATCH:
-        return false;
-      case LINE_START:
-      case LINE_END:
-      case WORD:
-      case NON_WORD:
-      case BEGIN:
-      case END:
-      case END_NO_LINE_TERM:
-      case PREVIOUS_MATCH:
-      default:
-        return true;
-    }
+    return switch (boundary.getType()) {
+      case UNICODE_EXTENDED_GRAPHEME, RESET_MATCH -> false;
+      case LINE_START, LINE_END, WORD, NON_WORD, BEGIN, END, END_NO_LINE_TERM, PREVIOUS_MATCH -> true;
+    };
   }
 
   default boolean supportsLiteralBackspace(RegExpChar aChar) {
@@ -88,15 +133,14 @@ public interface RegExpLanguageHost {
 
   String[] @NotNull [] getAllKnownProperties();
   @Nullable
-  String getPropertyDescription(@Nullable final String name);
+  String getPropertyDescription(final @Nullable String name);
   String[] @NotNull [] getKnownCharacterClasses();
 
   /**
    * @param number  the number element to extract the value from
    * @return the value, or null when the value is out of range
    */
-  @Nullable
-  default Number getQuantifierValue(@NotNull RegExpNumber number) {
+  default @Nullable Number getQuantifierValue(@NotNull RegExpNumber number) {
     return Double.parseDouble(number.getUnescapedText());
   }
 

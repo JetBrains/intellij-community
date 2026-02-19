@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.ui.overhead;
 
 import com.intellij.CommonBundle;
@@ -6,15 +6,25 @@ import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.debugger.engine.DebugProcessImpl;
 import com.intellij.debugger.ui.breakpoints.Breakpoint;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.CustomShortcutSet;
-import com.intellij.openapi.actionSystem.DataProvider;
+import com.intellij.openapi.actionSystem.DataSink;
+import com.intellij.openapi.actionSystem.UiDataProvider;
+import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.pom.Navigatable;
-import com.intellij.ui.*;
+import com.intellij.ui.ColoredTableCellRenderer;
+import com.intellij.ui.DoubleClickListener;
+import com.intellij.ui.ScrollPaneFactory;
+import com.intellij.ui.SimpleColoredComponent;
+import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.ui.TableUtil;
 import com.intellij.ui.table.TableView;
+import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.ListTableModel;
 import com.intellij.util.ui.components.BorderLayoutPanel;
@@ -26,16 +36,23 @@ import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JComponent;
+import javax.swing.JTable;
+import javax.swing.KeyStroke;
+import javax.swing.SortOrder;
 import javax.swing.table.TableCellRenderer;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.List;
 import java.util.function.Function;
 
-public class OverheadView extends BorderLayoutPanel implements Disposable, DataProvider {
-  @NotNull private final DebugProcessImpl myProcess;
+import static com.intellij.util.containers.ContainerUtil.getFirstItem;
+import static com.intellij.util.containers.ContainerUtil.mapNotNull;
+
+public class OverheadView extends BorderLayoutPanel implements Disposable, UiDataProvider {
+  private final @NotNull DebugProcessImpl myProcess;
 
   static final EnabledColumnInfo ENABLED_COLUMN = new EnabledColumnInfo();
   static final NameColumnInfo NAME_COLUMN = new NameColumnInfo();
@@ -60,7 +77,7 @@ public class OverheadView extends BorderLayoutPanel implements Disposable, DataP
                                    3, SortOrder.DESCENDING);
     myModel.setSortable(true);
     myTable = new TableView<>(myModel);
-    addToCenter(ScrollPaneFactory.createScrollPane(myTable));
+    addToCenter(ScrollPaneFactory.createScrollPane(myTable, true));
     TableUtil.setupCheckboxColumn(myTable.getColumnModel().getColumn(0));
 
     myUpdateQueue = new MergingUpdateQueue("OverheadView", 500, true, null, this);
@@ -97,7 +114,12 @@ public class OverheadView extends BorderLayoutPanel implements Disposable, DataP
       }
 
       @Override
-      public void actionPerformed(@NotNull final AnActionEvent e) {
+      public @NotNull ActionUpdateThread getActionUpdateThread() {
+        return ActionUpdateThread.EDT;
+      }
+
+      @Override
+      public void actionPerformed(final @NotNull AnActionEvent e) {
         myTable.getSelection().forEach(c -> c.setEnabled(!c.isEnabled()));
         myTable.repaint();
       }
@@ -106,18 +128,26 @@ public class OverheadView extends BorderLayoutPanel implements Disposable, DataP
     new DoubleClickListener() {
       @Override
       protected boolean onDoubleClick(@NotNull MouseEvent e) {
-        getSelectedNavigatables().findFirst().ifPresent(b -> b.navigate(true));
+        ReadAction.nonBlocking(
+            () -> getFirstItem(mapNotNull(getSelectedBreakpoints(), XBreakpoint::getNavigatable)))
+          .expireWith(OverheadView.this)
+          .finishOnUiThread(ModalityState.nonModal(), navigatable -> {
+            if (navigatable != null) {
+              navigatable.navigate(true);
+            }
+          })
+          .submit(AppExecutorUtil.getAppExecutorService());
         return true;
       }
     }.installOn(myTable);
   }
 
 
-  private StreamEx<Navigatable> getSelectedNavigatables() {
+  private List<XBreakpoint> getSelectedBreakpoints() {
     return StreamEx.of(myTable.getSelection())
       .select(Breakpoint.class)
       .map(Breakpoint::getXBreakpoint).nonNull()
-      .map(XBreakpoint::getNavigatable).nonNull();
+      .toList();
   }
 
 
@@ -125,16 +155,13 @@ public class OverheadView extends BorderLayoutPanel implements Disposable, DataP
     return myTable;
   }
 
-  @Nullable
   @Override
-  public Object getData(@NotNull String dataId) {
-    if (CommonDataKeys.NAVIGATABLE_ARRAY.is(dataId)) {
-      Navigatable[] navigatables = getSelectedNavigatables().toArray(Navigatable.class);
-      if (navigatables.length > 0) {
-        return navigatables;
-      }
-    }
-    return null;
+  public void uiDataSnapshot(@NotNull DataSink sink) {
+    var selection = getSelectedBreakpoints();
+    sink.lazy(CommonDataKeys.NAVIGATABLE_ARRAY, () -> {
+      List<Navigatable> navigatables = mapNotNull(selection, XBreakpoint::getNavigatable);
+      return navigatables.isEmpty() ? null : navigatables.toArray(Navigatable.EMPTY_NAVIGATABLE_ARRAY);
+    });
   }
 
   private static class EnabledColumnInfo extends ColumnInfo<OverheadProducer, Boolean> {
@@ -147,9 +174,8 @@ public class OverheadView extends BorderLayoutPanel implements Disposable, DataP
       return Boolean.class;
     }
 
-    @Nullable
     @Override
-    public Boolean valueOf(OverheadProducer item) {
+    public @Nullable Boolean valueOf(OverheadProducer item) {
       return item.isEnabled();
     }
 
@@ -169,9 +195,8 @@ public class OverheadView extends BorderLayoutPanel implements Disposable, DataP
       super(CommonBundle.message("title.name"));
     }
 
-    @Nullable
     @Override
-    public OverheadProducer valueOf(OverheadProducer aspects) {
+    public @Nullable OverheadProducer valueOf(OverheadProducer aspects) {
       return aspects;
     }
 
@@ -180,14 +205,12 @@ public class OverheadView extends BorderLayoutPanel implements Disposable, DataP
       return OverheadProducer.class;
     }
 
-    @Nullable
     @Override
-    public TableCellRenderer getRenderer(OverheadProducer producer) {
+    public @Nullable TableCellRenderer getRenderer(OverheadProducer producer) {
       return new ColoredTableCellRenderer() {
         @Override
         protected void customizeCellRenderer(@NotNull JTable table, @Nullable Object value, boolean selected, boolean hasFocus, int row, int column) {
-          if (value instanceof OverheadProducer) {
-            OverheadProducer overheadProducer = (OverheadProducer)value;
+          if (value instanceof OverheadProducer overheadProducer) {
             if (overheadProducer.isObsolete()) {
               overrideAttributes(overheadProducer, STRIKEOUT_ATTRIBUTES);
             }
@@ -219,9 +242,8 @@ public class OverheadView extends BorderLayoutPanel implements Disposable, DataP
       myGetter = getter;
     }
 
-    @Nullable
     @Override
-    public OverheadProducer valueOf(OverheadProducer aspects) {
+    public @Nullable OverheadProducer valueOf(OverheadProducer aspects) {
       return aspects;
     }
 
@@ -230,9 +252,8 @@ public class OverheadView extends BorderLayoutPanel implements Disposable, DataP
       return OverheadProducer.class;
     }
 
-    @Nullable
     @Override
-    public TableCellRenderer getRenderer(OverheadProducer producer) {
+    public @Nullable TableCellRenderer getRenderer(OverheadProducer producer) {
       return new ColoredTableCellRenderer() {
         @Override
         protected void customizeCellRenderer(@NotNull JTable table,
@@ -241,8 +262,7 @@ public class OverheadView extends BorderLayoutPanel implements Disposable, DataP
                                              boolean hasFocus,
                                              int row,
                                              int column) {
-          if (value instanceof OverheadProducer) {
-            OverheadProducer overheadProducer = (OverheadProducer)value;
+          if (value instanceof OverheadProducer overheadProducer) {
             Long val = myGetter.apply(overheadProducer);
             append(val != null ? String.valueOf((long)val) : "",
                    overheadProducer.isEnabled() ? SimpleTextAttributes.SIMPLE_CELL_ATTRIBUTES : SimpleTextAttributes.GRAYED_ATTRIBUTES);
@@ -251,9 +271,8 @@ public class OverheadView extends BorderLayoutPanel implements Disposable, DataP
       };
     }
 
-    @Nullable
     @Override
-    public Comparator<OverheadProducer> getComparator() {
+    public @Nullable Comparator<OverheadProducer> getComparator() {
       return Comparator.comparing(c -> {
         Long value = myGetter.apply(c);
         return value != null ? value : Long.MAX_VALUE;

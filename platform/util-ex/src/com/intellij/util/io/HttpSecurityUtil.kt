@@ -3,10 +3,11 @@ package com.intellij.util.io
 
 import java.io.ByteArrayOutputStream
 import java.nio.CharBuffer
-import java.util.*
+import java.util.Arrays
+import java.util.Base64
 
 object HttpSecurityUtil {
-  const val AUTHORIZATION_HEADER_NAME = "Authorization"
+  const val AUTHORIZATION_HEADER_NAME: String = "Authorization"
 
   @JvmStatic
   fun createBasicAuthHeaderValue(username: String, password: CharArray): String {
@@ -19,5 +20,10 @@ object HttpSecurityUtil {
 
     val encodedCredentials = Base64.getEncoder().encode(stream.toByteArray())
     return String(encodedCredentials)
+  }
+
+  @JvmStatic
+  fun createBearerAuthHeaderValue(token: String): String {
+    return "Bearer $token"
   }
 }

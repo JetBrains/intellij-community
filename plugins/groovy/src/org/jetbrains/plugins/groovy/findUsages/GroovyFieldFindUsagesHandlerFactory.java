@@ -5,11 +5,8 @@ import com.intellij.find.findUsages.FindUsagesHandler;
 import com.intellij.find.findUsages.JavaFindUsagesHandler;
 import com.intellij.find.findUsages.JavaFindUsagesHandlerFactory;
 import com.intellij.ide.util.SuperMethodWarningUtil;
-import com.intellij.java.JavaBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.MessageDialogBuilder;
-import com.intellij.openapi.ui.Messages;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiField;
@@ -22,6 +19,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAc
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyPropertyUtils;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 
@@ -54,21 +52,23 @@ public final class GroovyFieldFindUsagesHandlerFactory extends JavaFindUsagesHan
             final boolean doSearch;
             if (arePhysical(getters) || arePhysical(setters)) {
               if (ApplicationManager.getApplication().isUnitTestMode()) return PsiElement.EMPTY_ARRAY;
-              doSearch = MessageDialogBuilder.yesNo(JavaBundle.message("find.field.accessors.title"),
-                                                    JavaBundle.message("find.field.accessors.prompt", field.getName())).show() == Messages.YES;
+              doSearch = getFindVariableOptions().isSearchForAccessors;
             }
             else {
               doSearch = true;
             }
             if (doSearch) {
               final List<PsiElement> elements = new ArrayList<>();
-              for (PsiMethod getter : getters) {
-                ContainerUtil.addAll(elements, SuperMethodWarningUtil.checkSuperMethods(getter, getActionString()));
+              if (getFindVariableOptions().isSearchForBaseAccessors) {
+                for (PsiMethod getter : getters) {
+                  ContainerUtil.addAll(elements, SuperMethodWarningUtil.getTargetMethodCandidates(getter, Collections.emptyList()));
+                }
+
+                for (PsiMethod setter : setters) {
+                  ContainerUtil.addAll(elements, SuperMethodWarningUtil.getTargetMethodCandidates(setter, Collections.emptyList()));
+                }
               }
 
-              for (PsiMethod setter : setters) {
-                ContainerUtil.addAll(elements, SuperMethodWarningUtil.checkSuperMethods(setter, getActionString()));
-              }
               for (Iterator<PsiElement> iterator = elements.iterator(); iterator.hasNext(); ) {
                 if (iterator.next() instanceof GrAccessorMethod) iterator.remove();
               }

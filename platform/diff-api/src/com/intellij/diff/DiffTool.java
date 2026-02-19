@@ -7,7 +7,13 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 /**
+ * Extension point that allows registering new custom UI for comparing file revisions.
+ * <p>
+ * The supported tool types are currently limited by {@link FrameDiffTool}.
+ *
  * @see DiffExtension
+ * @see SuppressiveDiffTool
+ * @see com.intellij.diff.merge.MergeTool
  */
 public interface DiffTool {
   ExtensionPointName<DiffTool> EP_NAME = ExtensionPointName.create("com.intellij.diff.DiffTool");

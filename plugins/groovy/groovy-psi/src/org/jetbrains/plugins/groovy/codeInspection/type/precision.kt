@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 @file:JvmName("PrecisionUtil")
 @file:Suppress("PLATFORM_CLASS_MAPPED_TO_KOTLIN")
 
@@ -10,7 +10,14 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.T_PLUS
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrUnaryExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral
-import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypeConstants.*
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypeConstants.BIG_DECIMAL_RANK
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypeConstants.BYTE_RANK
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypeConstants.CHARACTER_RANK
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypeConstants.FLOAT_RANK
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypeConstants.INTEGER_RANK
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypeConstants.LONG_RANK
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypeConstants.SHORT_RANK
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypeConstants.getTypeRank
 import java.math.BigDecimal
 import java.math.BigInteger
 import java.lang.Double as JDouble
@@ -34,7 +41,7 @@ fun isPossibleLooseOfPrecision(targetType: PsiType, actualType: PsiType, express
         is Short -> JShort.valueOf(byteVal.toShort()) != value
         is Int -> JInteger.valueOf(byteVal.toInt()) != value
         is Long -> JLong.valueOf(byteVal.toLong()) != value
-        is Float -> JFloat.valueOf(byteVal.toFloat()) != value
+        is Float -> !JFloat.valueOf(byteVal.toFloat()).equals(value) //https://kotlinlang.org/docs/reference/equality.html#floating-point-numbers-equality
         else -> JDouble.valueOf(byteVal.toDouble()) != value
       }
     }
@@ -43,7 +50,7 @@ fun isPossibleLooseOfPrecision(targetType: PsiType, actualType: PsiType, express
       when (value) {
         is Int -> JInteger.valueOf(shortVal.toInt()) != value
         is Long -> JLong.valueOf(shortVal.toLong()) != value
-        is Float -> JFloat.valueOf(shortVal.toFloat()) != value
+        is Float -> !JFloat.valueOf(shortVal.toFloat()).equals(value)
         else -> JDouble.valueOf(shortVal.toDouble()) != value
       }
     }
@@ -51,14 +58,14 @@ fun isPossibleLooseOfPrecision(targetType: PsiType, actualType: PsiType, express
       val intVal = value.toInt()
       when (value) {
         is Long -> JLong.valueOf(intVal.toLong()) != value
-        is Float -> JFloat.valueOf(intVal.toFloat()) != value
+        is Float -> !JFloat.valueOf(intVal.toFloat()).equals(value)
         else -> JDouble.valueOf(intVal.toDouble()) != value
       }
     }
     LONG_RANK -> {
       val longVal = value.toLong()
       when (value) {
-        is Float -> JFloat.valueOf(longVal.toFloat()) != value
+        is Float -> !JFloat.valueOf(longVal.toFloat()).equals(value)
         else -> JDouble.valueOf(longVal.toDouble()) != value
       }
     }

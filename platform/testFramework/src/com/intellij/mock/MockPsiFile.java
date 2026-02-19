@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.mock;
 
 import com.intellij.lang.FileASTNode;
@@ -10,9 +10,19 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.*;
+import com.intellij.psi.FileViewProvider;
+import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiFileSystemItem;
+import com.intellij.psi.PsiInvalidElementAccessException;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiReference;
+import com.intellij.psi.SingleRootFileViewProvider;
 import com.intellij.psi.impl.source.resolve.FileContextUtil;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.testFramework.LightVirtualFile;
@@ -49,19 +59,17 @@ public class MockPsiFile extends MockPsiElement implements PsiFile {
   }
 
   @Override
-  public boolean processChildren(@NotNull final PsiElementProcessor<PsiFileSystemItem> processor) {
+  public boolean processChildren(final @NotNull PsiElementProcessor<? super PsiFileSystemItem> processor) {
     return true;
   }
 
   @Override
-  @NotNull
-  public String getName() {
+  public @NotNull String getName() {
     return "mock.file";
   }
 
   @Override
-  @Nullable
-  public ItemPresentation getPresentation() {
+  public @Nullable ItemPresentation getPresentation() {
     return null;
   }
 
@@ -85,8 +93,7 @@ public class MockPsiFile extends MockPsiElement implements PsiFile {
     return null;
   }
 
-  @Nullable
-  public PsiDirectory getParentDirectory() {
+  public @Nullable PsiDirectory getParentDirectory() {
     throw new UnsupportedOperationException("Method getParentDirectory is not yet implemented in " + getClass().getName());
   }
 
@@ -96,20 +103,17 @@ public class MockPsiFile extends MockPsiElement implements PsiFile {
   }
 
   @Override
-  @NotNull
-  public PsiFile getOriginalFile() {
+  public @NotNull PsiFile getOriginalFile() {
     return this;
   }
 
   @Override
-  @NotNull
-  public FileType getFileType() {
+  public @NotNull FileType getFileType() {
     return StdFileTypes.JAVA;
   }
 
   @Override
-  @NotNull
-  public Language getLanguage() {
+  public @NotNull Language getLanguage() {
     return StdFileTypes.JAVA.getLanguage();
   }
 
@@ -119,8 +123,7 @@ public class MockPsiFile extends MockPsiElement implements PsiFile {
   }
 
   @Override
-  @NotNull
-  public FileViewProvider getViewProvider() {
+  public @NotNull FileViewProvider getViewProvider() {
     return myFileViewProvider;
   }
 
@@ -314,8 +317,7 @@ public class MockPsiFile extends MockPsiElement implements PsiFile {
   }
 
   @Override
-  @NotNull
-  public Project getProject() {
+  public @NotNull Project getProject() {
     final PsiManager manager = getManager();
     if (manager == null) throw new PsiInvalidElementAccessException(this);
 
@@ -338,15 +340,13 @@ public class MockPsiFile extends MockPsiElement implements PsiFile {
   }
 
   @Override
-  @NotNull
-  public GlobalSearchScope getResolveScope() {
+  public @NotNull GlobalSearchScope getResolveScope() {
     return GlobalSearchScope.EMPTY_SCOPE;
   }
 
   @Override
-  @NotNull
-  public SearchScope getUseScope() {
-    return GlobalSearchScope.EMPTY_SCOPE;
+  public @NotNull SearchScope getUseScope() {
+    return LocalSearchScope.EMPTY;
   }
 
   @Override

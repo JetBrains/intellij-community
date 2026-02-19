@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.ui.configuration.actions;
 
 import com.intellij.ide.JavaUiBundle;
@@ -8,6 +8,7 @@ import com.intellij.ide.projectWizard.NewProjectWizard;
 import com.intellij.ide.util.newProjectWizard.AbstractProjectWizard;
 import com.intellij.ide.util.projectWizard.ModuleBuilder;
 import com.intellij.ide.util.projectWizard.ProjectBuilder;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
@@ -20,14 +21,12 @@ import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.List;
-
 /**
  * @author Eugene Zhuravlev
  */
 public class NewModuleAction extends AnAction implements DumbAware, NewProjectOrModuleAction {
   public NewModuleAction() {
-    super(JavaUiBundle.messagePointer("module.new.action", 0, 1), JavaUiBundle.messagePointer("module.new.action.description"), null);
+    super(JavaUiBundle.messagePointer("module.new.action", 0, 1), JavaUiBundle.messagePointer("module.new.action.description"));
   }
 
   @Override
@@ -50,46 +49,63 @@ public class NewModuleAction extends AnAction implements DumbAware, NewProjectOr
     }
   }
 
-  @Nullable
-  public Module createModuleFromWizard(Project project, @Nullable Object dataFromContext, AbstractProjectWizard wizard) {
-    final ProjectBuilder builder = wizard.getBuilder(project);
+  public @Nullable Module createModuleFromWizard(
+    @NotNull Project project,
+    @Nullable Object dataFromContext,
+    @NotNull AbstractProjectWizard wizard
+  ) {
+    var builder = wizard.getBuilder(project);
     if (builder == null) return null;
-    Module module;
-    if (builder instanceof ModuleBuilder) {
-      module = ((ModuleBuilder) builder).commitModule(project, null);
-      if (module != null) {
-        processCreatedModule(module, dataFromContext);
-      }
-      return module;
-    }
-    else {
-      List<Module> modules = builder.commit(project, null, new DefaultModulesProvider(project));
-      if (builder.isOpenProjectSettingsAfter()) {
-        ModulesConfigurator.showDialog(project, null, null);
-      }
-      module = modules == null || modules.isEmpty() ? null : modules.get(0);
-    }
+    var module = builder instanceof ModuleBuilder
+                 ? createModuleFromModuleBuilder(project, (ModuleBuilder)builder, dataFromContext)
+                 : createModuleFromProjectBuilder(project, builder);
     project.save();
     return module;
   }
 
-  @Nullable
-  protected Object prepareDataFromContext(final AnActionEvent e) {
+  private @Nullable Module createModuleFromModuleBuilder(
+    @NotNull Project project,
+    @NotNull ModuleBuilder builder,
+    @Nullable Object dataFromContext
+  ) {
+    var module = builder.commitModule(project, null);
+    if (module != null) {
+      processCreatedModule(module, dataFromContext);
+    }
+    return module;
+  }
+
+  private static @Nullable Module createModuleFromProjectBuilder(
+    @NotNull Project project,
+    @NotNull ProjectBuilder builder
+  ) {
+    var modules = builder.commit(project, null, new DefaultModulesProvider(project));
+    if (builder.isOpenProjectSettingsAfter()) {
+      ModulesConfigurator.showDialog(project, null, null);
+    }
+    return modules.isEmpty() ? null : modules.get(0);
+  }
+
+  protected @Nullable Object prepareDataFromContext(final AnActionEvent e) {
     return null;
   }
 
-  protected void processCreatedModule(final Module module, @Nullable final Object dataFromContext) {
+  protected void processCreatedModule(final Module module, final @Nullable Object dataFromContext) {
   }
 
   @Override
   public void update(@NotNull AnActionEvent e) {
     e.getPresentation().setEnabled(getEventProject(e) != null);
-    NewProjectAction.updateActionText(this, e);
+    NewProjectAction.Companion.updateActionText$intellij_java_ui(this, e);
   }
 
-  @NotNull
   @Override
-  public String getActionText(boolean isInNewSubmenu, boolean isInJavaIde) {
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
+  }
+
+  @Override
+  public @NotNull String getActionText(boolean isInNewSubmenu, boolean isInJavaIde) {
     return JavaUiBundle.message("module.new.action", isInNewSubmenu ? 1 : 0, isInJavaIde ? 1 :0);
   }
 }

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.incremental.groovy;
 
 import com.intellij.util.xmlb.annotations.Tag;
@@ -28,9 +14,6 @@ import org.jetbrains.jps.model.serialization.java.compiler.JpsJavaCompilerConfig
 
 import java.io.File;
 
-/**
- * @author peter
- */
 public class JpsGroovySettings extends JpsElementBase<JpsGroovySettings> {
   static final JpsElementChildRole<JpsGroovySettings> ROLE = JpsElementChildRoleBase.create("Groovy Compiler Configuration");
   public static final boolean DEFAULT_INVOKE_DYNAMIC = false;
@@ -57,18 +40,12 @@ public class JpsGroovySettings extends JpsElementBase<JpsGroovySettings> {
     JpsJavaCompilerConfigurationSerializer.readExcludes(excludes, myExcludeFromStubGeneration);
   }
 
-  @NotNull
   @Override
-  public JpsGroovySettings createCopy() {
+  public @NotNull JpsGroovySettings createCopy() {
     return new JpsGroovySettings(this);
   }
 
-  @Override
-  public void applyChanges(@NotNull JpsGroovySettings modified) {
-  }
-
-  @NotNull
-  public static JpsGroovySettings getSettings(@NotNull JpsProject project) {
+  public static @NotNull JpsGroovySettings getSettings(@NotNull JpsProject project) {
     JpsGroovySettings settings = project.getContainer().getChild(ROLE);
     return settings == null ? new JpsGroovySettings() : settings;
   }

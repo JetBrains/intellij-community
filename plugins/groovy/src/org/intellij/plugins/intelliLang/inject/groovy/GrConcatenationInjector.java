@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.intellij.plugins.intelliLang.inject.groovy;
 
 import com.intellij.lang.injection.MultiHostInjector;
@@ -6,7 +6,13 @@ import com.intellij.lang.injection.MultiHostRegistrar;
 import com.intellij.openapi.extensions.ExtensionNotApplicableException;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiAnnotation;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiModifierListOwner;
+import com.intellij.psi.PsiParameter;
+import com.intellij.psi.PsiParameterList;
+import com.intellij.psi.PsiType;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiModificationTracker;
@@ -24,6 +30,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssignmentExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrBinaryExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrCall;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
@@ -43,7 +50,7 @@ public final class GrConcatenationInjector implements MultiHostInjector {
   public GrConcatenationInjector() {
     if ("AndroidStudio".equals(PlatformUtils.getPlatformPrefix())) {
       // fix https://code.google.com/p/android/issues/detail?id=201624
-      throw ExtensionNotApplicableException.INSTANCE;
+      throw ExtensionNotApplicableException.create();
     }
   }
 
@@ -65,7 +72,7 @@ public final class GrConcatenationInjector implements MultiHostInjector {
     }
   }
 
-  private static BaseInjection findLanguageParams(PsiElement place) {
+  private static @Nullable BaseInjection findLanguageParams(@NotNull PsiElement place) {
     PsiElement parent = place.getParent();
     if (parent instanceof GrAssignmentExpression && ((GrAssignmentExpression)parent).getRValue() == place) {
       final GrExpression lvalue = ((GrAssignmentExpression)parent).getLValue();
@@ -79,11 +86,15 @@ public final class GrConcatenationInjector implements MultiHostInjector {
     else if (parent instanceof GrVariable) {
       return getLanguageParams((PsiModifierListOwner)parent);
     }
+    else if (parent instanceof GrBinaryExpression expression) {
+      PsiMethod method = GrInjectionUtil.getMethodFromLeftShiftOperator(expression);
+      PsiParameter parameter = GrInjectionUtil.getSingleParameterFromMethod(method);
+      return parameter != null ? getLanguageParams(parameter) : null;
+    }
     else if (parent instanceof GrArgumentList) {
       final PsiElement pparent = parent.getParent();
 
-      if (pparent instanceof GrCall) {
-        final GrCall call = (GrCall)pparent;
+      if (pparent instanceof GrCall call) {
         final GroovyResolveResult result = call.advancedResolve();
         if (result.getElement() != null) {
           final Map<GrExpression, Pair<PsiParameter, PsiType>> map =
@@ -100,14 +111,12 @@ public final class GrConcatenationInjector implements MultiHostInjector {
     return null;
   }
 
-  @Nullable
-  private static BaseInjection getLanguageParams(PsiModifierListOwner annotationOwner) {
+  private static @Nullable BaseInjection getLanguageParams(PsiModifierListOwner annotationOwner) {
     return CachedValuesManager.getCachedValue(annotationOwner, () ->
       CachedValueProvider.Result.create(calcLanguageParams(annotationOwner), PsiModificationTracker.MODIFICATION_COUNT));
   }
 
-  @Nullable
-  private static BaseInjection calcLanguageParams(PsiModifierListOwner annotationOwner) {
+  private static @Nullable BaseInjection calcLanguageParams(PsiModifierListOwner annotationOwner) {
     final Pair<String, ? extends Set<String>> pair = Configuration.getInstance().getAdvancedConfiguration().getLanguageAnnotationPair();
     final PsiAnnotation[] annotations = getAnnotationFrom(annotationOwner, pair, true, true);
     if (annotations.length > 0) {
@@ -150,9 +159,8 @@ public final class GrConcatenationInjector implements MultiHostInjector {
            PsiUtilEx.isLanguageAnnotationTarget(owner);
   }
 
-  @NotNull
   @Override
-  public List<? extends Class<? extends PsiElement>> elementsToInjectIn() {
+  public @NotNull List<? extends Class<? extends PsiElement>> elementsToInjectIn() {
     return Collections.singletonList(GrLiteral.class);
   }
 }

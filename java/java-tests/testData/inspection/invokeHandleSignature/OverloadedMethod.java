@@ -1,4 +1,6 @@
 import java.lang.invoke.*;
+import java.util.Arrays;
+import java.util.List;
 
 class Main {
   void foo() throws Exception {
@@ -25,6 +27,17 @@ class Main {
 
     l.<warning descr="Method 'method' is not static">findStatic</warning>(Test.class, "method", MethodType.methodType(void.class));
     l.findVirtual(Test.class, <warning descr="Cannot resolve method 'doesntExist'">"doesntExist"</warning>, MethodType.methodType(void.class));
+  }
+
+  void differentMethodTypeOverloads() throws Exception {
+    MethodHandles.Lookup l = MethodHandles.lookup();
+
+    l.findVirtual(Test.class, "method", <warning descr="Cannot resolve method 'void method(void)'">MethodType.methodType(void.class, List.of(void.class))</warning>);
+    l.findVirtual(Test.class, "method", <warning descr="Cannot resolve method 'void method(void)'">MethodType.methodType(void.class, new Class<?>[]{void.class})</warning>);
+    l.findVirtual(Test.class, "method", <warning descr="Cannot resolve method 'void method(void)'">MethodType.methodType(void.class, Arrays.asList(void.class))</warning>);
+    l.findVirtual(Test.class, "method", <warning descr="Cannot resolve method 'void method(void)'">MethodType.methodType(void.class, MethodType.methodType(String.class, void.class))</warning>);
+    MethodType methodType = MethodType.methodType(String.class, MethodType.methodType(void.class, void.class));
+    l.findVirtual(Test.class, "method", <warning descr="Cannot resolve method 'void method(void)'">MethodType.methodType(void.class, methodType)</warning>);
   }
 }
 

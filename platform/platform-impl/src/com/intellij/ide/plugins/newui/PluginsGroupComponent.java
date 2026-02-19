@@ -1,59 +1,104 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins.newui;
 
-import com.intellij.ide.plugins.IdeaPluginDescriptor;
+import com.intellij.accessibility.AccessibilityUtils;
+import com.intellij.ide.plugins.ListPluginModel;
 import com.intellij.ide.plugins.PluginManagerConfigurable;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.components.JBPanelWithEmptyText;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.components.panels.OpaquePanel;
 import com.intellij.ui.scale.JBUIScale;
-import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.table.ComponentsListFocusTraversalPolicy;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.accessibility.AccessibleContext;
+import javax.accessibility.AccessibleRole;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JScrollBar;
+import javax.swing.SwingUtilities;
+import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.Component;
+import java.awt.Container;
+import java.awt.Dimension;
+import java.awt.Insets;
 import java.awt.event.AdjustmentEvent;
 import java.awt.event.AdjustmentListener;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.function.Consumer;
 
-/**
- * @author Alexander Lobas
- */
-public class PluginsGroupComponent extends JBPanelWithEmptyText {
-  private final EventHandler myEventHandler;
-  private final Function<? super IdeaPluginDescriptor, ? extends ListPluginComponent> myFunction;
+@ApiStatus.Internal
+public abstract class PluginsGroupComponent extends JBPanelWithEmptyText {
+
+  private final @NotNull EventHandler myEventHandler;
   private final List<UIPluginGroup> myGroups = new ArrayList<>();
 
-  public PluginsGroupComponent(@NotNull LayoutManager layout,
-                               @NotNull EventHandler eventHandler,
-                               @NotNull Function<? super IdeaPluginDescriptor, ? extends ListPluginComponent> function) {
-    super(layout);
+  public PluginsGroupComponent(@NotNull EventHandler eventHandler) {
+    super(new PluginListLayout());
     myEventHandler = eventHandler;
-    myFunction = function;
 
     myEventHandler.connect(this);
 
     setOpaque(true);
     setBackground(PluginManagerConfigurable.MAIN_BG_COLOR);
+
+    setFocusTraversalPolicyProvider(true);
+    // Focus traversal policy that makes focus order similar to lists and trees, where Tab doesn't move focus between list items,
+    // but instead moves focus to the next component. It also keeps group header buttons and buttons inside list items focusable.
+    setFocusTraversalPolicy(new ComponentsListFocusTraversalPolicy(true) {
+      @Override
+      protected @NotNull List<Component> getOrderedComponents() {
+        List<Component> orderedComponents = new ArrayList<>();
+        List<ListPluginComponent> selectedComponents = getSelection();
+        Set<PluginsGroup> addedGroups = new HashSet<>();
+
+        for (ListPluginComponent component : selectedComponents) {
+          PluginsGroup group = component.getGroup();
+          if (!addedGroups.contains(group)) {
+            addedGroups.add(group);
+            if (UIUtil.isFocusable(group.mainAction)) {
+              orderedComponents.add(group.mainAction);
+            }
+            else if (!ContainerUtil.isEmpty(group.secondaryActions)) {
+              orderedComponents.addAll(ContainerUtil.filter(group.secondaryActions, UIUtil::isFocusable));
+            }
+          }
+
+          orderedComponents.add(component);
+          orderedComponents.addAll(component.getFocusableComponents());
+        }
+
+        return orderedComponents;
+      }
+    });
   }
 
-  @NotNull
-  public List<UIPluginGroup> getGroups() {
-    return myGroups;
+  protected abstract @NotNull ListPluginComponent createListComponent(@NotNull PluginUiModel model,
+                                                                      @NotNull PluginsGroup group,
+                                                                      @NotNull ListPluginModel listPluginModel);
+
+  public final @NotNull List<UIPluginGroup> getGroups() {
+    return Collections.unmodifiableList(myGroups);
   }
 
   public void setSelectionListener(@Nullable Consumer<? super PluginsGroupComponent> listener) {
     myEventHandler.setSelectionListener(listener);
   }
 
-  @NotNull
-  public List<ListPluginComponent> getSelection() {
+  public final @NotNull List<ListPluginComponent> getSelection() {
     return myEventHandler.getSelection();
   }
 
@@ -61,7 +106,7 @@ public class PluginsGroupComponent extends JBPanelWithEmptyText {
     myEventHandler.setSelection(component);
   }
 
-  public void setSelection(@NotNull List<? extends ListPluginComponent> components) {
+  public void setSelection(@NotNull List<ListPluginComponent> components) {
     myEventHandler.setSelection(components);
   }
 
@@ -70,33 +115,33 @@ public class PluginsGroupComponent extends JBPanelWithEmptyText {
   }
 
   public void addGroup(@NotNull PluginsGroup group, int groupIndex) {
-    addGroup(group, group.descriptors, groupIndex);
+    addGroup(group, group.getModels(), groupIndex);
   }
 
   public void addLazyGroup(@NotNull PluginsGroup group, @NotNull JScrollBar scrollBar, int gapSize, @NotNull Runnable uiCallback) {
-    if (group.descriptors.size() <= gapSize) {
+    if (group.getModels().size() <= gapSize) {
       addGroup(group);
     }
     else {
-      addGroup(group, group.descriptors.subList(0, gapSize), -1);
+      addGroup(group, group.getModels().subList(0, gapSize), -1);
       AdjustmentListener listener = new AdjustmentListener() {
         @Override
         public void adjustmentValueChanged(AdjustmentEvent e) {
           if ((scrollBar.getValue() + scrollBar.getVisibleAmount()) >= scrollBar.getMaximum()) {
             int fromIndex = group.ui.plugins.size();
-            int toIndex = Math.min(fromIndex + gapSize, group.descriptors.size());
+            int toIndex = Math.min(fromIndex + gapSize, group.getDescriptors().size());
             ListPluginComponent lastComponent = group.ui.plugins.get(fromIndex - 1);
             int uiIndex = getComponentIndex(lastComponent);
             int eventIndex = myEventHandler.getCellIndex(lastComponent);
             try {
               PluginLogo.startBatchMode();
-              addToGroup(group, group.descriptors.subList(fromIndex, toIndex), uiIndex, eventIndex);
+              addToGroup(group, group.getModels().subList(fromIndex, toIndex), uiIndex, eventIndex);
             }
             finally {
               PluginLogo.endBatchMode();
             }
 
-            if (group.descriptors.size() == group.ui.plugins.size()) {
+            if (group.getDescriptors().size() == group.ui.plugins.size()) {
               scrollBar.removeAdjustmentListener(this);
               group.clearCallback = null;
             }
@@ -115,12 +160,35 @@ public class PluginsGroupComponent extends JBPanelWithEmptyText {
   private static final Color SECTION_HEADER_BACKGROUND =
     JBColor.namedColor("Plugins.SectionHeader.background", new JBColor(0xF7F7F7, 0x3C3F41));
 
-  private void addGroup(@NotNull PluginsGroup group, @NotNull List<? extends IdeaPluginDescriptor> descriptors, int groupIndex) {
+  private void addGroup(@NotNull PluginsGroup group, @NotNull List<PluginUiModel> models, int groupIndex) {
     UIPluginGroup uiGroup = new UIPluginGroup();
     group.ui = uiGroup;
+    if (Registry.is("ide.plugins.category.promotion.enabled") && group.promotionPanel != null) {
+      uiGroup.promotionPanel = group.promotionPanel;
+    }
     myGroups.add(groupIndex == -1 ? myGroups.size() : groupIndex, uiGroup);
 
-    OpaquePanel panel = new OpaquePanel(new BorderLayout(), SECTION_HEADER_BACKGROUND);
+    OpaquePanel panel = new OpaquePanel(new BorderLayout(), SECTION_HEADER_BACKGROUND) {
+      @Override
+      public AccessibleContext getAccessibleContext() {
+        if (accessibleContext == null) {
+          accessibleContext = new AccessibleOpaquePanelComponent();
+        }
+        return accessibleContext;
+      }
+
+      protected class AccessibleOpaquePanelComponent extends AccessibleJComponent {
+        @Override
+        public String getAccessibleName() {
+          return group.title;
+        }
+
+        @Override
+        public AccessibleRole getAccessibleRole() {
+          return AccessibilityUtils.GROUPED_ELEMENTS;
+        }
+      }
+    };
     panel.setBorder(JBUI.Borders.empty(4, 10));
 
     JLabel title = new JLabel(group.title) {
@@ -144,14 +212,14 @@ public class PluginsGroupComponent extends JBPanelWithEmptyText {
     panel.add(title, BorderLayout.WEST);
     group.titleLabel = title;
 
-    if (group.rightAction != null) {
-      panel.add(group.rightAction, BorderLayout.EAST);
+    if (group.mainAction != null) {
+      panel.add(group.mainAction, BorderLayout.EAST);
     }
-    else if (!ContainerUtil.isEmpty(group.rightActions)) {
+    else if (!ContainerUtil.isEmpty(group.secondaryActions)) {
       JPanel actions = new NonOpaquePanel(new HorizontalLayout(JBUIScale.scale(5)));
       panel.add(actions, BorderLayout.EAST);
 
-      for (JComponent action : group.rightActions) {
+      for (JComponent action : group.secondaryActions) {
         actions.add(action);
       }
     }
@@ -179,7 +247,18 @@ public class PluginsGroupComponent extends JBPanelWithEmptyText {
 
     uiGroup.panel = panel;
 
-    addToGroup(group, descriptors, index, eventIndex);
+    if (Registry.is("ide.plugins.category.promotion.enabled")) {
+      if (group.ui.promotionPanel != null) {
+        if (index == -1) {
+          add(group.ui.promotionPanel);
+        } else {
+          add(group.ui.promotionPanel, index);
+          index++;
+        }
+      }
+    }
+
+    addToGroup(group, models, index, eventIndex);
   }
 
   private int getEventIndexForGroup(int groupIndex) {
@@ -193,11 +272,11 @@ public class PluginsGroupComponent extends JBPanelWithEmptyText {
   }
 
   private void addToGroup(@NotNull PluginsGroup group,
-                          @NotNull List<? extends IdeaPluginDescriptor> descriptors,
+                          @NotNull List<PluginUiModel> models,
                           int index,
                           int eventIndex) {
-    for (IdeaPluginDescriptor descriptor : descriptors) {
-      ListPluginComponent pluginComponent = myFunction.fun(descriptor);
+    for (PluginUiModel pluginUiModel : models) {
+      ListPluginComponent pluginComponent = createListComponent(pluginUiModel, group, group.getPreloadedModel());
       group.ui.plugins.add(pluginComponent);
       add(pluginComponent, index);
       myEventHandler.addCell(pluginComponent, eventIndex);
@@ -211,12 +290,13 @@ public class PluginsGroupComponent extends JBPanelWithEmptyText {
     }
   }
 
-  public void addToGroup(@NotNull PluginsGroup group, @NotNull IdeaPluginDescriptor descriptor) {
-    int index = group.addWithIndex(descriptor);
+  public void addToGroup(@NotNull PluginsGroup group, @NotNull PluginUiModel model) {
+    int index = group.addWithIndex(model);
     ListPluginComponent anchor = null;
     int uiIndex = -1;
 
-    if (index == group.ui.plugins.size()) {
+    List<ListPluginComponent> plugins = group.ui.plugins;
+    if (index == plugins.size()) {
       int groupIndex = myGroups.indexOf(group.ui);
       if (groupIndex < myGroups.size() - 1) {
         UIPluginGroup nextGroup = myGroups.get(groupIndex + 1);
@@ -225,12 +305,12 @@ public class PluginsGroupComponent extends JBPanelWithEmptyText {
       }
     }
     else {
-      anchor = group.ui.plugins.get(index);
+      anchor = plugins.get(index);
       uiIndex = getComponentIndex(anchor);
     }
 
-    ListPluginComponent pluginComponent = myFunction.fun(descriptor);
-    group.ui.plugins.add(index, pluginComponent);
+    ListPluginComponent pluginComponent = createListComponent(model, group, group.getPreloadedModel());
+    plugins.add(index, pluginComponent);
     add(pluginComponent, uiIndex);
     myEventHandler.addCell(pluginComponent, anchor);
     pluginComponent.setListeners(myEventHandler);
@@ -250,8 +330,8 @@ public class PluginsGroupComponent extends JBPanelWithEmptyText {
     group.clear();
   }
 
-  public void removeFromGroup(@NotNull PluginsGroup group, @NotNull IdeaPluginDescriptor descriptor) {
-    int index = ContainerUtil.indexOf(group.ui.plugins, component -> component.myPlugin == descriptor);
+  public void removeFromGroup(@NotNull PluginsGroup group, @NotNull PluginUiModel descriptor) {
+    int index = ContainerUtil.indexOf(group.ui.plugins, component -> component.getPluginModel() == descriptor);
     assert index != -1;
     ListPluginComponent component = group.ui.plugins.remove(index);
     component.close();
@@ -260,7 +340,7 @@ public class PluginsGroupComponent extends JBPanelWithEmptyText {
     if (component.getSelection() == EventHandler.SelectionType.SELECTION) {
       myEventHandler.updateSelection();
     }
-    group.descriptors.remove(descriptor);
+    group.removeDescriptor(descriptor);
   }
 
   private int getComponentIndex(@NotNull Component component) {
@@ -290,12 +370,26 @@ public class PluginsGroupComponent extends JBPanelWithEmptyText {
   }
 
   public void initialSelection(boolean scrollAndFocus) {
-    //noinspection SSBasedInspection
     SwingUtilities.invokeLater(() -> {
       myEventHandler.initialSelection(scrollAndFocus);
       if (!myGroups.isEmpty()) {
         scrollRectToVisible(myGroups.get(0).panel.getBounds());
       }
     });
+  }
+
+  @Override
+  public AccessibleContext getAccessibleContext() {
+    if (accessibleContext == null) {
+      accessibleContext = new AccessiblePluginsGroupComponent();
+    }
+    return accessibleContext;
+  }
+
+  protected class AccessiblePluginsGroupComponent extends AccessibleJComponent {
+    @Override
+    public AccessibleRole getAccessibleRole() {
+      return AccessibilityUtils.GROUPED_ELEMENTS;
+    }
   }
 }

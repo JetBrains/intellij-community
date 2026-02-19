@@ -1,21 +1,33 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.java.decompiler.modules.decompiler;
 
 import org.jetbrains.java.decompiler.code.CodeConstants;
-import org.jetbrains.java.decompiler.modules.decompiler.exps.*;
+import org.jetbrains.java.decompiler.code.cfg.BasicBlock;
+import org.jetbrains.java.decompiler.modules.decompiler.StatEdge.EdgeDirection;
+import org.jetbrains.java.decompiler.modules.decompiler.exps.AnnotationExprent;
+import org.jetbrains.java.decompiler.modules.decompiler.exps.ExitExprent;
+import org.jetbrains.java.decompiler.modules.decompiler.exps.Exprent;
+import org.jetbrains.java.decompiler.modules.decompiler.exps.FunctionExprent;
+import org.jetbrains.java.decompiler.modules.decompiler.exps.InvocationExprent;
+import org.jetbrains.java.decompiler.modules.decompiler.exps.VarExprent;
+import org.jetbrains.java.decompiler.modules.decompiler.stats.BasicBlockStatement;
 import org.jetbrains.java.decompiler.modules.decompiler.stats.IfStatement;
 import org.jetbrains.java.decompiler.modules.decompiler.stats.SequenceStatement;
 import org.jetbrains.java.decompiler.modules.decompiler.stats.Statement;
+import org.jetbrains.java.decompiler.modules.decompiler.stats.Statement.StatementType;
 import org.jetbrains.java.decompiler.struct.StructMethod;
 import org.jetbrains.java.decompiler.struct.attr.StructAnnotationAttribute;
 import org.jetbrains.java.decompiler.struct.attr.StructAnnotationParameterAttribute;
 import org.jetbrains.java.decompiler.struct.attr.StructGeneralAttribute;
 import org.jetbrains.java.decompiler.struct.gen.MethodDescriptor;
 
+import java.util.ArrayList;
 import java.util.List;
 
-public class IdeaNotNullHelper {
+public final class IdeaNotNullHelper {
 
+
+  private static final String REPORT_NOT_NULL = "$$$reportNull$$$";
 
   public static boolean removeHardcodedChecks(Statement root, StructMethod mt) {
 
@@ -37,11 +49,19 @@ public class IdeaNotNullHelper {
   private static boolean findAndRemoveParameterCheck(Statement stat, StructMethod mt) {
 
     Statement st = stat.getFirst();
-    while (st.type == Statement.TYPE_SEQUENCE) {
-      st = st.getFirst();
+    while (st.type == StatementType.SEQUENCE) {
+      if (st.getFirst() instanceof BasicBlockStatement blockStatement &&
+          st.getStats().size() > 1 &&
+          (blockStatement.getExprents() == null ||
+           blockStatement.getExprents().isEmpty())) {
+        st = st.getStats().get(1);
+      }
+      else {
+        st = st.getFirst();
+      }
     }
 
-    if (st.type == Statement.TYPE_IF) {
+    if (st.type == StatementType.IF) {
 
       IfStatement ifstat = (IfStatement)st;
       Statement ifbranch = ifstat.getIfstat();
@@ -54,16 +74,19 @@ public class IdeaNotNullHelper {
       if (ifbranch != null &&
           if_condition.type == Exprent.EXPRENT_FUNCTION &&
           ((FunctionExprent)if_condition).getFuncType() == FunctionExprent.FUNCTION_EQ &&
-          ifbranch.type == Statement.TYPE_BASICBLOCK &&
-          ifbranch.getExprents().size() == 1 &&
-          ifbranch.getExprents().get(0).type == Exprent.EXPRENT_EXIT) {
+          ifbranch.type == StatementType.BASIC_BLOCK &&
+          ifbranch.getExprents() != null && ifbranch.getExprents().size() == 1 &&
+          (ifbranch.getExprents().get(0).type == Exprent.EXPRENT_EXIT ||
+           (ifbranch.getExprents().get(0) instanceof InvocationExprent invocationExprent &&
+            invocationExprent.getName() != null &&
+            invocationExprent.getName().startsWith(REPORT_NOT_NULL)))) {
 
         FunctionExprent func = (FunctionExprent)if_condition;
         Exprent first_param = func.getLstOperands().get(0);
         Exprent second_param = func.getLstOperands().get(1);
 
         if (second_param.type == Exprent.EXPRENT_CONST &&
-            second_param.getExprType().type == CodeConstants.TYPE_NULL) { // TODO: reversed parameter order
+            second_param.getExprType().getType() == CodeConstants.TYPE_NULL) { // TODO: reversed parameter order
           if (first_param.type == Exprent.EXPRENT_VAR) {
             VarExprent var = (VarExprent)first_param;
 
@@ -101,7 +124,7 @@ public class IdeaNotNullHelper {
                   break;
                 }
 
-                index += md.params[i].stackSize;
+                index += md.params[i].getStackSize();
               }
             }
           }
@@ -123,13 +146,28 @@ public class IdeaNotNullHelper {
   private static void removeParameterCheck(Statement stat) {
 
     Statement st = stat.getFirst();
-    while (st.type == Statement.TYPE_SEQUENCE) {
-      st = st.getFirst();
+    while (st.type == StatementType.SEQUENCE) {
+      if (st.getFirst() instanceof BasicBlockStatement blockStatement &&
+          st.getStats().size() > 1 &&
+          (blockStatement.getExprents() == null ||
+           blockStatement.getExprents().isEmpty())) {
+        st = st.getStats().get(1);
+      }
+      else {
+        st = st.getFirst();
+      }
     }
 
     IfStatement ifstat = (IfStatement)st;
-
-    if (ifstat.getElsestat() != null) { // if - else
+    if (ifstat.getIfstat().getExprents() != null && ifstat.getIfstat().getExprents().size() == 1 &&
+        ifstat.getIfstat().getExprents().get(0) instanceof InvocationExprent invocationExprent && invocationExprent.getName() != null &&
+        invocationExprent.getName().startsWith(REPORT_NOT_NULL)) {
+      Statement parent = ifstat.getParent();
+      BasicBlockStatement newstat = new BasicBlockStatement(new BasicBlock(ifstat.id));
+      newstat.setExprents(new ArrayList<>());
+      parent.replaceStatement(ifstat, newstat);
+    }
+    else if (ifstat.getElsestat() != null) { // if - else
       StatEdge ifedge = ifstat.getIfEdge();
       StatEdge elseedge = ifstat.getElseEdge();
 
@@ -176,7 +214,7 @@ public class IdeaNotNullHelper {
 
     Statement parent = stat.getParent();
 
-    if (parent != null && parent.type == Statement.TYPE_IF && stat.type == Statement.TYPE_BASICBLOCK && stat.getExprents().size() == 1) {
+    if (parent != null && parent.type == StatementType.IF && stat.type == StatementType.BASIC_BLOCK && stat.getExprents().size() == 1) {
       Exprent exprent = stat.getExprents().get(0);
       if (exprent.type == Exprent.EXPRENT_EXIT) {
         ExitExprent exit_exprent = (ExitExprent)exprent;
@@ -202,10 +240,10 @@ public class IdeaNotNullHelper {
             Statement elsebranch = ifparent.getElsestat();
 
             if (second_param.type == Exprent.EXPRENT_CONST &&
-                second_param.getExprType().type == CodeConstants.TYPE_NULL) { // TODO: reversed parameter order
+                second_param.getExprType().getType() == CodeConstants.TYPE_NULL) { // TODO: reversed parameter order
               //if(first_param.type == Exprent.EXPRENT_VAR && ((VarExprent)first_param).getIndex() == var_value.getIndex()) {
               if (first_param.equals(exprent_value)) {        // TODO: check for absence of side effects like method invocations etc.
-                if (ifbranch.type == Statement.TYPE_BASICBLOCK &&
+                if (ifbranch.type == StatementType.BASIC_BLOCK &&
                     ifbranch.getExprents().size() == 1 &&
                     // TODO: special check for IllegalStateException
                     ifbranch.getExprents().get(0).type == Exprent.EXPRENT_EXIT) {
@@ -232,13 +270,13 @@ public class IdeaNotNullHelper {
               }
             }
           }
-          //}
         }
       }
     }
     else if (parent != null &&
-             parent.type == Statement.TYPE_SEQUENCE &&
-             stat.type == Statement.TYPE_BASICBLOCK &&
+             parent.type == StatementType.SEQUENCE &&
+             stat.type == StatementType.BASIC_BLOCK &&
+             stat.getExprents() !=null &&
              stat.getExprents().size() == 1) {
       Exprent exprent = stat.getExprents().get(0);
       if (exprent.type == Exprent.EXPRENT_EXIT) {
@@ -251,7 +289,7 @@ public class IdeaNotNullHelper {
 
           if (sequence_stats_number > 1 &&
               sequence.getStats().getLast() == stat &&
-              sequence.getStats().get(sequence_stats_number - 2).type == Statement.TYPE_IF) {
+              sequence.getStats().get(sequence_stats_number - 2).type == StatementType.IF) {
 
             IfStatement ifstat = (IfStatement)sequence.getStats().get(sequence_stats_number - 2);
             Exprent if_condition = ifstat.getHeadexprent().getCondition();
@@ -266,12 +304,15 @@ public class IdeaNotNullHelper {
               Statement ifbranch = ifstat.getIfstat();
 
               if (second_param.type == Exprent.EXPRENT_CONST &&
-                  second_param.getExprType().type == CodeConstants.TYPE_NULL) { // TODO: reversed parameter order
+                  second_param.getExprType().getType() == CodeConstants.TYPE_NULL) { // TODO: reversed parameter order
                 if (first_param.equals(exprent_value)) {        // TODO: check for absence of side effects like method invocations etc.
-                  if (ifbranch.type == Statement.TYPE_BASICBLOCK &&
+                  if (ifbranch.type == StatementType.BASIC_BLOCK &&
                       ifbranch.getExprents().size() == 1 &&
                       // TODO: special check for IllegalStateException
-                      ifbranch.getExprents().get(0).type == Exprent.EXPRENT_EXIT) {
+                      (ifbranch.getExprents().get(0).type == Exprent.EXPRENT_EXIT  ||
+                       (ifbranch.getExprents().get(0) instanceof InvocationExprent invocationExprent &&
+                        invocationExprent.getName() != null &&
+                        invocationExprent.getName().startsWith(REPORT_NOT_NULL)))) {
 
                     ifstat.removeSuccessor(ifstat.getAllSuccessorEdges().get(0)); // remove 'else' edge
 
@@ -282,7 +323,7 @@ public class IdeaNotNullHelper {
                     for (StatEdge edge : ifstat.getAllPredecessorEdges()) {
 
                       ifstat.removePredecessor(edge);
-                      edge.getSource().changeEdgeNode(Statement.DIRECTION_FORWARD, edge, stat);
+                      edge.getSource().changeEdgeNode(EdgeDirection.FORWARD, edge, stat);
                       stat.addPredecessor(edge);
                     }
 

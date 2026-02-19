@@ -19,9 +19,6 @@ import com.intellij.openapi.project.Project;
 
 import java.util.regex.Pattern;
 
-/**
- * @author Sergey Evdokimov
- */
 public class MavenScalaConsoleFilter extends AbstractMavenConsoleFilter {
 
   private static final Pattern PATTERN = Pattern.compile("\\[ERROR\\] (\\S.+\\.scala): ?(-?\\d{1,5}): .+", Pattern.DOTALL);

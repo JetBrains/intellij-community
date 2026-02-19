@@ -1,7 +1,7 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.jarFinder;
 
-import com.intellij.ide.IdeBundle;
+import com.intellij.ide.IdeCoreBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -12,36 +12,32 @@ import org.jetbrains.annotations.Nullable;
 import java.io.IOException;
 import java.util.List;
 
-/**
- * @author Sergey Evdokimov
- */
 public class MavenCentralSourceSearcher extends SourceSearcher {
   private static final Logger LOG = Logger.getInstance(MavenCentralSourceSearcher.class);
 
-  @Nullable
   @Override
-  protected String findSourceJar(@NotNull ProgressIndicator indicator,
-                                 @NotNull String artifactId,
-                                 @NotNull String version,
-                                 @NotNull VirtualFile classesJar) throws SourceSearchException {
+  @Nullable
+  public String findSourceJar(@NotNull ProgressIndicator indicator,
+                              @NotNull String artifactId,
+                              @NotNull String version,
+                              @NotNull VirtualFile classesJar) throws SourceSearchException {
     try {
-      indicator.setText(IdeBundle.message("progress.message.connecting.to", "https://search.maven.org"));
+      indicator.setText(IdeCoreBundle.message("progress.message.connecting.to", "https://central.sonatype.com"));
 
       indicator.checkCanceled();
 
-      String url = "https://search.maven.org/solrsearch/select?rows=3&wt=xml&q=";
+      String url = "https://central.sonatype.com/solrsearch/select?rows=3&wt=xml&q=";
       final String groupId = findMavenGroupId(classesJar, artifactId);
       if (groupId != null) {
-        url += "g:%22" + groupId + "%22%20AND%20";
+        url += "g:" + groupId + "%20AND%20";
       }
-      url += "a:%22" + artifactId + "%22%20AND%20v:%22" + version + "%22%20AND%20l:%22sources%22";
-      List<Element> artifactList = findElements("./result/doc/str[@name='g']", readElementCancelable(indicator, url));
+      url += "a:" + artifactId + "%20AND%20v:" + version + "%20AND%20l:sources";
+      final List<Element> artifactList = findElements("./response/docs/docs/g", readElementCancelable(indicator, url));
       if (artifactList.isEmpty()) {
         return null;
       }
-
       if (artifactList.size() == 1) {
-        return "https://search.maven.org/remotecontent?filepath=" +
+        return "https://repo1.maven.org/maven2/" +
                artifactList.get(0).getValue().replace('.', '/') + '/' +
                artifactId + '/' +
                version + '/' +

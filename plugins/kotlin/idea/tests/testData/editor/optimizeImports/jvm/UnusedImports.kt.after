@@ -1,0 +1,11 @@
+import kotlin.system.measureTimeMillis
+import kotlin.test.Asserter
+
+class Action {
+    fun test() {
+        val chs = Charsets.UTF8
+        val traait : Asserter? = null
+        measureTimeMillis({ println(HashMap<String, Int>().size) })
+        val test : ArrayList<Int>? = null
+    }
+}

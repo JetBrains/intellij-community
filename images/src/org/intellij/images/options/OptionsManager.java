@@ -15,7 +15,7 @@
  */
 package org.intellij.images.options;
 
-import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.application.ApplicationManager;
 
 /**
  * Options manager.
@@ -23,14 +23,14 @@ import com.intellij.openapi.components.ServiceManager;
  * @author <a href="mailto:aefimov.box@gmail.com">Alexey Efimov</a>
  */
 public abstract class OptionsManager {
-    /**
-     * Return current options.
-     *
-     * @return Options
-     */
-    public abstract Options getOptions();
+  /**
+   * Return current options.
+   *
+   * @return Options
+   */
+  public abstract Options getOptions();
 
-    public static OptionsManager getInstance() {
-        return ServiceManager.getService(OptionsManager.class);
-    }
+  public static OptionsManager getInstance() {
+    return ApplicationManager.getApplication().getService(OptionsManager.class);
+  }
 }

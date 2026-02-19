@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.messages;
 
 import org.jetbrains.annotations.ApiStatus;
@@ -13,33 +13,40 @@ import java.lang.annotation.Target;
 /**
  * Defines messaging endpoint within particular {@link MessageBus bus}.
  *
- * @param <L>  type of the interface that defines contract for working with the particular topic instance
+ * @param <L> type of the interface that defines contract for working with the particular topic instance
+ * @see <a href="https://plugins.jetbrains.com/docs/intellij/messaging-infrastructure.html">Messaging Infrastructure (IntelliJ Platform Docs)</a>
  */
 @ApiStatus.NonExtendable
 public class Topic<L> {
-  /**
-   * Indicates that messages the of annotated topic are published to a application level message bus.
-   */
-  @Retention(RetentionPolicy.SOURCE)
-  @Target(ElementType.FIELD)
-  public @interface AppLevel {}
 
   /**
-   * Indicates that messages the of annotated topic are published to a project level message bus.
+   * Indicates that messages of the annotated topic are published to an application level message bus.
    */
-  @Retention(RetentionPolicy.SOURCE)
+  @Retention(RetentionPolicy.CLASS)
   @Target(ElementType.FIELD)
-  public @interface ProjectLevel {}
+  public @interface AppLevel {
+  }
 
-  private final String name;
+  /**
+   * Indicates that messages of the annotated topic are published to a project level message bus.
+   */
+  @Retention(RetentionPolicy.CLASS)
+  @Target(ElementType.FIELD)
+  public @interface ProjectLevel {
+  }
+
+  private final String myDisplayName;
   private final Class<L> myListenerClass;
   private final BroadcastDirection myBroadcastDirection;
-  private final boolean immediateDelivery;
+  private final boolean myImmediateDelivery;
 
   public Topic(@NonNls @NotNull String name, @NotNull Class<L> listenerClass) {
     this(name, listenerClass, BroadcastDirection.TO_CHILDREN);
   }
 
+  /**
+   * Consider using {@link #Topic(Class, BroadcastDirection)} and {@link BroadcastDirection#NONE}.
+   */
   public Topic(@NotNull Class<L> listenerClass) {
     this(listenerClass.getSimpleName(), listenerClass, BroadcastDirection.TO_CHILDREN);
   }
@@ -48,27 +55,25 @@ public class Topic<L> {
     this(listenerClass.getSimpleName(), listenerClass, broadcastDirection);
   }
 
-  @ApiStatus.Experimental
   public Topic(@NotNull Class<L> listenerClass, @NotNull BroadcastDirection broadcastDirection, boolean immediateDelivery) {
-    name = listenerClass.getSimpleName();
+    myDisplayName = listenerClass.getSimpleName();
     myListenerClass = listenerClass;
     myBroadcastDirection = broadcastDirection;
-    this.immediateDelivery = immediateDelivery;
+    myImmediateDelivery = immediateDelivery;
   }
 
   public Topic(@NonNls @NotNull String name, @NotNull Class<L> listenerClass, @NotNull BroadcastDirection broadcastDirection) {
-    this.name = name;
+    myDisplayName = name;
     myListenerClass = listenerClass;
     myBroadcastDirection = broadcastDirection;
-    immediateDelivery = false;
+    myImmediateDelivery = false;
   }
 
   /**
    * @return human-readable name of the current topic. Is intended to be used in informational/logging purposes only
    */
-  @NonNls
-  public @NotNull String getDisplayName() {
-    return name;
+  public @NonNls @NotNull String getDisplayName() {
+    return myDisplayName;
   }
 
   /**
@@ -84,34 +89,36 @@ public class Topic<L> {
    *   </li>
    * </ul>
    *
-   * @return    class of the interface that defines contract for working with the current topic
+   * @return class of the interface that defines contract for working with the current topic
    */
+  @ApiStatus.Internal
   public @NotNull Class<L> getListenerClass() {
     return myListenerClass;
   }
 
   @Override
   public String toString() {
-    return "Topic(" +
-           "name='" + name + '\'' +
-           ", listenerClass=" + myListenerClass +
-           ", broadcastDirection=" + myBroadcastDirection +
-           ", immediateDelivery=" + immediateDelivery +
-           ')';
+    return "Topic('" + myDisplayName + "'" +
+           (myBroadcastDirection == BroadcastDirection.NONE ? "" : ", direction=" + myBroadcastDirection) +
+           (myImmediateDelivery ? ", immediateDelivery" : "") +
+           ", listenerClass=" + myListenerClass + ')';
   }
 
   public static @NotNull <L> Topic<L> create(@NonNls @NotNull String displayName, @NotNull Class<L> listenerClass) {
     return new Topic<>(displayName, listenerClass);
   }
 
-  public static @NotNull <L> Topic<L> create(@NonNls @NotNull String displayName, @NotNull Class<L> listenerClass, BroadcastDirection direction) {
+  public static @NotNull <L> Topic<L> create(@NonNls @NotNull String displayName,
+                                             @NotNull Class<L> listenerClass,
+                                             @NotNull BroadcastDirection direction) {
     return new Topic<>(displayName, listenerClass, direction);
   }
 
   /**
-   * @return    broadcasting strategy configured for the current topic. Default value is {@link BroadcastDirection#TO_CHILDREN}
+   * @return broadcasting strategy configured for the current topic. Default value is {@link BroadcastDirection#TO_CHILDREN}
    * @see BroadcastDirection
    */
+  @ApiStatus.Internal
   public @NotNull BroadcastDirection getBroadcastDirection() {
     return myBroadcastDirection;
   }
@@ -119,7 +126,7 @@ public class Topic<L> {
   @ApiStatus.Internal
   @ApiStatus.Experimental
   public boolean isImmediateDelivery() {
-    return immediateDelivery;
+    return myImmediateDelivery;
   }
 
   /**
@@ -149,11 +156,10 @@ public class Topic<L> {
     /**
      * Use only for application level publishers. To avoid collection subscribers from modules.
      */
-    @ApiStatus.Experimental
     TO_DIRECT_CHILDREN,
 
     /**
-     * No broadcasting is performed for the
+     * No broadcasting is performed.
      */
     NONE,
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.ui.impl.watch;
 
 import com.intellij.codeInsight.ChangeContextUtil;
@@ -7,22 +7,31 @@ import com.intellij.debugger.codeinsight.RuntimeTypeEvaluator;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiArrayType;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiClassType;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementFactory;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiParenthesizedExpression;
+import com.intellij.psi.PsiResolveHelper;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypeCastExpression;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.containers.SmartHashSet;
 import com.sun.jdi.ObjectReference;
 import com.sun.jdi.ReferenceType;
 import com.sun.jdi.Value;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.HashSet;
 import java.util.Set;
 
 public final class DebuggerTreeNodeExpression {
-  @Nullable
-  public static PsiExpression substituteThis(@Nullable PsiElement expressionWithThis, PsiExpression howToEvaluateThis, Value howToEvaluateThisValue)
+  public static @Nullable PsiExpression substituteThis(@Nullable PsiElement expressionWithThis, PsiExpression howToEvaluateThis, Value howToEvaluateThisValue)
     throws EvaluateException {
     if (!(expressionWithThis instanceof PsiExpression)) return null;
     PsiExpression result = (PsiExpression)expressionWithThis.copy();
@@ -33,10 +42,10 @@ public final class DebuggerTreeNodeExpression {
 
     if (thisClass != null) {
       PsiType type = howToEvaluateThis.getType();
-      if(type != null) {
-        if(type instanceof PsiClassType) {
-          PsiClass psiClass = ((PsiClassType) type).resolve();
-          if(psiClass != null && (psiClass == thisClass || psiClass.isInheritor(thisClass, true))) {
+      if (type != null) {
+        if (type instanceof PsiClassType) {
+          PsiClass psiClass = ((PsiClassType)type).resolve();
+          if (psiClass != null && (psiClass == thisClass || psiClass.isInheritor(thisClass, true))) {
             castNeeded = false;
           }
         }
@@ -53,7 +62,7 @@ public final class DebuggerTreeNodeExpression {
     ChangeContextUtil.encodeContextInfo(result, false);
     PsiExpression psiExpression;
     try {
-      psiExpression = (PsiExpression) ChangeContextUtil.decodeContextInfo(result, thisClass, howToEvaluateThis);
+      psiExpression = (PsiExpression)ChangeContextUtil.decodeContextInfo(result, thisClass, howToEvaluateThis);
     }
     catch (IncorrectOperationException e) {
       throw new EvaluateException(
@@ -99,7 +108,7 @@ public final class DebuggerTreeNodeExpression {
       ((PsiTypeCastExpression)parenthExpression.getExpression()).getOperand().replace(expression);
       Set<String> imports = expression.getUserData(ADDITIONAL_IMPORTS_KEY);
       if (imports == null) {
-        imports = new SmartHashSet<>();
+        imports = new HashSet<>();
       }
       imports.add(typeName);
       parenthExpression.putUserData(ADDITIONAL_IMPORTS_KEY, imports);

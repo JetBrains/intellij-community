@@ -1,0 +1,188 @@
+### auto-generated section `build intellij.platform.configurationStore.impl` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "configurationStore-impl_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "configurationStore-impl",
+  module_name = "intellij.platform.configurationStore.impl",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":configurationStore-impl_resources"],
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "//platform/util/concurrency",
+    "//platform/editor-ui-api:editor-ui",
+    "//jps/model-api:model",
+    "//jps/model-serialization",
+    "//platform/projectModel-api:projectModel",
+    "//platform/util",
+    "//platform/core-api:core",
+    "//platform/platform-api:ide",
+    "//platform/projectModel-impl",
+    "//platform/core-impl",
+    "//platform/workspace/jps",
+    "//platform/platform-impl:ide-impl",
+    "//libraries/kotlinx/coroutines/core",
+    "//platform/analysis-api:analysis",
+    "//platform/object-serializer",
+    "//platform/service-container",
+    "//platform/ide-core-impl",
+    "//libraries/snakeyaml-engine",
+    "//platform/statistics",
+    "//libraries/fastutil",
+    "//platform/diff-api:diff",
+    "//platform/core-ui",
+    "//libraries/aalto-xml",
+    "//platform/util/xmlDom",
+    "//platform/util/jdom",
+    "//libraries/hash4j",
+    "@lib//:opentelemetry",
+    "@lib//:opentelemetry-semconv",
+    "//platform/diagnostic/telemetry",
+    "//platform/backend/workspace",
+    "//platform/settings",
+    "//libraries/kotlinx/serialization/core",
+    "//platform/workspace/storage",
+    "//libraries/kotlinx/serialization/json",
+    "//platform/platform-impl/initial-config-import",
+    "//platform/eel-provider",
+  ]
+)
+
+jvm_library(
+  name = "configurationStore-impl_test_lib",
+  module_name = "intellij.platform.configurationStore.impl",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    ":configurationStore-impl",
+    "//platform/util/concurrency:concurrency_test_lib",
+    "//platform/editor-ui-api:editor-ui_test_lib",
+    "//jps/model-api:model_test_lib",
+    "//jps/model-serialization:model-serialization_test_lib",
+    "//platform/projectModel-api:projectModel_test_lib",
+    "//platform/util:util_test_lib",
+    "//platform/core-api:core_test_lib",
+    "//platform/platform-api:ide_test_lib",
+    "//platform/projectModel-impl:projectModel-impl_test_lib",
+    "//platform/core-impl:core-impl_test_lib",
+    "//platform/workspace/jps:jps_test_lib",
+    "//platform/platform-impl:ide-impl_test_lib",
+    "//libraries/kotlinx/coroutines/core:core_test_lib",
+    "//platform/analysis-api:analysis_test_lib",
+    "//platform/object-serializer:object-serializer_test_lib",
+    "//platform/service-container:service-container_test_lib",
+    "//platform/ide-core-impl:ide-core-impl_test_lib",
+    "//libraries/snakeyaml-engine:snakeyaml-engine_test_lib",
+    "//platform/statistics:statistics_test_lib",
+    "//libraries/fastutil:fastutil_test_lib",
+    "//platform/diff-api:diff_test_lib",
+    "//platform/core-ui:core-ui_test_lib",
+    "//libraries/aalto-xml:aalto-xml_test_lib",
+    "//platform/util/xmlDom:xmlDom_test_lib",
+    "//platform/util/jdom:jdom_test_lib",
+    "//libraries/hash4j:hash4j_test_lib",
+    "//platform/diagnostic/telemetry:telemetry_test_lib",
+    "//platform/backend/workspace:workspace_test_lib",
+    "//platform/settings:settings_test_lib",
+    "//libraries/kotlinx/serialization/core:core_test_lib",
+    "//platform/workspace/storage:storage_test_lib",
+    "//libraries/kotlinx/serialization/json:json_test_lib",
+    "//platform/platform-impl/initial-config-import:initial-config-import_test_lib",
+    "//platform/eel-provider:eel-provider_test_lib",
+  ]
+)
+### auto-generated section `build intellij.platform.configurationStore.impl` end
+
+### auto-generated section `build intellij.platform.configurationStore.tests` start
+resourcegroup(
+  name = "configurationStore-tests_test_resources",
+  srcs = glob(["testResources/**/*"]),
+  strip_prefix = "testResources"
+)
+
+jvm_library(
+  name = "configurationStore-tests",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = ["//platform/ide-core/plugins"]
+)
+
+jvm_library(
+  name = "configurationStore-tests_test_lib",
+  visibility = ["//visibility:public"],
+  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java", "testSrc/**/*.form"], allow_empty = True),
+  resources = [":configurationStore-tests_test_resources"],
+  associates = [
+    "//platform/configuration-store-impl:configurationStore-impl",
+    "//platform/configuration-store-impl:configurationStore-impl_test_lib",
+  ],
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "//platform/analysis-api:analysis",
+    "//platform/analysis-api:analysis_test_lib",
+    "//platform/code-style-api:codeStyle",
+    "//platform/code-style-api:codeStyle_test_lib",
+    "//platform/core-api:core",
+    "//platform/core-api:core_test_lib",
+    "//platform/ide-core/plugins",
+    "@lib//:assert_j",
+    "//jps/model-api:model",
+    "//jps/model-api:model_test_lib",
+    "//jps/model-serialization",
+    "//jps/model-serialization:model-serialization_test_lib",
+    "//platform/projectModel-api:projectModel",
+    "//platform/projectModel-api:projectModel_test_lib",
+    "//platform/testFramework/extensions:testExtensions",
+    "//platform/testFramework/extensions:testExtensions_test_lib",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test_lib",
+    "//platform/object-serializer",
+    "//platform/object-serializer:object-serializer_test_lib",
+    "//platform/service-container",
+    "//platform/service-container:service-container_test_lib",
+    "//platform/ide-core-impl",
+    "//libraries/kotlinx/coroutines/core",
+    "//libraries/kotlinx/coroutines/core:core_test_lib",
+    "//platform/statistics",
+    "//platform/statistics:statistics_test_lib",
+    "//libraries/fastutil",
+    "//libraries/fastutil:fastutil_test_lib",
+    "//platform/util/jdom",
+    "//platform/util/jdom:jdom_test_lib",
+    "//platform/settings",
+    "//platform/settings:settings_test_lib",
+    "//platform/settings-local",
+    "//platform/settings-local:settings-local_test_lib",
+    "//platform/testFramework/junit5",
+    "//platform/testFramework/junit5:junit5_test_lib",
+    "//libraries/kotlinx/serialization/json",
+    "//libraries/kotlinx/serialization/json:json_test_lib",
+    "//libraries/kotlinx/serialization/core",
+    "//libraries/kotlinx/serialization/core:core_test_lib",
+    "//java/java-impl:impl",
+    "//java/java-impl:impl_test_lib",
+    "//platform/lang-api:lang",
+    "//platform/lang-api:lang_test_lib",
+  ],
+  runtime_deps = [
+    ":configurationStore-tests",
+    "//platform/ide-core/plugins:plugins_test_lib",
+    "//platform/ide-core-impl:ide-core-impl_test_lib",
+  ]
+)
+### auto-generated section `build intellij.platform.configurationStore.tests` end
+
+### auto-generated section `test intellij.platform.configurationStore.tests` start
+load("@community//build:tests-options.bzl", "jps_test")
+
+jps_test(
+  name = "configurationStore-tests_test",
+  runtime_deps = [":configurationStore-tests_test_lib"]
+)
+### auto-generated section `test intellij.platform.configurationStore.tests` end

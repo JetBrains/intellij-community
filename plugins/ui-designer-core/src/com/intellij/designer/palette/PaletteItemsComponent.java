@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.designer.palette;
 
+import com.intellij.designer.DesignerBundle;
 import com.intellij.designer.componentTree.TreeTransfer;
 import com.intellij.designer.designSurface.DesignerEditorPanel;
 import com.intellij.ide.dnd.DnDAction;
@@ -18,9 +19,20 @@ import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.AbstractAction;
+import javax.swing.AbstractListModel;
+import javax.swing.Action;
+import javax.swing.ActionMap;
+import javax.swing.JList;
+import javax.swing.ListSelectionModel;
+import javax.swing.SwingUtilities;
 import javax.swing.plaf.basic.BasicListUI;
-import java.awt.*;
+import java.awt.Component;
+import java.awt.Container;
+import java.awt.FocusTraversalPolicy;
+import java.awt.Insets;
+import java.awt.KeyboardFocusManager;
+import java.awt.Point;
 import java.awt.event.ActionEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
@@ -85,7 +97,7 @@ public class PaletteItemsComponent extends JBList {
           String deprecatedMessage = "";
           if (deprecated) {
             deprecatedMessage =
-              String.format("<b>This item is deprecated in version \"%1$s\".<br>", myDesigner.getVersionLabel(deprecatedIn));
+              DesignerBundle.message("palette.item.deprecated.message", String.format("%1$s", myDesigner.getVersionLabel(deprecatedIn)));
             String hint = item.getDeprecatedHint();
             if (!StringUtil.isEmpty(hint)) {
               deprecatedMessage += hint;
@@ -93,14 +105,8 @@ public class PaletteItemsComponent extends JBList {
             deprecatedMessage += "</b><br><br>";
           }
 
-          tooltip = "<html><body><center><b>" +
-                    StringUtil.escapeXmlEntities(title) +
-                    "</b>" +
-                    version +
-                    "</center><p style='width: 300px'>" +
-                    deprecatedMessage +
-                    tooltip +
-                    "</p></body></html>";
+          tooltip = DesignerBundle
+            .message("palette.item.deprecated.tooltip", StringUtil.escapeXmlEntities(title), version, deprecatedMessage, tooltip);
         }
         setToolTipText(tooltip);
       }
@@ -137,7 +143,7 @@ public class PaletteItemsComponent extends JBList {
     setTransferHandler(new TreeTransfer(PaletteItem.class));
     DnDManager.getInstance().registerSource(new DnDSource() {
       @Override
-      public boolean canStartDragging(DnDAction action, Point dragOrigin) {
+      public boolean canStartDragging(DnDAction action, @NotNull Point dragOrigin) {
         int index = locationToIndex(dragOrigin);
         if (index != -1 && myDesigner != null) {
           PaletteItem paletteItem = myGroup.getItems().get(index);
@@ -147,7 +153,7 @@ public class PaletteItemsComponent extends JBList {
       }
 
       @Override
-      public DnDDragStartBean startDragging(DnDAction action, Point dragOrigin) {
+      public DnDDragStartBean startDragging(DnDAction action, @NotNull Point dragOrigin) {
         return null;
       }
     }, this);

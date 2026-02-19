@@ -41,4 +41,9 @@ public interface PackagingElementResolvingContext {
 
   @NotNull
   ManifestFileProvider getManifestFileProvider();
+
+  @FunctionalInterface
+  interface LibraryFinder {
+    @Nullable Library find(@NotNull String level, @NotNull String libraryName);
+  }
 }

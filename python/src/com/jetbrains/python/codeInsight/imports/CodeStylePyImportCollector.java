@@ -9,12 +9,12 @@ import com.jetbrains.python.psi.PyElement;
 import com.jetbrains.python.psi.PyFile;
 
 public class CodeStylePyImportCollector extends PyImportCollector {
-  public CodeStylePyImportCollector(PyElement node, PsiReference reference, String refText, String alias) {
-    super(node, reference, refText, alias);
+  public CodeStylePyImportCollector(PyElement node, PsiReference reference, String refText) {
+    super(node, reference, refText);
   }
 
   @Override
-  PsiFile addCandidatesViaFromImports(PsiFile existingImportFile, PyFile pyFile) {
+  protected PsiFile addCandidatesViaFromImports(PsiFile existingImportFile, PyFile pyFile) {
     final PyCodeStyleSettings pySettings = CodeStyle.getCustomSettings(getNode().getContainingFile(), PyCodeStyleSettings.class);
     return pySettings.OPTIMIZE_IMPORTS_ALWAYS_SPLIT_FROM_IMPORTS
            ? existingImportFile

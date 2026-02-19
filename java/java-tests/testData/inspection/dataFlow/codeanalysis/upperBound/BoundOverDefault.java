@@ -1,7 +1,7 @@
-import jspecify.annotations.DefaultNonNull;
-import jspecify.annotations.Nullable;
+import org.jspecify.annotations.NullMarked;
+import org.jspecify.annotations.Nullable;
 
-@DefaultNonNull
+@NullMarked
 class NullnessDemo {
   static <E extends @Nullable Object> void foo(E e) {
   }

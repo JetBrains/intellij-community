@@ -1,9 +1,16 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.stats.completion.tracker
 
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.openapi.actionSystem.IdeActions
-import com.intellij.stats.completion.Action.*
+import com.intellij.stats.completion.Action.BACKSPACE
+import com.intellij.stats.completion.Action.COMPLETION_CANCELED
+import com.intellij.stats.completion.Action.COMPLETION_STARTED
+import com.intellij.stats.completion.Action.DOWN
+import com.intellij.stats.completion.Action.EXPLICIT_SELECT
+import com.intellij.stats.completion.Action.TYPE
+import com.intellij.stats.completion.Action.TYPED_SELECT
+import com.intellij.stats.completion.Action.UP
 import com.intellij.stats.completion.events.ExplicitSelectEvent
 import com.intellij.stats.completion.events.LogEvent
 import com.intellij.stats.completion.events.TypedSelectEvent
@@ -64,7 +71,7 @@ class CompletionEventsLoggingTest : CompletionLoggingTestBase() {
         myFixture.type('u')
         myFixture.type('x')
 
-        lookup.hide() //figure out why needed here
+        lookup?.hide()  //figure out why needed here
 
         trackedEvents.assertOrder(
           COMPLETION_STARTED,

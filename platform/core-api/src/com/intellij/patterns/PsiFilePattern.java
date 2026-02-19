@@ -1,6 +1,7 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.patterns;
 
+import com.intellij.lang.Language;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
@@ -8,13 +9,14 @@ import com.intellij.psi.PsiFile;
 import com.intellij.util.ProcessingContext;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.function.Predicate;
+
 /**
- * @author spleaner
  * @see PlatformPatterns#psiFile()
  */
 public class PsiFilePattern<T extends PsiFile, Self extends PsiFilePattern<T, Self>> extends PsiElementPattern<T, Self> {
 
-  protected PsiFilePattern(@NotNull final InitialPatternCondition<T> condition) {
+  protected PsiFilePattern(final @NotNull InitialPatternCondition<T> condition) {
     super(condition);
   }
 
@@ -25,7 +27,7 @@ public class PsiFilePattern<T extends PsiFile, Self extends PsiFilePattern<T, Se
   public Self withParentDirectoryName(final StringPattern namePattern) {
     return with(new PatternCondition<T>("withParentDirectoryName") {
       @Override
-      public boolean accepts(@NotNull final T t, final ProcessingContext context) {
+      public boolean accepts(final @NotNull T t, final ProcessingContext context) {
         PsiDirectory directory = t.getContainingDirectory();
         return directory != null && namePattern.accepts(directory.getName(), context);
       }
@@ -59,13 +61,22 @@ public class PsiFilePattern<T extends PsiFile, Self extends PsiFilePattern<T, Se
     });
   }
 
+  public Self withLanguage(final Predicate<Language> languagePredicate) {
+    return with(new PatternCondition<T>("withLanguage") {
+      @Override
+      public boolean accepts(@NotNull T file, ProcessingContext context) {
+        return languagePredicate.test(file.getLanguage());
+      }
+    });
+  }
+
   public static class Capture<T extends PsiFile> extends PsiFilePattern<T, Capture<T>> {
 
     protected Capture(final Class<T> aClass) {
       super(aClass);
     }
 
-    public Capture(@NotNull final InitialPatternCondition<T> condition) {
+    public Capture(final @NotNull InitialPatternCondition<T> condition) {
       super(condition);
     }
   }

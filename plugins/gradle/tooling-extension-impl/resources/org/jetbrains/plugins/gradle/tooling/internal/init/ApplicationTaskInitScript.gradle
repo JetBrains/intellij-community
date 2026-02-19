@@ -1,0 +1,89 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+//file:noinspection GrPackage
+
+import com.intellij.gradle.toolingExtension.impl.initScript.listener.ArgFileTaskActionListener
+import com.intellij.gradle.toolingExtension.impl.initScript.listener.ClasspathFileTaskActionListener
+import com.intellij.gradle.toolingExtension.impl.initScript.listener.ManifestTaskActionListener
+import com.intellij.gradle.toolingExtension.impl.initScript.util.GradleLifecycleUtil
+import com.intellij.gradle.toolingExtension.impl.util.GradleProjectUtil
+import com.intellij.gradle.toolingExtension.impl.util.javaPluginUtil.JavaPluginUtil
+import com.intellij.gradle.toolingExtension.util.GradleVersionUtil
+
+interface Properties {
+  //noinspection GrUnresolvedAccess
+  public static final String gradlePath = GRADLE_PATH
+  //noinspection GrUnresolvedAccess
+  public static final String runAppTaskName = RUN_APP_TASK_NAME
+  //noinspection GrUnresolvedAccess
+  public static final String mainClassToRun = MAIN_CLASS_TO_RUN
+  //noinspection GrUnresolvedAccess
+  public static final String sourceSetName = SOURCE_SET_NAME
+  //noinspection GrUnresolvedAccess
+  public static final boolean useManifestJar = USE_MANIFEST_JAR
+  //noinspection GrUnresolvedAccess
+  public static final boolean useArgsFile = USE_ARGS_FILE
+  //noinspection GrUnresolvedAccess
+  public static final boolean useClasspathFile = USE_CLASSPATH_FILE
+  //noinspection GrUnresolvedAccess
+  public static final String javaModuleName = JAVA_MODULE_NAME
+}
+
+def javaExePath = JAVA_EXE_PATH
+def workingDirectory = WORKING_DIRECTORY
+def intelliJRtPath = INTELLIJ_RT_PATH
+DEFS
+
+def isOlderThan64 = GradleVersionUtil.isCurrentGradleOlderThan("6.4")
+
+if (Properties.useManifestJar) {
+  gradle.addListener(new ManifestTaskActionListener(Properties.runAppTaskName))
+}
+if (Properties.useArgsFile) {
+  gradle.addListener(new ArgFileTaskActionListener(Properties.runAppTaskName))
+}
+if (Properties.useClasspathFile && intelliJRtPath != null) {
+  gradle.addListener(
+    new ClasspathFileTaskActionListener(
+      Properties.runAppTaskName,
+      Properties.mainClassToRun,
+      intelliJRtPath
+    )
+  )
+}
+
+GradleLifecycleUtil.afterProject(gradle) { Project project ->
+  def projectPath = GradleProjectUtil.getProjectIdentityPath(project)
+  if (projectPath == Properties.gradlePath && JavaPluginUtil.isJavaPluginApplied(project)) {
+    project.tasks.create(name: Properties.runAppTaskName, type: JavaExec) { task ->
+      if (javaExePath) executable = javaExePath
+
+      classpath = project.sourceSets[Properties.sourceSetName].runtimeClasspath
+      if (isOlderThan64) {
+        main = Properties.mainClassToRun
+      }
+      else {
+        mainClass = Properties.mainClassToRun
+        if (Properties.javaModuleName != null) {
+          mainModule = Properties.javaModuleName
+          jvmArgumentProviders.add(
+            new CommandLineArgumentProvider() {
+              @Override
+              Iterable<String> asArguments() {
+                return [
+                  '--module-path', task.classpath.asPath,
+                  '--patch-module', Properties.javaModuleName + '=' + project.sourceSets[Properties.sourceSetName].output.resourcesDir
+                ]
+              }
+            }
+          )
+        }
+      }
+      PARAMS
+      if (workingDirectory) {
+        workingDir = workingDirectory
+      }
+      standardInput = System.in
+    }
+  }
+}
+

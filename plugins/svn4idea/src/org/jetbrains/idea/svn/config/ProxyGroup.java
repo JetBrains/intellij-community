@@ -2,6 +2,7 @@
 package org.jetbrains.idea.svn.config;
 
 import com.intellij.openapi.util.NlsSafe;
+import org.jetbrains.annotations.Nls;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -14,7 +15,7 @@ public class ProxyGroup {
   // svnkit has its internal named referencies
   private final Map<String, String> myProperties;
 
-  public ProxyGroup(final String groupName, final String patterns, final Map<String, String> properties) {
+  public ProxyGroup(@NlsSafe String groupName, final String patterns, final Map<String, String> properties) {
     myGroupName = groupName;
     myPattern = patterns;
     myProperties = properties;
@@ -28,7 +29,7 @@ public class ProxyGroup {
     return false;
   }
 
-  public void setName(final String value) {
+  public void setName(@NlsSafe String value) {
     myGroupName = value;
   }
 
@@ -36,16 +37,20 @@ public class ProxyGroup {
     return myGroupName;
   }
 
+  public @Nls String getDisplayName() {
+    return getName();
+  }
+
   public String getPort() {
-    return myProperties.get(SvnServerFileKeys.PORT);
+    return myProperties.get(ServersFileKeys.PORT);
   }
 
   public String getTimeout() {
-    return myProperties.get(SvnServerFileKeys.TIMEOUT);
+    return myProperties.get(ServersFileKeys.TIMEOUT);
   }
 
   public void setTimeout(final String value) {
-    myProperties.put(SvnServerFileKeys.TIMEOUT, value);
+    myProperties.put(ServersFileKeys.TIMEOUT, value);
   }
 
   public String getPatterns() {

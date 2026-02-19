@@ -1,0 +1,7 @@
+foo(a: Int = 1, b: Int) {}
+fun test() {
+    foo(
+        a = TODO(),
+        b = TODO()
+    )
+}

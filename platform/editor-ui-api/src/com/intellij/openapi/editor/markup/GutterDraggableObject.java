@@ -3,7 +3,7 @@ package com.intellij.openapi.editor.markup;
 
 import com.intellij.openapi.vfs.VirtualFile;
 
-import java.awt.*;
+import java.awt.Cursor;
 import java.awt.datatransfer.DataFlavor;
 import java.awt.dnd.DragSource;
 
@@ -11,7 +11,6 @@ import java.awt.dnd.DragSource;
  * Interface which should be implemented to handle drag and drop of gutter icons. An example of
  * a gutter icon which can be dragged and dropped is the breakpoint icon.
  *
- * @author ven
  * @author Konstantin Bulenkov
  * @see GutterIconRenderer#getDraggableObject()
  */
@@ -34,25 +33,12 @@ public interface GutterDraggableObject {
    * Returns the cursor to show when the drag is over the specified line.
    *
    * @param line the line over which the drag is performed.
-   * @param actionId the id of the DnD action {@link java.awt.dnd.DnDConstants}.
-   * @return the cursor to show.
-   * @deprecated override {@link #getCursor(int, VirtualFile, int)}
-   */
-  @Deprecated
-  default Cursor getCursor(int line, int actionId) {
-    return DragSource.DefaultMoveDrop;
-  }
-
-  /**
-   * Returns the cursor to show when the drag is over the specified line.
-   *
-   * @param line the line over which the drag is performed.
    * @param file the DnD target file
    * @param actionId the id of the DnD action {@link java.awt.dnd.DnDConstants}.
    * @return the cursor to show.
    */
   default Cursor getCursor(int line, VirtualFile file, int actionId) {
-    return getCursor(line, actionId);
+    return DragSource.DefaultMoveDrop;
   }
 
   default void remove() {}

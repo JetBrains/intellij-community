@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.refactoring.move;
 
@@ -7,7 +7,15 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiCompiledElement;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiFileSystemItem;
+import com.intellij.psi.PsiLanguageInjectionHost;
+import com.intellij.psi.PsiRecursiveElementVisitor;
+import com.intellij.psi.PsiRecursiveElementWalkingVisitor;
+import com.intellij.psi.PsiReference;
+import com.intellij.psi.ResolveResult;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReferenceOwner;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.PsiFileReference;
 import com.intellij.util.IncorrectOperationException;
@@ -52,8 +60,7 @@ public final class FileReferenceContextUtil {
   private static boolean encodeFileReference(PsiElement element, PsiFileReference ref, Map<String, PsiFileSystemItem> map, int refIndex) {
     final ResolveResult[] results = ref.multiResolve(false);
     for (ResolveResult result : results) {
-      if (result.getElement() instanceof PsiFileSystemItem) {
-        PsiFileSystemItem fileSystemItem = (PsiFileSystemItem)result.getElement();
+      if (result.getElement() instanceof PsiFileSystemItem fileSystemItem) {
         element.putCopyableUserData(REF_FILE_SYSTEM_ITEM_KEY, Pair.create(fileSystemItem, refIndex));
         map.put(element.getText(), fileSystemItem);
         return true;
@@ -126,10 +133,9 @@ public final class FileReferenceContextUtil {
     return element;
   }
 
-  @Nullable
-  private static PsiElement bindAndCheckElement(@NotNull PsiReference ref,
-                                                @NotNull PsiElement element,
-                                                @NotNull PsiFileSystemItem item) {
+  private static @Nullable PsiElement bindAndCheckElement(@NotNull PsiReference ref,
+                                                          @NotNull PsiElement element,
+                                                          @NotNull PsiFileSystemItem item) {
     final PsiFileReference fileReference = ((FileReferenceOwner)ref).getLastFileReference();
     if (fileReference != null) {
       try {

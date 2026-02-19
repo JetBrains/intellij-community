@@ -10,9 +10,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-/**
- * @author Sergey Evdokimov
- */
 public class MavenSurefireReportInConsoleTest extends LightJavaCodeInsightFixtureTestCase {
 
   private Filter myFilter;
@@ -26,7 +23,7 @@ public class MavenSurefireReportInConsoleTest extends LightJavaCodeInsightFixtur
   @Override
   protected void tearDown() throws Exception {
     try {
-      MavenServerManager.getInstance().shutdown(true);
+      MavenServerManager.getInstance().closeAllConnectorsAndWait();
     }
     catch (Throwable e) {
       addSuppressedException(e);
@@ -54,10 +51,11 @@ public class MavenSurefireReportInConsoleTest extends LightJavaCodeInsightFixtur
   }
 
   public void testSurefire2_14() {
-    myFixture.addClass("public class CccTest {\n" +
-                       "  public void testTtt() {}\n" +
-                       "  public void testTtt2() {}\n" +
-                       "}");
+    myFixture.addClass("""
+                         public class CccTest {
+                           public void testTtt() {}
+                           public void testTtt2() {}
+                         }""");
 
     String tempDirPath = myFixture.getTempDirPath();
 

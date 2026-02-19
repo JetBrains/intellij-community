@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.codeInsight;
 
 import com.intellij.codeInsight.CodeInsightActionHandler;
@@ -24,14 +24,11 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
-/**
- * @author Alexey.Ivanov
- */
-public class PyGotoSuperHandler implements CodeInsightActionHandler {
+public final class PyGotoSuperHandler implements CodeInsightActionHandler {
 
   @Override
-  public void invoke(@NotNull final Project project, @NotNull final Editor editor, @NotNull final PsiFile file) {
-    PsiElement element = file.findElementAt(editor.getCaretModel().getOffset());
+  public void invoke(final @NotNull Project project, final @NotNull Editor editor, final @NotNull PsiFile psiFile) {
+    PsiElement element = psiFile.findElementAt(editor.getCaretModel().getOffset());
     PyClass pyClass = PsiTreeUtil.getParentOfType(element, PyClass.class);
     if (pyClass != null) {
       PyFunction function = PsiTreeUtil.getParentOfType(element, PyFunction.class, false, PyClass.class);
@@ -44,7 +41,7 @@ public class PyGotoSuperHandler implements CodeInsightActionHandler {
           gotoSuperClassAttributes(editor, (PyTargetExpression)assignment.getTargets()[0], pyClass);
         }
         else {
-          final TypeEvalContext context = TypeEvalContext.codeAnalysis(project, file);
+          final TypeEvalContext context = TypeEvalContext.codeAnalysis(project, psiFile);
           navigateOrChoose(editor, pyClass.getAncestorClasses(context), PyBundle.message("goto.superclass.choose"));
         }
       }
@@ -73,7 +70,7 @@ public class PyGotoSuperHandler implements CodeInsightActionHandler {
     }
   }
 
-  private static Collection<PyTargetExpression> getAllSuperAttributesByName(@NotNull final PyTargetExpression classAttr, PyClass pyClass) {
+  private static Collection<PyTargetExpression> getAllSuperAttributesByName(final @NotNull PyTargetExpression classAttr, PyClass pyClass) {
     final String name = classAttr.getName();
     if (name == null) {
       return Collections.emptyList();
@@ -88,7 +85,7 @@ public class PyGotoSuperHandler implements CodeInsightActionHandler {
     return result;
   }
 
-  private static Collection<PyFunction> getAllSuperMethodsByName(@NotNull final PyFunction method, PyClass pyClass) {
+  private static Collection<PyFunction> getAllSuperMethodsByName(final @NotNull PyFunction method, PyClass pyClass) {
     final String name = method.getName();
     if (name == null) {
       return Collections.emptyList();

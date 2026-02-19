@@ -94,8 +94,7 @@ class RecentTestsData {
   private fun getFailedTests(allConfigurations: MutableCollection<RunConfigurationEntry>): List<SingleTestEntry> {
     val testsCollector = SingleTestCollector()
     allConfigurations.forEach { it.accept(testsCollector) }
-    val failedTests = testsCollector.tests.filter { it.failed }
-    return failedTests
+    return testsCollector.tests.filter { it.failed }
   }
 }
 

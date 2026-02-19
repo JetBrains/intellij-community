@@ -1,5 +1,5 @@
 /*
- * Copyright 2001-2013 the original author or authors.
+ * Copyright 2001-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,23 +22,23 @@ import org.jetbrains.annotations.NotNull;
  */
 public final class PolicyOptions {
 
-    private static final transient InsertWhere[] newMethodOptions = {InsertWhere.AT_CARET, InsertWhere.AFTER_EQUALS_AND_HASHCODE, InsertWhere.AT_THE_END_OF_A_CLASS};
+    private static final InsertWhere[] newMethodOptions = {InsertWhere.AT_CARET, InsertWhere.AFTER_EQUALS_AND_HASHCODE, InsertWhere.AT_THE_END_OF_A_CLASS};
 
-    private static final transient DuplicationPolicy[] conflictOptions = {DuplicationPolicy.ASK, DuplicationPolicy.REPLACE, DuplicationPolicy.DUPLICATE};
+    private static final DuplicationPolicy[] conflictOptions = {DuplicationPolicy.ASK, DuplicationPolicy.REPLACE, DuplicationPolicy.DUPLICATE};
 
     private PolicyOptions() {}
 
   /**
-     * Gets the options for the the insert new method policy.
-     * @return the options for the the insert new method policy.
+     * Gets the options for the insert new method policy.
+     * @return the options for the insert new method policy.
      */
     public static InsertWhere @NotNull [] getNewMethodOptions() {
         return newMethodOptions;
     }
 
     /**
-     * Gets the options for the the conflict resolution policy.
-     * @return the options for the the conflict resolution policy.
+     * Gets the options for the conflict resolution policy.
+     * @return the options for the conflict resolution policy.
      */
     public static DuplicationPolicy @NotNull [] getConflictOptions() {
         return conflictOptions;

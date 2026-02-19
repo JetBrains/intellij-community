@@ -3,13 +3,13 @@ package org.jetbrains.settingsRepository.test
 
 import com.intellij.testFramework.file
 import com.intellij.util.io.directoryStreamIfExists
-import com.intellij.util.io.readBytes
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.settingsRepository.SyncType
 import org.junit.Test
+import kotlin.io.path.readBytes
 
 // empty means "no files, no HEAD, no commits"
-internal class OverwriteRemote : GitTestCase() {
+internal class OverwriteRemote : SettingsRepositoryGitTestBase() {
   @Test
   fun `not empty local and not empty remote`() {
     addLocalToFs()

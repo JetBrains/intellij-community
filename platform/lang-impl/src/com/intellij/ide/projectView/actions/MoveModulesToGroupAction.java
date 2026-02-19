@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.ide.projectView.actions;
 
@@ -20,19 +6,29 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.ide.projectView.ProjectView;
 import com.intellij.ide.projectView.impl.AbstractProjectViewPane;
 import com.intellij.ide.projectView.impl.ModuleGroup;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.LangDataKeys;
+import com.intellij.openapi.actionSystem.Presentation;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.impl.ModuleManagerImpl;
+import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ui.configuration.ProjectSettingsService;
+import com.intellij.openapi.util.NlsActions.ActionText;
+import com.intellij.ui.treeStructure.ProjectViewUpdateCause;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+@ApiStatus.Internal
 public class MoveModulesToGroupAction extends AnAction {
   protected final ModuleGroup myModuleGroup;
 
-  public MoveModulesToGroupAction(ModuleGroup moduleGroup, String title) {
+  public MoveModulesToGroupAction(ModuleGroup moduleGroup, @ActionText String title) {
     super(title);
     myModuleGroup = moduleGroup;
   }
@@ -49,35 +45,43 @@ public class MoveModulesToGroupAction extends AnAction {
     }
   }
 
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
+  }
+
   protected static String whatToMove(Module @NotNull [] modules) {
     return modules.length == 1 ? IdeBundle.message("message.module", modules[0].getName()) : IdeBundle.message("message.modules");
   }
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
-    final Module[] modules = e.getRequiredData(LangDataKeys.MODULE_CONTEXT_ARRAY);
+    Module[] modules = e.getData(LangDataKeys.MODULE_CONTEXT_ARRAY);
+    if (modules == null || modules.length == 0) return;
     doMove(modules, myModuleGroup, e.getDataContext());
   }
 
-  public static void doMove(final Module @NotNull [] modules, final ModuleGroup group, @Nullable final DataContext dataContext) {
+  public static void doMove(final Module @NotNull [] modules, final ModuleGroup group, final @Nullable DataContext dataContext) {
     Project project = modules[0].getProject();
+    ModifiableModuleModel modifiableModuleModel = dataContext != null
+                                  ? LangDataKeys.MODIFIABLE_MODULE_MODEL.getData(dataContext)
+                                  : null;
+    ModifiableModuleModel model =
+      modifiableModuleModel != null ? modifiableModuleModel : ModuleManager.getInstance(project).getModifiableModel();
     for (final Module module : modules) {
-      ModifiableModuleModel model = dataContext != null
-                                    ? LangDataKeys.MODIFIABLE_MODULE_MODEL.getData(dataContext)
-                                    : null;
-      if (model != null){
-        model.setModuleGroupPath(module, group == null ? null : group.getGroupPath());
-      } else {
-        ModuleManagerImpl.getInstanceImpl(project).setModuleGroupPath(module, group == null ? null : group.getGroupPath());
-      }
+      model.setModuleGroupPath(module, group == null ? null : group.getGroupPath());
+    }
+    if (modifiableModuleModel == null) {
+      WriteAction.run(model::commit);
     }
 
     AbstractProjectViewPane pane = ProjectView.getInstance(project).getCurrentProjectViewPane();
     if (pane != null) {
-      pane.updateFromRoot(true);
+      pane.updateFromRoot(true, ProjectViewUpdateCause.REFACTORING);
     }
 
-    if (!ProjectSettingsService.getInstance(project).processModulesMoved(modules, group) && pane != null) {
+    String targetGroupName = group == null ? null : group.toString();
+    if (!ProjectSettingsService.getInstance(project).processModulesMoved(modules, targetGroupName) && pane != null) {
       if (group != null) {
         pane.selectModuleGroup(group, true);
       }

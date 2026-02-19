@@ -1,26 +1,43 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.analysis;
 
 import com.intellij.java.analysis.JavaAnalysisBundle;
+import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsSafe;
-import com.intellij.psi.*;
+import com.intellij.psi.CommonClassNames;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiArrayInitializerExpression;
+import com.intellij.psi.PsiArrayType;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiClassType;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiExpressionStatement;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiMethodCallExpression;
+import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiNameHelper;
+import com.intellij.psi.PsiParameter;
+import com.intellij.psi.PsiPrimitiveType;
+import com.intellij.psi.PsiReferenceExpression;
+import com.intellij.psi.PsiStatement;
+import com.intellij.psi.PsiSubstitutor;
+import com.intellij.psi.PsiType;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.psi.util.PsiFormatUtilBase;
+import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.JavaPsiConstructorUtil;
-import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 public final class JavaHighlightUtil {
@@ -37,12 +54,9 @@ public final class JavaHighlightUtil {
   public static boolean isSerializationRelatedMethod(@NotNull PsiMethod method, @Nullable PsiClass containingClass) {
     if (containingClass == null) return false;
     if (method.isConstructor()) {
-      if (isSerializable(containingClass, "java.io.Externalizable") &&
-          method.getParameterList().isEmpty() &&
-          method.hasModifierProperty(PsiModifier.PUBLIC)) {
-        return true;
-      }
-      return false;
+      return isSerializable(containingClass, "java.io.Externalizable") &&
+             method.getParameterList().isEmpty() &&
+             method.hasModifierProperty(PsiModifier.PUBLIC);
     }
     if (method.hasModifierProperty(PsiModifier.STATIC)) return false;
     @NonNls String name = method.getName();
@@ -83,24 +97,21 @@ public final class JavaHighlightUtil {
     return false;
   }
 
-  @NotNull
-  public static String formatType(@Nullable PsiType type) {
-    return type == null ? PsiKeyword.NULL : type.getInternalCanonicalText();
+  public static @NotNull String formatType(@Nullable PsiType type) {
+    return type == null ? JavaKeywords.NULL : PsiTypesUtil.removeExternalAnnotations(type).getInternalCanonicalText();
   }
 
-  @Nullable
-  private static PsiType getArrayInitializerType(@NotNull PsiArrayInitializerExpression element) {
+  private static @Nullable PsiType getArrayInitializerType(@NotNull PsiArrayInitializerExpression element) {
     PsiType typeCheckResult = sameType(element.getInitializers());
     return typeCheckResult != null ? typeCheckResult.createArrayType() : null;
   }
 
-  @Nullable
-  public static PsiType sameType(PsiExpression @NotNull [] expressions) {
+  public static @Nullable PsiType sameType(PsiExpression @NotNull [] expressions) {
     PsiType type = null;
     for (PsiExpression expression : expressions) {
-      final PsiType currentType;
-      if (expression instanceof PsiArrayInitializerExpression) {
-        currentType = getArrayInitializerType((PsiArrayInitializerExpression)expression);
+      PsiType currentType;
+      if (expression instanceof PsiArrayInitializerExpression initializerExpression) {
+        currentType = getArrayInitializerType(initializerExpression);
       }
       else {
         currentType = expression.getType();
@@ -115,74 +126,46 @@ public final class JavaHighlightUtil {
     return type;
   }
 
-  @NotNull
-  public static @NlsSafe String formatMethod(@NotNull PsiMethod method) {
+  public static @NotNull @NlsSafe String formatMethod(@NotNull PsiMethod method) {
     return PsiFormatUtil.formatMethod(method, PsiSubstitutor.EMPTY, PsiFormatUtilBase.SHOW_NAME | PsiFormatUtilBase.SHOW_PARAMETERS,
                                       PsiFormatUtilBase.SHOW_TYPE);
   }
 
   public static boolean isSuperOrThisCall(@NotNull PsiStatement statement, boolean testForSuper, boolean testForThis) {
-    if (!(statement instanceof PsiExpressionStatement)) return false;
-    PsiExpression expression = ((PsiExpressionStatement)statement).getExpression();
-    if (!(expression instanceof PsiMethodCallExpression)) return false;
-    final PsiReferenceExpression methodExpression = ((PsiMethodCallExpression)expression).getMethodExpression();
+    if (!(statement instanceof PsiExpressionStatement expressionStatement)) return false;
+    PsiExpression expression = expressionStatement.getExpression();
+    if (!(expression instanceof PsiMethodCallExpression callExpression)) return false;
+    PsiReferenceExpression methodExpression = callExpression.getMethodExpression();
     if (testForSuper) {
       if ("super".equals(methodExpression.getText())) return true;
     }
-    if (testForThis) {
-      if ("this".equals(methodExpression.getText())) return true;
-    }
-
-    return false;
+    return testForThis && "this".equals(methodExpression.getText());
   }
 
   /**
    * return all constructors which are referred from this constructor by
    *  this (...) at the beginning of the constructor body
    * @return referring constructor
+   * @deprecated use {@link JavaPsiConstructorUtil#getChainedConstructors(PsiMethod)} instead
    */
-  @NotNull
-  public static List<PsiMethod> getChainedConstructors(@NotNull PsiMethod constructor) {
-    final ConstructorVisitorInfo info = new ConstructorVisitorInfo();
-    visitConstructorChain(constructor, info);
-    if (info.visitedConstructors != null) info.visitedConstructors.remove(constructor);
-    return ObjectUtils.notNull(info.visitedConstructors, Collections.emptyList());
+  @Deprecated
+  public static @NotNull List<PsiMethod> getChainedConstructors(@NotNull PsiMethod constructor) {
+    return JavaPsiConstructorUtil.getChainedConstructors(constructor);
   }
-
-  static void visitConstructorChain(@NotNull PsiMethod entry, @NotNull ConstructorVisitorInfo info) {
-    PsiMethod constructor = entry;
-    while (true) {
-      PsiMethodCallExpression methodCall = JavaPsiConstructorUtil.findThisOrSuperCallInConstructor(constructor);
-      if (!JavaPsiConstructorUtil.isChainedConstructorCall(methodCall)) return;
-      PsiMethod method = methodCall.resolveMethod();
-      if (method == null) return;
-      if (info.visitedConstructors != null && info.visitedConstructors.contains(method)) {
-        info.recursivelyCalledConstructor = method;
-        return;
-      }
-      if (info.visitedConstructors == null) info.visitedConstructors = new ArrayList<>(5);
-      info.visitedConstructors.add(method);
-      constructor = method;
-    }
-  }
-
-  @Nullable
-  public static @Nls String checkPsiTypeUseInContext(@NotNull PsiType type, @NotNull PsiElement context) {
+  
+  public static @Nullable @Nls String checkPsiTypeUseInContext(@NotNull PsiType type, @NotNull PsiElement context) {
     if (type instanceof PsiPrimitiveType) return null;
-    if (type instanceof PsiArrayType) return checkPsiTypeUseInContext(((PsiArrayType) type).getComponentType(), context);
+    if (type instanceof PsiArrayType arrayType) return checkPsiTypeUseInContext(arrayType.getComponentType(), context);
     if (PsiUtil.resolveClassInType(type) != null) return null;
-    if (type instanceof PsiClassType) return checkClassType((PsiClassType)type, context);
+    if (type instanceof PsiClassType classType) return checkClassType(classType, context);
     return invalidJavaTypeMessage();
   }
 
-  @NotNull
-  @Nls
-  public static String invalidJavaTypeMessage() {
+  public static @NotNull @Nls String invalidJavaTypeMessage() {
     return JavaAnalysisBundle.message("error.message.invalid.java.type");
   }
 
-  @NotNull
-  private static @Nls String checkClassType(@NotNull PsiClassType type, @NotNull PsiElement context) {
+  private static @NotNull @Nls String checkClassType(@NotNull PsiClassType type, @NotNull PsiElement context) {
     String className = PsiNameHelper.getQualifiedClassName(type.getCanonicalText(false), true);
     if (classExists(context, className)) {
       return getClassInaccessibleMessage(context, className);
@@ -194,18 +177,11 @@ public final class JavaHighlightUtil {
     return JavaPsiFacade.getInstance(context.getProject()).findClass(className, GlobalSearchScope.allScope(context.getProject())) != null;
   }
 
-  @NotNull
-  @Nls
-  private static String getClassInaccessibleMessage(@NotNull PsiElement context, @NotNull String className) {
+  private static @NotNull @Nls String getClassInaccessibleMessage(@NotNull PsiElement context, @NotNull String className) {
     Module module = ModuleUtilCore.findModuleForPsiElement(context);
     if (module == null) {
       return JavaAnalysisBundle.message("message.class.inaccessible", className);
     }
     return JavaAnalysisBundle.message("message.class.inaccessible.from.module", className, module.getName());
-  }
-
-  static class ConstructorVisitorInfo {
-    List<PsiMethod> visitedConstructors;
-    PsiMethod recursivelyCalledConstructor;
   }
 }

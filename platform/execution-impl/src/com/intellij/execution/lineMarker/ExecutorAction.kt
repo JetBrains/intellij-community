@@ -1,29 +1,56 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.lineMarker
 
 import com.intellij.execution.Executor
-import com.intellij.execution.actions.BaseRunConfigurationAction
-import com.intellij.execution.actions.ConfigurationContext
-import com.intellij.execution.actions.ConfigurationFromContext
-import com.intellij.execution.configurations.LocatableConfiguration
-import com.intellij.ide.DataManager
-import com.intellij.openapi.actionSystem.*
-import com.intellij.openapi.util.Key
+import com.intellij.openapi.actionSystem.ActionGroup
+import com.intellij.openapi.actionSystem.ActionGroupWrapper
+import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.actionSystem.ActionWithDelegate
+import com.intellij.openapi.actionSystem.ActionWrapperUtil
+import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.DataKey
+import com.intellij.openapi.actionSystem.DataSink
+import com.intellij.openapi.actionSystem.DataSnapshotProvider
+import com.intellij.openapi.actionSystem.DefaultActionGroup
+import com.intellij.openapi.diagnostic.logger
+import org.jetbrains.annotations.ApiStatus
 
 
 /**
- * @author Dmitry Avdeev
+ * @param order corresponding sorting happens here:
+ * [com.intellij.execution.actions.BaseRunConfigurationAction.getOrderedConfiguration]
  */
-@Suppress("ComponentNotRegistered")
 class ExecutorAction private constructor(val origin: AnAction,
-                                         private val executor: Executor,
-                                         private val order: Int) : ActionGroup(), ActionWithDelegate<AnAction> {
+                                         val executor: Executor,
+                                         val order: Int) :
+  ActionGroup(), DataSnapshotProvider, ActionWithDelegate<AnAction> {
   init {
     copyFrom(origin)
+    if (origin !is ActionGroup) {
+      templatePresentation.isPerformGroup = true
+      templatePresentation.isPopupGroup = true
+    }
+  }
+
+  override fun getDelegate(): AnAction = origin
+
+  override fun isDumbAware() = origin.isDumbAware
+
+  override fun getActionUpdateThread() = ActionWrapperUtil.getActionUpdateThread(this, origin)
+
+  override fun dataSnapshot(sink: DataSink) {
+    if (order != 0) {
+      sink[orderKey] = order
+    }
   }
 
   companion object {
-    private val CONFIGURATION_CACHE = Key.create<List<ConfigurationFromContext>>("ConfigurationFromContext")
+    private val LOG = logger<ExecutorAction>()
+
+    @JvmStatic
+    val orderKey: DataKey<Int> = DataKey.create("Order")
+
     @JvmStatic
     @JvmOverloads
     fun getActions(order: Int = 0) = getActionList(order).toTypedArray()
@@ -32,76 +59,64 @@ class ExecutorAction private constructor(val origin: AnAction,
     @JvmOverloads
     fun getActionList(order: Int = 0): List<AnAction> {
       val actionManager = ActionManager.getInstance()
-      val createAction = actionManager.getAction("CreateRunConfiguration")
+
+      val extraActionsGroup = actionManager.getAction("RunLineMarkerExtraActions")
+      val extraActions = (extraActionsGroup as? DefaultActionGroup)?.getChildren(actionManager) ?: run {
+        LOG.error("extraActionsGroup doesn't inherit DefaultActionGroup. extraActionsGroup.class=${extraActionsGroup.javaClass.name}")
+        emptyArray<AnAction>()
+      }
       val extensions = Executor.EXECUTOR_EXTENSION_NAME.extensionList
-      val result = ArrayList<AnAction>(extensions.size + (if (createAction == null) 0 else 2))
+      val result = ArrayList<AnAction>(extensions.size + extraActions.size)
+
       extensions
         .mapNotNullTo(result) { executor ->
           actionManager.getAction(executor.contextActionId)?.let {
             ExecutorAction(it, executor, order)
           }
         }
-      if (createAction != null) {
-        result.add(Separator.getInstance())
-        result.add(createAction)
+
+      for (extraAction in extraActions) {
+        if (extraAction is ActionGroup) {
+          result.add(object : ActionGroupWrapper(extraAction), DataSnapshotProvider {
+            override fun dataSnapshot(sink: DataSink) {
+              sink[orderKey] = order
+            }
+
+            override fun equals(other: Any?): Boolean {
+              return other is ActionGroupWrapper && delegate == other.delegate
+            }
+
+            override fun hashCode(): Int {
+              return delegate.hashCode()
+            }
+          })
+        }
       }
+
       return result
     }
 
-    private fun getConfigurations(dataContext: DataContext): List<ConfigurationFromContext> {
-      var result = DataManager.getInstance().loadFromDataContext(dataContext, CONFIGURATION_CACHE)
-      if (result == null) {
-        result = computeConfigurations(dataContext)
-        DataManager.getInstance().saveInDataContext(dataContext, CONFIGURATION_CACHE, result)
-      }
-      return result
+    @ApiStatus.Internal
+    @JvmStatic
+    fun wrap(runContextAction: AnAction, executor: Executor, order: Int): AnAction {
+      return ExecutorAction(runContextAction, executor, order)
     }
-
-    private fun computeConfigurations(dataContext: DataContext): List<ConfigurationFromContext> {
-      val originalContext = ConfigurationContext.getFromContext(dataContext)
-      return originalContext.configurationsFromContext ?: return emptyList()
-    }
-  }
-
-  override fun getDelegate(): AnAction {
-    return origin
   }
 
   override fun update(e: AnActionEvent) {
-    val name = getActionName(e.dataContext)
-    e.presentation.isEnabledAndVisible = name != null
-    origin.update(e)
-    if (name != null) {
-      e.presentation.text = name
-    }
+    ActionWrapperUtil.update(e, this, origin)
+  }
+
+  override fun getChildren(e: AnActionEvent?): Array<AnAction> {
+    if (origin !is ActionGroup) return EMPTY_ARRAY
+    return ActionWrapperUtil.getChildren(e, this, origin)
   }
 
   override fun actionPerformed(e: AnActionEvent) {
-    origin.actionPerformed(e)
+    ActionWrapperUtil.actionPerformed(e, this, origin)
   }
 
-  override fun canBePerformed(context: DataContext) = origin !is ActionGroup || origin.canBePerformed(context)
-
-  override fun getChildren(e: AnActionEvent?): Array<AnAction> = (origin as? ActionGroup)?.getChildren(e) ?: AnAction.EMPTY_ARRAY
-
-  override fun isDumbAware() = origin.isDumbAware
-
-  override fun isPopup() = origin !is ActionGroup || origin.isPopup
-
-  override fun hideIfNoVisibleChildren() = origin is ActionGroup && origin.hideIfNoVisibleChildren()
-
-  override fun disableIfNoVisibleChildren() = origin !is ActionGroup || origin.disableIfNoVisibleChildren()
-
-  fun getActionName(dataContext: DataContext): String? {
-    val list = getConfigurations(dataContext)
-    if (list.isEmpty()) {
-      return null
-    }
-
-    val configuration = list.get(if (order < list.size) order else 0).configuration as LocatableConfiguration
-    return executor.getStartActionText(BaseRunConfigurationAction.suggestRunActionName(configuration))
-  }
-
+  // for EquatableTooltipProvider
   override fun equals(other: Any?): Boolean {
     if (this === other) {
       return true

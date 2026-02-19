@@ -1,158 +1,192 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
-import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
-import com.intellij.codeInsight.highlighting.HighlightManager;
-import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
 import com.intellij.codeInspection.CommonQuickFixBundle;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.colors.EditorColors;
-import com.intellij.openapi.project.Project;
-import com.intellij.psi.*;
+import com.intellij.codeInspection.RemoveInitializerFix;
+import com.intellij.codeInspection.util.IntentionName;
+import com.intellij.java.JavaBundle;
+import com.intellij.modcommand.ActionContext;
+import com.intellij.modcommand.ModCommand;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.Presentation;
+import com.intellij.modcommand.PsiBasedModCommandAction;
+import com.intellij.modcommand.PsiUpdateModCommandAction;
+import com.intellij.openapi.util.TextRange;
+import com.intellij.psi.PsiAssignmentExpression;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiJavaDocumentedElement;
+import com.intellij.psi.PsiParenthesizedExpression;
+import com.intellij.psi.PsiReferenceExpression;
+import com.intellij.psi.PsiUnaryExpression;
+import com.intellij.psi.PsiVariable;
 import com.intellij.psi.util.JavaElementKind;
-import com.intellij.psi.util.PsiExpressionTrimRenderer;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.psi.util.PsiUtilCore;
-import com.intellij.util.IncorrectOperationException;
-import org.jetbrains.annotations.NonNls;
+import com.intellij.util.containers.ContainerUtil;
+import com.siyeh.ig.psiutils.CommentTracker;
+import com.siyeh.ig.psiutils.ExpressionUtils;
+import com.siyeh.ig.psiutils.ParenthesesUtils;
+import com.siyeh.ig.psiutils.SideEffectChecker;
+import com.siyeh.ig.psiutils.VariableAccessUtils;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.function.Function;
 
-public class RemoveUnusedVariableFix implements IntentionAction {
-  private static final Logger LOG = Logger.getInstance(RemoveUnusedVariableFix.class);
-  private final PsiVariable myVariable;
-
+public class RemoveUnusedVariableFix extends PsiBasedModCommandAction<PsiVariable> {
   public RemoveUnusedVariableFix(PsiVariable variable) {
-    myVariable = variable;
+    super(variable);
   }
 
   @Override
-  @NotNull
-  public String getText() {
-    return CommonQuickFixBundle.message("fix.remove.title.x", JavaElementKind.fromElement(myVariable).object(), myVariable.getName());
-  }
-
-  @Override
-  @NotNull
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return QuickFixBundle.message("remove.unused.element.family", JavaElementKind.VARIABLE.object());
   }
 
-  @Override
-  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    return
-      myVariable != null
-      && myVariable.isValid()
-      && BaseIntentionAction.canModify(myVariable)
-      ;
+  protected @IntentionName @NotNull String getText(@NotNull PsiVariable variable) {
+    return CommonQuickFixBundle.message("fix.remove.title.x", JavaElementKind.fromElement(variable).object(), variable.getName());
   }
 
   @Override
-  public void invoke(@NotNull Project project, Editor editor, PsiFile file) {
-    if (!FileModificationService.getInstance().prepareFileForWrite(myVariable.getContainingFile())) return;
-    removeVariableAndReferencingStatements(editor);
+  protected @Nullable Presentation getPresentation(@NotNull ActionContext context, @NotNull PsiVariable variable) {
+    String message = getText(variable);
+    return Presentation.of(message);
   }
 
-  private void removeVariableAndReferencingStatements(Editor editor) {
-    final List<PsiElement> references = new ArrayList<>();
-    final List<PsiElement> sideEffects = new ArrayList<>();
-    final boolean[] canCopeWithSideEffects = {true};
-    try {
-      PsiElement context = myVariable instanceof PsiField ? ((PsiField)myVariable).getContainingClass() : PsiUtil.getVariableCodeBlock(myVariable, null);
-      if (context != null) {
-        RemoveUnusedVariableUtil.collectReferences(context, myVariable, references);
-      }
-      // do not forget to delete variable declaration
-      references.add(myVariable);
-      // check for side effects
-      for (PsiElement element : references) {
-        Boolean result = RemoveUnusedVariableUtil.processUsage(element, myVariable, sideEffects, RemoveUnusedVariableUtil.RemoveMode.CANCEL);
-        if (result == null) return;
-        canCopeWithSideEffects[0] &= result;
+  static Map<PsiExpression, List<PsiExpression>> collectSideEffects(@NotNull PsiVariable variable,
+                                                                    @NotNull List<@NotNull PsiReferenceExpression> references) {
+    PsiExpression initializer = variable.getInitializer();
+    Map<PsiExpression, List<PsiExpression>> result = new HashMap<>();
+    if (initializer != null) {
+      List<PsiExpression> expressions = SideEffectChecker.extractSideEffectExpressions(initializer);
+      if (!expressions.isEmpty()) {
+        result.put(initializer, expressions);
       }
     }
-    catch (IncorrectOperationException e) {
-      LOG.error(e);
+    for (PsiReferenceExpression reference : references) {
+      if (reference.getParent() instanceof PsiAssignmentExpression assignment &&
+          ExpressionUtils.isVoidContext(assignment)) {
+        PsiExpression rExpression = assignment.getRExpression();
+        if (rExpression != null) {
+          List<PsiExpression> expressions = SideEffectChecker.extractSideEffectExpressions(rExpression);
+          if (!expressions.isEmpty()) {
+            result.put(rExpression, expressions);
+          }
+        }
+      }
     }
-
-    final RemoveUnusedVariableUtil.RemoveMode
-      deleteMode = showSideEffectsWarning(sideEffects, myVariable, editor, canCopeWithSideEffects[0]);
-
-    ApplicationManager.getApplication().runWriteAction(() -> {
-      try {
-        RemoveUnusedVariableUtil.deleteReferences(myVariable, references, deleteMode);
-      }
-      catch (IncorrectOperationException e) {
-        LOG.error(e);
-      }
-    });
+    return result;
   }
 
-  public static RemoveUnusedVariableUtil.RemoveMode showSideEffectsWarning(List<? extends PsiElement> sideEffects,
-                                                                           PsiVariable variable,
-                                                                           Editor editor,
-                                                                           boolean canCopeWithSideEffects,
-                                                                           @NonNls String beforeText,
-                                                                           @NonNls String afterText) {
-    if (sideEffects.isEmpty()) return RemoveUnusedVariableUtil.RemoveMode.DELETE_ALL;
-    if (ApplicationManager.getApplication().isUnitTestMode()) {
-      return canCopeWithSideEffects
-             ? RemoveUnusedVariableUtil.RemoveMode.MAKE_STATEMENT
-             : RemoveUnusedVariableUtil.RemoveMode.DELETE_ALL;
-    }
-    Project project = editor.getProject();
-    HighlightManager highlightManager = HighlightManager.getInstance(project);
-    PsiElement[] elements = PsiUtilCore.toPsiElementArray(sideEffects);
-    highlightManager.addOccurrenceHighlights(editor, elements, EditorColors.SEARCH_RESULT_ATTRIBUTES, true, null);
-
-    SideEffectWarningDialog dialog = new SideEffectWarningDialog(project, false, variable, beforeText, afterText, canCopeWithSideEffects);
-    dialog.show();
-    int code = dialog.getExitCode();
-    return RemoveUnusedVariableUtil.RemoveMode.values()[code];
-  }
-
-  private static RemoveUnusedVariableUtil.RemoveMode showSideEffectsWarning(List<? extends PsiElement> sideEffects,
-                                                                            PsiVariable variable,
-                                                                            Editor editor,
-                                                                            boolean canCopeWithSideEffects) {
-    String text;
-    if (sideEffects.isEmpty()) {
-      text = "";
+  @Override
+  protected @NotNull ModCommand perform(@NotNull ActionContext context, @NotNull PsiVariable variable) {
+    final List<PsiReferenceExpression> references = collectReferences(variable);
+    Map<PsiExpression, List<PsiExpression>> effects = collectSideEffects(variable, references);
+    if (effects.isEmpty()) {
+      return new RemoveVariableSideEffectAware(variable, false).perform(context);
     }
     else {
-      final PsiElement sideEffect = sideEffects.get(0);
-      if (sideEffect instanceof PsiExpression) {
-        text = PsiExpressionTrimRenderer.render((PsiExpression)sideEffect);
-      }
-      else {
-        text = sideEffect.getText();
-      }
+      return ModCommand.chooseAction(JavaBundle.message("popup.title.remove.unused.variable"),
+                                     new RemoveVariableSideEffectAware(variable, true),
+                                     new RemoveVariableSideEffectAware(variable, false));
     }
-    return showSideEffectsWarning(sideEffects, variable, editor, canCopeWithSideEffects, text, text);
   }
 
-  @Override
-  public boolean startInWriteAction() {
-    return false;
+  private static class RemoveVariableSideEffectAware extends PsiUpdateModCommandAction<PsiVariable> {
+    private final boolean myKeepSideEffects;
+
+    protected RemoveVariableSideEffectAware(@NotNull PsiVariable variable, boolean keepSideEffects) {
+      super(variable);
+      myKeepSideEffects = keepSideEffects;
+    }
+
+    @Override
+    protected @Nullable Presentation getPresentation(@NotNull ActionContext context, @NotNull PsiVariable variable) {
+      Presentation presentation = Presentation.of(getFamilyName());
+      if (myKeepSideEffects) {
+        final List<PsiReferenceExpression> references = collectReferences(variable);
+        Map<PsiExpression, List<PsiExpression>> effects = collectSideEffects(variable, references);
+        return presentation.withHighlighting(StreamEx.ofValues(effects).flatCollection(Function.identity())
+                                               .map(PsiExpression::getTextRange).toArray(TextRange.EMPTY_ARRAY));
+      }
+      return presentation;
+    }
+
+    @Override
+    public @NotNull String getFamilyName() {
+      return myKeepSideEffects ? 
+             JavaBundle.message("intention.family.name.extract.possible.side.effects") : 
+             JavaBundle.message("intention.family.name.delete.possible.side.effects");
+    }
+
+    @Override
+    protected void invoke(@NotNull ActionContext context, @NotNull PsiVariable variable, @NotNull ModPsiUpdater updater) {
+      boolean retry = true;
+      while(retry) {
+        retry = false;
+        List<PsiReferenceExpression> refs = collectReferences(variable);
+        for (PsiReferenceExpression ref : refs) {
+          if (!ref.isValid()) {
+            retry = true;
+            break;
+          }
+          PsiElement parent = PsiUtil.skipParenthesizedExprUp(ref.getParent());
+          if (parent instanceof PsiUnaryExpression unary && ExpressionUtils.isVoidContext(unary)) {
+            RemoveUnusedVariableUtil.deleteWholeStatement(parent);
+          }
+          else if (parent instanceof PsiAssignmentExpression assignment) {
+            PsiExpression rExpression = assignment.getRExpression();
+            if (ExpressionUtils.isVoidContext(assignment)) {
+              if (rExpression != null && myKeepSideEffects) {
+                RemoveInitializerFix.SideEffectAwareRemove.remove(rExpression);
+              }
+              else {
+                RemoveUnusedVariableUtil.deleteWholeStatement(assignment);
+              }
+            }
+            else if (rExpression != null) {
+              PsiElement result = new CommentTracker().replaceAndRestoreComments(assignment, rExpression);
+              if (result.getParent() instanceof PsiParenthesizedExpression parens &&
+                  !ParenthesesUtils.areParenthesesNeeded(parens, true)) {
+                parens.replace(result);
+              }
+            }
+            else {
+              RemoveUnusedVariableUtil.deleteWholeStatement(assignment);
+            }
+          }
+        }
+      }
+      if (variable instanceof PsiField) {
+        variable.normalizeDeclaration();
+      }
+      PsiExpression initializer = variable.getInitializer();
+      if (initializer != null && myKeepSideEffects) {
+        RemoveInitializerFix.SideEffectAwareRemove.remove(initializer);
+      }
+      CommentTracker tracker = new CommentTracker();
+      tracker.markUnchanged(variable.getInitializer()); // assume that initializer is used (e.g. inlined)
+      if (variable instanceof PsiJavaDocumentedElement docElement) {
+        tracker.markUnchanged(docElement.getDocComment());
+      }
+      tracker.deleteAndRestoreComments(variable);
+    }
+  }
+
+  private static @Unmodifiable List<PsiReferenceExpression> collectReferences(@NotNull PsiVariable variable) {
+    List<PsiReferenceExpression> references = new ArrayList<>(VariableAccessUtils.getVariableReferences(variable));
+    references.removeIf(ref -> !PsiUtil.isAccessedForWriting(ref));
+    return ContainerUtil.filter(references, r1 ->
+      (r1.getParent() instanceof PsiAssignmentExpression assignment && !ExpressionUtils.isVoidContext(assignment)) ||  
+      !ContainerUtil.exists(references, r2 -> r1 != r2 && PsiTreeUtil.isAncestor(r2.getParent(), r1, true)));
   }
 }

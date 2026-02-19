@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.roots.ui.configuration
 
 import com.intellij.openapi.actionSystem.AnActionEvent
@@ -9,21 +9,21 @@ import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.projectRoots.Sdk
-import com.intellij.openapi.projectRoots.SdkType
 import com.intellij.openapi.projectRoots.SdkTypeId
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.ProjectRootManager
+import com.intellij.openapi.roots.ui.configuration.SdkPopupBuilder.SuggestedSdk
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectSdksModel
 import com.intellij.openapi.ui.popup.JBPopupListener
 import com.intellij.openapi.ui.popup.LightweightWindowEvent
 import com.intellij.openapi.util.Condition
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiFile
-import com.intellij.ui.AnActionButton
 import com.intellij.ui.EditorNotificationPanel
 import com.intellij.ui.EditorNotificationPanel.ActionHandler
 import com.intellij.ui.awt.RelativePoint
 import com.intellij.ui.popup.list.ComboBoxPopup
+import com.intellij.util.ui.accessibility.ScreenReader
 import java.awt.Component
 import java.awt.Point
 import java.awt.Window
@@ -36,11 +36,13 @@ import javax.swing.event.HyperlinkEvent
 private data class SdkPopupBuilderImpl(
   val project: Project? = null,
   val projectSdksModel: ProjectSdksModel? = null,
+  val ownsProjectSdksModel: Boolean = false,
   val sdkListModelBuilder: SdkListModelBuilder? = null,
 
   val sdkTypeFilter: Condition<SdkTypeId>? = null,
   val sdkTypeCreateFilter: Condition<SdkTypeId>? = null,
   val sdkFilter: Condition<Sdk>? = null,
+  val suggestedSdkFilter: Condition<SuggestedSdk>? = null,
 
   val registerNewSdk : Boolean = false,
   val updateProjectSdk : Boolean = false,
@@ -50,6 +52,8 @@ private data class SdkPopupBuilderImpl(
 
   val onItemSelected: Consumer<SdkListItem>? = null,
   val onSdkSelected: Consumer<Sdk>? = null,
+  val withAddActions: Boolean? = null,
+  val withDownloadActions: Boolean? = null,
   val onPopupClosed: Runnable? = null
 ) : SdkPopupBuilder {
   override fun registerNewSdk() = copy(registerNewSdk = true)
@@ -57,12 +61,16 @@ private data class SdkPopupBuilderImpl(
   override fun updateSdkForFile(file: PsiFile) = copy(updateSdkForPsiFile = file)
   override fun updateSdkForFile(file: VirtualFile) = copy(updateSdkForVirtualFile = file)
   override fun withProject(project: Project?) = copy(project = project)
-  override fun withProjectSdksModel(projectSdksModel: ProjectSdksModel) = copy(projectSdksModel = projectSdksModel)
+  override fun withProjectSdksModel(projectSdksModel: ProjectSdksModel) = copy(projectSdksModel = projectSdksModel, ownsProjectSdksModel = false)
+  override fun withOwnProjectSdksModel(projectSdksModel: ProjectSdksModel) = copy(projectSdksModel = projectSdksModel, ownsProjectSdksModel = true)
   override fun withSdkListModelBuilder(sdkListModelBuilder: SdkListModelBuilder) = copy(sdkListModelBuilder = sdkListModelBuilder)
   override fun withSdkType(type: SdkTypeId) = withSdkTypeFilter(Condition { sdk -> sdk == type })
   override fun withSdkTypeFilter(filter: Condition<SdkTypeId>) = copy(sdkTypeFilter = filter)
   override fun withSdkTypeCreateFilter(filter: Condition<SdkTypeId>) = copy(sdkTypeCreateFilter = filter)
   override fun withSdkFilter(filter: Condition<Sdk>) = copy(sdkFilter = filter)
+  override fun withSuggestedSdkFilter(filter: Condition<SuggestedSdk>) = copy(suggestedSdkFilter = filter)
+  override fun withNoAddActions() = copy(withAddActions = false)
+  override fun withNoDownlaodActions() = copy(withDownloadActions = false)
   override fun onItemSelected(onItemSelected: Consumer<SdkListItem>) = copy(onItemSelected = onItemSelected)
   override fun onPopupClosed(onClosed: Runnable) = copy(onPopupClosed = onClosed)
   override fun onSdkSelected(onSdkSelected: Consumer<Sdk>) = copy(onSdkSelected = onSdkSelected)
@@ -90,7 +98,7 @@ private interface SdkPopupListener {
 internal class PlatformSdkPopupFactory : SdkPopupFactory {
   override fun createBuilder(): SdkPopupBuilder = SdkPopupBuilderImpl()
 
-  override fun createEditorNotificationPanelHandler(builder: SdkPopupBuilder) = object : ActionHandler {
+  override fun createEditorNotificationPanelHandler(builder: SdkPopupBuilder): ActionHandler = object : ActionHandler {
     override fun handlePanelActionClick(panel: EditorNotificationPanel,
                                         event: HyperlinkEvent) {
       //FileEditorManager#addTopComponent wraps the panel to implement borders, unwrapping
@@ -109,7 +117,7 @@ internal class PlatformSdkPopupFactory : SdkPopupFactory {
 
   override fun createPopup(builder: SdkPopupBuilder): SdkPopup = (builder as SdkPopupBuilderImpl).copy().run {
     val (sdksModel, ownsModel) = if (projectSdksModel != null) {
-      projectSdksModel to false
+      projectSdksModel to ownsProjectSdksModel
     }
     else {
       ProjectSdksModel() to true
@@ -119,6 +127,9 @@ internal class PlatformSdkPopupFactory : SdkPopupFactory {
       require(sdkTypeFilter == null) { "sdkListModelBuilder was set explicitly via " + ::withSdkListModelBuilder.name }
       require(sdkTypeCreateFilter == null) { "sdkListModelBuilder was set explicitly via " + ::withSdkListModelBuilder.name }
       require(sdkFilter == null) { "sdkListModelBuilder was set explicitly via " + ::withSdkListModelBuilder.name }
+      require(suggestedSdkFilter == null) { "sdkListModelBuilder was set explicitly via " + ::withSdkListModelBuilder.name }
+      require(withAddActions == null) { "sdkListModelBuilder was set explicitly via " + ::withSdkListModelBuilder.name }
+      require(withDownloadActions == null) { "sdkListModelBuilder was set explicitly via " + ::withSdkListModelBuilder.name }
       sdkListModelBuilder
     }
     else {
@@ -127,7 +138,23 @@ internal class PlatformSdkPopupFactory : SdkPopupFactory {
         sdksModel,
         sdkTypeFilter,
         sdkTypeCreateFilter,
-        sdkFilter
+        sdkFilter,
+        Condition {
+          val box = object : SuggestedSdk {
+            override val type: SdkTypeId get() = it.sdkType
+            override val versionString: String get() = it.version
+            override val homePath: String get() = it.homePath
+            override fun toString() = "SuggestedSdk($it)"
+          }
+          it != null && (suggestedSdkFilter?.value(box) != false)
+        },
+        Condition {
+          when(it) {
+            SdkListItem.ActionRole.ADD -> withAddActions != false
+            SdkListItem.ActionRole.DOWNLOAD -> withDownloadActions != false
+            else -> true
+          }
+        }
       )
     }
 
@@ -142,7 +169,8 @@ internal class PlatformSdkPopupFactory : SdkPopupFactory {
         if (addToJdkTable && item is SdkListItem.SdkItem) {
           val sdk = item.sdk
           runWriteAction {
-            val jdkTable = ProjectJdkTable.getInstance()
+            val jdkTable = project?.let { ProjectJdkTable.getInstance(it) }
+                           ?: ProjectJdkTable.getInstance()
             if (jdkTable.findJdk(sdk.name) == null) {
               jdkTable.addJdk(sdk)
             }
@@ -260,6 +288,13 @@ private class SdkPopupImpl(
   context: SdkListItemContext,
   onItemSelected: Consumer<SdkListItem>
 ) : ComboBoxPopup<SdkListItem>(context, null, onItemSelected), SdkPopup {
+
+  init {
+    if (ScreenReader.isActive()) {
+      setRequestFocus(true)
+    }
+  }
+
   val popupOwner: JComponent
     get() {
       val owner = myOwner
@@ -279,12 +314,7 @@ private class SdkPopupImpl(
     }
 
   override fun showPopup(e: AnActionEvent) {
-    if (e is AnActionButton.AnActionEventWrapper) {
-      e.showPopup(this)
-    }
-    else {
-      showInBestPositionFor(e.dataContext)
-    }
+    showInBestPositionFor(e.dataContext)
   }
 
   override fun showUnderneathToTheRightOf(component: Component) {
@@ -298,7 +328,7 @@ private class SdkListItemContext(
 ) : ComboBoxPopup.Context<SdkListItem> {
   var myModel = SdkListModel.emptyModel()
 
-  private val myRenderer = SdkListPresenter { myModel }
+  private val myRenderer = SdkListPresenter.create<SdkListItem>(null, { myModel }, { it })
 
   override fun getProject() = myProject
   override fun getMaximumRowCount() = 30

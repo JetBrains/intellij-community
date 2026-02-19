@@ -20,12 +20,10 @@ public class PyWhileUnwrapper extends PyUnwrapper {
 
   @Override
   public boolean isApplicableTo(@NotNull PsiElement e) {
-    if (e instanceof PyWhileStatement) {
-      final PyStatementList statementList = ((PyWhileStatement)e).getWhilePart().getStatementList();
-      if (statementList != null) {
-        final PyStatement[] statements = statementList.getStatements();
-        return statements.length == 1 && !(statements[0] instanceof PyPassStatement) || statements.length > 1;
-      }
+    if (e instanceof PyWhileStatement whileStatement) {
+      final PyStatementList statementList = whileStatement.getWhilePart().getStatementList();
+      final PyStatement[] statements = statementList.getStatements();
+      return statements.length == 1 && !(statements[0] instanceof PyPassStatement) || statements.length > 1;
     }
     return false;
   }

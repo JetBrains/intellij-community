@@ -1,0 +1,13 @@
+// "Replace with 'get2(i)'" "true"
+interface T {
+    @Deprecated("", replaceWith = ReplaceWith("get2(i)"))
+    operator fun get(i: Int): String
+
+    fun get2(i: Int): String
+}
+
+fun test(t: T) {
+    val s = <caret>t[0]
+}
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.replaceWith.DeprecatedSymbolUsageFix
+// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.fixes.replaceWith.DeprecatedSymbolUsageFix

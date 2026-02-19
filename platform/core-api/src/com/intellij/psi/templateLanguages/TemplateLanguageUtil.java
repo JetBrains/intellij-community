@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.psi.templateLanguages;
 
@@ -16,8 +16,7 @@ public final class TemplateLanguageUtil {
   private TemplateLanguageUtil() {
   }
 
-  @Nullable
-  public static PsiFile getTemplateFile(PsiFile file) {
+  public static @Nullable PsiFile getTemplateFile(PsiFile file) {
     final FileViewProvider viewProvider = file.getViewProvider();
     if (viewProvider instanceof TemplateLanguageFileViewProvider) {
       return viewProvider.getPsi(((TemplateLanguageFileViewProvider)viewProvider).getTemplateDataLanguage());
@@ -41,8 +40,7 @@ public final class TemplateLanguageUtil {
                 file == viewProvider.getPsi(((TemplateLanguageFileViewProvider)viewProvider).getTemplateDataLanguage());
   }
 
-  @Nullable
-  public static ASTNode getSameLanguageTreePrev(@NotNull ASTNode node) {
+  public static @Nullable ASTNode getSameLanguageTreePrev(@NotNull ASTNode node) {
     ASTNode current = node.getTreePrev();
     while (current instanceof OuterLanguageElement) {
       current = current.getTreePrev();
@@ -50,8 +48,7 @@ public final class TemplateLanguageUtil {
     return current;
   }
 
-  @Nullable
-  public static ASTNode getSameLanguageTreeNext(@NotNull ASTNode node) {
+  public static @Nullable ASTNode getSameLanguageTreeNext(@NotNull ASTNode node) {
     ASTNode current = node.getTreeNext();
     while (current instanceof OuterLanguageElement) {
       current = current.getTreeNext();

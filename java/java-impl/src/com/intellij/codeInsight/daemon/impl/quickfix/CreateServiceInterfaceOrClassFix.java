@@ -1,9 +1,11 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.CommonBundle;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
+import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.ide.actions.TemplateKindCombo;
+import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.editor.Editor;
@@ -15,8 +17,17 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.panel.PanelGridBuilder;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiJavaCodeReferenceElement;
+import com.intellij.psi.PsiPackage;
+import com.intellij.psi.PsiProvidesStatement;
+import com.intellij.psi.PsiUsesStatement;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.ui.IconManager;
 import com.intellij.ui.SimpleListCellRenderer;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
@@ -27,14 +38,14 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.Action;
+import javax.swing.DefaultComboBoxModel;
+import javax.swing.JComponent;
+import javax.swing.JTextField;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.Map;
 
-/**
- * @author Pavel.Dolgov
- */
 public class CreateServiceInterfaceOrClassFix extends CreateServiceClassFixBase {
   private @NlsSafe String myInterfaceName;
 
@@ -49,22 +60,18 @@ public class CreateServiceInterfaceOrClassFix extends CreateServiceClassFixBase 
     }
   }
 
-  @Nls
-  @NotNull
   @Override
-  public String getText() {
+  public @Nls @NotNull String getText() {
     return QuickFixBundle.message("create.service.interface.fix.name", myInterfaceName);
   }
 
-  @Nls
-  @NotNull
   @Override
-  public String getFamilyName() {
+  public @Nls @NotNull String getFamilyName() {
     return QuickFixBundle.message("create.service.interface.fix.family.name");
   }
 
   @Override
-  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
+  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile psiFile) {
     if (myInterfaceName == null) return false;
     JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(project);
     GlobalSearchScope projectScope = GlobalSearchScope.projectScope(project);
@@ -73,7 +80,7 @@ public class CreateServiceInterfaceOrClassFix extends CreateServiceClassFixBase 
   }
 
   @Override
-  public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
+  public void invoke(@NotNull Project project, Editor editor, PsiFile psiFile) throws IncorrectOperationException {
     String qualifierText = StringUtil.getPackageName(myInterfaceName);
     JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(project);
 
@@ -94,10 +101,10 @@ public class CreateServiceInterfaceOrClassFix extends CreateServiceClassFixBase 
       Map<Module, PsiDirectory[]> psiRootDirs = getModuleRootDirs(psiPackage);
       if (!psiRootDirs.isEmpty()) {
         if (ApplicationManager.getApplication().isUnitTestMode()) {
-          PsiDirectory rootDir = file.getUserData(SERVICE_ROOT_DIR);
-          CreateClassKind classKind = file.getUserData(SERVICE_CLASS_KIND);
+          PsiDirectory rootDir = psiFile.getUserData(SERVICE_ROOT_DIR);
+          CreateClassKind classKind = psiFile.getUserData(SERVICE_CLASS_KIND);
           if (rootDir != null && classKind != null) {
-            WriteAction.run(() -> createClassInRoot(myInterfaceName, classKind, rootDir, file, null));
+            WriteAction.run(() -> createClassInRoot(myInterfaceName, classKind, rootDir, psiFile, null));
           }
           return;
         }
@@ -106,7 +113,7 @@ public class CreateServiceInterfaceOrClassFix extends CreateServiceClassFixBase 
           PsiDirectory rootDir = dialog.getRootDir();
           if (rootDir != null) {
             CreateClassKind classKind = dialog.getClassKind();
-            PsiClass psiClass = WriteAction.compute(() -> createClassInRoot(myInterfaceName, classKind, rootDir, file, null));
+            PsiClass psiClass = WriteAction.compute(() -> createClassInRoot(myInterfaceName, classKind, rootDir, psiFile, null));
             positionCursor(psiClass);
           }
         }
@@ -114,9 +121,13 @@ public class CreateServiceInterfaceOrClassFix extends CreateServiceClassFixBase 
     }
   }
 
-  @NotNull
-  private static Map<Module, PsiDirectory[]> getModuleRootDirs(@NotNull PsiPackage psiPackage) {
-    ProjectFileIndex index = ProjectFileIndex.SERVICE.getInstance(psiPackage.getProject());
+  @Override
+  public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile psiFile) {
+    return new IntentionPreviewInfo.CustomDiff(JavaFileType.INSTANCE, "", "public interface " + myInterfaceName + " {}");
+  }
+
+  private static @NotNull Map<Module, PsiDirectory[]> getModuleRootDirs(@NotNull PsiPackage psiPackage) {
+    ProjectFileIndex index = ProjectFileIndex.getInstance(psiPackage.getProject());
     return StreamEx.of(psiPackage.getDirectories())
       .map(PsiDirectory::getVirtualFile)
       .map(index::getSourceRootForFile)
@@ -153,7 +164,8 @@ public class CreateServiceInterfaceOrClassFix extends CreateServiceClassFixBase 
       myModuleCombo.setModel(new DefaultComboBoxModel<>(modules));
       updateRootDirsCombo(psiRootDirs);
 
-      myKindCombo.addItem(StringUtil.capitalize(CreateClassKind.CLASS.getDescription()), PlatformIcons.CLASS_ICON, CreateClassKind.CLASS.name());
+      myKindCombo.addItem(StringUtil.capitalize(CreateClassKind.CLASS.getDescription()),
+                          IconManager.getInstance().getPlatformIcon(com.intellij.ui.PlatformIcons.Class), CreateClassKind.CLASS.name());
       myKindCombo.addItem(StringUtil.capitalize(CreateClassKind.INTERFACE.getDescription()), PlatformIcons.INTERFACE_ICON, CreateClassKind.INTERFACE.name());
       myKindCombo.addItem(StringUtil.capitalize(CreateClassKind.ANNOTATION.getDescription()), PlatformIcons.ANNOTATION_TYPE_ICON, CreateClassKind.ANNOTATION.name());
 
@@ -176,9 +188,8 @@ public class CreateServiceInterfaceOrClassFix extends CreateServiceClassFixBase 
       return null;
     }
 
-    @Nullable
     @Override
-    protected JComponent createNorthPanel() {
+    protected @Nullable JComponent createNorthPanel() {
       JTextField nameTextField = new JTextField(myInterfaceName);
       nameTextField.setEditable(false);
       PanelGridBuilder builder = UI.PanelFactory.grid();
@@ -193,8 +204,7 @@ public class CreateServiceInterfaceOrClassFix extends CreateServiceClassFixBase 
       return builder.createPanel();
     }
 
-    @Nullable
-    public PsiDirectory getRootDir() {
+    public @Nullable PsiDirectory getRootDir() {
       return (PsiDirectory)myRootDirCombo.getSelectedItem();
     }
 

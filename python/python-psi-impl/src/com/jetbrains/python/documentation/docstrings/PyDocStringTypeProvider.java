@@ -3,16 +3,35 @@ package com.jetbrains.python.documentation.docstrings;
 
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider;
-import com.jetbrains.python.psi.*;
-import com.jetbrains.python.psi.types.*;
+import com.jetbrains.python.psi.PyCallable;
+import com.jetbrains.python.psi.PyClass;
+import com.jetbrains.python.psi.PyDocStringOwner;
+import com.jetbrains.python.psi.PyFunction;
+import com.jetbrains.python.psi.PyNamedParameter;
+import com.jetbrains.python.psi.PyQualifiedNameOwner;
+import com.jetbrains.python.psi.PyUtil;
+import com.jetbrains.python.psi.StructuredDocString;
+import com.jetbrains.python.psi.types.PyCloningTypeVisitor;
+import com.jetbrains.python.psi.types.PyCollectionType;
+import com.jetbrains.python.psi.types.PyType;
+import com.jetbrains.python.psi.types.PyTypeChecker;
+import com.jetbrains.python.psi.types.PyTypeParser;
+import com.jetbrains.python.psi.types.PyTypeProviderBase;
+import com.jetbrains.python.psi.types.PyTypeUtil;
+import com.jetbrains.python.psi.types.PyTypeVarType;
+import com.jetbrains.python.psi.types.PyTypeVarTypeImpl;
+import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.Set;
 
 /**
  * @author Mikhail Golubev
  */
-public class PyDocStringTypeProvider extends PyTypeProviderBase {
+public final class PyDocStringTypeProvider extends PyTypeProviderBase {
   @Override
   public Ref<PyType> getParameterType(@NotNull PyNamedParameter param, @NotNull PyFunction func, @NotNull TypeEvalContext context) {
     StructuredDocString docString = func.getStructuredDocString();
@@ -41,16 +60,14 @@ public class PyDocStringTypeProvider extends PyTypeProviderBase {
     return null;
   }
 
-  @Nullable
   @Override
-  public Ref<PyType> getReturnType(@NotNull PyCallable callable, @NotNull TypeEvalContext context) {
+  public @Nullable Ref<PyType> getReturnType(@NotNull PyCallable callable, @NotNull TypeEvalContext context) {
     if (callable instanceof PyDocStringOwner) {
       final StructuredDocString docString = ((PyDocStringOwner)callable).getStructuredDocString();
       if (docString != null) {
         final String typeText = docString.getReturnType();
         if (StringUtil.isNotEmpty(typeText)) {
           final Ref<PyType> typeRef = parseType(callable, typeText, context);
-
           if (callable instanceof PyFunction) {
             return Ref.create(PyTypingTypeProvider.toAsyncIfNeeded((PyFunction)callable, typeRef.get()));
           }
@@ -62,11 +79,21 @@ public class PyDocStringTypeProvider extends PyTypeProviderBase {
     return null;
   }
 
-  @NotNull
-  private static Ref<PyType> parseType(@NotNull PyCallable callable, @NotNull String typeText, @NotNull TypeEvalContext context) {
+  private @NotNull Ref<PyType> parseType(@NotNull PyCallable callable, @NotNull String typeText, @NotNull TypeEvalContext context) {
     final PyType type = PyTypeParser.getTypeByName(callable, typeText, context);
     if (type != null) {
       type.assertValid("from docstring");
+    }
+    if (callable instanceof PyFunction pyFunction) {
+      return Ref.create(PyCloningTypeVisitor.clone(type, new PyCloningTypeVisitor(context) {
+        @Override
+        public PyType visitPyTypeVarType(@NotNull PyTypeVarType typeVarType) {
+          if (typeVarType instanceof PyTypeVarTypeImpl impl) {
+            return impl.withScopeOwner(findScopeOwner(typeVarType, pyFunction, context));
+          }
+          return typeVarType;
+        }
+      }));
     }
     return Ref.create(type);
   }
@@ -74,20 +101,34 @@ public class PyDocStringTypeProvider extends PyTypeProviderBase {
   /**
    * Unify generics in the constructor according to the legacy type hints syntax.
    */
-  @Nullable
   @Override
-  public PyType getGenericType(@NotNull PyClass cls, @NotNull TypeEvalContext context) {
-    final PyFunction init = cls.findInitOrNew(true, context);
+  public @Nullable PyType getGenericType(@NotNull PyClass cls, @NotNull TypeEvalContext context) {
+    PyFunction init = cls.findInitOrNew(true, context);
     if (init != null) {
-      final PyCallableType callableType = PyUtil.as(context.getType(init), PyCallableType.class);
-      if (callableType != null) {
-        final PyType returnType = PyUtil.as(callableType.getReturnType(context), PyCollectionType.class);
-        if (returnType != null) {
-          return returnType;
-        }
+      PyType returnType = Ref.deref(getReturnType(init, context));
+      if (returnType instanceof PyCollectionType) {
+        return returnType;
       }
     }
 
     return null;
+  }
+
+  private PyQualifiedNameOwner findScopeOwner(@NotNull PyTypeVarType typeVar,
+                                              @NotNull PyFunction function,
+                                              @NotNull TypeEvalContext context) {
+    PyClass pyClass = function.getContainingClass();
+    if (PyUtil.isInitOrNewMethod(function)) {
+      return pyClass;
+    }
+    else if (pyClass != null) {
+      PyType classGenericType = getGenericType(pyClass, context);
+      if (classGenericType != null) {
+        PyTypeChecker.Generics classTypeParameters = PyTypeChecker.collectGenerics(classGenericType, context);
+        Set<String> classTypeVarNames = ContainerUtil.map2Set(classTypeParameters.getTypeVars(), PyTypeVarType::getName);
+        return classTypeVarNames.contains(typeVar.getName()) ? pyClass : function;
+      }
+    }
+    return function;
   }
 }

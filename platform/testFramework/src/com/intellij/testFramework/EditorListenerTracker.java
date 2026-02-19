@@ -1,22 +1,33 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testFramework;
 
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.impl.event.EditorEventMulticasterImpl;
+import com.intellij.openapi.project.ProjectManager;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.encoding.EncodingManager;
 import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.impl.PsiDocumentManagerBase;
-import com.intellij.util.containers.hash.LinkedHashMap;
+import com.intellij.psi.impl.PsiDocumentManagerEx;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.TestOnly;
 import org.junit.Assert;
 
 import java.util.ArrayList;
 import java.util.EventListener;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 @TestOnly
 public final class EditorListenerTracker {
+  private static final Set<String> APP_LEVEL_LISTENERS = Set.of(
+    "com.intellij.copyright.CopyrightManagerDocumentListener$",
+    "com.intellij.model.BranchServiceImpl$",
+    "com.jetbrains.liveEdit.highlighting.ElementHighlighterCaretListener",
+    "com.intellij.grazie.ide.inspection.auto.ChangeTracker$"
+  );
+
   private final Map<Class<? extends EventListener>, List<? extends EventListener>> before;
 
   public EditorListenerTracker() {
@@ -39,15 +50,13 @@ public final class EditorListenerTracker {
         // listeners may hang on default project which comes and goes unpredictably, so just ignore them
         afterList.removeIf(listener -> {
           //noinspection CastConflictsWithInstanceof
-          if (listener instanceof PsiDocumentManager && ((PsiDocumentManagerBase)listener).isDefaultProject()) {
+          if (listener instanceof PsiDocumentManager && ((PsiDocumentManagerEx)listener).isDefaultProject()) {
             return true;
           }
 
           // app level listener
           String name = listener.getClass().getName();
-          return name.startsWith("com.intellij.copyright.CopyrightManagerDocumentListener$") ||
-                 name.startsWith("com.intellij.model.BranchServiceImpl$") ||
-                 name.startsWith("com.jetbrains.liveEdit.highlighting.ElementHighlighterCaretListener");
+          return ContainerUtil.exists(APP_LEVEL_LISTENERS, name::startsWith);
         });
         if (!afterList.isEmpty()) {
           leaked.put(aClass, afterList);
@@ -57,7 +66,9 @@ public final class EditorListenerTracker {
       for (Map.Entry<Class<? extends EventListener>, List<? extends EventListener>> entry : leaked.entrySet()) {
         Class<? extends EventListener> aClass = entry.getKey();
         List<? extends EventListener> list = entry.getValue();
-        Assert.fail("Listeners leaked for " + aClass+":\n"+list);
+        String projectNames =
+          StringUtil.join(ContainerUtil.map(ProjectManager.getInstance().getOpenProjects(), project -> project.getName()), ", ");
+        Assert.fail("Listeners leaked for " + aClass+":\n"+list + "\nOpened projects: " + projectNames);
       }
     }
     finally {

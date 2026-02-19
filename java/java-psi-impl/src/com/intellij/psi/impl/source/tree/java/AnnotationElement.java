@@ -25,9 +25,6 @@ import com.intellij.psi.tree.ChildRoleBase;
 import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author ven
- */
 public class AnnotationElement extends CompositeElement implements Constants {
   private static final Logger LOG = Logger.getInstance(AnnotationElement.class);
 
@@ -55,14 +52,14 @@ public class AnnotationElement extends CompositeElement implements Constants {
   public ASTNode findChildByRole(int role) {
     LOG.assertTrue(ChildRole.isUnique(role));
     switch (role) {
-      default:
-        return null;
-
       case ChildRole.PARAMETER_LIST:
         return findChildByType(ANNOTATION_PARAMETER_LIST);
 
       case ChildRole.CLASS_REFERENCE:
         return findChildByType(JAVA_CODE_REFERENCE);
+
+      default:
+        return null;
     }
   }
 }

@@ -1,20 +1,30 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.compiler;
 
-import com.intellij.ProjectTopics;
 import com.intellij.compiler.impl.CompileDriver;
 import com.intellij.compiler.impl.ExitStatus;
 import com.intellij.compiler.server.BuildManager;
 import com.intellij.ide.highlighter.ModuleFileType;
+import com.intellij.java.testFramework.backend.CompilerTestUtil;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.application.ex.PathManagerEx;
-import com.intellij.openapi.compiler.*;
+import com.intellij.openapi.compiler.CompilationStatusListener;
+import com.intellij.openapi.compiler.CompileContext;
+import com.intellij.openapi.compiler.CompileScope;
+import com.intellij.openapi.compiler.CompileStatusNotification;
+import com.intellij.openapi.compiler.CompilerManager;
+import com.intellij.openapi.compiler.CompilerMessage;
+import com.intellij.openapi.compiler.CompilerMessageCategory;
+import com.intellij.openapi.compiler.CompilerTopics;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.impl.JavaAwareProjectJdkTableImpl;
-import com.intellij.openapi.roots.*;
+import com.intellij.openapi.roots.CompilerModuleExtension;
+import com.intellij.openapi.roots.CompilerProjectExtension;
+import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -25,23 +35,34 @@ import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.packaging.artifacts.ArtifactManager;
 import com.intellij.packaging.impl.compiler.ArtifactCompileScope;
 import com.intellij.pom.java.LanguageLevel;
-import com.intellij.testFramework.*;
+import com.intellij.testFramework.CompilerTester;
+import com.intellij.testFramework.JavaModuleTestCase;
+import com.intellij.testFramework.OpenProjectTaskBuilder;
+import com.intellij.testFramework.PlatformTestUtil;
+import com.intellij.testFramework.PsiTestUtil;
+import com.intellij.testFramework.TestLoggerFactory;
+import com.intellij.testFramework.VfsTestUtil;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.io.DirectoryContentSpec;
 import com.intellij.util.io.DirectoryContentSpecKt;
 import com.intellij.util.io.TestFileSystemBuilder;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.EDT;
+import com.intellij.workspaceModel.ide.impl.WorkspaceModelCacheImpl;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.util.JpsPathUtil;
 import org.junit.Assert;
 
-import javax.swing.*;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
-import java.util.*;
+import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 import java.util.function.Consumer;
 
 public abstract class BaseCompilerTestCase extends JavaModuleTestCase {
@@ -58,14 +79,8 @@ public abstract class BaseCompilerTestCase extends JavaModuleTestCase {
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    myProject.getMessageBus().connect(getTestRootDisposable()).subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootListener() {
-      @Override
-      public void rootsChanged(@NotNull ModuleRootEvent event) {
-        //todo[nik] projectOpened isn't called in tests so we need to add this listener manually
-        forceFSRescan();
-      }
-    });
     CompilerTestUtil.enableExternalCompiler();
+    WorkspaceModelCacheImpl.forceEnableCaching(getTestRootDisposable());
   }
 
   protected void forceFSRescan() {
@@ -127,10 +142,10 @@ public abstract class BaseCompilerTestCase extends JavaModuleTestCase {
   }
 
   protected Module addModule(@NotNull String moduleName, @Nullable VirtualFile sourceRoot) {
-    return addModule(moduleName, sourceRoot, null);
+    return addModule(moduleName, sourceRoot, null, null);
   }
 
-  protected Module addModule(String moduleName, @Nullable VirtualFile sourceRoot, @Nullable VirtualFile testRoot) {
+  protected Module addModule(String moduleName, @Nullable VirtualFile sourceRoot, @Nullable VirtualFile testRoot, @Nullable VirtualFile resourceRoot) {
     return WriteAction.computeAndWait(() -> {
       Module module = createModule(moduleName);
       if (sourceRoot != null) {
@@ -138,6 +153,9 @@ public abstract class BaseCompilerTestCase extends JavaModuleTestCase {
       }
       if (testRoot != null) {
         PsiTestUtil.addSourceContentToRoots(module, testRoot, true);
+      }
+      if (resourceRoot != null) {
+        PsiTestUtil.addResourceContentToRoots(module, resourceRoot, false);
       }
       ModuleRootModificationUtil.setModuleSdk(module, getTestProjectJdk());
       return module;
@@ -238,9 +256,12 @@ public abstract class BaseCompilerTestCase extends JavaModuleTestCase {
         generatedFilePaths.add(relativePath);
       }
     });
+
+    PlatformTestUtil.saveProject(myProject);
+    CompilerTestUtil.saveApplicationSettings();
+    TestLoggerFactory.publishArtifactIfTestFails(Paths.get(PathManager.getOptionsPath()), "config-before-compilation");
+    CompilerTests.saveWorkspaceModelCaches(myProject);
     ApplicationManager.getApplication().invokeAndWait(() -> {
-      PlatformTestUtil.saveProject(myProject);
-      CompilerTestUtil.saveApplicationSettings();
       CompilerTester.enableDebugLogging();
       action.accept(new CompileStatusNotification() {
         @Override
@@ -268,12 +289,12 @@ public abstract class BaseCompilerTestCase extends JavaModuleTestCase {
         if (!BuildManager.getInstance().isBuildProcessDebuggingEnabled() && System.currentTimeMillis() - start > 5 * 60 * 1000) {
           throw new RuntimeException("timeout");
         }
-        if (SwingUtilities.isEventDispatchThread()) {
-          UIUtil.dispatchAllInvocationEvents();
+        if (EDT.isCurrentThreadEdt()) {
+          PlatformTestUtil.dispatchAllEventsInIdeEventQueue();
         }
       }
-      if (SwingUtilities.isEventDispatchThread()) {
-        UIUtil.dispatchAllInvocationEvents();
+      if (EDT.isCurrentThreadEdt()) {
+        PlatformTestUtil.dispatchAllEventsInIdeEventQueue();
       }
     }
     finally {
@@ -312,13 +333,16 @@ public abstract class BaseCompilerTestCase extends JavaModuleTestCase {
   protected void setUpProject() throws Exception {
     super.setUpProject();
 
-    CompilerProjectExtension.getInstance(myProject).setCompilerOutputUrl("file://" + myProject.getBasePath() + "/out");
+    var compilerProjectExtension = CompilerProjectExtension.getInstance(myProject);
+    ApplicationManager.getApplication().runWriteAction(() -> {
+      compilerProjectExtension.setCompilerOutputUrl("file://" + myProject.getBasePath() + "/out");
+    });
   }
 
   @NotNull
   @Override
   protected Module doCreateRealModule(@NotNull String moduleName) {
-    //todo[nik] reuse code from PlatformTestCase
+    //todo reuse code from PlatformTestCase
     VirtualFile baseDir = getOrCreateProjectBaseDir();
     Path moduleFile = baseDir.toNioPath().resolve(moduleName + ModuleFileType.DOT_DEFAULT_EXTENSION);
     return WriteAction.computeAndWait(() -> {

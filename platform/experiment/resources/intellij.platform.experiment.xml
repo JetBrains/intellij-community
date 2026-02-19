@@ -1,0 +1,14 @@
+<!-- todo: register this as a content module (IJPL-210868); currently it's included via 'xi:include' tag -->
+<idea-plugin>
+  <extensions defaultExtensionNs="com.intellij">
+    <statistics.counterUsagesCollector
+      implementationClass="com.intellij.platform.experiment.ab.impl.statistic.ABExperimentCountCollector"/>
+    <statistics.validation.customValidationRule
+      implementation="com.intellij.platform.experiment.ab.impl.statistic.ABExperimentOptionIdValidationRule"/>
+  </extensions>
+
+  <actions>
+    <action class="com.intellij.platform.experiment.ab.demo.ABExperimentDemoAction" internal="true"
+            text="AB Experiment Demo Action"/>
+  </actions>
+</idea-plugin>

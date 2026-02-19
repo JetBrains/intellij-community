@@ -1,0 +1,18 @@
+// "Replace 'runBlocking' with 'withContext'" "true"
+// WITH_COROUTINES
+
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.runBlocking
+
+suspend fun something() {
+    run<caret>Blocking(Dispatchers.Default) {
+        code()
+    }
+}
+
+suspend fun code() {
+    TODO()
+}
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.codeInsight.inspections.shared.coroutines.RunBlockingInSuspendFunctionInspection$createQuickFix$1
+// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.codeInsight.inspections.shared.coroutines.RunBlockingInSuspendFunctionInspection$createQuickFix$1

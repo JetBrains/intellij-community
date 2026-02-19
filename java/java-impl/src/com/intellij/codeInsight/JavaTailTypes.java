@@ -1,0 +1,185 @@
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.codeInsight;
+
+import com.intellij.codeInsight.completion.simple.BracesTailType;
+import com.intellij.codeInsight.completion.simple.ParenthesesTailType;
+import com.intellij.codeInsight.completion.simple.RParenthTailType;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.ModNavigator;
+import com.intellij.openapi.project.Project;
+import com.intellij.psi.JavaTokenType;
+import com.intellij.psi.PsiCaseLabelElementList;
+import com.intellij.psi.PsiCodeBlock;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiErrorElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiJavaToken;
+import com.intellij.psi.PsiSwitchBlock;
+import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
+import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.text.CharArrayUtil;
+import com.siyeh.ig.psiutils.SwitchUtils;
+import org.jetbrains.annotations.NotNull;
+
+import static com.intellij.psi.JavaTokenType.COLON;
+
+public final class JavaTailTypes {
+  public static final ModNavigatorTailType CALL_RPARENTH = new RParenthTailType(){
+    @Override
+    protected boolean isSpaceWithinParentheses(final CommonCodeStyleSettings styleSettings, final Document document, final int tailOffset) {
+      return styleSettings.SPACE_WITHIN_METHOD_CALL_PARENTHESES && document.getCharsSequence().charAt(tailOffset - 1) != '(';
+    }
+  };
+  public static final ModNavigatorTailType RPARENTH = new RParenthTailType(){
+    @Override
+    protected boolean isSpaceWithinParentheses(final CommonCodeStyleSettings styleSettings, final Document document, final int tailOffset) {
+      return styleSettings.SPACE_WITHIN_PARENTHESES;
+    }
+  };
+  public static final ModNavigatorTailType IF_RPARENTH = new RParenthTailType(){
+    @Override
+    protected boolean isSpaceWithinParentheses(final CommonCodeStyleSettings styleSettings, final Document document, final int tailOffset) {
+      return styleSettings.SPACE_WITHIN_IF_PARENTHESES;
+    }
+  };
+  public static final ModNavigatorTailType WHILE_RPARENTH = new RParenthTailType(){
+    @Override
+    protected boolean isSpaceWithinParentheses(final CommonCodeStyleSettings styleSettings, final Document document, final int tailOffset) {
+      return styleSettings.SPACE_WITHIN_WHILE_PARENTHESES;
+    }
+  };
+  public static final ModNavigatorTailType CALL_RPARENTH_SEMICOLON = new RParenthTailType(){
+    @Override
+    protected boolean isSpaceWithinParentheses(final CommonCodeStyleSettings styleSettings, final Document document, final int tailOffset) {
+      return styleSettings.SPACE_WITHIN_METHOD_CALL_PARENTHESES;
+    }
+
+    @Override
+    public int processTail(@NotNull ModNavigator navigator, int tailOffset) {
+      return insertChar(navigator, super.processTail(navigator, tailOffset), ';');
+    }
+  };
+
+  public static final ModNavigatorTailType SYNCHRONIZED_LPARENTH = new ParenthesesTailType() {
+    @Override
+    protected boolean isSpaceBeforeParentheses(final CommonCodeStyleSettings styleSettings, final int tailOffset) {
+      return styleSettings.SPACE_BEFORE_SYNCHRONIZED_PARENTHESES;
+    }
+
+    @Override
+    protected boolean isSpaceWithinParentheses(final CommonCodeStyleSettings styleSettings, final int tailOffset) {
+      return styleSettings.SPACE_WITHIN_SYNCHRONIZED_PARENTHESES;
+    }
+  };
+  public static final ModNavigatorTailType CATCH_LPARENTH = new ParenthesesTailType() {
+    @Override
+    protected boolean isSpaceBeforeParentheses(final CommonCodeStyleSettings styleSettings, final int tailOffset) {
+      return styleSettings.SPACE_BEFORE_CATCH_PARENTHESES;
+    }
+
+    @Override
+    protected boolean isSpaceWithinParentheses(final CommonCodeStyleSettings styleSettings, final int tailOffset) {
+      return styleSettings.SPACE_WITHIN_CATCH_PARENTHESES;
+    }
+  };
+  public static final ModNavigatorTailType SWITCH_LPARENTH = new ParenthesesTailType() {
+    @Override
+    protected boolean isSpaceBeforeParentheses(final CommonCodeStyleSettings styleSettings, final int tailOffset) {
+      return styleSettings.SPACE_BEFORE_SWITCH_PARENTHESES;
+    }
+
+    @Override
+    protected boolean isSpaceWithinParentheses(final CommonCodeStyleSettings styleSettings, final int tailOffset) {
+      return styleSettings.SPACE_WITHIN_SWITCH_PARENTHESES;
+    }
+  };
+  public static final ModNavigatorTailType WHILE_LPARENTH = new ParenthesesTailType() {
+    @Override
+    protected boolean isSpaceBeforeParentheses(final CommonCodeStyleSettings styleSettings, final int tailOffset) {
+      return styleSettings.SPACE_BEFORE_WHILE_PARENTHESES;
+    }
+
+    @Override
+    protected boolean isSpaceWithinParentheses(final CommonCodeStyleSettings styleSettings, final int tailOffset) {
+      return styleSettings.SPACE_WITHIN_WHILE_PARENTHESES;
+    }
+  };
+  public static final ModNavigatorTailType FOR_LPARENTH = new ParenthesesTailType() {
+    @Override
+    protected boolean isSpaceBeforeParentheses(final CommonCodeStyleSettings styleSettings, final int tailOffset) {
+      return styleSettings.SPACE_BEFORE_FOR_PARENTHESES;
+    }
+
+    @Override
+    protected boolean isSpaceWithinParentheses(final CommonCodeStyleSettings styleSettings, final int tailOffset) {
+      return styleSettings.SPACE_WITHIN_FOR_PARENTHESES;
+    }
+  };
+  public static final ModNavigatorTailType IF_LPARENTH = new ParenthesesTailType() {
+    @Override
+    protected boolean isSpaceBeforeParentheses(final CommonCodeStyleSettings styleSettings, final int tailOffset) {
+      return styleSettings.SPACE_BEFORE_IF_PARENTHESES;
+    }
+
+    @Override
+    protected boolean isSpaceWithinParentheses(final CommonCodeStyleSettings styleSettings, final int tailOffset) {
+      return styleSettings.SPACE_WITHIN_IF_PARENTHESES;
+    }
+  };
+  private static final String ARROW = " -> ";
+  public static final ModNavigatorTailType CASE_ARROW = new ModNavigatorTailType() {
+    @Override
+    public int processTail(@NotNull ModNavigator navigator, int tailOffset) {
+      Document document = navigator.getDocument();
+      if (!isApplicable(navigator.getProject(), document, tailOffset)) return tailOffset;
+      document.insertString(tailOffset, ARROW);
+      return moveCaret(navigator, tailOffset, ARROW.length());
+    }
+
+    public boolean isApplicable(@NotNull Project project, @NotNull Document document, int tailOffset) {
+      CharSequence chars = document.getCharsSequence();
+      int offset = CharArrayUtil.shiftForward(chars, tailOffset, " \n\t");
+      if (CharArrayUtil.regionMatches(chars, offset, "->")) {
+        return false;
+      }
+      PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(document);
+      if (file == null) return false;
+      PsiElement element = file.findElementAt(tailOffset - 1);
+      return PsiUtil.isJavaToken(element, JavaTokenType.DEFAULT_KEYWORD) ||
+             PsiUtil.isJavaToken(element, JavaTokenType.CASE_KEYWORD) ||
+             PsiTreeUtil.getParentOfType(element, PsiCaseLabelElementList.class) != null;
+    }
+
+    @Override
+    public String toString() {
+      return "CASE_ARROW";
+    }
+  };
+  private static final ModNavigatorTailType BRACES = new BracesTailType();
+  public static final ModNavigatorTailType FINALLY_LBRACE = BRACES;
+  public static final ModNavigatorTailType TRY_LBRACE = BRACES;
+  public static final ModNavigatorTailType DO_LBRACE = BRACES;
+
+  public static ModNavigatorTailType forSwitchLabel(@NotNull PsiSwitchBlock block) {
+    boolean ruleFormatSwitch = SwitchUtils.isRuleFormatSwitch(block);
+    if (ruleFormatSwitch) {
+      //for not completed code with `:`
+      final PsiCodeBlock switchBody = block.getBody();
+      if (switchBody != null) {
+        for (var child = switchBody.getFirstChild(); child != null; child = child.getNextSibling()) {
+          if (child instanceof PsiErrorElement &&
+              ContainerUtil.exists(child.getChildren(), t -> t instanceof PsiJavaToken && ((PsiJavaToken)t).getTokenType() == COLON)) {
+            return (ModNavigatorTailType)TailTypes.caseColonType();
+          }
+        }
+      }
+    }
+    return ruleFormatSwitch ? CASE_ARROW : (ModNavigatorTailType)TailTypes.caseColonType();
+  }
+
+
+  private JavaTailTypes() { }
+}

@@ -25,15 +25,15 @@ class SafeVarargsTests {
 
     //incorrect types
     @SafeVarargs
-    public final void testString(<warning descr="@SafeVarargs is not applicable for reifiable types">String...</warning> <warning descr="Parameter 'str' is never used">str</warning>){
+    public final void testString(<warning descr="@SafeVarargs is not applicable to reifiable types">String...</warning> <warning descr="Parameter 'str' is never used">str</warning>){
     }
 
     @SafeVarargs
-    public final void testStringArray(<warning descr="@SafeVarargs is not applicable for reifiable types">String[]...</warning> <warning descr="Parameter 'str' is never used">str</warning>){
+    public final void testStringArray(<warning descr="@SafeVarargs is not applicable to reifiable types">String[]...</warning> <warning descr="Parameter 'str' is never used">str</warning>){
     }
 
     @SafeVarargs
-    public static void testUnbound(<warning descr="@SafeVarargs is not applicable for reifiable types">List<?>...</warning> <warning descr="Parameter 't' is never used">t</warning>){}
+    public static void testUnbound(<warning descr="@SafeVarargs is not applicable to reifiable types">List<?>...</warning> <warning descr="Parameter 't' is never used">t</warning>){}
 
 
     //correct usages

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.template.postfix.templates.editable;
 
 import com.intellij.codeInsight.template.impl.TemplateImpl;
@@ -8,30 +8,38 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Conditions;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.pom.java.LanguageLevel;
+import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiExpressionStatement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.refactoring.introduceVariable.IntroduceVariableBase;
+import com.intellij.util.CommonJavaRefactoringUtil;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Objects;
+import java.util.Set;
 
+@SuppressWarnings("PostfixTemplateDescriptionNotFound")
 public class JavaEditablePostfixTemplate
   extends EditablePostfixTemplateWithMultipleExpressions<JavaPostfixTemplateExpressionCondition> {
   private static final Condition<PsiElement> PSI_ERROR_FILTER = element -> !PsiTreeUtil.hasErrorElements(element);
 
-  @NotNull private final LanguageLevel myMinimumLanguageLevel;
+  private final @NotNull LanguageLevel myMinimumLanguageLevel;
 
   public JavaEditablePostfixTemplate(@NotNull String templateName,
                                      @NotNull String templateText,
                                      @NotNull String example,
-                                     @NotNull Set<JavaPostfixTemplateExpressionCondition> expressionConditions,
+                                     @NotNull Set<? extends JavaPostfixTemplateExpressionCondition> expressionConditions,
                                      @NotNull LanguageLevel minimumLanguageLevel,
                                      boolean useTopmostExpression,
                                      @NotNull PostfixTemplateProvider provider) {
@@ -43,7 +51,7 @@ public class JavaEditablePostfixTemplate
                                      @NotNull String templateName,
                                      @NotNull String templateText,
                                      @NotNull String example,
-                                     @NotNull Set<JavaPostfixTemplateExpressionCondition> expressionConditions,
+                                     @NotNull Set<? extends JavaPostfixTemplateExpressionCondition> expressionConditions,
                                      @NotNull LanguageLevel minimumLanguageLevel,
                                      boolean useTopmostExpression,
                                      @NotNull PostfixTemplateProvider provider) {
@@ -55,7 +63,7 @@ public class JavaEditablePostfixTemplate
                                      @NotNull String templateName,
                                      @NotNull TemplateImpl liveTemplate,
                                      @NotNull String example,
-                                     @NotNull Set<JavaPostfixTemplateExpressionCondition> expressionConditions,
+                                     @NotNull Set<? extends JavaPostfixTemplateExpressionCondition> expressionConditions,
                                      @NotNull LanguageLevel minimumLanguageLevel,
                                      boolean useTopmostExpression,
                                      @NotNull PostfixTemplateProvider provider) {
@@ -64,14 +72,14 @@ public class JavaEditablePostfixTemplate
   }
 
 
-  @NotNull
-  public LanguageLevel getMinimumLanguageLevel() {
+  public @NotNull LanguageLevel getMinimumLanguageLevel() {
     return myMinimumLanguageLevel;
   }
 
   @Override
   protected List<PsiElement> getExpressions(@NotNull PsiElement context, @NotNull Document document, int offset) {
-    if (DumbService.getInstance(context.getProject()).isDumb()) return Collections.emptyList();
+    DumbService dumbService = DumbService.getInstance(context.getProject());
+    if (!dumbService.isUsableInCurrentContext(this)) return Collections.emptyList();
     if (!PsiUtil.getLanguageLevel(context).isAtLeast(myMinimumLanguageLevel)) {
       return Collections.emptyList();
     }
@@ -81,21 +89,17 @@ public class JavaEditablePostfixTemplate
     }
     else {
       PsiFile file = context.getContainingFile();
-      expressions = new ArrayList<>(IntroduceVariableBase.collectExpressions(file, document, Math.max(offset - 1, 0), false));
+      expressions = new ArrayList<>(CommonJavaRefactoringUtil.collectExpressions(file, document, Math.max(offset - 1, 0), false));
     }
 
 
-    return ContainerUtil.filter(expressions, Conditions.and(e -> {
-      if (!PSI_ERROR_FILTER.value(e) || !(e instanceof PsiExpression) || e.getTextRange().getEndOffset() != offset) {
-        return false;
-      }
-      return true;
-    }, getExpressionCompositeCondition()));
+    return dumbService.computeWithAlternativeResolveEnabled(() -> ContainerUtil.filter(expressions, Conditions.and(
+      e -> PSI_ERROR_FILTER.value(e) && e instanceof PsiExpression && e.getTextRange().getEndOffset() == offset,
+      getExpressionCompositeCondition())));
   }
 
-  @NotNull
   @Override
-  protected PsiElement getTopmostExpression(@NotNull PsiElement element) {
+  protected @NotNull PsiElement getTopmostExpression(@NotNull PsiElement element) {
     PsiElement parent = element.getParent();
     if (parent instanceof PsiExpressionStatement) {
       return parent;
@@ -104,9 +108,23 @@ public class JavaEditablePostfixTemplate
     return element;
   }
 
-  @NotNull
   @Override
-  protected Function<PsiElement, String> getElementRenderer() {
+  protected @NotNull TextRange getRangeToRemove(@NotNull PsiElement element) {
+    PsiElement toRemove = getElementToRemove(element);
+    if (toRemove instanceof PsiExpressionStatement) {
+      PsiElement lastChild = toRemove.getLastChild();
+      while (lastChild instanceof PsiComment || lastChild instanceof PsiWhiteSpace) {
+        lastChild = lastChild.getPrevSibling();
+      }
+      if (lastChild != null) {
+        return TextRange.create(toRemove.getTextRange().getStartOffset(), lastChild.getTextRange().getEndOffset());
+      }
+    }
+    return toRemove.getTextRange();
+  }
+
+  @Override
+  protected @NotNull Function<PsiElement, String> getElementRenderer() {
     return JavaPostfixTemplatesUtils.getRenderer();
   }
 

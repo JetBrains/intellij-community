@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.service.settings;
 
 import com.intellij.openapi.externalSystem.service.settings.AbstractImportFromExternalSystemControl;
@@ -14,9 +14,8 @@ import org.jetbrains.plugins.gradle.settings.GradleSettingsListener;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
 import org.jetbrains.plugins.gradle.util.GradleUtil;
 
-/**
- * @author Denis Zhdanov
- */
+import java.nio.file.Path;
+
 public class ImportFromGradleControl
   extends AbstractImportFromExternalSystemControl<GradleProjectSettings, GradleSettingsListener, GradleSettings>
 {
@@ -24,25 +23,22 @@ public class ImportFromGradleControl
     super(GradleConstants.SYSTEM_ID, new GradleSettings(ProjectManager.getInstance().getDefaultProject()), getInitialProjectSettings(), true);
   }
 
-  @NotNull
-  private static GradleProjectSettings getInitialProjectSettings() {
+  private static @NotNull GradleProjectSettings getInitialProjectSettings() {
     GradleProjectSettings result = new GradleProjectSettings();
     String gradleHome = GradleUtil.getLastUsedGradleHome();
     if (!StringUtil.isEmpty(gradleHome)) {
-      result.setGradleHome(gradleHome);
+      result.setGradleHomePath(Path.of(gradleHome));
     }
     return result;
   }
   
-  @NotNull
   @Override
-  protected ExternalSystemSettingsControl<GradleProjectSettings> createProjectSettingsControl(@NotNull GradleProjectSettings settings) {
+  protected @NotNull ExternalSystemSettingsControl<GradleProjectSettings> createProjectSettingsControl(@NotNull GradleProjectSettings settings) {
     return new GradleProjectSettingsControl(settings);
   }
 
-  @Nullable
   @Override
-  protected ExternalSystemSettingsControl<GradleSettings> createSystemSettingsControl(@NotNull GradleSettings settings) {
+  protected @Nullable ExternalSystemSettingsControl<GradleSettings> createSystemSettingsControl(@NotNull GradleSettings settings) {
     return new GradleSystemSettingsControl(settings);
   }
 

@@ -36,10 +36,11 @@ class MavenConfigurationProducer : LazyRunConfigurationProducer<MavenRunConfigur
     val file = location.virtualFile ?: return false
     if (!MavenUtil.isPomFile(location.project, file)) return false
     if (location !is MavenGoalLocation) return false
-    if (context.module == null) return false
+    val module = context.module
+    if (module == null) return false
     val goals = location.goals
     val profiles = MavenProjectsManager.getInstance(location.getProject()).explicitProfiles
-    configuration.name = context.module.name + " " + goals.joinToString(separator = ",", prefix = "[", postfix = "]")
+    configuration.name = module.name + " " + goals.joinToString(separator = ",", prefix = "[", postfix = "]")
 
     configuration.runnerParameters = MavenRunnerParameters(true, file.parent.path, file.name, goals, profiles.enabledProfiles,
                                                            profiles.disabledProfiles)
@@ -56,12 +57,12 @@ class MavenConfigurationProducer : LazyRunConfigurationProducer<MavenRunConfigur
 
     if(configuration.runnerParameters?.workingDirPath != file.parent.path ) return false
     if(configuration.runnerParameters?.pomFileName != file.name ) return false
-    val tasks: List<String> = location.goals
-    val taskNames: List<String> = configuration.runnerParameters.goals
-    if (tasks.isEmpty() && taskNames.isEmpty()) {
+    val newTaskNames: List<String> = location.goals
+    val existingTaskNames: List<String> = configuration.runnerParameters.goals
+    if (newTaskNames.isEmpty() && existingTaskNames.isEmpty()) {
       return true
     }
 
-    return tasks.containsAll(taskNames) && !taskNames.isEmpty()
+    return HashSet(newTaskNames) == HashSet(existingTaskNames)
   }
 }

@@ -1,13 +1,21 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
-/*
- * @author max
- */
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.impl;
 
-import com.intellij.openapi.vfs.*;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileCopyEvent;
+import com.intellij.openapi.vfs.VirtualFileEvent;
+import com.intellij.openapi.vfs.VirtualFileListener;
+import com.intellij.openapi.vfs.VirtualFileMoveEvent;
+import com.intellij.openapi.vfs.VirtualFilePropertyEvent;
+import com.intellij.openapi.vfs.VirtualFileSystem;
 import com.intellij.openapi.vfs.newvfs.BulkFileListener;
-import com.intellij.openapi.vfs.newvfs.events.*;
+import com.intellij.openapi.vfs.newvfs.events.VFileContentChangeEvent;
+import com.intellij.openapi.vfs.newvfs.events.VFileCopyEvent;
+import com.intellij.openapi.vfs.newvfs.events.VFileCreateEvent;
+import com.intellij.openapi.vfs.newvfs.events.VFileDeleteEvent;
+import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
+import com.intellij.openapi.vfs.newvfs.events.VFileMoveEvent;
+import com.intellij.openapi.vfs.newvfs.events.VFilePropertyChangeEvent;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -27,7 +35,7 @@ public class BulkVirtualFileListenerAdapter implements BulkFileListener {
   }
 
   @Override
-  public void before(@NotNull final List<? extends VFileEvent> events) {
+  public void before(final @NotNull List<? extends @NotNull VFileEvent> events) {
     for (VFileEvent event : events) {
       if (myFileSystem == null || myFileSystem == event.getFileSystem()) {
         fireBefore(myAdapted, event);
@@ -36,7 +44,7 @@ public class BulkVirtualFileListenerAdapter implements BulkFileListener {
   }
 
   @Override
-  public void after(@NotNull final List<? extends VFileEvent> events) {
+  public void after(final @NotNull List<? extends @NotNull VFileEvent> events) {
     for (VFileEvent event : events) {
       if (myFileSystem == null || myFileSystem == event.getFileSystem()) {
         fireAfter(myAdapted, event);
@@ -49,7 +57,7 @@ public class BulkVirtualFileListenerAdapter implements BulkFileListener {
       final VFileContentChangeEvent ce = (VFileContentChangeEvent)event;
       final VirtualFile file = ce.getFile();
       adapted.contentsChanged(
-        new VirtualFileEvent(event.getRequestor(), file, file.getParent(), ce.getOldModificationStamp(), ce.getModificationStamp()));
+        new VirtualFileEvent(event.getRequestor(), file, event.getPath(), file.getParent(), ce.getOldModificationStamp(), ce.getModificationStamp()));
     }
     else if (event instanceof VFileCopyEvent) {
       final VFileCopyEvent ce = (VFileCopyEvent)event;
@@ -63,12 +71,12 @@ public class BulkVirtualFileListenerAdapter implements BulkFileListener {
       final VFileCreateEvent ce = (VFileCreateEvent)event;
       final VirtualFile newChild = ce.getFile();
       if (newChild != null) {
-        adapted.fileCreated(new VirtualFileEvent(event.getRequestor(), newChild, ce.getParent(), 0, 0));
+        adapted.fileCreated(new VirtualFileEvent(event.getRequestor(), newChild, event.getPath(), ce.getParent(), 0, 0));
       }
     }
     else if (event instanceof VFileDeleteEvent) {
       final VFileDeleteEvent de = (VFileDeleteEvent)event;
-      adapted.fileDeleted(new VirtualFileEvent(event.getRequestor(), de.getFile(), de.getFile().getParent(), 0, 0));
+      adapted.fileDeleted(new VirtualFileEvent(event.getRequestor(), de.getFile(),  de.getPath(), de.getFile().getParent(), 0, 0));
     }
     else if (event instanceof VFileMoveEvent) {
       final VFileMoveEvent me = (VFileMoveEvent)event;
@@ -86,11 +94,11 @@ public class BulkVirtualFileListenerAdapter implements BulkFileListener {
       final VFileContentChangeEvent ce = (VFileContentChangeEvent)event;
       final VirtualFile file = ce.getFile();
       adapted.beforeContentsChange(
-        new VirtualFileEvent(event.getRequestor(), file, file.getParent(), ce.getOldModificationStamp(), ce.getModificationStamp()));
+        new VirtualFileEvent(event.getRequestor(), file, event.getPath(), file.getParent(), ce.getOldModificationStamp(), ce.getModificationStamp()));
     }
     else if (event instanceof VFileDeleteEvent) {
       final VFileDeleteEvent de = (VFileDeleteEvent)event;
-      adapted.beforeFileDeletion(new VirtualFileEvent(event.getRequestor(), de.getFile(), de.getFile().getParent(), 0, 0));
+      adapted.beforeFileDeletion(new VirtualFileEvent(event.getRequestor(), de.getFile(), de.getPath(), de.getFile().getParent(), 0, 0));
     }
     else if (event instanceof VFileMoveEvent) {
       final VFileMoveEvent me = (VFileMoveEvent)event;

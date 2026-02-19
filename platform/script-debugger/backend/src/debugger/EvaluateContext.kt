@@ -16,6 +16,7 @@
 package org.jetbrains.debugger
 
 import com.intellij.openapi.project.Project
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.concurrency.Promise
 import org.jetbrains.debugger.values.Value
 
@@ -25,6 +26,7 @@ data class EvaluateResult(val value: Value, val wasThrown: Boolean = false)
  * A context in which watch expressions may be evaluated. Typically corresponds to stack frame
  * of suspended process, but may also be detached from any stack frame
  */
+@ApiStatus.Internal
 interface EvaluateContext {
   /**
    * Evaluates an arbitrary `expression` in the particular context.

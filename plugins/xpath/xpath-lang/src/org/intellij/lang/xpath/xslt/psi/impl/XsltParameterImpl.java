@@ -19,8 +19,8 @@ import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
+import com.intellij.ui.IconManager;
 import com.intellij.util.CommonProcessors;
-import com.intellij.util.PlatformIcons;
 import org.intellij.lang.xpath.xslt.XsltSupport;
 import org.intellij.lang.xpath.xslt.impl.XsltIncludeIndex;
 import org.intellij.lang.xpath.xslt.psi.XsltElementFactory;
@@ -30,67 +30,65 @@ import org.intellij.lang.xpath.xslt.util.XsltCodeInsightUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.Icon;
 
-public class XsltParameterImpl extends XsltVariableImpl implements XsltParameter {
-    XsltParameterImpl(XmlTag attribute) {
-        super(attribute);
-    }
+final class XsltParameterImpl extends XsltVariableImpl implements XsltParameter {
+  XsltParameterImpl(XmlTag attribute) {
+    super(attribute);
+  }
 
-    @Override
-    public Icon getIcon(int i) {
-        return PlatformIcons.PARAMETER_ICON;
-    }
+  @Override
+  public Icon getIcon(int i) {
+    return IconManager.getInstance().getPlatformIcon(com.intellij.ui.PlatformIcons.Parameter);
+  }
 
-    @Override
-    public boolean hasDefault() {
-        return getValue() != null || !getTag().isEmpty();
-    }
+  @Override
+  public boolean hasDefault() {
+    return getValue() != null || !getTag().isEmpty();
+  }
 
-    @Override
-    public boolean isAbstract() {
-        final boolean b = "true".equals(getTag().getAttributeValue("abstract", XsltSupport.PLUGIN_EXTENSIONS_NS));
-        if (!b) {
-            final XsltTemplate template = getTemplate();
-            return template != null && template.isAbstract();
-        }
-        return b;
+  @Override
+  public boolean isAbstract() {
+    final boolean b = "true".equals(getTag().getAttributeValue("abstract", XsltSupport.PLUGIN_EXTENSIONS_NS));
+    if (!b) {
+      final XsltTemplate template = getTemplate();
+      return template != null && template.isAbstract();
     }
+    return b;
+  }
 
-    @Override
-    @Nullable
-    public XsltTemplate getTemplate() {
-        return XsltCodeInsightUtil.getTemplate(getTag(), false);
-    }
+  @Override
+  public @Nullable XsltTemplate getTemplate() {
+    return XsltCodeInsightUtil.getTemplate(getTag(), false);
+  }
 
-    @Override
-    public String toString() {
-        return "XsltParam: " + getName();
-    }
+  @Override
+  public String toString() {
+    return "XsltParam: " + getName();
+  }
 
-    @NotNull
-    @Override
-    public SearchScope getLocalUseScope() {
-        final XmlTag tag = getTag();
-        if (!tag.isValid()) {
-            return getDefaultUseScope();
-        }
-        final XsltTemplate template = getTemplate();
-        if (template == null) {
-            return getDefaultUseScope();
-        }
-        if (template.getName() == null) {
-            return getDefaultUseScope();
-        }
-        final XmlFile file = (XmlFile)tag.getContainingFile();
-        if (!XsltIncludeIndex.processBackwardDependencies(file, new CommonProcessors.FindFirstProcessor<>())) {
-            // processor found something
-            return getDefaultUseScope();
-        }
-        return new LocalSearchScope(file);
+  @Override
+  public @NotNull SearchScope getLocalUseScope() {
+    final XmlTag tag = getTag();
+    if (!tag.isValid()) {
+      return getDefaultUseScope();
     }
+    final XsltTemplate template = getTemplate();
+    if (template == null) {
+      return getDefaultUseScope();
+    }
+    if (template.getName() == null) {
+      return getDefaultUseScope();
+    }
+    final XmlFile file = (XmlFile)tag.getContainingFile();
+    if (!XsltIncludeIndex.processBackwardDependencies(file, new CommonProcessors.FindFirstProcessor<>())) {
+      // processor found something
+      return getDefaultUseScope();
+    }
+    return new LocalSearchScope(file);
+  }
 
-    public static XsltParameter getInstance(@NotNull XmlTag target) {
-        return XsltElementFactory.getInstance().wrapElement(target, XsltParameter.class);
-    }
+  public static XsltParameter getInstance(@NotNull XmlTag target) {
+    return XsltElementFactory.getInstance().wrapElement(target, XsltParameter.class);
+  }
 }

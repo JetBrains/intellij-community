@@ -27,11 +27,11 @@ public interface Refreshable {
   DataKey<Refreshable> PANEL_KEY = DataKey.create("Panel");
 
   /**
-   * @deprecated use {@link #PANEL_KEY}
+   * @deprecated unused
    */
-  @Deprecated String PANEL = PANEL_KEY.getName();
-
-  void refresh();
+  @Deprecated
+  default void refresh() {
+  }
 
   void saveState();
 

@@ -15,7 +15,6 @@
  */
 package com.jetbrains.python.inspections;
 
-import com.google.common.collect.Lists;
 import com.intellij.codeInspection.LocalInspectionToolSession;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemHighlightType;
@@ -27,54 +26,63 @@ import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.inspections.quickfix.PyChangeBaseClassQuickFix;
 import com.jetbrains.python.inspections.quickfix.PyConvertToNewStyleQuickFix;
-import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.PyCallExpression;
+import com.jetbrains.python.psi.PyClass;
+import com.jetbrains.python.psi.PyExpression;
+import com.jetbrains.python.psi.PyFunction;
+import com.jetbrains.python.psi.PyTargetExpression;
+import com.jetbrains.python.psi.PyUtil;
 import com.jetbrains.python.psi.types.PyClassLikeType;
 import com.jetbrains.python.psi.types.PyClassType;
+import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
  * User: catherine
- *
+ * <p>
  * Inspection to detect occurrences of new-style class features in old-style classes
  */
-public class PyOldStyleClassesInspection extends PyInspection {
+public final class PyOldStyleClassesInspection extends PyInspection {
 
-  @NotNull
   @Override
-  public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder,
-                                        boolean isOnTheFly,
-                                        @NotNull LocalInspectionToolSession session) {
-    return new Visitor(holder, session);
+  public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder,
+                                                 boolean isOnTheFly,
+                                                 @NotNull LocalInspectionToolSession session) {
+    return new Visitor(holder, PyInspectionVisitor.getContext(session));
   }
 
   private static class Visitor extends PyInspectionVisitor {
-    Visitor(@Nullable ProblemsHolder holder, @NotNull LocalInspectionToolSession session) {
-      super(holder, session);
+    Visitor(@Nullable ProblemsHolder holder, @NotNull TypeEvalContext context) {
+      super(holder, context);
     }
 
     @Override
     public void visitPyClass(final @NotNull PyClass node) {
       final List<PyClassLikeType> expressions = node.getSuperClassTypes(myTypeEvalContext);
-      List<LocalQuickFix> quickFixes = Lists.newArrayList(new PyConvertToNewStyleQuickFix());
+      List<LocalQuickFix> quickFixes = new ArrayList<>();
+      quickFixes.add(new PyConvertToNewStyleQuickFix());
       if (!expressions.isEmpty()) {
         quickFixes.add(new PyChangeBaseClassQuickFix());
       }
       if (!node.isNewStyleClass(myTypeEvalContext)) {
         for (PyTargetExpression attr : node.getClassAttributes()) {
           if (PyNames.SLOTS.equals(attr.getName())) {
-            registerProblem(attr, PyPsiBundle.message("INSP.oldstyle.class.slots"), ProblemHighlightType.GENERIC_ERROR_OR_WARNING, null, quickFixes.toArray(
-              LocalQuickFix.EMPTY_ARRAY));
+            registerProblem(attr, PyPsiBundle.message("INSP.oldstyle.class.slots"), ProblemHighlightType.GENERIC_ERROR_OR_WARNING, null,
+                            quickFixes.toArray(
+                              LocalQuickFix.EMPTY_ARRAY));
           }
         }
         for (PyFunction attr : node.getMethods()) {
           if (PyNames.GETATTRIBUTE.equals(attr.getName())) {
             final ASTNode nameNode = attr.getNameNode();
             assert nameNode != null;
-            registerProblem(nameNode.getPsi(), PyPsiBundle.message("INSP.oldstyle.class.getattribute"), ProblemHighlightType.GENERIC_ERROR_OR_WARNING, null, quickFixes.toArray(
-              LocalQuickFix.EMPTY_ARRAY));
+            registerProblem(nameNode.getPsi(), PyPsiBundle.message("INSP.oldstyle.class.getattribute"),
+                            ProblemHighlightType.GENERIC_ERROR_OR_WARNING, null, quickFixes.toArray(
+                LocalQuickFix.EMPTY_ARRAY));
           }
         }
       }
@@ -91,7 +99,8 @@ public class PyOldStyleClassesInspection extends PyInspection {
           if (qName != null && qName.contains("PyQt")) return;
           if (!(type instanceof PyClassType)) return;
         }
-        List<LocalQuickFix> quickFixes = Lists.newArrayList(new PyConvertToNewStyleQuickFix());
+        List<LocalQuickFix> quickFixes = new ArrayList<>();
+        quickFixes.add(new PyConvertToNewStyleQuickFix());
         if (!types.isEmpty()) {
           quickFixes.add(new PyChangeBaseClassQuickFix());
         }

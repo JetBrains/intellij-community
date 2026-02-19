@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl.view;
 
 import com.intellij.openapi.editor.colors.EditorFontType;
@@ -10,11 +10,13 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.*;
+import java.awt.Font;
+import java.awt.FontMetrics;
+import java.awt.Graphics2D;
 import java.util.function.Consumer;
 
-class SpecialCharacterFragment implements LineFragment {
-  @NonNls private static final Int2ObjectMap<String> SPECIAL_CHAR_CODES = new Int2ObjectOpenHashMap<>(
+final class SpecialCharacterFragment implements LineFragment {
+  private static final @NonNls Int2ObjectMap<String> SPECIAL_CHAR_CODES = new Int2ObjectOpenHashMap<>(
   // @formatter:off
     new int[] {
         0x00,   0x01,   0x02,   0x03,   0x04,   0x05,   0x06,   0x07,   0x08,                   0x0B,   0x0C,           0x0E,   0x0F,
@@ -62,15 +64,19 @@ class SpecialCharacterFragment implements LineFragment {
       }
       else if (c == 0x200C /*ZWNJ*/ || c == 0x200D /*ZWJ*/) {
         // we don't display ZWNJ/ZWJ surrounded by non-ASCII characters, to avoid breaking complex scripts and emoji display
-        if (pos > 0 && text[pos - 1] >= 128) {
+        if (pos > 0 && hideJoiningCharactersAround(text[pos - 1])) {
           return null;
         }
-        if (pos < text.length - 1 && text[pos + 1] >= 128) {
+        if (pos < text.length - 1 && hideJoiningCharactersAround(text[pos + 1])) {
           return null;
         }
       }
     }
     return new SpecialCharacterFragment(view, code);
+  }
+
+  private static boolean hideJoiningCharactersAround(char c) {
+    return c >= 128 && Character.getType(c) != Character.FORMAT;
   }
 
   private final EditorView myView;
@@ -120,7 +126,7 @@ class SpecialCharacterFragment implements LineFragment {
   }
 
   @Override
-  public int[] xToVisualColumn(float startX, float x) {
+  public int @NotNull [] xToVisualColumn(float startX, float x) {
     if (x <= startX) return new int[] {0, 0};
     if (x > startX + myWidth) return new int[] {1, 1};
     int column = (x <= startX + myWidth / 2) ? 0 : 1;
@@ -133,7 +139,7 @@ class SpecialCharacterFragment implements LineFragment {
   }
 
   @Override
-  public Consumer<Graphics2D> draw(float x, float y, int startOffset, int endOffset) {
+  public @NotNull Consumer<Graphics2D> draw(float x, float y, int startOffset, int endOffset) {
     return g -> {
       g.setFont(getFont());
       g.drawString(myCode, x, y);

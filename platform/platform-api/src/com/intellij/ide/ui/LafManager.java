@@ -1,115 +1,116 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.ui;
 
-import com.intellij.ide.IdeBundle;
-import com.intellij.openapi.Disposable;
+import com.intellij.ide.ui.laf.UIThemeLookAndFeelInfo;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.util.NlsContexts;
-import com.intellij.openapi.util.NlsSafe;
+import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.ui.CollectionComboBoxModel;
+import kotlin.sequences.Sequence;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.util.Objects;
+import javax.swing.JComponent;
+import javax.swing.ListCellRenderer;
+import javax.swing.UIManager;
 
 public abstract class LafManager {
   public static LafManager getInstance() {
-    return ApplicationManager.getApplication().getComponent(LafManager.class);
+    return ApplicationManager.getApplication().getService(LafManager.class);
   }
 
+  /**
+   * @deprecated Do not use.
+   */
+  @Deprecated
   public abstract UIManager.LookAndFeelInfo @NotNull [] getInstalledLookAndFeels();
 
-  @ApiStatus.Internal
-  public abstract CollectionComboBoxModel<LafReference> getLafComboBoxModel();
+  @SuppressWarnings("unused")
+  @ApiStatus.Experimental
+  public abstract Sequence<UIThemeLookAndFeelInfo> getInstalledThemes();
 
   @ApiStatus.Internal
-  public abstract UIManager.LookAndFeelInfo findLaf(LafReference reference);
+  public abstract @NotNull CollectionComboBoxModel<LafReference> getLafComboBoxModel();
 
+  @ApiStatus.Internal
+  public abstract UIThemeLookAndFeelInfo findLaf(@NotNull String themeId);
+
+  /**
+   * @deprecated Use {@link LafManager#getCurrentUIThemeLookAndFeel()}
+   */
+  @Deprecated(forRemoval = true)
   public abstract UIManager.LookAndFeelInfo getCurrentLookAndFeel();
+
+  public abstract UIThemeLookAndFeelInfo getCurrentUIThemeLookAndFeel();
 
   @ApiStatus.Internal
   public abstract LafReference getLookAndFeelReference();
 
   @ApiStatus.Internal
-  public abstract void setLookAndFeelReference(LafReference reference);
+  public abstract ListCellRenderer<LafReference> getLookAndFeelCellRenderer(JComponent component);
 
   @ApiStatus.Internal
-  public abstract ListCellRenderer<LafReference> getLookAndFeelCellRenderer();
+  public abstract @NotNull JComponent createSettingsToolbar();
 
-  @ApiStatus.Internal
-  public abstract @NotNull JComponent getSettingsToolbar();
-
-  public void setCurrentLookAndFeel(@NotNull UIManager.LookAndFeelInfo lookAndFeelInfo) {
+  public void setCurrentUIThemeLookAndFeel(@NotNull UIThemeLookAndFeelInfo lookAndFeelInfo) {
     setCurrentLookAndFeel(lookAndFeelInfo, false);
   }
 
-  public abstract void setCurrentLookAndFeel(@NotNull UIManager.LookAndFeelInfo lookAndFeelInfo, boolean lockEditorScheme);
+  public abstract void setCurrentLookAndFeel(@NotNull UIThemeLookAndFeelInfo lookAndFeelInfo, boolean lockEditorScheme);
 
   public abstract void updateUI();
 
   public abstract void repaintUI();
 
-  public abstract boolean isAutoDetect();
+  @ApiStatus.Internal
+  public void checkRestart() {
+  }
+
+  /**
+   * @return if autodetect is supported and enabled
+   */
+  public abstract boolean getAutodetect();
+
+  public abstract void setAutodetect(boolean value);
+
+  public abstract boolean getAutodetectSupported();
+
+  @ApiStatus.Internal
+  public @Nullable String getPreferredDarkThemeId() {
+    return null;
+  }
+
+  public abstract void setPreferredDarkLaf(@NotNull UIThemeLookAndFeelInfo value);
+
+  public abstract void setPreferredLightLaf(@NotNull UIThemeLookAndFeelInfo value);
+
+  public abstract void resetPreferredEditorColorScheme();
+
+  @ApiStatus.Internal
+  public abstract void setRememberSchemeForLaf(boolean rememberSchemeForLaf);
+
+  @ApiStatus.Internal
+  public abstract void rememberSchemeForLaf(@NotNull EditorColorsScheme scheme);
+
+  @ApiStatus.Internal
+  public void applyDensity() { }
+
+  @ApiStatus.Internal
+  public void applyAltColors() { }
 
   /**
    * @deprecated Use {@link LafManagerListener#TOPIC}
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public abstract void addLafManagerListener(@NotNull LafManagerListener listener);
 
   /**
    * @deprecated Use {@link LafManagerListener#TOPIC}
    */
-  @Deprecated
-  public abstract void addLafManagerListener(@NotNull LafManagerListener listener, @NotNull Disposable disposable);
-
-  /**
-   * @deprecated Use {@link LafManagerListener#TOPIC}
-   */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public abstract void removeLafManagerListener(@NotNull LafManagerListener listener);
 
-  public static class LafReference {
-    public static final LafReference SYNC_OS = new LafReference(IdeBundle.message("preferred.theme.autodetect.selector"), null, null);
+  public abstract @Nullable UIThemeLookAndFeelInfo getDefaultLightLaf();
 
-    private final String name;
-    private final String className;
-    private final String themeId;
-
-    public LafReference(@NotNull String name, @Nullable String className, @Nullable String themeId) {
-      this.name = name;
-      this.className = className;
-      this.themeId = themeId;
-    }
-
-    @Override
-    public @NlsSafe @NlsContexts.Label String toString() {
-      return name;
-    }
-
-    public String getClassName() {
-      return className;
-    }
-
-    public String getThemeId() {
-      return themeId;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-      if (this == o) return true;
-      if (o == null || getClass() != o.getClass()) return false;
-      LafReference reference = (LafReference)o;
-      return name.equals(reference.name) &&
-             Objects.equals(className, reference.className) &&
-             Objects.equals(themeId, reference.themeId);
-    }
-
-    @Override
-    public int hashCode() {
-      return Objects.hash(name, className, themeId);
-    }
-  }
+  public abstract @Nullable UIThemeLookAndFeelInfo getDefaultDarkLaf();
 }

@@ -1,0 +1,87 @@
+package pkg;
+
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+public class TestAnnotationsForParametersWithNestedClass {
+   static void run(@Nullable RunCallback callback) {
+      if (callback != null) {// 9
+         callback.run();// 12
+      }
+   }// 10 13
+
+   static void run2(@NotNull RunCallback callback) {
+      callback.run();// 16
+   }// 17
+
+   static void run3(@NotNull String msg, @NotNull RunCallback callback) {
+      callback.run();// 20
+   }// 21
+
+   static void main() {
+      System.out.println("21211");// 30
+   }// 31
+
+   public interface RunCallback {
+      void run();
+   }
+}
+
+class 'pkg/TestAnnotationsForParametersWithNestedClass' {
+   method 'run (Lpkg/TestAnnotationsForParametersWithNestedClass$RunCallback;)V' {
+      0      7
+      1      7
+      4      10
+      5      8
+      6      8
+      7      8
+      8      8
+      9      8
+      a      8
+      b      10
+   }
+
+   method 'run2 (Lpkg/TestAnnotationsForParametersWithNestedClass$RunCallback;)V' {
+      8      13
+      9      13
+      a      13
+      b      13
+      c      13
+      d      13
+      e      14
+   }
+
+   method 'run3 (Ljava/lang/String;Lpkg/TestAnnotationsForParametersWithNestedClass$RunCallback;)V' {
+      10      17
+      11      17
+      12      17
+      13      17
+      14      17
+      15      17
+      16      18
+   }
+
+   method 'main ()V' {
+      0      21
+      1      21
+      2      21
+      3      21
+      4      21
+      5      21
+      6      21
+      7      21
+      8      22
+   }
+}
+
+Lines mapping:
+9 <-> 8
+10 <-> 11
+12 <-> 9
+13 <-> 11
+16 <-> 14
+17 <-> 15
+20 <-> 18
+21 <-> 19
+30 <-> 22
+31 <-> 23

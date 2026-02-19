@@ -1,16 +1,25 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.generation;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.util.MemberChooser;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.java.JavaBundle;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.lang.java.JavaLanguage;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.Constraints;
+import com.intellij.openapi.actionSystem.CustomShortcutSet;
+import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.actionSystem.ToggleAction;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.project.DumbAwareToggleAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NotNullLazyValue;
+import com.intellij.openapi.util.registry.Registry;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
@@ -18,6 +27,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.ui.components.JBCheckBox;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
@@ -25,7 +35,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.KeyStroke;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.util.Arrays;
@@ -38,9 +48,9 @@ import static com.intellij.openapi.keymap.KeymapUtil.getActiveKeymapShortcuts;
  * @author Dmitry Batkovich
  */
 public final class JavaOverrideImplementMemberChooser extends MemberChooser<PsiMethodMember> {
-
-  @NonNls public static final String PROP_COMBINED_OVERRIDE_IMPLEMENT = "OverrideImplement.combined";
-  @NonNls public static final String PROP_OVERRIDING_SORTED_OVERRIDE_IMPLEMENT = "OverrideImplement.overriding.sorted";
+  public static final @NonNls String PROP_COMBINED_OVERRIDE_IMPLEMENT = "OverrideImplement.combined";
+  public static final @NonNls String PROP_OVERRIDING_SORTED_OVERRIDE_IMPLEMENT = "OverrideImplement.overriding.sorted";
+  public static final @NonNls String PROP_GENERATE_JAVADOC_OVERRIDE_IMPLEMENT = "OverrideImplement.generate.javadoc";
 
   private ToggleAction myMergeAction;
   private final PsiMethodMember[] myAllElements;
@@ -51,68 +61,101 @@ public final class JavaOverrideImplementMemberChooser extends MemberChooser<PsiM
   private final PsiFile myFile;
   private boolean myMerge;
   private boolean mySortedByOverriding;
+  private JBCheckBox myGenerateJavadocCheckBox;
 
-  @Nullable
-  public static JavaOverrideImplementMemberChooser create(final PsiElement aClass,
-                                                          final boolean toImplement,
-                                                          final Collection<? extends CandidateInfo> candidates,
-                                                          final Collection<? extends CandidateInfo> secondary) {
+  public static @Nullable JavaOverrideImplementMemberChooser create(final PsiElement aClass,
+                                                                    final boolean toImplement,
+                                                                    final Collection<? extends CandidateInfo> candidates,
+                                                                    final Collection<? extends CandidateInfo> secondary) {
+    JavaOverrideImplementMemberChooserContainer result = prepare(aClass, toImplement, candidates, secondary);
+    if (result == null) return null;
+    return create(result);
+  }
+
+  public static @NotNull JavaOverrideImplementMemberChooser create(@NotNull JavaOverrideImplementMemberChooserContainer container) {
+    final JavaOverrideImplementMemberChooser javaOverrideImplementMemberChooser =
+      new JavaOverrideImplementMemberChooser(container.file(), container.all(), container.onlyPrimary(),
+                                             container.lazyElementsWithPercent(),
+                                             container.project(), container.overrideVisible(),
+                                             container.merge(), container.toImplement(),
+                                             PropertiesComponent.getInstance(container.project())
+                                               .getBoolean(PROP_OVERRIDING_SORTED_OVERRIDE_IMPLEMENT));
+    javaOverrideImplementMemberChooser.setTitle(getChooserTitle(container.toImplement(), container.merge()));
+
+    javaOverrideImplementMemberChooser.setCopyJavadocVisible(true);
+
+    if (container.selectElements() != null) {
+      javaOverrideImplementMemberChooser.selectElements(container.selectElements());
+    }
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      if (!container.toImplement() || container.onlyPrimary().length == 0) {
+        javaOverrideImplementMemberChooser.selectElements(container.all());
+      }
+      javaOverrideImplementMemberChooser.close(DialogWrapper.OK_EXIT_CODE);
+      return javaOverrideImplementMemberChooser;
+    }
+    return javaOverrideImplementMemberChooser;
+  }
+
+  public static @Nullable JavaOverrideImplementMemberChooserContainer prepare(PsiElement aClass,
+                                                                              boolean toImplement,
+                                                                              Collection<? extends CandidateInfo> candidates,
+                                                                              Collection<? extends CandidateInfo> secondary) {
     final Project project = aClass.getProject();
     final PsiFile file = aClass.getContainingFile();
+    if (file == null) {
+      return null;
+    }
     if (candidates.isEmpty() && secondary.isEmpty()) return null;
 
     final PsiMethodMember[] onlyPrimary = convertToMethodMembers(candidates);
     final LinkedHashSet<CandidateInfo> allCandidates = new LinkedHashSet<>(candidates);
     allCandidates.addAll(secondary);
     final PsiMethodMember[] all = convertToMethodMembers(allCandidates);
-    final NotNullLazyValue<PsiMethodWithOverridingPercentMember[]> lazyElementsWithPercent =
-      new NotNullLazyValue<>() {
-        @Override
-        protected PsiMethodWithOverridingPercentMember @NotNull [] compute() {
-          final PsiMethodWithOverridingPercentMember[] elements =
-            PsiMethodWithOverridingPercentMember.calculateOverridingPercents(candidates);
-          Arrays.sort(elements, PsiMethodWithOverridingPercentMember.COMPARATOR);
-          return elements;
-        }
-      };
+    final NotNullLazyValue<PsiMethodWithOverridingPercentMember[]> lazyElementsWithPercent = NotNullLazyValue.lazy(() -> {
+      final PsiMethodWithOverridingPercentMember[] elements =
+        PsiMethodWithOverridingPercentMember.calculateOverridingPercents(candidates);
+      Arrays.sort(elements, PsiMethodWithOverridingPercentMember.COMPARATOR);
+      return elements;
+    });
     final boolean merge = PropertiesComponent.getInstance(project).getBoolean(PROP_COMBINED_OVERRIDE_IMPLEMENT, true);
 
     final LanguageLevel languageLevel = PsiUtil.getLanguageLevel(aClass);
     //hide option if implement interface for 1.5 language level
-    final boolean overrideVisible = languageLevel.isAtLeast(LanguageLevel.JDK_1_6) || languageLevel.equals(LanguageLevel.JDK_1_5) && !toImplement;
+    final boolean overrideVisible =
+      JavaFeature.OVERRIDE_INTERFACE.isSufficient(languageLevel) || JavaFeature.ANNOTATIONS.isSufficient(languageLevel) && !toImplement;
 
-    final JavaOverrideImplementMemberChooser javaOverrideImplementMemberChooser =
-      new JavaOverrideImplementMemberChooser(file, all, onlyPrimary, lazyElementsWithPercent, project, overrideVisible,
-                                             merge, toImplement, PropertiesComponent.getInstance(project)
-        .getBoolean(PROP_OVERRIDING_SORTED_OVERRIDE_IMPLEMENT));
-    javaOverrideImplementMemberChooser.setTitle(getChooserTitle(toImplement, merge));
-
-    javaOverrideImplementMemberChooser.setCopyJavadocVisible(true);
-
+    ClassMember[] selectElements = null;
     if (toImplement) {
       if (onlyPrimary.length == 0) {
-        javaOverrideImplementMemberChooser.selectElements(new ClassMember[] {all[0]});
-      } else {
+        selectElements = new ClassMember[]{all[0]};
+      }
+      else {
         PsiClass currClass = ObjectUtils.tryCast(aClass, PsiClass.class);
         if (currClass != null && currClass.isRecord()) {
           PsiMethodMember[] toImplementMembers = ContainerUtil
             .filter(onlyPrimary, m -> !OverrideImplementExploreUtil.belongsToRecord(m.getElement()))
             .toArray(new PsiMethodMember[0]);
-          javaOverrideImplementMemberChooser.selectElements(ArrayUtil.isEmpty(toImplementMembers) ? onlyPrimary : toImplementMembers);
-        } else {
-          javaOverrideImplementMemberChooser.selectElements(onlyPrimary);
+          selectElements = ArrayUtil.isEmpty(toImplementMembers) ? onlyPrimary : toImplementMembers;
+        }
+        else {
+          selectElements = onlyPrimary;
         }
       }
     }
+    return new JavaOverrideImplementMemberChooserContainer(project, file, onlyPrimary, all, lazyElementsWithPercent, merge, overrideVisible,
+                                                           toImplement, selectElements);
+  }
 
-    if (ApplicationManager.getApplication().isUnitTestMode()) {
-      if (!toImplement || onlyPrimary.length == 0) {
-        javaOverrideImplementMemberChooser.selectElements(all);
-      }
-      javaOverrideImplementMemberChooser.close(DialogWrapper.OK_EXIT_CODE);
-      return javaOverrideImplementMemberChooser;
-    }
-    return javaOverrideImplementMemberChooser;
+  public record JavaOverrideImplementMemberChooserContainer(@NotNull Project project,
+                                                            @NotNull PsiFile file,
+                                                            PsiMethodMember @NotNull [] onlyPrimary,
+                                                            PsiMethodMember @NotNull [] all,
+                                                            @NotNull NotNullLazyValue<PsiMethodWithOverridingPercentMember[]> lazyElementsWithPercent,
+                                                            boolean merge,
+                                                            boolean overrideVisible,
+                                                            boolean toImplement,
+                                                            ClassMember @Nullable[] selectElements) {
   }
 
   private JavaOverrideImplementMemberChooser(final @NotNull PsiFile file,
@@ -135,6 +178,28 @@ public final class JavaOverrideImplementMemberChooser extends MemberChooser<PsiM
     mySortedByOverriding = sortedByOverriding;
     resetElements(getInitialElements(allElements, onlyPrimaryElements, lazyElementsWithPercent, merge, toImplement, sortedByOverriding));
     init();
+  }
+
+  @Override
+  public void resetElements(PsiMethodMember[] elements) {
+    super.resetElements(elements);
+    if (myOptionControls.length > 0 && myFile.getLanguage().is(JavaLanguage.INSTANCE)) {
+      myGenerateJavadocCheckBox = new JBCheckBox(JavaBundle.message("methods.to.override.generate.javadoc"));
+      myGenerateJavadocCheckBox.setSelected(isGenerateJavadoc());
+      myOptionControls = ArrayUtil.insert(super.getOptionControls(), 1, myGenerateJavadocCheckBox);
+    }
+  }
+
+  @Override
+  protected void customizeOptionsPanel() {
+    super.customizeOptionsPanel();
+    if (myGenerateJavadocCheckBox != null) {
+      myGenerateJavadocCheckBox.setSelected(isGenerateJavadoc());
+    }
+  }
+
+  public boolean isGenerateJavadoc(){
+    return PropertiesComponent.getInstance(myProject).getBoolean(PROP_GENERATE_JAVADOC_OVERRIDE_IMPLEMENT, false);
   }
 
   private static PsiMethodMember[] getInitialElements(PsiMethodMember[] allElements,
@@ -161,6 +226,9 @@ public final class JavaOverrideImplementMemberChooser extends MemberChooser<PsiM
     super.doOKAction();
     PropertiesComponent.getInstance(myProject).setValue(PROP_COMBINED_OVERRIDE_IMPLEMENT, myMerge, true);
     PropertiesComponent.getInstance(myProject).setValue(PROP_OVERRIDING_SORTED_OVERRIDE_IMPLEMENT, mySortedByOverriding);
+    if (myGenerateJavadocCheckBox != null) {
+      PropertiesComponent.getInstance(myProject).setValue(PROP_GENERATE_JAVADOC_OVERRIDE_IMPLEMENT, myGenerateJavadocCheckBox.isSelected());
+    }
   }
 
   @Override
@@ -168,17 +236,19 @@ public final class JavaOverrideImplementMemberChooser extends MemberChooser<PsiM
     super.fillToolbarActions(group);
     if (myToImplement) return;
 
-    ToggleAction sortByOverridingAction = new MySortByOverridingAction();
-    if (mySortedByOverriding) {
-      changeSortComparator(PsiMethodWithOverridingPercentMember.COMPARATOR);
+    if (Registry.is("java.override.methods.enable.sort.by.overriding.action")) {
+      ToggleAction sortByOverridingAction = new MySortByOverridingAction();
+      if (mySortedByOverriding) {
+        changeSortComparator(PsiMethodWithOverridingPercentMember.COMPARATOR);
+      }
+      group.add(sortByOverridingAction, Constraints.FIRST);
     }
-    group.add(sortByOverridingAction, Constraints.FIRST);
 
     myMergeAction = new MyMergeAction();
     group.add(myMergeAction);
   }
 
-  private static @NlsContexts.DialogTitle String getChooserTitle(final boolean toImplement, final boolean merge) {
+  static @NlsContexts.DialogTitle String getChooserTitle(final boolean toImplement, final boolean merge) {
     return toImplement
            ? JavaBundle.message("methods.to.implement.chooser.title")
            : merge
@@ -203,12 +273,17 @@ public final class JavaOverrideImplementMemberChooser extends MemberChooser<PsiM
     }
 
     @Override
-    public boolean isSelected(@NotNull final AnActionEvent e) {
+    public boolean isSelected(final @NotNull AnActionEvent e) {
       return mySortedByOverriding;
     }
 
     @Override
-    public void setSelected(@NotNull final AnActionEvent e, final boolean state) {
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
+    }
+
+    @Override
+    public void setSelected(final @NotNull AnActionEvent e, final boolean state) {
       mySortedByOverriding = state;
       if (state) {
         if (myMerge) {
@@ -225,7 +300,7 @@ public final class JavaOverrideImplementMemberChooser extends MemberChooser<PsiM
     }
   }
 
-  private final class MyMergeAction extends ToggleAction {
+  private final class MyMergeAction extends DumbAwareToggleAction {
     private MyMergeAction() {
       super(JavaBundle.message("action.text.show.methods.to.implement"), JavaBundle.message(
         "action.text.show.methods.to.implement"), AllIcons.General.Show_to_implement);
@@ -236,6 +311,11 @@ public final class JavaOverrideImplementMemberChooser extends MemberChooser<PsiM
     @Override
     public boolean isSelected(@NotNull AnActionEvent e) {
       return myMerge;
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
     }
 
     @Override
@@ -250,4 +330,10 @@ public final class JavaOverrideImplementMemberChooser extends MemberChooser<PsiM
     }
   }
 
+  public OverrideOrImplementOptions getOptions(){
+    return new OverrideOrImplementOptions()
+      .copyJavadoc(isCopyJavadoc())
+      .generateJavadoc(isGenerateJavadoc())
+      .insertOverrideWherePossible(isInsertOverrideAnnotation());
+  }
 }

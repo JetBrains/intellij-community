@@ -1,13 +1,26 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.actionSystem.impl;
 
 import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.extensions.ExtensionPointName;
 import org.jetbrains.annotations.NotNull;
 
+/**
+ * Allows registering and unregistering actions when a plugin is loaded/unloaded.
+ * <p>
+ * Register in {@code com.intellij.dynamicActionConfigurationCustomizer} extension point.
+ *
+ * @see ActionConfigurationCustomizer
+ */
 public interface DynamicActionConfigurationCustomizer {
-  void registerActions(@NotNull ActionManager actionManager);
-  void unregisterActions(@NotNull ActionManager actionManager);
+  /**
+   * Called during {@link ActionManager} initialization and when this extension is added.
+   * {@link ActionConfigurationCustomizer.LightCustomizeStrategy} maybe implemented instead.
+   */
+  default void registerActions(@SuppressWarnings("unused") @NotNull ActionManager actionManager) {
+  }
 
-  ExtensionPointName<DynamicActionConfigurationCustomizer> EP_NAME = ExtensionPointName.create("com.intellij.dynamicActionConfigurationCustomizer");
+  /**
+   * Called when this extension is removed.
+   */
+  void unregisterActions(@NotNull ActionManager actionManager);
 }

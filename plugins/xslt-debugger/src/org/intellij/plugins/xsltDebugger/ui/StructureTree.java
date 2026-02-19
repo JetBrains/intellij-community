@@ -16,7 +16,10 @@
 
 package org.intellij.plugins.xsltDebugger.ui;
 
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.DataSink;
+import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.actionSystem.UiDataProvider;
 import com.intellij.pom.Navigatable;
 import com.intellij.ui.PopupHandler;
 import com.intellij.ui.treeStructure.Tree;
@@ -27,7 +30,7 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreePath;
 
-public class StructureTree extends Tree implements TypeSafeDataProvider {
+public class StructureTree extends Tree implements UiDataProvider {
   public StructureTree(GeneratedStructureModel model) {
     super(model);
 
@@ -38,25 +41,14 @@ public class StructureTree extends Tree implements TypeSafeDataProvider {
     final DefaultActionGroup structureContextActions = DefaultActionGroup.createPopupGroup(() -> "StructureContext");
     structureContextActions.add(NavigateAction.getInstance());
     structureContextActions.add(new CopyValueAction(this));
-    PopupHandler.installFollowingSelectionTreePopup(this, structureContextActions, "XSLT.Debugger.GeneratedStructure", ActionManager.getInstance());
+    PopupHandler.installFollowingSelectionTreePopup(this, structureContextActions, "XSLT.Debugger.GeneratedStructure");
   }
 
   @Override
-  public void calcData(@NotNull DataKey key, @NotNull DataSink sink) {
-    if (key.equals(CommonDataKeys.NAVIGATABLE)) {
-      final TreePath selection = getSelectionPath();
-      if (selection != null) {
-        final Object o = selection.getLastPathComponent();
-        if (o instanceof Navigatable) {
-          sink.put(CommonDataKeys.NAVIGATABLE, (Navigatable)o);
-        }
-      }
-    } else if (key.equals(CopyValueAction.SELECTED_NODE)) {
-      final TreePath selection = getSelectionPath();
-      if (selection != null) {
-        final Object o = selection.getLastPathComponent();
-        sink.put(CopyValueAction.SELECTED_NODE, (DefaultMutableTreeNode)o);
-      }
-    }
+  public void uiDataSnapshot(@NotNull DataSink sink) {
+    TreePath selection = getSelectionPath();
+    Object obj = selection == null ? null : selection.getLastPathComponent();
+    sink.set(CommonDataKeys.NAVIGATABLE, obj instanceof Navigatable o ? o : null);
+    sink.set(CopyValueAction.SELECTED_NODE, obj instanceof DefaultMutableTreeNode o? o : null);
   }
 }

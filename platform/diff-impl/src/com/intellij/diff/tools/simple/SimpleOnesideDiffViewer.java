@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diff.tools.simple;
 
 import com.intellij.diff.DiffContext;
@@ -21,6 +7,7 @@ import com.intellij.diff.contents.DocumentContent;
 import com.intellij.diff.requests.ContentDiffRequest;
 import com.intellij.diff.requests.DiffRequest;
 import com.intellij.diff.tools.util.DiffDataKeys;
+import com.intellij.diff.tools.util.FoldingModelSupport;
 import com.intellij.diff.tools.util.base.HighlightPolicy;
 import com.intellij.diff.tools.util.base.TextDiffViewerUtil;
 import com.intellij.diff.tools.util.side.OnesideTextDiffViewer;
@@ -29,15 +16,18 @@ import com.intellij.diff.util.DiffDrawUtil;
 import com.intellij.diff.util.DiffUtil;
 import com.intellij.diff.util.LineRange;
 import com.intellij.diff.util.TextDiffType;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.DataSink;
 import com.intellij.openapi.actionSystem.Separator;
 import com.intellij.openapi.diff.DiffNavigationContext;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.LogicalPosition;
+import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.project.Project;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -47,32 +37,26 @@ import java.util.List;
 import static com.intellij.diff.util.DiffUtil.getLineCount;
 
 public class SimpleOnesideDiffViewer extends OnesideTextDiffViewer {
-  @NotNull private final MyInitialScrollHelper myInitialScrollHelper = new MyInitialScrollHelper();
+  private final @NotNull MyInitialScrollHelper myInitialScrollHelper = new MyInitialScrollHelper();
 
-  @NotNull private final TextDiffProvider myTextDiffProvider;
+  private final @NotNull TextDiffProvider myTextDiffProvider;
 
-  @NotNull private final List<RangeHighlighter> myHighlighters = new ArrayList<>();
+  private final @NotNull List<RangeHighlighter> myHighlighters = new ArrayList<>();
+
+  private final @NotNull MyMockFoldingModel myFoldingModel;
 
   public SimpleOnesideDiffViewer(@NotNull DiffContext context, @NotNull DiffRequest request) {
     super(context, (ContentDiffRequest)request);
+
+    myFoldingModel = new MyMockFoldingModel(getProject(), getEditor(), this);
 
     myTextDiffProvider = DiffUtil.createTextDiffProvider(getProject(), getRequest(), getTextSettings(), this::rediff, this);
   }
 
   @Override
-  @RequiresEdt
-  protected void onDispose() {
-    for (RangeHighlighter highlighter : myHighlighters) {
-      highlighter.dispose();
-    }
-    myHighlighters.clear();
-    super.onDispose();
-  }
-
-  @NotNull
-  @Override
-  protected List<AnAction> createToolbarActions() {
+  protected @NotNull List<AnAction> createToolbarActions() {
     List<AnAction> group = new ArrayList<>(myTextDiffProvider.getToolbarActions());
+    group.add(new MyToggleExpandByDefaultAction());
     group.add(new MyReadOnlyLockAction());
     group.add(myEditorSettingsAction);
 
@@ -82,9 +66,8 @@ public class SimpleOnesideDiffViewer extends OnesideTextDiffViewer {
     return group;
   }
 
-  @NotNull
   @Override
-  protected List<AnAction> createPopupActions() {
+  protected @NotNull List<AnAction> createPopupActions() {
     List<AnAction> group = new ArrayList<>(myTextDiffProvider.getPopupActions());
     group.add(Separator.getInstance());
     group.addAll(super.createPopupActions());
@@ -111,8 +94,7 @@ public class SimpleOnesideDiffViewer extends OnesideTextDiffViewer {
   //
 
   @Override
-  @NotNull
-  protected Runnable performRediff(@NotNull final ProgressIndicator indicator) {
+  protected @NotNull Runnable performRediff(final @NotNull ProgressIndicator indicator) {
     return () -> {
       clearDiffPresentation();
 
@@ -173,6 +155,12 @@ public class SimpleOnesideDiffViewer extends OnesideTextDiffViewer {
   // Actions
   //
 
+  private class MyToggleExpandByDefaultAction extends TextDiffViewerUtil.ToggleExpandByDefaultAction {
+    MyToggleExpandByDefaultAction() {
+      super(getTextSettings(), myFoldingModel);
+    }
+  }
+
   private class MyReadOnlyLockAction extends TextDiffViewerUtil.EditorReadOnlyLockAction {
     MyReadOnlyLockAction() {
       super(getContext(), getEditableEditors());
@@ -183,14 +171,10 @@ public class SimpleOnesideDiffViewer extends OnesideTextDiffViewer {
   // Helpers
   //
 
-  @Nullable
   @Override
-  public Object getData(@NotNull @NonNls String dataId) {
-    if (DiffDataKeys.CURRENT_CHANGE_RANGE.is(dataId)) {
-      int lineCount = getLineCount(getEditor().getDocument());
-      return new LineRange(0, lineCount);
-    }
-    return super.getData(dataId);
+  public void uiDataSnapshot(@NotNull DataSink sink) {
+    super.uiDataSnapshot(sink);
+    sink.set(DiffDataKeys.CURRENT_CHANGE_RANGE, new LineRange(0, getLineCount(getEditor().getDocument())));
   }
 
   private class MyInitialScrollHelper extends MyInitialScrollPositionHelper {
@@ -238,6 +222,12 @@ public class SimpleOnesideDiffViewer extends OnesideTextDiffViewer {
       carets[index] = getEditor().getCaretModel().getLogicalPosition();
       carets[otherIndex] = new LogicalPosition(0, 0);
       return carets;
+    }
+  }
+
+  private static class MyMockFoldingModel extends FoldingModelSupport {
+    MyMockFoldingModel(@Nullable Project project, @NotNull EditorEx editor, @NotNull Disposable disposable) {
+      super(project, new EditorEx[]{editor}, disposable);
     }
   }
 }

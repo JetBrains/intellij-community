@@ -1,8 +1,29 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.tree.java;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.JavaResolveResult;
+import com.intellij.psi.LambdaUtil;
+import com.intellij.psi.PsiArrayType;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiClassType;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiExpressionList;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiIdentifier;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiMethodReferenceExpression;
+import com.intellij.psi.PsiMethodReferenceUtil;
+import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiSubstitutor;
+import com.intellij.psi.PsiSuperExpression;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypeParameter;
+import com.intellij.psi.PsiTypes;
+import com.intellij.psi.ResolveState;
 import com.intellij.psi.impl.source.resolve.ParameterTypeInferencePolicy;
 import com.intellij.psi.impl.source.resolve.ResolveCache;
 import com.intellij.psi.impl.source.resolve.graphInference.InferenceSession;
@@ -18,15 +39,19 @@ import com.intellij.psi.util.MethodSignature;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
+import com.intellij.util.containers.FactoryMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
+import java.util.Map;
 
 public class MethodReferenceResolver implements ResolveCache.PolyVariantContextResolver<PsiMethodReferenceExpressionImpl> {
+  private static final Logger LOG = Logger.getInstance(MethodReferenceResolver.class);
+
   @Override
   public JavaResolveResult @NotNull [] resolve(@NotNull PsiMethodReferenceExpressionImpl reference, @NotNull PsiFile containingFile, boolean incompleteCode) {
     PsiMethodReferenceUtil.QualifierResolveResult qualifierResolveResult = PsiMethodReferenceUtil.getQualifierResolveResult(reference);
@@ -91,16 +116,21 @@ public class MethodReferenceResolver implements ResolveCache.PolyVariantContextR
                   return varargs;
                 }
 
-                @NotNull
                 @Override
-                public PsiSubstitutor inferTypeArguments(@NotNull ParameterTypeInferencePolicy policy, boolean includeReturnConstraint) {
-                  return includeReturnConstraint ? inferTypeArguments(true)
-                                                 : Objects.requireNonNull(MethodCandidateInfo.ourOverloadGuard
-                                                                            .doPreventingRecursion(reference, false,
-                                                                                                   () -> inferTypeArguments(false)));
+                public @NotNull PsiSubstitutor inferTypeArguments(@NotNull ParameterTypeInferencePolicy policy, boolean includeReturnConstraint) {
+                  if (includeReturnConstraint) {
+                    return inferTypeArguments(true);
+                  }
+                  PsiSubstitutor psiSubstitutor = MethodCandidateInfo.ourOverloadGuard
+                    .doPreventingRecursion(reference, false, () -> inferTypeArguments(false));
+                  if (psiSubstitutor == null) {
+                    LOG.error("Recursive call for: " + ObjectUtils.notNull(LambdaUtil.treeWalkUp(reference), reference).getText());
+                    return substitutor;
+                  }
+                  return psiSubstitutor;
                 }
 
-                private PsiSubstitutor inferTypeArguments(boolean includeReturnConstraint) {
+                private @NotNull PsiSubstitutor inferTypeArguments(boolean includeReturnConstraint) {
                   if (interfaceMethod == null) return substitutor;
                   InferenceSession session = new InferenceSession(method.getTypeParameters(), substitutor, reference.getManager(), reference);
                   session.initThrowsConstraints(method);
@@ -117,7 +147,7 @@ public class MethodReferenceResolver implements ResolveCache.PolyVariantContextR
                     return substitutor;
                   }
 
-                  if (includeReturnConstraint && !PsiType.VOID.equals(interfaceMethodReturnType) && interfaceMethodReturnType != null) {
+                  if (includeReturnConstraint && !PsiTypes.voidType().equals(interfaceMethodReturnType) && interfaceMethodReturnType != null) {
                     PsiType returnType = method.isConstructor()
                                                ? composeReturnType(containingClass, substitutor)
                                                : PsiMethodReferenceCompatibilityConstraint
@@ -208,22 +238,23 @@ public class MethodReferenceResolver implements ResolveCache.PolyVariantContextR
     }
 
     @Override
-    protected int getPertinentApplicabilityLevel(@NotNull MethodCandidateInfo conflict) {
+    protected int getPertinentApplicabilityLevel(@NotNull MethodCandidateInfo conflict,
+                                                 Map<MethodCandidateInfo, PsiSubstitutor> map) {
       return conflict.isVarargs() ? MethodCandidateInfo.ApplicabilityLevel.VARARGS : MethodCandidateInfo.ApplicabilityLevel.FIXED_ARITY;
     }
 
-    @Nullable
     @Override
-    protected CandidateInfo guardedOverloadResolution(@NotNull List<CandidateInfo> conflicts) {
+    protected @Nullable CandidateInfo guardedOverloadResolution(@NotNull List<CandidateInfo> conflicts) {
       if (mySignature == null) return null;
 
       if (conflicts.isEmpty()) return null;
       if (conflicts.size() == 1) return conflicts.get(0);
+      final Map<MethodCandidateInfo, PsiSubstitutor> map = FactoryMap.create(key -> key.getSubstitutor(false));
 
-      checkSameSignatures(conflicts);
+      checkSameSignatures(conflicts, map);
       if (conflicts.size() == 1) return  conflicts.get(0);
 
-      checkAccessStaticLevels(conflicts, true);
+      checkAccessStaticLevels(conflicts);
       if (conflicts.size() == 1) return  conflicts.get(0);
 
       PsiType[] argTypes = mySignature.getParameterTypes();
@@ -241,25 +272,39 @@ public class MethodReferenceResolver implements ResolveCache.PolyVariantContextR
       }
 
       if (myQualifierResolveResult.isReferenceTypeQualified() && myReferenceExpression.getReferenceNameElement() instanceof PsiIdentifier) {
+        int firstApplicability = checkApplicability(firstCandidates);
+        ArrayList<CandidateInfo> firstResults = new ArrayList<>(firstCandidates);
+        checkSpecifics(firstResults, firstApplicability, map, 0);
+
+        int secondApplicability = checkApplicability(secondCandidates);
+        ArrayList<CandidateInfo> secondResults = new ArrayList<>(secondCandidates);
+        checkSpecifics(secondResults, secondApplicability, map, 1);
+
         //If the first search produces a static method, and no non-static method is applicable for the second search, then the result of the first search is the compile-time declaration.
-        CandidateInfo candidateInfo = filterStaticCorrectCandidates(firstCandidates, secondCandidates, true);
+        CandidateInfo candidateInfo = filterStaticCorrectCandidates(firstResults, secondCandidates, true);
         if (candidateInfo != null) {
           return candidateInfo;
         }
 
         //If the second search produces a non-static method, and no static method is applicable for the first search, then the result of the second search is the compile-time declaration.
-        candidateInfo = filterStaticCorrectCandidates(secondCandidates, firstCandidates, false);
+        candidateInfo = filterStaticCorrectCandidates(secondResults, firstCandidates, false);
         if (candidateInfo != null) {
           return candidateInfo;
         }
+
+        conflicts.clear();
+        conflicts.addAll(firstResults);
+        conflicts.addAll(secondResults);
+
+        return null;
       }
 
-      CandidateInfo candidateInfo = resolveConflicts(firstCandidates, secondCandidates, MethodCandidateInfo.ApplicabilityLevel.FIXED_ARITY);
+      CandidateInfo candidateInfo = resolveConflicts(firstCandidates, secondCandidates, map, MethodCandidateInfo.ApplicabilityLevel.FIXED_ARITY);
       if (candidateInfo != null) {
         return candidateInfo;
       }
 
-      candidateInfo = resolveConflicts(firstCandidates, secondCandidates, MethodCandidateInfo.ApplicabilityLevel.VARARGS);
+      candidateInfo = resolveConflicts(firstCandidates, secondCandidates, map, MethodCandidateInfo.ApplicabilityLevel.VARARGS);
       if (candidateInfo != null) {
         return candidateInfo;
       }
@@ -290,6 +335,14 @@ public class MethodReferenceResolver implements ResolveCache.PolyVariantContextR
       boolean varargs = ((MethodCandidateInfo)conflict).isVarargs();
       if (varargs && (!psiMethod.isVarArgs() || functionalMethodVarArgs)) {
         return null;
+      }
+      
+      //prefer statically correct search variant when a vararg method is applicable both as first and second search
+      if (hasReceiver &&
+          varargs &&
+          isCorrectAssignment(parameterTypes, functionalInterfaceParamTypes, interfaceMethod, true, conflict, 0) &&
+          isCorrectAssignment(parameterTypes, functionalInterfaceParamTypes, interfaceMethod, true, conflict, 1)) {
+        return psiMethod.hasModifierProperty(PsiModifier.STATIC);
       }
 
       if ((varargs || functionalInterfaceParamTypes.length == parameterTypes.length) &&
@@ -346,12 +399,15 @@ public class MethodReferenceResolver implements ResolveCache.PolyVariantContextR
       }
     }
 
-    private CandidateInfo resolveConflicts(@NotNull List<CandidateInfo> firstCandidates, @NotNull List<CandidateInfo> secondCandidates, int applicabilityLevel) {
+    private CandidateInfo resolveConflicts(@NotNull List<CandidateInfo> firstCandidates,
+                                           @NotNull List<CandidateInfo> secondCandidates,
+                                           Map<MethodCandidateInfo, PsiSubstitutor> map,
+                                           int applicabilityLevel) {
       int firstApplicability = checkApplicability(firstCandidates);
-      checkSpecifics(firstCandidates, applicabilityLevel);
+      checkSpecifics(firstCandidates, applicabilityLevel, map, 0);
 
       int secondApplicability = checkApplicability(secondCandidates);
-      checkSpecifics(secondCandidates, applicabilityLevel, null, 1);
+      checkSpecifics(secondCandidates, applicabilityLevel, map, 1);
 
       if (firstApplicability < secondApplicability) {
         return secondCandidates.size() == 1 ? secondCandidates.get(0) : null;
@@ -412,6 +468,14 @@ public class MethodReferenceResolver implements ResolveCache.PolyVariantContextR
 
   private static boolean arrayCreationSignature(@NotNull MethodSignature signature) {
     PsiType[] parameterTypes = signature.getParameterTypes();
-    return parameterTypes.length == 1 && parameterTypes[0] != null && TypeConversionUtil.isAssignable(PsiType.INT, parameterTypes[0]);
+    if (parameterTypes.length == 1 && parameterTypes[0] != null) {
+      if (TypeConversionUtil.isAssignable(PsiTypes.intType(), parameterTypes[0])) {
+        return true;
+      }
+      if (parameterTypes[0] instanceof PsiClassType) {
+        return ((PsiClassType)parameterTypes[0]).resolve() instanceof PsiTypeParameter;
+      }
+    }
+    return false;
   }
 }

@@ -1,14 +1,18 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaElementVisitor;
+import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.PsiJavaCodeReferenceElement;
+import com.intellij.psi.PsiJavaModuleReferenceElement;
+import com.intellij.psi.PsiNameHelper;
+import com.intellij.psi.PsiPackageAccessibilityStatement;
 import com.intellij.psi.impl.java.stubs.JavaPackageAccessibilityStatementElementType;
 import com.intellij.psi.impl.java.stubs.PsiPackageAccessibilityStatementStub;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.SmartList;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -18,28 +22,25 @@ import static com.intellij.psi.SyntaxTraverser.psiTraverser;
 
 public class PsiPackageAccessibilityStatementImpl extends JavaStubPsiElement<PsiPackageAccessibilityStatementStub> implements PsiPackageAccessibilityStatement {
   public PsiPackageAccessibilityStatementImpl(@NotNull PsiPackageAccessibilityStatementStub stub) {
-    super(stub, stub.getStubType());
+    super(stub, stub.getElementType());
   }
 
   public PsiPackageAccessibilityStatementImpl(@NotNull ASTNode node) {
     super(node);
   }
 
-  @NotNull
   @Override
-  public Role getRole() {
-    return JavaPackageAccessibilityStatementElementType.typeToRole(getElementType());
+  public @NotNull Role getRole() {
+    return JavaPackageAccessibilityStatementElementType.typeToRole(getIElementType());
   }
 
-  @Nullable
   @Override
-  public PsiJavaCodeReferenceElement getPackageReference() {
+  public @Nullable PsiJavaCodeReferenceElement getPackageReference() {
     return PsiTreeUtil.getChildOfType(this, PsiJavaCodeReferenceElement.class);
   }
 
-  @Nullable
   @Override
-  public String getPackageName() {
+  public @Nullable String getPackageName() {
     PsiPackageAccessibilityStatementStub stub = getGreenStub();
     if (stub != null) {
       return StringUtil.nullize(stub.getPackageName());
@@ -50,15 +51,13 @@ public class PsiPackageAccessibilityStatementImpl extends JavaStubPsiElement<Psi
     }
   }
 
-  @NotNull
   @Override
-  public Iterable<PsiJavaModuleReferenceElement> getModuleReferences() {
+  public @NotNull Iterable<PsiJavaModuleReferenceElement> getModuleReferences() {
     return psiTraverser().children(this).filter(PsiJavaModuleReferenceElement.class);
   }
 
-  @NotNull
   @Override
-  public List<String> getModuleNames() {
+  public @NotNull List<String> getModuleNames() {
     PsiPackageAccessibilityStatementStub stub = getGreenStub();
     if (stub != null) {
       return stub.getTargets();

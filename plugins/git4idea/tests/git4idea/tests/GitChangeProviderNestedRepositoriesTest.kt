@@ -1,14 +1,22 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.tests
 
-import com.intellij.openapi.vcs.Executor.*
+import com.intellij.openapi.vcs.Executor.overwrite
+import com.intellij.openapi.vcs.Executor.rm
+import com.intellij.openapi.vcs.Executor.touch
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.FileStatus
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.vcsUtil.VcsUtil
-import git4idea.test.*
+import git4idea.test.GitPlatformTest
+import git4idea.test.addCommit
+import git4idea.test.cd
+import git4idea.test.createFileStructure
+import git4idea.test.createRepository
+import git4idea.test.createSubRepository
+import git4idea.test.git
 import java.io.File
 
 class GitChangeProviderNestedRepositoriesTest : GitPlatformTest() {
@@ -75,6 +83,7 @@ class GitChangeProviderNestedRepositoriesTest : GitPlatformTest() {
 
     dirtyScopeManager.markEverythingDirty()
     changeListManager.ensureUpToDate()
+    updateUntrackedFiles(repo)
 
     assertEquals(1, changeListManager.allChanges.size)
     assertFileStatus("a.txt", FileStatus.DELETED)
@@ -98,6 +107,35 @@ class GitChangeProviderNestedRepositoriesTest : GitPlatformTest() {
 
     assertEquals(1, changeListManager.allChanges.size)
     assertFileStatus("b.txt", FileStatus.MODIFIED)
+  }
+
+  fun `test marking root dirty`() {
+    val repo = createRepository(project, projectPath)
+    val subrepo = repo.createSubRepository("subrepo")
+
+    createFileStructure(repo.root, "a.txt")
+    createFileStructure(subrepo.root, "sub.txt")
+    repo.addCommit("commit in repo")
+    subrepo.addCommit("commit in subrepo")
+
+    val repoPath = VcsUtil.getFilePath(repo.root)
+    val repoFilePath = VcsUtil.getFilePath(repo.root, "a.txt")
+
+    val subRepoPath = VcsUtil.getFilePath(subrepo.root)
+    val subRepoFilePath = VcsUtil.getFilePath(subrepo.root, "sub.txt")
+
+    changeListManager.ensureUpToDate()
+    dirtyScopeManager.rootDirty(repo.root)
+
+    var dirtyFiles = dirtyScopeManager.whatFilesDirty(listOf(repoPath, repoFilePath, subRepoPath, subRepoFilePath))
+    assertContainsElements(dirtyFiles, repoPath, repoFilePath)
+    assertDoesntContain(dirtyFiles, subRepoPath, subRepoFilePath)
+
+    changeListManager.ensureUpToDate()
+    dirtyScopeManager.dirDirtyRecursively(repo.root)
+
+    dirtyFiles = dirtyScopeManager.whatFilesDirty(listOf(repoPath, repoFilePath, subRepoPath, subRepoFilePath))
+    assertContainsElements(dirtyFiles, repoPath, repoFilePath, subRepoPath, subRepoFilePath)
   }
 
   private fun assertFileStatus(relativePath: String, fileStatus: FileStatus) {

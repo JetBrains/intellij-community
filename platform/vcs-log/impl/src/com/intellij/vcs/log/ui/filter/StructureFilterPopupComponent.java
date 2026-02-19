@@ -1,9 +1,21 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.ui.filter;
 
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionGroup;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.actionSystem.KeepPopupOnPerform;
+import com.intellij.openapi.actionSystem.Presentation;
+import com.intellij.openapi.actionSystem.Separator;
+import com.intellij.openapi.actionSystem.ToggleAction;
+import com.intellij.openapi.actionSystem.ex.ActionUtil;
+import com.intellij.openapi.client.ClientSystemInfo;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbAwareAction;
+import com.intellij.openapi.project.DumbAwareToggleAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupListener;
@@ -11,7 +23,6 @@ import com.intellij.openapi.ui.popup.LightweightWindowEvent;
 import com.intellij.openapi.util.NlsActions;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsSafe;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.HtmlBuilder;
 import com.intellij.openapi.util.text.HtmlChunk;
@@ -21,79 +32,78 @@ import com.intellij.openapi.vcs.changes.HierarchicalFilePathComparator;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.SizedIcon;
-import com.intellij.ui.popup.KeepingPopupOpenAction;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.NotNullFunction;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.ui.ColorIcon;
+import com.intellij.util.ui.CheckboxIcon;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.vcs.log.VcsLogBundle;
+import com.intellij.vcs.log.VcsLogFilterCollection;
 import com.intellij.vcs.log.VcsLogRootFilter;
 import com.intellij.vcs.log.VcsLogStructureFilter;
 import com.intellij.vcs.log.impl.MainVcsLogUiProperties;
 import com.intellij.vcs.log.ui.VcsLogColorManager;
-import com.intellij.vcs.log.ui.table.VcsLogGraphTable;
 import com.intellij.vcs.log.util.VcsLogUtil;
 import com.intellij.vcs.log.visible.filters.VcsLogFilterObject;
-import com.intellij.vcsUtil.VcsFileUtil;
 import com.intellij.vcsUtil.VcsUtil;
-import org.intellij.lang.annotations.JdkConstants;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.Icon;
+import java.awt.Color;
+import java.awt.event.ActionEvent;
 import java.awt.event.InputEvent;
-import java.awt.event.KeyEvent;
 import java.io.File;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashSet;
 import java.util.List;
-import java.util.*;
+import java.util.Set;
+import java.util.function.Function;
 
-public class StructureFilterPopupComponent
-  extends FilterPopupComponent<FilterPair<VcsLogStructureFilter, VcsLogRootFilter>, VcsLogClassicFilterUi.FileFilterModel> {
+public class StructureFilterPopupComponent extends FilterPopupComponent<VcsLogFilterCollection, FileFilterModel> {
   private static final String PATHS = "Paths";
   private static final int FILTER_LABEL_LENGTH = 30;
   private static final int CHECKBOX_ICON_SIZE = 15;
   private static final FileByNameComparator FILE_BY_NAME_COMPARATOR = new FileByNameComparator();
   private static final FilePathByPathComparator FILE_PATH_BY_PATH_COMPARATOR = new FilePathByPathComparator();
 
-  @NotNull private final MainVcsLogUiProperties myUiProperties;
-  @NotNull private final VcsLogColorManager myColorManager;
+  private final @NotNull MainVcsLogUiProperties myUiProperties;
+  private final @NotNull VcsLogColorManager myColorManager;
 
   public StructureFilterPopupComponent(@NotNull MainVcsLogUiProperties uiProperties,
-                                       @NotNull VcsLogClassicFilterUi.FileFilterModel filterModel,
+                                       @NotNull FileFilterModel filterModel,
                                        @NotNull VcsLogColorManager colorManager) {
     super(VcsLogBundle.messagePointer("vcs.log.filter.popup.paths"), filterModel);
     myUiProperties = uiProperties;
     myColorManager = colorManager;
   }
 
-  private static VcsLogRootFilter getRootFilter(@Nullable FilterPair<VcsLogStructureFilter, VcsLogRootFilter> filter) {
+  private static VcsLogRootFilter getRootFilter(@Nullable VcsLogFilterCollection filter) {
     if (filter == null) return null;
-    return filter.getFilter2();
+    return filter.get(VcsLogFilterCollection.ROOT_FILTER);
   }
 
-  private static VcsLogStructureFilter getStructureFilter(@Nullable FilterPair<VcsLogStructureFilter, VcsLogRootFilter> filter) {
+  private static VcsLogStructureFilter getStructureFilter(@Nullable VcsLogFilterCollection filter) {
     if (filter == null) return null;
-    return filter.getFilter1();
+    return filter.get(VcsLogFilterCollection.STRUCTURE_FILTER);
   }
 
-  @NotNull
-  private Collection<VirtualFile> getFilterRoots(@Nullable VcsLogRootFilter filter) {
+  private @NotNull Collection<VirtualFile> getFilterRoots(@Nullable VcsLogRootFilter filter) {
     return filter != null ? filter.getRoots() : getAllRoots();
   }
 
-  @NotNull
-  private static Collection<FilePath> getFilterFiles(@Nullable VcsLogStructureFilter filter) {
+  private static @NotNull Collection<FilePath> getFilterFiles(@Nullable VcsLogStructureFilter filter) {
     return filter != null ? filter.getFiles() : Collections.emptySet();
   }
 
-  @NotNull
   @Override
-  @Nls
-  protected String getText(@NotNull FilterPair<VcsLogStructureFilter, VcsLogRootFilter> filter) {
+  protected @NotNull @Nls String getText(@NotNull VcsLogFilterCollection filter) {
     VcsLogRootFilter rootFilter = getRootFilter(filter);
     VcsLogStructureFilter structureFilter = getStructureFilter(filter);
     Collection<VirtualFile> visibleRoots = VcsLogUtil.getAllVisibleRoots(getAllRoots(), rootFilter, structureFilter);
@@ -106,30 +116,24 @@ public class StructureFilterPopupComponent
     return getTextFromFilePaths(files, VcsLogBundle.message("vcs.log.filter.popup.no.folders"), false);
   }
 
-  @NotNull
-  @Nls
-  private static String getTextFromRoots(@NotNull Collection<? extends VirtualFile> files,
-                                         boolean full) {
+  private static @NotNull @Nls String getTextFromRoots(@NotNull Collection<? extends VirtualFile> files,
+                                                       boolean full) {
     return getText(files, VcsLogBundle.message("vcs.log.filter.popup.no.roots"), FILE_BY_NAME_COMPARATOR, VirtualFile::getName, full);
   }
 
-  @NotNull
-  @Nls
-  private String getTextFromFilePaths(@NotNull Collection<? extends FilePath> files,
-                                      @Nls @NotNull String categoryText, boolean full) {
+  private @NotNull @Nls String getTextFromFilePaths(@NotNull Collection<? extends FilePath> files,
+                                                    @Nls @NotNull String categoryText, boolean full) {
     return getText(files, categoryText, FILE_PATH_BY_PATH_COMPARATOR,
                    file -> StringUtil.shortenPathWithEllipsis(path2Text(file, true), FILTER_LABEL_LENGTH), full);
   }
 
-  @NotNull
-  @Nls
-  private static <F> String getText(@NotNull Collection<? extends F> files,
-                                    @Nls @NotNull String categoryText,
-                                    @NotNull Comparator<? super F> comparator,
-                                    @NotNull NotNullFunction<? super F, @Nls String> getText,
-                                    boolean full) {
+  private static @NotNull @Nls <F> String getText(@NotNull Collection<? extends F> files,
+                                                  @Nls @NotNull String categoryText,
+                                                  @NotNull Comparator<? super F> comparator,
+                                                  @NotNull NotNullFunction<? super F, @Nls String> getText,
+                                                  boolean full) {
     if (full) {
-      return ALL.get();
+      return ALL_ACTION_TEXT.get();
     }
     else if (files.isEmpty()) {
       return categoryText;
@@ -144,15 +148,12 @@ public class StructureFilterPopupComponent
     }
   }
 
-  @Nls
   @Override
-  protected String getToolTip(@NotNull FilterPair<VcsLogStructureFilter, VcsLogRootFilter> filter) {
+  protected @Nls String getToolTip(@NotNull VcsLogFilterCollection filter) {
     return getToolTip(getFilterRoots(getRootFilter(filter)), getFilterFiles(getStructureFilter(filter)));
   }
 
-  @Nls
-  @NotNull
-  private String getToolTip(@NotNull Collection<? extends VirtualFile> roots, @NotNull Collection<? extends FilePath> files) {
+  private @Nls @NotNull String getToolTip(@NotNull Collection<? extends VirtualFile> roots, @NotNull Collection<? extends FilePath> files) {
     HtmlBuilder tooltip = new HtmlBuilder();
     if (roots.isEmpty()) {
       tooltip.append(VcsLogBundle.message("vcs.log.filter.tooltip.no.roots.selected"));
@@ -169,28 +170,23 @@ public class StructureFilterPopupComponent
     return tooltip.toString();
   }
 
-  @NotNull
-  @NlsContexts.Tooltip
-  private static HtmlChunk getTooltipTextForRoots(@NotNull Collection<? extends VirtualFile> files) {
+  private static @NotNull @NlsContexts.Tooltip HtmlChunk getTooltipTextForRoots(@NotNull Collection<? extends VirtualFile> files) {
     return getTooltipTextForFiles(files, FILE_BY_NAME_COMPARATOR, VirtualFile::getName, HtmlChunk.br());
   }
 
-  @NotNull
-  @NlsContexts.Tooltip
-  private HtmlChunk getTooltipTextForFilePaths(@NotNull Collection<? extends FilePath> files, @NotNull HtmlChunk separator) {
+  private @NotNull @NlsContexts.Tooltip HtmlChunk getTooltipTextForFilePaths(@NotNull Collection<? extends FilePath> files,
+                                                                             @NotNull HtmlChunk separator) {
     return getTooltipTextForFiles(files, FILE_PATH_BY_PATH_COMPARATOR, filePath -> path2Text(filePath, true), separator);
   }
 
-  @NotNull
-  @NlsContexts.Tooltip
-  private static <F> HtmlChunk getTooltipTextForFiles(@NotNull Collection<? extends F> files,
-                                                      @NotNull Comparator<? super F> comparator,
-                                                      @NotNull NotNullFunction<? super F, @Nls String> getText,
-                                                      @NotNull HtmlChunk separator) {
+  private static @NotNull @NlsContexts.Tooltip <F> HtmlChunk getTooltipTextForFiles(@NotNull Collection<? extends F> files,
+                                                                                    @NotNull Comparator<? super F> comparator,
+                                                                                    @NotNull Function<? super F, @NotNull @Nls String> getText,
+                                                                                    @NotNull HtmlChunk separator) {
     List<F> filesToDisplay = ContainerUtil.sorted(files, comparator);
     filesToDisplay = ContainerUtil.getFirstItems(filesToDisplay, 10);
     HtmlBuilder tooltip = new HtmlBuilder().appendWithSeparators(separator,
-                                                                 ContainerUtil.map(filesToDisplay, f -> HtmlChunk.text(getText.fun(f))));
+                                                                 ContainerUtil.map(filesToDisplay, f -> HtmlChunk.text(getText.apply(f))));
     if (files.size() > 10) {
       tooltip.append(separator).append("...");
     }
@@ -198,10 +194,10 @@ public class StructureFilterPopupComponent
   }
 
   @Override
-  protected ActionGroup createActionGroup() {
+  protected @NotNull ActionGroup createActionGroup() {
     Set<VirtualFile> roots = getAllRoots();
 
-    List<AnAction> rootActions = new ArrayList<>();
+    List<SelectVisibleRootAction> rootActions = new ArrayList<>();
     if (myColorManager.hasMultiplePaths()) {
       for (VirtualFile root : ContainerUtil.sorted(roots, FILE_BY_NAME_COMPARATOR)) {
         rootActions.add(new SelectVisibleRootAction(root));
@@ -212,24 +208,19 @@ public class StructureFilterPopupComponent
       structureActions.add(new SelectFromHistoryAction(filter));
     }
 
-    if (roots.size() > 15) {
-      return new DefaultActionGroup(createAllAction(), new EditPathsAction(), new SelectPathsInTreeAction(),
-                                    new Separator(VcsLogBundle.messagePointer("vcs.log.filter.recent")),
-                                    new DefaultActionGroup(structureActions),
-                                    new Separator(VcsLogBundle.messagePointer("vcs.log.filter.roots")),
-                                    new DefaultActionGroup(rootActions));
-    }
-    return new DefaultActionGroup(createAllAction(), new EditPathsAction(), new SelectPathsInTreeAction(),
-                                  new Separator(VcsLogBundle.messagePointer("vcs.log.filter.roots")),
-                                  new DefaultActionGroup(rootActions),
-                                  new Separator(VcsLogBundle.messagePointer("vcs.log.filter.recent")),
-                                  new DefaultActionGroup(structureActions));
+    List<AnAction> actionsList = new ArrayList<>(Arrays.asList(new EditPathsAction(), new SelectPathsInTreeAction(),
+                                                               new Separator(VcsLogBundle.messagePointer("vcs.log.filter.recent")),
+                                                               new DefaultActionGroup(structureActions)));
+
+    int position = roots.size() > 15 ? actionsList.size() : actionsList.size() - 2;
+    actionsList.addAll(position, List.of(new Separator(VcsLogBundle.messagePointer("vcs.log.filter.roots")),
+                                         new DefaultActionGroup(rootActions)));
+    return new DefaultActionGroup(actionsList);
   }
 
-  @NotNull
-  private List<VcsLogStructureFilter> getRecentFilters() {
+  private @NotNull List<VcsLogStructureFilter> getRecentFilters() {
     List<List<String>> filterValues = myUiProperties.getRecentlyFilteredGroups(PATHS);
-    return ContainerUtil.map2List(filterValues, values -> VcsLogClassicFilterUi.FileFilterModel.createStructureFilter(values));
+    return ContainerUtil.map(filterValues, values -> FileFilterModel.createStructureFilter(values));
   }
 
   private Set<VirtualFile> getAllRoots() {
@@ -258,36 +249,34 @@ public class StructureFilterPopupComponent
                      ? ContainerUtil.union(new HashSet<>(rootFilter.getRoots()), Collections.singleton(root))
                      : ContainerUtil.subtract(rootFilter.getRoots(), Collections.singleton(root));
     }
-    myFilterModel.setFilter(new FilterPair<>(null, VcsLogFilterObject.fromRoots(visibleRoots)));
+    myFilterModel.setFilter(VcsLogFilterObject.collection(VcsLogFilterObject.fromRoots(visibleRoots)));
   }
 
   private void setVisibleOnly(@NotNull VirtualFile root) {
-    myFilterModel.setFilter(new FilterPair<>(null, VcsLogFilterObject.fromRoot(root)));
+    myFilterModel.setFilter(VcsLogFilterObject.collection(VcsLogFilterObject.fromRoot(root)));
   }
 
-  @NotNull
-  @NlsActions.ActionText
-  private String getStructureActionText(@NotNull VcsLogStructureFilter filter) {
+  private @NotNull @NlsActions.ActionText String getStructureActionText(@NotNull VcsLogStructureFilter filter) {
     return getTextFromFilePaths(filter.getFiles(), VcsLogBundle.message("vcs.log.filter.popup.no.items"), filter.getFiles().isEmpty());
   }
 
-  @NotNull
-  @NlsSafe
-  private String path2Text(@NotNull FilePath filePath, boolean systemDependent) {
-    VirtualFile commonAncestor = VfsUtil.getCommonAncestor(getAllRoots());
-    String path;
-    if (commonAncestor == null) {
-      path = systemDependent ? filePath.getPresentableUrl() : filePath.getPath();
-    }
-    else {
-      path = VcsFileUtil.relativePath(commonAncestor, filePath);
-      if (systemDependent) path = FileUtil.toSystemDependentName(path);
-    }
-    return path + (filePath.isDirectory() ? separator(systemDependent) : "");
+  private @NotNull @NlsSafe String path2Text(@NotNull FilePath filePath, boolean systemDependent) {
+    return path2Text(filePath, systemDependent, getAllRoots());
   }
 
-  @NotNull
-  private FilePath text2Path(@NotNull String path) {
+  public static @NotNull @NlsSafe String path2Text(@NotNull FilePath filePath, boolean systemDependent, Set<VirtualFile> roots) {
+    VirtualFile commonAncestor = VfsUtil.getCommonAncestor(roots);
+    String path = null;
+    if (commonAncestor != null) {
+      path = FileUtil.getRelativePath(commonAncestor.getPath(), filePath.getPath(), '/');
+      if (path != null && systemDependent) path = FileUtil.toSystemDependentName(path);
+    }
+    if (path == null) path = systemDependent ? filePath.getPresentableUrl() : filePath.getPath();
+    char separator = separator(systemDependent);
+    return path + (filePath.isDirectory() && !StringUtil.endsWithChar(path, separator) ? separator : "");
+  }
+
+  private @NotNull FilePath text2Path(@NotNull String path) {
     path = FileUtil.toSystemIndependentName(path);
     boolean isDirectory = StringUtil.endsWithChar(path, '/');
 
@@ -320,17 +309,26 @@ public class StructureFilterPopupComponent
     }
   }
 
-  private final class SelectVisibleRootAction extends ToggleAction implements DumbAware, KeepingPopupOpenAction {
-    @NotNull private final CheckboxColorIcon myIcon;
-    @NotNull private final VirtualFile myRoot;
+  private final class SelectVisibleRootAction extends DumbAwareToggleAction {
+    private final Icon mySelectedIcon;
+    private final Icon myDeselectedIcon;
 
-    private SelectVisibleRootAction(@NotNull VirtualFile root) {
+    final VirtualFile myRoot;
+
+    SelectVisibleRootAction(@NotNull VirtualFile root) {
       super(null, root.getPresentableUrl(), null);
       getTemplatePresentation().setText(root.getName(), false);
       myRoot = root;
-      myIcon = JBUIScale.scaleIcon(new CheckboxColorIcon(CHECKBOX_ICON_SIZE,
-                                                         VcsLogGraphTable.getRootBackgroundColor(myRoot, myColorManager)));
+
+      Color color = myColorManager.getRootColor(myRoot);
+      mySelectedIcon = CheckboxIcon.createAndScaleCheckbox(color, true);
+      myDeselectedIcon = CheckboxIcon.createAndScaleCheckbox(color, false);
       getTemplatePresentation().setIcon(JBUIScale.scaleIcon(EmptyIcon.create(CHECKBOX_ICON_SIZE))); // see PopupFactoryImpl.calcMaxIconSize
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
     }
 
     @Override
@@ -343,68 +341,31 @@ public class StructureFilterPopupComponent
       if (!isEnabled()) {
         setVisibleOnly(myRoot);
       }
+      else if ((e.getModifiers() & getModifier()) != 0) {
+        setVisibleOnly(myRoot);
+      }
       else {
-        if ((e.getModifiers() & getMask()) != 0) {
-          setVisibleOnly(myRoot);
-        }
-        else {
-          setVisible(myRoot, state);
-        }
+        setVisible(myRoot, state);
       }
     }
 
-    @JdkConstants.InputEventMask
-    private int getMask() {
-      return SystemInfo.isMac ? InputEvent.META_MASK : InputEvent.CTRL_MASK;
+    private static int getModifier() {
+      return ClientSystemInfo.isMac() ? ActionEvent.META_MASK : ActionEvent.CTRL_MASK;
     }
 
     @Override
     public void update(@NotNull AnActionEvent e) {
       super.update(e);
 
-      updateIcon();
-      e.getPresentation().setIcon(myIcon);
-      String tooltip = VcsLogBundle.message("vcs.log.filter.tooltip.click.to.see.only",
-                                            KeyEvent.getKeyModifiersText(getMask()),
-                                            e.getPresentation().getText());
-      e.getPresentation().putClientProperty(TOOL_TIP_TEXT_KEY, tooltip);
-    }
-
-    private void updateIcon() {
-      myIcon.prepare(isVisible(myRoot) && isEnabled());
+      boolean isSelected = isVisible(myRoot) && isEnabled();
+      e.getPresentation().setIcon(isSelected ? mySelectedIcon : myDeselectedIcon);
+      var modifierText = InputEvent.getModifiersExText(getModifier() << 6);
+      var tooltip = VcsLogBundle.message("vcs.log.filter.tooltip.click.to.see.only", modifierText, e.getPresentation().getText());
+      e.getPresentation().putClientProperty(ActionUtil.TOOLTIP_TEXT, tooltip);
     }
 
     private boolean isEnabled() {
       return getStructureFilter(myFilterModel.getFilter()) == null;
-    }
-  }
-
-  private static class CheckboxColorIcon extends ColorIcon {
-    private boolean mySelected;
-    private SizedIcon mySizedIcon;
-
-    CheckboxColorIcon(int size, @NotNull Color color) {
-      super(size, color);
-      mySizedIcon = new SizedIcon(PlatformIcons.CHECK_ICON_SMALL, size, size);
-    }
-
-    public void prepare(boolean selected) {
-      mySelected = selected;
-    }
-
-    @NotNull
-    @Override
-    public CheckboxColorIcon withIconPreScaled(boolean preScaled) {
-      mySizedIcon = (SizedIcon)mySizedIcon.withIconPreScaled(preScaled);
-      return (CheckboxColorIcon)super.withIconPreScaled(preScaled);
-    }
-
-    @Override
-    public void paintIcon(Component component, Graphics g, int i, int j) {
-      super.paintIcon(component, g, i, j);
-      if (mySelected) {
-        mySizedIcon.paintIcon(component, g, i, j);
-      }
     }
   }
 
@@ -416,7 +377,8 @@ public class StructureFilterPopupComponent
 
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
-      Project project = e.getRequiredData(CommonDataKeys.PROJECT);
+      Project project = e.getData(CommonDataKeys.PROJECT);
+      if (project == null) return;
       Set<VirtualFile> roots = myFilterModel.getRoots();
 
       // for now, ignoring non-existing paths
@@ -428,6 +390,11 @@ public class StructureFilterPopupComponent
         VcsLogStructureFilter newFilter = VcsLogFilterObject.fromVirtualFiles(chooser.getSelectedFiles());
         setStructureFilter(newFilter);
       }
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.BGT;
     }
 
     @Override
@@ -443,7 +410,8 @@ public class StructureFilterPopupComponent
 
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
-      Project project = e.getRequiredData(CommonDataKeys.PROJECT);
+      Project project = e.getData(CommonDataKeys.PROJECT);
+      if (project == null) return;
 
       Collection<FilePath> filesPaths = ContainerUtil.sorted(getStructureFilterPaths(), HierarchicalFilePathComparator.NATURAL);
 
@@ -456,11 +424,21 @@ public class StructureFilterPopupComponent
         public void onClosed(@NotNull LightweightWindowEvent event) {
           if (event.isOk()) {
             List<FilePath> selectedPaths = ContainerUtil.map(popupBuilder.getSelectedValues(), path -> text2Path(path));
-            setStructureFilter(VcsLogFilterObject.fromPaths(selectedPaths));
+            if (selectedPaths.isEmpty()) {
+              myFilterModel.setFilter(null);
+            }
+            else {
+              setStructureFilter(VcsLogFilterObject.fromPaths(selectedPaths));
+            }
           }
         }
       });
-      popup.showUnderneathOf(StructureFilterPopupComponent.this);
+      popup.showUnderneathOf(getTargetComponent());
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.BGT;
     }
 
     @Override
@@ -469,37 +447,42 @@ public class StructureFilterPopupComponent
     }
   }
 
-  @NotNull
-  private Collection<FilePath> getStructureFilterPaths() {
+  private @NotNull Collection<FilePath> getStructureFilterPaths() {
     VcsLogStructureFilter structureFilter = getStructureFilter(myFilterModel.getFilter());
     return structureFilter != null ? structureFilter.getFiles() : Collections.emptyList();
   }
 
   private void setStructureFilter(@NotNull VcsLogStructureFilter newFilter) {
-    myFilterModel.setFilter(new FilterPair<>(newFilter, null));
-    myUiProperties.addRecentlyFilteredGroup(PATHS, VcsLogClassicFilterUi.FileFilterModel.getFilterValues(newFilter));
+    myFilterModel.setFilter(VcsLogFilterObject.collection(newFilter));
+    myUiProperties.addRecentlyFilteredGroup(PATHS, FileFilterModel.getStructureFilterValues(newFilter));
   }
 
   private final class SelectFromHistoryAction extends ToggleAction implements DumbAware {
-    @NotNull private final VcsLogStructureFilter myFilter;
-    @NotNull private final Icon myIcon;
-    @NotNull private final Icon myEmptyIcon;
+    private final @NotNull VcsLogStructureFilter myFilter;
+    private final @NotNull Icon myIcon;
+    private final @NotNull Icon myEmptyIcon;
 
     private SelectFromHistoryAction(@NotNull VcsLogStructureFilter filter) {
       super(getStructureActionText(filter), getTooltipTextForFilePaths(filter.getFiles(), HtmlChunk.text(" ")).toString(), null);
       myFilter = filter;
       myIcon = JBUIScale.scaleIcon(new SizedIcon(PlatformIcons.CHECK_ICON_SMALL, CHECKBOX_ICON_SIZE, CHECKBOX_ICON_SIZE));
       myEmptyIcon = JBUIScale.scaleIcon(EmptyIcon.create(CHECKBOX_ICON_SIZE));
+      getTemplatePresentation().setKeepPopupOnPerform(KeepPopupOnPerform.Never);
     }
 
     @Override
     public boolean isSelected(@NotNull AnActionEvent e) {
-      return getStructureFilter(myFilterModel.getFilter()) == myFilter;
+      return myFilter.equals(getStructureFilter(myFilterModel.getFilter()));
     }
 
     @Override
     public void setSelected(@NotNull AnActionEvent e, boolean state) {
-      myFilterModel.setFilter(new FilterPair<>(myFilter, null));
+      myFilterModel.setFilter(VcsLogFilterObject.collection(myFilter));
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
     }
 
     @Override

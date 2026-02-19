@@ -1,7 +1,13 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.unwrap;
 
-import com.intellij.psi.*;
+import com.intellij.java.JavaBundle;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiExpressionStatement;
+import com.intellij.psi.PsiStatement;
+import com.intellij.psi.PsiSwitchBlock;
+import com.intellij.psi.PsiSwitchExpression;
+import com.intellij.psi.PsiSwitchLabeledRuleStatement;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -12,7 +18,7 @@ import java.util.List;
 public class JavaSwitchExpressionUnwrapper extends JavaUnwrapper {
 
   public JavaSwitchExpressionUnwrapper() {
-    super("Unwrap 'switch' expression");
+    super(JavaBundle.message("unwrap.switch.expression"));
   }
 
   @Override
@@ -23,7 +29,7 @@ public class JavaSwitchExpressionUnwrapper extends JavaUnwrapper {
   }
 
   @Override
-  public PsiElement collectAffectedElements(@NotNull PsiElement e, @NotNull List<PsiElement> toExtract) {
+  public PsiElement collectAffectedElements(@NotNull PsiElement e, @NotNull List<? super PsiElement> toExtract) {
     super.collectAffectedElements(e, toExtract);
     PsiSwitchLabeledRuleStatement rule = (PsiSwitchLabeledRuleStatement)e;
     return rule.getEnclosingSwitchBlock();

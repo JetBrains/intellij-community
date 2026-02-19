@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.resolve;
 
 import com.intellij.openapi.util.TextRange;
@@ -11,7 +11,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrStringContent;
 import org.jetbrains.plugins.groovy.lang.psi.util.GrStringUtil;
 
-public class GroovyStringLiteralManipulator extends AbstractElementManipulator<GrLiteralContainer> {
+public final class GroovyStringLiteralManipulator extends AbstractElementManipulator<GrLiteralContainer> {
 
   @Override
   public GrLiteralContainer handleContentChange(@NotNull GrLiteralContainer expr, @NotNull TextRange range, String newContent) throws IncorrectOperationException {
@@ -41,9 +41,8 @@ public class GroovyStringLiteralManipulator extends AbstractElementManipulator<G
     return expr.updateText(newText);
   }
 
-  @NotNull
   @Override
-  public TextRange getRangeInElement(@NotNull final GrLiteralContainer element) {
+  public @NotNull TextRange getRangeInElement(final @NotNull GrLiteralContainer element) {
     if (element instanceof GrStringContent) {
       return TextRange.from(0, element.getTextLength());
     }

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.util.importProject;
 
 import com.intellij.ide.JavaUiBundle;
@@ -11,7 +11,7 @@ import com.intellij.lang.java.JavaParserDefinition;
 import com.intellij.lexer.Lexer;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.module.StdModuleTypes;
+import com.intellij.openapi.module.JavaModuleType;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.ProjectManager;
@@ -19,17 +19,33 @@ import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.java.LanguageLevel;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaRecursiveElementVisitor;
+import com.intellij.psi.JavaTokenType;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiFileFactory;
+import com.intellij.psi.PsiJavaCodeReferenceElement;
+import com.intellij.psi.PsiJavaFile;
+import com.intellij.psi.PsiJavaModule;
+import com.intellij.psi.PsiPackageAccessibilityStatement;
+import com.intellij.psi.PsiRequiresStatement;
 import com.intellij.util.Consumer;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.*;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Enumeration;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
@@ -37,7 +53,7 @@ public final class JavaModuleInsight extends ModuleInsight {
   private static final Logger LOG = Logger.getInstance(JavaModuleInsight.class);
   private final Lexer myLexer;
 
-  public JavaModuleInsight(@Nullable final ProgressIndicator progress,
+  public JavaModuleInsight(final @Nullable ProgressIndicator progress,
                            Set<String> existingModuleNames,
                            Set<String> existingProjectLibraryNames) {
     super(progress, existingModuleNames, existingProjectLibraryNames);
@@ -86,7 +102,7 @@ public final class JavaModuleInsight extends ModuleInsight {
         }
       }
 
-      addModules(StreamEx.of(moduleInfos.values()).map(info -> info.descriptor).toList());
+      addModules(ContainerUtil.map(moduleInfos.values(), info -> info.descriptor));
     }
     catch (ProcessCanceledException ignored) { }
     finally {
@@ -94,16 +110,15 @@ public final class JavaModuleInsight extends ModuleInsight {
     }
   }
 
-  @NotNull
   @Override
-  protected List<DetectedSourceRoot> getSourceRootsToScan() {
+  protected @NotNull @Unmodifiable List<DetectedSourceRoot> getSourceRootsToScan() {
     final List<DetectedSourceRoot> allRoots = super.getSourceRootsToScan();
     return ContainerUtil.filter(allRoots, r -> !(r instanceof JavaModuleSourceRoot) || !((JavaModuleSourceRoot)r).isWithModuleInfoFile());
   }
 
   private ModuleInfo scanModuleInfoFile(@NotNull File directory) {
     File file = new File(directory, PsiJavaModule.MODULE_INFO_FILE);
-    @NlsSafe final String name = file.getName();
+    final @NlsSafe String name = file.getName();
     myProgress.setText2(name);
     try {
       String text = FileUtil.loadFile(file);
@@ -147,7 +162,7 @@ public final class JavaModuleInsight extends ModuleInsight {
   }
 
   @Override
-  protected void scanSourceFileForImportedPackages(final CharSequence chars, final Consumer<String> result) {
+  protected void scanSourceFileForImportedPackages(final CharSequence chars, final Consumer<? super String> result) {
     myLexer.start(chars);
 
     JavaSourceRootDetectionUtil.skipWhiteSpaceAndComments(myLexer);
@@ -199,8 +214,7 @@ public final class JavaModuleInsight extends ModuleInsight {
     }
   }
 
-  @Nullable
-  private static String readPackageName(final CharSequence text, final Lexer lexer) {
+  private static @Nullable String readPackageName(final CharSequence text, final Lexer lexer) {
     final StringBuilder buffer = new StringBuilder();
     while (true) {
       if (lexer.getTokenType() != JavaTokenType.IDENTIFIER && lexer.getTokenType() != JavaTokenType.ASTERISK) {
@@ -218,7 +232,7 @@ public final class JavaModuleInsight extends ModuleInsight {
     }
 
     String packageName = buffer.toString();
-    if (packageName.length() == 0 || StringUtil.endsWithChar(packageName, '.') || StringUtil.startsWithChar(packageName, '*')) {
+    if (packageName.isEmpty() || StringUtil.endsWithChar(packageName, '.') || StringUtil.startsWithChar(packageName, '*')) {
       return null;
     }
     return packageName;
@@ -230,7 +244,7 @@ public final class JavaModuleInsight extends ModuleInsight {
   }
 
   @Override
-  protected void scanLibraryForDeclaredPackages(File file, Consumer<String> result) throws IOException {
+  protected void scanLibraryForDeclaredPackages(File file, Consumer<? super String> result) throws IOException {
     try (ZipFile zip = new ZipFile(file)) {
       final Enumeration<? extends ZipEntry> entries = zip.entries();
       while (entries.hasMoreElements()) {
@@ -248,7 +262,7 @@ public final class JavaModuleInsight extends ModuleInsight {
 
   @Override
   protected ModuleDescriptor createModuleDescriptor(final File moduleContentRoot, final Collection<DetectedSourceRoot> sourceRoots) {
-    return new ModuleDescriptor(moduleContentRoot, StdModuleTypes.JAVA, sourceRoots);
+    return new ModuleDescriptor(moduleContentRoot, JavaModuleType.getModuleType(), sourceRoots);
   }
 
   @Override
@@ -277,7 +291,7 @@ public final class JavaModuleInsight extends ModuleInsight {
     }
 
     @Override
-    public void visitRequiresStatement(PsiRequiresStatement statement) {
+    public void visitRequiresStatement(@NotNull PsiRequiresStatement statement) {
       super.visitRequiresStatement(statement);
       String referenceText = statement.getModuleName();
       if (referenceText != null) {
@@ -286,7 +300,7 @@ public final class JavaModuleInsight extends ModuleInsight {
     }
 
     @Override
-    public void visitPackageAccessibilityStatement(PsiPackageAccessibilityStatement statement) {
+    public void visitPackageAccessibilityStatement(@NotNull PsiPackageAccessibilityStatement statement) {
       super.visitPackageAccessibilityStatement(statement);
       if (statement.getRole() == PsiPackageAccessibilityStatement.Role.EXPORTS) {
         PsiJavaCodeReferenceElement reference = statement.getPackageReference();

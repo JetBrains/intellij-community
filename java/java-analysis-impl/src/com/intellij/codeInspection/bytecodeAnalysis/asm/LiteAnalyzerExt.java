@@ -1,10 +1,21 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.bytecodeAnalysis.asm;
 
 import org.jetbrains.org.objectweb.asm.Opcodes;
 import org.jetbrains.org.objectweb.asm.Type;
-import org.jetbrains.org.objectweb.asm.tree.*;
-import org.jetbrains.org.objectweb.asm.tree.analysis.*;
+import org.jetbrains.org.objectweb.asm.tree.AbstractInsnNode;
+import org.jetbrains.org.objectweb.asm.tree.InsnList;
+import org.jetbrains.org.objectweb.asm.tree.JumpInsnNode;
+import org.jetbrains.org.objectweb.asm.tree.LabelNode;
+import org.jetbrains.org.objectweb.asm.tree.LookupSwitchInsnNode;
+import org.jetbrains.org.objectweb.asm.tree.MethodNode;
+import org.jetbrains.org.objectweb.asm.tree.TableSwitchInsnNode;
+import org.jetbrains.org.objectweb.asm.tree.TryCatchBlockNode;
+import org.jetbrains.org.objectweb.asm.tree.analysis.AnalyzerException;
+import org.jetbrains.org.objectweb.asm.tree.analysis.BasicValue;
+import org.jetbrains.org.objectweb.asm.tree.analysis.Frame;
+import org.jetbrains.org.objectweb.asm.tree.analysis.Interpreter;
+import org.jetbrains.org.objectweb.asm.tree.analysis.Value;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -12,8 +23,6 @@ import java.util.List;
 /**
  * Extended version of {@link LiteAnalyzer}.
  * It handles frames <b>and</b> additional data.
- *
- * @author lambdamix
  */
 public class LiteAnalyzerExt<V extends Value, Data, MyInterpreter extends Interpreter<V> & InterpreterExt<Data>> implements Opcodes {
   private final MyInterpreter interpreter;
@@ -115,16 +124,14 @@ public class LiteAnalyzerExt<V extends Value, Data, MyInterpreter extends Interp
           interpreter.init(data[insn]);
           current.init(f).execute(insnNode, interpreter);
 
-          if (insnNode instanceof JumpInsnNode) {
-            JumpInsnNode j = (JumpInsnNode)insnNode;
+          if (insnNode instanceof JumpInsnNode j) {
             if (insnOpcode != GOTO && insnOpcode != JSR) {
               merge(insn + 1, current);
             }
             int jump = insns.indexOf(j.label);
             merge(jump, current);
           }
-          else if (insnNode instanceof LookupSwitchInsnNode) {
-            LookupSwitchInsnNode lsi = (LookupSwitchInsnNode)insnNode;
+          else if (insnNode instanceof LookupSwitchInsnNode lsi) {
             int jump = insns.indexOf(lsi.dflt);
             merge(jump, current);
             for (int j = 0; j < lsi.labels.size(); ++j) {
@@ -133,8 +140,7 @@ public class LiteAnalyzerExt<V extends Value, Data, MyInterpreter extends Interp
               merge(jump, current);
             }
           }
-          else if (insnNode instanceof TableSwitchInsnNode) {
-            TableSwitchInsnNode tsi = (TableSwitchInsnNode)insnNode;
+          else if (insnNode instanceof TableSwitchInsnNode tsi) {
             int jump = insns.indexOf(tsi.dflt);
             merge(jump, current);
             for (int j = 0; j < tsi.labels.size(); ++j) {

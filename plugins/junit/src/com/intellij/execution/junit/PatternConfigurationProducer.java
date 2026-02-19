@@ -4,21 +4,25 @@ package com.intellij.execution.junit;
 
 import com.intellij.execution.Location;
 import com.intellij.execution.actions.ConfigurationContext;
+import com.intellij.execution.configurations.ConfigurationFactory;
 import com.intellij.execution.junit2.PsiMemberParameterizedLocation;
 import com.intellij.execution.testframework.AbstractPatternBasedConfigurationProducer;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.util.Ref;
+import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMember;
 import com.intellij.psi.PsiMethod;
+import com.intellij.psi.search.GlobalSearchScope;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.LinkedHashSet;
 import java.util.Set;
 
 public class PatternConfigurationProducer extends AbstractPatternBasedConfigurationProducer<JUnitConfiguration> {
-  public PatternConfigurationProducer() {
-    super(JUnitConfigurationType.getInstance());
+  @Override
+  public @NotNull ConfigurationFactory getConfigurationFactory() {
+    return JUnitConfigurationType.getInstance().getFactory();
   }
 
   @Override
@@ -34,6 +38,12 @@ public class PatternConfigurationProducer extends AbstractPatternBasedConfigurat
     final LinkedHashSet<String> classes = new LinkedHashSet<>();
     final PsiElement element = checkPatterns(context, classes);
     if (element == null) {
+      return false;
+    }
+    JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(context.getProject());
+    GlobalSearchScope resolveScope = element.getResolveScope();
+    if (psiFacade.findClass(JUnitUtil.TEST_CASE_CLASS, resolveScope) == null &&
+        psiFacade.findClass(JUnitUtil.TEST5_ANNOTATION, resolveScope) == null) {
       return false;
     }
     sourceElement.set(element);

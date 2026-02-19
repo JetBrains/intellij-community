@@ -1,4 +1,4 @@
-// "Change "1" to '1' (to char literal)" "true"
+// "Change "1" to '1' (to char literal)" "true-preview"
 class Simple {
     Simple(int i) {}
     Simple(char ch) {}

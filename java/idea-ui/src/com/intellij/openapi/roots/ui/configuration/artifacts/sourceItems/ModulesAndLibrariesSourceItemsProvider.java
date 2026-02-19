@@ -1,58 +1,51 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.ui.configuration.artifacts.sourceItems;
 
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleGrouper;
-import com.intellij.openapi.roots.*;
+import com.intellij.openapi.roots.DependencyScope;
+import com.intellij.openapi.roots.LibraryOrderEntry;
+import com.intellij.openapi.roots.ModuleRootModel;
+import com.intellij.openapi.roots.OrderEntry;
+import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.packaging.impl.artifacts.ArtifactUtil;
-import com.intellij.packaging.impl.elements.*;
+import com.intellij.packaging.impl.elements.ModuleElementTypeBase;
+import com.intellij.packaging.impl.elements.ModulePackagingElementBase;
+import com.intellij.packaging.impl.elements.PackagingElementFactoryImpl;
+import com.intellij.packaging.impl.elements.ProductionModuleOutputElementType;
 import com.intellij.packaging.ui.ArtifactEditorContext;
 import com.intellij.packaging.ui.PackagingSourceItem;
 import com.intellij.packaging.ui.PackagingSourceItemsProvider;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
-public class ModulesAndLibrariesSourceItemsProvider extends PackagingSourceItemsProvider {
+public final class ModulesAndLibrariesSourceItemsProvider extends PackagingSourceItemsProvider {
 
   @Override
-  @NotNull
-  public Collection<? extends PackagingSourceItem> getSourceItems(@NotNull ArtifactEditorContext editorContext, @NotNull Artifact artifact,
-                                                                  PackagingSourceItem parent) {
-    if (parent == null) {
-      return createModuleItems(editorContext, Collections.emptyList());
-    }
-    else if (parent instanceof ModuleGroupItem) {
-      return createModuleItems(editorContext, ((ModuleGroupItem)parent).getPath());
-    }
-    else if (parent instanceof ModuleSourceItemGroup) {
-      return createAvailableItems(editorContext, artifact, ((ModuleSourceItemGroup)parent).getModule());
-    }
-    return Collections.emptyList();
+  public @NotNull Collection<? extends PackagingSourceItem> getSourceItems(@NotNull ArtifactEditorContext editorContext, @NotNull Artifact artifact,
+                                                                           PackagingSourceItem parent) {
+    return switch (parent) {
+      case null -> createModuleItems(editorContext, Collections.emptyList());
+      case ModuleGroupItem item -> createModuleItems(editorContext, item.getPath());
+      case ModuleSourceItemGroup group -> createAvailableItems(editorContext, artifact, group.getModule());
+      default -> Collections.emptyList();
+    };
   }
 
-  @NotNull
-  private static Collection<? extends PackagingSourceItem> createAvailableItems(@NotNull ArtifactEditorContext editorContext,
-                                                                                @NotNull Artifact artifact, @NotNull Module module) {
+  private static @NotNull Collection<? extends PackagingSourceItem> createAvailableItems(@NotNull ArtifactEditorContext editorContext,
+                                                                                         @NotNull Artifact artifact, @NotNull Module module) {
     final List<PackagingSourceItem> items = new ArrayList<>();
 
     for (Module toAdd : getAvailableModules(editorContext, artifact, ProductionModuleOutputElementType.ELEMENT_TYPE, module)) {
@@ -62,8 +55,7 @@ public class ModulesAndLibrariesSourceItemsProvider extends PackagingSourceItems
     List<Library> libraries = new ArrayList<>();
     final ModuleRootModel rootModel = editorContext.getModulesProvider().getRootModel(module);
     for (OrderEntry orderEntry : rootModel.getOrderEntries()) {
-      if (orderEntry instanceof LibraryOrderEntry) {
-        final LibraryOrderEntry libraryEntry = (LibraryOrderEntry)orderEntry;
+      if (orderEntry instanceof LibraryOrderEntry libraryEntry) {
         final Library library = libraryEntry.getLibrary();
         final DependencyScope scope = libraryEntry.getScope();
         if (library != null && scope.isForProductionRuntime()) {
@@ -78,8 +70,7 @@ public class ModulesAndLibrariesSourceItemsProvider extends PackagingSourceItems
     return items;
   }
 
-  @NotNull
-  private static Collection<? extends PackagingSourceItem> createModuleItems(@NotNull ArtifactEditorContext editorContext, @NotNull List<String> groupPath) {
+  private static @NotNull Collection<? extends PackagingSourceItem> createModuleItems(@NotNull ArtifactEditorContext editorContext, @NotNull List<String> groupPath) {
     final List<PackagingSourceItem> items = new ArrayList<>();
     ModuleGrouper grouper = ModuleGrouper.instanceFor(editorContext.getProject(), editorContext.getModifiableModuleModel());
     Set<String> groups = new HashSet<>();
@@ -98,11 +89,10 @@ public class ModulesAndLibrariesSourceItemsProvider extends PackagingSourceItems
     return items;
   }
 
-  @NotNull
-  private static <E extends ModulePackagingElementBase> List<? extends Module> getAvailableModules(@NotNull final ArtifactEditorContext context,
-                                                                                                   @NotNull Artifact artifact,
-                                                                                                   @NotNull ModuleElementTypeBase<E> elementType,
-                                                                                                   final Module... allModules) {
+  private static @NotNull <E extends ModulePackagingElementBase> List<? extends Module> getAvailableModules(final @NotNull ArtifactEditorContext context,
+                                                                                                            @NotNull Artifact artifact,
+                                                                                                            @NotNull ModuleElementTypeBase<E> elementType,
+                                                                                                            final Module... allModules) {
     final Set<Module> modules = new HashSet<>();
     for (Module module : allModules) {
       if (elementType.isSuitableModule(context.getModulesProvider(), module)) {
@@ -117,7 +107,7 @@ public class ModulesAndLibrariesSourceItemsProvider extends PackagingSourceItems
     return new ArrayList<>(modules);
   }
 
-  private static List<? extends Library> getNotAddedLibraries(@NotNull final ArtifactEditorContext context, @NotNull Artifact artifact,
+  private static List<? extends Library> getNotAddedLibraries(final @NotNull ArtifactEditorContext context, @NotNull Artifact artifact,
                                                               List<? extends Library> librariesList) {
     final Set<VirtualFile> roots = new HashSet<>();
     ArtifactUtil.processPackagingElements(artifact, PackagingElementFactoryImpl.FILE_COPY_ELEMENT_TYPE, fileCopyPackagingElement -> {

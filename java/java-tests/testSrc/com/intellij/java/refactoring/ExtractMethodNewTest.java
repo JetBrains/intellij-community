@@ -1,31 +1,39 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.refactoring;
 
 import com.intellij.JavaTestUtil;
+import com.intellij.application.options.CodeStyle;
 import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.registry.RegistryValue;
 import com.intellij.pom.java.LanguageLevel;
-import com.intellij.psi.*;
+import com.intellij.psi.CommonClassNames;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypes;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.refactoring.IntroduceVariableUtil;
 import com.intellij.refactoring.extractMethod.ExtractMethodHandler;
 import com.intellij.refactoring.extractMethod.ExtractMethodProcessor;
 import com.intellij.refactoring.extractMethod.PrepareFailedException;
 import com.intellij.refactoring.extractMethod.newImpl.ExtractException;
 import com.intellij.refactoring.extractMethod.newImpl.MethodExtractor;
-import com.intellij.refactoring.introduceVariable.IntroduceVariableBase;
 import com.intellij.refactoring.util.duplicates.Match;
+import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.LightJavaCodeInsightTestCase;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.IncorrectOperationException;
@@ -201,7 +209,7 @@ public class ExtractMethodNewTest extends LightJavaCodeInsightTestCase {
     try {
       doTest();
       fail("Should not work for assignment expression");
-    } catch (PrepareFailedException e){
+    } catch (PrepareFailedException ignored) {
     }
   }
 
@@ -273,7 +281,7 @@ public class ExtractMethodNewTest extends LightJavaCodeInsightTestCase {
     try {
       doTest();
       fail("Should not work for assignment expression");
-    } catch (PrepareFailedException e){
+    } catch (PrepareFailedException ignored) {
     }
   }
 
@@ -281,8 +289,12 @@ public class ExtractMethodNewTest extends LightJavaCodeInsightTestCase {
     try {
       doTest();
       fail("Should not work for assignment expression");
-    } catch (PrepareFailedException e){
+    } catch (PrepareFailedException ignored) {
     }
+  }
+
+  public void testAssignmentInsideLambda() throws Exception {
+    doTest();
   }
 
   public void testExtractFromTryFinally2() throws Exception {
@@ -321,14 +333,12 @@ public class ExtractMethodNewTest extends LightJavaCodeInsightTestCase {
   }
 
   private void doTestWithLanguageLevel(LanguageLevel languageLevel) throws Exception {
-    LanguageLevelProjectExtension projectExtension = LanguageLevelProjectExtension.getInstance(getProject());
-    LanguageLevel oldLevel = projectExtension.getLanguageLevel();
+    LanguageLevel oldLevel = IdeaTestUtil.setProjectLanguageLevel(getProject(), languageLevel);
     try {
-      projectExtension.setLanguageLevel(languageLevel);
       doTest();
     }
     finally {
-      projectExtension.setLanguageLevel(oldLevel);
+      IdeaTestUtil.setProjectLanguageLevel(getProject(), oldLevel);
     }
   }
 
@@ -531,6 +541,10 @@ public class ExtractMethodNewTest extends LightJavaCodeInsightTestCase {
     doPrepareErrorTest("Local class is used out of the selected block.");
   }
 
+  public void testLocalClassScope() throws Exception {
+    doTest();
+  }
+
   public void testStaticImport() throws Exception {
     doTest();
   }
@@ -560,7 +574,7 @@ public class ExtractMethodNewTest extends LightJavaCodeInsightTestCase {
   }
 
   public void testForceBraces() throws Exception {
-    final CommonCodeStyleSettings settings = CodeStyleSettingsManager.getSettings(getProject()).getCommonSettings(JavaLanguage.INSTANCE);
+    final CommonCodeStyleSettings settings = CodeStyle.getSettings(getProject()).getCommonSettings(JavaLanguage.INSTANCE);
     int old = settings.IF_BRACE_FORCE;
     settings.IF_BRACE_FORCE = CommonCodeStyleSettings.FORCE_BRACES_ALWAYS;
     try {
@@ -796,10 +810,6 @@ public class ExtractMethodNewTest extends LightJavaCodeInsightTestCase {
     }
   }
 
-  public void testReturnStatementFolding() throws Exception {
-    doTest();
-  }
-
   public void testWriteArrayAccess() throws Exception {
     doTest();
   }
@@ -814,6 +824,10 @@ public class ExtractMethodNewTest extends LightJavaCodeInsightTestCase {
 
   public void testCodeDuplicatesVarargsShouldNotChangeReturnType() throws Exception {
     doDuplicatesTest();
+  }
+
+  public void testVarargsArguments() throws Exception {
+    doTest();
   }
 
   public void testParametersFromAnonymous() throws Exception {
@@ -1134,7 +1148,7 @@ public class ExtractMethodNewTest extends LightJavaCodeInsightTestCase {
   }
 
   public void testPatternVariable() throws Exception {
-    doTestWithLanguageLevel(LanguageLevel.JDK_14_PREVIEW);
+    doTestWithLanguageLevel(LanguageLevel.HIGHEST);
   }
 
   public void testPatternVariableIntroduced() throws Exception {
@@ -1146,7 +1160,7 @@ public class ExtractMethodNewTest extends LightJavaCodeInsightTestCase {
   }
 
   public void testPatternVariableIntroduced3() throws Exception {
-    doTestWithLanguageLevel(LanguageLevel.JDK_14_PREVIEW);
+    doTestWithLanguageLevel(LanguageLevel.HIGHEST);
   }
 
   public void testSuggestChangeSignatureWithChangedParameterName() throws Exception {
@@ -1161,7 +1175,7 @@ public class ExtractMethodNewTest extends LightJavaCodeInsightTestCase {
   }
 
   public void testSimpleMethodsInOneLine() throws Exception {
-    CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(getProject());
+    CodeStyleSettings settings = CodeStyle.getSettings(getProject());
     CommonCodeStyleSettings javaSettings = settings.getCommonSettings(JavaLanguage.INSTANCE);
     javaSettings.KEEP_SIMPLE_METHODS_IN_ONE_LINE = true;
     doTest();
@@ -1218,20 +1232,20 @@ public class ExtractMethodNewTest extends LightJavaCodeInsightTestCase {
 
   //TODO remove or implement
   public void _testMakeVoidMethodReturnVariable() throws Exception {
-    doTestReturnTypeChanged(PsiType.INT);
+    doTestReturnTypeChanged(PsiTypes.intType());
   }
 
   public void testNoReturnTypesSuggested() throws Exception {
-    doTestReturnTypeChanged(PsiType.INT);
+    doTestReturnTypeChanged(PsiTypes.intType());
   }
 
   public void testMultipleVarsInMethodNoReturnStatementAndAssignment() throws Exception {
     //return type should not be suggested but still
-    doTestReturnTypeChanged(PsiType.INT);
+    doTestReturnTypeChanged(PsiTypes.intType());
   }
 
   public void testReassignFinalFieldInside() throws Exception {
-    doTestReturnTypeChanged(PsiType.INT);
+    doTestReturnTypeChanged(PsiTypes.intType());
   }
 
   public void testShortenClassRefsInNewReturnType() throws Exception {
@@ -1422,8 +1436,12 @@ public class ExtractMethodNewTest extends LightJavaCodeInsightTestCase {
     }
   }
 
+  public void testNestedReference() throws Exception {
+    doTest();
+  }
+
   public void testQualifyWhenConflictingNamePresent() throws Exception {
-    final CommonCodeStyleSettings settings = CodeStyleSettingsManager.getSettings(getProject()).getCommonSettings(JavaLanguage.INSTANCE);
+    final CommonCodeStyleSettings settings = CodeStyle.getSettings(getProject()).getCommonSettings(JavaLanguage.INSTANCE);
     settings.ELSE_ON_NEW_LINE = true;
     settings.CATCH_ON_NEW_LINE = myCatchOnNewLine;
     configureByFile(BASE_PATH + getTestName(false) + ".java");
@@ -1436,12 +1454,14 @@ public class ExtractMethodNewTest extends LightJavaCodeInsightTestCase {
   }
 
   public void testNoStaticForInnerClass() {
-    try {
-      configureByFile(BASE_PATH + getTestName(false) + ".java");
-      performExtractMethod(true, true, getEditor(), getFile(), getProject(), false, null, true, null, null, null);
-      fail("Static modifier is forbidden inside inner classes");
-    } catch (PrepareFailedException e){
-    }
+    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_15, () -> {
+      try {
+        configureByFile(BASE_PATH + getTestName(false) + ".java");
+        performExtractMethod(true, true, getEditor(), getFile(), getProject(), false, null, true, null, null, null);
+        fail("Static modifier is forbidden inside inner classes");
+      } catch (PrepareFailedException ignored){
+      }
+    });
   }
 
   public void testStaticForNestedClass() throws Exception {
@@ -1689,8 +1709,57 @@ public class ExtractMethodNewTest extends LightJavaCodeInsightTestCase {
     doTest();
   }
 
+  public void testSimpleWithNullableDirectlyBeforeType() throws Exception {
+    JavaCodeStyleSettings instance = JavaCodeStyleSettings.getInstance(getProject());
+    boolean oldValue = instance.GENERATE_USE_TYPE_ANNOTATION_BEFORE_TYPE;
+    instance.GENERATE_USE_TYPE_ANNOTATION_BEFORE_TYPE = true;
+    try {
+      doTest();
+    }
+    finally {
+      instance.GENERATE_USE_TYPE_ANNOTATION_BEFORE_TYPE = oldValue;
+    }
+  }
+
+  public void testSimpleWithNullableDirectlyBeforeKeyword() throws Exception {
+    JavaCodeStyleSettings instance = JavaCodeStyleSettings.getInstance(getProject());
+    boolean oldValue = instance.GENERATE_USE_TYPE_ANNOTATION_BEFORE_TYPE;
+    instance.GENERATE_USE_TYPE_ANNOTATION_BEFORE_TYPE = false;
+    try {
+      doTest();
+    }
+    finally {
+      instance.GENERATE_USE_TYPE_ANNOTATION_BEFORE_TYPE = oldValue;
+    }
+  }
+
+  public void testNullableAnnotationNotTypeUse() throws Exception {
+    final NullableNotNullManager nullManager = NullableNotNullManager.getInstance(getProject());
+
+    final List<String> nullables = nullManager.getNullables();
+    final List<String> notNulls = nullManager.getNotNulls();
+    final String defaultNullable = nullManager.getDefaultNullable();
+    final String defaultNotNull = nullManager.getDefaultNotNull();
+    try {
+      String nullable = "com.test.Nullable";
+      String notNull = "com.test.NotNull";
+      nullManager.setNullables(nullable);
+      nullManager.setNotNulls(notNull);
+      nullManager.setDefaultNullable(nullable);
+      nullManager.setDefaultNotNull(notNull);
+
+      doTest();
+    }
+    finally {
+      nullManager.setNullables(ArrayUtilRt.toStringArray(nullables));
+      nullManager.setNotNulls(ArrayUtilRt.toStringArray(notNulls));
+      nullManager.setDefaultNullable(defaultNullable);
+      nullManager.setDefaultNotNull(defaultNotNull);
+    }
+  }
+
   private void doTestDisabledParam() throws PrepareFailedException {
-    final CommonCodeStyleSettings settings = CodeStyleSettingsManager.getSettings(getProject()).getCommonSettings(JavaLanguage.INSTANCE);
+    final CommonCodeStyleSettings settings = CodeStyle.getSettings(getProject()).getCommonSettings(JavaLanguage.INSTANCE);
     settings.ELSE_ON_NEW_LINE = true;
     settings.CATCH_ON_NEW_LINE = myCatchOnNewLine;
     configureByFile(BASE_PATH + getTestName(false) + ".java");
@@ -1700,7 +1769,7 @@ public class ExtractMethodNewTest extends LightJavaCodeInsightTestCase {
   }
 
   private void doTestReturnTypeChanged(PsiType type) throws PrepareFailedException {
-    final CommonCodeStyleSettings settings = CodeStyleSettingsManager.getSettings(getProject()).getCommonSettings(JavaLanguage.INSTANCE);
+    final CommonCodeStyleSettings settings = CodeStyle.getSettings(getProject()).getCommonSettings(JavaLanguage.INSTANCE);
     settings.ELSE_ON_NEW_LINE = true;
     settings.CATCH_ON_NEW_LINE = myCatchOnNewLine;
     configureByFile(BASE_PATH + getTestName(false) + ".java");
@@ -1710,7 +1779,7 @@ public class ExtractMethodNewTest extends LightJavaCodeInsightTestCase {
   }
 
   private void doTestPassFieldsAsParams() throws PrepareFailedException {
-    final CommonCodeStyleSettings settings = CodeStyleSettingsManager.getSettings(getProject()).getCommonSettings(JavaLanguage.INSTANCE);
+    final CommonCodeStyleSettings settings = CodeStyle.getSettings(getProject()).getCommonSettings(JavaLanguage.INSTANCE);
     settings.ELSE_ON_NEW_LINE = true;
     settings.CATCH_ON_NEW_LINE = myCatchOnNewLine;
     configureByFile(BASE_PATH + getTestName(false) + ".java");
@@ -1749,7 +1818,7 @@ public class ExtractMethodNewTest extends LightJavaCodeInsightTestCase {
   }
 
   private void doTest() throws Exception {
-    final CommonCodeStyleSettings settings = CodeStyleSettingsManager.getSettings(getProject()).getCommonSettings(JavaLanguage.INSTANCE);
+    final CommonCodeStyleSettings settings = CodeStyle.getSettings(getProject()).getCommonSettings(JavaLanguage.INSTANCE);
     settings.ELSE_ON_NEW_LINE = true;
     settings.CATCH_ON_NEW_LINE = myCatchOnNewLine;
     doTest(true);
@@ -1841,7 +1910,7 @@ public class ExtractMethodNewTest extends LightJavaCodeInsightTestCase {
       elements = CodeInsightUtil.findStatementsInRange(file, startOffset, endOffset);
     }
     if (elements.length == 0) {
-      final PsiExpression expression = IntroduceVariableBase.getSelectedExpression(project, file, startOffset, endOffset);
+      final PsiExpression expression = IntroduceVariableUtil.getSelectedExpression(project, file, startOffset, endOffset);
       if (expression != null) {
         elements = new PsiElement[]{expression};
       }
@@ -1867,10 +1936,10 @@ public class ExtractMethodNewTest extends LightJavaCodeInsightTestCase {
     }
 
     if (doRefactor) {
-      processor.testTargetClass(targetClass);
+      processor.setTargetClass(targetClass);
       processor.testPrepare(returnType, makeStatic);
       if (methodVisibility != null) processor.setMethodVisibility(methodVisibility);
-      processor.testNullability();
+      processor.prepareNullability();
       for (int param : disabledParams) {
         processor.doNotPassParameter(param);
       }

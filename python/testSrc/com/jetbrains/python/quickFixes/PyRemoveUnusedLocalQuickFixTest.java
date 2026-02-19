@@ -15,28 +15,30 @@
  */
 package com.jetbrains.python.quickFixes;
 
+import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.testFramework.TestDataPath;
 import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.PyQuickFixTestCase;
 import com.jetbrains.python.inspections.unusedLocal.PyUnusedLocalInspection;
 import com.jetbrains.python.psi.LanguageLevel;
+import org.jetbrains.annotations.NotNull;
 
 @TestDataPath("$CONTENT_ROOT/../testData/quickFixes/PyRemoveUnusedLocalQuickFixTest/")
 public class PyRemoveUnusedLocalQuickFixTest extends PyQuickFixTestCase {
   // PY-20893
   public void testExcept() {
-    doQuickFixTest(PyUnusedLocalInspection.class, PyPsiBundle.message("QFIX.NAME.remove.target.expr"));
+    doQuickFixTest(PyUnusedLocalInspection.class, PyPsiBundle.message("QFIX.NAME.remove.exception.target"));
   }
 
   // PY-20893
   public void testExcept2() {
     runWithLanguageLevel(LanguageLevel.PYTHON27,
-                         () -> doQuickFixTest(PyUnusedLocalInspection.class, PyPsiBundle.message("QFIX.NAME.remove.target.expr")));
+                         () -> doQuickFixTest(PyUnusedLocalInspection.class, PyPsiBundle.message("QFIX.NAME.remove.exception.target")));
   }
 
   // PY-26418
   public void testWithOneTarget() {
-    doQuickFixTest(PyUnusedLocalInspection.class, PyPsiBundle.message("QFIX.NAME.remove.target.expr"));
+    doQuickFixTest(PyUnusedLocalInspection.class, PyPsiBundle.message("QFIX.NAME.remove.with.target"));
   }
 
   // PY-26418
@@ -45,25 +47,51 @@ public class PyRemoveUnusedLocalQuickFixTest extends PyQuickFixTestCase {
   }
 
   // PY-26418
-  // TODO: PY-43505
-  public void _testTwoWithItemsFirstUnused() {
-    runWithLanguageLevel(LanguageLevel.getLatest(), () -> {
-      doQuickFixTest(PyUnusedLocalInspection.class, PyPsiBundle.message("QFIX.NAME.remove.target.expr"));
-    });
+  public void testTwoWithItemsFirstUnused() {
+    doQuickFixTest(PyUnusedLocalInspection.class, PyPsiBundle.message("QFIX.NAME.remove.with.target"));
   }
 
   // PY-26418
   public void testTwoWithItemsSecondUnused() {
-    runWithLanguageLevel(LanguageLevel.getLatest(), () -> {
-      doQuickFixTest(PyUnusedLocalInspection.class, PyPsiBundle.message("QFIX.NAME.remove.target.expr"));
-    });
+    doQuickFixTest(PyUnusedLocalInspection.class, PyPsiBundle.message("QFIX.NAME.remove.with.target"));
   }
 
   // PY-17901
   public void testRemoveAssignmentStatementTarget() {
-    runWithLanguageLevel(LanguageLevel.getLatest(), () -> {
-      doQuickFixTest(PyUnusedLocalInspection.class, PyPsiBundle.message("QFIX.NAME.remove.target.expr"));
-    });
+    doQuickFixTest(PyUnusedLocalInspection.class, PyPsiBundle.message("QFIX.NAME.remove.assignment.target"));
+  }
+
+  // PY-28782
+  public void testRemoveChainedAssignmentStatementFirstTarget() {
+    doQuickFixTest(PyUnusedLocalInspection.class, PyPsiBundle.message("QFIX.NAME.remove.assignment.target"));
+  }
+
+  // PY-28782
+  public void testRemoveChainedAssignmentStatementSecondTarget() {
+    doQuickFixTest(PyUnusedLocalInspection.class, PyPsiBundle.message("QFIX.NAME.remove.assignment.target"));
+  }
+
+  // PY-28782
+  public void testRemoveChainedAssignmentStatementUnpackingFirstTarget() {
+    doTestNotIgnoreTupleUnpacking(PyPsiBundle.message("INSP.unused.locals.replace.with.wildcard"));
+  }
+
+  // PY-28782
+  public void testRemoveChainedAssignmentStatementUnpackingSecondTarget() {
+    doTestNotIgnoreTupleUnpacking(PyPsiBundle.message("INSP.unused.locals.replace.with.wildcard"));
+  }
+
+  private void doTestNotIgnoreTupleUnpacking(@NotNull String hint) {
+    final String testFileName = getTestName(true);
+    final PyUnusedLocalInspection inspection = new PyUnusedLocalInspection();
+    inspection.ignoreTupleUnpacking = false;
+    myFixture.configureByFile(testFileName + ".py");
+    myFixture.enableInspections(inspection);
+    myFixture.checkHighlighting(true, false, false);
+    final IntentionAction intentionAction = myFixture.findSingleIntention(hint);
+    assertNotNull(intentionAction);
+    myFixture.launchAction(intentionAction);
+    myFixture.checkResultByFile(testFileName + "_after.py", true);
   }
 
   // PY-32037
@@ -74,5 +102,17 @@ public class PyRemoveUnusedLocalQuickFixTest extends PyQuickFixTestCase {
   // PY-32037
   public void testComprehensionIterator() {
     doQuickFixTest(PyUnusedLocalInspection.class, PyPsiBundle.message("INSP.unused.locals.replace.with.wildcard"));
+  }
+
+  // PY-85080
+  public void testRemoveUnusedTypeParameterInFunction() {
+    runWithLanguageLevel(LanguageLevel.PYTHON312,
+                         () -> doQuickFixTest(PyUnusedLocalInspection.class, PyPsiBundle.message("QFIX.NAME.remove.type.parameter")));
+  }
+
+  // PY-85080
+  public void testRemoveUnusedTypeParameterInTypeAlias() {
+    runWithLanguageLevel(LanguageLevel.PYTHON312,
+                         () -> doQuickFixTest(PyUnusedLocalInspection.class, PyPsiBundle.message("QFIX.NAME.remove.type.parameter")));
   }
 }

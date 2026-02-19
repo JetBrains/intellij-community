@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.ui.tree.render;
 
 import com.intellij.debugger.DebuggerContext;
@@ -6,12 +6,14 @@ import com.intellij.debugger.DebuggerManagerEx;
 import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.debugger.actions.ArrayAction;
 import com.intellij.debugger.engine.ContextUtil;
+import com.intellij.debugger.engine.DebugProcessImpl;
 import com.intellij.debugger.engine.DebuggerManagerThreadImpl;
 import com.intellij.debugger.engine.JavaValue;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluationContext;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.debugger.engine.evaluation.TextWithImportsImpl;
+import com.intellij.debugger.engine.evaluation.expression.UnBoxingEvaluator;
 import com.intellij.debugger.impl.DebuggerUtilsAsync;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.memory.utils.ErrorsValueGroup;
@@ -19,6 +21,7 @@ import com.intellij.debugger.settings.NodeRendererSettings;
 import com.intellij.debugger.settings.ViewsGeneralSettings;
 import com.intellij.debugger.ui.impl.watch.ArrayElementDescriptorImpl;
 import com.intellij.debugger.ui.impl.watch.NodeManagerImpl;
+import com.intellij.debugger.ui.impl.watch.ValueDescriptorImpl;
 import com.intellij.debugger.ui.tree.DebuggerTreeNode;
 import com.intellij.debugger.ui.tree.NodeDescriptor;
 import com.intellij.debugger.ui.tree.NodeDescriptorFactory;
@@ -29,20 +32,31 @@ import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.openapi.util.DefaultJDOMExternalizer;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.java.LanguageLevel;
+import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementFactory;
 import com.intellij.psi.PsiExpression;
+import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xdebugger.XExpression;
 import com.intellij.xdebugger.frame.XCompositeNode;
 import com.intellij.xdebugger.frame.XDebuggerTreeNodeHyperlink;
 import com.intellij.xdebugger.frame.XValueChildrenList;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
-import com.sun.jdi.*;
+import com.sun.jdi.ArrayReference;
+import com.sun.jdi.ArrayType;
+import com.sun.jdi.ObjectCollectedException;
+import com.sun.jdi.StringReference;
+import com.sun.jdi.Type;
+import com.sun.jdi.Value;
+import one.util.streamex.StreamEx;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 
@@ -55,13 +69,13 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
-public class ArrayRenderer extends NodeRendererImpl{
+public class ArrayRenderer extends NodeRendererImpl {
   private static final Logger LOG = Logger.getInstance(ArrayRenderer.class);
 
   public static final @NonNls String UNIQUE_ID = "ArrayRenderer";
 
   public int START_INDEX = 0;
-  public int END_INDEX   = Integer.MAX_VALUE;
+  public int END_INDEX = Integer.MAX_VALUE;
   public int ENTRIES_LIMIT = XCompositeNode.MAX_CHILDREN_TO_SHOW;
 
   private boolean myForced = false;
@@ -91,8 +105,81 @@ public class ArrayRenderer extends NodeRendererImpl{
   }
 
   @Override
-  public String calcLabel(ValueDescriptor descriptor, EvaluationContext evaluationContext, DescriptorLabelListener listener) throws EvaluateException {
-    return ClassRenderer.calcLabel(descriptor, evaluationContext);
+  public String calcLabel(ValueDescriptor descriptor, EvaluationContext evaluationContext, DescriptorLabelListener listener)
+    throws EvaluateException {
+    if (!Registry.is("debugger.renderers.arrays") ||
+        OnDemandRenderer.isOnDemandForced((DebugProcessImpl)evaluationContext.getDebugProcess())) {
+      return ClassRenderer.calcLabel(descriptor, evaluationContext);
+    }
+
+    Value value = descriptor.getValue();
+    if (value == null) {
+      return "null";
+    }
+    else if (value instanceof ArrayReference arrValue) {
+      String componentTypeName = ((ArrayType)arrValue.type()).componentTypeName();
+      boolean isString = CommonClassNames.JAVA_LANG_STRING.equals(componentTypeName);
+      if (TypeConversionUtil.isPrimitive(componentTypeName) || UnBoxingEvaluator.isTypeUnboxable(componentTypeName) || isString) {
+        CompletableFuture<String> asyncLabel = DebuggerUtilsAsync.length(arrValue)
+          .thenCompose(length -> {
+            if (length > 0) {
+              int shownLength = Math.min(length, Registry.intValue(
+                isString ? "debugger.renderers.arrays.max.strings" : "debugger.renderers.arrays.max.primitives"));
+              return DebuggerUtilsAsync.getValues(arrValue, 0, shownLength).thenCompose(values -> {
+                @SuppressWarnings("unchecked")
+                CompletableFuture<String>[] futures = ContainerUtil.map2Array(values, new CompletableFuture[0], v -> {
+                  if (v != null) {
+                    try {
+                      v = (Value)UnBoxingEvaluator.unbox(v, evaluationContext);
+                    }
+                    catch (EvaluateException e) {
+                      throw new RuntimeException(e);
+                    }
+                  }
+                  return getElementAsString(v);
+                });
+                return CompletableFuture.allOf(futures).thenApply(__ -> {
+                  List<String> elements = ContainerUtil.map(futures, CompletableFuture::join);
+                  if (descriptor instanceof ValueDescriptorImpl) {
+                    int compactLength = Math.min(shownLength, isString ? 5 : 10);
+                    String compact =
+                      createLabel(elements.subList(0, compactLength), length - values.size() + (shownLength - compactLength));
+                    ((ValueDescriptorImpl)descriptor).setCompactValueLabel(compact);
+                  }
+                  return createLabel(elements, length - values.size());
+                });
+              });
+            }
+            return CompletableFuture.completedFuture("[]");
+          });
+        if (asyncLabel.isDone()) {
+          return asyncLabel.join();
+        }
+        else {
+          asyncLabel.thenAccept(res -> {
+            descriptor.setValueLabel(res);
+            listener.labelChanged();
+          });
+        }
+      }
+      return "";
+    }
+    return JavaDebuggerBundle.message("label.undefined");
+  }
+
+  private static String createLabel(List<String> elements, int remaining) {
+    StreamEx<String> strings = StreamEx.of(elements);
+    if (remaining > 0) {
+      strings = strings.append(JavaDebuggerBundle.message("message.node.array.elements.more", remaining));
+    }
+    return strings.joining(", ", "[", "]");
+  }
+
+  private static CompletableFuture<String> getElementAsString(Value value) {
+    if (value instanceof StringReference) {
+      return DebuggerUtilsAsync.getStringValue((StringReference)value).thenApply(e -> "\"" + StringUtil.first(e, 15, true) + "\"");
+    }
+    return CompletableFuture.completedFuture(value != null ? value.toString() : "null");
   }
 
   public void setForced(boolean forced) {
@@ -116,11 +203,11 @@ public class ArrayRenderer extends NodeRendererImpl{
           }
 
           AtomicInteger added = new AtomicInteger();
-        AtomicBoolean hiddenNulls = new AtomicBoolean();
+          AtomicBoolean hiddenNulls = new AtomicBoolean();
 
-        addChunk(array, START_INDEX, Math.min(arrayLength - 1, END_INDEX), arrayLength, builder, evaluationContext, added, hiddenNulls);
-      }
-    });
+          addChunk(array, START_INDEX, Math.min(arrayLength - 1, END_INDEX), arrayLength, builder, evaluationContext, added, hiddenNulls);
+        }
+      });
   }
 
   private CompletableFuture<Void> addChunk(ArrayReference array,
@@ -345,8 +432,7 @@ public class ArrayRenderer extends NodeRendererImpl{
         TreePath path = tree.getPathForLocation(e.getX(), e.getY());
         if (path != null) {
           TreeNode parent = ((TreeNode)path.getLastPathComponent()).getParent();
-          if (parent instanceof XValueNodeImpl) {
-            XValueNodeImpl valueNode = (XValueNodeImpl)parent;
+          if (parent instanceof XValueNodeImpl valueNode) {
             ArrayAction.setArrayRenderer(NodeRendererSettings.getInstance().getArrayRenderer(),
                                          valueNode,
                                          DebuggerManagerEx.getInstanceEx(tree.getProject()).getContext());

@@ -1,0 +1,6 @@
+- name: dist.all/lib/intellij.spellchecker.jar
+  modules:
+  - name: intellij.spellchecker
+    libraries:
+      java-string-similarity:
+      - name: $MAVEN_REPOSITORY$/info/debatty/java-string-similarity/2/java-string-similarity-2.jar

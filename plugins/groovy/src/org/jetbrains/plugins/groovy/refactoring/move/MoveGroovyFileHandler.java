@@ -17,12 +17,21 @@ package org.jetbrains.plugins.groovy.refactoring.move;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaDirectoryService;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiPackage;
+import com.intellij.psi.PsiReference;
 import com.intellij.refactoring.move.moveClassesOrPackages.MoveClassesOrPackagesUtil;
 import com.intellij.refactoring.move.moveFilesOrDirectories.MoveFileHandler;
 import com.intellij.refactoring.util.MoveRenameUsageInfo;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.util.GroovyChangeContextUtil;
 
@@ -34,7 +43,7 @@ import java.util.Map;
 /**
  * @author Max Medvedev
  */
-public class MoveGroovyFileHandler extends MoveFileHandler {
+public final class MoveGroovyFileHandler extends MoveFileHandler {
   private static final Logger LOG = Logger.getInstance(MoveGroovyFileHandler.class);
 
   @Override
@@ -52,7 +61,7 @@ public class MoveGroovyFileHandler extends MoveFileHandler {
   }
 
   @Override
-  public List<UsageInfo> findUsages(PsiFile psiFile, PsiDirectory newParent, boolean searchInComments, boolean searchInNonJavaFiles) {
+  public @Nullable @Unmodifiable List<UsageInfo> findUsages(@NotNull PsiFile psiFile, @NotNull PsiDirectory newParent, boolean searchInComments, boolean searchInNonJavaFiles) {
     final List<UsageInfo> result = new ArrayList<>();
     final PsiPackage newParentPackage = JavaDirectoryService.getInstance().getPackage(newParent);
     final String qualifiedName = newParentPackage == null ? "" : newParentPackage.getQualifiedName();
@@ -65,10 +74,9 @@ public class MoveGroovyFileHandler extends MoveFileHandler {
   }
 
   @Override
-  public void retargetUsages(List<UsageInfo> usageInfos, Map<PsiElement, PsiElement> oldToNewMap) {
+  public void retargetUsages(@Unmodifiable @NotNull List<? extends UsageInfo> usageInfos, @NotNull Map<PsiElement, PsiElement> oldToNewMap) {
     for (UsageInfo usage : usageInfos) {
-      if (usage instanceof MoveRenameUsageInfo) {
-        final MoveRenameUsageInfo moveRenameUsage = (MoveRenameUsageInfo)usage;
+      if (usage instanceof MoveRenameUsageInfo moveRenameUsage) {
         final PsiElement oldElement = moveRenameUsage.getReferencedElement();
         final PsiElement newElement = oldToNewMap.get(oldElement);
         final PsiReference reference = moveRenameUsage.getReference();

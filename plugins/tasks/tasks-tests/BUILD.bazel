@@ -1,0 +1,118 @@
+### auto-generated section `build intellij.tasks.tests` start
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+jvm_library(
+  name = "tests",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    "//plugins/tasks/tasks-api:tasks",
+    "//plugins/tasks/tasks-java:java",
+    "//plugins/tasks/tasks-compatibility:compatibility",
+    "//platform/vcs-api:vcs",
+    "//platform/ide-core-impl",
+    "//platform/dvcs-impl:vcs-dvcs-impl",
+    "//platform/vcs-impl",
+    "//libraries/xml-rpc",
+    "//spellchecker",
+    "//java/debugger/openapi:java-debugger",
+    "//plugins/xslt-debugger",
+    "//libraries/gson",
+    "//platform/core-ui",
+  ]
+)
+
+jvm_library(
+  name = "tests_test_lib",
+  module_name = "intellij.tasks.tests",
+  visibility = ["//visibility:public"],
+  srcs = glob(["test/**/*.kt", "test/**/*.java", "test/**/*.form"], allow_empty = True),
+  deps = [
+    "//platform/analysis-api:analysis",
+    "//platform/analysis-api:analysis_test_lib",
+    "//platform/core-api:core",
+    "//platform/core-api:core_test_lib",
+    "//platform/editor-ui-api:editor-ui",
+    "//platform/editor-ui-api:editor-ui_test_lib",
+    "//platform/projectModel-api:projectModel",
+    "//platform/projectModel-api:projectModel_test_lib",
+    "//plugins/tasks/tasks-api:tasks",
+    "//plugins/tasks/tasks-api:tasks_test_lib",
+    "//plugins/tasks/tasks-core:core",
+    "//plugins/tasks/tasks-core:core_test_lib",
+    "//plugins/tasks/tasks-java:java",
+    "//plugins/tasks/tasks-java:java_test_lib",
+    "//java/debugger/impl",
+    "//java/debugger/impl:impl_test_lib",
+    "//plugins/tasks/tasks-compatibility:compatibility",
+    "//plugins/tasks/tasks-compatibility:compatibility_test_lib",
+    "//platform/vcs-api:vcs",
+    "//platform/vcs-api:vcs_test_lib",
+    "@lib//:junit4",
+    "//platform/ide-core-impl",
+    "//platform/dvcs-impl:vcs-dvcs-impl",
+    "//platform/dvcs-impl:vcs-dvcs-impl_test_lib",
+    "//java/testFramework",
+    "//java/testFramework:testFramework_test_lib",
+    "//platform/vcs-impl",
+    "//platform/vcs-impl:vcs-impl_test_lib",
+    "//libraries/xml-rpc",
+    "//libraries/xml-rpc:xml-rpc_test_lib",
+    "//java/debugger/openapi:java-debugger",
+    "//java/debugger/openapi:java-debugger_test_lib",
+    "//plugins/xslt-debugger",
+    "//plugins/xslt-debugger:xslt-debugger_test_lib",
+    "//platform/xdebugger-impl:debugger-impl",
+    "//platform/xdebugger-impl:debugger-impl_test_lib",
+    "//libraries/gson",
+    "//libraries/gson:gson_test_lib",
+    "//plugins/tasks/tasks-core/jira",
+    "//plugins/tasks/tasks-core/jira:jira_test_lib",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test_lib",
+    "//plugins/git4idea:vcs-git",
+    "//plugins/git4idea:vcs-git_test_lib",
+    "//plugins/hg4idea:vcs-hg",
+    "//plugins/hg4idea:vcs-hg_test_lib",
+    "//platform/vcs-tests:vcs-testFramework",
+    "//platform/vcs-tests:vcs-testFramework_test_lib",
+    "//platform/tasks-platform-api:tasks",
+    "//platform/tasks-platform-api:tasks_test_lib",
+    "//platform/tasks-platform-impl:tasks-impl",
+    "//platform/tasks-platform-impl:tasks-impl_test_lib",
+    "@lib//:easymock",
+    "@lib//:objenesis",
+    "//libraries/http-client",
+    "//libraries/http-client:http-client_test_lib",
+    "@lib//:assert_j",
+    "//libraries/stream",
+    "//libraries/stream:stream_test_lib",
+    "//platform/core-ui",
+    "//platform/core-ui:core-ui_test_lib",
+    "//platform/util/jdom",
+    "//platform/util/jdom:jdom_test_lib",
+    "//platform/bookmarks",
+    "//platform/bookmarks:bookmarks_test_lib",
+    "//plugins/git4idea/shared",
+    "//plugins/git4idea/shared:shared_test_lib",
+    "//platform/dvcs-impl/shared",
+    "//platform/dvcs-impl/shared:shared_test_lib",
+    "//plugins/tasks/tasks-core/trac",
+    "//plugins/tasks/tasks-core/trac:trac_test_lib",
+  ],
+  runtime_deps = [
+    ":tests",
+    "//platform/ide-core-impl:ide-core-impl_test_lib",
+    "//spellchecker:spellchecker_test_lib",
+  ]
+)
+### auto-generated section `build intellij.tasks.tests` end
+
+### auto-generated section `test intellij.tasks.tests` start
+load("@community//build:tests-options.bzl", "jps_test")
+
+jps_test(
+  name = "tests_test",
+  runtime_deps = [":tests_test_lib"]
+)
+### auto-generated section `test intellij.tasks.tests` end

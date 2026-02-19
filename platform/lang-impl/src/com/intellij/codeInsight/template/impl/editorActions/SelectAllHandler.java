@@ -23,9 +23,11 @@ import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.util.TextRange;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+@ApiStatus.Internal
 public class SelectAllHandler extends EditorActionHandler {
   private final EditorActionHandler myOriginalHandler;
 
@@ -39,7 +41,7 @@ public class SelectAllHandler extends EditorActionHandler {
     if (templateState != null && !templateState.isFinished()) {
       final TextRange range = templateState.getCurrentVariableRange();
       final int caretOffset = editor.getCaretModel().getOffset();
-      if (range != null && range.getStartOffset() <= caretOffset && caretOffset <= range.getEndOffset()) {
+      if (range != null && range.containsInclusive(caretOffset)) {
         editor.getSelectionModel().setSelection(range.getStartOffset(), range.getEndOffset());
         return;
       }

@@ -2,16 +2,22 @@
 
 package com.intellij.profile.codeInspection.ui.inspectionsTree;
 
+import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.openapi.util.text.NaturalComparator;
+import org.jetbrains.annotations.ApiStatus;
 
 import java.util.Comparator;
 
+@ApiStatus.Internal
 public final class InspectionsConfigTreeComparator {
   public static final Comparator<InspectionConfigTreeNode> INSTANCE =
     Comparator.<InspectionConfigTreeNode>comparingInt(n -> n instanceof InspectionConfigTreeNode.Group ? 0 : 1)
       .thenComparing(n -> getDisplayTextToSort(n.getText()), NaturalComparator.INSTANCE);
 
   public static String getDisplayTextToSort(String s) {
+    if (s.equals(InspectionsBundle.message("group.names.user.defined"))) {
+      return " " + InspectionsBundle.message("group.names.user.defined"); // sort at the top
+    }
     if (s.isEmpty()) {
       return s;
     }

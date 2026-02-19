@@ -1,0 +1,15 @@
+fun interface ABCD {
+    fun foo(a: Int, b: String)
+}
+
+fun abc(
+    text1: String, text2: String, aBCD: ABCD = ABCD { a, b ->
+        // doSomething
+    }
+) {
+    unknown(
+        text1,
+        text2,
+        aBCD
+    )
+}

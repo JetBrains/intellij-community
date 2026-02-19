@@ -1,8 +1,8 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.builders.java.dependencyView;
 
 import com.intellij.util.io.DataInputOutputUtil;
-import gnu.trove.THashSet;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.builders.storage.BuildDataCorruptedException;
 
@@ -10,11 +10,10 @@ import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
 import java.io.PrintStream;
+import java.util.HashSet;
 import java.util.Set;
 
-/**
- * @author Eugene Zhuravlev
- */
+@ApiStatus.Internal
 public abstract class ClassFileRepr extends Proto {
   protected final DependencyContext myContext;
   private final int myFileName;
@@ -37,7 +36,7 @@ public abstract class ClassFileRepr extends Proto {
     myContext = context;
     try {
       myFileName = DataInputOutputUtil.readINT(in);
-      myUsages = RW.read(UsageRepr.externalizer(context), new THashSet<>(), in);
+      myUsages = RW.read(UsageRepr.externalizer(context), new HashSet<>(), in);
     }
     catch (IOException e) {
       throw new BuildDataCorruptedException(e);

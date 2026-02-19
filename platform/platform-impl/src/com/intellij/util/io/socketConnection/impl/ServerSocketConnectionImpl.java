@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.io.socketConnection.impl;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -15,12 +15,12 @@ import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 
-public class ServerSocketConnectionImpl<Request extends AbstractRequest, Response extends AbstractResponse> extends SocketConnectionBase<Request,Response> {
+public final class ServerSocketConnectionImpl<Request extends AbstractRequest, Response extends AbstractResponse> extends SocketConnectionBase<Request,Response> {
   private static final Logger LOG = Logger.getInstance(ServerSocketConnectionImpl.class);
   private ServerSocket myServerSocket;
   private final int myDefaultPort;
   private final int myPortChoiceAttempts;
-  @Nullable private final InetAddress myBindAddress;
+  private final @Nullable InetAddress myBindAddress;
 
   public ServerSocketConnectionImpl(int defaultPort,
                                     @Nullable InetAddress bindAddress,
@@ -47,8 +47,7 @@ public class ServerSocketConnectionImpl<Request extends AbstractRequest, Respons
     });
   }
 
-  @NotNull
-  private ServerSocket createSocket() throws IOException {
+  private @NotNull ServerSocket createSocket() throws IOException {
     IOException exc = null;
     for (int i = 0; i < myPortChoiceAttempts; i++) {
       int port = myDefaultPort + i;

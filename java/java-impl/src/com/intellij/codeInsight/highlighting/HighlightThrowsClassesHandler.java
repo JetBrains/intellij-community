@@ -15,7 +15,8 @@ import com.intellij.psi.PsiFile;
 import com.intellij.ui.SimpleListCellRenderer;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.JList;
+import javax.swing.ListSelectionModel;
 import java.util.Arrays;
 
 /**
@@ -23,8 +24,6 @@ import java.util.Arrays;
  * (or just highlight the usages under the caret if the user told us so)
  */
 class HighlightThrowsClassesHandler extends HighlightExceptionsHandler {
-  private @NotNull final Editor myEditor;
-  private @NotNull final PsiFile myFile;
   private final PsiElement myResolved;
 
   enum MODE {
@@ -39,8 +38,6 @@ class HighlightThrowsClassesHandler extends HighlightExceptionsHandler {
                                 @NotNull PsiElement block,
                                 @NotNull PsiElement resolved) {
     super(editor, file, target, new PsiClassType[]{type}, block, null, __->true);
-    myEditor = editor;
-    myFile = file;
     myResolved = resolved;
   }
 

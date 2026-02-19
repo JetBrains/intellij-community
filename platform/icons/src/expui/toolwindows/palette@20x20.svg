@@ -1,0 +1,16 @@
+<!-- Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license. -->
+<svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <g clip-path="url(#clip0_3769_2012)">
+    <path d="M1.75 12.75v5a.5.5 0 0 0 .5.5h15.5a.5.5 0 0 0 .5-.5v-5a.5.5 0 0 0-.5-.5H2.25a.5.5 0 0 0-.5.5z" stroke="#6C707E"
+          stroke-width="1.5"/>
+    <circle cx="15" cy="15.25" r="1" fill="#6C707E"/>
+    <path fill-rule="evenodd" clip-rule="evenodd"
+          d="M3.674 6.856l3.182-3.182L13.182 10h2.121L7.74 2.436a1.25 1.25 0 0 0-1.768 0L2.436 5.972a1.25 1.25 0 0 0 0 1.768L4.696 10h2.122L3.674 6.856zM13 2.75h4.5V10h1.329a.5.5 0 0 1 .171.03V2.5c0-.69-.56-1.25-1.25-1.25h-5c-.69 0-1.25.56-1.25 1.25v1.656l1.5 1.5V2.75z"
+          fill="#6C707E"/>
+  </g>
+  <defs>
+    <clipPath id="clip0_3769_2012">
+      <path fill="#fff" d="M0 0h20v20H0z"/>
+    </clipPath>
+  </defs>
+</svg>

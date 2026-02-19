@@ -1,15 +1,17 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.coverage;
 
+import com.intellij.coverage.analysis.CoverageInfoCollector;
+import com.intellij.coverage.analysis.JavaCoverageClassesAnnotator;
+import com.intellij.coverage.analysis.PackageAnnotator;
 import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.openapi.compiler.CompilerMessage;
 import com.intellij.openapi.compiler.CompilerMessageCategory;
-import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.JavaPsiFacade;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiFile;
 import com.intellij.rt.coverage.data.ClassData;
 import com.intellij.rt.coverage.data.LineData;
@@ -18,12 +20,16 @@ import com.intellij.testFramework.CompilerTester;
 import com.intellij.testFramework.JavaModuleTestCase;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Assert;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.JUnit4;
 
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+@RunWith(JUnit4.class)
 public class CoverageAnnotatorIntegrationTest extends JavaModuleTestCase {
   private CompilerTester myCompilerTester;
 
@@ -31,6 +37,11 @@ public class CoverageAnnotatorIntegrationTest extends JavaModuleTestCase {
     return VfsUtilCore.pathToUrl(PluginPathManager.getPluginHomePath("coverage") + "/testData/annotator");
   }
 
+
+  @Override
+  protected @NotNull LanguageLevel getProjectLanguageLevel() {
+    return LanguageLevel.JDK_11;
+  }
 
   @Override
   protected void setUp() throws Exception {
@@ -54,8 +65,8 @@ public class CoverageAnnotatorIntegrationTest extends JavaModuleTestCase {
                                            });
   }
 
+  @Test
   public void testExcludeEverythingFromCoverage() {
-    PackageAnnotator annotator = new PackageAnnotator(JavaPsiFacade.getInstance(getProject()).findPackage("p"));
     JavaCoverageEngine engine = new JavaCoverageEngine() {
       @Override
       public boolean acceptedByFilters(@NotNull PsiFile psiFile, @NotNull CoverageSuitesBundle suite) {
@@ -74,14 +85,15 @@ public class CoverageAnnotatorIntegrationTest extends JavaModuleTestCase {
         };
       }
     };
-    annotator.annotate(suite, new PackageAnnotator.Annotator() {
+    new JavaCoverageClassesAnnotator(suite, myProject, new CoverageInfoCollector() {
       @Override
-      public void annotateClass(String classQualifiedName, PackageAnnotator.ClassCoverageInfo classCoverageInfo) {
+      public void addClass(String classQualifiedName, PackageAnnotator.ClassCoverageInfo classCoverageInfo) {
         Assert.fail("No classes are accepted by filter");
       }
-    });
+    }).visitSuite();
   }
 
+  @Test
   public void testMultipleSourceRoots() {
     CoverageSuitesBundle suite = new CoverageSuitesBundle(new JavaCoverageSuite(new JavaCoverageEngine())) {
       @NotNull
@@ -102,16 +114,16 @@ public class CoverageAnnotatorIntegrationTest extends JavaModuleTestCase {
         };
       }
     };
-    PackageAnnotator annotator = new PackageAnnotator(JavaPsiFacade.getInstance(getProject()).findPackage("p"));
+    JavaCoverageSuite javaCoverageSuite = (JavaCoverageSuite)suite.getSuites()[0];
+    javaCoverageSuite.setIncludeFilters(new String[]{"p.*"});
     Map<VirtualFile, PackageAnnotator.PackageCoverageInfo> dirs = new HashMap<>();
-    annotator.annotate(suite, new PackageAnnotator.Annotator() {
+    new JavaCoverageClassesAnnotator(suite, myProject, new CoverageInfoCollector() {
       @Override
-      public void annotateSourceDirectory(VirtualFile virtualFile,
-                                          PackageAnnotator.PackageCoverageInfo packageCoverageInfo,
-                                          Module module) {
+      public void addSourceDirectory(VirtualFile virtualFile,
+                                     PackageAnnotator.PackageCoverageInfo packageCoverageInfo) {
         dirs.put(virtualFile, packageCoverageInfo);
       }
-    });
+    }).visitSuite();
 
     assertEquals(2, dirs.size());
     for (PackageAnnotator.PackageCoverageInfo coverageInfo : dirs.values()) {

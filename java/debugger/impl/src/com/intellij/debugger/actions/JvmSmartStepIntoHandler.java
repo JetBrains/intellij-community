@@ -1,12 +1,27 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.actions;
 
 import com.intellij.debugger.SourcePosition;
-import com.intellij.debugger.engine.*;
+import com.intellij.debugger.engine.AnonymousClassMethodFilter;
+import com.intellij.debugger.engine.BasicStepMethodFilter;
+import com.intellij.debugger.engine.ClassInstanceMethodFilter;
+import com.intellij.debugger.engine.DebugProcessImpl;
+import com.intellij.debugger.engine.LambdaAsyncMethodFilter;
+import com.intellij.debugger.engine.LambdaMethodFilter;
+import com.intellij.debugger.engine.MethodFilter;
 import com.intellij.debugger.impl.DebuggerSession;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.psi.*;
+import com.intellij.psi.LambdaUtil;
+import com.intellij.psi.PsiAnonymousClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiExpressionList;
+import com.intellij.psi.PsiLambdaExpression;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiMethodCallExpression;
+import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.concurrency.Promise;
@@ -14,21 +29,21 @@ import org.jetbrains.concurrency.Promises;
 
 import java.util.List;
 
+/**
+ * Allows to support smart step into in non-java languages
+ */
 public abstract class JvmSmartStepIntoHandler {
   public static final ExtensionPointName<JvmSmartStepIntoHandler> EP_NAME = ExtensionPointName.create("com.intellij.debugger.jvmSmartStepIntoHandler");
 
-  @NotNull
-  public List<SmartStepTarget> findSmartStepTargets(SourcePosition position) {
+  public @NotNull List<SmartStepTarget> findSmartStepTargets(SourcePosition position) {
     throw new AbstractMethodError();
   }
 
-  @NotNull
-  public Promise<List<SmartStepTarget>> findSmartStepTargetsAsync(SourcePosition position, DebuggerSession session) {
+  public @NotNull Promise<List<SmartStepTarget>> findSmartStepTargetsAsync(SourcePosition position, DebuggerSession session) {
     return Promises.resolvedPromise(findSmartStepTargets(position));
   }
 
-  @NotNull
-  public Promise<List<SmartStepTarget>> findStepIntoTargets(SourcePosition position, DebuggerSession session) {
+  public @NotNull Promise<List<SmartStepTarget>> findStepIntoTargets(SourcePosition position, DebuggerSession session) {
     return Promises.rejectedPromise();
   }
 
@@ -37,13 +52,14 @@ public abstract class JvmSmartStepIntoHandler {
   /**
    * Override in case if your JVMNames slightly different then it can be provided by getJvmSignature method.
    *
-   * @param stepTarget
    * @return SmartStepFilter
    */
-  @Nullable
-  protected MethodFilter createMethodFilter(SmartStepTarget stepTarget) {
-    if (stepTarget instanceof MethodSmartStepTarget) {
-      MethodSmartStepTarget methodSmartStepTarget = (MethodSmartStepTarget)stepTarget;
+  protected @Nullable MethodFilter createMethodFilter(SmartStepTarget stepTarget) {
+    return ReadAction.compute(() -> createMethodFilterInReadAction(stepTarget));
+  }
+
+  private static @Nullable MethodFilter createMethodFilterInReadAction(SmartStepTarget stepTarget) {
+    if (stepTarget instanceof MethodSmartStepTarget methodSmartStepTarget) {
       final PsiMethod method = methodSmartStepTarget.getMethod();
       if (stepTarget.needsBreakpointRequest()) {
         return Registry.is("debugger.async.smart.step.into") && method.getContainingClass() instanceof PsiAnonymousClass
@@ -54,8 +70,7 @@ public abstract class JvmSmartStepIntoHandler {
         return new BasicStepMethodFilter(method, methodSmartStepTarget.getOrdinal(), stepTarget.getCallingExpressionLines());
       }
     }
-    if (stepTarget instanceof LambdaSmartStepTarget) {
-      LambdaSmartStepTarget lambdaTarget = (LambdaSmartStepTarget)stepTarget;
+    if (stepTarget instanceof LambdaSmartStepTarget lambdaTarget) {
       LambdaMethodFilter lambdaMethodFilter =
         new LambdaMethodFilter(lambdaTarget.getLambda(), lambdaTarget.getOrdinal(), stepTarget.getCallingExpressionLines());
 
@@ -75,5 +90,21 @@ public abstract class JvmSmartStepIntoHandler {
       return lambdaMethodFilter;
     }
     return null;
+  }
+
+  protected static List<SmartStepTarget> reorderWithSteppingFilters(List<SmartStepTarget> targets) {
+    if (targets.size() > 1) {
+      // deprioritize filtered items in stepping filters
+      int firstGood = ContainerUtil.indexOf(targets, elem -> !DebugProcessImpl.isClassFiltered(elem.getClassName()));
+      if (firstGood > 0) {
+        targets = ContainerUtil.concat(targets.subList(firstGood, targets.size()), targets.subList(0, firstGood));
+      }
+    }
+    return targets;
+  }
+
+  @ApiStatus.Internal
+  public enum SmartStepIntoDetectionStatus {
+    SUCCESS, NO_TARGETS, TARGETS_MISMATCH, INTERNAL_ERROR, INVALID_POSITION, BYTECODE_NOT_AVAILABLE
   }
 }

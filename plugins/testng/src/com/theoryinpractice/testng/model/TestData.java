@@ -8,6 +8,7 @@ import com.intellij.execution.junit2.info.MethodLocation;
 import com.intellij.execution.testframework.TestSearchScope;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiClass;
@@ -17,7 +18,14 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.serialization.PathMacroUtil;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
 
 /**
  * @author Hani Suleiman
@@ -26,9 +34,9 @@ public class TestData implements Cloneable
 {
   public String SUITE_NAME;
   public String PACKAGE_NAME;
-  public String MAIN_CLASS_NAME;
+  public @NlsSafe String MAIN_CLASS_NAME;
   public String METHOD_NAME;
-  public String GROUP_NAME;
+  public @NlsSafe String GROUP_NAME;
   public String TEST_OBJECT;
   // should be private, but for now we use DefaultJDOMExternalizer, so, public
   public String VM_PARAMETERS = "-ea";
@@ -60,21 +68,19 @@ public class TestData implements Cloneable
     TEST_SEARCH_SCOPE.setScope(testseachscope);
   }
 
-  public String getPackageName() {
+  public @NlsSafe String getPackageName() {
     return PACKAGE_NAME == null ? "" : PACKAGE_NAME;
   }
 
-  public String getGroupName() {
+  public @NlsSafe String getGroupName() {
     return GROUP_NAME == null ? "" : GROUP_NAME;
   }
 
-  @NotNull
-  public String getMethodName() {
+  public @NotNull @NlsSafe String getMethodName() {
     return METHOD_NAME == null ? "" : METHOD_NAME;
   }
 
-  @NotNull
-  public String getSuiteName() {
+  public @NotNull @NlsSafe String getSuiteName() {
     return SUITE_NAME == null ? "" : SUITE_NAME;
   }
 
@@ -112,10 +118,9 @@ public class TestData implements Cloneable
 
   @Override
   public boolean equals(Object obj) {
-    if (!(obj instanceof TestData)) {
+    if (!(obj instanceof TestData data)) {
       return false;
     } else {
-      TestData data = (TestData) obj;
       return Objects.equals(TEST_OBJECT, data.TEST_OBJECT)
              && Objects.equals(getMainClassName(), data.getMainClassName())
              && Objects.equals(getPackageName(), data.getPackageName())

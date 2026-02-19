@@ -1,0 +1,20 @@
+// FILE: first.before.kt
+// "Import" "false"
+// ERROR: Unresolved reference: extFun
+package test
+
+class MyClass(
+    val param: Int = <caret>extFun()
+)
+
+//-----------------------
+
+
+// FILE: second.kt
+package library
+
+import test.MyClass
+
+fun MyClass.extFun() {}
+
+//-----------------------

@@ -1,10 +1,13 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.ui;
 
 import com.intellij.openapi.Disposable;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JComponent;
+import javax.swing.SwingUtilities;
+import java.awt.AWTEvent;
+import java.awt.Component;
+import java.awt.Toolkit;
 import java.awt.event.AWTEventListener;
 import java.awt.event.FocusEvent;
 
@@ -13,13 +16,12 @@ public abstract class ChildFocusWatcher implements AWTEventListener, Disposable 
 
   public ChildFocusWatcher(JComponent parent) {
     myParent = parent;
-    Toolkit.getDefaultToolkit().addAWTEventListener(this, FocusEvent.FOCUS_EVENT_MASK);
+    Toolkit.getDefaultToolkit().addAWTEventListener(this, AWTEvent.FOCUS_EVENT_MASK);
   }
 
   @Override
   public void eventDispatched(final AWTEvent event) {
-    if (event instanceof FocusEvent) {
-      final FocusEvent fe = (FocusEvent)event;
+    if (event instanceof FocusEvent fe) {
       final Component component = fe.getComponent();
       if (component == null) return;
       if (!SwingUtilities.isDescendingFrom(component, myParent)) return;

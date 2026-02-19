@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.ui.tree;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -13,22 +13,35 @@ import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.AbstractAction;
+import javax.swing.ActionMap;
+import javax.swing.CellRendererPane;
+import javax.swing.JComponent;
+import javax.swing.JTree;
+import javax.swing.JViewport;
+import javax.swing.SwingUtilities;
+import javax.swing.UIManager;
 import javax.swing.border.Border;
 import javax.swing.plaf.TreeUI;
 import javax.swing.plaf.UIResource;
 import javax.swing.plaf.basic.BasicTreeUI;
 import javax.swing.tree.TreeCellRenderer;
 import javax.swing.tree.TreePath;
-import java.awt.*;
+import java.awt.Color;
+import java.awt.Component;
+import java.awt.Container;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.Insets;
+import java.awt.Rectangle;
 import java.awt.event.ActionEvent;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.lang.reflect.Method;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 import static com.intellij.util.ReflectionUtil.getMethod;
-import static com.intellij.util.containers.ContainerUtil.newConcurrentSet;
 
 /**
  * @author Konstantin Bulenkov
@@ -37,34 +50,26 @@ import static com.intellij.util.containers.ContainerUtil.newConcurrentSet;
  */
 @Deprecated
 public class WideSelectionTreeUI extends BasicTreeUI {
-  /**
-   * @deprecated use {@link RenderingUtil#FOCUSABLE_SIBLING} or {@link RenderingUtil#ALWAYS_PAINT_SELECTION_AS_FOCUSED}
-   */
-  @Deprecated
-  public static final String TREE_TABLE_TREE_KEY = "TreeTableTree";
-
-  @NonNls public static final String SOURCE_LIST_CLIENT_PROPERTY = "mac.ui.source.list";
-  @NonNls public static final String STRIPED_CLIENT_PROPERTY = "mac.ui.striped";
+  public static final @NonNls String SOURCE_LIST_CLIENT_PROPERTY = "mac.ui.source.list";
+  public static final @NonNls String STRIPED_CLIENT_PROPERTY = "mac.ui.striped";
 
   private static final Border LIST_BACKGROUND_PAINTER = UIManager.getBorder("List.sourceListBackgroundPainter");
   private static final Border LIST_SELECTION_BACKGROUND_PAINTER = UIManager.getBorder("List.sourceListSelectionBackgroundPainter");
   private static final Border LIST_FOCUSED_SELECTION_BACKGROUND_PAINTER = UIManager.getBorder("List.sourceListFocusedSelectionBackgroundPainter");
 
   private static final Logger LOG = Logger.getInstance(WideSelectionTreeUI.class);
-  private static final Set<String> LOGGED_RENDERERS = newConcurrentSet();
+  private static final Set<String> LOGGED_RENDERERS = ConcurrentHashMap.newKeySet();
 
-  @NotNull private final Condition<? super Integer> myWideSelectionCondition;
+  private final @NotNull Condition<? super Integer> myWideSelectionCondition;
   private final boolean myWideSelection;
   private boolean myOldRepaintAllRowValue;
-  private boolean myForceDontPaintLines = false;
   private static final boolean mySkinny = false;
 
   private static final TreeUIAction EXPAND_OR_SELECT_NEXT = new TreeUIAction() {
     @Override
     public void actionPerformed(ActionEvent event) {
       Object source = event.getSource();
-      if (source instanceof JTree) {
-        JTree tree = (JTree)source;
+      if (source instanceof JTree tree) {
         TreePath path = tree.getLeadSelectionPath();
         if (path != null) {
           if (tree.isExpanded(path) || tree.getModel().isLeaf(path.getLastPathComponent())) {
@@ -87,8 +92,7 @@ public class WideSelectionTreeUI extends BasicTreeUI {
     @Override
     public void actionPerformed(ActionEvent event) {
       Object source = event.getSource();
-      if (source instanceof JTree) {
-        JTree tree = (JTree)source;
+      if (source instanceof JTree tree) {
         TreePath path = tree.getLeadSelectionPath();
         if (path != null) {
           if (tree.isExpanded(path)) {
@@ -143,7 +147,7 @@ public class WideSelectionTreeUI extends BasicTreeUI {
 
   @Override
   protected MouseListener createMouseListener() {
-    return new MouseEventAdapter<MouseListener>(super.createMouseListener()) {
+    return new MouseEventAdapter<>(super.createMouseListener()) {
       @Override
       public void mouseDragged(MouseEvent event) {
         JTree tree = (JTree)event.getSource();
@@ -153,9 +157,8 @@ public class WideSelectionTreeUI extends BasicTreeUI {
         }
       }
 
-      @NotNull
       @Override
-      protected MouseEvent convert(@NotNull MouseEvent event) {
+      protected @NotNull MouseEvent convert(@NotNull MouseEvent event) {
         if (!event.isConsumed() && SwingUtilities.isLeftMouseButton(event)) {
           int x = event.getX();
           int y = event.getY();
@@ -203,14 +206,6 @@ public class WideSelectionTreeUI extends BasicTreeUI {
     map.put("selectParent", COLLAPSE_OR_SELECT_PREVIOUS);
   }
 
-  /**
-   * @deprecated not supported in UI
-   */
-  @Deprecated
-  public void setForceDontPaintLines() {
-    myForceDontPaintLines = true;
-  }
-
   private abstract static class TreeUIAction extends AbstractAction implements UIResource {
   }
 
@@ -243,7 +238,7 @@ public class WideSelectionTreeUI extends BasicTreeUI {
     if (UIUtil.isUnderAquaBasedLookAndFeel() || StartupUiUtil.isUnderDarcula() || UIUtil.isUnderIntelliJLaF()) {
       return false;
     }
-    return myForceDontPaintLines || !"None".equals(tree.getClientProperty("JTree.lineStyle"));
+    return !"None".equals(tree.getClientProperty("JTree.lineStyle"));
   }
 
   @Override

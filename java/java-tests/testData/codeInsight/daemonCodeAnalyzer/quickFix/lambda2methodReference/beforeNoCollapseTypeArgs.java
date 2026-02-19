@@ -1,4 +1,4 @@
-// "Replace lambda with method reference" "true"
+// "Replace lambda with method reference" "false"
 import java.util.function.Function;
 
 class Box<T>

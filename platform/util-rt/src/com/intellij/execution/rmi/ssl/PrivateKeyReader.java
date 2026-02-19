@@ -1,147 +1,13 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.rmi.ssl;
 
-import com.intellij.openapi.util.io.FileUtilRt;
-import com.intellij.util.Base64;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-
-import javax.crypto.EncryptedPrivateKeyInfo;
-import javax.crypto.SecretKeyFactory;
-import javax.crypto.spec.PBEKeySpec;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.math.BigInteger;
-import java.security.GeneralSecurityException;
-import java.security.KeyFactory;
-import java.security.NoSuchAlgorithmException;
-import java.security.PrivateKey;
-import java.security.spec.*;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.security.spec.RSAPrivateCrtKeySpec;
 
-public class PrivateKeyReader {
-  public static final String P1_BEGIN_MARKER = "-----BEGIN RSA PRIVATE KEY";
-  public static final String P1_END_MARKER = "-----END RSA PRIVATE KEY";
-
-  public static final String P8_BEGIN_MARKER = "-----BEGIN PRIVATE KEY";
-  public static final String P8_END_MARKER = "-----END PRIVATE KEY";
-
-  public static final String EP8_BEGIN_MARKER = "-----BEGIN ENCRYPTED PRIVATE KEY";
-  public static final String EP8_END_MARKER = "-----END ENCRYPTED PRIVATE KEY";
-
-  private static final Map<String, PrivateKey> keyCache = Collections.synchronizedMap(new HashMap<String, PrivateKey>());
-
-  @NotNull private final String myFileName;
-  @NotNull private final char[] myPassword;
-
-  public PrivateKeyReader(@NotNull String fileName, @Nullable char[] password) {
-    myFileName = fileName;
-    myPassword = password;
-  }
-
-  public PrivateKey getPrivateKey() throws IOException {
-    PrivateKey key = keyCache.get(myFileName);
-    if (key != null) return key;
-    key = read(myFileName, myPassword);
-    keyCache.put(myFileName, key);
-    return key;
-  }
-
-  private static PrivateKey read(String fileName, @Nullable char[] password) throws IOException {
-    KeyFactory factory;
-    try {
-      factory = KeyFactory.getInstance("RSA");
-    }
-    catch (NoSuchAlgorithmException e) {
-      throw new IOException("JCE error: " + e.getMessage());
-    }
-
-    List<String> lines = FileUtilRt.loadLines(fileName, "UTF-8");
-    for (int i = 0; i < lines.size(); i++) {
-      KeySpec keySpec = findRSAKeySpec(lines, i);
-      String enc = "PKCS#1";
-      if (keySpec == null) {
-        keySpec = findPKCS8EncodedKeySpec(lines, i);
-        enc = "PKCS#8";
-      }
-      if (keySpec == null) {
-        keySpec = findEncryptedKeySpec(lines, i, password);
-        enc = "Encrypted key";
-      }
-      if (keySpec == null) continue;
-      try {
-        return factory.generatePrivate(keySpec);
-      }
-      catch (InvalidKeySpecException e) {
-        throw new IOException("Invalid " + enc + " PEM file: " + e.getMessage());
-      }
-    }
-
-
-    throw new IOException("Invalid PEM file: no begin marker");
-  }
-
-  @Nullable
-  private static EncodedKeySpec findEncryptedKeySpec(List<String> lines, int i, @Nullable char[] password) throws IOException {
-    if (!lines.get(i).contains(EP8_BEGIN_MARKER)) return null;
-    List<String> strings = lines.subList(i + 1, lines.size());
-    byte[] keyBytes = readKeyMaterial(EP8_END_MARKER, strings);
-    EncryptedPrivateKeyInfo encrypted = new EncryptedPrivateKeyInfo(keyBytes);
-    PBEKeySpec encryptedKeySpec = new PBEKeySpec(password);
-    try {
-      SecretKeyFactory pbeKeyFactory = SecretKeyFactory.getInstance(encrypted.getAlgName());
-      return encrypted.getKeySpec(pbeKeyFactory.generateSecret(encryptedKeySpec));
-    }
-    catch (GeneralSecurityException e) {
-      throw new IOException("JCE error: " + e.getMessage());
-    }
-  }
-
-  @Nullable
-  private static EncodedKeySpec findPKCS8EncodedKeySpec(List<String> lines, int i) throws IOException {
-    if (!lines.get(i).contains(P8_BEGIN_MARKER)) return null;
-    List<String> strings = lines.subList(i + 1, lines.size());
-    byte[] keyBytes = readKeyMaterial(P8_END_MARKER, strings);
-    return new PKCS8EncodedKeySpec(keyBytes);
-  }
-
-  @Nullable
-  private static RSAPrivateCrtKeySpec findRSAKeySpec(List<String> lines, int i) throws IOException {
-    if (!lines.get(i).contains(P1_BEGIN_MARKER)) return null;
-    List<String> strings = lines.subList(i + 1, lines.size());
-    byte[] keyBytes = readKeyMaterial(P1_END_MARKER, strings);
-    return getRSAKeySpec(keyBytes);
-  }
-
-  private static byte[] readKeyMaterial(String endMarker, List<String> strings) throws IOException {
-    StringBuilder buf = new StringBuilder();
-    for (String line : strings) {
-      if (line.contains(endMarker)) {
-        return Base64.decode(buf.toString());
-      }
-      buf.append(line.trim());
-    }
-    throw new IOException("Invalid PEM file: No end marker");
-  }
-
+final class PrivateKeyReader {
   /**
    * Convert PKCS#1 encoded private key into RSAPrivateCrtKeySpec.
    * <p/>
@@ -167,9 +33,8 @@ public class PrivateKeyReader {
    *
    * @param keyBytes PKCS#1 encoded key
    * @return KeySpec
-   * @throws IOException
    */
-  private static RSAPrivateCrtKeySpec getRSAKeySpec(byte[] keyBytes) throws IOException {
+  static RSAPrivateCrtKeySpec getRSAKeySpec(byte[] keyBytes) throws IOException {
     DerParser parser = new DerParser(keyBytes);
 
     Asn1Object sequence = parser.read();
@@ -209,45 +74,45 @@ public class PrivateKeyReader {
  *
  * @author zhang
  */
-class DerParser {
+final class DerParser {
 
   // Classes
-  public final static int UNIVERSAL = 0x00;
-  public final static int APPLICATION = 0x40;
-  public final static int CONTEXT = 0x80;
-  public final static int PRIVATE = 0xC0;
+  public static final int UNIVERSAL = 0x00;
+  public static final int APPLICATION = 0x40;
+  public static final int CONTEXT = 0x80;
+  public static final int PRIVATE = 0xC0;
 
   // Constructed Flag
-  public final static int CONSTRUCTED = 0x20;
+  public static final int CONSTRUCTED = 0x20;
 
   // Tag and data types
-  public final static int ANY = 0x00;
-  public final static int BOOLEAN = 0x01;
-  public final static int INTEGER = 0x02;
-  public final static int BIT_STRING = 0x03;
-  public final static int OCTET_STRING = 0x04;
-  public final static int NULL = 0x05;
-  public final static int REAL = 0x09;
-  public final static int ENUMERATED = 0x0a;
+  public static final int ANY = 0x00;
+  public static final int BOOLEAN = 0x01;
+  public static final int INTEGER = 0x02;
+  public static final int BIT_STRING = 0x03;
+  public static final int OCTET_STRING = 0x04;
+  public static final int NULL = 0x05;
+  public static final int REAL = 0x09;
+  public static final int ENUMERATED = 0x0a;
 
-  public final static int SEQUENCE = 0x10;
-  public final static int SET = 0x11;
+  public static final int SEQUENCE = 0x10;
+  public static final int SET = 0x11;
 
-  public final static int NUMERIC_STRING = 0x12;
-  public final static int PRINTABLE_STRING = 0x13;
-  public final static int VIDEOTEX_STRING = 0x15;
-  public final static int IA5_STRING = 0x16;
-  public final static int GRAPHIC_STRING = 0x19;
-  public final static int ISO646_STRING = 0x1A;
-  public final static int GENERAL_STRING = 0x1B;
+  public static final int NUMERIC_STRING = 0x12;
+  public static final int PRINTABLE_STRING = 0x13;
+  public static final int VIDEOTEX_STRING = 0x15;
+  public static final int IA5_STRING = 0x16;
+  public static final int GRAPHIC_STRING = 0x19;
+  public static final int ISO646_STRING = 0x1A;
+  public static final int GENERAL_STRING = 0x1B;
 
-  public final static int UTF8_STRING = 0x0C;
-  public final static int UNIVERSAL_STRING = 0x1C;
-  public final static int BMP_STRING = 0x1E;
+  public static final int UTF8_STRING = 0x0C;
+  public static final int UNIVERSAL_STRING = 0x1C;
+  public static final int BMP_STRING = 0x1E;
 
-  public final static int UTC_TIME = 0x17;
+  public static final int UTC_TIME = 0x17;
 
-  protected InputStream in;
+  private InputStream in;
 
   /**
    * Create a new DER decoder from an input stream.
@@ -262,7 +127,6 @@ class DerParser {
    * Create a new DER decoder from a byte array.
    *
    * @param bytes The encoded bytes
-   * @throws IOException
    */
   DerParser(byte[] bytes) throws IOException {
     this(new ByteArrayInputStream(bytes));
@@ -274,7 +138,6 @@ class DerParser {
    * parser from {@code Asn1Object.getParser}.
    *
    * @return A object
-   * @throws IOException
    */
   public Asn1Object read() throws IOException {
     int tag = in.read();
@@ -309,7 +172,6 @@ class DerParser {
    * </ul>
    *
    * @return The length as integer
-   * @throws IOException
    */
   private int getLength() throws IOException {
 
@@ -348,12 +210,12 @@ class DerParser {
  *
  * @author zhang
  */
-class Asn1Object {
+final class Asn1Object {
 
-  protected final int type;
-  protected final int length;
-  protected final byte[] value;
-  protected final int tag;
+  private final int type;
+  private final int length;
+  private final byte[] value;
+  private final int tag;
 
   /**
    * Construct a ASN.1 TLV. The TLV could be either a
@@ -406,7 +268,6 @@ class Asn1Object {
    * For constructed field, return a parser for its content.
    *
    * @return A parser for the construct.
-   * @throws IOException
    */
   public DerParser getParser() throws IOException {
     if (!isConstructed()) {
@@ -420,7 +281,6 @@ class Asn1Object {
    * Get the value as integer
    *
    * @return BigInteger
-   * @throws IOException
    */
   public BigInteger getInteger() throws IOException {
     if (type != DerParser.INTEGER) {
@@ -435,7 +295,6 @@ class Asn1Object {
    * as Latin-1.
    *
    * @return Java string
-   * @throws IOException
    */
   public String getString() throws IOException {
 

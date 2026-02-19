@@ -1,0 +1,8 @@
+<idea-plugin <error descr="Package attribute usage is discouraged and deprecated, content modules should be packaged into separate jars under `lib/modules/`. Refer to attribute documentation for details.">package="com.intellij"</error>
+             <error descr="It's not recommended to mark a plugin as \"implementation-detail\": use a regular plugin visible to users">implementation-detail="false"</error>
+             allow-bundled-update="false"
+             require-restart="false"
+             url="https://www.jetbrains.com">
+  <id>com.intellij</id>
+  <vendor>JetBrains</vendor>
+</idea-plugin>

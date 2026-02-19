@@ -1,32 +1,38 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testFramework.fixtures.impl;
 
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
-import com.intellij.testFramework.fixtures.*;
+import com.intellij.testFramework.fixtures.IdeaProjectTestFixture;
+import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory;
+import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.JavaTestFixtureFactory;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.ModuleFixture;
+import com.intellij.testFramework.fixtures.TempDirTestFixture;
+import com.intellij.testFramework.fixtures.TestFixtureBuilder;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author yole
- */
+
 public final class JavaTestFixtureFactoryImpl extends JavaTestFixtureFactory {
   public JavaTestFixtureFactoryImpl() {
     IdeaTestFixtureFactory.getFixtureFactory().registerFixtureBuilder(JavaModuleFixtureBuilder.class, MyJavaModuleFixtureBuilderImpl.class);
   }
 
   @Override
-  public JavaCodeInsightTestFixture createCodeInsightFixture(IdeaProjectTestFixture projectFixture) {
+  public @NotNull JavaCodeInsightTestFixture createCodeInsightFixture(IdeaProjectTestFixture projectFixture) {
     return new JavaCodeInsightTestFixtureImpl(projectFixture, new TempDirTestFixtureImpl());
   }
 
   @Override
-  public JavaCodeInsightTestFixture createCodeInsightFixture(IdeaProjectTestFixture projectFixture, TempDirTestFixture tempDirFixture) {
+  public @NotNull JavaCodeInsightTestFixture createCodeInsightFixture(IdeaProjectTestFixture projectFixture,
+                                                                      TempDirTestFixture tempDirFixture) {
     return new JavaCodeInsightTestFixtureImpl(projectFixture, tempDirFixture);
   }
 
   @Override
-  public TestFixtureBuilder<IdeaProjectTestFixture> createLightFixtureBuilder() {
-    return new LightTestFixtureBuilderImpl<>(new LightIdeaTestFixtureImpl(ourJavaProjectDescriptor));
+  public @NotNull TestFixtureBuilder<IdeaProjectTestFixture> createLightFixtureBuilder(@NotNull String name) {
+    return new LightTestFixtureBuilderImpl<>(new LightIdeaTestFixtureImpl(ourJavaProjectDescriptor, name));
   }
 
   public static class MyJavaModuleFixtureBuilderImpl extends JavaModuleFixtureBuilderImpl<ModuleFixture> {
@@ -34,9 +40,8 @@ public final class JavaTestFixtureFactoryImpl extends JavaTestFixtureFactory {
       super(testFixtureBuilder);
     }
 
-    @NotNull
     @Override
-    protected ModuleFixture instantiateFixture() {
+    protected @NotNull ModuleFixture instantiateFixture() {
       return new ModuleFixtureImpl(this);
     }
   }

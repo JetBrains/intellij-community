@@ -28,9 +28,8 @@ import com.intellij.icons.AllIcons;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.Icon;
 
 /**
  * @author Robert F. Beeger (robert@beeger.net)
@@ -42,27 +41,21 @@ public final class ManifestFileType extends LanguageFileType {
     super(ManifestLanguage.INSTANCE);
   }
 
-  @NotNull
-  @NonNls
   @Override
-  public String getName() {
+  public @NotNull @NonNls String getName() {
     return "Manifest";
   }
 
-  @NotNull
   @Override
-  public String getDescription() {
-    return ManifestBundle.message("file.type.description");
+  public @NotNull String getDescription() {
+    return ManifestBundle.message("filetype.manifest.description");
   }
 
-  @NotNull
-  @NonNls
   @Override
-  public String getDefaultExtension() {
+  public @NotNull @NonNls String getDefaultExtension() {
     return "MF";
   }
 
-  @Nullable
   @Override
   public Icon getIcon() {
     return AllIcons.FileTypes.Manifest;

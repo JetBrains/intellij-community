@@ -1,45 +1,36 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl;
 
+import com.intellij.openapi.editor.colors.impl.EditorFontCacheImpl;
 import com.intellij.openapi.editor.impl.view.FontLayoutService;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.util.ArrayUtil;
+import com.jetbrains.FontMetricsAccessor;
+import com.jetbrains.JBR;
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
+import it.unimi.dsi.fastutil.ints.IntSet;
 import org.intellij.lang.annotations.JdkConstants;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 import sun.font.CompositeGlyphMapper;
-import sun.font.FontDesignMetrics;
 
-import java.awt.*;
+import java.awt.Component;
+import java.awt.Font;
+import java.awt.FontMetrics;
 import java.awt.font.FontRenderContext;
-import java.awt.font.TextAttribute;
-import java.util.Collections;
+import java.util.Set;
 
 public final class FontInfo {
-  private static final FontRenderContext DEFAULT_CONTEXT = new FontRenderContext(null, false, false);
+  static final FontRenderContext DEFAULT_CONTEXT = new FontRenderContext(null, false, false);
+
   private static final Font DUMMY_FONT = new Font(null);
+  private static final FontMetricsAccessor FONT_METRICS_ACCESSOR = JBR.getFontMetricsAccessor();
 
   private final Font myFont;
-  private final int mySize;
-  @JdkConstants.FontStyle private final int myStyle;
-  private final IntOpenHashSet mySafeCharacters = new IntOpenHashSet();
+  private final float mySize;
+  private final IntSet mySafeCharacters = new IntOpenHashSet();
   private final FontRenderContext myContext;
   private FontMetrics myFontMetrics = null;
-
-  /**
-   * @deprecated Use {@link #FontInfo(String, int, int, boolean, FontRenderContext)} instead.
-   */
-  @Deprecated
-  public FontInfo(final String familyName, final int size, @JdkConstants.FontStyle int style) {
-    this(familyName, size, style, false, null);
-  }
-
-  /**
-   * @deprecated Use {@link #FontInfo(String, int, int, boolean, FontRenderContext)} instead.
-   */
-  @Deprecated
-  public FontInfo(final String familyName, final int size, @JdkConstants.FontStyle int style, boolean useLigatures) {
-    this(familyName, size, style, useLigatures, null);
-  }
 
   /**
    * To get valid font metrics from this {@link FontInfo} instance, pass valid {@link FontRenderContext} here as a parameter.
@@ -47,9 +38,36 @@ public final class FontInfo {
   public FontInfo(final String familyName, final int size, @JdkConstants.FontStyle int style, boolean useLigatures,
                   FontRenderContext fontRenderContext) {
     mySize = size;
-    myStyle = style;
-    Font font = new Font(familyName, style, size);
-    myFont = useLigatures ? font.deriveFont(Collections.singletonMap(TextAttribute.LIGATURES, TextAttribute.LIGATURES_ON)) : font;
+    myFont = EditorFontCacheImpl.deriveFontWithLigatures(new Font(familyName, style, size), useLigatures);
+    myContext = fontRenderContext;
+  }
+
+  /**
+   * To get valid font metrics from this {@link FontInfo} instance, pass valid {@link FontRenderContext} here as a parameter.
+   */
+  public FontInfo(Font font, int size, boolean useLigatures, FontRenderContext fontRenderContext) {
+    this(font, (float)size, useLigatures, fontRenderContext);
+  }
+
+  /**
+   * To get valid font metrics from this {@link FontInfo} instance, pass valid {@link FontRenderContext} here as a parameter.
+   */
+  public FontInfo(Font font, float size, boolean useLigatures, FontRenderContext fontRenderContext) {
+    mySize = size;
+    myFont = EditorFontCacheImpl.deriveFontWithLigatures(font.deriveFont(size), useLigatures);
+    myContext = fontRenderContext;
+  }
+
+  public FontInfo(Font font, float size, boolean useLigatures, @Unmodifiable @NotNull Set<@NotNull String> variants, FontRenderContext fontRenderContext) {
+    mySize = size;
+    Font f = EditorFontCacheImpl.deriveFontWithLigatures(font.deriveFont(size), useLigatures);
+    if (variants.isEmpty()) {
+      myFont = f;
+    }
+    else {
+      String[] features = ArrayUtil.toStringArray(variants);
+      myFont = JBR.getFontExtensions().deriveFontWithFeatures(f, features);
+    }
     myContext = fontRenderContext;
   }
 
@@ -101,9 +119,8 @@ public final class FontInfo {
     return myFontMetrics;
   }
 
-  @NotNull
-  public static FontMetrics getFontMetrics(@NotNull Font font, @NotNull FontRenderContext fontRenderContext) {
-    return FontDesignMetrics.getMetrics(font, fontRenderContext);
+  public static @NotNull FontMetrics getFontMetrics(@NotNull Font font, @NotNull FontRenderContext fontRenderContext) {
+    return FONT_METRICS_ACCESSOR.getMetrics(font, fontRenderContext);
   }
 
   public static FontRenderContext getFontRenderContext(Component component) {
@@ -114,12 +131,11 @@ public final class FontInfo {
   }
 
   public int getSize() {
-    return mySize;
+    return (int)(mySize + 0.5);
   }
 
-  @JdkConstants.FontStyle
-  public int getStyle() {
-    return myStyle;
+  public float getSize2D() {
+    return mySize;
   }
 
   public FontRenderContext getFontRenderContext() {
@@ -141,5 +157,16 @@ public final class FontInfo {
   @Override
   public int hashCode() {
     return myFont.hashCode();
+  }
+
+  @Override
+  public String toString() {
+    return "FontInfo{" +
+           "myFont=" + myFont +
+           ", mySize=" + mySize +
+           ", mySafeCharacters=" + mySafeCharacters +
+           ", myContext=" + myContext +
+           ", myFontMetrics=" + myFontMetrics +
+           '}';
   }
 }

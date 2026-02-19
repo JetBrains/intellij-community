@@ -17,8 +17,11 @@
 package com.intellij.execution.actions;
 
 import com.intellij.execution.Executor;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NotNull;
 
-public class ChooseDebugConfigurationPopupAction extends ChooseRunConfigurationPopupAction {
+@ApiStatus.Internal
+public final class ChooseDebugConfigurationPopupAction extends ChooseRunConfigurationPopupAction {
   @Override
   protected Executor getDefaultExecutor() {
     return super.getAlternativeExecutor();
@@ -30,7 +33,7 @@ public class ChooseDebugConfigurationPopupAction extends ChooseRunConfigurationP
   }
 
   @Override
-  protected String getAdKey() {
+  protected @NotNull String getAdKey() {
     return "debug.configuration.alternate.action.ad";
   }
 }

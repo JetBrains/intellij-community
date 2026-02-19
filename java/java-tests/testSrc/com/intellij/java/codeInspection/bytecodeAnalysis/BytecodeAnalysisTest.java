@@ -3,7 +3,11 @@ package com.intellij.java.codeInspection.bytecodeAnalysis;
 
 import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.AnnotationUtil;
-import com.intellij.codeInspection.bytecodeAnalysis.*;
+import com.intellij.codeInspection.bytecodeAnalysis.BytecodeAnalysisConverter;
+import com.intellij.codeInspection.bytecodeAnalysis.Direction;
+import com.intellij.codeInspection.bytecodeAnalysis.EKey;
+import com.intellij.codeInspection.bytecodeAnalysis.Member;
+import com.intellij.codeInspection.bytecodeAnalysis.ProjectBytecodeAnalysis;
 import com.intellij.codeInspection.bytecodeAnalysis.asm.LeakingParameters;
 import com.intellij.lang.jvm.JvmAnnotation;
 import com.intellij.lang.jvm.JvmParameter;
@@ -12,7 +16,13 @@ import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiAnnotation;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiMember;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiParameter;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.ClassUtil;
 import com.intellij.testFramework.LightProjectDescriptor;
@@ -33,9 +43,6 @@ import java.io.InputStream;
 import java.util.HashMap;
 import java.util.Map;
 
-/**
- * @author lambdamix
- */
 public class BytecodeAnalysisTest extends LightJavaCodeInsightFixtureTestCase {
   private static final String PACKAGE_NAME = "bytecodeAnalysis";
   private static final String EXPECT_NOT_NULL = PACKAGE_NAME + ".ExpectNotNull";
@@ -172,7 +179,7 @@ public class BytecodeAnalysisTest extends LightJavaCodeInsightFixtureTestCase {
       fail(message + ": @NotNull inferred, but not expected");
     }
   }
-
+  
   private void checkCompoundIds(String className) throws IOException {
     GlobalSearchScope scope = GlobalSearchScope.moduleWithLibrariesScope(getModule());
     PsiClass psiClass = JavaPsiFacade.getInstance(getProject()).findClass(PACKAGE_NAME + '.' + className, scope);

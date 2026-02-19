@@ -8,7 +8,7 @@ class Test<T> {
     m("");
     Test.<String>m("");
     new Test<>("");
-    new Test<String><error descr="Cannot resolve constructor 'Test(java.lang.String)'">("")</error>;
+    new Test<String><error descr="Cannot resolve constructor 'Test(String)'">("")</error>;
   }
 }
 

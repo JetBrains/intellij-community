@@ -18,9 +18,6 @@ package com.intellij.util.containers;
 import java.util.Collections;
 import java.util.Iterator;
 
-/**
-* @author peter
-*/
 public abstract class FlatteningIterator<Group, Value> implements Iterator<Value> {
   private final Iterator<? extends Group> valuesIterator;
   private Iterator<Value> groupIterator;

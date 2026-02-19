@@ -31,10 +31,10 @@ import java.util.Collection;
 import java.util.List;
 
 /**
- * @author yole
+ * Important note: please update PyFindUsagesHandlerFactory#proxy on any changes here.
  */
 public class PyModuleFindUsagesHandler extends PyFindUsagesHandler {
-  final PsiFileSystemItem myElement;
+  protected final PsiFileSystemItem myElement;
 
   protected PyModuleFindUsagesHandler(@NotNull PsiFileSystemItem file) {
     super(file);
@@ -44,14 +44,13 @@ public class PyModuleFindUsagesHandler extends PyFindUsagesHandler {
 
   @Override
   public PsiElement @NotNull [] getPrimaryElements() {
-    return new PsiElement[] {myElement};
+    return new PsiElement[]{myElement};
   }
 
-  @NotNull
   @Override
-  public Collection<PsiReference> findReferencesToHighlight(@NotNull PsiElement target, @NotNull SearchScope searchScope) {
+  public @NotNull Collection<PsiReference> findReferencesToHighlight(@NotNull PsiElement target, @NotNull SearchScope searchScope) {
     if (target instanceof PyImportedModule) {
-      target = ((PyImportedModule) target).resolve();
+      target = ((PyImportedModule)target).resolve();
     }
     if (target instanceof PyFile && PyNames.INIT_DOT_PY.equals(((PyFile)target).getName())) {
       List<PsiReference> result = new ArrayList<>(super.findReferencesToHighlight(target, searchScope));

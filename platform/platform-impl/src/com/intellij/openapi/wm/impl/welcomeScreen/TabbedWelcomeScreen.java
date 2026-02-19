@@ -1,159 +1,306 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl.welcomeScreen;
 
-import com.intellij.ide.IdeBundle;
-import com.intellij.openapi.actionSystem.IdeActions;
-import com.intellij.openapi.wm.IdeFocusManager;
+import com.intellij.openapi.Disposable;
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.ActionPlaces;
+import com.intellij.openapi.actionSystem.ActionToolbar;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.wm.WelcomeScreenCustomization;
+import com.intellij.openapi.wm.WelcomeScreenLeftPanel;
 import com.intellij.openapi.wm.WelcomeScreenTab;
 import com.intellij.openapi.wm.WelcomeTabFactory;
-import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy;
 import com.intellij.ui.CardLayoutPanel;
+import com.intellij.ui.ExperimentalUI;
+import com.intellij.ui.JBColor;
 import com.intellij.ui.components.JBLabel;
-import com.intellij.ui.components.JBList;
 import com.intellij.ui.components.panels.NonOpaquePanel;
+import com.intellij.util.ui.JBDimension;
 import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.UI;
-import com.intellij.util.ui.UIUtil;
-import com.intellij.util.ui.table.ComponentsListFocusTraversalPolicy;
-import com.intellij.util.ui.update.UiNotifyConnector;
+import com.intellij.util.ui.UpdateScaleHelper;
+import com.intellij.util.ui.components.BorderLayoutPanel;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
-import java.util.Arrays;
+import javax.accessibility.Accessible;
+import javax.accessibility.AccessibleContext;
+import javax.swing.Icon;
+import javax.swing.JComponent;
+import javax.swing.JPanel;
+import javax.swing.SwingConstants;
+import java.awt.BorderLayout;
+import java.awt.Component;
+import java.awt.Dimension;
+import java.awt.FlowLayout;
 import java.util.List;
-
-import static com.intellij.openapi.wm.impl.welcomeScreen.WelcomeScreenComponentFactory.createActionLink;
-import static com.intellij.openapi.wm.impl.welcomeScreen.WelcomeScreenComponentFactory.createSmallLogo;
-import static com.intellij.openapi.wm.impl.welcomeScreen.WelcomeScreenUIManager.getMainTabListBackground;
+import java.util.Objects;
+import java.util.function.Consumer;
 
 public class TabbedWelcomeScreen extends AbstractWelcomeScreen {
+  private final JPanel leftSidebarHolder = new NonOpaquePanel();
+  private final WelcomeScreenLeftPanel myLeftSidebar;
+  private final CardLayoutPanel<WelcomeScreenTab, WelcomeScreenTab, JPanel> mainPanel;
+  private Disposable currentDisposable = null;
+  private ProjectsTab myProjectsTab = null;
 
   TabbedWelcomeScreen() {
-    setBackground(getMainTabListBackground());
+    this(true);
+  }
 
-    CardLayoutPanel<WelcomeScreenTab, WelcomeScreenTab, JPanel> centralPanel = createCardPanel();
+  @ApiStatus.Internal
+  public TabbedWelcomeScreen(boolean addLogo) {
+    this(WelcomeTabFactory.WELCOME_TAB_FACTORY_EP.getExtensionList(), new TreeWelcomeScreenLeftPanel(), addLogo, true);
+  }
 
-    DefaultListModel<WelcomeScreenTab> mainListModel = new DefaultListModel<>();
-    WelcomeTabFactory.WELCOME_TAB_FACTORY_EP.getExtensionList().forEach(it -> mainListModel.addElement(it.createWelcomeTab(this)));
+  public TabbedWelcomeScreen(List<? extends WelcomeTabFactory> welcomeTabFactories,
+                             WelcomeScreenLeftPanel leftSidebar,
+                             boolean addLogo,
+                             boolean addQuickAccessPanel) {
+    setBackground(WelcomeScreenUIManager.getMainTabListBackground());
 
-    JBList<WelcomeScreenTab> tabList = createListWithTabs(mainListModel);
-    tabList.addListSelectionListener(e -> centralPanel.select(tabList.getSelectedValue(), true));
+    mainPanel = createCardPanel();
 
-    JComponent logoComponent = createSmallLogo();
-    logoComponent.setFocusable(false);
-    logoComponent.setBorder(JBUI.Borders.emptyLeft(16));
+    myLeftSidebar = leftSidebar;
+    myLeftSidebar.addSelectionListener(this, tab -> {
+      mainPanel.select(tab, true);
+      WelcomeScreenEventCollector.logTabSelected(tab);
+    });
 
-    JPanel leftPanel = new NonOpaquePanel();
-    leftPanel.add(logoComponent, BorderLayout.NORTH);
-    leftPanel.add(tabList, BorderLayout.CENTER);
+    if (addLogo) {
+      JComponent logoComponent = WelcomeScreenComponentFactory.createSmallLogo();
+      logoComponent.setFocusable(false);
+      logoComponent.setBorder(JBUI.Borders.emptyLeft(16));
+      leftSidebarHolder.add(logoComponent, BorderLayout.NORTH);
+    }
 
-    JComponent helpLink =
-      createActionLink(this, IdeBundle.message("action.help"), IdeActions.GROUP_WELCOME_SCREEN_HELP, null, centralPanel);
-    leftPanel.add(JBUI.Panels.simplePanel().andTransparent().addToLeft(helpLink).withBorder(JBUI.Borders.empty(5, 10)), BorderLayout.SOUTH);
+    leftSidebarHolder.add(myLeftSidebar.getComponent(), BorderLayout.CENTER);
 
-    leftPanel.setPreferredSize(new Dimension(JBUI.scale(196), leftPanel.getPreferredSize().height));
+    if (addQuickAccessPanel) {
+      JComponent quickAccessPanel = createQuickAccessPanel(this);
+      leftSidebarHolder.add(quickAccessPanel, BorderLayout.SOUTH);
+    }
 
-    add(leftPanel, BorderLayout.WEST);
+    updateLeftSidebarHolderSize();
+
+    JComponent centralPanel = mainPanel;
+    JComponent mainPanelToolbar = createMainPanelToolbar(this);
+    if (mainPanelToolbar != null) {
+      centralPanel = new JPanel(new BorderLayout());
+      centralPanel.add(mainPanel, BorderLayout.CENTER);
+      centralPanel.add(mainPanelToolbar, BorderLayout.SOUTH);
+    }
+
+    add(createLeftPanel(leftSidebarHolder), BorderLayout.WEST);
     add(centralPanel, BorderLayout.CENTER);
 
-    //select and install focused component
-    if (!mainListModel.isEmpty()) {
-      tabList.setSelectedIndex(0);
-      JComponent firstShownPanel = mainListModel.get(0).getAssociatedComponent();
-      UiNotifyConnector.doWhenFirstShown(firstShownPanel, () -> IdeFocusManager.getGlobalInstance()
-        .requestFocus(IdeFocusTraversalPolicy.getPreferredFocusedComponent(firstShownPanel), true));
+    if (ExperimentalUI.isNewUI()) {
+      setBorder(JBUI.Borders.customLineTop(JBColor.border()));
+      centralPanel.setBorder(JBUI.Borders.customLineLeft(JBColor.border()));
     }
-    setFocusTraversalPolicyProvider(true);
-    setFocusTraversalPolicy(new ComponentsListFocusTraversalPolicy() {
 
-      @Override
-      protected @NotNull List<Component> getOrderedComponents() {
-        return Arrays.asList(helpLink, tabList, centralPanel);
-      }
-    });
+    loadTabs(welcomeTabFactories);
   }
 
-  @NotNull
-  private static JBList<WelcomeScreenTab> createListWithTabs(@NotNull DefaultListModel<WelcomeScreenTab> mainListModel) {
-    JBList<WelcomeScreenTab> tabList = new JBList<>(mainListModel) {
-      @Override
-      public int locationToIndex(Point location) {
-        int i = super.locationToIndex(location);
-        return (i == -1 || !getCellBounds(i, i).contains(location)) ? -1 : i;
-      }
-    };
-    tabList.setBackground(getMainTabListBackground());
-    tabList.setBorder(JBUI.Borders.emptyLeft(16));
-    tabList.setCellRenderer(new MyCellRenderer());
-    return tabList;
+  @ApiStatus.Internal
+  protected @NotNull BorderLayoutPanel createLeftPanel(JPanel content) {
+    BorderLayoutPanel panel = new BorderLayoutPanel();
+    panel.addToCenter(content);
+    return panel;
   }
 
-  @NotNull
-  private static CardLayoutPanel<WelcomeScreenTab, WelcomeScreenTab, JPanel> createCardPanel() {
+  @Override
+  public void updateUI() {
+    super.updateUI();
+    if (getParent() != null) updateLeftSidebarHolderSize();
+  }
+
+  private void updateLeftSidebarHolderSize() {
+    leftSidebarHolder.setPreferredSize(new Dimension(JBUI.scale(224), leftSidebarHolder.getPreferredSize().height));
+  }
+
+  @Override
+  public void dispose() {
+    super.dispose();
+    WelcomeScreenEventCollector.logWelcomeScreenHide();
+  }
+
+  public void addSelectionListener(@NotNull Disposable disposable, @NotNull Consumer<? super WelcomeScreenTab> action) {
+    myLeftSidebar.addSelectionListener(disposable, action);
+  }
+
+  /**
+   * Prefer to use addSelectionListener(Disposable, Consumer)
+   */
+  public void addSelectionListener(@NotNull Consumer<? super WelcomeScreenTab> action) {
+    myLeftSidebar.addSelectionListener(this, action);
+  }
+
+  public void loadTabs() {
+    loadTabs(WelcomeTabFactory.WELCOME_TAB_FACTORY_EP.getExtensionList());
+  }
+
+  private void loadTabs(List<? extends WelcomeTabFactory> welcomeTabFactories) {
+    myLeftSidebar.removeAllTabs();
+    myProjectsTab = null;
+    if (currentDisposable != null) {
+      Disposer.dispose(currentDisposable);
+    }
+    currentDisposable = Disposer.newDisposable(this, "TabbedWelcomeScreen tabs");
+    for (WelcomeTabFactory tabFactory : welcomeTabFactories) {
+      if (tabFactory.isApplicable()) {
+        for (WelcomeScreenTab alsoTab : tabFactory.createWelcomeTabs(this, currentDisposable)) {
+          myLeftSidebar.addRootTab(alsoTab);
+          if (alsoTab instanceof ProjectsTab) {
+            myProjectsTab = (ProjectsTab)alsoTab;
+          }
+        }
+      }
+    }
+    myLeftSidebar.init();
+  }
+
+  public void setTabListVisible(boolean visible) {
+    leftSidebarHolder.setVisible(visible);
+  }
+
+  @ApiStatus.Internal
+  public void switchToProjectsTab() {
+    if (myProjectsTab != null) myLeftSidebar.selectTab(myProjectsTab);
+  }
+
+  @ApiStatus.Experimental
+  public void selectTab(@NotNull WelcomeScreenTab tab) {
+    myLeftSidebar.selectTab(tab);
+  }
+
+  @ApiStatus.Internal
+  @ApiStatus.Experimental
+  public void navigateToTabAndSetMainComponent(@NotNull DefaultWelcomeScreenTab tab, Component component) {
+    boolean wasSelected = myLeftSidebar.selectTab(tab);
+    if (!wasSelected) return;
+
+    var panel = (JComponent)tab.myAssociatedComponent.getComponent(0);
+    panel.removeAll();
+    panel.add(component, BorderLayout.CENTER);
+    revalidate();
+    repaint();
+    leftSidebarHolder.setVisible(false);
+  }
+
+  private static JComponent createQuickAccessPanel(@NotNull Disposable parentDisposable) {
+    JPanel result = new NonOpaquePanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
+
+    List<WelcomeScreenCustomization> customizations =
+      WelcomeScreenCustomization.WELCOME_SCREEN_CUSTOMIZATION.getExtensionsIfPointIsRegistered();
+
+    List<AnAction> actions = customizations.stream().map(c -> c.createQuickAccessActions(parentDisposable))
+      .filter(Objects::nonNull)
+      .flatMap(l -> l.stream())
+      .toList();
+
+    if (!actions.isEmpty()) {
+      DefaultActionGroup group = new DefaultActionGroup(actions);
+      ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.WELCOME_SCREEN_QUICK_PANEL, group, true);
+      toolbar.setTargetComponent(result);
+      toolbar.setMinimumButtonSize(new JBDimension(26, 26));
+      JComponent toolbarComponent = toolbar.getComponent();
+
+      toolbarComponent.setOpaque(false);
+      toolbarComponent.setBorder(null);
+      result.add(toolbarComponent);
+    }
+
+    // Remove this together with createQuickAccessComponent method
+    customizations.stream()
+      .map(c -> c.createQuickAccessComponent(parentDisposable))
+      .filter(Objects::nonNull)
+      .forEach(result::add);
+
+    if (ExperimentalUI.isNewUI()) {
+      // ActionButtons have own empty insets(1, 2)
+      result.setBorder(JBUI.Borders.empty(15, 14));
+    }
+    else {
+      result.setBorder(JBUI.Borders.empty(5, 10));
+    }
+    return result;
+  }
+
+  private static @Nullable JComponent createMainPanelToolbar(@NotNull Disposable parentDisposable) {
+    return WelcomeScreenCustomization.WELCOME_SCREEN_CUSTOMIZATION.getExtensionsIfPointIsRegistered().stream()
+      .map(c -> c.createMainPanelToolbar(parentDisposable))
+      .filter(Objects::nonNull)
+      .findFirst().orElse(null);
+  }
+
+  private static @NotNull CardLayoutPanel<WelcomeScreenTab, WelcomeScreenTab, JPanel> createCardPanel() {
     return new CardLayoutPanel<>() {
       @Override
       protected WelcomeScreenTab prepare(WelcomeScreenTab key) {
+        key.updateComponent();
         return key;
       }
 
       @Override
       protected JPanel create(WelcomeScreenTab screenTab) {
-        return UI.Panels.simplePanel(screenTab.getAssociatedComponent());
+        return JBUI.Panels.simplePanel(screenTab.getAssociatedComponent());
       }
     };
   }
 
-  @Override
-  public @Nullable Object getData(@NotNull String dataId) {
-    return null;
-  }
-
-  @Override
-  public void setupFrame(JFrame frame) {
-  }
-
-  private static class MyCellRenderer extends CellRendererPane implements ListCellRenderer<WelcomeScreenTab> {
-
-    @Override
-    public Component getListCellRendererComponent(JList<? extends WelcomeScreenTab> list,
-                                                  WelcomeScreenTab value,
-                                                  int index,
-                                                  boolean isSelected,
-                                                  boolean cellHasFocus) {
-      JComponent keyComponent = value.getKeyComponent();
-      JPanel wrappedPanel = JBUI.Panels.simplePanel(keyComponent);
-      UIUtil.setBackgroundRecursively(wrappedPanel, isSelected ? UIUtil.getListSelectionBackground(cellHasFocus): getMainTabListBackground());
-      UIUtil.setForegroundRecursively(wrappedPanel, UIUtil.getListForeground(isSelected, cellHasFocus));
-      return wrappedPanel;
-    }
-  }
-
-  public abstract static class DefaultWelcomeScreenTab implements WelcomeScreenTab {
-
-    private final JComponent myKeyComponent;
+  public abstract static class DefaultWelcomeScreenTab implements WelcomeScreenTab, Accessible {
+    protected final JComponent myKeyComponent;
+    private final UpdateScaleHelper keyUpdateScaleHelper = new UpdateScaleHelper();
+    private final JBLabel myLabel;
+    private final WelcomeScreenEventCollector.TabType myType;
     private JComponent myAssociatedComponent;
+    private final UpdateScaleHelper associatedUpdateScaleHelper = new UpdateScaleHelper();
 
     public DefaultWelcomeScreenTab(@NotNull @Nls String tabName) {
-      myKeyComponent = JBUI.Panels.simplePanel().addToLeft(new JBLabel(tabName)).withBackground(getMainTabListBackground())
+      this(tabName, null, WelcomeScreenEventCollector.TabType.TabNavOther);
+    }
+
+    public DefaultWelcomeScreenTab(@NotNull @Nls String tabName, @Nullable Icon icon) {
+      this(tabName, icon, WelcomeScreenEventCollector.TabType.TabNavOther);
+    }
+
+    DefaultWelcomeScreenTab(@NotNull @Nls String tabName, @NotNull WelcomeScreenEventCollector.TabType tabType) {
+      this(tabName, null, tabType);
+    }
+
+    DefaultWelcomeScreenTab(@NotNull @Nls String tabName, @Nullable Icon icon, @NotNull WelcomeScreenEventCollector.TabType tabType) {
+      myLabel = new JBLabel(tabName, icon, SwingConstants.LEFT);
+      myType = tabType;
+      myKeyComponent = JBUI.Panels.simplePanel().addToLeft(myLabel).withBackground(WelcomeScreenUIManager.getMainTabListBackground())
         .withBorder(JBUI.Borders.empty(8, 0));
     }
 
     @Override
-    @NotNull
-    public JComponent getKeyComponent() {
+    public @NotNull JComponent getKeyComponent(@NotNull JComponent parent) {
+      keyUpdateScaleHelper.saveScaleAndUpdateUIIfChanged(myKeyComponent);
       return myKeyComponent;
     }
 
     @Override
-    @NotNull
-    public JComponent getAssociatedComponent() {
+    public @NotNull JComponent getAssociatedComponent() {
       if (myAssociatedComponent == null) {
         myAssociatedComponent = buildComponent();
       }
+      associatedUpdateScaleHelper.saveScaleAndUpdateUIIfChanged(myAssociatedComponent);
       return myAssociatedComponent;
+    }
+
+    WelcomeScreenEventCollector.TabType getType() {
+      return myType;
+    }
+
+    @Override
+    public AccessibleContext getAccessibleContext() {
+      return myLabel.getAccessibleContext();
     }
 
     protected abstract JComponent buildComponent();

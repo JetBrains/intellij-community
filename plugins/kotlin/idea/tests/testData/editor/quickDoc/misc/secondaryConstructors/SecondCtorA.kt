@@ -1,0 +1,2 @@
+class SecondCtorA { constructor<caret>() }
+//INFO: <div class='definition'><pre><span style="color:#000080;font-weight:bold;">public</span> <span style="color:#000080;font-weight:bold;">constructor</span> <span style="color:#000000;">SecondCtorA</span>()</pre></div><div class='bottom'><icon src="KotlinBaseResourcesIcons.ClassKotlin"/>&nbsp;<a href="psi_element://SecondCtorA"><code><span style="color:#000000;">SecondCtorA</span></code></a><br/></div>

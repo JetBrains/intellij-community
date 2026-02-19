@@ -1,0 +1,93 @@
+UFile (package = )
+    UClass (name = TypePattern)
+        UMethod (name = formatter)
+            UParameter (name = o)
+            UBlockExpression
+                UDeclarationsExpression
+                    ULocalVariable (name = formatted)
+                USwitchExpression
+                    USimpleNameReferenceExpression (identifier = o)
+                    UExpressionList (switch)
+                        USwitchClauseExpressionWithBody
+                            UPatternExpression
+                                UParameter (name = i)
+                            UBinaryExpression (operator = <)
+                                USimpleNameReferenceExpression (identifier = i)
+                                ULiteralExpression (value = 0)
+                            UExpressionList (switch_entry)
+                                UYieldExpression
+                                    UBinaryExpression (operator = =)
+                                        USimpleNameReferenceExpression (identifier = formatted)
+                                        UQualifiedReferenceExpression
+                                            USimpleNameReferenceExpression (identifier = String)
+                                            UCallExpression (kind = UastCallKind(name='method_call'), argCount = 2))
+                                                UIdentifier (Identifier (format))
+                                                ULiteralExpression (value = "int %d")
+                                                USimpleNameReferenceExpression (identifier = i)
+                        USwitchClauseExpressionWithBody
+                            UPatternExpression
+                                UParameter (name = i)
+                            UExpressionList (switch_entry)
+                                UYieldExpression
+                                    UBinaryExpression (operator = =)
+                                        USimpleNameReferenceExpression (identifier = formatted)
+                                        UQualifiedReferenceExpression
+                                            USimpleNameReferenceExpression (identifier = String)
+                                            UCallExpression (kind = UastCallKind(name='method_call'), argCount = 2))
+                                                UIdentifier (Identifier (format))
+                                                ULiteralExpression (value = "int %d")
+                                                USimpleNameReferenceExpression (identifier = i)
+                        USwitchClauseExpressionWithBody
+                            UPatternExpression
+                                UParameter (name = l)
+                            UBinaryExpression (operator = <)
+                                USimpleNameReferenceExpression (identifier = l)
+                                ULiteralExpression (value = 0)
+                            UExpressionList (switch_entry)
+                                UYieldExpression
+                                    UBinaryExpression (operator = =)
+                                        USimpleNameReferenceExpression (identifier = formatted)
+                                        UQualifiedReferenceExpression
+                                            USimpleNameReferenceExpression (identifier = String)
+                                            UCallExpression (kind = UastCallKind(name='method_call'), argCount = 2))
+                                                UIdentifier (Identifier (format))
+                                                ULiteralExpression (value = "long %d")
+                                                USimpleNameReferenceExpression (identifier = l)
+                        USwitchClauseExpressionWithBody
+                            UPatternExpression
+                                UParameter (name = d)
+                            UExpressionList (switch_entry)
+                                UYieldExpression
+                                    UBinaryExpression (operator = =)
+                                        USimpleNameReferenceExpression (identifier = formatted)
+                                        UQualifiedReferenceExpression
+                                            USimpleNameReferenceExpression (identifier = String)
+                                            UCallExpression (kind = UastCallKind(name='method_call'), argCount = 2))
+                                                UIdentifier (Identifier (format))
+                                                ULiteralExpression (value = "double %f")
+                                                USimpleNameReferenceExpression (identifier = d)
+                        USwitchClauseExpressionWithBody
+                            UPatternExpression
+                                UParameter (name = s)
+                            UExpressionList (switch_entry)
+                                UYieldExpression
+                                    UBinaryExpression (operator = =)
+                                        USimpleNameReferenceExpression (identifier = formatted)
+                                        UQualifiedReferenceExpression
+                                            USimpleNameReferenceExpression (identifier = String)
+                                            UCallExpression (kind = UastCallKind(name='method_call'), argCount = 2))
+                                                UIdentifier (Identifier (format))
+                                                ULiteralExpression (value = "String %s")
+                                                USimpleNameReferenceExpression (identifier = s)
+                        USwitchClauseExpressionWithBody
+                            UDefaultCaseExpression
+                            UExpressionList (switch_entry)
+                                UYieldExpression
+                                    UBinaryExpression (operator = =)
+                                        USimpleNameReferenceExpression (identifier = formatted)
+                                        UQualifiedReferenceExpression
+                                            USimpleNameReferenceExpression (identifier = o)
+                                            UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0))
+                                                UIdentifier (Identifier (toString))
+                UReturnExpression
+                    USimpleNameReferenceExpression (identifier = formatted)

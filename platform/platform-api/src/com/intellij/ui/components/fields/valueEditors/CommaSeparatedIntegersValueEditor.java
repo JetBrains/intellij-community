@@ -1,11 +1,12 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.components.fields.valueEditors;
 
 import com.intellij.openapi.util.InvalidDataException;
+import com.intellij.openapi.util.NlsSafe;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JTextField;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -21,9 +22,8 @@ public class CommaSeparatedIntegersValueEditor extends TextFieldValueEditor<List
     myMaxValue = maxValue;
   }
 
-  @NotNull
   @Override
-  public List<Integer> parseValue(@Nullable String text) throws InvalidDataException {
+  public @NotNull List<Integer> parseValue(@Nullable String text) throws InvalidDataException {
     if (text == null || text.isEmpty()) return Collections.emptyList();
     String[] chunks = text.split("\\s*,\\s*");
     List<Integer> values = new ArrayList<>(chunks.length);
@@ -53,10 +53,10 @@ public class CommaSeparatedIntegersValueEditor extends TextFieldValueEditor<List
     return true;
   }
 
-  public static String intListToString(@NotNull List<Integer> valueList) {
+  public static @NlsSafe String intListToString(@NotNull List<Integer> valueList) {
     StringBuilder sb = new StringBuilder();
     for (Integer value : valueList) {
-      if (sb.length() != 0) sb.append(", ");
+      if (!sb.isEmpty()) sb.append(", ");
       sb.append(value);
     }
     return sb.toString();

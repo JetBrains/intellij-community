@@ -1,8 +1,8 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.inspections.quickfix;
 
-import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.tree.TokenSet;
@@ -15,11 +15,7 @@ import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * Created by IntelliJ IDEA.
- * Author: Alexey.Ivanov
- */
-public class SimplifyBooleanCheckQuickFix implements LocalQuickFix {
+public class SimplifyBooleanCheckQuickFix extends PsiUpdateModCommandQuickFix {
   private final String myReplacementText;
 
   public SimplifyBooleanCheckQuickFix(PyBinaryExpression binaryExpression) {
@@ -43,20 +39,17 @@ public class SimplifyBooleanCheckQuickFix implements LocalQuickFix {
   }
 
   @Override
-  @NotNull
-  public String getName() {
+  public @NotNull String getName() {
     return PyPsiBundle.message("QFIX.simplify.boolean.expression", myReplacementText);
   }
 
   @Override
-  @NotNull
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return PyPsiBundle.message("QFIX.NAME.simplify.boolean.expression");
   }
 
   @Override
-  public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-    final PsiElement element = descriptor.getPsiElement();
+  public void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
     PyPsiUtils.assertValid(element);
     if (!element.isValid() || !(element instanceof PyBinaryExpression)) {
       return;
@@ -74,7 +67,8 @@ public class SimplifyBooleanCheckQuickFix implements LocalQuickFix {
                          || isEmpty(rightExpression) || isEmpty(leftExpression);
     if (isTrue(leftExpression) || isFalse(leftExpression) || isNull(leftExpression) || isEmpty(leftExpression)) {
       resultExpression = rightExpression;
-    } else {
+    }
+    else {
       resultExpression = leftExpression;
     }
     return ((positiveCondition) ? "" : "not ") + resultExpression.getText();

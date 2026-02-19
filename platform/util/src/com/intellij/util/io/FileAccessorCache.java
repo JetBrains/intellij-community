@@ -1,130 +1,192 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.io;
 
+import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.util.containers.SLRUMap;
 import com.intellij.util.containers.hash.EqualityPolicy;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.locks.ReentrantLock;
 
 public abstract class FileAccessorCache<K, T> implements EqualityPolicy<K> {
-  /*@GuardedBy("myCacheLock")*/ private final SLRUMap<K, Handle<T>> myCache;
-  /*@GuardedBy("myCacheLock")*/ private final List<T> myElementsToBeDisposed = new ArrayList<>();
-  private final Object myCacheLock = new Object();
-  private final Object myUpdateLock = new Object();
 
-  public FileAccessorCache(int protectedQueueSize, int probationalQueueSize) {
-    myCache = new SLRUMap<K, Handle<T>>(protectedQueueSize, probationalQueueSize, this) {
+  /** Accessor caches are usually not contended until really high #CPUs */
+  private static final int SEGMENTS_COUNT = Math.max(
+    Runtime.getRuntime().availableProcessors() / 8,
+    1
+  );
+
+  /*@GuardedBy("cacheLock")*/ private final SLRUMap<K, Handle<T>> cache;
+  /*@GuardedBy("cacheLock")*/ private final List<Handle<T>> handlersToBeDisposed = new ArrayList<>();
+
+  /**
+   * Guards .cache and .elementsToBeDisposed structures.
+   * Handlers are added to .elementsToBeDisposed inside cache.onDropFromCache(), so it is already under cacheLock, which makes
+   * it natural to use the same cacheLock for cleaning .elementsToBeProcessed in {@link #runPostponedDisposals()}
+   */
+  private final ReentrantLock cacheLock = new ReentrantLock();
+
+  /**
+   * Guards allocation of new resource/{@link Handle}, and its disposal.
+   * Lock is segmented by [key.hash % SEGMENTS_COUNT]
+   */
+  private final ReentrantLock[] resourceAllocationLocks = new ReentrantLock[SEGMENTS_COUNT];
+
+  public FileAccessorCache(int protectedQueueSize,
+                           int probationalQueueSize) {
+    cache = new SLRUMap<K, Handle<T>>(protectedQueueSize, probationalQueueSize, this) {
       @Override
-      protected final void onDropFromCache(K key, @NotNull Handle<T> value) {
+      protected void onDropFromCache(K key, @NotNull Handle<T> value) {
         value.release();
       }
     };
+    for (int i = 0; i < resourceAllocationLocks.length; i++) {
+      resourceAllocationLocks[i] = new ReentrantLock();
+    }
   }
 
-  @NotNull
-  protected abstract T createAccessor(K key) throws IOException;
+  protected abstract @NotNull T createAccessor(K key) throws IOException;
 
   protected abstract void disposeAccessor(@NotNull T fileAccessor) throws IOException;
 
-  @NotNull
-  public final Handle<T> get(K key) {
+  public final @NotNull Handle<T> get(K key) {
     Handle<T> cached = getIfCached(key);
     if (cached != null) return cached;
 
-    synchronized (myUpdateLock) {
-      cached = getIfCached(key);
-      if (cached != null) return cached;
-      return createHandle(key);
+    try {
+      return withUpdateLock(key, () -> {
+        Handle<T> _cached = getIfCached(key);
+        if (_cached != null) return _cached;
+
+        return createHandle(key);
+      });
+    }
+    finally {
+      runPostponedDisposals();
     }
   }
 
-  @NotNull
+  //GuardedBy("updateLock[key]")
   private Handle<T> createHandle(K key) {
     try {
-      Handle<T> cached = new Handle<>(createAccessor(key), this);
-      cached.allocate();
+      Handle<T> newHandle = new Handle<>(key, createAccessor(key), this);
+      //Handle initially has refCount=2: +1 in ctor, and +1 here. This is because we don't want Handler to be disposed
+      // right after all current users release it, we want it to remain in cache, if cache has capacity for it.
+      // So we dispose a Handler when it is (not currently in use) AND (evicted from cache). So +1 refCount in ctor
+      // could be interpreted as 'a reference from the cache itself'
+      newHandle.allocate();
 
-      synchronized (myCacheLock) {
-        myCache.put(key, cached);
+      cacheLock.lock();
+      try {
+        cache.put(key, newHandle);
       }
-
-      disposeInvalidAccessors();
-      return cached;
+      finally {
+        cacheLock.unlock();
+      }
+      return newHandle;
     }
     catch (IOException ex) {
-      throw new RuntimeException(ex);
+      throw new UncheckedIOException(ex);
     }
   }
 
-  private void disposeInvalidAccessors() {
-    List<T> fileAccessorsToBeDisposed;
-    synchronized (myCacheLock) {
-      if (myElementsToBeDisposed.isEmpty()) return;
-      fileAccessorsToBeDisposed = new ArrayList<>(myElementsToBeDisposed);
-      myElementsToBeDisposed.clear();
+  private void runPostponedDisposals() {
+    List<Handle<T>> handlesToBeDisposed;
+    cacheLock.lock();
+    try {
+      if (handlersToBeDisposed.isEmpty()) return;
+      handlesToBeDisposed = new ArrayList<>(handlersToBeDisposed);
+      handlersToBeDisposed.clear();
+    }
+    finally {
+      cacheLock.unlock();
     }
 
-    for (T t : fileAccessorsToBeDisposed) {
+    IOException disposeException = null;
+    for (Handle<T> handleToDispose : handlesToBeDisposed) {
       try {
-        disposeAccessor(t);
+        //noinspection unchecked
+        withUpdateLock((K)handleToDispose.key, () -> {
+          disposeAccessor(handleToDispose.resource);
+          return null;
+        });
       }
       catch (IOException ex) {
-        throw new RuntimeException(ex);
+        //postpone throwing an exception -- try to dispose as many handlers, as possible
+        if (disposeException == null) {
+          disposeException = ex;
+        }
+        else {
+          disposeException.addSuppressed(ex);
+        }
       }
+    }
+
+    if (disposeException != null) {
+      throw new UncheckedIOException(disposeException);
+    }
+  }
+
+  private <R, E extends Exception> R withUpdateLock(@NotNull K key,
+                                                    @NotNull ThrowableComputable<R, E> lambda) throws E {
+    int hash = getHashCode(key);
+    int segmentNo = Math.abs(hash) % resourceAllocationLocks.length;
+    ReentrantLock lock = resourceAllocationLocks[segmentNo];
+    lock.lock();
+    try {
+      return lambda.compute();
+    }
+    finally {
+      lock.unlock();
     }
   }
 
   public Handle<T> getIfCached(K key) {
-    synchronized (myCacheLock) {
-      final Handle<T> value = myCache.get(key);
+    cacheLock.lock();
+    try {
+      final Handle<T> value = cache.get(key);
       if (value != null) {
         value.allocate();
       }
       return value;
     }
+    finally {
+      cacheLock.unlock();
+    }
   }
 
   public boolean remove(K key) {
     try {
-      synchronized (myCacheLock) {
-        return myCache.remove(key);
+      cacheLock.lock();
+      try {
+        return cache.remove(key);
+      }
+      finally {
+        cacheLock.unlock();
       }
     }
     finally {
-      synchronized (myUpdateLock) {
-        disposeInvalidAccessors();
-      }
+      runPostponedDisposals();
     }
   }
 
   public void clear() {
     try {
-      synchronized (myCacheLock) {
-        myCache.clear();
+      cacheLock.lock();
+      try {
+        cache.clear();
+      }
+      finally {
+        cacheLock.unlock();
       }
     }
     finally {
-      synchronized (myUpdateLock) {
-        disposeInvalidAccessors();
-      }
+      runPostponedDisposals();
     }
   }
 
@@ -139,30 +201,37 @@ public abstract class FileAccessorCache<K, T> implements EqualityPolicy<K> {
   }
 
   public static final class Handle<T> extends ResourceHandle<T> {
-    private final FileAccessorCache<?, ? super T> myOwner;
-    @NotNull
-    private final T myResource;
-    private final AtomicInteger myRefCount = new AtomicInteger(1);
+    private final Object key;
+    private final FileAccessorCache<?, T> owner;
+    private final @NotNull T resource;
+    private final AtomicInteger refCount = new AtomicInteger(1);
 
-    public Handle(@NotNull T fileAccessor, @NotNull FileAccessorCache<?, ? super T> owner) {
-      myResource = fileAccessor;
-      myOwner = owner;
+    private <K> Handle(@NotNull K key,
+                       @NotNull T fileAccessor,
+                       @NotNull FileAccessorCache<K, T> owner) {
+      this.key = key;
+      this.resource = fileAccessor;
+      this.owner = owner;
     }
 
     public void allocate() {
-      myRefCount.incrementAndGet();
+      refCount.incrementAndGet();
     }
 
-    public final void release() {
-      if (myRefCount.decrementAndGet() == 0) {
-        synchronized (myOwner.myCacheLock) {
-          myOwner.myElementsToBeDisposed.add(myResource);
+    public void release() {
+      if (refCount.decrementAndGet() == 0) {
+        owner.cacheLock.lock();
+        try {
+          owner.handlersToBeDisposed.add(this);
+        }
+        finally {
+          owner.cacheLock.unlock();
         }
       }
     }
 
     public int getRefCount() {
-      return myRefCount.get();
+      return refCount.get();
     }
 
     @Override
@@ -171,9 +240,8 @@ public abstract class FileAccessorCache<K, T> implements EqualityPolicy<K> {
     }
 
     @Override
-    @NotNull
-    public T get() {
-      return myResource;
+    public @NotNull T get() {
+      return resource;
     }
   }
 }

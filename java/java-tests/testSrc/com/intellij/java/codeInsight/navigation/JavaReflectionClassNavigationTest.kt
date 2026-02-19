@@ -19,9 +19,6 @@ import com.intellij.psi.PsiClass
 import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 
-/**
- * @author Pavel.Dolgov
- */
 class JavaReflectionClassNavigationTest : JavaReflectionClassNavigationTestBase() {
 
   fun testPublicClass() {
@@ -85,7 +82,7 @@ abstract class JavaReflectionClassNavigationTestBase : LightJavaCodeInsightFixtu
       if (dotPos >= 0) expectedName = expectedName.substring(0, dotPos).replace("<caret>", "")
     }
     else {
-      atCaret = className + "<caret>"
+      atCaret = "$className<caret>"
     }
     myFixture.configureByText("Main.java",
                               """import foo.bar.*;

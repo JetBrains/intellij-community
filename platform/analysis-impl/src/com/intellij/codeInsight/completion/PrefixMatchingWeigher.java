@@ -16,11 +16,10 @@
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.lookup.LookupElement;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author peter
-*/
+@ApiStatus.Internal
 public class PrefixMatchingWeigher extends CompletionWeigher {
 
   @Override

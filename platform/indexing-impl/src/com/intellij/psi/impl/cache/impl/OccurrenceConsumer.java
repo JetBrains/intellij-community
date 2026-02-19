@@ -1,36 +1,26 @@
-/*
- * Copyright 2000-2011 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.cache.impl;
 
 import com.intellij.psi.impl.cache.impl.id.IdDataConsumer;
 import com.intellij.psi.search.IndexPattern;
-import gnu.trove.TObjectIntHashMap;
+import it.unimi.dsi.fastutil.objects.Object2IntMap;
+import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 
 public final class OccurrenceConsumer {
   private final IdDataConsumer myIndexDataConsumer;
-  private TObjectIntHashMap<IndexPattern> myTodoOccurrences;
+  private Object2IntMap<IndexPattern> myTodoOccurrences;
   private final boolean myNeedToDo;
 
-  public OccurrenceConsumer(final IdDataConsumer indexDataConsumer, boolean needToDo) {
+  public OccurrenceConsumer(IdDataConsumer indexDataConsumer, boolean needToDo) {
     myIndexDataConsumer = indexDataConsumer;
     myNeedToDo = needToDo;
   }
 
   public void addOccurrence(final CharSequence charSequence, char[] charArray, final int start, final int end, final int occurrenceMask) {
-    if (myIndexDataConsumer == null) return;
+    if (myIndexDataConsumer == null) {
+      return;
+    }
+
     if (charArray != null) {
       myIndexDataConsumer.addOccurrence(charArray, start, end, occurrenceMask);
     }
@@ -40,15 +30,14 @@ public final class OccurrenceConsumer {
   }
 
   public void incTodoOccurrence(final IndexPattern pattern) {
-    if (myTodoOccurrences == null) myTodoOccurrences = new TObjectIntHashMap<>();
-    if (!myTodoOccurrences.increment(pattern)) {
-      myTodoOccurrences.put(pattern, 1);
+    if (myTodoOccurrences == null) {
+      myTodoOccurrences = new Object2IntOpenHashMap<>();
     }
+    myTodoOccurrences.mergeInt(pattern, 1, Math::addExact);
   }
 
   public int getOccurrenceCount(IndexPattern pattern) {
-    if (myTodoOccurrences == null) return 0;
-    return myTodoOccurrences.get(pattern);
+    return myTodoOccurrences == null ? 0 : myTodoOccurrences.getInt(pattern);
   }
 
   public boolean isNeedToDo() {

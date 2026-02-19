@@ -3,7 +3,6 @@ package com.intellij.filePrediction.features
 
 import com.intellij.filePrediction.features.FilePredictionFeature.Companion.binary
 import com.intellij.filePrediction.features.FilePredictionFeature.Companion.numerical
-import com.intellij.filePrediction.references.ExternalReferencesResult
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.guessProjectDir
@@ -63,7 +62,7 @@ class FilePredictionSimilarityFeatures : FilePredictionFeatureProvider {
         val fileIndex = FileIndexFacade.getInstance(project)
         result["in_project"] = binary(fileIndex.isInProjectScope(newFile))
         result["in_source"] = binary(fileIndex.isInSource(newFile))
-        result["in_library"] = binary(fileIndex.isInLibraryClasses(newFile) || fileIndex.isInLibrarySource(newFile))
+        result["in_library"] = binary(fileIndex.isInLibrary(newFile))
         result["excluded"] = binary(fileIndex.isExcludedFile(newFile))
 
         if (prevFile != null && prevFile.isValid) {
@@ -75,8 +74,8 @@ class FilePredictionSimilarityFeatures : FilePredictionFeatureProvider {
     }
 
     if (prevFile != null) {
-      val newFileName = unify(newFile.name)
-      val prevFileName = unify(prevFile.name)
+      val newFileName = FileUtil.getNameWithoutExtension(newFile.name)
+      val prevFileName = FileUtil.getNameWithoutExtension(prevFile.name)
       addNameSimilarity(newFileName, prevFileName, result)
 
       addPathSimilarity(newFile, prevFile, null, "", result)
@@ -146,8 +145,8 @@ class FilePredictionSimilarityFeatures : FilePredictionFeatureProvider {
     result["name_prefix_norm"] = numerical((2 * commonPrefixLen.toDouble()) / (newFileName.length + prevFileName.length))
 
     var common = 0
-    val newWords = ContainerUtil.map2Set(NameUtilCore.nameToWords(newFileName), Strings::toLowerCase)
-    val prevWords = ContainerUtil.map2Set(NameUtilCore.nameToWords(prevFileName), Strings::toLowerCase)
+    val newWords = ContainerUtil.map2Set(NameUtilCore.nameToWordList(newFileName), Strings::toLowerCase)
+    val prevWords = ContainerUtil.map2Set(NameUtilCore.nameToWordList(prevFileName), Strings::toLowerCase)
     for (prevWord in prevWords) {
       if (newWords.contains(prevWord)) common++
     }

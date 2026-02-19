@@ -17,6 +17,7 @@ import io.netty.channel.socket.nio.NioServerSocketChannel
 import io.netty.handler.codec.LengthFieldBasedFrameDecoder
 import io.netty.handler.codec.LengthFieldPrepender
 import io.netty.handler.logging.LoggingHandler
+import org.apache.thrift.TConfiguration
 import org.apache.thrift.transport.TServerTransport
 import org.apache.thrift.transport.TTransport
 import org.apache.thrift.transport.TTransportException
@@ -53,7 +54,7 @@ class TNettyServerTransport(host: String, port: Int) : TServerTransport() {
     return nettyServer.awaitTermination(timeout, unit)
   }
 
-  override fun acceptImpl(): TTransport = nettyServer.accept()
+  override fun accept(): TTransport = nettyServer.accept()
 
   override fun interrupt() {
     close()
@@ -228,10 +229,52 @@ class TNettyServerTransport(host: String, port: Int) : TServerTransport() {
     override fun writeMessage(content: ByteArray) {
       channel.writeAndFlush(DirectedMessage(DirectedMessage.MessageDirection.RESPONSE, content))
     }
+
+    /**
+     * Workarounds the problem of the original method where the generic [TTransportException] is thrown even if the client side has properly
+     * finished its work. The generic exceptions are not ignored in [org.apache.thrift.server.TThreadPoolServer.WorkerProcess.run], these
+     * exceptions are rethrown and they are shown in as the error in the IDE.
+     *
+     * The workaround is to throw [TTransportException] of the specific type [TTransportException.END_OF_FILE], which is ignored by the said
+     * `run` method.
+     */
+    override fun readAll(buf: ByteArray, off: Int, len: Int): Int {
+      var got = 0
+      while (got < len) {
+        val ret = read(buf, off + got, len - got)
+        if (ret <= 0) {
+          if (got == 0) {
+            // properly handle the case when the client seems to have finished its working session normally
+            throw TTransportException(TTransportException.END_OF_FILE)
+          }
+          else {
+            throw TTransportException(
+              "Cannot read. Remote side has closed. Tried to read "
+              + len
+              + " bytes, but only got "
+              + got
+              + " bytes. (This is often indicative of an internal error on the server side. Please check your server logs.)")
+          }
+        }
+        got += ret
+      }
+      return got
+    }
+
+    override fun getConfiguration(): TConfiguration? = null
+
+    override fun updateKnownMessageSize(size: Long) {}
+
+    override fun checkReadBytesAvailable(numBytes: Long) {}
   }
 
   private class TNettyClientTransport(private val channel: SocketChannel) : TCumulativeTransport() {
     override fun isOpen(): Boolean = channel.isOpen
+    override fun getConfiguration(): TConfiguration? = null
+
+    override fun updateKnownMessageSize(size: Long) {}
+
+    override fun checkReadBytesAvailable(numBytes: Long) {}
 
     override fun writeMessage(content: ByteArray) {
       channel.writeAndFlush(DirectedMessage(DirectedMessage.MessageDirection.REQUEST, content))

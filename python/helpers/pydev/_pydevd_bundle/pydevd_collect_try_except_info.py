@@ -9,6 +9,8 @@ try:
 except NameError:
     xrange = range
 
+from _pydevd_bundle.pydevd_constants import IS_PY38_OR_GREATER, IS_PY312_OR_GREATER
+
 
 class TryExceptInfo(object):
 
@@ -143,6 +145,10 @@ def _iter_instructions(co):
             yield instruction
 
 
+_return_op_names = {'RETURN_VALUE', 'RETURN_CONST'} if IS_PY312_OR_GREATER \
+    else {'RETURN_VALUE'}
+
+
 def collect_return_info(co, use_func_first_line=False):
     if not hasattr(co, 'co_lnotab'):
         return []
@@ -156,7 +162,7 @@ def collect_return_info(co, use_func_first_line=False):
     op_offset_to_line = dict(dis.findlinestarts(co))
     for instruction in _iter_instructions(co):
         curr_op_name = instruction.opname
-        if curr_op_name == 'RETURN_VALUE':
+        if curr_op_name in _return_op_names:
             lst.append(ReturnInfo(_get_line(op_offset_to_line, instruction.offset, firstlineno, search=True)))
 
     return lst
@@ -189,9 +195,15 @@ def collect_try_except_info(co, use_func_first_line=False):
         for instruction in iter_in:
             curr_op_name = instruction.opname
 
-            if curr_op_name == 'SETUP_EXCEPT':
+            if curr_op_name in ('SETUP_EXCEPT', 'SETUP_FINALLY'):
+                # We need to collect try..finally blocks too to make sure that
+                # the stack_in_setup we're using to collect info is correct.
+                # Note: On Py3.8 both except and finally statements use 'SETUP_FINALLY'.
                 try_except_info = TryExceptInfo(
-                    _get_line(op_offset_to_line, instruction.offset, firstlineno, search=True))
+                    _get_line(op_offset_to_line, instruction.offset,
+                              firstlineno, search=True),
+                    is_finally=curr_op_name == 'SETUP_FINALLY'
+                )
                 try_except_info.except_bytecode_offset = instruction.argval
                 try_except_info.except_line = _get_line(
                     op_offset_to_line,
@@ -201,12 +213,11 @@ def collect_try_except_info(co, use_func_first_line=False):
 
                 stack_in_setup.append(try_except_info)
 
-            elif curr_op_name == 'SETUP_FINALLY':
-                # We need to collect try..finally blocks too to make sure that
-                # the stack_in_setup we're using to collect info is correct.
-                try_except_info = TryExceptInfo(
-                    _get_line(op_offset_to_line, instruction.offset, firstlineno, search=True), is_finally=True)
-                stack_in_setup.append(try_except_info)
+            elif curr_op_name == 'POP_EXCEPT':
+                # On Python 3.8 there's no SETUP_EXCEPT (both except and finally start with SETUP_FINALLY),
+                # so, we differentiate by a POP_EXCEPT.
+                if IS_PY38_OR_GREATER:
+                    stack_in_setup[-1].is_finally = False
 
             elif curr_op_name == 'RAISE_VARARGS':
                 # We want to know about reraises and returns inside of except blocks (unfortunately

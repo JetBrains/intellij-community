@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.service.project.manage;
 
 import com.intellij.openapi.externalSystem.ExternalSystemManager;
@@ -14,58 +14,37 @@ import com.intellij.openapi.externalSystem.settings.AbstractExternalSystemLocalS
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.externalSystem.util.ExternalSystemConstants;
 import com.intellij.openapi.externalSystem.util.Order;
-import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Computable;
-import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * Encapsulates functionality of importing external system module to the intellij project.
- *
- * @author Denis Zhdanov
  */
+@ApiStatus.Internal
 @Order(ExternalSystemConstants.BUILTIN_MODULE_DATA_SERVICE_ORDER)
-public class ModuleDataService extends AbstractModuleDataService<ModuleData> {
-
-  @NotNull
+public final class ModuleDataService extends AbstractModuleDataService<ModuleData> {
   @Override
-  public Key<ModuleData> getTargetDataKey() {
+  public @NotNull Key<ModuleData> getTargetDataKey() {
     return ProjectKeys.MODULE;
   }
 
-  @NotNull
   @Override
-  public Computable<Collection<Module>> computeOrphanData(@NotNull final Collection<DataNode<ModuleData>> toImport,
-                                                          @NotNull final ProjectData projectData,
-                                                          @NotNull final Project project,
-                                                          @NotNull final IdeModifiableModelsProvider modelsProvider) {
-    return () -> {
-      List<Module> orphanIdeModules = new SmartList<>();
-
-      for (Module module : modelsProvider.getModules()) {
-        if (!ExternalSystemApiUtil.isExternalSystemAwareModule(projectData.getOwner(), module)) continue;
-        if (ExternalSystemApiUtil.getExternalModuleType(module) != null) continue;
-
-        final String rootProjectPath = ExternalSystemApiUtil.getExternalRootProjectPath(module);
-        if (projectData.getLinkedExternalProjectPath().equals(rootProjectPath)) {
-          if (module.getUserData(AbstractModuleDataService.MODULE_DATA_KEY) == null) {
-            orphanIdeModules.add(module);
-          }
-        }
-      }
-
-      return orphanIdeModules;
-    };
+  public @Nullable String getExternalModuleType() {
+    return null;
   }
 
   @Override
-  public void postProcess(@NotNull Collection<DataNode<ModuleData>> toImport,
+  public void postProcess(@NotNull Collection<? extends DataNode<ModuleData>> toImport,
                           @Nullable ProjectData projectData,
                           @NotNull Project project,
                           @NotNull IdeModifiableModelsProvider modelsProvider) {
@@ -74,7 +53,7 @@ public class ModuleDataService extends AbstractModuleDataService<ModuleData> {
     updateLocalSettings(toImport, project);
   }
 
-  private static void updateLocalSettings(Collection<DataNode<ModuleData>> toImport, Project project) {
+  private static void updateLocalSettings(Collection<? extends DataNode<ModuleData>> toImport, Project project) {
     if (toImport.isEmpty()) {
       return;
     }
@@ -86,7 +65,7 @@ public class ModuleDataService extends AbstractModuleDataService<ModuleData> {
     Map<ExternalProjectPojo, Collection<ExternalProjectPojo>> data = new HashMap<>();
     for (Map.Entry<DataNode<ProjectData>, Collection<DataNode<ModuleData>>> entry : grouped.entrySet()) {
       data.put(ExternalProjectPojo.from(entry.getKey().getData()),
-               ContainerUtil.map2List(entry.getValue(), node -> ExternalProjectPojo.from(node.getData())));
+               ContainerUtil.map(entry.getValue(), node -> ExternalProjectPojo.from(node.getData())));
     }
 
     AbstractExternalSystemLocalSettings settings = manager.getLocalSettingsProvider().fun(project);
@@ -99,9 +78,8 @@ public class ModuleDataService extends AbstractModuleDataService<ModuleData> {
     settings.setAvailableProjects(projects);
   }
 
-  @NotNull
-  private static Set<String> detectRenamedProjects(@NotNull Map<ExternalProjectPojo, Collection<ExternalProjectPojo>> currentInfo,
-                                                   @NotNull Map<ExternalProjectPojo, Collection<ExternalProjectPojo>> oldInfo) {
+  private static @NotNull Set<String> detectRenamedProjects(@NotNull Map<ExternalProjectPojo, Collection<ExternalProjectPojo>> currentInfo,
+                                                            @NotNull Map<ExternalProjectPojo, Collection<ExternalProjectPojo>> oldInfo) {
     Map<String/* external config path */, String/* project name */> map = new HashMap<>();
     for (Map.Entry<ExternalProjectPojo, Collection<ExternalProjectPojo>> entry : currentInfo.entrySet()) {
       map.put(entry.getKey().getPath(), entry.getKey().getName());

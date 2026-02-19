@@ -2,7 +2,13 @@
 package com.intellij.psi.impl.compiled;
 
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaElementVisitor;
+import com.intellij.psi.PsiAnnotation;
+import com.intellij.psi.PsiClassType;
+import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.PsiJavaCodeReferenceElement;
+import com.intellij.psi.PsiProvidesStatement;
+import com.intellij.psi.PsiReferenceList;
 import com.intellij.psi.impl.java.stubs.JavaStubElementTypes;
 import com.intellij.psi.impl.java.stubs.PsiProvidesStatementStub;
 import com.intellij.psi.impl.source.PsiClassReferenceType;
@@ -21,6 +27,16 @@ public class ClsProvidesStatementImpl extends ClsRepositoryPsiElement<PsiProvide
   }
 
   @Override
+  public void accept(@NotNull PsiElementVisitor visitor) {
+    if (visitor instanceof JavaElementVisitor) {
+      ((JavaElementVisitor)visitor).visitProvidesStatement(this);
+    }
+    else {
+      visitor.visitElement(this);
+    }
+  }
+
+  @Override
   public PsiJavaCodeReferenceElement getInterfaceReference() {
     return myClassReference;
   }
@@ -32,7 +48,8 @@ public class ClsProvidesStatementImpl extends ClsRepositoryPsiElement<PsiProvide
 
   @Override
   public PsiReferenceList getImplementationList() {
-    StubElement<PsiReferenceList> stub = getStub().findChildStubByType(JavaStubElementTypes.PROVIDES_WITH_LIST);
+    StubElement<PsiReferenceList> stub =
+      (StubElement<PsiReferenceList>)getStub().findChildStubByElementType(JavaStubElementTypes.PROVIDES_WITH_LIST);
     return stub != null ? stub.getPsi() : null;
   }
 
@@ -45,7 +62,7 @@ public class ClsProvidesStatementImpl extends ClsRepositoryPsiElement<PsiProvide
   }
 
   @Override
-  public void setMirror(@NotNull TreeElement element) throws InvalidMirrorException {
+  protected void setMirror(@NotNull TreeElement element) throws InvalidMirrorException {
     setMirrorCheckingType(element, JavaElementType.PROVIDES_STATEMENT);
     setMirror(getInterfaceReference(), SourceTreeToPsiMap.<PsiProvidesStatement>treeToPsiNotNull(element).getInterfaceReference());
     setMirrorIfPresent(getImplementationList(), SourceTreeToPsiMap.<PsiProvidesStatement>treeToPsiNotNull(element).getImplementationList());

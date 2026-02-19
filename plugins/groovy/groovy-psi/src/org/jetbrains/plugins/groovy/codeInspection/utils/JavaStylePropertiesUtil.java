@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.codeInspection.utils;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -12,7 +12,11 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrApplicationStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssignmentExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAccessorMethod;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyNamesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
@@ -28,11 +32,11 @@ public final class JavaStylePropertiesUtil {
   public static void fixJavaStyleProperty(GrMethodCall call) {
     GrExpression invoked = call.getInvokedExpression();
     String accessorName = ((GrReferenceExpression)invoked).getReferenceName();
-    if (isGetterInvocation(call) && invoked instanceof GrReferenceExpression) {
+    if (isGetterInvocation(call)) {
       final GrExpression newCall = genRefForGetter(call, accessorName);
       call.replaceWithExpression(newCall, true);
     }
-    else if (isSetterInvocation(call) && invoked instanceof GrReferenceExpression) {
+    else if (isSetterInvocation(call)) {
       final GrStatement newCall = genRefForSetter(call, accessorName);
       if(newCall != null) {
         call.replaceWithStatement(newCall);
@@ -44,8 +48,7 @@ public final class JavaStylePropertiesUtil {
     return !isInvokedOnMap(call) && (isGetterInvocation(call) || isSetterInvocation(call));
   }
 
-  @Nullable
-  private static GrAssignmentExpression genRefForSetter(GrMethodCall call, String accessorName) {
+  private static @Nullable GrAssignmentExpression genRefForSetter(GrMethodCall call, String accessorName) {
     String name = GroovyPropertyUtils.getPropertyNameBySetterName(accessorName);
     if(name == null) return null;
     GrExpression value = call.getExpressionArguments()[0];
@@ -80,8 +83,7 @@ public final class JavaStylePropertiesUtil {
   private static boolean isSetterInvocation(GrMethodCall call) {
     GrExpression expr = call.getInvokedExpression();
 
-    if (!(expr instanceof GrReferenceExpression)) return false;
-    GrReferenceExpression refExpr = (GrReferenceExpression)expr;
+    if (!(expr instanceof GrReferenceExpression refExpr)) return false;
 
     PsiMethod method;
     if (call instanceof GrApplicationStatement) {
@@ -92,11 +94,10 @@ public final class JavaStylePropertiesUtil {
     else {
       method = call.resolveMethod();
       if (!GroovyPropertyUtils.isSimplePropertySetter(method)) return false;
-      LOG.assertTrue(method != null);
     }
 
     if (!GroovyNamesUtil.isValidReference(GroovyPropertyUtils.getPropertyNameBySetterName(method.getName()),
-                                          ((GrReferenceExpression)expr).getQualifier() != null,
+                                          refExpr.getQualifier() != null,
                                           call.getProject())) {
       return false;
     }
@@ -124,7 +125,6 @@ public final class JavaStylePropertiesUtil {
 
     PsiMethod method = call.resolveMethod();
     if (!GroovyPropertyUtils.isSimplePropertyGetter(method)) return false;
-    LOG.assertTrue(method != null);
     if (!GroovyNamesUtil.isValidReference(GroovyPropertyUtils.getPropertyNameByGetterName(method.getName(), true),
                                           ((GrReferenceExpression)expr).getQualifier() != null,
                                           call.getProject())) {

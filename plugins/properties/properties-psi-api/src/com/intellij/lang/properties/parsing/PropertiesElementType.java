@@ -10,7 +10,7 @@ public class PropertiesElementType extends IElementType {
     super(debugName, PropertiesLanguage.INSTANCE);
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
+  @Override
   public String toString() {
     return "Properties:" + super.toString();
   }

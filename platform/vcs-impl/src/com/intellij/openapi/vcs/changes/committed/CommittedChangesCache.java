@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes.committed;
 
 import com.intellij.concurrency.JobScheduler;
@@ -6,7 +6,11 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.components.*;
+import com.intellij.openapi.components.Service;
+import com.intellij.openapi.components.SimplePersistentStateComponent;
+import com.intellij.openapi.components.State;
+import com.intellij.openapi.components.Storage;
+import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
@@ -14,7 +18,14 @@ import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.vcs.*;
+import com.intellij.openapi.vcs.AbstractVcs;
+import com.intellij.openapi.vcs.CachingCommittedChangesProvider;
+import com.intellij.openapi.vcs.CommittedChangesProvider;
+import com.intellij.openapi.vcs.ProjectLevelVcsManager;
+import com.intellij.openapi.vcs.RepositoryLocation;
+import com.intellij.openapi.vcs.VcsBundle;
+import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vcs.VcsListener;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
 import com.intellij.openapi.vcs.update.UpdatedFiles;
@@ -26,6 +37,8 @@ import com.intellij.util.containers.MultiMap;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.messages.Topic;
 import com.intellij.vcs.ProgressManagerQueue;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -33,7 +46,17 @@ import org.jetbrains.annotations.TestOnly;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Date;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
@@ -41,14 +64,8 @@ import java.util.concurrent.TimeUnit;
 import static com.intellij.util.MessageBusUtil.invokeLaterIfNeededOnSyncPublisher;
 import static com.intellij.util.containers.ContainerUtil.unmodifiableOrEmptyList;
 
-/**
- * @author yole
- */
-@Service
-@State(
-  name = "CommittedChangesCache",
-  storages = {@Storage(StoragePathMacros.WORKSPACE_FILE)}
-)
+@Service(Service.Level.PROJECT)
+@State(name = "CommittedChangesCache", storages = @Storage(StoragePathMacros.WORKSPACE_FILE))
 public final class CommittedChangesCache extends SimplePersistentStateComponent<CommittedChangesCacheState> {
   private static final Logger LOG = Logger.getInstance(CommittedChangesCache.class);
 
@@ -60,17 +77,21 @@ public final class CommittedChangesCache extends SimplePersistentStateComponent<
   private List<CommittedChangeList> myCachedIncomingChangeLists;
   private final @NotNull Set<CommittedChangeList> myNewIncomingChanges = new LinkedHashSet<>();
 
-  private MyRefreshRunnable myRefresnRunnable;
+  private MyRefreshRunnable refreshRunnable;
 
   private final Map<String, Pair<Long, List<CommittedChangeList>>> myExternallyLoadedChangeLists;
   private final CachesHolder myCachesHolder;
   private final RepositoryLocationCache myLocationCache;
 
-  public static final Topic<CommittedChangesListener> COMMITTED_TOPIC = new Topic<>("committed changes updates",
-                                                                                    CommittedChangesListener.class);
+  @Topic.ProjectLevel
+  public static final Topic<CommittedChangesListener> COMMITTED_TOPIC = new Topic<>(CommittedChangesListener.class, Topic.BroadcastDirection.NONE);
 
   public static CommittedChangesCache getInstance(Project project) {
     return project.getService(CommittedChangesCache.class);
+  }
+
+  public static @Nullable CommittedChangesCache getInstanceIfCreated(Project project) {
+    return project.getServiceIfCreated(CommittedChangesCache.class);
   }
 
   public CommittedChangesCache(@NotNull Project project) {
@@ -117,6 +138,7 @@ public final class CommittedChangesCache extends SimplePersistentStateComponent<
     myExternallyLoadedChangeLists = new ConcurrentHashMap<>();
   }
 
+  @ApiStatus.Internal
   @Override
   public void loadState(@NotNull CommittedChangesCacheState state) {
     super.loadState(state);
@@ -126,8 +148,7 @@ public final class CommittedChangesCache extends SimplePersistentStateComponent<
   public boolean isMaxCountSupportedForProject() {
     for (AbstractVcs vcs : ProjectLevelVcsManager.getInstance(myProject).getAllActiveVcss()) {
       final CommittedChangesProvider provider = vcs.getCommittedChangesProvider();
-      if (provider instanceof CachingCommittedChangesProvider) {
-        final CachingCommittedChangesProvider cachingProvider = (CachingCommittedChangesProvider)provider;
+      if (provider instanceof CachingCommittedChangesProvider cachingProvider) {
         if (!cachingProvider.isMaxCountSupported()) {
           return false;
         }
@@ -204,13 +225,13 @@ public final class CommittedChangesCache extends SimplePersistentStateComponent<
         if (myProject.isDisposed()) {
           return;
         }
-        if (myExceptions.size() > 0) {
+        if (!myExceptions.isEmpty()) {
           myErrorConsumer.consume(myExceptions);
         }
         else if (!myDisposed) {
           myConsumer.consume(new ArrayList<>(myResult));
         }
-      }, ModalityState.NON_MODAL);
+      }, ModalityState.nonModal());
     }
   }
 
@@ -270,7 +291,7 @@ public final class CommittedChangesCache extends SimplePersistentStateComponent<
       return cacheFile.hasCompleteHistory();
     }
 
-    boolean hasDateFilter = settings.USE_DATE_AFTER_FILTER || settings.USE_DATE_BEFORE_FILTER || settings.USE_CHANGE_AFTER_FILTER || settings.USE_CHANGE_BEFORE_FILTER;
+    boolean hasDateFilter = settings.USE_DATE_AFTER_FILTER || settings.USE_CHANGE_AFTER_FILTER;
     boolean hasNonDateFilter = settings.isNonDateFilterSpecified();
     if (!hasDateFilter && hasNonDateFilter) {
       return cacheFile.hasCompleteHistory();
@@ -402,7 +423,7 @@ public final class CommittedChangesCache extends SimplePersistentStateComponent<
     if (maxCount > 0 && changes.size() < getState().getInitialCount()) {
       cacheFile.setHaveCompleteHistory(true);
     }
-    if (changes.size() > 0) {
+    if (!changes.isEmpty()) {
       fireChangesLoaded(location, changes);
     }
     return changes;
@@ -466,12 +487,13 @@ public final class CommittedChangesCache extends SimplePersistentStateComponent<
   private List<CommittedChangeList> appendLoadedChanges(@NotNull ChangesCacheFile cacheFile,
                                                         @NotNull List<? extends CommittedChangeList> newChanges) throws IOException {
     final List<CommittedChangeList> savedChanges = writeChangesInReadAction(cacheFile, newChanges);
-    if (savedChanges.size() > 0) {
+    if (!savedChanges.isEmpty()) {
       fireChangesLoaded(cacheFile.getLocation(), savedChanges);
     }
     return savedChanges;
   }
 
+  @Contract(mutates = "param1,param2")
   private static List<CommittedChangeList> writeChangesInReadAction(final ChangesCacheFile cacheFile,
                                                                     @NotNull List<? extends CommittedChangeList> newChanges)
     throws IOException {
@@ -696,7 +718,7 @@ public final class CommittedChangesCache extends SimplePersistentStateComponent<
         try {
           debug("Processing updated files after refresh in " + cache.getLocation());
           boolean result = true;
-          if (committedChangeLists.size() > 0) {
+          if (!committedChangeLists.isEmpty()) {
             // received some new changelists, try to process updated files again
             result = cache.processUpdatedFiles(updatedFiles, myNewIncomingChanges);
           }
@@ -765,12 +787,10 @@ public final class CommittedChangesCache extends SimplePersistentStateComponent<
   public void refreshIncomingChangesAsync() {
     debug("Refreshing incoming changes in background");
     myRefreshingIncomingChanges = true;
-    final Runnable task = () -> {
+    myTaskQueue.run(() -> {
       refreshIncomingChanges();
-
       refreshIncomingUi();
-    };
-    myTaskQueue.run(task);
+    });
   }
 
   private void refreshIncomingUi() {
@@ -778,7 +798,7 @@ public final class CommittedChangesCache extends SimplePersistentStateComponent<
       myRefreshingIncomingChanges = false;
       debug("Incoming changes refresh complete, clearing cached incoming changes");
       notifyReloadIncomingChanges();
-    }, ModalityState.NON_MODAL, myProject.getDisposed());
+    }, ModalityState.nonModal(), myProject.getDisposed());
   }
 
   public void refreshAllCachesAsync(final boolean initIfEmpty, final boolean inBackground) {
@@ -888,10 +908,10 @@ public final class CommittedChangesCache extends SimplePersistentStateComponent<
   private void updateRefreshTimer() {
     cancelRefreshTimer();
     if (getState().isRefreshEnabled()) {
-      myRefresnRunnable = new MyRefreshRunnable(this);
+      refreshRunnable = new MyRefreshRunnable(this);
       // if "schedule with fixed rate" is used, then after waking up from stand-by mode, events are generated for inactive period
       // it does not make sense
-      myFuture = JobScheduler.getScheduler().scheduleWithFixedDelay(myRefresnRunnable,
+      myFuture = JobScheduler.getScheduler().scheduleWithFixedDelay(refreshRunnable,
                                                                     getState().getRefreshInterval() * 60L,
                                                                     getState().getRefreshInterval() * 60L,
                                                                     TimeUnit.SECONDS);
@@ -899,9 +919,9 @@ public final class CommittedChangesCache extends SimplePersistentStateComponent<
   }
 
   private void cancelRefreshTimer() {
-    if (myRefresnRunnable != null) {
-      myRefresnRunnable.cancel();
-      myRefresnRunnable = null;
+    if (refreshRunnable != null) {
+      refreshRunnable.cancel();
+      refreshRunnable = null;
     }
     if (myFuture != null) {
       myFuture.cancel(false);
@@ -923,7 +943,7 @@ public final class CommittedChangesCache extends SimplePersistentStateComponent<
     return null;
   }
 
-  private long getLatestListForFile(final ChangesCacheFile file) {
+  private static long getLatestListForFile(final ChangesCacheFile file) {
     try {
       if ((file == null) || (file.isEmpty())) {
         return -1;
@@ -935,6 +955,7 @@ public final class CommittedChangesCache extends SimplePersistentStateComponent<
     }
   }
 
+  @ApiStatus.Internal
   public CachesHolder getCachesHolder() {
     return myCachesHolder;
   }

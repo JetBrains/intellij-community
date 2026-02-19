@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.controlFlow;
 
 import com.intellij.util.ArrayUtil;
@@ -7,9 +7,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
 
-/**
- * @author Pavel.Dolgov
- */
 final class InstructionKey implements Comparable<InstructionKey> {
   private final int myOffset;
   private final int[] myCallStack; // shared between instructions on the same stack level
@@ -19,8 +16,7 @@ final class InstructionKey implements Comparable<InstructionKey> {
     myCallStack = callStack;
   }
 
-  @NotNull
-  static InstructionKey create(int offset) {
+  static @NotNull InstructionKey create(int offset) {
     return new InstructionKey(offset, ArrayUtilRt.EMPTY_INT_ARRAY);
   }
 

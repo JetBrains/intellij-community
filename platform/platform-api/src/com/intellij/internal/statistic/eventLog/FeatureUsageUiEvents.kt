@@ -1,34 +1,50 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistic.eventLog
 
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.components.ServiceManager
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.options.Configurable
+import com.intellij.openapi.ui.ExitActionType
+import kotlinx.coroutines.CancellationException
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 fun getUiEventLogger(): FeatureUsageUiEvents {
-  if (ApplicationManager.getApplication() != null) {
-    return ServiceManager.getService(FeatureUsageUiEvents::class.java) ?: EmptyFeatureUsageUiEvents
+  try {
+    if (ApplicationManager.getApplication() != null) {
+      return ApplicationManager.getApplication().getService(FeatureUsageUiEvents::class.java) ?: EmptyFeatureUsageUiEvents
+    }
+    // cannot load service if application is not initialized
+    return EmptyFeatureUsageUiEvents
   }
-  // cannot load service if application is not initialized
-  return EmptyFeatureUsageUiEvents
+  catch (_: CancellationException) {
+    // cancellation in EDT is often unexpected
+    return EmptyFeatureUsageUiEvents
+  }
+  catch (e: Exception) {
+    logger<FeatureUsageUiEvents>().error("UiEventLogger is unavailable", e)
+    return EmptyFeatureUsageUiEvents
+  }
 }
 
+@ApiStatus.Internal
 interface FeatureUsageUiEvents {
-  fun logSelectConfigurable(configurable: Configurable)
+  fun logSelectConfigurable(configurable: Configurable, loadedFromCache: Boolean, loadTimeMs: Long)
 
   fun logApplyConfigurable(configurable: Configurable)
 
   fun logResetConfigurable(configurable: Configurable)
 
-  fun logShowDialog(name: String, context: Class<*>)
+  fun logShowDialog(dialogClass: Class<*>, invocationPlace: String? = null)
 
-  fun logCloseDialog(name: String, exitCode: Int, context: Class<*>)
+  fun logCloseDialog(dialogClass: Class<*>, exitCode: Int, exitActionType: ExitActionType, invocationPlace: String? = null)
 
-  fun logClickOnHelpDialog(name: String, context: Class<*>)
+  fun logClickOnHelpDialog(dialogClass: Class<*>, invocationPlace: String? = null)
 }
 
+@ApiStatus.Internal
 object EmptyFeatureUsageUiEvents : FeatureUsageUiEvents {
-  override fun logSelectConfigurable(configurable: Configurable) {
+  override fun logSelectConfigurable(configurable: Configurable, loadedFromCache: Boolean, loadTimeMs: Long) {
   }
 
   override fun logApplyConfigurable(configurable: Configurable) {
@@ -37,12 +53,12 @@ object EmptyFeatureUsageUiEvents : FeatureUsageUiEvents {
   override fun logResetConfigurable(configurable: Configurable) {
   }
 
-  override fun logShowDialog(name: String, context: Class<*>) {
+  override fun logShowDialog(dialogClass: Class<*>, invocationPlace: String?) {
   }
 
-  override fun logCloseDialog(name: String, exitCode: Int, context: Class<*>) {
+  override fun logCloseDialog(dialogClass: Class<*>, exitCode: Int, exitActionType: ExitActionType, invocationPlace: String?) {
   }
 
-  override fun logClickOnHelpDialog(name: String, context: Class<*>) {
+  override fun logClickOnHelpDialog(dialogClass: Class<*>, invocationPlace: String?) {
   }
 }

@@ -1,12 +1,15 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.refactoring.suggested
 
 import com.intellij.codeInsight.FileModificationService
+import com.intellij.codeWithMe.isForeignClientOnServer
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CustomShortcutSet
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.WriteIntentReadAction
 import com.intellij.openapi.application.impl.LaterInvocator
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.command.executeCommand
@@ -17,6 +20,8 @@ import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.editor.markup.HighlighterLayer
 import com.intellij.openapi.editor.markup.HighlighterTargetArea
 import com.intellij.openapi.editor.markup.TextAttributes
+import com.intellij.openapi.fileEditor.FileEditorManager
+import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Messages
@@ -29,12 +34,15 @@ import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
+import com.intellij.psi.util.startOffset
 import com.intellij.refactoring.RefactoringBundle
 import com.intellij.refactoring.RefactoringFactory
 import com.intellij.refactoring.suggested.SuggestedRefactoringExecution.NewParameterValue
 import com.intellij.refactoring.suggested.SuggestedRefactoringState.ErrorLevel
 import com.intellij.refactoring.util.TextOccurrencesUtil
 import com.intellij.ui.awt.RelativePoint
+import com.intellij.util.SlowOperations
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import java.awt.Font
 import java.awt.Insets
@@ -45,7 +53,7 @@ import javax.swing.UIManager
 
 internal fun performSuggestedRefactoring(
   project: Project,
-  editor: Editor,
+  originalEditor: Editor,
   popupAnchorComponent: JComponent?,
   popupAnchorPoint: Point?,
   showReviewBalloon: Boolean,
@@ -54,16 +62,40 @@ internal fun performSuggestedRefactoring(
   PsiDocumentManager.getInstance(project).commitAllDocuments()
 
   val state = SuggestedRefactoringProviderImpl.getInstance(project).state
-    ?.takeIf { it.errorLevel == ErrorLevel.NO_ERRORS }
-    ?.let {
-      it.refactoringSupport.availability.refineSignaturesWithResolve(it)
-    } ?: return
+                ?.takeIf { it.errorLevel == ErrorLevel.NO_ERRORS }
+                ?.let {
+                  it.refactoringSupport.availability.refineSignaturesWithResolve(it)
+                } ?: return
+  performSuggestedRefactoring(state, originalEditor, project, actionPlace, showReviewBalloon, popupAnchorComponent, popupAnchorPoint)
+}
+
+/**
+ * Launch suggested refactoring based on the specified state
+ */
+internal fun performSuggestedRefactoring(state: SuggestedRefactoringState,
+                                         originalEditor: Editor,
+                                         project: Project,
+                                         actionPlace: String,
+                                         showReviewBalloon: Boolean,
+                                         popupAnchorComponent: JComponent?,
+                                         popupAnchorPoint: Point?) {
   if (state.errorLevel != ErrorLevel.NO_ERRORS || state.oldSignature == state.newSignature) return
   val refactoringSupport = state.refactoringSupport
 
+  val declaration = refactoringSupport.stateChanges.findDeclaration(state.anchor) ?: return
+  val file = declaration.containingFile
+  val editor: Editor
+  if (originalEditor.document == file.viewProvider.document) {
+    editor = originalEditor
+  }
+  else {
+    val descriptor = OpenFileDescriptor(project, file.virtualFile)
+    editor = (FileEditorManager.getInstance(project).openTextEditor(descriptor, true) ?: return)
+  }
+
   when (val refactoringData = refactoringSupport.availability.detectAvailableRefactoring(state)) {
     is SuggestedRenameData -> {
-      val popup = RenamePopup(refactoringData.oldName, refactoringData.declaration.name!!)
+      val popup = RenamePopup(refactoringData.oldName, refactoringData.newName)
 
       fun doRefactor() {
         doRefactor(refactoringData, state, editor, actionPlace) {
@@ -71,18 +103,18 @@ internal fun performSuggestedRefactoring(
         }
       }
 
-      if (!showReviewBalloon || ApplicationManager.getApplication().isHeadlessEnvironment) {
+      if (!showReviewBalloon || ApplicationManager.getApplication().isHeadlessEnvironment || isForeignClientOnServer()) {
         doRefactor()
         return
       }
 
-      val rangeToHighlight = state.refactoringSupport.nameRange(state.declaration)!!
+      val rangeToHighlight = state.refactoringSupport.nameRange(state.anchor)!!
 
       val callbacks = createAndShowBalloon<Unit>(
         popup, project, editor, popupAnchorComponent, popupAnchorPoint, rangeToHighlight,
         commandName = RefactoringBundle.message("suggested.refactoring.rename.command.name"),
         doRefactoring = { doRefactor() },
-        onEnter = ::doRefactor,
+        onEnter = { popup.onRefactor() },
         isEnterEnabled = { true },
         isEscapeEnabled = { true },
         onClosed = { isOk ->
@@ -97,23 +129,42 @@ internal fun performSuggestedRefactoring(
     }
 
     is SuggestedChangeSignatureData -> {
-      fun doRefactor(newParameterValues: List<NewParameterValue>) {
-        doRefactor(refactoringData, state, editor, actionPlace) {
-          performChangeSignature(refactoringSupport, refactoringData, newParameterValues, project, editor)
+      fun doRefactor(newParameterInfo: List<NewParameterInfo>) {
+        WriteIntentReadAction.run {
+          doRefactor(refactoringData, state, editor, actionPlace) {
+            val sig = refactoringData.newSignature
+            val newSig = SuggestedRefactoringSupport.Signature.create(
+              sig.name, sig.type, sig.parameters.map { param ->
+                val updated = newParameterInfo.firstOrNull { p -> p.newParameterData.presentableName == param.name }
+                if (updated == null) param else param.copy(name = updated.name)
+              }, sig.additionalData)
+            performChangeSignature(refactoringSupport, refactoringData.copy(newSignature = newSig!!),
+                                   newParameterInfo.map { info -> info.value }, project, editor)
+          }
         }
       }
 
       val newParameterData = refactoringSupport.ui.extractNewParameterData(refactoringData)
 
-      if (!showReviewBalloon || ApplicationManager.getApplication().isHeadlessEnvironment) {
-        val newParameterValues = if (ApplicationManager.getApplication().isUnitTestMode) {
-          // for testing
-          newParameterData.indices.map {
-            _suggestedChangeSignatureNewParameterValuesForTests?.invoke(it) ?: NewParameterValue.None
+      if (!showReviewBalloon || ApplicationManager.getApplication().isHeadlessEnvironment || isForeignClientOnServer()) {
+        val indexToExpression = if (ApplicationManager.getApplication().isUnitTestMode) {
+          _suggestedChangeSignatureNewParameterValuesForTests
+        }
+        else {
+          { NewParameterValue.None }
+        }
+        val newParameterValues: List<NewParameterInfo>
+        if (indexToExpression != null) {
+          newParameterValues = newParameterData.mapIndexed { index, data ->
+            NewParameterInfo(data, data.presentableName, indexToExpression.invoke(index))
           }
         }
         else {
-          newParameterData.map { NewParameterValue.None }
+          newParameterValues = newParameterData.map { data ->
+            NewParameterInfo(data, data.presentableName,
+                             if (data.offerToUseAnyVariable) NewParameterValue.AnyVariable
+                             else NewParameterValue.Expression(data.valueFragment))
+          }
         }
         doRefactor(newParameterValues)
         return
@@ -158,6 +209,7 @@ internal fun performSuggestedRefactoring(
 
       SuggestedRefactoringFeatureUsage.logEvent(SuggestedRefactoringFeatureUsage.POPUP_SHOWN, refactoringData, state, actionPlace)
     }
+    else -> {}
   }
 }
 
@@ -168,12 +220,14 @@ private fun doRefactor(
   actionPlace: String,
   doRefactor: () -> Unit
 ) {
-  SuggestedRefactoringFeatureUsage.logEvent(SuggestedRefactoringFeatureUsage.REFACTORING_PERFORMED, refactoringData, state, actionPlace)
+  SuggestedRefactoringFeatureUsage.logEvent(SuggestedRefactoringFeatureUsage.PERFORMED, refactoringData, state, actionPlace)
 
-  val project = state.declaration.project
+  val project = state.anchor.project
   UndoManager.getInstance(project).undoableActionPerformed(SuggestedRefactoringUndoableAction.create(editor.document, state))
 
-  performWithDumbEditor(editor, doRefactor)
+  SlowOperations.startSection(SlowOperations.ACTION_PERFORM).use {
+    performWithDumbEditor(editor, doRefactor)
+  }
 
   // no refactoring availability anymore even if no usages updated
   SuggestedRefactoringProvider.getInstance(project).reset()
@@ -227,6 +281,8 @@ private fun <TData> createAndShowBalloon(
     override fun update(e: AnActionEvent) {
       e.presentation.isEnabled = isEnterEnabled()
     }
+
+    override fun getActionUpdateThread() = ActionUpdateThread.EDT
   }.registerCustomShortcutSet(CustomShortcutSet.fromString("ENTER"), content, balloon)
 
   object : DumbAwareAction() {
@@ -237,6 +293,8 @@ private fun <TData> createAndShowBalloon(
     override fun update(e: AnActionEvent) {
       e.presentation.isEnabled = isEscapeEnabled()
     }
+
+    override fun getActionUpdateThread() = ActionUpdateThread.BGT
   }.registerCustomShortcutSet(CustomShortcutSet.fromString("ESCAPE"), content, balloon)
 
   val attributes = TextAttributes(
@@ -321,7 +379,7 @@ private fun performRename(refactoringSupport: SuggestedRefactoringSupport, data:
 
   val relativeCaretOffset = editor.caretModel.offset - refactoringSupport.anchorOffset(data.declaration)
 
-  val newName = data.declaration.name!!
+  val newName = data.newName
   runWriteAction {
     data.declaration.setName(data.oldName)
   }
@@ -374,7 +432,13 @@ private fun performChangeSignature(
   runWriteAction {
     PsiDocumentManager.getInstance(project).doPostponedOperationsAndUnblockDocument(editor.document)
     restoreNewSignature()
-    editor.caretModel.moveToOffset(relativeCaretOffset + refactoringSupport.anchorOffset(data.declaration))
+    val offset = if (data.anchor != data.declaration) {
+      refactoringSupport.anchorOffset(data.declaration)
+    }
+    else {
+      relativeCaretOffset + refactoringSupport.anchorOffset(data.declaration)
+    }
+    editor.caretModel.moveToOffset(offset)
   }
 }
 
@@ -383,4 +447,6 @@ private fun SuggestedRefactoringSupport.anchorOffset(declaration: PsiElement): I
 }
 
 @set:TestOnly
+@set:ApiStatus.Internal
+@get:ApiStatus.Internal
 var _suggestedChangeSignatureNewParameterValuesForTests: ((index: Int) -> NewParameterValue)? = null

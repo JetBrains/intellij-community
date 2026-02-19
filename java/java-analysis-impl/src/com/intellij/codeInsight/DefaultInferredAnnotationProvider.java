@@ -1,41 +1,51 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight;
 
 import com.intellij.codeInspection.bytecodeAnalysis.ProjectBytecodeAnalysis;
-import com.intellij.codeInspection.dataFlow.*;
+import com.intellij.codeInspection.dataFlow.HardcodedContracts;
+import com.intellij.codeInspection.dataFlow.JavaMethodContractUtil;
+import com.intellij.codeInspection.dataFlow.MethodContract;
+import com.intellij.codeInspection.dataFlow.Mutability;
+import com.intellij.codeInspection.dataFlow.MutationSignature;
+import com.intellij.codeInspection.dataFlow.StandardMethodContract;
 import com.intellij.codeInspection.dataFlow.inference.JavaSourceInference;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.*;
+import com.intellij.psi.CommonClassNames;
+import com.intellij.psi.PsiAnnotation;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiCompiledElement;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiModifierListOwner;
+import com.intellij.psi.PsiParameter;
+import com.intellij.psi.PsiParameterList;
+import com.intellij.psi.PsiPrimitiveType;
+import com.intellij.psi.PsiType;
 import com.intellij.psi.impl.source.PsiMethodImpl;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.containers.ContainerUtil;
-import com.siyeh.ig.callMatcher.CallMatcher;
-import one.util.streamex.EntryStream;
 import one.util.streamex.StreamEx;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Objects;
+import java.util.Set;
 
-import static com.intellij.codeInsight.AnnotationUtil.*;
+import static com.intellij.codeInsight.AnnotationUtil.CHECK_EXTERNAL;
+import static com.intellij.codeInsight.AnnotationUtil.CHECK_TYPE;
+import static com.intellij.codeInsight.AnnotationUtil.isAnnotated;
 import static com.intellij.codeInspection.dataFlow.JavaMethodContractUtil.ORG_JETBRAINS_ANNOTATIONS_CONTRACT;
 
-public class DefaultInferredAnnotationProvider implements InferredAnnotationProvider {
+public final class DefaultInferredAnnotationProvider implements InferredAnnotationProvider {
   private static final Set<String> JB_INFERRED_ANNOTATIONS =
-    ContainerUtil.set(ORG_JETBRAINS_ANNOTATIONS_CONTRACT, Mutability.UNMODIFIABLE_ANNOTATION,
-                      Mutability.UNMODIFIABLE_VIEW_ANNOTATION);
+    Set.of(ORG_JETBRAINS_ANNOTATIONS_CONTRACT, Mutability.UNMODIFIABLE_ANNOTATION, Mutability.UNMODIFIABLE_VIEW_ANNOTATION);
   private static final Set<String> EXPERIMENTAL_INFERRED_ANNOTATIONS = Collections.emptySet();
   private final Project myProject;
 
-  // Could be added via external annotations, but there are many signatures to handle
-  // and we have troubles supporting external annotations for JDK 9+
-  private static final CallMatcher IMMUTABLE_FACTORY = CallMatcher.anyOf(
-    CallMatcher.staticCall(CommonClassNames.JAVA_UTIL_LIST, "of", "copyOf"),
-    CallMatcher.staticCall(CommonClassNames.JAVA_UTIL_SET, "of", "copyOf"),
-    CallMatcher.staticCall(CommonClassNames.JAVA_UTIL_MAP, "of", "ofEntries", "copyOf", "entry")
-  );
   private final NullableNotNullManager myNullabilityManager;
 
   public DefaultInferredAnnotationProvider(Project project) {
@@ -43,9 +53,8 @@ public class DefaultInferredAnnotationProvider implements InferredAnnotationProv
     myNullabilityManager = NullableNotNullManager.getInstance(project);
   }
 
-  @Nullable
   @Override
-  public PsiAnnotation findInferredAnnotation(@NotNull PsiModifierListOwner listOwner, @NotNull String annotationFQN) {
+  public @Nullable PsiAnnotation findInferredAnnotation(@NotNull PsiModifierListOwner listOwner, @NotNull String annotationFQN) {
     if (!JB_INFERRED_ANNOTATIONS.contains(annotationFQN) && !isDefaultNullabilityAnnotation(annotationFQN)) {
       return null;
     }
@@ -71,14 +80,12 @@ public class DefaultInferredAnnotationProvider implements InferredAnnotationProv
     }
 
     if (isDefaultNullabilityAnnotation(annotationFQN)) {
-      PsiAnnotation anno = null;
-      if (listOwner instanceof PsiMethodImpl) {
-        anno = getInferredNullabilityAnnotation((PsiMethodImpl)listOwner);
-      }
-      if (listOwner instanceof PsiParameter) {
-        anno = getInferredNullabilityAnnotation((PsiParameter)listOwner);
-      }
-      return anno == null ? null : annotationFQN.equals(anno.getQualifiedName()) ? anno : null;
+      PsiAnnotation anno = switch (listOwner) {
+        case PsiMethodImpl method -> getInferredNullabilityAnnotation(method);
+        case PsiParameter parameter -> getInferredNullabilityAnnotation(parameter);
+        default -> null;
+      };
+      return anno != null && anno.hasQualifiedName(annotationFQN) ? anno : null;
     }
 
     if (Mutability.UNMODIFIABLE_ANNOTATION.equals(annotationFQN) || Mutability.UNMODIFIABLE_VIEW_ANNOTATION.equals(annotationFQN)) {
@@ -96,11 +103,13 @@ public class DefaultInferredAnnotationProvider implements InferredAnnotationProv
     return annotationFQN.equals(myNullabilityManager.getDefaultNullable()) || annotationFQN.equals(myNullabilityManager.getDefaultNotNull());
   }
 
-  @Nullable
-  private PsiAnnotation getHardcodedContractAnnotation(PsiMethod method) {
+  private @Nullable PsiAnnotation getHardcodedContractAnnotation(PsiMethod method) {
     PsiClass aClass = method.getContainingClass();
-    if (aClass != null && aClass.getQualifiedName() != null && aClass.getQualifiedName().startsWith("org.assertj.core.api.")) {
-      return createContractAnnotation(Collections.emptyList(), MutationSignature.pure());
+    if (aClass != null) {
+      String name = aClass.getQualifiedName();
+      if (name != null && name.startsWith("org.assertj.core.api.") && !name.equals("org.assertj.core.api.AbstractThrowableAssert")) {
+        return createContractAnnotation(Collections.emptyList(), MutationSignature.pure());
+      }
     }
     List<MethodContract> contracts = HardcodedContracts.getHardcodedContracts(method, null);
     return contracts.isEmpty() ? null : createContractAnnotation(contracts, HardcodedContracts.getHardcodedMutation(method));
@@ -116,8 +125,10 @@ public class DefaultInferredAnnotationProvider implements InferredAnnotationProv
    */
   private boolean ignoreInference(@NotNull PsiModifierListOwner owner, @Nullable String annotationFQN) {
     if (annotationFQN == null) return true;
-    if (owner instanceof PsiMethod && PsiUtil.canBeOverridden((PsiMethod)owner)) {
-      return true;
+    if (owner instanceof PsiMethod method && PsiUtil.canBeOverridden(method)) {
+      if (!(owner instanceof PsiMethodImpl methodImpl) || !JavaSourceInference.canInferFromSource(methodImpl)) {
+        return true;
+      }
     }
     if (ORG_JETBRAINS_ANNOTATIONS_CONTRACT.equals(annotationFQN) && HardcodedContracts.hasHardcodedContracts(owner)) {
       return true;
@@ -127,30 +138,22 @@ public class DefaultInferredAnnotationProvider implements InferredAnnotationProv
       if (isAnnotated(owner, annotations, CHECK_EXTERNAL | CHECK_TYPE)) {
         return true;
       }
-      if (HardcodedContracts.hasHardcodedContracts(owner)) {
-        return true;
-      }
+      return HardcodedContracts.hasHardcodedContracts(owner);
     }
     return false;
   }
 
-  @Nullable
-  private PsiAnnotation getInferredMutabilityAnnotation(@NotNull PsiModifierListOwner owner) {
-    if (owner instanceof PsiMethod && IMMUTABLE_FACTORY.methodMatches((PsiMethod)owner)) {
-      return Mutability.UNMODIFIABLE.asAnnotation(myProject);
-    }
-    if (!(owner instanceof PsiMethodImpl)) return null;
-    PsiMethodImpl method = (PsiMethodImpl)owner;
-    PsiModifierList modifiers = method.getModifierList();
-    if (modifiers.hasAnnotation(Mutability.UNMODIFIABLE_ANNOTATION) ||
-        modifiers.hasAnnotation(Mutability.UNMODIFIABLE_VIEW_ANNOTATION)) {
+  private @Nullable PsiAnnotation getInferredMutabilityAnnotation(@NotNull PsiModifierListOwner owner) {
+    if (!(owner instanceof PsiMethodImpl method)) return null;
+    if (StreamEx.of(method.getModifierList(), method.getReturnType())
+      .nonNull()
+      .anyMatch(m -> m.hasAnnotation(Mutability.UNMODIFIABLE_ANNOTATION) || m.hasAnnotation(Mutability.UNMODIFIABLE_VIEW_ANNOTATION))) {
       return null;
     }
     return JavaSourceInference.inferMutability(method).asAnnotation(myProject);
   }
 
-  @Nullable
-  private PsiAnnotation getInferredContractAnnotation(PsiMethodImpl method) {
+  private @Nullable PsiAnnotation getInferredContractAnnotation(PsiMethodImpl method) {
     if (method.getModifierList().hasAnnotation(ORG_JETBRAINS_ANNOTATIONS_CONTRACT)) {
       return null;
     }
@@ -158,8 +161,9 @@ public class DefaultInferredAnnotationProvider implements InferredAnnotationProv
     return createContractAnnotation(JavaSourceInference.inferContracts(method), JavaSourceInference.inferMutationSignature(method));
   }
 
-  @Nullable
-  private PsiAnnotation getInferredNullabilityAnnotation(PsiMethodImpl method) {
+  private @Nullable PsiAnnotation getInferredNullabilityAnnotation(PsiMethodImpl method) {
+    PsiType returnType = method.getReturnType();
+    if (returnType == null || returnType instanceof PsiPrimitiveType) return null;
     if (hasExplicitNullability(method)) {
       return null;
     }
@@ -177,26 +181,22 @@ public class DefaultInferredAnnotationProvider implements InferredAnnotationProv
     return NullableNotNullManager.getInstance(myProject).findExplicitNullability(owner) != null;
   }
 
-  @Nullable
-  private PsiAnnotation getInferredNullabilityAnnotation(PsiParameter parameter) {
+  private @Nullable PsiAnnotation getInferredNullabilityAnnotation(PsiParameter parameter) {
     if (hasExplicitNullability(parameter)) {
       return null;
     }
     PsiElement parent = parameter.getParent();
     if (!(parent instanceof PsiParameterList)) return null;
     PsiElement scope = parent.getParent();
-    if (scope instanceof PsiMethod) {
-      PsiMethod method = (PsiMethod)scope;
-      if (method.getName().equals("of")) {
-        PsiClass containingClass = method.getContainingClass();
-        if (containingClass != null) {
-          String className = containingClass.getQualifiedName();
-          if (CommonClassNames.JAVA_UTIL_LIST.equals(className) ||
-              CommonClassNames.JAVA_UTIL_SET.equals(className) ||
-              CommonClassNames.JAVA_UTIL_MAP.equals(className) ||
-              "java.util.EnumSet".equals(className)) {
-            return ProjectBytecodeAnalysis.getInstance(myProject).getNotNullAnnotation();
-          }
+    if (scope instanceof PsiMethod method && method.getName().equals("of")) {
+      PsiClass containingClass = method.getContainingClass();
+      if (containingClass != null) {
+        String className = containingClass.getQualifiedName();
+        if (CommonClassNames.JAVA_UTIL_LIST.equals(className) ||
+            CommonClassNames.JAVA_UTIL_SET.equals(className) ||
+            CommonClassNames.JAVA_UTIL_MAP.equals(className) ||
+            "java.util.EnumSet".equals(className)) {
+          return ProjectBytecodeAnalysis.getInstance(myProject).getNotNullAnnotation();
         }
       }
     }
@@ -204,42 +204,27 @@ public class DefaultInferredAnnotationProvider implements InferredAnnotationProv
     return nullability == Nullability.NOT_NULL ? ProjectBytecodeAnalysis.getInstance(myProject).getNotNullAnnotation() : null;
   }
 
-  @Nullable
-  private PsiAnnotation createContractAnnotation(List<? extends MethodContract> contracts, MutationSignature signature) {
-    return createContractAnnotation(myProject, signature.isPure(), 
-                                    StreamEx.of(contracts).select(StandardMethodContract.class).joining("; "), 
+  private @Nullable PsiAnnotation createContractAnnotation(List<? extends MethodContract> contracts, MutationSignature signature) {
+    return createContractAnnotation(myProject, signature.isPure(),
+                                    StreamEx.of(contracts).select(StandardMethodContract.class).joining("; "),
                                     signature.isPure() || signature == MutationSignature.unknown() ? "" : signature.toString());
   }
 
-  @Nullable
-  public static PsiAnnotation createContractAnnotation(Project project, boolean pure, String contracts, String mutates) {
-    @NonNls Map<String, String> attrMap = new LinkedHashMap<>();
-    if (!contracts.isEmpty()) {
-      attrMap.put("value", StringUtil.wrapWithDoubleQuote(contracts));
-    }
-    if (pure) {
-      attrMap.put("pure", "true");
-    }
-    else if (!mutates.trim().isEmpty()) {
-      attrMap.put("mutates", StringUtil.wrapWithDoubleQuote(mutates));
-    }
-    if (attrMap.isEmpty()) {
-      return null;
-    }
-    String attrs = attrMap.keySet().equals(Collections.singleton("value")) ?
-                   attrMap.get("value") : EntryStream.of(attrMap).join(" = ").joining(", ");
-    return ProjectBytecodeAnalysis.getInstance(project).createContractAnnotation(attrs);
+  public static @Nullable PsiAnnotation createContractAnnotation(Project project, boolean pure, String contracts, String mutates) {
+    String attributes = JavaMethodContractUtil.createAttributesText(contracts, pure, mutates);
+    if (attributes.isEmpty()) return null;
+    return ProjectBytecodeAnalysis.getInstance(project).createContractAnnotation(attributes);
   }
 
-  @NotNull
   @Override
-  public List<PsiAnnotation> findInferredAnnotations(@NotNull PsiModifierListOwner listOwner) {
+  public @NotNull List<PsiAnnotation> findInferredAnnotations(@NotNull PsiModifierListOwner listOwner) {
     listOwner = PsiUtil.preferCompiledElement(listOwner);
     List<PsiAnnotation> result = new ArrayList<>();
     if (canInferFromByteCode(listOwner)) {
       PsiAnnotation[] fromBytecode = ProjectBytecodeAnalysis.getInstance(myProject).findInferredAnnotations(listOwner);
       for (PsiAnnotation annotation : fromBytecode) {
-        if (!ignoreInference(listOwner, annotation.getQualifiedName())) {
+        if (!ignoreInference(listOwner, annotation.getQualifiedName()) &&
+            !ignoreByteCodeAnnotation(listOwner, annotation.getQualifiedName())) {
           result.add(annotation);
         }
       }
@@ -272,19 +257,22 @@ public class DefaultInferredAnnotationProvider implements InferredAnnotationProv
     return result;
   }
 
-  private static boolean canInferFromByteCode(PsiModifierListOwner owner) {
-    if (!(owner instanceof PsiCompiledElement)) return false;
-    if (owner instanceof PsiField) {
-      return true;
-    }
-    if (owner instanceof PsiMethod) {
-      return !PsiUtil.canBeOverridden((PsiMethod)owner);
-    }
-    if (owner instanceof PsiParameter) {
-      PsiElement scope = ((PsiParameter)owner).getDeclarationScope();
-      return scope instanceof PsiMethod && !PsiUtil.canBeOverridden((PsiMethod)scope); 
+  private static boolean ignoreByteCodeAnnotation(PsiModifierListOwner owner, String name) {
+    NullableNotNullManager manager = NullableNotNullManager.getInstance(owner.getProject());
+    if (name.equals(manager.getDefaultNotNull()) || name.equals(manager.getDefaultNullable())) {
+      return ContainerUtil.exists(owner.getAnnotations(), NullableNotNullManager::isNullabilityAnnotation);
     }
     return false;
+  }
+
+  private static boolean canInferFromByteCode(PsiModifierListOwner owner) {
+    if (!(owner instanceof PsiCompiledElement)) return false;
+    return switch (owner) {
+      case PsiField ignored -> true;
+      case PsiMethod method -> !PsiUtil.canBeOverridden(method);
+      case PsiParameter parameter -> parameter.getDeclarationScope() instanceof PsiMethod method && !PsiUtil.canBeOverridden(method);
+      default -> false;
+    };
   }
 
   public static boolean isExperimentalInferredAnnotation(@NotNull PsiAnnotation annotation) {

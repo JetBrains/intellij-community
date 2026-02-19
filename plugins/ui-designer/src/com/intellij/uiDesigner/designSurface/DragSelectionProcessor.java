@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.uiDesigner.designSurface;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -7,17 +7,20 @@ import com.intellij.uiDesigner.radComponents.RadComponent;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
-import java.awt.*;
-import java.awt.dnd.*;
+import java.awt.Component;
+import java.awt.Point;
+import java.awt.dnd.DnDConstants;
+import java.awt.dnd.DragGestureEvent;
+import java.awt.dnd.DragGestureRecognizer;
+import java.awt.dnd.DragSource;
+import java.awt.dnd.DragSourceAdapter;
+import java.awt.dnd.DragSourceDragEvent;
+import java.awt.dnd.DragSourceDropEvent;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 
-/**
- * @author Anton Katilin
- * @author Vladimir Kondratyev
- */
 public final class DragSelectionProcessor extends EventProcessor {
   private static final Logger LOG = Logger.getInstance(DragSelectionProcessor.class);
 
@@ -35,7 +38,7 @@ public final class DragSelectionProcessor extends EventProcessor {
   private final MyDragGestureRecognizer myDragGestureRecognizer;
   private final MyDragSourceListener myDragSourceListener = new MyDragSourceListener();
 
-  public DragSelectionProcessor(@NotNull final GuiEditor editor) {
+  public DragSelectionProcessor(final @NotNull GuiEditor editor) {
     myEditor = editor;
     myDragGestureRecognizer = new MyDragGestureRecognizer(DragSource.getDefaultDragSource(),
                                                           myEditor.getActiveDecorationLayer(),
@@ -121,7 +124,7 @@ public final class DragSelectionProcessor extends EventProcessor {
   private class MyDragSourceListener extends DragSourceAdapter {
     @Override
     public void dropActionChanged(DragSourceDragEvent dsde) {
-      final int shiftDownMask = (dsde.getGestureModifiersEx() & KeyEvent.SHIFT_DOWN_MASK);
+      final int shiftDownMask = (dsde.getGestureModifiersEx() & InputEvent.SHIFT_DOWN_MASK);
       if (shiftDownMask != 0) {
         myEditor.setDesignTimeInsets(12);
       }

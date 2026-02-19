@@ -1,0 +1,6 @@
+0(1) element: null
+1(2) element: PyFunction('f')
+2(3) READ ACCESS: list
+3(4) element: PyCallExpression: list
+4(5) WRITE ACCESS: f
+5() element: null

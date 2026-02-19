@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.tooling.serialization;
 
 import com.amazon.ion.IonReader;
@@ -7,9 +7,9 @@ import com.amazon.ion.IonWriter;
 import com.amazon.ion.system.IonReaderBuilder;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.model.MavenRepositoryModel;
-import org.jetbrains.plugins.gradle.model.RepositoriesModel;
+import org.jetbrains.plugins.gradle.model.RepositoryModels;
+import org.jetbrains.plugins.gradle.tooling.internal.DefaultRepositoryModels;
 import org.jetbrains.plugins.gradle.tooling.internal.MavenRepositoryModelImpl;
-import org.jetbrains.plugins.gradle.tooling.internal.RepositoriesModelImpl;
 import org.jetbrains.plugins.gradle.tooling.util.IntObjectMap;
 import org.jetbrains.plugins.gradle.tooling.util.IntObjectMap.SimpleObjectFactory;
 import org.jetbrains.plugins.gradle.tooling.util.ObjectCollector;
@@ -20,46 +20,42 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-import static org.jetbrains.plugins.gradle.tooling.serialization.ToolingStreamApiUtils.*;
+import static org.jetbrains.plugins.gradle.tooling.serialization.ToolingStreamApiUtils.OBJECT_ID_FIELD;
+import static org.jetbrains.plugins.gradle.tooling.serialization.ToolingStreamApiUtils.createIonWriter;
+import static org.jetbrains.plugins.gradle.tooling.serialization.ToolingStreamApiUtils.readInt;
+import static org.jetbrains.plugins.gradle.tooling.serialization.ToolingStreamApiUtils.readString;
+import static org.jetbrains.plugins.gradle.tooling.serialization.ToolingStreamApiUtils.writeString;
 
 /**
  * @author Vladislav.Soroka
  */
-public class RepositoriesModelSerializationService implements SerializationService<RepositoriesModel> {
+public class RepositoriesModelSerializationService implements SerializationService<RepositoryModels> {
   private final WriteContext myWriteContext = new WriteContext();
   private final ReadContext myReadContext = new ReadContext();
 
   @Override
-  public byte[] write(RepositoriesModel repositoriesModel, Class<? extends RepositoriesModel> modelClazz) throws IOException {
+  public byte[] write(RepositoryModels repositoryModels, Class<? extends RepositoryModels> modelClazz) throws IOException {
     ByteArrayOutputStream out = new ByteArrayOutputStream();
-    IonWriter writer = createIonWriter().build(out);
-    try {
-      write(writer, myWriteContext, repositoriesModel);
-    }
-    finally {
-      writer.close();
+    try (IonWriter writer = createIonWriter().build(out)) {
+      write(writer, myWriteContext, repositoryModels);
     }
     return out.toByteArray();
   }
 
   @Override
-  public RepositoriesModel read(byte[] object, Class<? extends RepositoriesModel> modelClazz) throws IOException {
-    IonReader reader = IonReaderBuilder.standard().build(object);
-    try {
+  public RepositoryModels read(byte[] object, Class<? extends RepositoryModels> modelClazz) throws IOException {
+    try (IonReader reader = IonReaderBuilder.standard().build(object)) {
       return read(reader, myReadContext);
-    }
-    finally {
-      reader.close();
     }
   }
 
   @Override
-  public Class<? extends RepositoriesModel> getModelClass() {
-    return RepositoriesModel.class;
+  public Class<? extends RepositoryModels> getModelClass() {
+    return RepositoryModels.class;
   }
 
 
-  private static void write(final IonWriter writer, final WriteContext context, final RepositoriesModel model) throws IOException {
+  private static void write(final IonWriter writer, final WriteContext context, final RepositoryModels model) throws IOException {
     context.objectCollector.add(model, new ObjectCollector.Processor<IOException>() {
       @Override
       public void process(boolean isAdded, int objectId) throws IOException {
@@ -67,7 +63,7 @@ public class RepositoriesModelSerializationService implements SerializationServi
         writer.setFieldName(OBJECT_ID_FIELD);
         writer.writeInt(objectId);
         if (isAdded) {
-          writeRepositories(writer, context, model.getAll());
+          writeRepositories(writer, context, model.getRepositories());
         }
         writer.stepOut();
       }
@@ -103,22 +99,17 @@ public class RepositoriesModelSerializationService implements SerializationServi
     });
   }
 
-  @Nullable
-  private static RepositoriesModel read(final IonReader reader, final ReadContext context) {
+  private static @Nullable RepositoryModels read(final IonReader reader, final ReadContext context) {
     if (reader.next() == null) return null;
     reader.stepIn();
 
-    RepositoriesModel model =
-      context.objectMap.computeIfAbsent(readInt(reader, OBJECT_ID_FIELD), new SimpleObjectFactory<RepositoriesModelImpl>() {
+    RepositoryModels model =
+      context.objectMap.computeIfAbsent(readInt(reader, OBJECT_ID_FIELD), new SimpleObjectFactory<DefaultRepositoryModels>() {
 
         @Override
-        public RepositoriesModelImpl create() {
-          RepositoriesModelImpl repositoriesModel = new RepositoriesModelImpl();
-          List<MavenRepositoryModel> repositoryModels = readRepositories(reader, context);
-          for (MavenRepositoryModel entry : repositoryModels) {
-            repositoriesModel.add(entry);
-          }
-          return repositoriesModel;
+        public DefaultRepositoryModels create() {
+          List<MavenRepositoryModel> repositories = readRepositories(reader, context);
+          return new DefaultRepositoryModels(repositories);
         }
       });
     reader.stepOut();
@@ -126,7 +117,7 @@ public class RepositoriesModelSerializationService implements SerializationServi
   }
 
   private static List<MavenRepositoryModel> readRepositories(IonReader reader, ReadContext context) {
-    List<MavenRepositoryModel> list = new ArrayList<MavenRepositoryModel>();
+    List<MavenRepositoryModel> list = new ArrayList<>();
     reader.next();
     reader.stepIn();
     MavenRepositoryModel entry;
@@ -137,8 +128,7 @@ public class RepositoriesModelSerializationService implements SerializationServi
     return list;
   }
 
-  @Nullable
-  private static MavenRepositoryModel readRepositoryModel(final IonReader reader, ReadContext context) {
+  private static @Nullable MavenRepositoryModel readRepositoryModel(final IonReader reader, ReadContext context) {
     if (reader.next() == null) return null;
     reader.stepIn();
     MavenRepositoryModel dependency =
@@ -153,14 +143,14 @@ public class RepositoriesModelSerializationService implements SerializationServi
   }
 
   private static class ReadContext {
-    private final IntObjectMap<RepositoriesModelImpl> objectMap = new IntObjectMap<RepositoriesModelImpl>();
-    private final IntObjectMap<MavenRepositoryModel> repositoryMap = new IntObjectMap<MavenRepositoryModel>();
+    private final IntObjectMap<DefaultRepositoryModels> objectMap = new IntObjectMap<>();
+    private final IntObjectMap<MavenRepositoryModel> repositoryMap = new IntObjectMap<>();
   }
 
   private static class WriteContext {
-    private final ObjectCollector<RepositoriesModel, IOException> objectCollector = new ObjectCollector<RepositoriesModel, IOException>();
+    private final ObjectCollector<RepositoryModels, IOException> objectCollector = new ObjectCollector<>();
     private final ObjectCollector<MavenRepositoryModel, IOException> repositoryCollector =
-      new ObjectCollector<MavenRepositoryModel, IOException>();
+      new ObjectCollector<>();
   }
 }
 

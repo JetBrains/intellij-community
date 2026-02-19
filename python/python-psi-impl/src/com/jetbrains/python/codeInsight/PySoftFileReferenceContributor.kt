@@ -5,28 +5,45 @@ import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.TextRange
 import com.intellij.patterns.PatternCondition
 import com.intellij.patterns.PlatformPatterns.psiElement
-import com.intellij.psi.*
+import com.intellij.psi.ElementManipulators
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiFileSystemItem
+import com.intellij.psi.PsiReference
+import com.intellij.psi.PsiReferenceContributor
+import com.intellij.psi.PsiReferenceProvider
+import com.intellij.psi.PsiReferenceRegistrar
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReference
 import com.intellij.psi.util.QualifiedName
 import com.intellij.util.ProcessingContext
 import com.intellij.util.SystemProperties
-import com.jetbrains.python.PyNames
-import com.jetbrains.python.psi.*
+import com.jetbrains.python.psi.LanguageLevel
+import com.jetbrains.python.psi.PyArgumentList
+import com.jetbrains.python.psi.PyAssignmentStatement
+import com.jetbrains.python.psi.PyCallExpression
+import com.jetbrains.python.psi.PyKeywordArgument
+import com.jetbrains.python.psi.PyReferenceExpression
+import com.jetbrains.python.psi.PyStringLiteralExpression
+import com.jetbrains.python.psi.PyStringLiteralFileReferenceSet
+import com.jetbrains.python.psi.PyTargetExpression
+import com.jetbrains.python.psi.PyTypedElement
 import com.jetbrains.python.psi.impl.PyBuiltinCache
 import com.jetbrains.python.psi.impl.PyCallExpressionHelper
 import com.jetbrains.python.psi.resolve.PyResolveContext
 import com.jetbrains.python.psi.resolve.PyResolveUtil
+import com.jetbrains.python.psi.resolve.fromFoothold
+import com.jetbrains.python.psi.resolve.resolveTopLevelMember
+import com.jetbrains.python.psi.types.PyType
 import com.jetbrains.python.psi.types.PyTypeChecker
-import com.jetbrains.python.psi.types.PyTypeUtil
+import com.jetbrains.python.psi.types.PyTypeUtil.toStream
 import com.jetbrains.python.psi.types.PyUnionType
 import com.jetbrains.python.psi.types.TypeEvalContext
+import java.util.Locale
 
 /**
  * Contributes file path references for Python string literals where it seems appropriate based on heuristics.
  *
  * References are soft: used only for code completion and ignored during code inspection.
  *
- * @author vlan
  */
 open class PySoftFileReferenceContributor : PsiReferenceContributor() {
   override fun registerReferenceProviders(registrar: PsiReferenceRegistrar) {
@@ -62,7 +79,7 @@ open class PySoftFileReferenceContributor : PsiReferenceContributor() {
       val argList = expr.parent as? PyArgumentList ?: return false
       val callExpr = argList.parent as? PyCallExpression ?: return false
       val typeEvalContext = TypeEvalContext.codeInsightFallback(expr.project)
-      val resolveContext = PyResolveContext.defaultContext().withTypeEvalContext(typeEvalContext)
+      val resolveContext = PyResolveContext.defaultContext(typeEvalContext)
 
       return callExpr.multiResolveCallee(resolveContext)
         .asSequence()
@@ -93,33 +110,29 @@ open class PySoftFileReferenceContributor : PsiReferenceContributor() {
           builtinCache.getUnicodeType(languageLevel)
         )
       ) ?: return false
-      val osPathLikeType = builtinCache.getObjectType(PyNames.BUILTIN_PATH_LIKE) ?: return false
 
       val typeEvalContext = TypeEvalContext.codeInsightFallback(expr.project)
 
-      return callExpr.multiResolveCallee(PyResolveContext.defaultContext().withTypeEvalContext(typeEvalContext))
+      val osPathLike = resolveTopLevelMember(
+        QualifiedName.fromComponents("os", "PathLike"),
+        fromFoothold(expr)
+      ) as? PyTypedElement ?: return false
+      val osPathLikeType = typeEvalContext.getType(osPathLike) ?: return false
+
+      val argumentTypes = callExpr.multiResolveCallee(PyResolveContext.defaultContext(typeEvalContext))
         .asSequence()
-        // Fail-fast check
-        .filter { callableType ->
-          val parameters = callableType.getParameters(typeEvalContext) ?: return@filter false
-          parameters
-            .mapNotNull { it.getArgumentType(typeEvalContext) }
-            .any {
-              PyTypeChecker.match(bytesOrUnicodeType, it, typeEvalContext) || PyTypeChecker.match(osPathLikeType, it, typeEvalContext)
-            }
-        }
         .mapNotNull {
           val mapping = PyCallExpressionHelper.mapArguments(callExpr, it, typeEvalContext)
           mapping.mappedParameters[expr]?.getArgumentType(typeEvalContext)
         }
-        .mapNotNull { PyTypeUtil.toNonWeakType(it, typeEvalContext) }
-        .toList()
-        .let { PyUnionType.union(it) }
-        .let {
-          it != null &&
-          PyTypeChecker.match(bytesOrUnicodeType, it, typeEvalContext) &&
-          PyTypeChecker.match(osPathLikeType, it, typeEvalContext)
-        }
+
+      // We can't use PyTypeChecker.match directly because the type `str | PathLike` is considered incompatible 
+      // with neither str nor PathLike (strict union semantics).
+      fun PyType.allowsValuesCompatibleWith(superType: PyType): Boolean =
+        this.toStream().anyMatch { it != null && PyTypeChecker.match(superType, it, typeEvalContext) }
+
+      return argumentTypes.any { it.allowsValuesCompatibleWith(bytesOrUnicodeType) } &&
+             argumentTypes.any { it.allowsValuesCompatibleWith(osPathLikeType) }
     }
   }
 
@@ -180,7 +193,7 @@ open class PySoftFileReferenceContributor : PsiReferenceContributor() {
 
     private fun matchesPathNamePattern(name: String): Boolean {
       val nameParts = name.split("_")
-      return nameParts.any { it.toLowerCase() in FILE_NAME_PATTERNS }
+      return nameParts.any { it.lowercase(Locale.getDefault()) in FILE_NAME_PATTERNS }
     }
   }
 
@@ -209,15 +222,17 @@ open class PySoftFileReferenceContributor : PsiReferenceContributor() {
     override fun createFileReference(range: TextRange, index: Int, text: String): FileReference? =
       doCreateFileReference(range, index, expandUserHome(text))
 
-    open fun doCreateFileReference(range: TextRange,
-                                   index: Int,
-                                   expandedText: String?): FileReference? =
+    open fun doCreateFileReference(
+      range: TextRange,
+      index: Int,
+      expandedText: String?,
+    ): FileReference? =
       super.createFileReference(range, index, expandedText)
 
     override fun isAbsolutePathReference(): Boolean =
       super.isAbsolutePathReference() || pathString.startsWith("~")
 
-    private fun expandUserHome(text: String): String? =
+    private fun expandUserHome(text: String): String =
       when (text) {
         "~" -> SystemProperties.getUserHome()
         else -> text

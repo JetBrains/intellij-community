@@ -15,7 +15,10 @@
  */
 package git4idea.merge
 
-import com.intellij.openapi.vcs.Executor.*
+import com.intellij.openapi.vcs.Executor.cd
+import com.intellij.openapi.vcs.Executor.overwrite
+import com.intellij.openapi.vcs.Executor.rm
+import com.intellij.openapi.vcs.Executor.touch
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.history.VcsRevisionNumber
 import com.intellij.openapi.vcs.merge.MergeData
@@ -25,7 +28,11 @@ import com.intellij.util.LineSeparator
 import com.intellij.vcsUtil.VcsFileUtil
 import git4idea.branch.GitRebaseParams
 import git4idea.repo.GitRepository
-import git4idea.test.*
+import git4idea.test.GitPlatformTest
+import git4idea.test.TestGitImpl
+import git4idea.test.cd
+import git4idea.test.git
+import git4idea.test.mv
 import git4idea.util.GitFileUtils
 import java.io.File
 import java.io.FileNotFoundException
@@ -37,8 +44,6 @@ abstract class GitMergeProviderTestCase : GitPlatformTest() {
 
   protected lateinit var repository: GitRepository
 
-  override fun runInDispatchThread(): Boolean = true
-
   public override fun setUp() {
     super.setUp()
 
@@ -47,7 +52,7 @@ abstract class GitMergeProviderTestCase : GitPlatformTest() {
     cd(projectRoot)
     git("commit --allow-empty -m initial")
 
-    touch(FILE, "original" + FILE_CONTENT)
+    touch(FILE, "original$FILE_CONTENT")
     git("add .")
     git("commit -m Base")
   }
@@ -104,7 +109,7 @@ abstract class GitMergeProviderTestCase : GitPlatformTest() {
 
   protected fun `init branch - change`(branch: String) {
     doInitBranch(branch, {
-      overwrite(FILE, "modified: $branch" + FILE_CONTENT)
+      overwrite(FILE, "modified: $branch$FILE_CONTENT")
     })
   }
 
@@ -116,7 +121,7 @@ abstract class GitMergeProviderTestCase : GitPlatformTest() {
 
   protected fun `init branch - change and rename`(branch: String, newFileName: String = FILE_RENAME) {
     doInitBranch(branch, {
-      overwrite(FILE, "modified: $branch" + FILE_CONTENT)
+      overwrite(FILE, "modified: $branch$FILE_CONTENT")
       mv(FILE, newFileName)
     })
   }

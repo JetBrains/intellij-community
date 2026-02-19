@@ -1,0 +1,4 @@
+JsonFile: y_structure_whitespace_array.json
+  JsonArray
+    PsiElement([)('[')
+    PsiElement(])(']')

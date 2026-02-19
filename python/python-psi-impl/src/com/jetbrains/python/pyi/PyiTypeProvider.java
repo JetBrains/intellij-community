@@ -18,11 +18,17 @@ package com.jetbrains.python.pyi;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiElement;
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider;
-import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.PyCallable;
+import com.jetbrains.python.psi.PyClass;
+import com.jetbrains.python.psi.PyElement;
+import com.jetbrains.python.psi.PyFunction;
+import com.jetbrains.python.psi.PyNamedParameter;
+import com.jetbrains.python.psi.PyTypedElement;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.PyTypeProviderBase;
 import com.jetbrains.python.psi.types.PyTypeUtil;
 import com.jetbrains.python.psi.types.TypeEvalContext;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -31,17 +37,13 @@ import java.util.Map;
 
 import static com.jetbrains.python.psi.PyUtil.as;
 
-/**
- * @author vlan
- */
-public class PyiTypeProvider extends PyTypeProviderBase {
+public final class PyiTypeProvider extends PyTypeProviderBase {
   @Override
   public Ref<PyType> getParameterType(@NotNull PyNamedParameter param, @NotNull PyFunction func, @NotNull TypeEvalContext context) {
     final String name = param.getName();
     if (name != null) {
       final PsiElement pythonStub = PyiUtil.getPythonStub(func);
-      if (pythonStub instanceof PyFunction) {
-        final PyFunction functionStub = (PyFunction)pythonStub;
+      if (pythonStub instanceof PyFunction functionStub) {
         final PyNamedParameter paramSkeleton = functionStub.getParameterList().findParameterByName(name);
         if (paramSkeleton != null) {
           final PyType type = context.getType(paramSkeleton);
@@ -55,9 +57,8 @@ public class PyiTypeProvider extends PyTypeProviderBase {
     return null;
   }
 
-  @Nullable
   @Override
-  public Ref<PyType> getReturnType(@NotNull PyCallable callable, @NotNull TypeEvalContext context) {
+  public @Nullable Ref<PyType> getReturnType(@NotNull PyCallable callable, @NotNull TypeEvalContext context) {
     final PsiElement pythonStub = PyiUtil.getPythonStub(callable);
     if (pythonStub instanceof PyCallable) {
       final PyType type = context.getReturnType((PyCallable)pythonStub);
@@ -72,16 +73,22 @@ public class PyiTypeProvider extends PyTypeProviderBase {
   public Ref<PyType> getReferenceType(@NotNull PsiElement target, @NotNull TypeEvalContext context, @Nullable PsiElement anchor) {
     if (target instanceof PyElement) {
       final PsiElement pythonStub = PyiUtil.getPythonStub((PyElement)target);
+      if (pythonStub instanceof PyFunction pyFunction) {
+        PyType allSignatures = StreamEx.ofNullable(PyiUtil.getImplementation(pyFunction, context))
+          .prepend(PyiUtil.getOverloads(pyFunction, context))
+          .map(context::getType)
+          .collect(PyTypeUtil.toUnion());
+        return PyTypeUtil.getNotNullToRef(allSignatures);
+      }
       if (pythonStub instanceof PyTypedElement) {
-        return PyTypeUtil.notNullToRef(context.getType((PyTypedElement)pythonStub));
+        return PyTypeUtil.getNotNullToRef(context.getType((PyTypedElement)pythonStub));
       }
     }
     return null;
   }
 
-  @Nullable
   @Override
-  public PyType getGenericType(@NotNull PyClass cls, @NotNull TypeEvalContext context) {
+  public @Nullable PyType getGenericType(@NotNull PyClass cls, @NotNull TypeEvalContext context) {
     final PyClass classStub = as(PyiUtil.getPythonStub(cls), PyClass.class);
     if (classStub != null) {
       return new PyTypingTypeProvider().getGenericType(classStub, context);
@@ -89,9 +96,8 @@ public class PyiTypeProvider extends PyTypeProviderBase {
     return null;
   }
 
-  @NotNull
   @Override
-  public Map<PyType, PyType> getGenericSubstitutions(@NotNull PyClass cls, @NotNull TypeEvalContext context) {
+  public @NotNull Map<PyType, PyType> getGenericSubstitutions(@NotNull PyClass cls, @NotNull TypeEvalContext context) {
     final PyClass classStub = as(PyiUtil.getPythonStub(cls), PyClass.class);
     if (classStub != null) {
       return new PyTypingTypeProvider().getGenericSubstitutions(classStub, context);

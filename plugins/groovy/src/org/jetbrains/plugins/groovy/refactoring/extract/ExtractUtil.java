@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.plugins.groovy.refactoring.extract;
 
@@ -10,6 +10,7 @@ import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiPrimitiveType;
 import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypes;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.IncorrectOperationException;
@@ -39,11 +40,14 @@ import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 import org.jetbrains.plugins.groovy.refactoring.extract.method.ExtractMethodInfoHelper;
 import org.jetbrains.plugins.groovy.refactoring.introduce.StringPartInfo;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
-/**
- * @author ilyas
- */
 public final class ExtractUtil {
   private static final Logger LOG = Logger.getInstance(ExtractUtil.class);
 
@@ -92,7 +96,7 @@ public final class ExtractUtil {
     GrStatement[] statements = helper.getStatements();
     GrMethodCallExpression callExpression = createMethodCall(helper);
 
-    if ((outputVars.length == 0 || PsiType.VOID.equals(type)) && !helper.hasReturnValue()) return new GrStatement[]{callExpression};
+    if ((outputVars.length == 0 || PsiTypes.voidType().equals(type)) && !helper.hasReturnValue()) return new GrStatement[]{callExpression};
     GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(helper.getProject());
     if (helper.hasReturnValue()) {
       return new GrStatement[]{factory.createStatementFromText("return " + callExpression.getText())};
@@ -224,8 +228,7 @@ public final class ExtractUtil {
     List<VariableInfo> result = new ArrayList<>();
 
     for (GrStatement statement : statements) {
-      if (statement instanceof GrVariableDeclaration) {
-        GrVariableDeclaration declaration = (GrVariableDeclaration)statement;
+      if (statement instanceof GrVariableDeclaration declaration) {
         for (GrVariable variable : declaration.getVariables()) {
           final VariableInfo removed = names.remove(variable.getName());
           if (removed != null) {
@@ -285,7 +288,7 @@ public final class ExtractUtil {
     return result;
   }
 
-  public static GrMethod createMethod(ExtractMethodInfoHelper helper) {
+  public static @NotNull GrMethod createMethod(ExtractMethodInfoHelper helper) {
     StringBuilder buffer = new StringBuilder();
 
     //Add signature
@@ -306,7 +309,7 @@ public final class ExtractUtil {
     buffer.append(") { \n");
 
     GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(helper.getProject());
-    generateBody(helper, PsiType.VOID.equals(type), buffer, helper.isForceReturn());
+    generateBody(helper, PsiTypes.voidType().equals(type), buffer, helper.isForceReturn());
 
     buffer.append("\n}");
 
@@ -314,7 +317,7 @@ public final class ExtractUtil {
     return factory.createMethodFromText(methodText, helper.getContext());
   }
 
-  public static void appendName(@NotNull final StringBuilder buffer, @NotNull final String name) {
+  public static void appendName(final @NotNull StringBuilder buffer, final @NotNull String name) {
     if (GroovyNamesUtil.isIdentifier(name)) {
       buffer.append(name);
     }
@@ -345,9 +348,8 @@ public final class ExtractUtil {
     for (final GrVariable variable : outside) {
       if (!declaredVars.contains(variable.getName())) {
         genDecl.add(new VariableInfo() {
-          @NotNull
           @Override
-          public String getName() {
+          public @NotNull String getName() {
             return variable.getName();
           }
 
@@ -413,7 +415,7 @@ public final class ExtractUtil {
         if (unboxed != null) paramType = unboxed;
 
         String paramTypeText;
-        if (paramType == null || paramType.equalsToText(CommonClassNames.JAVA_LANG_OBJECT) || paramType.equals(PsiType.NULL)) {
+        if (paramType == null || paramType.equalsToText(CommonClassNames.JAVA_LANG_OBJECT) || paramType.equals(PsiTypes.nullType())) {
           paramTypeText = "";
         }
         else {
@@ -426,8 +428,7 @@ public final class ExtractUtil {
     return ArrayUtilRt.toStringArray(params);
   }
 
-  @NotNull
-  public static String getTypeString(@NotNull ExtractMethodInfoHelper helper, boolean forPresentation, @NotNull String modifier) {
+  public static @NotNull String getTypeString(@NotNull ExtractMethodInfoHelper helper, boolean forPresentation, @NotNull String modifier) {
     if (!helper.specifyType()) {
       return modifier.isEmpty() ? "def " : "";
     }

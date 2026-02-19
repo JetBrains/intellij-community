@@ -1,23 +1,27 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.actions;
 
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.editor.EditorSettings;
+import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.VisualPosition;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.impl.AbstractEditorTest;
+import com.intellij.openapi.editor.textarea.TextComponentEditorImpl;
+import com.intellij.openapi.fileTypes.PlainTextFileType;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.testFramework.EditorTestUtil;
-import com.intellij.testFramework.TestFileType;
+import com.intellij.ui.components.JBTextArea;
+import org.junit.jupiter.api.Assertions;
 
 import java.awt.datatransfer.StringSelection;
 
 public class EditorActionTest extends AbstractEditorTest {
   public void testDownWithSelectionWhenCaretsAreAllowedInsideTabs() {
     init("<caret>text",
-         TestFileType.TEXT);
+         PlainTextFileType.INSTANCE);
 
     final EditorSettings editorSettings = getEditor().getSettings();
     final boolean old = editorSettings.isCaretInsideTabs();
@@ -33,7 +37,7 @@ public class EditorActionTest extends AbstractEditorTest {
   public void testPageDownWithSelectionWhenCaretsAreAllowedInsideTabs() {
     init("<caret>line 1\n" +
          "line 2",
-         TestFileType.TEXT);
+         PlainTextFileType.INSTANCE);
     setEditorVisibleSize(100, 100);
 
     final EditorSettings editorSettings = getEditor().getSettings();
@@ -50,7 +54,7 @@ public class EditorActionTest extends AbstractEditorTest {
   }
 
   public void testDuplicateFirstLineWhenSoftWrapsAreOn() {
-    init("long long t<caret>ext", TestFileType.TEXT);
+    init("long long t<caret>ext", PlainTextFileType.INSTANCE);
     EditorTestUtil.configureSoftWraps(getEditor(), 10);
 
     executeAction("EditorDuplicate");
@@ -59,17 +63,18 @@ public class EditorActionTest extends AbstractEditorTest {
   }
 
   public void testTabWithSelection() {
-    init("some<selection> <caret></selection>text", TestFileType.TEXT);
+    init("some<selection> <caret></selection>text", PlainTextFileType.INSTANCE);
     executeAction("EditorTab");
     checkResultByText("some    <caret>text");
   }
 
   public void testLineDeleteWithSelectionEndAtLineStart() {
     String text =
-      "line 1\n" +
-      "<selection>line 2\n" +
-      "</selection>line 3";
-    init(text, TestFileType.TEXT);
+      """
+        line 1
+        <selection>line 2
+        </selection>line 3""";
+    init(text, PlainTextFileType.INSTANCE);
     deleteLine();
     checkResultByText(
       "line 1\n" +
@@ -79,10 +84,11 @@ public class EditorActionTest extends AbstractEditorTest {
 
   public void testDeleteLastLine() {
     String text =
-      "1\n" +
-      "2<caret>\n" +
-      "3";
-    init(text, TestFileType.TEXT);
+      """
+        1
+        2<caret>
+        3""";
+    init(text, PlainTextFileType.INSTANCE);
 
     deleteLine();
     deleteLine();
@@ -90,30 +96,42 @@ public class EditorActionTest extends AbstractEditorTest {
   }
 
   public void testDeleteLastNonEmptyLine() {
-    init("<caret>1\n", TestFileType.TEXT);
+    init("<caret>1\n", PlainTextFileType.INSTANCE);
     deleteLine();
     checkResultByText("");
   }
 
+  public void testDeleteLineBeforeGuardedBlock() {
+    init("""
+
+           <caret>text
+           #""", PlainTextFileType.INSTANCE);
+    getEditor().getDocument().createGuardedBlock(5, 7); // "\n#"
+    deleteLine();
+    checkResultByText("\n" +
+                      "#");
+  }
+
   public void testDeleteLineHonorSelection() {
-    init("xxxx\n" +
-         "bla <selection><caret>bla\n" +
-         "bla</selection> bla\n" +
-         "yyy",
-         TestFileType.TEXT);
+    init("""
+           xxxx
+           bla <selection><caret>bla
+           bla</selection> bla
+           yyy""",
+         PlainTextFileType.INSTANCE);
     deleteLine();
     checkResultByText("xxxx\n" +
                       "yyy<caret>");
   }
 
   public void testIndentWhitespaceLineWithCaretAtLineStart() {
-    init("<caret> ", TestFileType.TEXT);
+    init("<caret> ", PlainTextFileType.INSTANCE);
     executeAction("EditorIndentLineOrSelection");
     checkResultByText("    <caret> ");
   }
 
   public void testBackspaceWithStickySelection() {
-    init("te<caret>xt", TestFileType.TEXT);
+    init("te<caret>xt", PlainTextFileType.INSTANCE);
     executeAction(IdeActions.ACTION_EDITOR_TOGGLE_STICKY_SELECTION);
     executeAction(IdeActions.ACTION_EDITOR_MOVE_CARET_RIGHT);
     executeAction(IdeActions.ACTION_EDITOR_BACKSPACE);
@@ -122,59 +140,115 @@ public class EditorActionTest extends AbstractEditorTest {
   }
 
   public void testMoveRightAtFoldedLineEnd() {
-    init("line1<caret>\nline2\nline3", TestFileType.TEXT);
+    init("line1<caret>\nline2\nline3", PlainTextFileType.INSTANCE);
     addCollapsedFoldRegion(5, 7, "...");
     executeAction(IdeActions.ACTION_EDITOR_MOVE_CARET_RIGHT);
     assertEquals(new VisualPosition(0, 6), getEditor().getCaretModel().getVisualPosition());
   }
 
   public void testEnterOnLastLineInOverwriteMode() {
-    init("text<caret>", TestFileType.TEXT);
+    init("text<caret>", PlainTextFileType.INSTANCE);
     executeAction(IdeActions.ACTION_EDITOR_TOGGLE_OVERWRITE_MODE);
     executeAction(IdeActions.ACTION_EDITOR_ENTER);
     checkResultByText("text\n<caret>");
   }
 
   public void testPasteInOneLineMode() {
-    init("", TestFileType.TEXT);
+    init("", PlainTextFileType.INSTANCE);
     ((EditorEx)getEditor()).setOneLineMode(true);
     CopyPasteManager.getInstance().setContents(new StringSelection("a\rb"));
     executeAction(IdeActions.ACTION_EDITOR_PASTE);
     checkResultByText("a b<caret>");
   }
 
-  public void testDeleteToWordStartWithEscapeChars() {
-    init("class Foo { String s = \"a\\nb<caret>\"; }", TestFileType.JAVA);
-    executeAction(IdeActions.ACTION_EDITOR_DELETE_TO_WORD_START);
-    checkResultByText("class Foo { String s = \"a\\n<caret>\"; }");
-  }
-
-  public void testDeleteToWordEndWithEscapeChars() {
-    init("class Foo { String s = \"a\\<caret>nb\"; }", TestFileType.JAVA);
-    executeAction(IdeActions.ACTION_EDITOR_DELETE_TO_WORD_END);
-    checkResultByText("class Foo { String s = \"a\\<caret>b\"; }");
-  }
-  
   public void testUpWithSelectionOnCaretInsideSelection() {
-    initText("blah blah\n" +
-             "blah <selection>bl<caret>ah</selection>\n" +
-             "blah blah");
+    initText("""
+               blah blah
+               blah <selection>bl<caret>ah</selection>
+               blah blah""");
     executeAction(IdeActions.ACTION_EDITOR_MOVE_CARET_UP_WITH_SELECTION);
-    checkResultByText("blah bl<selection><caret>ah\n" +
-                      "blah blah</selection>\n" +
-                      "blah blah");
+    checkResultByText("""
+                        blah bl<selection><caret>ah
+                        blah blah</selection>
+                        blah blah""");
   }
   
   public void testDownWithSelectionOnCaretInsideSelection() {
-    initText("blah blah\n" +
-             "blah <selection>bl<caret>ah</selection>\n" +
-             "blah blah");
+    initText("""
+               blah blah
+               blah <selection>bl<caret>ah</selection>
+               blah blah""");
     executeAction(IdeActions.ACTION_EDITOR_MOVE_CARET_DOWN_WITH_SELECTION);
-    checkResultByText("blah blah\n" +
-                      "blah <selection>blah\n" +
-                      "blah bl<caret></selection>ah");
+    checkResultByText("""
+                        blah blah
+                        blah <selection>blah
+                        blah bl<caret></selection>ah""");
   }
   
+  public void testUpOnCaretOnSelectionEnd() {
+    initText("""
+               A mad boxer shot
+               a quick<selection>, gloved jab
+               to the jaw of<caret></selection> his\s
+               dizzy opponent.
+               """);
+    up();
+    checkResultByText("""
+                        A mad b<caret>oxer shot
+                        a quick, gloved jab
+                        to the jaw of his\s
+                        dizzy opponent.
+                        """);
+  }
+
+  public void testUpOnCaretInsideSelection() {
+    initText("""
+               A mad boxer shot
+               a quick<selection>, gloved<caret> jab
+               to the jaw of</selection> his\s
+               dizzy opponent.
+               """);
+    up();
+    checkResultByText("""
+                        A mad b<caret>oxer shot
+                        a quick, gloved jab
+                        to the jaw of his\s
+                        dizzy opponent.
+                        """);
+  }
+
+  public void testDownOnCaretOnSelectionStart() {
+    initText("""
+               A mad boxer shot
+               a quick<selection><caret>, gloved jab
+               to the jaw of</selection> his\s
+               dizzy opponent.
+               """);
+    down();
+    checkResultByText("""
+                        A mad boxer shot
+                        a quick, gloved jab
+                        to the jaw of his\s
+                        dizzy opponen<caret>t.
+                        """);
+  }
+
+  public void testDownOnCaretInsideSelection() {
+    initText("""
+               A mad boxer shot
+               a quick<selection>, gloved<caret> jab
+               to the jaw of</selection> his\s
+               dizzy opponent.
+               """);
+    down();
+    checkResultByText("""
+                        A mad boxer shot
+                        a quick, gloved jab
+                        to the jaw of his\s
+                        dizzy opponen<caret>t.
+                        """);
+  }
+
   public void testCaretComesBeforeTextOnUnindent() {
     initText("      <caret>  text");
     unindent();
@@ -207,7 +281,38 @@ public class EditorActionTest extends AbstractEditorTest {
     executeAction(IdeActions.ACTION_EDITOR_DUPLICATE_LINES);
     checkResultByText("ab\ncd\n<selection>ab\ncd</selection>");
   }
+
+  public void testDuplicateLinesMultiCaretLineStart() {
+    String before = """
+      <caret>one
+      <caret>two
+      <caret>three
+      """;
+    String after = """
+      one
+      <caret>one
+      two
+      <caret>two
+      three
+      <caret>three
+      """;
+
+    initText(before);
+    executeAction(IdeActions.ACTION_EDITOR_DUPLICATE_LINES);
+    checkResultByText(after);
+
+    initText(before);
+    ctrlD();
+    checkResultByText(after);
+  }
   
+  public void testDuplicateLineWithGuardedBlock() {
+    initText("a\n#");
+    getEditor().getDocument().createGuardedBlock(1, 3);
+    executeAction(IdeActions.ACTION_EDITOR_DUPLICATE_LINES);
+    checkResultByText("a\na\n#");
+  }
+
   public void testSmartHomeAfterFoldedRegion() {
     initText(" text with [multiline\nfold region]<caret>");
     foldOccurrences("(?s)\\[.*\\]", "...");
@@ -216,20 +321,8 @@ public class EditorActionTest extends AbstractEditorTest {
     checkResultByText(" <caret>text with [multiline\nfold region]");
   }
 
-  public void testToggleCaseForTextAfterEscapedSlash() {
-    init("class C { String s = \"<selection>ab\\\\cd<caret></selection>\"; }", TestFileType.JAVA);
-    executeAction(IdeActions.ACTION_EDITOR_TOGGLE_CASE);
-    checkResultByText("class C { String s = \"<selection>AB\\\\CD<caret></selection>\"; }");
-  }
-
-  public void testToggleCaseForEscapedChar() {
-    init("class C { String s = \"<selection>ab\\ncd<caret></selection>\"; }", TestFileType.JAVA);
-    executeAction(IdeActions.ACTION_EDITOR_TOGGLE_CASE);
-    checkResultByText("class C { String s = \"<selection>AB\\nCD<caret></selection>\"; }");
-  }
-
   public void testToggleCaseForEszett() {
-    init("<selection>\u00df</selection>", TestFileType.TEXT);
+    init("<selection>\u00df</selection>", PlainTextFileType.INSTANCE);
     executeAction(IdeActions.ACTION_EDITOR_TOGGLE_CASE);
     checkResultByText("<selection>SS</selection>");
   }
@@ -253,18 +346,21 @@ public class EditorActionTest extends AbstractEditorTest {
     checkResultByText("a<caret>b");
   }
 
+  public void testBackspaceInsideVirtualTab() {
+    initText("<caret>\ta");
+    getEditor().getSettings().setCaretInsideTabs(true);
+    right();
+    backspace();
+    checkResultByText("<caret>\ta");
+    assertEquals(new LogicalPosition(0, 1), getEditor().getCaretModel().getLogicalPosition());
+  }
+
   public void testCaretMovementNearSurrogatePair() {
     initText("a<caret>" + SURROGATE_PAIR + "b");
     right();
     checkResultByText("a" + SURROGATE_PAIR + "<caret>b");
     left();
     checkResultByText("a<caret>" + SURROGATE_PAIR + "b");
-  }
-
-  public void testDeleteToWordStartWithEscapedQuote() {
-    init("class Foo { String s = \"\\\"a<caret>\"; }", TestFileType.JAVA);
-    executeAction(IdeActions.ACTION_EDITOR_DELETE_TO_WORD_START);
-    checkResultByText("class Foo { String s = \"\\\"<caret>\"; }");
   }
 
   public void testSortLinesNoSelection() {
@@ -345,5 +441,37 @@ public class EditorActionTest extends AbstractEditorTest {
     initText("<selection>line1\nline2\nli<caret></selection>ne3");
     executeAction(IdeActions.ACTION_EDITOR_ADD_CARET_PER_SELECTED_LINE);
     checkResultByText("line1<caret>\nline2<caret>\nline3<caret>");
+  }
+
+  public void testEscapeRemovesSelection() {
+    initText("<selection>line1\nline2\nli<caret></selection>ne3");
+    executeAction(IdeActions.ACTION_EDITOR_ESCAPE);
+    checkResultByText("line1\nline2\nli<caret>ne3");
+  }
+
+  public void testEscapeActionIsDisabledByDefault() {
+    initText("<selection>line1\nline2\nli<caret></selection>ne3");
+    AnAction escapeAction = ActionManager.getInstance().getAction(IdeActions.ACTION_EDITOR_ESCAPE);
+    Assertions.assertTrue(EditorTestUtil.checkActionIsEnabled(getEditor(), escapeAction));
+
+    initText("line1\nline2\nli<caret>ne3");
+    Assertions.assertFalse(EditorTestUtil.checkActionIsEnabled(getEditor(), escapeAction));
+  }
+
+  public void testTextComponentEditor() {
+    JBTextArea area = new JBTextArea("text \u00df text");
+    TextComponentEditorImpl editor = new TextComponentEditorImpl(getProject(), area);
+
+    area.select(0, 4);
+    executeAction(IdeActions.ACTION_EDITOR_TOGGLE_CASE, editor);
+    assertEquals("TEXT ß text", area.getText());
+    assertEquals(0, area.getSelectionStart());
+    assertEquals(4, area.getSelectionEnd());
+
+    area.select(5, 6);
+    executeAction(IdeActions.ACTION_EDITOR_TOGGLE_CASE, editor);
+    assertEquals("TEXT SS text", area.getText());
+    assertEquals(5, area.getSelectionStart());
+    assertEquals(7, area.getSelectionEnd());
   }
 }

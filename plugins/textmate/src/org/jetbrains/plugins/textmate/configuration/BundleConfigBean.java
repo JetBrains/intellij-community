@@ -5,6 +5,10 @@ import com.intellij.openapi.util.io.FileUtil;
 
 import java.util.Objects;
 
+/**
+ * @deprecated use {@link TextMatePersistentBundle} instead
+ */
+@Deprecated
 public class BundleConfigBean implements Cloneable {
 
   public BundleConfigBean() {
@@ -16,8 +20,7 @@ public class BundleConfigBean implements Cloneable {
     this.enabled = enabled;
   }
 
-  @NlsSafe
-  public String getName() {
+  public @NlsSafe String getName() {
     return name;
   }
 

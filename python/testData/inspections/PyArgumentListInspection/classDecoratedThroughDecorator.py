@@ -4,4 +4,4 @@ import abcd
 class A(object):
     a = abcd.ib()
 
-A(a="test")
+A(<warning descr="Unexpected argument">a="test"</warning>)

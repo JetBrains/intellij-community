@@ -18,8 +18,14 @@ package com.intellij.codeInsight.generation.actions;
 import com.intellij.codeInsight.CodeInsightActionHandler;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
-import com.intellij.pom.java.LanguageLevel;
-import com.intellij.psi.*;
+import com.intellij.pom.java.JavaFeature;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementFactory;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiReturnStatement;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -32,14 +38,14 @@ import org.jetbrains.annotations.NotNull;
  */
 public class GenerateCreateUIHandler implements CodeInsightActionHandler {
   @Override
-  public void invoke(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
+  public void invoke(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile psiFile) {
     final PsiElement element = PsiUtilBase.getElementAtCaret(editor);
     final PsiClass psiClass = PsiTreeUtil.getParentOfType(element, PsiClass.class);
     if (psiClass == null) return;
 
     final PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
     String annotation = "";
-    if (PsiUtil.getLanguageLevel(file).isAtLeast(LanguageLevel.JDK_1_5)) {
+    if (PsiUtil.isAvailable(JavaFeature.ANNOTATIONS, psiFile)) {
       annotation = "@SuppressWarnings({\"MethodOverridesStaticMethodOfSuperclass\", \"UnusedDeclaration\"})";
     }
     final PsiMethod createUI = factory.createMethodFromText(annotation +

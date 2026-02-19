@@ -1,25 +1,35 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.ui;
 
 import com.intellij.ide.HelpTooltip;
 import com.intellij.ide.IdeEventQueue;
+import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.idea.ActionsBundle;
-import com.intellij.internal.statistic.eventLog.FeatureUsageData;
-import com.intellij.internal.statistic.service.fus.collectors.FUCounterUsageLogger;
+import com.intellij.openapi.application.AccessToken;
+import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.options.ConfigurationException;
+import com.intellij.openapi.project.DumbModeBlockedFunctionality;
+import com.intellij.openapi.project.DumbModeBlockedFunctionalityCollector;
 import com.intellij.openapi.project.DumbService;
+import com.intellij.openapi.project.PossiblyDumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.NlsContexts.Button;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.refactoring.BaseRefactoringProcessor;
+import com.intellij.refactoring.Refactoring;
 import com.intellij.refactoring.RefactoringBundle;
+import com.intellij.util.SlowOperations;
+import com.intellij.util.concurrency.AppExecutorUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.AbstractAction;
+import javax.swing.Action;
+import javax.swing.JButton;
 import java.awt.event.ActionEvent;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -28,7 +38,7 @@ import java.util.List;
 /**
  * Author: msk
  */
-public abstract class RefactoringDialog extends DialogWrapper {
+public abstract class RefactoringDialog extends DialogWrapper implements PossiblyDumbAware {
   private Action myRefactorAction;
   private Action myPreviewAction;
   private boolean myCbPreviewResults;
@@ -51,37 +61,32 @@ public abstract class RefactoringDialog extends DialogWrapper {
    * Must be called before {@link #init()}.
    */
   protected void addOpenInEditorCheckbox() {
-    setDoNotAskOption(new DoNotAskOption.Adapter() {
+    setDoNotAskOption(new com.intellij.openapi.ui.DoNotAskOption.Adapter() {
       @Override
       public void rememberChoice(boolean selected, int exitCode) {
-        PropertiesComponent.getInstance().setValue(getRefactoringId() + ".OpenInEditor", selected, true);
-        report(selected, "open.in.editor.saved");
+        PropertiesComponent.getInstance().setValue(getRefactoringId() + ".OpenInEditor", selected, isOpenInEditorEnabledByDefault());
+        RefactoringDialogUsageCollector.logOpenInEditorSaved(myProject, selected, RefactoringDialog.this.getClass());
       }
 
       @Override
       public boolean isSelectedByDefault() {
-        boolean selected = PropertiesComponent.getInstance().getBoolean(getRefactoringId() + ".OpenInEditor", true);
-        return report(selected, "open.in.editor.shown");
-      }
-
-      private boolean report(boolean selected, String eventId) {
-        String refactoringClassName = RefactoringDialog.this.getClass().getName();
-        FeatureUsageData data = new FeatureUsageData().addData("selected", selected).addData("class_name", refactoringClassName);
-        FUCounterUsageLogger.getInstance().logEvent("refactoring.dialog", eventId, data);
+        boolean selected = PropertiesComponent.getInstance().getBoolean(getRefactoringId() + ".OpenInEditor", isOpenInEditorEnabledByDefault());
+        RefactoringDialogUsageCollector.logOpenInEditorShown(myProject, selected, RefactoringDialog.this.getClass());
         return selected;
       }
 
-      @NotNull
       @Override
-      public String getDoNotShowMessage() {
+      public @NotNull String getDoNotShowMessage() {
         return RefactoringBundle.message("open.in.editor.label");
       }
     });
   }
 
-  @NonNls
-  @NotNull
-  protected String getRefactoringId() {
+  protected boolean isOpenInEditorEnabledByDefault() {
+    return true;
+  }
+
+  protected @NonNls @NotNull String getRefactoringId() {
     return getClass().getName();
   }
 
@@ -117,6 +122,12 @@ public abstract class RefactoringDialog extends DialogWrapper {
     return myRefactorAction;
   }
 
+  protected final void setRefactorButtonText(@Button @NotNull String text) {
+    myRefactorAction.putValue(Action.NAME, text);
+    myRefactorAction.putValue(Action.DISPLAYED_MNEMONIC_INDEX_KEY, null);
+    myRefactorAction.putValue(Action.MNEMONIC_KEY, null);
+  }
+
   /**
    * @return default implementation of "Preview" action.
    */
@@ -140,9 +151,10 @@ public abstract class RefactoringDialog extends DialogWrapper {
 
   @Override
   protected final void doOKAction() {
-    if (!DumbService.isDumbAware(this) && DumbService.isDumb(myProject)) {
+    if (!DumbService.getInstance(myProject).isUsableInCurrentContext(this)) {
       Messages.showMessageDialog(myProject, RefactoringBundle.message("refactoring.not.available.indexing"),
                                  RefactoringBundle.message("refactoring.indexing.warning.title"), null);
+      DumbModeBlockedFunctionalityCollector.INSTANCE.logFunctionalityBlocked(myProject, DumbModeBlockedFunctionality.RefactoringDialog);
       return;
     }
 
@@ -157,7 +169,7 @@ public abstract class RefactoringDialog extends DialogWrapper {
 
   @Override
   protected void setHelpTooltip(@NotNull JButton helpButton) {
-    if (Registry.is("ide.helptooltip.enabled")) {
+    if (UISettings.isIdeHelpTooltipEnabled()) {
       new HelpTooltip().setDescription(ActionsBundle.actionDescription("HelpTopics")).installOn(helpButton);
     }
     else {
@@ -173,10 +185,32 @@ public abstract class RefactoringDialog extends DialogWrapper {
     }
     catch (ConfigurationException e) {
       enabled = false;
-      setErrorText(e.getMessage());
+      setErrorHtml(e.getMessageHtml());
     }
     getPreviewAction().setEnabled(enabled);
     getRefactorAction().setEnabled(enabled);
+  }
+
+  protected void validateButtonsAsync() {
+    validateButtonsAsync(ModalityState.stateForComponent(getContentPanel()));
+  }
+
+  protected void validateButtonsAsync(@NotNull ModalityState modalityState) {
+    ReadAction.nonBlocking(() -> {
+        try {
+          canRun();
+          return null;
+        }
+        catch (ConfigurationException e) {
+          return e;
+        }
+      }).finishOnUiThread(modalityState, e -> {
+        setErrorHtml(e == null ? null : e.getMessageHtml());
+        getPreviewAction().setEnabled(e == null);
+        getRefactorAction().setEnabled(e == null);
+      })
+      .coalesceBy(myProject, getClass())
+      .submit(AppExecutorUtil.getAppExecutorService());
   }
 
   protected boolean hasHelpAction() {
@@ -208,7 +242,7 @@ public abstract class RefactoringDialog extends DialogWrapper {
     return myProject;
   }
 
-  private class RefactorAction extends AbstractAction {
+  private final class RefactorAction extends AbstractAction {
     RefactorAction() {
       super(RefactoringBundle.message("refactor.button"));
       putValue(DEFAULT_ACTION, Boolean.TRUE);
@@ -216,11 +250,13 @@ public abstract class RefactoringDialog extends DialogWrapper {
 
     @Override
     public void actionPerformed(ActionEvent e) {
-      doRefactorAction();
+      try (AccessToken ignore = SlowOperations.startSection(SlowOperations.ACTION_PERFORM)) {
+        doRefactorAction();
+      }
     }
   }
 
-  private class PreviewAction extends AbstractAction {
+  private final class PreviewAction extends AbstractAction {
     PreviewAction() {
       super(RefactoringBundle.message("preview.button"));
       if (SystemInfo.isMac) {
@@ -230,13 +266,22 @@ public abstract class RefactoringDialog extends DialogWrapper {
 
     @Override
     public void actionPerformed(ActionEvent e) {
-      doPreviewAction();
+      try (AccessToken ignore = SlowOperations.startSection(SlowOperations.ACTION_PERFORM)) {
+        doPreviewAction();
+      }
     }
   }
 
   protected void invokeRefactoring(BaseRefactoringProcessor processor) {
     final Runnable prepareSuccessfulCallback = () -> close(DialogWrapper.OK_EXIT_CODE);
     processor.setPrepareSuccessfulSwingThreadCallback(prepareSuccessfulCallback);
+    processor.setPreviewUsages(isPreviewUsages());
+    processor.run();
+  }
+  
+  protected void invokeRefactoring(Refactoring processor) {
+    final Runnable prepareSuccessfulCallback = () -> close(DialogWrapper.OK_EXIT_CODE);
+    processor.setInteractive(prepareSuccessfulCallback);
     processor.setPreviewUsages(isPreviewUsages());
     processor.run();
   }

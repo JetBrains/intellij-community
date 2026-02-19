@@ -1,0 +1,36 @@
+0(1) element: null
+1(2) element: PyWhileStatement
+2(3) element: PyBinaryExpression
+3(4,5) READ ACCESS: undefined1
+4(16) element: null. Condition: undefined1:false
+5(6) element: null. Condition: undefined1:true
+6(7) ASSERTTYPE ACCESS: undefined1
+7(8) READ ACCESS: undefined2
+8(9) element: PyCallExpression: undefined2
+9(10,11) WRITE ACCESS: r
+10(16) element: null. Condition: (r := undefined2()):false
+11(12) element: null. Condition: (r := undefined2()):true
+12(13) ASSERTTYPE ACCESS: r
+13(14) element: PyStatementList
+14(15) element: PyPrintStatement
+15(1) READ ACCESS: r
+16(17) element: PyStatementList
+17(18) element: PyPrintStatement
+18(19) element: PyWhileStatement
+19(20) element: PyBinaryExpression
+20(21,22) READ ACCESS: undefined3
+21(24) element: null. Condition: undefined3:false
+22(23) element: null. Condition: undefined3:true
+23(30) ASSERTTYPE ACCESS: undefined3
+24(25) READ ACCESS: undefined4
+25(26) element: PyCallExpression: undefined4
+26(27,28) WRITE ACCESS: r2
+27(33) element: null. Condition: (r2 := undefined4()):false
+28(29) element: null. Condition: (r2 := undefined4()):true
+29(30) ASSERTTYPE ACCESS: r2
+30(31) element: PyStatementList
+31(32) element: PyPrintStatement
+32(18) READ ACCESS: r2
+33(34) element: PyStatementList
+34(35) element: PyPrintStatement
+35() element: null

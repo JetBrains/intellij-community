@@ -1,7 +1,7 @@
 package com.jetbrains.python;
 
 import com.intellij.lang.ASTNode;
-import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.psi.PsiElement;
@@ -12,8 +12,11 @@ import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.PyReferenceExpression;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.List;
 
 @ApiStatus.Experimental
 public class PythonRuntimeService {
@@ -22,17 +25,15 @@ public class PythonRuntimeService {
     return false;
   }
 
-  @Nullable
-  public Sdk getConsoleSdk(@NotNull PsiElement foothold) {
+  public @Nullable Sdk getConsoleSdk(@NotNull PsiElement foothold) {
     return null;
   }
 
-  public String createPydevDoc(PsiElement element, PsiElement originalElement) {
+  public @Nls String createPydevDoc(PsiElement element, PsiElement originalElement) {
     return null;
   }
 
-  @NotNull
-  public LanguageLevel getLanguageLevelForSdk(@Nullable Sdk sdk) {
+  public @NotNull LanguageLevel getLanguageLevelForSdk(@Nullable Sdk sdk) {
     return LanguageLevel.getDefault();
   }
 
@@ -45,7 +46,10 @@ public class PythonRuntimeService {
     return null;
   }
 
-  public String formatDocstring(Module module, DocStringFormat format, String docstring) {
+  public String formatDocstring(@NotNull Module module,
+                                @NotNull DocStringFormat format,
+                                @NotNull String input,
+                                @NotNull List<String> formatterFlags) {
     return null;
   }
 
@@ -57,7 +61,11 @@ public class PythonRuntimeService {
     return false;
   }
 
+  public boolean isExternallyIndexedFile(@NotNull PsiElement element) {
+    return false;
+  }
+
   public static PythonRuntimeService getInstance() {
-    return ServiceManager.getService(PythonRuntimeService.class);
+    return ApplicationManager.getApplication().getService(PythonRuntimeService.class);
   }
 }

@@ -1,8 +1,11 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.hints
 
-import com.intellij.codeInsight.hints.presentation.*
-import com.intellij.openapi.editor.impl.EditorImpl
+import com.intellij.codeInsight.hints.presentation.ContainerInlayPresentation
+import com.intellij.codeInsight.hints.presentation.InlayPresentation
+import com.intellij.codeInsight.hints.presentation.PresentationFactory
+import com.intellij.codeInsight.hints.presentation.SpacePresentation
+import com.intellij.codeInsight.hints.presentation.VerticalListInlayPresentation
 import com.intellij.openapi.editor.markup.TextAttributes
 import com.intellij.testFramework.LightPlatformCodeInsightTestCase
 import com.intellij.testFramework.PlatformTestUtil
@@ -15,7 +18,7 @@ import java.io.File
 import javax.imageio.ImageIO
 
 class PresentationUITest : LightPlatformCodeInsightTestCase() {
-  val factory by lazy { PresentationFactory(editor as EditorImpl) }
+  val factory: PresentationFactory by lazy { PresentationFactory(editor) }
 
   override fun setUp() {
     super.setUp()
@@ -95,6 +98,6 @@ class PresentationUITest : LightPlatformCodeInsightTestCase() {
   }
 
   companion object {
-    var REPLACE_WITH_ACTUAL = false
+    var REPLACE_WITH_ACTUAL: Boolean = false
   }
 }

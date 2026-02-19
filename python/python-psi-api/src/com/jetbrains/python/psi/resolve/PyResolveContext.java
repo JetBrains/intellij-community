@@ -1,30 +1,18 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.psi.resolve;
 
-import com.intellij.openapi.diagnostic.Logger;
 import com.jetbrains.python.psi.types.TypeEvalContext;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author yole
- */
+
 public final class PyResolveContext {
   private final boolean myAllowImplicits;
   private final boolean myAllowProperties;
   private final boolean myAllowRemote;
-  private final TypeEvalContext myTypeEvalContext;
 
+  private final @NotNull TypeEvalContext myTypeEvalContext;
 
-  private PyResolveContext(boolean allowImplicits, boolean allowProperties) {
-    myAllowImplicits = allowImplicits;
-    myAllowProperties = allowProperties;
-    myTypeEvalContext = null;
-    myAllowRemote = false;
-  }
-
-
-  private PyResolveContext(boolean allowImplicits, boolean allowProperties, boolean allowRemote, TypeEvalContext typeEvalContext) {
+  private PyResolveContext(boolean allowImplicits, boolean allowProperties, boolean allowRemote, @NotNull TypeEvalContext typeEvalContext) {
     myAllowImplicits = allowImplicits;
     myAllowProperties = allowProperties;
     myAllowRemote = allowRemote;
@@ -43,12 +31,17 @@ public final class PyResolveContext {
     return myAllowRemote;
   }
 
-  private static final PyResolveContext ourDefaultContext = new PyResolveContext(false, true);
-  private static final PyResolveContext ourImplicitsContext = new PyResolveContext(true, true);
-  private static final PyResolveContext ourNoPropertiesContext = new PyResolveContext(false, false);
+  /**
+   * @deprecated Please use {@link PyResolveContext#defaultContext(TypeEvalContext)}
+   * to explicitly specify type evaluation context.
+   */
+  @Deprecated(forRemoval = true)
+  public static @NotNull PyResolveContext defaultContext() {
+    return new PyResolveContext(false, true, false, TypeEvalContext.codeInsightFallback(null));
+  }
 
-  public static PyResolveContext defaultContext() {
-    return ourDefaultContext;
+  public static @NotNull PyResolveContext defaultContext(@NotNull TypeEvalContext context) {
+    return new PyResolveContext(false, true, false, context);
   }
 
   /**
@@ -56,40 +49,28 @@ public final class PyResolveContext {
    *
    * Note that this resolve context is slower than the default one. Use it only for one-off user actions.
    */
-  @NotNull
-  public static PyResolveContext implicitContext() {
-    return ourImplicitsContext;
+  public static @NotNull PyResolveContext implicitContext(@NotNull TypeEvalContext context) {
+    return new PyResolveContext(true, true, false, context);
   }
 
-  /**
-   * @deprecated Use {@link #defaultContext()} instead, now it doesn't contain implicit results.
-   */
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020.2")
-  @Deprecated
-  public static PyResolveContext noImplicits() {
-    Logger.getInstance(PyResolveContext.class).warn("Deprecated method used: 'noImplicits'. This method will be dropped soon." +
-                                                    "Consider migrate to the new one");
-    return defaultContext();
+  public static @NotNull PyResolveContext noProperties(@NotNull TypeEvalContext context) {
+    return new PyResolveContext(false, false, false, context);
   }
 
-  public static PyResolveContext noProperties() {
-    return ourNoPropertiesContext;
-  }
-
-  public PyResolveContext withTypeEvalContext(@NotNull TypeEvalContext context) {
+  public @NotNull PyResolveContext withTypeEvalContext(@NotNull TypeEvalContext context) {
     return new PyResolveContext(myAllowImplicits, myAllowProperties, myAllowRemote, context);
   }
 
-  public PyResolveContext withoutImplicits() {
-    return new PyResolveContext(false, myAllowProperties, myAllowRemote, myTypeEvalContext);
+  public @NotNull PyResolveContext withoutImplicits() {
+    return allowImplicits() ? new PyResolveContext(false, myAllowProperties, myAllowRemote, myTypeEvalContext) : this;
   }
 
-  public PyResolveContext withRemote() {
-    return new PyResolveContext(myAllowImplicits, myAllowProperties, true, myTypeEvalContext);
+  public @NotNull PyResolveContext withRemote() {
+    return allowRemote() ? this : new PyResolveContext(myAllowImplicits, myAllowProperties, true, myTypeEvalContext);
   }
 
-  public TypeEvalContext getTypeEvalContext() {
-    return myTypeEvalContext != null ? myTypeEvalContext : TypeEvalContext.codeInsightFallback(null);
+  public @NotNull TypeEvalContext getTypeEvalContext() {
+    return myTypeEvalContext;
   }
 
   @Override
@@ -100,7 +81,9 @@ public final class PyResolveContext {
     PyResolveContext that = (PyResolveContext)o;
 
     if (myAllowImplicits != that.myAllowImplicits) return false;
-    if (myTypeEvalContext != null ? !myTypeEvalContext.equals(that.myTypeEvalContext) : that.myTypeEvalContext != null) return false;
+    if (myAllowProperties != that.myAllowProperties) return false;
+    if (myAllowRemote != that.myAllowRemote) return false;
+    if (!myTypeEvalContext.equals(that.myTypeEvalContext)) return false;
 
     return true;
   }
@@ -108,7 +91,9 @@ public final class PyResolveContext {
   @Override
   public int hashCode() {
     int result = (myAllowImplicits ? 1 : 0);
-    result = 31 * result + (myTypeEvalContext != null ? myTypeEvalContext.hashCode() : 0);
+    result = 31 * result + (myAllowProperties ? 1 : 0);
+    result = 31 * result + (myAllowRemote ? 1 : 0);
+    result = 31 * result + myTypeEvalContext.hashCode();
     return result;
   }
 }

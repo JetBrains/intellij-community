@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.xml.ui.actions;
 
 import com.intellij.openapi.actionSystem.AnAction;
@@ -9,12 +9,17 @@ import com.intellij.psi.SmartPointerManager;
 import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.xml.*;
+import com.intellij.util.xml.DomElement;
+import com.intellij.util.xml.DomManager;
+import com.intellij.util.xml.DomUtil;
+import com.intellij.util.xml.StableElement;
+import com.intellij.util.xml.TypeChooser;
+import com.intellij.util.xml.XmlDomBundle;
 import com.intellij.util.xml.reflect.DomCollectionChildDescription;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.Icon;
 import java.lang.reflect.Type;
 
 public abstract class DefaultAddAction<T extends DomElement> extends AnAction {
@@ -48,15 +53,14 @@ public abstract class DefaultAddAction<T extends DomElement> extends AnAction {
   }
 
   @Override
-  public final void actionPerformed(@NotNull final AnActionEvent e) {
+  public final void actionPerformed(final @NotNull AnActionEvent e) {
     final T result = performElementAddition();
     if (result != null) {
       afterAddition(result);
     }
   }
 
-  @Nullable
-  protected T performElementAddition() {
+  protected @Nullable T performElementAddition() {
     final DomElement parent = getParentDomElement();
     final DomManager domManager = parent.getManager();
     final TypeChooser[] oldChoosers = new TypeChooser[]{null};

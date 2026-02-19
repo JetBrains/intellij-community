@@ -2,39 +2,33 @@
 
 package com.maddyhome.idea.copyright.ui;
 
+import com.intellij.copyright.CopyrightBundle;
 import com.intellij.ide.highlighter.HtmlFileType;
 import com.intellij.ide.highlighter.XmlFileType;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.project.Project;
+import com.intellij.xml.util.JspFileTypeUtil;
+import org.jetbrains.annotations.NotNull;
 
 public final class FileTypeCopyrightConfigurableFactory {
-  private static final String[] LOCATIONS_IN_FILE = new String[]{"Before Doctype", "Before Root Tag"};
 
   private FileTypeCopyrightConfigurableFactory() {
   }
 
-  public static Configurable createFileTypeConfigurable(Project project, FileType fileType, TemplateCommentPanel parentPanel) {
+  public static @NotNull Configurable createFileTypeConfigurable(Project project, FileType fileType, TemplateCommentPanel parentPanel) {
     if (fileType.equals(StdFileTypes.JAVA)) {
-      return new TemplateCommentPanel(fileType, parentPanel, new String[]{"Before Package", "Before Imports", "Before Class"}, project);
+      return new TemplateCommentPanel(fileType, parentPanel, project,
+                                      CopyrightBundle.message("radio.location.in.file.before.package"),
+                                      CopyrightBundle.message("radio.location.in.file.before.imports"),
+                                      CopyrightBundle.message("radio.location.in.file.before.class"));
     }
-    else if (fileType.equals(XmlFileType.INSTANCE)) {
-      return new TemplateCommentPanel(fileType, parentPanel, LOCATIONS_IN_FILE, project);
+    if (fileType.equals(XmlFileType.INSTANCE) || fileType.equals(HtmlFileType.INSTANCE) || JspFileTypeUtil.isJspOrJspX(fileType)) {
+      return new TemplateCommentPanel(fileType, parentPanel, project,
+                                      CopyrightBundle.message("radio.location.in.file.before.doctype"),
+                                      CopyrightBundle.message("radio.location.in.file.before.root.tag"));
     }
-    else if (fileType.equals(HtmlFileType.INSTANCE)) {
-      return new TemplateCommentPanel(fileType, parentPanel, LOCATIONS_IN_FILE, project);
-    }
-    else if (fileType.equals(StdFileTypes.JSP)) {
-      return new TemplateCommentPanel(fileType, parentPanel, LOCATIONS_IN_FILE, project);
-    }
-    else if (fileType.equals(StdFileTypes.JSPX)) {
-      return new TemplateCommentPanel(fileType, parentPanel, LOCATIONS_IN_FILE, project);
-    }
-    else {
-      return new TemplateCommentPanel(fileType, parentPanel, null, project);
-    }
+    return new TemplateCommentPanel(fileType, parentPanel, project);
   }
-
-
 }

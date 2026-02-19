@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.intellij.lang.xpath.xslt.validation.inspections;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
@@ -13,7 +13,13 @@ import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import org.intellij.lang.xpath.xslt.XsltSupport;
-import org.intellij.lang.xpath.xslt.psi.*;
+import org.intellij.lang.xpath.xslt.psi.XsltApplyTemplates;
+import org.intellij.lang.xpath.xslt.psi.XsltCallTemplate;
+import org.intellij.lang.xpath.xslt.psi.XsltElementFactory;
+import org.intellij.lang.xpath.xslt.psi.XsltParameter;
+import org.intellij.lang.xpath.xslt.psi.XsltTemplate;
+import org.intellij.lang.xpath.xslt.psi.XsltTemplateInvocation;
+import org.intellij.lang.xpath.xslt.psi.XsltWithParam;
 import org.intellij.lang.xpath.xslt.quickfix.AbstractFix;
 import org.intellij.lang.xpath.xslt.quickfix.AddParameterFix;
 import org.intellij.lang.xpath.xslt.quickfix.AddWithParamFix;
@@ -27,25 +33,22 @@ import java.util.Map;
 public class TemplateInvocationInspection extends XsltInspection {
 
   @Override
-  @NotNull
-    public HighlightDisplayLevel getDefaultLevel() {
+  public @NotNull HighlightDisplayLevel getDefaultLevel() {
         return HighlightDisplayLevel.ERROR;
     }
 
   @Override
-    @NotNull
-    public String getShortName() {
+  public @NotNull String getShortName() {
         return "XsltTemplateInvocation";
     }
 
     @Override
-    @NotNull
-    public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, final boolean isOnTheFly) {
-      if (!(holder.getFile() instanceof XmlFile)) return PsiElementVisitor.EMPTY_VISITOR;
+    public @NotNull PsiElementVisitor buildVisitor(final @NotNull ProblemsHolder holder, final boolean isOnTheFly) {
+        if (!(holder.getFile() instanceof XmlFile)) return PsiElementVisitor.EMPTY_VISITOR;
         final XsltElementFactory xsltElementFactory = XsltElementFactory.getInstance();
         return new XmlElementVisitor() {
             @Override
-            public void visitXmlTag(XmlTag tag) {
+            public void visitXmlTag(@NotNull XmlTag tag) {
               if (XsltSupport.isTemplateCall(tag)) {
                   final XsltCallTemplate call = xsltElementFactory.wrapElement(tag, XsltCallTemplate.class);
                     checkTemplateInvocation(call, holder, isOnTheFly);
@@ -74,9 +77,8 @@ public class TemplateInvocationInspection extends XsltInspection {
             }
         }
 
-        if (call instanceof XsltCallTemplate) {
-            final XsltCallTemplate ct = ((XsltCallTemplate)call);
-            final PsiElement nameToken = ct.getNameIdentifier();
+        if (call instanceof XsltCallTemplate ct) {
+          final PsiElement nameToken = ct.getNameIdentifier();
             final XsltTemplate template = ct.getTemplate();
 
             if (template != null) {
@@ -97,7 +99,7 @@ public class TemplateInvocationInspection extends XsltInspection {
 
                     final XmlAttributeValue valueElement = argAttribute.getValueElement();
                     final PsiElement valueToken = XsltSupport.getAttValueToken(argAttribute);
-                    if (valueToken != null && s.trim().length() > 0) {
+                    if (valueToken != null && !s.trim().isEmpty()) {
                         if (template.getParameter(s) == null) {
                             final LocalQuickFix fix1 = new AddParameterFix(s, template).createQuickFix(onTheFly);
                             final LocalQuickFix fix2 = new RemoveParamFix(argNames.get(s).getTag(), s).createQuickFix(onTheFly);

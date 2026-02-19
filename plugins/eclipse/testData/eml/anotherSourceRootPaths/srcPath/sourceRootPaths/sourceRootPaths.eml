@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<component>
+<component inheritJdk="true">
   <exclude-output />
   <contentEntry url="file://$MODULE_DIR$">
     <excludeFolder url="file://$MODULE_DIR$/bin" />

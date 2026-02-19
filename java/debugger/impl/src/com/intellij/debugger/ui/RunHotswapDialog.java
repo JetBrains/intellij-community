@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.ui;
 
 import com.intellij.debugger.JavaDebuggerBundle;
@@ -7,14 +7,19 @@ import com.intellij.debugger.settings.DebuggerSettings;
 import com.intellij.ide.util.ElementsChooser;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MultiLineLabelUI;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.OptionsDialog;
 import com.intellij.util.ui.UIUtil;
-import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.Action;
+import javax.swing.Icon;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import java.awt.BorderLayout;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
@@ -37,19 +42,18 @@ public class RunHotswapDialog extends OptionsDialog {
     myElementsChooser = new ElementsChooser<>(items, true);
     myPanel.setBorder(JBUI.Borders.empty(10, 0, 5, 0));
     //myElementsChooser.setBorder(IdeBorderFactory.createEmptyBorder(5, 0, 0, 0));
-    if (sessions.size() > 0) {
+    if (!sessions.isEmpty()) {
       myElementsChooser.selectElements(items.subList(0, 1));
     }
     myPanel.add(myElementsChooser, BorderLayout.CENTER);
     //myPanel.add(new JLabel("Choose debug sessions to reload classes:"), BorderLayout.NORTH);
-    if(sessions.size() == 1) {
+    if (sessions.size() == 1) {
       setTitle(JavaDebuggerBundle.message("hotswap.dialog.title.with.session", sessions.get(0).getSessionName()));
       myPanel.setVisible(false);
     }
     else {
       setTitle(JavaDebuggerBundle.message("hotswap.dialog.title"));
     }
-    setButtonsAlignment(SwingConstants.CENTER);
     this.init();
   }
 
@@ -79,7 +83,7 @@ public class RunHotswapDialog extends OptionsDialog {
   }
 
   @Override
-  protected Action @NotNull [] createActions(){
+  protected Action @NotNull [] createActions() {
     setOKButtonText(JavaDebuggerBundle.message("hotswap.dialog.reload.action.text"));
     return new Action[]{getOKAction(), getCancelAction()};
   }
@@ -106,8 +110,8 @@ public class RunHotswapDialog extends OptionsDialog {
     return myPanel;
   }
 
-  public Collection<DebuggerSession> getSessionsToReload() {
-    return StreamEx.of(myElementsChooser.getMarkedElements()).map(SessionItem::getSession).toList();
+  public @Unmodifiable Collection<DebuggerSession> getSessionsToReload() {
+    return ContainerUtil.map(myElementsChooser.getMarkedElements(), SessionItem::getSession);
   }
 
   private static class SessionItem {
@@ -121,6 +125,7 @@ public class RunHotswapDialog extends OptionsDialog {
       return mySession;
     }
 
+    @Override
     public String toString() {
       return mySession.getSessionName();
     }

@@ -18,4 +18,4 @@ class A:
         return None
 
 
-A().foo(<warning descr="Parameter(s) unfilledPossible callees:A.foo(self: A, value: None)A.foo(self: A, value: int)A.foo(self: A, value: str)">)</warning>
+A().foo(<warning descr="Parameter(s) unfilledPossible callees:A.foo(self: Self@A, value: None)A.foo(self: Self@A, value: int)A.foo(self: Self@A, value: str)">)</warning>

@@ -1,4 +1,4 @@
-// "Replace with sum()" "true"
+// "Collapse loop with stream 'sum()'" "true-preview"
 
 public class Main {
   public void test(long[] list) {

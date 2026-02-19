@@ -5,9 +5,6 @@ import com.sun.jna.Callback;
 import com.sun.jna.Library;
 import com.sun.jna.Pointer;
 
-/**
- * @author spleaner
- */
 public interface FoundationLibrary extends Library {
   void NSLog(Pointer pString, Object thing);
 
@@ -25,8 +22,6 @@ public interface FoundationLibrary extends Library {
 
   long CFStringConvertIANACharSetNameToEncoding(ID encodingName);
   long CFStringConvertEncodingToNSStringEncoding(long cfEncoding);
-
-  ID CGWindowListCreateImage(Foundation.NSRect screenBounds, int windowOption, ID windowID, int imageOption);
 
   void CFRetain(ID cfTypeRef);
   void CFRelease(ID cfTypeRef);
@@ -46,7 +41,6 @@ public interface FoundationLibrary extends Library {
    * Note: Vararg version. Should only be used only for selectors with a single fixed argument followed by varargs.
    */
   ID objc_msgSend(ID receiver, Pointer selector, Object firstArg, Object... args);
-  double objc_msgSend_fpret(ID receiver, Pointer selector, Object... args); // the same as objc_msgSend but returns double (32-bit only)
 
   boolean class_respondsToSelector(ID cls, Pointer selName);
   boolean class_addMethod(ID cls, Pointer selName, Callback imp, String types);

@@ -1,10 +1,14 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.plugins.groovy.formatter.blocks;
 
-import com.intellij.formatting.*;
+import com.intellij.formatting.ASTBlock;
+import com.intellij.formatting.Alignment;
+import com.intellij.formatting.Block;
+import com.intellij.formatting.ChildAttributes;
+import com.intellij.formatting.Indent;
+import com.intellij.formatting.Spacing;
+import com.intellij.formatting.Wrap;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiComment;
@@ -24,9 +28,12 @@ import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrListOrMap;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotationArgumentList;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.*;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrIfStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrLabeledStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrLoopStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrSwitchElement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrCaseLabel;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrCaseSection;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssignmentExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrBinaryExpression;
@@ -40,8 +47,6 @@ import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.LAMBDA_EX
 
 /**
  * Block implementation for Groovy formatter
- *
- * @author ilyas
  */
 public class GroovyBlock implements Block, ASTBlock {
 
@@ -54,9 +59,12 @@ public class GroovyBlock implements Block, ASTBlock {
 
   protected List<Block> mySubBlocks = null;
 
-  public GroovyBlock(@NotNull final ASTNode node,
-                     @NotNull final Indent indent,
-                     @Nullable final Wrap wrap,
+  /**
+   * Consider using {@link FormattingContext#createBlock(ASTNode, Indent, Wrap)}
+   */
+  public GroovyBlock(final @NotNull ASTNode node,
+                     final @NotNull Indent indent,
+                     final @Nullable Wrap wrap,
                      @NotNull FormattingContext context) {
     myNode = node;
 
@@ -66,20 +74,17 @@ public class GroovyBlock implements Block, ASTBlock {
   }
 
   @Override
-  @NotNull
-  public ASTNode getNode() {
+  public @NotNull ASTNode getNode() {
     return myNode;
   }
 
   @Override
-  @NotNull
-  public TextRange getTextRange() {
+  public @NotNull TextRange getTextRange() {
     return myNode.getTextRange();
   }
 
-  @NotNull
   @Override
-  public List<Block> getSubBlocks() {
+  public @NotNull List<Block> getSubBlocks() {
     if (mySubBlocks == null) {
       mySubBlocks = new GroovyBlockGenerator(this).generateSubBlocks();
     }
@@ -87,20 +92,17 @@ public class GroovyBlock implements Block, ASTBlock {
   }
 
   @Override
-  @Nullable
-  public Wrap getWrap() {
+  public @Nullable Wrap getWrap() {
     return myWrap;
   }
 
   @Override
-  @Nullable
-  public Indent getIndent() {
+  public @NotNull Indent getIndent() {
     return myIndent;
   }
 
   @Override
-  @Nullable
-  public Alignment getAlignment() {
+  public @Nullable Alignment getAlignment() {
     if (myAlignment == null) {
       myAlignment = myContext.getAlignmentProvider().getAlignment(myNode.getPsi());
     }
@@ -113,31 +115,24 @@ public class GroovyBlock implements Block, ASTBlock {
    *
    * @param child1 left element
    * @param child2 right element
-   * @return
    */
   @Override
-  @Nullable
-  public Spacing getSpacing(Block child1, @NotNull Block child2) {
+  public @Nullable Spacing getSpacing(Block child1, @NotNull Block child2) {
     return GroovySpacingProcessor.getSpacing(child1, child2, myContext);
   }
 
   @Override
-  @NotNull
-  public ChildAttributes getChildAttributes(final int newChildIndex) {
+  public @NotNull ChildAttributes getChildAttributes(final int newChildIndex) {
     ASTNode astNode = getNode();
     final PsiElement psiParent = astNode.getPsi();
     if (psiParent instanceof GroovyFileBase) {
       return new ChildAttributes(Indent.getNoneIndent(), null);
     }
-    if (psiParent instanceof GrSwitchStatement) {
-      new ChildAttributes(Indent.getNoneIndent(), null);
-    }
-
-    if (psiParent instanceof GrCaseLabel) {
-      return new ChildAttributes(GroovyIndentProcessor.getSwitchCaseIndent(getContext().getSettings()), null);
+    if (psiParent instanceof GrSwitchElement) {
+      return new ChildAttributes(Indent.getNoneIndent(), null);
     }
     if (psiParent instanceof GrCaseSection) {
-      return GroovyIndentProcessor.getChildSwitchIndent((GrCaseSection)psiParent, newChildIndex);
+      return new ChildAttributes(GroovyIndentProcessor.getSwitchCaseIndent(getContext().getSettings()), null);
     }
 
     if (astNode.getElementType() == LAMBDA_EXPRESSION) {
@@ -146,7 +141,7 @@ public class GroovyBlock implements Block, ASTBlock {
     if (astNode.getElementType() == BLOCK_LAMBDA_BODY) {
       return new ChildAttributes(Indent.getNormalIndent(), null);
     }
-    if (TokenSets.BLOCK_SET.contains(astNode.getElementType()) || GroovyElementTypes.SWITCH_STATEMENT.equals(astNode.getElementType())) {
+    if (TokenSets.BLOCK_SET.contains(astNode.getElementType()) || GroovyElementTypes.SWITCH_STATEMENT.equals(astNode.getElementType()) || GroovyElementTypes.SWITCH_EXPRESSION.equals(astNode.getElementType())) {
       return new ChildAttributes(Indent.getNormalIndent(), null);
     }
     if (GroovyElementTypes.CASE_SECTION.equals(astNode.getElementType())) {
@@ -186,7 +181,7 @@ public class GroovyBlock implements Block, ASTBlock {
    * @param node Tree node
    * @return true if node is incomplete
    */
-  public static boolean isIncomplete(@NotNull final ASTNode node) {
+  public static boolean isIncomplete(final @NotNull ASTNode node) {
     if (node.getElementType() instanceof ILazyParseableElementType) return false;
     ASTNode lastChild = node.getLastChildNode();
     while (lastChild != null &&

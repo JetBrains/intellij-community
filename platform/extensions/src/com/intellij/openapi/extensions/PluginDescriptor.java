@@ -1,28 +1,48 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.extensions;
 
 import com.intellij.openapi.util.NlsSafe;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.ApiStatus.Internal;
+import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.nio.file.Path;
 import java.util.Date;
 
+@ApiStatus.NonExtendable
 public interface PluginDescriptor {
+  @NotNull PluginId getPluginId();
+
   /**
-   * @return plugin id or null if the descriptor is the nested (optional dependency) descriptor
+   * @return a configured classloader instance for this plugin (or content module, hereinafter - module)
+   *  that can load classes of module's dependencies and module's own classes;
+   *  {@code null} if the module is not loaded in the application.
    */
-  PluginId getPluginId();
+  @Nullable ClassLoader getPluginClassLoader();
 
-  ClassLoader getPluginClassLoader();
+  /**
+   * @deprecated use {@link #getPluginClassLoader} instead
+   */
+  @ApiStatus.Experimental
+  @Deprecated
+  default @NotNull ClassLoader getClassLoader() {
+    ClassLoader classLoader = getPluginClassLoader();
+    return classLoader == null ? getClass().getClassLoader() : classLoader;
+  }
 
+  /**
+   * @return true if the installed plugin version is a part of IDE distribution, false - if the plugin received an update or installed by user
+   *
+   * @see com.intellij.ide.plugins.PluginManagerCore#isUpdatedBundledPlugin
+   */
   default boolean isBundled() {
     return false;
   }
 
-  /**
-   * @deprecated Use {@link #getPluginPath()}
-   */
+  /** @deprecated Use {@link #getPluginPath()} */
   @Deprecated
   default File getPath() {
     Path path = getPluginPath();
@@ -31,63 +51,43 @@ public interface PluginDescriptor {
 
   Path getPluginPath();
 
-  @Nullable
-  @Nls String getDescription();
+  @Nullable @Nls String getDescription();
 
-  String getChangeNotes();
+  @Nullable String getChangeNotes();
 
   @NlsSafe String getName();
 
-  @Nullable
-  String getProductCode();
+  @Nullable String getProductCode();
 
-  @Nullable
-  Date getReleaseDate();
+  @Nullable Date getReleaseDate();
 
   int getReleaseVersion();
 
   boolean isLicenseOptional();
 
-  /**
-   * @deprecated Do not use.
-   */
-  @Deprecated
-  default PluginId @NotNull [] getDependentPluginIds() {
-    return PluginId.EMPTY_ARRAY;
-  }
+  @Nullable @NlsSafe String getVendor();
 
-  /**
-   * @deprecated Do not use.
-   */
-  @Deprecated
-  PluginId @NotNull [] getOptionalDependentPluginIds();
-
-  @NlsSafe String getVendor();
-
-  @NlsSafe String getVersion();
-
-  String getResourceBundleBaseName();
-
-  @NlsSafe String getCategory();
-
-  String getVendorEmail();
-
-  String getVendorUrl();
-
-  String getUrl();
-
-  /**
-   * @deprecated doesn't make sense for installed plugins; use PluginNode#getDownloads
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
-  default String getDownloads() {
+  default @Nullable @NlsSafe String getOrganization() {
     return null;
   }
 
-  @NlsSafe String getSinceBuild();
+  @NlsSafe String getVersion();
 
-  @NlsSafe String getUntilBuild();
+  @Nullable String getResourceBundleBaseName();
+
+  @Nullable @NlsSafe String getCategory();
+
+  default @Nullable @Nls String getDisplayCategory() { return getCategory(); }
+
+  @Nullable String getVendorEmail();
+
+  @Nullable String getVendorUrl();
+
+  @Nullable String getUrl();
+
+  @Nullable @NlsSafe String getSinceBuild();
+
+  @Nullable @NlsSafe String getUntilBuild();
 
   default boolean allowBundledUpdate() {
     return false;
@@ -96,6 +96,7 @@ public interface PluginDescriptor {
   /**
    * If true, this plugin is hidden from the list of installed plugins in Settings | Plugins.
    */
+  @Internal
   default boolean isImplementationDetail() {
     return false;
   }
@@ -105,7 +106,26 @@ public interface PluginDescriptor {
    */
   default boolean isRequireRestart() { return false; }
 
+  /**
+   * @deprecated This method does not reflect the enabled/disabled state of the plugin (as the tick box in the settings shows).
+   * Its effective semantics in the current implementation are rather about loaded state,
+   * but it cannot be completely trusted too due to public mutability.
+   * <br>
+   * Note that if a plugin is marked as enabled, it does not mean it is loaded, and vice versa.
+   * <br>
+   * Instead, use {@link com.intellij.ide.plugins.PluginManagerCore#isLoaded(PluginId)},
+   * {@link com.intellij.ide.plugins.PluginManagerCore#isDisabled(PluginId)}.
+   */
+  @Deprecated
   boolean isEnabled();
 
+  /**
+   * @deprecated for removal. This method has no immediate effect and is, in fact, an implementation detail of plugin loading.
+   * <br>
+   * Instead, use {@link com.intellij.ide.plugins.PluginManagerCore#disablePlugin(PluginId)} and
+   * {@link com.intellij.ide.plugins.PluginManagerCore#enablePlugin(PluginId)}.
+   * Also, see {@link com.intellij.ide.plugins.PluginEnabler}.
+   */
+  @Deprecated
   void setEnabled(boolean enabled);
 }

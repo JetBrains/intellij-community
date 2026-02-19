@@ -1,0 +1,36 @@
+<idea-plugin allow-bundled-update="true">
+  <name>Gradle for Java</name>
+  <!-- "org.jetbrains.plugins.gradle" id has been reused to avoid dependent plugins breakage-->
+  <id>org.jetbrains.plugins.gradle</id>
+  <vendor>JetBrains</vendor>
+  <category>Build Tools</category>
+  <description>
+    Provides Java Gradle projects import, run configuration and profiler integrations.
+  </description>
+
+  <dependencies>
+    <plugin id="org.intellij.groovy"/>
+    <module name="intellij.java.indexing"/>
+    <module name="intellij.java.ui"/>
+    <module name="intellij.platform.jps.build"/>
+  </dependencies>
+
+  <module value="com.intellij.modules.gradle.java"/>
+  <module value="org.jetbrains.plugins.gradle.java"/>
+
+  <content namespace="jetbrains">
+    <module name="intellij.gradle.java" loading="embedded"/>
+    <module name="intellij.gradle.profiler"/>
+    <module name="intellij.gradle.java.maven"/>
+    <module name="intellij.gradle.analysis"/>
+    <module name="intellij.gradle.dependencyUpdater"/>
+    <module name="intellij.gradle.java.performance"/>
+    <module name="intellij.gradle.java.toml"/>
+    <module name="intellij.gradle.java.groovy"/>
+    <module name="intellij.gradle.java.groovy.toml"/>
+    <module name="intellij.gradle.java.groovy.ml"/>
+    <module name="intellij.gradle.java.coverage"/>
+    <module name="intellij.gradle.java.properties"/>
+  </content>
+
+</idea-plugin>

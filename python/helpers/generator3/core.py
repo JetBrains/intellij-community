@@ -19,7 +19,6 @@ if TYPE_CHECKING:
     GenerationStatusId = NewType('GenerationStatusId', str)
     GeneratorVersion = Tuple[int, int]
 
-# TODO: Move all CLR-specific functions to clr_tools
 quiet = False
 _parent_dir = os.path.dirname(os.path.abspath(__file__))
 
@@ -106,16 +105,23 @@ def is_tensorflow_contrib_ops_module(qname):
     return TENSORFLOW_CONTRIB_OPS_MODULE_PATTERN.match(qname)
 
 
+def is_debugpy_module(qname):
+    # Debugpy modules should not be processed
+    return DEBUGPY_PATTERN.match(qname)
+
+
 def is_skipped_module(path, f, qname):
     return (is_mac_skipped_module(path, f) or
             is_posix_skipped_module(path, f[:f.rindex('.')]) or
             'pynestkernel' in f or
-            is_tensorflow_contrib_ops_module(qname))
+            is_tensorflow_contrib_ops_module(qname) or
+            is_debugpy_module(qname))
 
 
 def is_module(d, root):
     return (os.path.exists(os.path.join(root, d, "__init__.py")) or
             os.path.exists(os.path.join(root, d, "__init__.pyc")) or
+            os.path.exists(os.path.join(root, d, "__init__.pyi")) or
             os.path.exists(os.path.join(root, d, "__init__.pyo")) or
             is_valid_implicit_namespace_package_name(d))
 
@@ -145,18 +151,15 @@ def module_hash(mod_qname, mod_path):
     if mod_path:
         hash_ = physical_module_hash(mod_path)
     else:
-        hash_ = builtin_module_hash(mod_qname)
+        hash_ = builtin_module_hash()
     # Use shorter hashes in test data as it might affect developers on Windows
     if is_test_mode():
         return hash_[:10]
     return hash_
 
 
-def builtin_module_hash(mod_qname):
-    # Hash the content of interpreter executable, i.e. it will be the same for all built-in modules.
-    # Also, it's the same for a virtualenv interpreter and its base.
-    with fopen(sys.executable, 'rb') as f:
-        return sha256_digest(f)
+def builtin_module_hash():
+    return sha256_digest(sys.version.encode(encoding='utf-8'))
 
 
 def physical_module_hash(mod_path):
@@ -224,7 +227,7 @@ def skeleton_status(base_dir, mod_qname, mod_path, sdk_skeleton_state=None):
         used_version = version_to_tuple(used_version)
 
     used_bin_mtime = skeleton_meta.get('bin_mtime')
-    # state.json is normally passed for remote skeletons only. Since we don't have neither cache,
+    # state.json is normally passed for remote skeletons only. Since we have neither cache,
     # nor physical sdk skeletons there, we have to rely on binary modification time to detect
     # outdated skeletons.
     if mod_path and used_bin_mtime is not None and used_bin_mtime < file_modification_timestamp(mod_path):
@@ -369,7 +372,7 @@ def get_module_origin(mod_path, mod_qname):
         return None
 
     if is_test_mode():
-        return get_relative_path_by_qname(mod_path, mod_qname)
+        return get_portable_test_module_path(mod_path, mod_qname)
     return mod_path
 
 
@@ -471,8 +474,6 @@ class SkeletonGenerator(object):
         if not self.roots:
             return []
         # TODO Move to future InterpreterHandler
-        if IS_JAVA:  # jython can't have binary modules
-            return []
         paths = sorted_no_case(self.roots)
         for path in paths:
             for root, files in walk_python_path(path):
@@ -516,7 +517,7 @@ class SkeletonGenerator(object):
         status = self.reuse_or_generate_skeleton(mod_name, mod_path, sdk_skeleton_state)
         control_message('generation_result', {
             'module_name': mod_name,
-            'module_origin': get_module_origin(mod_path, mod_name),
+            'module_origin': get_module_origin(mod_path, mod_name).replace('%', '%%'),
             'generation_status': status
         })
         if mod_path:
@@ -578,10 +579,30 @@ class SkeletonGenerator(object):
             msg = "Failed to process %r while %s: %s"
             args = mod_name, CURRENT_ACTION, str(value)
             report(msg, *args)
-            if sys.platform == 'cli':
-                import traceback
-                traceback.print_exc(file=sys.stderr)
             raise
+
+
+@contextmanager
+def imported_names_collected():
+    imported_names = set()
+
+    class MyFinder(object):
+        # noinspection PyMethodMayBeStatic
+        def find_module(self, fullname, path=None):
+            imported_names.add(fullname)
+            return None
+
+        # noinspection PyMethodMayBeStatic
+        def find_spec(self, fullname, path, target=None):
+            imported_names.add(fullname)
+            return None
+
+    my_finder = MyFinder()
+    sys.meta_path.insert(0, my_finder)
+    try:
+        yield imported_names
+    finally:
+        sys.meta_path.remove(my_finder)
 
 
 def generate_skeleton(name, mod_file_name, mod_cache_dir, output_dir):
@@ -594,32 +615,12 @@ def generate_skeleton(name, mod_file_name, mod_cache_dir, output_dir):
         delete(mod_cache_dir)
     mkdir(mod_cache_dir)
 
-    old_modules = list(sys.modules.keys())
-    imported_module_names = set()
-
-    class MyFinder:
-        # noinspection PyMethodMayBeStatic
-        def find_module(self, fullname, path=None):
-            if fullname != name:
-                imported_module_names.add(fullname)
-            return None
-
-    my_finder = None
-    if hasattr(sys, 'meta_path'):
-        my_finder = MyFinder()
-        sys.meta_path.insert(0, my_finder)
-    else:
-        imported_module_names = None
-
     create_failed_version_stamp(mod_cache_dir, name)
 
     action("importing")
-    __import__(name)  # sys.modules will fill up with what we want
-
-    if my_finder:
-        sys.meta_path.remove(my_finder)
-    if imported_module_names is None:
-        imported_module_names = set(sys.modules.keys()) - set(old_modules)
+    old_modules = list(sys.modules.keys())
+    with imported_names_collected() as imported_module_names:
+        __import__(name)  # sys.modules will fill up with what we want
 
     redo_module(name, mod_file_name, mod_cache_dir, output_dir)
     # The C library may have called Py_InitModule() multiple times to define several modules (gtk._gtk and gtk.gdk);
@@ -629,7 +630,14 @@ def generate_skeleton(name, mod_file_name, mod_cache_dir, output_dir):
     if redo_imports:
         initial_module_set = set(sys.modules)
         for m in list(sys.modules):
-            if m.startswith("pycharm_generator_utils"): continue
+            if not m.startswith(name):
+                continue
+            # Python 2 puts dummy None entries in sys.modules for imports of
+            # top-level modules made from inside packages unless absolute
+            # imports are explicitly enabled.
+            # See https://www.python.org/dev/peps/pep-0328/#relative-imports-and-indirection-entries-in-sys-modules
+            if not sys.modules[m] or m.startswith("generator3"):
+                continue
             action("looking at possible submodule %r", m)
             if m == name or m in old_modules or m in sys.builtin_module_names:
                 continue
@@ -656,18 +664,6 @@ def redo_module(module_name, module_file_name, cache_dir, output_dir):
     # sys.modules
     mod = sys.modules.get(module_name)
     mod_path = module_name.split('.')
-    if not mod and sys.platform == 'cli':
-        # "import System.Collections" in IronPython 2.7 doesn't actually put System.Collections in sys.modules
-        # instead, sys.modules['System'] get set to a Microsoft.Scripting.Actions.NamespaceTracker and Collections can be
-        # accessed as its attribute
-        mod = sys.modules[mod_path[0]]
-        for component in mod_path[1:]:
-            try:
-                mod = getattr(mod, component)
-            except AttributeError:
-                mod = None
-                report("Failed to find CLR module " + module_name)
-                break
     if mod:
         action("restoring")
         from generator3.module_redeclarator import ModuleRedeclarator

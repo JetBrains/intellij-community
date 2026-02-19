@@ -1,0 +1,70 @@
+### auto-generated section `build intellij.platform.core.impl` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "core-impl_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "core-impl",
+  module_name = "intellij.platform.core.impl",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":core-impl_resources"],
+  kotlinc_opts = "@community//:k8",
+  deps = [
+    "//platform/core-api:core",
+    "@lib//:kotlin-stdlib",
+    "//libraries/kotlinx/coroutines/core",
+    "//platform/util/jdom",
+    "//libraries/fastutil",
+    "//platform/util-class-loader:util-classLoader",
+    "//libraries/aalto-xml",
+    "//platform/util/xmlDom",
+    "//libraries/automaton",
+    "//libraries/guava",
+    "//platform/util/diff",
+    "//platform/diagnostic",
+    "//platform/util",
+    "//platform/diagnostic/telemetry",
+    "@lib//:opentelemetry",
+    "@lib//:opentelemetry-semconv",
+    "//platform/util/coroutines",
+    "//platform/pluginSystem/parser/impl",
+    "//platform/syntax/syntax-api:syntax",
+    "//platform/eel",
+  ],
+  exports = ["@lib//:kotlin-stdlib"]
+)
+
+jvm_library(
+  name = "core-impl_test_lib",
+  module_name = "intellij.platform.core.impl",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  kotlinc_opts = "@community//:k8",
+  exports = ["@lib//:kotlin-stdlib"],
+  runtime_deps = [
+    ":core-impl",
+    "//platform/core-api:core_test_lib",
+    "//libraries/kotlinx/coroutines/core:core_test_lib",
+    "//platform/util/jdom:jdom_test_lib",
+    "//libraries/fastutil:fastutil_test_lib",
+    "//platform/util-class-loader:util-classLoader_test_lib",
+    "//libraries/aalto-xml:aalto-xml_test_lib",
+    "//platform/util/xmlDom:xmlDom_test_lib",
+    "//libraries/automaton:automaton_test_lib",
+    "//libraries/guava:guava_test_lib",
+    "//platform/util/diff:diff_test_lib",
+    "//platform/diagnostic:diagnostic_test_lib",
+    "//platform/util:util_test_lib",
+    "//platform/diagnostic/telemetry:telemetry_test_lib",
+    "//platform/util/coroutines:coroutines_test_lib",
+    "//platform/pluginSystem/parser/impl:impl_test_lib",
+    "//platform/syntax/syntax-api:syntax_test_lib",
+    "//platform/eel:eel_test_lib",
+  ]
+)
+### auto-generated section `build intellij.platform.core.impl` end

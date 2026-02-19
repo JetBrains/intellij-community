@@ -3,12 +3,8 @@ package com.intellij.uiDesigner.actions;
 
 import com.intellij.uiDesigner.designSurface.GuiEditor;
 
-import java.awt.*;
+import java.awt.Point;
 
-/**
- * @author Anton Katilin
- * @author Vladimir Kondratyev
- */
 public final class MoveSelectionToRightAction extends AbstractMoveSelectionAction{
   public MoveSelectionToRightAction(final GuiEditor editor, final boolean extend, final boolean moveToLast) {
     super(editor, extend, moveToLast);

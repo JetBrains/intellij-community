@@ -1,0 +1,32 @@
+<idea-plugin package="com.intellij.devkit.workspaceModel.k1">
+
+  <dependencies>
+    <plugin id="com.intellij.modules.kotlin.k1"/>
+    <module name="intellij.devkit.workspaceModel"/>
+  </dependencies>
+
+  <resource-bundle>messages.DevKitWorkspaceModelBundle</resource-bundle>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <applicationService serviceInterface="com.intellij.devkit.workspaceModel.metaModel.WorkspaceMetaModelProvider"
+      serviceImplementation="com.intellij.devkit.workspaceModel.k1.metaModel.WorkspaceMetaModelProviderImpl"
+    />
+    <localInspection language="kotlin"
+                     shortName="WorkspaceImplAbsent"
+                     projectType="INTELLIJ_PLUGIN"
+                     groupBundle="messages.DevKitWorkspaceModelBundle"
+                     groupPathKey="inspections.group.path" groupKey="inspections.group.workspace.model"
+                     runForWholeFile="true"
+                     enabledByDefault="true" level="WARNING"
+                     implementationClass="com.intellij.devkit.workspaceModel.k1.inspections.WorkspaceCodeAbsentInspection"
+                     key="inspection.workspace.impl.generation.display.name"/>
+    <localInspection language="kotlin"
+                     projectType="INTELLIJ_PLUGIN"
+                     groupBundle="messages.DevKitWorkspaceModelBundle"
+                     groupPathKey="inspections.group.path" groupKey="inspections.group.workspace.model"
+                     runForWholeFile="true"
+                     enabledByDefault="true" level="WARNING"
+                     implementationClass="com.intellij.devkit.workspaceModel.k1.inspections.WorkspaceImplObsoleteInspection"
+                     key="inspection.workspace.obsolete.model.display.name"/>
+  </extensions>
+</idea-plugin>

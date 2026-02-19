@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.hierarchy.treestructures;
 
 import com.intellij.ide.hierarchy.HierarchyNodeDescriptor;
@@ -13,18 +13,16 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class PySuperTypesHierarchyTreeStructure extends HierarchyTreeStructure {
-  public PySuperTypesHierarchyTreeStructure(@NotNull final PyClass cl) {
+  public PySuperTypesHierarchyTreeStructure(final @NotNull PyClass cl) {
     super(cl.getProject(), new PyHierarchyNodeDescriptor(null, cl, true));
   }
 
   @Override
   protected Object @NotNull [] buildChildren(@NotNull HierarchyNodeDescriptor descriptor) {
     final List<PyHierarchyNodeDescriptor> res = new ArrayList<>();
-    if (descriptor instanceof PyHierarchyNodeDescriptor) {
-      final PyHierarchyNodeDescriptor pyDescriptor = (PyHierarchyNodeDescriptor)descriptor;
+    if (descriptor instanceof PyHierarchyNodeDescriptor pyDescriptor) {
       final PsiElement element = pyDescriptor.getPsiElement();
-      if (element instanceof PyClass) {
-        final PyClass cls = (PyClass)element;
+      if (element instanceof PyClass cls) {
         final TypeEvalContext context = TypeEvalContext.codeAnalysis(cls.getProject(), cls.getContainingFile());
         for (PyClass superClass : cls.getSuperClasses(context)) {
           res.add(new PyHierarchyNodeDescriptor(descriptor, superClass, false));

@@ -1,4 +1,4 @@
-// "Replace with setter" "true"
+// "Replace with setter" "true-preview"
 class Test {
   private int i;
 

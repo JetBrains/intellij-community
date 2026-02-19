@@ -1,18 +1,20 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInsight.template;
 
 import com.intellij.codeInsight.lookup.PresentableLookupValue;
 import com.intellij.codeInsight.template.impl.Variable;
-import com.intellij.util.PairProcessor;
+import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.NlsSafe;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Map;
+import java.util.List;
 
 /**
  * Used to build and run a live template.
+ *
  * @see TemplateManager
  */
 public abstract class Template implements PresentableLookupValue {
@@ -21,44 +23,48 @@ public abstract class Template implements PresentableLookupValue {
     USE_STATIC_IMPORT_IF_POSSIBLE
   }
 
-  @NonNls public static final String END = "END";
-  @NonNls public static final String SELECTION = "SELECTION";
+  public static final @NonNls String END = "END";
+  public static final @NonNls String SELECTION = "SELECTION";
 
   private boolean myUseStaticImport;
+  private boolean scrollToTemplate = true;
 
   public abstract void addTextSegment(@NotNull String text);
+
   public abstract void addVariableSegment(@NonNls @NotNull String name);
 
-  @NotNull
-  public Variable addVariable(@NonNls @NotNull String name, @NotNull Expression defaultValueExpression, boolean isAlwaysStopAt) {
+  public @NotNull Variable addVariable(@NonNls @NotNull String name, @NotNull Expression defaultValueExpression, boolean isAlwaysStopAt) {
     return addVariable(name, defaultValueExpression, defaultValueExpression, isAlwaysStopAt);
   }
-  @NotNull
-  public abstract Variable addVariable(@NotNull Expression expression, boolean isAlwaysStopAt);
 
-  @NotNull
-  public Variable addVariable(@NonNls @NotNull String name, Expression expression, Expression defaultValueExpression, boolean isAlwaysStopAt) {
+  public abstract List<Variable> getVariables();
+
+  public abstract @NotNull Variable addVariable(@NotNull Expression expression, boolean isAlwaysStopAt);
+
+  public @NotNull Variable addVariable(@NonNls @NotNull String name,
+                                       Expression expression,
+                                       Expression defaultValueExpression,
+                                       boolean isAlwaysStopAt) {
     return addVariable(name, expression, defaultValueExpression, isAlwaysStopAt, false);
   }
 
-  @NotNull
-  public abstract Variable addVariable(@NonNls @NotNull String name,
-                                       Expression expression,
-                                       Expression defaultValueExpression,
-                                       boolean isAlwaysStopAt,
-                                       boolean skipOnStart);
-  @NotNull
-  public abstract Variable addVariable(@NonNls @NotNull String name, @NonNls String expression, @NonNls String defaultValueExpression, boolean isAlwaysStopAt);
+  public abstract @NotNull Variable addVariable(@NonNls @NotNull String name,
+                                                Expression expression,
+                                                Expression defaultValueExpression,
+                                                boolean isAlwaysStopAt,
+                                                boolean skipOnStart);
+  public abstract @NotNull Variable addVariable(@NonNls @NotNull String name, @NonNls String expression, @NonNls String defaultValueExpression, boolean isAlwaysStopAt);
+
+  public abstract void addVariable(@NotNull Variable variable);
 
   public abstract void addEndVariable();
   public abstract void addSelectionStartVariable();
   public abstract void addSelectionEndVariable();
 
-  public abstract String getId();
-  public abstract String getKey();
+  public abstract @NonNls String getId();
+  public abstract @NlsSafe String getKey();
 
-  @Nullable
-  public abstract String getDescription();
+  public abstract @Nullable @NlsContexts.DetailedDescription String getDescription();
 
   public abstract boolean isToReformat();
 
@@ -72,14 +78,13 @@ public abstract class Template implements PresentableLookupValue {
    * 
    * E.g. they might be useful for inplace rename.
    * 
-   * @see com.intellij.codeInsight.template.impl.TemplateState#start(TemplateImpl, PairProcessor, Map) 
+   * @see com.intellij.codeInsight.template.impl.TemplateState#start
    */
   public abstract void setInline(boolean isInline);
 
   public abstract int getSegmentsCount();
 
-  @NotNull
-  public abstract String getSegmentName( int segmentIndex);
+  public abstract @NotNull String getSegmentName(int segmentIndex);
 
   public abstract int getSegmentOffset(int segmentIndex);
 
@@ -87,15 +92,13 @@ public abstract class Template implements PresentableLookupValue {
    * @return template text as it appears in Live Template settings, including variables surrounded with '$'
    * @see #getTemplateText()
    */
-  @NotNull
-  public abstract String getString();
+  public abstract @NotNull @NlsSafe String getString();
 
   /**
    * @return template text without any variables and with '$' character escapes removed.
    * @see #getString()
    */
-  @NotNull
-  public abstract String getTemplateText();
+  public abstract @NotNull @NlsSafe String getTemplateText();
 
   public abstract boolean isToShortenLongNames();
   public abstract void setToShortenLongNames(boolean toShortenLongNames);
@@ -113,7 +116,21 @@ public abstract class Template implements PresentableLookupValue {
   }
 
   @Override
-  public String getPresentation() {
+  public @NlsSafe String getPresentation() {
     return getKey();
+  }
+
+  /**
+   * @return if editor should scroll to template, true by default
+   */
+  public boolean isScrollToTemplate() {
+    return scrollToTemplate;
+  }
+
+  /**
+   * override scroll template policy
+   */
+  public void setScrollToTemplate(boolean scrollToTemplate) {
+    this.scrollToTemplate = scrollToTemplate;
   }
 }

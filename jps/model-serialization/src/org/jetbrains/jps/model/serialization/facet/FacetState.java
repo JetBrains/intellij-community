@@ -8,6 +8,8 @@ import com.intellij.util.xmlb.annotations.Property;
 import com.intellij.util.xmlb.annotations.Tag;
 import com.intellij.util.xmlb.annotations.XCollection;
 import org.jdom.Element;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.serialization.SerializationConstants;
 
 import java.util.ArrayList;
@@ -19,8 +21,10 @@ public final class FacetState {
   private String myFacetType;
   private String myName;
   private String myExternalSystemId;
+  private String myExternalSystemIdInInternalStorage;
   private Element myConfiguration;
 
+  @ApiStatus.Internal
   @Property(surroundWithTag = false)
   @XCollection
   public final List<FacetState> subFacets = new ArrayList<>();
@@ -36,13 +40,18 @@ public final class FacetState {
   }
 
   @Tag(JpsFacetSerializer.CONFIGURATION_TAG)
-  public Element getConfiguration() {
+  public @Nullable Element getConfiguration() {
     return myConfiguration;
   }
 
-  @Attribute(value = SerializationConstants.EXTERNAL_SYSTEM_ID_ATTRIBUTE)
+  @Attribute(SerializationConstants.EXTERNAL_SYSTEM_ID_ATTRIBUTE)
   public String getExternalSystemId() {
     return myExternalSystemId;
+  }
+
+  @Attribute(SerializationConstants.EXTERNAL_SYSTEM_ID_IN_INTERNAL_STORAGE_ATTRIBUTE)
+  public String getExternalSystemIdInInternalStorage() {
+    return myExternalSystemIdInInternalStorage;
   }
 
   public void setConfiguration(final Element configuration) {
@@ -59,6 +68,10 @@ public final class FacetState {
 
   public void setExternalSystemId(String externalSystemId) {
     myExternalSystemId = externalSystemId;
+  }
+
+  public void setExternalSystemIdInInternalStorage(String externalSystemIdInInternalStorage) {
+    myExternalSystemIdInInternalStorage = externalSystemIdInInternalStorage;
   }
 
   @Override

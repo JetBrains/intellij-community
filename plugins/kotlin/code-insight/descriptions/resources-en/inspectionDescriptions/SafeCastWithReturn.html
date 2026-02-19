@@ -1,0 +1,32 @@
+<html>
+<body>
+Reports safe cast with <code>return</code> that can be replaced with <code>if</code> type check.
+<p>Using corresponding functions simplifies your code.</p>
+<p>The quick-fix replaces the safe cast with <code>if</code> type check.</p>
+<p><b>Example:</b></p>
+<pre><code>
+  fun test(x: Any) {
+      x as? String ?: return
+  }
+</code></pre>
+<p>After the quick-fix is applied:</p>
+<pre><code>
+  fun test(x: Any) {
+      if (x !is String) return
+  }
+</code></pre>
+<p>Analogously, it detects unsafe casts in form </p>
+<pre><code>
+    fun foo(o: Any) {
+    o as String ?: return
+}
+</code></pre>
+<p>and transforms into a type check:</p>
+<pre><code>
+    fun foo(o: Any) {
+    if (o !is String) return
+}
+</code></pre>
+<!-- tooltip end -->
+</body>
+</html>

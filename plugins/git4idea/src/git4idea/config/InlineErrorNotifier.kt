@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.config
 
 import com.intellij.ide.plugins.newui.TwoLineProgressIndicator
@@ -8,24 +8,23 @@ import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
-import com.intellij.openapi.progress.util.ProgressWindow.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS
-import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.text.HtmlBuilder
 import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.labels.LinkLabel
-import com.intellij.util.Alarm.ThreadToUse.SWING_THREAD
-import com.intellij.util.SingleAlarm
+import com.intellij.ui.progress.ProgressUIUtil
+import com.intellij.util.concurrency.EdtScheduler
 import com.intellij.util.concurrency.annotations.RequiresEdt
+import com.intellij.util.ui.NamedColorUtil
 import com.intellij.util.ui.components.BorderLayoutPanel
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.Nls.Capitalization.Sentence
 import org.jetbrains.annotations.Nls.Capitalization.Title
 import org.jetbrains.annotations.NotNull
-import javax.swing.JComponent
 import javax.swing.JPanel
 import javax.swing.SwingConstants
+import kotlin.time.Duration.Companion.milliseconds
 
 internal interface InlineComponent {
   fun showProgress(@Nls(capitalization = Title) text: String): ProgressIndicator
@@ -50,8 +49,14 @@ internal open class InlineErrorNotifier(private val inlineComponent: InlineCompo
           fixOption.fix()
         }
       }
-      val message = if (description == null) text else HtmlBuilder().append(text).br().append(description).wrapWithHtmlBody().toString()
-      inlineComponent.showError(message, linkLabel)
+
+      val message = HtmlBuilder().appendRaw(text)
+      if (description != null) {
+        message.br().appendRaw(description)
+      }
+      message.wrapWithHtmlBody()
+
+      inlineComponent.showError(message.toString(), linkLabel)
     }
   }
 
@@ -99,7 +104,7 @@ internal open class InlineErrorNotifier(private val inlineComponent: InlineCompo
   }
 }
 
-class GitExecutableInlineComponent(private val container: BorderLayoutPanel,
+internal class GitExecutableInlineComponent(private val container: BorderLayoutPanel,
                                    private val modalityState: ModalityState,
                                    private val panelToValidate: JPanel?) : InlineComponent {
 
@@ -113,12 +118,12 @@ class GitExecutableInlineComponent(private val container: BorderLayoutPanel,
     }
 
     progressShown = true
-    SingleAlarm(Runnable {
+    EdtScheduler.getInstance().schedule(ProgressUIUtil.DEFAULT_PROGRESS_DELAY_MILLIS.milliseconds, modalityState) {
       if (progressShown) {
         container.addToLeft(pi.component)
         panelToValidate?.validate()
       }
-    }, delay = DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS, threadToUse = SWING_THREAD).request(modalityState)
+    }
 
     return pi
   }
@@ -127,9 +132,12 @@ class GitExecutableInlineComponent(private val container: BorderLayoutPanel,
     container.removeAll()
     progressShown = false
 
-    val label = multilineLabel(errorText).apply {
-      foreground = DialogWrapper.ERROR_FOREGROUND_COLOR
-    }
+    val label = JBLabel(errorText)
+      .setCopyable(true)
+      .setAllowAutoWrapping(true)
+      .apply {
+        foreground = NamedColorUtil.getErrorForeground()
+      }
 
     container.addToCenter(label)
     if (link != null) {
@@ -143,7 +151,10 @@ class GitExecutableInlineComponent(private val container: BorderLayoutPanel,
     container.removeAll()
     progressShown = false
 
-    container.addToLeft(JBLabel(text))
+    val label = JBLabel(text)
+      .setCopyable(true)
+
+    container.addToLeft(label)
     panelToValidate?.validate()
   }
 
@@ -152,10 +163,5 @@ class GitExecutableInlineComponent(private val container: BorderLayoutPanel,
     progressShown = false
 
     panelToValidate?.validate()
-  }
-
-  private fun multilineLabel(text: @NlsContexts.Label String): JComponent = JBLabel(text).apply {
-    setAllowAutoWrapping(true)
-    setCopyable(true)
   }
 }

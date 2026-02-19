@@ -1,12 +1,13 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.cache;
 
+import com.intellij.java.syntax.element.JavaDocSyntaxTokenType;
+import com.intellij.java.syntax.lexer.JavaDocLexer;
 import com.intellij.lang.LighterAST;
 import com.intellij.lang.LighterASTNode;
 import com.intellij.lang.LighterASTTokenNode;
-import com.intellij.lang.java.lexer.JavaDocLexer;
+import com.intellij.platform.syntax.SyntaxElementType;
 import com.intellij.pom.java.LanguageLevel;
-import com.intellij.psi.JavaDocTokenType;
 import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.PsiModifier;
 import com.intellij.psi.impl.java.stubs.JavaStubElementTypes;
@@ -16,7 +17,6 @@ import com.intellij.psi.impl.java.stubs.PsiModifierListStub;
 import com.intellij.psi.impl.source.tree.JavaElementType;
 import com.intellij.psi.impl.source.tree.LightTreeUtil;
 import com.intellij.psi.stubs.StubElement;
-import com.intellij.psi.tree.IElementType;
 import com.intellij.util.CharTable;
 import org.jetbrains.annotations.NotNull;
 
@@ -25,6 +25,13 @@ public final class RecordUtil {
   private static final String DEPRECATED_TAG = "@deprecated";
 
   private RecordUtil() { }
+
+  public static boolean hasValueModifier(@NotNull LighterAST tree, @NotNull LighterASTNode modList) {
+    for (LighterASTNode child : tree.getChildren(modList)) {
+      if (child.getTokenType() == JavaTokenType.VALUE_KEYWORD) return true;
+    }
+    return false;
+  }
 
   public static boolean isDeprecatedByAnnotation(@NotNull LighterAST tree, @NotNull LighterASTNode modList) {
     for (final LighterASTNode child : tree.getChildren(modList)) {
@@ -48,9 +55,9 @@ public final class RecordUtil {
     if (text.contains(DEPRECATED_TAG)) {
       JavaDocLexer lexer = new JavaDocLexer(LanguageLevel.HIGHEST);
       lexer.start(text);
-      IElementType token;
+      SyntaxElementType token;
       while ((token = lexer.getTokenType()) != null) {
-        if (token == JavaDocTokenType.DOC_TAG_NAME && DEPRECATED_TAG.equals(lexer.getTokenText())) {
+        if (token == JavaDocSyntaxTokenType.DOC_TAG_NAME && DEPRECATED_TAG.equals(lexer.getTokenText())) {
           return true;
         }
         lexer.advance();
@@ -68,14 +75,13 @@ public final class RecordUtil {
     return packed;
   }
 
-  @NotNull
-  public static String intern(@NotNull CharTable table, @NotNull LighterASTNode node) {
+  public static @NotNull String intern(@NotNull CharTable table, @NotNull LighterASTNode node) {
     assert node instanceof LighterASTTokenNode : node;
     return table.intern(((LighterASTTokenNode)node).getText()).toString();
   }
 
   public static boolean isStaticNonPrivateMember(@NotNull StubElement<?> stub) {
-    PsiModifierListStub type = stub.findChildStubByType(JavaStubElementTypes.MODIFIER_LIST);
+    PsiModifierListStub type = (PsiModifierListStub)stub.findChildStubByElementType(JavaStubElementTypes.MODIFIER_LIST);
     if (type == null) {
       return false;
     }
@@ -90,7 +96,7 @@ public final class RecordUtil {
     }
 
     return stub instanceof PsiFieldStub &&
-           stub.getStubType() == JavaElementType.ENUM_CONSTANT ||
-           stub.getParentStub() instanceof PsiClassStub && ((PsiClassStub)stub.getParentStub()).isInterface();
+           stub.getElementType() == JavaElementType.ENUM_CONSTANT ||
+           stub.getParentStub() instanceof PsiClassStub && ((PsiClassStub<?>)stub.getParentStub()).isInterface();
   }
 }

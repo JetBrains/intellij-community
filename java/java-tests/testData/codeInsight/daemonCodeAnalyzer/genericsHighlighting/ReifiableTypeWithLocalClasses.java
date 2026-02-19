@@ -2,7 +2,7 @@ class B<T> {
 
   Object[] foo(Object obj) {
     class C {}
-    return <error descr="Generic array creation">new C[0]</error>;
+    return <error descr="Generic array creation not allowed">new C[0]</error>;
   }
 
 
@@ -27,7 +27,7 @@ class B<T> {
     I<Object> i = new I<Object>() {
       class InsideAnno {}
       {
-        InsideAnno[] array = <error descr="Generic array creation">new InsideAnno[1]</error>;
+        InsideAnno[] array = <error descr="Generic array creation not allowed">new InsideAnno[1]</error>;
       }
     };
   }
@@ -48,7 +48,7 @@ class B<T> {
         class O {}
 
         {
-          O[] array = <error descr="Generic array creation">new O[1]</error>;
+          O[] array = <error descr="Generic array creation not allowed">new O[1]</error>;
         }
       }
     };

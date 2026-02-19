@@ -1,11 +1,10 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions;
 
 import com.siyeh.HardcodedMethodConstants;
 import org.jetbrains.annotations.NonNls;
 
-@NonNls
-public final class HardcodedGroovyMethodConstants {
+public final @NonNls class HardcodedGroovyMethodConstants {
   public static final String COMPARE_TO = HardcodedMethodConstants.COMPARE_TO;
   public static final String EQUALS = HardcodedMethodConstants.EQUALS;
   public static final String NEXT = HardcodedMethodConstants.NEXT;

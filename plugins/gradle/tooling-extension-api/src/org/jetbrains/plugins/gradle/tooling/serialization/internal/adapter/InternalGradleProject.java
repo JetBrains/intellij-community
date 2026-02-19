@@ -3,6 +3,7 @@ package org.jetbrains.plugins.gradle.tooling.serialization.internal.adapter;
 
 import org.gradle.tooling.model.GradleProject;
 import org.gradle.tooling.model.internal.ImmutableDomainObjectSet;
+import org.jetbrains.annotations.ApiStatus;
 
 import java.io.File;
 import java.util.Iterator;
@@ -12,6 +13,7 @@ import java.util.Set;
 import static org.jetbrains.plugins.gradle.tooling.serialization.internal.adapter.AdapterUtils.wrap;
 import static org.jetbrains.plugins.gradle.tooling.util.GradleContainerUtil.emptyDomainObjectSet;
 
+@ApiStatus.Internal
 public final class InternalGradleProject implements GradleProject {
   private final InternalGradleScript buildScript = new InternalGradleScript();
   private File buildDirectory;
@@ -22,6 +24,7 @@ public final class InternalGradleProject implements GradleProject {
   private InternalProjectIdentifier projectIdentifier;
   private InternalGradleProject parent;
   private Set<InternalGradleProject> children = emptyDomainObjectSet();
+  private String buildTreePath;
 
   @Override
   public String getName() {
@@ -87,7 +90,7 @@ public final class InternalGradleProject implements GradleProject {
       return this;
     }
     else {
-      Iterator<? extends InternalGradleProject> iterator = this.children.iterator();
+      Iterator<InternalGradleProject> iterator = this.children.iterator();
       InternalGradleProject found;
       if (!iterator.hasNext()) {
         return null;
@@ -105,12 +108,13 @@ public final class InternalGradleProject implements GradleProject {
     }
   }
 
+  @Override
   public String toString() {
     return "GradleProject{path='" + this.getPath() + '\'' + '}';
   }
 
   @Override
-  public ImmutableDomainObjectSet<? extends InternalGradleTask> getTasks() {
+  public ImmutableDomainObjectSet<InternalGradleTask> getTasks() {
     return wrap(tasks);
   }
 
@@ -130,6 +134,15 @@ public final class InternalGradleProject implements GradleProject {
   @Override
   public File getProjectDirectory() {
     return this.projectDirectory;
+  }
+
+  @Override
+  public String getBuildTreePath() {
+    return buildTreePath;
+  }
+
+  public void setBuildTreePath(String buildTreePath) {
+    this.buildTreePath = buildTreePath;
   }
 
   public void setProjectDirectory(File projectDirectory) {

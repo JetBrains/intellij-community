@@ -1,28 +1,38 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.rebase;
 
+import com.intellij.execution.CommandLineUtil;
+import com.intellij.openapi.Disposable;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.platform.eel.EelApi;
 import git4idea.GitUtil;
 import git4idea.commands.GitHandler;
+import git4idea.commands.GitScriptGenerator;
+import git4idea.config.GitExecutable;
+import git4idea.editor.GitRebaseEditorAppHandler;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.git4idea.editor.GitRebaseEditorXmlRpcHandler;
 
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Path;
 import java.util.UUID;
 
 import static git4idea.commands.GitCommand.GIT_EDITOR_ENV;
 
 public final class GitHandlerRebaseEditorManager implements AutoCloseable {
-  @NotNull private final GitHandler myHandler;
-  @NotNull private final GitRebaseEditorHandler myEditorHandler;
-  @NotNull private final GitRebaseEditorService myService;
+  private static final Logger LOG = Logger.getInstance(GitHandlerRebaseEditorManager.class);
 
-  @Nullable private UUID myHandlerId;
+  private final @NotNull GitHandler myHandler;
+  private final @NotNull GitRebaseEditorHandler myEditorHandler;
+  private final @NotNull GitRebaseEditorService myService;
+
+  private final Disposable myDisposable = Disposer.newDisposable();
 
   /**
    * Configure handler with editor
    */
-  @NotNull
-  public static GitHandlerRebaseEditorManager prepareEditor(GitHandler h, @NotNull GitRebaseEditorHandler editorHandler) {
+  public static @NotNull GitHandlerRebaseEditorManager prepareEditor(GitHandler h, @NotNull GitRebaseEditorHandler editorHandler) {
     GitHandlerRebaseEditorManager manager = new GitHandlerRebaseEditorManager(h, editorHandler);
     GitUtil.tryRunOrClose(manager, () -> {
       manager.prepareEditor();
@@ -38,16 +48,33 @@ public final class GitHandlerRebaseEditorManager implements AutoCloseable {
 
   private void prepareEditor() {
     if (myHandler.containsCustomEnvironmentVariable(GIT_EDITOR_ENV)) return;
-    myHandlerId = myService.registerHandler(myHandler, myEditorHandler);
-    myHandler.addCustomEnvironmentVariable(GIT_EDITOR_ENV, myService.getEditorCommand(myHandler.getExecutable()));
-    myHandler.addCustomEnvironmentVariable(GitRebaseEditorXmlRpcHandler.IJ_EDITOR_HANDLER_ENV, myHandlerId.toString());
+    try {
+      GitExecutable executable = myHandler.getExecutable();
+      UUID handlerId = myService.registerHandler(myEditorHandler, executable, myDisposable);
+
+      int port = myService.getIdePort();
+      String scriptPath;
+      if (myHandler.getExecutable() instanceof GitExecutable.Eel) {
+        EelApi eelApi = ((GitExecutable.Eel)myHandler.getExecutable()).getEel();
+        Path scriptFile = myService.getCallbackScriptPath(eelApi, false, myDisposable);
+        scriptPath = executable.convertFilePath(scriptFile);
+      }
+      else {
+        File scriptFile = myService.getCallbackScriptPath(executable.getId(), new GitScriptGenerator(executable), false);
+        scriptPath = executable.convertFilePath(scriptFile.toPath());
+      }
+
+      myHandler.addCustomEnvironmentVariable(GIT_EDITOR_ENV, CommandLineUtil.posixQuote(scriptPath));
+      myHandler.addCustomEnvironmentVariable(GitRebaseEditorAppHandler.IJ_EDITOR_HANDLER_ENV, handlerId.toString());
+      myHandler.addCustomEnvironmentVariable(GitRebaseEditorAppHandler.IJ_EDITOR_PORT_ENV, Integer.toString(port));
+    }
+    catch (IOException e) {
+      LOG.warn(e);
+    }
   }
 
   @Override
   public void close() {
-    if (myHandlerId != null) {
-      myService.unregisterHandler(myHandlerId);
-      myHandlerId = null;
-    }
+    Disposer.dispose(myDisposable);
   }
 }

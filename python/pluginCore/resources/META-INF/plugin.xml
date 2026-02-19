@@ -1,6 +1,8 @@
-<idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude" url="https://confluence.jetbrains.com/display/PYH/">
-  <!-- Components and extensions declared in this file work ONLY in Python plugin, not in standalone PyCharm.
-       Anything related to Python/Java integration must go in this file. -->
+<!--suppress PluginXmlRegistrationCheck -->
+<idea-plugin url="https://www.jetbrains.com/pycharm/" allow-bundled-update="true">
+  <!--Python community support for Pycharm, DS and IC.-->
+  <!--Include core Python functionality-->
+
 
   <id>PythonCore</id>
   <name>Python Community Edition</name>
@@ -9,30 +11,71 @@
 The Python plug-in provides smart editing for Python scripts. The feature set of the plugin
  corresponds to PyCharm IDE Community Edition.
 <br>
-<a href="http://blog.jetbrains.com/pycharm">PyCharm blog</a><br>
-<a href="http://forum.jetbrains.com/forum/PyCharm">Discussion forum</a><br>
+<a href="https://blog.jetbrains.com/pycharm">PyCharm blog</a><br>
+<a href="https://forum.jetbrains.com/forum/PyCharm">Discussion forum</a><br>
 <a href="https://youtrack.jetbrains.com/issues/PY">Issue tracker</a><br>
 ]]></description>
 
   <vendor url="https://www.jetbrains.com/pycharm/">JetBrains</vendor>
 
-  <depends>com.intellij.modules.python-core-capable</depends>
+  <dependencies>
+    <plugin id="com.intellij.modules.lang"/>
+    <plugin id="com.intellij.modules.python-core-capable"/>
+    <module name="intellij.platform.debugger.impl.shared"/>
+  </dependencies>
 
-  <xi:include href="/META-INF/python-core-plugin.xml" xpointer="xpointer(/idea-plugin/*)"/>
-
-  <depends optional="true" config-file="python-community-plugin-java.xml">com.intellij.modules.idea</depends>
-  <depends optional="true" config-file="python-community-plugin-minor.xml">com.intellij.modules.clion</depends>
-  <depends optional="true" config-file="python-plugin-rider.xml">com.intellij.modules.rider</depends>
-  <depends optional="true" config-file="python-plugin-datagrip.xml">com.intellij.modules.datagrip</depends>
-  <depends optional="true" config-file="python-plugin-goland.xml">com.intellij.modules.go</depends>
-  <depends optional="true" config-file="python-rest-plugin.xml">org.jetbrains.plugins.rest</depends>
-  <depends optional="true" config-file="python-copyright-plugin.xml">com.intellij.copyright</depends>
-  <depends optional="true" config-file="intellilang-python-support.xml">org.intellij.intelliLang</depends>
-  <depends optional="true" config-file="python-terminal-plugin.xml">org.jetbrains.plugins.terminal</depends>
-  <depends optional="true" config-file="python-grazie-plugin.xml">tanvd.grazi</depends>
-
-  <extensions defaultExtensionNs="com.intellij">
-    <applicationService serviceInterface="com.jetbrains.python.console.PythonConsoleRunnerFactory"
-                        serviceImplementation="com.jetbrains.python.console.PydevConsoleRunnerFactory" />
-  </extensions>
+  <content namespace="jetbrains">
+    <module name="intellij.python.common" loading="required"/>
+    <module name="intellij.python.parser" loading="required"/>
+    <module name="intellij.python.ast" loading="required"/>
+    <module name="intellij.python.syntax.core" loading="required"/>
+    <module name="intellij.python.syntax" loading="required"/>
+    <module name="intellij.python.psi" loading="required"/>
+    <module name="intellij.python.psi.impl" loading="required"/>
+    <module name="intellij.python.sdk" loading="required"/>
+    <module name="intellij.python.sdk.ui" loading="required"/>
+    <module name="intellij.python.pyproject" loading="required"/>
+    <module name="intellij.python.sdkConfigurator.common" loading="required"/>
+    <module name="intellij.python.sdkConfigurator.backend"/>
+    <module name="intellij.python.sdkConfigurator.frontend"/>
+    <module name="intellij.python.community.impl.poetry.common" loading="required"/>
+    <module name="intellij.python.community.impl.poetry.backend"/>
+    <module name="intellij.python.community.impl.uv.common" loading="required"/>
+    <module name="intellij.python.community.impl.uv.backend"/>
+    <module name="intellij.python.community.impl.pipenv" loading="required"/>
+    <module name="intellij.python.community.impl.conda" loading="required"/>
+    <module name="intellij.python.community.core.impl" loading="required"/>
+    <module name="intellij.python.community.helpersLocator" loading="required"/>
+    <module name="intellij.python.community" loading="required"/>
+    <module name="intellij.python.community.impl" loading="required"/>
+    <module name="intellij.python.community.execService" loading="required"/>
+    <module name="intellij.python.community.execService.python" loading="required"/>
+    <module name="intellij.python.community.impl.installer" loading="required"/>
+    <module name="intellij.python.pydev" loading="required"/>
+    <module name="intellij.python.venv" loading="required"/>
+    <module name="intellij.python.hatch" loading="required"/>
+    <module name="intellij.python.community.services.shared" loading="required"/>
+    <module name="intellij.python.community.services.internal.impl" loading="required"/>
+    <module name="intellij.python.community.services.systemPython" loading="required"/>
+    <module name="intellij.python.community.interpreters" loading="required"/>
+    <module name="intellij.python.community.aliasProvider" loading="required"/>
+    <module name="intellij.python.processOutput" loading="required"/>
+    <module name="intellij.python.processOutput.impl"/>
+    <module name="intellij.python.externalIndex" loading="required"/>
+    <!--Mini-IDes support community python only-->
+    <module name="intellij.python.community.plugin.minor"/> <!-- Python for Mini-IDEs-->
+    <module name="intellij.python.community.plugin.minorRider"/> <!-- Python special support for Rider -->
+    <module name="intellij.python.community.communityOnly"/> <!-- Community-specific code-->
+    <module name="intellij.commandInterface"/> <!-- used by Django in Prof, by some plugins in community -->
+    <module name="intellij.python.community.impl.huggingFace"/>
+    <module name="intellij.python.community.plugin.impl"/><!--Python for any IDE except PyCharm -->
+    <module name="intellij.python.community.plugin.java"/><!-- Python for Java IDE -->
+    <module name="intellij.python.copyright"/>
+    <module name="intellij.python.featuresTrainer"/>
+    <module name="intellij.python.grazie"/>
+    <module name="intellij.python.langInjection"/>
+    <module name="intellij.python.markdown"/>
+    <module name="intellij.python.ml.features"/>
+    <module name="intellij.python.terminal"/>
+  </content>
 </idea-plugin>

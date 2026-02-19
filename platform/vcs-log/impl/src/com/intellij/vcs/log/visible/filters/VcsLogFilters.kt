@@ -1,29 +1,44 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.visible.filters
 
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.util.text.CharFilter
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.util.containers.OpenTHashSet
-import com.intellij.vcs.log.*
+import com.intellij.vcs.log.CommitId
+import com.intellij.vcs.log.VcsLogBranchFilter
+import com.intellij.vcs.log.VcsLogBundle
+import com.intellij.vcs.log.VcsLogDateFilter
+import com.intellij.vcs.log.VcsLogFilter
+import com.intellij.vcs.log.VcsLogFilterCollection
 import com.intellij.vcs.log.VcsLogFilterCollection.FilterKey
 import com.intellij.vcs.log.VcsLogFilterCollection.HASH_FILTER
+import com.intellij.vcs.log.VcsLogHashFilter
+import com.intellij.vcs.log.VcsLogParentFilter
+import com.intellij.vcs.log.VcsLogRangeFilter
 import com.intellij.vcs.log.VcsLogRangeFilter.RefRange
+import com.intellij.vcs.log.VcsLogRevisionFilter
+import com.intellij.vcs.log.VcsLogRootFilter
+import com.intellij.vcs.log.VcsLogStructureFilter
+import com.intellij.vcs.log.VcsLogTextFilter
+import com.intellij.vcs.log.VcsLogUserFilter
+import com.intellij.vcs.log.VcsUser
 import com.intellij.vcs.log.data.VcsLogData
 import com.intellij.vcs.log.util.VcsLogUtil
 import com.intellij.vcs.log.util.VcsUserUtil
 import com.intellij.vcsUtil.VcsUtil
-import gnu.trove.TObjectHashingStrategy
+import it.unimi.dsi.fastutil.Hash
+import it.unimi.dsi.fastutil.objects.ObjectOpenCustomHashSet
 import org.jetbrains.annotations.Nls
-import java.util.*
+import java.util.Date
 import java.util.regex.Pattern
 import java.util.regex.PatternSyntaxException
 
-private val LOG = Logger.getInstance("#com.intellij.vcs.log.visible.filters.VcsLogFilters")
-
 object VcsLogFilterObject {
-  const val ME = "*"
+  private val LOG = Logger.getInstance("#com.intellij.vcs.log.visible.filters.VcsLogFilters")
+
+  const val ME: String = "*"
 
   @JvmStatic
   fun fromPattern(text: String, isRegexpAllowed: Boolean = false, isMatchCase: Boolean = false): VcsLogTextFilter {
@@ -31,7 +46,7 @@ object VcsLogFilterObject {
       try {
         return VcsLogRegexTextFilter(Pattern.compile(text, if (isMatchCase) 0 else Pattern.CASE_INSENSITIVE))
       }
-      catch (ignored: PatternSyntaxException) {
+      catch (_: PatternSyntaxException) {
       }
     }
     return VcsLogTextFilterImpl(text, isMatchCase)
@@ -133,7 +148,7 @@ object VcsLogFilterObject {
   @JvmStatic
   fun fromHash(text: String): VcsLogHashFilter? {
     val hashes = mutableListOf<String>()
-    for (word in StringUtil.split(text, " ")) {
+    for (word in StringUtil.split(text, HashSeparatorCharFilter, true, true)) {
       if (!VcsLogUtil.HASH_REGEX.matcher(word).matches()) {
         return null
       }
@@ -161,7 +176,7 @@ object VcsLogFilterObject {
 
   @JvmStatic
   fun fromUserNames(userNames: Collection<String>, vcsLogData: VcsLogData): VcsLogUserFilter {
-    return VcsLogUserFilterImpl(userNames, vcsLogData.currentUser, vcsLogData.allUsers)
+    return VcsLogUserFilterImpl(userNames, vcsLogData.userNameResolver)
   }
 
   @JvmStatic
@@ -195,18 +210,28 @@ object VcsLogFilterObject {
   }
 
   @JvmStatic
+  fun noMerges(): VcsLogParentFilter {
+    return fromParentCount(maxParents = 1)
+  }
+
+  @JvmStatic
+  fun fromParentCount(minParents: Int? = null, maxParents: Int? = null): VcsLogParentFilter {
+    return VcsLogParentFilterImpl(minParents ?: 0, maxParents ?: Int.MAX_VALUE)
+  }
+
+  @JvmStatic
   fun collection(vararg filters: VcsLogFilter?): VcsLogFilterCollection {
     val filterSet = createFilterSet()
     for (f in filters) {
-      if (f != null) {
-        if (filterSet.replace(f)) LOG.warn("Two filters with the same key ${f.key} in filter collection. Keeping only ${f}.")
+      if (f != null && replace(filterSet, f)) {
+        LOG.warn("Two filters with the same key ${f.key} in filter collection. Keeping only ${f}.")
       }
     }
     return VcsLogFilterCollectionImpl(filterSet)
   }
 
   @JvmField
-  val EMPTY_COLLECTION = collection()
+  val EMPTY_COLLECTION: VcsLogFilterCollection = collection()
 }
 
 fun VcsLogFilterCollection.with(filter: VcsLogFilter?): VcsLogFilterCollection {
@@ -214,7 +239,7 @@ fun VcsLogFilterCollection.with(filter: VcsLogFilter?): VcsLogFilterCollection {
 
   val filterSet = createFilterSet()
   filterSet.addAll(this.filters)
-  filterSet.replace(filter)
+  replace(filterSet, filter)
   return VcsLogFilterCollectionImpl(filterSet)
 }
 
@@ -232,17 +257,21 @@ fun <T : VcsLogFilter> VcsLogFilterCollection.without(filterClass: Class<T>): Vc
   return without { filterClass.isInstance(it) }
 }
 
-fun VcsLogFilterCollection.matches(vararg filterKey: FilterKey<*>): Boolean {
-  return this.filters.mapTo(mutableSetOf()) { it.key } == filterKey.toSet()
+val VcsLogFilterCollection.keysToSet: Set<FilterKey<*>> get() = this.filters.mapTo(mutableSetOf()) { it.key }
+
+fun VcsLogFilterCollection.matches(vararg filterKey: FilterKey<*>): Boolean = matches(filterKey.toSet())
+
+fun VcsLogFilterCollection.matches(filterKeys: Set<FilterKey<*>>): Boolean {
+  return this.keysToSet == filterKeys
 }
 
 @Nls
-fun VcsLogFilterCollection.getPresentation(): String {
+fun VcsLogFilterCollection.getPresentation(withPrefix: Boolean = false): String {
   if (get(HASH_FILTER) != null) {
     return get(HASH_FILTER)!!.displayText
   }
   return StringUtil.join(filters, { filter: VcsLogFilter ->
-    if (filters.size != 1) {
+    if (filters.size != 1 || withPrefix) {
       filter.withPrefix()
     }
     else filter.displayText
@@ -254,28 +283,37 @@ private fun VcsLogFilter.withPrefix(): String {
   when (this) {
     is VcsLogTextFilter -> return VcsLogBundle.message("vcs.log.filter.text.presentation.with.prefix", displayText)
     is VcsLogUserFilter -> return VcsLogBundle.message("vcs.log.filter.user.presentation.with.prefix", displayText)
-    is VcsLogDateFilter -> return displayTextWithPrefix
+    is VcsLogDateFilter -> return VcsLogDateFilterImpl.getDisplayTextWithPrefix(this)
     is VcsLogBranchFilter -> return VcsLogBundle.message("vcs.log.filter.branch.presentation.with.prefix", displayText)
     is VcsLogRootFilter -> return VcsLogBundle.message("vcs.log.filter.root.presentation.with.prefix", displayText)
     is VcsLogStructureFilter -> return VcsLogBundle.message("vcs.log.filter.structure.presentation.with.prefix", displayText)
   }
-  return ""
+  return displayText
 }
 
-private fun createFilterSet() = OpenTHashSet(FilterByKeyHashingStrategy())
+private fun createFilterSet() = ObjectOpenCustomHashSet(object : Hash.Strategy<VcsLogFilter> {
+  override fun hashCode(o: VcsLogFilter?): Int {
+    return o?.key?.hashCode() ?: 0
+  }
 
-private fun <T> OpenTHashSet<T>.replace(element: T): Boolean {
-  val isModified = remove(element)
-  add(element)
+  override fun equals(o1: VcsLogFilter?, o2: VcsLogFilter?): Boolean {
+    return o1 === o2 || (o1?.key == o2?.key)
+  }
+})
+
+private fun <T> replace(set: ObjectOpenCustomHashSet<T>, element: T): Boolean {
+  val isModified = set.remove(element)
+  set.add(element)
   return isModified
 }
 
-internal class FilterByKeyHashingStrategy : TObjectHashingStrategy<VcsLogFilter> {
-  override fun computeHashCode(`object`: VcsLogFilter): Int {
-    return `object`.key.hashCode()
+internal object HashSeparatorCharFilter : CharFilter {
+  override fun accept(ch: Char): Boolean {
+    if (ch == ',' || ch == ';') return true
+    if (Character.isWhitespace(ch)) return true
+    return false
   }
 
-  override fun equals(o1: VcsLogFilter, o2: VcsLogFilter): Boolean {
-    return o1.key == o2.key
-  }
+  @JvmStatic
+  fun invert(): CharFilter = CharFilter { ch -> !accept(ch) }
 }

@@ -21,8 +21,17 @@ import com.intellij.codeInsight.daemon.EmptyResolveMessageProvider;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.LocalQuickFixProvider;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.*;
-import com.intellij.psi.xml.*;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementResolveResult;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiPolyVariantReference;
+import com.intellij.psi.PsiReference;
+import com.intellij.psi.ResolveResult;
+import com.intellij.psi.xml.XmlAttribute;
+import com.intellij.psi.xml.XmlDocument;
+import com.intellij.psi.xml.XmlElement;
+import com.intellij.psi.xml.XmlFile;
+import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.containers.ContainerUtil;
@@ -40,7 +49,11 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.xml.namespace.QName;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 class ModeReference extends SimpleAttributeReference implements PsiPolyVariantReference, EmptyResolveMessageProvider {
   private final boolean myIsDeclaration;
@@ -65,8 +78,7 @@ class ModeReference extends SimpleAttributeReference implements PsiPolyVariantRe
   }
 
   @Override
-  @NotNull
-  protected TextRange getTextRange() {
+  protected @NotNull TextRange getTextRange() {
     return myImplicitModeElement.getModeRange();
   }
 
@@ -95,8 +107,7 @@ class ModeReference extends SimpleAttributeReference implements PsiPolyVariantRe
   }
 
   @Override
-  @Nullable
-  public PsiElement resolveImpl() {
+  public @Nullable PsiElement resolveImpl() {
     if (myIsDeclaration) {
       return myImplicitModeElement;
     }
@@ -199,8 +210,7 @@ class ModeReference extends SimpleAttributeReference implements PsiPolyVariantRe
   }
 
   @Override
-  @NotNull
-  public String getUnresolvedMessagePattern() {
+  public @NotNull String getUnresolvedMessagePattern() {
     final QName qName = myImplicitModeElement.getQName();
     if (qName != null && qName != QNameUtil.UNRESOLVED) {
       return XPathBundle.message("inspection.message.undefined.mode", qName);
@@ -216,7 +226,7 @@ class ModeReference extends SimpleAttributeReference implements PsiPolyVariantRe
     }
 
     @Override
-    public LocalQuickFix @Nullable [] getQuickFixes() {
+    public @NotNull LocalQuickFix @Nullable [] getQuickFixes() {
       // TODO: This should actually scan all (reachable) xslt files for mode-declarations with the same local name
       return LocalQuickFix.EMPTY_ARRAY;
     }

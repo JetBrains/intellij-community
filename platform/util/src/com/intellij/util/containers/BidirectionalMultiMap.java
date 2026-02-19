@@ -3,10 +3,15 @@ package com.intellij.util.containers;
 
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.*;
+import java.util.Map;
+import java.util.Set;
 
+/**
+ * @see MultiMap
+ */
 public final class BidirectionalMultiMap<K, V> {
   private final Map<K, Set<V>> keyToValues;
   private final Map<V, Set<K>> valueToKeys;

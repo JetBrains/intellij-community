@@ -7,11 +7,8 @@ public class TestLocalsNames {
       if (file.isDirectory()) {// 22
          long start = System.currentTimeMillis();// 23
          File[] files = file.listFiles();// 25
-         File[] var5 = files;
-         int var6 = files.length;
 
-         for(int var7 = 0; var7 < var6; ++var7) {// 26
-            File s = var5[var7];
+         for(File s : files) {// 26
             File dest = new File(s.getAbsolutePath() + ".tmp");// 27
 
             assert s.renameTo(dest) : "unable to rename " + s + " to " + dest;// 28
@@ -26,42 +23,92 @@ public class TestLocalsNames {
 
 class 'pkg/TestLocalsNames' {
    method 'rename (Ljava/io/File;Z)V' {
+      0      6
       1      6
+      2      6
+      3      6
       4      6
       7      7
+      8      7
+      9      7
       a      7
+      b      8
       c      8
+      d      8
+      e      8
       f      8
-      13      9
-      17      10
+      10      8
+      11      10
+      12      10
+      13      10
+      14      10
       18      10
-      1a      12
-      1b      12
-      21      12
-      28      13
-      29      13
-      38      14
-      3e      14
-      43      14
-      49      14
-      55      16
-      66      16
-      70      16
-      7a      16
-      81      12
-      87      19
-      8b      19
-      8c      19
-      8e      20
-      98      20
-      a2      20
-      ab      20
-      ac      20
-      ad      20
-      b1      20
-      b6      20
-      b9      20
-      bc      23
+      19      10
+      1b      10
+      1c      10
+      29      10
+      2a      10
+      36      11
+      37      11
+      38      11
+      39      11
+      3a      11
+      3e      11
+      3f      11
+      43      11
+      44      11
+      45      11
+      49      11
+      4a      11
+      51      13
+      52      13
+      53      13
+      54      13
+      55      13
+      56      13
+      57      13
+      66      13
+      67      13
+      6b      13
+      6c      13
+      70      13
+      71      13
+      75      13
+      76      13
+      7a      13
+      7b      13
+      7c      13
+      81      10
+      87      16
+      88      16
+      89      16
+      8a      16
+      8b      16
+      8c      16
+      8d      16
+      8e      17
+      8f      17
+      90      17
+      98      17
+      99      17
+      9d      17
+      9e      17
+      a2      17
+      a3      17
+      a7      17
+      a8      17
+      a9      17
+      aa      17
+      ab      17
+      ac      17
+      ad      17
+      b1      17
+      b2      17
+      b6      17
+      b7      17
+      b8      17
+      b9      17
+      bc      20
    }
 }
 
@@ -69,9 +116,9 @@ Lines mapping:
 22 <-> 7
 23 <-> 8
 25 <-> 9
-26 <-> 13
-27 <-> 15
-28 <-> 17
-31 <-> 20
-32 <-> 21
-34 <-> 24
+26 <-> 11
+27 <-> 12
+28 <-> 14
+31 <-> 17
+32 <-> 18
+34 <-> 21

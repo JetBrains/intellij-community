@@ -19,7 +19,7 @@ import com.intellij.openapi.editor.Editor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.*;
+import java.awt.Color;
 
 public interface TextDiffType {
   @NotNull TextDiffType INSERTED = TextDiffTypeFactory.INSERTED;

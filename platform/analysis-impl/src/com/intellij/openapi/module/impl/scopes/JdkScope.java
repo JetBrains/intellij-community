@@ -32,6 +32,7 @@ public class JdkScope extends LibraryScopeBase {
 
   @Override
   public boolean equals(Object object) {
+    if (object == null) return false;
     if (object == this) return true;
     if (object.getClass() != getClass()) return false;
 

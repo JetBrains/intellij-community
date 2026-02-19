@@ -1,0 +1,6 @@
+// PRIORITY: LOW
+class Test {
+    fun getFoo(): Foo<String> = Foo()
+}
+
+class Foo<T>

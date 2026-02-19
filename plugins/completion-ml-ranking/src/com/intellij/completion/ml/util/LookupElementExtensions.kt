@@ -18,7 +18,9 @@ package com.intellij.completion.ml.util
 
 import com.intellij.codeInsight.completion.BaseCompletionLookupArranger
 import com.intellij.codeInsight.lookup.LookupElement
+import com.intellij.codeInsight.lookup.LookupElementDecorator
 import com.intellij.codeInsight.lookup.LookupElementPresentation
+import com.intellij.codeInsight.template.impl.LiveTemplateLookupElement
 import com.intellij.openapi.util.Key
 
 private val CACHED_ITEM_ID: Key<String> = Key.create("CACHED_ITEM_ID")
@@ -26,9 +28,23 @@ private val CACHED_ITEM_ID: Key<String> = Key.create("CACHED_ITEM_ID")
 fun LookupElement.idString(): String {
     var itemId = getUserData(CACHED_ITEM_ID)
     if (itemId == null) {
-        val p = BaseCompletionLookupArranger.getDefaultPresentation(this) ?: LookupElementPresentation.renderElement(this)
-        itemId = "${p.itemText} ${p.tailText} ${p.typeText}"
+        itemId = LookupElementIdProvider.tryGetIdString(this) ?: run {
+          val p = BaseCompletionLookupArranger.getDefaultPresentation(this) ?: LookupElementPresentation.renderElement(this)
+          "${p.itemText} ${p.tailText} ${p.typeText}"
+        }
         putUserData(CACHED_ITEM_ID, itemId)
     }
     return itemId
+}
+
+fun LookupElement.isLiveTemplate(): Boolean {
+    if (this is LiveTemplateLookupElement) return true
+
+    var item: LookupElement = this
+    while (item is LookupElementDecorator<*>) {
+      item = item.delegate
+      if (item is LiveTemplateLookupElement) return true
+    }
+
+    return false
 }

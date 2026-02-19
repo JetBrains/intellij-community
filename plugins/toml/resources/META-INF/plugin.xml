@@ -1,0 +1,23 @@
+<idea-plugin allow-bundled-update="true">
+    <id>org.toml.lang</id>
+    <name>Toml</name>
+    <vendor>JetBrains</vendor>
+    <category>Languages</category>
+
+    <description><![CDATA[
+      Adds support for the <a href="https://toml.io/en/">TOML</a> configuration file syntax.
+    ]]></description>
+
+    <dependencies>
+        <plugin id="com.intellij.modules.lang"/>
+    </dependencies>
+
+    <content namespace="jetbrains">
+        <module name="intellij.toml.core" loading="embedded"/>
+        <module name="intellij.toml.backend"/>
+        <module name="intellij.toml.frontend"/>
+        <module name="intellij.toml.frontend.split"/>
+        <module name="intellij.toml.json"/>
+        <module name="intellij.toml.grazie"/>
+    </content>
+</idea-plugin>

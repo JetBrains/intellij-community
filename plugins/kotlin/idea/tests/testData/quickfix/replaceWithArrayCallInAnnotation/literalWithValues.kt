@@ -1,0 +1,10 @@
+// "Replace with array call" "true"
+// LANGUAGE_VERSION: 1.2
+
+annotation class Some(vararg val ints: Int)
+
+@Some(ints = *<caret>[1, 2, 3])
+class My
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.ReplaceWithArrayCallInAnnotationFix
+// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.ReplaceWithArrayCallInAnnotationFix

@@ -1,0 +1,20 @@
+<component name="libraryTable">
+  <library name="fleet:io.github.pdvrieze.xmlutil.core" type="repository">
+    <properties include-transitive-deps="false" maven-id="io.github.pdvrieze.xmlutil:core:0.91.3">
+      <verification>
+        <artifact url="file://$MAVEN_REPOSITORY$/io/github/pdvrieze/xmlutil/core/0.91.3/core-0.91.3.jar">
+          <sha256sum>4af1acef851d201c7bfe3fd579057197f71b3b6570a02d04fe63c32bc5b29e93</sha256sum>
+        </artifact>
+      </verification>
+    </properties>
+    <CLASSES>
+      <root url="jar://$MAVEN_REPOSITORY$/io/github/pdvrieze/xmlutil/core/0.91.3/core-0.91.3.jar!/" />
+    </CLASSES>
+    <JAVADOC>
+      <root url="jar://$MAVEN_REPOSITORY$/io/github/pdvrieze/xmlutil/core/0.91.3/core-0.91.3-javadoc.jar!/" />
+    </JAVADOC>
+    <SOURCES>
+      <root url="jar://$MAVEN_REPOSITORY$/io/github/pdvrieze/xmlutil/core/0.91.3/core-0.91.3-sources.jar!/" />
+    </SOURCES>
+  </library>
+</component>

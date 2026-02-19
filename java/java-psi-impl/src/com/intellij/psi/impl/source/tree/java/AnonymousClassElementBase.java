@@ -16,12 +16,14 @@
 
 package com.intellij.psi.impl.source.tree.java;
 
+import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.JavaTokenType;
-import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.impl.source.tree.ChildRole;
+import com.intellij.psi.impl.source.tree.JavaElementType;
+import com.intellij.psi.impl.source.tree.TreeUtil;
 import com.intellij.psi.tree.ChildRoleBase;
-import com.intellij.psi.impl.source.tree.*;
-import com.intellij.lang.ASTNode;
+import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
 
 public abstract class AnonymousClassElementBase extends ClassElement {
@@ -35,9 +37,6 @@ public abstract class AnonymousClassElementBase extends ClassElement {
   public ASTNode findChildByRole(int role) {
     LOG.assertTrue(ChildRole.isUnique(role));
     switch(role){
-      default:
-        return null;
-
       case ChildRole.BASE_CLASS_REFERENCE:
         return getFirstChildNode().getElementType() == JavaElementType.JAVA_CODE_REFERENCE ? getFirstChildNode() : null;
 
@@ -49,6 +48,9 @@ public abstract class AnonymousClassElementBase extends ClassElement {
 
       case ChildRole.RBRACE:
         return TreeUtil.findChildBackward(this, JavaTokenType.RBRACE);
+
+      default:
+        return null;
     }
   }
 

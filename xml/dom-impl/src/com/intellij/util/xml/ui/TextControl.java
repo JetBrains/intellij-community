@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.xml.ui;
 
 import com.intellij.openapi.editor.Document;
@@ -29,14 +15,11 @@ import com.intellij.util.Function;
 import com.intellij.util.xml.XmlDomBundle;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JTextArea;
+import java.awt.Component;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
-/**
- * @author peter
- */
 public class TextControl extends EditorTextFieldControl<TextPanel> {
 
   public TextControl(final DomWrapper<String> domWrapper) {
@@ -48,7 +31,7 @@ public class TextControl extends EditorTextFieldControl<TextPanel> {
   }
 
   @Override
-  protected EditorTextField getEditorTextField(@NotNull final TextPanel panel) {
+  protected EditorTextField getEditorTextField(final @NotNull TextPanel panel) {
     final Component component = panel.getComponent(0);
     if (component instanceof ReferenceEditorWithBrowseButton) {
       return ((ReferenceEditorWithBrowseButton)component).getEditorTextField();
@@ -67,7 +50,7 @@ public class TextControl extends EditorTextFieldControl<TextPanel> {
     final TextPanel boundedComponent1 = boundedComponent;
     final EditorTextField editorTextField = new EditorTextField(factory.fun(""), project, FileTypes.PLAIN_TEXT) {
       @Override
-      protected EditorEx createEditor() {
+      protected @NotNull EditorEx createEditor() {
         final EditorEx editor = super.createEditor();
         return boundedComponent1 instanceof MultiLineTextPanel ? makeBigEditor(editor, ((MultiLineTextPanel)boundedComponent1).getRowCount()) : editor;
       }
@@ -85,7 +68,7 @@ public class TextControl extends EditorTextFieldControl<TextPanel> {
         public void actionPerformed(ActionEvent e) {
           EditorTextField textArea = new EditorTextField(editorTextField.getDocument(), project, FileTypes.PLAIN_TEXT) {
             @Override
-            protected EditorEx createEditor() {
+            protected @NotNull EditorEx createEditor() {
               final EditorEx editor = super.createEditor();
               editor.setEmbeddedIntoDialogWrapper(true);
               return makeBigEditor(editor, 5);

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs
 
 import com.intellij.CommonBundle
@@ -9,7 +9,9 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.vcs.changes.ui.SelectFilesDialog
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 abstract class FilesProcessorWithNotificationImpl(
   project: Project,
   parentDisposable: Disposable
@@ -20,9 +22,12 @@ abstract class FilesProcessorWithNotificationImpl(
   private var notification: Notification? = null
   abstract val notificationDisplayId: String
 
+  abstract val askedBeforeProperty: String
+  abstract val doForCurrentProjectProperty: String
+
   abstract val showActionText: String
   abstract val forCurrentProjectActionText: String
-  abstract val forAllProjectsActionText: String?
+  open val forAllProjectsActionText: String? = null
   abstract val muteActionText: String
 
   @NlsContexts.NotificationTitle
@@ -34,19 +39,12 @@ abstract class FilesProcessorWithNotificationImpl(
   @NlsContexts.Button
   protected open val viewFilesDialogOkActionName: String = CommonBundle.getAddButtonText()
   @NlsContexts.Button
-  protected open val  viewFilesDialogCancelActionName: String = CommonBundle.getCancelButtonText()
+  protected open val viewFilesDialogCancelActionName: String = CommonBundle.getCancelButtonText()
 
-  override fun doProcess(): Boolean {
-    val processed = super.doProcess()
-    if (!processed) {
-      proposeToProcessFiles()
-    }
-    return processed
-  }
-
-  private fun proposeToProcessFiles() {
+  override fun handleProcessingForCurrentProject() {
     synchronized(NOTIFICATION_LOCK) {
       if (notAskedBefore() && notificationNotPresent()) {
+        // propose to process files
         val notificationActions = mutableListOf(showAction(), addForCurrentProjectAction()).apply {
           if (forAllProjectsActionText != null) {
             add(forAllProjectsAction())
@@ -65,19 +63,18 @@ abstract class FilesProcessorWithNotificationImpl(
   }
 
   private fun showAction() = NotificationAction.createSimple(showActionText) {
-    val allFiles = acquireValidFiles()
+    val allFiles = selectValidFiles()
     if (allFiles.isNotEmpty()) {
-      with(SelectFilesDialog.init(project, allFiles, null, null, true, true,
-                                  viewFilesDialogOkActionName, viewFilesDialogCancelActionName)) {
-        title = viewFilesDialogTitle
-        selectedFiles = allFiles
-        if (showAndGet()) {
-          val userSelectedFiles = selectedFiles
-          doActionOnChosenFiles(userSelectedFiles)
-          removeFiles(userSelectedFiles)
-          if (isFilesEmpty()) {
-            expireNotification()
-          }
+      val dialog = SelectFilesDialog.init(project, allFiles, null, null, true, true,
+                                          viewFilesDialogOkActionName, viewFilesDialogCancelActionName)
+      dialog.title = viewFilesDialogTitle
+      dialog.selectedFiles = allFiles
+      if (dialog.showAndGet()) {
+        val userSelectedFiles = dialog.selectedFiles
+        doActionOnChosenFiles(userSelectedFiles)
+        removeFiles(userSelectedFiles)
+        if (isFilesEmpty()) {
+          expireNotification()
         }
       }
     }
@@ -85,19 +82,17 @@ abstract class FilesProcessorWithNotificationImpl(
 
   private fun addForCurrentProjectAction() = NotificationAction.create(forCurrentProjectActionText) { _, _ ->
     doActionOnChosenFiles(acquireValidFiles())
-    rememberForCurrentProject()
+    setForCurrentProject(true)
     PropertiesComponent.getInstance(project).setValue(askedBeforeProperty, true)
     expireNotification()
-    clearFiles()
   }
 
   private fun forAllProjectsAction() = NotificationAction.create(forAllProjectsActionText!!) { _, _ ->
     doActionOnChosenFiles(acquireValidFiles())
-    rememberForCurrentProject()
+    setForCurrentProject(true)
     PropertiesComponent.getInstance(project).setValue(askedBeforeProperty, true)
     rememberForAllProjects()
     expireNotification()
-    clearFiles()
   }
 
   private fun muteAction() = NotificationAction.create(muteActionText) { _, notification ->
@@ -106,13 +101,26 @@ abstract class FilesProcessorWithNotificationImpl(
     notification.expire()
   }
 
-  protected fun notificationNotPresent() =
+  private fun notificationNotPresent() =
     synchronized(NOTIFICATION_LOCK) {
       notification?.isExpired ?: true
     }
 
-  protected fun expireNotification() =
+  private fun expireNotification() =
     synchronized(NOTIFICATION_LOCK) {
       notification?.expire()
     }
+
+
+  protected open fun rememberForAllProjects(): Unit = throw UnsupportedOperationException()
+
+  protected open fun setForCurrentProject(isEnabled: Boolean) {
+    PropertiesComponent.getInstance(project).setValue(doForCurrentProjectProperty, isEnabled)
   }
+
+  override fun needDoForCurrentProject() =
+    PropertiesComponent.getInstance(project).getBoolean(doForCurrentProjectProperty, false)
+
+  private fun notAskedBefore() = !wasAskedBefore()
+  private fun wasAskedBefore() = PropertiesComponent.getInstance(project).getBoolean(askedBeforeProperty, false)
+}

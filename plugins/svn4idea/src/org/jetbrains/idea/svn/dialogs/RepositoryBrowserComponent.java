@@ -1,13 +1,14 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.svn.dialogs;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.DataProvider;
+import com.intellij.openapi.actionSystem.DataSink;
+import com.intellij.openapi.actionSystem.UiDataProvider;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.vcs.vfs.VcsFileSystem;
+import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.vfs.VcsVirtualFile;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.NavigatableAdapter;
@@ -18,7 +19,7 @@ import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.EditSourceOnDoubleClickHandler;
 import com.intellij.util.NotNullFunction;
 import com.intellij.util.ui.StatusText;
-import org.jetbrains.annotations.NonNls;
+import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnVcs;
@@ -28,12 +29,16 @@ import org.jetbrains.idea.svn.browse.DirectoryEntry;
 import org.jetbrains.idea.svn.dialogs.browserCache.Expander;
 import org.jetbrains.idea.svn.history.SvnFileRevision;
 
-import javax.swing.*;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.JTree;
+import javax.swing.ScrollPaneConstants;
 import javax.swing.event.TreeSelectionListener;
 import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
 import javax.swing.tree.TreeSelectionModel;
-import java.awt.*;
+import java.awt.BorderLayout;
+import java.awt.Component;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Enumeration;
@@ -42,7 +47,7 @@ import java.util.List;
 /**
  * @author alex
  */
-public class RepositoryBrowserComponent extends JPanel implements Disposable, DataProvider {
+public class RepositoryBrowserComponent extends JPanel implements Disposable, UiDataProvider {
 
   private Tree myRepositoryTree;
   private final SvnVcs myVCS;
@@ -56,8 +61,7 @@ public class RepositoryBrowserComponent extends JPanel implements Disposable, Da
     return myRepositoryTree;
   }
 
-  @NotNull
-  public Project getProject() {
+  public @NotNull Project getProject() {
     return myVCS.getProject();
   }
 
@@ -107,7 +111,7 @@ public class RepositoryBrowserComponent extends JPanel implements Disposable, Da
     myRepositoryTree.setSelectionRow(0);
   }
 
-  public void expandNode(@NotNull final TreeNode treeNode) {
+  public void expandNode(final @NotNull TreeNode treeNode) {
     final TreeNode[] pathToNode = ((RepositoryTreeModel)myRepositoryTree.getModel()).getPathToRoot(treeNode);
 
     if ((pathToNode != null) && (pathToNode.length > 0)) {
@@ -116,7 +120,7 @@ public class RepositoryBrowserComponent extends JPanel implements Disposable, Da
     }
   }
 
-  public Collection<TreeNode> getExpandedSubTree(@NotNull final TreeNode treeNode) {
+  public Collection<TreeNode> getExpandedSubTree(final @NotNull TreeNode treeNode) {
     final TreeNode[] pathToNode = ((RepositoryTreeModel)myRepositoryTree.getModel()).getPathToRoot(treeNode);
 
     final Enumeration<TreePath> expanded = myRepositoryTree.getExpandedDescendants(new TreePath(pathToNode));
@@ -131,7 +135,7 @@ public class RepositoryBrowserComponent extends JPanel implements Disposable, Da
     return result;
   }
 
-  public boolean isExpanded(@NotNull final TreeNode treeNode) {
+  public boolean isExpanded(final @NotNull TreeNode treeNode) {
     final TreeNode[] pathToNode = ((RepositoryTreeModel)myRepositoryTree.getModel()).getPathToRoot(treeNode);
 
     return (pathToNode != null) && (pathToNode.length > 0) && myRepositoryTree.isExpanded(new TreePath(pathToNode));
@@ -145,35 +149,30 @@ public class RepositoryBrowserComponent extends JPanel implements Disposable, Da
     ((RepositoryTreeModel)myRepositoryTree.getModel()).removeRoot(url);
   }
 
-  @Nullable
-  public DirectoryEntry getSelectedEntry() {
+  public @Nullable DirectoryEntry getSelectedEntry() {
     TreePath selection = myRepositoryTree.getSelectionPath();
     if (selection == null) {
       return null;
     }
     Object element = selection.getLastPathComponent();
-    if (element instanceof RepositoryTreeNode) {
-      RepositoryTreeNode node = (RepositoryTreeNode)element;
+    if (element instanceof RepositoryTreeNode node) {
       return node.getSVNDirEntry();
     }
     return null;
   }
 
-  @Nullable
-  public String getSelectedURL() {
+  public @Nullable String getSelectedURL() {
     Url selectedUrl = getSelectedSVNURL();
     return selectedUrl == null ? null : selectedUrl.toString();
   }
 
-  @Nullable
-  public Url getSelectedSVNURL() {
+  public @Nullable Url getSelectedSVNURL() {
     TreePath selection = myRepositoryTree.getSelectionPath();
     if (selection == null) {
       return null;
     }
     Object element = selection.getLastPathComponent();
-    if (element instanceof RepositoryTreeNode) {
-      RepositoryTreeNode node = (RepositoryTreeNode)element;
+    if (element instanceof RepositoryTreeNode node) {
       return node.getURL();
     }
     return null;
@@ -198,10 +197,11 @@ public class RepositoryBrowserComponent extends JPanel implements Disposable, Da
     myRepositoryTree.setRootVisible(false);
     myRepositoryTree.setShowsRootHandles(true);
     JScrollPane scrollPane =
-      ScrollPaneFactory.createScrollPane(myRepositoryTree, JScrollPane.VERTICAL_SCROLLBAR_ALWAYS, JScrollPane.HORIZONTAL_SCROLLBAR_ALWAYS);
+      ScrollPaneFactory.createScrollPane(myRepositoryTree, ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS,
+                                         ScrollPaneConstants.HORIZONTAL_SCROLLBAR_ALWAYS);
     add(scrollPane, BorderLayout.CENTER);
     myRepositoryTree.setCellRenderer(new SvnRepositoryTreeCellRenderer());
-    TreeSpeedSearch search = new TreeSpeedSearch(myRepositoryTree, o -> {
+    TreeSpeedSearch search = TreeSpeedSearch.installOn(myRepositoryTree, false, o -> {
       Object component = o.getLastPathComponent();
       if (component instanceof RepositoryTreeNode) {
         return ((RepositoryTreeNode)component).getURL().toDecodedString();
@@ -213,8 +213,7 @@ public class RepositoryBrowserComponent extends JPanel implements Disposable, Da
     EditSourceOnDoubleClickHandler.install(myRepositoryTree);
   }
 
-  @Nullable
-  public RepositoryTreeNode getSelectedNode() {
+  public @Nullable RepositoryTreeNode getSelectedNode() {
     TreePath selection = myRepositoryTree.getSelectionPath();
     if (selection != null && selection.getLastPathComponent() instanceof RepositoryTreeNode) {
       return (RepositoryTreeNode)selection.getLastPathComponent();
@@ -222,13 +221,12 @@ public class RepositoryBrowserComponent extends JPanel implements Disposable, Da
     return null;
   }
 
-  public void setSelectedNode(@NotNull final TreeNode node) {
+  public void setSelectedNode(final @NotNull TreeNode node) {
     final TreeNode[] pathNodes = ((RepositoryTreeModel)myRepositoryTree.getModel()).getPathToRoot(node);
     myRepositoryTree.setSelectionPath(new TreePath(pathNodes));
   }
 
-  @Nullable
-  public VirtualFile getSelectedVcsFile() {
+  public @Nullable VirtualFile getSelectedVcsFile() {
     final RepositoryTreeNode node = getSelectedNode();
     if (node == null) return null;
 
@@ -245,7 +243,8 @@ public class RepositoryBrowserComponent extends JPanel implements Disposable, Da
       SvnFileRevision revision =
         new SvnFileRevision(myVCS, Revision.UNDEFINED, Revision.HEAD, url, entry.getAuthor(), entry.getDate(), null, null);
 
-      return new VcsVirtualFile(node.getSVNDirEntry().getName(), revision, VcsFileSystem.getInstance());
+      FilePath filePath = VcsUtil.getFilePath(node.getSVNDirEntry().getName(), entry.isDirectory());
+      return new VcsVirtualFile(filePath, revision);
     }
     else {
       return null;
@@ -253,31 +252,24 @@ public class RepositoryBrowserComponent extends JPanel implements Disposable, Da
   }
 
   @Override
-  @Nullable
-  public Object getData(@NotNull @NonNls String dataId) {
-    if (CommonDataKeys.NAVIGATABLE.is(dataId)) {
-      final Project project = myVCS.getProject();
-      if (project == null || project.isDefault()) {
-        return null;
-      }
-      final VirtualFile vcsFile = getSelectedVcsFile();
-
+  public void uiDataSnapshot(@NotNull DataSink sink) {
+    Project project = myVCS.getProject();
+    if (project.isDefault()) return;
+    sink.set(CommonDataKeys.PROJECT, project);
+    VirtualFile vcsFile = getSelectedVcsFile();
+    if (vcsFile != null) {
       // do not return OpenFileDescriptor instance here as in that case SelectInAction will be enabled and its invocation (using keyboard)
       // will raise error - see IDEA-104113 - because of the following operations inside SelectInAction.actionPerformed():
       // - at first VcsVirtualFile content will be loaded which for svn results in showing progress dialog
       // - then DataContext from SelectInAction will still be accessed which results in error as current event count has already changed
       // (because of progress dialog)
-      return vcsFile != null ? new NavigatableAdapter() {
+      sink.set(CommonDataKeys.NAVIGATABLE, new NavigatableAdapter() {
         @Override
         public void navigate(boolean requestFocus) {
           navigate(project, vcsFile, requestFocus);
         }
-      } : null;
+      });
     }
-    else if (CommonDataKeys.PROJECT.is(dataId)) {
-      return myVCS.getProject();
-    }
-    return null;
   }
 
   @Override
@@ -288,8 +280,7 @@ public class RepositoryBrowserComponent extends JPanel implements Disposable, Da
     ((RepositoryTreeModel)myRepositoryTree.getModel()).setDefaultExpanderFactory(expanderFactory);
   }
 
-  @NotNull
-  public StatusText getStatusText() {
+  public @NotNull StatusText getStatusText() {
     return myRepositoryTree.getEmptyText();
   }
 }

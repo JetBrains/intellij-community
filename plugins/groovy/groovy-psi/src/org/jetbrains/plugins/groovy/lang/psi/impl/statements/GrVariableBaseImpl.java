@@ -1,17 +1,24 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.RecursionManager;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiClassType;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiIdentifier;
+import com.intellij.psi.PsiModifierList;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypeElement;
+import com.intellij.psi.StubBasedPsiElement;
+import com.intellij.psi.TokenType;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.impl.source.tree.LeafPsiElement;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.stubs.IStubElementType;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -19,7 +26,6 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
-import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrListOrMap;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifier;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
@@ -34,9 +40,6 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUt
 import org.jetbrains.plugins.groovy.lang.psi.stubs.GrVariableStubBase;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
-/**
- * @author ilyas
- */
 public abstract class GrVariableBaseImpl<T extends GrVariableStubBase> extends GrStubElementBase<T> implements GrVariable, StubBasedPsiElement<T> {
   protected static final Logger LOG = Logger.getInstance(GrVariableBaseImpl.class);
 
@@ -49,14 +52,12 @@ public abstract class GrVariableBaseImpl<T extends GrVariableStubBase> extends G
   }
 
   @Override
-  @Nullable
-  public PsiTypeElement getTypeElement() {
+  public @Nullable PsiTypeElement getTypeElement() {
     return PsiImplUtil.getOrCreateTypeElement(getTypeElementGroovy());
   }
 
   @Override
-  @Nullable
-  public PsiExpression getInitializer() {
+  public @Nullable PsiExpression getInitializer() {
     return null;
   }
 
@@ -70,8 +71,7 @@ public abstract class GrVariableBaseImpl<T extends GrVariableStubBase> extends G
   }
 
   @Override
-  @Nullable
-  public Object computeConstantValue() {
+  public @Nullable Object computeConstantValue() {
     return null;
   }
 
@@ -102,15 +102,13 @@ public abstract class GrVariableBaseImpl<T extends GrVariableStubBase> extends G
   }
 
   @Override
-  @NotNull
-  public PsiType getType() {
+  public @NotNull PsiType getType() {
     PsiType type = getDeclaredType();
     return type != null ? type : TypesUtil.getJavaLangObject(this);
   }
 
   @Override
-  @Nullable
-  public GrTypeElement getTypeElementGroovy() {
+  public @Nullable GrTypeElement getTypeElementGroovy() {
     T stub = getStub();
     if (stub != null) {
       return stub.getTypeElement();
@@ -125,19 +123,7 @@ public abstract class GrVariableBaseImpl<T extends GrVariableStubBase> extends G
   }
 
   @Override
-  @Nullable
-  public PsiType getDeclaredType() {
-    GrTypeElement typeElement = getTypeElementGroovy();
-    if (typeElement != null) return typeElement.getType();
-
-    return null;
-  }
-
-  @Override
-  @Nullable
-  public PsiType getTypeGroovy() {
-    final GrExpression initializer = getInitializerGroovy();
-
+  public @Nullable PsiType getTypeGroovy() {
     GrTypeElement typeElement = getTypeElementGroovy();
     PsiType declaredType = null;
     if (typeElement != null) {
@@ -147,14 +133,13 @@ public abstract class GrVariableBaseImpl<T extends GrVariableStubBase> extends G
       }
     }
 
-    if (initializer != null) {
-      PsiType initializerType = RecursionManager.doPreventingRecursion(this, true, initializer::getType);
-      if (declaredType == null) return initializerType;
-      if (initializerType instanceof PsiClassType && TypesUtil.isAssignable(declaredType, initializerType, this)) {
-        return initializerType;
-      }
+    PsiType initializerType = RecursionManager.doPreventingRecursion(this, true, this::getInitializerType);
+    if (declaredType == null) {
+      return initializerType;
     }
-
+    if (initializerType instanceof PsiClassType && TypesUtil.isAssignableWithoutConversions(declaredType, initializerType)) {
+      return initializerType;
+    }
     return declaredType;
   }
 
@@ -194,31 +179,14 @@ public abstract class GrVariableBaseImpl<T extends GrVariableStubBase> extends G
   }
 
   @Override
-  @NotNull
-  public PsiElement getNameIdentifierGroovy() {
+  public @NotNull PsiElement getNameIdentifierGroovy() {
     PsiElement ident = findChildByType(TokenSets.PROPERTY_NAMES);
     assert ident != null : getText();
     return ident;
   }
 
   @Override
-  @Nullable
-  public GrExpression getInitializerGroovy() {
-    final PsiElement parent = getParent();
-    if (parent instanceof GrVariableDeclaration && ((GrVariableDeclaration)parent).isTuple()){
-      final GrVariableDeclaration tuple = (GrVariableDeclaration)parent;
-      final GrExpression initializer = tuple.getTupleInitializer();
-
-      if (initializer instanceof GrListOrMap){
-        final GrListOrMap listOrMap = (GrListOrMap)initializer;
-        final GrExpression[] initializers = listOrMap.getInitializers();
-
-        final int varNumber = ArrayUtil.indexOf(tuple.getVariables(), this);
-        if (initializers.length < varNumber + 1) return null;
-
-        return initializers[varNumber];
-      }
-    }
+  public @Nullable GrExpression getInitializerGroovy() {
     return GroovyPsiElementImpl.findExpressionChild(this);
   }
 
@@ -234,16 +202,17 @@ public abstract class GrVariableBaseImpl<T extends GrVariableStubBase> extends G
   }
 
   @Override
-  @NotNull
-  public SearchScope getUseScope() {
+  public @NotNull SearchScope getUseScope() {
+    if (isUnnamed()) {
+      return LocalSearchScope.EMPTY;
+    }
     final GrVariableDeclarationOwner owner = PsiTreeUtil.getParentOfType(this, GrVariableDeclarationOwner.class);
     if (owner != null) return new LocalSearchScope(owner);
     return super.getUseScope();
   }
 
   @Override
-  @NotNull
-  public String getName() {
+  public @NotNull String getName() {
     T stub = getGreenStub();
     if (stub != null) {
       String name = stub.getName();
@@ -255,21 +224,18 @@ public abstract class GrVariableBaseImpl<T extends GrVariableStubBase> extends G
   }
 
   @Override
-  @NotNull
-  public PsiIdentifier getNameIdentifier() {
+  public @NotNull PsiIdentifier getNameIdentifier() {
     return PsiUtil.getJavaNameIdentifier(this);
   }
 
   @Override
-  @Nullable
-  public GrModifierList getModifierList() {
+  public @Nullable GrModifierList getModifierList() {
     final GrVariableDeclaration variableDeclaration = getDeclaration();
     if (variableDeclaration != null) return variableDeclaration.getModifierList();
     return null;
   }
 
-  @Nullable
-  private GrVariableDeclaration getDeclaration() {
+  private @Nullable GrVariableDeclaration getDeclaration() {
     PsiElement parent = getParent();
     if (parent instanceof GrVariableDeclaration) {
       return (GrVariableDeclaration)parent;

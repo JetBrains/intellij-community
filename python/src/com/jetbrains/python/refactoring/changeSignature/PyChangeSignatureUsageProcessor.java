@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.refactoring.changeSignature;
 
 import com.intellij.openapi.module.Module;
@@ -31,10 +17,27 @@ import com.intellij.util.Query;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.jetbrains.python.PythonLanguage;
+import com.jetbrains.python.ast.PyAstSingleStarParameter;
+import com.jetbrains.python.ast.PyAstSlashParameter;
 import com.jetbrains.python.codeInsight.PyPsiIndexUtil;
 import com.jetbrains.python.documentation.docstrings.PyDocstringGenerator;
 import com.jetbrains.python.inspections.quickfix.PyChangeSignatureQuickFix;
-import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.LanguageLevel;
+import com.jetbrains.python.psi.PyAnnotation;
+import com.jetbrains.python.psi.PyArgumentList;
+import com.jetbrains.python.psi.PyCallExpression;
+import com.jetbrains.python.psi.PyClass;
+import com.jetbrains.python.psi.PyDecorator;
+import com.jetbrains.python.psi.PyElementGenerator;
+import com.jetbrains.python.psi.PyExpression;
+import com.jetbrains.python.psi.PyFunction;
+import com.jetbrains.python.psi.PyKeywordArgument;
+import com.jetbrains.python.psi.PyNamedParameter;
+import com.jetbrains.python.psi.PyParameter;
+import com.jetbrains.python.psi.PyParameterList;
+import com.jetbrains.python.psi.PyStarArgument;
+import com.jetbrains.python.psi.PyStringLiteralExpression;
+import com.jetbrains.python.psi.PyUtil;
 import com.jetbrains.python.psi.impl.PyCallExpressionHelper;
 import com.jetbrains.python.psi.search.PyOverridingMethodsSearch;
 import com.jetbrains.python.psi.types.PyCallableParameter;
@@ -43,7 +46,14 @@ import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * User : ktisha
@@ -56,7 +66,7 @@ public class PyChangeSignatureUsageProcessor implements ChangeSignatureUsageProc
     if (info instanceof PyChangeInfo) {
       final PyFunction targetFunction = ((PyChangeInfo)info).getMethod();
       final List<UsageInfo> usages = PyPsiIndexUtil.findUsages(targetFunction, true);
-      if (!PyUtil.isInitOrNewMethod(targetFunction)) {
+      if (!PyUtil.isConstructorLikeMethod(targetFunction)) {
         final Query<PyFunction> search = PyOverridingMethodsSearch.search(targetFunction, true);
         for (PyFunction override : search.findAll()) {
           usages.add(new UsageInfo(override));
@@ -68,9 +78,8 @@ public class PyChangeSignatureUsageProcessor implements ChangeSignatureUsageProc
     return UsageInfo.EMPTY_ARRAY;
   }
 
-  @Nullable
   @Override
-  public MultiMap<PsiElement, String> findConflicts(ChangeInfo info, Ref<UsageInfo[]> refUsages) {
+  public @Nullable MultiMap<PsiElement, String> findConflicts(ChangeInfo info, Ref<UsageInfo[]> refUsages) {
     final MultiMap<PsiElement, String> conflicts = new MultiMap<>();
     if (info instanceof PyChangeInfo && info.isNameChanged()) {
       final PyFunction function = ((PyChangeInfo)info).getMethod();
@@ -100,8 +109,7 @@ public class PyChangeSignatureUsageProcessor implements ChangeSignatureUsageProc
     }
     if (element == null) return false;
 
-    if (element.getParent() instanceof PyCallExpression) {
-      final PyCallExpression call = (PyCallExpression)element.getParent();
+    if (element.getParent() instanceof PyCallExpression call) {
       // Don't modify the call that was the cause of Change Signature invocation
       if (call.getUserData(PyChangeSignatureQuickFix.CHANGE_SIGNATURE_ORIGINAL_CALL) != null) {
         return true;
@@ -129,8 +137,7 @@ public class PyChangeSignatureUsageProcessor implements ChangeSignatureUsageProc
     return false;
   }
 
-  @NotNull
-  private static StringBuilder buildSignature(@NotNull PyChangeInfo changeInfo, @NotNull PyCallExpression call) {
+  private static @NotNull StringBuilder buildSignature(@NotNull PyChangeInfo changeInfo, @NotNull PyCallExpression call) {
     final PyArgumentList argumentList = call.getArgumentList();
     final PyExpression callee = call.getCallee();
     String name = callee != null ? callee.getText() : changeInfo.getNewName();
@@ -144,8 +151,7 @@ public class PyChangeSignatureUsageProcessor implements ChangeSignatureUsageProc
   }
 
 
-  @NotNull
-  private static List<String> collectParameters(@NotNull PyChangeInfo changeInfo, @NotNull PyCallExpression call) {
+  private static @NotNull List<String> collectParameters(@NotNull PyChangeInfo changeInfo, @NotNull PyCallExpression call) {
     boolean keywordArgsRequired = false;
     final List<String> newArguments = new ArrayList<>();
 
@@ -165,11 +171,10 @@ public class PyChangeSignatureUsageProcessor implements ChangeSignatureUsageProc
     List<PyParameterInfo> newParamInfos = Arrays.asList(changeInfo.getNewParameters());
     
     final int posVarargIndex = ContainerUtil.indexOf(newParamInfos, info -> isPositionalVarargName(info.getName()));
-    final int posOnlyMarkerIndex = ContainerUtil.indexOf(newParamInfos, info -> PySlashParameter.TEXT.equals(info.getName()));
+    final int posOnlyMarkerIndex = ContainerUtil.indexOf(newParamInfos, info -> PyAstSlashParameter.TEXT.equals(info.getName()));
     final boolean posVarargEmpty = posVarargIndex != -1 && oldParamIndexToArgs.get(newParamInfos.get(posVarargIndex).getOldIndex()).isEmpty();
-    List<PyExpression> notInsertedVariadicKeywordArgs = ContainerUtil.filter(call.getArguments(), a -> {
-      return a instanceof PyStarArgument && ((PyStarArgument)a).isKeyword();
-    });
+    List<PyExpression> notInsertedVariadicKeywordArgs =
+      new ArrayList<>(ContainerUtil.filter(call.getArguments(), a -> a instanceof PyStarArgument && ((PyStarArgument)a).isKeyword()));
     boolean variadicKeywordArgsUsed = false;
     final int implicitCount = mapping.getImplicitParameters().size();
     for (int paramIndex = implicitCount; paramIndex < newParamInfos.size(); paramIndex++) {
@@ -181,11 +186,11 @@ public class PyChangeSignatureUsageProcessor implements ChangeSignatureUsageProc
       final boolean defaultShouldBeInlined = beforePositionalOnlyMarker &&
                                              ContainerUtil.exists(newParamInfos.subList(paramIndex + 1, posOnlyMarkerIndex),
                                                                   i -> !i.isNew() && !oldParamIndexToArgs.get(i.getOldIndex()).isEmpty());
-      if (paramName.equals(PySingleStarParameter.TEXT)) {
+      if (paramName.equals(PyAstSingleStarParameter.TEXT)) {
         keywordArgsRequired = true;
         continue;
       }
-      if (paramName.equals(PySlashParameter.TEXT)) {
+      if (paramName.equals(PyAstSlashParameter.TEXT)) {
         continue;
       }
       final String paramDefault = StringUtil.notNullize(info.getDefaultValue());
@@ -196,7 +201,7 @@ public class PyChangeSignatureUsageProcessor implements ChangeSignatureUsageProc
           // Imagine "def f(x, y=None): ..." -> "def f(x, foo=None, y=None): ..." and a call "f(1, 2)"
           keywordArgsRequired = true;
         }
-        else {
+        else if (!isKeywordVararg && !isPositionalVararg) {
           newArguments.add(formatArgument(paramName, paramDefault, keywordArgsRequired));
         }
       }
@@ -251,16 +256,16 @@ public class PyChangeSignatureUsageProcessor implements ChangeSignatureUsageProc
   }
 
   private static boolean isPositionalVarargName(@NotNull String paramName) {
-    return !isKeywordVarargName(paramName) && !paramName.equals(PySingleStarParameter.TEXT) && paramName.startsWith("*");
+    return !isKeywordVarargName(paramName) && !paramName.equals(PyAstSingleStarParameter.TEXT) && paramName.startsWith("*");
   }
 
   private static boolean isKeywordVarargName(@NotNull String paramName) {
     return paramName.startsWith("**");
   }
 
-  @NotNull
-  private static String formatArgument(@NotNull String name, @NotNull String value, boolean keywordArgument) {
+  private static @NotNull String formatArgument(@NotNull String name, @NotNull String value, boolean keywordArgument) {
     if (keywordArgument && !value.startsWith("*")) {
+      assert !name.startsWith("*");
       return name + "=" + value;
     }
     else {
@@ -277,8 +282,7 @@ public class PyChangeSignatureUsageProcessor implements ChangeSignatureUsageProc
 
   @Override
   public boolean processPrimaryMethod(ChangeInfo changeInfo) {
-    if (changeInfo instanceof PyChangeInfo && changeInfo.getLanguage().is(PythonLanguage.getInstance())) {
-      final PyChangeInfo pyChangeInfo = (PyChangeInfo)changeInfo;
+    if (changeInfo instanceof PyChangeInfo pyChangeInfo && changeInfo.getLanguage().is(PythonLanguage.getInstance())) {
       processFunctionDeclaration(pyChangeInfo, pyChangeInfo.getMethod());
       return true;
     }
@@ -397,7 +401,7 @@ public class PyChangeSignatureUsageProcessor implements ChangeSignatureUsageProc
   }
 
   @Override
-  public void registerConflictResolvers(List<ResolveSnapshotProvider.ResolveSnapshot> snapshots,
+  public void registerConflictResolvers(List<? super ResolveSnapshotProvider.ResolveSnapshot> snapshots,
                                         @NotNull ResolveSnapshotProvider resolveSnapshotProvider,
                                         UsageInfo[] usages, ChangeInfo changeInfo) {
   }

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.ExpectedTypesProvider;
@@ -11,26 +11,39 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.patterns.PatternCondition;
 import com.intellij.patterns.PsiElementPattern;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaResolveResult;
+import com.intellij.psi.PsiCall;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiExpressionList;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiNamedElement;
+import com.intellij.psi.PsiParameter;
+import com.intellij.psi.PsiReferenceExpression;
+import com.intellij.psi.PsiSubstitutor;
+import com.intellij.psi.PsiType;
 import com.intellij.psi.impl.source.tree.java.PsiEmptyExpressionImpl;
 import com.intellij.psi.util.PsiSuperMethodUtil;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.ui.IconManager;
 import com.intellij.ui.LayeredIcon;
+import com.intellij.ui.PlatformIcons;
 import com.intellij.util.Consumer;
 import com.intellij.util.JavaPsiConstructorUtil;
-import com.intellij.util.PlatformIcons;
 import com.intellij.util.ProcessingContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.LinkedHashSet;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
 
 import static com.intellij.patterns.PlatformPatterns.psiElement;
 
-/**
-* @author peter
-*/
-class SameSignatureCallParametersProvider {
+final class SameSignatureCallParametersProvider {
   static final PsiElementPattern.Capture<PsiElement> IN_CALL_ARGUMENT =
     psiElement().afterLeaf("(").withParent(
       psiElement(PsiReferenceExpression.class).withParent(
@@ -68,13 +81,14 @@ class SameSignatureCallParametersProvider {
   }
 
   private static LookupElement createParametersLookupElement(final PsiMethod takeParametersFrom, PsiElement call, PsiMethod invoked) {
-    final PsiParameter[] parameters = takeParametersFrom.getParameterList().getParameters();
-    final String lookupString = StringUtil.join(parameters, PsiNamedElement::getName, ", ");
+    PsiParameter[] parameters = takeParametersFrom.getParameterList().getParameters();
+    String lookupString = StringUtil.join(parameters, PsiNamedElement::getName, ", ");
 
-    final int w = PlatformIcons.PARAMETER_ICON.getIconWidth();
+    IconManager iconManager = IconManager.getInstance();
+    int w = iconManager.getPlatformIcon(PlatformIcons.Parameter).getIconWidth();
     LayeredIcon icon = new LayeredIcon(2);
-    icon.setIcon(PlatformIcons.PARAMETER_ICON, 0, 2*w/5, 0);
-    icon.setIcon(PlatformIcons.PARAMETER_ICON, 1);
+    icon.setIcon(iconManager.getPlatformIcon(PlatformIcons.Parameter), 0, 2 * w / 5, 0);
+    icon.setIcon(iconManager.getPlatformIcon(PlatformIcons.Parameter), 1);
 
     LookupElementBuilder element = LookupElementBuilder.create(lookupString).withIcon(icon);
     boolean makeFinalIfNeeded = PsiTreeUtil.isAncestor(takeParametersFrom, call, true);
@@ -105,23 +119,18 @@ class SameSignatureCallParametersProvider {
   private static Set<Pair<PsiMethod, PsiSubstitutor>> getCallCandidates(PsiCall expression) {
     PsiMethod chosenMethod = CompletionMemory.getChosenMethod(expression);
     Set<Pair<PsiMethod, PsiSubstitutor>> candidates = new LinkedHashSet<>();
-    JavaResolveResult[] results;
-    if (expression instanceof PsiMethodCallExpression) {
-      results = ((PsiMethodCallExpression)expression).getMethodExpression().multiResolve(false);
-    } else {
-      results = new JavaResolveResult[]{expression.resolveMethodGenerics()};
-    }
+    JavaResolveResult[] results = expression.multiResolve(false);
 
     PsiMethod toExclude =
       JavaPsiConstructorUtil.isConstructorCall(expression) ? PsiTreeUtil.getParentOfType(expression, PsiMethod.class) : null;
 
     for (final JavaResolveResult candidate : results) {
       final PsiElement element = candidate.getElement();
-      if (element instanceof PsiMethod) {
-        final PsiClass psiClass = ((PsiMethod)element).getContainingClass();
+      if (element instanceof PsiMethod method) {
+        final PsiClass psiClass = method.getContainingClass();
         if (psiClass != null) {
-          for (Pair<PsiMethod, PsiSubstitutor> overload : psiClass.findMethodsAndTheirSubstitutorsByName(((PsiMethod)element).getName(), true)) {
-            if (overload.first != toExclude && (chosenMethod == null || chosenMethod.equals(overload.first))) {
+          for (Pair<PsiMethod, PsiSubstitutor> overload : psiClass.findMethodsAndTheirSubstitutorsByName(method.getName(), true)) {
+            if (overload.first != toExclude && (chosenMethod == null || chosenMethod.isEquivalentTo(overload.first))) {
               candidates.add(Pair.create(overload.first, candidate.getSubstitutor().putAll(overload.second)));
             }
           }
@@ -133,8 +142,7 @@ class SameSignatureCallParametersProvider {
   }
 
 
-  @Nullable
-  private static PsiMethod getMethodToTakeParametersFrom(PsiMethod place, PsiMethod invoked, PsiSubstitutor substitutor) {
+  private static @Nullable PsiMethod getMethodToTakeParametersFrom(PsiMethod place, PsiMethod invoked, PsiSubstitutor substitutor) {
     if (PsiSuperMethodUtil.isSuperMethod(place, invoked)) {
       return place;
     }

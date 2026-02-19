@@ -1,13 +1,12 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.controlflow;
 
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.Function;
 import com.intellij.util.Processor;
-import com.intellij.util.containers.IntStack;
 import com.intellij.util.graph.Graph;
+import it.unimi.dsi.fastutil.ints.IntArrayList;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
@@ -16,32 +15,25 @@ import java.util.Iterator;
 import java.util.List;
 
 public final class ControlFlowUtil {
-  private static final Logger LOG = Logger.getInstance(ControlFlowUtil.class.getName());
-
   private ControlFlowUtil() {
   }
 
-  @NotNull
-  public static Graph<Instruction> createGraph(final Instruction @NotNull [] flow) {
+  public static @NotNull Graph<Instruction> createGraph(final Instruction @NotNull [] flow) {
     return new Graph<Instruction>() {
-      @NotNull
-      final private List<Instruction> myList = Arrays.asList(flow);
+      private final @NotNull List<Instruction> myList = Arrays.asList(flow);
 
-      @NotNull
       @Override
-      public Collection<Instruction> getNodes() {
+      public @NotNull Collection<Instruction> getNodes() {
         return myList;
       }
 
-      @NotNull
       @Override
-      public Iterator<Instruction> getIn(Instruction n) {
+      public @NotNull Iterator<Instruction> getIn(Instruction n) {
         return n.allPred().iterator();
       }
 
-      @NotNull
       @Override
-      public Iterator<Instruction> getOut(Instruction n) {
+      public @NotNull Iterator<Instruction> getOut(Instruction n) {
         return n.allSucc().iterator();
       }
     };
@@ -67,12 +59,13 @@ public final class ControlFlowUtil {
     boolean[] visited = new boolean[length];
     Arrays.fill(visited, false);
 
-    final IntStack stack = new IntStack(length);
+    @SuppressWarnings("SSBasedInspection")
+    IntArrayList stack = new IntArrayList(length);
     stack.push(start);
 
-    while (!stack.empty()) {
+    while (!stack.isEmpty()) {
       ProgressManager.checkCanceled();
-      final int num = stack.pop();
+      final int num = stack.popInt();
       final Instruction instruction = flow[num];
       if (!processor.process(instruction)){
         return false;
@@ -90,7 +83,7 @@ public final class ControlFlowUtil {
 
   public static void iteratePrev(final int startInstruction,
                                  final Instruction @NotNull [] instructions,
-                                 @NotNull final Function<? super Instruction, Operation> closure) {
+                                 final @NotNull Function<? super Instruction, Operation> closure) {
     iterate(startInstruction, instructions, closure, true);
   }
 
@@ -99,18 +92,20 @@ public final class ControlFlowUtil {
    */
   public static void iterate(final int startInstruction,
                              final Instruction @NotNull [] instructions,
-                             @NotNull final Function<? super Instruction, Operation> closure,
+                             final @NotNull Function<? super Instruction, Operation> closure,
                              boolean prev) {
-    final IntStack stack = new IntStack(instructions.length);
+    //noinspection SSBasedInspection
+    final IntArrayList stack = new IntArrayList(instructions.length);
     final boolean[] visited = new boolean[instructions.length];
 
+    visited[startInstruction] = true;
     stack.push(startInstruction);
-    while (!stack.empty()) {
+    while (!stack.isEmpty()) {
       ProgressManager.checkCanceled();
-      final int num = stack.pop();
+      final int num = stack.popInt();
       final Instruction instr = instructions[num];
       final Operation nextOperation = closure.fun(instr);
-      // Just ignore previous instructions for current node and move further
+      // Just ignore previous instructions for the current node and move further
       if (nextOperation == Operation.CONTINUE) {
         continue;
       }

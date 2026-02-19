@@ -1,0 +1,8 @@
+{
+  "properties": {
+    "baseEnum": {
+      "type": "string",
+      "enum": ["one", "two"]
+    }
+  }
+}

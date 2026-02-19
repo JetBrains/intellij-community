@@ -10,8 +10,7 @@ class Test {
       return null;
    }
 
-    @Nullable
-    private String newMethod(int i, boolean flag) {
+    private @Nullable String newMethod(int i, boolean flag) {
         String xxx = "";
         if (flag) {
             for (int j = 0; j < 100; j++) {

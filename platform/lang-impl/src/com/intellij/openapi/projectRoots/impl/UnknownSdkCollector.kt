@@ -1,12 +1,12 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.projectRoots.impl
 
 import com.google.common.collect.MultimapBuilder
 import com.google.common.hash.Hashing
-import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.ReadAction
+import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionPointName
+import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressManager.checkCanceled
@@ -18,16 +18,14 @@ import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.roots.ui.configuration.UnknownSdk
-import com.intellij.util.concurrency.AppExecutorUtil
-import java.util.*
-import java.util.function.Consumer
+import java.util.Objects
+import java.util.TreeSet
 
 private val EP_NAME = ExtensionPointName.create<UnknownSdkContributor>("com.intellij.unknownSdkContributor")
 
 interface UnknownSdkContributor {
   fun contributeUnknownSdks(project: Project): List<UnknownSdk>
 
-  @JvmDefault
   fun contributeKnownSdks(project: Project) : List<Sdk> = listOf()
 }
 
@@ -36,8 +34,7 @@ data class UnknownSdkSnapshot(
   val resolvableSdks: List<UnknownSdk>,
   val knownSdks: List<Sdk>
 ) {
-
-  private val sdkState = run {
+  private val sdkState by lazy {
     val hasher = Hashing.goodFastHash(128).newHasher()
     knownSdks.sortedBy { it.name }.forEach { sdk ->
       hasher.putByte(42)
@@ -66,7 +63,7 @@ data class UnknownSdkSnapshot(
     return this.sdkState == other.sdkState
   }
 
-  override fun hashCode() = Objects.hash(totallyUnknownSdks.size, resolvableSdks.size, sdkState)
+  override fun hashCode(): Int = Objects.hash(totallyUnknownSdks.size, resolvableSdks.size, sdkState)
 }
 
 private data class MissingSdkInfo(
@@ -77,46 +74,58 @@ private data class MissingSdkInfo(
   override fun getSdkType() = mySdkType
 }
 
-class UnknownSdkCollector(private val myProject: Project) {
-  companion object {
-    private val LOG = logger<UnknownSdkCollector>()
-  }
-  fun collectSdksPromise(onCompleted: Consumer<UnknownSdkSnapshot>) {
-    ReadAction.nonBlocking<UnknownSdkSnapshot> { collectSdksUnderReadAction() }
-      .expireWith(myProject)
-      .coalesceBy(myProject, UnknownSdkCollector::class)
-      .finishOnUiThread(ApplicationManager.getApplication().noneModalityState, onCompleted)
-      .submit(AppExecutorUtil.getAppExecutorService())
-  }
+interface UnknownSdkBlockingCollector {
+  /**
+   * Starts collection of SDKs blocking inside one read action.
+   * For background activities it's more recommended to use [UnknownSdkCollector.collectSdksPromise]
+   * instead to allow better concurrency
+   */
+  fun collectSdksBlocking() : UnknownSdkSnapshot
+}
 
-  private fun collectSdksUnderReadAction(): UnknownSdkSnapshot {
+private val LOG = logger<UnknownSdkCollector>()
 
+open class UnknownSdkCollector(private val project: Project) : UnknownSdkBlockingCollector {
+  /**
+   * Starts collection of Sdks blockingly inside one read action.
+   * For background activities it's more recommended to use [collectSdksPromise]
+   * instead to allow better concurrency
+   */
+  override fun collectSdksBlocking() : UnknownSdkSnapshot = runReadAction { collectSdksUnderReadAction() }
+
+  protected open fun checkProjectSdk(project: Project) : Boolean = true
+  protected open fun collectModulesToCheckSdk(project: Project) : List<Module> = ModuleManager.getInstance(this@UnknownSdkCollector.project).modules.toList()
+
+  internal fun collectSdksUnderReadAction(): UnknownSdkSnapshot {
     val knownSdks = mutableSetOf<Sdk>()
     val sdkToTypes = MultimapBuilder.treeKeys(java.lang.String.CASE_INSENSITIVE_ORDER)
       .hashSetValues()
-      .build<String, String>()
+      .build<String, String?>()
 
     checkCanceled()
 
-    val rootManager = ProjectRootManager.getInstance(myProject)
-    val projectSdk = rootManager.projectSdk
-    if (projectSdk == null) {
-      val sdkName = rootManager.projectSdkName
-      val sdkTypeName = rootManager.projectSdkTypeName
+    if (checkProjectSdk(project)) {
+      val rootManager = ProjectRootManager.getInstance(project)
+      val projectSdk = rootManager.projectSdk
+      if (projectSdk == null) {
+        val sdkName = rootManager.projectSdkName
+        val sdkTypeName = rootManager.projectSdkTypeName
 
-      if (sdkName != null) {
-        sdkToTypes.put(sdkName, sdkTypeName)
+        if (sdkName != null) {
+          sdkToTypes.put(sdkName, sdkTypeName)
+        }
       }
-    } else {
-      knownSdks += projectSdk
+      else {
+        knownSdks.add(projectSdk)
+      }
     }
 
-    for (module in ModuleManager.getInstance(myProject).modules) {
+    for (module in collectModulesToCheckSdk(project)) {
       checkCanceled()
 
       val moduleRootManager = ModuleRootManager.getInstance(module)
       if (moduleRootManager.externalSource != null) {
-        //we do not need to check external modules (e.g. which are imported from Maven or Gradle)
+        // we do not need to check external modules (e.g., which are imported from Maven or Gradle)
         continue
       }
 
@@ -148,10 +157,8 @@ class UnknownSdkCollector(private val myProject: Project) {
 
       val sdkType = SdkType.findByName(singleSdkTypeName)
       if (sdkType == null) {
-        // that seems like one has removed a plugin that was used
-        // and there is no requested SDK too.
-        // it makes less sense to suggest any SDK here (we will fail)
-        // just skipping it for now
+        // that seems like one has removed a plugin that was used and there is no requested SDK either.
+        // it makes less sense to suggest any SDK here (we will fail) just skipping it for now
         continue
       }
 
@@ -160,14 +167,14 @@ class UnknownSdkCollector(private val myProject: Project) {
 
     val detectedUnknownSdkNames = resolvableSdks.mapNotNull { it.sdkName }.toMutableSet()
 
-    EP_NAME.forEachExtensionSafe {
+    getContributors().forEach {
       val contrib = try {
-        it.contributeUnknownSdks(myProject)
+        it.contributeUnknownSdks(project)
       } catch (e: ProcessCanceledException) {
         throw e
       } catch (t: Throwable) {
         LOG.warn("Failed to contribute SDKs with ${it.javaClass.name}. ${t.message}", t)
-        listOf<UnknownSdk>()
+        listOf()
       }
 
       for (unknownSdk in contrib) {
@@ -177,7 +184,7 @@ class UnknownSdkCollector(private val myProject: Project) {
       }
 
       try {
-        knownSdks += it.contributeKnownSdks(myProject)
+        knownSdks += it.contributeKnownSdks(project)
       } catch (e: ProcessCanceledException) {
         throw e
       } catch (t: Throwable) {
@@ -185,6 +192,8 @@ class UnknownSdkCollector(private val myProject: Project) {
       }
     }
 
-    return UnknownSdkSnapshot(totallyUnknownSdks, resolvableSdks, knownSdks.toList().sortedBy { it.name })
+    return UnknownSdkSnapshot(totallyUnknownSdks, resolvableSdks, knownSdks.toList().sortedBy { it.name }.distinct())
   }
+
+  protected open fun getContributors(): List<UnknownSdkContributor> = EP_NAME.extensionList
 }

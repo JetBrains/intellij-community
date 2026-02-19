@@ -3,7 +3,17 @@ package org.jetbrains.plugins.gradle.nativeplatform.tooling.model
 
 import org.jetbrains.plugins.gradle.model.DefaultExternalTask
 import org.jetbrains.plugins.gradle.model.ExternalTask
-import org.jetbrains.plugins.gradle.nativeplatform.tooling.model.impl.*
+import org.jetbrains.plugins.gradle.nativeplatform.tooling.model.impl.CompilationDetailsImpl
+import org.jetbrains.plugins.gradle.nativeplatform.tooling.model.impl.CppBinaryImpl
+import org.jetbrains.plugins.gradle.nativeplatform.tooling.model.impl.CppComponentImpl
+import org.jetbrains.plugins.gradle.nativeplatform.tooling.model.impl.CppExecutableImpl
+import org.jetbrains.plugins.gradle.nativeplatform.tooling.model.impl.CppProjectImpl
+import org.jetbrains.plugins.gradle.nativeplatform.tooling.model.impl.CppSharedLibraryImpl
+import org.jetbrains.plugins.gradle.nativeplatform.tooling.model.impl.CppStaticLibraryImpl
+import org.jetbrains.plugins.gradle.nativeplatform.tooling.model.impl.CppTestSuiteImpl
+import org.jetbrains.plugins.gradle.nativeplatform.tooling.model.impl.LinkageDetailsImpl
+import org.jetbrains.plugins.gradle.nativeplatform.tooling.model.impl.MacroDirectiveImpl
+import org.jetbrains.plugins.gradle.nativeplatform.tooling.model.impl.SourceFileImpl
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import java.io.File
@@ -50,6 +60,8 @@ abstract class SerializationDataTestCase {
     group = string
     type = string
     isTest = boolean
+    isJvmTest = boolean
+    isInherited = boolean
   }
 
   private fun <B : CppBinaryImpl> B.configure() = apply {
@@ -168,7 +180,10 @@ abstract class SerializationDataTestCase {
     if (expected == null || actual == null) return
     assertEquals(expected.description, actual.description)
     assertEquals(expected.group, actual.group)
+    assertEquals(expected.isJvm, actual.isJvm)
     assertEquals(expected.isTest, actual.isTest)
+    assertEquals(expected.isJvmTest, actual.isJvmTest)
+    assertEquals(expected.isInherited, actual.isInherited)
     assertEquals(expected.name, actual.name)
     assertEquals(expected.qName, actual.qName)
     assertEquals(expected.type, actual.type)

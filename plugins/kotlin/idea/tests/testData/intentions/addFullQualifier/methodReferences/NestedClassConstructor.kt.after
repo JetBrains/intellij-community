@@ -1,0 +1,8 @@
+// PRIORITY: LOW
+package one.two.three
+
+class Foo {
+    class Bar {
+        val x: () -> Bar = one.two.three.Foo::Bar
+    }
+}

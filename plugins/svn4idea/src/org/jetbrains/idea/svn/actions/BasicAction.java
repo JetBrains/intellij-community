@@ -1,10 +1,11 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 
 package org.jetbrains.idea.svn.actions;
 
 import com.intellij.history.LocalHistory;
 import com.intellij.history.LocalHistoryAction;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
@@ -16,7 +17,9 @@ import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnVcs;
 
 import java.util.List;
@@ -24,9 +27,8 @@ import java.util.function.Predicate;
 import java.util.stream.Stream;
 
 import static com.intellij.openapi.application.ApplicationManager.getApplication;
-import static com.intellij.openapi.util.text.StringUtil.trimEnd;
+import static com.intellij.openapi.util.text.StringUtil.removeEllipsisSuffix;
 import static com.intellij.util.ArrayUtil.isEmpty;
-import static com.intellij.util.ui.SwingHelper.ELLIPSIS;
 import static com.intellij.util.ui.UIUtil.removeMnemonic;
 
 public abstract class BasicAction extends AnAction implements DumbAware {
@@ -34,15 +36,15 @@ public abstract class BasicAction extends AnAction implements DumbAware {
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
     Project project = e.getData(CommonDataKeys.PROJECT);
-    VirtualFile[] files = e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY);
-    if (isEmpty(files)) return;
+    VirtualFile[] files = getSelectedFiles(e);
+    if (files == null || isEmpty(files)) return;
 
     SvnVcs vcs = SvnVcs.getInstance(project);
     if (!ProjectLevelVcsManager.getInstance(project).checkAllFilesAreUnder(vcs, files)) return;
 
     project.save();
 
-    String actionName = removeMnemonic(trimEnd(getActionName(), ELLIPSIS));
+    String actionName = removeMnemonic(removeEllipsisSuffix(getActionName()));
     LocalHistoryAction action = LocalHistory.getInstance().startAction(actionName);
     AbstractVcsHelper helper = AbstractVcsHelper.getInstance(project);
 
@@ -73,11 +75,20 @@ public abstract class BasicAction extends AnAction implements DumbAware {
     }
   }
 
+  protected VirtualFile @Nullable [] getSelectedFiles(@NotNull AnActionEvent e) {
+    return e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY);
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
+  }
+
   @Override
   public void update(@NotNull AnActionEvent e) {
     Project project = e.getProject();
     SvnVcs vcs = project != null ? SvnVcs.getInstance(project) : null;
-    VirtualFile[] files = e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY);
+    VirtualFile[] files = getSelectedFiles(e);
     boolean visible = project != null;
 
     e.getPresentation().setEnabled(visible && vcs != null && !isEmpty(files) && isEnabled(vcs, files));
@@ -112,8 +123,7 @@ public abstract class BasicAction extends AnAction implements DumbAware {
     }
   }
 
-  @NotNull
-  protected abstract String getActionName();
+  protected abstract @NotNull @Nls String getActionName();
 
   protected boolean isEnabled(@NotNull SvnVcs vcs, VirtualFile @NotNull [] files) {
     Stream<VirtualFile> fileStream = Stream.of(files);
@@ -127,7 +137,8 @@ public abstract class BasicAction extends AnAction implements DumbAware {
 
   protected abstract void perform(@NotNull SvnVcs vcs, @NotNull VirtualFile file, @NotNull DataContext context) throws VcsException;
 
-  protected abstract void batchPerform(@NotNull SvnVcs vcs, VirtualFile @NotNull [] files, @NotNull DataContext context) throws VcsException;
+  protected abstract void batchPerform(@NotNull SvnVcs vcs, VirtualFile @NotNull [] files, @NotNull DataContext context)
+    throws VcsException;
 
   protected abstract boolean isBatchAction();
 }

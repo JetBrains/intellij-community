@@ -17,7 +17,12 @@
 package com.intellij.java.refactoring;
 
 import com.intellij.JavaTestUtil;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaDirectoryService;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiPackage;
 import com.intellij.refactoring.LightMultiFileTestCase;
 import com.intellij.refactoring.memberPullUp.PullUpConflictsUtil;
 import com.intellij.refactoring.memberPullUp.PullUpProcessor;
@@ -57,7 +62,7 @@ public class PullUpMultifileTest extends LightMultiFileTestCase {
         PullUpConflictsUtil.checkConflicts(membersToMove, srcClass, targetClass, targetPackage, targetDirectory,
                                            psiMethod -> PullUpProcessor.checkedInterfacesContain(Arrays.asList(membersToMove), psiMethod)));
 
-      new PullUpProcessor(srcClass, targetClass, membersToMove, new DocCommentPolicy<>(DocCommentPolicy.ASIS)).run();
+      new PullUpProcessor(srcClass, targetClass, membersToMove, new DocCommentPolicy(DocCommentPolicy.ASIS)).run();
     });
 
     if (conflicts.length != 0 && conflictsMap.isEmpty()) {
@@ -107,7 +112,7 @@ public class PullUpMultifileTest extends LightMultiFileTestCase {
       final MemberInfo memberInfo = new MemberInfo(methods[0]);
       memberInfo.setChecked(true);
       membersToMove[0] = memberInfo;
-      new PullUpProcessor(srcClass, targetClass, membersToMove, new DocCommentPolicy<>(DocCommentPolicy.ASIS)).run();
+      new PullUpProcessor(srcClass, targetClass, membersToMove, new DocCommentPolicy(DocCommentPolicy.ASIS)).run();
     });
   }
 }

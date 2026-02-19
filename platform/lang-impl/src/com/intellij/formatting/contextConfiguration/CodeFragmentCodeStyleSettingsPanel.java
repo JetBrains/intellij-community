@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.formatting.contextConfiguration;
 
 import com.intellij.application.options.TabbedLanguageCodeStylePanel;
@@ -6,7 +6,12 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsContexts;
-import com.intellij.psi.codeStyle.*;
+import com.intellij.openapi.util.text.Strings;
+import com.intellij.psi.codeStyle.CodeStyleSettings;
+import com.intellij.psi.codeStyle.CodeStyleSettingsCodeFragmentFilter;
+import com.intellij.psi.codeStyle.CodeStyleSettingsCustomizable;
+import com.intellij.psi.codeStyle.CustomCodeStyleSettings;
+import com.intellij.psi.codeStyle.LanguageCodeStyleSettingsProvider;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.util.ArrayUtilRt;
 import org.jetbrains.annotations.Nls;
@@ -14,20 +19,25 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JComponent;
+import javax.swing.JPanel;
+import java.awt.BorderLayout;
+import java.awt.Dimension;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
-import java.util.*;
+import java.util.Set;
 
 import static com.intellij.psi.codeStyle.CodeStyleSettingsCustomizableOptions.getInstance;
 import static com.intellij.psi.codeStyle.LanguageCodeStyleSettingsProvider.SettingsType.SPACING_SETTINGS;
 import static com.intellij.psi.codeStyle.LanguageCodeStyleSettingsProvider.SettingsType.WRAPPING_AND_BRACES_SETTINGS;
 
-class CodeFragmentCodeStyleSettingsPanel extends TabbedLanguageCodeStylePanel {
+final class CodeFragmentCodeStyleSettingsPanel extends TabbedLanguageCodeStylePanel {
   private static final Logger LOG = Logger.getInstance(CodeFragmentCodeStyleSettingsPanel.class);
 
   private final CodeStyleSettingsCodeFragmentFilter.CodeStyleSettingsToShow mySettingsToShow;
-  @NotNull private final LanguageCodeStyleSettingsProvider mySettingsProvider;
+  private final @NotNull LanguageCodeStyleSettingsProvider mySettingsProvider;
   private final SelectedTextFormatter mySelectedTextFormatter;
   private SpacesPanelWithoutPreview mySpacesPanel;
   private WrappingAndBracesPanelWithoutPreview myWrappingPanel;
@@ -79,8 +89,7 @@ class CodeFragmentCodeStyleSettingsPanel extends TabbedLanguageCodeStylePanel {
     reset(getSettings());
   }
 
-  @Nullable
-  private SpacesPanelWithoutPreview getSpacesPanel(CodeStyleSettings settings) {
+  private @Nullable SpacesPanelWithoutPreview getSpacesPanel(CodeStyleSettings settings) {
     SpacesPanelWithoutPreview spacesPanel = new SpacesPanelWithoutPreview(settings);
     if (spacesPanel.hasSomethingToShow()) {
       return spacesPanel;
@@ -117,7 +126,7 @@ class CodeFragmentCodeStyleSettingsPanel extends TabbedLanguageCodeStylePanel {
     mySelectedTextFormatter.reformatSelectedText(clonedSettings);
   }
 
-  private class SpacesPanelWithoutPreview extends MySpacesPanel {
+  private final class SpacesPanelWithoutPreview extends MySpacesPanel {
     private JPanel myPanel;
 
     SpacesPanelWithoutPreview(CodeStyleSettings settings) {
@@ -176,7 +185,7 @@ class CodeFragmentCodeStyleSettingsPanel extends TabbedLanguageCodeStylePanel {
     }
   }
 
-  private class WrappingAndBracesPanelWithoutPreview extends MyWrappingAndBracesPanel {
+  private final class WrappingAndBracesPanelWithoutPreview extends MyWrappingAndBracesPanel {
     public JPanel myPanel;
 
     WrappingAndBracesPanelWithoutPreview(CodeStyleSettings settings) {
@@ -211,16 +220,15 @@ class CodeFragmentCodeStyleSettingsPanel extends TabbedLanguageCodeStylePanel {
       isFirstUpdate = false;
     }
 
-    @NotNull
-    private Collection<String> populateWithAssociatedFields(Collection<String> settingNames) {
+    private @NotNull Collection<String> populateWithAssociatedFields(Collection<String> settingNames) {
       Set<String> commonFields = new HashSet<>();
       for (String fieldName : settingNames) {
         SettingsGroup settingsGroup = getAssociatedSettingsGroup(fieldName);
         if (settingsGroup == null) {
           commonFields.add(fieldName);
         }
-        else if (settingsGroup.title != getInstance().WRAPPING_KEEP) {
-          commonFields.addAll(settingsGroup.commonCodeStyleSettingFieldNames);
+        else if (!Strings.areSameInstance(settingsGroup.title(), getInstance().WRAPPING_KEEP)) {
+          commonFields.addAll(settingsGroup.commonCodeStyleSettingFieldNames());
         }
       }
       return commonFields;
@@ -248,8 +256,7 @@ class CodeFragmentCodeStyleSettingsPanel extends TabbedLanguageCodeStylePanel {
     }
   }
 
-  @NotNull
-  private static CodeStyleSettingsCustomizable getFilteredSettingsConsumer(@NotNull Collection<String> names, @NotNull CodeStyleSettingsCustomizable original) {
+  private static @NotNull CodeStyleSettingsCustomizable getFilteredSettingsConsumer(@NotNull Collection<String> names, @NotNull CodeStyleSettingsCustomizable original) {
     return new CodeStyleSettingsCustomizable() {
       @Override
       public void showAllStandardOptions() {

@@ -30,7 +30,7 @@ abstract class ObviousNullCheck {
   }
 
   void testStrings(List<String> list) {
-    list.forEach(s -> concat(<warning descr="Redundant null-check: literal is never null">"Not null!"</warning>, s));
+    list.forEach(s -> concat("Not null!", s));
     list.stream().map(s -> concat("Not null!", s)).forEach(System.out::println);
   }
 

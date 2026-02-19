@@ -15,9 +15,24 @@
  */
 package com.intellij.build.events;
 
+import com.intellij.build.eventBuilders.FinishEventBuilder;
+import com.intellij.build.events.BuildEventsNls.Message;
+import org.jetbrains.annotations.CheckReturnValue;
+import org.jetbrains.annotations.NotNull;
+
 /**
  * @author Vladislav.Soroka
  */
 public interface FinishEvent extends BuildEvent {
-  EventResult getResult();
+
+  @NotNull EventResult getResult();
+
+  @CheckReturnValue
+  static @NotNull FinishEventBuilder builder(
+    @NotNull Object startId,
+    @NotNull @Message String message,
+    @NotNull EventResult result
+  ) {
+    return BuildEvents.getInstance().finish(startId, message, result);
+  }
 }

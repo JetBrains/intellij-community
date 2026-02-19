@@ -1,27 +1,33 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.openapi.editor.actions;
 
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.editor.*;
+import com.intellij.openapi.editor.Caret;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.EditorCopyPasteHelper;
+import com.intellij.openapi.editor.EditorModificationUtil;
 import com.intellij.openapi.editor.actionSystem.EditorWriteActionHandler;
 import com.intellij.util.DocumentUtil;
 import com.intellij.util.text.CharArrayUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class CutLineEndAction extends TextComponentEditorAction {
+@ApiStatus.Internal
+public final class CutLineEndAction extends TextComponentEditorAction {
   public CutLineEndAction() {
     super(new Handler());
   }
 
   private static final class Handler extends EditorWriteActionHandler {
     private Handler() {
-      super(false);
+      super();
     }
 
     @Override
-    public void executeWriteAction(final Editor editor, @Nullable Caret caret, DataContext dataContext) {
+    public void executeWriteAction(final @NotNull Editor editor, @Nullable Caret caret, DataContext dataContext) {
       if (caret == null && editor.getCaretModel().getCaretCount() > 1) {
         editor.getCaretModel().runForEachCaret(c -> c.setSelection(c.getOffset(), getEndOffset(c)));
         // We don't support kill-ring operations for multiple carets currently

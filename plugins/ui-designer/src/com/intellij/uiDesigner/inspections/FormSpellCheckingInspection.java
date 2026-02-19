@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2011 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.uiDesigner.inspections;
 
 import com.intellij.openapi.module.Module;
@@ -35,17 +21,14 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-/**
- * @author yole
- */
-public class FormSpellCheckingInspection extends StringDescriptorInspection {
+
+public final class FormSpellCheckingInspection extends StringDescriptorInspection {
   public FormSpellCheckingInspection() {
     super("FormSpellChecking");
   }
 
-  @Nullable
   @Override
-  public String getAlternativeID() {
+  public @Nullable String getAlternativeID() {
     return "SpellCheckingInspection";
   }
 
@@ -65,24 +48,26 @@ public class FormSpellCheckingInspection extends StringDescriptorInspection {
       if (manager.hasProblem(word)) {
         final List<String> suggestions = manager.getSuggestions(word);
         if (!suggestions.isEmpty() && prop instanceof IntroStringProperty) {
-          EditorQuickFixProvider changeToProvider = (editor, component1) -> new PopupQuickFix<String>(editor, "Change to...", component1) {
-            @Override
-            public void run() {
-              ListPopup popup = JBPopupFactory.getInstance().createListPopup(getPopupStep());
-              popup.showUnderneathOf(component1.getDelegee());
-            }
+          EditorQuickFixProvider changeToProvider =
+            (editor, component1) -> new PopupQuickFix<String>(editor, UIDesignerBundle.message("inspection.editor.quick.fix.name"),
+                                                              component1) {
+              @Override
+              public void run() {
+                ListPopup popup = JBPopupFactory.getInstance().createListPopup(getPopupStep());
+                popup.showUnderneathOf(component1.getDelegee());
+              }
 
-            @Override
-            public ListPopupStep<String> getPopupStep() {
-              return new BaseListPopupStep<>(UIDesignerBundle.message("popup.title.select.replacement"), suggestions) {
-                @Override
-                public PopupStep onChosen(String selectedValue, boolean finalChoice) {
-                  FormInspectionUtil.updateStringPropertyValue(editor, component1, (IntroStringProperty)prop, descriptor, selectedValue);
-                  return FINAL_CHOICE;
-                }
-              };
-            }
-          };
+              @Override
+              public ListPopupStep<String> getPopupStep() {
+                return new BaseListPopupStep<>(UIDesignerBundle.message("popup.title.select.replacement"), suggestions) {
+                  @Override
+                  public PopupStep<?> onChosen(String selectedValue, boolean finalChoice) {
+                    FormInspectionUtil.updateStringPropertyValue(editor, component1, (IntroStringProperty)prop, descriptor, selectedValue);
+                    return FINAL_CHOICE;
+                  }
+                };
+              }
+            };
           EditorQuickFixProvider acceptProvider =
             (editor, component1) -> new QuickFix(editor, UIDesignerBundle.message("intention.name.save.to.dictionary", word), component1) {
               @Override

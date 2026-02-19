@@ -1,35 +1,58 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInsight.actions;
 
+import com.intellij.CodeStyleBundle;
+import com.intellij.application.options.CodeStyle;
 import com.intellij.codeInsight.CodeInsightBundle;
-import com.intellij.formatting.FormattingProgressTask;
+import com.intellij.codeInsight.CodeInsightSettings;
+import com.intellij.formatting.KeptLineFeedsCollector;
+import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.lang.Language;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.SelectionModel;
-import com.intellij.openapi.editor.ex.util.EditorScrollingPositionKeeper;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.ui.DoNotAskOption;
+import com.intellij.openapi.ui.MessageDialogBuilder;
+import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.Segment;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.Trinity;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.*;
+import com.intellij.psi.FileViewProvider;
+import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.ChangedRangesInfo;
 import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.psi.impl.source.codeStyle.CodeFormatterFacade;
+import com.intellij.psi.impl.source.codeStyle.CodeFormattingData;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
-import java.util.Collection;
+import java.util.Collections;
+import java.util.Date;
+import java.util.List;
 import java.util.concurrent.FutureTask;
 
 public class ReformatCodeProcessor extends AbstractLayoutCodeProcessor {
-  private static final Logger LOG = Logger.getInstance(ReformatCodeProcessor.class);
+  private static final Logger LOG = CodeStyle.LOG;
+  private static final Key<Trinity<Long, Date, List<TextRange>>> SECOND_FORMAT_KEY = Key.create("second.format");
+  private static final String SECOND_REFORMAT_CONFIRMED = "second.reformat.confirmed.2";
 
-  private final Collection<TextRange> myRanges = new ArrayList<>();
+  private final List<TextRange> myRanges = new ArrayList<>();
   private SelectionModel mySelectionModel;
 
   public ReformatCodeProcessor(Project project, boolean processChangedTextOnly) {
@@ -66,6 +89,16 @@ public class ReformatCodeProcessor extends AbstractLayoutCodeProcessor {
     }
   }
 
+  @SuppressWarnings("unused") // Used in Rider
+  public ReformatCodeProcessor(@NotNull PsiFile file, TextRange[] ranges) {
+    super(file.getProject(), file, getProgressText(), getCommandName(), false);
+    for (TextRange range : ranges) {
+      if (range != null) {
+        myRanges.add(range);
+      }
+    }
+  }
+
   public ReformatCodeProcessor(@NotNull PsiFile file, boolean processChangedTextOnly) {
     super(file.getProject(), file, getProgressText(), getCommandName(), processChangedTextOnly);
   }
@@ -83,56 +116,170 @@ public class ReformatCodeProcessor extends AbstractLayoutCodeProcessor {
     super(project, files, getProgressText(), commandName, postRunnable, processChangedTextOnly);
   }
 
+  public void setDoNotKeepLineBreaks(PsiFile file) {
+    file.putUserData(SECOND_FORMAT_KEY, Trinity.create(file.getModificationStamp(), new Date(), myRanges));
+  }
+
   @Override
-  @NotNull
-  protected FutureTask<Boolean> prepareTask(@NotNull final PsiFile file, final boolean processChangedTextOnly)
+  protected boolean needsReadActionToPrepareTask() {
+    return false;
+  }
+
+  @Override
+  protected @NotNull FutureTask<Boolean> prepareTask(final @NotNull PsiFile psiFile, final boolean processChangedTextOnly)
     throws IncorrectOperationException
   {
+    Pair<PsiFile, Runnable> fileToFormatAndCommitActionIfNeed = ReadAction.compute(() -> {
+      PsiFile psiFileValid = ensureValid(psiFile);
+      if (psiFileValid != null) {
+        PsiDocumentManager instance = PsiDocumentManager.getInstance(myProject);
+        Document document = instance.getDocument(psiFileValid);
+        if (document != null) {
+          return Pair.create(psiFileValid, () -> instance.commitDocument(document));
+        }
+      }
+      return Pair.create(psiFileValid, null);
+    });
+
+    PsiFile fileToProcess = fileToFormatAndCommitActionIfNeed.first;
+    if (fileToProcess == null) {
+      return new FutureTask<>(() -> false);
+    }
+
+    List<TextRange> changedRangesToFormate = processChangedTextOnly ? getChangedRangesToFormat(psiFile) : null;
+    Computable<List<TextRange>> prepareRangesForFormat = () -> {
+      List<TextRange> formattingRanges = changedRangesToFormate == null ? getRangesToFormat(psiFile) : changedRangesToFormate;
+      CodeFormattingData.prepare(fileToProcess, formattingRanges);
+      return formattingRanges;
+    };
+
+    Ref<List<TextRange>> rangesForFormat = Ref.create();
+    final Runnable commitAction = fileToFormatAndCommitActionIfNeed.second;
+    if (commitAction == null) {
+      rangesForFormat.set(ReadAction.compute(() -> prepareRangesForFormat.compute()));
+    }
+
+    boolean doNotKeepLineBreaks = confirmSecondReformat(psiFile);
     return new FutureTask<>(() -> {
-      FormattingProgressTask.FORMATTING_CANCELLED_FLAG.set(false);
-      try {
-        PsiFile fileToProcess = ensureValid(file);
-        if (fileToProcess == null) return false;
-
-        CharSequence before = null;
-        Document document = PsiDocumentManager.getInstance(myProject).getDocument(fileToProcess);
-        if (getInfoCollector() != null) {
-          LOG.assertTrue(document != null);
-          before = document.getImmutableCharSequence();
+      Ref<Boolean> result = new Ref<>();
+      final var fileSettings = CodeStyle.getSettings(fileToProcess);
+      if (LOG.isDebugEnabled()) {
+        //noinspection ObjectToString
+        LOG.debug("reformat " + fileToProcess.getName() + " uses " + fileSettings);
+      }
+      CodeStyle.runWithLocalSettings(myProject, fileSettings, (localSettings) -> {
+        if (doNotKeepLineBreaks) {
+          localSettings.getCommonSettings(fileToProcess.getLanguage()).KEEP_LINE_BREAKS = false;
         }
-
-        EditorScrollingPositionKeeper.perform(document, true, () -> {
-          if (processChangedTextOnly) {
-            ChangedRangesInfo info = VcsFacade.getInstance().getChangedRangesInfo(fileToProcess);
-            if (info != null) {
-              assertFileIsValid(fileToProcess);
-              CodeStyleManager.getInstance(myProject).reformatTextWithContext(fileToProcess, info);
-            }
-          }
-          else {
-            Collection<TextRange> ranges = getRangesToFormat(fileToProcess);
-            CodeStyleManager.getInstance(myProject).reformatText(fileToProcess, ranges);
-          }
-        });
-
-        if (before != null) {
-          prepareUserNotificationMessage(document, before);
+        if (commitAction != null) {
+          commitAction.run();
+          rangesForFormat.set(prepareRangesForFormat.compute());
         }
-
-        return !FormattingProgressTask.FORMATTING_CANCELLED_FLAG.get();
-      }
-      catch (IncorrectOperationException e) {
-        LOG.error(e);
-        return false;
-      }
-      finally {
-        myRanges.clear();
-      }
+        result.set(doReformat(psiFile, rangesForFormat.get(), processChangedTextOnly));
+      });
+      return result.get();
     });
   }
 
-  @Nullable
-  private static PsiFile ensureValid(@NotNull PsiFile file) {
+  private static @NotNull List<TextRange> getChangedRangesToFormat(@NotNull PsiFile psiFile) {
+    ChangedRangesInfo ranges = ReadAction.compute(() -> VcsFacade.getInstance().getChangedRangesInfo(psiFile));
+    return ranges != null ? ranges.allChangedRanges : Collections.emptyList();
+  }
+
+  private static boolean isSecondReformatDisabled() {
+    return !CodeInsightSettings.getInstance().ENABLE_SECOND_REFORMAT && PropertiesComponent.getInstance().isValueSet(SECOND_REFORMAT_CONFIRMED);
+  }
+
+  private boolean confirmSecondReformat(@NotNull PsiFile file) {
+    boolean doNotKeepLineBreaks = ReadAction.compute(() -> isDoNotKeepLineBreaks(file));
+    if (!doNotKeepLineBreaks || isSecondReformatDisabled()) return false;
+    CodeInsightSettings settings = CodeInsightSettings.getInstance();
+    if (!settings.ENABLE_SECOND_REFORMAT) {
+      Ref<Boolean> ref = Ref.create(true);
+      ApplicationManager.getApplication().invokeAndWait(() -> {
+        ref.set(
+          MessageDialogBuilder.yesNo(CodeInsightBundle.message("second.reformat"),
+                                     CodeInsightBundle.message("do.you.want.to.remove.custom.line.breaks"))
+            .doNotAsk(new DoNotAskOption.Adapter() {
+              @Override
+              public void rememberChoice(boolean isSelected, int exitCode) {
+                if (isSelected) {
+                  settings.ENABLE_SECOND_REFORMAT = exitCode == DialogWrapper.OK_EXIT_CODE;
+                  PropertiesComponent.getInstance().setValue(SECOND_REFORMAT_CONFIRMED, true);
+                }
+              }
+            }).ask(myProject));
+      });
+      return ref.get();
+    }
+    return true;
+  }
+
+  private boolean doReformat(@NotNull PsiFile file, List<TextRange> ranges, boolean processChangedTextOnly) {
+    PsiFile fileToProcess = ensureValid(file);
+    if (fileToProcess == null) {
+      LOG.warn("Invalid file " + file.getName() + ", skipping reformat");
+      return false;
+    }
+    CodeFormatterFacade.FORMATTING_CANCELLED_FLAG.set(false);
+    try {
+      Document document = PsiDocumentManager.getInstance(myProject).getDocument(fileToProcess);
+      final LayoutCodeInfoCollector infoCollector = getInfoCollector();
+      LOG.assertTrue(infoCollector == null || document != null);
+
+      CharSequence before = document == null ? null : document.getImmutableCharSequence();
+      if (!isSecondReformatDisabled()) {
+        KeptLineFeedsCollector.setup(fileToProcess);
+      }
+      try {
+        if (LOG.isDebugEnabled()) {
+          LOG.debug("explicit reformat for " + file.getName());
+        }
+        CodeStyleManager.getInstance(myProject).reformatText(fileToProcess, ranges, processChangedTextOnly);
+      }
+      catch (ProcessCanceledException pce) {
+        if (before != null) {
+          document.setText(before);
+        }
+        if (infoCollector != null) {
+          infoCollector.setReformatCodeNotification(CodeInsightBundle.message("hint.text.formatting.canceled"));
+        }
+         return false;
+      }
+      finally {
+        List<Segment> segments = KeptLineFeedsCollector.getLineFeedsAndCleanup();
+        if (!segments.isEmpty() && infoCollector != null) {
+          infoCollector.setSecondFormatNotification(CodeInsightBundle.message("hint.text.custom.line.breaks.are.preserved"));
+          setDoNotKeepLineBreaks(fileToProcess);
+        }
+        else {
+          fileToProcess.putUserData(SECOND_FORMAT_KEY, null);
+        }
+      }
+
+      if (infoCollector != null) {
+        prepareUserNotificationMessage(document, before);
+      }
+
+      return !CodeFormatterFacade.FORMATTING_CANCELLED_FLAG.get();
+    }
+    catch (IncorrectOperationException e) {
+      LOG.error(e);
+      return false;
+    }
+    finally {
+      myRanges.clear();
+    }
+  }
+
+  private boolean isDoNotKeepLineBreaks(PsiFile file) {
+    Trinity<Long, Date, List<TextRange>> previous = SECOND_FORMAT_KEY.get(file);
+    return previous != null && previous.first == file.getModificationStamp() &&
+           (new Date().getTime() - previous.second.getTime() < 5000) &&
+           myRanges.equals(previous.third);
+  }
+
+  private static @Nullable PsiFile ensureValid(@NotNull PsiFile file) {
     if (file.isValid()) return file;
 
     VirtualFile virtualFile = file.getVirtualFile();
@@ -145,15 +292,6 @@ public class ReformatCodeProcessor extends AbstractLayoutCodeProcessor {
     return provider.hasLanguage(language) ? provider.getPsi(language) : provider.getPsi(provider.getBaseLanguage());
   }
 
-  private static void assertFileIsValid(@NotNull PsiFile file) {
-    if (!file.isValid()) {
-      LOG.error(
-        "Invalid Psi file, name: " + file.getName() +
-        " , class: " + file.getClass().getSimpleName() +
-        " , " + PsiInvalidElementAccessException.findOutInvalidationReason(file));
-    }
-  }
-
   private void prepareUserNotificationMessage(@NotNull Document document, @NotNull CharSequence before) {
     LOG.assertTrue(getInfoCollector() != null);
     int number = VcsFacade.getInstance().calculateChangedLinesNumber(document, before);
@@ -163,20 +301,19 @@ public class ReformatCodeProcessor extends AbstractLayoutCodeProcessor {
     }
   }
 
-  @NotNull
-  private Collection<TextRange> getRangesToFormat(PsiFile file) {
+  private @NotNull List<TextRange> getRangesToFormat(@NotNull PsiFile file) {
     if (mySelectionModel != null) {
       return getSelectedRanges(mySelectionModel);
     }
-    
-    return !myRanges.isEmpty() ? myRanges : ContainerUtil.newArrayList(file.getTextRange());
+
+    return !myRanges.isEmpty() ? myRanges : List.of(file.getTextRange());
   }
 
   private static @NlsContexts.ProgressText String getProgressText() {
-    return CodeInsightBundle.message("reformat.progress.common.text");
+    return CodeStyleBundle.message("reformat.progress.common.text");
   }
 
   public static @NlsContexts.Command String getCommandName() {
-    return CodeInsightBundle.message("process.reformat.code");
+    return CodeStyleBundle.message("process.reformat.code");
   }
 }

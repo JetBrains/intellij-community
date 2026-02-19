@@ -1,0 +1,22 @@
+- name: lib/assertj-swing.jar
+  library: assertj-swing
+  files:
+  - name: $MAVEN_REPOSITORY$/org/assertj/assertj-swing/3/assertj-swing-3.jar
+  reason: <- intellij.featuresTrainer
+- name: lib/assertj.jar
+  library: assertJ
+  files:
+  - name: $MAVEN_REPOSITORY$/org/assertj/assertj-core/4/assertj-core-4.jar
+  reason: <- intellij.featuresTrainer
+- name: lib/featuresTrainer.jar
+  modules:
+  - name: intellij.featuresTrainer
+  contentModules:
+  - name: intellij.vcs.git.featuresTrainer
+  - name: intellij.featuresTrainer.onboarding
+  - name: intellij.kotlin.onboarding.promoter
+- name: lib/git-learning-project.jar
+  library: git-learning-project
+  files:
+  - name: $MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/ift/git-learning-project/212/git-learning-project-212.jar
+  reason: <- intellij.vcs.git.featuresTrainer

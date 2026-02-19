@@ -1,5 +1,5 @@
 class Test {
     void simpleMethod() {
-        boolean <caret>bb;
+        boolean b<caret>b;
     }
 }

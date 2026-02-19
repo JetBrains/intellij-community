@@ -32,6 +32,7 @@ import org.intellij.plugins.relaxNG.compact.psi.RncDefine;
 import org.intellij.plugins.relaxNG.compact.psi.RncElement;
 import org.intellij.plugins.relaxNG.compact.psi.util.EscapeUtil;
 import org.intellij.plugins.relaxNG.compact.psi.util.RenameUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -46,20 +47,17 @@ public final class RngCompactLanguage extends Language {
 
   public static class MyCommenter implements Commenter {
     @Override
-    @Nullable
-    public String getLineCommentPrefix() {
+    public @Nullable String getLineCommentPrefix() {
       return "#";
     }
 
     @Override
-    @Nullable
-    public String getBlockCommentPrefix() {
+    public @Nullable String getBlockCommentPrefix() {
       return null;
     }
 
     @Override
-    @Nullable
-    public String getBlockCommentSuffix() {
+    public @Nullable String getBlockCommentSuffix() {
       return null;
     }
 
@@ -116,8 +114,7 @@ public final class RngCompactLanguage extends Language {
   public static class MyDocumentationProvider implements DocumentationProvider {
 
     @Override
-    @Nullable
-    public String generateDoc(PsiElement element, PsiElement originalElement) {
+    public @Nullable @Nls String generateDoc(PsiElement element, PsiElement originalElement) {
       if (element instanceof RncElement) {
         PsiElement comment = element.getPrevSibling();
         while (comment instanceof PsiWhiteSpace) {

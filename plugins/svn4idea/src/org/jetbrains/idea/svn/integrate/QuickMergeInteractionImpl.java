@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.svn.integrate;
 
 import com.intellij.openapi.project.Project;
@@ -20,28 +20,33 @@ import org.jetbrains.idea.svn.mergeinfo.MergeChecker;
 import java.util.List;
 
 import static com.intellij.openapi.ui.DialogWrapper.OK_EXIT_CODE;
-import static com.intellij.openapi.ui.Messages.*;
+import static com.intellij.openapi.ui.Messages.OK;
+import static com.intellij.openapi.ui.Messages.getQuestionIcon;
+import static com.intellij.openapi.ui.Messages.showDialog;
+import static com.intellij.openapi.ui.Messages.showOkCancelDialog;
 import static com.intellij.util.Functions.TO_STRING;
 import static com.intellij.util.containers.ContainerUtil.emptyList;
 import static com.intellij.util.containers.ContainerUtil.map2Array;
 import static com.intellij.xml.util.XmlStringUtil.wrapInHtml;
 import static org.jetbrains.idea.svn.SvnBundle.message;
-import static org.jetbrains.idea.svn.integrate.LocalChangesAction.*;
+import static org.jetbrains.idea.svn.integrate.LocalChangesAction.cancel;
+import static org.jetbrains.idea.svn.integrate.LocalChangesAction.continueMerge;
+import static org.jetbrains.idea.svn.integrate.LocalChangesAction.inspect;
+import static org.jetbrains.idea.svn.integrate.LocalChangesAction.shelve;
 import static org.jetbrains.idea.svn.integrate.ToBeMergedDialog.MERGE_ALL_CODE;
 
 public class QuickMergeInteractionImpl implements QuickMergeInteraction {
 
-  @NotNull private final MergeContext myMergeContext;
-  @NotNull private final Project myProject;
+  private final @NotNull MergeContext myMergeContext;
+  private final @NotNull Project myProject;
 
   public QuickMergeInteractionImpl(@NotNull MergeContext mergeContext) {
     myMergeContext = mergeContext;
     myProject = mergeContext.getProject();
   }
 
-  @NotNull
   @Override
-  public QuickMergeContentsVariants selectMergeVariant() {
+  public @NotNull QuickMergeContentsVariants selectMergeVariant() {
     QuickMergeWayOptionsPanel panel = new QuickMergeWayOptionsPanel();
     DialogBuilder builder = new DialogBuilder(myProject);
 
@@ -63,12 +68,11 @@ public class QuickMergeInteractionImpl implements QuickMergeInteraction {
       message("dialog.message.merge.confirm.reintegrate", myMergeContext.getSourceUrl().toDecodedString(), targetUrl.toDecodedString())));
   }
 
-  @NotNull
   @Override
-  public SelectMergeItemsResult selectMergeItems(@NotNull List<SvnChangeList> lists,
-                                                 @NotNull MergeChecker mergeChecker,
-                                                 boolean allStatusesCalculated,
-                                                 boolean allListsLoaded) {
+  public @NotNull SelectMergeItemsResult selectMergeItems(@NotNull List<SvnChangeList> lists,
+                                                          @NotNull MergeChecker mergeChecker,
+                                                          boolean allStatusesCalculated,
+                                                          boolean allListsLoaded) {
     ToBeMergedDialog dialog = new ToBeMergedDialog(myMergeContext, lists, mergeChecker, allStatusesCalculated, allListsLoaded);
     dialog.show();
 
@@ -78,9 +82,8 @@ public class QuickMergeInteractionImpl implements QuickMergeInteraction {
     return new SelectMergeItemsResult(resultCode, selectedLists);
   }
 
-  @NotNull
   @Override
-  public LocalChangesAction selectLocalChangesAction(boolean mergeAll) {
+  public @NotNull LocalChangesAction selectLocalChangesAction(boolean mergeAll) {
     LocalChangesAction[] possibleResults;
     String message;
 
@@ -121,15 +124,11 @@ public class QuickMergeInteractionImpl implements QuickMergeInteraction {
     return showOkCancelDialog(myProject, question, myMergeContext.getMergeTitle(), getQuestionIcon()) == OK;
   }
 
-  @NotNull
-  private static QuickMergeContentsVariants toMergeVariant(int exitCode) {
-    switch (exitCode) {
-      case MERGE_ALL_CODE:
-        return QuickMergeContentsVariants.all;
-      case OK_EXIT_CODE:
-        return QuickMergeContentsVariants.select;
-      default:
-        return QuickMergeContentsVariants.cancel;
-    }
+  private static @NotNull QuickMergeContentsVariants toMergeVariant(int exitCode) {
+    return switch (exitCode) {
+      case MERGE_ALL_CODE -> QuickMergeContentsVariants.all;
+      case OK_EXIT_CODE -> QuickMergeContentsVariants.select;
+      default -> QuickMergeContentsVariants.cancel;
+    };
   }
 }

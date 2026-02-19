@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.theoryinpractice.testng.util;
 
 import com.intellij.codeInsight.AnnotationUtil;
@@ -17,12 +17,34 @@ import com.intellij.openapi.util.io.JarUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiAnnotation;
+import com.intellij.psi.PsiAnnotationMemberValue;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiClassObjectAccessExpression;
+import com.intellij.psi.PsiDocCommentOwner;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiLiteralExpression;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiModifierListOwner;
+import com.intellij.psi.PsiNameValuePair;
+import com.intellij.psi.PsiTypeElement;
+import com.intellij.psi.SyntaxTraverser;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.javadoc.PsiDocTag;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.AllClassesSearch;
-import com.intellij.psi.util.*;
+import com.intellij.psi.util.CachedValueProvider;
+import com.intellij.psi.util.CachedValuesManager;
+import com.intellij.psi.util.InheritanceUtil;
+import com.intellij.psi.util.PsiClassUtil;
+import com.intellij.psi.util.PsiModificationTracker;
+import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.PathUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
@@ -32,13 +54,36 @@ import com.theoryinpractice.testng.model.TestClassFilter;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Range;
 import org.testng.Assert;
 import org.testng.ITestNGListener;
 import org.testng.TestNG;
-import org.testng.annotations.*;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.AfterGroups;
+import org.testng.annotations.AfterMethod;
+import org.testng.annotations.AfterSuite;
+import org.testng.annotations.AfterTest;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.BeforeGroups;
+import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.BeforeSuite;
+import org.testng.annotations.BeforeTest;
+import org.testng.annotations.DataProvider;
+import org.testng.annotations.Factory;
+import org.testng.annotations.ObjectFactory;
+import org.testng.annotations.Test;
 
 import java.io.File;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.jar.Attributes;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -46,7 +91,7 @@ import java.util.regex.Pattern;
 /**
  * @author Hani Suleiman
  */
-public class TestNGUtil {
+public final class TestNGUtil {
   public static final String TESTNG_GROUP_NAME = "TestNG";
 
   @SuppressWarnings("StaticNonFinalField") public static boolean hasDocTagsSupport = hasDocTagsSupport();
@@ -57,10 +102,12 @@ public class TestNGUtil {
     return version != null && StringUtil.compareVersionNumbers(version, "5.12") <= 0;
   }
 
+  public static final String MAVEN_TEST_NG = "org.testng:testng";
   public static final String TEST_ANNOTATION_FQN = Test.class.getName();
+  public static final String TESTNG_PACKAGE = "org.testng";
   public static final String FACTORY_ANNOTATION_FQN = Factory.class.getName();
-  @SuppressWarnings("deprecation") public static final String[] CONFIG_ANNOTATIONS_FQN = {
-      Configuration.class.getName(),
+  public static final String[] CONFIG_ANNOTATIONS_FQN = {
+      "org.testng.annotations.Configuration",
       Factory.class.getName(),
       ObjectFactory.class.getName(),
       DataProvider.class.getName(),
@@ -76,8 +123,8 @@ public class TestNGUtil {
       AfterTest.class.getName()
   };
 
-  @SuppressWarnings("deprecation") public static final String[] CONFIG_ANNOTATIONS_FQN_NO_TEST_LEVEL = {
-      Configuration.class.getName(),
+ public static final String[] CONFIG_ANNOTATIONS_FQN_NO_TEST_LEVEL = {
+      "org.testng.annotations.Configuration",
       Factory.class.getName(),
       ObjectFactory.class.getName(),
       BeforeClass.class.getName(),
@@ -90,8 +137,7 @@ public class TestNGUtil {
       AfterTest.class.getName()
   };
 
-  @NonNls
-  private static final String[] CONFIG_JAVADOC_TAGS = {
+  private static final @NonNls String[] CONFIG_JAVADOC_TAGS = {
       "testng.configuration",
       "testng.before-class",
       "testng.before-groups",
@@ -108,8 +154,7 @@ public class TestNGUtil {
   private static final List<String> JUNIT_ANNOTATIONS =
       Arrays.asList("org.junit.Test", "org.junit.Before", "org.junit.BeforeClass", "org.junit.After", "org.junit.AfterClass");
 
-  @NonNls
-  private static final String SUITE_TAG_NAME = "suite";
+  private static final @NonNls String SUITE_TAG_NAME = "suite";
 
   public static boolean hasConfig(PsiModifierListOwner element) {
     return hasConfig(element, CONFIG_ANNOTATIONS_FQN);
@@ -206,8 +251,7 @@ public class TestNGUtil {
     if (checkJavadoc && getTextJavaDoc((PsiDocCommentOwner)element) != null)
       return true;
     //now we check all methods for the test annotation
-    if (element instanceof PsiClass) {
-      PsiClass psiClass = (PsiClass) element;
+    if (element instanceof PsiClass psiClass) {
       for (PsiMethod method : psiClass.getAllMethods()) {
         PsiAnnotation annotation = AnnotationUtil.findAnnotation(method, true, TEST_ANNOTATION_FQN);
         if (annotation != null) {
@@ -249,7 +293,7 @@ public class TestNGUtil {
     return attributeValue != null && attributeValue.textMatches("false");
   }
 
-  private static PsiDocTag getTextJavaDoc(@NotNull final PsiDocCommentOwner element) {
+  private static PsiDocTag getTextJavaDoc(final @NotNull PsiDocCommentOwner element) {
     final PsiDocComment docComment = element.getDocComment();
     if (docComment != null) {
       return docComment.findTagByName("testng.test");
@@ -279,7 +323,6 @@ public class TestNGUtil {
   }
 
   /**
-   * @return were javadoc params used
    */
   public static void collectAnnotationValues(final Map<String, Collection<String>> results, PsiMethod[] psiMethods, PsiClass... classes) {
     final Set<String> test = new HashSet<>(1);
@@ -333,7 +376,7 @@ public class TestNGUtil {
       String[] groups = matcher.group(1).split("[,\\s]");
       for (String group : groups) {
         final String trimmed = group.trim();
-        if (trimmed.length() > 0) {
+        if (!trimmed.isEmpty()) {
           results.add(trimmed);
         }
       }
@@ -358,7 +401,7 @@ public class TestNGUtil {
       final PsiManager manager = PsiManager.getInstance(filter.getProject());
       final GlobalSearchScope projectScope = GlobalSearchScope.projectScope(manager.getProject());
       final GlobalSearchScope scope = projectScope.intersectWith(filter.getScope());
-      for (final PsiClass psiClass : AllClassesSearch.search(scope, manager.getProject())) {
+      for (final PsiClass psiClass : AllClassesSearch.search(scope, manager.getProject()).asIterable()) {
         if (filter.isAccepted(psiClass)) {
           if (indicator != null) {
             indicator.setText2(TestngBundle.message("testng.util.found.test.class", ReadAction.compute(psiClass::getQualifiedName)));
@@ -466,11 +509,25 @@ public class TestNGUtil {
     return topLevelClass;
   }
 
-  @Nullable
-  public static Version detectVersion(Project project, @Nullable Module module) {
-    if (module == null) return null;
+  /**
+   * Returns whether the version is greater or equal to the one passed into this method.
+   * Check only works when the supplied version is <= 7.4.0, otherwise it will always return true.
+   */
+  public static boolean isVersionOrGreaterThan(@NotNull Project project,
+                                               @Nullable Module module,
+                                               @Range(from = 0, to = 7) int major,
+                                               int minor,
+                                               int bugfix) {
+    if (module == null) return false;
+    Version version = detectVersion(project, module);
+    if (version == null) return false;
+    if (version.major == Integer.MAX_VALUE) return true;
+    return version.isOrGreaterThan(major, minor, bugfix);
+  }
+
+  private static @Nullable Version detectVersion(@NotNull Project project, @NotNull Module module) {
     return CachedValuesManager.getManager(project).getCachedValue(module, () -> {
-      Version version = null;
+      String version = null;
       JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(project);
       PsiClass aClass = psiFacade.findClass("org.testng.internal.Version",
                                             GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(module));
@@ -481,12 +538,16 @@ public class TestNGUtil {
           if (initializer instanceof PsiLiteralExpression) {
             Object eval = ((PsiLiteralExpression)initializer).getValue();
             if (eval instanceof String) {
-              version = Version.parseVersion((String)eval);
+              version = (String)eval;
             }
+          } else {
+            version = String.valueOf(Integer.MAX_VALUE);
           }
         }
       }
-      return CachedValueProvider.Result.createSingleDependency(version, ProjectRootManager.getInstance(module.getProject()));
+      if (version == null) return null;
+      return CachedValueProvider.Result.createSingleDependency(Version.parseVersion(version),
+                                                               ProjectRootManager.getInstance(module.getProject()));
     });
   }
 }

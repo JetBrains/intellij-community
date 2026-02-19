@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.uiDesigner.componentTree;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -10,20 +10,16 @@ import com.intellij.uiDesigner.quickFixes.QuickFixManager;
 import com.intellij.uiDesigner.radComponents.RadComponent;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.JViewport;
 import javax.swing.event.TreeSelectionEvent;
 import javax.swing.event.TreeSelectionListener;
 import javax.swing.tree.TreePath;
-import java.awt.*;
+import java.awt.Rectangle;
 
-/**
- * @author Anton Katilin
- * @author Vladimir Kondratyev
- */
 public final class QuickFixManagerImpl extends QuickFixManager<ComponentTree>{
   private static final Logger LOG = Logger.getInstance(QuickFixManagerImpl.class);
 
-  public QuickFixManagerImpl(final GuiEditor editor, @NotNull final ComponentTree componentTree, final JViewport viewPort) {
+  public QuickFixManagerImpl(final GuiEditor editor, final @NotNull ComponentTree componentTree, final JViewport viewPort) {
     super(editor, componentTree, viewPort);
     myComponent.addTreeSelectionListener(new MyTreeSelectionListener());
   }
@@ -54,7 +50,7 @@ public final class QuickFixManagerImpl extends QuickFixManager<ComponentTree>{
 
 
       final String text;
-      if (errorInfos.length > 0 && errorInfos [0].myDescription != null) {
+      if (errorInfos.length > 0) {
         text = errorInfos [0].myDescription;
       }
       else {

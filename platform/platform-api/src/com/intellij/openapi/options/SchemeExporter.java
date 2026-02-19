@@ -1,9 +1,11 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.options;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -12,15 +14,14 @@ import java.util.Objects;
 
 /**
  * Base interface to export a scheme.
- *
- * @author Rustam Vishnyakov
  */
 public abstract class SchemeExporter<T extends Scheme> {
   /**
    * @deprecated use {@link #exportScheme(Project, Scheme, OutputStream)}.
    */
-  @SuppressWarnings({"DeprecatedIsStillUsed", "unused", "RedundantThrows"})
-  @Deprecated
+  @SuppressWarnings({"unused", "RedundantThrows"})
+  @ApiStatus.Internal
+  @Deprecated(forRemoval = true)
   public void exportScheme(@NotNull T scheme, @NotNull OutputStream outputStream) throws Exception {
   }
 
@@ -46,14 +47,13 @@ public abstract class SchemeExporter<T extends Scheme> {
    * @return The default file name to be used.
    */
   public String getDefaultFileName(@NotNull String schemeName) {
-    return schemeName;
+    return FileUtil.sanitizeFileName(schemeName);
   }
 
   /**
    * @return A directory which should be preselected for the given project if any.
    */
-  @NotNull
-  public VirtualFile getDefaultDir(@Nullable Project project) {
+  public @NotNull VirtualFile getDefaultDir(@Nullable Project project) {
     return Objects.requireNonNull(VfsUtil.getUserHomeDir());
   }
 }

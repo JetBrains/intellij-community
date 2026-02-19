@@ -1,11 +1,11 @@
-# $Id: sk.py 7119 2011-09-02 13:00:23Z milde $
+# $Id: sk.py 9452 2023-09-27 00:11:54Z milde $
 # Author: Miroslav Vasko <zemiak@zoznam.sk>
 # Copyright: This module has been placed in the public domain.
 
 # New language mappings are welcome.  Before doing a new translation, please
-# read <http://docutils.sf.net/docs/howto/i18n.html>.  Two files must be
-# translated for each language: one in docutils/languages, the other in
-# docutils/parsers/rst/languages.
+# read <https://docutils.sourceforge.io/docs/howto/i18n.html>.
+# Two files must be translated for each language: one in docutils/languages,
+# the other in docutils/parsers/rst/languages.
 
 """
 Slovak-language mappings for language-dependent features of
@@ -37,22 +37,22 @@ directives = {
       'pull-quote (translation required)': 'pull-quote',
       'compound (translation required)': 'compound',
       'container (translation required)': 'container',
-      #u'questions': 'questions',
-      #u'qa': 'questions',
-      #u'faq': 'questions',
+      # 'questions': 'questions',
+      # 'qa': 'questions',
+      # 'faq': 'questions',
       'table (translation required)': 'table',
       'csv-table (translation required)': 'csv-table',
       'list-table (translation required)': 'list-table',
       'meta': 'meta',
       'math (translation required)': 'math',
-      #u'imagemap': 'imagemap',
+      # 'imagemap': 'imagemap',
       'obr\xe1zok': 'image',
       'tvar': 'figure',
       'vlo\x9ei\x9d': 'include',
       'raw (translation required)': 'raw',
       'nahradi\x9d': 'replace',
       'unicode': 'unicode',
-      'd\u00E1tum': 'date',
+      'dátum': 'date',
       'class (translation required)': 'class',
       'role (translation required)': 'role',
       'default-role (translation required)': 'default-role',
@@ -63,8 +63,8 @@ directives = {
       'cie\xbeov\xe9-pozn\xe1mky': 'target-notes',
       'header (translation required)': 'header',
       'footer (translation required)': 'footer',
-      #u'footnotes': 'footnotes',
-      #u'citations': 'citations',
+      # 'footnotes': 'footnotes',
+      # 'citations': 'citations',
       }
 """Slovak name to registered (in directives/__init__.py) directive name
 mapping."""
@@ -82,14 +82,15 @@ roles = {
       'emphasis (translation required)': 'emphasis',
       'strong (translation required)': 'strong',
       'literal (translation required)': 'literal',
-    'math (translation required)': 'math',
+      'math (translation required)': 'math',
       'named-reference (translation required)': 'named-reference',
       'anonymous-reference (translation required)': 'anonymous-reference',
       'footnote-reference (translation required)': 'footnote-reference',
       'citation-reference (translation required)': 'citation-reference',
-      'substitution-reference (translation required)': 'substitution-reference',
+      'substitution-reference (translation required)': 'substitution-reference',  # noqa:E501
       'target (translation required)': 'target',
       'uri-reference (translation required)': 'uri-reference',
-      'raw (translation required)': 'raw',}
+      'raw (translation required)': 'raw',
+      }
 """Mapping of Slovak role names to canonical role names for interpreted text.
 """

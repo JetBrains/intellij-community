@@ -1,0 +1,36 @@
+PyFile:NestedTemplateStrings.py
+  PyAssignmentStatement
+    PyTargetExpression: s
+      PsiElement(Py:IDENTIFIER)('s')
+    PsiWhiteSpace(' ')
+    PsiElement(Py:EQ)('=')
+    PsiWhiteSpace(' ')
+    PyStringLiteralExpression: 1{t'''2{t"3{t'4'}"}'''}
+      PyFormattedStringElement
+        PsiElement(Py:FSTRING_START)('t"""')
+        PsiElement(Py:FSTRING_TEXT)('1')
+        PyFStringFragment
+          PsiElement(Py:FSTRING_FRAGMENT_START)('{')
+          PyStringLiteralExpression: 2{t"3{t'4'}"}
+            PyFormattedStringElement
+              PsiElement(Py:FSTRING_START)('t'''')
+              PsiElement(Py:FSTRING_TEXT)('2')
+              PyFStringFragment
+                PsiElement(Py:FSTRING_FRAGMENT_START)('{')
+                PyStringLiteralExpression: 3{t'4'}
+                  PyFormattedStringElement
+                    PsiElement(Py:FSTRING_START)('t"')
+                    PsiElement(Py:FSTRING_TEXT)('3')
+                    PyFStringFragment
+                      PsiElement(Py:FSTRING_FRAGMENT_START)('{')
+                      PyStringLiteralExpression: 4
+                        PyFormattedStringElement
+                          PsiElement(Py:FSTRING_START)('t'')
+                          PsiElement(Py:FSTRING_TEXT)('4')
+                          PsiElement(Py:FSTRING_END)(''')
+                      PsiElement(Py:FSTRING_FRAGMENT_END)('}')
+                    PsiElement(Py:FSTRING_END)('"')
+                PsiElement(Py:FSTRING_FRAGMENT_END)('}')
+              PsiElement(Py:FSTRING_END)(''''')
+          PsiElement(Py:FSTRING_FRAGMENT_END)('}')
+        PsiElement(Py:FSTRING_END)('"""')

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.testing.tox;
 
 import com.intellij.execution.Executor;
@@ -17,12 +17,15 @@ import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.xmlb.SkipEmptySerializationFilter;
 import com.intellij.util.xmlb.XmlSerializer;
 import com.intellij.util.xmlb.annotations.Tag;
+import com.jetbrains.python.psi.resolve.PackageAvailabilitySpec;
+import com.jetbrains.python.serialization.AnnotationSerializationFilter;
+import com.jetbrains.python.serialization.CompoundFilter;
 import com.jetbrains.python.testing.AbstractPythonTestRunConfiguration;
-import com.jetbrains.serialization.AnnotationSerializationFilter;
-import com.jetbrains.serialization.CompoundFilter;
 import org.jdom.Element;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.VisibleForTesting;
 
 import java.util.List;
 
@@ -30,17 +33,17 @@ import java.util.List;
  * @author Ilya.Kazakevich
  */
 public final class PyToxConfiguration extends AbstractPythonTestRunConfiguration<PyToxConfiguration> {
+  private static final PackageAvailabilitySpec PACKAGE_SPEC = new PackageAvailabilitySpec("tox", "tox.run");
 
-  @NotNull
-  private final Project myProject;
+  private final @NotNull Project myProject;
 
   @Tag("arguments")
   private String @Nullable [] myArguments;
   @Tag("runOnlyEnvs")
   private String @Nullable [] myRunOnlyEnvs;
 
-  PyToxConfiguration(@NotNull final PyToxConfigurationFactory factory, @NotNull final Project project) {
-    super(project, factory);
+  PyToxConfiguration(final @NotNull PyToxConfigurationFactory factory, final @NotNull Project project) {
+    super(project, factory, PACKAGE_SPEC);
     myProject = project;
     // Module will be stored with XmlSerializer
     //noinspection AssignmentToSuperclassField
@@ -52,11 +55,12 @@ public final class PyToxConfiguration extends AbstractPythonTestRunConfiguration
     return true;
   }
 
-  String @NotNull [] getRunOnlyEnvs() {
+  @ApiStatus.Internal
+  public String @NotNull [] getRunOnlyEnvs() {
     return (myRunOnlyEnvs == null ? ArrayUtilRt.EMPTY_STRING_ARRAY : myRunOnlyEnvs.clone());
   }
 
-  void setRunOnlyEnvs(final String @NotNull ... tests) {
+  public void setRunOnlyEnvs(final String @NotNull ... tests) {
     myRunOnlyEnvs = tests.clone();
   }
 
@@ -64,18 +68,19 @@ public final class PyToxConfiguration extends AbstractPythonTestRunConfiguration
     return (myArguments == null ? ArrayUtilRt.EMPTY_STRING_ARRAY : myArguments.clone());
   }
 
-  void setArguments(final String @NotNull ... arguments) {
+  @VisibleForTesting
+  public void setArguments(final String @NotNull ... arguments) {
     myArguments = arguments.clone();
   }
 
   @Override
-  public void readExternal(@NotNull final Element element) throws InvalidDataException {
+  public void readExternal(final @NotNull Element element) throws InvalidDataException {
     super.readExternal(element);
     XmlSerializer.deserializeInto(this, element);
   }
 
   @Override
-  public void writeExternal(@NotNull final Element element) throws WriteExternalException {
+  public void writeExternal(final @NotNull Element element) throws WriteExternalException {
     super.writeExternal(element);
     XmlSerializer.serializeInto(this, element, new CompoundFilter(
       new SkipEmptySerializationFilter(),
@@ -88,25 +93,21 @@ public final class PyToxConfiguration extends AbstractPythonTestRunConfiguration
     return new PyToxConfigurationSettings(myProject);
   }
 
-  @Nullable
   @Override
-  public RunProfileState getState(@NotNull final Executor executor, @NotNull final ExecutionEnvironment environment) {
+  public @NotNull RunProfileState getState(final @NotNull Executor executor, final @NotNull ExecutionEnvironment environment) {
     return new PyToxCommandLineState(this, environment);
   }
 
-  @Nullable
   @Override
-  public String getTestSpec(@NotNull final Location<?> location, @NotNull final AbstractTestProxy failedTest) {
-
+  public @Nullable String getTestSpec(final @NotNull Location<?> location, final @NotNull AbstractTestProxy failedTest) {
     AbstractTestProxy test = failedTest;
     while (test != null) {
       final String url = test.getLocationUrl();
-      if (url == null) {
-        continue;
-      }
-      final String protocol = VirtualFileManager.extractProtocol(url);
-      if (PyToxTestLocator.PROTOCOL_ID.equals(protocol)) {
-        return VirtualFileManager.extractPath(url);
+      if (url != null) {
+        final String protocol = VirtualFileManager.extractProtocol(url);
+        if (PyToxTestLocator.PROTOCOL_ID.equals(protocol)) {
+          return VirtualFileManager.extractPath(url);
+        }
       }
       test = test.getParent();
     }
@@ -114,7 +115,7 @@ public final class PyToxConfiguration extends AbstractPythonTestRunConfiguration
   }
 
   @Override
-  public void addTestSpecsAsParameters(@NotNull final ParamsGroup paramsGroup, @NotNull final List<String> testSpecs) {
+  public void addTestSpecsAsParameters(final @NotNull ParamsGroup paramsGroup, final @NotNull List<String> testSpecs) {
     if (!testSpecs.isEmpty()) {
       paramsGroup.addParameter(String.format("-e %s", StringUtil.join(testSpecs, ",")));
     }

@@ -1,30 +1,43 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.util;
 
+import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.util.NlsContexts;
-import com.intellij.ui.*;
+import com.intellij.ui.AnActionButton;
+import com.intellij.ui.AnActionButtonRunnable;
+import com.intellij.ui.CommonActionsPanel;
+import com.intellij.ui.TableUtil;
+import com.intellij.ui.ToolbarDecorator;
 import com.intellij.ui.table.TableView;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.ListTableModel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
-import javax.swing.*;
+import javax.swing.DefaultCellEditor;
+import javax.swing.JComponent;
+import javax.swing.JPanel;
+import javax.swing.ListSelectionModel;
+import javax.swing.SwingUtilities;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.TableCellRenderer;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import java.util.Observable;
+import java.util.stream.Stream;
 
 public abstract class ListTableWithButtons<T> extends Observable {
   private final List<T> myElements = new ArrayList<>();
   private JPanel myPanel;
-  @NotNull private final TableView<T> myTableView;
+  private final @NotNull TableView<T> myTableView;
   private final CommonActionsPanel myActionsPanel;
   private boolean myIsEnabled = true;
   private final ToolbarDecorator myDecorator;
@@ -41,7 +54,7 @@ public abstract class ListTableWithButtons<T> extends Observable {
             public void keyPressed(KeyEvent e) {
               final int column = myTableView.getEditingColumn();
               final int row = myTableView.getEditingRow();
-              if (e.getModifiers() == 0 && (e.getKeyCode() == KeyEvent.VK_ENTER || e.getKeyCode() == KeyEvent.VK_TAB)) {
+              if (e.getModifiersEx() == 0 && (e.getKeyCode() == KeyEvent.VK_ENTER || e.getKeyCode() == KeyEvent.VK_TAB)) {
                 e.consume();
                 SwingUtilities.invokeLater(() -> {
                   stopEditing();
@@ -68,8 +81,8 @@ public abstract class ListTableWithButtons<T> extends Observable {
         }
       }
     };
+    myTableView.setShowGrid(false);
     myTableView.setIntercellSpacing(JBUI.emptySize());
-    myTableView.setStriped(true);
     myTableView.getTableViewModel().setSortable(false);
     myTableView.getComponent().setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
 
@@ -81,14 +94,16 @@ public abstract class ListTableWithButtons<T> extends Observable {
     return ToolbarDecorator.createDecorator(myTableView);
   }
 
-  @Nullable
-  protected AnActionButtonRunnable createRemoveAction() {
+  protected @Nullable AnActionButtonRunnable createRemoveAction() {
     return button -> removeSelected();
   }
 
-  @Nullable
-  protected AnActionButtonRunnable createAddAction() {
+  protected @Nullable AnActionButtonRunnable createAddAction() {
     return button -> addNewElement(createElement());
+  }
+
+  protected @Nullable AnActionButtonRunnable createEditAction() {
+    return null;
   }
 
   protected void addNewElement(T newElement) {
@@ -100,8 +115,9 @@ public abstract class ListTableWithButtons<T> extends Observable {
         myTableView.getTableViewModel().setItems(myElements);
       }
       myTableView.scrollRectToVisible(myTableView.getCellRect(myElements.size() - 1, 0, true));
-      if(shouldEditRowOnCreation())
+      if (shouldEditRowOnCreation()) {
         myTableView.getComponent().editCellAt(myElements.size() - 1, 0);
+      }
       myTableView.getComponent().revalidate();
       myTableView.getComponent().repaint();
     });
@@ -136,14 +152,16 @@ public abstract class ListTableWithButtons<T> extends Observable {
     else if (selectedIndex < myElements.size()) {
       myTableView.getComponent().getSelectionModel().setSelectionInterval(selectedIndex, selectedIndex);
     }
+
+    myTableView.getComponent().revalidate();
+    myTableView.getComponent().repaint();
   }
 
-  @NotNull
-  public TableView<T> getTableView() {
+  public @NotNull TableView<T> getTableView() {
     return myTableView;
   }
 
-  protected abstract ListTableModel createListModel();
+  protected abstract ListTableModel<T> createListModel();
 
   protected void setModified() {
     setChanged();
@@ -156,30 +174,40 @@ public abstract class ListTableWithButtons<T> extends Observable {
 
   public JComponent getComponent() {
     if (myPanel == null) {
-      myDecorator.setAddAction(createAddAction()).setRemoveAction(createRemoveAction());
-      if(!isUpDownSupported())
+      myDecorator.setAddAction(createAddAction())
+        .setRemoveAction(createRemoveAction())
+        .setEditAction(createEditAction());
+      if (!isUpDownSupported()) {
         myDecorator.disableUpDownActions();
-      myDecorator.addExtraActions(createExtraActions());
+      }
+      myDecorator.addExtraActions(createExtraToolbarActions());
       myPanel = myDecorator.createPanel();
-
-      AnActionButton removeButton = ToolbarDecorator.findRemoveButton(myPanel);
-      if (removeButton != null) {
-        removeButton.addCustomUpdater(e -> {
-          List<T> selection = getSelection();
-          if (selection.isEmpty() || !myIsEnabled) return false;
-          for (T t : selection) {
-            if (!canDeleteElement(t)) return false;
-          }
-          return true;
-        });
-      }
-
-      AnActionButton addButton = ToolbarDecorator.findAddButton(myPanel);
-      if (addButton != null) {
-        addButton.addCustomUpdater(e -> myIsEnabled);
-      }
+      configureToolbarButtons(myPanel);
     }
     return myPanel;
+  }
+
+  protected void configureToolbarButtons(@NotNull JPanel panel) {
+    var addButton = ToolbarDecorator.findAddButton(panel);
+    var removeButton = ToolbarDecorator.findRemoveButton(panel);
+    var editButton = ToolbarDecorator.findEditButton(panel);
+    var upButton = ToolbarDecorator.findUpButton(panel);
+    var downButton = ToolbarDecorator.findDownButton(panel);
+
+    Stream.of(addButton, removeButton, editButton, upButton, downButton)
+      .filter(Objects::nonNull)
+      .forEach(it -> it.addCustomUpdater(e -> myIsEnabled));
+
+    if (removeButton != null) {
+      removeButton.addCustomUpdater(e -> {
+        List<T> selection = getSelection();
+        if (selection.isEmpty()) return false;
+        for (T t : selection) {
+          if (!canDeleteElement(t)) return false;
+        }
+        return true;
+      });
+    }
   }
 
   public CommonActionsPanel getActionsPanel() {
@@ -222,15 +250,21 @@ public abstract class ListTableWithButtons<T> extends Observable {
 
   protected abstract boolean isEmpty(T element);
 
+  protected AnAction @NotNull [] createExtraToolbarActions() {
+    AnActionButton[] actions = createExtraActions();
+    if (actions.length == 0) return AnAction.EMPTY_ARRAY;
+    return Arrays.copyOf(actions, actions.length, AnAction[].class);
+  }
+
+  /** @deprecated override {@link #createExtraToolbarActions()} instead */
+  @Deprecated(forRemoval = true)
   protected AnActionButton @NotNull [] createExtraActions() {
     return new AnActionButton[0];
   }
 
-
-  @NotNull
-  protected List<T> getSelection() {
+  protected @NotNull List<T> getSelection() {
     int[] selection = myTableView.getComponent().getSelectedRows();
-    if (selection.length == 0) {
+    if (selection.length == 0 || myElements.isEmpty()) {
       return Collections.emptyList();
     }
     else {
@@ -242,7 +276,7 @@ public abstract class ListTableWithButtons<T> extends Observable {
     }
   }
 
-  public void setValues(List<? extends T> envVariables) {
+  public void setValues(@Unmodifiable List<? extends T> envVariables) {
     myElements.clear();
     for (T envVariable : envVariables) {
       myElements.add(cloneElement(envVariable));
@@ -262,7 +296,7 @@ public abstract class ListTableWithButtons<T> extends Observable {
 
   protected abstract boolean canDeleteElement(T selection);
 
-  protected static abstract class ElementsColumnInfoBase<T> extends ColumnInfo<T, @NlsContexts.ListItem String> {
+  protected abstract static class ElementsColumnInfoBase<T> extends ColumnInfo<T, @NlsContexts.ListItem String> {
     private DefaultTableCellRenderer myRenderer;
 
     protected ElementsColumnInfoBase(@NlsContexts.ColumnName String name) {
@@ -281,7 +315,6 @@ public abstract class ListTableWithButtons<T> extends Observable {
       return myRenderer;
     }
 
-    @Nullable
-    protected abstract @NlsContexts.Tooltip String getDescription(T element);
+    protected abstract @Nullable @NlsContexts.Tooltip String getDescription(T element);
   }
 }

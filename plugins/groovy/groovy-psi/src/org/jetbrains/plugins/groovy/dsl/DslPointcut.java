@@ -1,18 +1,26 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.dsl;
 
 import com.intellij.openapi.util.Key;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiMethod;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ProcessingContext;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.dsl.toplevel.ClassContextFilter;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
-/**
- * @author peter
- */
 @SuppressWarnings("UnusedDeclaration")
 public abstract class DslPointcut<T,V> {
   public static final DslPointcut UNKNOWN = new DslPointcut() {
@@ -29,14 +37,13 @@ public abstract class DslPointcut<T,V> {
   };
   public static Key<Map<String, List>> BOUND = Key.create("gdsl.bound");
 
-  @Nullable
-  abstract List<V> matches(T src, ProcessingContext context);
+  abstract @Nullable List<V> matches(T src, ProcessingContext context);
 
   abstract boolean operatesOn(Class c);
 
   public DslPointcut<T, V> and(final DslPointcut<T, V> next) {
     final DslPointcut<T, V> first = this;
-    return new DslPointcut<T, V>() {
+    return new DslPointcut<>() {
       @Override
       List<V> matches(T src, ProcessingContext context) {
         final List<V> vs1 = first.matches(src, context);
@@ -59,7 +66,7 @@ public abstract class DslPointcut<T,V> {
 
   public DslPointcut<T, V> or(final DslPointcut<T, V> next) {
     final DslPointcut<T, V> first = this;
-    return new DslPointcut<T, V>() {
+    return new DslPointcut<>() {
       @Override
       List<V> matches(T src, ProcessingContext context) {
         final List<V> vs1 = first.matches(src, context);
@@ -85,7 +92,7 @@ public abstract class DslPointcut<T,V> {
   }
   public DslPointcut<T, V> bitwiseNegate() {
     final DslPointcut<T, V> base = this;
-    return new DslPointcut<T, V>() {
+    return new DslPointcut<>() {
       @Override
       List<V> matches(T src, ProcessingContext context) {
         return base.matches(src, context) == null ? Collections.emptyList() : null;
@@ -100,7 +107,7 @@ public abstract class DslPointcut<T,V> {
 
 
   public static DslPointcut<GdslType, GdslType> subType(final Object arg) {
-    return new DslPointcut<GdslType, GdslType>() {
+    return new DslPointcut<>() {
 
       @Override
       List<GdslType> matches(GdslType src, ProcessingContext context) {
@@ -128,7 +135,7 @@ public abstract class DslPointcut<T,V> {
       assert inner.operatesOn(GdslType.class) : "The argument to currentType should be a pointcut working with types, e.g. subType";
     }
 
-    return new DslPointcut<GroovyClassDescriptor, GdslType>() {
+    return new DslPointcut<>() {
 
       @Override
       List<GdslType> matches(GroovyClassDescriptor src, ProcessingContext context) {
@@ -147,7 +154,7 @@ public abstract class DslPointcut<T,V> {
   }
 
   public static DslPointcut<GroovyClassDescriptor, GdslType> enclosingType(final Object arg) {
-    return new DslPointcut<GroovyClassDescriptor, GdslType>() {
+    return new DslPointcut<>() {
       @Override
       List<GdslType> matches(GroovyClassDescriptor src, ProcessingContext context) {
         List<GdslType> result = new ArrayList<>();
@@ -173,7 +180,7 @@ public abstract class DslPointcut<T,V> {
   }
 
   public static DslPointcut<Object, String> name(final Object arg) {
-    return new DslPointcut<Object, String>() {
+    return new DslPointcut<>() {
       @Override
       List<String> matches(Object src, ProcessingContext context) {
         if (src instanceof GdslType) {
@@ -202,7 +209,7 @@ public abstract class DslPointcut<T,V> {
       assert inner.operatesOn(GdslMethod.class) : "The argument to enclosingMethod should be a pointcut working with methods, e.g. name";
     }
 
-    return new DslPointcut<GroovyClassDescriptor, GdslMethod>() {
+    return new DslPointcut<>() {
       @Override
       List<GdslMethod> matches(GroovyClassDescriptor src, ProcessingContext context) {
         List<GdslMethod> result = new ArrayList<>();
@@ -230,7 +237,7 @@ public abstract class DslPointcut<T,V> {
 
   public static DslPointcut bind(final Object arg) {
     assert arg instanceof Map;
-    assert ((Map)arg).size() == 1;
+    assert ((Map<?, ?>)arg).size() == 1;
     final String name = (String)((Map)arg).keySet().iterator().next();
     final DslPointcut pct = (DslPointcut)((Map)arg).values().iterator().next();
 

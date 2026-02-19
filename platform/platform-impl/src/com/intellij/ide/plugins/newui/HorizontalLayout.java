@@ -4,11 +4,16 @@ package com.intellij.ide.plugins.newui;
 import com.intellij.util.ui.AbstractLayoutManager;
 import com.intellij.util.ui.JBInsets;
 
-import java.awt.*;
+import java.awt.Component;
+import java.awt.Container;
+import java.awt.Dimension;
+import java.awt.Insets;
 
 /**
  * @author Alexander Lobas
+ * @deprecated use {@link com.intellij.ui.components.panels.ListLayout}
  */
+@Deprecated
 public class HorizontalLayout extends AbstractLayoutManager {
   protected final int myOffset;
 

@@ -1,0 +1,14 @@
+com.intellij.concurrency.AsyncFutureResult
+- com.intellij.concurrency.AsyncFuture
+- a:set(java.lang.Object):V
+- a:setException(java.lang.Throwable):V
+com.intellij.openapi.util.SimpleTimerTask
+- a:cancel():V
+- a:isCancelled():Z
+com.intellij.util.concurrency.EdtScheduledExecutorService
+- java.util.concurrent.ScheduledExecutorService
+- s:getInstance():com.intellij.util.concurrency.EdtScheduledExecutorService
+- a:schedule(java.lang.Runnable,com.intellij.openapi.application.ModalityState,J,java.util.concurrent.TimeUnit):java.util.concurrent.ScheduledFuture
+org.jetbrains.concurrency.ObsolescentFunction
+- com.intellij.util.Function
+- org.jetbrains.concurrency.Obsolescent

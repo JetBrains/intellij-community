@@ -1,17 +1,57 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.slicer;
 
 import com.intellij.analysis.AnalysisScope;
 import com.intellij.codeInsight.Nullability;
-import com.intellij.codeInspection.dataFlow.*;
+import com.intellij.codeInspection.dataFlow.ContractReturnValue;
+import com.intellij.codeInspection.dataFlow.ContractValue;
+import com.intellij.codeInspection.dataFlow.JavaMethodContractUtil;
+import com.intellij.codeInspection.dataFlow.MethodContract;
+import com.intellij.codeInspection.dataFlow.TypeConstraints;
 import com.intellij.codeInspection.dataFlow.types.DfType;
 import com.intellij.codeInspection.dataFlow.types.DfTypes;
-import com.intellij.execution.filters.*;
+import com.intellij.execution.filters.ArithmeticExceptionInfo;
+import com.intellij.execution.filters.ArrayCopyIndexOutOfBoundsExceptionInfo;
+import com.intellij.execution.filters.ArrayIndexOutOfBoundsExceptionInfo;
+import com.intellij.execution.filters.AssertionErrorInfo;
+import com.intellij.execution.filters.ClassCastExceptionInfo;
+import com.intellij.execution.filters.ExceptionAnalysisProvider;
+import com.intellij.execution.filters.ExceptionInfo;
+import com.intellij.execution.filters.JetBrainsNotNullInstrumentationExceptionInfo;
+import com.intellij.execution.filters.NegativeArraySizeExceptionInfo;
+import com.intellij.execution.filters.NullPointerExceptionInfo;
 import com.intellij.java.JavaBundle;
+import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiAssertStatement;
+import com.intellij.psi.PsiBlockStatement;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiCodeBlock;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiExpressionList;
+import com.intellij.psi.PsiIdentifier;
+import com.intellij.psi.PsiIfStatement;
+import com.intellij.psi.PsiKeyword;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiMethodCallExpression;
+import com.intellij.psi.PsiNewExpression;
+import com.intellij.psi.PsiPrimitiveType;
+import com.intellij.psi.PsiReferenceExpression;
+import com.intellij.psi.PsiStatement;
+import com.intellij.psi.PsiSwitchBlock;
+import com.intellij.psi.PsiSwitchLabelStatement;
+import com.intellij.psi.PsiSwitchLabelStatementBase;
+import com.intellij.psi.PsiSwitchLabeledRuleStatement;
+import com.intellij.psi.PsiThrowStatement;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypeCastExpression;
+import com.intellij.psi.PsiTypeElement;
+import com.intellij.psi.PsiTypes;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.ClassUtil;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -31,7 +71,7 @@ import java.util.function.Supplier;
 
 import static com.intellij.util.ObjectUtils.tryCast;
 
-public class DataflowExceptionAnalysisProvider implements ExceptionAnalysisProvider {
+public final class DataflowExceptionAnalysisProvider implements ExceptionAnalysisProvider {
   private final Project myProject;
 
   public DataflowExceptionAnalysisProvider(Project project) {
@@ -41,14 +81,14 @@ public class DataflowExceptionAnalysisProvider implements ExceptionAnalysisProvi
   @Override
   public @Nullable AnAction getAnalysisAction(@NotNull PsiElement anchor,
                                               @NotNull ExceptionInfo info,
-                                              @NotNull Supplier<List<StackLine>> nextFrames) {
+                                              @NotNull Supplier<? extends List<StackLine>> nextFrames) {
     AnalysisStartingPoint analysis = getAnalysis(anchor, info);
     return createAction(analysis, nextFrames);
   }
 
   @Override
   public @Nullable AnAction getIntermediateRowAnalysisAction(@NotNull PsiElement anchor,
-                                                             @NotNull Supplier<List<StackLine>> nextFrames) {
+                                                             @NotNull Supplier<? extends List<StackLine>> nextFrames) {
     AnalysisStartingPoint analysis = getIntermediateRowAnalysis(anchor);
     return createAction(analysis, nextFrames);
   }
@@ -101,7 +141,7 @@ public class DataflowExceptionAnalysisProvider implements ExceptionAnalysisProvi
 
   private @Nullable AnalysisStartingPoint getAnalysis(@NotNull PsiElement anchor,
                                                       @NotNull ExceptionInfo info) {
-    if (anchor instanceof PsiKeyword && anchor.textMatches(PsiKeyword.NEW)) {
+    if (anchor instanceof PsiKeyword && anchor.textMatches(JavaKeywords.NEW)) {
       PsiNewExpression exceptionConstructor = tryCast(anchor.getParent(), PsiNewExpression.class);
       if (exceptionConstructor != null && !exceptionConstructor.isArrayCreation()) {
         PsiThrowStatement throwStatement =
@@ -143,10 +183,9 @@ public class DataflowExceptionAnalysisProvider implements ExceptionAnalysisProvi
   }
 
   private static AnalysisStartingPoint fromArithmeticException(PsiElement anchor) {
-    if (anchor instanceof PsiExpression) {
-      PsiExpression divisor = (PsiExpression)anchor;
+    if (anchor instanceof PsiExpression divisor) {
       PsiType type = divisor.getType();
-      if (PsiType.LONG.equals(type)) {
+      if (PsiTypes.longType().equals(type)) {
         return AnalysisStartingPoint.create(DfTypes.longValue(0), divisor);
       }
       else if (TypeConversionUtil.isIntegralNumberType(type)) {
@@ -156,14 +195,13 @@ public class DataflowExceptionAnalysisProvider implements ExceptionAnalysisProvi
     return null;
   }
 
-  private @Nullable static AnalysisStartingPoint fromThrowStatement(PsiThrowStatement throwStatement) {
+  private static @Nullable AnalysisStartingPoint fromThrowStatement(PsiThrowStatement throwStatement) {
     PsiElement parent = throwStatement.getParent();
     if (parent instanceof PsiCodeBlock) {
       PsiElement statement = throwStatement.getPrevSibling();
       while (statement != null) {
         statement = statement.getPrevSibling();
-        if (statement instanceof PsiIfStatement) {
-          PsiIfStatement ifStatement = (PsiIfStatement)statement;
+        if (statement instanceof PsiIfStatement ifStatement) {
           boolean thenExits = ifStatement.getThenBranch() != null && !ControlFlowUtils.statementMayCompleteNormally(ifStatement.getThenBranch());
           boolean elseExits =
             ifStatement.getElseBranch() != null && !ControlFlowUtils.statementMayCompleteNormally(ifStatement.getElseBranch());
@@ -224,8 +262,7 @@ public class DataflowExceptionAnalysisProvider implements ExceptionAnalysisProvi
     if (hasDefault) {
       List<PsiExpression> allLabels = new ArrayList<>();
       for (PsiStatement statement : Objects.requireNonNull(block.getBody()).getStatements()) {
-        if (statement instanceof PsiSwitchLabelStatementBase) {
-          PsiSwitchLabelStatementBase labelStatement = (PsiSwitchLabelStatementBase)statement;
+        if (statement instanceof PsiSwitchLabelStatementBase labelStatement) {
           if (labelStatement.isDefaultCase()) continue;
           PsiExpressionList caseValues = labelStatement.getCaseValues();
           if (caseValues == null) return null;
@@ -305,8 +342,7 @@ public class DataflowExceptionAnalysisProvider implements ExceptionAnalysisProvi
     return null;
   }
 
-  @Nullable
-  private static AnalysisStartingPoint fromAssertionError(@NotNull PsiElement anchor) {
+  private static @Nullable AnalysisStartingPoint fromAssertionError(@NotNull PsiElement anchor) {
     if (anchor instanceof PsiAssertStatement) {
       return AnalysisStartingPoint.tryNegate(AnalysisStartingPoint.fromCondition(((PsiAssertStatement)anchor).getAssertCondition()));
     }
@@ -314,7 +350,7 @@ public class DataflowExceptionAnalysisProvider implements ExceptionAnalysisProvi
   }
 
   private @Nullable AnAction createAction(@Nullable AnalysisStartingPoint analysis,
-                                          @NotNull Supplier<List<StackLine>> nextFramesSupplier) {
+                                          @NotNull Supplier<? extends List<StackLine>> nextFramesSupplier) {
     if (analysis == null) return null;
     String text = DfaBasedFilter.getPresentationText(analysis.myDfType, analysis.myAnchor.getType());
     if (text.isEmpty()) return null;
@@ -323,11 +359,11 @@ public class DataflowExceptionAnalysisProvider implements ExceptionAnalysisProvi
 
   private final class DfaFromStacktraceAction extends AnAction {
     private final @NotNull AnalysisStartingPoint myAnalysis;
-    private @NotNull final Supplier<List<StackLine>> myNextFramesSupplier;
+    private final @NotNull Supplier<? extends List<StackLine>> myNextFramesSupplier;
 
     private DfaFromStacktraceAction(@NotNull AnalysisStartingPoint analysis,
                                     String text,
-                                    @NotNull Supplier<List<StackLine>> nextFramesSupplier) {
+                                    @NotNull Supplier<? extends List<StackLine>> nextFramesSupplier) {
       super(null, JavaBundle
         .message("action.dfa.from.stacktrace.text", analysis.myAnchor.getText(), text), null);
       myAnalysis = analysis;

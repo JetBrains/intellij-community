@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.chainCall;
 
 import com.intellij.codeInspection.LambdaCanBeMethodReferenceInspection;
@@ -20,13 +6,25 @@ import com.intellij.codeInspection.util.OptionalRefactoringUtil;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiArrayInitializerExpression;
+import com.intellij.psi.PsiElementFactory;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiExpressionList;
+import com.intellij.psi.PsiLambdaExpression;
+import com.intellij.psi.PsiLocalVariable;
+import com.intellij.psi.PsiMethodCallExpression;
+import com.intellij.psi.PsiParameter;
+import com.intellij.psi.PsiParameterList;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypeElement;
+import com.intellij.psi.PsiVariable;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.util.LambdaRefactoringUtil;
-import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.CommonJavaRefactoringUtil;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NonNls;
@@ -35,6 +33,14 @@ import org.jetbrains.annotations.Nullable;
 
 import static com.intellij.util.ObjectUtils.tryCast;
 
+/**
+ * An extension to support intermediate mapping steps extraction
+ * in fluent lambda chains.
+ * <p>
+ * For example, {@code stream.map(x -> x.y().z())} can be automatically refactored to
+ * {@code stream.map(x -> x.y()).map(y -> y.z())}. Implement this extension
+ * to plug custom fluent APIs to existing refactorings.
+ */
 public interface ChainCallExtractor {
   ExtensionPointName<ChainCallExtractor> KEY = ExtensionPointName.create("com.intellij.java.refactoring.chainCallExtractor");
 
@@ -47,7 +53,7 @@ public interface ChainCallExtractor {
    * @return true if this extractor can create a mapping step from given expression
    */
   @Contract(pure = true)
-  boolean canExtractChainCall(@NotNull PsiMethodCallExpression call, PsiExpression expression, PsiType expressionType);
+  boolean canExtractChainCall(@NotNull PsiMethodCallExpression call, @NotNull PsiExpression expression, @Nullable PsiType expressionType);
 
   /**
    * Returns chain call string representation (starting from "." like {@code .map(x -> x.getName())}).
@@ -61,7 +67,7 @@ public interface ChainCallExtractor {
   @Contract(pure = true)
   default @NonNls String buildChainCall(PsiVariable variable, PsiExpression expression, PsiType expressionType) {
     if(expression instanceof PsiArrayInitializerExpression) {
-      expression = RefactoringUtil.convertInitializerToNormalExpression(expression, expressionType);
+      expression = CommonJavaRefactoringUtil.convertInitializerToNormalExpression(expression, expressionType);
     }
     String typeArgument = OptionalRefactoringUtil.getMapTypeArgument(expression, expressionType);
     return "." + typeArgument + getMethodName(variable, expression, expressionType) +
@@ -94,8 +100,17 @@ public interface ChainCallExtractor {
     return call.getMethodExpression().getReferenceName();
   }
 
-  @Contract("null, _, _ -> null")
-  static ChainCallExtractor findExtractor(@Nullable PsiLambdaExpression lambda, PsiExpression expression, PsiType targetType) {
+  /**
+   * @param lambda lambda expression to find the suitable extractor for
+   * @param expression a subexpression from the lambda body that should be extracted
+   * @param targetType type of the new intermediate lambda parameter
+   * @return a ChainCallExtractor that supports extracting given subexpression from the given lambda; null if there's no such an extractor
+   * registered.
+   */
+  @Contract(value = "null, _, _ -> null", pure = true)
+  static ChainCallExtractor findExtractor(@Nullable PsiLambdaExpression lambda,
+                                          @NotNull PsiExpression expression,
+                                          @Nullable PsiType targetType) {
     if (lambda == null) return null;
     PsiParameterList parameters = lambda.getParameterList();
     if (parameters.getParametersCount() != 1) return null;
@@ -108,7 +123,7 @@ public interface ChainCallExtractor {
     }
     PsiMethodCallExpression call = tryCast(args.getParent(), PsiMethodCallExpression.class);
     if (call == null) return null;
-    for(ChainCallExtractor extractor : KEY.getExtensions()) {
+    for(ChainCallExtractor extractor : KEY.getExtensionList()) {
       if(extractor.canExtractChainCall(call, expression, targetType) &&
          StringUtil.isNotEmpty(extractor.getMethodName(parameter, expression, targetType))) {
         return extractor;

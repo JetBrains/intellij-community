@@ -1,20 +1,33 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.ui;
 
 import com.intellij.openapi.ui.GraphicsConfig;
 import com.intellij.util.MethodInvocator;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JComponent;
+import javax.swing.JRootPane;
+import javax.swing.RepaintManager;
+import java.awt.AlphaComposite;
+import java.awt.Component;
+import java.awt.Composite;
+import java.awt.Font;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.GraphicsConfiguration;
+import java.awt.GraphicsEnvironment;
+import java.awt.RenderingHints;
+import java.awt.Toolkit;
 import java.awt.image.BufferedImage;
 import java.util.Map;
 
-/**
- * @author Konstantin Bulenkov
- */
 public final class GraphicsUtil {
+  @SuppressWarnings("SpellCheckingInspection")
+  @ApiStatus.Internal
+  public static final String DESKTOP_HINTS = "awt.font.desktophints";
+
   private static final MethodInvocator ourSafelyGetGraphicsMethod = new MethodInvocator(JComponent.class, "safelyGetGraphics", Component.class);
 
   @SuppressWarnings("UndesirableClassUsage")
@@ -29,7 +42,7 @@ public final class GraphicsUtil {
    */
   public static void applyRenderingHints(@NotNull Graphics2D g) {
     Toolkit tk = Toolkit.getDefaultToolkit();
-    Map map = (Map)tk.getDesktopProperty("awt.font.desktophints");
+    Map<?, ?> map = (Map<?, ?>)tk.getDesktopProperty(DESKTOP_HINTS);
     if (map != null) {
       g.addRenderingHints(map);
     }
@@ -39,6 +52,10 @@ public final class GraphicsUtil {
     ((Graphics2D)g).setRenderingHint(RenderingHints.KEY_FRACTIONALMETRICS, RenderingHints.VALUE_FRACTIONALMETRICS_ON);
   }
 
+  /**
+   * Prefer using {@link #setAntialiasingType(JComponent, Object)} instead, as this method will complicate computing
+   * the correct text width for the preferred size.
+   */
   public static void setupAntialiasing(@NotNull Graphics g2) {
     setupAntialiasing(g2, true, false);
   }
@@ -56,11 +73,13 @@ public final class GraphicsUtil {
     return ourGraphics.getFontMetrics(font).charWidth(ch);
   }
 
+  /**
+   * Prefer using {@link #setAntialiasingType(JComponent, Object)} instead
+   */
   public static void setupAntialiasing(Graphics g2, boolean enableAA, boolean ignoreSystemSettings) {
-    if (g2 instanceof Graphics2D) {
-      Graphics2D g = (Graphics2D)g2;
+    if (g2 instanceof Graphics2D g) {
       Toolkit tk = Toolkit.getDefaultToolkit();
-      @SuppressWarnings("SpellCheckingInspection") Map map = (Map)tk.getDesktopProperty("awt.font.desktophints");
+      Map<?, ?> map = (Map<?, ?>)tk.getDesktopProperty(DESKTOP_HINTS);
       if (map != null && !ignoreSystemSettings) {
         g.addRenderingHints(map);
       }
@@ -87,6 +106,14 @@ public final class GraphicsUtil {
     return new GraphicsConfig(g).paintWithAlpha(alpha);
   }
 
+  public static void paintWithAlpha(Graphics g, float alpha, @NotNull Runnable paint) {
+    Graphics2D g2 = (Graphics2D)g;
+    Composite oldComposite = g2.getComposite();
+    g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, alpha));
+    paint.run();
+    g2.setComposite(oldComposite);
+  }
+
   /**
    * <p>Invoking {@link Component#getGraphics()} disables true double buffering withing {@link JRootPane},
    * even if no subsequent drawing is actually performed.</p>
@@ -100,7 +127,7 @@ public final class GraphicsUtil {
    * nor this method unless you really need to perform some drawing.</p>
    *
    * <p>Under the hood, "getGraphics" is actually "createGraphics" - it creates a new object instance and allocates native resources,
-   * that should be subsequently released by calling {@link Graphics#dispose()} (called from {@link Graphics#finalize()},
+   * that should be subsequently released by calling {@link Graphics#dispose()} (called from {@code finalize()},
    * but there's no need to retain resources unnecessarily).</p>
    *
    * <p>If you need {@link GraphicsConfiguration}, rely on {@link Component#getGraphicsConfiguration()},
@@ -115,15 +142,23 @@ public final class GraphicsUtil {
     return ourSafelyGetGraphicsMethod.isAvailable() ? (Graphics)ourSafelyGetGraphicsMethod.invoke(null, c) : c.getGraphics();
   }
 
-  public static Object getAntialiasingType(@NotNull JComponent component) {
-    return AATextInfo.getClientProperty(component);
-  }
-
+  /**
+   * Put a context hint that instructs using specified aliasing for a given component.
+   * It's preferred over using {@link #setupAntialiasing(Graphics)}, as it will allow to compute {@link JComponent#getPreferredSize()}
+   * without using {@link JComponent#getGraphics()} (see {@link #safelyGetGraphics(Component)} on why it shall be avoided).
+   * <p>
+   * NB: {@link JComponent#paint(Graphics)} should be using {@link sun.swing.SwingUtilities2#drawString} to make use of this component hint.
+   */
   public static void setAntialiasingType(@NotNull JComponent component, @Nullable Object type) {
-    AATextInfo.putClientProperty(type, component);
+    AATextInfo.putClientProperty((AATextInfo) type, component);
   }
 
-  public static Object createAATextInfo(@NotNull Object hint) {
-    return AATextInfo.create(hint, UIUtil.getLcdContrastValue());
+  public static @NotNull AATextInfo createAATextInfo(@NotNull Object hint) {
+    return new AATextInfo(hint, StartupUiUtil.getLcdContrastValue());
+  }
+
+  public static boolean isRemoteEnvironment() {
+    String geClassName = GraphicsEnvironment.getLocalGraphicsEnvironment().getClass().getSimpleName();
+    return geClassName.equals("PGraphicsEnvironment") || geClassName.equals("IdeGraphicsEnvironment");
   }
 }

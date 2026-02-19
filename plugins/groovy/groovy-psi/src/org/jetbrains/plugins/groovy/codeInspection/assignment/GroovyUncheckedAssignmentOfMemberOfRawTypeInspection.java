@@ -1,7 +1,13 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.codeInspection.assignment;
 
-import com.intellij.psi.*;
+import com.intellij.psi.CommonClassNames;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiClassType;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypes;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import org.jetbrains.annotations.NotNull;
@@ -24,7 +30,7 @@ import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 /**
  * @author Maxim.Medvedev
  */
-public class GroovyUncheckedAssignmentOfMemberOfRawTypeInspection extends BaseInspection {
+public final class GroovyUncheckedAssignmentOfMemberOfRawTypeInspection extends BaseInspection {
 
   @Override
   protected String buildErrorString(Object... args) {
@@ -34,8 +40,7 @@ public class GroovyUncheckedAssignmentOfMemberOfRawTypeInspection extends BaseIn
   }
 
   @Override
-  @NotNull
-  protected BaseInspectionVisitor buildVisitor() {
+  protected @NotNull BaseInspectionVisitor buildVisitor() {
     return new Visitor();
   }
 
@@ -47,13 +52,12 @@ public class GroovyUncheckedAssignmentOfMemberOfRawTypeInspection extends BaseIn
         final PsiType type = value.getType();
         if (type != null) {
           final GrParameterListOwner owner = PsiTreeUtil.getParentOfType(returnStatement, GrParameterListOwner.class);
-          if (owner instanceof PsiMethod) {
-            final PsiMethod method = (PsiMethod)owner;
+          if (owner instanceof PsiMethod method) {
             if (!method.isConstructor()) {
               final PsiType methodType = method.getReturnType();
               final PsiType returnType = value.getType();
               if (methodType != null) {
-                if (!PsiType.VOID.equals(methodType)) {
+                if (!PsiTypes.voidType().equals(methodType)) {
                   if (returnType != null) {
                     checkAssignability(methodType, value, value);
                   }
@@ -116,8 +120,7 @@ public class GroovyUncheckedAssignmentOfMemberOfRawTypeInspection extends BaseIn
       PsiType rType = rValue.getType();
 
       // For assignments with spread dot
-      if (PsiImplUtil.isSpreadAssignment(lValue) && lType instanceof PsiClassType) {
-        final PsiClassType pct = (PsiClassType)lType;
+      if (PsiImplUtil.isSpreadAssignment(lValue) && lType instanceof PsiClassType pct) {
         final PsiClass clazz = pct.resolve();
         if (clazz != null && CommonClassNames.JAVA_UTIL_LIST.equals(clazz.getQualifiedName())) {
           final PsiType[] types = pct.getParameters();

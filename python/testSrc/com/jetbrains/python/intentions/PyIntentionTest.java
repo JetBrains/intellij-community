@@ -1,11 +1,15 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.intentions;
 
+import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.openapi.application.impl.NonBlockingReadActionImpl;
 import com.intellij.openapi.ui.TestDialogManager;
 import com.intellij.openapi.ui.TestInputDialog;
 import com.intellij.psi.PsiFile;
+import com.intellij.ui.ChooserInterceptor;
+import com.intellij.ui.UiInterceptors;
 import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.codeInsight.PyCodeInsightSettings;
 import com.jetbrains.python.documentation.PyDocumentationSettings;
@@ -16,10 +20,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
+import java.util.regex.Pattern;
 
-/**
- * @author Alexey.Ivanov
- */
 public class PyIntentionTest extends PyTestCase {
   @Nullable private PyDocumentationSettings myDocumentationSettings = null;
 
@@ -50,79 +52,81 @@ public class PyIntentionTest extends PyTestCase {
     doTest(hint, false);
   }
 
-  private void doTest(String hint, LanguageLevel languageLevel) {
-    runWithLanguageLevel(languageLevel, () -> doTest(hint));
-  }
-
   private void doTest(String hint, boolean ignoreWhiteSpaces) {
     final PsiFile file = myFixture.configureByFile("intentions/" + getTestName(true) + ".py");
     final IntentionAction action = myFixture.findSingleIntention(hint);
     assertSdkRootsNotParsed(file);
     myFixture.launchAction(action);
+    NonBlockingReadActionImpl.waitForAsyncTaskCompletion();
     myFixture.checkResultByFile("intentions/" + getTestName(true) + "_after.py", ignoreWhiteSpaces);
   }
 
   private void doMultiFileTest(@NotNull String hint) {
     final String directoryPath = "intentions/" + getTestName(false);
-    final String filesPathPrefix = directoryPath + "/" + getTestName(true);
+    final String filesPathPrefix = getTestName(true);
     myFixture.copyDirectoryToProject(directoryPath, "");
     myFixture.configureByFile(filesPathPrefix + ".py");
     final IntentionAction action = myFixture.findSingleIntention(hint);
     myFixture.launchAction(action);
-    myFixture.checkResultByFile(filesPathPrefix + ".py", filesPathPrefix + "_after.py", false);
+    NonBlockingReadActionImpl.waitForAsyncTaskCompletion();
+    myFixture.checkResultByFile(filesPathPrefix + ".py", directoryPath + "/" + filesPathPrefix + "_after.py", false);
   }
 
   /**
    * Ensures that intention with given hint <i>is not</i> active.
    *
-   * @param hint
    */
-  private void doNegativeTest(String hint) {
+  private void doNegativeTest(@NotNull String hint) {
     final PsiFile file = myFixture.configureByFile("intentions/" + getTestName(true) + ".py");
     List<IntentionAction> ints = myFixture.filterAvailableIntentions(hint);
-    assertEmpty(ints);
+    assertEmpty("Intention '" + hint + "' should not be available under caret", ints);
     assertSdkRootsNotParsed(file);
   }
 
-  public void testConvertDictComp() {
-    doTest(PyPsiBundle.message("INTN.convert.dict.comp.to"), LanguageLevel.PYTHON26);
-  }
-
-  public void testConvertSetLiteral() {
-    doTest(PyPsiBundle.message("INTN.convert.set.literal.to"), LanguageLevel.PYTHON26);
-  }
-
   public void testReplaceExceptPart() {
-    doTest(PyPsiBundle.message("INTN.convert.except.to"), LanguageLevel.PYTHON34);
+    runWithLanguageLevel(LanguageLevel.PYTHON35, () -> doTest(PyPsiBundle.message("INTN.convert.except.to")));
+  }
+
+  public void testExceptPartAddMissingParentheses() {
+    doTest(PyPsiBundle.message("QFIX.except.clause.missing.parens"));
   }
 
   public void testConvertBuiltins() {
-    doTest(PyPsiBundle.message("INTN.convert.builtin.import"), LanguageLevel.PYTHON34);
+    doTest(PyPsiBundle.message("INTN.convert.builtin.import"));
   }
 
   public void testRemoveLeadingF() {
-    doTest(PyPsiBundle.message("QFIX.remove.string.prefix", "F"), LanguageLevel.PYTHON35);
+    runWithLanguageLevel(LanguageLevel.PYTHON35, () -> doTest(PyPsiBundle.message("QFIX.remove.string.prefix", "F")));
+  }
+
+  // PY-45729
+  public void  testJoinTupleToSingleLine() {
+    doTest(CodeInsightBundle.message("intention.name.join.comma.values"));
+  }
+
+  public void testSplitTupleToMultiLine() {
+    doTest(CodeInsightBundle.message("intention.name.split.comma.values"));
   }
 
   // PY-18972
   public void testRemoveTrailingL() {
-    doTest(PyPsiBundle.message("QFIX.remove.trailing.suffix"), LanguageLevel.PYTHON34);
+    doTest(PyPsiBundle.message("QFIX.remove.trailing.suffix"));
   }
 
   public void testReplaceOctalNumericLiteral() {
-    doTest(PyPsiBundle.message("INTN.replace.octal.numeric.literal"), LanguageLevel.PYTHON34);
+    doTest(PyPsiBundle.message("INTN.replace.octal.numeric.literal"));
   }
 
   public void testReplaceListComprehensions() {
-    doTest(PyPsiBundle.message("INTN.replace.list.comprehensions"), LanguageLevel.PYTHON34);
+    doTest(PyPsiBundle.message("INTN.replace.list.comprehensions"));
   }
 
   public void testReplaceRaiseStatement() {
-    doTest(PyPsiBundle.message("INTN.replace.raise.statement"), LanguageLevel.PYTHON34);
+    doTest(PyPsiBundle.message("INTN.replace.raise.statement"));
   }
 
   public void testReplaceBackQuoteExpression() {
-    doTest(PyPsiBundle.message("INTN.replace.backquote.expression"), LanguageLevel.PYTHON34);
+    doTest(PyPsiBundle.message("INTN.replace.backquote.expression"));
   }
 
   public void testSplitIf() {
@@ -163,6 +167,19 @@ public class PyIntentionTest extends PyTestCase {
 
   public void testJoinIfMultiStatements() {           //PY-2970
     doNegativeTest(PyPsiBundle.message("INTN.join.if"));
+  }
+
+  public void testJoinIfOrExpressionInOuterCondition() {
+    doTest(PyPsiBundle.message("INTN.join.if"));
+  }
+
+  // EA-401551
+  public void testJoinIfAssignmentExpressionInInnerCondition() {
+    doTest(PyPsiBundle.message("INTN.join.if"));
+  }
+
+  public void testJoinIfAssignmentExpressionsInBothConditions() {
+    doTest(PyPsiBundle.message("INTN.join.if"));
   }
 
   public void testDictConstructorToLiteralForm() {
@@ -206,6 +223,96 @@ public class PyIntentionTest extends PyTestCase {
     doTest(PyPsiBundle.message("INTN.quoted.string.double.to.single"));
   }
 
+  // PY-15608
+  public void testConvertingQuotesOfGluedStringWithDifferentElementQuotes() {
+    doTest(PyPsiBundle.message("INTN.quoted.string.single.to.double"));
+  }
+
+  // PY-30798
+  public void testConvertingFStringQuotesNotSuggestedInsideInnerExpressions() {
+    doNegativeTest(PyPsiBundle.message("INTN.quoted.string.single.to.double"));
+  }
+
+  // PY-30798
+  public void testConvertingFStringQuotesSuggestedOnFragmentBraces() {
+    doTest(PyPsiBundle.message("INTN.quoted.string.single.to.double"));
+  }
+
+  // PY-30798
+  public void testConvertingFStringQuotesSuggestedOnFragmentFormatPart() {
+    doTest(PyPsiBundle.message("INTN.quoted.string.single.to.double"));
+  }
+
+  // PY-30798
+  public void testConvertingRawFStringQuotesBefore312() {
+    runWithLanguageLevel(LanguageLevel.PYTHON311, () -> doTest(PyPsiBundle.message("INTN.quoted.string.single.to.double")));
+  }
+
+  // PY-59594
+  public void testConvertingRawFStringQuotes() {
+    doTest(PyPsiBundle.message("INTN.quoted.string.single.to.double"));
+  }
+
+  // PY-30798
+  public void testConvertingQuotesNotSuggestedForStringInsideFStringWithOppositeQuotesBefore312() {
+    runWithLanguageLevel(LanguageLevel.PYTHON311, () -> doNegativeTest(PyPsiBundle.message("INTN.quoted.string.single.to.double")));
+  }
+
+  // PY-59594
+  public void testConvertingQuotesOfStringInsideFStringWithOppositeQuotes() {
+    doTest(PyPsiBundle.message("INTN.quoted.string.single.to.double"));
+  }
+
+  // PY-30798
+  public void testConvertingQuotesNotSuggestedForStringContainingQuotesOfParentFStringBefore312() {
+    runWithLanguageLevel(LanguageLevel.PYTHON311, () -> doNegativeTest(PyPsiBundle.message("INTN.quoted.string.single.to.double")));
+  }
+
+  // PY-59594
+  public void testConvertingQuotesOfStringContainingQuotesOfParentFString() {
+    doTest(PyPsiBundle.message("INTN.quoted.string.single.to.double"));
+  }
+
+  // PY-30798
+  public void testConvertingQuotesNotSuggestedForFStringContainingTripleQuotedString() {
+    doNegativeTest(PyPsiBundle.message("INTN.quoted.string.single.to.double"));
+  }
+
+  // PY-30798
+  public void testConvertingQuotesOfStringInsideFString() {
+    doTest(PyPsiBundle.message("INTN.quoted.string.double.to.single"));
+  }
+
+  // PY-30798
+  public void testConvertingQuotesOfFStringContainingOtherStringsBefore312() {
+    runWithLanguageLevel(LanguageLevel.PYTHON311, () -> doTest(PyPsiBundle.message("INTN.quoted.string.double.to.single")));
+  }
+
+  // PY-59594
+  public void testConvertingQuotesOfFStringContainingOtherStrings() {
+    doTest(PyPsiBundle.message("INTN.quoted.string.double.to.single"));
+  }
+
+  // PY-30798
+  public void testConvertingQuotesOfFStringContainingEscapedQuotes() {
+    doTest(PyPsiBundle.message("INTN.quoted.string.single.to.double"));
+  }
+
+  // PY-30798
+  public void testConvertingQuotesOfGluedFStringContainingOtherStringsBefore312() {
+    runWithLanguageLevel(LanguageLevel.PYTHON311, () -> doTest(PyPsiBundle.message("INTN.quoted.string.single.to.double")));
+  }
+
+  // PY-59594
+  public void testConvertingQuotesOfGluedFStringContainingOtherStrings() {
+    doTest(PyPsiBundle.message("INTN.quoted.string.single.to.double"));
+  }
+
+  // PY-38315
+  public void testConvertingQuotesOfEmptyString() {
+    doTest(PyPsiBundle.message("INTN.quoted.string.single.to.double"));
+  }
+
   public void testConvertLambdaToFunction() {
     doTest(PyPsiBundle.message("INTN.convert.lambda.to.function"));
   }
@@ -242,11 +349,11 @@ public class PyIntentionTest extends PyTestCase {
   }
 
   public void testConvertVariadicParamPositionalContainerInPy2() {
-    doNegativeTest(PyPsiBundle.message("INTN.convert.variadic.param"));
+    runWithLanguageLevel(LanguageLevel.PYTHON27, () -> doNegativeTest(PyPsiBundle.message("INTN.convert.variadic.param")));
   }
 
   public void testConvertVariadicParamPositionalContainerInPy3() {
-    runWithLanguageLevel(LanguageLevel.getLatest(), () -> doTest(PyPsiBundle.message("INTN.convert.variadic.param")));
+    doTest(PyPsiBundle.message("INTN.convert.variadic.param"));
   }
 
   // PY-26284
@@ -351,16 +458,16 @@ public class PyIntentionTest extends PyTestCase {
 
   // PY-8989
   public void testConvertTripleQuotedStringDoesNotReplacePythonEscapes() {
-    doTest(PyPsiBundle.message("INTN.triple.quoted.string"), LanguageLevel.PYTHON34);
+    doTest(PyPsiBundle.message("INTN.triple.quoted.string"));
   }
 
   // PY-8989
   public void testConvertTripleQuotedStringMultilineGluedString() {
-    doTest(PyPsiBundle.message("INTN.triple.quoted.string"), LanguageLevel.PYTHON34);
+    doTest(PyPsiBundle.message("INTN.triple.quoted.string"));
   }
 
   public void testConvertTripleQuotedEmptyString() {
-    doTest(PyPsiBundle.message("INTN.triple.quoted.string"), LanguageLevel.PYTHON34);
+    doTest(PyPsiBundle.message("INTN.triple.quoted.string"));
   }
 
   public void testTransformConditionalExpression() { //PY-3094
@@ -373,7 +480,44 @@ public class PyIntentionTest extends PyTestCase {
 
   // PY-11074
   public void testImportToImportFrom() {
-    doTest("Convert to 'from __builtin__ import ...'");
+    doTest("Convert to 'from builtins import ...'");
+  }
+
+  // PY-45863
+  public void testRemoveQualifierFromAllUsages() {
+    shouldSelectRemoveQualifierOption("Remove qualifier from all usages");
+    doTest("Remove 'b' qualifier");
+  }
+
+  public void testRemoveQualifierFromThisName() {
+    shouldSelectRemoveQualifierOption("Remove qualifier from this name");
+    doTest("Remove 'b' qualifier");
+  }
+
+  private static void shouldSelectRemoveQualifierOption(String option) {
+    List<String> options = List.of("Remove qualifier from all usages", "Remove qualifier from this name");
+    UiInterceptors.register(new ChooserInterceptor(options, Pattern.quote(option)));
+  }
+
+  // PY-45863
+  public void testImportFQNToImportFromAll() {
+    doMultiFileTest("Remove 'pkg.mod' qualifier");
+  }
+
+  public void testRelativeFromImportOfModuleItselfToRelativeFromImportOfItsAttributes() {
+    doMultiFileTest("Convert to 'from .mod import ...'");
+  }
+
+  public void testRelativeFromImportOfMultipleModulesToRelativeFromImportOfOnesAttributes() {
+    doMultiFileTest("Convert to 'from .mod import ...'");
+  }
+
+  public void testImportOfMultipleModulesToFromImportOfOnesAttributes() {
+    doMultiFileTest("Convert to 'from mod import ...'");
+  }
+
+  public void testImportToFromImportKeepingOriginalImport() {
+    doMultiFileTest("Convert to 'from mod import ...'");
   }
 
   public void testTypeInDocstring() {
@@ -419,8 +563,13 @@ public class PyIntentionTest extends PyTestCase {
     doNegativeTest(PyPsiBundle.message("INTN.specify.type.in.docstring"));
   }
 
+  // PY-31369
+  public void testTypeCommentNotAffectSpecifyTypeInDocstringIntention() {
+    doTest(PyPsiBundle.message("INTN.specify.type.in.docstring"));
+  }
+
   public void testParamTypeInAnnotationNotSuggestedForSelf() {
-    runWithLanguageLevel(LanguageLevel.PYTHON36, () -> doNegativeTest(PyPsiBundle.message("INTN.specify.type.in.annotation")));
+    doNegativeTest(PyPsiBundle.message("INTN.specify.type.in.annotation"));
   }
 
   public void testParamTypeInDocstringNotSuggestedForLambda() {
@@ -428,7 +577,7 @@ public class PyIntentionTest extends PyTestCase {
   }
 
   public void testParamTypeInAnnotationNotSuggestedForLambda() {
-    runWithLanguageLevel(LanguageLevel.PYTHON36, () -> doNegativeTest(PyPsiBundle.message("INTN.specify.type.in.annotation")));
+    doNegativeTest(PyPsiBundle.message("INTN.specify.type.in.annotation"));
   }
 
   // PY-16456
@@ -455,24 +604,24 @@ public class PyIntentionTest extends PyTestCase {
   }
 
   public void testReturnTypeInPy3Annotation() {      //PY-7085
-    doTest(PyPsiBundle.message("INTN.specify.return.type.in.annotation"), LanguageLevel.PYTHON34);
+    doTest(PyPsiBundle.message("INTN.specify.return.type.in.annotation"));
   }
 
   public void testReturnTypeInPy3Annotation1() {      //PY-8783
-    doTest(PyPsiBundle.message("INTN.specify.return.type.in.annotation"), LanguageLevel.PYTHON34);
+    doTest(PyPsiBundle.message("INTN.specify.return.type.in.annotation"));
   }
 
   public void testReturnTypeInPy3Annotation2() {      //PY-8783
-    doTest(PyPsiBundle.message("INTN.specify.return.type.in.annotation"), LanguageLevel.PYTHON34);
+    doTest(PyPsiBundle.message("INTN.specify.return.type.in.annotation"));
   }
 
   // PY-17094
   public void testReturnTypeInPy3AnnotationLocalFunction() {
-    doTest(PyPsiBundle.message("INTN.specify.return.type.in.annotation"), LanguageLevel.PYTHON34);
+    doTest(PyPsiBundle.message("INTN.specify.return.type.in.annotation"));
   }
 
   public void testReturnTypeInPy3AnnotationNoColon() {
-    doTest(PyPsiBundle.message("INTN.specify.return.type.in.annotation"), LanguageLevel.PYTHON34);
+    doTest(PyPsiBundle.message("INTN.specify.return.type.in.annotation"));
   }
 
   public void testTypeAnnotation3() {  //PY-7087
@@ -480,7 +629,7 @@ public class PyIntentionTest extends PyTestCase {
   }
 
   private void doTypeAnnotationTest() {
-    doTest(PyPsiBundle.message("INTN.specify.type.in.annotation"), LanguageLevel.PYTHON34);
+    doTest(PyPsiBundle.message("INTN.specify.type.in.annotation"));
   }
 
   public void testTypeAssertion() {
@@ -496,7 +645,7 @@ public class PyIntentionTest extends PyTestCase {
   }
 
   public void testTypeAssertion3() {                   //PY-7403
-    runWithLanguageLevel(LanguageLevel.PYTHON34, () -> doNegativeTest(PyPsiBundle.message("INTN.insert.assertion")));
+    doNegativeTest(PyPsiBundle.message("INTN.insert.assertion"));
   }
 
   public void testTypeAssertion4() {  //PY-7971
@@ -521,7 +670,7 @@ public class PyIntentionTest extends PyTestCase {
 
   public void testDocStubKeywordOnly() {
     getIndentOptions().INDENT_SIZE = 2;
-    runWithLanguageLevel(LanguageLevel.PYTHON27, () -> doDocStubTest(DocStringFormat.REST));
+    doDocStubTest(DocStringFormat.REST);
   }
 
   // PY-16765
@@ -790,7 +939,7 @@ public class PyIntentionTest extends PyTestCase {
 
   // PY-7383
   public void testYieldFrom() {
-    doTest(PyPsiBundle.message("INTN.yield.from"), LanguageLevel.PYTHON34);
+    doTest(PyPsiBundle.message("INTN.yield.from"));
   }
 
   public void testConvertStaticMethodToFunction() {

@@ -1,57 +1,52 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.psi.search.scope.packageSet;
 
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.lexer.Lexer;
+import com.intellij.openapi.util.text.Strings;
 import com.intellij.psi.search.scope.packageSet.lexer.ScopeTokenTypes;
+import com.intellij.util.containers.ContainerUtil;
 
-public class PatternPackageSetParserExtension implements PackageSetParserExtension {
+public final class PatternPackageSetParserExtension implements PackageSetParserExtension {
 
   @Override
   public PackageSet parsePackageSet(final Lexer lexer, final String scope, final String modulePattern) throws ParsingException {
     /*if (scope == PatternPackageSet.SCOPE_ANY && modulePattern == null) {
       error(AnalysisScopeBundle.message("error.packageset.common.expectations"), lexer);
     }*/
-    if (scope != PatternPackageSet.SCOPE_ANY &&
-        scope != PatternPackageSet.SCOPE_LIBRARY &&
-        scope != PatternPackageSet.SCOPE_PROBLEM &&
-        scope != PatternPackageSet.SCOPE_SOURCE &&
-        scope != PatternPackageSet.SCOPE_TEST) {
+    PatternPackageSet.Scope scopeByText = ContainerUtil.find(PatternPackageSet.Scope.values(), 
+                                                             value -> Strings.areSameInstance(value.getId(), scope));
+    if (scopeByText == null) {
       return null;
     }
-    return new PatternPackageSet(parseAspectJPattern(lexer), scope, modulePattern);
+    return new PatternPackageSet(parseAspectJPattern(lexer), scopeByText, modulePattern);
   }
 
   @Override
   public String parseScope(final Lexer lexer) {
-    if (lexer.getTokenType() != ScopeTokenTypes.IDENTIFIER) return PatternPackageSet.SCOPE_ANY;
+    if (lexer.getTokenType() != ScopeTokenTypes.IDENTIFIER) return PatternPackageSet.Scope.ANY.getId();
     String id = getTokenText(lexer);
-    String scope = PatternPackageSet.SCOPE_ANY;
-    if (PatternPackageSet.SCOPE_SOURCE.equals(id)) {
-      scope = PatternPackageSet.SCOPE_SOURCE;
-    } else if (PatternPackageSet.SCOPE_TEST.equals(id)) {
-      scope = PatternPackageSet.SCOPE_TEST;
-    } else if (PatternPackageSet.SCOPE_PROBLEM.equals(id)) {
-      scope = PatternPackageSet.SCOPE_PROBLEM;
-    } else if (PatternPackageSet.SCOPE_LIBRARY.equals(id)) {
-      scope = PatternPackageSet.SCOPE_LIBRARY;
-    } else if (!id.trim().isEmpty()) {
-      scope = null;
+    PatternPackageSet.Scope scope;
+    if (id.trim().isEmpty()) {
+      scope = PatternPackageSet.Scope.ANY;
+    }
+    else {
+      scope = ContainerUtil.find(PatternPackageSet.Scope.values(), value -> value.getId().equals(id));
     }
     final CharSequence buf = lexer.getBufferSequence();
     int end = lexer.getTokenEnd();
     int bufferEnd = lexer.getBufferEnd();
 
-    if (scope == PatternPackageSet.SCOPE_ANY || end >= bufferEnd || buf.charAt(end) != ':' && buf.charAt(end) != '[') {
-      return PatternPackageSet.SCOPE_ANY;
+    if (scope == PatternPackageSet.Scope.ANY || end >= bufferEnd || buf.charAt(end) != ':' && buf.charAt(end) != '[') {
+      return PatternPackageSet.Scope.ANY.getId();
     }
 
     if (scope != null) {
       lexer.advance();
+      return scope.getId();
     }
-
-    return scope;
+    return null;
   }
 
   private static String parseAspectJPattern(Lexer lexer) throws ParsingException {
@@ -77,7 +72,7 @@ public class PatternPackageSetParserExtension implements PackageSetParserExtensi
       lexer.advance();
     }
 
-    if (pattern.length() == 0) {
+    if (pattern.isEmpty()) {
       error(CodeInsightBundle.message("error.package.set.pattern.expectations"), lexer);
     }
 

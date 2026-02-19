@@ -38,7 +38,12 @@ import com.intellij.openapi.vcs.changes.ignore.psi.IgnoreFile;
 import com.intellij.openapi.vcs.changes.ignore.util.RegexUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiElementResolveResult;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiFileSystemItem;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.ResolveResult;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReference;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReferenceSet;
 import com.intellij.util.containers.ContainerUtil;
@@ -54,8 +59,7 @@ import java.util.regex.Pattern;
 
 public class IgnoreReferenceSet extends FileReferenceSet {
 
-  @NotNull
-  private final IgnorePatternsMatchedFilesCache myIgnorePatternsMatchedFilesCache;
+  private final @NotNull IgnorePatternsMatchedFilesCache myIgnorePatternsMatchedFilesCache;
 
   private final PatternCache myPatternCache;
 
@@ -93,9 +97,8 @@ public class IgnoreReferenceSet extends FileReferenceSet {
    *
    * @return contexts collection
    */
-  @NotNull
   @Override
-  public Collection<PsiFileSystemItem> computeDefaultContexts() {
+  public @NotNull Collection<PsiFileSystemItem> computeDefaultContexts() {
     PsiFile containingFile = getElement().getContainingFile();
     PsiDirectory containingDirectory =
       containingFile.getParent() != null ? containingFile.getParent() : containingFile.getOriginalFile().getContainingDirectory();
@@ -136,8 +139,7 @@ public class IgnoreReferenceSet extends FileReferenceSet {
    * @return last {@link FileReference}
    */
   @Override
-  @Nullable
-  public FileReference getLastReference() {
+  public @Nullable FileReference getLastReference() {
     FileReference lastReference = super.getLastReference();
     if (lastReference != null && lastReference.getCanonicalText().endsWith(getSeparatorString())) {
       return this.myReferences != null && this.myReferences.length > 1 ?
@@ -238,7 +240,6 @@ public class IgnoreReferenceSet extends FileReferenceSet {
 
     /**
      * Resolves reference to the filesystem.
-     *
      * @param text          entry
      * @param context       filesystem context
      * @param result        result references collection
@@ -246,7 +247,7 @@ public class IgnoreReferenceSet extends FileReferenceSet {
      */
     @Override
     protected void innerResolveInContext(@NotNull String text, @NotNull PsiFileSystemItem context,
-                                         @NotNull Collection<ResolveResult> result, boolean caseSensitive) {
+                                         @NotNull Collection<? super ResolveResult> result, boolean caseSensitive) {
       ProgressManager.checkCanceled();
       super.innerResolveInContext(text, context, result, caseSensitive);
 
@@ -309,8 +310,7 @@ public class IgnoreReferenceSet extends FileReferenceSet {
      * @param file    working file
      * @return Psi item
      */
-    @Nullable
-    private PsiFileSystemItem getPsiFileSystemItem(@NotNull PsiManager manager, @NotNull VirtualFile file) {
+    private static @Nullable PsiFileSystemItem getPsiFileSystemItem(@NotNull PsiManager manager, @NotNull VirtualFile file) {
       if (!file.isValid()) {
         return null;
       }

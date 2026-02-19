@@ -1,13 +1,27 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.dom;
 
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.ide.presentation.Presentation;
 import com.intellij.openapi.util.NlsSafe;
-import com.intellij.util.xml.*;
+import com.intellij.psi.PsiPackage;
+import com.intellij.util.xml.Attribute;
+import com.intellij.util.xml.Convert;
+import com.intellij.util.xml.DefinesXml;
+import com.intellij.util.xml.DomElement;
+import com.intellij.util.xml.DomUtil;
+import com.intellij.util.xml.GenericAttributeValue;
+import com.intellij.util.xml.GenericDomValue;
+import com.intellij.util.xml.NameValue;
+import com.intellij.util.xml.Required;
+import com.intellij.util.xml.Stubbed;
+import com.intellij.util.xml.SubTag;
+import com.intellij.util.xml.SubTagList;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.devkit.dom.impl.IdeaPluginConverter;
+import org.jetbrains.idea.devkit.dom.impl.IdeaPluginPackageConverter;
 
 import java.util.List;
 
@@ -17,170 +31,166 @@ import java.util.List;
 public interface IdeaPlugin extends DomElement {
   @NonNls String TAG_NAME = "idea-plugin";
 
-  @Nullable @NlsSafe
-  String getPluginId();
+  @Nullable @NlsSafe String getPluginId();
+
+  @NotNull ContentDescriptor getFirstOrAddContentDescriptor();
 
   default boolean hasRealPluginId() {
     String pluginId = getPluginId();
     return pluginId != null && !pluginId.equals(PluginManagerCore.CORE_PLUGIN_ID);
   }
 
-  @SubTag("product-descriptor")
-  @Nullable
-  ProductDescriptor getProductDescriptor();
+  default boolean isV2Descriptor() {
+    return DomUtil.hasXml(getPackage()) ||
+           !getContent().isEmpty() ||
+           DomUtil.hasXml(getDependencies());
+  }
 
-  @NotNull
+  @SubTag("product-descriptor")
+  @NotNull ProductDescriptor getProductDescriptor();
+
+  @SubTagList("content")
+  @Stubbed
+  @NotNull List<? extends ContentDescriptor> getContent();
+
+  @SubTagList("content")
+  ContentDescriptor addContent();
+
+  @SubTag("dependencies")
+  @Stubbed
+  @NotNull DependencyDescriptor getDependencies();
+
   @NameValue
   @Stubbed
-  GenericDomValue<String> getId();
+  @NotNull GenericDomValue<String> getId();
 
   /**
    * @deprecated Unused.
    */
   @SuppressWarnings("DeprecatedIsStillUsed")
-  @NotNull
   @Attribute("version")
   @Deprecated
-  GenericAttributeValue<Integer> getIdeaPluginVersion();
+  @NotNull GenericAttributeValue<Integer> getIdeaPluginVersion();
 
-  @NotNull
-  GenericAttributeValue<String> getUrl();
+  @NotNull GenericAttributeValue<String> getUrl();
 
   /**
    * @deprecated Unused.
    */
   @SuppressWarnings("DeprecatedIsStillUsed")
-  @NotNull
   @Deprecated
-  GenericAttributeValue<Boolean> getUseIdeaClassloader();
+  @NotNull GenericAttributeValue<Boolean> getUseIdeaClassloader();
 
-  @NotNull
-  GenericAttributeValue<Boolean> getAllowBundledUpdate();
+  @NotNull GenericAttributeValue<Boolean> getAllowBundledUpdate();
 
-  @NotNull
-  GenericAttributeValue<Boolean> getImplementationDetail();
+  /**
+   * @deprecated Will be dropped without a replacement: use either a regular plugin or implement a product module.
+   */
+  @SuppressWarnings("DeprecatedIsStillUsed")
+  @Stubbed
+  @Deprecated
+  @NotNull GenericAttributeValue<Boolean> getImplementationDetail();
 
-  @NotNull
-  GenericAttributeValue<Boolean> getRequireRestart();
+  @NotNull GenericAttributeValue<Boolean> getRequireRestart();
 
-  @NotNull
+  @Stubbed
+  @Attribute("visibility")
+  @NotNull GenericAttributeValue<ContentModuleVisibility> getContentModuleVisibility();
+
+  /**
+   * @deprecated Usage is discouraged, content modules should be packaged into separate content module jars under `lib/modules/`.
+   */
+  @SuppressWarnings("DeprecatedIsStillUsed")
+  @Stubbed
+  @Convert(IdeaPluginPackageConverter.class)
+  @Deprecated
+  @NotNull GenericAttributeValue<PsiPackage> getPackage();
+
   @Stubbed
   @Required(false)
-  GenericDomValue<String> getName();
+  @NotNull GenericDomValue<String> getName();
 
+  @NotNull GenericDomValue<String> getDescription();
 
-  @NotNull
-  GenericDomValue<String> getDescription();
-
-
-  @NotNull
   @Required(false)
-  GenericDomValue<String> getVersion();
+  @NotNull GenericDomValue<String> getVersion();
 
+  @NotNull Vendor getVendor();
 
-  @NotNull
-  Vendor getVendor();
+  @NotNull GenericDomValue<String> getChangeNotes();
 
-
-  @NotNull
-  GenericDomValue<String> getChangeNotes();
-
-
-  @NotNull
   @Stubbed
-  IdeaVersion getIdeaVersion();
+  @NotNull IdeaVersion getIdeaVersion();
 
+  @NotNull GenericDomValue<String> getCategory();
 
-  @NotNull
-  GenericDomValue<String> getCategory();
+  @Stubbed
+  @NotNull GenericDomValue<String> getResourceBundle();
 
-
-  @NotNull
-  GenericDomValue<String> getResourceBundle();
-
-
-  @NotNull
   @Stubbed
   @SubTagList("depends")
-  List<Dependency> getDependencies();
+  @NotNull List<? extends Dependency> getDepends();
 
   @SubTagList("depends")
   Dependency addDependency();
 
-  @NotNull
+  @Convert(IdeaPluginConverter.class)
   @SubTagList("incompatible-with")
-  List<GenericDomValue<String>> getIncompatibilities();
+  @NotNull List<GenericDomValue<IdeaPlugin>> getIncompatibilities();
 
-  @NotNull
   @Stubbed
   @SubTagList("module")
-  List<PluginModule> getModules();
+  @NotNull List<? extends PluginModule> getModules();
 
-  @NotNull
   @SubTagList("extensions")
   @Stubbed
-  List<Extensions> getExtensions();
+  @NotNull List<? extends Extensions> getExtensions();
 
   Extensions addExtensions();
 
-  @NotNull
   @Stubbed
   @SubTagList("extensionPoints")
-  List<ExtensionPoints> getExtensionPoints();
+  @NotNull List<? extends ExtensionPoints> getExtensionPoints();
 
   ExtensionPoints addExtensionPoints();
 
-
-  @NotNull
   @SubTagList("application-components")
-  List<ApplicationComponents> getApplicationComponents();
+  @NotNull List<? extends ApplicationComponents> getApplicationComponents();
 
   ApplicationComponents addApplicationComponents();
 
-  @NotNull
   @SubTagList("project-components")
-  List<ProjectComponents> getProjectComponents();
+  @NotNull List<? extends ProjectComponents> getProjectComponents();
 
   ProjectComponents addProjectComponents();
 
-  @NotNull
   @SubTagList("module-components")
-  List<ModuleComponents> getModuleComponents();
+  @NotNull List<? extends ModuleComponents> getModuleComponents();
 
   ModuleComponents addModuleComponents();
 
-  @NotNull
   @SubTagList("actions")
   @Stubbed
-  List<Actions> getActions();
+  @NotNull List<? extends Actions> getActions();
 
   Actions addActions();
 
   /**
    * Available since 192.
    */
-  @NotNull
   @SubTagList("applicationListeners")
-  List<Listeners> getApplicationListeners();
+  @NotNull List<? extends Listeners> getApplicationListeners();
 
   /**
    * Available since 192.
    */
-  @NotNull
   @SubTagList("projectListeners")
-  List<Listeners> getProjectListeners();
+  @NotNull List<? extends Listeners> getProjectListeners();
 
   /**
-   * @deprecated not used anymore
+   * @deprecated the corresponding tag in plugin.xml is not supported anymore, this method is used to highlight occurrences of such a tag
    */
   @SuppressWarnings("SpellCheckingInspection")
-  @Deprecated
-  @NotNull
-  List<Helpset> getHelpsets();
-
-  /**
-   * @deprecated not used anymore
-   */
-  @Deprecated
-  Helpset addHelpset();
+  @Deprecated(forRemoval = true)
+  @NotNull List<? extends Helpset> getHelpsets();
 }

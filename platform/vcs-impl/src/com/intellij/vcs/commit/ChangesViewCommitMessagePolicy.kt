@@ -2,18 +2,20 @@
 package com.intellij.vcs.commit
 
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.vcs.changes.Change
 import com.intellij.openapi.vcs.changes.LocalChangeList
 
-internal class ChangesViewCommitMessagePolicy(project: Project) : AbstractCommitMessagePolicy(project) {
-  fun getCommitMessage(changeList: LocalChangeList, changesSupplier: () -> List<Change>): String? =
-    if (vcsConfiguration.CLEAR_INITIAL_COMMIT_MESSAGE) null
-    else getCommitMessageFor(changeList)?.takeIf { it.isNotBlank() }
-         ?: getCommitMessageFromVcs(changesSupplier())
-         ?: vcsConfiguration.LAST_COMMIT_MESSAGE
+internal class ChangesViewCommitMessagePolicy(
+  project: Project,
+  commitMessageUi: CommitMessageUi,
+  initialChangeList: LocalChangeList,
+) : ChangeListCommitMessagePolicy(project, commitMessageUi, initialChangeList) {
+  override val delayedMessagesProvidersSupport = object : DelayedMessageProvidersSupport {
+    override fun saveCurrentCommitMessage() {
+      saveMessageToChangeListDescription()
+    }
 
-  fun save(changeList: LocalChangeList?, commitMessage: String, saveToHistory: Boolean) {
-    if (saveToHistory) vcsConfiguration.saveCommitMessage(commitMessage)
-    changeList?.let { save(it.name, commitMessage) }
+    override fun restoredCommitMessage(): CommitMessage? = getCommitMessageFromChangelistDescription()
   }
+
+  override fun getNewCommitMessage(): CommitMessage? = getCommitMessageForCurrentList()
 }

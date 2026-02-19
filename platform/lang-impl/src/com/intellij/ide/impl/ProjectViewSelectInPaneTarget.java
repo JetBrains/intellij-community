@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.impl;
 
 import com.intellij.ide.projectView.impl.AbstractProjectViewPane;
@@ -6,7 +6,7 @@ import com.intellij.openapi.project.PossiblyDumbAware;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 
-public class ProjectViewSelectInPaneTarget extends ProjectViewSelectInTarget implements PossiblyDumbAware {
+public final class ProjectViewSelectInPaneTarget extends ProjectViewSelectInTarget implements PossiblyDumbAware {
   private final AbstractProjectViewPane myPane;
   private final boolean myDumbAware;
 

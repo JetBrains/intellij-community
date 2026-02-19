@@ -1,29 +1,29 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.uiDesigner.actions;
 
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.uiDesigner.CaptionSelection;
 import com.intellij.uiDesigner.FormEditingUtil;
 import com.intellij.uiDesigner.designSurface.GuiEditor;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.Icon;
 
-/**
- * @author yole
- */
+
 public abstract class RowColumnAction extends AnAction {
-  private final String myColumnText;
+  private final @Nls String myColumnText;
   private final Icon myColumnIcon;
-  private final String myRowText;
+  private final @Nls String myRowText;
   private final Icon myRowIcon;
 
-  public RowColumnAction(final String columnText, @Nullable final Icon columnIcon,
-                         final String rowText, @Nullable final Icon rowIcon) {
+  public RowColumnAction(final @Nls String columnText, final @Nullable Icon columnIcon,
+                         final @Nls String rowText, final @Nullable Icon rowIcon) {
     myColumnText = columnText;
     myColumnIcon = columnIcon;
     myRowText = rowText;
@@ -31,7 +31,7 @@ public abstract class RowColumnAction extends AnAction {
   }
 
   @Override
-  public void actionPerformed(@NotNull final AnActionEvent e) {
+  public void actionPerformed(final @NotNull AnActionEvent e) {
     GuiEditor editor = FormEditingUtil.getEditorFromContext(e.getDataContext());
     CaptionSelection selection = e.getData(CaptionSelection.DATA_KEY);
     if (editor == null || selection == null || !editor.ensureEditable()) {
@@ -45,7 +45,12 @@ public abstract class RowColumnAction extends AnAction {
   protected abstract void actionPerformed(CaptionSelection selection);
 
   @Override
-  public void update(@NotNull final AnActionEvent e) {
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.EDT;
+  }
+
+  @Override
+  public void update(final @NotNull AnActionEvent e) {
     final Presentation presentation = e.getPresentation();
     CaptionSelection selection = e.getData(CaptionSelection.DATA_KEY);
     if (selection == null) {

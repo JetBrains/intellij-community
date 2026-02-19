@@ -1,31 +1,36 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application;
 
-import com.intellij.diagnostic.StartUpMeasurer;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.PropertiesUtil;
-import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtilRt;
-import com.intellij.openapi.util.text.Strings;
-import com.intellij.psi.codeStyle.MinusculeMatcher;
-import com.intellij.util.SystemProperties;
-import com.intellij.util.containers.FList;
 import com.intellij.util.io.URLUtil;
-import it.unimi.dsi.fastutil.objects.Object2IntMap;
+import com.intellij.util.system.CpuArch;
+import com.intellij.util.system.OS;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
-import java.io.*;
+import java.io.IOException;
+import java.io.Reader;
+import java.io.UncheckedIOException;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
+import java.net.URISyntaxException;
 import java.net.URL;
+import java.nio.file.AccessDeniedException;
 import java.nio.file.Files;
+import java.nio.file.InvalidPathException;
 import java.nio.file.LinkOption;
+import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.Properties;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -38,53 +43,80 @@ public final class PathManager {
   public static final String PROPERTY_SCRATCH_PATH = "idea.scratch.path";
   public static final String PROPERTY_PLUGINS_PATH = "idea.plugins.path";
   public static final String PROPERTY_LOG_PATH = "idea.log.path";
-  public static final String PROPERTY_LOG_CONFIG_FILE = "idea.log.config.file";
+  public static final String PROPERTY_LOG_CONFIG_FILE = "idea.log.config.properties.file";
   public static final String PROPERTY_PATHS_SELECTOR = "idea.paths.selector";
+  public static final String SYSTEM_PATHS_CUSTOMIZER = "idea.paths.customizer";
 
-  public static final @NonNls String OPTIONS_DIRECTORY = "options";
+  public static final String OPTIONS_DIRECTORY = "options";
   public static final String DEFAULT_EXT = ".xml";
-  public static final String DEFAULT_OPTIONS_FILE = "other" + DEFAULT_EXT;
 
-  private static final String KOTLIN_IDE_IML_RELATIVE_PATH = "kotlin/idea/kotlin.idea.iml";
-  private static final @NonNls String KOTLIN_COMMUNITY_IDE_IML_RELATIVE_PATH = "idea/kotlin.idea.iml";
-  private static final @NonNls String INTELLIJ_SUB_REPO_NAME = "intellij";
-
-  private static final String PROPERTY_HOME = "idea.home";  // reduced variant of PROPERTY_HOME_PATH, now deprecated
+  private static final String PROPERTY_HOME = "idea.home";  // a reduced variant of PROPERTY_HOME_PATH, now deprecated
   private static final String PROPERTY_VENDOR_NAME = "idea.vendor.name";
 
-  private static final @NonNls String LIB_DIRECTORY = "lib";
-  private static final @NonNls String PLUGINS_DIRECTORY = "plugins";
-  private static final @NonNls String BIN_DIRECTORY = "bin";
-  private static final @NonNls String LOG_DIRECTORY = "log";
-  private static final @NonNls String CONFIG_DIRECTORY = "config";
+  private static final String JRE_DIRECTORY = "jbr";
+  private static final String LIB_DIRECTORY = "lib";
+  private static final String PLUGINS_DIRECTORY = "plugins";
+  private static final String BIN_DIRECTORY = "bin";
+  private static final String LOG_DIRECTORY = "log";
+  private static final String CONFIG_DIRECTORY = "config";
   private static final String SYSTEM_DIRECTORY = "system";
-  private static final String PATHS_SELECTOR = System.getProperty(PROPERTY_PATHS_SELECTOR);
+  private static final String COMMUNITY_MARKER = "intellij.idea.community.main.iml";
+  private static final String ULTIMATE_MARKER = ".ultimate.root.marker";
+  private static final String PRODUCT_INFO_JSON = "product-info.json";
 
-  private static class Lazy {
+  private static final class Lazy {
     private static final Pattern PROPERTY_REF = Pattern.compile("\\$\\{(.+?)}");
   }
 
-  private static volatile String ourHomePath;
+  private static volatile Path ourHomePath;
   private static volatile List<Path> ourBinDirectories;
   private static Path ourCommonDataPath;
-  private static String ourConfigPath;
-  private static String ourSystemPath;
-  private static String ourScratchPath;
-  private static String ourPluginsPath;
-  private static String ourLogPath;
+  private static String ourPathSelector = System.getProperty(PROPERTY_PATHS_SELECTOR);
+  private static Path ourConfigPath;
+  private static Path ourSystemPath;
+  private static Path ourScratchPath;
+  private static Path ourPluginPath;
+  private static Path ourLogPath;
+  private static Path ourStartupScriptDir;
+  private static Path ourOriginalConfigDir;
+  private static Path ourOriginalSystemDir;
+  private static Path ourOriginalLogDir;
 
-  // IDE installation paths
+  private PathManager() { }
 
+  /**
+   * Returns paths to the directory where the IDE is installed, i.e., the directory containing 'lib', 'plugins' and other subdirectories.
+   * On macOS, it's {@code <product>.app/Contents} directory.
+   * <br>
+   * If the IDE is started from source code rather than installation, the method returns paths to the Git repository root.
+   * <br>
+   * The method is supposed to be called from the main IDE process. For other processes started from the IDE process (e.g., build process)
+   * use {@link #getHomePath(boolean)} with {@code false} argument.
+   */
+  public static @NotNull Path getHomeDir() {
+    return getHomeDir(true);
+  }
+
+  /** Prefer {@link #getHomeDir()}. */
+  @ApiStatus.Obsolete
   public static @NotNull String getHomePath() {
-    return getHomePath(true);
+    return getHomeDir().toString();
+  }
+
+  /** Prefer {@link #getHomeDir(boolean)}. */
+  @ApiStatus.Obsolete
+  public static String getHomePath(boolean insideIde) {
+    Path homeDir = getHomeDir(insideIde);
+    return homeDir != null ? homeDir.toString() : null;
   }
 
   /**
-   * @param insideIde {@code true} if the calling code works inside IDE; {@code false} otherwise (e.g. in a build process or a script)
+   * A variant of {@link #getHomeDir()} which also works inside additional processes started from the main IDE process.
+   * @param insideIde {@code true} if the calling code works inside IDE; {@code false} otherwise (e.g., in a build process or a script)
    */
   @Contract("true -> !null")
-  public static String getHomePath(boolean insideIde) {
-    String result = ourHomePath;
+  public static Path getHomeDir(boolean insideIde) {
+    Path result = ourHomePath;
     if (result != null) return result;
 
     //noinspection SynchronizeOnThis
@@ -92,33 +124,49 @@ public final class PathManager {
       result = ourHomePath;
       if (result != null) return result;
 
-      String explicit = getExplicitPath(PROPERTY_HOME_PATH);
+      Path explicit = getExplicitPath(PROPERTY_HOME_PATH);
       if (explicit == null) explicit = getExplicitPath(PROPERTY_HOME);
       if (explicit != null) {
         result = explicit;
-        if (!Files.isDirectory(Paths.get(result))) {
+        if (!Files.isDirectory(result)) {
           ourHomePath = result;
           throw new RuntimeException("Invalid home path '" + result + "'");
         }
       }
       else if (insideIde) {
-        result = getHomePathFor(PathManager.class);
+        //noinspection TestOnlyProblems
+        result = getHomeDirFor(PathManager.class);
         if (result == null) {
-          String advice =
-            SystemInfoRt.isMac ? "reinstall the software." : "make sure bin/idea.properties is present in the installation directory.";
+          String advice = OS.CURRENT == OS.macOS ? "reinstall the software." : "make sure product-info.json is present in the installation directory.";
           throw new RuntimeException("Could not find installation home path. Please " + advice);
         }
       }
 
-      if (result != null && SystemInfoRt.isWindows) {
+      if (result != null && OS.CURRENT == OS.Windows) {
         try {
-          result = Paths.get(result).toRealPath(LinkOption.NOFOLLOW_LINKS).toString();
+          result = result.toRealPath(LinkOption.NOFOLLOW_LINKS);
         }
         catch (IOException ignored) { }
       }
 
-      // set before ourHomePath because getBinDirectories() rely on fact that if getHomePath(true) returns something, then ourBinDirectories is already computed
-      ourBinDirectories = result == null ?  Collections.emptyList() : getBinDirectories(Paths.get(result));
+      // set before ourHomePath because getBinDirectories() rely on the fact that if `getHomePath(true)`
+      // returns something, then `ourBinDirectories` is already computed
+      if (result == null) {
+        ourBinDirectories = Collections.emptyList();
+      }
+      else {
+        Path root = result;
+        if (Boolean.getBoolean("idea.use.dev.build.server")) {
+          while (root.getParent() != null) {
+            if (Files.exists(root.resolve(ULTIMATE_MARKER)) || Files.exists(root.resolve(COMMUNITY_MARKER))) {
+              break;
+            }
+            root = root.getParent();
+          }
+        }
+        ourBinDirectories = getBinDirectories(root);
+      }
+
       ourHomePath = result;
     }
 
@@ -135,7 +183,16 @@ public final class PathManager {
   }
 
   public static boolean isUnderHomeDirectory(@NotNull String path) {
-    Path home = Paths.get(getHomePath()), target = Paths.get(path);
+    try {
+      return isUnderHomeDirectory(Paths.get(path));
+    }
+    catch (InvalidPathException e) {
+      return false;
+    }
+  }
+
+  public static boolean isUnderHomeDirectory(@NotNull Path target) {
+    Path home = Paths.get(getHomePath());
     try {
       home = home.toRealPath();
       target = target.toRealPath();
@@ -144,57 +201,126 @@ public final class PathManager {
     return target.startsWith(home);
   }
 
+  /**
+   * Returns the path to the git repository of 'intellij' project when running tests from sources.
+   * Consider using {@link #getHomeDirFor(Class)} instead.
+   */
+  @ApiStatus.Internal
+  @TestOnly
   public static @Nullable String getHomePathFor(@NotNull Class<?> aClass) {
-    String rootPath = getResourceRoot(aClass, '/' + aClass.getName().replace('.', '/') + ".class");
-    if (rootPath == null) return null;
-
-    Path root = Paths.get(rootPath).toAbsolutePath();
-    do {
-      root = root.getParent();
-    } while (root != null && !isIdeaHome(root) && !isKotlinIdeRepoHome(root));
-    if (root != null && isKotlinIdeRepoHome(root)) {
-      root = root.resolve(INTELLIJ_SUB_REPO_NAME);
-    }
-    return root != null ? root.toString() : null;
+    Path result = getHomeDirFor(aClass);
+    return result == null ? null : result.toString();
   }
 
   /**
-   * Checks whether it's intellij + kotlin kotlin-ide repo home.
-   * <p></p>
-   * This is temp util method and it's supposed to be removed when kotlin-20202 experiment is over
+   * Returns the path to the git repository of 'intellij' project when running tests from sources.
+   * In production code, use {@link #getHomePath()} instead.
    */
-  private static boolean isKotlinIdeRepoHome(@NotNull Path path) {
-    boolean containsRootKotlinModuleFile = Files.isRegularFile(path.resolve(KOTLIN_IDE_IML_RELATIVE_PATH)) ||
-                                           Files.isRegularFile(path.resolve(KOTLIN_COMMUNITY_IDE_IML_RELATIVE_PATH));
+  @ApiStatus.Internal
+  @TestOnly
+  public static @Nullable Path getHomeDirFor(@NotNull Class<?> aClass) {
+    String rootPath = getResourceRoot(aClass, '/' + aClass.getName().replace('.', '/') + ".class");
+    if (rootPath == null) {
+      return null;
+    }
 
-    return Files.isDirectory(path) &&
-           containsRootKotlinModuleFile &&
-           Files.isDirectory(path.resolve(INTELLIJ_SUB_REPO_NAME)) &&
-           isIdeaHome(path.resolve(INTELLIJ_SUB_REPO_NAME));
+    // classes compiled to .jar and passed as archived compiled classes
+    String relevantJarsRoot = ArchivedCompilationContextUtil.getArchivedCompiledClassesLocation();
+    if (relevantJarsRoot != null && rootPath.startsWith(relevantJarsRoot)) {
+      String home = System.getProperty(PROPERTY_HOME_PATH);
+      if (home != null) {
+        Path path = Paths.get(home).toAbsolutePath();
+        if (isIdeaHome(path)) {
+          return path;
+        }
+      }
+    }
+
+    Path root = Paths.get(rootPath);
+
+    // classes compiled to .class files and under checkout root
+    Path ideaHomeUpwards = getIdeaHomeUpwards(root);
+    if (ideaHomeUpwards != null) {
+      return ideaHomeUpwards;
+    }
+
+    // classes compiled to .jar files with Bazel
+    // but we're running not under Bazel, like with delegating compilation to Bazel
+    // (monorepo.devkit.use.bazel.compile=true)
+    try {
+      Path ideaHomeFromBazelOut = getIdeaHomeFromBazelExecRoot(root);
+      if (ideaHomeFromBazelOut != null) {
+        return ideaHomeFromBazelOut;
+      }
+    }
+    catch (IOException e) {
+      throw new RuntimeException(e);
+    }
+
+    return null;
+  }
+
+  private static @Nullable Path getIdeaHomeUpwards(Path start) {
+    Path root = start.toAbsolutePath();
+    do root = root.getParent();
+    while (root != null && !isIdeaHome(root));
+    return root;
+  }
+
+  /**
+   * classes compiled to .jar files with Bazel,
+   * but we're running not under Bazel, like with delegating compilation to Bazel
+   * (monorepo.devkit.use.bazel.compile=true)
+   * this is a temporary solution while we're still using JPS model for ultimate monorepo
+   */
+  private static @Nullable Path getIdeaHomeFromBazelExecRoot(Path start) throws IOException {
+    String workspacePrefix = "WORKSPACE: ";
+
+    Path root = start.toAbsolutePath();
+    while (root != null && root.getParent() != null) {
+      Path readme = root.getParent().resolve("README");
+      Path fileName = root.getFileName();
+      if (fileName != null && fileName.toString().equals("execroot") && Files.isRegularFile(readme)) {
+        String firstLine = Files.readAllLines(readme).get(0);
+        if (firstLine.startsWith(workspacePrefix)) {
+          Path workspaceLocation = Paths.get(firstLine.substring(workspacePrefix.length()));
+          if (isIdeaHome(workspaceLocation)) {
+            return workspaceLocation;
+          }
+        }
+      }
+      root = root.getParent();
+    }
+    return null;
   }
 
   private static boolean isIdeaHome(Path root) {
-    for (Path binDir : getBinDirectories(root)) {
-      if (Files.isRegularFile(binDir.resolve(PROPERTIES_FILE_NAME))) {
-        return true;
-      }
-    }
-    return false;
+    return Files.isRegularFile(root.resolve(PRODUCT_INFO_JSON)) ||
+           Files.isRegularFile(root.resolve("Resources").resolve(PRODUCT_INFO_JSON)) ||
+           Files.isRegularFile(root.resolve(COMMUNITY_MARKER)) ||
+           Files.isRegularFile(root.resolve(ULTIMATE_MARKER));
   }
 
   private static List<Path> getBinDirectories(Path root) {
     List<Path> binDirs = new ArrayList<>();
 
-    @NonNls String[] subDirs = {BIN_DIRECTORY, "community/bin", "ultimate/community/bin"};
-    String osSuffix = SystemInfoRt.isWindows ? "win" : SystemInfoRt.isMac ? "mac" : "linux";
+    Path[] candidates = {root.resolve(BIN_DIRECTORY), Paths.get(getCommunityHomePath(root.toString()), "bin")};
+    String osSuffix = OS.CURRENT == OS.Windows ? "win" : OS.CURRENT == OS.macOS ? "mac" : "linux";
 
-    for (String subDir : subDirs) {
-      Path dir = root.resolve(subDir);
+    for (Path dir : candidates) {
+      if (binDirs.contains(dir) || !Files.isDirectory(dir)) {
+        continue;
+      }
+      binDirs.add(dir);
+      dir = dir.resolve(osSuffix);
       if (Files.isDirectory(dir)) {
         binDirs.add(dir);
-        dir = dir.resolve(osSuffix);
-        if (Files.isDirectory(dir)) {
-          binDirs.add(dir);
+        String arch = CpuArch.isIntel64() ? "amd64" : CpuArch.isArm64() ? "aarch64" : null;
+        if (arch != null) {
+          dir = dir.resolve(arch);
+          if (Files.isDirectory(dir)) {
+            binDirs.add(dir);
+          }
         }
       }
     }
@@ -205,8 +331,14 @@ public final class PathManager {
   /**
    * Bin path may be not what you want when developing an IDE. Consider using {@link #findBinFile(String)} if applicable.
    */
+  public static @NotNull Path getBinDir() {
+    return getHomeDir().resolve(BIN_DIRECTORY);
+  }
+
+  /** Prefer {@link #getBinDir()}. */
+  @ApiStatus.Obsolete
   public static @NotNull String getBinPath() {
-    return getHomePath() + '/' + BIN_DIRECTORY;
+    return getBinDir().toString();
   }
 
   /**
@@ -228,229 +360,395 @@ public final class PathManager {
   /**
    * Looks for a file in all possible bin directories.
    *
-   * @return first that exists.
-   * @throws FileNotFoundException if nothing found.
+   * @return the first file that exists.
+   * @throws RuntimeException if nothing found.
    * @see #findBinFile(String)
    */
-  public static @NotNull Path findBinFileWithException(@NotNull String fileName) throws FileNotFoundException {
+  public static @NotNull Path findBinFileWithException(@NotNull String fileName) {
     Path file = findBinFile(fileName);
-    if (file != null) {
-      return file;
-    }
+    if (file != null) return file;
 
-    @NonNls StringBuilder message = new StringBuilder();
+    StringBuilder message = new StringBuilder();
     message.append('\'').append(fileName).append("' not found in directories:");
     for (Path directory : getBinDirectories()) {
       message.append('\n').append(directory);
     }
-    throw new FileNotFoundException(message.toString());
+    throw new RuntimeException(message.toString());
   }
 
+  /**
+   * Returns the path to the directory where IDE's JAR files are stored.
+   */
+  public static @NotNull Path getLibDir() {
+    return getHomeDir().resolve(LIB_DIRECTORY);
+  }
+
+  /** Prefer {@link #getLibDir()}. */
+  @ApiStatus.Obsolete
   public static @NotNull String getLibPath() {
-    return getHomePath() + '/' + LIB_DIRECTORY;
+    return getLibDir().toString();
   }
 
+  /**
+   * Returns the path to the directory where bundled plugins are located.
+   */
+  public static @NotNull Path getBundledPluginsDir() {
+    return getHomeDir().resolve(PLUGINS_DIRECTORY);
+  }
+
+  /** Prefer {@link #getBundledPluginsDir()}. */
+  @ApiStatus.Obsolete
   public static @NotNull String getPreInstalledPluginsPath() {
-    return getHomePath() + '/' + PLUGINS_DIRECTORY;
+    return getBundledPluginsDir().toString();
   }
 
-  // config paths
+  /** <b>Note</b>: on macOS, the method returns a "functional" home, pointing to a JRE subdirectory inside a bundle. */
+  public static @NotNull Path getBundledRuntimeDir() {
+    return getHomeDir().resolve(JRE_DIRECTORY + (OS.CURRENT == OS.macOS ? "/Contents/Home" : ""));
+  }
 
+  /** Prefer {@link #getBundledRuntimeDir()}. */
+  @ApiStatus.Obsolete
+  public static @NotNull String getBundledRuntimePath() {
+    return getBundledRuntimeDir().toString();
+  }
+
+  /**
+   * Returns the path to the directory where data common for all IntelliJ-based IDEs is stored. 
+   */
   public static synchronized @NotNull Path getCommonDataPath() {
-    if (ourCommonDataPath == null) {
-      Path path = Paths.get(platformPath("", "Application Support", "", "APPDATA", "", "XDG_DATA_HOME", ".local/share", ""));
+    Path path = ourCommonDataPath;
+    if (path == null) {
+      path = Paths.get(platformPath("", "Application Support", "", "APPDATA", "", "XDG_DATA_HOME", ".local/share", ""));
       if (!Files.exists(path, LinkOption.NOFOLLOW_LINKS)) {
         try {
           Files.createDirectories(path);
         }
         catch (IOException e) {
-          throw new UncheckedIOException(e);
+          throw new UncheckedIOException("Failed to create " + path + ", user.home=" + System.getProperty("user.home"), e);
         }
       }
       ourCommonDataPath = path;
     }
-    return ourCommonDataPath;
+    return path;
   }
 
+  /**
+   * Returns a base name used to compose default locations of directories used by the IDE.
+   */
+  @ApiStatus.Internal
+  @SuppressWarnings("IdentifierGrammar")
   public static @Nullable String getPathsSelector() {
-    return PATHS_SELECTOR;
+    return ourPathSelector;
   }
 
+  /**
+   * Provides a way to update the path selected. This is a temporary solution, it'll be removed when RDCT-1474 is fixed.
+   */
+  @ApiStatus.Experimental
+  @ApiStatus.Internal
+  public static void setPathSelector(@NotNull String newValue) {
+    ourPathSelector = newValue;
+    System.setProperty(PROPERTY_PATHS_SELECTOR, newValue);
+  }
+  
+  /**
+   * Returns the path to the directory where settings are stored.
+   * Usually, you don't need to access this directory directly, use {@link com.intellij.openapi.components.PersistentStateComponent} instead.
+   */
   public static @NotNull Path getConfigDir() {
-    return Paths.get(getConfigPath());
+    Path path = ourConfigPath;
+    if (path == null) {
+      Path explicit = getExplicitPath(PROPERTY_CONFIG_PATH);
+      ourConfigPath = path =
+        explicit != null ? explicit :
+        ourPathSelector != null ? Paths.get(getDefaultConfigPathFor(ourPathSelector)) :
+        getHomeDir().resolve(CONFIG_DIRECTORY);
+    }
+    return path;
   }
 
+  /** Prefer {@link #getConfigDir()}. */
+  @ApiStatus.Obsolete
   public static @NotNull String getConfigPath() {
-    if (ourConfigPath != null) return ourConfigPath;
-
-    String explicit = getExplicitPath(PROPERTY_CONFIG_PATH);
-    if (explicit != null) {
-      ourConfigPath = explicit;
-    }
-    else if (PATHS_SELECTOR != null) {
-      ourConfigPath = getDefaultConfigPathFor(PATHS_SELECTOR);
-    }
-    else {
-      ourConfigPath = getHomePath() + '/' + CONFIG_DIRECTORY;
-    }
-
-    return ourConfigPath;
+    return getConfigDir().toString();
   }
 
+  @TestOnly
+  @ApiStatus.Internal
+  public static void setExplicitConfigPath(@NotNull Path path) {
+    ourConfigPath = path;
+  }
+
+  /** Prefer {@link #getScratchDir()}. */
+  @ApiStatus.Obsolete
   public static @NotNull String getScratchPath() {
-    if (ourScratchPath != null) return ourScratchPath;
-
-    String explicit = getExplicitPath(PROPERTY_SCRATCH_PATH);
-    if (explicit != null) {
-      ourScratchPath = explicit;
-    }
-    else {
-      ourScratchPath = getConfigPath();
-    }
-
-    return ourScratchPath;
+    return getScratchDir().toString();
   }
 
+  /**
+   * Returns the path to the directory where scratch files are stored.
+   */
+  public static @NotNull Path getScratchDir() {
+    Path path = ourScratchPath;
+    if (path == null) {
+      Path explicit = getExplicitPath(PROPERTY_SCRATCH_PATH);
+      ourScratchPath = path = explicit == null ? getConfigDir() : explicit;
+    }
+    return path;
+  }
+
+  /**
+   * Returns the path to the directory where settings are stored by default for IDE designated by {@code selector}.
+   */
   public static @NotNull String getDefaultConfigPathFor(@NotNull String selector) {
     return platformPath(selector, "Application Support", "", "APPDATA", "", "XDG_CONFIG_HOME", ".config", "");
   }
 
+  /** Use {@link #getOptionsDir()} instead */
+  @ApiStatus.Obsolete
   public static @NotNull String getOptionsPath() {
-    return getConfigPath() + '/' + OPTIONS_DIRECTORY;
+    return getOptionsDir().toString();
   }
 
-  public static @NotNull File getOptionsFile(@NotNull String fileName) {
-    return Paths.get(getOptionsPath(), fileName + DEFAULT_EXT).toFile();
+  /**
+   * Returns the path to the directory where regular settings are stored.
+   * Usually, you don't need to access this directory directly, use {@link com.intellij.openapi.components.PersistentStateComponent} instead.
+   */
+  public static @NotNull Path getOptionsDir() {
+    return getConfigDir().resolve(OPTIONS_DIRECTORY);
   }
 
+  /**
+   * @deprecated prefer {@link com.intellij.openapi.components.PersistentStateComponent},
+   * or use {@code PathManager.getOptionsDir().resolve(fileName + PathManager.DEFAULT_EXT)} instead.
+   */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval
+  @SuppressWarnings({"IO_FILE_USAGE", "UnnecessaryFullyQualifiedName"})
+  public static @NotNull java.io.File getOptionsFile(@NotNull String fileName) {
+    return getOptionsDir().resolve(fileName + DEFAULT_EXT).toFile();
+  }
+
+  /** Prefer {@link #getPluginsDir()}. */
+  @ApiStatus.Obsolete
   public static @NotNull String getPluginsPath() {
-    if (ourPluginsPath != null) return ourPluginsPath;
-
-    String explicit = getExplicitPath(PROPERTY_PLUGINS_PATH);
-    if (explicit != null) {
-      ourPluginsPath = explicit;
-    }
-    else if (PATHS_SELECTOR != null && System.getProperty(PROPERTY_CONFIG_PATH) == null) {
-      ourPluginsPath = getDefaultPluginPathFor(PATHS_SELECTOR);
-    }
-    else {
-      ourPluginsPath = getConfigPath() + '/' + PLUGINS_DIRECTORY;
-    }
-
-    return ourPluginsPath;
+    return getPluginsDir().toString();
   }
 
+  /**
+   * Returns the path to the directory where custom plugins are stored.
+   */
+  public static @NotNull Path getPluginsDir() {
+    Path path = ourPluginPath;
+    if (path == null) {
+      Path explicit = getExplicitPath(PROPERTY_PLUGINS_PATH);
+      ourPluginPath = path =
+        explicit != null ? explicit :
+        ourPathSelector != null && System.getProperty(PROPERTY_CONFIG_PATH) == null ? Paths.get(getDefaultPluginPathFor(ourPathSelector)) :
+        getConfigDir().resolve(PLUGINS_DIRECTORY);
+    }
+    return path;
+  }
+
+  /**
+   * Return the path to the directory where custom plugins are stored by default for IDE with the given path selector.
+   */
+  @ApiStatus.Internal
   public static @NotNull String getDefaultPluginPathFor(@NotNull String selector) {
     return platformPath(selector, "Application Support", PLUGINS_DIRECTORY, "APPDATA", PLUGINS_DIRECTORY, "XDG_DATA_HOME", ".local/share", "");
   }
 
+  /**
+   * Return the path to the directory where custom idea.properties and *.vmoptions files are stored.
+   */
   public static @Nullable String getCustomOptionsDirectory() {
     // do not use getConfigPath() here - as it may be not yet defined
-    return PATHS_SELECTOR != null ? getDefaultConfigPathFor(PATHS_SELECTOR) : null;
+    return ourPathSelector != null ? getDefaultConfigPathFor(ourPathSelector) : null;
   }
 
-  // runtime paths
+  /**
+   * Returns the path to the directory where caches are stored. 
+   * To store plugin-related caches, always use a subdirectory named after the plugin.
+   * To store caches related to a particular project, use 
+   * {@link com.intellij.openapi.project.ProjectUtil#getProjectDataPath} instead.
+   */
+  public static @NotNull Path getSystemDir() {
+    Path path = ourSystemPath;
+    if (path == null) {
+      Path explicit = getExplicitPath(PROPERTY_SYSTEM_PATH);
+      ourSystemPath = path =
+        explicit != null ? explicit :
+        ourPathSelector != null ? Paths.get(getDefaultSystemPathFor(ourPathSelector)) :
+        getHomeDir().resolve(SYSTEM_DIRECTORY);
+    }
+    return path;
+  }
 
+  /** Prefer {@link #getSystemDir()}. */
+  @ApiStatus.Obsolete
   public static @NotNull String getSystemPath() {
-    if (ourSystemPath != null) return ourSystemPath;
-
-    String explicit = getExplicitPath(PROPERTY_SYSTEM_PATH);
-    if (explicit != null) {
-      ourSystemPath = explicit;
-    }
-    else if (PATHS_SELECTOR != null) {
-      ourSystemPath = getDefaultSystemPathFor(PATHS_SELECTOR);
-    }
-    else {
-      ourSystemPath = getHomePath() + '/' + SYSTEM_DIRECTORY;
-    }
-
-    return ourSystemPath;
+    return getSystemDir().toString();
   }
 
+  /**
+   * Returns the path to the directory where caches are stored by default for IDE with the given path selector.
+   */
   public static @NotNull String getDefaultSystemPathFor(@NotNull String selector) {
-    return platformPath(selector, "Caches", "", "LOCALAPPDATA", "", "XDG_CACHE_HOME", ".cache", "");
+    return getDefaultSystemPathFor(OS.CURRENT, System.getProperty("user.home"), selector, System.getenv());
   }
 
-  public static @NotNull @NonNls String getTempPath() {
-    return getSystemPath() + "/tmp";
+  @ApiStatus.Internal
+  public static @NotNull String getDefaultSystemPathFor(@NotNull OS os, @NotNull String userHome, @NotNull String selector) {
+    return getDefaultSystemPathFor(os, userHome, selector, System.getenv());
   }
 
-  public static @NotNull File getIndexRoot() {
-    String indexRootPath = getExplicitPath("index_root_path");
-    if (indexRootPath == null) indexRootPath = getSystemPath() + "/index";
-    return Paths.get(indexRootPath).toFile();
+  @ApiStatus.Internal
+  public static @NotNull String getDefaultSystemPathFor(@NotNull OS os, @NotNull String userHome, @NotNull String selector, @NotNull Map<String, String> env) {
+    return platformPath(os, env, userHome, selector, "Caches", "", "LOCALAPPDATA", "", "XDG_CACHE_HOME", ".cache", "");
   }
 
+  /**
+   * Returns the path to the directory to store temporary files.
+   */
+  public static @NotNull Path getTempDir() {
+    return getSystemDir().resolve("tmp");
+  }
+
+  /** Prefer {@link #getTempDir()}. */
+  @ApiStatus.Obsolete
+  public static @NotNull String getTempPath() {
+    return getTempDir().toString();
+  }
+
+  /**
+   * Returns the path to the directory where indices are stored.
+   */
+  @ApiStatus.Internal
+  public static @NotNull Path getIndexRoot() {
+    Path explicit = getExplicitPath("index_root_path");
+    return explicit != null ? explicit : getSystemDir().resolve("index");
+  }
+
+  /**
+   * Returns the path to the directory where log files are stored.
+   * Usually you don't need to access it directly, use {@link Logger} instead.
+   */
+  public static @NotNull Path getLogDir() {
+    Path path = ourLogPath;
+    if (path == null) {
+      Path explicit = getExplicitPath(PROPERTY_LOG_PATH);
+      ourLogPath = path =
+        explicit != null ? explicit :
+        ourPathSelector != null && System.getProperty(PROPERTY_SYSTEM_PATH) == null ? Paths.get(getDefaultLogPathFor(ourPathSelector)) :
+        getSystemDir().resolve(LOG_DIRECTORY);
+    }
+    return path;
+  }
+
+  /** Prefer {@link #getLogDir()}. */
+  @ApiStatus.Obsolete
   public static @NotNull String getLogPath() {
-    if (ourLogPath != null) return ourLogPath;
-
-    String explicit = getExplicitPath(PROPERTY_LOG_PATH);
-    if (explicit != null) {
-      ourLogPath = explicit;
-    }
-    else if (PATHS_SELECTOR != null && System.getProperty(PROPERTY_SYSTEM_PATH) == null) {
-      ourLogPath = platformPath(PATHS_SELECTOR, "Logs", "", "LOCALAPPDATA", LOG_DIRECTORY, "XDG_CACHE_HOME", ".cache", LOG_DIRECTORY);
-    }
-    else {
-      ourLogPath = getSystemPath() + '/' + LOG_DIRECTORY;
-    }
-
-    return ourLogPath;
+    return getLogDir().toString();
   }
 
+  /**
+   * Returns the path to the directory where log files are stored by default for IDE with the given path selector.
+   */
+  @ApiStatus.Internal
+  public static @NotNull String getDefaultLogPathFor(@NotNull String selector) {
+    return platformPath(selector, "Logs", "", "LOCALAPPDATA", LOG_DIRECTORY, "XDG_CACHE_HOME", ".cache", LOG_DIRECTORY);
+  }
+
+  /**
+   * Returns the path to the directory where the script which is executed at startup and files used by it are located.
+   * @see com.intellij.ide.startup.StartupActionScriptManager
+   */
+  @ApiStatus.Internal
+  public static @NotNull Path getStartupScriptDir() {
+    return ourStartupScriptDir != null ? ourStartupScriptDir : getSystemDir().resolve(PLUGINS_DIRECTORY);
+  }
+
+  /**
+   * @deprecated for a directory where the startup script and related files are located, use {@link #getStartupScriptDir()} instead.
+   * If you need to save some custom caches related to plugins, create your own directory under {@link #getSystemDir()}.
+   */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval
   public static @NotNull String getPluginTempPath() {
-    return getSystemPath() + '/' + PLUGINS_DIRECTORY;
+    return getSystemDir().resolve(PLUGINS_DIRECTORY).toString();
   }
 
   // misc stuff
 
   /**
-   * Attempts to detect classpath entry containing given resource.
+   * Returns the absolute path to the resource root of the JAR containing {@code cls}, using it for classpath detection.
+   * <p>
+   * Consider this file hierarchy:
+   *
+   * <pre>
+   * &lt;jar_root&gt;/
+   *   resources/
+   *     META-INF/
+   *       some_file.xml
+   *   src/
+   *     com/
+   *       intellij/
+   *         SomeClass.java/
+   * </pre>
+   * <p>
+   * Calling this method with {@code SomeClass.java} as first argument and {@code resources/META-INF/some_file} as the second argument
+   * will return something like {@code /home/user/absolute/path/to/jar_root.jar}.
    */
-  public static @Nullable String getResourceRoot(@NotNull Class<?> context, @NotNull String path) {
-    URL url = context.getResource(path);
-    if (url == null) {
-      url = ClassLoader.getSystemResource(path.substring(1));
-    }
+  public static @Nullable String getResourceRoot(@NotNull Class<?> cls, @NotNull String path) {
+    URL url = cls.getResource(path);
+    if (url == null) url = ClassLoader.getSystemResource(path.substring(1));
     return url != null ? extractRoot(url, path) : null;
   }
 
   /**
-   * Attempts to detect classpath entry containing given resource.
+   * Attempts to detect classpath entry containing the resource.
    */
-  public static @Nullable String getResourceRoot(@NotNull ClassLoader cl, @NotNull String resourcePath) {
-    URL url = cl.getResource(resourcePath);
-    return url != null ? extractRoot(url, resourcePath) : null;
+  public static @Nullable String getResourceRoot(@NotNull ClassLoader classLoader, @NotNull String resourcePath) {
+    URL url = classLoader.getResource(resourcePath);
+    return url == null ? null : extractRoot(url, "/" + resourcePath);
   }
 
   /**
    * Attempts to extract classpath entry part from passed URL.
    */
   private static @Nullable String extractRoot(URL resourceURL, String resourcePath) {
-    if (resourcePath.length() == 0 || resourcePath.charAt(0) != '/' && resourcePath.charAt(0) != '\\') {
+    if (resourcePath.isEmpty() || resourcePath.charAt(0) != '/' && resourcePath.charAt(0) != '\\') {
       log("precondition failed: " + resourcePath);
       return null;
     }
 
     String resultPath = null;
-    String protocol = resourceURL.getProtocol();
-    if (URLUtil.FILE_PROTOCOL.equals(protocol)) {
-      String path = URLUtil.urlToFile(resourceURL).getPath();
-      String testPath = path.replace('\\', '/');
-      String testResourcePath = resourcePath.replace('\\', '/');
-      if (StringUtilRt.endsWithIgnoreCase(testPath, testResourcePath)) {
-        resultPath = path.substring(0, path.length() - resourcePath.length());
+    switch (resourceURL.getProtocol()) {
+      case URLUtil.FILE_PROTOCOL: {
+        Path result;
+        try {
+          result = Paths.get(resourceURL.toURI());
+        }
+        catch (URISyntaxException e) {
+          throw new IllegalArgumentException("URL='" + resourceURL + "'", e);
+        }
+        String path = result.toString();
+        String testPath = path.replace('\\', '/');
+        String testResourcePath = resourcePath.replace('\\', '/');
+        if (StringUtilRt.endsWithIgnoreCase(testPath, testResourcePath)) {
+          resultPath = path.substring(0, path.length() - resourcePath.length());
+        }
+        break;
       }
-    }
-    else if (URLUtil.JAR_PROTOCOL.equals(protocol)) {
-      Pair<String, String> paths = URLUtil.splitJarUrl(resourceURL.getFile());
-      if (paths != null && paths.first != null) {
-        resultPath = paths.first;
+      case URLUtil.JAR_PROTOCOL: {
+        // do not use URLUtil.splitJarUrl here - used in bootstrap
+        String jarPath = splitJarUrl(resourceURL.getFile());
+        if (jarPath != null) resultPath = jarPath;
+        break;
       }
-    }
-    else if (URLUtil.JRT_PROTOCOL.equals(protocol)) {
-      return null;
+      case URLUtil.JRT_PROTOCOL:
+        return null;
     }
 
     if (resultPath == null) {
@@ -461,48 +759,162 @@ public final class PathManager {
     return Paths.get(resultPath).normalize().toString();
   }
 
-  public static void loadProperties() {
-    Set<String> paths = new LinkedHashSet<>();
-    paths.add(System.getProperty(PROPERTIES_FILE));
-    paths.add(getCustomPropertiesFile());
-    paths.add(SystemProperties.getUserHome() + '/' + PROPERTIES_FILE_NAME);
-    for (Path binDir : getBinDirectories()) {
-      paths.add(binDir.resolve(PROPERTIES_FILE_NAME).toString());
+  // do not use URLUtil.splitJarUrl here - used in bootstrap
+  private static @Nullable String splitJarUrl(String url) {
+    int pivot = url.indexOf(URLUtil.JAR_SEPARATOR);
+    if (pivot < 0) {
+      return null;
     }
 
-    Properties sysProperties = System.getProperties();
-    for (String path : paths) {
-      Path file = path != null ? Paths.get(path) : null;
-      if (file != null && Files.exists(file)) {
-        try (Reader reader = Files.newBufferedReader(file)) {
-          Map<String, String> properties = PropertiesUtil.loadProperties(reader);
-          for (Map.Entry<String, String> entry : properties.entrySet()) {
-            String key = entry.getKey();
-            if (PROPERTY_HOME_PATH.equals(key) || PROPERTY_HOME.equals(key)) {
-              log(path + ": '" + key + "' cannot be redefined");
-            }
-            else if (!sysProperties.containsKey(key)) {
-              sysProperties.setProperty(key, substituteVars(entry.getValue()));
-            }
-          }
-        }
-        catch (IOException e) {
-          log("Can't read property file '" + path + "': " + e.getMessage());
-        }
+    String jarPath = url.substring(0, pivot);
+
+    boolean startsWithConcatenation = true;
+    int offset = 0;
+    for (String prefix : new String[]{URLUtil.JAR_PROTOCOL, ":"}) {
+      int prefixLen = prefix.length();
+      if (!jarPath.regionMatches(offset, prefix, 0, prefixLen)) {
+        startsWithConcatenation = false;
+        break;
+      }
+      offset += prefixLen;
+    }
+    if (startsWithConcatenation) {
+      jarPath = jarPath.substring(URLUtil.JAR_PROTOCOL.length() + 1);
+    }
+
+    if (!jarPath.startsWith(URLUtil.FILE_PROTOCOL)) {
+      return jarPath;
+    }
+
+    try {
+      Path result;
+      URL parsedUrl = new URL(jarPath);
+      try {
+        result = Paths.get(parsedUrl.toURI());
+      }
+      catch (URISyntaxException e) {
+        throw new IllegalArgumentException("URL='" + parsedUrl + "'", e);
+      }
+      return result.toString().replace('\\', '/');
+    }
+    catch (Exception e) {
+      jarPath = jarPath.substring(URLUtil.FILE_PROTOCOL.length());
+      if (jarPath.startsWith(URLUtil.SCHEME_SEPARATOR)) {
+        return jarPath.substring(URLUtil.SCHEME_SEPARATOR.length());
+      }
+      else if (!jarPath.isEmpty() && jarPath.charAt(0) == ':') {
+        return jarPath.substring(1);
+      }
+      else {
+        return jarPath;
       }
     }
   }
 
-  private static String getCustomPropertiesFile() {
-    String configPath = getCustomOptionsDirectory();
-    return configPath != null ? configPath + '/' + PROPERTIES_FILE_NAME : null;
+  @ApiStatus.Internal
+  public static void loadProperties() {
+    List<Path> files = new ArrayList<>();
+    String customFile = System.getProperty(PROPERTIES_FILE);
+    if (customFile != null) {
+      files.add(Paths.get(customFile));
+    }
+    String optionsDir = getCustomOptionsDirectory();
+    if (optionsDir != null) {
+      files.add(Paths.get(optionsDir, PROPERTIES_FILE_NAME));
+    }
+    files.add(Paths.get(System.getProperty("user.home"), PROPERTIES_FILE_NAME));
+    for (Path binDir : getBinDirectories()) {
+      files.add(binDir.resolve(PROPERTIES_FILE_NAME));
+    }
+
+    Properties sysProperties = System.getProperties();
+    String homePath = getHomePath();
+    for (Path file : files) {
+      try (Reader reader = Files.newBufferedReader(file)) {
+        //noinspection NonSynchronizedMethodOverridesSynchronizedMethod
+        new Properties() {
+          @Override
+          public Object put(Object key, Object value) {
+            if (PROPERTY_HOME_PATH.equals(key) || PROPERTY_HOME.equals(key)) {
+              log(file + ": '" + key + "' cannot be redefined");
+            }
+            else if (!sysProperties.containsKey(key)) {
+              sysProperties.setProperty((String)key, substituteVars((String)value, homePath));
+            }
+            return null;
+          }
+        }.load(reader);
+      }
+      catch (NoSuchFileException | AccessDeniedException ignore) { }
+      catch (IOException e) {
+        log("Can't read property file '" + file + "': " + e.getMessage());
+      }
+    }
+
+    // check and fix conflicting properties (see also `com.intellij.ui.mac.MenuSettings.isJbSystemMenu`)
+    if (Boolean.parseBoolean(System.getProperty("jbScreenMenuBar.enabled", "true"))) {
+      sysProperties.setProperty("apple.laf.useScreenMenuBar", "false");
+    }
   }
 
-  @Contract("null -> null")
-  public static String substituteVars(String s) {
-    return substituteVars(s, getHomePath());
+  @ApiStatus.Internal
+  public static void customizePaths(List<String> args) {
+    String property = System.getProperty(SYSTEM_PATHS_CUSTOMIZER);
+    if (property == null) return;
+
+    try {
+      Class<?> aClass = PathManager.class.getClassLoader().loadClass(property);
+      Object customizer = aClass.getConstructor().newInstance();
+      if (customizer instanceof PathCustomizer) {
+        PathCustomizer.CustomPaths paths = ((PathCustomizer)customizer).customizePaths(args);
+        if (paths != null) {
+          ourOriginalConfigDir = getConfigDir();
+          ourOriginalSystemDir = getSystemDir();
+          ourOriginalLogDir = getLogDir();
+          if (paths.configPath != null) System.setProperty(PROPERTY_CONFIG_PATH, paths.configPath);
+          if (paths.systemPath != null) System.setProperty(PROPERTY_SYSTEM_PATH, paths.systemPath);
+          if (paths.pluginsPath != null) System.setProperty(PROPERTY_PLUGINS_PATH, paths.pluginsPath);
+          if (paths.logDirPath != null) System.setProperty(PROPERTY_LOG_PATH, paths.logDirPath);
+          if (paths.startupScriptDir != null) ourStartupScriptDir = paths.startupScriptDir;
+          // NB: IDE might use an instance from a different classloader
+          ourConfigPath = null;
+          ourSystemPath = null;
+          ourPluginPath = null;
+          ourScratchPath = null;
+          ourLogPath = null;
+        }
+      }
+    }
+    catch (Throwable e) {
+      log("Failed to set up '" + property + "' as PathCustomizer: " + e);
+    }
   }
 
+  /**
+   * Return original value of the config path ignoring possible customizations made by {@link PathCustomizer}. 
+   */
+  @ApiStatus.Internal
+  public static @NotNull Path getOriginalConfigDir() {
+    return ourOriginalConfigDir != null ? ourOriginalConfigDir : getConfigDir();
+  }
+
+  /**
+   * Return original value of the system path ignoring possible customizations made by {@link PathCustomizer}.
+   */
+  @ApiStatus.Internal
+  public static @NotNull Path getOriginalSystemDir() {
+    return ourOriginalSystemDir != null ? ourOriginalSystemDir : getSystemDir();
+  }
+
+  /**
+   * Return original value of the log path ignoring possible customizations made by {@link PathCustomizer}.
+   */
+  @ApiStatus.Internal
+  public static @NotNull Path getOriginalLogDir() {
+    return ourOriginalLogDir != null ? ourOriginalLogDir : getLogDir();
+  }
+
+  @ApiStatus.Internal
   @Contract("null, _ -> null")
   public static String substituteVars(String s, @NotNull String ideaHomePath) {
     if (s == null) return null;
@@ -543,118 +955,126 @@ public final class PathManager {
     return s;
   }
 
-  public static @NotNull File findFileInLibDirectory(@NotNull String relativePath) {
-    Path file = Paths.get(getLibPath(), relativePath);
-    if (!Files.exists(file)) file = Paths.get(getHomePath(), "community/lib/" + relativePath);
-    return file.toFile();
+  /**
+   * @return path to 'community' project home irrespective of the current project
+   */
+  @ApiStatus.Internal
+  public static @NotNull String getCommunityHomePath() {
+    return getCommunityHomePath(getHomePath());
+  }
+
+  private static String getCommunityHomePath(String homePath) {
+    if (Boolean.getBoolean("idea.use.dev.build.server") || Files.isDirectory(Paths.get(homePath, ".idea"))) {
+      Path[] possibleCommunityPathList = {
+        Paths.get(homePath, "community"),
+        Paths.get(homePath, "..", "..", "..", "community"),
+        Paths.get(homePath, "..", "..", "..", "..", "community")
+      };
+      for (Path possibleCommunityPath : possibleCommunityPathList) {
+        if (Files.isRegularFile(possibleCommunityPath.resolve(COMMUNITY_MARKER))) {
+          return possibleCommunityPath.normalize().toString();
+        }
+      }
+    }
+    return homePath;
   }
 
   /**
-   * @return path to 'community' project home irrespective of current project
+   * Returns the path to the JAR file or root directory from where class-file for {@code aClass} is located.
+   * Consider using {@link #getJarForClass(Class)} instead.
    */
-  public static @NotNull @NonNls String getCommunityHomePath() {
-    String path = getHomePath();
-    if (Files.isDirectory(Paths.get(path, "community/.idea"))) {
-      return path + "/community";
-    }
-    if (Files.isDirectory(Paths.get(path, "ultimate/community/.idea"))) {
-      return path + "/ultimate/community";
-    }
-    return path;
-  }
-
   public static @Nullable String getJarPathForClass(@NotNull Class<?> aClass) {
+    Path resourceRoot = getJarForClass(aClass);
+    return resourceRoot == null ? null : resourceRoot.toString();
+  }
+
+  /**
+   * Returns the path to the JAR file or root directory from where class-file for {@code aClass} is located.
+   */
+  public static @Nullable Path getJarForClass(@NotNull Class<?> aClass) {
     String resourceRoot = getResourceRoot(aClass, '/' + aClass.getName().replace('.', '/') + ".class");
-    return resourceRoot != null ? Paths.get(resourceRoot).toAbsolutePath().toString() : null;
+    return resourceRoot == null ? null : Paths.get(resourceRoot).toAbsolutePath();
   }
-
-  public static @NotNull Collection<String> getUtilClassPath() {
-    Set<String> classPath = new HashSet<>();
-
-    @SuppressWarnings("UnnecessaryFullyQualifiedName") Class<?>[] classes = {
-      PathManager.class,                               // module 'intellij.platform.util'
-      Strings.class,                                   // module 'intellij.platform.util.strings'
-      FList.class,                                     // module 'intellij.platform.util.collections'
-      MinusculeMatcher.class,                          // module 'intellij.platform.util.text.matching'
-      StartUpMeasurer.class,                           // module 'intellij.platform.util.diagnostic'
-      com.intellij.openapi.util.SystemInfoRt.class,    // module 'intellij.platform.util.rt'
-      com.intellij.util.lang.UrlClassLoader.class,     // module 'intellij.platform.util.classLoader'
-      org.intellij.lang.annotations.Flow.class,        // jetbrains-annotations-java5
-      org.jdom.Document.class,                         // jDOM
-      org.apache.log4j.Appender.class,                 // Log4J
-      gnu.trove.THashSet.class,                        // Trove
-      Object2IntMap.class,                             // fastutil
-      com.sun.jna.TypeMapper.class,                    // JNA
-      com.sun.jna.platform.FileUtils.class,            // JNA (jna-platform)
-      org.apache.oro.text.regex.PatternMatcher.class,  // OROMatcher
-      net.jpountz.lz4.LZ4Factory.class,                // LZ4-Java
-    };
-    for (Class<?> aClass : classes) {
-      String path = getJarPathForClass(aClass);
-      if (path != null) {
-        classPath.add(path);
-      }
-    }
-
-    String resourceRoot = getResourceRoot(PathManager.class, "/messages/CommonBundle.properties");  // intellij.platform.resources.en
-    if (resourceRoot != null) {
-      classPath.add(Paths.get(resourceRoot).toAbsolutePath().toString());
-    }
-
-    return classPath;
-  }
-
-  // helpers
 
   @SuppressWarnings("UseOfSystemOutOrSystemErr")
-  private static void log(@NonNls String x) {
+  private static void log(String x) {
     System.err.println(x);
   }
 
+  /**
+   * Convert the given path to an absolute path substituting '~' symbol with the user home path.
+   */
   public static @NotNull String getAbsolutePath(@NotNull String path) {
     if (path.startsWith("~/") || path.startsWith("~\\")) {
-      path = SystemProperties.getUserHome() + path.substring(1);
+      path = System.getProperty("user.home") + path.substring(1);
     }
     return Paths.get(path).toAbsolutePath().normalize().toString();
   }
 
-  private static @Nullable String getExplicitPath(String property) {
+  private static @Nullable Path getExplicitPath(String property) {
     String path = System.getProperty(property);
-    return path != null ? getAbsolutePath(StringUtilRt.unquoteString(path, '"')) : null;
+    if (path == null) return null;
+
+    try {
+      boolean quoted = path.length() > 1 && '"' == path.charAt(0) && '"' == path.charAt(path.length() - 1);
+      return toAbsoluteNormalizedPath(quoted ? path.substring(1, path.length() - 1) : path);
+    }
+    catch (InvalidPathException e) {
+      Logger.getInstance(PathManager.class).error("Invalid value for property '" + property + "'", e);
+      return null;
+    }
   }
 
-  private static String platformPath(@NonNls String selector,
-                                     @NonNls String macDir, @NonNls String macSub,
-                                     @NonNls String winVar, @NonNls String winSub,
-                                     @NonNls String xdgVar, @NonNls String xdgDfl, @NonNls String xdgSub) {
-    String userHome = SystemProperties.getUserHome(), vendorName = vendorName();
-
-    if (SystemInfoRt.isMac) {
-      @NonNls String dir = userHome + "/Library/" + macDir + '/' + vendorName;
-      if (!selector.isEmpty()) dir = dir + '/' + selector;
-      if (!macSub.isEmpty()) dir = dir + '/' + macSub;
-      return dir;
+  private static Path toAbsoluteNormalizedPath(@NotNull String path) {
+    if (path.startsWith("~/") || path.startsWith("~\\")) {
+      path = System.getProperty("user.home") + path.substring(1);
     }
+    return Paths.get(path).toAbsolutePath().normalize();
+  }
 
-    if (SystemInfoRt.isWindows) {
-      @NonNls String dir = System.getenv(winVar);
-      if (dir == null || dir.isEmpty()) dir = userHome + "\\AppData\\" + (winVar.startsWith("LOCAL") ? "Local" : "Roaming");
-      dir = dir + '\\' + vendorName;
-      if (!selector.isEmpty()) dir = dir + '\\' + selector;
-      if (!winSub.isEmpty()) dir = dir + '\\' + winSub;
-      return dir;
+  private static String platformPath(
+    String selector,
+    String macDir, String macSub,
+    String winVar, String winSub,
+    String xdgVar, String xdgDfl, String xdgSub
+  ) {
+    return platformPath(OS.CURRENT, System.getenv(), System.getProperty("user.home"), selector, macDir, macSub, winVar, winSub, xdgVar, xdgDfl, xdgSub);
+  }
+
+  private static String platformPath(
+    OS os,
+    Map<String, String> env,
+    String userHome,
+    String selector,
+    String macDir, String macSub,
+    String winVar, String winSub,
+    String xdgVar, String xdgDfl, String xdgSub
+  ) {
+    String vendorName = vendorName();
+    switch (os) {
+      case Windows: {
+        String dir = env.get(winVar);
+        if (dir == null || dir.isEmpty()) dir = userHome + "\\AppData\\" + (winVar.startsWith("LOCAL") ? "Local" : "Roaming");
+        dir = dir + '\\' + vendorName;
+        if (!selector.isEmpty()) dir = dir + '\\' + selector;
+        if (!winSub.isEmpty()) dir = dir + '\\' + winSub;
+        return dir;
+      }
+      case macOS: {
+        String dir = userHome + "/Library/" + macDir + '/' + vendorName;
+        if (!selector.isEmpty()) dir = dir + '/' + selector;
+        if (!macSub.isEmpty()) dir = dir + '/' + macSub;
+        return dir;
+      }
+      default: {
+        String dir = xdgVar != null ? env.get(xdgVar) : null;
+        if (dir == null || dir.isEmpty()) dir = userHome + '/' + xdgDfl;
+        dir = dir + '/' + vendorName();
+        if (!selector.isEmpty()) dir = dir + '/' + selector;
+        if (!xdgSub.isEmpty()) dir = dir + '/' + xdgSub;
+        return dir;
+      }
     }
-
-    if (SystemInfoRt.isUnix) {
-      String dir = System.getenv(xdgVar);
-      if (dir == null || dir.isEmpty()) dir = userHome + '/' + xdgDfl;
-      dir = dir + '/' + vendorName;
-      if (!selector.isEmpty()) dir = dir + '/' + selector;
-      if (!xdgSub.isEmpty()) dir = dir + '/' + xdgSub;
-      return dir;
-    }
-
-    throw new UnsupportedOperationException("Unsupported OS: " + SystemInfoRt.OS_NAME);
   }
 
   private static String vendorName() {
@@ -668,7 +1088,10 @@ public final class PathManager {
         property = (String)lookup.findVirtual(impl, "getShortCompanyName", MethodType.methodType(String.class)).invoke(instance);
       }
       catch (Throwable ignored) { }
-      System.setProperty(PROPERTY_VENDOR_NAME, property != null ? property : "JetBrains");
+      if (property == null) {
+        property = "JetBrains";
+      }
+      System.setProperty(PROPERTY_VENDOR_NAME, property);
     }
     return property;
   }

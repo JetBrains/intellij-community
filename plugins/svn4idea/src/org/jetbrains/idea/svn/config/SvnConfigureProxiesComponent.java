@@ -1,6 +1,7 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.svn.config;
 
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonShortcuts;
@@ -13,25 +14,36 @@ import com.intellij.util.PlatformIcons;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.svn.SvnBundle;
-import org.jetbrains.idea.svn.SvnServerFileManager;
 
-import javax.swing.*;
+import javax.swing.JComponent;
+import javax.swing.KeyStroke;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreePath;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
+import static org.jetbrains.idea.svn.SvnBundle.message;
 
 public class SvnConfigureProxiesComponent extends MasterDetailsComponent {
-  private final SvnServerFileManager myManager;
+  private final ServersFileManager myManager;
 
-  private final CompositeRunnable myTreeUpdaterValidator;
+  private final Runnable myTreeUpdaterValidator;
   private final Runnable myValidator;
   private JComponent myComponent;
   private final TestConnectionPerformer myTestConnectionPerformer;
   private ConfigureProxiesOptionsPanel myDefaultGroupPanel;
 
-  public SvnConfigureProxiesComponent(final SvnServerFileManager manager, final GroupsValidator validator, final TestConnectionPerformer testConnectionPerformer) {
+  public SvnConfigureProxiesComponent(final ServersFileManager manager, final GroupsValidator validator, final TestConnectionPerformer testConnectionPerformer) {
     myTestConnectionPerformer = testConnectionPerformer;
     myValidator = validator;
     myTreeUpdaterValidator = new CompositeRunnable(TREE_UPDATER, myValidator);
@@ -42,8 +54,7 @@ public class SvnConfigureProxiesComponent extends MasterDetailsComponent {
   }
 
   @Override
-  @NotNull
-  public JComponent createComponent() {
+  public @NotNull JComponent createComponent() {
     if (myComponent == null) {
       myComponent = super.createComponent();
     }
@@ -52,7 +63,7 @@ public class SvnConfigureProxiesComponent extends MasterDetailsComponent {
 
   @Override
   public String getDisplayName() {
-    return SvnBundle.message("configurable.SvnConfigureProxiesComponent.display.name");
+    return message("configurable.SvnConfigureProxiesComponent.display.name");
   }
 
   @Override
@@ -60,16 +71,12 @@ public class SvnConfigureProxiesComponent extends MasterDetailsComponent {
     return null;
   }
 
-  private static String getNewName() {
-    return "Unnamed";
-  }
-
   private void addGroup(final ProxyGroup template) {
     final ProxyGroup group;
     if (template == null) {
-      group = new ProxyGroup(getNewName(), "", new HashMap<>());
+      group = new ProxyGroup(message("value.new.server.group.name"), "", new HashMap<>());
     } else {
-      group = new ProxyGroup(getNewName(), template.getPatterns(), template.getProperties());
+      group = new ProxyGroup(message("value.new.server.group.name"), template.getPatterns(), template.getProperties());
     }
 
     addNode(createNodeForObject(group), myRoot);
@@ -101,7 +108,7 @@ public class SvnConfigureProxiesComponent extends MasterDetailsComponent {
       final String groupName = groupConfigurable.getEditableObject().getName();
 
       if (checkSet.contains(groupName)) {
-        listener.onError(SvnBundle.message("dialog.edit.http.proxies.settings.error.same.group.names.text", groupName), myComponent, true);
+        listener.onError(message("dialog.edit.http.proxies.settings.error.same.group.names.text", groupName), myComponent, true);
         return false;
       }
       checkSet.add(groupName);
@@ -141,7 +148,7 @@ public class SvnConfigureProxiesComponent extends MasterDetailsComponent {
                                    SvnBundle.messagePointer("action.DumbAware.SvnConfigureProxiesComponent.description.add"),
                                    IconUtil.getAddIcon()) {
         {
-            registerCustomShortcutSet(CommonShortcuts.INSERT, myTree);
+            registerCustomShortcutSet(CommonShortcuts.getInsert(), myTree);
         }
         @Override
         public void actionPerformed(@NotNull AnActionEvent event) {
@@ -151,8 +158,7 @@ public class SvnConfigureProxiesComponent extends MasterDetailsComponent {
 
     });
     result.add(new MyDeleteAction(forAll(o -> {
-      if (o instanceof MyNode) {
-        final MyNode node = (MyNode)o;
+      if (o instanceof MyNode node) {
         if (node.getConfigurable() instanceof GroupConfigurable) {
           final ProxyGroup group = ((GroupConfigurable)node.getConfigurable()).getEditableObject();
           return !group.isDefault();
@@ -161,7 +167,7 @@ public class SvnConfigureProxiesComponent extends MasterDetailsComponent {
       return false;
     })) {
       @Override
-      public void actionPerformed(@NotNull final AnActionEvent e) {
+      public void actionPerformed(final @NotNull AnActionEvent e) {
         final TreePath path = myTree.getSelectionPath();
         final MyNode node = (MyNode)path.getLastPathComponent();
         final MyNode parentNode = (MyNode) node.getParent();
@@ -179,29 +185,35 @@ public class SvnConfigureProxiesComponent extends MasterDetailsComponent {
 
     result.add(new DumbAwareAction(SvnBundle.messagePointer("action.DumbAware.SvnConfigureProxiesComponent.text.copy"),
                                    SvnBundle.messagePointer("action.DumbAware.SvnConfigureProxiesComponent.description.copy"),
-      PlatformIcons.COPY_ICON) {
-        {
-            registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_D, InputEvent.CTRL_MASK)), myTree);
-        }
-        @Override
-        public void actionPerformed(@NotNull AnActionEvent event) {
-          // apply - for update of editable object
-          try {
-            getSelectedConfigurable().apply();
-          } catch (ConfigurationException e) {
-            // suppress & wait for OK
-          }
-          final ProxyGroup selectedGroup = (ProxyGroup) getSelectedObject();
-          if (selectedGroup != null) {
-            addGroup(selectedGroup);
-          }
-        }
+                                   PlatformIcons.COPY_ICON) {
+      {
+        registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_D, InputEvent.CTRL_MASK)), myTree);
+      }
 
-        @Override
-        public void update(@NotNull AnActionEvent event) {
-            super.update(event);
-            event.getPresentation().setEnabled(getSelectedObject() != null);
+      @Override
+      public void actionPerformed(@NotNull AnActionEvent event) {
+        // apply - for update of editable object
+        try {
+          getSelectedConfigurable().apply();
         }
+        catch (ConfigurationException e) {
+          // suppress & wait for OK
+        }
+        final ProxyGroup selectedGroup = (ProxyGroup)getSelectedObject();
+        if (selectedGroup != null) {
+          addGroup(selectedGroup);
+        }
+      }
+
+      @Override
+      public @NotNull ActionUpdateThread getActionUpdateThread() {
+        return ActionUpdateThread.EDT;
+      }
+
+      @Override
+      public void update(@NotNull AnActionEvent event) {
+        event.getPresentation().setEnabled(getSelectedObject() != null);
+      }
     });
     return result;
   }
@@ -269,7 +281,7 @@ public class SvnConfigureProxiesComponent extends MasterDetailsComponent {
   }
 
   private static class GroupNodesComparator implements Comparator<MyNode> {
-    private final static GroupNodesComparator instance = new GroupNodesComparator();
+    private static final GroupNodesComparator instance = new GroupNodesComparator();
 
     private static GroupNodesComparator getInstance() {
       return instance;
@@ -300,6 +312,21 @@ public class SvnConfigureProxiesComponent extends MasterDetailsComponent {
       final MyNode node = (MyNode) myRoot.getChildAt(i);
       final GroupConfigurable groupConfigurable = (GroupConfigurable) node.getConfigurable();
       groupConfigurable.setIsValid(valid);
+    }
+  }
+
+  private static class CompositeRunnable implements Runnable {
+    private final Runnable[] myRunnables;
+
+    CompositeRunnable(Runnable @NotNull ... runnables) {
+      myRunnables = runnables;
+    }
+
+    @Override
+    public void run() {
+      for (Runnable runnable : myRunnables) {
+        runnable.run();
+      }
     }
   }
 }

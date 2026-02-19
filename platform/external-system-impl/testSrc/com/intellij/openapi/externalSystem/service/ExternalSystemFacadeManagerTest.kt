@@ -1,7 +1,7 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.service
 
-import com.intellij.openapi.components.ServiceManager
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.externalSystem.ExternalSystemManager
 import com.intellij.openapi.externalSystem.model.DataNode
 import com.intellij.openapi.externalSystem.model.ProjectKeys
@@ -11,19 +11,22 @@ import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotifica
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskType
 import com.intellij.openapi.externalSystem.service.project.ExternalSystemProjectResolver
 import com.intellij.openapi.externalSystem.task.ExternalSystemTaskManager
-import com.intellij.openapi.externalSystem.test.ExternalSystemTestUtil.TEST_EXTERNAL_SYSTEM_ID
-import com.intellij.openapi.externalSystem.test.TestExternalSystemExecutionSettings
-import com.intellij.openapi.externalSystem.test.TestExternalSystemManager
 import com.intellij.openapi.project.Project
+import com.intellij.platform.externalSystem.testFramework.ExternalSystemTestUtil.TEST_EXTERNAL_SYSTEM_ID
+import com.intellij.platform.externalSystem.testFramework.TestExternalSystemExecutionSettings
+import com.intellij.platform.externalSystem.testFramework.TestExternalSystemManager
 import com.intellij.testFramework.ExtensionTestUtil
 import com.intellij.testFramework.RunAll
 import com.intellij.testFramework.UsefulTestCase
 import com.intellij.testFramework.fixtures.IdeaProjectTestFixture
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory
 import com.intellij.util.ThrowableRunnable
+import com.intellij.util.io.URLUtil
 import junit.framework.TestCase
 import java.net.URL
 import java.net.URLClassLoader
+import java.nio.file.Files
+import java.nio.file.StandardCopyOption
 import com.intellij.openapi.externalSystem.model.Key as DataNodeKey
 
 class ExternalSystemFacadeManagerTest : UsefulTestCase() {
@@ -41,22 +44,26 @@ class ExternalSystemFacadeManagerTest : UsefulTestCase() {
 
   override fun tearDown() {
     RunAll(
-      ThrowableRunnable { testFixture.tearDown() },
+      ThrowableRunnable { ApplicationManager.getApplication().invokeAndWait { testFixture.tearDown() } },
       ThrowableRunnable { super.tearDown() }
     ).run()
+  }
+
+  override fun runInDispatchThread(): Boolean {
+    return false
   }
 
   fun `test remote resolve project info`() {
     ExtensionTestUtil.maskExtensions(ExternalSystemManager.EP_NAME, listOf(SimpleTestExternalSystemManager(project)), testRootDisposable)
 
-    val facadeManager: ExternalSystemFacadeManager = ServiceManager.getService(ExternalSystemFacadeManager::class.java)
+    val facadeManager = ExternalSystemFacadeManager.getInstance()
     TestCase.assertNotNull(facadeManager)
     val facade = facadeManager.getFacade(project, "fake/path", TEST_EXTERNAL_SYSTEM_ID)
     try {
       TestCase.assertNotNull(facade)
 
       val taskId = ExternalSystemTaskId.create(TEST_EXTERNAL_SYSTEM_ID, ExternalSystemTaskType.RESOLVE_PROJECT, project)
-      val projectDataNode = facade.resolver.resolveProjectInfo(taskId, "fake/path", false, null, null);
+      val projectDataNode = facade.resolver.resolveProjectInfo(taskId, "fake/path", false, null, null)
 
       assertNotNull(projectDataNode)
       assertEquals("ExternalName", projectDataNode!!.data.externalName)
@@ -67,8 +74,14 @@ class ExternalSystemFacadeManagerTest : UsefulTestCase() {
   }
 
   fun `test remote resolve with custom classes`() {
-    val libUrl = javaClass.classLoader.getResource("dataNodeTest/lib.jar")!!
+    var libUrl = javaClass.classLoader.getResource("dataNodeTest/lib.jar")!!
 
+    if (libUrl.protocol == URLUtil.JAR_PROTOCOL) {
+      // jar in jar
+      val extracted = Files.createTempFile("extracted", ".jar")
+      Files.copy(libUrl.openStream(), extracted, StandardCopyOption.REPLACE_EXISTING)
+      libUrl = extracted.toUri().toURL()
+    }
     val subClassLoader = URLClassLoader(arrayOf(libUrl), this::class.java.classLoader)
 
 
@@ -83,13 +96,13 @@ class ExternalSystemFacadeManagerTest : UsefulTestCase() {
                                     listOf(testExternalSystemManager, fakeExternalSystemManager),
                                     testRootDisposable)
 
-    val facadeManager: ExternalSystemFacadeManager = ServiceManager.getService(ExternalSystemFacadeManager::class.java)
+    val facadeManager = ExternalSystemFacadeManager.getInstance()
     TestCase.assertNotNull(facadeManager)
     val facade = facadeManager.getFacade(project, "fake/path", TEST_EXTERNAL_SYSTEM_ID)
     try {
       val taskId = ExternalSystemTaskId.create(TEST_EXTERNAL_SYSTEM_ID, ExternalSystemTaskType.RESOLVE_PROJECT, project)
       val settings = CustomLibUrlSettings(libUrl)
-      val projectDataNode = facade.resolver.resolveProjectInfo(taskId, "fake/path", false, settings, null);
+      val projectDataNode = facade.resolver.resolveProjectInfo(taskId, "fake/path", false, settings, null)
 
       assertNotNull(projectDataNode)
       assertEquals("ExternalName", projectDataNode!!.data.externalName)
@@ -117,26 +130,21 @@ class TestProjectResolver: ExternalSystemProjectResolver<TestExternalSystemExecu
                                   projectPath: String,
                                   isPreviewMode: Boolean,
                                   settings: TestExternalSystemExecutionSettings?,
-                                  listener: ExternalSystemTaskNotificationListener): DataNode<ProjectData>? {
+                                  listener: ExternalSystemTaskNotificationListener): DataNode<ProjectData> {
     val data = ProjectData(TEST_EXTERNAL_SYSTEM_ID, "ExternalName", "fake/path", "linked/project/path")
     return DataNode(ProjectKeys.PROJECT, data, null)
   }
 
   override fun cancelTask(taskId: ExternalSystemTaskId, listener: ExternalSystemTaskNotificationListener): Boolean {
-    listener.beforeCancel(taskId)
-    listener.onCancel(taskId)
-    return true
+    return false
   }
 }
 
 class TestTaskManager: ExternalSystemTaskManager<TestExternalSystemExecutionSettings> {
   override fun cancelTask(id: ExternalSystemTaskId, listener: ExternalSystemTaskNotificationListener): Boolean {
-    listener.beforeCancel(id)
-    listener.onCancel(id)
-    return true
+    return false
   }
 }
-
 
 class CustomClassLoadingTestExternalSystemManager(val project: Project): TestExternalSystemManager(project) {
   override fun getProjectResolverClass(): Class<out ExternalSystemProjectResolver<TestExternalSystemExecutionSettings>> {
@@ -158,7 +166,7 @@ class CustomClassLoadingTestProjectResolver: ExternalSystemProjectResolver<TestE
                                   projectPath: String,
                                   isPreviewMode: Boolean,
                                   settings: TestExternalSystemExecutionSettings?,
-                                  listener: ExternalSystemTaskNotificationListener): DataNode<ProjectData>? {
+                                  listener: ExternalSystemTaskNotificationListener): DataNode<ProjectData> {
     val libUrl = (settings as? CustomLibUrlSettings)?.libUrl
     val data = ProjectData(TEST_EXTERNAL_SYSTEM_ID, "ExternalName", "fake/path", "linked/project/path")
     val rootNode = DataNode(ProjectKeys.PROJECT, data, null)
@@ -170,9 +178,7 @@ class CustomClassLoadingTestProjectResolver: ExternalSystemProjectResolver<TestE
   }
 
   override fun cancelTask(taskId: ExternalSystemTaskId, listener: ExternalSystemTaskNotificationListener): Boolean {
-    listener.beforeCancel(taskId)
-    listener.onCancel(taskId)
-    return true
+    return false
   }
 }
 

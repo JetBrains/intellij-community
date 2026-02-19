@@ -1,0 +1,6 @@
+- name: dist.all/lib/intellij.libraries.ini4j.jar
+  modules:
+  - name: intellij.libraries.ini4j
+    libraries:
+      ini4j:
+      - name: $MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/ini4j/0/ini4j-0.jar

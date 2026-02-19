@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diff.merge;
 
 import com.intellij.openapi.Disposable;
@@ -29,36 +29,38 @@ public class MergeCallback {
   }
 
 
-  @NotNull
-  public static <T extends MergeRequest> T register(@NotNull T request, @Nullable MergeCallback callback) {
+  public static @NotNull <T extends MergeRequest> T register(@NotNull T request, @Nullable MergeCallback callback) {
     LOG.assertTrue(request.getUserData(KEY) == null);
     if (callback != null) request.putUserData(KEY, callback);
     return request;
   }
 
-  @NotNull
-  public static <T extends MergeRequest> T register(@NotNull T request, @Nullable Consumer<? super MergeResult> callback) {
-    return register(request, new MergeCallback() {
+  public static @NotNull <T extends MergeRequest> T register(@NotNull T request, @Nullable Consumer<? super MergeResult> callback) {
+    MergeCallback mergeCallback = callback == null ? null : new MergeCallback() {
       @Override
       public void applyResult(@NotNull MergeResult result) {
-        if (callback != null) callback.consume(result);
+        callback.consume(result);
       }
-    });
+    };
+    return register(request, mergeCallback);
   }
 
-  @NotNull
-  public static MergeCallback getCallback(@NotNull MergeRequest request) {
+  public static @NotNull MergeCallback getCallback(@NotNull MergeRequest request) {
     MergeCallback callback = request.getUserData(KEY);
     return callback != null ? callback : EMPTY;
   }
 
-  // original request lifecycle is ended, MergeCallback is transferred from original to target
+  /**
+   * Transfer MergeCallback from original to target.
+   * <p>
+   * After this call lifecycle of the original request is finished, and it can be discarded.
+   * Target request shall be handled like usual, via {@link MergeRequest#applyResult(MergeResult)} call.
+   */
+  @SuppressWarnings("unused") // Used in Rider
   public static void retarget(@NotNull MergeRequest original, @NotNull MergeRequest target) {
-    original.resultRetargeted();
-
     MergeCallback callback = original.getUserData(KEY);
     original.putUserData(KEY, null);
-    target.putUserData(KEY, callback);
+    register(target, callback);
   }
 
   public interface Listener extends EventListener {

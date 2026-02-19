@@ -1,12 +1,32 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.highlighting;
 
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.featureStatistics.ProductivityFeatureNames;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.*;
-import com.intellij.psi.controlFlow.*;
+import com.intellij.psi.PsiBreakStatement;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiClassType;
+import com.intellij.psi.PsiCodeBlock;
+import com.intellij.psi.PsiContinueStatement;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiLambdaExpression;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiParameter;
+import com.intellij.psi.PsiReturnStatement;
+import com.intellij.psi.PsiStatement;
+import com.intellij.psi.PsiThrowStatement;
+import com.intellij.psi.PsiTryStatement;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.controlFlow.AnalysisCanceledException;
+import com.intellij.psi.controlFlow.ControlFlow;
+import com.intellij.psi.controlFlow.ControlFlowFactory;
+import com.intellij.psi.controlFlow.ControlFlowUtil;
+import com.intellij.psi.controlFlow.LocalsOrMyInstanceFieldsControlFlowPolicy;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.Consumer;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
@@ -18,7 +38,7 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 
-public final class HighlightExitPointsHandler extends HighlightUsagesHandlerBase<PsiElement> {
+public final class HighlightExitPointsHandler extends HighlightUsagesHandlerBase<PsiElement> implements DumbAware {
   private final PsiElement myTarget;
 
   public HighlightExitPointsHandler(final Editor editor, final PsiFile file, final PsiElement target) {
@@ -62,8 +82,7 @@ public final class HighlightExitPointsHandler extends HighlightUsagesHandlerBase
     }
   }
 
-  @Nullable
-  private static PsiElement getExitTarget(PsiStatement exitStatement) {
+  private static @Nullable PsiElement getExitTarget(PsiStatement exitStatement) {
     if (exitStatement instanceof PsiReturnStatement) {
       return PsiTreeUtil.getParentOfType(exitStatement, PsiMethod.class);
     }
@@ -81,8 +100,7 @@ public final class HighlightExitPointsHandler extends HighlightUsagesHandlerBase
 
       PsiElement target = exitStatement;
       while (!(target instanceof PsiMethod || target == null || target instanceof PsiClass || target instanceof PsiFile)) {
-        if (target instanceof PsiTryStatement) {
-          final PsiTryStatement tryStatement = (PsiTryStatement)target;
+        if (target instanceof PsiTryStatement tryStatement) {
           final PsiParameter[] params = tryStatement.getCatchBlockParameters();
           for (PsiParameter param : params) {
             if (param.getType().isAssignableFrom(exceptionType)) {

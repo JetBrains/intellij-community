@@ -1,35 +1,43 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.templates.github;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ObjectUtils;
-import gnu.trove.TIntArrayList;
+import it.unimi.dsi.fastutil.ints.IntArrayList;
+import it.unimi.dsi.fastutil.ints.IntList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author Sergey Simonchik
- */
-public class GithubTagInfo {
-
+public final class GithubTagInfo {
   private final String myName;
   private final String myZipballUrl;
+  @JsonIgnore
   private Version myVersion;
+  @JsonIgnore
   private boolean myRecentTag = false;
+
 
   public GithubTagInfo(@NotNull String name, @NotNull String zipballUrl) {
     myName = name;
     myZipballUrl = zipballUrl;
   }
 
-  @NotNull
-  public @NlsSafe String getName() {
+  @JsonCreator
+  public static GithubTagInfo createInstance(
+    @JsonProperty("name") String name,
+    @JsonProperty("zipball_url") String zipballUrl) {
+    return new GithubTagInfo(name, zipballUrl);
+  }
+
+  public @NotNull @NlsSafe String getName() {
     return myName;
   }
 
-  @NotNull
-  public String getZipballUrl() {
+  public @NotNull String getZipballUrl() {
     return myZipballUrl;
   }
 
@@ -41,23 +49,21 @@ public class GithubTagInfo {
     return myRecentTag;
   }
 
-  @NotNull
-  public Version getVersion() {
+  public @NotNull Version getVersion() {
     if (myVersion == null) {
       myVersion = createVersionComponents();
     }
     return myVersion;
   }
 
-  @NotNull
-  private Version createVersionComponents() {
+  private @NotNull Version createVersionComponents() {
     String tagName = myName;
-    if (tagName.startsWith("v.")) {
+    if (tagName.startsWith("v.")) { //NON-NLS
       tagName = tagName.substring(2);
     } else if (StringUtil.startsWithChar(tagName, 'v')) {
       tagName = tagName.substring(1);
     }
-    TIntArrayList intComponents = new TIntArrayList();
+    IntList intComponents=new IntArrayList();
     int startInd = 0;
     while (true) {
       int ind = tagName.indexOf('.', startInd);
@@ -119,15 +125,15 @@ public class GithubTagInfo {
     return result;
   }
 
-  public static class Version implements Comparable<Version> {
-    private final TIntArrayList myIntComponents = new TIntArrayList();
+  public static final class Version implements Comparable<Version> {
+    private final IntList myIntComponents;
     private final String myLabel;
     private final int myLabelVersion;
 
-    public Version(@NotNull TIntArrayList intComponents,
+    public Version(@NotNull IntList intComponents,
                    @NotNull String label,
                    int labelVersion) {
-      myIntComponents.add(intComponents.toNativeArray());
+      myIntComponents = new IntArrayList(intComponents);
       myLabel = label;
       myLabelVersion = labelVersion;
     }
@@ -136,8 +142,8 @@ public class GithubTagInfo {
     public int compareTo(Version other) {
       int minSize = Math.min(myIntComponents.size(), other.myIntComponents.size());
       for (int i = 0; i < minSize; i++) {
-        int thisN = myIntComponents.get(i);
-        int otherN = other.myIntComponents.get(i);
+        int thisN = myIntComponents.getInt(i);
+        int otherN = other.myIntComponents.getInt(i);
         if (thisN != otherN) {
           return thisN - otherN;
         }
@@ -159,8 +165,7 @@ public class GithubTagInfo {
     }
   }
 
-  @Nullable
-  public static GithubTagInfo tryCast(@Nullable Object o) {
+  public static @Nullable GithubTagInfo tryCast(@Nullable Object o) {
     return ObjectUtils.tryCast(o, GithubTagInfo.class);
   }
 

@@ -1,0 +1,28 @@
+{
+  "name": "vscode-bicep-param",
+  "version": null,
+  "description": null,
+  "license": null,
+  "contributes": {
+    "languages": [
+      {
+        "id": "bicep-params",
+        "aliases": [
+          "Bicep Parameters",
+          "Bicep Params"
+        ],
+        "extensions": [
+          ".bicepparam"
+        ],
+        "configuration": "../bicep/syntaxes/language-configuration.json"
+      }
+    ],
+    "grammars": [
+      {
+        "language": "bicep-params",
+        "scopeName": "source.bicep",
+        "path": "../bicep/syntaxes/bicep.tmlanguage"
+      }
+    ]
+  }
+}

@@ -1,19 +1,19 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("ReplacePutWithAssignment")
+
 package com.intellij.configurationStore
 
+import com.intellij.openapi.components.ComponentManagerEx
 import com.intellij.openapi.components.StoragePathMacros
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.serviceContainer.processAllImplementationClasses
 import com.intellij.util.LineSeparator
 import com.intellij.util.SmartList
-import com.intellij.util.io.exists
 import com.intellij.util.io.outputStream
-import com.intellij.util.isEmpty
-import com.intellij.util.write
 import org.jdom.Element
 import org.jetbrains.jps.model.serialization.JpsProjectLoader
+import java.nio.file.Files
 import java.nio.file.Path
 import kotlin.collections.component1
 import kotlin.collections.component2
@@ -27,7 +27,7 @@ internal fun normalizeDefaultProjectElement(defaultProject: Project, element: El
       "InspectionProjectProfileManager" -> {
         iterator.remove()
         val schemeDir = projectConfigDir.resolve("inspectionProfiles")
-        convertProfiles(component.getChildren("profile").iterator(), componentName, schemeDir)
+        convertProfiles(component.getChildren("profile").iterator(), componentName, schemeDir, ::getProfileName)
         component.removeChild("version")
         writeProfileSettings(schemeDir, componentName, component)
       }
@@ -35,8 +35,20 @@ internal fun normalizeDefaultProjectElement(defaultProject: Project, element: El
       "CopyrightManager" -> {
         iterator.remove()
         val schemeDir = projectConfigDir.resolve("copyright")
-        convertProfiles(component.getChildren("copyright").iterator(), componentName, schemeDir)
+        convertProfiles(component.getChildren("copyright").iterator(), componentName, schemeDir, ::getProfileName)
         writeProfileSettings(schemeDir, componentName, component)
+      }
+
+      "libraryTable" -> {
+        iterator.remove()
+        val libraryDir = projectConfigDir.resolve("libraries")
+        convertProfiles(
+          profileIterator = component.getChildren("library").iterator(),
+          componentName = componentName,
+          schemeDir = libraryDir,
+        ) { library ->
+          library.getAttributeValue("name")
+        }
       }
 
       JpsProjectLoader.MODULE_MANAGER_COMPONENT -> {
@@ -48,25 +60,27 @@ internal fun normalizeDefaultProjectElement(defaultProject: Project, element: El
   moveComponentConfiguration(defaultProject, element, { it }) { projectConfigDir.resolve(it) }
 }
 
+private fun getProfileName(profile: Element): String? =
+  profile.getChildren("option").find { it.getAttributeValue("name") == "myName" }?.getAttributeValue("value")
+
 private fun writeProfileSettings(schemeDir: Path, componentName: String, component: Element) {
   component.removeAttribute("name")
-  if (component.isEmpty()) {
+  if (JDOMUtil.isEmpty(component)) {
     return
   }
 
   val wrapper = Element("component").setAttribute("name", componentName)
   component.name = "settings"
   wrapper.addContent(component)
-
-  val file = schemeDir.resolve("profiles_settings.xml")
-  file.outputStream().use {
-    wrapper.write(it)
-  }
+  JDOMUtil.write(wrapper, schemeDir.resolve("profiles_settings.xml"))
 }
 
-private fun convertProfiles(profileIterator: MutableIterator<Element>, componentName: String, schemeDir: Path) {
+private fun convertProfiles(profileIterator: MutableIterator<Element>,
+                            componentName: String,
+                            schemeDir: Path,
+                            nameCallback: (Element) -> String?) {
   for (profile in profileIterator) {
-    val schemeName = profile.getChildren("option").find { it.getAttributeValue("name") == "myName" }?.getAttributeValue("value") ?: continue
+    val schemeName = nameCallback(profile) ?: continue
 
     profileIterator.remove()
     val wrapper = Element("component").setAttribute("name", componentName)
@@ -93,10 +107,9 @@ internal fun moveComponentConfiguration(defaultProject: Project,
   fun processComponents(aClass: Class<*>) {
     val stateAnnotation = getStateSpec(aClass) ?: return
 
-    @Suppress("MoveVariableDeclarationIntoWhen")
     val storagePath = when {
       stateAnnotation.name.isEmpty() -> "misc.xml"
-      else -> (stateAnnotation.storages.sortByDeprecated().firstOrNull() ?: return).path
+      else -> (sortStoragesByDeprecated(stateAnnotation.storages.asList()).firstOrNull() ?: return).path
     }
 
     when (storagePath) {
@@ -109,12 +122,11 @@ internal fun moveComponentConfiguration(defaultProject: Project,
     }
   }
 
-  processAllImplementationClasses(defaultProject.picoContainer) { aClass, _ ->
-    processComponents(aClass)
-    true
+  (defaultProject as ComponentManagerEx).processAllHolders { _, componentClass, _ ->
+    processComponents(componentClass)
   }
 
-  // fileResolver may return the same file for different storage names (e.g. for IPR project)
+  // fileResolver may return the same file for different storage names (e.g., for .ipr)
   val storagePathToComponentStates = HashMap<Path, MutableList<Element>>()
   val iterator = componentElements.iterator()
   cI@ for (componentElement in iterator) {
@@ -147,7 +159,7 @@ private fun writeConfigFile(elements: List<Element>, file: Path) {
   }
 
   var wrapper = Element("project").setAttribute("version", "4")
-  if (file.exists()) {
+  if (Files.exists(file)) {
     try {
       wrapper = JDOMUtil.load(file)
     }
@@ -164,6 +176,6 @@ private fun writeConfigFile(elements: List<Element>, file: Path) {
   file.outputStream().use {
     it.write(XML_PROLOG)
     it.write(LineSeparator.LF.separatorBytes)
-    wrapper.write(it)
+    JDOMUtil.write(wrapper, it)
   }
 }

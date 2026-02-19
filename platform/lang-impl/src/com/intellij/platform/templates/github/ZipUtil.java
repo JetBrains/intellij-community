@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.templates.github;
 
 import com.intellij.lang.LangBundle;
@@ -30,9 +30,6 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 import java.util.zip.ZipInputStream;
 
-/**
- * @author Sergey Simonchik
- */
 public final class ZipUtil {
   private static final Logger LOG = Logger.getInstance(ZipUtil.class);
 
@@ -52,9 +49,9 @@ public final class ZipUtil {
   public static void unzipWithProgressSynchronously(
     @Nullable Project project,
     @NotNull @NlsContexts.ProgressTitle String progressTitle,
-    @NotNull final File zipArchive,
-    @NotNull final File extractToDir,
-    @Nullable final NullableFunction<? super String, String> pathConvertor,
+    final @NotNull File zipArchive,
+    final @NotNull File extractToDir,
+    final @Nullable NullableFunction<? super String, String> pathConvertor,
     final boolean unwrapSingleTopLevelFolder) throws GeneratorException
   {
     final Outcome<Boolean> outcome = DownloadUtil.provideDataWithProgressSynchronously(
@@ -105,19 +102,6 @@ public final class ZipUtil {
     if (unwrapSingleTopLevelFolder) {
       doUnwrapSingleTopLevelFolder(unzipToDir, targetDir.toPath());
     }
-  }
-
-  /**
-   * @deprecated Use {@link #unzip(ProgressIndicator, Path, ZipInputStream, NullableFunction, ContentProcessor, boolean)}
-   */
-  @Deprecated
-  public static void unzip(@Nullable ProgressIndicator progress,
-                           @NotNull File targetDir,
-                           @NotNull ZipInputStream stream,
-                           @Nullable NullableFunction<? super String, String> pathConvertor,
-                           @Nullable ContentProcessor contentProcessor,
-                           boolean unwrapSingleTopLevelFolder) throws IOException {
-    unzip(progress, targetDir.toPath(), stream, pathConvertor, contentProcessor, unwrapSingleTopLevelFolder);
   }
 
   public static void unzip(@Nullable ProgressIndicator progress,
@@ -174,8 +158,8 @@ public final class ZipUtil {
   }
 
   private static void unzipEntryToDir(@Nullable ProgressIndicator progress,
-                                      @NotNull final ZipEntry zipEntry,
-                                      @NotNull final InputStream entryContentStream,
+                                      final @NotNull ZipEntry zipEntry,
+                                      final @NotNull InputStream entryContentStream,
                                       @NotNull Path extractToDir,
                                       @Nullable NullableFunction<? super String, String> pathConvertor,
                                       @Nullable ContentProcessor contentProcessor) throws IOException {
@@ -190,11 +174,13 @@ public final class ZipUtil {
     Path child = Decompressor.entryFile(extractToDir, relativeExtractPath);
     Path dir = zipEntry.isDirectory() ? child : child.getParent();
     Files.createDirectories(dir);
+    LOG.assertTrue(dir.toFile().exists());
+    LOG.assertTrue(dir.toFile().listFiles() != null);
     if (zipEntry.isDirectory()) {
       return;
     }
     if (progress != null) {
-      progress.setText(LangBundle.message("progress.text.extracting.path", relativeExtractPath));
+      progress.setText2(LangBundle.message("progress.text.extracting.path", relativeExtractPath));
     }
     if (contentProcessor == null) {
       Files.copy(entryContentStream, child, StandardCopyOption.REPLACE_EXISTING);
@@ -208,8 +194,7 @@ public final class ZipUtil {
     LOG.info("Extract: " + relativeExtractPath);
   }
 
-  @NotNull
-  private static String createRelativeExtractPath(@NotNull ZipEntry zipEntry) {
+  private static @NotNull String createRelativeExtractPath(@NotNull ZipEntry zipEntry) {
     String name = StringUtil.trimStart(zipEntry.getName(), "/");
     return StringUtil.trimEnd(name, "/");
   }

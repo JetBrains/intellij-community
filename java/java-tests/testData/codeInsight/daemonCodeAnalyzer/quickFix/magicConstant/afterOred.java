@@ -1,4 +1,4 @@
-// "Replace with 'D.FontType.BOLD | D.FontType.ITALIC | D.FontType.WEIRD'" "true"
+// "Replace with 'D.FontType.BOLD | D.FontType.ITALIC | D.FontType.WEIRD'" "true-preview"
 import org.intellij.lang.annotations.MagicConstant;
 
 class D {

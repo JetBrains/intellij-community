@@ -4,7 +4,7 @@ import java.util.*;
 
 class Test {
   public boolean testAnyMatch(Map<String, Integer> map) {
-    map.entrySet().stream().m<caret>ap(Map.Entry::getKey).forEach(System.out::println);
+    map.entrySet().stream().m<caret>ap(Map.Entry::getKey).filter(x -> !x.isEmpty()).forEach(System.out::println);
     map.entrySet().stream().map(Map.Entry::getValue).forEach(System.out::println);
     map/*1*/.entrySet()/*2*/.stream()./*3*/map(e -> /*4*/e.getKey())/*5*/.forEach(System.out::println);
     map.entrySet().stream().map(e -> {

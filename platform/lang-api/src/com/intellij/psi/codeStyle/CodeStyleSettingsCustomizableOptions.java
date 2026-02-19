@@ -1,12 +1,20 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.codeStyle;
 
+import com.intellij.CodeStyleBundle;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.util.NlsContexts.Label;
 import com.intellij.util.LocaleSensitiveApplicationCacheService;
 import org.jetbrains.annotations.NotNull;
 
 public final class CodeStyleSettingsCustomizableOptions {
+
+  /**
+   * @deprecated this instance does not support localization
+   */
+  @Deprecated(forRemoval = true)
+  static final CodeStyleSettingsCustomizableOptions ourStaticInstance = new CodeStyleSettingsCustomizableOptions();
+
   private CodeStyleSettingsCustomizableOptions() {
   }
 
@@ -51,16 +59,16 @@ public final class CodeStyleSettingsCustomizableOptions {
   public final @Label String WRAPPING_ASSERT_STATEMENT = ApplicationBundle.message("wrapping.assert.statement");
 
   public final @Label String[] WRAP_OPTIONS = {
-    ApplicationBundle.message("wrapping.do.not.wrap"),
-    ApplicationBundle.message("wrapping.wrap.if.long"),
-    ApplicationBundle.message("wrapping.chop.down.if.long"),
-    ApplicationBundle.message("wrapping.wrap.always")
+    CodeStyleBundle.message("wrapping.do.not.wrap"),
+    CodeStyleBundle.message("wrapping.wrap.if.long"),
+    CodeStyleBundle.message("wrapping.chop.down.if.long"),
+    CodeStyleBundle.message("wrapping.wrap.always")
   };
 
   public final @Label String[] WRAP_OPTIONS_FOR_SINGLETON = {
-    ApplicationBundle.message("wrapping.do.not.wrap"),
-    ApplicationBundle.message("wrapping.wrap.if.long"),
-    ApplicationBundle.message("wrapping.wrap.always")
+    CodeStyleBundle.message("wrapping.do.not.wrap"),
+    CodeStyleBundle.message("wrapping.wrap.if.long"),
+    CodeStyleBundle.message("wrapping.wrap.always")
   };
 
   public final @Label String[] BRACE_OPTIONS = {

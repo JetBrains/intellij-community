@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.net.ssl;
 
 import com.intellij.ide.IdeBundle;
@@ -7,14 +7,20 @@ import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.HtmlBuilder;
 import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.ui.*;
+import com.intellij.ui.IdeBorderFactory;
+import com.intellij.ui.JBColor;
+import com.intellij.ui.SimpleColoredComponent;
+import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.ui.TitledSeparator;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.util.ui.FormBuilder;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JComponent;
+import javax.swing.JPanel;
+import javax.swing.JTextPane;
+import java.awt.BorderLayout;
 import java.security.cert.X509Certificate;
 import java.text.DateFormat;
 import java.util.Map;
@@ -58,9 +64,7 @@ public class CertificateInfoPanel extends JPanel {
     add(builder.getPanel(), BorderLayout.NORTH);
   }
 
-  @NotNull
-  @NlsSafe
-  public static String formatHex(@NotNull String hex, boolean split) {
+  public static @NotNull @NlsSafe String formatHex(@NotNull String hex, boolean split) {
     if (NOT_AVAILABLE.equals(hex)) return hex;
 
     StringBuilder builder = new StringBuilder();
@@ -72,7 +76,7 @@ public class CertificateInfoPanel extends JPanel {
       builder.append(hex, i, i + 2);
       builder.append(' ');
     }
-    if (hex.length() > 0) {
+    if (!hex.isEmpty()) {
       builder.deleteCharAt(builder.length() - 1);
     }
     return StringUtil.toUpperCase(builder.toString());

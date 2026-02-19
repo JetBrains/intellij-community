@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.reference;
 
 import com.intellij.psi.PsiParameter;
@@ -12,6 +12,8 @@ import org.jetbrains.uast.UParameter;
  * @author anna
  */
 public interface RefParameter extends RefJavaElement {
+
+  RefParameter[] EMPTY_ARRAY = new RefParameter[0];
   Object VALUE_IS_NOT_CONST = ObjectUtils.sentinel("VALUE_IS_NOT_CONST");
   Object VALUE_UNDEFINED = ObjectUtils.sentinel("VALUE_UNDEFINED");
 
@@ -37,11 +39,10 @@ public interface RefParameter extends RefJavaElement {
   int getIndex();
 
   /**
-   * @see RefParameter#getActualConstValue()
+   * @deprecated Use {@link RefParameter#getActualConstValue()) instead
    */
-  @Deprecated
-  @Nullable
-  default String getActualValueIfSame() {
+  @Deprecated(forRemoval = true)
+  default @Nullable String getActualValueIfSame() {
     throw new UnsupportedOperationException();
   }
 
@@ -53,8 +54,7 @@ public interface RefParameter extends RefJavaElement {
    *
    * @return the parameter value or null if it's different or impossible to determine.
    */
-  @Nullable
-  default Object getActualConstValue() {
+  default @Nullable Object getActualConstValue() {
     //noinspection deprecation
     return getActualValueIfSame();
   }

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.util.duplicates;
 
 import com.intellij.codeInsight.AnnotationUtil;
@@ -9,24 +9,85 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.*;
-import com.intellij.psi.controlFlow.*;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.JavaRecursiveElementWalkingVisitor;
+import com.intellij.psi.JavaTokenType;
+import com.intellij.psi.PsiAnonymousClass;
+import com.intellij.psi.PsiAssignmentExpression;
+import com.intellij.psi.PsiBlockStatement;
+import com.intellij.psi.PsiBreakStatement;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiClassObjectAccessExpression;
+import com.intellij.psi.PsiClassType;
+import com.intellij.psi.PsiCodeBlock;
+import com.intellij.psi.PsiComment;
+import com.intellij.psi.PsiContinueStatement;
+import com.intellij.psi.PsiDeclarationStatement;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiEllipsisType;
+import com.intellij.psi.PsiEmptyStatement;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiExpressionList;
+import com.intellij.psi.PsiExpressionStatement;
+import com.intellij.psi.PsiInstanceOfExpression;
+import com.intellij.psi.PsiJavaCodeReferenceElement;
+import com.intellij.psi.PsiLambdaExpression;
+import com.intellij.psi.PsiLocalVariable;
+import com.intellij.psi.PsiMember;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiMethodCallExpression;
+import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiModifierList;
+import com.intellij.psi.PsiNewExpression;
+import com.intellij.psi.PsiParameter;
+import com.intellij.psi.PsiParenthesizedExpression;
+import com.intellij.psi.PsiPolyadicExpression;
+import com.intellij.psi.PsiPrimitiveType;
+import com.intellij.psi.PsiReferenceExpression;
+import com.intellij.psi.PsiResolveHelper;
+import com.intellij.psi.PsiReturnStatement;
+import com.intellij.psi.PsiStatement;
+import com.intellij.psi.PsiSubstitutor;
+import com.intellij.psi.PsiSuperExpression;
+import com.intellij.psi.PsiThisExpression;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypeCastExpression;
+import com.intellij.psi.PsiTypeElement;
+import com.intellij.psi.PsiTypeParameter;
+import com.intellij.psi.PsiUnaryExpression;
+import com.intellij.psi.PsiVariable;
+import com.intellij.psi.PsiWhiteSpace;
+import com.intellij.psi.controlFlow.AnalysisCanceledException;
+import com.intellij.psi.controlFlow.ControlFlow;
+import com.intellij.psi.controlFlow.ControlFlowFactory;
+import com.intellij.psi.controlFlow.ControlFlowUtil;
+import com.intellij.psi.controlFlow.LocalsControlFlowPolicy;
 import com.intellij.psi.impl.source.PsiImmediateClassType;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.util.*;
+import com.intellij.psi.util.InheritanceUtil;
+import com.intellij.psi.util.MethodSignatureUtil;
+import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.PsiUtilCore;
+import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.refactoring.extractMethod.InputVariables;
 import com.intellij.refactoring.util.RefactoringChangeUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
+import it.unimi.dsi.fastutil.ints.IntList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.Objects;
+import java.util.Set;
 
-/**
- * @author dsl
- */
 public final class DuplicatesFinder {
   private static final Logger LOG = Logger.getInstance(DuplicatesFinder.class);
   public static final Key<Parameter> PARAMETER = Key.create("PARAMETER");
@@ -35,8 +96,8 @@ public final class DuplicatesFinder {
   private final List<? extends PsiVariable> myOutputParameters;
   private final List<PsiElement> myPatternAsList;
   private boolean myMultipleExitPoints;
-  @Nullable private final ReturnValue myReturnValue;
-  @Nullable private final Set<? extends TextRange> myTextRanges;
+  private final @Nullable ReturnValue myReturnValue;
+  private final @Unmodifiable @Nullable Set<? extends TextRange> myTextRanges;
   private final MatchType myMatchType;
   private final Set<? extends PsiVariable> myEffectivelyLocal;
   private ComplexityHolder myPatternComplexityHolder;
@@ -48,7 +109,7 @@ public final class DuplicatesFinder {
                           @NotNull List<? extends PsiVariable> outputParameters,
                           @NotNull MatchType matchType,
                           @Nullable Set<? extends PsiVariable> effectivelyLocal,
-                          @Nullable Set<? extends TextRange> textRanges) {
+                          @Nullable @Unmodifiable Set<? extends TextRange> textRanges) {
     myReturnValue = returnValue;
     LOG.assertTrue(pattern.length > 0);
     myPattern = pattern;
@@ -76,7 +137,7 @@ public final class DuplicatesFinder {
       }
       while (endOffset < 0 && j >= 0);
 
-      IntArrayList exitPoints = new IntArrayList();
+      IntList exitPoints = new IntArrayList();
       final Collection<PsiStatement> exitStatements = ControlFlowUtil
           .findExitPointsAndStatements(controlFlow, startOffset, endOffset, exitPoints, ControlFlowUtil.DEFAULT_EXIT_STATEMENTS_CLASSES);
       myMultipleExitPoints = exitPoints.size() > 1;
@@ -113,8 +174,7 @@ public final class DuplicatesFinder {
     return myPattern;
   }
 
-  @Nullable
-  public ReturnValue getReturnValue() {
+  public @Nullable ReturnValue getReturnValue() {
     return myReturnValue;
   }
 
@@ -126,8 +186,7 @@ public final class DuplicatesFinder {
     return result;
   }
 
-  @Nullable
-  public Match isDuplicate(@NotNull PsiElement element, boolean ignoreParameterTypesAndPostVariableUsages) {
+  public @Nullable Match isDuplicate(@NotNull PsiElement element, boolean ignoreParameterTypesAndPostVariableUsages) {
     annotatePattern();
     Match match = isDuplicateFragment(element, ignoreParameterTypesAndPostVariableUsages);
     deannotatePattern();
@@ -137,10 +196,9 @@ public final class DuplicatesFinder {
   private void annotatePattern() {
     JavaRecursiveElementWalkingVisitor visitor = new JavaRecursiveElementWalkingVisitor() {
       @Override
-      public void visitReferenceElement(PsiJavaCodeReferenceElement reference) {
+      public void visitReferenceElement(@NotNull PsiJavaCodeReferenceElement reference) {
         final PsiElement element = reference.resolve();
-        if (element instanceof PsiVariable) {
-          final PsiVariable variable = (PsiVariable)element;
+        if (element instanceof PsiVariable variable) {
           PsiType type = variable.getType();
           myParameters.annotateWithParameter(reference);
           if (myOutputParameters.contains(element)) {
@@ -161,7 +219,7 @@ public final class DuplicatesFinder {
   private void deannotatePattern() {
     JavaRecursiveElementWalkingVisitor visitor = new JavaRecursiveElementWalkingVisitor() {
       @Override
-      public void visitExpression(PsiExpression expression) {
+      public void visitExpression(@NotNull PsiExpression expression) {
         super.visitExpression(expression);
         if (expression.getUserData(PARAMETER) != null) {
           expression.putUserData(PARAMETER, null);
@@ -169,7 +227,7 @@ public final class DuplicatesFinder {
       }
 
       @Override
-      public void visitReferenceElement(PsiJavaCodeReferenceElement reference) {
+      public void visitReferenceElement(@NotNull PsiJavaCodeReferenceElement reference) {
         if (reference.getUserData(PARAMETER) != null) {
           reference.putUserData(PARAMETER, null);
         }
@@ -194,8 +252,7 @@ public final class DuplicatesFinder {
   }
 
 
-  @Nullable
-  private Match isDuplicateFragment(@NotNull PsiElement candidate, boolean ignoreParameterTypesAndPostVariableUsages) {
+  private @Nullable Match isDuplicateFragment(@NotNull PsiElement candidate, boolean ignoreParameterTypesAndPostVariableUsages) {
     if (isSelf(candidate)) return null;
     PsiElement sibling = candidate;
     ArrayList<PsiElement> candidates = new ArrayList<>();
@@ -207,8 +264,7 @@ public final class DuplicatesFinder {
     }
     LOG.assertTrue(myPattern.length == candidates.size());
     if (myPattern.length == 1 && myPattern[0] instanceof PsiExpression) {
-      if (candidates.get(0) instanceof PsiExpression) {
-        final PsiExpression candidateExpression = (PsiExpression)candidates.get(0);
+      if (candidates.get(0) instanceof PsiExpression candidateExpression) {
         if (PsiUtil.isAccessedForWriting(candidateExpression)) return null;
         final PsiType patternType = ((PsiExpression)myPattern[0]).getType();
         final PsiType candidateType = candidateExpression.getType();
@@ -226,7 +282,7 @@ public final class DuplicatesFinder {
       }
 
     }
-    final Match match = new Match(candidates.get(0), candidates.get(candidates.size() - 1), ignoreParameterTypesAndPostVariableUsages);
+    final Match match = new Match(candidates.getFirst(), candidates.getLast(), ignoreParameterTypesAndPostVariableUsages);
     for (int i = 0; i < myPattern.length; i++) {
       if (!matchPattern(myPattern[i], candidates.get(i), candidates, match)) return null;
     }
@@ -263,7 +319,7 @@ public final class DuplicatesFinder {
         endOffset = controlFlow.getEndOffset(candidates.get(j--));
       } while(endOffset < 0 && j >= 0);
 
-      final IntArrayList exitPoints = new IntArrayList();
+      final IntList exitPoints = new IntArrayList();
       ControlFlowUtil.findExitPointsAndStatements(controlFlow, startOffset, endOffset, exitPoints, ControlFlowUtil.DEFAULT_EXIT_STATEMENTS_CLASSES);
       final PsiVariable[] outVariables = ControlFlowUtil.getOutputVariables(controlFlow, startOffset, endOffset, exitPoints.toIntArray());
 
@@ -306,10 +362,9 @@ public final class DuplicatesFinder {
       if (type1 instanceof PsiImmediateClassType && type2 instanceof PsiImmediateClassType) {
         final PsiClass psiClass1 = ((PsiImmediateClassType)type1).resolve();
         final PsiClass psiClass2 = ((PsiImmediateClassType)type2).resolve();
-        if (!(psiClass1 instanceof PsiAnonymousClass &&
-              psiClass2 instanceof PsiAnonymousClass &&
-              psiClass1.getManager().areElementsEquivalent(((PsiAnonymousClass)psiClass1).getBaseClassType().resolve(),
-                                                           ((PsiAnonymousClass)psiClass2).getBaseClassType().resolve()))) {
+        if (!(psiClass1 instanceof PsiAnonymousClass anonymousClass1) ||
+            !(psiClass2 instanceof PsiAnonymousClass anonymousClass2) ||
+            !anonymousClass1.getBaseClassType().equals(anonymousClass2.getBaseClassType())) {
           return false;
         }
       }
@@ -427,8 +482,7 @@ public final class DuplicatesFinder {
     return true;
   }
 
-  @Nullable
-  private Boolean matchParameter(@NotNull PsiElement pattern, @NotNull PsiElement candidate, @NotNull Match match) {
+  private @Nullable Boolean matchParameter(@NotNull PsiElement pattern, @NotNull PsiElement candidate, @NotNull Match match) {
     final Parameter parameter = pattern.getUserData(PARAMETER);
     if (parameter == null || myMatchType == MatchType.EXACT && parameter.isFolded()) {
       return null;
@@ -442,11 +496,10 @@ public final class DuplicatesFinder {
     return true;
   }
 
-  @Nullable
-  private Boolean matchVarargs(@NotNull PsiExpressionList pattern,
-                               @NotNull PsiExpressionList candidate,
-                               @NotNull List<PsiElement> candidates,
-                               @NotNull Match match) {
+  private @Nullable Boolean matchVarargs(@NotNull PsiExpressionList pattern,
+                                         @NotNull PsiExpressionList candidate,
+                                         @NotNull List<PsiElement> candidates,
+                                         @NotNull Match match) {
     final PsiExpression[] expressions = pattern.getExpressions();
     final PsiExpression[] childExpressions = candidate.getExpressions();
     if (expressions.length > 0 && expressions[expressions.length - 1] instanceof PsiReferenceExpression) {
@@ -490,11 +543,10 @@ public final class DuplicatesFinder {
     return false;
   }
 
-  @Nullable
-  private Boolean matchReferenceElement(@NotNull PsiJavaCodeReferenceElement pattern,
-                                        @NotNull PsiJavaCodeReferenceElement candidate,
-                                        @NotNull List<? extends PsiElement> candidates,
-                                        @NotNull Match match) {
+  private @Nullable Boolean matchReferenceElement(@NotNull PsiJavaCodeReferenceElement pattern,
+                                                  @NotNull PsiJavaCodeReferenceElement candidate,
+                                                  @NotNull List<? extends PsiElement> candidates,
+                                                  @NotNull Match match) {
     final PsiElement resolveResult1 = pattern.resolve();
     final PsiElement resolveResult2 = candidate.resolve();
     if (resolveResult1 instanceof PsiClass && resolveResult2 instanceof PsiClass) return true;
@@ -557,11 +609,9 @@ public final class DuplicatesFinder {
     final PsiMethod constructor2 = candidate.resolveConstructor();
     if (constructor1 != null && constructor2 != null) {
       if (!pattern.getManager().areElementsEquivalent(constructor1, constructor2)) return false;
+      if (pattern.getAnonymousClass() == null && candidate.getAnonymousClass() == null) return true;
     }
-    else {
-      if (!canTypesBeEquivalent(type1, type2)) return false;
-    }
-    return true;
+    return canTypesBeEquivalent(type1, type2);
   }
 
   private static boolean matchObjectAccess(@NotNull PsiClassObjectAccessExpression pattern,
@@ -588,10 +638,9 @@ public final class DuplicatesFinder {
     return true;
   }
 
-  @Nullable
-  private static Boolean matchReferenceExpression(@NotNull PsiReferenceExpression pattern,
-                                                  @NotNull PsiReferenceExpression candidate,
-                                                  @NotNull Match match) {
+  private static @Nullable Boolean matchReferenceExpression(@NotNull PsiReferenceExpression pattern,
+                                                            @NotNull PsiReferenceExpression candidate,
+                                                            @NotNull Match match) {
     final PsiExpression patternQualifier = pattern.getQualifierExpression();
     final PsiExpression candidateQualifier = candidate.getQualifierExpression();
     if (patternQualifier == null) {
@@ -858,8 +907,7 @@ public final class DuplicatesFinder {
     else if (candidate instanceof PsiDeclarationStatement) {
       final PsiElement[] declaredElements = ((PsiDeclarationStatement)candidate).getDeclaredElements();
       if (declaredElements.length != 1) return false;
-      if (!(declaredElements[0] instanceof PsiVariable)) return false;
-      final PsiVariable variable = (PsiVariable)declaredElements[0];
+      if (!(declaredElements[0] instanceof PsiVariable variable)) return false;
       if (!matchPattern(patternReturnStatement.getReturnValue(), variable.getInitializer(), candidates, match)) return false;
       return match.registerReturnValue(new VariableReturnValue(variable));
     }
@@ -882,9 +930,7 @@ public final class DuplicatesFinder {
 
   private static boolean equivalentResolve(final PsiElement resolveResult1, final PsiElement resolveResult2, PsiElement qualifier2) {
     if (Comparing.equal(resolveResult1, resolveResult2)) return true;
-    if (resolveResult1 instanceof PsiMethod && resolveResult2 instanceof PsiMethod) {
-      final PsiMethod method1 = (PsiMethod)resolveResult1;
-      final PsiMethod method2 = (PsiMethod)resolveResult2;
+    if (resolveResult1 instanceof PsiMethod method1 && resolveResult2 instanceof PsiMethod method2) {
       if (method1.hasModifierProperty(PsiModifier.STATIC)) return false; // static methods don't inherit
       if (ArrayUtil.find(method1.findSuperMethods(), method2) >= 0) return true;
       if (ArrayUtil.find(method2.findSuperMethods(), method1) >= 0) return true;
@@ -978,6 +1024,7 @@ public final class DuplicatesFinder {
       return myFolded;
     }
 
+    @Override
     public String toString() {
       return myVariable + ", " + myType + (myFolded ? ", folded" : "");
     }
@@ -985,8 +1032,7 @@ public final class DuplicatesFinder {
     @Override
     public boolean equals(Object o) {
       if (this == o) return true;
-      if (!(o instanceof Parameter)) return false;
-      Parameter p = (Parameter)o;
+      if (!(o instanceof Parameter p)) return false;
       return Objects.equals(myVariable, p.myVariable) &&
              Objects.equals(myType, p.myType) &&
              myFolded == p.myFolded;

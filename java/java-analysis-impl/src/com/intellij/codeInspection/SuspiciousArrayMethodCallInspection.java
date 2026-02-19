@@ -1,23 +1,31 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 import com.intellij.java.analysis.JavaAnalysisBundle;
-import com.intellij.psi.*;
+import com.intellij.psi.CommonClassNames;
+import com.intellij.psi.JavaElementVisitor;
+import com.intellij.psi.PsiArrayType;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiMethodCallExpression;
+import com.intellij.psi.PsiPrimitiveType;
+import com.intellij.psi.PsiType;
 import com.intellij.psi.util.TypeConversionUtil;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Set;
 
-public class SuspiciousArrayMethodCallInspection extends AbstractBaseJavaLocalInspectionTool {
-  private static final Set<String> INTERESTING_NAMES = ContainerUtil.set("fill", "binarySearch", "equals", "mismatch");
+public final class SuspiciousArrayMethodCallInspection extends AbstractBaseJavaLocalInspectionTool {
+  private static final Set<String> INTERESTING_NAMES = Set.of("fill", "binarySearch", "equals", "mismatch");
 
-  @NotNull
   @Override
-  public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
+  public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
     return new JavaElementVisitor() {
       @Override
-      public void visitMethodCallExpression(PsiMethodCallExpression call) {
+      public void visitMethodCallExpression(@NotNull PsiMethodCallExpression call) {
         PsiElement nameElement = call.getMethodExpression().getReferenceNameElement();
         if (nameElement == null) return;
         String name = nameElement.getText();
@@ -28,24 +36,22 @@ public class SuspiciousArrayMethodCallInspection extends AbstractBaseJavaLocalIn
         if (aClass == null || !CommonClassNames.JAVA_UTIL_ARRAYS.equals(aClass.getQualifiedName())) return;
         PsiExpression[] args = call.getArgumentList().getExpressions();
         switch (name) {
-          case "fill":
-          case "binarySearch":
+          case "fill", "binarySearch" -> {
             if (args.length == 2) {
               handleArrayElement(args[0], args[1]);
             }
             else if (args.length == 4) {
               handleArrayElement(args[0], args[3]);
             }
-            break;
-          case "equals":
-          case "mismatch":
+          }
+          case "equals", "mismatch" -> {
             if (args.length == 2) {
               handleArrays(nameElement, args[0], args[1]);
             }
             else if (args.length == 6) {
               handleArrays(nameElement, args[0], args[3]);
             }
-            break;
+          }
         }
       }
 

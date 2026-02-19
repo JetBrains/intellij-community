@@ -1,45 +1,44 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.intention.impl;
 
-import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.PsiEquivalenceUtil;
-import com.intellij.codeInsight.intention.PsiElementBaseIntentionAction;
 import com.intellij.codeInspection.RemoveRedundantTypeArgumentsUtil;
 import com.intellij.java.JavaBundle;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ApplicationNamesInfo;
-import com.intellij.openapi.application.WriteAction;
-import com.intellij.openapi.editor.Editor;
+import com.intellij.modcommand.ActionContext;
+import com.intellij.modcommand.ModCommand;
+import com.intellij.modcommand.ModCommandAction;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.Presentation;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.*;
+import com.intellij.pom.java.JavaFeature;
+import com.intellij.psi.CommonClassNames;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.JavaRecursiveElementWalkingVisitor;
+import com.intellij.psi.JavaTokenType;
+import com.intellij.psi.PsiBinaryExpression;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementFactory;
+import com.intellij.psi.PsiEnumConstant;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiMethodCallExpression;
+import com.intellij.psi.PsiParenthesizedExpression;
+import com.intellij.psi.PsiPolyadicExpression;
+import com.intellij.psi.PsiReferenceExpression;
+import com.intellij.psi.PsiResolveHelper;
+import com.intellij.psi.PsiType;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.SuggestedNameInfo;
 import com.intellij.psi.codeStyle.VariableKind;
-import com.intellij.psi.search.LocalSearchScope;
-import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.refactoring.rename.inplace.MemberInplaceRenamer;
-import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.ThrowableRunnable;
+import com.intellij.util.ThreeState;
+import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.psiutils.ClassUtils;
 import com.siyeh.ig.psiutils.EqualityCheck;
 import com.siyeh.ig.psiutils.ExpressionUtils;
@@ -51,110 +50,83 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.text.MessageFormat;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Objects;
+import java.util.Set;
 
 import static com.intellij.util.ObjectUtils.tryCast;
 
-public class ExtractSetFromComparisonChainAction extends PsiElementBaseIntentionAction {
-  private static class Holder {
-    private static final String GUAVA_IMMUTABLE_SET = "com.google.common.collect.ImmutableSet";
-    private static final String INITIALIZER_FORMAT_GUAVA = GUAVA_IMMUTABLE_SET + ".of({0})";
-    private static final String INITIALIZER_FORMAT_JAVA2 =
-      CommonClassNames.JAVA_UTIL_COLLECTIONS + ".unmodifiableSet(" +
-      "new " + CommonClassNames.JAVA_UTIL_HASH_SET +
-      "(" + CommonClassNames.JAVA_UTIL_ARRAYS + ".asList(new {1}[] '{'{0}'}')))";
-    private static final String INITIALIZER_FORMAT_JAVA5 =
-      CommonClassNames.JAVA_UTIL_COLLECTIONS + ".unmodifiableSet(" +
-      "new " + CommonClassNames.JAVA_UTIL_HASH_SET + "<{1}>" +
-      "(" + CommonClassNames.JAVA_UTIL_ARRAYS + ".asList({0})))";
-    private static final String INITIALIZER_FORMAT_JAVA9 = CommonClassNames.JAVA_UTIL_SET + ".of({0})";
-    private static final String INITIALIZER_ENUM_SET =
-      CommonClassNames.JAVA_UTIL_COLLECTIONS + ".unmodifiableSet(" +
-      "java.util.EnumSet.of({0}))";
+public final class ExtractSetFromComparisonChainAction implements ModCommandAction {
+  private static final String GUAVA_IMMUTABLE_SET = "com.google.common.collect.ImmutableSet";
+  private static final String INITIALIZER_FORMAT_GUAVA = GUAVA_IMMUTABLE_SET + ".of({0})";
+  private static final String INITIALIZER_FORMAT_JAVA2 =
+    CommonClassNames.JAVA_UTIL_COLLECTIONS + ".unmodifiableSet(" +
+    "new " + CommonClassNames.JAVA_UTIL_HASH_SET +
+    "(" + CommonClassNames.JAVA_UTIL_ARRAYS + ".asList(new {1}[] '{'{0}'}')))";
+  private static final String INITIALIZER_FORMAT_JAVA5 =
+    CommonClassNames.JAVA_UTIL_COLLECTIONS + ".unmodifiableSet(" +
+    "new " + CommonClassNames.JAVA_UTIL_HASH_SET + "<{1}>" +
+    "(" + CommonClassNames.JAVA_UTIL_ARRAYS + ".asList({0})))";
+  private static final String INITIALIZER_FORMAT_JAVA9 = CommonClassNames.JAVA_UTIL_SET + ".of({0})";
+  private static final String INITIALIZER_ENUM_SET =
+    CommonClassNames.JAVA_UTIL_COLLECTIONS + ".unmodifiableSet(" +
+    "java.util.EnumSet.of({0}))";
+
+  private final @NotNull ThreeState myProcessDuplicates;
+
+  public ExtractSetFromComparisonChainAction() {
+    myProcessDuplicates = ThreeState.UNSURE;
   }
-  @Override
-  public boolean startInWriteAction() {
-    return false;
+
+  private ExtractSetFromComparisonChainAction(boolean processDuplicates) {
+    myProcessDuplicates = ThreeState.fromBoolean(processDuplicates);
   }
 
   @Override
-  public void invoke(@NotNull Project project, Editor editor, @NotNull PsiElement element) throws IncorrectOperationException {
-    if (!FileModificationService.getInstance().preparePsiElementForWrite(element)) return;
-
-    PsiDocumentManager.getInstance(project).commitAllDocuments();
-
+  public @NotNull ModCommand perform(@NotNull ActionContext actionContext) {
+    PsiElement element = actionContext.findLeaf();
     List<ExpressionToConstantComparison> comparisons = comparisons(element).toList();
-    if (comparisons.size() < 2) return;
+    if (comparisons.size() < 2) return ModCommand.nop();
     PsiClass containingClass = ClassUtils.getContainingStaticClass(element);
-    if (containingClass == null) return;
-    ExpressionToConstantReplacementContext context = new ExpressionToConstantReplacementContext(comparisons);
-    List<ExpressionToConstantReplacementContext> copies = findCopies(comparisons, containingClass);
-    JavaCodeStyleManager manager = JavaCodeStyleManager.getInstance(project);
-    PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
+    if (containingClass == null) return ModCommand.nop();
+    List<ExpressionToConstantReplacementContext> copies =
+      myProcessDuplicates == ThreeState.NO ? List.of() : findCopies(comparisons, containingClass);
+    if (myProcessDuplicates == ThreeState.UNSURE && !copies.isEmpty()) {
+      return ModCommand.chooseAction(JavaBundle.message("intention.extract.set.from.comparison.chain.popup.title"),
+                                     new ExtractSetFromComparisonChainAction(false), new ExtractSetFromComparisonChainAction(true));
+    }
     LinkedHashSet<String> suggestions = getSuggestions(comparisons);
 
-    class Extractor implements ThrowableRunnable<RuntimeException> {
-      SmartPsiElementPointer<PsiElement> resultPtr;
-      SmartPsiElementPointer<PsiField> fieldPtr;
+    return ModCommand.psiUpdate(containingClass, (cls, updater) -> {
+      Project project = cls.getProject();
+      ExpressionToConstantReplacementContext context = new ExpressionToConstantReplacementContext(comparisons).getWritable(updater);
+      List<ExpressionToConstantReplacementContext> writableCopies = ContainerUtil.map(copies, copy -> copy.getWritable(updater));
 
-      @Override
-      public void run() {
-        if (!containingClass.isValid()) return;
-        String name = manager.suggestUniqueVariableName(suggestions.iterator().next(), containingClass, false);
-        String fieldInitializer = context.myInitializer;
-        PsiType elementType = context.myTypePtr.getType();
-        if (elementType == null) return;
-        String pattern = getInitializer(elementType, containingClass);
-        String initializer = MessageFormat.format(pattern, fieldInitializer, elementType.getCanonicalText());
-        String modifiers = containingClass.isInterface() ? "" : "private static final ";
-        String type = CommonClassNames.JAVA_UTIL_SET +
-                      (PsiUtil.isLanguageLevel5OrHigher(containingClass) ? "<" + elementType.getCanonicalText() + ">" : "");
-        PsiField field = factory.createFieldFromText(modifiers + type + " " + name + "=" + initializer + ";", containingClass);
-        field = (PsiField)containingClass.add(field);
-        RemoveRedundantTypeArgumentsUtil.removeRedundantTypeArguments(field);
-        CodeStyleManager.getInstance(project).reformat(manager.shortenClassReferences(field));
+      PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
+      JavaCodeStyleManager manager = JavaCodeStyleManager.getInstance(project);
+      String name = manager.suggestUniqueVariableName(suggestions.getFirst(), cls, false);
+      String fieldInitializer = context.myInitializer;
+      PsiType elementType = context.myType;
+      if (elementType == null) return;
+      String pattern = getInitializer(elementType, cls);
+      String initializer = MessageFormat.format(pattern, fieldInitializer, elementType.getCanonicalText());
+      String modifiers = cls.isInterface() ? "" : "private static final ";
+      String type = CommonClassNames.JAVA_UTIL_SET +
+                    (PsiUtil.isAvailable(JavaFeature.GENERICS, cls) ? "<" + elementType.getCanonicalText() + ">" : "");
+      PsiField field = factory.createFieldFromText(modifiers + type + " " + name + "=" + initializer + ";", cls);
+      field = (PsiField)cls.add(field);
+      RemoveRedundantTypeArgumentsUtil.removeRedundantTypeArguments(field);
+      CodeStyleManager.getInstance(project).reformat(manager.shortenClassReferences(field));
 
-        SmartPointerManager smartPointerManager = SmartPointerManager.getInstance(project);
-        PsiElement result = context.replace(field);
-        resultPtr = result == null ? null : smartPointerManager.createSmartPsiElementPointer(result);
-        fieldPtr = smartPointerManager.createSmartPsiElementPointer(field);
+      context.replace(field);
+      for (ExpressionToConstantReplacementContext copy : writableCopies) {
+        copy.replace(field);
       }
-    }
-    Extractor extractor = new Extractor();
-    WriteAction.run(extractor);
-    PsiElement result = extractor.resultPtr == null ? null : extractor.resultPtr.getElement();
-    if (result == null || !result.isValid()) return;
-
-    if (!copies.isEmpty()) {
-      int answer = ApplicationManager.getApplication().isUnitTestMode() ? Messages.YES :
-                   Messages.showYesNoDialog(project,
-                                            JavaBundle.message("intention.extract.set.from.comparison.chain.duplicates",
-                                                                      ApplicationNamesInfo.getInstance().getProductName(),
-                                                                      copies.size()), JavaBundle.message(
-                       "dialog.title.process.duplicates"),
-                                            Messages.getQuestionIcon());
-      if (answer == Messages.YES) {
-        WriteAction.run(() -> {
-          PsiField field = extractor.fieldPtr.getElement();
-          if (field == null) return;
-          for (ExpressionToConstantReplacementContext copy : copies) {
-            copy.replace(field);
-          }
-        });
-      }
-    }
-
-    PsiField field = extractor.fieldPtr.getElement();
-    result = extractor.resultPtr.getElement();
-    if (result == null || field == null) return;
-    PsiReferenceExpression fieldRef =
-      tryCast(ReferencesSearch.search(field, new LocalSearchScope(result)).findFirst(), PsiReferenceExpression.class);
-    if (fieldRef == null) return;
-
-    PsiDocumentManager.getInstance(project).doPostponedOperationsAndUnblockDocument(editor.getDocument());
-    editor.getCaretModel().moveToOffset(fieldRef.getTextOffset());
-    editor.getSelectionModel().removeSelection();
-    new MemberInplaceRenamer(field, field, editor).performInplaceRefactoring(suggestions);
+      updater.rename(field, List.copyOf(suggestions));
+    });
   }
 
   private static List<ExpressionToConstantReplacementContext> findCopies(@NotNull List<ExpressionToConstantComparison> comparisons,
@@ -164,7 +136,7 @@ public class ExtractSetFromComparisonChainAction extends PsiElementBaseIntention
     Set<PsiExpression> processedOperands = new HashSet<>();
     aClass.accept(new JavaRecursiveElementWalkingVisitor() {
       @Override
-      public void visitPolyadicExpression(PsiPolyadicExpression expression) {
+      public void visitPolyadicExpression(@NotNull PsiPolyadicExpression expression) {
         super.visitPolyadicExpression(expression);
         if (!expression.getOperationTokenType().equals(JavaTokenType.OROR)) return;
         for (PsiExpression operand : expression.getOperands()) {
@@ -172,8 +144,8 @@ public class ExtractSetFromComparisonChainAction extends PsiElementBaseIntention
           List<ExpressionToConstantComparison> otherComparisons = comparisons(operand).toList();
           otherComparisons.stream().map(c -> c.myComparison).forEach(processedOperands::add);
           if (otherComparisons.size() == comparisons.size() &&
-              otherComparisons.get(0).myExpression != comparisons.get(0).myExpression &&
-              otherComparisons.get(0).myType.equals(comparisons.get(0).myType)
+              otherComparisons.getFirst().myExpression != comparisons.getFirst().myExpression &&
+              otherComparisons.getFirst().myType.equals(comparisons.getFirst().myType)
               && StreamEx.of(otherComparisons).map(c -> c.myConstantRepresentation).toSet().equals(orig)) {
             copies.add(new ExpressionToConstantReplacementContext(otherComparisons));
           }
@@ -186,45 +158,56 @@ public class ExtractSetFromComparisonChainAction extends PsiElementBaseIntention
   @NotNull
   String getInitializer(PsiType type, PsiClass containingClass) {
     if (!type.equalsToText(CommonClassNames.JAVA_LANG_STRING)) {
-      return Holder.INITIALIZER_ENUM_SET;
+      return INITIALIZER_ENUM_SET;
     }
-    if (PsiUtil.isLanguageLevel9OrHigher(containingClass)) {
-      return Holder.INITIALIZER_FORMAT_JAVA9;
+    if (PsiUtil.isAvailable(JavaFeature.COLLECTION_FACTORIES, containingClass)) {
+      return INITIALIZER_FORMAT_JAVA9;
     }
-    if (JavaPsiFacade.getInstance(containingClass.getProject()).findClass(Holder.GUAVA_IMMUTABLE_SET, containingClass.getResolveScope()) != null) {
-      return Holder.INITIALIZER_FORMAT_GUAVA;
+    if (JavaPsiFacade.getInstance(containingClass.getProject()).findClass(GUAVA_IMMUTABLE_SET, containingClass.getResolveScope()) != null) {
+      return INITIALIZER_FORMAT_GUAVA;
     }
-    if (PsiUtil.isLanguageLevel5OrHigher(containingClass)) {
-      return Holder.INITIALIZER_FORMAT_JAVA5;
+    if (PsiUtil.isAvailable(JavaFeature.GENERICS, containingClass)) {
+      return INITIALIZER_FORMAT_JAVA5;
     }
-    return Holder.INITIALIZER_FORMAT_JAVA2;
+    return INITIALIZER_FORMAT_JAVA2;
   }
 
   @Override
-  public boolean isAvailable(@NotNull Project project, Editor editor, @NotNull PsiElement element) {
-    return comparisons(element).count() > 1;
+  public @Nullable Presentation getPresentation(@NotNull ActionContext actionContext) {
+    if (!BaseIntentionAction.canModify(actionContext.file())) return null;
+    PsiElement element = actionContext.findLeaf();
+    List<ExpressionToConstantComparison> comparisons = comparisons(element).toList();
+    if (comparisons.size() <= 1) return null;
+    return switch (myProcessDuplicates) {
+      case UNSURE -> Presentation.of(getFamilyName());
+      case YES -> {
+        PsiClass containingClass = ClassUtils.getContainingStaticClass(element);
+        if (containingClass == null) yield null;
+        ExpressionToConstantReplacementContext context = new ExpressionToConstantReplacementContext(comparisons);
+        List<ExpressionToConstantReplacementContext> copies = findCopies(comparisons, containingClass);
+        TextRange[] ranges =
+          StreamEx.of(copies).append(context).map(ExpressionToConstantReplacementContext::range).toArray(TextRange.EMPTY_ARRAY);
+        yield Presentation.of(JavaBundle.message("intention.extract.set.from.comparison.chain.replace.all")).withHighlighting(ranges);
+      }
+      case NO -> {
+        ExpressionToConstantReplacementContext context = new ExpressionToConstantReplacementContext(comparisons);
+        yield Presentation.of(JavaBundle.message("intention.extract.set.from.comparison.chain.replace.only.this"))
+          .withHighlighting(context.range());
+      }
+    };
   }
 
-  @NotNull
   @Override
-  public String getText() {
-    return getFamilyName();
-  }
-
-  @Nls
-  @NotNull
-  @Override
-  public String getFamilyName() {
+  public @Nls @NotNull String getFamilyName() {
     return JavaBundle.message("intention.extract.set.from.comparison.chain.family");
   }
 
-  @NotNull
-  private static LinkedHashSet<String> getSuggestions(List<ExpressionToConstantComparison> comparisons) {
-    PsiExpression stringExpression = comparisons.get(0).myExpression;
+  private static @NotNull LinkedHashSet<String> getSuggestions(List<ExpressionToConstantComparison> comparisons) {
+    PsiExpression stringExpression = comparisons.getFirst().myExpression;
     Project project = stringExpression.getProject();
     JavaCodeStyleManager manager = JavaCodeStyleManager.getInstance(project);
     SuggestedNameInfo info = manager.suggestVariableName(VariableKind.STATIC_FINAL_FIELD, null, stringExpression,
-                                                         comparisons.get(0).myType, false);
+                                                         comparisons.getFirst().myType, false);
     // Suggestions like OBJECT and AN_OBJECT appear because Object.equals argument type is an Object,
     // such names are rarely appropriate
     LinkedHashSet<String> suggestions =
@@ -238,7 +221,7 @@ public class ExtractSetFromComparisonChainAction extends PsiElementBaseIntention
       .limit(5)
       .map(StringUtil::pluralize)
       .forEach(suggestions::add);
-    if(comparisons.get(0).myType.equalsToText(CommonClassNames.JAVA_LANG_STRING)) {
+    if(comparisons.getFirst().myType.equalsToText(CommonClassNames.JAVA_LANG_STRING)) {
       suggestions.add("STRINGS");
     }
     return suggestions;
@@ -269,42 +252,53 @@ public class ExtractSetFromComparisonChainAction extends PsiElementBaseIntention
   }
 
   static final class ExpressionToConstantReplacementContext {
-    final SmartPsiElementPointer<PsiExpression> myExpressionPtr;
-    final SmartPsiElementPointer<PsiExpression> myFirstComparisonPtr;
-    final SmartPsiElementPointer<PsiExpression> myLastComparisonPtr;
-    final SmartTypePointer myTypePtr;
+    final @NotNull PsiExpression myExpression;
+    final @NotNull PsiExpression myFirstComparison;
+    final @NotNull PsiExpression myLastComparison;
+    final PsiType myType;
     final String myInitializer;
 
     ExpressionToConstantReplacementContext(List<ExpressionToConstantComparison> comparisons) {
       assert !comparisons.isEmpty();
-      Project project = comparisons.get(0).myComparison.getProject();
-      SmartPointerManager manager = SmartPointerManager.getInstance(project);
-      myExpressionPtr = manager.createSmartPsiElementPointer(comparisons.get(0).myExpression);
-      myFirstComparisonPtr = manager.createSmartPsiElementPointer(comparisons.get(0).myComparison);
-      myLastComparisonPtr = manager.createSmartPsiElementPointer(comparisons.get(comparisons.size() - 1).myComparison);
-      myTypePtr = SmartTypePointerManager.getInstance(project).createSmartTypePointer(comparisons.get(0).myType);
+      myExpression = comparisons.getFirst().myExpression;
+      myFirstComparison = comparisons.getFirst().myComparison;
+      myLastComparison = comparisons.getLast().myComparison;
+      myType = comparisons.getFirst().myType;
       myInitializer = StreamEx.of(comparisons).map(cmp -> cmp.myConstant.getText()).joining(",");
     }
 
-    @Nullable
-    private PsiElement replace(@NotNull PsiField field) {
+    private ExpressionToConstantReplacementContext(ExpressionToConstantReplacementContext context, ModPsiUpdater updater) {
+      myExpression = updater.getWritable(context.myExpression);
+      myFirstComparison = updater.getWritable(context.myFirstComparison);
+      myLastComparison = updater.getWritable(context.myLastComparison);
+      myType = context.myType;
+      myInitializer = context.myInitializer;
+    }
+
+    @NotNull TextRange range() {
+      int start = myFirstComparison.getTextRange().getStartOffset();
+      int end = myLastComparison.getTextRange().getEndOffset();
+      return TextRange.create(start, end);
+    }
+
+    @NotNull ExpressionToConstantReplacementContext getWritable(@NotNull ModPsiUpdater updater) {
+      return new ExpressionToConstantReplacementContext(this, updater);
+    }
+
+    private @Nullable PsiElement replace(@NotNull PsiField field) {
       Project project = field.getProject();
       PsiClass containingClass = field.getContainingClass();
       if (containingClass == null) return null;
       String name = field.getName();
-      PsiExpression expression = myExpressionPtr.getElement();
-      PsiExpression firstComparison = myFirstComparisonPtr.getElement();
-      PsiExpression lastComparison = myLastComparisonPtr.getElement();
-      if (expression == null || firstComparison == null || lastComparison == null) return null;
-      PsiExpression disjunction = tryCast(firstComparison.getParent(), PsiPolyadicExpression.class);
+      PsiExpression disjunction = tryCast(myFirstComparison.getParent(), PsiPolyadicExpression.class);
       if (disjunction == null) return null;
-      int startOffset = firstComparison.getStartOffsetInParent();
-      int endOffset = lastComparison.getStartOffsetInParent() + lastComparison.getTextLength();
+      int startOffset = myFirstComparison.getStartOffsetInParent();
+      int endOffset = myLastComparison.getStartOffsetInParent() + myLastComparison.getTextLength();
       String origText = disjunction.getText();
-      String fieldReference = PsiResolveHelper.SERVICE.getInstance(project).resolveReferencedVariable(name, disjunction) == field ?
+      String fieldReference = PsiResolveHelper.getInstance(project).resolveReferencedVariable(name, disjunction) == field ?
                               name : containingClass.getQualifiedName() + "." + name;
       String replacementText = origText.substring(0, startOffset) +
-                               fieldReference + ".contains(" + expression.getText() + ")" +
+                               fieldReference + ".contains(" + myExpression.getText() + ")" +
                                origText.substring(endOffset);
       PsiExpression replacement = JavaPsiFacade.getElementFactory(project).createExpressionFromText(replacementText, disjunction);
       if (replacement instanceof PsiMethodCallExpression && disjunction.getParent() instanceof PsiParenthesizedExpression) {
@@ -315,11 +309,11 @@ public class ExtractSetFromComparisonChainAction extends PsiElementBaseIntention
   }
 
   static final class ExpressionToConstantComparison {
-    @NotNull final PsiExpression myComparison;
-    @NotNull final PsiExpression myExpression;
-    @NotNull final PsiExpression myConstant;
-    @NotNull final PsiType myType;
-    @NotNull final String myConstantRepresentation;
+    final @NotNull PsiExpression myComparison;
+    final @NotNull PsiExpression myExpression;
+    final @NotNull PsiExpression myConstant;
+    final @NotNull PsiType myType;
+    final @NotNull String myConstantRepresentation;
 
     ExpressionToConstantComparison(@NotNull PsiExpression comparison,
                                    @NotNull PsiExpression expression,
@@ -349,16 +343,14 @@ public class ExtractSetFromComparisonChainAction extends PsiElementBaseIntention
       return null;
     }
 
-    @Nullable
-    private static ExpressionToConstantComparison fromComparison(PsiExpression candidate, PsiExpression left, PsiExpression right) {
+    private static @Nullable ExpressionToConstantComparison fromComparison(PsiExpression candidate, PsiExpression left, PsiExpression right) {
       if (left == null || right == null) return null;
       ExpressionToConstantComparison fromLeft = tryExtract(candidate, left, right);
       if (fromLeft != null) return fromLeft;
       return tryExtract(candidate, right, left);
     }
 
-    @Nullable
-    private static ExpressionToConstantComparison tryExtract(PsiExpression candidate, PsiExpression constant, PsiExpression nonConstant) {
+    private static @Nullable ExpressionToConstantComparison tryExtract(PsiExpression candidate, PsiExpression constant, PsiExpression nonConstant) {
       String constantValue = tryCast(ExpressionUtils.computeConstantExpression(constant), String.class);
       if (constantValue != null) {
         return new ExpressionToConstantComparison(candidate, nonConstant, constant, constantValue);

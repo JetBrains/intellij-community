@@ -2,6 +2,7 @@
 package com.intellij.java.codeInsight.completion;
 
 import com.intellij.JavaTestUtil;
+import com.intellij.application.options.CodeStyle;
 import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.JavaProjectCodeInsightSettings;
 import com.intellij.codeInsight.completion.CompletionType;
@@ -12,14 +13,13 @@ import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementPresentation;
 import com.intellij.codeInsight.template.SmartCompletionContextType;
 import com.intellij.codeInsight.template.Template;
-import com.intellij.codeInsight.template.TemplateContextType;
 import com.intellij.codeInsight.template.TemplateManager;
+import com.intellij.codeInsight.template.impl.TemplateContextTypes;
 import com.intellij.codeInsight.template.impl.TemplateImpl;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiClass;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.psi.util.PsiUtil;
@@ -290,6 +290,7 @@ public class SmartTypeCompletionTest extends LightFixtureCompletionTestCase {
     String path = "/return";
 
     configureByFile(path + "/before3.java");
+    type('\n');
     checkResultByFile(path + "/after3.java");
   }
 
@@ -307,6 +308,7 @@ public class SmartTypeCompletionTest extends LightFixtureCompletionTestCase {
     checkResultByFile(path + "/after2.java");
   }
 
+  @NeedsIndex.ForStandardLibrary
   public void testGenerics3() {
     String path = "/generics";
 
@@ -314,6 +316,7 @@ public class SmartTypeCompletionTest extends LightFixtureCompletionTestCase {
     checkResultByFile(path + "/after3.java");
   }
 
+  @NeedsIndex.ForStandardLibrary
   public void testGenerics4() {
     String path = "/generics";
 
@@ -394,6 +397,7 @@ public class SmartTypeCompletionTest extends LightFixtureCompletionTestCase {
     checkResultByFile("/Silly1.java");
   }
 
+  @NeedsIndex.ForStandardLibrary
   public void testVarargs1() { doTest('\n'); }
 
   public void testEnumConstInSwitch() { doTest(); }
@@ -442,6 +446,7 @@ public class SmartTypeCompletionTest extends LightFixtureCompletionTestCase {
 
   public void testThrowRuntimeException() { doTest(); }
 
+  @NeedsIndex.ForStandardLibrary
   public void testParameterizedConstructor() { doTest(); }
 
   public void testNewInnerClassNameShortPrefix() { doTest('\n'); }
@@ -460,6 +465,7 @@ public class SmartTypeCompletionTest extends LightFixtureCompletionTestCase {
 
   public void testArrayAccessIndex() { doTest(); }
 
+  @NeedsIndex.ForStandardLibrary(reason = "Need to resolve java.lang.String")
   public void testThrowExceptionConstructor() { doTest('\n'); }
 
   public void testJavadocThrows() { doTest(); }
@@ -471,6 +477,7 @@ public class SmartTypeCompletionTest extends LightFixtureCompletionTestCase {
 
   public void testArrayIndexTailType() { doTest(); }
 
+  @NeedsIndex.ForStandardLibrary
   public void testPrivateOverloads() { doTest(); }
   public void testInaccessibleMethodArgument() { doTest(); }
 
@@ -587,6 +594,7 @@ public class SmartTypeCompletionTest extends LightFixtureCompletionTestCase {
   @NeedsIndex.ForStandardLibrary
   public void testConstructorNoPairBracketSemicolon() { doTestNoPairBracket(';'); }
 
+  @NeedsIndex.ForStandardLibrary
   public void testMethodNoPairBracketComma() { doTestNoPairBracket(','); }
 
   public void testAbstractClassTwice() {
@@ -615,6 +623,7 @@ public class SmartTypeCompletionTest extends LightFixtureCompletionTestCase {
     doTest();
   }
 
+  @NeedsIndex.ForStandardLibrary
   public void testMethodCallDot() { doTest('\n'); }
   public void testNegateVariable() { doTest(); }
 
@@ -639,6 +648,7 @@ public class SmartTypeCompletionTest extends LightFixtureCompletionTestCase {
 
   public void testInstanceMethodParametersFromStaticContext() { doTest(); }
 
+  @NeedsIndex.ForStandardLibrary
   public void testInstanceMethodParametersFromStaticContext2() { doTest(); }
 
   public void testBeforeCastToArray() { doTest(); }
@@ -725,8 +735,7 @@ public class SmartTypeCompletionTest extends LightFixtureCompletionTestCase {
   public void testLiveTemplate() {
     final Template template = TemplateManager.getInstance(getProject()).createTemplate("foo", "zzz");
     template.addTextSegment("FooFactory.createFoo()");
-    final SmartCompletionContextType completionContextType =
-      ContainerUtil.findInstance(TemplateContextType.EP_NAME.getExtensions(), SmartCompletionContextType.class);
+    SmartCompletionContextType completionContextType = TemplateContextTypes.getByClass(SmartCompletionContextType.class);
     ((TemplateImpl)template).getTemplateContext().setEnabled(completionContextType, true);
     CodeInsightTestUtil.addTemplate(template, myFixture.getTestRootDisposable());
     doTest();
@@ -856,6 +865,7 @@ public class SmartTypeCompletionTest extends LightFixtureCompletionTestCase {
     checkResultByTestName();
   }
 
+  @NeedsIndex.ForStandardLibrary
   public void testSameNamedArgumentsDelegation() {
     configureByTestName();
     getLookup().setCurrentItem(getLookup().getItems().get(1));
@@ -868,6 +878,7 @@ public class SmartTypeCompletionTest extends LightFixtureCompletionTestCase {
     myFixture.assertPreferredCompletionItems(0, "i", "z", "zz", "i, z, zz");
   }
 
+  @NeedsIndex.ForStandardLibrary
   public void testSameSignatureWithoutClosingParen() {
     configureByTestName();
     myFixture.assertPreferredCompletionItems(0, "someString", "someString, number");
@@ -1155,27 +1166,31 @@ public class SmartTypeCompletionTest extends LightFixtureCompletionTestCase {
   public void testBreakLabel() {
     myFixture.configureByText(
       "a.java",
-      "class a{{\n" +
-      "  foo: while (true) break <caret>\n" +
-      "}}");
+      """
+        class a{{
+          foo: while (true) break <caret>
+        }}""");
     complete();
     myFixture.checkResult(
-      "class a{{\n" +
-      "  foo: while (true) break foo;<caret>\n" +
-      "}}");
+      """
+        class a{{
+          foo: while (true) break foo;<caret>
+        }}""");
   }
 
   public void testContinueLabel() {
     myFixture.configureByText(
       "a.java",
-      "class a{{\n" +
-      "  foo: while (true) continue <caret>\n" +
-      "}}");
+      """
+        class a{{
+          foo: while (true) continue <caret>
+        }}""");
     complete();
     myFixture.checkResult(
-      "class a{{\n" +
-      "  foo: while (true) continue foo;<caret>\n" +
-      "}}");
+      """
+        class a{{
+          foo: while (true) continue foo;<caret>
+        }}""");
   }
 
   @NeedsIndex.SmartMode(reason = "For now ConstructorInsertHandler.createOverrideRunnable doesn't work in dumb mode")
@@ -1402,7 +1417,7 @@ public class SmartTypeCompletionTest extends LightFixtureCompletionTestCase {
   }
 
   private CommonCodeStyleSettings getCodeStyleSettings() {
-    return CodeStyleSettingsManager.getSettings(getProject()).getCommonSettings(JavaLanguage.INSTANCE);
+    return CodeStyle.getSettings(getProject()).getCommonSettings(JavaLanguage.INSTANCE);
   }
 
   @NeedsIndex.ForStandardLibrary(reason = "On empty indices 'get2' is filtered out by unmatching type in ReferenceExpressionCompletionContributor.addSmartReferenceSuggestions")
@@ -1479,4 +1494,24 @@ public class SmartTypeCompletionTest extends LightFixtureCompletionTestCase {
 
   public void testNoSemicolonAfterNonLastVariableInitializer() { doTest(); }
 
+  @NeedsIndex.ForStandardLibrary
+  public void testSuggestExceptionTypes() {
+    myFixture.configureByText("Test.java", """
+      import java.io.*;
+
+      class X {
+        void test() {
+          try {
+            new FileInputStream("/etc/passwd");
+          }
+          catch(<caret>)
+        }
+      }
+      class MyException extends FileNotFoundException {}
+      class My2Exception extends MyException {}""");
+    myFixture.complete(CompletionType.SMART);
+    myFixture.assertPreferredCompletionItems(0, "FileNotFoundException", "IOException", "Exception", "Throwable",
+                                             "MyException", "My2Exception",
+                                             "RuntimeException", "ArithmeticException", "ArrayIndexOutOfBoundsException");
+  }
 }

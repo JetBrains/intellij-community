@@ -9,9 +9,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlo
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.ClassHint;
 
-/**
- * @author Sergey Evdokimov
- */
 public abstract class ClosureMissingMethodContributor {
 
   public static final ExtensionPointName<ClosureMissingMethodContributor> EP_NAME = ExtensionPointName.create("org.intellij.groovy.closureMissingMethodContributor");

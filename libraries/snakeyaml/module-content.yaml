@@ -1,0 +1,6 @@
+- name: dist.all/lib/intellij.libraries.snakeyaml.jar
+  modules:
+  - name: intellij.libraries.snakeyaml
+  library: snakeyaml
+  files:
+  - name: $MAVEN_REPOSITORY$/org/yaml/snakeyaml/2/snakeyaml-2.jar

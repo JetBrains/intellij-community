@@ -1,9 +1,22 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.bytecodeAnalysis.asm;
 
 import org.jetbrains.org.objectweb.asm.Type;
-import org.jetbrains.org.objectweb.asm.tree.*;
-import org.jetbrains.org.objectweb.asm.tree.analysis.*;
+import org.jetbrains.org.objectweb.asm.tree.AbstractInsnNode;
+import org.jetbrains.org.objectweb.asm.tree.IincInsnNode;
+import org.jetbrains.org.objectweb.asm.tree.JumpInsnNode;
+import org.jetbrains.org.objectweb.asm.tree.LabelNode;
+import org.jetbrains.org.objectweb.asm.tree.LookupSwitchInsnNode;
+import org.jetbrains.org.objectweb.asm.tree.MethodNode;
+import org.jetbrains.org.objectweb.asm.tree.TableSwitchInsnNode;
+import org.jetbrains.org.objectweb.asm.tree.TryCatchBlockNode;
+import org.jetbrains.org.objectweb.asm.tree.VarInsnNode;
+import org.jetbrains.org.objectweb.asm.tree.analysis.Analyzer;
+import org.jetbrains.org.objectweb.asm.tree.analysis.AnalyzerException;
+import org.jetbrains.org.objectweb.asm.tree.analysis.BasicValue;
+import org.jetbrains.org.objectweb.asm.tree.analysis.Frame;
+import org.jetbrains.org.objectweb.asm.tree.analysis.Interpreter;
+import org.jetbrains.org.objectweb.asm.tree.analysis.Value;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -13,8 +26,6 @@ import java.util.Map;
 /**
  * Extended version of {@link Analyzer}.
  * It handles frames <b>and</b> additional data.
- *
- * @author lambdamix
  */
 public class AnalyzerExt<V extends Value, Data, MyInterpreter extends Interpreter<V> & InterpreterExt<Data>> extends SubroutineFinder {
   private final MyInterpreter interpreter;
@@ -143,22 +154,19 @@ public class AnalyzerExt<V extends Value, Data, MyInterpreter extends Interprete
           current.init(f).execute(insnNode, interpreter);
           subroutine = subroutine == null ? null : subroutine.copy();
 
-          if (insnNode instanceof JumpInsnNode) {
-            JumpInsnNode j = (JumpInsnNode)insnNode;
+          if (insnNode instanceof JumpInsnNode j) {
             if (insnOpcode != GOTO && insnOpcode != JSR) {
               merge(insn + 1, current, subroutine);
             }
             int jump = insns.indexOf(j.label);
             if (insnOpcode == JSR) {
-              merge(jump, current, new Subroutine(j.label,
-                                                  m.maxLocals, j));
+              merge(jump, current, new Subroutine(j.label, m.maxLocals, j));
             }
             else {
               merge(jump, current, subroutine);
             }
           }
-          else if (insnNode instanceof LookupSwitchInsnNode) {
-            LookupSwitchInsnNode lsi = (LookupSwitchInsnNode)insnNode;
+          else if (insnNode instanceof LookupSwitchInsnNode lsi) {
             int jump = insns.indexOf(lsi.dflt);
             merge(jump, current, subroutine);
             for (LabelNode label : lsi.labels) {
@@ -166,8 +174,7 @@ public class AnalyzerExt<V extends Value, Data, MyInterpreter extends Interprete
               merge(jump, current, subroutine);
             }
           }
-          else if (insnNode instanceof TableSwitchInsnNode) {
-            TableSwitchInsnNode tsi = (TableSwitchInsnNode)insnNode;
+          else if (insnNode instanceof TableSwitchInsnNode tsi) {
             int jump = insns.indexOf(tsi.dflt);
             merge(jump, current, subroutine);
             for (LabelNode label : tsi.labels) {

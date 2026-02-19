@@ -24,29 +24,32 @@ import com.intellij.psi.PsiPolyVariantReference;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.inspections.quickfix.DictCreationQuickFix;
-import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.PyAssignmentStatement;
+import com.jetbrains.python.psi.PyDictLiteralExpression;
+import com.jetbrains.python.psi.PyExpression;
+import com.jetbrains.python.psi.PyRecursiveElementVisitor;
+import com.jetbrains.python.psi.PyReferenceExpression;
+import com.jetbrains.python.psi.PyStatement;
+import com.jetbrains.python.psi.PySubscriptionExpression;
+import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * @author Alexey.Ivanov
- */
-public class PyDictCreationInspection extends PyInspection {
+public final class PyDictCreationInspection extends PyInspection {
 
-  @NotNull
   @Override
-  public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder,
-                                        boolean isOnTheFly,
-                                        @NotNull LocalInspectionToolSession session) {
-    return new Visitor(holder, session);
+  public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder,
+                                                 boolean isOnTheFly,
+                                                 @NotNull LocalInspectionToolSession session) {
+    return new Visitor(holder, PyInspectionVisitor.getContext(session));
   }
 
   private static class Visitor extends PyInspectionVisitor {
-    Visitor(@Nullable ProblemsHolder holder, @NotNull LocalInspectionToolSession session) {
-      super(holder, session);
+    Visitor(@Nullable ProblemsHolder holder, @NotNull TypeEvalContext context) {
+      super(holder, context);
     }
 
     @Override
@@ -63,15 +66,15 @@ public class PyDictCreationInspection extends PyInspection {
 
         PyStatement statement = PsiTreeUtil.getNextSiblingOfType(node, PyStatement.class);
 
-        while (statement instanceof PyAssignmentStatement) {
-          final PyAssignmentStatement assignmentStatement = (PyAssignmentStatement)statement;
+        while (statement instanceof PyAssignmentStatement assignmentStatement) {
           final List<Pair<PyExpression, PyExpression>> targets = getDictTargets(target, name, assignmentStatement);
-          if (targets == null)
+          if (targets == null) {
             return;
+          }
           if (!targets.isEmpty()) {
             registerProblem(node,
                             PyPsiBundle.message("INSP.dict.creation.this.dictionary.creation.could.be.rewritten.as.dictionary.literal"),
-                            new DictCreationQuickFix(node));
+                            new DictCreationQuickFix());
             break;
           }
           statement = PsiTreeUtil.getNextSiblingOfType(assignmentStatement, PyStatement.class);
@@ -80,27 +83,26 @@ public class PyDictCreationInspection extends PyInspection {
     }
   }
 
-  @Nullable
-  public static List<Pair<PyExpression, PyExpression>> getDictTargets(@NotNull final PyExpression target,
-                                                                      @NotNull final String name,
-                                                                      @NotNull final PyAssignmentStatement assignmentStatement) {
+  public static @Nullable List<Pair<PyExpression, PyExpression>> getDictTargets(final @NotNull PyExpression target,
+                                                                                final @NotNull String name,
+                                                                                final @NotNull PyAssignmentStatement assignmentStatement) {
     final List<Pair<PyExpression, PyExpression>> targets = new ArrayList<>();
     for (Pair<PyExpression, PyExpression> targetToValue : assignmentStatement.getTargetsToValuesMapping()) {
-      if (targetToValue.first instanceof PySubscriptionExpression) {
-        final PySubscriptionExpression subscriptionExpression = (PySubscriptionExpression)targetToValue.first;
+      if (targetToValue.first instanceof PySubscriptionExpression subscriptionExpression) {
         if (name.equals(subscriptionExpression.getOperand().getName()) &&
             subscriptionExpression.getIndexExpression() != null &&
             !referencesTarget(targetToValue.second, target)) {
           targets.add(targetToValue);
         }
       }
-      else
+      else {
         return null;
+      }
     }
     return targets;
   }
 
-  private static boolean referencesTarget(@NotNull final PyExpression expression, @NotNull final PsiElement target) {
+  private static boolean referencesTarget(final @NotNull PyExpression expression, final @NotNull PsiElement target) {
     final List<PsiElement> refs = new ArrayList<>();
     expression.accept(new PyRecursiveElementVisitor() {
       @Override

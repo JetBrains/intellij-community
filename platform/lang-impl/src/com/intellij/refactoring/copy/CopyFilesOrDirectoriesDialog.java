@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.copy;
 
 import com.intellij.CommonBundle;
@@ -11,7 +11,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.event.DocumentListener;
-import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.fileChooser.impl.FileChooserUtil;
 import com.intellij.openapi.fileTypes.FileType;
@@ -20,15 +19,23 @@ import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.ui.TextComponentAccessor;
+import com.intellij.openapi.ui.TextComponentAccessors;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiBinaryFile;
+import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiManager;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.move.moveFilesOrDirectories.MoveFilesOrDirectoriesUtil;
 import com.intellij.refactoring.ui.RefactoringDialog;
-import com.intellij.ui.*;
+import com.intellij.ui.DocumentAdapter;
+import com.intellij.ui.EditorTextField;
+import com.intellij.ui.RecentsManager;
+import com.intellij.ui.TextFieldWithHistory;
+import com.intellij.ui.TextFieldWithHistoryWithBrowseButton;
 import com.intellij.ui.components.JBLabelDecorator;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ObjectUtils;
@@ -36,21 +43,26 @@ import com.intellij.util.PathUtil;
 import com.intellij.util.PathUtilRt;
 import com.intellij.util.ui.FormBuilder;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JCheckBox;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.SwingUtilities;
 import javax.swing.event.DocumentEvent;
-import java.awt.*;
+import java.awt.BorderLayout;
 import java.util.List;
 
 public class CopyFilesOrDirectoriesDialog extends RefactoringDialog implements DumbAware {
   public static final int MAX_PATH_LENGTH = 70;
 
-  @NonNls private static final String COPY = "Copy";
-  @NonNls private static final String COPY_OPEN_IN_EDITOR = "Copy.OpenInEditor";
-  @NonNls private static final String RECENT_KEYS = "CopyFile.RECENT_KEYS";
+  private static final @NonNls String COPY = "Copy";
+  private static final @NonNls String COPY_OPEN_IN_EDITOR = "Copy.OpenInEditor";
+  private static final @NonNls String RECENT_KEYS = "CopyFile.RECENT_KEYS";
 
   public static String shortenPath(@NotNull VirtualFile file) {
     return StringUtil.shortenPathWithEllipsis(file.getPresentableUrl(), MAX_PATH_LENGTH);
@@ -61,10 +73,10 @@ public class CopyFilesOrDirectoriesDialog extends RefactoringDialog implements D
    *
    * @deprecated use {@link RefactoringDialog#RefactoringDialog(Project, boolean, boolean)} instead
    */
-  @Deprecated
+  @ApiStatus.Internal
+  @Deprecated(forRemoval = true)
   public static JCheckBox createOpenInEditorCB() {
     JCheckBox checkBox = new JCheckBox(RefactoringBundle.message("open.copy.in.editor"), PropertiesComponent.getInstance().getBoolean(COPY_OPEN_IN_EDITOR, true));
-    checkBox.setMnemonic('o');
     return checkBox;
   }
 
@@ -73,7 +85,8 @@ public class CopyFilesOrDirectoriesDialog extends RefactoringDialog implements D
    *
    * @deprecated use {@link RefactoringDialog#RefactoringDialog(Project, boolean, boolean)} instead
    */
-  @Deprecated
+  @ApiStatus.Internal
+  @Deprecated(forRemoval = true)
   public static void saveOpenInEditorState(boolean selected) {
     PropertiesComponent.getInstance().setValue(COPY_OPEN_IN_EDITOR, String.valueOf(selected));
   }
@@ -88,13 +101,14 @@ public class CopyFilesOrDirectoriesDialog extends RefactoringDialog implements D
   private final boolean myShowNewNameField;
 
   private PsiDirectory myTargetDirectory;
-  private boolean myFileCopy = false;
+  private final boolean myFileCopy;
 
   public CopyFilesOrDirectoriesDialog(PsiElement[] elements, @Nullable PsiDirectory defaultTargetDirectory, Project project, boolean doClone) {
     super(project, true, canBeOpenedInEditor(elements));
     myElements = elements;
     myShowDirectoryField = !doClone;
     myShowNewNameField = elements.length == 1;
+    myFileCopy = elements.length == 1 && elements[0] instanceof PsiFile;
 
     if (doClone && elements.length != 1) {
       throw new IllegalArgumentException("wrong number of elements to clone: " + elements.length);
@@ -111,8 +125,7 @@ public class CopyFilesOrDirectoriesDialog extends RefactoringDialog implements D
 
     if (elements.length == 1) {
       String text;
-      if (elements[0] instanceof PsiFile) {
-        PsiFile file = (PsiFile)elements[0];
+      if (elements[0] instanceof PsiFile file) {
         VirtualFile vFile = file.getVirtualFile();
         text = RefactoringBundle.message(doClone ? "copy.files.clone.file.0" : "copy.files.copy.file.0", shortenPath(vFile));
         String fileName = vFile.isInLocalFileSystem() ? vFile.getName() : PathUtil.suggestFileName(file.getName(), true, true);
@@ -126,7 +139,6 @@ public class CopyFilesOrDirectoriesDialog extends RefactoringDialog implements D
           selectNameWithoutExtension(dotIdx);
         }
         myTargetDirectory = file.getContainingDirectory();
-        myFileCopy = true;
       }
       else {
         VirtualFile vFile = ((PsiDirectory)elements[0]).getVirtualFile();
@@ -144,7 +156,7 @@ public class CopyFilesOrDirectoriesDialog extends RefactoringDialog implements D
       getTargetDirectoryComponent().setText(targetPath);
     }
     validateButtons();
-    getRefactorAction().putValue(Action.NAME, CommonBundle.getOkButtonText());
+    setRefactorButtonText(CommonBundle.getOkButtonText());
   }
 
   private static boolean canBeOpenedInEditor(PsiElement[] elements) {
@@ -154,6 +166,11 @@ public class CopyFilesOrDirectoriesDialog extends RefactoringDialog implements D
       }
     }
     return false;
+  }
+
+  @Override
+  protected boolean isOpenInEditorEnabledByDefault() {
+    return myFileCopy;
   }
 
   private void selectNameWithoutExtension(int dotIdx) {
@@ -231,11 +248,10 @@ public class CopyFilesOrDirectoriesDialog extends RefactoringDialog implements D
       if (recentEntries != null) {
         getTargetDirectoryComponent().setHistory(recentEntries);
       }
-      final FileChooserDescriptor descriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor();
-      myTargetDirectoryField.addBrowseFolderListener(RefactoringBundle.message("select.target.directory"),
-                                                     RefactoringBundle.message("the.file.will.be.copied.to.this.directory"),
-                                                     myProject, descriptor,
-                                                     TextComponentAccessor.TEXT_FIELD_WITH_HISTORY_WHOLE_TEXT);
+      var descriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor()
+        .withTitle(RefactoringBundle.message("select.target.directory"))
+        .withDescription(RefactoringBundle.message("the.file.will.be.copied.to.this.directory"));
+      myTargetDirectoryField.addBrowseFolderListener(myProject, descriptor, TextComponentAccessors.TEXT_FIELD_WITH_HISTORY_WHOLE_TEXT);
       getTargetDirectoryComponent().addDocumentListener(new DocumentAdapter() {
         @Override
         protected void textChanged(@NotNull DocumentEvent e) {
@@ -245,7 +261,7 @@ public class CopyFilesOrDirectoriesDialog extends RefactoringDialog implements D
       formBuilder.addLabeledComponent(RefactoringBundle.message("copy.files.to.directory.label"), myTargetDirectoryField);
 
       String shortcutText =
-        KeymapUtil.getFirstKeyboardShortcutText(ActionManager.getInstance().getAction(IdeActions.ACTION_CODE_COMPLETION));
+        KeymapUtil.getFirstKeyboardShortcutText(ActionManager.getInstance().getAction(IdeActions  .ACTION_CODE_COMPLETION));
       formBuilder.addTooltip(RefactoringBundle.message("path.completion.shortcut", shortcutText));
     }
 
@@ -278,7 +294,7 @@ public class CopyFilesOrDirectoriesDialog extends RefactoringDialog implements D
     if (myShowNewNameField) {
       String newName = getNewName();
 
-      if (newName.length() == 0) {
+      if (newName.isEmpty()) {
         Messages.showErrorDialog(myProject, RefactoringBundle.message("no.new.name.specified"), RefactoringBundle.message("error.title"));
         return;
       }
@@ -298,7 +314,7 @@ public class CopyFilesOrDirectoriesDialog extends RefactoringDialog implements D
     if (myShowDirectoryField) {
       final String targetDirectoryName = getTargetDirectoryComponent().getText();
 
-      if (targetDirectoryName.length() == 0) {
+      if (targetDirectoryName.isEmpty()) {
         Messages.showErrorDialog(myProject, RefactoringBundle.message("no.target.directory.specified"),
                                  RefactoringBundle.message("error.title"));
         return;
@@ -341,12 +357,12 @@ public class CopyFilesOrDirectoriesDialog extends RefactoringDialog implements D
 
   @Override
   protected boolean areButtonsValid() {
-    if (myShowDirectoryField && getTargetDirectoryComponent().getText().length() == 0) {
+    if (myShowDirectoryField && getTargetDirectoryComponent().getText().isEmpty()) {
       return false;
     }
     if (myShowNewNameField) {
       String newName = getNewName();
-      if (newName.length() == 0 || myFileCopy && !PathUtilRt.isValidFileName(newName, false)) {
+      if (newName.isEmpty() || myFileCopy && !PathUtilRt.isValidFileName(newName, false)) {
         return false;
       }
     }

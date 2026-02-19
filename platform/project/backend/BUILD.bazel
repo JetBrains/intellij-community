@@ -1,0 +1,52 @@
+### auto-generated section `build intellij.platform.project.backend` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "backend_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "backend",
+  module_name = "intellij.platform.project.backend",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":backend_resources"],
+  deps = [
+    "//platform/util",
+    "@lib//:kotlin-stdlib",
+    "//platform/project/shared:project",
+    "//platform/core-api:core",
+    "//platform/kernel/rpc.backend",
+    "//platform/projectModel-api:projectModel",
+    "//platform/kernel/backend",
+    "//platform/ide-core",
+    "//platform/platform-api:ide",
+    "//platform/analysis-api:analysis",
+    "//platform/platform-impl/rpc",
+  ],
+  runtime_deps = ["//platform/backend"]
+)
+
+jvm_library(
+  name = "backend_test_lib",
+  module_name = "intellij.platform.project.backend",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    ":backend",
+    "//platform/backend:backend_test_lib",
+    "//platform/util:util_test_lib",
+    "//platform/project/shared:project_test_lib",
+    "//platform/core-api:core_test_lib",
+    "//platform/kernel/rpc.backend:rpc.backend_test_lib",
+    "//platform/projectModel-api:projectModel_test_lib",
+    "//platform/kernel/backend:backend_test_lib",
+    "//platform/ide-core:ide-core_test_lib",
+    "//platform/platform-api:ide_test_lib",
+    "//platform/analysis-api:analysis_test_lib",
+    "//platform/platform-impl/rpc:rpc_test_lib",
+  ]
+)
+### auto-generated section `build intellij.platform.project.backend` end

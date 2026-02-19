@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
 import com.intellij.openapi.util.NlsContexts;
@@ -11,7 +11,9 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.border.Border;
 import javax.swing.border.EmptyBorder;
 import javax.swing.border.TitledBorder;
-import java.awt.*;
+import java.awt.Color;
+import java.awt.Font;
+import java.awt.Insets;
 
 import static com.intellij.openapi.util.registry.Registry.intValue;
 
@@ -42,18 +44,15 @@ public final class IdeBorderFactory {
     return new SideBorder(color, borders);
   }
 
-  @NotNull
-  public static RoundedLineBorder createRoundedBorder() {
+  public static @NotNull RoundedLineBorder createRoundedBorder() {
     return createRoundedBorder(BORDER_ROUNDNESS);
   }
 
-  @NotNull
-  public static RoundedLineBorder createRoundedBorder(int arcSize) {
+  public static @NotNull RoundedLineBorder createRoundedBorder(int arcSize) {
     return new RoundedLineBorder(getBorderColor(), arcSize);
   }
 
-  @NotNull
-  public static RoundedLineBorder createRoundedBorder(int arcSize, final int thickness) {
+  public static @NotNull RoundedLineBorder createRoundedBorder(int arcSize, final int thickness) {
     return new RoundedLineBorder(getBorderColor(), arcSize, thickness);
   }
 
@@ -67,14 +66,6 @@ public final class IdeBorderFactory {
   @Deprecated
   public static Border createEmptyBorder() {
     return JBUI.Borders.empty();
-  }
-
-  /**
-   * @deprecated use {@link JBUI.Borders#empty(int)}
-   */
-  @Deprecated
-  public static Border createEmptyBorder(int thickness) {
-    return JBUI.Borders.empty(thickness);
   }
 
   /**

@@ -15,11 +15,17 @@
  */
 package com.jetbrains.python.codeInsight.completion;
 
-import com.intellij.codeInsight.completion.*;
+import com.intellij.codeInsight.completion.CompletionContributor;
+import com.intellij.codeInsight.completion.CompletionInitializationContext;
+import com.intellij.codeInsight.completion.CompletionParameters;
+import com.intellij.codeInsight.completion.CompletionProvider;
+import com.intellij.codeInsight.completion.CompletionResultSet;
+import com.intellij.codeInsight.completion.CompletionType;
 import com.intellij.codeInsight.lookup.AutoCompletionPolicy;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiNamedElement;
@@ -44,7 +50,7 @@ import static com.intellij.patterns.StandardPatterns.or;
 /**
  * User : ktisha
  */
-public class PyDocstringCompletionContributor extends CompletionContributor {
+public final class PyDocstringCompletionContributor extends CompletionContributor implements DumbAware {
   public PyDocstringCompletionContributor() {
     extend(CompletionType.BASIC,
            or(psiElement().withParent(DocStringTagCompletionContributor.DOCSTRING_PATTERN), psiComment()),
@@ -115,7 +121,7 @@ public class PyDocstringCompletionContributor extends CompletionContributor {
     }
     final String text = file.getText();
     StringBuilder prefixBuilder = new StringBuilder();
-    while(offset > 0 && Character.isLetterOrDigit(text.charAt(offset))) {
+    while (offset > 0 && Character.isLetterOrDigit(text.charAt(offset))) {
       prefixBuilder.insert(0, text.charAt(offset));
       offset--;
     }

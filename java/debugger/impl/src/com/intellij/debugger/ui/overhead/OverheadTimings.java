@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.ui.overhead;
 
 import com.intellij.debugger.engine.DebugProcess;
@@ -9,7 +9,11 @@ import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.EventListener;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class OverheadTimings {
@@ -71,8 +75,7 @@ public class OverheadTimings {
     timings.myEventDispatcher.getMulticaster().timingAdded(producer);
   }
 
-  @NotNull
-  private static OverheadTimings getTimings(DebugProcess process) {
+  private static @NotNull OverheadTimings getTimings(DebugProcess process) {
     OverheadTimings data = process.getUserData(KEY);
     if (data == null) {
       data = new OverheadTimings();

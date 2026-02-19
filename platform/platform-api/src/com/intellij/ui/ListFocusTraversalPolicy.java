@@ -1,21 +1,22 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
-import gnu.trove.TObjectIntHashMap;
+import com.intellij.util.containers.ObjectIntHashMap;
+import com.intellij.util.containers.ObjectIntMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.LayoutFocusTraversalPolicy;
+import java.awt.Component;
+import java.awt.Container;
 import java.util.List;
 
 /**
  * Policy which defines explicit focus component cycle.
  */
-public class ListFocusTraversalPolicy extends LayoutFocusTraversalPolicy {
-
+public final class ListFocusTraversalPolicy extends LayoutFocusTraversalPolicy {
   private final Component[] myComponents;
-  private final TObjectIntHashMap<Component> myComponentToIndex;
+  private final ObjectIntMap<Component> myComponentToIndex;
 
   public ListFocusTraversalPolicy(@NotNull List<? extends Component> components) {
     myComponents = components.toArray(new Component[0]);
@@ -42,7 +43,8 @@ public class ListFocusTraversalPolicy extends LayoutFocusTraversalPolicy {
     if (!myComponentToIndex.containsKey(aComponent)) {
       return null;
     }
-    return getNextComponent(myComponentToIndex.get(aComponent) + 1);
+    int i = myComponentToIndex.get(aComponent);
+    return getNextComponent((i==-1?0:i) + 1);
   }
 
   @Override
@@ -50,11 +52,11 @@ public class ListFocusTraversalPolicy extends LayoutFocusTraversalPolicy {
     if (!myComponentToIndex.containsKey(aComponent)) {
       return null;
     }
-    return getPreviousComponent(myComponentToIndex.get(aComponent) - 1);
+    int i = myComponentToIndex.get(aComponent);
+    return getPreviousComponent((i==-1 ?0:i) - 1);
   }
 
-  @Nullable
-  private Component getNextComponent(int startIndex) {
+  private @Nullable Component getNextComponent(int startIndex) {
     for (int index = startIndex; index < myComponents.length; index++) {
       Component result = myComponents[index];
       if (accept(result)) {
@@ -70,8 +72,7 @@ public class ListFocusTraversalPolicy extends LayoutFocusTraversalPolicy {
     return null;
   }
 
-  @Nullable
-  private Component getPreviousComponent(int startIndex) {
+  private @Nullable Component getPreviousComponent(int startIndex) {
     for (int index = startIndex; index >= 0; index--) {
       Component result = myComponents[index];
       if (accept(result)) {
@@ -87,15 +88,13 @@ public class ListFocusTraversalPolicy extends LayoutFocusTraversalPolicy {
     return null;
   }
 
-  @NotNull
-  private static <X> TObjectIntHashMap<X> indexMap(X @NotNull [] array) {
-    TObjectIntHashMap<X> map = new TObjectIntHashMap<>(array.length);
+  private static @NotNull <X> ObjectIntMap<X> indexMap(X @NotNull [] array) {
+    ObjectIntMap<X> map = new ObjectIntHashMap<>(array.length);
     for (X x : array) {
-      if (!map.contains(x)) {
+      if (!map.containsKey(x)) {
         map.put(x, map.size());
       }
     }
-    map.compact();
     return map;
   }
 }

@@ -1,11 +1,17 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.tree.java;
 
 import com.intellij.lang.ASTNode;
-import com.intellij.psi.*;
+import com.intellij.psi.GenericsUtil;
+import com.intellij.psi.JavaElementVisitor;
+import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiPrimitiveType;
+import com.intellij.psi.PsiSwitchExpression;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypes;
 import com.intellij.psi.impl.source.resolve.graphInference.InferenceSession;
 import com.intellij.psi.impl.source.resolve.graphInference.PsiPolyExpressionUtil;
-import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.impl.source.tree.JavaElementType;
 import com.intellij.psi.impl.source.tree.JavaSourceUtil;
 import com.intellij.psi.impl.source.tree.TreeElement;
@@ -26,13 +32,9 @@ public class PsiSwitchExpressionImpl extends PsiSwitchBlockImpl implements PsiSw
   }
 
   @Override
-  public PsiExpression getExpression() {
-    return (PsiExpression)findPsiChildByType(ElementType.EXPRESSION_BIT_SET);
-  }
-
-  @Override
   public PsiType getType() {
-    if (PsiPolyExpressionUtil.isPolyExpression(this) &&
+    if (PsiUtil.isLanguageLevel8OrHigher(this) &&
+        PsiPolyExpressionUtil.isPolyExpression(this) &&
         !MethodCandidateInfo.isOverloadCheck(PsiUtil.skipParenthesizedExprUp(getParent()))) {
       return InferenceSession.getTargetType(this);
     }
@@ -55,8 +57,8 @@ public class PsiSwitchExpressionImpl extends PsiSwitchBlockImpl implements PsiSw
 
     //Otherwise, if the type of each result expression is boolean or Boolean, 
     //an unboxing conversion (5.1.8) is applied to each result expression of type Boolean, and the switch expression has type boolean.
-    if (resultTypes.stream().allMatch(type -> PsiType.BOOLEAN.isAssignableFrom(type))) {
-      return PsiType.BOOLEAN;
+    if (ContainerUtil.and(resultTypes, type -> PsiTypes.booleanType().isAssignableFrom(type))) {
+      return PsiTypes.booleanType();
     }
 
     //Otherwise, if the type of each result expression is convertible to a numeric type (5.1.8), 
@@ -65,50 +67,45 @@ public class PsiSwitchExpressionImpl extends PsiSwitchBlockImpl implements PsiSw
     int maxRank = ArrayUtil.max(ranks);
     if (TypeConversionUtil.isNumericType(maxRank)) {
       if (maxRank == TypeConversionUtil.DOUBLE_RANK) {
-        return PsiType.DOUBLE;
+        return PsiTypes.doubleType();
       }
       if (maxRank == TypeConversionUtil.FLOAT_RANK) {
-        return PsiType.FLOAT;
+        return PsiTypes.floatType();
       }
       if (maxRank == TypeConversionUtil.LONG_RANK) {
-        return PsiType.LONG;
+        return PsiTypes.longType();
       }
 
-      if (isNumericPromotion(resultExpressions, ranks, PsiType.CHAR)) {
-        return PsiType.CHAR;
+      if (isNumericPromotion(resultExpressions, ranks, PsiTypes.charType())) {
+        return PsiTypes.charType();
       }
 
-      if (isNumericPromotion(resultExpressions, ranks, PsiType.SHORT)) {
-        return PsiType.SHORT;
+      if (isNumericPromotion(resultExpressions, ranks, PsiTypes.shortType())) {
+        return PsiTypes.shortType();
       }
 
-      if (isNumericPromotion(resultExpressions, ranks, PsiType.BYTE)) {
-        return PsiType.BYTE;
+      if (isNumericPromotion(resultExpressions, ranks, PsiTypes.byteType())) {
+        return PsiTypes.byteType();
       }
-      return PsiType.INT;
+      return PsiTypes.intType();
     }
 
     //Otherwise, boxing conversion (5.1.7) is applied to each result expression that has a primitive type, after which the type of the switch expression is the result of applying capture conversion (5.1.10) 
     // to the least upper bound (4.10.4) of the types of the result expressions.
-    PsiType leastUpperBound = PsiType.NULL;
+    PsiType leastUpperBound = PsiTypes.nullType();
     for (PsiType type : resultTypes) {
-      if (TypeConversionUtil.isNullType(type)) return PsiType.getJavaLangObject(getManager(), getResolveScope());
       if (TypeConversionUtil.isPrimitiveAndNotNull(type)) {
         type = ((PsiPrimitiveType)type).getBoxedType(this);
       }
-      if (TypeConversionUtil.isNullType(leastUpperBound)) {
-        leastUpperBound = type;
-      }
-      else {
-        leastUpperBound = GenericsUtil.getLeastUpperBound(type, leastUpperBound, getManager());
-      }
+      
+      leastUpperBound = GenericsUtil.getLeastUpperBound(type, leastUpperBound, getManager());
     }
     return leastUpperBound != null ? PsiUtil.captureToplevelWildcards(leastUpperBound, this) : null;
   }
 
-  private static boolean isNumericPromotion(List<PsiExpression> resultExpressions, int[] ranks, final PsiPrimitiveType type) {
+  private static boolean isNumericPromotion(List<PsiExpression> resultExpressions, int[] ranks, PsiPrimitiveType type) {
     return ArrayUtil.find(ranks, TypeConversionUtil.getTypeRank(type)) > -1 && 
-           resultExpressions.stream().allMatch(expression -> TypeConversionUtil.areTypesAssignmentCompatible(type, expression));
+           ContainerUtil.and(resultExpressions, expression -> TypeConversionUtil.areTypesAssignmentCompatible(type, expression));
   }
 
   @Override
@@ -117,7 +114,7 @@ public class PsiSwitchExpressionImpl extends PsiSwitchBlockImpl implements PsiSw
       ((JavaElementVisitor)visitor).visitSwitchExpression(this);
     }
     else {
-      super.accept(visitor);
+      visitor.visitElement(this);
     }
   }
 

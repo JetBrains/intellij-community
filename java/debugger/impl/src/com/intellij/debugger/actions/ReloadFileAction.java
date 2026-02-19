@@ -10,6 +10,8 @@ import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.compiler.CompilerManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.platform.debugger.impl.rpc.HotSwapSource;
+import com.intellij.xdebugger.impl.hotswap.HotSwapStatistics;
 import org.jetbrains.annotations.NotNull;
 
 public class ReloadFileAction extends CompileAction {
@@ -21,6 +23,7 @@ public class ReloadFileAction extends CompileAction {
       if (files.length > 0) {
         DebuggerSession session = DebuggerManagerEx.getInstanceEx(project).getContext().getDebuggerSession();
         if (session != null) {
+          HotSwapStatistics.logHotSwapCalled(project, HotSwapSource.RELOAD_FILE);
           HotSwapUI.getInstance(project).compileAndReload(session, files);
         }
       }

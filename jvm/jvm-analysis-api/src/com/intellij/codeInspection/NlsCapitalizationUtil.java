@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 import com.intellij.openapi.util.text.StringUtil;
@@ -7,13 +7,12 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-public class NlsCapitalizationUtil {
-
+public final class NlsCapitalizationUtil {
   public static boolean isCapitalizationSatisfied(String value, Nls.Capitalization capitalization) {
     if (StringUtil.isEmpty(value) || capitalization == Nls.Capitalization.NotSpecified) {
       return true;
     }
-    value = value.replace("&", "");
+
     return capitalization == Nls.Capitalization.Title
            ? StringUtil.wordsToBeginFromUpperCase(value).equals(value)
            : checkSentenceCapitalization(value);
@@ -24,7 +23,7 @@ public class NlsCapitalizationUtil {
     final int wordCount = words.size();
     if (wordCount == 0) return true;
 
-    if (Character.isLetter(words.get(0).charAt(0)) && !isCapitalizedWord(words.get(0))) return false;
+    if (Character.isLetter(words.getFirst().charAt(0)) && !isCapitalizedWord(words.getFirst())) return false;
     if (wordCount == 1) return true;
 
     int capitalized = 1;
@@ -50,8 +49,7 @@ public class NlsCapitalizationUtil {
     return !word.isEmpty() && Character.isLetter(word.charAt(0)) && Character.isUpperCase(word.charAt(0));
   }
 
-  @NotNull
-  public static String fixValue(String string, Nls.Capitalization capitalization) {
+  public static @NotNull String fixValue(String string, Nls.Capitalization capitalization) {
     return capitalization == Nls.Capitalization.Title
            ? StringUtil.wordsToBeginFromUpperCase(string)
            : StringUtil.capitalize(StringUtil.wordsToBeginFromLowerCase(string));

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.uiDesigner.propertyInspector.properties;
 
 import com.intellij.uiDesigner.XmlWriter;
@@ -12,13 +12,9 @@ import com.intellij.uiDesigner.propertyInspector.renderers.InsetsPropertyRendere
 import com.intellij.uiDesigner.radComponents.RadComponent;
 import org.jetbrains.annotations.NotNull;
 
-import java.awt.*;
+import java.awt.Insets;
 import java.lang.reflect.Method;
 
-/**
- * @author Anton Katilin
- * @author Vladimir Kondratyev
- */
 public final class IntroInsetsProperty extends IntrospectedProperty<Insets> {
   private final Property[] myChildren;
   private final InsetsPropertyRenderer myRenderer;
@@ -47,8 +43,7 @@ public final class IntroInsetsProperty extends IntrospectedProperty<Insets> {
   }
 
   @Override
-  @NotNull
-  public PropertyRenderer<Insets> getRenderer() {
+  public @NotNull PropertyRenderer<Insets> getRenderer() {
     return myRenderer;
   }
 

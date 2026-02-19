@@ -1,8 +1,12 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.uiDesigner.designSurface;
 
 import com.intellij.ide.palette.impl.PaletteToolWindowManager;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionGroup;
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.ActionPlaces;
+import com.intellij.openapi.actionSystem.ActionPopupMenu;
+import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.uiDesigner.FormEditingUtil;
 import com.intellij.uiDesigner.palette.ComponentItem;
@@ -10,32 +14,31 @@ import com.intellij.uiDesigner.propertyInspector.InplaceContext;
 import com.intellij.uiDesigner.radComponents.RadComponent;
 import com.intellij.uiDesigner.radComponents.RadRootContainer;
 import com.intellij.util.ui.UIUtil;
-import gnu.trove.TIntArrayList;
+import it.unimi.dsi.fastutil.ints.IntList;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JComponent;
+import javax.swing.SwingUtilities;
+import java.awt.Component;
+import java.awt.Cursor;
+import java.awt.Point;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 
-/**
- * @author Anton Katilin
- * @author Vladimir Kondratyev
- */
 public final class MainProcessor extends EventProcessor{
   private static final Logger LOG = Logger.getInstance(MainProcessor.class);
 
   private static final int DRAGGER_SIZE = 10;
 
   private EventProcessor myCurrentProcessor;
-  @NotNull private final InsertComponentProcessor myInsertComponentProcessor;
-  @NotNull private final GuiEditor myEditor;
+  private final @NotNull InsertComponentProcessor myInsertComponentProcessor;
+  private final @NotNull GuiEditor myEditor;
   private boolean myInsertFeedbackEnabled = true;
   private Point myLastMousePosition = new Point(0, 0);
 
-  public MainProcessor(@NotNull final GuiEditor editor){
+  public MainProcessor(final @NotNull GuiEditor editor){
     myEditor = editor;
     myInsertComponentProcessor = new InsertComponentProcessor(myEditor);
   }
@@ -60,7 +63,7 @@ public final class MainProcessor extends EventProcessor{
     else if (e.getID() == KeyEvent.KEY_TYPED && Character.isLetterOrDigit(e.getKeyChar()) &&
       (e.getModifiers() & (InputEvent.ALT_MASK | InputEvent.CTRL_MASK | InputEvent.META_MASK)) == 0) {
       final ArrayList<RadComponent> selection = FormEditingUtil.getAllSelectedComponents(myEditor);
-      if (selection.size() > 0) {
+      if (!selection.isEmpty()) {
         final RadComponent component = selection.get(0);
         final InplaceEditingLayer inplaceLayer = myEditor.getInplaceEditingLayer();
         inplaceLayer.startInplaceEditing(component, component.getDefaultInplaceProperty(),
@@ -306,7 +309,7 @@ public final class MainProcessor extends EventProcessor{
     else if (component instanceof RadRootContainer || e.isShiftDown()) {
       myCurrentProcessor = new GroupSelectionProcessor(myEditor, component);
     }
-    else if (!e.isShiftDown()) {
+    else {
       myCurrentProcessor = new DragSelectionProcessor(myEditor);
     }
 
@@ -347,7 +350,7 @@ public final class MainProcessor extends EventProcessor{
     myInsertFeedbackEnabled = enabled;
   }
 
-  public void startPasteProcessor(final ArrayList<RadComponent> componentsToPaste, final TIntArrayList xs, final TIntArrayList ys) {
+  public void startPasteProcessor(final ArrayList<RadComponent> componentsToPaste, final IntList xs, final IntList ys) {
     removeDragger();
     myEditor.hideIntentionHint();
     myCurrentProcessor = new PasteProcessor(myEditor, componentsToPaste, xs, ys);
@@ -356,7 +359,7 @@ public final class MainProcessor extends EventProcessor{
                                                         1, false));
   }
 
-  public void startInsertProcessor(@NotNull final ComponentItem componentToInsert, final ComponentDropLocation location) {
+  public void startInsertProcessor(final @NotNull ComponentItem componentToInsert, final ComponentDropLocation location) {
     removeDragger();
     myEditor.hideIntentionHint();
     myInsertComponentProcessor.setComponentToInsert(componentToInsert);

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.uiDesigner.radComponents;
 
@@ -10,12 +10,11 @@ import com.intellij.uiDesigner.palette.Palette;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JToolBar;
+import java.awt.FlowLayout;
+import java.awt.Point;
 
-/**
- * @author yole
- */
+
 public class RadToolBar extends RadContainer {
   public static class Factory extends RadComponentFactory {
     @Override
@@ -37,8 +36,8 @@ public class RadToolBar extends RadContainer {
     super(componentClass, id, palette);
   }
 
-  @Override @Nullable
-  protected RadLayoutManager createInitialLayoutManager() {
+  @Override
+  protected @Nullable RadLayoutManager createInitialLayoutManager() {
     return new RadToolBarLayoutManager();
   }
 
@@ -55,12 +54,12 @@ public class RadToolBar extends RadContainer {
   private class RadToolBarLayoutManager extends RadAbstractIndexedLayoutManager {
 
     @Override
-    @Nullable public String getName() {
+    public @Nullable String getName() {
       return null;
     }
 
-    @Override @NotNull
-    public ComponentDropLocation getDropLocation(RadContainer container, @Nullable final Point location) {
+    @Override
+    public @NotNull ComponentDropLocation getDropLocation(RadContainer container, final @Nullable Point location) {
       return new FlowDropLocation(RadToolBar.this, location, FlowLayout.LEFT, 0, 0);
     }
   }

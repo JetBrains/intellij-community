@@ -1,41 +1,43 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.uast.java
 
 import com.intellij.psi.PsiAnnotation
 import com.intellij.psi.PsiClass
 import com.intellij.psi.ResolveResult
-import org.jetbrains.uast.*
+import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.uast.UAnchorOwner
+import org.jetbrains.uast.UAnnotation
+import org.jetbrains.uast.UAnnotationEx
+import org.jetbrains.uast.UElement
+import org.jetbrains.uast.UExpression
+import org.jetbrains.uast.UIdentifier
+import org.jetbrains.uast.UMultiResolvable
+import org.jetbrains.uast.UNamedExpression
+import org.jetbrains.uast.UastEmptyExpression
+import org.jetbrains.uast.UastFacade
+import org.jetbrains.uast.UastLazyPart
+import org.jetbrains.uast.getOrBuild
 import org.jetbrains.uast.java.expressions.JavaUNamedExpression
 
+@ApiStatus.Internal
 class JavaUAnnotation(
   override val sourcePsi: PsiAnnotation,
   givenParent: UElement?
 ) : JavaAbstractUElement(givenParent), UAnnotationEx, UAnchorOwner, UMultiResolvable {
+
+  private val attributeValuesPart = UastLazyPart<List<UNamedExpression>>()
 
   override val javaPsi: PsiAnnotation = sourcePsi
 
   override val qualifiedName: String?
     get() = sourcePsi.qualifiedName
 
-  override val attributeValues: List<UNamedExpression> by lz {
-    val attributes = sourcePsi.parameterList.attributes
+  override val attributeValues: List<UNamedExpression>
+    get() = attributeValuesPart.getOrBuild {
+      val attributes = sourcePsi.parameterList.attributes
 
-    attributes.map { attribute -> JavaUNamedExpression(attribute, this) }
-  }
+      attributes.map { attribute -> JavaUNamedExpression(attribute, this) }
+    }
 
   override val uastAnchor: UIdentifier?
     get() = sourcePsi.nameReferenceElement?.referenceNameElement?.let { UIdentifier(it, this) }

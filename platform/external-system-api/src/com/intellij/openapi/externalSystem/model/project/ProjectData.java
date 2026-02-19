@@ -1,8 +1,9 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.model.project;
 
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.serialization.PropertyMapping;
 import org.jetbrains.annotations.NotNull;
@@ -10,27 +11,14 @@ import org.jetbrains.annotations.Nullable;
 
 // cannot be final because of ModuleModelDataServiceTest - mock is created for class
 public class ProjectData extends AbstractNamedData implements ExternalConfigPathAware, Identifiable {
-  @NotNull
-  private final String linkedExternalProjectPath;
+  private final @NotNull String linkedExternalProjectPath;
 
-  @NotNull
-  private String ideProjectFileDirectoryPath;
-  @Nullable
-  private String description;
+  private @NotNull String ideProjectFileDirectoryPath;
+  private @Nullable String description;
 
   private String group;
   private String version;
   private String ideGrouping;
-
-  @Deprecated
-  public ProjectData(@NotNull ProjectSystemId owner,
-                     @NotNull String ideProjectFileDirectoryPath,
-                     @NotNull String linkedExternalProjectPath) {
-    super(owner, "unnamed");
-
-    this.linkedExternalProjectPath = ExternalSystemApiUtil.toCanonicalPath(linkedExternalProjectPath);
-    this.ideProjectFileDirectoryPath = ExternalSystemApiUtil.toCanonicalPath(ideProjectFileDirectoryPath);
-  }
 
   @PropertyMapping({"owner", "externalName", "ideProjectFileDirectoryPath", "linkedExternalProjectPath"})
   public ProjectData(@NotNull ProjectSystemId owner,
@@ -43,15 +31,7 @@ public class ProjectData extends AbstractNamedData implements ExternalConfigPath
     this.ideProjectFileDirectoryPath = ExternalSystemApiUtil.toCanonicalPath(ideProjectFileDirectoryPath);
   }
 
-  @Deprecated
-  @Override
-  public void setName(@NotNull String name) {
-    super.setExternalName(name);
-    super.setInternalName(name);
-  }
-
-  @NotNull
-  public String getIdeProjectFileDirectoryPath() {
+  public @NotNull String getIdeProjectFileDirectoryPath() {
     return ideProjectFileDirectoryPath;
   }
 
@@ -60,13 +40,11 @@ public class ProjectData extends AbstractNamedData implements ExternalConfigPath
   }
 
   @Override
-  @NotNull
-  public String getLinkedExternalProjectPath() {
+  public @NotNull String getLinkedExternalProjectPath() {
     return linkedExternalProjectPath;
   }
 
-  @Nullable
-  public String getIdeGrouping() {
+  public @Nullable String getIdeGrouping() {
     return ideGrouping;
   }
 
@@ -99,9 +77,8 @@ public class ProjectData extends AbstractNamedData implements ExternalConfigPath
     return String.format("%s project '%s'", StringUtil.toLowerCase(getOwner().toString()), getExternalName());
   }
 
-  @NotNull
   @Override
-  public String getId() {
+  public @NotNull String getId() {
     return "";
   }
 
@@ -121,8 +98,7 @@ public class ProjectData extends AbstractNamedData implements ExternalConfigPath
     this.version = version;
   }
 
-  @Nullable
-  public String getDescription() {
+  public @Nullable @NlsSafe String getDescription() {
     return description;
   }
 

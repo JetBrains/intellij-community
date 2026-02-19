@@ -17,11 +17,11 @@ package com.intellij.java.codeInsight.actions;
 
 import com.intellij.JavaTestUtil;
 import com.intellij.application.options.CodeStyle;
+import com.intellij.application.options.codeStyle.excludedFiles.NamedScopeDescriptor;
 import com.intellij.codeInsight.actions.FileInEditorProcessor;
-import com.intellij.codeInsight.actions.VcsFacade;
 import com.intellij.codeInsight.actions.LayoutCodeOptions;
 import com.intellij.codeInsight.actions.ReformatCodeRunOptions;
-import com.intellij.formatting.fileSet.NamedScopeDescriptor;
+import com.intellij.codeInsight.actions.VcsFacade;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.editor.Document;
 import com.intellij.psi.PsiFile;
@@ -29,7 +29,9 @@ import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.testFramework.fixtures.BasePlatformTestCase;
 
-import static com.intellij.codeInsight.actions.TextRangeType.*;
+import static com.intellij.codeInsight.actions.TextRangeType.SELECTED_TEXT;
+import static com.intellij.codeInsight.actions.TextRangeType.VCS_CHANGED_TEXT;
+import static com.intellij.codeInsight.actions.TextRangeType.WHOLE_FILE;
 
 public class ReformatCodeActionInEditorTest extends BasePlatformTestCase {
 
@@ -115,7 +117,8 @@ public class ReformatCodeActionInEditorTest extends BasePlatformTestCase {
     doTest(new ReformatCodeRunOptions(VCS_CHANGED_TEXT).setOptimizeImports(true));
   }
 
-  public void testFormatOptimizeRearrangeVcsChanges() {
+  // Excluded because of IDEA-229587
+  public void _testFormatOptimizeRearrangeVcsChanges() {
     doTest(new ReformatCodeRunOptions(VCS_CHANGED_TEXT).setOptimizeImports(true).setRearrangeCode(true));
   }
   
@@ -128,7 +131,8 @@ public class ReformatCodeActionInEditorTest extends BasePlatformTestCase {
     doTest(new ReformatCodeRunOptions(SELECTED_TEXT));
   }
 
-  public void testWrapParamList() {
+  // Excluded because of IDEA-229587
+  public void _testWrapParamList() {
     CodeStyleSettings temp = CodeStyle.createTestSettings();
     CommonCodeStyleSettings javaSettings = temp.getCommonSettings(JavaLanguage.INSTANCE);
     javaSettings.KEEP_LINE_BREAKS = false;
@@ -143,5 +147,31 @@ public class ReformatCodeActionInEditorTest extends BasePlatformTestCase {
     descriptor.setPattern("file:*.java");
     temp.getExcludedFiles().addDescriptor(descriptor);
     CodeStyle.doWithTemporarySettings(getProject(), temp, () -> doTest(new ReformatCodeRunOptions(WHOLE_FILE).setOptimizeImports(true)));
+  }
+
+  public void testReformatWithOptimizeImportMustNotBeCanceledUnexpectedly() {
+    CodeStyleSettings temp = CodeStyle.createTestSettings();
+    CodeStyle.doWithTemporarySettings(getProject(), temp, () -> {
+      String text = """
+        class X {
+            void f(Runnable dddd) {
+                f(()->{});vvdds<caret>
+            }
+        }""";
+      myFixture.configureByText("x.java", text);
+      myFixture.type("abc");
+
+      LayoutCodeOptions options = new ReformatCodeRunOptions(WHOLE_FILE).setOptimizeImports(true);
+      FileInEditorProcessor processor = new FileInEditorProcessor(myFixture.getFile(), myFixture.getEditor(), options);
+      processor.processCode();
+      myFixture.checkResult("""
+                              class X {
+                                  void f(Runnable dddd) {
+                                      f(() -> {
+                                      });
+                                      vvddsabc
+                                  }
+                              }""");
+    });
   }
 }

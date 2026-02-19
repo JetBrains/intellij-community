@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.console;
 
 import com.intellij.codeInsight.hint.TooltipController;
@@ -16,14 +16,21 @@ import com.intellij.ui.JreHiDpiUtil;
 import com.intellij.ui.awt.RelativePoint;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JComponent;
+import java.awt.Cursor;
+import java.awt.Dimension;
+import java.awt.Font;
+import java.awt.FontMetrics;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.Rectangle;
+import java.awt.RenderingHints;
 import java.awt.event.ComponentEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseMotionListener;
 
-class ConsoleGutterComponent extends JComponent implements MouseMotionListener {
+final class ConsoleGutterComponent extends JComponent implements MouseMotionListener {
   private static final TooltipGroup TOOLTIP_GROUP = new TooltipGroup("CONSOLE_GUTTER_TOOLTIP_GROUP", 0);
 
   private final EditorImpl editor;
@@ -216,7 +223,7 @@ class ConsoleGutterComponent extends JComponent implements MouseMotionListener {
                                         ((EditorMarkupModel)editor.getMarkupModel()).getErrorStripTooltipRendererProvider().calcTooltipRenderer(toolTip),
                                         false,
                                         TOOLTIP_GROUP,
-                                        new HintHint(this, e.getPoint()).setAwtTooltip(true));
+                                        new HintHint(this, e.getPoint()).setAwtTooltip(true).setStatus(HintHint.Status.Info));
     }
   }
 

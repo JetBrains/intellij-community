@@ -1,8 +1,13 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.sdk;
 
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.module.Module;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.TypeAdapter;
+import com.google.gson.stream.JsonReader;
+import com.google.gson.stream.JsonToken;
+import com.google.gson.stream.JsonWriter;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkAdditionalData;
 import com.intellij.openapi.util.JDOMExternalizer;
@@ -13,92 +18,181 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerContainer;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
+import com.jetbrains.python.PythonPluginDisposable;
+import com.jetbrains.python.sdk.flavors.PyFlavorAndData;
+import com.jetbrains.python.sdk.flavors.PyFlavorData;
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
 import org.jdom.Element;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.IOException;
+import java.nio.file.Path;
 import java.util.Collections;
-import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.UUID;
 
+/**
+ * Python-specific stuff each SDK must have. Use ``PySdkExt.getOrCreateAdditionalData`` to obtain it.
+ */
+// TODO: Use new annotation-based API to save data instead of legacy manual save
 public class PythonSdkAdditionalData implements SdkAdditionalData {
-  @NonNls private static final String PATHS_ADDED_BY_USER_ROOT = "PATHS_ADDED_BY_USER_ROOT";
-  @NonNls private static final String PATH_ADDED_BY_USER = "PATH_ADDED_BY_USER";
-  @NonNls private static final String PATHS_REMOVED_BY_USER_ROOT = "PATHS_REMOVED_BY_USER_ROOT";
-  @NonNls private static final String PATH_REMOVED_BY_USER = "PATH_REMOVED_BY_USER";
-  @NonNls private static final String ASSOCIATED_PROJECT_PATH = "ASSOCIATED_PROJECT_PATH";
+  @ApiStatus.Internal
+  public static final @NonNls String REQUIREMENT_TXT_DEFAULT = "requirements.txt";
+
+  private static final @NonNls String PATHS_ADDED_BY_USER_ROOT = "PATHS_ADDED_BY_USER_ROOT";
+  private static final @NonNls String PATH_ADDED_BY_USER = "PATH_ADDED_BY_USER";
+  private static final @NonNls String PATHS_REMOVED_BY_USER_ROOT = "PATHS_REMOVED_BY_USER_ROOT";
+  private static final @NonNls String PATH_REMOVED_BY_USER = "PATH_REMOVED_BY_USER";
+  private static final @NonNls String PATHS_TO_TRANSFER_ROOT = "PATHS_TO_TRANSFER_ROOT";
+  private static final @NonNls String PATH_TO_TRANSFER = "PATH_TO_TRANSFER";
+  private static final @NonNls String ASSOCIATED_PROJECT_PATH = "ASSOCIATED_PROJECT_PATH";
+  private static final @NonNls String ASSOCIATED_REQUIRED_TXT_PATH = "ASSOCIATED_REQUIRED_TXT_PATH";
+  private static final @NonNls String SDK_UUID_FIELD_NAME = "SDK_UUID";
+
+  private static final @NonNls String FLAVOR_ID = "FLAVOR_ID";
+  private static final @NonNls String FLAVOR_DATA = "FLAVOR_DATA";
 
   private final VirtualFilePointerContainer myAddedPaths;
   private final VirtualFilePointerContainer myExcludedPaths;
+  private final VirtualFilePointerContainer myPathsToTransfer;
+  private @NotNull UUID myUUID = UUID.randomUUID();
 
-  private final PythonSdkFlavor myFlavor;
+  private PyFlavorAndData<?, ?> myFlavorAndData;
   private String myAssociatedModulePath;
+  private Path myRequiredTxtPath;
 
-  public PythonSdkAdditionalData(@Nullable PythonSdkFlavor flavor) {
-    myFlavor = flavor;
-    myAddedPaths = VirtualFilePointerManager.getInstance().createContainer(ApplicationManager.getApplication());
-    myExcludedPaths = VirtualFilePointerManager.getInstance().createContainer(ApplicationManager.getApplication());
+  private final Gson myGson = new GsonBuilder().registerTypeAdapter(Path.class, new PathSerializer()).create();
+
+
+  public PythonSdkAdditionalData() {
+    this((PyFlavorAndData<?, ?>)null);
+  }
+
+  /**
+   * @deprecated Use constructor with data. This ctor only supports flavours with empty data
+   */
+  @SuppressWarnings({"rawtypes", "unchecked"})
+  @Deprecated(forRemoval = true)
+  public PythonSdkAdditionalData(@Nullable PythonSdkFlavor<?> flavor) {
+    this(flavor == null
+         ? PyFlavorAndData.getUNKNOWN_FLAVOR_DATA()
+         : new PyFlavorAndData(PyFlavorData.Empty.INSTANCE, ensureSupportsEmptyData(flavor)));
+  }
+
+  private static @NotNull PythonSdkFlavor<?> ensureSupportsEmptyData(@NotNull PythonSdkFlavor<?> flavor) {
+    if (!flavor.supportsEmptyData()) {
+      throw new IllegalArgumentException(flavor.getName() + " can't be created without additional data");
+    }
+    return flavor;
+  }
+
+  public PythonSdkAdditionalData(@Nullable PyFlavorAndData<?, ?> flavorAndData) {
+    myFlavorAndData = (flavorAndData != null ? flavorAndData : PyFlavorAndData.getUNKNOWN_FLAVOR_DATA());
+    myAddedPaths = VirtualFilePointerManager.getInstance().createContainer(PythonPluginDisposable.getInstance());
+    myExcludedPaths = VirtualFilePointerManager.getInstance().createContainer(PythonPluginDisposable.getInstance());
+    myPathsToTransfer = VirtualFilePointerManager.getInstance().createContainer(PythonPluginDisposable.getInstance());
   }
 
   protected PythonSdkAdditionalData(@NotNull PythonSdkAdditionalData from) {
-    myFlavor = from.getFlavor();
-    myAddedPaths = from.myAddedPaths.clone(ApplicationManager.getApplication());
-    myExcludedPaths = from.myExcludedPaths.clone(ApplicationManager.getApplication());
+    myAddedPaths = from.myAddedPaths.clone(PythonPluginDisposable.getInstance());
+    myExcludedPaths = from.myExcludedPaths.clone(PythonPluginDisposable.getInstance());
+    myPathsToTransfer = from.myPathsToTransfer.clone(PythonPluginDisposable.getInstance());
     myAssociatedModulePath = from.myAssociatedModulePath;
+    myRequiredTxtPath = from.myRequiredTxtPath;
+    myFlavorAndData = from.myFlavorAndData;
+    myUUID = from.myUUID;
   }
 
-  @NotNull
-  public PythonSdkAdditionalData copy() {
+  /**
+   * Persistent UUID of SDK.  Could be used to point to "this particular" SDK.
+   */
+  @ApiStatus.Internal
+  public final @NotNull UUID getUUID() {
+    return myUUID;
+  }
+
+  public @NotNull PythonSdkAdditionalData copy() {
     return new PythonSdkAdditionalData(this);
   }
 
-  public void setAddedPathsFromVirtualFiles(@NotNull Set<VirtualFile> addedPaths) {
-    myAddedPaths.killAll();
+  public final void setAddedPathsFromVirtualFiles(@NotNull Set<VirtualFile> addedPaths) {
+    myAddedPaths.clear();
     for (VirtualFile file : addedPaths) {
       myAddedPaths.add(file);
     }
   }
 
-  public void setExcludedPathsFromVirtualFiles(@NotNull Set<VirtualFile> addedPaths) {
-    myExcludedPaths.killAll();
+  @ApiStatus.Internal
+  public final void setExcludedPathsFromVirtualFiles(@NotNull Set<VirtualFile> addedPaths) {
+    myExcludedPaths.clear();
     for (VirtualFile file : addedPaths) {
       myExcludedPaths.add(file);
     }
   }
 
-  public String getAssociatedModulePath() {
-    return myAssociatedModulePath;
-  }
-
-  public void resetAssociatedModulePath() {
-    setAssociatedModulePath(null);
-  }
-
-  public void setAssociatedModulePath(@Nullable String associatedModulePath) {
-    myAssociatedModulePath = associatedModulePath;
-  }
-
-  public void associateWithModule(@NotNull Module module) {
-    final String path = BasePySdkExtKt.getBasePath(module);
-    if (path != null) {
-      associateWithModulePath(path);
+  @ApiStatus.Internal
+  public final void setPathsToTransferFromVirtualFiles(@NotNull Set<VirtualFile> addedPaths) {
+    myPathsToTransfer.clear();
+    for (VirtualFile file : addedPaths) {
+      myPathsToTransfer.add(file);
     }
   }
 
-  public void associateWithModulePath(@NotNull String modulePath) {
-    myAssociatedModulePath = FileUtil.toSystemIndependentName(modulePath);
+  @ApiStatus.Internal
+  public final String getAssociatedModulePath() {
+    return myAssociatedModulePath;
   }
 
-  public void save(@NotNull final Element rootElement) {
+  /**
+   * Be sure to use {@link com.intellij.openapi.projectRoots.SdkModificator} to save changes
+   */
+  @ApiStatus.Internal
+  public final void setAssociatedModulePath(@Nullable String modulePath) {
+    myAssociatedModulePath = modulePath == null ? null : FileUtil.toSystemIndependentName(modulePath);
+  }
+
+  /**
+   * ONLY FOR INTERNAL USE!
+   * For external usage use {@link com.jetbrains.python.packaging.requirements.PyRequirementTxtUtils#findRequirementsTxt(Sdk)}
+   * Be sure to use {@link com.intellij.openapi.projectRoots.SdkModificator} to save changes
+   */
+  @ApiStatus.Internal
+  public final Path getRequiredTxtPath() {
+    return myRequiredTxtPath;
+  }
+
+  /**
+   * ONLY FOR INTERNAL USE!
+   * For external usage use {@link com.jetbrains.python.packaging.requirements.PyRequirementTxtUtils#saveRequirementsTxtPath(Project, Sdk, Path)}
+   * Be sure to use {@link com.intellij.openapi.projectRoots.SdkModificator} to save changes
+   */
+  @ApiStatus.Internal
+  public final void setRequiredTxtPath(@Nullable Path requiredTxtPath) {
+    boolean isNotDefault = requiredTxtPath == null;
+    myRequiredTxtPath = isNotDefault ? null : requiredTxtPath;
+  }
+
+  public void save(final @NotNull Element rootElement) {
     savePaths(rootElement, myAddedPaths, PATHS_ADDED_BY_USER_ROOT, PATH_ADDED_BY_USER);
     savePaths(rootElement, myExcludedPaths, PATHS_REMOVED_BY_USER_ROOT, PATH_REMOVED_BY_USER);
+    savePaths(rootElement, myPathsToTransfer, PATHS_TO_TRANSFER_ROOT, PATH_TO_TRANSFER);
 
     if (myAssociatedModulePath != null) {
       rootElement.setAttribute(ASSOCIATED_PROJECT_PATH, myAssociatedModulePath);
     }
+
+    if (myRequiredTxtPath != null) {
+      rootElement.setAttribute(ASSOCIATED_REQUIRED_TXT_PATH, myRequiredTxtPath.toString());
+    }
+
+    rootElement.setAttribute(SDK_UUID_FIELD_NAME, myUUID.toString());
+    JDOMExternalizer.write(rootElement, FLAVOR_ID, myFlavorAndData.getFlavor().getUniqueId());
+    JDOMExternalizer.write(rootElement, FLAVOR_DATA, myGson.toJson(myFlavorAndData.getData(), myFlavorAndData.getDataClass()));
   }
 
   private static void savePaths(Element rootElement, VirtualFilePointerContainer paths, String root, String element) {
@@ -109,24 +203,60 @@ public class PythonSdkAdditionalData implements SdkAdditionalData {
     }
   }
 
-  @Nullable
-  public PythonSdkFlavor getFlavor() {
-    return myFlavor;
+  public final @NotNull PythonSdkFlavor<?> getFlavor() {
+    return myFlavorAndData.getFlavor();
   }
 
-  @NotNull
-  public static PythonSdkAdditionalData load(Sdk sdk, @Nullable Element element) {
-    final PythonSdkAdditionalData data = new PythonSdkAdditionalData(PythonSdkFlavor.getFlavor(sdk.getHomePath()));
+  @ApiStatus.Internal
+
+  public final @NotNull PyFlavorAndData<?, ?> getFlavorAndData() {
+    return myFlavorAndData;
+  }
+
+  @ApiStatus.Internal
+
+  public static @NotNull PythonSdkAdditionalData loadFromElement(@Nullable Element element) {
+    final PythonSdkAdditionalData data = new PythonSdkAdditionalData();
     data.load(element);
     return data;
   }
 
-  protected void load(@Nullable Element element) {
-    collectPaths(JDOMExternalizer.loadStringsList(element, PATHS_ADDED_BY_USER_ROOT, PATH_ADDED_BY_USER),myAddedPaths);
-    collectPaths(JDOMExternalizer.loadStringsList(element, PATHS_REMOVED_BY_USER_ROOT, PATH_REMOVED_BY_USER),myExcludedPaths);
+  public void load(@Nullable Element element) {
+    collectPaths(JDOMExternalizer.loadStringsList(element, PATHS_ADDED_BY_USER_ROOT, PATH_ADDED_BY_USER), myAddedPaths);
+    collectPaths(JDOMExternalizer.loadStringsList(element, PATHS_REMOVED_BY_USER_ROOT, PATH_REMOVED_BY_USER), myExcludedPaths);
+    collectPaths(JDOMExternalizer.loadStringsList(element, PATHS_TO_TRANSFER_ROOT, PATH_TO_TRANSFER), myPathsToTransfer);
     if (element != null) {
-      setAssociatedModulePath(element.getAttributeValue(ASSOCIATED_PROJECT_PATH));
+      myAssociatedModulePath = element.getAttributeValue(ASSOCIATED_PROJECT_PATH);
+
+      String storedRequiredTxtPath = element.getAttributeValue(ASSOCIATED_REQUIRED_TXT_PATH);
+      if (storedRequiredTxtPath != null) {
+        myRequiredTxtPath = Path.of(storedRequiredTxtPath);
+      }
+      else {
+        myRequiredTxtPath = null;
+      }
+
+      var uuidStr = element.getAttributeValue(SDK_UUID_FIELD_NAME);
+      if (uuidStr != null) {
+        myUUID = UUID.fromString(uuidStr);
+      }
+      var flavorId = JDOMExternalizer.readString(element, FLAVOR_ID);
+      if (flavorId != null) {
+        var flavorOpt = PythonSdkFlavor.getApplicableFlavors(true).stream().filter(f -> f.getUniqueId().equals(flavorId)).findFirst();
+        if (flavorOpt.isPresent()) {
+          setFlavorFromConfig(element, flavorOpt.get());
+        }
+        else {
+          myFlavorAndData = new PyFlavorAndData<>(PyFlavorData.Empty.INSTANCE, PythonSdkFlavor.UnknownFlavor.INSTANCE);
+        }
+      }
     }
+  }
+
+  @SuppressWarnings({"rawtypes", "unchecked"})
+  private void setFlavorFromConfig(@NotNull Element element, @NotNull PythonSdkFlavor<?> flavor) {
+    var flavorData = myGson.fromJson(JDOMExternalizer.readString(element, FLAVOR_DATA), flavor.getFlavorDataClass());
+    myFlavorAndData = new PyFlavorAndData(flavorData, flavor);
   }
 
   private static void collectPaths(@NotNull List<String> paths, VirtualFilePointerContainer container) {
@@ -138,18 +268,52 @@ public class PythonSdkAdditionalData implements SdkAdditionalData {
     }
   }
 
+  @ApiStatus.Internal
 
-  public Set<VirtualFile> getAddedPathFiles() {
+  public final Set<VirtualFile> getAddedPathFiles() {
     return getPathsAsVirtualFiles(myAddedPaths);
   }
 
-  public Set<VirtualFile> getExcludedPathFiles() {
+  @ApiStatus.Internal
+
+  public final Set<VirtualFile> getExcludedPathFiles() {
     return getPathsAsVirtualFiles(myExcludedPaths);
   }
 
+  /**
+   * @see com.jetbrains.python.sdk.PyTransferredSdkRootsKt#getPathsToTransfer(Sdk)
+   */
+
+  @ApiStatus.Internal
+  public final @NotNull Set<VirtualFile> getPathsToTransfer() {
+    return getPathsAsVirtualFiles(myPathsToTransfer);
+  }
+
   private static Set<VirtualFile> getPathsAsVirtualFiles(VirtualFilePointerContainer paths) {
-    Set<VirtualFile> ret = new HashSet<VirtualFile>();
+    Set<VirtualFile> ret = new LinkedHashSet<>();
     Collections.addAll(ret, paths.getFiles());
     return ret;
+  }
+
+  private static class PathSerializer extends TypeAdapter<@Nullable Path> {
+    @Override
+    public void write(JsonWriter out, @Nullable Path value) throws IOException {
+      if (value == null) {
+        out.nullValue();
+      }
+      else {
+        out.value(value.toString());
+      }
+    }
+
+    @Override
+    public @Nullable Path read(JsonReader in) throws IOException {
+      if (in.peek() == JsonToken.NULL) {
+        in.nextNull();
+        return null;
+      }
+
+      return Path.of(in.nextString());
+    }
   }
 }

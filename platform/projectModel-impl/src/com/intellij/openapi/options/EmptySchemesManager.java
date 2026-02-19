@@ -1,6 +1,10 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.options;
 
+import com.intellij.openapi.components.SettingsCategory;
+import com.intellij.openapi.extensions.PluginDescriptor;
+import kotlin.sequences.Sequence;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -9,10 +13,10 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
-public class EmptySchemesManager extends SchemeManager<Object> {
+@ApiStatus.Internal
+public final class EmptySchemesManager extends SchemeManager<Object> {
   @Override
-  @NotNull
-  public Collection<Object> loadSchemes() {
+  public @NotNull Collection<Object> loadSchemes() {
     return Collections.emptySet();
   }
 
@@ -21,12 +25,11 @@ public class EmptySchemesManager extends SchemeManager<Object> {
   }
 
   @Override
-  public void addScheme(@NotNull final Object scheme, final boolean replaceExisting) {
+  public void addScheme(final @NotNull Object scheme, final boolean replaceExisting) {
   }
 
   @Override
-  @NotNull
-  public List<Object> getAllSchemes() {
+  public @NotNull List<Object> getAllSchemes() {
     return Collections.emptyList();
   }
 
@@ -35,9 +38,8 @@ public class EmptySchemesManager extends SchemeManager<Object> {
     return null;
   }
 
-  @Nullable
   @Override
-  public String getCurrentSchemeName() {
+  public @Nullable String getCurrentSchemeName() {
     return null;
   }
 
@@ -47,14 +49,12 @@ public class EmptySchemesManager extends SchemeManager<Object> {
   }
 
   @Override
-  @NotNull
-  public Collection<String> getAllSchemeNames() {
+  public @NotNull Collection<String> getAllSchemeNames() {
     return Collections.emptySet();
   }
 
-  @NotNull
   @Override
-  public File getRootDirectory() {
+  public @NotNull File getRootDirectory() {
     //noinspection ConstantConditions
     return null;
   }
@@ -67,15 +67,36 @@ public class EmptySchemesManager extends SchemeManager<Object> {
   public void setCurrentSchemeName(@Nullable String s) {
   }
 
-  @Nullable
   @Override
-  public Scheme getActiveScheme() {
+  public @Nullable Scheme getActiveScheme() {
     return null;
   }
 
-  @Nullable
   @Override
-  public Object removeScheme(@NotNull String name) {
+  public @Nullable Object removeScheme(@NotNull String name) {
     return null;
+  }
+
+  @Override
+  public Object loadBundledScheme(@NotNull String resourceName, @Nullable Object requestor, @Nullable PluginDescriptor pluginDescriptor) {
+    return null;
+  }
+
+  @Override
+  public boolean isMetadataEditable(Object scheme) {
+    return true;
+  }
+
+  @Override
+  public void save() {
+  }
+
+  @Override
+  public @NotNull SettingsCategory getSettingsCategory() {
+    return SettingsCategory.OTHER;
+  }
+
+  @Override
+  public void loadBundledSchemes(@NotNull Sequence<? extends LoadBundleSchemeRequest<Object>> providers) {
   }
 }

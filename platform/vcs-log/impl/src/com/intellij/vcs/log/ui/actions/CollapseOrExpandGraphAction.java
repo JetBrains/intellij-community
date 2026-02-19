@@ -1,20 +1,7 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.ui.actions;
 
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.ProgressManager;
@@ -45,7 +32,7 @@ abstract class CollapseOrExpandGraphAction extends DumbAwareAction {
                                         @NotNull Supplier<String> linearBranchesDescription,
                                         @NotNull Supplier<String> mergesAction,
                                         @NotNull Supplier<String> mergesDescription) {
-    super(linearBranchesAction, linearBranchesDescription, null);
+    super(linearBranchesAction, linearBranchesDescription);
     myLinearBranchesAction = linearBranchesAction;
     myLinearBranchesDescription = linearBranchesDescription;
     myMergesAction = mergesAction;
@@ -55,8 +42,9 @@ abstract class CollapseOrExpandGraphAction extends DumbAwareAction {
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
     VcsLogUsageTriggerCollector.triggerUsage(e, this);
-
-    executeAction(e.getRequiredData(VcsLogInternalDataKeys.MAIN_UI));
+    MainVcsLogUi ui = e.getData(VcsLogInternalDataKeys.MAIN_UI);
+    if (ui == null || !ui.getDataPack().getVisibleGraph().getActionController().isActionSupported(getGraphAction())) return;
+    executeAction(ui);
   }
 
   @Override
@@ -68,8 +56,8 @@ abstract class CollapseOrExpandGraphAction extends DumbAwareAction {
     e.getPresentation().setVisible(visible);
     e.getPresentation().setEnabled(visible && !ui.getDataPack().isEmpty());
     if (visible) {
-      if (properties != null && properties.exists(MainVcsLogUiProperties.BEK_SORT_TYPE) &&
-          properties.get(MainVcsLogUiProperties.BEK_SORT_TYPE) == PermanentGraph.SortType.LinearBek) {
+      if (properties != null && properties.exists(MainVcsLogUiProperties.GRAPH_OPTIONS) &&
+          properties.get(MainVcsLogUiProperties.GRAPH_OPTIONS) == PermanentGraph.Options.LinearBek.INSTANCE) {
         e.getPresentation().setText(myMergesAction.get());
         e.getPresentation().setDescription(myMergesDescription.get());
       }
@@ -84,7 +72,9 @@ abstract class CollapseOrExpandGraphAction extends DumbAwareAction {
 
   protected abstract @NotNull GraphAction getGraphAction();
 
-  protected void performLongAction(@NotNull MainVcsLogUi logUi, @NotNull GraphAction graphAction, @NotNull @NlsContexts.ProgressTitle String title) {
+  protected void performLongAction(@NotNull MainVcsLogUi logUi,
+                                   @NotNull GraphAction graphAction,
+                                   @NotNull @NlsContexts.ProgressTitle String title) {
     VisiblePack dataPack = logUi.getDataPack();
     ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
       ActionController<Integer> actionController = dataPack.getVisibleGraph().getActionController();
@@ -98,5 +88,10 @@ abstract class CollapseOrExpandGraphAction extends DumbAwareAction {
         logUi.getTable().handleAnswer(answer);
       });
     }, title, false, null, logUi.getMainComponent());
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.EDT;
   }
 }

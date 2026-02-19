@@ -1,8 +1,3 @@
 PyFile:magic2.py
   PyEmptyExpression
-    PsiElement(Py:PERC)('%')
-    PsiElement(Py:IDENTIFIER)('alias_magic')
-    PsiWhiteSpace(' ')
-    PsiElement(Py:IDENTIFIER)('t')
-    PsiWhiteSpace(' ')
-    PsiElement(Py:IDENTIFIER)('timeit')
+    PsiElement(Py:MAGIC_COMMAND_LINE)('%alias_magic t timeit')

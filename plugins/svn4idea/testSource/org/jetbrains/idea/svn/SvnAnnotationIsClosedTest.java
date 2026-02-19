@@ -16,7 +16,10 @@ import java.io.IOException;
 import java.util.Objects;
 
 import static java.util.Collections.singletonList;
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 
 public class SvnAnnotationIsClosedTest extends SvnTestCase {
   private volatile boolean myIsClosed;
@@ -195,9 +198,9 @@ public class SvnAnnotationIsClosedTest extends SvnTestCase {
     final FileAnnotation annotation = createTestAnnotation(vcs.getAnnotationProvider(), file);
     annotation.setCloser(() -> {
       closer.run();
-      listener.unregisterAnnotation(file, annotation);
+      listener.unregisterAnnotation(annotation);
     });
-    listener.registerAnnotation(file, annotation);
+    listener.registerAnnotation(annotation);
   }
 
   private void assertRevision(@NotNull VirtualFile file, final long number) {

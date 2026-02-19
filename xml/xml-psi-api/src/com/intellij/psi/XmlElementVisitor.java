@@ -15,58 +15,71 @@
  */
 package com.intellij.psi;
 
-import com.intellij.psi.xml.*;
+import com.intellij.psi.xml.XmlAttribute;
+import com.intellij.psi.xml.XmlAttributeValue;
+import com.intellij.psi.xml.XmlComment;
+import com.intellij.psi.xml.XmlDecl;
+import com.intellij.psi.xml.XmlDoctype;
+import com.intellij.psi.xml.XmlDocument;
+import com.intellij.psi.xml.XmlElement;
+import com.intellij.psi.xml.XmlFile;
+import com.intellij.psi.xml.XmlProcessingInstruction;
+import com.intellij.psi.xml.XmlProlog;
+import com.intellij.psi.xml.XmlTag;
+import com.intellij.psi.xml.XmlText;
+import com.intellij.psi.xml.XmlToken;
+import org.jetbrains.annotations.NotNull;
 
 public abstract class XmlElementVisitor extends PsiElementVisitor {
-  public void visitXmlElement(XmlElement element) {
+  public void visitXmlElement(@NotNull XmlElement element) {
     visitElement(element);
   }
 
-  public void visitXmlFile(XmlFile file) {
+  public void visitXmlFile(@NotNull XmlFile file) {
     visitFile(file);
   }
 
-  public void visitXmlAttribute(XmlAttribute attribute) {
+  public void visitXmlAttribute(@NotNull XmlAttribute attribute) {
     visitXmlElement(attribute);
   }
 
-  public void visitXmlComment(XmlComment comment) {
+  public void visitXmlComment(@NotNull XmlComment comment) {
     visitXmlElement(comment);
   }
 
-  public void visitXmlDecl(XmlDecl decl) {
+  public void visitXmlDecl(@NotNull XmlDecl decl) {
     visitXmlElement(decl);
   }                                    
 
-  public void visitXmlDocument(XmlDocument document) {
+  public void visitXmlDocument(@NotNull XmlDocument document) {
     visitXmlElement(document);
   }
 
-  public void visitXmlProlog(XmlProlog prolog) {
+  public void visitXmlProlog(@NotNull XmlProlog prolog) {
     visitXmlElement(prolog);
   }
 
-  public void visitXmlText(XmlText text) {
+  public void visitXmlText(@NotNull XmlText text) {
     visitXmlElement(text);
   }
 
-  public void visitXmlTag(XmlTag tag) {
+  public void visitXmlTag(@NotNull XmlTag tag) {
     visitXmlElement(tag);
   }
 
-  public void visitXmlToken(XmlToken token) {
+  public void visitXmlToken(@NotNull XmlToken token) {
     visitXmlElement(token);
   }
 
-  public void visitXmlAttributeValue(XmlAttributeValue value) {
+  public void visitXmlAttributeValue(@NotNull XmlAttributeValue value) {
     visitXmlElement(value);
   }
 
-  public void visitXmlDoctype(XmlDoctype xmlDoctype) {
+  public void visitXmlDoctype(@NotNull XmlDoctype xmlDoctype) {
     visitXmlElement(xmlDoctype);
   }
 
-  public void visitXmlProcessingInstruction(XmlProcessingInstruction processingInstruction) {
+  public void visitXmlProcessingInstruction(@NotNull XmlProcessingInstruction processingInstruction) {
     visitXmlElement(processingInstruction);
   }
 }

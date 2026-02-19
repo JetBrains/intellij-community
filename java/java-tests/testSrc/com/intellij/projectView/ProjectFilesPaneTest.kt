@@ -1,18 +1,27 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.projectView
 
+import com.intellij.ide.projectView.ProjectViewNode
 import com.intellij.ide.projectView.ProjectViewSettings
 import com.intellij.ide.projectView.ViewSettings
 import com.intellij.ide.projectView.impl.ProjectViewState
 import com.intellij.ide.util.treeView.NodeOptions
+import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.testFramework.PsiTestUtil
 import com.intellij.util.io.directoryContent
 import com.intellij.util.io.generateInVirtualTempDir
+import kotlin.test.assertNotEquals
 
 class ProjectFilesPaneTest : AbstractProjectViewTest() {
   override fun setUp() {
     super.setUp()
     selectProjectFilesPane()
+  }
+
+  private fun allowed(any: Any?): Boolean {
+    val node = any as? ProjectViewNode<*> ?: return true
+    val file = node.virtualFile ?: return true
+    return ProjectFileIndex.getInstance(project).isInContent(file)
   }
 
   fun `test default settings`() {
@@ -32,9 +41,9 @@ class ProjectFilesPaneTest : AbstractProjectViewTest() {
     assertEquals(!defaultShowVisibilityIcons, settings.isShowVisibilityIcons)
 
     val defaultUseFileNestingRules = ProjectViewSettings.Immutable.DEFAULT.isUseFileNestingRules
-    assertEquals(false, settings.isUseFileNestingRules) // not supported in the Scope view
+    assertEquals(defaultUseFileNestingRules, settings.isUseFileNestingRules)
     state.useFileNestingRules = !defaultUseFileNestingRules
-    assertEquals(false, settings.isUseFileNestingRules) // not supported in the Scope view
+    assertEquals(!defaultUseFileNestingRules, settings.isUseFileNestingRules)
 
     // ViewSettings
 
@@ -121,9 +130,9 @@ class ProjectFilesPaneTest : AbstractProjectViewTest() {
     assertEquals(!defaultShowVisibilityIcons, settings.isShowVisibilityIcons)
 
     val defaultUseFileNestingRules = ProjectViewSettings.Immutable.DEFAULT.isUseFileNestingRules
-    assertEquals(false, settings.isUseFileNestingRules) // not supported in the Scope view
+    assertEquals(defaultUseFileNestingRules, settings.isUseFileNestingRules)
     state.useFileNestingRules = !defaultUseFileNestingRules
-    assertEquals(false, settings.isUseFileNestingRules) // not supported in the Scope view
+    assertEquals(!defaultUseFileNestingRules, settings.isUseFileNestingRules)
 
     // ViewSettings
 
@@ -183,5 +192,71 @@ class ProjectFilesPaneTest : AbstractProjectViewTest() {
     assertEquals(false, settings.isShowLibraryContents) // not supported in the Scope view
     state.showLibraryContents = !defaultShowLibraryContents
     assertEquals(false, settings.isShowLibraryContents) // not supported in the Scope view
+  }
+
+  fun `test node collapse on sibling add`() {
+    with(ProjectViewState.getInstance(project)) {
+      showExcludedFiles = false
+      showModules = false
+    }
+    val test = createTreeTest().setFilter { allowed(it.lastPathComponent) }
+    val temp = getOrCreateModuleDir(module)
+    val root = createChildDirectory(temp, "module")
+    PsiTestUtil.addSourceRoot(module, root)
+
+    val parent = createChildDirectory(root, "parent")
+    val folder = createChildDirectory(parent, "folder")
+
+    selectFile(folder)
+    test.assertStructure("  -module\n" +
+                         "   -parent\n" +
+                         "    folder\n")
+
+    selectFile(createChildDirectory(folder, "child"))
+    test.assertStructure("  -module\n" +
+                         "   -parent\n" +
+                         "    -folder\n" +
+                         "     child\n")
+
+    selectFile(createChildDirectory(parent, "sibling"))
+    test.assertStructure("  -module\n" +
+                         "   -parent\n" +
+                         "    -folder\n" +
+                         "     child\n" +
+                         "    sibling\n")
+  }
+
+  fun `test file nesting support`() {
+    with(ProjectViewState.getInstance(project)) {
+      showModules = false
+    }
+    val test = createTreeTest().setFilter { allowed(it.lastPathComponent) }
+    val root = directoryContent {
+      dir("src") {
+        dir("com") {
+          file("test.js")
+          file("test.js.map")
+        }
+      }
+    }.generateInVirtualTempDir()
+    PsiTestUtil.addSourceRoot(module, root.findChild("src")!!)
+    val mapFile = root.findFileByRelativePath("src/com/test.js.map")!!
+
+    setFileNestingRules(".js" to ".js.map")
+    selectFile(mapFile)
+    test.assertStructure("   -src\n" +
+                         "    -com\n" +
+                         "     -test.js\n" +
+                         "      test.js.map\n")
+
+    val structureBefore = test.toString()
+    projectView.setUseFileNestingRules(false)
+    selectFile(mapFile)
+    test.assertStructure("   -src\n" +
+                         "    -com\n" +
+                         "     test.js\n" +
+                         "     test.js.map\n")
+
+    assertNotEquals(structureBefore, test.toString())
   }
 }

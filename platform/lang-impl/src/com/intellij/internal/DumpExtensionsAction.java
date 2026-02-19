@@ -1,6 +1,7 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal;
 
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
@@ -18,7 +19,12 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-public final class DumpExtensionsAction extends DumbAwareAction {
+final class DumpExtensionsAction extends DumbAwareAction {
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
+  }
+
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
     List<ExtensionsArea> areas = new ArrayList<>();
@@ -39,11 +45,11 @@ public final class DumpExtensionsAction extends DumbAwareAction {
 
     List<ExtensionPoint<?>> points = new ArrayList<>();
     for (ExtensionsArea area : areas) {
-      points.addAll(area.getExtensionPoints());
+      points.addAll(area.getNameToPointMap().values());
     }
     System.out.println(points.size() + " extension points: ");
     for (ExtensionPoint<?> point : points) {
-      System.out.println(" " + ((ExtensionPointImpl<?>)point).getName());
+      System.out.println(" " + ((ExtensionPointImpl<?>)point).name);
     }
 
     List<Object> extensions = new ArrayList<>();

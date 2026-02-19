@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xml.util;
 
 import com.intellij.openapi.util.Key;
@@ -6,14 +6,28 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.source.xml.XmlEntityCache;
-import com.intellij.psi.impl.source.xml.XmlEntityRefImpl;
 import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
-import com.intellij.psi.xml.*;
+import com.intellij.psi.xml.XmlAttlistDecl;
+import com.intellij.psi.xml.XmlAttributeDecl;
+import com.intellij.psi.xml.XmlAttributeValue;
+import com.intellij.psi.xml.XmlConditionalSection;
+import com.intellij.psi.xml.XmlDocument;
+import com.intellij.psi.xml.XmlElement;
+import com.intellij.psi.xml.XmlElementDecl;
+import com.intellij.psi.xml.XmlEntityContextType;
+import com.intellij.psi.xml.XmlEntityDecl;
+import com.intellij.psi.xml.XmlEntityRef;
+import com.intellij.psi.xml.XmlEnumeratedType;
+import com.intellij.psi.xml.XmlFile;
+import com.intellij.psi.xml.XmlTag;
+import com.intellij.util.AstLoadingFilter;
+import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.IdempotenceChecker;
+import com.intellij.util.PlatformUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -23,13 +37,16 @@ import java.util.Set;
 
 public final class XmlPsiUtil {
   private static final Key<CachedValue<PsiElement>> PARSED_DECL_KEY = Key.create("PARSED_DECL_KEY");
-  @NonNls public static final String XINCLUDE_URI = "http://www.w3.org/2001/XInclude";
+  public static final @NonNls String XINCLUDE_URI = "http://www.w3.org/2001/XInclude";
 
   public static boolean processXmlElements(XmlElement element, PsiElementProcessor<? super PsiElement> processor, boolean deepFlag) {
     return processXmlElements(element, processor, deepFlag, false);
   }
 
-  public static boolean processXmlElements(XmlElement element, PsiElementProcessor<? super PsiElement> processor, boolean deepFlag, boolean wideFlag) {
+  public static boolean processXmlElements(XmlElement element,
+                                           PsiElementProcessor<? super PsiElement> processor,
+                                           boolean deepFlag,
+                                           boolean wideFlag) {
     if (element == null) return true;
     PsiFile baseFile = element.isValid() ? element.getContainingFile() : null;
     return processXmlElements(element, processor, deepFlag, wideFlag, baseFile);
@@ -49,27 +66,29 @@ public final class XmlPsiUtil {
                                            final boolean wideFlag,
                                            final PsiFile baseFile,
                                            boolean processIncludes) {
-    return new XmlElementProcessor(processor, baseFile).processXmlElements(element, deepFlag, wideFlag, processIncludes);
+    return AstLoadingFilter.forceAllowTreeLoading(baseFile, () ->
+      new XmlElementProcessor(baseFile, processor).processXmlElements(element, deepFlag, wideFlag, processIncludes)
+    );
   }
 
-  public static boolean processXmlElementChildren(final XmlElement element, final PsiElementProcessor<? super PsiElement> processor, final boolean deepFlag) {
-    final XmlPsiUtil.XmlElementProcessor p = new XmlPsiUtil.XmlElementProcessor(processor, element.getContainingFile());
+  public static boolean processXmlElementChildren(final XmlElement element,
+                                                  final PsiElementProcessor<? super PsiElement> processor,
+                                                  final boolean deepFlag) {
+    final XmlPsiUtil.XmlElementProcessor p = new XmlPsiUtil.XmlElementProcessor(element.getContainingFile(), processor);
 
-    final boolean wideFlag = false;
     for (PsiElement child = element.getFirstChild(); child != null; child = child.getNextSibling()) {
-      if (!p.processElement(child, deepFlag, wideFlag, true) && !wideFlag) return false;
+      if (!p.processElement(child, deepFlag, false, true)) return false;
     }
 
     return true;
   }
 
-  @Nullable
-  public static XmlElement findElement(@NotNull final XmlElement parent, @NotNull final IElementType.Predicate predicate){
+  public static @Nullable XmlElement findElement(final @NotNull XmlElement parent, final @NotNull IElementType.Predicate predicate) {
     final Ref<XmlElement> result = new Ref<>();
-    parent.processElements(new PsiElementProcessor<PsiElement>(){
+    parent.processElements(new PsiElementProcessor<>() {
       @Override
-      public boolean execute(@NotNull PsiElement element){
-        if(element instanceof XmlElement && predicate.matches(element.getNode().getElementType())){
+      public boolean execute(@NotNull PsiElement element) {
+        if (element instanceof XmlElement && predicate.matches(element.getNode().getElementType())) {
           result.set((XmlElement)element);
           return false;
         }
@@ -85,7 +104,7 @@ public final class XmlPsiUtil {
     private final PsiFile targetFile;
     private final Set<String> visitedEntities = new HashSet<>();
 
-    XmlElementProcessor(PsiElementProcessor<? super PsiElement> _processor, PsiFile _targetFile) {
+    XmlElementProcessor(PsiFile _targetFile, @NotNull PsiElementProcessor<? super PsiElement> _processor) {
       processor = _processor;
       targetFile = _targetFile;
     }
@@ -95,8 +114,7 @@ public final class XmlPsiUtil {
 
       PsiElement startFrom = element.getFirstChild();
 
-      if (element instanceof XmlEntityRef) {
-        XmlEntityRef ref = (XmlEntityRef)element;
+      if (element instanceof XmlEntityRef ref) {
         if (!visitedEntities.add(ref.getText())) return true;
         PsiElement newElement = parseEntityRef(targetFile, ref);
 
@@ -107,16 +125,15 @@ public final class XmlPsiUtil {
 
         return true;
       }
-      else if (element instanceof XmlConditionalSection) {
-        XmlConditionalSection xmlConditionalSection = (XmlConditionalSection)element;
+      else if (element instanceof XmlConditionalSection xmlConditionalSection) {
         if (!xmlConditionalSection.isIncluded(targetFile)) return true;
         startFrom = xmlConditionalSection.getBodyStart();
       }
-      else if (processIncludes && XmlIncludeHandler.isXInclude(element)) {
+      else if (processIncludes && isXInclude(element)) {
         if (IdempotenceChecker.isLoggingEnabled()) {
           IdempotenceChecker.logTrace("Processing xinclude " + element.getText());
         }
-        PsiElement[] tags = InclusionProvider.getIncludedTags((XmlTag)element);
+        PsiElement[] tags = InclusionProvider.getInstance().getIncludedTags((XmlTag)element);
         for (PsiElement psiElement : tags) {
           if (IdempotenceChecker.isLoggingEnabled()) {
             IdempotenceChecker.logTrace("Processing included tag " + psiElement);
@@ -145,21 +162,22 @@ public final class XmlPsiUtil {
         else if (child instanceof XmlConditionalSection) {
           if (!processXmlElements(child, false, wideFlag, processIncludes)) return false;
         }
-        else if (processIncludes && XmlIncludeHandler.isXInclude(child)) {
-          if (!processXmlElements(child, false, wideFlag, processIncludes)) return false;
+        else if (processIncludes && isXInclude(child)) {
+          if (!processXmlElements(child, false, wideFlag, true)) return false;
         }
         else if (!processor.execute(child)) return false;
       }
-      if (targetFile != null && child instanceof XmlEntityDecl) {
-        XmlEntityDecl xmlEntityDecl = (XmlEntityDecl)child;
+      if (targetFile != null && child instanceof XmlEntityDecl xmlEntityDecl) {
         XmlEntityCache.cacheParticularEntity(targetFile, xmlEntityDecl);
       }
       return true;
     }
   }
 
-  private static PsiElement parseEntityRef(PsiFile targetFile, XmlEntityRef ref) {
-    XmlEntityDecl.EntityContextType type = getContextType(ref);
+  private static @Nullable PsiElement parseEntityRef(PsiFile targetFile, XmlEntityRef ref) {
+    if (PlatformUtils.isJetBrainsClient()) return null;
+
+    XmlEntityContextType type = getContextType(ref);
 
     {
       final XmlEntityDecl entityDecl = ref.resolve(targetFile);
@@ -178,8 +196,7 @@ public final class XmlPsiUtil {
 
         continue;
       }
-      if (e instanceof PsiFile) {
-        PsiFile refFile = (PsiFile)e;
+      if (e instanceof PsiFile refFile) {
         final XmlEntityDecl entityDecl = ref.resolve(refFile);
         if (entityDecl != null) return parseEntityDecl(entityDecl, targetFile, type, ref);
         break;
@@ -197,27 +214,27 @@ public final class XmlPsiUtil {
     return null;
   }
 
-  private static XmlEntityDecl.EntityContextType getContextType(XmlEntityRef ref) {
-    XmlEntityDecl.EntityContextType type = XmlEntityDecl.EntityContextType.GENERIC_XML;
+  private static XmlEntityContextType getContextType(XmlEntityRef ref) {
+    XmlEntityContextType type = XmlEntityContextType.GENERIC_XML;
     PsiElement temp = ref;
     while (temp != null) {
       if (temp instanceof XmlAttributeDecl) {
-        type = XmlEntityDecl.EntityContextType.ATTRIBUTE_SPEC;
+        type = XmlEntityContextType.ATTRIBUTE_SPEC;
       }
       else if (temp instanceof XmlElementDecl) {
-        type = XmlEntityDecl.EntityContextType.ELEMENT_CONTENT_SPEC;
+        type = XmlEntityContextType.ELEMENT_CONTENT_SPEC;
       }
       else if (temp instanceof XmlAttlistDecl) {
-        type = XmlEntityDecl.EntityContextType.ATTLIST_SPEC;
+        type = XmlEntityContextType.ATTLIST_SPEC;
       }
       else if (temp instanceof XmlEntityDecl) {
-        type = XmlEntityDecl.EntityContextType.ENTITY_DECL_CONTENT;
+        type = XmlEntityContextType.ENTITY_DECL_CONTENT;
       }
       else if (temp instanceof XmlEnumeratedType) {
-        type = XmlEntityDecl.EntityContextType.ENUMERATED_TYPE;
+        type = XmlEntityContextType.ENUMERATED_TYPE;
       }
       else if (temp instanceof XmlAttributeValue) {
-        type = XmlEntityDecl.EntityContextType.ATTR_VALUE;
+        type = XmlEntityContextType.ATTR_VALUE;
       }
       else {
         temp = temp.getContext();
@@ -230,20 +247,33 @@ public final class XmlPsiUtil {
 
   private static PsiElement parseEntityDecl(final XmlEntityDecl entityDecl,
                                             final PsiFile targetFile,
-                                            final XmlEntityDecl.EntityContextType type,
+                                            final XmlEntityContextType type,
                                             final XmlEntityRef entityRef) {
-    CachedValue<PsiElement> value = entityRef.getUserData(PARSED_DECL_KEY);
-
-    if (value == null) {
-      value = CachedValuesManager.getManager(entityDecl.getProject()).createCachedValue(() -> {
+    CachedValue<PsiElement> value = ConcurrencyUtil.computeIfAbsent(entityRef, PARSED_DECL_KEY, () ->
+      CachedValuesManager.getManager(entityDecl.getProject()).createCachedValue(() -> {
         final PsiElement res = entityDecl.parse(targetFile, type, entityRef);
-        if (res == null) return new CachedValueProvider.Result<>(res, targetFile);
+        if (res == null) return new CachedValueProvider.Result<>(null, targetFile);
         if (!entityDecl.isInternalReference()) XmlEntityCache.copyEntityCaches(res.getContainingFile(), targetFile);
         return new CachedValueProvider.Result<>(res, res.getUserData(XmlElement.DEPENDING_ELEMENT), entityDecl, targetFile, entityRef);
-      }, false);
-      value = ((XmlEntityRefImpl)entityRef).putUserDataIfAbsent(PARSED_DECL_KEY, value);
-    }
+      }, false));
 
     return value.getValue();
+  }
+
+  private static final @NonNls String INCLUDE_TAG_NAME = "include";
+
+  public static boolean isXInclude(PsiElement element) {
+    if (element instanceof XmlTag xmlTag) {
+
+      if (xmlTag.getParent() instanceof XmlDocument) return false;
+
+      if (xmlTag.getLocalName().equals(INCLUDE_TAG_NAME) && xmlTag.getAttributeValue("href") != null) {
+        if (xmlTag.getNamespace().equals(XmlPsiUtil.XINCLUDE_URI)) {
+          return true;
+        }
+      }
+    }
+
+    return false;
   }
 }

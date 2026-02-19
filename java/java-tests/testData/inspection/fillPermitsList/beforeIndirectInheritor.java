@@ -1,4 +1,4 @@
-// "Add missing subclasses to the permits clause" "true"
+// "Add missing subclasses to the permits clause" "true-preview"
 
 sealed class A<caret> /*1*/ {}
 

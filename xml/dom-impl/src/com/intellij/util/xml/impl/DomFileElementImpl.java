@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.xml.impl;
 
 import com.intellij.openapi.module.Module;
@@ -14,14 +14,27 @@ import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.semantic.SemElement;
 import com.intellij.util.ObjectUtils;
-import com.intellij.util.xml.*;
-import com.intellij.util.xml.reflect.*;
+import com.intellij.util.xml.DomElement;
+import com.intellij.util.xml.DomElementVisitor;
+import com.intellij.util.xml.DomFileDescription;
+import com.intellij.util.xml.DomFileElement;
+import com.intellij.util.xml.DomNameStrategy;
+import com.intellij.util.xml.ElementPresentation;
+import com.intellij.util.xml.EvaluatedXmlNameImpl;
+import com.intellij.util.xml.GenericDomValue;
+import com.intellij.util.xml.reflect.AbstractDomChildrenDescription;
+import com.intellij.util.xml.reflect.CustomDomChildrenDescription;
+import com.intellij.util.xml.reflect.DomAttributeChildDescription;
+import com.intellij.util.xml.reflect.DomChildrenDescription;
+import com.intellij.util.xml.reflect.DomCollectionChildDescription;
+import com.intellij.util.xml.reflect.DomFixedChildDescription;
+import com.intellij.util.xml.reflect.DomGenericInfo;
 import com.intellij.util.xml.stubs.FileStub;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.Icon;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Type;
 import java.util.Collections;
@@ -29,9 +42,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-/**
- * @author peter
- */
 public class DomFileElementImpl<T extends DomElement> implements DomFileElement<T>, SemElement {
   private static final DomGenericInfo EMPTY_DOM_GENERIC_INFO = new DomGenericInfo() {
     @Override
@@ -154,11 +164,10 @@ public class DomFileElementImpl<T extends DomElement> implements DomFileElement<
     return null;
   }
 
+  @Override
   public boolean equals(final Object o) {
     if (this == o) return true;
-    if (!(o instanceof DomFileElementImpl)) return false;
-
-    final DomFileElementImpl that = (DomFileElementImpl)o;
+    if (!(o instanceof DomFileElementImpl that)) return false;
 
     if (myFile != null ? !myFile.equals(that.myFile) : that.myFile != null) return false;
     if (myRootElementClass != null ? !myRootElementClass.equals(that.myRootElementClass) : that.myRootElementClass != null) return false;
@@ -167,6 +176,7 @@ public class DomFileElementImpl<T extends DomElement> implements DomFileElement<
     return true;
   }
 
+  @Override
   public int hashCode() {
     int result;
     result = (myFile != null ? myFile.hashCode() : 0);
@@ -200,14 +210,12 @@ public class DomFileElementImpl<T extends DomElement> implements DomFileElement<
     return new ElementPresentation() {
 
       @Override
-      @NonNls
-      public String getElementName() {
+      public @NonNls String getElementName() {
         return "<ROOT>";
       }
 
       @Override
-      @NonNls
-      public String getTypeName() {
+      public @NonNls String getTypeName() {
         return "<ROOT>";
       }
 
@@ -257,8 +265,7 @@ public class DomFileElementImpl<T extends DomElement> implements DomFileElement<
   }
 
   @Override
-  @NonNls
-  public @Nullable String getXmlElementNamespaceKey() {
+  public @NonNls @Nullable String getXmlElementNamespaceKey() {
     return null;
   }
 
@@ -285,8 +292,8 @@ public class DomFileElementImpl<T extends DomElement> implements DomFileElement<
     return myRootHandler;
   }
 
-  @NonNls
-  public String toString() {
+  @Override
+  public @NonNls String toString() {
     return "File " + myFile.toString();
   }
 

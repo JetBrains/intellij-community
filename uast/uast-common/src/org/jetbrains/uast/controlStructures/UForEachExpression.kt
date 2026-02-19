@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.uast
 
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.uast.internal.acceptList
 import org.jetbrains.uast.internal.log
 import org.jetbrains.uast.visitor.UastTypedVisitor
@@ -19,7 +20,15 @@ interface UForEachExpression : ULoopExpression {
   /**
    * Returns the loop variable.
    */
+  @Deprecated(message = "property may throw exception if foreach doesn't have variable", replaceWith = ReplaceWith("parameter"))
+  @get:ApiStatus.ScheduledForRemoval
+  @get:Deprecated(message = "property may throw exception if foreach doesn't have variable", replaceWith = ReplaceWith("parameter"))
   val variable: UParameter
+
+  /**
+   * Returns the loop parameter.
+   */
+  val parameter: UParameter?
 
   /**
    * Returns the iterated value (collection, sequence, iterable etc.)
@@ -44,7 +53,7 @@ interface UForEachExpression : ULoopExpression {
 
   override fun asRenderString(): String = buildString {
     append("for (")
-    append(variable.name)
+    append(variable?.name ?: "<no var>")
     append(" : ")
     append(iteratedValue.asRenderString())
     append(") ")

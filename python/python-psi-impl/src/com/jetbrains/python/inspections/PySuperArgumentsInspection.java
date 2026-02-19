@@ -27,24 +27,23 @@ import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.PyReferenceExpression;
 import com.jetbrains.python.psi.types.PyClassType;
 import com.jetbrains.python.psi.types.PyType;
+import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author Alexey.Ivanov
- */
-public class PySuperArgumentsInspection extends PyInspection {
+public final class PySuperArgumentsInspection extends PyInspection {
 
-  @NotNull
   @Override
-  public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly, @NotNull LocalInspectionToolSession session) {
-    return new Visitor(holder, session);
+  public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder,
+                                                 boolean isOnTheFly,
+                                                 @NotNull LocalInspectionToolSession session) {
+    return new Visitor(holder, PyInspectionVisitor.getContext(session));
   }
 
   private static class Visitor extends PyInspectionVisitor {
 
-    Visitor(final ProblemsHolder holder, LocalInspectionToolSession session) {
-      super(holder, session);
+    Visitor(final ProblemsHolder holder, @NotNull TypeEvalContext context) {
+      super(holder, context);
     }
 
     @Override
@@ -72,11 +71,12 @@ public class PySuperArgumentsInspection extends PyInspection {
       }
     }
 
-    @Nullable
-    private PyClass findClassOf(PyExpression argument) {
+    private @Nullable PyClass findClassOf(PyExpression argument) {
       PsiElement firstElement = ((PyReferenceExpression)argument).followAssignmentsChain(getResolveContext()).getElement();
       PyClass firstClass = null;
-      if (firstElement instanceof PyClass) firstClass = (PyClass)firstElement;
+      if (firstElement instanceof PyClass) {
+        firstClass = (PyClass)firstElement;
+      }
       else if (firstElement instanceof PyExpression) {
         PyType first_type = myTypeEvalContext.getType((PyExpression)firstElement);
         if (first_type instanceof PyClassType) {

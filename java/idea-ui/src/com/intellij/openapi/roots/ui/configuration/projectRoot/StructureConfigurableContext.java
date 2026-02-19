@@ -1,20 +1,7 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.ui.configuration.projectRoot;
 
+import com.intellij.java.JavaPluginDisposable;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
@@ -29,16 +16,16 @@ import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.ProjectStr
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.EventDispatcher;
-import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.HashMap;
 import java.util.Map;
 
-public class StructureConfigurableContext implements Disposable, LibraryEditorListener {
+public final class StructureConfigurableContext implements Disposable, LibraryEditorListener {
   private final ProjectStructureDaemonAnalyzer myDaemonAnalyzer;
   public final ModulesConfigurator myModulesConfigurator;
-  public final Map<String, LibrariesModifiableModel> myLevel2Providers = new THashMap<>();
+  public final Map<String, LibrariesModifiableModel> myLevel2Providers = new HashMap<>();
   private final EventDispatcher<LibraryEditorListener> myLibraryEditorListeners = EventDispatcher.create(LibraryEditorListener.class);
   private final Project myProject;
 
@@ -46,20 +33,16 @@ public class StructureConfigurableContext implements Disposable, LibraryEditorLi
   public StructureConfigurableContext(Project project, final ModulesConfigurator modulesConfigurator) {
     myProject = project;
     myModulesConfigurator = modulesConfigurator;
-    Disposer.register(project, this);
+    Disposer.register(JavaPluginDisposable.getInstance(project), this);
     myDaemonAnalyzer = new ProjectStructureDaemonAnalyzer(this);
   }
 
   public VirtualFile[] getLibraryFiles(Library library, final OrderRootType type) {
     final LibraryTable table = library.getTable();
-    if (table != null) {
-      final LibraryTable.ModifiableModel modifiableModel = getModifiableLibraryTable(table);
-      if (modifiableModel instanceof LibrariesModifiableModel) {
-        final LibrariesModifiableModel librariesModel = (LibrariesModifiableModel)modifiableModel;
-        if (librariesModel.hasLibraryEditor(library)) {
-          return librariesModel.getLibraryEditor(library).getFiles(type);
-        }
-      }
+    if (table != null &&
+        getModifiableLibraryTable(table) instanceof LibrariesModifiableModel librariesModel &&
+        librariesModel.hasLibraryEditor(library)) {
+      return librariesModel.getLibraryEditor(library).getFiles(type);
     }
     return library.getFiles(type);
   }
@@ -92,7 +75,7 @@ public class StructureConfigurableContext implements Disposable, LibraryEditorLi
     final LibraryTablesRegistrar tablesRegistrar = LibraryTablesRegistrar.getInstance();
 
     myLevel2Providers.clear();
-    myLevel2Providers.put(LibraryTablesRegistrar.APPLICATION_LEVEL, new LibrariesModifiableModel(tablesRegistrar.getLibraryTable(), myProject, this));
+    myLevel2Providers.put(LibraryTablesRegistrar.APPLICATION_LEVEL, new LibrariesModifiableModel(tablesRegistrar.getGlobalLibraryTable(myProject), myProject, this));
     myLevel2Providers.put(LibraryTablesRegistrar.PROJECT_LEVEL, new LibrariesModifiableModel(tablesRegistrar.getLibraryTable(myProject), myProject, this));
     for (final LibraryTable table : tablesRegistrar.getCustomLibraryTables()) {
       myLevel2Providers.put(table.getTableLevel(), new LibrariesModifiableModel(table, myProject, this));
@@ -112,18 +95,15 @@ public class StructureConfigurableContext implements Disposable, LibraryEditorLi
     myLibraryEditorListeners.getMulticaster().libraryRenamed(library, oldName, newName);
   }
 
-  @NotNull
-  public StructureLibraryTableModifiableModelProvider getGlobalLibrariesProvider() {
+  public @NotNull StructureLibraryTableModifiableModelProvider getGlobalLibrariesProvider() {
     return createModifiableModelProvider(LibraryTablesRegistrar.APPLICATION_LEVEL);
   }
 
-  @NotNull
-  public StructureLibraryTableModifiableModelProvider createModifiableModelProvider(@NotNull String level) {
+  public @NotNull StructureLibraryTableModifiableModelProvider createModifiableModelProvider(@NotNull String level) {
     return new StructureLibraryTableModifiableModelProvider(level, this);
   }
 
-  @NotNull
-  public StructureLibraryTableModifiableModelProvider getProjectLibrariesProvider() {
+  public @NotNull StructureLibraryTableModifiableModelProvider getProjectLibrariesProvider() {
     return createModifiableModelProvider(LibraryTablesRegistrar.PROJECT_LEVEL);
   }
 
@@ -136,15 +116,13 @@ public class StructureConfigurableContext implements Disposable, LibraryEditorLi
     return myLevel2Providers.get(tableLevel);
   }
 
-  @Nullable
-  public Library getLibrary(final String libraryName, @NotNull String libraryLevel) {
+  public @Nullable Library getLibrary(final String libraryName, @NotNull String libraryLevel) {
 /* the null check is added only to prevent NPE when called from getLibrary */
     final LibrariesModifiableModel model = myLevel2Providers.get(libraryLevel);
     return model == null ? null : findLibraryModel(libraryName, model);
   }
 
-  @Nullable
-  private static Library findLibraryModel(@NotNull final String libraryName, @NotNull LibrariesModifiableModel model) {
+  private static @Nullable Library findLibraryModel(final @NotNull String libraryName, @NotNull LibrariesModifiableModel model) {
     for (Library library : model.getLibraries()) {
       final Library libraryModel = findLibraryModel(library, model);
       if (libraryModel != null && libraryName.equals(libraryModel.getName())) {
@@ -154,8 +132,7 @@ public class StructureConfigurableContext implements Disposable, LibraryEditorLi
     return null;
   }
 
-  @Nullable
-  public Library getLibraryModel(@NotNull Library library) {
+  public @Nullable Library getLibraryModel(@NotNull Library library) {
     final LibraryTable libraryTable = library.getTable();
     if (libraryTable != null) {
       return findLibraryModel(library, myLevel2Providers.get(libraryTable.getTableLevel()));
@@ -163,8 +140,7 @@ public class StructureConfigurableContext implements Disposable, LibraryEditorLi
     return library;
   }
 
-  @Nullable
-  private static Library findLibraryModel(final Library library, LibrariesModifiableModel tableModel) {
+  private static @Nullable Library findLibraryModel(final Library library, LibrariesModifiableModel tableModel) {
     if (tableModel == null) return library;
     if (tableModel.wasLibraryRemoved(library)) return null;
     return tableModel.hasLibraryEditor(library) ? (Library)tableModel.getLibraryEditor(library).getModel() : library;

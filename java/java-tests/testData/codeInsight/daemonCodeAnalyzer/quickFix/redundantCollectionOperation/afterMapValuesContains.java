@@ -1,4 +1,4 @@
-// "Replace with 'Map.containsValue()'" "true"
+// "Replace with 'Map.containsValue()'" "true-preview"
 import java.util.Map;
 
 class Test {

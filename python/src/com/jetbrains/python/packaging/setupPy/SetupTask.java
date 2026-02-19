@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.packaging.setupPy;
 
 import com.google.common.collect.ImmutableList;
@@ -9,12 +9,9 @@ import org.jetbrains.annotations.NotNull;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
-* @author yole
-*/
 public class SetupTask implements ChooseByNameItem {
   private final @NlsSafe String name;
-  private String description;
+  private @NlsSafe String description;
   private final List<Option> options = new ArrayList<>();
 
   SetupTask(@NotNull @NlsSafe String name) {
@@ -23,7 +20,7 @@ public class SetupTask implements ChooseByNameItem {
   }
 
   @Override
-  public String getDescription() {
+  public @NlsSafe String getDescription() {
     return description;
   }
 
@@ -31,9 +28,8 @@ public class SetupTask implements ChooseByNameItem {
     this.description = description;
   }
 
-  @NotNull
   @Override
-  public @NlsSafe String getName() {
+  public @NotNull @NlsSafe String getName() {
     return name;
   }
 

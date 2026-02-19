@@ -1,60 +1,64 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.jcef;
 
-import com.intellij.application.options.RegistryManager;
+import com.intellij.openapi.Disposable;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.testFramework.ApplicationRule;
-import com.intellij.util.ui.TestScaleHelper;
+import com.intellij.testFramework.DisposableRule;
+import com.intellij.ui.scale.TestScaleHelper;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.ClassRule;
+import org.junit.Rule;
 import org.junit.Test;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JFrame;
+import java.awt.BorderLayout;
 import java.util.concurrent.CountDownLatch;
 
-import static com.intellij.ui.jcef.JBCefTestHelper.loadAndWait;
+import static com.intellij.ui.jcef.JBCefTestHelper.invokeAndWaitForLatch;
+import static com.intellij.ui.jcef.JBCefTestHelper.invokeAndWaitForLoad;
 
 /**
- * Tests https://youtrack.jetbrains.com/issue/IDEA-246306
+ * Tests IDEA-246306
  * A JS callback should be called on the browser instance which created it.
  *
  * @author tav
  */
 public class IDEA246306Test {
-  static {
-    TestScaleHelper.setSystemProperty("java.awt.headless", "false");
-  }
-
   @ClassRule public static final ApplicationRule appRule = new ApplicationRule();
+
+  @Rule
+  public DisposableRule myDisposableRule = new DisposableRule();
 
   @Before
   public void before() {
-    RegistryManager.getInstance().get("ide.browser.jcef.headless.enabled").setValue("true");
+    TestScaleHelper.assumeStandalone();
+    TestScaleHelper.setSystemProperty("java.awt.headless", "false");
   }
 
   @After
   public void after() {
-    TestScaleHelper.restoreSystemProperties();
+    TestScaleHelper.restoreProperties();
   }
 
   @Test
   public void test() {
-    TestScaleHelper.assumeStandalone();
-
-    new MyBrowser();
-    new MyBrowser();
+    new MyBrowser(myDisposableRule.getDisposable());
+    new MyBrowser(myDisposableRule.getDisposable());
   }
 
   static class MyBrowser extends JBCefBrowser {
     static final JBCefClient ourClient = JBCefApp.getInstance().createClient();
 
-    final JBCefJSQuery myQuery = JBCefJSQuery.create(this);
+    final JBCefJSQuery myQuery = JBCefJSQuery.create((JBCefBrowserBase)this);
     final CountDownLatch latch = new CountDownLatch(1);
+    private final Disposable myDisposable;
 
     @SuppressWarnings("ObjectToString")
-    MyBrowser() {
-      super(ourClient, "chrome:version");
+    MyBrowser(Disposable disposable) {
+      super(createBuilder().setClient(ourClient).setUrl("chrome:version"));
+      myDisposable = disposable;
       myQuery.addHandler(result -> {
         System.out.println("query: result " + result + ", on " + this);
         if (!result.equals(this.toString())) {
@@ -64,17 +68,17 @@ public class IDEA246306Test {
         return null;
       });
 
-      loadAndWait(this, () -> SwingUtilities.invokeLater(() -> {
+      invokeAndWaitForLoad(this, () -> {
         JFrame frame = new JFrame(JBCefLoadHtmlTest.class.getName());
+        Disposer.register(myDisposable, () -> frame.removeNotify());
         frame.setSize(640, 480);
         frame.setLocationRelativeTo(null);
         frame.add(getComponent(), BorderLayout.CENTER);
         frame.setVisible(true);
-      }));
+      });
 
-      loadAndWait(latch, () -> SwingUtilities.invokeLater(() -> {
-        getCefBrowser().executeJavaScript(myQuery.inject("'" + this + "'"), getCefBrowser().getURL(), 0);
-      }));
+      invokeAndWaitForLatch(latch, "executeJavaScript -> wait js callback",
+        () -> getCefBrowser().executeJavaScript(myQuery.inject("'" + this + "'"), getCefBrowser().getURL(), 0));
     }
   }
 }

@@ -1,0 +1,10 @@
+// WITH_STDLIB
+
+fun println(s: String) {}
+
+fun foo() {
+    val a = <caret>run {
+        println("")
+        1
+    }
+}

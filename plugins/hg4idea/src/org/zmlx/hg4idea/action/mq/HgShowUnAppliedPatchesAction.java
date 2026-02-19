@@ -2,6 +2,7 @@
 package org.zmlx.hg4idea.action.mq;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager;
 import com.intellij.openapi.wm.ToolWindow;
@@ -11,7 +12,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.HgBundle;
 import org.zmlx.hg4idea.action.HgAbstractGlobalSingleRepoAction;
-import org.zmlx.hg4idea.action.HgActionUtil;
 import org.zmlx.hg4idea.repo.HgRepository;
 import org.zmlx.hg4idea.ui.HgMqUnAppliedPatchesPanel;
 
@@ -20,7 +20,10 @@ import java.util.Objects;
 
 public final class HgShowUnAppliedPatchesAction extends HgAbstractGlobalSingleRepoAction {
   @Override
-  protected void execute(@NotNull Project project, @NotNull Collection<HgRepository> repositories, @Nullable HgRepository selectedRepo) {
+  protected void execute(@NotNull Project project,
+                         @NotNull Collection<HgRepository> repositories,
+                         @Nullable HgRepository selectedRepo,
+                         @NotNull DataContext dataContext) {
     if (selectedRepo != null) {
       showUnAppliedPatches(project, selectedRepo);
     }
@@ -28,7 +31,7 @@ public final class HgShowUnAppliedPatchesAction extends HgAbstractGlobalSingleRe
 
   @Override
   public void update(@NotNull AnActionEvent e) {
-    HgRepository repository = HgActionUtil.getSelectedRepositoryFromEvent(e);
+    HgRepository repository = getSelectedRepositoryFromEvent(e.getDataContext());
     e.getPresentation().setEnabledAndVisible(repository != null && repository.getRepositoryConfig().isMqUsed());
   }
 

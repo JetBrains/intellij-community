@@ -15,19 +15,21 @@
  */
 package com.intellij.util.xml.ui;
 
+import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.util.Factory;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.text.Strings;
 import org.jetbrains.annotations.Nls;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.DefaultCellEditor;
+import javax.swing.Icon;
+import javax.swing.JComboBox;
+import javax.swing.JTable;
+import java.awt.Component;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-/**
- * @author peter
- */
 public class ComboTableCellEditor extends DefaultCellEditor {
   private final boolean myNullable;
   private final Factory<? extends List<Pair<String, Icon>>> myDataFactory;
@@ -41,8 +43,8 @@ public class ComboTableCellEditor extends DefaultCellEditor {
     setClickCountToStart(2);
     JComboBox<Pair<String, Icon>> comboBox = (JComboBox<Pair<String, Icon>>)editorComponent;
     comboBox.setBorder(null);
-    comboBox.putClientProperty("JComboBox.isTableCellEditor", Boolean.TRUE);
-    ComboControl.initComboBox(comboBox, object -> myData != null && myData.containsKey(object) || myNullable && EMPTY.first == object);
+    comboBox.putClientProperty(ComboBox.IS_TABLE_CELL_EDITOR_PROPERTY, Boolean.TRUE);
+    ComboControl.initComboBox(comboBox, object -> myData != null && myData.containsKey(object) || myNullable && Strings.areSameInstance(EMPTY.first, object));
   }
 
   public ComboTableCellEditor(Class<? extends Enum> anEnum, final boolean nullable) {

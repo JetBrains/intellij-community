@@ -25,7 +25,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatem
 /**
  * @author Max Medvedev
  */
-public class GroovyImportSearcher extends ImportSearcher {
+public final class GroovyImportSearcher extends ImportSearcher {
   @Override
   public PsiElement findImport(PsiElement element, boolean onlyNonStatic) {
     PsiFile file = element.getContainingFile();

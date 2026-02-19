@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.lookup.DefaultLookupItemRenderer;
@@ -15,9 +15,6 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 
-/**
- * @author peter
- */
 public class JavaGlobalMemberLookupElement extends LookupElement implements StaticallyImportable {
   private final MemberLookupHelper myHelper;
   private final InsertHandler<JavaGlobalMemberLookupElement> myQualifiedInsertion;
@@ -41,30 +38,27 @@ public class JavaGlobalMemberLookupElement extends LookupElement implements Stat
     myImportInsertion = importInsertion;
   }
 
-  @NotNull
   @Override
-  public PsiMember getObject() {
+  public @NotNull PsiMember getObject() {
     return myHelper.getMember();
   }
 
-  @NotNull
-  public PsiClass getContainingClass() {
+  public @NotNull PsiClass getContainingClass() {
     return Objects.requireNonNull(myHelper.getContainingClass());
   }
 
-  @NotNull
   @Override
-  public String getLookupString() {
+  public @NotNull String getLookupString() {
     return Objects.requireNonNull(getObject().getName());
   }
 
   @Override
-  public Set<String> getAllLookupStrings() {
+  public @NotNull Set<String> getAllLookupStrings() {
     return JavaCompletionUtil.getAllLookupStrings(getObject());
   }
 
   @Override
-  public void renderElement(LookupElementPresentation presentation) {
+  public void renderElement(@NotNull LookupElementPresentation presentation) {
     presentation.setIcon(DefaultLookupItemRenderer.getRawIcon(this));
     myHelper.renderElement(presentation, !myHelper.willBeImported(), true, PsiSubstitutor.EMPTY);
   }

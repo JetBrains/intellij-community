@@ -1,0 +1,118 @@
+### auto-generated section `build intellij.devkit.compose` start
+load("//build:compiler-options.bzl", "create_kotlinc_options")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+create_kotlinc_options(
+  name = "custom_compose",
+  opt_in = [
+    "androidx.compose.foundation.ExperimentalFoundationApi",
+    "kotlinx.coroutines.ExperimentalCoroutinesApi",
+  ],
+  plugin_options = ["plugin:androidx.compose.compiler.plugins.kotlin:generateFunctionKeyMetaAnnotations=true"]
+)
+
+resourcegroup(
+  name = "compose_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "compose",
+  module_name = "intellij.devkit.compose",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form", "gen/**/*.kt", "gen/**/*.java"], allow_empty = True),
+  resources = [":compose_resources"],
+  kotlinc_opts = ":custom_compose",
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "//libraries/kotlinx/datetime",
+    "//platform/platform-impl:ide-impl",
+    "//platform/ide-core",
+    "//platform/progress/shared:ide-progress",
+    "//platform/core-api:core",
+    "//xml/xml-psi-api:psi",
+    "//xml/impl",
+    "//platform/core-ui",
+    "//platform/core-impl",
+    "//platform/lang-core",
+    "//platform/editor-ui-api:editor-ui",
+    "//platform/projectModel-api:projectModel",
+    "//platform/compose",
+    "//platform/jewel/samples/showcase",
+    "//platform/compose/markdown",
+    "//plugins/devkit/devkit-core:core",
+    "//platform/analysis-api:analysis",
+    "//plugins/kotlin/base/code-insight",
+    "//java/java-psi-api:psi",
+    "//plugins/kotlin/base/facet",
+    "//plugins/kotlin/base/jps",
+    "@lib//:kotlinc-kotlin-compiler-common-provided",
+    "@lib//:kotlinc-analysis-api-provided",
+    "@lib//:kotlinc-kotlin-jps-common-provided",
+    "//platform/lang-impl",
+    "//uast/uast-common:uast",
+    "//java/openapi:java",
+    "//libraries/skiko",
+    "//java/debugger/impl",
+    "//platform/ide-core-impl",
+    "//java/execution/impl",
+    "//platform/execution",
+    "//platform/platform-util-io:ide-util-io",
+    "//platform/execution-impl",
+    "//platform/util/jdom",
+    "//platform/external-system-impl:externalSystem-impl",
+    "//plugins/gradle",
+  ],
+  plugins = ["@lib//:compose-plugin"]
+)
+
+jvm_library(
+  name = "compose_test_lib",
+  module_name = "intellij.devkit.compose",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  kotlinc_opts = ":custom_compose",
+  runtime_deps = [
+    ":compose",
+    "//libraries/kotlinx/datetime:datetime_test_lib",
+    "//platform/platform-impl:ide-impl_test_lib",
+    "//platform/ide-core:ide-core_test_lib",
+    "//platform/progress/shared:ide-progress_test_lib",
+    "//platform/core-api:core_test_lib",
+    "//xml/xml-psi-api:psi_test_lib",
+    "//xml/impl:impl_test_lib",
+    "//platform/core-ui:core-ui_test_lib",
+    "//platform/core-impl:core-impl_test_lib",
+    "//platform/lang-core:lang-core_test_lib",
+    "//platform/editor-ui-api:editor-ui_test_lib",
+    "//platform/projectModel-api:projectModel_test_lib",
+    "//platform/compose:compose_test_lib",
+    "//platform/jewel/samples/showcase:showcase_test_lib",
+    "//platform/compose/markdown:markdown_test_lib",
+    "//plugins/devkit/devkit-core:core_test_lib",
+    "//platform/analysis-api:analysis_test_lib",
+    "//plugins/kotlin/base/code-insight:code-insight_test_lib",
+    "//java/java-psi-api:psi_test_lib",
+    "//plugins/kotlin/base/facet:facet_test_lib",
+    "//plugins/kotlin/base/jps:jps_test_lib",
+    "@lib//:kotlinc-kotlin-compiler-common-provided",
+    "@lib//:kotlinc-analysis-api-provided",
+    "@lib//:kotlinc-kotlin-jps-common-provided",
+    "//platform/lang-impl:lang-impl_test_lib",
+    "//uast/uast-common:uast_test_lib",
+    "//java/openapi:java_test_lib",
+    "//libraries/skiko:skiko_test_lib",
+    "//java/debugger/impl:impl_test_lib",
+    "//platform/ide-core-impl:ide-core-impl_test_lib",
+    "//java/execution/impl:impl_test_lib",
+    "//platform/execution:execution_test_lib",
+    "//platform/platform-util-io:ide-util-io_test_lib",
+    "//platform/execution-impl:execution-impl_test_lib",
+    "//platform/util/jdom:jdom_test_lib",
+    "//platform/external-system-impl:externalSystem-impl_test_lib",
+    "//plugins/gradle:gradle_test_lib",
+  ],
+  plugins = ["@lib//:compose-plugin"]
+)
+### auto-generated section `build intellij.devkit.compose` end

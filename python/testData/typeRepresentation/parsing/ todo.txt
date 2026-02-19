@@ -1,0 +1,15 @@
+TypeRepresentation:a.pythonTypeRepresentation
+  PyElement
+    PsiElement(Py:AT)('@')
+    PsiElement(Py:IDENTIFIER)('Todo')
+    PsiElement(Py:LPAR)('(')
+    PsiElement(Py:TICK)('`')
+    PsiElement(Py:IDENTIFIER)('Unpack')
+    PsiElement(Py:LBRACKET)('[')
+    PsiElement(Py:RBRACKET)(']')
+    PsiElement(Py:TICK)('`')
+    PsiWhiteSpace(' ')
+    PsiElement(Py:IDENTIFIER)('special')
+    PsiWhiteSpace(' ')
+    PsiElement(Py:IDENTIFIER)('form')
+    PsiElement(Py:RPAR)(')')

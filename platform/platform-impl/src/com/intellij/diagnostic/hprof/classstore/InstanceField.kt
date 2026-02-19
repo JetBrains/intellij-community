@@ -16,5 +16,7 @@
 package com.intellij.diagnostic.hprof.classstore
 
 import com.intellij.diagnostic.hprof.parser.Type
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 class InstanceField(val name: String, val offset: Int, val type: Type)

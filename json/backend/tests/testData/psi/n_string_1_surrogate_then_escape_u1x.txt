@@ -1,0 +1,6 @@
+JsonFile: n_string_1_surrogate_then_escape_u1x.json
+  JsonArray
+    PsiElement([)('[')
+    JsonStringLiteral
+      PsiElement(DOUBLE_QUOTED_STRING)('"\uD800\u1x"')
+    PsiElement(])(']')

@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<module version="4">
+  <component name="NewModuleRootManager" inherit-compiler-output="true">
+    <exclude-output />
+    <content url="file://$MODULE_DIR$">
+      <excludeFolder url="file://$MODULE_DIR$/gradlebuild/build" />
+    </content>
+    <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="library" exported="" name="JUnit5" level="project" />
+    <orderEntry type="library" exported="" name="JUnit5Params" level="project" />
+    <orderEntry type="library" exported="" name="JUnit5Jupiter" level="project" />
+    <orderEntry type="library" exported="" name="JUnit5Launcher" level="project" />
+    <orderEntry type="library" exported="" name="hamcrest" level="project" />
+    <orderEntry type="library" exported="" name="kotlin-test-junit5" level="project" />
+    <orderEntry type="library" exported="" name="kotlin-test" level="project" />
+  </component>
+</module>

@@ -16,14 +16,18 @@
 
 package org.intellij.lang.xpath.xslt.impl;
 
+import com.intellij.codeInsight.daemon.impl.analysis.XmlUnresolvedReferenceInspection;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.util.MoveRenameUsageInfo;
 import com.intellij.usageView.UsageInfo;
-import com.intellij.usages.*;
+import com.intellij.usages.PsiElementUsageTarget;
+import com.intellij.usages.Usage;
+import com.intellij.usages.UsageGroup;
+import com.intellij.usages.UsageInfo2UsageAdapter;
+import com.intellij.usages.UsageTarget;
 import com.intellij.usages.rules.SingleParentUsageGroupingRule;
 import com.intellij.usages.rules.UsageGroupingRule;
 import com.intellij.usages.rules.UsageGroupingRuleProvider;
@@ -39,18 +43,19 @@ import org.intellij.plugins.xpathView.XPathBundle;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.Icon;
 import javax.xml.namespace.QName;
 
-public class XsltStuffProvider implements UsageGroupingRuleProvider {
+public final class XsltStuffProvider implements UsageGroupingRuleProvider {
 
-    @SuppressWarnings({"unchecked"})
-    public  static final Class<? extends LocalInspectionTool>[] INSPECTION_CLASSES = new Class[]{
-            UnusedElementInspection.class,
-            TemplateInvocationInspection.class,
-            XsltDeclarationInspection.class,
-            VariableShadowingInspection.class
-    };
+  @SuppressWarnings({"unchecked"})
+  public static final Class<? extends LocalInspectionTool>[] INSPECTION_CLASSES = new Class[]{
+    UnusedElementInspection.class,
+    TemplateInvocationInspection.class,
+    XsltDeclarationInspection.class,
+    VariableShadowingInspection.class,
+    XmlUnresolvedReferenceInspection.class
+  };
 
     private final UsageGroupingRule[] myUsageGroupingRules;
 
@@ -59,7 +64,7 @@ public class XsltStuffProvider implements UsageGroupingRuleProvider {
     }
 
   @Override
-  public UsageGroupingRule @NotNull [] getActiveRules(@NotNull Project project) {
+  public @NotNull UsageGroupingRule @NotNull [] getActiveRules(@NotNull Project project) {
         return myUsageGroupingRules;
     }
 
@@ -71,13 +76,12 @@ public class XsltStuffProvider implements UsageGroupingRuleProvider {
         }
 
         @Override
-        public Icon getIcon(boolean isOpen) {
+        public Icon getIcon() {
             return myTemplate.getIcon(0);
         }
 
         @Override
-        @NotNull
-        public String getText(UsageView view) {
+        public @NotNull String getPresentableGroupText() {
             final StringBuilder sb = new StringBuilder();
 
             final XPathExpression expr = myTemplate.getMatchExpression();
@@ -85,25 +89,15 @@ public class XsltStuffProvider implements UsageGroupingRuleProvider {
             final QName mode = myTemplate.getMode();
 
             if (mode != null) {
-                if (sb.length() > 0) sb.append(", ");
+                if (!sb.isEmpty()) sb.append(", ");
                 sb.append("mode='").append(mode.toString()).append("'");
             }
             return XPathBundle.message("list.item.template", sb);
         }
 
         @Override
-        @Nullable
-        public FileStatus getFileStatus() {
-            return null;
-        }
-
-        @Override
         public boolean isValid() {
             return myTemplate.isValid();
-        }
-
-        @Override
-        public void update() {
         }
 
         @Override
@@ -127,6 +121,7 @@ public class XsltStuffProvider implements UsageGroupingRuleProvider {
             return canNavigate();
         }
 
+        @Override
         public boolean equals(Object o) {
             if (this == o) return true;
             if (o == null || getClass() != o.getClass()) return false;
@@ -139,21 +134,19 @@ public class XsltStuffProvider implements UsageGroupingRuleProvider {
             return true;
         }
 
+        @Override
         public int hashCode() {
             return myTemplate.hashCode();
         }
     }
 
     private static class TemplateUsageGroupingRule extends SingleParentUsageGroupingRule {
-        @Nullable
         @Override
-        protected UsageGroup getParentGroupFor(@NotNull Usage usage, UsageTarget @NotNull [] targets) {
-            if (usage instanceof UsageInfo2UsageAdapter) {
-                final UsageInfo2UsageAdapter u = (UsageInfo2UsageAdapter)usage;
-                final UsageInfo usageInfo = u.getUsageInfo();
-                if (usageInfo instanceof MoveRenameUsageInfo) {
-                    final MoveRenameUsageInfo info = (MoveRenameUsageInfo)usageInfo;
-                    return buildGroup(info.getReferencedElement(), usageInfo, true);
+        protected @Nullable UsageGroup getParentGroupFor(@NotNull Usage usage, UsageTarget @NotNull [] targets) {
+            if (usage instanceof UsageInfo2UsageAdapter u) {
+              final UsageInfo usageInfo = u.getUsageInfo();
+                if (usageInfo instanceof MoveRenameUsageInfo info) {
+                  return buildGroup(info.getReferencedElement(), usageInfo, true);
                 } else {
                     for (UsageTarget target : targets) {
                         UsageGroup group = target instanceof PsiElementUsageTarget ?
@@ -166,11 +159,9 @@ public class XsltStuffProvider implements UsageGroupingRuleProvider {
             return null;
         }
 
-        @Nullable
-        private static UsageGroup buildGroup(PsiElement referencedElement, UsageInfo u, boolean mustBeForeign) {
-            if (referencedElement instanceof XsltParameter) {
-                final XsltParameter parameter = (XsltParameter)referencedElement;
-                final PsiElement element = u.getElement();
+        private static @Nullable UsageGroup buildGroup(PsiElement referencedElement, UsageInfo u, boolean mustBeForeign) {
+            if (referencedElement instanceof XsltParameter parameter) {
+              final PsiElement element = u.getElement();
                 if (element == null) return null;
                 final XsltTemplate template = XsltCodeInsightUtil.getTemplate(element, false);
                 if (template == null) return null;

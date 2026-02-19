@@ -25,8 +25,6 @@ import org.jetbrains.annotations.Nullable;
  * One possible use case for such functionality is a situation when user opens document with lines that are wider that editor's
  * visible area. We can represent such long strings in multiple visual line then and need to know the best place to insert
  * such virtual wrap.
- *
- * @author Denis Zhdanov
  */
 public interface LineWrapPositionStrategy {
 
@@ -52,4 +50,26 @@ public interface LineWrapPositionStrategy {
     @NotNull Document document, @Nullable Project project, int startOffset, int endOffset, int maxPreferredOffset,
     boolean allowToBeyondMaxPreferredOffset, boolean isSoftWrap
   );
+
+  /**
+   *The method ensures:
+   * - No breaks within surrogate pairs to prevent visual errors.
+   * - Natural line breaks at spaces and tabs for Western-style text.
+   * - Support for wrapping in Eastern languages by allowing breaks on specific Unicode ranges.
+   * @param text the character sequence to analyze
+   * @param offset the offset of the character in the sequence to evaluate
+   * @return {@code true} if the line can be wrapped at the specified offset,
+   *         {@code false} otherwise
+   */
+  default boolean canWrapLineAtOffset(CharSequence text, int offset) {
+    char c = text.charAt(offset);
+    // Ensure no break occurs within surrogate pairs.
+     if (Character.isLowSurrogate(c)) {
+      if (offset - 1 >= 0 && Character.isHighSurrogate(text.charAt(offset - 1))) {
+        return false;
+      }
+    }
+    int codePoint = Character.codePointAt(text, offset);
+    return codePoint == ' ' || codePoint == '\t' || (codePoint >= 0x2f00 && codePoint < 0x10000 /* eastern languages unicode ranges */);
+  }
 }

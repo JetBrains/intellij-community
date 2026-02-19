@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.debugger.fragments;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -6,7 +6,14 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ClearableLazyValue;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.*;
+import com.intellij.psi.FileViewProvider;
+import com.intellij.psi.IntentionFilterOwner;
+import com.intellij.psi.JavaCodeFragment;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.SingleRootFileViewProvider;
 import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.file.impl.FileManager;
 import com.intellij.psi.impl.source.tree.FileElement;
@@ -16,12 +23,13 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrUnAmbiguousClosureContainer;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyFileImpl;
-import org.jetbrains.plugins.groovy.lang.resolve.imports.*;
+import org.jetbrains.plugins.groovy.lang.resolve.imports.GroovyFileImports;
+import org.jetbrains.plugins.groovy.lang.resolve.imports.GroovyImport;
+import org.jetbrains.plugins.groovy.lang.resolve.imports.GroovyStarImport;
+import org.jetbrains.plugins.groovy.lang.resolve.imports.RegularImport;
+import org.jetbrains.plugins.groovy.lang.resolve.imports.StaticImport;
 import org.jetbrains.plugins.groovy.lang.resolve.imports.impl.GroovyImportCollector;
 
-/**
- * @author ven
- */
 public class GroovyCodeFragment extends GroovyFileImpl implements JavaCodeFragment, IntentionFilterOwner, GrUnAmbiguousClosureContainer {
   private static final Logger LOG = Logger.getInstance(GroovyCodeFragment.class);
 
@@ -64,8 +72,7 @@ public class GroovyCodeFragment extends GroovyFileImpl implements JavaCodeFragme
   }
 
   @Override
-  @NotNull
-  public FileViewProvider getViewProvider() {
+  public @NotNull FileViewProvider getViewProvider() {
     if (myViewProvider != null) return myViewProvider;
     return super.getViewProvider();
   }
@@ -208,9 +215,8 @@ public class GroovyCodeFragment extends GroovyFileImpl implements JavaCodeFragme
     myImportCollector.clear();
   }
 
-  @NotNull
   @Override
-  public GroovyFileImports getImports() {
+  public @NotNull GroovyFileImports getImports() {
     return myFileImports.getValue();
   }
 }

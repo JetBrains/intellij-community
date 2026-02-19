@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.CommonBundle;
@@ -6,6 +6,7 @@ import com.intellij.codeInsight.daemon.impl.quickfix.CreateClassKind;
 import com.intellij.codeInsight.daemon.impl.quickfix.CreateFromUsageUtils;
 import com.intellij.codeInsight.daemon.impl.quickfix.CreateServiceClassFixBase;
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.ide.actions.TemplateKindCombo;
 import com.intellij.java.JavaBundle;
 import com.intellij.openapi.application.ApplicationManager;
@@ -23,7 +24,12 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiNameHelper;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.ui.components.JBTextField;
 import com.intellij.util.IncorrectOperationException;
@@ -32,15 +38,14 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.Action;
+import javax.swing.DefaultComboBoxModel;
+import javax.swing.JComponent;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
 
-/**
- * @author Pavel.Dolgov
- */
 public final class CreateClassInPackageInModuleFix implements IntentionAction {
   public static final Key<Boolean> IS_INTERFACE = Key.create("CREATE_CLASS_IN_PACKAGE_IS_INTERFACE");
   public static final Key<PsiDirectory> ROOT_DIR = Key.create("CREATE_CLASS_IN_PACKAGE_ROOT_DIR");
@@ -54,33 +59,34 @@ public final class CreateClassInPackageInModuleFix implements IntentionAction {
     myPackageName = packageName;
   }
 
-  @Nls
-  @NotNull
   @Override
-  public String getText() {
+  public @Nls @NotNull String getText() {
     return JavaBundle.message("intention.text.create.a.class.in.0", myPackageName);
   }
 
-  @Nls
-  @NotNull
   @Override
-  public String getFamilyName() {
+  public @Nls @NotNull String getFamilyName() {
     return JavaBundle.message("intention.family.create.a.class.in.package");
   }
 
   @Override
-  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
+  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile psiFile) {
     return ModuleManager.getInstance(project).findModuleByName(myModuleName) != null;
   }
 
   @Override
-  public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
+  public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile psiFile) {
+    return new IntentionPreviewInfo.Html(JavaBundle.message("intention.text.create.a.class.in.package.preview", myPackageName));
+  }
+
+  @Override
+  public void invoke(@NotNull Project project, Editor editor, PsiFile psiFile) throws IncorrectOperationException {
     if (ApplicationManager.getApplication().isUnitTestMode()) {
-      Boolean isInterface = IS_INTERFACE.get(file);
-      PsiDirectory rootDir = ROOT_DIR.get(file);
-      String name = NAME.get(file);
+      Boolean isInterface = IS_INTERFACE.get(psiFile);
+      PsiDirectory rootDir = ROOT_DIR.get(psiFile);
+      String name = NAME.get(psiFile);
       if (isInterface != null && rootDir != null && name != null) {
-        WriteAction.run(() -> createClassInPackage(isInterface ? CreateClassKind.INTERFACE : CreateClassKind.CLASS, rootDir, name, file));
+        WriteAction.run(() -> createClassInPackage(isInterface ? CreateClassKind.INTERFACE : CreateClassKind.CLASS, rootDir, name, psiFile));
       }
       return;
     }
@@ -102,7 +108,7 @@ public final class CreateClassInPackageInModuleFix implements IntentionAction {
           PsiDirectory rootDir = dialog.getRootDir();
           String name = dialog.getName();
           if (rootDir != null) {
-            PsiClass psiClass = WriteAction.compute(() -> createClassInPackage(kind, rootDir, name, file));
+            PsiClass psiClass = WriteAction.compute(() -> createClassInPackage(kind, rootDir, name, psiFile));
             CreateServiceClassFixBase.positionCursor(psiClass);
           }
         }
@@ -110,11 +116,10 @@ public final class CreateClassInPackageInModuleFix implements IntentionAction {
     }
   }
 
-  @Nullable
-  private PsiClass createClassInPackage(@NotNull CreateClassKind kind,
-                                        @NotNull PsiDirectory rootDir,
-                                        @NotNull String name,
-                                        @NotNull PsiElement contextElement) {
+  private @Nullable PsiClass createClassInPackage(@NotNull CreateClassKind kind,
+                                                  @NotNull PsiDirectory rootDir,
+                                                  @NotNull String name,
+                                                  @NotNull PsiElement contextElement) {
     PsiDirectory psiPackageDir = CreateServiceClassFixBase.getOrCreatePackageDirInRoot(myPackageName, rootDir);
     if (psiPackageDir != null) {
       return CreateFromUsageUtils.createClass(kind, psiPackageDir, name, contextElement.getManager(), contextElement, null, null);
@@ -127,8 +132,7 @@ public final class CreateClassInPackageInModuleFix implements IntentionAction {
     return false;
   }
 
-  @Nullable
-  public static IntentionAction createFix(@NotNull Module module, @Nullable String packageName) {
+  public static @Nullable IntentionAction createFix(@NotNull Module module, @Nullable String packageName) {
     return StringUtil.isEmpty(packageName) ? null : new CreateClassInPackageInModuleFix(module.getName(), packageName);
   }
 
@@ -136,9 +140,9 @@ public final class CreateClassInPackageInModuleFix implements IntentionAction {
     private final JBTextField myNameTextField = new JBTextField();
     private final ComboBoxWithWidePopup<PsiDirectory> myRootDirCombo = new ComboBoxWithWidePopup<>();
     private final TemplateKindCombo myKindCombo = new TemplateKindCombo();
-    @Nullable private final Project myProject;
+    private final @NotNull Project myProject;
 
-    CreateClassInPackageDialog(@Nullable Project project, PsiDirectory @NotNull [] rootDirs) {
+    CreateClassInPackageDialog(@NotNull Project project, PsiDirectory @NotNull [] rootDirs) {
       super(project);
       myProject = project;
       setTitle(JavaBundle.message("dialog.title.create.class.in.package"));
@@ -163,15 +167,13 @@ public final class CreateClassInPackageInModuleFix implements IntentionAction {
       return null;
     }
 
-    @Nullable
     @Override
-    public JComponent getPreferredFocusedComponent() {
+    public @Nullable JComponent getPreferredFocusedComponent() {
       return myNameTextField;
     }
 
-    @Nullable
     @Override
-    protected JComponent createNorthPanel() {
+    protected @Nullable JComponent createNorthPanel() {
       PanelGridBuilder builder = UI.PanelFactory.grid();
       builder.add(UI.PanelFactory.panel(myNameTextField)
                     .withLabel(CommonBundle.message("label.name") + ":")
@@ -183,9 +185,8 @@ public final class CreateClassInPackageInModuleFix implements IntentionAction {
       return builder.createPanel();
     }
 
-    @Nullable
     @Override
-    protected ValidationInfo doValidate() {
+    protected @Nullable ValidationInfo doValidate() {
       String name = getName();
       PsiDirectory rootDir = getRootDir();
       LanguageLevel level = rootDir != null ? PsiUtil.getLanguageLevel(rootDir) : LanguageLevel.HIGHEST;
@@ -196,13 +197,11 @@ public final class CreateClassInPackageInModuleFix implements IntentionAction {
       return new ValidationInfo(JavaBundle.message("error.text.this.is.not.a.valid.java.class.name"), myNameTextField);
     }
 
-    @NotNull
-    public String getName() {
+    public @NotNull String getName() {
       return myNameTextField.getText().trim();
     }
 
-    @Nullable
-    public PsiDirectory getRootDir() {
+    public @Nullable PsiDirectory getRootDir() {
       return (PsiDirectory)myRootDirCombo.getSelectedItem();
     }
 

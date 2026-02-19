@@ -19,10 +19,13 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeList;
+import com.intellij.openapi.vcs.changes.committed.CommittedChangesTreeBrowser;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+@ApiStatus.Internal
 public abstract class RevertSelectedChangesAction extends RevertCommittedStuffAbstractAction {
   public static class Revert extends RevertSelectedChangesAction {
     public Revert() {
@@ -62,11 +65,16 @@ public abstract class RevertSelectedChangesAction extends RevertCommittedStuffAb
 
   @Override
   protected Change @Nullable [] getChanges(@NotNull AnActionEvent e, boolean isFromUpdate) {
-    if (!isFromUpdate) {
-      // to ensure directory flags for SVN are initialized
-      e.getData(VcsDataKeys.CHANGES_WITH_MOVED_CHILDREN);
+    CommittedChangesTreeBrowser treeBrowser = e.getData(CommittedChangesTreeBrowser.COMMITTED_CHANGES_TREE_DATA_KEY);
+    if (treeBrowser == null) {
+      return e.getData(VcsDataKeys.SELECTED_CHANGES_IN_DETAILS);
     }
 
-    return e.getData(VcsDataKeys.SELECTED_CHANGES_IN_DETAILS);
+    if (isFromUpdate) {
+      return e.getData(VcsDataKeys.SELECTED_CHANGES_IN_DETAILS);
+    }
+    else {
+      return treeBrowser.collectSelectedChangesWithMovedChildren();
+    }
   }
 }

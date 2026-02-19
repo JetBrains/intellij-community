@@ -1,0 +1,20 @@
+// FILE: before.kt
+// IGNORE_K1
+fun foo(a: List<Int>?) {
+    for (i in 1..10) {
+        val x = a ?: <caret>break
+        for (j in x) {
+            //
+        }
+    }
+}
+// FILE: after.kt
+// IGNORE_K1
+fun foo(a: List<Int>?) {
+    for (i in 1..10) {
+        val x = a ?: break
+        for (j in x) {
+            //
+        }
+    }<caret>
+}

@@ -1,0 +1,7 @@
+{
+  "type": "JAVA_CLASS",
+  "classId": "testing/SomeInterface",
+  "newName": "NewInterface",
+  "comment": "For KT-4100 Imports doesn't change after java interface name refactoring",
+  "enabledInK2": true
+}

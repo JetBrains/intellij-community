@@ -1,0 +1,39 @@
+PsiJavaFile:SeeTag19.java
+  PsiImportList
+    <empty list>
+  PsiClass:C
+    PsiDocComment
+      PsiDocToken:DOC_COMMENT_START('/**')
+      PsiWhiteSpace('\n ')
+      PsiDocToken:DOC_COMMENT_LEADING_ASTERISKS('*')
+      PsiDocToken:DOC_COMMENT_DATA(' ')
+      PsiDocTag:@see
+        PsiDocToken:DOC_TAG_NAME('@see')
+        PsiWhiteSpace(' ')
+        PsiElement(DOC_FRAGMENT_REF)
+          PsiElement(DOC_REFERENCE_HOLDER)
+            PsiJavaCodeReferenceElement:C
+              PsiIdentifier:C('C')
+              PsiReferenceParameterList
+                <empty list>
+          PsiDocToken:DOC_TAG_VALUE_DOUBLE_SHARP_TOKEN('##')
+          PsiElement(DOC_FRAGMENT_NAME)
+            PsiDocToken:DOC_TAG_VALUE_TOKEN('fragmentName')
+        PsiWhiteSpace(' ')
+        PsiDocToken:DOC_COMMENT_DATA('label')
+      PsiWhiteSpace('\n ')
+      PsiDocToken:DOC_COMMENT_END('*/')
+    PsiWhiteSpace('\n')
+    PsiModifierList:
+      <empty list>
+    PsiKeyword:class('class')
+    PsiWhiteSpace(' ')
+    PsiIdentifier:C('C')
+    PsiTypeParameterList
+      <empty list>
+    PsiReferenceList
+      <empty list>
+    PsiReferenceList
+      <empty list>
+    PsiJavaToken:LBRACE('{')
+    PsiJavaToken:RBRACE('}')

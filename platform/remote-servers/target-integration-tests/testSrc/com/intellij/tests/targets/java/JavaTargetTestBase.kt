@@ -1,108 +1,74 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.tests.targets.java
 
-import com.intellij.debugger.ExecutionWithDebuggerToolsTestCase
-import com.intellij.debugger.impl.OutputChecker
-import com.intellij.execution.ExecutionManager
-import com.intellij.execution.RunConfigurationExtension
+import com.intellij.execution.PsiLocation
 import com.intellij.execution.ShortenCommandLine
 import com.intellij.execution.application.ApplicationConfiguration
-import com.intellij.execution.configurations.JavaParameters
-import com.intellij.execution.configurations.RunConfigurationBase
-import com.intellij.execution.configurations.RunnerSettings
-import com.intellij.execution.executors.DefaultDebugExecutor
 import com.intellij.execution.executors.DefaultRunExecutor
-import com.intellij.execution.impl.ExecutionManagerImpl
-import com.intellij.execution.process.ProcessEvent
-import com.intellij.execution.process.ProcessHandler
-import com.intellij.execution.process.ProcessListener
+import com.intellij.execution.junit.JUnitConfiguration
 import com.intellij.execution.process.ProcessOutputType
 import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.execution.runners.ExecutionEnvironmentBuilder
 import com.intellij.execution.ui.RunContentDescriptor
-import com.intellij.openapi.application.AppUIExecutor
-import com.intellij.openapi.application.Experiments
-import com.intellij.openapi.application.PathManager
-import com.intellij.openapi.application.impl.coroutineDispatchingContext
+import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.asContextElement
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.editor.EditorFactory
-import com.intellij.openapi.extensions.LoadingOrder
-import com.intellij.openapi.util.Key
-import com.intellij.openapi.util.SystemInfo
-import com.intellij.psi.JavaPsiFacade
-import com.intellij.psi.search.GlobalSearchScope
-import kotlinx.coroutines.*
+import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.testFramework.PlatformTestUtil
+import com.intellij.testFramework.common.timeoutRunBlocking
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeout
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.Test
-import kotlin.coroutines.resume
-import kotlin.coroutines.resumeWithException
+import kotlin.time.Duration.Companion.minutes
 
 /**
  * Create a subclass to briefly test a compatibility of some Run Target with Java run configurations.
  */
-abstract class JavaTargetTestBase : ExecutionWithDebuggerToolsTestCase() {
-  /** A [com.intellij.execution.target.ContributedConfigurationBase.displayName] or null for the local target. */
-  abstract val targetName: String?
-
+abstract class JavaTargetTestBase(executionMode: ExecutionMode) : CommonJavaTargetTestBase(executionMode) {
   /** One test checks that the being launched on the target, a test application can read the file at this path. */
   abstract val targetFilePath: String
 
   /** Expected contents of [targetFilePath]. */
   abstract val targetFileContent: String
 
-  override fun initOutputChecker(): OutputChecker = OutputChecker(testAppPath, appOutputPath)
+  override fun getTestAppPath(): String = "${PlatformTestUtil.getCommunityPath()}/platform/remote-servers/target-integration-tests/targetApp"
 
-  override fun getTestAppPath(): String =
-    PathManager.getCommunityHomePath() + "/platform/remote-servers/target-integration-tests/targetApp"
+  override fun setUpModule() {
+    super.setUpModule()
 
-  private var defaultTargetsEnabled: Boolean? = null
-  private var defaultForceCompilationInTests: Boolean? = null
-
-  override fun setUp() {
-    super.setUp()
-
-    defaultTargetsEnabled = Experiments.getInstance().isFeatureEnabled("run.targets")
-    Experiments.getInstance().setFeatureEnabled("run.targets", true)
-
-    (ExecutionManager.getInstance(project) as? ExecutionManagerImpl)?.let {
-      defaultForceCompilationInTests = it.forceCompilationInTests
-      it.forceCompilationInTests = true
-    }
-  }
-
-  override fun tearDown() {
-    try {
-      defaultTargetsEnabled?.let {
-        Experiments.getInstance().setFeatureEnabled("run.targets", it)
-      }
-      defaultForceCompilationInTests?.let {
-        (ExecutionManager.getInstance(project) as? ExecutionManagerImpl)?.forceCompilationInTests = it
-      }
-    }
-    finally {
-      super.tearDown()
-    }
+    val contentRoot = LocalFileSystem.getInstance().findFileByPath(testAppPath)
+    initializeSampleModule(module, contentRoot!!)
   }
 
   @Test
   fun `test can read file at target`(): Unit = runBlocking {
+    if (executionMode != ExecutionMode.RUN) return@runBlocking
     doTestCanReadFileAtTarget(ShortenCommandLine.NONE)
   }
 
   @Test
   fun `test can read file at target with manifest shortener`(): Unit = runBlocking {
+    if (executionMode != ExecutionMode.RUN) return@runBlocking
     doTestCanReadFileAtTarget(ShortenCommandLine.MANIFEST)
   }
 
   @Test
   fun `test can read file at target with args file shortener`(): Unit = runBlocking {
+    if (executionMode != ExecutionMode.RUN) return@runBlocking
     doTestCanReadFileAtTarget(ShortenCommandLine.ARGS_FILE)
   }
 
   private suspend fun doTestCanReadFileAtTarget(shortenCommandLine: ShortenCommandLine) {
     val cwd = tempDir.createDir()
     val executor = DefaultRunExecutor.getRunExecutorInstance()
-    val executionEnvironment: ExecutionEnvironment = withContext(AppUIExecutor.onUiThread().coroutineDispatchingContext()) {
+    val executionEnvironment: ExecutionEnvironment = withContext(Dispatchers.EDT + ModalityState.defaultModalityState().asContextElement()) {
       ExecutionEnvironmentBuilder(project, executor)
         .runProfile(
           ApplicationConfiguration("CatRunConfiguration", project).also { conf ->
@@ -122,7 +88,7 @@ abstract class JavaTargetTestBase : ExecutionWithDebuggerToolsTestCase() {
         CompletableDeferred<RunContentDescriptor>()
           .also { deferred ->
             executionEnvironment.setCallback { deferred.complete(it) }
-            withContext(AppUIExecutor.onUiThread().coroutineDispatchingContext()) {
+            withContext(Dispatchers.EDT + ModalityState.defaultModalityState().asContextElement()) {
               executionEnvironment.runner.execute(executionEnvironment)
             }
           }
@@ -134,29 +100,26 @@ abstract class JavaTargetTestBase : ExecutionWithDebuggerToolsTestCase() {
   }
 
   @Test
-  fun `test java debugger`(): Unit = runBlocking {
-    assertThat(SystemInfo.IS_AT_LEAST_JAVA9).describedAs("The test is intended to verifying Java 9 options.").isTrue()
+  fun `test java application`(): Unit = runBlocking {
     val cwd = tempDir.createDir()
-    val executor = DefaultDebugExecutor.getDebugExecutorInstance()
-    val executionEnvironment: ExecutionEnvironment = withContext(AppUIExecutor.onUiThread().coroutineDispatchingContext()) {
-      ExecutionEnvironmentBuilder(project, executor)
-        .runProfile(
-          ApplicationConfiguration("CatRunConfiguration", project).also { conf ->
-            conf.setModule(module)
-            conf.workingDirectory = cwd.toString()
-            conf.mainClassName = "Cat"
-            conf.programParameters = targetFilePath
-            conf.defaultTargetName = targetName
-          }
-        )
+    val executionEnvironment: ExecutionEnvironment = withContext(Dispatchers.EDT + ModalityState.defaultModalityState().asContextElement()) {
+      ExecutionEnvironmentBuilder(project, getExecutor()).runProfile(
+        ApplicationConfiguration("CatRunConfiguration", project).also { conf ->
+          conf.setModule(module)
+          conf.workingDirectory = cwd.toString()
+          conf.mainClassName = "Cat"
+          conf.programParameters = targetFilePath
+          conf.defaultTargetName = targetName
+        }
+      )
         .build()
     }
 
-    createBreakpoints(runReadAction {
-      JavaPsiFacade.getInstance(project)
-        .findClass("Cat", GlobalSearchScope.allScope(project))!!
-        .containingFile
-    })
+    if (executionMode == ExecutionMode.DEBUG) {
+      createBreakpoints(runReadAction {
+        getTestClass("Cat").containingFile
+      })
+    }
 
     val textDeferred = processOutputReader filter@{ event, outputType ->
       val text = event.text ?: return@filter false
@@ -174,7 +137,7 @@ abstract class JavaTargetTestBase : ExecutionWithDebuggerToolsTestCase() {
         CompletableDeferred<RunContentDescriptor>()
           .also { deferred ->
             executionEnvironment.setCallback { deferred.complete(it) }
-            withContext(AppUIExecutor.onUiThread().coroutineDispatchingContext()) {
+            withContext(Dispatchers.EDT + ModalityState.defaultModalityState().asContextElement()) {
               executionEnvironment.runner.execute(executionEnvironment)
             }
           }
@@ -182,61 +145,12 @@ abstract class JavaTargetTestBase : ExecutionWithDebuggerToolsTestCase() {
       }
     }
     val text = withTimeout(30_000) { textDeferred.await() }
-    assertThat(text).isEqualTo("Debugger: $targetFileContent\n$targetFileContent")
-    Unit
-  }
-
-  private fun processOutputReader(filter: (ProcessEvent, Key<*>) -> Boolean): CompletableDeferred<String> {
-    val textDeferred = CompletableDeferred<String>()
-    RunConfigurationExtension.EP_NAME.point.registerExtension(
-      object : RunConfigurationExtension() {
-        override fun isApplicableFor(configuration: RunConfigurationBase<*>): Boolean = true
-
-        override fun <T : RunConfigurationBase<*>?> updateJavaParameters(
-          configuration: T,
-          params: JavaParameters,
-          runnerSettings: RunnerSettings?
-        ): Unit = Unit
-
-        override fun attachToProcess(configuration: RunConfigurationBase<*>, handler: ProcessHandler, runnerSettings: RunnerSettings?) {
-          GlobalScope.launch {
-            textDeferred.complete(handler.collectOutput(filter))
-          }
-        }
-      },
-      LoadingOrder.ANY,
-      testRootDisposable
-    )
-    return textDeferred
-  }
-
-  private suspend fun ProcessHandler.collectOutput(handler: (event: ProcessEvent, outputType: Key<*>) -> Boolean): String =
-    suspendCancellableCoroutine { continuation ->
-      val wholeOutput = StringBuilder()
-      val stdout = StringBuilder()
-      addProcessListener(object : ProcessListener {
-        override fun startNotified(event: ProcessEvent) {
-          event.text?.let(wholeOutput::append)
-        }
-
-        override fun processTerminated(event: ProcessEvent) {
-          event.text?.let(wholeOutput::append)
-          if (event.exitCode == 0) {
-            continuation.resume(stdout.toString())
-          }
-          else {
-            continuation.resumeWithException(IllegalStateException("\n=== CONSOLE ===\n$wholeOutput\n=== CONSOLE END ==="))
-          }
-        }
-
-        override fun onTextAvailable(event: ProcessEvent, outputType: Key<*>) {
-          event.text?.let(wholeOutput::append)
-          if (handler(event, outputType)) {
-            event.text?.let(stdout::append)
-          }
-        }
-      })
+    val expectedText = when (executionMode) {
+      ExecutionMode.DEBUG -> "Debugger: $targetFileContent\n$targetFileContent"
+      else -> targetFileContent
     }
+    assertThat(text).isEqualTo(expectedText)
+  }
 
   private suspend inline fun withDeletingExcessiveEditors(handler: () -> Unit) {
     val editorFactory = EditorFactory.getInstance()
@@ -245,7 +159,7 @@ abstract class JavaTargetTestBase : ExecutionWithDebuggerToolsTestCase() {
       handler()
     }
     finally {
-      withContext(AppUIExecutor.onUiThread().coroutineDispatchingContext()) {
+      withContext(Dispatchers.EDT + ModalityState.defaultModalityState().asContextElement()) {
         for (editor in editorFactory.allEditors) {
           if (editor.project === project && editor !in editorsBefore) {
             editorFactory.releaseEditor(editor)
@@ -253,5 +167,221 @@ abstract class JavaTargetTestBase : ExecutionWithDebuggerToolsTestCase() {
         }
       }
     }
+  }
+
+  @Test
+  fun `test junit tests - run all`() {
+    val runConfiguration = createJUnitConfiguration(JUnitConfiguration.TEST_PACKAGE)
+
+    doTestJUnitRunConfiguration(runConfiguration = runConfiguration,
+                                expectedTestsResultExported = "<testrun name=\"JUnit tests Run Configuration\">\n" +
+                                                              "  <count name=\"total\" value=\"2\" />\n" +
+                                                              "  <count name=\"failed\" value=\"1\" />\n" +
+                                                              "  <count name=\"passed\" value=\"1\" />\n" +
+                                                              "  <root name=\"&lt;default package&gt;\" location=\"java:suite://&lt;default package&gt;\" />\n" +
+                                                              "  <suite locationUrl=\"java:suite://AlsoTest\" name=\"AlsoTest\" status=\"failed\">\n" +
+                                                              "    <test locationUrl=\"java:test://AlsoTest/testShouldFail\" name=\"testShouldFail()\" metainfo=\"\" status=\"failed\">\n" +
+                                                              "      <diff actual=\"5\" expected=\"4\" />\n" +
+                                                              "      <output type=\"stdout\">Debugger: testShouldFail() reached</output>\n" +
+                                                              "      <output type=\"stderr\">org.opentest4j.AssertionFailedError: \n" +
+                                                              "\tat org.junit.jupiter.api.AssertionUtils.fail(AssertionUtils.java:54)\n" +
+                                                              "\tat org.junit.jupiter.api.AssertEquals.failNotEqual(AssertEquals.java:195)\n" +
+                                                              "\tat org.junit.jupiter.api.AssertEquals.assertEquals(AssertEquals.java:152)\n" +
+                                                              "\tat org.junit.jupiter.api.AssertEquals.assertEquals(AssertEquals.java:147)\n" +
+                                                              "\tat org.junit.jupiter.api.Assertions.assertEquals(Assertions.java:326)\n" +
+                                                              "\tat AlsoTest.testShouldFail(AlsoTest.java:12)\n" +
+                                                              "\tat java.base/jdk.internal.reflect.NativeMethodAccessorImpl.invoke0(Native Method)\n" +
+                                                              "\tat java.base/jdk.internal.reflect.NativeMethodAccessorImpl.invoke(</output>\n" +
+                                                              "    </test>\n" +
+                                                              "  </suite>\n" +
+                                                              "  <suite locationUrl=\"java:suite://SomeTest\" name=\"SomeTest\" status=\"passed\">\n" +
+                                                              "    <test locationUrl=\"java:test://SomeTest/testSomething\" name=\"testSomething()\" metainfo=\"\" status=\"passed\">\n" +
+                                                              "      <output type=\"stdout\">Debugger: testSomething() reached</output>\n" +
+                                                              "    </test>\n" +
+                                                              "  </suite>\n" +
+                                                              "</testrun>")
+  }
+
+  @Test
+  fun `test junit tests - run single test`() = timeoutRunBlocking(timeout = 1.minutes) {
+    val alsoTestClass = getTestClass("AlsoTest")
+
+    val runConfiguration = readAction {
+      createJUnitConfiguration(JUnitConfiguration.TEST_CLASS).also { conf ->
+        conf.persistentData.setMainClass(alsoTestClass)
+      }
+    }
+
+    @Suppress("SpellCheckingInspection")
+    doTestJUnitRunConfiguration(runConfiguration = runConfiguration,
+                                expectedTestsResultExported = "<testrun name=\"JUnit tests Run Configuration\">\n" +
+                                                              "  <count name=\"total\" value=\"1\" />\n" +
+                                                              "  <count name=\"failed\" value=\"1\" />\n" +
+                                                              "  <root name=\"AlsoTest\" location=\"java:suite://AlsoTest\" />\n" +
+                                                              "  <test locationUrl=\"java:test://AlsoTest/testShouldFail\" name=\"testShouldFail()\" metainfo=\"\" status=\"failed\">\n" +
+                                                              "    <diff actual=\"5\" expected=\"4\" />\n" +
+                                                              "    <output type=\"stdout\">Debugger: testShouldFail() reached</output>\n" +
+                                                              "    <output type=\"stderr\">org.opentest4j.AssertionFailedError: \n" +
+                                                              "\tat org.junit.jupiter.api.AssertionUtils.fail(AssertionUtils.java:54)\n" +
+                                                              "\tat org.junit.jupiter.api.AssertEquals.failNotEqual(AssertEquals.java:195)\n" +
+                                                              "\tat org.junit.jupiter.api.AssertEquals.assertEquals(AssertEquals.java:152)\n" +
+                                                              "\tat org.junit.jupiter.api.AssertEquals.assertEquals(AssertEquals.java:147)\n" +
+                                                              "\tat org.junit.jupiter.api.Assertions.assertEquals(Assertions.java:326)\n" +
+                                                              "\tat AlsoTest.testShouldFail(AlsoTest.java:12)\n" +
+                                                              "\tat java.base/jdk.internal.reflect.NativeMethodAccessorImpl.invoke0(Native Method)\n" +
+                                                              "\tat java.base/jdk.internal.reflect.NativeMethodAccessorImpl.invoke(</output>\n" +
+                                                              "  </test>\n" +
+                                                              "</testrun>")
+  }
+
+  @Test
+  fun `test junit tests - run tests in directory`() {
+    val runConfiguration = createJUnitConfiguration(JUnitConfiguration.TEST_DIRECTORY).also { conf ->
+      conf.persistentData.dirName = "$testAppPath/tests"
+    }
+
+    @Suppress("SpellCheckingInspection")
+    doTestJUnitRunConfiguration(runConfiguration = runConfiguration,
+                                expectedTestsResultExported = "<testrun name=\"JUnit tests Run Configuration\">\n" +
+                                                              "  <count name=\"total\" value=\"2\" />\n" +
+                                                              "  <count name=\"failed\" value=\"1\" />\n" +
+                                                              "  <count name=\"passed\" value=\"1\" />\n" +
+                                                              "  <root name=\"&lt;default package&gt;\" location=\"java:suite://&lt;default package&gt;\" />\n" +
+                                                              "  <suite locationUrl=\"java:suite://AlsoTest\" name=\"AlsoTest\" status=\"failed\">\n" +
+                                                              "    <test locationUrl=\"java:test://AlsoTest/testShouldFail\" name=\"testShouldFail()\" metainfo=\"\" status=\"failed\">\n" +
+                                                              "      <diff actual=\"5\" expected=\"4\" />\n" +
+                                                              "      <output type=\"stdout\">Debugger: testShouldFail() reached</output>\n" +
+                                                              "      <output type=\"stderr\">org.opentest4j.AssertionFailedError: \n" +
+                                                              "\tat org.junit.jupiter.api.AssertionUtils.fail(AssertionUtils.java:54)\n" +
+                                                              "\tat org.junit.jupiter.api.AssertEquals.failNotEqual(AssertEquals.java:195)\n" +
+                                                              "\tat org.junit.jupiter.api.AssertEquals.assertEquals(AssertEquals.java:152)\n" +
+                                                              "\tat org.junit.jupiter.api.AssertEquals.assertEquals(AssertEquals.java:147)\n" +
+                                                              "\tat org.junit.jupiter.api.Assertions.assertEquals(Assertions.java:326)\n" +
+                                                              "\tat AlsoTest.testShouldFail(AlsoTest.java:12)\n" +
+                                                              "\tat java.base/jdk.internal.reflect.NativeMethodAccessorImpl.invoke0(Native Method)\n" +
+                                                              "\tat java.base/jdk.internal.reflect.NativeMethodAccessorImpl.invoke(</output>\n" +
+                                                              "    </test>\n" +
+                                                              "  </suite>\n" +
+                                                              "  <suite locationUrl=\"java:suite://SomeTest\" name=\"SomeTest\" status=\"passed\">\n" +
+                                                              "    <test locationUrl=\"java:test://SomeTest/testSomething\" name=\"testSomething()\" metainfo=\"\" status=\"passed\">\n" +
+                                                              "      <output type=\"stdout\">Debugger: testSomething() reached</output>\n" +
+                                                              "    </test>\n" +
+                                                              "  </suite>\n" +
+                                                              "</testrun>")
+  }
+
+  @Test
+  fun `test junit tests - run tests by pattern`() {
+    val runConfiguration = createJUnitConfiguration(JUnitConfiguration.TEST_PATTERN).also { conf ->
+      conf.persistentData.setPatterns(LinkedHashSet(listOf("^So.*")))
+    }
+
+    @Suppress("SpellCheckingInspection")
+    doTestJUnitRunConfiguration(runConfiguration = runConfiguration,
+                                expectedTestsResultExported = "<testrun name=\"JUnit tests Run Configuration\">\n" +
+                                                              "  <count name=\"total\" value=\"1\" />\n" +
+                                                              "  <count name=\"passed\" value=\"1\" />\n" +
+                                                              "  <root name=\"&lt;default package&gt;\" location=\"java:suite://&lt;default package&gt;\" />\n" +
+                                                              "  <suite locationUrl=\"java:suite://SomeTest\" name=\"SomeTest\" status=\"passed\">\n" +
+                                                              "    <test locationUrl=\"java:test://SomeTest/testSomething\" name=\"testSomething()\" metainfo=\"\" status=\"passed\">\n" +
+                                                              "      <output type=\"stdout\">Debugger: testSomething() reached</output>\n" +
+                                                              "    </test>\n" +
+                                                              "  </suite>\n" +
+                                                              "</testrun>")
+  }
+
+  @Test
+  fun `test junit tests - run test method by pattern`() {
+    val runConfiguration = createJUnitConfiguration(JUnitConfiguration.TEST_PATTERN).also { conf ->
+      conf.persistentData.setPatterns(LinkedHashSet(listOf("SomeTest,testSomething")))
+    }
+
+    doTestJUnitRunConfiguration(runConfiguration = runConfiguration,
+                                expectedTestsResultExported = "<testrun name=\"JUnit tests Run Configuration\">\n" +
+                                                              "  <count name=\"total\" value=\"1\" />\n" +
+                                                              "  <count name=\"passed\" value=\"1\" />\n" +
+                                                              "  <root name=\"&lt;default package&gt;\" location=\"java:suite://&lt;default package&gt;\" />\n" +
+                                                              "  <suite locationUrl=\"java:suite://SomeTest\" name=\"SomeTest\" status=\"passed\">\n" +
+                                                              "    <test locationUrl=\"java:test://SomeTest/testSomething\" name=\"testSomething()\" metainfo=\"\" status=\"passed\">\n" +
+                                                              "      <output type=\"stdout\">Debugger: testSomething() reached</output>\n" +
+                                                              "    </test>\n" +
+                                                              "  </suite>\n" +
+                                                              "</testrun>")
+  }
+
+  private fun createJUnitConfiguration(testObject: String) = JUnitConfiguration("JUnit tests Run Configuration", project).also { conf ->
+    conf.setModule(module)
+    conf.defaultTargetName = targetName
+    conf.persistentData.TEST_OBJECT = testObject
+  }
+
+  @Test
+  fun `test junit tests - run test method`() = timeoutRunBlocking(timeout = 1.minutes) {
+    val runConfiguration = readAction {
+      createJUnitConfiguration(JUnitConfiguration.TEST_METHOD).also { conf ->
+        conf.persistentData.setTestMethod(PsiLocation.fromPsiElement(getTestClass("AlsoTest").findMethodsByName("testShouldFail", false)[0]))
+      }
+    }
+
+    @Suppress("SpellCheckingInspection")
+    doTestJUnitRunConfiguration(runConfiguration = runConfiguration,
+                                expectedTestsResultExported = "<testrun name=\"JUnit tests Run Configuration\">\n" +
+                                                              "  <count name=\"total\" value=\"1\" />\n" +
+                                                              "  <count name=\"failed\" value=\"1\" />\n" +
+                                                              "  <root name=\"AlsoTest\" location=\"java:suite://AlsoTest\" />\n" +
+                                                              "  <test locationUrl=\"java:test://AlsoTest/testShouldFail\" name=\"testShouldFail()\" metainfo=\"\" status=\"failed\">\n" +
+                                                              "    <diff actual=\"5\" expected=\"4\" />\n" +
+                                                              "    <output type=\"stdout\">Debugger: testShouldFail() reached</output>\n" +
+                                                              "    <output type=\"stderr\">org.opentest4j.AssertionFailedError: \n" +
+                                                              "\tat org.junit.jupiter.api.AssertionUtils.fail(AssertionUtils.java:54)\n" +
+                                                              "\tat org.junit.jupiter.api.AssertEquals.failNotEqual(AssertEquals.java:195)\n" +
+                                                              "\tat org.junit.jupiter.api.AssertEquals.assertEquals(AssertEquals.java:152)\n" +
+                                                              "\tat org.junit.jupiter.api.AssertEquals.assertEquals(AssertEquals.java:147)\n" +
+                                                              "\tat org.junit.jupiter.api.Assertions.assertEquals(Assertions.java:326)\n" +
+                                                              "\tat AlsoTest.testShouldFail(AlsoTest.java:12)\n" +
+                                                              "\tat java.base/jdk.internal.reflect.NativeMethodAccessorImpl.invoke0(Native Method)\n" +
+                                                              "\tat java.base/jdk.internal.reflect.NativeMethodAccessorImpl.invoke(</output>\n" +
+                                                              "  </test>\n" +
+                                                              "</testrun>")
+  }
+
+  @Test
+  fun `test junit tests - run tagged tests`() {
+    val runConfiguration = createJUnitConfiguration(JUnitConfiguration.TEST_TAGS).also { conf ->
+      conf.persistentData.tags = "selected"
+    }
+
+    @Suppress("SpellCheckingInspection")
+    doTestJUnitRunConfiguration(runConfiguration = runConfiguration,
+                                expectedTestsResultExported = "<testrun name=\"JUnit tests Run Configuration\">\n" +
+                                                              "  <count name=\"total\" value=\"1\" />\n" +
+                                                              "  <count name=\"passed\" value=\"1\" />\n" +
+                                                              "  <root name=\"&lt;default package&gt;\" location=\"java:suite://&lt;default package&gt;\" />\n" +
+                                                              "  <suite locationUrl=\"java:suite://SomeTest\" name=\"SomeTest\" status=\"passed\">\n" +
+                                                              "    <test locationUrl=\"java:test://SomeTest/testSomething\" name=\"testSomething()\" metainfo=\"\" status=\"passed\">\n" +
+                                                              "      <output type=\"stdout\">Debugger: testSomething() reached</output>\n" +
+                                                              "    </test>\n" +
+                                                              "  </suite>\n" +
+                                                              "</testrun>")
+  }
+
+  @Test
+  fun `test junit tests - run tests by uniqueId`() {
+    val runConfiguration = createJUnitConfiguration(JUnitConfiguration.TEST_UNIQUE_ID).also { conf ->
+      conf.persistentData.setUniqueIds("[engine:junit-jupiter]/[class:SomeTest]")
+    }
+
+    @Suppress("SpellCheckingInspection")
+    doTestJUnitRunConfiguration(runConfiguration = runConfiguration,
+                                expectedTestsResultExported = "<testrun name=\"JUnit tests Run Configuration\">\n" +
+                                                              "  <count name=\"total\" value=\"1\" />\n" +
+                                                              "  <count name=\"passed\" value=\"1\" />\n" +
+                                                              "  <root name=\"&lt;default package&gt;\" location=\"java:suite://&lt;default package&gt;\" />\n" +
+                                                              "  <suite locationUrl=\"java:suite://SomeTest\" name=\"SomeTest\" status=\"passed\">\n" +
+                                                              "    <test locationUrl=\"java:test://SomeTest/testSomething\" name=\"testSomething()\" metainfo=\"\" status=\"passed\">\n" +
+                                                              "      <output type=\"stdout\">Debugger: testSomething() reached</output>\n" +
+                                                              "    </test>\n" +
+                                                              "  </suite>\n" +
+                                                              "</testrun>")
   }
 }

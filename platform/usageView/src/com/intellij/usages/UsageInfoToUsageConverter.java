@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.usages;
 
 import com.intellij.codeInsight.highlighting.ReadWriteAccessDetector;
@@ -7,8 +7,15 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.SmartPointerManager;
 import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.usageView.UsageInfo;
+import com.intellij.usages.similarity.bag.Bag;
+import com.intellij.usages.similarity.clustering.ClusteringSearchSession;
+import com.intellij.usages.similarity.features.UsageSimilarityFeaturesProvider;
+import com.intellij.usages.similarity.usageAdapter.SimilarReadWriteUsageInfo2UsageAdapter;
+import com.intellij.usages.similarity.usageAdapter.SimilarUsage;
+import com.intellij.usages.similarity.usageAdapter.SimilarUsageInfo2UsageAdapter;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -43,8 +50,7 @@ public final class UsageInfoToUsageConverter {
       return ContainerUtil.toArray(ContainerUtil.mapNotNull(primary, SmartPsiElementPointer::getElement), PsiElement.ARRAY_FACTORY);
     }
 
-    @NotNull
-    private static List<@NotNull SmartPsiElementPointer<PsiElement>> convertToSmartPointers(@NotNull PsiElement @NotNull [] primaryElements) {
+    private static @NotNull @Unmodifiable List<@NotNull SmartPsiElementPointer<PsiElement>> convertToSmartPointers(@NotNull PsiElement @NotNull [] primaryElements) {
       if (primaryElements.length == 0) return Collections.emptyList();
       final SmartPointerManager smartPointerManager = SmartPointerManager.getInstance(primaryElements[0].getProject());
       return ContainerUtil.mapNotNull(primaryElements, smartPointerManager::createSmartPsiElementPointer);
@@ -66,16 +72,15 @@ public final class UsageInfoToUsageConverter {
       return convertToPsiElements(myAdditionalSearchedElements);
     }
 
-    @NotNull
-    public List<PsiElement> getAllElements() {
+    public @NotNull List<PsiElement> getAllElements() {
       List<PsiElement> result = new ArrayList<>(myPrimarySearchedElements.size() + myAdditionalSearchedElements.size());
-      for (SmartPsiElementPointer pointer : myPrimarySearchedElements) {
+      for (SmartPsiElementPointer<?> pointer : myPrimarySearchedElements) {
         PsiElement element = pointer.getElement();
         if (element != null) {
           result.add(element);
         }
       }
-      for (SmartPsiElementPointer pointer : myAdditionalSearchedElements) {
+      for (SmartPsiElementPointer<?> pointer : myAdditionalSearchedElements) {
         PsiElement element = pointer.getElement();
         if (element != null) {
           result.add(element);
@@ -84,31 +89,50 @@ public final class UsageInfoToUsageConverter {
       return result;
     }
 
-    @NotNull
-    public List<SmartPsiElementPointer<PsiElement>> getAllElementPointers() {
+    public @NotNull @Unmodifiable List<SmartPsiElementPointer<PsiElement>> getAllElementPointers() {
       return ContainerUtil.concat(myPrimarySearchedElements, myAdditionalSearchedElements);
     }
   }
 
-  @NotNull
-  public static Usage convert(@NotNull TargetElementsDescriptor descriptor, @NotNull UsageInfo usageInfo) {
+  public static @NotNull Usage convert(@NotNull TargetElementsDescriptor descriptor, @NotNull UsageInfo usageInfo) {
     PsiElement[] primaryElements = descriptor.getPrimaryElements();
 
     return convert(primaryElements, usageInfo);
   }
 
-  @NotNull
-  public static Usage convert(PsiElement @NotNull [] primaryElements, @NotNull UsageInfo usageInfo) {
+  public static @NotNull Usage convert(PsiElement @NotNull [] primaryElements, @NotNull UsageInfo usageInfo) {
     PsiElement usageElement = usageInfo.getElement();
     if (usageElement != null && primaryElements.length != 0) {
       ReadWriteAccessDetector.Access rwAccess = ReadWriteUtil.getReadWriteAccess(primaryElements, usageElement);
       if (rwAccess != null) {
-        return new ReadWriteAccessUsageInfo2UsageAdapter(usageInfo,
-                                                         rwAccess != ReadWriteAccessDetector.Access.Write,
-                                                         rwAccess != ReadWriteAccessDetector.Access.Read);
+        return new ReadWriteAccessUsageInfo2UsageAdapter(usageInfo, rwAccess);
       }
     }
     return new UsageInfo2UsageAdapter(usageInfo);
+  }
+
+
+  public static @NotNull Usage convertToSimilarUsage(PsiElement @NotNull [] primaryElements,
+                                                     @NotNull UsageInfo usageInfo,
+                                                     @NotNull ClusteringSearchSession session) {
+    PsiElement usageElement = usageInfo.getElement();
+    if (usageElement != null && primaryElements.length != 0) {
+      Bag features = new Bag();
+      UsageSimilarityFeaturesProvider.EP_NAME.forEachExtensionSafe(provider ->
+                                                                     features.addAll(provider.getFeatures(usageElement)));
+      if (!features.isEmpty()) {
+        final ReadWriteAccessDetector.Access readWriteAccess = ReadWriteUtil.getReadWriteAccess(primaryElements, usageElement);
+        final SimilarUsage similarUsageAdapter;
+        if (readWriteAccess != null) {
+          similarUsageAdapter = new SimilarReadWriteUsageInfo2UsageAdapter(usageInfo, readWriteAccess, features, session);
+        }
+        else {
+          similarUsageAdapter = new SimilarUsageInfo2UsageAdapter(usageInfo, features, session);
+        }
+        return session.clusterUsage(similarUsageAdapter);
+      }
+    }
+    return convert(primaryElements, usageInfo);
   }
 
   public static Usage @NotNull [] convert(@NotNull TargetElementsDescriptor descriptor, UsageInfo @NotNull [] usageInfos) {

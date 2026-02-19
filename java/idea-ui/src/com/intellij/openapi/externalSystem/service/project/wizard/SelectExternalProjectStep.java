@@ -1,3 +1,4 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.service.project.wizard;
 
 import com.intellij.ide.util.projectWizard.WizardContext;
@@ -5,8 +6,9 @@ import com.intellij.openapi.externalSystem.service.settings.AbstractImportFromEx
 import com.intellij.openapi.options.ConfigurationException;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JComponent;
+import javax.swing.JPanel;
+import java.awt.BorderLayout;
 
 /**
  * Handles the following responsibilities:
@@ -16,14 +18,12 @@ import java.awt.*;
  *   <li>processes the input and reacts accordingly - shows error message if the project is invalid or proceeds to the next screen;</li>
  * </ul>
  * </pre>
- *
- * @author Denis Zhdanov
  */
 public class SelectExternalProjectStep extends AbstractImportFromExternalSystemWizardStep {
 
   private final JPanel myComponent = new JPanel(new BorderLayout());
 
-  @NotNull private AbstractImportFromExternalSystemControl myControl;
+  private @NotNull AbstractImportFromExternalSystemControl myControl;
 
   private boolean myExternalSystemSettingsInitialised;
 

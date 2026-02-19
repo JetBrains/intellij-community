@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.sdk.skeletons;
 
 import com.google.common.annotations.VisibleForTesting;
@@ -7,7 +7,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
@@ -15,23 +14,20 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.io.ZipUtil;
 import com.jetbrains.python.PyBundle;
-import com.jetbrains.python.PyNames;
-import com.jetbrains.python.sdk.PythonSdkUtil;
+import com.jetbrains.python.sdk.legacy.PythonSdkUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.regex.PatternSyntaxException;
 
 
-public class DefaultPregeneratedSkeletonsProvider implements PyPregeneratedSkeletonsProvider {
+public final class DefaultPregeneratedSkeletonsProvider implements PyPregeneratedSkeletonsProvider {
   private static final Logger LOG = Logger.getInstance(DefaultPregeneratedSkeletonsProvider.class);
 
-  @Nullable
-  private static File findPregeneratedSkeletonsRoot() {
+  private static @Nullable File findPregeneratedSkeletonsRoot() {
     final String path = PathManager.getHomePath();
     LOG.info("Home path is " + path);
     File f = new File(path, "python/skeletons");  // from sources
@@ -50,11 +46,10 @@ public class DefaultPregeneratedSkeletonsProvider implements PyPregeneratedSkele
     }
   }
 
-  @Nullable
-  public static String getPregeneratedSkeletonsName(@NotNull Sdk sdk,
-                                                    int generatorVersion,
-                                                    boolean withMinorVersion,
-                                                    boolean withExtension) {
+  public static @Nullable String getPregeneratedSkeletonsName(@NotNull Sdk sdk,
+                                                              int generatorVersion,
+                                                              boolean withMinorVersion,
+                                                              boolean withExtension) {
     if (PythonSdkUtil.isRemote(sdk)) {
       return null;
     }
@@ -70,12 +65,11 @@ public class DefaultPregeneratedSkeletonsProvider implements PyPregeneratedSkele
     return getPrebuiltSkeletonsName(generatorVersion, versionString, withMinorVersion, withExtension);
   }
 
-  @NotNull
   @VisibleForTesting
-  public static String getPrebuiltSkeletonsName(int generatorVersion,
-                                                @NotNull @NonNls String versionString,
-                                                boolean withMinorVersion,
-                                                boolean withExtension) {
+  public static @NotNull String getPrebuiltSkeletonsName(int generatorVersion,
+                                                         @NotNull @NonNls String versionString,
+                                                         boolean withMinorVersion,
+                                                         boolean withExtension) {
 
     String version = StringUtil.toLowerCase(versionString).replace(" ", "-");
     if (!withMinorVersion) {
@@ -148,47 +142,6 @@ public class DefaultPregeneratedSkeletonsProvider implements PyPregeneratedSkele
 
     ArchivedSkeletons(VirtualFile archiveRoot) {
       myArchiveRoot = archiveRoot;
-    }
-
-    @Override
-    public boolean copyPregeneratedSkeleton(String moduleName, String skeletonDir) {
-      File targetDir;
-      final String modulePath = moduleName.replace('.', '/');
-      File skeletonsDir = new File(skeletonDir);
-      VirtualFile pregenerated = myArchiveRoot.findFileByRelativePath(modulePath + ".py");
-      if (pregenerated == null) {
-        pregenerated = myArchiveRoot.findFileByRelativePath(modulePath + "/" + PyNames.INIT_DOT_PY);
-        targetDir = new File(skeletonsDir, modulePath);
-      }
-      else {
-        int pos = modulePath.lastIndexOf('/');
-        if (pos < 0) {
-          targetDir = skeletonsDir;
-        }
-        else {
-          final String moduleParentPath = modulePath.substring(0, pos);
-          targetDir = new File(skeletonsDir, moduleParentPath);
-        }
-      }
-      if (pregenerated != null && (targetDir.exists() || targetDir.mkdirs())) {
-        LOG.info("Pre-generated skeleton for " + moduleName);
-        File target = new File(targetDir, pregenerated.getName());
-        try {
-          FileOutputStream fos = new FileOutputStream(target);
-          try {
-            FileUtil.copy(pregenerated.getInputStream(), fos);
-          }
-          finally {
-            fos.close();
-          }
-        }
-        catch (IOException e) {
-          LOG.info("Error copying pre-generated skeleton", e);
-          return false;
-        }
-        return true;
-      }
-      return false;
     }
 
     @Override

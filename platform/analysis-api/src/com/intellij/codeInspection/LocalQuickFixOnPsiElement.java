@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.intention.FileModifier;
@@ -47,15 +47,14 @@ public abstract class LocalQuickFixOnPsiElement implements LocalQuickFix, Clonea
     myEndElement = endElement == startElement ? null : SmartPointerManager.getInstance(project).createSmartPsiElementPointer(endElement, endContainingFile);
   }
 
-  @NotNull
   @Override
-  public final String getName() {
+  public final @NotNull String getName() {
     return getText();
   }
 
   // validity of startElement/endElement must be checked before calling this
   public boolean isAvailable(@NotNull Project project,
-                             @NotNull PsiFile file,
+                             @NotNull PsiFile psiFile,
                              @NotNull PsiElement startElement,
                              @NotNull PsiElement endElement) {
     return true;
@@ -65,12 +64,12 @@ public abstract class LocalQuickFixOnPsiElement implements LocalQuickFix, Clonea
     if (myStartElement == null) return false;
     final PsiElement startElement = myStartElement.getElement();
     final PsiElement endElement = myEndElement == null ? startElement : myEndElement.getElement();
-    PsiFile file = myStartElement.getContainingFile();
+    PsiFile psiFile = myStartElement.getContainingFile();
     Project project = myStartElement.getProject();
     return startElement != null &&
            endElement != null &&
-           file != null &&
-           isAvailable(project, file, startElement, endElement);
+           psiFile != null &&
+           isAvailable(project, psiFile, startElement, endElement);
   }
 
   public PsiElement getStartElement() {
@@ -81,9 +80,7 @@ public abstract class LocalQuickFixOnPsiElement implements LocalQuickFix, Clonea
     return myEndElement == null ? null : myEndElement.getElement();
   }
 
-  @IntentionName
-  @NotNull
-  public abstract String getText();
+  public abstract @IntentionName @NotNull String getText();
 
   @Override
   public final void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
@@ -95,13 +92,13 @@ public abstract class LocalQuickFixOnPsiElement implements LocalQuickFix, Clonea
     final PsiElement startElement = myStartElement.getElement();
     final PsiElement endElement = myEndElement == null ? startElement : myEndElement.getElement();
     if (startElement == null || endElement == null) return;
-    PsiFile file = startElement.getContainingFile();
-    if (file == null) return;
-    invoke(file.getProject(), file, startElement, endElement);
+    PsiFile psiFile = startElement.getContainingFile();
+    if (psiFile == null) return;
+    invoke(psiFile.getProject(), psiFile, startElement, endElement);
   }
 
   public abstract void invoke(@NotNull Project project,
-                              @NotNull PsiFile file,
+                              @NotNull PsiFile psiFile,
                               @NotNull PsiElement startElement,
                               @NotNull PsiElement endElement);
 
@@ -121,6 +118,7 @@ public abstract class LocalQuickFixOnPsiElement implements LocalQuickFix, Clonea
     PsiElement endElement = getEndElement();
     if (startElement == null && myStartElement != null || 
         endElement == null && myEndElement != null) return null;
+    if (startElement != null && startElement.getContainingFile() != target.getOriginalFile()) return null;
     startElement = PsiTreeUtil.findSameElementInCopy(startElement, target);
     endElement = PsiTreeUtil.findSameElementInCopy(endElement, target);
     LocalQuickFixOnPsiElement clone;

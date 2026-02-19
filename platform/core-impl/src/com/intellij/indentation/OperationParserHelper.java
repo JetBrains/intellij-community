@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.indentation;
 
 import com.intellij.lang.PsiBuilder;
@@ -8,7 +8,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public final class OperationParserHelper {
-  private static boolean parsePostfixOperation(@NotNull final BinaryOperationParser parser) {
+  private static boolean parsePostfixOperation(final @NotNull BinaryOperationParser parser) {
     final PsiBuilder.Marker tempMarker = parser.mark();
     PsiBuilder.Marker lastMarker = tempMarker;
     boolean result = parsePrefixOperation(parser);
@@ -31,7 +31,7 @@ public final class OperationParserHelper {
     return result;
   }
 
-  private static boolean parsePrefixOperation(@NotNull final BinaryOperationParser parser) {
+  private static boolean parsePrefixOperation(final @NotNull BinaryOperationParser parser) {
     int prefixCount = 0;
     while (parser.getPrefixOperators().contains(parser.lookAhead(prefixCount))) {
       prefixCount++;
@@ -50,14 +50,14 @@ public final class OperationParserHelper {
     return result;
   }
 
-  public static boolean callParsingBinaryOperation(@NotNull final BinaryOperationParser parser, int level) {
+  public static boolean callParsingBinaryOperation(final @NotNull BinaryOperationParser parser, int level) {
     if (level < 0) {
       return parsePostfixOperation(parser);
     }
     return parseBinaryOperation(parser, level);
   }
 
-  private static boolean isBinaryOperator(@NotNull final BinaryOperationParser parser, int level) {
+  private static boolean isBinaryOperator(final @NotNull BinaryOperationParser parser, int level) {
     if (parser instanceof CustomBinaryOperationParser) {
       return ((CustomBinaryOperationParser)parser).isBinaryOperator(level);
     }
@@ -65,7 +65,7 @@ public final class OperationParserHelper {
     return parser.getOperatorsByPriority()[level].contains(tokenType);
   }
 
-  private static void parseBinaryOperator(@NotNull final BinaryOperationParser parser) {
+  private static void parseBinaryOperator(final @NotNull BinaryOperationParser parser) {
     if (parser instanceof CustomBinaryOperationParser) {
       ((CustomBinaryOperationParser)parser).parseBinaryOperator();
     } else {
@@ -77,7 +77,7 @@ public final class OperationParserHelper {
    * Parses arithmetic mult, arithmetic sum, bit operation, relation operation
    * @param level 0 for mult, 1, for sum, 2 for bit, 3 for relations
    */
-  private static boolean parseBinaryOperation(@NotNull final BinaryOperationParser parser, int level) {
+  private static boolean parseBinaryOperation(final @NotNull BinaryOperationParser parser, int level) {
     final PsiBuilder.Marker tempMarker = parser.mark();
     PsiBuilder.Marker lastMarker = tempMarker;
     boolean result = callParsingBinaryOperation(parser, level - 1);

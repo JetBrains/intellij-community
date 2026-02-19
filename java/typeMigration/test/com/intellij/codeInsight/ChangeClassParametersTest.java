@@ -9,12 +9,13 @@ import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
  */
 public class ChangeClassParametersTest extends LightJavaCodeInsightFixtureTestCase {
   public void testNestedTypeElements() {
-    String text = "interface Fun<A, B> {}\n" +
-                  "class Test {\n" +
-                  "  {\n" +
-                  "     new Fun<java.util.List<Int<caret>eger>, String> () {};\n" +
-                  "  }\n" +
-                  "}";
+    String text = """
+      interface Fun<A, B> {}
+      class Test {
+        {
+           new Fun<java.util.List<Int<caret>eger>, String> () {};
+        }
+      }""";
 
     myFixture.configureByText("a.java", text);
     myFixture.doHighlighting();

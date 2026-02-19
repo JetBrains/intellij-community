@@ -1,13 +1,21 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.testframework.sm.runner;
 
 import com.intellij.execution.executors.DefaultRunExecutor;
+import com.intellij.execution.testframework.AbstractTestProxy;
 import com.intellij.execution.testframework.Filter;
 import com.intellij.execution.testframework.TestConsoleProperties;
 import com.intellij.execution.testframework.actions.AbstractRerunFailedTestsAction;
-import com.intellij.execution.testframework.export.TestResultsXmlFormatter;
+import com.intellij.execution.testframework.export.ExportTestResultsAction;
+import com.intellij.execution.testframework.export.ExportTestResultsConfiguration;
 import com.intellij.execution.testframework.sm.Marker;
-import com.intellij.execution.testframework.sm.runner.events.*;
+import com.intellij.execution.testframework.sm.runner.events.TestFailedEvent;
+import com.intellij.execution.testframework.sm.runner.events.TestFinishedEvent;
+import com.intellij.execution.testframework.sm.runner.events.TestIgnoredEvent;
+import com.intellij.execution.testframework.sm.runner.events.TestStartedEvent;
+import com.intellij.execution.testframework.sm.runner.events.TestSuiteFinishedEvent;
+import com.intellij.execution.testframework.sm.runner.events.TestSuiteStartedEvent;
+import com.intellij.execution.testframework.sm.runner.events.TreeNodeEvent;
 import com.intellij.execution.testframework.sm.runner.history.ImportedToGeneralTestEventsConverter;
 import com.intellij.execution.testframework.sm.runner.ui.MockPrinter;
 import com.intellij.execution.testframework.sm.runner.ui.SMTRunnerConsoleView;
@@ -18,22 +26,21 @@ import com.intellij.execution.testframework.ui.TestsOutputConsolePrinter;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.io.FileUtilRt;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.testFramework.PlatformTestUtil;
+import kotlin.text.StringsKt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.xml.sax.SAXException;
 
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreeModel;
-import javax.xml.transform.OutputKeys;
-import javax.xml.transform.TransformerFactory;
-import javax.xml.transform.sax.SAXTransformerFactory;
-import javax.xml.transform.sax.TransformerHandler;
-import javax.xml.transform.stream.StreamResult;
+import javax.xml.transform.TransformerException;
 import java.io.File;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.io.StringReader;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.List;
 
 /**
@@ -55,7 +62,7 @@ public class GeneralToSMTRunnerEventsConvertorTest extends BaseSMTRunnerTestCase
 
       myTestsOutputConsolePrinter = new TestsOutputConsolePrinter(this, consoleProperties, null) {
         @Override
-        public void print(final String text, final ConsoleViewContentType contentType) {
+        public void print(final @NotNull String text, final @NotNull ConsoleViewContentType contentType) {
           myMockResettablePrinter.print(text, contentType);
         }
       };
@@ -78,7 +85,7 @@ public class GeneralToSMTRunnerEventsConvertorTest extends BaseSMTRunnerTestCase
     TestConsoleProperties.SELECT_FIRST_DEFECT.set(consoleProperties, false);
     TestConsoleProperties.TRACK_RUNNING_TEST.set(consoleProperties, false);
 
-    myMockResettablePrinter = new MockPrinter(true);
+    myMockResettablePrinter = new MockPrinter();
     myConsole = new MyConsoleView(consoleProperties);
     myConsole.initUI();
     myResultsViewer = myConsole.getResultsViewer();
@@ -92,13 +99,24 @@ public class GeneralToSMTRunnerEventsConvertorTest extends BaseSMTRunnerTestCase
 
   @Override
   protected void tearDown() throws Exception {
-    Disposer.dispose(myEventsProcessor);
-    Disposer.dispose(myConsole);
+    try {
+      Disposer.dispose(myEventsProcessor);
+      Disposer.dispose(myConsole);
+      if (myTempFile != null) {
+        assertFalse(myTempFile.exists());
+      }
+    }
+    catch (Throwable e) {
+      addSuppressedException(e);
+    }
+    finally {
+      super.tearDown();
+    }
+  }
 
-    super.tearDown();
-
-    if (myTempFile != null) {
-      assertFalse(myTempFile.exists());
+  private static void assertContains(@NotNull String expectedString, @NotNull String actualText) {
+    if (!actualText.contains(expectedString)) {
+      failNotEquals("Text doesn't contain string:", expectedString, actualText);
     }
   }
 
@@ -147,6 +165,39 @@ public class GeneralToSMTRunnerEventsConvertorTest extends BaseSMTRunnerTestCase
     onTestStarted("some_test");
 
     assertEquals(1, myEventsProcessor.getRunningTestsQuantity());
+  }
+
+  public void testCheckMetaUpdateWithValue() {
+    checkMetainfo("suiteMetaUpdate", "testMetaUpdate");
+  }
+
+  public void testCheckMetaUpdateWithNull() {
+    checkMetainfo(null, null);
+  }
+
+  private void checkMetainfo(@Nullable String updatedSuiteMetainfo, @Nullable String updatedTestMetainfo) {
+    final String suiteName = "some_suite";
+    final String testName = "some_test";
+    final String initSuiteMeta = "suiteMeta";
+    final String initTestMeta = "testMeta";
+
+    myEventsProcessor.onSuiteTreeNodeAdded(true, suiteName, suiteName, initSuiteMeta, suiteName, TreeNodeEvent.ROOT_NODE_ID);
+    myEventsProcessor.onSuiteTreeNodeAdded(false, testName, testName, initTestMeta, testName, suiteName);
+    myEventsProcessor.onSuiteTreeEnded(testName);
+    myEventsProcessor.onSuiteTreeEnded(suiteName);
+    myEventsProcessor.onBuildTreeEnded();
+
+    myEventsProcessor.onSuiteStarted(new TestSuiteStartedEvent(suiteName, suiteName, updatedSuiteMetainfo));
+    myEventsProcessor.onTestStarted(new TestStartedEvent(testName, testName, updatedTestMetainfo));
+
+    myResultsViewer.performUpdate();
+    PlatformTestUtil.waitWhileBusy(myResultsViewer.getTreeView());
+
+    final SMTestProxy suiteProxy = myEventsProcessor.findChild(null, suiteName, true);
+    assertEquals(updatedSuiteMetainfo == null ? initSuiteMeta : updatedSuiteMetainfo, suiteProxy.getMetainfo());
+
+    final SMTestProxy testProxy = myEventsProcessor.findChild(suiteProxy, testName, false);
+    assertEquals(updatedTestMetainfo == null ? initTestMeta : updatedTestMetainfo, testProxy.getMetainfo());
   }
 
   public void testOnTestStarted_WithLocation() {
@@ -491,12 +542,13 @@ public class GeneralToSMTRunnerEventsConvertorTest extends BaseSMTRunnerTestCase
 
   public void testSampleImportTest() throws Exception {
     myEventsProcessor.onStartTesting();
-    ImportedToGeneralTestEventsConverter.parseTestResults(() -> new StringReader("<?xml version=\"1.0\" encoding=\"UTF-8\"?>" +
-                                                                           "<testrun duration=\"592\" footerText=\"Generated by IntelliJ IDEA\" name=\"suite1\">\n" +
-                                                                           "    <suite name=\"suite1\" status=\"failed\">\n" +
-                                                                           "        <test name=\"ATest\" status=\"failed\"/>\n" +
-                                                                           "    </suite>\n" +
-                                                                           "</testrun>\n"),
+    ImportedToGeneralTestEventsConverter.parseTestResults(() -> new StringReader("""
+                                                                                   <?xml version="1.0" encoding="UTF-8"?><testrun duration="592" footerText="Generated by IntelliJ IDEA" name="suite1">
+                                                                                       <suite name="suite1" status="failed">
+                                                                                           <test name="ATest" status="failed"/>
+                                                                                       </suite>
+                                                                                   </testrun>
+                                                                                   """),
                                                           myEventsProcessor);
     myEventsProcessor.onFinishTesting();
 
@@ -511,22 +563,20 @@ public class GeneralToSMTRunnerEventsConvertorTest extends BaseSMTRunnerTestCase
 
   public void testComparisonFailure() throws Exception {
     myEventsProcessor.onStartTesting();
-    ImportedToGeneralTestEventsConverter.parseTestResults(() -> new StringReader("<?xml version=\"1.0\" encoding=\"UTF-8\"?>" +
-                                                                           "<testrun duration=\"592\" footerText=\"Generated by IntelliJ IDEA\" name=\"suite1\">\n" +
-                                                                           "    <suite name=\"suite1\" status=\"failed\">\n" +
-                                                                           "        <test name=\"ATest\" status=\"failed\">\n" +
-                                                                           "           <output type=\"stderr\">java.lang.AssertionError: \n" +
-                                                                           "           </output>\n" +
-                                                                           "           <output type=\"stdout\">Expected :\n" +
-                                                                           "           </output>\n" +
-                                                                           "           <output type=\"stderr\">2\n" +
-                                                                           "           </output>\n" +
-                                                                           "           <output type=\"stdout\">Actual   :\n" +
-                                                                           "           </output>" +
-                                                                           "           <diff actual=\"3\" expected=\"2\"/>" +
-                                                                                    "</test>" +
-                                                                           "    </suite>\n" +
-                                                                           "</testrun>\n"),
+    ImportedToGeneralTestEventsConverter.parseTestResults(() -> new StringReader("""
+                                                                                   <?xml version="1.0" encoding="UTF-8"?><testrun duration="592" footerText="Generated by IntelliJ IDEA" name="suite1">
+                                                                                       <suite name="suite1" status="failed">
+                                                                                           <test name="ATest" status="failed">
+                                                                                              <output type="stderr">java.lang.AssertionError:\s
+                                                                                              </output>
+                                                                                              <output type="stdout">Expected :
+                                                                                              </output>
+                                                                                              <output type="stderr">2
+                                                                                              </output>
+                                                                                              <output type="stdout">Actual   :
+                                                                                              </output>           <diff actual="3" expected="2"/></test>    </suite>
+                                                                                   </testrun>
+                                                                                   """),
                                                           myEventsProcessor);
     myEventsProcessor.onFinishTesting();
 
@@ -545,15 +595,13 @@ public class GeneralToSMTRunnerEventsConvertorTest extends BaseSMTRunnerTestCase
 
   public void testPreserveOutputOnImport() throws Exception {
     myEventsProcessor.onStartTesting();
-    ImportedToGeneralTestEventsConverter.parseTestResults(() -> new StringReader("<?xml version=\"1.0\" encoding=\"UTF-8\"?>" +
-                                                                           "<testrun duration=\"592\" footerText=\"Generated by IntelliJ IDEA\" name=\"suite1\">\n" +
-                                                                           "    <suite name=\"suite1\" status=\"failed\">\n" +
-                                                                           "        <test name=\"ATest\" status=\"failed\">\n" +
-                                                                           "          <output type=\"stdout\">test output</output>" +
-                                                                           "          <output type=\"stderr\">error output</output>" +
-                                                                           "        </test>" +
-                                                                           "    </suite>\n" +
-                                                                           "</testrun>\n"),
+    ImportedToGeneralTestEventsConverter.parseTestResults(() -> new StringReader("""
+                                                                                   <?xml version="1.0" encoding="UTF-8"?><testrun duration="592" footerText="Generated by IntelliJ IDEA" name="suite1">
+                                                                                       <suite name="suite1" status="failed">
+                                                                                           <test name="ATest" status="failed">
+                                                                                             <output type="stdout">test output</output>          <output type="stderr">error output</output>        </test>    </suite>
+                                                                                   </testrun>
+                                                                                   """),
                                                           myEventsProcessor);
     myEventsProcessor.onFinishTesting();
 
@@ -573,12 +621,13 @@ public class GeneralToSMTRunnerEventsConvertorTest extends BaseSMTRunnerTestCase
 
   public void testSampleImportTestWithMetainfo() throws Exception {
     myEventsProcessor.onStartTesting();
-    ImportedToGeneralTestEventsConverter.parseTestResults(() -> new StringReader("<?xml version=\"1.0\" encoding=\"UTF-8\"?>" +
-                                                                                 "<testrun duration=\"592\" footerText=\"Generated by IntelliJ IDEA\" name=\"suite1\">\n" +
-                                                                                 "    <suite name=\"suite1\" status=\"failed\" metainfo=\"any:info:string:that:can:help?navigation\">\n" +
-                                                                                 "        <test name=\"ATest\" status=\"failed\" metainfo=\"but is not a part of primary key\"/>\n" +
-                                                                                 "    </suite>\n" +
-                                                                                 "</testrun>\n"),
+    ImportedToGeneralTestEventsConverter.parseTestResults(() -> new StringReader("""
+                                                                                   <?xml version="1.0" encoding="UTF-8"?><testrun duration="592" footerText="Generated by IntelliJ IDEA" name="suite1">
+                                                                                       <suite name="suite1" status="failed" metainfo="any:info:string:that:can:help?navigation">
+                                                                                           <test name="ATest" status="failed" metainfo="but is not a part of primary key"/>
+                                                                                       </suite>
+                                                                                   </testrun>
+                                                                                   """),
                                                           myEventsProcessor);
     myEventsProcessor.onFinishTesting();
 
@@ -597,12 +646,13 @@ public class GeneralToSMTRunnerEventsConvertorTest extends BaseSMTRunnerTestCase
   public void testEscapedImportTest() throws Exception {
     myEventsProcessor.onStartTesting();
 
-    ImportedToGeneralTestEventsConverter.parseTestResults(() -> new StringReader("<?xml version=\"1.0\" encoding=\"UTF-8\"?>" +
-                                                                                 "<testrun duration=\"592\" footerText=\"Generated by IntelliJ IDEA\" name=\"suite1\">\n" +
-                                                                                 "    <suite name=\"sui&amp;te1\" status=\"failed\">\n" +
-                                                                                 "        <test name=\"ATe&amp;st\" status=\"failed\"/>\n" +
-                                                                                 "    </suite>\n" +
-                                                                                 "</testrun>\n"), myEventsProcessor);
+    ImportedToGeneralTestEventsConverter.parseTestResults(() -> new StringReader("""
+                                                                                   <?xml version="1.0" encoding="UTF-8"?><testrun duration="592" footerText="Generated by IntelliJ IDEA" name="suite1">
+                                                                                       <suite name="sui&amp;te1" status="failed">
+                                                                                           <test name="ATe&amp;st" status="failed"/>
+                                                                                       </suite>
+                                                                                   </testrun>
+                                                                                   """), myEventsProcessor);
     myEventsProcessor.onFinishTesting();
 
     final List<? extends SMTestProxy> children = myResultsViewer.getTestsRootNode().getChildren();
@@ -614,43 +664,133 @@ public class GeneralToSMTRunnerEventsConvertorTest extends BaseSMTRunnerTestCase
     assertEquals("ATe&st", tests.get(0).getName());
   }
 
+  public void testIntellijExportXslEscaping() throws Exception {
+    String systemOutput = "<span onclick=\"alert(\"Ops!\")\">SYSTEM_OUTPUT\n<span>";
+    String escapedSystemOutput = "&lt;span onclick=\"alert(\"Ops!\")\"&gt;SYSTEM_OUTPUT<br/>&lt;span&gt;<br/>";
+    String normalOutput = "<div onclick=\"alert(\"Ops!!\")\">NORMAL_OUTPUT<span>";
+    String escapedNormalOutput = "&lt;div onclick=\"alert(\"Ops!!\")\"&gt;NORMAL_OUTPUT&lt;span&gt;<br/>";
+    String errorOutput = "<p onclick=\"alert(\"Ops!!!\")\">ERROR_OUTPUT<div>";
+    String escapedErrorOutput = "&lt;p onclick=\"alert(\"Ops!!!\")\"&gt;ERROR_OUTPUT&lt;div&gt;<br/>";
+
+    mySuite.addChild(mySimpleTest);
+    mySimpleTest.addLast(printer -> {
+      printer.print(systemOutput, ConsoleViewContentType.SYSTEM_OUTPUT);
+      printer.print(normalOutput, ConsoleViewContentType.NORMAL_OUTPUT);
+      printer.print(errorOutput, ConsoleViewContentType.ERROR_OUTPUT);
+    });
+    mySimpleTest.setFinished();
+    mySuite.setFinished();
+
+    String renderedResult = exportTestResults(mySuite, ExportTestResultsConfiguration.ExportFormat.BundledTemplate);
+
+    assertContains(escapedSystemOutput, renderedResult);
+    assertContains(escapedNormalOutput, renderedResult);
+    assertContains(escapedErrorOutput, renderedResult);
+  }
+
+  private @NotNull String exportTestResults(
+    @NotNull AbstractTestProxy root,
+    @NotNull ExportTestResultsConfiguration.ExportFormat exportFormat
+  ) throws IOException, TransformerException, SAXException {
+    Path outputFile = Files.createTempFile("output", "");
+    try {
+      MockRuntimeConfiguration configuration = new MockRuntimeConfiguration(getProject());
+      ExportTestResultsAction.writeOutputFile(new ExportTestResultsAction.ExportContext(
+        exportFormat,
+        null,
+        root,
+        configuration,
+        new SMTRunnerConsoleProperties(configuration, "framework", DefaultRunExecutor.getRunExecutorInstance()),
+        outputFile
+      ));
+      return Files.readString(outputFile);
+    }
+    finally {
+      Files.delete(outputFile);
+    }
+  }
+
   public void testPreserveFullOutputAfterImport() throws Exception {
 
     mySuite.addChild(mySimpleTest);
     for (int i = 0; i < 550; i++) {
-      String message = "line" + i + "\n";
+      String message = "line" + i + "\u0000 a < b \n";
       mySimpleTest.addLast(printer -> printer.print(message, ConsoleViewContentType.NORMAL_OUTPUT));
     }
+    mySimpleTest.setTestComparisonFailed("message", "stacktrace", "\u0000", "a < b");
     mySimpleTest.setFinished();
     mySuite.setFinished();
 
-    SAXTransformerFactory transformerFactory = (SAXTransformerFactory)TransformerFactory.newInstance();
-    TransformerHandler handler = transformerFactory.newTransformerHandler();
-    handler.getTransformer().setOutputProperty(OutputKeys.INDENT, "yes");
-    handler.getTransformer().setOutputProperty("{http://xml.apache.org/xslt}indent-amount", "4");
-    File output = FileUtil.createTempFile("output", "");
-    try {
-      FileUtilRt.createParentDirs(output);
-      handler.setResult(new StreamResult(new FileWriter(output)));
-      MockRuntimeConfiguration configuration = new MockRuntimeConfiguration(getProject());
-      TestResultsXmlFormatter.execute(mySuite, configuration, new SMTRunnerConsoleProperties(configuration, "framework", new DefaultRunExecutor()), handler);
+    String savedText = exportTestResults(mySuite, ExportTestResultsConfiguration.ExportFormat.Xml);
+    assertTrue(savedText.split("\n").length > 550);
 
-      String savedText = FileUtil.loadFile(output);
-      assertTrue(savedText.split("\n").length > 550);
+    myEventsProcessor.onStartTesting();
+    ImportedToGeneralTestEventsConverter.parseTestResults(() -> new StringReader(savedText), myEventsProcessor);
+    myEventsProcessor.onFinishTesting();
 
-      myEventsProcessor.onStartTesting();
-      ImportedToGeneralTestEventsConverter.parseTestResults(() -> new StringReader(savedText), myEventsProcessor);
-      myEventsProcessor.onFinishTesting();
+    List<? extends SMTestProxy> children = myResultsViewer.getTestsRootNode().getChildren();
+    assertSize(1, children);
+    SMTestProxy testProxy = children.get(0);
+    MockPrinter mockPrinter = new MockPrinter();
+    mockPrinter.setShowHyperLink(true);
+    testProxy.printOn(mockPrinter);
+    String allOut = mockPrinter.getAllOut();
+    assertContains(StringsKt.trimMargin("""
+      |line549 a < b\s
+      |
+      |Expected :a < b
+      |Actual   :
+      |<Click to see difference>
+      |
+      |messagestacktrace
+    """, "|"), allOut);
+    assertSize(558, allOut.split("\n"));
+  }
 
-      List<? extends SMTestProxy> children = myResultsViewer.getTestsRootNode().getChildren();
-      assertSize(1, children);
-      SMTestProxy testProxy = children.get(0);
-      MockPrinter mockPrinter = new MockPrinter();
-      testProxy.printOn(mockPrinter);
-      assertSize(550, mockPrinter.getAllOut().split("\n"));
-    }
-    finally {
-      FileUtil.delete(output);
-    }
+  public void testComparisonFailureImport() throws Exception {
+
+    mySuite.addChild(mySimpleTest);
+    mySimpleTest.addLast(printer -> printer.print("execution output", ConsoleViewContentType.NORMAL_OUTPUT));
+    mySimpleTest.setTestComparisonFailed("message", "stacktrace", "actual", "expected");
+    mySimpleTest.setFinished();
+    mySuite.setFinished();
+
+    String savedText = exportTestResults(mySuite, ExportTestResultsConfiguration.ExportFormat.Xml);
+    assertTrue(StringUtil.convertLineSeparators(savedText)
+                 .endsWith("""
+                             <count name="total" value="1"/>
+                                 <count name="failed" value="1"/>
+                                 <config configId="MockRuntimeConfiguration" name="">
+                                     <method v="2"/>
+                                 </config>
+                                 <test locationUrl="file://test.text" name="test" status="failed">
+                                     <diff actual="actual" expected="expected"/>
+                                     <output type="stdout">execution output
+                             </output>
+                                     <output type="stderr">messagestacktrace
+                             </output>
+                                 </test>
+                             </testrun>
+                             """));
+
+    myEventsProcessor.onStartTesting();
+    ImportedToGeneralTestEventsConverter.parseTestResults(() -> new StringReader(savedText), myEventsProcessor);
+    myEventsProcessor.onFinishTesting();
+
+    List<? extends SMTestProxy> children = myResultsViewer.getTestsRootNode().getChildren();
+    assertSize(1, children);
+    SMTestProxy testProxy = children.get(0);
+    MockPrinter mockPrinter = new MockPrinter();
+    mockPrinter.setShowHyperLink(true);
+    testProxy.printOn(mockPrinter);
+    assertEquals(StringsKt.trimMargin("""
+      |execution output
+      |
+      |Expected :expected
+      |Actual   :actual
+      |<Click to see difference>
+      |
+      |messagestacktrace
+    """, "|"), StringUtil.convertLineSeparators(mockPrinter.getAllOut().trim()));
   }
 }

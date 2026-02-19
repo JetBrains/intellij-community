@@ -1,24 +1,10 @@
-/*
- * Copyright 2000-2011 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.openapi.editor.TextChange;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.text.CharArrayUtil;
-import com.intellij.util.text.StringFactory;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -32,9 +18,8 @@ import java.util.List;
  * Provides ability to automatic merging them if necessary.
  * <p/>
  * Not thread-safe.
- * 
- * @author Denis Zhdanov
  */
+@ApiStatus.Internal
 public class TextChangesStorage {
   private final List<ChangeEntry> myChanges = new ArrayList<>();
 
@@ -43,8 +28,7 @@ public class TextChangesStorage {
    *            text and that returned list is sorted by start offset in ascending order
    * @see #store(TextChange)
    */
-  @NotNull
-  public List<TextChangeImpl> getChanges() {
+  public @NotNull List<TextChangeImpl> getChanges() {
     if (myChanges.isEmpty()) return Collections.emptyList();
     List<TextChangeImpl> result = new ArrayList<>(myChanges.size());
 
@@ -62,8 +46,7 @@ public class TextChangesStorage {
    * @param end     target range end offset (exclusive)
    * @return        list that contains all registered changes that have intersections with the target text range
    */
-  @NotNull
-  public List<? extends TextChange> getChanges(int start, int end) {
+  public @NotNull List<? extends TextChange> getChanges(int start, int end) {
     assert start <= end;
     
     int changeStartIndex = getChangeIndex(start);
@@ -181,7 +164,7 @@ public class TextChangesStorage {
         ));
         return insertionIndex;
       }
-      else if (insertionIndex > 0 && !myChanges.isEmpty()) {
+      else if (insertionIndex > 0) {
         ChangeEntry changeEntry = myChanges.get(insertionIndex - 1);
         clientShift = changeEntry.clientStartOffset - changeEntry.change.getStart() + changeEntry.change.getDiff();
       }
@@ -266,7 +249,7 @@ public class TextChangesStorage {
       }
 
       // Check if given change intersects stored change range from the right.
-      if (newChangeStart < storedClientEnd && newChangeEnd >= storedClientEnd) {
+      if (newChangeEnd >= storedClientEnd) {
         CharSequence adjustedText = storedText.subSequence(0, newChangeStart - storedClientStart);
         TextChangeImpl adjusted = new TextChangeImpl(adjustedText, changeEntry.change.getStart(), changeEntry.change.getEnd());
         changeEntry.change = adjusted;
@@ -277,9 +260,7 @@ public class TextChangesStorage {
       }
 
       // Check if given change is left-adjacent to the stored change.
-      if (newChangeEnd == storedClientStart) {
-        changeEntry.clientStartOffset += changeDiff;
-      }
+      changeEntry.clientStartOffset += changeDiff;
     }
 
     if (insertionIndex >= 0) {
@@ -429,7 +410,7 @@ public class TextChangesStorage {
             break;
           }
         }
-        if (end >= clientStart && clientStart < clientEnd) {
+        if (clientStart < clientEnd) {
           int changeTextStartOffset = start <= clientStart ? 0 : start - clientStart;
           int length = Math.min(clientEnd, end) - Math.max(clientStart, start);
           CharArrayUtil.getChars(changeEntry.change.getText(), data, changeTextStartOffset, outputOffset, length);
@@ -442,7 +423,7 @@ public class TextChangesStorage {
     if (outputOffset < data.length) {
       System.arraycopy(originalData, originalStart, data, outputOffset, data.length - outputOffset);
     }
-    return StringFactory.createShared(data);
+    return new String(data);
   }
   
   /**
@@ -493,9 +474,8 @@ public class TextChangesStorage {
       return clientStartOffset + change.getText().length();
     }
     
-    @NonNls
     @Override
-    public String toString() {
+    public @NonNls String toString() {
       return "client start offset: " + clientStartOffset + ", change: " + change;
     }
   }

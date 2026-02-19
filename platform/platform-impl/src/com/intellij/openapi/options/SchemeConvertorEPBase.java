@@ -1,7 +1,7 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.options;
 
-import com.intellij.AbstractBundle;
+import com.intellij.BundleBase;
 import com.intellij.DynamicBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.serviceContainer.BaseKeyedLazyInstance;
@@ -20,13 +20,9 @@ public class SchemeConvertorEPBase<T> extends BaseKeyedLazyInstance<T> {
    *
    * @see #getLocalizedName()
    */
-  @Attribute("name")
-  @Nls(capitalization = Nls.Capitalization.Sentence)
-  public String name;
+  @Attribute("name") public @Nls(capitalization = Nls.Capitalization.Sentence) String name;
 
-  @Attribute("nameKey")
-  @Nls(capitalization = Nls.Capitalization.Sentence)
-  public String nameKey;
+  @Attribute("nameKey") public @Nls(capitalization = Nls.Capitalization.Sentence) String nameKey;
 
   @Attribute("nameBundle")
   public String nameBundle;
@@ -34,9 +30,8 @@ public class SchemeConvertorEPBase<T> extends BaseKeyedLazyInstance<T> {
   @Attribute("implementationClass")
   public String implementationClass;
 
-  @Nullable
   @Override
-  protected String getImplementationClassName() {
+  protected @Nullable String getImplementationClassName() {
     return implementationClass;
   }
 
@@ -46,8 +41,8 @@ public class SchemeConvertorEPBase<T> extends BaseKeyedLazyInstance<T> {
    */
   public @NotNull String getLocalizedName() {
     if (nameBundle != null && nameKey != null) {
-      ResourceBundle resourceBundle = DynamicBundle.INSTANCE.getResourceBundle(nameBundle, getPluginDescriptor().getPluginClassLoader());
-      return AbstractBundle.message(resourceBundle, nameKey);
+      ResourceBundle resourceBundle = DynamicBundle.getResourceBundle(getPluginDescriptor().getClassLoader(), nameBundle);
+      return BundleBase.messageOrDefault(resourceBundle, nameKey, null);
     }
     else if (name == null) {
       LOG.error("Either a pair ('nameBundle', 'nameKey') or 'name' attribute must be specified.");

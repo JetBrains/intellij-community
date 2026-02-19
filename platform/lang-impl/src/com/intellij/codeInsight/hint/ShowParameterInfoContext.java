@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.hint;
 
 import com.intellij.lang.parameterInfo.CreateParameterInfoContext;
@@ -6,21 +6,17 @@ import com.intellij.lang.parameterInfo.ParameterInfoHandler;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.EditorActivityManager;
-import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author peter
-*/
 public class ShowParameterInfoContext implements CreateParameterInfoContext {
   private final Editor myEditor;
-  private final PsiFile myFile;
+  private final PsiFile myPsiFile;
   private final Project myProject;
   private final int myOffset;
   private final int myParameterListStart;
@@ -30,22 +26,22 @@ public class ShowParameterInfoContext implements CreateParameterInfoContext {
   private boolean myRequestFocus;
 
   public ShowParameterInfoContext(final Editor editor, final Project project,
-                                  final PsiFile file, int offset, int parameterListStart) {
-    this(editor, project, file, offset, parameterListStart, false);
+                                  final PsiFile psiFile, int offset, int parameterListStart) {
+    this(editor, project, psiFile, offset, parameterListStart, false);
   }
 
   public ShowParameterInfoContext(final Editor editor, final Project project,
-                                  final PsiFile file, int offset, int parameterListStart,
+                                  final PsiFile psiFile, int offset, int parameterListStart,
                                   boolean requestFocus) {
-    this(editor, project, file, offset, parameterListStart, requestFocus, false);
+    this(editor, project, psiFile, offset, parameterListStart, requestFocus, false);
   }
 
   public ShowParameterInfoContext(final Editor editor, final Project project,
-                                  final PsiFile file, int offset, int parameterListStart,
+                                  final PsiFile psiFile, int offset, int parameterListStart,
                                   boolean requestFocus, boolean singleParameterInfo) {
     myEditor = editor;
     myProject = project;
-    myFile = file;
+    myPsiFile = psiFile;
     myParameterListStart = parameterListStart;
     myOffset = offset;
     myRequestFocus = requestFocus;
@@ -59,7 +55,7 @@ public class ShowParameterInfoContext implements CreateParameterInfoContext {
 
   @Override
   public PsiFile getFile() {
-    return myFile;
+    return myPsiFile;
   }
 
   @Override
@@ -73,8 +69,7 @@ public class ShowParameterInfoContext implements CreateParameterInfoContext {
   }
 
   @Override
-  @NotNull
-  public Editor getEditor() {
+  public @NotNull Editor getEditor() {
     return myEditor;
   }
 
@@ -112,22 +107,23 @@ public class ShowParameterInfoContext implements CreateParameterInfoContext {
                                         final Project project,
                                         @Nullable PsiElement highlighted,
                                         final int elementStart,
-                                        final ParameterInfoHandler handler,
+                                        final ParameterInfoHandler<?, ?> handler,
                                         final boolean requestFocus,
                                         boolean singleParameterInfo) {
     if (editor.isDisposed() || !editor.getComponent().isVisible()) return;
 
     PsiDocumentManager.getInstance(project).performLaterWhenAllCommitted(() -> {
-      if (editor.isDisposed() || DumbService.isDumb(project) || !element.isValid() ||
+      if (editor.isDisposed() || !element.isValid() ||
           (!ApplicationManager.getApplication().isUnitTestMode() &&
-           !EditorActivityManager.getInstance().isVisible(editor))) return;
+           !UIUtil.isShowing(editor.getContentComponent()))) return;
 
       final Document document = editor.getDocument();
       if (document.getTextLength() < elementStart) return;
 
-      ParameterInfoController controller = ParameterInfoController.findControllerAtOffset(editor, elementStart);
+      ParameterInfoControllerBase controller = ParameterInfoControllerBase.findControllerAtOffset(editor, elementStart);
       if (controller == null) {
-        new ParameterInfoController(project, editor, elementStart, descriptors, highlighted, element, handler, true, requestFocus);
+        ParameterInfoControllerBase.createParameterInfoController(
+          project, editor, elementStart, descriptors, highlighted, element, handler, true, requestFocus);
       }
       else {
         controller.setDescriptors(descriptors);

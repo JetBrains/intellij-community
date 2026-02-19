@@ -1,12 +1,18 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.java.decompiler.util;
 
 import org.jetbrains.java.decompiler.main.DecompilerContext;
 import org.jetbrains.java.decompiler.main.extern.IFernflowerPreferences;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.TreeSet;
 
 /**
  * Allows to connect text with resulting lines
@@ -129,7 +135,7 @@ public class TextBuffer {
     int count = 0, length = myLineSeparator.length();
     while ((lineEnd = myStringBuilder.indexOf(myLineSeparator, lineStart)) > 0) {
       ++count;
-      sb.append(myStringBuilder.substring(lineStart, lineEnd));
+      sb.append(myStringBuilder, lineStart, lineEnd);
       Set<Integer> integers = myLineMapping.get(count);
       if (integers != null) {
         sb.append("//");

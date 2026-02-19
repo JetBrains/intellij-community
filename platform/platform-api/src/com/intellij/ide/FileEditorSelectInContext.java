@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide;
 
 import com.intellij.lang.injection.InjectedLanguageManager;
@@ -20,24 +20,21 @@ public class FileEditorSelectInContext extends SmartSelectInContext {
 
   public FileEditorSelectInContext(@NotNull FileEditor fileEditor, @NotNull PsiFile psiFile) {
     super(psiFile, psiFile, () -> fileEditor);
-    editor = fileEditor instanceof TextEditor ? (TextEditor)fileEditor : null;
+    editor = fileEditor instanceof TextEditor te ? te : null;
   }
 
-  @Nullable
   @Override
-  public Object getSelectorInFile() {
+  public @Nullable Object getSelectorInFile() {
     PsiFile file = getPsiFile();
     return file == null ? null : ObjectUtils.notNull(getElementAtCaret(file, false), file);
   }
 
-  @Nullable
-  public PsiElement getElementAtCaret(boolean tryInjected) {
+  public @Nullable PsiElement getElementAtCaret(boolean tryInjected) {
     PsiFile file = getPsiFile();
     return file == null ? null : getElementAtCaret(file, tryInjected);
   }
 
-  @Nullable
-  private PsiElement getElementAtCaret(@NotNull PsiFile file, boolean tryInjected) {
+  private @Nullable PsiElement getElementAtCaret(@NotNull PsiFile file, boolean tryInjected) {
     Editor editor = getEditor();
     if (editor == null) return null;
     int offset = editor.getCaretModel().getOffset();
@@ -53,8 +50,7 @@ public class FileEditorSelectInContext extends SmartSelectInContext {
     return elementAt;
   }
 
-  @Nullable
-  public Editor getEditor() {
+  public @Nullable Editor getEditor() {
     return editor == null ? null : editor.getEditor();
   }
 }

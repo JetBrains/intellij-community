@@ -1,23 +1,28 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.jdi;
 
-import com.intellij.debugger.engine.DebugProcessImpl;
 import com.intellij.debugger.engine.DebuggerUtils;
-import com.sun.jdi.*;
+import com.sun.jdi.AbsentInformationException;
+import com.sun.jdi.Location;
+import com.sun.jdi.Method;
+import com.sun.jdi.ReferenceType;
+import com.sun.jdi.VirtualMachine;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
+import java.util.List;
 import java.util.Objects;
 
 public class GeneratedLocation implements Location {
-  private final VirtualMachine myVirtualMachine;
   private final int myLineNumber;
-  private final ReferenceType myReferenceType;
-  private final Method myMethod;
+  private final @NotNull ReferenceType myReferenceType;
+  private final @Nullable Method myMethod;
+  private final @NotNull String myMethodName;
 
-  public GeneratedLocation(DebugProcessImpl debugProcess, ReferenceType type, String methodName, int lineNumber) {
-    myVirtualMachine = debugProcess.getVirtualMachineProxy().getVirtualMachine();
+  public GeneratedLocation(@NotNull ReferenceType type, @NotNull String methodName, int lineNumber) {
     myLineNumber = lineNumber;
     myReferenceType = type;
+    myMethodName = methodName;
     myMethod = DebuggerUtils.findMethod(myReferenceType, methodName, null);
   }
 
@@ -31,6 +36,10 @@ public class GeneratedLocation implements Location {
     return myMethod;
   }
 
+  public @NotNull String methodName() {
+    return myMethodName;
+  }
+
   @Override
   public long codeIndex() {
     return -2; // to be never equal to any LocationImpl
@@ -38,22 +47,22 @@ public class GeneratedLocation implements Location {
 
   @Override
   public String sourceName() throws AbsentInformationException {
-    throw new AbsentInformationException();
+    return myReferenceType.sourceName();
   }
 
   @Override
-  public String sourceName(String s) throws AbsentInformationException {
-    throw new AbsentInformationException();
+  public String sourceName(String stratum) throws AbsentInformationException {
+    return firstOrThrow(myReferenceType.sourceNames(stratum));
   }
 
   @Override
   public String sourcePath() throws AbsentInformationException {
-    throw new AbsentInformationException();
+    return firstOrThrow(myReferenceType.sourcePaths(myReferenceType.defaultStratum()));
   }
 
   @Override
-  public String sourcePath(String s) throws AbsentInformationException {
-    throw new AbsentInformationException();
+  public String sourcePath(String stratum) throws AbsentInformationException {
+    return firstOrThrow(myReferenceType.sourcePaths(stratum));
   }
 
   @Override
@@ -68,22 +77,22 @@ public class GeneratedLocation implements Location {
 
   @Override
   public VirtualMachine virtualMachine() {
-    return myVirtualMachine;
+    return myReferenceType.virtualMachine();
   }
 
   @Override
-  public boolean equals(Object o) {
-    if (this == o) return true;
-    if (o == null || getClass() != o.getClass()) return false;
-    GeneratedLocation location = (GeneratedLocation)o;
-    return Objects.equals(myMethod, location.myMethod) &&
-           myLineNumber == location.myLineNumber &&
-           Objects.equals(myVirtualMachine, location.myVirtualMachine);
+  public boolean equals(Object other) {
+    if (this == other) return true;
+    if (other == null || getClass() != other.getClass()) return false;
+    GeneratedLocation location = (GeneratedLocation)other;
+    return myLineNumber == location.myLineNumber &&
+           myReferenceType.equals(location.myReferenceType) &&
+           myMethodName.equals(location.myMethodName);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(myMethod, myLineNumber);
+    return Objects.hash(myReferenceType, myMethodName, myLineNumber);
   }
 
   // Same as in LocationImpl
@@ -96,7 +105,13 @@ public class GeneratedLocation implements Location {
     return Long.compare(codeIndex(), o.codeIndex());
   }
 
+  @Override
   public String toString() {
-    return myReferenceType.name() + ":" + myLineNumber;
+    return myReferenceType.name() + "." + myMethodName + ":" + myLineNumber;
+  }
+
+  private static String firstOrThrow(@NotNull List<String> list) throws AbsentInformationException {
+    if (list.isEmpty()) throw new AbsentInformationException();
+    return list.get(0);
   }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.jarRepository.services;
 
 import com.intellij.jarRepository.RemoteRepositoryDescription;
@@ -7,14 +7,12 @@ import com.intellij.jarRepository.services.artifactory.ArtifactoryRepositoryServ
 import com.intellij.jarRepository.services.bintray.BintrayRepositoryService;
 import com.intellij.jarRepository.services.nexus.NexusRepositoryService;
 import com.intellij.openapi.components.PersistentStateComponent;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.SmartList;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xmlb.annotations.Property;
 import com.intellij.util.xmlb.annotations.XCollection;
 import org.jetbrains.annotations.NotNull;
@@ -34,17 +32,15 @@ public class MavenRepositoryServicesManager implements PersistentStateComponent<
   private static final Logger LOG = Logger.getInstance(MavenRepositoryServicesManager.class);
   private final List<String> myUrls = new ArrayList<>();
 
-  public static final List<String> DEFAULT_SERVICES = ContainerUtil
-    .immutableList("https://oss.sonatype.org/service/local/", "https://repo.jfrog.org/artifactory/api/",
-                   "https://repository.jboss.org/nexus/service/local/", "https://jcenter.bintray.com");
+  public static final List<String> DEFAULT_SERVICES =
+    List.of("https://oss.sonatype.org/service/local/", "https://repository.jboss.org/nexus/service/local/");
 
   public MavenRepositoryServicesManager() {
     myUrls.addAll(DEFAULT_SERVICES);
   }
 
-  @NotNull
-  public static MavenRepositoryServicesManager getInstance(Project project) {
-    return ServiceManager.getService(project, MavenRepositoryServicesManager.class);
+  public static @NotNull MavenRepositoryServicesManager getInstance(Project project) {
+    return project.getService(MavenRepositoryServicesManager.class);
   }
 
   public static MavenRepositoryService @NotNull [] getServices() {
@@ -55,10 +51,9 @@ public class MavenRepositoryServicesManager implements PersistentStateComponent<
     return ArrayUtilRt.toStringArray(getInstance(project).getUrls());
   }
 
-  @NotNull
   @Property(surroundWithTag = false)
   @XCollection(elementName = "service-url", valueAttributeName = "")
-  public List<String> getUrls() {
+  public @NotNull List<String> getUrls() {
     return myUrls;
   }
 
@@ -80,8 +75,7 @@ public class MavenRepositoryServicesManager implements PersistentStateComponent<
     myUrls.addAll(state.getUrls());
   }
 
-  @NotNull
-  public static List<RemoteRepositoryDescription> getRepositories(String url) {
+  public static @NotNull List<RemoteRepositoryDescription> getRepositories(String url) {
     List<RemoteRepositoryDescription> result = new SmartList<>();
     for (MavenRepositoryService service : getServices()) {
       try {
@@ -94,8 +88,7 @@ public class MavenRepositoryServicesManager implements PersistentStateComponent<
     return result;
   }
 
-  @NotNull
-  public static List<RepositoryArtifactDescription> findArtifacts(@NotNull RepositoryArtifactDescription template, @NotNull String url) {
+  public static @NotNull List<RepositoryArtifactDescription> findArtifacts(@NotNull RepositoryArtifactDescription template, @NotNull String url) {
     final List<RepositoryArtifactDescription> result = new SmartList<>();
     for (MavenRepositoryService service : getServices()) {
       try {

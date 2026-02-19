@@ -1,55 +1,63 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.AnnotationUtil;
-import com.intellij.codeInsight.ExternalAnnotationsManager;
-import com.intellij.codeInsight.FileModificationService;
-import com.intellij.codeInspection.nullable.AnnotateOverriddenMethodParameterFix;
+import com.intellij.codeInsight.ModCommandAwareExternalAnnotationsManager;
+import com.intellij.codeInsight.intention.preview.IntentionPreviewUtils;
+import com.intellij.codeInspection.nullable.NullableStuffInspectionBase;
 import com.intellij.java.analysis.JavaAnalysisBundle;
-import com.intellij.openapi.application.WriteAction;
+import com.intellij.modcommand.ActionContext;
+import com.intellij.modcommand.ModCommand;
+import com.intellij.modcommand.ModCommandQuickFix;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiAnnotation;
+import com.intellij.psi.PsiJavaFile;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiModifierListOwner;
+import com.intellij.psi.PsiParameter;
+import com.intellij.psi.SmartPointerManager;
+import com.intellij.psi.SmartPsiElementPointer;
+import com.intellij.psi.codeStyle.JavaCodeStyleManager;
+import com.intellij.psi.search.searches.OverridingMethodsSearch;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.function.Consumer;
+import java.util.Set;
 
 /**
- * @author yole
+ * @see com.intellij.codeInsight.intention.AddAnnotationModCommandAction
  */
-public class RemoveAnnotationQuickFix implements LocalQuickFix {
+public class RemoveAnnotationQuickFix extends ModCommandQuickFix {
   private final SmartPsiElementPointer<PsiAnnotation> myAnnotation;
   private final SmartPsiElementPointer<PsiModifierListOwner> myListOwner;
+  private final boolean myRemoveInheritors;
 
   public RemoveAnnotationQuickFix(@NotNull PsiAnnotation annotation, @Nullable PsiModifierListOwner listOwner) {
+    this(annotation, listOwner, false);
+  }
+
+  public RemoveAnnotationQuickFix(@NotNull PsiAnnotation annotation, @Nullable PsiModifierListOwner listOwner, boolean removeInheritors) {
     Project project = annotation.getProject();
     SmartPointerManager pm = SmartPointerManager.getInstance(project);
     myAnnotation = pm.createSmartPsiElementPointer(annotation);
     myListOwner = listOwner == null ? null : pm.createSmartPsiElementPointer(listOwner);
-  }
-
-  protected boolean shouldRemoveInheritors() {
-    return false;
+    myRemoveInheritors = removeInheritors;
   }
 
   @Override
-  @NotNull
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return JavaAnalysisBundle.message("remove.annotation");
   }
 
   @Override
-  public boolean startInWriteAction() {
-    return false;
-  }
-
-  @Override
-  public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
+  public @NotNull ModCommand perform(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
     PsiAnnotation annotation = myAnnotation.getElement();
-    if (annotation == null) return;
+    if (annotation == null) return ModCommand.nop();
 
     PsiModifierListOwner listOwner = myListOwner == null ? null : myListOwner.getElement();
     String qualifiedName = annotation.getQualifiedName();
@@ -59,30 +67,43 @@ public class RemoveAnnotationQuickFix implements LocalQuickFix {
 
     registerAnnotation(annotation, listOwner, physical, externalOwners);
 
-    if (shouldRemoveInheritors() && qualifiedName != null) {
-      Consumer<PsiModifierListOwner> inheritorProcessor = owner -> {
-        registerAnnotation(AnnotationUtil.findAnnotation(owner, qualifiedName), owner, physical, externalOwners);
-      };
-      if (listOwner instanceof PsiMethod &&
-          !AnnotateMethodFix.processModifiableInheritorsUnderProgress((PsiMethod)listOwner, inheritorProcessor)) {
-        return;
+    if (myRemoveInheritors && qualifiedName != null && !IntentionPreviewUtils.isIntentionPreviewActive()) {
+      if (listOwner instanceof PsiMethod method) {
+        for (PsiMethod psiMethod : OverridingMethodsSearch.search(method).asIterable()) {
+          if (psiMethod.isPhysical() && !NullableStuffInspectionBase.shouldSkipOverriderAsGenerated(psiMethod)) {
+            registerAnnotation(AnnotationUtil.findAnnotation(psiMethod, qualifiedName), psiMethod, physical, externalOwners);
+          }
+        }
       }
-      if (listOwner instanceof PsiParameter &&
-               !AnnotateOverriddenMethodParameterFix.processParameterInheritorsUnderProgress((PsiParameter)listOwner, inheritorProcessor)) {
-        return;
+      else if (listOwner instanceof PsiParameter parameter) {
+        PsiMethod method = ObjectUtils.tryCast(parameter.getDeclarationScope(), PsiMethod.class);
+        if (method == null) return ModCommand.nop();
+        int index = method.getParameterList().getParameterIndex(parameter);
+        if (index < 0) return ModCommand.nop();
+
+        for (PsiMethod psiMethod : OverridingMethodsSearch.search(method).asIterable()) {
+          if (psiMethod.isPhysical() && !NullableStuffInspectionBase.shouldSkipOverriderAsGenerated(psiMethod)) {
+            PsiParameter subParameter = psiMethod.getParameterList().getParameter(index);
+            if (subParameter != null) {
+              registerAnnotation(AnnotationUtil.findAnnotation(subParameter, qualifiedName), subParameter, physical, externalOwners);
+            }
+          }
+        }
       }
     }
+    return ModCommand.psiUpdate(ActionContext.from(descriptor), updater -> {
+      List<PsiAnnotation> annotations = ContainerUtil.map(physical, updater::getWritable);
+      Set<PsiJavaFile> containingFiles = StreamEx.of(annotations).map(PsiAnnotation::getContainingFile).select(PsiJavaFile.class).toSet();
+      annotations.forEach(PsiAnnotation::delete);
+      containingFiles.forEach(JavaCodeStyleManager.getInstance(project)::removeRedundantImports);
+    }).andThen(deannotateExternal(project, qualifiedName, externalOwners));
+  }
 
-    if (!FileModificationService.getInstance().preparePsiElementsForWrite(physical)) {
-      return;
-    }
-    WriteAction.run(() -> physical.forEach(PsiAnnotation::delete));
-
+  private static @NotNull ModCommand deannotateExternal(@NotNull Project project, String qualifiedName, List<PsiModifierListOwner> externalOwners) {
     if (qualifiedName != null) {
-      for (PsiModifierListOwner owner : externalOwners) {
-        ExternalAnnotationsManager.getInstance(project).deannotate(owner, qualifiedName);
-      }
+      return ModCommandAwareExternalAnnotationsManager.getInstance(project).deannotateModCommand(externalOwners, List.of(qualifiedName));
     }
+    return ModCommand.nop();
   }
 
   private static void registerAnnotation(@Nullable PsiAnnotation annotation,

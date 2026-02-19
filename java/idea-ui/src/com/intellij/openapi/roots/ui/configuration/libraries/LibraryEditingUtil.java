@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.ui.configuration.libraries;
 
 import com.intellij.ide.JavaUiBundle;
@@ -12,23 +12,35 @@ import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.impl.ModuleLibraryTableBase;
 import com.intellij.openapi.roots.impl.libraries.LibraryEx;
 import com.intellij.openapi.roots.impl.libraries.LibraryTableImplUtil;
-import com.intellij.openapi.roots.libraries.*;
+import com.intellij.openapi.roots.libraries.Library;
+import com.intellij.openapi.roots.libraries.LibraryKind;
+import com.intellij.openapi.roots.libraries.LibraryTable;
+import com.intellij.openapi.roots.libraries.LibraryTablePresentation;
+import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
+import com.intellij.openapi.roots.libraries.LibraryType;
+import com.intellij.openapi.roots.libraries.PersistentLibraryKind;
 import com.intellij.openapi.roots.ui.configuration.FacetsProvider;
 import com.intellij.openapi.roots.ui.configuration.classpath.ClasspathPanel;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesModifiableModel;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ModuleStructureConfigurable;
-import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.ProjectStructureValidator;
 import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.util.ParameterizedRunnable;
 import com.intellij.util.PlatformIcons;
+import com.intellij.util.text.UniqueNameGenerator;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.util.*;
+import javax.swing.Icon;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.function.Predicate;
 
 public final class LibraryEditingUtil {
@@ -56,12 +68,7 @@ public final class LibraryEditingUtil {
 
   public static String suggestNewLibraryName(LibraryTable.ModifiableModel table,
                                              final String baseName) {
-    String candidateName = baseName;
-    int idx = 1;
-    while (libraryAlreadyExists(table, candidateName)) {
-      candidateName = baseName + (idx++);
-    }
-    return candidateName;
+    return UniqueNameGenerator.generateUniqueNameOneBased(baseName, n -> !libraryAlreadyExists(table, n));
   }
 
   public static Predicate<Library> getNotAddedSuitableLibrariesCondition(final ModuleRootModel rootModel, final FacetsProvider facetsProvider) {
@@ -140,13 +147,14 @@ public final class LibraryEditingUtil {
     return table.getPresentation();
   }
 
-  public static List<LibraryType> getSuitableTypes(ClasspathPanel classpathPanel) {
-    List<LibraryType> suitableTypes = new ArrayList<>();
-    suitableTypes.add(null);
+  public static List<TypeForNewLibrary> getSuitableTypes(ClasspathPanel classpathPanel) {
+    List<TypeForNewLibrary> suitableTypes = new ArrayList<>();
+    suitableTypes.add(new TypeForNewLibrary(null, JavaUiBundle.message("create.default.library.type.action.name")));
     final Module module = classpathPanel.getRootModel().getModule();
     for (LibraryType libraryType : LibraryType.EP_NAME.getExtensions()) {
-      if (libraryType.getCreateActionName() != null && libraryType.isSuitableModule(module, classpathPanel.getModuleConfigurationState().getFacetsProvider())) {
-        suitableTypes.add(libraryType);
+      String createActionName = libraryType.getCreateActionName();
+      if (createActionName != null && libraryType.isSuitableModule(module, classpathPanel.getModuleConfigurationState().getFacetsProvider())) {
+        suitableTypes.add(new TypeForNewLibrary(libraryType, createActionName));
       }
     }
     return suitableTypes;
@@ -156,27 +164,23 @@ public final class LibraryEditingUtil {
     return getSuitableTypes(panel).size() > 1;
   }
 
-  public static BaseListPopupStep<LibraryType> createChooseTypeStep(final ClasspathPanel classpathPanel,
+  public static BaseListPopupStep<TypeForNewLibrary> createChooseTypeStep(final ClasspathPanel classpathPanel,
                                                                     final ParameterizedRunnable<? super LibraryType> action) {
     return new BaseListPopupStep<>(JavaUiBundle.message("popup.title.select.library.type"), getSuitableTypes(classpathPanel)) {
-      @NotNull
       @Override
-      public String getTextFor(LibraryType value) {
-        if (value != null) {
-          final String name = value.getCreateActionName();
-          if (name != null) return name;
-        }
-        return JavaUiBundle.message("create.default.library.type.action.name");
+      public @NotNull String getTextFor(TypeForNewLibrary value) {
+        //noinspection HardCodedStringLiteral
+        return value.getCreateActionName();
       }
 
       @Override
-      public Icon getIconFor(LibraryType aValue) {
-        return aValue != null ? aValue.getIcon(null) : PlatformIcons.LIBRARY_ICON;
+      public Icon getIconFor(TypeForNewLibrary aValue) {
+        return aValue.getIcon();
       }
 
       @Override
-      public PopupStep onChosen(final LibraryType selectedValue, boolean finalChoice) {
-        return doFinalStep(() -> action.run(selectedValue));
+      public PopupStep<?> onChosen(final TypeForNewLibrary selectedValue, boolean finalChoice) {
+        return doFinalStep(() -> action.run(selectedValue.getType()));
       }
     };
   }
@@ -202,9 +206,26 @@ public final class LibraryEditingUtil {
     return modules;
   }
 
-  public static void showDialogAndAddLibraryToDependencies(@NotNull Library library,
-                                                           @NotNull Project project,
-                                                           boolean allowEmptySelection) {
-    ProjectStructureValidator.showDialogAndAddLibraryToDependencies(library, project, allowEmptySelection);
+  public static class TypeForNewLibrary {
+    private final LibraryType<?> myType;
+    private final @NlsContexts.Label String myCreateActionName;
+
+    private TypeForNewLibrary(@Nullable LibraryType<?> type, @NlsContexts.Label String createActionName) {
+      myType = type;
+      myCreateActionName = createActionName;
+    }
+
+    public String getCreateActionName() {
+      return myCreateActionName;
+    }
+
+    public Icon getIcon() {
+      Icon icon = myType != null ? myType.getIcon(null) : null;
+      return icon != null ? icon : PlatformIcons.LIBRARY_ICON;
+    }
+
+    public LibraryType<?> getType() {
+      return myType;
+    }
   }
 }

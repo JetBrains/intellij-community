@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.compiler.impl;
 
 import com.intellij.compiler.ModuleSourceSet;
@@ -8,15 +8,24 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.util.containers.ContainerUtil;
+import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 import org.jetbrains.jps.api.CmdlineProtoUtil;
 import org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.ParametersMessage.TargetTypeBuildScope;
 import org.jetbrains.jps.builders.BuildTargetType;
 import org.jetbrains.jps.builders.java.JavaModuleBuildTargetType;
+import org.jetbrains.jps.builders.java.ResourcesTargetType;
 import org.jetbrains.jps.incremental.artifacts.ArtifactBuildTargetType;
 
-import java.util.*;
-import java.util.function.Function;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 public final class CompileScopeUtil {
   private static final Key<List<TargetTypeBuildScope>> BASE_SCOPE_FOR_EXTERNAL_BUILD = Key.create("SCOPE_FOR_EXTERNAL_BUILD");
@@ -27,7 +36,7 @@ public final class CompileScopeUtil {
 
   public static void setResourcesScopeForExternalBuild(@NotNull CompileScope scope, @NotNull List<String> moduleNames) {
     List<TargetTypeBuildScope> resourceScopes = new ArrayList<>();
-    for (UpdateResourcesBuildContributor provider : UpdateResourcesBuildContributor.EP_NAME.getExtensions()) {
+    for (UpdateResourcesBuildContributor provider : UpdateResourcesBuildContributor.EP_NAME.getExtensionList()) {
       for (BuildTargetType<?> type : provider.getResourceTargetTypes()) {
         resourceScopes.add(CmdlineProtoUtil.createTargetsScope(type.getTypeId(), moduleNames, false));
       }
@@ -58,22 +67,14 @@ public final class CompileScopeUtil {
       return;
     }
     final Map<BuildTargetType<?>, Set<String>> targetsByType = new HashMap<>();
-    final Function<BuildTargetType<?>, Set<String>> idsOf = targetType -> {
-      Set<String> ids = targetsByType.get(targetType);
-      if (ids == null) {
-        ids = new HashSet<>();
-        targetsByType.put(targetType, ids);
-      }
-      return ids;
-    };
     for (ModuleSourceSet set : sets) {
       final BuildTargetType<?> targetType = toTargetType(set);
       assert targetType != null;
-      idsOf.apply(targetType).add(set.getModule().getName());
+      targetsByType.computeIfAbsent(targetType, tt -> new HashSet<>()).add(set.getModule().getName());
     }
     if (!unloadedModules.isEmpty()) {
       for (JavaModuleBuildTargetType targetType : JavaModuleBuildTargetType.ALL_TYPES) {
-        idsOf.apply(targetType).addAll(unloadedModules);
+        targetsByType.computeIfAbsent(targetType, tt -> new HashSet<>()).addAll(unloadedModules);
       }
     }
 
@@ -87,20 +88,26 @@ public final class CompileScopeUtil {
   }
 
   private static BuildTargetType<?> toTargetType(ModuleSourceSet set) {
-    switch (set.getType()) {
-      case TEST: return JavaModuleBuildTargetType.TEST;
-      case PRODUCTION: return JavaModuleBuildTargetType.PRODUCTION;
-      default: return null;
-    }
+    return switch (set.getType()) {
+      case TEST -> JavaModuleBuildTargetType.TEST;
+      case PRODUCTION -> JavaModuleBuildTargetType.PRODUCTION;
+      case RESOURCES -> ResourcesTargetType.PRODUCTION;
+      case RESOURCES_TEST -> ResourcesTargetType.TEST;
+    };
   }
 
   public static List<TargetTypeBuildScope> getBaseScopeForExternalBuild(@NotNull CompileScope scope) {
     return scope.getUserData(BASE_SCOPE_FOR_EXTERNAL_BUILD);
   }
 
-  public static List<TargetTypeBuildScope> mergeScopes(List<TargetTypeBuildScope> scopes1, List<TargetTypeBuildScope> scopes2) {
-    if (scopes2.isEmpty()) return scopes1;
-    if (scopes1.isEmpty()) return scopes2;
+  public static List<TargetTypeBuildScope> mergeScopes(@NotNull List<TargetTypeBuildScope> scopes1,
+                                                       @NotNull List<TargetTypeBuildScope> scopes2) {
+    if (scopes2.isEmpty()) {
+      return scopes1;
+    }
+    if (scopes1.isEmpty()) {
+      return scopes2;
+    }
 
     Map<String, TargetTypeBuildScope> scopeById = new HashMap<>();
     mergeScopes(scopeById, scopes1);
@@ -142,12 +149,15 @@ public final class CompileScopeUtil {
   }
 
   public static boolean allProjectModulesAffected(CompileContextImpl compileContext) {
-    final Set<Module> allModules = ContainerUtil.set(compileContext.getProjectCompileScope().getAffectedModules());
-    allModules.removeAll(Arrays.asList(compileContext.getCompileScope().getAffectedModules()));
+    @SuppressWarnings("SSBasedInspection")
+    Set<Module> allModules = new ObjectOpenHashSet<>(compileContext.getProjectCompileScope().getAffectedModules());
+    for (Module module : compileContext.getCompileScope().getAffectedModules()) {
+      allModules.remove(module);
+    }
     return allModules.isEmpty();
   }
 
-  public static List<String> fetchFiles(CompileContextImpl context) {
+  public static @Unmodifiable List<String> fetchFiles(CompileContextImpl context) {
     if (context.isRebuild()) {
       return Collections.emptyList();
     }

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.ui.tree.render;
 
 import com.intellij.debugger.DebuggerContext;
@@ -10,11 +10,17 @@ import com.intellij.debugger.engine.evaluation.TextWithImports;
 import com.intellij.debugger.impl.descriptors.data.UserExpressionData;
 import com.intellij.debugger.settings.NodeRendererSettings;
 import com.intellij.debugger.ui.impl.watch.ValueDescriptorImpl;
-import com.intellij.debugger.ui.tree.*;
+import com.intellij.debugger.ui.tree.DebuggerTreeNode;
+import com.intellij.debugger.ui.tree.NodeDescriptor;
+import com.intellij.debugger.ui.tree.NodeDescriptorFactory;
+import com.intellij.debugger.ui.tree.NodeManager;
+import com.intellij.debugger.ui.tree.UserExpressionDescriptor;
+import com.intellij.debugger.ui.tree.ValueDescriptor;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizerUtil;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.PsiElement;
+import com.intellij.xdebugger.impl.evaluate.XEvaluationOrigin;
 import com.sun.jdi.Value;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -24,7 +30,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
-public final class EnumerationChildrenRenderer extends ReferenceRenderer implements ChildrenRenderer{
+public final class EnumerationChildrenRenderer extends ReferenceRenderer implements ChildrenRenderer {
   public static final @NonNls String UNIQUE_ID = "EnumerationChildrenRenderer";
 
   private boolean myAppendDefaultChildren;
@@ -114,6 +120,7 @@ public final class EnumerationChildrenRenderer extends ReferenceRenderer impleme
                                                        childInfo.myExpression);
       data.setEnumerationIndex(idx++);
       UserExpressionDescriptor descriptor = descriptorFactory.getUserExpressionDescriptor(builder.getParentDescriptor(), data);
+      XEvaluationOrigin.setOrigin(descriptor, XEvaluationOrigin.RENDERER);
       if (childInfo.myOnDemand) {
         descriptor.putUserData(OnDemandRenderer.ON_DEMAND_CALCULATED, false);
       }
@@ -128,12 +135,12 @@ public final class EnumerationChildrenRenderer extends ReferenceRenderer impleme
 
   @Override
   public PsiElement getChildValueExpression(DebuggerTreeNode node, DebuggerContext context) throws EvaluateException {
-    return ((ValueDescriptor) node.getDescriptor()).getDescriptorEvaluation(context);
+    return ((ValueDescriptor)node.getDescriptor()).getDescriptorEvaluation(context);
   }
 
   @Override
   public CompletableFuture<Boolean> isExpandableAsync(Value value, EvaluationContext evaluationContext, NodeDescriptor parentDescriptor) {
-    if (myChildren.size() > 0) {
+    if (!myChildren.isEmpty()) {
       return CompletableFuture.completedFuture(true);
     }
     if (myAppendDefaultChildren) {
@@ -150,8 +157,7 @@ public final class EnumerationChildrenRenderer extends ReferenceRenderer impleme
     myChildren = children;
   }
 
-  @Nullable
-  public static EnumerationChildrenRenderer getCurrent(ValueDescriptorImpl valueDescriptor) {
+  public static @Nullable EnumerationChildrenRenderer getCurrent(ValueDescriptorImpl valueDescriptor) {
     Renderer renderer = valueDescriptor.getLastRenderer();
     if (renderer instanceof CompoundReferenceRenderer &&
         NodeRendererSettings.getInstance().getCustomRenderers().contains((NodeRenderer)renderer)) {

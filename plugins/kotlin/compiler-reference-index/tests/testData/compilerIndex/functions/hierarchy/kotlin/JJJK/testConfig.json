@@ -1,0 +1,9 @@
+{
+    "mainFile": "JJJK.java",
+    "usages": [
+        "JJJK.java",
+        "jjjk_.java",
+        "jjjk_.kt"
+    ],
+    "ignoreK2Compiler": "KT-57044"
+}

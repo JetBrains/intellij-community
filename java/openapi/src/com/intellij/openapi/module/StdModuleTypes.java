@@ -3,13 +3,22 @@ package com.intellij.openapi.module;
 
 import com.intellij.ide.util.projectWizard.JavaModuleBuilder;
 
+/**
+ * @deprecated it's better to avoid checking types of modules at all, see {@link ModuleType} for details; if you really need to access
+ * the Java module type, use {@link JavaModuleType#getModuleType()} instead.
+ */
+@Deprecated(forRemoval = true)
 public final class StdModuleTypes {
+  /**
+   * @deprecated it's better to avoid checking types of modules at all, see {@link ModuleType} for details; if you really need to access
+   * the Java module type, use {@link JavaModuleType#getModuleType()} instead.
+   */
+  @Deprecated(forRemoval = true)
   public static final ModuleType<JavaModuleBuilder> JAVA;
 
   static {
     try {
-      //noinspection unchecked
-      JAVA = (ModuleType<JavaModuleBuilder>)Class.forName("com.intellij.openapi.module.JavaModuleType").newInstance();
+      JAVA = new JavaModuleType();
     }
     catch (Exception e) {
       throw new IllegalArgumentException(e);

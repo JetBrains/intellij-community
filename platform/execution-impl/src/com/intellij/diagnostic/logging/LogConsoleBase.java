@@ -1,43 +1,81 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diagnostic.logging;
 
+import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.filters.TextConsoleBuilder;
 import com.intellij.execution.filters.TextConsoleBuilderFactory;
 import com.intellij.execution.impl.ConsoleBuffer;
 import com.intellij.execution.process.AnsiEscapeDecoder;
-import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.process.ProcessHandler;
+import com.intellij.execution.process.ProcessListener;
 import com.intellij.execution.ui.ConsoleView;
 import com.intellij.execution.ui.ConsoleViewContentType;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.icons.AllIcons;
+import com.intellij.ide.DataManager;
+import com.intellij.openapi.Disposable;
+import com.intellij.openapi.actionSystem.ActionGroup;
+import com.intellij.openapi.actionSystem.ActionPlaces;
+import com.intellij.openapi.actionSystem.ActionToolbar;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.CustomShortcutSet;
+import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.actionSystem.Presentation;
+import com.intellij.openapi.actionSystem.ToggleAction;
+import com.intellij.openapi.actionSystem.Toggleable;
+import com.intellij.openapi.actionSystem.ex.CustomComponentAction;
+import com.intellij.openapi.actionSystem.impl.ActionButton;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.WriteIntentReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.toolbar.floating.FloatingToolbar;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.ui.ComponentUtil;
 import com.intellij.ui.FilterComponent;
+import com.intellij.ui.LayeredIcon;
+import com.intellij.ui.components.JBLayeredPane;
+import com.intellij.ui.components.panels.FlowLayoutWrapper;
+import com.intellij.ui.components.panels.HorizontalLayout;
+import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.util.Alarm;
-import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.EDT;
+import com.intellij.util.ui.JBEmptyBorder;
+import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.accessibility.AccessibleContextUtil;
 import com.intellij.util.ui.accessibility.ScreenReader;
 import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.CalledInAny;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.DefaultComboBoxModel;
+import javax.swing.JComboBox;
+import javax.swing.JComponent;
+import javax.swing.JLayeredPane;
+import javax.swing.JPanel;
+import javax.swing.KeyStroke;
+import javax.swing.SwingConstants;
+import java.awt.BorderLayout;
+import java.awt.Component;
+import java.awt.Rectangle;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.InputEvent;
@@ -46,32 +84,28 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.Reader;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.function.BiConsumer;
 
-/**
- * @author Eugene.Kudelevsky
- */
 public abstract class LogConsoleBase extends AdditionalTabComponent implements LogConsole, LogFilterListener {
   private static final Logger LOG = Logger.getInstance(LogConsoleBase.class);
-  @NonNls public static final String APPLYING_FILTER_TITLE = "Applying filter...";
 
-  private JPanel mySearchComponent;
-  private JComboBox myLogFilterCombo;
-  private JPanel myTextFilterWrapper;
+  private final JPanel mySearchComponent;
+  private final JComboBox<LogFilter> myLogFilterCombo;
+  private final JPanel myTextFilterWrapper;
 
   private volatile boolean myDisposed;
   private ConsoleView myConsole;
   private final LightProcessHandler myProcessHandler = new LightProcessHandler();
   private ReaderThread myReaderThread;
-  private StringBuffer myOriginalDocument = null;
+  private final LinkedList<String> myLogLines = new LinkedList<>();
+  private int myCurrentLogLength = 0;
   private String myLineUnderSelection = null;
   private int myLineOffset = -1;
-  private LogContentPreprocessor myContentPreprocessor;
   private final Project myProject;
   private @NlsContexts.TabTitle String myTitle = null;
   private boolean myWasInitialized;
-  private final JPanel myTopComponent = new JPanel(new BorderLayout());
   private ActionGroup myActions;
   private final boolean myBuildInActions;
   private LogFilterModel myModel;
@@ -83,7 +117,7 @@ public abstract class LogConsoleBase extends AdditionalTabComponent implements L
   private FilterComponent myFilter = new FilterComponent("LOG_FILTER_HISTORY", 5) {
     @Override
     public void filter() {
-      final Task.Backgroundable task = new Task.Backgroundable(myProject, APPLYING_FILTER_TITLE) {
+      final Task.Backgroundable task = new Task.Backgroundable(myProject, getApplyingFilterTitle()) {
         @Override
         public void run(@NotNull ProgressIndicator indicator) {
           myModel.updateCustomFilter(getFilter());
@@ -92,6 +126,10 @@ public abstract class LogConsoleBase extends AdditionalTabComponent implements L
       ProgressManager.getInstance().run(task);
     }
   };
+
+  public static @NlsContexts.ProgressTitle @NotNull String getApplyingFilterTitle() {
+    return ExecutionBundle.message("progress.title.applying.filter");
+  }
 
   public LogConsoleBase(@NotNull Project project, @Nullable Reader reader, @NlsContexts.TabTitle String title, final boolean buildInActions, LogFilterModel model) {
     this(project, reader, title, buildInActions, model, GlobalSearchScope.allScope(project));
@@ -113,10 +151,21 @@ public abstract class LogConsoleBase extends AdditionalTabComponent implements L
     myReaderThread = new ReaderThread(reader);
     myBuildInActions = buildInActions;
     TextConsoleBuilder builder = TextConsoleBuilderFactory.getInstance().createBuilder(project, scope);
+    builder.setViewer(true);
     myConsole = builder.getConsole();
+    // remove the left border from console view
+    UIUtil.removeScrollBorder(myConsole.getComponent());
     myConsole.attachToProcess(myProcessHandler);
     myDisposed = false;
     myModel.addFilterListener(this);
+
+    mySearchComponent = new NonOpaquePanel(new BorderLayout());
+    myLogFilterCombo = new ComboBox<>();
+    myLogFilterCombo.setOpaque(false);
+    myTextFilterWrapper = new NonOpaquePanel();
+
+    mySearchComponent.add(myLogFilterCombo, BorderLayout.WEST);
+    mySearchComponent.add(myTextFilterWrapper, BorderLayout.CENTER);
   }
 
   @Override
@@ -133,63 +182,31 @@ public abstract class LogConsoleBase extends AdditionalTabComponent implements L
     return myModel;
   }
 
-  /**
-   * @deprecated use {@link #getFilterModel()} instead
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020.1")
-  @Override
-  public LogContentPreprocessor getContentPreprocessor() {
-    return myContentPreprocessor;
-  }
-
-  /**
-   * @deprecated use {@link #setFilterModel(LogFilterModel)} instead and
-   *             customize log entry in {@link LogFilterModel#processLine(String)}
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020.1")
-  @Override
-  public void setContentPreprocessor(final LogContentPreprocessor contentPreprocessor) {
-    myContentPreprocessor = contentPreprocessor;
-  }
-
-  @Nullable
-  protected BufferedReader updateReaderIfNeeded(@Nullable BufferedReader reader) throws IOException {
+  protected @Nullable BufferedReader updateReaderIfNeeded(@Nullable BufferedReader reader) throws IOException {
     return reader;
   }
 
-  private JComponent createToolbar() {
-    String customFilter = myModel.getCustomFilter();
-
-    myFilter.reset();
-    myFilter.setSelectedItem(customFilter != null ? customFilter : "");
+  private void registerShiftTab() {
     // Don't override Shift-TAB if screen reader is active. It is unclear why overriding
     // Shift-TAB was necessary in the first place.
     // See https://github.com/JetBrains/intellij-community/commit/a36a3a00db97e4d5b5c112bb4136a41d9435f667
     if (!ScreenReader.isActive()) {
       new AnAction() {
         {
-          registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_TAB, InputEvent.SHIFT_DOWN_MASK)),
-                                    LogConsoleBase.this);
+          var shiftTabShortcut = new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_TAB, InputEvent.SHIFT_DOWN_MASK));
+          registerCustomShortcutSet(shiftTabShortcut, LogConsoleBase.this);
         }
 
         @Override
-        public void actionPerformed(@NotNull final AnActionEvent e) {
-          myFilter.requestFocusInWindow();
+        public void actionPerformed(final @NotNull AnActionEvent e) {
+          var console = ComponentUtil.getParentOfType(ConsoleWithFloatingToolbar.class, getConsoleNotNull().getComponent());
+          if (console != null) {
+            console.myFloatingToolbar.scheduleShow();
+          }
+          getTextFilterComponent().requestFocusInWindow();
         }
       };
     }
-
-    if (myBuildInActions) {
-      final JComponent tbComp =
-        ActionManager.getInstance().createActionToolbar("LogConsole", getOrCreateActions(), true).getComponent();
-      myTopComponent.add(tbComp, BorderLayout.CENTER);
-      myTopComponent.add(getSearchComponent(), BorderLayout.EAST);
-    }
-
-
-    return myTopComponent;
   }
 
   public ActionGroup getOrCreateActions() {
@@ -221,7 +238,7 @@ public abstract class LogConsoleBase extends AdditionalTabComponent implements L
   }
 
   @Override
-  public void onFilterStateChange(@NotNull final LogFilter filter) {
+  public void onFilterStateChange(final @NotNull LogFilter filter) {
     filterConsoleOutput();
   }
 
@@ -231,43 +248,162 @@ public abstract class LogConsoleBase extends AdditionalTabComponent implements L
   }
 
   @Override
-  @NotNull
-  public JComponent getComponent() {
+  public @NotNull JComponent getComponent() {
     if (!myWasInitialized) {
       myWasInitialized = true;
-      add(getConsoleNotNull().getComponent(), BorderLayout.CENTER);
-      add(createToolbar(), BorderLayout.NORTH);
+      var console = getConsoleNotNull().getComponent();
+      if (myBuildInActions) {
+        var search = getSearchComponent();
+        var group = getOrCreateActions();
+        if (search != null) {
+          group = addSearchFilter(group, search);
+        }
+        add(new ConsoleWithFloatingToolbar(console, group, this), BorderLayout.CENTER);
+      } else {
+        add(console, BorderLayout.CENTER);
+      }
+      registerShiftTab();
     }
     return this;
+  }
+
+  private ActionGroup addSearchFilter(ActionGroup origin, @NotNull JComponent searchComponent) {
+    var filterAction = new ToggleSearchFilterAction() {
+      @Override
+      protected @NotNull JComponent getSearchFilterComponent() {
+        return searchComponent;
+      }
+
+      @Override
+      protected boolean isModified(@NotNull JComponent component) {
+        if (myLogFilterCombo.getSelectedIndex() > 0) {
+          return true;
+        }
+        var textFilterComponent = getTextFilterComponent();
+        if (textFilterComponent instanceof FilterComponent) {
+          String filterText = ((FilterComponent)textFilterComponent).getFilter();
+          return StringUtil.isNotEmpty(filterText);
+        }
+        return false;
+      }
+    };
+    return new DefaultActionGroup(origin, filterAction);
+  }
+
+  private static final class ConsoleWithFloatingToolbar extends JBLayeredPane {
+    private static final int TOP_OFFSET = 25;
+    private static final int RIGHT_OFFSET = 20;
+
+    private final @NotNull JComponent myComponent;
+    private final @NotNull FloatingToolbar myFloatingToolbar;
+
+    private ConsoleWithFloatingToolbar(@NotNull JComponent component, @NotNull ActionGroup actions, @NotNull Disposable disposable) {
+      myComponent = component;
+      myFloatingToolbar = new FloatingToolbar(component, actions, disposable);
+
+      add(myComponent, JLayeredPane.DEFAULT_LAYER);
+      add(myFloatingToolbar, JLayeredPane.POPUP_LAYER);
+    }
+
+    @Override
+    public void doLayout() {
+      Rectangle bounds = getBounds();
+      myComponent.setBounds(0, 0, bounds.width, bounds.height);
+      var toolbarSize = myFloatingToolbar.getPreferredSize();
+      myFloatingToolbar.setBounds(
+        bounds.width - toolbarSize.width - RIGHT_OFFSET,
+        TOP_OFFSET - (toolbarSize.height - ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE.height) / 2,
+        toolbarSize.width,
+        toolbarSize.height
+      );
+    }
+  }
+
+  private abstract static class ToggleSearchFilterAction extends ToggleAction implements CustomComponentAction {
+    ToggleSearchFilterAction() {
+      super(() -> ExecutionBundle.message("log.toggle.filter.component"), new LayeredIcon(AllIcons.General.Filter, null));
+    }
+
+    protected abstract @NotNull JComponent getSearchFilterComponent();
+
+    protected boolean isModified(@NotNull JComponent component) {
+      return false;
+    }
+
+    @Override
+    public boolean isSelected(@NotNull AnActionEvent e) {
+      return Toggleable.isSelected(e.getPresentation());
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
+    }
+
+    @Override
+    public void setSelected(@NotNull AnActionEvent e, boolean state) {
+      Toggleable.setSelected(e.getPresentation(), state);
+    }
+
+    @Override
+    public @NotNull JComponent createCustomComponent(@NotNull Presentation presentation, @NotNull String place) {
+      var button = new ActionButton(this, presentation, "LogSearchFilterToolbar", ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE);
+      var panel = new NonOpaquePanel();
+      panel.setBorder(new JBEmptyBorder(0, 2, 0, 2));
+      panel.setLayout(new HorizontalLayout(4, SwingConstants.CENTER));
+      panel.add(getSearchFilterComponent());
+      panel.add(new FlowLayoutWrapper(button));
+      return panel;
+    }
+
+    @Override
+    public void updateCustomComponent(@NotNull JComponent component,
+                                      @NotNull Presentation presentation) {
+      component.setVisible(presentation.isVisible());
+      component.setEnabled(presentation.isEnabled());
+      getSearchFilterComponent().setVisible(Toggleable.isSelected(presentation));
+      var icon = presentation.getIcon();
+      if (icon instanceof LayeredIcon && ((LayeredIcon)icon).getIconCount() == 2) {
+        ((LayeredIcon)icon).setIcon(isModified(component) ? AllIcons.Nodes.TabAlert : null, 1);
+        presentation.setIcon(icon);
+      }
+    }
   }
 
   public abstract boolean isActive();
 
   public void activate() {
+    activate(false);
+  }
+
+  @ApiStatus.Internal
+  public void activate(boolean force) {
+    boolean isActive = force || isActive();
     final ReaderThread readerThread = myReaderThread;
     if (readerThread == null) {
       return;
     }
-    if (isActive() && !readerThread.myRunning) {
+    if (isActive && !readerThread.myRunning) {
       resetLogFilter();
       myFilter.setSelectedItem(myModel.getCustomFilter());
       readerThread.startRunning();
       ApplicationManager.getApplication().executeOnPooledThread(readerThread);
     }
-    else if (!isActive() && readerThread.myRunning) {
+    else if (!isActive && readerThread.myRunning) {
       readerThread.stopRunning();
     }
   }
 
-  @NotNull
   @Override
-  public String getTabTitle() {
+  public @NotNull String getTabTitle() {
     return myTitle;
   }
 
   @Override
   public void dispose() {
-    myModel.removeFilterListener(this);
+    if (!myProject.isDisposed()) {
+      myModel.removeFilterListener(this);
+    }
     stopRunning(false);
     if (myDisposed) return;
     myDisposed = true;
@@ -275,7 +411,6 @@ public abstract class LogConsoleBase extends AdditionalTabComponent implements L
     myConsole = null;
     myFilter.dispose();
     myFilter = null;
-    myOriginalDocument = null;
   }
 
   private void stopRunning(boolean checkActive) {
@@ -312,114 +447,108 @@ public abstract class LogConsoleBase extends AdditionalTabComponent implements L
   protected void addMessage(final String text) {
     if (myDisposed) return;
     if (text == null) return;
-    if (myContentPreprocessor != null) {
-      final List<LogFragment> fragments = myContentPreprocessor.parseLogLine(text + "\n");
-      myOriginalDocument = getOriginalDocument();
-      for (LogFragment fragment : fragments) {
-        String formattedMessage = myFormatter.formatMessage(fragment.getText());
-        myProcessHandler.notifyTextAvailable(formattedMessage, fragment.getOutputType());
-        if (myOriginalDocument != null) {
-          myOriginalDocument.append(fragment.getText());
+    final LogFilterModel.MyProcessingResult processingResult = myModel.processLine(text);
+    if (processingResult.isApplicable()) {
+      final Key key = processingResult.getKey();
+      if (key != null) {
+        final String messagePrefix = processingResult.getMessagePrefix();
+        if (messagePrefix != null) {
+          String formattedPrefix = myFormatter.formatPrefix(messagePrefix);
+          myProcessHandler.notifyTextAvailable(formattedPrefix, key);
+        }
+        String formattedMessage = myFormatter.formatMessage(text);
+        myProcessHandler.notifyTextAvailable(formattedMessage + "\n", key);
+      }
+    }
+
+    if (myLogLines.isEmpty() && getEditor() != null) {
+      myLogLines.add(getEditor().getDocument().getText());
+      myCurrentLogLength = myLogLines.getFirst().length();
+    }
+
+    if (ConsoleBuffer.useCycleBuffer()) {
+      if (text.length() > ConsoleBuffer.getCycleBufferSize()) {
+        final String cutText = text.substring(text.length() - ConsoleBuffer.getCycleBufferSize());
+        myLogLines.clear();
+        myLogLines.add(cutText);
+        myCurrentLogLength = cutText.length();
+
+        return;
+      }
+      else {
+        while (myCurrentLogLength + text.length() > ConsoleBuffer.getCycleBufferSize() && !myLogLines.isEmpty()) {
+          myCurrentLogLength -= myLogLines.removeFirst().length();
         }
       }
     }
-    else {
-      final LogFilterModel.MyProcessingResult processingResult = myModel.processLine(text);
-      if (processingResult.isApplicable()) {
-        final Key key = processingResult.getKey();
-        if (key != null) {
-          final String messagePrefix = processingResult.getMessagePrefix();
-          if (messagePrefix != null) {
-            String formattedPrefix = myFormatter.formatPrefix(messagePrefix);
-            myProcessHandler.notifyTextAvailable(formattedPrefix, key);
-          }
-          String formattedMessage = myFormatter.formatMessage(text);
-          myProcessHandler.notifyTextAvailable(formattedMessage + "\n", key);
-        }
-      }
-      myOriginalDocument = getOriginalDocument();
-      if (myOriginalDocument != null) {
-        myOriginalDocument.append(text).append("\n");
-      }
-    }
+
+    myLogLines.add(text);
+    myCurrentLogLength += text.length();
   }
 
   public void attachStopLogConsoleTrackingListener(final ProcessHandler process) {
     if (process != null) {
-      final ProcessAdapter stopListener = new ProcessAdapter() {
+      final ProcessListener stopListener = new ProcessListener() {
         @Override
-        public void processTerminated(@NotNull final ProcessEvent event) {
+        public void processTerminated(final @NotNull ProcessEvent event) {
           process.removeProcessListener(this);
-          stopRunning(true);
+          if (EDT.isCurrentThreadEdt()) {
+            WriteIntentReadAction.run(() -> stopRunning(true));
+          }
+          else {
+            ApplicationManager.getApplication().invokeAndWait(() -> {
+              stopRunning(true);
+            }, ModalityState.any());
+          }
         }
       };
       process.addProcessListener(stopListener);
     }
   }
 
-  public StringBuffer getOriginalDocument() {
-    if (myOriginalDocument == null) {
-      final Editor editor = getEditor();
-      if (editor != null) {
-        myOriginalDocument = new StringBuffer(editor.getDocument().getText());
-      }
-    } else {
-      if (ConsoleBuffer.useCycleBuffer()) {
-        resizeBuffer(myOriginalDocument, ConsoleBuffer.getCycleBufferSize());
-      }
-    }
-    return myOriginalDocument;
+  /**
+   * @deprecated No longer necessary for buffering, preserved for API compatibility.
+   */
+  @CalledInAny
+  @Deprecated
+  public @Nullable StringBuffer getOriginalDocument() {
+    return null;
   }
 
-  static void resizeBuffer(@NotNull StringBuffer buffer, int size) {
-    final int toRemove = buffer.length() - size;
-    if (toRemove > 0) {
-
-      int indexOfNewline = buffer.indexOf("\n", toRemove);
-
-      if (indexOfNewline == -1) {
-        buffer.delete(0, toRemove);
-      }
-      else {
-        buffer.delete(0, indexOfNewline + 1);
-      }
-    }
-
+  @CalledInAny
+  private @Nullable Editor getEditor() {
+    ConsoleView console = getConsole();
+    if (console == null) return null;
+    // TODO This is a hack to get it working in BGT without a proper BGT-enabled document getter
+    DataContext dataContext = DataManager.getInstance().customizeDataContext(
+      DataContext.EMPTY_CONTEXT, console);
+    return CommonDataKeys.EDITOR.getData(dataContext);
   }
 
-  @Nullable
-  private Editor getEditor() {
-    final ConsoleView console = getConsole();
-    return console != null ? CommonDataKeys.EDITOR.getData((DataProvider) console) : null;
-  }
-
-  private void filterConsoleOutput() {
+  protected void filterConsoleOutput() {
     ApplicationManager.getApplication().invokeLater(() -> computeSelectedLineAndFilter());
   }
 
   private void computeSelectedLineAndFilter() {
     // we have to do this in dispatch thread, because ConsoleViewImpl can flush something to document otherwise
-    myOriginalDocument = getOriginalDocument();
-    if (myOriginalDocument != null) {
-      final Editor editor = getEditor();
-      LOG.assertTrue(editor != null);
-      final Document document = editor.getDocument();
-      final int caretOffset = editor.getCaretModel().getOffset();
-      myLineUnderSelection = null;
-      myLineOffset = -1;
-      if (caretOffset > -1 && caretOffset < document.getTextLength()) {
-        int line;
-        try {
-          line = document.getLineNumber(caretOffset);
-        }
-        catch (IllegalStateException e) {
-          throw new IllegalStateException("document.length=" + document.getTextLength() + ", caret offset = " + caretOffset + "; " + e.getMessage(), e);
-        }
-        if (line > -1 && line < document.getLineCount()) {
-          final int startOffset = document.getLineStartOffset(line);
-          myLineUnderSelection = document.getText().substring(startOffset, document.getLineEndOffset(line));
-          myLineOffset = caretOffset - startOffset;
-        }
+    final Editor editor = getEditor();
+    LOG.assertTrue(editor != null);
+    final Document document = editor.getDocument();
+    final int caretOffset = editor.getCaretModel().getOffset();
+    myLineUnderSelection = null;
+    myLineOffset = -1;
+    if (caretOffset > -1 && caretOffset < document.getTextLength()) {
+      int line;
+      try {
+        line = document.getLineNumber(caretOffset);
+      }
+      catch (IllegalStateException e) {
+        throw new IllegalStateException("document.length=" + document.getTextLength() + ", caret offset = " + caretOffset + "; " + e.getMessage(), e);
+      }
+      if (line > -1 && line < document.getLineCount()) {
+        final int startOffset = document.getLineStartOffset(line);
+        myLineUnderSelection = document.getText().substring(startOffset, document.getLineEndOffset(line));
+        myLineOffset = caretOffset - startOffset;
       }
     }
     ApplicationManager.getApplication().executeOnPooledThread(() -> doFilter());
@@ -433,12 +562,11 @@ public abstract class LogConsoleBase extends AdditionalTabComponent implements L
     console.clear();
     myModel.processingStarted();
 
-    final String[] lines = myOriginalDocument != null ? myOriginalDocument.toString().split("\n") : ArrayUtilRt.EMPTY_STRING_ARRAY;
     int offset = 0;
     boolean caretPositioned = false;
     AnsiEscapeDecoder decoder = new AnsiEscapeDecoder();
 
-    for (String line : lines) {
+    for (String line : myLogLines) {
       @SuppressWarnings("CodeBlock2Expr")
       final int printed = printMessageToConsole(line, (text, key) -> {
         decoder.escapeText(text, key, (chunk, attributes) -> {
@@ -468,32 +596,22 @@ public abstract class LogConsoleBase extends AdditionalTabComponent implements L
   }
 
   private int printMessageToConsole(@NotNull String line, @NotNull BiConsumer<? super String, ? super Key> printer) {
-    if (myContentPreprocessor != null) {
-      List<LogFragment> fragments = myContentPreprocessor.parseLogLine(line + '\n');
-      for (LogFragment fragment : fragments) {
-        printer.accept(myFormatter.formatMessage(fragment.getText()), fragment.getOutputType());
-      }
-      return line.length() + 1;
-    }
-    else {
-      final LogFilterModel.MyProcessingResult processingResult = myModel.processLine(line);
-      if (processingResult.isApplicable()) {
-        final Key key = processingResult.getKey();
-        if (key != null) {
-          final String messagePrefix = processingResult.getMessagePrefix();
-          if (messagePrefix != null) {
-            printer.accept(myFormatter.formatPrefix(messagePrefix), key);
-          }
-          printer.accept(myFormatter.formatMessage(line) + "\n", key);
-          return (messagePrefix != null ? messagePrefix.length() : 0) + line.length() + 1;
+    final LogFilterModel.MyProcessingResult processingResult = myModel.processLine(line);
+    if (processingResult.isApplicable()) {
+      final Key key = processingResult.getKey();
+      if (key != null) {
+        final String messagePrefix = processingResult.getMessagePrefix();
+        if (messagePrefix != null) {
+          printer.accept(myFormatter.formatPrefix(messagePrefix), key);
         }
+        printer.accept(myFormatter.formatMessage(line) + "\n", key);
+        return (messagePrefix != null ? messagePrefix.length() : 0) + line.length() + 1;
       }
-      return 0;
     }
+    return 0;
   }
 
-  @Nullable
-  public ConsoleView getConsole() {
+  public @Nullable ConsoleView getConsole() {
     return myConsole;
   }
 
@@ -503,8 +621,7 @@ public abstract class LogConsoleBase extends AdditionalTabComponent implements L
    * If we get the assertion then it is a time to revisit logic of caller ;)
    */
 
-  @NotNull
-  private ConsoleView getConsoleNotNull() {
+  public @NotNull ConsoleView getConsoleNotNull() {
     final ConsoleView console = getConsole();
     assert console != null: "it looks like console has been disposed";
     return console;
@@ -521,8 +638,7 @@ public abstract class LogConsoleBase extends AdditionalTabComponent implements L
   }
 
   @Override
-  @Nullable
-  public JComponent getToolbarContextComponent() {
+  public @Nullable JComponent getToolbarContextComponent() {
     final ConsoleView console = getConsole();
     return console == null ? null : console.getComponent();
   }
@@ -538,18 +654,18 @@ public abstract class LogConsoleBase extends AdditionalTabComponent implements L
 
   public void clear() {
     getConsoleNotNull().clear();
-    myOriginalDocument = null;
+    myLogLines.clear();
   }
 
   @Override
   public JComponent getSearchComponent() {
-    myLogFilterCombo.setModel(new DefaultComboBoxModel(myFilters.toArray(new LogFilter[0])));
+    myLogFilterCombo.setModel(new DefaultComboBoxModel<>(myFilters.toArray(new LogFilter[0])));
     resetLogFilter();
     myLogFilterCombo.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
         final LogFilter filter = (LogFilter)myLogFilterCombo.getSelectedItem();
-        final Task.Backgroundable task = new Task.Backgroundable(myProject, APPLYING_FILTER_TITLE) {
+        final Task.Backgroundable task = new Task.Backgroundable(myProject, getApplyingFilterTitle()) {
           @Override
           public void run(@NotNull ProgressIndicator indicator) {
             myModel.selectFilter(filter);
@@ -558,7 +674,7 @@ public abstract class LogConsoleBase extends AdditionalTabComponent implements L
         ProgressManager.getInstance().run(task);
       }
     });
-    AccessibleContextUtil.setName(myLogFilterCombo, "Message severity filter");
+    AccessibleContextUtil.setName(myLogFilterCombo, ExecutionBundle.message("log.filter.combo.accessible.name"));
     myTextFilterWrapper.removeAll();
     myTextFilterWrapper.add(getTextFilterComponent());
     return mySearchComponent;
@@ -575,8 +691,7 @@ public abstract class LogConsoleBase extends AdditionalTabComponent implements L
     }
   }
 
-  @NotNull
-  protected Component getTextFilterComponent() {
+  protected @NotNull Component getTextFilterComponent() {
     return myFilter;
   }
 
@@ -599,7 +714,7 @@ public abstract class LogConsoleBase extends AdditionalTabComponent implements L
     }
   }
 
-  private static class LightProcessHandler extends ProcessHandler {
+  private static final class LightProcessHandler extends ProcessHandler {
 
     private final AnsiEscapeDecoder myDecoder = new AnsiEscapeDecoder();
 
@@ -624,13 +739,12 @@ public abstract class LogConsoleBase extends AdditionalTabComponent implements L
     }
 
     @Override
-    @Nullable
-    public OutputStream getProcessInput() {
+    public @Nullable OutputStream getProcessInput() {
       return null;
     }
   }
 
-  private class ReaderThread implements Runnable {
+  private final class ReaderThread implements Runnable {
     private BufferedReader myReader;
     private boolean myRunning = false;
     private final Alarm myAlarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, LogConsoleBase.this);

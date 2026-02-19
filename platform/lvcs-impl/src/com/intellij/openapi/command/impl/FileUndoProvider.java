@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.command.impl;
 
 import com.intellij.configurationStore.StorageManagerFileWriteRequestor;
@@ -9,13 +9,24 @@ import com.intellij.history.core.changes.ContentChange;
 import com.intellij.history.core.changes.StructuralChange;
 import com.intellij.history.integration.IdeaGateway;
 import com.intellij.history.integration.LocalHistoryImpl;
-import com.intellij.openapi.command.undo.*;
+import com.intellij.openapi.command.undo.DocumentReference;
+import com.intellij.openapi.command.undo.DocumentReferenceManager;
+import com.intellij.openapi.command.undo.GlobalUndoableAction;
+import com.intellij.openapi.command.undo.UndoManager;
+import com.intellij.openapi.command.undo.UndoUtil;
+import com.intellij.openapi.command.undo.UnexpectedUndoException;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.BulkFileListener;
-import com.intellij.openapi.vfs.newvfs.events.*;
+import com.intellij.openapi.vfs.newvfs.events.VFileContentChangeEvent;
+import com.intellij.openapi.vfs.newvfs.events.VFileCopyEvent;
+import com.intellij.openapi.vfs.newvfs.events.VFileCreateEvent;
+import com.intellij.openapi.vfs.newvfs.events.VFileDeleteEvent;
+import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
+import com.intellij.openapi.vfs.newvfs.events.VFileMoveEvent;
+import com.intellij.openapi.vfs.newvfs.events.VFilePropertyChangeEvent;
 import com.intellij.util.FileContentUtilCore;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -49,7 +60,7 @@ public final class FileUndoProvider implements UndoProvider, BulkFileListener {
     if (!(localHistory instanceof LocalHistoryImpl)) return;
     myLocalHistory = ((LocalHistoryImpl)localHistory).getFacade();
     myGateway = ((LocalHistoryImpl)localHistory).getGateway();
-    if (myLocalHistory == null || myGateway == null) return; // local history was not initialized (e.g. in headless environment)
+    if (myLocalHistory == null) return; // local history was not initialized (e.g. in headless environment)
 
     ((LocalHistoryImpl)localHistory).addVFSListenerAfterLocalHistoryOne(this, project);
     myLocalHistory.addListener(new LocalHistoryFacade.Listener() {
@@ -74,7 +85,7 @@ public final class FileUndoProvider implements UndoProvider, BulkFileListener {
   }
 
   @Override
-  public void before(@NotNull List<? extends VFileEvent> events) {
+  public void before(@NotNull List<? extends @NotNull VFileEvent> events) {
     for (VFileEvent e : events) {
       if (e instanceof VFileContentChangeEvent) {
         beforeContentsChange((VFileContentChangeEvent)e);
@@ -86,7 +97,7 @@ public final class FileUndoProvider implements UndoProvider, BulkFileListener {
   }
 
   @Override
-  public void after(@NotNull List<? extends VFileEvent> events) {
+  public void after(@NotNull List<? extends @NotNull VFileEvent> events) {
     for (VFileEvent e : events) {
       if (e instanceof VFileCreateEvent ||
           e instanceof VFileMoveEvent ||
@@ -148,6 +159,9 @@ public final class FileUndoProvider implements UndoProvider, BulkFileListener {
     if (!myIsInsideCommand || myProject.isDisposed()) {
       return false;
     }
+    if (UndoUtil.isUndoDisabledFor(file)) {
+      return false;
+    }
 
     Object requestor = e.getRequestor();
     if (FileContentUtilCore.FORCE_RELOAD_REQUESTOR.equals(requestor) || requestor instanceof StorageManagerFileWriteRequestor) {
@@ -157,7 +171,7 @@ public final class FileUndoProvider implements UndoProvider, BulkFileListener {
   }
 
   private static boolean isUndoable(@NotNull VFileEvent e, @NotNull VirtualFile file) {
-    return !e.isFromRefresh() || file.getUserData(UndoConstants.FORCE_RECORD_UNDO) == Boolean.TRUE;
+    return !e.isFromRefresh() || UndoUtil.isForceUndoFlagSet(file);
   }
 
   private void registerUndoableAction(@NotNull VirtualFile file) {
@@ -178,7 +192,7 @@ public final class FileUndoProvider implements UndoProvider, BulkFileListener {
     }
   }
 
-  private static DocumentReference createDocumentReference(@NotNull VirtualFile file) {
+  private static @NotNull DocumentReference createDocumentReference(@NotNull VirtualFile file) {
     return DocumentReferenceManager.getInstance().create(file);
   }
 
@@ -189,13 +203,13 @@ public final class FileUndoProvider implements UndoProvider, BulkFileListener {
     return (UndoManagerImpl)UndoManager.getGlobalInstance();
   }
 
-  private class MyUndoableAction extends GlobalUndoableAction {
+  private final class MyUndoableAction extends GlobalUndoableAction {
     private ChangeRange myActionChangeRange;
     private ChangeRange myUndoChangeRange;
 
     MyUndoableAction(DocumentReference r) {
       super(r);
-      myActionChangeRange = new ChangeRange(myGateway, myLocalHistory, myLastChangeId);
+      myActionChangeRange = new ChangeRange(myProject, myGateway, myLocalHistory, myLastChangeId);
     }
 
     @Override

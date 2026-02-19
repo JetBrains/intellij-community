@@ -1,0 +1,16 @@
+================ Step #1 =================
+Cleaning output files:
+  NamedValue.class
+End of files
+Compiling files:
+  kotlin/assignJavaFieldFromKotlinSubclass/a/NamedValue.java
+End of files
+Cleaning output files:
+  DebugValueAdapter.class
+  META-INF/kotlin_assignJavaFieldFromKotlinSubclass-c.kotlin_module
+End of files
+Compiling files:
+  kotlin/assignJavaFieldFromKotlinSubclass/c/DebugValueAdapter.kt
+End of files
+------------------------------------------
+Exit code: ERROR

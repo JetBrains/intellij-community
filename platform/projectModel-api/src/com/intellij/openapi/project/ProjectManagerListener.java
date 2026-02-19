@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.project;
 
 import org.jetbrains.annotations.NotNull;
@@ -6,37 +6,41 @@ import org.jetbrains.annotations.NotNull;
 import java.util.EventListener;
 
 /**
- * Listener for Project.
+ * Listener for the {@link Project} lifecycle events.
+ * @see ProjectManager#TOPIC
  */
 public interface ProjectManagerListener extends EventListener {
   ProjectManagerListener[] EMPTY_ARRAY = new ProjectManagerListener[0];
 
   /**
-   * Invoked on project open.
-   *
-   * @param project opening project
+   * @deprecated Do not use.
+   * Consider using <a href="https://plugins.jetbrains.com/docs/intellij/plugin-components.html#project-open">Post start-up activity</a>.
    */
+  @Deprecated(forRemoval = true)
   default void projectOpened(@NotNull Project project) {
   }
 
   /**
-   * @deprecated Please use {@link VetoableProjectManagerListener}
+   * @deprecated Use {@link VetoableProjectManagerListener} instead.
    */
-  @Deprecated
-  default boolean canCloseProject(@NotNull Project project) {
+  @SuppressWarnings("DeprecatedIsStillUsed")
+  @Deprecated(forRemoval = true)
+  default boolean canCloseProject(@SuppressWarnings("unused") @NotNull Project project) {
     return true;
   }
 
   /**
    * Invoked on project close.
-   *
-   * @param project closing project
+   * <p>
+   * Consider using {@link ProjectCloseListener}.
    */
   default void projectClosed(@NotNull Project project) {
   }
 
   /**
-   * Invoked on project close before any closing activities
+   * Invoked on project close before any closing activities.
+   * <p>
+   * Consider using {@link ProjectCloseListener}.
    */
   default void projectClosing(@NotNull Project project) {
   }

@@ -7,7 +7,8 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.JComponent;
+import javax.swing.JTree;
 
 public abstract class CommonActionsManager {
   public static CommonActionsManager getInstance() {
@@ -18,23 +19,11 @@ public abstract class CommonActionsManager {
 
   public abstract AnAction createNextOccurenceAction(OccurenceNavigator navigator);
 
-  /**
-   * @deprecated use {@link #createCollapseAllAction(TreeExpander, JComponent)} instead
-   */
-  @Deprecated
-  public abstract AnAction createExpandAllAction(TreeExpander expander);
-
   public abstract AnAction createExpandAllAction(TreeExpander expander, JComponent component);
 
   public abstract AnAction createExpandAllHeaderAction(TreeExpander expander, JComponent component);
 
   public abstract AnAction createExpandAllHeaderAction(JTree tree);
-
-  /**
-   * @deprecated use {@link #createCollapseAllAction(TreeExpander, JComponent)} instead
-   */
-  @Deprecated
-  public abstract AnAction createCollapseAllAction(TreeExpander expander);
 
   public abstract AnAction createCollapseAllAction(TreeExpander expander, JComponent component);
 

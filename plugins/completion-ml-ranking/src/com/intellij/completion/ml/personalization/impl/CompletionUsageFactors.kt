@@ -16,7 +16,11 @@
 
 package com.intellij.completion.ml.personalization.impl
 
-import com.intellij.completion.ml.personalization.*
+import com.intellij.completion.ml.personalization.UserFactor
+import com.intellij.completion.ml.personalization.UserFactorDescriptions
+import com.intellij.completion.ml.personalization.UserFactorReaderBase
+import com.intellij.completion.ml.personalization.UserFactorStorage
+import com.intellij.completion.ml.personalization.UserFactorUpdaterBase
 
 /**
  * @author Vitaliy.Bibaev
@@ -36,15 +40,15 @@ class CompletionUsageUpdater(factor: MutableDoubleFactor) : UserFactorUpdaterBas
 }
 
 class TodayCompletionUsageCount : CompletionUsageFactorBase("todayCompletionCount") {
-    override fun compute(reader: CompletionUsageReader): Double? = reader.getTodayCount()
+    override fun compute(reader: CompletionUsageReader): Double = reader.getTodayCount()
 }
 
 class WeekAverageUsageCount : CompletionUsageFactorBase("weekAverageDailyCompletionCount") {
-    override fun compute(reader: CompletionUsageReader): Double? = reader.getWeekAverage()
+    override fun compute(reader: CompletionUsageReader): Double = reader.getWeekAverage()
 }
 
 class TotalUsageCount : CompletionUsageFactorBase("totalCompletionCountInLastDays") {
-    override fun compute(reader: CompletionUsageReader): Double? = reader.getTotalCount()
+    override fun compute(reader: CompletionUsageReader): Double = reader.getTotalCount()
 }
 
 abstract class CompletionUsageFactorBase(override val id: String) : UserFactor {

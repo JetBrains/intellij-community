@@ -1,4 +1,4 @@
-// "Import static method 'java.util.stream.Collectors.toList'" "true"
+// "Import static method 'java.util.stream.Collectors.toList()'" "true-preview"
 
 import java.util.stream.Stream;
 

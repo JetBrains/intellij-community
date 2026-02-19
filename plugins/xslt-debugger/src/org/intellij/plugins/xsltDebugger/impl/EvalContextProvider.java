@@ -18,7 +18,11 @@ package org.intellij.plugins.xsltDebugger.impl;
 
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.util.ArrayUtilRt;
-import org.intellij.lang.xpath.context.*;
+import org.intellij.lang.xpath.context.ContextProvider;
+import org.intellij.lang.xpath.context.ContextType;
+import org.intellij.lang.xpath.context.NamespaceContext;
+import org.intellij.lang.xpath.context.SimpleVariableContext;
+import org.intellij.lang.xpath.context.VariableContext;
 import org.intellij.lang.xpath.psi.XPathElement;
 import org.intellij.lang.xpath.xslt.context.XsltContextProvider;
 import org.intellij.plugins.xsltDebugger.rt.engine.Debugger;
@@ -38,14 +42,12 @@ public class EvalContextProvider extends ContextProvider {
   }
 
   @Override
-  @NotNull
-  public ContextType getContextType() {
+  public @NotNull ContextType getContextType() {
     return XsltContextProvider.TYPE;
   }
 
   @Override
-  @Nullable
-  public XmlElement getContextElement() {
+  public @Nullable XmlElement getContextElement() {
     return null;
   }
 
@@ -55,8 +57,7 @@ public class EvalContextProvider extends ContextProvider {
   }
 
   @Override
-  @Nullable
-  public NamespaceContext getNamespaceContext() {
+  public @Nullable NamespaceContext getNamespaceContext() {
     return null;
   }
 
@@ -76,14 +77,12 @@ public class EvalContextProvider extends ContextProvider {
   }
 
   @Override
-  @Nullable
-  public Set<QName> getAttributes(boolean forValidation) {
+  public @Nullable Set<QName> getAttributes(boolean forValidation) {
     return null; // TODO
   }
 
   @Override
-  @Nullable
-  public Set<QName> getElements(boolean forValidation) {
+  public @Nullable Set<QName> getElements(boolean forValidation) {
     return null; // TODO
   }
 }

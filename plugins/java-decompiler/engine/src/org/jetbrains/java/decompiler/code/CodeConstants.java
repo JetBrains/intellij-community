@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.java.decompiler.code;
 
 @SuppressWarnings({"unused", "SpellCheckingInspection"})
@@ -17,6 +17,15 @@ public interface CodeConstants {
   int BYTECODE_JAVA_11 = 55;
   int BYTECODE_JAVA_12 = 56;
   int BYTECODE_JAVA_13 = 57;
+  int BYTECODE_JAVA_14 = 58;
+  int BYTECODE_JAVA_15 = 59;
+  int BYTECODE_JAVA_16 = 60;
+  int BYTECODE_JAVA_17 = 61;
+  int BYTECODE_JAVA_18 = 62;
+  int BYTECODE_JAVA_19 = 63;
+  int BYTECODE_JAVA_20 = 64;
+  int BYTECODE_JAVA_21 = 65;
+  int BYTECODE_JAVA_22 = 66;
 
   // ----------------------------------------------------------------------
   // VARIABLE TYPES
@@ -64,17 +73,21 @@ public interface CodeConstants {
   int ACC_STATIC = 0x0008;
   int ACC_FINAL = 0x0010;
   int ACC_SYNCHRONIZED = 0x0020;
+  int ACC_OPEN = 0x0020;
+  int ACC_TRANSITIVE = 0x0020;
+  int ACC_VOLATILE = 0x0040;
+  int ACC_BRIDGE = 0x0040;
+  int ACC_STATIC_PHASE = 0x0040;
+  int ACC_TRANSIENT = 0x0080;
+  int ACC_VARARGS = 0x0080;
   int ACC_NATIVE = 0x0100;
   int ACC_ABSTRACT = 0x0400;
   int ACC_STRICT = 0x0800;
-  int ACC_VOLATILE = 0x0040;
-  int ACC_BRIDGE = 0x0040;
-  int ACC_TRANSIENT = 0x0080;
-  int ACC_VARARGS = 0x0080;
   int ACC_SYNTHETIC = 0x1000;
   int ACC_ANNOTATION = 0x2000;
   int ACC_ENUM = 0x4000;
   int ACC_MANDATED = 0x8000;
+  int ACC_MODULE = 0x8000;
 
   // ----------------------------------------------------------------------
   // CLASS FLAGS
@@ -111,7 +124,10 @@ public interface CodeConstants {
   int CONSTANT_NameAndType = 12;
   int CONSTANT_MethodHandle = 15;
   int CONSTANT_MethodType = 16;
+  int CONSTANT_Dynamic = 17;
   int CONSTANT_InvokeDynamic = 18;
+  int CONSTANT_Module = 19;
+  int CONSTANT_Package = 20;
 
   // ----------------------------------------------------------------------
   // MethodHandle reference_kind values

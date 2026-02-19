@@ -1,8 +1,13 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.psi.typeEnhancers;
 
-import com.intellij.psi.*;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiClassType;
 import com.intellij.psi.PsiClassType.ClassResolveResult;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiSubstitutor;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypeParameter;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
@@ -14,32 +19,26 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUt
 
 import java.util.Iterator;
 
-import static org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil.isCompileStatic;
+import static org.jetbrains.plugins.groovy.lang.psi.util.CompileStaticUtil.isCompileStatic;
 
 /**
  * @author Max Medvedev
  */
-public class GrGenericTypeConverter extends GrTypeConverter {
+public final class GrGenericTypeConverter extends GrTypeConverter {
 
   @Override
   public boolean isApplicableTo(@NotNull Position position) {
-    switch (position) {
-      case METHOD_PARAMETER:
-      case GENERIC_PARAMETER:
-      case ASSIGNMENT:
-      case RETURN_VALUE:
-        return true;
-      default:
-        return false;
-    }
+    return switch (position) {
+      case METHOD_PARAMETER, GENERIC_PARAMETER, ASSIGNMENT, RETURN_VALUE -> true;
+      default -> false;
+    };
   }
 
   @Override
-  @Nullable
-  public ConversionResult isConvertible(@NotNull PsiType ltype,
-                                        @NotNull PsiType rtype,
-                                        @NotNull Position position,
-                                        @NotNull GroovyPsiElement context) {
+  public @Nullable ConversionResult isConvertible(@NotNull PsiType ltype,
+                                                  @NotNull PsiType rtype,
+                                                  @NotNull Position position,
+                                                  @NotNull GroovyPsiElement context) {
     if (!(ltype instanceof PsiClassType && rtype instanceof PsiClassType)) {
       return null;
     }

@@ -1,39 +1,24 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.actions
 
-import com.intellij.openapi.actionSystem.ActionPlaces.CHANGES_VIEW_POPUP
-import com.intellij.openapi.actionSystem.ActionPlaces.CHANGES_VIEW_TOOLBAR
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.actionSystem.PlatformDataKeys.CONTENT_MANAGER
 import com.intellij.openapi.vcs.FilePath
-import com.intellij.openapi.vcs.ProjectLevelVcsManager
-import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager.Companion.LOCAL_CHANGES
-import com.intellij.vcs.commit.isToggleCommitUi
-import com.intellij.vcsUtil.VcsUtil.getFilePath
+import com.intellij.openapi.vcs.actions.commit.getAllCommittableRoots
+import com.intellij.openapi.vcs.actions.commit.isCommonCommitActionHidden
 
-private val LOCAL_CHANGES_ACTION_PLACES = setOf(CHANGES_VIEW_TOOLBAR, CHANGES_VIEW_POPUP)
-private fun AnActionEvent.isFromLocalChangesPlace() = place in LOCAL_CHANGES_ACTION_PLACES
-
-internal fun AnActionEvent.isFromLocalChanges() = getData(CONTENT_MANAGER)?.selectedContent?.tabName == LOCAL_CHANGES
-
+@Deprecated("Use [com.intellij.openapi.vcs.actions.commit.CheckinActionUtil] instead")
 open class CommonCheckinProjectAction : AbstractCommonCheckinAction() {
-  protected open fun isCommitProjectAction() = this::class.java == CommonCheckinProjectAction::class.java
-
   override fun update(e: AnActionEvent) {
-    if (isCommitProjectAction() && e.isProjectUsesNonModalCommit() &&
-        (isToggleCommitUi.asBoolean() && e.isFromLocalChanges() || !isToggleCommitUi.asBoolean() && e.isFromLocalChangesPlace())) {
+    if (e.isCommonCommitActionHidden()) {
       e.presentation.isEnabledAndVisible = false
+      return
     }
-    else {
-      super.update(e)
-    }
+
+    super.update(e)
   }
 
   override fun getRoots(dataContext: VcsContext): Array<FilePath> =
-    ProjectLevelVcsManager.getInstance(dataContext.project!!).allVcsRoots
-      .filter { it.vcs!!.checkinEnvironment != null }
-      .map { getFilePath(it.path) }
-      .toTypedArray()
+    getAllCommittableRoots(dataContext.project!!).toTypedArray()
 
   override fun approximatelyHasRoots(dataContext: VcsContext): Boolean = true
 }

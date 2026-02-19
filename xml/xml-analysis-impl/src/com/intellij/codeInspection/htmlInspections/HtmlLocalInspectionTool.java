@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInspection.htmlInspections;
 
@@ -25,14 +11,13 @@ import com.intellij.psi.XmlElementVisitor;
 import com.intellij.psi.templateLanguages.OuterLanguageElement;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.xml.XmlAttribute;
+import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.xml.XmlTag;
+import com.intellij.psi.xml.XmlText;
 import com.intellij.psi.xml.XmlToken;
 import com.intellij.psi.xml.XmlTokenType;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author spleaner
- */
 public abstract class HtmlLocalInspectionTool extends XmlSuppressableInspectionTool {
 
   @Override
@@ -40,20 +25,27 @@ public abstract class HtmlLocalInspectionTool extends XmlSuppressableInspectionT
     return true;
   }
 
-  protected void checkTag(@NotNull final XmlTag tag, @NotNull final ProblemsHolder holder, final boolean isOnTheFly) {
+  protected void checkTag(final @NotNull XmlTag tag, final @NotNull ProblemsHolder holder, final boolean isOnTheFly) {
     // should be overridden
   }
 
-  protected void checkAttribute(@NotNull final XmlAttribute attribute, @NotNull final ProblemsHolder holder, final boolean isOnTheFly) {
+  protected void checkAttribute(final @NotNull XmlAttribute attribute, final @NotNull ProblemsHolder holder, final boolean isOnTheFly) {
+    // should be overridden
+  }
+
+  protected void checkAttributeValue(final @NotNull XmlAttributeValue attributeValue, final @NotNull ProblemsHolder holder, final boolean isOnTheFly) {
+    // should be overridden
+  }
+
+  protected void checkText(final @NotNull XmlText text, final @NotNull ProblemsHolder holder, final boolean isOnTheFly) {
     // should be overridden
   }
 
   @Override
-  @NotNull
-  public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, final boolean isOnTheFly) {
+  public @NotNull PsiElementVisitor buildVisitor(final @NotNull ProblemsHolder holder, final boolean isOnTheFly) {
     return new XmlElementVisitor() {
       @Override
-      public void visitXmlToken(final XmlToken token) {
+      public void visitXmlToken(final @NotNull XmlToken token) {
         IElementType tokenType = token.getTokenType();
         if (tokenType == XmlTokenType.XML_NAME || tokenType == XmlTokenType.XML_TAG_NAME) {
           PsiElement element = token.getPrevSibling();
@@ -62,8 +54,7 @@ public abstract class HtmlLocalInspectionTool extends XmlSuppressableInspectionT
           if (element instanceof XmlToken && ((XmlToken)element).getTokenType() == XmlTokenType.XML_START_TAG_START) {
             PsiElement parent = element.getParent();
 
-            if (parent instanceof XmlTag && !(token.getNextSibling() instanceof OuterLanguageElement)) {
-              XmlTag tag = (XmlTag)parent;
+            if (parent instanceof XmlTag tag && !(token.getNextSibling() instanceof OuterLanguageElement)) {
               checkTag(tag, holder, isOnTheFly);
             }
           }
@@ -71,9 +62,20 @@ public abstract class HtmlLocalInspectionTool extends XmlSuppressableInspectionT
       }
 
       @Override
-      public void visitXmlAttribute(final XmlAttribute attribute) {
+      public void visitXmlText(@NotNull XmlText text) {
+        checkText(text, holder, isOnTheFly);
+      }
+
+      @Override
+      public void visitXmlAttribute(final @NotNull XmlAttribute attribute) {
         checkAttribute(attribute, holder, isOnTheFly);
       }
+
+      @Override
+      public void visitXmlAttributeValue(@NotNull XmlAttributeValue value) {
+        checkAttributeValue(value, holder, isOnTheFly);
+      }
+
     };
   }
 }

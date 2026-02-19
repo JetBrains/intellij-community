@@ -1,0 +1,6 @@
+- name: dist.all/lib/intellij.platform.compose.jar
+  modules:
+  - name: intellij.platform.compose
+  library: jetbrains.compose.components.ui.tooling.preview.desktop
+  files:
+  - name: $MAVEN_REPOSITORY$/org/jetbrains/compose/components/components-ui-tooling-preview-desktop/1/components-ui-tooling-preview-desktop-1.jar

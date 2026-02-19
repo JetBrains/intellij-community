@@ -1,12 +1,22 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions;
 
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.idea.ActionsBundle;
-import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.application.impl.LaterInvocator;
+import com.intellij.openapi.actionSystem.ActionGroup;
+import com.intellij.openapi.actionSystem.ActionGroupUtil;
+import com.intellij.openapi.actionSystem.ActionToolbar;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.actionSystem.Separator;
+import com.intellij.openapi.actionSystem.ToggleAction;
+import com.intellij.openapi.actionSystem.UpdateSession;
+import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
 import com.intellij.openapi.editor.impl.EditorHeaderComponent;
+import com.intellij.openapi.editor.toolbar.floating.FloatingToolbarComponent;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.ToolWindow;
@@ -14,15 +24,18 @@ import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManager;
 import com.intellij.ui.content.ContentManagerEvent;
 import com.intellij.ui.content.ContentManagerListener;
-import com.intellij.util.SmartList;
+import com.intellij.ui.content.impl.ContentManagerImpl;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.JBIterable;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JComponent;
+import java.awt.Container;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.function.Supplier;
@@ -31,21 +44,19 @@ import java.util.function.Supplier;
  * @author gregsh
  */
 public final class ToggleToolbarAction extends ToggleAction implements DumbAware {
-  @NotNull
-  public static DefaultActionGroup createToggleToolbarGroup(@NotNull Project project, @NotNull ToolWindow toolWindow) {
+  public static @NotNull DefaultActionGroup createToggleToolbarGroup(@NotNull Project project, @NotNull ToolWindow toolWindow) {
     return new DefaultActionGroup(new OptionsGroup(toolWindow),
                                   createToolWindowAction(toolWindow, PropertiesComponent.getInstance(project)));
   }
 
-  @NotNull
-  public static ToggleToolbarAction createAction(@NotNull String id,
-                                                 @NotNull PropertiesComponent properties,
-                                                 @NotNull Supplier<? extends Iterable<? extends JComponent>> components) {
+  public static @NotNull ToggleToolbarAction createAction(@NotNull String id,
+                                                          @NotNull PropertiesComponent properties,
+                                                          @NotNull Supplier<? extends Iterable<? extends JComponent>> components) {
     return new ToggleToolbarAction(properties, getShowToolbarProperty(id), components);
   }
 
-  @NotNull
-  public static ToggleToolbarAction createToolWindowAction(@NotNull ToolWindow toolWindow, @NotNull PropertiesComponent properties) {
+  public static @NotNull ToggleToolbarAction createToolWindowAction(@NotNull ToolWindow toolWindow,
+                                                                    @NotNull PropertiesComponent properties) {
     updateToolbarsVisibility(toolWindow, properties);
     toolWindow.addContentManagerListener(new ContentManagerListener() {
       @Override
@@ -54,7 +65,7 @@ public final class ToggleToolbarAction extends ToggleAction implements DumbAware
         setToolbarVisible(Collections.singletonList(component), isToolbarVisible(toolWindow, properties));
 
         // support nested content managers, e.g. RunnerLayoutUi as content component
-        ContentManager contentManager = component instanceof DataProvider ? PlatformDataKeys.CONTENT_MANAGER.getData((DataProvider)component) : null;
+        ContentManager contentManager = ContentManagerImpl.getContentManager(component);
         if (contentManager != null) {
           contentManager.addContentManagerListener(this);
         }
@@ -68,14 +79,21 @@ public final class ToggleToolbarAction extends ToggleAction implements DumbAware
       }
     });
     return new ToggleToolbarAction(properties, getShowToolbarProperty(toolWindow), () -> {
-      return Collections.singletonList(toolWindow.getContentManager().getComponent());
+      ContentManager manager = toolWindow.getContentManagerIfCreated();
+      return ContainerUtil.createMaybeSingletonList(manager == null ? null : manager.getComponent());
     });
   }
 
-  public static void updateToolbarsVisibility(@NotNull ToolWindow toolWindow, @NotNull PropertiesComponent properties) {
-      if (toolWindow.getContentManagerIfCreated() != null) {
-        setToolbarVisible(Collections.singletonList(toolWindow.getComponent()), isToolbarVisible(toolWindow, properties));
-      }
+  private static void updateToolbarsVisibility(@NotNull ToolWindow toolWindow,
+                                               @NotNull PropertiesComponent properties) {
+    if (toolWindow.getContentManagerIfCreated() == null) return;
+    setToolbarVisible(Collections.singletonList(toolWindow.getComponent()), isToolbarVisible(toolWindow, properties));
+  }
+
+  public static void updateToolbarVisibility(@NotNull ToolWindow toolWindow,
+                                             @NotNull ActionToolbar toolbar,
+                                             @NotNull PropertiesComponent properties) {
+    setToolbarVisible(toolbar, isToolbarVisible(toolWindow, properties));
   }
 
   public static void setToolbarVisible(@NotNull ToolWindow toolWindow,
@@ -93,19 +111,40 @@ public final class ToggleToolbarAction extends ToggleAction implements DumbAware
     setToolbarVisibleImpl(getShowToolbarProperty(id), properties, components, state);
   }
 
-  public static void setToolbarVisible(@NotNull Iterable<? extends JComponent> roots, boolean state) {
+  public static void setToolbarVisible(@NotNull Iterable<? extends JComponent> roots,
+                                       boolean state) {
     for (ActionToolbar toolbar : iterateToolbars(roots)) {
-      JComponent c = toolbar.getComponent();
-      c.setVisible(state);
-      Container parent = c.getParent();
-      if (parent instanceof EditorHeaderComponent) {
-        parent.setVisible(state);
-      }
+      setToolbarVisible(toolbar, state);
     }
+  }
+
+  private static void setToolbarVisible(ActionToolbar toolbar, boolean state) {
+    JComponent c = toolbar.getComponent();
+    c.setVisible(state);
+    Container parent = c.getParent();
+    if (parent instanceof EditorHeaderComponent) {
+      parent.setVisible(state);
+    }
+  }
+
+  public static boolean isToolbarVisible(@NotNull String property) {
+    return isToolbarVisible(property, PropertiesComponent.getInstance());
+  }
+
+  public static boolean isToolbarVisible(@NotNull String property, @NotNull Project project) {
+    return isToolbarVisible(property, PropertiesComponent.getInstance(project));
   }
 
   public static boolean isToolbarVisible(@NotNull String property, @NotNull PropertiesComponent properties) {
     return isSelectedImpl(properties, getShowToolbarProperty(property));
+  }
+
+  public static boolean isToolbarVisible(@NotNull ToolWindow toolWindow) {
+    return isToolbarVisible(toolWindow, PropertiesComponent.getInstance());
+  }
+
+  public static boolean isToolbarVisible(@NotNull ToolWindow toolWindow, @NotNull Project project) {
+    return isToolbarVisible(toolWindow, PropertiesComponent.getInstance(project));
   }
 
   public static boolean isToolbarVisible(@NotNull ToolWindow toolWindow, @NotNull PropertiesComponent properties) {
@@ -130,6 +169,11 @@ public final class ToggleToolbarAction extends ToggleAction implements DumbAware
     super.update(e);
     boolean hasToolbars = iterateToolbars(myProducer.get()).iterator().hasNext();
     e.getPresentation().setVisible(hasToolbars);
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.EDT;
   }
 
   @Override
@@ -158,66 +202,79 @@ public final class ToggleToolbarAction extends ToggleAction implements DumbAware
     return properties.getBoolean(property, true);
   }
 
-  @NotNull
-  static String getShowToolbarProperty(@NotNull ToolWindow window) {
-    return getShowToolbarProperty("ToolWindow" + window.getStripeTitle());
+  static @NotNull String getShowToolbarProperty(@NotNull ToolWindow window) {
+    return getShowToolbarProperty("ToolWindow." + window.getId());
   }
 
-  @NotNull
-  static String getShowToolbarProperty(@NotNull @NonNls String s) {
+  static @NotNull String getShowToolbarProperty(@NotNull @NonNls String s) {
     return s + ".ShowToolbar";
   }
 
-  @NotNull
-  private static Iterable<ActionToolbar> iterateToolbars(Iterable<? extends JComponent> roots) {
-    return UIUtil.uiTraverser(null).withRoots(roots).preOrderDfsTraversal().filter(ActionToolbar.class);
+  private static @NotNull Iterable<ActionToolbar> iterateToolbars(Iterable<? extends JComponent> roots) {
+    return UIUtil.uiTraverser(null).withRoots(roots).preOrderDfsTraversal()
+      .filter(ActionToolbar.class)
+      .filter(toolbar -> {
+        var c = toolbar.getComponent();
+        return !Boolean.TRUE.equals(c.getClientProperty(ActionToolbarImpl.IMPORTANT_TOOLBAR_KEY)) &&
+               !(c instanceof FloatingToolbarComponent);
+      });
   }
 
-  private static class OptionsGroup extends ActionGroup implements DumbAware {
+  private static final class OptionsGroup extends NonTrivialActionGroup implements DumbAware {
 
     private final ToolWindow myToolWindow;
 
     OptionsGroup(ToolWindow toolWindow) {
-      super(IdeBundle.message("group.view.options"), true);
+      getTemplatePresentation().setText(IdeBundle.message("group.view.options"));
       myToolWindow = toolWindow;
     }
 
     @Override
     public void update(@NotNull AnActionEvent e) {
-      e.getPresentation().setVisible(!ActionGroupUtil.isGroupEmpty(this, e, LaterInvocator.isInModalContext()));
+      super.update(e);
+      if (e.getPresentation().isVisible()) {
+        int trimmedSize = ActionGroupUtil.getVisibleActions(this, e).take(4).size();
+        e.getPresentation().setPopupGroup(trimmedSize > 3);
+      }
     }
 
     @Override
     public AnAction @NotNull [] getChildren(@Nullable AnActionEvent e) {
-      ContentManager contentManager = myToolWindow.getContentManager();
-      Content selectedContent = contentManager.getSelectedContent();
-      JComponent contentComponent = selectedContent != null ? selectedContent.getComponent() : null;
-      if (contentComponent == null || e == null) return EMPTY_ARRAY;
-      List<AnAction> result = new SmartList<>();
-      for (final ActionToolbar toolbar : iterateToolbars(Collections.singletonList(contentComponent))) {
-        JComponent c = toolbar.getComponent();
-        if (c.isVisible() || !c.isValid()) continue;
-        if (!result.isEmpty() && !(ContainerUtil.getLastItem(result) instanceof Separator)) {
-          result.add(Separator.getInstance());
-        }
-
-        List<AnAction> actions = toolbar.getActions();
+      if (e == null) return EMPTY_ARRAY;
+      UpdateSession updateSession = e.getUpdateSession();
+      List<ActionGroup> groups = updateSession.compute(
+        this, "collectActionGroups", ActionUpdateThread.EDT, this::collectActionGroups);
+      if (groups.isEmpty()) return EMPTY_ARRAY;
+      List<AnAction> result = new ArrayList<>();
+      for (ActionGroup group : groups) {
+        Iterable<? extends AnAction> actions = updateSession.expandedChildren(group);
         for (AnAction action : actions) {
-          if (action instanceof ToggleAction && !result.contains(action) &&
-              ActionGroupUtil.isActionEnabledAndVisible(action, e, LaterInvocator.isInModalContext())) {
+          if (action instanceof ToggleAction && !result.contains(action)) {
             result.add(action);
           }
-          else if (action instanceof Separator) {
-            if (!result.isEmpty() && !(ContainerUtil.getLastItem(result) instanceof Separator)) {
-              result.add(Separator.getInstance());
-            }
+          else if (action instanceof Separator && !result.isEmpty() &&
+                   !(ContainerUtil.getLastItem(result) instanceof Separator)) {
+            result.add(Separator.getInstance());
           }
         }
       }
       boolean popup = ContainerUtil.count(result, it -> !(it instanceof Separator)) > 3;
-      setPopup(popup);
       if (!popup && !result.isEmpty()) result.add(Separator.getInstance());
-      return result.toArray(AnAction.EMPTY_ARRAY);
+      return result.toArray(EMPTY_ARRAY);
+    }
+
+    private @Unmodifiable @NotNull List<ActionGroup> collectActionGroups() {
+      ContentManager contentManager = myToolWindow.getContentManagerIfCreated();
+      Content selectedContent = contentManager == null ? null : contentManager.getSelectedContent();
+      JComponent contentComponent = selectedContent == null ? null : selectedContent.getComponent();
+      if (contentComponent == null) return Collections.emptyList();
+      return JBIterable.from(iterateToolbars(Collections.singletonList(contentComponent)))
+        .filterMap(toolbar -> {
+          JComponent c = toolbar.getComponent();
+          if (c.isVisible() || !c.isValid()) return null;
+          return toolbar.getActionGroup();
+        })
+        .toList();
     }
   }
 }

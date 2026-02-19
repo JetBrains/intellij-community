@@ -8,9 +8,6 @@ import java.io.Reader;
 import java.math.BigDecimal;
 import java.net.URL;
 
-/**
- * @author dsl
- */
 public class SCR20557 implements ResultSet {
   public void updateLong(int columnIndex, long x) throws SQLException {
   }

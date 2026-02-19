@@ -17,7 +17,7 @@ package org.intellij.images.options.impl;
 
 import org.intellij.images.options.ZoomOptions;
 
-import java.awt.*;
+import java.awt.Dimension;
 import java.beans.PropertyChangeSupport;
 import java.util.Objects;
 
@@ -72,15 +72,14 @@ final class ZoomOptionsImpl implements ZoomOptions {
     return true;
   }
 
+  @Override
   public boolean equals(Object obj) {
     if (this == obj) {
       return true;
     }
-    if (!(obj instanceof ZoomOptions)) {
+    if (!(obj instanceof ZoomOptions otherOptions)) {
       return false;
     }
-
-    ZoomOptions otherOptions = (ZoomOptions)obj;
 
     Dimension prefferedSize = otherOptions.getPrefferedSize();
     return prefferedSize != null && prefferedHeight == prefferedSize.height &&

@@ -1,14 +1,14 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.ui;
 
-import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 import java.util.List;
 import java.util.function.Predicate;
 
@@ -34,7 +34,7 @@ public abstract class NestedGroupFragment<S extends FragmentedSettings> extends 
   protected NestedGroupFragment(String id,
                                 @Nls(capitalization = Nls.Capitalization.Sentence) String name,
                                 @Nls(capitalization = Nls.Capitalization.Title) String group,
-                                Predicate<S> initialSelection) {
+                                Predicate<? super S> initialSelection) {
     super(id, name, group, null, null, null, initialSelection);
   }
 
@@ -55,8 +55,19 @@ public abstract class NestedGroupFragment<S extends FragmentedSettings> extends 
   }
 
   @Override
+  public boolean isSelected() {
+    return ContainerUtil.exists(getChildren(), fragment -> fragment.isSelected());
+  }
+
+  @Override
   public boolean isInitiallyVisible(S s) {
     return super.isInitiallyVisible(s) || ContainerUtil.exists(getChildren(), fragment -> fragment.isInitiallyVisible(s));
+  }
+
+  @Override
+  @ApiStatus.Internal
+  public boolean isAvailable() {
+    return super.isAvailable() && ContainerUtil.exists(getChildren(), SettingsEditorFragment::isAvailable);
   }
 
   private void updateVisibility() {
@@ -72,7 +83,7 @@ public abstract class NestedGroupFragment<S extends FragmentedSettings> extends 
   }
 
   @Override
-  protected void applyEditorTo(@NotNull S s) throws ConfigurationException {
+  protected void applyEditorTo(@NotNull S s) {
     for (SettingsEditorFragment<S, ?> child : getChildren()) {
       child.applyEditorTo(s);
     }
@@ -80,11 +91,16 @@ public abstract class NestedGroupFragment<S extends FragmentedSettings> extends 
 
   protected abstract List<SettingsEditorFragment<S, ?>> createChildren();
 
-    @Override
+  protected @NotNull FragmentedSettingsBuilder<S> getBuilder() {
+    return new FragmentedSettingsBuilder<>(getChildren(), this, this);
+  }
+
+  @Override
   protected @NotNull JComponent createEditor() {
-     myGroupComponent = new FragmentedSettingsBuilder<>(getChildren(), this).createCompoundEditor();
-     if (myComponent == null) myComponent = myGroupComponent;
-     updateVisibility();
-     return myGroupComponent;
+    var builder = getBuilder();
+    myGroupComponent = builder.createCompoundEditor();
+    if (myComponent == null) myComponent = myGroupComponent;
+    updateVisibility();
+    return myGroupComponent;
   }
 }

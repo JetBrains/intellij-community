@@ -16,7 +16,14 @@
 package com.intellij.psi.impl.source.resolve.graphInference.constraints;
 
 import com.intellij.core.JavaPsiBundle;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiArrayType;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiClassType;
+import com.intellij.psi.PsiIntersectionType;
+import com.intellij.psi.PsiPrimitiveType;
+import com.intellij.psi.PsiSubstitutor;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypes;
 import com.intellij.psi.impl.source.resolve.graphInference.InferenceBound;
 import com.intellij.psi.impl.source.resolve.graphInference.InferenceSession;
 import com.intellij.psi.impl.source.resolve.graphInference.InferenceVariable;
@@ -32,8 +39,8 @@ public class TypeCompatibilityConstraint implements ConstraintFormula {
   private PsiType myS;
 
   public TypeCompatibilityConstraint(@NotNull PsiType t, @NotNull PsiType s) {
-    myT = t.annotate(TypeAnnotationProvider.EMPTY);
-    myS = s.annotate(TypeAnnotationProvider.EMPTY);
+    myT = t;
+    myS = s;
   }
 
   @Override
@@ -46,14 +53,14 @@ public class TypeCompatibilityConstraint implements ConstraintFormula {
       }
       return assignable;
     }
-    if (myS instanceof PsiPrimitiveType && !PsiType.VOID.equals(myS)) {
+    if (myS instanceof PsiPrimitiveType && !PsiTypes.voidType().equals(myS)) {
       final PsiClassType boxedType = ((PsiPrimitiveType)myS).getBoxedType(session.getManager(), session.getScope());
       if (boxedType != null) {
         constraints.add(new TypeCompatibilityConstraint(myT, boxedType));
         return true;
       }
     }
-    if (myT instanceof PsiPrimitiveType && !PsiType.VOID.equals(myT)) {
+    if (myT instanceof PsiPrimitiveType && !PsiTypes.voidType().equals(myT)) {
       final PsiClassType boxedType = ((PsiPrimitiveType)myT).getBoxedType(session.getManager(), session.getScope());
       if (boxedType != null) {
         constraints.add(new TypeEqualityConstraint(boxedType, myS));
@@ -131,17 +138,13 @@ public class TypeCompatibilityConstraint implements ConstraintFormula {
     if (o == null || getClass() != o.getClass()) return false;
 
     TypeCompatibilityConstraint that = (TypeCompatibilityConstraint)o;
-
-    if (!myS.equals(that.myS)) return false;
-    if (!myT.equals(that.myT)) return false;
-
-    return true;
+    return ConstraintUtil.typesEqual(myS, that.myS) && ConstraintUtil.typesEqual(myT, that.myT);
   }
 
   @Override
   public int hashCode() {
-    int result = myT.hashCode();
-    result = 31 * result + myS.hashCode();
+    int result = ConstraintUtil.typeHashCode(myT);
+    result = 31 * result + ConstraintUtil.typeHashCode(myS);
     return result;
   }
 

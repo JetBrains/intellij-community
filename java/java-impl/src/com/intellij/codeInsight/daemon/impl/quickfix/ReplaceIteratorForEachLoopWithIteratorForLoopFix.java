@@ -1,70 +1,51 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.application.options.CodeStyle;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
-import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
-import com.intellij.openapi.editor.Editor;
+import com.intellij.modcommand.ActionContext;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.PsiUpdateModCommandAction;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.*;
-import com.intellij.psi.codeStyle.*;
-import com.intellij.util.IncorrectOperationException;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiBlockStatement;
+import com.intellij.psi.PsiCodeBlock;
+import com.intellij.psi.PsiDeclarationStatement;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementFactory;
+import com.intellij.psi.PsiEmptyStatement;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiForStatement;
+import com.intellij.psi.PsiForeachStatement;
+import com.intellij.psi.PsiLocalVariable;
+import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiModifierList;
+import com.intellij.psi.PsiParameter;
+import com.intellij.psi.PsiStatement;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypeElement;
+import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.psi.codeStyle.CodeStyleSettings;
+import com.intellij.psi.codeStyle.JavaCodeStyleManager;
+import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
+import com.intellij.psi.codeStyle.VariableKind;
 import com.siyeh.ig.psiutils.VariableNameGenerator;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author Pavel.Dolgov
- */
-public class ReplaceIteratorForEachLoopWithIteratorForLoopFix implements IntentionAction {
-  private final PsiForeachStatement myStatement;
-
+public final class ReplaceIteratorForEachLoopWithIteratorForLoopFix extends PsiUpdateModCommandAction<PsiForeachStatement> {
   public ReplaceIteratorForEachLoopWithIteratorForLoopFix(@NotNull PsiForeachStatement statement) {
-    myStatement = statement;
+    super(statement);
   }
 
-  @Nls
-  @NotNull
   @Override
-  public String getText() {
-    return getFamilyName();
-  }
-
-  @Nls
-  @NotNull
-  @Override
-  public String getFamilyName() {
+  public @Nls @NotNull String getFamilyName() {
     return QuickFixBundle.message("replace.for.each.loop.with.iterator.for.loop");
   }
 
   @Override
-  public boolean startInWriteAction() {
-    return true;
-  }
-
-  @Override
-  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    return myStatement.isValid() && BaseIntentionAction.canModify(myStatement);
-  }
-
-  @Override
-  public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-    final PsiExpression iteratedValue = myStatement.getIteratedValue();
+  protected void invoke(@NotNull ActionContext context, @NotNull PsiForeachStatement statement, @NotNull ModPsiUpdater updater) {
+    final PsiExpression iteratedValue = statement.getIteratedValue();
     if (iteratedValue == null) {
       return;
     }
@@ -72,16 +53,17 @@ public class ReplaceIteratorForEachLoopWithIteratorForLoopFix implements Intenti
     if (iteratedValueType == null) {
       return;
     }
-    final PsiParameter iterationParameter = myStatement.getIterationParameter();
+    final PsiParameter iterationParameter = statement.getIterationParameter();
     final String iterationParameterName = iterationParameter.getName();
-    final PsiStatement forEachBody = myStatement.getBody();
+    final PsiStatement forEachBody = statement.getBody();
 
+    Project project = context.project();
     final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(project);
     final JavaCodeStyleManager javaStyleManager = JavaCodeStyleManager.getInstance(project);
-    final String name = new VariableNameGenerator(myStatement, VariableKind.LOCAL_VARIABLE)
+    final String name = new VariableNameGenerator(statement, VariableKind.LOCAL_VARIABLE)
       .byName("it", "iter", "iterator").generate(true);
     PsiForStatement newForLoop = (PsiForStatement)elementFactory.createStatementFromText(
-      "for (Iterator " + name + " = initializer; " + name + ".hasNext();) { Object next = " + name + ".next(); }", myStatement);
+      "for (Iterator " + name + " = initializer; " + name + ".hasNext();) { var next = " + name + ".next(); }", statement);
 
     final PsiDeclarationStatement newDeclaration = (PsiDeclarationStatement)newForLoop.getInitialization();
     if (newDeclaration == null) return;
@@ -96,10 +78,13 @@ public class ReplaceIteratorForEachLoopWithIteratorForLoopFix implements Intenti
 
     final PsiDeclarationStatement newFirstStatement = (PsiDeclarationStatement)newBodyBlock.getStatements()[0];
     final PsiLocalVariable newItemVariable = (PsiLocalVariable)newFirstStatement.getDeclaredElements()[0];
-    final PsiTypeElement newItemTypeElement = elementFactory.createTypeElement(iterationParameter.getType());
-    newItemVariable.getTypeElement().replace(newItemTypeElement);
+    PsiTypeElement typeElement = iterationParameter.getTypeElement();
+    if (typeElement == null || !typeElement.isInferredType()) {
+      final PsiTypeElement newItemTypeElement = elementFactory.createTypeElement(iterationParameter.getType());
+      newItemVariable.getTypeElement().replace(newItemTypeElement);
+    }
     newItemVariable.setName(iterationParameterName);
-    final CodeStyleSettings codeStyleSettings = CodeStyle.getSettings(file);
+    final CodeStyleSettings codeStyleSettings = CodeStyle.getSettings(context.file());
     if (codeStyleSettings.getCustomSettings(JavaCodeStyleSettings.class).GENERATE_FINAL_LOCALS) {
       final PsiModifierList modifierList = newItemVariable.getModifierList();
       if (modifierList != null) modifierList.setModifierProperty(PsiModifier.FINAL, true);
@@ -120,6 +105,6 @@ public class ReplaceIteratorForEachLoopWithIteratorForLoopFix implements Intenti
       newBodyBlock.addAfter(forEachBody, newFirstStatement);
     }
 
-    myStatement.replace(newForLoop);
+    statement.replace(newForLoop);
   }
 }

@@ -1,26 +1,24 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.designer.actions;
 
+import com.intellij.designer.DesignerBundle;
 import com.intellij.designer.DesignerToolWindowManager;
 import com.intellij.designer.designSurface.ComponentSelectionListener;
 import com.intellij.designer.designSurface.DesignerEditorPanel;
 import com.intellij.designer.designSurface.EditableArea;
 import com.intellij.designer.model.RadComponent;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionGroup;
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.ActionToolbar;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CustomShortcutSet;
+import com.intellij.openapi.actionSystem.DataSink;
+import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.actionSystem.IdeActions;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.actionSystem.UiDataProvider;
+import com.intellij.openapi.actionSystem.toolbarLayout.ToolbarLayoutStrategy;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.SideBorder;
@@ -29,15 +27,17 @@ import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JComponent;
+import javax.swing.JTable;
+import javax.swing.KeyStroke;
+import java.awt.Component;
 import java.awt.event.KeyEvent;
 import java.util.List;
 
 /**
  * @author Alexander Lobas
  */
-public class DesignerActionPanel implements DataProvider {
+public class DesignerActionPanel implements UiDataProvider {
   public static final String TOOLBAR = "DesignerToolbar";
 
   private final DefaultActionGroup myActionGroup;
@@ -90,7 +90,7 @@ public class DesignerActionPanel implements DataProvider {
   protected JComponent createToolbar() {
     ActionManager actionManager = ActionManager.getInstance();
     ActionToolbar actionToolbar = actionManager.createActionToolbar(TOOLBAR, myActionGroup, true);
-    actionToolbar.setLayoutPolicy(ActionToolbar.WRAP_LAYOUT_POLICY);
+    actionToolbar.setLayoutStrategy(ToolbarLayoutStrategy.WRAP_STRATEGY);
 
     JComponent toolbar = actionToolbar.getComponent();
     toolbar.setBorder(IdeBorderFactory.createBorder(SideBorder.BOTTOM));
@@ -99,12 +99,11 @@ public class DesignerActionPanel implements DataProvider {
     return toolbar;
   }
 
-  @NotNull
-  private ActionGroup createSelectActionGroup(DesignerEditorPanel designer) {
-    final DefaultActionGroup group = DefaultActionGroup.createPopupGroup(() -> "_Select");
+  private @NotNull ActionGroup createSelectActionGroup(DesignerEditorPanel designer) {
+    final DefaultActionGroup group = DefaultActionGroup.createPopupGroup(() -> DesignerBundle.message("action.select.text"));
 
     AnAction selectParent = new AnAction(UIBundle.messagePointer("action.DesignerActionPanel.Anonymous.text.select.parent"),
-                                         UIBundle.messagePointer("action.DesignerActionPanel.Anonymous.description.select.parent"), null) {
+                                         UIBundle.messagePointer("action.DesignerActionPanel.Anonymous.description.select.parent")) {
       @Override
       public void actionPerformed(@NotNull AnActionEvent e) {
         myDesigner.getToolProvider().processKeyEvent(new KeyEvent(myDesigner.getSurfaceArea().getNativeComponent(),
@@ -182,14 +181,14 @@ public class DesignerActionPanel implements DataProvider {
     }
   }
 
-  private static boolean isVisible(DefaultActionGroup group) {
+  private static boolean isVisible(@NotNull DefaultActionGroup group) {
     if (group.getChildrenCount() == 0) {
       return false;
     }
 
-    for (AnAction action : group.getChildren(null)) {
-      if (action instanceof DefaultActionGroup) {
-        if (isVisible((DefaultActionGroup)action)) {
+    for (AnAction action : group.getChildActionsOrStubs()) {
+      if (action instanceof DefaultActionGroup o) {
+        if (isVisible(o)) {
           return true;
         }
       }
@@ -238,17 +237,13 @@ public class DesignerActionPanel implements DataProvider {
   }
 
   @Override
-  public Object getData(@NotNull @NonNls String dataId) {
-    if (PlatformDataKeys.DELETE_ELEMENT_PROVIDER.is(dataId) ||
-        PlatformDataKeys.CUT_PROVIDER.is(dataId) ||
-        PlatformDataKeys.COPY_PROVIDER.is(dataId) ||
-        PlatformDataKeys.PASTE_PROVIDER.is(dataId)) {
-      JTable table = DesignerToolWindowManager.getInstance(myDesigner).getPropertyTable();
-      Component focusOwner = IdeFocusManager.getInstance(myDesigner.getProject()).getFocusOwner();
-      if (!UIUtil.isAncestor(table, focusOwner)) {
-        return myCommonEditActionsProvider;
-      }
-    }
-    return null;
+  public void uiDataSnapshot(@NotNull DataSink sink) {
+    JTable table = DesignerToolWindowManager.getInstance(myDesigner).getPropertyTable();
+    Component focusOwner = IdeFocusManager.getInstance(myDesigner.getProject()).getFocusOwner();
+    if (UIUtil.isAncestor(table, focusOwner)) return;
+    sink.set(PlatformDataKeys.DELETE_ELEMENT_PROVIDER, myCommonEditActionsProvider);
+    sink.set(PlatformDataKeys.CUT_PROVIDER, myCommonEditActionsProvider);
+    sink.set(PlatformDataKeys.COPY_PROVIDER, myCommonEditActionsProvider);
+    sink.set(PlatformDataKeys.PASTE_PROVIDER, myCommonEditActionsProvider);
   }
 }

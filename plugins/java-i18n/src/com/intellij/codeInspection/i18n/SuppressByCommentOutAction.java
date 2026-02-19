@@ -1,22 +1,8 @@
-/*
- * Copyright 2000-2010 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.i18n;
 
 import com.intellij.analysis.AnalysisBundle;
-import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
+import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerEx;
 import com.intellij.codeInspection.SuppressIntentionAction;
 import com.intellij.java.i18n.JavaI18nBundle;
 import com.intellij.lang.injection.InjectedLanguageManager;
@@ -24,7 +10,11 @@ import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.JavaTokenType;
+import com.intellij.psi.PsiComment;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -65,7 +55,7 @@ class SuppressByCommentOutAction extends SuppressIntentionAction {
     else {
       editor.getDocument().insertString(lineEndOffset, " " + commentText);
     }
-    DaemonCodeAnalyzer.getInstance(project).restart(); //comment replacement not necessarily rehighlights
+    DaemonCodeAnalyzerEx.getInstanceEx(project).restart("SuppressByCommentOutAction.invoke"); //comment replacement not necessarily rehighlights
   }
 
   @Override
@@ -87,14 +77,12 @@ class SuppressByCommentOutAction extends SuppressIntentionAction {
   }
 
   @Override
-  @NotNull
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return AnalysisBundle.message("suppress.inspection.family");
   }
 
-  @NotNull
   @Override
-  public String getText() {
+  public @NotNull String getText() {
     return JavaI18nBundle.message("intention.text.suppress.with.0.comment", nonNlsCommentPattern);
   }
 }

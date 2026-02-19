@@ -17,9 +17,12 @@ package com.intellij.ui;
 
 import junit.framework.TestCase;
 
-import java.awt.*;
+import java.awt.Color;
 
-import static com.intellij.ui.ColorUtil.*;
+import static com.intellij.ui.ColorUtil.alphaBlending;
+import static com.intellij.ui.ColorUtil.fromHex;
+import static com.intellij.ui.ColorUtil.mix;
+import static com.intellij.ui.ColorUtil.withAlpha;
 import static java.util.Arrays.asList;
 
 public class ColorUtilTest extends TestCase {
@@ -103,5 +106,14 @@ public class ColorUtilTest extends TestCase {
     assertEquals(new Color(0x00000000, true), fromHex("0000"));
     assertEquals(new Color(0xAA123456, true), fromHex("123456AA"));
     assertEquals(new Color(0xAA2468AC, true), fromHex("#2468ACAA"));
+  }
+
+  public void testAlphaBlending() {
+    assertEquals(new Color(48, 78, 241, 15), alphaBlending(new Color(48, 78, 241, 15), new Color(120, 46, 97, 0)));
+    assertEquals(new Color(0, 0, 0, 0), alphaBlending(new Color(48, 78, 241, 0), new Color(120, 46, 97, 0)));
+    assertEquals(new Color(120, 46, 97, 24), alphaBlending(new Color(48, 78, 241, 0), new Color(120, 46, 97, 24)));
+    assertEquals(new Color(48, 78, 241, 255), alphaBlending(new Color(48, 78, 241, 255), new Color(120, 46, 97, 24)));
+    assertEquals(new Color(115, 47, 105, 255), alphaBlending(new Color(48, 78, 241, 15), new Color(120, 46, 97, 255)));
+    assertEquals(new Color(91, 58, 154, 37), alphaBlending(new Color(48, 78, 241, 15), new Color(120, 46, 97, 24)));
   }
 }

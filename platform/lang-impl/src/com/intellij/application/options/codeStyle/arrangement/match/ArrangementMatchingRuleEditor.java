@@ -1,7 +1,8 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.application.options.codeStyle.arrangement.match;
 
 import com.intellij.application.options.codeStyle.arrangement.ArrangementConstants;
+import com.intellij.application.options.codeStyle.arrangement.ArrangementUiUtil;
 import com.intellij.application.options.codeStyle.arrangement.color.ArrangementColorsProvider;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.codeStyle.arrangement.ArrangementUtil;
@@ -10,7 +11,13 @@ import com.intellij.psi.codeStyle.arrangement.match.ArrangementMatchRule;
 import com.intellij.psi.codeStyle.arrangement.match.StdArrangementEntryMatcher;
 import com.intellij.psi.codeStyle.arrangement.match.StdArrangementMatchRule;
 import com.intellij.psi.codeStyle.arrangement.model.ArrangementMatchCondition;
-import com.intellij.psi.codeStyle.arrangement.std.*;
+import com.intellij.psi.codeStyle.arrangement.std.ArrangementSettingsToken;
+import com.intellij.psi.codeStyle.arrangement.std.ArrangementStandardSettingsManager;
+import com.intellij.psi.codeStyle.arrangement.std.ArrangementUiComponent;
+import com.intellij.psi.codeStyle.arrangement.std.CompositeArrangementSettingsToken;
+import com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokenType;
+import com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokenUiRole;
+import com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens;
 import com.intellij.util.ui.GridBag;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.MultiRowFlowPanel;
@@ -18,35 +25,45 @@ import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JComponent;
+import javax.swing.JPanel;
+import java.awt.Color;
+import java.awt.FlowLayout;
+import java.awt.Graphics;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
+import java.awt.Point;
+import java.awt.Rectangle;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
-import java.util.*;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * Control for managing {@link ArrangementEntryMatcher matching rule conditions} for a single {@link ArrangementMatchRule}.
  * <p/>
  * Not thread-safe.
- *
- * @author Denis Zhdanov
  */
-public class ArrangementMatchingRuleEditor extends JPanel implements ArrangementUiComponent.Listener {
+public final class ArrangementMatchingRuleEditor extends JPanel implements ArrangementUiComponent.Listener {
 
-  @NotNull private final Map<ArrangementSettingsToken, ArrangementUiComponent> myComponents =
+  private final @NotNull Map<ArrangementSettingsToken, ArrangementUiComponent> myComponents =
     new HashMap<>();
-  @NotNull private final List<MultiRowFlowPanel>                               myRows       = new ArrayList<>();
+  private final @NotNull List<MultiRowFlowPanel>                               myRows       = new ArrayList<>();
 
-  @NotNull private final ArrangementMatchingRulesControl    myControl;
-  @NotNull private final ArrangementStandardSettingsManager mySettingsManager;
-  @NotNull private final ArrangementColorsProvider          myColorsProvider;
+  private final @NotNull ArrangementMatchingRulesControl    myControl;
+  private final @NotNull ArrangementStandardSettingsManager mySettingsManager;
+  private final @NotNull ArrangementColorsProvider          myColorsProvider;
 
   private int myRow = -1;
   private int        myLabelWidth;
 
-  @Nullable private JComponent myDefaultFocusRequestor;
-  @Nullable private JComponent myFocusRequestor;
+  private @Nullable JComponent myDefaultFocusRequestor;
+  private @Nullable JComponent myFocusRequestor;
 
   private boolean mySkipStateChange;
 
@@ -100,7 +117,7 @@ public class ArrangementMatchingRuleEditor extends JPanel implements Arrangement
     for (CompositeArrangementSettingsToken token : tokens) {
       StdArrangementTokenUiRole role = token.getRole();
       if (role != prevRole && !prevTokens.isEmpty()) {
-        component = ArrangementUtil.buildUiComponent(
+        component = ArrangementUiUtil.buildUiComponent(
           role, prevTokens, myColorsProvider, mySettingsManager
         );
         component.setListener(this);
@@ -112,22 +129,22 @@ public class ArrangementMatchingRuleEditor extends JPanel implements Arrangement
         prevRole = null;
         prevTokens.clear();
       }
-      component = ArrangementUtil.buildUiComponent(
+      component = ArrangementUiUtil.buildUiComponent(
         role, Collections.singletonList(token.getToken()), myColorsProvider, mySettingsManager
       );
       component.setListener(this);
       uiComponent = component.getUiComponent();
       switch (role) {
-        case LABEL:
+        case LABEL -> {
           panel = addRowIfNecessary(panel);
           add(uiComponent, labelConstraints);
           myLabelWidth = Math.max(myLabelWidth, uiComponent.getPreferredSize().width);
           prevRole = null;
-          break;
-        case TEXT_FIELD:
+        }
+        case TEXT_FIELD -> {
           panel = addRowIfNecessary(panel);
 
-          ArrangementUiComponent textLabel = ArrangementUtil.buildUiComponent(
+          ArrangementUiComponent textLabel = ArrangementUiUtil.buildUiComponent(
             StdArrangementTokenUiRole.LABEL, Collections.singletonList(token.getToken()), myColorsProvider, mySettingsManager
           );
           JComponent textLabelComponent = textLabel.getUiComponent();
@@ -143,8 +160,8 @@ public class ArrangementMatchingRuleEditor extends JPanel implements Arrangement
           if (myDefaultFocusRequestor == null) {
             myDefaultFocusRequestor = uiComponent;
           }
-          break;
-        default:
+        }
+        default -> {
           if (role == StdArrangementTokenUiRole.COMBO_BOX) {
             prevTokens.add(token.getToken());
             prevRole = role;
@@ -153,11 +170,12 @@ public class ArrangementMatchingRuleEditor extends JPanel implements Arrangement
 
           panel.add(uiComponent);
           myComponents.put(token.getToken(), component);
+        }
       }
     }
 
     if (prevRole != null && !prevTokens.isEmpty()) {
-      component = ArrangementUtil.buildUiComponent(prevRole, prevTokens, myColorsProvider, mySettingsManager);
+      component = ArrangementUiUtil.buildUiComponent(prevRole, prevTokens, myColorsProvider, mySettingsManager);
       panel.add(component.getUiComponent());
       component.setListener(this);
       for (ArrangementSettingsToken prevToken : prevTokens) {
@@ -167,8 +185,7 @@ public class ArrangementMatchingRuleEditor extends JPanel implements Arrangement
     addRowIfNecessary(panel);
   }
 
-  @NotNull
-  private MultiRowFlowPanel addRowIfNecessary(@NotNull MultiRowFlowPanel panel) {
+  private @NotNull MultiRowFlowPanel addRowIfNecessary(@NotNull MultiRowFlowPanel panel) {
     if (panel.getComponentCount() <= 0) {
       return panel;
     }
@@ -186,8 +203,7 @@ public class ArrangementMatchingRuleEditor extends JPanel implements Arrangement
     }
   }
 
-  @Nullable
-  private Pair<ArrangementMatchCondition, ArrangementSettingsToken> buildCondition() {
+  private @Nullable Pair<ArrangementMatchCondition, ArrangementSettingsToken> buildCondition() {
     List<ArrangementMatchCondition> conditions = new ArrayList<>();
     ArrangementSettingsToken orderType = null;
     for (ArrangementUiComponent component : myComponents.values()) {

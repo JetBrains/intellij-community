@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.codeInsight;
 
 import com.intellij.JavaTestUtil;
@@ -34,7 +20,7 @@ public class NullityInferrerTest extends LightJavaCodeInsightTestCase {
     @Override
     public void configureModule(@NotNull Module module, @NotNull ModifiableRootModel model, @NotNull ContentEntry contentEntry) {
       super.configureModule(module, model, contentEntry);
-      PsiTestUtil.addProjectLibrary(model, "annotations", IntelliJProjectConfiguration.getProjectLibraryClassesRootPaths("jetbrains-annotations-java5"));
+      PsiTestUtil.addProjectLibrary(model, "annotations", IntelliJProjectConfiguration.getProjectLibraryClassesRootPaths("jetbrains-annotations"));
     }
   };
 
@@ -51,19 +37,19 @@ public class NullityInferrerTest extends LightJavaCodeInsightTestCase {
   }
 
   //-----------------------params and return values---------------------------------
-  public void testParameterPassed2NotNull() throws Exception {
+  public void testParameterPassed2NotNull() {
     doTest(false);
   }
 
-  public void testParameterCheckedForNull() throws Exception {
+  public void testParameterCheckedForNull() {
     doTest(false);
   }
 
-  public void testParameterDereferenced() throws Exception {
+  public void testParameterDereferenced() {
     doTest(false);
   }
 
-  public void testParameterCheckedForInstanceof() throws Exception {
+  public void testParameterCheckedForInstanceof() {
     try {
       doTest(false);
       fail("Should infer nothing");
@@ -75,38 +61,49 @@ public class NullityInferrerTest extends LightJavaCodeInsightTestCase {
     }
   }
 
-  public void testParameterUsedInForeachIteratedValue() throws Exception {
+  public void testParameterUsedInForeachIteratedValue() {
     doTest(false);
   }
 
-  public void testForEachParameter() throws Exception {
+  public void testForEachParameter() {
     doTest(true);
   }
 
-  public void testConditionalReturnNotNull() throws Exception {
+  public void testConditionalReturnNotNull() {
     doTest(false);
   }
 
-  public void testAssertParamNotNull() throws Exception {
+  public void testAssertParamNotNull() {
     doTest(true);
   }
 
-  public void testTryEnumSwitch() throws Exception {
+  public void testTryEnumSwitch() {
+    doTest(true);
+  }
+  
+  public void testCatchParams() {
     doTest(true);
   }
 
   //-----------------------fields---------------------------------------------------
-  public void testFieldsAssignment() throws Exception {
+  public void testFieldsAssignment() {
     doTest(false);
   }
 
   //-----------------------methods---------------------------------------------------
-  public void testMethodReturnValue() throws Exception {
+  public void testMethodReturnValue() {
     doTest(false);
   }
 
+  public void testNullFail() {
+    doTest(false);
+  }
+  
+  public void testArrayInitializer() {
+    doTest(false);
+  }
 
-  private void doTest(boolean annotateLocalVariables) throws Exception  {
+  private void doTest(boolean annotateLocalVariables) {
     final String nullityPath = "/codeInsight/nullityinferrer";
     configureByFile(nullityPath + "/before" + getTestName(false) + ".java");
     final NullityInferrer nullityInferrer = new NullityInferrer(annotateLocalVariables, getProject());

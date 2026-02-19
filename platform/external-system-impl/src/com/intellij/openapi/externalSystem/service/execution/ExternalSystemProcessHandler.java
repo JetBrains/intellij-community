@@ -1,91 +1,125 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.service.execution;
 
 import com.intellij.build.process.BuildProcessHandler;
 import com.intellij.execution.process.AnsiEscapeDecoder;
+import com.intellij.execution.process.SoftlyKillableProcessHandler;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTask;
+import com.intellij.openapi.externalSystem.util.DiscardingInputStream;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.util.io.StreamUtil;
+import com.intellij.util.ObjectUtils;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.*;
+import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.nio.channels.Channels;
 import java.nio.channels.Pipe;
 
 /**
  * @author Vladislav.Soroka
  */
-public class ExternalSystemProcessHandler extends BuildProcessHandler implements AnsiEscapeDecoder.ColoredTextAcceptor, Disposable {
-  private static final Logger LOG = Logger.getInstance(ExternalSystemProcessHandler.class);
-  private final String myExecutionName;
-  @Nullable
-  private ExternalSystemTask myTask;
-  private final AnsiEscapeDecoder myAnsiEscapeDecoder = new AnsiEscapeDecoder();
-  @Nullable
-  private OutputStream myProcessInput;
+public class ExternalSystemProcessHandler extends BuildProcessHandler implements SoftlyKillableProcessHandler, Disposable {
 
-  public ExternalSystemProcessHandler(@NotNull ExternalSystemTask task, String executionName) {
+  private static final Logger LOG = Logger.getInstance(ExternalSystemProcessHandler.class);
+  static final Key<Boolean> SOFT_PROCESS_KILL_ENABLED_KEY = Key.create("SOFT_PROCESS_KILL_ENABLED_KEY");
+
+  private final @NotNull String myExecutionName;
+  private @Nullable ExternalSystemTask myTask;
+  private @Nullable UserDataHolder myDataHolder;
+  private @Nullable OutputStream myProcessInputWriter;
+  private @Nullable InputStream myProcessInputReader;
+
+  private final @NotNull AnsiEscapeDecoder myAnsiEscapeDecoder = new AnsiEscapeDecoder();
+  private boolean escapeAnsiText = true;
+
+  public ExternalSystemProcessHandler(@NotNull ExternalSystemTask task, @NotNull String executionName) {
+    this(task, executionName, ObjectUtils.tryCast(task, UserDataHolder.class));
+  }
+
+  private ExternalSystemProcessHandler(
+    @NotNull ExternalSystemTask task,
+    @NotNull String executionName,
+    @Nullable UserDataHolder dataHolder
+  ) {
     myTask = task;
+    myDataHolder = dataHolder;
     myExecutionName = executionName;
-    if (task instanceof UserDataHolder) {
-      try {
-        Pipe pipe = Pipe.open();
-        InputStream inputStream = new BufferedInputStream(Channels.newInputStream(pipe.source()));
-        myProcessInput = new BufferedOutputStream(Channels.newOutputStream(pipe.sink()));
-        ((UserDataHolder)task).putUserData(ExternalSystemRunConfiguration.RUN_INPUT_KEY, inputStream);
-      }
-      catch (IOException e) {
-        LOG.warn("Unable to setup process input", e);
-      }
+    try {
+      Pipe pipe = Pipe.open();
+      myProcessInputReader = new DiscardingInputStream(new BufferedInputStream(Channels.newInputStream(pipe.source())));
+      myProcessInputWriter = new BufferedOutputStream(Channels.newOutputStream(pipe.sink()));
+    }
+    catch (IOException e) {
+      LOG.warn("Unable to setup process input", e);
+    }
+    if (myDataHolder != null) {
+      closeLeakedStream(myDataHolder);
+      myDataHolder.putUserData(ExternalSystemRunConfiguration.RUN_INPUT_KEY, myProcessInputReader);
     }
   }
 
   @Override
-  public String getExecutionName() {
+  public @NotNull String getExecutionName() {
     return myExecutionName;
   }
 
-  @Nullable
-  public ExternalSystemTask getTask() {
+  public @Nullable ExternalSystemTask getTask() {
     return myTask;
   }
 
+  @ApiStatus.Experimental
+  public void disableAnsiTextEscaping() {
+    escapeAnsiText = false;
+  }
+
   @Override
-  public void notifyTextAvailable(@NotNull final String text, @NotNull final Key outputType) {
-    myAnsiEscapeDecoder.escapeText(text, outputType, this);
+  public void notifyTextAvailable(@NotNull String text, final @NotNull Key outputType) {
+    if (escapeAnsiText) {
+      myAnsiEscapeDecoder.escapeText(text, outputType, (decodedText, attributes) ->
+        super.notifyTextAvailable(decodedText, attributes)
+      );
+    }
+    else {
+      super.notifyTextAvailable(text, outputType);
+    }
+  }
+
+  @Override
+  @ApiStatus.Experimental
+  public boolean shouldKillProcessSoftly() {
+    return myDataHolder != null && myDataHolder.getUserData(SOFT_PROCESS_KILL_ENABLED_KEY) == Boolean.TRUE;
   }
 
   @Override
   protected void destroyProcessImpl() {
-    ExternalSystemTask task = myTask;
-    if (task != null) {
-      task.cancel();
+    try {
+      ExternalSystemTask task = myTask;
+      if (task != null) {
+        task.cancel();
+      }
     }
-    closeInput();
+    finally {
+      closeInput();
+    }
   }
 
   @Override
   protected void detachProcessImpl() {
-    notifyProcessDetached();
-    closeInput();
+    try {
+      notifyProcessDetached();
+    }
+    finally {
+      closeInput();
+    }
   }
 
   @Override
@@ -93,42 +127,54 @@ public class ExternalSystemProcessHandler extends BuildProcessHandler implements
     return false;
   }
 
-  @Nullable
   @Override
-  public OutputStream getProcessInput() {
-    return myProcessInput;
+  public @Nullable OutputStream getProcessInput() {
+    return myProcessInputWriter;
   }
 
   @Override
   public void notifyProcessTerminated(int exitCode) {
-    super.notifyProcessTerminated(exitCode);
-    closeInput();
-  }
-
-  @Override
-  public void coloredTextAvailable(@NotNull String text, @NotNull Key attributes) {
-    super.notifyTextAvailable(text, attributes);
+    try {
+      super.notifyProcessTerminated(exitCode);
+    }
+    finally {
+      closeInput();
+    }
   }
 
   protected void closeInput() {
-    StreamUtil.closeStream(myProcessInput);
-    myProcessInput = null;
+    var processInputWriter = myProcessInputWriter;
+    var processInputReader = myProcessInputReader;
+    var dataHolder = myDataHolder;
+    myProcessInputWriter = null;
+    myProcessInputReader = null;
+    if (dataHolder != null) {
+      dataHolder.putUserData(ExternalSystemRunConfiguration.RUN_INPUT_KEY, null);
+    }
+    //noinspection deprecation
+    StreamUtil.closeStream(processInputWriter);
+    //noinspection deprecation
+    StreamUtil.closeStream(processInputReader);
+  }
+
+  private static void closeLeakedStream(@NotNull UserDataHolder dataHolder) {
+    var leakedStream = dataHolder.getUserData(ExternalSystemRunConfiguration.RUN_INPUT_KEY);
+    dataHolder.putUserData(ExternalSystemRunConfiguration.RUN_INPUT_KEY, null);
+    if (leakedStream != null) {
+      LOG.warn("Unexpected stream found, closing it...");
+    }
+    //noinspection deprecation
+    StreamUtil.closeStream(leakedStream);
   }
 
   @Override
   public void dispose() {
     try {
-      ExternalSystemTask task = myTask;
-      if (task instanceof UserDataHolder) {
-        UserDataHolder taskDataHolder = (UserDataHolder)task;
-        InputStream inputStream = taskDataHolder.getUserData(ExternalSystemRunConfiguration.RUN_INPUT_KEY);
-        StreamUtil.closeStream(inputStream);
-        taskDataHolder.putUserData(ExternalSystemRunConfiguration.RUN_INPUT_KEY, null);
-      }
       detachProcessImpl();
     }
     finally {
       myTask = null;
+      myDataHolder = null;
     }
   }
 }

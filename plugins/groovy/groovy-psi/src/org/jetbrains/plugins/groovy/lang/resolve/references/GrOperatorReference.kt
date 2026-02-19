@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.resolve.references
 
 import com.intellij.openapi.util.TextRange
@@ -6,14 +6,55 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiPolyVariantReference
 import com.intellij.psi.PsiRecursiveElementWalkingVisitor
 import com.intellij.util.SmartList
-import org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.*
+import org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.LEFT_SHIFT_SIGN
+import org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.RIGHT_SHIFT_SIGN
+import org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.RIGHT_SHIFT_UNSIGNED_SIGN
+import org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.T_BAND
+import org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.T_BOR
+import org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.T_COMPARE
+import org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.T_DIV
+import org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.T_EQ
+import org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.T_GE
+import org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.T_GT
+import org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.T_LE
+import org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.T_LT
+import org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.T_MINUS
+import org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.T_NEQ
+import org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.T_PLUS
+import org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.T_POW
+import org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.T_REM
+import org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.T_STAR
+import org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.T_XOR
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyDependentReference
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssignmentExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrBinaryExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrOperatorExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrParenthesizedExpression
-import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.HardcodedGroovyMethodConstants.*
-import org.jetbrains.plugins.groovy.lang.resolve.api.*
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrIndexProperty
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.HardcodedGroovyMethodConstants.AND
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.HardcodedGroovyMethodConstants.COMPARE_TO
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.HardcodedGroovyMethodConstants.DIV
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.HardcodedGroovyMethodConstants.EQUALS
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.HardcodedGroovyMethodConstants.LEFT_SHIFT
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.HardcodedGroovyMethodConstants.MINUS
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.HardcodedGroovyMethodConstants.MOD
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.HardcodedGroovyMethodConstants.MULTIPLY
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.HardcodedGroovyMethodConstants.OR
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.HardcodedGroovyMethodConstants.PLUS
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.HardcodedGroovyMethodConstants.POWER
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.HardcodedGroovyMethodConstants.RIGHT_SHIFT
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.HardcodedGroovyMethodConstants.RIGHT_SHIFT_UNSIGNED
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.HardcodedGroovyMethodConstants.XOR
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.binaryCalculators.GrNumericBinaryExpressionTypeCalculator
+import org.jetbrains.plugins.groovy.lang.psi.util.getArgumentListArgument
+import org.jetbrains.plugins.groovy.lang.resolve.api.Argument
+import org.jetbrains.plugins.groovy.lang.resolve.api.Arguments
+import org.jetbrains.plugins.groovy.lang.resolve.api.ExpressionArgument
+import org.jetbrains.plugins.groovy.lang.resolve.api.GroovyMethodCallReferenceBase
+import org.jetbrains.plugins.groovy.lang.resolve.api.JustTypeArgument
+import org.jetbrains.plugins.groovy.lang.resolve.api.LazyTypeArgument
+import org.jetbrains.plugins.groovy.lang.resolve.api.UnknownArgument
+import org.jetbrains.plugins.groovy.lang.resolve.impl.resolveWithArguments
 
 class GrOperatorReference(
   element: GrOperatorExpression
@@ -26,24 +67,61 @@ class GrOperatorReference(
     get() {
       val operand = when (val element = element) {
         is GrBinaryExpression -> element.leftOperand
-        is GrAssignmentExpression -> element.lValue
+        is GrAssignmentExpression -> {
+          val lValue = element.lValue
+          if (lValue is GrIndexProperty) {
+            lValue.invokedExpression
+          }
+          else {
+            lValue
+          }
+        }
         else -> return null
       }
       return ExpressionArgument(operand)
     }
 
-  override val methodName: String get() = binaryOperatorMethodNames[element.operator] ?: error(element.text)
+  override val methodName: String
+    get() {
+      val element = element
+      return if (element is GrAssignmentExpression && element.lValue is GrIndexProperty) "putAt"
+      else binaryOperatorMethodNames[element.operator] ?: error(element.text)
+    }
 
-  override val arguments: Arguments?
+  override val arguments: Arguments
     get() {
       val operand = when (val element = element) {
         is GrBinaryExpression -> element.rightOperand
-        is GrAssignmentExpression -> element.rValue
+        is GrAssignmentExpression -> {
+          val lValue = element.lValue
+          if (lValue is GrIndexProperty) {
+            return computePutAtArguments(lValue, element)
+          }
+          else {
+            element.rValue
+          }
+        }
         else -> null
       }
       val argument = if (operand == null) UnknownArgument else ExpressionArgument(operand)
       return listOf(argument)
     }
+
+  private fun computePutAtArguments(lValue: GrIndexProperty,
+                                    element: GrAssignmentExpression): List<Argument> {
+    val key = lValue.getArgumentListArgument()
+    val value = LazyTypeArgument {
+      val actualMethodName = binaryOperatorMethodNames[element.operator] ?: return@LazyTypeArgument null
+      val leftOperand = lValue.type?.let(::JustTypeArgument) ?: UnknownArgument
+      val rightOperand = element.rValue?.type?.let(::JustTypeArgument) ?: UnknownArgument
+      val resolveResult = resolveWithArguments(leftOperand, actualMethodName, listOf(rightOperand), element).singleOrNull()
+                          ?: return@LazyTypeArgument null
+      val rt = GrNumericBinaryExpressionTypeCalculator.INSTANCE.getTypeByResult(lValue.type, element.rValue?.type, listOf(rightOperand),
+                                                                                resolveResult, element)
+      rt
+    }
+    return listOf(key, value)
+  }
 
   override fun collectDependencies(): MutableCollection<out PsiPolyVariantReference> {
     val result = SmartList<PsiPolyVariantReference>()

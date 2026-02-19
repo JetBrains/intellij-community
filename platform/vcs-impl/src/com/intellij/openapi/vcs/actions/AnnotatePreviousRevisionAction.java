@@ -1,3 +1,4 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.actions;
 
 import com.intellij.icons.AllIcons;
@@ -11,7 +12,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 class AnnotatePreviousRevisionAction extends AnnotateRevisionAction {
-  @Nullable private final FileAnnotation.PreviousFileRevisionProvider myProvider;
+  private final @Nullable FileAnnotation.PreviousFileRevisionProvider myProvider;
 
   AnnotatePreviousRevisionAction(@NotNull FileAnnotation annotation, @NotNull AbstractVcs vcs) {
     super(VcsBundle.messagePointer("action.annotate.previous.revision.text"),
@@ -31,11 +32,11 @@ class AnnotatePreviousRevisionAction extends AnnotateRevisionAction {
     super.update(e);
   }
 
-  @Nullable
   @Override
-  protected VcsFileRevision getRevision(int lineNumber) {
+  protected @Nullable VcsFileRevision getFileRevision(@NotNull AnActionEvent e) {
     assert myProvider != null;
 
+    int lineNumber = ShowAnnotateOperationsPopup.getAnnotationLineNumber(e.getDataContext());
     if (lineNumber == UpToDateLineNumberProvider.ABSENT_LINE_NUMBER) {
       return myProvider.getLastRevision();
     }
@@ -43,5 +44,10 @@ class AnnotatePreviousRevisionAction extends AnnotateRevisionAction {
       if (lineNumber < 0 || lineNumber >= myAnnotation.getLineCount()) return null;
       return myProvider.getPreviousRevision(lineNumber);
     }
+  }
+
+  @Override
+  protected int getAnnotatedLine(@NotNull AnActionEvent e) {
+    return ShowAnnotateOperationsPopup.getAnnotationLineNumber(e.getDataContext(), true);
   }
 }

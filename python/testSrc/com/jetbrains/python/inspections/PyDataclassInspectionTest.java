@@ -3,11 +3,8 @@
  */
 package com.jetbrains.python.inspections;
 
-import com.intellij.testFramework.LightProjectDescriptor;
 import com.jetbrains.python.fixtures.PyInspectionTestCase;
-import com.jetbrains.python.psi.LanguageLevel;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 public class PyDataclassInspectionTest extends PyInspectionTestCase {
 
@@ -21,14 +18,29 @@ public class PyDataclassInspectionTest extends PyInspectionTestCase {
     doTest();
   }
 
+  // PY-54560
+  public void testMutatingFrozenDataclassTransform() {
+    doMultiFileTest();
+  }
+
   // PY-28506
   public void testFrozenInheritance() {
     doTest();
   }
 
+  // PY-54560
+  public void testFrozenInheritanceDataclassTransform() {
+    doMultiFileTest();
+  }
+
   // PY-28506, PY-31762
   public void testMutatingFrozenInInheritance() {
     doTest();
+  }
+
+  // PY-54560
+  public void testMutatingFrozenInInheritanceDataclassTransform() {
+    doMultiFileTest();
   }
 
   // PY-28506, PY-31762
@@ -41,24 +53,44 @@ public class PyDataclassInspectionTest extends PyInspectionTestCase {
     doTest();
   }
 
+  // PY-54560
+  public void testOrderAndNotEqDataclassTransform() {
+    doMultiFileTest();
+  }
+  
   // PY-27398
   public void testDefaultFieldValue() {
     doTest();
   }
 
+  // PY-54560
+  public void testMutableDefaultFieldValueDataclassTransform() {
+    doMultiFileTest();
+  }
+  
   // PY-27398
   public void testFieldsOrder() {
     doTest();
   }
-
+  
   // PY-26354
   public void testAttrsFieldsOrder() {
     doTest();
   }
 
+  // PY-54560
+  public void testDataclassTransformFieldsOrder() {
+    doMultiFileTest();
+  }
+
   // PY-28506, PY-31762
   public void testFieldsOrderInInheritance() {
     doTest();
+  }
+
+  // PY-54560
+  public void testDataclassTransformFieldOrderInInheritance() {
+    doMultiFileTest();
   }
 
   // PY-28506, PY-31762
@@ -67,22 +99,22 @@ public class PyDataclassInspectionTest extends PyInspectionTestCase {
   }
 
   // PY-34374, PY-33189
-  public void testFieldsOrderInInheritanceKwOnlyNoDefaultBase() {
+  public void testAttrsFieldsOrderInInheritanceKwOnlyNoDefaultBase() {
     doTest();
   }
 
   // PY-34374, PY-33189
-  public void testFieldsOrderInInheritanceKwOnlyDefaultBase() {
+  public void testAttrsFieldsOrderInInheritanceKwOnlyDefaultBase() {
     doTest();
   }
 
   // PY-34374, PY-33189
-  public void testFieldsOrderInInheritanceKwOnlyNoDefaultDerived() {
+  public void testAttrsFieldsOrderInInheritanceKwOnlyNoDefaultDerived() {
     doTest();
   }
 
   // PY-34374, PY-33189
-  public void testFieldsOrderInInheritanceKwOnlyDefaultDerived() {
+  public void testAttrsFieldsOrderInInheritanceKwOnlyDefaultDerived() {
     doTest();
   }
 
@@ -121,20 +153,41 @@ public class PyDataclassInspectionTest extends PyInspectionTestCase {
     doTest();
   }
 
+  // PY-54560
+  public void testComparisonForOrderedDataclassTransform() {
+    doMultiFileTest();  
+  }
+
+  // PY-54560
+  public void testComparisonForUnorderedDataclassTransform() {
+    doMultiFileTest();
+  }
+
+  // PY-54560
+  public void testComparisonForOrderedAndUnorderedDataclassTransform() {
+    doMultiFileTest();
+  }
+
+  // PY-54560
+  public void testComparisonForManuallyOrderedDataclassTransform() {
+    doMultiFileTest();
+  }
+
   // PY-32078
   public void testComparisonForManuallyOrderedAttrs() {
-    doTestByText("from attr import s\n" +
-                 "\n" +
-                 "@s(cmp=False)\n" +
-                 "class Test:\n" +
-                 "    def __gt__(self, other):\n" +
-                 "        pass\n" +
-                 "\n" +
-                 "print(Test() < Test())\n" +
-                 "print(Test() > Test())\n" +
-                 "\n" +
-                 "print(Test < Test)\n" +
-                 "print(Test > Test)");
+    doTestByText("""
+                   from attr import s
+
+                   @s(cmp=False)
+                   class Test:
+                       def __gt__(self, other):
+                           pass
+
+                   print(Test() < Test())
+                   print(Test() > Test())
+
+                   print(Test < Test)
+                   print(Test > Test)""");
   }
 
   // PY-28506
@@ -189,11 +242,12 @@ public class PyDataclassInspectionTest extends PyInspectionTestCase {
 
   // PY-33445
   public void testDontConsiderUnresolvedFieldsAsInitOnly() {
-    doTestByText("class A:\n" +
-                 "    pass\n" +
-                 "\n" +
-                 "a = A()\n" +
-                 "b = a.b");
+    doTestByText("""
+                   class A:
+                       pass
+
+                   a = A()
+                   b = a.b""");
   }
 
   // PY-27398
@@ -228,16 +282,17 @@ public class PyDataclassInspectionTest extends PyInspectionTestCase {
 
   // PY-43359
   public void testSuppressedDunderPostInitSignature() {
-    doTestByText("import dataclasses\n" +
-                 "\n" +
-                 "@dataclasses.dataclass\n" +
-                 "class A:\n" +
-                 "    a: int\n" +
-                 "    b: dataclasses.InitVar[str]\n" +
-                 "    c: dataclasses.InitVar[bytes]\n" +
-                 "\n" +
-                 "    def __post_init__(self, *args, **kwargs):\n" +
-                 "        pass");
+    doTestByText("""
+                   import dataclasses
+
+                   @dataclasses.dataclass
+                   class A:
+                       a: int
+                       b: dataclasses.InitVar[str]
+                       c: dataclasses.InitVar[bytes]
+
+                       def __post_init__(self, *args, **kwargs):
+                           pass""");
   }
 
   // PY-27398
@@ -250,9 +305,19 @@ public class PyDataclassInspectionTest extends PyInspectionTestCase {
     doTest();
   }
 
+  // PY-54560
+  public void testDataclassTransformDefaultAndDefaultFactory() {
+    doMultiFileTest();    
+  }
+
   // PY-27398
   public void testUselessInitReprEq() {
     doTest();
+  }
+
+  // PY-54560
+  public void testDataclassTransformUselessInitEqUnsafeHashOrderFrozen() {
+    doMultiFileTest();
   }
 
   // PY-27398
@@ -305,6 +370,11 @@ public class PyDataclassInspectionTest extends PyInspectionTestCase {
     doTest();
   }
 
+  // PY-54560
+  public void testDataclassTransformFieldLackingTypeAnnotation() {
+    doMultiFileTest();
+  }
+
   // PY-26354
   public void testAttrsLackingTypeAnnotation() {
     doTest();
@@ -315,22 +385,55 @@ public class PyDataclassInspectionTest extends PyInspectionTestCase {
     doTest();
   }
 
-  @Override
-  protected void doTest() {
-    runWithLanguageLevel(
-      LanguageLevel.getLatest(),
-      () -> {
-        myFixture.copyFileToProject(getTestCaseDirectory() + "/dataclasses.py", "dataclasses.py");
-        super.doTest();
-        assertProjectFilesNotParsed(myFixture.getFile());
-      }
-    );
+  // PY-49946
+  public void testFieldsOrderInInheritanceNotKwOnlyBaseDataclass() {
+    doTest();
   }
 
-  @Nullable
+  // PY-49946
+  public void testFieldsOrderInInheritanceKwOnlyBaseDataclass() {
+    doTest();
+  }
+
+  // PY-54560
+  public void testDataclassTransformKwOnlyFieldOrderInInheritance() {
+    doMultiFileTest();
+  }
+
+  // PY-57582
+  public void testFieldsOrderKwOnly() {
+    doTest();
+  }
+
+  // PY-49946
+  public void testFieldsOrderOverridden() {
+    doTest();
+  }
+
+  // PY-76911
+  public void testFrozenInheritanceDataclassTransformMetaclassNoDefault() {
+    doTest();
+  }
+
+  // PY-49946
+  public void testTypingNTFieldsOrderKWOnlyInherited() {
+    doTest();
+  }
+
   @Override
-  protected LightProjectDescriptor getProjectDescriptor() {
-    return ourPy3Descriptor;
+  protected void doTest() {
+    myFixture.copyDirectoryToProject("packages/attr", "attr");
+    myFixture.copyDirectoryToProject("packages/attrs", "attrs");
+    super.doTest();
+    assertProjectFilesNotParsed(myFixture.getFile());
+  }
+
+  public void testFieldOrderInheritanceMultifile() {
+    doMultiFileTest();
+  }
+
+  public void testDataclassMissingHandlingMultifile() {
+    doMultiFileTest();
   }
 
   @NotNull

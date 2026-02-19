@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2011 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
 import com.intellij.openapi.util.NlsContexts;
@@ -25,10 +11,13 @@ import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JButton;
+import javax.swing.JComponent;
+import javax.swing.JPanel;
+import javax.swing.ListSelectionModel;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.TableCellRenderer;
-import java.awt.*;
+import java.awt.BorderLayout;
 import java.awt.event.MouseEvent;
 import java.util.Arrays;
 import java.util.List;
@@ -58,13 +47,11 @@ public abstract class AddEditRemovePanel<T> extends PanelWithButtons implements 
     initPanel();
   }
 
-  @Nullable
-  protected abstract T addItem();
+  protected abstract @Nullable T addItem();
 
   protected abstract boolean removeItem(T o);
 
-  @Nullable
-  protected abstract T editItem(T o);
+  protected abstract @Nullable T editItem(T o);
 
   public boolean isUpDownSupported() {
     return false;
@@ -74,6 +61,34 @@ public abstract class AddEditRemovePanel<T> extends PanelWithButtons implements 
   protected void initPanel() {
     setLayout(new BorderLayout());
 
+    ToolbarDecorator decorator = createToolbarDecorator();
+
+    final JPanel panel = decorator.createPanel();
+    add(panel, BorderLayout.CENTER);
+    final String label = getLabelText();
+    if (label != null) {
+      UIUtil.addBorder(panel, IdeBorderFactory.createTitledBorder(label, false, JBUI.insetsTop(8)).setShowLine(false));
+    }
+  }
+
+  @Override
+  protected String getLabelText() {
+    return myLabel;
+  }
+
+  @Override
+  public @NotNull StatusText getEmptyText() {
+    return myTable.getEmptyText();
+  }
+
+  @Override
+  protected JComponent createMainComponent() {
+    initTable();
+
+    return ScrollPaneFactory.createScrollPane(myTable);
+  }
+
+  protected ToolbarDecorator createToolbarDecorator() {
     ToolbarDecorator decorator = ToolbarDecorator.createDecorator(myTable)
       .setAddAction(new AnActionButtonRunnable() {
         @Override
@@ -115,31 +130,7 @@ public abstract class AddEditRemovePanel<T> extends PanelWithButtons implements 
     else {
       decorator.disableUpAction().disableDownAction();
     }
-
-    final JPanel panel = decorator.createPanel();
-    add(panel, BorderLayout.CENTER);
-    final String label = getLabelText();
-    if (label != null) {
-      UIUtil.addBorder(panel, IdeBorderFactory.createTitledBorder(label, false, JBUI.insetsTop(8)).setShowLine(false));
-    }
-  }
-
-  @Override
-  protected String getLabelText(){
-    return myLabel;
-  }
-
-  @NotNull
-  @Override
-  public StatusText getEmptyText() {
-    return myTable.getEmptyText();
-  }
-
-  @Override
-  protected JComponent createMainComponent(){
-    initTable();
-
-    return ScrollPaneFactory.createScrollPane(myTable);
+    return decorator;
   }
 
   private void initTable() {
@@ -185,7 +176,6 @@ public abstract class AddEditRemovePanel<T> extends PanelWithButtons implements 
     myTable.setModel(myTableModel);
     myTable.setShowColumns(false);
     myTable.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
-    myTable.setStriped(true);
     new DoubleClickListener() {
       @Override
       protected boolean onDoubleClick(@NotNull MouseEvent event) {
@@ -288,8 +278,7 @@ public abstract class AddEditRemovePanel<T> extends PanelWithButtons implements 
   public abstract static class TableModel<T> {
 
     public abstract int getColumnCount();
-    @Nullable
-    public abstract @ColumnName String getColumnName(int columnIndex);
+    public abstract @Nullable @ColumnName String getColumnName(int columnIndex);
     public abstract Object getField(T o, int columnIndex);
 
     public Class getColumnClass(int columnIndex) { return String.class; }

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij;
 
 import com.intellij.openapi.Disposable;
@@ -7,18 +7,14 @@ import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.projectRoots.SdkModificator;
 import com.intellij.openapi.projectRoots.impl.JavaAwareProjectJdkTableImpl;
-import com.intellij.openapi.projectRoots.impl.ProjectJdkImpl;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.java.LanguageLevel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
-/**
- * @author yole
- * @author Konstantin Bulenkov
- */
 public final class JavaTestUtil {
 
   public static String getJavaTestDataPath() {
@@ -48,8 +44,10 @@ public final class JavaTestUtil {
       Sdk jdk = internalJdk;
       if (!internalJdk.getName().equals(finalJdkName)) {
         try {
-          ProjectJdkImpl copy = (ProjectJdkImpl)internalJdk.clone();
-          copy.setName(finalJdkName);
+          Sdk copy = internalJdk.clone();
+          SdkModificator modificator = copy.getSdkModificator();
+          modificator.setName(finalJdkName);
+          modificator.commitChanges();
           jdk = copy;
         }
         catch (CloneNotSupportedException e) {
@@ -62,7 +60,6 @@ public final class JavaTestUtil {
   }
 
   public static LanguageLevel getMaxRegisteredLanguageLevel() {
-    LanguageLevel[] values = LanguageLevel.values();
-    return values[values.length - 1];
+    return LanguageLevel.getEntries().getLast();
   }
 }

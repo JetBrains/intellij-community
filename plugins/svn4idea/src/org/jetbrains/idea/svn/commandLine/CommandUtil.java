@@ -1,11 +1,10 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.svn.commandLine;
 
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.text.DateFormatUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -15,9 +14,15 @@ import org.jetbrains.idea.svn.api.Target;
 import org.jetbrains.idea.svn.diff.DiffOptions;
 import org.jetbrains.idea.svn.status.StatusType;
 
-import javax.xml.bind.*;
+import javax.xml.bind.JAXBContext;
+import javax.xml.bind.JAXBException;
+import javax.xml.bind.Unmarshaller;
+import javax.xml.bind.ValidationEvent;
+import javax.xml.bind.ValidationEventHandler;
 import java.io.File;
 import java.io.StringReader;
+import java.time.ZoneOffset;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -26,7 +31,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import static com.intellij.openapi.util.text.StringUtil.join;
 import static java.util.Arrays.asList;
 
-public class CommandUtil {
+public final class CommandUtil {
 
   private static final Logger LOG = Logger.getInstance(CommandUtil.class);
 
@@ -39,9 +44,6 @@ public class CommandUtil {
   /**
    * Puts given value to parameters if condition is satisfied
    *
-   * @param parameters
-   * @param condition
-   * @param value
    */
   public static void put(@NotNull List<? super String> parameters, boolean condition, @NonNls @NotNull String value) {
     if (condition) {
@@ -74,8 +76,7 @@ public class CommandUtil {
     parameters.add(format(path, pegRevision));
   }
 
-  @NotNull
-  public static String format(@NotNull String path, @Nullable Revision pegRevision) {
+  public static @NotNull String format(@NotNull String path, @Nullable Revision pegRevision) {
     StringBuilder builder = new StringBuilder(path);
 
     boolean hasAtSymbol = path.contains("@");
@@ -131,9 +132,9 @@ public class CommandUtil {
     put(parameters, "--revision", format(startRevision) + ":" + format(endRevision));
   }
 
-  @NotNull
-  public static String format(@NotNull Revision revision) {
-    return revision.getDate() != null ? "{" + DateFormatUtil.getIso8601Format().format(revision.getDate()) + "}" : revision.toString();
+  public static @NotNull String format(@NotNull Revision revision) {
+    var date = revision.getDate();
+    return date != null ? "{" + DateTimeFormatter.ISO_OFFSET_DATE_TIME.format(date.toInstant().atZone(ZoneOffset.UTC)) + "}" : revision.toString();
   }
 
   public static void put(@NotNull List<? super String> parameters, @Nullable DiffOptions diffOptions) {
@@ -181,28 +182,23 @@ public class CommandUtil {
     return (T)unmarshaller.unmarshal(new StringReader(data.trim()));
   }
 
-  @NotNull
-  public static File getHomeDirectory() {
+  public static @NotNull File getHomeDirectory() {
     return new File(PathManager.getHomePath());
   }
 
   /**
    * Gets svn status represented by single character.
    *
-   * @param type
-   * @return
    */
   public static char getStatusChar(@Nullable String type) {
     return !StringUtil.isEmpty(type) ? type.charAt(0) : ' ';
   }
 
-  @NotNull
-  public static StatusType getStatusType(@Nullable String type) {
+  public static @NotNull StatusType getStatusType(@Nullable String type) {
     return getStatusType(getStatusChar(type));
   }
 
-  @NotNull
-  public static StatusType getStatusType(char first) {
+  public static @NotNull StatusType getStatusType(char first) {
     final StatusType contentsStatus;
     if ('A' == first) {
       contentsStatus = StatusType.STATUS_ADDED;
@@ -224,8 +220,7 @@ public class CommandUtil {
     return contentsStatus;
   }
 
-  @Nullable
-  public static File findExistingParent(@Nullable File file) {
+  public static @Nullable File findExistingParent(@Nullable File file) {
     while (file != null) {
       if (file.exists() && file.isDirectory()) return file;
       file = file.getParentFile();
@@ -233,8 +228,7 @@ public class CommandUtil {
     return null;
   }
 
-  @NotNull
-  public static File requireExistingParent(@NotNull File file) {
+  public static @NotNull File requireExistingParent(@NotNull File file) {
     File result = findExistingParent(file);
 
     if (result == null) {

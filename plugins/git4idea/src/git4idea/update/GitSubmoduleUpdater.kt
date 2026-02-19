@@ -29,6 +29,8 @@ internal class GitSubmoduleUpdater(val project: Project,
       val result = git.runCommand {
         val handler = GitLineHandler(project, parentRepository.root, GitCommand.SUBMODULE)
         handler.addParameters("update", "--recursive")
+        handler.endOptions()
+        handler.addRelativeFiles(listOf(repository.root))
         handler.setSilent(false)
         handler.setStdoutSuppressed(false)
         handler

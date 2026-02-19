@@ -1,24 +1,18 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.tree.java;
 
 import com.intellij.lang.ASTNode;
-import com.intellij.lang.java.parser.ExpressionParser;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaElementVisitor;
+import com.intellij.psi.PsiArrayAccessExpression;
+import com.intellij.psi.PsiAssignmentExpression;
+import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiJavaToken;
+import com.intellij.psi.PsiReferenceExpression;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypes;
+import com.intellij.psi.impl.source.resolve.graphInference.PsiPolyExpressionUtil;
 import com.intellij.psi.impl.source.tree.ChildRole;
 import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.impl.source.tree.JavaElementType;
@@ -36,8 +30,7 @@ public class PsiAssignmentExpressionImpl extends ExpressionPsiElement implements
   }
 
   @Override
-  @NotNull
-  public PsiExpression getLExpression() {
+  public @NotNull PsiExpression getLExpression() {
     return (PsiExpression)findChildByRoleAsPsiElement(ChildRole.LOPERAND);
   }
 
@@ -47,14 +40,12 @@ public class PsiAssignmentExpressionImpl extends ExpressionPsiElement implements
   }
 
   @Override
-  @NotNull
-  public PsiJavaToken getOperationSign() {
+  public @NotNull PsiJavaToken getOperationSign() {
     return (PsiJavaToken)findChildByRoleAsPsiElement(ChildRole.OPERATION_SIGN);
   }
 
   @Override
-  @NotNull
-  public IElementType getOperationTokenType() {
+  public @NotNull IElementType getOperationTokenType() {
     return getOperationSign().getTokenType();
   }
 
@@ -65,7 +56,14 @@ public class PsiAssignmentExpressionImpl extends ExpressionPsiElement implements
     //thus it's important to ensure that type of left side is not calculated for invalid expression, e.g. bar() = ""
     PsiExpression lExpression = PsiUtil.deparenthesizeExpression(getLExpression());
     if (lExpression instanceof PsiReferenceExpression || lExpression instanceof PsiArrayAccessExpression) {
-      return lExpression.getType();
+      PsiType type = lExpression.getType();
+      if (type == null || type == PsiTypes.nullType()) {
+        PsiExpression rExpression = getRExpression();
+        if (rExpression != null && !PsiPolyExpressionUtil.isPolyExpression(rExpression)) {
+          return rExpression.getType();
+        }
+      }
+      return type;
     }
     return null;
   }
@@ -74,9 +72,6 @@ public class PsiAssignmentExpressionImpl extends ExpressionPsiElement implements
   public ASTNode findChildByRole(int role) {
     LOG.assertTrue(ChildRole.isUnique(role));
     switch (role) {
-      default:
-        return null;
-
       case ChildRole.LOPERAND:
         return getFirstChildNode();
 
@@ -85,6 +80,9 @@ public class PsiAssignmentExpressionImpl extends ExpressionPsiElement implements
 
       case ChildRole.OPERATION_SIGN:
         return findChildByType(OUR_OPERATIONS_BIT_SET);
+
+      default:
+        return null;
     }
   }
 
@@ -104,7 +102,7 @@ public class PsiAssignmentExpressionImpl extends ExpressionPsiElement implements
     }
   }
 
-  private static final TokenSet OUR_OPERATIONS_BIT_SET = ExpressionParser.ASSIGNMENT_OPS;
+  private static final TokenSet OUR_OPERATIONS_BIT_SET = ElementType.ASSIGNMENT_OPS;
 
   @Override
   public void accept(@NotNull PsiElementVisitor visitor) {

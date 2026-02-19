@@ -1,0 +1,35 @@
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+package com.intellij.codeInsight.daemon.problems
+
+import com.intellij.psi.PsiClass
+import com.intellij.psi.PsiEnumConstant
+import com.intellij.psi.PsiField
+import com.intellij.psi.PsiMember
+import com.intellij.psi.PsiMethod
+
+internal enum class MemberType {
+  METHOD,
+  CLASS,
+  FIELD,
+  ENUM_CONSTANT;
+
+  companion object {
+    internal fun create(psiMember: PsiMember): MemberType? =
+      when (psiMember) {
+        is PsiMethod -> METHOD
+        is PsiClass -> CLASS
+        is PsiEnumConstant -> ENUM_CONSTANT
+        is PsiField -> FIELD
+        else -> null
+      }
+
+    internal fun create(member: Member): MemberType =
+      when (member) {
+        is Member.Method -> METHOD
+        is Member.Class -> CLASS
+        is Member.Field -> FIELD
+        is Member.EnumConstant -> ENUM_CONSTANT
+      }
+
+  }
+}

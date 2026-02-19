@@ -19,8 +19,6 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * Represents a Java constructor call or enum constant.
- *
- * @author ven
  */
 public interface PsiConstructorCall extends PsiCall {
   /**

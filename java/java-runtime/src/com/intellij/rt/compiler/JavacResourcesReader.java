@@ -136,6 +136,7 @@ public final class JavacResourcesReader {
       super(MSG_IGNORED, new String[]{"compiler.warn.warning", messageKey});
     }
 
+    @Override
     public String getCategoryValue(ResourceBundle messagesBundle) {
       return messagesBundle.getString(keys[0]) + MessageFormat.format(messagesBundle.getString(keys[1]), "");
     }

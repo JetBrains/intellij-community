@@ -13,8 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import java.lang.Object;
-
 public class A<caret> extends Object {
   void foo() {
     Object myObject = new Object(){};

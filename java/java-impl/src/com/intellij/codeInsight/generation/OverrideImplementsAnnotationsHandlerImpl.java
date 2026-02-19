@@ -1,14 +1,14 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInsight.generation;
 
-import com.intellij.application.options.CodeStyle;
 import com.intellij.codeInsight.AnnotationUtil;
+import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiModifierListOwner;
-import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.util.ArrayUtilRt;
 import org.jetbrains.annotations.NotNull;
@@ -16,28 +16,20 @@ import org.jetbrains.annotations.NotNull;
 import java.util.ArrayList;
 import java.util.List;
 
-public class OverrideImplementsAnnotationsHandlerImpl implements OverrideImplementsAnnotationsHandler {
-  @Override
-  public String[] getAnnotations(Project project) {
-    List<String> annotations = getCoreAnnotations(project);
-
-    CodeStyleSettings settings = CodeStyle.getSettings(project);
-    annotations.addAll(settings.getCustomSettings(JavaCodeStyleSettings.class).getRepeatAnnotations());
-
-    return ArrayUtilRt.toStringArray(annotations);
-  }
-
+public final class OverrideImplementsAnnotationsHandlerImpl implements OverrideImplementsAnnotationsHandler {
   @Override
   public void transferToTarget(String annotation, PsiModifierListOwner source, PsiModifierListOwner target) {
-    NullableNotNullManager manager = NullableNotNullManager.getInstance(source.getProject());
-    String correctedAnnotation;
-    if (manager.getNullables().contains(annotation) && !annotation.equals(manager.getDefaultNullable())) {
-      correctedAnnotation = manager.getDefaultNullable();
+    Project project = source.getProject();
+    NullableNotNullManager manager = NullableNotNullManager.getInstance(project);
+    String correctedAnnotation = null;
+    if (manager.getNullables().contains(annotation)) {
+      correctedAnnotation = manager.getDefaultAnnotation(Nullability.NULLABLE, target);
     }
-    else if (manager.getNotNulls().contains(annotation) && !annotation.equals(manager.getDefaultNotNull())) {
-      correctedAnnotation = manager.getDefaultNotNull();
+    else if (manager.getNotNulls().contains(annotation)) {
+      correctedAnnotation = manager.getDefaultAnnotation(Nullability.NOT_NULL, target);
     }
-    else {
+    if (correctedAnnotation == null || 
+        JavaPsiFacade.getInstance(project).findClass(correctedAnnotation, target.getResolveScope()) == null) {
       correctedAnnotation = annotation;
     }
     OverrideImplementsAnnotationsHandler.super.transferToTarget(correctedAnnotation, source, target);
@@ -50,8 +42,7 @@ public class OverrideImplementsAnnotationsHandlerImpl implements OverrideImpleme
     return ArrayUtilRt.toStringArray(annotations);
   }
 
-  @NotNull
-  private static List<String> getCoreAnnotations(Project project) {
+  private static @NotNull List<String> getCoreAnnotations(Project project) {
     List<String> annotations = new ArrayList<>();
 
     NullableNotNullManager manager = NullableNotNullManager.getInstance(project);

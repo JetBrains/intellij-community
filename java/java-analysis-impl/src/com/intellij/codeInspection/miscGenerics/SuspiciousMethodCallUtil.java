@@ -1,25 +1,56 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.miscGenerics;
 
 import com.intellij.codeInsight.daemon.impl.analysis.JavaGenericsUtil;
 import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.openapi.util.NullableLazyValue;
-import com.intellij.psi.*;
+import com.intellij.pom.java.JavaFeature;
+import com.intellij.psi.CommonClassNames;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.JavaResolveResult;
+import com.intellij.psi.PsiCapturedWildcardType;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiClassType;
+import com.intellij.psi.PsiConditionalExpression;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiMethodCallExpression;
+import com.intellij.psi.PsiParameter;
+import com.intellij.psi.PsiPrimitiveType;
+import com.intellij.psi.PsiReferenceExpression;
+import com.intellij.psi.PsiSubstitutor;
+import com.intellij.psi.PsiSuperExpression;
+import com.intellij.psi.PsiThisExpression;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypeParameter;
+import com.intellij.psi.PsiWildcardType;
 import com.intellij.psi.impl.source.resolve.graphInference.PsiPolyExpressionUtil;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.util.*;
+import com.intellij.psi.util.InheritanceUtil;
+import com.intellij.psi.util.MethodSignature;
+import com.intellij.psi.util.MethodSignatureUtil;
+import com.intellij.psi.util.PsiFormatUtil;
+import com.intellij.psi.util.PsiFormatUtilBase;
+import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
 import com.siyeh.ig.callMatcher.CallMatcher;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.TypeUtils;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
+
+import static com.intellij.openapi.util.NullableLazyValue.lazyNullable;
 
 public final class SuspiciousMethodCallUtil {
 
@@ -43,7 +74,7 @@ public final class SuspiciousMethodCallUtil {
 
       addSingleParameterMethod(patternMethods, collectionClass, "contains", object);
 
-      if (PsiUtil.isLanguageLevel5OrHigher(collectionClass)) {
+      if (PsiUtil.isAvailable(JavaFeature.GENERICS, collectionClass)) {
         PsiClassType wildcardCollection = javaPsiFacade.getElementFactory().createType(collectionClass, PsiWildcardType.createUnbounded(manager));
         addSingleParameterMethod(patternMethods, collectionClass, "removeAll", wildcardCollection);
         addSingleParameterMethod(patternMethods, collectionClass, "retainAll", wildcardCollection);
@@ -206,13 +237,12 @@ public final class SuspiciousMethodCallUtil {
            MethodSignatureUtil.findMethodBySignature(bClass, inheritorCandidate.getSignature(substitutor), false) == base;
   }
 
-  @Nullable
-  public static @InspectionMessage String getSuspiciousMethodCallMessage(@NotNull PsiMethodCallExpression methodCall,
-                                                                         PsiExpression arg,
-                                                                         PsiType argType,
-                                                                         boolean reportConvertibleMethodCalls,
-                                                                         @NotNull List<PatternMethod> patternMethods,
-                                                                         int idx) {
+  public static @Nullable @InspectionMessage String getSuspiciousMethodCallMessage(@NotNull PsiMethodCallExpression methodCall,
+                                                                                   PsiExpression arg,
+                                                                                   PsiType argType,
+                                                                                   boolean reportConvertibleMethodCalls,
+                                                                                   @NotNull List<PatternMethod> patternMethods,
+                                                                                   int idx) {
     final PsiReferenceExpression methodExpression = methodCall.getMethodExpression();
 
     if (arg instanceof PsiConditionalExpression &&
@@ -224,12 +254,11 @@ public final class SuspiciousMethodCallUtil {
     return getSuspiciousMethodCallMessage(methodExpression, argType, reportConvertibleMethodCalls, patternMethods, idx);
   }
 
-  @Nullable
-  static @InspectionMessage String getSuspiciousMethodCallMessage(PsiReferenceExpression methodExpression,
-                                                                  PsiType argType,
-                                                                  boolean reportConvertibleMethodCalls,
-                                                                  @NotNull List<PatternMethod> patternMethods,
-                                                                  int argIdx) {
+  static @Nullable @InspectionMessage String getSuspiciousMethodCallMessage(PsiReferenceExpression methodExpression,
+                                                                            PsiType argType,
+                                                                            boolean reportConvertibleMethodCalls,
+                                                                            @NotNull List<PatternMethod> patternMethods,
+                                                                            int argIdx) {
     final PsiExpression qualifier = methodExpression.getQualifierExpression();
     if (qualifier == null || qualifier instanceof PsiThisExpression || qualifier instanceof PsiSuperExpression) return null;
     if (argType instanceof PsiPrimitiveType) {
@@ -240,9 +269,8 @@ public final class SuspiciousMethodCallUtil {
 
     final JavaResolveResult resolveResult = methodExpression.advancedResolve(false);
     PsiElement element = resolveResult.getElement();
-    if (!(element instanceof PsiMethod)) return null;
-    PsiMethod calleeMethod = (PsiMethod)element;
-    NullableLazyValue<PsiMethod> lazyContextMethod = NullableLazyValue.createValue(() -> PsiTreeUtil.getParentOfType(methodExpression, PsiMethod.class));
+    if (!(element instanceof PsiMethod calleeMethod)) return null;
+    NullableLazyValue<PsiMethod> lazyContextMethod = lazyNullable(() -> PsiTreeUtil.getParentOfType(methodExpression, PsiMethod.class));
 
     //noinspection SynchronizationOnLocalVariableOrMethodParameter
     synchronized (patternMethods) {
@@ -356,7 +384,8 @@ public final class SuspiciousMethodCallUtil {
     return false;
   }
 
-  static class PatternMethod {
+  @ApiStatus.Internal
+  public static final class PatternMethod {
     PsiMethod patternMethod;
     int typeParameterIdx;
     int argIdx;

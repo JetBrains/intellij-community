@@ -3,7 +3,6 @@ package com.jetbrains.python.codeInsight.typing
 
 import com.intellij.openapi.util.Ref
 import com.jetbrains.python.PyNames
-import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider.getReturnTypeAnnotation
 import com.jetbrains.python.psi.PyCallable
 import com.jetbrains.python.psi.PyFunction
 import com.jetbrains.python.psi.PyNamedParameter
@@ -35,7 +34,7 @@ class PyAncestorTypeProvider : PyTypeProviderBase() {
     if (callable is PyFunction) {
       val typeFromSupertype = getReturnTypeFromSupertype(callable, context)
       if (typeFromSupertype != null) {
-        return Ref.create(PyTypingTypeProvider.toAsyncIfNeeded(callable, typeFromSupertype.get()))
+        return typeFromSupertype
       }
     }
     return null
@@ -87,10 +86,12 @@ private fun getReturnTypeFromSupertype(function: PyFunction, context: TypeEvalCo
   val overriddenFunction = getOverriddenFunction(function, context)
 
   if (overriddenFunction != null) {
-    val superFunctionAnnotation = getReturnTypeAnnotation(overriddenFunction, context)
+    val superFunctionAnnotation = PyTypingTypeProvider.getReturnTypeAnnotation(overriddenFunction, context)
     if (superFunctionAnnotation != null) {
-      val typeRef = PyTypingTypeProvider.getType(superFunctionAnnotation, PyTypingTypeProvider.Context(context))
-      typeRef?.let { return Ref.create(PyTypingTypeProvider.toAsyncIfNeeded(function, it.get())) }
+      val typeRef = PyTypingTypeProvider.getType(superFunctionAnnotation, context)
+      if (typeRef != null && function.isAsync == overriddenFunction.isAsync) {
+        return Ref.create(PyTypingTypeProvider.toAsyncIfNeeded(function, typeRef.get()))
+      }
     }
   }
   return null

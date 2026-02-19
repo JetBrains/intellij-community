@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.analysis;
 
 import com.intellij.codeInsight.intention.PsiElementBaseIntentionAction;
@@ -50,9 +36,8 @@ public class AddSchemaPrefixIntention extends PsiElementBaseIntentionAction {
     setText(XmlBundle.message("xml.intention.insert.namespace.prefix.name"));
   }
 
-  @NotNull
   @Override
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return getText();
   }
 
@@ -92,7 +77,7 @@ public class AddSchemaPrefixIntention extends PsiElementBaseIntentionAction {
         .withName(XmlBundle.message("xml.intention.insert.namespace.prefix.command")).run(() -> {
         tag.accept(new XmlRecursiveElementVisitor() {
           @Override
-          public void visitXmlTag(XmlTag tag) {
+          public void visitXmlTag(@NotNull XmlTag tag) {
             if (tag.getNamespace().equals(namespace) && tag.getNamespacePrefix().isEmpty()) {
               tags.add(tag);
             }
@@ -100,7 +85,7 @@ public class AddSchemaPrefixIntention extends PsiElementBaseIntentionAction {
           }
 
           @Override
-          public void visitXmlAttributeValue(XmlAttributeValue value) {
+          public void visitXmlAttributeValue(@NotNull XmlAttributeValue value) {
             PsiReference ref = null;
             boolean skip = false;
             for (PsiReference reference : value.getReferences()) {
@@ -153,11 +138,9 @@ public class AddSchemaPrefixIntention extends PsiElementBaseIntentionAction {
     return getXmlnsDeclaration(element) != null;
   }
 
-  @Nullable
-  private static XmlAttribute getXmlnsDeclaration(PsiElement element) {
+  private static @Nullable XmlAttribute getXmlnsDeclaration(PsiElement element) {
     final PsiElement parent = element.getParent();
-    if (parent instanceof XmlTag) {
-      XmlTag tag = (XmlTag)parent;
+    if (parent instanceof XmlTag tag) {
       if (tag.getNamespacePrefix().isEmpty()) {
         while (tag != null) {
           final XmlAttribute attr = tag.getAttribute("xmlns");

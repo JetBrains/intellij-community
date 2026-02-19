@@ -1,15 +1,17 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.ui;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JTree;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
-import java.awt.*;
+import java.awt.Color;
+import java.awt.Graphics;
+import java.awt.Rectangle;
 import java.util.Enumeration;
 
 public final class DuplicateNodeRenderer {
@@ -32,8 +34,7 @@ public final class DuplicateNodeRenderer {
       TreePath accumPath = null;
       while (node != null) {
         Object userObject = node.getUserObject();
-        if (!(userObject instanceof DuplicatableNode)) break;
-        DuplicatableNode duplicatableNode = (DuplicatableNode)userObject;
+        if (!(userObject instanceof DuplicatableNode duplicatableNode)) break;
         Object duplicate = duplicatableNode.getDuplicate();
         if (duplicate == null) break;
         accumPath = accumRect == null ? path : accumPath.getParentPath();
@@ -57,8 +58,7 @@ public final class DuplicateNodeRenderer {
     g.setColor(old);
   }
 
-  @NotNull
-  private static Rectangle union(Rectangle r1, Rectangle r2) {
+  private static @NotNull Rectangle union(Rectangle r1, Rectangle r2) {
     if (r1 == null) return r2;
     if (r2 == null) return r1;
     return r1.union(r2);

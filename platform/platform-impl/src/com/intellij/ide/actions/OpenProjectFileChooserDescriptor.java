@@ -1,27 +1,26 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions;
 
+import com.intellij.configurationStore.ProjectStorePathManager;
 import com.intellij.ide.highlighter.ProjectFileType;
 import com.intellij.ide.ui.ProductIcons;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
-import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.vfs.VfsUtil;
-import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.project.ProjectKt;
 import com.intellij.projectImport.ProjectOpenProcessor;
 import com.intellij.util.SystemProperties;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.Icon;
+import java.nio.file.InvalidPathException;
+import java.nio.file.Path;
 
 /**
  * Intended for use in actions related to opening or importing existing projects.
  * <strong>Due to a high I/O impact SHOULD NOT be used in any other cases.</strong>
  */
 public class OpenProjectFileChooserDescriptor extends FileChooserDescriptor {
-  private static final boolean ourCanInspectDirs = SystemProperties.getBooleanProperty("idea.chooser.lookup.for.project.dirs", true);
-
   public OpenProjectFileChooserDescriptor(boolean chooseFiles) {
     this(chooseFiles, chooseFiles);
   }
@@ -32,13 +31,8 @@ public class OpenProjectFileChooserDescriptor extends FileChooserDescriptor {
   }
 
   @Override
-  public boolean isFileVisible(VirtualFile file, boolean showHiddenFiles) {
-    return super.isFileVisible(file, showHiddenFiles) && (file.isDirectory() || isProjectFile(file));
-  }
-
-  @Override
-  public boolean isFileSelectable(VirtualFile file) {
-    return isProjectDirectory(file) || isProjectFile(file);
+  public boolean isFileSelectable(@Nullable VirtualFile file) {
+    return file != null && (isProjectDirectory(file) || isProjectFile(file));
   }
 
   @Override
@@ -47,7 +41,7 @@ public class OpenProjectFileChooserDescriptor extends FileChooserDescriptor {
       if (isIprFile(file) || isIdeaDirectory(file)) {
         return dressIcon(file, ProductIcons.getInstance().getProjectNodeIcon());
       }
-      Icon icon = getImporterIcon(file);
+      var icon = getImporterIcon(file);
       if (icon != null) {
         return dressIcon(file, icon);
       }
@@ -56,36 +50,34 @@ public class OpenProjectFileChooserDescriptor extends FileChooserDescriptor {
   }
 
   private static boolean canInspectDirectory(VirtualFile file) {
-    VirtualFile home = VfsUtil.getUserHomeDir();
-    if (home == null || VfsUtilCore.isAncestor(file, home, false)) {
-      return false;
-    }
-    if (VfsUtilCore.isAncestor(home, file, true)) {
-      return true;
-    }
-    if (SystemInfo.isUnix && file.isInLocalFileSystem()) {
-      VirtualFile parent = file.getParent();
-      if (parent != null && parent.getParent() == null) {
+    if (file.isInLocalFileSystem()) {
+      try {
+        var path = file.getFileSystem().getNioPath(file);
+        if (path == null || !path.startsWith(Path.of(SystemProperties.getUserHome()))) {
+          return false;
+        }
+      }
+      catch (InvalidPathException e) {
+        Logger.getInstance(OpenProjectFileChooserDescriptor.class).error(e);
         return false;
       }
     }
-    return ourCanInspectDirs;
+
+    return true;
   }
 
-  private static Icon getImporterIcon(VirtualFile file) {
-    ProjectOpenProcessor provider = ProjectOpenProcessor.getImportProvider(file);
-    if (provider != null) {
-      return file.isDirectory() && provider.lookForProjectsInDirectory() ? ProductIcons.getInstance().getProjectNodeIcon()
-                                                                         : provider.getIcon(file);
-    }
-    return null;
+  private static @Nullable Icon getImporterIcon(VirtualFile file) {
+    var provider = ProjectOpenProcessor.getImportProvider(file);
+    return provider == null ? null :
+           file.isDirectory() && provider.lookForProjectsInDirectory() ? ProductIcons.getInstance().getProjectNodeIcon() :
+           provider.getIcon(file);
   }
 
   public static boolean isProjectFile(@NotNull VirtualFile file) {
     return !file.isDirectory() && file.isValid() && (isIprFile(file) || hasImportProvider(file));
   }
 
-  private static boolean isProjectDirectory(@NotNull VirtualFile file) {
+  private static boolean isProjectDirectory(VirtualFile file) {
     return file.isDirectory() && file.isValid() && (isIdeaDirectory(file) || hasImportProvider(file));
   }
 
@@ -94,7 +86,7 @@ public class OpenProjectFileChooserDescriptor extends FileChooserDescriptor {
   }
 
   private static boolean isIdeaDirectory(VirtualFile file) {
-    return ProjectKt.getProjectStoreDirectory(file) != null;
+    return ProjectStorePathManager.Companion.getInstance().testStoreDirectoryExistsForProjectRoot(file);
   }
 
   private static boolean hasImportProvider(VirtualFile file) {

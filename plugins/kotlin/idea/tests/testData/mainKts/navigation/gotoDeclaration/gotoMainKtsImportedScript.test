@@ -1,0 +1,9 @@
+// EXPECTED_TEXT: println("Hi from imported")
+
+// FILE: gotoImportedScript.main.kts
+@file:Import("impo<caret>rted.kts")
+
+// FILE: imported.kts
+println("Hi from imported")
+
+

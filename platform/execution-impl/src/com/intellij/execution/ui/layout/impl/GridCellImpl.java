@@ -1,11 +1,19 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.ui.layout.impl;
 
-import com.intellij.execution.ui.layout.*;
+import com.intellij.execution.ui.layout.CellTransform;
+import com.intellij.execution.ui.layout.GridCell;
+import com.intellij.execution.ui.layout.PlaceInGrid;
+import com.intellij.execution.ui.layout.Tab;
+import com.intellij.execution.ui.layout.View;
+import com.intellij.execution.ui.layout.ViewContext;
 import com.intellij.execution.ui.layout.actions.CloseViewAction;
 import com.intellij.execution.ui.layout.actions.MinimizeViewAction;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionGroup;
-import com.intellij.openapi.actionSystem.DataProvider;
+import com.intellij.openapi.actionSystem.DataSink;
+import com.intellij.openapi.actionSystem.UiDataProvider;
+import com.intellij.openapi.application.impl.InternalUICustomization;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.DimensionService;
@@ -15,40 +23,47 @@ import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManager;
 import com.intellij.ui.tabs.JBTabPainter;
-import com.intellij.ui.tabs.JBTabs;
 import com.intellij.ui.tabs.TabInfo;
 import com.intellij.ui.tabs.TabsListener;
-import com.intellij.ui.tabs.impl.*;
-import com.intellij.ui.tabs.impl.singleRow.ScrollableSingleRowLayout;
-import com.intellij.ui.tabs.impl.singleRow.SingleRowLayout;
+import com.intellij.ui.tabs.impl.DefaultTabPainterAdapter;
+import com.intellij.ui.tabs.impl.DragHelper;
+import com.intellij.ui.tabs.impl.JBTabsImpl;
+import com.intellij.ui.tabs.impl.SingleHeightTabs;
+import com.intellij.ui.tabs.impl.TabLabel;
+import com.intellij.ui.tabs.impl.TabPainterAdapter;
 import com.intellij.util.SmartList;
 import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.SwingUtilities;
+import java.awt.BorderLayout;
+import java.awt.Component;
+import java.awt.Dimension;
+import java.awt.Image;
+import java.awt.Point;
+import java.awt.Window;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+@ApiStatus.Internal
 public final class GridCellImpl implements GridCell {
   private final GridImpl myContainer;
 
-  private final MutualMap<Content, TabInfo> myContents = new MutualMap<>(true);
   private final Set<Content> myMinimizedContents = new HashSet<>();
 
-  private final JBTabs myTabs;
+  private final GridCellTabs myTabs;
   private final GridImpl.Placeholder myPlaceholder;
   private final PlaceInGrid myPlaceInGrid;
 
   private final ViewContextEx myContext;
   private JBPopup myPopup;
 
-  public GridCellImpl(ViewContextEx context, @NotNull GridImpl container, GridImpl.Placeholder placeholder, PlaceInGrid placeInGrid) {
+  GridCellImpl(ViewContextEx context, @NotNull GridImpl container, GridImpl.Placeholder placeholder, PlaceInGrid placeInGrid) {
     myContext = context;
     myContainer = container;
 
@@ -56,19 +71,6 @@ public final class GridCellImpl implements GridCell {
     myPlaceholder = placeholder;
     myPlaceholder.setContentProvider(() -> getContents());
     myTabs = new GridCellTabs(context, container);
-    myTabs.setDataProvider(dataId -> {
-      if (ViewContext.CONTENT_KEY.is(dataId)) {
-        TabInfo target = myTabs.getTargetInfo();
-        if (target != null) {
-          return new Content[]{getContentFor(target)};
-        }
-      }
-      else if (ViewContext.CONTEXT_KEY.is(dataId)) {
-        return myContext;
-      }
-
-      return null;
-    });
 
     myTabs.getPresentation().setSideComponentVertical(true)
       .setFocusCycle(false).setPaintFocus(true)
@@ -116,8 +118,8 @@ public final class GridCellImpl implements GridCell {
   }
 
   void add(final Content content) {
-    if (myContents.containsKey(content)) return;
-    myContents.put(content, null);
+    if (myTabs.myContents.containsKey(content)) return;
+    myTabs.myContents.put(content, null);
 
     revalidateCell(() -> myTabs.addTab(createTabInfoFor(content)));
 
@@ -125,10 +127,10 @@ public final class GridCellImpl implements GridCell {
   }
 
   void remove(Content content) {
-    if (!myContents.containsKey(content)) return;
+    if (!myTabs.myContents.containsKey(content)) return;
 
     final TabInfo info = getTabFor(content);
-    myContents.remove(content);
+    myTabs.myContents.remove(content);
 
     revalidateCell(() -> myTabs.removeTab(info));
 
@@ -136,7 +138,7 @@ public final class GridCellImpl implements GridCell {
   }
 
   private void revalidateCell(Runnable contentAction) {
-    if (myContents.size() == 0) {
+    if (myTabs.myContents.size() == 0) {
       myPlaceholder.removeAll();
       myTabs.removeAllTabs();
 
@@ -169,8 +171,8 @@ public final class GridCellImpl implements GridCell {
       .setPreferredFocusableComponent(content.getPreferredFocusableComponent())
       .setActionsContextComponent(content.getActionsContextComponent());
 
-    myContents.remove(content);
-    myContents.put(content, tabInfo);
+    myTabs.myContents.remove(content);
+    myTabs.myContents.put(content, tabInfo);
 
     ActionGroup group = (ActionGroup)myContext.getActionManager().getAction(RunnerContentUi.VIEW_TOOLBAR);
     tabInfo.setTabLabelActions(group, ViewContext.CELL_TOOLBAR_PLACE);
@@ -178,8 +180,7 @@ public final class GridCellImpl implements GridCell {
     return tabInfo;
   }
 
-  @Nullable
-  private static TabInfo updatePresentation(TabInfo info, Content content) {
+  private static @Nullable TabInfo updatePresentation(TabInfo info, Content content) {
     if (info == null) {
       return null;
     }
@@ -189,11 +190,12 @@ public final class GridCellImpl implements GridCell {
       setText(content.getDisplayName()).
       setTooltipText(content.getDescription()).
       setActionsContextComponent(content.getActionsContextComponent()).
-      setActions(content.getActions(), content.getPlace());
+      setActions(content.getActions(), content.getPlace()).
+      setTabColor(content.getTabColor());
   }
 
   public ActionCallback select(final Content content, final boolean requestFocus) {
-    final TabInfo tabInfo = myContents.getValue(content);
+    final TabInfo tabInfo = myTabs.myContents.getValue(content);
     return tabInfo != null ? myTabs.select(tabInfo, requestFocus) : ActionCallback.DONE;
   }
 
@@ -226,7 +228,7 @@ public final class GridCellImpl implements GridCell {
     return myTabs.getComponent().isAncestorOf(c);
   }
 
-  private static final class ProviderWrapper extends NonOpaquePanel implements DataProvider {
+  private static final class ProviderWrapper extends NonOpaquePanel implements UiDataProvider {
     Content myContent;
     ViewContext myContext;
 
@@ -238,26 +240,19 @@ public final class GridCellImpl implements GridCell {
     }
 
     @Override
-    @Nullable
-    public Object getData(@NotNull @NonNls final String dataId) {
-      if (ViewContext.CONTENT_KEY.is(dataId)) {
-        return new Content[]{myContent};
-      }
-      else if (ViewContext.CONTEXT_KEY.is(dataId)) {
-        return myContext;
-      }
-      return null;
+    public void uiDataSnapshot(@NotNull DataSink sink) {
+      sink.set(ViewContext.CONTENT_KEY, new Content[]{myContent});
+      sink.set(ViewContext.CONTEXT_KEY, myContext);
     }
   }
 
   @Nullable
   TabInfo getTabFor(Content content) {
-    return myContents.getValue(content);
+    return myTabs.myContents.getValue(content);
   }
 
-  @NotNull
-  private Content getContentFor(TabInfo tab) {
-    return myContents.getKey(tab);
+  private @NotNull Content getContentFor(TabInfo tab) {
+    return myTabs.myContents.getKey(tab);
   }
 
   public void setToolbarHorizontal(final boolean horizontal) {
@@ -304,18 +299,18 @@ public final class GridCellImpl implements GridCell {
   }
 
   Content[] getContents() {
-    return myContents.getKeys().toArray(new Content[myContents.size()]);
+    return myTabs.myContents.getKeys().toArray(new Content[myTabs.myContents.size()]);
   }
 
   @Override
   public int getContentCount() {
-    return myContents.size();
+    return myTabs.myContents.size();
   }
 
   public void saveUiState() {
     saveProportions();
 
-    for (Content each : myContents.getKeys()) {
+    for (Content each : myTabs.myContents.getKeys()) {
       saveState(each, false);
     }
 
@@ -328,7 +323,7 @@ public final class GridCellImpl implements GridCell {
     service.setSize(getDimensionKey(), size, myContext.getProject());
     if (myContext.getWindow() != 0) {
       final Window frame = SwingUtilities.getWindowAncestor(myPlaceholder);
-      if (frame != null) {
+      if (frame != null && frame.isShowing()) {
         service.setLocation(getDimensionKey(), frame.getLocationOnScreen());
       }
     }
@@ -362,7 +357,7 @@ public final class GridCellImpl implements GridCell {
     ContentManager contentManager = myContext.getContentManager();
     if (contentManager.isDisposed()) return;
 
-    for (Content each : myContents.getKeys()) {
+    for (Content each : myTabs.myContents.getKeys()) {
       final TabInfo eachTab = getTabFor(each);
       boolean isSelected = eachTab != null && myTabs.getSelectedInfo() == eachTab;
       if (isSelected && isShowing) {
@@ -398,13 +393,11 @@ public final class GridCellImpl implements GridCell {
     }
   }
 
-  @Nullable
-  public Point getLocation() {
+  public @Nullable Point getLocation() {
     return DimensionService.getInstance().getLocation(getDimensionKey(), myContext.getProject());
   }
 
-  @Nullable
-  public Dimension getSize() {
+  public @Nullable Dimension getSize() {
     return DimensionService.getInstance().getSize(getDimensionKey(), myContext.getProject());
   }
 
@@ -439,10 +432,18 @@ public final class GridCellImpl implements GridCell {
   }
 
   private static final class GridCellTabs extends SingleHeightTabs {
-    private final ViewContextEx myContext;
+    final ViewContextEx myContext;
+    final MutualMap<Content, TabInfo> myContents = new MutualMap<>(true);
 
     @Override
-    protected TabPainterAdapter createTabPainterAdapter() {
+    protected @NotNull TabPainterAdapter createTabPainterAdapter() {
+      InternalUICustomization customization = InternalUICustomization.getInstance();
+      if (customization != null) {
+        TabPainterAdapter painter = customization.getDebuggerTabPainterAdapter();
+        if (painter != null) {
+          return painter;
+        }
+      }
       return new DefaultTabPainterAdapter(JBTabPainter.getDEBUGGER());
     }
 
@@ -450,8 +451,28 @@ public final class GridCellImpl implements GridCell {
       super(context.getProject(), context.getFocusManager(), container);
 
       myContext = context;
-      JBRunnerTabsBase tabs = ((RunnerContentUi)myContext).myTabs;
-      ((JBTabsImpl)tabs).addNestedTabs(this, myContext);
+      JBRunnerTabsBase tabs = ((RunnerContentUi)myContext).tabs;
+      ((JBTabsImpl)tabs).addNestedTabs(this, container);
+    }
+
+    @Override
+    public void uiDataSnapshot(@NotNull DataSink sink) {
+      super.uiDataSnapshot(sink);
+      TabInfo target = getTargetInfo();
+      Content content = target == null ? null : myContents.getKey(target);
+      sink.set(ViewContext.CONTENT_KEY, content == null ? null : new Content[]{content});
+      sink.set(ViewContext.CONTEXT_KEY, myContext);
+    }
+
+    @Override
+    protected @NotNull DragHelper createDragHelper(@NotNull JBTabsImpl tabs,
+                                                   @NotNull Disposable parentDisposable) {
+      return new DragHelper(tabs, parentDisposable) {
+        @Override
+        protected boolean canFinishDragging(@NotNull MouseEvent me) {
+          return true;
+        }
+      };
     }
 
     @Override
@@ -460,34 +481,23 @@ public final class GridCellImpl implements GridCell {
     }
 
     @Override
-    protected SingleRowLayout createSingleRowLayout() {
-      return new ScrollableSingleRowLayout(this);
+    public void processDropOver(@NotNull TabInfo over, @NotNull RelativePoint point) {
+      ((RunnerContentUi)myContext).tabs.processDropOver(over, point);
     }
 
     @Override
-    public int tabMSize() {
-      return 12;
+    public @NotNull Image startDropOver(@NotNull TabInfo tabInfo, @NotNull RelativePoint point) {
+      return ((RunnerContentUi)myContext).tabs.startDropOver(tabInfo, point);
     }
 
     @Override
-    public void processDropOver(TabInfo over, RelativePoint point) {
-      ((RunnerContentUi)myContext).myTabs.processDropOver(over, point);
+    public void resetDropOver(@NotNull TabInfo tabInfo) {
+      ((RunnerContentUi)myContext).tabs.resetDropOver(tabInfo);
     }
 
     @Override
-    public Image startDropOver(TabInfo tabInfo, RelativePoint point) {
-      return ((RunnerContentUi)myContext).myTabs.startDropOver(tabInfo, point);
-    }
-
-    @Override
-    public void resetDropOver(TabInfo tabInfo) {
-      ((RunnerContentUi)myContext).myTabs.resetDropOver(tabInfo);
-    }
-
-    @NotNull
-    @Override
-    protected TabLabel createTabLabel(@NotNull TabInfo info) {
-      return new SingleHeightTabs.SingleHeightLabel(this, info) {
+    protected @NotNull TabLabel createTabLabel(@NotNull TabInfo info) {
+      return new SingleHeightLabel(this, info) {
         @Override
         public void setAlignmentToCenter(boolean toCenter) {
           super.setAlignmentToCenter(false);

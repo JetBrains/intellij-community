@@ -15,12 +15,8 @@
  */
 package com.intellij.java.codeInsight.daemon;
 
-import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInsight.daemon.DaemonAnalyzerTestCase;
-import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
-import com.intellij.codeInspection.ex.InspectionProfileModifiableModel;
-import com.intellij.codeInspection.javaDoc.JavaDocLocalInspection;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkModificator;
 import com.intellij.openapi.projectRoots.impl.ProjectRootUtil;
@@ -33,7 +29,6 @@ import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.testFramework.InspectionsKt;
-import com.intellij.util.Consumer;
 
 public class ScanAllJdkSourceTest extends DaemonAnalyzerTestCase {
   public void testAll() throws Exception {
@@ -56,15 +51,12 @@ public class ScanAllJdkSourceTest extends DaemonAnalyzerTestCase {
       return null;
     });
 
-    Consumer<InspectionProfileModifiableModel> consumer = it -> it.setErrorLevel(HighlightDisplayKey.find(JavaDocLocalInspection.SHORT_NAME), HighlightDisplayLevel.WARNING, getProject());
-    inspectionProfile.modifyProfile(consumer);
     try {
       for (PsiDirectory root : ProjectRootUtil.getSourceRootDirectories(myProject)) {
         doScan(root);
       }
     }
     finally {
-      inspectionProfile.modifyProfile(consumer);
       profileManager.deleteProfile(inspectionProfile.getName());
     }
   }

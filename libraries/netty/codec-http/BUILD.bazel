@@ -1,0 +1,34 @@
+### auto-generated section `build intellij.libraries.netty.codec.http` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "libraries-netty-codec-http_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "libraries-netty-codec-http",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  resources = [":libraries-netty-codec-http_resources"],
+  exports = ["@lib//:netty-codec-http"],
+  runtime_deps = [
+    "@lib//:netty-codec-http",
+    "//libraries/netty/buffer",
+  ]
+)
+
+jvm_library(
+  name = "libraries-netty-codec-http_test_lib",
+  module_name = "intellij.libraries.netty.codec.http",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  kotlinc_opts = "@community//:k8",
+  exports = ["@lib//:netty-codec-http"],
+  runtime_deps = [
+    ":libraries-netty-codec-http",
+    "//libraries/netty/buffer:buffer_test_lib",
+  ]
+)
+### auto-generated section `build intellij.libraries.netty.codec.http` end

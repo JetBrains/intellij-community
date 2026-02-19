@@ -95,11 +95,23 @@
   <item name='java.awt.Component java.awt.Point location()'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
+  <item name='java.awt.Component java.awt.Rectangle bounds()'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.awt.Component java.awt.Rectangle getBounds()'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
   <item name='java.awt.Component void firePropertyChange(java.lang.String, boolean, boolean) 0'>
     <annotation name='org.jetbrains.annotations.NonNls'/>
   </item>
   <item name='java.awt.Component void firePropertyChange(java.lang.String, java.lang.Object, java.lang.Object) 0'>
     <annotation name='org.jetbrains.annotations.NonNls'/>
+  </item>
+    <item name='java.awt.Component void resize(java.awt.Dimension) 0'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+  <item name='java.awt.Component void setBounds(java.awt.Rectangle) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
   <item name='java.awt.Component void setLocation(java.awt.Point) 0'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
@@ -107,7 +119,10 @@
     <item name='java.awt.Component void setName(java.lang.String) 0'>
         <annotation name='org.jetbrains.annotations.NonNls'/>
     </item>
-    <item name='java.awt.Container void add(java.awt.Component, java.lang.Object) 0'>
+  <item name='java.awt.Component void setSize(java.awt.Dimension) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.awt.Container void add(java.awt.Component, java.lang.Object) 0'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
   <item name="java.awt.Container void addPropertyChangeListener(java.lang.String, java.beans.PropertyChangeListener) 0">
@@ -149,6 +164,9 @@
       <val name="intValues" val="{java.awt.FlowLayout.LEFT, java.awt.FlowLayout.CENTER, java.awt.FlowLayout.RIGHT, java.awt.FlowLayout.LEADING, java.awt.FlowLayout.TRAILING}" />
     </annotation>
   </item>
+  <item name='java.awt.FlowLayout java.lang.String toString()'>
+    <annotation name='org.jetbrains.annotations.NonNls'/>
+  </item>
   <item name="java.awt.FlowLayout void setAlignment(int) 0">
     <annotation name="org.intellij.lang.annotations.MagicConstant">
       <val name="intValues" val="{java.awt.FlowLayout.LEFT, java.awt.FlowLayout.CENTER, java.awt.FlowLayout.RIGHT, java.awt.FlowLayout.LEADING, java.awt.FlowLayout.TRAILING}" />
@@ -185,7 +203,10 @@
       <val name="flags" val="{java.awt.Font.PLAIN, java.awt.Font.BOLD, java.awt.Font.ITALIC}" />
     </annotation>
   </item>
-  <item name='java.awt.FontMetrics int stringWidth(java.lang.String) 0'>
+    <item name='java.awt.Font java.lang.String getFamily(java.util.Locale) 0'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='java.awt.FontMetrics int stringWidth(java.lang.String) 0'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
   <item name='java.awt.Graphics void drawString(java.lang.String, int, int) 0'>
@@ -206,6 +227,9 @@
     <annotation name="org.intellij.lang.annotations.MagicConstant">
       <val name="intValues" val="{java.awt.Label.LEFT, java.awt.Label.CENTER, java.awt.Label.RIGHT}" />
     </annotation>
+  </item>
+  <item name='java.awt.MouseInfo java.awt.PointerInfo getPointerInfo()'>
+    <annotation name='org.jetbrains.annotations.UnknownNullability'/>
   </item>
   <item name='java.awt.Point Point(java.awt.Point) 0'>
     <annotation name='org.jetbrains.annotations.NotNull'/>

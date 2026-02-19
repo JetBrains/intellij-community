@@ -1,0 +1,21 @@
+================ Step #1 =================
+Cleaning output files:
+  ppp/Service.class
+End of files
+Compiling files:
+  java/methodModifiers/changePrivateToProtected/a/ppp/Service.java
+End of files
+Cleaning output files:
+  ppp/Client.class
+  ppp/ClientDerived.class
+  ppp/DerivedService.class
+  qqq/DerivedService.class
+End of files
+Compiling files:
+  java/methodModifiers/changePrivateToProtected/a/ppp/Client.java
+  java/methodModifiers/changePrivateToProtected/a/ppp/ClientDerived.java
+  java/methodModifiers/changePrivateToProtected/a/ppp/DerivedService.java
+  java/methodModifiers/changePrivateToProtected/a/qqq/DerivedService.java
+End of files
+------------------------------------------
+Exit code: ERROR

@@ -1,7 +1,6 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.incremental.java;
 
-import gnu.trove.TObjectIntHashMap;
 import org.jetbrains.jps.builders.java.JavaBuilderUtil;
 import org.jetbrains.jps.builders.java.dependencyView.Callbacks;
 import org.jetbrains.jps.incremental.CompileContext;
@@ -11,14 +10,22 @@ import org.jetbrains.jps.javac.ast.api.JavacRef;
 import org.jetbrains.jps.javac.ast.api.JavacTypeCast;
 
 import javax.lang.model.element.Modifier;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * register dependencies that are not discoverable from bytecode:
  * - references caused  by import statements
  * - references to fields initialized with compile-time constant values. Such values can be inlined into referencing bytecode
  */
-public class JpsReferenceDependenciesRegistrar implements JavacFileReferencesRegistrar {
+public final class JpsReferenceDependenciesRegistrar implements JavacFileReferencesRegistrar {
   @Override
   public void initialize() {
   }
@@ -31,7 +38,7 @@ public class JpsReferenceDependenciesRegistrar implements JavacFileReferencesReg
   @Override
   public void registerFile(CompileContext context,
                            String filePath,
-                           TObjectIntHashMap<? extends JavacRef> refs,
+                           Iterable<Map.Entry<? extends JavacRef, Integer>> refs,
                            Collection<? extends JavacDef> defs,
                            Collection<? extends JavacTypeCast> casts,
                            Collection<? extends JavacRef> implicitToString) {
@@ -47,11 +54,15 @@ public class JpsReferenceDependenciesRegistrar implements JavacFileReferencesReg
     if (definedClasses.isEmpty()) {
       return;
     }
-    if (!refs.isEmpty()) {
+
+    Iterator<Map.Entry<? extends JavacRef, Integer>> iterator = refs.iterator();
+    if (iterator.hasNext()) {
       final Set<String> classImports = new HashSet<>();
       final Set<String> staticImports = new HashSet<>();
       final Map<String, List<Callbacks.ConstantRef>> cRefs = new HashMap<>();
-      refs.forEachKey(ref -> {
+
+      while (iterator.hasNext()) {
+        JavacRef ref = iterator.next().getKey();
         final JavacRef.ImportProperties importProps = ref.getImportProperties();
         if (importProps != null) { // the reference comes from import list
           if (ref instanceof JavacRef.JavacClass) {
@@ -78,8 +89,8 @@ public class JpsReferenceDependenciesRegistrar implements JavacFileReferencesReg
             refsList.add(Callbacks.createConstantReference(fieldRef.getOwnerName(), fieldRef.getName(), descriptor));
           }
         }
-        return true;
-      });
+      }
+
       if (!classImports.isEmpty() || !staticImports.isEmpty()) {
         final Callbacks.Backend reg = JavaBuilderUtil.getDependenciesRegistrar(context);
         for (String aClass : definedClasses) {

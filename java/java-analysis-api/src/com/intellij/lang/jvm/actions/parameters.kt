@@ -3,23 +3,23 @@ package com.intellij.lang.jvm.actions
 
 import com.intellij.lang.jvm.types.JvmType
 
-fun expectedParameter(type: JvmType, vararg names: String): ExpectedParameter {
+public fun expectedParameter(type: JvmType, vararg names: String): ExpectedParameter {
   return expectedParameter(expectedType(type, ExpectedType.Kind.SUPERTYPE), *names)
 }
 
-fun expectedParameter(expectedType: ExpectedType, vararg names: String): ExpectedParameter {
+public fun expectedParameter(expectedType: ExpectedType, vararg names: String): ExpectedParameter {
   return expectedParameter(listOf(expectedType), *names)
 }
 
-fun expectedParameter(types: List<ExpectedType>, vararg names: String): ExpectedParameter {
+public fun expectedParameter(types: List<ExpectedType>, vararg names: String): ExpectedParameter {
   return expectedParameter(types, names.toList())
 }
 
-fun expectedParameter(types: List<ExpectedType>, names: Collection<String>): ExpectedParameter {
+public fun expectedParameter(types: List<ExpectedType>, names: Collection<String>): ExpectedParameter {
   return SimpleExpectedParameter(types, names)
 }
 
-fun expectedParameter(type: JvmType, name: String, annotations: Collection<AnnotationRequest>): ExpectedParameter {
+public fun expectedParameter(type: JvmType, name: String, annotations: Collection<AnnotationRequest>): ExpectedParameter {
   return SimpleExpectedParameter(listOf(expectedType(type, ExpectedType.Kind.SUPERTYPE)), listOf(name), annotations)
 }
 

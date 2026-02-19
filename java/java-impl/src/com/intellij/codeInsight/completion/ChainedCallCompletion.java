@@ -1,11 +1,20 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.patterns.PsiMethodPattern;
 import com.intellij.patterns.StandardPatterns;
-import com.intellij.psi.*;
+import com.intellij.psi.CommonClassNames;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiClassType;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiModifierListOwner;
+import com.intellij.psi.PsiReferenceExpression;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypeParameter;
 import com.intellij.psi.filters.ElementFilter;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -17,9 +26,6 @@ import org.jetbrains.annotations.NotNull;
 
 import static com.intellij.patterns.PsiJavaPatterns.psiMethod;
 
-/**
- * @author peter
- */
 final class ChainedCallCompletion {
   static final PsiMethodPattern OBJECT_METHOD_PATTERN = psiMethod().withName(
     StandardPatterns.string().oneOf("hashCode", "equals", "finalize", "wait", "notify", "notifyAll", "getClass", "clone", "toString")).
@@ -68,8 +74,7 @@ final class ChainedCallCompletion {
       return false;
     }
 
-    if (object instanceof PsiMethod) {
-      final PsiMethod method = (PsiMethod)object;
+    if (object instanceof PsiMethod method) {
       if (psiMethod().withName("toArray").withParameterCount(1)
         .definedInClass(CommonClassNames.JAVA_UTIL_COLLECTION).accepts(method)) {
         return false;
@@ -80,11 +85,9 @@ final class ChainedCallCompletion {
       }
 
       final PsiType type = method.getReturnType();
-      if (type instanceof PsiClassType) {
-        final PsiClassType classType = (PsiClassType)type;
+      if (type instanceof PsiClassType classType) {
         final PsiClass psiClass = classType.resolve();
-        if (psiClass instanceof PsiTypeParameter && method.getTypeParameterList() == psiClass.getParent()) {
-          final PsiTypeParameter typeParameter = (PsiTypeParameter)psiClass;
+        if (psiClass instanceof PsiTypeParameter typeParameter && method.getTypeParameterList() == psiClass.getParent()) {
           if (typeParameter.getExtendsListTypes().length == 0) return false;
           if (!expectedType.isAssignableFrom(TypeConversionUtil.typeParameterErasure(typeParameter))) return false;
         }
@@ -116,7 +119,7 @@ final class ChainedCallCompletion {
     if (!"getClass".equals(((PsiMethod)object).getName())) return false;
 
     final PsiType type = parameters.getDefaultType();
-    @NonNls final String canonicalText = type.getCanonicalText();
+    final @NonNls String canonicalText = type.getCanonicalText();
     if ("java.lang.ClassLoader".equals(canonicalText)) return true;
     if (canonicalText.startsWith("java.lang.reflect.")) return true;
     return false;

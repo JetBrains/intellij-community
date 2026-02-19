@@ -17,7 +17,7 @@ import javax.swing.JComponent
 abstract class VcsCloneDialogExtensionComponent : Disposable {
   private val listeners = EventDispatcher.create(VcsCloneDialogComponentStateListener::class.java)
 
-  protected val dialogStateListener = listeners.multicaster
+  protected val dialogStateListener: VcsCloneDialogComponentStateListener = listeners.multicaster
 
   /**
    * Return main [JComponent] that will be displayed in center of get-from-vcs dialog when extension is selected.
@@ -68,5 +68,5 @@ abstract class VcsCloneDialogExtensionComponent : Disposable {
   @RequiresEdt
   abstract fun onComponentSelected()
 
-  final override fun dispose() = listeners.listeners.clear()
+  final override fun dispose(): Unit = listeners.listeners.clear()
 }

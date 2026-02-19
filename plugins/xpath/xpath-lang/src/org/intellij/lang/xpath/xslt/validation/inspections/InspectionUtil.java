@@ -20,7 +20,11 @@ import com.intellij.codeInspection.SuppressIntentionAction;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.xml.*;
+import com.intellij.psi.xml.XmlComment;
+import com.intellij.psi.xml.XmlDocument;
+import com.intellij.psi.xml.XmlProlog;
+import com.intellij.psi.xml.XmlTag;
+import com.intellij.psi.xml.XmlText;
 import org.intellij.lang.xpath.xslt.util.XsltCodeInsightUtil;
 import org.intellij.plugins.xpathView.XPathBundle;
 import org.jetbrains.annotations.NonNls;
@@ -34,8 +38,7 @@ import java.util.regex.Pattern;
 public final class InspectionUtil {
     static final Pattern SUPPRESSION_PATTERN = Pattern.compile("[ \t]*(?:noinspection|suppress)[ \t]+(\\w+(,[ \t]*\\w+)*)[ \t]*");
 
-    @NonNls
-    private static final String ALL_ID = "ALL";
+    private static final @NonNls String ALL_ID = "ALL";
 
     private InspectionUtil() {
     }
@@ -79,9 +82,8 @@ public final class InspectionUtil {
                 return isSuppressedAt(prevSibling, tool);
             }
         }
-        if (prevSibling instanceof XmlComment) {
-            final XmlComment comment = (XmlComment)prevSibling;
-            final String text = comment.getCommentText();
+        if (prevSibling instanceof XmlComment comment) {
+          final String text = comment.getCommentText();
             final Matcher matcher = SUPPRESSION_PATTERN.matcher(text);
             if (matcher.matches()) {
                 final String[] strings = matcher.group(1).split(",");

@@ -1,0 +1,58 @@
+### auto-generated section `build intellij.sh.plugin` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "plugin_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "plugin",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  resources = [":plugin_resources"]
+)
+
+jvm_library(
+  name = "plugin_test_lib",
+  module_name = "intellij.sh.plugin",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [":plugin"]
+)
+### auto-generated section `build intellij.sh.plugin` end
+
+### auto-generated section `build intellij.sh.plugin.main` start
+jvm_library(
+  name = "plugin-main",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    "//plugins/sh/plugin",
+    "//plugins/sh/core",
+    "//plugins/sh/backend",
+    "//plugins/sh/terminal",
+    "//plugins/sh/copyright",
+    "//plugins/sh/markdown",
+    "//plugins/sh/python",
+  ]
+)
+
+jvm_library(
+  name = "plugin-main_test_lib",
+  module_name = "intellij.sh.plugin.main",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    ":plugin-main",
+    "//plugins/sh/plugin:plugin_test_lib",
+    "//plugins/sh/core:core_test_lib",
+    "//plugins/sh/backend:backend_test_lib",
+    "//plugins/sh/terminal:terminal_test_lib",
+    "//plugins/sh/copyright:copyright_test_lib",
+    "//plugins/sh/markdown:markdown_test_lib",
+    "//plugins/sh/python:python_test_lib",
+  ]
+)
+### auto-generated section `build intellij.sh.plugin.main` end

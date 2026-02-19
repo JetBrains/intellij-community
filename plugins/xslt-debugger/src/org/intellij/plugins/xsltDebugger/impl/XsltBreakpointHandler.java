@@ -1,11 +1,11 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.intellij.plugins.xsltDebugger.impl;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
-import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
@@ -13,7 +13,11 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.xml.*;
+import com.intellij.psi.xml.XmlChildRole;
+import com.intellij.psi.xml.XmlElement;
+import com.intellij.psi.xml.XmlTag;
+import com.intellij.psi.xml.XmlToken;
+import com.intellij.psi.xml.XmlTokenType;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.breakpoints.XBreakpointHandler;
@@ -21,16 +25,17 @@ import com.intellij.xdebugger.breakpoints.XBreakpointProperties;
 import com.intellij.xdebugger.breakpoints.XLineBreakpoint;
 import org.intellij.plugins.xsltDebugger.VMPausedException;
 import org.intellij.plugins.xsltDebugger.XsltBreakpointType;
+import org.intellij.plugins.xsltDebugger.XsltDebuggerBundle;
 import org.intellij.plugins.xsltDebugger.rt.engine.Breakpoint;
 import org.intellij.plugins.xsltDebugger.rt.engine.BreakpointManager;
 import org.intellij.plugins.xsltDebugger.rt.engine.DebuggerStoppedException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class XsltBreakpointHandler extends XBreakpointHandler<XLineBreakpoint<XBreakpointProperties>> {
+public final class XsltBreakpointHandler extends XBreakpointHandler<XLineBreakpoint<XBreakpointProperties>> {
   private final XsltDebugProcess myXsltDebugProcess;
 
-  public XsltBreakpointHandler(XsltDebugProcess xsltDebugProcess, final Class<? extends XsltBreakpointType> typeClass) {
+  public XsltBreakpointHandler(XsltDebugProcess xsltDebugProcess, final Class<XsltBreakpointType> typeClass) {
     super(typeClass);
     myXsltDebugProcess = xsltDebugProcess;
   }
@@ -63,13 +68,13 @@ public class XsltBreakpointHandler extends XBreakpointHandler<XLineBreakpoint<XB
     } catch (DebuggerStoppedException ignore) {
     } catch (VMPausedException e) {
       final XDebugSession session = myXsltDebugProcess.getSession();
-      session.reportMessage("Target VM is not responding. Breakpoint can not be set", MessageType.ERROR);
+      session.reportMessage(XsltDebuggerBundle.message("notification.content.target.vm.not.responding.breakpoint.can.not.be.set"), MessageType.ERROR);
       session.setBreakpointInvalid(breakpoint, "Target VM is not responding. Breakpoint can not be set");
     }
   }
 
   public static String getFileURL(VirtualFile file) {
-    return VfsUtil.virtualToIoFile(file).toURI().toASCIIString();
+    return VfsUtilCore.virtualToIoFile(file).toURI().toASCIIString();
   }
 
   @Override
@@ -97,7 +102,8 @@ public class XsltBreakpointHandler extends XBreakpointHandler<XLineBreakpoint<XB
       }
     } catch (DebuggerStoppedException ignore) {
     } catch (VMPausedException e) {
-      myXsltDebugProcess.getSession().reportMessage("Target VM is not responding. Breakpoint can not be removed", MessageType.ERROR);
+      myXsltDebugProcess.getSession().reportMessage(
+        XsltDebuggerBundle.message("notification.content.target.vm.not.responding.breakpoint.can.not.be.removed"), MessageType.ERROR);
     }
   }
 
@@ -151,8 +157,7 @@ public class XsltBreakpointHandler extends XBreakpointHandler<XLineBreakpoint<XB
     return -1;
   }
 
-  @Nullable
-  public static PsiElement findContextElement(Project project, @Nullable XSourcePosition position) {
+  public static @Nullable PsiElement findContextElement(Project project, @Nullable XSourcePosition position) {
     if (position == null) {
       return null;
     }

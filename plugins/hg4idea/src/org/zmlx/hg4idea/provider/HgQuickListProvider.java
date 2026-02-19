@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.zmlx.hg4idea.provider;
 
 import com.intellij.dvcs.actions.DvcsQuickListContentProvider;
@@ -11,9 +11,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class HgQuickListProvider extends DvcsQuickListContentProvider {
-  @NotNull
   @Override
-  protected String getVcsName() {
+  protected @NotNull String getVcsName() {
     return HgVcs.VCS_NAME;
   }
 
@@ -25,6 +24,7 @@ public class HgQuickListProvider extends DvcsQuickListContentProvider {
     add("Vcs.Push", manager, actions);
     add("hg4idea.updateTo", manager, actions);
     add("ChangesView.AddUnversioned", manager, actions);
+    add("Vcs.CopyCurrentBranchName", manager, actions);
     return actions;
   }
 }

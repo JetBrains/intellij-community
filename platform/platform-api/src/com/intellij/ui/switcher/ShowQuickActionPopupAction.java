@@ -15,6 +15,7 @@
  */
 package com.intellij.ui.switcher;
 
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
@@ -24,13 +25,19 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JComponent;
+import java.awt.Component;
 import java.util.List;
 
 import static com.intellij.openapi.ui.popup.JBPopupFactory.ActionSelectionAid.ALPHA_NUMBERING;
 
 public class ShowQuickActionPopupAction extends AnAction {
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
+  }
+
   @Override
   public void update(@NotNull AnActionEvent e) {
     QuickActionProvider quickActionProvider = e.getData(QuickActionProvider.KEY);
@@ -46,7 +53,8 @@ public class ShowQuickActionPopupAction extends AnAction {
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
-    QuickActionProvider provider = e.getRequiredData(QuickActionProvider.KEY);
+    QuickActionProvider provider = e.getData(QuickActionProvider.KEY);
+    if (provider == null) return;
     List<AnAction> actions = provider.getActions(true);
 
     DefaultActionGroup group = new DefaultActionGroup(actions);
@@ -57,7 +65,7 @@ public class ShowQuickActionPopupAction extends AnAction {
       Component eachParent = component.getParent();
       while (eachParent != null) {
         QuickActionProvider parentProvider = ObjectUtils.tryCast(eachParent, QuickActionProvider.class);
-        if (parentProvider != null) {
+        if (parentProvider != null && provider != parentProvider) {
           List<AnAction> parentActions = parentProvider.getActions(false);
           if (!parentActions.isEmpty()) {
             String name = StringUtil.notNullize(parentProvider.getName());

@@ -22,11 +22,11 @@ import org.junit.Test;
 import java.util.Arrays;
 
 import static java.util.Arrays.asList;
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
-/**
- * @author Denis Zhdanov
- */
 public class TextChangesStorageTest {
 
   private TextChangesStorage myStorage;  

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes.actions.diff;
 
 import com.intellij.diff.DiffManager;
@@ -6,6 +6,7 @@ import com.intellij.diff.chains.DiffRequestChain;
 import com.intellij.diff.util.DiffUserDataKeys;
 import com.intellij.openapi.ListSelection;
 import com.intellij.openapi.actionSystem.ActionPlaces;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.AnActionExtensionProvider;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
@@ -23,7 +24,12 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
-public final class ShowDiffAction implements AnActionExtensionProvider {
+public class ShowDiffAction implements AnActionExtensionProvider {
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
+  }
+
   @Override
   public boolean isActive(@NotNull AnActionEvent e) {
     return true; // order="last"
@@ -46,7 +52,7 @@ public final class ShowDiffAction implements AnActionExtensionProvider {
   }
 
   public static boolean canShowDiff(@Nullable Project project, @Nullable List<? extends Change> changes) {
-    if (changes == null || changes.size() == 0) return false;
+    if (changes == null || changes.isEmpty()) return false;
     for (Change change : changes) {
       if (ChangeDiffRequestProducer.canCreate(project, change)) return true;
     }
@@ -54,11 +60,13 @@ public final class ShowDiffAction implements AnActionExtensionProvider {
   }
 
   @Override
-  public void actionPerformed(@NotNull final AnActionEvent e) {
-    final Project project = e.getRequiredData(CommonDataKeys.PROJECT);
-    final Change[] changes = e.getRequiredData(VcsDataKeys.CHANGES);
+  public void actionPerformed(final @NotNull AnActionEvent e) {
+    Project project = e.getData(CommonDataKeys.PROJECT);
+    if  (project == null) return;
+    Change[] changes = e.getData(VcsDataKeys.CHANGES);
+    if (changes == null) return;
 
-    List<Change> result = ContainerUtil.newArrayList(changes);
+    List<Change> result = List.of(changes);
     showDiffForChange(project, result, 0);
   }
 
@@ -99,10 +107,11 @@ public final class ShowDiffAction implements AnActionExtensionProvider {
   public static void showDiffForChange(@Nullable Project project,
                                        @NotNull ListSelection<? extends Change> changes,
                                        @NotNull ShowDiffContext context) {
-    ListSelection<ChangeDiffRequestProducer> presentables = changes.map(change -> ChangeDiffRequestProducer.create(project, change, context.getChangeContext(change)));
+    ListSelection<ChangeDiffRequestProducer> presentables =
+      changes.map(change -> ChangeDiffRequestProducer.create(project, change, context.getChangeContext(change)));
     if (presentables.isEmpty()) return;
 
-    DiffRequestChain chain = new ChangeDiffRequestChain(presentables.getList(), presentables.getSelectedIndex());
+    DiffRequestChain chain = new ChangeDiffRequestChain(presentables);
 
     for (Map.Entry<Key<?>, Object> entry : context.getChainContext().entrySet()) {
       //noinspection unchecked,rawtypes

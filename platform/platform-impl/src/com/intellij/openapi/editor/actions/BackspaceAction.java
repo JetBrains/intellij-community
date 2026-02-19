@@ -1,38 +1,38 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.openapi.editor.actions;
 
 import com.intellij.codeInsight.hint.HintManagerImpl;
-import com.intellij.injected.editor.EditorWindow;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.command.CommandProcessor;
-import com.intellij.openapi.editor.*;
+import com.intellij.openapi.editor.Caret;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.EditorModificationUtil;
+import com.intellij.openapi.editor.EditorModificationUtilEx;
+import com.intellij.openapi.editor.FoldRegion;
+import com.intellij.openapi.editor.VisualPosition;
 import com.intellij.openapi.editor.actionSystem.EditorWriteActionHandler;
 import com.intellij.openapi.editor.actionSystem.LatencyAwareEditorAction;
 import com.intellij.openapi.editor.ex.util.EditorUIUtil;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
+import com.intellij.psi.impl.source.tree.injected.InjectedLanguageEditorUtil;
 import com.intellij.util.DocumentUtil;
 import org.jetbrains.annotations.NotNull;
 
-public class BackspaceAction extends TextComponentEditorAction implements LatencyAwareEditorAction, HintManagerImpl.ActionToIgnore {
+public final class BackspaceAction extends TextComponentEditorAction implements LatencyAwareEditorAction, HintManagerImpl.ActionToIgnore {
   public BackspaceAction() {
     super(new Handler());
   }
 
-  private static final class Handler extends EditorWriteActionHandler {
-    private Handler() {
-      super(true);
-    }
-
+  private static final class Handler extends EditorWriteActionHandler.ForEachCaret {
     @Override
-    public void executeWriteAction(Editor editor, Caret caret, DataContext dataContext) {
+    public void executeWriteAction(@NotNull Editor editor, @NotNull Caret caret, DataContext dataContext) {
       EditorUIUtil.hideCursorInEditor(editor);
       CommandProcessor.getInstance().setCurrentCommandGroupId(EditorActionUtil.DELETE_COMMAND_GROUP);
-      if (editor instanceof EditorWindow) {
-        // manipulate actual document/editor instead of injected
-        // since the latter have trouble finding the right location of caret movement in the case of multi-shred injected fragments
-        editor = ((EditorWindow)editor).getDelegate();
-      }
+      // manipulate actual document/editor instead of injected
+      // since the latter have trouble finding the right location of caret movement in the case of multi-shred injected fragments
+      editor = InjectedLanguageEditorUtil.getTopLevelEditor(editor);
       doBackSpaceAtCaret(editor);
     }
   }
@@ -55,17 +55,23 @@ public class BackspaceAction extends TextComponentEditorAction implements Latenc
         editor.getCaretModel().moveCaretRelatively(columnShift, 0, false, false, true);
       }
       else {
-        EditorModificationUtil.scrollToCaret(editor);
         editor.getSelectionModel().removeSelection();
 
-        FoldRegion region = editor.getFoldingModel().getCollapsedRegionAtOffset(offset - 1);
-        if (region != null && region.shouldNeverExpand()) {
-          document.deleteString(region.getStartOffset(), region.getEndOffset());
-          editor.getCaretModel().moveToOffset(region.getStartOffset());
-        }
-        else {
-          document.deleteString(DocumentUtil.getPreviousCodePointOffset(document, offset), offset);
-        }
+        Runnable runnable = () -> {
+          FoldRegion region = editor.getFoldingModel().getCollapsedRegionAtOffset(offset - 1);
+          if (region != null && region.shouldNeverExpand()) {
+            document.deleteString(region.getStartOffset(), region.getEndOffset());
+            editor.getCaretModel().moveToOffset(region.getStartOffset());
+          }
+          else {
+            int prevOffset = DocumentUtil.getPreviousCodePointOffset(document, offset);
+            if (prevOffset >= 0) {
+              document.deleteString(prevOffset, offset);
+            }
+          }
+          EditorModificationUtilEx.scrollToCaret(editor);
+        };
+        EditorUtil.runWithAnimationDisabled(editor, runnable);
       }
     }
     else if(lineNumber > 0) {

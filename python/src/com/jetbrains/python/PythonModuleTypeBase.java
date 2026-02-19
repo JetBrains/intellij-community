@@ -1,20 +1,18 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python;
 
 import com.intellij.facet.FacetType;
 import com.intellij.ide.util.projectWizard.ModuleBuilder;
 import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.module.ModuleTypeManager;
-import icons.PythonIcons;
+import com.jetbrains.python.icons.PythonIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.model.java.JavaSourceRootType;
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
 
-import javax.swing.*;
+import javax.swing.Icon;
 
-/**
- * @author yole
- */
+
 public abstract class PythonModuleTypeBase<T extends ModuleBuilder> extends ModuleType<T> {
   public static ModuleType getInstance() {
     return ModuleTypeManager.getInstance().findByID(PyNames.PYTHON_MODULE_ID);
@@ -25,14 +23,12 @@ public abstract class PythonModuleTypeBase<T extends ModuleBuilder> extends Modu
   }
 
   @Override
-  @NotNull
-  public String getName() {
+  public @NotNull String getName() {
     return PyBundle.message("python.module.name");
   }
 
   @Override
-  @NotNull
-  public String getDescription() {
+  public @NotNull String getDescription() {
     String basicDescription = PyBundle.message("python.module.description");
     for (FacetType type : FacetType.EP_NAME.getExtensionList()) {
       if (type.getId().toString().equalsIgnoreCase("django")) {
@@ -42,9 +38,8 @@ public abstract class PythonModuleTypeBase<T extends ModuleBuilder> extends Modu
     return basicDescription;
   }
 
-  @NotNull
   @Override
-  public Icon getNodeIcon(final boolean isOpened) {
+  public @NotNull Icon getNodeIcon(final boolean isOpened) {
     return PythonIcons.Python.PythonClosed;
   }
 

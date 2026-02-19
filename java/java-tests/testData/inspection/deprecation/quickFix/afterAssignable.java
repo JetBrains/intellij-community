@@ -1,4 +1,4 @@
-// "Replace method call with A.newMethod" "true"
+// "Replace method call with 'A.newMethod()'" "true"
 class A {
   {
     Object b = newMethod(); // invoke here

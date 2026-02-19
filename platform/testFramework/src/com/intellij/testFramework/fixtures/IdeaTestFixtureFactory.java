@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testFramework.fixtures;
 
 import com.intellij.testFramework.LightProjectDescriptor;
@@ -15,8 +15,7 @@ import java.nio.file.Path;
 public abstract class IdeaTestFixtureFactory {
   private static final IdeaTestFixtureFactory ourInstance = new IdeaTestFixtureFactoryImpl();
 
-  @NotNull
-  public static IdeaTestFixtureFactory getFixtureFactory() {
+  public static @NotNull IdeaTestFixtureFactory getFixtureFactory() {
     return ourInstance;
   }
 
@@ -28,30 +27,32 @@ public abstract class IdeaTestFixtureFactory {
 
   public abstract void registerFixtureBuilder(@NotNull Class<? extends ModuleFixtureBuilder<?>> aClass, @NotNull String implClassName);
 
-  @NotNull
-  public TestFixtureBuilder<IdeaProjectTestFixture> createFixtureBuilder(@NotNull String name) {
+  public @NotNull TestFixtureBuilder<IdeaProjectTestFixture> createFixtureBuilder(@NotNull String name) {
     return createFixtureBuilder(name, false);
   }
 
   public abstract @NotNull TestFixtureBuilder<IdeaProjectTestFixture> createFixtureBuilder(@NotNull String name, boolean isDirectoryBasedProject);
 
-  public abstract TestFixtureBuilder<IdeaProjectTestFixture> createFixtureBuilder(@NotNull String name, @Nullable Path projectPath, boolean isDirectoryBasedProject);
+  public TestFixtureBuilder<IdeaProjectTestFixture> createFixtureBuilder(@NotNull String name,
+                                                                         @Nullable Path projectPath,
+                                                                         boolean isDirectoryBasedProject) {
+    return createFixtureBuilder(name, (testName, disposable) -> projectPath, isDirectoryBasedProject);
+  }
 
-  @NotNull
-  public abstract TestFixtureBuilder<IdeaProjectTestFixture> createLightFixtureBuilder();
+  public abstract TestFixtureBuilder<IdeaProjectTestFixture> createFixtureBuilder(@NotNull String name,
+                                                                                  @NotNull HeavyIdeaTestFixturePathProvider projectPathProvider,
+                                                                                  boolean isDirectoryBasedProject);
 
-  @NotNull
-  public abstract TestFixtureBuilder<IdeaProjectTestFixture> createLightFixtureBuilder(@Nullable LightProjectDescriptor projectDescriptor);
+  public abstract @NotNull TestFixtureBuilder<IdeaProjectTestFixture> createLightFixtureBuilder(@NotNull String projectName);
 
-  @NotNull
-  public abstract CodeInsightTestFixture createCodeInsightFixture(@NotNull IdeaProjectTestFixture projectFixture);
+  public abstract @NotNull TestFixtureBuilder<IdeaProjectTestFixture> createLightFixtureBuilder(@Nullable LightProjectDescriptor projectDescriptor,
+                                                                                                @NotNull String projectName);
 
-  @NotNull
-  public abstract CodeInsightTestFixture createCodeInsightFixture(@NotNull IdeaProjectTestFixture projectFixture, @NotNull TempDirTestFixture tempDirFixture);
+  public abstract @NotNull CodeInsightTestFixture createCodeInsightFixture(@NotNull IdeaProjectTestFixture projectFixture);
 
-  @NotNull
-  public abstract TempDirTestFixture createTempDirTestFixture();
+  public abstract @NotNull CodeInsightTestFixture createCodeInsightFixture(@NotNull IdeaProjectTestFixture projectFixture, @NotNull TempDirTestFixture tempDirFixture);
 
-  @NotNull
-  public abstract BareTestFixture createBareFixture();
+  public abstract @NotNull TempDirTestFixture createTempDirTestFixture();
+
+  public abstract @NotNull BareTestFixture createBareFixture();
 }

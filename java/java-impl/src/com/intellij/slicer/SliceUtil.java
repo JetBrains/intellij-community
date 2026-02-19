@@ -1,40 +1,85 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.slicer;
 
 import com.intellij.analysis.AnalysisScope;
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.JavaTargetElementEvaluator;
-import com.intellij.codeInspection.dataFlow.*;
+import com.intellij.codeInspection.dataFlow.CommonDataflow;
+import com.intellij.codeInspection.dataFlow.DfaPsiUtil;
+import com.intellij.codeInspection.dataFlow.DfaUtil;
+import com.intellij.codeInspection.dataFlow.JavaMethodContractUtil;
+import com.intellij.codeInspection.dataFlow.TypeConstraint;
 import com.intellij.codeInspection.dataFlow.types.DfType;
-import com.intellij.codeInspection.dataFlow.types.DfTypes;
 import com.intellij.lang.Language;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.JavaRecursiveElementWalkingVisitor;
+import com.intellij.psi.JavaResolveResult;
+import com.intellij.psi.JavaTokenType;
+import com.intellij.psi.PsiAnonymousClass;
+import com.intellij.psi.PsiArrayAccessExpression;
+import com.intellij.psi.PsiArrayInitializerExpression;
+import com.intellij.psi.PsiAssignmentExpression;
+import com.intellij.psi.PsiCall;
+import com.intellij.psi.PsiCallExpression;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiClassType;
+import com.intellij.psi.PsiCodeBlock;
+import com.intellij.psi.PsiCompiledElement;
+import com.intellij.psi.PsiConditionalExpression;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiEllipsisType;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiExpressionList;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiForeachStatement;
+import com.intellij.psi.PsiLambdaExpression;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiMethodCallExpression;
+import com.intellij.psi.PsiNewExpression;
+import com.intellij.psi.PsiParameter;
+import com.intellij.psi.PsiParameterList;
+import com.intellij.psi.PsiPrimitiveType;
+import com.intellij.psi.PsiRecordComponent;
+import com.intellij.psi.PsiReference;
+import com.intellij.psi.PsiReferenceExpression;
+import com.intellij.psi.PsiResolveHelper;
+import com.intellij.psi.PsiReturnStatement;
+import com.intellij.psi.PsiSubstitutor;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypeParameter;
+import com.intellij.psi.PsiTypeParameterListOwner;
+import com.intellij.psi.PsiUnaryExpression;
+import com.intellij.psi.PsiVariable;
 import com.intellij.psi.impl.source.resolve.DefaultParameterTypeInferencePolicy;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.searches.MethodReferencesSearch;
 import com.intellij.psi.search.searches.OverridingMethodsSearch;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.util.JavaPsiRecordUtil;
 import com.intellij.psi.util.MethodSignatureUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.CommonProcessors;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.psiutils.ExpressionUtils;
-import gnu.trove.THashMap;
-import gnu.trove.THashSet;
 import org.intellij.lang.annotations.Flow;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
@@ -71,13 +116,12 @@ final class SliceUtil {
     }
 
     boolean needToReportDeclaration = false;
-    if (expression instanceof PsiReferenceExpression) {
+    if (expression instanceof PsiReferenceExpression ref) {
       PsiElement element = SliceForwardUtil.complexify(expression);
       if (element instanceof PsiExpression && PsiUtil.isOnAssignmentLeftHand((PsiExpression)element)) {
         PsiExpression rightSide = ((PsiAssignmentExpression)element.getParent()).getRExpression();
         return rightSide == null || builder.process(rightSide, processor);
       }
-      PsiReferenceExpression ref = (PsiReferenceExpression)expression;
       JavaResolveResult result = ref.advancedResolve(false);
       builder = builder.withSubstitutor(result.getSubstitutor().putAll(builder.getSubstitutor()));
       PsiElement resolved = result.getElement();
@@ -97,8 +141,33 @@ final class SliceUtil {
       }
       expression = resolved;
     }
-    if (expression instanceof PsiVariable) {
-      PsiVariable variable = (PsiVariable)expression;
+    if (expression instanceof PsiRecordComponent) {
+      PsiClass recordClass = ((PsiRecordComponent)expression).getContainingClass();
+      if (recordClass != null) {
+        int idx = ArrayUtil.indexOf(recordClass.getRecordComponents(), expression);
+        PsiMethod constructor = JavaPsiRecordUtil.findCanonicalConstructor(recordClass);
+        if (constructor != null) {
+          PsiParameterList parameterList = constructor.getParameterList();
+          PsiParameter parameter = parameterList.getParameter(idx);
+          if (parameter != null) {
+            if (!constructor.isPhysical()) {
+              JavaSliceBuilder finalBuilder = builder;
+              ReferencesSearch.search(recordClass, builder.getSearchScope()).forEach(ref -> {
+                PsiElement refElement = ref.getElement();
+                PsiNewExpression newExpression = ObjectUtils.tryCast(refElement.getParent(), PsiNewExpression.class);
+                if (newExpression != null) {
+                  processMethodCall(finalBuilder, processor, parameter.getType(), parameterList.getParameters(), idx, refElement);
+                }
+                return true;
+              });
+            } else {
+              expression = parameter;
+            }
+          }
+        }
+      }
+    }
+    if (expression instanceof PsiVariable variable) {
       Collection<PsiExpression> values = DfaUtil.getVariableValues(variable, original);
       PsiExpression initializer = variable.getInitializer();
       if (values.isEmpty() && initializer != null) {
@@ -130,20 +199,20 @@ final class SliceUtil {
         return processParameterUsages((PsiParameter)variable, builder.withFilter(f -> f.popFrame(variable.getProject())), processor);
       }
     }
-    if (expression instanceof PsiMethodCallExpression) { // ctr call can't return value or be container get, so don't use PsiCall here
-      PsiExpression returnedValue = JavaMethodContractUtil.findReturnedValue((PsiMethodCallExpression)expression);
+    if (expression instanceof PsiMethodCallExpression call) { // ctr call can't return value or be container get, so don't use PsiCall here
+      PsiExpression returnedValue = JavaMethodContractUtil.findReturnedValue(call);
       if (returnedValue != null) {
         if (!builder.process(returnedValue, processor)) {
           return false;
         }
       }
-      PsiMethod method = ((PsiMethodCallExpression)expression).resolveMethod();
+      PsiMethod method = call.resolveMethod();
       Flow anno = method == null ? null : isMethodFlowAnnotated(method);
       if (anno != null) {
         String target = anno.target();
         if (target.equals(Flow.DEFAULT_TARGET)) target = Flow.RETURN_METHOD_TARGET;
         if (target.equals(Flow.RETURN_METHOD_TARGET)) {
-          PsiExpression qualifier = ((PsiMethodCallExpression)expression).getMethodExpression().getQualifierExpression();
+          PsiExpression qualifier = call.getMethodExpression().getQualifierExpression();
           if (qualifier != null) {
             builder = builder.updateNesting(anno);
             String source = anno.source();
@@ -153,17 +222,34 @@ final class SliceUtil {
           }
         }
       }
-      return processMethodReturnValue((PsiMethodCallExpression)expression, processor, builder);
+      if (method != null) {
+        PsiParameter[] parameters = method.getParameterList().getParameters();
+        boolean hasFlownParameter = false;
+        for (int i = 0; i < parameters.length; i++) {
+          Flow paramAnno = isParamFlowAnnotated(method, i);
+          if (paramAnno != null && !parameters[i].isVarArgs()) {
+            if (!builder.hasNesting() && !paramAnno.sourceIsContainer()) continue;
+            PsiExpression[] args = call.getArgumentList().getExpressions();
+            if (args.length > i) {
+              JavaSliceBuilder argBuilder = builder.updateNesting(paramAnno);
+              if (!argBuilder.process(args[i], processor)) {
+                return false;
+              }
+              hasFlownParameter = true;
+            }
+          }
+        }
+        if (hasFlownParameter) return true;
+      }
+      return processMethodReturnValue(call, processor, builder);
     }
-    if (expression instanceof PsiConditionalExpression) {
-      PsiConditionalExpression conditional = (PsiConditionalExpression)expression;
+    if (expression instanceof PsiConditionalExpression conditional) {
       PsiExpression thenE = conditional.getThenExpression();
       PsiExpression elseE = conditional.getElseExpression();
       if (thenE != null && !builder.process(thenE, processor)) return false;
       if (elseE != null && !builder.process(elseE, processor)) return false;
     }
-    if (expression instanceof PsiAssignmentExpression) {
-      PsiAssignmentExpression assignment = (PsiAssignmentExpression)expression;
+    if (expression instanceof PsiAssignmentExpression assignment) {
       IElementType tokenType = assignment.getOperationTokenType();
       PsiExpression rExpression = assignment.getRExpression();
 
@@ -172,7 +258,7 @@ final class SliceUtil {
       }
     }
     DfType filterDfType = builder.getFilter().getDfType();
-    if (filterDfType != DfTypes.TOP && expression instanceof PsiExpression) {
+    if (filterDfType != DfType.TOP && expression instanceof PsiExpression) {
       AnalysisStartingPoint analysis = AnalysisStartingPoint.propagateThroughExpression(expression, filterDfType);
       if (analysis != null) {
         return builder.withFilter(filter -> filter.withType(analysis.myDfType)).process(analysis.myAnchor, processor);
@@ -212,19 +298,18 @@ final class SliceUtil {
     return AnnotationUtil.findAnnotationInHierarchy(parameters[paramIndex], Flow.class);
   }
 
-  @NotNull
-  static Collection<SliceUsage> collectMethodReturnValues(@NotNull SliceUsage parent,
-                                                          @NotNull PsiSubstitutor parentSubstitutor,
-                                                          PsiMethod methodCalled) {
+  static @NotNull Collection<SliceUsage> collectMethodReturnValues(@NotNull SliceUsage parent,
+                                                                   @NotNull PsiSubstitutor parentSubstitutor,
+                                                                   PsiMethod methodCalled) {
     CommonProcessors.CollectProcessor<SliceUsage> processor = new CommonProcessors.CollectProcessor<>();
     processMethodReturnValue(processor, parentSubstitutor, null, methodCalled, null,
                              JavaSliceBuilder.create(parent).withSubstitutor(PsiSubstitutor.EMPTY).dropSyntheticField());
     return processor.getResults();
   }
 
-  private static boolean processMethodReturnValue(@NotNull final PsiMethodCallExpression methodCallExpr,
-                                                  @NotNull final Processor<? super SliceUsage> processor,
-                                                  @NotNull final JavaSliceBuilder builder) {
+  private static boolean processMethodReturnValue(final @NotNull PsiMethodCallExpression methodCallExpr,
+                                                  final @NotNull Processor<? super SliceUsage> processor,
+                                                  final @NotNull JavaSliceBuilder builder) {
     // if the call looks like 'otherClassObject.methodFromInterface()'
     // we can narrow down the overridden methods scan to inheritors of OtherClass only
     PsiClass qualifierClass = resolveQualifier(methodCallExpr);
@@ -233,8 +318,7 @@ final class SliceUtil {
     if (r instanceof PsiCompiledElement) {
       r = r.getNavigationElement();
     }
-    if (!(r instanceof PsiMethod)) return true;
-    PsiMethod methodCalled = (PsiMethod)r;
+    if (!(r instanceof PsiMethod methodCalled)) return true;
 
     PsiType returnType = methodCalled.getReturnType();
     if (returnType == null) return true;
@@ -251,7 +335,7 @@ final class SliceUtil {
                                                   PsiMethod methodCalled,
                                                   @Nullable PsiType parentType,
                                                   @NotNull JavaSliceBuilder builder) {
-    Collection<PsiMethod> overrides = new THashSet<>();
+    Collection<PsiMethod> overrides = new HashSet<>();
     SearchScope scope = builder.getSearchScope();
     if (qualifierClass != null && qualifierClass != methodCalled.getContainingClass()) {
       scope = JavaTargetElementEvaluator.getHierarchyScope(qualifierClass, scope, false);
@@ -284,13 +368,13 @@ final class SliceUtil {
 
       body.accept(new JavaRecursiveElementWalkingVisitor() {
         @Override
-        public void visitClass(PsiClass aClass) {}
+        public void visitClass(@NotNull PsiClass aClass) {}
 
         @Override
-        public void visitLambdaExpression(PsiLambdaExpression expression) {}
+        public void visitLambdaExpression(@NotNull PsiLambdaExpression expression) {}
 
         @Override
-        public void visitReturnStatement(final PsiReturnStatement statement) {
+        public void visitReturnStatement(final @NotNull PsiReturnStatement statement) {
           PsiExpression returnValue = statement.getReturnValue();
           if (returnValue == null) return;
           PsiType right = superSubstitutor.substitute(superSubstitutor.substitute(returnValue.getType()));
@@ -320,9 +404,9 @@ final class SliceUtil {
     return PsiUtil.resolveClassInClassTypeOnly(psiType);
   }
 
-  private static boolean processFieldUsages(@NotNull final PsiField field,
-                                            @NotNull final JavaSliceBuilder builder,
-                                            @NotNull final Processor<? super SliceUsage> processor) {
+  private static boolean processFieldUsages(final @NotNull PsiField field,
+                                            final @NotNull JavaSliceBuilder builder,
+                                            final @NotNull Processor<? super SliceUsage> processor) {
     if (field.hasInitializer()) {
       PsiExpression initializer = field.getInitializer();
       if (initializer != null && !(field instanceof PsiCompiledElement)) {
@@ -338,8 +422,7 @@ final class SliceUtil {
         element = element.getNavigationElement();
         if (!scope.contains(element)) return true;
       }
-      if (element instanceof PsiReferenceExpression) {
-        final PsiReferenceExpression referenceExpression = (PsiReferenceExpression)element;
+      if (element instanceof PsiReferenceExpression referenceExpression) {
         PsiElement parentExpr = referenceExpression.getParent();
         if (PsiUtil.isOnAssignmentLeftHand(referenceExpression)) {
           PsiExpression rExpression = ((PsiAssignmentExpression)parentExpr).getRExpression();
@@ -353,8 +436,8 @@ final class SliceUtil {
             }
           }
         }
-        if (parentExpr instanceof PsiUnaryExpression && ((PsiUnaryExpression)parentExpr).getOperand() == referenceExpression && ( ((PsiUnaryExpression)parentExpr).getOperationTokenType() == JavaTokenType.PLUSPLUS || ((PsiUnaryExpression)parentExpr).getOperationTokenType() == JavaTokenType.MINUSMINUS)) {
-          PsiUnaryExpression unaryExpression = (PsiUnaryExpression)parentExpr;
+        if (parentExpr instanceof PsiUnaryExpression unaryExpression && unaryExpression.getOperand() == referenceExpression && (
+          unaryExpression.getOperationTokenType() == JavaTokenType.PLUSPLUS || unaryExpression.getOperationTokenType() == JavaTokenType.MINUSMINUS)) {
           return builder.process(unaryExpression, processor);
         }
       }
@@ -363,20 +446,18 @@ final class SliceUtil {
     });
   }
 
-  private static boolean processParameterUsages(@NotNull final PsiParameter parameter,
-                                                @NotNull final JavaSliceBuilder builder,
-                                                @NotNull final Processor<? super SliceUsage> processor) {
+  private static boolean processParameterUsages(final @NotNull PsiParameter parameter,
+                                                final @NotNull JavaSliceBuilder builder,
+                                                final @NotNull Processor<? super SliceUsage> processor) {
     PsiElement declarationScope = parameter.getDeclarationScope();
-    if (declarationScope instanceof PsiForeachStatement) {
-      PsiForeachStatement statement = (PsiForeachStatement)declarationScope;
+    if (declarationScope instanceof PsiForeachStatement statement) {
       PsiExpression iterated = statement.getIteratedValue();
       return statement.getIterationParameter() != parameter ||
              iterated == null ||
              builder.incrementNesting().process(iterated, processor);
     }
-    if (!(declarationScope instanceof PsiMethod)) return true;
+    if (!(declarationScope instanceof PsiMethod method)) return true;
 
-    final PsiMethod method = (PsiMethod)declarationScope;
     final PsiType actualParameterType = parameter.getType();
 
     final PsiParameter[] actualParameters = method.getParameterList().getParameters();
@@ -392,10 +473,10 @@ final class SliceUtil {
                                processor, actualParameterType, actualParameters, paramSeqNo, specificMethodCall.getElement());
     }
 
-    Collection<PsiMethod> superMethods = ContainerUtil.set(method.findDeepestSuperMethods());
+    Collection<PsiMethod> superMethods = ContainerUtil.newHashSet(method.findDeepestSuperMethods());
     superMethods.add(method);
 
-    final Set<PsiReference> processed = new THashSet<>(); //usages of super method and overridden method can overlap
+    final Set<PsiReference> processed = new HashSet<>(); //usages of super method and overridden method can overlap
     for (final PsiMethod superMethod : superMethods) {
       if (!MethodReferencesSearch.search(superMethod, builder.getSearchScope(), true).forEach(reference -> {
         ProgressManager.checkCanceled();
@@ -431,25 +512,22 @@ final class SliceUtil {
                                            PsiElement refElement) {
     PsiExpressionList argumentList;
     JavaResolveResult result;
-    if (refElement instanceof PsiCall) {
+    if (refElement instanceof PsiCall call) {
       // the case of enum constant decl
-      PsiCall call = (PsiCall)refElement;
       argumentList = call.getArgumentList();
       result = call.resolveMethodGenerics();
     }
     else {
       PsiElement element = refElement.getParent();
       if (element instanceof PsiCompiledElement) return true;
-      if (element instanceof PsiAnonymousClass) {
-        PsiAnonymousClass anon = (PsiAnonymousClass)element;
+      if (element instanceof PsiAnonymousClass anon) {
         argumentList = anon.getArgumentList();
         PsiElement callExp = element.getParent();
         if (!(callExp instanceof PsiCallExpression)) return true;
         result = ((PsiCall)callExp).resolveMethodGenerics();
       }
-      else if (element instanceof PsiCall) {
-          PsiCall call = (PsiCall)element;
-          argumentList = call.getArgumentList();
+      else if (element instanceof PsiCall call) {
+        argumentList = call.getArgumentList();
           result = call.resolveMethodGenerics();
       }
       else {
@@ -527,13 +605,12 @@ final class SliceUtil {
   }
 
   private static void addContainerReferences(@NotNull PsiVariable variable,
-                                             @NotNull final Processor<? super SliceUsage> processor,
-                                             @NotNull final JavaSliceBuilder builder) {
+                                             final @NotNull Processor<? super SliceUsage> processor,
+                                             final @NotNull JavaSliceBuilder builder) {
     if (builder.hasNesting()) {
       ReferencesSearch.search(variable).forEach(reference -> {
         PsiElement element = reference.getElement();
-        if (element instanceof PsiExpression && !element.getManager().areElementsEquivalent(element, builder.getParent().getElement())) {
-          PsiExpression expression = (PsiExpression)element;
+        if (element instanceof PsiExpression expression && !element.getManager().areElementsEquivalent(element, builder.getParent().getElement())) {
           return addContainerItemModification(expression, processor, builder);
         }
         return true;
@@ -620,17 +697,16 @@ final class SliceUtil {
     return true;
   }
 
-  @NotNull
-  private static PsiSubstitutor removeRawMappingsLeftFromResolve(@NotNull PsiSubstitutor substitutor) {
+  private static @NotNull PsiSubstitutor removeRawMappingsLeftFromResolve(@NotNull PsiSubstitutor substitutor) {
     Map<PsiTypeParameter, PsiType> map = null;
     for (Map.Entry<PsiTypeParameter, PsiType> entry : substitutor.getSubstitutionMap().entrySet()) {
       if (entry.getValue() == null) {
-        if (map == null) map = new THashMap<>();
+        if (map == null) map = new HashMap<>();
         map.put(entry.getKey(), entry.getValue());
       }
     }
     if (map == null) return substitutor;
-    Map<PsiTypeParameter, PsiType> newMap = new THashMap<>(substitutor.getSubstitutionMap());
+    Map<PsiTypeParameter, PsiType> newMap = new HashMap<>(substitutor.getSubstitutionMap());
     newMap.keySet().removeAll(map.keySet());
     return PsiSubstitutor.createSubstitutor(newMap);
   }

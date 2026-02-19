@@ -30,8 +30,7 @@ public abstract class AddParamBase extends AbstractFix {
 
     protected abstract String getParamName();
 
-    @Nullable
-    protected abstract XmlTag findTemplateTag();
+    protected abstract @Nullable XmlTag findTemplateTag();
 
     @Override
     protected boolean requiresEditor() {
@@ -39,7 +38,7 @@ public abstract class AddParamBase extends AbstractFix {
     }
 
     @Override
-    public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
+    public void invoke(@NotNull Project project, Editor editor, PsiFile psiFile) throws IncorrectOperationException {
         final XmlTag templateTag = findTemplateTag();
         assert templateTag != null;
 
@@ -48,6 +47,6 @@ public abstract class AddParamBase extends AbstractFix {
 
         RefactoringUtil.addParameter(templateTag, paramTag);
 
-        DaemonCodeAnalyzer.getInstance(project).restart();
+        DaemonCodeAnalyzer.getInstance(project).restart(this);
     }
 }

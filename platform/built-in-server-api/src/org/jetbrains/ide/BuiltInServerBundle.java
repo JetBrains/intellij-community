@@ -2,6 +2,7 @@
 package org.jetbrains.ide;
 
 import com.intellij.DynamicBundle;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -9,21 +10,36 @@ import org.jetbrains.annotations.PropertyKey;
 
 import java.util.function.Supplier;
 
-public final class BuiltInServerBundle extends DynamicBundle {
-  @NonNls private static final String BUNDLE = "messages.BuiltInServerBundle";
-  private static final BuiltInServerBundle INSTANCE = new BuiltInServerBundle();
+public final class BuiltInServerBundle {
+  private static final @NonNls String BUNDLE = "messages.BuiltInServerBundle";
+  private static final DynamicBundle INSTANCE = new DynamicBundle(BuiltInServerBundle.class, BUNDLE);
 
   private BuiltInServerBundle() {
-    super(BUNDLE);
   }
 
-  @NotNull
-  public static @Nls String message(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, Object @NotNull ... params) {
+  public static @NotNull @Nls String getReloadOnSaveGotItTitle() {
+    return message("reload.on.save.got.it.title");
+  }
+
+  public static @NotNull @Nls String getReloadOnSaveGotItContent() {
+    return message("reload.on.save.got.it.content");
+  }
+
+  public static @NotNull @Nls String getReloadOnSavePreviewGotItTitle() {
+    return message("reload.on.save.preview.got.it.title");
+  }
+
+  public static @NotNull @Nls String getReloadOnSavePreviewGotItContent() {
+    return message("reload.on.save.preview.got.it.content");
+  }
+
+  @ApiStatus.Internal
+  public static @NotNull @Nls String message(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, Object @NotNull ... params) {
     return INSTANCE.getMessage(key, params);
   }
 
-  @NotNull
-  public static Supplier<@Nls String> messagePointer(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, Object @NotNull ... params) {
+  @ApiStatus.Internal
+  public static @NotNull Supplier<@Nls String> messagePointer(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, Object @NotNull ... params) {
     return INSTANCE.getLazyMessage(key, params);
   }
 }

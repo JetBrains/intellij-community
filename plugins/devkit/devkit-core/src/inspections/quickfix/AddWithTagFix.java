@@ -1,6 +1,7 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.inspections.quickfix;
 
+import com.intellij.codeInsight.intention.preview.IntentionPreviewUtils;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
@@ -23,23 +24,19 @@ import org.jetbrains.idea.devkit.dom.impl.ExtensionPointPropertyNameConverter;
 
 import java.util.List;
 
-/**
- * @author yole
- */
+
 public class AddWithTagFix implements LocalQuickFix {
-  @NotNull
   @Override
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return DevKitBundle.message("inspections.plugin.xml.fix.extension.point.add.with.tag");
   }
 
   @Override
   public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
     DomElement element = DomUtil.getDomElement(descriptor.getPsiElement());
-    if (!(element instanceof ExtensionPoint)) {
+    if (!(element instanceof ExtensionPoint extensionPoint)) {
       return;
     }
-    ExtensionPoint extensionPoint = (ExtensionPoint)element;
     List<PsiField> fields = extensionPoint.collectMissingWithTags();
     PsiElement navTarget = null;
     for (PsiField field : fields) {
@@ -62,7 +59,7 @@ public class AddWithTagFix implements LocalQuickFix {
       String className = "";
       if (epName != null) {
         int pos = epName.lastIndexOf('.');
-        epName = StringUtil.capitalize(pos >= 0 ? epName.substring(pos+1) : epName);
+        epName = StringUtil.capitalize(pos >= 0 ? epName.substring(pos + 1) : epName);
         PsiClass[] classesByName = PsiShortNamesCache.getInstance(project).getClassesByName(epName,
                                                                                             ProjectScope.getAllScope(project));
         if (classesByName.length == 1) {
@@ -74,7 +71,7 @@ public class AddWithTagFix implements LocalQuickFix {
         navTarget = with.getImplements().getXmlAttributeValue();
       }
     }
-    if (navTarget != null) {
+    if (navTarget != null && !IntentionPreviewUtils.isPreviewElement(descriptor.getPsiElement())) {
       PsiNavigateUtil.navigate(navTarget);
     }
   }

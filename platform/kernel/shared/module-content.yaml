@@ -1,0 +1,4 @@
+- name: dist.all/lib/intellij.platform.kernel.jar
+  modules:
+  - name: intellij.platform.kernel
+  - name: intellij.platform.pasta

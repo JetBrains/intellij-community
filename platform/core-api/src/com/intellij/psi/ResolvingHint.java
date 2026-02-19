@@ -16,6 +16,8 @@
 
 package com.intellij.psi;
 
+import org.jetbrains.annotations.NotNull;
+
 /**
  * CAUTION: this is a workaround to fix java method searcher performance.
  * This can be removed in future if the searcher is fixed to obey {@link PsiReference#isReferenceTo(PsiElement)} contract.
@@ -25,5 +27,5 @@ package com.intellij.psi;
  */
 public interface ResolvingHint {
 
-  boolean canResolveTo(Class<? extends PsiElement> elementClass);
+  boolean canResolveTo(@NotNull Class<? extends PsiElement> elementClass);
 }

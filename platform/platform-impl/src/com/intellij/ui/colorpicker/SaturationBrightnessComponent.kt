@@ -17,31 +17,46 @@
 
 package com.intellij.ui.colorpicker
 
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.ui.ColorUtil
 import com.intellij.ui.picker.ColorListener
 import com.intellij.util.ui.GraphicsUtil
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
+import org.jetbrains.annotations.ApiStatus
 import sun.awt.image.ToolkitImage
-import java.awt.*
+import java.awt.Color
+import java.awt.Dimension
+import java.awt.Graphics
+import java.awt.Graphics2D
+import java.awt.MouseInfo
+import java.awt.Point
+import java.awt.Rectangle
+import java.awt.Robot
 import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
 import java.awt.image.ColorModel
 import java.awt.image.MemoryImageSource
 import javax.swing.JComponent
+import kotlin.math.ceil
+import kotlin.math.max
+import kotlin.math.min
 
 private val KNOB_COLOR = Color.WHITE
 private const val KNOB_RADIUS = 4
 
-class SaturationBrightnessComponent(private val myModel: ColorPickerModel) : JComponent(), ColorListener {
-  var brightness = 1f
+@ApiStatus.Internal
+class SaturationBrightnessComponent(private val myModel: ColorPickerModel) : JComponent(), ColorListener, ColorPipette.Callback {
+  var brightness: Float = 1f
     private set
-  var hue = 1f
+  var hue: Float = 1f
     private set
-  var saturation = 0f
+  var saturation: Float = 0f
     private set
   var alpha: Int = 255
     private set
+  var pipetteMode: Boolean = false
+  val robot: Robot = Robot()
 
   init {
     isOpaque = false
@@ -60,6 +75,9 @@ class SaturationBrightnessComponent(private val myModel: ColorPickerModel) : JCo
     addMouseMotionListener(mouseAdapter)
 
     myModel.addListener(this)
+    if (Registry.`is`("ide.color.picker.new.pipette")) {
+      myModel.addPipetteListener(this)
+    }
   }
 
   private fun handleMouseEvent(e: MouseEvent) {
@@ -67,22 +85,46 @@ class SaturationBrightnessComponent(private val myModel: ColorPickerModel) : JCo
   }
 
   public fun getColorByPoint(p: Point): Color {
-    val x = Math.max(0, Math.min(p.x, size.width))
-    val y = Math.max(0, Math.min(p.y, size.height))
+    val x = max(0, min(p.x, size.width))
+    val y = max(0, min(p.y, size.height))
 
     val saturation = x.toFloat() / size.width
     val brightness = 1.0f - y.toFloat() / size.height
 
     val argb = ahsbToArgb(alpha, hue, saturation, brightness)
-    val newColor = Color(argb, true)
-    return newColor
+    return Color(argb, true)
   }
 
   override fun getPreferredSize(): Dimension = JBUI.size(PICKER_PREFERRED_WIDTH, 150)
 
   override fun getMinimumSize(): Dimension = JBUI.size(150, 140)
 
+  private fun paintPipetteMode(graphics: Graphics) {
+    graphics.color = parent.background
+    graphics.fillRect(0,0, width, height)
+    val g = graphics.create() as Graphics2D
+    val p = MouseInfo.getPointerInfo().location
+    val size = width / 21.0
+    val img = robot.createMultiResolutionScreenCapture(Rectangle(p.x - 10, p.y - 5, 21, 11))
+    val image = img.resolutionVariants.last()
+    val iW = image.getWidth(null)
+    val iH = image.getHeight(null)
+    g.scale(width / 21.0, width / 21.0)
+    g.drawImage(image, -((iW - 21) / 2.0).toInt(), -ceil((iH - 11) / 2.0).toInt(), null)
+    g.dispose()
+    val xx = ceil(size * 10).toInt()
+    val yy = ceil(size * 5).toInt()
+    graphics.color = Color.white
+    graphics.drawRect(xx, yy, (size - 1).toInt(), (size - 1).toInt())
+    graphics.color = Color.black
+    graphics.drawRect(xx+1, yy+1, (size - 3).toInt(), (size - 3).toInt())
+  }
+
   override fun paintComponent(g: Graphics) {
+    if (Registry.`is`("ide.color.picker.new.pipette") && pipetteMode) {
+      paintPipetteMode(g)
+      return
+    }
     val component = Rectangle(0, 0, size.width, size.height)
     val image = createImage(SaturationBrightnessImageProducer(size.width, size.height, hue))
 
@@ -119,6 +161,19 @@ class SaturationBrightnessComponent(private val myModel: ColorPickerModel) : JCo
     brightness = b
     alpha = a
     repaint()
+  }
+
+  override fun picked(pickedColor: Color) {
+    pipetteMode = false
+  }
+
+  override fun update(updatedColor: Color) {
+    pipetteMode = true
+    repaint()
+  }
+
+  override fun cancel() {
+    pipetteMode = false
   }
 }
 

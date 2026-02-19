@@ -1,0 +1,6 @@
+if (condition) {
+    for (item in <selection><caret>items</selection>) {
+        action1()
+        action2()
+    }
+}

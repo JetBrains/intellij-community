@@ -1,0 +1,7 @@
+{
+  "type": "JAVA_METHOD",
+  "classId": "testing/rename/Bartender",
+  "methodSignature": "int foo()",
+  "newName": "bar",
+  "enabledInK2": true
+}

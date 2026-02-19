@@ -1,0 +1,24 @@
+<idea-plugin visibility="internal">
+  <dependencies>
+    <module name="intellij.vcs.github"/>
+    <plugin id="Git4Idea"/>
+  </dependencies>
+
+  <resource-bundle>messages.GithubBundle</resource-bundle>
+
+  <actions>
+    <action id="Github.Share" class="com.intellij.vcs.github.git.share.GithubShareAction" icon="AllIcons.Vcs.Vendors.Github">
+      <add-to-group group-id="GitHub.MainMenu" anchor="before" relative-to-action="Github.Clone"/>
+      <add-to-group group-id="Vcs.Import"/>
+      <add-to-group group-id="Vcs.ToolbarWidget.ShareProject" anchor="first"/>
+      <override-text place="Vcs.Toolbar.Widget"/>
+    </action>
+  </actions>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <github.ghShareProjectCompatibilityExtension implementation="com.intellij.vcs.github.git.share.GHShareProjectUtilCompatExtension"/>
+    <openapi.vcs.changes.ui.shareProjectAction
+      implementation="com.intellij.vcs.github.git.share.GithubShareActionProvider"
+      order="first"/>
+  </extensions>
+</idea-plugin>

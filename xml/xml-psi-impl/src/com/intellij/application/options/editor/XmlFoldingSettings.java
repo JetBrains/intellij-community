@@ -1,20 +1,21 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.application.options.editor;
 
 import com.intellij.lang.XmlCodeFoldingSettings;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.PersistentStateComponent;
-import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.components.SettingsCategory;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.util.xmlb.XmlSerializerUtil;
 import org.jetbrains.annotations.NotNull;
 
-@State(name = "XmlFoldingSettings", storages = @Storage("editor.xml"))
+@State(name = "XmlFoldingSettings", storages = @Storage("editor.xml"), category = SettingsCategory.CODE)
 public final class XmlFoldingSettings implements XmlCodeFoldingSettings, PersistentStateComponent<XmlFoldingSettings.State> {
   private final XmlFoldingSettings.State myState = new State();
 
   public static XmlFoldingSettings getInstance() {
-    return ServiceManager.getService(XmlFoldingSettings.class);
+    return ApplicationManager.getApplication().getService(XmlFoldingSettings.class);
   }
 
   @Override
@@ -38,8 +39,7 @@ public final class XmlFoldingSettings implements XmlCodeFoldingSettings, Persist
   }
 
   @Override
-  @NotNull
-  public State getState() {
+  public @NotNull State getState() {
     return myState;
   }
 

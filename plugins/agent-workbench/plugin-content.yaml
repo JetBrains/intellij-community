@@ -1,0 +1,11 @@
+- name: lib/agent-workbench-sessions.jar
+  modules:
+  - name: intellij.agent.workbench.plugin
+  contentModules:
+  - name: intellij.agent.workbench.claude.common
+  - name: intellij.agent.workbench.claude.sessions
+  - name: intellij.agent.workbench.codex.common
+  - name: intellij.agent.workbench.filewatch
+  - name: intellij.agent.workbench.codex.sessions
+  - name: intellij.agent.workbench.sessions
+  - name: intellij.agent.workbench

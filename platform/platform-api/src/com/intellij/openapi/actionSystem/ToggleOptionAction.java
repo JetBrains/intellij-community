@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.actionSystem;
 
 import com.intellij.openapi.util.NlsActions.ActionDescription;
@@ -6,15 +6,16 @@ import com.intellij.openapi.util.NlsActions.ActionText;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.Icon;
 import java.util.function.Function;
 
 public class ToggleOptionAction extends ToggleAction {
-  private final Function<AnActionEvent, Option> optionSupplier;
+  private final @NotNull Function<? super AnActionEvent, ? extends Option> optionSupplier;
 
   @SuppressWarnings("unused")
   public ToggleOptionAction(@NotNull Option option) {
-    this(option, null);
+    super();
+    this.optionSupplier = event -> option;
   }
 
   @SuppressWarnings("unused")
@@ -23,11 +24,12 @@ public class ToggleOptionAction extends ToggleAction {
   }
 
   @SuppressWarnings("unused")
-  public ToggleOptionAction(@NotNull Function<AnActionEvent, Option> optionSupplier) {
-    this(optionSupplier, null);
+  public ToggleOptionAction(@NotNull Function<? super AnActionEvent, ? extends Option> optionSupplier) {
+    super();
+    this.optionSupplier = optionSupplier;
   }
 
-  public ToggleOptionAction(@NotNull Function<AnActionEvent, Option> optionSupplier, @Nullable Icon icon) {
+  public ToggleOptionAction(@NotNull Function<? super AnActionEvent, ? extends Option> optionSupplier, @Nullable Icon icon) {
     super(() -> null, () -> null, icon);
     this.optionSupplier = optionSupplier;
   }
@@ -45,7 +47,7 @@ public class ToggleOptionAction extends ToggleAction {
   }
 
   @Override
-  public final void update(@NotNull AnActionEvent event) {
+  public void update(@NotNull AnActionEvent event) {
     Option option = optionSupplier.apply(event);
     boolean enabled = option != null && option.isEnabled();
     boolean visible = enabled || option != null && option.isAlwaysVisible();
@@ -57,27 +59,32 @@ public class ToggleOptionAction extends ToggleAction {
       String name = option.getName();
       if (name != null) presentation.setText(name);
       String description = option.getDescription();
-      if (description != null) presentation.setDescription(description);
-      if (ActionPlaces.isPopupPlace(event.getPlace())) presentation.setIcon(null);
+      if (description != null) {
+        presentation.setDescription(description);
+      }
+      if (event.isFromContextMenu()) {
+        presentation.setIcon(null);
+      }
     }
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.EDT;
   }
 
   public interface Option {
     /**
-     * @return a not null string to override an action name
+     * @return a string to override an action name
      */
-    @Nullable
-    @ActionText
-    default String getName() {
+    default @Nullable @ActionText String getName() {
       return null;
     }
 
     /**
-     * @return a not null string to override an action description
+     * @return a string to override an action description
      */
-    @Nullable
-    @ActionDescription
-    default String getDescription() {
+    default @Nullable @ActionDescription String getDescription() {
       return null;
     }
 

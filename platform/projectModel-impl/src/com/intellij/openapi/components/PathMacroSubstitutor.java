@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.components;
 
 import org.jdom.Element;
@@ -13,7 +13,7 @@ import org.jetbrains.annotations.Nullable;
  */
 public interface PathMacroSubstitutor {
   /**
-   * Convert path to absolute by replacing all names of path variables by its values
+   * Convert a path to absolute by replacing all names of path variables by its values
    */
   @Contract("null -> null; !null -> !null")
   String expandPath(@Nullable String text);

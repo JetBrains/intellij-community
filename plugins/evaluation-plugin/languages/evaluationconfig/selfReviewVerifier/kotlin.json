@@ -1,0 +1,32 @@
+{
+  "language": "Kotlin",
+  "projectPath": "../ml-eval/ultimate",
+  "outputDir": "bin/ml-eval-self-review-verifier-kotlin-output",
+  "strategy": {
+    "instanceId": "jetbrains__ultimate-1142"
+  },
+  "fileDataset": {
+    "url": "config:./ultimate_workspace.json_hack"
+  },
+  "actions": {
+    "evaluationRoots": [
+      "."
+    ]
+  },
+  "interpret": {
+    "saveLogs": true,
+    "sessionProbability": 1.0,
+    "sessionSeed": null,
+    "sessionsLimit": 1000,
+    "filesLimit": 1000,
+    "order": "LINEAR",
+    "trainTestSplit": 70,
+    "registry": ""
+  },
+  "reports": {
+    "evaluationTitle": "Kotlin-Self-Review-Verifier",
+    "defaultMetrics": null,
+    "sessionsFilters": [],
+    "comparisonFilters": []
+  }
+}

@@ -1,8 +1,9 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.util;
 
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.openapi.components.Service;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NlsSafe;
@@ -12,16 +13,18 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsConsoleLine;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
-@Service
+@Service(Service.Level.PROJECT)
 public final class GitVcsConsoleWriter {
-  @NotNull
-  public static GitVcsConsoleWriter getInstance(@NotNull Project project) {
+  private static final Logger LOG = Logger.getInstance(GitVcsConsoleWriter.class);
+
+  public static @NotNull GitVcsConsoleWriter getInstance(@NotNull Project project) {
     return project.getService(GitVcsConsoleWriter.class);
   }
 
@@ -63,7 +66,7 @@ public final class GitVcsConsoleWriter {
    */
   public void showMessage(@NotNull @NlsSafe String message, @NotNull ConsoleViewContentType contentType) {
     String shortMessage = StringUtil.shortenPathWithEllipsis(message, MAX_CONSOLE_OUTPUT_SIZE);
-    ProjectLevelVcsManager.getInstance(myProject).addMessageToConsoleWindow(shortMessage, contentType);
+    showMessage(VcsConsoleLine.create(shortMessage, contentType));
   }
 
   public void showMessage(@NotNull List<Pair<String, Key>> lineChunks) {
@@ -104,6 +107,11 @@ public final class GitVcsConsoleWriter {
       }
       index += message.length();
     }
-    ProjectLevelVcsManager.getInstance(myProject).addMessageToConsoleWindow(VcsConsoleLine.create(messages));
+    showMessage(VcsConsoleLine.create(messages));
+  }
+
+  private void showMessage(@Nullable VcsConsoleLine line) {
+    if (myProject.isDisposed()) return;
+    ProjectLevelVcsManager.getInstance(myProject).addMessageToConsoleWindow(line);
   }
 }

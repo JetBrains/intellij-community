@@ -4,8 +4,6 @@ package com.intellij.util.diff;
 
 import junit.framework.TestCase;
 
-import java.util.BitSet;
-
 public class IntLCSTest extends TestCase {
   public void testDiag() {
     Diff.Change change = buildChange(new int[]{1, 2, 3}, new int[]{1, 2, 3}, 0);

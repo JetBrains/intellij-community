@@ -25,8 +25,6 @@ import org.jetbrains.annotations.NotNull;
  * <p/>
  * Such customizations can be then passed to {@link EditorTextFieldProvider#getEditorField(Language, Project, Iterable)} to get editor
  * with all necessary features applied or disabled.
- *
- * @author Denis Zhdanov
  */
 public interface EditorCustomization {
 

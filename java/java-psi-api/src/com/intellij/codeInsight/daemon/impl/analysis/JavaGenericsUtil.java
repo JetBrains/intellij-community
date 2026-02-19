@@ -1,9 +1,36 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.analysis;
 
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.pom.java.LanguageLevel;
-import com.intellij.psi.*;
+import com.intellij.psi.CommonClassNames;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.JavaResolveResult;
+import com.intellij.psi.PsiAnonymousClass;
+import com.intellij.psi.PsiArrayType;
+import com.intellij.psi.PsiCall;
+import com.intellij.psi.PsiCapturedWildcardType;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiClassType;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementFactory;
+import com.intellij.psi.PsiEllipsisType;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiExpressionList;
+import com.intellij.psi.PsiForeachStatement;
+import com.intellij.psi.PsiIntersectionType;
+import com.intellij.psi.PsiJavaCodeReferenceElement;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiMethodReferenceExpression;
+import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiModifierListOwner;
+import com.intellij.psi.PsiParameter;
+import com.intellij.psi.PsiPrimitiveType;
+import com.intellij.psi.PsiSubstitutor;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypeParameter;
+import com.intellij.psi.PsiWildcardType;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -12,7 +39,9 @@ import com.intellij.psi.util.TypeConversionUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.HashSet;
 import java.util.Iterator;
+import java.util.Set;
 
 import static com.intellij.codeInsight.AnnotationUtil.CHECK_EXTERNAL;
 
@@ -46,7 +75,6 @@ public final class JavaGenericsUtil {
         return true;
       }
 
-      assert parameters.length == 0;
       final PsiClassType.ClassResolveResult resolved = classType.resolveGenerics();
       final PsiClass aClass = resolved.getElement();
       if (aClass instanceof PsiTypeParameter) {
@@ -159,21 +187,80 @@ public final class JavaGenericsUtil {
           PsiSubstitutor castSubstitutor = castResult.getSubstitutor();
           PsiElementFactory factory = JavaPsiFacade.getElementFactory(castClass.getProject());
           for (PsiTypeParameter typeParameter : PsiUtil.typeParametersIterable(castClass)) {
+            //only parameters declared in containing classes
+            if (typeParameter.getOwner() instanceof PsiMethod) {
+              continue;
+            }
             PsiSubstitutor modifiedSubstitutor = castSubstitutor.put(typeParameter, null);
             PsiClassType otherType = factory.createType(castClass, modifiedSubstitutor);
             if (TypeConversionUtil.isAssignable(operandType, otherType, false)) return true;
           }
-          for (PsiTypeParameter typeParameter : PsiUtil.typeParametersIterable(operandClass)) {
-            final PsiType operand = operandResult.getSubstitutor().substitute(typeParameter);
-            if (operand instanceof PsiCapturedWildcardType) return true;
+          //from Java7. Java 6 now is unsupported
+          //according to `Checked and Unchecked Narrowing Reference Conversions`
+          PsiSubstitutor superSubstitutor =
+            TypeConversionUtil.getSuperClassSubstitutor(operandClass, castClass, castResult.getSubstitutor());
+          PsiSubstitutor operandSubstitutor = operandResult.getSubstitutor();
+          PsiClass superClass = operandResult.getElement();
+          if (superClass == null) {
+            return true;
           }
-          return false;
+          Set<PsiTypeParameter> capturedWildcardType = new HashSet<>();
+          for (PsiTypeParameter parameter : PsiUtil.typeParametersIterable(operandClass)) {
+            //only parameters declared in containing classes
+            if (parameter.getOwner() instanceof PsiMethod) {
+              continue;
+            }
+            PsiType operandParameterType = operandSubstitutor.substitute(parameter);
+            if (operandParameterType instanceof PsiCapturedWildcardType) {
+              capturedWildcardType.add(parameter);
+            }
+            PsiType superParameterType = superSubstitutor.substitute(parameter);
+            if (operandParameterType != null &&
+                superParameterType != null &&
+                !TypeConversionUtil.typesAgree(superParameterType, operandParameterType, false)) {
+              return true;
+            }
+          }
+          return !capturedWildcardTypesAreNotMerged(capturedWildcardType, operandClass, castClass);
         }
         return true;
       }
     }
 
     return false;
+  }
+
+  //according to com.sun.tools.javac.code.Types.Adapter#visitTypeVar, it is impossible to merge 2 captured types.
+  private static boolean capturedWildcardTypesAreNotMerged(Set<PsiTypeParameter> capturedSuperClassTypes,
+                                                           PsiClass superClass,
+                                                           PsiClass derivedClass) {
+    if (capturedSuperClassTypes.isEmpty()) {
+      return true;
+    }
+    PsiSubstitutor substitutor = TypeConversionUtil.getSuperClassSubstitutor(superClass, derivedClass, PsiSubstitutor.EMPTY);
+    if (substitutor == PsiSubstitutor.EMPTY) {
+      return true;
+    }
+    Set<String> capturedSourceTypeParameters = new HashSet<>();
+    for (PsiTypeParameter parameter : PsiUtil.typeParametersIterable(superClass)) {
+      if (!capturedSuperClassTypes.contains(parameter)) {
+        continue;
+      }
+      PsiType substituted = substitutor.substitute(parameter);
+      if (!(substituted instanceof PsiClassType)) {
+        continue;
+      }
+      PsiClass resolved = ((PsiClassType)substituted).resolve();
+      if (!(resolved instanceof PsiTypeParameter)) {
+        continue;
+      }
+      PsiTypeParameter typeParameter = (PsiTypeParameter)resolved;
+      if (capturedSourceTypeParameters.contains(typeParameter.getName())) {
+        return false;
+      }
+      capturedSourceTypeParameters.add(typeParameter.getName());
+    }
+    return true;
   }
 
   public static boolean isRawToGeneric(PsiType lType, PsiType rType) {
@@ -256,13 +343,16 @@ public final class JavaGenericsUtil {
     return false;
   }
 
-  @Nullable
-  public static PsiType getCollectionItemType(@NotNull PsiExpression expression) {
+  /**
+   * @param expression expression used as for-each loop {@linkplain PsiForeachStatement#getIteratedValue() iterated value}.
+   * @return type of elements; the for-each loop {@linkplain PsiForeachStatement#getIterationParameter() iteration parameter} 
+   * must be assignable from this type. Returns null if the supplied expression type cannot be used as for-each loop iterated value.  
+   */
+  public static @Nullable PsiType getCollectionItemType(@NotNull PsiExpression expression) {
     return getCollectionItemType(expression.getType(), expression.getResolveScope());
   }
 
-  @Nullable
-  public static PsiType getCollectionItemType(@Nullable PsiType type, @NotNull GlobalSearchScope scope) {
+  public static @Nullable PsiType getCollectionItemType(@Nullable PsiType type, @NotNull GlobalSearchScope scope) {
     if (type instanceof PsiArrayType) {
       return ((PsiArrayType)type).getComponentType();
     }
@@ -310,8 +400,7 @@ public final class JavaGenericsUtil {
     return null;
   }
 
-  @Nullable
-  private static PsiTypeParameter getIterableTypeParameter(final JavaPsiFacade facade, final PsiClass context) {
+  private static @Nullable PsiTypeParameter getIterableTypeParameter(final JavaPsiFacade facade, final PsiClass context) {
     PsiClass iterable = facade.findClass("java.lang.Iterable", context.getResolveScope());
     if (iterable == null) return null;
     PsiTypeParameter[] typeParameters = iterable.getTypeParameters();

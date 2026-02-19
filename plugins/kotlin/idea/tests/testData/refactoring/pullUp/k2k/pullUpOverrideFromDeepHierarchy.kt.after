@@ -1,0 +1,13 @@
+abstract class Foo {
+    abstract fun foo()
+}
+
+abstract class Bar : Foo() {
+    // INFO: {"checked": "true"}
+    override fun foo() {
+
+    }
+}
+
+abstract class Baz : Bar() {
+}

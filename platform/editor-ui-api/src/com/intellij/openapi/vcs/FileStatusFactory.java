@@ -2,98 +2,89 @@
 package com.intellij.openapi.vcs;
 
 import com.intellij.openapi.editor.colors.ColorKey;
-import com.intellij.openapi.editor.colors.EditorColorsManager;
+import com.intellij.openapi.extensions.PluginId;
+import com.intellij.util.containers.MultiMap;
+import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.*;
-import java.util.ArrayList;
-import java.util.List;
+import java.awt.Color;
+import java.util.Collection;
 import java.util.function.Supplier;
 
 public final class FileStatusFactory {
   private static final FileStatusFactory ourInstance = new FileStatusFactory();
-  public static final String FILESTATUS_COLOR_KEY_PREFIX = "FILESTATUS_";
-  private final List<FileStatus> myStatuses = new ArrayList<>();
 
-  private FileStatusFactory() {
-  }
-
-  public FileStatus createFileStatus(@NonNls @NotNull String id,
-                                     @Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String description) {
-    return createFileStatus(id, () -> description, null);
-  }
-
-  public FileStatus createFileStatus(@NonNls @NotNull String id,
-                                     @Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String description,
-                                     @Nullable Color color) {
-    return createFileStatus(id, () -> description, color);
-  }
-
-  public FileStatus createFileStatus(@NonNls @NotNull String id,
-                                     @NotNull Supplier<@Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String> description) {
-    return createFileStatus(id, description, null);
-  }
-
-  public synchronized FileStatus createFileStatus(@NonNls @NotNull String id,
-                                                  @NotNull Supplier<@Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String> description,
-                                                  @Nullable Color color) {
-    FileStatusImpl result = new FileStatusImpl(id, ColorKey.createColorKey(FILESTATUS_COLOR_KEY_PREFIX + id, color), description);
-    myStatuses.add(result);
-    return result;
-  }
-
-  public synchronized FileStatus[] getAllFileStatuses() {
-    return myStatuses.toArray(new FileStatus[0]);
-  }
-
-  public static FileStatusFactory getInstance() {
+  public static @NotNull FileStatusFactory getInstance() {
     return ourInstance;
   }
 
+  @Internal
+  public static String getFilestatusColorKeyPrefix() {
+    return "FILESTATUS_";
+  }
+
+  @Internal
+  public static String getFilestatusUiThemePrefix() {
+    return "VersionControl.FileStatus.";
+  }
+
   /**
-   * author: lesya
+   * @deprecated this method is not locale-friendly or plugin unloading-friendly
    */
-  private static class FileStatusImpl implements FileStatus {
-    private final String myStatus;
-    private final ColorKey myColorKey;
-    private final Supplier<@Nls(capitalization = Nls.Capitalization.Sentence) String> myTextSupplier;
+  @Deprecated
+  public FileStatus createFileStatus(@NonNls @NotNull String id,
+                                     @Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String description,
+                                     @Nullable Color color) {
+    return createFileStatus(id, () -> description, color, null);
+  }
 
-    FileStatusImpl(@NotNull String status,
-                   @NotNull ColorKey key,
-                   @NotNull Supplier<@Nls(capitalization = Nls.Capitalization.Sentence) String> textSupplier) {
-      myStatus = status;
-      myColorKey = key;
-      myTextSupplier = textSupplier;
-    }
+  /**
+   * @param pluginId if specified, returned status will be removed from global file status list on plugin unloading (to avoid unloading
+   *                 being blocked by plugin classes referenced via description supplier)
+   */
+  public @NotNull FileStatus createFileStatus(
+    @NonNls @NotNull String id,
+    @NotNull Supplier<@Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String> description,
+    @Nullable PluginId pluginId
+  ) {
+    return createFileStatus(id, description, null, pluginId);
+  }
 
-    @NonNls
-    public String toString() {
-      return myStatus;
-    }
+  /**
+   * @param pluginId if specified, returned status will be removed from global file status list on plugin unloading (to avoid unloading
+   *                 being blocked by plugin classes referenced via description supplier)
+   */
+  public synchronized @NotNull FileStatus createFileStatus(
+    @NonNls @NotNull String id,
+    @NotNull Supplier<@Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String> description,
+    @Nullable Color color,
+    @Nullable PluginId pluginId
+  ) {
+    ColorKey colorKey = ColorKey.createColorKey(getFilestatusColorKeyPrefix() + id, color);
+    FileStatusImpl result = new FileStatusImpl(id, colorKey, description);
+    myStatuses.putValue(pluginId, result);
+    return result;
+  }
 
-    @Override
-    public String getText() {
-      return myTextSupplier.get();
-    }
+  private final MultiMap<@Nullable PluginId, FileStatus> myStatuses = new MultiMap<>();
 
-    @Override
-    public Color getColor() {
-      return EditorColorsManager.getInstance().getSchemeForCurrentUITheme().getColor(getColorKey());
-    }
+  @Internal
+  public @NotNull FileStatus @NotNull [] getAllFileStatuses() {
+    return myStatuses.values().toArray(new FileStatus[0]);
+  }
 
-    @NotNull
-    @Override
-    public ColorKey getColorKey() {
-      return myColorKey;
-    }
+  @Internal
+  public @NotNull Collection<FileStatus> getGlobalFileStatuses() {
+    return myStatuses.get(null);
+  }
 
-    @NotNull
-    @Override
-    public String getId() {
-      return myStatus;
-    }
+  synchronized void onPluginUnload(@NotNull PluginId pluginId) {
+    myStatuses.remove(pluginId);
+  }
+
+  private FileStatusFactory() {
   }
 }

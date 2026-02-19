@@ -1,21 +1,24 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.ui.popup;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsContexts.PopupAdvertisement;
 import com.intellij.openapi.util.Pair;
 import com.intellij.ui.ActiveComponent;
 import com.intellij.util.BooleanFunction;
 import com.intellij.util.Processor;
-import com.intellij.openapi.util.NlsContexts;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JComponent;
+import javax.swing.KeyStroke;
+import java.awt.Color;
+import java.awt.Component;
+import java.awt.Dimension;
 import java.awt.event.ActionListener;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
@@ -83,6 +86,24 @@ public interface ComponentPopupBuilder {
   ComponentPopupBuilder setMinSize(Dimension minSize);
 
   /**
+   * Use this method if you need the popup to have the same width as the owner
+   * @see JBPopup#show(Component) for the meaning of the owner
+   *
+   * Note that setting owner.getWidth() to popup beforehand won't work in remote development scenario
+   */
+  @NotNull
+  ComponentPopupBuilder setStretchToOwnerWidth(boolean stretchToOwnerWidth);
+
+  /**
+   * Use this method if you need the popup to have the same height as the owner
+   * @see JBPopup#show(Component) for the meaning of the owner
+   *
+   * Note that setting owner.getHeight() to popup beforehand won't work in remote development scenario
+   */
+  @NotNull
+  ComponentPopupBuilder setStretchToOwnerHeight(boolean stretchToOwnerHeight);
+
+  /**
    * Use this method to customize shape of popup window (e.g. to use bounded corners).
    */
   @SuppressWarnings("UnusedDeclaration")//used in 'Presentation Assistant' plugin
@@ -117,6 +138,9 @@ public interface ComponentPopupBuilder {
   ComponentPopupBuilder setAdText(@Nullable @PopupAdvertisement String text, int textAlignment);
 
   @NotNull
+  ComponentPopupBuilder setAdvertiser(@Nullable JComponent advertiser);
+
+  @NotNull
   ComponentPopupBuilder setShowShadow(boolean show);
 
   @NotNull
@@ -137,10 +161,9 @@ public interface ComponentPopupBuilder {
   ComponentPopupBuilder setCancelOnWindowDeactivation(boolean cancelOnWindowDeactivation);
 
   /**
-   * Allows to define custom strategy for processing {@link JBPopup#dispatchKeyEvent(KeyEvent)}.
+   * Allows defining custom strategy for processing {@link JBPopup#dispatchKeyEvent(KeyEvent)}.
    */
-  @NotNull
-  ComponentPopupBuilder setKeyEventHandler(@NotNull BooleanFunction<? super KeyEvent> handler);
+  @NotNull ComponentPopupBuilder setKeyEventHandler(@NotNull BooleanFunction<? super KeyEvent> handler);
 
   @NotNull
   ComponentPopupBuilder setShowBorder(boolean show);
@@ -148,8 +171,7 @@ public interface ComponentPopupBuilder {
   @NotNull
   ComponentPopupBuilder setNormalWindowLevel(boolean b);
 
-  @NotNull
-  default ComponentPopupBuilder setBorderColor(Color color) {
+  default @NotNull ComponentPopupBuilder setBorderColor(Color color) {
     return this;
   }
 

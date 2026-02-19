@@ -1,8 +1,8 @@
-/*
- * Copyright (c) 2000-2007 JetBrains s.r.o. All Rights Reserved.
- */
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.mock;
 
+import com.intellij.codeInsight.multiverse.CodeInsightContext;
+import com.intellij.codeInsight.multiverse.CodeInsightContexts;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -15,32 +15,30 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 
-/**
- * @author peter
- */
 public class MockPsiDocumentManager extends PsiDocumentManager {
   @Override
-  @Nullable
-  public PsiFile getPsiFile(@NotNull Document document) {
+  public @Nullable PsiFile getPsiFile(@NotNull Document document, @NotNull CodeInsightContext context) {
     throw new UnsupportedOperationException("Method getPsiFile is not yet implemented in " + getClass().getName());
   }
 
   @Override
-  @Nullable
-  public PsiFile getCachedPsiFile(@NotNull Document document) {
+  public @Nullable PsiFile getCachedPsiFile(@NotNull Document document) {
+    return getCachedPsiFile(document, CodeInsightContexts.anyContext());
+  }
+
+  @Override
+  public @Nullable PsiFile getCachedPsiFile(@NotNull Document document, @NotNull CodeInsightContext context) {
     throw new UnsupportedOperationException("Method getCachedPsiFile is not yet implemented in " + getClass().getName());
   }
 
   @Override
-  @Nullable
-  public Document getDocument(@NotNull PsiFile file) {
+  public @Nullable Document getDocument(@NotNull PsiFile psiFile) {
     return null;
   }
 
   @Override
-  @Nullable
-  public Document getCachedDocument(@NotNull PsiFile file) {
-    VirtualFile vFile = file.getViewProvider().getVirtualFile();
+  public @Nullable Document getCachedDocument(@NotNull PsiFile psiFile) {
+    VirtualFile vFile = psiFile.getViewProvider().getVirtualFile();
     return FileDocumentManager.getInstance().getCachedDocument(vFile);
   }
 
@@ -54,7 +52,7 @@ public class MockPsiDocumentManager extends PsiDocumentManager {
   }
 
   @Override
-  public void performForCommittedDocument(@NotNull final Document document, @NotNull final Runnable action) {
+  public void performForCommittedDocument(final @NotNull Document document, final @NotNull Runnable action) {
     action.run();
   }
 
@@ -62,9 +60,8 @@ public class MockPsiDocumentManager extends PsiDocumentManager {
   public void commitDocument(@NotNull Document document) {
   }
 
-  @NotNull
   @Override
-  public CharSequence getLastCommittedText(@NotNull Document document) {
+  public @NotNull CharSequence getLastCommittedText(@NotNull Document document) {
     return document.getImmutableCharSequence();
   }
 
@@ -73,9 +70,8 @@ public class MockPsiDocumentManager extends PsiDocumentManager {
     return document.getModificationStamp();
   }
 
-  @Nullable
   @Override
-  public Document getLastCommittedDocument(@NotNull PsiFile file) {
+  public @Nullable Document getLastCommittedDocument(@NotNull PsiFile psiFile) {
     return null;
   }
 
@@ -95,6 +91,11 @@ public class MockPsiDocumentManager extends PsiDocumentManager {
   }
 
   @Override
+  public @Nullable PsiFile getPsiFile(@NotNull Document document) {
+    return getPsiFile(document, CodeInsightContexts.anyContext());
+  }
+
+  @Override
   public boolean hasUncommitedDocuments() {
     throw new UnsupportedOperationException("Method hasUncommitedDocuments is not yet implemented in " + getClass().getName());
   }
@@ -110,22 +111,12 @@ public class MockPsiDocumentManager extends PsiDocumentManager {
   }
 
   @Override
-  public void addListener(@NotNull Listener listener) {
-    throw new UnsupportedOperationException("Method addListener is not yet implemented in " + getClass().getName());
-  }
-
-  @Override
-  public void removeListener(@NotNull Listener listener) {
-    throw new UnsupportedOperationException("Method removeListener is not yet implemented in " + getClass().getName());
-  }
-
-  @Override
-  public boolean isDocumentBlockedByPsi(@NotNull Document doc) {
+  public boolean isDocumentBlockedByPsi(@NotNull Document document) {
     throw new UnsupportedOperationException("Method isDocumentBlockedByPsi is not yet implemented in " + getClass().getName());
   }
 
   @Override
-  public void doPostponedOperationsAndUnblockDocument(@NotNull Document doc) {
+  public void doPostponedOperationsAndUnblockDocument(@NotNull Document document) {
     throw new UnsupportedOperationException(
       "Method doPostponedOperationsAndUnblockDocument is not yet implemented in " + getClass().getName());
   }
@@ -141,12 +132,13 @@ public class MockPsiDocumentManager extends PsiDocumentManager {
   }
 
   @Override
-  public void performLaterWhenAllCommitted(@NotNull final Runnable runnable) {
+  public void performLaterWhenAllCommitted(final @NotNull Runnable runnable) {
     throw new UnsupportedOperationException();
   }
 
   @Override
-  public void performLaterWhenAllCommitted(@NotNull Runnable runnable, ModalityState modalityState) {
+  public void performLaterWhenAllCommitted(@NotNull ModalityState modalityState,
+                                           @NotNull Runnable runnable) {
     throw new UnsupportedOperationException();
   }
 }

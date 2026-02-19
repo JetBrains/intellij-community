@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.javaee;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -18,12 +18,20 @@ import com.intellij.util.ui.UIUtil;
 import com.intellij.xml.XmlBundle;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JComponent;
+import javax.swing.JPanel;
+import javax.swing.JTable;
+import javax.swing.ListSelectionModel;
 import javax.swing.event.TableModelEvent;
 import javax.swing.event.TableModelListener;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.TableColumn;
-import java.awt.*;
+import java.awt.Color;
+import java.awt.Component;
+import java.awt.Dimension;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
+import java.awt.Insets;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -34,7 +42,7 @@ public class ExternalResourceConfigurable extends BaseConfigurable implements Co
   private List<String> myIgnoredUrls;
   private AddEditRemovePanel<NameLocationPair> myExtPanel;
   private AddEditRemovePanel<String> myIgnorePanel;
-  @Nullable private final Project myProject;
+  private final @Nullable Project myProject;
   private final List<? extends NameLocationPair> myNewPairs;
 
   @SuppressWarnings("UnusedDeclaration")
@@ -79,7 +87,7 @@ public class ExternalResourceConfigurable extends BaseConfigurable implements Co
         return editExtLocation(o);
       }
     };
-    myExtPanel.getTable().setShowColumns(true);
+    myExtPanel.getTable().setShowGrid(false);
 
     myExtPanel.setRenderer(1, new PathRenderer());
 
@@ -114,6 +122,7 @@ public class ExternalResourceConfigurable extends BaseConfigurable implements Co
         return editIgnoreLocation(o);
       }
     };
+    myIgnorePanel.getTable().setShowGrid(false);
 
     myPanel.add(myExtPanel,
                 new GridBagConstraints(0, 0, 1, 1, 1, 1, GridBagConstraints.NORTH, GridBagConstraints.BOTH, new Insets(0, 0, 0, 0), 0, 0));
@@ -211,8 +220,7 @@ public class ExternalResourceConfigurable extends BaseConfigurable implements Co
     return "preferences.externalResources";
   }
 
-  @Nullable
-  private NameLocationPair addExtLocation() {
+  private @Nullable NameLocationPair addExtLocation() {
     MapExternalResourceDialog dialog = new MapExternalResourceDialog(null, myProject, null, null);
     if (!dialog.showAndGet()) {
       return null;
@@ -221,8 +229,7 @@ public class ExternalResourceConfigurable extends BaseConfigurable implements Co
     return new NameLocationPair(dialog.getUri(), dialog.getResourceLocation(), false);
   }
 
-  @Nullable
-  private NameLocationPair editExtLocation(Object o) {
+  private @Nullable NameLocationPair editExtLocation(Object o) {
     NameLocationPair pair = (NameLocationPair)o;
     MapExternalResourceDialog dialog = new MapExternalResourceDialog(pair.getName(), myProject, null, pair.getLocation());
     if (!dialog.showAndGet()) {
@@ -232,8 +239,7 @@ public class ExternalResourceConfigurable extends BaseConfigurable implements Co
     return new NameLocationPair(dialog.getUri(), dialog.getResourceLocation(), pair.myShared);
   }
 
-  @Nullable
-  private String addIgnoreLocation() {
+  private @Nullable String addIgnoreLocation() {
     EditLocationDialog dialog = new EditLocationDialog(null, false);
     if (!dialog.showAndGet()) {
       return null;
@@ -242,8 +248,7 @@ public class ExternalResourceConfigurable extends BaseConfigurable implements Co
     return dialog.getPair().myName;
   }
 
-  @Nullable
-  private String editIgnoreLocation(Object o) {
+  private @Nullable String editIgnoreLocation(Object o) {
     EditLocationDialog dialog = new EditLocationDialog(null, false);
     dialog.init(new NameLocationPair(o.toString(), null, false));
     if (!dialog.showAndGet()) {
@@ -313,16 +318,12 @@ public class ExternalResourceConfigurable extends BaseConfigurable implements Co
 
     @Override
     public Object getField(NameLocationPair pair, int columnIndex) {
-      switch (columnIndex) {
-        case 0:
-          return pair.myName;
-        case 1:
-          return pair.myLocation;
-        case 2:
-          return !pair.myShared;
-      }
-
-      return "";
+      return switch (columnIndex) {
+        case 0 -> pair.myName;
+        case 1 -> pair.myLocation;
+        case 2 -> !pair.myShared;
+        default -> "";
+      };
     }
 
     @Override

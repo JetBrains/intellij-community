@@ -1,9 +1,14 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.psi.impl;
 
-import com.intellij.openapi.util.VolatileNotNullLazyValue;
+import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.pom.java.LanguageLevel;
-import com.intellij.psi.*;
+import com.intellij.psi.CommonClassNames;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiClassType;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypes;
 import com.intellij.psi.search.GlobalSearchScope;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -12,16 +17,15 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUt
 import java.util.List;
 
 public abstract class GrTupleType extends GrLiteralClassType {
-
-  private final VolatileNotNullLazyValue<PsiType[]> myParameters = VolatileNotNullLazyValue.createValue(() -> {
+  private final NotNullLazyValue<PsiType[]> myParameters = NotNullLazyValue.volatileLazy(() -> {
     List<PsiType> types = getComponentTypes();
     if (types.isEmpty()) return PsiType.EMPTY_ARRAY;
     final PsiType leastUpperBound = getLeastUpperBound(types.toArray(PsiType.EMPTY_ARRAY));
-    if (leastUpperBound == PsiType.NULL) return EMPTY_ARRAY;
+    if (leastUpperBound == PsiTypes.nullType()) return EMPTY_ARRAY;
     return new PsiType[]{leastUpperBound};
   });
 
-  private final VolatileNotNullLazyValue<List<PsiType>> myComponents = VolatileNotNullLazyValue.createValue(this::inferComponents);
+  private final NotNullLazyValue<List<PsiType>> myComponents = NotNullLazyValue.volatileLazy(this::inferComponents);
 
   public GrTupleType(@NotNull GlobalSearchScope scope, @NotNull JavaPsiFacade facade) {
     this(scope, facade, LanguageLevel.JDK_1_5);
@@ -37,9 +41,8 @@ public abstract class GrTupleType extends GrLiteralClassType {
     super(LanguageLevel.JDK_1_5, context);
   }
 
-  @NotNull
   @Override
-  protected String getJavaClassName() {
+  protected @NotNull String getJavaClassName() {
     return CommonClassNames.JAVA_UTIL_LIST;
   }
 
@@ -49,8 +52,7 @@ public abstract class GrTupleType extends GrLiteralClassType {
   }
 
   @Override
-  @NotNull
-  public String getInternalCanonicalText() {
+  public @NotNull String getInternalCanonicalText() {
     List<PsiType> types = getComponentTypes();
 
     StringBuilder builder = new StringBuilder();
@@ -68,6 +70,7 @@ public abstract class GrTupleType extends GrLiteralClassType {
     return builder.toString();
   }
 
+  @Override
   public boolean equals(Object obj) {
     if (obj instanceof GrTupleType) {
       List<PsiType> componentTypes = getComponentTypes();
@@ -97,8 +100,7 @@ public abstract class GrTupleType extends GrLiteralClassType {
     return super.isAssignableFrom(type);
   }
 
-  @NotNull
-  public List<PsiType> getComponentTypes() {
+  public @NotNull List<PsiType> getComponentTypes() {
     return myComponents.getValue();
   }
 
@@ -106,12 +108,10 @@ public abstract class GrTupleType extends GrLiteralClassType {
     return getComponentTypes().toArray(PsiType.EMPTY_ARRAY);
   }
 
-  @NotNull
-  protected abstract List<PsiType> inferComponents();
+  protected abstract @NotNull List<PsiType> inferComponents();
 
-  @NotNull
   @Override
-  public PsiClassType setLanguageLevel(@NotNull LanguageLevel languageLevel) {
+  public @NotNull PsiClassType setLanguageLevel(@NotNull LanguageLevel languageLevel) {
     return new GrImmediateTupleType(getComponentTypes(), myFacade, getResolveScope());
   }
 }

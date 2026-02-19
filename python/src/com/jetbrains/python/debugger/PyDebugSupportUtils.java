@@ -1,6 +1,7 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.debugger;
 
+import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
@@ -10,9 +11,17 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.xdebugger.XDebugSession;
-import com.intellij.xdebugger.XDebuggerManager;
+import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
 import com.jetbrains.python.PyTokenTypes;
-import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.LanguageLevel;
+import com.jetbrains.python.psi.PyCallExpression;
+import com.jetbrains.python.psi.PyElementGenerator;
+import com.jetbrains.python.psi.PyExpression;
+import com.jetbrains.python.psi.PyExpressionStatement;
+import com.jetbrains.python.psi.PyLiteralExpression;
+import com.jetbrains.python.psi.PyNamedParameter;
+import com.jetbrains.python.psi.PyQualifiedExpression;
+import com.jetbrains.python.psi.PyReferenceExpression;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -31,8 +40,7 @@ public final class PyDebugSupportUtils {
     });
   }
 
-  @Nullable
-  public static TextRange getExpressionRangeAtOffset(final Project project, final Document document, final int offset) {
+  public static @Nullable TextRange getExpressionRangeAtOffset(final Project project, final Document document, final int offset) {
     return ReadAction.compute(() -> {
 
       final PsiFile psiFile = PsiDocumentManager.getInstance(project).getPsiFile(document);
@@ -43,6 +51,10 @@ public final class PyDebugSupportUtils {
         }
         if (element instanceof PyLiteralExpression) {
           return null;
+        }
+        if (element instanceof PyReferenceExpression && element.getParent() instanceof PyCallExpression parent) {
+          // Don't evaluate function objects, expand range for the entire call (`foo` -> `foo(arg1, ..., argN)`)
+          element = parent;
         }
         if (element != null && isSimpleEnough(element) && isExpression(project, document.getText(element.getTextRange()))) {
           return element.getTextRange();
@@ -56,10 +68,8 @@ public final class PyDebugSupportUtils {
   private static boolean isSimpleEnough(final PsiElement element) {
     return element instanceof PyLiteralExpression ||
            element instanceof PyQualifiedExpression ||
-           element instanceof PyBinaryExpression ||
-           element instanceof PyPrefixExpression ||
-           element instanceof PySliceExpression ||
-           element instanceof PyNamedParameter;
+           element instanceof PyNamedParameter ||
+           element instanceof PyCallExpression;
   }
 
   // is expression a variable reference and can be evaluated
@@ -83,8 +93,7 @@ public final class PyDebugSupportUtils {
            root.getFirstChild().getFirstChild().getFirstChild() == null;
   }
 
-  @Nullable
-  private static String getLineText(@NotNull Document document, int line) {
+  private static @Nullable String getLineText(@NotNull Document document, int line) {
     if (line > 0 && line < document.getLineCount()) {
       return document.getText(TextRange.create(document.getLineStartOffset(line), document.getLineEndOffset(line)));
     }
@@ -100,8 +109,8 @@ public final class PyDebugSupportUtils {
     return false;
   }
 
-  public static boolean isCurrentPythonDebugProcess(@NotNull Project project) {
-    XDebugSession session = XDebuggerManager.getInstance(project).getCurrentSession();
+  public static boolean isCurrentPythonDebugProcess(@NotNull AnActionEvent event) {
+    XDebugSession session = DebuggerUIUtil.getSession(event);
     return session != null && session.getDebugProcess() instanceof PyDebugProcess;
   }
 }

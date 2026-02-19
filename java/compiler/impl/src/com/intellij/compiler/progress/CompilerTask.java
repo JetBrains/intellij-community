@@ -1,14 +1,11 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
-/*
- * @author: Eugene Zhuravlev
- */
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.compiler.progress;
 
 import com.intellij.compiler.CompilerManagerImpl;
 import com.intellij.compiler.impl.ExitStatus;
+import com.intellij.openapi.application.Application;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.compiler.CompilerManager;
 import com.intellij.openapi.compiler.CompilerMessage;
 import com.intellij.openapi.compiler.CompilerMessageCategory;
@@ -17,19 +14,20 @@ import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.progress.util.AbstractProgressIndicatorExBase;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.AppIconScheme;
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
 import com.intellij.pom.Navigatable;
 import com.intellij.problems.WolfTheProblemSolver;
 import com.intellij.ui.AppIcon;
-import com.intellij.ui.GuiUtils;
+import com.intellij.util.ModalityUiUtil;
+import com.intellij.util.SystemProperties;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -38,10 +36,8 @@ import java.util.concurrent.TimeUnit;
 
 public final class CompilerTask extends Task.Backgroundable {
   private static final String APP_ICON_ID = "compiler";
-  @NotNull
-  private final Object myContentId;
-  @NotNull
-  private Object mySessionId;
+  private final @NotNull Object myContentId;
+  private @NotNull Object mySessionId;
   private final boolean myModal;
   private final boolean myHeadlessMode;
   private final boolean myForceAsyncExecution;
@@ -74,15 +70,14 @@ public final class CompilerTask extends Task.Backgroundable {
     myContentId = new IDObject("content_id");
     mySessionId = myContentId; // by default sessionID should be unique, just as content ID
 
-    if (Registry.is("ide.jps.use.build.tool.window", true)) {
-      myBuildViewService = new BuildOutputService(project, contentName);
+    if (SystemProperties.getBooleanProperty("ide.jps.use.build.tool.window", true)) {
+      myBuildViewService = new BuildOutputService(project, contentName, myCompilationStartedAutomatically);
     } else {
       myBuildViewService = new CompilerMessagesService(project, myContentId, contentName, headlessMode);
     }
   }
 
-  @NotNull
-  public Object getSessionId() {
+  public @NotNull Object getSessionId() {
     return mySessionId;
   }
 
@@ -90,8 +85,7 @@ public final class CompilerTask extends Task.Backgroundable {
     mySessionId = sessionId;
   }
 
-  @NotNull
-  public Object getContentId() {
+  public @NotNull Object getContentId() {
     return myContentId;
   }
 
@@ -122,9 +116,8 @@ public final class CompilerTask extends Task.Backgroundable {
     return myIndicator;
   }
 
-  @NotNull
   @Override
-  public NotificationInfo getNotificationInfo() {
+  public @NotNull NotificationInfo getNotificationInfo() {
     return new NotificationInfo(myErrorCount > 0 ? "Compiler (errors)" : "Compiler (success)",
                                 JavaCompilerBundle.message("compilation.finished"),
                                 JavaCompilerBundle.message("0.errors.1.warnings", myErrorCount, myWarningCount), true);
@@ -139,20 +132,25 @@ public final class CompilerTask extends Task.Backgroundable {
     Semaphore semaphore = ((CompilerManagerImpl)CompilerManager.getInstance(myProject)).getCompilationSemaphore();
     boolean acquired = false;
     try {
-      try {
-        while (!acquired) {
-          acquired = semaphore.tryAcquire(300, TimeUnit.MILLISECONDS);
-          if (!acquired && !myWaitForPreviousSession) {
-            return;
-          }
-          if (indicator.isCanceled()) {
-            // give up obtaining the semaphore,
-            // let compile work begin in order to stop gracefuly on cancel event
-            break;
+      if (!myCompilationStartedAutomatically || !isHeadless()) {
+        // Do not acquire the semaphore for the automatically launched headless tasks.
+        // Because of that Build UI controls will not be disabled and would allow the user to start build explicitly.
+        // Such builds will be queued and executed after any currently running tasks.
+        try {
+          while (!acquired) {
+            acquired = semaphore.tryAcquire(300, TimeUnit.MILLISECONDS);
+            if (!acquired && !myWaitForPreviousSession) {
+              return;
+            }
+            if (indicator.isCanceled()) {
+              // give up obtaining the semaphore,
+              // let compile work begin in order to stop gracefuly on cancel event
+              break;
+            }
           }
         }
-      }
-      catch (InterruptedException ignored) {
+        catch (InterruptedException ignored) {
+        }
       }
 
       if (!isHeadless()) {
@@ -216,9 +214,8 @@ public final class CompilerTask extends Task.Backgroundable {
       @Override
       public void setFraction(final double fraction) {
         super.setFraction(fraction);
-        GuiUtils.invokeLaterIfNeeded(
-          () -> AppIcon.getInstance().setProgress(myProject, APP_ICON_ID, AppIconScheme.Progress.BUILD, fraction, true),
-          ModalityState.any()
+        ModalityUiUtil.invokeLaterIfNeeded(
+          ModalityState.any(), () -> AppIcon.getInstance().setProgress(myProject, APP_ICON_ID, AppIconScheme.Progress.BUILD, fraction, true)
         );
       }
 
@@ -242,17 +239,38 @@ public final class CompilerTask extends Task.Backgroundable {
     }
     else if (CompilerMessageCategory.ERROR.equals(messageCategory)) {
       myErrorCount += 1;
-      ReadAction.run(() -> informWolf(message));
+      informWolf(message);
     }
     myBuildViewService.addMessage(mySessionId, message);
   }
 
   private void informWolf(final CompilerMessage message) {
-    if (myProject.isDisposed()) return;
-    WolfTheProblemSolver wolf = WolfTheProblemSolver.getInstance(myProject);
-    VirtualFile file = getVirtualFile(message);
-    if (file != null) {
-      wolf.queue(file);
+    if (myProject == null) {
+      return;
+    }
+
+    final Runnable task = () -> {
+      if (myProject.isDisposed()) {
+        return;
+      }
+      VirtualFile file = message.getVirtualFile();
+      if (file == null) {
+        Navigatable navigatable = message.getNavigatable();
+        if (navigatable instanceof OpenFileDescriptor) {
+          file = ((OpenFileDescriptor)navigatable).getFile();
+        }
+      }
+      if (file != null) {
+        WolfTheProblemSolver.getInstance(myProject).queue(file);
+      }
+    };
+
+    final Application app = ApplicationManager.getApplication();
+    if (app.isDispatchThread()) {
+      app.executeOnPooledThread(task);
+    }
+    else {
+      task.run();
     }
   }
 
@@ -263,7 +281,7 @@ public final class CompilerTask extends Task.Backgroundable {
   public void start(Runnable compileWork, Runnable restartWork) {
     myCompileWork = compileWork;
     myRestartWork = restartWork;
-    queue();
+    ProgressManager.getInstance().run(this);
   }
 
   public void run(Runnable compileWork, Runnable restartWork, ProgressIndicator progressIndicator) {
@@ -275,17 +293,6 @@ public final class CompilerTask extends Task.Backgroundable {
   @Override
   public boolean isHeadless() {
     return myHeadlessMode && !myForceAsyncExecution;
-  }
-
-  private static VirtualFile getVirtualFile(final CompilerMessage message) {
-    VirtualFile virtualFile = message.getVirtualFile();
-    if (virtualFile == null) {
-      Navigatable navigatable = message.getNavigatable();
-      if (navigatable instanceof OpenFileDescriptor) {
-        virtualFile = ((OpenFileDescriptor)navigatable).getFile();
-      }
-    }
-    return virtualFile;
   }
 
   public static TextRange getTextRange(final CompilerMessage message) {

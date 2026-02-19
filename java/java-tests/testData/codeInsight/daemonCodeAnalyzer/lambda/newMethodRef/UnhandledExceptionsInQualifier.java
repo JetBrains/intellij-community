@@ -12,6 +12,6 @@ class Test {
 
   void d() throws E2 {
     a(b()::c);
-    a(<error descr="Unhandled exception: E2">this::e</error>);
+    a(this::<error descr="Unhandled exception: E2">e</error>);
   }
 }

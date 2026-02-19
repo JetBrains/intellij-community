@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.rebase.conflict
 
 import com.intellij.diff.DiffEditorTitleCustomizer
@@ -12,12 +12,19 @@ import com.intellij.openapi.vcs.merge.MergeDialogCustomizer
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.vcs.log.Hash
 import com.intellij.vcs.log.impl.HashImpl
-import com.intellij.vcs.log.util.VcsLogUtil
 import git4idea.GitRevisionNumber
 import git4idea.GitUtil
+import git4idea.branch.GitRebaseParams
 import git4idea.history.GitHistoryUtils
 import git4idea.i18n.GitBundleExtensions.html
-import git4idea.merge.*
+import git4idea.merge.GitDefaultMergeDialogCustomizer
+import git4idea.merge.GitMergeDialogCustomizerHelper
+import git4idea.merge.GitMergeProvider
+import git4idea.merge.getDefaultLeftPanelTitleForBranch
+import git4idea.merge.getDefaultRightPanelTitleForBranch
+import git4idea.merge.getDescriptionForRebase
+import git4idea.merge.getTitleWithCommitDetailsCustomizer
+import git4idea.merge.getTitleWithCommitsRangeDetailsCustomizer
 import git4idea.rebase.GitRebaseSpec
 import git4idea.repo.GitRepository
 
@@ -32,7 +39,9 @@ internal fun createRebaseDialogCustomizer(repository: GitRepository, rebaseSpec:
 
   // check that upstream is HEAD to overcome a hack: passing HEAD into `git rebase HEAD branch`
   // to avoid passing branch names for different repositories
-  val upstream = rebaseParams.upstream.takeIf { it != GitUtil.HEAD } ?: currentBranchAtTheStartOfRebase
+  val upstream = rebaseParams.upstream.takeUnless {
+    it is GitRebaseParams.RebaseUpstream.Reference && it.ref == GitUtil.HEAD
+  } ?: currentBranchAtTheStartOfRebase?.let { GitRebaseParams.RebaseUpstream.fromRefString(currentBranchAtTheStartOfRebase) }
   val branch = rebaseParams.branch ?: currentBranchAtTheStartOfRebase
 
   if (upstream == null || branch == null) {
@@ -62,10 +71,10 @@ internal fun createRebaseDialogCustomizer(repository: GitRepository, rebaseSpec:
 
 private class GitRebaseMergeDialogCustomizer(
   private val repository: GitRepository,
-  upstream: String,
+  upstream: GitRebaseParams.RebaseUpstream,
   @NlsSafe private val rebasingBranch: String,
   private val ingoingCommit: Hash?,
-  private val mergeBase: Hash?
+  private val mergeBase: Hash?,
 ) : MergeDialogCustomizer() {
   private val baseHash: Hash?
 
@@ -76,19 +85,26 @@ private class GitRebaseMergeDialogCustomizer(
   private val baseBranch: String?
 
   init {
-    if (upstream.matches("[a-fA-F0-9]{40}".toRegex())) {
-      basePresentable = VcsLogUtil.getShortHash(upstream)
+    if (upstream is GitRebaseParams.RebaseUpstream.Commit) {
+      basePresentable = upstream.commit.toShortString()
       baseBranch = null
-      baseHash = HashImpl.build(upstream)
+      baseHash = upstream.commit
+    }
+    else if (upstream is GitRebaseParams.RebaseUpstream.Reference) {
+      basePresentable = upstream.ref
+      baseBranch = upstream.ref
+      baseHash = null
     }
     else {
-      basePresentable = upstream
-      baseBranch = upstream
+      basePresentable = null
+      baseBranch = null
       baseHash = null
     }
   }
 
-  override fun getMultipleFileMergeDescription(files: MutableCollection<VirtualFile>) = getDescriptionForRebase(rebasingBranch, baseBranch, baseHash)
+  override fun getMultipleFileMergeDescription(files: Collection<VirtualFile>) = getDescriptionForRebase(
+    repository, rebasingBranch, baseBranch, baseHash
+  )
 
   override fun getLeftPanelTitle(file: VirtualFile) = getDefaultLeftPanelTitleForBranch(rebasingBranch)
 
@@ -102,10 +118,8 @@ private class GitRebaseMergeDialogCustomizer(
     GitMergeProvider.calcColumnName(true, basePresentable)
   )
 
-  override fun getTitleCustomizerList(file: FilePath) = DiffEditorTitleCustomizerList(
-    getLeftTitleCustomizer(file),
-    null,
-    getRightTitleCustomizer(file)
+  override fun getTitleCustomizerList(file: FilePath) = GitMergeDialogCustomizerHelper.getCustomizers(
+    repository.project, file, getLeftTitleCustomizer(file), getRightTitleCustomizer(file)
   )
 
   private fun getLeftTitleCustomizer(file: FilePath): DiffEditorTitleCustomizer? {

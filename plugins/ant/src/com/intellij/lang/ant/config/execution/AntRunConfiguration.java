@@ -1,10 +1,16 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.ant.config.execution;
 
 import com.intellij.execution.Executor;
-import com.intellij.execution.configurations.*;
+import com.intellij.execution.configurations.ConfigurationFactory;
+import com.intellij.execution.configurations.LocatableConfigurationBase;
+import com.intellij.execution.configurations.RunConfiguration;
+import com.intellij.execution.configurations.RunProfileState;
+import com.intellij.execution.configurations.RunProfileWithCompileBeforeLaunchOption;
+import com.intellij.execution.configurations.RuntimeConfigurationException;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.util.ListTableWithButtons;
+import com.intellij.lang.ant.AntBundle;
 import com.intellij.lang.ant.config.AntBuildTarget;
 import com.intellij.lang.ant.config.AntConfiguration;
 import com.intellij.lang.ant.config.impl.BuildFileProperty;
@@ -15,6 +21,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.LabeledComponent;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizable;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -26,8 +33,10 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.BorderFactory;
+import javax.swing.JComponent;
+import javax.swing.JPanel;
+import java.awt.BorderLayout;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -46,19 +55,19 @@ public final class AntRunConfiguration extends LocatableConfigurationBase implem
     return configuration;
   }
 
-  @NotNull
   @Override
-  public SettingsEditor<? extends RunConfiguration> getConfigurationEditor() {
+  public @NotNull SettingsEditor<? extends RunConfiguration> getConfigurationEditor() {
     return new AntConfigurationSettingsEditor();
   }
 
   @Override
   public void checkConfiguration() throws RuntimeConfigurationException {
     if (!AntConfiguration.getInstance(getProject()).isInitialized()) {
-      throw new RuntimeConfigurationException("Ant Configuration still haven't been initialized");
+      throw new RuntimeConfigurationException(AntBundle.message("dialog.message.ant.configuration.not.initialized"));
     }
     if (getTarget() == null)
-      throw new RuntimeConfigurationException("Target is not specified", "Missing parameters");
+      throw new RuntimeConfigurationException(AntBundle.message("dialog.message.target.not.specified"),
+                                              AntBundle.message("dialog.title.ant.configuration.missing.parameters"));
   }
 
   @Override
@@ -67,9 +76,8 @@ public final class AntRunConfiguration extends LocatableConfigurationBase implem
     return target == null ? null : target.getDisplayName();
   }
 
-  @NotNull
   @Override
-  public RunProfileState getState(@NotNull Executor executor, @NotNull ExecutionEnvironment env) {
+  public @NotNull RunProfileState getState(@NotNull Executor executor, @NotNull ExecutionEnvironment env) {
     return new AntRunProfileState(env);
   }
 
@@ -85,13 +93,11 @@ public final class AntRunConfiguration extends LocatableConfigurationBase implem
     mySettings.writeExternal(element);
   }
 
-  @Nullable
-  public AntBuildTarget getTarget() {
+  public @Nullable AntBuildTarget getTarget() {
     return GlobalAntConfiguration.getInstance().findTarget(getProject(), mySettings.myFileUrl, mySettings.myTargetName);
   }
 
-  @NotNull
-  public List<BuildFileProperty> getProperties() {
+  public @NotNull List<BuildFileProperty> getProperties() {
     return Collections.unmodifiableList(mySettings.myProperties);
   }
 
@@ -216,15 +222,15 @@ public final class AntRunConfiguration extends LocatableConfigurationBase implem
       copyProperties(ContainerUtil.filter(myPropTable.getElements(), property -> !myPropTable.isEmpty(property)), config.mySettings.myProperties);
     }
 
-    @NotNull
     @Override
-    protected JComponent createEditor() {
+    protected @NotNull JComponent createEditor() {
       myTextField = new ExtendableTextField().addBrowseExtension(myAction, this);
 
       final JPanel panel = new JPanel(new BorderLayout());
-      panel.add(LabeledComponent.create(myTextField, "Target name", BorderLayout.WEST), BorderLayout.NORTH);
+      panel.add(LabeledComponent.create(myTextField, AntBundle.message("label.ant.run.configuration.target.name"), BorderLayout.WEST), BorderLayout.NORTH);
 
-      final LabeledComponent<JComponent> tableComponent = LabeledComponent.create(myPropTable.getComponent(), "Ant Properties");
+      String propertiesTableName = AntBundle.message("label.table.name.ant.properties");
+      final LabeledComponent<JComponent> tableComponent = LabeledComponent.create(myPropTable.getComponent(), propertiesTableName);
       tableComponent.setBorder(BorderFactory.createEmptyBorder(10, 0, 0, 0));
       panel.add(tableComponent, BorderLayout.CENTER);
       return panel;
@@ -233,11 +239,10 @@ public final class AntRunConfiguration extends LocatableConfigurationBase implem
 
   private static class PropertiesTable extends ListTableWithButtons<BuildFileProperty> {
     @Override
-    protected ListTableModel createListModel() {
-      final ColumnInfo nameColumn = new TableColumn("Name") {
-        @Nullable
+    protected ListTableModel<BuildFileProperty> createListModel() {
+      final ColumnInfo<BuildFileProperty, @NlsContexts.ListItem String> nameColumn = new TableColumn(AntBundle.message("column.name.ant.configuration.property.name")) {
         @Override
-        public String valueOf(BuildFileProperty property) {
+        public @Nullable String valueOf(BuildFileProperty property) {
           return property.getPropertyName();
         }
 
@@ -246,10 +251,9 @@ public final class AntRunConfiguration extends LocatableConfigurationBase implem
           property.setPropertyName(value);
         }
       };
-      final ColumnInfo valueColumn = new TableColumn("Value") {
-        @Nullable
+      final ColumnInfo<BuildFileProperty, @NlsContexts.ListItem String> valueColumn = new TableColumn(AntBundle.message("column.name.ant.configuration.property.value")) {
         @Override
-        public String valueOf(BuildFileProperty property) {
+        public @Nullable String valueOf(BuildFileProperty property) {
           return property.getPropertyValue();
         }
 
@@ -258,7 +262,7 @@ public final class AntRunConfiguration extends LocatableConfigurationBase implem
           property.setPropertyValue(value);
         }
       };
-      return new ListTableModel(nameColumn, valueColumn);
+      return new ListTableModel<>(nameColumn, valueColumn);
     }
 
     @Override
@@ -287,7 +291,7 @@ public final class AntRunConfiguration extends LocatableConfigurationBase implem
     }
 
     private abstract static class TableColumn extends ElementsColumnInfoBase<BuildFileProperty> {
-      TableColumn(final String name) {
+      TableColumn(final @NlsContexts.ColumnName String name) {
         super(name);
       }
 
@@ -296,15 +300,14 @@ public final class AntRunConfiguration extends LocatableConfigurationBase implem
         return true;
       }
 
-      @Nullable
       @Override
-      protected String getDescription(BuildFileProperty element) {
+      protected @Nullable String getDescription(BuildFileProperty element) {
         return null;
       }
     }
   }
 
-  private static void copyProperties(final Iterable<? extends BuildFileProperty> from, final List<? super BuildFileProperty> to) {
+  private static void copyProperties(final Iterable<BuildFileProperty> from, final List<? super BuildFileProperty> to) {
     to.clear();
     for (BuildFileProperty p : from) {
       to.add(p.clone());

@@ -1,17 +1,21 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.inspections.quickfix;
 
-import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.PyStringFormatParser;
-import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.PyBinaryExpression;
+import com.jetbrains.python.psi.PyExpression;
+import com.jetbrains.python.psi.PyParenthesizedExpression;
+import com.jetbrains.python.psi.PyStringLiteralExpression;
+import com.jetbrains.python.psi.PyTupleExpression;
+import com.jetbrains.python.psi.PyUtil;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.types.PyClassType;
 import com.jetbrains.python.psi.types.PyType;
@@ -24,16 +28,14 @@ import java.util.List;
 import static com.jetbrains.python.PyStringFormatParser.filterSubstitutions;
 import static com.jetbrains.python.PyStringFormatParser.parsePercentFormat;
 
-public class PyAddSpecifierToFormatQuickFix implements LocalQuickFix {
+public class PyAddSpecifierToFormatQuickFix extends PsiUpdateModCommandQuickFix {
   @Override
-  @NotNull
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return PyPsiBundle.message("QFIX.NAME.add.specifier");
   }
 
   @Override
-  public void applyFix(@NotNull final Project project, @NotNull final ProblemDescriptor descriptor) {
-    final PsiElement element = descriptor.getPsiElement();
+  public void applyFix(final @NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
     final PyBinaryExpression expression = PsiTreeUtil.getParentOfType(element, PyBinaryExpression.class);
     if (expression == null) return;
     PyExpression rightExpression = expression.getRightExpression();
@@ -43,7 +45,7 @@ public class PyAddSpecifierToFormatQuickFix implements LocalQuickFix {
     if (rightExpression == null) return;
 
     final PsiFile file = element.getContainingFile();
-    final Document document = FileDocumentManager.getInstance().getDocument(file.getVirtualFile());
+    final Document document = file.getViewProvider().getDocument();
     if (document == null) return;
     final int offset = element.getTextOffset();
     final TypeEvalContext context = TypeEvalContext.userInitiated(file.getProject(), file);
@@ -66,7 +68,8 @@ public class PyAddSpecifierToFormatQuickFix implements LocalQuickFix {
 
       int shift = 1;
       for (int i = 0; i < chunks.size(); i++) {
-        final PyStringFormatParser.PercentSubstitutionChunk chunk = PyUtil.as(chunks.get(i), PyStringFormatParser.PercentSubstitutionChunk.class);
+        final PyStringFormatParser.PercentSubstitutionChunk chunk =
+          PyUtil.as(chunks.get(i), PyStringFormatParser.PercentSubstitutionChunk.class);
         if (chunk != null) {
           if (elements.length <= i) return;
           final PyType type = context.getType(elements[i]);

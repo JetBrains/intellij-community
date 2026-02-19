@@ -1,3 +1,4 @@
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.test;
 
 import com.intellij.openapi.util.io.FileUtil;
@@ -8,7 +9,10 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Collection;
 
-import static com.intellij.openapi.vcs.Executor.*;
+import static com.intellij.openapi.vcs.Executor.cat;
+import static com.intellij.openapi.vcs.Executor.echo;
+import static com.intellij.openapi.vcs.Executor.pwd;
+import static com.intellij.openapi.vcs.Executor.touch;
 import static git4idea.test.GitExecutor.cd;
 import static git4idea.test.GitExecutor.git;
 
@@ -18,7 +22,7 @@ import static git4idea.test.GitExecutor.git;
  * - make some unmerged files in the working tree;
  * - make the situation when local changes would be overwritten by merge.
  */
-public class GitScenarios {
+public final class GitScenarios {
   private static final String BRANCH_FOR_UNMERGED_CONFLICTS = "unmerged_files_branch_" + Math.random();
 
   public static final MergeContent LOCAL_CHANGES_OVERWRITTEN_BY = new MergeContent("common content\ncommon content\ncommon content\n",

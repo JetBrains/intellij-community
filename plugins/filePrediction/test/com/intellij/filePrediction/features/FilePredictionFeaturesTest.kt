@@ -1,13 +1,18 @@
 package com.intellij.filePrediction.features
 
+import com.intellij.filePrediction.FileReferencesComputationResult
 import com.intellij.filePrediction.candidates.FilePredictionCandidateSource.OPEN
+import com.intellij.filePrediction.features.history.FilePredictionNGramFeatures
 import com.intellij.filePrediction.predictor.FilePredictionCandidate
 import com.intellij.filePrediction.predictor.FilePredictionCompressedCandidatesHolder
 import com.intellij.filePrediction.references.FilePredictionReferencesHelper
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.testFramework.builders.ModuleFixtureBuilder
 import com.intellij.testFramework.fixtures.CodeInsightFixtureTestCase
 import com.intellij.testFramework.fixtures.ModuleFixture
 import junit.framework.TestCase
+import java.util.concurrent.Callable
+import java.util.concurrent.TimeUnit
 
 /**
  * Smoke tests for a composite features provider, for provider specific checks use dedicated test class
@@ -18,13 +23,16 @@ class FilePredictionFeaturesTest : CodeInsightFixtureTestCase<ModuleFixtureBuild
     val prevFile = myFixture.addFileToProject("prevFile.txt", "PREVIOUS FILE").virtualFile
     val candidate = myFixture.addFileToProject("candidate.txt", "CANDIDATE").virtualFile
 
-    val result = FilePredictionFeaturesCache(FilePredictionReferencesHelper.calculateExternalReferences(myFixture.project, prevFile).value)
+    val references: FileReferencesComputationResult = ApplicationManager.getApplication().executeOnPooledThread(Callable {
+      FilePredictionReferencesHelper.calculateExternalReferences(myFixture.project, prevFile)
+    }).get(1, TimeUnit.SECONDS)
+    val result = FilePredictionFeaturesCache(references.value, FilePredictionNGramFeatures(emptyMap()))
     val actual = FilePredictionFeaturesHelper.calculateFileFeatures(myFixture.project, candidate, result, prevFile)
     assertNotEmpty(actual.value.keys)
 
     val features = actual.value.keys
     for (expected in expectedFeatures) {
-      assertTrue(features.contains(expected))
+      assertTrue("Cannot find $expected feature", features.contains(expected))
     }
   }
 
@@ -32,8 +40,11 @@ class FilePredictionFeaturesTest : CodeInsightFixtureTestCase<ModuleFixtureBuild
     val prevFile = myFixture.addFileToProject("prevFile.txt", "PREVIOUS FILE").virtualFile
     val candidateFile = myFixture.addFileToProject("candidate.txt", "CANDIDATE").virtualFile
 
+    val references: FileReferencesComputationResult = ApplicationManager.getApplication().executeOnPooledThread(Callable {
+      FilePredictionReferencesHelper.calculateExternalReferences(myFixture.project, prevFile)
+    }).get(1, TimeUnit.SECONDS)
 
-    val result = FilePredictionFeaturesCache(FilePredictionReferencesHelper.calculateExternalReferences(myFixture.project, prevFile).value)
+    val result = FilePredictionFeaturesCache(references.value, FilePredictionNGramFeatures(emptyMap()))
     val features = FilePredictionFeaturesHelper.calculateFileFeatures(myFixture.project, candidateFile, result, prevFile)
     assertNotEmpty(features.value.keys)
 
@@ -89,9 +100,7 @@ class FilePredictionFeaturesTest : CodeInsightFixtureTestCase<ModuleFixtureBuild
       "similarity_name_prefix",
       "similarity_path_prefix",
       "similarity_relative_path_prefix",
-      "history_size",
-      "history_uni_mle",
-      "history_bi_mle"
+      "history_size"
     )
   }
 

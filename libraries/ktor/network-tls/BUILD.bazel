@@ -1,0 +1,34 @@
+### auto-generated section `build intellij.libraries.ktor.network.tls` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "libraries-ktor-network-tls_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "libraries-ktor-network-tls",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  resources = [":libraries-ktor-network-tls_resources"],
+  exports = ["@lib//:ktor-network-tls"],
+  runtime_deps = [
+    "@lib//:ktor-network-tls",
+    "//libraries/io",
+  ]
+)
+
+jvm_library(
+  name = "libraries-ktor-network-tls_test_lib",
+  module_name = "intellij.libraries.ktor.network.tls",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  kotlinc_opts = "@community//:k8",
+  exports = ["@lib//:ktor-network-tls"],
+  runtime_deps = [
+    ":libraries-ktor-network-tls",
+    "//libraries/io:io_test_lib",
+  ]
+)
+### auto-generated section `build intellij.libraries.ktor.network.tls` end

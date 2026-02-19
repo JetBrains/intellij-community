@@ -1,11 +1,29 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.problems
 
 import com.intellij.openapi.project.DumbService
-import com.intellij.psi.*
+import com.intellij.psi.JavaElementVisitor
+import com.intellij.psi.PsiClass
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiEnumConstant
+import com.intellij.psi.PsiField
+import com.intellij.psi.PsiFile
+import com.intellij.psi.PsiMember
+import com.intellij.psi.PsiMethod
+import com.intellij.psi.PsiModifier
+import com.intellij.psi.SmartPointerManager
+import com.intellij.psi.SmartPsiElementPointer
 
+/**
+ * Mapping between psi members and their properties model.
+ * These properties are used to determine if member state has changed or not.
+ */
 internal typealias Snapshot = Map<SmartPsiElementPointer<PsiMember>, ScopedMember>
 
+/**
+ * Pair of snapshot and changes.
+ * Changes contain mapping between psi members and their previous state.
+ */
 internal data class FileState(val snapshot: Snapshot, val changes: Map<PsiMember, ScopedMember?>)
 
 internal class FileStateUpdater(private val prevState: FileState?) : JavaElementVisitor() {
@@ -13,13 +31,13 @@ internal class FileStateUpdater(private val prevState: FileState?) : JavaElement
   private val snapshot = mutableMapOf<SmartPsiElementPointer<PsiMember>, ScopedMember>()
   private val changes = mutableMapOf<PsiMember, ScopedMember?>()
 
-  override fun visitEnumConstant(psiEnumConstant: PsiEnumConstant) = visitMember(psiEnumConstant)
+  override fun visitEnumConstant(psiEnumConstant: PsiEnumConstant): Unit = visitMember(psiEnumConstant)
 
-  override fun visitClass(psiClass: PsiClass) = visitMember(psiClass)
+  override fun visitClass(psiClass: PsiClass): Unit = visitMember(psiClass)
 
-  override fun visitField(psiField: PsiField) = visitMember(psiField)
+  override fun visitField(psiField: PsiField): Unit = visitMember(psiField)
 
-  override fun visitMethod(psiMethod: PsiMethod) = visitMember(psiMethod)
+  override fun visitMethod(psiMethod: PsiMethod): Unit = visitMember(psiMethod)
 
   private fun visitMember(psiMember: PsiMember) {
     val member = ScopedMember.create(psiMember) ?: return
@@ -34,11 +52,14 @@ internal class FileStateUpdater(private val prevState: FileState?) : JavaElement
 
   companion object {
 
+    /**
+     * Extracts current file state from cache or creates a new one if it is not in cache.
+     */
     @JvmStatic
     @JvmName("getState")
     internal fun getState(psiFile: PsiFile): FileState? {
       if (DumbService.isDumb(psiFile.project)) return null
-      val storedState = FileStateCache.SERVICE.getInstance(psiFile.project).getState(psiFile)
+      val storedState = FileStateCache.getInstance(psiFile.project).getState(psiFile)
       if (storedState != null) return storedState
       val updater = FileStateUpdater(null)
       publicApi(psiFile).forEach { it.accept(updater) }
@@ -46,6 +67,15 @@ internal class FileStateUpdater(private val prevState: FileState?) : JavaElement
       return FileState(snapshot, emptyMap())
     }
 
+    /**
+     * Constructs new state based on a previous one
+     * 
+     * Construction contains three stages:
+     * 1. analyze current state of psi file. for each member that already was in a snapshot check if it changed.
+     * 2. put elements that were removed from psi file into set of changes
+     * 3. add related changes to set of changes
+     * (e.g. if additional method was added to functional interface then it cannot be used in lambdas and we have to check its usages)
+     */
     @JvmStatic
     @JvmName("findState")
     internal fun findState(psiFile: PsiFile, prevSnapshot: Snapshot, prevChanges: Map<PsiMember, ScopedMember?>): FileState {
@@ -63,11 +93,14 @@ internal class FileStateUpdater(private val prevState: FileState?) : JavaElement
       return FileState(snapshot, changes)
     }
 
+    /**
+     * Restore file state based on changes in snapshot
+     */
     @JvmStatic
     @JvmName("setPreviousState")
     internal fun setPreviousState(psiFile: PsiFile) {
       val project = psiFile.project
-      val fileStateCache = FileStateCache.SERVICE.getInstance(project)
+      val fileStateCache = FileStateCache.getInstance(project)
       val (snapshot, changes) = fileStateCache.getState(psiFile) ?: return
       if (changes.isEmpty()) return
       val manager = SmartPointerManager.getInstance(project)
@@ -83,13 +116,13 @@ internal class FileStateUpdater(private val prevState: FileState?) : JavaElement
     @JvmStatic
     @JvmName("updateState")
     internal fun updateState(psiFile: PsiFile, fileState: FileState) {
-      FileStateCache.SERVICE.getInstance(psiFile.project).setState(psiFile, fileState.snapshot, fileState.changes)
+      FileStateCache.getInstance(psiFile.project).setState(psiFile, fileState.snapshot, fileState.changes)
     }
 
     @JvmStatic
     @JvmName("removeState")
     internal fun removeState(psiFile: PsiFile) {
-      FileStateCache.SERVICE.getInstance(psiFile.project).removeState(psiFile)
+      FileStateCache.getInstance(psiFile.project).removeState(psiFile)
     }
 
     private fun collectRelatedChanges(
@@ -99,6 +132,13 @@ internal class FileStateUpdater(private val prevState: FileState?) : JavaElement
       changes: MutableMap<PsiMember, ScopedMember?>,
       prevChanges: Map<PsiMember, ScopedMember?>
     ) {
+      // new member, maybe it is recreated
+      val recreated = prevChanges.entries.find {
+        val changedMember = it.value ?: return@find false
+        return@find member::class == changedMember::class && member.name == changedMember.name
+      }
+      if (recreated != null) changes.putIfAbsent(recreated.key, recreated.value)
+
       when (psiMember) {
         is PsiMethod -> {
           val containingClass = psiMember.containingClass ?: return
@@ -119,7 +159,8 @@ internal class FileStateUpdater(private val prevState: FileState?) : JavaElement
             }
             prevClass.extendsList != curClass.extendsList || prevClass.implementsList != curClass.implementsList -> {
               // maybe some parent members were referenced instead of current class overrides
-              publicApi(psiMember).filter { it is PsiMethod && it.isOverride() }.forEach { changes.putIfAbsent(it, prevChanges[it]) }
+              // also maybe this overrides now reference something else in current class (e.g. private method)
+              MemberCollector.collectMembers(psiMember) { it is PsiMethod }.forEach { changes.putIfAbsent(it, prevChanges[it]) }
             }
           }
         }
@@ -127,8 +168,6 @@ internal class FileStateUpdater(private val prevState: FileState?) : JavaElement
     }
 
     private fun publicApi(psiElement: PsiElement) = MemberCollector.collectMembers(psiElement) { !it.hasModifier(PsiModifier.PRIVATE) }
-
-    private fun PsiMethod.isOverride() = hasAnnotation(CommonClassNames.JAVA_LANG_OVERRIDE)
 
     private fun PsiMember.hasModifier(modifier: String) = modifierList?.hasModifierProperty(modifier) ?: false
   }

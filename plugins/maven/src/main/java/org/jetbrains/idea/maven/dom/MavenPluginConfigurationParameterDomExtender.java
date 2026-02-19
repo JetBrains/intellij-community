@@ -23,7 +23,7 @@ import com.intellij.util.xml.reflect.DomExtensionsRegistrar;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.dom.model.MavenDomConfigurationParameter;
 
-public class MavenPluginConfigurationParameterDomExtender extends DomExtender<MavenDomConfigurationParameter> {
+public final class MavenPluginConfigurationParameterDomExtender extends DomExtender<MavenDomConfigurationParameter> {
   @Override
   public void registerExtensions(@NotNull MavenDomConfigurationParameter param, @NotNull DomExtensionsRegistrar r) {
     for (XmlAttribute each : param.getXmlTag().getAttributes()) {

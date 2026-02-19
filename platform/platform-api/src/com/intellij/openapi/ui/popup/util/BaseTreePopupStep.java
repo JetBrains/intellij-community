@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.ui.popup.util;
 
 import com.intellij.ide.util.treeView.AbstractTreeStructure;
@@ -54,7 +54,7 @@ public class BaseTreePopupStep<T> extends BaseStep<T> implements TreePopupStep<T
   }
 
   @Override
-  public PopupStep onChosen(T selectedValue, final boolean finalChoice) {
+  public PopupStep<?> onChosen(T selectedValue, final boolean finalChoice) {
     return FINAL_CHOICE;
   }
 
@@ -68,8 +68,7 @@ public class BaseTreePopupStep<T> extends BaseStep<T> implements TreePopupStep<T
   }
 
   @Override
-  @NotNull
-  public List<T> getValues() {
+  public @NotNull List<T> getValues() {
     return Collections.emptyList();
   }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.tasks.context;
 
 import com.intellij.notification.Notification;
@@ -9,6 +9,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.components.Service;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.InvalidDataException;
@@ -18,7 +19,6 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.tasks.Task;
 import com.intellij.tasks.TaskBundle;
-import com.intellij.util.NullableFunction;
 import com.intellij.util.ThrowableConsumer;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.zip.JBZipEntry;
@@ -29,6 +29,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.io.File;
 import java.io.IOException;
@@ -38,14 +39,14 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 
-@Service
+@Service(Service.Level.PROJECT)
 public final class WorkingContextManager {
   private static final Logger LOG = Logger.getInstance(WorkingContextManager.class);
-  @NonNls private static final String TASKS_FOLDER = "tasks";
+  private static final @NonNls String TASKS_FOLDER = "tasks";
 
   private final Project myProject;
-  @NonNls private static final String TASKS_ZIP_POSTFIX = ".tasks.zip";
-  @NonNls private static final String TASK_XML_POSTFIX = ".task.xml";
+  private static final @NonNls String TASKS_ZIP_POSTFIX = ".tasks.zip";
+  private static final @NonNls String TASK_XML_POSTFIX = ".task.xml";
   private static final String CONTEXT_ZIP_POSTFIX = ".contexts.zip";
   private static final Comparator<JBZipEntry> ENTRY_COMPARATOR = (o1, o2) -> Long.signum(o2.getTime() - o1.getTime());
   private boolean ENABLED;
@@ -66,7 +67,7 @@ public final class WorkingContextManager {
   }
 
   public void loadContext(@NotNull Element fromElement) {
-    for (WorkingContextProvider provider : WorkingContextProvider.EP_NAME.getExtensionList()) {
+    for (WorkingContextProvider provider : getWorkingContextProviderList()) {
       try {
         Element child = fromElement.getChild(provider.getId());
         if (child != null) {
@@ -80,7 +81,7 @@ public final class WorkingContextManager {
   }
 
   public void saveContext(Element toElement) {
-    for (WorkingContextProvider provider : WorkingContextProvider.EP_NAME.getExtensionList()) {
+    for (WorkingContextProvider provider : getWorkingContextProviderList()) {
       try {
         Element child = new Element(provider.getId());
         provider.saveContext(myProject, child);
@@ -93,7 +94,7 @@ public final class WorkingContextManager {
   }
 
   public void clearContext() {
-    for (WorkingContextProvider provider : WorkingContextProvider.EP_NAME.getExtensionList()) {
+    for (WorkingContextProvider provider : getWorkingContextProviderList()) {
       provider.clearContext(myProject);
     }
   }
@@ -137,13 +138,13 @@ public final class WorkingContextManager {
   private JBZipFile getTasksArchive(String postfix) {
     File file = getArchiveFile(postfix);
     try {
-      return new JBZipFile(file);
+      return new JBZipFile(file.toPath(), false);
     }
     catch (IOException e) {
       file.delete();
       JBZipFile zipFile = null;
       try {
-        zipFile = new JBZipFile(file);
+        zipFile = new JBZipFile(file.toPath(), false);
         Notifications.Bus.notify(new Notification("Tasks", TaskBundle.message("notification.title.context.data.corrupted"),
                                                   TaskBundle.message("notification.content.context.information.history", myProject.getName()), NotificationType.ERROR), myProject);
       }
@@ -161,6 +162,8 @@ public final class WorkingContextManager {
       tasksFolder.mkdirs();
     }
     String projectName = FileUtil.sanitizeFileName(myProject.getName());
+    int maxNameLength = 240;
+    projectName = projectName.length() <= maxNameLength ? projectName : projectName.substring(0, maxNameLength); // make sure archive file name does not exceed 255
     return new File(tasksFolder, projectName + postfix);
   }
 
@@ -175,7 +178,7 @@ public final class WorkingContextManager {
     });
   }
 
-  private synchronized boolean doEntryAction(String zipPostfix, String entryName, ThrowableConsumer<JBZipEntry, Exception> action) {
+  private synchronized boolean doEntryAction(String zipPostfix, String entryName, ThrowableConsumer<? super JBZipEntry, ? extends Exception> action) {
     if (!ENABLED) return false;
 
     try (JBZipFile archive = getTasksArchive(zipPostfix)) {
@@ -185,21 +188,24 @@ public final class WorkingContextManager {
         return true;
       }
     }
+    catch (ProcessCanceledException e) {
+      throw e;
+    }
     catch (Exception e) {
       LOG.error(e);
     }
     return false;
   }
 
-  public List<ContextInfo> getContextHistory() {
+  public @Unmodifiable List<ContextInfo> getContextHistory() {
     return getContextHistory(CONTEXT_ZIP_POSTFIX);
   }
 
-  private synchronized List<ContextInfo> getContextHistory(String zipPostfix) {
+  private synchronized @Unmodifiable List<ContextInfo> getContextHistory(String zipPostfix) {
     if (!ENABLED) return Collections.emptyList();
     try (JBZipFile archive = getTasksArchive(zipPostfix)) {
       List<JBZipEntry> entries = archive.getEntries();
-      return ContainerUtil.mapNotNull(entries, (NullableFunction<JBZipEntry, ContextInfo>)entry -> entry.getName().startsWith("/context") ? new ContextInfo(entry.getName(), entry.getTime(), entry.getComment()) : null);
+      return ContainerUtil.mapNotNull(entries, entry -> entry.getName().startsWith("/context") ? new ContextInfo(entry.getName(), entry.getTime(), entry.getComment()) : null);
     }
     catch (Exception e) {
       LOG.error(e);
@@ -263,5 +269,9 @@ public final class WorkingContextManager {
   @TestOnly
   public File getTaskFile() {
     return getArchiveFile(TASKS_ZIP_POSTFIX);
+  }
+
+  private static @NotNull List<@NotNull WorkingContextProvider> getWorkingContextProviderList() {
+    return WorkingContextProvider.EP_NAME.getExtensionList().stream().filter(provider -> provider.isEnabled()).toList();
   }
 }

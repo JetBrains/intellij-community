@@ -1,0 +1,69 @@
+### auto-generated section `build intellij.python.community.interpreters` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "interpreters_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "interpreters",
+  module_name = "intellij.python.community.interpreters",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":interpreters_resources"],
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "//python/services/shared",
+    "@lib//:jetbrains-annotations",
+    "//platform/extensions",
+    "//python/python-sdk:sdk",
+    "//python/python-psi-impl:psi-impl",
+    "//platform/projectModel-api:projectModel",
+    "//platform/util",
+    "//platform/diagnostic",
+    "//python/python-exec-service/execService.python",
+    "//python/python-exec-service:community-execService",
+    "//python/python-parser:parser",
+    "//python/openapi:community",
+    "//platform/core-api:core",
+    "//platform/eel-provider",
+  ]
+)
+
+jvm_library(
+  name = "interpreters_test_lib",
+  module_name = "intellij.python.community.interpreters",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    ":interpreters",
+    "//python/services/shared:shared_test_lib",
+    "//platform/extensions:extensions_test_lib",
+    "//python/python-sdk:sdk_test_lib",
+    "//python/python-psi-impl:psi-impl_test_lib",
+    "//platform/projectModel-api:projectModel_test_lib",
+    "//platform/util:util_test_lib",
+    "//platform/diagnostic:diagnostic_test_lib",
+    "//python/python-exec-service/execService.python:execService.python_test_lib",
+    "//python/python-exec-service:community-execService_test_lib",
+    "//python/python-parser:parser_test_lib",
+    "//python/openapi:community_test_lib",
+    "//platform/core-api:core_test_lib",
+    "//platform/eel-provider:eel-provider_test_lib",
+    "@lib//:junit5",
+    "@lib//:junit5Params",
+    "//platform/testFramework/junit5",
+    "//platform/testFramework/junit5:junit5_test_lib",
+    "//platform/lang-core",
+    "//platform/lang-core:lang-core_test_lib",
+    "//python/python-venv:venv",
+    "//python/python-venv:venv_test_lib",
+    "//platform/execution",
+    "//platform/execution:execution_test_lib",
+    "//python/impl.helperLocator:community-helpersLocator",
+    "//python/impl.helperLocator:community-helpersLocator_test_lib",
+  ]
+)
+### auto-generated section `build intellij.python.community.interpreters` end

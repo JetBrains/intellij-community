@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.application.options.pathMacros;
 
 import com.intellij.application.options.PathMacrosCollector;
@@ -8,20 +8,26 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.table.JBTable;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.JTable;
+import javax.swing.ListSelectionModel;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.TableColumn;
-import java.awt.*;
+import java.awt.Component;
 import java.io.File;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Comparator;
 import java.util.List;
-import java.util.*;
+import java.util.Map;
 
 public final class PathMacroTable extends JBTable {
   private static final Logger LOG = Logger.getInstance(PathMacroTable.class);
@@ -31,7 +37,7 @@ public final class PathMacroTable extends JBTable {
   private static final int VALUE_COLUMN = 1;
 
   private final List<Couple<String>> myMacros = new ArrayList<>();
-  private static final Comparator<Couple<String>> MACRO_COMPARATOR = Comparator.comparing(pair -> pair.getFirst());
+  private static final Comparator<Pair<String, String>> MACRO_COMPARATOR = Pair.comparingByFirst();
 
   private final Collection<String> myUndefinedMacroNames;
 
@@ -41,6 +47,7 @@ public final class PathMacroTable extends JBTable {
 
   public PathMacroTable(Collection<String> undefinedMacroNames) {
     myUndefinedMacroNames = undefinedMacroNames;
+    setShowGrid(false);
     setModel(myTableModel);
     TableColumn column = getColumnModel().getColumn(NAME_COLUMN);
     column.setCellRenderer(new DefaultTableCellRenderer() {
@@ -48,7 +55,7 @@ public final class PathMacroTable extends JBTable {
       public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
         final Component component = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
         final String macroValue = getMacroValueAt(row);
-        component.setForeground(macroValue.length() == 0
+        component.setForeground(macroValue.isEmpty()
                                 ? JBColor.RED
                                 : isSelected ? table.getSelectionForeground() : table.getForeground());
         return component;
@@ -202,21 +209,23 @@ public final class PathMacroTable extends JBTable {
     @Override
     public Object getValueAt(int rowIndex, int columnIndex) {
       final Couple<String> pair = myMacros.get(rowIndex);
-      switch (columnIndex) {
-        case NAME_COLUMN: return pair.getFirst();
-        case VALUE_COLUMN: return pair.getSecond();
-      }
-      LOG.error("Wrong indices");
-      return null;
+      return switch (columnIndex) {
+        case NAME_COLUMN -> pair.getFirst();
+        case VALUE_COLUMN -> pair.getSecond();
+        default -> {
+          LOG.error("Wrong indices");
+          yield null;
+        }
+      };
     }
 
     @Override
     public String getColumnName(int columnIndex) {
-      switch (columnIndex) {
-        case NAME_COLUMN: return ApplicationBundle.message("column.name");
-        case VALUE_COLUMN: return ApplicationBundle.message("column.value");
-      }
-      return null;
+      return switch (columnIndex) {
+        case NAME_COLUMN -> ApplicationBundle.message("column.name");
+        case VALUE_COLUMN -> ApplicationBundle.message("column.value");
+        default -> null;
+      };
     }
   }
 
@@ -229,13 +238,13 @@ public final class PathMacroTable extends JBTable {
 
     @Override
     public boolean checkName(String name) {
-      if (name.length() == 0) return false;
+      if (name.isEmpty()) return false;
       return PathMacrosCollector.MACRO_PATTERN.matcher("$" + name + "$").matches();
     }
 
     @Override
     public boolean isOK(String name, String value) {
-      if(name.length() == 0) return false;
+      if(name.isEmpty()) return false;
       if (hasMacroWithName(name)) {
         Messages.showErrorDialog(PathMacroTable.this,
                                  ApplicationBundle.message("error.variable.already.exists", name), myTitle);
@@ -245,7 +254,7 @@ public final class PathMacroTable extends JBTable {
     }
   }
 
-  private static class EditValidator implements PathMacroEditor.Validator {
+  private static final class EditValidator implements PathMacroEditor.Validator {
     @Override
     public boolean checkName(String name) {
       if (name.isEmpty() || PathMacros.getInstance().getSystemMacroNames().contains(name)) {

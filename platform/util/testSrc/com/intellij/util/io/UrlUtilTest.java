@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.util.io;
 
@@ -8,6 +8,7 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.ThreeState;
+import com.intellij.util.lang.UrlClassLoader;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.junit.Test;
@@ -15,10 +16,16 @@ import org.junit.Test;
 import java.io.File;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
+import java.util.List;
 import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 public class UrlUtilTest {
   @Test
@@ -54,6 +61,21 @@ public class UrlUtilTest {
     assertNotNull(pair);
     assertEquals(expected1, pair.first);
     assertEquals(expected2, pair.second);
+  }
+
+  @Test
+  public void urlToPath() {
+    String p1 = UrlClassLoader.urlToFilePath("file:C:\\Program%20Files\\JetBrains\\IntelliJ%20IDEA%20211.2638\\lib\\resources.jar!/");
+    String p2 = UrlClassLoader.urlToFilePath("file:C:\\Program%20Files\\JetBrains\\IntelliJ%20IDEA%20211.2638\\lib\\resources.jar");
+    String p3 = UrlClassLoader.urlToFilePath("C:\\Program%20Files\\JetBrains\\IntelliJ%20IDEA%20211.2638\\lib\\resources.jar");
+    assertThat(p1).isEqualTo(p2);
+    assertThat(p1).isEqualTo(p3);
+    assertThat(p1).isEqualTo("C:\\Program Files\\JetBrains\\IntelliJ IDEA 211.2638\\lib\\resources.jar");
+    assertThat(UrlClassLoader.urlToFilePath(
+      "file:/C:\\Program%20Files\\JetBrains\\resources.jar!/")).isEqualTo("C:\\Program Files\\JetBrains\\resources.jar");
+    assertThat(UrlClassLoader.urlToFilePath("file:/Users/foo/r.jar")).isEqualTo("/Users/foo/r.jar");
+    assertThat(UrlClassLoader.urlToFilePath("file:/Users/path with space/r.jar")).isEqualTo("/Users/path with space/r.jar");
+    assertThat(UrlClassLoader.urlToFilePath("/Users/path with space/r.jar")).isEqualTo("/Users/path with space/r.jar");
   }
 
   @Test
@@ -97,6 +119,12 @@ public class UrlUtilTest {
     for (String sshUrl : SSH_URL_VARIANTS) {
       assertEquals("github.com", URLUtil.parseHostFromSshUrl(sshUrl));
     }
+
+    // sanity checks
+    assertEquals("test", URLUtil.parseHostFromSshUrl("file://test"));
+    assertEquals("test1", URLUtil.parseHostFromSshUrl("test1:test2"));
+    assertEquals("@test", URLUtil.parseHostFromSshUrl("@test"));
+    assertEquals("", URLUtil.parseHostFromSshUrl("test@"));
   }
 
   @Test
@@ -113,8 +141,41 @@ public class UrlUtilTest {
     assertThat(URLUtil.getBytesFromDataUri("data:text/plain;charset=utf-8,Hello%20world!")).isEqualTo(test);
   }
 
-  private static void doUrlTest(@NotNull final String line, @Nullable final String expectedUrl) {
-    final Matcher matcher = URLUtil.URL_PATTERN.matcher(line);
+  private record UrlTestCase(@NotNull String line, @Nullable String expectedUrl) {
+  }
+
+  private static @NotNull List<UrlTestCase> getUrlTestCases() {
+    return List.of(
+      new UrlTestCase("not detecting jetbrains.com", null),
+      new UrlTestCase("mailto:admin@jetbrains.com;", "mailto:admin@jetbrains.com"),
+      new UrlTestCase("news://jetbrains.com is good", "news://jetbrains.com"),
+      new UrlTestCase("see http://www.jetbrains.com", "http://www.jetbrains.com"),
+      new UrlTestCase("https://www.jetbrains.com;", "https://www.jetbrains.com"),
+      new UrlTestCase("(ftp://jetbrains.com)", "ftp://jetbrains.com"),
+      new UrlTestCase("[ftps://jetbrains.com]", "ftps://jetbrains.com"),
+      new UrlTestCase("Is it good site:http://jetbrains.com?", "http://jetbrains.com"),
+      new UrlTestCase("And http://jetbrains.com?a=@#/%?=~_|!:,.;&b=20,", "http://jetbrains.com?a=@#/%?=~_|!:,.;&b=20"),
+      new UrlTestCase("site:www.jetbrains.com.", "www.jetbrains.com"),
+      new UrlTestCase("site (www.jetbrains.com)", "www.jetbrains.com"),
+      new UrlTestCase("site [www.jetbrains.com]", "www.jetbrains.com"),
+      new UrlTestCase("site <www.jetbrains.com>", "www.jetbrains.com"),
+      new UrlTestCase("site {www.jetbrains.com}", "www.jetbrains.com"),
+      new UrlTestCase("site 'www.jetbrains.com'", "www.jetbrains.com"),
+      new UrlTestCase("site \"www.jetbrains.com\"", "www.jetbrains.com"),
+      new UrlTestCase("site=www.jetbrains.com!", "www.jetbrains.com"),
+      new UrlTestCase("site *www.jetbrains.com*", "www.jetbrains.com"),
+      new UrlTestCase("site `www.jetbrains.com`", "www.jetbrains.com"),
+      new UrlTestCase("not a site _www.jetbrains.com", null),
+      new UrlTestCase("not a site 1www.jetbrains.com", null),
+      new UrlTestCase("not a site wwww.jetbrains.com", null),
+      new UrlTestCase("not a site xxx.www.jetbrains.com", null),
+      new UrlTestCase("site https://code.angularjs.org/1.4.3/docs/api/ng/service/$http#usage",
+                      "https://code.angularjs.org/1.4.3/docs/api/ng/service/$http#usage")
+    );
+  }
+
+  private static void doUrlTest(@NotNull final Pattern pattern, @NotNull final String line, @Nullable final String expectedUrl) {
+    final Matcher matcher = pattern.matcher(line);
     boolean found = matcher.find();
     if (expectedUrl == null) {
       if (found) {
@@ -133,31 +194,18 @@ public class UrlUtilTest {
 
   @Test
   public void testUrlParsing() {
-    doUrlTest("not detecting jetbrains.com", null);
-    doUrlTest("mailto:admin@jetbrains.com;", "mailto:admin@jetbrains.com");
-    doUrlTest("news://jetbrains.com is good", "news://jetbrains.com");
-    doUrlTest("see http://www.jetbrains.com", "http://www.jetbrains.com");
-    doUrlTest("https://www.jetbrains.com;", "https://www.jetbrains.com");
-    doUrlTest("(ftp://jetbrains.com)", "ftp://jetbrains.com");
-    doUrlTest("[ftps://jetbrains.com]", "ftps://jetbrains.com");
-    doUrlTest("Is it good site:http://jetbrains.com?", "http://jetbrains.com");
-    doUrlTest("And http://jetbrains.com?a=@#/%?=~_|!:,.;&b=20,", "http://jetbrains.com?a=@#/%?=~_|!:,.;&b=20");
-    doUrlTest("site:www.jetbrains.com.", "www.jetbrains.com");
-    doUrlTest("site (www.jetbrains.com)", "www.jetbrains.com");
-    doUrlTest("site [www.jetbrains.com]", "www.jetbrains.com");
-    doUrlTest("site <www.jetbrains.com>", "www.jetbrains.com");
-    doUrlTest("site {www.jetbrains.com}", "www.jetbrains.com");
-    doUrlTest("site 'www.jetbrains.com'", "www.jetbrains.com");
-    doUrlTest("site \"www.jetbrains.com\"", "www.jetbrains.com");
-    doUrlTest("site=www.jetbrains.com!", "www.jetbrains.com");
-    doUrlTest("site *www.jetbrains.com*", "www.jetbrains.com");
-    doUrlTest("site `www.jetbrains.com`", "www.jetbrains.com");
-    doUrlTest("not a site _www.jetbrains.com", null);
-    doUrlTest("not a site 1www.jetbrains.com", null);
-    doUrlTest("not a site wwww.jetbrains.com", null);
-    doUrlTest("not a site xxx.www.jetbrains.com", null);
-    doUrlTest("site https://code.angularjs.org/1.4.3/docs/api/ng/service/$http#usage",
-              "https://code.angularjs.org/1.4.3/docs/api/ng/service/$http#usage");
+    List<UrlTestCase> cases = getUrlTestCases();
+    for (UrlTestCase testCase : cases) {
+      doUrlTest(URLUtil.URL_PATTERN, testCase.line, testCase.expectedUrl);
+    }
+  }
+
+  @Test
+  public void testUrlParsingOptimized() {
+    List<UrlTestCase> cases = getUrlTestCases();
+    for (UrlTestCase testCase : cases) {
+      doUrlTest(URLUtil.URL_PATTERN_OPTIMIZED, testCase.line, testCase.expectedUrl);
+    }
   }
 
   @Test

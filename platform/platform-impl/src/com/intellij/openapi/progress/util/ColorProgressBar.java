@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.progress.util;
 
 import com.intellij.ide.ui.UISettings;
@@ -10,27 +10,30 @@ import com.intellij.ui.paint.LinePainter2D;
 import com.intellij.util.ui.GraphicsUtil;
 import com.intellij.util.ui.UIUtil;
 
-import javax.swing.*;
-import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.awt.event.WindowAdapter;
-import java.awt.event.WindowEvent;
+import javax.swing.JComponent;
+import javax.swing.JProgressBar;
+import java.awt.Color;
+import java.awt.Dimension;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
 import java.awt.geom.Rectangle2D;
 
 /**
  * @author Eugene Belyaev
+ * @deprecated Use {@link JProgressBar} component. Use colors in {@link com.intellij.util.ui.JBUI.CurrentTheme.ProgressBar}.
+ * To update the color of a {@link JProgressBar}, change the client property with key {@link ProgressBarUtil#STATUS_KEY}.
  */
-public class ColorProgressBar extends JComponent {
+@Deprecated
+public final class ColorProgressBar extends JComponent {
   private static final Dimension PREFERRED_SIZE = new Dimension(146, 17);
 
-  public static final Color GREEN = new JBColor(() -> {
+  public static final Color GREEN = JBColor.lazy(() -> {
     UISettings settings = UISettings.getInstance();
     return null == settings.getColorBlindness()
            ? new JBColor(new Color(0x6cad74), new Color(0x4a8c53))
            : new JBColor(new Color(0x6ca69c), new Color(0x639990));
   });
-  public static final Color RED = new JBColor(() -> {
+  public static final Color RED = JBColor.lazy(() -> {
     UISettings settings = UISettings.getInstance();
     return null == settings.getColorBlindness()
            ? new JBColor(new Color(0xd67b76), new Color(0xe55757))
@@ -208,35 +211,5 @@ public class ColorProgressBar extends JComponent {
 
   public Color getColor() {
     return myColor;
-  }
-
-  @SuppressWarnings("HardCodedStringLiteral")
-  public static void main(String[] args) {
-    JFrame frame = new JFrame("ColorProgressBar Test");
-    frame.addWindowListener(
-      new WindowAdapter() {
-        @Override
-        public void windowClosing(WindowEvent e) {
-          System.exit(0);
-        }
-      }
-    );
-    frame.setSize(800, 600);
-    frame.setLocation(0, 0);
-    Container contentPane = frame.getContentPane();
-    contentPane.setLayout(new BorderLayout());
-    final ColorProgressBar colorProgressBar = new ColorProgressBar();
-    colorProgressBar.setFraction(0.5);
-    colorProgressBar.setIndeterminate(true);
-    contentPane.add(colorProgressBar, BorderLayout.NORTH);
-    frame.setVisible(true);
-    JButton b = new JButton ("X");
-    b.addActionListener(new ActionListener () {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-         colorProgressBar.setFraction(1);
-      }
-    });
-    contentPane.add(b, BorderLayout.SOUTH);
   }
 }

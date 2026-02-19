@@ -36,7 +36,7 @@ import com.intellij.openapi.util.Pair
 import com.intellij.util.containers.BidirectionalMap
 import com.intellij.util.ui.tree.TreeUtil
 import org.jetbrains.annotations.TestOnly
-import java.util.*
+import java.util.Collections
 import javax.swing.JTree
 import javax.swing.tree.DefaultMutableTreeNode
 import javax.swing.tree.DefaultTreeModel
@@ -212,7 +212,7 @@ class ModuleGroupingTreeHelper<M: Any, N: MutableTreeNode> private constructor(
       convertVirtualGroupToRealNode(group, nodeFromVirtualGroup, node)
     }
     nodeForGroup[group] = node
-    nodeData[node] = ModuleTreeNodeData<M>(null, group)
+    nodeData[node] = ModuleTreeNodeData(null, group)
     return node
   }
 
@@ -235,7 +235,7 @@ class ModuleGroupingTreeHelper<M: Any, N: MutableTreeNode> private constructor(
   }
 
   fun moveAllModuleNodesToProperGroups(rootNode: N, model: DefaultTreeModel) {
-    val modules = nodeData.values.map { it.module }.filterNotNull()
+    val modules = nodeData.values.mapNotNull { it.module }
     nodeData.keys.forEach { it.removeFromParent() }
     nodeData.clear()
     nodeForGroup.clear()

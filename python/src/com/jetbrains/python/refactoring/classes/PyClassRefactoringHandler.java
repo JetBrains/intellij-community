@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.refactoring.classes;
 
 import com.intellij.openapi.actionSystem.CommonDataKeys;
@@ -16,6 +16,7 @@ import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.lang.ElementsHandler;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.jetbrains.python.PyBundle;
+import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyUtil;
 import org.jetbrains.annotations.NotNull;
@@ -44,7 +45,7 @@ public abstract class PyClassRefactoringHandler implements RefactoringActionHand
       }
     }
     if (element1 == null || element2 == null) {
-      CommonRefactoringUtil.showErrorHint(project, editor, PyBundle.message("refactoring.introduce.selection.error"), getTitle(),
+      CommonRefactoringUtil.showErrorHint(project, editor, PyPsiBundle.message("refactoring.introduce.selection.error"), getTitle(),
                                           "members.pull.up");
       return;
     }
@@ -73,10 +74,10 @@ public abstract class PyClassRefactoringHandler implements RefactoringActionHand
   }
 
 
-  protected abstract void doRefactorImpl(@NotNull final Project project,
-                                         @NotNull final PyClass classUnderRefactoring,
-                                         @NotNull final PyMemberInfoStorage infoStorage,
-                                         @NotNull final Editor editor);
+  protected abstract void doRefactorImpl(final @NotNull Project project,
+                                         final @NotNull PyClass classUnderRefactoring,
+                                         final @NotNull PyMemberInfoStorage infoStorage,
+                                         final @NotNull Editor editor);
 
 
 

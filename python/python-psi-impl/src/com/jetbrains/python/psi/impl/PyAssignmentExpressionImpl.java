@@ -2,10 +2,8 @@
 package com.jetbrains.python.psi.impl;
 
 import com.intellij.lang.ASTNode;
-import com.intellij.util.ObjectUtils;
 import com.jetbrains.python.psi.PyAssignmentExpression;
 import com.jetbrains.python.psi.PyElementVisitor;
-import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.PyTargetExpression;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
@@ -20,21 +18,8 @@ public class PyAssignmentExpressionImpl extends PyElementImpl implements PyAssig
     super(astNode);
   }
 
-  @Nullable
   @Override
-  public PyTargetExpression getTarget() {
-    return ObjectUtils.tryCast(getFirstChild(), PyTargetExpression.class);
-  }
-
-  @Nullable
-  @Override
-  public PyExpression getAssignedValue() {
-    return ObjectUtils.tryCast(getLastChild(), PyExpression.class);
-  }
-
-  @Nullable
-  @Override
-  public PyType getType(@NotNull TypeEvalContext context, @NotNull TypeEvalContext.Key key) {
+  public @Nullable PyType getType(@NotNull TypeEvalContext context, @NotNull TypeEvalContext.Key key) {
     final PyTargetExpression target = getTarget();
     return target == null ? null : context.getType(target);
   }

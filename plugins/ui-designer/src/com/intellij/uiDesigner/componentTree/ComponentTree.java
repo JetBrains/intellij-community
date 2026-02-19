@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.uiDesigner.componentTree;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
@@ -9,7 +9,17 @@ import com.intellij.ide.highlighter.JavaHighlightingColors;
 import com.intellij.ide.util.EditSourceUtil;
 import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.lang.annotation.HighlightSeverity;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionPlaces;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.CustomShortcutSet;
+import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.DataKey;
+import com.intellij.openapi.actionSystem.DataSink;
+import com.intellij.openapi.actionSystem.IdeActions;
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.actionSystem.UiDataProvider;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
@@ -17,6 +27,8 @@ import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsSafe;
+import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiField;
 import com.intellij.ui.ColoredTreeCellRenderer;
@@ -24,43 +36,70 @@ import com.intellij.ui.JBColor;
 import com.intellij.ui.PopupHandler;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.treeStructure.Tree;
-import com.intellij.uiDesigner.*;
+import com.intellij.uiDesigner.ErrorAnalyzer;
+import com.intellij.uiDesigner.ErrorInfo;
+import com.intellij.uiDesigner.FormEditingUtil;
+import com.intellij.uiDesigner.SimpleTransferable;
+import com.intellij.uiDesigner.UIDesignerBundle;
 import com.intellij.uiDesigner.actions.StartInplaceEditingAction;
 import com.intellij.uiDesigner.core.GridConstraints;
-import com.intellij.uiDesigner.designSurface.*;
+import com.intellij.uiDesigner.designSurface.ComponentDragObject;
+import com.intellij.uiDesigner.designSurface.ComponentDropLocation;
+import com.intellij.uiDesigner.designSurface.ComponentItemDragObject;
+import com.intellij.uiDesigner.designSurface.DraggedComponentList;
+import com.intellij.uiDesigner.designSurface.GuiEditor;
+import com.intellij.uiDesigner.designSurface.InsertComponentProcessor;
 import com.intellij.uiDesigner.editor.UIFormEditor;
 import com.intellij.uiDesigner.lw.LwInspectionSuppression;
 import com.intellij.uiDesigner.palette.ComponentItem;
 import com.intellij.uiDesigner.palette.Palette;
 import com.intellij.uiDesigner.quickFixes.QuickFixManager;
-import com.intellij.uiDesigner.radComponents.*;
+import com.intellij.uiDesigner.radComponents.RadComponent;
+import com.intellij.uiDesigner.radComponents.RadContainer;
+import com.intellij.uiDesigner.radComponents.RadErrorComponent;
+import com.intellij.uiDesigner.radComponents.RadHSpacer;
+import com.intellij.uiDesigner.radComponents.RadRootContainer;
+import com.intellij.uiDesigner.radComponents.RadVSpacer;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ui.PlatformColors;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import icons.UIDesignerIcons;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.BorderFactory;
+import javax.swing.Icon;
+import javax.swing.JComponent;
+import javax.swing.JTree;
+import javax.swing.JViewport;
+import javax.swing.KeyStroke;
+import javax.swing.ToolTipManager;
+import javax.swing.TransferHandler;
 import javax.swing.plaf.TreeUI;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreePath;
-import java.awt.*;
+import java.awt.Color;
 import java.awt.datatransfer.Transferable;
-import java.awt.dnd.*;
+import java.awt.dnd.DnDConstants;
+import java.awt.dnd.DropTarget;
+import java.awt.dnd.DropTargetAdapter;
+import java.awt.dnd.DropTargetDragEvent;
+import java.awt.dnd.DropTargetDropEvent;
+import java.awt.dnd.DropTargetEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
-import java.util.*;
+import java.util.Map;
 
-/**
- * @author Anton Katilin
- * @author Vladimir Kondratyev
- */
-public final class ComponentTree extends Tree implements DataProvider {
+public final class ComponentTree extends Tree implements UiDataProvider {
   private static final Logger LOG = Logger.getInstance(ComponentTree.class);
 
   public static final DataKey<LwInspectionSuppression[]> LW_INSPECTION_SUPPRESSION_ARRAY_DATA_KEY =
@@ -81,10 +120,10 @@ public final class ComponentTree extends Tree implements DataProvider {
   private final StartInplaceEditingAction myStartInplaceEditingAction;
   private final MyDeleteProvider myDeleteProvider = new MyDeleteProvider();
 
-  @NonNls private static final String ourHelpID = "guiDesigner.uiTour.compsTree";
+  private static final @NonNls String ourHelpID = "guiDesigner.uiTour.compsTree";
   private final Project myProject;
 
-  public ComponentTree(@NotNull final Project project) {
+  public ComponentTree(final @NotNull Project project) {
     super(new DefaultTreeModel(new DefaultMutableTreeNode()));
     myProject = project;
 
@@ -99,10 +138,10 @@ public final class ComponentTree extends Tree implements DataProvider {
     TreeUtil.installActions(this);
 
     // Popup menu
-    PopupHandler.installPopupHandler(
+    PopupHandler.installPopupMenu(
       this,
-      (ActionGroup)ActionManager.getInstance().getAction(IdeActions.GROUP_GUI_DESIGNER_COMPONENT_TREE_POPUP),
-      ActionPlaces.GUI_DESIGNER_COMPONENT_TREE_POPUP, ActionManager.getInstance());
+      IdeActions.GROUP_GUI_DESIGNER_COMPONENT_TREE_POPUP,
+      ActionPlaces.GUI_DESIGNER_COMPONENT_TREE_POPUP);
 
     // F2 should start inplace editing
     myStartInplaceEditingAction = new StartInplaceEditingAction(null);
@@ -128,8 +167,7 @@ public final class ComponentTree extends Tree implements DataProvider {
     }
   }
 
-  @NotNull
-  public Project getProject() {
+  public @NotNull Project getProject() {
     return myProject;
   }
 
@@ -144,13 +182,16 @@ public final class ComponentTree extends Tree implements DataProvider {
     myStartInplaceEditingAction.setEditor(editor);
   }
 
+  public GuiEditor getEditor() {
+    return myEditor;
+  }
+
   public void refreshIntentionHint() {
     myQuickFixManager.refreshIntentionHint();
   }
 
   @Override
-  @Nullable
-  public String getToolTipText(final MouseEvent e) {
+  public @Nullable String getToolTipText(final MouseEvent e) {
     final TreePath path = getPathForLocation(e.getX(), e.getY());
     final RadComponent component = getComponentFromPath(path);
     if (component != null) {
@@ -162,14 +203,12 @@ public final class ComponentTree extends Tree implements DataProvider {
     return null;
   }
 
-  @Nullable
-  private static RadComponent getComponentFromPath(TreePath path) {
+  private static @Nullable RadComponent getComponentFromPath(TreePath path) {
     if (path != null) {
       final DefaultMutableTreeNode node = (DefaultMutableTreeNode)path.getLastPathComponent();
       LOG.assertTrue(node != null);
       final Object userObject = node.getUserObject();
-      if (userObject instanceof ComponentPtrDescriptor) {
-        final ComponentPtrDescriptor descriptor = (ComponentPtrDescriptor)userObject;
+      if (userObject instanceof ComponentPtrDescriptor descriptor) {
         final ComponentPtr ptr = descriptor.getElement();
         if (ptr != null && ptr.isValid()) {
           final RadComponent component = ptr.getComponent();
@@ -187,8 +226,7 @@ public final class ComponentTree extends Tree implements DataProvider {
    * @return first selected component. The method returns {@code null}
    *         if there is no selection in the tree.
    */
-  @Nullable
-  public RadComponent getSelectedComponent() {
+  public @Nullable RadComponent getSelectedComponent() {
     return ArrayUtil.getFirstElement(getSelectedComponents());
   }
 
@@ -205,8 +243,7 @@ public final class ComponentTree extends Tree implements DataProvider {
     final ArrayList<RadComponent> result = new ArrayList<>(paths.length);
     for (TreePath path : paths) {
       final DefaultMutableTreeNode node = (DefaultMutableTreeNode)path.getLastPathComponent();
-      if (node != null && node.getUserObject() instanceof ComponentPtrDescriptor) {
-        final ComponentPtrDescriptor descriptor = (ComponentPtrDescriptor)node.getUserObject();
+      if (node != null && node.getUserObject() instanceof ComponentPtrDescriptor descriptor) {
         final ComponentPtr ptr = descriptor.getElement();
         if (ptr != null && ptr.isValid()) {
           result.add(ptr.getComponent());
@@ -216,48 +253,34 @@ public final class ComponentTree extends Tree implements DataProvider {
     return result.toArray(RadComponent.EMPTY_ARRAY);
   }
 
-  /**
-   * Provides {@link PlatformDataKeys#NAVIGATABLE} to navigate to
-   * binding of currently selected component (if any)
-   */
   @Override
-  public Object getData(@NotNull final String dataId) {
-    if (GuiEditor.DATA_KEY.is(dataId)) {
-      return myEditor;
+  public void uiDataSnapshot(@NotNull DataSink sink) {
+    sink.set(GuiEditor.DATA_KEY, myEditor);
+
+    sink.set(PlatformDataKeys.DELETE_ELEMENT_PROVIDER, myDeleteProvider);
+
+    if (myEditor != null) {
+      sink.set(PlatformDataKeys.COPY_PROVIDER, myEditor.getCutCopyPasteDelegator());
+      sink.set(PlatformDataKeys.CUT_PROVIDER, myEditor.getCutCopyPasteDelegator());
+      sink.set(PlatformDataKeys.PASTE_PROVIDER, myEditor.getCutCopyPasteDelegator());
     }
 
-    if (PlatformDataKeys.DELETE_ELEMENT_PROVIDER.is(dataId)) {
-      return myDeleteProvider;
-    }
+    Collection<LwInspectionSuppression> elements = getSelectedElements(LwInspectionSuppression.class);
+    sink.set(LW_INSPECTION_SUPPRESSION_ARRAY_DATA_KEY,
+             elements.isEmpty() ? null : elements.toArray(LwInspectionSuppression.EMPTY_ARRAY));
 
-    if (PlatformDataKeys.COPY_PROVIDER.is(dataId) ||
-        PlatformDataKeys.CUT_PROVIDER.is(dataId) ||
-        PlatformDataKeys.PASTE_PROVIDER.is(dataId)) {
-      return myEditor == null ? null : myEditor.getData(dataId);
-    }
+    sink.set(PlatformCoreDataKeys.HELP_ID, ourHelpID);
+    sink.set(PlatformCoreDataKeys.FILE_EDITOR, myFormEditor);
 
-    if (LW_INSPECTION_SUPPRESSION_ARRAY_DATA_KEY.is(dataId)) {
-      Collection<LwInspectionSuppression> elements = getSelectedElements(LwInspectionSuppression.class);
-      return elements.size() == 0 ? null : elements.toArray(LwInspectionSuppression.EMPTY_ARRAY);
-    }
+    RadComponent selectedComponent = getSelectedComponent();
+    if (selectedComponent == null) return;
+    sink.lazy(CommonDataKeys.NAVIGATABLE, () -> {
+      return getPsiFile(selectedComponent);
+    });
+  }
 
-    if (PlatformDataKeys.HELP_ID.is(dataId)) {
-      return ourHelpID;
-    }
-
-    if (PlatformDataKeys.FILE_EDITOR.is(dataId)) {
-      return myFormEditor;
-    }
-
-    if (!CommonDataKeys.NAVIGATABLE.is(dataId)) {
-      return null;
-    }
-
-    final RadComponent selectedComponent = getSelectedComponent();
-    if (selectedComponent == null) {
-      return null;
-    }
-
+  @ApiStatus.Internal
+  public @Nullable Navigatable getPsiFile(@NotNull RadComponent selectedComponent) {
     final String classToBind = myEditor.getRootContainer().getClassToBind();
     if (classToBind == null) {
       return null;
@@ -297,15 +320,15 @@ public final class ComponentTree extends Tree implements DataProvider {
     for (TreePath path : paths) {
       final DefaultMutableTreeNode node = (DefaultMutableTreeNode)path.getLastPathComponent();
       Object userObject = node.getUserObject();
-      if (userObject instanceof NodeDescriptor && elementClass.isInstance(((NodeDescriptor) userObject).getElement())) {
+      if (userObject instanceof NodeDescriptor && elementClass.isInstance(((NodeDescriptor<?>) userObject).getElement())) {
         //noinspection unchecked
-        result.add((T)((NodeDescriptor) node.getUserObject()).getElement());
+        result.add((T)((NodeDescriptor<?>) node.getUserObject()).getElement());
       }
     }
     return result;
   }
 
-  private SimpleTextAttributes getAttribute(@NotNull final SimpleTextAttributes attrs,
+  private SimpleTextAttributes getAttribute(final @NotNull SimpleTextAttributes attrs,
                                             @Nullable HighlightDisplayLevel level) {
     if (level == null) {
       return attrs;
@@ -377,11 +400,11 @@ public final class ComponentTree extends Tree implements DataProvider {
   }
 
   private final class MyTreeCellRenderer extends ColoredTreeCellRenderer {
-    @NonNls private static final String SWING_PACKAGE = "javax.swing";
+    private static final @NonNls String SWING_PACKAGE = "javax.swing";
 
     @Override
     public void customizeCellRenderer(
-      final JTree tree,
+      final @NotNull JTree tree,
       final Object value,
       final boolean selected,
       final boolean expanded,
@@ -390,8 +413,7 @@ public final class ComponentTree extends Tree implements DataProvider {
       final boolean hasFocus
     ) {
       final DefaultMutableTreeNode node = (DefaultMutableTreeNode)value;
-      if (node.getUserObject() instanceof ComponentPtrDescriptor) {
-        final ComponentPtrDescriptor descriptor = (ComponentPtrDescriptor)node.getUserObject();
+      if (node.getUserObject() instanceof ComponentPtrDescriptor descriptor) {
         final ComponentPtr ptr = descriptor.getElement();
         if (ptr == null) return;
         final RadComponent component = ptr.getComponent();
@@ -424,8 +446,7 @@ public final class ComponentTree extends Tree implements DataProvider {
         else if (component instanceof RadHSpacer) {
           append(UIDesignerBundle.message("component.horizontal.spacer"), getAttribute(myClassAttributes, level));
         }
-        else if (component instanceof RadErrorComponent) {
-          final RadErrorComponent c = (RadErrorComponent)component;
+        else if (component instanceof RadErrorComponent c) {
           append(c.getErrorDescription(), getAttribute(myUnknownAttributes, level));
         }
         else if (component instanceof RadRootContainer) {
@@ -473,7 +494,7 @@ public final class ComponentTree extends Tree implements DataProvider {
         }
       }
       else if (node.getUserObject() != null) {
-        final String fragment = node.getUserObject().toString();
+        final @NlsSafe String fragment = node.getUserObject().toString();
         if (fragment != null) {
           append(fragment, SimpleTextAttributes.REGULAR_ATTRIBUTES);
         }
@@ -587,22 +608,25 @@ public final class ComponentTree extends Tree implements DataProvider {
     }
 
     @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      DeleteProvider baseProvider = myEditor == null ? null : myEditor.getDeleteProvider();
+      return baseProvider == null ? ActionUpdateThread.BGT : baseProvider.getActionUpdateThread();
+    }
+
+    @Override
     public void deleteElement(@NotNull DataContext dataContext) {
-      if (myEditor != null) {
-        LwInspectionSuppression[] suppressions = LW_INSPECTION_SUPPRESSION_ARRAY_DATA_KEY.getData(dataContext);
-        if (suppressions != null) {
-          if (!myEditor.ensureEditable()) return;
-          for(LwInspectionSuppression suppression: suppressions) {
-            myEditor.getRootContainer().removeInspectionSuppression(suppression);
-          }
-          myEditor.refreshAndSave(true);
+      if (myEditor == null) return;
+      LwInspectionSuppression[] suppressions = LW_INSPECTION_SUPPRESSION_ARRAY_DATA_KEY.getData(dataContext);
+      if (suppressions != null) {
+        if (!myEditor.ensureEditable()) return;
+        for(LwInspectionSuppression suppression: suppressions) {
+          myEditor.getRootContainer().removeInspectionSuppression(suppression);
         }
-        else {
-          DeleteProvider baseProvider = (DeleteProvider) myEditor.getData(PlatformDataKeys.DELETE_ELEMENT_PROVIDER.getName());
-          if (baseProvider != null) {
-            baseProvider.deleteElement(dataContext);
-          }
-        }
+        myEditor.refreshAndSave(true);
+      }
+      else {
+        DeleteProvider baseProvider = myEditor.getDeleteProvider();
+        baseProvider.deleteElement(dataContext);
       }
     }
 
@@ -613,10 +637,8 @@ public final class ComponentTree extends Tree implements DataProvider {
         if (suppressions != null) {
           return true;
         }
-        DeleteProvider baseProvider = (DeleteProvider) myEditor.getData(PlatformDataKeys.DELETE_ELEMENT_PROVIDER.getName());
-        if (baseProvider != null) {
-          return baseProvider.canDeleteElement(dataContext);
-        }
+        DeleteProvider baseProvider = myEditor.getDeleteProvider();
+        return baseProvider.canDeleteElement(dataContext);
       }
       return false;
     }

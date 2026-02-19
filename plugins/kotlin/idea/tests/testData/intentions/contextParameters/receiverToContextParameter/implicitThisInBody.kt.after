@@ -1,0 +1,6 @@
+// COMPILER_ARGUMENTS: -Xcontext-parameters
+
+context(string: String)
+fun foo() {
+    println(string.isEmpty())
+}

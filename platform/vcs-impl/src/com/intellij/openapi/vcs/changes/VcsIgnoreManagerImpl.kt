@@ -1,44 +1,95 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes
 
 import com.intellij.configurationStore.OLD_NAME_CONVERTER
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.runReadAction
-import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.components.service
+import com.intellij.openapi.components.serviceAsync
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.fileTypes.FileTypeManager
 import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.progress.runBlockingCancellable
+import com.intellij.openapi.project.InitialVfsRefreshService
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.ProjectCloseListener
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.openapi.vcs.*
+import com.intellij.openapi.vcs.AbstractVcs
+import com.intellij.openapi.vcs.FilePath
+import com.intellij.openapi.vcs.Ignored
+import com.intellij.openapi.vcs.IgnoredCheckResult
+import com.intellij.openapi.vcs.NotIgnored
+import com.intellij.openapi.vcs.VcsBundle
+import com.intellij.openapi.vcs.VcsIgnoreChecker
 import com.intellij.openapi.vcs.actions.VcsContextFactory
 import com.intellij.openapi.vcs.changes.ignore.lang.IgnoreFileType
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.project.isDirectoryBased
 import com.intellij.project.stateStore
-import com.intellij.util.Alarm
-import com.intellij.util.io.systemIndependentPath
+import com.intellij.util.SlowOperations
 import com.intellij.util.ui.update.MergingUpdateQueue
+import com.intellij.util.ui.update.Update
 import com.intellij.vcsUtil.VcsImplUtil.findIgnoredFileContentProvider
 import com.intellij.vcsUtil.VcsUtil
+import kotlinx.coroutines.CoroutineScope
+import org.jetbrains.annotations.ApiStatus.Internal
 import java.io.IOException
+import java.util.concurrent.TimeUnit
+import kotlin.io.path.invariantSeparatorsPathString
 
-private val LOG = Logger.getInstance(VcsIgnoreManagerImpl::class.java)
+private val LOG = logger<VcsIgnoreManagerImpl>()
 
 private const val RUN_CONFIGURATIONS_DIRECTORY = "runConfigurations"
-class VcsIgnoreManagerImpl(private val project: Project) : VcsIgnoreManager {
+
+@Internal
+class VcsIgnoreManagerImpl(private val project: Project, coroutineScope: CoroutineScope) : VcsIgnoreManager {
   companion object {
+    @JvmStatic
     fun getInstanceImpl(project: Project) = VcsIgnoreManager.getInstance(project) as VcsIgnoreManagerImpl
 
-    val EP_NAME = ExtensionPointName<VcsIgnoreChecker>("com.intellij.vcsIgnoreChecker")
+    @JvmField
+    val EP_NAME: ExtensionPointName<VcsIgnoreChecker> = ExtensionPointName("com.intellij.vcsIgnoreChecker")
   }
 
-  val ignoreRefreshQueue: MergingUpdateQueue
+  val ignoreRefreshQueue: MergingUpdateQueue = MergingUpdateQueue.mergingUpdateQueue(
+    name = "VcsIgnoreUpdate",
+    mergingTimeSpan = 500,
+    coroutineScope = coroutineScope,
+  )
 
   init {
     checkProjectNotDefault(project)
-    ignoreRefreshQueue = MergingUpdateQueue("VcsIgnoreUpdate", 500, true, null, project, null,
-                                            Alarm.ThreadToUse.POOLED_THREAD)
+
+    ignoreRefreshQueue.queue(object : Update("wait Project opening activities scan") {
+      override fun run() {
+        val vfsRefreshService = project.service<InitialVfsRefreshService>()
+        runBlockingCancellable {
+          vfsRefreshService.awaitInitialVfsRefreshFinished()
+        }
+      }
+
+      override suspend fun execute() {
+        project.serviceAsync<InitialVfsRefreshService>().awaitInitialVfsRefreshFinished()
+      }
+    })
+
+    if (ApplicationManager.getApplication().isUnitTestMode) {
+      project.messageBus.connect(coroutineScope).subscribe(ProjectCloseListener.TOPIC, object : ProjectCloseListener {
+        override fun projectClosing(project: Project) {
+          if (this@VcsIgnoreManagerImpl.project === project) {
+            try {
+              @Suppress("TestOnlyProblems")
+              ignoreRefreshQueue.waitForAllExecuted(10, TimeUnit.SECONDS)
+            }
+            catch (e: Exception) {
+              LOG.warn("Queue '$ignoreRefreshQueue' wait for all executed failed with error:", e)
+            }
+          }
+        }
+      })
+    }
   }
 
   fun findIgnoreFileType(vcs: AbstractVcs): IgnoreFileType? {
@@ -61,7 +112,7 @@ class VcsIgnoreManagerImpl(private val project: Project) : VcsIgnoreManager {
   }
 
   private fun getDirectoryVcsIgnoredStatus(project: Project, dirPathString: String): IgnoredCheckResult {
-    val dirPath = VcsContextFactory.SERVICE.getInstance().createFilePath(dirPathString, true)
+    val dirPath = VcsContextFactory.getInstance().createFilePath(dirPathString, true)
     val vcsRoot = VcsUtil.getVcsRootFor(project, dirPath) ?: return NotIgnored
     return getCheckerForFile(project, dirPath)?.isFilePatternIgnored(vcsRoot, dirPathString) ?: NotIgnored
   }
@@ -84,7 +135,11 @@ class VcsIgnoreManagerImpl(private val project: Project) : VcsIgnoreManager {
 
   override fun removeRunConfigurationFromVcsIgnore(configurationName: String) {
     try {
-      val removeFromIgnore = { removeConfigurationFromVcsIgnore(project, configurationName) }
+      val removeFromIgnore = {
+        SlowOperations.knownIssue("IDEA-338210, EA-660187").use {
+          removeConfigurationFromVcsIgnore(project, configurationName)
+        }
+      }
       ProgressManager.getInstance()
         .runProcessWithProgressSynchronously<Unit, IOException>(removeFromIgnore,
                                                                 VcsBundle.message("changes.removing.configuration.0.from.ignore",
@@ -142,15 +197,15 @@ private fun checkConfigurationVcsIgnored(project: Project, configurationFileName
   val stateStore = project.stateStore
   val dotIdea = stateStore.directoryStorePath
   if (dotIdea != null) {
-    val dotIdeaVcsPath = VcsContextFactory.SERVICE.getInstance().createFilePath(dotIdea, true)
+    val dotIdeaVcsPath = VcsContextFactory.getInstance().createFilePath(dotIdea, true)
     val vcsRootForIgnore = VcsUtil.getVcsRootFor(project, dotIdeaVcsPath) ?: return NotIgnored
-    val filePattern = "${dotIdea.systemIndependentPath}/$RUN_CONFIGURATIONS_DIRECTORY/$configurationFileName*.xml" // NON-NLS
+    val filePattern = "${dotIdea.invariantSeparatorsPathString}/$RUN_CONFIGURATIONS_DIRECTORY/$configurationFileName*.xml" // NON-NLS
     return getCheckerForFile(project, dotIdeaVcsPath)
              ?.isFilePatternIgnored(vcsRootForIgnore, filePattern) ?: NotIgnored
   }
   else {
     val projectFile = stateStore.projectFilePath
-    val projectFileVcsPath = VcsContextFactory.SERVICE.getInstance().createFilePath(projectFile, false)
+    val projectFileVcsPath = VcsContextFactory.getInstance().createFilePath(projectFile, false)
     val vcsRootForIgnore = VcsUtil.getVcsRootFor(project, projectFileVcsPath) ?: return NotIgnored
     return getCheckerForFile(project, projectFileVcsPath)
              ?.isIgnored(vcsRootForIgnore, projectFile) ?: NotIgnored

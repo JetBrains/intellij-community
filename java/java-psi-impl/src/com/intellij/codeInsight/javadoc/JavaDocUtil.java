@@ -1,21 +1,54 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.javadoc;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.*;
+import com.intellij.pom.java.LanguageLevel;
+import com.intellij.psi.JavaDirectoryService;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiAnonymousClass;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiClassType;
+import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementFactory;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiJavaCodeReferenceElement;
+import com.intellij.psi.PsiJavaFile;
+import com.intellij.psi.PsiJavaModule;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiMember;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiNamedElement;
+import com.intellij.psi.PsiPackage;
+import com.intellij.psi.PsiPackageStatement;
+import com.intellij.psi.PsiParameter;
+import com.intellij.psi.PsiParameterList;
+import com.intellij.psi.PsiReferenceList;
+import com.intellij.psi.PsiSubstitutor;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypeParameter;
+import com.intellij.psi.codeStyle.JavaFileCodeStyleFacade;
 import com.intellij.psi.impl.source.javadoc.PsiDocMethodOrFieldRef;
 import com.intellij.psi.javadoc.PsiDocComment;
+import com.intellij.psi.javadoc.PsiDocFragmentRef;
 import com.intellij.psi.javadoc.PsiDocTagValue;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.templateLanguages.TemplateLanguageUtil;
 import com.intellij.psi.util.MethodSignature;
 import com.intellij.psi.util.MethodSignatureUtil;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.ObjectUtils;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -27,13 +60,13 @@ import java.util.regex.Pattern;
 public final class JavaDocUtil {
   private static final Logger LOG = Logger.getInstance(JavaDocUtil.class);
 
-  @NonNls private static final Pattern ourTypePattern = Pattern.compile("[ ]+[^ ^\\[^\\]]");
+  private static final @NonNls Pattern ourTypePattern = Pattern.compile("[ ]+[^ ^\\[^\\]]");
+  private static final String JAVA_LANG = "java.lang.";
 
   private JavaDocUtil() {
   }
 
-  @Nullable
-  public static PsiClass resolveClassInTagValue(@Nullable PsiDocTagValue value) {
+  public static @Nullable PsiClass resolveClassInTagValue(@Nullable PsiDocTagValue value) {
     if (value == null) return null;
     PsiElement refHolder = value.getFirstChild();
     if (refHolder != null) {
@@ -75,54 +108,96 @@ public final class JavaDocUtil {
     }
   }
 
-  @Nullable
-  public static PsiElement findReferenceTarget(@NotNull PsiManager manager, @NotNull String refText, PsiElement context) {
+  public static @Nullable PsiElement findReferenceTarget(@NotNull PsiManager manager, @NotNull String refText, PsiElement context) {
     return findReferenceTarget(manager, refText, context, true);
   }
 
-  @Nullable
-  public static PsiElement findReferenceTarget(@NotNull PsiManager manager, @NotNull String refText, PsiElement context, boolean useNavigationElement) {
+  public static @Nullable PsiElement findReferenceTarget(@NotNull PsiManager manager, @NotNull String refText, PsiElement context, boolean useNavigationElement) {
     LOG.assertTrue(context == null || context.isValid());
     if (context != null) {
       context = context.getNavigationElement();
     }
 
-    int poundIndex = refText.indexOf('#');
     final JavaPsiFacade facade = JavaPsiFacade.getInstance(manager.getProject());
-    if (poundIndex < 0) {
-      PsiClass aClass = findClassFromRef(manager, facade, refText, context);
 
-      if (aClass != null) {
-        return useNavigationElement ? aClass.getNavigationElement() : aClass;
+    String refTextCorrected = refText;
+    if (refText.contains("/")) {
+      // Module link
+      if (refText.endsWith("/")) {
+        PsiJavaModule module = findModuleFromRef(manager, facade, StringUtil.trimEnd(refText, '/'));
+        if (module != null) {
+          return useNavigationElement ? module.getNavigationElement() : module;
+        }
       }
-      PsiPackage aPackage = facade.findPackage(refText);
-      if (aPackage!=null) return aPackage;
-      return null;
+      // Not a module link: remove the module part
+      int slashIndex = refText.indexOf('/');
+      if (slashIndex < refText.length() - 1) refTextCorrected = refText.substring(refText.indexOf('/') + 1);
+    }
+
+    int poundIndex = refTextCorrected.indexOf('#');
+    if (poundIndex < 0) {
+      return findClassOrPackage(manager, context, useNavigationElement, facade, refTextCorrected);
     }
     else {
-      String classRef = refText.substring(0, poundIndex).trim();
-      if (!classRef.isEmpty()) {
-        PsiClass aClass = findClassFromRef(manager, facade, classRef, context);
+      int fragmentIndex = refTextCorrected.indexOf("##");
+      String classRef = refTextCorrected.substring(0, poundIndex).trim();
+      PsiClass aClass = classRef.isEmpty()
+                        ? PsiTreeUtil.getParentOfType(context, PsiClass.class, false)
+                        : findClassFromRef(manager, facade, classRef, context);
+      while (aClass != null){
+        PsiElement reference = fragmentIndex >= 0
+          ? findFragmentOwner(aClass, useNavigationElement, refTextCorrected, fragmentIndex, manager)
+          : findReference(aClass, context, useNavigationElement, refTextCorrected, poundIndex);
+          if (reference != null) return reference;
 
-        if (aClass == null) return null;
-        PsiElement member = findReferencedMember(aClass, refText.substring(poundIndex + 1), context);
-        return useNavigationElement && member != null ? member.getNavigationElement() : member;
+          aClass = PsiTreeUtil.getParentOfType(aClass, PsiClass.class, true);
       }
-      else {
-        String memberRefText = refText.substring(1);
-        PsiElement scope = context;
-        while (scope != null && !(scope instanceof PsiFile)) {
-          if (scope instanceof PsiClass) {
-            PsiElement member = findReferencedMember((PsiClass)scope, memberRefText, context);
-            if (member != null) {
-              return useNavigationElement ? member.getNavigationElement() : member;
-            }
-          }
-          scope = scope.getParent();
-        }
-        return null;
+      return null;
+    }
+  }
+
+  private static @Nullable PsiElement findClassOrPackage(@NotNull PsiManager manager,
+                                                         PsiElement context,
+                                                         boolean useNavigationElement,
+                                                         JavaPsiFacade facade,
+                                                         String refTextCorrected) {
+    PsiClass aClass = findClassFromRef(manager, facade, refTextCorrected, context);
+    if (aClass != null) {
+      return useNavigationElement ? aClass.getNavigationElement() : aClass;
+    }
+    PsiPackage aPackage = facade.findPackage(refTextCorrected);
+    if (aPackage != null) {
+      return aPackage;
+    }
+    return null;
+  }
+
+  private static @Nullable PsiElement findReference(@NotNull PsiClass refClass,
+                                                    PsiElement context,
+                                                    boolean useNavigationElement,
+                                                    String refTextCorrected,
+                                                    int poundIndex) {
+    PsiElement member = findReferencedMember(refClass, refTextCorrected.substring(poundIndex + 1), context);
+    return useNavigationElement && member != null ? member.getNavigationElement() : member;
+  }
+
+  private static @Nullable PsiElement findFragmentOwner(@NotNull PsiClass aClass,
+                                                   boolean useNavigationElement,
+                                                   String refTextCorrected,
+                                                   int fragmentIndex,
+                                                   @NotNull PsiManager manager) {
+    String fragmentName = refTextCorrected.substring(fragmentIndex + 2);
+    for (JavaDocFragmentData fragmentData : JavaDocFragmentAnchorCacheKt.getJavaDocFragmentsForClass(manager.getProject(), aClass)) {
+      if (fragmentName.equals(fragmentData.getName())) {
+        PsiElement ref = PsiUtilCore.getElementAtOffset(aClass.getContainingFile(), fragmentData.getOffset());
+        PsiDocComment docComment = PsiTreeUtil.getParentOfType(ref, PsiDocComment.class, false);
+        if (docComment == null) return null;
+        PsiElement owner = docComment.getOwner();
+        if (owner == null) return null;
+        return useNavigationElement ? owner.getNavigationElement() : owner;
       }
     }
+    return null;
   }
 
   private static PsiClass findClassFromRef(@NotNull PsiManager manager,
@@ -142,8 +217,14 @@ public final class JavaDocUtil {
     return aClass;
   }
 
-  @Nullable
-  private static PsiElement findReferencedMember(@NotNull PsiClass aClass, @NotNull String memberRefText, PsiElement context) {
+  private static PsiJavaModule findModuleFromRef(@NotNull PsiManager manager,
+                                                 @NotNull JavaPsiFacade facade,
+                                                 @NotNull String refText) {
+    GlobalSearchScope projectScope = GlobalSearchScope.allScope(manager.getProject());
+    return facade.findModules(refText, projectScope).stream().findFirst().orElse(null);
+  }
+
+  private static @Nullable PsiElement findReferencedMember(@NotNull PsiClass aClass, @NotNull String memberRefText, PsiElement context) {
     int parenthIndex = memberRefText.indexOf('(');
     if (parenthIndex < 0) {
       String name = memberRefText;
@@ -212,8 +293,7 @@ public final class JavaDocUtil {
     }
   }
 
-  @Nullable
-  public static String getReferenceText(Project project, PsiElement element) {
+  public static @Nullable String getReferenceText(Project project, PsiElement element) {
     if (element instanceof PsiPackage) {
       return ((PsiPackage)element).getQualifiedName();
     }
@@ -245,8 +325,8 @@ public final class JavaDocUtil {
       buffer.append(name);
       buffer.append("(");
       PsiParameter[] parms = method.getParameterList().getParameters();
-      boolean spaceBeforeComma = JavaDocCodeStyle.getInstance(project).spaceBeforeComma();
-      boolean spaceAfterComma = JavaDocCodeStyle.getInstance(project).spaceAfterComma();
+      boolean spaceBeforeComma = JavaFileCodeStyleFacade.forContext(element.getContainingFile()).isSpaceBeforeComma();
+      boolean spaceAfterComma = JavaFileCodeStyleFacade.forContext(element.getContainingFile()).isSpaceAfterComma();
       for (int i = 0; i < parms.length; i++) {
         PsiParameter parm = parms[i];
         String typeText = TypeConversionUtil.erasure(parm.getType()).getCanonicalText();
@@ -272,6 +352,9 @@ public final class JavaDocUtil {
                ((PsiParameterList)element.getParent()).getParameterIndex((PsiParameter)element);
       }
     }
+    else if (element instanceof PsiJavaModule) {
+      return ((PsiJavaModule)element).getName() + "/";
+    }
     else if (element instanceof PsiNamedElement) {
       return ((PsiNamedElement)element).getName();
     }
@@ -279,7 +362,7 @@ public final class JavaDocUtil {
     return null;
   }
 
-  public static String getShortestClassName(PsiClass aClass, PsiElement context) {
+  public static @NlsSafe String getShortestClassName(PsiClass aClass, PsiElement context) {
     @NonNls String shortName = aClass.getName();
     if(shortName == null){
       shortName = "null";
@@ -301,9 +384,10 @@ public final class JavaDocUtil {
     catch (IndexNotReadyException e) {
       LOG.debug(e);
     }
-    return manager.areElementsEquivalent(aClass, resolvedClass)
-      ? shortName
-      : StringUtil.trimStart(qName, "java.lang.");
+    if (manager.areElementsEquivalent(aClass, resolvedClass)) {
+      return shortName;
+    }
+    return JAVA_LANG.length() + shortName.length() == qName.length() ? StringUtil.trimStart(qName, JAVA_LANG) : qName;
   }
 
   public static String getLabelText(Project project, PsiManager manager, String refText, PsiElement context) {
@@ -313,6 +397,9 @@ public final class JavaDocUtil {
     }
     catch (IndexNotReadyException e) {
       LOG.debug(e);
+    }
+    if (context instanceof PsiDocFragmentRef) {
+      return refText;
     }
     if (refElement == null) {
       return refText.replaceFirst("^#", "").replaceAll("#", ".");
@@ -372,8 +459,8 @@ public final class JavaDocUtil {
     if (!StringUtil.endsWithChar(memberText, ')')) return memberText;
     String parms = memberText.substring(parenthIndex + 1, memberText.length() - 1);
     StringBuilder buffer = new StringBuilder();
-    boolean spaceBeforeComma = JavaDocCodeStyle.getInstance(project).spaceBeforeComma();
-    boolean spaceAfterComma = JavaDocCodeStyle.getInstance(project).spaceAfterComma();
+    boolean spaceBeforeComma = JavaFileCodeStyleFacade.forContext(context.getContainingFile()).isSpaceBeforeComma();
+    boolean spaceAfterComma = JavaFileCodeStyleFacade.forContext(context.getContainingFile()).isSpaceAfterComma();
     StringTokenizer tokenizer = new StringTokenizer(parms, ",");
     while (tokenizer.hasMoreTokens()) {
       String param = tokenizer.nextToken().trim();
@@ -421,5 +508,40 @@ public final class JavaDocUtil {
 
   public static boolean isInsidePackageInfo(@Nullable PsiDocComment containingComment) {
     return containingComment != null && containingComment.getOwner() == null && containingComment.getParent() instanceof PsiJavaFile;
+  }
+
+  public static boolean isDanglingDocComment(@NotNull PsiDocComment comment, boolean ignoreCopyright) {
+    if (comment.getOwner() != null || TemplateLanguageUtil.isInsideTemplateFile(comment)) {
+      return false;
+    }
+    if (isInsidePackageInfo(comment) &&
+        PsiTreeUtil.skipWhitespacesAndCommentsForward(comment) instanceof PsiPackageStatement &&
+        "package-info.java".equals(comment.getContainingFile().getName())) {
+      return false;
+    }
+    if (ignoreCopyright && comment.getPrevSibling() == null && comment.getParent() instanceof PsiFile) {
+      return false;
+    }
+    return true;
+  }
+
+  /**
+   * @return Whether the inspections should be run for the given comment
+   * Markdown format is allowed for java < 23. However, due to old (sometimes generated) code starting with 3 slashes,
+   * we should not run the inspections on dangling comments.
+   */
+  @Contract("null -> false")
+  public static boolean shouldRunInspectionOnOldMarkdownComment(@Nullable PsiDocComment comment) {
+    if (comment == null) return false;
+    if (!comment.isMarkdownComment()) return true;
+    PsiJavaFile file = ObjectUtils.tryCast(comment.getContainingFile(), PsiJavaFile.class);
+    if (file == null) return false;
+
+    if (file.getLanguageLevel().isAtLeast(LanguageLevel.JDK_23)) return true;
+    return !isDanglingDocComment(comment, true);
+  }
+
+  public static boolean shouldRunInspectionOnOldMarkdownComment(@NotNull PsiElement element) {
+    return shouldRunInspectionOnOldMarkdownComment(PsiTreeUtil.getParentOfType(element, PsiDocComment.class, false, PsiMember.class));
   }
 }

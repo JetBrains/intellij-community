@@ -1,8 +1,6 @@
-import java.lang.Thread.State;
-
 public class ao implements Comparable<ao> {
    protected String a;
-   protected State b;
+   protected Thread.State b;
    protected double c;
    protected long d;
    protected long e;
@@ -11,7 +9,7 @@ public class ao implements Comparable<ao> {
       return this.a;
    }
 
-   public State b() {
+   public Thread.State b() {
       return this.b;
    }
 

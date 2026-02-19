@@ -1,5 +1,5 @@
 <idea-plugin>
     <extensions defaultExtensionNs="com.intellij">
-        <globalInspection implementationClass="GlobalInspection"/>
+        <globalInspection implementationClass="GlobalInspection" language=""/>
     </extensions>
 </idea-plugin>

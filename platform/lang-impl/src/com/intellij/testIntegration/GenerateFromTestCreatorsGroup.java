@@ -1,21 +1,28 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testIntegration;
 
 import com.intellij.lang.LangBundle;
 import com.intellij.navigation.ItemPresentation;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionGroup;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-public class GenerateFromTestCreatorsGroup extends ActionGroup {
+@ApiStatus.Internal
+public final class GenerateFromTestCreatorsGroup extends ActionGroup {
   @Override
   public AnAction @NotNull [] getChildren(@Nullable AnActionEvent e) {
     if (e == null) {
@@ -24,12 +31,17 @@ public class GenerateFromTestCreatorsGroup extends ActionGroup {
     Project project = e.getData(CommonDataKeys.PROJECT);
     PsiFile file = e.getData(CommonDataKeys.PSI_FILE);
     Editor editor = e.getData(CommonDataKeys.EDITOR);
-    if (project == null || file == null) {
+    if (project == null || file == null || editor == null) {
       return AnAction.EMPTY_ARRAY;
     }
     List<AnAction> result = new SmartList<>();
     for (TestCreator creator : LanguageTestCreators.INSTANCE.allForLanguage(file.getLanguage())) {
-      result.add(new AnAction() {
+      final class Action extends AnAction {
+        @Override
+        public @NotNull ActionUpdateThread getActionUpdateThread() {
+          return ActionUpdateThread.BGT;
+        }
+
         @Override
         public void actionPerformed(@NotNull AnActionEvent e) {
           creator.createTest(project, editor, file);
@@ -47,7 +59,8 @@ public class GenerateFromTestCreatorsGroup extends ActionGroup {
         public boolean isDumbAware() {
           return DumbService.isDumbAware(creator);
         }
-      });
+      }
+      result.add(new Action());
     }
     return result.toArray(AnAction.EMPTY_ARRAY);
   }

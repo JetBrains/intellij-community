@@ -2,21 +2,10 @@
 package com.jetbrains.python.psi.impl;
 
 import com.intellij.lang.ASTNode;
-import com.jetbrains.python.PyElementTypes;
-import com.jetbrains.python.psi.PyFStringFragment;
 import com.jetbrains.python.psi.PyFStringFragmentFormatPart;
-import org.jetbrains.annotations.NotNull;
-
-import java.util.List;
 
 public class PyFStringFragmentFormatPartImpl extends PyElementImpl implements PyFStringFragmentFormatPart {
   public PyFStringFragmentFormatPartImpl(ASTNode astNode) {
     super(astNode);
-  }
-
-  @NotNull
-  @Override
-  public List<PyFStringFragment> getFragments() {
-    return findChildrenByType(PyElementTypes.FSTRING_FRAGMENT);
   }
 }

@@ -1,8 +1,15 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.svn.dialogs;
 
 import com.intellij.icons.AllIcons;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionGroup;
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.CommonShortcuts;
+import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.DumbAwareToggleAction;
 import com.intellij.openapi.project.Project;
@@ -30,8 +37,14 @@ import org.jetbrains.idea.svn.properties.PropertyConsumer;
 import org.jetbrains.idea.svn.properties.PropertyData;
 import org.jetbrains.idea.svn.properties.PropertyValue;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.Icon;
+import javax.swing.JComponent;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.JSplitPane;
+import javax.swing.JTextArea;
+import javax.swing.ListSelectionModel;
+import java.awt.BorderLayout;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
@@ -45,7 +58,7 @@ import static org.jetbrains.idea.svn.SvnBundle.message;
 import static org.jetbrains.idea.svn.SvnBundle.messagePointer;
 
 public class PropertiesComponent extends JPanel {
-  @NonNls public static final @NotNull String ID = "SVN Properties";
+  public static final @NonNls @NotNull String ID = "SVN Properties";
 
   private final @NotNull PropertiesTableView myTable = new PropertiesTableView();
   private JTextArea myTextArea;
@@ -78,8 +91,8 @@ public class PropertiesComponent extends JPanel {
       myTextArea.setText(property != null ? property.getValue().toString() : "");
     });
     ActionGroup popupActionGroup = createPopup();
-    PopupHandler.installPopupHandler(myTable, popupActionGroup, ActionPlaces.UNKNOWN, ActionManager.getInstance());
-    PopupHandler.installPopupHandler(scrollPane, popupActionGroup, ActionPlaces.UNKNOWN, ActionManager.getInstance());
+    PopupHandler.installPopupMenu(myTable, popupActionGroup, "SvnPropertiesPopup");
+    PopupHandler.installPopupMenu(scrollPane, popupActionGroup, "SvnPropertiesPopup");
     myCloseAction.registerCustomShortcutSet(getActiveKeymapShortcuts(IdeActions.ACTION_CLOSE_ACTIVE_TAB), this);
     myRefreshAction.registerCustomShortcutSet(CommonShortcuts.getRerun(), this);
   }
@@ -146,8 +159,7 @@ public class PropertiesComponent extends JPanel {
     return group;
   }
 
-  @Nullable
-  private String getSelectedPropertyName() {
+  private @Nullable String getSelectedPropertyName() {
     PropertyData property = myTable.getSelectedObject();
     return property != null ? property.getName() : null;
   }
@@ -179,7 +191,8 @@ public class PropertiesComponent extends JPanel {
 
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
-      Project project = e.getRequiredData(CommonDataKeys.PROJECT);
+      Project project = e.getData(CommonDataKeys.PROJECT);
+      if (project == null) return;
       ToolWindow toolWindow = ToolWindowManager.getInstance(project).getToolWindow(ID);
 
       if (toolWindow != null) toolWindow.remove();
@@ -193,6 +206,11 @@ public class PropertiesComponent extends JPanel {
         messagePointer("action.Subversion.PropertiesView.Refresh.description"),
         AllIcons.Actions.Refresh
       );
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
     }
 
     @Override
@@ -210,6 +228,11 @@ public class PropertiesComponent extends JPanel {
   private abstract class BasePropertyAction extends DumbAwareAction {
     protected BasePropertyAction(@NotNull Supplier<String> dynamicText, @NotNull Supplier<String> dynamicDescription, @Nullable Icon icon) {
       super(dynamicText, dynamicDescription, icon);
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
     }
 
     protected void setProperty(@Nullable String property, @Nullable String value, boolean recursive, boolean force) {
@@ -350,6 +373,11 @@ public class PropertiesComponent extends JPanel {
     }
 
     @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.BGT;
+    }
+
+    @Override
     public boolean isSelected(@NotNull AnActionEvent e) {
       return myIsFollowSelection;
     }
@@ -363,7 +391,7 @@ public class PropertiesComponent extends JPanel {
     }
 
     @Override
-    public void update(@NotNull final AnActionEvent e) {
+    public void update(final @NotNull AnActionEvent e) {
       super.update(e);
       // change file
       if (myIsFollowSelection) {

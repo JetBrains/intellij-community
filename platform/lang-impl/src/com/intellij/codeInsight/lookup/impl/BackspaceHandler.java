@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInsight.lookup.impl;
 
@@ -9,20 +9,26 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-public class BackspaceHandler extends EditorActionHandler {
+@ApiStatus.Internal
+public final class BackspaceHandler extends EditorActionHandler {
+  @Nullable
   private final EditorActionHandler myOriginalHandler;
 
-  public BackspaceHandler(EditorActionHandler originalHandler){
+  public BackspaceHandler(@Nullable EditorActionHandler originalHandler) {
     myOriginalHandler = originalHandler;
   }
 
   @Override
-  public void doExecute(@NotNull final Editor editor, Caret caret, final DataContext dataContext){
+  public void doExecute(final @NotNull Editor editor, Caret caret, final DataContext dataContext){
     LookupImpl lookup = (LookupImpl)LookupManager.getActiveLookup(editor);
-    if (lookup == null){
-      myOriginalHandler.execute(editor, caret, dataContext);
+    if (lookup == null) {
+      if (myOriginalHandler != null) {
+        myOriginalHandler.execute(editor, caret, dataContext);
+      }
       return;
     }
 
@@ -31,17 +37,17 @@ public class BackspaceHandler extends EditorActionHandler {
     if (originalStart >= 0 && originalStart <= hideOffset) {
       hideOffset = originalStart - 1;
     }
-    
+
     truncatePrefix(dataContext, lookup, myOriginalHandler, hideOffset, caret);
   }
 
   static void truncatePrefix(final DataContext dataContext,
                              LookupImpl lookup,
-                             final EditorActionHandler handler,
+                             final @Nullable EditorActionHandler handler,
                              final int hideOffset,
                              final Caret caret) {
     final Editor editor = lookup.getEditor();
-    if (!lookup.performGuardedChange(() -> handler.execute(editor, caret, dataContext))) {
+    if (handler != null && !lookup.performGuardedChange(() -> handler.execute(editor, caret, dataContext))) {
       return;
     }
 

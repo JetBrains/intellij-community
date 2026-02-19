@@ -1,0 +1,6 @@
+- name: dist.all/lib/intellij.libraries.stream.jar
+  modules:
+  - name: intellij.libraries.stream
+    libraries:
+      StreamEx:
+      - name: $MAVEN_REPOSITORY$/one/util/streamex/0/streamex-0.jar

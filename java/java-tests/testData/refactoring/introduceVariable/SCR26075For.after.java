@@ -7,8 +7,7 @@ class C {
 
     void test () {
         C c = new C();
-        String wrong = c.f();
-        for (; wrong != null;) {
+        for (;c.f() != null;) {
             c = c.getParent();
         }
     }

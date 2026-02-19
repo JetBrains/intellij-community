@@ -1,17 +1,26 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.dgm;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NotNullLazyValue;
-import com.intellij.openapi.util.VolatileNotNullLazyValue;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiParameter;
+import com.intellij.psi.PsiPrimitiveType;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.ResolveState;
 import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.scope.NameHint;
 import com.intellij.psi.scope.PsiScopeProcessor;
-import com.intellij.psi.util.*;
+import com.intellij.psi.util.CachedValue;
+import com.intellij.psi.util.CachedValueProvider;
+import com.intellij.psi.util.CachedValuesManager;
+import com.intellij.psi.util.PsiModificationTracker;
+import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.containers.ConcurrentFactoryMap;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NonNls;
@@ -52,12 +61,11 @@ public final class GdkMethodHolder {
       }
       byName.putValue(m.getName(), m);
     }
-    myOriginalMethodByType = VolatileNotNullLazyValue.createValue(() -> groupByType(byName.values()));
+    myOriginalMethodByType = NotNullLazyValue.volatileLazy(() -> groupByType(byName.values()));
     myOriginalMethodsByNameAndType = ConcurrentFactoryMap.createMap(name -> groupByType(byName.get(name)));
   }
 
-  @NotNull
-  private static MultiMap<String, PsiMethod> groupByType(Collection<? extends PsiMethod> methods) {
+  private static @NotNull MultiMap<String, PsiMethod> groupByType(Collection<? extends PsiMethod> methods) {
     MultiMap<String, PsiMethod> map = new MultiMap<>();
     for (PsiMethod method : methods) {
       PsiType type = getCategoryTargetType(method);
@@ -67,8 +75,7 @@ public final class GdkMethodHolder {
     return map;
   }
 
-  @Nullable
-  private static PsiType getCategoryTargetType(@NotNull PsiMethod method) {
+  private static @Nullable PsiType getCategoryTargetType(@NotNull PsiMethod method) {
     final PsiType parameterType = method.getParameterList().getParameters()[0].getType();
     return TypeConversionUtil.erasure(parameterType);
   }
@@ -114,8 +121,7 @@ public final class GdkMethodHolder {
   }
 
   @Override
-  @NonNls
-  public String toString() {
+  public @NonNls String toString() {
     return "GDK Method Holder for " + myClassName;
   }
 }

@@ -30,8 +30,6 @@ import java.util.List;
 /**
  * Reference to an imported name in a 'from ... import' statement:<br/>
  * <code>from foo import <u>name</u></code>
- *
- * @author yole
  */
 public class PyFromImportNameReference extends PyImportReference {
   private final PyFromImportStatement myStatement;
@@ -42,9 +40,8 @@ public class PyFromImportNameReference extends PyImportReference {
     assert myStatement != null;
   }
 
-  @NotNull
   @Override
-  protected List<RatedResolveResult> resolveInner() {
+  protected @NotNull List<RatedResolveResult> resolveInner() {
     QualifiedName qName = myElement.asQualifiedName();
     return qName == null
            ? Collections.emptyList()

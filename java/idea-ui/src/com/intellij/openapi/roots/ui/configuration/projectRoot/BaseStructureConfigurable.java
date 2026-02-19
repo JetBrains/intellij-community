@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.ui.configuration.projectRoot;
 
 import com.intellij.facet.Facet;
@@ -6,12 +6,20 @@ import com.intellij.ide.CommonActionsManager;
 import com.intellij.ide.DefaultTreeExpander;
 import com.intellij.ide.TreeExpander;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionGroup;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CustomShortcutSet;
+import com.intellij.openapi.actionSystem.Presentation;
+import com.intellij.openapi.actionSystem.Separator;
+import com.intellij.openapi.actionSystem.Shortcut;
 import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ui.configuration.ProjectStructureConfigurable;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.ProjectStructureDaemonAnalyzerListener;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.ProjectStructureElement;
 import com.intellij.openapi.ui.MasterDetailsComponent;
@@ -19,7 +27,6 @@ import com.intellij.openapi.ui.MasterDetailsState;
 import com.intellij.openapi.ui.MasterDetailsStateService;
 import com.intellij.openapi.ui.NamedConfigurable;
 import com.intellij.openapi.util.ActionCallback;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsActions;
 import com.intellij.ui.TreeSpeedSearch;
@@ -31,17 +38,26 @@ import com.intellij.util.containers.MultiMap;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
-import javax.swing.*;
+import javax.swing.Icon;
+import javax.swing.JComponent;
+import javax.swing.ToolTipManager;
 import javax.swing.tree.TreePath;
-import java.awt.*;
+import java.awt.Point;
+import java.awt.Rectangle;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
-import java.util.*;
+import java.util.Map;
+import java.util.Objects;
 
 public abstract class BaseStructureConfigurable extends MasterDetailsComponent implements SearchableConfigurable, Disposable, Place.Navigator {
   protected StructureConfigurableContext myContext;
 
   protected final Project myProject;
+  protected final ProjectStructureConfigurable myProjectStructureConfigurable;
 
   protected boolean myUiDisposed = true;
 
@@ -49,13 +65,18 @@ public abstract class BaseStructureConfigurable extends MasterDetailsComponent i
 
   protected boolean myAutoScrollEnabled = true;
 
-  protected BaseStructureConfigurable(Project project, MasterDetailsState state) {
+  protected BaseStructureConfigurable(@NotNull ProjectStructureConfigurable projectStructureConfigurable, MasterDetailsState state) {
     super(state);
-    myProject = project;
+    myProject = projectStructureConfigurable.getProject();
+    myProjectStructureConfigurable = projectStructureConfigurable;
   }
 
-  protected BaseStructureConfigurable(@NotNull Project project) {
-    myProject = project;
+  protected BaseStructureConfigurable(@NotNull ProjectStructureConfigurable projectStructureConfigurable) {
+    this(projectStructureConfigurable, new MasterDetailsState());
+  }
+
+  public ProjectStructureConfigurable getProjectStructureConfigurable() {
+    return myProjectStructureConfigurable;
   }
 
   public void init(StructureConfigurableContext context) {
@@ -69,6 +90,7 @@ public abstract class BaseStructureConfigurable extends MasterDetailsComponent i
         myTree.repaint();
       }
     });
+    Disposer.register(myProjectStructureConfigurable, this);
   }
 
   @Override
@@ -77,7 +99,7 @@ public abstract class BaseStructureConfigurable extends MasterDetailsComponent i
   }
 
   @Override
-  public ActionCallback navigateTo(@Nullable final Place place, final boolean requestFocus) {
+  public ActionCallback navigateTo(final @Nullable Place place, final boolean requestFocus) {
     if (place == null) return ActionCallback.DONE;
 
     final Object object = place.getPath(TREE_OBJECT);
@@ -90,15 +112,8 @@ public abstract class BaseStructureConfigurable extends MasterDetailsComponent i
 
     if (node == null && nodeByName == null) return ActionCallback.DONE;
 
-    final NamedConfigurable config;
-    if (node != null) {
-      config = node.getConfigurable();
-    } else {
-      config = nodeByName.getConfigurable();
-    }
-
-    final ActionCallback result = new ActionCallback().doWhenDone(() -> myAutoScrollEnabled = true);
-
+    NamedConfigurable<?> config = Objects.requireNonNullElse(node, nodeByName).getConfigurable();
+    ActionCallback result = new ActionCallback().doWhenDone(() -> myAutoScrollEnabled = true);
     myAutoScrollEnabled = false;
     myAutoScrollHandler.cancelAllRequests();
     final MyNode nodeToSelect = node != null ? node : nodeByName;
@@ -112,7 +127,7 @@ public abstract class BaseStructureConfigurable extends MasterDetailsComponent i
 
 
   @Override
-  public void queryPlace(@NotNull final Place place) {
+  public void queryPlace(final @NotNull Place place) {
     if (myCurrentConfigurable != null) {
       place.putPath(TREE_OBJECT, myCurrentConfigurable.getEditableObject());
       Place.queryFurther(myCurrentConfigurable, place);
@@ -125,13 +140,12 @@ public abstract class BaseStructureConfigurable extends MasterDetailsComponent i
     myWasTreeInitialized = true;
 
     super.initTree();
-    new TreeSpeedSearch(myTree, treePath -> getTextForSpeedSearch((MyNode)treePath.getLastPathComponent()), true);
+    TreeSpeedSearch.installOn(myTree, true, treePath -> getTextForSpeedSearch((MyNode)treePath.getLastPathComponent()));
     ToolTipManager.sharedInstance().registerComponent(myTree);
     myTree.setCellRenderer(new ProjectStructureElementRenderer(myContext));
   }
 
-  @NotNull
-  protected String getTextForSpeedSearch(MyNode node) {
+  protected @NotNull String getTextForSpeedSearch(@NotNull MyNode node) {
     return node.getDisplayName();
   }
 
@@ -144,6 +158,7 @@ public abstract class BaseStructureConfigurable extends MasterDetailsComponent i
     myUiDisposed = true;
 
     myAutoScrollHandler.cancelAllRequests();
+    myAutoScrollHandler.resetAlarm();
 
     myContext.getDaemonAnalyzer().clear();
 
@@ -160,15 +175,11 @@ public abstract class BaseStructureConfigurable extends MasterDetailsComponent i
     result.add(actionsManager.createCollapseAllAction(expander, myTree));
   }
 
-  @Nullable
-  public ProjectStructureElement getSelectedElement() {
+  public @Nullable ProjectStructureElement getSelectedElement() {
     final TreePath selectionPath = myTree.getSelectionPath();
-    if (selectionPath != null && selectionPath.getLastPathComponent() instanceof MyNode) {
-      MyNode node = (MyNode)selectionPath.getLastPathComponent();
-      final NamedConfigurable configurable = node.getConfigurable();
-      if (configurable instanceof ProjectStructureElementConfigurable) {
-        return ((ProjectStructureElementConfigurable)configurable).getProjectStructureElement();
-      }
+    if (selectionPath != null && selectionPath.getLastPathComponent() instanceof MyNode node &&
+        node.getConfigurable() instanceof ProjectStructureElementConfigurable<?> configurable) {
+      return configurable.getProjectStructureElement();
     }
     return null;
   }
@@ -176,7 +187,7 @@ public abstract class BaseStructureConfigurable extends MasterDetailsComponent i
   private class MyFindUsagesAction extends FindUsagesInProjectStructureActionBase {
 
     MyFindUsagesAction(JComponent parentComponent) {
-      super(parentComponent, myProject);
+      super(parentComponent, myProjectStructureConfigurable);
     }
 
     @Override
@@ -191,10 +202,9 @@ public abstract class BaseStructureConfigurable extends MasterDetailsComponent i
     }
 
     @Override
-    protected StructureConfigurableContext getContext() {
-      return myContext;
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
     }
-
     @Override
     protected ProjectStructureElement getSelectedElement() {
       return BaseStructureConfigurable.this.getSelectedElement();
@@ -228,9 +238,7 @@ public abstract class BaseStructureConfigurable extends MasterDetailsComponent i
 
   private void loadTreeNodes() {
     loadTree();
-    for (ProjectStructureElement element : getProjectStructureElements()) {
-      myContext.getDaemonAnalyzer().queueUpdate(element);
-    }
+    myContext.getDaemonAnalyzer().queueUpdates(getProjectStructureElements());
   }
 
   protected final void reloadTreeNodes() {
@@ -239,8 +247,7 @@ public abstract class BaseStructureConfigurable extends MasterDetailsComponent i
     loadTreeNodes();
   }
 
-  @NotNull
-  protected Collection<? extends ProjectStructureElement> getProjectStructureElements() {
+  protected @NotNull Collection<? extends ProjectStructureElement> getProjectStructureElements() {
     return Collections.emptyList();
   }
 
@@ -248,10 +255,9 @@ public abstract class BaseStructureConfigurable extends MasterDetailsComponent i
 
 
   @Override
-  @NotNull
-  protected ArrayList<AnAction> createActions(final boolean fromPopup) {
+  protected @NotNull ArrayList<AnAction> createActions(final boolean fromPopup) {
     final ArrayList<AnAction> result = new ArrayList<>();
-    AbstractAddGroup addAction = createAddAction();
+    AbstractAddGroup addAction = createAddAction(fromPopup);
     if (addAction != null) {
       result.add(addAction);
     }
@@ -268,8 +274,7 @@ public abstract class BaseStructureConfigurable extends MasterDetailsComponent i
     return result;
   }
 
-  @NotNull
-  protected List<? extends AnAction> createCopyActions(boolean fromPopup) {
+  protected @NotNull @Unmodifiable List<? extends AnAction> createCopyActions(boolean fromPopup) {
     return Collections.emptyList();
   }
 
@@ -279,15 +284,13 @@ public abstract class BaseStructureConfigurable extends MasterDetailsComponent i
   public void onStructureSelected() {
   }
 
-  @Nullable
-  protected abstract AbstractAddGroup createAddAction();
+  protected abstract @Nullable AbstractAddGroup createAddAction(boolean fromPopup);
 
   protected List<? extends RemoveConfigurableHandler<?>> getRemoveHandlers() {
     return Collections.emptyList();
   }
 
-  @NotNull
-  private MultiMap<RemoveConfigurableHandler, MyNode> groupNodes(List<? extends MyNode> nodes) {
+  private @NotNull MultiMap<RemoveConfigurableHandler, MyNode> groupNodes(List<? extends MyNode> nodes) {
     List<? extends RemoveConfigurableHandler<?>> handlers = getRemoveHandlers();
     MultiMap<RemoveConfigurableHandler, MyNode> grouped = MultiMap.createLinked();
     for (MyNode node : nodes) {
@@ -311,26 +314,22 @@ public abstract class BaseStructureConfigurable extends MasterDetailsComponent i
     return null;
   }
 
-  protected class MyRemoveAction extends MyDeleteAction {
-    public MyRemoveAction() {
-      //noinspection Convert2Lambda
-      super(new Condition<>() {
-        @Override
-        public boolean value(final Object[] objects) {
-          List<MyNode> nodes = new ArrayList<>();
-          for (Object object : objects) {
-            if (!(object instanceof MyNode)) return false;
-            nodes.add((MyNode)object);
-          }
-          MultiMap<RemoveConfigurableHandler, MyNode> map = groupNodes(nodes);
-          for (Map.Entry<RemoveConfigurableHandler, Collection<MyNode>> entry : map.entrySet()) {
-            //noinspection unchecked
-            if (!entry.getKey().canBeRemoved(getEditableObjects(entry.getValue()))) {
-              return false;
-            }
-          }
-          return true;
+  final class MyRemoveAction extends MyDeleteAction {
+    MyRemoveAction() {
+      super(objects -> {
+        List<MyNode> nodes = new ArrayList<>();
+        for (Object object : objects) {
+          if (!(object instanceof MyNode)) return false;
+          nodes.add((MyNode)object);
         }
+        MultiMap<RemoveConfigurableHandler, MyNode> map = groupNodes(nodes);
+        for (Map.Entry<RemoveConfigurableHandler, Collection<MyNode>> entry : map.entrySet()) {
+          //noinspection unchecked
+          if (!entry.getKey().canBeRemoved(getEditableObjects(entry.getValue()))) {
+            return false;
+          }
+        }
+        return true;
       });
     }
 

@@ -22,47 +22,43 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlTag;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xml.XmlAttributeDescriptor;
 import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.util.XmlStringUtil;
-import gnu.trove.THashSet;
 import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
 import org.intellij.plugins.relaxNG.model.descriptors.CompositeDescriptor;
 import org.intellij.plugins.relaxNG.model.descriptors.RngElementDescriptor;
 import org.intellij.plugins.relaxNG.model.descriptors.RngXmlAttributeDescriptor;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 import org.kohsuke.rngom.digested.DElementPattern;
 
 import java.util.Collection;
+import java.util.Set;
 
 final class RngDocumentationProvider implements DocumentationProvider {
   private static final Logger LOG = Logger.getInstance(RngDocumentationProvider.class);
 
-  @NonNls
-  private static final String COMPATIBILITY_ANNOTATIONS_1_0 = "http://relaxng.org/ns/compatibility/annotations/1.0";
+  private static final @NonNls String COMPATIBILITY_ANNOTATIONS_1_0 = "http://relaxng.org/ns/compatibility/annotations/1.0";
 
   @Override
-  @Nullable
-  public String generateDoc(PsiElement element, @Nullable PsiElement originalElement) {
+  public @Nullable @Nls String generateDoc(PsiElement element, @Nullable PsiElement originalElement) {
     final XmlElement c = PsiTreeUtil.getParentOfType(originalElement, XmlTag.class, XmlAttribute.class);
     if (c != null && c.getManager() == null) {
       LOG.warn("Invalid context element passed to generateDoc()", new Throwable("<stack trace>"));
       return null;
     }
-    if (c instanceof XmlTag) {
-      final XmlTag xmlElement = (XmlTag)c;
+    if (c instanceof XmlTag xmlElement) {
       final XmlElementDescriptor descriptor = xmlElement.getDescriptor();
-      if (descriptor instanceof CompositeDescriptor) {
+      if (descriptor instanceof CompositeDescriptor d) {
         final StringBuilder sb = new StringBuilder();
-        final CompositeDescriptor d = (CompositeDescriptor)descriptor;
         final DElementPattern[] patterns = d.getElementPatterns();
-        final THashSet<PsiElement> elements = ContainerUtil.newIdentityTroveSet();
+        final Set<PsiElement> elements = new ReferenceOpenHashSet<>();
         for (DElementPattern pattern : patterns) {
           final PsiElement psiElement = d.getDeclaration(pattern.getLocation());
           if (psiElement instanceof XmlTag && elements.add(psiElement)) {
-            if (sb.length() > 0) {
+            if (!sb.isEmpty()) {
               sb.append("<hr>");
             }
             sb.append(getDocumentationFromTag((XmlTag)psiElement, xmlElement.getLocalName(), "Element"));
@@ -70,21 +66,19 @@ final class RngDocumentationProvider implements DocumentationProvider {
         }
         return makeDocumentation(sb);
       } else if (descriptor instanceof RngElementDescriptor) {
-        final RngElementDescriptor d = (RngElementDescriptor)descriptor;
-        final PsiElement declaration = d.getDeclaration();
+        final PsiElement declaration = descriptor.getDeclaration();
         if (declaration instanceof XmlTag) {
           return makeDocumentation(getDocumentationFromTag((XmlTag)declaration, xmlElement.getLocalName(), "Element"));
         }
       }
-    } else if (c instanceof XmlAttribute) {
-      final XmlAttribute attribute = (XmlAttribute)c;
+    } else if (c instanceof XmlAttribute attribute) {
       final XmlAttributeDescriptor descriptor = attribute.getDescriptor();
       if (descriptor instanceof RngXmlAttributeDescriptor) {
         final StringBuilder sb = new StringBuilder();
         final Collection<PsiElement> declaration = new ReferenceOpenHashSet<>(descriptor.getDeclarations());
         for (PsiElement psiElement : declaration) {
           if (psiElement instanceof XmlTag) {
-            if (sb.length() > 0) {
+            if (!sb.isEmpty()) {
               sb.append("<hr>");
             }
             sb.append(getDocumentationFromTag((XmlTag)psiElement, descriptor.getName(), "Attribute"));
@@ -98,7 +92,7 @@ final class RngDocumentationProvider implements DocumentationProvider {
     return null;
   }
 
-  private static String makeDocumentation(StringBuilder sb) {
+  private static String makeDocumentation(CharSequence sb) {
     if (sb == null) return null;
     String s = sb.toString().replaceAll("\n", "<br>"); //NON-NLS
     if (!s.startsWith("<html>")) {
@@ -127,6 +121,7 @@ final class RngDocumentationProvider implements DocumentationProvider {
     return null;
   }
 
+  @Override
   public int hashCode() {
     return 0;   // CompositeDocumentationProvider uses a HashSet that doesn't preserve order. We want to be the first one.
   }

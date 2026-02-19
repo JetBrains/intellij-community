@@ -3,16 +3,18 @@ package org.jetbrains.plugins.groovy.dsl.toplevel;
 
 import com.intellij.openapi.util.Key;
 import com.intellij.patterns.ElementPattern;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiClassType;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypes;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.ClassUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-/**
- * @author peter
- */
 public final class ClassContextFilter {
 
   public static ContextFilter fromClassPattern(ElementPattern pattern) {
@@ -40,7 +42,7 @@ public final class ClassContextFilter {
     }
 
     PsiType myType = getCachedType(typeText, placeFile);
-    if (checked == PsiType.NULL) return myType == PsiType.NULL;
+    if (checked == PsiTypes.nullType()) return myType == PsiTypes.nullType();
     return TypesUtil.isAssignableByMethodCallConversion(myType, checked, placeFile);
   }
 

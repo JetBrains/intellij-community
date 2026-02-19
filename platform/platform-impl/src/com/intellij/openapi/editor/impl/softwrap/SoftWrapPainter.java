@@ -17,7 +17,7 @@ package com.intellij.openapi.editor.impl.softwrap;
 
 import org.jetbrains.annotations.NotNull;
 
-import java.awt.*;
+import java.awt.Graphics;
 
 /**
  * Defines contract for the service that manages soft wrap-related graphical effects.
@@ -30,8 +30,6 @@ import java.awt.*;
  * </pre>
  * <p/>
  * Implementations of this interface are not obliged to be thread-safe.
- *
- * @author Denis Zhdanov
  */
 public interface SoftWrapPainter {
 

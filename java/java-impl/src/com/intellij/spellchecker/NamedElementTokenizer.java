@@ -1,59 +1,91 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.spellchecker;
 
+import com.intellij.openapi.project.DumbService;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiClassType;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiIdentifier;
+import com.intellij.psi.PsiJavaCodeReferenceElement;
 import com.intellij.psi.PsiNamedElement;
+import com.intellij.psi.PsiReferenceList;
+import com.intellij.psi.PsiType;
 import com.intellij.psi.PsiTypeElement;
+import com.intellij.psi.PsiVariable;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.spellchecker.tokenizer.TokenConsumer;
 import com.intellij.spellchecker.tokenizer.Tokenizer;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Locale;
 
 /**
- * Created by IntelliJ IDEA.
- *
  * @author shkate@jetbrains.com
  */
 public class NamedElementTokenizer<T extends PsiNamedElement> extends Tokenizer<T> {
   private final Tokenizer<PsiIdentifier> myIdentifierTokenizer = new PsiIdentifierTokenizer();
-  //private final PsiTypeTokenizer myTypeTokenizer = new PsiTypeTokenizer();
 
   @Override
-   public void tokenize(@NotNull T element, TokenConsumer consumer) {
-    final PsiIdentifier psiIdentifier = PsiTreeUtil.getChildOfType(element, PsiIdentifier.class);
-    final PsiTypeElement psiType = PsiTreeUtil.getChildOfType(element, PsiTypeElement.class);
+  public void tokenize(@NotNull T element, @NotNull TokenConsumer consumer) {
+    PsiIdentifier psiIdentifier = PsiTreeUtil.getChildOfType(element, PsiIdentifier.class);
+    if (psiIdentifier == null) return;
 
-    if (psiIdentifier == null) {
+    String identifier = psiIdentifier.getText();
+    if (identifier == null) return;
+
+    if (nameSeemsDerived(identifier, getTypeText(element))) {
       return;
     }
 
-    final String identifier = psiIdentifier.getText();
-    final String type = psiType==null?null:psiType.getText();
-
-    if (identifier == null) {
-      return;
+    if (element instanceof PsiClass psiClass) {
+      if (DumbService.isDumb(element.getProject())) {
+        PsiReferenceList extendList = psiClass.getExtendsList();
+        PsiReferenceList implementList = psiClass.getImplementsList();
+        List<PsiJavaCodeReferenceElement> referenceElements = new ArrayList<>();
+        if (extendList != null) referenceElements.addAll(List.of(extendList.getReferenceElements()));
+        if (implementList != null) referenceElements.addAll(List.of(implementList.getReferenceElements()));
+        for (PsiJavaCodeReferenceElement referenceElement : referenceElements) {
+          PsiElement nameElement = referenceElement.getReferenceNameElement();
+          if (nameElement != null && nameSeemsDerived(identifier, nameElement.getText())) return;
+        }
+      } else {
+        for (PsiClassType superType : psiClass.getSuperTypes()) {
+          if (nameSeemsDerived(identifier, getClassName(superType))) {
+            return;
+          }
+        }
+      }
     }
 
-    if (type == null || !type.equalsIgnoreCase(identifier)) {
-      myIdentifierTokenizer.tokenize(psiIdentifier, consumer);      
+    myIdentifierTokenizer.tokenize(psiIdentifier, consumer);
+  }
+
+  private static boolean nameSeemsDerived(String name, @Nullable String source) {
+    return source != null && name.toLowerCase(Locale.ROOT).endsWith(source.toLowerCase(Locale.ROOT));
+  }
+
+  private static @Nullable String getTypeText(@NotNull PsiElement element) {
+    PsiTypeElement typeElement = PsiTreeUtil.getChildOfType(element, PsiTypeElement.class);
+    if (DumbService.isDumb(element.getProject())) {
+      if (typeElement == null || typeElement.isInferredType()) return null;
+      PsiJavaCodeReferenceElement referenceElement = typeElement.getInnermostComponentReferenceElement();
+      if (referenceElement == null) return null;
+      PsiElement identifier = referenceElement.getReferenceNameElement();
+      if (identifier == null) return null;
+      return identifier.getText();
     }
-    //if (psiType != null) {
-    //  myTypeTokenizer.tokenize(psiType, consumer);
-    //}
+    else {
+      PsiType type = typeElement != null ? typeElement.getType() : element instanceof PsiVariable ? ((PsiVariable)element).getType() : null;
+      return getClassName(type);
+    }
+  }
+
+  private static @Nullable String getClassName(PsiType type) {
+    PsiType component = type == null ? null : type.getDeepComponentType();
+    return component instanceof PsiClassType ? ((PsiClassType)component).getClassName() : null;
   }
 }
 

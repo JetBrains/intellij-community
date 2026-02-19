@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.compiler.options;
 
 import com.intellij.openapi.compiler.JavaCompilerBundle;
@@ -10,21 +10,26 @@ import com.intellij.ui.JBColor;
 import com.intellij.ui.TableSpeedSearch;
 import com.intellij.ui.TableUtil;
 import com.intellij.ui.ToolbarDecorator;
-import com.intellij.ui.components.JBTextField;
+import com.intellij.ui.dsl.listCellRenderer.BuilderKt;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.ArrayUtilRt;
-import com.intellij.util.ObjectUtils;
-import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.GridBag;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.java.JpsJavaSdkType;
 
-import javax.swing.*;
-import javax.swing.plaf.basic.BasicComboBoxEditor;
+import javax.swing.DefaultCellEditor;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JTable;
+import javax.swing.SwingConstants;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.TableColumn;
-import java.awt.*;
+import java.awt.Component;
+import java.awt.Dimension;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -40,7 +45,7 @@ public class TargetOptionsComponent extends JPanel {
     List<String> targets = new ArrayList<>();
     targets.add("1.1");
     targets.add("1.2");
-    for (LanguageLevel level : LanguageLevel.values()) {
+    for (LanguageLevel level : LanguageLevel.getEntries()) {
       if (level != LanguageLevel.JDK_X && !level.isPreview()) {
         targets.add(JpsJavaSdkType.complianceOption(level.toJavaVersion()));
       }
@@ -59,6 +64,7 @@ public class TargetOptionsComponent extends JPanel {
     myCbProjectTargetLevel = createTargetOptionsCombo();
 
     myTable = new JBTable(new ModuleOptionsTableModel());
+    myTable.setShowGrid(false);
     myTable.setRowHeight(JBUIScale.scale(22));
     myTable.getEmptyText().setText(JavaCompilerBundle.message("settings.all.modules.will.be.compiled.with.project.bytecode.version"));
 
@@ -76,13 +82,19 @@ public class TargetOptionsComponent extends JPanel {
     targetLevelColumn.setMinWidth(width);
     targetLevelColumn.setMaxWidth(width);
 
-    new TableSpeedSearch(myTable);
+    TableSpeedSearch.installOn(myTable);
+
+    GridBag constraints = new GridBag()
+      .setDefaultAnchor(GridBagConstraints.WEST)
+      .setDefaultWeightX(1.0).setDefaultWeightY(1.0)
+      .setDefaultFill(GridBagConstraints.NONE)
+      .setDefaultInsets(6, 0, 0, 0);
 
     JLabel label = new JLabel(JavaCompilerBundle.message("settings.project.bytecode.version"));
     label.setLabelFor(myCbProjectTargetLevel);
-    add(label, constraints(0, 0, 1, 1, 0.0, 0.0, GridBagConstraints.NONE));
-    add(myCbProjectTargetLevel, constraints(1, 0, 1, 1, 1.0, 0.0, GridBagConstraints.NONE));
-    add(new JLabel(JavaCompilerBundle.message("settings.per.module.bytecode.version")), constraints(0, 1, 2, 1, 1.0, 0.0, GridBagConstraints.NONE));
+    add(label, constraints.nextLine().next().weightx(0.0));
+    add(myCbProjectTargetLevel, constraints.next());
+    add(new JLabel(JavaCompilerBundle.message("settings.per.module.bytecode.version")), constraints.nextLine().weightx(0.0));
     JPanel tableComp = ToolbarDecorator.createDecorator(myTable)
       .disableUpAction()
       .disableDownAction()
@@ -90,27 +102,14 @@ public class TargetOptionsComponent extends JPanel {
       .setRemoveAction(b -> removeSelectedModules())
       .createPanel();
     tableComp.setPreferredSize(new Dimension(myTable.getWidth(), 150));
-    add(tableComp, constraints(0, 2, 2, 1, 1.0, 1.0, GridBagConstraints.BOTH));
+    add(tableComp, constraints.nextLine().fillCell().coverLine());
   }
 
   private static ComboBox<String> createTargetOptionsCombo() {
     ComboBox<String> combo = new ComboBox<>(KNOWN_TARGETS);
-    combo.setEditable(true);
-    combo.setEditor(new BasicComboBoxEditor() {
-      @Override
-      protected JTextField createEditorComponent() {
-        JBTextField editor = new JBTextField(JavaCompilerBundle.message("settings.same.as.language.level"), 12);
-        editor.getEmptyText().setText(JavaCompilerBundle.message("settings.same.as.language.level"));
-        editor.setBorder(null);
-        return editor;
-      }
-    });
+    combo.insertItemAt(null, 0);
+    combo.setRenderer(BuilderKt.textListCellRenderer(JavaCompilerBundle.message("settings.same.as.language.level"), String::toString));
     return combo;
-  }
-
-  @SuppressWarnings("SameParameterValue")
-  private static GridBagConstraints constraints(int gridX, int gridY, int gridWidth, int gridHeight, double weightX, double weightY, int fill) {
-    return new GridBagConstraints(gridX, gridY, gridWidth, gridHeight, weightX, weightY, GridBagConstraints.WEST, fill, JBUI.insets(5, 5, 0, 0), 0, 0);
   }
 
   private void addModules() {
@@ -128,13 +127,13 @@ public class TargetOptionsComponent extends JPanel {
   }
 
   public void setProjectBytecodeTargetLevel(@NlsSafe String level) {
-    myCbProjectTargetLevel.setSelectedItem(level == null ? "" : level);
+    myCbProjectTargetLevel.setSelectedItem(level);
   }
 
-  @Nullable
-  public String getProjectBytecodeTarget() {
-    String item = ObjectUtils.notNull(((String)myCbProjectTargetLevel.getSelectedItem()), "").trim();
-    return item.isEmpty() ? null : item;
+  public @Nullable String getProjectBytecodeTarget() {
+    String item = (String)myCbProjectTargetLevel.getSelectedItem();
+    if (item == null) return item;
+    return item.trim();
   }
 
   public Map<String, String> getModulesBytecodeTargetMap() {
@@ -156,8 +155,7 @@ public class TargetOptionsComponent extends JPanel {
     @Override
     public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
       Component component = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
-      if (component instanceof JLabel) {
-        JLabel comp = (JLabel)component;
+      if (component instanceof JLabel comp) {
         comp.setHorizontalAlignment(SwingConstants.CENTER);
         if ("".equals(value)) {
           comp.setForeground(JBColor.GRAY);

@@ -17,7 +17,14 @@ package org.intellij.plugins.relaxNG;
 
 import com.intellij.codeHighlighting.Pass;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
-import com.intellij.codeInspection.*;
+import com.intellij.codeInsight.daemon.impl.analysis.XmlUnresolvedReferenceInspection;
+import com.intellij.codeInspection.InspectionManager;
+import com.intellij.codeInspection.InspectionToolProvider;
+import com.intellij.codeInspection.LocalInspectionTool;
+import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.LocalQuickFixProvider;
+import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.htmlInspections.RequiredAttributesInspection;
 import com.intellij.javaee.ExternalResourceManagerEx;
 import com.intellij.openapi.application.WriteAction;
@@ -85,7 +92,7 @@ public abstract class HighlightingTestBase extends UsefulTestCase implements Ide
   }
 
   protected CodeInsightTestFixture createFixture(@NotNull IdeaTestFixtureFactory factory) {
-    final TestFixtureBuilder<IdeaProjectTestFixture> builder = factory.createLightFixtureBuilder();
+    final TestFixtureBuilder<IdeaProjectTestFixture> builder = factory.createLightFixtureBuilder(getTestName(false));
     final IdeaProjectTestFixture fixture = builder.getFixture();
 
     return factory.createCodeInsightFixture(fixture);
@@ -166,6 +173,7 @@ public abstract class HighlightingTestBase extends UsefulTestCase implements Ide
     int[] ignore = externalToolPass == null || externalToolPass ? new int[]{
       Pass.LINE_MARKERS,
       Pass.LOCAL_INSPECTIONS,
+      Pass.SLOW_LINE_MARKERS,
       Pass.POPUP_HINTS,
       Pass.UPDATE_ALL,
       Pass.UPDATE_FOLDING,
@@ -213,7 +221,7 @@ public abstract class HighlightingTestBase extends UsefulTestCase implements Ide
     @Override
     public Class<? extends LocalInspectionTool> @NotNull [] getInspectionClasses() {
       //noinspection unchecked
-      return new Class[]{RngDomInspection.class, RequiredAttributesInspection.class};
+      return new Class[]{RngDomInspection.class, RequiredAttributesInspection.class, XmlUnresolvedReferenceInspection.class};
     }
   }
 }

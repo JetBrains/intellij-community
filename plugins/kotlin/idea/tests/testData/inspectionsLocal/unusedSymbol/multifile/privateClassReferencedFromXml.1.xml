@@ -1,0 +1,3 @@
+<extensions>
+  <initProjectActivity id="dumbServiceStartup" implementation="packageNumberOne.DumbServiceStartupActivity" order="last"/>
+</extensions>

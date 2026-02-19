@@ -1,0 +1,17 @@
+<html>
+<body>
+Reports <code>expect</code> declarations that have ambiguous
+<code>actual</code> declarations in implementing multi-platform modules.
+<p>
+    For example:
+</p>
+<pre><code>
+// common.kt
+expect class Foo
+// middle.kt
+actual class Foo
+// bottom.kt
+actual class Foo
+</code></pre>
+</body>
+</html>

@@ -24,9 +24,7 @@ import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.lexer.PythonLexer;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author yole
- */
+
 class PyWordsScanner extends VersionedWordsScanner {
   private volatile DefaultWordsScanner myDelegate;
 
@@ -35,9 +33,9 @@ class PyWordsScanner extends VersionedWordsScanner {
     DefaultWordsScanner delegate = myDelegate;
     if (delegate == null) {
       myDelegate = delegate = new DefaultWordsScanner(new PythonLexer(),
-                                         TokenSet.create(PyTokenTypes.IDENTIFIER),
-                                         TokenSet.create(PyTokenTypes.END_OF_LINE_COMMENT),
-                                         PyTokenTypes.STRING_NODES);
+                                                      TokenSet.create(PyTokenTypes.IDENTIFIER),
+                                                      TokenSet.create(PyTokenTypes.END_OF_LINE_COMMENT),
+                                                      PyTokenTypes.STRING_NODES);
     }
     delegate.processWords(fileText, processor);
   }
@@ -46,5 +44,4 @@ class PyWordsScanner extends VersionedWordsScanner {
   public int getVersion() {
     return super.getVersion() + 1;
   }
-
 }

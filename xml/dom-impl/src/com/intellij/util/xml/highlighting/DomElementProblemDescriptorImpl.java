@@ -1,25 +1,10 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.util.xml.highlighting;
 
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.util.InspectionMessage;
-import com.intellij.lang.annotation.Annotation;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -35,11 +20,15 @@ import com.intellij.psi.xml.XmlText;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.FunctionUtil;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.xml.*;
+import com.intellij.util.xml.DomElement;
+import com.intellij.util.xml.DomFileElement;
+import com.intellij.util.xml.DomUtil;
+import com.intellij.util.xml.GenericAttributeValue;
+import com.intellij.util.xml.GenericValue;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.List;
+import java.util.Objects;
 
 public class DomElementProblemDescriptorImpl implements DomElementProblemDescriptor {
   private static final Logger LOG = Logger.getInstance(DomElementProblemDescriptorImpl.class);
@@ -47,35 +36,27 @@ public class DomElementProblemDescriptorImpl implements DomElementProblemDescrip
   private final HighlightSeverity mySeverity;
   private final @InspectionMessage String myMessage;
   private final LocalQuickFix[] myFixes;
-  private List<Annotation> myAnnotations;
   private Pair<TextRange, PsiElement> myPair;
-  public static final Pair<TextRange,PsiElement> NO_PROBLEM = new Pair<>(null, null);
+  static final Pair<TextRange,PsiElement> NO_PROBLEM = new Pair<>(null, null);
   private final ProblemHighlightType myHighlightType;
 
-  public DomElementProblemDescriptorImpl(@NotNull final DomElement domElement, @InspectionMessage String message, final HighlightSeverity type) {
+  public DomElementProblemDescriptorImpl(final @NotNull DomElement domElement, @InspectionMessage String message, final HighlightSeverity type) {
     this(domElement, message, type, LocalQuickFix.EMPTY_ARRAY);
   }
 
-  public DomElementProblemDescriptorImpl(@NotNull final DomElement domElement,
-                                         @InspectionMessage String message,
-                                         final HighlightSeverity type,
-                                         @Nullable final TextRange textRange) {
-    this(domElement, message, type, textRange, null, LocalQuickFix.EMPTY_ARRAY);
-  }
-
-  public DomElementProblemDescriptorImpl(@NotNull final DomElement domElement,
-                                         @InspectionMessage String message,
-                                         final HighlightSeverity type,
-                                         LocalQuickFix @NotNull ... fixes) {
+  DomElementProblemDescriptorImpl(final @NotNull DomElement domElement,
+                                  @InspectionMessage String message,
+                                  final HighlightSeverity type,
+                                  @NotNull LocalQuickFix @NotNull ... fixes) {
     this(domElement, message, type, null, null, fixes);
   }
 
-  public DomElementProblemDescriptorImpl(@NotNull final DomElement domElement,
-                                         @InspectionMessage String message,
-                                         final HighlightSeverity type,
-                                         @Nullable final TextRange textRange,
-                                         ProblemHighlightType highlightType,
-                                         LocalQuickFix @NotNull ... fixes) {
+  DomElementProblemDescriptorImpl(final @NotNull DomElement domElement,
+                                  @InspectionMessage String message,
+                                  final HighlightSeverity type,
+                                  final @Nullable TextRange textRange,
+                                  ProblemHighlightType highlightType,
+                                  @NotNull LocalQuickFix @NotNull ... fixes) {
     myDomElement = domElement;
     final XmlElement element = domElement.getXmlElement();
     if (element != null && !ApplicationManager.getApplication().isUnitTestMode()) {
@@ -95,35 +76,23 @@ public class DomElementProblemDescriptorImpl implements DomElementProblemDescrip
   }
 
   @Override
-  @NotNull
-  public DomElement getDomElement() {
+  public @NotNull DomElement getDomElement() {
     return myDomElement;
   }
 
   @Override
-  @NotNull
-  public HighlightSeverity getHighlightSeverity() {
+  public @NotNull HighlightSeverity getHighlightSeverity() {
     return mySeverity;
   }
 
   @Override
-  @NotNull
-  public String getDescriptionTemplate() {
+  public @NotNull String getDescriptionTemplate() {
     return myMessage == null ? "" : myMessage;
   }
 
   @Override
-  public LocalQuickFix @NotNull [] getFixes() {
+  public @NotNull LocalQuickFix @Nullable [] getFixes() {
     return myFixes;
-  }
-
-  @Override
-  @NotNull
-  public final List<Annotation> getAnnotations() {
-    if (myAnnotations == null) {
-      myAnnotations = ContainerUtil.createMaybeSingletonList(DomElementsHighlightingUtil.createAnnotation(this));
-    }
-    return myAnnotations;
   }
 
   @Override
@@ -141,7 +110,7 @@ public class DomElementProblemDescriptorImpl implements DomElementProblemDescrip
     }
   }
 
-  public Pair<TextRange,PsiElement> getProblemRange() {
+  Pair<TextRange,PsiElement> getProblemRange() {
     if (myPair == null) {
       myPair = computeProblemRange();
     }
@@ -152,8 +121,7 @@ public class DomElementProblemDescriptorImpl implements DomElementProblemDescrip
     return myPair;
   }
 
-  @NotNull
-  protected Pair<TextRange,PsiElement> computeProblemRange() {
+  protected @NotNull Pair<TextRange,PsiElement> computeProblemRange() {
     final PsiElement element = getPsiElement();
 
     if (element != null) {
@@ -179,39 +147,38 @@ public class DomElementProblemDescriptorImpl implements DomElementProblemDescrip
     return NO_PROBLEM;
   }
 
+  @Override
   public String toString() {
     return myDomElement + "; " + myMessage;
   }
 
+  @Override
   public boolean equals(final Object o) {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
 
     final DomElementProblemDescriptorImpl that = (DomElementProblemDescriptorImpl)o;
 
-    if (myDomElement != null ? !myDomElement.equals(that.myDomElement) : that.myDomElement != null) return false;
+    if (!Objects.equals(myDomElement, that.myDomElement)) return false;
     if (!myMessage.equals(that.myMessage)) return false;
-    if (!mySeverity.equals(that.mySeverity)) return false;
-
-    return true;
+    return mySeverity.equals(that.mySeverity);
   }
 
+  @Override
   public int hashCode() {
     int result;
-    result = (myDomElement != null ? myDomElement.hashCode() : 0);
+    result = myDomElement != null ? myDomElement.hashCode() : 0;
     result = 31 * result + mySeverity.hashCode();
     result = 31 * result + myMessage.hashCode();
     return result;
   }
 
-  @Nullable
-  private PsiElement getPsiElement() {
+  private @Nullable PsiElement getPsiElement() {
     if (myDomElement instanceof DomFileElement) {
-      return ((DomFileElement)myDomElement).getFile();
+      return ((DomFileElement<?>)myDomElement).getFile();
     }
 
-    if (myDomElement instanceof GenericAttributeValue) {
-      final GenericAttributeValue attributeValue = (GenericAttributeValue)myDomElement;
+    if (myDomElement instanceof GenericAttributeValue<?> attributeValue) {
       final XmlAttributeValue value = attributeValue.getXmlAttributeValue();
       return value != null && StringUtil.isNotEmpty(value.getText()) ? value : attributeValue.getXmlElement();
     }
@@ -226,8 +193,7 @@ public class DomElementProblemDescriptorImpl implements DomElementProblemDescrip
     return tag;
   }
 
-  @Nullable
-  private XmlTag getParentXmlTag() {
+  private @Nullable XmlTag getParentXmlTag() {
     DomElement parent = myDomElement.getParent();
     while (parent != null) {
       if (parent.getXmlTag() != null) return parent.getXmlTag();
@@ -237,8 +203,7 @@ public class DomElementProblemDescriptorImpl implements DomElementProblemDescrip
   }
 
   @Override
-  @Nullable
-  public ProblemHighlightType getHighlightType() {
+  public @Nullable ProblemHighlightType getHighlightType() {
     return myHighlightType;
   }
 }

@@ -1,0 +1,30 @@
+<idea-plugin>
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <plugin id="org.jetbrains.idea.reposearch"/>
+    <plugin id="org.intellij.groovy"/>
+    <plugin id="org.jetbrains.idea.maven"/>
+    <module name="intellij.gradle.java"/>
+    <module name="intellij.gradle.java.groovy"/>
+  </dependencies>
+  <!-- endregion -->
+
+  <extensions defaultExtensionNs="org.jetbrains.idea.maven">
+    <repositoryProvider implementation="org.jetbrains.plugins.gradle.integrations.maven.GradleMavenRepositoryProvider"/>
+  </extensions>
+
+  <actions>
+    <action id="Gradle.AddGradleDslDependencyAction" class="org.jetbrains.plugins.gradle.integrations.maven.codeInsight.actions.AddGradleDslDependencyAction">
+      <add-to-group group-id="Gradle.GenerateGroup" anchor="after" relative-to-action="AddGradleDslPluginAction"/>
+    </action>
+  </actions>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <postStartupActivity implementation="org.jetbrains.plugins.gradle.integrations.maven.GradleProjectStartupActivity"/>
+    <externalSystemTaskNotificationListener
+        implementation="org.jetbrains.plugins.gradle.integrations.maven.GradleMavenProjectImportNotificationListener"/>
+    <completion.contributor language="Groovy" order="first"
+                            implementationClass="org.jetbrains.plugins.gradle.integrations.maven.codeInsight.completion.MavenDependenciesGradleCompletionContributor"/>
+    <projectService serviceImplementation="org.jetbrains.plugins.gradle.integrations.maven.MavenRepositoriesHolder"/>
+  </extensions>
+</idea-plugin>

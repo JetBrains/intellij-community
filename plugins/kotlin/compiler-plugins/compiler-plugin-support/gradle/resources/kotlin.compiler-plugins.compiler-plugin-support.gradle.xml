@@ -1,0 +1,9 @@
+<idea-plugin package="org.jetbrains.kotlin.idea.gradleJava.compilerPlugin">
+  <dependencies>
+    <module name="intellij.kotlin.gradle.gradle"/>
+    <module name="intellij.kotlin.gradle.tooling"/>
+    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+    <module name="kotlin.gradle.gradle-java"/>
+    <!-- endregion -->
+  </dependencies>
+</idea-plugin>

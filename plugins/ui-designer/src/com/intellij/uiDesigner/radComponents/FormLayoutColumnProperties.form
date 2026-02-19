@@ -21,7 +21,7 @@
           <forms/>
         </constraints>
         <properties>
-          <text value="Row 0 Properties"/>
+          <text resource-bundle="messages/UIDesignerBundle" key="row.0.properties"/>
         </properties>
       </component>
       <grid id="b5262" binding="myAlignmentPanel" layout-manager="FormLayout">

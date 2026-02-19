@@ -1,28 +1,31 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion;
 
+import com.intellij.codeInsight.completion.group.CompletionGroup;
+import com.intellij.codeInsight.completion.group.GroupedCompletionContributor;
 import com.intellij.codeInsight.lookup.AutoCompletionPolicy;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.WeighingContext;
-import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.psi.Weigher;
 import com.intellij.util.Consumer;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
+
+import static com.intellij.codeInsight.completion.group.CompletionGroup.COMPLETION_GROUP_KEY;
 
 /**
  * For completion FAQ, see {@link CompletionContributor}.
- *
- * @author peter
  */
 public abstract class CompletionService {
   public static final Key<CompletionStatistician> STATISTICS_KEY = Key.create("completion");
@@ -32,65 +35,116 @@ public abstract class CompletionService {
   public static final Key<CompletionWeigher> RELEVANCE_KEY = Key.create("completion");
 
   public static CompletionService getCompletionService() {
-    return ServiceManager.getService(CompletionService.class);
+    return ApplicationManager.getApplication().getService(CompletionService.class);
   }
 
   /**
    * Set lookup advertisement text (at the bottom) at any time. Will do nothing if no completion process is in progress.
-   * @param text
    * @deprecated use {@link CompletionResultSet#addLookupAdvertisement(String)}
    */
-  @Deprecated
+  @ApiStatus.Internal
+  @Deprecated(forRemoval = true)
   public abstract void setAdvertisementText(@Nullable @NlsContexts.PopupAdvertisement String text);
 
   /**
-   * Run all contributors until any of them returns false or the list is exhausted. If from parameter is not null, contributors
+   * Run all contributors until any of them returns false or the list is exhausted. If {@code from} parameter is not null, contributors
    * will be run starting from the next one after that.
    */
-  public void getVariantsFromContributors(final CompletionParameters parameters,
-                                          @Nullable final CompletionContributor from,
-                                          final Consumer<? super CompletionResult> consumer) {
+  public void getVariantsFromContributors(@NotNull CompletionParameters parameters,
+                                          @Nullable CompletionContributor from,
+                                          @NotNull Consumer<? super CompletionResult> consumer) {
     getVariantsFromContributors(parameters, from, createMatcher(suggestPrefix(parameters), false), consumer);
   }
 
-  protected void getVariantsFromContributors(CompletionParameters parameters,
+  protected void getVariantsFromContributors(@NotNull CompletionParameters parameters,
                                              @Nullable CompletionContributor from,
-                                             PrefixMatcher matcher, Consumer<? super CompletionResult> consumer) {
-    getVariantsFromContributors(parameters, from, matcher, consumer, null);
-  }
+                                             @NotNull PrefixMatcher matcher,
+                                             @NotNull Consumer<? super CompletionResult> consumer) {
+    List<CompletionContributor> contributors = CompletionContributor.forParameters(parameters);
+    boolean groupEnabledInApp = GroupedCompletionContributor.isGroupEnabledInApp();
 
-  protected void getVariantsFromContributors(CompletionParameters parameters,
-                                             @Nullable CompletionContributor from,
-                                             PrefixMatcher matcher, Consumer<? super CompletionResult> consumer,
-                                             CompletionSorter customSorter) {
-    final List<CompletionContributor> contributors = CompletionContributor.forParameters(parameters);
-
-    for (int i = contributors.indexOf(from) + 1; i < contributors.size(); i++) {
+    int startingIndex = from != null ? contributors.indexOf(from) + 1 : 0;
+    for (int i = startingIndex; i < contributors.size(); i++) {
       ProgressManager.checkCanceled();
       CompletionContributor contributor = contributors.get(i);
-
-      CompletionResultSet result = createResultSet(parameters, consumer, contributor, matcher);
-      if (customSorter != null) {
-        result = result.withRelevanceSorter(customSorter);
+      if (groupEnabledInApp &&
+          contributor instanceof GroupedCompletionContributor groupedCompletionContributor &&
+          groupedCompletionContributor.groupIsEnabled(parameters)) {
+        continue;
       }
-      contributor.fillCompletionVariants(parameters, result);
+      CompletionResultSet result = createResultSet(parameters, consumer, contributor, matcher);
+      try {
+        getVariantsFromContributor(parameters, contributor, result);
+      }
+      catch (IndexNotReadyException ignore) {
+      }
       if (result.isStopped()) {
         return;
       }
     }
   }
 
-  protected abstract CompletionResultSet createResultSet(CompletionParameters parameters, Consumer<? super CompletionResult> consumer,
-                                                         @NotNull CompletionContributor contributor, PrefixMatcher matcher);
 
-  protected abstract String suggestPrefix(CompletionParameters parameters);
+  /**
+   * Invokes completion contributors that belong to a specific group, collects their completion variants,
+   * and passes the results to a specified consumer. Only contributors with their group enabled are processed.
+   *
+   * @param parameters Specifies the current completion parameters, containing context information
+   *                   about the target element and environment where completion is requested.
+   * @param matcher    A prefix matcher that filters suggestions based on the provided input prefix.
+   * @param consumer   A consumer to handle the completion results produced by active contributors in the group.
+   */
+  @ApiStatus.Experimental
+  protected void getVariantsFromGroupContributors(@NotNull CompletionParameters parameters,
+                                                  @NotNull PrefixMatcher matcher,
+                                                  @NotNull Consumer<? super CompletionResult> consumer) {
+    if (!GroupedCompletionContributor.isGroupEnabledInApp()) {
+      return;
+    }
+    final List<CompletionContributor> contributors = CompletionContributor.forParameters(parameters);
+    for (int i = 0; i < contributors.size(); i++) {
+      CompletionContributor contributor = contributors.get(i);
+      if (!(contributor instanceof GroupedCompletionContributor groupedCompletionContributor &&
+            groupedCompletionContributor.groupIsEnabled(parameters))) {
+        continue;
+      }
+      CompletionGroup completionGroup = new CompletionGroup(i, groupedCompletionContributor.getGroupDisplayName());
+      CompletionResultSet result = createResultSet(parameters,
+                                                   r -> {
+                                                     r.getLookupElement().putUserData(COMPLETION_GROUP_KEY, completionGroup);
+                                                     consumer.consume(r);
+                                                   }, contributor,
+                                                   matcher);
+      try {
+        getVariantsFromContributor(parameters, contributor, result);
+      }
+      catch (IndexNotReadyException ignore) {
+      }
+      if (result.isStopped()) {
+        return;
+      }
+    }
+  }
 
-  @NotNull
-  protected abstract PrefixMatcher createMatcher(String prefix, boolean typoTolerant);
+  @ApiStatus.Internal
+  public void getVariantsFromContributor(@NotNull CompletionParameters params,
+                                         @NotNull CompletionContributor contributor,
+                                         @NotNull CompletionResultSet result) {
+    contributor.fillCompletionVariants(params, result);
+  }
+
+  @ApiStatus.Internal
+  public abstract @NotNull CompletionResultSet createResultSet(@NotNull CompletionParameters parameters,
+                                                               @NotNull Consumer<? super CompletionResult> consumer,
+                                                               @NotNull CompletionContributor contributor,
+                                                               @NotNull PrefixMatcher matcher);
+
+  protected abstract @NotNull String suggestPrefix(@NotNull CompletionParameters parameters);
+
+  protected abstract @NotNull PrefixMatcher createMatcher(String prefix, boolean typoTolerant);
 
 
-  @Nullable
-  public abstract CompletionProcess getCurrentCompletion();
+  public abstract @Nullable CompletionProcess getCurrentCompletion();
 
   /**
    * The main method that is invoked to collect all the completion variants
@@ -98,23 +152,22 @@ public abstract class CompletionService {
    * @param consumer The consumer of the completion variants. Pass an instance of {@link BatchConsumer} if you need to receive information
    *                 about item batches generated by each completion contributor.
    */
-  public void performCompletion(CompletionParameters parameters, Consumer<? super CompletionResult> consumer) {
-    final Set<LookupElement> lookupSet = ContainerUtil.newConcurrentSet();
-
+  public void performCompletion(@NotNull CompletionParameters parameters, @NotNull Consumer<? super CompletionResult> consumer) {
+    Set<LookupElement> lookupSet = ConcurrentHashMap.newKeySet();
     AtomicBoolean typoTolerant = new AtomicBoolean();
 
-    BatchConsumer<CompletionResult> batchConsumer = new BatchConsumer<CompletionResult>() {
+    BatchConsumer<CompletionResult> batchConsumer = new BatchConsumer<>() {
       @Override
       public void startBatch() {
-        if (consumer instanceof BatchConsumer) {
-          ((BatchConsumer)consumer).startBatch();
+        if (consumer instanceof BatchConsumer<?> c) {
+          c.startBatch();
         }
       }
 
       @Override
       public void endBatch() {
-        if (consumer instanceof BatchConsumer) {
-          ((BatchConsumer)consumer).endBatch();
+        if (consumer instanceof BatchConsumer<?> c) {
+          c.endBatch();
         }
       }
 
@@ -130,23 +183,29 @@ public abstract class CompletionService {
     };
     String prefix = suggestPrefix(parameters);
     getVariantsFromContributors(parameters, null, createMatcher(prefix, false), batchConsumer);
+    getVariantsFromGroupContributors(parameters, createMatcher(prefix, false), batchConsumer);
     if (lookupSet.isEmpty() && prefix.length() > 2) {
       typoTolerant.set(true);
       getVariantsFromContributors(parameters, null, createMatcher(prefix, true), batchConsumer);
+      getVariantsFromGroupContributors(parameters, createMatcher(prefix, true), batchConsumer);
     }
   }
 
-  public abstract CompletionSorter defaultSorter(CompletionParameters parameters, PrefixMatcher matcher);
+  public abstract @NotNull CompletionSorter defaultSorter(@NotNull BaseCompletionParameters parameters, @NotNull PrefixMatcher matcher);
+  
+  public @NotNull CompletionSorter defaultSorter(@NotNull CompletionParameters parameters, @NotNull PrefixMatcher matcher) {
+    return defaultSorter((BaseCompletionParameters) parameters, matcher);
+  }
 
-  public abstract CompletionSorter emptySorter();
+  public abstract @NotNull CompletionSorter emptySorter();
 
   @ApiStatus.Internal
-  public static boolean isStartMatch(LookupElement element, WeighingContext context) {
+  public static boolean isStartMatch(@NotNull LookupElement element, @NotNull WeighingContext context) {
     return getItemMatcher(element, context).isStartMatch(element);
   }
 
   @ApiStatus.Internal
-  public static PrefixMatcher getItemMatcher(LookupElement element, WeighingContext context) {
+  public static PrefixMatcher getItemMatcher(@NotNull LookupElement element, @NotNull WeighingContext context) {
     PrefixMatcher itemMatcher = context.itemMatcher(element);
     String pattern = context.itemPattern(element);
     if (!pattern.equals(itemMatcher.getPrefix())) {

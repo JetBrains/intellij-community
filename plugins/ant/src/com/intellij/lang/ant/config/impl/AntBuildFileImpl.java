@@ -1,16 +1,21 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.ant.config.impl;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.ide.macro.Macro;
 import com.intellij.ide.macro.MacroManager;
-import com.intellij.lang.ant.config.*;
+import com.intellij.lang.ant.config.AntBuildFileBase;
+import com.intellij.lang.ant.config.AntBuildModel;
+import com.intellij.lang.ant.config.AntBuildModelBase;
+import com.intellij.lang.ant.config.AntBuildTarget;
+import com.intellij.lang.ant.config.AntConfigurationBase;
 import com.intellij.lang.ant.dom.AntDomFileDescription;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.InvalidDataException;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -19,22 +24,36 @@ import com.intellij.psi.PsiManager;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.util.NewInstanceFactory;
 import com.intellij.util.SystemProperties;
-import com.intellij.util.config.*;
+import com.intellij.util.config.AbstractProperty;
+import com.intellij.util.config.BooleanProperty;
+import com.intellij.util.config.ExternalizablePropertyContainer;
+import com.intellij.util.config.Externalizer;
+import com.intellij.util.config.IntProperty;
+import com.intellij.util.config.ListProperty;
+import com.intellij.util.config.StringProperty;
+import com.intellij.util.config.ValueProperty;
 import org.jdom.Element;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 
 public final class AntBuildFileImpl implements AntBuildFileBase {
   private static final Logger LOG = Logger.getInstance(AntBuildFileImpl.class);
-  @NonNls private static final String ANT_LIB = "/.ant/lib";
+  private static final @NonNls String ANT_LIB = "/.ant/lib";
   private volatile Map<String, String> myCachedExternalProperties;
   private final Object myOptionsLock = new Object();
 
-  public static final AbstractProperty<AntInstallation> ANT_INSTALLATION = new AbstractProperty<AntInstallation>() {
+  public static final AbstractProperty<AntInstallation> ANT_INSTALLATION = new AbstractProperty<>() {
     @Override
     public String getName() {
       return "$antInstallation";
@@ -59,7 +78,7 @@ public final class AntBuildFileImpl implements AntBuildFileBase {
     }
   };
 
-  public static final AbstractProperty<List<File>> ALL_CLASS_PATH = new AbstractProperty<List<File>>() {
+  public static final AbstractProperty<List<File>> ALL_CLASS_PATH = new AbstractProperty<>() {
     @Override
     public String getName() {
       return "$allClasspath";
@@ -82,9 +101,9 @@ public final class AntBuildFileImpl implements AntBuildFileBase {
       return classpath;
     }
 
-    private void collectClasspath(List<File> files,
-                                  ListProperty<AntClasspathEntry> property,
-                                  AbstractProperty.AbstractPropertyContainer container) {
+    private static void collectClasspath(List<File> files,
+                                         ListProperty<AntClasspathEntry> property,
+                                         AbstractProperty.AbstractPropertyContainer container) {
       if (!container.hasProperty(property)) return;
       Iterator<AntClasspathEntry> entries = property.getIterator(container);
       while (entries.hasNext()) {
@@ -92,7 +111,7 @@ public final class AntBuildFileImpl implements AntBuildFileBase {
         entry.addFilesTo(files);
       }
     }
-
+                                                                       
     @Override
     public void set(AbstractProperty.AbstractPropertyContainer container, List<File> files) {
       throw new UnsupportedOperationException(getName());
@@ -105,7 +124,7 @@ public final class AntBuildFileImpl implements AntBuildFileBase {
   };
 
   public static final BooleanProperty RUN_IN_BACKGROUND = new BooleanProperty("runInBackground", true);
-  public static final IntProperty MAX_HEAP_SIZE = new IntProperty("maximumHeapSize", 128);
+  public static final IntProperty MAX_HEAP_SIZE = new IntProperty("maximumHeapSize", 512);
   public static final IntProperty MAX_STACK_SIZE = new IntProperty("maximumStackSize", 2);
   public static final BooleanProperty VERBOSE = new BooleanProperty("verbose", true);
   public static final BooleanProperty TREE_VIEW = new BooleanProperty("treeView", true);
@@ -119,21 +138,19 @@ public final class AntBuildFileImpl implements AntBuildFileBase {
   public static final AbstractProperty<AntReference> ANT_REFERENCE =
     new ValueProperty<>("antReference", AntReference.PROJECT_DEFAULT);
   public static final ListProperty<AntClasspathEntry> ADDITIONAL_CLASSPATH = ListProperty.create("additionalClassPath");
-  public static final AbstractProperty<AntInstallation> RUN_WITH_ANT = new AbstractProperty<AntInstallation>() {
+  public static final AbstractProperty<AntInstallation> RUN_WITH_ANT = new AbstractProperty<>() {
     @Override
     public String getName() {
       return "$runWithAnt";
     }
 
     @Override
-    @Nullable
-    public AntInstallation getDefault(AbstractProperty.AbstractPropertyContainer container) {
+    public @Nullable AntInstallation getDefault(AbstractProperty.AbstractPropertyContainer container) {
       return get(container);
     }
 
     @Override
-    @Nullable
-    public AntInstallation get(AbstractProperty.AbstractPropertyContainer container) {
+    public @Nullable AntInstallation get(AbstractProperty.AbstractPropertyContainer container) {
       return AntReference.findAnt(ANT_REFERENCE, container);
     }
 
@@ -144,7 +161,7 @@ public final class AntBuildFileImpl implements AntBuildFileBase {
   };
 
   private final VirtualFile myVFile;
-  private final Project myProject;
+  private final @NotNull Project myProject;
   private final AntConfigurationBase myAntConfiguration;
   private final ExternalizablePropertyContainer myWorkspaceOptions;
   private final ExternalizablePropertyContainer myProjectOptions;
@@ -152,7 +169,7 @@ public final class AntBuildFileImpl implements AntBuildFileBase {
   private final ClassLoaderHolder myClassloaderHolder;
   private boolean myShouldExpand = true;
 
-  public AntBuildFileImpl(PsiFile antFile, final AntConfigurationBase configuration) {
+  public AntBuildFileImpl(@NotNull PsiFile antFile, final AntConfigurationBase configuration) {
     myVFile = antFile.getOriginalFile().getVirtualFile();
     myProject = antFile.getProject();
     myAntConfiguration = configuration;
@@ -193,7 +210,7 @@ public final class AntBuildFileImpl implements AntBuildFileBase {
   }
 
   @Override
-  public @NotNull String getPresentableName() {
+  public @NotNull @Nls String getPresentableName() {
     AntBuildModel model = myAntConfiguration.getModelIfRegistered(this);
     String name = model != null ? model.getName() : null;
     if (StringUtil.isEmptyOrSpaces(name)) {
@@ -203,8 +220,7 @@ public final class AntBuildFileImpl implements AntBuildFileBase {
   }
 
   @Override
-  @Nullable
-  public String getName() {
+  public @Nullable @NlsSafe String getName() {
     final VirtualFile vFile = getVirtualFile();
     return vFile != null ? vFile.getName() : null;
   }
@@ -216,8 +232,7 @@ public final class AntBuildFileImpl implements AntBuildFileBase {
   }
 
   @Override
-  @Nullable
-  public AntBuildModelBase getModelIfRegistered() {
+  public @Nullable AntBuildModelBase getModelIfRegistered() {
     return myAntConfiguration.getModelIfRegistered(this);
   }
 
@@ -237,14 +252,9 @@ public final class AntBuildFileImpl implements AntBuildFileBase {
   }
 
   @Override
-  @Nullable
-  public XmlFile getAntFile() {
-    final PsiFile psiFile = myVFile.isValid() ? PsiManager.getInstance(getProject()).findFile(myVFile) : null;
-    if (!(psiFile instanceof XmlFile)) {
-      return null;
-    }
-    final XmlFile xmlFile = (XmlFile)psiFile;
-    return AntDomFileDescription.isAntFile(xmlFile) ? xmlFile : null;
+  public @Nullable XmlFile getAntFile() {
+    final PsiFile psiFile = myVFile.isValid()? PsiManager.getInstance(getProject()).findFile(myVFile) : null;
+    return (psiFile instanceof XmlFile xmlFile) && AntDomFileDescription.isAntFile(xmlFile)? xmlFile : null;
   }
 
   @Override
@@ -253,8 +263,7 @@ public final class AntBuildFileImpl implements AntBuildFileBase {
   }
 
   @Override
-  @Nullable
-  public VirtualFile getVirtualFile() {
+  public @Nullable VirtualFile getVirtualFile() {
     return myVFile;
   }
 
@@ -264,8 +273,7 @@ public final class AntBuildFileImpl implements AntBuildFileBase {
   }
 
   @Override
-  @Nullable
-  public String getPresentableUrl() {
+  public @Nullable @NlsSafe String getPresentableUrl() {
     final VirtualFile file = getVirtualFile();
     return (file == null) ? null : file.getPresentableUrl();
   }
@@ -340,7 +348,7 @@ public final class AntBuildFileImpl implements AntBuildFileBase {
   @Override
   public void updateConfig() {
     basicUpdateConfig();
-    DaemonCodeAnalyzer.getInstance(getProject()).restart();
+    DaemonCodeAnalyzer.getInstance(getProject()).restart(this);
   }
 
   public void setTreeViewAnsiColor(final boolean value) {
@@ -368,7 +376,7 @@ public final class AntBuildFileImpl implements AntBuildFileBase {
       myWorkspaceOptions.readExternal(parentNode);
       final Element expanded = parentNode.getChild("expanded");
       if (expanded != null) {
-        myShouldExpand = Boolean.valueOf(expanded.getAttributeValue("value"));
+        myShouldExpand = Boolean.parseBoolean(expanded.getAttributeValue("value"));
       }
 
       // don't lose old command line parameters
@@ -414,8 +422,7 @@ public final class AntBuildFileImpl implements AntBuildFileBase {
   }
 
   @Override
-  @NotNull
-  public Map<String, String> getExternalProperties() {
+  public @NotNull Map<String, String> getExternalProperties() {
     Map<String, String> result = myCachedExternalProperties;
     if (result == null) {
       synchronized (myOptionsLock) {
@@ -449,8 +456,7 @@ public final class AntBuildFileImpl implements AntBuildFileBase {
     ANT_REFERENCE.set(getAllOptions(), ANT_REFERENCE.get(getAllOptions()).bind(GlobalAntConfiguration.getInstance()));
   }
 
-  @Nullable
-  private TargetFilter findFilter(final String targetName) {
+  private @Nullable TargetFilter findFilter(final String targetName) {
     final List<TargetFilter> filters;
     synchronized (myOptionsLock) {
       filters = TARGET_FILTERS.get(myAllOptions);
@@ -463,8 +469,7 @@ public final class AntBuildFileImpl implements AntBuildFileBase {
     return null;
   }
 
-  @NotNull
-  public ClassLoader getClassLoader() {
+  public @NotNull ClassLoader getClassLoader() {
     return myClassloaderHolder.getClassloader();
   }
 }

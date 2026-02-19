@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<module type="JAVA_MODULE" version="4">
+  <component name="NewModuleRootManager" LANGUAGE_LEVEL="JDK_1_8" inherit-compiler-output="true">
+    <exclude-output />
+    <content url="file://$MODULE_DIR$">
+      <sourceFolder url="file://$MODULE_DIR$/resources" type="java-resource" />
+    </content>
+    <orderEntry type="inheritedJdk" />
+    <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="module-library" exported="">
+      <library name="xstream" type="repository">
+        <properties maven-id="com.thoughtworks.xstream:xstream:1.4.21">
+          <verification>
+            <artifact url="file://$MAVEN_REPOSITORY$/com/thoughtworks/xstream/xstream/1.4.21/xstream-1.4.21.jar">
+              <sha256sum>f56586f3de59ae2a49430acbc9f27942b8c5cebec9245c869fae7136733333ec</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/io/github/x-stream/mxparser/1.2.2/mxparser-1.2.2.jar">
+              <sha256sum>aeeee23a3303d811bca8790ea7f25b534314861c03cff36dafdcc2180969eb97</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/xmlpull/xmlpull/1.1.3.1/xmlpull-1.1.3.1.jar">
+              <sha256sum>34e08ee62116071cbb69c0ed70d15a7a5b208d62798c59f2120bb8929324cb63</sha256sum>
+            </artifact>
+          </verification>
+          <exclude>
+            <dependency maven-id="xml-apis:xml-apis" />
+            <dependency maven-id="xerces:xercesImpl" />
+          </exclude>
+        </properties>
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/com/thoughtworks/xstream/xstream/1.4.21/xstream-1.4.21.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/github/x-stream/mxparser/1.2.2/mxparser-1.2.2.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/xmlpull/xmlpull/1.1.3.1/xmlpull-1.1.3.1.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES>
+          <root url="jar://$MAVEN_REPOSITORY$/com/thoughtworks/xstream/xstream/1.4.21/xstream-1.4.21-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/github/x-stream/mxparser/1.2.2/mxparser-1.2.2-sources.jar!/" />
+        </SOURCES>
+      </library>
+    </orderEntry>
+    <orderEntry type="module" module-name="intellij.libraries.jettison" scope="RUNTIME" />
+  </component>
+</module>

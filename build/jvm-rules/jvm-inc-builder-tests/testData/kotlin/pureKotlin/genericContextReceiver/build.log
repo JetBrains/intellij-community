@@ -1,0 +1,10 @@
+================ Step #1 =================
+Cleaning output files:
+  META-INF/kotlin_pureKotlin_genericContextReceiver-a.kotlin_module
+  test/BarKt.class
+End of files
+Compiling files:
+  kotlin/pureKotlin/genericContextReceiver/a/bar.kt
+End of files
+------------------------------------------
+Exit code: OK

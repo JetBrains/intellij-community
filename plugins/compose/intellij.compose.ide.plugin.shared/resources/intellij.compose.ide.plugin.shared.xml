@@ -1,0 +1,31 @@
+<idea-plugin>
+  <extensions defaultExtensionNs="com.intellij">
+    <additionalTextAttributes scheme="Default" file="colorSchemes/IntelliJComposeColorSchemeDefault.xml"/>
+    <additionalTextAttributes scheme="Darcula" file="colorSchemes/IntelliJComposeColorSchemeDarcula.xml"/>
+
+    <lang.inspectionSuppressor language="kotlin"
+                               implementationClass="com.intellij.compose.ide.plugin.shared.ComposableNamingInspectionSuppressor"/>
+
+    <overrideImplementsAnnotationsFilter id="ComposeOverrideImplementsAnnotationsFilter"
+                                         implementation="com.intellij.compose.ide.plugin.shared.ComposeOverrideImplementsAnnotationsFilter" />
+
+    <!--suppress PluginXmlCapitalization -->
+    <localInspection implementationClass="com.intellij.compose.ide.plugin.shared.inspections.MultiplatformPreviewAnnotationInFunctionWithParametersInspection"
+                     language="kotlin"
+                     enabledByDefault="true"
+                     bundle="messages.ComposeIdeBundle"
+                     groupKey="compose.preview.inspection.group.name"
+                     key="compose.preview.inspection.no.parameters.name"
+                     level="ERROR"/>
+
+    <!--suppress PluginXmlCapitalization -->
+    <localInspection implementationClass="com.intellij.compose.ide.plugin.shared.inspections.MultiplatformPreviewMultipleParameterProvidersInspection"
+                     language="kotlin"
+                     enabledByDefault="true"
+                     bundle="messages.ComposeIdeBundle"
+                     groupKey="compose.preview.inspection.group.name"
+                     key="compose.preview.inspection.no.multiple.preview.provider.name"
+                     level="ERROR"/>
+
+  </extensions>
+</idea-plugin>

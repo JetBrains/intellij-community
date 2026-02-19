@@ -1,9 +1,25 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.refactoring.extractMethod;
 
 import com.intellij.codeInsight.PsiEquivalenceUtil;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.JavaRecursiveElementVisitor;
+import com.intellij.psi.JavaRecursiveElementWalkingVisitor;
+import com.intellij.psi.PsiArrayAccessExpression;
+import com.intellij.psi.PsiConditionalExpression;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiExpressionStatement;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiIfStatement;
+import com.intellij.psi.PsiMethodCallExpression;
+import com.intellij.psi.PsiReference;
+import com.intellij.psi.PsiReferenceExpression;
+import com.intellij.psi.PsiSwitchStatement;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypes;
+import com.intellij.psi.PsiVariable;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.SuggestedNameInfo;
 import com.intellij.psi.codeStyle.VariableKind;
@@ -19,9 +35,18 @@ import com.intellij.util.text.UniqueNameGenerator;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
 
-class ParametersFolder {
+public class ParametersFolder {
   private final Map<PsiVariable, PsiExpression> myExpressions = new HashMap<>();
   private final Map<PsiVariable, String> myArgs = new HashMap<>();
   private final Map<PsiVariable, List<PsiExpression>> myMentionedInExpressions = new HashMap<>();
@@ -37,7 +62,7 @@ class ParametersFolder {
 
   boolean isParameterSafeToDelete(@NotNull VariableData data, @NotNull LocalSearchScope scope) {
     Next:
-    for (PsiReference reference : ReferencesSearch.search(data.variable, scope)) {
+    for (PsiReference reference : ReferencesSearch.search(data.variable, scope).asIterable()) {
       PsiElement expression = reference.getElement();
       while (expression != null) {
         for (PsiExpression psiExpression : myExpressions.values()) {
@@ -71,7 +96,7 @@ class ParametersFolder {
       if (psiExpression == null) continue;
 
       final Set<PsiExpression> eqExpressions = new HashSet<>();
-      for (PsiReference reference : ReferencesSearch.search(data.variable, scope)) {
+      for (PsiReference reference : ReferencesSearch.search(data.variable, scope).asIterable()) {
         final PsiExpression expression = findEquivalent(psiExpression, reference.getElement());
         if (expression != null && expression.isValid()) {
           eqExpressions.add(expression);
@@ -109,8 +134,7 @@ class ParametersFolder {
 
     int currentRank = 0;
     PsiExpression mostRanked = null;
-    for (int i = mentionedInExpressions.size() - 1; i >= 0; i--) {
-      PsiExpression expression = mentionedInExpressions.get(i);
+    for (PsiExpression expression : mentionedInExpressions.reversed()) {
       final int r = findUsedVariables(data, inputVariables, expression).size();
       if (currentRank < r || expression instanceof PsiArrayAccessExpression && myFoldingSelectedByDefault && currentRank == r) {
         currentRank = r;
@@ -150,13 +174,12 @@ class ParametersFolder {
     }
   }
 
-  @NotNull
-  private static Set<PsiVariable> findUsedVariables(@NotNull VariableData data, @NotNull List<? extends PsiVariable> inputVariables,
-                                                    @NotNull PsiExpression expression) {
+  private static @NotNull Set<PsiVariable> findUsedVariables(@NotNull VariableData data, @NotNull List<? extends PsiVariable> inputVariables,
+                                                             @NotNull PsiExpression expression) {
     final Set<PsiVariable> found = new HashSet<>();
     expression.accept(new JavaRecursiveElementVisitor() {
       @Override
-      public void visitReferenceExpression(PsiReferenceExpression referenceExpression) {
+      public void visitReferenceExpression(@NotNull PsiReferenceExpression referenceExpression) {
         super.visitReferenceExpression(referenceExpression);
         PsiElement resolved = referenceExpression.resolve();
         if (resolved instanceof PsiVariable && inputVariables.contains(resolved)) {
@@ -172,15 +195,17 @@ class ParametersFolder {
     return !myExpressions.isEmpty();
   }
 
-  @Nullable
-  private List<PsiExpression> getMentionedExpressions(@NotNull PsiVariable var, @NotNull LocalSearchScope scope, @NotNull List<? extends PsiVariable> inputVariables) {
+  private @Nullable List<PsiExpression> getMentionedExpressions(@NotNull PsiVariable var, @NotNull LocalSearchScope scope, @NotNull List<? extends PsiVariable> inputVariables) {
     if (myMentionedInExpressions.containsKey(var)) return myMentionedInExpressions.get(var);
     final PsiElement[] scopeElements = scope.getScope();
 
     List<PsiExpression> expressions = null;
     Boolean arrayAccess = null;
-    for (PsiReference reference : ReferencesSearch.search(var, scope)) {
-      PsiElement expression = reference.getElement();
+    List<PsiElement> refExpressions = ReferencesSearch.search(var, scope).findAll().stream()
+      .map(ref -> ref.getElement())
+      .sorted(Comparator.comparingInt(element -> element.getTextRange().getStartOffset()))
+      .toList();
+    for (PsiElement expression : refExpressions) {
       if (expressions == null) {
         expressions = new ArrayList<>();
         while (expression instanceof PsiExpression) {
@@ -198,7 +223,7 @@ class ParametersFolder {
             break;
           }
           final PsiType expressionType = ((PsiExpression)expression).getType();
-          if (expressionType == null || PsiType.VOID.equals(expressionType)) {
+          if (expressionType == null || PsiTypes.voidType().equals(expressionType)) {
             break;
           }
           if (isTooLongExpressionChain(expression)) {
@@ -232,7 +257,7 @@ class ParametersFolder {
     return expressions;
   }
 
-  private static boolean isSafeToFoldArrayAccess(@NotNull LocalSearchScope scope,
+  public static boolean isSafeToFoldArrayAccess(@NotNull LocalSearchScope scope,
                                                  PsiElement expression) {
     while (true) {
       final PsiElement parent = expression.getParent();
@@ -260,7 +285,7 @@ class ParametersFolder {
       }
 
       @Override
-      public void visitExpression(PsiExpression expression) {
+      public void visitExpression(@NotNull PsiExpression expression) {
         if (PsiUtil.isAccessedForWriting(expression)) {
           exprWithWriteAccessInside[0] = expression;
         }
@@ -315,10 +340,9 @@ class ParametersFolder {
     final boolean[] localVarsUsed = {false};
     expression.accept(new JavaRecursiveElementWalkingVisitor(){
       @Override
-      public void visitReferenceExpression(PsiReferenceExpression expression) {
+      public void visitReferenceExpression(@NotNull PsiReferenceExpression expression) {
         final PsiElement resolved = expression.resolve();
-        if (resolved instanceof PsiVariable) {
-          final PsiVariable variable = (PsiVariable)resolved;
+        if (resolved instanceof PsiVariable variable) {
           if (!(variable instanceof PsiField) && !inputVariables.contains(variable)) {
             localVarsUsed[0] = true;
             return;
@@ -351,8 +375,7 @@ class ParametersFolder {
     return false;
   }
 
-  @Nullable
-  private static PsiExpression findEquivalent(PsiExpression expr, @NotNull PsiElement element) {
+  private static @Nullable PsiExpression findEquivalent(PsiExpression expr, @NotNull PsiElement element) {
     PsiElement expression = element;
     while (expression != null) {
       if (PsiEquivalenceUtil.areElementsEquivalent(expression, expr)) {

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.service;
 
 import com.intellij.openapi.externalSystem.model.settings.ExternalSystemExecutionSettings;
@@ -6,7 +6,9 @@ import com.intellij.openapi.externalSystem.service.project.ExternalSystemProject
 import com.intellij.openapi.externalSystem.task.ExternalSystemTaskManager;
 import com.intellij.openapi.externalSystem.util.ExternalSystemConstants;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.util.ReflectionUtil;
 import com.intellij.util.concurrency.AppExecutorUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.OutputStream;
@@ -14,7 +16,6 @@ import java.io.PrintStream;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.lang.reflect.Proxy;
 import java.nio.charset.StandardCharsets;
 import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
@@ -24,8 +25,9 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
+@ApiStatus.Internal
 public final class RemoteExternalSystemFacadeImpl<S extends ExternalSystemExecutionSettings> extends AbstractExternalSystemFacadeImpl<S> {
-  private static final long DEFAULT_REMOTE_PROCESS_TTL_IN_MS = TimeUnit.MILLISECONDS.convert(3, TimeUnit.MINUTES);
+  private static final long DEFAULT_REMOTE_PROCESS_TTL_IN_MS = TimeUnit.MINUTES.toMillis(3);
 
   private final AtomicInteger myCallsInProgressNumber = new AtomicInteger();
   private Future<?> myShutdownFuture = CompletableFuture.completedFuture(null);
@@ -78,7 +80,7 @@ public final class RemoteExternalSystemFacadeImpl<S extends ExternalSystemExecut
 
   @SuppressWarnings({"unchecked", "UseOfSystemOutOrSystemErr"})
   @Override
-  protected <I extends RemoteExternalSystemService<S>, C extends I> I createService(@NotNull Class<I> interfaceClass, @NotNull final C impl)
+  protected <I extends RemoteExternalSystemService<S>, C extends I> I createService(@NotNull Class<I> interfaceClass, final @NotNull C impl)
     throws RemoteException
   {
     if (!myStdOutputConfigured) {
@@ -87,7 +89,7 @@ public final class RemoteExternalSystemFacadeImpl<S extends ExternalSystemExecut
       System.setErr(new LineAwarePrintStream(System.err));
     }
 
-    I proxy = (I)Proxy.newProxyInstance(getClass().getClassLoader(), new Class<?>[]{interfaceClass}, new InvocationHandler() {
+    I proxy = ReflectionUtil.proxy(getClass().getClassLoader(), interfaceClass, new InvocationHandler() {
       @Override
       public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
         myCallsInProgressNumber.incrementAndGet();
@@ -133,10 +135,10 @@ public final class RemoteExternalSystemFacadeImpl<S extends ExternalSystemExecut
   }
 
   private static final class LineAwarePrintStream extends PrintStream {
-    private LineAwarePrintStream(@NotNull final PrintStream delegate) {
+    private LineAwarePrintStream(final @NotNull PrintStream delegate) {
       super(new OutputStream() {
 
-        @NotNull private final StringBuilder myBuffer = new StringBuilder();
+        private final @NotNull StringBuilder myBuffer = new StringBuilder();
 
         @Override
         public void write(int b) {

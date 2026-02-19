@@ -1,12 +1,19 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.components;
 
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.ColorUtil;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JScrollBar;
+import javax.swing.JScrollPane;
+import java.awt.Color;
+import java.awt.Component;
+import java.awt.GradientPaint;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.Insets;
+import java.awt.Rectangle;
 
 public class GradientViewport extends JBViewport {
   private final Insets myInsets;
@@ -22,8 +29,7 @@ public class GradientViewport extends JBViewport {
     return null;
   }
 
-  @Nullable
-  protected Color getViewColor() {
+  protected @Nullable Color getViewColor() {
     Component view = getView();
     return view == null ? null : view.getBackground();
   }
@@ -46,7 +52,7 @@ public class GradientViewport extends JBViewport {
           g.fillRect(header.getX(), header.getY(), header.getWidth(), header.getHeight());
         }
       }
-      if (g instanceof Graphics2D && background != null && !Registry.is("ui.no.bangs.and.whistles")) {
+      if (g instanceof Graphics2D && background != null && !Registry.is("ui.simplified")) {
         paintGradient((Graphics2D)g, background, 0, header == null ? 0 : header.getHeight());
       }
       if (header != null) {
@@ -91,8 +97,7 @@ public class GradientViewport extends JBViewport {
         y3 -= myInsets.bottom;
       }
       Component parent = myAlways ? null : getParent();
-      if (parent instanceof JScrollPane) {
-        JScrollPane pane = (JScrollPane)parent;
+      if (parent instanceof JScrollPane pane) {
         JScrollBar vBar = pane.getVerticalScrollBar();
         if (vBar != null && vBar.isVisible()) {
           if (vBar.getX() < getX()) {

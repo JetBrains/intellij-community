@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.remote.impl;
 
 import com.intellij.openapi.externalSystem.model.DataNode;
@@ -9,17 +9,22 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * Encapsulates logic of checking if particular collection of gradle libraries contains libraries with the same names and
  * tries to diversify them in the case of the positive answer.
  * <p/>
  * Thread-safe.
- *
- * @author Denis Zhdanov
  */
-public class GradleLibraryNamesMixer {
+public final class GradleLibraryNamesMixer {
 
   /**
    * Holds mappings like {@code ('file name'; boolean)} where {@code 'file name'} defines 'too common' file/dir
@@ -186,7 +191,7 @@ public class GradleLibraryNamesMixer {
   /**
    * Wraps target library and hold auxiliary information required for the processing.
    */
-  private static class Wrapped {
+  private static final class Wrapped {
     /** Holds list of files that may be used for name generation. */
     public final Set<File> files = new HashSet<>();
     /** File that was used for the current name generation. */

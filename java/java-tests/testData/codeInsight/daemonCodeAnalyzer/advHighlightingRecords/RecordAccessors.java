@@ -15,10 +15,18 @@ record RecNonPublic(int x, int y, int z) {
   private int <error descr="Record component accessor must be 'public'">z</error>() {return z;}
 }
 record RecThrows(int x) {
-  public int x() <error descr="Record component accessor cannot declare thrown exceptions">throws Exception</error> {return x;}
+  public int x() <error descr="Record component accessor should not declare a 'throws' clause">throws</error> Exception {return x;}
   public int y() throws Exception {return x;}
 }
 record CheckOverride(int x) {
-  <error descr="Method does not override method from its superclass">@Override</error> public int x() { return x; }
+  @Override public int x() { return x; }
   <error descr="Method does not override method from its superclass">@Override</error> public int y() { return x; }
 }
+record VarArg(int... x) {
+  public int[] x() { return x; }
+}
+
+interface I {
+  String bar();
+}
+record Impl(<error descr="'bar()' in 'Impl' clashes with 'bar()' in 'I'; incompatible return type">int</error> bar) implements I {}

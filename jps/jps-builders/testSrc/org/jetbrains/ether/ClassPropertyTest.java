@@ -1,26 +1,25 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.ether;
 
-/**
- * @author: db
- */
+import org.jetbrains.jps.builders.java.JavaBuilderUtil;
+import org.jetbrains.jps.model.JpsModuleRootModificationUtil;
+import org.jetbrains.jps.model.module.JpsModule;
+
+import java.util.Set;
+
 public class ClassPropertyTest extends IncrementalTestCase {
+  private static final Set<String> GRAPH_ONLY_TESTS = Set.of("addImplementsPatternMatching");
+
   public ClassPropertyTest() {
     super("classProperties");
+  }
+
+  @Override
+  protected boolean shouldRunTest() {
+    if (JavaBuilderUtil.isDepGraphEnabled()) {
+      return super.shouldRunTest();
+    }
+    return !GRAPH_ONLY_TESTS.contains(getTestName(true));
   }
 
   public void testAddExtends() {
@@ -28,6 +27,10 @@ public class ClassPropertyTest extends IncrementalTestCase {
   }
 
   public void testAddImplements() {
+    doTest();
+  }
+
+  public void testAddImplementsPatternMatching() {
     doTest();
   }
 
@@ -65,5 +68,12 @@ public class ClassPropertyTest extends IncrementalTestCase {
 
   public void testConvertToCheckedException() {
       doTest();
+  }
+  
+  public void testConvertToCheckedExceptionMultiModule() {
+    JpsModule module1 = addModule("module1", "module1/src");
+    JpsModule module2 = addModule("module2", "module2/src");
+    JpsModuleRootModificationUtil.addDependency(module2, module1);
+    doTestBuild(1).assertSuccessful();
   }
 }

@@ -132,6 +132,8 @@ public final class ChildRole {
 
   public static final int ENUM_CONSTANT_LIST_DELIMITER = 126; // in CLASS
 
+  public static final int PERMITS_LIST = 127; // in CLASS
+
   public static final int DOC_TAG_VALUE = 242;
 
   public static final int TYPE_PARAMETER_IN_LIST = 244;
@@ -150,9 +152,6 @@ public final class ChildRole {
 
   public static boolean isUnique(int role) {
     switch(role){
-      default:
-        return true;
-
       case ChildRoleBase.NONE:
       case CLASS:
       case FIELD:
@@ -166,6 +165,8 @@ public final class ChildRole {
       case TYPE_PARAMETER_IN_LIST:
       case ANNOTATION_VALUE:
         return false;
+      default:
+        return true;
     }
   }
 }

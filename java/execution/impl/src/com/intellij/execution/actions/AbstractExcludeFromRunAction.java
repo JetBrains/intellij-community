@@ -6,7 +6,12 @@ import com.intellij.execution.configurations.JavaRunConfigurationModule;
 import com.intellij.execution.configurations.ModuleBasedConfiguration;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.testframework.AbstractTestProxy;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiClass;
@@ -20,6 +25,11 @@ import java.util.Set;
 
 public abstract class AbstractExcludeFromRunAction<T extends ModuleBasedConfiguration<JavaRunConfigurationModule, Element>> extends AnAction {
   private static final Logger LOG = Logger.getInstance(AbstractExcludeFromRunAction.class);
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
+  }
 
   protected abstract Set<String> getPattern(T configuration);
   protected abstract boolean isPatternBasedConfiguration(RunConfiguration configuration);
@@ -49,7 +59,7 @@ public abstract class AbstractExcludeFromRunAction<T extends ModuleBasedConfigur
       if (isPatternBasedConfiguration(configuration)) {
         final AbstractTestProxy testProxy = AbstractTestProxy.DATA_KEY.getData(dataContext);
         if (testProxy != null) {
-          final Location location = testProxy.getLocation(project, ((T)configuration).getConfigurationModule().getSearchScope());
+          final Location<?> location = testProxy.getLocation(project, ((T)configuration).getConfigurationModule().getSearchScope());
           if (location != null) {
             final PsiElement psiElement = location.getPsiElement();
             if (psiElement instanceof PsiClass && getPattern((T)configuration).contains(((PsiClass)psiElement).getQualifiedName())) {

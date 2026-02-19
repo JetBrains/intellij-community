@@ -1,0 +1,17 @@
+<!--suppress PluginXmlPluginLogo -->
+<idea-plugin>
+  <id>com.intellij.agent.workbench</id>
+  <name>Agent Workbench</name>
+  <description>Agent Workbench - AI-based developement for IntelliJ</description>
+  <vendor>JetBrains</vendor>
+  <content namespace="jetbrains">
+    <module name="intellij.agent.workbench.json"/>
+    <module name="intellij.agent.workbench.claude.common"/>
+    <module name="intellij.agent.workbench.claude.sessions"/>
+    <module name="intellij.agent.workbench.codex.common"/>
+    <module name="intellij.agent.workbench.codex.sessions"/>
+    <module name="intellij.agent.workbench.sessions"/>
+    <module name="intellij.agent.workbench.chat"/>
+    <module name="intellij.agent.workbench.filewatch"/>
+  </content>
+</idea-plugin>

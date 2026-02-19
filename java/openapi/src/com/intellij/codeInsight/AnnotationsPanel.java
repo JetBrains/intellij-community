@@ -1,63 +1,74 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight;
 
-import com.intellij.core.JavaPsiBundle;
-import com.intellij.icons.AllIcons;
-import com.intellij.ide.util.ClassFilter;
 import com.intellij.ide.util.TreeClassChooser;
 import com.intellij.ide.util.TreeClassChooserFactory;
 import com.intellij.java.JavaBundle;
-import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.ComboBox;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.ui.*;
+import com.intellij.ui.AnActionButton;
+import com.intellij.ui.AnActionButtonRunnable;
+import com.intellij.ui.ColoredTableCellRenderer;
+import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.ui.ToolbarDecorator;
+import com.intellij.ui.dsl.builder.DslComponentProperty;
+import com.intellij.ui.dsl.builder.VerticalComponentGap;
 import com.intellij.ui.table.JBTable;
-import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.JBDimension;
-import com.intellij.util.ui.JBUI;
-import org.jetbrains.annotations.NonNls;
+import com.intellij.util.ui.UI;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.JComponent;
+import javax.swing.JPanel;
+import javax.swing.JTable;
+import javax.swing.ListSelectionModel;
+import javax.swing.RowSorter;
+import javax.swing.SortOrder;
 import javax.swing.table.DefaultTableColumnModel;
 import javax.swing.table.DefaultTableModel;
-import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableColumn;
-import java.awt.*;
-import java.util.ArrayList;
+import javax.swing.table.TableRowSorter;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
 public class AnnotationsPanel {
   private final Project myProject;
-  private String myDefaultAnnotation;
   private final Set<String> myDefaultAnnotations;
   private final JBTable myTable;
   private final JPanel myComponent;
+  private final ComboBox<String> myCombo;
   protected final DefaultTableModel myTableModel;
+  private final TableRowSorter<DefaultTableModel> mySorter;
 
   public AnnotationsPanel(Project project,
-                          @NonNls String name,
-                          String defaultAnnotation,
+                          @Nls String name,
                           List<String> annotations,
-                          List<String> defaultAnnotations,
-                          Set<String> checkedAnnotations,
-                          boolean showInstrumentationOptions,
-                          boolean showDefaultActions) {
+                          List<String> defaultAnnotations) {
     myProject = project;
-    myDefaultAnnotation = defaultAnnotation;
     myDefaultAnnotations = new HashSet<>(defaultAnnotations);
+
+    myCombo = new ComboBox<>(annotations.stream().sorted().toArray(String[]::new));
+    if (!annotations.contains("")) {
+      addAnnotationToCombo("");
+    }
+    myCombo.setSelectedItem("");
+
     myTableModel = new DefaultTableModel() {
       @Override
       public boolean isCellEditable(int row, int column) {
         return column == 1;
       }
     };
-    myTableModel.setColumnCount(showInstrumentationOptions ? 2 : 1);
+    myTableModel.setColumnCount(1);
     for (String annotation : annotations) {
-      addRow(annotation, checkedAnnotations.contains(annotation));
+      addRow(annotation);
     }
 
     DefaultTableColumnModel columnModel = new DefaultTableColumnModel();
@@ -75,66 +86,15 @@ public class AnnotationsPanel {
                                            int row,
                                            int column) {
         append((String)value, SimpleTextAttributes.REGULAR_ATTRIBUTES);
-        if (value.equals(myDefaultAnnotation)) {
-          setIcon(AllIcons.Actions.Forward);
-        }
-        else {
-          setIcon(EmptyIcon.ICON_16);
-        }
       }
     }, null));
 
     myTable = new JBTable(myTableModel, columnModel);
-
-    if (showInstrumentationOptions) {
-      columnModel.getColumn(0).setHeaderValue(JavaPsiBundle.message("node.annotation.tooltip"));
-
-      TableColumn checkColumn = new TableColumn(1, 100, new BooleanTableCellRenderer(), new BooleanTableCellEditor());
-      columnModel.addColumn(checkColumn);
-      checkColumn.setHeaderValue(" Instrument ");
-
-      TableCellRenderer defaultRenderer = myTable.getTableHeader().getDefaultRenderer();
-
-      TableCellRenderer headerRenderer = new TableCellRenderer() {
-        @Override
-        public Component getTableCellRendererComponent(JTable table,
-                                                       Object value,
-                                                       boolean isSelected,
-                                                       boolean hasFocus,
-                                                       int row,
-                                                       int column) {
-          Component component = defaultRenderer.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
-          if (component instanceof JComponent) {
-            ((JComponent)component)
-              .setToolTipText(column == 1 ? JavaBundle.message("nullable.notnull.annotations.runtime.instrumentation.tooltip") : null);
-          }
-          return component;
-        }
-      };
-      myTable.getTableHeader().setDefaultRenderer(headerRenderer);
-      checkColumn.setHeaderRenderer(headerRenderer);
-      checkColumn.sizeWidthToFit();
-    }
-
-    final AnActionButton selectButton =
-      new AnActionButton(JavaBundle.messagePointer("action.AnActionButton.text.select.annotation.used.for.code.generation"),
-                         AllIcons.Actions.Checked) {
-        @Override
-        public void actionPerformed(@NotNull AnActionEvent e) {
-          String selectedValue = getSelectedAnnotation();
-          if (selectedValue == null) return;
-          myDefaultAnnotation = selectedValue;
-
-          // to show the new default value in the ui
-          myTableModel.fireTableRowsUpdated(myTable.getSelectedRow(), myTable.getSelectedRow());
-        }
-
-        @Override
-        public void updateButton(@NotNull AnActionEvent e) {
-          String selectedValue = getSelectedAnnotation();
-          e.getPresentation().setEnabled(selectedValue != null && !selectedValue.equals(myDefaultAnnotation));
-        }
-      };
+    mySorter = new TableRowSorter<>(myTableModel);
+    mySorter.setSortKeys(List.of(new RowSorter.SortKey(0, SortOrder.ASCENDING)));
+    myTable.setRowSorter(mySorter);
+    myTable.setTableHeader(null);
+    mySorter.sort();
 
     final ToolbarDecorator toolbarDecorator = ToolbarDecorator.createDecorator(myTable).disableUpDownActions()
       .setAddAction(b -> chooseAnnotation(name))
@@ -143,30 +103,48 @@ public class AnnotationsPanel {
         public void run(AnActionButton anActionButton) {
           String selectedValue = getSelectedAnnotation();
           if (selectedValue == null) return;
-          if (myDefaultAnnotation.equals(selectedValue)) myDefaultAnnotation = (String)myTable.getValueAt(0, 0);
+          myCombo.removeItem(selectedValue);
 
-          myTableModel.removeRow(myTable.getSelectedRow());
+          int rowIndex = -1;
+          for (int i = 0; i < myTableModel.getDataVector().size(); i++) {
+            if (myTableModel.getDataVector().get(i).contains(selectedValue)) {
+              rowIndex = i;
+              break;
+            }
+          }
+          if (rowIndex != -1) myTableModel.removeRow(rowIndex);
         }
       })
       .setRemoveActionUpdater(e -> !myDefaultAnnotations.contains(getSelectedAnnotation()));
-    if (showDefaultActions) {
-      toolbarDecorator.addExtraAction(selectButton);
-    }
-    final JPanel panel = toolbarDecorator.createPanel();
-    myComponent = new JPanel(new BorderLayout());
-    myComponent.setBorder(IdeBorderFactory.createTitledBorder(JavaBundle.message("nullable.notnull.annotations.panel.title", name), false, JBUI.insetsTop(10)));
-    myComponent.add(panel);
-    myComponent.setPreferredSize(new JBDimension(myComponent.getPreferredSize().width, 200));
 
     myTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
     myTable.setRowSelectionAllowed(true);
     myTable.setShowGrid(false);
 
-    selectAnnotation(myDefaultAnnotation);
+    final var tablePanel = UI.PanelFactory
+      .panel(toolbarDecorator.createPanel())
+      .withLabel(JavaBundle.message("annotations.panel.title", name))
+      .moveLabelOnTop()
+      .resizeY(true)
+      .createPanel();
+    tablePanel.setPreferredSize(new JBDimension(tablePanel.getPreferredSize().width, 200));
+
+    myComponent = new JPanel(new GridBagLayout());
+    myComponent.putClientProperty(DslComponentProperty.VERTICAL_COMPONENT_GAP, VerticalComponentGap.BOTH);
+    GridBagConstraints constraints = new GridBagConstraints();
+    constraints.anchor = GridBagConstraints.WEST;
+    constraints.weightx = 1;
+    constraints.fill = GridBagConstraints.BOTH;
+    constraints.weighty = 1;
+    myComponent.add(tablePanel, constraints);
   }
 
-  private void addRow(String annotation, boolean checked) {
-    myTableModel.addRow(new Object[]{annotation, checked});
+  protected boolean isAnnotationAccepted(PsiClass annotation) {
+    return true;
+  }
+
+  private void addRow(String annotation) {
+    myTableModel.addRow(new Object[]{annotation});
   }
 
   private Integer selectAnnotation(String annotation) {
@@ -179,19 +157,15 @@ public class AnnotationsPanel {
     return null;
   }
 
-  private String getSelectedAnnotation() {
+  private @NlsSafe String getSelectedAnnotation() {
     int selectedRow = myTable.getSelectedRow();
     return selectedRow < 0 ? null : (String)myTable.getValueAt(selectedRow, 0);
   }
 
-  private void chooseAnnotation(String title) {
+  private void chooseAnnotation(@NlsSafe String title) {
     final TreeClassChooser chooser = TreeClassChooserFactory.getInstance(myProject)
-      .createNoInnerClassesScopeChooser(JavaBundle.message("dialog.title.choose.annotation", title), GlobalSearchScope.allScope(myProject), new ClassFilter() {
-        @Override
-        public boolean isAccepted(PsiClass aClass) {
-          return aClass.isAnnotationType();
-        }
-      }, null);
+      .createNoInnerClassesScopeChooser(JavaBundle.message("dialog.title.choose.annotation", title), GlobalSearchScope.allScope(myProject),
+                                        aClass -> aClass.isAnnotationType() && isAnnotationAccepted(aClass), null);
     chooser.showDialog();
     final PsiClass selected = chooser.getSelected();
     if (selected == null) {
@@ -199,16 +173,25 @@ public class AnnotationsPanel {
     }
     final String qualifiedName = selected.getQualifiedName();
     if (selectAnnotation(qualifiedName) == null) {
-      addRow(qualifiedName, false);
+      addRow(qualifiedName);
+      addAnnotationToCombo(qualifiedName);
+      mySorter.sort();
+      Object added = selectAnnotation(qualifiedName);
+      assert added != null;
+      myTable.scrollRectToVisible(myTable.getCellRect((int)added, 0, true));
     }
+  }
+
+  private void addAnnotationToCombo(@NlsSafe String annotation) {
+    int insertAt = 0;
+    for (; insertAt < myCombo.getItemCount(); insertAt += 1) {
+      if (myCombo.getItemAt(insertAt).compareTo(annotation) >= 0) break;
+    }
+    myCombo.insertItemAt(annotation, insertAt);
   }
 
   public JComponent getComponent() {
     return myComponent;
-  }
-
-  String getDefaultAnnotation() {
-    return myDefaultAnnotation;
   }
 
   public String[] getAnnotations() {
@@ -220,13 +203,20 @@ public class AnnotationsPanel {
     return result;
   }
 
-  List<String> getCheckedAnnotations() {
-    List<String> result = new ArrayList<>();
-    for (int i = 0; i < myTable.getRowCount(); i++) {
-      if (Boolean.TRUE.equals(myTable.getValueAt(i, 1))) {
-        result.add((String)myTable.getValueAt(i, 0));
+  /** Reset table to contain only annotations from the list. */
+  public void resetAnnotations(List<String> annotations) {
+    final Set<String> set = new HashSet<>(annotations);
+    int row = 0;
+    for (String annotation : getAnnotations()) {
+      if (!set.contains(annotation)) {
+        myTableModel.removeRow(row);
+      } else {
+        set.remove(annotation);
+        row++;
       }
     }
-    return result;
+    for (String annotation : set) {
+      addRow(annotation);
+    }
   }
 }

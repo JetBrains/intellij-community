@@ -16,25 +16,29 @@
 
 package org.intellij.plugins.xsltDebugger;
 
-import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.process.ProcessHandler;
+import com.intellij.execution.process.ProcessListener;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.util.Alarm;
+import com.intellij.util.ui.EDT;
 import it.unimi.dsi.fastutil.objects.Reference2ObjectOpenHashMap;
 import org.intellij.plugins.xsltDebugger.rt.engine.Watchable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.io.Serializable;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -43,7 +47,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * Utility class that tries to prevent hanging the whole IDE because some call on the EDT waits too long on the debugged
  * VM, which can especially happen when the VM has been paused (either manually or by a breakpoint on Java code).
  * <p/>
- * This is just the second best solution though as it would be better to avoid any interaction with the debuggee on the
+ * This is just the second-best solution though as it would be better to avoid any interaction with the debuggee on the
  * EDT, but, at least right now, it seems to be more reliable against bad surprises.
  */
 final class EDTGuard implements InvocationHandler {
@@ -66,17 +70,15 @@ final class EDTGuard implements InvocationHandler {
   }
 
   @Override
-  @Nullable
-  public Object invoke(Object proxy, @NotNull Method method, Object[] args) throws Throwable {
-    if (SwingUtilities.isEventDispatchThread()) {
+  public @Nullable Object invoke(Object proxy, @NotNull Method method, Object[] args) throws Throwable {
+    if (EDT.isCurrentThreadEdt()) {
       return invokeAsync(method, args);
     }
 
     return invoke(method, args);
   }
 
-  @Nullable
-  private Object invokeAsync(Method method, Object[] args) throws Throwable {
+  private @Nullable Object invokeAsync(Method method, Object[] args) throws Throwable {
     final Call call = new Call(method, args);
 
     if (!myQueue.first.offer(call)) {
@@ -100,19 +102,16 @@ final class EDTGuard implements InvocationHandler {
     return result.getValue();
   }
 
-  @Nullable
-  private Object invoke(@NotNull Method method, Object[] args) throws Throwable {
+  private @Nullable Object invoke(@NotNull Method method, Object[] args) throws Throwable {
     try {
       return convert(method.invoke(myTarget, args));
     } catch (InvocationTargetException e) {
-      final Throwable t = e.getTargetException();
-      throw t;
+      throw e.getTargetException();
     }
   }
 
-  @Nullable
-  @SuppressWarnings({ "unchecked" })
-  private Object convert(@Nullable Object o) {
+  @SuppressWarnings("unchecked")
+  private @Nullable Object convert(@Nullable Object o) {
     if (o != null && !(o instanceof Serializable)) {
       synchronized (myInstanceCache) {
         Object instance = myInstanceCache.get(o);
@@ -126,15 +125,15 @@ final class EDTGuard implements InvocationHandler {
         return instance;
       }
     } else if (o instanceof List) {
-      final List list = (List)o;
+      final List<Object> list = (List<Object>)o;
       for (int i = 0; i < list.size(); i++) {
         final Object e = list.remove(i);
         list.add(i, convert(e));
       }
     } else if (o instanceof Set) {
-      final Set set = (Set)o;
-      final List s2 = new ArrayList();
-      for (Iterator iterator = set.iterator(); iterator.hasNext(); ) {
+      final Set<Object> set = (Set<Object>)o;
+      final List<Object> s2 = new ArrayList<>();
+      for (Iterator<Object> iterator = set.iterator(); iterator.hasNext(); ) {
         Object o1 = iterator.next();
         final Object o2 = convert(o1);
         if (o1 != o2) {
@@ -147,8 +146,7 @@ final class EDTGuard implements InvocationHandler {
     return o;
   }
 
-  @NotNull
-  public static <T, O extends Watchable> T create(@NotNull final O target, final ProcessHandler process) {
+  public static @NotNull <T, O extends Watchable> T create(final @NotNull O target, final ProcessHandler process) {
     final Pair<LinkedBlockingQueue<Call>, LinkedBlockingQueue<Call.Result>> queue =
       Pair.create(new LinkedBlockingQueue<>(10), new LinkedBlockingQueue<>());
 
@@ -158,9 +156,7 @@ final class EDTGuard implements InvocationHandler {
         try {
           while (!Thread.currentThread().isInterrupted()) {
             final Call call = queue.first.take();
-            if (call != null) {
-              queue.second.offer(call.invoke());
-            }
+            queue.second.offer(call.invoke());
           }
         } catch (InterruptedException e) {
           // break
@@ -183,7 +179,7 @@ final class EDTGuard implements InvocationHandler {
         }
       }
     };
-    process.addProcessListener(new ProcessAdapter() {
+    process.addProcessListener(new ProcessListener() {
       @Override
       public void processTerminated(@NotNull ProcessEvent event) {
         synchronized (d) {
@@ -257,8 +253,7 @@ final class EDTGuard implements InvocationHandler {
         return call == Call.this;
       }
 
-      @Nullable
-      public Object getValue() throws Throwable {
+      public @Nullable Object getValue() throws Throwable {
         if (myThrowable != null) {
           throw myThrowable;
         }
@@ -271,8 +266,7 @@ final class EDTGuard implements InvocationHandler {
       myArguments = arguments;
     }
 
-    @NotNull
-    public Result invoke() {
+    public @NotNull Result invoke() {
       try {
         return new Result(EDTGuard.this.invoke(myMethod, myArguments));
       } catch (Throwable e) {

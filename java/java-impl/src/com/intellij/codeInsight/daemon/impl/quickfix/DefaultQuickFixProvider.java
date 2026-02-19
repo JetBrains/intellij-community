@@ -1,61 +1,77 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.QuickFixActionRegistrar;
-import com.intellij.codeInsight.daemon.impl.analysis.HighlightMethodUtil;
-import com.intellij.codeInsight.daemon.impl.analysis.HighlightingFeature;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.impl.PriorityIntentionActionWrapper;
 import com.intellij.codeInsight.quickfix.UnresolvedReferenceQuickFixProvider;
 import com.intellij.lang.java.request.CreateFieldFromUsage;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.*;
+import com.intellij.pom.java.JavaFeature;
+import com.intellij.psi.JavaTokenType;
+import com.intellij.psi.PsiDeconstructionPattern;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiExpressionList;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiJavaCodeReferenceCodeFragment;
+import com.intellij.psi.PsiJavaCodeReferenceElement;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiMethodCallExpression;
+import com.intellij.psi.PsiMethodReferenceExpression;
+import com.intellij.psi.PsiNewExpression;
+import com.intellij.psi.PsiReferenceExpression;
+import com.intellij.psi.PsiTypeElement;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 
 public class DefaultQuickFixProvider extends UnresolvedReferenceQuickFixProvider<PsiJavaCodeReferenceElement> {
   @Override
   public void registerFixes(@NotNull PsiJavaCodeReferenceElement ref, @NotNull QuickFixActionRegistrar registrar) {
     PsiFile containingFile = ref.getContainingFile();
-    if (containingFile instanceof PsiJavaCodeReferenceCodeFragment &&
-        !((PsiJavaCodeReferenceCodeFragment)containingFile).isClassesAccepted()) {
+    if (containingFile instanceof PsiJavaCodeReferenceCodeFragment fragment && !fragment.isClassesAccepted()) {
       return;
     }
+    List<IntentionAction> fixes = new ArrayList<>();
+    OrderEntryFix.registerFixes(ref, fixes);
+    for (IntentionAction fix : fixes) {
+      registrar.register(fix);
+    }
     if (PsiUtil.isModuleFile(containingFile)) {
-      OrderEntryFix.registerFixes(registrar, ref);
       registrar.register(new CreateServiceImplementationClassFix(ref));
       registrar.register(new CreateServiceInterfaceOrClassFix(ref));
       return;
     }
 
     registrar.register(new ImportClassFix(ref));
-    registrar.register(new StaticImportConstantFix(containingFile, ref));
-    registrar.register(new QualifyStaticConstantFix(containingFile, ref));
-
-    OrderEntryFix.registerFixes(registrar, ref);
+    PsiElement refParent = ref.getParent();
+    if (!(refParent instanceof PsiMethodCallExpression)) {
+      registrar.register(new StaticImportConstantFix(containingFile, ref));
+      registrar.register(new QualifyStaticConstantFix(containingFile, ref));
+    }
 
     MoveClassToModuleFix.registerFixes(registrar, ref);
 
-    if (ref instanceof PsiReferenceExpression) {
-      TextRange fixRange = HighlightMethodUtil.getFixRange(ref);
-      PsiReferenceExpression refExpr = (PsiReferenceExpression)ref;
-
+    if (ref instanceof PsiReferenceExpression refExpr) {
+      TextRange fixRange = getFixRange(ref);
       registrar.register(fixRange, new RenameWrongRefFix(refExpr), null);
-      PsiExpression qualifier = ((PsiReferenceExpression)ref).getQualifierExpression();
+      PsiExpression qualifier = refExpr.getQualifierExpression();
       if (qualifier != null) {
         AddTypeCastFix.registerFix(registrar, qualifier, ref, fixRange);
       }
       BringVariableIntoScopeFix bringToScope = BringVariableIntoScopeFix.fromReference(refExpr);
       if (bringToScope != null) {
-        registrar.register(fixRange, bringToScope, null);
+        registrar.register(fixRange, bringToScope.asIntention(), null);
       }
 
       for (IntentionAction action : createVariableActions(refExpr)) {
@@ -63,63 +79,106 @@ public class DefaultQuickFixProvider extends UnresolvedReferenceQuickFixProvider
       }
     }
 
-    registrar.register(new CreateClassFromUsageFix(ref, CreateClassKind.INTERFACE));
-    if (PsiUtil.isLanguageLevel5OrHigher(ref)) {
-      registrar.register(new CreateClassFromUsageFix(ref, CreateClassKind.ENUM));
-      registrar.register(new CreateClassFromUsageFix(ref, CreateClassKind.ANNOTATION));
-      registrar.register(new CreateTypeParameterFromUsageFix(ref));
-    }
-    if (HighlightingFeature.RECORDS.isAvailable(ref)) {
-      registrar.register(new CreateClassFromUsageFix(ref, CreateClassKind.RECORD));
-    }
-
-    PsiElement parent = PsiTreeUtil.getParentOfType(ref, PsiNewExpression.class, PsiMethod.class);
-    PsiExpressionList expressionList = PsiTreeUtil.getParentOfType(ref, PsiExpressionList.class);
-    if (parent instanceof PsiNewExpression &&
-        !(ref.getParent() instanceof PsiTypeElement) &&
-        (expressionList == null || !PsiTreeUtil.isAncestor(parent, expressionList, false))) {
-      registrar.register(new CreateClassFromNewFix((PsiNewExpression)parent));
-      registrar.register(new CreateInnerClassFromNewFix((PsiNewExpression)parent));
-      if (HighlightingFeature.RECORDS.isAvailable(ref)) {
-        registrar.register(new CreateRecordFromNewFix((PsiNewExpression)parent));
-        if (((PsiNewExpression)parent).getQualifier() == null) {
-          registrar.register(new CreateInnerRecordFromNewFix((PsiNewExpression)parent));
-        }
-      }
-    }
-    else {
-      registrar.register(new CreateClassFromUsageFix(ref, CreateClassKind.CLASS));
-      registrar.register(new CreateInnerClassFromUsageFix(ref, CreateClassKind.CLASS));
+    for (IntentionAction action : createClassActions(ref)) {
+      registrar.register(action);
     }
 
     SurroundWithQuotesAnnotationParameterValueFix.register(registrar, ref);
+
+    if (PsiUtil.isAvailable(JavaFeature.GENERICS, ref)) {
+      registrar.register(new CreateTypeParameterFromUsageFix(ref).asIntention());
+    }
   }
 
-  @NotNull
-  private static Collection<IntentionAction> createVariableActions(@NotNull PsiReferenceExpression refExpr) {
-    final Collection<IntentionAction> result = new ArrayList<>(CreateFieldFromUsage.generateActions(refExpr));
-    if (!refExpr.isQualified()) {
-      final VariableKind kind = getKind(refExpr);
-      IntentionAction createLocalFix = new CreateLocalFromUsageFix(refExpr);
-      result.add(kind == VariableKind.LOCAL_VARIABLE ? PriorityIntentionActionWrapper.highPriority(createLocalFix) : createLocalFix);
-      IntentionAction createParameterFix = new CreateParameterFromUsageFix(refExpr);
-      result.add(kind == VariableKind.PARAMETER ? PriorityIntentionActionWrapper.highPriority(createParameterFix) : createParameterFix);
+  private static @NotNull Collection<IntentionAction> createClassActions(@NotNull PsiJavaCodeReferenceElement ref) {
+    Collection<IntentionAction> result = new ArrayList<>();
+    PsiElement refParent = ref.getParent();
+    if (refParent != null && refParent.getParent() instanceof PsiDeconstructionPattern) {
+      result.add(new CreateClassFromUsageFix(ref, CreateClassKind.RECORD));
+      result.add(new CreateInnerClassFromUsageFix(ref, CreateClassKind.RECORD));
+    }
+    else {
+      PsiElement parent = PsiTreeUtil.getParentOfType(ref, PsiNewExpression.class, PsiMethod.class);
+      PsiExpressionList expressionList = PsiTreeUtil.getParentOfType(ref, PsiExpressionList.class);
+
+      boolean isNewExpression =
+        parent instanceof PsiNewExpression &&
+        !(refParent instanceof PsiTypeElement) &&
+        (expressionList == null || !PsiTreeUtil.isAncestor(parent, expressionList, false));
+
+      if (isNewExpression) {
+        result.add(new CreateClassFromNewFix((PsiNewExpression)parent));
+      }
+      else {
+        result.add(new CreateClassFromUsageFix(ref, CreateClassKind.CLASS));
+      }
+
+      result.add(new CreateClassFromUsageFix(ref, CreateClassKind.INTERFACE));
+      if (PsiUtil.isAvailable(JavaFeature.ENUMS, ref)) {
+        result.add(new CreateClassFromUsageFix(ref, CreateClassKind.ENUM));
+      }
+      if (PsiUtil.isAvailable(JavaFeature.ANNOTATIONS, ref)) {
+        result.add(new CreateClassFromUsageFix(ref, CreateClassKind.ANNOTATION));
+      }
+      if (PsiUtil.isAvailable(JavaFeature.RECORDS, ref)) {
+        if (isNewExpression) {
+          result.add(new CreateRecordFromNewFix((PsiNewExpression)parent));
+        }
+        else {
+          result.add(new CreateClassFromUsageFix(ref, CreateClassKind.RECORD));
+        }
+      }
+
+      if (isNewExpression) {
+        result.add(new CreateInnerClassFromNewFix((PsiNewExpression)parent));
+        if (PsiUtil.isAvailable(JavaFeature.RECORDS, ref) && ((PsiNewExpression)parent).getQualifier() == null) {
+          result.add(new CreateInnerRecordFromNewFix((PsiNewExpression)parent));
+        }
+      }
+      else {
+        result.add(new CreateInnerClassFromUsageFix(ref, CreateClassKind.CLASS));
+      }
     }
     return result;
   }
 
-  @Nullable
-  private static VariableKind getKind(@NotNull PsiReferenceExpression refExpr) {
-    final JavaCodeStyleManager styleManager = JavaCodeStyleManager.getInstance(refExpr.getProject());
-    final String reference = refExpr.getText();
+  private static @NotNull Collection<IntentionAction> createVariableActions(@NotNull PsiReferenceExpression refExpr) {
+    Collection<IntentionAction> result = new ArrayList<>();
+    boolean isQualified = refExpr.isQualified();
+    VariableKind kind = getKind(refExpr);
+
+    if (!isQualified) {
+      IntentionAction createLocalFix = new CreateLocalFromUsageFix(refExpr);
+      result.add(kind == VariableKind.LOCAL_VARIABLE ? PriorityIntentionActionWrapper.highPriority(createLocalFix) : createLocalFix);
+    }
+
+    if (!(refExpr instanceof PsiMethodReferenceExpression)) {
+      List<IntentionAction> createFieldFixes = CreateFieldFromUsage.generateActions(refExpr);
+      if (kind == VariableKind.FIELD) {
+        createFieldFixes = ContainerUtil.map(createFieldFixes, fix -> PriorityIntentionActionWrapper.highPriority(fix));
+      }
+      result.addAll(createFieldFixes);
+    }
+
+    if (!isQualified) {
+      IntentionAction createParameterFix = new CreateParameterFromUsageFix(refExpr);
+      result.add(kind == VariableKind.PARAMETER ? PriorityIntentionActionWrapper.highPriority(createParameterFix) : createParameterFix);
+    }
+
+    return result;
+  }
+
+  private static @Nullable VariableKind getKind(@NotNull PsiReferenceExpression refExpr) {
+    JavaCodeStyleManager styleManager = JavaCodeStyleManager.getInstance(refExpr.getProject());
+    String reference = refExpr.getText();
 
     if (StringUtil.isUpperCase(reference)) {
       return VariableKind.STATIC_FINAL_FIELD;
     }
 
     for (VariableKind kind : VariableKind.values()) {
-      final String prefix = styleManager.getPrefixByVariableKind(kind);
-      final String suffix = styleManager.getSuffixByVariableKind(kind);
+      String prefix = styleManager.getPrefixByVariableKind(kind);
+      String suffix = styleManager.getSuffixByVariableKind(kind);
 
       if (prefix.isEmpty() && suffix.isEmpty()) {
         continue;
@@ -138,8 +197,16 @@ public class DefaultQuickFixProvider extends UnresolvedReferenceQuickFixProvider
   }
 
   @Override
-  @NotNull
-  public Class<PsiJavaCodeReferenceElement> getReferenceClass() {
+  public @NotNull Class<PsiJavaCodeReferenceElement> getReferenceClass() {
     return PsiJavaCodeReferenceElement.class;
+  }
+
+  private static @NotNull TextRange getFixRange(@NotNull PsiElement element) {
+    PsiElement nextSibling = element.getNextSibling();
+    TextRange range = element.getTextRange();
+    if (PsiUtil.isJavaToken(nextSibling, JavaTokenType.SEMICOLON)) {
+      return range.grown(1);
+    }
+    return range;
   }
 }

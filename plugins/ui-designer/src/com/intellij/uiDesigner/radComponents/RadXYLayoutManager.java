@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.uiDesigner.radComponents;
 
@@ -18,11 +18,11 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.*;
+import java.awt.Insets;
+import java.awt.LayoutManager;
+import java.awt.Point;
 
-/**
- * @author yole
- */
+
 public class RadXYLayoutManager extends RadLayoutManager {
   public static RadXYLayoutManager INSTANCE = new RadXYLayoutManager();
 
@@ -70,8 +70,8 @@ public class RadXYLayoutManager extends RadLayoutManager {
     }
   }
 
-  @NotNull @Override
-  public ComponentDropLocation getDropLocation(RadContainer container, @Nullable final Point location) {
+  @Override
+  public @NotNull ComponentDropLocation getDropLocation(RadContainer container, final @Nullable Point location) {
     return new MyDropLocation(container, location != null ? location : new Point(5, 5));
   }
 
@@ -82,9 +82,9 @@ public class RadXYLayoutManager extends RadLayoutManager {
 
   private static class MyDropLocation implements ComponentDropLocation {
     private final RadContainer myContainer;
-    private final Point myLocation;
+    private final @NotNull Point myLocation;
 
-    MyDropLocation(final RadContainer container, @NotNull final Point location) {
+    MyDropLocation(final RadContainer container, final @NotNull Point location) {
       myContainer = container;
       myLocation = location;
     }
@@ -96,7 +96,7 @@ public class RadXYLayoutManager extends RadLayoutManager {
 
     @Override
     public boolean canDrop(ComponentDragObject dragObject) {
-      if (myLocation == null || dragObject.getComponentCount() != 1) {
+      if (dragObject.getComponentCount() != 1) {
         return false;
       }
       for(RadComponent component: myContainer.getComponents()) {
@@ -145,8 +145,7 @@ public class RadXYLayoutManager extends RadLayoutManager {
     }
 
     @Override
-    @Nullable
-    public ComponentDropLocation getAdjacentLocation(Direction direction) {
+    public @Nullable ComponentDropLocation getAdjacentLocation(Direction direction) {
       return null;
     }
   }

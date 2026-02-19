@@ -23,7 +23,7 @@ import org.intellij.plugins.relaxNG.RelaxngBundle;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.Icon;
 
 public final class RncFileType extends LanguageFileType {
   @SuppressWarnings("unused")
@@ -36,22 +36,17 @@ public final class RncFileType extends LanguageFileType {
   }
 
   @Override
-  @NotNull
-  @NonNls
-  public String getName() {
+  public @NotNull @NonNls String getName() {
     return "RNG Compact";
   }
 
   @Override
-  @NotNull
-  public String getDescription() {
-    return RelaxngBundle.message("relaxng.file-type.compact-syntax");
+  public @NotNull String getDescription() {
+    return RelaxngBundle.message("filetype.relaxng.compact-syntax.description");
   }
 
   @Override
-  @NotNull
-  @NonNls
-  public String getDefaultExtension() {
+  public @NotNull @NonNls String getDefaultExtension() {
     return "rnc";
   }
 

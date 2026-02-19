@@ -20,7 +20,11 @@ import org.zmlx.hg4idea.HgBundle;
 import org.zmlx.hg4idea.provider.update.HgUpdateConfigurationSettings;
 import org.zmlx.hg4idea.provider.update.HgUpdateType;
 
-import javax.swing.*;
+import javax.swing.ButtonGroup;
+import javax.swing.JCheckBox;
+import javax.swing.JComponent;
+import javax.swing.JPanel;
+import javax.swing.JRadioButton;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 
@@ -41,8 +45,7 @@ public class HgUpdateDialog {
     myContentPanel = createCenterPanel();
   }
 
-  @NotNull
-  public JComponent getContentPanel() {
+  public @NotNull JComponent getContentPanel() {
     return myContentPanel;
   }
 
@@ -64,8 +67,7 @@ public class HgUpdateDialog {
     updateConfiguration.setShouldCommitAfterMerge(myCommitAfterMergeCheckBox.isSelected());
   }
 
-  @NotNull
-  public JComponent createCenterPanel() {
+  public @NotNull JComponent createCenterPanel() {
     String panelConstraints = "flowy, ins 0 0 0 10, fill";
     MigLayout migLayout = new MigLayout(panelConstraints);
     JPanel contentPane = new JPanel(migLayout);
@@ -112,19 +114,12 @@ public class HgUpdateDialog {
   public void updateFrom(@NotNull HgUpdateConfigurationSettings updateConfiguration) {
     myPullCheckBox.setSelected(updateConfiguration.shouldPull());
     HgUpdateType updateType = updateConfiguration.getUpdateType();
-    switch (updateType) {
-      case ONLY_UPDATE:
-        myOnlyUpdateButton.setSelected(true);
-        break;
-      case MERGE:
-        myMergeRadioButton.setSelected(true);
-        break;
-      case REBASE:
-        myRebaseRadioButton.setSelected(true);
-        break;
-      default:
-        assert false : "Unknown value of update type: " + updateType;
-    }
+    JRadioButton button = switch (updateType) {
+      case ONLY_UPDATE -> myOnlyUpdateButton;
+      case MERGE -> myMergeRadioButton;
+      case REBASE -> myRebaseRadioButton;
+    };
+    button.setSelected(true);
     myCommitAfterMergeCheckBox.setSelected(updateConfiguration.shouldCommitAfterMerge());
   }
 }

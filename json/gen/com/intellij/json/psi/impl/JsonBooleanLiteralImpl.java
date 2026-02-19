@@ -16,6 +16,7 @@ public class JsonBooleanLiteralImpl extends JsonLiteralImpl implements JsonBoole
     super(node);
   }
 
+  @Override
   public void accept(@NotNull JsonElementVisitor visitor) {
     visitor.visitBooleanLiteral(this);
   }
@@ -26,6 +27,7 @@ public class JsonBooleanLiteralImpl extends JsonLiteralImpl implements JsonBoole
     else super.accept(visitor);
   }
 
+  @Override
   public boolean getValue() {
     return JsonPsiImplUtils.getValue(this);
   }

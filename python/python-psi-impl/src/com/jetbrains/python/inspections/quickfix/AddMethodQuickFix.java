@@ -14,9 +14,23 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyPsiBundle;
+import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.PythonTemplateRunner;
 import com.jetbrains.python.PythonUiService;
-import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.LanguageLevel;
+import com.jetbrains.python.psi.PyArgumentList;
+import com.jetbrains.python.psi.PyCallExpression;
+import com.jetbrains.python.psi.PyClass;
+import com.jetbrains.python.psi.PyDecoratorList;
+import com.jetbrains.python.psi.PyElementGenerator;
+import com.jetbrains.python.psi.PyExpression;
+import com.jetbrains.python.psi.PyFunction;
+import com.jetbrains.python.psi.PyKeywordArgument;
+import com.jetbrains.python.psi.PyNamedParameter;
+import com.jetbrains.python.psi.PyPrefixExpression;
+import com.jetbrains.python.psi.PyQualifiedExpression;
+import com.jetbrains.python.psi.PyReferenceExpression;
+import com.jetbrains.python.psi.PyStatementList;
 import com.jetbrains.python.psi.impl.ParamHelper;
 import com.jetbrains.python.psi.impl.PyFunctionBuilder;
 import com.jetbrains.python.psi.types.PyClassType;
@@ -30,7 +44,6 @@ import static com.jetbrains.python.psi.PyUtil.sure;
 
 /**
  * Adds a method foo to class X if X.foo() is unresolved.
- * User: dcheryasov
  */
 public class AddMethodQuickFix implements LocalQuickFix {
 
@@ -46,14 +59,12 @@ public class AddMethodQuickFix implements LocalQuickFix {
   }
 
   @Override
-  @NotNull
-  public String getName() {
+  public @NotNull String getName() {
     return PyPsiBundle.message("QFIX.add.method.to.class", myIdentifier, myClassName);
   }
 
   @Override
-  @NotNull
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return PyPsiBundle.message("QFIX.NAME.add.method.to.class");
   }
 
@@ -74,10 +85,14 @@ public class AddMethodQuickFix implements LocalQuickFix {
       PsiElement pe = problemElement.getParent();
       String decoratorName = null; // set to non-null to add a decorator
       PyExpression[] args = PyExpression.EMPTY_ARRAY;
-      if (pe instanceof PyCallExpression) {
-        PyArgumentList arglist = ((PyCallExpression)pe).getArgumentList();
+      if (pe instanceof PyCallExpression callExpression) {
+        PyArgumentList arglist = callExpression.getArgumentList();
         if (arglist == null) return;
         args = arglist.getArguments();
+        if (callExpression.getParent() instanceof PyPrefixExpression prefixExpression &&
+            prefixExpression.getOperator() == PyTokenTypes.AWAIT_KEYWORD) {
+          builder.makeAsync();
+        }
       }
       boolean madeInstance = false;
       if (callByClass) {
@@ -107,8 +122,7 @@ public class AddMethodQuickFix implements LocalQuickFix {
         if (arg instanceof PyKeywordArgument) { // foo(bar) -> def foo(self, bar_1)
           builder.parameter(((PyKeywordArgument)arg).getKeyword());
         }
-        else if (arg instanceof PyReferenceExpression) {
-          PyReferenceExpression refex = (PyReferenceExpression)arg;
+        else if (arg instanceof PyReferenceExpression refex) {
           builder.parameter(refex.getReferencedName());
         }
         else { // use a boring name
@@ -134,7 +148,7 @@ public class AddMethodQuickFix implements LocalQuickFix {
     }
   }
 
-  private static PyClassType getClassType(@NotNull final PsiElement problemElement) {
+  private static PyClassType getClassType(final @NotNull PsiElement problemElement) {
     if ((problemElement instanceof PyQualifiedExpression)) {
       final PyExpression qualifier = ((PyQualifiedExpression)problemElement).getQualifier();
       if (qualifier == null) return null;

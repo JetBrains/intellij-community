@@ -4,16 +4,19 @@ package org.jetbrains.plugins.groovy.lang.psi.impl.utils;
 
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiType;
-import gnu.trove.THashMap;
-import gnu.trove.TObjectHashingStrategy;
+import com.intellij.psi.PsiTypes;
+import com.intellij.util.containers.CollectionFactory;
+import com.intellij.util.containers.HashingStrategy;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
 
-/**
- * @author ilyas
- */
 public final class DuplicatesUtil {
   public static void collectMethodDuplicates(Map<GrMethod, List<GrMethod>> map, HashSet<? super GrMethod> duplicateMethodsWarning, HashSet<? super GrMethod> duplicateMethodsErrors) {
     for (GrMethod method : map.keySet()) {
@@ -29,7 +32,7 @@ public final class DuplicatesUtil {
           if (typeElement != null) {
             methodReturnType = typeElement.getType();
           } else {
-            methodReturnType = PsiType.NULL;
+            methodReturnType = PsiTypes.nullType();
           }
 
           duplicateMethodsWarning.add(duplicateMethod);
@@ -48,11 +51,12 @@ public final class DuplicatesUtil {
     }
   }
 
-  public static <D extends PsiElement> Map<D, List<D>> factorDuplicates(D[] elements, TObjectHashingStrategy<D> strategy) {
-    if (elements == null || elements.length == 0) return Collections.emptyMap();
+  public static <D extends PsiElement> Map<D, List<D>> factorDuplicates(D[] elements, HashingStrategy<D> strategy) {
+    if (elements == null || elements.length == 0) {
+      return Collections.emptyMap();
+    }
 
-    THashMap<D, List<D>> map = new THashMap<>(strategy);
-
+    Map<D, List<D>> map = CollectionFactory.createCustomHashingStrategyMap(strategy);
     for (D element : elements) {
       List<D> list = map.get(element);
       if (list == null) {

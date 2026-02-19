@@ -23,7 +23,7 @@ import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
 /**
  * @author Max Medvedev
  */
-public class NewifyAnnotationChecker extends CustomAnnotationChecker {
+public final class NewifyAnnotationChecker extends CustomAnnotationChecker {
   @Override
   public boolean checkArgumentList(@NotNull AnnotationHolder holder, @NotNull GrAnnotation annotation) {
     return GroovyCommonClassNames.GROOVY_LANG_NEWIFY.equals(annotation.getQualifiedName()) &&

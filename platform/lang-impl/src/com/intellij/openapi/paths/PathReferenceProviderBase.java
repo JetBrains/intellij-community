@@ -1,5 +1,5 @@
 
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.paths;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -19,7 +19,7 @@ public abstract class PathReferenceProviderBase implements PathReferenceProvider
   private static final Logger LOG = Logger.getInstance(PathReferenceProviderBase.class);
 
   @Override
-  public boolean createReferences(@NotNull final PsiElement psiElement, final @NotNull List<PsiReference> references, final boolean soft) {
+  public boolean createReferences(final @NotNull PsiElement psiElement, final @NotNull List<PsiReference> references, final boolean soft) {
 
     final TextRange range = ElementManipulators.getValueTextRange(psiElement);
     int offset = range.getStartOffset();
@@ -49,18 +49,18 @@ public abstract class PathReferenceProviderBase implements PathReferenceProvider
     }
   }
 
-  public abstract boolean createReferences(@NotNull final PsiElement psiElement,
-                                  final int offset,
-                                  String text,
-                                  final @NotNull List<PsiReference> references,
-                                  final boolean soft);
+  public abstract boolean createReferences(final @NotNull PsiElement psiElement,
+                                           final int offset,
+                                           String text,
+                                           @NotNull List<? super PsiReference> references,
+                                           final boolean soft);
 
   public static int getLastPosOfURL(final int offset, @NotNull String url) {
     for (int i = offset; i < url.length(); i++) {
       switch (url.charAt(i)) {
-        case '?':
-        case '#':
+        case '?', '#' -> {
           return i;
+        }
       }
     }
     return -1;

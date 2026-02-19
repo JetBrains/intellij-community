@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.externalSystem
 
 import com.intellij.compiler.CompilerConfiguration
@@ -9,15 +7,18 @@ import com.intellij.openapi.externalSystem.model.Key
 import com.intellij.openapi.externalSystem.model.project.ProjectData
 import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider
 import com.intellij.openapi.externalSystem.service.project.manage.AbstractProjectDataService
-import com.intellij.openapi.externalSystem.util.DisposeAwareProjectChange
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.JavaSdkVersionUtil
 import com.intellij.openapi.roots.LanguageLevelProjectExtension
 import com.intellij.openapi.roots.ProjectRootManager
+import com.intellij.pom.java.AcceptedLanguageLevelsSettings
+import com.intellij.pom.java.JavaRelease
+import com.intellij.pom.java.LanguageLevel
 
 
-class JavaProjectDataService : AbstractProjectDataService<JavaProjectData, Project?>() {
+internal class JavaProjectDataService : AbstractProjectDataService<JavaProjectData, Project?>() {
+
   override fun getTargetDataKey(): Key<JavaProjectData> = JavaProjectData.KEY
 
   override fun importData(
@@ -27,27 +28,13 @@ class JavaProjectDataService : AbstractProjectDataService<JavaProjectData, Proje
     modelsProvider: IdeModifiableModelsProvider
   ) {
     if (toImport.isEmpty() || projectData == null) return
-    require(toImport.size == 1) { String.format("Expected to get a single project but got %d: %s", toImport.size, toImport) }
     if (!ExternalSystemApiUtil.isOneToOneMapping(project, projectData, modelsProvider.modules)) return
-    val javaProjectData = toImport.first().data
 
-    ExternalSystemApiUtil.executeProjectChangeAction(object : DisposeAwareProjectChange(project) {
-      override fun execute() {
-        importProjectSdk(project, javaProjectData)
-        importLanguageLevel(project, javaProjectData)
-        importTargetBytecodeVersion(project, javaProjectData)
-      }
-    })
-  }
-
-  private fun importProjectSdk(project: Project, javaProjectData: JavaProjectData) {
-    if (!javaProjectData.isSetJdkVersion) return
-    val jdkVersion = javaProjectData.jdkVersion
-    val sdk = JavaSdkVersionUtil.findJdkByVersion(jdkVersion)
-    val projectRootManager = ProjectRootManager.getInstance(project)
-    val projectSdk = projectRootManager.projectSdk
-    if (projectSdk == null) {
-      projectRootManager.projectSdk = sdk
+    val javaProjectData = toImport.single().data
+    ExternalSystemApiUtil.executeProjectChangeAction(project) {
+      importLanguageLevel(project, javaProjectData)
+      importTargetBytecodeVersion(project, javaProjectData)
+      importCompilerArguments(project, javaProjectData)
     }
   }
 
@@ -56,7 +43,8 @@ class JavaProjectDataService : AbstractProjectDataService<JavaProjectData, Proje
     val projectSdk = projectRootManager.projectSdk
     val projectSdkVersion = JavaSdkVersionUtil.getJavaSdkVersion(projectSdk)
     val projectSdkLanguageLevel = projectSdkVersion?.maxLanguageLevel
-    val languageLevel = javaProjectData.languageLevel
+    val languageLevel = JavaProjectDataServiceUtil.adjustLevelAndNotify(project, javaProjectData.languageLevel)
+
     val languageLevelProjectExtension = LanguageLevelProjectExtension.getInstance(project)
     languageLevelProjectExtension.languageLevel = languageLevel
     languageLevelProjectExtension.default = languageLevel == projectSdkLanguageLevel
@@ -66,5 +54,25 @@ class JavaProjectDataService : AbstractProjectDataService<JavaProjectData, Proje
     val compilerConfiguration = CompilerConfiguration.getInstance(project)
     val targetBytecodeVersion = javaProjectData.targetBytecodeVersion
     compilerConfiguration.projectBytecodeTarget = targetBytecodeVersion
+  }
+
+  private fun importCompilerArguments(project: Project, javaProjectData: JavaProjectData) {
+    val compilerConfiguration = CompilerConfiguration.getInstance(project)
+    val compilerArguments = javaProjectData.compilerArguments
+    compilerConfiguration.additionalOptions = compilerArguments
+  }
+}
+
+internal object JavaProjectDataServiceUtil {
+
+  internal fun adjustLevelAndNotify(project: Project, level: LanguageLevel): LanguageLevel {
+    if (!AcceptedLanguageLevelsSettings.isLanguageLevelAccepted(level)) {
+      val highestAcceptedLevel = AcceptedLanguageLevelsSettings.getHighestAcceptedLevel()
+      if (highestAcceptedLevel.isLessThan(level)) {
+        AcceptedLanguageLevelsSettings.showNotificationToAccept(project, level)
+      }
+      return if (highestAcceptedLevel.isAtLeast(level)) JavaRelease.getHighest() else highestAcceptedLevel
+    }
+    return level
   }
 }

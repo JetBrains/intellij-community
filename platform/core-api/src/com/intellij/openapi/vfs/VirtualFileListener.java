@@ -23,7 +23,8 @@ import java.util.EventListener;
  * Receives notifications about changes in the virtual file system.
  *
  * @see VirtualFileManager#addVirtualFileListener(VirtualFileListener)
- * @see VirtualFileListener
+ * @see com.intellij.openapi.vfs.newvfs.BulkFileListener
+ * @see AsyncFileListener
  */
 public interface VirtualFileListener extends EventListener {
 

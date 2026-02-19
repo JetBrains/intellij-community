@@ -1,8 +1,22 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.typeMigration.rules;
 
 import com.intellij.openapi.util.Pair;
-import com.intellij.psi.*;
+import com.intellij.psi.CommonClassNames;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiArrayAccessExpression;
+import com.intellij.psi.PsiArrayType;
+import com.intellij.psi.PsiAssignmentExpression;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiClassType;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiMember;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiMethodCallExpression;
+import com.intellij.psi.PsiSubstitutor;
+import com.intellij.psi.PsiType;
 import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.InheritanceUtil;
@@ -15,7 +29,7 @@ import com.intellij.refactoring.typeMigration.TypeMigrationLabeler;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
-public class ListArrayConversionRule extends TypeConversionRule {
+public final class ListArrayConversionRule extends TypeConversionRule {
   @Override
   public TypeConversionDescriptorBase findConversion(final PsiType from,
                                                      final PsiType to,
@@ -37,41 +51,42 @@ public class ListArrayConversionRule extends TypeConversionRule {
         expression = callExpression;
       }
     }
-    if (member instanceof PsiMethod) {
-      TypeConversionDescriptor descriptor = changeCollectionCallsToArray((PsiMethod)member, context, collectionType, arrayType);
+    if (member instanceof PsiMethod method) {
+      TypeConversionDescriptor descriptor = changeCollectionCallsToArray(method, context, collectionType, arrayType);
       if (descriptor != null) return descriptor;
 
-      @NonNls final String memberName = member.getName();
+      final @NonNls String memberName = member.getName();
       assert memberName != null;
-      if (memberName.equals("sort")) {
-        if (((PsiMethod)member).getParameterList().getParametersCount() == 1) {
-          descriptor = new TypeConversionDescriptor("Arrays.sort($qualifier$)", "Collections.sort($qualifier$)", expression);
+      descriptor = switch (memberName) {
+        case "sort" -> {
+          if (method.getParameterList().getParametersCount() == 1) {
+            yield new TypeConversionDescriptor("Arrays.sort($qualifier$)", "Collections.sort($qualifier$)", expression);
+          }
+          else {
+            yield new TypeConversionDescriptor("Arrays.sort($qualifier$, $expr$)", "Collections.sort($qualifier$, $expr$)", expression);
+          }
         }
-        else {
-          descriptor =
-            new TypeConversionDescriptor("Arrays.sort($qualifier$, $expr$)", "Collections.sort($qualifier$, $expr$)", expression);
+        case "binarySearch" -> {
+          if (method.getParameterList().getParametersCount() == 2) {
+            yield new TypeConversionDescriptor("Arrays.binarySearch($qualifier$, $key$)", "Collections.binarySearch($qualifier$, $key$)",
+                                               expression);
+          }
+          else {
+            yield new TypeConversionDescriptor("Arrays.binarySearch($qualifier$, $key$, $comparator$)",
+                                               "Collections.binarySearch($qualifier$, $key$, $comparator$)", expression);
+          }
         }
-      }
-      else if (memberName.equals("binarySearch")) {
-        if (((PsiMethod)member).getParameterList().getParametersCount() == 2) {
-          descriptor =
-            new TypeConversionDescriptor("Arrays.binarySearch($qualifier$, $key$)", "Collections.binarySearch($qualifier$, $key$)",
-                                         expression);
+        case "asList" -> {
+          if (method.getParameterList().getParametersCount() == 1) {
+            yield new TypeConversionDescriptor("Arrays.asList($qualifier$)", "$qualifier$", expression);
+          } else {
+            yield null;
+          }
         }
-        else {
-          descriptor = new TypeConversionDescriptor("Arrays.binarySearch($qualifier$, $key$, $comparator$)",
-                                                    "Collections.binarySearch($qualifier$, $key$, $comparator$)", expression);
-        }
-      }
-      else if (memberName.equals("asList")) {
-        if (((PsiMethod)member).getParameterList().getParametersCount() == 1) {
-          descriptor =
-            new TypeConversionDescriptor("Arrays.asList($qualifier$)", "$qualifier$", expression);
-        }
-      }
-      else if (memberName.equals("fill")) {
-        descriptor = new TypeConversionDescriptor("Arrays.fill($qualifier$, $filler$)", "Collections.fill($qualifier$, $filler$)", expression);
-      }
+        case "fill" ->
+          new TypeConversionDescriptor("Arrays.fill($qualifier$, $filler$)", "Collections.fill($qualifier$, $filler$)", expression);
+        default -> null;
+      };
       if (descriptor != null) {
         return from instanceof PsiClassType
                ? new TypeConversionDescriptor(descriptor.getReplaceByString(), descriptor.getStringToReplace(), descriptor.getExpression())
@@ -97,8 +112,7 @@ public class ListArrayConversionRule extends TypeConversionRule {
     return null;
   }
 
-  @Nullable
-  public static PsiType evaluateCollectionsType(PsiClassType classType, PsiExpression expression) {
+  public static @Nullable PsiType evaluateCollectionsType(PsiClassType classType, PsiExpression expression) {
     final PsiClassType.ClassResolveResult classResolveResult = PsiUtil.resolveGenericsClassInType(classType);
     final PsiClass psiClass = classResolveResult.getElement();
     if (psiClass != null) {
@@ -142,32 +156,34 @@ public class ListArrayConversionRule extends TypeConversionRule {
     return null;
   }
 
-  @Nullable
-  private static TypeConversionDescriptor changeCollectionCallsToArray(final PsiMethod method,
-                                                                       final PsiElement context,
-                                                                       PsiType collectionType,
-                                                                       PsiArrayType arrayType) {
-    @NonNls final String methodName = method.getName();
-    if (methodName.equals("toArray")) {
-      if (method.getParameterList().isEmpty()) {
-        return new TypeConversionDescriptor("$qualifier$.toArray()", "$qualifier$");
+  private static @Nullable TypeConversionDescriptor changeCollectionCallsToArray(final PsiMethod method,
+                                                                                 final PsiElement context,
+                                                                                 PsiType collectionType,
+                                                                                 PsiArrayType arrayType) {
+    final @NonNls String methodName = method.getName();
+    return switch (methodName) {
+      case "toArray" -> {
+        if (method.getParameterList().isEmpty()) {
+          yield new TypeConversionDescriptor("$qualifier$.toArray()", "$qualifier$");
+        }
+        yield new TypeConversionDescriptor("$qualifier$.toArray($expr$)", "$qualifier$");
       }
-      return new TypeConversionDescriptor("$qualifier$.toArray($expr$)", "$qualifier$");
-    }
-    else if (methodName.equals("size")) {
-      return new TypeConversionDescriptor("$qualifier$.size()", "$qualifier$.length");
-    }
-    else if (methodName.equals("get")) {
-      if (TypeConversionUtil.isAssignable(collectionType, arrayType.getComponentType())) {
-        return new TypeConversionDescriptor("$qualifier$.get($i$)", "$qualifier$[$i$]", PsiTreeUtil.getParentOfType(context, PsiMethodCallExpression.class));
+      case "size" -> new TypeConversionDescriptor("$qualifier$.size()", "$qualifier$.length");
+      case "get" -> {
+        if (TypeConversionUtil.isAssignable(collectionType, arrayType.getComponentType())) {
+          yield new TypeConversionDescriptor("$qualifier$.get($i$)", "$qualifier$[$i$]",
+                                             PsiTreeUtil.getParentOfType(context, PsiMethodCallExpression.class));
+        }
+        yield null;
       }
-    }
-    else if (methodName.equals("set")) {
-      if (TypeConversionUtil.isAssignable(arrayType.getComponentType(), collectionType)) {
-        return new TypeConversionDescriptor("$qualifier$.set($i$, $val$)", "$qualifier$[$i$] = $val$");
+      case "set" -> {
+        if (TypeConversionUtil.isAssignable(arrayType.getComponentType(), collectionType)) {
+          yield new TypeConversionDescriptor("$qualifier$.set($i$, $val$)", "$qualifier$[$i$] = $val$");
+        }
+        yield null;
       }
-    }
-    return null;
+      default -> null;
+    };
   }
 
 }

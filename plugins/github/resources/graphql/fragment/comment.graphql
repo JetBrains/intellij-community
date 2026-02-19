@@ -1,8 +1,0 @@
-fragment comment on Comment {
-    ...nodeInfo
-    author {
-        ...actorInfo
-    }
-    bodyHTML
-    createdAt
-}

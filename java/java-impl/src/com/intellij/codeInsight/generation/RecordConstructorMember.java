@@ -1,23 +1,28 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.generation;
 
 import com.intellij.codeInsight.AnnotationTargetUtil;
-import com.intellij.codeInsight.daemon.JavaErrorBundle;
 import com.intellij.java.JavaBundle;
 import com.intellij.openapi.project.Project;
-import com.intellij.pom.java.LanguageLevel;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiAnnotation;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiModifierList;
+import com.intellij.psi.PsiParameter;
+import com.intellij.psi.PsiParameterList;
+import com.intellij.psi.PsiRecordComponent;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.psi.util.AccessModifier;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.psi.util.PsiFormatUtilBase;
-import com.intellij.psi.util.PsiUtil;
 import com.intellij.ui.SimpleColoredComponent;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.JTree;
 
 public class RecordConstructorMember implements ClassMember {
   private final PsiClass myRecord;
@@ -43,21 +48,17 @@ public class RecordConstructorMember implements ClassMember {
     return myCompact;
   }
 
-  @NotNull
   @Override
-  public String getText() {
+  public @NotNull String getText() {
     return myCompact ? JavaBundle.message("label.compact.constructor") : JavaBundle.message("label.canonical.constructor");
   }
 
-  @NotNull
-  public PsiMethod generateRecordConstructor() {
+  public @NotNull PsiMethod generateRecordConstructor() {
     String constructor;
     AccessModifier accessModifier = AccessModifier.PUBLIC;
-    if (PsiUtil.getLanguageLevel(myRecord) != LanguageLevel.JDK_14_PREVIEW) {
-      PsiModifierList list = myRecord.getModifierList();
-      if (list != null) {
-        accessModifier = AccessModifier.fromModifierList(list);
-      }
+    PsiModifierList list = myRecord.getModifierList();
+    if (list != null) {
+      accessModifier = AccessModifier.fromModifierList(list);
     }
     if (myCompact) {
       constructor = myRecord.getName() + "{\n}";

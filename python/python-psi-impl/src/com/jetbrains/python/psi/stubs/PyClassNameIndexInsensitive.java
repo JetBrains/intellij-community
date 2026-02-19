@@ -26,15 +26,12 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
 
-/**
- * @author yole
- */
-public class PyClassNameIndexInsensitive extends StringStubIndexExtension<PyClass> {
-  public static final StubIndexKey<String,PyClass> KEY = StubIndexKey.createIndexKey("Py.class.shortNameInsensitive");
 
-  @NotNull
+public final class PyClassNameIndexInsensitive extends StringStubIndexExtension<PyClass> {
+  public static final StubIndexKey<String, PyClass> KEY = StubIndexKey.createIndexKey("Py.class.shortNameInsensitive");
+
   @Override
-  public StubIndexKey<String, PyClass> getKey() {
+  public @NotNull StubIndexKey<String, PyClass> getKey() {
     return KEY;
   }
 

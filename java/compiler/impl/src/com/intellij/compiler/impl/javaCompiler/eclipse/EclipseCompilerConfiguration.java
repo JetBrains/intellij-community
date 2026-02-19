@@ -1,8 +1,7 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.compiler.impl.javaCompiler.eclipse;
 
 import com.intellij.openapi.components.PersistentStateComponent;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.project.Project;
@@ -15,8 +14,7 @@ public class EclipseCompilerConfiguration implements PersistentStateComponent<Ec
   private final EclipseCompilerOptions mySettings = new EclipseCompilerOptions();
 
   @Override
-  @NotNull
-  public EclipseCompilerOptions getState() {
+  public @NotNull EclipseCompilerOptions getState() {
     return mySettings;
   }
 
@@ -26,5 +24,5 @@ public class EclipseCompilerConfiguration implements PersistentStateComponent<Ec
   }
 
   public static EclipseCompilerOptions getOptions(Project project, Class<? extends EclipseCompilerConfiguration> aClass) {
-    return ServiceManager.getService(project, aClass).getState();
+    return project.getService(aClass).getState();
   }}

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.debugger.remote.vfs;
 
 import com.google.common.collect.Maps;
@@ -10,14 +10,16 @@ import com.intellij.util.IncorrectOperationException;
 import com.jetbrains.python.debugger.PyDebugProcess;
 import com.jetbrains.python.debugger.PyLocalPositionConverter;
 import com.jetbrains.python.remote.PyRemotePathMapper;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 import java.util.Map;
 
-public class PyRemoteDebugVirtualFS extends VirtualFileSystem {
-  @NonNls private static final String PROTOCOL = "remoteDebugVfs";
+@ApiStatus.Internal
+public final class PyRemoteDebugVirtualFS extends VirtualFileSystem {
+  private static final @NonNls String PROTOCOL = "remoteDebugVfs";
 
   private final PyRemotePathMapper myPathMapper;
   private final PyDebugProcess myDebugProcess;
@@ -33,9 +35,8 @@ public class PyRemoteDebugVirtualFS extends VirtualFileSystem {
     myPathMapper = pathMapper;
   }
 
-  @NotNull
   @Override
-  public String getProtocol() {
+  public @NotNull String getProtocol() {
     return PROTOCOL;
   }
 
@@ -84,35 +85,32 @@ public class PyRemoteDebugVirtualFS extends VirtualFileSystem {
   }
 
   @Override
-  protected void deleteFile(Object requestor, @NotNull VirtualFile vFile) throws IOException {
+  protected void deleteFile(Object requestor, @NotNull VirtualFile vFile) {
   }
 
   @Override
-  protected void moveFile(Object requestor, @NotNull VirtualFile vFile, @NotNull VirtualFile newParent) throws IOException {
+  protected void moveFile(Object requestor, @NotNull VirtualFile vFile, @NotNull VirtualFile newParent) {
   }
 
   @Override
-  protected void renameFile(Object requestor, @NotNull VirtualFile vFile, @NotNull String newName) throws IOException {
+  protected void renameFile(Object requestor, @NotNull VirtualFile vFile, @NotNull String newName) {
   }
 
-  @NotNull
   @Override
-  protected VirtualFile createChildFile(Object requestor, @NotNull VirtualFile vDir, @NotNull String fileName) throws IOException {
+  protected @NotNull VirtualFile createChildFile(Object requestor, @NotNull VirtualFile vDir, @NotNull String fileName) {
     throw new IncorrectOperationException();
   }
 
-  @NotNull
   @Override
-  protected VirtualFile createChildDirectory(Object requestor, @NotNull VirtualFile vDir, @NotNull String dirName) throws IOException {
+  protected @NotNull VirtualFile createChildDirectory(Object requestor, @NotNull VirtualFile vDir, @NotNull String dirName) throws IOException {
     throw new IncorrectOperationException();
   }
 
-  @NotNull
   @Override
-  protected VirtualFile copyFile(Object requestor,
-                                 @NotNull VirtualFile virtualFile,
-                                 @NotNull VirtualFile newParent,
-                                 @NotNull String copyName) throws IOException {
+  protected @NotNull VirtualFile copyFile(Object requestor,
+                                          @NotNull VirtualFile virtualFile,
+                                          @NotNull VirtualFile newParent,
+                                          @NotNull String copyName) throws IOException {
     return virtualFile;
   }
 

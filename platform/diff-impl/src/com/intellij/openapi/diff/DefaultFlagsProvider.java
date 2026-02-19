@@ -3,8 +3,10 @@ package com.intellij.openapi.diff;
 
 import com.intellij.openapi.vcs.ex.Range;
 import com.intellij.openapi.vcs.ex.VisibleRangeMerger;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
+@ApiStatus.Internal
 public abstract class DefaultFlagsProvider implements VisibleRangeMerger.FlagsProvider<DefaultLineFlags> {
   public static final VisibleRangeMerger.FlagsProvider<DefaultLineFlags> DEFAULT = new DefaultFlagsProvider() {
     @Override

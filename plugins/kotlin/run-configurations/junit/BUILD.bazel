@@ -1,0 +1,71 @@
+### auto-generated section `build intellij.kotlin.runConfigurations.junit` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "junit_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "junit",
+  module_name = "intellij.kotlin.runConfigurations.junit",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":junit_resources"],
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:kotlinc-kotlin-compiler-common",
+    "//java/java-indexing-api:indexing",
+    "//platform/core-api:core",
+    "//platform/execution-impl",
+    "//platform/execution",
+    "//platform/indexing-api:indexing",
+    "//plugins/kotlin/base/util",
+    "//plugins/kotlin/base/facet",
+    "//plugins/kotlin/base/project-structure",
+    "//plugins/kotlin/base/analysis",
+    "//platform/smRunner",
+    "//plugins/kotlin/base/code-insight",
+    "//plugins/kotlin/base/indices",
+    "//plugins/kotlin/run-configurations/jvm",
+    "//platform/lang-api:lang",
+    "//java/execution/impl",
+    "//java/java-analysis-impl:analysis-impl",
+    "//plugins/junit",
+    "//java/java-impl:impl",
+    "//plugins/kotlin/code-insight/impl-base:kotlin-codeInsight-shared",
+    "//plugins/kotlin/base/plugin",
+  ]
+)
+
+jvm_library(
+  name = "junit_test_lib",
+  module_name = "intellij.kotlin.runConfigurations.junit",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    ":junit",
+    "//java/java-indexing-api:indexing_test_lib",
+    "//platform/core-api:core_test_lib",
+    "//platform/execution-impl:execution-impl_test_lib",
+    "//platform/execution:execution_test_lib",
+    "//platform/indexing-api:indexing_test_lib",
+    "//plugins/kotlin/base/util:util_test_lib",
+    "//plugins/kotlin/base/facet:facet_test_lib",
+    "//plugins/kotlin/base/project-structure:project-structure_test_lib",
+    "//plugins/kotlin/base/analysis:analysis_test_lib",
+    "//platform/smRunner:smRunner_test_lib",
+    "//plugins/kotlin/base/code-insight:code-insight_test_lib",
+    "//plugins/kotlin/base/indices:indices_test_lib",
+    "//plugins/kotlin/run-configurations/jvm:jvm_test_lib",
+    "//platform/lang-api:lang_test_lib",
+    "//java/execution/impl:impl_test_lib",
+    "//java/java-analysis-impl:analysis-impl_test_lib",
+    "//plugins/junit:junit_test_lib",
+    "//java/java-impl:impl_test_lib",
+    "//plugins/kotlin/code-insight/impl-base:kotlin-codeInsight-shared_test_lib",
+    "//plugins/kotlin/base/plugin:plugin_test_lib",
+  ]
+)
+### auto-generated section `build intellij.kotlin.runConfigurations.junit` end

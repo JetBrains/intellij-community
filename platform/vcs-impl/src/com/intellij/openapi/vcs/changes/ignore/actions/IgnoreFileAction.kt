@@ -3,6 +3,7 @@ package com.intellij.openapi.vcs.changes.ignore.actions
 
 import com.intellij.CommonBundle
 import com.intellij.ide.IdeBundle
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.application.runUndoTransparentWriteAction
@@ -22,13 +23,18 @@ import com.intellij.openapi.vcs.changes.ignore.psi.util.addNewElements
 import com.intellij.openapi.vcs.changes.ui.ChangesListView
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.util.containers.asJBIterable
 import com.intellij.vcsUtil.VcsUtil
-import kotlin.streams.toList
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 class IgnoreFileAction(private val ignoreFile: VirtualFile) : DumbAwareAction() {
+  override fun getActionUpdateThread(): ActionUpdateThread {
+    return ActionUpdateThread.BGT
+  }
 
   override fun actionPerformed(e: AnActionEvent) {
-    val project = e.getRequiredData(CommonDataKeys.PROJECT)
+    val project = e.getData(CommonDataKeys.PROJECT) ?: return
     val vcs = VcsUtil.getVcsFor(project, ignoreFile) ?: return
     val ignoreFileRoot = ignoreFile.parent ?: return
 
@@ -40,10 +46,14 @@ class IgnoreFileAction(private val ignoreFile: VirtualFile) : DumbAwareAction() 
 
 }
 
+@ApiStatus.Internal
 class CreateNewIgnoreFileAction(private val ignoreFileName: String, private val ignoreFileRoot: VirtualFile) : DumbAwareAction() {
+  override fun getActionUpdateThread(): ActionUpdateThread {
+    return ActionUpdateThread.BGT
+  }
 
   override fun actionPerformed(e: AnActionEvent) {
-    val project = e.getRequiredData(CommonDataKeys.PROJECT)
+    val project = e.getData(CommonDataKeys.PROJECT) ?: return
     val ignoreFileRootVcs = VcsUtil.getVcsFor(project, ignoreFileRoot) ?: return
 
     val ignored = getIgnoredFileBeans(e, ignoreFileRoot, ignoreFileRootVcs)
@@ -85,8 +95,8 @@ internal fun getIgnoredFileBeans(e: AnActionEvent, ignoreFileRoot: VirtualFile, 
 }
 
 fun getSelectedFiles(e: AnActionEvent): List<VirtualFile> {
-  val exactlySelectedFiles = e.getData(ChangesListView.EXACTLY_SELECTED_FILES_DATA_KEY)?.toList()
+  val exactlySelectedFiles = e.getData(ChangesListView.EXACTLY_SELECTED_FILES_DATA_KEY).asJBIterable().toList()
 
-  return if (!exactlySelectedFiles.isNullOrEmpty()) exactlySelectedFiles
+  return if (exactlySelectedFiles.isNotEmpty()) exactlySelectedFiles
   else e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY)?.toList() ?: emptyList()
 }

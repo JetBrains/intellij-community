@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.psi.impl;
 
 import com.intellij.psi.JavaPsiFacade;
@@ -8,9 +8,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-/**
- * @author ven
- */
 public class GrImmediateTupleType extends GrTupleType {
 
   private final List<PsiType> myComponentTypes;
@@ -28,15 +25,13 @@ public class GrImmediateTupleType extends GrTupleType {
     return true;
   }
 
-  @NotNull
   @Override
-  protected List<PsiType> inferComponents() {
+  protected @NotNull List<PsiType> inferComponents() {
     return myComponentTypes;
   }
 
-  @NotNull
   @Override
-  public List<PsiType> getComponentTypes() {
+  public @NotNull List<PsiType> getComponentTypes() {
     return myComponentTypes;
   }
 }

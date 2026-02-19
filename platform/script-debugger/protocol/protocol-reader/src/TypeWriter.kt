@@ -3,7 +3,6 @@ package org.jetbrains.protocolReader
 
 import org.jetbrains.jsonProtocol.JsonObjectBased
 import java.lang.reflect.Method
-import java.util.*
 
 internal const val FIELD_PREFIX = '_'
 
@@ -217,6 +216,8 @@ internal class TypeWriter<T>(val typeClass: Class<T>, jsonSuperClass: TypeRef<*>
             fieldLoader.valueReader.writeReadCode(classScope, false, out)
           }
           catch (e: UnsupportedOperationException) {
+            println("Unable to generate reader for field ${typeClass.name}::${fieldLoader.name}")
+            e.printStackTrace()
             out.append("throw UnsupportedOperationException()").newLine()
           }
 

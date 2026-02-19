@@ -1,4 +1,4 @@
 def foo(smth, param):
     if smth:
         param = ""
-    print(param.smth())
+    print(param.<weak_warning descr="Member 'str' of 'Union[str, Any]' does not have attribute 'smth'">smth</weak_warning>())

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.intentions.conversions;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -6,7 +6,11 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiReference;
+import com.intellij.psi.PsiType;
 import com.intellij.psi.search.searches.MethodReferencesSearch;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.MethodSignature;
@@ -42,22 +46,20 @@ import java.util.List;
 /**
  * @author Maxim.Medvedev
  */
-public class ConvertClosureToMethodIntention extends Intention {
+public final class ConvertClosureToMethodIntention extends Intention {
   private static final Logger LOG =
     Logger.getInstance(ConvertClosureToMethodIntention.class);
 
-  @NotNull
   @Override
-  protected PsiElementPredicate getElementPredicate() {
+  protected @NotNull PsiElementPredicate getElementPredicate() {
     return new MyPredicate();
   }
 
   @Override
   protected void processIntention(@NotNull PsiElement element, @NotNull Project project, Editor editor) throws IncorrectOperationException {
     final PsiElement parent = element.getParent();
-    if (!(parent instanceof GrField)) return;
+    if (!(parent instanceof GrField field)) return;
 
-    final GrField field = (GrField)parent;
     final HashSet<PsiReference> usages = new HashSet<>();
     usages.addAll(ReferencesSearch.search(field).findAll());
     final GrAccessorMethod[] getters = field.getGetters();
@@ -120,7 +122,7 @@ public class ConvertClosureToMethodIntention extends Intention {
     final GrClosableBlock block = (GrClosableBlock)field.getInitializerGroovy();
 
     final GrModifierList modifierList = field.getModifierList();
-    if (modifierList.getModifiers().length > 0 || modifierList.getAnnotations().length > 0) {
+    if (modifierList.getModifiers().length > 0 || modifierList.hasAnnotations()) {
       builder.append(modifierList.getText());
     }
     else {
@@ -190,9 +192,8 @@ public class ConvertClosureToMethodIntention extends Intention {
       if (element.getLanguage() != GroovyLanguage.INSTANCE) return false;
 
       final PsiElement parent = element.getParent();
-      if (!(parent instanceof GrField)) return false;
+      if (!(parent instanceof GrField field)) return false;
 
-      final GrField field = (GrField)parent;
       if (field.getNameIdentifierGroovy() != element) return false;
 
       final PsiElement varDeclaration = field.getParent();

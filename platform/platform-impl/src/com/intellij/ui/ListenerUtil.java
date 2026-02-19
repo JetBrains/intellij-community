@@ -3,7 +3,7 @@ package com.intellij.ui;
 
 import com.intellij.util.ui.UIUtil;
 
-import java.awt.*;
+import java.awt.Component;
 import java.awt.event.FocusListener;
 import java.awt.event.KeyListener;
 import java.awt.event.MouseListener;

@@ -4,6 +4,7 @@ package com.intellij.java.codeInsight.daemon;
 
 import com.intellij.codeInsight.daemon.DaemonAnalyzerTestCase;
 import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerEx;
+import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.LossyEncodingInspection;
@@ -12,7 +13,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.encoding.EncodingProjectManager;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.testFramework.PlatformTestUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -33,7 +34,7 @@ public class LossyEncodingTest extends DaemonAnalyzerTestCase {
   @Override
   protected void tearDown() throws Exception {
     try {
-      UIUtil.dispatchAllInvocationEvents(); // invokeLater() in EncodingProjectManagerImpl.reloadAllFilesUnder()
+      PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue(); // invokeLater() in EncodingProjectManagerImpl.reloadAllFilesUnder()
     }
     catch (Throwable e) {
       addSuppressedException(e);
@@ -49,7 +50,7 @@ public class LossyEncodingTest extends DaemonAnalyzerTestCase {
     VirtualFile myVFile = myFile.getVirtualFile();
     FileDocumentManager.getInstance().saveAllDocuments();
     EncodingProjectManager.getInstance(getProject()).setEncoding(myVFile, ascii);
-    UIUtil.dispatchAllInvocationEvents(); // wait for reload requests to bubble up
+    PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue(); // wait for reload requests to bubble up
     assertEquals(ascii, myVFile.getCharset());
     int start = myEditor.getCaretModel().getOffset();
     type((char)0x445);
@@ -71,7 +72,7 @@ public class LossyEncodingTest extends DaemonAnalyzerTestCase {
   public void testNativeConversion() {
     configureByText(PropertiesFileType.INSTANCE, "a=<caret>v");
     EncodingProjectManager.getInstance(getProject()).setNative2AsciiForPropertiesFiles(null, true);
-    UIUtil.dispatchAllInvocationEvents();  //reload files
+    PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();  //reload files
 
     type('\\');
     type('\\');
@@ -85,16 +86,9 @@ public class LossyEncodingTest extends DaemonAnalyzerTestCase {
     type("US-ASCII");
 
     Collection<HighlightInfo> infos = doHighlighting();
-    assertEquals(1, infos.size());
-    boolean found = false;
+    HighlightInfo info = assertOneElement(infos);
 
-    for(HighlightInfo info:infos) {
-      if (info.getDescription().equals("Unsupported characters for the charset 'US-ASCII'")) {
-        found = true;
-        break;
-      }
-    }
-    assertTrue(found);
+    assertEquals("Unsupported characters for the charset 'US-ASCII'", info.getDescription());
   }
 
   public void testMultipleRanges() throws Exception {
@@ -106,12 +100,12 @@ public class LossyEncodingTest extends DaemonAnalyzerTestCase {
 
   private void doTest(@NonNls String filePath) throws Exception {
     doTest(BASE_PATH + "/" + filePath, true, false);
-    UIUtil.dispatchAllInvocationEvents();
+    PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
   }
 
   public void testNativeEncoding() throws Exception {
     EncodingProjectManager.getInstance(getProject()).setNative2AsciiForPropertiesFiles(null, true);
-    UIUtil.dispatchAllInvocationEvents();
+    PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
     configureByFile(BASE_PATH + "/" + "NativeEncoding.properties");
 
     doDoTest(true, false);
@@ -127,9 +121,9 @@ public class LossyEncodingTest extends DaemonAnalyzerTestCase {
     assertEquals(StandardCharsets.UTF_8, virtualFile.getCharset());
 
     doHighlighting();
-    List<HighlightInfo> infos = DaemonCodeAnalyzerEx.getInstanceEx(getProject()).getFileLevelHighlights(getProject(), getFile());
+    List<HighlightInfo> infos = ((DaemonCodeAnalyzerImpl)DaemonCodeAnalyzerEx.getInstanceEx(getProject())).getFileLevelHighlights(getProject(), getFile());
     HighlightInfo info = assertOneElement(infos);
-    assertEquals("File was loaded in the wrong encoding: 'UTF-8'", info.getDescription());
+    assertEquals("The file was loaded in a wrong encoding: 'UTF-8'", info.getDescription());
   }
 
   public void testSurrogateUTF8() {
@@ -151,7 +145,7 @@ public class LossyEncodingTest extends DaemonAnalyzerTestCase {
     final Document document = Objects.requireNonNull(FileDocumentManager.getInstance().getDocument(virtualFile));
     assertFalse(FileDocumentManager.getInstance().isDocumentUnsaved(document));
     doHighlighting();
-    List<HighlightInfo> infos = DaemonCodeAnalyzerEx.getInstanceEx(getProject()).getFileLevelHighlights(getProject(), getFile());
+    List<HighlightInfo> infos = ((DaemonCodeAnalyzerImpl)DaemonCodeAnalyzerEx.getInstanceEx(getProject())).getFileLevelHighlights(getProject(), getFile());
     assertEmpty(infos);
   }
 }

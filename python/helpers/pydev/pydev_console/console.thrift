@@ -18,9 +18,11 @@ struct DebugValue {
   4: string value,
   5: bool isContainer,
   6: string shape,
-  7: bool isReturnedValue,
-  8: bool isIPythonHidden,
-  9: bool isErrorOnEval,
+  7: string arrayElementType,
+  8: bool isReturnedValue,
+  9: bool isIPythonHidden,
+  10: bool isErrorOnEval,
+  11: string typeRendererId
 }
 
 typedef list<DebugValue> GetFrameResponse
@@ -121,6 +123,10 @@ exception PythonUnhandledException {
   1: string traceback,
 }
 
+exception PythonTableException {
+  1: string message,
+}
+
 /**
  * Indicates that the related array has more than two dimensions.
  **/
@@ -150,12 +156,17 @@ service PythonConsoleBackendService {
   /**
    * Return Frame
    */
-  GetFrameResponse getFrame() throws (1: PythonUnhandledException unhandledException),
+  GetFrameResponse getFrame(1: i32 type) throws (1: PythonUnhandledException unhandledException),
 
   /**
    * Parameter is a full path in a variables tree from the top-level parent to the debug value.
    **/
   DebugValues getVariable(1: string variable) throws (1: PythonUnhandledException unhandledException),
+
+  /**
+     * Parameter is a serialized user type renderers.
+     **/
+    bool setUserTypeRenderers(1: string renderers) throws (1: PythonUnhandledException unhandledException),
 
   /**
    * Changes the variable value asynchronously.
@@ -190,13 +201,20 @@ service PythonConsoleBackendService {
    * The result is returned asyncronously with `PythonConsoleFrontendService.returnFullValue`.
    */
   void loadFullValue(1: LoadFullValueRequestSeq seq, 2: list<string> variables) throws (1: PythonUnhandledException unhandledException),
+
+  string execRaw(1: string command) throws (1: PythonUnhandledException unhandledException)
+
+  string execTableCommand(1: string tableVariable, 2: string commandType, 3: string startIndex, 4: string endIndex, 5: string format) throws (1: PythonUnhandledException unhandledException, 2: PythonTableException tableException)
+
+  string execTableImageCommand(1: string tableVariable, 2: string commandType, 3: string offset, 4: string imageId) throws (1: PythonUnhandledException unhandledException, 2: PythonTableException tableException)
+
 }
 
 exception KeyboardInterruptException {
 }
 
 service PythonConsoleFrontendService {
-  void notifyFinished(1: bool needsMoreInput),
+  void notifyFinished(1: bool needsMoreInput, 2: bool exceptionOccurred),
 
   string requestInput(1: string path) throws (1: KeyboardInterruptException interrupted),
 
@@ -210,4 +228,6 @@ service PythonConsoleFrontendService {
   void returnFullValue(1: LoadFullValueRequestSeq requestSeq, 2: list<DebugValue> response),
 
   bool IPythonEditor(1: string path, 2: string line),
+
+  void sendRichOutput(1: map<string, string> data),
 }

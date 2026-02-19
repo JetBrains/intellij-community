@@ -15,6 +15,7 @@ package org.zmlx.hg4idea;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.RoamingType;
+import com.intellij.openapi.components.SettingsCategory;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.util.text.StringUtil;
@@ -24,7 +25,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.HashMap;
 import java.util.Map;
 
-@State(name = "HgGlobalSettings", storages = @Storage(value = "hg.xml", roamingType = RoamingType.PER_OS))
+@State(name = "HgGlobalSettings", storages = @Storage(value = "hg.xml", roamingType = RoamingType.PER_OS), category = SettingsCategory.TOOLS)
 public class HgGlobalSettings implements PersistentStateComponent<HgGlobalSettings.State> {
   private static final int FIVE_MINUTES = 300;
 
@@ -56,8 +57,7 @@ public class HgGlobalSettings implements PersistentStateComponent<HgGlobalSettin
    * @param stringUrl the url for which to retrieve the last used username;
    * @return the (probably empty) login remembered for this URL.
    */
-  @Nullable
-  public String getRememberedUserName(@NotNull String stringUrl) {
+  public @Nullable String getRememberedUserName(@NotNull String stringUrl) {
     return myState.myRememberedUserNames.get(stringUrl);
   }
 
@@ -77,8 +77,7 @@ public class HgGlobalSettings implements PersistentStateComponent<HgGlobalSettin
     myState.myRememberedUserNames.put(stringUrl, username);
   }
 
-  @Nullable
-  public String getHgExecutable() {
+  public @Nullable String getHgExecutable() {
     return myState.myHgExecutable;
   }
 

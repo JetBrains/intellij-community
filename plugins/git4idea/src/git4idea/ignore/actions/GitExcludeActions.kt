@@ -1,13 +1,14 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.ignore.actions
 
-import com.intellij.openapi.actionSystem.ActionPlaces
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.ProjectLevelVcsManager
+import com.intellij.openapi.vcs.VcsBundle
 import com.intellij.openapi.vcs.changes.ChangeListManager
 import com.intellij.openapi.vcs.changes.IgnoredBeanFactory
 import com.intellij.openapi.vcs.changes.actions.ScheduleForAdditionAction
@@ -15,6 +16,7 @@ import com.intellij.openapi.vcs.changes.ignore.actions.getSelectedFiles
 import com.intellij.openapi.vcs.changes.ignore.actions.writeIgnoreFileEntries
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.vcsUtil.VcsUtil
 import git4idea.GitUtil
 import git4idea.GitVcs
 import git4idea.i18n.GitBundle.messagePointer
@@ -22,7 +24,6 @@ import git4idea.ignore.lang.GitExcludeFileType
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NotNull
 import java.util.function.Supplier
-import kotlin.streams.toList
 
 abstract class DefaultGitExcludeAction(dynamicText: @NotNull Supplier<@Nls String>,
                                        dynamicDescription: @NotNull Supplier<@Nls String>)
@@ -32,6 +33,10 @@ abstract class DefaultGitExcludeAction(dynamicText: @NotNull Supplier<@Nls Strin
     val enabled = isEnabled(e)
     e.presentation.isVisible = enabled
     e.presentation.isEnabled = enabled
+  }
+
+  override fun getActionUpdateThread(): ActionUpdateThread {
+    return ActionUpdateThread.BGT
   }
 
   protected open fun isEnabled(e: AnActionEvent): Boolean {
@@ -48,7 +53,7 @@ class AddToGitExcludeAction : DefaultGitExcludeAction(
   override fun isEnabled(e: AnActionEvent): Boolean {
     val project = e.getData(CommonDataKeys.PROJECT) ?: return false
     val selectedFiles = getSelectedFiles(e)
-    val unversionedFiles = ScheduleForAdditionAction.getUnversionedFiles(e, project)
+    val unversionedFiles = ScheduleForAdditionAction.Manager.getUnversionedFiles(e, project)
     return isEnabled(project, selectedFiles, unversionedFiles.toList())
   }
 
@@ -62,12 +67,16 @@ class AddToGitExcludeAction : DefaultGitExcludeAction(
   }
 
   override fun actionPerformed(e: AnActionEvent) {
-    val project = e.getRequiredData(CommonDataKeys.PROJECT)
+    val project = e.getData(CommonDataKeys.PROJECT) ?: return
     val gitVcs = GitVcs.getInstance(project)
     val selectedFiles = getSelectedFiles(e)
     if (selectedFiles.isEmpty()) return
 
-    for ((repository, filesToAdd) in GitUtil.sortFilesByRepositoryIgnoringMissing(project, selectedFiles)) {
+    val filesToIgnore =
+      VcsUtil.computeWithModalProgress(project, VcsBundle.message("ignoring.files.progress.title"), false) {
+        GitUtil.sortFilesByRepositoryIgnoringMissing(project, selectedFiles)
+      }
+    for ((repository, filesToAdd) in filesToIgnore) {
       val gitExclude = repository.repositoryFiles.excludeFile.let { VfsUtil.findFileByIoFile(it, true) } ?: continue
       val ignores = filesToAdd.map { file -> IgnoredBeanFactory.ignoreFile(file, project) }
       writeIgnoreFileEntries(project, gitExclude, ignores, gitVcs, repository.root)
@@ -81,15 +90,8 @@ class OpenGitExcludeAction : DefaultGitExcludeAction(
   messagePointer("git.open.exclude.file.action.description")
 ) {
 
-  override fun update(e: AnActionEvent) {
-    if (e.place == ActionPlaces.MAIN_MENU)
-      super.update(e)
-    else
-      e.presentation.isEnabledAndVisible = false
-  }
-
   override fun actionPerformed(e: AnActionEvent) {
-    val project = e.getRequiredData(CommonDataKeys.PROJECT)
+    val project = e.getData(CommonDataKeys.PROJECT) ?: return
     val excludeToOpen = GitUtil.getRepositories(project).map { it.repositoryFiles.excludeFile }
     for (gitExclude in excludeToOpen) {
       VfsUtil.findFileByIoFile(gitExclude, true)?.let { excludeVf ->

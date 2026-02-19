@@ -1,29 +1,44 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.tree.java;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaElementVisitor;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.JavaResolveResult;
+import com.intellij.psi.JavaTokenType;
+import com.intellij.psi.PsiAnnotation;
+import com.intellij.psi.PsiAnonymousClass;
+import com.intellij.psi.PsiArrayInitializerExpression;
+import com.intellij.psi.PsiArrayType;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiClassType;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementFactory;
+import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiExpressionList;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiJavaCodeReferenceElement;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiNewExpression;
+import com.intellij.psi.PsiReference;
+import com.intellij.psi.PsiReferenceParameterList;
+import com.intellij.psi.PsiSubstitutor;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypeParameter;
+import com.intellij.psi.ResolveResult;
+import com.intellij.psi.TypeAnnotationProvider;
 import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.impl.source.PsiClassReferenceType;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.resolve.reference.impl.PsiPolyVariantCachingReference;
-import com.intellij.psi.impl.source.tree.*;
+import com.intellij.psi.impl.source.tree.ChildRole;
+import com.intellij.psi.impl.source.tree.CompositeElement;
+import com.intellij.psi.impl.source.tree.ElementType;
+import com.intellij.psi.impl.source.tree.JavaElementType;
+import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.tree.ChildRoleBase;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
@@ -35,6 +50,10 @@ import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 public class PsiNewExpressionImpl extends ExpressionPsiElement implements PsiNewExpression {
   private static final Logger LOG = Logger.getInstance(PsiNewExpressionImpl.class);
@@ -54,10 +73,10 @@ public class PsiNewExpressionImpl extends ExpressionPsiElement implements PsiNew
     return doGetType(annotation);
   }
 
-  @Nullable
-  private PsiType doGetType(@Nullable PsiAnnotation stopAt) {
+  private @Nullable PsiType doGetType(@Nullable PsiAnnotation stopAt) {
     PsiType type = null;
-    SmartList<PsiAnnotation> annotations = new SmartList<>();
+    List<PsiAnnotation> annotations = new SmartList<>();
+    List<TypeAnnotationProvider> arrayComponentAnnotations = new ArrayList<>();
     boolean stop = false;
 
     for (ASTNode child = getFirstChildNode(); child != null; child = child.getTreeNext()) {
@@ -65,7 +84,13 @@ public class PsiNewExpressionImpl extends ExpressionPsiElement implements PsiNew
       if (elementType == JavaElementType.ANNOTATION) {
         PsiAnnotation annotation = (PsiAnnotation)child.getPsi();
         annotations.add(annotation);
-        if (annotation == stopAt) stop = true;
+        if (annotation == stopAt) {
+          // Drop previous array annotations. Only the subsequent annotations matter
+          // E.g., if we have "new int @A [] @B [] @C []" and we search an owner for "@B"
+          // then we should return "new int @B [] @C []"
+          arrayComponentAnnotations.clear();
+          stop = true;
+        }
       }
       else if (elementType == JavaElementType.JAVA_CODE_REFERENCE) {
         assert type == null : this;
@@ -82,8 +107,7 @@ public class PsiNewExpressionImpl extends ExpressionPsiElement implements PsiNew
       else if (elementType == JavaTokenType.LBRACKET) {
         assert type != null : this;
         PsiAnnotation[] copy = ContainerUtil.copyAndClear(annotations, PsiAnnotation.ARRAY_FACTORY, true);
-        type = type.createArrayType().annotate(TypeAnnotationProvider.Static.create(copy));
-        if (stop) return type;
+        arrayComponentAnnotations.add(TypeAnnotationProvider.Static.create(copy));
       }
       else if (elementType == JavaElementType.ANONYMOUS_CLASS) {
         PsiElementFactory factory = JavaPsiFacade.getElementFactory(getProject());
@@ -95,8 +119,11 @@ public class PsiNewExpressionImpl extends ExpressionPsiElement implements PsiNew
       }
     }
 
-    // stop == true means annotation is misplaced
-    return stop ? null : type;
+    for (int i = arrayComponentAnnotations.size() - 1; i >= 0; i--) {
+      TypeAnnotationProvider provider = arrayComponentAnnotations.get(i);
+      type = new PsiArrayType(type, provider);
+    }
+    return type;
   }
 
   @Override
@@ -121,9 +148,7 @@ public class PsiNewExpressionImpl extends ExpressionPsiElement implements PsiNew
     }
     else {
       LOG.assertTrue(expressions[0] == qualifier);
-      PsiExpression[] expressions1 = new PsiExpression[expressions.length - 1];
-      System.arraycopy(expressions, 1, expressions1, 0, expressions1.length);
-      return expressions1;
+      return Arrays.copyOfRange(expressions, 1, expressions.length);
     }
   }
 
@@ -137,7 +162,7 @@ public class PsiNewExpressionImpl extends ExpressionPsiElement implements PsiNew
     return resolveConstructor();
   }
 
-  public PsiPolyVariantCachingReference getConstructorFakeReference() {
+  private PsiPolyVariantCachingReference getConstructorFakeReference() {
     return CachedValuesManager.getCachedValue(this, () -> new CachedValueProvider.Result<>(new PsiPolyVariantCachingReference() {
       @Override
       public JavaResolveResult @NotNull [] resolveInner(boolean incompleteCode, @NotNull PsiFile containingFile) {
@@ -168,21 +193,18 @@ public class PsiNewExpressionImpl extends ExpressionPsiElement implements PsiNew
         return JavaResolveResult.EMPTY_ARRAY;
       }
 
-      @NotNull
       @Override
-      public PsiElement getElement() {
+      public @NotNull PsiElement getElement() {
         return PsiNewExpressionImpl.this;
       }
 
-      @NotNull
       @Override
-      public TextRange getRangeInElement() {
+      public @NotNull TextRange getRangeInElement() {
         return null;
       }
 
       @Override
-      @NotNull
-      public String getCanonicalText() {
+      public @NotNull String getCanonicalText() {
         throw new UnsupportedOperationException();
       }
 
@@ -209,10 +231,16 @@ public class PsiNewExpressionImpl extends ExpressionPsiElement implements PsiNew
   }
 
   @Override
-  @NotNull
-  public JavaResolveResult resolveMethodGenerics() {
-    ResolveResult[] results = getConstructorFakeReference().multiResolve(false);
-    return results.length == 1 ? (JavaResolveResult)results[0] : JavaResolveResult.EMPTY;
+  public @NotNull JavaResolveResult resolveMethodGenerics() {
+    JavaResolveResult[] results = multiResolve(false);
+    return results.length == 1 ? results[0] : JavaResolveResult.EMPTY;
+  }
+
+  @Override
+  public JavaResolveResult @NotNull [] multiResolve(boolean incompleteCode) {
+    ResolveResult[] results = getConstructorFakeReference().multiResolve(incompleteCode);
+    if (results instanceof JavaResolveResult[]) return (JavaResolveResult[])results;
+    return ContainerUtil.map2Array(results, JavaResolveResult.EMPTY_ARRAY, result -> (JavaResolveResult)result);
   }
 
   @Override
@@ -221,8 +249,7 @@ public class PsiNewExpressionImpl extends ExpressionPsiElement implements PsiNew
   }
 
   @Override
-  @NotNull
-  public PsiReferenceParameterList getTypeArgumentList() {
+  public @NotNull PsiReferenceParameterList getTypeArgumentList() {
     return (PsiReferenceParameterList) findChildByRoleAsPsiElement(ChildRole.REFERENCE_PARAMETER_LIST);
   }
 
@@ -250,8 +277,7 @@ public class PsiNewExpressionImpl extends ExpressionPsiElement implements PsiNew
 
   private static final TokenSet CLASS_REF = TokenSet.create(JavaElementType.JAVA_CODE_REFERENCE, JavaElementType.ANONYMOUS_CLASS);
   @Override
-  @Nullable
-  public PsiJavaCodeReferenceElement getClassOrAnonymousClassReference() {
+  public @Nullable PsiJavaCodeReferenceElement getClassOrAnonymousClassReference() {
     ASTNode ref = findChildByType(CLASS_REF);
     if (ref == null) return null;
     if (ref instanceof PsiJavaCodeReferenceElement) return (PsiJavaCodeReferenceElement)ref;
@@ -275,9 +301,6 @@ public class PsiNewExpressionImpl extends ExpressionPsiElement implements PsiNew
   public ASTNode findChildByRole(int role){
     LOG.assertTrue(ChildRole.isUnique(role));
     switch(role){
-      default:
-        return null;
-
       case ChildRole.REFERENCE_PARAMETER_LIST:
         return findChildByType(JavaElementType.REFERENCE_PARAMETER_LIST);
 
@@ -321,6 +344,9 @@ public class PsiNewExpressionImpl extends ExpressionPsiElement implements PsiNew
         else{
           return null;
         }
+
+      default:
+        return null;
     }
   }
 

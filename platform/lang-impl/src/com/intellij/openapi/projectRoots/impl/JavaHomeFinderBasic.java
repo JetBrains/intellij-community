@@ -1,120 +1,216 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.projectRoots.impl;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.ControlFlowException;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.projectRoots.JavaSdkType;
 import com.intellij.openapi.projectRoots.JdkUtil;
 import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.impl.jdkDownloader.JdkInstaller;
-import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.SystemInfoRt;
-import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.projectRoots.impl.jdkDownloader.JdkInstallerStore;
+import com.intellij.openapi.projectRoots.impl.jdkDownloader.OsAbstractionForJdkInstaller;
 import com.intellij.openapi.util.text.StringUtilRt;
-import com.intellij.util.EnvironmentUtil;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.SystemProperties;
+import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.jps.model.java.JdkVersionDetector;
 
-import java.io.File;
+import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+import java.util.TreeSet;
+import java.util.concurrent.CancellationException;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+@ApiStatus.Internal
 public class JavaHomeFinderBasic {
-  private final Logger LOG = Logger.getInstance(getClass());
-  private final List<Supplier<Set<String>>> myFinders = new ArrayList<>();
+  @SuppressWarnings("NonConstantLogger") private final Logger log = Logger.getInstance(getClass());
+  private final List<Supplier<? extends Set<String>>> myFinders = new ArrayList<>();
+  private final JavaHomeFinder.SystemInfoProvider mySystemInfo;
 
-  JavaHomeFinderBasic(boolean forceEmbeddedJava, String... paths) {
+  private boolean myCheckDefaultInstallDir = true;
+  private boolean myCheckUsedInstallDirs = true;
+  private boolean myCheckConfiguredJdks = true;
+
+  private boolean myCheckEmbeddedJava = false;
+
+  private @NotNull String @NotNull[] mySpecifiedPaths = ArrayUtil.EMPTY_STRING_ARRAY;
+
+  public JavaHomeFinderBasic(@NotNull JavaHomeFinder.SystemInfoProvider systemInfo) {
+    mySystemInfo = systemInfo;
+
     myFinders.add(this::checkDefaultLocations);
     myFinders.add(this::findInPATH);
-    myFinders.add(() -> findInSpecifiedPaths(paths));
+    myFinders.add(this::findInJavaHome);
+    myFinders.add(this::findInSpecifiedPaths);
     myFinders.add(this::findJavaInstalledBySdkMan);
+    myFinders.add(this::findJavaInstalledByAsdfJava);
+    myFinders.add(this::findJavaInstalledByGradle);
+    myFinders.add(this::findJavaInstalledByMise);
+    myFinders.add(this::findJavaInstalledByJabba);
 
-    if (forceEmbeddedJava || Registry.is("java.detector.include.embedded", false)) {
-      myFinders.add(() -> scanAll(getJavaHome(), false));
-    }
+    myFinders.add(
+      () -> myCheckEmbeddedJava ? scanAll(getJavaHome(), false) : Collections.emptySet()
+    );
   }
 
-  private @NotNull Set<String> findInSpecifiedPaths(String[] paths) {
-    return scanAll(Stream.of(paths).map(it -> Paths.get(it)).collect(Collectors.toList()), true);
+  public @NotNull JavaHomeFinderBasic checkDefaultInstallDir(boolean value) {
+    myCheckDefaultInstallDir = value;
+    return this;
   }
 
-  protected void registerFinder(@NotNull Supplier<Set<String>> finder) {
+  public @NotNull JavaHomeFinderBasic checkUsedInstallDirs(boolean value) {
+    myCheckUsedInstallDirs = value;
+    return this;
+  }
+
+  public @NotNull JavaHomeFinderBasic checkConfiguredJdks(boolean value) {
+    myCheckConfiguredJdks = value;
+    return this;
+  }
+
+  public @NotNull JavaHomeFinderBasic checkEmbeddedJava(boolean value) {
+    myCheckEmbeddedJava = value;
+    return this;
+  }
+
+  public @NotNull JavaHomeFinderBasic checkSpecifiedPaths(String @NotNull ... paths) {
+    mySpecifiedPaths = paths;
+    return this;
+  }
+
+  protected JavaHomeFinder.SystemInfoProvider getSystemInfo() {
+    return mySystemInfo;
+  }
+
+  private @NotNull Set<String> findInSpecifiedPaths() {
+    return scanAll(ContainerUtil.map(mySpecifiedPaths, Paths::get), true);
+  }
+
+  protected void registerFinder(@NotNull Supplier<? extends Set<String>> finder) {
     myFinders.add(finder);
   }
 
-  @NotNull
-  public final Set<String> findExistingJdks() {
+  /// Detects the paths of JDKs on the machine.
+  public final @NotNull Set<String> findExistingJdks() {
     Set<String> result = new TreeSet<>();
 
-    for (Supplier<Set<String>> action : myFinders) {
+    for (Supplier<? extends Set<String>> action : myFinders) {
       try {
         result.addAll(action.get());
       }
+      catch (ProcessCanceledException e) {
+        throw e;
+      }
       catch (Exception e) {
-        LOG.warn("Failed to find Java Home. " + e.getMessage(), e);
+        log.warn("Failed to find Java Home. " + e.getMessage(), e);
       }
     }
 
     return result;
   }
 
+  /// Detects the paths of JDKs on the machine with information about the Java version and architecture.
+  public final @NotNull Set<JavaHomeFinder.JdkEntry> findExistingJdkEntries() {
+    final var paths = findExistingJdks();
+    final var detector = JdkVersionDetector.getInstance();
+
+    return paths.stream().map(path -> {
+      final var version = detector.detectJdkVersionInfo(path);
+      return new JavaHomeFinder.JdkEntry(path, version);
+    }).collect(Collectors.toSet());
+
+  }
+
+  public @NotNull Set<String> findInJavaHome() {
+    String javaHome = mySystemInfo.getEnvironmentVariable("JAVA_HOME");
+    return javaHome != null ? scanAll(mySystemInfo.getPath(javaHome), false) : Collections.emptySet();
+  }
+
   private @NotNull Set<String> findInPATH() {
     try {
-      String pathVarString = EnvironmentUtil.getValue("PATH");
-      if (pathVarString == null || pathVarString.isEmpty()) {
+      String pathVarString = mySystemInfo.getPathEnvVar();
+      if (pathVarString.isEmpty()) {
         return Collections.emptySet();
       }
 
       Set<Path> dirsToCheck = new HashSet<>();
-      for (String p : pathVarString.split(File.pathSeparator)) {
-        Path dir = Paths.get(p);
-        if (!StringUtilRt.equal(dir.getFileName().toString(), "bin", SystemInfoRt.isFileSystemCaseSensitive)) {
-          continue;
-        }
+      for (String p : pathVarString.split(mySystemInfo.getPathSeparator())) {
+        if (p.isEmpty()) continue;
+        try {
+          Path dir = mySystemInfo.getPath(p);
+          if (!StringUtilRt.equal(dir.getFileName().toString(), "bin", mySystemInfo.isFileSystemCaseSensitive())) {
+            continue;
+          }
 
-        Path parentFile = dir.getParent();
-        if (parentFile == null) {
-          continue;
-        }
+          Path parentFile = dir.getParent();
+          if (parentFile == null) {
+            continue;
+          }
 
-        dirsToCheck.addAll(listPossibleJdkInstallRootsFromHomes(parentFile));
+          dirsToCheck.addAll(listPossibleJdkInstallRootsFromHomes(parentFile));
+        }
+        catch (Exception e) {
+          if (e instanceof ControlFlowException) throw e;
+          log.warn("Failed to get Java home path for " + p, e);
+        }
       }
 
       return scanAll(dirsToCheck, false);
     }
+    catch (CancellationException e) {
+      throw e;
+    }
     catch (Exception e) {
-      LOG.warn("Failed to scan PATH for JDKs. " + e.getMessage(), e);
+      log.warn("Failed to scan PATH for JDKs. " + e.getMessage(), e);
       return Collections.emptySet();
     }
   }
 
-  @NotNull
-  private Set<String> checkDefaultLocations() {
+  private @NotNull Set<String> checkDefaultLocations() {
     if (ApplicationManager.getApplication() == null) {
       return Collections.emptySet();
     }
 
     Set<Path> paths = new HashSet<>();
-    paths.add(JdkInstaller.getInstance().defaultInstallDir());
 
-    for (Sdk jdk : ProjectJdkTable.getInstance().getAllJdks()) {
-      if (!(jdk.getSdkType() instanceof JavaSdkType) || jdk.getSdkType() instanceof DependentSdkType) {
-        continue;
+    if (myCheckDefaultInstallDir) {
+      paths.add(JdkInstaller.getInstance().defaultInstallDir((OsAbstractionForJdkInstaller)null));
+    }
+
+    if (myCheckUsedInstallDirs) {
+      paths.addAll(JdkInstallerStore.Companion.getInstance().listJdkInstallHomes());
+    }
+
+    if (myCheckConfiguredJdks) {
+      Collection<Path> availableRoots = mySystemInfo.getFsRoots();
+      for (Sdk jdk : ProjectJdkTable.getInstance().getAllJdks()) {
+        if (!(jdk.getSdkType() instanceof JavaSdkType) || jdk.getSdkType() instanceof DependentSdkType) {
+          continue;
+        }
+
+        String homePath = jdk.getHomePath();
+        if (homePath == null || ContainerUtil.all(availableRoots, root -> !homePath.startsWith(root.toString()))) {
+          continue;
+        }
+
+        paths.addAll(listPossibleJdkInstallRootsFromHomes(mySystemInfo.getPath(homePath)));
       }
-
-      String homePath = jdk.getHomePath();
-      if (homePath == null) {
-        continue;
-      }
-
-      paths.addAll(listPossibleJdkInstallRootsFromHomes(Paths.get(homePath)));
     }
 
     return scanAll(paths, true);
@@ -127,93 +223,259 @@ public class JavaHomeFinderBasic {
     return scanAll(Collections.singleton(file), includeNestDirs);
   }
 
-  protected @NotNull Set<String> scanAll(@NotNull Collection<Path> files, boolean includeNestDirs) {
+  protected @NotNull Set<String> scanAll(@NotNull Collection<? extends Path> files, boolean includeNestDirs) {
     Set<String> result = new HashSet<>();
     for (Path root : new HashSet<>(files)) {
-      scanFolder(root.toFile(), includeNestDirs, result);
+      scanFolder(root, includeNestDirs, result);
     }
     return result;
   }
 
-  private void scanFolder(@NotNull File folder, boolean includeNestDirs, @NotNull Collection<? super String> result) {
+  protected void scanFolder(@NotNull Path folder, boolean includeNestDirs, @NotNull Collection<? super String> result) {
     if (JdkUtil.checkForJdk(folder)) {
-      result.add(folder.getAbsolutePath());
+      result.add(folder.toAbsolutePath().toString());
       return;
     }
 
     if (!includeNestDirs) return;
-    File[] files = folder.listFiles();
-    if (files == null) return;
-
-    for (File candidate : files) {
-      for (File adjusted : listPossibleJdkHomesFromInstallRoot(candidate)) {
-        scanFolder(adjusted, false, result);
-      }
+    try (Stream<Path> files = Files.list(folder)) {
+      files.forEach(candidate -> {
+        for (Path adjusted : listPossibleJdkHomesFromInstallRoot(candidate)) {
+          final int found = result.size();
+          scanFolder(adjusted, false, result);
+          if (result.size() > found) { break; } // Avoid duplicates
+        }
+      });
+    }
+    catch (IOException ignore) {
     }
   }
 
-  @NotNull
-  protected List<File> listPossibleJdkHomesFromInstallRoot(@NotNull File file) {
-    return Collections.singletonList(file);
+  protected @NotNull List<Path> listPossibleJdkHomesFromInstallRoot(@NotNull Path path) {
+    return Collections.singletonList(path);
   }
 
   protected @NotNull List<Path> listPossibleJdkInstallRootsFromHomes(@NotNull Path file) {
     return Collections.singletonList(file);
   }
 
-  protected static @Nullable Path getJavaHome() {
-    String property = SystemProperties.getJavaHome();
-    if (property == null || property.isEmpty()) {
-      return null;
-    }
-
-    // actually java.home points to to jre home
-    Path javaHome = Paths.get(property).getParent();
-    return javaHome == null || !Files.isDirectory(javaHome) ? null : javaHome;
+  private static @Nullable Path getJavaHome() {
+    Path javaHome = Path.of(SystemProperties.getJavaHome());
+    return Files.isDirectory(javaHome) ? javaHome : null;
   }
 
+  protected @Nullable Path getPathInEnvironmentVariable(String variable, String path) {
+    String dir = mySystemInfo.getEnvironmentVariable(variable);
+    if (dir != null) {
+      Path primaryDir = mySystemInfo.getPath(dir, path);
+      if (safeIsDirectory(primaryDir)) return primaryDir;
+    }
+    return null;
+  }
 
   /**
-   * Finds Java home directories installed by SDKMAN: https://github.com/sdkman
+   * Finds Java home directories installed by <a href="https://github.com/sdkman">SDKMAN</a>.
    */
-  private @NotNull Set<String> findJavaInstalledBySdkMan() {
-    File candidatesDir = findSdkManCandidatesDir();
-    if (candidatesDir == null) return Collections.emptySet();
-    File javasDir = new File(candidatesDir, "java");
-    return javasDir.isDirectory() ? scanAll(javasDir.toPath(), true) : Collections.emptySet();
+  private @NotNull Set<@NotNull String> findJavaInstalledBySdkMan() {
+    try {
+      Path candidatesDir = findSdkManCandidatesDir();
+      if (candidatesDir == null) return Collections.emptySet();
+      Path javasDir = candidatesDir.resolve("java");
+      if (!Files.isDirectory(javasDir)) return Collections.emptySet();
+      //noinspection UnnecessaryLocalVariable
+      var homes = listJavaHomeDirsInstalledBySdkMan(javasDir);
+      return homes;
+    }
+    catch (CancellationException e) {
+      throw e;
+    }
+    catch (Exception e) {
+      log.warn("Unexpected exception while looking for Sdkman directory: " + e.getClass().getSimpleName() + ": " + e.getMessage(), e);
+      return Collections.emptySet();
+    }
   }
 
-  @Nullable
-  private static File findSdkManCandidatesDir() {
-    // first, try the special environment variable
-    String candidatesPath = EnvironmentUtil.getValue("SDKMAN_CANDIDATES_DIR");
-    if (candidatesPath != null) {
-      File candidatesDir = new File(candidatesPath);
-      if (candidatesDir.isDirectory()) return candidatesDir;
+  private @NotNull Set<String> findJavaInstalledByGradle() {
+    Path jdks = getPathInUserHome(".gradle/jdks");
+    return jdks != null && Files.isDirectory(jdks) ? scanAll(jdks, true) : Collections.emptySet();
+  }
+
+  /**
+   * Finds Java home directory installed by <a href="https://mise.jdx.dev/lang/java.html">mise</a>.
+   */
+  private @NotNull Set<String> findJavaInstalledByMise() {
+    Path installsDir = findMiseInstallsDir();
+    if (installsDir == null) return Collections.emptySet();
+    Path jdks = installsDir.resolve("java");
+    return scanAll(jdks, true);
+  }
+
+  private @Nullable Path findMiseInstallsDir() {
+    // try to use environment variable for custom data directory
+    // https://mise.jdx.dev/configuration.html#mise-data-dir
+    Path miseDataDir = getPathInEnvironmentVariable("MISE_DATA_DIR", "installs");
+    if (miseDataDir != null) return miseDataDir;
+
+    Path xdgDataHome = getPathInEnvironmentVariable("XDG_DATA_HOME", "mise/installs");
+    if (xdgDataHome != null) return xdgDataHome;
+
+    // finally, try the usual system-specific directories
+    if (this instanceof JavaHomeFinderWindows) {
+      // Windows
+      Path localAppData = getPathInEnvironmentVariable("LOCALAPPDATA", "mise/installs");
+      if (localAppData != null) return localAppData;
+      localAppData = getPathInUserHome("AppData/Local/mise/installs");
+      if (localAppData != null && safeIsDirectory(localAppData)) return localAppData;
+    } else if (!(this instanceof JavaHomeFinderWsl)) {
+      // Unix and macOS
+      Path installsDir = getPathInUserHome(".local/share/mise/installs");
+      if (installsDir != null && safeIsDirectory(installsDir)) return installsDir;
     }
+
+    // no chances
+    return null;
+  }
+
+  private @Nullable Path findSdkManCandidatesDir() {
+    // first, try the special environment variable
+    Path candidatesDir = getPathInEnvironmentVariable("SDKMAN_CANDIDATES_DIR", "");
+    if (candidatesDir != null) return candidatesDir;
 
     // then, try to use its 'primary' variable
-    String primaryPath = EnvironmentUtil.getValue("SDKMAN_DIR");
-    if (primaryPath != null) {
-      File primaryDir = new File(primaryPath);
-      if (primaryDir.isDirectory()) {
-        File candidatesDir = new File(primaryDir, "candidates");
-        if (candidatesDir.isDirectory()) return candidatesDir;
-      }
-    }
+    Path sdkmanDirCandidates = getPathInEnvironmentVariable("SDKMAN_DIR", "candidates");
+    if (sdkmanDirCandidates != null) return sdkmanDirCandidates;
 
-    // finally, try the usual location in Unix or MacOS
-    if (!SystemInfo.isWindows) {
-      String homePath = System.getProperty("user.home");
-      if (homePath != null) {
-        File homeDir = new File(homePath);
-        File primaryDir = new File(homeDir, ".sdkman");
-        File candidatesDir = new File(primaryDir, "candidates");
-        if (candidatesDir.isDirectory()) return candidatesDir;
+    // finally, try the usual location in UNIX
+    if (!(this instanceof JavaHomeFinderWindows)) {
+      Path candidates = getPathInUserHome(".sdkman/candidates");
+      if (candidates != null && Files.isDirectory(candidates)) {
+        return candidates;
       }
     }
 
     // no chances
     return null;
+  }
+
+  protected @Nullable Path getPathInUserHome(@NotNull String relativePath) {
+    Path userHome = mySystemInfo.getUserHome();
+    return userHome != null ? userHome.resolve(relativePath) : null;
+  }
+
+  private @NotNull Set<@NotNull String> listJavaHomeDirsInstalledBySdkMan(@NotNull Path javasDir) {
+    var mac = this instanceof JavaHomeFinderMac;
+    var result = new HashSet<@NotNull String>();
+
+    try (Stream<Path> stream = Files.list(javasDir)) {
+      List<Path> innerDirectories = stream.filter(d -> Files.isDirectory(d)).toList();
+      for (Path innerDir : innerDirectories) {
+        var home = innerDir;
+        if (!JdkUtil.checkForJdk(home)) continue;
+        var releaseFile = home.resolve("release");
+
+        if (mac) {
+          // Zulu JDK on macOS has a rogue layout, with which Gradle failed to operate (see the bugreport IDEA-253051),
+          // and in order to get Gradle working with Zulu JDK we should use it's second home (when symbolic links are resolved).
+          try {
+            if (Files.isSymbolicLink(releaseFile)) {
+              var realReleaseFile = releaseFile.toRealPath();
+              if (!safeExists(realReleaseFile)) {
+                log.warn("Failed to resolve the target file (it doesn't exist) for: " + releaseFile);
+                continue;
+              }
+              var realHome = realReleaseFile.getParent();
+              if (realHome == null) {
+                log.warn("Failed to resolve the target file (it has no parent dir) for: " + releaseFile);
+                continue;
+              }
+              home = realHome;
+            }
+          }
+          catch (IOException ioe) {
+            log.warn("Failed to resolve the target file for: " + releaseFile + ": " + ioe.getMessage());
+            continue;
+          }
+          catch (Exception e) {
+            log.warn("Failed to resolve the target file for: " +
+                     releaseFile + ": Unexpected exception " + e.getClass().getSimpleName() + ": " + e.getMessage());
+            continue;
+          }
+        }
+
+        result.add(home.toString());
+      }
+    }
+    catch (IOException ioe) {
+      log.warn("I/O exception while listing Java home directories installed by Sdkman: " + ioe.getMessage(), ioe);
+      return Collections.emptySet();
+    }
+    catch (Exception e) {
+      log.warn("Unexpected exception while listing Java home directories installed by Sdkman: " +
+               e.getClass().getSimpleName() +
+               ": " +
+               e.getMessage(), e);
+      return Collections.emptySet();
+    }
+
+    return result;
+  }
+
+
+  /**
+   * Finds Java home directories installed by <a href="https://github.com/halcyon/asdf-java">asdf-java</a>.
+   */
+  private @NotNull Set<String> findJavaInstalledByAsdfJava() {
+    Path installsDir = findAsdfInstallsDir();
+    if (installsDir == null) return Collections.emptySet();
+    Path javasDir = installsDir.resolve("java");
+    return safeIsDirectory(javasDir) ? scanAll(javasDir, true) : Collections.emptySet();
+  }
+
+  private @Nullable Path findAsdfInstallsDir() {
+    // try to use environment variable for custom data directory
+    // https://asdf-vm.com/#/core-configuration?id=environment-variables
+    Path asdfDataDirInstalls = getPathInEnvironmentVariable("ASDF_DATA_DIR", "installs");
+    if (asdfDataDirInstalls != null) return asdfDataDirInstalls;
+
+    // finally, try the usual location in Unix or macOS
+    if (!(this instanceof JavaHomeFinderWindows) && !(this instanceof JavaHomeFinderWsl)) {
+      Path installsDir = getPathInUserHome(".asdf/installs");
+      if (installsDir != null && safeIsDirectory(installsDir)) return installsDir;
+    }
+
+    // no chances
+    return null;
+  }
+
+  /**
+   * Finds Java home directories installed by <a href="https://github.com/shyiko/jabba">jabba</a>.
+   */
+  private @NotNull Set<String> findJavaInstalledByJabba() {
+    Path installsDir = getPathInUserHome(".jabba/jdk");
+    if (installsDir == null) return Collections.emptySet();
+    return safeIsDirectory(installsDir) ? scanAll(installsDir, true) : Collections.emptySet();
+  }
+
+  private boolean safeIsDirectory(@NotNull Path dir) {
+    try {
+      return Files.isDirectory(dir);
+    }
+    catch (SecurityException se) {
+      return false; // when a directory is not accessible we should ignore it
+    }
+    catch (Exception e) {
+      log.debug("Failed to check directory existence: unexpected exception " + e.getClass().getSimpleName() + ": " + e.getMessage(), e);
+      return false;
+    }
+  }
+
+  private boolean safeExists(@NotNull Path path) {
+    try {
+      return Files.exists(path);
+    }
+    catch (Exception e) {
+      log.debug("Failed to check file existence: unexpected exception " + e.getClass().getSimpleName() + ": " + e.getMessage(), e);
+      return false;
+    }
   }
 }

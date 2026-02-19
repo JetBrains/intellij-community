@@ -1,0 +1,27 @@
+### auto-generated section `build intellij.platform.util.classLoader` start
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+jvm_library(
+  name = "util-classLoader",
+  module_name = "intellij.platform.util.classLoader",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  kotlinc_opts = "@community//:k8",
+  deps = [
+    "@lib//:jetbrains-annotations",
+    "//platform/util/rt-java8",
+  ]
+)
+
+jvm_library(
+  name = "util-classLoader_test_lib",
+  module_name = "intellij.platform.util.classLoader",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  kotlinc_opts = "@community//:k8",
+  runtime_deps = [
+    ":util-classLoader",
+    "//platform/util/rt-java8:rt-java8_test_lib",
+  ]
+)
+### auto-generated section `build intellij.platform.util.classLoader` end

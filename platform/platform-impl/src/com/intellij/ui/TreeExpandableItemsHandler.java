@@ -1,25 +1,13 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
 import com.intellij.openapi.util.Pair;
-import com.intellij.ui.treeStructure.Tree;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.ui.hover.TreeHoverListener;
+import com.intellij.ui.tree.ui.DefaultTreeUI;
+import com.intellij.util.ui.JBUI;
+import org.jetbrains.annotations.ApiStatus;
 
-import javax.swing.*;
+import javax.swing.JTree;
 import javax.swing.event.TreeModelEvent;
 import javax.swing.event.TreeModelListener;
 import javax.swing.event.TreeSelectionEvent;
@@ -28,12 +16,18 @@ import javax.swing.tree.TreeCellRenderer;
 import javax.swing.tree.TreeModel;
 import javax.swing.tree.TreePath;
 import javax.swing.tree.TreeSelectionModel;
-import java.awt.*;
+import java.awt.Component;
+import java.awt.Graphics2D;
+import java.awt.Point;
+import java.awt.Rectangle;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 
-public class TreeExpandableItemsHandler extends AbstractExpandableItemsHandler<Integer, JTree> {
-  protected TreeExpandableItemsHandler(final JTree tree) {
+import static com.intellij.openapi.util.registry.Registry.is;
+
+@ApiStatus.Internal
+public final class TreeExpandableItemsHandler extends AbstractExpandableItemsHandler<Integer, JTree> {
+  TreeExpandableItemsHandler(final JTree tree) {
     super(tree);
     final TreeSelectionListener selectionListener = new TreeSelectionListener() {
       @Override
@@ -92,6 +86,10 @@ public class TreeExpandableItemsHandler extends AbstractExpandableItemsHandler<I
         }
       }
     });
+
+    if(ExperimentalUI.isNewUI() && is("ide.experimental.ui.tree.selection")) {
+      setBorderArc(JBUI.CurrentTheme.Tree.ARC.get());
+    }
   }
 
   private void updateSelection(JTree tree) {
@@ -101,6 +99,8 @@ public class TreeExpandableItemsHandler extends AbstractExpandableItemsHandler<I
 
   @Override
   protected Integer getCellKeyForPoint(Point point) {
+    int row = TreeHoverListener.getHoveredRow(myComponent);
+    if (row >= 0) return row;
     int rowIndex = myComponent.getRowForLocation(point.x, point.y);
     return rowIndex != -1 ? rowIndex : null;
   }
@@ -136,30 +136,7 @@ public class TreeExpandableItemsHandler extends AbstractExpandableItemsHandler<I
                                      Rectangle cellBounds,
                                      Graphics2D g,
                                      Integer key) {
-    boolean opaque = rComponent.isOpaque();
-    if (rComponent instanceof JComponent) {
-      ((JComponent)rComponent).setOpaque(true);
-    }
-
-    if (myComponent.isRowSelected(key)) {
-      rComponent.setBackground(UIUtil.getTreeSelectionBackground(myComponent.hasFocus()));
-    }
-    else {
-      Color bg = UIUtil.getTreeBackground();
-      if (myComponent instanceof Tree && ((Tree)myComponent).isFileColorsEnabled()) {
-        TreePath path = myComponent.getPathForRow(key);
-        Color color = path == null ? null : ((Tree)myComponent).getFileColorForPath(path);
-        if (color != null) {
-          bg = color;
-        }
-      }
-      rComponent.setBackground(bg);
-    }
-
+    DefaultTreeUI.setBackground(myComponent, rComponent, key);
     super.doPaintTooltipImage(rComponent, cellBounds, g, key);
-
-    if (rComponent instanceof JComponent) {
-      ((JComponent)rComponent).setOpaque(opaque);
-    }
   }
 }

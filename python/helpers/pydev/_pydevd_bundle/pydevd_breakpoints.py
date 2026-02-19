@@ -5,7 +5,7 @@ from _pydev_bundle import pydev_log
 from _pydevd_bundle import pydevd_import_class
 from _pydevd_bundle.pydevd_frame_utils import add_exception_to_frame
 from _pydev_imps._pydev_saved_modules import threading
-
+from _pydevd_bundle.pydevd_utils import eval_expression
 
 class ExceptionBreakpoint(object):
 
@@ -37,6 +37,15 @@ class ExceptionBreakpoint(object):
 
     def __str__(self):
         return self.qname
+
+    def __repr__(self):
+        return ("<ExceptionBreakpoint(qname=%r, condition=%r, expression=%r, "
+                "notify_on_handled_exceptions=%s, notify_on_unhandled_exceptions=%s, "
+                "notify_on_first_raise_only=%s, ignore_libraries=%s)>") % (
+            self.qname, self.condition, self.expression,
+            self.notify_on_handled_exceptions, self.notify_on_unhandled_exceptions,
+            self.notify_on_first_raise_only, self.ignore_libraries
+        )
 
     @property
     def has_condition(self):
@@ -71,7 +80,7 @@ class LineBreakpoint(object):
             self._hit_count += 1
             expr = self.hit_condition.replace('@HIT@', str(self._hit_count))
             try:
-                ret = bool(eval(expr, frame.f_globals, frame.f_locals))
+                ret = bool(eval_expression(expr, frame.f_globals, frame.f_locals))
             except Exception:
                 ret = False
         return ret
@@ -170,7 +179,7 @@ def _fallback_excepthook(exctype, value, tb):
     try:
         debugger = get_global_debugger()
         if debugger and debugger.break_on_uncaught_exceptions:
-            thread = threading.currentThread()
+            thread = threading.current_thread()
             additional_info = getattr(thread, 'additional_info', None)
             if not thread or additional_info is None:
                 return

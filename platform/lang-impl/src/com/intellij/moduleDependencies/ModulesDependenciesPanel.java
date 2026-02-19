@@ -1,8 +1,7 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.moduleDependencies;
 
 import com.intellij.CommonBundle;
-import com.intellij.ProjectTopics;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.CommonActionsManager;
@@ -10,7 +9,20 @@ import com.intellij.ide.DefaultTreeExpander;
 import com.intellij.ide.TreeExpander;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.ActionToolbar;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.DataSink;
+import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.actionSystem.IdeActions;
+import com.intellij.openapi.actionSystem.LangDataKeys;
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
+import com.intellij.openapi.actionSystem.Separator;
+import com.intellij.openapi.actionSystem.ToggleAction;
+import com.intellij.openapi.actionSystem.UiDataProvider;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleType;
@@ -24,7 +36,11 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.NavigatableWithText;
-import com.intellij.ui.*;
+import com.intellij.ui.ColoredTreeCellRenderer;
+import com.intellij.ui.PopupHandler;
+import com.intellij.ui.ScrollPaneFactory;
+import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.ui.TreeSpeedSearch;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.graph.DFSTBuilder;
@@ -34,7 +50,10 @@ import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JComponent;
+import javax.swing.JPanel;
+import javax.swing.JTextField;
+import javax.swing.JTree;
 import javax.swing.event.TreeExpansionEvent;
 import javax.swing.event.TreeExpansionListener;
 import javax.swing.event.TreeSelectionEvent;
@@ -44,14 +63,18 @@ import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreePath;
 import javax.swing.tree.TreeSelectionModel;
-import java.awt.*;
+import java.awt.BorderLayout;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
-import java.util.*;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * @author anna
  */
-public class ModulesDependenciesPanel extends JPanel implements Disposable {
+public final class ModulesDependenciesPanel extends JPanel implements Disposable {
   public static final String HELP_ID = "module.dependencies.tool.window";
 
   private static final Comparator<DefaultMutableTreeNode> NODE_COMPARATOR = (o1, o2) -> {
@@ -64,8 +87,7 @@ public class ModulesDependenciesPanel extends JPanel implements Disposable {
     @Override
     public void customizeCellRenderer(@NotNull JTree tree, Object value, boolean selected, boolean expanded, boolean leaf, int row, boolean hasFocus) {
       Object userObject = ((DefaultMutableTreeNode)value).getUserObject();
-      if (userObject instanceof MyUserObject) {
-        MyUserObject node = (MyUserObject)userObject;
+      if (userObject instanceof MyUserObject node) {
         setIcon(ModuleType.get(node.myModule).getIcon());
         append(node.myModule.getName(), node.myInCycle ? SimpleTextAttributes.ERROR_ATTRIBUTES : SimpleTextAttributes.REGULAR_ATTRIBUTES);
       }
@@ -113,7 +135,7 @@ public class ModulesDependenciesPanel extends JPanel implements Disposable {
     myPathField.setEditable(false);
     add(createNorthPanel(), BorderLayout.NORTH);
 
-    project.getMessageBus().connect(this).subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootListener() {
+    project.getMessageBus().connect(this).subscribe(ModuleRootListener.TOPIC, new ModuleRootListener() {
       @Override
       public void rootsChanged(@NotNull ModuleRootEvent event) {
         updateModuleGraph();
@@ -133,7 +155,7 @@ public class ModulesDependenciesPanel extends JPanel implements Disposable {
 
   private Iterable<Module> getModuleDependencies(Module module) {
     final Iterator<Module> iterator = myState.forwardDirection ? myModuleGraph.getIn(module) : myModuleGraph.getOut(module);
-    return new Iterable<Module>() {
+    return new Iterable<>() {
       @Override
       public Iterator<Module> iterator() {
         return iterator;
@@ -176,7 +198,7 @@ public class ModulesDependenciesPanel extends JPanel implements Disposable {
         }
       }
 
-      private boolean isLooped(TreePath path, DefaultMutableTreeNode child) {
+      private static boolean isLooped(TreePath path, DefaultMutableTreeNode child) {
         for (Object o : path.getPath()) {
           DefaultMutableTreeNode node = (DefaultMutableTreeNode)o;
           if (node != child && Comparing.equal(node.getUserObject(), child.getUserObject())) {
@@ -214,7 +236,7 @@ public class ModulesDependenciesPanel extends JPanel implements Disposable {
 
     TreeUtil.installActions(tree);
 
-    new TreeSpeedSearch(tree, o -> o.getLastPathComponent().toString(), true);
+    TreeSpeedSearch.installOn(tree, true, o -> o.getLastPathComponent().toString());
 
     DefaultActionGroup group = new DefaultActionGroup();
     CommonActionsManager commonActionManager = CommonActionsManager.getInstance();
@@ -230,7 +252,7 @@ public class ModulesDependenciesPanel extends JPanel implements Disposable {
     group.add(globalActionManager.getAction(IdeActions.ACTION_ANALYZE_CYCLIC_DEPENDENCIES));
     group.add(globalActionManager.getAction(IdeActions.ACTION_ANALYZE_MODULE_DEPENDENCIES));
 
-    PopupHandler.installUnknownPopupHandler(tree, group, ActionManager.getInstance());
+    PopupHandler.installPopupMenu(tree, group, "ModuleDependenciesPopup");
   }
 
   private void updateSplitterProportion() {
@@ -259,6 +281,11 @@ public class ModulesDependenciesPanel extends JPanel implements Disposable {
       public void update(@NotNull AnActionEvent e) {
         analyzeDepsAction.update(e);
       }
+
+      @Override
+      public @NotNull ActionUpdateThread getActionUpdateThread() {
+        return analyzeDepsAction.getActionUpdateThread();
+      }
     });
 
     group.add(new ToggleAction(CodeInsightBundle.message("action.module.dependencies.direction")) {
@@ -278,12 +305,22 @@ public class ModulesDependenciesPanel extends JPanel implements Disposable {
         e.getPresentation().setIcon(myState.forwardDirection ? AllIcons.Hierarchy.Subtypes : AllIcons.Hierarchy.Supertypes);
         super.update(e);
       }
+
+      @Override
+      public @NotNull ActionUpdateThread getActionUpdateThread() {
+        return ActionUpdateThread.BGT;
+      }
     });
 
     group.add(new ToggleAction(CodeInsightBundle.message("action.module.dependencies.tests"), null, AllIcons.Nodes.TestSourceFolder) {
       @Override
       public boolean isSelected(@NotNull AnActionEvent e) {
         return myState.includeTests;
+      }
+
+      @Override
+      public @NotNull ActionUpdateThread getActionUpdateThread() {
+        return ActionUpdateThread.BGT;
       }
 
       @Override
@@ -350,7 +387,7 @@ public class ModulesDependenciesPanel extends JPanel implements Disposable {
   public void dispose() { }
 
 
-  private static class MyUserObject implements NavigatableWithText {
+  private static final class MyUserObject implements NavigatableWithText {
     private final Module myModule;
     private final boolean myInCycle;
 
@@ -367,11 +404,6 @@ public class ModulesDependenciesPanel extends JPanel implements Disposable {
     @Override
     public boolean canNavigate() {
       return !myModule.isDisposed();
-    }
-
-    @Override
-    public boolean canNavigateToSource() {
-      return false;
     }
 
     @Override
@@ -395,7 +427,7 @@ public class ModulesDependenciesPanel extends JPanel implements Disposable {
     }
   }
 
-  private static class MyTreePanel extends JPanel implements DataProvider {
+  private static final class MyTreePanel extends JPanel implements UiDataProvider {
     private final Tree myTree;
     private final Project myProject;
 
@@ -407,36 +439,19 @@ public class ModulesDependenciesPanel extends JPanel implements Disposable {
     }
 
     @Override
-    public Object getData(@NotNull String dataId) {
-      if (CommonDataKeys.PROJECT.is(dataId)) {
-        return myProject;
+    public void uiDataSnapshot(@NotNull DataSink sink) {
+      TreePath path = myTree.getLeadSelectionPath();
+      Object obj = path == null ? null : TreeUtil.getUserObject(path.getLastPathComponent());
+      sink.set(CommonDataKeys.PROJECT, myProject);
+      if (obj instanceof MyUserObject o) {
+        sink.set(LangDataKeys.MODULE_CONTEXT, o.myModule);
+        sink.set(CommonDataKeys.NAVIGATABLE, o);
       }
-      if (LangDataKeys.MODULE_CONTEXT.is(dataId)) {
-        TreePath selectionPath = myTree.getLeadSelectionPath();
-        if (selectionPath != null && selectionPath.getLastPathComponent() instanceof DefaultMutableTreeNode) {
-          DefaultMutableTreeNode node = (DefaultMutableTreeNode)selectionPath.getLastPathComponent();
-          if (node.getUserObject() instanceof MyUserObject) {
-            return ((MyUserObject)node.getUserObject()).myModule;
-          }
-        }
-      }
-      if (PlatformDataKeys.HELP_ID.is(dataId)) {
-        return HELP_ID;
-      }
-      if (CommonDataKeys.NAVIGATABLE.is(dataId)) {
-        TreePath selectionPath = myTree.getLeadSelectionPath();
-        if (selectionPath != null && selectionPath.getLastPathComponent() instanceof DefaultMutableTreeNode) {
-          DefaultMutableTreeNode node = (DefaultMutableTreeNode)selectionPath.getLastPathComponent();
-          if (node.getUserObject() instanceof MyUserObject) {
-            return node.getUserObject();
-          }
-        }
-      }
-      return null;
+      sink.set(PlatformCoreDataKeys.HELP_ID, HELP_ID);
     }
   }
 
-  private static class MyTreeExpander extends DefaultTreeExpander {
+  private static final class MyTreeExpander extends DefaultTreeExpander {
     private final boolean myEnableExpandAll;
 
     MyTreeExpander(Tree tree, boolean enableExpandAll) {

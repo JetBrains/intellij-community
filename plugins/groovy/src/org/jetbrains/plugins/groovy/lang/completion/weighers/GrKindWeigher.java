@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.completion.weighers;
 
 import com.intellij.codeInsight.AnnotationTargetUtil;
@@ -20,12 +6,25 @@ import com.intellij.codeInsight.completion.CompletionLocation;
 import com.intellij.codeInsight.completion.CompletionWeigher;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.PsiTypeLookupItem;
-import com.intellij.psi.*;
+import com.intellij.java.syntax.parser.JavaKeywords;
+import com.intellij.psi.CommonClassNames;
+import com.intellij.psi.PsiAnnotation;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiClassType;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiEnumConstant;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiMember;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiModifierList;
+import com.intellij.psi.PsiPackage;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiVariable;
+import com.intellij.psi.ResolveResult;
 import com.intellij.psi.impl.light.LightElement;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.containers.ContainerUtil;
-import java.util.HashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.extensions.NamedArgumentDescriptor;
 import org.jetbrains.plugins.groovy.lang.completion.GrMainCompletionProvider;
@@ -39,17 +38,18 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.annotation.GrAnnotat
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyPropertyUtils;
 
+import java.util.HashSet;
 import java.util.Set;
 
 /**
  * @author Maxim.Medvedev
  */
-public class GrKindWeigher extends CompletionWeigher {
+public final class GrKindWeigher extends CompletionWeigher {
   private static final Set<String> TRASH_CLASSES = new HashSet<>(10);
   private static final Set<String> PRIORITY_KEYWORDS = ContainerUtil.newHashSet(
-    PsiKeyword.RETURN, PsiKeyword.INSTANCEOF, "in",
-    PsiKeyword.PRIVATE, PsiKeyword.PROTECTED, PsiKeyword.PUBLIC, PsiKeyword.STATIC, "def",
-    PsiKeyword.TRUE,  PsiKeyword.FALSE, PsiKeyword.NULL);
+    JavaKeywords.RETURN, JavaKeywords.INSTANCEOF, "in",
+    JavaKeywords.PRIVATE, JavaKeywords.PROTECTED, JavaKeywords.PUBLIC, JavaKeywords.STATIC, "def",
+    JavaKeywords.TRUE, JavaKeywords.FALSE, JavaKeywords.NULL);
 
   static {
     TRASH_CLASSES.add(CommonClassNames.JAVA_LANG_CLASS);
@@ -59,7 +59,7 @@ public class GrKindWeigher extends CompletionWeigher {
 
   @Override
   public Comparable weigh(@NotNull LookupElement element, @NotNull CompletionLocation location) {
-    final PsiElement position = location.getCompletionParameters().getPosition();
+    final PsiElement position = location.getBaseCompletionParameters().getPosition();
     if (!(position.getContainingFile() instanceof GroovyFileBase)) return null;
 
     Object o = element.getObject();
@@ -68,17 +68,14 @@ public class GrKindWeigher extends CompletionWeigher {
     }
 
     final PsiElement parent = position.getParent();
-    final PsiElement qualifier = parent instanceof GrReferenceElement ? ((GrReferenceElement)parent).getQualifier() : null;
+    final PsiElement qualifier = parent instanceof GrReferenceElement ? ((GrReferenceElement<?>)parent).getQualifier() : null;
     if (qualifier == null) {
-      if (o instanceof NamedArgumentDescriptor) {
-        switch (((NamedArgumentDescriptor)o).getPriority()) {
-          case ALWAYS_ON_TOP:
-            return NotQualifiedKind.onTop;
-          case AS_LOCAL_VARIABLE:
-            return NotQualifiedKind.local;
-          default:
-            return NotQualifiedKind.unknown;
-        }
+      if (o instanceof NamedArgumentDescriptor descriptor) {
+        return switch (descriptor.getPriority()) {
+          case ALWAYS_ON_TOP -> NotQualifiedKind.onTop;
+          case AS_LOCAL_VARIABLE -> NotQualifiedKind.local;
+          default -> NotQualifiedKind.unknown;
+        };
       }
       if (o instanceof PsiVariable && !(o instanceof PsiField)) {
         return NotQualifiedKind.local;
@@ -91,27 +88,27 @@ public class GrKindWeigher extends CompletionWeigher {
 
       if (isPriorityKeyword(o)) return NotQualifiedKind.local;
       if (isLightElement(o)) return NotQualifiedKind.unknown;
-      if (o instanceof PsiClass) {
-        if (((PsiClass)o).isAnnotationType() && GrMainCompletionProvider.AFTER_AT.accepts(position)) {
+      if (o instanceof PsiClass cls) {
+        if (cls.isAnnotationType() && GrMainCompletionProvider.AFTER_AT.accepts(position)) {
           final GrAnnotation annotation = PsiTreeUtil.getParentOfType(position, GrAnnotation.class);
           if (annotation != null) {
             PsiElement annoParent = annotation.getParent();
             PsiElement ownerToUse = annoParent instanceof PsiModifierList ? annoParent.getParent() : annoParent;
             PsiAnnotation.TargetType[] elementTypeFields = GrAnnotationImpl.getApplicableElementTypeFields(ownerToUse);
-            if (AnnotationTargetUtil.findAnnotationTarget((PsiClass)o, elementTypeFields) != null) {
+            if (AnnotationTargetUtil.findAnnotationTarget(cls, elementTypeFields) != null) {
               return NotQualifiedKind.restrictedClass;
             }
           }
         }
         if (GrMainCompletionProvider.IN_CATCH_TYPE.accepts(position) &&
-            InheritanceUtil.isInheritor((PsiClass)o, CommonClassNames.JAVA_LANG_THROWABLE)) {
+            InheritanceUtil.isInheritor(cls, CommonClassNames.JAVA_LANG_THROWABLE)) {
           return NotQualifiedKind.restrictedClass;
         }
       }
-      if (o instanceof PsiMember) {
-        final PsiClass containingClass = ((PsiMember)o).getContainingClass();
-        if (isAccessor((PsiMember)o)) return NotQualifiedKind.accessor;
-        if (o instanceof PsiClass && ((PsiClass)o).getContainingClass() == null || o instanceof PsiPackage) return NotQualifiedKind.unknown;
+      if (o instanceof PsiMember member) {
+        final PsiClass containingClass = member.getContainingClass();
+        if (isAccessor(member)) return NotQualifiedKind.accessor;
+        if (o instanceof PsiClass cls && cls.getContainingClass() == null || o instanceof PsiPackage) return NotQualifiedKind.unknown;
         if (o instanceof PsiClass) return NotQualifiedKind.innerClass;
         if (PsiTreeUtil.isContextAncestor(containingClass, position, false)) return NotQualifiedKind.currentClassMember;
         return NotQualifiedKind.member;
@@ -137,7 +134,6 @@ public class GrKindWeigher extends CompletionWeigher {
   }
 
   private static boolean isPriorityKeyword(Object o) {
-    //noinspection SuspiciousMethodCalls
     return PRIORITY_KEYWORDS.contains(o);
   }
 

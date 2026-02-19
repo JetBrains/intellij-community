@@ -20,6 +20,13 @@ $config = <<<CONFIG
       "endpoints": {
         "send": "http://test-send-url",
         "metadata": "metadata/$time/"
+      },
+      "options": {
+        "dataThreshold": 16000,
+        "groupDataThreshold": 8000,
+        "groupAlertThreshold": 4000,
+        "id_salt": "test_salt",
+        "id_salt_revision": 1
       }
     }
   ]

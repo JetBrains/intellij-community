@@ -1,31 +1,33 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInsight.template;
 
 import com.intellij.codeInsight.template.impl.ConstantNode;
 import com.intellij.codeInsight.template.impl.NonInteractiveTemplateUtil;
 import com.intellij.codeInsight.template.impl.TemplateImpl;
+import com.intellij.codeInsight.template.impl.Variable;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RangeMarker;
-import com.intellij.openapi.fileEditor.FileEditorManager;
-import com.intellij.openapi.fileEditor.OpenFileDescriptor;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.DocumentUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
@@ -42,12 +44,16 @@ public class TemplateBuilderImpl implements TemplateBuilder {
   private RangeMarker myEndElement;
   private RangeMarker mySelection;
   private final Document myDocument;
-  private final PsiFile myFile;
+  private final PsiFile myPsiFile;
+  private Comparator<? super Variable> myVariableComparator;
+
+  private boolean scrollToTemplate = true;
+
   private static final Logger LOG = Logger.getInstance(TemplateBuilderImpl.class);
 
   public TemplateBuilderImpl(@NotNull PsiElement element) {
-    myFile = InjectedLanguageManager.getInstance(element.getProject()).getTopLevelFile(element);
-    myDocument = myFile.getViewProvider().getDocument();
+    myPsiFile = InjectedLanguageManager.getInstance(element.getProject()).getTopLevelFile(element);
+    myDocument = myPsiFile.getViewProvider().getDocument();
     myContainerElement = wrapElement(element);
   }
 
@@ -73,7 +79,7 @@ public class TemplateBuilderImpl implements TemplateBuilder {
   private RangeMarker wrapReference(final PsiReference ref) {
     PsiElement element = ref.getElement();
     return myDocument.createRangeMarker(ref.getRangeInElement().shiftRight(
-      InjectedLanguageManager.getInstance(myFile.getProject()).injectedToHost(element, element.getTextRange().getStartOffset())
+      InjectedLanguageManager.getInstance(myPsiFile.getProject()).injectedToHost(element, element.getTextRange().getStartOffset())
     ));
   }
 
@@ -155,13 +161,20 @@ public class TemplateBuilderImpl implements TemplateBuilder {
   }
 
   /**
-   * Adds end variable after the specified element
+   * Sets the place where the caret will be moved after the template is finished.
+   *
+   * @param element the element after which the cursor will be placed
    */
   public void setEndVariableAfter(PsiElement element) {
     element = PsiTreeUtil.nextLeaf(element);
     setEndVariableBefore(element);
   }
 
+  /**
+   * Sets the place where the caret will be moved after the template is finished.
+   *
+   * @param element the element before which the cursor will be placed
+   */
   public void setEndVariableBefore(PsiElement element) {
     if (myEndElement != null) {
       myElements.remove(myEndElement);
@@ -175,6 +188,10 @@ public class TemplateBuilderImpl implements TemplateBuilder {
     myElements.add(mySelection);
   }
 
+  public void setVariableOrdering(@Nullable Comparator<? super Variable> comparator) {
+    myVariableComparator = comparator;
+  }
+
   public Template buildInlineTemplate() {
     return initInlineTemplate(buildTemplate());
   }
@@ -182,22 +199,24 @@ public class TemplateBuilderImpl implements TemplateBuilder {
   public Template initInlineTemplate(Template template) {
     template.setInline(true);
 
-    ApplicationManager.getApplication().assertWriteAccessAllowed();
+    if (myPsiFile.isPhysical()) {
+      ApplicationManager.getApplication().assertWriteAccessAllowed();
+    }
 
     //this is kinda hacky way of doing things, but have not got a better idea
-    //DocumentUtil.executeInBulk(myDocument, true, () -> {
+    DocumentUtil.executeInBulk(myDocument, true, () -> {
       for (RangeMarker element : myElements) {
         if (element != myEndElement) {
           myDocument.deleteString(element.getStartOffset(), element.getEndOffset());
         }
       }
-    //});
+    });
 
     return template;
   }
 
   public Template buildTemplate() {
-    TemplateManager manager = TemplateManager.getInstance(myFile.getProject());
+    TemplateManager manager = TemplateManager.getInstance(myPsiFile.getProject());
     final Template template = manager.createTemplate("", "");
     return initTemplate(template);
   }
@@ -209,11 +228,10 @@ public class TemplateBuilderImpl implements TemplateBuilder {
     for (final RangeMarker element : myElements) {
       int offset = element.getStartOffset() - containerStart;
       if (start > offset) {
-        LOG.error("file: " + myFile +
+        LOG.error("file: " + myPsiFile +
                   " container: " + myContainerElement +
                   " markers: " + StringUtil.join(myElements, rangeMarker -> {
-                    final String docString =
-                      myDocument.getText(new TextRange(rangeMarker.getStartOffset(), rangeMarker.getEndOffset()));
+                    final String docString = myDocument.getText(rangeMarker.getTextRange());
                     return "[[" + docString + "]" + rangeMarker.getStartOffset() + ", " + rangeMarker.getEndOffset() + "]";
                   }, ", "));
       }
@@ -266,9 +284,28 @@ public class TemplateBuilderImpl implements TemplateBuilder {
 
     template.setToIndent(false);
     template.setToReformat(false);
+    template.setScrollToTemplate(scrollToTemplate);
+
+    orderTemplateVariables(template);
 
     return template;
   }
+
+  private void orderTemplateVariables(Template template) {
+    if (myVariableComparator == null || !(template instanceof TemplateImpl templateImpl)) {
+      return;
+    }
+
+    List<Variable> variables = new ArrayList<>(templateImpl.getVariables());
+    variables.sort(myVariableComparator);
+    for (int i = variables.size() - 1; i >= 0; i--) {
+      templateImpl.removeVariable(i);
+    }
+    for (Variable variable : variables) {
+      templateImpl.addVariable(variable);
+    }
+  }
+
   private String getDocumentTextFragment(final int startOffset, final int endOffset) {
     return myDocument.getCharsSequence().subSequence(startOffset, endOffset).toString();
   }
@@ -286,18 +323,6 @@ public class TemplateBuilderImpl implements TemplateBuilder {
   }
 
   @Override
-  public void run() {
-    final Project project = myFile.getProject();
-    VirtualFile file = myFile.getVirtualFile();
-    assert file != null: "Virtual file is null for " + myFile;
-    OpenFileDescriptor descriptor = new OpenFileDescriptor(project, file);
-    final Editor editor = FileEditorManager.getInstance(project).openTextEditor(descriptor, true);
-
-    assert editor != null : "Editor is null";
-    run(editor, false);
-  }
-
-  @Override
   public void runNonInteractively(final boolean inline) {
     Template template = new TemplateImpl("", "");
     if (inline) {
@@ -307,11 +332,11 @@ public class TemplateBuilderImpl implements TemplateBuilder {
       template = initTemplate(template);
       myDocument.replaceString(myContainerElement.getStartOffset(), myContainerElement.getEndOffset(), "");
     }
-    NonInteractiveTemplateUtil.runNonInteractively(myFile, myDocument, template, myContainerElement);
+    NonInteractiveTemplateUtil.runNonInteractively(myPsiFile, myDocument, template, myContainerElement);
   }
 
   @Override
-  public void run(@NotNull final Editor editor, final boolean inline) {
+  public void run(final @NotNull Editor editor, final boolean inline) {
     final Template template;
     if (inline) {
       template = buildInlineTemplate();
@@ -321,7 +346,7 @@ public class TemplateBuilderImpl implements TemplateBuilder {
       editor.getDocument().replaceString(myContainerElement.getStartOffset(), myContainerElement.getEndOffset(), "");
     }
     editor.getCaretModel().moveToOffset(myContainerElement.getStartOffset());
-    TemplateManager.getInstance(myFile.getProject()).startTemplate(editor, template);
+    TemplateManager.getInstance(myPsiFile.getProject()).startTemplate(editor, template);
   }
 
   public void replaceElement(PsiElement element, @NonNls String varName, Expression expression, boolean alwaysStopAt, boolean skipOnStart) {
@@ -345,5 +370,11 @@ public class TemplateBuilderImpl implements TemplateBuilder {
     myVariableNamesMap.put(key, varName);
     myVariableExpressions.put(key, dependantVariableName);
     myElements.add(key);
+  }
+
+  @Override
+  public TemplateBuilder setScrollToTemplate(boolean scrollToTemplate) {
+    this.scrollToTemplate = scrollToTemplate;
+    return this;
   }
 }

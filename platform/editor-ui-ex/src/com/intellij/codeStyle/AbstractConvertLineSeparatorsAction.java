@@ -1,9 +1,14 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeStyle;
 
 import com.intellij.ide.lightEdit.LightEditCompatible;
 import com.intellij.injected.editor.VirtualFileWindow;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -36,8 +41,7 @@ import java.util.function.Supplier;
 public abstract class AbstractConvertLineSeparatorsAction extends AnAction implements DumbAware, LightEditCompatible {
   private static final Logger LOG = Logger.getInstance(AbstractConvertLineSeparatorsAction.class);
 
-  @NotNull
-  private final String mySeparator;
+  private final @NotNull String mySeparator;
 
   protected AbstractConvertLineSeparatorsAction(@NotNull Supplier<@NlsActions.ActionText String> text, @NotNull LineSeparator separator) {
     this(separator + " - " + text.get(), separator.getSeparatorString());
@@ -70,6 +74,11 @@ public abstract class AbstractConvertLineSeparatorsAction extends AnAction imple
   }
 
   @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
+  }
+
+  @Override
   public void actionPerformed(@NotNull AnActionEvent event) {
     final DataContext dataContext = event.getDataContext();
     final Project project = CommonDataKeys.PROJECT.getData(dataContext);
@@ -87,9 +96,8 @@ public abstract class AbstractConvertLineSeparatorsAction extends AnAction imple
     FileTypeRegistry fileTypeManager = FileTypeRegistry.getInstance();
     for (VirtualFile file : virtualFiles) {
       VfsUtilCore.visitChildrenRecursively(file, new VirtualFileVisitor<Void>() {
-        @NotNull
         @Override
-        public Result visitFileEx(@NotNull VirtualFile file) {
+        public @NotNull Result visitFileEx(@NotNull VirtualFile file) {
           if (shouldProcess(file)) {
             changeLineSeparators(project, file, mySeparator);
           }

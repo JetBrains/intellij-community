@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.cfgView;
 
 import com.intellij.codeInsight.CodeInsightActionHandler;
@@ -11,8 +11,14 @@ import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.configurations.PathEnvironmentVariableUtil;
 import com.intellij.execution.util.ExecUtil;
 import com.intellij.notification.NotificationGroup;
+import com.intellij.notification.NotificationGroupManager;
 import com.intellij.notification.NotificationType;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -31,19 +37,19 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 
-public class ShowControlFlowHandler implements CodeInsightActionHandler {
+public final class ShowControlFlowHandler implements CodeInsightActionHandler {
 
   private static final Logger LOGGER = Logger.getInstance(ShowControlFlowHandler.class);
 
-  private static final NotificationGroup NOTIFICATION_GROUP = NotificationGroup.balloonGroup("Show control flow group");
+  private static final NotificationGroup NOTIFICATION_GROUP = NotificationGroupManager.getInstance().getNotificationGroup("Show control flow group");
   private static final String NO_GRAPHVIZ_HELP = "Probably graphviz is missing." +
                                                  "You could install graphviz using `apt install graphviz` or `brew install graphviz`";
 
 
   @Override
-  public void invoke(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
+  public void invoke(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile psiFile) {
     final int offset = editor.getCaretModel().getOffset();
-    final PsiElement position = file.findElementAt(offset);
+    final PsiElement position = psiFile.findElementAt(offset);
     if (position == null) {
       return;
     }
@@ -57,15 +63,10 @@ public class ShowControlFlowHandler implements CodeInsightActionHandler {
           final VirtualFile fileByUrl = VirtualFileManager.getInstance().refreshAndFindFileByUrl(VfsUtilCore.pathToUrl(path));
           if (fileByUrl != null) {
             final AnAction openInBrowser = ActionManager.getInstance().getAction("OpenInBrowser");
-            DataContext dataContext = dataId -> {
-              if (CommonDataKeys.VIRTUAL_FILE.is(dataId)) {
-                return fileByUrl;
-              }
-              if (CommonDataKeys.PROJECT.is(dataId)) {
-                return project;
-              }
-              return null;
-            };
+            DataContext dataContext = SimpleDataContext.builder()
+              .add(CommonDataKeys.VIRTUAL_FILE, fileByUrl)
+              .add(CommonDataKeys.PROJECT, project)
+              .build();
             final AnActionEvent action = AnActionEvent.createFromDataContext("ShowControlFlow", null, dataContext);
             openInBrowser.actionPerformed(action);
           }
@@ -76,7 +77,10 @@ public class ShowControlFlowHandler implements CodeInsightActionHandler {
       }
     }
     catch (FileNotFoundException e) {
-      NOTIFICATION_GROUP.createNotification("Show CFG:", e.getMessage(), NO_GRAPHVIZ_HELP, NotificationType.ERROR).notify(project);
+      NOTIFICATION_GROUP
+        .createNotification("Show CFG:", NO_GRAPHVIZ_HELP, NotificationType.ERROR)
+        .setSubtitle(e.getMessage())
+        .notify(project);
       LOGGER.warn(e);
     }
     catch (IOException | ExecutionException e) {
@@ -89,7 +93,7 @@ public class ShowControlFlowHandler implements CodeInsightActionHandler {
     return false;
   }
 
-  public static boolean toSvgFile(@NotNull final String outSvgFile, @NotNull final PsiElement target) throws IOException, ExecutionException {
+  public static boolean toSvgFile(final @NotNull String outSvgFile, final @NotNull PsiElement target) throws IOException, ExecutionException {
     String dotUtilName = SystemInfo.isUnix ? "dot" : "dot.exe";
     File dotFullPath = PathEnvironmentVariableUtil.findInPath(dotUtilName);
     if (dotFullPath == null) {
@@ -124,15 +128,13 @@ public class ShowControlFlowHandler implements CodeInsightActionHandler {
     return true;
   }
 
-  @NotNull
-  private static String toDot(@NotNull final ControlFlow flow, @NotNull final ControlFlowProvider provider) {
+  private static @NotNull String toDot(final @NotNull ControlFlow flow, final @NotNull ControlFlowProvider provider) {
     StringBuilder builder = new StringBuilder();
     builder.append("digraph {");
     for (Instruction instruction : flow.getInstructions()) {
       printInstruction(builder, instruction, provider);
 
-      if (instruction instanceof ConditionalInstruction) {
-        ConditionalInstruction conditionalInstruction = (ConditionalInstruction)instruction;
+      if (instruction instanceof ConditionalInstruction conditionalInstruction) {
         builder.append("\n").append("Its ").append(conditionalInstruction.getResult()).
           append(" branch, condition: ").append(conditionalInstruction.getCondition().getText());
       }
@@ -172,8 +174,7 @@ public class ShowControlFlowHandler implements CodeInsightActionHandler {
     }
   }
 
-  @NotNull
-  private static String escape(@NotNull String text) {
+  private static @NotNull String escape(@NotNull String text) {
     return StringUtil.replace(StringUtil.escapeChars(text, '"'), "\n", "\\n");
   }
 }

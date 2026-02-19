@@ -34,8 +34,7 @@ public final class Variable implements Cloneable, Copyable<Variable> {
         this.myName = name;
     }
 
-    @NotNull
-    public String getName() {
+    public @NotNull String getName() {
         return myName != null ? myName : "";
     }
 
@@ -48,8 +47,7 @@ public final class Variable implements Cloneable, Copyable<Variable> {
         }
     }
 
-    @NotNull
-    public String getExpression() {
+    public @NotNull String getExpression() {
         return myExpression != null ? myExpression : "";
     }
 
@@ -61,10 +59,12 @@ public final class Variable implements Cloneable, Copyable<Variable> {
         this.myExpression = expression;
     }
 
+    @Override
     public String toString() {
         return myName + "<" + myExpression + ">";
     }
 
+    @Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
@@ -75,6 +75,7 @@ public final class Variable implements Cloneable, Copyable<Variable> {
         return !(myName != null ? !myName.equals(variable.myName) : variable.myName != null);
     }
 
+    @Override
     public int hashCode() {
         int result = (myName != null ? myName.hashCode() : 0);
         result = 29 * result + (myExpression != null ? myExpression.hashCode() : 0);

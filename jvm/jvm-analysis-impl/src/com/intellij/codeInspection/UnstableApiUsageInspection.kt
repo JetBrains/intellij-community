@@ -1,55 +1,57 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection
 
 import com.intellij.analysis.JvmAnalysisBundle
 import com.intellij.codeInsight.AnnotationUtil
+import com.intellij.codeInsight.StaticAnalysisAnnotationManager
+import com.intellij.codeInsight.options.JavaClassValidator
 import com.intellij.codeInspection.AnnotatedApiUsageUtil.findAnnotatedContainingDeclaration
 import com.intellij.codeInspection.AnnotatedApiUsageUtil.findAnnotatedTypeUsedInDeclarationSignature
 import com.intellij.codeInspection.apiUsage.ApiUsageProcessor
 import com.intellij.codeInspection.apiUsage.ApiUsageUastVisitor
 import com.intellij.codeInspection.deprecation.DeprecationInspection
-import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel
-import com.intellij.codeInspection.util.SpecialAnnotationsUtil
+import com.intellij.codeInspection.options.OptPane
+import com.intellij.codeInspection.options.OptPane.checkbox
+import com.intellij.codeInspection.options.OptPane.pane
+import com.intellij.codeInspection.options.OptPane.stringList
+import com.intellij.codeInspection.util.InspectionMessage
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.roots.ProjectFileIndex
-import com.intellij.psi.*
+import com.intellij.psi.PsiAnnotation
+import com.intellij.psi.PsiClass
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiElementVisitor
+import com.intellij.psi.PsiMethod
+import com.intellij.psi.PsiModifierListOwner
 import com.intellij.psi.util.PsiUtilCore
-import com.intellij.util.ArrayUtilRt
 import com.siyeh.ig.ui.ExternalizableStringSet
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.uast.*
-import java.awt.BorderLayout
-import javax.swing.JPanel
+import org.jetbrains.annotations.VisibleForTesting
+import org.jetbrains.uast.UClass
+import org.jetbrains.uast.UDeclaration
+import org.jetbrains.uast.UElement
+import org.jetbrains.uast.UExpression
+import org.jetbrains.uast.UField
+import org.jetbrains.uast.UMethod
+import org.jetbrains.uast.sourcePsiElement
+import org.jetbrains.uast.toUElement
 
+@VisibleForTesting
 class UnstableApiUsageInspection : LocalInspectionTool() {
 
-  companion object {
+  private inline val SCHEDULED_FOR_REMOVAL_ANNOTATION_NAME: String get() = ApiStatus.ScheduledForRemoval::class.java.canonicalName
 
-    private val SCHEDULED_FOR_REMOVAL_ANNOTATION_NAME: String = ApiStatus.ScheduledForRemoval::class.java.canonicalName
-
-    val DEFAULT_UNSTABLE_API_ANNOTATIONS: List<String> = listOf(
-      SCHEDULED_FOR_REMOVAL_ANNOTATION_NAME,
-      "org.jetbrains.annotations.ApiStatus.Experimental",
-      "org.jetbrains.annotations.ApiStatus.Internal",
-      "com.google.common.annotations.Beta",
-      "io.reactivex.annotations.Beta",
-      "io.reactivex.annotations.Experimental",
-      "rx.annotations.Experimental",
-      "rx.annotations.Beta",
-      "org.apache.http.annotation.Beta",
-      "org.gradle.api.Incubating"
-    )
-
-    private val knownAnnotationMessageProviders = mapOf(SCHEDULED_FOR_REMOVAL_ANNOTATION_NAME to ScheduledForRemovalMessageProvider())
-  }
+  private val knownAnnotationMessageProviders = mapOf(SCHEDULED_FOR_REMOVAL_ANNOTATION_NAME to ScheduledForRemovalMessageProvider())
 
   @JvmField
-  val unstableApiAnnotations: List<String> = ExternalizableStringSet(
-    *ArrayUtilRt.toStringArray(DEFAULT_UNSTABLE_API_ANNOTATIONS)
-  )
+  val unstableApiAnnotations: List<String> =
+    ExternalizableStringSet(*StaticAnalysisAnnotationManager.getInstance().knownUnstableApiAnnotations)
 
   @JvmField
   var myIgnoreInsideImports: Boolean = true
+
+  @JvmField
+  var myIgnoreApiDeclaredInThisProject: Boolean = true
 
   override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor {
     val annotations = unstableApiAnnotations.toList()
@@ -58,35 +60,33 @@ class UnstableApiUsageInspection : LocalInspectionTool() {
         UnstableApiUsageProcessor(
           holder,
           myIgnoreInsideImports,
+          myIgnoreApiDeclaredInThisProject,
           annotations,
           knownAnnotationMessageProviders
         )
       )
-    } else {
+    }
+    else {
       PsiElementVisitor.EMPTY_VISITOR
     }
   }
 
-  override fun createOptionsPanel(): JPanel {
-    val checkboxPanel = SingleCheckboxOptionsPanel(
-      JvmAnalysisBundle.message("jvm.inspections.unstable.api.usage.ignore.inside.imports"), this, "myIgnoreInsideImports"
+  override fun getOptionsPane(): OptPane {
+    return pane(
+      checkbox("myIgnoreInsideImports", JvmAnalysisBundle.message("jvm.inspections.unstable.api.usage.ignore.inside.imports")),
+      checkbox("myIgnoreApiDeclaredInThisProject",
+               JvmAnalysisBundle.message("jvm.inspections.unstable.api.usage.ignore.declared.inside.this.project")),
+      //TODO in add annotation window "Include non-project items" should be enabled by default
+      stringList("unstableApiAnnotations", JvmAnalysisBundle.message("jvm.inspections.unstable.api.usage.annotations.list"),
+                 JavaClassValidator().annotationsOnly())
     )
-
-    //TODO in add annotation window "Include non-project items" should be enabled by default
-    val annotationsListControl = SpecialAnnotationsUtil.createSpecialAnnotationsListControl(
-      unstableApiAnnotations, JvmAnalysisBundle.message("jvm.inspections.unstable.api.usage.annotations.list")
-    )
-
-    val panel = JPanel(BorderLayout(2, 2))
-    panel.add(checkboxPanel, BorderLayout.NORTH)
-    panel.add(annotationsListControl, BorderLayout.CENTER)
-    return panel
   }
 }
 
 private class UnstableApiUsageProcessor(
   private val problemsHolder: ProblemsHolder,
   private val ignoreInsideImports: Boolean,
+  private val ignoreApiDeclaredInThisProject: Boolean,
   private val unstableApiAnnotations: List<String>,
   private val knownAnnotationMessageProviders: Map<String, UnstableApiUsageMessageProvider>
 ) : ApiUsageProcessor {
@@ -135,7 +135,7 @@ private class UnstableApiUsageProcessor(
     (sourceNode as? UDeclaration)?.uastAnchor.sourcePsiElement ?: sourceNode.sourcePsi
 
   private fun checkUnstableApiUsage(target: PsiModifierListOwner, sourceNode: UElement, isMethodOverriding: Boolean) {
-    if (!isLibraryElement(target)) {
+    if (ignoreApiDeclaredInThisProject && !isLibraryElement(target)) {
       return
     }
 
@@ -157,13 +157,21 @@ private class UnstableApiUsageProcessor(
         messageProvider.buildMessage(annotatedContainingDeclaration)
       }
       val elementToHighlight = getElementToHighlight(sourceNode) ?: return false
-      problemsHolder.registerProblem(elementToHighlight, message, messageProvider.problemHighlightType)
+      val fix = DeprecationInspection.getReplacementQuickFix(target, elementToHighlight)
+      if (fix != null) {
+        problemsHolder.registerProblem(elementToHighlight, message, messageProvider.problemHighlightType, fix)
+      }
+      else {
+        problemsHolder.registerProblem(elementToHighlight, message, messageProvider.problemHighlightType)
+      }
       return true
     }
     return false
   }
 
-  private fun checkTargetReferencesUnstableTypeInSignature(target: PsiModifierListOwner, sourceNode: UElement, isMethodOverriding: Boolean) {
+  private fun checkTargetReferencesUnstableTypeInSignature(target: PsiModifierListOwner,
+                                                           sourceNode: UElement,
+                                                           isMethodOverriding: Boolean) {
     if (!isMethodOverriding && !arePsiElementsFromTheSameFile(sourceNode.sourcePsi, target.containingFile)) {
       val declaration = target.toUElement(UDeclaration::class.java)
       if (declaration !is UClass && declaration !is UMethod && declaration !is UField) {
@@ -191,10 +199,13 @@ private interface UnstableApiUsageMessageProvider {
 
   val problemHighlightType: ProblemHighlightType
 
+  @InspectionMessage
   fun buildMessage(annotatedContainingDeclaration: AnnotatedContainingDeclaration): String
 
+  @InspectionMessage
   fun buildMessageUnstableMethodOverridden(annotatedContainingDeclaration: AnnotatedContainingDeclaration): String
 
+  @InspectionMessage
   fun buildMessageUnstableTypeIsUsedInSignatureOfReferencedApi(
     referencedApi: PsiModifierListOwner,
     annotatedTypeUsedInSignature: AnnotatedContainingDeclaration
@@ -209,7 +220,8 @@ private object DefaultUnstableApiUsageMessageProvider : UnstableApiUsageMessageP
   override fun buildMessageUnstableMethodOverridden(annotatedContainingDeclaration: AnnotatedContainingDeclaration): String =
     with(annotatedContainingDeclaration) {
       if (isOwnAnnotation) {
-        JvmAnalysisBundle.message("jvm.inspections.unstable.api.usage.overridden.method.is.marked.unstable.itself", targetName, presentableAnnotationName)
+        JvmAnalysisBundle.message("jvm.inspections.unstable.api.usage.overridden.method.is.marked.unstable.itself", targetName,
+                                  presentableAnnotationName)
       }
       else {
         JvmAnalysisBundle.message(

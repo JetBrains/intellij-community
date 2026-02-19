@@ -1,63 +1,86 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.codeInspection.bytecodeAnalysis;
 
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.ExternalAnnotationsManager;
 import com.intellij.codeInsight.ExternalAnnotationsManagerImpl;
 import com.intellij.codeInsight.InferredContractAnnotationsLineMarkerProvider;
+import com.intellij.codeInsight.ModCommandAwareExternalAnnotationsManager;
 import com.intellij.codeInsight.daemon.GutterMark;
 import com.intellij.codeInsight.daemon.LineMarkerSettings;
 import com.intellij.codeInsight.daemon.impl.LineMarkerSettingsImpl;
+import com.intellij.codeInspection.bytecodeAnalysis.BytecodeAnalysisSuppressor;
 import com.intellij.codeInspection.bytecodeAnalysis.ClassDataIndexer;
 import com.intellij.codeInspection.bytecodeAnalysis.ProjectBytecodeAnalysis;
 import com.intellij.codeInspection.dataFlow.JavaMethodContractUtil;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.roots.*;
+import com.intellij.openapi.roots.AnnotationOrderRootType;
+import com.intellij.openapi.roots.ContentEntry;
+import com.intellij.openapi.roots.LibraryOrderEntry;
+import com.intellij.openapi.roots.ModifiableRootModel;
+import com.intellij.openapi.roots.OrderEntry;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.JavaRecursiveElementVisitor;
+import com.intellij.psi.PsiAnnotation;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiModifierListOwner;
+import com.intellij.psi.PsiNameValuePair;
+import com.intellij.psi.PsiPackage;
+import com.intellij.psi.PsiParameter;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.PsiTestUtil;
+import com.intellij.testFramework.ServiceContainerUtil;
 import com.intellij.testFramework.fixtures.DefaultLightProjectDescriptor;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import com.intellij.testFramework.fixtures.MavenDependencyUtil;
 import one.util.streamex.EntryStream;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.java.decompiler.IdeaDecompiler;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
+import java.util.TreeMap;
 import java.util.stream.Collectors;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.jetbrains.java.decompiler.IdeaDecompilerKt.IDEA_DECOMPILER_BANNER;
 
-/**
- * @author lambdamix
- */
 public class BytecodeAnalysisIntegrationTest extends LightJavaCodeInsightFixtureTestCase {
   private static final String ORG_JETBRAINS_ANNOTATIONS_CONTRACT = JavaMethodContractUtil.ORG_JETBRAINS_ANNOTATIONS_CONTRACT;
   private static final String INFERRED_TEST_METHOD =
     "org.apache.velocity.util.ExceptionUtils java.lang.Throwable createWithCause(java.lang.Class, java.lang.String, java.lang.Throwable)";
   private static final String EXTERNAL_TEST_METHOD = "java.lang.String String(java.lang.String)";
+  
+  private static final BytecodeAnalysisSuppressor TEST_SUPPRESSOR = file -> file.getPath().endsWith("/ParserTokenManager.class");
 
   private static final DefaultLightProjectDescriptor PROJECT_DESCRIPTOR = new DefaultLightProjectDescriptor() {
     @Override
     public void configureModule(@NotNull Module module, @NotNull ModifiableRootModel model, @NotNull ContentEntry contentEntry) {
       super.configureModule(module, model, contentEntry);
 
+      addJetBrainsAnnotations(model);
       MavenDependencyUtil.addFromMaven(model, "org.apache.velocity:velocity:1.7");
       MavenDependencyUtil.addFromMaven(model, "commons-collections:commons-collections:3.2.1");
 
@@ -69,19 +92,18 @@ public class BytecodeAnalysisIntegrationTest extends LightJavaCodeInsightFixture
           libModel.commit();
         }
       }
-      Sdk sdk = model.getSdk();
-      if (sdk != null) {
-        // first, remove bundled JDK Annotations because they are too thorough - can't infer them automatically yet
-        sdk = PsiTestUtil.modifyJdkRoots(sdk, modificator -> {
-          modificator.setName(modificator.getName() + "-RootType" + AnnotationOrderRootType.getInstance().name());
-          modificator.removeRoots(AnnotationOrderRootType.getInstance());
-        });
+    }
 
-        sdk = PsiTestUtil.addRootsToJdk(sdk, AnnotationOrderRootType.getInstance(), annotationsRoot);
-        model.setSdk(sdk);
-      }
+    @Override
+    public Sdk getSdk() {
+      Sdk sdk = super.getSdk();
+      sdk = PsiTestUtil.modifyJdkRoots(sdk, modificator -> {
+        modificator.setName(modificator.getName() + "-RootType" + AnnotationOrderRootType.getInstance().name());
+        modificator.removeRoots(AnnotationOrderRootType.getInstance());
+      });
 
-      Registry.get(ProjectBytecodeAnalysis.NULLABLE_METHOD).setValue(true, module);
+      sdk = PsiTestUtil.addRootsToJdk(sdk, AnnotationOrderRootType.getInstance(), getAnnotationsRoot());
+      return sdk;
     }
   };
 
@@ -105,16 +127,21 @@ public class BytecodeAnalysisIntegrationTest extends LightJavaCodeInsightFixture
     Disposer.register(getTestRootDisposable(), () -> settings.resetEnabled(descriptor));
 
     checkHasGutter("org.apache.velocity.util.ExceptionUtils",
-                   "<html><i>Inferred</i> annotations available. Full signature:<p>\n" +
-                   "<b><i>@Contract('null,_,_->null')</i></b> \n" +
-                   "Throwable <b>createWithCause</b>(Class,\n String,\n Throwable)</html>");
+                   """
+                     <html><p><i>Inferred</i> annotations available. Full signature:
+                     <pre><code><b><i><span style="color:#808000;">@</span><a href="psi_element://org.jetbrains.annotations.Contract"><span style="color:#808000;">Contract</span></a><span style="">(</span><span style="color:#008000;font-weight:bold;">"null,_,_->null"</span><span style="">)</span></i></b>\s
+                     <span style="color:#000000;">Throwable</span> <span style="color:#000000;">createWithCause</span><span style="">(</span><span style="color:#000000;">Class</span><span style="">,</span>
+                     <span style="color:#000000;">String</span><span style="">,</span>
+                     <span style="color:#000000;">Throwable</span><span style="">)</span></code></pre></html>""");
   }
 
   public void testExternalAnnoGutter() {
     checkHasGutter("java.lang.String",
-                   "<html>External and <i>inferred</i> annotations available. Full signature:<p>\n" +
-                   "<b><i>@Contract(pure = true)</i></b> \n" +
-                   "<b>String</b>(<b>@NotNull</b> String)</html>");
+                   """
+                     <html><p>External annotations available. Full signature:
+                     <pre><code><span style="color:#000000;">String</span><span style="">(</span><b><span style="color:#808000;">@</span><a href="psi_element://org.jetbrains.annotations.NotNull"><span style="color:#808000;">NotNull</span></a></b> <span style="color:#000080;font-weight:bold;">char</span><span style="">[]</span><span style="">,</span>
+                     <span style="color:#000080;font-weight:bold;">int</span><span style="">,</span>
+                     <span style="color:#000080;font-weight:bold;">int</span><span style="">)</span></code></pre></html>""");
   }
 
   private void checkHasGutter(String className, String expectedText) {
@@ -122,7 +149,7 @@ public class BytecodeAnalysisIntegrationTest extends LightJavaCodeInsightFixture
     assertNotNull(psiClass);
     myFixture.openFileInEditor(psiClass.getContainingFile().getVirtualFile());
     String documentText = myFixture.getEditor().getDocument().getText();
-    assertThat(documentText).startsWith(IdeaDecompiler.BANNER);
+    assertThat(documentText).startsWith(IDEA_DECOMPILER_BANNER);
     Set<String> gutters = myFixture.findAllGutters().stream()
       .map(GutterMark::getTooltipText)
       .filter(Objects::nonNull)
@@ -133,6 +160,8 @@ public class BytecodeAnalysisIntegrationTest extends LightJavaCodeInsightFixture
 
   public void testSdkAndLibAnnotations() {
     PsiPackage rootPackage = JavaPsiFacade.getInstance(getProject()).findPackage("");
+    ServiceContainerUtil.registerExtension(ApplicationManager.getApplication(), BytecodeAnalysisSuppressor.EP_NAME, TEST_SUPPRESSOR,
+                                           getTestRootDisposable());
     assertNotNull(rootPackage);
 
     List<String> diffs = new ArrayList<>();
@@ -152,7 +181,7 @@ public class BytecodeAnalysisIntegrationTest extends LightJavaCodeInsightFixture
       }
     };
     rootPackage.accept(visitor);
-    System.err.println(ClassDataIndexer.ourIndexSizeStatistics);
+    LOG.debug(String.valueOf(ClassDataIndexer.ourIndexSizeStatistics));
     assertEmpty(diffs);
   }
 
@@ -208,9 +237,12 @@ public class BytecodeAnalysisIntegrationTest extends LightJavaCodeInsightFixture
     }
   }
 
-  public void _testExportInferredAnnotations() {
+  @SuppressWarnings("unused")
+  public void testExportInferredAnnotations() {
     PsiPackage rootPackage = JavaPsiFacade.getInstance(getProject()).findPackage("");
     assertNotNull(rootPackage);
+    ServiceContainerUtil.registerExtension(ApplicationManager.getApplication(), BytecodeAnalysisSuppressor.EP_NAME, TEST_SUPPRESSOR,
+                                           getTestRootDisposable());
 
     VirtualFile annotationsRoot = getAnnotationsRoot();
     JavaRecursiveElementVisitor visitor = new PackageVisitor(GlobalSearchScope.moduleWithLibrariesScope(getModule())) {
@@ -268,10 +300,10 @@ public class BytecodeAnalysisIntegrationTest extends LightJavaCodeInsightFixture
         }
       }
 
-      private void annotate(Map<String, Map<String, PsiNameValuePair[]>> annotations,
-                            PsiModifierListOwner owner,
-                            String annotationFQN,
-                            PsiNameValuePair[] attributes) {
+      private static void annotate(Map<String, Map<String, PsiNameValuePair[]>> annotations,
+                                   PsiModifierListOwner owner,
+                                   String annotationFQN,
+                                   PsiNameValuePair[] attributes) {
         String key = PsiFormatUtil.getExternalName(owner, false, Integer.MAX_VALUE);
         annotations.computeIfAbsent(key, k -> new TreeMap<>()).put(annotationFQN, attributes);
       }
@@ -279,12 +311,13 @@ public class BytecodeAnalysisIntegrationTest extends LightJavaCodeInsightFixture
       private void saveXmlForPackage(String packageName, Map<String, Map<String, PsiNameValuePair[]>> annotations, VirtualFile root) {
         if (annotations.isEmpty()) return;
         String xmlContent = EntryStream.of(annotations)
-          .mapValues(map -> EntryStream.of(map).mapKeyValue(ExternalAnnotationsManagerImpl::createAnnotationTag).joining())
+          .mapValues(map -> EntryStream.of(map).mapKeyValue(ModCommandAwareExternalAnnotationsManager::createAnnotationTag).joining())
           .mapKeyValue((externalName, content) -> "<item name='" + StringUtil.escapeXmlEntities(externalName) +
                                                   "'>\n" + content.trim() + "\n</item>\n")
           .joining("", "<root>\n", "</root>");
+        PsiDirectory directory = getPsiManager().findDirectory(root);
         WriteCommandAction.runWriteCommandAction(getProject(), () -> {
-          XmlFile xml = ExternalAnnotationsManagerImpl.createAnnotationsXml(root, packageName, getPsiManager());
+          XmlFile xml = ExternalAnnotationsManagerImpl.createAnnotationsXml(null, directory, packageName);
           if (xml == null) throw new IllegalStateException("Unable to get XML for package " + packageName + "; root = " + root);
           xml.getVirtualFile().refresh(false, false);
           PsiDocumentManager documentManager = PsiDocumentManager.getInstance(getProject());
@@ -317,7 +350,7 @@ public class BytecodeAnalysisIntegrationTest extends LightJavaCodeInsightFixture
     }
 
     @Override
-    public void visitPackage(PsiPackage aPackage) {
+    public void visitPackage(@NotNull PsiPackage aPackage) {
       if (!"org.intellij.lang.annotations".equals(aPackage.getQualifiedName())) {
         for (PsiPackage subPackage : aPackage.getSubPackages(myScope)) {
           visitPackage(subPackage);

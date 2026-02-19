@@ -1,24 +1,12 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.hierarchy.type;
 
 import com.intellij.ide.hierarchy.HierarchyNodeDescriptor;
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.PsiClass;
+import com.intellij.util.SlowOperations;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -29,36 +17,40 @@ public final class TypeHierarchyTreeStructure extends SubtypesHierarchyTreeStruc
     setBaseElement(myBaseDescriptor); //to set myRoot
   }
 
-  @NotNull
-  private static HierarchyNodeDescriptor buildHierarchyElement(@NotNull Project project, @NotNull PsiClass aClass) {
+  private static @NotNull HierarchyNodeDescriptor buildHierarchyElement(@NotNull Project project, @NotNull PsiClass aClass) {
+    try (AccessToken ignore = SlowOperations.knownIssue("IDEA-345476, EA-700938")) {
+      return buildHierarchyElementInner(project, aClass);
+    }
+  }
+
+  private static @NotNull HierarchyNodeDescriptor buildHierarchyElementInner(@NotNull Project project, @NotNull PsiClass aClass) {
     HierarchyNodeDescriptor descriptor = null;
-    final PsiClass[] superClasses = createSuperClasses(aClass);
+    PsiClass[] superClasses = createSuperClasses(aClass);
     for(int i = superClasses.length - 1; i >= 0; i--){
-      final PsiClass superClass = superClasses[i];
-      final HierarchyNodeDescriptor newDescriptor = new TypeHierarchyNodeDescriptor(project, descriptor, superClass, false);
+      PsiClass superClass = superClasses[i];
+      HierarchyNodeDescriptor newDescriptor = new TypeHierarchyNodeDescriptor(project, descriptor, superClass, false);
       if (descriptor != null){
         descriptor.setCachedChildren(new HierarchyNodeDescriptor[] {newDescriptor});
       }
       descriptor = newDescriptor;
     }
-    final HierarchyNodeDescriptor newDescriptor = new TypeHierarchyNodeDescriptor(project, descriptor, aClass, true);
+    HierarchyNodeDescriptor newDescriptor = new TypeHierarchyNodeDescriptor(project, descriptor, aClass, true);
     if (descriptor != null) {
       descriptor.setCachedChildren(new HierarchyNodeDescriptor[] {newDescriptor});
     }
     return newDescriptor;
   }
 
-  @NotNull
-  private static PsiClass[] createSuperClasses(@NotNull PsiClass aClass) {
+  private static @NotNull PsiClass[] createSuperClasses(@NotNull PsiClass aClass) {
     if (!aClass.isValid()) return PsiClass.EMPTY_ARRAY;
     if (aClass.isInterface()) return PsiClass.EMPTY_ARRAY;
 
-    final ArrayList<PsiClass> superClasses = new ArrayList<>();
+    ArrayList<PsiClass> superClasses = new ArrayList<>();
     while (!CommonClassNames.JAVA_LANG_OBJECT.equals(aClass.getQualifiedName())) {
-      final PsiClass aClass1 = aClass;
-      final PsiClass[] superTypes = aClass1.getSupers();
+      PsiClass aClass1 = aClass;
+      PsiClass[] superTypes = aClass1.getSupers();
       PsiClass superType = null;
-      for (final PsiClass type : superTypes) {
+      for (PsiClass type : superTypes) {
         if (!type.isInterface()) {
           superType = type;
           break;

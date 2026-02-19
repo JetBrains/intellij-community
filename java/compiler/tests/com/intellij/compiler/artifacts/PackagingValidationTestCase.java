@@ -13,11 +13,15 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Set;
 
 public abstract class PackagingValidationTestCase extends PackagingElementsTestCase {
-  protected PackagingValidationTestCase() {
+  @Override
+  protected void setUp() throws Exception {
     mySetupModule = true;
+    super.setUp();
   }
 
   protected MockArtifactProblemsHolder validate(CompositePackagingElement<?> root, final ArtifactType artifactType) {
@@ -30,7 +34,6 @@ public abstract class PackagingValidationTestCase extends PackagingElementsTestC
 
   protected class MockArtifactProblemsHolder extends ArtifactProblemsHolderBase {
     private final List<String> myProblems = new ArrayList<>();
-    private final Map<String, ArtifactProblemQuickFix[]> myQuickFixes = new HashMap<>();
 
     public MockArtifactProblemsHolder() {
       super(new MockPackagingEditorContext(new MockArtifactsStructureConfigurableContext(), null));
@@ -42,7 +45,6 @@ public abstract class PackagingValidationTestCase extends PackagingElementsTestC
                               @Nullable List<PackagingElement<?>> pathToPlace,
                               ArtifactProblemQuickFix @NotNull ... quickFixes) {
       myProblems.add(message);
-      myQuickFixes.put(message, quickFixes);
     }
 
     @Override
@@ -57,7 +59,7 @@ public abstract class PackagingValidationTestCase extends PackagingElementsTestC
     }
 
     public void assertProblems(String... expectedMessages) {
-      Set<String> expected = ContainerUtil.set(expectedMessages);
+      Set<String> expected = ContainerUtil.newHashSet(expectedMessages);
       outer:
       for (String problem : myProblems) {
         for (String message : expected) {

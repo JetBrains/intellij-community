@@ -1,23 +1,22 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.impl;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.concurrency.annotations.RequiresReadLock;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
 public abstract class PushedFilePropertiesUpdater {
-  public abstract void runConcurrentlyIfPossible(List<Runnable> tasks);
+  public abstract void runConcurrentlyIfPossible(List<? extends Runnable> tasks);
 
-  @NotNull
-  public static PushedFilePropertiesUpdater getInstance(@NotNull Project project) {
-    return project.getComponent(PushedFilePropertiesUpdater.class);
+  public static @NotNull PushedFilePropertiesUpdater getInstance(@NotNull Project project) {
+    return project.getService(PushedFilePropertiesUpdater.class);
   }
 
-  public abstract void initializeProperties();
   public abstract void pushAll(final FilePropertyPusher<?>... pushers);
 
   /**
@@ -25,7 +24,8 @@ public abstract class PushedFilePropertiesUpdater {
    */
   @Deprecated
   public abstract void filePropertiesChanged(@NotNull VirtualFile file);
-  public abstract void pushAllPropertiesNow();
+
+  @RequiresReadLock
   public abstract <T> void findAndUpdateValue(@NotNull VirtualFile fileOrDir, @NotNull FilePropertyPusher<T> pusher, @Nullable T moduleValue);
 
   /**

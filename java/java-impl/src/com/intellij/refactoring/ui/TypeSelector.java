@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.ui;
 
 import com.intellij.openapi.project.Project;
@@ -7,15 +7,16 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.SmartTypePointer;
 import com.intellij.psi.SmartTypePointerManager;
+import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.DefaultComboBoxModel;
+import javax.swing.JComboBox;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
 import java.awt.event.ItemListener;
 
-/**
- * @author dsl
- */
 public class TypeSelector {
   private final PsiType myType;
   private final JComponent myComponent;
@@ -33,6 +34,7 @@ public class TypeSelector {
     myProject = project;
     myComboBoxModel = new MyComboBoxModel();
     ComboBox<PsiTypeItem> itemSelector = new ComboBox<>();
+    itemSelector.setSwingPopup(false);
     itemSelector.setModel(myComboBoxModel);
     myComponent = itemSelector;
     myType = null;
@@ -48,12 +50,9 @@ public class TypeSelector {
     }
     myComboBoxModel.setSuggestions(wrapToItems(types, myProject));
     if(oldType != null) {
-      for (int i = 0; i < types.length; i++) {
-        PsiType type = types[i];
-        if(type.equals(oldType)) {
-          ((JComboBox<?>) myComponent).setSelectedIndex(i);
-          return;
-        }
+      int i = ArrayUtil.indexOf(types, oldType);
+      if(i != -1) {
+        ((JComboBox<?>) myComponent).setSelectedIndex(i);
       }
     }
     if (types.length > 0) {
@@ -110,8 +109,7 @@ public class TypeSelector {
     }
   }
 
-  @Nullable
-  public PsiType getSelectedType() {
+  public @Nullable PsiType getSelectedType() {
     if (myComponent instanceof JLabel) {
       return myType;
     }
@@ -158,8 +156,7 @@ public class TypeSelector {
       myTypePointer = SmartTypePointerManager.getInstance(project).createSmartTypePointer(type);
     }
 
-    @Nullable
-    public PsiType getType() {
+    public @Nullable PsiType getType() {
       return myTypePointer.getType();
     }
 

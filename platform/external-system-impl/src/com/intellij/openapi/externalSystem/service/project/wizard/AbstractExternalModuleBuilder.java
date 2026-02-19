@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.service.project.wizard;
 
 import com.intellij.ide.util.projectWizard.ModuleBuilder;
@@ -13,18 +13,15 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.Icon;
 
-/**
- * @author Denis Zhdanov
- */
 public abstract class AbstractExternalModuleBuilder<S extends ExternalProjectSettings> extends ModuleBuilder {
-  @NotNull private final Icon myIcon;
-  @NotNull private final ProjectSystemId myExternalSystemId;
-  @NotNull private final S myExternalProjectSettings;
+  private final @NotNull Icon myIcon;
+  private final @NotNull ProjectSystemId myExternalSystemId;
+  private final @NotNull S myExternalProjectSettings;
 
-  protected AbstractExternalModuleBuilder(@NotNull final ProjectSystemId externalSystemId,
-                                          @NotNull final S externalProjectSettings) {
+  protected AbstractExternalModuleBuilder(final @NotNull ProjectSystemId externalSystemId,
+                                          final @NotNull S externalProjectSettings) {
     myExternalSystemId = externalSystemId;
     myExternalProjectSettings = externalProjectSettings;
     externalProjectSettings.setupNewProjectDefault();
@@ -43,8 +40,7 @@ public abstract class AbstractExternalModuleBuilder<S extends ExternalProjectSet
   }
 
   @Override
-  @Nls(capitalization = Nls.Capitalization.Sentence)
-  public String getDescription() {
+  public @Nls(capitalization = Nls.Capitalization.Sentence) String getDescription() {
     return ExternalSystemBundle.message("module.type.description", myExternalSystemId.getReadableName());
   }
 
@@ -53,14 +49,12 @@ public abstract class AbstractExternalModuleBuilder<S extends ExternalProjectSet
     return myIcon;
   }
 
-  @NotNull
-  public S getExternalProjectSettings() {
+  public @NotNull S getExternalProjectSettings() {
     return myExternalProjectSettings;
   }
 
-  @Nullable
   @Override
-  public Project createProject(String name, String path) {
+  public @Nullable Project createProject(String name, String path) {
     Project project = super.createProject(name, path);
     if(project != null) {
       project.putUserData(ExternalSystemDataKeys.NEWLY_CREATED_PROJECT, Boolean.TRUE);

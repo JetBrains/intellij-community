@@ -5,16 +5,14 @@ import com.intellij.util.io.addChannelListener
 import com.intellij.util.io.shutdownIfOio
 import io.netty.channel.Channel
 import io.netty.util.ReferenceCountUtil
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.concurrency.AsyncPromise
 import org.jetbrains.concurrency.Promise
-import org.jetbrains.concurrency.errorIfNotMessage
 import org.jetbrains.concurrency.nullPromise
-import org.jetbrains.jsonProtocol.Request
-import org.jetbrains.rpc.CONNECTION_CLOSED_MESSAGE
-import org.jetbrains.rpc.LOG
 import org.jetbrains.rpc.MessageProcessor
 
-open class StandaloneVmHelper(private val vm: Vm, private val messageProcessor: MessageProcessor, channel: Channel) : AttachStateManager {
+@ApiStatus.Internal
+open class StandaloneVmHelper(private val messageProcessor: MessageProcessor, channel: Channel) : AttachStateManager {
   @Volatile
   private var channel: Channel? = channel
 
@@ -33,10 +31,6 @@ open class StandaloneVmHelper(private val vm: Vm, private val messageProcessor: 
     }
   }
 
-  interface VmEx : Vm {
-    fun createDisconnectRequest(): Request<out Any>?
-  }
-
   override val isAttached: Boolean
     get() = channel != null
 
@@ -44,25 +38,9 @@ open class StandaloneVmHelper(private val vm: Vm, private val messageProcessor: 
     val currentChannel = channel ?: return nullPromise()
 
     messageProcessor.cancelWaitingRequests()
-    val disconnectRequest = (vm as? VmEx)?.createDisconnectRequest()
     val promise = AsyncPromise<Any?>()
-    if (disconnectRequest == null) {
-      messageProcessor.closed()
-      channel = null
-    }
-    else {
-      messageProcessor.send(disconnectRequest)
-        .onError {
-          if (it.message != CONNECTION_CLOSED_MESSAGE) {
-            LOG.errorIfNotMessage(it)
-          }
-        }
-      // we don't wait response because 1) no response to "disconnect" message (V8 for example) 2) closed message manager just ignore any incoming messages
-      currentChannel.flush()
-      messageProcessor.closed()
-      channel = null
-      messageProcessor.cancelWaitingRequests()
-    }
+    messageProcessor.closed()
+    channel = null
     closeChannel(currentChannel, promise)
     return promise
   }
@@ -72,6 +50,7 @@ open class StandaloneVmHelper(private val vm: Vm, private val messageProcessor: 
   }
 }
 
+@ApiStatus.Internal
 fun doCloseChannel(channel: Channel, promise: AsyncPromise<Any?>) {
   channel.close().addChannelListener {
     try {

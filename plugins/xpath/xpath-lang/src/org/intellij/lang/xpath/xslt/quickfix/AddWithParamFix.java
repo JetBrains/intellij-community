@@ -23,7 +23,11 @@ import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.SmartPointerManager;
+import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.IncorrectOperationException;
@@ -47,13 +51,12 @@ public class AddWithParamFix extends AbstractFix {
     }
 
     @Override
-    @NotNull
-    public String getText() {
+    public @NotNull String getText() {
         return XPathBundle.message("intention.name.add.argument.for.x", myName);
     }
 
     @Override
-    public String getFamilyName() {
+    public @NotNull String getFamilyName() {
         return XPathBundle.message("intention.family.name.add.argument");
     }
 
@@ -73,7 +76,7 @@ public class AddWithParamFix extends AbstractFix {
     }
 
     @Override
-    public void invoke(@NotNull final Project project, final Editor editor, PsiFile file) throws IncorrectOperationException {
+    public void invoke(final @NotNull Project project, final Editor editor, PsiFile psiFile) throws IncorrectOperationException {
         SmartPsiElementPointer<XmlTag> result = WriteAction.compute(() -> {
             final XmlTag withParamTag = RefactoringUtil.addWithParam(myTag);
 
@@ -84,7 +87,7 @@ public class AddWithParamFix extends AbstractFix {
         });
 
         final PsiDocumentManager psiDocumentManager = PsiDocumentManager.getInstance(project);
-        final Document doc = psiDocumentManager.getDocument(file);
+        final Document doc = psiDocumentManager.getDocument(psiFile);
         assert doc != null;
         psiDocumentManager.doPostponedOperationsAndUnblockDocument(doc);
 

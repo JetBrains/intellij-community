@@ -1,12 +1,22 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.java;
 
 import com.intellij.ide.ui.UISettings;
 import com.intellij.lang.Language;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.util.NlsSafe;
-import com.intellij.openapi.util.registry.Registry;
-import com.intellij.psi.*;
+import com.intellij.psi.ElementDescriptionUtil;
+import com.intellij.psi.PsiAnonymousClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiLambdaExpression;
+import com.intellij.psi.PsiMember;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiParameter;
+import com.intellij.psi.PsiParameterListOwner;
+import com.intellij.psi.PsiPrimitiveType;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypeElement;
 import com.intellij.psi.impl.source.PsiClassReferenceType;
 import com.intellij.psi.util.PsiExpressionTrimRenderer;
 import com.intellij.refactoring.util.RefactoringDescriptionLocation;
@@ -15,15 +25,15 @@ import com.intellij.usageView.UsageViewShortNameLocation;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.Icon;
-
-import static com.intellij.openapi.util.text.StringUtil.*;
+import static com.intellij.openapi.util.text.StringUtil.htmlEmphasize;
+import static com.intellij.openapi.util.text.StringUtil.isEmpty;
+import static com.intellij.openapi.util.text.StringUtil.notNullize;
 import static com.intellij.psi.PsiNameHelper.getShortClassName;
 
 /**
  * @author gregsh
  */
-public class JavaBreadcrumbsInfoProvider implements BreadcrumbsProvider {
+public final class JavaBreadcrumbsInfoProvider implements BreadcrumbsProvider {
   private static final Language[] ourLanguages = {JavaLanguage.INSTANCE};
   @Override
   public Language[] getLanguages() {
@@ -35,9 +45,8 @@ public class JavaBreadcrumbsInfoProvider implements BreadcrumbsProvider {
     return e instanceof PsiMember || e instanceof PsiLambdaExpression;
   }
 
-  @NotNull
   @Override
-  public String getElementInfo(@NotNull PsiElement e) {
+  public @NotNull String getElementInfo(@NotNull PsiElement e) {
     if (e instanceof PsiLambdaExpression) {
       return PsiExpressionTrimRenderer.render((PsiExpression)e);
     }
@@ -50,24 +59,14 @@ public class JavaBreadcrumbsInfoProvider implements BreadcrumbsProvider {
     return suffix != null ? description + suffix : description;
   }
 
-  @Nullable
   @Override
-  public Icon getElementIcon(@NotNull PsiElement element) {
-    return Registry.is("editor.breadcrumbs.java.icon")
-           ? element.getIcon(0)
-           : null;
-  }
-
-  @Nullable
-  @Override
-  public String getElementTooltip(@NotNull PsiElement e) {
+  public @Nullable String getElementTooltip(@NotNull PsiElement e) {
     if (e instanceof PsiLambdaExpression) return getLambdaDescription((PsiLambdaExpression)e);
     if (e instanceof PsiMethod) return getMethodPresentableText((PsiMethod)e);
     return ElementDescriptionUtil.getElementDescription(e, RefactoringDescriptionLocation.WITH_PARENT);
   }
 
-  @NotNull
-  private static String getMethodPresentableText(PsiMethod e) {
+  private static @NotNull String getMethodPresentableText(PsiMethod e) {
     boolean isDumb = DumbService.isDumb(e.getProject());
     StringBuilder sb = new StringBuilder(e.isConstructor() ? "constructor" : "method");
     PsiType type = e.getReturnType();
@@ -79,8 +78,7 @@ public class JavaBreadcrumbsInfoProvider implements BreadcrumbsProvider {
     return sb.toString();
   }
 
-  @NotNull
-  private static String getLambdaDescription(@NotNull PsiLambdaExpression e) {
+  private static @NotNull String getLambdaDescription(@NotNull PsiLambdaExpression e) {
     boolean isDumb = DumbService.isDumb(e.getProject());
     StringBuilder sb = new StringBuilder("lambda");
     PsiType functionalInterfaceType = isDumb ? null : e.getFunctionalInterfaceType();

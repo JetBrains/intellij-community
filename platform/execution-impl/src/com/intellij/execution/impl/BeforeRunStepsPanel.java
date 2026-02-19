@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.impl;
 
 import com.intellij.execution.BeforeRunTask;
@@ -8,31 +8,51 @@ import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.configurations.UnknownRunConfiguration;
 import com.intellij.execution.impl.RunConfigurationBeforeRunProvider.RunConfigurableBeforeRunTask;
+import com.intellij.execution.impl.statistics.RunConfigurationOptionUsagesCollector;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.CommonShortcuts;
+import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.util.Key;
-import com.intellij.ui.*;
+import com.intellij.openapi.util.NlsContexts;
+import com.intellij.ui.AnActionButton;
+import com.intellij.ui.AnActionButtonRunnable;
+import com.intellij.ui.AnActionButtonUpdater;
+import com.intellij.ui.CollectionListModel;
+import com.intellij.ui.CommonActionsPanel;
+import com.intellij.ui.ListUtil;
+import com.intellij.ui.ToolbarDecorator;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.CollectionFactory;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.Icon;
+import javax.swing.JCheckBox;
+import javax.swing.JList;
+import javax.swing.JOptionPane;
+import javax.swing.JPanel;
+import javax.swing.ListSelectionModel;
 import javax.swing.event.ListDataEvent;
 import javax.swing.event.ListDataListener;
-import java.awt.*;
+import java.awt.BorderLayout;
+import java.awt.Component;
+import java.awt.FlowLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.Collections;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
@@ -40,9 +60,11 @@ import java.util.Set;
 /**
  * @author Vassiliy Kudryashov
  */
+@ApiStatus.Internal
 public final class BeforeRunStepsPanel extends JPanel {
   private final JCheckBox myShowSettingsBeforeRunCheckBox;
   private final JCheckBox myActivateToolWindowBeforeRunCheckBox;
+  private final JCheckBox myFocusToolWindowBeforeRunCheckBox;
   private final JBList<BeforeRunTask<?>> myList;
   private final CollectionListModel<BeforeRunTask<?>> myModel;
   private RunConfiguration myRunConfiguration;
@@ -94,7 +116,8 @@ public final class BeforeRunStepsPanel extends JPanel {
           clonedTasks.add(task);
           myModel.setElementAt(task, selection.getIndex());
         }
-
+        RunConfigurationOptionUsagesCollector.logEditBeforeRunTask(
+          myRunConfiguration.getProject(), myRunConfiguration.getType().getId(), task.getProviderId().getClass());
         selection.getProvider().configureTask(button.getDataContext(), myRunConfiguration, task)
           .onSuccess(changed -> {
             if (changed) {
@@ -125,6 +148,18 @@ public final class BeforeRunStepsPanel extends JPanel {
       }
     });
 
+    myDecorator.setRemoveAction(new AnActionButtonRunnable() {
+      @Override
+      public void run(AnActionButton button) {
+        BeforeRunTaskAndProvider selection = getSelection();
+        if (selection != null) {
+          RunConfigurationOptionUsagesCollector.logRemoveBeforeRunTask(
+            myRunConfiguration.getProject(), myRunConfiguration.getType().getId(), selection.getProvider().getClass());
+          ListUtil.removeSelectedItems(myList);
+        }
+      }
+    });
+
     myShowSettingsBeforeRunCheckBox = new JCheckBox(ExecutionBundle.message("configuration.edit.before.run"));
     myShowSettingsBeforeRunCheckBox.addActionListener(new ActionListener() {
       @Override
@@ -133,12 +168,7 @@ public final class BeforeRunStepsPanel extends JPanel {
       }
     });
     myActivateToolWindowBeforeRunCheckBox = new JCheckBox(ExecutionBundle.message("configuration.activate.toolwindow.before.run"));
-    myActivateToolWindowBeforeRunCheckBox.addActionListener(new ActionListener() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        updateText();
-      }
-    });
+    myFocusToolWindowBeforeRunCheckBox = new JCheckBox(ExecutionBundle.message("configuration.focus.toolwindow.before.run"));
 
     myPanel = myDecorator.createPanel();
     myDecorator.getActionsPanel().setCustomShortcuts(CommonActionsPanel.Buttons.EDIT,
@@ -148,9 +178,10 @@ public final class BeforeRunStepsPanel extends JPanel {
 
     setLayout(new BorderLayout());
     add(myPanel, BorderLayout.CENTER);
-    JPanel checkboxPanel = new JPanel(new FlowLayout(FlowLayout.LEADING, JBUIScale.scale(5), JBUIScale.scale(5)));
+    JPanel checkboxPanel = new JPanel(new FlowLayout(FlowLayout.LEADING, JBUIScale.scale(10), JBUIScale.scale(5)));
     checkboxPanel.add(myShowSettingsBeforeRunCheckBox);
     checkboxPanel.add(myActivateToolWindowBeforeRunCheckBox);
+    checkboxPanel.add(myFocusToolWindowBeforeRunCheckBox);
     add(checkboxPanel, BorderLayout.SOUTH);
   }
 
@@ -182,14 +213,14 @@ public final class BeforeRunStepsPanel extends JPanel {
     myShowSettingsBeforeRunCheckBox.setEnabled(!isUnknown());
     myActivateToolWindowBeforeRunCheckBox.setSelected(settings.isActivateToolWindowBeforeRun());
     myActivateToolWindowBeforeRunCheckBox.setEnabled(!isUnknown());
+    myFocusToolWindowBeforeRunCheckBox.setSelected(settings.isFocusToolWindowBeforeRun());
+    myFocusToolWindowBeforeRunCheckBox.setEnabled(!isUnknown());
     myPanel.setVisible(checkBeforeRunTasksAbility(false));
     updateText();
   }
 
   private void updateText() {
-    int count = (myShowSettingsBeforeRunCheckBox.isSelected() ? 1 : 0)
-      + (myActivateToolWindowBeforeRunCheckBox.isSelected() ? 1 : 0)
-      + myModel.getSize();
+    int count = myModel.getSize();
     String title = ExecutionBundle.message("before.launch.panel.title");
     String suffix = count == 0 || isVisible() ? "" : ExecutionBundle.message("before.launch.panel.title.suffix", count);
     myListener.titleChanged(title + suffix);
@@ -206,6 +237,10 @@ public final class BeforeRunStepsPanel extends JPanel {
 
   public boolean needActivateToolWindowBeforeRun() {
     return myActivateToolWindowBeforeRunCheckBox.isSelected();
+  }
+
+  public boolean needFocusToolWindowBeforeRun() {
+    return myFocusToolWindowBeforeRunCheckBox.isSelected();
   }
 
   private boolean checkBeforeRunTasksAbility(boolean checkOnlyAddAction) {
@@ -268,14 +303,20 @@ public final class BeforeRunStepsPanel extends JPanel {
                                               ExecutionBundle.message("warning.common.title"), JOptionPane.WARNING_MESSAGE);
                 return;
               }
+              RunConfigurationOptionUsagesCollector.logAddBeforeRunTask(
+                myRunConfiguration.getProject(), myRunConfiguration.getType().getId(), provider.getClass());
               addTask(task);
               myListener.fireStepsBeforeRunChanged();
             });
         }
       });
     }
+    DataContext dataContext = SimpleDataContext.builder()
+      .add(CommonDataKeys.PROJECT, myRunConfiguration.getProject())
+      .add(PlatformCoreDataKeys.CONTEXT_COMPONENT, myPanel)
+      .build();
     ListPopup popup = JBPopupFactory.getInstance().createActionGroupPopup(ExecutionBundle.message("add.new.before.run.task.name"), actionGroup,
-                                                                          SimpleDataContext.getProjectContext(myRunConfiguration.getProject()), false, false, false, null,
+                                                                          dataContext, false, false, false, null,
                                                                           -1, Conditions.alwaysTrue());
     popup.show(Objects.requireNonNull(button.getPreferredPopupPoint()));
   }
@@ -286,6 +327,10 @@ public final class BeforeRunStepsPanel extends JPanel {
 
   public void addTask(@NotNull BeforeRunTask<?> task) {
     myModel.add(task);
+  }
+
+  public void replaceTasks(@NotNull List<BeforeRunTask<?>> tasks) {
+    myModel.replaceAll(tasks);
   }
 
   private @NotNull Set<Key<?>> getActiveProviderKeys() {
@@ -313,28 +358,33 @@ public final class BeforeRunStepsPanel extends JPanel {
   public interface StepsBeforeRunListener {
     void fireStepsBeforeRunChanged();
 
-    void titleChanged(@NotNull String title);
+    void titleChanged(@NotNull @NlsContexts.Separator String title);
   }
 
   private final class MyListCellRenderer extends JBList.StripedListCellRenderer {
     @Override
     public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
       super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
-      if (value instanceof BeforeRunTask) {
-        BeforeRunTask<?> task = (BeforeRunTask<?>)value;
-        BeforeRunTaskProvider<BeforeRunTask<?>> provider = getProvider(myRunConfiguration.getProject(), task.getProviderId());
-        if (provider != null) {
-          Icon icon = provider.getTaskIcon(task);
-          setIcon(icon != null ? icon : provider.getIcon());
-          setText(provider.getDescription(task));
+      if (value instanceof BeforeRunTask<?> task) {
+        //noinspection rawtypes
+        BeforeRunTaskProvider provider = getProvider(myRunConfiguration.getProject(), task.getProviderId());
+        if (provider == null) {
+          provider = new UnknownBeforeRunTaskProvider(task.getProviderId().toString());
         }
+        //noinspection unchecked
+        Icon icon = provider.getTaskIcon(task);
+        setIcon(icon != null ? icon : provider.getIcon());
+        //noinspection unchecked
+        setText(provider.getDescription(task));
       }
       return this;
     }
   }
 
   private static @Nullable BeforeRunTaskProvider<BeforeRunTask<?>> getProvider(@NotNull Project project, Key<?> key) {
-    for (BeforeRunTaskProvider<BeforeRunTask<?>> provider : BeforeRunTaskProvider.EP_NAME.getIterable(project)) {
+    for (Iterator<BeforeRunTaskProvider<BeforeRunTask<?>>> it = BeforeRunTaskProvider.EP_NAME.asSequence(project).iterator();
+         it.hasNext(); ) {
+      BeforeRunTaskProvider<BeforeRunTask<?>> provider = it.next();
       if (provider.getId() == key) {
         return provider;
       }

@@ -16,6 +16,7 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.impl.ExtensionsAreaImpl;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.IoTestUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.SystemProperties;
 import org.jetbrains.annotations.NotNull;
@@ -62,7 +63,7 @@ public class PathMacroManagerTest {
 
   private MockModule createModule(@NotNull String basePath) {
     MockProject project = createProject(basePath);
-    return new MockModule(project) {
+    return new MockModule(project, project) {
       @Override
       public @NotNull Path getModuleNioFile() {
         return Paths.get(project.getBasePath()).resolve("module/module.iml");
@@ -92,7 +93,7 @@ public class PathMacroManagerTest {
   @Test
   public void testRightMacrosOrder_RelativeValues_NoVariables() {
     assertReplacements(
-      new ModulePathMacroManager(createModule("/tmp/foo")).getReplacePathMap(),
+      new ModulePathMacroManager(createModule("/tmp/foo"), PathMacros.getInstance()).getReplacePathMap(),
       APP_HOME + " -> $APPLICATION_HOME_DIR$\n" +
       USER_HOME + " -> $USER_HOME$\n" +
       "/tmp/foo/module -> $MODULE_DIR$\n" +
@@ -124,7 +125,7 @@ public class PathMacroManagerTest {
   public void testProjectUnderUserHome() {
     MockModule module = createModule(USER_HOME + "/IdeaProjects/foo");
     assertReplacements(
-      new ModulePathMacroManager(module).getReplacePathMap(),
+      new ModulePathMacroManager(module, PathMacros.getInstance()).getReplacePathMap(),
       APP_HOME + " -> $APPLICATION_HOME_DIR$\n" +
       USER_HOME + "/IdeaProjects/foo/module -> $MODULE_DIR$\n" +
       USER_HOME + "/IdeaProjects/foo -> $MODULE_DIR$/..\n" +
@@ -134,10 +135,11 @@ public class PathMacroManagerTest {
 
   @Test
   public void testProjectUnderWSL() {
+    IoTestUtil.assumeWindows();
     String wslHome = "//wsl$/Linux";
     MockModule module = createModule(wslHome + "/project");
     assertReplacements(
-      new ModulePathMacroManager(module).getReplacePathMap(),
+      new ModulePathMacroManager(module, PathMacros.getInstance()).getReplacePathMap(),
       APP_HOME + " -> $APPLICATION_HOME_DIR$\n" +
       USER_HOME + " -> $USER_HOME$\n" +
       wslHome + "/project/module -> $MODULE_DIR$\n" +

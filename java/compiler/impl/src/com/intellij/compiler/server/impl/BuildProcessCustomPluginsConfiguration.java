@@ -1,9 +1,8 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.compiler.server.impl;
 
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.components.PersistentStateComponent;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.diagnostic.Logger;
@@ -19,6 +18,7 @@ import com.intellij.util.xmlb.annotations.Property;
 import com.intellij.util.xmlb.annotations.XCollection;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -40,15 +40,19 @@ public class BuildProcessCustomPluginsConfiguration implements PersistentStateCo
   }
 
   public static BuildProcessCustomPluginsConfiguration getInstance(@NotNull Project project) {
-    return ServiceManager.getService(project, BuildProcessCustomPluginsConfiguration.class);
+    return project.getService(BuildProcessCustomPluginsConfiguration.class);
   }
 
   public List<String> getProjectLibraries() {
     return myState.myProjectLibraries;
   }
 
-  @NotNull
-  public List<String> getCustomPluginsClasspath() {
+  @TestOnly
+  public void addProjectLibrary(@NotNull String libraryName) {
+    myState.myProjectLibraries.add(libraryName);
+  }
+
+  public @NotNull List<String> getCustomPluginsClasspath() {
     return ReadAction.compute(() -> {
       List<String> result = new ArrayList<>();
       LibraryTable libraryTable = LibraryTablesRegistrar.getInstance().getLibraryTable(myProject);
@@ -66,9 +70,8 @@ public class BuildProcessCustomPluginsConfiguration implements PersistentStateCo
     });
   }
 
-  @Nullable
   @Override
-  public BuildProcessPluginsState getState() {
+  public @Nullable BuildProcessPluginsState getState() {
     return myState;
   }
 

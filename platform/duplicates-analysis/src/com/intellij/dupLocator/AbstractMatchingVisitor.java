@@ -15,18 +15,15 @@
  */
 package com.intellij.dupLocator;
 
-import com.intellij.dupLocator.util.NodeFilter;
-import com.intellij.psi.PsiElement;
 import com.intellij.dupLocator.iterators.ArrayBackedNodeIterator;
 import com.intellij.dupLocator.iterators.FilteringNodeIterator;
 import com.intellij.dupLocator.iterators.NodeIterator;
 import com.intellij.dupLocator.iterators.SiblingNodeIterator;
+import com.intellij.dupLocator.util.NodeFilter;
+import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author Eugene.Kudelevsky
- */
 public abstract class AbstractMatchingVisitor {
 
   public abstract boolean matchSequentially(@NotNull NodeIterator nodes, @NotNull NodeIterator nodes2);
@@ -40,8 +37,7 @@ public abstract class AbstractMatchingVisitor {
                              new FilteringNodeIterator(new ArrayBackedNodeIterator(element2), getNodeFilter()));
   }
 
-  @NotNull
-  protected abstract NodeFilter getNodeFilter();
+  protected abstract @NotNull NodeFilter getNodeFilter();
 
   public boolean matchOptionally(@Nullable PsiElement element1, @Nullable PsiElement element2) {
     return element1 == null && isLeftLooseMatching() ||
@@ -81,8 +77,8 @@ public abstract class AbstractMatchingVisitor {
     PsiElement e2 = element2.getFirstChild();
     return (e == null && isLeftLooseMatching()) ||
            (e2 == null && isRightLooseMatching()) ||
-           matchInAnyOrder(new FilteringNodeIterator(new SiblingNodeIterator(e), getNodeFilter()),
-                           new FilteringNodeIterator(new SiblingNodeIterator(e2), getNodeFilter()));
+           matchInAnyOrder(new FilteringNodeIterator(SiblingNodeIterator.create(e), getNodeFilter()),
+                           new FilteringNodeIterator(SiblingNodeIterator.create(e2), getNodeFilter()));
   }
 
   public boolean matchOptionally(PsiElement @NotNull [] elements1, PsiElement @NotNull [] elements2) {
@@ -105,15 +101,15 @@ public abstract class AbstractMatchingVisitor {
 
   public boolean matchSequentially(PsiElement el1, PsiElement el2) {
     //if (el1==null || el2==null) return el1 == el2;
-    return matchSequentially(new FilteringNodeIterator(new SiblingNodeIterator(el1), getNodeFilter()),
-                             new FilteringNodeIterator(new SiblingNodeIterator(el2), getNodeFilter()));
+    return matchSequentially(new FilteringNodeIterator(SiblingNodeIterator.create(el1), getNodeFilter()),
+                             new FilteringNodeIterator(SiblingNodeIterator.create(el2), getNodeFilter()));
   }
 
   public boolean matchSequentiallyOptionally(PsiElement el1, PsiElement el2) {
     return (el1 == null && isLeftLooseMatching()) ||
            (el2 == null && isRightLooseMatching()) ||
-           matchSequentially(new FilteringNodeIterator(new SiblingNodeIterator(el1), getNodeFilter()),
-                             new FilteringNodeIterator(new SiblingNodeIterator(el2), getNodeFilter()));
+           matchSequentially(new FilteringNodeIterator(SiblingNodeIterator.create(el1), getNodeFilter()),
+                             new FilteringNodeIterator(SiblingNodeIterator.create(el2), getNodeFilter()));
   }
 
   public final boolean matchInAnyOrder(@NotNull NodeIterator elements, @NotNull NodeIterator elements2) {

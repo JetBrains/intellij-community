@@ -1,13 +1,5 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.svn.integrate;
-
-import static com.intellij.openapi.application.ApplicationManager.getApplication;
-import static org.jetbrains.annotations.Nls.Capitalization.Sentence;
-import static org.jetbrains.idea.svn.SvnBundle.message;
-import static org.jetbrains.idea.svn.SvnUtil.checkRepositoryVersion15;
-import static org.jetbrains.idea.svn.SvnUtil.isAncestor;
-import static org.jetbrains.idea.svn.WorkingCopyFormat.ONE_DOT_EIGHT;
-import static org.jetbrains.idea.svn.integrate.SvnBranchPointsCalculator.WrapperInvertor;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -16,8 +8,6 @@ import com.intellij.openapi.util.NlsContexts.ProgressTitle;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
-import java.io.File;
-import java.util.List;
 import org.jetbrains.annotations.CalledInAny;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -27,13 +17,24 @@ import org.jetbrains.idea.svn.NestedCopyType;
 import org.jetbrains.idea.svn.api.Url;
 import org.jetbrains.idea.svn.history.SvnChangeList;
 
+import java.io.File;
+import java.util.List;
+
+import static com.intellij.openapi.application.ApplicationManager.getApplication;
+import static org.jetbrains.annotations.Nls.Capitalization.Sentence;
+import static org.jetbrains.idea.svn.SvnBundle.message;
+import static org.jetbrains.idea.svn.SvnUtil.checkRepositoryVersion15;
+import static org.jetbrains.idea.svn.SvnUtil.isAncestor;
+import static org.jetbrains.idea.svn.WorkingCopyFormat.ONE_DOT_EIGHT;
+import static org.jetbrains.idea.svn.integrate.SvnBranchPointsCalculator.WrapperInvertor;
+
 public class QuickMerge extends BackgroundTaskGroup {
 
   private static final Logger LOG = Logger.getInstance(QuickMerge.class);
 
-  @NotNull private final MergeContext myMergeContext;
-  @NotNull private final QuickMergeInteraction myInteraction;
-  @NotNull private final Semaphore mySemaphore = new Semaphore();
+  private final @NotNull MergeContext myMergeContext;
+  private final @NotNull QuickMergeInteraction myInteraction;
+  private final @NotNull Semaphore mySemaphore = new Semaphore();
 
   public QuickMerge(@NotNull MergeContext mergeContext, @NotNull QuickMergeInteraction interaction) {
     super(mergeContext.getProject(), mergeContext.getMergeTitle());
@@ -41,13 +42,11 @@ public class QuickMerge extends BackgroundTaskGroup {
     myInteraction = interaction;
   }
 
-  @NotNull
-  public MergeContext getMergeContext() {
+  public @NotNull MergeContext getMergeContext() {
     return myMergeContext;
   }
 
-  @NotNull
-  public QuickMergeInteraction getInteraction() {
+  public @NotNull QuickMergeInteraction getInteraction() {
     return myInteraction;
   }
 
@@ -139,15 +138,9 @@ public class QuickMerge extends BackgroundTaskGroup {
       myInteraction.selectMergeItems(task.getChangeLists(), task.getMergeChecker(), allStatusesCalculated, task.areAllListsLoaded());
 
     switch (result.getResultCode()) {
-      case all:
-        mergeAll(true);
-        break;
-      case select:
-      case showLatest:
-        merge(result.getSelectedLists());
-        break;
-      case cancel:
-        break;
+      case all -> mergeAll(true);
+      case select, showLatest -> merge(result.getSelectedLists());
+      case cancel -> { }
     }
   }
 
@@ -193,8 +186,7 @@ public class QuickMerge extends BackgroundTaskGroup {
         newIntegrateTask(title, mergerFactory).queue()))));
   }
 
-  @NotNull
-  private Task newIntegrateTask(@ProgressTitle @NotNull String title, @NotNull MergerFactory mergerFactory) {
+  private @NotNull Task newIntegrateTask(@ProgressTitle @NotNull String title, @NotNull MergerFactory mergerFactory) {
     return new SvnIntegrateChangesTask(myMergeContext.getVcs(), new WorkingCopyInfo(myMergeContext.getWcInfo().getPath(), true),
                                        mergerFactory, myMergeContext.getSourceUrl(), title, false,
                                        myMergeContext.getBranchName()) {
@@ -219,8 +211,7 @@ public class QuickMerge extends BackgroundTaskGroup {
            checkRepositoryVersion15(myMergeContext.getVcs(), myMergeContext.getSourceUrl());
   }
 
-  @NotNull
-  private MergerFactory createMergeAllFactory(boolean reintegrate, @Nullable WrapperInvertor copyPoint, boolean supportsMergeInfo) {
+  private @NotNull MergerFactory createMergeAllFactory(boolean reintegrate, @Nullable WrapperInvertor copyPoint, boolean supportsMergeInfo) {
     long revision = copyPoint != null
                     ? reintegrate ? copyPoint.getWrapped().getTargetRevision() : copyPoint.getWrapped().getSourceRevision()
                     : -1;

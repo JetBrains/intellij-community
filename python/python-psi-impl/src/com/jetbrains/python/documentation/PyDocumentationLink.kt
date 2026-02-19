@@ -16,14 +16,25 @@
 package com.jetbrains.python.documentation
 
 import com.intellij.codeInsight.documentation.DocumentationManagerProtocol
+import com.intellij.openapi.util.NlsSafe
+import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFileSystemItem
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.QualifiedName
-import com.jetbrains.python.psi.*
+import com.jetbrains.python.highlighting.PyHighlighter
+import com.jetbrains.python.psi.PyClass
+import com.jetbrains.python.psi.PyFile
+import com.jetbrains.python.psi.PyFunction
+import com.jetbrains.python.psi.PyNamedParameter
+import com.jetbrains.python.psi.PyPsiFacade
+import com.jetbrains.python.psi.PyTypeAliasStatement
+import com.jetbrains.python.psi.PyUtil
 import com.jetbrains.python.psi.types.PyClassType
 import com.jetbrains.python.psi.types.PyTypeParser
 import com.jetbrains.python.psi.types.TypeEvalContext
+import com.jetbrains.python.psi.types.isNoneType
+import org.jetbrains.annotations.Nls
 
 object PyDocumentationLink {
 
@@ -34,46 +45,56 @@ object PyDocumentationLink {
   private const val LINK_TYPE_MODULE = "#module#"
 
   @JvmStatic
-  fun toContainingClass(content: String?): String {
-    return "<a href=\"${DocumentationManagerProtocol.PSI_ELEMENT_PROTOCOL}$LINK_TYPE_CLASS\">$content</a>"
+  fun toContainingClass(@NlsSafe content: String): HtmlChunk {
+    return HtmlChunk.link("${DocumentationManagerProtocol.PSI_ELEMENT_PROTOCOL}$LINK_TYPE_CLASS", content)
   }
 
   @JvmStatic
-  fun toParameterPossibleClass(type: String, anchor: PsiElement, context: TypeEvalContext): String {
-    val pyType = PyTypeParser.getTypeByName(anchor, type, context)
-    return when (pyType) {
-      is PyClassType -> "<a href=\"${DocumentationManagerProtocol.PSI_ELEMENT_PROTOCOL}$LINK_TYPE_PARAM\">$type</a>"
-      else -> type
+  fun toPossibleClass(typeName: @Nls String, anchor: PsiElement, context: TypeEvalContext): HtmlChunk {
+    val type = PyTypeParser.getTypeByName(anchor, typeName, context)
+    return when {
+      type is PyClassType -> {
+        val text = toClass(type.pyClass, typeName)
+        if (type.isNoneType)
+          styledSpan(text, PyHighlighter.PY_KEYWORD)
+        else
+          styledReference(text, type.pyClass)
+      }
+      else -> HtmlChunk.text(typeName)
     }
   }
 
   @JvmStatic
-  fun toPossibleClass(type: String, anchor: PsiElement, context: TypeEvalContext): String = toPossibleClass(type, type, anchor, context)
-
-  @JvmStatic
-  fun toPossibleClass(content: String, qualifiedName: String, anchor: PsiElement, context: TypeEvalContext): String {
-    val pyType = PyTypeParser.getTypeByName(anchor, qualifiedName, context)
-    return when (pyType) {
-      is PyClassType -> "<a href=\"${DocumentationManagerProtocol.PSI_ELEMENT_PROTOCOL}$LINK_TYPE_TYPENAME$qualifiedName\">$content</a>"
-      else -> content
-    }
+  fun toClass(pyClass: PyClass, linkText: @Nls String): HtmlChunk {
+    return toClass(pyClass.qualifiedName.orEmpty(), linkText)
   }
 
   @JvmStatic
-  fun toFunction(func: PyFunction): String = toFunction(func.qualifiedName ?: func.name.orEmpty(), func)
+  fun toClass(qualifiedName: String, linkText: @Nls String): HtmlChunk {
+    return HtmlChunk.link("${DocumentationManagerProtocol.PSI_ELEMENT_PROTOCOL}$LINK_TYPE_TYPENAME$qualifiedName", linkText)
+  }
 
   @JvmStatic
-  fun toFunction(content: String, func: PyFunction): String {
+  fun toFunction(@NlsSafe content: String, func: PyFunction): HtmlChunk {
     val qualifiedName = func.qualifiedName
     return when {
-      qualifiedName != null -> "<a href=\"${DocumentationManagerProtocol.PSI_ELEMENT_PROTOCOL}$LINK_TYPE_FUNC$qualifiedName\">$content</a>"
-      else -> content
+      qualifiedName != null -> HtmlChunk.link("${DocumentationManagerProtocol.PSI_ELEMENT_PROTOCOL}$LINK_TYPE_FUNC$qualifiedName", content)
+      else -> HtmlChunk.text(content)
     }
   }
 
   @JvmStatic
-  fun toModule(content: String, qualifiedName: String): String {
-    return "<a href=\"${DocumentationManagerProtocol.PSI_ELEMENT_PROTOCOL}$LINK_TYPE_MODULE$qualifiedName\">$content</a>"
+  fun toTypeAliasStatement(@NlsSafe content: String, typeAliasStatement: PyTypeAliasStatement): HtmlChunk {
+    val qualifiedName = typeAliasStatement.qualifiedName
+    return when {
+      qualifiedName != null -> HtmlChunk.link("${DocumentationManagerProtocol.PSI_ELEMENT_PROTOCOL}$LINK_TYPE_FUNC$qualifiedName", content)
+      else -> HtmlChunk.text(content)
+    }
+  }
+
+  @JvmStatic
+  fun toModule(@NlsSafe content: String, qualifiedName: String): HtmlChunk {
+    return HtmlChunk.link("${DocumentationManagerProtocol.PSI_ELEMENT_PROTOCOL}$LINK_TYPE_MODULE$qualifiedName", content)
   }
 
   @JvmStatic
@@ -141,8 +162,7 @@ object PyDocumentationLink {
 
   @JvmStatic
   private fun possibleClass(type: String, anchor: PsiElement, context: TypeEvalContext): PyClass? {
-    val pyType = PyTypeParser.getTypeByName(anchor, type, context)
-    return when (pyType) {
+    return when (val pyType = PyTypeParser.getTypeByName(anchor, type, context)) {
       is PyClassType -> pyType.pyClass
       else -> null
     }

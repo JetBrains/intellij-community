@@ -1,0 +1,28 @@
+### auto-generated section `build intellij.cucumber.jvmFormatter3` start
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+jvm_library(
+  name = "cucumber-jvmFormatter3",
+  module_name = "intellij.cucumber.jvmFormatter3",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  kotlinc_opts = "@community//:k8",
+  deps = [
+    "@lib//:cucumber-jvm_formatter3-cucumber-core-3-0-2-provided",
+    "//plugins/cucumber-jvm-formatter:cucumber-jvmFormatter",
+  ]
+)
+
+jvm_library(
+  name = "cucumber-jvmFormatter3_test_lib",
+  module_name = "intellij.cucumber.jvmFormatter3",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  kotlinc_opts = "@community//:k8",
+  runtime_deps = [
+    ":cucumber-jvmFormatter3",
+    "@lib//:cucumber-jvm_formatter3-cucumber-core-3-0-2-provided",
+    "//plugins/cucumber-jvm-formatter:cucumber-jvmFormatter_test_lib",
+  ]
+)
+### auto-generated section `build intellij.cucumber.jvmFormatter3` end

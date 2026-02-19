@@ -1,4 +1,4 @@
-// "Unroll loop" "true"
+// "Unroll loop" "true-preview"
 class Test {
   void test() {
       System.out.println("Hi!" + 10);

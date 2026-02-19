@@ -1,16 +1,23 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.impl;
 
-import com.intellij.execution.*;
+import com.intellij.execution.BeforeRunTask;
+import com.intellij.execution.BeforeRunTaskProvider;
+import com.intellij.execution.ExecutionBundle;
+import com.intellij.execution.RunManager;
+import com.intellij.execution.RunManagerEx;
+import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.configurations.ConfigurationFactory;
 import com.intellij.execution.configurations.ConfigurationType;
 import com.intellij.execution.configurations.RunConfiguration;
+import com.intellij.execution.configurations.VirtualConfigurationType;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.ui.ScrollPaneFactory;
-import com.intellij.ui.TreeSpeedSearch;
+import com.intellij.ui.TreeUIHelper;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.CollectionFactory;
@@ -20,21 +27,33 @@ import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.Icon;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.JTree;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreeCellRenderer;
 import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
-import java.awt.*;
+import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.Component;
+import java.awt.Rectangle;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.util.ArrayList;
+import java.util.Enumeration;
 import java.util.List;
-import java.util.*;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
 
 public abstract class BaseExecuteBeforeRunDialog<T extends BeforeRunTask<?>> extends DialogWrapper {
-  private final static Object TEMPLATE_ROOT = new Object();
+  private static final Object TEMPLATE_ROOT = new Object();
   private final Project myProject;
   private DefaultMutableTreeNode myRoot;
 
@@ -62,7 +81,7 @@ public abstract class BaseExecuteBeforeRunDialog<T extends BeforeRunTask<?>> ext
     tree.setRootVisible(false);
     tree.setShowsRootHandles(true);
     TreeUtil.installActions(tree);
-    new TreeSpeedSearch(tree);
+    TreeUIHelper.getInstance().installTreeSpeedSearch(tree);
 
     tree.addMouseListener(new MouseAdapter() {
       @Override
@@ -141,8 +160,7 @@ public abstract class BaseExecuteBeforeRunDialog<T extends BeforeRunTask<?>> ext
     tree.repaint();
   }
 
-  @NotNull
-  private DefaultMutableTreeNode buildNodes() {
+  private @NotNull DefaultMutableTreeNode buildNodes() {
     DefaultMutableTreeNode root = new DefaultMutableTreeNode(new Descriptor());
     RunManagerImpl runManager = RunManagerImpl.getInstanceImpl(myProject);
     for (Map.Entry<ConfigurationType, Map<String, List<RunnerAndConfigurationSettings>>> entry : runManager.getConfigurationsGroupedByTypeAndFolder(false).entrySet()) {
@@ -175,9 +193,11 @@ public abstract class BaseExecuteBeforeRunDialog<T extends BeforeRunTask<?>> ext
     DefaultMutableTreeNode node = new DefaultMutableTreeNode(TEMPLATE_ROOT);
     root.add(node);
     for (ConfigurationType type : ConfigurationType.CONFIGURATION_TYPE_EP.getExtensionList()) {
-      Icon icon = type.getIcon();
-      DefaultMutableTreeNode typeNode = new DefaultMutableTreeNode(new ConfigurationTypeDescriptor(type, icon, isConfigurationAssigned(type)));
-      node.add(typeNode);
+      if (!(type instanceof VirtualConfigurationType)) {
+        Icon icon = type.getIcon();
+        DefaultMutableTreeNode typeNode = new DefaultMutableTreeNode(new ConfigurationTypeDescriptor(type, icon, isConfigurationAssigned(type)));
+        node.add(typeNode);
+      }
     }
   }
 
@@ -204,21 +224,18 @@ public abstract class BaseExecuteBeforeRunDialog<T extends BeforeRunTask<?>> ext
     for (Enumeration<?> nodes = myRoot.depthFirstEnumeration(); nodes.hasMoreElements(); ) {
       final DefaultMutableTreeNode node = (DefaultMutableTreeNode)nodes.nextElement();
       Object object = node.getUserObject();
-      if (!(object instanceof Descriptor)) {
+      if (!(object instanceof Descriptor descriptor)) {
         continue;
       }
-      final Descriptor descriptor = (Descriptor)object;
       final boolean isChecked = descriptor.isChecked();
 
-      if (descriptor instanceof ConfigurationTypeDescriptor) {
-        ConfigurationTypeDescriptor typeDesc = (ConfigurationTypeDescriptor)descriptor;
+      if (descriptor instanceof ConfigurationTypeDescriptor typeDesc) {
         for (ConfigurationFactory factory : typeDesc.getConfigurationType().getConfigurationFactories()) {
           RunnerAndConfigurationSettings settings = runManager.getConfigurationTemplate(factory);
           update(settings.getConfiguration(), isChecked, runManager);
         }
       }
-      else if (descriptor instanceof ConfigurationDescriptor) {
-        ConfigurationDescriptor configDesc = (ConfigurationDescriptor)descriptor;
+      else if (descriptor instanceof ConfigurationDescriptor configDesc) {
         update(configDesc.getConfiguration(), isChecked, runManager);
       }
     }
@@ -323,7 +340,7 @@ public abstract class BaseExecuteBeforeRunDialog<T extends BeforeRunTask<?>> ext
       return myConfiguration.getType();
     }
 
-    public String getName() {
+    public @NlsSafe String getName() {
       return myConfiguration.getName();
     }
 
@@ -390,21 +407,18 @@ public abstract class BaseExecuteBeforeRunDialog<T extends BeforeRunTask<?>> ext
       myCheckbox.setSelected(descriptor.isChecked());
       myCheckbox.setEnabled(true);
 
-      if (descriptor instanceof ConfigurationTypeDescriptor) {
-        ConfigurationTypeDescriptor configurationTypeDescriptor = (ConfigurationTypeDescriptor)descriptor;
+      if (descriptor instanceof ConfigurationTypeDescriptor configurationTypeDescriptor) {
         myLabel.setFont(tree.getFont());
         myLabel.setText(configurationTypeDescriptor.getConfigurationType().getDisplayName());
         myLabel.setIcon(configurationTypeDescriptor.getIcon());
       }
-      else if (descriptor instanceof GroupConfigurationDescriptor) {
-        GroupConfigurationDescriptor groupConfigurationDescriptor = (GroupConfigurationDescriptor)descriptor;
+      else if (descriptor instanceof GroupConfigurationDescriptor groupConfigurationDescriptor) {
         myLabel.setIcon(groupConfigurationDescriptor.getIcon());
         myLabel.setText(groupConfigurationDescriptor.getConfigurationType().getDisplayName());
         myLabel.setFont(tree.getFont());
         myCheckbox.setState(getStateFromChildren(node));
       }
-      else if (descriptor instanceof ConfigurationDescriptor) {
-        ConfigurationDescriptor configurationTypeDescriptor = (ConfigurationDescriptor)descriptor;
+      else if (descriptor instanceof ConfigurationDescriptor configurationTypeDescriptor) {
         myLabel.setFont(tree.getFont());
         myLabel.setText(configurationTypeDescriptor.getName());
         myLabel.setIcon(null);

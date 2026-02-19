@@ -1,15 +1,18 @@
-// Copyright 2000-2017 JetBrains s.r.o.
-// Use of this source code is governed by the Apache 2.0 license that can be
-// found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.i18n;
 
+import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
+import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.java.i18n.JavaI18nBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.text.HtmlBuilder;
+import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
@@ -17,26 +20,30 @@ import com.intellij.psi.PsiFile;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.uast.*;
+import org.jetbrains.uast.UBinaryExpression;
+import org.jetbrains.uast.UExpression;
+import org.jetbrains.uast.UastBinaryOperator;
+import org.jetbrains.uast.UastUtils;
 import org.jetbrains.uast.expressions.UInjectionHost;
 import org.jetbrains.uast.generate.UastCodeGenerationPlugin;
 import org.jetbrains.uast.generate.UastElementFactory;
+
+import java.util.Objects;
 
 public class I18nizeQuickFix extends AbstractI18nizeQuickFix<UInjectionHost> {
   private static final Logger LOG = Logger.getInstance(I18nizeQuickFix.class);
   private TextRange mySelectionRange;
 
-  public I18nizeQuickFix(NlsInfo.Localized info) {
+  I18nizeQuickFix(NlsInfo.Localized info) {
     super(info);
   }
 
-  public I18nizeQuickFix() {
+  I18nizeQuickFix() {
     this(NlsInfo.localized());
   }
 
   @Override
-  @NotNull
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return JavaI18nBundle.message("inspection.i18n.quickfix");
   }
 
@@ -96,23 +103,40 @@ public class I18nizeQuickFix extends AbstractI18nizeQuickFix<UInjectionHost> {
     doDocumentReplacement(psiFile, literalExpression, i18nizedText, document, generationPlugin);
   }
 
+  @Override
   protected JavaI18nizeQuickFixDialog<UInjectionHost> createDialog(Project project,
                                                                    PsiFile context,
                                                                    @NotNull UInjectionHost literalExpression) {
-    String value = StringUtil.notNullize(literalExpression.evaluateToString());
-    if (mySelectionRange != null) {
-      TextRange literalRange = literalExpression.getSourcePsi().getTextRange();
-      TextRange intersection = literalRange.intersection(mySelectionRange);
-      value = literalExpression.asSourceString().substring(intersection.getStartOffset() - literalRange.getStartOffset(), intersection.getEndOffset() - literalRange.getStartOffset());
-    }
+    String value = getStringToExtract(literalExpression);
     return new JavaI18nizeQuickFixDialog<>(project, context, literalExpression, value, getCustomization(value), true, true);
   }
 
-  @Nullable
-  private static UBinaryExpression breakStringLiteral(@NotNull UInjectionHost literalExpression,
-                                                      UastCodeGenerationPlugin generationPlugin,
-                                                      UastElementFactory elementFactory,
-                                                      int offset) throws IncorrectOperationException {
+  private @NotNull @NlsSafe String getStringToExtract(@NotNull UInjectionHost literalExpression) {
+    if (mySelectionRange != null) {
+      TextRange literalRange = Objects.requireNonNull(literalExpression.getSourcePsi()).getTextRange();
+      TextRange intersection = literalRange.intersection(mySelectionRange);
+      return literalExpression.asSourceString().substring(intersection.getStartOffset() - literalRange.getStartOffset(),
+                                                             intersection.getEndOffset() - literalRange.getStartOffset());
+    }
+    return StringUtil.notNullize(literalExpression.evaluateToString());
+  }
+
+  @Override
+  public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
+    PsiElement element = descriptor.getPsiElement();
+    UInjectionHost literal = I18nizeAction.getEnclosingStringLiteral(element);
+    if (literal == null) {
+      return IntentionPreviewInfo.EMPTY;
+    }
+    String string = getStringToExtract(literal);
+    return new IntentionPreviewInfo.Html(new HtmlBuilder().append(JavaI18nBundle.message("i18n.quickfix.preview.description"))
+                                           .br().append(HtmlChunk.text(string).code()).toFragment());
+  }
+
+  private static @Nullable UBinaryExpression breakStringLiteral(@NotNull UInjectionHost literalExpression,
+                                                                UastCodeGenerationPlugin generationPlugin,
+                                                                UastElementFactory elementFactory,
+                                                                int offset) throws IncorrectOperationException {
     PsiElement sourcePsi = literalExpression.getSourcePsi();
     if (sourcePsi == null) {
       return null;
@@ -122,11 +146,11 @@ public class I18nizeQuickFix extends AbstractI18nizeQuickFix<UInjectionHost> {
     if (literalRange.getStartOffset() + 1 >= offset || offset >= literalRange.getEndOffset() - 1 || value == null) {
       return null;
     }
-    int breakIndex = offset - literalRange.getStartOffset()-1;
+    int breakIndex = offset - literalRange.getStartOffset() - 1;
     String lsubstring = value.substring(0, breakIndex);
     String rsubstring = value.substring(breakIndex);
-    ULiteralExpression left = elementFactory.createStringLiteralExpression(lsubstring, sourcePsi);
-    ULiteralExpression right = elementFactory.createStringLiteralExpression(rsubstring, sourcePsi);
+    UExpression left = elementFactory.createStringLiteralExpression(lsubstring, sourcePsi);
+    UExpression right = elementFactory.createStringLiteralExpression(rsubstring, sourcePsi);
     if (left == null || right == null) {
       return null;
     }

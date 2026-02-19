@@ -1,19 +1,4 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.fileTemplates;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
@@ -23,9 +8,9 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Properties;
 
 /**
- * Provides default variables which are available in file templates.
+ * Provides default properties which are available in file templates.
  *
- * @author yole
+ * @see <a href="https://plugins.jetbrains.com/docs/intellij/providing-file-templates.html#providing-default-file-template-properties">Providing Default File Template Properties (IntelliJ Platform Docs)</a>
  */
 public interface DefaultTemplatePropertiesProvider {
   ExtensionPointName<DefaultTemplatePropertiesProvider> EP_NAME = ExtensionPointName.create("com.intellij.defaultTemplatePropertiesProvider");
@@ -33,8 +18,8 @@ public interface DefaultTemplatePropertiesProvider {
   /**
    * Fills the default properties for a file which is created in the specified directory.
    *
-   * @param directory the directory in which the file is created.
-   * @param props the map in which the defined properties should be stored.
+   * @param directory the directory in which the file is created
+   * @param props the map in which the defined properties should be stored
    */
   void fillProperties(@NotNull PsiDirectory directory, @NotNull Properties props);
 }

@@ -81,8 +81,6 @@ public class PyPullUpPresenterTest extends PyRefactoringPresenterTestCase<PyPull
       "my_func(self)",
       "__init__(self)"
     ));
-
-
   }
 
   /**
@@ -114,14 +112,14 @@ public class PyPullUpPresenterTest extends PyRefactoringPresenterTestCase<PyPull
    * Checks that some members are not allowed (and may nto be abstract), while others are for Py2
    */
   public void testMembersPy2() {
-    ensureCorrectMembersForHugeChild(false);
+    runWithLanguageLevel(LanguageLevel.PYTHON27, () -> ensureCorrectMembersForHugeChild(false));
   }
 
   /**
    * Checks that some members are not allowed (and may nto be abstract), while others are for Py3
    */
   public void testMembersPy3() {
-    runWithLanguageLevel(LanguageLevel.PYTHON34, () -> ensureCorrectMembersForHugeChild(true));
+    ensureCorrectMembersForHugeChild(true);
   }
 
   /**

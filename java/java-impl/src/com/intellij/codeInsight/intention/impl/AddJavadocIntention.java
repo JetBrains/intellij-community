@@ -1,27 +1,50 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.codeInsight.editorActions.FixDocCommentAction;
-import com.intellij.codeInsight.intention.BaseElementAtCaretIntentionAction;
-import com.intellij.codeInsight.intention.LowPriorityAction;
+import com.intellij.codeInsight.intention.PriorityAction;
 import com.intellij.ide.util.PackageUtil;
 import com.intellij.java.JavaBundle;
 import com.intellij.lang.java.JavaDocumentationProvider;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.project.Project;
-import com.intellij.psi.*;
+import com.intellij.modcommand.ActionContext;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.Presentation;
+import com.intellij.modcommand.PsiUpdateModCommandAction;
+import com.intellij.openapi.project.DumbAware;
+import com.intellij.psi.PsiAnonymousClass;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiIdentifier;
+import com.intellij.psi.PsiJavaCodeReferenceElement;
+import com.intellij.psi.PsiJavaDocumentedElement;
+import com.intellij.psi.PsiJavaModuleReferenceElement;
+import com.intellij.psi.PsiPackageStatement;
+import com.intellij.psi.PsiTypeParameter;
+import com.intellij.psi.PsiVariable;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.util.IncorrectOperationException;
+import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-public class AddJavadocIntention extends BaseElementAtCaretIntentionAction implements LowPriorityAction {
-  @Override
-  public void invoke(@NotNull final Project project, final Editor editor, @NotNull final PsiElement element) throws IncorrectOperationException {
-    FixDocCommentAction.generateOrFixComment(element, project, editor);
+public class AddJavadocIntention extends PsiUpdateModCommandAction<PsiElement> implements DumbAware {
+  public AddJavadocIntention() {
+    super(PsiElement.class);
   }
 
   @Override
-  public boolean isAvailable(@NotNull final Project project, final Editor editor, @NotNull PsiElement element) {
+  protected void invoke(@NotNull ActionContext context, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
+    FixDocCommentAction.generateComment(element, context.project(), updater);
+  }
+
+  @Override
+  protected @Nullable Presentation getPresentation(@NotNull ActionContext context, @NotNull PsiElement element) {
+    //noinspection DialogTitleCapitalization
+    return Presentation.of(getFamilyName()).withPriority(PriorityAction.Priority.LOW);
+  }
+
+  @Override
+  protected boolean isElementApplicable(@NotNull PsiElement element, @NotNull ActionContext context) {
     if (element instanceof PsiIdentifier ||
         element instanceof PsiJavaCodeReferenceElement ||
         element instanceof PsiJavaModuleReferenceElement) {
@@ -29,10 +52,13 @@ public class AddJavadocIntention extends BaseElementAtCaretIntentionAction imple
       if (targetElement instanceof PsiVariable && PsiTreeUtil.isAncestor(((PsiVariable)targetElement).getInitializer(), element, false)) {
         return false;
       }
-      if (targetElement instanceof PsiJavaDocumentedElement &&
+      if ( targetElement instanceof PsiClass aClass && PsiUtil.isLocalClass(aClass)) {
+        return false;
+      }
+      if (targetElement instanceof PsiJavaDocumentedElement documentedElement &&
           !(targetElement instanceof PsiTypeParameter) &&
           !(targetElement instanceof PsiAnonymousClass)) {
-        return ((PsiJavaDocumentedElement)targetElement).getDocComment() == null;
+        return documentedElement.getDocComment() == null;
       }
 
       if (targetElement instanceof PsiPackageStatement) {
@@ -46,17 +72,9 @@ public class AddJavadocIntention extends BaseElementAtCaretIntentionAction imple
     return false;
   }
 
-  @NotNull
   @Override
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     //noinspection DialogTitleCapitalization
     return JavaBundle.message("intention.family.add.javadoc");
-  }
-
-  @NotNull
-  @Override
-  public String getText() {
-    //noinspection DialogTitleCapitalization
-    return getFamilyName();
   }
 }

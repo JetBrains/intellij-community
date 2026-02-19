@@ -1,48 +1,48 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.impl.jrt;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.vfs.impl.ArchiveHandler;
-import com.intellij.reference.SoftReference;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.lang.ref.SoftReference;
 import java.net.URI;
-import java.net.URL;
-import java.net.URLClassLoader;
-import java.nio.file.*;
+import java.nio.file.FileSystem;
+import java.nio.file.FileSystems;
+import java.nio.file.FileVisitResult;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
+import static com.intellij.reference.SoftReference.dereference;
+
+/** @see jdk.internal.jrtfs.JrtFileSystemProvider */
 @SuppressWarnings("SynchronizeOnThis")
-class JrtHandler extends ArchiveHandler {
+public class JrtHandler extends ArchiveHandler {
   private static final URI ROOT_URI = URI.create("jrt:/");
 
   private SoftReference<FileSystem> myFileSystem;
 
-  JrtHandler(@NotNull String path) {
+  public JrtHandler(@NotNull String path) {
     super(path);
   }
 
   @Override
-  public void dispose() {
-    super.dispose();
-
+  public void clearCaches() {
+    super.clearCaches();
     synchronized (this) {
-      FileSystem fs = SoftReference.dereference(myFileSystem);
+      var fs = dereference(myFileSystem);
       if (fs != null) {
         myFileSystem = null;
         try {
           fs.close();
-          ClassLoader loader = fs.getClass().getClassLoader();
-          if (loader instanceof AutoCloseable) {
-            ((AutoCloseable)loader).close();
-          }
         }
         catch (Exception e) {
           Logger.getInstance(JrtHandler.class).info(e);
@@ -51,35 +51,30 @@ class JrtHandler extends ArchiveHandler {
     }
   }
 
-  private synchronized FileSystem getFileSystem() throws IOException {
-    FileSystem fs = SoftReference.dereference(myFileSystem);
+  protected synchronized FileSystem getFileSystem() throws IOException {
+    var fs = dereference(myFileSystem);
     if (fs == null) {
-      String path = getFile().getPath();
+      var path = getPath().toString();
       try {
-        if (SystemInfoRt.IS_AT_LEAST_JAVA9) {
-          fs = FileSystems.newFileSystem(ROOT_URI, Collections.singletonMap("java.home", path));
-        }
-        else {
-          File file = new File(path, "lib/jrt-fs.jar");
-          if (!file.exists()) throw new IOException("Missing provider: " + file);
-          fs = FileSystems.newFileSystem(ROOT_URI, Collections.emptyMap(), new URLClassLoader(new URL[]{file.toURI().toURL()}, null));
-        }
+        fs = FileSystems.newFileSystem(ROOT_URI, Collections.singletonMap("java.home", path));
         myFileSystem = new SoftReference<>(fs);
       }
       catch (RuntimeException | Error e) {
         throw new IOException("Error mounting JRT filesystem at " + path, e);
       }
     }
+    else if (!fs.isOpen()) {
+      throw new ProcessCanceledException();
+    }
     return fs;
   }
 
-  @NotNull
   @Override
-  protected Map<String, EntryInfo> createEntriesMap() throws IOException {
-    Map<String, EntryInfo> map = new HashMap<>();
+  protected @NotNull Map<String, EntryInfo> createEntriesMap() throws IOException {
+    var map = new HashMap<String, EntryInfo>();
     map.put("", createRootEntry());
 
-    Path root = getFileSystem().getPath("/modules");
+    var root = getFileSystem().getPath("/modules");
     if (!Files.exists(root)) throw new FileNotFoundException("JRT root missing");
 
     Files.walkFileTree(root, new SimpleFileVisitor<>() {
@@ -98,14 +93,14 @@ class JrtHandler extends ArchiveHandler {
       private void process(Path entry, BasicFileAttributes attrs) throws IOException {
         int pathLength = entry.getNameCount();
         if (pathLength > 1) {
-          Path relativePath = entry.subpath(1, pathLength);
-          String path = relativePath.toString();
+          var relativePath = entry.subpath(1, pathLength);
+          var path = relativePath.toString();
           if (!map.containsKey(path)) {
-            EntryInfo parent = map.get(pathLength > 2 ? relativePath.getParent().toString() : "");
+            var parent = map.get(pathLength > 2 ? relativePath.getParent().toString() : "");
             if (parent == null) throw new IOException("Out of order: " + entry);
 
-            String shortName = entry.getFileName().toString();
-            long modified = attrs.lastModifiedTime().toMillis();
+            var shortName = entry.getFileName().toString();
+            var modified = attrs.lastModifiedTime().toMillis();
             map.put(path, new EntryInfo(shortName, attrs.isDirectory(), attrs.size(), modified, parent));
           }
         }
@@ -117,9 +112,15 @@ class JrtHandler extends ArchiveHandler {
 
   @Override
   public byte @NotNull [] contentsToByteArray(@NotNull String relativePath) throws IOException {
-    EntryInfo entry = getEntryInfo(relativePath);
-    if (entry == null) throw new FileNotFoundException(getFile() + " : " + relativePath);
-    Path path = getFileSystem().getPath("/modules/" + relativePath);
-    return Files.readAllBytes(path);
+    var entry = getEntryInfo(relativePath);
+    if (entry == null) throw new FileNotFoundException(getPath() + " : " + relativePath);
+    try {
+      var path = getFileSystem().getPath("/modules/" + relativePath);
+      return Files.readAllBytes(path);
+    }
+    catch (RuntimeException e) {
+      if (e.getCause() instanceof IOException ioe) throw ioe;
+      throw e;
+    }
   }
 }

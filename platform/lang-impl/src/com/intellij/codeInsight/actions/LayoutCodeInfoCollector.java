@@ -1,16 +1,16 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.actions;
 
 import com.intellij.openapi.util.NlsContexts.HintText;
 
-public class LayoutCodeInfoCollector {
+public final class LayoutCodeInfoCollector {
 
   private @HintText String optimizeImportsNotification = null;
   private @HintText String reformatCodeNotification = null;
   private @HintText String rearrangeCodeNotification = null;
+  private @HintText String secondFormatNotification = null;
 
-  @HintText
-  public String getOptimizeImportsNotification() {
+  public @HintText String getOptimizeImportsNotification() {
     return optimizeImportsNotification;
   }
 
@@ -18,8 +18,7 @@ public class LayoutCodeInfoCollector {
     this.optimizeImportsNotification = optimizeImportsNotification;
   }
 
-  @HintText
-  public String getReformatCodeNotification() {
+  public @HintText String getReformatCodeNotification() {
     return reformatCodeNotification;
   }
 
@@ -27,8 +26,7 @@ public class LayoutCodeInfoCollector {
     this.reformatCodeNotification = reformatCodeNotification;
   }
 
-  @HintText
-  public String getRearrangeCodeNotification() {
+  public @HintText String getRearrangeCodeNotification() {
     return rearrangeCodeNotification;
   }
 
@@ -39,6 +37,14 @@ public class LayoutCodeInfoCollector {
   public boolean hasReformatOrRearrangeNotification() {
     return rearrangeCodeNotification != null
            || reformatCodeNotification != null;
+  }
+
+  public @HintText String getSecondFormatNotification() {
+    return secondFormatNotification;
+  }
+
+  public void setSecondFormatNotification(@HintText String secondFormatNotification) {
+    this.secondFormatNotification = secondFormatNotification;
   }
 
   public boolean isEmpty() {

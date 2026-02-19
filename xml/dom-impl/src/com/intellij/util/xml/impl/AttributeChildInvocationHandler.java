@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.xml.impl;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -33,9 +19,6 @@ import com.intellij.xml.util.XmlStringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author peter
- */
 public class AttributeChildInvocationHandler extends DomInvocationHandler {
   private static final Logger LOG = Logger.getInstance(AttributeChildInvocationHandler.class);
 
@@ -62,7 +45,7 @@ public class AttributeChildInvocationHandler extends DomInvocationHandler {
   }
 
   @Override
-  protected XmlElement recomputeXmlElement(@NotNull final DomInvocationHandler parent) {
+  protected XmlElement recomputeXmlElement(final @NotNull DomInvocationHandler parent) {
     if (!parent.isValid()) return null;
 
     final XmlTag tag = parent.getXmlTag();
@@ -71,8 +54,7 @@ public class AttributeChildInvocationHandler extends DomInvocationHandler {
     return tag.getAttribute(getXmlElementName(), getXmlApiCompatibleNamespace(parent));
   }
 
-  @Nullable
-  private String getXmlApiCompatibleNamespace(DomInvocationHandler parent) {
+  private @Nullable String getXmlApiCompatibleNamespace(DomInvocationHandler parent) {
     final XmlTag tag = parent.getXmlTag();
     if (tag == null) {
       return null;
@@ -130,8 +112,7 @@ public class AttributeChildInvocationHandler extends DomInvocationHandler {
   }
 
   @Override
-  @Nullable
-  public final XmlTag getXmlTag() {
+  public final @Nullable XmlTag getXmlTag() {
     final DomInvocationHandler handler = getParentHandler();
     return handler == null ? null : handler.getXmlTag();
   }
@@ -144,8 +125,7 @@ public class AttributeChildInvocationHandler extends DomInvocationHandler {
   }
 
   @Override
-  @Nullable
-  protected String getValue() {
+  protected @Nullable String getValue() {
     if (myStub != null) {
       return ((AttributeStub)myStub).getValue();
     }
@@ -160,7 +140,7 @@ public class AttributeChildInvocationHandler extends DomInvocationHandler {
   }
 
   @Override
-  protected void setValue(@Nullable final String value) {
+  protected void setValue(final @Nullable String value) {
     final XmlTag tag = ensureTagExists();
     final String attributeName = getXmlElementName();
     final String namespace = getXmlApiCompatibleNamespace(getParentHandler());

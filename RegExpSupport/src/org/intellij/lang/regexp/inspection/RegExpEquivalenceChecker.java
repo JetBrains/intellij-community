@@ -3,7 +3,21 @@ package org.intellij.lang.regexp.inspection;
 
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
-import org.intellij.lang.regexp.psi.*;
+import com.intellij.util.ArrayUtil;
+import org.intellij.lang.regexp.psi.RegExpBranch;
+import org.intellij.lang.regexp.psi.RegExpChar;
+import org.intellij.lang.regexp.psi.RegExpCharRange;
+import org.intellij.lang.regexp.psi.RegExpClass;
+import org.intellij.lang.regexp.psi.RegExpClosure;
+import org.intellij.lang.regexp.psi.RegExpElement;
+import org.intellij.lang.regexp.psi.RegExpGroup;
+import org.intellij.lang.regexp.psi.RegExpIntersection;
+import org.intellij.lang.regexp.psi.RegExpNamedGroupRef;
+import org.intellij.lang.regexp.psi.RegExpNumber;
+import org.intellij.lang.regexp.psi.RegExpOptions;
+import org.intellij.lang.regexp.psi.RegExpPattern;
+import org.intellij.lang.regexp.psi.RegExpQuantifier;
+import org.intellij.lang.regexp.psi.RegExpSetOptions;
 
 import java.util.Arrays;
 import java.util.Comparator;
@@ -137,12 +151,7 @@ final class RegExpEquivalenceChecker {
       Arrays.sort(elements1, TEXT_COMPARATOR);
       Arrays.sort(elements2, TEXT_COMPARATOR);
     }
-    for (int i = 0; i < elements1.length; i++) {
-      if (!areElementsEquivalent(elements1[i], elements2[i])) {
-        return false;
-      }
-    }
-    return true;
+    return ArrayUtil.areEqual(elements1, elements2, RegExpEquivalenceChecker::areElementsEquivalent);
   }
 
   private static boolean areCharsEquivalent(RegExpChar aChar1, RegExpChar aChar2) {

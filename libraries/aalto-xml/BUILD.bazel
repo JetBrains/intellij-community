@@ -1,0 +1,28 @@
+### auto-generated section `build intellij.libraries.aalto.xml` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "aalto-xml_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "aalto-xml",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  resources = [":aalto-xml_resources"],
+  exports = ["@lib//:aalto-xml"],
+  runtime_deps = ["@lib//:aalto-xml"]
+)
+
+jvm_library(
+  name = "aalto-xml_test_lib",
+  module_name = "intellij.libraries.aalto.xml",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  kotlinc_opts = "@community//:k8",
+  exports = ["@lib//:aalto-xml"],
+  runtime_deps = [":aalto-xml"]
+)
+### auto-generated section `build intellij.libraries.aalto.xml` end

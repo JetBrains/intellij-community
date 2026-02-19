@@ -1,0 +1,2 @@
+# Flask-Migrate users don't need to interact with this undocumented module from within  python
+flask_migrate.cli

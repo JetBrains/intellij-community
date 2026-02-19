@@ -27,9 +27,32 @@ public interface Dictionary {
   @NotNull
   String getName();
 
+  /**
+   * @deprecated This method returns null if a word is alien, which is extremely confusing and may cause issues.
+   * <p>
+   * Please implement and use {@link #lookup(String)} instead, which provides clear status indication through {@link LookupStatus}
+   */
   @Nullable
+  @Deprecated(forRemoval = true)
   Boolean contains(@NotNull String word);
 
   @NotNull
+  default LookupStatus lookup(@NotNull String word) {
+    Boolean contains = contains(word);
+    if (contains == null) { return LookupStatus.Alien; }
+    if (contains) { return LookupStatus.Present; }
+    return LookupStatus.Absent;
+  }
+
+  @NotNull
   Set<String> getWords();
+
+  enum LookupStatus {
+    Present, Absent, Alien;
+
+    public boolean isNotPresent() {
+      return this == Absent || this == Alien;
+    }
+  }
+
 }

@@ -1,0 +1,6 @@
+- name: dist.all/lib/intellij.libraries.jspecify.jar
+  modules:
+  - name: intellij.libraries.jspecify
+  library: jspecify
+  files:
+  - name: $MAVEN_REPOSITORY$/org/jspecify/jspecify/1/jspecify-1.jar

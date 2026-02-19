@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.components.fields.valueEditors;
 
 import com.intellij.openapi.application.ApplicationBundle;
@@ -7,7 +7,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JTextField;
 
 public class IntegerValueEditor extends TextFieldValueEditor<Integer> {
   private int myMinValue;
@@ -18,9 +18,8 @@ public class IntegerValueEditor extends TextFieldValueEditor<Integer> {
     super(field, valueName, defaultValue);
   }
 
-  @NotNull
   @Override
-  public Integer parseValue(@Nullable String text) throws InvalidDataException {
+  public @NotNull Integer parseValue(@Nullable String text) throws InvalidDataException {
     try {
       if (StringUtil.isEmpty(text)) {
         if (!myCanBeEmpty) {
@@ -74,5 +73,13 @@ public class IntegerValueEditor extends TextFieldValueEditor<Integer> {
 
   public void setCanBeEmpty(boolean canBeEmpty) {
     myCanBeEmpty = canBeEmpty;
+  }
+
+  @Override
+  protected boolean isShowError(@Nullable String errorText) {
+    if (StringUtil.isEmpty(getValueText())) {
+      return false;
+    }
+    return super.isShowError(errorText);
   }
 }

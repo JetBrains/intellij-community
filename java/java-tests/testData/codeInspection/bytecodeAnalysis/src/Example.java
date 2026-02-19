@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-import org.apache.commons.lang.ArrayUtils;
-import org.apache.commons.lang.ClassUtils;
+import org.apache.commons.lang3.ArrayUtils;
+import org.apache.commons.lang3.ClassUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -34,7 +34,7 @@ public class Example {
       System.out.println("null");
     }
 
-    @NotNull Class x = <warning descr="'null' is assigned to a variable that is annotated with @NotNull">ClassUtils.primitiveToWrapper(null)</warning>;
+    @NotNull Class x = <warning descr="'null' is assigned to a non-null variable"><warning descr="Result of 'ClassUtils.primitiveToWrapper(null)' is always 'null'">ClassUtils.primitiveToWrapper(null)</warning></warning>;
   }
 
   void writeBytes(@Nullable byte[] bytes, FilterOutputStream stream) throws IOException {

@@ -2,16 +2,20 @@
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.ex.*;
+import com.intellij.openapi.editor.ex.DocumentEx;
+import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.openapi.editor.ex.MarkupIterator;
+import com.intellij.openapi.editor.ex.MarkupModelEx;
+import com.intellij.openapi.editor.ex.RangeHighlighterEx;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.editor.markup.HighlighterTargetArea;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.EmptyIcon;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-import java.util.ArrayList;
+import javax.swing.Icon;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
@@ -20,7 +24,7 @@ public class MarkupModelStressTest extends AbstractEditorTest {
   private static final int RANDOM_ITERATIONS = 10_000;
   private static final int MAX_CHARS_PER_OPERATION = 10;
   private static final Long SEED_OVERRIDE = null; // set non-null value to run with a specific seed
-  private static final GutterIconRenderer DUMMY_GUTTER_ICON_RENDERER = new DummyGutterIconRenderer();
+  static final GutterIconRenderer DUMMY_GUTTER_ICON_RENDERER = new DummyGutterIconRenderer();
 
   private final List<? extends Runnable> ourActions = Arrays.asList(new AddHighlighter(),
                                                                     new RemoveHighlighter(),
@@ -29,6 +33,7 @@ public class MarkupModelStressTest extends AbstractEditorTest {
                                                                     new RemoveCharacters(),
                                                                     new MoveCharacters());
   private final Random myRandom = new Random() {{
+    //noinspection ConstantValue
     setSeed(mySeed = SEED_OVERRIDE == null ? nextLong() : SEED_OVERRIDE);
   }};
   private long mySeed;
@@ -52,27 +57,15 @@ public class MarkupModelStressTest extends AbstractEditorTest {
 
   private void validateState() {
     MarkupModelEx markupModel = ((EditorEx)getEditor()).getMarkupModel();
-    List<RangeHighlighterEx> list1 = new ArrayList<>();
-    MarkupIterator<RangeHighlighterEx> it1 = markupModel.overlappingIterator(0, Integer.MAX_VALUE);
-    try {
-      while (it1.hasNext()) {
-        RangeHighlighterEx h = it1.next();
-        if (h.isRenderedInGutter()) list1.add(h);
-      }
+    List<RangeHighlighterEx> list1;
+    try (MarkupIterator<RangeHighlighterEx> it1 = markupModel.overlappingIterator(0, Integer.MAX_VALUE)) {
+      list1 = ContainerUtil.collect(it1, h -> h.isRenderedInGutter());
     }
-    finally {
-      it1.dispose();
-    }
-    List<RangeHighlighterEx> list2 = new ArrayList<>();
-    MarkupIterator<RangeHighlighterEx> it2 =
-      markupModel.overlappingIterator(0, Integer.MAX_VALUE, true);
-    try {
-      while (it2.hasNext()) {
-        list2.add(it2.next());
-      }
-    }
-    finally {
-      it2.dispose();
+
+    List<RangeHighlighterEx> list2;
+    try (MarkupIterator<RangeHighlighterEx> it2 = new FilteringMarkupIterator<>(markupModel.overlappingIterator(0, Integer.MAX_VALUE),
+                                                                                h -> h.isRenderedInGutter())) {
+      list2 = ContainerUtil.collect(it2);
     }
     assertEquals(list1, list2);
   }

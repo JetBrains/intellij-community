@@ -1,4 +1,4 @@
-// "Remove 'while' statement extracting side effects" "true"
+// "Remove 'while' statement extracting side effects" "true-preview"
 import org.jetbrains.annotations.Contract;
 
 class X {

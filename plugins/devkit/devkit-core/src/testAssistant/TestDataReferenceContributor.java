@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.testAssistant;
 
 import com.intellij.openapi.project.Project;
@@ -24,7 +10,21 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.ManagingFS;
 import com.intellij.patterns.uast.UastPatterns;
-import com.intellij.psi.*;
+import com.intellij.psi.ElementManipulators;
+import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementResolveResult;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiFileSystemItem;
+import com.intellij.psi.PsiLanguageInjectionHost;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiReference;
+import com.intellij.psi.PsiReferenceContributor;
+import com.intellij.psi.PsiReferenceProvider;
+import com.intellij.psi.PsiReferenceRegistrar;
+import com.intellij.psi.ResolveResult;
+import com.intellij.psi.UastInjectionHostReferenceProvider;
+import com.intellij.psi.UastReferenceRegistrar;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileInfoManager;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReference;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReferenceSet;
@@ -38,17 +38,13 @@ import org.jetbrains.uast.UastUtils;
 
 import java.util.Collection;
 
-import static org.jetbrains.idea.devkit.testAssistant.TestDataLineMarkerProvider.*;
-
-/**
- * @author zolotov
- */
-public class TestDataReferenceContributor extends PsiReferenceContributor {
+final class TestDataReferenceContributor extends PsiReferenceContributor {
   @Override
   public void registerReferenceProviders(@NotNull PsiReferenceRegistrar registrar) {
     UastReferenceRegistrar.registerUastReferenceProvider(registrar,
                                                          UastPatterns.injectionHostUExpression()
-                                                                     .annotationParam(TEST_DATA_PATH_ANNOTATION_QUALIFIED_NAME, "value"),
+                                                                     .annotationParam(
+                                                                       TestFrameworkConstants.TEST_DATA_PATH_ANNOTATION_QUALIFIED_NAME, "value"),
                                                          new TestDataReferenceProvider(), PsiReferenceRegistrar.DEFAULT_PRIORITY);
   }
 
@@ -99,9 +95,8 @@ public class TestDataReferenceContributor extends PsiReferenceContributor {
       return new TestDataReference(this, range, index, text);
     }
 
-    @NotNull
     @Override
-    public Collection<PsiFileSystemItem> computeDefaultContexts() {
+    public @NotNull Collection<PsiFileSystemItem> computeDefaultContexts() {
       return toFileSystemItems(ManagingFS.getInstance().getLocalRoots());
     }
 
@@ -122,13 +117,13 @@ public class TestDataReferenceContributor extends PsiReferenceContributor {
         Collection<Object> variants = ContainerUtil.newHashSet(super.getVariants());
         final PsiDirectory projectPsiRoot = getProjectPsiRoot();
         if (projectPsiRoot != null) {
-          variants.add(FileInfoManager.getFileLookupItem(projectPsiRoot, PROJECT_ROOT_VARIABLE, projectPsiRoot.getIcon(0))
+          variants.add(FileInfoManager.getFileLookupItem(projectPsiRoot, TestFrameworkConstants.PROJECT_ROOT_VARIABLE, projectPsiRoot.getIcon(0))
                          .withTypeText(projectPsiRoot.getVirtualFile().getPath(), true));
         }
 
         final PsiDirectory contentPsiRoot = getContentPsiRoot();
         if (contentPsiRoot != null) {
-          variants.add(FileInfoManager.getFileLookupItem(contentPsiRoot, CONTENT_ROOT_VARIABLE, contentPsiRoot.getIcon(0))
+          variants.add(FileInfoManager.getFileLookupItem(contentPsiRoot, TestFrameworkConstants.CONTENT_ROOT_VARIABLE, contentPsiRoot.getIcon(0))
                          .withTypeText(contentPsiRoot.getVirtualFile().getPath(), true));
         }
         return ArrayUtil.toObjectArray(variants);
@@ -140,13 +135,13 @@ public class TestDataReferenceContributor extends PsiReferenceContributor {
     @Override
     protected ResolveResult @NotNull [] innerResolve(boolean caseSensitive, @NotNull PsiFile containingFile) {
       if (getIndex() == 0 && StringUtil.startsWithChar(getText(), '$')) {
-        if (PROJECT_ROOT_VARIABLE.equals(getText())) {
+        if (TestFrameworkConstants.PROJECT_ROOT_VARIABLE.equals(getText())) {
           final PsiDirectory projectPsiRoot = getProjectPsiRoot();
           if (projectPsiRoot != null) {
             return new ResolveResult[]{new PsiElementResolveResult(projectPsiRoot)};
           }
         }
-        else if (CONTENT_ROOT_VARIABLE.equals(getText())) {
+        else if (TestFrameworkConstants.CONTENT_ROOT_VARIABLE.equals(getText())) {
           final PsiDirectory contentPsiRoot = getContentPsiRoot();
           if (contentPsiRoot != null) {
             return new ResolveResult[]{new PsiElementResolveResult(contentPsiRoot)};
@@ -156,8 +151,7 @@ public class TestDataReferenceContributor extends PsiReferenceContributor {
       return super.innerResolve(caseSensitive, containingFile);
     }
 
-    @Nullable
-    private PsiDirectory getProjectPsiRoot() {
+    private @Nullable PsiDirectory getProjectPsiRoot() {
       final Project project = getElement().getProject();
       final VirtualFile projectDir = project.getBaseDir();
       if (projectDir != null) {
@@ -167,8 +161,7 @@ public class TestDataReferenceContributor extends PsiReferenceContributor {
       return null;
     }
 
-    @Nullable
-    private PsiDirectory getContentPsiRoot() {
+    private @Nullable PsiDirectory getContentPsiRoot() {
       final Project project = getElement().getProject();
       final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
       final VirtualFile file = getElement().getContainingFile().getOriginalFile().getVirtualFile();

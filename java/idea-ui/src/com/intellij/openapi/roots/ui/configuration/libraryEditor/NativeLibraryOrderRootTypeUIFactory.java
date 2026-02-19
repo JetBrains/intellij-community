@@ -22,9 +22,9 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.ui.SdkPathEditor;
 import com.intellij.openapi.roots.ui.OrderRootTypeUIFactory;
 
-import javax.swing.*;
+import javax.swing.Icon;
 
-public class NativeLibraryOrderRootTypeUIFactory implements OrderRootTypeUIFactory {
+public final class NativeLibraryOrderRootTypeUIFactory implements OrderRootTypeUIFactory {
   @Override
   public Icon getIcon() {
     return AllIcons.Nodes.NativeLibrariesFolder;

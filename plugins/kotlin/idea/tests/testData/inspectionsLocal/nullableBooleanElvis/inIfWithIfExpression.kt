@@ -1,0 +1,12 @@
+// HIGHLIGHT: GENERIC_ERROR_OR_WARNING
+fun foo() {
+    var a: Int? = null
+    fun isOddNumber(n: Int?): Boolean? {
+        if (n == null) return null
+        if (n < 0) return null
+        return n % 2 == 1
+    }
+    if ((if (isOddNumber(a) == true) a == 3 else null) <caret>?: false) {
+
+    }
+}

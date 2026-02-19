@@ -1,12 +1,10 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.Getter;
-import com.intellij.openapi.util.StaticGetter;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.DisposableWrapperList;
 import com.intellij.util.lang.CompoundRuntimeException;
@@ -16,8 +14,13 @@ import org.jetbrains.annotations.TestOnly;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.lang.reflect.Proxy;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.EventListener;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.CancellationException;
+import java.util.function.Supplier;
 
 public final class EventDispatcher<T extends EventListener> {
   private static final Logger LOG = Logger.getInstance(EventDispatcher.class);
@@ -32,7 +35,8 @@ public final class EventDispatcher<T extends EventListener> {
     return new EventDispatcher<>(listenerClass, null);
   }
 
-  public static @NotNull <T extends EventListener> EventDispatcher<T> create(@NotNull Class<T> listenerClass, @NotNull Map<String, Object> methodReturnValues) {
+  public static @NotNull <T extends EventListener> EventDispatcher<T> create(@NotNull Class<T> listenerClass,
+                                                                             @NotNull Map<String, Object> methodReturnValues) {
     assertNonVoidMethodReturnValuesAreDeclared(methodReturnValues, listenerClass);
     return new EventDispatcher<>(listenerClass, methodReturnValues);
   }
@@ -55,7 +59,7 @@ public final class EventDispatcher<T extends EventListener> {
     }
     for (Method method : declared) {
       assert method.getReturnType().equals(void.class) :
-        "Method "+method+" returns "+method.getReturnType()+" and yet you didn't specify what its proxy should return";
+        "Method " + method + " returns " + method.getReturnType() + " and yet you didn't specify what its proxy should return";
     }
   }
 
@@ -65,16 +69,15 @@ public final class EventDispatcher<T extends EventListener> {
   }
 
   public static <T> T createMulticaster(@NotNull Class<T> listenerClass,
-                                        @NotNull Getter<? extends Iterable<T>> listeners) {
-    return createMulticaster(listenerClass, null, listeners);
+                                        @NotNull Supplier<? extends Iterable<T>> listeners) {
+    return doCreateMulticaster(listenerClass, null, listeners);
   }
 
-  static @NotNull <T> T createMulticaster(@NotNull Class<T> listenerClass,
-                                          @Nullable Map<String, Object> methodReturnValues,
-                                          @NotNull Getter<? extends Iterable<T>> listeners) {
-    LOG.assertTrue(listenerClass.isInterface(), "listenerClass must be an interface");
-    //noinspection unchecked
-    return (T)Proxy.newProxyInstance(listenerClass.getClassLoader(), new Class[]{listenerClass}, (proxy, method, args) -> {
+  private static @NotNull <T> T doCreateMulticaster(@NotNull Class<T> listenerClass,
+                                            @Nullable Map<String, Object> methodReturnValues,
+                                            @NotNull Supplier<? extends Iterable<T>> listeners) {
+    LOG.assertTrue(listenerClass.isInterface(), "listenerClass must be an interface: " + listenerClass.getName());
+    return ReflectionUtil.proxy(listenerClass, (proxy, method, args) -> {
       String methodName = method.getName();
       if (method.getDeclaringClass().getName().equals("java.lang.Object")) {
         return handleObjectMethod(proxy, args, methodName);
@@ -90,18 +93,16 @@ public final class EventDispatcher<T extends EventListener> {
   }
 
   public static @Nullable Object handleObjectMethod(Object proxy, Object[] args, String methodName) {
-    if (methodName.equals("toString")) {
-      return "Multicaster";
-    }
-    else if (methodName.equals("hashCode")) {
-      return System.identityHashCode(proxy);
-    }
-    else if (methodName.equals("equals")) {
-      return proxy == args[0] ? Boolean.TRUE : Boolean.FALSE;
-    }
-    else {
-      LOG.error("Incorrect Object's method invoked for proxy:" + methodName);
-      return null;
+    switch (methodName) {
+      case "toString":
+        return "Multicaster";
+      case "hashCode":
+        return System.identityHashCode(proxy);
+      case "equals":
+        return proxy == args[0] ? Boolean.TRUE : Boolean.FALSE;
+      default:
+        LOG.error("Incorrect Object's method invoked for proxy:" + methodName);
+        return null;
     }
   }
 
@@ -109,7 +110,7 @@ public final class EventDispatcher<T extends EventListener> {
     T multicaster = myMulticaster;
     if (multicaster == null) {
       // benign race
-      myMulticaster = multicaster = createMulticaster(myListenerClass, myMethodReturnValues, new StaticGetter<Iterable<T>>(myListeners));
+      myMulticaster = multicaster = doCreateMulticaster(myListenerClass, myMethodReturnValues, () -> myListeners);
     }
     return multicaster;
   }
@@ -153,18 +154,34 @@ public final class EventDispatcher<T extends EventListener> {
     return exceptions;
   }
 
-  public static void throwExceptions(@NotNull List<Throwable> exceptions) {
-    if (exceptions.size() == 1) {
-      ExceptionUtil.rethrow(exceptions.get(0));
+  private static void throwExceptions(@NotNull List<? extends Throwable> exceptions) {
+    if (isEventDispatcherErrorPropagationEnabled()) {
+      if (exceptions.size() == 1) {
+        ExceptionUtil.rethrow(exceptions.get(0));
+      }
+      else {
+        for (Throwable exception : exceptions) {
+          if (exception instanceof ProcessCanceledException) {
+            throw (ProcessCanceledException)exception;
+          }
+        }
+        throw new CompoundRuntimeException(exceptions);
+      }
     }
     else {
       for (Throwable exception : exceptions) {
-        if (exception instanceof ProcessCanceledException) {
-          throw (ProcessCanceledException)exception;
-        }
+        if (exception instanceof CancellationException) continue;
+        LOG.error(exception);
       }
-      throw new CompoundRuntimeException(exceptions);
     }
+  }
+
+  /**
+   * - `false` means exceptions from {@link com.intellij.util.EventDispatcher} listeners are being logged
+   * - `true` means exceptions from {@link com.intellij.util.EventDispatcher} listeners are being rethrown at {@link com.intellij.util.EventDispatcher#getMulticaster} usages (the old behavior)
+   */
+  private static boolean isEventDispatcherErrorPropagationEnabled() {
+    return Boolean.parseBoolean(System.getProperty("ijpl.event.dispatcher.rethrows.errors.from.listeners", "false"));
   }
 
   public void addListener(@NotNull T listener) {
@@ -190,7 +207,7 @@ public final class EventDispatcher<T extends EventListener> {
   @TestOnly
   public void neuterMultiCasterWhilePerformanceTestIsRunningUntil(@NotNull Disposable disposable) {
     T multicaster = myMulticaster;
-    myMulticaster = createMulticaster(myListenerClass, myMethodReturnValues, new StaticGetter<Iterable<T>>(Collections.emptyList()));
+    myMulticaster = doCreateMulticaster(myListenerClass, myMethodReturnValues, () -> Collections.emptyList());
     Disposer.register(disposable, () -> myMulticaster = multicaster);
   }
 }

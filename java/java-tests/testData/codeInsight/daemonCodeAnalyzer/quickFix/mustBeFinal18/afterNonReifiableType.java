@@ -1,4 +1,4 @@
-// "Transform 'a' into final one element array" "true"
+// "Transform 'a' into final one element array" "true-preview"
 import java.util.*;
 class Test {
     public void test() {

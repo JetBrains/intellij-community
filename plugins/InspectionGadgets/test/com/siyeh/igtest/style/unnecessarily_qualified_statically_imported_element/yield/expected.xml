@@ -1,9 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<problems>
-  <problem>
-    <file>C.java</file>
-    <line>9</line>
-    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Unnecessarily qualified statically imported element</problem_class>
-    <description>Statically imported element 'currentThread' is unnecessarily qualified with &lt;code&gt;Thread&lt;/code&gt; #loc</description>
-  </problem>
-</problems>

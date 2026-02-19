@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.events;
 
 import com.intellij.openapi.util.io.FileAttributes;
@@ -8,11 +8,11 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Comparator;
 
-/** An internal class for data transfer from refresh worker to persistent FS impl, do not use. */
+/** An internal class for data transfer from refresh worker to persistent FS impl: do not use it outside The Platform. */
 @ApiStatus.Internal
 public interface ChildInfo {
-  ChildInfo[] EMPTY_ARRAY = new ChildInfo[0];
-  Comparator<ChildInfo> BY_ID = Comparator.comparing(o->o.getId());
+  ChildInfo[] EMPTY_ARRAY = {};
+  Comparator<ChildInfo> BY_ID = Comparator.comparingInt(o->o.getId());
 
   int getId();
 

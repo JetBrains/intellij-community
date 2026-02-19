@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.fixtures;
 
 import com.google.common.base.Joiner;
@@ -13,69 +13,130 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.WriteCommandAction;
+import com.intellij.openapi.editor.Caret;
+import com.intellij.openapi.editor.CaretModel;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkModificator;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.impl.FilePropertyPusher;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.platform.DirectoryProjectConfigurator;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiPolyVariantReference;
+import com.intellij.psi.PsiReference;
+import com.intellij.psi.ResolveResult;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.refactoring.RefactoringActionHandler;
-import com.intellij.testFramework.*;
-import com.intellij.testFramework.fixtures.*;
+import com.intellij.testFramework.IndexingTestUtil;
+import com.intellij.testFramework.LightProjectDescriptor;
+import com.intellij.testFramework.PsiTestUtil;
+import com.intellij.testFramework.TestDataPath;
+import com.intellij.testFramework.TestLoggerFactory;
+import com.intellij.testFramework.UsefulTestCase;
+import com.intellij.testFramework.VfsTestUtil;
+import com.intellij.testFramework.fixtures.CodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.IdeaProjectTestFixture;
+import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory;
+import com.intellij.testFramework.fixtures.TempDirTestFixture;
+import com.intellij.testFramework.fixtures.TestFixtureBuilder;
 import com.intellij.testFramework.fixtures.impl.LightTempDirTestFixtureImpl;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usages.Usage;
 import com.intellij.usages.rules.PsiElementUsage;
 import com.intellij.util.CommonProcessors.CollectProcessor;
 import com.intellij.util.IncorrectOperationException;
-import com.jetbrains.python.PythonHelpersLocator;
 import com.jetbrains.python.PythonLanguage;
 import com.jetbrains.python.PythonTestUtil;
+import com.jetbrains.python.codeInsight.typing.PyBundledStubs;
+import com.jetbrains.python.codeInsight.typing.PyTypeShed;
 import com.jetbrains.python.documentation.PyDocumentationSettings;
+import com.jetbrains.python.documentation.PyTypeRenderer.Feature;
 import com.jetbrains.python.documentation.PythonDocumentationProvider;
 import com.jetbrains.python.documentation.docstrings.DocStringFormat;
-import com.jetbrains.python.psi.*;
+import com.jetbrains.python.namespacePackages.PyNamespacePackagesService;
+import com.jetbrains.python.psi.LanguageLevel;
+import com.jetbrains.python.psi.PyClass;
+import com.jetbrains.python.psi.PyFile;
+import com.jetbrains.python.psi.PyTypedElement;
+import com.jetbrains.python.psi.PyUtil;
+import com.jetbrains.python.psi.impl.IntentionalUnstubbing;
 import com.jetbrains.python.psi.impl.PyFileImpl;
 import com.jetbrains.python.psi.impl.PythonLanguageLevelPusher;
 import com.jetbrains.python.psi.search.PySearchUtilBase;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
-import com.jetbrains.python.sdk.PythonSdkUtil;
+import com.jetbrains.python.sdk.legacy.PythonSdkUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.junit.Assert;
 
-import javax.swing.*;
 import java.io.File;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+import java.util.TreeSet;
 import java.util.function.Consumer;
 
-/**
- * @author yole
- */
+
 @TestDataPath("$CONTENT_ROOT/../testData/")
 public abstract class PyTestCase extends UsefulTestCase {
-  public static final String PYTHON_2_MOCK_SDK = "2.7";
-  public static final String PYTHON_3_MOCK_SDK = "3.7";
 
-  protected static final PyLightProjectDescriptor ourPyDescriptor = new PyLightProjectDescriptor(PYTHON_2_MOCK_SDK);
-  protected static final PyLightProjectDescriptor ourPy3Descriptor = new PyLightProjectDescriptor(PYTHON_3_MOCK_SDK);
+  protected static final PyLightProjectDescriptor ourPy2Descriptor = new PyLightProjectDescriptor(LanguageLevel.PYTHON27);
+  protected static final PyLightProjectDescriptor ourPyLatestDescriptor = new PyLightProjectDescriptor(LanguageLevel.getLatest());
 
   protected CodeInsightTestFixture myFixture;
+
+  @Override
+  protected void setUp() throws Exception {
+    super.setUp();
+
+    IdeaTestFixtureFactory factory = IdeaTestFixtureFactory.getFixtureFactory();
+    TestFixtureBuilder<IdeaProjectTestFixture> fixtureBuilder = factory.createLightFixtureBuilder(getProjectDescriptor(), getTestName(false));
+    final IdeaProjectTestFixture fixture = fixtureBuilder.getFixture();
+    myFixture = IdeaTestFixtureFactory.getFixtureFactory().createCodeInsightFixture(fixture, createTempDirFixture());
+    myFixture.setTestDataPath(getTestDataPath());
+    myFixture.setUp();
+  }
+
+  @Override
+  protected void tearDown() throws Exception {
+    try {
+      if (myFixture != null) {
+        if (myFixture.getModule() != null) {
+          PyNamespacePackagesService.getInstance(myFixture.getModule()).resetAllNamespacePackages();
+        }
+        setLanguageLevel(null);
+
+        myFixture.tearDown();
+        myFixture = null;
+      }
+
+      FilePropertyPusher.EP_NAME.findExtensionOrFail(PythonLanguageLevelPusher.class).flushLanguageLevelCache();
+      IntentionalUnstubbing.resetForciblyUnstubbedFileSet();
+    }
+    catch (Throwable e) {
+      addSuppressedException(e);
+    }
+    finally {
+      super.tearDown();
+    }
+  }
 
   protected void assertProjectFilesNotParsed(@NotNull PsiFile currentFile) {
     assertRootNotParsed(currentFile, myFixture.getTempDirFixture().getFile("."), null);
@@ -87,6 +148,10 @@ public abstract class PyTestCase extends UsefulTestCase {
 
   protected void assertSdkRootsNotParsed(@NotNull PsiFile currentFile) {
     final Sdk testSdk = PythonSdkUtil.findPythonSdk(currentFile);
+    if (testSdk == null) {
+      LOG.warn("testSdk is null. assertSdkRootsNotParsed is skipped");
+      return;
+    }
     for (VirtualFile root : testSdk.getRootProvider().getFiles(OrderRootType.CLASSES)) {
       assertRootNotParsed(currentFile, root, null);
     }
@@ -122,34 +187,6 @@ public abstract class PyTestCase extends UsefulTestCase {
     final PsiFile file = myFixture.getFile();
     final TextRange myTextRange = file.getTextRange();
     CodeStyleManager.getInstance(myFixture.getProject()).reformatText(file, myTextRange.getStartOffset(), myTextRange.getEndOffset());
-  }
-
-  @Override
-  protected void setUp() throws Exception {
-    initApplication();
-    super.setUp();
-    IdeaTestFixtureFactory factory = IdeaTestFixtureFactory.getFixtureFactory();
-    TestFixtureBuilder<IdeaProjectTestFixture> fixtureBuilder = factory.createLightFixtureBuilder(getProjectDescriptor());
-    final IdeaProjectTestFixture fixture = fixtureBuilder.getFixture();
-    myFixture = IdeaTestFixtureFactory.getFixtureFactory().createCodeInsightFixture(fixture, createTempDirFixture());
-    myFixture.setTestDataPath(getTestDataPath());
-    if (SwingUtilities.isEventDispatchThread()) {
-      myFixture.setUp();
-    }
-    else {
-      ApplicationManager.getApplication().invokeAndWait(() -> {
-        try {
-          myFixture.setUp();
-        }
-        catch (final Exception e) {
-          throw new RuntimeException("Error running setup", e);
-        }
-      });
-    }
-  }
-
-  private static void initApplication() {
-    TestApplicationManager.getInstance();
   }
 
   /**
@@ -239,48 +276,62 @@ public abstract class PyTestCase extends UsefulTestCase {
                                             @NotNull VirtualFile root,
                                             @NotNull OrderRootType rootType,
                                             @NotNull Consumer<VirtualFile> rootConsumer) {
-    WriteAction.run(() -> {
-      final SdkModificator modificator = sdk.getSdkModificator();
-      assertNotNull(modificator);
-      modificator.addRoot(root, rootType);
-      modificator.commitChanges();
-    });
+    addSdkRoots(sdk, List.of(root), rootType);
     try {
       rootConsumer.accept(root);
     }
     finally {
-      WriteAction.run(() -> {
-        final SdkModificator modificator = sdk.getSdkModificator();
-        assertNotNull(modificator);
-        modificator.removeRoot(root, rootType);
-        modificator.commitChanges();
-      });
+      removeSdkRoots(sdk, List.of(root), rootType);
     }
+  }
+
+  private static void removeSdkRoots(@NotNull Sdk sdk, @NotNull List<VirtualFile> roots, @NotNull OrderRootType rootType) {
+    WriteAction.run(() -> {
+      final SdkModificator modificator = sdk.getSdkModificator();
+      assertNotNull(modificator);
+      for (VirtualFile root : roots) {
+        modificator.removeRoot(root, rootType);
+      }
+      modificator.commitChanges();
+    });
+    IndexingTestUtil.waitUntilIndexesAreReadyInAllOpenedProjects();
+  }
+
+  private static void addSdkRoots(@NotNull Sdk sdk, @NotNull List<VirtualFile> roots, @NotNull OrderRootType rootType) {
+    WriteAction.run(() -> {
+      final SdkModificator modificator = sdk.getSdkModificator();
+      assertNotNull(modificator);
+      for (VirtualFile root : roots) {
+        modificator.addRoot(root, rootType);
+      }
+      modificator.commitChanges();
+    });
+    IndexingTestUtil.waitUntilIndexesAreReadyInAllOpenedProjects();
+  }
+
+  protected void enablePyiStubsForPackages(String @NotNull ... packageNames) {
+    Sdk sdk = PythonSdkUtil.findPythonSdk(myFixture.getModule());
+    assertNotNull(sdk);
+    List<VirtualFile> stubPackageRoots = new ArrayList<>();
+    for (String packageName : packageNames) {
+      VirtualFile stubPackageRoot = PyTypeShed.INSTANCE.getStubRootForPackage(packageName);
+      if (stubPackageRoot == null) {
+        stubPackageRoot = PyBundledStubs.INSTANCE.getStubRootForPackage(packageName);
+      }
+      assertNotNull("Stub package root for " + packageName + " not found", stubPackageRoot);
+      stubPackageRoots.add(stubPackageRoot);
+    }
+    addSdkRoots(sdk, stubPackageRoots, OrderRootType.CLASSES);
+    Disposer.register(getTestRootDisposable(), () -> removeSdkRoots(sdk, stubPackageRoots, OrderRootType.CLASSES));
   }
 
   protected String getTestDataPath() {
     return PythonTestUtil.getTestDataPath();
   }
 
-  @Override
-  protected void tearDown() throws Exception {
-    try {
-      setLanguageLevel(null);
-      myFixture.tearDown();
-      myFixture = null;
-      FilePropertyPusher.EP_NAME.findExtensionOrFail(PythonLanguageLevelPusher.class).flushLanguageLevelCache();
-    }
-    catch (Throwable e) {
-      addSuppressedException(e);
-    }
-    finally {
-      super.tearDown();
-    }
-  }
-
   @Nullable
   protected LightProjectDescriptor getProjectDescriptor() {
-    return ourPyDescriptor;
+    return ourPyLatestDescriptor;
   }
 
   @Nullable
@@ -298,8 +349,12 @@ public abstract class PyTestCase extends UsefulTestCase {
     return PsiDocumentManager.getInstance(myFixture.getProject()).getDocument(myFixture.getFile()).getText().indexOf(signature);
   }
 
-  protected void setLanguageLevel(@Nullable LanguageLevel languageLevel) {
-    PythonLanguageLevelPusher.setForcedLanguageLevel(myFixture.getProject(), languageLevel);
+  private void setLanguageLevel(@Nullable LanguageLevel languageLevel) {
+    Project project = myFixture.getProject();
+    if (project != null) {
+      PythonLanguageLevelPusher.setForcedLanguageLevel(project, languageLevel);
+      IndexingTestUtil.waitUntilIndexesAreReady(project);
+    }
   }
 
   protected void runWithLanguageLevel(@NotNull LanguageLevel languageLevel, @NotNull Runnable runnable) {
@@ -329,19 +384,27 @@ public abstract class PyTestCase extends UsefulTestCase {
     sourceRoots.forEach(root -> PsiTestUtil.addSourceRoot(module, root));
     try {
       runnable.run();
-    } finally {
+    }
+    finally {
       sourceRoots.forEach(root -> PsiTestUtil.removeSourceRoot(module, root));
     }
   }
 
   protected static void assertNotParsed(PsiFile file) {
+    if (IntentionalUnstubbing.getForciblyUnstubbedFiles().contains(file)) {
+      return;
+    }
     assertInstanceOf(file, PyFileImpl.class);
-    assertNull("Operations should have been performed on stubs but caused file to be parsed: " + file.getVirtualFile().getPath(),
+    VirtualFile virtualFile = file.getVirtualFile();
+    String path = virtualFile.getPath();
+    String name = virtualFile.getName();
+    String errorMessage = "Operations should have been performed on stubs but caused file to be parsed: " + path;
+    String tip = "As a starting point for an investigation, a breakpoint can be set in com.intellij.psi.impl.source.PsiFileImpl#loadTreeElement with a condition `getName().equals(\"" + name + "\")`.\nThen the stacktrace can be investigated to find the root cause.";
+    assertNull(errorMessage + "\n" + tip,
                ((PyFileImpl)file).getTreeElement());
   }
 
   /**
-   * @param name
    * @return class by its name from file
    */
   @NotNull
@@ -450,26 +513,6 @@ public abstract class PyTestCase extends UsefulTestCase {
   }
 
   /**
-   * Configures project by some path. It is here to emulate {@link com.intellij.platform.PlatformProjectOpenProcessor}
-   *
-   * @param path         path to open
-   * @param configurator configurator to use
-   */
-  protected void configureProjectByProjectConfigurators(@NotNull final String path,
-                                                        @NotNull final DirectoryProjectConfigurator configurator) {
-    final VirtualFile newPath =
-      myFixture.copyDirectoryToProject(path, String.format("%s%s%s", "temp_for_project_conf", File.pathSeparator, path));
-    final Ref<Module> moduleRef = new Ref<>(myFixture.getModule());
-    configurator.configureProject(myFixture.getProject(), newPath, moduleRef, false);
-  }
-
-  public static String getHelpersPath() {
-    return new File(PythonHelpersLocator.getPythonCommunityPath(), "helpers").getPath();
-  }
-
-
-
-  /**
    * Compares sets with string sorting them and displaying one-per-line to make comparision easier
    *
    * @param message  message to display in case of error
@@ -506,14 +549,12 @@ public abstract class PyTestCase extends UsefulTestCase {
 
   @NotNull
   protected CommonCodeStyleSettings.IndentOptions getIndentOptions() {
-    //noinspection ConstantConditions
     return getCommonCodeStyleSettings().getIndentOptions();
   }
 
   /**
    * When you have more than one completion variant, you may use this method providing variant to choose.
-   * It only works for one caret (multiple carets not supported) and since it puts tab after completion, be sure to limit
-   * line somehow (i.e. with comment).
+   * Since it puts tab after completion, be sure to limit line somehow (i.e. with comment).
    * <br/>
    * Example: "user.n[caret]." There are "name" and "nose" fields.
    * By calling this function with "nose" you will end with "user.nose  ".
@@ -535,6 +576,29 @@ public abstract class PyTestCase extends UsefulTestCase {
     }
   }
 
+  /**
+   * The same as completeCaretWithMultipleVariants but for multiple carets in the file
+   */
+  protected final void completeAllCaretsWithMultipleVariants(final String @NotNull ... desiredVariants) {
+    CaretModel caretModel = myFixture.getEditor().getCaretModel();
+    List<Caret> carets = caretModel.getAllCarets();
+
+    List<Integer> originalOffsets = new ArrayList<>(carets.size());
+
+    for (Caret caret : carets) {
+      originalOffsets.add(caret.getOffset());
+    }
+    caretModel.removeSecondaryCarets();
+
+    // We do it in reverse order because completions would affect offsets
+    // i.e.: when you complete "spa" to "spam", the next caret offset increased by 1
+    for (int i = originalOffsets.size() - 1; i >= 0; i--) {
+      int originalOffset = originalOffsets.get(i);
+      caretModel.moveToOffset(originalOffset);
+      completeCaretWithMultipleVariants(desiredVariants);
+    }
+  }
+
   @NotNull
   protected PsiElement getElementAtCaret() {
     final PsiFile file = myFixture.getFile();
@@ -551,7 +615,7 @@ public abstract class PyTestCase extends UsefulTestCase {
                                 @NotNull PyTypedElement element,
                                 @NotNull TypeEvalContext context) {
     final PyType actual = context.getType(element);
-    final String actualType = PythonDocumentationProvider.getTypeName(actual, context);
+    final String actualType = PythonDocumentationProvider.getTypeName(actual, context, Feature.UNSAFE_UNION);
     assertEquals(message, expectedType, actualType);
   }
 
@@ -563,12 +627,12 @@ public abstract class PyTestCase extends UsefulTestCase {
     Disposer.register(myFixture.getProjectDisposable(), () -> PsiTestUtil.removeExcludedRoot(module, dir));
   }
 
-  public <T> void assertContainsInRelativeOrder(@NotNull final Iterable<T> actual, final T @Nullable ... expected) {
+  public <T> void assertContainsInRelativeOrder(@NotNull final Iterable<? extends T> actual, final T @Nullable ... expected) {
     final List<T> actualList = Lists.newArrayList(actual);
     if (expected.length > 0) {
       T prev = expected[0];
       int prevIndex = actualList.indexOf(prev);
-      assertTrue(prevIndex >= 0);
+      assertTrue(prev + " is not found in " + actualList, prevIndex >= 0);
       for (int i = 1; i < expected.length; i++) {
         final T next = expected[i];
         final int nextIndex = actualList.indexOf(next);
@@ -578,6 +642,22 @@ public abstract class PyTestCase extends UsefulTestCase {
         prevIndex = nextIndex;
       }
     }
+  }
+
+  public static void fixme(@NotNull String comment, @NotNull Class<? extends Throwable> c, @NotNull Runnable test) {
+    try {
+      test.run();
+    }
+    catch (Throwable failedError) {
+      if (c.isInstance(failedError) ||
+          failedError instanceof TestLoggerFactory.TestLoggerAssertionError testLoggerError && c.isInstance(testLoggerError.getCause())) {
+        // fix-me tests are supposed to fail
+        return;
+      }
+      throw failedError;
+    }
+    // the fix-me test passed -> the bug/feature was fixed!
+    fail("Test " + comment + " was previously failing and was suppressed, but now it passes");
   }
 }
 

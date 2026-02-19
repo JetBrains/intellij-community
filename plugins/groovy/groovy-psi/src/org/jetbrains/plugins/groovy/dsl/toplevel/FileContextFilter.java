@@ -20,9 +20,6 @@ import com.intellij.psi.PsiFile;
 import com.intellij.util.ProcessingContext;
 import org.jetbrains.plugins.groovy.dsl.GroovyClassDescriptor;
 
-/**
- * @author peter
- */
 public class FileContextFilter implements ContextFilter {
   private final ElementPattern<? extends PsiFile> myPattern;
 

@@ -1,0 +1,36 @@
+// FILE: first.before.kt
+// "Import type alias 'InnerTypeAliasWithString'" "true"
+// IGNORE_K1
+
+package test
+
+class Outer<T> {
+    inner class Inner
+}
+
+fun usage(f: Outer<Int>) {
+    // We allow to import type alias even if the type parameters are incompatible
+    f.<caret>InnerTypeAliasWithString()
+}
+
+// FILE: second.kt
+package some
+
+typealias InnerTypeAliasWithString = test.Outer<String>.Inner
+
+// FILE: first.after.kt
+// "Import type alias 'InnerTypeAliasWithString'" "true"
+// IGNORE_K1
+
+package test
+
+import some.InnerTypeAliasWithString
+
+class Outer<T> {
+    inner class Inner
+}
+
+fun usage(f: Outer<Int>) {
+    // We allow to import type alias even if the type parameters are incompatible
+    f.<caret>InnerTypeAliasWithString()
+}

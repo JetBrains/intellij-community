@@ -98,11 +98,6 @@ public abstract class SuiteFinishedState extends AbstractState {
    */
   public static SuiteFinishedState TESTS_REPORTER_NOT_ATTACHED = new SuiteFinishedState() {
     @Override
-    public boolean isDefect() {
-      return false;
-    }
-
-    @Override
     public Magnitude getMagnitude() {
       return Magnitude.COMPLETE_INDEX;
     }
@@ -143,12 +138,6 @@ public abstract class SuiteFinishedState extends AbstractState {
   }
 
   private static class EmptySuite extends SuiteFinishedState {
-
-    @Override
-    public boolean isDefect() {
-      return false;
-    }
-
     @Override
     public Magnitude getMagnitude() {
       return Magnitude.COMPLETE_INDEX;

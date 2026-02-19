@@ -1,60 +1,58 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.terminal.ui;
 
+import com.intellij.ide.IdeCoreBundle;
+import com.intellij.openapi.actionSystem.DataKey;
+import com.intellij.openapi.actionSystem.DataSink;
+import com.intellij.openapi.actionSystem.UiDataProvider;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.colors.CodeInsightColors;
-import com.intellij.openapi.editor.colors.EditorColorsManager;
-import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.wm.IdeFocusManager;
-import com.intellij.terminal.JBTerminalWidget;
-import com.intellij.ui.OnePixelSplitter;
+import com.intellij.terminal.ui.TerminalWidget;
 import com.intellij.ui.content.Content;
-import com.intellij.util.ObjectUtils;
-import com.intellij.util.ui.JBUI;
-import com.jediterm.terminal.ui.TerminalWidgetListener;
+import com.jediterm.terminal.ProcessTtyConnector;
+import com.jediterm.terminal.TtyConnector;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.terminal.TerminalView;
+import org.jetbrains.plugins.terminal.ShellTerminalWidget;
+import org.jetbrains.plugins.terminal.TerminalBundle;
+import org.jetbrains.plugins.terminal.TerminalOptionsProvider;
+import org.jetbrains.plugins.terminal.TerminalToolWindowManager;
 
-import javax.swing.*;
-import java.awt.*;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
+import javax.swing.JPanel;
+import java.awt.BorderLayout;
+import java.awt.Component;
+import java.awt.Container;
 
-public class TerminalContainer {
-
-  private static final Logger LOG = Logger.getInstance(TerminalContainer.class);
+public final class TerminalContainer {
+  @ApiStatus.Internal
+  public static final @NotNull DataKey<TerminalWidget> TERMINAL_WIDGET_DATA_KEY = DataKey.create("terminalWidget");
 
   private final Content myContent;
-  private final JBTerminalWidget myTerminalWidget;
+  private final TerminalWidget myTerminalWidget;
   private final Project myProject;
-  private final TerminalView myTerminalView;
-  private final TerminalWidgetListener myListener;
-  private JPanel myPanel;
+  private final TerminalToolWindowManager myTerminalToolWindowManager;
+  private @Nullable TerminalWrapperPanel myWrapperPanel;
+  private boolean myForceHideUiWhenSessionEnds = false;
 
   public TerminalContainer(@NotNull Project project,
                            @NotNull Content content,
-                           @NotNull JBTerminalWidget terminalWidget,
-                           @NotNull TerminalView terminalView) {
+                           @NotNull TerminalWidget terminalWidget,
+                           @NotNull TerminalToolWindowManager terminalToolWindowManager) {
     myProject = project;
     myContent = content;
     myTerminalWidget = terminalWidget;
-    myTerminalView = terminalView;
-    myPanel = createPanel(terminalWidget);
-    myListener = widget -> {
-      ApplicationManager.getApplication().invokeLater(() -> onSessionClosed(), myProject.getDisposed());
-    };
-    terminalWidget.addListener(myListener);
-    terminalView.register(this);
+    myTerminalToolWindowManager = terminalToolWindowManager;
+    terminalWidget.addTerminationCallback(() -> {
+      ApplicationManager.getApplication().invokeLater(() -> processSessionCompleted(), myProject.getDisposed());
+    }, terminalWidget);
+    terminalToolWindowManager.register(this);
+    Disposer.register(content, () -> myTerminalToolWindowManager.unregister(this));
   }
 
-  public @NotNull JBTerminalWidget getTerminalWidget() {
+  public @NotNull TerminalWidget getTerminalWidget() {
     return myTerminalWidget;
   }
 
@@ -62,158 +60,85 @@ public class TerminalContainer {
     return myContent;
   }
 
-  private static @NotNull JPanel createPanel(@NotNull JBTerminalWidget terminalWidget ) {
-    JPanel panel = new JPanel(new BorderLayout());
-    panel.setBorder(null);
-    panel.setFocusable(false);
-    panel.add(terminalWidget.getComponent(), BorderLayout.CENTER);
-    return panel;
-  }
-
-  public @NotNull JComponent getComponent() {
-    return myPanel;
-  }
-
-  public void split(boolean vertically, @NotNull JBTerminalWidget newTerminalWidget) {
-    boolean hasFocus = myTerminalWidget.getTerminalPanel().hasFocus();
-    JPanel parent = myPanel;
-    parent.remove(myTerminalWidget.getComponent());
-
-    myPanel = createPanel(myTerminalWidget);
-
-    Splitter splitter = createSplitter(vertically);
-    splitter.setFirstComponent(myPanel);
-    TerminalContainer newContainer = new TerminalContainer(myProject, myContent, newTerminalWidget, myTerminalView);
-    splitter.setSecondComponent(newContainer.getComponent());
-
-    parent.add(splitter, BorderLayout.CENTER);
-    parent.revalidate();
-    if (hasFocus) {
-      requestFocus(myTerminalWidget);
-    }
-  }
-
-  private static @NotNull Splitter createSplitter(boolean vertically) {
-    Splitter splitter = new OnePixelSplitter(vertically, 0.5f, 0.1f, 0.9f);
-    splitter.setDividerWidth(JBUI.scale(1));
-    EditorColorsScheme scheme = EditorColorsManager.getInstance().getGlobalScheme();
-    Color color = scheme.getColor(CodeInsightColors.METHOD_SEPARATORS_COLOR);
-    if (color != null) {
-      splitter.getDivider().setBackground(color);
-    }
-    return splitter;
-  }
-
-  private void onSessionClosed() {
-    Container parent = myPanel.getParent();
-    if (parent instanceof Splitter) {
-      JBTerminalWidget nextToFocus = null;
-      if (myTerminalWidget.getTerminalPanel().hasFocus()) {
-        nextToFocus = getNextSplitTerminal(true);
-      }
-      Splitter splitter = (Splitter)parent;
-      parent = parent.getParent();
-      JComponent otherComponent = myPanel.equals(splitter.getFirstComponent()) ? splitter.getSecondComponent()
-                                                                               : splitter.getFirstComponent();
-      Component realComponent = unwrapComponent(otherComponent);
-      if (realComponent instanceof JBTerminalWidget) {
-        TerminalContainer otherContainer = myTerminalView.getContainer((JBTerminalWidget)realComponent);
-        otherContainer.myPanel = (JPanel)parent;
-      }
-      realComponent.getParent().remove(realComponent);
-      parent.remove(splitter);
-      parent.add(realComponent, BorderLayout.CENTER);
-      parent.revalidate();
-      if (nextToFocus != null) {
-        requestFocus(nextToFocus);
-      }
-      Disposer.dispose(myTerminalWidget);
+  public void closeAndHide() {
+    myForceHideUiWhenSessionEnds = true;
+    TtyConnector connector = myTerminalWidget.getTtyConnector();
+    if (connector != null && connector.isConnected()) {
+      connector.close();
     }
     else {
-      myTerminalView.closeTab(myContent);
+      // When "Close session when it ends" is off, terminal session is shown even with terminated process.
+      processSessionCompleted();
     }
-    detachWidget();
   }
 
-  public void detachWidget() {
-    myTerminalWidget.removeListener(myListener);
-    myTerminalView.unregister(this);
-  }
-
-  public boolean isSplitTerminal() {
-    return findRootSplitter() != null;
-  }
-
-  public @Nullable JBTerminalWidget getNextSplitTerminal(boolean forward) {
-    List<JBTerminalWidget> terminals = listTerminals();
-    int ind = terminals.indexOf(myTerminalWidget);
-    if (ind < 0) {
-      LOG.error("All split terminal list (" + terminals.size() + ") doesn't contain this terminal");
-      return null;
+  public @NotNull JPanel getWrapperPanel() {
+    if (myWrapperPanel == null) {
+      myWrapperPanel = new TerminalWrapperPanel(this);
     }
-    if (terminals.size() == 1) {
-      return null;
+    return myWrapperPanel;
+  }
+
+  private void processSessionCompleted() {
+    if (myForceHideUiWhenSessionEnds || TerminalOptionsProvider.getInstance().getCloseSessionOnLogout()) {
+      myTerminalToolWindowManager.closeTab(myContent);
     }
-    int newInd = (ind + (forward ? 1 : (terminals.size() - 1))) % terminals.size();
-    return terminals.get(newInd);
-  }
-
-  private @NotNull List<JBTerminalWidget> listTerminals() {
-    Splitter rootSplitter = findRootSplitter();
-    if (rootSplitter == null) {
-      return Collections.singletonList(myTerminalWidget);
+    else {
+      String text = getSessionCompletedMessage(myTerminalWidget);
+      myTerminalWidget.writePlainMessage("\n" + text + "\n");
+      myTerminalWidget.setCursorVisible(false);
     }
-    List<JBTerminalWidget> terminals = new ArrayList<>();
-    traverseSplitters(rootSplitter, terminals);
-    return terminals;
   }
 
-  private void traverseSplitters(@NotNull Splitter splitter, @NotNull List<JBTerminalWidget> terminals) {
-    traverseParentPanel(splitter.getFirstComponent(), terminals);
-    traverseParentPanel(splitter.getSecondComponent(), terminals);
-  }
-
-  private void traverseParentPanel(@NotNull JComponent parentPanel, @NotNull List<JBTerminalWidget> terminals) {
-    Component[] components = parentPanel.getComponents();
-    if (components.length == 1) {
-      Component c = components[0];
-      if (c instanceof Splitter) {
-        traverseSplitters((Splitter)c, terminals);
+  private static @NotNull @Nls String getSessionCompletedMessage(@NotNull TerminalWidget widget) {
+    String text = "[" + TerminalBundle.message("session.terminated.text") + "]";
+    ProcessTtyConnector connector = ShellTerminalWidget.getProcessTtyConnector(widget.getTtyConnector());
+    if (connector != null) {
+      Integer exitCode = null;
+      try {
+        exitCode = connector.getProcess().exitValue();
       }
-      else if (c instanceof JBTerminalWidget) {
-        terminals.add((JBTerminalWidget)c);
+      catch (IllegalThreadStateException ignored) {
       }
+      return text + "\n[" + IdeCoreBundle.message("finished.with.exit.code.text.message", exitCode != null ? exitCode : "unknown") + "]";
     }
+    return text;
   }
 
-  private @Nullable Splitter findRootSplitter() {
-    Splitter splitter = ObjectUtils.tryCast(myPanel.getParent(), Splitter.class);
-    while (splitter != null) {
-      Component panel = splitter.getParent();
-      Splitter parentSplitter = panel != null ? ObjectUtils.tryCast(panel.getParent(), Splitter.class) : null;
-      if (parentSplitter != null) {
-        splitter = parentSplitter;
-      }
-      else {
-        return splitter;
+  private static final class TerminalWrapperPanel extends JPanel implements UiDataProvider {
+    private TerminalContainer myTerminal;
+
+    private TerminalWrapperPanel(@NotNull TerminalContainer terminal) {
+      super(new BorderLayout());
+      setBorder(null);
+      setFocusable(false);
+      setChildTerminal(terminal);
+    }
+
+    @Override
+    public void uiDataSnapshot(@NotNull DataSink sink) {
+      if (myTerminal != null) {
+        sink.set(TERMINAL_WIDGET_DATA_KEY, myTerminal.getTerminalWidget());
       }
     }
-    return null;
-  }
 
-  private static @NotNull Component unwrapComponent(@NotNull JComponent component) {
-    Component[] components = component.getComponents();
-    if (components.length == 1) {
-      Component c = components[0];
-      if (c instanceof JBTerminalWidget || c instanceof Splitter) {
-        return c;
+    private void setChildTerminal(@NotNull TerminalContainer terminal) {
+      if (myTerminal != null) {
+        throw new IllegalStateException("Cannot set a new terminal when another terminal is still set");
       }
+      myTerminal = terminal;
+      myTerminal.myWrapperPanel = this;
+      setChildComponent(terminal.myTerminalWidget.getComponent());
     }
-    LOG.error("Cannot unwrap " + component + ", children: " + Arrays.toString(components));
-    return component;
-  }
 
-  public void requestFocus(@NotNull JBTerminalWidget terminal) {
-    IdeFocusManager.getInstance(myProject).requestFocus(terminal.getTerminalPanel(), true);
+    private void setChildComponent(@NotNull Component childComponent) {
+      Container parent = childComponent.getParent();
+      if (parent != null) {
+        parent.remove(childComponent);
+      }
+      removeAll();
+      add(childComponent, BorderLayout.CENTER);
+      revalidate();
+    }
   }
 }

@@ -1,0 +1,6 @@
+JsonFile: n_string_escape_x.json
+  JsonArray
+    PsiElement([)('[')
+    JsonStringLiteral
+      PsiElement(DOUBLE_QUOTED_STRING)('"\x00"')
+    PsiElement(])(']')

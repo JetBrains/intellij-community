@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInsight.template.impl;
 
@@ -17,20 +17,31 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.psi.PsiFile;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
-public class SurroundWithTemplateHandler implements CodeInsightActionHandler {
+@ApiStatus.Internal
+public final class SurroundWithTemplateHandler implements CodeInsightActionHandler {
   @Override
-  public void invoke(@NotNull final Project project, @NotNull final Editor editor, @NotNull PsiFile file) {
+  public boolean startInWriteAction() {
+    return false;
+  }
+
+  @Override
+  public void invoke(final @NotNull Project project, final @NotNull Editor editor, @NotNull PsiFile psiFile) {
     if (!EditorModificationUtil.checkModificationAllowed(editor)) return;
     if (!editor.getSelectionModel().hasSelection()) {
       SurroundWithHandler.selectLogicalLineContentsAtCaret(editor);
       if (!editor.getSelectionModel().hasSelection()) return;
     }
 
-    List<AnAction> group = createActionGroup(editor, file, new HashSet<>());
+    List<AnAction> group = createActionGroup(editor, psiFile, new HashSet<>());
     if (group.isEmpty()) {
       HintManager.getInstance().showErrorHint(editor, CodeInsightBundle.message("templates.surround.no.defined"));
       return;
@@ -45,11 +56,10 @@ public class SurroundWithTemplateHandler implements CodeInsightActionHandler {
     popup.showInBestPositionFor(editor);
   }
 
-  @NotNull
-  public static List<AnAction> createActionGroup(@NotNull Editor editor, @NotNull PsiFile file, @NotNull Set<Character> usedMnemonicsSet) {
+  public static @NotNull List<AnAction> createActionGroup(@NotNull Editor editor, @NotNull PsiFile file, @NotNull Set<? super Character> usedMnemonicsSet) {
     TemplateActionContext templateActionContext = TemplateActionContext.surrounding(file, editor);
     List<CustomLiveTemplate> customTemplates = TemplateManagerImpl.listApplicableCustomTemplates(templateActionContext);
-    List<TemplateImpl> templates = TemplateManagerImpl.listApplicableTemplateWithInsertingDummyIdentifier(templateActionContext);
+    List<TemplateImpl> templates = TemplateManagerImpl.listApplicableTemplates(templateActionContext);
     if (templates.isEmpty() && customTemplates.isEmpty()) {
       return Collections.emptyList();
     }

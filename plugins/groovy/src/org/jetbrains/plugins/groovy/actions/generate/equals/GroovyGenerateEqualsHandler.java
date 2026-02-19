@@ -1,8 +1,12 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.actions.generate.equals;
 
 import com.intellij.codeInsight.CodeInsightSettings;
-import com.intellij.codeInsight.generation.*;
+import com.intellij.codeInsight.generation.ClassMember;
+import com.intellij.codeInsight.generation.GenerateMembersHandlerBase;
+import com.intellij.codeInsight.generation.GenerationInfo;
+import com.intellij.codeInsight.generation.PsiElementClassMember;
+import com.intellij.codeInsight.generation.PsiGenerationInfo;
 import com.intellij.codeInsight.generation.ui.GenerateEqualsWizard;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Logger;
@@ -91,14 +95,13 @@ public class GroovyGenerateEqualsHandler extends GenerateMembersHandlerBase {
   }
 
   @Override
-  @NotNull
-  protected List<? extends GenerationInfo> generateMemberPrototypes(PsiClass aClass, ClassMember[] originalMembers) throws IncorrectOperationException {
+  protected @NotNull List<? extends GenerationInfo> generateMemberPrototypes(PsiClass aClass, ClassMember[] originalMembers) throws IncorrectOperationException {
     Project project = aClass.getProject();
     final boolean useInstanceofToCheckParameterType = CodeInsightSettings.getInstance().USE_INSTANCEOF_ON_EQUALS_PARAMETER;
 
     GroovyGenerateEqualsHelper helper = new GroovyGenerateEqualsHelper(project, aClass, myEqualsFields, myHashCodeFields, myNonNullFields, useInstanceofToCheckParameterType);
     Collection<PsiMethod> methods = helper.generateMembers();
-    return ContainerUtil.map2List(methods, (Function<PsiMethod, PsiGenerationInfo<PsiMethod>>)s -> new GroovyGenerationInfo<>(s));
+    return ContainerUtil.map(methods, (Function<PsiMethod, PsiGenerationInfo<PsiMethod>>)s -> new GroovyGenerationInfo<>(s));
   }
 
   @Override

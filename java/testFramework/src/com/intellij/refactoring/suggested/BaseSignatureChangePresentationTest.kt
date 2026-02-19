@@ -65,7 +65,7 @@ private fun StringBuilder.append(fragments: List<TextFragment>, ident: String) {
     append("\n")
 
     if (fragment is TextFragment.Group) {
-      append(fragment.children, ident + "  ")
+      append(fragment.children, "$ident  ")
     }
   }
 }

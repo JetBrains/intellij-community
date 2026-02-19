@@ -1,24 +1,27 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
-/*
- * @author max
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.speedSearch;
 
 import com.intellij.openapi.util.Condition;
 import com.intellij.ui.ListUtil;
+import com.intellij.util.diff.Diff;
+import com.intellij.util.diff.FilesTooBigForDiffException;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
-import javax.swing.*;
+import javax.swing.AbstractListModel;
+import javax.swing.ListModel;
 import javax.swing.event.ListDataEvent;
 import javax.swing.event.ListDataListener;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 
 public class FilteringListModel<T> extends AbstractListModel<T> {
   private final ListModel<T> myOriginalModel;
   private final List<T> myData = new ArrayList<>();
   private Condition<? super T> myCondition = null;
+  private boolean myUpdating = false;
 
   private final ListDataListener myListDataListener = new ListDataListener() {
     @Override
@@ -51,32 +54,87 @@ public class FilteringListModel<T> extends AbstractListModel<T> {
     refilter();
   }
 
-  private void removeAllElements() {
-    int index1 = myData.size() - 1;
-    if (index1 >= 0) {
-      myData.clear();
-      fireIntervalRemoved(this, 0, index1);
-    }
-  }
-
   public void refilter() {
-    removeAllElements();
-    int count = 0;
-    for (int i = 0; i < myOriginalModel.getSize(); i++) {
-      final T elt = myOriginalModel.getElementAt(i);
+    if (myUpdating) return;
+    List<T> newData = new ArrayList<>();
+    Collection<T> elements = getElementsToFilter();
+    for (T elt : elements) {
       if (passElement(elt)) {
-        addToFiltered(elt);
-        count++;
+        newData.add(elt);
       }
     }
+    
+    commit(newData);
+  }
 
-    if (count > 0) {
-      fireIntervalAdded(this, 0, count - 1);
+  private void commit(List<T> newData) {
+    Diff.Change change;
+    try {
+      change = Diff.buildChanges(
+        myData.stream().map(e -> new IdentityWrapper(e)).toArray(),
+        newData.stream().map(e -> new IdentityWrapper(e)).toArray()
+      );
+    }
+    catch (FilesTooBigForDiffException e) {
+      replace(0, myData.size(), newData);
+      return;
+    }
+    if (change != null) {
+      ArrayList<Diff.Change> list = change.toList();
+      Collections.reverse(list);
+      for (Diff.Change ch : list) {
+        replace(ch.line0, ch.line0 + ch.deleted, newData.subList(ch.line1, ch.line1 + ch.inserted));
+      }
+      assert myData.equals(newData);
     }
   }
 
-  protected void addToFiltered(T elt) {
-    myData.add(elt);
+  private class IdentityWrapper {
+    private final Object myElement;
+
+    IdentityWrapper(T element) {
+      myElement = element;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+      if (obj == null) return false;
+      if (obj instanceof FilteringListModel<?>.IdentityWrapper wrapper) {
+        return myElement == wrapper.myElement;
+      }
+      return false;
+    }
+
+    @Override
+    public int hashCode() {
+      return System.identityHashCode(myElement);
+    }
+  }
+
+  /**
+   * Replaces the interval between from and to with elements from the new list.
+   * 
+   * @param from start index
+   * @param to end index
+   * @param newData new data
+   */
+  protected void replace(int from, int to, List<T> newData) {
+    if (to > from) {
+      myData.subList(from, to).clear();
+      fireIntervalRemoved(this, from, to - 1);
+    }
+    if (!newData.isEmpty()) {
+      myData.addAll(from, newData);
+      fireIntervalAdded(this, from, from + newData.size() - 1);
+    }
+  }
+
+  protected @NotNull @Unmodifiable Collection<T> getElementsToFilter() {
+    List<T> result = new ArrayList<>(myOriginalModel.getSize());
+    for (int i = 0; i < myOriginalModel.getSize(); i++) {
+      result.add(myOriginalModel.getElementAt(i));
+    }
+    return result;
   }
 
   @Override
@@ -101,8 +159,7 @@ public class FilteringListModel<T> extends AbstractListModel<T> {
     return myData.contains(value);
   }
 
-  @NotNull
-  public ListModel<T> getOriginalModel() {
+  public @NotNull ListModel<T> getOriginalModel() {
     return myOriginalModel;
   }
 
@@ -111,8 +168,15 @@ public class FilteringListModel<T> extends AbstractListModel<T> {
   }
 
   public void replaceAll(List<? extends T> elements) {
-    ListUtil.removeAllItems(myOriginalModel);
-    ListUtil.addAllItems(myOriginalModel, elements);
+    try {
+      myUpdating = true;
+      ListUtil.removeAllItems(myOriginalModel);
+      ListUtil.addAllItems(myOriginalModel, elements);
+    }
+    finally {
+      myUpdating = false;
+      refilter();
+    }
   }
 
   public void remove(int index) {

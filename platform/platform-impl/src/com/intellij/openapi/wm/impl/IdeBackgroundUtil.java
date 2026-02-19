@@ -1,13 +1,11 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl;
 
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.ActionToolbar;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.DataProvider;
-import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.impl.InternalUICustomization;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.EditorGutterComponentEx;
@@ -17,24 +15,49 @@ import com.intellij.openapi.fileEditor.impl.EditorEmptyTextPainter;
 import com.intellij.openapi.fileEditor.impl.EditorsSplitters;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.AbstractPainter;
+import com.intellij.openapi.ui.Painter;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.wm.StatusBar;
-import com.intellij.ui.*;
-import com.intellij.ui.components.JBLoadingPanel;
-import com.intellij.ui.components.JBPanelWithEmptyText;
-import com.intellij.ui.tabs.JBTabs;
+import com.intellij.openapi.util.text.Strings;
+import com.intellij.ui.ClientProperty;
+import com.intellij.ui.ColorUtil;
+import com.intellij.ui.Graphics2DDelegate;
+import com.intellij.ui.Gray;
+import com.intellij.ui.JBColor;
 import com.intellij.util.ui.JBSwingUtilities;
 import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
-import java.awt.geom.*;
+import javax.swing.JComponent;
+import javax.swing.JLayeredPane;
+import javax.swing.JList;
+import javax.swing.JMenu;
+import javax.swing.JMenuBar;
+import javax.swing.JPanel;
+import javax.swing.JRootPane;
+import javax.swing.JTable;
+import javax.swing.JTree;
+import javax.swing.JViewport;
+import javax.swing.UIManager;
+import javax.swing.text.JTextComponent;
+import java.awt.Color;
+import java.awt.Component;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.Image;
+import java.awt.Insets;
+import java.awt.Polygon;
+import java.awt.Rectangle;
+import java.awt.RenderingHints;
+import java.awt.Shape;
+import java.awt.Transparency;
+import java.awt.Window;
+import java.awt.geom.Arc2D;
+import java.awt.geom.Ellipse2D;
+import java.awt.geom.RoundRectangle2D;
 import java.awt.image.BufferedImage;
 import java.awt.image.BufferedImageOp;
 import java.awt.image.ImageObserver;
@@ -48,9 +71,30 @@ import java.util.function.Predicate;
 public final class IdeBackgroundUtil {
   public static final String EDITOR_PROP = "idea.background.editor";
   public static final String FRAME_PROP = "idea.background.frame";
-  public static final String TARGET_PROP = "idea.background.target";
 
+  /**
+   * The client property for disabling background image painting.
+   * <p>
+   *   It can be set by the user of a component to a non-null value to disable or force background painting.
+   * </p>
+   * <p>
+   *   If the {@link #NO_BACKGROUND_PREDICATE} property is set, then this property is ignored.
+   * </p>
+   */
   public static final Key<Boolean> NO_BACKGROUND = Key.create("SUPPRESS_BACKGROUND");
+
+  /**
+   * The client property for conditionally disabling background image painting.
+   * <p>
+   *   Prefer {@link #NO_BACKGROUND} for simple cases.
+   *   Be aware of references that the predicate may capture, to avoid memory leaks.
+   * </p>
+   * <p>
+   *   If this property is set, {@link #NO_BACKGROUND} is ignored.
+   *   If this behavior is undesired, consider explicitly checking for {@link #NO_BACKGROUND} in the predicate itself.
+   * </p>
+   */
+  public static final Key<Predicate<JComponent>> NO_BACKGROUND_PREDICATE = Key.create("SUPPRESS_BACKGROUND_PREDICATE");
 
   public enum Fill {
     PLAIN, SCALE, TILE
@@ -67,82 +111,73 @@ public final class IdeBackgroundUtil {
   }
 
   public static @NotNull Graphics2D withEditorBackground(@NotNull Graphics g, @NotNull JComponent component) {
-    if (suppressBackground(component)) {
-      return (Graphics2D)g;
-    }
     return withNamedPainters(g, EDITOR_PROP, component);
   }
 
   public static @NotNull Graphics2D withFrameBackground(@NotNull Graphics g, @NotNull JComponent component) {
-    if (suppressBackground(component)) {
-      return (Graphics2D)g;
-    }
     return withNamedPainters(g, FRAME_PROP, component);
-  }
-
-  private static boolean suppressBackground(@NotNull JComponent component) {
-    String type = getComponentType(component);
-    if (type == null) return false;
-    String spec = System.getProperty(TARGET_PROP, "*");
-    boolean allInclusive = spec.startsWith("*");
-    return allInclusive ? spec.contains("-" + type) : !spec.contains(type);
-  }
-
-  private static boolean isKnownName(@Nullable String name) {
-    //noinspection SpellCheckingInspection
-    return name != null && (name.equals("navbar") || name.equals("terminal"));
-  }
-
-  @NonNls
-  private static @Nullable String getComponentType(JComponent component) {
-    return component instanceof JTree ? "tree" :
-           component instanceof JList ? "list" :
-           component instanceof JTable ? "table" :
-           component instanceof JViewport ? "viewport" :
-           component instanceof JTabbedPane ? "tabs" :
-           component instanceof JButton ? "button" :
-           component instanceof ActionToolbar ? "toolbar" :
-           component instanceof StatusBar ? "statusbar" :
-           component instanceof JMenuBar || component instanceof JMenu? "menubar" :
-           component instanceof Stripe ? "stripe" :
-           component instanceof EditorsSplitters ? "frame" :
-           component instanceof EditorComponentImpl ? "editor" :
-           component instanceof EditorGutterComponentEx ? "editor" :
-           component instanceof JBLoadingPanel ? "loading" :
-           component instanceof JBTabs ? "tabs" :
-           component instanceof ToolWindowHeader ? "title" :
-           component instanceof JBPanelWithEmptyText ? "panel" :
-           component instanceof JPanel && isKnownName(component.getName()) ? component.getName() :
-           null;
   }
 
   public static @NotNull Graphics2D getOriginalGraphics(@NotNull Graphics g) {
     return g instanceof MyGraphics? ((MyGraphics)g).getDelegate() : (Graphics2D)g;
   }
 
-  private static @NotNull Graphics2D withNamedPainters(@NotNull Graphics g, @NotNull String paintersName, final @NotNull JComponent component) {
-    JRootPane rootPane = component.getRootPane();
+  private static @NotNull Graphics2D withNamedPainters(@NotNull Graphics g,
+                                                       @NotNull String paintersName,
+                                                       @NotNull JComponent component) {
+    Boolean noBackground = isBackgroundDisabled(component);
+    if (Boolean.TRUE.equals(noBackground)) {
+      return MyGraphics.unwrap(g);
+    }
+
+    boolean checkLayer = !Boolean.FALSE.equals(noBackground);
+    JRootPane rootPane = null;
+    for (Component c = component, p = null; c != null && rootPane == null; p = c, c = c.getParent()) {
+      if (c instanceof JRootPane) {
+        rootPane = (JRootPane)c;
+      }
+      if (checkLayer && c instanceof JLayeredPane && p != null && ((JLayeredPane)c).getLayer(p) == JLayeredPane.POPUP_LAYER) {
+        break;
+      }
+    }
     Component glassPane = rootPane == null ? null : rootPane.getGlassPane();
-    PaintersHelper helper = glassPane instanceof IdeGlassPaneImpl? ((IdeGlassPaneImpl)glassPane).getNamedPainters(paintersName) : null;
-    if (helper == null || !helper.needsRepaint()) return (Graphics2D)g;
+    PainterHelper helper = glassPane instanceof IdeGlassPaneImpl ? ((IdeGlassPaneImpl)glassPane).getNamedPainters(paintersName) : null;
+    if (helper == null || !helper.needsRepaint()) {
+      return MyGraphics.unwrap(g);
+    }
     return MyGraphics.wrap(g, helper, component);
   }
 
+  private static @Nullable Boolean isBackgroundDisabled(@NotNull JComponent component) {
+    var predicate = ClientProperty.get(component, NO_BACKGROUND_PREDICATE);
+    if (predicate != null) {
+      return predicate.test(component);
+    }
+    else {
+      return ClientProperty.get(component, NO_BACKGROUND);
+    }
+  }
+
+  @ApiStatus.Experimental
+  @ApiStatus.Internal
+  static void addFallbackBackgroundPainter(IdeGlassPaneImpl glassPane, @NotNull Painter fallbackBackgroundPainter) {
+    PainterHelper painters = glassPane.getNamedPainters(EDITOR_PROP);
+    painters.addFallbackBackgroundPainter(fallbackBackgroundPainter);
+
+    painters = glassPane.getNamedPainters(FRAME_PROP);
+    painters.addFallbackBackgroundPainter(fallbackBackgroundPainter);
+  }
+
   static void initEditorPainters(@NotNull IdeGlassPaneImpl glassPane) {
-    PaintersHelper.initWallpaperPainter(EDITOR_PROP, glassPane.getNamedPainters(EDITOR_PROP));
+    PainterHelper.initWallpaperPainter(EDITOR_PROP, glassPane.getNamedPainters(EDITOR_PROP));
   }
 
   static void initFramePainters(@NotNull IdeGlassPaneImpl glassPane) {
-    PaintersHelper painters = glassPane.getNamedPainters(FRAME_PROP);
-    PaintersHelper.initWallpaperPainter(FRAME_PROP, painters);
-
-    //Image centerImage = null;
-    //if (centerImage != null) {
-    //  painters.addPainter(PaintersHelper.newImagePainter(centerImage, Fill.PLAIN, Anchor.TOP_CENTER, 1.0f, JBUI.insets(10, 0, 0, 0)), null);
-    //}
+    PainterHelper painters = glassPane.getNamedPainters(FRAME_PROP);
+    PainterHelper.initWallpaperPainter(FRAME_PROP, painters);
 
     painters.addPainter(new AbstractPainter() {
-      final EditorEmptyTextPainter p = ServiceManager.getService(EditorEmptyTextPainter.class);
+      EditorEmptyTextPainter p = null;
 
       @Override
       public boolean needsRepaint() {
@@ -150,51 +185,112 @@ public final class IdeBackgroundUtil {
       }
 
       @Override
-      public void executePaint(Component component, Graphics2D g) {
+      public void executePaint(@NotNull Component component, @NotNull Graphics2D g) {
+        if (p == null) {
+          p = ApplicationManager.getApplication().getService(EditorEmptyTextPainter.class);
+        }
         p.paintEmptyText((JComponent)component, g);
       }
     }, null);
   }
 
+  public static void resetBackgroundImagePainters() {
+    var uiCustomization = InternalUICustomization.getInstance();
+    if (uiCustomization != null) {
+      uiCustomization.updateBackgroundPainter();
+    }
+    PainterHelper.resetWallpaperPainterCache();
+    repaintAllWindows();
+  }
+
   public static @NotNull Color getIdeBackgroundColor() {
-    return new JBColor(() -> {
-      Color light = ColorUtil.darker(UIUtil.getPanelBackground(), 3);
-      return StartupUiUtil.isUnderDarcula() ? Gray._40 : light;
+    return JBColor.lazy(() -> {
+      return StartupUiUtil.isUnderDarcula() ? Gray._40 : ColorUtil.darker(JBColor.PanelBackground, 3);
     });
   }
 
   public static void createTemporaryBackgroundTransform(@NotNull JPanel root, String tmp, @NotNull Disposable disposable) {
-    PaintersHelper paintersHelper = new PaintersHelper(root);
-    PaintersHelper.initWallpaperPainter(tmp, paintersHelper);
-    Disposer.register(disposable, JBSwingUtilities.addGlobalCGTransform((t, v) -> {
-      if (!UIUtil.isAncestor(root, t)) return v;
-      return MyGraphics.wrap(v, paintersHelper, t);
-    }));
+    PainterHelper paintersHelper = new PainterHelper(root);
+    PainterHelper.initWallpaperPainter(tmp, paintersHelper);
+    createTemporaryBackgroundTransform(root, paintersHelper, disposable);
   }
 
-  public static void createTemporaryBackgroundTransform(JPanel root,
+  public static void createTemporaryBackgroundTransform(JComponent root,
                                                         Image image,
                                                         Fill fill,
                                                         Anchor anchor,
                                                         float alpha,
                                                         Insets insets,
                                                         Disposable disposable) {
-    PaintersHelper paintersHelper = new PaintersHelper(root);
-    paintersHelper.addPainter(PaintersHelper.newImagePainter(image, fill, anchor, alpha, insets), root);
-    Disposer.register(disposable, JBSwingUtilities.addGlobalCGTransform((t, v) -> {
-      if (!UIUtil.isAncestor(root, t)) return v;
-      return MyGraphics.wrap(v, paintersHelper, t);
+    PainterHelper paintersHelper = new PainterHelper(root);
+    paintersHelper.addPainter(PainterHelper.newImagePainter(image, fill, anchor, alpha, insets), root);
+    createTemporaryBackgroundTransform(root, paintersHelper, disposable);
+  }
+
+  /**
+   * Allows painting anything as a background for component and its children
+   */
+  @ApiStatus.Experimental
+  public static void createTemporaryBackgroundTransform(JComponent root,
+                                                        Painter painter,
+                                                        Disposable disposable) {
+    PainterHelper paintersHelper = new PainterHelper(root);
+    // In order not to expose MyGraphics class, we need to have a delegate that unwraps MyGraphics to Graphics2D
+    paintersHelper.addPainter(new Painter() {
+      @Override
+      public boolean needsRepaint() {
+        return painter.needsRepaint();
+      }
+
+      @Override
+      public void paint(@NotNull Component component, @NotNull Graphics2D g) {
+        painter.paint(component, MyGraphics.unwrap(g));
+      }
+
+      @Override
+      public void addListener(@NotNull Listener listener) {
+        painter.addListener(listener);
+      }
+
+      @Override
+      public void removeListener(Listener listener) {
+        painter.removeListener(listener);
+      }
+    }, root);
+    createTemporaryBackgroundTransform(root, paintersHelper, disposable);
+  }
+
+  private static void createTemporaryBackgroundTransform(JComponent root, PainterHelper painterHelper, Disposable disposable) {
+    Disposer.register(disposable, JBSwingUtilities.addGlobalCGTransform((c, g) -> {
+      if (!UIUtil.isAncestor(root, c)) {
+        return g;
+      }
+
+      Boolean noBackground = isBackgroundDisabled(c);
+      if (Boolean.TRUE.equals(noBackground)) {
+        return MyGraphics.unwrap(g);
+      }
+
+      return MyGraphics.wrap(g, painterHelper, c);
     }));
   }
 
   public static @NotNull String getBackgroundSpec(@Nullable Project project, @NotNull String propertyName) {
     String spec = project == null || project.isDisposed() ? null : PropertiesComponent.getInstance(project).getValue(propertyName);
-    if (spec == null) spec = PropertiesComponent.getInstance().getValue(propertyName);
-    return StringUtil.notNullize(spec, System.getProperty(propertyName, ""));
+    if (spec == null) {
+      spec = PropertiesComponent.getInstance().getValue(propertyName);
+    }
+    return spec == null ? System.getProperty(propertyName, "") : spec;
   }
 
+  @ApiStatus.Internal
   public static boolean isEditorBackgroundImageSet(@Nullable Project project) {
-    return StringUtil.isNotEmpty(getBackgroundSpec(project, EDITOR_PROP));
+    return Strings.isNotEmpty(getBackgroundSpec(project, EDITOR_PROP));
+  }
+
+  @ApiStatus.Internal
+  public static boolean isFrameBackgroundImageSet(@Nullable Project project) {
+    return Strings.isNotEmpty(getBackgroundSpec(project, FRAME_PROP));
   }
 
   public static void repaintAllWindows() {
@@ -204,7 +300,16 @@ public final class IdeBackgroundUtil {
     }
   }
 
-  static final RenderingHints.Key ADJUST_ALPHA = new RenderingHints.Key(1) {
+  @ApiStatus.Internal
+  public static final RenderingHints.Key ADJUST_ALPHA = new RenderingHints.Key(1) {
+    @Override
+    public boolean isCompatibleValue(Object val) {
+      return val instanceof Boolean;
+    }
+  };
+
+  @ApiStatus.Internal
+  public static final RenderingHints.Key NO_BACKGROUND_HINT = new RenderingHints.Key(2) {
     @Override
     public boolean isCompatibleValue(Object val) {
       return val instanceof Boolean;
@@ -212,11 +317,11 @@ public final class IdeBackgroundUtil {
   };
 
   private static final class MyGraphics extends Graphics2DDelegate {
-    final PaintersHelper helper;
-    final PaintersHelper.Offsets offsets;
-    Predicate<Color> preserved;
+    final PainterHelper helper;
+    final PainterHelper.Offsets offsets;
+    Predicate<? super Color> preserved;
 
-    static Graphics2D wrap(Graphics g, PaintersHelper helper, JComponent component) {
+    static Graphics2D wrap(Graphics g, PainterHelper helper, JComponent component) {
       MyGraphics gg = g instanceof MyGraphics ? (MyGraphics)g : null;
       return new MyGraphics(gg != null ? gg.myDelegate : g, helper, helper.computeOffsets(g, component), gg != null ? gg.preserved : null);
     }
@@ -225,7 +330,7 @@ public final class IdeBackgroundUtil {
       return g instanceof MyGraphics ? ((MyGraphics)g).getDelegate() : (Graphics2D)g;
     }
 
-    MyGraphics(Graphics g, PaintersHelper helper, PaintersHelper.Offsets offsets, Predicate<Color> preserved) {
+    MyGraphics(Graphics g, PainterHelper helper, PainterHelper.Offsets offsets, Predicate<? super Color> preserved) {
       super((Graphics2D)g);
       this.helper = helper;
       this.offsets = offsets;
@@ -235,6 +340,11 @@ public final class IdeBackgroundUtil {
     @Override
     public @NotNull Graphics create() {
       return new MyGraphics(getDelegate().create(), helper, offsets, preserved);
+    }
+
+    private boolean isNoBackground() {
+      Object obj = getRenderingHint(NO_BACKGROUND_HINT);
+      return obj != null && Boolean.TRUE.equals(obj);
     }
 
     @Override
@@ -337,23 +447,8 @@ public final class IdeBackgroundUtil {
       return b;
     }
 
-    private static @Nullable Shape calcTempClip(@Nullable Shape prevClip, @NotNull Shape forcedClip) {
-      if (prevClip == null) {
-        return forcedClip;
-      }
-      else if (prevClip instanceof Rectangle2D && forcedClip instanceof Rectangle2D) {
-        Rectangle2D r = ((Rectangle2D)prevClip).createIntersection((Rectangle2D)forcedClip);
-        return r.isEmpty() ? null : r;
-      }
-      else {
-        Area area = new Area(prevClip);
-        area.intersect(new Area(forcedClip));
-        return area.getBounds().isEmpty() ? null : area;
-      }
-    }
-
     void runAllPainters(int x, int y, int width, int height, @Nullable Shape sourceShape, @Nullable Object reason) {
-      if (width <= 1 || height <= 1) return;
+      if (width <= 1 || height <= 1 || isNoBackground()) return;
       boolean hasAlpha;
       if (reason instanceof Color) {
         hasAlpha = ((Color)reason).getAlpha() < 255;
@@ -370,17 +465,18 @@ public final class IdeBackgroundUtil {
         return;
       }
 
-      Shape prevClip = getClip();
-      Shape tmpClip = calcTempClip(prevClip, sourceShape != null ? sourceShape : new Rectangle(x, y, width, height));
-      if (tmpClip == null) return;
-
       boolean preserve = preserved != null && reason instanceof Color && preserved.test((Color)reason);
       if (preserve) {
         myDelegate.setRenderingHint(ADJUST_ALPHA, Boolean.TRUE);
       }
-      setClip(tmpClip);
-      helper.runAllPainters(myDelegate, offsets);
-      setClip(prevClip);
+      Graphics2D clipped = (Graphics2D)myDelegate.create();
+      try {
+        clipped.clip(sourceShape != null ? sourceShape : new Rectangle(x, y, width, height));
+        helper.runAllPainters(clipped, offsets);
+      }
+      finally {
+        clipped.dispose();
+      }
       if (preserve) {
         myDelegate.setRenderingHint(ADJUST_ALPHA, Boolean.FALSE);
       }
@@ -389,33 +485,37 @@ public final class IdeBackgroundUtil {
 
   private static final class MyTransform implements BiFunction<JComponent, Graphics2D, Graphics2D> {
     @Override
-    public Graphics2D apply(JComponent c, Graphics2D g) {
-      if (Boolean.TRUE.equals(ComponentUtil.getClientProperty(c, NO_BACKGROUND))) return g;
-      String type = getComponentType(c);
-      if (type == null) return g;
-      if ("frame".equals(type)) return withFrameBackground(g, c);
-
-      Editor editor = "editor".equals(type) ? obtainEditor(c) : null;
-      if (editor != null) {
-        if (!(g instanceof MyGraphics) && Boolean.TRUE.equals(EditorTextField.SUPPLEMENTARY_KEY.get(editor))) return g;
-        if (c instanceof EditorComponentImpl && ((EditorImpl)editor).isDumb()) return MyGraphics.unwrap(g);
+    public Graphics2D apply(@NotNull JComponent c, @NotNull Graphics2D g) {
+      Graphics2D original = MyGraphics.unwrap(g);
+      if (c instanceof EditorsSplitters) {
+        return withFrameBackground(original, c);
       }
 
-      Graphics2D gg = withEditorBackground(g, c);
+      Editor editor = obtainEditor(c);
+      if (editor instanceof EditorImpl editorImpl) {
+        if (c instanceof EditorComponentImpl && (editorImpl.isDumb() || editorImpl.isStickyLinePainting())) {
+          return original;
+        }
+        if (c instanceof EditorGutterComponentEx && editorImpl.isStickyLinePainting()) {
+          return original;
+        }
+      }
+
+      Graphics2D gg = withEditorBackground(original, c);
       if (gg instanceof MyGraphics) {
         ((MyGraphics)gg).preserved = editor != null ? getEditorPreserveColorCondition((EditorEx)editor) : getGeneralPreserveColorCondition(c);
       }
       return gg;
     }
 
-    private static Editor obtainEditor(JComponent c) {
-      //noinspection CastConflictsWithInstanceof
-      return c instanceof EditorComponentImpl ? ((EditorComponentImpl)c).getEditor() :
-             c instanceof EditorGutterComponentEx ? CommonDataKeys.EDITOR.getData((DataProvider)c) :
+    private static @Nullable Editor obtainEditor(@Nullable JComponent c) {
+      Component view = c instanceof JViewport ? ((JViewport)c).getView() : c;
+      return view instanceof EditorComponentImpl o ? o.getEditor() :
+             view instanceof EditorGutterComponentEx o ? o.getEditor() :
              null;
     }
 
-    private static @NotNull Predicate<Color> getEditorPreserveColorCondition(EditorEx editor) {
+    private static @NotNull Predicate<Color> getEditorPreserveColorCondition(@NotNull EditorEx editor) {
       Color background1 = editor.getBackgroundColor();
       Color background2 = editor.getGutterComponentEx().getBackground();
       return color -> color != background1 && color != background2;
@@ -426,6 +526,7 @@ public final class IdeBackgroundUtil {
       Color selection1 = view instanceof JTree ? UIUtil.getTreeSelectionBackground(true) :
                          view instanceof JList ? UIUtil.getListSelectionBackground(true) :
                          view instanceof JTable ? UIUtil.getTableSelectionBackground(true) :
+                         view instanceof JTextComponent ? ((JTextComponent)view).getSelectionColor() :
                          view instanceof JMenuBar || view instanceof JMenu ? UIManager.getColor("Menu.selectionBackground") :
                          null;
       Color selection2 = view instanceof JTree ? UIUtil.getTreeSelectionBackground(false) :

@@ -1,50 +1,22 @@
-/*
- * Copyright 2000-2018 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python;
 
 import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
+import com.intellij.util.ThrowableRunnable;
 import com.jetbrains.python.fixtures.PyTestCase;
-import com.jetbrains.python.psi.LanguageLevel;
+import org.jetbrains.annotations.NotNull;
 
-/**
- * @author yole
- */
+
 public class PyCopyPasteTest extends PyTestCase {
-  private boolean myOldEnabled;
-
   @Override
-  public void setUp() throws Exception {
-    super.setUp();
-    myOldEnabled = CodeInsightSettings.getInstance().INDENT_TO_CARET_ON_PASTE;
-    CodeInsightSettings.getInstance().INDENT_TO_CARET_ON_PASTE = true;
-  }
-
-  @Override
-  public void tearDown() throws Exception {
-    try {
-      CodeInsightSettings.getInstance().INDENT_TO_CARET_ON_PASTE = myOldEnabled;
-    }
-    catch (Throwable e) {
-      addSuppressedException(e);
-    }
-    finally {
-      super.tearDown();
-    }
+  protected void runTestRunnable(@NotNull ThrowableRunnable<Throwable> testRunnable) throws Throwable {
+    CodeInsightSettings.runWithTemporarySettings(settings -> {
+      settings.INDENT_TO_CARET_ON_PASTE = true;
+      super.runTestRunnable(testRunnable);
+      return null;
+    });
   }
 
   public void testIndent1() {
@@ -451,7 +423,7 @@ public class PyCopyPasteTest extends PyTestCase {
 
   // PY-19100
   public void testAsyncFunctionWithBadSelection() {
-    runWithLanguageLevel(LanguageLevel.PYTHON35, this::doTest);
+    doTest();
   }
 
   // PY-20138

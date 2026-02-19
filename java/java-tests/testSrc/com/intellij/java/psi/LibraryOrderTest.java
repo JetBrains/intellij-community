@@ -17,12 +17,18 @@ package com.intellij.java.psi;
 
 import com.intellij.JavaTestUtil;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.roots.*;
+import com.intellij.openapi.roots.LibraryOrderEntry;
+import com.intellij.openapi.roots.ModifiableRootModel;
+import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.roots.ModuleRootModificationUtil;
+import com.intellij.openapi.roots.OrderEntry;
+import com.intellij.openapi.roots.OrderEnumerator;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
+import com.intellij.testFramework.IndexingTestUtil;
 import com.intellij.testFramework.JavaPsiTestCase;
 
 import java.io.File;
@@ -30,9 +36,6 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
-/**
- *  @author dsl
- */
 public class LibraryOrderTest extends JavaPsiTestCase {
 
   public void test1() {
@@ -104,5 +107,6 @@ public class LibraryOrderTest extends JavaPsiTestCase {
   private void addLibraryWithSourcePath(String name, VirtualFile libClasses, final VirtualFile libSource) {
     ModuleRootModificationUtil.addModuleLibrary(myModule, name, Collections.singletonList(libClasses.getUrl()),
                                                 Collections.singletonList(libSource.getUrl()));
+    IndexingTestUtil.waitUntilIndexesAreReady(myProject);
   }
 }

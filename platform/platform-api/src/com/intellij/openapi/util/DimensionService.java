@@ -1,7 +1,12 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.util;
 
-import com.intellij.openapi.components.*;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.RoamingType;
+import com.intellij.openapi.components.Service;
+import com.intellij.openapi.components.State;
+import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
@@ -12,18 +17,22 @@ import com.intellij.ui.ComponentUtil;
 import com.intellij.ui.JreHiDpiUtil;
 import com.intellij.ui.ScreenUtil;
 import com.intellij.ui.scale.JBUIScale;
-import com.intellij.util.containers.CollectionFactory;
+import com.intellij.util.containers.ObjectIntHashMap;
+import com.intellij.util.containers.ObjectIntMap;
 import com.intellij.util.ui.JBUI;
-import it.unimi.dsi.fastutil.objects.Object2IntMap;
-import it.unimi.dsi.fastutil.objects.Object2IntMaps;
-import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JFrame;
+import java.awt.Component;
+import java.awt.Dimension;
+import java.awt.GraphicsDevice;
+import java.awt.GraphicsEnvironment;
+import java.awt.Point;
+import java.awt.Rectangle;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 /**
@@ -31,24 +40,25 @@ import java.util.Map;
  * sizes of window, dialogs, etc.
  */
 @State(name = "DimensionService", storages = @Storage(value = "window.state.xml", roamingType = RoamingType.DISABLED))
+@Service(Service.Level.APP)
 public final class DimensionService extends SimpleModificationTracker implements PersistentStateComponent<Element> {
   private static final Logger LOG = Logger.getInstance(DimensionService.class);
 
-  private final Map<String, Point> myKeyToLocation = CollectionFactory.createSmallMemoryFootprintLinkedMap();
-  private final Map<String, Dimension> myKeToSize = CollectionFactory.createSmallMemoryFootprintLinkedMap();
-  private final Object2IntMap<String> myKeyToExtendedState = new Object2IntOpenHashMap<>();
-  @NonNls private static final String EXTENDED_STATE = "extendedState";
-  @NonNls private static final String KEY = "key";
-  @NonNls private static final String STATE = "state";
-  @NonNls private static final String ELEMENT_LOCATION = "location";
-  @NonNls private static final String ELEMENT_SIZE = "size";
-  @NonNls private static final String ATTRIBUTE_X = "x";
-  @NonNls private static final String ATTRIBUTE_Y = "y";
-  @NonNls private static final String ATTRIBUTE_WIDTH = "width";
-  @NonNls private static final String ATTRIBUTE_HEIGHT = "height";
+  private final Map<String, Point> myKeyToLocation = new LinkedHashMap<>();
+  private final Map<String, Dimension> myKeToSize = new LinkedHashMap<>();
+  private final ObjectIntMap<String> myKeyToExtendedState = new ObjectIntHashMap<>();
+  private static final @NonNls String EXTENDED_STATE = "extendedState";
+  private static final @NonNls String KEY = "key";
+  private static final @NonNls String STATE = "state";
+  private static final @NonNls String ELEMENT_LOCATION = "location";
+  private static final @NonNls String ELEMENT_SIZE = "size";
+  private static final @NonNls String ATTRIBUTE_X = "x";
+  private static final @NonNls String ATTRIBUTE_Y = "y";
+  private static final @NonNls String ATTRIBUTE_WIDTH = "width";
+  private static final @NonNls String ATTRIBUTE_HEIGHT = "height";
 
   public static DimensionService getInstance() {
-    return ServiceManager.getService(DimensionService.class);
+    return ApplicationManager.getApplication().getService(DimensionService.class);
   }
 
   /**
@@ -58,14 +68,15 @@ public final class DimensionService extends SimpleModificationTracker implements
    * is outside of current screen bounds then the method returns {@code null}. It
    * properly works in multi-monitor configuration.
    * @throws IllegalArgumentException if {@code key} is {@code null}.
+   *
+   * @deprecated use {@link #getLocation(String, Project)} instead.
    */
-  @Nullable
-  public synchronized Point getLocation(String key) {
+  @Deprecated(forRemoval = true)
+  public synchronized @Nullable Point getLocation(String key) {
     return getLocation(key, guessProject());
   }
 
-  @Nullable
-  public synchronized Point getLocation(@NotNull String key, Project project) {
+  public synchronized @Nullable Point getLocation(@NotNull String key, @Nullable Project project) {
     Point point = project == null ? null : WindowStateService.getInstance(project).getLocation(key);
     if (point != null) return point;
 
@@ -89,12 +100,15 @@ public final class DimensionService extends SimpleModificationTracker implements
    * @param key   a String key to store location for.
    * @param point location to save.
    * @throws IllegalArgumentException if {@code key} is {@code null}.
+   *
+   * @deprecated use {@link #setLocation(String, Point, Project)} instead.
    */
+  @Deprecated(forRemoval = true)
   public synchronized void setLocation(String key, Point point) {
     setLocation(key, point, guessProject());
   }
 
-  public synchronized void setLocation(@NotNull String key, Point point, Project project) {
+  public synchronized void setLocation(@NotNull String key, Point point, @Nullable Project project) {
     getWindowStateService(project).putLocation(key, point);
     Pair<String, Float> pair = keyPair(key, project);
     if (point != null) {
@@ -114,14 +128,15 @@ public final class DimensionService extends SimpleModificationTracker implements
    * @return point stored under the specified {@code key}. The method returns
    * {@code null} if there is no stored value under the {@code key}.
    * @throws IllegalArgumentException if {@code key} is {@code null}.
+   *
+   * @deprecated use {@link #getSize(String, Project)} instead.
    */
-  @Nullable
-  public synchronized Dimension getSize(@NotNull @NonNls String key) {
+  @Deprecated(forRemoval = true)
+  public synchronized @Nullable Dimension getSize(@NotNull @NonNls String key) {
     return getSize(key, guessProject());
   }
 
-  @Nullable
-  public synchronized Dimension getSize(@NotNull @NonNls String key, Project project) {
+  public synchronized @Nullable Dimension getSize(@NotNull @NonNls String key, @Nullable Project project) {
     Dimension size = project == null ? null : WindowStateService.getInstance(project).getSize(key);
     if (size != null) return size;
 
@@ -139,17 +154,23 @@ public final class DimensionService extends SimpleModificationTracker implements
    * Store specified {@code size} under the {@code key}. If {@code size} is
    * {@code null} then the value stored under {@code key} will be removed.
    *
-   * @param key  a String key to to save size for.
+   * @param key  a String key to save size for.
    * @param size a Size to save.
    * @throws IllegalArgumentException if {@code key} is {@code null}.
+   *
+   * @deprecated use {@link #setSize(String, Dimension, Project)} instead.
    */
+  @Deprecated(forRemoval = true)
   public synchronized void setSize(@NotNull @NonNls String key, Dimension size) {
     setSize(key, size, guessProject());
   }
 
-  public synchronized void setSize(@NotNull @NonNls String key, Dimension size, Project project) {
-    getWindowStateService(project).putSize(key, size);
-    Pair<String, Float> pair = keyPair(key, project);
+  public synchronized void setSize(@NotNull @NonNls String key, Dimension size, @Nullable Project project) {
+    @Nullable Project projectIfValid = project;
+    if (projectIfValid != null && projectIfValid.isDisposed()) projectIfValid = null;
+
+    getWindowStateService(projectIfValid).putSize(key, size);
+    Pair<String, Float> pair = keyPair(key, projectIfValid);
     if (size != null) {
       size = (Dimension)size.clone();
       float scale = pair.second;
@@ -188,10 +209,11 @@ public final class DimensionService extends SimpleModificationTracker implements
     }
 
     // save extended states
-    for (Object2IntMap.Entry<String> entry : Object2IntMaps.fastIterable(myKeyToExtendedState)) {
+
+    for (ObjectIntMap.Entry<String> entry : myKeyToExtendedState.entries()) {
       Element e = new Element(EXTENDED_STATE);
       e.setAttribute(KEY, entry.getKey());
-      e.setAttribute(STATE, Integer.toString(entry.getIntValue()));
+      e.setAttribute(STATE, Integer.toString(entry.getValue()));
       element.addContent(e);
     }
     return element;
@@ -233,8 +255,8 @@ public final class DimensionService extends SimpleModificationTracker implements
     }
   }
 
-  @Nullable
-  private static Project guessProject() {
+  @Deprecated
+  private static @Nullable Project guessProject() {
     Project[] openProjects = ProjectManager.getInstance().getOpenProjects();
     return openProjects.length == 1 ? openProjects[0] : null;
   }
@@ -244,8 +266,7 @@ public final class DimensionService extends SimpleModificationTracker implements
    * key is the HiDPI-aware key,
    * scale is the HiDPI-aware factor to transform size metrics.
    */
-  @NotNull
-  private static Pair<String, Float> keyPair(String key, @Nullable Project project) {
+  private static @NotNull Pair<String, Float> keyPair(String key, @Nullable Project project) {
     GraphicsEnvironment env = GraphicsEnvironment.getLocalGraphicsEnvironment();
     if (env.isHeadlessInstance()) {
       return new Pair<>(key + ".headless", 1f);
@@ -295,8 +316,7 @@ public final class DimensionService extends SimpleModificationTracker implements
     return new Pair<>(realKey, scale);
   }
 
-  @NotNull
-  private static WindowStateService getWindowStateService(@Nullable Project project) {
+  private static @NotNull WindowStateService getWindowStateService(@Nullable Project project) {
     return project == null ? WindowStateService.getInstance() : WindowStateService.getInstance(project);
   }
 }

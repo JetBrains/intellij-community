@@ -1,0 +1,25 @@
+<!-- todo: register this as a content module (IJPL-210868); currently it's included via 'xi:include' tag -->
+<idea-plugin>
+  <extensionPoints>
+    <extensionPoint name="syntax.elementTypeConverter" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
+      <with attribute="implementationClass" implements="com.intellij.platform.syntax.psi.ElementTypeConverterFactory"/>
+    </extensionPoint>
+    <extensionPoint name="syntax.syntaxDefinition" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
+      <with attribute="implementationClass" implements="com.intellij.platform.syntax.LanguageSyntaxDefinition"/>
+    </extensionPoint>
+    <extensionPoint name="syntax.cancellationProviderExtension"
+                    interface="com.intellij.platform.syntax.util.cancellation.CancellationProviderExtension"
+                    dynamic="true"/>
+    <extensionPoint name="syntax.logProvider"
+                    interface="com.intellij.platform.syntax.util.log.LogProvider"
+                    dynamic="true"/>
+  </extensionPoints>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <syntax.elementTypeConverter language="any" implementationClass="com.intellij.platform.syntax.psi.CommonElementTypeConverterFactory"/>
+    <syntax.cancellationProviderExtension implementation="com.intellij.platform.syntax.psi.IntelliJCancellationProvider"/>
+    <syntax.logProvider implementation="com.intellij.platform.syntax.psi.IntelliJLogProvider"/>
+    <applicationService serviceInterface="com.intellij.platform.syntax.psi.PsiSyntaxBuilderFactory"
+                        serviceImplementation="com.intellij.platform.syntax.psi.PsiSyntaxBuilderFactoryImpl"/>
+  </extensions>
+</idea-plugin>

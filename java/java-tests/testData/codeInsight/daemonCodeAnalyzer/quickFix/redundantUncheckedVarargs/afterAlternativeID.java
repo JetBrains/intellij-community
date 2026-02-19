@@ -1,4 +1,4 @@
-// "Remove 'boxing' suppression" "true"
+// "Remove 'boxing' suppression" "true-preview"
 import java.util.ArrayList;
 
 class Test {

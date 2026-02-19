@@ -1,7 +1,7 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.generation.ui;
 
-import com.intellij.codeInsight.generation.EqualsHashCodeTemplatesManager;
+import com.intellij.codeInsight.generation.EqualsHashCodeTemplatesManagerBase;
 import com.intellij.codeInsight.generation.GenerateEqualsHelper;
 import com.intellij.java.JavaBundle;
 import com.intellij.openapi.options.ConfigurationException;
@@ -10,10 +10,15 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.NamedItemsListEditor;
 import com.intellij.openapi.ui.Namer;
 import com.intellij.openapi.ui.Splitter;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Cloner;
+import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Couple;
+import com.intellij.openapi.util.Factory;
+import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.Pair;
+import com.intellij.psi.PsiType;
 import com.intellij.ui.TitledSeparator;
 import com.intellij.util.ui.JBUI;
-import gnu.trove.Equality;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -21,18 +26,21 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.java.generate.template.TemplateResource;
 import org.jetbrains.java.generate.view.GenerateTemplateConfigurable;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JComponent;
+import javax.swing.JPanel;
+import java.awt.BorderLayout;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
+import java.util.function.BiPredicate;
 
 public class EqualsHashCodeTemplatesPanel extends NamedItemsListEditor<Couple<TemplateResource>> {
   private static final Namer<Couple<TemplateResource>> NAMER = new Namer<>() {
 
     @Override
     public String getName(Couple<TemplateResource> couple) {
-      return EqualsHashCodeTemplatesManager.getTemplateBaseName(couple.first);
+      return EqualsHashCodeTemplatesManagerBase.getTemplateBaseName(couple.first);
     }
 
     @Override
@@ -42,8 +50,8 @@ public class EqualsHashCodeTemplatesPanel extends NamedItemsListEditor<Couple<Te
 
     @Override
     public void setName(Couple<TemplateResource> couple, String name) {
-      couple.first.setFileName(EqualsHashCodeTemplatesManager.toEqualsName(name));
-      couple.second.setFileName(EqualsHashCodeTemplatesManager.toHashCodeName(name));
+      couple.first.setFileName(EqualsHashCodeTemplatesManagerBase.toEqualsName(name));
+      couple.second.setFileName(EqualsHashCodeTemplatesManagerBase.toHashCodeName(name));
     }
   };
 
@@ -61,8 +69,7 @@ public class EqualsHashCodeTemplatesPanel extends NamedItemsListEditor<Couple<Te
       return Couple.of(copyOf(couple.first), copyOf(couple.second));
     }
 
-    @NotNull
-    private TemplateResource copyOf(TemplateResource resource) {
+    private static @NotNull TemplateResource copyOf(TemplateResource resource) {
       TemplateResource result = new TemplateResource();
       result.setFileName(resource.getFileName());
       result.setTemplate(resource.getTemplate());
@@ -70,28 +77,28 @@ public class EqualsHashCodeTemplatesPanel extends NamedItemsListEditor<Couple<Te
     }
   };
 
-  private static final Equality<Couple<TemplateResource>> COMPARER = new Equality<>() {
-    @Override
-    public boolean equals(Couple<TemplateResource> o1, Couple<TemplateResource> o2) {
-      return equals(o1.first, o2.first) && equals(o1.second, o2.second);
-    }
+  private static final BiPredicate<Pair<TemplateResource, TemplateResource>, Pair<TemplateResource, TemplateResource>> COMPARER =
+    new BiPredicate<>() {
+      @Override
+      public boolean test(Pair<TemplateResource, TemplateResource> o1, Pair<TemplateResource, TemplateResource> o2) {
+        return equals(o1.first, o2.first) && equals(o1.second, o2.second);
+      }
 
-    private boolean equals(TemplateResource r1, TemplateResource r2) {
-      return Objects.equals(r1.getTemplate(), r2.getTemplate()) && Objects.equals(r1.getFileName(), r2.getFileName());
-    }
-  };
+      private static boolean equals(TemplateResource r1, TemplateResource r2) {
+        return Objects.equals(r1.getTemplate(), r2.getTemplate()) && Objects.equals(r1.getFileName(), r2.getFileName());
+      }
+    };
   private final Project myProject;
-  private final EqualsHashCodeTemplatesManager myManager;
+  private final EqualsHashCodeTemplatesManagerBase myManager;
 
-  public EqualsHashCodeTemplatesPanel(Project project, EqualsHashCodeTemplatesManager manager) {
+  public EqualsHashCodeTemplatesPanel(Project project, EqualsHashCodeTemplatesManagerBase manager) {
     super(NAMER, FACTORY, CLONER, COMPARER, new ArrayList<>(manager.getTemplateCouples()));
     myProject = project;
     myManager = manager;
   }
 
   @Override
-  @Nls
-  public String getDisplayName() {
+  public @Nls String getDisplayName() {
     return JavaBundle.message("configurable.EqualsHashCodeTemplatesPanel.display.name");
   }
 
@@ -111,9 +118,7 @@ public class EqualsHashCodeTemplatesPanel extends NamedItemsListEditor<Couple<Te
   }
 
   @Override
-  @Nullable
-  @NonNls
-  public String getHelpTopic() {
+  public @Nullable @NonNls String getHelpTopic() {
     return null;
   }
 
@@ -129,12 +134,11 @@ public class EqualsHashCodeTemplatesPanel extends NamedItemsListEditor<Couple<Te
 
   @Override
   protected UnnamedConfigurable createConfigurable(Couple<TemplateResource> item) {
-    final GenerateTemplateConfigurable equalsConfigurable = new GenerateTemplateConfigurable(item.first, GenerateEqualsHelper.getEqualsImplicitVars(myProject), myProject);
-    final GenerateTemplateConfigurable hashCodeConfigurable = new GenerateTemplateConfigurable(item.second, GenerateEqualsHelper.getHashCodeImplicitVars(), myProject);
+    final GenerateTemplateConfigurable equalsConfigurable = new GenerateTemplateConfigurable(item.first, getEqualsImplicitVars(), myProject);
+    final GenerateTemplateConfigurable hashCodeConfigurable = new GenerateTemplateConfigurable(item.second, getHashCodeImplicitVars(), myProject);
     return new UnnamedConfigurable() {
-      @Nullable
       @Override
-      public JComponent createComponent() {
+      public @NotNull JComponent createComponent() {
         final Splitter splitter = new Splitter(true);
 
         final JPanel eqPanel = new JPanel(new BorderLayout());
@@ -177,6 +181,14 @@ public class EqualsHashCodeTemplatesPanel extends NamedItemsListEditor<Couple<Te
         hashCodeConfigurable.disposeUIResources();
       }
     };
+  }
+
+  protected @NotNull Map<String, PsiType> getHashCodeImplicitVars() {
+    return GenerateEqualsHelper.getHashCodeImplicitVars();
+  }
+
+  protected @NotNull Map<String, PsiType> getEqualsImplicitVars() {
+    return GenerateEqualsHelper.getEqualsImplicitVars(myProject);
   }
 
   @Override

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.index
 
 import com.intellij.diff.DiffApplicationSettings
@@ -9,50 +9,88 @@ import com.intellij.diff.comparison.ComparisonPolicy
 import com.intellij.diff.contents.DiffContent
 import com.intellij.diff.fragments.DiffFragment
 import com.intellij.diff.requests.SimpleDiffRequest
-import com.intellij.diff.util.*
-import com.intellij.ide.GeneralSettings
+import com.intellij.diff.util.DiffDrawUtil
+import com.intellij.diff.util.DiffDrawUtil.InlineHighlighterBuilder
+import com.intellij.diff.util.DiffDrawUtil.LineHighlighterBuilder
+import com.intellij.diff.util.DiffUserDataKeysEx
+import com.intellij.diff.util.DiffUtil
+import com.intellij.diff.util.Side
+import com.intellij.diff.util.TextDiffType
+import com.intellij.diff.util.ThreeSide
 import com.intellij.ide.lightEdit.LightEditCompatible
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.IdeActions
+import com.intellij.openapi.actionSystem.KeepPopupOnPerform
+import com.intellij.openapi.actionSystem.Separator
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.WriteThread
 import com.intellij.openapi.diff.DiffBundle
+import com.intellij.openapi.diff.LineStatusMarkerColorScheme
 import com.intellij.openapi.diff.LineStatusMarkerDrawUtil
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.impl.EditorImpl
-import com.intellij.openapi.editor.markup.MarkupEditorFilter
 import com.intellij.openapi.editor.markup.MarkupEditorFilterFactory
 import com.intellij.openapi.editor.markup.RangeHighlighter
-import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.progress.util.BackgroundTaskUtil
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.VerticalSeparatorComponent
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.openapi.vcs.ex.*
+import com.intellij.openapi.vcs.ex.BlockI
+import com.intellij.openapi.vcs.ex.ChangedLines
+import com.intellij.openapi.vcs.ex.ChangesBlock
+import com.intellij.openapi.vcs.ex.DocumentTracker
+import com.intellij.openapi.vcs.ex.LineStatusMarkerPopupActions
+import com.intellij.openapi.vcs.ex.LineStatusMarkerPopupPanel
+import com.intellij.openapi.vcs.ex.LineStatusMarkerPopupService
+import com.intellij.openapi.vcs.ex.LineStatusTrackerBase
+import com.intellij.openapi.vcs.ex.LineStatusTrackerBlockOperations
+import com.intellij.openapi.vcs.ex.LineStatusTrackerListener
+import com.intellij.openapi.vcs.ex.LineStatusTrackerMarkerRenderer
+import com.intellij.openapi.vcs.ex.LocalLineStatusTracker
 import com.intellij.openapi.vcs.ex.Range
+import com.intellij.openapi.vcs.ex.RangeExclusionState
+import com.intellij.openapi.vcs.ex.RollbackLineStatusAction
+import com.intellij.openapi.vcs.ex.VisibleRangeMerger
+import com.intellij.openapi.vcs.ex.saveDocumentWhenUnchanged
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.EditorTextField
+import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.labels.LinkLabel
+import com.intellij.ui.paint.PaintUtil
 import com.intellij.ui.scale.JBUIScale
+import com.intellij.util.EventDispatcher
+import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.containers.PeekableIteratorWrapper
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import git4idea.GitUtil
 import git4idea.i18n.GitBundle
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
-import java.awt.*
-import java.util.*
-import javax.swing.*
+import java.awt.BasicStroke
+import java.awt.Color
+import java.awt.Graphics
+import java.awt.Graphics2D
+import java.awt.Point
+import java.awt.RenderingHints
+import java.awt.geom.Path2D
+import java.util.BitSet
+import javax.swing.BorderFactory
+import javax.swing.Box
+import javax.swing.BoxLayout
+import javax.swing.JComponent
+import javax.swing.JPanel
 import kotlin.math.max
 
 class GitStageLineStatusTracker(
@@ -68,6 +106,7 @@ class GitStageLineStatusTracker(
   private val LOCK: DocumentTracker.Lock = DocumentTracker.Lock()
 
   private val blockOperations: LineStatusTrackerBlockOperations<StagedRange, StagedRange> = MyBlockOperations(LOCK)
+  private val stagedBlockOperations: LineStatusTrackerBlockOperations<Range, BlockI> = MyStagedBlockOperations(LOCK)
   private val stagedTracker: DocumentTracker
   private val unstagedTracker: DocumentTracker
 
@@ -79,6 +118,8 @@ class GitStageLineStatusTracker(
 
   private val renderer = MyLineStatusMarkerPopupRenderer(this)
 
+  private val listeners = EventDispatcher.create(LineStatusTrackerListener::class.java)
+
   // FIXME
   override var mode: LocalLineStatusTracker.Mode = LocalLineStatusTracker.Mode(true, true, false)
 
@@ -89,14 +130,14 @@ class GitStageLineStatusTracker(
     unstagedTracker = DocumentTracker(stagedDocument, document, LOCK)
     Disposer.register(disposable, unstagedTracker)
 
-    stagedTracker.addHandler(MyDocumentTrackerHandler(true))
-    unstagedTracker.addHandler(MyDocumentTrackerHandler(false))
+    stagedTracker.addHandler(MyDocumentTrackerHandler(false))
+    unstagedTracker.addHandler(MyDocumentTrackerHandler(true))
   }
 
 
   @RequiresEdt
   fun setBaseRevision(vcsContent: CharSequence, newStagedDocument: Document) {
-    ApplicationManager.getApplication().assertIsDispatchThread()
+    ThreadingAssertions.assertEventDispatchThread()
     if (isReleased) return
 
     if (stagedDocument != newStagedDocument) {
@@ -115,11 +156,13 @@ class GitStageLineStatusTracker(
       isInitialized = true
       updateHighlighters()
     }
+
+    if (isValid()) listeners.multicaster.onBecomingValid()
   }
 
   @RequiresEdt
   fun dropBaseRevision() {
-    ApplicationManager.getApplication().assertIsDispatchThread()
+    ThreadingAssertions.assertEventDispatchThread()
     if (isReleased) return
 
     isInitialized = false
@@ -135,7 +178,7 @@ class GitStageLineStatusTracker(
     }
 
     if (!ApplicationManager.getApplication().isDispatchThread || LOCK.isHeldByCurrentThread) {
-      WriteThread.submit(runnable)
+      ApplicationManager.getApplication().invokeLater(runnable)
     }
     else {
       runnable.run()
@@ -143,7 +186,7 @@ class GitStageLineStatusTracker(
   }
 
   @RequiresEdt
-  private fun updateDocument(side: ThreeSide, commandName: String?, task: (Document) -> Unit): Boolean {
+  private fun updateDocument(side: ThreeSide, commandName: @NlsContexts.Command String?, task: (Document) -> Unit): Boolean {
     val affectedDocument = side.selectNotNull(vcsDocument, stagedDocument, document)
     return LineStatusTrackerBase.updateDocument(project, affectedDocument, commandName, task)
   }
@@ -183,6 +226,8 @@ class GitStageLineStatusTracker(
   override fun transferLineFromVcs(line: Int, approximate: Boolean): Int = blockOperations.transferLineFromVcs(line, approximate)
   override fun transferLineToVcs(line: Int, approximate: Boolean): Int = blockOperations.transferLineToVcs(line, approximate)
 
+  fun transferLineFromLocalToStaged(line: Int, approximate: Boolean): Int = stagedBlockOperations.transferLineToVcs(line, approximate)
+  fun transferLineFromStagedToLocal(line: Int, approximate: Boolean): Int = stagedBlockOperations.transferLineFromVcs(line, approximate)
 
   override fun scrollAndShowHint(range: Range, editor: Editor) {
     renderer.scrollAndShow(editor, range)
@@ -237,7 +282,7 @@ class GitStageLineStatusTracker(
 
     val filter = BlockFilter.create(toRevert, Side.RIGHT)
     updateDocument(ThreeSide.RIGHT, GitBundle.message("stage.revert.unstaged.range.command.name")) {
-      unstagedTracker.partiallyApplyBlocks(Side.RIGHT) { filter.matches(it) }
+      unstagedTracker.partiallyApplyBlocks(Side.RIGHT) { filter.asExclusionState(it) }
     }
   }
 
@@ -252,7 +297,7 @@ class GitStageLineStatusTracker(
 
     val filter = BlockFilter.create(toRevert, Side.RIGHT)
     updateDocument(ThreeSide.BASE, GitBundle.message("stage.add.range.command.name")) {
-      unstagedTracker.partiallyApplyBlocks(Side.LEFT) { filter.matches(it) }
+      unstagedTracker.partiallyApplyBlocks(Side.LEFT) { filter.asExclusionState(it) }
     }
   }
 
@@ -267,8 +312,18 @@ class GitStageLineStatusTracker(
 
     val filter = BlockFilter.create(toRevert, Side.LEFT)
     updateDocument(ThreeSide.BASE, GitBundle.message("stage.revert.staged.range.command.name")) {
-      stagedTracker.partiallyApplyBlocks(Side.RIGHT) { filter.matches(it) }
+      stagedTracker.partiallyApplyBlocks(Side.RIGHT) { filter.asExclusionState(it) }
     }
+  }
+
+  @ApiStatus.Internal
+  override fun addListener(listener: LineStatusTrackerListener) {
+    listeners.addListener(listener)
+  }
+
+  @ApiStatus.Internal
+  override fun removeListener(listener: LineStatusTrackerListener) {
+    listeners.removeListener(listener)
   }
 
   private class BlockFilter(private val bitSet1: BitSet,
@@ -276,6 +331,10 @@ class GitStageLineStatusTracker(
     fun matches(block: DocumentTracker.Block): Boolean {
       return matches(block, Side.LEFT, bitSet1) ||
              matches(block, Side.RIGHT, bitSet2)
+    }
+
+    fun asExclusionState(block: DocumentTracker.Block): RangeExclusionState {
+      return if (matches(block)) RangeExclusionState.Included else RangeExclusionState.Excluded
     }
 
     private fun matches(block: DocumentTracker.Block, blockSide: Side, bitSet: BitSet): Boolean {
@@ -305,41 +364,47 @@ class GitStageLineStatusTracker(
   }
 
   private inner class MyDocumentTrackerHandler(private val unstaged: Boolean) : DocumentTracker.Handler {
+    private var wasEmpty = isTrackerEmpty()
+
     override fun afterBulkRangeChange(isDirty: Boolean) {
       cachedBlocks = null
 
       updateHighlighters()
+      if (!isDirty) listeners.multicaster.onRangesChanged()
 
-      if (unstaged) {
-        if (unstagedTracker.blocks.isEmpty()) {
-          fireFileUnchanged(document)
-        }
-      }
-      else {
-        if (stagedTracker.blocks.isEmpty()) {
-          fireFileUnchanged(stagedDocument)
+      if (isOperational()) {
+        val isEmpty = isTrackerEmpty()
+        if (wasEmpty != isEmpty) {
+          wasEmpty = isEmpty
+
+          if (isEmpty && unstaged) {
+            saveDocumentWhenUnchanged(project, document)
+          }
+          saveDocumentWhenUnchanged(project, stagedDocument)
         }
       }
     }
 
     override fun onUnfreeze(side: Side) {
       updateHighlighters()
+      listeners.multicaster.onRangesChanged()
+
+      if (isValid()) listeners.multicaster.onBecomingValid()
     }
 
-    @RequiresEdt
-    private fun fireFileUnchanged(documentToSave: Document) {
-      if (GeneralSettings.getInstance().isSaveOnFrameDeactivation) {
-        // later to avoid saving inside document change event processing and deadlock with CLM.
-        ApplicationManager.getApplication().invokeLater(Runnable {
-          FileDocumentManager.getInstance().saveDocument(documentToSave)
-        }, project.disposed)
+    private fun isTrackerEmpty(): Boolean {
+      if (unstaged) {
+        return unstagedTracker.blocks.isEmpty()
+      }
+      else {
+        return stagedTracker.blocks.isEmpty()
       }
     }
   }
 
-  private class MyLineStatusMarkerPopupRenderer(val tracker: GitStageLineStatusTracker)
-    : LineStatusMarkerPopupRenderer(tracker) {
-    override fun getEditorFilter(): MarkupEditorFilter? = MarkupEditorFilterFactory.createIsNotDiffFilter()
+  private class MyLineStatusMarkerPopupRenderer(
+    private val tracker: GitStageLineStatusTracker
+  ) : LineStatusTrackerMarkerRenderer(tracker, MarkupEditorFilterFactory.createIsNotDiffFilter()) {
 
     override fun shouldPaintGutter(): Boolean {
       return tracker.mode.isVisible
@@ -349,9 +414,7 @@ class GitStageLineStatusTracker(
       return tracker.mode.isVisible && tracker.mode.showErrorStripeMarkers
     }
 
-    override fun paint(editor: Editor, g: Graphics) {
-      val ranges = tracker.getRanges() ?: return
-
+    override fun paintGutterMarkers(editor: Editor, ranges: List<Range>, g: Graphics) {
       val blocks: List<ChangesBlock<StageLineFlags>> = VisibleRangeMerger.merge(editor, ranges, MyLineFlagProvider, g.clipBounds)
       for (block in blocks) {
         paintStageLines(g as Graphics2D, editor, block.changes)
@@ -359,49 +422,117 @@ class GitStageLineStatusTracker(
     }
 
     private fun paintStageLines(g: Graphics2D, editor: Editor, block: List<ChangedLines<StageLineFlags>>) {
+      val isNewUi = ExperimentalUI.isNewUI()
+
+      val borderColor = LineStatusMarkerColorScheme.DEFAULT.getBorderColor(editor)
+
       val area = LineStatusMarkerDrawUtil.getGutterArea(editor)
       val x = area.first
       val endX = area.second
-      val midX = (endX + x + 3) / 2
+      val midX = if (isNewUi) (endX + x) / 2 else (endX + x + 3) / 2
+
+      val y = block.first().y1
+      val endY = block.last().y2
+
+      val hoveredLine = (editor as EditorEx).gutterComponentEx.hoveredFreeMarkersLine
 
       for (change in block) {
-        if (change.y1 != change.y2) {
+        if (change.y1 != change.y2 &&
+            change.flags.isUnstaged) {
           val start = change.y1
           val end = change.y2
-          val gutterColor = LineStatusMarkerDrawUtil.getGutterColor(change.type, editor)
+          val gutterColor = LineStatusMarkerColorScheme.DEFAULT.getColor(editor, change.type)
 
-          if (change.flags.isUnstaged && change.flags.isStaged) {
-            LineStatusMarkerDrawUtil.paintRect(g, gutterColor, null, x, start, midX, end)
-            LineStatusMarkerDrawUtil.paintRect(g, null, gutterColor, x, start, endX, end)
-          }
-          else if (change.flags.isStaged) {
-            LineStatusMarkerDrawUtil.paintRect(g, null, gutterColor, x, start, endX, end)
+          if (isNewUi && LineStatusMarkerDrawUtil.isRangeHovered(editor, hoveredLine, x, start, end)) {
+            g.paintUnStagedChange(change, gutterColor, x - 1, endX + 1, midX, start, end)
           }
           else {
-            LineStatusMarkerDrawUtil.paintRect(g, gutterColor, null, x, start, endX, end)
+            g.paintUnStagedChange(change, gutterColor, x, endX, midX, start, end)
           }
+        }
+      }
+
+      if (borderColor == null) {
+        for (change in block) {
+          if (change.y1 != change.y2 &&
+              change.flags.isStaged) {
+            val start = change.y1
+            val end = change.y2
+            val stagedBorderColor = LineStatusMarkerColorScheme.DEFAULT.getIgnoredBorderColor(editor, change.type)
+
+            if (isNewUi && LineStatusMarkerDrawUtil.isRangeHovered(editor, hoveredLine, x, start, end)) {
+              LineStatusMarkerDrawUtil.paintRect(g, null, stagedBorderColor, x - 1, start, endX + 1, end)
+            }
+            else {
+              LineStatusMarkerDrawUtil.paintRect(g, null, stagedBorderColor, x, start, endX, end)
+            }
+          }
+        }
+      }
+      else if (y != endY) {
+        if (isNewUi && LineStatusMarkerDrawUtil.isRangeHovered(editor, hoveredLine, x, y, endY)) {
+          LineStatusMarkerDrawUtil.paintRect(g, null, borderColor, x - 1, y, endX + 1, endY)
+        }
+        else {
+          LineStatusMarkerDrawUtil.paintRect(g, null, borderColor, x, y, endX, endY)
         }
       }
 
       for (change in block) {
         if (change.y1 == change.y2) {
           val start = change.y1
-          val gutterColor = LineStatusMarkerDrawUtil.getGutterColor(change.type, editor)
+          val gutterColor = LineStatusMarkerColorScheme.DEFAULT.getColor(editor, change.type)
+          val stagedBorderColor = borderColor ?: LineStatusMarkerColorScheme.DEFAULT.getIgnoredBorderColor(editor, change.type)
 
           if (change.flags.isUnstaged && change.flags.isStaged) {
-            paintStripeTriangle(g, editor, gutterColor, x, endX, start)
+            paintStripeTriangle(g, editor, gutterColor, stagedBorderColor, x, endX, start)
           }
           else if (change.flags.isStaged) {
-            LineStatusMarkerDrawUtil.paintTriangle(g, editor, null, gutterColor, x, endX, start)
+            LineStatusMarkerDrawUtil.paintTriangle(g, editor, null, stagedBorderColor, x, endX, start)
           }
           else {
-            LineStatusMarkerDrawUtil.paintTriangle(g, editor, gutterColor, null, x, endX, start)
+            LineStatusMarkerDrawUtil.paintTriangle(g, editor, gutterColor, borderColor, x, endX, start)
           }
         }
       }
     }
 
-    private fun paintStripeTriangle(g: Graphics2D, editor: Editor, color: Color?, x1: Int, x2: Int, y: Int) {
+    private fun Graphics2D.paintUnStagedChange(change: ChangedLines<StageLineFlags>, color: Color?,
+                                               x: Int, endX: Int, midX: Int,
+                                               start: Int, end: Int) {
+      if (change.flags.isStaged) {
+        if (ExperimentalUI.isNewUI()) {
+          paintHalfRoundedRect(color, x, start + 1, midX, end - 1, endX - x)
+        }
+        else {
+          LineStatusMarkerDrawUtil.paintRect(this, color, null, x, start, midX, end)
+        }
+      }
+      else {
+        LineStatusMarkerDrawUtil.paintRect(this, color, null, x, start, endX, end)
+      }
+    }
+
+    private fun Graphics2D.paintHalfRoundedRect(color: Color?, x1: Int, y1: Int, x2: Int, y2: Int, arc: Int) {
+      if (color == null) return
+      paintHalfRoundedRect(color, x1.toDouble(), y1.toDouble(), x2.toDouble(), y2.toDouble(), arc.toDouble())
+    }
+
+    private fun Graphics2D.paintHalfRoundedRect(color: Color, x1: Double, y1: Double, x2: Double, y2: Double, arc: Double) {
+      val path = Path2D.Double()
+      path.moveTo(x1, y1 + arc)
+      path.quadTo(x1, y1, x1 + arc, y1)
+      path.lineTo(x2, y1)
+      path.lineTo(x2, y2)
+      path.lineTo(x1 + arc, y2)
+      path.quadTo(x1, y2, x1, y2 - arc)
+      path.closePath()
+
+      this.color = color
+      PaintUtil.paintWithAA(this, RenderingHints.VALUE_ANTIALIAS_DEFAULT) { fill(path) }
+    }
+
+    private fun paintStripeTriangle(g: Graphics2D, editor: Editor, color: Color?, borderColor: Color?, x1: Int, x2: Int, y: Int) {
       @Suppress("NAME_SHADOWING") var y = y
       val editorScale = if (editor is EditorImpl) editor.scale else 1.0f
       val size = JBUIScale.scale(5 * editorScale).toInt()
@@ -413,7 +544,10 @@ class GitStageLineStatusTracker(
       if (color != null) {
         g.color = color
         g.fillPolygon(xPoints, yPointsFill, xPoints.size)
+      }
 
+      if (borderColor != null) {
+        g.color = borderColor
         val oldStroke = g.stroke
         g.stroke = BasicStroke(JBUIScale.scale(1).toFloat())
         g.drawPolygon(xPoints, yPointsBorder, xPoints.size)
@@ -439,8 +573,7 @@ class GitStageLineStatusTracker(
     }
 
     override fun showHintAt(editor: Editor, range: Range, mousePosition: Point?) {
-      if (!myTracker.isValid()) return
-      myTracker as GitStageLineStatusTracker
+      if (!tracker.isValid()) return
       range as StagedRange
 
       if (!range.hasStaged || !range.hasUnstaged) {
@@ -448,20 +581,22 @@ class GitStageLineStatusTracker(
         return
       }
 
-      val disposable = Disposer.newDisposable()
+      LineStatusMarkerPopupService.instance.buildAndShowPopup(tracker.disposable, editor, mousePosition) { popupDisposable->
+        val stagedTextField = createTextField(editor, tracker.stagedDocument, range.stagedLine1, range.stagedLine2)
+        val vcsTextField = createTextField(editor, tracker.vcsDocument, range.vcsLine1, range.vcsLine2)
+        installWordDiff(editor, stagedTextField, vcsTextField, range, popupDisposable)
 
-      val stagedTextField = createTextField(editor, myTracker.stagedDocument, range.stagedLine1, range.stagedLine2)
-      val vcsTextField = createTextField(editor, myTracker.vcsDocument, range.vcsLine1, range.vcsLine2)
-      installWordDiff(editor, stagedTextField, vcsTextField, range, disposable)
+        val editorsPanel = createEditorComponent(editor, stagedTextField, vcsTextField)
 
-      val editorsPanel = createEditorComponent(editor, stagedTextField, vcsTextField)
+        val actions = createToolbarActions(editor, range, mousePosition)
+        val toolbar = LineStatusMarkerPopupPanel.buildToolbar(editor, actions, popupDisposable)
 
-      val actions = createToolbarActions(editor, range, mousePosition)
-      val toolbar = LineStatusMarkerPopupPanel.buildToolbar(editor, actions, disposable)
+        val additionalPanel = createStageLinksPanel(editor, range, mousePosition, popupDisposable)
 
-      val additionalPanel = createStageLinksPanel(editor, range, mousePosition, disposable)
-
-      LineStatusMarkerPopupPanel.showPopupAt(editor, toolbar, editorsPanel, additionalPanel, mousePosition, disposable)
+        val popupPanel = LineStatusMarkerPopupPanel.create(editor, toolbar, editorsPanel, additionalPanel)
+        toolbar.setTargetComponent(popupPanel)
+        popupPanel
+      }
     }
 
     fun createEditorComponent(editor: Editor, stagedTextField: EditorTextField, vcsTextField: EditorTextField): JComponent {
@@ -496,7 +631,7 @@ class GitStageLineStatusTracker(
       val textRange = DiffUtil.getLinesRange(document, line1, line2)
       val content = textRange.subSequence(document.immutableCharSequence).toString()
       val textField = LineStatusMarkerPopupPanel.createTextField(editor, content)
-      LineStatusMarkerPopupPanel.installBaseEditorSyntaxHighlighters(myTracker.project, textField, document, textRange, fileType)
+      LineStatusMarkerPopupPanel.installBaseEditorSyntaxHighlighters(tracker.project, textField, document, textRange, fileType)
       return textField
     }
 
@@ -505,13 +640,12 @@ class GitStageLineStatusTracker(
                                 vcsTextField: EditorTextField,
                                 range: StagedRange,
                                 disposable: Disposable) {
-      myTracker as GitStageLineStatusTracker
       if (!DiffApplicationSettings.getInstance().SHOW_LST_WORD_DIFFERENCES) return
       if (!range.hasLines()) return
 
-      val currentContent = DiffUtil.getLinesContent(myTracker.document, range.line1, range.line2)
-      val stagedContent = DiffUtil.getLinesContent(myTracker.stagedDocument, range.stagedLine1, range.stagedLine2)
-      val vcsContent = DiffUtil.getLinesContent(myTracker.vcsDocument, range.vcsLine1, range.vcsLine2)
+      val currentContent = DiffUtil.getLinesContent(tracker.document, range.line1, range.line2)
+      val stagedContent = DiffUtil.getLinesContent(tracker.stagedDocument, range.stagedLine1, range.stagedLine2)
+      val vcsContent = DiffUtil.getLinesContent(tracker.vcsDocument, range.vcsLine1, range.vcsLine2)
       val (stagedWordDiff, vcsWordDiff) = BackgroundTaskUtil.tryComputeFast(
         { indicator ->
           Pair(if (range.hasStagedLines()) ByWord.compare(stagedContent, currentContent, ComparisonPolicy.DEFAULT, indicator) else null,
@@ -526,17 +660,31 @@ class GitStageLineStatusTracker(
       }
 
       if (stagedWordDiff != null || vcsWordDiff != null) {
-        val currentStartOffset = myTracker.document.getLineStartOffset(range.line1)
-        installMasterEditorWordHighlighters(editor, currentStartOffset, stagedWordDiff.orEmpty(), vcsWordDiff.orEmpty(), disposable)
+        installMasterEditorWordHighlighters(editor, range.line1, range.line2, stagedWordDiff.orEmpty(), vcsWordDiff.orEmpty(), disposable)
       }
     }
 
     private fun installMasterEditorWordHighlighters(editor: Editor,
-                                                    currentStartOffset: Int,
+                                                    startLine: Int,
+                                                    endLine: Int,
                                                     wordDiff1: List<DiffFragment>,
                                                     wordDiff2: List<DiffFragment>,
                                                     parentDisposable: Disposable) {
-      val highlighters = WordDiffMerger(editor, currentStartOffset, wordDiff1, wordDiff2).run()
+      val currentTextRange = DiffUtil.getLinesRange(editor.document, startLine, endLine)
+
+      DiffDrawUtil.setupLayeredRendering(editor, startLine, endLine,
+                                         DiffDrawUtil.LAYER_PRIORITY_LST, parentDisposable)
+
+      val highlighters = mutableListOf<RangeHighlighter>()
+      highlighters += LineHighlighterBuilder(editor, startLine, endLine, TextDiffType.MODIFIED)
+        .withLayerPriority(DiffDrawUtil.LAYER_PRIORITY_LST)
+        .withIgnored(true)
+        .withHideStripeMarkers(true)
+        .withHideGutterMarkers(true)
+        .done()
+
+      highlighters += WordDiffMerger(editor, currentTextRange.startOffset, wordDiff1, wordDiff2).run()
+
       Disposer.register(parentDisposable, Disposable {
         highlighters.forEach(RangeHighlighter::dispose)
       })
@@ -602,7 +750,9 @@ class GitStageLineStatusTracker(
           val currentStart = currentStartOffset + dirtyStart
           val currentEnd = currentStartOffset + dirtyEnd
           val type = affectedFragments.map { DiffUtil.getDiffType(it) }.distinct().singleOrNull() ?: TextDiffType.MODIFIED
-          highlighters.addAll(DiffDrawUtil.createInlineHighlighter(editor, currentStart, currentEnd, type))
+          highlighters.addAll(InlineHighlighterBuilder(editor, currentStart, currentEnd, type)
+                                .withLayerPriority(DiffDrawUtil.LAYER_PRIORITY_LST)
+                                .done())
 
           dirtyStart = -1
           dirtyEnd = -1
@@ -674,17 +824,26 @@ class GitStageLineStatusTracker(
 
     override fun createToolbarActions(editor: Editor, range: Range, mousePosition: Point?): List<AnAction> {
       val actions = ArrayList<AnAction>()
-      actions.add(ShowPrevChangeMarkerAction(editor, range))
-      actions.add(ShowNextChangeMarkerAction(editor, range))
+      actions.add(LineStatusMarkerPopupActions.ShowPrevChangeMarkerAction(editor, tracker, range, this))
+      actions.add(LineStatusMarkerPopupActions.ShowNextChangeMarkerAction(editor, tracker, range, this))
       actions.add(RollbackLineStatusRangeAction(editor, range))
       actions.add(StageShowDiffAction(editor, range))
-      actions.add(CopyLineStatusRangeAction(editor, range))
-      actions.add(ToggleByWordDiffAction(editor, range, mousePosition))
+      actions.add(LineStatusMarkerPopupActions.CopyLineStatusRangeAction(editor, tracker, range))
       return actions
     }
 
+    override fun createEditorContextMenuActions(editor: Editor, range: Range, mousePosition: Point?): List<AnAction> = listOf(
+      LineStatusMarkerPopupActions.CopyLineStatusRangeAction(editor, tracker, range),
+      Separator.getInstance(),
+      LineStatusMarkerPopupActions.ToggleByWordDiffAction(editor, tracker, range, mousePosition, this).apply {
+        templatePresentation.keepPopupOnPerform = KeepPopupOnPerform.Never
+      },
+    )
+
+    override fun toString(): String = "GitStageLineStatusTracker.MyLineStatusMarkerPopupRenderer(tracker=$tracker)"
+
     private inner class RollbackLineStatusRangeAction(editor: Editor, range: Range)
-      : RangeMarkerAction(editor, range, IdeActions.SELECTED_CHANGES_ROLLBACK) {
+      : LineStatusMarkerPopupActions.RangeMarkerAction(editor, tracker, range, IdeActions.SELECTED_CHANGES_ROLLBACK) {
       override fun isEnabled(editor: Editor, range: Range): Boolean = (range as StagedRange).hasUnstaged
 
       override fun actionPerformed(editor: Editor, range: Range) {
@@ -693,30 +852,35 @@ class GitStageLineStatusTracker(
     }
 
     private inner class StageShowDiffAction(editor: Editor, range: Range)
-      : RangeMarkerAction(editor, range, IdeActions.ACTION_SHOW_DIFF_COMMON), LightEditCompatible {
+      : LineStatusMarkerPopupActions.RangeMarkerAction(editor, tracker, range, IdeActions.ACTION_SHOW_DIFF_COMMON), LightEditCompatible {
       override fun isEnabled(editor: Editor, range: Range): Boolean = true
 
       override fun actionPerformed(editor: Editor, range: Range) {
         range as StagedRange
-        myTracker as GitStageLineStatusTracker
 
         val canExpandBefore = range.line1 != 0 && range.stagedLine1 != 0 && range.vcsLine1 != 0
-        val canExpandAfter = range.line2 < DiffUtil.getLineCount(myTracker.document) &&
-                             range.stagedLine2 < DiffUtil.getLineCount(myTracker.stagedDocument) &&
-                             range.vcsLine2 < DiffUtil.getLineCount(myTracker.vcsDocument)
+        val canExpandAfter = range.line2 < DiffUtil.getLineCount(tracker.document) &&
+                             range.stagedLine2 < DiffUtil.getLineCount(tracker.stagedDocument) &&
+                             range.vcsLine2 < DiffUtil.getLineCount(tracker.vcsDocument)
 
-        val currentContent = createDiffContent(myTracker.document, range.line1, range.line2,
+        val currentContent = createDiffContent(tracker.document, range.line1, range.line2,
                                                canExpandBefore, canExpandAfter)
-        val stagedContent = createDiffContent(myTracker.stagedDocument, range.stagedLine1, range.stagedLine2,
+        val stagedContent = createDiffContent(tracker.stagedDocument, range.stagedLine1, range.stagedLine2,
                                               canExpandBefore, canExpandAfter)
-        val vcsContent = createDiffContent(myTracker.vcsDocument, range.vcsLine1, range.vcsLine2,
+        val vcsContent = createDiffContent(tracker.vcsDocument, range.vcsLine1, range.vcsLine2,
                                            canExpandBefore, canExpandAfter)
 
         val request = SimpleDiffRequest(
           DiffBundle.message("dialog.title.diff.for.range"),
           vcsContent, stagedContent, currentContent,
           GitUtil.HEAD, GitBundle.message("stage.content.staged"), GitBundle.message("stage.content.local"))
-        DiffManager.getInstance().showDiff(myTracker.project, request)
+        request.putUserData(DiffUserDataKeysEx.VCS_DIFF_ACCEPT_RIGHT_TO_BASE_ACTION_TEXT,
+                            GitBundle.message("action.label.add.unstaged.range"))
+        request.putUserData(DiffUserDataKeysEx.VCS_DIFF_ACCEPT_BASE_TO_RIGHT_ACTION_TEXT,
+                            DiffBundle.message("action.presentation.diff.revert.text"))
+        request.putUserData(DiffUserDataKeysEx.VCS_DIFF_ACCEPT_LEFT_TO_BASE_ACTION_TEXT,
+                            GitBundle.message("action.label.reset.staged.range"))
+        DiffManager.getInstance().showDiff(tracker.project, request)
       }
 
       private fun createDiffContent(document: Document, line1: Int, line2: Int,
@@ -724,8 +888,8 @@ class GitStageLineStatusTracker(
         val textRange = DiffUtil.getLinesRange(document,
                                                line1 - if (canExpandBefore) 1 else 0,
                                                line2 + if (canExpandAfter) 1 else 0)
-        val content = DiffContentFactory.getInstance().create(myTracker.project, document, myTracker.virtualFile)
-        return DiffContentFactory.getInstance().createFragment(myTracker.project, content, textRange)
+        val content = DiffContentFactory.getInstance().create(tracker.project, document, tracker.virtualFile)
+        return DiffContentFactory.getInstance().createFragment(tracker.project, content, textRange)
       }
     }
   }
@@ -733,6 +897,11 @@ class GitStageLineStatusTracker(
   private inner class MyBlockOperations(lock: DocumentTracker.Lock) : LineStatusTrackerBlockOperations<StagedRange, StagedRange>(lock) {
     override fun getBlocks(): List<StagedRange>? = if (isValid()) blocks else null
     override fun StagedRange.toRange(): StagedRange = this
+  }
+
+  private inner class MyStagedBlockOperations(lock: DocumentTracker.Lock) : LineStatusTrackerBlockOperations<Range, BlockI>(lock) {
+    override fun getBlocks(): List<BlockI>? = if (isValid()) unstagedTracker.blocks else null
+    override fun BlockI.toRange(): Range = Range(start, end, vcsStart, vcsEnd)
   }
 }
 
@@ -747,7 +916,7 @@ class StagedRange(line1: Int, line2: Int,
   override val vcsEnd: Int get() = vcsLine2
   override val isEmpty: Boolean get() = line1 == line2 && stagedLine1 == stagedLine2 && vcsLine1 == vcsLine2
 
-  fun hasStagedLines() : Boolean = stagedLine1 != stagedLine2
+  fun hasStagedLines(): Boolean = stagedLine1 != stagedLine2
 }
 
 private class BlockMerger(private val staged: List<DocumentTracker.Block>,

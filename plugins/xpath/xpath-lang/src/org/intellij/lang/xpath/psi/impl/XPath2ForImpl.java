@@ -18,7 +18,11 @@ package org.intellij.lang.xpath.psi.impl;
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.intellij.lang.xpath.XPath2ElementTypes;
-import org.intellij.lang.xpath.psi.*;
+import org.intellij.lang.xpath.psi.XPath2ElementVisitor;
+import org.intellij.lang.xpath.psi.XPath2For;
+import org.intellij.lang.xpath.psi.XPathExpression;
+import org.intellij.lang.xpath.psi.XPathType;
+import org.intellij.lang.xpath.psi.XPathVariableDeclaration;
 import org.jetbrains.annotations.NotNull;
 
 public class XPath2ForImpl extends XPath2ElementImpl implements XPath2For {
@@ -27,8 +31,7 @@ public class XPath2ForImpl extends XPath2ElementImpl implements XPath2For {
   }
 
   @Override
-  @NotNull
-  public XPathType getType() {
+  public @NotNull XPathType getType() {
     final XPathExpression value = getReturn();
     return value != null ? value.getType() : XPathType.UNKNOWN;
   }

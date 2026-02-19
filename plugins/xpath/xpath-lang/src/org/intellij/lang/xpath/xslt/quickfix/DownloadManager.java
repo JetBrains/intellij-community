@@ -38,62 +38,61 @@ import java.lang.reflect.InvocationTargetException;
 import java.util.Set;
 
 public abstract class DownloadManager {
-  private static final ExternalResourceManager resourceManager = ExternalResourceManager.getInstance();
-
-  private final Project myProject;
-  private final ProgressIndicator myProgress;
-  private final String myResourcePath;
+  private final Project project;
+  private final ProgressIndicator progress;
+  private final String resourcePath;
 
   public DownloadManager(Project project, ProgressIndicator progress) {
-    myProject = project;
-    myProgress = progress;
+    this.project = project;
+    this.progress = progress;
 
-    myResourcePath = PathManager.getSystemPath() + File.separatorChar + "extResources";
+    resourcePath = PathManager.getSystemPath() + File.separatorChar + "extResources";
     //noinspection ResultOfMethodCallIgnored
-    new File(myResourcePath).mkdirs();
+    new File(resourcePath).mkdirs();
   }
 
-  public void fetch(@NotNull final String location) throws DownloadException {
-    if (resourceManager.getResourceLocation(location, myProject) != location) {
+  public void fetch(@NotNull String location) throws DownloadException {
+    if (!location.equals(ExternalResourceManager.getInstance().getResourceLocation(location, project))) {
       return;
     }
 
-    myProgress.setText(XPathBundle.message("progress.text.downloading", location));
+    progress.setText(XPathBundle.message("progress.text.downloading", location));
 
     File file = null;
     try {
-      file = HttpRequests.request(location).connect(new HttpRequests.RequestProcessor<File>() {
+      file = HttpRequests.request(location).connect(new HttpRequests.RequestProcessor<>() {
         @Override
         public File process(@NotNull HttpRequests.Request request) throws IOException {
           String name = Integer.toHexString(System.identityHashCode(this)) + "_" +
                         Integer.toHexString(location.hashCode()) + "_" +
                         location.substring(location.lastIndexOf('/') + 1);
-          return request.saveToFile(new File(myResourcePath, name.lastIndexOf('.') == -1 ? name + ".xml" : name), myProgress);
+          return request.saveToFile(new File(resourcePath, name.lastIndexOf('.') == -1 ? name + ".xml" : name), progress);
         }
       });
 
       try {
         //noinspection unchecked
-        final Set<String>[] resourceDependencies = new Set[1];
-        final VirtualFile vf = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file);
+        Set<String>[] resourceDependencies = new Set[1];
+        VirtualFile vf = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file);
         if (vf != null) {
-          PsiFile psiFile = PsiManager.getInstance(myProject).findFile(vf);
+          PsiFile psiFile = PsiManager.getInstance(project).findFile(vf);
           if (psiFile != null && isAccepted(psiFile)) {
             resourceDependencies[0] = getResourceDependencies(psiFile);
-            resourceManager.addResource(location, file.getAbsolutePath());
+            ExternalResourceManager.getInstance().addResource(location, file.getAbsolutePath());
           }
           else {
-            ApplicationManager.getApplication().invokeLater(
-              () -> Messages.showErrorDialog(myProject,
-                                             XPathBundle.message("dialog.message.not.valid.file", vf.getPresentableUrl()),
-                                             XPathBundle.message("dialog.title.download.problem")), myProject.getDisposed());
+            ApplicationManager.getApplication().invokeLater(() -> {
+              Messages.showErrorDialog(project,
+                                       XPathBundle.message("dialog.message.not.valid.file", vf.getPresentableUrl()),
+                                       XPathBundle.message("dialog.title.download.problem"));
+            }, project.getDisposed());
           }
         }
 
         if (resourceDependencies[0] != null) {
           for (String s : resourceDependencies[0]) {
-            myProgress.checkCanceled();
-            myProgress.setFraction(0);
+            progress.checkCanceled();
+            progress.setFraction(0);
             fetch(s);
           }
         }
@@ -119,7 +118,7 @@ public abstract class DownloadManager {
       throw new DownloadException(location, e);
     }
     finally {
-      if (file != null && resourceManager.getResourceLocation(location, myProject) == location) {
+      if (file != null && location.equals(ExternalResourceManager.getInstance().getResourceLocation(location, project))) {
         // something went wrong. get rid of the file
         FileUtil.delete(file);
       }

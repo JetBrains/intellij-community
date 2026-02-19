@@ -1,16 +1,18 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.dvcs.push.ui
 
 import com.intellij.dvcs.push.PushSupport
 import com.intellij.dvcs.push.PushTarget
 import com.intellij.dvcs.ui.DvcsBundle
+import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.ui.DialogWrapper
+import com.intellij.openapi.ui.DoNotAskOption
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.ui.showOkCancelDialog
+import com.intellij.util.ui.UIUtil
 import com.intellij.xml.util.XmlStringUtil
 
-private class ForcePushAction : PushActionBase() {
+internal class ForcePushAction : PushActionBase() {
   override fun actionPerformed(project: Project, ui: VcsPushUi) {
     if (confirmForcePush(project, ui)) {
       ui.push(true)
@@ -23,10 +25,18 @@ private class ForcePushAction : PushActionBase() {
 
   override fun getDescription(ui: VcsPushUi, enabled: Boolean): String? {
     val prohibitedTarget = getProhibitedTarget(ui)
-    return if (!enabled && prohibitedTarget != null) {
-      DvcsBundle.message("action.force.push.is.prohibited.description", prohibitedTarget.presentation)
+    val configurablePath = getProhibitedTargetConfigurablePath(ui)
+    if (!enabled && prohibitedTarget != null) {
+      var message = DvcsBundle.message("action.force.push.is.prohibited.description", prohibitedTarget.presentation)
+      if (configurablePath != null) {
+        message += UIUtil.BR + DvcsBundle.message("action.force.push.is.prohibited.settings.link", configurablePath)
+      }
+      return message
     }
-    else null
+    if (configurablePath != null) {
+      return DvcsBundle.message("action.force.push.is.prohibited.settings.link", configurablePath)
+    }
+    return null
   }
 
   private fun confirmForcePush(project: Project, ui: VcsPushUi): Boolean {
@@ -54,11 +64,17 @@ private class ForcePushAction : PushActionBase() {
     }
 
     val message = if (commonTarget != null) {
-      DvcsBundle.message("action.force.push.to.confirmation.text", commonTarget.presentation)
+      val presentation = "'${commonTarget.presentation}'"
+      DvcsBundle.message("action.force.push.to.confirmation.text", presentation)
     }
     else {
       DvcsBundle.message("action.force.push.confirmation.text")
     }
+
+    if (AdvancedSettings.getBoolean("vcs.allow.force.push.without.confirmation")) {
+      return true
+    }
+
     val myDoNotAskOption = if (commonTarget != null) MyDoNotAskOptionForPush(aSupport!!, commonTarget) else null
     val decision = showOkCancelDialog(title = DvcsBundle.message("force.push.dialog.title"),
                                       message = XmlStringUtil.wrapInHtml(message),
@@ -70,7 +86,7 @@ private class ForcePushAction : PushActionBase() {
 }
 
 private class MyDoNotAskOptionForPush(private val pushSupport: PushSupport<*, *, PushTarget>,
-                                      private val commonTarget: PushTarget) : DialogWrapper.DoNotAskOption.Adapter() {
+                                      private val commonTarget: PushTarget) : DoNotAskOption.Adapter() {
   override fun rememberChoice(isSelected: Boolean, exitCode: Int) {
     if (exitCode == Messages.OK && isSelected) {
       pushSupport.saveSilentForcePushTarget(commonTarget)

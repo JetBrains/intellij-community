@@ -1,20 +1,63 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.compiler.notNullVerification;
 
-import com.intellij.compiler.instrumentation.FailSafeClassReader;
 import com.intellij.compiler.instrumentation.FailSafeMethodVisitor;
-import org.jetbrains.org.objectweb.asm.*;
+import org.jetbrains.org.objectweb.asm.AnnotationVisitor;
+import org.jetbrains.org.objectweb.asm.ClassReader;
+import org.jetbrains.org.objectweb.asm.ClassVisitor;
+import org.jetbrains.org.objectweb.asm.Handle;
+import org.jetbrains.org.objectweb.asm.Label;
+import org.jetbrains.org.objectweb.asm.MethodVisitor;
+import org.jetbrains.org.objectweb.asm.Type;
+import org.jetbrains.org.objectweb.asm.TypePath;
+import org.jetbrains.org.objectweb.asm.TypeReference;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
-import java.util.*;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.LinkedHashMap;
+import java.util.Map;
+import java.util.Set;
 
-/**
- * @author ven
- */
-public final class NotNullVerifyingInstrumenter extends ClassVisitor implements Opcodes {
+import static org.jetbrains.org.objectweb.asm.Opcodes.ACC_BRIDGE;
+import static org.jetbrains.org.objectweb.asm.Opcodes.ACC_ENUM;
+import static org.jetbrains.org.objectweb.asm.Opcodes.ACC_FINAL;
+import static org.jetbrains.org.objectweb.asm.Opcodes.ACC_PRIVATE;
+import static org.jetbrains.org.objectweb.asm.Opcodes.ACC_STATIC;
+import static org.jetbrains.org.objectweb.asm.Opcodes.ALOAD;
+import static org.jetbrains.org.objectweb.asm.Opcodes.ANEWARRAY;
+import static org.jetbrains.org.objectweb.asm.Opcodes.API_VERSION;
+import static org.jetbrains.org.objectweb.asm.Opcodes.ARETURN;
+import static org.jetbrains.org.objectweb.asm.Opcodes.CHECKCAST;
+import static org.jetbrains.org.objectweb.asm.Opcodes.DUP;
+import static org.jetbrains.org.objectweb.asm.Opcodes.DUP2;
+import static org.jetbrains.org.objectweb.asm.Opcodes.DUP2_X1;
+import static org.jetbrains.org.objectweb.asm.Opcodes.DUP2_X2;
+import static org.jetbrains.org.objectweb.asm.Opcodes.DUP_X1;
+import static org.jetbrains.org.objectweb.asm.Opcodes.DUP_X2;
+import static org.jetbrains.org.objectweb.asm.Opcodes.GOTO;
+import static org.jetbrains.org.objectweb.asm.Opcodes.IFNONNULL;
+import static org.jetbrains.org.objectweb.asm.Opcodes.IINC;
+import static org.jetbrains.org.objectweb.asm.Opcodes.INVOKEDYNAMIC;
+import static org.jetbrains.org.objectweb.asm.Opcodes.INVOKESPECIAL;
+import static org.jetbrains.org.objectweb.asm.Opcodes.INVOKESTATIC;
+import static org.jetbrains.org.objectweb.asm.Opcodes.INVOKEVIRTUAL;
+import static org.jetbrains.org.objectweb.asm.Opcodes.JSR;
+import static org.jetbrains.org.objectweb.asm.Opcodes.LDC;
+import static org.jetbrains.org.objectweb.asm.Opcodes.LOOKUPSWITCH;
+import static org.jetbrains.org.objectweb.asm.Opcodes.MULTIANEWARRAY;
+import static org.jetbrains.org.objectweb.asm.Opcodes.NEW;
+import static org.jetbrains.org.objectweb.asm.Opcodes.NEWARRAY;
+import static org.jetbrains.org.objectweb.asm.Opcodes.NOP;
+import static org.jetbrains.org.objectweb.asm.Opcodes.RET;
+import static org.jetbrains.org.objectweb.asm.Opcodes.TABLESWITCH;
+
+public final class NotNullVerifyingInstrumenter extends ClassVisitor {
   private static final String IAE_CLASS_NAME = "java/lang/IllegalArgumentException";
   private static final String ISE_CLASS_NAME = "java/lang/IllegalStateException";
+  private static final String KOTLIN_METADATA_ANNOTATION_CLASS_DESCRIPTOR = "Lkotlin/Metadata;";
 
   private static final String ANNOTATION_DEFAULT_METHOD = "value";
 
@@ -27,8 +70,8 @@ public final class NotNullVerifyingInstrumenter extends ClassVisitor implements 
   private final AuxiliaryMethodGenerator myAuxGenerator;
 
   private NotNullVerifyingInstrumenter(ClassVisitor classVisitor, ClassReader reader, String[] notNullAnnotations) {
-    super(Opcodes.API_VERSION, classVisitor);
-    Set<String> annoSet = new HashSet<String>();
+    super(API_VERSION, classVisitor);
+    Set<String> annoSet = new HashSet<>();
     for (String annotation : notNullAnnotations) {
       annoSet.add('L' + annotation.replace('.', '/') + ';');
     }
@@ -36,24 +79,20 @@ public final class NotNullVerifyingInstrumenter extends ClassVisitor implements 
     myAuxGenerator = new AuxiliaryMethodGenerator(reader);
   }
 
-  /**
-   * @deprecated use {@link NotNullVerifyingInstrumenter#processClassFile(ClassReader, ClassVisitor, String[])} instead
-   */
-  @Deprecated
-  public static boolean processClassFile(FailSafeClassReader reader, ClassVisitor writer, String[] notNullAnnotations) {
-    return processClassFile((ClassReader)reader, writer, notNullAnnotations);
-  }
-
   public static boolean processClassFile(ClassReader reader, ClassVisitor writer, String[] notNullAnnotations) {
     NotNullVerifyingInstrumenter instrumenter = new NotNullVerifyingInstrumenter(writer, reader, notNullAnnotations);
+    if (instrumenter.myMethodData.myIsKotlinBytecode) {
+      // skip Kotlin-generated bytecode, as nullability assertions are handled on compiler level by kotlinc
+      return false;
+    }
     reader.accept(instrumenter, 0);
     return instrumenter.myIsModification;
   }
 
   private static class MethodInfo {
     final NotNullState nullability = new NotNullState();
-    final Map<Integer, String> paramNames = new HashMap<Integer, String>();
-    final Map<Integer, NotNullState> paramNullability = new LinkedHashMap<Integer, NotNullState>();
+    final Map<Integer, String> paramNames = new HashMap<>();
+    final Map<Integer, NotNullState> paramNullability = new LinkedHashMap<>();
     boolean isStable;
     int paramAnnotationOffset;
 
@@ -69,7 +108,8 @@ public final class NotNullVerifyingInstrumenter extends ClassVisitor implements 
 
   private static final class MethodData {
     private String myClassName;
-    private final Map<String, MethodInfo> myMethodInfos = new HashMap<String, MethodInfo>();
+    private boolean myIsKotlinBytecode;
+    private final Map<String, MethodInfo> myMethodInfos = new HashMap<>();
 
     static String key(String methodName, String desc) {
       return methodName + desc;
@@ -92,8 +132,16 @@ public final class NotNullVerifyingInstrumenter extends ClassVisitor implements 
 
   private static MethodData collectMethodData(ClassReader reader, final Set<String> notNullAnnotations) {
     final MethodData result = new MethodData();
-    reader.accept(new ClassVisitor(Opcodes.API_VERSION) {
+    reader.accept(new ClassVisitor(API_VERSION) {
       private boolean myEnum, myInner;
+
+      @Override
+      public AnnotationVisitor visitAnnotation(String desc, boolean visible) {
+        if (KOTLIN_METADATA_ANNOTATION_CLASS_DESCRIPTOR.equals(desc)) {
+          result.myIsKotlinBytecode = true;
+        }
+        return super.visitAnnotation(desc, visible);
+      }
 
       @Override
       public void visit(int version, int access, String name, String signature, String superName, String[] interfaces) {
@@ -115,7 +163,7 @@ public final class NotNullVerifyingInstrumenter extends ClassVisitor implements 
         final Type[] args = Type.getArgumentTypes(desc);
         final boolean methodCanHaveNullability = isReferenceType(Type.getReturnType(desc));
 
-        final Map<Integer, Integer> paramSlots = new LinkedHashMap<Integer, Integer>(); // map: localVariableSlot -> methodParameterIndex
+        final Map<Integer, Integer> paramSlots = new LinkedHashMap<>(); // map: localVariableSlot -> methodParameterIndex
         int slotIndex = isStatic(access) ? 0 : 1;
         for (int paramIndex = 0; paramIndex < args.length; paramIndex++) {
           Type arg = args[paramIndex];
@@ -124,7 +172,7 @@ public final class NotNullVerifyingInstrumenter extends ClassVisitor implements 
         }
 
         final MethodInfo methodInfo = new MethodInfo();
-        methodInfo.isStable = (access & (Opcodes.ACC_FINAL | Opcodes.ACC_STATIC | Opcodes.ACC_PRIVATE)) != 0;
+        methodInfo.isStable = (access & (ACC_FINAL | ACC_STATIC | ACC_PRIVATE)) != 0;
         methodInfo.paramAnnotationOffset = !"<init>".equals(name) ? 0 : myEnum ? 2 : myInner ? 1 : 0;
         result.myMethodInfos.put(MethodData.key(name, desc), methodInfo);
 
@@ -183,7 +231,7 @@ public final class NotNullVerifyingInstrumenter extends ClassVisitor implements 
           }
 
           private AnnotationVisitor collectNotNullArgs(AnnotationVisitor base, final NotNullState state) {
-            return new AnnotationVisitor(Opcodes.API_VERSION, base) {
+            return new AnnotationVisitor(API_VERSION, base) {
               @Override
               public void visit(String methodName, Object o) {
                 if (ANNOTATION_DEFAULT_METHOD.equals(methodName) && !((String) o).isEmpty()) {
@@ -261,14 +309,14 @@ public final class NotNullVerifyingInstrumenter extends ClassVisitor implements 
   @Override
   public MethodVisitor visitMethod(int access, final String name, final String desc, String signature, String[] exceptions) {
     final MethodInfo info = myMethodData.myMethodInfos.get(MethodData.key(name, desc));
-    if ((access & Opcodes.ACC_BRIDGE) != 0 || info == null) {
-      return new FailSafeMethodVisitor(Opcodes.API_VERSION, super.visitMethod(access, name, desc, signature, exceptions));
+    if ((access & ACC_BRIDGE) != 0 || info == null) {
+      return new FailSafeMethodVisitor(API_VERSION, super.visitMethod(access, name, desc, signature, exceptions));
     }
 
     final boolean isStatic = isStatic(access);
     final Type[] args = Type.getArgumentTypes(desc);
     final NotNullInstructionTracker instrTracker = new NotNullInstructionTracker(cv.visitMethod(access, name, desc, signature, exceptions));
-    return new FailSafeMethodVisitor(Opcodes.API_VERSION, instrTracker) {
+    return new FailSafeMethodVisitor(API_VERSION, instrTracker) {
       private Label myStartGeneratedCodeLabel;
 
       @Override
@@ -278,7 +326,7 @@ public final class NotNullVerifyingInstrumenter extends ClassVisitor implements 
             iterator.remove();
           }
         }
-        if (info.paramNullability.size() > 0) {
+        if (!info.paramNullability.isEmpty()) {
           myStartGeneratedCodeLabel = new Label();
           mv.visitLabel(myStartGeneratedCodeLabel);
         }
@@ -332,6 +380,7 @@ public final class NotNullVerifyingInstrumenter extends ClassVisitor implements 
       }
 
       @Override
+      @SuppressWarnings("SpellCheckingInspection")
       public void visitMaxs(int maxStack, int maxLocals) {
         try {
           super.visitMaxs(maxStack, maxLocals);
@@ -390,7 +439,7 @@ public final class NotNullVerifyingInstrumenter extends ClassVisitor implements 
     private boolean myCanBeNull = true; // initially assume the value can be null
 
     NotNullInstructionTracker(MethodVisitor delegate) {
-      super(Opcodes.API_VERSION, delegate);
+      super(API_VERSION, delegate);
     }
 
     public boolean canBeNull() {
@@ -429,7 +478,7 @@ public final class NotNullVerifyingInstrumenter extends ClassVisitor implements 
 
     @Override
     public void visitInvokeDynamicInsn(String name, String descriptor, Handle bootstrapMethodHandle, Object... bootstrapMethodArguments) {
-      myCanBeNull = nextCanBeNullValue(Opcodes.INVOKEDYNAMIC);
+      myCanBeNull = nextCanBeNullValue(INVOKEDYNAMIC);
       super.visitInvokeDynamicInsn(name, descriptor, bootstrapMethodHandle, bootstrapMethodArguments);
     }
 
@@ -441,31 +490,31 @@ public final class NotNullVerifyingInstrumenter extends ClassVisitor implements 
 
     @Override
     public void visitLdcInsn(Object value) {
-      myCanBeNull = nextCanBeNullValue(Opcodes.LDC);
+      myCanBeNull = nextCanBeNullValue(LDC);
       super.visitLdcInsn(value);
     }
 
     @Override
     public void visitIincInsn(int var, int increment) {
-      myCanBeNull = nextCanBeNullValue(Opcodes.IINC);
+      myCanBeNull = nextCanBeNullValue(IINC);
       super.visitIincInsn(var, increment);
     }
 
     @Override
-    public void visitTableSwitchInsn(int min, int max, Label dflt, Label... labels) {
-      myCanBeNull = nextCanBeNullValue(Opcodes.TABLESWITCH);
-      super.visitTableSwitchInsn(min, max, dflt, labels);
+    public void visitTableSwitchInsn(int min, int max, Label defaultLabel, Label... labels) {
+      myCanBeNull = nextCanBeNullValue(TABLESWITCH);
+      super.visitTableSwitchInsn(min, max, defaultLabel, labels);
     }
 
     @Override
-    public void visitLookupSwitchInsn(Label dflt, int[] keys, Label[] labels) {
-      myCanBeNull = nextCanBeNullValue(Opcodes.LOOKUPSWITCH);
-      super.visitLookupSwitchInsn(dflt, keys, labels);
+    public void visitLookupSwitchInsn(Label defaultLabel, int[] keys, Label[] labels) {
+      myCanBeNull = nextCanBeNullValue(LOOKUPSWITCH);
+      super.visitLookupSwitchInsn(defaultLabel, keys, labels);
     }
 
     @Override
     public void visitMultiANewArrayInsn(String descriptor, int numDimensions) {
-      myCanBeNull = nextCanBeNullValue(Opcodes.MULTIANEWARRAY);
+      myCanBeNull = nextCanBeNullValue(MULTIANEWARRAY);
       super.visitMultiANewArrayInsn(descriptor, numDimensions);
     }
 
@@ -476,11 +525,11 @@ public final class NotNullVerifyingInstrumenter extends ClassVisitor implements 
     }
 
     private boolean nextCanBeNullValue(int nextMethodCallOpcode, String owner, String name, String descriptor) {
-      if (nextMethodCallOpcode == Opcodes.INVOKESPECIAL && ("<init>".equals(name) || myMethodData.isAlwaysNotNull(owner, name, descriptor))) {
+      if (nextMethodCallOpcode == INVOKESPECIAL && ("<init>".equals(name) || myMethodData.isAlwaysNotNull(owner, name, descriptor))) {
         // a constructor call or a NotNull marked own method
         return false;
       }
-      if ((nextMethodCallOpcode == Opcodes.INVOKESTATIC || nextMethodCallOpcode == Opcodes.INVOKEVIRTUAL) &&
+      if ((nextMethodCallOpcode == INVOKESTATIC || nextMethodCallOpcode == INVOKEVIRTUAL) &&
           myMethodData.isAlwaysNotNull(owner, name, descriptor)) {
         return false;
       }
@@ -489,15 +538,14 @@ public final class NotNullVerifyingInstrumenter extends ClassVisitor implements 
 
     private boolean nextCanBeNullValue(int nextOpcode) {
       // if instruction guaranteed produces non-null stack value
-      if (nextOpcode == Opcodes.LDC || nextOpcode == NEW ||
-          nextOpcode == ANEWARRAY || nextOpcode == Opcodes.NEWARRAY || nextOpcode == Opcodes.MULTIANEWARRAY) {
+      if (nextOpcode == LDC || nextOpcode == NEW || nextOpcode == ANEWARRAY || nextOpcode == NEWARRAY || nextOpcode == MULTIANEWARRAY) {
         return false;
       }
-      // for some instructions it is safe not to change previously calculated flag value
-      if (nextOpcode == Opcodes.DUP || nextOpcode == Opcodes.DUP_X1 || nextOpcode == Opcodes.DUP_X2 ||
-          nextOpcode == Opcodes.DUP2 || nextOpcode == Opcodes.DUP2_X1 || nextOpcode == Opcodes.DUP2_X2 ||
-          nextOpcode == Opcodes.JSR || nextOpcode == Opcodes.GOTO || nextOpcode == Opcodes.NOP ||
-          nextOpcode == Opcodes.RET || nextOpcode == Opcodes.CHECKCAST) {
+      // for some instructions, it is safe not to change the previously calculated flag value
+      if (nextOpcode == DUP || nextOpcode == DUP_X1 || nextOpcode == DUP_X2 ||
+          nextOpcode == DUP2 || nextOpcode == DUP2_X1 || nextOpcode == DUP2_X2 ||
+          nextOpcode == JSR || nextOpcode == GOTO || nextOpcode == NOP ||
+          nextOpcode == RET || nextOpcode == CHECKCAST) {
         return myCanBeNull;
       }
       // by default assume nullable

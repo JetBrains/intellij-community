@@ -1,8 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
-/*
- * @author max
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
@@ -10,46 +6,50 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.KeyedExtensionCollector;
 import com.intellij.util.KeyedLazyInstance;
 import com.intellij.util.containers.ContainerUtil;
-import gnu.trove.THashSet;
+import kotlinx.collections.immutable.PersistentList;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.UnknownNullability;
+import org.jetbrains.annotations.Unmodifiable;
 
-import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import static com.intellij.lang.LanguageUtil.matchingMetaLanguages;
+import static kotlinx.collections.immutable.ExtensionsKt.persistentListOf;
 
 public class LanguageExtension<T> extends KeyedExtensionCollector<T, Language> {
-  private final T myDefaultImplementation;
-  private final /* non static!!! */ Key<T> myCacheKey;
-  private final /* non static!!! */ Key<List<T>> myAllCacheKey;
+  private final T defaultImplementation;
+  private final /* non static!!! */ Key<T> cacheKey;
+  private final /* non static!!! */ Key<PersistentList<T>> allCacheKey;
+  private final /* non static!!! */ Key<PersistentList<T>> allCacheWithDefaultKey;
 
-  public LanguageExtension(@NotNull final ExtensionPointName<? extends KeyedLazyInstance<T>> epName) {
+  public LanguageExtension(final @NotNull ExtensionPointName<? extends KeyedLazyInstance<T>> epName) {
     this(epName.getName(), null);
   }
 
-  public LanguageExtension(@NotNull @NonNls final String epName) {
+  public LanguageExtension(final @NotNull @NonNls String epName) {
     this(epName, null);
   }
 
-  public LanguageExtension(@NotNull final ExtensionPointName<? extends KeyedLazyInstance<T>> epName, @Nullable T defaultImplementation) {
+  public LanguageExtension(final @NotNull ExtensionPointName<? extends KeyedLazyInstance<T>> epName, @Nullable T defaultImplementation) {
     this(epName.getName(), defaultImplementation);
   }
 
   public LanguageExtension(@NonNls String epName, @Nullable T defaultImplementation) {
     super(epName);
-    myDefaultImplementation = defaultImplementation;
-    myCacheKey = Key.create("EXTENSIONS_IN_LANGUAGE_" + epName);
-    myAllCacheKey = Key.create("ALL_EXTENSIONS_IN_LANGUAGE_" + epName);
+    this.defaultImplementation = defaultImplementation;
+    cacheKey = Key.create("EXTENSIONS_IN_LANGUAGE_" + epName);
+    allCacheKey = Key.create("ALL_EXTENSIONS_IN_LANGUAGE_" + epName);
+    allCacheWithDefaultKey = Key.create("ALL_EXTENSIONS_IN_LANGUAGE_" + epName + "_WITH_DEFAULT");
   }
 
-  @NotNull
   @Override
-  protected String keyToString(@NotNull final Language key) {
+  protected @NotNull String keyToString(@NotNull Language key) {
     return key.getID();
   }
 
@@ -60,34 +60,33 @@ public class LanguageExtension<T> extends KeyedExtensionCollector<T, Language> {
   }
 
   private void clearCacheForDerivedLanguages(@NotNull Language language) {
-    Set<Language> languages = LanguageUtil.getAllDerivedLanguages(language);  // includes language itself
-    for (Language derivedLanguage : languages) {
-      clearCacheForLanguage(derivedLanguage);
-
-      Collection<MetaLanguage> metaLanguages = matchingMetaLanguages(derivedLanguage);
-      for (MetaLanguage metaLanguage : metaLanguages) {
+    for (Language dialect : ContainerUtil.concat(language.getTransitiveDialects(), Collections.singletonList(language))) {
+      clearCacheForLanguage(dialect);
+      for (MetaLanguage metaLanguage : LanguageUtil.matchingMetaLanguages(dialect)) {
         clearCacheForLanguage(metaLanguage);
       }
     }
     if (language instanceof MetaLanguage) {
       Collection<Language> matchingLanguages = ((MetaLanguage)language).getMatchingLanguages();
       for (Language matchingLanguage : matchingLanguages) {
-        Set<Language> matchingDerivedLanguages = LanguageUtil.getAllDerivedLanguages(matchingLanguage);  // includes language itself
-        for (Language derivedLanguage : matchingDerivedLanguages) {
-          clearCacheForLanguage(derivedLanguage);
+        Collection<Language> dialects = matchingLanguage.getTransitiveDialects();
+        clearCacheForLanguage(matchingLanguage);
+        for (Language dialect : dialects) {
+          clearCacheForLanguage(dialect);
         }
       }
     }
   }
 
-  private void clearCacheForLanguage(Language language) {
-    language.putUserData(myCacheKey, null);
-    language.putUserData(myAllCacheKey, null);
+  private void clearCacheForLanguage(@NotNull Language language) {
+    language.putUserData(cacheKey, null);
+    language.putUserData(allCacheKey, null);
+    language.putUserData(allCacheWithDefaultKey, null);
     super.invalidateCacheForExtension(language.getID());
   }
 
   @Override
-  public void invalidateCacheForExtension(String key) {
+  public void invalidateCacheForExtension(@NotNull String key) {
     super.invalidateCacheForExtension(key);
 
     final Language language = Language.findLanguageByID(key);
@@ -96,13 +95,13 @@ public class LanguageExtension<T> extends KeyedExtensionCollector<T, Language> {
     }
   }
 
-  public T forLanguage(@NotNull Language l) {
-    T cached = l.getUserData(myCacheKey);
+  public @UnknownNullability T forLanguage(@NotNull Language l) {
+    T cached = l.getUserData(cacheKey);
     if (cached != null) return cached;
 
     T result = findForLanguage(l);
     if (result == null) return null;
-    result = l.putUserDataIfAbsent(myCacheKey, result);
+    result = l.putUserDataIfAbsent(cacheKey, result);
     return result;
   }
 
@@ -113,51 +112,61 @@ public class LanguageExtension<T> extends KeyedExtensionCollector<T, Language> {
         return extensions.get(0);
       }
     }
-    return myDefaultImplementation;
+    return defaultImplementation;
   }
 
   /**
+   * Returns all extensions registered for the language and basic dialects.
+   * Note: It does not include {@link #defaultImplementation}, if you need use {@link #allForLanguageWithDefault(Language)} instead.
+   *
    *  @see #allForLanguageOrAny(Language)
    */
-  @NotNull
-  public List<T> allForLanguage(@NotNull Language language) {
-    List<T> cached = language.getUserData(myAllCacheKey);
-    if (cached != null) return cached;
-    List<T> result = collectAllForLanguage(language);
-    return language.putUserDataIfAbsent(myAllCacheKey, result);
+  public @NotNull @Unmodifiable List<T> allForLanguage(@NotNull Language language) {
+    List<T> cached = language.getUserData(allCacheKey);
+    if (cached != null) {
+      return cached;
+    }
+
+    PersistentList<T> result = collectAllForLanguage(language);
+    return language.putUserDataIfAbsent(allCacheKey, result);
   }
 
-  @NotNull
-  private List<T> collectAllForLanguage(@NotNull Language language) {
-    boolean copyList = true;
-    List<T> result = null;
+  private @NotNull PersistentList<T> collectAllForLanguage(@NotNull Language language) {
+    PersistentList<T> result = persistentListOf();
     for (Language l = language; l != null; l = l.getBaseLanguage()) {
-      List<T> list = forKey(l);
-      if (result == null) {
-        result = list;
-      }
-      else if (!list.isEmpty()) {
-        if (copyList) {
-          result = new ArrayList<>(ContainerUtil.concat(result, list));
-          copyList = false;
-        }
-        else {
-          result.addAll(list);
-        }
-      }
+      result = result.addAll(forKey(l));
     }
     return result;
   }
 
-  @NotNull
+  /**
+   * Returns all extensions registered for the language and basic dialects, including the default implementation when it is available.
+   *  @see #allForLanguage(Language)
+   */
+  public final @NotNull @Unmodifiable List<T> allForLanguageWithDefault(@NotNull Language language) {
+    if (defaultImplementation == null) {
+      return allForLanguage(language);
+    }
+    List<T> cached = language.getUserData(allCacheWithDefaultKey);
+    if (cached != null) {
+      return cached;
+    }
+
+    PersistentList<T> result = collectAllForLanguage(language);
+    if (!result.contains(defaultImplementation)) {
+      result = result.add(defaultImplementation);
+    }
+    return language.putUserDataIfAbsent(allCacheWithDefaultKey, result);
+  }
+
   @Override
-  protected List<T> buildExtensions(@NotNull String stringKey, @NotNull Language key) {
-    Collection<MetaLanguage> metaLanguages = matchingMetaLanguages(key);
+  protected @NotNull @Unmodifiable List<T> buildExtensions(@NotNull String stringKey, @NotNull Language key) {
+    List<MetaLanguage> metaLanguages = LanguageUtil.matchingMetaLanguages(key);
     if (metaLanguages.isEmpty()) {
       return super.buildExtensions(stringKey, key);
     }
 
-    Set<String> allKeys = new THashSet<>();
+    Set<String> allKeys = new HashSet<>(metaLanguages.size() + 1);
     allKeys.add(stringKey);
     for (MetaLanguage language : metaLanguages) {
       allKeys.add(keyToString(language));
@@ -165,10 +174,11 @@ public class LanguageExtension<T> extends KeyedExtensionCollector<T, Language> {
     return buildExtensions(allKeys);
   }
 
-  @NotNull
-  public List<T> allForLanguageOrAny(@NotNull Language l) {
+  public @Unmodifiable @NotNull List<T> allForLanguageOrAny(@NotNull Language l) {
     List<T> forLanguage = allForLanguage(l);
-    if (l == Language.ANY) return forLanguage;
+    if (l == Language.ANY) {
+      return forLanguage;
+    }
     return ContainerUtil.concat(forLanguage, allForLanguage(Language.ANY));
   }
 
@@ -185,7 +195,7 @@ public class LanguageExtension<T> extends KeyedExtensionCollector<T, Language> {
   }
 
   protected T getDefaultImplementation() {
-    return myDefaultImplementation;
+    return defaultImplementation;
   }
 
   @Override

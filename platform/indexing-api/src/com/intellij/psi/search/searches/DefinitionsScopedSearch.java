@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.psi.search.searches;
 
@@ -24,6 +24,7 @@ import org.jetbrains.annotations.NotNull;
 public final class DefinitionsScopedSearch extends ExtensibleQueryFactory<PsiElement, DefinitionsScopedSearch.SearchParameters> {
   public static final ExtensionPointName<QueryExecutor<PsiElement, DefinitionsScopedSearch.SearchParameters>> EP_NAME = ExtensionPointName.create("com.intellij.definitionsScopedSearch");
   public static final DefinitionsScopedSearch INSTANCE = new DefinitionsScopedSearch();
+  private static final @NotNull ExtensionPointName<QueryExecutor<PsiElement, PsiElement>> DEFINITIONS_SEARCH_EP_NAME = ExtensionPointName.create("com.intellij.definitionsSearch");
 
   private DefinitionsScopedSearch() {
     super(EP_NAME);
@@ -31,8 +32,7 @@ public final class DefinitionsScopedSearch extends ExtensibleQueryFactory<PsiEle
 
   static {
     INSTANCE.registerExecutor((queryParameters, consumer) -> {
-      //noinspection deprecation
-      for (QueryExecutor<PsiElement, PsiElement> executor : DefinitionsSearch.EP_NAME.getExtensions()) {
+      for (QueryExecutor<PsiElement, PsiElement> executor : DEFINITIONS_SEARCH_EP_NAME.getExtensionList()) {
         if (!executor.execute(queryParameters.getElement(), consumer))
           return false;
       }
@@ -63,7 +63,7 @@ public final class DefinitionsScopedSearch extends ExtensibleQueryFactory<PsiEle
     private final boolean myCheckDeep;
     private final Project myProject;
 
-    public SearchParameters(@NotNull final PsiElement element) {
+    public SearchParameters(final @NotNull PsiElement element) {
       this(element, ReadAction.compute(element::getUseScope), true);
     }
 
@@ -74,8 +74,7 @@ public final class DefinitionsScopedSearch extends ExtensibleQueryFactory<PsiEle
       myProject = PsiUtilCore.getProjectInReadAction(myElement);
     }
 
-    @NotNull
-    public PsiElement getElement() {
+    public @NotNull PsiElement getElement() {
       return myElement;
     }
 
@@ -83,9 +82,8 @@ public final class DefinitionsScopedSearch extends ExtensibleQueryFactory<PsiEle
       return myCheckDeep;
     }
 
-    @NotNull
     @Override
-    public Project getProject() {
+    public @NotNull Project getProject() {
       return myProject;
     }
 
@@ -94,8 +92,7 @@ public final class DefinitionsScopedSearch extends ExtensibleQueryFactory<PsiEle
       return myElement.isValid();
     }
 
-    @NotNull
-    public SearchScope getScope() {
+    public @NotNull SearchScope getScope() {
       return ReadAction.compute(() -> {
         PsiFile file = myElement.getContainingFile();
         return myScope.intersectWith(

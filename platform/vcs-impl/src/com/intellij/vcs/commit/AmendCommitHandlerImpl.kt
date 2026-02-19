@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.commit
 
 import com.intellij.openapi.Disposable
@@ -9,10 +9,14 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Messages.showErrorDialog
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.text.StringUtil.equalsIgnoreWhitespaces
-import com.intellij.openapi.vcs.*
+import com.intellij.openapi.vcs.ProjectLevelVcsManager
+import com.intellij.openapi.vcs.VcsBundle
+import com.intellij.openapi.vcs.VcsConfiguration
+import com.intellij.openapi.vcs.VcsException
+import com.intellij.openapi.vcs.VcsRoot
 import com.intellij.openapi.vcs.changes.CommitContext
-import com.intellij.openapi.vcs.changes.CommitResultHandler
 import com.intellij.util.EventDispatcher
+import org.jetbrains.annotations.ApiStatus
 
 private val AMEND_DATA_KEY = Key.create<AmendData>("Vcs.Commit.AmendData")
 private var CommitContext.amendData: AmendData? by commitProperty(AMEND_DATA_KEY, null)
@@ -21,6 +25,7 @@ private class AmendData(val beforeAmendMessage: String, val amendMessage: String
 
 private val LOG = logger<AmendCommitHandlerImpl>()
 
+@ApiStatus.Internal
 open class AmendCommitHandlerImpl(private val workflowHandler: AbstractCommitWorkflowHandler<*, *>) : AmendCommitHandler {
   private val amendCommitEventDispatcher = EventDispatcher.create(AmendCommitModeListener::class.java)
 
@@ -32,25 +37,20 @@ open class AmendCommitHandlerImpl(private val workflowHandler: AbstractCommitWor
 
   var initialMessage: String? = null
 
-  init {
-    workflow.addCommitListener(AmendPrefixCleaner(), workflowHandler)
-  }
-
-  override var isAmendCommitMode: Boolean
-    get() = commitContext.isAmendCommitMode
+  override var commitToAmend: CommitToAmend
+    get() = commitContext.commitToAmend
     set(value) {
-      val oldValue = isAmendCommitMode
-      commitContext.isAmendCommitMode = value
-
-      if (oldValue == value) return
-      amendCommitModeToggled()
+      if (commitContext.commitToAmend != value) {
+        commitContext.commitToAmend = value
+        amendCommitModeToggled()
+      }
     }
 
   protected open fun amendCommitModeToggled() {
     fireAmendCommitModeToggled()
 
-    if (isAmendCommitMode) setAmendMessage() else restoreBeforeAmendMessage()
-    setAmendPrefix(isAmendCommitMode)
+    if (commitToAmend is CommitToAmend.Last) setAmendMessage() else restoreBeforeAmendMessage()
+    workflowHandler.updateDefaultCommitActionName()
   }
 
   protected fun fireAmendCommitModeToggled() = amendCommitEventDispatcher.multicaster.amendCommitModeToggled()
@@ -59,15 +59,20 @@ open class AmendCommitHandlerImpl(private val workflowHandler: AbstractCommitWor
 
   override fun isAmendCommitModeSupported(): Boolean =
     workflow.isDefaultCommitEnabled &&
-    workflow.vcses.mapNotNull { it.checkinEnvironment }.filterIsInstance<AmendCommitAware>().any { it.isAmendCommitSupported() }
+    getAmendCommitAwareCheckinEnvironments().any { it.isAmendCommitSupported() }
+
+  override fun isAmendSpecificCommitSupported(): Boolean = isAmendCommitModeSupported() &&
+                                                           getAmendCommitAwareCheckinEnvironments().any { it.isAmendSpecificCommitSupported() }
+
+  private fun getAmendCommitAwareCheckinEnvironments(): List<AmendCommitAware> = workflow.vcses.mapNotNull { it.checkinEnvironment }.filterIsInstance<AmendCommitAware>()
 
   override fun addAmendCommitModeListener(listener: AmendCommitModeListener, parent: Disposable) =
     amendCommitEventDispatcher.addListener(listener, parent)
 
-  protected fun setAmendPrefix(isAmend: Boolean) {
-    val commitActionName = workflowHandler.getCommitActionName()
-    val newActionName = if (isAmend) VcsBundle.message("amend.action.name", commitActionName) else commitActionName
-    workflowHandler.ui.defaultCommitActionName = newActionName
+  override suspend fun getAmendSpecificCommitTargets(limit: Int): List<CommitToAmend.Specific> {
+    val singleRoot = getSingleRoot()
+    val amendAware = singleRoot?.vcs?.checkinEnvironment as? AmendCommitAware
+    return amendAware?.getAmendSpecificCommitTargets(singleRoot.path, limit) ?: emptyList()
   }
 
   private fun setAmendMessage() {
@@ -75,7 +80,10 @@ open class AmendCommitHandlerImpl(private val workflowHandler: AbstractCommitWor
 
     // if initial message set - only update commit message if user hasn't changed it
     if (initialMessage == null || beforeAmendMessage == initialMessage) {
-      val amendMessage = loadLastCommitMessage(project, resolveAmendRoots())
+      val roots = resolveAmendRoots()
+      val messages = LoadCommitMessagesTask(project, roots).load() ?: return
+
+      val amendMessage = messages.distinct().joinToString(separator = "\n").takeIf { it.isNotBlank() }
       amendMessage?.let { setAmendMessage(beforeAmendMessage, it) }
     }
   }
@@ -85,7 +93,7 @@ open class AmendCommitHandlerImpl(private val workflowHandler: AbstractCommitWor
       workflowHandler.ui.getIncludedPaths().mapNotNull { vcsManager.getVcsRootObjectFor(it) }.toSet()
     }
 
-  protected fun getSingleRoot(): VcsRoot? = vcsManager.allVcsRoots.singleOrNull()
+  protected fun getSingleRoot(): VcsRoot? = vcsManager.getAllVcsRoots().singleOrNull()
 
   protected fun setAmendMessage(beforeAmendMessage: String, amendMessage: String) {
     if (!equalsIgnoreWhitespaces(beforeAmendMessage, amendMessage)) {
@@ -111,7 +119,7 @@ open class AmendCommitHandlerImpl(private val workflowHandler: AbstractCommitWor
     ui.commitMessageUi.focus()
   }
 
-  internal class LoadCommitMessagesTask(project: Project, private val roots: Collection<VcsRoot>) :
+  private class LoadCommitMessagesTask(project: Project, private val roots: Collection<VcsRoot>) :
     Task.WithResult<List<String>, VcsException>(project, VcsBundle.message("amend.commit.load.message.task.title"), true) {
 
     fun load(): List<String>? {
@@ -132,15 +140,4 @@ open class AmendCommitHandlerImpl(private val workflowHandler: AbstractCommitWor
       amendAware.getLastCommitMessage(vcsRoot.path)
     }
   }
-
-  private inner class AmendPrefixCleaner : CommitResultHandler {
-    override fun onSuccess(commitMessage: String) = setAmendPrefix(false)
-    override fun onCancel() = Unit
-    override fun onFailure() = setAmendPrefix(false)
-  }
-}
-
-fun loadLastCommitMessage(project: Project, roots: Collection<VcsRoot>): String? {
-  val messages = AmendCommitHandlerImpl.LoadCommitMessagesTask(project, roots).load() ?: return null
-  return messages.distinct().joinToString(separator = "\n").takeIf { it.isNotBlank() }
 }

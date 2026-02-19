@@ -26,6 +26,9 @@ class AbstractExternalSystemTaskConfigurationTypeTest : UsefulTestCase() {
     try {
       myTestFixture.tearDown()
     }
+    catch (e: Throwable) {
+      addSuppressedException(e)
+    }
     finally {
       super.tearDown()
     }

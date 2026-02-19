@@ -1,25 +1,33 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.services;
 
 import com.intellij.ide.projectView.PresentationData;
 import com.intellij.navigation.ItemPresentation;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.Icon;
 
-@ApiStatus.Experimental
 public class SimpleServiceViewDescriptor implements ServiceViewDescriptor {
   private final ItemPresentation myPresentation;
+  private final String myId;
 
   public SimpleServiceViewDescriptor(@NotNull String name, @Nullable Icon icon) {
-    myPresentation = new PresentationData(name, null, icon, null);
+    this(name, icon, name);
   }
 
-  @NotNull
+  public SimpleServiceViewDescriptor(@NotNull String name, @Nullable Icon icon, @NotNull String id) {
+    myPresentation = new PresentationData(name, null, icon, null);
+    myId = id;
+  }
+
   @Override
-  public ItemPresentation getPresentation() {
+  public @NotNull ItemPresentation getPresentation() {
     return myPresentation;
+  }
+
+  @Override
+  public @NotNull String getId() {
+    return myId;
   }
 }

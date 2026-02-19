@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion.impl;
 
 import com.intellij.codeInsight.CodeInsightSettings;
@@ -7,21 +7,20 @@ import com.intellij.codeInsight.completion.PrefixMatcher;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.codeStyle.MinusculeMatcher;
 import com.intellij.psi.codeStyle.NameUtil;
-import com.intellij.util.containers.FList;
 import com.intellij.util.text.CharArrayUtil;
+import com.intellij.util.text.matching.MatchedFragment;
+import com.intellij.util.text.matching.MatchingMode;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
-/**
- * @author peter
-*/
+import java.util.List;
+
 public class CamelHumpMatcher extends PrefixMatcher {
   private final MinusculeMatcher myMatcher;
   private final MinusculeMatcher myCaseInsensitiveMatcher;
@@ -29,8 +28,7 @@ public class CamelHumpMatcher extends PrefixMatcher {
   private static boolean ourForceStartMatching;
   private final boolean myTypoTolerant;
 
-
-  public CamelHumpMatcher(@NotNull final String prefix) {
+  public CamelHumpMatcher(final @NotNull String prefix) {
     this(prefix, true);
   }
 
@@ -47,17 +45,21 @@ public class CamelHumpMatcher extends PrefixMatcher {
     myCaseInsensitiveMatcher = createMatcher(false);
   }
 
+  public boolean isCaseSensitive() {
+    return myCaseSensitive;
+  }
+
   @Override
-  public boolean isStartMatch(String name) {
+  public boolean isStartMatch(@NotNull String name) {
     return myMatcher.isStartMatch(name);
   }
 
   @Override
-  public boolean isStartMatch(LookupElement element) {
+  public boolean isStartMatch(@NotNull LookupElement element) {
     for (String s : CompletionUtil.iterateLookupStrings(element)) {
-      FList<TextRange> ranges = myCaseInsensitiveMatcher.matchingFragments(s);
+      @Nullable List<@NotNull MatchedFragment> ranges = myCaseInsensitiveMatcher.match(s);
       if (ranges == null) continue;
-      if (ranges.isEmpty() || skipUnderscores(s) >= ranges.get(0).getStartOffset()) {
+      if (ranges.isEmpty() || skipUnderscores(s) >= ranges.getFirst().getStartOffset()) {
         return true;
       }
     }
@@ -75,7 +77,7 @@ public class CamelHumpMatcher extends PrefixMatcher {
   }
 
   @Override
-  public boolean prefixMatches(@NotNull final String name) {
+  public boolean prefixMatches(final @NotNull String name) {
     if (name.startsWith("_") &&
         CodeInsightSettings.getInstance().getCompletionCaseSensitive() == CodeInsightSettings.FIRST_LETTER &&
         firstLetterCaseDiffers(name)) {
@@ -98,7 +100,7 @@ public class CamelHumpMatcher extends PrefixMatcher {
   }
 
   @Override
-  public boolean prefixMatches(@NotNull final LookupElement element) {
+  public boolean prefixMatches(final @NotNull LookupElement element) {
     return prefixMatchersInternal(element, !element.isCaseSensitive());
   }
 
@@ -117,8 +119,7 @@ public class CamelHumpMatcher extends PrefixMatcher {
   }
 
   @Override
-  @NotNull
-  public PrefixMatcher cloneWithPrefix(@NotNull final String prefix) {
+  public @NotNull PrefixMatcher cloneWithPrefix(final @NotNull String prefix) {
     if (prefix.equals(myPrefix)) {
       return this;
     }
@@ -133,10 +134,10 @@ public class CamelHumpMatcher extends PrefixMatcher {
     if (caseSensitive) {
       int setting = CodeInsightSettings.getInstance().getCompletionCaseSensitive();
       if (setting == CodeInsightSettings.FIRST_LETTER) {
-        builder = builder.withCaseSensitivity(NameUtil.MatchingCaseSensitivity.FIRST_LETTER);
+        builder = builder.withMatchingMode(MatchingMode.FIRST_LETTER);
       }
       else if (setting == CodeInsightSettings.ALL) {
-        builder = builder.withCaseSensitivity(NameUtil.MatchingCaseSensitivity.ALL);
+        builder = builder.withMatchingMode(MatchingMode.MATCH_CASE);
       }
     }
     if (myTypoTolerant) {
@@ -176,21 +177,20 @@ public class CamelHumpMatcher extends PrefixMatcher {
   }
 
   @Override
-  public int matchingDegree(String string) {
-    return matchingDegree(string, matchingFragments(string));
+  public int matchingDegree(@NotNull String name) {
+    return matchingDegree(name, matchingFragments(name));
   }
 
-  @Nullable
-  public FList<TextRange> matchingFragments(String string) {
-    return myMatcher.matchingFragments(string);
+  public @Nullable List<MatchedFragment> matchingFragments(String string) {
+    return myMatcher.match(string);
   }
 
-  public int matchingDegree(String string, @Nullable FList<? extends TextRange> fragments) {
+  public int matchingDegree(String string, @Nullable List<MatchedFragment> fragments) {
     int underscoreEnd = skipUnderscores(string);
     if (underscoreEnd > 0) {
-      FList<TextRange> ciRanges = myCaseInsensitiveMatcher.matchingFragments(string);
+      List<MatchedFragment> ciRanges = myCaseInsensitiveMatcher.match(string);
       if (ciRanges != null && !ciRanges.isEmpty()) {
-        int matchStart = ciRanges.get(0).getStartOffset();
+        int matchStart = ciRanges.getFirst().getStartOffset();
         if (matchStart > 0 && matchStart <= underscoreEnd) {
           return myCaseInsensitiveMatcher.matchingDegree(string.substring(matchStart), true) - 1;
         }

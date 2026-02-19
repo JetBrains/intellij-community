@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.actions;
 
 import com.intellij.CommonBundle;
@@ -16,8 +16,19 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.SplitterProportionsData;
 import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.ui.*;
+import com.intellij.openapi.util.text.Strings;
+import com.intellij.ui.CollectionListModel;
+import com.intellij.ui.ColoredListCellRenderer;
+import com.intellij.ui.ComponentUtil;
+import com.intellij.ui.DoubleClickListener;
+import com.intellij.ui.JBColor;
+import com.intellij.ui.JBSplitter;
+import com.intellij.ui.ScrollPaneFactory;
+import com.intellij.ui.ScrollingUtil;
+import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.ui.ToolbarDecorator;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.speedSearch.FilteringListModel;
 import com.intellij.ui.speedSearch.ListWithFilter;
@@ -31,30 +42,42 @@ import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
-import javax.swing.*;
+import javax.swing.Icon;
+import javax.swing.JComponent;
+import javax.swing.JList;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.JTextArea;
+import javax.swing.ListSelectionModel;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
-import java.awt.*;
+import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.FontMetrics;
 import java.awt.datatransfer.StringSelection;
-import java.awt.event.*;
+import java.awt.event.ComponentAdapter;
+import java.awt.event.ComponentEvent;
+import java.awt.event.KeyEvent;
+import java.awt.event.KeyListener;
+import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 import java.util.List;
 
 public abstract class ContentChooser<Data> extends DialogWrapper {
-
-  @NotNull @NonNls public static final String RETURN_SYMBOL = "\u23ce";
+  public static final String RETURN_SYMBOL = "\u23ce";
 
   private List<Data> myAllContents;
-  private Editor     myViewer;
+  private Editor myViewer;
 
   private final boolean myUseIdeaEditor;
 
   private final JBList<Item> myList;
   private final JBSplitter mySplitter;
-  private final Project    myProject;
-  private final boolean    myAllowMultipleSelections;
-  private final Alarm      myUpdateAlarm;
+  private final Project myProject;
+  private final boolean myAllowMultipleSelections;
+  private final Alarm myUpdateAlarm;
   private Icon myListEntryIcon = AllIcons.FileTypes.Text;
   private boolean myUseNumbering = true;
 
@@ -70,7 +93,7 @@ public abstract class ContentChooser<Data> extends DialogWrapper {
     myUpdateAlarm = new Alarm(getDisposable());
     mySplitter = new JBSplitter(true, 0.3f);
     mySplitter.setSplitterProportionKey(getDimensionServiceKey() + ".splitter");
-    myList = new JBList<Item>(new CollectionListModel<>()) {
+    myList = new JBList<>(new CollectionListModel<>()) {
       @Override
       protected void doCopyToClipboardAction() {
         String text = getSelectedText();
@@ -111,8 +134,8 @@ public abstract class ContentChooser<Data> extends DialogWrapper {
     if (myUseIdeaEditor) {
       EditorColorsScheme scheme = EditorColorsManager.getInstance().getGlobalScheme();
       myList.setFont(scheme.getFont(EditorFontType.PLAIN));
-      Color fg = ObjectUtils.chooseNotNull(scheme.getDefaultForeground(), new JBColor(UIUtil::getListForeground));
-      Color bg = ObjectUtils.chooseNotNull(scheme.getDefaultBackground(), new JBColor(UIUtil::getListBackground));
+      Color fg = ObjectUtils.chooseNotNull(scheme.getDefaultForeground(), JBColor.lazy(UIUtil::getListForeground));
+      Color bg = ObjectUtils.chooseNotNull(scheme.getDefaultBackground(), JBColor.lazy(UIUtil::getListBackground));
       myList.setForeground(fg);
       myList.setBackground(bg);
     }
@@ -134,22 +157,7 @@ public abstract class ContentChooser<Data> extends DialogWrapper {
       @Override
       public void keyPressed(KeyEvent e) {
         if (e.getKeyCode() == KeyEvent.VK_DELETE) {
-          int newSelectionIndex = -1;
-          for (Object o : myList.getSelectedValuesList()) {
-            int i = ((Item)o).index;
-            removeContentAt(myAllContents.get(i));
-            if (newSelectionIndex < 0) {
-              newSelectionIndex = i;
-            }
-          }
-
-          rebuildListContent();
-          if (myAllContents.isEmpty()) {
-            close(CANCEL_EXIT_CODE);
-            return;
-          }
-          newSelectionIndex = Math.min(newSelectionIndex, myAllContents.size() - 1);
-          myList.setSelectedIndex(newSelectionIndex);
+          deleteSelectedItems();
         }
         else if (e.getKeyCode() == KeyEvent.VK_ENTER) {
           doOKAction();
@@ -189,8 +197,19 @@ public abstract class ContentChooser<Data> extends DialogWrapper {
       }
     });
 
-    mySplitter.setFirstComponent(ListWithFilter.wrap(
-      myList, ScrollPaneFactory.createScrollPane(myList), o -> o.getShortText(renderer.previewChars), true));
+    ToolbarDecorator toolbarDecorator = ToolbarDecorator.createDecorator(myList)
+      .disableUpDownActions()
+      .setRemoveAction(button -> deleteSelectedItems());
+    toolbarDecorator.createPanel();
+
+    JScrollPane scroll = ScrollPaneFactory.createScrollPane(myList);
+    JComponent listWithFilter = ListWithFilter.wrap(myList, scroll, o -> o.getShortText(renderer.previewChars), true);
+
+    JPanel filteringListWithToolbar = new JPanel(new BorderLayout());
+    filteringListWithToolbar.add(toolbarDecorator.getActionsPanel(), BorderLayout.NORTH);
+    filteringListWithToolbar.add(listWithFilter, BorderLayout.CENTER);
+
+    mySplitter.setFirstComponent(filteringListWithToolbar);
     mySplitter.setSecondComponent(new JPanel());
     mySplitter.getFirstComponent().addComponentListener(new ComponentAdapter() {
       @Override
@@ -223,6 +242,27 @@ public abstract class ContentChooser<Data> extends DialogWrapper {
     return mySplitter;
   }
 
+  private void deleteSelectedItems() {
+    int bottomVisibleComponent = myList.getLastVisibleIndex();
+    int newSelectionIndex = -1;
+    for (Item o : myList.getSelectedValuesList()) {
+      int i = o.index;
+      removeContentAt(myAllContents.get(i));
+      if (newSelectionIndex < 0) {
+        newSelectionIndex = i;
+      }
+    }
+
+    rebuildListContent();
+    if (myAllContents.isEmpty()) {
+      close(CANCEL_EXIT_CODE);
+      return;
+    }
+    newSelectionIndex = Math.min(newSelectionIndex, myAllContents.size() - 1);
+    myList.setSelectedIndex(newSelectionIndex);
+    myList.ensureIndexIsVisible(Math.min(bottomVisibleComponent, myList.getItemsCount() - 1));
+  }
+
   protected abstract void removeContentAt(final Data content);
 
   @Override
@@ -238,7 +278,7 @@ public abstract class ContentChooser<Data> extends DialogWrapper {
 
   private void updateViewerForSelection() {
     if (myAllContents.isEmpty()) return;
-    String fullString = getSelectedText();
+    @NonNls String fullString = getSelectedText();
 
     if (myViewer != null) {
       EditorFactory.getInstance().releaseEditor(myViewer);
@@ -288,7 +328,7 @@ public abstract class ContentChooser<Data> extends DialogWrapper {
   }
 
   private void rebuildListContent() {
-    ArrayList<Item> items = new ArrayList<>();
+    List<Item> items = new ArrayList<>();
     int index = 0;
     List<Data> contents = new ArrayList<>(getContents());
     for (Data content : contents) {
@@ -299,21 +339,19 @@ public abstract class ContentChooser<Data> extends DialogWrapper {
       index++;
     }
     myAllContents = contents;
-    FilteringListModel listModel = (FilteringListModel)myList.getModel();
-    ((CollectionListModel)listModel.getOriginalModel()).removeAll();
+    FilteringListModel<Item> listModel = (FilteringListModel<Item>)myList.getModel();
+    ((CollectionListModel<?>)listModel.getOriginalModel()).removeAll();
     listModel.addAll(items);
-    ListWithFilter listWithFilter = ComponentUtil.getParentOfType((Class<? extends ListWithFilter>)ListWithFilter.class, (Component)myList);
+    ListWithFilter<?> listWithFilter = ComponentUtil.getParentOfType(ListWithFilter.class, myList);
     if (listWithFilter != null) {
       listWithFilter.getSpeedSearch().update();
       if (listModel.getSize() == 0) listWithFilter.resetFilter();
     }
   }
 
-  @Nullable
-  protected abstract String getStringRepresentationFor(Data content);
+  protected abstract @Nullable @NlsSafe String getStringRepresentationFor(Data content);
 
-  @NotNull
-  protected abstract List<Data> getContents();
+  protected abstract @NotNull List<Data> getContents();
 
   public int getSelectedIndex() {
     Item o = myList.getSelectedValue();
@@ -326,31 +364,27 @@ public abstract class ContentChooser<Data> extends DialogWrapper {
     updateViewerForSelection();
   }
 
-  @NotNull
-  public List<Data> getSelectedContents() {
+  public @Unmodifiable @NotNull List<Data> getSelectedContents() {
     return JBIterable.from(myList.getSelectedValuesList()).map(o -> myAllContents.get(o.index)).toList();
   }
 
-  @NotNull
-  public List<Data> getAllContents() {
+  public @NotNull List<Data> getAllContents() {
     return myAllContents;
   }
 
-  @NotNull
-  public String getSelectedText() {
+  public @NotNull String getSelectedText() {
     StringBuilder sb = new StringBuilder();
     boolean first = true;
-    for (Object o : myList.getSelectedValuesList()) {
+    for (Item o : myList.getSelectedValuesList()) {
       if (first) first = false;
       else sb.append("\n");
-      String s = ((Item)o).longText;
+      String s = o.longText;
       sb.append(StringUtil.convertLineSeparators(s));
     }
     return sb.toString();
   }
 
-  private class MyListCellRenderer extends ColoredListCellRenderer<Item> {
-
+  private final class MyListCellRenderer extends ColoredListCellRenderer<Item> {
     int previewChars = 80;
 
     @Override
@@ -370,18 +404,18 @@ public abstract class ContentChooser<Data> extends DialogWrapper {
     }
   }
 
-  private static class Item {
+  public static class Item {
     final int index;
-    final String longText;
+    protected final String longText;
     String shortText = "";
     boolean trimmed;
 
-    Item(int index, String longText) {
+    protected Item(int index, String longText) {
       this.index = index;
       this.longText = longText;
     }
 
-    String getShortText(int maxChars) {
+    public @NlsSafe String getShortText(int maxChars) {
       int len = shortText.length();
       if (len > 0 && !trimmed) return shortText;
       if (len >= maxChars && (len - maxChars) * 10 / len == 0) return shortText;
@@ -393,17 +427,16 @@ public abstract class ContentChooser<Data> extends DialogWrapper {
       boolean hasSlashR = StringUtil.indexOf(longText, '\r', 0, Math.min(longText.length(), maxChars * 2 + 1)) > 0;
       if (!hasSlashR) {
         String s = StringUtil.first(longText, maxChars, true);
-        trimmed = s != longText;
+        trimmed = !Strings.areSameInstance(s, longText);
         shortText = StringUtil.convertLineSeparators(s, RETURN_SYMBOL);
       }
       else {
         String s = StringUtil.first(longText, maxChars * 2 + 1, false);
         String s2 = StringUtil.convertLineSeparators(s, RETURN_SYMBOL);
         shortText = StringUtil.first(s2, maxChars, true);
-        trimmed = s != longText || s2 != shortText;
+        trimmed = !Strings.areSameInstance(s, longText) || !Strings.areSameInstance(s2, shortText);
       }
       return shortText;
     }
   }
-
 }

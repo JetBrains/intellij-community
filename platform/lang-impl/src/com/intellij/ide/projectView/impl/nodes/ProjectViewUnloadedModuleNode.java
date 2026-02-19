@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.projectView.impl.nodes;
 
 import com.intellij.icons.AllIcons;
@@ -6,12 +6,14 @@ import com.intellij.ide.projectView.PresentationData;
 import com.intellij.ide.projectView.ProjectViewNode;
 import com.intellij.ide.projectView.ViewSettings;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
+import com.intellij.lang.LangBundle;
 import com.intellij.openapi.module.UnloadedModuleDescription;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
 import com.intellij.ui.SimpleTextAttributes;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
@@ -20,14 +22,14 @@ import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
+@ApiStatus.Internal
 public final class ProjectViewUnloadedModuleNode extends ProjectViewNode<UnloadedModuleDescription> {
   public ProjectViewUnloadedModuleNode(Project project, @NotNull UnloadedModuleDescription value, ViewSettings viewSettings) {
     super(project, value, viewSettings);
   }
 
   @Override
-  @NotNull
-  public Collection<AbstractTreeNode<?>> getChildren() {
+  public @NotNull Collection<AbstractTreeNode<?>> getChildren() {
     UnloadedModuleDescription module = getValue();
     if (module == null) {
       return Collections.emptyList();
@@ -58,12 +60,11 @@ public final class ProjectViewUnloadedModuleNode extends ProjectViewNode<Unloade
     presentation.setPresentableText(module.getName());
     presentation.addText(module.getName(), SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
     presentation.setIcon(AllIcons.Modules.UnloadedModule);
-    presentation.setTooltip("Unloaded module");
+    presentation.setTooltip(LangBundle.message("unloaded.module.tooltip"));
   }
 
-  @NotNull
   @Override
-  public Collection<VirtualFile> getRoots() {
+  public @NotNull Collection<VirtualFile> getRoots() {
     UnloadedModuleDescription module = getValue();
     return module != null ? module.getContentRoots().stream().map(VirtualFilePointer::getFile).filter(Objects::nonNull).collect(Collectors.toList())
                           : Collections.emptyList();

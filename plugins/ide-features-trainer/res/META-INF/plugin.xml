@@ -1,0 +1,234 @@
+<idea-plugin package="training" allow-bundled-update="true">
+  <id>training</id>
+  <name>IDE Features Trainer</name>
+  <vendor>JetBrains</vendor>
+
+  <description><![CDATA[
+    <p>
+      Learn basic shortcuts and essential features interactively — right inside the IDE.
+      No need to read long manuals or look for screencasts.
+      Install the plugin, and open with the <b>Help | IDE Features Trainer</b> menu item.
+    </p>
+    <p/>
+    <p>Found a bug or have a feature to suggest? Welcome to the tracker: <a href="https://youtrack.jetbrains.com/newIssue?project=IFT&description=**Description%3A**%20_Write%20description%20here_%0A%0A**Plugin%20version%3A**%20_Write%20plugin%20version%20here_">https://youtrack.jetbrains.com/issues/IFT</a></p>
+  ]]></description>
+
+  <dependencies>
+    <module name="intellij.platform.tips"/>
+    <plugin id="com.intellij.modules.lang"/>
+    <module name="intellij.platform.lvcs.impl"/>
+  </dependencies>
+
+  <content namespace="jetbrains">
+    <module name="intellij.vcs.git.featuresTrainer"/>
+    <module name="intellij.featuresTrainer.onboarding"/>
+    <module name="intellij.kotlin.onboarding.promoter"/>
+  </content>
+
+  <resource-bundle>messages.LearnBundle</resource-bundle>
+
+  <projectListeners>
+    <listener class="training.editor.LearnProjectFileEditorListener"
+              topic="com.intellij.openapi.fileEditor.FileEditorManagerListener"/>
+  </projectListeners>
+
+  <applicationListeners>
+    <listener class="training.statistic.LearnProjectStateListener"
+              topic="com.intellij.openapi.project.ProjectManagerListener"/>
+  </applicationListeners>
+
+  <extensionPoints>
+    <extensionPoint name="ift.language.extension"
+                    beanClass="training.lang.LangSupportBean" dynamic="true">
+      <with attribute="implementationClass" implements="training.lang.LangSupport"/>
+    </extensionPoint>
+
+    <extensionPoint name="ift.learning.course" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
+      <with attribute="implementationClass" implements="training.learn.course.LearningCourseBase"/>
+    </extensionPoint>
+
+    <extensionPoint name="ift.learning.commonCourse" beanClass="com.intellij.util.KeyedLazyInstanceEP" dynamic="true">
+      <with attribute="implementationClass" implements="training.learn.course.LearningCourse"/>
+    </extensionPoint>
+
+    <extensionPoint name="ift.newUsersOnboardingExperimentAccessor" interface="training.learn.NewUsersOnboardingExperimentAccessor" dynamic="true"/>
+  </extensionPoints>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <statistics.validation.customValidationRule
+      implementation="training.statistic.IdeFeaturesTrainerRuleValidator"/>
+    <statistics.validation.customValidationRule
+      implementation="training.statistic.SupportedLanguageRuleValidator"/>
+    <statistics.validation.customValidationRule
+      implementation="training.statistic.ActionIdRuleValidator"/>
+    <statistics.validation.customValidationRule
+      implementation="training.statistic.KeymapSchemeRuleValidator"/>
+    <statistics.counterUsagesCollector implementationClass="training.statistic.StatisticBase"/>
+    <applicationService
+      serviceImplementation="training.statistic.LearnProjectState"/>
+
+    <interactiveCourseFactory id="IFTInteractiveCourse" implementation="training.ui.welcomeScreen.IFTInteractiveCourse" order="first"/>
+
+    <tipAndTrickPromotionFactory implementation="training.ui.IftTipAndTrickPromoter"/>
+
+    <applicationService serviceImplementation="training.lang.LangManager"/>
+    <applicationService serviceImplementation="training.learn.lesson.LessonStateBase"/>
+    <toolWindow id="Learn"
+                canCloseContents="true"
+                icon="AllIcons.Toolwindows.Learn"
+                factoryClass="training.ui.LearnToolWindowFactory"/>
+
+    <applicationConfigurable groupId="tools" bundle="messages.LearnBundle" key="learn.options.panel.name" id="FeaturesTrainerSettingsPanel"
+                             instance="training.ui.FeaturesTrainerSettingsPanel"/>
+
+    <!--suppress PluginXmlCapitalization -->
+    <notificationGroup displayType="STICKY_BALLOON" id="IDE Features Trainer" isLogByDefault="false"
+        bundle="messages.LearnBundle" key="notification.group.feature.trainer"/>
+  </extensions>
+
+  <actions>
+    <group internal="true" popup="true" id="IFTInternalActions" text="IFT Actions">
+      <action internal="true" id="DumpFeaturesTrainerText" class="training.actions.DumpFeaturesTrainerText"/>
+      <action internal="true" id="AutorunAllLessons" class="training.actions.AutorunAllLessons"/>
+      <action internal="true" id="AutorunCurrentLesson" class="training.actions.AutorunCurrentLesson"/>
+      <action internal="true" id="SetCurrentLessonAsPassed" class="training.actions.SetCurrentLessonAsPassed"/>
+      <action internal="true" id="ResetOnboardingFeedbackState" class="training.actions.ResetOnboardingFeedbackStateAction"/>
+      <action internal="true" id="ShowDemoAltClickPromoter" class="training.featuresSuggester.suggesters.promo.ShowDemoAltClickPromoterAction"/>
+      <add-to-group group-id="Internal" anchor="last"/>
+    </group>
+
+
+    <action id="PreviousLessonAction" class="training.actions.PreviousLessonAction"
+            icon="AllIcons.Actions.Back"/>
+    <action id="NextLessonAction" class="training.actions.NextLessonAction"
+            icon="AllIcons.Actions.Forward"/>
+    <action id="ResetLearningProgressAction" class="training.actions.ResetLearningProgressAction"
+            icon="AllIcons.Actions.Restart"/>
+    <action id="RestartLessonAction" class="training.actions.RestartLessonAction"
+            icon="AllIcons.General.Reset"/>
+
+    <action id="ShowLearnPanel" class="training.actions.OpenLearnPanel" icon="AllIcons.Toolwindows.Learn">
+      <add-to-group group-id="LearnGroup"/>
+    </action>
+  </actions>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <registryKey key="ift.short.onboarding.lesson"
+                 description="Use short onboarding lesson followed after UI overview"
+                 defaultValue="TRUE"
+                 restartRequired="true"/>
+    <registryKey key="ift.help.links"
+                 description="Turn on IFT Help and Resources section"
+                 defaultValue="TRUE"
+                 restartRequired="false"/>
+    <registryKey key="ift.experimental.lessons"
+                 description="Turn on it to preview incomplete lessons"
+                 defaultValue="FALSE"
+                 restartRequired="false"/>
+    <registryKey key="ift.default.restore.delay"
+                 description="Specified default delay in milliseconds before previous task will be restored if something went wrong."
+                 defaultValue="500"
+                 restartRequired="false"/>
+    <registryKey key="ift.show.feedback.link"
+                 description="Whether IFT show feedback link in the modules panel."
+                 defaultValue="TRUE"
+                 restartRequired="false"/>
+    <registryKey key="ift.use.scroll.animation"
+                 description="Use scroll animation in IFT lessons."
+                 defaultValue="TRUE"
+                 restartRequired="false"/>
+    <registryKey key="ift.send.onboarding.feedback"
+                 description="Where to send onboarding lessons feedback (nowhere, staging, production)."
+                 defaultValue="production"
+                 restartRequired="false"/>
+    <registryKey key="ift.adapt.to.not.native.localization"
+                 description="Lessons logic will be changed like using not native localization."
+                 defaultValue="FALSE"
+                 restartRequired="false"/>
+    <registryKey key="ift.enable.in.old.ui"
+                 description="Whether IFT lessons and promoters should be enabled in old UI."
+                 defaultValue="FALSE"
+                 restartRequired="false"/>
+  </extensions>
+
+  <extensionPoints>
+    <extensionPoint name="ifs.suggester" interface="training.featuresSuggester.suggesters.FeatureSuggester" dynamic="true"/>
+    <extensionPoint name="ifs.suggesterSupport"
+                    beanClass="com.intellij.lang.LanguageExtensionPoint"
+                    dynamic="true">
+      <with attribute="implementationClass" implements="training.featuresSuggester.SuggesterSupport"/>
+    </extensionPoint>
+  </extensionPoints>
+
+  <extensions defaultExtensionNs="training">
+    <ifs.suggester
+      implementation="training.featuresSuggester.suggesters.LineCommentingSuggester"/>
+    <ifs.suggester
+      implementation="training.featuresSuggester.suggesters.IntroduceVariableSuggester"/>
+    <ifs.suggester
+      implementation="training.featuresSuggester.suggesters.CopyPasteSuggester"/>
+    <ifs.suggester
+      implementation="training.featuresSuggester.suggesters.QuickEvaluateSuggester"/>
+    <ifs.suggester
+      implementation="training.featuresSuggester.suggesters.SurroundWithSuggester"/>
+    <ifs.suggester
+      implementation="training.featuresSuggester.suggesters.UnwrapSuggester"/>
+    <ifs.suggester
+      implementation="training.featuresSuggester.suggesters.FileStructureSuggester"/>
+    <ifs.suggester
+      implementation="training.featuresSuggester.suggesters.CompletionPopupSuggester"/>
+    <ifs.suggester
+      implementation="training.featuresSuggester.suggesters.ReplaceCompletionSuggester"/>
+    <ifs.suggester
+      implementation="training.featuresSuggester.suggesters.RunToCursorSuggester"/>
+    <ifs.suggester
+      implementation="training.featuresSuggester.suggesters.EditBreakpointSuggester"/>
+    <ifs.suggester
+      implementation="training.featuresSuggester.suggesters.MuteBreakpointsSuggester"/>
+  </extensions>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <applicationService serviceImplementation="training.featuresSuggester.settings.FeatureSuggesterSettings"/>
+    <applicationConfigurable parentId="tools"
+                             instance="training.featuresSuggester.settings.FeatureSuggesterConfigurable"
+                             id="org.intellij.featuresSuggester.FeatureSuggesterConfigurable"
+                             key="configurable.name" bundle="messages.FeatureSuggesterBundle"/>
+    <psi.treeChangeListener
+      implementation="training.featuresSuggester.listeners.PsiActionsListener"/>
+    <editorFactoryDocumentListener
+      implementation="training.featuresSuggester.listeners.DocumentActionsListener"/>
+    <statistics.counterUsagesCollector
+      implementationClass="training.featuresSuggester.statistics.FeatureSuggesterStatistics"/>
+    <statistics.validation.customValidationRule
+      implementation="training.featuresSuggester.statistics.FeatureSuggesterIdRuleValidator"/>
+    <registryKey defaultValue="true" description="Send statistics about IDE Feature Suggester plugin usage"
+                 key="feature.suggester.send.statistics"/>
+    <registryKey defaultValue="false" description="Show suggestion even if corresponding action has been used recently"
+                 key="feature.suggester.force.show.suggestions"/>
+    <registryKey defaultValue="false" description="Should suggesters be enabled in settings by default or not"
+                 key="feature.suggester.enable.suggesters" restartRequired="true"/>
+    <!--suppress PluginXmlCapitalization -->
+    <notificationGroup id="IDE Feature Suggester" displayType="STICKY_BALLOON" isLogByDefault="false"
+        bundle="messages.FeatureSuggesterBundle" key="notification.group.feature.suggester"/>
+
+    <newProject.onboarding.tips implementation="training.onboarding.NewProjectOnboardingTipsImpl"/>
+    <postStartupActivity implementation="training.onboarding.InstallOnboardingTooltip"/>
+    <editorFactoryListener implementation="training.onboarding.InstallOnboardingTipsEditorListener"/>
+    <statistics.counterUsagesCollector
+      implementationClass="training.onboarding.OnboardingTipsStatistics"/>
+  </extensions>
+
+  <projectListeners>
+    <listener class="training.featuresSuggester.listeners.BreakpointsListener"
+              topic="com.intellij.xdebugger.breakpoints.XBreakpointListener"/>
+    <listener class="training.featuresSuggester.listeners.DebuggerListener"
+              topic="com.intellij.xdebugger.XDebuggerManagerListener"/>
+  </projectListeners>
+
+  <applicationListeners>
+    <listener class="training.featuresSuggester.listeners.EditorActionsListener"
+              topic="com.intellij.openapi.actionSystem.ex.AnActionListener"/>
+    <listener class="training.featuresSuggester.listeners.EvaluationListener"
+              topic="com.intellij.xdebugger.XEvaluationListener"/>
+  </applicationListeners>
+</idea-plugin>

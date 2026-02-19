@@ -24,7 +24,7 @@ def do_list_available_packages():
     major_version = int(version_splitted[0])
     minor_version = int(version_splitted[1])
 
-    if major_version >= 4 and minor_version >= 4:
+    if major_version >= 22 or (major_version >= 4 and minor_version >= 4):
         init_context()
         from conda.core.index import get_index
         index = get_index()
@@ -60,7 +60,13 @@ def do_list_channels():
 
 def fetch_versions(package):
     import json
-    from distutils.version import LooseVersion
+    try:
+        from distutils.version import LooseVersion
+    except ImportError:
+        if sys.version_info[:2] >= (3, 12):
+            LooseVersion = lambda v: v.split('.')
+        else:
+            raise
     from conda.cli.python_api import run_command, Commands
 
     stdout, stderr, ret_code = run_command(Commands.SEARCH, package, '--json')

@@ -34,6 +34,7 @@ public class RootTagFilter extends PositionElementFilter{
     return getFilter().isAcceptable(rootTag, (PsiElement)element);
   }
 
+  @Override
   public String toString(){
     return "roottag(" + getFilter().toString() + ")";
   }

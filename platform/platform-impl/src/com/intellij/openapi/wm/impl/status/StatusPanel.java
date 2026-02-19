@@ -1,52 +1,56 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl.status;
 
-import com.intellij.icons.AllIcons;
 import com.intellij.ide.ClipboardSynchronizer;
-import com.intellij.ide.IdeBundle;
-import com.intellij.notification.EventLog;
+import com.intellij.notification.ActionCenter;
 import com.intellij.notification.Notification;
+import com.intellij.notification.impl.ApplicationNotificationsModel;
+import com.intellij.notification.impl.StatusMessage;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.IdeActions;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.ui.JBMenuItem;
 import com.intellij.openapi.ui.JBPopupMenu;
 import com.intellij.openapi.util.NlsContexts;
-import com.intellij.openapi.util.Trinity;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.ui.ClickListener;
 import com.intellij.util.Alarm;
+import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.accessibility.AccessibleContext;
 import javax.accessibility.AccessibleRole;
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.AbstractAction;
+import javax.swing.Action;
+import javax.swing.JComponent;
+import javax.swing.JPanel;
+import javax.swing.SwingUtilities;
+import java.awt.BorderLayout;
+import java.awt.Cursor;
+import java.awt.FontMetrics;
+import java.awt.Rectangle;
 import java.awt.datatransfer.StringSelection;
 import java.awt.event.ActionEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 
-/**
- * @author peter
- */
-class StatusPanel extends JPanel {
+final class StatusPanel extends JPanel {
   private Notification myCurrentNotification;
-  @Nullable private String myTimeText;
+  private @NlsSafe @Nullable String myTimeText;
   private boolean myDirty;
   private boolean myAfterClick;
   private Alarm myLogAlarm;
   private Action myCopyAction;
-  private Action myClearAction;
   private final TextPanel myTextPanel = new TextPanel() {
     @Override
     protected String getTextForPreferredSize() {
@@ -65,7 +69,9 @@ class StatusPanel extends JPanel {
         Rectangle boundsForTrim = new Rectangle(withoutTime, bounds.height);
         return super.truncateText(text, boundsForTrim, fm, textR, iconR, withoutTime) + myTimeText;
       }
-      return super.truncateText(text, bounds, fm, textR, iconR, maxWidth);
+      else {
+        return super.truncateText(text, bounds, fm, textR, iconR, maxWidth);
+      }
     }
   };
 
@@ -79,7 +85,10 @@ class StatusPanel extends JPanel {
       @Override
       public boolean onClick(@NotNull MouseEvent e, int clickCount) {
         if (myCurrentNotification != null || myAfterClick) {
-          EventLog.toggleLog(getActiveProject(), myCurrentNotification);
+          Project project = getActiveProject();
+          if (project != null) {
+            ActionCenter.toggleLog(project);
+          }
           myAfterClick = true;
           myTextPanel.setExplicitSize(myTextPanel.getSize());
           UIUtil.setCursor(myTextPanel, Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
@@ -107,14 +116,7 @@ class StatusPanel extends JPanel {
           JBPopupMenu menu = new JBPopupMenu();
           menu.add(new JBMenuItem(myCopyAction));
 
-          if (myClearAction == null) {
-            myClearAction = createClearAction();
-          }
-          if (myClearAction != null) {
-            menu.add(new JBMenuItem(myClearAction));
-          }
-
-          menu.show(myTextPanel, e.getX(), e.getY());
+          JBPopupMenu.showByEvent(e, menu);
         }
       }
     });
@@ -141,27 +143,7 @@ class StatusPanel extends JPanel {
     };
   }
 
-  private Action createClearAction() {
-    Project project = getActiveProject();
-    if (project == null) {
-      return null;
-    }
-    return new AbstractAction(IdeBundle.message("clear.event.log.action", IdeBundle.message("toolwindow.stripe.Event_Log")),
-                              AllIcons.Actions.GC) {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        EventLog.doClear(project);
-      }
-
-      @Override
-      public boolean isEnabled() {
-        return EventLog.isClearAvailable(project);
-      }
-    };
-  }
-
-  @Nullable
-  private Project getActiveProject() {
+  private @Nullable Project getActiveProject() {
     // a better way of finding a project would be great
     for (Project project : ProjectManager.getInstance().getOpenProjects()) {
       IdeFrame ideFrame = WindowManager.getInstance().getIdeFrame(project);
@@ -177,9 +159,8 @@ class StatusPanel extends JPanel {
 
   // Returns the alarm used for displaying status messages in the status bar, or null if the status bar is attached to a floating
   // editor window.
-  @Nullable
-  private Alarm getAlarm() {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+  private @Nullable Alarm getAlarm() {
+    ThreadingAssertions.assertEventDispatchThread();
     if (myLogAlarm == null || myLogAlarm.isDisposed()) {
       myLogAlarm = null; //Welcome screen
       Project project = getActiveProject();
@@ -191,12 +172,18 @@ class StatusPanel extends JPanel {
   }
 
   public boolean updateText(@Nullable @NlsContexts.StatusBarText String nonLogText) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
 
-    final Project project = getActiveProject();
-    final Trinity<Notification, String, Long> statusMessage = EventLog.getStatusMessage(project);
-    final Alarm alarm = getAlarm();
-    myCurrentNotification = StringUtil.isEmpty(nonLogText) && statusMessage != null && alarm != null ? statusMessage.first : null;
+    StatusMessage statusMessage;
+    Project project = getActiveProject();
+    if (project != null) {
+      statusMessage = ApplicationNotificationsModel.getStatusMessage(project);
+    }
+    else {
+      statusMessage = null;
+    }
+    Alarm alarm = getAlarm();
+    myCurrentNotification = StringUtil.isEmpty(nonLogText) && statusMessage != null && alarm != null ? statusMessage.notification() : null;
 
     if (alarm != null) {
       alarm.cancelAllRequests();
@@ -208,9 +195,9 @@ class StatusPanel extends JPanel {
         @Override
         public void run() {
           assert statusMessage != null;
-          String text = statusMessage.second;
-          if (myDirty || System.currentTimeMillis() - statusMessage.third >= DateFormatUtil.MINUTE) {
-            myTimeText = " (" + StringUtil.decapitalize(DateFormatUtil.formatPrettyDateTime(statusMessage.third)) + ")";
+          String text = statusMessage.text();
+          if (myDirty || System.currentTimeMillis() - statusMessage.stamp() >= 60_000) {  // >= 1 min
+            myTimeText = " (" + StringUtil.decapitalize(DateFormatUtil.formatPrettyDateTime(statusMessage.stamp())) + ")";
             text += myTimeText;
           }
           else {
@@ -235,7 +222,7 @@ class StatusPanel extends JPanel {
     myTextPanel.setText(text);
   }
 
-  public String getText() {
+  public @Nls String getText() {
     return myTextPanel.getText();
   }
 
@@ -247,7 +234,7 @@ class StatusPanel extends JPanel {
     return accessibleContext;
   }
 
-  protected class AccessibleStatusPanel extends AccessibleJPanel {
+  protected final class AccessibleStatusPanel extends AccessibleJPanel {
     @Override
     public AccessibleRole getAccessibleRole() {
       return AccessibleRole.STATUS_BAR;

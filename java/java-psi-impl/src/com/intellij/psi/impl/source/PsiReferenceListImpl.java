@@ -2,7 +2,13 @@
 package com.intellij.psi.impl.source;
 
 import com.intellij.lang.ASTNode;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaElementVisitor;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiClassType;
+import com.intellij.psi.PsiElementFactory;
+import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.PsiJavaCodeReferenceElement;
+import com.intellij.psi.PsiReferenceList;
 import com.intellij.psi.impl.java.stubs.JavaClassReferenceListElementType;
 import com.intellij.psi.impl.java.stubs.PsiClassReferenceListStub;
 import com.intellij.psi.impl.source.tree.JavaElementType;
@@ -10,7 +16,7 @@ import org.jetbrains.annotations.NotNull;
 
 public class PsiReferenceListImpl extends JavaStubPsiElement<PsiClassReferenceListStub> implements PsiReferenceList {
   public PsiReferenceListImpl(@NotNull PsiClassReferenceListStub stub) {
-    super(stub, stub.getStubType());
+    super(stub, stub.getElementType());
   }
 
   public PsiReferenceListImpl(@NotNull ASTNode node) {
@@ -31,7 +37,7 @@ public class PsiReferenceListImpl extends JavaStubPsiElement<PsiClassReferenceLi
 
     PsiJavaCodeReferenceElement[] refs = getReferenceElements();
     PsiElementFactory factory = JavaPsiFacade.getElementFactory(getProject());
-    PsiClassType[] types = new PsiClassType[refs.length];
+    PsiClassType[] types = refs.length == 0 ? PsiClassType.EMPTY_ARRAY : new PsiClassType[refs.length];
     for (int i = 0; i < types.length; i++) {
       types[i] = factory.createType(refs[i]);
     }
@@ -41,7 +47,7 @@ public class PsiReferenceListImpl extends JavaStubPsiElement<PsiClassReferenceLi
 
   @Override
   public Role getRole() {
-    return JavaClassReferenceListElementType.elementTypeToRole(getElementType());
+    return JavaClassReferenceListElementType.elementTypeToRole(getIElementType());
   }
 
   @Override

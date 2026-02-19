@@ -1,0 +1,6 @@
+- name: dist.all/lib/intellij.libraries.commons.logging.jar
+  modules:
+  - name: intellij.libraries.commons.logging
+    libraries:
+      commons-logging:
+      - name: $MAVEN_REPOSITORY$/commons-logging/commons-logging/1/commons-logging-1.jar

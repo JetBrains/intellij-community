@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
@@ -11,26 +11,25 @@ import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.Icon;
+import java.awt.AWTException;
+import java.awt.Image;
+import java.awt.SystemTray;
+import java.awt.TrayIcon;
+import java.awt.Window;
 
-/**
- * @author Alexander Lobas
- */
 final class SystemTrayNotifications implements SystemNotificationsImpl.Notifier {
   private static SystemTrayNotifications ourWin10Instance;
 
-  @Nullable
-  static synchronized SystemTrayNotifications getWin10Instance() throws AWTException {
+  static synchronized @Nullable SystemTrayNotifications getWin10Instance() throws AWTException {
     if (ourWin10Instance == null && SystemTray.isSupported()) {
       ourWin10Instance = new SystemTrayNotifications(createImage(), TrayIcon.MessageType.INFO);
     }
     return ourWin10Instance;
   }
 
-  @NotNull
   private static Image createImage() {
-    Icon icon = AppUIUtil.loadSmallApplicationIcon(ScaleContext.create());
+    Icon icon = AppUIUtilKt.loadSmallApplicationIcon(ScaleContext.create(), 16);
     return ImageUtil.toBufferedImage(IconUtil.toImage(icon));
   }
 

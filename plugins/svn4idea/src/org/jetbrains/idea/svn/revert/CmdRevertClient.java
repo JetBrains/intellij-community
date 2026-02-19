@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.svn.revert;
 
 import com.intellij.openapi.vcs.VcsException;
@@ -7,7 +7,13 @@ import com.intellij.util.containers.Convertor;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.svn.api.*;
+import org.jetbrains.idea.svn.api.BaseSvnClient;
+import org.jetbrains.idea.svn.api.Depth;
+import org.jetbrains.idea.svn.api.EventAction;
+import org.jetbrains.idea.svn.api.FileStatusResultParser;
+import org.jetbrains.idea.svn.api.ProgressEvent;
+import org.jetbrains.idea.svn.api.ProgressTracker;
+import org.jetbrains.idea.svn.api.Target;
 import org.jetbrains.idea.svn.commandLine.Command;
 import org.jetbrains.idea.svn.commandLine.CommandExecutor;
 import org.jetbrains.idea.svn.commandLine.CommandUtil;
@@ -58,21 +64,13 @@ public class CmdRevertClient extends BaseSvnClient implements RevertClient {
       return createEvent(new File(path), createAction(statusMessage));
     }
 
-    @Nullable
-    public static EventAction createAction(@NotNull String code) {
-      EventAction result = null;
-
-      if (REVERTED_CODE.equals(code)) {
-        result = EventAction.REVERT;
-      }
-      else if (FAILED_TO_REVERT_CODE.equals(code)) {
-        result = EventAction.FAILED_REVERT;
-      }
-      else if (SKIPPED_CODE.equals(code)) {
-        result = EventAction.SKIP;
-      }
-
-      return result;
+    public static @Nullable EventAction createAction(@NotNull String code) {
+      return switch (code) {
+        case REVERTED_CODE -> EventAction.REVERT;
+        case FAILED_TO_REVERT_CODE -> EventAction.FAILED_REVERT;
+        case SKIPPED_CODE -> EventAction.SKIP;
+        default -> null;
+      };
     }
   }
 }

@@ -1,0 +1,180 @@
+### auto-generated section `build intellij.kotlin.refactorings.rename` start
+load("//build:compiler-options.bzl", "create_kotlinc_options")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+create_kotlinc_options(
+  name = "custom_kotlin-refactorings-rename",
+  opt_in = [
+    "com.intellij.openapi.util.IntellijInternalApi",
+    "org.jetbrains.kotlin.utils.addToStdlib.UnsafeCastFunction",
+    "org.jetbrains.kotlin.analysis.api.permissions.KaAllowProhibitedAnalyzeFromWriteAction",
+    "org.jetbrains.kotlin.analysis.api.KaIdeApi",
+    "org.jetbrains.kotlin.analysis.api.KaContextParameterApi",
+  ],
+  x_context_parameters = True
+)
+
+resourcegroup(
+  name = "kotlin-refactorings-rename_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "kotlin-refactorings-rename",
+  module_name = "intellij.kotlin.refactorings.rename",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":kotlin-refactorings-rename_resources"],
+  kotlinc_opts = ":custom_kotlin-refactorings-rename",
+  deps = [
+    "@lib//:kotlinc-kotlin-compiler-common",
+    "@lib//:kotlinc-analysis-api",
+    "//platform/analysis-api:analysis",
+    "//platform/indexing-api:indexing",
+    "//plugins/kotlin/base/psi",
+    "//plugins/kotlin/base/util",
+    "//java/java-psi-api:psi",
+    "//platform/core-api:core",
+    "//platform/core-impl",
+    "//platform/lang-impl",
+    "//plugins/kotlin/refactorings/kotlin.refactorings.common:kotlin-refactorings-common",
+    "//plugins/kotlin/refactorings/kotlin.refactorings.k2:kotlin-refactorings",
+    "//plugins/kotlin/base/analysis",
+    "//plugins/kotlin/base/resources:kotlin-base-resources",
+    "//plugins/kotlin/kotlin.searching",
+    "//plugins/kotlin/base/analysis-api/analysis-api-utils:kotlin-base-analysis-utils",
+    "//java/java-indexing-api:indexing",
+    "//java/java-impl-refactorings:impl-refactorings",
+  ]
+)
+
+jvm_library(
+  name = "kotlin-refactorings-rename_test_lib",
+  module_name = "intellij.kotlin.refactorings.rename",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  kotlinc_opts = ":custom_kotlin-refactorings-rename",
+  runtime_deps = [
+    ":kotlin-refactorings-rename",
+    "//platform/analysis-api:analysis_test_lib",
+    "//platform/indexing-api:indexing_test_lib",
+    "//plugins/kotlin/base/psi:psi_test_lib",
+    "//plugins/kotlin/base/util:util_test_lib",
+    "//java/java-psi-api:psi_test_lib",
+    "//platform/core-api:core_test_lib",
+    "//platform/core-impl:core-impl_test_lib",
+    "//platform/lang-impl:lang-impl_test_lib",
+    "//plugins/kotlin/refactorings/kotlin.refactorings.common:kotlin-refactorings-common_test_lib",
+    "//plugins/kotlin/refactorings/kotlin.refactorings.k2:kotlin-refactorings_test_lib",
+    "//plugins/kotlin/base/analysis:analysis_test_lib",
+    "//plugins/kotlin/base/resources:kotlin-base-resources_test_lib",
+    "//plugins/kotlin/kotlin.searching:kotlin.searching_test_lib",
+    "//plugins/kotlin/base/analysis-api/analysis-api-utils:kotlin-base-analysis-utils_test_lib",
+    "//java/java-indexing-api:indexing_test_lib",
+    "//java/java-impl-refactorings:impl-refactorings_test_lib",
+  ]
+)
+### auto-generated section `build intellij.kotlin.refactorings.rename` end
+
+### auto-generated section `build intellij.kotlin.refactorings.rename.tests` start
+create_kotlinc_options(
+  name = "custom_kotlin-refactorings-rename-tests",
+  opt_in = [
+    "com.intellij.openapi.util.IntellijInternalApi",
+    "org.jetbrains.kotlin.utils.addToStdlib.UnsafeCastFunction",
+    "org.jetbrains.kotlin.analysis.api.permissions.KaAllowProhibitedAnalyzeFromWriteAction",
+    "org.jetbrains.kotlin.analysis.api.KaIdeApi",
+    "org.jetbrains.kotlin.analysis.api.KaContextParameterApi",
+  ],
+  x_context_parameters = True
+)
+
+jvm_library(
+  name = "kotlin-refactorings-rename-tests",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True)
+)
+
+jvm_library(
+  name = "kotlin-refactorings-rename-tests_test_lib",
+  visibility = ["//visibility:public"],
+  srcs = glob(["test/**/*.kt", "test/**/*.java", "test/**/*.form"], allow_empty = True),
+  kotlinc_opts = ":custom_kotlin-refactorings-rename-tests",
+  associates = [
+    "//plugins/kotlin/refactorings/rename.k2:kotlin-refactorings-rename",
+    "//plugins/kotlin/refactorings/rename.k2:kotlin-refactorings-rename_test_lib",
+  ],
+  deps = [
+    "@lib//:kotlinc-kotlin-compiler-common",
+    "@lib//:kotlinc-kotlin-compiler-tests",
+    "//libraries/gson",
+    "//libraries/gson:gson_test_lib",
+    "@lib//:kotlinc-analysis-api",
+    "//platform/analysis-api:analysis",
+    "//platform/analysis-api:analysis_test_lib",
+    "//platform/core-ui",
+    "//platform/core-ui:core-ui_test_lib",
+    "//platform/lang-core",
+    "//platform/lang-core:lang-core_test_lib",
+    "//platform/indexing-api:indexing",
+    "//platform/indexing-api:indexing_test_lib",
+    "//plugins/kotlin/plugin/k2",
+    "//plugins/kotlin/plugin/k2:k2_test_lib",
+    "//plugins/kotlin/base/plugin",
+    "//plugins/kotlin/base/plugin:plugin_test_lib",
+    "//plugins/kotlin/base/psi",
+    "//plugins/kotlin/base/psi:psi_test_lib",
+    "//plugins/kotlin/base/util",
+    "//plugins/kotlin/base/util:util_test_lib",
+    "//java/java-psi-api:psi",
+    "//java/java-psi-api:psi_test_lib",
+    "//platform/core-api:core",
+    "//platform/core-api:core_test_lib",
+    "//platform/core-impl",
+    "//platform/core-impl:core-impl_test_lib",
+    "//plugins/kotlin/base/test",
+    "//plugins/kotlin/base/test:test_test_lib",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test_lib",
+    "//platform/lang-impl",
+    "//platform/lang-impl:lang-impl_test_lib",
+    "//plugins/kotlin/tests-common:common-tests",
+    "//plugins/kotlin/tests-common:common-tests_test_lib",
+    "//plugins/kotlin/test-framework",
+    "//plugins/kotlin/test-framework:test-framework_test_lib",
+    "//plugins/kotlin/base/fir/code-insight:kotlin-codeInsight-base",
+    "//plugins/kotlin/base/fir/code-insight:kotlin-codeInsight-base_test_lib",
+    "//java/testFramework",
+    "//java/testFramework:testFramework_test_lib",
+    "//plugins/kotlin/refactorings/kotlin.refactorings.common:kotlin-refactorings-common",
+    "//plugins/kotlin/refactorings/kotlin.refactorings.common:kotlin-refactorings-common_test_lib",
+    "//plugins/kotlin/refactorings/kotlin.refactorings.k2:kotlin-refactorings",
+    "//plugins/kotlin/refactorings/kotlin.refactorings.k2:kotlin-refactorings_test_lib",
+    "//plugins/kotlin/base/analysis",
+    "//plugins/kotlin/base/analysis:analysis_test_lib",
+    "//plugins/kotlin/base/resources:kotlin-base-resources",
+    "//plugins/kotlin/base/resources:kotlin-base-resources_test_lib",
+    "//plugins/kotlin/kotlin.searching",
+    "//plugins/kotlin/kotlin.searching:kotlin.searching_test_lib",
+    "//plugins/kotlin/base/analysis-api/analysis-api-utils:kotlin-base-analysis-utils",
+    "//plugins/kotlin/base/analysis-api/analysis-api-utils:kotlin-base-analysis-utils_test_lib",
+    "//java/java-indexing-api:indexing",
+    "//java/java-indexing-api:indexing_test_lib",
+    "//java/java-impl-refactorings:impl-refactorings",
+    "//java/java-impl-refactorings:impl-refactorings_test_lib",
+    "//plugins/kotlin/intellij.kotlin.base.test:base-test",
+    "//plugins/kotlin/intellij.kotlin.base.test:base-test_test_lib",
+  ],
+  runtime_deps = [":kotlin-refactorings-rename-tests"]
+)
+### auto-generated section `build intellij.kotlin.refactorings.rename.tests` end
+
+### auto-generated section `test intellij.kotlin.refactorings.rename.tests` start
+load("@community//build:tests-options.bzl", "jps_test")
+
+jps_test(
+  name = "kotlin-refactorings-rename-tests_test",
+  runtime_deps = [":kotlin-refactorings-rename-tests_test_lib"]
+)
+### auto-generated section `test intellij.kotlin.refactorings.rename.tests` end

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.lookup.Lookup;
@@ -8,36 +8,58 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * @author peter
+ * Contains useful information about the current completion session.
+ * <p>
+ * The following information is available:
+ * <ul>
+ *   <li>char which was typed to finish completion</li>
+ *   <li>list of lookup elements</li>
+ *   <li>file which was edited</li>
+ *   <li>editor which was edited</li>
+ *   <li>offset map which tracks offsets of inserted elements</li>
+ *   <li>runnable which should be executed after completing write action is finished. You can update it.</li>
+ * </ul>
+ * <p>
+ * Offset map contains the following offsets by default:
+ * <ul>
+ *   <li>{@link CompletionInitializationContext#START_OFFSET}</li>
+ *   <li>{@link CompletionInitializationContext#SELECTION_END_OFFSET}</li>
+ *   <li>{@link CompletionInitializationContext#IDENTIFIER_END_OFFSET}</li>
+ * </ul>
  */
+@ApiStatus.NonExtendable
 public class InsertionContext {
   public static final OffsetKey TAIL_OFFSET = OffsetKey.create("tailOffset", true);
 
   private final OffsetMap myOffsetMap;
   private final char myCompletionChar;
   private final LookupElement[] myElements;
-  private final PsiFile myFile;
+  private final PsiFile myPsiFile;
   private final Editor myEditor;
   private Runnable myLaterRunnable;
   private boolean myAddCompletionChar;
 
-  public InsertionContext(final OffsetMap offsetMap, final char completionChar, final LookupElement[] elements,
-                          @NotNull final PsiFile file,
-                          @NotNull final Editor editor, final boolean addCompletionChar) {
+  public InsertionContext(@NotNull OffsetMap offsetMap,
+                          char completionChar,
+                          @NotNull LookupElement @NotNull [] elements,
+                          @NotNull PsiFile psiFile,
+                          @NotNull Editor editor,
+                          boolean addCompletionChar) {
     myOffsetMap = offsetMap;
     myCompletionChar = completionChar;
     myElements = elements;
-    myFile = file;
+    myPsiFile = psiFile;
     myEditor = editor;
     setTailOffset(editor.getCaretModel().getOffset());
     myAddCompletionChar = addCompletionChar;
   }
 
-  public void setTailOffset(final int offset) {
+  public void setTailOffset(int offset) {
     myOffsetMap.addOffset(TAIL_OFFSET, offset);
   }
 
@@ -45,13 +67,11 @@ public class InsertionContext {
     return myOffsetMap.getOffset(TAIL_OFFSET);
   }
 
-  @NotNull
-  public PsiFile getFile() {
-    return myFile;
+  public @NotNull PsiFile getFile() {
+    return myPsiFile;
   }
 
-  @NotNull
-  public Editor getEditor() {
+  public @NotNull Editor getEditor() {
     return myEditor;
   }
 
@@ -59,21 +79,20 @@ public class InsertionContext {
     PsiDocumentManager.getInstance(getProject()).commitDocument(getDocument());
   }
 
-  @NotNull
-  public Document getDocument() {
+  public @NotNull Document getDocument() {
     return getEditor().getDocument();
   }
 
-  public int getOffset(OffsetKey key) {
+  public int getOffset(@NotNull OffsetKey key) {
     return getOffsetMap().getOffset(key);
   }
 
-  public OffsetMap getOffsetMap() {
+  public @NotNull OffsetMap getOffsetMap() {
     return myOffsetMap;
   }
 
-  public OffsetKey trackOffset(int offset, boolean movableToRight) {
-    final OffsetKey key = OffsetKey.create("tracked", movableToRight);
+  public @NotNull OffsetKey trackOffset(int offset, boolean movableToRight) {
+    OffsetKey key = OffsetKey.create("tracked", movableToRight);
     getOffsetMap().addOffset(key, offset);
     return key;
   }
@@ -86,31 +105,33 @@ public class InsertionContext {
     return myCompletionChar;
   }
 
-  public LookupElement[] getElements() {
+  public @NotNull LookupElement @NotNull [] getElements() {
     return myElements;
   }
 
-  public Project getProject() {
-    return myFile.getProject();
+  public @NotNull Project getProject() {
+    return myPsiFile.getProject();
   }
 
   public int getSelectionEndOffset() {
     return myOffsetMap.getOffset(CompletionInitializationContext.SELECTION_END_OFFSET);
   }
 
-  @Nullable
-  public Runnable getLaterRunnable() {
+  public @Nullable Runnable getLaterRunnable() {
     return myLaterRunnable;
   }
 
-  public void setLaterRunnable(@Nullable final Runnable laterRunnable) {
+  /**
+   * See doc of {@link LookupElement#handleInsert}
+   */
+  public void setLaterRunnable(@Nullable Runnable laterRunnable) {
     myLaterRunnable = laterRunnable;
   }
 
   /**
    * @param addCompletionChar Whether completionChar should be added to document at tail offset (see {@link #TAIL_OFFSET}) after insert handler (default: {@code true}).
    */
-  public void setAddCompletionChar(final boolean addCompletionChar) {
+  public void setAddCompletionChar(boolean addCompletionChar) {
     myAddCompletionChar = addCompletionChar;
   }
 
@@ -123,5 +144,13 @@ public class InsertionContext {
     return completionChar != Lookup.AUTO_INSERT_SELECT_CHAR &&
            completionChar != Lookup.REPLACE_SELECT_CHAR &&
            completionChar != Lookup.NORMAL_SELECT_CHAR;
+  }
+
+  /**
+   * Creates a new instance of {@link InsertionContext} with the new copy of {@link OffsetMap}
+   */
+  public @NotNull InsertionContext forkByOffsetMap() {
+    return new InsertionContext(myOffsetMap.copyOffsets(myEditor.getDocument()), myCompletionChar, myElements, myPsiFile, myEditor,
+                                myAddCompletionChar);
   }
 }

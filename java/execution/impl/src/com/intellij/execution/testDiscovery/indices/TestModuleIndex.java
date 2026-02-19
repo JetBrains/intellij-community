@@ -2,10 +2,16 @@
 package com.intellij.execution.testDiscovery.indices;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.util.io.*;
+import com.intellij.util.io.DataExternalizer;
+import com.intellij.util.io.DataInputOutputUtil;
+import com.intellij.util.io.EnumeratorIntegerDescriptor;
+import com.intellij.util.io.EnumeratorStringDescriptor;
+import com.intellij.util.io.PersistentEnumerator;
+import com.intellij.util.io.PersistentHashMap;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
+import it.unimi.dsi.fastutil.ints.IntSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -23,11 +29,11 @@ public final class TestModuleIndex {
   private static final Logger LOG = Logger.getInstance(TestModuleIndex.class);
 
   private final PersistentHashMap<Integer, IntList> myTestNameToRunModule;
-  private final PersistentEnumeratorDelegate<String> myModuleNameEnumerator;
+  private final PersistentEnumerator<String> myModuleNameEnumerator;
 
   public TestModuleIndex(@NotNull Path basePath, @NotNull PersistentObjectSeq persistentObjectSeq) throws IOException {
     Path moduleNameEnumeratorFile = basePath.resolve("moduleName.enum");
-    myModuleNameEnumerator = new PersistentEnumeratorDelegate<>(moduleNameEnumeratorFile, EnumeratorStringDescriptor.INSTANCE, 64);
+    myModuleNameEnumerator = new PersistentEnumerator<>(moduleNameEnumeratorFile, EnumeratorStringDescriptor.INSTANCE, 64);
     persistentObjectSeq.add(myModuleNameEnumerator);
 
     Path testModuleIndexFile = basePath.resolve("testModule.index");
@@ -77,7 +83,7 @@ public final class TestModuleIndex {
 
     @Override
     public IntList read(@NotNull DataInput dataInput) throws IOException {
-      IntOpenHashSet result = new IntOpenHashSet();
+      IntSet result = new IntOpenHashSet();
       while (((InputStream)dataInput).available() > 0) {
         result.add(DataInputOutputUtil.readINT(dataInput));
       }

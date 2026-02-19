@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.refactoring.introduce;
 
 import com.intellij.openapi.util.TextRange;
@@ -51,8 +37,7 @@ public class StringPartInfo {
   private final String myStartQuote;
   private final String myEndQuote;
 
-  @Nullable
-  public static StringPartInfo findStringPart(@NotNull PsiFile file, int startOffset, int endOffset) {
+  public static @Nullable StringPartInfo findStringPart(@NotNull PsiFile file, int startOffset, int endOffset) {
     final PsiElement start = file.findElementAt(startOffset);
     final PsiElement fin = file.findElementAt(endOffset - 1);
     if (start == null || fin == null) return null;
@@ -68,7 +53,7 @@ public class StringPartInfo {
     return null;
   }
 
-  public StringPartInfo(@NotNull GrLiteral literal, @NotNull final TextRange range) {
+  public StringPartInfo(@NotNull GrLiteral literal, final @NotNull TextRange range) {
     myLiteral = literal;
 
     if (literal instanceof GrString) {
@@ -152,8 +137,7 @@ public class StringPartInfo {
     return false;
   }
 
-  @Nullable
-  private static GrLiteral findLiteral(@NotNull PsiElement psi) {
+  private static @Nullable GrLiteral findLiteral(@NotNull PsiElement psi) {
     PsiElement parent = psi.getParent();
     if (isStringLiteral(parent)) {
       return (GrLiteral)parent;
@@ -178,8 +162,7 @@ public class StringPartInfo {
     return psi instanceof GrLiteral && TokenSets.STRING_LITERAL_SET.contains(GrLiteralImpl.getLiteralType((GrLiteral)psi)) || psi instanceof GrString;
   }
 
-  @NotNull
-  public GrExpression replaceLiteralWithConcatenation(@Nullable String varName) {
+  public @NotNull GrExpression replaceLiteralWithConcatenation(@Nullable String varName) {
 
     String prefix = preparePrefix();
     String suffix = prepareSuffix();
@@ -252,8 +235,7 @@ public class StringPartInfo {
     return myStartQuote + content + myEndQuote;
   }
 
-  @NotNull
-  private static String prepareGString(@NotNull String content) {
+  private static @NotNull String prepareGString(@NotNull String content) {
     StringBuilder buffer = new StringBuilder();
     boolean multiline = content.contains("\n");
     buffer.append(multiline ? GrStringUtil.TRIPLE_DOUBLE_QUOTES : GrStringUtil.DOUBLE_QUOTES);
@@ -263,23 +245,19 @@ public class StringPartInfo {
     return buffer.toString();
   }
 
-  @NotNull
-  public GrLiteral getLiteral() {
+  public @NotNull GrLiteral getLiteral() {
     return myLiteral;
   }
 
-  @NotNull
-  public TextRange getRange() {
+  public @NotNull TextRange getRange() {
     return myRange;
   }
 
-  @NotNull
-  public List<GrStringInjection> getInjections() {
+  public @NotNull List<GrStringInjection> getInjections() {
     return myInjections;
   }
 
-  @NotNull
-  public GrLiteral createLiteralFromSelected() {
+  public @NotNull GrLiteral createLiteralFromSelected() {
     return (GrLiteral)GroovyPsiElementFactory.getInstance(myLiteral.getProject()).createExpressionFromText(prepareSelected());
   }
 }

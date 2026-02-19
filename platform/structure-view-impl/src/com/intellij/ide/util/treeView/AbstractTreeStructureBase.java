@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.util.treeView;
 
 import com.intellij.ide.projectView.SettingsProvider;
@@ -14,6 +14,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -70,37 +71,20 @@ public abstract class AbstractTreeStructureBase extends AbstractTreeStructure {
 
   @Override
   public Object getParentElement(@NotNull Object element) {
-    if (element instanceof AbstractTreeNode){
+    if (element instanceof AbstractTreeNode) {
       return ((AbstractTreeNode<?>)element).getParent();
     }
     return null;
   }
 
   @Override
-  @NotNull
-  public NodeDescriptor<?> createDescriptor(@NotNull final Object element, final NodeDescriptor parentDescriptor) {
+  public @NotNull NodeDescriptor<?> createDescriptor(final @NotNull Object element, final NodeDescriptor parentDescriptor) {
     return (NodeDescriptor<?>)element;
   }
 
-  @Nullable
-  public abstract List<TreeStructureProvider> getProviders();
+  public abstract @Unmodifiable @Nullable List<TreeStructureProvider> getProviders();
 
-  @Nullable
-  public Object getDataFromProviders(@NotNull List<AbstractTreeNode<?>> selectedNodes, @NotNull String dataId) {
-    List<TreeStructureProvider> providers = getProvidersDumbAware();
-    if (!providers.isEmpty()) {
-      for (TreeStructureProvider treeStructureProvider : providers) {
-        final Object fromProvider = treeStructureProvider.getData(selectedNodes, dataId);
-        if (fromProvider != null) {
-          return fromProvider;
-        }
-      }
-    }
-    return null;
-  }
-
-  @NotNull
-  private List<TreeStructureProvider> getProvidersDumbAware() {
+  private @Unmodifiable @NotNull List<TreeStructureProvider> getProvidersDumbAware() {
     if (myProject == null) {
       return Collections.emptyList();
     }

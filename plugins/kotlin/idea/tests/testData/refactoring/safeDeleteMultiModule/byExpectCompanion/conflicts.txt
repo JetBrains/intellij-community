@@ -1,0 +1,2 @@
+Usage of companion object A.Companion that is not safe to delete.
+Usage of companion object A.Companion that is not safe to delete.

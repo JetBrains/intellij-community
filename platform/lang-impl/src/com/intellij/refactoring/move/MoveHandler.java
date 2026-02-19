@@ -1,40 +1,43 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.refactoring.move;
 
-import com.intellij.internal.statistic.eventLog.FeatureUsageData;
-import com.intellij.internal.statistic.service.fus.collectors.FUCounterUsageLogger;
+import com.intellij.codeInsight.TargetElementUtilBase;
 import com.intellij.lang.Language;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.LangDataKeys;
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.NlsActions;
 import com.intellij.openapi.util.NlsContexts;
-import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiReference;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.actions.BaseRefactoringAction;
+import com.intellij.refactoring.move.moveFilesOrDirectories.MoveFilesOrDirectoriesHandler;
 import com.intellij.refactoring.move.moveFilesOrDirectories.MoveFilesOrDirectoriesUtil;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
+import com.intellij.util.SlowOperations;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-public class MoveHandler implements RefactoringActionHandler {
-  /**
-   * @deprecated Use {@link #getRefactoringName()} instead
-   */
-  @Deprecated
-  public static final String REFACTORING_NAME = "Move";
+public final class MoveHandler implements RefactoringActionHandler {
 
   /**
    * called by an Action in AtomicAction when refactoring is invoked from Editor
@@ -48,7 +51,7 @@ public class MoveHandler implements RefactoringActionHandler {
       element = file;
     }
 
-    PsiReference reference = findReferenceAtCaret(element, offset);
+    PsiReference reference = TargetElementUtilBase.findReferenceWithoutExpectedCaret(editor);
     if (reference != null) {
       PsiElement refElement = reference.resolve();
       for (MoveHandlerDelegate delegate: MoveHandlerDelegate.EP_NAME.getExtensionList()) {
@@ -79,19 +82,7 @@ public class MoveHandler implements RefactoringActionHandler {
   }
 
   private static void logDelegate(@NotNull Project project, @NotNull MoveHandlerDelegate delegate, @Nullable Language language) {
-    FeatureUsageData data = new FeatureUsageData()
-      .addLanguage(language)
-      .addData("handler", delegate.getClass().getName());
-    FUCounterUsageLogger.getInstance().logEvent(project, "move.refactoring", "handler.invoked", data);
-  }
-
-  private static PsiReference findReferenceAtCaret(PsiElement element, int caretOffset) {
-    final TextRange range = element.getTextRange();
-    if (range != null) {
-      int relative = caretOffset - range.getStartOffset();
-      return element.findReferenceAt(relative);
-    }
-    return null;
+    MoveUsagesCollector.HANDLER_INVOKED.log(project, language, delegate.getClass());
   }
 
   /**
@@ -101,9 +92,11 @@ public class MoveHandler implements RefactoringActionHandler {
   public void invoke(@NotNull Project project, PsiElement @NotNull [] elements, DataContext dataContext) {
     final PsiElement targetContainer = dataContext == null ? null : LangDataKeys.TARGET_PSI_ELEMENT.getData(dataContext);
     final Set<PsiElement> filesOrDirs = new HashSet<>();
-    for (MoveHandlerDelegate delegate: MoveHandlerDelegate.EP_NAME.getExtensionList()) {
-      if (delegate.canMove(dataContext) && delegate.isValidTarget(targetContainer, elements)) {
-        delegate.collectFilesOrDirsFromContext(dataContext, filesOrDirs);
+    if (!DumbService.isDumb(project)) {
+      for (MoveHandlerDelegate delegate : MoveHandlerDelegate.EP_NAME.getExtensionList()) {
+        if (delegate.canMove(dataContext) && delegate.isValidTarget(targetContainer, elements)) {
+          delegate.collectFilesOrDirsFromContext(dataContext, filesOrDirs);
+        }
       }
     }
     if (!filesOrDirs.isEmpty()) {
@@ -118,7 +111,7 @@ public class MoveHandler implements RefactoringActionHandler {
           }
         }
       }
-      FUCounterUsageLogger.getInstance().logEvent(project, "move.refactoring", "move.files.or.directories");
+      MoveUsagesCollector.MOVE_FILES_OR_DIRECTORIES.log(project);
       MoveFilesOrDirectoriesUtil
         .doMove(project, PsiUtilCore.toPsiElementArray(filesOrDirs), new PsiElement[]{targetContainer}, null);
       return;
@@ -132,11 +125,27 @@ public class MoveHandler implements RefactoringActionHandler {
   public static void doMove(Project project, PsiElement @NotNull [] elements, PsiElement targetContainer, DataContext dataContext, MoveCallback callback) {
     if (elements.length == 0) return;
 
-    for (MoveHandlerDelegate delegate: MoveHandlerDelegate.EP_NAME.getExtensionList()) {
-      if (delegate.canMove(elements, targetContainer, null)) {
-        logDelegate(project, delegate, elements[0].getLanguage());
-        delegate.doMove(project, elements, delegate.adjustTargetForMove(dataContext, targetContainer), callback);
-        break;
+    try (var ignored = SlowOperations.startSection(SlowOperations.ACTION_PERFORM)) {
+      if (DumbService.isDumb(project)) {
+        MoveFilesOrDirectoriesHandler filesOrDirectoriesHandler = MoveHandlerDelegate.EP_NAME.findExtensionOrFail(MoveFilesOrDirectoriesHandler.class);
+        if (filesOrDirectoriesHandler.canMove(elements, targetContainer, null)) {
+          int copyDumb = Messages.showYesNoDialog(project,
+                                                  RefactoringBundle.message("move.handler.is.dumb.during.indexing"),
+                                                  getRefactoringName(), Messages.getQuestionIcon());
+          if (copyDumb == Messages.YES) {
+            logDelegate(project, filesOrDirectoriesHandler, elements[0].getLanguage());
+            filesOrDirectoriesHandler.doMove(project, elements, filesOrDirectoriesHandler.adjustTargetForMove(dataContext, targetContainer), callback);
+          }
+        }
+      }
+      else {
+        for (MoveHandlerDelegate delegate : MoveHandlerDelegate.EP_NAME.getExtensionList()) {
+          if (delegate.canMove(elements, targetContainer, null)) {
+            logDelegate(project, delegate, elements[0].getLanguage());
+            delegate.doMove(project, elements, delegate.adjustTargetForMove(dataContext, targetContainer), callback);
+            break;
+          }
+        }
       }
     }
   }
@@ -156,14 +165,15 @@ public class MoveHandler implements RefactoringActionHandler {
 
   /**
    * Must be invoked in AtomicAction
-   * target container can be null => means that container is not determined yet and must be spacify by the user
+   * target container can be null => means that container is not determined yet and must be specified by the user
    */
   public static boolean canMove(PsiElement @NotNull [] elements, PsiElement targetContainer) {
-    return findDelegate(elements, targetContainer, null) != null;
+    try (AccessToken ignore = SlowOperations.knownIssue("IDEA-326650, EA-659473")) {
+      return findDelegate(elements, targetContainer, null) != null;
+    }
   }
 
-  @Nullable
-  private static MoveHandlerDelegate findDelegate(PsiElement @NotNull [] elements, @Nullable PsiElement targetContainer, @Nullable PsiReference reference) {
+  private static @Nullable MoveHandlerDelegate findDelegate(PsiElement @NotNull [] elements, @Nullable PsiElement targetContainer, @Nullable PsiReference reference) {
     for (MoveHandlerDelegate delegate: MoveHandlerDelegate.EP_NAME.getExtensionList()) {
       if (delegate.canMove(elements, targetContainer, reference)) {
         return delegate;
@@ -173,8 +183,7 @@ public class MoveHandler implements RefactoringActionHandler {
     return null;
   }
 
-  @Nullable
-  public static @NlsActions.ActionText String getActionName(@NotNull DataContext dataContext) {
+  public static @Nullable @NlsActions.ActionText String getActionName(@NotNull DataContext dataContext) {
     Editor editor = dataContext.getData(CommonDataKeys.EDITOR);
     if (editor != null) {
       Project project = dataContext.getData(CommonDataKeys.PROJECT);
@@ -184,7 +193,7 @@ public class MoveHandler implements RefactoringActionHandler {
       PsiElement element = file.findElementAt(editor.getCaretModel().getOffset());
       if (element == null) element = file;
 
-      PsiReference reference = findReferenceAtCaret(element, editor.getCaretModel().getOffset());
+      PsiReference reference = TargetElementUtilBase.findReferenceWithoutExpectedCaret(editor);
       if (reference != null) {
         PsiElement refElement = reference.resolve();
         if (refElement != null) {
@@ -218,8 +227,7 @@ public class MoveHandler implements RefactoringActionHandler {
     return null;
   }
 
-  @NotNull
-  private static List<MoveHandlerDelegate> findHandlersForLanguage(@NotNull PsiElement element) {
+  private static @Unmodifiable @NotNull List<MoveHandlerDelegate> findHandlersForLanguage(@NotNull PsiElement element) {
     return ContainerUtil.filter(MoveHandlerDelegate.EP_NAME.getExtensionList(),
                                 (delegate) -> delegate.supportsLanguage(element.getLanguage()));
   }

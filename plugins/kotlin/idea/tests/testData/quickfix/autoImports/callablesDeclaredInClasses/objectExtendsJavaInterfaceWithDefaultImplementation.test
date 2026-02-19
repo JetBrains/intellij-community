@@ -1,0 +1,29 @@
+// FILE: first.before.kt
+// "Import function 'MyObject.foo'" "true"
+// ERROR: Unresolved reference: foo
+package test
+
+val f = <caret>foo()
+
+// FILE: javadep/JavaInterfaceWithDefaultImplementation.java
+package javadep;
+
+public interface JavaInterfaceWithDefaultImplementation {
+    default void foo() {}
+}
+
+// FILE: second.kt
+package second
+
+import javadep.JavaInterfaceWithDefaultImplementation
+
+object MyObject : JavaInterfaceWithDefaultImplementation
+
+// FILE: first.after.kt
+// "Import function 'MyObject.foo'" "true"
+// ERROR: Unresolved reference: foo
+package test
+
+import second.MyObject.foo
+
+val f = <caret>foo()

@@ -1,11 +1,11 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.ide
 
-import com.google.common.base.Supplier
-import com.google.common.cache.CacheBuilder
-import com.google.common.cache.CacheLoader
+import com.github.benmanes.caffeine.cache.CacheLoader
+import com.github.benmanes.caffeine.cache.Caffeine
 import com.google.gson.Gson
 import com.google.gson.GsonBuilder
+import com.google.gson.Strictness
 import com.google.gson.stream.JsonReader
 import com.google.gson.stream.JsonWriter
 import com.google.gson.stream.MalformedJsonException
@@ -13,35 +13,44 @@ import com.intellij.ide.IdeBundle
 import com.intellij.ide.impl.ProjectUtil.showYesNoDialog
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.components.service
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.openapi.util.text.StringUtilRt
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.ui.AppIcon
 import com.intellij.util.ExceptionUtil
+import com.intellij.util.containers.CollectionFactory
+import com.intellij.util.io.getHostName
 import com.intellij.util.io.origin
 import com.intellij.util.io.referrer
-import com.intellij.util.net.NetUtils
-import com.intellij.util.text.nullize
+import com.intellij.xml.util.XmlStringUtil
 import io.netty.buffer.ByteBufInputStream
 import io.netty.buffer.Unpooled
 import io.netty.channel.Channel
 import io.netty.channel.ChannelHandlerContext
-import io.netty.handler.codec.http.*
-import org.jetbrains.builtInWebServer.isSignedRequest
-import org.jetbrains.io.addCommonHeaders
+import io.netty.handler.codec.http.FullHttpRequest
+import io.netty.handler.codec.http.HttpHeaders
+import io.netty.handler.codec.http.HttpMethod
+import io.netty.handler.codec.http.HttpRequest
+import io.netty.handler.codec.http.HttpResponse
+import io.netty.handler.codec.http.HttpResponseStatus
+import io.netty.handler.codec.http.HttpUtil
+import io.netty.handler.codec.http.QueryStringDecoder
+import org.jetbrains.builtInWebServer.BuiltInWebServerAuth
 import org.jetbrains.io.addNoCache
 import org.jetbrains.io.response
+import org.jetbrains.io.responseStatus
 import org.jetbrains.io.send
+import org.jetbrains.io.sendPlainText
 import java.awt.Window
 import java.io.IOException
 import java.io.OutputStream
 import java.lang.reflect.InvocationTargetException
-import java.net.InetAddress
 import java.net.InetSocketAddress
 import java.net.URI
 import java.net.URISyntaxException
@@ -49,19 +58,22 @@ import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicInteger
 
 /**
- * Document your service using [apiDoc](http://apidocjs.com). To extract big example from source code, consider to use *.coffee file near your source file.
- * (or Python/Ruby, but coffee recommended because it's plugin is lightweight). See [AboutHttpService] for example.
+ * Document your service using [apiDoc](http://apidocjs.com).
+ * To extract a big example from source code, consider adding a `*.coffee` file near the sources
+ * (or Python/Ruby, but CoffeeScript is recommended because its plugin is lightweight).
+ * See [AboutHttpService] for example.
  *
- * Don't create JsonReader/JsonWriter directly, use only provided [.createJsonReader], [.createJsonWriter] methods (to ensure that you handle in/out according to REST API guidelines).
+ * Don't create [JsonReader]/[JsonWriter] directly, use only provided [RestService.createJsonReader] and [RestService.createJsonWriter] methods
+ * (to ensure that you handle in/out according to REST API guidelines).
  *
- * @see [Best Practices for Designing a Pragmatic REST API](http://www.vinaysahni.com/best-practices-for-a-pragmatic-restful-api).
+ * @see <a href="http://www.vinaysahni.com/best-practices-for-a-pragmatic-restful-api">Best Practices for Designing a Pragmatic REST API</a>.
  */
 abstract class RestService : HttpRequestHandler() {
   companion object {
     @JvmField
-    val LOG = logger<RestService>()
+    val LOG: Logger = logger<RestService>()
 
-    const val PREFIX = "api"
+    const val PREFIX: String = "api"
 
     @JvmStatic
     fun activateLastFocusedFrame() {
@@ -69,23 +81,18 @@ abstract class RestService : HttpRequestHandler() {
     }
 
     @JvmStatic
-    fun createJsonReader(request: FullHttpRequest): JsonReader {
-      val reader = JsonReader(ByteBufInputStream(request.content()).reader())
-      reader.isLenient = true
-      return reader
-    }
+    fun createJsonReader(request: FullHttpRequest): JsonReader =
+      JsonReader(ByteBufInputStream(request.content()).reader())
+        .apply { strictness = Strictness.LENIENT }
 
     @JvmStatic
-    fun createJsonWriter(out: OutputStream): JsonWriter {
-      val writer = JsonWriter(out.writer())
-      writer.setIndent("  ")
-      return writer
-    }
+    fun createJsonWriter(out: OutputStream): JsonWriter =
+      JsonWriter(out.writer())
+        .apply { setIndent("  ") }
 
     @JvmStatic
-    fun getLastFocusedOrOpenedProject(): Project? {
-      return IdeFocusManager.getGlobalInstance().lastFocusedFrame?.project ?: ProjectManager.getInstance().openProjects.firstOrNull()
-    }
+    fun getLastFocusedOrOpenedProject(): Project? =
+      IdeFocusManager.getGlobalInstance().lastFocusedFrame?.project ?: ProjectManager.getInstance().openProjects.firstOrNull()
 
     @JvmStatic
     fun sendOk(request: FullHttpRequest, context: ChannelHandlerContext) {
@@ -94,15 +101,7 @@ abstract class RestService : HttpRequestHandler() {
 
     @JvmStatic
     fun sendStatus(status: HttpResponseStatus, keepAlive: Boolean, channel: Channel) {
-      val response = DefaultFullHttpResponse(HttpVersion.HTTP_1_1, status)
-      HttpUtil.setContentLength(response, 0)
-      response.addCommonHeaders()
-      response.addNoCache()
-      if (keepAlive) {
-        HttpUtil.setKeepAlive(response, true)
-      }
-      response.headers().set("X-Frame-Options", "Deny")
-      response.send(channel, !keepAlive)
+      responseStatus(status, keepAlive, channel)
     }
 
     @JvmStatic
@@ -120,25 +119,23 @@ abstract class RestService : HttpRequestHandler() {
 
     @Suppress("SameParameterValue")
     @JvmStatic
-    fun getStringParameter(name: String, urlDecoder: QueryStringDecoder): String? {
-      return urlDecoder.parameters().get(name)?.lastOrNull()
-    }
+    fun getStringParameter(name: String, urlDecoder: QueryStringDecoder): String? = urlDecoder.parameters()[name]?.lastOrNull()
 
     @JvmStatic
     fun getIntParameter(name: String, urlDecoder: QueryStringDecoder): Int {
-      return StringUtilRt.parseInt(getStringParameter(name, urlDecoder).nullize(nullizeSpaces = true), -1)
+      return getStringParameter(name, urlDecoder)?.ifBlank { null }?.toIntOrNull() ?: -1
     }
 
     @JvmOverloads
     @JvmStatic
     fun getBooleanParameter(name: String, urlDecoder: QueryStringDecoder, defaultValue: Boolean = false): Boolean {
-      val values = urlDecoder.parameters().get(name) ?: return defaultValue
+      val values = urlDecoder.parameters()[name] ?: return defaultValue
       // if just name specified, so, true
       val value = values.lastOrNull() ?: return true
       return value.toBoolean()
     }
 
-    fun parameterMissedErrorMessage(name: String) = "Parameter \"$name\" is not specified"
+    fun parameterMissedErrorMessage(name: String): String = "Parameter \"$name\" is not specified"
   }
 
   protected val gson: Gson by lazy {
@@ -148,19 +145,29 @@ abstract class RestService : HttpRequestHandler() {
       .create()
   }
 
-  private val abuseCounter = CacheBuilder.newBuilder()
+  private val abuseCounter = Caffeine.newBuilder()
     .expireAfterWrite(1, TimeUnit.MINUTES)
-    .build<InetAddress, AtomicInteger>(CacheLoader.from(Supplier { AtomicInteger() }))
+    .build<Any, AtomicInteger>(CacheLoader { AtomicInteger() })
 
-  private val trustedOrigins = CacheBuilder.newBuilder()
+  private val trustedOrigins = Caffeine.newBuilder()
     .maximumSize(1024)
     .expireAfterWrite(1, TimeUnit.DAYS)
-    .build<String, Boolean>()
+    .build<Pair<String, String>, Boolean>()
+
+  private val hostLocks = CollectionFactory.createConcurrentWeakKeyWeakValueMap<String, Any>()
+
+  private var isBlockUnknownHosts = false
 
   /**
    * Service url must be "/api/$serviceName", but to preserve backward compatibility, prefixless path could be also supported
    */
   protected open val isPrefixlessAllowed: Boolean
+    get() = false
+
+  /**
+   * Whether service failures should be returned as HTML or PlainText.
+   */
+  protected open val reportErrorsAsPlainText: Boolean
     get() = false
 
   /**
@@ -197,26 +204,30 @@ abstract class RestService : HttpRequestHandler() {
     return false
   }
 
-  protected open fun isMethodSupported(method: HttpMethod): Boolean {
-    return method === HttpMethod.GET
-  }
+  protected open fun isMethodSupported(method: HttpMethod): Boolean = method === HttpMethod.GET
+
+  /**
+   * If the requests per minute counter exceeds this value, the exception [HttpResponseStatus.TOO_MANY_REQUESTS] will be sent.
+   * @return The value of "ide.rest.api.requests.per.minute" Registry key or '30', if the key does not exist.
+   */
+  protected open fun getMaxRequestsPerMinute(): Int = Registry.intValue("ide.rest.api.requests.per.minute", 30)
 
   override fun process(urlDecoder: QueryStringDecoder, request: FullHttpRequest, context: ChannelHandlerContext): Boolean {
     try {
-      val counter = abuseCounter.get((context.channel().remoteAddress() as InetSocketAddress).address)
-      if (counter.incrementAndGet() > Registry.intValue("ide.rest.api.requests.per.minute", 30)) {
-        HttpResponseStatus.TOO_MANY_REQUESTS.orInSafeMode(HttpResponseStatus.OK).send(context.channel(), request)
+      if (!isHostTrusted(request, urlDecoder)) {
+        HttpResponseStatus.FORBIDDEN.sendError(context.channel(), request)
         return true
       }
 
-      if (!isHostTrusted(request, urlDecoder)) {
-        HttpResponseStatus.FORBIDDEN.orInSafeMode(HttpResponseStatus.OK).send(context.channel(), request)
+      val counter = abuseCounter.get(getRequesterId(urlDecoder, request, context))!!
+      if (counter.incrementAndGet() > getMaxRequestsPerMinute()) {
+        HttpResponseStatus.TOO_MANY_REQUESTS.sendError(context.channel(), request)
         return true
       }
 
       val error = execute(urlDecoder, request, context)
       if (error != null) {
-        HttpResponseStatus.BAD_REQUEST.send(context.channel(), request, error)
+        HttpResponseStatus.BAD_REQUEST.sendError(context.channel(), request, error)
       }
     }
     catch (e: Throwable) {
@@ -230,68 +241,142 @@ abstract class RestService : HttpRequestHandler() {
         LOG.error(e)
         status = HttpResponseStatus.INTERNAL_SERVER_ERROR
       }
-      status.send(context.channel(), request, ExceptionUtil.getThrowableText(e))
+
+      status.sendError(context.channel(), request, XmlStringUtil.escapeString(ExceptionUtil.getThrowableText(e)))
     }
 
     return true
   }
 
-  @Throws(InterruptedException::class, InvocationTargetException::class)
-  protected open fun isHostTrusted(request: FullHttpRequest, urlDecoder: QueryStringDecoder): Boolean {
-    @Suppress("DEPRECATION")
-    return isHostTrusted(request)
+  private fun HttpResponseStatus.sendError(
+    channel: Channel,
+    request: HttpRequest,
+    description: String? = null,
+    extraHeaders: HttpHeaders? = null,
+  ) {
+    if (reportErrorsAsPlainText) {
+      sendPlainText(channel, request, description, extraHeaders)
+    }
+    else {
+      send(channel, request, description, extraHeaders)
+    }
   }
+
+  @Throws(InterruptedException::class, InvocationTargetException::class)
+  protected open fun isHostTrusted(request: FullHttpRequest, urlDecoder: QueryStringDecoder): Boolean =
+    @Suppress("DEPRECATION")
+    isHostTrusted(request)
+
+  /**
+   * Used to set individual API access rate limits.
+   */
+  @Throws(InterruptedException::class, InvocationTargetException::class)
+  protected open fun getRequesterId(urlDecoder: QueryStringDecoder, request: FullHttpRequest, context: ChannelHandlerContext): Any =
+    (context.channel().remoteAddress() as InetSocketAddress).address
 
   @Deprecated("Use {@link #isHostTrusted(FullHttpRequest, QueryStringDecoder)}")
   @Throws(InterruptedException::class, InvocationTargetException::class)
-  // e.g. upsource trust to configured host
+  // e.g., Upsource trust to configured host
   protected open fun isHostTrusted(request: FullHttpRequest): Boolean {
-    if (request.isSignedRequest() || isOriginAllowed(request) == OriginCheckResult.ALLOW) {
+    if (service<BuiltInWebServerAuth>().isRequestSigned(request) || isOriginAllowed(request) == OriginCheckResult.ALLOW) {
       return true
     }
 
     val referrer = request.origin ?: request.referrer
-    val host = try {
-      if (referrer == null) null else URI(referrer).host.nullize()
+    val host: String?
+    val scheme: String?
+    if (referrer.isNullOrBlank()) {
+      host = null
+      scheme = null
     }
-    catch (ignored: URISyntaxException) {
-      return false
+    else {
+      try {
+        val uri = URI(referrer)
+        host = uri.host.ifBlank { null }
+        scheme = uri.scheme.ifBlank { null }
+      }
+      catch (_: URISyntaxException) {
+        return false
+      }
     }
 
-    if (host != null) {
-      if (NetUtils.isLocalhost(host)) {
+    val lock = hostLocks.computeIfAbsent(host ?: "") { Object() }
+    synchronized(lock) {
+      if (host == null || scheme == null) {
+        if (isBlockUnknownHosts) {
+          return false
+        }
+      }
+      else if (isLocalhost(host)) {
         return true
       }
-      else {
-        trustedOrigins.getIfPresent(host)?.let {
+
+      val key = if (host == null || scheme == null) null else host to scheme
+      if (key != null) {
+        trustedOrigins.getIfPresent(key)?.let {
           return it
         }
       }
+
+      var isTrusted = false
+      ApplicationManager.getApplication().invokeAndWait(
+        {
+          AppIcon.getInstance().requestAttention(null, true)
+          val message = when (host) {
+            null -> IdeBundle.message("warning.use.rest.api.0.and.trust.host.unknown", getServiceName())
+            else -> IdeBundle.message("warning.use.rest.api.0.and.trust.host.1", getServiceName(), host)
+          }
+          isTrusted = showYesNoDialog(message, "title.use.rest.api")
+          if (key != null) {
+            trustedOrigins.put(key, isTrusted)
+          }
+          else if (!isTrusted) {
+            isBlockUnknownHosts = showYesNoDialog(IdeBundle.message("warning.use.rest.api.block.unknown.hosts"), "title.use.rest.api")
+          }
+        },
+        ModalityState.any(),
+      )
+      return isTrusted
+    }
+  }
+
+  fun isHostInPredefinedHosts(request: HttpRequest, trustedPredefinedHosts: Set<String>, systemPropertyKey: String): Boolean {
+    val origin = request.origin
+    val originHost = if (origin == null) {
+      null
+    }
+    else {
+      try {
+        URI(origin).takeIf { it.scheme == "https" }?.host?.ifBlank { null }
+      }
+      catch (_: URISyntaxException) {
+        return false
+      }
     }
 
-    var isTrusted = false
-    ApplicationManager.getApplication().invokeAndWait({
-                                                        AppIcon.getInstance().requestAttention(null, true)
-                                                        val message = if (host != null) {
-                                                          IdeBundle.message("warning.use.rest.api.0.and.trust.host.1", getServiceName(), host)
-                                                        } else {
-                                                          IdeBundle.message("warning.use.rest.api.0.and.trust.host.unknown", getServiceName())
-                                                        }
-                                                        isTrusted = showYesNoDialog(message, "title.use.rest.api")
-                                                        if (host != null) {
-                                                          trustedOrigins.put(host, isTrusted)
-                                                        }
-                                                      }, ModalityState.any())
-    return isTrusted
+    val hostName = getHostName(request)
+    if (hostName != null && !isLocalhost(hostName)) {
+      LOG.error("Expected 'request.hostName' to be localhost. hostName='$hostName', origin='$origin'")
+    }
+
+    return (originHost != null && (
+      trustedPredefinedHosts.contains(originHost) ||
+      System.getProperty(systemPropertyKey, "").splitToSequence(',').contains(originHost) ||
+      isLocalhost(originHost)))
   }
 
   /**
-   * Return error or send response using [sendOk], [send]
+   * Return error or send response using [RestService.sendOk], [RestService.send]
    */
   @Throws(IOException::class)
   abstract fun execute(urlDecoder: QueryStringDecoder, request: FullHttpRequest, context: ChannelHandlerContext): String?
 }
 
-internal fun HttpResponseStatus.orInSafeMode(safeStatus: HttpResponseStatus): HttpResponseStatus {
-  return if (Registry.`is`("ide.http.server.response.actual.status", true) || ApplicationManager.getApplication()?.isUnitTestMode == true) this else safeStatus
+fun HttpResponseStatus.orInSafeMode(safeStatus: HttpResponseStatus): HttpResponseStatus = when {
+  Registry.`is`("ide.http.server.response.actual.status", false) || ApplicationManager.getApplication()?.isUnitTestMode == true -> this
+  else -> safeStatus
+}
+
+private fun isLocalhost(hostName: @NlsSafe String): Boolean {
+  return hostName.equals("localhost", ignoreCase = true) || hostName == "127.0.0.1" || hostName == "::1"
 }

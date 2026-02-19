@@ -1,14 +1,19 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.impl;
 
-import com.google.common.base.Ascii;
 import com.intellij.execution.ExecutionBundle;
-import com.intellij.execution.process.*;
+import com.intellij.execution.process.BaseProcessHandler;
+import com.intellij.execution.process.OSProcessHandler;
+import com.intellij.execution.process.ProcessEvent;
+import com.intellij.execution.process.ProcessHandler;
+import com.intellij.execution.process.ProcessListener;
+import com.intellij.execution.process.ProcessOutputType;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vfs.encoding.EncodingManager;
+import com.intellij.util.ObjectUtils;
 import com.pty4j.PtyProcess;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -19,20 +24,19 @@ import java.io.OutputStreamWriter;
 import java.io.Writer;
 import java.nio.charset.Charset;
 
-public class ConsoleViewRunningState extends ConsoleState {
+public final class ConsoleViewRunningState extends ConsoleState {
+  private static final char LF = '\n';
   private final ConsoleViewImpl myConsole;
   private final ProcessHandler myProcessHandler;
   private final ConsoleState myFinishedStated;
   private final Writer myUserInputWriter;
   private final ProcessStreamsSynchronizer myStreamsSynchronizer;
 
-  private final ProcessAdapter myProcessListener = new ProcessAdapter() {
+  private final ProcessListener myProcessListener = new ProcessListener() {
     @Override
     public void onTextAvailable(@NotNull ProcessEvent event, @NotNull Key outputType) {
       if (outputType instanceof ProcessOutputType) {
-        myStreamsSynchronizer.doWhenStreamsSynchronized(event.getText(), (ProcessOutputType)outputType, () -> {
-          print(event.getText(), outputType);
-        });
+        myStreamsSynchronizer.doWhenStreamsSynchronized(event.getText(), (ProcessOutputType)outputType, () -> print(event.getText(), outputType));
       }
       else {
         print(event.getText(), outputType);
@@ -57,7 +61,7 @@ public class ConsoleViewRunningState extends ConsoleState {
 
     // attach to process stdin
     if (attachToStdIn) {
-      final OutputStream processInput = myProcessHandler.getProcessInput();
+      OutputStream processInput = myProcessHandler.getProcessInput();
       myUserInputWriter = processInput == null ? null : createOutputStreamWriter(processInput, processHandler);
     }
     else {
@@ -81,8 +85,7 @@ public class ConsoleViewRunningState extends ConsoleState {
   }
 
   @Override
-  @NotNull
-  public ConsoleState dispose() {
+  public @NotNull ConsoleState dispose() {
     if (myProcessHandler != null) {
       myProcessHandler.removeProcessListener(myProcessListener);
     }
@@ -91,7 +94,7 @@ public class ConsoleViewRunningState extends ConsoleState {
 
   @Override
   public boolean isCommandLine(@NotNull String line) {
-    return myProcessHandler instanceof BaseProcessHandler && line.equals(((BaseProcessHandler)myProcessHandler).getCommandLine());
+    return myProcessHandler instanceof BaseProcessHandler && line.equals(((BaseProcessHandler<?>)myProcessHandler).getCommandLineForLog());
   }
 
   @Override
@@ -105,36 +108,34 @@ public class ConsoleViewRunningState extends ConsoleState {
   }
 
   @Override
-  public void sendUserInput(@NotNull final String input) throws IOException {
+  public void sendUserInput(@NotNull String input) throws IOException {
     if (myUserInputWriter == null) {
       throw new IOException(ExecutionBundle.message("no.user.process.input.error.message"));
     }
     char enterKeyCode = getEnterKeyCode();
-    String inputToSend = input.replace((char)Ascii.LF, enterKeyCode);
+    String inputToSend = input.replace(LF, enterKeyCode);
     myUserInputWriter.write(inputToSend);
     myUserInputWriter.flush();
   }
 
   private char getEnterKeyCode() {
-    if (SystemInfo.isWindows &&
-        myProcessHandler instanceof OSProcessHandler &&
-        ((OSProcessHandler)myProcessHandler).getProcess() instanceof PtyProcess) {
-      // pty4j expects \r as Enter key code
-      // https://github.com/JetBrains/pty4j/blob/0.9.4/test/com/pty4j/PtyTest.java#L54
-      return Ascii.CR;
+    if (myProcessHandler instanceof BaseProcessHandler<?>) {
+      PtyProcess process = ObjectUtils.tryCast(((BaseProcessHandler<?>)myProcessHandler).getProcess(), PtyProcess.class);
+      if (process != null) {
+        return (char)process.getEnterKeyCode();
+      }
     }
-    return Ascii.LF;
+    return LF;
   }
 
-  @NotNull
   @Override
-  public ConsoleState attachTo(@NotNull final ConsoleViewImpl console, final @NotNull ProcessHandler processHandler) {
+  public @NotNull ConsoleState attachTo(@NotNull ConsoleViewImpl console, @NotNull ProcessHandler processHandler) {
     return dispose().attachTo(console, processHandler);
   }
 
   @TestOnly
-  @Nullable
-  ProcessStreamsSynchronizer getStreamsSynchronizer() {
+  @ApiStatus.Internal
+  public @Nullable ProcessStreamsSynchronizer getStreamsSynchronizer() {
     return myStreamsSynchronizer;
   }
 

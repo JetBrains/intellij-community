@@ -1,37 +1,63 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.reference;
 
 import com.intellij.analysis.AnalysisBundle;
 import com.intellij.java.analysis.JavaAnalysisBundle;
+import com.intellij.lang.Language;
 import com.intellij.openapi.util.Iconable;
-import com.intellij.psi.*;
-import com.intellij.util.IconUtil;
-import com.intellij.util.ObjectUtils;
+import com.intellij.psi.PsiAnonymousClass;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiImplicitClass;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiModifierListOwner;
+import com.intellij.psi.PsiNamedElement;
+import com.intellij.psi.PsiSubstitutor;
+import com.intellij.psi.PsiSyntheticClass;
+import com.intellij.psi.SyntheticElement;
+import com.intellij.psi.util.PsiFormatUtil;
+import com.intellij.psi.util.PsiFormatUtilBase;
+import com.intellij.ui.CoreAwareIconManager;
+import com.intellij.ui.IconManager;
 import com.intellij.util.containers.Stack;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.uast.*;
+import org.jetbrains.uast.UAnnotated;
+import org.jetbrains.uast.UCallExpression;
+import org.jetbrains.uast.UCallableReferenceExpression;
+import org.jetbrains.uast.UClass;
+import org.jetbrains.uast.UDeclaration;
+import org.jetbrains.uast.UDeclarationKt;
+import org.jetbrains.uast.UElement;
+import org.jetbrains.uast.UExpression;
+import org.jetbrains.uast.UField;
+import org.jetbrains.uast.ULambdaExpression;
+import org.jetbrains.uast.UMethod;
+import org.jetbrains.uast.UQualifiedReferenceExpression;
+import org.jetbrains.uast.UastCallKind;
+import org.jetbrains.uast.UastUtils;
 
-import javax.swing.*;
+import javax.swing.Icon;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.Objects;
-import java.util.Set;
 
-public abstract class RefJavaElementImpl extends RefElementImpl implements RefJavaElement {
-  private Set<RefClass> myOutTypeReferences; // guarded by this
-  private static final int ACCESS_MODIFIER_MASK = 0x03;
-  private static final int ACCESS_PRIVATE = 0x00;
-  private static final int ACCESS_PROTECTED = 0x01;
-  private static final int ACCESS_PACKAGE = 0x02;
-  private static final int ACCESS_PUBLIC = 0x03;
+/**
+ * Subclasses are allowed to use bit 17 and higher for flags.
+ */
+public abstract sealed class RefJavaElementImpl extends RefElementImpl implements RefJavaElement
+  permits RefClassImpl, RefFieldImpl, RefFunctionalExpressionImpl, RefMethodImpl, RefParameterImpl {
 
-  private static final int IS_STATIC_MASK = 0x04;
-  private static final int IS_FINAL_MASK = 0x08;
-  private static final int IS_SYNTHETIC_JSP_ELEMENT_MASK = 0x400;
-  private static final int FORBID_PROTECTED_ACCESS_MASK = 0x800;
+  private static final int ACCESS_MODIFIER_MASK = 0b11;
+  private static final int ACCESS_PRIVATE = 0b00;
+  private static final int ACCESS_PROTECTED = 0b01;
+  private static final int ACCESS_PACKAGE = 0b10;
+  private static final int ACCESS_PUBLIC = 0b11;
+
+  private static final int IS_STATIC_MASK = 0b100;
+  private static final int IS_FINAL_MASK = 0b1000;
+  private static final int IS_SYNTHETIC_JSP_ELEMENT_MASK = 0b100_00000000;
+  private static final int FORBID_PROTECTED_ACCESS_MASK = 0b1000_00000000;
 
   protected RefJavaElementImpl(@NotNull String name, @NotNull RefJavaElement owner) {
     super(name, owner);
@@ -46,10 +72,11 @@ public abstract class RefJavaElementImpl extends RefElementImpl implements RefJa
 
   protected RefJavaElementImpl(UDeclaration elem, PsiElement psi, RefManager manager) {
     super(getName(elem), psi, manager);
+    assert (!(psi instanceof UElement));
 
-    PsiModifierListOwner javaPsi = Objects.requireNonNull(ObjectUtils.tryCast(elem.getJavaPsi(), PsiModifierListOwner.class));
+    if (!(elem.getJavaPsi() instanceof PsiModifierListOwner javaPsi)) throw new AssertionError();
     setAccessModifier(RefJavaUtil.getInstance().getAccessModifier(javaPsi));
-    final boolean isSynth = javaPsi instanceof PsiMethod && psi instanceof SyntheticElement  || psi instanceof PsiSyntheticClass;
+    final boolean isSynth = javaPsi instanceof PsiMethod && psi instanceof SyntheticElement || psi instanceof PsiSyntheticClass;
     if (isSynth) {
       setSyntheticJSP(true);
     }
@@ -58,48 +85,75 @@ public abstract class RefJavaElementImpl extends RefElementImpl implements RefJa
     setIsFinal(elem.isFinal());
   }
 
+  RefJavaElementImpl(@NotNull UElement declaration, @NotNull PsiElement psi, @NotNull RefManager manager) {
+    super(getName(declaration), psi, manager);
+  }
+
   @Override
-  @NotNull
-  public synchronized Collection<RefClass> getOutTypeReferences() {
-    return ObjectUtils.notNull(myOutTypeReferences, Collections.emptySet());
+  public synchronized @NotNull Collection<RefClass> getOutTypeReferences() {
+    return getOwner() instanceof RefJavaElement e ? e.getOutTypeReferences() : Collections.emptySet();
   }
 
-  synchronized void addOutTypeReference(RefClass refClass){
-    if (myOutTypeReferences == null){
-      myOutTypeReferences = new THashSet<>();
+  synchronized void addOutTypeReference(RefClass refClass) {
+    if (getOwner() instanceof RefJavaElementImpl e) {
+      e.addOutTypeReference(refClass);
     }
-    myOutTypeReferences.add(refClass);
   }
 
-  @NotNull
-  public static String getName(UDeclaration declaration) {
+  private static @NotNull String getName(@NotNull UElement declaration) {
     PsiElement element = declaration.getJavaPsi();
-    if (element instanceof PsiAnonymousClass) {
-     PsiAnonymousClass psiAnonymousClass = (PsiAnonymousClass)element;
-     PsiClass psiBaseClass = psiAnonymousClass.getBaseClassType().resolve();
-     if (psiBaseClass == null) {
-       return "anonymous class";
-     } else {
-       return JavaAnalysisBundle.message("inspection.reference.anonymous.name", psiBaseClass.getName());
-     }
-   }
+    if (element instanceof PsiAnonymousClass anonymousClass) {
+      PsiClass psiBaseClass = anonymousClass.getBaseClassType().resolve();
+      if (psiBaseClass == null) {
+        return JavaAnalysisBundle.message("inspection.reference.anonymous.class");
+      }
+      else {
+        return JavaAnalysisBundle.message("inspection.reference.anonymous.name", psiBaseClass.getName());
+      }
+    }
+    if (element instanceof PsiImplicitClass) {
+      return JavaAnalysisBundle.message("inspection.reference.implicit.class", element.getContainingFile().getName());
+    }
 
-   if (element instanceof PsiSyntheticClass) {
-     final PsiSyntheticClass jspClass = (PsiSyntheticClass)element;
-     final PsiFile jspxFile = jspClass.getContainingFile();
-     return "<" + jspxFile.getName() + ">";
-   }
+    if (element instanceof PsiSyntheticClass jspClass) {
+      return "<" + jspClass.getContainingFile().getName() + ">";
+    }
 
-   if (element instanceof PsiMethod && element instanceof SyntheticElement ) {
-     return JavaAnalysisBundle.message("inspection.reference.jsp.holder.method.anonymous.name");
-   }
+    if (element instanceof PsiMethod) {
+      if (element instanceof SyntheticElement) {
+        Language language = element.getLanguage();
+        if (language.isKindOf("JSP") || language.isKindOf("JSPX")) {
+          return JavaAnalysisBundle.message("inspection.reference.jsp.holder.method.anonymous.name");
+        }
+      }
+      return PsiFormatUtil.formatMethod((PsiMethod)element,
+                                        PsiSubstitutor.EMPTY,
+                                        PsiFormatUtilBase.SHOW_NAME | PsiFormatUtilBase.SHOW_PARAMETERS,
+                                        PsiFormatUtilBase.SHOW_TYPE);
+    }
 
-   String name = null;
-   if (element instanceof PsiNamedElement) {
-     name = ((PsiNamedElement)element).getName();
-   }
-   return name == null ? AnalysisBundle.message("inspection.reference.anonymous") : name;
- }
+    if (declaration instanceof ULambdaExpression || declaration instanceof UCallableReferenceExpression) {
+      UDeclaration elementDeclaration = UDeclarationKt.getContainingDeclaration(declaration);
+      boolean isMethodReference = declaration instanceof UCallableReferenceExpression;
+      if (elementDeclaration != null) {
+        UAnnotated pDeclaration =
+          UastUtils.getParentOfType(elementDeclaration, false, UMethod.class, UClass.class, ULambdaExpression.class, UField.class);
+        if (pDeclaration != null && pDeclaration.getSourcePsi() instanceof PsiNamedElement) {
+          String name = ((PsiNamedElement)pDeclaration.getSourcePsi()).getName();
+          return JavaAnalysisBundle.message(
+            isMethodReference ? "inspection.reference.method.reference.name" : "inspection.reference.lambda.name", name);
+        }
+      }
+      return JavaAnalysisBundle.message(
+        isMethodReference ? "inspection.reference.default.method.reference.name" : "inspection.reference.default.lambda.name");
+    }
+
+    String name = null;
+    if (element instanceof PsiNamedElement named) {
+      name = named.getName();
+    }
+    return name == null ? AnalysisBundle.message("inspection.reference.anonymous") : name;
+  }
 
   @Override
   public boolean isFinal() {
@@ -119,19 +173,17 @@ public abstract class RefJavaElementImpl extends RefElementImpl implements RefJa
     setFlag(isFinal, IS_FINAL_MASK);
   }
 
-
   @Override
   public boolean isSyntheticJSP() {
     return checkFlag(IS_SYNTHETIC_JSP_ELEMENT_MASK);
   }
 
-  private void setSyntheticJSP(boolean b) {
-    setFlag(b, IS_SYNTHETIC_JSP_ELEMENT_MASK);
+  private void setSyntheticJSP(boolean synthetic) {
+    setFlag(synthetic, IS_SYNTHETIC_JSP_ELEMENT_MASK);
   }
 
-  @NotNull
   @Override
-  public String getAccessModifier() {
+  public synchronized @NotNull String getAccessModifier() {
     long access_id = myFlags & ACCESS_MODIFIER_MASK;
     if (access_id == ACCESS_PRIVATE) return PsiModifier.PRIVATE;
     if (access_id == ACCESS_PUBLIC) return PsiModifier.PUBLIC;
@@ -139,27 +191,19 @@ public abstract class RefJavaElementImpl extends RefElementImpl implements RefJa
     return PsiModifier.PROTECTED;
   }
 
-  public void setAccessModifier(String am) {
-    doSetAccessModifier(am);
+  public void setAccessModifier(String visibility) {
+    doSetAccessModifier(visibility);
   }
 
-  private void doSetAccessModifier(@NotNull String am) {
-    final int access_id;
+  private synchronized void doSetAccessModifier(@NotNull String visibility) {
+    final int accessFlag = switch (visibility) {
+      case PsiModifier.PRIVATE -> ACCESS_PRIVATE;
+      case PsiModifier.PUBLIC -> ACCESS_PUBLIC;
+      case PsiModifier.PACKAGE_LOCAL -> ACCESS_PACKAGE;
+      default -> ACCESS_PROTECTED;
+    };
 
-    if (PsiModifier.PRIVATE.equals(am)) {
-      access_id = ACCESS_PRIVATE;
-    }
-    else if (PsiModifier.PUBLIC.equals(am)) {
-      access_id = ACCESS_PUBLIC;
-    }
-    else if (PsiModifier.PACKAGE_LOCAL.equals(am)) {
-      access_id = ACCESS_PACKAGE;
-    }
-    else {
-      access_id = ACCESS_PROTECTED;
-    }
-
-    myFlags = myFlags & ~0x3 | access_id;
+    myFlags = myFlags & ~ACCESS_MODIFIER_MASK | accessFlag;
   }
 
   public boolean isSuspiciousRecursive() {
@@ -170,8 +214,7 @@ public abstract class RefJavaElementImpl extends RefElementImpl implements RefJa
     if (callStack.contains(this)) return refElement == this;
     if (getInReferences().isEmpty()) return false;
 
-    if (refElement instanceof RefMethod) {
-      RefMethod refMethod = (RefMethod) refElement;
+    if (refElement instanceof RefMethod refMethod) {
       for (RefMethod refSuper : refMethod.getSuperMethods()) {
         if (!refSuper.getInReferences().isEmpty()) return false;
       }
@@ -187,8 +230,8 @@ public abstract class RefJavaElementImpl extends RefElementImpl implements RefJa
     callStack.push(this);
     for (RefElement refCaller : getInReferences()) {
       if (!((RefElementImpl)refCaller).isSuspicious() ||
-          !(refCaller instanceof RefJavaElementImpl) ||
-          !((RefJavaElementImpl)refCaller).isCalledOnlyFrom(refElement, callStack)) {
+          !(refCaller instanceof RefJavaElementImpl ref) ||
+          !ref.isCalledOnlyFrom(refElement, callStack)) {
         callStack.pop();
         return false;
       }
@@ -200,31 +243,28 @@ public abstract class RefJavaElementImpl extends RefElementImpl implements RefJa
 
   void addReference(RefElement refWhat,
                     PsiElement psiWhat,
-                    UDeclaration from,
+                    UElement from,
                     boolean forWriting,
                     boolean forReading,
                     UExpression expression) {
     PsiElement psiFrom = from.getPsi();
     if (refWhat != null) {
-      if (refWhat instanceof RefParameter) {
+      if (refWhat instanceof RefParameter param) {
         if (forWriting) {
-          ((RefParameter)refWhat).parameterReferenced(true);
+          param.parameterReferenced(true);
         }
         if (forReading) {
-          ((RefParameter)refWhat).parameterReferenced(false);
+          param.parameterReferenced(false);
         }
       }
       addOutReference(refWhat);
-      if (refWhat instanceof RefJavaFileImpl) {
-        ((RefJavaFileImpl)refWhat).addInReference(this);
+      if (refWhat instanceof RefJavaFileImpl file) {
+        file.addInReference(this);
         getRefManager().fireNodeMarkedReferenced(psiWhat, psiFrom);
-      } else if (refWhat instanceof RefJavaElementImpl) {
-        ((RefJavaElementImpl)refWhat).markReferenced(this, forWriting, forReading, expression);
+      } else if (refWhat instanceof RefJavaElementImpl refJava) {
+        refJava.markReferenced(this, forWriting, forReading, expression);
       }
     } else {
-      if (psiWhat instanceof PsiMethod) {
-        markEnumUsedIfValuesMethod((PsiMethod)psiWhat, expression);
-      }
       getRefManager().fireNodeMarkedReferenced(psiWhat, psiFrom);
     }
   }
@@ -241,9 +281,12 @@ public abstract class RefJavaElementImpl extends RefElementImpl implements RefJa
   void setForbidProtectedAccess(RefElementImpl refFrom, @Nullable UExpression expressionFrom) {
     if (!checkFlag(FORBID_PROTECTED_ACCESS_MASK) &&
         (expressionFrom instanceof UQualifiedReferenceExpression ||
-         expressionFrom instanceof UCallExpression && ((UCallExpression)expressionFrom).getKind() == UastCallKind.CONSTRUCTOR_CALL) &&
-        RefJavaUtil.getPackage(refFrom) != RefJavaUtil.getPackage(this)) {
-      setFlag(true, FORBID_PROTECTED_ACCESS_MASK);
+         expressionFrom instanceof UCallExpression call && call.getKind() == UastCallKind.CONSTRUCTOR_CALL)) {
+      initializeIfNeeded();
+      refFrom.initializeIfNeeded();
+      if (RefJavaUtil.getPackage(refFrom) != RefJavaUtil.getPackage(this)) {
+        setFlag(true, FORBID_PROTECTED_ACCESS_MASK);
+      }
     }
   }
 
@@ -264,30 +307,14 @@ public abstract class RefJavaElementImpl extends RefElementImpl implements RefJa
   }
 
   @Override
-  public Icon getIcon(final boolean expanded) {
+  public Icon getIcon(boolean expanded) {
     if (isSyntheticJSP()) {
       final PsiElement element = getPsiElement();
-      if (element != null && element.isValid()) {
-        return IconUtil.getIcon(element.getContainingFile().getVirtualFile(),
-                                Iconable.ICON_FLAG_VISIBILITY | Iconable.ICON_FLAG_READ_STATUS, element.getProject());
+      if (element != null && element.isValid() && IconManager.getInstance() instanceof CoreAwareIconManager manager) {
+        return manager.getIcon(element.getContainingFile().getVirtualFile(),
+                               Iconable.ICON_FLAG_VISIBILITY | Iconable.ICON_FLAG_READ_STATUS, element.getProject());
       }
     }
     return super.getIcon(expanded);
-  }
-
-  private void markEnumUsedIfValuesMethod(PsiMethod psiWhat, UExpression expression) {
-    //TODO support kotlin enums
-    final PsiClass containingClass = psiWhat.getContainingClass();
-    if (containingClass != null && containingClass.isEnum() && "values".equals(psiWhat.getName())) {
-      for (PsiField enumConstant : containingClass.getFields()) {
-        if (enumConstant instanceof PsiEnumConstant) {
-          final RefJavaElementImpl enumConstantReference = (RefJavaElementImpl)getRefManager().getReference(enumConstant);
-          if (enumConstantReference != null) {
-            addOutReference(enumConstantReference);
-            enumConstantReference.markReferenced(this, false, true, expression);
-          }
-        }
-      }
-    }
   }
 }

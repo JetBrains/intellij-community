@@ -1,7 +1,7 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.file;
 
-import com.intellij.ide.projectView.ProjectView;
+import com.intellij.ide.util.PsiNavigationSupport;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.undo.GlobalUndoableAction;
 import com.intellij.openapi.command.undo.UndoManager;
@@ -12,31 +12,36 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.*;
+import com.intellij.openapi.roots.ContentEntry;
+import com.intellij.openapi.roots.ModifiableRootModel;
+import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.roots.SourceFolder;
 import com.intellij.openapi.roots.impl.ModifiableModelCommitter;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.wm.ToolWindow;
-import com.intellij.openapi.wm.ToolWindowId;
-import com.intellij.openapi.wm.ToolWindowManager;
-import com.intellij.psi.*;
+import com.intellij.psi.NonClasspathClassFinder;
+import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiNameHelper;
+import com.intellij.psi.PsiPackage;
 import com.intellij.psi.impl.PackagePrefixElementFinder;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.GlobalSearchScopes;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.psi.util.PsiUtilCore;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.VisibleForTesting;
 import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes;
 
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * @author yole
- */
-public class PsiPackageImplementationHelperImpl extends PsiPackageImplementationHelper {
-  @NotNull
+
+public final class PsiPackageImplementationHelperImpl extends PsiPackageImplementationHelper {
   @Override
-  public GlobalSearchScope adjustAllScope(@NotNull PsiPackage psiPackage, @NotNull GlobalSearchScope globalSearchScope) {
+  public @NotNull GlobalSearchScope adjustAllScope(@NotNull PsiPackage psiPackage, @NotNull GlobalSearchScope globalSearchScope) {
     return NonClasspathClassFinder.addNonClasspathScope(psiPackage.getProject(), globalSearchScope);
   }
 
@@ -65,7 +70,7 @@ public class PsiPackageImplementationHelperImpl extends PsiPackageImplementation
   }
 
   @Override
-  public void handleQualifiedNameChange(@NotNull final PsiPackage psiPackage, @NotNull final String newQualifiedName) {
+  public void handleQualifiedNameChange(final @NotNull PsiPackage psiPackage, final @NotNull String newQualifiedName) {
     ApplicationManager.getApplication().assertWriteAccessAllowed();
     final String oldQualifedName = psiPackage.getQualifiedName();
     final boolean anyChanged = changePackagePrefixes(psiPackage, oldQualifedName, newQualifiedName);
@@ -118,19 +123,14 @@ public class PsiPackageImplementationHelperImpl extends PsiPackageImplementation
   }
 
   @Override
-  public void navigate(@NotNull final PsiPackage psiPackage, final boolean requestFocus) {
-    final Project project = psiPackage.getProject();
-    ToolWindow window = ToolWindowManager.getInstance(project).getToolWindow(ToolWindowId.PROJECT_VIEW);
-    if (window != null) {
-      window.activate(null);
-    }
-    final ProjectView projectView = ProjectView.getInstance(project);
+  public void navigate(final @NotNull PsiPackage psiPackage, final boolean requestFocus) {
     PsiDirectory[] directories = suggestMostAppropriateDirectories(psiPackage);
     if (directories.length == 0) return;
-    projectView.select(directories[0], directories[0].getVirtualFile(), requestFocus);
+    PsiNavigationSupport.getInstance().navigateToDirectory(directories[0], requestFocus);
   }
 
-  private static PsiDirectory @NotNull [] suggestMostAppropriateDirectories(@NotNull PsiPackage psiPackage) {
+  @VisibleForTesting
+  public static PsiDirectory @NotNull [] suggestMostAppropriateDirectories(@NotNull PsiPackage psiPackage) {
     final Project project = psiPackage.getProject();
     PsiDirectory[] directories = null;
     final Editor editor = FileEditorManager.getInstance(project).getSelectedTextEditor();
@@ -141,14 +141,21 @@ public class PsiPackageImplementationHelperImpl extends PsiPackageImplementation
         final Module module = ModuleUtilCore.findModuleForPsiElement(psiFile);
         if (module != null) {
           final VirtualFile virtualFile = PsiUtilCore.getVirtualFile(psiFile);
-          final boolean isInTests =
-            virtualFile != null && ModuleRootManager.getInstance(module).getFileIndex().isInTestSourceContent(virtualFile);
-          if (isInTests) {
-            directories = psiPackage.getDirectories(GlobalSearchScope.moduleTestsWithDependentsScope(module));
+          if (virtualFile != null) {
+            if (ModuleRootManager.getInstance(module).getFileIndex().isInTestSourceContent(virtualFile)) {
+              directories = psiPackage.getDirectories(GlobalSearchScope.moduleTestsWithDependentsScope(module));
+            }
+
+            if (directories == null || directories.length == 0) {
+              VirtualFile contentRootForFile = ProjectRootManager.getInstance(project).getFileIndex().getContentRootForFile(virtualFile);
+              if (contentRootForFile != null) {
+                directories = psiPackage.getDirectories(GlobalSearchScopes.directoriesScope(project, true, contentRootForFile));
+              }
+            }
           }
 
           if (directories == null || directories.length == 0) {
-            directories = psiPackage.getDirectories(GlobalSearchScope.moduleWithDependenciesScope(module));
+            directories = psiPackage.getDirectories(GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(module));
           }
         }
         else {

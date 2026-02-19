@@ -1,37 +1,40 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.resolve.reference.impl.providers;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.*;
+import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.psi.ElementManipulators;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiNameHelper;
+import com.intellij.psi.PsiPackage;
+import com.intellij.psi.PsiReference;
+import com.intellij.psi.ResolveState;
 import com.intellij.psi.scope.ElementClassHint;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.util.*;
+import com.intellij.psi.util.CachedValueProvider;
+import com.intellij.psi.util.CachedValuesManager;
+import com.intellij.psi.util.ClassKind;
+import com.intellij.psi.util.ParameterizedCachedValue;
+import com.intellij.psi.util.ParameterizedCachedValueProvider;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ProcessingContext;
 import com.intellij.util.containers.ContainerUtil;
-import gnu.trove.THashMap;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.VisibleForTesting;
 
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 public class JavaClassReferenceProvider extends GenericReferenceProvider implements CustomizableReferenceProvider {
   /** Tells reference provider to process only qualified class references (e.g. not resolve String as java.lang.String) */
@@ -51,12 +54,13 @@ public class JavaClassReferenceProvider extends GenericReferenceProvider impleme
   public static final CustomizationKey<Boolean> ALLOW_WILDCARDS = new CustomizationKey<>("ALLOW_WILDCARDS");
 
   /** @deprecated use {@link #SUPER_CLASSES} instead */
-  @Deprecated public static final CustomizationKey<String[]> EXTEND_CLASS_NAMES = new CustomizationKey<>("EXTEND_CLASS_NAMES");
+  @Deprecated
+  public static final CustomizationKey<String[]> EXTEND_CLASS_NAMES = new CustomizationKey<>("EXTEND_CLASS_NAMES");
   /** @deprecated use {@link #IMPORTS} instead */
-  @Deprecated public static final CustomizationKey<String> DEFAULT_PACKAGE = new CustomizationKey<>("DEFAULT_PACKAGE");
+  @Deprecated(forRemoval = true)
+  public static final CustomizationKey<String> DEFAULT_PACKAGE = new CustomizationKey<>("DEFAULT_PACKAGE");
 
-  @Nullable
-  private Map<CustomizationKey, Object> myOptions;
+  private @Nullable Map<CustomizationKey, Object> myOptions;
 
   private boolean myAllowEmpty;
 
@@ -66,17 +70,17 @@ public class JavaClassReferenceProvider extends GenericReferenceProvider impleme
     List<PsiPackage> psiPackages = root == null ? Collections.emptyList() :
                                    ContainerUtil.filter(root.getSubPackages(),
                                                         p -> nameHelper.isIdentifier(p.getName(), PsiUtil.getLanguageLevel(p)));
-    return CachedValueProvider.Result.createSingleDependency(psiPackages, PsiModificationTracker.MODIFICATION_COUNT);
+    return CachedValueProvider.Result.createSingleDependency(psiPackages, VirtualFileManager.VFS_STRUCTURE_MODIFICATIONS);
   };
 
   private static final Key<ParameterizedCachedValue<List<PsiPackage>, Project>> ourPackagesKey = Key.create("default packages");
 
   public <T> void setOption(CustomizationKey<T> option, T value) {
     if (myOptions == null) {
-      myOptions = new THashMap<>();
+      myOptions = new HashMap<>();
     }
     if (option == EXTEND_CLASS_NAMES) {
-      SUPER_CLASSES.putValue(myOptions, ContainerUtil.immutableList((String[])value));
+      SUPER_CLASSES.putValue(myOptions, List.of((String[])value));
     }
     else if (option == DEFAULT_PACKAGE) {
       IMPORTS.putValue(myOptions, Collections.singletonList((String)value));
@@ -86,23 +90,19 @@ public class JavaClassReferenceProvider extends GenericReferenceProvider impleme
     }
   }
 
-  @Nullable
-  public <T> T getOption(@NotNull CustomizationKey<T> option) {
+  public @Nullable <T> T getOption(@NotNull CustomizationKey<T> option) {
     return myOptions == null ? null : option.getValue(myOptions);
   }
 
-  @Nullable
-  public GlobalSearchScope getScope(@NotNull Project project) {
+  public @Nullable GlobalSearchScope getScope(@NotNull Project project) {
     return null;
   }
 
-  @NotNull
-  public PsiFile getContextFile(@NotNull PsiElement element) {
+  public @NotNull PsiFile getContextFile(@NotNull PsiElement element) {
     return element.getContainingFile();
   }
 
-  @Nullable
-  public PsiClass getContextClass(@NotNull PsiElement element) {
+  public @Nullable PsiClass getContextClass(@NotNull PsiElement element) {
     return null;
   }
 
@@ -139,19 +139,21 @@ public class JavaClassReferenceProvider extends GenericReferenceProvider impleme
     }
   }
 
-  @NotNull
-  static List<PsiPackage> getDefaultPackages(@NotNull Project project) {
+  static @NotNull List<PsiPackage> getDefaultPackages(@NotNull Project project) {
     return CachedValuesManager.getManager(project).getParameterizedCachedValue(project, ourPackagesKey, ourPackagesProvider, false, project);
   }
 
-  @Override
-  public void setOptions(@Nullable Map<CustomizationKey, Object> options) {
-    myOptions = options;
+  @ApiStatus.Internal
+  @VisibleForTesting
+  public static @NotNull Set<String> getDefaultPackagesNames(@NotNull Project project) {
+    return CachedValuesManager.getManager(project)
+      .getCachedValue(project, 
+                      () -> CachedValueProvider.Result.create(ContainerUtil.map2Set(getDefaultPackages(project), PsiPackage::getName), 
+                                                              VirtualFileManager.VFS_STRUCTURE_MODIFICATIONS));
   }
 
   @Override
-  @Nullable
-  public Map<CustomizationKey, Object> getOptions() {
+  public @Nullable Map<CustomizationKey, Object> getOptions() {
     return myOptions;
   }
 

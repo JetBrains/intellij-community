@@ -1,37 +1,105 @@
-<idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude">
+<idea-plugin allow-bundled-update="true">
   <id>com.intellij.java</id>
   <name>Java</name>
-  <description>Java language support.</description>
+  <description><![CDATA[
+    Adds support for the Java language, including Java projects, language syntax highlighting, inspections, and all other coding assistance features.
+  ]]></description>
+
   <vendor>JetBrains</vendor>
+  <category>Languages</category>
   <resource-bundle>messages.ActionsBundle</resource-bundle>
 
-  <depends>com.intellij.modules.platform</depends>
-  <depends>com.intellij.modules.lang</depends>
-  <depends>com.intellij.modules.vcs</depends>
-  <depends>com.intellij.modules.xdebugger</depends>
-  <depends>com.intellij.modules.xml</depends>
-  <depends>com.intellij.modules.java-capable</depends>
-  <depends optional="true" config-file="java-copyright.xml">com.intellij.copyright</depends>
+  <!--other dependencies inside java.backend plugin-->
+  <dependencies>
+    <plugin id="com.intellij.modules.lang"/>
+  </dependencies>
 
-  <xi:include href="/META-INF/JavaPlugin.xml" xpointer="xpointer(/idea-plugin/*)"/>
+  <module value="com.intellij.modules.java"/>
 
-  <!-- todo: these files are present in Java plugin for IDEA Ultimate only, they should be extract to a different plugin.xml -->
-  <xi:include href="/META-INF/duplicates-java.xml" xpointer="xpointer(/idea-plugin/*)">
-    <xi:fallback/>
-  </xi:include>
-  <xi:include href="/META-INF/duplicates-detection-java.xml" xpointer="xpointer(/idea-plugin/*)">
-    <xi:fallback/>
-  </xi:include>
-  <xi:include href="/META-INF/JamSupport.xml" xpointer="xpointer(/idea-plugin/*)">
-    <xi:fallback/>
-  </xi:include>
+  <content namespace="jetbrains">
+    <module name="intellij.java.syntax" loading="embedded"/>
+    <module name="intellij.java.frontback.psi" loading="embedded"/>
+    <module name="intellij.java.frontback.psi.impl" loading="embedded"/>
+    <module name="intellij.java.psi" loading="embedded"/>
+    <module name="intellij.java.psi.impl" loading="embedded"/>
+    <module name="intellij.java.frontback.impl" loading="embedded"/>
 
-  <depends optional="true" config-file="profiler-java.xml">com.intellij.modules.profiler</depends>
-  <depends optional="true" config-file="structuralsearch-java.xml">com.intellij.modules.structuralsearch</depends>
-  <depends optional="true" config-file="RemoteServersJava.xml">com.intellij.modules.remoteServers</depends>
-  <depends optional="true" config-file="JavaCMakeActionPatcher.xml">com.intellij.modules.clion.cmake</depends> <!-- a workaround for IDEA-209728 -->
+    <module name="intellij.java.indexing" required-if-available="intellij.platform.backend"/>
+    <module name="intellij.platform.uast" required-if-available="intellij.platform.backend"/>
+    <module name="intellij.platform.uast.ide" required-if-available="intellij.platform.backend"/>
+    <module name="intellij.java.uast" required-if-available="intellij.platform.backend"/>
+    <module name="intellij.java.compiler" required-if-available="intellij.platform.backend"/>
+    <module name="intellij.java.analysis" required-if-available="intellij.platform.backend"/>
+    <module name="intellij.java" required-if-available="intellij.platform.backend"/>
+    <module name="intellij.java.resources" required-if-available="intellij.platform.backend"/>
+    <module name="intellij.java.execution" required-if-available="intellij.platform.backend"/>
+    <module name="intellij.java.remoteServers" loading="optional"/>
+    <module name="intellij.jvm.analysis" required-if-available="intellij.platform.backend"/>
+    <module name="intellij.jsp" required-if-available="intellij.platform.backend"/>
+    <module name="intellij.java.resources.en" required-if-available="intellij.platform.backend"/>
+    <module name="intellij.java.debugger" required-if-available="intellij.platform.backend"/>
+    <module name="intellij.java.codeserver.core" required-if-available="intellij.platform.backend"/>
+    <module name="intellij.java.codeserver.highlighting" required-if-available="intellij.platform.backend"/>
 
-  <extensions defaultExtensionNs="com.intellij">
-    <moduleType id="JAVA_MODULE" classpathProvider="true" implementationClass="com.intellij.openapi.module.JavaModuleType"/>
-  </extensions>
+    <module name="intellij.jsp.spi" required-if-available="intellij.platform.backend"/>
+    <module name="intellij.java.indexing.impl" required-if-available="intellij.platform.backend"/>
+    <module name="intellij.java.analysis.impl" required-if-available="intellij.platform.backend"/>
+    <module name="intellij.java.structureView" required-if-available="intellij.platform.backend"/>
+
+    <module name="intellij.java.impl" required-if-available="intellij.platform.backend"/>
+    <module name="intellij.java.impl.refactorings" required-if-available="intellij.platform.backend"/>
+    <module name="intellij.java.compiler.impl" required-if-available="intellij.platform.backend"/>
+    <module name="intellij.java.typeMigration" required-if-available="intellij.platform.backend"/>
+    <module name="intellij.java.impl.inspections" required-if-available="intellij.platform.backend"/>
+    <module name="intellij.jvm.analysis.refactoring" required-if-available="intellij.platform.backend"/>
+    <module name="intellij.jvm.analysis.quickFix" required-if-available="intellij.platform.backend"/>
+    <module name="intellij.uiDesigner" required-if-available="intellij.platform.backend"/>
+    <module name="intellij.java.manifest" required-if-available="intellij.platform.backend"/>
+    <module name="intellij.java.ui" required-if-available="intellij.platform.backend"/>
+    <module name="intellij.java.execution.impl" required-if-available="intellij.platform.backend"/>
+    <module name="intellij.java.debugger.impl" required-if-available="intellij.platform.backend"/>
+    <module name="intellij.java.debugger.memory.agent" required-if-available="intellij.platform.backend"/>
+    <module name="intellij.java.remoteServers.impl" loading="optional"/>
+    <module name="intellij.java.uast.ide" required-if-available="intellij.platform.backend"/>
+
+    <module name="intellij.platform.jps.build" required-if-available="intellij.platform.backend"/>
+    <module name="intellij.platform.jps.build.dependencyGraph" required-if-available="intellij.platform.backend"/>
+    <module name="intellij.platform.jps.build.javac.rt" loading="embedded"/>
+    <module name="intellij.java.guiForms.compiler" loading="embedded"/>
+    <module name="intellij.java.compiler.antTasks" loading="embedded"/>
+    <module name="intellij.java.compiler.instrumentationUtil" loading="embedded"/>
+    <module name="intellij.java.compiler.instrumentationUtil.java8" loading="embedded"/>
+
+    <module name="intellij.java.backend" required-if-available="intellij.platform.backend"/>
+
+    <module name="intellij.java.frontend.split" required-if-available="intellij.platform.frontend.split"/>
+    <module name="intellij.java.backend.split"/>
+
+    <module name="intellij.java.debugger.impl.shared" loading="embedded"/>
+    <module name="intellij.java.execution.impl.shared" loading="embedded"/>
+    <module name="intellij.java.structuralSearch"/>
+    <module name="intellij.java.featuresTrainer"/>
+    <module name="intellij.java.performancePlugin" loading="optional"/>
+    <module name="intellij.java.unscramble"/>
+    <module name="intellij.java.vcs"/>
+    <module name="intellij.java.terminal" loading="optional"/>
+    <module name="intellij.jvm.analysis.impl"/>
+    <module name="intellij.java.debugger.impl.frontend" required-if-available="intellij.platform.frontend"/>
+    <module name="intellij.java.debugger.impl.backend" required-if-available="intellij.platform.backend"/>
+    <module name="intellij.java.execution.impl.frontend" required-if-available="intellij.platform.frontend"/>
+    <module name="intellij.java.execution.impl.backend" required-if-available="intellij.platform.backend"/>
+    <module name="intellij.java.ultimate.icons" loading="optional"/>
+    <module name="intellij.java.langInjection"/>
+    <module name="intellij.java.langInjection.jps"/>
+    <module name="intellij.java.duplicates"/>
+    <module name="intellij.java.duplicates.analysis"/>
+    <module name="intellij.java.duplicatesDetection"/>
+    <module name="intellij.java.jam.impl"/>
+    <module name="intellij.java.jam"/>
+    <module name="intellij.profiler.ultimate"/>
+    <module name="intellij.debugger.jvm.advanced.java"/>
+    <module name="intellij.jvm.dfa.analysis.ui"/>
+    <module name="intellij.java.copyright"/>
+    <module name="intellij.java.promo"/>
+  </content>
 </idea-plugin>

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.editorActions;
 
 import com.intellij.application.options.CodeStyle;
@@ -14,19 +14,19 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.util.DocumentUtil;
 import com.intellij.util.text.CharArrayUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class LineCommentCopyPastePreProcessor implements CopyPastePreProcessor {
-  @Nullable
+@ApiStatus.Internal
+public final class LineCommentCopyPastePreProcessor implements CopyPastePreProcessor {
   @Override
-  public String preprocessOnCopy(PsiFile file, int[] startOffsets, int[] endOffsets, String text) {
+  public @Nullable String preprocessOnCopy(PsiFile file, int[] startOffsets, int[] endOffsets, String text) {
     return null;
   }
 
-  @NotNull
   @Override
-  public String preprocessOnPaste(Project project, PsiFile file, Editor editor, String text, RawText rawText) {
+  public @NotNull String preprocessOnPaste(Project project, PsiFile file, Editor editor, String text, RawText rawText) {
     Language language = file.getLanguage();
     Commenter commenter = LanguageCommenters.INSTANCE.forLanguage(language);
     if (commenter == null) return text;
@@ -40,12 +40,19 @@ public class LineCommentCopyPastePreProcessor implements CopyPastePreProcessor {
     int lineStartOffset = DocumentUtil.getLineStartOffset(offset, document);
     CharSequence chars = document.getImmutableCharSequence();
     int firstNonWsLineOffset = CharArrayUtil.shiftForward(chars, lineStartOffset, " \t");
-    if (offset < (firstNonWsLineOffset + lineCommentPrefix.length()) || 
-        !CharArrayUtil.regionMatches(chars, firstNonWsLineOffset, lineCommentPrefix)) return text;
-    
+    if (offset < (firstNonWsLineOffset + lineCommentPrefix.length()) ||
+        !CharArrayUtil.regionMatches(chars, firstNonWsLineOffset, lineCommentPrefix)) {
+      return text;
+    }
+
     CodeStyleSettings codeStyleSettings = CodeStyle.getSettings(file);
     String lineStartReplacement = "\n" + chars.subSequence(lineStartOffset, firstNonWsLineOffset + lineCommentPrefix.length()) +
                                   (codeStyleSettings.getCommonSettings(language).LINE_COMMENT_ADD_SPACE ? " " : "");
     return StringUtil.trimTrailing(text, '\n').replace("\n", lineStartReplacement);
+  }
+
+  @Override
+  public boolean requiresAllDocumentsToBeCommitted(@NotNull Editor editor, @NotNull Project project) {
+    return false;
   }
 }

@@ -1,0 +1,10 @@
+================ Step #1 =================
+Cleaning output files:
+  META-INF/kotlin_pureKotlin_inlinePrivateFunctionAdded-a.kotlin_module
+  foo/InlineKt.class
+End of files
+Compiling files:
+  kotlin/pureKotlin/inlinePrivateFunctionAdded/a/inline.kt
+End of files
+------------------------------------------
+Exit code: OK

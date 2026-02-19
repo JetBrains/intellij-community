@@ -8,14 +8,17 @@ import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
 import com.intellij.codeInsight.template.impl.TemplateState;
 import com.intellij.lang.java.JavaDocumentationProvider;
+import com.intellij.openapi.application.impl.NonBlockingReadActionImpl;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiClass;
+import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.NeedsIndex;
 import com.intellij.testFramework.TestDataPath;
+import org.intellij.lang.annotations.Language;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 
@@ -25,7 +28,7 @@ public class ClassNameCompletionTest extends LightFixtureCompletionTestCase {
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    LanguageLevelProjectExtension.getInstance(getProject()).setLanguageLevel(LanguageLevel.JDK_1_7);
+    IdeaTestUtil.setProjectLanguageLevel(getProject(), LanguageLevel.JDK_1_7);
   }
 
   @Override
@@ -36,9 +39,10 @@ public class ClassNameCompletionTest extends LightFixtureCompletionTestCase {
   @NeedsIndex.Full
   public void testImportAfterNew() {
     createClass("package pack; public class AAClass {}");
-    createClass("package pack; public class WithInnerAClass{\n" +
-                "  public static class Inner{}\n" +
-                "}");
+    createClass("""
+                  package pack; public class WithInnerAClass{
+                    public static class Inner{}
+                  }""");
 
     String path = "/importAfterNew";
 
@@ -80,21 +84,23 @@ public class ClassNameCompletionTest extends LightFixtureCompletionTestCase {
     type("String");
     assert state != null;
     state.gotoEnd(false);
+    NonBlockingReadActionImpl.waitForAsyncTaskCompletion();
     checkResultByFile(path + "/after1.java");
 
     configureByFile(path + "/before2.java");
     selectItem(myItems[0]);
     assert TemplateManagerImpl.getTemplateState(myFixture.getEditor()) == null;
+    NonBlockingReadActionImpl.waitForAsyncTaskCompletion();
     checkResultByFile(path +"/after2.java");
 
     configureByFile(path + "/before3.java");
     selectItem(myItems[0]);
     assert TemplateManagerImpl.getTemplateState(myFixture.getEditor()) == null;
+    NonBlockingReadActionImpl.waitForAsyncTaskCompletion();
     checkResultByFile(path +"/after3.java");
   }
 
-  private void createClass(String text) {
-    //noinspection LanguageMismatch
+  private void createClass(@NotNull @Language("JAVA") String text) {
     myFixture.addClass(text);
   }
 
@@ -109,10 +115,11 @@ public class ClassNameCompletionTest extends LightFixtureCompletionTestCase {
 
   private void addClassesForAfterNewThrowable() {
     createClass("public class OurException extends Throwable{}");
-    createClass("public class OurNotException {\n" +
-                "  public static class InnerException extends Throwable{}\n" +
-                "  public static class InnerNonException{}\n" +
-                "}");
+    createClass("""
+                  public class OurNotException {
+                    public static class InnerException extends Throwable{}
+                    public static class InnerNonException{}
+                  }""");
   }
 
   @NeedsIndex.Full
@@ -306,6 +313,71 @@ public class ClassNameCompletionTest extends LightFixtureCompletionTestCase {
   public void testNoInnerInaccessibleClass() {
     myFixture.addClass("package foo; interface Intf { interface InnerInterface {} }");
     doAntiTest();
+  }
+
+  @NeedsIndex.Full
+  public void testPublicClassInPrivateSuper() {
+    myFixture.addClass("""
+                         package pkg;
+                         public class Sub extends Super {
+                         }
+                         class Super {
+                           public static class Foo {
+                           }
+                         }""");
+    myFixture.configureByText("Main.java",
+                              """
+                                import pkg.*;
+                                public class Main {
+                                  public static void main(String[] args) {
+                                    Sub.F<caret>
+                                  }
+                                }""");
+    myFixture.completeBasic();
+    myFixture.checkResult("""
+                            import pkg.*;
+                            public class Main {
+                              public static void main(String[] args) {
+                                Sub.Foo
+                              }
+                            }""");
+  }
+
+  @NeedsIndex.Full
+  public void testImplicitClassWithNestedClass() {
+    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_24, () -> {
+      myFixture.configureByText("Main.java", """
+        public static void main(String[] args){
+        }
+        
+        private class AAAAAAAAB{
+        
+          void test(){
+            call(AAAAAAAA<caret>)
+          }
+        
+          void call(Class<?> a){
+        
+          }
+        }
+        """);
+      myFixture.completeBasic();
+      myFixture.checkResult("""
+                              public static void main(String[] args){
+                              }
+                              
+                              private class AAAAAAAAB{
+                              
+                                void test(){
+                                  call(AAAAAAAAB)
+                                }
+                              
+                                void call(Class<?> a){
+                              
+                                }
+                              }
+                              """);
+    });
   }
 
   private void doJavaTest(char toType) {

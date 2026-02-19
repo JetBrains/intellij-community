@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.memory.agent;
 
 import com.intellij.debugger.engine.ReferringObject;
@@ -35,9 +35,8 @@ public class ReferringObjectsInfo {
     return myReversedMap.containsKey(reference);
   }
 
-  @NotNull
   @TestOnly
-  public List<ObjectReference> getAllReferrers(@NotNull ObjectReference value) {
+  public @NotNull List<ObjectReference> getAllReferrers(@NotNull ObjectReference value) {
     return myReferrers.get(myReversedMap.get(value)).stream()
       .distinct()
       .map(ReferringObject::getReference)
@@ -45,11 +44,10 @@ public class ReferringObjectsInfo {
       .collect(Collectors.toList());
   }
 
-  @NotNull
-  public List<ReferringObject> getReferringObjects(@NotNull ObjectReference value, long limit) {
+  public @NotNull List<ReferringObject> getReferringObjects(@NotNull ObjectReference value, long limit) {
     Integer index = myReversedMap.get(value);
     if (index == null) {
-      LOG.error("Could not find referring object for reference " + value.toString());
+      LOG.error("Could not find referring object for reference " + value);
       return Collections.emptyList();
     }
 

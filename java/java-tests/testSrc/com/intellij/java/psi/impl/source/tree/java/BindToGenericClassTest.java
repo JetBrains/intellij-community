@@ -16,13 +16,14 @@
 package com.intellij.java.psi.impl.source.tree.java;
 
 import com.intellij.java.psi.GenericsTestCase;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiReferenceExpression;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.psi.search.GlobalSearchScope;
 
-/**
- * @author dsl
- */
 public class BindToGenericClassTest extends GenericsTestCase {
   @Override
   protected void setUp() throws Exception {

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -7,7 +7,7 @@ import com.intellij.openapi.command.undo.DocumentReference;
 import com.intellij.openapi.command.undo.DocumentReferenceManager;
 import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.progress.util.BackgroundTaskUtil;
+import com.intellij.openapi.diff.impl.patch.ApplyPatchStatus;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.vcs.VcsBundle;
@@ -21,11 +21,11 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.event.ChangeEvent;
 import java.io.File;
 import java.io.IOException;
 import java.util.Collection;
@@ -33,15 +33,17 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 
+@ApiStatus.Internal
 public final class VcsShelveUtils {
   private static final Logger LOG = Logger.getInstance(VcsShelveUtils.class.getName());
 
-  public static void doSystemUnshelve(final Project project,
-                                      final ShelvedChangeList shelvedChangeList,
-                                      @Nullable final LocalChangeList targetChangeList,
-                                      final ShelveChangesManager shelveManager,
-                                      @NlsContexts.Label @Nullable final String leftConflictTitle,
-                                      @NlsContexts.Label @Nullable final String rightConflictTitle) {
+  public static @NotNull ApplyPatchStatus doSystemUnshelve(final Project project,
+                                                           final ShelvedChangeList shelvedChangeList,
+                                                           final @Nullable LocalChangeList targetChangeList,
+                                                           final ShelveChangesManager shelveManager,
+                                                           final @NlsContexts.Label @Nullable String leftConflictTitle,
+                                                           final @NlsContexts.Label @Nullable String rightConflictTitle,
+                                                           boolean reportLocalHistoryActivity) {
     VirtualFile baseDir = project.getBaseDir();
     assert baseDir != null;
     final String projectPath = baseDir.getPath() + "/";
@@ -51,20 +53,21 @@ public final class VcsShelveUtils {
     List<ShelvedBinaryFile> binaryFiles = shelvedChangeList.getBinaryFiles();
 
     LOG.info("refreshing files ");
-    // The changes are temporary copied to the first local change list, the next operation will restore them back
+    // The changes are temporarily copied to the first local change list, the next operation will restore them back
     // Refresh files that might be affected by unshelve
     refreshFilesBeforeUnshelve(projectPath, changes, binaryFiles);
 
-    LOG.info("Unshelving shelvedChangeList: " + shelvedChangeList);
-    // we pass null as target change list for Patch Applier to do NOTHING with change lists
-    shelveManager.unshelveChangeList(shelvedChangeList, changes, binaryFiles, targetChangeList, false, true,
-                                     true, leftConflictTitle, rightConflictTitle, true);
+    LOG.info("Unshelving shelvedChangeList: " + shelvedChangeList + " into " + targetChangeList);
+    ApplyPatchStatus status = shelveManager.unshelveChangeList(shelvedChangeList, changes, binaryFiles, targetChangeList, false, true,
+                                                               true, leftConflictTitle, rightConflictTitle, true,
+                                                               reportLocalHistoryActivity);
     ApplicationManager.getApplication().invokeAndWait(() -> markUnshelvedFilesNonUndoable(project, changes));
+    return status;
   }
 
   @RequiresEdt
-  private static void markUnshelvedFilesNonUndoable(@NotNull final Project project,
-                                                    @NotNull List<? extends ShelvedChange> changes) {
+  private static void markUnshelvedFilesNonUndoable(final @NotNull Project project,
+                                                    @NotNull List<ShelvedChange> changes) {
     final UndoManagerImpl undoManager = (UndoManagerImpl)UndoManager.getInstance(project);
     if (undoManager != null && !changes.isEmpty()) {
       ContainerUtil.process(changes, change -> {
@@ -80,16 +83,12 @@ public final class VcsShelveUtils {
   }
 
   private static void refreshFilesBeforeUnshelve(String projectPath,
-                                                 @NotNull List<? extends ShelvedChange> shelvedChanges,
-                                                 @NotNull List<? extends ShelvedBinaryFile> binaryFiles) {
+                                                 @NotNull List<ShelvedChange> shelvedChanges,
+                                                 @NotNull List<ShelvedBinaryFile> binaryFiles) {
     HashSet<File> filesToRefresh = new HashSet<>();
     shelvedChanges.forEach(c -> {
-      if (c.getBeforePath() != null) {
-        filesToRefresh.add(new File(projectPath + c.getBeforePath()));
-      }
-      if (c.getAfterPath() != null) {
-        filesToRefresh.add(new File(projectPath + c.getAfterPath()));
-      }
+      filesToRefresh.add(new File(projectPath + c.getBeforePath()));
+      filesToRefresh.add(new File(projectPath + c.getAfterPath()));
     });
     binaryFiles.forEach(f -> {
       if (f.BEFORE_PATH != null) {
@@ -103,34 +102,21 @@ public final class VcsShelveUtils {
   }
 
   /**
-   * Shelve changes
-   *
-   *
-   * @param project       the context project
-   * @param shelveManager the shelve manager
-   * @param changes       the changes to process
-   * @param description   the description of for the shelve
-   * @param exceptions    the generated exceptions
-   * @param rollback
+   * @param project     the context project
+   * @param changes     the changes to process
+   * @param description the description of for the shelve
    * @return created shelved change list or null in case failure
    */
-  @Nullable
-  public static ShelvedChangeList shelveChanges(final Project project, final ShelveChangesManager shelveManager, Collection<? extends Change> changes,
+  public static @Nullable ShelvedChangeList shelveChanges(final Project project,
+                                                Collection<? extends Change> changes,
                                                 final @Nls String description,
-                                                final List<? super VcsException> exceptions, boolean rollback, boolean markToBeDeleted) {
+                                                boolean rollback,
+                                                boolean markToBeDeleted) throws VcsException {
     try {
-      ShelvedChangeList shelve = shelveManager.shelveChanges(changes, description, rollback, markToBeDeleted);
-      BackgroundTaskUtil.syncPublisher(project, ShelveChangesManager.SHELF_TOPIC).stateChanged(new ChangeEvent(VcsShelveUtils.class));
-      return shelve;
+      return ShelveChangesManager.getInstance(project).shelveChanges(changes, description, rollback, markToBeDeleted);
     }
-
     catch (IOException e) {
-      exceptions.add(new VcsException(VcsBundle.message("changes.error.shelving.changes.failed", description), e));
-      return null;
-    }
-    catch (VcsException e) {
-      exceptions.add(e);
-      return null;
+      throw new VcsException(VcsBundle.message("changes.error.shelving.changes.failed", description), e);
     }
   }
 }

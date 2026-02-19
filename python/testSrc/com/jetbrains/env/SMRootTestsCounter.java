@@ -29,7 +29,7 @@ public final class SMRootTestsCounter {
   /**
    * Filter to exclude suites
    */
-  static final Filter<SMTestProxy> NOT_SUIT = new Filter<SMTestProxy>() {
+  static final Filter<SMTestProxy> NOT_SUIT = new Filter<>() {
     @Override
     public boolean shouldAccept(final SMTestProxy test) {
       return test.isLeaf();

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.svn.dialogs;
 
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
@@ -7,12 +7,18 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.NamedColorUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.svn.SvnBundle;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.Action;
+import javax.swing.JCheckBox;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JPasswordField;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
 
 public class SSLCredentialsDialog extends DialogWrapper {
   private JPanel myPanel;
@@ -56,9 +62,8 @@ public class SSLCredentialsDialog extends DialogWrapper {
 
     myCertificatePath = new TextFieldWithBrowseButton();
 
-    myCertificatePath.addBrowseFolderListener(
-        SvnBundle.message("dialog.edit.http.proxies.settings.dialog.select.ssl.client.certificate.path.title"),
-        null, null, FileChooserDescriptorFactory.createSingleFileNoJarsDescriptor());
+    myCertificatePath.addBrowseFolderListener(null, FileChooserDescriptorFactory.createSingleFileNoJarsDescriptor()
+      .withTitle(SvnBundle.message("dialog.edit.http.proxies.settings.dialog.select.ssl.client.certificate.path.title")));
 
     gb.weightx = 1;
     ++ gb.gridx;
@@ -85,7 +90,7 @@ public class SSLCredentialsDialog extends DialogWrapper {
       ++ gb.gridy;
       gb.gridwidth = 2;
       final JLabel cannotSaveLabel = new JLabel(SvnBundle.message("svn.cannot.save.credentials.store-auth-creds"));
-      cannotSaveLabel.setForeground(UIUtil.getInactiveTextColor());
+      cannotSaveLabel.setForeground(NamedColorUtil.getInactiveTextColor());
       myPanel.add(cannotSaveLabel, gb);
     }
   }

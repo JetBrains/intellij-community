@@ -1,14 +1,41 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.codeInsight.ExpectedTypeInfo;
-import com.intellij.codeInsight.daemon.impl.analysis.HighlightClassUtil;
-import com.intellij.codeInsight.lookup.*;
+import com.intellij.codeInsight.lookup.AutoCompletionPolicy;
+import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.codeInsight.lookup.LookupElementDecorator;
+import com.intellij.codeInsight.lookup.PsiTypeLookupItem;
+import com.intellij.codeInsight.lookup.TypedLookupItem;
+import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.pom.java.LanguageLevel;
-import com.intellij.psi.*;
+import com.intellij.pom.java.JavaFeature;
+import com.intellij.psi.CommonClassNames;
+import com.intellij.psi.GenericsUtil;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.JavaResolveResult;
+import com.intellij.psi.PsiArrayType;
+import com.intellij.psi.PsiCallExpression;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiClassType;
+import com.intellij.psi.PsiCompiledElement;
+import com.intellij.psi.PsiDeclarationStatement;
+import com.intellij.psi.PsiDiamondTypeImpl;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementFactory;
+import com.intellij.psi.PsiEllipsisType;
+import com.intellij.psi.PsiExpressionList;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiNewExpression;
+import com.intellij.psi.PsiParameter;
+import com.intellij.psi.PsiStatement;
+import com.intellij.psi.PsiSubstitutor;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypeParameter;
+import com.intellij.psi.PsiVariable;
 import com.intellij.psi.filters.getters.ExpectedTypesGetter;
 import com.intellij.psi.impl.PsiClassImplUtil;
 import com.intellij.psi.impl.source.PsiClassReferenceType;
@@ -16,12 +43,17 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.statistics.JavaStatisticsManager;
 import com.intellij.psi.statistics.StatisticsInfo;
 import com.intellij.psi.statistics.StatisticsManager;
+import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
-import com.intellij.util.*;
+import com.intellij.util.ArrayUtil;
+import com.intellij.util.Consumer;
+import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -32,9 +64,6 @@ import java.util.function.Supplier;
 
 import static com.intellij.patterns.PsiJavaPatterns.psiElement;
 
-/**
- * @author peter
- */
 public class JavaInheritorsGetter {
   private static final Logger LOG = Logger.getInstance(JavaInheritorsGetter.class);
   private final ConstructorInsertHandler myConstructorInsertHandler;
@@ -94,19 +123,15 @@ public class JavaInheritorsGetter {
   private static List<PsiClassType> extractClassTypes(ExpectedTypeInfo[] infos) {
     final List<PsiClassType> expectedClassTypes = new SmartList<>();
     for (PsiType type : ExpectedTypesGetter.extractTypes(infos, true)) {
-      if (type instanceof PsiClassType) {
-        final PsiClassType classType = (PsiClassType)type;
-        if (classType.resolve() != null) {
-          expectedClassTypes.add(classType);
-        }
+      if (type instanceof PsiClassType classType && classType.resolve() != null) {
+        expectedClassTypes.add(classType);
       }
     }
     return expectedClassTypes;
   }
 
-  @Nullable
-  private LookupElement addExpectedType(final PsiType type,
-                                        final CompletionParameters parameters) {
+  private @Nullable LookupElement addExpectedType(final PsiType type,
+                                                  final CompletionParameters parameters) {
     if (!JavaCompletionUtil.hasAccessibleConstructor(type, parameters.getPosition())) return null;
 
     final PsiClass psiClass = PsiUtil.resolveClassInType(type);
@@ -114,16 +139,17 @@ public class JavaInheritorsGetter {
 
     PsiElement position = parameters.getPosition();
     if ((parameters.getInvocationCount() < 2 || psiClass instanceof PsiCompiledElement) &&
-        HighlightClassUtil.checkCreateInnerClassFromStaticContext(position, null, psiClass) != null &&
-        !psiElement().afterLeaf(psiElement().withText(PsiKeyword.NEW).afterLeaf(".")).accepts(position)) {
+        isInnerClassFromStaticContext(position, psiClass) &&
+        !psiElement().afterLeaf(psiElement().withText(JavaKeywords.NEW).afterLeaf(".")).accepts(position)) {
       return null;
     }
 
     PsiType psiType = GenericsUtil.eliminateWildcards(type);
     if (JavaSmartCompletionContributor.AFTER_NEW.accepts(parameters.getOriginalPosition()) &&
-        PsiUtil.getLanguageLevel(parameters.getOriginalFile()).isAtLeast(LanguageLevel.JDK_1_7)) {
+        PsiUtil.isAvailable(JavaFeature.DIAMOND_TYPES, parameters.getOriginalFile())) {
       final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(psiClass.getProject());
-      if (psiClass.hasTypeParameters() && !((PsiClassType)type).isRaw()) {
+      PsiClassType classType = (PsiClassType)type;
+      if (psiClass.hasTypeParameters() && !classType.isRaw()) {
         final String erasedText = TypeConversionUtil.erasure(psiType).getCanonicalText();
         String canonicalText = psiType.getCanonicalText();
         if (canonicalText.contains("?extends") || canonicalText.contains("?super")) {
@@ -141,8 +167,15 @@ public class JavaInheritorsGetter {
             }
             else {
               //just try to resolve to the first constructor
+              PsiSubstitutor substitutor = classType.resolveGenerics().getSubstitutor();
               PsiParameter[] constructorParams = psiClass.getConstructors()[0].getParameterList().getParameters();
-              args = StringUtil.join(constructorParams, p -> PsiTypesUtil.getDefaultValueOfType(p.getType()), ",");
+              args = StreamEx.of(constructorParams)
+                .map(p -> p.getType())
+                .map(t -> t instanceof PsiEllipsisType ellipsisType ? ellipsisType.toArrayType() : t)
+                .map(substitutor::substitute)
+                .map(GenericsUtil::getVariableTypeByExpressionType)
+                .map(paramType -> "(" + paramType.getCanonicalText() + ")" + PsiTypesUtil.getDefaultValueOfType(paramType))
+                .joining(",");
             }
             final PsiStatement statement = elementFactory
               .createStatementFromText(canonicalText + " v = new " + erasedText + "<>(" + args + ")", parameters.getPosition());
@@ -163,6 +196,9 @@ public class JavaInheritorsGetter {
     final PsiTypeLookupItem item = PsiTypeLookupItem.createLookupItem(psiType, position).setShowPackage();
 
     if (psiClass.isInterface() || psiClass.hasModifierProperty(PsiModifier.ABSTRACT)) {
+      if (psiClass.hasModifierProperty(PsiModifier.SEALED)) {
+        return null;
+      }
       item.setAutoCompletionPolicy(AutoCompletionPolicy.NEVER_AUTOCOMPLETE);
       item.setIndicateAnonymous(true);
     }
@@ -200,6 +236,12 @@ public class JavaInheritorsGetter {
   }
 
   public static void processInheritors(final CompletionParameters parameters,
+                                       Collection<? extends PsiClassType> expectedClassTypes,
+                                       final PrefixMatcher matcher, final Consumer<? super PsiType> consumer) {
+    processInheritors((BaseCompletionParameters)parameters, expectedClassTypes, matcher, consumer);
+  }
+  
+  public static void processInheritors(final BaseCompletionParameters parameters,
                                        Collection<? extends PsiClassType> expectedClassTypes,
                                        final PrefixMatcher matcher, final Consumer<? super PsiType> consumer) {
     final PsiElement context = parameters.getPosition();
@@ -243,5 +285,15 @@ public class JavaInheritorsGetter {
       }
     }
     return true;
+  }
+
+  private static boolean isInnerClassFromStaticContext(@NotNull PsiElement element, @NotNull PsiClass aClass) {
+    if (aClass.hasModifierProperty(PsiModifier.STATIC)) return false;
+    PsiClass outerClass = aClass.getContainingClass();
+    if (outerClass == null) return false;
+
+    return !InheritanceUtil.hasEnclosingInstanceInScope(outerClass, element, true, false) &&
+           (!PsiTreeUtil.isContextAncestor(outerClass, element, false) ||
+            PsiUtil.getEnclosingStaticElement(element, outerClass) != null);
   }
 }

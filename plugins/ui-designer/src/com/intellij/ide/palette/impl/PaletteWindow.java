@@ -1,13 +1,20 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.palette.impl;
 
 import com.intellij.designer.LightToolWindowContent;
 import com.intellij.ide.palette.PaletteGroup;
 import com.intellij.ide.palette.PaletteItem;
 import com.intellij.ide.palette.PaletteItemProvider;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.CustomShortcutSet;
+import com.intellij.openapi.actionSystem.DataSink;
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
+import com.intellij.openapi.actionSystem.UiDataProvider;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.PopupHandler;
 import com.intellij.ui.ScrollPaneFactory;
@@ -18,10 +25,15 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JComponent;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.JTabbedPane;
+import javax.swing.KeyStroke;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
-import java.awt.*;
+import java.awt.Component;
+import java.awt.GridLayout;
 import java.awt.dnd.DragSource;
 import java.awt.dnd.DragSourceAdapter;
 import java.awt.dnd.DragSourceDropEvent;
@@ -29,12 +41,15 @@ import java.awt.dnd.DragSourceListener;
 import java.awt.event.KeyEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
+import java.util.TreeSet;
 
-/**
- * @author yole
- */
-public class PaletteWindow extends JPanel implements LightToolWindowContent, DataProvider {
+
+public class PaletteWindow extends JPanel implements LightToolWindowContent, UiDataProvider {
   private final Project myProject;
   private final ArrayList<PaletteGroupHeader> myGroupHeaders = new ArrayList<>();
   private final PaletteItemProvider[] myProviders;
@@ -45,7 +60,7 @@ public class PaletteWindow extends JPanel implements LightToolWindowContent, Dat
   private final MyListSelectionListener myListSelectionListener = new MyListSelectionListener();
   private PaletteGroupHeader myLastFocusedGroup;
 
-  @NonNls private static final String ourHelpID = "guiDesigner.uiTour.palette";
+  private static final @NonNls String ourHelpID = "guiDesigner.uiTour.palette";
 
   private final DragSourceListener myDragSourceListener = new DragSourceAdapter() {
     @Override
@@ -148,7 +163,7 @@ public class PaletteWindow extends JPanel implements LightToolWindowContent, Dat
         remove(myScrollPane);
         add(myTabbedPane);
       }
-      for (String tabName : tabNames) {
+      for (@NlsSafe String tabName : tabNames) {
         PaletteContentWindow contentWindow = new PaletteContentWindow();
         JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(contentWindow);
         scrollPane.addMouseListener(new MyScrollPanePopupHandler());
@@ -202,8 +217,7 @@ public class PaletteWindow extends JPanel implements LightToolWindowContent, Dat
     notifySelectionChanged(event);
   }
 
-  @Nullable
-  public PaletteItem getActiveItem() {
+  public @Nullable PaletteItem getActiveItem() {
     for (PaletteGroupHeader groupHeader : myGroupHeaders) {
       if (groupHeader.isSelected() && groupHeader.getComponentList().getSelectedValue() != null) {
         return (PaletteItem)groupHeader.getComponentList().getSelectedValue();
@@ -212,8 +226,7 @@ public class PaletteWindow extends JPanel implements LightToolWindowContent, Dat
     return null;
   }
 
-  @Nullable
-  public <T extends PaletteItem> T getActiveItem(Class<T> cls) {
+  public @Nullable <T extends PaletteItem> T getActiveItem(Class<T> cls) {
     PaletteItem item = getActiveItem();
     if (item != null && item.getClass().isInstance(item)) {
       //noinspection unchecked
@@ -222,26 +235,13 @@ public class PaletteWindow extends JPanel implements LightToolWindowContent, Dat
     return null;
   }
 
-  @Override
-  @Nullable
-  public Object getData(@NotNull String dataId) {
-    if (PlatformDataKeys.HELP_ID.is(dataId)) {
-      return ourHelpID;
-    }
-    if (CommonDataKeys.PROJECT.is(dataId)) {
-      return myProject;
-    }
-    PaletteItem item = getActiveItem();
-    if (item != null) {
-      Object data = item.getData(myProject, dataId);
-      if (data != null) return data;
-    }
+  private @Nullable PaletteGroup getActiveGroup() {
     for (PaletteGroupHeader groupHeader : myGroupHeaders) {
       if ((groupHeader.isSelected() && groupHeader.getComponentList().getSelectedValue() != null) || groupHeader == myLastFocusedGroup) {
-        return groupHeader.getGroup().getData(myProject, dataId);
+        return groupHeader.getGroup();
       }
     }
-    final int tabCount = collectTabNames(myGroups).length;
+    int tabCount = collectTabNames(myGroups).length;
     if (tabCount > 0) {
       JScrollPane activeScrollPane;
       if (tabCount == 1) {
@@ -253,10 +253,18 @@ public class PaletteWindow extends JPanel implements LightToolWindowContent, Dat
       PaletteContentWindow activeContentWindow = (PaletteContentWindow)activeScrollPane.getViewport().getView();
       PaletteGroupHeader groupHeader = activeContentWindow.getLastGroupHeader();
       if (groupHeader != null) {
-        return groupHeader.getGroup().getData(myProject, dataId);
+        return groupHeader.getGroup();
       }
     }
     return null;
+  }
+
+  @Override
+  public void uiDataSnapshot(@NotNull DataSink sink) {
+    sink.set(PlatformCoreDataKeys.HELP_ID, ourHelpID);
+    sink.set(CommonDataKeys.PROJECT, myProject);
+    DataSink.uiDataSnapshot(sink, getActiveItem());
+    DataSink.uiDataSnapshot(sink, getActiveGroup());
   }
 
   public Project getProject() {

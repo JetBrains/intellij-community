@@ -1,0 +1,6 @@
+{
+  "type": "AUTO_DETECT",
+  "mainFile": "JavaClass.java",
+  "newName": "Bar",
+  "enabledInK2": true
+}

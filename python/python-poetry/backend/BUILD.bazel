@@ -1,0 +1,41 @@
+### auto-generated section `build intellij.python.community.impl.poetry.backend` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "backend_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "backend",
+  module_name = "intellij.python.community.impl.poetry.backend",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":backend_resources"],
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:jetbrains-annotations",
+    "//python/python-poetry/common",
+    "//python/openapi:community",
+    "//python/python-pyproject:pyproject",
+    "//platform/util/base/multiplatform",
+    "//python/common",
+  ]
+)
+
+jvm_library(
+  name = "backend_test_lib",
+  module_name = "intellij.python.community.impl.poetry.backend",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    ":backend",
+    "//python/python-poetry/common:common_test_lib",
+    "//python/openapi:community_test_lib",
+    "//python/python-pyproject:pyproject_test_lib",
+    "//platform/util/base/multiplatform:multiplatform_test_lib",
+    "//python/common:common_test_lib",
+  ]
+)
+### auto-generated section `build intellij.python.community.impl.poetry.backend` end

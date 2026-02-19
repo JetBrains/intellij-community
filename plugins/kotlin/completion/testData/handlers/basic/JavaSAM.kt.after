@@ -1,0 +1,10 @@
+import java.util.concurrent.Callable
+
+// FIR_COMPARISON
+// FIR_IDENTICAL
+
+fun f() {
+    Callable<caret>
+}
+
+// ELEMENT: "Callable"

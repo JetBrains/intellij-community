@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.junit;
 
 import com.intellij.execution.RunnerAndConfigurationSettings;
@@ -16,14 +16,13 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @deprecated Use {@link JavaRunConfigurationProducerBase} instead
  */
-@Deprecated
+@Deprecated(forRemoval = true)
 public abstract class JavaRuntimeConfigurationProducerBase extends RuntimeConfigurationProducer {
   protected JavaRuntimeConfigurationProducerBase(@NotNull ConfigurationType configurationType) {
     super(configurationType);
   }
 
-  @Nullable
-  public static PsiPackage checkPackage(final PsiElement element) {
+  public static @Nullable PsiPackage checkPackage(final PsiElement element) {
     return AbstractJavaTestConfigurationProducer.checkPackage(element);
   }
 
@@ -32,7 +31,7 @@ public abstract class JavaRuntimeConfigurationProducerBase extends RuntimeConfig
       final RunnerAndConfigurationSettings template =
         ((RunManagerImpl)context.getRunManager()).getConfigurationTemplate(getConfigurationFactory());
       final Module contextModule = context.getModule();
-      final Module predefinedModule = ((ModuleBasedConfiguration)template.getConfiguration()).getConfigurationModule().getModule();
+      final Module predefinedModule = ((ModuleBasedConfiguration<?, ?>)template.getConfiguration()).getConfigurationModule().getModule();
       if (predefinedModule != null) {
         configuration.setModule(predefinedModule);
         return true;

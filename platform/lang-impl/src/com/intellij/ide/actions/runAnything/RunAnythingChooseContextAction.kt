@@ -1,12 +1,25 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions.runAnything
 
 import com.intellij.ide.IdeBundle
-import com.intellij.ide.actions.runAnything.RunAnythingContext.*
-import com.intellij.openapi.actionSystem.*
+import com.intellij.ide.actions.runAnything.RunAnythingContext.BrowseRecentDirectoryContext
+import com.intellij.ide.actions.runAnything.RunAnythingContext.ModuleContext
+import com.intellij.ide.actions.runAnything.RunAnythingContext.ProjectContext
+import com.intellij.ide.actions.runAnything.RunAnythingContext.RecentDirectoryContext
+import com.intellij.openapi.actionSystem.ActionGroup
+import com.intellij.openapi.actionSystem.ActionPlaces
+import com.intellij.openapi.actionSystem.ActionToolbar
+import com.intellij.openapi.actionSystem.ActionUpdateThread
+import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.DataContext
+import com.intellij.openapi.actionSystem.DefaultActionGroup
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys
+import com.intellij.openapi.actionSystem.Presentation
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction
 import com.intellij.openapi.actionSystem.impl.ActionButtonWithText
+import com.intellij.openapi.actionSystem.impl.PresentationFactory
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.fileChooser.FileChooserFactory
@@ -15,15 +28,15 @@ import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.guessProjectDir
 import com.intellij.openapi.ui.popup.ListSeparator
-import com.intellij.openapi.util.Condition
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.ui.ErrorLabel
+import com.intellij.ui.popup.ActionPopupOptions
 import com.intellij.ui.popup.ActionPopupStep
 import com.intellij.ui.popup.PopupFactoryImpl
 import com.intellij.ui.popup.list.PopupListElementRenderer
 import com.intellij.util.ui.EmptyIcon
 import com.intellij.util.ui.JBUI
-import com.intellij.util.ui.UIUtil
+import com.intellij.util.ui.NamedColorUtil
 import java.awt.BorderLayout
 import java.awt.Dimension
 import java.util.function.Supplier
@@ -33,8 +46,7 @@ import javax.swing.JList
 import javax.swing.JPanel
 
 abstract class RunAnythingChooseContextAction(private val containingPanel: JPanel) : CustomComponentAction, DumbAware, ActionGroup() {
-  override fun canBePerformed(context: DataContext): Boolean = true
-  override fun isPopup(): Boolean = true
+
   override fun getChildren(e: AnActionEvent?): Array<AnAction> = EMPTY_ARRAY
 
   abstract var selectedContext: RunAnythingContext?
@@ -46,6 +58,8 @@ abstract class RunAnythingChooseContextAction(private val containingPanel: JPane
   }
 
   override fun update(e: AnActionEvent) {
+    e.presentation.isPopupGroup = true
+    e.presentation.isPerformGroup = true
     if (availableContexts.isEmpty()) {
       e.presentation.isEnabledAndVisible = false
       return
@@ -59,9 +73,9 @@ abstract class RunAnythingChooseContextAction(private val containingPanel: JPane
     e.presentation.isEnabledAndVisible = true
     e.presentation.text = selectedContext!!.label
     e.presentation.icon = selectedContext!!.icon
-
-    containingPanel.revalidate()
   }
+
+  override  fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
 
   override fun actionPerformed(e: AnActionEvent) {
     val project = e.project
@@ -75,18 +89,16 @@ abstract class RunAnythingChooseContextAction(private val containingPanel: JPane
     }
 
     val updateToolbar = {
-      val toolbar = UIUtil.uiParents(component, true).filter(ActionToolbar::class.java).first()
-      toolbar!!.updateActionsImmediately()
+      ActionToolbar.findToolbarBy(component)!!.updateActionsImmediately()
     }
 
     val dataContext = e.dataContext
+    val presentationFactory = PresentationFactory()
     val actionItems = ActionPopupStep.createActionItems(
-      DefaultActionGroup(createItems()), dataContext,
-      false,
-      false, true,
-      true, ActionPlaces.POPUP, null)
+      DefaultActionGroup(createItems()), dataContext, ActionPlaces.POPUP, presentationFactory,
+      ActionPopupOptions.mnemonicsAndDisabled())
 
-    ChooseContextPopup(ChooseContextPopupStep(actionItems, dataContext, updateToolbar), dataContext)
+    ChooseContextPopup(ChooseContextPopupStep(actionItems, dataContext, presentationFactory, updateToolbar), dataContext)
       .also { it.size = Dimension(500, 300) }
       .also { it.setRequestFocus(false) }
       .showUnderneathOf(component)
@@ -99,7 +111,6 @@ abstract class RunAnythingChooseContextAction(private val containingPanel: JPane
         is ModuleContext -> ModuleItem(it)
         is BrowseRecentDirectoryContext -> BrowseDirectoryItem(it)
         is RecentDirectoryContext -> RecentDirectoryItem(it)
-        else -> throw UnsupportedOperationException()
       }
     }
   }
@@ -118,7 +129,7 @@ abstract class RunAnythingChooseContextAction(private val containingPanel: JPane
       ApplicationManager.getApplication().invokeLater {
         val project = e.project!!
         val descriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor().also { it.isForcedToUseIdeaFileChooser = true }
-        FileChooserFactory.getInstance().createPathChooser(descriptor, project, e.dataContext.getData(PlatformDataKeys.CONTEXT_COMPONENT))
+        FileChooserFactory.getInstance().createPathChooser(descriptor, project, e.dataContext.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT))
           .choose(project.guessProjectDir()) {
             val recentDirectories = RunAnythingContextRecentDirectoryCache.getInstance(project).state.paths
             val path = it.single().path
@@ -142,21 +153,26 @@ abstract class RunAnythingChooseContextAction(private val containingPanel: JPane
       e.presentation.icon = context.icon
     }
 
+    override  fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
+
     override fun actionPerformed(e: AnActionEvent) {
       selectedContext = context
     }
   }
 
   open inner class ChooseContextPopup(step: ActionPopupStep, dataContext: DataContext)
-    : PopupFactoryImpl.ActionGroupPopup(null, step, null, dataContext, ActionPlaces.POPUP, -1) {
+    : PopupFactoryImpl.ActionGroupPopup(null, step, null, dataContext, -1) {
     override fun getListElementRenderer(): PopupListElementRenderer<PopupFactoryImpl.ActionItem> =
       object : PopupListElementRenderer<PopupFactoryImpl.ActionItem>(this) {
         private lateinit var myInfoLabel: JLabel
 
         override fun createItemComponent(): JComponent {
+          myIconLabel = JLabel()
           myTextLabel = ErrorLabel()
           myInfoLabel = JLabel()
           myTextLabel.border = JBUI.Borders.emptyRight(10)
+
+          myIconBar = createIconBar()
 
           val textPanel = JPanel(BorderLayout())
           textPanel.add(myTextLabel, BorderLayout.WEST)
@@ -164,11 +180,15 @@ abstract class RunAnythingChooseContextAction(private val containingPanel: JPane
           return layoutComponent(textPanel)
         }
 
+        override fun createIconBar(): JComponent {
+          return myIconLabel
+        }
+
         override fun customizeComponent(list: JList<out PopupFactoryImpl.ActionItem>,
                                         actionItem: PopupFactoryImpl.ActionItem,
                                         isSelected: Boolean) {
           val event = ActionUtil.createEmptyEvent()
-          ActionUtil.performDumbAwareUpdate(true, actionItem.action, event, false)
+          ActionUtil.updateAction(actionItem.action, event)
 
           val description = event.presentation.description
           if (description != null) {
@@ -176,14 +196,15 @@ abstract class RunAnythingChooseContextAction(private val containingPanel: JPane
           }
 
           myTextLabel.text = event.presentation.text
-          myInfoLabel.foreground = if (isSelected) UIUtil.getListSelectionForeground(true) else UIUtil.getInactiveTextColor()
+          myInfoLabel.foreground = if (isSelected) NamedColorUtil.getListSelectionForeground(true) else NamedColorUtil.getInactiveTextColor()
         }
       }
   }
 
-  class ChooseContextPopupStep(val actions: List<PopupFactoryImpl.ActionItem>, dataContext: DataContext, val updateToolbar: () -> Unit)
-    : ActionPopupStep(actions, IdeBundle.message("run.anything.context.title.working.directory"), Supplier { dataContext }, null, true,
-                      Condition { false }, false, true, null) {
+  class ChooseContextPopupStep(val actions: List<PopupFactoryImpl.ActionItem>, dataContext: DataContext, presentationFactory: PresentationFactory, val updateToolbar: () -> Unit)
+    : ActionPopupStep(actions, IdeBundle.message("run.anything.context.title.working.directory"), Supplier { dataContext },
+                      ActionPlaces.getPopupPlace("RunAnythingChooseContext"), presentationFactory,
+                      ActionPopupOptions.mnemonicsAndDisabled()) {
 
     override fun getSeparatorAbove(value: PopupFactoryImpl.ActionItem?): ListSeparator? {
       val action = value?.action
@@ -213,7 +234,7 @@ abstract class RunAnythingChooseContextAction(private val containingPanel: JPane
         .plus(ProjectContext(project))
         .plus(ModuleManager.getInstance(project).modules.map {
           ModuleContext(it)
-        }.let { if (it.size > 1) it else emptyList<RunAnythingContext>() })
+        }.let { if (it.size > 1) it else emptyList() })
         .toList()
     }
   }

@@ -1,8 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
-/*
- * @author max
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.markup;
 
 import com.intellij.openapi.util.Comparing;
@@ -10,19 +6,26 @@ import com.intellij.openapi.util.DefaultJDOMExternalizer;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizerUtil;
 import com.intellij.util.ConcurrencyUtil;
+import com.intellij.util.ui.ComparableColor;
 import org.intellij.lang.annotations.JdkConstants;
 import org.jdom.Element;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import java.awt.*;
+import java.awt.Color;
+import java.io.DataInput;
+import java.io.DataOutput;
+import java.io.IOException;
 import java.util.Collections;
-import java.util.HashMap;
+import java.util.EnumMap;
 import java.util.Map;
-import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+
+import static com.intellij.util.io.DataInputOutputUtil.readINT;
+import static com.intellij.util.io.DataInputOutputUtil.writeINT;
 
 public final class AttributesFlyweight {
   private static final ConcurrentMap<FlyweightKey, AttributesFlyweight> entries = new ConcurrentHashMap<>();
@@ -35,7 +38,7 @@ public final class AttributesFlyweight {
   private final int myFontType;
   private final Color myEffectColor;
   private final EffectType myEffectType;
-  private final @NotNull Map<EffectType, Color> myAdditionalEffects;
+  private final @NotNull Map<@NotNull EffectType, ? extends @NotNull Color> myAdditionalEffects; // unmodifiable map
   private final Color myErrorStripeColor;
 
   private static final class FlyweightKey implements Cloneable {
@@ -46,7 +49,7 @@ public final class AttributesFlyweight {
     private Color effectColor;
     private EffectType effectType;
     private Color errorStripeColor;
-    private @NotNull Map<EffectType, Color> myAdditionalEffects = Collections.emptyMap();
+    private @NotNull Map<@NotNull EffectType, ? extends @NotNull Color> myAdditionalEffects = Collections.emptyMap();
 
     private FlyweightKey() {
     }
@@ -59,11 +62,11 @@ public final class AttributesFlyweight {
       FlyweightKey key = (FlyweightKey)o;
 
       if (fontType != key.fontType) return false;
-      if (!Objects.equals(background, key.background)) return false;
-      if (!Objects.equals(effectColor, key.effectColor)) return false;
+      if (!ComparableColor.equalColors(background, key.background)) return false;
+      if (!ComparableColor.equalColors(effectColor, key.effectColor)) return false;
       if (effectType != key.effectType) return false;
-      if (!Objects.equals(errorStripeColor, key.errorStripeColor)) return false;
-      if (!Objects.equals(foreground, key.foreground)) return false;
+      if (!ComparableColor.equalColors(errorStripeColor, key.errorStripeColor)) return false;
+      if (!ComparableColor.equalColors(foreground, key.foreground)) return false;
       if (!myAdditionalEffects.equals(key.myAdditionalEffects)) return false;
 
       return true;
@@ -71,12 +74,12 @@ public final class AttributesFlyweight {
 
     @Override
     public int hashCode() {
-      int result = foreground != null ? foreground.hashCode() : 0;
-      result = 31 * result + (background != null ? background.hashCode() : 0);
+      int result = ComparableColor.colorHashCode(foreground);
+      result = 31 * result + ComparableColor.colorHashCode(background);
       result = 31 * result + fontType;
-      result = 31 * result + (effectColor != null ? effectColor.hashCode() : 0);
+      result = 31 * result + ComparableColor.colorHashCode(effectColor);
       result = 31 * result + (effectType != null ? effectType.hashCode() : 0);
-      result = 31 * result + (errorStripeColor != null ? errorStripeColor.hashCode() : 0);
+      result = 31 * result + ComparableColor.colorHashCode(errorStripeColor);
       result = 31 * result + myAdditionalEffects.hashCode();
       return result;
     }
@@ -90,6 +93,27 @@ public final class AttributesFlyweight {
         throw new RuntimeException(e);
       }
     }
+  }
+
+  private static @NotNull FlyweightKey createKey(@Nullable Color foreground,
+                                                 @Nullable Color background,
+                                                 @JdkConstants.FontStyle int fontType,
+                                                 @Nullable Color effectColor,
+                                                 @Nullable EffectType effectType,
+                                                 @NotNull Map<@NotNull EffectType, ? extends @NotNull Color> additionalEffects,
+                                                 @Nullable Color errorStripeColor) {
+    FlyweightKey key = ourKey.get();
+    if (key == null) {
+      ourKey.set(key = new FlyweightKey());
+    }
+    key.foreground = foreground;
+    key.background = background;
+    key.fontType = fontType;
+    key.effectColor = effectColor;
+    key.effectType = effectType;
+    key.myAdditionalEffects = additionalEffects.isEmpty() ? Collections.emptyMap() : new EnumMap<>(additionalEffects);
+    key.errorStripeColor = errorStripeColor;
+    return key;
   }
 
   public static @NotNull AttributesFlyweight create(Color foreground,
@@ -107,19 +131,9 @@ public final class AttributesFlyweight {
                                                     @JdkConstants.FontStyle int fontType,
                                                     Color effectColor,
                                                     EffectType effectType,
-                                                    @NotNull Map<EffectType, Color> additionalEffects,
+                                                    @NotNull Map<@NotNull EffectType, ? extends @NotNull Color> additionalEffects,
                                                     Color errorStripeColor) {
-    FlyweightKey key = ourKey.get();
-    if (key == null) {
-      ourKey.set(key = new FlyweightKey());
-    }
-    key.foreground = foreground;
-    key.background = background;
-    key.fontType = fontType;
-    key.effectColor = effectColor;
-    key.effectType = effectType;
-    key.myAdditionalEffects = additionalEffects.isEmpty() ? Collections.emptyMap() : new HashMap<>(additionalEffects);
-    key.errorStripeColor = errorStripeColor;
+    FlyweightKey key = createKey(foreground, background, fontType, effectColor, effectType, additionalEffects, errorStripeColor);
 
     AttributesFlyweight flyweight = entries.get(key);
     if (flyweight != null) {
@@ -127,6 +141,18 @@ public final class AttributesFlyweight {
     }
 
     return ConcurrencyUtil.cacheOrGet(entries, key.clone(), new AttributesFlyweight(key));
+  }
+
+  @ApiStatus.Internal
+  public static @NotNull AttributesFlyweight createNoCache(Color foreground,
+                                                           Color background,
+                                                           @JdkConstants.FontStyle int fontType,
+                                                           Color effectColor,
+                                                           EffectType effectType,
+                                                           @NotNull Map<@NotNull EffectType, ? extends @NotNull Color> additionalEffects,
+                                                           Color errorStripeColor) {
+    FlyweightKey key = createKey(foreground, background, fontType, effectColor, effectType, additionalEffects, errorStripeColor);
+    return new AttributesFlyweight(key);
   }
 
   private AttributesFlyweight(@NotNull FlyweightKey key) {
@@ -140,7 +166,7 @@ public final class AttributesFlyweight {
     myHashCode = key.hashCode();
   }
 
-  public static @NotNull AttributesFlyweight create(@NotNull  Element element) throws InvalidDataException {
+  static @NotNull AttributesFlyweight create(@NotNull Element element) throws InvalidDataException {
     Color FOREGROUND = DefaultJDOMExternalizer.toColor(JDOMExternalizerUtil.readField(element, "FOREGROUND"));
     Color BACKGROUND = DefaultJDOMExternalizer.toColor(JDOMExternalizerUtil.readField(element, "BACKGROUND"));
     Color EFFECT_COLOR = DefaultJDOMExternalizer.toColor(JDOMExternalizerUtil.readField(element, "EFFECT_COLOR"));
@@ -155,10 +181,38 @@ public final class AttributesFlyweight {
     return create(FOREGROUND, BACKGROUND, FONT_TYPE, EFFECT_COLOR, toEffectType(EFFECT_TYPE), Collections.emptyMap(), ERROR_STRIPE_COLOR);
   }
 
-  private static void writeColor(Element element, String fieldName, Color color) {
+  @ApiStatus.Internal
+  static @NotNull AttributesFlyweight create(@NotNull DataInput in) throws IOException {
+    Color FOREGROUND = readColor(in);
+    Color BACKGROUND = readColor(in);
+    int fontType = readINT(in);
+    if (fontType < 0 || fontType > 3) {
+      fontType = 0;
+    }
+    int FONT_TYPE = fontType;
+    Color EFFECT_COLOR = readColor(in);
+    Color ERROR_STRIPE_COLOR = readColor(in);
+    int EFFECT_TYPE = readINT(in);
+    return create(FOREGROUND, BACKGROUND, FONT_TYPE, EFFECT_COLOR, toEffectType(EFFECT_TYPE), Collections.emptyMap(), ERROR_STRIPE_COLOR);
+  }
+
+  private static @Nullable Color readColor(@NotNull DataInput in) throws IOException {
+    boolean colorExists = in.readBoolean();
+    return colorExists ? new Color(readINT(in)) : null;
+  }
+
+  private static void writeColor(@NotNull Element element, @NotNull String fieldName, Color color) {
     if (color != null) {
       String string = Integer.toString(color.getRGB() & 0xFFFFFF, 16);
       JDOMExternalizerUtil.writeField(element, fieldName, string);
+    }
+  }
+
+  private static void writeColor(@NotNull DataOutput out, @Nullable Color color) throws IOException {
+    boolean colorExists = color != null;
+    out.writeBoolean(colorExists);
+    if (colorExists) {
+      writeINT(out, color.getRGB() & 0xFFFFFF);
     }
   }
 
@@ -176,6 +230,16 @@ public final class AttributesFlyweight {
       JDOMExternalizerUtil.writeField(element, "EFFECT_TYPE", String.valueOf(effectType));
     }
     // todo additionalEffects are not serialized yet, we have no user-controlled additional effects
+  }
+
+  @ApiStatus.Internal
+  void writeExternal(@NotNull DataOutput out) throws IOException {
+    writeColor(out, getForeground());
+    writeColor(out, getBackground());
+    writeINT(out, getFontType());
+    writeColor(out, getEffectColor());
+    writeColor(out, getErrorStripeColor());
+    writeINT(out, fromEffectType(getEffectType()));
   }
 
   private static final int EFFECT_BORDER = 0;
@@ -232,7 +296,7 @@ public final class AttributesFlyweight {
   }
 
   @NotNull
-  Map<EffectType, Color> getAdditionalEffects() {
+  Map<@NotNull EffectType, ? extends @NotNull Color> getAdditionalEffects() {
     return myAdditionalEffects;
   }
 
@@ -247,8 +311,7 @@ public final class AttributesFlyweight {
   /**
    * @return all attributes effects, main and additional ones
    */
-  @NotNull
-  Map<EffectType, Color> getAllEffects() {
+  public @NotNull Map<EffectType, Color> getAllEffects() {
     if (myAdditionalEffects.isEmpty()) {
       return myEffectType == null || myEffectColor == null ? Collections.emptyMap() : Collections.singletonMap(myEffectType, myEffectColor);
     }
@@ -258,18 +321,18 @@ public final class AttributesFlyweight {
     return builder.getEffectsMap();
   }
 
-  public Color getErrorStripeColor() {
+  Color getErrorStripeColor() {
     return myErrorStripeColor;
   }
 
   public @NotNull AttributesFlyweight withForeground(Color foreground) {
-    return Comparing.equal(foreground, myForeground)
+    return ComparableColor.equalColors(foreground, myForeground)
            ? this
            : create(foreground, myBackground, myFontType, myEffectColor, myEffectType, myAdditionalEffects, myErrorStripeColor);
   }
 
   public @NotNull AttributesFlyweight withBackground(Color background) {
-    return Comparing.equal(background, myBackground)
+    return ComparableColor.equalColors(background, myBackground)
            ? this
            : create(myForeground, background, myFontType, myEffectColor, myEffectType, myAdditionalEffects, myErrorStripeColor);
   }
@@ -281,7 +344,7 @@ public final class AttributesFlyweight {
   }
 
   public @NotNull AttributesFlyweight withEffectColor(Color effectColor) {
-    return Comparing.equal(effectColor, myEffectColor)
+    return ComparableColor.equalColors(effectColor, myEffectColor)
            ? this
            : create(myForeground, myBackground, myFontType, effectColor, myEffectType, myAdditionalEffects, myErrorStripeColor);
   }
@@ -293,7 +356,7 @@ public final class AttributesFlyweight {
   }
 
   public @NotNull AttributesFlyweight withErrorStripeColor(Color stripeColor) {
-    return Comparing.equal(stripeColor, myErrorStripeColor)
+    return ComparableColor.equalColors(stripeColor, myErrorStripeColor)
            ? this
            : create(myForeground, myBackground, myFontType, myEffectColor, myEffectType, myAdditionalEffects, stripeColor);
   }
@@ -302,7 +365,7 @@ public final class AttributesFlyweight {
    * @see TextAttributes#setAdditionalEffects(Map)
    */
   @ApiStatus.Experimental
-  public @NotNull AttributesFlyweight withAdditionalEffects(@NotNull Map<EffectType, Color> additionalEffects) {
+  public @NotNull AttributesFlyweight withAdditionalEffects(@NotNull Map<@NotNull EffectType, ? extends @NotNull Color> additionalEffects) {
     return Comparing.equal(additionalEffects, myAdditionalEffects)
            ? this
            : create(myForeground, myBackground, myFontType, myEffectColor, myEffectType, additionalEffects, myErrorStripeColor);
@@ -316,11 +379,11 @@ public final class AttributesFlyweight {
     AttributesFlyweight that = (AttributesFlyweight)o;
 
     if (myFontType != that.myFontType) return false;
-    if (!Objects.equals(myBackground, that.myBackground)) return false;
-    if (!Objects.equals(myEffectColor, that.myEffectColor)) return false;
+    if (!ComparableColor.equalColors(myBackground, that.myBackground)) return false;
+    if (!ComparableColor.equalColors(myEffectColor, that.myEffectColor)) return false;
     if (myEffectType != that.myEffectType) return false;
-    if (!Objects.equals(myErrorStripeColor, that.myErrorStripeColor)) return false;
-    if (!Objects.equals(myForeground, that.myForeground)) return false;
+    if (!ComparableColor.equalColors(myErrorStripeColor, that.myErrorStripeColor)) return false;
+    if (!ComparableColor.equalColors(myForeground, that.myForeground)) return false;
     if (!myAdditionalEffects.equals(that.myAdditionalEffects)) return false;
 
     return true;
@@ -331,9 +394,8 @@ public final class AttributesFlyweight {
     return myHashCode;
   }
 
-  @NonNls
   @Override
-  public String toString() {
+  public @NonNls String toString() {
     return "AttributesFlyweight{myForeground=" + myForeground + ", myBackground=" + myBackground + ", myFontType=" + myFontType +
            ", myEffectColor=" + myEffectColor + ", myEffectType=" + myEffectType + ", myErrorStripeColor=" + myErrorStripeColor + '}';
   }

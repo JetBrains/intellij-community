@@ -1,0 +1,104 @@
+com.intellij.openapi.diagnostic.ControlFlowException
+c:com.intellij.openapi.progress.ProcessCanceledException
+- java.util.concurrent.CancellationException
+- com.intellij.openapi.diagnostic.ControlFlowException
+- <init>():V
+- p:<init>(java.lang.String):V
+- <init>(java.lang.Throwable):V
+- getCause():java.lang.Throwable
+@:com.intellij.openapi.util.NlsSafe
+- java.lang.annotation.Annotation
+f:com.intellij.openapi.util.text.LineTokenizer
+- sf:Companion:com.intellij.openapi.util.text.LineTokenizer$Companion
+- <init>(java.lang.CharSequence):V
+- <init>(C[],I,I):V
+- f:advance():V
+- f:atEnd():Z
+- sf:calcLineCount(java.lang.CharSequence,Z):I
+- f:getLength():I
+- f:getLineSeparatorLength():I
+- f:getOffset():I
+- sf:tokenize(java.lang.CharSequence,Z):java.lang.String[]
+- sf:tokenize(java.lang.CharSequence,Z,Z):java.lang.String[]
+- sf:tokenize(C[],Z):java.lang.String[]
+- sf:tokenize(C[],Z,Z):java.lang.String[]
+- sf:tokenizeIntoList(java.lang.CharSequence,Z):java.util.List
+- sf:tokenizeIntoList(java.lang.CharSequence,Z,Z):java.util.List
+f:com.intellij.openapi.util.text.LineTokenizer$Companion
+- f:calcLineCount(java.lang.CharSequence,Z):I
+- f:tokenize(java.lang.CharSequence,Z):java.lang.String[]
+- f:tokenize(java.lang.CharSequence,Z,Z):java.lang.String[]
+- f:tokenize(C[],I,I,Z):java.lang.String[]
+- f:tokenize(C[],I,I,Z,Z):java.lang.String[]
+- f:tokenize(C[],Z):java.lang.String[]
+- f:tokenize(C[],Z,Z):java.lang.String[]
+- bs:tokenize$default(com.intellij.openapi.util.text.LineTokenizer$Companion,java.lang.CharSequence,Z,Z,I,java.lang.Object):java.lang.String[]
+- bs:tokenize$default(com.intellij.openapi.util.text.LineTokenizer$Companion,C[],I,I,Z,Z,I,java.lang.Object):java.lang.String[]
+- bs:tokenize$default(com.intellij.openapi.util.text.LineTokenizer$Companion,C[],Z,Z,I,java.lang.Object):java.lang.String[]
+- f:tokenizeIntoList(java.lang.CharSequence,Z):java.util.List
+- f:tokenizeIntoList(java.lang.CharSequence,Z,Z):java.util.List
+- bs:tokenizeIntoList$default(com.intellij.openapi.util.text.LineTokenizer$Companion,java.lang.CharSequence,Z,Z,I,java.lang.Object):java.util.List
+f:com.intellij.util.IntPair
+- f:first:I
+- f:second:I
+- <init>(I,I):V
+- equals(java.lang.Object):Z
+- hashCode():I
+com.intellij.util.containers.PeekableIterator
+- java.util.Iterator
+- kotlin.jvm.internal.markers.KMappedMarker
+- sf:Companion:com.intellij.util.containers.PeekableIterator$Companion
+- sf:EMPTY:com.intellij.util.containers.PeekableIterator
+- a:peek():java.lang.Object
+f:com.intellij.util.containers.PeekableIterator$Companion
+c:com.intellij.util.containers.PeekableIteratorWrapper
+- com.intellij.util.containers.PeekableIterator
+- <init>(java.util.Iterator):V
+- hasNext():Z
+- next():java.lang.Object
+- peek():java.lang.Object
+- remove():V
+c:com.intellij.util.text.CharArrayCharSequence
+- java.lang.CharSequence
+- pf:myChars:C[]
+- pf:myEnd:I
+- pf:myStart:I
+- <init>(C[]):V
+- <init>(C[],I,I):V
+- f:charAt(I):C
+- equals(java.lang.Object):Z
+- get(I):C
+- getChars():C[]
+- getChars(C[],I):V
+- getLength():I
+- hashCode():I
+- f:length():I
+- f:readCharsTo(I,C[],I,I):I
+- subSequence(I,I):java.lang.CharSequence
+com.intellij.util.text.CharArrayExternalizable
+- java.lang.CharSequence
+- a:getChars(I,I,C[],I):V
+c:com.intellij.util.text.CharSequenceSubSequence
+- com.intellij.util.text.CharArrayExternalizable
+- java.lang.CharSequence
+- <init>(java.lang.CharSequence):V
+- <init>(java.lang.CharSequence,I,I):V
+- f:charAt(I):C
+- equals(java.lang.Object):Z
+- get(I):C
+- f:getBaseSequence():java.lang.CharSequence
+- getChars(I,I,C[],I):V
+- getLength():I
+- hashCode():I
+- f:length():I
+- subSequence(I,I):java.lang.CharSequence
+com.intellij.util.text.Matcher
+- a:matches(java.lang.String):Z
+f:com.intellij.util.text.MergingCharSequence
+- java.lang.CharSequence
+- <init>(java.lang.CharSequence,java.lang.CharSequence):V
+- f:charAt(I):C
+- get(I):C
+- getLength():I
+- f:length():I
+- subSequence(I,I):java.lang.CharSequence

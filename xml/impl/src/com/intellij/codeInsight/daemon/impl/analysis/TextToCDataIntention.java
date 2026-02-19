@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.analysis;
 
 import com.intellij.codeInsight.intention.IntentionAction;
@@ -20,30 +20,26 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class TextToCDataIntention implements IntentionAction {
-  @Nls(capitalization = Nls.Capitalization.Sentence)
-  @NotNull
   @Override
-  public String getText() {
+  public @Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String getText() {
     return getFamilyName();
   }
 
-  @Nls(capitalization = Nls.Capitalization.Sentence)
-  @NotNull
   @Override
-  public String getFamilyName() {
+  public @Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String getFamilyName() {
     return XmlBundle.message("convert.text.to.cdata");
   }
 
   @Override
-  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    return file.getLanguage().isKindOf(XMLLanguage.INSTANCE) &&
-           getText(editor, file) != null &&
-           !file.getLanguage().isKindOf(HTMLLanguage.INSTANCE);
+  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile psiFile) {
+    return psiFile.getLanguage().isKindOf(XMLLanguage.INSTANCE) &&
+           getText(editor, psiFile) != null &&
+           !psiFile.getLanguage().isKindOf(HTMLLanguage.INSTANCE);
   }
 
   @Override
-  public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-    PsiElement textElement = getText(editor, file);
+  public void invoke(@NotNull Project project, Editor editor, PsiFile psiFile) throws IncorrectOperationException {
+    PsiElement textElement = getText(editor, psiFile);
     if (textElement == null) return;
 
 
@@ -78,13 +74,13 @@ public class TextToCDataIntention implements IntentionAction {
     editor.getCaretModel().moveToOffset(begin + replacement.length());
   }
 
-  private static PsiElement getText(Editor editor, PsiFile file) {
+  private static PsiElement getText(Editor editor, PsiFile psiFile) {
     int offset = editor.getCaretModel().getOffset();
-    PsiElement element = file.findElementAt(offset);
+    PsiElement element = psiFile.findElementAt(offset);
     PsiElement parent = element != null ? element.getParent() : null;
     if (isText(parent)) return parent;
 
-    element = file.findElementAt(offset - 1);
+    element = psiFile.findElementAt(offset - 1);
     parent = element != null ? element.getParent() : null;
     if (isText(parent)) return parent;
     return null;

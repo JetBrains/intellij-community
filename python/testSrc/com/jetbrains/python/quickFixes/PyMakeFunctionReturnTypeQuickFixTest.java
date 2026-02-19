@@ -33,4 +33,49 @@ public class PyMakeFunctionReturnTypeQuickFixTest extends PyQuickFixTestCase {
     public void testPy3OneReturn() {
       doQuickFixTest(PyTypeCheckerInspection.class, PyPsiBundle.message("QFIX.make.function.return.type", "f", "int"), LanguageLevel.PYTHON34);
     }
+
+  // PY-27128
+  public void testPy39UnionTypeImports() {
+    runWithLanguageLevel(LanguageLevel.PYTHON39, () -> {
+      doMultiFileTest(PyTypeCheckerInspection.class, PyPsiBundle.message("QFIX.make.function.return.type", "foo", "type[Union[X, Y]]"));
+    });
+  }
+
+  // PY-27128
+  public void testPy39BitwiseOrUnionFromFutureAnnotationsUnionTypeImports() {
+    runWithLanguageLevel(LanguageLevel.PYTHON39, () -> {
+      doMultiFileTest(PyTypeCheckerInspection.class, PyPsiBundle.message("QFIX.make.function.return.type", "foo", "type[X | Y]"));
+    });
+  }
+
+  // PY-27128
+  public void testBitwiseOrUnionTypeImports() {
+    doMultiFileTest(PyTypeCheckerInspection.class, PyPsiBundle.message("QFIX.make.function.return.type", "foo", "type[X | Y]"));
+  }
+
+  // PY-27128
+  public void testAncestorAndInheritorReturn() {
+    doMultiFileTest(PyTypeCheckerInspection.class, PyPsiBundle.message("QFIX.make.function.return.type", "foo", "type[X | Y]"));
+  }
+
+  // PY-27128 PY-48466
+  public void testLambda() {
+    doQuickFixTest(PyTypeCheckerInspection.class,
+                   PyPsiBundle.message("QFIX.make.function.return.type", "func", "Callable[..., int]"),
+                   LanguageLevel.getLatest());
+  }
+
+  // PY-20710
+  public void testChangeGenerator() {
+      doQuickFixTest(PyTypeCheckerInspection.class, 
+                     PyPsiBundle.message("QFIX.make.function.return.type", "gen", "Generator[str, bool, int]"),
+                     LanguageLevel.getLatest());
+  }
+
+  // PY-20710
+  public void testMakeGenerator() {
+    doQuickFixTest(PyTypeCheckerInspection.class,
+                   PyPsiBundle.message("QFIX.make.function.return.type", "gen", "AsyncGenerator[str | float, Any]"),
+                   LanguageLevel.getLatest());
+  }
 }

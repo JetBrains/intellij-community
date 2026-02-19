@@ -16,9 +16,10 @@
 package git4idea.push
 
 import com.intellij.dvcs.DvcsUtil.getPushSupport
+import com.intellij.openapi.vcs.changes.ChangeListManagerImpl
+import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager
 import git4idea.GitBranch
 import git4idea.test.GitPlatformTest
-import git4idea.test.TestDialogHandler
 import git4idea.update.GitUpdateResult
 
 abstract class GitPushOperationBaseTest : GitPlatformTest() {
@@ -36,11 +37,8 @@ abstract class GitPushOperationBaseTest : GitPlatformTest() {
 
   protected fun updateRepositories() {
     repositoryManager.updateAllRepositories()
-  }
-
-  protected fun agreeToUpdate(exitCode: Int) {
-    dialogManager.registerDialogHandler(GitRejectedPushUpdateDialog::class.java,
-                                        TestDialogHandler { exitCode })
+    VcsDirtyScopeManager.getInstance(project).markEverythingDirty()
+    ChangeListManagerImpl.getInstanceImpl(project).ensureUpToDate()
   }
 
   internal fun assertResult(type: GitPushRepoResult.Type, pushedCommits: Int, from: String, to: String,

@@ -1,33 +1,33 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.model.tests;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.File;
 import java.util.Collections;
+import java.util.Objects;
 import java.util.Set;
 
+import static org.jetbrains.plugins.gradle.tooling.util.GradleContainerUtil.unmodifiableFileSet;
+import static org.jetbrains.plugins.gradle.tooling.util.GradleContainerUtil.unmodifiablePathSet;
+
 public class DefaultExternalTestSourceMapping implements ExternalTestSourceMapping {
-  @Nullable
-  private String testName;
-  @Nullable
-  private String testTaskPath;
-  @NotNull
-  private Set<String> sourceFolders = Collections.emptySet();
+  private @Nullable String testName;
+  private @Nullable String testTaskPath;
+  private @NotNull Set<File> sourceFolders = Collections.emptySet();
 
   @Override
-  @NotNull
-  public Set<String> getSourceFolders() {
-    return Collections.unmodifiableSet(sourceFolders);
+  public @NotNull Set<String> getSourceFolders() {
+    return unmodifiablePathSet(sourceFolders);
   }
 
   public void setSourceFolders(@NotNull Set<String> sourceFolders) {
-    this.sourceFolders = sourceFolders;
+    this.sourceFolders = unmodifiableFileSet(sourceFolders);
   }
 
-  @NotNull
   @Override
-  public String getTestName() {
+  public @NotNull String getTestName() {
     assert testName != null;
     return testName;
   }
@@ -37,8 +37,7 @@ public class DefaultExternalTestSourceMapping implements ExternalTestSourceMappi
   }
 
   @Override
-  @NotNull
-  public String getTestTaskPath() {
+  public @NotNull String getTestTaskPath() {
     assert testTaskPath != null;
     return testTaskPath;
   }
@@ -54,8 +53,8 @@ public class DefaultExternalTestSourceMapping implements ExternalTestSourceMappi
 
     DefaultExternalTestSourceMapping mapping = (DefaultExternalTestSourceMapping)o;
 
-    if (testName != null ? !testName.equals(mapping.testName) : mapping.testName != null) return false;
-    if (testTaskPath != null ? !testTaskPath.equals(mapping.testTaskPath) : mapping.testTaskPath != null) return false;
+    if (!Objects.equals(testName, mapping.testName)) return false;
+    if (!Objects.equals(testTaskPath, mapping.testTaskPath)) return false;
     if (!sourceFolders.equals(mapping.sourceFolders)) return false;
 
     return true;

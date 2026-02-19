@@ -6,23 +6,24 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vcs.Executor.cd
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.FileStatus
-import com.intellij.openapi.vcs.VcsTestUtil.*
+import com.intellij.openapi.vcs.VcsTestUtil.copyFileInCommand
+import com.intellij.openapi.vcs.VcsTestUtil.deleteFileInCommand
+import com.intellij.openapi.vcs.VcsTestUtil.editFileInCommand
 import com.intellij.openapi.vcs.changes.Change
 import com.intellij.openapi.vcs.changes.ChangesUtil
 import com.intellij.openapi.vcs.changes.ContentRevision
-import com.intellij.openapi.vcs.changes.VcsModifiableDirtyScope
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.vcs.MockChangeListManagerGate
 import com.intellij.testFramework.vcs.MockChangelistBuilder
-import com.intellij.testFramework.vcs.MockDirtyScope
+import com.intellij.util.containers.CollectionFactory
 import com.intellij.vcsUtil.VcsUtil
+import git4idea.GitVcsDirtyScope
 import git4idea.config.GitVersion
 import git4idea.status.GitChangeProvider
 import git4idea.test.GitSingleRepoTest
 import git4idea.test.addCommit
 import git4idea.test.createFileStructure
-import gnu.trove.THashMap
 import junit.framework.TestCase
 import org.junit.Assume
 import java.io.File
@@ -35,7 +36,7 @@ import java.io.File
  */
 abstract class GitChangeProviderTest : GitSingleRepoTest() {
   private lateinit var changeProvider: GitChangeProvider
-  protected lateinit var dirtyScope: VcsModifiableDirtyScope
+  protected lateinit var dirtyScope: GitVcsDirtyScope
   private lateinit var subDir: VirtualFile
 
   protected lateinit var atxt: VirtualFile
@@ -56,7 +57,7 @@ abstract class GitChangeProviderTest : GitSingleRepoTest() {
     subdir_dtxt = getVirtualFile("dir/subdir/d.txt")
     subDir = projectRoot.findChild("dir")!!
 
-    dirtyScope = MockDirtyScope(myProject, vcs)
+    dirtyScope = GitVcsDirtyScope(myProject)
 
     cd(projectPath)
   }
@@ -105,7 +106,7 @@ abstract class GitChangeProviderTest : GitSingleRepoTest() {
     val builder = MockChangelistBuilder()
     changeProvider.getChanges(dirtyScope, builder, EmptyProgressIndicator(), MockChangeListManagerGate(changeListManager))
     val changes = builder.changes
-    val map = THashMap<FilePath, Change>(ChangesUtil.CASE_SENSITIVE_FILE_PATH_HASHING_STRATEGY)
+    val map = CollectionFactory.createCustomHashingStrategyMap<FilePath, Change>(ChangesUtil.CASE_SENSITIVE_FILE_PATH_HASHING_STRATEGY)
     return changes.associateByTo(map) { ChangesUtil.getFilePath(it) }
   }
 

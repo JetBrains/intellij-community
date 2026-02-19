@@ -1,12 +1,20 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.ui;
 
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.table.JBTable;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-import javax.swing.table.*;
-import java.awt.*;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
+import javax.swing.SwingConstants;
+import javax.swing.table.DefaultTableCellRenderer;
+import javax.swing.table.DefaultTableModel;
+import javax.swing.table.TableCellRenderer;
+import javax.swing.table.TableColumn;
+import javax.swing.table.TableColumnModel;
+import java.awt.Dimension;
+import java.awt.FontMetrics;
 import java.util.Arrays;
 
 /**
@@ -26,8 +34,6 @@ import java.util.Arrays;
  * </pre>
  * <p/>
  * Not thread-safe.
- * 
- * @author Denis Zhdanov
  */
 public class MatrixControlBuilder {
   
@@ -54,8 +60,8 @@ public class MatrixControlBuilder {
         return getPreferredSize();
       }
     };
+    myTable.setShowGrid(false);
     myTable.setFocusable(false);
-    myTable.setStriped(true);
     DefaultTableCellRenderer renderer = new DefaultTableCellRenderer();
     renderer.setHorizontalAlignment(SwingConstants.CENTER);
     for (int i = 0, max = myTable.getColumnCount(); i < max; i++) {
@@ -109,8 +115,7 @@ public class MatrixControlBuilder {
     }
   }
   
-  @NotNull
-  public JComponent build() {
+  public @NotNull JComponent build() {
     final TableColumnModel columnModel = myTable.getColumnModel();
     for (int i = 0; i < myColumnWidths.length; i++) {
       columnModel.getColumn(i).setMinWidth(myColumnWidths[i] + 4);

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.equalsAndHashcode;
 
 import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool;
@@ -9,7 +9,14 @@ import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Pair;
-import com.intellij.psi.*;
+import com.intellij.psi.CommonClassNames;
+import com.intellij.psi.JavaElementVisitor;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.PsiIdentifier;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiModifier;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
@@ -19,8 +26,7 @@ import org.jetbrains.annotations.NotNull;
 
 public class EqualsAndHashcodeBase extends AbstractBaseJavaLocalInspectionTool {
   @Override
-  @NotNull
-  public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, final boolean isOnTheFly) {
+  public @NotNull PsiElementVisitor buildVisitor(final @NotNull ProblemsHolder holder, final boolean isOnTheFly) {
     final Project project = holder.getProject();
     Pair<PsiMethod, PsiMethod> pair = CachedValuesManager.getManager(project).getCachedValue(project, () -> {
       final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(project);
@@ -33,7 +39,7 @@ public class EqualsAndHashcodeBase extends AbstractBaseJavaLocalInspectionTool {
       PsiMethod myEquals = null;
       PsiMethod myHashCode = null;
       for (PsiMethod method : methods) {
-        @NonNls final String name = method.getName();
+        final @NonNls String name = method.getName();
         if ("equals".equals(name)) {
           myEquals = method;
         }
@@ -52,12 +58,16 @@ public class EqualsAndHashcodeBase extends AbstractBaseJavaLocalInspectionTool {
     if (myEquals == null || myHashCode == null || !myEquals.isValid() || !myHashCode.isValid()) return PsiElementVisitor.EMPTY_VISITOR;
 
     return new JavaElementVisitor() {
-      @Override public void visitClass(PsiClass aClass) {
+      @Override public void visitClass(@NotNull PsiClass aClass) {
         super.visitClass(aClass);
         boolean [] hasEquals = {false};
         boolean [] hasHashCode = {false};
         processClass(aClass, hasEquals, hasHashCode, myEquals, myHashCode);
         if (hasEquals[0] != hasHashCode[0]) {
+          if (hasHashCode[0] && aClass.isRecord()) {
+            // Probably better distributed hashCode is implemented for a record class where default equals works fine
+            return;
+          }
           PsiIdentifier identifier = aClass.getNameIdentifier();
           holder.registerProblem(identifier != null ? identifier : aClass,
                                  hasEquals[0]
@@ -85,14 +95,12 @@ public class EqualsAndHashcodeBase extends AbstractBaseJavaLocalInspectionTool {
   }
 
   @Override
-  @NotNull
-  public String getGroupDisplayName() {
+  public @NotNull String getGroupDisplayName() {
     return "";
   }
 
   @Override
-  @NotNull
-  public String getShortName() {
+  public @NotNull String getShortName() {
     return "EqualsAndHashcode";
   }
 

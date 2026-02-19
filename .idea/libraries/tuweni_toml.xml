@@ -1,0 +1,27 @@
+<component name="libraryTable">
+  <library name="tuweni-toml" type="repository">
+    <properties maven-id="io.consensys.tuweni:tuweni-toml:2.7.1">
+      <verification>
+        <artifact url="file://$MAVEN_REPOSITORY$/io/consensys/tuweni/tuweni-toml/2.7.1/tuweni-toml-2.7.1.jar">
+          <sha256sum>00cfcc187ff46ce8d702a0f2cb98d6a4f2a67f8f41242b5901e46efdcb7c84b7</sha256sum>
+        </artifact>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/antlr/antlr4-runtime/4.13.0/antlr4-runtime-4.13.0.jar">
+          <sha256sum>bd7f7b5d07bc0b047f10915b32ca4bb1de9e57d8049098882e4453c88c076a5d</sha256sum>
+        </artifact>
+      </verification>
+      <exclude>
+        <dependency maven-id="org.jetbrains.kotlin:kotlin-stdlib" />
+        <dependency maven-id="org.antlr:antlr4" />
+      </exclude>
+    </properties>
+    <CLASSES>
+      <root url="jar://$MAVEN_REPOSITORY$/io/consensys/tuweni/tuweni-toml/2.7.1/tuweni-toml-2.7.1.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/antlr/antlr4-runtime/4.13.0/antlr4-runtime-4.13.0.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES>
+      <root url="jar://$MAVEN_REPOSITORY$/io/consensys/tuweni/tuweni-toml/2.7.1/tuweni-toml-2.7.1-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/antlr/antlr4-runtime/4.13.0/antlr4-runtime-4.13.0-sources.jar!/" />
+    </SOURCES>
+  </library>
+</component>

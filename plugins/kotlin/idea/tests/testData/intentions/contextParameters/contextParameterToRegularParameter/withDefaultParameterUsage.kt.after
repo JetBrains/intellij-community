@@ -1,0 +1,15 @@
+// COMPILER_ARGUMENTS: -Xcontext-parameters
+
+context(ctx: A) fun <A> implicit():A = ctx
+
+interface Config {
+    val debug: Boolean
+}
+
+fun isDebug(
+    <caret>config: Config, bool: Boolean = with(config) {
+        implicit<Config>()
+    }.debug
+): Boolean {
+    return bool
+}

@@ -1,0 +1,19 @@
+0(1) element: null
+1(2) element: PyTryExceptStatement
+2(3,6) element: PyTryPart
+3(4,6) element: PyAssignmentStatement
+4(5,6) READ ACCESS: f
+5(6,18) WRITE ACCESS: x
+6(7) element: PyExceptPart
+7(8) READ ACCESS: AttributeError
+8(9) element: PyReturnStatement
+9(10) element: PyListCompExpression
+10(11) element: PyReferenceExpression: f
+11(12,18) READ ACCESS: f
+12(13) element: PyTargetExpression: g
+13(14) WRITE ACCESS: g
+14(15) element: PyCallExpression: abs
+15(16) READ ACCESS: abs
+16(17) READ ACCESS: g
+17(12,18) element: PyCallExpression: abs
+18() element: null

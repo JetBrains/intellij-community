@@ -1,4 +1,4 @@
-// "Cast parameter to 'M'" "false"
+// "Cast argument to 'M'" "false"
 class a {
     void doSomething(String[] data) {}
     void test() {

@@ -1,38 +1,38 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.tooling.internal;
 
-import org.gradle.internal.impldep.com.google.common.base.Objects;
+import com.google.common.base.Objects;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.model.AnnotationProcessingConfig;
+import org.jetbrains.plugins.gradle.tooling.util.GradleContainerUtil;
 
+import java.io.File;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
 public class AnnotationProcessingConfigImpl implements AnnotationProcessingConfig, Serializable {
-  private final List<String> myPaths;
+  private final List<File> myPaths;
   private final List<String> myArgs;
   private final String myProcessorOutput;
   private final boolean isTestSources;
 
-  public AnnotationProcessingConfigImpl(List<String> files, List<String> args, String output, boolean sources) {
+  public AnnotationProcessingConfigImpl(Collection<File> files, List<String> args, String output, boolean sources) {
     myProcessorOutput = output;
     isTestSources = sources;
-    myPaths = new ArrayList<String>(files);
+    myPaths = new ArrayList<>(files);
     myArgs = args;
   }
 
-  @NotNull
   @Override
-  public Collection<String> getAnnotationProcessorPath() {
-    return myPaths;
+  public @NotNull Collection<String> getAnnotationProcessorPath() {
+    return GradleContainerUtil.unmodifiablePathSet(myPaths);
   }
 
-  @NotNull
   @Override
-  public Collection<String> getAnnotationProcessorArguments() {
+  public @NotNull Collection<String> getAnnotationProcessorArguments() {
     return myArgs;
   }
   @Override
@@ -40,9 +40,8 @@ public class AnnotationProcessingConfigImpl implements AnnotationProcessingConfi
     return isTestSources;
   }
 
-  @Nullable
   @Override
-  public String getProcessorOutput() {
+  public @Nullable String getProcessorOutput() {
     return myProcessorOutput;
   }
 

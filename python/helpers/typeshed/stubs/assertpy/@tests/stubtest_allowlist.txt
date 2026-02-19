@@ -1,0 +1,7 @@
+# Python 2 compatibility cruft:
+assertpy\..+\.Iterable(\.__class_getitem__)?
+assertpy.contains.str_types
+assertpy.contains.xrange
+assertpy.extracting.str_types
+assertpy.file.str_types
+assertpy.string.str_types

@@ -1,4 +1,4 @@
-// "Make 'Bar' implement 'java.lang.Runnable'" "true"
+// "Make 'Bar' implement 'java.lang.Runnable'" "true-preview"
 
 abstract class Foo {
     abstract Runnable foo();
@@ -11,6 +11,7 @@ class FooBar extends Foo {
     }
 
     static class Bar implements Runnable {
+        @Override
         public void run() {
             <caret>
         }

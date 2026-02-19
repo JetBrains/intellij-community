@@ -1,11 +1,19 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.ext.newify
 
 import com.intellij.openapi.util.NlsSafe
-import com.intellij.psi.*
+import com.intellij.psi.PsiAnnotation
+import com.intellij.psi.PsiClass
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiManager
+import com.intellij.psi.PsiMethod
+import com.intellij.psi.PsiModifier
+import com.intellij.psi.PsiModifierListOwner
+import com.intellij.psi.PsiType
+import com.intellij.psi.ResolveState
 import com.intellij.psi.impl.light.LightMethodBuilder
 import com.intellij.psi.scope.PsiScopeProcessor
-import com.intellij.psi.util.parentsWithSelf
+import com.intellij.psi.util.parents
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.plugins.groovy.GroovyLanguage
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile
@@ -32,15 +40,15 @@ internal const val newifyOriginInfo = "by @Newify"
 interface GrNewifyAttributes {
   companion object {
     @NlsSafe
-    public const val VALUE = "value"
+    const val VALUE = "value"
     @NlsSafe
-    public const val AUTO = "auto"
+    const val AUTO = "auto"
     @NlsSafe
-    public const val NEW = "new"
+    const val NEW = "new"
   }
 }
 
-class NewifyMemberContributor : NonCodeMembersContributor() {
+internal class NewifyMemberContributor : NonCodeMembersContributor() {
   override fun processDynamicElements(qualifierType: PsiType,
                                       aClass: PsiClass?,
                                       processor: PsiScopeProcessor,
@@ -116,7 +124,7 @@ class NewifyMemberContributor : NonCodeMembersContributor() {
 
   companion object {
     @JvmStatic
-    fun getNewifyAnnotations(element: PsiElement): List<PsiAnnotation> = element.parentsWithSelf.flatMap {
+    fun getNewifyAnnotations(element: PsiElement): List<PsiAnnotation> = element.parents(true).flatMap {
       val owner = it as? PsiModifierListOwner
       val seq = owner?.modifierList?.annotations?.asSequence()?.filter { it.qualifiedName == newifyAnnotationFqn }
       return@flatMap seq ?: emptySequence()

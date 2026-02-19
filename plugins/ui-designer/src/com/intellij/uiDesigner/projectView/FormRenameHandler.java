@@ -12,7 +12,7 @@ import com.intellij.refactoring.RefactoringActionHandlerFactory;
 import com.intellij.refactoring.rename.RenameHandler;
 import org.jetbrains.annotations.NotNull;
 
-public class FormRenameHandler implements RenameHandler {
+public final class FormRenameHandler implements RenameHandler {
   @Override
   public boolean isAvailableOnDataContext(@NotNull DataContext dataContext) {
     Form[] forms = Form.DATA_KEY.getData(dataContext);

@@ -1,17 +1,27 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.structuralsearch.plugin.ui.filters;
 
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionPlaces;
+import com.intellij.openapi.actionSystem.ActionToolbarPosition;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.application.WriteIntentReadAction;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.psi.PsiElement;
-import com.intellij.structuralsearch.*;
+import com.intellij.structuralsearch.MatchVariableConstraint;
+import com.intellij.structuralsearch.NamedScriptableDefinition;
+import com.intellij.structuralsearch.SSRBundle;
+import com.intellij.structuralsearch.StructuralSearchProfile;
+import com.intellij.structuralsearch.StructuralSearchUtil;
 import com.intellij.structuralsearch.impl.matcher.CompiledPattern;
 import com.intellij.structuralsearch.plugin.ui.Configuration;
 import com.intellij.ui.SimpleColoredComponent;
@@ -22,6 +32,7 @@ import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.table.JBTable;
 import com.intellij.ui.table.TableView;
 import com.intellij.util.SmartList;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.ListTableModel;
@@ -32,27 +43,31 @@ import com.intellij.util.ui.table.JBTableRowRenderer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JComponent;
+import javax.swing.JPanel;
 import javax.swing.table.JTableHeader;
-import java.awt.*;
+import java.awt.Component;
+import java.awt.Dimension;
+import java.awt.MouseInfo;
+import java.util.Arrays;
 import java.util.List;
 
 /**
  * @author Bas Leijdekkers
  */
-public class FilterPanel implements FilterTable {
+public class FilterPanel implements FilterTable, ShortFilterTextProvider {
 
   private final JPanel myFilterPanel;
   final JBListTable myFilterTable;
   final ListTableModel<Filter> myTableModel;
 
-  @NotNull final Project myProject;
+  final @NotNull Project myProject;
   private CompiledPattern myCompiledPattern;
   NamedScriptableDefinition myConstraint;
   LanguageFileType myFileType;
 
   final Header myHeader = new Header();
-  private final ScriptFilter myScriptFilter = new ScriptFilter();
+  private final ScriptFilter myScriptFilter;
   private final List<FilterAction> myFilters;
   private Runnable myConstraintChangedCallback;
 
@@ -60,17 +75,19 @@ public class FilterPanel implements FilterTable {
     myProject = project;
     myFileType = fileType;
     myFilters = new SmartList<>();
-    for (FilterAction filterAction : FilterAction.EP_NAME.getExtensionList()) {
-      myFilters.add(filterAction);
-      filterAction.setTable(this);
+    for (FilterProvider provider : FilterProvider.EP_NAME.getExtensionList()) {
+      for (FilterAction filter : provider.getFilters()) {
+        myFilters.add(filter);
+        filter.setTable(this);
+      }
     }
+    myScriptFilter = new ScriptFilter(); // initialize last
     myFilters.add(myScriptFilter);
     myScriptFilter.setTable(this);
 
     myTableModel = new ListTableModel<>(new ColumnInfo[]{new ColumnInfo<Filter, Filter>("") {
-      @Nullable
       @Override
-      public Filter valueOf(Filter s) {
+      public @Nullable Filter valueOf(Filter s) {
         return s;
       }
     }}, new SmartList<>());
@@ -84,7 +101,7 @@ public class FilterPanel implements FilterTable {
       @Override
       protected JBTableRowEditor getRowEditor(int row) {
         if (!isValid()) return null;
-        return myTableModel.getRowValue(row).getEditor();
+        return WriteIntentReadAction.compute(() -> myTableModel.getRowValue(row).getEditor());
       }
     };
     final JBTable table = myFilterTable.getTable();
@@ -94,11 +111,9 @@ public class FilterPanel implements FilterTable {
       .disableUpDownActions()
       .setToolbarPosition(ActionToolbarPosition.RIGHT)
       .setAddAction(button -> {
-        final RelativePoint point = button.getPreferredPopupPoint();
-        if (point == null) return;
-        showAddFilterPopup(button.getContextComponent(), point);
+        showAddFilterPopup(button.getContextComponent(), button.getPreferredPopupPoint());
       })
-      .setAddActionUpdater(e -> isValid() && myFilters.stream().anyMatch(f -> f.isAvailable()))
+      .setAddActionUpdater(e -> isValid() && ContainerUtil.exists(myFilters, f -> f.isAvailable()))
       .setRemoveAction(button -> {
         myFilterTable.stopEditing();
         final int selectedRow = myFilterTable.getTable().getSelectedRow();
@@ -144,15 +159,16 @@ public class FilterPanel implements FilterTable {
 
   final void initFilter(FilterAction filter, List<? extends PsiElement> nodes, boolean completePattern, boolean target) {
     if (filter.checkApplicable(nodes, completePattern, target)) {
-      if (filter.hasFilter() && !myTableModel.getItems().contains(filter)) {
+      if (filter.isActive() && !myTableModel.getItems().contains(filter)) {
         if (myTableModel.getRowCount() == 0) {
           myTableModel.addRow(myHeader);
         }
         myTableModel.addRow(filter);
       }
     }
-    else {
+    else if (filter.hasFilter()) {
       filter.clearFilter();
+      myConstraintChangedCallback.run();
     }
   }
 
@@ -172,16 +188,28 @@ public class FilterPanel implements FilterTable {
   }
 
   @Override
-  @NotNull
-  public StructuralSearchProfile getProfile() {
-    final StructuralSearchProfile fileType = StructuralSearchUtil.getProfileByFileType(myFileType);
-    assert fileType != null;
-    return fileType;
+  public String getShortFilterText(NamedScriptableDefinition variable) {
+    if (variable == null) {
+      return "";
+    }
+    final StringBuilder builder = new StringBuilder();
+    for (FilterAction filter : myFilters) {
+      final String text = filter.getShortText(variable);
+      if (!text.isEmpty()) {
+        if (!builder.isEmpty()) builder.append(", ");
+        builder.append(text);
+      }
+    }
+    return builder.toString();
   }
 
   @Override
-  @NotNull
-  public Project getProject() {
+  public @Nullable StructuralSearchProfile getProfile() {
+    return StructuralSearchUtil.getProfileByFileType(myFileType);
+  }
+
+  @Override
+  public @NotNull Project getProject() {
     return myProject;
   }
 
@@ -191,8 +219,8 @@ public class FilterPanel implements FilterTable {
       final DefaultActionGroup group = new DefaultActionGroup(myFilters);
       final DataContext context = DataManager.getInstance().getDataContext(component);
       final ListPopup popup = JBPopupFactory.getInstance().createActionGroupPopup(SSRBundle.message("add.filter.title"), group, context,
-                                                                                  JBPopupFactory.ActionSelectionAid.ALPHA_NUMBERING, true,
-                                                                                  null);
+                                                                                  JBPopupFactory.ActionSelectionAid.ALPHA_NUMBERING, false,
+                                                                                  ActionPlaces.getPopupPlace("StructuralSearchFilterPanel"));
       popup.show(point);
     }
     else {
@@ -205,7 +233,7 @@ public class FilterPanel implements FilterTable {
     return myFilterPanel;
   }
 
-  public void setFileType(@NotNull LanguageFileType fileType) {
+  public void setFileType(@Nullable LanguageFileType fileType) {
     myFileType = fileType;
   }
 
@@ -223,11 +251,18 @@ public class FilterPanel implements FilterTable {
       return;
     }
     myConstraint = constraint;
+    resetFilters();
     showFilters();
   }
 
   public boolean hasVisibleFilter() {
     return myTableModel.getRowCount() > 0;
+  }
+
+  private void resetFilters() {
+    for (FilterAction filter : myFilters) {
+      filter.reset();
+    }
   }
 
   private void showFilters() {
@@ -260,16 +295,15 @@ public class FilterPanel implements FilterTable {
       message = SSRBundle.message("no.script.for.0.label", varName);
     }
     final StatusText statusText = myFilterTable.getTable().getEmptyText();
-    statusText.setText(message);
+    statusText.clear();
+    Arrays.stream(message.split("\n")).forEach((@NlsSafe var line) -> statusText.appendLine(line));
     if (isValid()) {
-      statusText.appendSecondaryText(myConstraint instanceof MatchVariableConstraint
+      statusText.appendLine(myConstraint instanceof MatchVariableConstraint
                                      ? SSRBundle.message("add.filter.label")
                                      : SSRBundle.message("add.script.label"),
-                                     SimpleTextAttributes.LINK_ATTRIBUTES,
-                                     e -> {
-                                       final JBTable table = myFilterTable.getTable();
-                                       showAddFilterPopup(table, new RelativePoint(table, table.getMousePosition()));
-                                     });
+                                     SimpleTextAttributes.LINK_PLAIN_ATTRIBUTES,
+                                     e -> showAddFilterPopup(myFilterTable.getTable(),
+                                                             new RelativePoint(MouseInfo.getPointerInfo().getLocation())));
     }
   }
 
@@ -280,6 +314,10 @@ public class FilterPanel implements FilterTable {
   @Override
   public Runnable getConstraintChangedCallback() {
     return myConstraintChangedCallback;
+  }
+
+  public JBTable getTable() {
+    return myFilterTable.getTable();
   }
 
   private class Header implements Filter {

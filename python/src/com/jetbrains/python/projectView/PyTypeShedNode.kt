@@ -28,9 +28,6 @@ import com.intellij.util.PlatformIcons
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.codeInsight.typing.PyTypeShed
 
-/**
- * @author vlan
- */
 class PyTypeShedNode(project: Project?, sdk: Sdk, viewSettings: ViewSettings) : ProjectViewNode<Sdk>(project, sdk, viewSettings) {
   companion object {
     fun create(project : Project?, sdk: Sdk, viewSettings: ViewSettings): PyTypeShedNode? =

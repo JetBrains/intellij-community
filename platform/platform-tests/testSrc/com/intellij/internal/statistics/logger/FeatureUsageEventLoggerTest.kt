@@ -1,17 +1,32 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistics.logger
 
-import com.intellij.internal.statistic.FUCounterCollectorTestCase
-import com.intellij.internal.statistic.eventLog.*
-import com.intellij.internal.statistic.eventLog.events.*
+import com.intellij.internal.statistic.FUCollectorTestCase
+import com.intellij.internal.statistic.eventLog.EmptyEventLogFilesProvider
+import com.intellij.internal.statistic.eventLog.EventLogFile
+import com.intellij.internal.statistic.eventLog.EventLogFilesProvider
+import com.intellij.internal.statistic.eventLog.EventLogGroup
+import com.intellij.internal.statistic.eventLog.FilteredEventMergeStrategy
+import com.intellij.internal.statistic.eventLog.StatisticsEventLogWriter
+import com.intellij.internal.statistic.eventLog.StatisticsEventMergeStrategy
+import com.intellij.internal.statistic.eventLog.StatisticsFileEventLogger
+import com.intellij.internal.statistic.eventLog.StatisticsSystemEventIdProvider
+import com.intellij.internal.statistic.eventLog.events.EnumEventField
+import com.intellij.internal.statistic.eventLog.events.EventField
+import com.intellij.internal.statistic.eventLog.events.EventFields
+import com.intellij.internal.statistic.eventLog.events.ObjectDescription
+import com.intellij.internal.statistic.eventLog.events.ObjectEventData
+import com.intellij.internal.statistic.eventLog.events.ObjectEventField
+import com.intellij.internal.statistic.eventLog.events.ObjectListEventField
+import com.intellij.internal.statistic.eventLog.validator.rules.impl.CustomValidationRule
 import com.intellij.internal.statistics.StatisticsTestEventFactory.DEFAULT_SESSION_ID
 import com.intellij.internal.statistics.StatisticsTestEventFactory.newEvent
 import com.intellij.internal.statistics.StatisticsTestEventFactory.newStateEvent
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.testFramework.HeavyPlatformTestCase
 import com.intellij.testFramework.UsefulTestCase
+import com.jetbrains.fus.reporting.model.lion3.LogEvent
 import org.junit.Test
-import java.util.*
 import java.util.concurrent.TimeUnit
 import kotlin.test.assertTrue
 
@@ -89,9 +104,8 @@ class FeatureUsageEventLoggerTest : HeavyPlatformTestCase() {
     data["type"] = "close"
     data["state"] = 1
 
-    val expected = newEvent("group.id", "dialog-id", groupVersion = "2")
-    expected.event.addData("type", "close")
-    expected.event.addData("state", 1)
+    val expected = newEvent("group.id", "dialog-id", groupVersion = "2",
+      data = hashMapOf("type" to "close", "state" to 1))
 
     testLogger({ logger -> logger.logAsync(EventLogGroup("group.id", 2), "dialog-id", data, false) }, expected)
   }
@@ -102,10 +116,8 @@ class FeatureUsageEventLoggerTest : HeavyPlatformTestCase() {
     data["type"] = "close"
     data["state"] = 1
 
-    val expected = newEvent("group.id", "dialog-id", groupVersion = "2")
+    val expected = newEvent("group.id", "dialog-id", groupVersion = "2", data = hashMapOf("type" to "close", "state" to 1))
     expected.event.increment()
-    expected.event.addData("type", "close")
-    expected.event.addData("state", 1)
 
     testLogger(
       { logger ->
@@ -115,16 +127,142 @@ class FeatureUsageEventLoggerTest : HeavyPlatformTestCase() {
   }
 
   @Test
+  fun testMergeEventWithoutFilteredData() {
+    val ts = System.currentTimeMillis()
+    val first = newEvent("group.id", "dialog-id", count = 1, data = hashMapOf("start_time" to ts))
+    val second = newEvent("group.id", "dialog-id", count = 1, data = hashMapOf("start_time" to 100 + ts))
+    val third = newEvent("group.id", "dialog-id", count = 1, data = hashMapOf("start_time" to 4202 + ts))
+
+    testLogger(
+      { logger ->
+        val group = EventLogGroup("group.id", 99)
+        logger.logAsync(group, "dialog-id", hashMapOf("start_time" to ts), false)
+        logger.logAsync(group, "dialog-id", hashMapOf("start_time" to 100 + ts), false)
+        logger.logAsync(group, "dialog-id", hashMapOf("start_time" to 4202 + ts), false)
+      }, first, second, third)
+  }
+
+  @Test
+  fun testMergeEventWithMultipleNotFilteredData() {
+    val ts = System.currentTimeMillis()
+    val first = newEvent("group.id", "dialog-id", count = 1, data = hashMapOf("start_time" to ts, "type" to "open"))
+    val second = newEvent("group.id", "dialog-id", count = 1, data = hashMapOf("start_time" to 1000 + ts, "type" to "open"))
+    val third = newEvent("group.id", "dialog-id", count = 1, data = hashMapOf("start_time" to 402 + ts, "type" to "open"))
+
+    testLogger(
+      { logger ->
+        val group = EventLogGroup("group.id", 99)
+        logger.logAsync(group, "dialog-id", hashMapOf("start_time" to ts, "type" to "open"), false)
+        logger.logAsync(group, "dialog-id", hashMapOf("start_time" to 1000 + ts, "type" to "open"), false)
+        logger.logAsync(group, "dialog-id", hashMapOf("start_time" to 402 + ts, "type" to "open"), false)
+      }, first, second, third)
+  }
+
+
+  @Test
+  fun testMergeEventWithFilteredData() {
+    val ts = System.currentTimeMillis()
+    val expected = newEvent("group.id", "dialog-id", count = 3, data = hashMapOf("start_time" to ts))
+
+    val loggerWithMergeStrategy = TestFeatureUsageFileEventLogger(mergeStrategy = FilteredEventMergeStrategy(hashSetOf("start_time")))
+    testLoggerInternal(
+      loggerWithMergeStrategy,
+      { logger ->
+        val group = EventLogGroup("group.id", 99)
+        logger.logAsync(group, "dialog-id", hashMapOf("start_time" to ts), false)
+        logger.logAsync(group, "dialog-id", hashMapOf("start_time" to 100 + ts), false)
+        logger.logAsync(group, "dialog-id", hashMapOf("start_time" to 4202 + ts), false)
+      }, expected)
+  }
+
+  @Test
+  fun testMergeEventWithFilteredDataAndOtherFields() {
+    val ts = System.currentTimeMillis()
+    val expected = newEvent("group.id", "dialog-id", count = 3, data = hashMapOf("start_time" to ts, "type" to "open"))
+
+    val loggerWithMergeStrategy = TestFeatureUsageFileEventLogger(mergeStrategy = FilteredEventMergeStrategy(hashSetOf("start_time")))
+    testLoggerInternal(
+      loggerWithMergeStrategy,
+      { logger ->
+        val group = EventLogGroup("group.id", 99)
+        logger.logAsync(group, "dialog-id", hashMapOf("start_time" to ts, "type" to "open"), false)
+        logger.logAsync(group, "dialog-id", hashMapOf("start_time" to 1000 + ts, "type" to "open"), false)
+        logger.logAsync(group, "dialog-id", hashMapOf("start_time" to 402 + ts, "type" to "open"), false)
+      }, expected)
+  }
+
+  @Test
+  fun testMergeEventWithFilteredDataAndOtherDifferentFields() {
+    val startTimeMs1 = System.currentTimeMillis()
+    val startTimeMs2 = 1000 + System.currentTimeMillis()
+    val startTimeMs3 = 402 + System.currentTimeMillis()
+
+    val first = newEvent("group.id", "dialog-id", data = hashMapOf("start_time" to startTimeMs1, "type" to "open"))
+    val second = newEvent("group.id", "dialog-id", data = hashMapOf("start_time" to startTimeMs2, "type" to "close"))
+    val third = newEvent("group.id", "dialog-id", data = hashMapOf("start_time" to startTimeMs3, "type" to "open"))
+
+    val loggerWithMergeStrategy = TestFeatureUsageFileEventLogger(mergeStrategy = FilteredEventMergeStrategy(hashSetOf("start_time")))
+    testLoggerInternal(
+      loggerWithMergeStrategy,
+      { logger ->
+        val group = EventLogGroup("group.id", 99)
+        logger.logAsync(group, "dialog-id", hashMapOf("start_time" to startTimeMs1, "type" to "open"), false)
+        logger.logAsync(group, "dialog-id", hashMapOf("start_time" to startTimeMs2, "type" to "close"), false)
+        logger.logAsync(group, "dialog-id", hashMapOf("start_time" to startTimeMs3, "type" to "open"), false)
+      }, first, second, third)
+  }
+
+  @Test
+  fun testMergeEventWithFilteredDataAndOtherDifferentFieldsSize() {
+    val startTimeMs1 = System.currentTimeMillis()
+    val startTimeMs2 = 1000 + System.currentTimeMillis()
+    val startTimeMs3 = 402 + System.currentTimeMillis()
+
+    val first = newEvent("group.id", "dialog-id", data = hashMapOf("start_time" to startTimeMs1, "type" to "open"))
+    val second = newEvent("group.id", "dialog-id", data = hashMapOf("start_time" to startTimeMs2))
+    val third = newEvent("group.id", "dialog-id", data = hashMapOf("start_time" to startTimeMs3, "type" to "open"))
+
+    val loggerWithMergeStrategy = TestFeatureUsageFileEventLogger(mergeStrategy = FilteredEventMergeStrategy(hashSetOf("start_time")))
+    testLoggerInternal(
+      loggerWithMergeStrategy,
+      { logger ->
+        val group = EventLogGroup("group.id", 99)
+        logger.logAsync(group, "dialog-id", hashMapOf("start_time" to startTimeMs1, "type" to "open"), false)
+        logger.logAsync(group, "dialog-id", hashMapOf("start_time" to startTimeMs2), false)
+        logger.logAsync(group, "dialog-id", hashMapOf("start_time" to startTimeMs3, "type" to "open"), false)
+      }, first, second, third)
+  }
+
+  @Test
+  fun testMergeEventWithFilteredDataAndOtherDifferentFieldsSize2() {
+    val startTimeMs1 = System.currentTimeMillis()
+    val startTimeMs2 = 1000 + System.currentTimeMillis()
+    val startTimeMs3 = 402 + System.currentTimeMillis()
+
+    val first = newEvent("group.id", "dialog-id", data = hashMapOf("start_time" to startTimeMs1, "type" to "open"))
+    val second = newEvent("group.id", "dialog-id", data = hashMapOf("start_time" to startTimeMs2, "value" to 13, "result" to "succeed"))
+    val third = newEvent("group.id", "dialog-id", data = hashMapOf("start_time" to startTimeMs3, "type" to "open"))
+
+    val loggerWithMergeStrategy = TestFeatureUsageFileEventLogger(mergeStrategy = FilteredEventMergeStrategy(hashSetOf("start_time")))
+    testLoggerInternal(
+      loggerWithMergeStrategy,
+      { logger ->
+        val group = EventLogGroup("group.id", 99)
+        logger.logAsync(group, "dialog-id", hashMapOf("start_time" to startTimeMs1, "type" to "open"), false)
+        logger.logAsync(group, "dialog-id", hashMapOf("start_time" to startTimeMs2, "value" to 13, "result" to "succeed"), false)
+        logger.logAsync(group, "dialog-id", hashMapOf("start_time" to startTimeMs3, "type" to "open"), false)
+      }, first, second, third)
+  }
+
+  @Test
   fun testStateEventWithData() {
     val data = HashMap<String, Any>()
     data["name"] = "myOption"
     data["value"] = true
     data["default"] = false
 
-    val expected = newStateEvent("settings", "ui", groupVersion = "3")
-    expected.event.addData("name", "myOption")
-    expected.event.addData("value", true)
-    expected.event.addData("default", false)
+    val expected = newStateEvent("settings", "ui", groupVersion = "3",
+      data = hashMapOf("name" to "myOption", "value" to true, "default" to false))
 
     testLogger({ logger -> logger.logAsync(EventLogGroup("settings", 3), "ui", data, true) }, expected)
   }
@@ -136,10 +274,8 @@ class FeatureUsageEventLoggerTest : HeavyPlatformTestCase() {
     data["value"] = true
     data["default"] = false
 
-    val expected = newStateEvent("settings", "ui", groupVersion = "5")
-    expected.event.addData("name", "myOption")
-    expected.event.addData("value", true)
-    expected.event.addData("default", false)
+    val expected = newStateEvent("settings", "ui", groupVersion = "5",
+      data = hashMapOf("name" to "myOption", "value" to true, "default" to false))
 
     testLogger(
       { logger ->
@@ -275,8 +411,38 @@ class FeatureUsageEventLoggerTest : HeavyPlatformTestCase() {
     logger.dispose()
     val logged = logger.testWriter.logged
     UsefulTestCase.assertSize(2, logged)
+    //suppressed until https://youtrack.jetbrains.com/issue/KTIJ-21749 being fixed
+    @Suppress("AssertBetweenInconvertibleTypes")
     assertEquals(logged[0].event.data["system_event_id"], 42.toLong())
+    //suppressed until https://youtrack.jetbrains.com/issue/KTIJ-21749 being fixed
+    @Suppress("AssertBetweenInconvertibleTypes")
     assertEquals(logged[1].event.data["system_event_id"], 43.toLong())
+  }
+
+  @Test
+  fun testLogHeadlessModeEnabled() {
+    doTestHeadlessMode(true) {
+      //suppressed until https://youtrack.jetbrains.com/issue/KTIJ-21749 being fixed
+      @Suppress("AssertBetweenInconvertibleTypes")
+      assertEquals(it.event.data["system_headless"], true)
+    }
+  }
+
+  @Test
+  fun testLogHeadlessModeDisabled() {
+    doTestHeadlessMode(false) {
+      assertFalse(it.event.data.containsKey("system_headless"))
+    }
+  }
+
+  private fun doTestHeadlessMode(headless: Boolean, assertion: (LogEvent) -> Unit) {
+    val logger = TestFeatureUsageFileEventLogger(headless = headless)
+    logger.logAsync(EventLogGroup("group.id", 1), "test.action", false)
+    logger.dispose()
+
+    val loggedEvents = logger.testWriter.logged
+    UsefulTestCase.assertSize(1, loggedEvents)
+    assertion.invoke(loggedEvents[0])
   }
 
   @Test
@@ -290,8 +456,8 @@ class FeatureUsageEventLoggerTest : HeavyPlatformTestCase() {
     } */
 
     class TestObjDescription : ObjectDescription() {
-      var name by field(EventFields.StringValidatedByCustomRule("name", "name_rule"))
-      var versions by field(EventFields.StringListValidatedByCustomRule("versions", "version_rule"))
+      var name by field(EventFields.StringValidatedByCustomRule<CustomValidationRule>("name"))
+      var versions by field(EventFields.StringListValidatedByCustomRule<CustomValidationRule>("versions"))
     }
 
     val group = EventLogGroup("newGroup", 1)
@@ -301,7 +467,7 @@ class FeatureUsageEventLoggerTest : HeavyPlatformTestCase() {
     val intValue = 43
     val testName = "testName"
     val versionsValue = listOf("1", "2")
-    val events = FUCounterCollectorTestCase.collectLogEvents {
+    val events = FUCollectorTestCase.collectLogEvents(testRootDisposable) {
       event.log(intValue, ObjectDescription.build(::TestObjDescription) {
         versions = versionsValue
         name = testName
@@ -319,8 +485,8 @@ class FeatureUsageEventLoggerTest : HeavyPlatformTestCase() {
   @Test
   fun testObjectVarargEvent() {
     class TestObjDescription : ObjectDescription() {
-      var name by field(EventFields.StringValidatedByCustomRule("name", "name_rule"))
-      var versions by field(EventFields.StringListValidatedByCustomRule("versions", "version_rule"))
+      var name by field(EventFields.StringValidatedByCustomRule("name", CustomValidationRule::class.java))
+      var versions by field(EventFields.StringListValidatedByCustomRule("versions", CustomValidationRule::class.java))
     }
 
     val group = EventLogGroup("newGroup", 1)
@@ -331,7 +497,7 @@ class FeatureUsageEventLoggerTest : HeavyPlatformTestCase() {
     val intValue = 43
     val testName = "testName"
     val versionsValue = listOf("1", "2")
-    val events = FUCounterCollectorTestCase.collectLogEvents {
+    val events = FUCollectorTestCase.collectLogEvents(testRootDisposable) {
       event.log(intEventField with intValue, objectEventField with ObjectDescription.build(::TestObjDescription) {
         versions = versionsValue
         name = testName
@@ -349,15 +515,15 @@ class FeatureUsageEventLoggerTest : HeavyPlatformTestCase() {
   @Test
   fun testObjectListEventByDescription() {
     class TestObjDescription : ObjectDescription() {
-      var name by field(EventFields.StringValidatedByCustomRule("name", "name_rule"))
-      var version by field(EventFields.StringValidatedByCustomRule("versions", "version_rule"))
+      var name by field(EventFields.StringValidatedByCustomRule("name", CustomValidationRule::class.java))
+      var version by field(EventFields.StringValidatedByCustomRule("versions", CustomValidationRule::class.java))
     }
 
     val group = EventLogGroup("newGroup", 1)
     val objectListField: EventField<List<ObjectEventData>> = ObjectListEventField("objects", TestObjDescription())
     val event = group.registerVarargEvent("testEvent", objectListField)
 
-    val events = FUCounterCollectorTestCase.collectLogEvents {
+    val events = FUCollectorTestCase.collectLogEvents(testRootDisposable) {
       val objList = mutableListOf<ObjectEventData>()
       objList.add(ObjectDescription.build(::TestObjDescription) {
         name = "name1"
@@ -390,12 +556,12 @@ class FeatureUsageEventLoggerTest : HeavyPlatformTestCase() {
     } */
 
     class InnerObjDescription : ObjectDescription() {
-      var foo by field(EventFields.StringValidatedByCustomRule("foo", "foo_rule"))
-      var bar by field(EventFields.StringValidatedByCustomRule("bar", "bar_rule"))
+      var foo by field(EventFields.StringValidatedByCustomRule("foo", CustomValidationRule::class.java))
+      var bar by field(EventFields.StringValidatedByCustomRule("bar", CustomValidationRule::class.java))
     }
 
     class OuterObjDescription : ObjectDescription() {
-      var name by field(EventFields.StringValidatedByCustomRule("name", "name_rule"))
+      var name by field(EventFields.StringValidatedByCustomRule("name", CustomValidationRule::class.java))
       var obj1 by field(ObjectEventField("obj2", InnerObjDescription()))
     }
 
@@ -403,7 +569,7 @@ class FeatureUsageEventLoggerTest : HeavyPlatformTestCase() {
     val event = group.registerEvent("testEvent", EventFields.Int("intField"),
                                     ObjectEventField("obj1", OuterObjDescription()))
 
-    val events = FUCounterCollectorTestCase.collectLogEvents {
+    val events = FUCollectorTestCase.collectLogEvents(testRootDisposable) {
       val objectValue = ObjectDescription.build(::OuterObjDescription) {
         name = "testName"
         obj1 = ObjectDescription.build(::InnerObjDescription) {
@@ -437,7 +603,7 @@ class FeatureUsageEventLoggerTest : HeavyPlatformTestCase() {
     val group = EventLogGroup("newGroup", 1)
     val event = group.registerEvent("testEvent", ObjectEventField("obj", TestObjDescription()))
 
-    val events = FUCounterCollectorTestCase.collectLogEvents {
+    val events = FUCollectorTestCase.collectLogEvents(testRootDisposable) {
       event.log(ObjectDescription.build(::TestObjDescription) {
         enumField = TestEnum.FOO
       })
@@ -462,7 +628,7 @@ class FeatureUsageEventLoggerTest : HeavyPlatformTestCase() {
 
     val actual = logger.testWriter.logged
     assertEquals(expected.size, actual.size)
-    for (i in 0 until expected.size) {
+    for (i in expected.indices) {
       assertEvent(actual[i], expected[i])
     }
   }
@@ -495,13 +661,15 @@ class FeatureUsageEventLoggerTest : HeavyPlatformTestCase() {
 
 private const val TEST_RECORDER = "TEST"
 
-class TestFeatureUsageFileEventLogger(session: String,
-                                      build: String,
-                                      bucket: String,
-                                      recorderVersion: String,
-                                      writer: TestFeatureUsageEventWriter,
-                                      systemEventIdProvider: StatisticsSystemEventIdProvider = TestSystemEventIdProvider(0)) :
-  StatisticsFileEventLogger(TEST_RECORDER, session, build, bucket, recorderVersion, writer, systemEventIdProvider) {
+class TestFeatureUsageFileEventLogger(session: String = DEFAULT_SESSION_ID,
+                                      build: String = "999.999",
+                                      bucket: String = "0",
+                                      recorderVersion: String = "1",
+                                      writer: TestFeatureUsageEventWriter = TestFeatureUsageEventWriter(),
+                                      systemEventIdProvider: StatisticsSystemEventIdProvider = TestSystemEventIdProvider(0),
+                                      mergeStrategy: StatisticsEventMergeStrategy = FilteredEventMergeStrategy(emptySet()),
+                                      headless: Boolean = false) :
+  StatisticsFileEventLogger(TEST_RECORDER, session, headless, build, bucket, recorderVersion, writer, systemEventIdProvider, mergeStrategy) {
   val testWriter = writer
 
   override fun dispose() {
@@ -521,6 +689,7 @@ class TestFeatureUsageEventWriter : StatisticsEventLogWriter {
   override fun getLogFilesProvider(): EventLogFilesProvider = EmptyEventLogFilesProvider
   override fun cleanup() = Unit
   override fun rollOver() = Unit
+  override fun dispose() = Unit
 }
 
 class TestSystemEventIdProvider(var value: Long) : StatisticsSystemEventIdProvider {

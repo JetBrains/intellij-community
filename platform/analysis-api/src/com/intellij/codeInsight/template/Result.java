@@ -5,10 +5,12 @@ package com.intellij.codeInsight.template;
 import com.intellij.openapi.editor.Document;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import org.jetbrains.annotations.NonNls;
 
 public interface Result {
-  boolean equalsToText (String text, PsiElement context);
+  boolean equalsToText (@NonNls String text, PsiElement context);
 
+  @Override
   String toString();
 
   void handleFocused(final PsiFile psiFile, final Document document, final int segmentStart, final int segmentEnd);

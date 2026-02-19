@@ -1,0 +1,6 @@
+<component name="ArtifactManager">
+  <artifact external-system-id="GRADLE" name="imported">
+    <output-path>$PROJECT_DIR$/out/artifacts/imported</output-path>
+    <root id="root" />
+  </artifact>
+</component>

@@ -1,12 +1,22 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.wm
 
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.wm.impl.CloseProjectWindowHelper
+import com.intellij.testFramework.ProjectRule
 import com.intellij.testFramework.assertions.Assertions.assertThat
+import com.intellij.testFramework.runInEdtAndWait
+import org.junit.ClassRule
 import org.junit.Test
 
 class CloseProjectWindowHelperTest {
+
+  companion object {
+    @JvmField
+    @ClassRule
+    val projectRule = ProjectRule()
+  }
+
   @Test
   fun `on Windows closing last project leads to exit`() {
     val helper = object : TestCloseProjectWindowHelper() {
@@ -15,7 +25,10 @@ class CloseProjectWindowHelperTest {
       override fun getNumberOfOpenedProjects() = 1
     }
 
-    helper.windowClosing(null)
+    runInEdtAndWait {
+      helper.windowClosing(null)
+    }
+
     assertThat(helper.wasQuitAppCalled).isTrue()
     assertThat(helper.wasShowWelcomeFrameIfNoProjectOpenedCalled).isFalse()
   }
@@ -28,12 +41,15 @@ class CloseProjectWindowHelperTest {
       override fun getNumberOfOpenedProjects() = 1
     }
 
-    helper.windowClosing(null)
+    runInEdtAndWait {
+      helper.windowClosing(null)
+    }
+
     assertThat(helper.wasQuitAppCalled).isFalse()
     assertThat(helper.wasShowWelcomeFrameIfNoProjectOpenedCalled).isTrue()
   }
 
-  // well, not clear is listener will be called for case when no opened  prtojects atllall, but just t o be sure
+  // well, not clear is listener will be called for the case when no opened projects at all, but just to be sure
   @Test
   fun `on Windows closing if no opened projects leads to exit`() {
     val helper = object : TestCloseProjectWindowHelper() {
@@ -42,7 +58,10 @@ class CloseProjectWindowHelperTest {
       override fun getNumberOfOpenedProjects() = 0
     }
 
-    helper.windowClosing(null)
+    runInEdtAndWait {
+      helper.windowClosing(null)
+    }
+
     assertThat(helper.wasQuitAppCalled).isTrue()
     assertThat(helper.wasShowWelcomeFrameIfNoProjectOpenedCalled).isFalse()
   }
@@ -55,7 +74,64 @@ class CloseProjectWindowHelperTest {
       override fun getNumberOfOpenedProjects() = 0
     }
 
-    helper.windowClosing(null)
+    runInEdtAndWait {
+      helper.windowClosing(null)
+    }
+
+    assertThat(helper.wasQuitAppCalled).isTrue()
+    assertThat(helper.wasShowWelcomeFrameIfNoProjectOpenedCalled).isFalse()
+  }
+
+  @Test
+  fun `on macOS closing a tab with tabbed project view`() {
+    val helper = object : TestCloseProjectWindowHelper() {
+      override val isMacSystemMenu = true
+
+      override fun isMacOsTabbedProjectView(project: Project?): Boolean = true
+      override fun isCloseTab(project: Project?): Boolean = true
+      override fun couldReturnToWelcomeScreen(projects: Array<Project>): Boolean = false
+    }
+
+    runInEdtAndWait {
+      helper.windowClosing(null)
+    }
+
+    assertThat(helper.wasQuitAppCalled).isFalse()
+    assertThat(helper.wasShowWelcomeFrameIfNoProjectOpenedCalled).isTrue()
+  }
+
+  @Test
+  fun `on macOS closing an application with tabbed project view when should show welcome screen`() {
+    val helper = object : TestCloseProjectWindowHelper() {
+      override val isMacSystemMenu = true
+
+      override fun isMacOsTabbedProjectView(project: Project?): Boolean = true
+      override fun isCloseTab(project: Project?): Boolean = false
+      override fun couldReturnToWelcomeScreen(projects: Array<Project>): Boolean = true
+    }
+
+    runInEdtAndWait {
+      helper.windowClosing(null)
+    }
+
+    assertThat(helper.wasQuitAppCalled).isFalse()
+    assertThat(helper.wasShowWelcomeFrameIfNoProjectOpenedCalled).isTrue()
+  }
+
+  @Test
+  fun `on macOS closing an application with tabbed project view when should not show welcome screen`() {
+    val helper = object : TestCloseProjectWindowHelper() {
+      override val isMacSystemMenu = true
+
+      override fun isMacOsTabbedProjectView(project: Project?): Boolean = true
+      override fun isCloseTab(project: Project?): Boolean = false
+      override fun couldReturnToWelcomeScreen(projects: Array<Project>): Boolean = false
+    }
+
+    runInEdtAndWait {
+      helper.windowClosing(null)
+    }
+
     assertThat(helper.wasQuitAppCalled).isTrue()
     assertThat(helper.wasShowWelcomeFrameIfNoProjectOpenedCalled).isFalse()
   }

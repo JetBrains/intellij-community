@@ -1,0 +1,42 @@
+TypeRepresentation:a.pythonTypeRepresentation
+  PyFunctionTypeRepresentation
+    PyParameterListRepresentation
+      PsiElement(Py:LPAR)('(')
+      PyStarExpression
+        PsiElement(Py:MULT)('*')
+        PyNamedParameterTypeRepresentation
+          PsiElement(Py:IDENTIFIER)('a')
+          PsiElement(Py:COLON)(':')
+          PsiWhiteSpace(' ')
+          PyStarExpression
+            PsiElement(Py:MULT)('*')
+            PySubscriptionExpression
+              PyReferenceExpression: tuple
+                PsiElement(Py:IDENTIFIER)('tuple')
+              PsiElement(Py:LBRACKET)('[')
+              PyTupleExpression
+                PyReferenceExpression: int
+                  PsiElement(Py:IDENTIFIER)('int')
+                PsiElement(Py:COMMA)(',')
+                PsiWhiteSpace(' ')
+                PyReferenceExpression: str
+                  PsiElement(Py:IDENTIFIER)('str')
+              PsiElement(Py:RBRACKET)(']')
+      PsiElement(Py:COMMA)(',')
+      PsiWhiteSpace(' ')
+      PyDoubleStarExpression
+        PsiElement(Py:EXP)('**')
+        PyNamedParameterTypeRepresentation
+          PsiElement(Py:IDENTIFIER)('b')
+          PsiElement(Py:COLON)(':')
+          PsiWhiteSpace(' ')
+          PyDoubleStarExpression
+            PsiElement(Py:EXP)('**')
+            PyReferenceExpression: B
+              PsiElement(Py:IDENTIFIER)('B')
+      PsiElement(Py:RPAR)(')')
+    PsiWhiteSpace(' ')
+    PsiElement(Py:RARROW)('->')
+    PsiWhiteSpace(' ')
+    PyNoneLiteralExpression
+      PsiElement(Py:NONE_KEYWORD)('None')

@@ -32,19 +32,21 @@ import org.jetbrains.annotations.NotNull;
 /**
  * Weighs down items starting with two underscores.
  * <br/>
- * User: dcheryasov
  */
-public class PythonCompletionWeigher extends CompletionWeigher {
+public final class PythonCompletionWeigher extends CompletionWeigher {
 
+  // TODO Unify different ways of detecting and weighing elements
   public static final int PRIORITY_WEIGHT = 5;
+  public static final int WEIGHT_FOR_MULTIPLE_ARGUMENTS = 5;
   public static final int WEIGHT_FOR_KEYWORDS = 0;
   private static final Logger LOG = Logger.getInstance(PythonCompletionWeigher.class);
   public static final String COLLECTION_KEY = "dict key";
   private static final int COLLECTION_KEY_WEIGHT = 10;
+  public static final int NOT_IMPORTED_MODULE_WEIGHT = -1;
 
   @Override
-  public Comparable weigh(@NotNull final LookupElement element, @NotNull final CompletionLocation location) {
-    if (!PsiUtilCore.findLanguageFromElement(location.getCompletionParameters().getPosition()).isKindOf(PythonLanguage.getInstance())) {
+  public Comparable weigh(final @NotNull LookupElement element, final @NotNull CompletionLocation location) {
+    if (!PsiUtilCore.findLanguageFromElement(location.getBaseCompletionParameters().getPosition()).isKindOf(PythonLanguage.getInstance())) {
       return PyCompletionUtilsKt.FALLBACK_WEIGHT;
     }
 
@@ -56,12 +58,12 @@ public class PythonCompletionWeigher extends CompletionWeigher {
     }
 
     PsiElement psiElement = element.getPsiElement();
-    PsiFile file = location.getCompletionParameters().getOriginalFile();
+    PsiFile file = location.getBaseCompletionParameters().getOriginalFile();
     if (psiElement != null) {
       if (psiElement.getContainingFile() == file) return PRIORITY_WEIGHT;
 
-      PsiElement dummyParent = location.getCompletionParameters().getPosition().getParent();
-      boolean isQualified = dummyParent instanceof PyReferenceExpression && ((PyReferenceExpression)dummyParent).isQualified();
+      PsiElement dummyParent = location.getBaseCompletionParameters().getPosition().getParent();
+      boolean isQualified = dummyParent instanceof PyReferenceExpression ref && ref.isQualified();
       int completionWeight = PyCompletionUtilsKt.computeCompletionWeight(psiElement, name, null, file, isQualified);
       LOG.debug("Combined weight for completion item ", name, ": ", completionWeight);
       return completionWeight;
@@ -69,6 +71,10 @@ public class PythonCompletionWeigher extends CompletionWeigher {
 
     if (PyNames.isReserved(element.getLookupString())) {
       return WEIGHT_FOR_KEYWORDS;
+    }
+
+    if (element.getUserData(PyMultipleArgumentsCompletionContributor.Companion.getMULTIPLE_ARGUMENTS_VARIANT_KEY()) != null) {
+      return WEIGHT_FOR_MULTIPLE_ARGUMENTS;
     }
 
     return PyCompletionUtilsKt.FALLBACK_WEIGHT;

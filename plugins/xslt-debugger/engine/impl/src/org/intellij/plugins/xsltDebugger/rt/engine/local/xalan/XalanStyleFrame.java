@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.intellij.plugins.xsltDebugger.rt.engine.local.xalan;
 
 import org.apache.xalan.templates.ElemLiteralResult;
@@ -22,7 +22,12 @@ import org.intellij.plugins.xsltDebugger.rt.engine.local.VariableImpl;
 import org.w3c.dom.Node;
 
 import javax.xml.transform.TransformerException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+import java.util.Vector;
 
 class XalanStyleFrame extends AbstractFrame<Debugger.StyleFrame> implements Debugger.StyleFrame {
   private final boolean myWithSourceFrame;
@@ -70,9 +75,7 @@ class XalanStyleFrame extends AbstractFrame<Debugger.StyleFrame> implements Debu
                           new XObjectValue(variable.getValue(myTransformer, myCurrentNode));
 
       variables.add(new VariableImpl(name, value, global, kind, variable.getSystemId(), variable.getLineNumber()));
-    } catch (TransformerException e) {
-      debug(e);
-    } catch (Debugger.EvaluationException e) {
+    } catch (TransformerException | Debugger.EvaluationException e) {
       debug(e);
     }
   }
@@ -81,10 +84,12 @@ class XalanStyleFrame extends AbstractFrame<Debugger.StyleFrame> implements Debu
     return myWithSourceFrame;
   }
 
+  @Override
   public String getInstruction() {
     return myInstr;
   }
 
+  @Override
   public List<Debugger.Variable> getVariables() {
     assert isValid();
 
@@ -92,7 +97,7 @@ class XalanStyleFrame extends AbstractFrame<Debugger.StyleFrame> implements Debu
   }
 
   private List<Debugger.Variable> collectVariables() {
-    final Set<Debugger.Variable> variables = new HashSet<Debugger.Variable>();
+    final Set<Debugger.Variable> variables = new HashSet<>();
 
     ElemTemplateElement p = myCurrentElement;
     while (p != null) {
@@ -116,19 +121,22 @@ class XalanStyleFrame extends AbstractFrame<Debugger.StyleFrame> implements Debu
       addVariable(variable, true, variables);
     }
 
-    final ArrayList<Debugger.Variable> result = new ArrayList<Debugger.Variable>(variables);
+    final ArrayList<Debugger.Variable> result = new ArrayList<>(variables);
     result.sort(VariableComparator.INSTANCE);
     return result;
   }
 
+  @Override
   public String getURI() {
     return myURI;
   }
 
+  @Override
   public int getLineNumber() {
     return myLineNumber;
   }
 
+  @Override
   public Value eval(String expr) throws Debugger.EvaluationException {
     assert isValid();
 
@@ -180,7 +188,7 @@ class XalanStyleFrame extends AbstractFrame<Debugger.StyleFrame> implements Debu
     final String name = node.getNodeName();
     if (node instanceof ElemLiteralResult) {
       return name;
-    } else if (name != null && name.indexOf(':') == -1) {
+    } else if (name.indexOf(':') == -1) {
       return "xsl:" + name;
     }
     return name;

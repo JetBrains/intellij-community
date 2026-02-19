@@ -1,0 +1,46 @@
+### auto-generated section `build intellij.platform.project` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "project_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "project",
+  module_name = "intellij.platform.project",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":project_resources"],
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "//libraries/kotlinx/serialization/core",
+    "//libraries/kotlinx/serialization/json",
+    "//platform/kernel/shared:kernel",
+    "//platform/util",
+    "//platform/projectModel-api:projectModel",
+    "//platform/util/coroutines",
+    "//platform/core-api:core",
+    "//platform/platform-impl/rpc",
+  ]
+)
+
+jvm_library(
+  name = "project_test_lib",
+  module_name = "intellij.platform.project",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    ":project",
+    "//libraries/kotlinx/serialization/core:core_test_lib",
+    "//libraries/kotlinx/serialization/json:json_test_lib",
+    "//platform/kernel/shared:kernel_test_lib",
+    "//platform/util:util_test_lib",
+    "//platform/projectModel-api:projectModel_test_lib",
+    "//platform/util/coroutines:coroutines_test_lib",
+    "//platform/core-api:core_test_lib",
+    "//platform/platform-impl/rpc:rpc_test_lib",
+  ]
+)
+### auto-generated section `build intellij.platform.project` end

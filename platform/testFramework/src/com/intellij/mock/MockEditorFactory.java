@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.mock;
 
 import com.intellij.openapi.Disposable;
@@ -16,11 +16,22 @@ import com.intellij.util.text.CharArrayCharSequence;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.List;
 import java.util.stream.Stream;
 
 public final class MockEditorFactory extends EditorFactory {
   public Document createDocument(String text) {
     return new DocumentImpl(text);
+  }
+
+  @Override
+  public @NotNull Document createDocument(boolean allowUpdatesWithoutWriteAction) {
+    return new DocumentImpl("", allowUpdatesWithoutWriteAction);
+  }
+
+  @Override
+  public @NotNull Document createDocument(@NotNull CharSequence text, boolean acceptsSlashR, boolean allowUpdatesWithoutWriteAction) {
+    return new DocumentImpl(text, acceptsSlashR, allowUpdatesWithoutWriteAction);
   }
 
   @Override
@@ -58,7 +69,7 @@ public final class MockEditorFactory extends EditorFactory {
   }
 
   @Override
-  public Editor createEditor(@NotNull final Document document, final Project project, @NotNull final FileType fileType, final boolean isViewer) {
+  public Editor createEditor(final @NotNull Document document, final Project project, final @NotNull FileType fileType, final boolean isViewer) {
     return null;
   }
 
@@ -87,6 +98,11 @@ public final class MockEditorFactory extends EditorFactory {
   }
 
   @Override
+  public @NotNull List<Editor> getEditorList() {
+    return List.of();
+  }
+
+  @Override
   public void addEditorFactoryListener(@NotNull EditorFactoryListener listener) {
   }
 
@@ -99,20 +115,17 @@ public final class MockEditorFactory extends EditorFactory {
   }
 
   @Override
-  @NotNull
-  public EditorEventMulticaster getEventMulticaster() {
+  public @NotNull EditorEventMulticaster getEventMulticaster() {
     return new MockEditorEventMulticaster();
   }
 
   @Override
-  @NotNull
-  public Document createDocument(@NotNull CharSequence text) {
+  public @NotNull Document createDocument(@NotNull CharSequence text) {
     return new DocumentImpl(text);
   }
 
   @Override
-  @NotNull
-  public Document createDocument(char @NotNull [] text) {
+  public @NotNull Document createDocument(char @NotNull [] text) {
     return createDocument(new CharArrayCharSequence(text));
   }
 

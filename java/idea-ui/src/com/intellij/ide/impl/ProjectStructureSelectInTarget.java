@@ -1,21 +1,13 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.impl;
 
-import com.intellij.facet.*;
+import com.intellij.facet.Facet;
+import com.intellij.facet.FacetAsVirtualFile;
+import com.intellij.facet.FacetFinder;
+import com.intellij.facet.FacetManager;
+import com.intellij.facet.FacetRootsProvider;
+import com.intellij.facet.FacetTypeId;
+import com.intellij.facet.FacetTypeRegistry;
 import com.intellij.ide.JavaUiBundle;
 import com.intellij.ide.SelectInContext;
 import com.intellij.ide.SelectInTarget;
@@ -41,7 +33,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collection;
 import java.util.Iterator;
 
-public class ProjectStructureSelectInTarget implements SelectInTarget, DumbAware {
+public final class ProjectStructureSelectInTarget implements SelectInTarget, DumbAware {
   @Override
   public boolean canSelect(SelectInContext context) {
     ProjectFileIndex fileIndex = ProjectRootManager.getInstance(context.getProject()).getFileIndex();
@@ -89,8 +81,7 @@ public class ProjectStructureSelectInTarget implements SelectInTarget, DumbAware
     }
   }
 
-  @Nullable
-  private static Module findModuleByModuleFile(@NotNull Project project, @NotNull VirtualFile file) {
+  private static @Nullable Module findModuleByModuleFile(@NotNull Project project, @NotNull VirtualFile file) {
     for (Module module : ModuleManager.getInstance(project).getModules()) {
       if (ModuleUtilCore.isModuleFile(module, file)) {
         return module;
@@ -99,8 +90,7 @@ public class ProjectStructureSelectInTarget implements SelectInTarget, DumbAware
     return null;
   }
 
-  @Nullable
-  private static Facet<?> findFacet(final @NotNull Project project, final @NotNull VirtualFile file) {
+  private static @Nullable Facet<?> findFacet(final @NotNull Project project, final @NotNull VirtualFile file) {
     for (FacetTypeId<?> id : FacetTypeRegistry.getInstance().getFacetTypeIds()) {
       if (hasFacetWithRoots(project, id)) {
         Facet<?> facet = FacetFinder.getInstance(project).findFacet(file, (FacetTypeId)id);
@@ -123,6 +113,7 @@ public class ProjectStructureSelectInTarget implements SelectInTarget, DumbAware
     return false;
   }
 
+  @Override
   public String toString() {
     return JavaUiBundle.message("select.in.project.settings");
   }

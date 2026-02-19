@@ -1,0 +1,45 @@
+<!-- DO NOT EDIT: This file is auto-generated from Kotlin code -->
+<!-- To regenerate, run 'Generate Product Layouts' or directly CommunityModuleSets.main() -->
+<!-- Source: org.jetbrains.intellij.build.IdeaCommunityProperties.getProductContentDescriptor() -->
+<idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude">
+  <module value="com.intellij.modules.all"/>
+  <module value="com.intellij.modules.idea"/>
+  <module value="com.intellij.modules.idea.community"/>
+  <module value="com.intellij.modules.java-capable"/>
+  <module value="com.intellij.modules.jcef"/>
+  <module value="com.intellij.modules.jsp.base"/>
+  <module value="com.intellij.modules.python-core-capable"/>
+  <module value="com.intellij.modules.python-in-non-pycharm-ide-capable"/>
+  <module value="com.intellij.platform.ide.provisioner"/>
+
+  <xi:include href="/META-INF/PlatformLangPlugin.xml"/>
+  <xi:include href="intellij.platform.remoteServers.impl.xml">
+    <xi:fallback/>
+  </xi:include>
+  <xi:include href="/META-INF/DesignerCorePlugin.xml">
+    <xi:fallback/>
+  </xi:include>
+  <xi:include href="/META-INF/JavaIdePlugin.xml"/>
+  <xi:include href="/META-INF/tips-intellij-idea-community.xml"/>
+  <xi:include href="/META-INF/community-customization.xml"/>
+  <xi:include href="/META-INF/community-extensions.xml">
+    <xi:fallback/>
+  </xi:include>
+  <xi:include href="/META-INF/intellij.moduleSets.debugger.streams.xml"/>
+  <xi:include href="/META-INF/intellij.moduleSets.ide.common.xml"/>
+  <xi:include href="/META-INF/intellij.moduleSets.rd.common.xml"/>
+  <!-- region additional -->
+  <content namespace="jetbrains">
+    <module name="intellij.platform.coverage"/>
+    <module name="intellij.platform.coverage.agent"/>
+    <module name="intellij.xml.xmlbeans"/>
+    <module name="intellij.platform.ide.newUiOnboarding"/>
+    <module name="intellij.platform.ide.newUsersOnboarding"/>
+    <module name="intellij.ide.startup.importSettings"/>
+    <module name="intellij.platform.customization.min"/>
+    <module name="intellij.idea.customization.base"/>
+    <module name="intellij.idea.customization.backend"/>
+    <module name="intellij.platform.tips"/>
+  </content>
+  <!-- endregion -->
+</idea-plugin>

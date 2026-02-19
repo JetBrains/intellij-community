@@ -15,13 +15,12 @@
  */
 package com.intellij.util.xml;
 
+import com.intellij.openapi.util.NlsSafe;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * This interface may be interpreted as a reference, whose text is {@link #getStringValue()}, and resolving to
  * the result of {@link #getValue()} method.
- *
- * @author peter
  */
 public interface GenericValue<T> {
 
@@ -31,6 +30,7 @@ public interface GenericValue<T> {
    */
   @TagValue
   @Nullable
+  @NlsSafe
   String getStringValue();
 
   /**
@@ -39,5 +39,4 @@ public interface GenericValue<T> {
    */
   @Nullable
   T getValue();
-
 }

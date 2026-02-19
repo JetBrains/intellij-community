@@ -1,0 +1,35 @@
+{
+  "language": "PHP",
+  "projectPath": "../ml-eval/PhpStormMarkerTests",
+  "repository": "ssh://git@git.jetbrains.team/code-generation-evaluation/PhpStormMarkerTests.git",
+  "revision": "master",
+  "outputDir": "bin/ml-eval-code-generation-php-output",
+  "strategy": {
+    "model": "",
+    "mode": "",
+    "behaviour": "MULTI_FILE_GENERATION",
+    "collectContextOnly": false,
+    "userPrompts": {}
+  },
+  "actions": {
+    "evaluationRoots": [
+      "."
+    ],
+    "sourceFile": "../ml-eval/PhpStormMarkerTests/evaluation/multi-file-actions.json"
+  },
+  "interpret": {
+    "saveLogs": true,
+    "sessionProbability": 1.0,
+    "sessionSeed": null,
+    "sessionsLimit": 400,
+    "filesLimit": 100,
+    "order": "LINEAR",
+    "trainTestSplit": 70,
+    "registry":"llm.context.service.debug=true"
+  },
+  "reports": {
+    "evaluationTitle": "Default",
+    "sessionsFilters": [],
+    "comparisonFilters": []
+  }
+}

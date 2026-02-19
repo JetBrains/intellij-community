@@ -1,19 +1,4 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs;
 
 import com.intellij.openapi.util.io.FileUtil;
@@ -26,18 +11,15 @@ import org.jetbrains.annotations.SystemIndependent;
 import java.util.Objects;
 import java.util.function.Supplier;
 
-/**
- * @author yole
- */
-public class VcsDirectoryMapping {
+public final class VcsDirectoryMapping {
   public static final String DEFAULT_MAPPING_DIR = "";
 
   public static final Supplier<@Nls String> PROJECT_CONSTANT = VcsBundle.messagePointer("label.project.vcs.root.mapping");
   public static final VcsDirectoryMapping[] EMPTY_ARRAY = new VcsDirectoryMapping[0];
 
-  @NotNull private final String myDirectory;
+  private final @NotNull String myDirectory;
   private final String myVcs;
-  private VcsRootSettings myRootSettings;
+  private final VcsRootSettings myRootSettings;
 
   /**
    * Empty string as 'directory' denotes "default mapping" aka "&lt;Project&gt;".
@@ -54,28 +36,15 @@ public class VcsDirectoryMapping {
     myRootSettings = rootSettings;
   }
 
-  @NotNull
-  public static VcsDirectoryMapping createDefault(@NotNull String vcs) {
+  public static @NotNull VcsDirectoryMapping createDefault(@NotNull String vcs) {
     return new VcsDirectoryMapping(DEFAULT_MAPPING_DIR, vcs);
   }
 
-  @NotNull
-  @SystemIndependent
-  public String getDirectory() {
+  public @NotNull @SystemIndependent String getDirectory() {
     return myDirectory;
   }
 
-  /**
-   * @deprecated Use {@link #getDirectory()}
-   */
-  @NotNull
-  @Deprecated
-  public String systemIndependentPath() {
-    return myDirectory;
-  }
-
-  @NotNull
-  public String getVcs() {
+  public @NotNull String getVcs() {
     return myVcs;
   }
 
@@ -85,27 +54,15 @@ public class VcsDirectoryMapping {
    * @return VCS-specific settings, or null if none have been defined.
    * @see AbstractVcs#getRootConfigurable(VcsDirectoryMapping)
    */
-  @Nullable
-  public VcsRootSettings getRootSettings() {
+  public @Nullable VcsRootSettings getRootSettings() {
     return myRootSettings;
-  }
-
-  /**
-   * Sets the VCS-specific settings for the given mapping.
-   *
-   * @param rootSettings the VCS-specific settings
-   * @deprecated Use constructor parameter
-   */
-  @Deprecated
-  public void setRootSettings(final VcsRootSettings rootSettings) {
-    myRootSettings = rootSettings;
   }
 
   /**
    * @return if this mapping denotes "default mapping" aka "&lt;Project&gt;".
    */
   public boolean isDefaultMapping() {
-    return myDirectory.length() == 0;
+    return myDirectory.isEmpty();
   }
 
   /**
@@ -115,6 +72,7 @@ public class VcsDirectoryMapping {
     return myVcs.isEmpty();
   }
 
+  @Override
   public boolean equals(final Object o) {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
@@ -128,6 +86,7 @@ public class VcsDirectoryMapping {
     return true;
   }
 
+  @Override
   public int hashCode() {
     int result;
     result = myDirectory.hashCode();

@@ -6,10 +6,15 @@ import com.intellij.codeInsight.FileModificationService;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiType;
 import com.intellij.uiDesigner.UIDesignerBundle;
 import com.intellij.uiDesigner.designSurface.GuiEditor;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.Nls;
 
 /**
  * @author Eugene Zhuravlev
@@ -24,7 +29,7 @@ public class ChangeFieldTypeFix extends QuickFix {
     myNewType = uiComponentType;
   }
 
-  private static String gettext(PsiField field, PsiType uiComponentType) {
+  private static @Nls String gettext(PsiField field, PsiType uiComponentType) {
     return UIDesignerBundle.message("action.change.field.type",
                                          field.getName(), field.getType().getCanonicalText(), uiComponentType.getCanonicalText());
   }

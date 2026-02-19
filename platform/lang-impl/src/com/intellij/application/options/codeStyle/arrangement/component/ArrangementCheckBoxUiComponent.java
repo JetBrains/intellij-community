@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.application.options.codeStyle.arrangement.component;
 
 import com.intellij.application.options.codeStyle.arrangement.ArrangementConstants;
@@ -23,23 +9,23 @@ import com.intellij.ui.components.JBCheckBox;
 import com.intellij.util.ui.GridBag;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 
-/**
- * @author Denis Zhdanov
- */
-public class ArrangementCheckBoxUiComponent extends AbstractArrangementUiComponent {
+public final class ArrangementCheckBoxUiComponent extends AbstractArrangementUiComponent {
 
-  @NotNull private final JPanel myComponent = new JPanel(new GridBagLayout());
+  private final @NotNull JPanel myComponent = new JPanel(new GridBagLayout());
 
-  @NotNull private final ArrangementAtomMatchCondition myCondition;
-  @NotNull private final JBCheckBox                    myCheckBox;
-  @NotNull private final JLabel                        myTextLabel;
+  private final @NotNull ArrangementAtomMatchCondition myCondition;
+  private final @NotNull JBCheckBox                    myCheckBox;
+  private final @NotNull JLabel                        myTextLabel;
 
   public ArrangementCheckBoxUiComponent(@NotNull ArrangementSettingsToken token) {
     super(token);
@@ -67,9 +53,8 @@ public class ArrangementCheckBoxUiComponent extends AbstractArrangementUiCompone
     myComponent.add(myTextLabel, new GridBag().anchor(GridBagConstraints.WEST).insets(0, 0, 0, ArrangementConstants.HORIZONTAL_GAP));
   }
 
-  @NotNull
   @Override
-  public ArrangementSettingsToken getToken() {
+  public @NotNull ArrangementSettingsToken getToken() {
     return myCondition.getType();
   }
 
@@ -82,9 +67,8 @@ public class ArrangementCheckBoxUiComponent extends AbstractArrangementUiCompone
     }
   }
 
-  @NotNull
   @Override
-  public ArrangementMatchCondition getMatchCondition() {
+  public @NotNull ArrangementMatchCondition getMatchCondition() {
     return myCondition;
   }
 

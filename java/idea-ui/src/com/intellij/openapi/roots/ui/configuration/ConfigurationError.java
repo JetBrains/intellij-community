@@ -1,26 +1,11 @@
-/*
- * Copyright 2000-2010 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.ui.configuration;
 
-import com.intellij.openapi.util.NlsContexts.DetailedDescription;
 import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.ui.awt.RelativePoint;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 import java.util.Comparator;
 
 public abstract class ConfigurationError implements Comparable<ConfigurationError> {
@@ -38,35 +23,17 @@ public abstract class ConfigurationError implements Comparable<ConfigurationErro
     myIgnored = ignored;
   }
 
-  /**
-   * @deprecated Use the constructors with {@link HtmlChunk} for description
-   */
-  @Deprecated
-  protected ConfigurationError(final String plainTextTitle, final @DetailedDescription String description) {
-    this(plainTextTitle, description, false);
-  }
-
-  /**
-   * @deprecated Use the constructors with {@link HtmlChunk} for description
-   */
-  @Deprecated
-  protected ConfigurationError(final String plainTextTitle, final @DetailedDescription String description, final boolean ignored) {
-    this(plainTextTitle, HtmlChunk.raw(description), ignored);
-  }
-
-  @NotNull
-  public String getPlainTextTitle() {
+  public @NotNull String getPlainTextTitle() {
     return myPlainTextTitle;
   }
 
-  @NotNull
-  public HtmlChunk getDescription() {
+  public @NotNull HtmlChunk getDescription() {
     return myDescription;
   }
 
   /**
    * Called when user invokes "Ignore" action
-   * @param "true" if user invokes "Ignore", "false" if user wish to not ignore this error anymore
+   * @param b "true" if user invokes "Ignore", "false" if user wish to not ignore this error anymore
    */
   public void ignore(final boolean b) {
     if (b != myIgnored) {

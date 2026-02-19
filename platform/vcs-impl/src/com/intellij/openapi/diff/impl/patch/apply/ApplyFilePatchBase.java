@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.diff.impl.patch.apply;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -6,17 +6,19 @@ import com.intellij.openapi.diff.impl.patch.ApplyPatchContext;
 import com.intellij.openapi.diff.impl.patch.FilePatch;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Getter;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.changes.CommitContext;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
+import java.util.function.Supplier;
 
+@ApiStatus.Internal
 public abstract class ApplyFilePatchBase<T extends FilePatch> implements ApplyFilePatch {
-  protected final static Logger LOG = Logger.getInstance(ApplyFilePatchBase.class);
+  protected static final Logger LOG = Logger.getInstance(ApplyFilePatchBase.class);
   protected final T myPatch;
 
   public ApplyFilePatchBase(T patch) {
@@ -28,16 +30,17 @@ public abstract class ApplyFilePatchBase<T extends FilePatch> implements ApplyFi
   }
 
   @Override
-  public Result apply(VirtualFile fileToPatch,
+  public Result apply(@NotNull VirtualFile fileToPatch,
                       ApplyPatchContext context,
                       @NotNull Project project,
                       FilePath pathBeforeRename,
-                      Getter<? extends CharSequence> baseContents,
+                      Supplier<? extends CharSequence> baseContents,
                       @Nullable CommitContext commitContext) throws IOException {
     if (LOG.isDebugEnabled()) {
       LOG.debug("apply patch called for : " + fileToPatch.getPath());
     }
     if (myPatch.isNewFile()) {
+      // File was already created by PathsVerifier.CheckAdded.check(), now set its content
       applyCreate(project, fileToPatch, commitContext);
     }
     else if (myPatch.isDeletedFile()) {
@@ -50,12 +53,16 @@ public abstract class ApplyFilePatchBase<T extends FilePatch> implements ApplyFi
     return SUCCESS;
   }
 
-  protected abstract void applyCreate(Project project, VirtualFile newFile, @Nullable CommitContext commitContext) throws IOException;
+  protected abstract void applyCreate(@NotNull Project project,
+                                      @NotNull VirtualFile newFile,
+                                      @Nullable CommitContext commitContext) throws IOException;
 
-  protected abstract Result applyChange(Project project, VirtualFile fileToPatch, FilePath pathBeforeRename, Getter<? extends CharSequence> baseContents) throws IOException;
+  protected abstract Result applyChange(@NotNull Project project,
+                                        @NotNull VirtualFile fileToPatch,
+                                        @NotNull FilePath pathBeforeRename,
+                                        @Nullable Supplier<? extends CharSequence> baseContents) throws IOException;
 
-  @Nullable
-  public static VirtualFile findPatchTarget(final ApplyPatchContext context, final String beforeName, final String afterName)
+  public static @Nullable VirtualFile findPatchTarget(final ApplyPatchContext context, final String beforeName, final String afterName)
     throws IOException {
     VirtualFile file = null;
     if (beforeName != null) {
@@ -67,16 +74,16 @@ public abstract class ApplyFilePatchBase<T extends FilePatch> implements ApplyFi
     else if (context.isAllowRename() && afterName != null && !beforeName.equals(afterName)) {
       String[] beforeNameComponents = beforeName.split("/");
       String[] afterNameComponents = afterName.split("/");
-      if (!beforeNameComponents [beforeNameComponents.length-1].equals(afterNameComponents [afterNameComponents.length-1])) {
+      if (!beforeNameComponents[beforeNameComponents.length - 1].equals(afterNameComponents[afterNameComponents.length - 1])) {
         context.registerBeforeRename(file);
-        file.rename(FilePatch.class, afterNameComponents [afterNameComponents.length-1]);
+        file.rename(FilePatch.class, afterNameComponents[afterNameComponents.length - 1]);
       }
       boolean needMove = (beforeNameComponents.length != afterNameComponents.length);
       if (!needMove) {
         needMove = checkPackageRename(context, beforeNameComponents, afterNameComponents);
       }
       if (needMove) {
-        VirtualFile moveTarget = findFileToPatchByComponents(context, afterNameComponents, afterNameComponents.length-1);
+        VirtualFile moveTarget = findFileToPatchByComponents(context, afterNameComponents, afterNameComponents.length - 1);
         if (moveTarget == null) {
           return null;
         }
@@ -91,8 +98,8 @@ public abstract class ApplyFilePatchBase<T extends FilePatch> implements ApplyFi
                                             final String[] beforeNameComponents,
                                             final String[] afterNameComponents) {
     int changedIndex = -1;
-    for(int i=context.getSkipTopDirs(); i<afterNameComponents.length-1; i++) {
-      if (!beforeNameComponents [i].equals(afterNameComponents [i])) {
+    for (int i = context.getSkipTopDirs(); i < afterNameComponents.length - 1; i++) {
+      if (!beforeNameComponents[i].equals(afterNameComponents[i])) {
         if (changedIndex != -1) {
           return true;
         }
@@ -100,38 +107,36 @@ public abstract class ApplyFilePatchBase<T extends FilePatch> implements ApplyFi
       }
     }
     if (changedIndex == -1) return false;
-    VirtualFile oldDir = findFileToPatchByComponents(context, beforeNameComponents, changedIndex+1);
-    VirtualFile newDir = findFileToPatchByComponents(context.getPrepareContext(), afterNameComponents, changedIndex+1);
+    VirtualFile oldDir = findFileToPatchByComponents(context, beforeNameComponents, changedIndex + 1);
+    VirtualFile newDir = findFileToPatchByComponents(context.getPrepareContext(), afterNameComponents, changedIndex + 1);
     if (oldDir != null && newDir == null) {
       return false;
     }
     return true;
   }
 
-  @Nullable
-  private static VirtualFile findFileToPatchByName(@NotNull ApplyPatchContext context, final String fileName) {
+  private static @Nullable VirtualFile findFileToPatchByName(@NotNull ApplyPatchContext context, final String fileName) {
     String[] pathNameComponents = fileName.split("/");
     int lastComponentToFind = pathNameComponents.length;
     return findFileToPatchByComponents(context, pathNameComponents, lastComponentToFind);
   }
 
-  @Nullable
-  private static VirtualFile findFileToPatchByComponents(ApplyPatchContext context,
-                                                         final String[] pathNameComponents,
-                                                         final int lastComponentToFind) {
+  private static @Nullable VirtualFile findFileToPatchByComponents(ApplyPatchContext context,
+                                                                   final String[] pathNameComponents,
+                                                                   final int lastComponentToFind) {
     VirtualFile patchedDir = context.getBaseDir();
-    for(int i=context.getSkipTopDirs(); i<lastComponentToFind; i++) {
+    for (int i = context.getSkipTopDirs(); i < lastComponentToFind; i++) {
       VirtualFile nextChild;
-      if (pathNameComponents [i].equals("..")) {
+      if (pathNameComponents[i].equals("..")) {
         nextChild = patchedDir.getParent();
       }
       else {
-        nextChild = patchedDir.findChild(pathNameComponents [i]);
+        nextChild = patchedDir.findChild(pathNameComponents[i]);
       }
       if (nextChild == null) {
         if (context.isCreateDirectories()) {
           try {
-            nextChild = patchedDir.createChildDirectory(null, pathNameComponents [i]);
+            nextChild = patchedDir.createChildDirectory(null, pathNameComponents[i]);
           }
           catch (IOException e) {
             return null;

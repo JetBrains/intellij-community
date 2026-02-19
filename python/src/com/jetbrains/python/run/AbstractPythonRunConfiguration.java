@@ -1,11 +1,16 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.run;
 
 import com.intellij.diagnostic.logging.LogConfigurationPanel;
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.configuration.AbstractRunConfiguration;
 import com.intellij.execution.configuration.EnvironmentVariablesComponent;
-import com.intellij.execution.configurations.*;
+import com.intellij.execution.configurations.ConfigurationFactory;
+import com.intellij.execution.configurations.GeneralCommandLine;
+import com.intellij.execution.configurations.ParamsGroup;
+import com.intellij.execution.configurations.RunProfileWithCompileBeforeLaunchOption;
+import com.intellij.execution.configurations.RuntimeConfigurationError;
+import com.intellij.execution.configurations.RuntimeConfigurationException;
 import com.intellij.execution.testframework.sm.runner.GeneralIdBasedToSMTRunnerEventsConvertor;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
@@ -19,6 +24,7 @@ import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizerUtil;
 import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.PathMappingSettings;
@@ -26,30 +32,39 @@ import com.intellij.util.PlatformUtils;
 import com.intellij.util.xmlb.annotations.Transient;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PythonModuleTypeBase;
+import com.jetbrains.python.sdk.PySdkExtKt;
 import com.jetbrains.python.sdk.PythonEnvUtil;
 import com.jetbrains.python.sdk.PythonSdkType;
-import com.jetbrains.python.sdk.PythonSdkUtil;
+import com.jetbrains.python.sdk.legacy.PythonSdkUtil;
 import org.jdom.Element;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+
+import static com.jetbrains.python.run.PythonScriptCommandLineState.getExpandedWorkingDir;
 
 /**
  * @author Leonid Shalupov
  */
 public abstract class AbstractPythonRunConfiguration<T extends AbstractPythonRunConfiguration<T>> extends AbstractRunConfiguration
   implements AbstractPythonRunConfigurationParams, CommandLinePatcher, RunProfileWithCompileBeforeLaunchOption {
+  private static final String RUN_TOOL = "RUN_TOOL";
+  private @Nullable Boolean useRunTool = null;
   private String myInterpreterOptions = "";
   private String myWorkingDirectory = "";
   private String mySdkHome = "";
+  private Sdk mySdk = null;
   private boolean myUseModuleSdk;
   private boolean myAddContentRoots = true;
   private boolean myAddSourceRoots = true;
+  private boolean myDebugJustMyCode = false;
 
   protected PathMappingSettings myMappingSettings;
   /**
@@ -115,9 +130,13 @@ public abstract class AbstractPythonRunConfiguration<T extends AbstractPythonRun
     };
   }
 
-  @NotNull
   @Override
-  public final SettingsEditor<T> getConfigurationEditor() {
+  public final @NotNull SettingsEditor<T> getConfigurationEditor() {
+    if (Registry.is("python.new.run.config", false) && isNewUiSupported()) {
+      // TODO: actually, we should return result of `PythonExtendedConfigurationEditor.create()` call, but it produces side effects
+      // investigation needed PY-17716
+      return createConfigurationEditor();
+    }
     final SettingsEditor<T> runConfigurationEditor = PythonExtendedConfigurationEditor.create(createConfigurationEditor());
 
     final SettingsEditorGroup<T> group = new SettingsEditorGroup<>();
@@ -130,6 +149,10 @@ public abstract class AbstractPythonRunConfiguration<T extends AbstractPythonRun
     group.addEditor(ExecutionBundle.message("logs.tab.title"), new LogConfigurationPanel<>());
 
     return group;
+  }
+
+  protected boolean isNewUiSupported() {
+    return false;
   }
 
   protected abstract SettingsEditor<T> createConfigurationEditor();
@@ -169,11 +192,11 @@ public abstract class AbstractPythonRunConfiguration<T extends AbstractPythonRun
       if (!myUseModuleSdk) {
         if (StringUtil.isEmptyOrSpaces(getSdkHome())) {
           final Sdk projectSdk = ProjectRootManager.getInstance(getProject()).getProjectSdk();
-          if (projectSdk == null || !(projectSdk.getSdkType() instanceof PythonSdkType)) {
+          if (projectSdk == null || !PythonSdkUtil.isPythonSdk(projectSdk)) {
             throw new RuntimeConfigurationError(PyBundle.message("runcfg.unittest.no_sdk"));
           }
         }
-        else if (!PythonSdkType.getInstance().isValidSdkHome(getSdkHome())) {
+        else if (mySdk == null || !PySdkExtKt.getSdkSeemsValid(mySdk)) {
           throw new RuntimeConfigurationError(PyBundle.message("runcfg.unittest.no_valid_sdk"));
         }
       }
@@ -188,6 +211,9 @@ public abstract class AbstractPythonRunConfiguration<T extends AbstractPythonRun
 
   @Override
   public String getSdkHome() {
+    if (mySdk != null) {
+      return mySdk.getHomePath();
+    }
     String sdkHome = mySdkHome;
     if (StringUtil.isEmptyOrSpaces(mySdkHome)) {
       final Sdk projectJdk = PythonSdkUtil.findPythonSdk(getModule());
@@ -198,13 +224,15 @@ public abstract class AbstractPythonRunConfiguration<T extends AbstractPythonRun
     return sdkHome;
   }
 
-  @Nullable
-  public String getInterpreterPath() {
+  public @Nullable String getInterpreterPath() {
     String sdkHome;
     if (myUseModuleSdk) {
       Sdk sdk = PythonSdkUtil.findPythonSdk(getModule());
       if (sdk == null) return null;
       sdkHome = sdk.getHomePath();
+    }
+    else if (mySdk != null) {
+      sdkHome = mySdk.getHomePath();
     }
     else {
       sdkHome = getSdkHome();
@@ -212,14 +240,30 @@ public abstract class AbstractPythonRunConfiguration<T extends AbstractPythonRun
     return sdkHome;
   }
 
-  @Nullable
-  public Sdk getSdk() {
+  @Override
+  @Transient
+  public @Nullable Sdk getSdk() {
     if (myUseModuleSdk) {
       return PythonSdkUtil.findPythonSdk(getModule());
+    }
+    else if (mySdk != null) {
+      return mySdk;
     }
     else {
       return PythonSdkUtil.findSdkByPath(getSdkHome());
     }
+  }
+
+  private @NotNull List<String> myEnvFiles = Collections.emptyList();
+
+  @Override
+  public @NotNull List<String> getEnvFilePaths() {
+    return myEnvFiles;
+  }
+
+  @Override
+  public void setEnvFilePaths(@NotNull List<String> envFiles) {
+    myEnvFiles = envFiles;
   }
 
   @Override
@@ -228,12 +272,24 @@ public abstract class AbstractPythonRunConfiguration<T extends AbstractPythonRun
     myInterpreterOptions = JDOMExternalizerUtil.readField(element, "INTERPRETER_OPTIONS");
     readEnvs(element);
     mySdkHome = JDOMExternalizerUtil.readField(element, "SDK_HOME");
+
+    final String sdkName = JDOMExternalizerUtil.readField(element, "SDK_NAME");
+    if (sdkName != null) {
+      mySdk = PythonSdkUtil.findSdkByKey(sdkName);
+    }
+
+    var output = JDOMExternalizerUtil.readField(element, "ENV_FILES");
+    myEnvFiles = output != null ? StringUtil.split(output, File.pathSeparator) : Collections.emptyList();
+
     myWorkingDirectory = JDOMExternalizerUtil.readField(element, "WORKING_DIRECTORY");
     myUseModuleSdk = Boolean.parseBoolean(JDOMExternalizerUtil.readField(element, "IS_MODULE_SDK"));
     final String addContentRoots = JDOMExternalizerUtil.readField(element, "ADD_CONTENT_ROOTS");
     myAddContentRoots = addContentRoots == null || Boolean.parseBoolean(addContentRoots);
     final String addSourceRoots = JDOMExternalizerUtil.readField(element, "ADD_SOURCE_ROOTS");
     myAddSourceRoots = addSourceRoots == null || Boolean.parseBoolean(addSourceRoots);
+    final String debugJustMyCode = JDOMExternalizerUtil.readField(element, "DEBUG_JUST_MY_CODE");
+    myDebugJustMyCode = debugJustMyCode == null || Boolean.parseBoolean(debugJustMyCode);
+
     if (!mySkipModuleSerialization) {
       getConfigurationModule().readExternal(element);
     }
@@ -241,6 +297,8 @@ public abstract class AbstractPythonRunConfiguration<T extends AbstractPythonRun
     setMappingSettings(PathMappingSettings.readExternal(element));
     // extension settings:
     PythonRunConfigurationExtensionsManager.Companion.getInstance().readExternal(this, element);
+    String runToolValue = JDOMExternalizerUtil.readField(element, RUN_TOOL);
+    useRunTool = StringUtil.isEmpty(runToolValue) ? null : Boolean.parseBoolean(runToolValue);
   }
 
   protected void readEnvs(Element element) {
@@ -254,13 +312,18 @@ public abstract class AbstractPythonRunConfiguration<T extends AbstractPythonRun
   @Override
   public void writeExternal(@NotNull Element element) throws WriteExternalException {
     super.writeExternal(element);
+    JDOMExternalizerUtil.writeField(element, "ENV_FILES", String.join(File.pathSeparator, myEnvFiles));
     JDOMExternalizerUtil.writeField(element, "INTERPRETER_OPTIONS", myInterpreterOptions);
     writeEnvs(element);
     JDOMExternalizerUtil.writeField(element, "SDK_HOME", mySdkHome);
+    if (mySdk != null) {
+      JDOMExternalizerUtil.writeField(element, "SDK_NAME", mySdk.getName());
+    }
     JDOMExternalizerUtil.writeField(element, "WORKING_DIRECTORY", myWorkingDirectory);
     JDOMExternalizerUtil.writeField(element, "IS_MODULE_SDK", Boolean.toString(myUseModuleSdk));
     JDOMExternalizerUtil.writeField(element, "ADD_CONTENT_ROOTS", Boolean.toString(myAddContentRoots));
     JDOMExternalizerUtil.writeField(element, "ADD_SOURCE_ROOTS", Boolean.toString(myAddSourceRoots));
+    JDOMExternalizerUtil.writeField(element, "DEBUG_JUST_MY_CODE", Boolean.toString(myDebugJustMyCode));
     if (!mySkipModuleSerialization) {
       getConfigurationModule().writeExternal(element);
     }
@@ -269,6 +332,7 @@ public abstract class AbstractPythonRunConfiguration<T extends AbstractPythonRun
     PythonRunConfigurationExtensionsManager.Companion.getInstance().writeExternal(this, element);
 
     PathMappingSettings.writeExternal(element, getMappingSettings());
+    JDOMExternalizerUtil.writeField(element, RUN_TOOL, useRunTool == null ? null : Boolean.toString(useRunTool));
   }
 
   protected void writeEnvs(Element element) {
@@ -302,9 +366,14 @@ public abstract class AbstractPythonRunConfiguration<T extends AbstractPythonRun
   }
 
   @Override
-  @Nullable
   @Transient
-  public Module getModule() {
+  public void setSdk(@Nullable Sdk sdk) {
+    mySdk = sdk;
+  }
+
+  @Override
+  @Transient
+  public @Nullable Module getModule() {
     return getConfigurationModule().getModule();
   }
 
@@ -339,16 +408,20 @@ public abstract class AbstractPythonRunConfiguration<T extends AbstractPythonRun
   }
 
   public static void copyParams(AbstractPythonRunConfigurationParams source, AbstractPythonRunConfigurationParams target) {
+    target.setEnvFilePaths(source.getEnvFilePaths());
     target.setEnvs(new LinkedHashMap<>(source.getEnvs()));
     target.setInterpreterOptions(source.getInterpreterOptions());
     target.setPassParentEnvs(source.isPassParentEnvs());
     target.setSdkHome(source.getSdkHome());
+    target.setSdk(source.getSdk());
     target.setWorkingDirectory(source.getWorkingDirectory());
     target.setModule(source.getModule());
     target.setUseModuleSdk(source.isUseModuleSdk());
     target.setMappingSettings(source.getMappingSettings());
     target.setAddContentRoots(source.shouldAddContentRoots());
     target.setAddSourceRoots(source.shouldAddSourceRoots());
+    target.setUseRunTool(source.getUseRunTool());
+    target.setDebugJustMyCode(source.shouldDebugJustMyCode());
   }
 
   /**
@@ -358,54 +431,27 @@ public abstract class AbstractPythonRunConfiguration<T extends AbstractPythonRun
    * @param commandLine what to patch
    */
   @Override
+  @ApiStatus.Internal
   public void patchCommandLine(GeneralCommandLine commandLine) {
     final String interpreterPath = getInterpreterPath();
     Sdk sdk = getSdk();
     if (sdk != null && interpreterPath != null) {
       patchCommandLineFirst(commandLine, interpreterPath);
       patchCommandLineForVirtualenv(commandLine, sdk);
-      patchCommandLineForBuildout(commandLine, interpreterPath);
-      patchCommandLineLast(commandLine, interpreterPath);
     }
   }
 
   /**
-   * Patches command line before virtualenv and buildout patchers.
+   * Patches command line before virtualenv patchers.
    * Default implementation does nothing.
-   *
-   * @param commandLine
-   * @param sdkHome
    */
+  @ApiStatus.Internal
   protected void patchCommandLineFirst(GeneralCommandLine commandLine, String sdkHome) {
     // override
   }
 
   /**
-   * Patches command line after virtualenv and buildout patchers.
-   * Default implementation does nothing.
-   *
-   * @param commandLine
-   * @param sdkHome
-   */
-  protected void patchCommandLineLast(GeneralCommandLine commandLine, String sdkHome) {
-    // override
-  }
-
-  /**
-   * Gets called after {@link #patchCommandLineForVirtualenv(GeneralCommandLine, Sdk)}
-   * Does nothing here, real implementations should use alter running script name or use engulfer.
-   *
-   * @param commandLine
-   * @param sdkHome
-   */
-  protected void patchCommandLineForBuildout(GeneralCommandLine commandLine, String sdkHome) {
-  }
-
-  /**
    * Alters PATH so that a virtualenv is activated, if present.
-   *
-   * @param commandLine
-   * @param sdk
    */
   protected void patchCommandLineForVirtualenv(@NotNull GeneralCommandLine commandLine, @NotNull Sdk sdk) {
     PythonSdkType.patchCommandLineForVirtualenv(commandLine, sdk);
@@ -435,9 +481,8 @@ public abstract class AbstractPythonRunConfiguration<T extends AbstractPythonRun
    * @return working directory to run, never null, does its best to guess which dir to use.
    * Unlike {@link #getWorkingDirectory()} it does not simply take directory from config.
    */
-  @NotNull
-  public String getWorkingDirectorySafe() {
-    final String result = StringUtil.isEmpty(myWorkingDirectory) ? getProject().getBasePath() : myWorkingDirectory;
+  public @NotNull String getWorkingDirectorySafe() {
+    final String result = StringUtil.isEmpty(myWorkingDirectory) ? getProject().getBasePath() : getExpandedWorkingDir(this);
     if (result != null) {
       return result;
     }
@@ -449,8 +494,7 @@ public abstract class AbstractPythonRunConfiguration<T extends AbstractPythonRun
     return new File(".").getAbsolutePath();
   }
 
-  @Nullable
-  private String getFirstModuleRoot() {
+  private @Nullable String getFirstModuleRoot() {
     final Module module = getModule();
     if (module == null) {
       return null;
@@ -465,18 +509,44 @@ public abstract class AbstractPythonRunConfiguration<T extends AbstractPythonRun
     return module != null ? module.getName() : null;
   }
 
+  @ApiStatus.Internal
+  @Override
+  public final @Nullable Boolean getUseRunTool() {
+    return useRunTool;
+  }
+
+  @ApiStatus.Internal
+  @Override
+  public final void setUseRunTool(@Nullable Boolean useRunTool) {
+    this.useRunTool = useRunTool;
+  }
+
   @Override
   public boolean isBuildBeforeLaunchAddedByDefault() {
     return false;
   }
 
+  @Override
+  @ApiStatus.Internal
+  public boolean shouldDebugJustMyCode() {
+    return myDebugJustMyCode;
+  }
+
+  @Override
+  @ApiStatus.Internal
+  public void setDebugJustMyCode(boolean debugJustMyCode) {
+    myDebugJustMyCode = debugJustMyCode;
+  }
+
+
   /**
    * Adds test specs (like method, class, script, etc) to list of runner parameters.
-   *
-   * @deprecated this method has been moved to {@link com.jetbrains.python.testing.PythonTestCommandLineStateBase}
+   * <p>
+   * To be deprecated.
+   * <p>
+   * The part of the legacy implementation based on {@link GeneralCommandLine}.
    */
-  @Deprecated
-  public void addTestSpecsAsParameters(@NotNull final ParamsGroup paramsGroup, @NotNull final List<String> testSpecs) {
+  public void addTestSpecsAsParameters(final @NotNull ParamsGroup paramsGroup, final @NotNull List<String> testSpecs) {
     // By default we simply add them as arguments
     paramsGroup.addParameters(testSpecs);
   }

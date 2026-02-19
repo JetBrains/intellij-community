@@ -21,7 +21,7 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Dmitry Avdeev
- * @see com.intellij.util.xml.DomManager#getConverterManager()
+ * @see DomManager#getConverterManager()
  */
 public interface ConverterManager {
 

@@ -1,0 +1,3 @@
+- name: dist.all/lib/intellij.platform.compose.markdown.jar
+  modules:
+  - name: intellij.platform.compose.markdown

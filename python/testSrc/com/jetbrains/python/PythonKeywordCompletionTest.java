@@ -1,6 +1,7 @@
 // Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python;
 
+import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.completion.impl.CamelHumpMatcher;
 import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.psi.LanguageLevel;
@@ -8,9 +9,9 @@ import com.jetbrains.python.psi.LanguageLevel;
 import java.util.List;
 
 public class PythonKeywordCompletionTest extends PyTestCase {
-
-  private void doTest3K() {
-    runWithLanguageLevel(LanguageLevel.PYTHON34, this::doTest);
+  @Override
+  protected void setUp() throws Exception {
+    super.setUp();
   }
 
   private void doTest() {
@@ -47,7 +48,7 @@ public class PythonKeywordCompletionTest extends PyTestCase {
   }
 
   public void testNonlocal() {  // PY-2289
-    doTest3K();
+    doTest();
   }
 
   public void testYield() {
@@ -91,12 +92,14 @@ public class PythonKeywordCompletionTest extends PyTestCase {
   }
 
   public void testNoContinueInFinally() {
-    final String testName = "keywordCompletion/" + getTestName(true);
-    myFixture.configureByFile(testName + ".py");
-    myFixture.completeBasic();
-    final List<String> lookupElementStrings = myFixture.getLookupElementStrings();
-    assertNotNull(lookupElementStrings);
-    assertDoesntContain(lookupElementStrings, "continue");
+    runWithLanguageLevel(LanguageLevel.PYTHON27, () -> {
+      final String testName = "keywordCompletion/" + getTestName(true);
+      myFixture.configureByFile(testName + ".py");
+      myFixture.completeBasic();
+      final List<String> lookupElementStrings = myFixture.getLookupElementStrings();
+      assertNotNull(lookupElementStrings);
+      assertDoesntContain(lookupElementStrings, "continue");
+    });
   }
 
   public void testNoElifBeforeElse() {
@@ -109,9 +112,10 @@ public class PythonKeywordCompletionTest extends PyTestCase {
   }
 
   public void testNoElseBeforeExcept() {
-    final List<String> lookupElementStrings = doTestByText("try:\n" +
-                                                           "  a = 1\n" +
-                                                           "<caret>");
+    final List<String> lookupElementStrings = doTestByText("""
+                                                             try:
+                                                               a = 1
+                                                             <caret>""");
     assertNotNull(lookupElementStrings);
     assertDoesntContain(lookupElementStrings, "else");
   }
@@ -121,7 +125,7 @@ public class PythonKeywordCompletionTest extends PyTestCase {
   }
 
   public void testFromDotImport() {  // PY-2772
-    doTest3K();
+    doTest();
   }
 
   public void testLambdaInExpression() {  // PY-3150
@@ -129,7 +133,7 @@ public class PythonKeywordCompletionTest extends PyTestCase {
   }
 
   public void testNoneInArgList() {  // PY-3464
-    doTest3K();
+    doTest();
   }
 
   // PY-5144
@@ -138,34 +142,34 @@ public class PythonKeywordCompletionTest extends PyTestCase {
   }
 
   public void testAsInWith() {  // PY-3701
-    runWithLanguageLevel(LanguageLevel.PYTHON27, () -> assertTrue(doTestByText("with open(foo) <caret>").contains("as")));
+    assertTrue(doTestByText("with open(foo) <caret>").contains("as"));
   }
 
   public void testAsInExcept() {  // PY-1846
-    runWithLanguageLevel(
-      LanguageLevel.PYTHON27,
-      () -> assertTrue(doTestByText("try:\n" +
-                                    "    pass\n" +
-                                    "except IOError <caret>").contains("as"))
-    );
+    assertTrue(doTestByText("""
+                              try:
+                                  pass
+                              except IOError <caret>""").contains("as"));
   }
 
   // PY-13323
   public void testAsInComment() {
     assertDoesntContain(
       doTestByText(
-        "import foo\n" +
-        "# bar baz\n" +
-        "# <caret>"
+        """
+          import foo
+          # bar baz
+          # <caret>"""
       ),
       "as"
     );
   }
 
   public void testElseInFor() {  // PY-6755
-    assertTrue(doTestByText("for item in range(10):\n" +
-                            "    pass\n" +
-                            "el<caret>").contains("else"));
+    assertTrue(doTestByText("""
+                              for item in range(10):
+                                  pass
+                              el<caret>""").contains("else"));
   }
 
   public void testFinallyInElse() {  // PY-6755
@@ -210,30 +214,36 @@ public class PythonKeywordCompletionTest extends PyTestCase {
   }
 
   public void testExceptAfterElse() {
-    assertDoesntContain(doTestByText("try:\n" +
-                                     "    pass\n" +
-                                     "except ArithmeticError:\n" +
-                                     "    pass\n" +
-                                     "else:\n" +
-                                     "    pass\n<caret>"), "except");
+    assertDoesntContain(doTestByText("""
+                                       try:
+                                           pass
+                                       except ArithmeticError:
+                                           pass
+                                       else:
+                                           pass
+                                       <caret>"""), "except");
   }
 
   public void testExceptAfterFinally() {
-    assertDoesntContain(doTestByText("try:\n" +
-                                        "    pass\n" +
-                                        "except ArithmeticError:\n" +
-                                        "    pass\n" +
-                                        "finally:\n" +
-                                        "    pass\n<caret>"), "except");
+    assertDoesntContain(doTestByText("""
+                                       try:
+                                           pass
+                                       except ArithmeticError:
+                                           pass
+                                       finally:
+                                           pass
+                                       <caret>"""), "except");
   }
 
   // PY-15075
   public void testImportAfterWhitespaceInRelativeImport() {
-    List<String> variants = doTestByText("from ...<caret>");
-    assertDoesntContain(variants, "import");
+    runWithLanguageLevel(LanguageLevel.PYTHON27, () -> {
+      List<String> variants = doTestByText("from ...<caret>");
+      assertDoesntContain(variants, "import");
 
-    assertNull(doTestByText("from ... <caret>"));
-    myFixture.checkResult("from ... import ");
+      assertNull(doTestByText("from ... <caret>"));
+      myFixture.checkResult("from ... import ");
+    });
   }
 
   // PY-7018
@@ -244,5 +254,129 @@ public class PythonKeywordCompletionTest extends PyTestCase {
   // PY-13111
   public void testNoForAndYieldInCommentContext() {
     assertDoesntContain(doTestByTestName(), "for", "yield");
+  }
+
+  // PY-45368
+  public void testNoneInParameterAnnotation() {
+    doTest();
+  }
+
+  // PY-45368
+  public void testNoneInReturnAnnotation() {
+    doTest();
+  }
+
+  // PY-48039
+  public void testMatchInsideFunction() {
+    doTest();
+  }
+
+  // PY-48039
+  public void testMatchOnTopLevel() {
+    doTest();
+  }
+
+  // PY-48039
+  public void testNoMatchInsideArgumentList() {
+    doTest();
+  }
+
+  // PY-48039
+  public void testNoMatchInCondition() {
+    doTest();
+  }
+
+  // PY-48039
+  public void testNoMatchAfterQualifier() {
+    doTest();
+  }
+
+  // PY-48039
+  public void testNoMatchBefore310() {
+    runWithLanguageLevel(LanguageLevel.PYTHON39, this::doTest);
+  }
+
+  // PY-48039
+  public void testCaseInsideMatchStatement() {
+    doTest();
+  }
+
+  // PY-48039
+  public void testNoCaseBefore310() {
+    runWithLanguageLevel(LanguageLevel.PYTHON39, this::doTest);
+  }
+
+  // PY-48039
+  public void testNoCaseOutsideMatchStatement() {
+    CodeInsightSettings.runWithTemporarySettings(settings -> {
+      settings.AUTOCOMPLETE_ON_CODE_COMPLETION = false;
+      List<String> variants = doTestByTestName();
+      assertDoesntContain(variants, PyNames.CASE);
+      return null;
+    });
+  }
+
+  // PY-49728
+  public void testNoNonLiteralExpressionKeywordsInsidePattern() {
+    List<String> variants = doTestByTestName();
+    assertDoesntContain(variants, PyNames.ASYNC, PyNames.NOT, PyNames.LAMBDA);
+    assertContainsElements(variants, PyNames.NONE, PyNames.TRUE, PyNames.FALSE);
+  }
+
+  // PY-49728
+  public void testNoNonLiteralExpressionKeywordsAfterPattern() {
+    List<String> variants = doTestByTestName();
+    assertDoesntContain(variants, PyNames.ASYNC, PyNames.NOT, PyNames.LAMBDA);
+    assertContainsElements(variants, PyNames.NONE, PyNames.TRUE, PyNames.FALSE);
+  }
+
+  // PY-49728
+  public void testNonLiteralExpressionKeywordsInGuardCondition() {
+    assertContainsElements(doTestByTestName(), PyNames.ASYNC, PyNames.NOT, PyNames.LAMBDA);
+  }
+
+  // PY-49728
+  public void testNonLiteralExpressionKeywordsInCaseClauseBody() {
+    assertContainsElements(doTestByTestName(), PyNames.ASYNC, PyNames.NOT, PyNames.LAMBDA);
+  }
+
+  // PY-54482
+  public void testLiteralsInDecoratorArgumentList() {
+    List<String> variants = doTestByTestName();
+    assertContainsElements(variants, PyNames.TRUE);
+  }
+
+  // PY-52547
+  public void testAsyncKeywordCompletionOnly() {
+    List<String> variants = doTestByText("""
+                   some_variable = 42
+                   def some_function():
+                       pass
+                   class SomeClass:
+                       pass
+                   async <caret>
+                   """);
+
+      assertContainsElements(variants, PyNames.DEF, PyNames.WITH, PyNames.FOR);
+      assertDoesntContain(variants, "some_variable", "some_function", "SomeClass");
+  }
+
+  // PY-46932
+  public void testAsyncKeywordConstructCompletion() {
+    List<String> variants = doTestByText("""
+                   some_variable = 42
+                   def some_function():
+                       pass
+                   class SomeClass:
+                       pass
+                   as<caret>
+                   """);
+
+    assertContainsElements(
+      variants,
+      PyNames.ASYNC + " " + PyNames.DEF,
+      PyNames.ASYNC + " " + PyNames.FOR,
+      PyNames.ASYNC + " " + PyNames.WITH
+    );
   }
 }

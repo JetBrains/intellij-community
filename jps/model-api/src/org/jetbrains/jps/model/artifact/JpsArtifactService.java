@@ -15,6 +15,7 @@
  */
 package org.jetbrains.jps.model.artifact;
 
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.model.JpsElement;
 import org.jetbrains.jps.model.JpsProject;
@@ -29,6 +30,7 @@ public abstract class JpsArtifactService {
     return JpsServiceManager.getInstance().getService(JpsArtifactService.class);
   }
 
+  @ApiStatus.Internal
   public abstract <P extends JpsElement> JpsArtifact createArtifact(@NotNull String name, @NotNull JpsCompositePackagingElement rootElement,
                                                                     @NotNull JpsArtifactType<P> type, @NotNull P properties);
 
@@ -36,6 +38,7 @@ public abstract class JpsArtifactService {
 
   public abstract List<JpsArtifact> getSortedArtifacts(@NotNull JpsProject project);
 
+  @ApiStatus.Internal
   public abstract <P extends JpsElement> JpsArtifact addArtifact(@NotNull JpsProject project, @NotNull String name,
                                                                  @NotNull JpsCompositePackagingElement rootElement,
                                           @NotNull JpsArtifactType<P> type, @NotNull P properties);

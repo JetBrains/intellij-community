@@ -17,14 +17,15 @@ package com.intellij.laf.macos;
 
 import com.intellij.ide.ui.laf.darcula.ui.DarculaSpinnerBorder;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JSpinner;
+import java.awt.Component;
+import java.awt.Rectangle;
 import java.awt.geom.Area;
 
 /**
  * @author Konstantin Bulenkov
  */
-public class MacIntelliJSpinnerBorder extends MacIntelliJComboBoxBorder {
+public final class MacIntelliJSpinnerBorder extends MacIntelliJComboBoxBorder {
   @Override
   protected boolean isFocused(Component c) {
     return DarculaSpinnerBorder.isFocused(c);
@@ -33,8 +34,7 @@ public class MacIntelliJSpinnerBorder extends MacIntelliJComboBoxBorder {
   @Override
   Area getButtonBounds(Component c) {
     Rectangle bounds = null;
-    if (c instanceof JSpinner && ((JSpinner)c).getUI() instanceof MacIntelliJSpinnerUI) {
-      MacIntelliJSpinnerUI ui = (MacIntelliJSpinnerUI)((JSpinner)c).getUI();
+    if (c instanceof JSpinner && ((JSpinner)c).getUI() instanceof MacIntelliJSpinnerUI ui) {
       bounds = ui.getArrowButtonBounds();
     }
     return bounds != null ? new Area(bounds) : new Area();

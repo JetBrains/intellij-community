@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.util;
 
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
@@ -9,18 +9,18 @@ import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.NlsContexts.ConfigurableName;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyBundle;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import java.awt.BorderLayout;
 
-/**
- * @author peter
- */
 public abstract class SdkHomeConfigurable implements SearchableConfigurable {
   private JPanel myPanel;
   private TextFieldWithBrowseButton myPathField;
@@ -45,13 +45,12 @@ public abstract class SdkHomeConfigurable implements SearchableConfigurable {
     contentPanel.add(new JLabel(GroovyBundle.message("framework.0.home.label", myFrameworkName)), BorderLayout.WEST);
     myPathField = new TextFieldWithBrowseButton();
     contentPanel.add(myPathField);
-    myPathField
-      .addBrowseFolderListener(GroovyBundle.message("select.framework.0.home.title", myFrameworkName), "", myProject, new FileChooserDescriptor(false, true, false, false, false, false) {
-        @Override
-        public boolean isFileSelectable(VirtualFile file) {
-          return isSdkHome(file);
-        }
-      });
+    myPathField.addBrowseFolderListener(myProject, new FileChooserDescriptor(false, true, false, false, false, false) {
+      @Override
+      public boolean isFileSelectable(@Nullable VirtualFile file) {
+        return file != null && isSdkHome(file);
+      }
+    }.withTitle(GroovyBundle.message("select.framework.0.home.title", myFrameworkName)));
     return myPanel;
   }
 
@@ -59,7 +58,7 @@ public abstract class SdkHomeConfigurable implements SearchableConfigurable {
 
   @Override
   public boolean isModified() {
-    return !myPathField.getText().equals(getStateText());
+    return !(myPathField.getText().equals(StringUtil.notNullize(getStateText())));
   }
 
   @Override
@@ -95,8 +94,7 @@ public abstract class SdkHomeConfigurable implements SearchableConfigurable {
   }
 
   @Override
-  @NotNull
-  public String getId() {
+  public @NotNull String getId() {
     return getHelpTopic();
   }
 

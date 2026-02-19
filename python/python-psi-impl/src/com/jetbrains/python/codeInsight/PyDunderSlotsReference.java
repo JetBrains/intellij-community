@@ -21,17 +21,15 @@ import com.intellij.psi.PsiReferenceBase;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.psi.PsiReferenceEx;
 import com.jetbrains.python.psi.PyClass;
-import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.PyStringLiteralExpression;
 import com.jetbrains.python.psi.PyTargetExpression;
 import com.jetbrains.python.psi.PyUtil;
 import com.jetbrains.python.psi.types.TypeEvalContext;
-import java.util.Objects;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author yole
- */
+import java.util.Objects;
+
+
 public class PyDunderSlotsReference extends PsiReferenceBase<PyStringLiteralExpression> implements PsiReferenceEx {
   public PyDunderSlotsReference(@NotNull PyStringLiteralExpression element) {
     super(element, element.getStringValueTextRanges().get(0));
@@ -45,11 +43,11 @@ public class PyDunderSlotsReference extends PsiReferenceBase<PyStringLiteralExpr
 
   @Override
   public boolean isReferenceTo(@NotNull PsiElement element) {
-    if (element instanceof PyExpression && PyUtil.isInstanceAttribute((PyExpression)element)) {
-      PyClass elementClass = PsiTreeUtil.getParentOfType(element, PyClass.class);
+    if (element instanceof PyTargetExpression targetExpression && PyUtil.isInstanceAttribute(targetExpression)) {
+      PyClass elementClass = PsiTreeUtil.getParentOfType(targetExpression, PyClass.class);
       PyClass referenceClass = PsiTreeUtil.getParentOfType(myElement, PyClass.class);
       if (referenceClass != null && referenceClass.isSubclass(elementClass, null)) {
-        String elementName = ((PyTargetExpression) element).getReferencedName();
+        String elementName = targetExpression.getReferencedName();
         String referenceName = myElement.getStringValue();
         if (Objects.equals(elementName, referenceName)) {
           return true;

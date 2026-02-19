@@ -2,6 +2,7 @@
 package com.intellij.tasks.impl;
 
 import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.Service;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.project.Project;
 import com.intellij.serviceContainer.NonInjectable;
@@ -11,6 +12,7 @@ import com.intellij.util.xmlb.annotations.Attribute;
 import com.intellij.util.xmlb.annotations.Property;
 import com.intellij.util.xmlb.annotations.Tag;
 import com.intellij.util.xmlb.annotations.XCollection;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -20,7 +22,9 @@ import java.util.List;
 /**
 * @author Dmitry Avdeev
 */
+@Service(Service.Level.PROJECT)
 @State(name = "TaskProjectConfiguration")
+@ApiStatus.Internal
 public final class TaskProjectConfiguration implements PersistentStateComponent<TaskProjectConfiguration> {
   @Tag("server")
   public static class SharedServer {
@@ -54,22 +58,22 @@ public final class TaskProjectConfiguration implements PersistentStateComponent<
   @XCollection(elementName = "server")
   public List<SharedServer> servers = new ArrayList<>();
 
-  private final TaskManagerImpl myManager;
+  private final Project myProject;
 
   // for serialization
   @NonInjectable
   public TaskProjectConfiguration() {
-    myManager = null;
+    myProject = null;
   }
 
   public TaskProjectConfiguration(@NotNull Project project) {
-    myManager = (TaskManagerImpl)TaskManager.getManager(project);
+    myProject = project;
   }
 
   @Override
   public TaskProjectConfiguration getState() {
     LinkedHashSet<SharedServer> set = new LinkedHashSet<>(this.servers);
-    for (TaskRepository repository : myManager.getAllRepositories()) {
+    for (TaskRepository repository : TaskManager.getManager(myProject).getAllRepositories()) {
       if (repository.isShared()) {
         SharedServer server = new SharedServer();
         server.type = repository.getRepositoryType().getName();

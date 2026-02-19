@@ -1,8 +1,8 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.uiDesigner.propertyInspector.editors;
 
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
-import com.intellij.ui.ColorChooser;
+import com.intellij.ui.ColorChooserService;
 import com.intellij.ui.JBColor;
 import com.intellij.uiDesigner.UIDesignerBundle;
 import com.intellij.uiDesigner.lw.ColorDescriptor;
@@ -10,15 +10,14 @@ import com.intellij.uiDesigner.propertyInspector.InplaceContext;
 import com.intellij.uiDesigner.propertyInspector.PropertyEditor;
 import com.intellij.uiDesigner.radComponents.RadComponent;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.BorderFactory;
+import javax.swing.JComponent;
+import javax.swing.SwingUtilities;
+import java.awt.Color;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
-/**
- * @author yole
- */
-public class ColorEditor extends PropertyEditor<ColorDescriptor> {
+public final class ColorEditor extends PropertyEditor<ColorDescriptor> {
   private final String myPropertyName;
   private final TextFieldWithBrowseButton myTextField = new TextFieldWithBrowseButton();
   private ColorDescriptor myValue;
@@ -31,7 +30,7 @@ public class ColorEditor extends PropertyEditor<ColorDescriptor> {
       @Override
       public void actionPerformed(ActionEvent e) {
         String title = UIDesignerBundle.message("color.chooser.title", myPropertyName);
-        Color color = ColorChooser.chooseColor(myTextField, title , myValue.getColor());
+        Color color = ColorChooserService.getInstance().showDialog(myTextField, title , myValue.getColor());
         if (color != null) {
           myValue = new ColorDescriptor(color);
           updateTextField();

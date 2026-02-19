@@ -1,0 +1,8 @@
+package test
+
+import java.lang.Deprecated
+
+@Deprecated
+fun test(): String {
+    return run { "" }
+}

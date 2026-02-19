@@ -16,52 +16,28 @@ public final class PercentageCoverageColumnInfo extends ColumnInfo<NodeDescripto
   private final int myColumnIdx;
   private final Comparator<NodeDescriptor<?>> myComparator;
   private final CoverageSuitesBundle mySuitesBundle;
-  private final CoverageViewManager.StateBean myStateBean;
 
   public PercentageCoverageColumnInfo(int columnIdx,
                                       @NlsContexts.ColumnName String name,
-                                      final CoverageSuitesBundle suitesBundle,
-                                      CoverageViewManager.StateBean stateBean) {
+                                      final CoverageSuitesBundle suitesBundle) {
     super(name);
     this.myColumnIdx = columnIdx;
     myComparator = (o1, o2) -> {
       final String val1 = valueOf(o1);
       final String val2 = valueOf(o2);
-      if (val1 != null && val2 != null) {
-        final int percentageIndex1 = val1.indexOf('%');
-        final int percentageIndex2 = val2.indexOf('%');
-        if (percentageIndex1 > -1 && percentageIndex2 >-1) {
-          final String percentage1 = val1.substring(0, percentageIndex1);
-          final String percentage2 = val2.substring(0, percentageIndex2);
-          final int compare = Comparing.compare(Double.parseDouble(percentage1), Double.parseDouble(percentage2));
-          if (compare == 0) {
-            final int total1 = val1.indexOf('/');
-            final int total2 = val2.indexOf('/');
-            if (total1 > -1 && total2 > -1) {
-              final int r1 = val1.indexOf(')', total1);
-              final int r2 = val2.indexOf(')', total2);
-              if (r1 > -1 && r2 > -1) {
-                return Comparing.compare(Double.parseDouble(val1.substring(total1 + 1, r1)),
-                                         Double.parseDouble(val2.substring(total2 + 1, r2)));
-              }
-            }
-          }
-          return compare;
-        }
-        if (percentageIndex1 > -1) return 1;
-        if (percentageIndex2 > -1) return -1;
-      }
-      return Comparing.compare(val1, val2);
+      if (val1 == null || val2 == null) return Comparing.compare(val1, val2);
+      return PercentageParser.parse(val1).compareTo(PercentageParser.parse(val2));
     };
     mySuitesBundle = suitesBundle;
-    myStateBean = stateBean;
   }
 
   @Override
   public String valueOf(NodeDescriptor node) {
     final CoverageEngine coverageEngine = mySuitesBundle.getCoverageEngine();
     final Project project = node.getProject();
-    return coverageEngine.createCoverageViewExtension(project, mySuitesBundle, myStateBean).getPercentage(myColumnIdx, (AbstractTreeNode<?>)node);
+    CoverageViewExtension extension = coverageEngine.createCoverageViewExtension(project, mySuitesBundle);
+    if (extension == null) return null;
+    return extension.getPercentage(myColumnIdx, (AbstractTreeNode<?>)node);
   }
 
   @Override

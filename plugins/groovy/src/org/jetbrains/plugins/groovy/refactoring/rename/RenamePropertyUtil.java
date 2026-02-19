@@ -1,12 +1,17 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.refactoring.rename;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Pair;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiMember;
+import com.intellij.psi.PsiModifier;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.util.RadioUpDownListener;
+import com.intellij.ui.components.JBBox;
 import com.intellij.usageView.UsageViewUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nullable;
@@ -16,8 +21,13 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMe
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyPropertyUtils;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringBundle;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.Box;
+import javax.swing.ButtonGroup;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JRadioButton;
+import java.awt.BorderLayout;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
@@ -116,8 +126,7 @@ public final class RenamePropertyUtil {
       return new JLabel(RefactoringBundle.message("what.would.you.like.to.do"));
     }
 
-    @Nullable
-    private String getPropertyName() {
+    private @Nullable String getPropertyName() {
       if (myMember instanceof GrMethod) {
         return GroovyPropertyUtils.getPropertyNameByAccessorName(myMember.getName());
       }
@@ -139,13 +148,13 @@ public final class RenamePropertyUtil {
       gr.add(myRbRenameMember);
       myRbRenameProperty.setSelected(true);
 
-      Box box = Box.createVerticalBox();
+      JBBox box = JBBox.createVerticalBox();
       box.add(Box.createVerticalStrut(5));
       box.add(myRbRenameProperty);
       box.add(myRbRenameMember);
       panel.add(box, BorderLayout.CENTER);
 
-      new RadioUpDownListener(myRbRenameMember, myRbRenameProperty);
+      RadioUpDownListener.installOn(myRbRenameMember, myRbRenameProperty);
       return panel;
     }
 

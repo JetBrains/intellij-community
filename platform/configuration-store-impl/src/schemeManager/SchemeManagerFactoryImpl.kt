@@ -1,62 +1,79 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.configurationStore.schemeManager
 
-import com.intellij.configurationStore.*
-import com.intellij.ide.startup.StartupManagerEx
+import com.intellij.configurationStore.LISTEN_SCHEME_VFS_CHANGES_IN_TEST_MODE
+import com.intellij.configurationStore.LOG
+import com.intellij.configurationStore.SchemeNameToFileName
+import com.intellij.configurationStore.SettingsSavingComponent
+import com.intellij.configurationStore.StreamProvider
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.ComponentManager
 import com.intellij.openapi.components.RoamingType
+import com.intellij.openapi.components.SettingsCategory
 import com.intellij.openapi.components.impl.stores.IProjectStore
-import com.intellij.openapi.components.stateStore
+import com.intellij.openapi.components.impl.stores.stateStore
 import com.intellij.openapi.options.Scheme
 import com.intellij.openapi.options.SchemeManager
 import com.intellij.openapi.options.SchemeManagerFactory
 import com.intellij.openapi.options.SchemeProcessor
+import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFileManager
-import com.intellij.util.SmartList
+import com.intellij.openapi.vfs.newvfs.RefreshQueue
+import com.intellij.openapi.vfs.newvfs.events.VFileEvent
+import com.intellij.util.addSuppressed
 import com.intellij.util.containers.ContainerUtil
-import com.intellij.util.throwIfNotEmpty
-import org.jetbrains.annotations.NonNls
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CoroutineScope
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import java.nio.file.Path
-import java.nio.file.Paths
 
-@NonNls const val ROOT_CONFIG = "\$ROOT_CONFIG$"
+@Suppress("CanUnescapeDollarLiteral")
+const val ROOT_CONFIG: String = "\$ROOT_CONFIG\$"
 
 internal typealias FileChangeSubscriber = (schemeManager: SchemeManagerImpl<*, *>) -> Unit
 
-sealed class SchemeManagerFactoryBase : SchemeManagerFactory(), com.intellij.openapi.components.SettingsSavingComponent {
+sealed class SchemeManagerFactoryBase(
+  private val componentManager: ComponentManager?,
+  private val coroutineScope: CoroutineScope?
+) : SchemeManagerFactory(componentManager as? Project), SettingsSavingComponent {
   private val managers = ContainerUtil.createLockFreeCopyOnWriteList<SchemeManagerImpl<Scheme, Scheme>>()
-
-  protected open val componentManager: ComponentManager? = null
 
   protected open fun createFileChangeSubscriber(): FileChangeSubscriber? = null
 
-  protected open fun getVirtualFileResolver(): VirtualFileResolver? = null
-
-  final override fun <T : Any, MutableT : T> create(directoryName: String,
-                                                    processor: SchemeProcessor<T, MutableT>,
-                                                    presentableName: String?,
-                                                    roamingType: RoamingType,
-                                                    schemeNameToFileName: SchemeNameToFileName,
-                                                    streamProvider: StreamProvider?,
-                                                    directoryPath: Path?,
-                                                    isAutoSave: Boolean): SchemeManager<T> {
+  @ApiStatus.Internal
+  final override fun <T: Scheme, MutableT : T> create(
+    directoryName: String,
+    processor: SchemeProcessor<T, MutableT>,
+    presentableName: String?,
+    roamingType: RoamingType,
+    schemeNameToFileName: SchemeNameToFileName,
+    streamProvider: StreamProvider?,
+    directoryPath: Path?,
+    isAutoSave: Boolean,
+    settingsCategory: SettingsCategory
+  ): SchemeManager<T> {
     val path = checkPath(directoryName)
     val fileChangeSubscriber = when {
       streamProvider != null && streamProvider.isApplicable(path, roamingType) -> null
       else -> createFileChangeSubscriber()
     }
-    val manager = SchemeManagerImpl(path,
-                                    processor,
-                                    streamProvider ?: (componentManager?.stateStore?.storageManager as? StateStorageManagerImpl)?.compoundStreamProvider,
-                                    ioDirectory = directoryPath ?: pathToFile(path),
-                                    roamingType = roamingType,
-                                    presentableName = presentableName,
-                                    schemeNameToFileName = schemeNameToFileName,
-                                    fileChangeSubscriber = fileChangeSubscriber,
-                                    virtualFileResolver = getVirtualFileResolver())
+    val streamProvider = streamProvider ?: componentManager?.stateStore?.storageManager?.streamProvider
+    val ioDirectory = directoryPath ?: pathToFile(path)
+    val manager = SchemeManagerImpl(
+      project = project,
+      fileSpec = path,
+      processor = processor,
+      provider = streamProvider,
+      ioDirectory = ioDirectory,
+      roamingType = roamingType,
+      presentableName = presentableName,
+      schemeNameToFileName = schemeNameToFileName,
+      fileChangeSubscriber = fileChangeSubscriber,
+      settingsCategory = settingsCategory,
+      coroutineScope = coroutineScope,
+    )
     if (isAutoSave) {
       @Suppress("UNCHECKED_CAST")
       managers.add(manager as SchemeManagerImpl<Scheme, Scheme>)
@@ -68,7 +85,7 @@ sealed class SchemeManagerFactoryBase : SchemeManagerFactory(), com.intellij.ope
     managers.remove(schemeManager)
   }
 
-  open fun checkPath(originalPath: String): String {
+  internal open fun checkPath(originalPath: String): String {
     when {
       originalPath.contains('\\') -> LOG.error("Path must be system-independent, use forward slash instead of backslash")
       originalPath.isEmpty() -> LOG.error("Path must not be empty")
@@ -76,12 +93,18 @@ sealed class SchemeManagerFactoryBase : SchemeManagerFactory(), com.intellij.ope
     return originalPath
   }
 
-  abstract fun pathToFile(path: String): Path
+  internal abstract fun pathToFile(path: String): Path
 
   fun process(processor: (SchemeManagerImpl<Scheme, Scheme>) -> Unit) {
     for (manager in managers) {
       try {
         processor(manager)
+      }
+      catch (e: CancellationException) {
+        throw e
+      }
+      catch (e: ProcessCanceledException) {
+        throw e
       }
       catch (e: Throwable) {
         LOG.error("Cannot reload settings for ${manager.javaClass.name}", e)
@@ -89,78 +112,76 @@ sealed class SchemeManagerFactoryBase : SchemeManagerFactory(), com.intellij.ope
     }
   }
 
-  final override fun save() {
-    val errors = SmartList<Throwable>()
+  final override suspend fun save() {
+    var error: Throwable? = null
+    val events = mutableListOf<VFileEvent>()
+
     for (registeredManager in managers) {
       try {
-        registeredManager.save(errors)
+        registeredManager.saveImpl(events)
       }
+      catch (e: CancellationException) { throw e }
+      catch (e: ProcessCanceledException) { throw e }
       catch (e: Throwable) {
-        errors.add(e)
-      }
-    }
-    throwIfNotEmpty(errors)
-  }
-
-  @Suppress("unused")
-  private class ApplicationSchemeManagerFactory : SchemeManagerFactoryBase() {
-    override val componentManager: ComponentManager
-      get() = ApplicationManager.getApplication()
-
-    override fun checkPath(originalPath: String): String {
-      var path = super.checkPath(originalPath)
-      if (path.startsWith(ROOT_CONFIG)) {
-        path = path.substring(ROOT_CONFIG.length + 1)
-        val message = "Path must not contains ROOT_CONFIG macro, corrected: $path"
-        if (ApplicationManager.getApplication().isUnitTestMode) throw AssertionError(message) else LOG.warn(message)
-      }
-      return path
-    }
-
-    override fun pathToFile(path: String): Path {
-      return ApplicationManager.getApplication().stateStore.storageManager.expandMacro(ROOT_CONFIG).resolve(path)
-    }
-  }
-
-  @Suppress("unused")
-  private class ProjectSchemeManagerFactory(private val project: Project) : SchemeManagerFactoryBase() {
-    override val componentManager = project
-
-    override fun getVirtualFileResolver() = project as? VirtualFileResolver?
-
-    private fun addVfsListener(schemeManager: SchemeManagerImpl<*, *>) {
-      @Suppress("UNCHECKED_CAST")
-      project.messageBus.connect().subscribe(VirtualFileManager.VFS_CHANGES, SchemeFileTracker(schemeManager as SchemeManagerImpl<Any, Any>, project))
-    }
-
-    override fun createFileChangeSubscriber(): FileChangeSubscriber? {
-      return { schemeManager ->
-        if (!ApplicationManager.getApplication().isUnitTestMode || project.getUserData(LISTEN_SCHEME_VFS_CHANGES_IN_TEST_MODE) == true) {
-          StartupManagerEx.getInstanceEx(project).runAfterOpened {
-            addVfsListener(schemeManager)
-          }
-        }
+        error = addSuppressed(error, e)
       }
     }
 
-    override fun pathToFile(path: String): Path {
-      if (project.isDefault) {
-        // no idea how to solve this issue (run SingleInspectionProfilePanelTest) in a quick and safe way
-        return Paths.get("__not_existent_path__")
-      }
+    if (events.isNotEmpty()) {
+      RefreshQueue.getInstance().processEvents(false, events)
+    }
 
-      val projectFileDir = (project.stateStore as? IProjectStore)?.directoryStorePath
-      if (projectFileDir == null) {
-        return Paths.get(project.basePath!!, ".$path")
-      }
-      else {
-        return projectFileDir.resolve(path)
-      }
+    error?.let {
+      throw it
     }
   }
 
   @TestOnly
-  class TestSchemeManagerFactory(private val basePath: Path) : SchemeManagerFactoryBase() {
+  @ApiStatus.Internal
+  class TestSchemeManagerFactory(private val basePath: Path) : SchemeManagerFactoryBase(componentManager = null, coroutineScope = null) {
     override fun pathToFile(path: String): Path = basePath.resolve(path)
+  }
+}
+
+internal class ApplicationSchemeManagerFactory(coroutineScope: CoroutineScope) : SchemeManagerFactoryBase(ApplicationManager.getApplication(), coroutineScope) {
+  override fun checkPath(originalPath: String): String {
+    var path = super.checkPath(originalPath)
+    if (path.startsWith(ROOT_CONFIG)) {
+      path = path.substring(ROOT_CONFIG.length + 1)
+      val message = "Path must not contains ROOT_CONFIG macro, corrected: $path"
+      if (ApplicationManager.getApplication().isUnitTestMode) {
+        throw AssertionError(message)
+      }
+      else {
+        LOG.warn(message)
+      }
+    }
+    return path
+  }
+
+  override fun pathToFile(path: String): Path = ApplicationManager.getApplication().stateStore.storageManager.expandMacro(ROOT_CONFIG).resolve(path)
+}
+
+@Suppress("unused")
+internal class ProjectSchemeManagerFactory(override val project: Project, coroutineScope: CoroutineScope) : SchemeManagerFactoryBase(project, coroutineScope) {
+  override fun createFileChangeSubscriber(): FileChangeSubscriber = { schemeManager ->
+    if (!ApplicationManager.getApplication().isUnitTestMode || project.getUserData(LISTEN_SCHEME_VFS_CHANGES_IN_TEST_MODE) == true) {
+      project.messageBus.simpleConnect().subscribe(VirtualFileManager.VFS_CHANGES, SchemeFileTracker(schemeManager, project))
+    }
+  }
+
+  override fun pathToFile(path: String): Path {
+    if (project.isDefault) {
+      // no idea how to solve this issue (run SingleInspectionProfilePanelTest) in a quick and safe way
+      return Path.of("__not_existent_path__")
+    }
+
+    val projectStore = project.stateStore as? IProjectStore
+    val projectFileDir = projectStore?.directoryStorePath
+    return when {
+      projectFileDir != null -> projectFileDir.resolve(path)
+      projectStore != null -> projectStore.projectBasePath.resolve(".$path")
+      else -> Path.of(project.basePath!!, ".${path}")
+    }
   }
 }

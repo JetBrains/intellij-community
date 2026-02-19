@@ -22,7 +22,10 @@ import static com.intellij.openapi.vfs.VfsUtilCore.toVirtualFileArray;
 import static com.intellij.openapi.vfs.VfsUtilCore.virtualToIoFile;
 import static com.intellij.testFramework.vcs.DuringChangeListManagerUpdateTestScheme.checkDeletedFilesAreInList;
 import static com.intellij.testFramework.vcs.DuringChangeListManagerUpdateTestScheme.checkFilesAreInList;
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 
 public class SvnChangesCorrectlyRefreshedTest extends SvnTestCase {
   @Override

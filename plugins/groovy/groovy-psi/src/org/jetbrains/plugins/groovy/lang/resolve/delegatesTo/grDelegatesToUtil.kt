@@ -1,10 +1,22 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.resolve.delegatesTo
 
 import com.intellij.openapi.util.Key
-import com.intellij.psi.*
-import com.intellij.psi.util.*
-import com.intellij.psi.util.CachedValueProvider.Result
+import com.intellij.psi.JavaPsiFacade
+import com.intellij.psi.PsiAnnotation
+import com.intellij.psi.PsiAnnotationMemberValue
+import com.intellij.psi.PsiClassObjectAccessExpression
+import com.intellij.psi.PsiClassType
+import com.intellij.psi.PsiExpression
+import com.intellij.psi.PsiLiteralExpression
+import com.intellij.psi.PsiMethod
+import com.intellij.psi.PsiParameter
+import com.intellij.psi.PsiParameterList
+import com.intellij.psi.PsiType
+import com.intellij.psi.PsiTypes
+import com.intellij.psi.util.InheritanceUtil
+import com.intellij.psi.util.PsiUtil
+import com.intellij.psi.util.TypeConversionUtil
 import com.intellij.util.ArrayUtil
 import groovy.lang.Closure
 import org.jetbrains.plugins.groovy.lang.psi.api.GrFunctionalExpression
@@ -14,6 +26,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgument
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrCall
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral
+import org.jetbrains.plugins.groovy.lang.psi.dataFlow.types.TypeInferenceHelper
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrAnnotationUtil
 import org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.ClosureSamParameterEnhancer
 import org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.FromStringHintProcessor
@@ -31,8 +44,8 @@ val DELEGATES_TO_TYPE_KEY: Key<String> = Key.create("groovy.closure.delegatesTo.
 @JvmField
 val DELEGATES_TO_STRATEGY_KEY: Key<Int> = Key.create("groovy.closure.delegatesTo.strategy")
 
-fun getDelegatesToInfo(closure: GrFunctionalExpression): DelegatesToInfo? = CachedValuesManager.getCachedValue(closure) {
-  Result.create(doGetDelegatesToInfo(closure), PsiModificationTracker.MODIFICATION_COUNT)
+fun getDelegatesToInfo(closure: GrFunctionalExpression): DelegatesToInfo? {
+  return TypeInferenceHelper.getCurrentContext().getCachedValue(closure, ::doGetDelegatesToInfo)
 }
 
 private fun doGetDelegatesToInfo(expression: GrFunctionalExpression): DelegatesToInfo? {
@@ -69,8 +82,8 @@ fun getFromValue(delegatesTo: PsiAnnotation): PsiType? {
     return ResolveUtil.unwrapClassType(value.type)
   }
   else if (value == null ||
-           value is PsiLiteralExpression && value.type === PsiType.NULL ||
-           value is GrLiteral && value.type === PsiType.NULL) {
+           value is PsiLiteralExpression && value.type === PsiTypes.nullType() ||
+           value is GrLiteral && value.type === PsiTypes.nullType()) {
     return null
   }
   else if (value is PsiExpression) {

@@ -1,22 +1,24 @@
 package com.intellij.dupLocator.iterators;
 
 import com.intellij.psi.PsiElement;
+import org.jetbrains.annotations.NotNull;
 
-/**
- * Iterates over siblings
- */
 public final class SiblingNodeIterator extends NodeIterator {
   private final PsiElement start;
   private PsiElement current;
   private PsiElement previous;
 
-  public SiblingNodeIterator(final PsiElement element) {
+  private SiblingNodeIterator(@NotNull PsiElement element) {
     previous = current = start = element;
+  }
+
+  public static NodeIterator create(PsiElement element) {
+    return (element == null) ? SingleNodeIterator.EMPTY : new SiblingNodeIterator(element);
   }
 
   @Override
   public boolean hasNext() {
-    return current!=null;
+    return current != null;
   }
 
   @Override

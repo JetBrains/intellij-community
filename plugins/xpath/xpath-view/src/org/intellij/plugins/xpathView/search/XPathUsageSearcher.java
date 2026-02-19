@@ -70,7 +70,7 @@ class XPathUsageSearcher implements UsageSearcher {
     }
 
     @Override
-    public void generate(@NotNull final Processor<? super Usage> processor) {
+    public void generate(final @NotNull Processor<? super Usage> processor) {
         Runnable runnable = () -> {
             myIndicator.setIndeterminate(true);
             //noinspection DialogTitleCapitalization
@@ -103,9 +103,8 @@ class XPathUsageSearcher implements UsageSearcher {
               FindBundle.message("find.searching.for.string.in.file.progress", myExpression.expression, t.getPresentableUrl()));
 
             final PsiFile psiFile = myManager.findFile(t);
-            if (psiFile instanceof XmlFile) {
-                final XmlFile t1 = (XmlFile)psiFile;
-                final XmlDocument document;
+            if (psiFile instanceof XmlFile t1) {
+              final XmlDocument document;
                 FileViewProvider fileViewProvider = t1.getViewProvider();
 
                 if (fileViewProvider instanceof TemplateLanguageFileViewProvider) {
@@ -175,7 +174,7 @@ class XPathUsageSearcher implements UsageSearcher {
                         myProcessor.process(new UsageInfo2UsageAdapter(new UsageInfo(psiFile)));
                     }
                 } else if (o instanceof String) {
-                    if (((String)o).length() > 0) {
+                    if (!((String)o).isEmpty()) {
                         matchFound();
                         myProcessor.process(new UsageInfo2UsageAdapter(new UsageInfo(psiFile)));
                     }

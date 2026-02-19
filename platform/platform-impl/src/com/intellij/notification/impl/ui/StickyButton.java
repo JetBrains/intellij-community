@@ -17,13 +17,11 @@ package com.intellij.notification.impl.ui;
 
 import com.intellij.openapi.util.NlsContexts;
 
-import javax.swing.*;
+import javax.swing.BorderFactory;
+import javax.swing.JToggleButton;
 import javax.swing.plaf.ButtonUI;
-import java.awt.*;
+import java.awt.Color;
 
-/**
- * @author spleaner
- */
 public class StickyButton extends JToggleButton {
 
   public StickyButton(final @NlsContexts.Button String text) {

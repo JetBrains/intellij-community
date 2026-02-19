@@ -1,4 +1,4 @@
-// "Create class 'MyTableModel'" "true"
+// "Create class 'MyTableModel'" "true-preview"
 
 public class Test {
     public static void main() {

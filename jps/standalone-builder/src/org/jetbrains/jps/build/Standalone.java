@@ -1,18 +1,21 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.build;
 
-import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.LowMemoryWatcherManager;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.ParameterizedRunnable;
-import com.intellij.util.containers.ContainerUtil;
 import com.sampullara.cli.Args;
 import com.sampullara.cli.Argument;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.api.BuildType;
 import org.jetbrains.jps.api.CanceledStatus;
 import org.jetbrains.jps.builders.java.JavaModuleBuildTargetType;
-import org.jetbrains.jps.cmdline.*;
+import org.jetbrains.jps.cmdline.BuildRunner;
+import org.jetbrains.jps.cmdline.JpsModelLoader;
+import org.jetbrains.jps.cmdline.JpsModelLoaderImpl;
+import org.jetbrains.jps.cmdline.LogSetup;
+import org.jetbrains.jps.cmdline.ProjectDescriptor;
 import org.jetbrains.jps.incremental.MessageHandler;
 import org.jetbrains.jps.incremental.Utils;
 import org.jetbrains.jps.incremental.artifacts.ArtifactBuildTargetType;
@@ -23,20 +26,23 @@ import org.jetbrains.jps.model.JpsModel;
 import org.jetbrains.jps.service.SharedThreadPool;
 
 import java.io.File;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 import static org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.ParametersMessage.TargetTypeBuildScope;
 
 @SuppressWarnings({"UseOfSystemOutOrSystemErr", "CallToPrintStackTrace"})
-public class Standalone {
+public final class Standalone {
   @Argument(value = "config", prefix = "--", description = "Path to directory containing global options (idea.config.path)")
   public String configPath;
 
-  @Argument(value = "script", prefix = "--", description = "Path to Groovy script which will be used to initialize global options")
+  @Argument(value = "script", prefix = "--", description = "Path to Groovy script which will be used to initialize global options (deprecated)")
   public String initializationScriptPath;
 
   @Argument(value = "cache-dir", prefix = "--", description = "Path to directory to store build caches")
@@ -105,6 +111,7 @@ public class Standalone {
     ParameterizedRunnable<JpsModel> initializer = null;
     String scriptPath = initializationScriptPath;
     if (scriptPath != null) {
+      System.err.println("--script argument is deprecated, use --config instead or configure options in code and call Standalone.runBuild method");
       File scriptFile = new File(scriptPath);
       if (!scriptFile.isFile()) {
         System.err.println("Script '" + scriptPath + "' not found");
@@ -119,25 +126,14 @@ public class Standalone {
     }
 
     JpsModelLoaderImpl loader = new JpsModelLoaderImpl(projectPath, globalOptionsPath, false, initializer);
-    Set<String> modulesSet = ContainerUtil.set(modules);
+    Set<String> modulesSet = Set.of(modules);
     List<String> artifactsList = Arrays.asList(artifacts);
-    File dataStorageRoot;
-    if (cacheDirPath != null) {
-      dataStorageRoot = new File(cacheDirPath);
-    }
-    else {
-      dataStorageRoot = Utils.getDataStorageRoot(projectPath);
-    }
-    if (dataStorageRoot == null) {
-      System.err.println("Error: Cannot determine build data storage root for project " + projectPath);
-      return 1;
-    }
+    File dataStorageRoot = cacheDirPath == null ? Utils.getDataStorageRoot(projectPath) : new File(cacheDirPath);
 
     ConsoleMessageHandler consoleMessageHandler = new ConsoleMessageHandler();
     long start = System.nanoTime();
     try {
-      runBuild(loader, dataStorageRoot, !incremental, modulesSet, allModules, artifactsList, allArtifacts, true,
-               consoleMessageHandler);
+      runBuild(loader, dataStorageRoot, !incremental, modulesSet, allModules, artifactsList, allArtifacts, true, consoleMessageHandler);
     }
     catch (Throwable t) {
       System.err.println("Internal error: " + t.getMessage());
@@ -147,21 +143,22 @@ public class Standalone {
     return consoleMessageHandler.hasErrors() ? 1 : 0;
   }
 
-  @Deprecated
-  public static void runBuild(JpsModelLoader loader, final File dataStorageRoot, boolean forceBuild, Set<String> modulesSet,
-                              List<String> artifactsList, final boolean includeTests, final MessageHandler messageHandler) throws Exception {
-    runBuild(loader, dataStorageRoot, forceBuild, modulesSet, modulesSet.isEmpty(), artifactsList, includeTests, messageHandler);
-  }
-
-  public static void runBuild(JpsModelLoader loader, final File dataStorageRoot, boolean forceBuild, Set<String> modulesSet,
-                              final boolean allModules, List<String> artifactsList, final boolean includeTests,
-                              final MessageHandler messageHandler) throws Exception {
+  public static void runBuild(@NotNull JpsModelLoader loader, @NotNull File dataStorageRoot, boolean forceBuild,
+                              @NotNull Set<String> modulesSet, boolean allModules,
+                              @NotNull List<String> artifactsList, boolean includeTests,
+                              @NotNull MessageHandler messageHandler) throws Exception {
     runBuild(loader, dataStorageRoot, forceBuild, modulesSet, allModules, artifactsList, false, includeTests, messageHandler);
   }
 
-  public static void runBuild(JpsModelLoader loader, final File dataStorageRoot, boolean forceBuild, Set<String> modulesSet,
-                              final boolean allModules, List<String> artifactsList, boolean allArtifacts, final boolean includeTests,
-                              final MessageHandler messageHandler) throws Exception {
+  public static void runBuild(@NotNull JpsModelLoader loader,
+                              @NotNull File dataStorageRoot,
+                              boolean forceBuild,
+                              @NotNull Set<String> modulesSet,
+                              boolean allModules,
+                              @NotNull List<String> artifactsList,
+                              boolean allArtifacts,
+                              boolean includeTests,
+                              @NotNull MessageHandler messageHandler) throws Exception {
     List<TargetTypeBuildScope> scopes = new ArrayList<>();
     for (JavaModuleBuildTargetType type : JavaModuleBuildTargetType.ALL_TYPES) {
       if (includeTests || !type.isTests()) {
@@ -186,24 +183,30 @@ public class Standalone {
       scopes.add(builder.addAllTargetId(artifactsList).build());
     }
 
-    runBuild(loader, dataStorageRoot, messageHandler, scopes, true);
+    runBuild(loader, dataStorageRoot.toPath(), Collections.emptyMap(), messageHandler, scopes, true, CanceledStatus.NULL);
   }
 
-  public static void runBuild(JpsModelLoader loader, File dataStorageRoot, MessageHandler messageHandler, List<TargetTypeBuildScope> scopes,
-                              boolean includeDependenciesToScope) throws Exception {
+  public static void runBuild(@NotNull JpsModelLoader loader,
+                              @NotNull Path dataStorageRoot,
+                              @NotNull Map<String, String> buildParameters,
+                              @NotNull MessageHandler messageHandler,
+                              @NotNull List<TargetTypeBuildScope> scopes,
+                              boolean includeDependenciesToScope,
+                              @NotNull CanceledStatus canceledStatus) throws Exception {
     final LowMemoryWatcherManager memWatcher = new LowMemoryWatcherManager(SharedThreadPool.getInstance());
     final BuildRunner buildRunner = new BuildRunner(loader);
+    buildRunner.setBuilderParams(buildParameters);
     ProjectDescriptor descriptor = buildRunner.load(messageHandler, dataStorageRoot, new BuildFSState(true));
     try {
-      buildRunner.runBuild(descriptor, CanceledStatus.NULL, null, messageHandler, BuildType.BUILD, scopes, includeDependenciesToScope);
+      buildRunner.runBuild(descriptor, canceledStatus, messageHandler, BuildType.BUILD, scopes, includeDependenciesToScope);
     }
     finally {
       descriptor.release();
-      Disposer.dispose(memWatcher);
+      memWatcher.shutdown();
     }
   }
 
-  private static class ConsoleMessageHandler implements MessageHandler {
+  private static final class ConsoleMessageHandler implements MessageHandler {
     private boolean hasErrors = false;
 
     @Override

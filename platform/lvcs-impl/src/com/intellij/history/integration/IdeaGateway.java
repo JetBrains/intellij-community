@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.history.integration;
 
 import com.intellij.history.core.LocalHistoryFacade;
@@ -9,7 +9,9 @@ import com.intellij.history.core.tree.Entry;
 import com.intellij.history.core.tree.FileEntry;
 import com.intellij.history.core.tree.RootEntry;
 import com.intellij.ide.scratch.ScratchFileService;
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.FileType;
@@ -20,20 +22,24 @@ import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Clock;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
+import com.intellij.openapi.vfs.VersionManagingFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.encoding.EncodingRegistry;
 import com.intellij.openapi.vfs.ex.temp.TempFileSystem;
 import com.intellij.openapi.vfs.newvfs.ManagingFS;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.openapi.vfs.newvfs.impl.VirtualFileSystemEntry;
-import com.intellij.util.NullableFunction;
+import com.intellij.util.SlowOperations;
+import com.intellij.util.SmartList;
+import com.intellij.util.concurrency.annotations.RequiresReadLock;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.io.URLUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -41,19 +47,28 @@ import java.io.IOException;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.function.Function;
+import java.util.function.Supplier;
 
 public class IdeaGateway {
-  private static final Key<ContentAndTimestamps> SAVED_DOCUMENT_CONTENT_AND_STAMP_KEY
+  private static final Logger LOG = Logger.getInstance(IdeaGateway.class);
+  private static final Key<DocumentContentWithTimestamps> SAVED_DOCUMENT_CONTENT_AND_STAMP_KEY
     = Key.create("LocalHistory.SAVED_DOCUMENT_CONTENT_AND_STAMP_KEY");
 
-  public boolean isVersioned(@NotNull VirtualFile f) {
-    return isVersioned(f, false);
+  public static @NotNull IdeaGateway getInstance() {
+    return ApplicationManager.getApplication().getService(IdeaGateway.class);
   }
 
-  public boolean isVersioned(@NotNull VirtualFile f, boolean shouldBeInContent) {
-    if (!f.isInLocalFileSystem()) return false;
+  public boolean isVersioned(@NotNull VirtualFile f) {
+    if (VersionManagingFileSystem.isDisabled(f)) {
+      return false;
+    }
+    if (!f.isInLocalFileSystem()) {
+      return VersionManagingFileSystem.isEnforcedNonLocal(f);
+    }
 
     if (!f.isDirectory()) {
       CharSequence fileName = f.getNameSequence();
@@ -65,41 +80,60 @@ public class IdeaGateway {
 
     VersionedFilterData versionedFilterData = getVersionedFilterData();
 
-    int numberOfOpenProjects = versionedFilterData.myOpenedProjects.size();
+    int numberOfOpenProjects = versionedFilterData.myProjectFileIndices.size();
 
     // optimisation: FileTypeManager.isFileIgnored(f) will be checked inside ProjectFileIndex.isUnderIgnored()
     if (numberOfOpenProjects == 0) {
-      if (shouldBeInContent) return false; // there is no project, so the file can't be in content
       if (FileTypeManager.getInstance().isFileIgnored(f)) return false;
 
       return true;
     }
 
-    boolean isExcludedFromAll = true;
-    boolean isInContent = false;
-
-    for (int i = 0; i < numberOfOpenProjects; ++i) {
-      ProjectFileIndex index = versionedFilterData.myProjectFileIndices.get(i);
-
-      if (index.isUnderIgnored(f)) return false;
-      isInContent |= index.isInContent(f);
-      isExcludedFromAll &= index.isExcluded(f);
+    boolean underAnyProject = false;
+    for (ProjectFileIndex projectFileIndex : versionedFilterData.myProjectFileIndices) {
+      boolean isProjectRelated = projectFileIndex.isInProjectOrExcluded(f) || projectFileIndex.isUnderIgnored(f);
+      // isIsContent returns true when the file or directory is under the content root of the project,
+      // AND is not excluded or ignored
+      if (isProjectRelated && projectFileIndex.isInContent(f)) {
+        // File is under the content root and isn't ignored/excluded. Track it in LVCS.
+        return true;
+      }
+      underAnyProject |= isProjectRelated;
     }
 
-    if (isExcludedFromAll) return false;
-    if (shouldBeInContent && !isInContent) return false;
-
-    return true;
+    if (underAnyProject) {
+      // File does not belong to any content root, but it is excluded by one or more projects.
+      // Do not track it in LVCS.
+      return false;
+    }
+    else {
+      // File is outside all the projects. Let's track it anyway because a user may edit some external files or scratch files.
+      // Check only if the file matches any ignored pattern.
+      return !FileTypeManager.getInstance().isFileIgnored(f);
+    }
   }
 
-  @NotNull
-  protected static VersionedFilterData getVersionedFilterData() {
+  public @NotNull String getPathOrUrl(@NotNull VirtualFile file) {
+    return file.isInLocalFileSystem() ? file.getPath() : file.getUrl();
+  }
+
+  public static @NotNull String getNameOrUrlPart(@NotNull VirtualFile file) {
+    String name = file.getName();
+    if (file.getParent() != null) return name;
+    if (file.isInLocalFileSystem()) {
+      return "/".equals(name) ? "" : name; // on Unix FS root name is "/"
+    }
+    return VirtualFileManager.constructUrl(file.getFileSystem().getProtocol(), StringUtil.trimStart(name, "/"));
+  }
+
+  protected static @NotNull VersionedFilterData getVersionedFilterData() {
     VersionedFilterData versionedFilterData;
     VfsEventDispatchContext vfsEventDispatchContext = ourCurrentEventDispatchContext.get();
     if (vfsEventDispatchContext != null) {
       versionedFilterData = vfsEventDispatchContext.myFilterData;
       if (versionedFilterData == null) versionedFilterData = vfsEventDispatchContext.myFilterData = new VersionedFilterData();
-    } else {
+    }
+    else {
       versionedFilterData = new VersionedFilterData();
     }
     return versionedFilterData;
@@ -107,7 +141,7 @@ public class IdeaGateway {
 
   private static final ThreadLocal<VfsEventDispatchContext> ourCurrentEventDispatchContext = new ThreadLocal<>();
 
-  private static class VfsEventDispatchContext implements AutoCloseable {
+  private static final class VfsEventDispatchContext implements AutoCloseable {
     final List<? extends VFileEvent> myEvents;
     final boolean myBeforeEvents;
     final VfsEventDispatchContext myPreviousContext;
@@ -133,14 +167,13 @@ public class IdeaGateway {
     }
   }
 
-  public void runWithVfsEventsDispatchContext(List<? extends VFileEvent> events, boolean beforeEvents, Runnable action) {
+  public void runWithVfsEventsDispatchContext(List<? extends VFileEvent> events, boolean beforeEvents, @NotNull Runnable action) {
     try (VfsEventDispatchContext ignored = new VfsEventDispatchContext(events, beforeEvents)) {
       action.run();
     }
   }
 
-  private static class VersionedFilterData {
-    final List<Project> myOpenedProjects = new ArrayList<>();
+  protected static final class VersionedFilterData {
     final List<ProjectFileIndex> myProjectFileIndices = new ArrayList<>();
 
     VersionedFilterData() {
@@ -150,7 +183,6 @@ public class IdeaGateway {
         if (each.isDefault()) continue;
         if (!each.isInitialized()) continue;
 
-        myOpenedProjects.add(each);
         myProjectFileIndices.add(ProjectRootManager.getInstance(each).getFileIndex());
       }
     }
@@ -170,8 +202,10 @@ public class IdeaGateway {
     return !h.ensureFilesWritable(ff).hasReadonlyFiles();
   }
 
-  @Nullable
-  public VirtualFile findVirtualFile(@NotNull String path) {
+  public @Nullable VirtualFile findVirtualFile(@NotNull String path) {
+    if (path.contains(URLUtil.SCHEME_SEPARATOR)) {
+      return VirtualFileManager.getInstance().findFileByUrl(path);
+    }
     VirtualFile file = LocalFileSystem.getInstance().findFileByPath(path);
     if (file == null && ApplicationManager.getApplication().isUnitTestMode()) {
       return TempFileSystem.getInstance().findFileByPath(path);
@@ -179,8 +213,8 @@ public class IdeaGateway {
     return file;
   }
 
-  @NotNull
-  public VirtualFile findOrCreateFileSafely(@NotNull VirtualFile parent, @NotNull String name, boolean isDirectory) throws IOException {
+  public @NotNull VirtualFile findOrCreateFileSafely(@NotNull VirtualFile parent, @NotNull String name, boolean isDirectory)
+    throws IOException {
     VirtualFile f = parent.findChild(name);
     if (f != null && f.isDirectory() != isDirectory) {
       f.delete(this);
@@ -194,8 +228,7 @@ public class IdeaGateway {
     return f;
   }
 
-  @NotNull
-  public VirtualFile findOrCreateFileSafely(@NotNull String path, boolean isDirectory) throws IOException {
+  public @NotNull VirtualFile findOrCreateFileSafely(@NotNull String path, boolean isDirectory) throws IOException {
     VirtualFile f = findVirtualFile(path);
     if (f != null && f.isDirectory() != isDirectory) {
       f.delete(this);
@@ -211,150 +244,249 @@ public class IdeaGateway {
     return f;
   }
 
-  public List<VirtualFile> getAllFilesFrom(@NotNull String path) {
-    VirtualFile f = findVirtualFile(path);
-    if (f == null) return Collections.emptyList();
-    return collectFiles(f, new ArrayList<>());
-  }
-
-  @NotNull
-  private static List<VirtualFile> collectFiles(@NotNull VirtualFile f, @NotNull List<VirtualFile> result) {
-    if (f.isDirectory()) {
-      for (VirtualFile child : iterateDBChildren(f)) {
-        collectFiles(child, result);
-      }
-    }
-    else {
-      result.add(f);
-    }
-    return result;
-  }
-
-  @NotNull
-  public static Iterable<VirtualFile> iterateDBChildren(VirtualFile f) {
-    if (!(f instanceof NewVirtualFile)) return Collections.emptyList();
-    NewVirtualFile nf = (NewVirtualFile)f;
+  public static @NotNull Iterable<VirtualFile> iterateDBChildren(VirtualFile f) {
+    if (!(f instanceof NewVirtualFile nf) || !f.isValid()) return Collections.emptyList();
     return nf.iterInDbChildrenWithoutLoadingVfsFromOtherProjects();
   }
 
-  @NotNull
-  public static Iterable<VirtualFile> loadAndIterateChildren(VirtualFile f) {
-    if (!(f instanceof NewVirtualFile)) return Collections.emptyList();
-    NewVirtualFile nf = (NewVirtualFile)f;
+  public static @NotNull Iterable<VirtualFile> loadAndIterateChildren(VirtualFile f) {
+    if (!(f instanceof NewVirtualFile nf) || !f.isValid()) return Collections.emptyList();
     return Arrays.asList(nf.getChildren());
   }
 
-  @NotNull
-  public RootEntry createTransientRootEntry() {
-    ApplicationManager.getApplication().assertReadAccessAllowed();
+  @RequiresReadLock
+  public @NotNull RootEntry createTransientRootEntry() {
     RootEntry root = new RootEntry();
-    doCreateChildren(root, getLocalRoots(), false);
+    doCreateChildren(root, getLocalRoots(), IdeaGateway::getActualContentNoAcquire, null);
     return root;
   }
 
-  @NotNull
-  public RootEntry createTransientRootEntryForPathOnly(@NotNull String path) {
-    ApplicationManager.getApplication().assertReadAccessAllowed();
+  @RequiresReadLock
+  public @NotNull RootEntry createTransientRootEntryForPath(@NotNull String path, boolean includeChildren) {
     RootEntry root = new RootEntry();
-    doCreateChildrenForPathOnly(root, path, getLocalRoots());
+    doCreateChildren(root, getLocalRoots(), IdeaGateway::getActualContentNoAcquire, new SinglePathVisitor(path, includeChildren));
     return root;
   }
 
-  private static List<VirtualFile> getLocalRoots() {
-    return Arrays.asList(ManagingFS.getInstance().getLocalRoots());
+  @RequiresReadLock
+  public @NotNull RootEntry createTransientRootEntryForPaths(@NotNull Collection<String> paths, boolean includeChildren) {
+    if (paths.isEmpty()) return new RootEntry();
+
+    String singlePath = ContainerUtil.getOnlyItem(paths);
+    if (singlePath != null) {
+      return createTransientRootEntryForPath(singlePath, includeChildren);
+    }
+
+    RootEntry root = new RootEntry();
+    List<SinglePathVisitor> visitors = ContainerUtil.map(paths, s -> new SinglePathVisitor(s, includeChildren));
+    doCreateChildren(root, getLocalRoots(), IdeaGateway::getActualContentNoAcquire, new MergingPathVisitor(visitors));
+    return root;
   }
 
-  private void doCreateChildrenForPathOnly(@NotNull DirectoryEntry parent,
-                                           @NotNull String path,
-                                           @NotNull Iterable<? extends VirtualFile> children) {
-    for (VirtualFile child : children) {
-      String name = StringUtil.trimStart(child.getName(), "/"); // on Mac FS root name is "/"
-      if (!path.startsWith(name)) continue;
-      String rest = path.substring(name.length());
-      if (!rest.isEmpty() && rest.charAt(0) != '/') continue;
-      if (!rest.isEmpty() && rest.charAt(0) == '/') {
-        rest = rest.substring(1);
+  private static @NotNull List<VirtualFile> getLocalRoots() {
+    List<VirtualFile> roots = new SmartList<>();
+
+    for (VirtualFile root : ManagingFS.getInstance().getRoots()) {
+      if ((root.isInLocalFileSystem() || VersionManagingFileSystem.isEnforcedNonLocal(root)) &&
+          !(root.getFileSystem() instanceof TempFileSystem)) {
+        roots.add(root);
       }
-      Entry e = doCreateEntryForPathOnly(child, rest);
-      if (e == null) continue;
-      parent.addChild(e);
     }
+    return roots;
   }
 
-  @Nullable
-  private Entry doCreateEntryForPathOnly(@NotNull VirtualFile file, @NotNull String path) {
+  @RequiresReadLock
+  public @Nullable Entry createTransientEntry(@NotNull VirtualFile file) {
+    return doCreateEntry(file, IdeaGateway::getActualContentNoAcquire, null);
+  }
+
+  @RequiresReadLock
+  public @Nullable Entry createEntryForDeletion(@NotNull VirtualFile file) {
+    return doCreateEntry(file, f -> acquireContentForDeletedFile(f, null), null);
+  }
+
+  @Nullable Entry doCreateEntry(@NotNull VirtualFile file,
+                                @NotNull Function<@NotNull VirtualFile, @NotNull ContentWithTimestamp> contentProvider,
+                                @Nullable FileTreeVisitor visitor) {
     if (!file.isDirectory()) {
       if (!isVersioned(file)) return null;
 
-      return doCreateFileEntry(file, getActualContentNoAcquire(file));
+      return doCreateFileEntry(file, contentProvider);
     }
-    DirectoryEntry newDir = new DirectoryEntry(file.getName());
-    doCreateChildrenForPathOnly(newDir, path, iterateDBChildren(file));
-    if (!isVersioned(file) && newDir.getChildren().isEmpty()) return null;
-    return newDir;
+
+    DirectoryEntries entries = doCreateDirectoryEntries(file);
+    if (entries == null) return null;
+
+    doCreateChildren(entries.last, iterateDBChildren(file), contentProvider, visitor);
+    if (!isVersioned(file) && entries.last.getChildren().isEmpty()) return null;
+    return entries.first;
   }
 
-  @Nullable
-  public Entry createTransientEntry(@NotNull VirtualFile file) {
-    ApplicationManager.getApplication().assertReadAccessAllowed();
-    return doCreateEntry(file, false);
+  private static @NotNull Entry doCreateFileEntry(@NotNull VirtualFile file,
+                                                  @NotNull Function<@NotNull VirtualFile, @NotNull ContentWithTimestamp> contentProvider) {
+    ContentWithTimestamp contentAndStamps = contentProvider.apply(file);
+
+    StoredContent content = contentAndStamps.content;
+    long timestamp = contentAndStamps.timestamp;
+
+    if (file instanceof VirtualFileSystemEntry) {
+      return new FileEntry(((VirtualFileSystemEntry)file).getNameId(), content, timestamp, !file.isWritable());
+    }
+    return new FileEntry(file.getName(), content, timestamp, !file.isWritable());
   }
 
-  @Nullable
-  public Entry createEntryForDeletion(@NotNull VirtualFile file) {
-    ApplicationManager.getApplication().assertReadAccessAllowed();
-    return doCreateEntry(file, true);
+  private record DirectoryEntries(@NotNull DirectoryEntry first, @NotNull DirectoryEntry last) {
   }
 
-  @Nullable
-  private Entry doCreateEntry(@NotNull VirtualFile file, boolean forDeletion) {
-    if (!file.isDirectory()) {
-      if (!isVersioned(file)) return null;
+  private static @Nullable DirectoryEntries doCreateDirectoryEntries(@NotNull VirtualFile file) {
+    if (file.isInLocalFileSystem() || file.getParent() != null) {
+      if (file instanceof VirtualFileSystemEntry) {
+        int nameId = ((VirtualFileSystemEntry)file).getNameId();
+        if (nameId > 0) {
+          DirectoryEntry newDir = new DirectoryEntry(nameId);
+          return new DirectoryEntries(newDir, newDir);
+        }
+      }
+      DirectoryEntry newDir = new DirectoryEntry(file.getName());
+      return new DirectoryEntries(newDir, newDir);
+    }
 
-      Pair<StoredContent, Long> contentAndStamps;
-      if (forDeletion) {
-        FileDocumentManager m = FileDocumentManager.getInstance();
-        Document d = m.isFileModified(file) ? m.getCachedDocument(file) : null; // should not try to load document
-        contentAndStamps = acquireAndClearCurrentContent(file, d);
+    DirectoryEntry first = null;
+    DirectoryEntry last = null;
+    for (String item : Paths.split(file.getUrl())) {
+      DirectoryEntry current = new DirectoryEntry(item);
+      if (first == null) first = current;
+      if (last != null) last.addChild(current);
+      last = current;
+    }
+
+    if (first == null) return null;
+    return new DirectoryEntries(first, last);
+  }
+
+  private void doCreateChildren(@NotNull DirectoryEntry parent, @NotNull Iterable<? extends VirtualFile> children, @NotNull Function<@NotNull VirtualFile, @NotNull ContentWithTimestamp> contentProvider,
+                                @Nullable FileTreeVisitor visitor) {
+    List<Entry> entries = ContainerUtil.mapNotNull(children, each -> {
+      if (visitor != null && !visitor.before(each)) return null;
+
+      Entry newEntry = null;
+      Entry existingEntry = parent.findEntry(each.getName());
+      if (existingEntry != null) {
+        if (existingEntry instanceof DirectoryEntry existingDirectoryEntry) {
+          doCreateChildren(existingDirectoryEntry, iterateDBChildren(each), contentProvider, visitor);
+        }
       }
       else {
-        contentAndStamps = getActualContentNoAcquire(file);
+        newEntry = doCreateEntry(each, contentProvider, visitor);
       }
 
-      return doCreateFileEntry(file, contentAndStamps);
-    }
+      if (visitor != null) visitor.after(each);
 
-    DirectoryEntry newDir = null;
-    if (file instanceof VirtualFileSystemEntry) {
-      int nameId = ((VirtualFileSystemEntry)file).getNameId();
-      if (nameId > 0) {
-        newDir = new DirectoryEntry(nameId);
-      }
-    }
-
-    if (newDir == null) {
-      newDir = new DirectoryEntry(file.getName());
-    }
-
-    doCreateChildren(newDir, iterateDBChildren(file), forDeletion);
-    if (!isVersioned(file) && newDir.getChildren().isEmpty()) return null;
-    return newDir;
-  }
-
-  @NotNull
-  private Entry doCreateFileEntry(@NotNull VirtualFile file, Pair<StoredContent, Long> contentAndStamps) {
-    if (file instanceof VirtualFileSystemEntry) {
-      return new FileEntry(((VirtualFileSystemEntry)file).getNameId(), contentAndStamps.first, contentAndStamps.second, !file.isWritable());
-    }
-    return new FileEntry(file.getName(), contentAndStamps.first, contentAndStamps.second, !file.isWritable());
-  }
-
-  private void doCreateChildren(@NotNull DirectoryEntry parent, Iterable<? extends VirtualFile> children, final boolean forDeletion) {
-    List<Entry> entries = ContainerUtil.mapNotNull(children, (NullableFunction<VirtualFile, Entry>)each -> doCreateEntry(each, forDeletion));
+      return newEntry;
+    });
     parent.addChildren(entries);
   }
 
-  public void registerUnsavedDocuments(@NotNull final LocalHistoryFacade vcs) {
+  private interface FileTreeVisitor {
+    boolean before(@NotNull VirtualFile file);
+
+    void after(@NotNull VirtualFile file);
+  }
+
+  private static class SinglePathVisitor implements FileTreeVisitor {
+    private final @NotNull List<String> myPathsStack = new ArrayList<>();
+    private final boolean myIncludeChildren;
+
+    private SinglePathVisitor(@NotNull String path, boolean includeChildren) {
+      myIncludeChildren = includeChildren;
+      myPathsStack.add(path);
+    }
+
+    @Override
+    public boolean before(@NotNull VirtualFile child) {
+      String targetPath = ContainerUtil.getLastItem(myPathsStack);
+      if (targetPath == null) return false;
+      if (myIncludeChildren && targetPath.isEmpty()) {
+        myPathsStack.add("");
+        return true;
+      }
+
+      String childName = getNameOrUrlPart(child);
+      if (!targetPath.startsWith(childName)) return false;
+      String targetPathRest = targetPath.substring(childName.length());
+      if (!targetPathRest.isEmpty() && targetPathRest.charAt(0) != '/') return false;
+      if (!targetPathRest.isEmpty() && targetPathRest.charAt(0) == '/') {
+        targetPathRest = targetPathRest.substring(1);
+      }
+
+      myPathsStack.add(targetPathRest);
+      return true;
+    }
+
+    @Override
+    public void after(@NotNull VirtualFile file) {
+      myPathsStack.remove(myPathsStack.size() - 1);
+    }
+  }
+
+  private static class MergingPathVisitor implements FileTreeVisitor {
+    private final List<? extends FileTreeVisitor> myVisitors;
+
+    private final int[] myTerminatedAtDepth;
+    private int myDepth = 1; // not 0 to simplify array initialization
+
+    private MergingPathVisitor(@NotNull List<? extends FileTreeVisitor> visitors) {
+      myVisitors = visitors;
+      myTerminatedAtDepth = new int[visitors.size()];
+    }
+
+    @Override
+    public boolean before(@NotNull VirtualFile file) {
+      boolean result = false;
+      for (int i = 0; i < myVisitors.size(); i++) {
+        int terminatedAt = myTerminatedAtDepth[i];
+        if (terminatedAt != 0) continue;
+
+        if (myVisitors.get(i).before(file)) {
+          result = true;
+        }
+        else {
+          myTerminatedAtDepth[i] = myDepth;
+        }
+      }
+      if (result) {
+        myDepth++;
+        return true;
+      }
+      else {
+        for (int i = 0; i < myVisitors.size(); i++) {
+          int terminatedAt = myTerminatedAtDepth[i];
+          if (terminatedAt == myDepth) {
+            myTerminatedAtDepth[i] = 0; // rollback because 'after' won't be called
+          }
+        }
+        return false;
+      }
+    }
+
+    @Override
+    public void after(@NotNull VirtualFile file) {
+      myDepth--;
+      LOG.assertTrue(myDepth >= 1);
+
+      for (int i = 0; i < myVisitors.size(); i++) {
+        int terminatedAt = myTerminatedAtDepth[i];
+        if (terminatedAt == myDepth) {
+          myTerminatedAtDepth[i] = 0;
+        }
+        else if (terminatedAt == 0) {
+          myVisitors.get(i).after(file);
+        }
+      }
+    }
+  }
+
+  public void registerUnsavedDocuments(final @NotNull LocalHistoryFacade vcs) {
     ApplicationManager.getApplication().runReadAction(() -> {
       vcs.beginChangeSet();
       for (Document d : FileDocumentManager.getInstance().getUnsavedDocuments()) {
@@ -362,34 +494,29 @@ public class IdeaGateway {
         if (!shouldRegisterDocument(f)) continue;
         registerDocumentContents(vcs, f, d);
       }
-      vcs.endChangeSet(null);
+      vcs.endChangeSet(null, null);
     });
   }
 
   private boolean shouldRegisterDocument(@Nullable VirtualFile f) {
-    return f != null && f.isValid() && areContentChangesVersioned(f);
+    try (AccessToken ignore = SlowOperations.knownIssue("IDEA-307668, EA-821075")) {
+      return f != null && f.isValid() && areContentChangesVersioned(f);
+    }
   }
 
-  private void registerDocumentContents(@NotNull LocalHistoryFacade vcs, @NotNull VirtualFile f, Document d) {
-    Pair<StoredContent, Long> contentAndStamp = acquireAndUpdateActualContent(f, d);
+  private void registerDocumentContents(@NotNull LocalHistoryFacade vcs, @NotNull VirtualFile f, @NotNull Document d) {
+    ContentWithTimestamp contentAndStamp = acquireAndUpdateActualContent(f, d);
     if (contentAndStamp != null) {
-      vcs.contentChanged(f.getPath(), contentAndStamp.first, contentAndStamp.second);
+      vcs.contentChanged(getPathOrUrl(f), contentAndStamp.content, contentAndStamp.timestamp);
     }
   }
 
   // returns null is content has not been changes since last time
-  @Nullable
-  public Pair<StoredContent, Long> acquireAndUpdateActualContent(@NotNull VirtualFile f, @Nullable Document d) {
-    ContentAndTimestamps contentAndStamp = f.getUserData(SAVED_DOCUMENT_CONTENT_AND_STAMP_KEY);
+  private static @Nullable ContentWithTimestamp acquireAndUpdateActualContent(@NotNull VirtualFile f, @NotNull Document d) {
+    DocumentContentWithTimestamps contentAndStamp = f.getUserData(SAVED_DOCUMENT_CONTENT_AND_STAMP_KEY);
     if (contentAndStamp == null) {
-      if (d != null) saveDocumentContent(f, d);
-      return Pair.create(StoredContent.acquireContent(f), f.getTimeStamp());
-    }
-
-    // if no need to save current document content when simply return and clear stored one
-    if (d == null) {
-      f.putUserData(SAVED_DOCUMENT_CONTENT_AND_STAMP_KEY, null);
-      return Pair.create(contentAndStamp.content, contentAndStamp.registeredTimestamp);
+      saveDocumentContent(f, d);
+      return new ContentWithTimestamp(f.getTimeStamp(), StoredContent.acquireContent(f));
     }
 
     // if the stored content equals the current one, do not store it and return null
@@ -397,25 +524,43 @@ public class IdeaGateway {
 
     // is current content has been changed, store it and return the previous one
     saveDocumentContent(f, d);
-    return Pair.create(contentAndStamp.content, contentAndStamp.registeredTimestamp);
+    return contentAndStamp;
+  }
+
+  // returns null is content has not been changes since last time
+  @Nullable ContentWithTimestamp acquireActualContentAndForgetSavedContent(@NotNull VirtualFile f, @Nullable Document d) {
+    DocumentContentWithTimestamps contentAndStamp = f.getUserData(SAVED_DOCUMENT_CONTENT_AND_STAMP_KEY);
+    if (contentAndStamp == null) {
+      return new ContentWithTimestamp(f.getTimeStamp(), StoredContent.acquireContent(f));
+    }
+    f.putUserData(SAVED_DOCUMENT_CONTENT_AND_STAMP_KEY, null);
+    if (d != null && d.getModificationStamp() == contentAndStamp.documentModificationStamp) return null;
+    return contentAndStamp;
   }
 
   private static void saveDocumentContent(@NotNull VirtualFile f, @NotNull Document d) {
     f.putUserData(SAVED_DOCUMENT_CONTENT_AND_STAMP_KEY,
-                  new ContentAndTimestamps(Clock.getTime(),
-                                           StoredContent.acquireContent(bytesFromDocument(d)),
-                                           d.getModificationStamp()));
+                  new DocumentContentWithTimestamps(Clock.getTime(),
+                                                     StoredContent.acquireContent(bytesFromDocument(d)),
+                                                     d.getModificationStamp()));
   }
 
-  @NotNull
-  public Pair<StoredContent, Long> acquireAndClearCurrentContent(@NotNull VirtualFile f, @Nullable Document d) {
-    ContentAndTimestamps contentAndStamp = f.getUserData(SAVED_DOCUMENT_CONTENT_AND_STAMP_KEY);
+  /**
+   * @param contentFallback fallback in case if acquired content is unavailable
+   *                        (see {@link StoredContent#acquireContent(VirtualFile)} implementation details)
+   */
+  @NotNull ContentWithTimestamp acquireContentForDeletedFile(@NotNull VirtualFile f,
+                                                             @Nullable Supplier<? extends @NotNull StoredContent> contentFallback) {
+    FileDocumentManager m = FileDocumentManager.getInstance();
+    Document d = m.isFileModified(f) ? m.getCachedDocument(f) : null; // should not try to load document
+
+    DocumentContentWithTimestamps contentAndStamp = f.getUserData(SAVED_DOCUMENT_CONTENT_AND_STAMP_KEY);
     f.putUserData(SAVED_DOCUMENT_CONTENT_AND_STAMP_KEY, null);
 
     if (d != null && contentAndStamp != null) {
       // if previously stored content was not changed, return it
       if (d.getModificationStamp() == contentAndStamp.documentModificationStamp) {
-        return Pair.create(contentAndStamp.content, contentAndStamp.registeredTimestamp);
+        return contentAndStamp;
       }
     }
 
@@ -426,22 +571,26 @@ public class IdeaGateway {
 
     // take document's content if any
     if (d != null) {
-      return Pair.create(StoredContent.acquireContent(bytesFromDocument(d)), Clock.getTime());
+      return new ContentWithTimestamp(Clock.getTime(), StoredContent.acquireContent(bytesFromDocument(d)));
     }
 
-    return Pair.create(StoredContent.acquireContent(f), f.getTimeStamp());
+    StoredContent content = StoredContent.acquireContent(f);
+    if (!content.isAvailable() && contentFallback != null) {
+      content = contentFallback.get();
+    }
+
+    return new ContentWithTimestamp(f.getTimeStamp(), content);
   }
 
-  @NotNull
-  private static Pair<StoredContent, Long> getActualContentNoAcquire(@NotNull VirtualFile f) {
-    ContentAndTimestamps result = f.getUserData(SAVED_DOCUMENT_CONTENT_AND_STAMP_KEY);
+  private static @NotNull ContentWithTimestamp getActualContentNoAcquire(@NotNull VirtualFile f) {
+    DocumentContentWithTimestamps result = f.getUserData(SAVED_DOCUMENT_CONTENT_AND_STAMP_KEY);
     if (result == null) {
-      return Pair.create(StoredContent.transientContent(f), f.getTimeStamp());
+      return new ContentWithTimestamp(f.getTimeStamp(), StoredContent.transientContent(f));
     }
-    return Pair.create(result.content, result.registeredTimestamp);
+    return result;
   }
 
-  private static byte[] bytesFromDocument(@NotNull Document d) {
+  private static byte @NotNull [] bytesFromDocument(@NotNull Document d) {
     VirtualFile file = getFile(d);
     Charset charset = file != null ? file.getCharset() : EncodingRegistry.getInstance().getDefaultCharset();
     return d.getText().getBytes(charset);
@@ -457,29 +606,35 @@ public class IdeaGateway {
     FileDocumentManager.getInstance().saveAllDocuments();
   }
 
-  @Nullable
-  private static VirtualFile getFile(@NotNull Document d) {
+  private static @Nullable VirtualFile getFile(@NotNull Document d) {
     return FileDocumentManager.getInstance().getFile(d);
   }
 
-  @Nullable
-  public Document getDocument(@NotNull String path) {
-    return FileDocumentManager.getInstance().getDocument(findVirtualFile(path));
+  public @Nullable Document getDocument(@NotNull String path) {
+    VirtualFile file = findVirtualFile(path);
+    if (file == null) return null;
+    return FileDocumentManager.getInstance().getDocument(file);
   }
 
-  @NotNull
-  public FileType getFileType(@NotNull String fileName) {
+  public @NotNull FileType getFileType(@NotNull String fileName) {
     return FileTypeManager.getInstance().getFileTypeByFileName(fileName);
   }
 
-  private static final class ContentAndTimestamps {
-    long registeredTimestamp;
-    StoredContent content;
-    long documentModificationStamp;
+  static class ContentWithTimestamp {
+    public final long timestamp;
+    public final StoredContent content;
 
-    private ContentAndTimestamps(long registeredTimestamp, StoredContent content, long documentModificationStamp) {
-      this.registeredTimestamp = registeredTimestamp;
+    private ContentWithTimestamp(long timestamp, StoredContent content) {
+      this.timestamp = timestamp;
       this.content = content;
+    }
+  }
+
+  private static final class DocumentContentWithTimestamps extends ContentWithTimestamp {
+    final long documentModificationStamp;
+
+    private DocumentContentWithTimestamps(long registeredTimestamp, StoredContent content, long documentModificationStamp) {
+      super(registeredTimestamp, content);
       this.documentModificationStamp = documentModificationStamp;
     }
   }

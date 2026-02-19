@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.idea.svn.history;
 
@@ -14,7 +14,11 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.svn.*;
+import org.jetbrains.idea.svn.SvnBaseContentRevision;
+import org.jetbrains.idea.svn.SvnBundle;
+import org.jetbrains.idea.svn.SvnRevisionNumber;
+import org.jetbrains.idea.svn.SvnUtil;
+import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.api.Revision;
 import org.jetbrains.idea.svn.api.Target;
 import org.jetbrains.idea.svn.api.Url;
@@ -28,7 +32,7 @@ import static com.intellij.util.ObjectUtils.notNull;
 
 public class SvnRepositoryContentRevision extends SvnBaseContentRevision implements ByteBackedContentRevision {
 
-  @NotNull private final String myPath;
+  private final @NotNull String myPath;
   private final long myRevision;
 
   public SvnRepositoryContentRevision(@NotNull SvnVcs vcs, @NotNull FilePath remotePath, @Nullable FilePath localPath, long revision) {
@@ -38,8 +42,7 @@ public class SvnRepositoryContentRevision extends SvnBaseContentRevision impleme
   }
 
   @Override
-  @NotNull
-  public String getContent() throws VcsException {
+  public @NotNull String getContent() throws VcsException {
     return ContentRevisionCache.getAsString(getContentAsBytes(), myFile, null);
   }
 
@@ -57,8 +60,7 @@ public class SvnRepositoryContentRevision extends SvnBaseContentRevision impleme
     }
   }
 
-  @NotNull
-  protected ByteArrayOutputStream loadContent() throws VcsException {
+  protected @NotNull ByteArrayOutputStream loadContent() throws VcsException {
     final ByteArrayOutputStream buffer = new ByteArrayOutputStream();
     ContentLoader loader = new ContentLoader(myPath, buffer, myRevision);
     if (ApplicationManager.getApplication().isDispatchThread()) {
@@ -77,8 +79,7 @@ public class SvnRepositoryContentRevision extends SvnBaseContentRevision impleme
   }
 
   @Override
-  @NotNull
-  public SvnRevisionNumber getRevisionNumber() {
+  public @NotNull SvnRevisionNumber getRevisionNumber() {
     return new SvnRevisionNumber(Revision.of(myRevision));
   }
 
@@ -159,8 +160,7 @@ public class SvnRepositoryContentRevision extends SvnBaseContentRevision impleme
     }
   }
 
-  @NotNull
-  public String getFullPath() {
+  public @NotNull String getFullPath() {
     return myPath;
   }
 
@@ -168,13 +168,11 @@ public class SvnRepositoryContentRevision extends SvnBaseContentRevision impleme
     return SvnUtil.getRelativePath(repositoryUrl, myPath);
   }
 
-  @NotNull
-  public Url getUrl() throws SvnBindException {
+  public @NotNull Url getUrl() throws SvnBindException {
     return SvnUtil.createUrl(getFullPath(), false);
   }
 
-  @NotNull
-  public Target toTarget() throws SvnBindException {
+  public @NotNull Target toTarget() throws SvnBindException {
     return Target.on(getUrl(), getRevisionNumber().getRevision());
   }
 }

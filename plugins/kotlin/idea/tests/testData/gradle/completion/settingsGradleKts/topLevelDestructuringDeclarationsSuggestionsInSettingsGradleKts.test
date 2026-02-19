@@ -1,0 +1,29 @@
+// FILE: settings.gradle.kts
+// "EXPECTED-SUGGESTION": "person1"
+// "EXPECTED-SUGGESTION": "getPerson1"
+rootProject.name = "GradleKotlinFixture"
+
+data class Person(val fullName: String, val age: Int)
+val person1 = Person("Jan", 35)
+val person2 = Person("Ana", 30)
+
+fun myPrint(p: Person) {
+    println("${p.fullName} ${p.age}")
+}
+
+myPrint(pers<caret>)
+
+pluginManagement {
+    repositories {
+        mavenCentral()
+    }
+}
+
+// FILE: build.gradle.kts
+plugins {
+    id("java")
+}
+
+repositories {
+    mavenCentral()
+}

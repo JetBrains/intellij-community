@@ -1,0 +1,24 @@
+<html>
+<body>
+Reports compact source files and suggests replacing them with regular classes.
+<p><b>Example (in file Sample.java):</b></p>
+<pre><code>
+  void main() {
+      String a = "Hello, world!";
+  }
+</code></pre>
+<p>After the quick-fix is applied:</p>
+<pre><code>
+public class Sample {
+    void main() {
+        String a = "Hello, world!";
+    }
+}
+</code></pre>
+<!-- tooltip end -->
+<p>
+  This inspection can help to downgrade for backward compatibility with earlier Java versions.
+</p>
+<p><small>New in 2024.1</small></p>
+</body>
+</html>

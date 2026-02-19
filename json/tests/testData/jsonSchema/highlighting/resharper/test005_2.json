@@ -1,5 +1,0 @@
-<warning descr="Validates against 'not' schema">{
-  "a": "5",
-  "b": 6,
-  "c": 7
-}</warning>

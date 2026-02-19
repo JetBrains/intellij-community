@@ -1,24 +1,38 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.model.serialization.module;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.text.UniqueNameGenerator;
 import org.jdom.Element;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.jps.model.*;
+import org.jetbrains.jps.model.JpsCompositeElement;
+import org.jetbrains.jps.model.JpsElement;
+import org.jetbrains.jps.model.JpsElementFactory;
+import org.jetbrains.jps.model.JpsElementReference;
 import org.jetbrains.jps.model.java.JpsJavaSdkType;
 import org.jetbrains.jps.model.java.JpsJavaSdkTypeWrapper;
 import org.jetbrains.jps.model.library.JpsLibrary;
 import org.jetbrains.jps.model.library.sdk.JpsSdkType;
-import org.jetbrains.jps.model.module.*;
+import org.jetbrains.jps.model.module.JpsDependenciesList;
+import org.jetbrains.jps.model.module.JpsDependencyElement;
+import org.jetbrains.jps.model.module.JpsLibraryDependency;
+import org.jetbrains.jps.model.module.JpsModule;
+import org.jetbrains.jps.model.module.JpsModuleDependency;
+import org.jetbrains.jps.model.module.JpsModuleSourceRoot;
+import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
+import org.jetbrains.jps.model.module.JpsTypedModuleSourceRoot;
+import org.jetbrains.jps.model.module.UnknownSourceRootType;
 import org.jetbrains.jps.model.serialization.JpsModelSerializerExtension;
+import org.jetbrains.jps.model.serialization.JpsPathMapper;
 import org.jetbrains.jps.model.serialization.impl.JpsSerializationFormatException;
 import org.jetbrains.jps.model.serialization.library.JpsLibraryTableSerializer;
 import org.jetbrains.jps.model.serialization.library.JpsSdkTableSerializer;
 
 import static com.intellij.openapi.util.JDOMUtil.getChildren;
 
+@ApiStatus.Internal
 public final class JpsModuleRootModelSerializer {
   private static final Logger LOG = Logger.getInstance(JpsModuleRootModelSerializer.class);
   public static final String URL_ATTRIBUTE = "url";
@@ -48,7 +62,7 @@ public final class JpsModuleRootModelSerializer {
   public static final String JAVA_TEST_ROOT_TYPE_ID = "java-test";
   private static final String GENERATED_LIBRARY_NAME_PREFIX = "#";
 
-  public static void loadRootModel(JpsModule module, @Nullable Element rootModelComponent, @Nullable JpsSdkType<?> projectSdkType) {
+  public static void loadRootModel(JpsModule module, @Nullable Element rootModelComponent, @Nullable JpsSdkType<?> projectSdkType, @NotNull JpsPathMapper pathMapper) {
     if (rootModelComponent == null) return;
 
     for (Element contentElement : getChildren(rootModelComponent, CONTENT_TAG)) {
@@ -108,7 +122,7 @@ public final class JpsModuleRootModelSerializer {
             name = GENERATED_LIBRARY_NAME_PREFIX;
           }
           String uniqueName = nameGenerator.generateUniqueName(name);
-          final JpsLibrary library = JpsLibraryTableSerializer.loadLibrary(moduleLibraryElement, uniqueName);
+          final JpsLibrary library = JpsLibraryTableSerializer.loadLibrary(moduleLibraryElement, uniqueName, pathMapper);
           module.addModuleLibrary(library);
 
           final JpsLibraryDependency dependency = dependenciesList.addLibraryDependency(library);
@@ -130,8 +144,7 @@ public final class JpsModuleRootModelSerializer {
     }
   }
 
-  @NotNull
-  private static String getRequiredAttribute(Element element, String attribute) {
+  private static @NotNull String getRequiredAttribute(Element element, String attribute) {
     final String url = element.getAttributeValue(attribute);
     if (url == null) {
       throw new JpsSerializationFormatException("'" + attribute + "' attribute is missing in '" + element.getName() + "' tag");
@@ -139,22 +152,19 @@ public final class JpsModuleRootModelSerializer {
     return url;
   }
 
-  @NotNull
-  public static JpsModuleSourceRoot loadSourceRoot(Element sourceElement) {
+  public static @NotNull JpsModuleSourceRoot loadSourceRoot(Element sourceElement) {
     final String sourceUrl = getRequiredAttribute(sourceElement, URL_ATTRIBUTE);
     JpsModuleSourceRootPropertiesSerializer<?> serializer = getSourceRootPropertiesSerializer(sourceElement);
     return createSourceRoot(sourceUrl, serializer, sourceElement);
   }
 
-  @NotNull
-  private static <P extends JpsElement> JpsModuleSourceRoot createSourceRoot(@NotNull String url,
-                                                                             @NotNull JpsModuleSourceRootPropertiesSerializer<P> serializer,
-                                                                             @NotNull Element sourceElement) {
+  private static @NotNull <P extends JpsElement> JpsModuleSourceRoot createSourceRoot(@NotNull String url,
+                                                                                      @NotNull JpsModuleSourceRootPropertiesSerializer<P> serializer,
+                                                                                      @NotNull Element sourceElement) {
     return JpsElementFactory.getInstance().createModuleSourceRoot(url, serializer.getType(), serializer.loadProperties(sourceElement));
   }
 
-  @NotNull
-  private static JpsModuleSourceRootPropertiesSerializer<?> getSourceRootPropertiesSerializer(@NotNull Element sourceElement) {
+  private static @NotNull JpsModuleSourceRootPropertiesSerializer<?> getSourceRootPropertiesSerializer(@NotNull Element sourceElement) {
     String typeAttribute = sourceElement.getAttributeValue(SOURCE_ROOT_TYPE_ATTRIBUTE);
     if (typeAttribute == null) {
       typeAttribute = Boolean.parseBoolean(sourceElement.getAttributeValue(IS_TEST_SOURCE_ATTRIBUTE))? JAVA_TEST_ROOT_TYPE_ID : JAVA_SOURCE_ROOT_TYPE_ID;
@@ -186,8 +196,7 @@ public final class JpsModuleRootModelSerializer {
     contentElement.addContent(sourceElement);
   }
 
-  @Nullable
-  private static <P extends JpsElement> JpsModuleSourceRootPropertiesSerializer<P> getSerializer(JpsModuleSourceRootType<P> type) {
+  private static @Nullable <P extends JpsElement> JpsModuleSourceRootPropertiesSerializer<P> getSerializer(JpsModuleSourceRootType<P> type) {
     if (type instanceof UnknownSourceRootType) {
       return (JpsModuleSourceRootPropertiesSerializer<P>)UnknownSourceRootPropertiesSerializer.forType((UnknownSourceRootType)type);
     }

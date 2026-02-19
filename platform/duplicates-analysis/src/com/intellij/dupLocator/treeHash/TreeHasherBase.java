@@ -19,9 +19,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * @author Eugene.Kudelevsky
- */
 class TreeHasherBase extends AbstractTreeHasher {
   private final FragmentsCollector myCallback;
   private final int myDiscardCost;
@@ -219,10 +216,9 @@ class TreeHasherBase extends AbstractTreeHasher {
     return filteredElements;
   }
 
-  @NotNull
-  private Couple<Integer> computeHash(SingleChildDescriptor childDescriptor,
-                                      PsiFragment parentFragment,
-                                      NodeSpecificHasher nodeSpecificHasher) {
+  private @NotNull Couple<Integer> computeHash(SingleChildDescriptor childDescriptor,
+                                               PsiFragment parentFragment,
+                                               NodeSpecificHasher nodeSpecificHasher) {
 
     final PsiElement element = childDescriptor.getElement();
     if (element == null) {
@@ -244,55 +240,39 @@ class TreeHasherBase extends AbstractTreeHasher {
     return role != null && !duplicatesProfile.getDuplocatorState(duplicatesProfile.getLanguage(element)).distinguishRole(role);
   }
 
-  @NotNull
-  private Couple<Integer> doComputeHash(SingleChildDescriptor childDescriptor,
-                                        PsiFragment parentFragment,
-                                        NodeSpecificHasher nodeSpecificHasher) {
+  private @NotNull Couple<Integer> doComputeHash(SingleChildDescriptor childDescriptor,
+                                                 PsiFragment parentFragment,
+                                                 NodeSpecificHasher nodeSpecificHasher) {
     final PsiElement element = childDescriptor.getElement();
     if (element == null) {
       return Couple.of(0, 0);
     }
 
-    switch (childDescriptor.getType()) {
-      case OPTIONALLY_IN_PATTERN:
-      case DEFAULT:
+    return switch (childDescriptor.getType()) {
+      case OPTIONALLY_IN_PATTERN, DEFAULT -> {
         final TreeHashResult result = hash(element, parentFragment, nodeSpecificHasher);
-        return Couple.of(result.getHash(), result.getCost());
-
-      case CHILDREN_OPTIONALLY_IN_PATTERN:
-      case CHILDREN:
-        return hashChildResults(computeHashesForChildren(element, parentFragment, nodeSpecificHasher), 31);
-
-      case CHILDREN_IN_ANY_ORDER:
-        return hashChildResults(computeHashesForChildren(element, parentFragment, nodeSpecificHasher), 1);
-
-      default:
-        return Couple.of(0, 0);
-    }
+        yield Couple.of(result.getHash(), result.getCost());
+      }
+      case CHILDREN_OPTIONALLY_IN_PATTERN, CHILDREN ->
+        hashChildResults(computeHashesForChildren(element, parentFragment, nodeSpecificHasher), 31);
+      case CHILDREN_IN_ANY_ORDER -> hashChildResults(computeHashesForChildren(element, parentFragment, nodeSpecificHasher), 1);
+      default -> Couple.of(0, 0);
+    };
   }
 
-  @NotNull
-  private Couple<Integer> computeHash(MultiChildDescriptor childDescriptor,
-                                      PsiFragment parentFragment,
-                                      NodeSpecificHasher nodeSpecificHasher) {
+  private @NotNull Couple<Integer> computeHash(MultiChildDescriptor childDescriptor,
+                                               PsiFragment parentFragment,
+                                               NodeSpecificHasher nodeSpecificHasher) {
     final PsiElement[] elements = childDescriptor.getElements();
 
-    switch (childDescriptor.getType()) {
-
-      case OPTIONALLY_IN_PATTERN:
-      case DEFAULT:
-        return hashChildResults(computeHashes(elements, parentFragment, nodeSpecificHasher), 31);
-
-      case IN_ANY_ORDER:
-        return hashChildResults(computeHashes(elements, parentFragment, nodeSpecificHasher), 1);
-
-      default:
-        return Couple.of(0, 0);
-    }
+    return switch (childDescriptor.getType()) {
+      case OPTIONALLY_IN_PATTERN, DEFAULT -> hashChildResults(computeHashes(elements, parentFragment, nodeSpecificHasher), 31);
+      case IN_ANY_ORDER -> hashChildResults(computeHashes(elements, parentFragment, nodeSpecificHasher), 1);
+      default -> Couple.of(0, 0);
+    };
   }
 
-  @NotNull
-  private static Couple<Integer> hashChildResults(TreeHashResult[] childResults, int multiplier) {
+  private static @NotNull Couple<Integer> hashChildResults(TreeHashResult[] childResults, int multiplier) {
     int[] hashes = getHashes(childResults);
     int[] costs = getCosts(childResults);
 

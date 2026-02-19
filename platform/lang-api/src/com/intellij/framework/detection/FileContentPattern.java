@@ -1,15 +1,20 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.framework.detection;
 
-import com.intellij.patterns.*;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.patterns.ElementPattern;
+import com.intellij.patterns.ObjectPattern;
+import com.intellij.patterns.PatternCondition;
+import com.intellij.patterns.StandardPatterns;
+import com.intellij.patterns.StringPattern;
 import com.intellij.util.ProcessingContext;
 import com.intellij.util.indexing.FileContent;
 import com.intellij.util.text.CharArrayUtil;
-import com.intellij.util.xml.NanoXmlUtil;
 import com.intellij.util.xml.XmlFileHeader;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
+import java.io.Reader;
 
 /**
  * Provides filters for file content
@@ -23,8 +28,8 @@ public final class FileContentPattern extends ObjectPattern<FileContent, FileCon
     return new FileContentPattern();
   }
 
-  public FileContentPattern withName(@NotNull final String name) {
-    return with(new PatternCondition<FileContent>("withName") {
+  public FileContentPattern withName(final @NotNull String name) {
+    return with(new PatternCondition<>("withName") {
       @Override
       public boolean accepts(@NotNull FileContent fileContent, ProcessingContext context) {
         return name.equals(fileContent.getFileName());
@@ -33,7 +38,7 @@ public final class FileContentPattern extends ObjectPattern<FileContent, FileCon
   }
 
   public FileContentPattern withName(final StringPattern namePattern) {
-    return with(new PatternCondition<FileContent>("withName") {
+    return with(new PatternCondition<>("withName") {
       @Override
       public boolean accepts(@NotNull FileContent fileContent, ProcessingContext context) {
         return namePattern.accepts(fileContent.getFileName());
@@ -42,7 +47,7 @@ public final class FileContentPattern extends ObjectPattern<FileContent, FileCon
   }
 
   public FileContentPattern inDirectory(final @NotNull String name) {
-    return with(new PatternCondition<FileContent>("inDirectory") {
+    return with(new PatternCondition<>("inDirectory") {
       @Override
       public boolean accepts(@NotNull FileContent fileContent, ProcessingContext context) {
         return name.equals(fileContent.getFile().getParent().getName());
@@ -50,12 +55,12 @@ public final class FileContentPattern extends ObjectPattern<FileContent, FileCon
     });
   }
 
-  public FileContentPattern xmlWithRootTag(@NotNull final String rootTag) {
-    return with(new PatternCondition<FileContent>("withRootTag") {
+  public FileContentPattern xmlWithRootTag(final @NotNull String rootTag) {
+    return with(new PatternCondition<>("withRootTag") {
       @Override
       public boolean accepts(@NotNull FileContent fileContent, ProcessingContext context) {
         try {
-          return rootTag.equals(parseHeaderWithException(fileContent).getRootTagLocalName());
+          return rootTag.equals(parseHeaderWithException(CharArrayUtil.readerFromCharSequence(fileContent.getContentAsText())).getRootTagLocalName());
         }
         catch (IOException e) {
           return false;
@@ -69,11 +74,11 @@ public final class FileContentPattern extends ObjectPattern<FileContent, FileCon
   }
 
   public FileContentPattern xmlWithRootTagNamespace(final ElementPattern<String> namespacePattern) {
-    return with(new PatternCondition<FileContent>("xmlWithRootTagNamespace") {
+    return with(new PatternCondition<>("xmlWithRootTagNamespace") {
       @Override
-      public boolean accepts(@NotNull final FileContent fileContent, final ProcessingContext context) {
+      public boolean accepts(final @NotNull FileContent fileContent, final ProcessingContext context) {
         try {
-          String rootTagNamespace = parseHeaderWithException(fileContent).getRootTagNamespace();
+          String rootTagNamespace = parseHeaderWithException(CharArrayUtil.readerFromCharSequence(fileContent.getContentAsText())).getRootTagNamespace();
           return rootTagNamespace != null && namespacePattern.accepts(rootTagNamespace, context);
         }
         catch (IOException e) {
@@ -83,9 +88,14 @@ public final class FileContentPattern extends ObjectPattern<FileContent, FileCon
     });
   }
 
-  @NotNull
-  private static XmlFileHeader parseHeaderWithException(FileContent fileContent) throws IOException {
-    return NanoXmlUtil.parseHeaderWithException(CharArrayUtil.readerFromCharSequence(fileContent.getContentAsText()));
+  public interface ParseXml {
+    @NotNull XmlFileHeader parseHeaderWithException(@NotNull Reader reader);
+    static ParseXml getInstance() {
+      return ApplicationManager.getApplication().getService(ParseXml.class);
+    }
   }
 
+  private static @NotNull XmlFileHeader parseHeaderWithException(@NotNull Reader reader) throws IOException {
+    return ParseXml.getInstance().parseHeaderWithException(reader);
+  }
 }

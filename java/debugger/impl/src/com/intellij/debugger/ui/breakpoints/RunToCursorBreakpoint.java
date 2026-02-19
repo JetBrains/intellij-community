@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.ui.breakpoints;
 
 import com.intellij.debugger.JavaDebuggerBundle;
@@ -12,6 +12,7 @@ import com.intellij.xdebugger.XDebuggerUtil;
 import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.breakpoints.XLineBreakpointType;
 import com.sun.jdi.event.LocatableEvent;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -20,18 +21,18 @@ import org.jetbrains.annotations.Nullable;
  */
 public class RunToCursorBreakpoint extends SyntheticLineBreakpoint implements SteppingBreakpoint {
   private final boolean myRestoreBreakpoints;
-  @NotNull
-  protected final SourcePosition myCustomPosition;
+  private final boolean myIsEngineBreakpoint;
+  protected final @NotNull SourcePosition myCustomPosition;
 
-  protected RunToCursorBreakpoint(@NotNull Project project, @NotNull SourcePosition pos, boolean restoreBreakpoints) {
+  protected RunToCursorBreakpoint(@NotNull Project project, @NotNull SourcePosition pos, boolean restoreBreakpoints, boolean isEngineBreakpoint) {
     super(project);
     myCustomPosition = pos;
     myRestoreBreakpoints = restoreBreakpoints;
+    myIsEngineBreakpoint = isEngineBreakpoint;
   }
 
-  @NotNull
   @Override
-  public SourcePosition getSourcePosition() {
+  public @NotNull SourcePosition getSourcePosition() {
     return myCustomPosition;
   }
 
@@ -41,8 +42,13 @@ public class RunToCursorBreakpoint extends SyntheticLineBreakpoint implements St
   }
 
   @Override
-  protected String getFileName() {
+  public String getFileName() {
     return myCustomPosition.getFile().getName();
+  }
+
+  @Override
+  protected @Nullable VirtualFile getVirtualFile() {
+    return myCustomPosition.getFile().getVirtualFile();
   }
 
   @Override
@@ -55,9 +61,8 @@ public class RunToCursorBreakpoint extends SyntheticLineBreakpoint implements St
     return JavaDebuggerBundle.message("status.stopped.at.cursor");
   }
 
-  @Nullable
   @Override
-  protected JavaLineBreakpointType getXBreakpointType() {
+  protected @Nullable JavaLineBreakpointType getXBreakpointType() {
     SourcePosition position = getSourcePosition();
     VirtualFile file = position.getFile().getVirtualFile();
     int line = position.getLine();
@@ -69,13 +74,19 @@ public class RunToCursorBreakpoint extends SyntheticLineBreakpoint implements St
     return null;
   }
 
-  @Nullable
-  protected static RunToCursorBreakpoint create(@NotNull Project project, @NotNull XSourcePosition position, boolean restoreBreakpoints) {
+  @ApiStatus.Internal
+  public final boolean isEngineBreakpoint() {
+    return myIsEngineBreakpoint;
+  }
+
+  protected static @Nullable RunToCursorBreakpoint create(@NotNull Project project,
+                                                          @NotNull XSourcePosition position,
+                                                          boolean restoreBreakpoints) {
     PsiFile psiFile = PsiManager.getInstance(project).findFile(position.getFile());
     if (psiFile == null) {
       return null;
     }
-    return new RunToCursorBreakpoint(project, SourcePosition.createFromOffset(psiFile, position.getOffset()), restoreBreakpoints);
+    return new RunToCursorBreakpoint(project, SourcePosition.createFromOffset(psiFile, position.getOffset()), restoreBreakpoints, false);
   }
 
   @Override

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.typeMigration.rules.guava;
 
 import com.intellij.codeInspection.java18StreamApi.PseudoLambdaReplaceTemplate;
@@ -6,7 +6,20 @@ import com.intellij.codeInspection.java18StreamApi.StreamApiConstants;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.NotNullLazyValue;
-import com.intellij.psi.*;
+import com.intellij.psi.CommonClassNames;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiClassType;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiEllipsisType;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiLiteralExpression;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiMethodCallExpression;
+import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiParameterList;
+import com.intellij.psi.PsiReferenceExpression;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiVariable;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.SuggestedNameInfo;
 import com.intellij.psi.codeStyle.VariableKind;
@@ -17,7 +30,6 @@ import com.intellij.refactoring.typeMigration.TypeConversionDescriptorBase;
 import com.intellij.refactoring.typeMigration.TypeEvaluator;
 import com.intellij.refactoring.typeMigration.TypeMigrationLabeler;
 import com.intellij.refactoring.typeMigration.rules.TypeConversionRule;
-import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Stack;
@@ -27,15 +39,28 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * @author Dmitry Batkovich
  */
-public class GuavaFluentIterableConversionRule extends BaseGuavaTypeConversionRule {
+public final class GuavaFluentIterableConversionRule extends BaseGuavaTypeConversionRule {
   private static final Logger LOG = Logger.getInstance(GuavaFluentIterableConversionRule.class);
-  private static final Map<@NonNls String, TypeConversionDescriptorFactory> DESCRIPTORS_MAP =
-    new HashMap<>();
+  private static final Map<@NonNls String, TypeConversionDescriptorFactory> DESCRIPTORS_MAP = Map.of(
+    "skip", new TypeConversionDescriptorFactory("$q$.skip($p$)", "$q$.skip($p$)", false, true, true),
+    "limit", new TypeConversionDescriptorFactory("$q$.limit($p$)", "$q$.limit($p$)", false, true, true),
+    "first", new TypeConversionDescriptorFactory("$q$.first()", "$q$.findFirst()", false, true, false),
+    "transform", new TypeConversionDescriptorFactory("$q$.transform($params$)", "$q$.map($params$)", true, true, true),
+
+    "allMatch", new TypeConversionDescriptorFactory("$it$.allMatch($c$)", "$it$." + StreamApiConstants.ALL_MATCH + "($c$)", true),
+    "anyMatch", new TypeConversionDescriptorFactory("$it$.anyMatch($c$)", "$it$." + StreamApiConstants.ANY_MATCH + "($c$)", true),
+    "firstMatch", new TypeConversionDescriptorFactory("$it$.firstMatch($p$)", "$it$.filter($p$).findFirst()", true, true, false),
+    "size", new TypeConversionDescriptorFactory("$it$.size()", "(int) $it$.count()", false)
+  );
 
   public static final Set<@NonNls String> CHAIN_HEAD_METHODS = ContainerUtil.newHashSet("from", "of", "fromNullable");
   public static final @NonNls String FLUENT_ITERABLE = "com.google.common.collect.FluentIterable";
@@ -52,11 +77,11 @@ public class GuavaFluentIterableConversionRule extends BaseGuavaTypeConversionRu
       this(stringToReplace, replaceByString, withLambdaParameter, false, false);
     }
 
-    TypeConversionDescriptorFactory(@NonNls final String stringToReplace,
-                                           @NonNls final String replaceByString,
-                                           boolean withLambdaParameter,
-                                           boolean chainedMethod,
-                                           boolean fluentIterableReturnType) {
+    TypeConversionDescriptorFactory(final @NonNls String stringToReplace,
+                                    final @NonNls String replaceByString,
+                                    boolean withLambdaParameter,
+                                    boolean chainedMethod,
+                                    boolean fluentIterableReturnType) {
       myStringToReplace = stringToReplace;
       myReplaceByString = replaceByString;
       myWithLambdaParameter = withLambdaParameter;
@@ -81,32 +106,19 @@ public class GuavaFluentIterableConversionRule extends BaseGuavaTypeConversionRu
     }
   }
 
-  static {
-    DESCRIPTORS_MAP.put("skip", new TypeConversionDescriptorFactory("$q$.skip($p$)", "$q$.skip($p$)", false, true, true));
-    DESCRIPTORS_MAP.put("limit", new TypeConversionDescriptorFactory("$q$.limit($p$)", "$q$.limit($p$)", false, true, true));
-    DESCRIPTORS_MAP.put("first", new TypeConversionDescriptorFactory("$q$.first()", "$q$.findFirst()", false, true, false));
-    DESCRIPTORS_MAP.put("transform", new TypeConversionDescriptorFactory("$q$.transform($params$)", "$q$.map($params$)", true, true, true));
-
-    DESCRIPTORS_MAP.put("allMatch", new TypeConversionDescriptorFactory("$it$.allMatch($c$)", "$it$." + StreamApiConstants.ALL_MATCH + "($c$)", true));
-    DESCRIPTORS_MAP.put("anyMatch", new TypeConversionDescriptorFactory("$it$.anyMatch($c$)", "$it$." + StreamApiConstants.ANY_MATCH + "($c$)", true));
-    DESCRIPTORS_MAP.put("firstMatch", new TypeConversionDescriptorFactory("$it$.firstMatch($p$)", "$it$.filter($p$).findFirst()", true, true, false));
-    DESCRIPTORS_MAP.put("size", new TypeConversionDescriptorFactory("$it$.size()", "(int) $it$.count()", false));
-  }
-
   @Override
   protected boolean isValidMethodQualifierToConvert(PsiClass aClass) {
     return super.isValidMethodQualifierToConvert(aClass) ||
            (aClass != null && GuavaOptionalConversionRule.GUAVA_OPTIONAL.equals(aClass.getQualifiedName()));
   }
 
-  @Nullable
   @Override
-  protected TypeConversionDescriptorBase findConversionForMethod(@NotNull PsiType from,
-                                                                 @NotNull PsiType to,
-                                                                 @NotNull PsiMethod method,
-                                                                 @NotNull String methodName,
-                                                                 PsiExpression context,
-                                                                 TypeMigrationLabeler labeler) {
+  protected @Nullable TypeConversionDescriptorBase findConversionForMethod(@NotNull PsiType from,
+                                                                           @NotNull PsiType to,
+                                                                           @NotNull PsiMethod method,
+                                                                           @NotNull String methodName,
+                                                                           PsiExpression context,
+                                                                           TypeMigrationLabeler labeler) {
     if (context instanceof PsiMethodCallExpression) {
       return buildCompoundDescriptor((PsiMethodCallExpression)context, to, labeler);
     }
@@ -114,18 +126,16 @@ public class GuavaFluentIterableConversionRule extends BaseGuavaTypeConversionRu
     return getOneMethodDescriptor(methodName, method, from, context);
   }
 
-  @Nullable
-  private static TypeConversionDescriptorBase getOneMethodDescriptor(@NotNull @NlsSafe String methodName,
-                                                                     @NotNull PsiMethod method,
-                                                                     @NotNull PsiType from,
-                                                                     @Nullable PsiExpression context) {
+  private static @Nullable TypeConversionDescriptorBase getOneMethodDescriptor(@NotNull @NlsSafe String methodName,
+                                                                               @NotNull PsiMethod method,
+                                                                               @NotNull PsiType from,
+                                                                               @Nullable PsiExpression context) {
     TypeConversionDescriptor descriptorBase = null;
     PsiType conversionType = null;
     boolean needSpecifyType = true;
-    if (methodName.equals("of")) {
-      descriptorBase = new TypeConversionDescriptor("'_FluentIterable?.of($arr$)", "java.util.Arrays.stream($arr$)");
-    } else if (methodName.equals("from")) {
-      descriptorBase = new TypeConversionDescriptor("'_FluentIterable?.from($it$)", null) {
+    switch (methodName) {
+      case "of" -> descriptorBase = new TypeConversionDescriptor("'_FluentIterable?.of($arr$)", "java.util.Arrays.stream($arr$)");
+      case "from" -> descriptorBase = new TypeConversionDescriptor("'_FluentIterable?.from($it$)", null) {
         @Override
         public PsiExpression replace(PsiExpression expression, @NotNull TypeEvaluator evaluator) {
           final PsiMethodCallExpression methodCall = (PsiMethodCallExpression)expression;
@@ -142,80 +152,75 @@ public class GuavaFluentIterableConversionRule extends BaseGuavaTypeConversionRu
           return replaced;
         }
       };
-    } else if (methodName.equals("filter")) {
-      descriptorBase = FluentIterableConversionUtil.getFilterDescriptor(method, context);
-    } else if (methodName.equals("isEmpty")) {
-      descriptorBase = new TypeConversionDescriptor("$q$.isEmpty()", null) {
-        @Override
-        public PsiExpression replace(PsiExpression expression, @NotNull TypeEvaluator evaluator) {
-          final PsiElement parent = expression.getParent();
-          boolean isDoubleNegation = false;
-          if (parent instanceof PsiExpression && DoubleNegationInspection.isNegation((PsiExpression)parent)) {
-            isDoubleNegation = true;
-            expression = (PsiExpression)parent.replace(expression);
-          }
-          setReplaceByString((isDoubleNegation ? "" : "!") + "$q$.findAny().isPresent()");
-          return super.replace(expression, evaluator);
-        }
-      };
-      needSpecifyType = false;
-    }
-    else if (methodName.equals("transformAndConcat")) {
-      descriptorBase = new FluentIterableConversionUtil.TransformAndConcatConversionRule(context);
-    } else if (methodName.equals("toArray")) {
-      descriptorBase = FluentIterableConversionUtil.getToArrayDescriptor(from, context);
-      needSpecifyType = false;
-    }
-    else if (methodName.equals("copyInto")) {
-      descriptorBase = new FluentIterableConversionUtil.CopyIntoConversionDescriptor();
-      needSpecifyType = false;
-    }
-    else if (methodName.equals("append")) {
-      descriptorBase = createDescriptorForAppend(method, context);
-    }
-    else if (methodName.equals("get")) {
-      descriptorBase = new TypeConversionDescriptor("$it$.get($p$)", null) {
-        @Override
-        public PsiExpression replace(PsiExpression expression, @NotNull TypeEvaluator evaluator) {
-          PsiMethodCallExpression methodCall = (PsiMethodCallExpression)expression;
-          final PsiExpression[] arguments = methodCall.getArgumentList().getExpressions();
-          setReplaceByString("$it$.skip($p$).findFirst().get()");
-          if (arguments.length == 1 && arguments[0] instanceof PsiLiteralExpression) {
-            final Object value = ((PsiLiteralExpression)arguments[0]).getValue();
-            if (value != null && value.equals(0)) {
-              setReplaceByString("$it$.findFirst().get()");
+      case "filter" -> descriptorBase = FluentIterableConversionUtil.getFilterDescriptor(method, context);
+      case "isEmpty" -> {
+        descriptorBase = new TypeConversionDescriptor("$q$.isEmpty()", null) {
+          @Override
+          public PsiExpression replace(PsiExpression expression, @NotNull TypeEvaluator evaluator) {
+            final PsiElement parent = expression.getParent();
+            boolean isDoubleNegation = false;
+            if (parent instanceof PsiExpression && DoubleNegationInspection.isNegation((PsiExpression)parent)) {
+              isDoubleNegation = true;
+              expression = (PsiExpression)parent.replace(expression);
             }
+            setReplaceByString((isDoubleNegation ? "" : "!") + "$q$.findAny().isPresent()");
+            return super.replace(expression, evaluator);
           }
-          return super.replace(expression, evaluator);
-        }
-      };
-      needSpecifyType = false;
-    }
-    else if (methodName.equals("contains")) {
-      descriptorBase = new TypeConversionDescriptor("$it$.contains($o$)", null) {
-        @Override
-        public PsiExpression replace(PsiExpression expression, @NotNull TypeEvaluator evaluator) {
-          final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)expression;
-          final PsiExpression qualifier = methodCallExpression.getMethodExpression().getQualifierExpression();
-          LOG.assertTrue(qualifier != null);
-          final PsiClassType qualifierType = (PsiClassType)qualifier.getType();
-          LOG.assertTrue(qualifierType != null);
-          final PsiType[] parameters = qualifierType.getParameters();
+        };
+        needSpecifyType = false;
+      }
+      case "transformAndConcat" -> descriptorBase = new FluentIterableConversionUtil.TransformAndConcatConversionRule(context);
+      case "toArray" -> {
+        descriptorBase = FluentIterableConversionUtil.getToArrayDescriptor(from, context);
+        needSpecifyType = false;
+      }
+      case "copyInto" -> {
+        descriptorBase = new FluentIterableConversionUtil.CopyIntoConversionDescriptor();
+        needSpecifyType = false;
+      }
+      case "append" -> descriptorBase = createDescriptorForAppend(method, context);
+      case "get" -> {
+        descriptorBase = new TypeConversionDescriptor("$it$.get($p$)", null) {
+          @Override
+          public PsiExpression replace(PsiExpression expression, @NotNull TypeEvaluator evaluator) {
+            PsiMethodCallExpression methodCall = (PsiMethodCallExpression)expression;
+            final PsiExpression[] arguments = methodCall.getArgumentList().getExpressions();
+            setReplaceByString("$it$.skip($p$).findFirst().get()");
+            if (arguments.length == 1 && arguments[0] instanceof PsiLiteralExpression) {
+              final Object value = ((PsiLiteralExpression)arguments[0]).getValue();
+              if (value != null && value.equals(0)) {
+                setReplaceByString("$it$.findFirst().get()");
+              }
+            }
+            return super.replace(expression, evaluator);
+          }
+        };
+        needSpecifyType = false;
+      }
+      case "contains" -> {
+        descriptorBase = new TypeConversionDescriptor("$it$.contains($o$)", null) {
+          @Override
+          public PsiExpression replace(PsiExpression expression, @NotNull TypeEvaluator evaluator) {
+            final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)expression;
+            final PsiExpression qualifier = methodCallExpression.getMethodExpression().getQualifierExpression();
+            LOG.assertTrue(qualifier != null);
+            final PsiClassType qualifierType = (PsiClassType)qualifier.getType();
+            LOG.assertTrue(qualifierType != null);
+            final PsiType[] parameters = qualifierType.getParameters();
 
-          final JavaCodeStyleManager codeStyleManager = JavaCodeStyleManager.getInstance(expression.getProject());
-          final SuggestedNameInfo suggestedNameInfo = codeStyleManager
-            .suggestVariableName(VariableKind.LOCAL_VARIABLE, null, null, parameters.length == 1 ? parameters[0] : null, false);
-          final String suggestedName = codeStyleManager.suggestUniqueVariableName(suggestedNameInfo, expression, false).names[0];
+            final JavaCodeStyleManager codeStyleManager = JavaCodeStyleManager.getInstance(expression.getProject());
+            final SuggestedNameInfo suggestedNameInfo = codeStyleManager
+              .suggestVariableName(VariableKind.LOCAL_VARIABLE, null, null, parameters.length == 1 ? parameters[0] : null, false);
+            final String suggestedName = codeStyleManager.suggestUniqueVariableName(suggestedNameInfo, expression, false).names[0];
 
-          setReplaceByString("$it$.anyMatch(" + suggestedName + " -> java.util.Objects.equals(" + suggestedName + ", $o$))");
+            setReplaceByString("$it$.anyMatch(" + suggestedName + " -> java.util.Objects.equals(" + suggestedName + ", $o$))");
 
-          return super.replace(expression, evaluator);
-        }
-      };
-      needSpecifyType = false;
-    }
-    else if (methodName.equals("last")) {
-      descriptorBase = new TypeConversionDescriptor("$it$.last()", null) {
+            return super.replace(expression, evaluator);
+          }
+        };
+        needSpecifyType = false;
+      }
+      case "last" -> descriptorBase = new TypeConversionDescriptor("$it$.last()", null) {
         @Override
         public PsiExpression replace(PsiExpression expression, @NotNull TypeEvaluator evaluator) {
           final JavaCodeStyleManager codeStyleManager = JavaCodeStyleManager.getInstance(expression.getProject());
@@ -225,22 +230,22 @@ public class GuavaFluentIterableConversionRule extends BaseGuavaTypeConversionRu
           return super.replace(expression, evaluator);
         }
 
-        private  String suggestName(String baseName, JavaCodeStyleManager codeStyleManager, PsiElement place) {
-          final SuggestedNameInfo suggestedNameInfo = codeStyleManager
-            .suggestVariableName(VariableKind.LOCAL_VARIABLE, baseName, null, null, false);
+        private static String suggestName(String baseName, JavaCodeStyleManager codeStyleManager, PsiElement place) {
+          final SuggestedNameInfo suggestedNameInfo =
+            codeStyleManager.suggestVariableName(VariableKind.LOCAL_VARIABLE, baseName, null, null, false);
           return codeStyleManager.suggestUniqueVariableName(suggestedNameInfo, place, false).names[0];
         }
       };
-    }
-    else {
-      final TypeConversionDescriptorFactory base = DESCRIPTORS_MAP.get(methodName);
-      if (base != null) {
-        final TypeConversionDescriptor descriptor = base.create(context);
-        needSpecifyType = base.isChainedMethod();
-        if (needSpecifyType && !base.isFluentIterableReturnType()) {
-          conversionType = GuavaConversionUtil.addTypeParameters(GuavaOptionalConversionRule.JAVA_OPTIONAL, context.getType(), context);
+      default -> {
+        final TypeConversionDescriptorFactory base = DESCRIPTORS_MAP.get(methodName);
+        if (base != null) {
+          final TypeConversionDescriptor descriptor = base.create(context);
+          needSpecifyType = base.isChainedMethod();
+          if (needSpecifyType && !base.isFluentIterableReturnType()) {
+            conversionType = GuavaConversionUtil.addTypeParameters(GuavaOptionalConversionRule.JAVA_OPTIONAL, context.getType(), context);
+          }
+          descriptorBase = descriptor;
         }
-        descriptorBase = descriptor;
       }
     }
     if (descriptorBase == null) {
@@ -248,22 +253,25 @@ public class GuavaFluentIterableConversionRule extends BaseGuavaTypeConversionRu
     }
     if (needSpecifyType) {
       if (conversionType == null) {
-        PsiMethodCallExpression methodCall = (PsiMethodCallExpression) (context instanceof PsiMethodCallExpression ? context : context.getParent());
-        conversionType = GuavaConversionUtil.addTypeParameters(GuavaTypeConversionDescriptor.isIterable(methodCall) ? CommonClassNames.JAVA_LANG_ITERABLE : StreamApiConstants.JAVA_UTIL_STREAM_STREAM, context.getType(), context);
+        PsiMethodCallExpression methodCall =
+          (PsiMethodCallExpression)(context instanceof PsiMethodCallExpression ? context : context.getParent());
+        conversionType = GuavaConversionUtil.addTypeParameters(GuavaTypeConversionDescriptor.isIterable(methodCall)
+                                                               ? CommonClassNames.JAVA_LANG_ITERABLE
+                                                               : StreamApiConstants.JAVA_UTIL_STREAM_STREAM, context.getType(), context);
       }
       descriptorBase.withConversionType(conversionType);
     }
     return descriptorBase;
   }
 
-  @Nullable
-  private static TypeConversionDescriptor createDescriptorForAppend(PsiMethod method, PsiExpression context) {
+  private static @Nullable TypeConversionDescriptor createDescriptorForAppend(PsiMethod method, PsiExpression context) {
     LOG.assertTrue("append".equals(method.getName()));
     final PsiParameterList list = method.getParameterList();
     if (list.getParametersCount() != 1) return null;
     final PsiType parameterType = list.getParameters()[0].getType();
     if (parameterType instanceof PsiEllipsisType) {
-      return new TypeConversionDescriptor("$q$.append('_params*)", "java.util.stream.Stream.concat($q$, java.util.Arrays.asList($params$).stream())");
+      return new TypeConversionDescriptor("$q$.append('_params*)",
+                                          "java.util.stream.Stream.concat($q$, java.util.Arrays.asList($params$).stream())");
     }
     else if (parameterType instanceof PsiClassType) {
       final PsiClass psiClass = PsiTypesUtil.getPsiClass(parameterType);
@@ -280,24 +288,19 @@ public class GuavaFluentIterableConversionRule extends BaseGuavaTypeConversionRu
     return null;
   }
 
-  @Nullable
-  public static GuavaChainedConversionDescriptor buildCompoundDescriptor(PsiMethodCallExpression expression,
-                                                                          PsiType to,
-                                                                          TypeMigrationLabeler labeler) {
+  public static @Nullable GuavaChainedConversionDescriptor buildCompoundDescriptor(PsiMethodCallExpression expression,
+                                                                                   PsiType to,
+                                                                                   TypeMigrationLabeler labeler) {
     List<TypeConversionDescriptorBase> methodDescriptors = new SmartList<>();
 
-    NotNullLazyValue<TypeConversionRule> optionalDescriptor = new NotNullLazyValue<>() {
-      @NotNull
-      @Override
-      protected TypeConversionRule compute() {
-        for (TypeConversionRule rule : TypeConversionRule.EP_NAME.getExtensions()) {
-          if (rule instanceof GuavaOptionalConversionRule) {
-            return rule;
-          }
+    NotNullLazyValue<TypeConversionRule> optionalDescriptor = NotNullLazyValue.createValue(() -> {
+      for (TypeConversionRule rule : TypeConversionRule.EP_NAME.getExtensions()) {
+        if (rule instanceof GuavaOptionalConversionRule) {
+          return rule;
         }
-        throw new RuntimeException("GuavaOptionalConversionRule extension is not found");
       }
-    };
+      throw new RuntimeException("GuavaOptionalConversionRule extension is not found");
+    });
 
     PsiMethodCallExpression current = expression;
     while (true) {
@@ -362,7 +365,8 @@ public class GuavaFluentIterableConversionRule extends BaseGuavaTypeConversionRu
                            GuavaOptionalConversionRule.GUAVA_OPTIONAL.equals(qClass.getQualifiedName()))) {
       labeler.migrateExpressionType(qualifier,
                                     GuavaConversionUtil.addTypeParameters(isFluentIterable ? StreamApiConstants.JAVA_UTIL_STREAM_STREAM :
-                                                                          GuavaOptionalConversionRule.JAVA_OPTIONAL, qualifier.getType(), qualifier),
+                                                                          GuavaOptionalConversionRule.JAVA_OPTIONAL, qualifier.getType(),
+                                                                          qualifier),
                                     qualifier.getParent(),
                                     false,
                                     false);
@@ -380,9 +384,9 @@ public class GuavaFluentIterableConversionRule extends BaseGuavaTypeConversionRu
     }
 
     @Override
-    public PsiExpression replace(@NotNull PsiExpression expression, @NotNull TypeEvaluator evaluator) throws IncorrectOperationException {
+    public PsiExpression replace(@NotNull PsiExpression expression, @NotNull TypeEvaluator evaluator) {
       Stack<PsiMethodCallExpression> methodChainStack = new Stack<>();
-      PsiMethodCallExpression current = (PsiMethodCallExpression) expression;
+      PsiMethodCallExpression current = (PsiMethodCallExpression)expression;
       while (current != null) {
         methodChainStack.add(current);
         final PsiExpression qualifier = current.getMethodExpression().getQualifierExpression();
@@ -403,22 +407,19 @@ public class GuavaFluentIterableConversionRule extends BaseGuavaTypeConversionRu
       return converted;
     }
 
-    @Nullable
     @Override
-    public PsiType conversionType() {
+    public @Nullable PsiType conversionType() {
       return myToType;
     }
   }
 
-  @NotNull
   @Override
-  public String ruleFromClass() {
+  public @NotNull String ruleFromClass() {
     return FLUENT_ITERABLE;
   }
 
-  @NotNull
   @Override
-  public String ruleToClass() {
+  public @NotNull String ruleToClass() {
     return StreamApiConstants.JAVA_UTIL_STREAM_STREAM;
   }
 

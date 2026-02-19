@@ -1,3 +1,0 @@
-lib/log4j.jar
-lib/jna.jar
-lib/jna-platform.jar

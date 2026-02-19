@@ -1,29 +1,46 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.containers;
 
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.Functions;
-import com.intellij.util.concurrency.AtomicFieldUpdater;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.Iterator;
+import java.util.List;
+import java.util.ListIterator;
+import java.util.NoSuchElementException;
+import java.util.Objects;
+import java.util.RandomAccess;
+import java.util.Set;
+import java.util.Spliterator;
 import java.util.function.Consumer;
+import java.util.function.Predicate;
+import java.util.function.UnaryOperator;
 
 /**
  * This class is a
- * - lock-free (CAS instead of ReentrantLock)
- * - less-memory (no lock field)
- * - less-garbage (does not create Object[0] arrays)
- * - non-cloneable, non-serializable, no-subList-method variant of {@link java.util.concurrent.CopyOnWriteArrayList}.
- * It generally is faster than COWAL in case of low write-contention.
- * (Note that it is not advisable to use COWAL in high write-contention code anyway, consider using {@link java.util.concurrent.ConcurrentHashMap}) instead)
+ * <ul>
+ * <li> lock-free (CAS instead of ReentrantLock)
+ * <li> less-memory (no lock field)
+ * <li> less-garbage (does not create Object[0] arrays)
+ * <li> non-cloneable, non-serializable, no-subList-method
+ * </ul>
+ * re-implementation of {@link java.util.concurrent.CopyOnWriteArrayList}.
+ * It generally is faster than {@link java.util.concurrent.CopyOnWriteArrayList} in case of low write-contention.
+ * (Note that it is not advisable to use {@link java.util.concurrent.CopyOnWriteArrayList}
+ *  in high write-contention code anyway, consider using {@link java.util.concurrent.ConcurrentHashMap} instead).
  */
 final class LockFreeCopyOnWriteArrayList<E> implements List<E>, RandomAccess, ConcurrentList<E> {
+  @SuppressWarnings({"FieldMayBeFinal"})
   private volatile Object @NotNull [] array;
-
+  private static final VarHandleWrapper ARRAY_HANDLE = VarHandleWrapper.getFactory().create(LockFreeCopyOnWriteArrayList.class, "array", Object[].class);
   LockFreeCopyOnWriteArrayList() {
     array = ArrayUtilRt.EMPTY_OBJECT_ARRAY;
   }
@@ -31,17 +48,8 @@ final class LockFreeCopyOnWriteArrayList<E> implements List<E>, RandomAccess, Co
     array = c.isEmpty() ? ArrayUtilRt.EMPTY_OBJECT_ARRAY : c.toArray();
   }
 
-  @TestOnly
-  Object @NotNull [] getArray() {
-    return array;
-  }
-
-  @SuppressWarnings("rawtypes")
-  private static final AtomicFieldUpdater<LockFreeCopyOnWriteArrayList, Object[]> ARRAY_UPDATER
-    = AtomicFieldUpdater.forFieldOfType(LockFreeCopyOnWriteArrayList.class, Object[].class);
-
   private boolean replaceArray(Object @NotNull [] oldArray, Object @NotNull [] newArray) {
-    return ARRAY_UPDATER.compareAndSet(this, oldArray, newArray);
+    return ARRAY_HANDLE.compareAndSet(this, oldArray, newArray);
   }
 
   /**
@@ -51,7 +59,7 @@ final class LockFreeCopyOnWriteArrayList<E> implements List<E>, RandomAccess, Co
    */
   @Override
   public int size() {
-    return array.length;
+    return get().length;
   }
 
   /**
@@ -113,8 +121,12 @@ final class LockFreeCopyOnWriteArrayList<E> implements List<E>, RandomAccess, Co
    */
   @Override
   public boolean contains(Object o) {
-    Object[] elements = array;
+    Object[] elements = get();
     return indexOf(o, elements, 0, elements.length) >= 0;
+  }
+
+  private Object[] get() {
+    return array;
   }
 
   /**
@@ -122,7 +134,7 @@ final class LockFreeCopyOnWriteArrayList<E> implements List<E>, RandomAccess, Co
    */
   @Override
   public int indexOf(Object o) {
-    Object[] elements = array;
+    Object[] elements = get();
     return indexOf(o, elements, 0, elements.length);
   }
 
@@ -142,7 +154,7 @@ final class LockFreeCopyOnWriteArrayList<E> implements List<E>, RandomAccess, Co
    * @throws IndexOutOfBoundsException if the specified index is negative
    */
   public int indexOf(E e, int index) {
-    Object[] elements = array;
+    Object[] elements = get();
     return indexOf(e, elements, index, elements.length);
   }
 
@@ -151,7 +163,7 @@ final class LockFreeCopyOnWriteArrayList<E> implements List<E>, RandomAccess, Co
    */
   @Override
   public int lastIndexOf(Object o) {
-    Object[] elements = array;
+    Object[] elements = get();
     return lastIndexOf(o, elements, elements.length - 1);
   }
 
@@ -172,12 +184,12 @@ final class LockFreeCopyOnWriteArrayList<E> implements List<E>, RandomAccess, Co
    *                                   than or equal to the current size of this list
    */
   public int lastIndexOf(E e, int index) {
-    Object[] elements = array;
+    Object[] elements = get();
     return lastIndexOf(e, elements, index);
   }
 
   /**
-   * Returns an array containing all of the elements in this list
+   * Returns an array containing all the elements in this list
    * in proper sequence (from first to last element).
    * <p/>
    * <p>The returned array will be "safe" in that no references to it are
@@ -191,14 +203,14 @@ final class LockFreeCopyOnWriteArrayList<E> implements List<E>, RandomAccess, Co
    */
   @Override
   public Object @NotNull [] toArray() {
-    Object[] elements = array;
+    Object[] elements = get();
     if (elements.length == 0) return ArrayUtilRt.EMPTY_OBJECT_ARRAY;
 
     return Arrays.copyOf(elements, elements.length, Object[].class);
   }
 
   /**
-   * Returns an array containing all of the elements in this list in
+   * Returns an array containing all the elements in this list in
    * proper sequence (from first to last element); the runtime type of
    * the returned array is that of the specified array.  If the list fits
    * in the specified array, it is returned therein.  Otherwise, a new
@@ -238,7 +250,7 @@ final class LockFreeCopyOnWriteArrayList<E> implements List<E>, RandomAccess, Co
    */
   @Override
   public <T> T @NotNull [] toArray(T @NotNull [] a) {
-    Object[] elements = array;
+    Object[] elements = get();
     int len = elements.length;
     if (a.length < len) {
       //noinspection unchecked
@@ -266,7 +278,7 @@ final class LockFreeCopyOnWriteArrayList<E> implements List<E>, RandomAccess, Co
    */
   @Override
   public E get(int index) {
-    return get(array, index);
+    return get(get(), index);
   }
 
   /**
@@ -280,7 +292,7 @@ final class LockFreeCopyOnWriteArrayList<E> implements List<E>, RandomAccess, Co
     Object[] elements;
     Object[] newElements;
     do {
-      elements = array;
+      elements = get();
       oldValue = get(elements, index);
 
       if (oldValue == element) {
@@ -309,20 +321,12 @@ final class LockFreeCopyOnWriteArrayList<E> implements List<E>, RandomAccess, Co
    */
   @Override
   public boolean add(E e) {
-    while (true) {
-      Object[] elements = array;
-      Object[] newElements = createArrayAdd(elements, e);
-      if (replaceArray(elements, newElements)) break;
-    }
-    return true;
+    return changeAndReplace(elements -> createArrayAdd(elements, e));
   }
 
   private static <E> Object @NotNull [] createArrayAdd(Object @NotNull [] elements, E e) {
     int len = elements.length;
-    Object[] newElements = new Object[len + 1];
-    if (len != 0) {
-      System.arraycopy(elements, 0, newElements, 0, len);
-    }
+    Object[] newElements = Arrays.copyOf(elements, len + 1);
     newElements[len] = e;
     return newElements;
   }
@@ -335,11 +339,7 @@ final class LockFreeCopyOnWriteArrayList<E> implements List<E>, RandomAccess, Co
    */
   @Override
   public void add(int index, E element) throws IndexOutOfBoundsException {
-    while (true) {
-      Object[] elements = array;
-      Object[] newElements = createArrayAdd(elements, index, element);
-      if (replaceArray(elements, newElements)) break;
-    }
+    changeAndReplace(elements -> createArrayAdd(elements, index, element));
   }
 
   private static <E> Object @NotNull [] createArrayAdd(Object @NotNull [] elements, int index, E element) {
@@ -369,7 +369,7 @@ final class LockFreeCopyOnWriteArrayList<E> implements List<E>, RandomAccess, Co
   public E remove(int index) throws IndexOutOfBoundsException {
     E oldValue;
     while (true) {
-      Object[] elements = array;
+      Object[] elements = get();
       Object[] newElements = createArrayRemove(elements, index);
       if (replaceArray(elements, newElements)) {
         oldValue = get(elements, index);
@@ -407,14 +407,7 @@ final class LockFreeCopyOnWriteArrayList<E> implements List<E>, RandomAccess, Co
    */
   @Override
   public boolean remove(Object o) {
-    while (true) {
-      Object[] elements = array;
-      Object[] newElements = createArrayRemove(elements, o);
-      if (newElements == null) {
-        return false;
-      }
-      if (replaceArray(elements, newElements)) return true;
-    }
+    return changeAndReplace(elements -> createArrayRemove(elements, o));
   }
 
   // null means not found
@@ -454,39 +447,38 @@ final class LockFreeCopyOnWriteArrayList<E> implements List<E>, RandomAccess, Co
    */
   @Override
   public boolean addIfAbsent(E e) {
-    Object[] elements;
-    Object[] newElements;
-    do {
-      // Copy while checking if already present.
-      // This wins in the most common case where it is not present
-      elements = array;
-      int len = elements.length;
-      newElements = new Object[len + 1];
-      for (int i = 0; i < len; ++i) {
-        if (Objects.equals(e, elements[i])) {
-          return false; // exit, throwing away copy
-        }
-        newElements[i] = elements[i];
+    return changeAndReplace(elements -> createArrayAddIfAbsent(elements, e));
+  }
+
+  private static <E> Object @Nullable [] createArrayAddIfAbsent(Object @NotNull [] elements, E e) {
+    // Copy while checking if already present.
+    // This wins in the most common case where it is not present
+    int len = elements.length;
+    Object[] newElements = new Object[len + 1];
+    for (int i = 0; i < len; ++i) {
+      if (Objects.equals(e, elements[i])) {
+        // exit, throwing away copy
+        return null;
       }
-      newElements[len] = e;
+      newElements[i] = elements[i];
     }
-    while (!replaceArray(elements, newElements));
-    return true;
+    newElements[len] = e;
+    return newElements;
   }
 
   /**
-   * Returns <tt>true</tt> if this list contains all of the elements of the
+   * Returns <tt>true</tt> if this list contains all the elements of the
    * specified collection.
    *
    * @param c collection to be checked for containment in this list
-   * @return <tt>true</tt> if this list contains all of the elements of the
+   * @return <tt>true</tt> if this list contains all the elements of the
    *         specified collection
    * @throws NullPointerException if the specified collection is null
    * @see #contains(Object)
    */
   @Override
   public boolean containsAll(@NotNull Collection<?> c) {
-    Object[] elements = array;
+    Object[] elements = get();
     int len = elements.length;
     for (Object e : c) {
       if (indexOf(e, elements, 0, len) < 0) {
@@ -514,13 +506,7 @@ final class LockFreeCopyOnWriteArrayList<E> implements List<E>, RandomAccess, Co
    */
   @Override
   public boolean removeAll(@NotNull Collection<?> c) {
-    if (c.isEmpty()) return false;
-    while (true) {
-      Object[] elements = array;
-      Object[] newElements = createArrayRemoveAll(elements, c);
-      if (newElements == null) return false;
-      if (replaceArray(elements, newElements)) return true;
-    }
+    return changeAndReplace(elements -> createArrayRemoveAll(elements, c));
   }
 
   // null means not found
@@ -561,12 +547,7 @@ final class LockFreeCopyOnWriteArrayList<E> implements List<E>, RandomAccess, Co
    */
   @Override
   public boolean retainAll(@NotNull Collection<?> c) {
-    while (true) {
-      Object[] elements = array;
-      Object[] newElements = createArrayRetainAll(elements, c);
-      if (newElements == null) return false;
-      if (replaceArray(elements, newElements)) return true;
-    }
+    return changeAndReplace(elements -> createArrayRetainAll(elements, c));
   }
 
   private static Object @Nullable [] createArrayRetainAll(Object @NotNull [] elements, @NotNull Collection<?> c) {
@@ -589,7 +570,7 @@ final class LockFreeCopyOnWriteArrayList<E> implements List<E>, RandomAccess, Co
   }
 
   /**
-   * Appends all of the elements in the specified collection that
+   * Appends all the elements in the specified collection that
    * are not already contained in this list, to the end of
    * this list, in the order that they are returned by the
    * specified collection's iterator.
@@ -610,7 +591,7 @@ final class LockFreeCopyOnWriteArrayList<E> implements List<E>, RandomAccess, Co
     Object[] newElements;
     int added;
     do {
-      elements = array;
+      elements = get();
       Set<Object> existing = ContainerUtil.map2Set(elements, Functions.identity());
       List<Object> toAddList = new ArrayList<>(c.size());
       for (E e : c) {
@@ -629,7 +610,7 @@ final class LockFreeCopyOnWriteArrayList<E> implements List<E>, RandomAccess, Co
   }
 
   /**
-   * Removes all of the elements from this list.
+   * Removes all the elements from this list.
    * The list will be empty after this call returns.
    */
   @Override
@@ -638,7 +619,7 @@ final class LockFreeCopyOnWriteArrayList<E> implements List<E>, RandomAccess, Co
   }
 
   /**
-   * Appends all of the elements in the specified collection to the end
+   * Appends all the elements in the specified collection to the end
    * of this list, in the order that they are returned by the specified
    * collection's iterator.
    *
@@ -649,27 +630,27 @@ final class LockFreeCopyOnWriteArrayList<E> implements List<E>, RandomAccess, Co
    */
   @Override
   public boolean addAll(@NotNull Collection<? extends E> c) {
-    if (c.isEmpty()) return false;
-    Object[] cs = c.toArray();
-    if (cs.length == 0) {
-      return false;
-    }
-
-    while (true) {
-      Object[] elements = array;
-      Object[] newElements = createArrayAddAll(elements, cs);
-      if (replaceArray(elements, newElements)) return true;
-    }
+    changeAndReplace(elements -> createArrayAddAll(elements, c));
+    return true;
   }
 
-  private static Object @NotNull [] createArrayAddAll(Object @NotNull [] elements, Object @NotNull [] cs) {
+  private static Object @Nullable [] createArrayAddAll(Object @NotNull [] elements, @SuppressWarnings("rawtypes") @NotNull Collection c) {
+    if (c.isEmpty()) {
+      return null;
+    }
+    Object[] cs = c.toArray();
+    //could still be empty for concurrent collection
+    //noinspection ConstantConditions
+    if (cs.length == 0) {
+      return null;
+    }
     int len = elements.length;
     Object[] newElements = Arrays.copyOf(elements, len + cs.length, Object[].class);
     System.arraycopy(cs, 0, newElements, len, cs.length);
     return newElements;
   }
   /**
-   * Inserts all of the elements in the specified collection into this
+   * Inserts all the elements in the specified collection into this
    * list, starting at the specified position.  Shifts the element
    * currently at that position (if any) and any subsequent elements to
    * the right (increases their indices).  The new elements will appear
@@ -685,21 +666,16 @@ final class LockFreeCopyOnWriteArrayList<E> implements List<E>, RandomAccess, Co
    */
   @Override
   public boolean addAll(int index, @NotNull Collection<? extends E> c) throws IndexOutOfBoundsException {
-    Object[] cs = c.toArray();
-    if (cs.length == 0) {
-      return false;
-    }
-
-    while (true) {
-      Object[] elements = array;
-      Object[] newElements = createArrayAddAll(elements, index, cs);
-      if (replaceArray(elements, newElements)) break;
-    }
-
-    return true;
+    return changeAndReplace(elements -> createArrayAddAll(elements, index, c));
   }
 
-  private static Object @NotNull [] createArrayAddAll(Object @NotNull [] elements, int index, Object @NotNull [] cs) {
+  private static Object @Nullable [] createArrayAddAll(Object @NotNull [] elements, int index, @SuppressWarnings("rawtypes") @NotNull Collection c) {
+    if (c.isEmpty()) return null;
+    Object[] cs = c.toArray();
+    //noinspection ConstantValue
+    if (cs.length == 0) {
+      return null;
+    }
     int len = elements.length;
     if (index > len || index < 0) {
       throw new IndexOutOfBoundsException("Index: " + index + ", Size: " + len);
@@ -730,7 +706,7 @@ final class LockFreeCopyOnWriteArrayList<E> implements List<E>, RandomAccess, Co
    */
   @Override
   public @NotNull String toString() {
-    return Arrays.toString(array);
+    return Arrays.toString(get());
   }
 
   /**
@@ -759,7 +735,7 @@ final class LockFreeCopyOnWriteArrayList<E> implements List<E>, RandomAccess, Co
 
     List<?> list = (List<?>)o;
     Iterator<?> it = list.iterator();
-    for (Object element : array) {
+    for (Object element : get()) {
       if (!it.hasNext() || !Objects.equals(element, it.next())) {
         return false;
       }
@@ -777,7 +753,7 @@ final class LockFreeCopyOnWriteArrayList<E> implements List<E>, RandomAccess, Co
   @Override
   public int hashCode() {
     int hashCode = 1;
-    for (Object obj : array) {
+    for (Object obj : get()) {
       hashCode = 31 * hashCode + (obj == null ? 0 : obj.hashCode());
     }
     return hashCode;
@@ -795,13 +771,13 @@ final class LockFreeCopyOnWriteArrayList<E> implements List<E>, RandomAccess, Co
    */
   @Override
   public @NotNull Iterator<E> iterator() {
-    Object[] elements = array;
+    Object[] elements = get();
     return elements.length == 0 ? Collections.emptyIterator() : new COWIterator(elements, 0);
   }
 
   @Override
   public void forEach(@NotNull Consumer<? super E> action) {
-    Object[] snapshot = array;
+    Object[] snapshot = get();
     for (Object element : snapshot) {
       //noinspection unchecked
       action.accept((E)element);
@@ -833,7 +809,7 @@ final class LockFreeCopyOnWriteArrayList<E> implements List<E>, RandomAccess, Co
    */
   @Override
   public @NotNull ListIterator<E> listIterator(final int index) {
-    Object[] elements = array;
+    Object[] elements = get();
     int len = elements.length;
     if (index < 0 || index > len) {
       throw new IndexOutOfBoundsException("Index: " + index);
@@ -923,5 +899,76 @@ final class LockFreeCopyOnWriteArrayList<E> implements List<E>, RandomAccess, Co
   @Override
   public @NotNull List<E> subList(int fromIndex, int toIndex) {
     throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public @NotNull Spliterator<E> spliterator() {
+    //noinspection unchecked
+    return (Spliterator<E>)Arrays.spliterator(get());
+  }
+
+  @Override
+  public void replaceAll(@NotNull UnaryOperator<E> operator) {
+    changeAndReplace(elements -> createArrayMap(elements, operator));
+  }
+
+  private Object @NotNull [] createArrayMap(Object @NotNull [] elements, @NotNull UnaryOperator<? super E> operator) {
+    Object[] newElements = ArrayUtil.newObjectArray(elements.length);
+    for (int i = 0; i < elements.length; i++) {
+      Object element = elements[i];
+      //noinspection unchecked
+      newElements[i] = operator.apply((E)element);
+    }
+    return newElements;
+  }
+
+  @Override
+  public void sort(Comparator<? super E> c) {
+    changeAndReplace(elements -> {
+      Object[] sorted = elements.clone();
+      //noinspection rawtypes,unchecked
+      Arrays.sort(sorted, (Comparator)c);
+      return sorted;
+    });
+  }
+
+  @Override
+  public boolean removeIf(@NotNull Predicate<? super E> filter) {
+    return changeAndReplace(elements -> createArrayRemoveIf(elements, filter));
+  }
+
+  private boolean changeAndReplace(@NotNull UnaryOperator<Object[]> change) {
+    while (true) {
+      Object[] elements = get();
+      Object[] newArray = change.apply(elements);
+      if (newArray == null) return false;
+      if (replaceArray(elements, newArray)) {
+        return true;
+      }
+    }
+  }
+
+  private static Object @Nullable [] createArrayRemoveIf(Object @NotNull [] elements, @SuppressWarnings("rawtypes") @NotNull Predicate filter) {
+    int i;
+    for (i = 0; i < elements.length; i++) {
+      Object element = elements[i];
+      //noinspection unchecked
+      if (filter.test(element)) {
+        break;
+      }
+    }
+    if (i == elements.length) {
+      return null;
+    }
+    Object[] newElements = elements.clone();
+    int o = i;
+    for (int j = i+1; j < elements.length; j++) {
+      Object element = elements[j];
+      //noinspection unchecked
+      if (!filter.test(element)) {
+        newElements[o++] = element;
+      }
+    }
+    return ArrayUtil.realloc(newElements, o, ArrayUtil.OBJECT_ARRAY_FACTORY);
   }
 }

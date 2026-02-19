@@ -1,0 +1,49 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.ide.plugins
+
+import com.intellij.idea.AppMode
+import com.intellij.util.PlatformUtils
+import com.intellij.util.lang.ZipEntryResolverPool
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Deferred
+import java.nio.file.Path
+
+internal class PathBasedProductLoadingStrategy : ProductLoadingStrategy() {
+  // this property returns hardcoded Strings instead of ProductMode, because currently ProductMode class isn't available in dependencies of this module
+  override val currentModeId: String
+    get() = when {
+      AppMode.isRemoteDevHost() -> "backend"
+      PlatformUtils.isJetBrainsClient() -> "frontend" //this should be removed after all tests starts using the module-based loader to run the frontend process 
+      else -> "monolith"
+    }
+
+  override fun addMainModuleGroupToClassPath(bootstrapClassLoader: ClassLoader) {
+  }
+
+  override fun loadPluginDescriptors(
+    scope: CoroutineScope,
+    loadingContext: PluginDescriptorLoadingContext,
+    customPluginDir: Path,
+    bundledPluginDir: Path?,
+    isUnitTestMode: Boolean,
+    isInDevServerMode: Boolean,
+    isRunningFromSources: Boolean,
+    zipPool: ZipEntryResolverPool,
+    mainClassLoader: ClassLoader,
+  ): Deferred<List<DiscoveredPluginsList>> {
+    return scope.loadPluginDescriptorsForPathBasedLoader(
+      loadingContext = loadingContext,
+      isUnitTestMode = isUnitTestMode,
+      isInDevServerMode = isInDevServerMode,
+      isRunningFromSources = isRunningFromSources,
+      mainClassLoader = mainClassLoader,
+      zipPool = zipPool,
+      customPluginDir = customPluginDir,
+      bundledPluginDir = bundledPluginDir,
+    )
+  }
+
+  override fun isOptionalProductModule(moduleId: String): Boolean = false
+
+  override fun findProductContentModuleClassesRoot(moduleId: PluginModuleId, moduleDir: Path): Path = moduleDir.resolve("$moduleId.jar")
+}

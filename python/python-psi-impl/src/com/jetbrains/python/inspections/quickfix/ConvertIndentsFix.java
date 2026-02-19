@@ -27,9 +27,7 @@ import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.PythonCodeStyleService;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author yole
- */
+
 public class ConvertIndentsFix implements LocalQuickFix {
   private final boolean myToSpaces;
 
@@ -37,15 +35,13 @@ public class ConvertIndentsFix implements LocalQuickFix {
     myToSpaces = toSpaces;
   }
 
-  @NotNull
   @Override
-  public String getName() {
+  public @NotNull String getName() {
     return myToSpaces ? PyPsiBundle.message("QFIX.convert.indents.to.spaces") : PyPsiBundle.message("QFIX.convert.indents.to.tabs");
   }
 
-  @NotNull
   @Override
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return PyPsiBundle.message("QFIX.convert.indents");
   }
 

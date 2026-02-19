@@ -1,20 +1,26 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.options;
 
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.Constructor;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.IdentityHashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.function.BiConsumer;
 
+@ApiStatus.Internal
 public class CompoundScheme<E extends SchemeElement> implements ExternalizableScheme {
   protected String myName;
   protected final ArrayList<E> myElements = new ArrayList<>();
 
-  public CompoundScheme(final String name) {
+  public CompoundScheme(@NotNull String name) {
     setName(name);
   }
 
@@ -35,7 +41,7 @@ public class CompoundScheme<E extends SchemeElement> implements ExternalizableSc
   }
 
   @Override
-  public final void setName(final @NotNull String name) {
+  public final void setName(@NotNull String name) {
     myName = name;
     for (E template : myElements) {
       template.setGroupName(name);

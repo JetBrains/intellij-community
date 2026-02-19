@@ -1,0 +1,80 @@
+package org.jetbrains.jewel.bridge.theme
+
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.shape.CornerSize
+import androidx.compose.ui.graphics.takeOrElse
+import androidx.compose.ui.unit.DpSize
+import androidx.compose.ui.unit.dp
+import com.intellij.util.ui.JBUI
+import org.jetbrains.jewel.bridge.createVerticalBrush
+import org.jetbrains.jewel.bridge.retrieveColorOrUnspecified
+import org.jetbrains.jewel.bridge.retrieveColorsOrUnspecified
+import org.jetbrains.jewel.bridge.toNonNegativeDpSize
+import org.jetbrains.jewel.ui.component.styling.ChipColors
+import org.jetbrains.jewel.ui.component.styling.ChipMetrics
+import org.jetbrains.jewel.ui.component.styling.ChipStyle
+
+// Note: there isn't a chip spec, nor a chip UI, so we're deriving this from the
+// styling defined in com.intellij.ide.ui.experimental.meetNewUi.MeetNewUiButton
+// To note:
+//  1. There is no real disabled state, we're making it sort of up
+//  2. Chips can be used as buttons (see run configs) or as radio buttons (see MeetNewUi)
+//  3. We also have a toggleable version because why not
+internal fun readChipStyle(): ChipStyle {
+    val normalBackground =
+        retrieveColorsOrUnspecified("Button.startBackground", "Button.endBackground").createVerticalBrush()
+
+    val normalContent = retrieveColorOrUnspecified("Label.foreground")
+    val disabledContent = retrieveColorOrUnspecified("Label.disabledForeground").takeOrElse { normalContent }
+
+    val normalBorder = retrieveColorOrUnspecified("Button.startBorderColor")
+    val disabledBorder = retrieveColorOrUnspecified("Button.disabledBorderColor")
+    val selectedBorder = retrieveColorOrUnspecified("Component.focusColor")
+
+    val colors =
+        ChipColors(
+            background = normalBackground,
+            backgroundDisabled = normalBackground,
+            backgroundFocused = normalBackground,
+            backgroundPressed = normalBackground,
+            backgroundHovered = normalBackground,
+            backgroundSelected = normalBackground,
+            backgroundSelectedDisabled = normalBackground,
+            backgroundSelectedPressed = normalBackground,
+            backgroundSelectedFocused = normalBackground,
+            backgroundSelectedHovered = normalBackground,
+            content = normalContent,
+            contentDisabled = disabledContent,
+            contentFocused = normalContent,
+            contentPressed = normalContent,
+            contentHovered = normalContent,
+            contentSelected = normalContent,
+            contentSelectedDisabled = disabledContent,
+            contentSelectedPressed = normalContent,
+            contentSelectedFocused = normalContent,
+            contentSelectedHovered = normalContent,
+            border = normalBorder,
+            borderDisabled = disabledBorder,
+            borderFocused = normalBorder,
+            borderPressed = normalBorder,
+            borderHovered = normalBorder,
+            borderSelected = selectedBorder,
+            borderSelectedDisabled = disabledBorder,
+            borderSelectedPressed = selectedBorder,
+            borderSelectedFocused = selectedBorder,
+            borderSelectedHovered = selectedBorder,
+        )
+
+    val minimumSize = JBUI.CurrentTheme.Button.minimumSize().toNonNegativeDpSize()
+    return ChipStyle(
+        colors = colors,
+        metrics =
+            ChipMetrics(
+                cornerSize = CornerSize(100),
+                padding = PaddingValues(horizontal = 14.dp), // see DarculaButtonUI.HORIZONTAL_PADDING
+                borderWidth = 1.dp,
+                borderWidthSelected = 2.dp,
+                minSize = DpSize(minimumSize.width, minimumSize.height),
+            ),
+    )
+}

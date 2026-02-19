@@ -90,7 +90,7 @@ public class GrIntroduceValidatorEngine implements GrIntroduceHandlerBase.Valida
     MultiMap<PsiElement, String> list = isOKImpl(varName, allOccurences);
     String result = "";
     final String[] strings = ArrayUtilRt.toStringArray(list.values());
-    Arrays.sort(strings, (o1, o2) -> o1.compareTo(o2));
+    Arrays.sort(strings);
 
     for (String s : strings) {
       result = result + s.replaceAll("<b><code>", "").replaceAll("</code></b>", "") + "\n";
@@ -108,7 +108,6 @@ public class GrIntroduceValidatorEngine implements GrIntroduceHandlerBase.Valida
    * @param startElement Container to start checking conflicts from
    * @param conflicts    Conflict accumulator
    * @param varName      Variable name
-   * @param startOffset
    */
   private void validateOccurrencesDown(@NotNull PsiElement startElement,
                                        @NotNull MultiMap<PsiElement, String> conflicts,

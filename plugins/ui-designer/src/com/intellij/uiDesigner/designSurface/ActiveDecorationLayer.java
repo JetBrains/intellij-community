@@ -1,16 +1,30 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.uiDesigner.designSurface;
 
-import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.uiDesigner.SelectionWatcher;
 import com.intellij.uiDesigner.radComponents.RadComponent;
+import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.ui.PlatformColors;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JComponent;
+import javax.swing.JPanel;
+import javax.swing.JToolTip;
+import javax.swing.SwingUtilities;
+import java.awt.BasicStroke;
+import java.awt.Color;
+import java.awt.Component;
+import java.awt.Dimension;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.Point;
+import java.awt.Rectangle;
+import java.awt.Stroke;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -18,9 +32,6 @@ import java.util.Map;
  * Decoration layer is over COMPONENT_LAYER (layer where all components are located).
  * It contains all necessary decorators. Decorators are:
  * - special mini-buttons to perform editing of grids (add/remove of columns)
- *
- * @author Anton Katilin
- * @author Vladimir Kondratyev
  */
 final class ActiveDecorationLayer extends JComponent implements FeedbackLayer {
   private static final Logger LOG = Logger.getInstance(ActiveDecorationLayer.class);
@@ -33,13 +44,13 @@ final class ActiveDecorationLayer extends JComponent implements FeedbackLayer {
   private final FeedbackPainterPanel myFeedbackPainterPanel = new FeedbackPainterPanel();
   private final RectangleFeedbackPainter myRectangleFeedbackPainter = new RectangleFeedbackPainter();
 
-  ActiveDecorationLayer(@NotNull final GuiEditor editor) {
+  ActiveDecorationLayer(final @NotNull GuiEditor editor) {
     myEditor = editor;
     myToolTip = new JToolTip();
   }
 
   public void installSelectionWatcher() {
-    new MyNavigateButtonSelectionWatcher(myEditor);
+    new MyNavigateButtonSelectionWatcher(myEditor).setupListeners();
   }
 
   @Override
@@ -79,7 +90,7 @@ final class ActiveDecorationLayer extends JComponent implements FeedbackLayer {
     }
   }
 
-  private void putToolTip(Component relativeTo, Point pnt, @Nullable String text) {
+  private void putToolTip(Component relativeTo, Point pnt, @Nullable @NlsSafe String text) {
     if (text == null) {
       if (myToolTip.getParent() == this) {
         remove(myToolTip);
@@ -166,20 +177,24 @@ final class ActiveDecorationLayer extends JComponent implements FeedbackLayer {
     protected void selectionChanged(RadComponent component, boolean selected) {
       ListenerNavigateButton btn = myNavigateButtons.get(component);
       if (selected) {
-        DefaultActionGroup group = component.getBinding() != null ? ListenerNavigateButton.prepareActionGroup(component) : null;
-        if (group != null && group.getChildrenCount() > 0) {
-          if (btn == null) {
-            btn = new ListenerNavigateButton(component);
-            myNavigateButtons.put(component, btn);
-          }
-          add(btn);
-          btn.setVisible(true);
-        }
-        else {
-          if (btn != null) {
-            btn.setVisible(false);
-          }
-        }
+        ReadAction.nonBlocking(() -> component.getBinding() != null ? ListenerNavigateButton.prepareActionGroup(component) : null)
+          .finishOnUiThread(ModalityState.nonModal(), group -> {
+            if (group != null && group.getChildrenCount() > 0) {
+              ListenerNavigateButton navigateButton = btn;
+              if (navigateButton == null) {
+                navigateButton = new ListenerNavigateButton(component);
+                myNavigateButtons.put(component, navigateButton);
+              }
+              add(navigateButton);
+              navigateButton.setVisible(true);
+            }
+            else {
+              if (btn != null) {
+                btn.setVisible(false);
+              }
+            }
+          })
+          .submit(AppExecutorUtil.getAppExecutorService());
       }
       else {
         if (btn != null) {

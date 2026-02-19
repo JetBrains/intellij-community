@@ -1,0 +1,14 @@
+// "Replace with assignment (original is empty)" "true"
+// TOOL: org.jetbrains.kotlin.idea.codeInsight.inspections.shared.SuspiciousCollectionReassignmentInspection
+// WITH_STDLIB
+fun test(otherMap: Map<Int, Int>) {
+    var list = mapOf<Int, Int>()
+    foo()
+    bar()
+    list <caret>+= otherMap
+}
+
+fun foo() {}
+fun bar() {}
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.codeInsight.inspections.shared.SuspiciousCollectionReassignmentInspection$ReplaceWithAssignmentFix
+// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.codeInsight.inspections.shared.SuspiciousCollectionReassignmentInspection$ReplaceWithAssignmentFix

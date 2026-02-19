@@ -1,27 +1,35 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.intellij.lang.regexp.inspection;
 
-import com.intellij.codeInspection.*;
+import com.intellij.codeInspection.CommonQuickFixBundle;
+import com.intellij.codeInspection.LocalInspectionTool;
+import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.util.containers.ContainerUtil;
 import org.intellij.lang.regexp.RegExpBundle;
 import org.intellij.lang.regexp.RegExpTT;
-import org.intellij.lang.regexp.psi.*;
+import org.intellij.lang.regexp.psi.RegExpAtom;
+import org.intellij.lang.regexp.psi.RegExpBranch;
+import org.intellij.lang.regexp.psi.RegExpChar;
+import org.intellij.lang.regexp.psi.RegExpElementVisitor;
+import org.intellij.lang.regexp.psi.RegExpGroup;
+import org.intellij.lang.regexp.psi.RegExpPattern;
+import org.intellij.lang.regexp.psi.RegExpSimpleClass;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
-
-import java.util.stream.Stream;
 
 /**
  * @author Bas Leijdekkers
  */
 public class SingleCharAlternationInspection extends LocalInspectionTool {
 
-  @NotNull
   @Override
-  public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
+  public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
     return new SingleCharAlternationVisitor(holder);
   }
 
@@ -36,23 +44,22 @@ public class SingleCharAlternationInspection extends LocalInspectionTool {
     @Override
     public void visitRegExpPattern(RegExpPattern pattern) {
       final RegExpBranch[] branches = pattern.getBranches();
-      if (branches.length < 2) {
+      if (branches.length < 2 || !ContainerUtil.and(branches, SingleCharAlternationVisitor::isSingleChar)) {
         return;
       }
-      if (!Stream.of(branches).allMatch(SingleCharAlternationVisitor::isSingleChar)) {
-        return;
-      }
-      final String text = buildReplacementText(pattern);
+      final String replacement = RegExpReplacementUtil.escapeForContext(buildReplacementText(pattern), pattern.getContainingFile());
       myHolder.registerProblem(pattern, RegExpBundle.message("inspection.warning.single.character.alternation.in.regexp"),
-                               new SingleCharAlternationFix(text));
+                               new SingleCharAlternationFix(replacement));
     }
 
     private static boolean isSingleChar(RegExpBranch branch) {
       final RegExpAtom[] atoms = branch.getAtoms();
-      return atoms.length == 1 && atoms[0] instanceof RegExpChar;
+      if (atoms.length != 1) return false;
+      RegExpAtom atom = atoms[0];
+      return atom instanceof RegExpChar || atom instanceof RegExpSimpleClass;
     }
 
-    private static class SingleCharAlternationFix implements LocalQuickFix {
+    private static class SingleCharAlternationFix extends PsiUpdateModCommandQuickFix {
 
       private final String myText;
 
@@ -60,30 +67,24 @@ public class SingleCharAlternationInspection extends LocalInspectionTool {
         myText = text;
       }
 
-      @Nls
-      @NotNull
       @Override
-      public String getName() {
+      public @Nls @NotNull String getName() {
         return CommonQuickFixBundle.message("fix.replace.with.x", myText);
       }
 
-      @Nls
-      @NotNull
       @Override
-      public String getFamilyName() {
+      public @Nls @NotNull String getFamilyName() {
         return RegExpBundle.message("inspection.quick.fix.replace.alternation.with.character.class");
       }
 
       @Override
-      public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-        final PsiElement element = descriptor.getPsiElement();
-        if (!(element instanceof RegExpPattern)) {
+      protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
+        if (!(element instanceof RegExpPattern pattern)) {
           return;
         }
-        final RegExpPattern pattern = (RegExpPattern)element;
         final PsiElement parent = pattern.getParent();
         final PsiElement victim =
-          (parent instanceof RegExpGroup && ((RegExpGroup)parent).getType() == RegExpGroup.Type.NON_CAPTURING) ? parent : pattern;
+          (parent instanceof RegExpGroup group && group.getType() == RegExpGroup.Type.NON_CAPTURING) ? parent : pattern;
         final String replacementText = buildReplacementText(pattern);
         if (replacementText == null) {
           return;
@@ -97,63 +98,56 @@ public class SingleCharAlternationInspection extends LocalInspectionTool {
     final StringBuilder text = new StringBuilder("[");
     for (RegExpBranch branch : pattern.getBranches()) {
       for (PsiElement child : branch.getChildren()) {
-        if (!(child instanceof RegExpChar)) {
-          return null;
+        if (child instanceof RegExpSimpleClass simpleClass) {
+          text.append(simpleClass.getUnescapedText());
         }
-        final RegExpChar ch = (RegExpChar)child;
-        final IElementType type = ch.getNode().getFirstChildNode().getElementType();
-        if (type == RegExpTT.REDUNDANT_ESCAPE) {
-          final int value = ch.getValue();
-          if (value == ']') {
-            text.append(ch.getUnescapedText());
+        else if (child instanceof RegExpChar ch) {
+          final IElementType type = ch.getNode().getFirstChildNode().getElementType();
+          if (type == RegExpTT.REDUNDANT_ESCAPE) {
+            final int value = ch.getValue();
+            if (value == ']') {
+              text.append(ch.getUnescapedText());
+            }
+            else if (value == '-' && text.length() != 1) {
+              text.append("\\-");
+            }
+            else {
+              text.append((char)value);
+            }
           }
-          else if (value == '-' && text.length() != 1) {
-            text.append("\\-");
+          else if (type == RegExpTT.ESC_CHARACTER) {
+            final int value = ch.getValue();
+            switch (value) {
+              case '.', '$', '?', '*', '+', '|', '{', '(', ')' -> text.append((char)value);
+              case '^' -> {
+                if (text.length() == 1) {
+                  text.append(ch.getUnescapedText());
+                }
+                else {
+                  text.append((char)value);
+                }
+              }
+              default -> text.append(ch.getUnescapedText());
+            }
           }
           else {
-            text.append((char)value);
-          }
-        }
-        else if (type == RegExpTT.ESC_CHARACTER) {
-          final int value = ch.getValue();
-          switch (value) {
-            case '.':
-            case '$':
-            case '?':
-            case '*':
-            case '+':
-            case '|':
-            case '{':
-            case '(':
-            case ')':
-              text.append((char)value);
-              break;
-            case '^':
-              if (text.length() == 1) {
+            final int value = ch.getValue();
+            switch (value) {
+              case ']':
+                text.append("\\]");
+                break;
+              case '-':
+                if (text.length() != 1) {
+                  text.append("\\-");
+                  break;
+                }
+              default:
                 text.append(ch.getUnescapedText());
-              }
-              else {
-                text.append((char)value);
-              }
-              break;
-            default:
-              text.append(ch.getUnescapedText());
+            }
           }
         }
         else {
-          final int value = ch.getValue();
-          switch (value) {
-            case ']':
-              text.append("\\]");
-              break;
-            case '-':
-              if (text.length() != 1) {
-                text.append("\\-");
-                break;
-              }
-            default:
-              text.append(ch.getUnescapedText());
-          }
+          return null;
         }
       }
     }

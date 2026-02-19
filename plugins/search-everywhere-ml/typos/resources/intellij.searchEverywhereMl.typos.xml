@@ -1,0 +1,43 @@
+<idea-plugin>
+
+  <resource-bundle>messages.searchEverywhereMlTyposBundle</resource-bundle>
+
+  <dependencies>
+    <module name="intellij.platform.ml.impl"/>
+    <plugin id="tanvd.grazi"/>
+    <module name="intellij.libraries.ai.grazie.spell.gec.engine.local"/>
+  </dependencies>
+
+  <extensions defaultExtensionNs="com.intellij">
+
+    <searchEverywhereSpellingCorrector
+      implementation="com.intellij.searchEverywhereMl.typos.GrazieSpellingCorrectorFactoryImpl" />
+
+    <advancedSetting default="true" id="searcheverywhere.ml.typos.enable"
+                     groupKey="advanced.setting.searcheverywhere.ml.name"
+                     bundle="messages.searchEverywhereMlTyposBundle"/>
+
+    <registryKey key="search.everywhere.ml.typos.min.confidence"
+                 description="Minimum confidence required for spelling suggestion"
+                 defaultValue="0.5"/>
+
+    <registryKey key="search.everywhere.ml.typos.show.confidence"
+                 description="Show confidence in Search Everywhere"
+                 defaultValue="false"/>
+  </extensions>
+
+  <actions>
+    <action id="com.intellij.searchEverywhereMl.typos.actions.DumpDictionaryToFileAction"
+            class="com.intellij.searchEverywhereMl.typos.actions.DumpDictionaryToFileAction"
+            internal="true">
+      <add-to-group group-id="MaintenanceGroup" anchor="last"/>
+    </action>
+
+    <action id="com.intellij.searchEverywhereMl.typos.actions.CorpusToFileAction"
+            class="com.intellij.searchEverywhereMl.typos.actions.CorpusToFileAction"
+            internal="true">
+      <add-to-group group-id="MaintenanceGroup" anchor="last"/>
+    </action>
+
+  </actions>
+</idea-plugin>

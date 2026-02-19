@@ -12,7 +12,6 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyFile
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArgument
-import runCompletion
 
 
 abstract class GradleMapStyleInsertHandler : InsertHandler<LookupElement> {
@@ -27,7 +26,6 @@ abstract class GradleMapStyleInsertHandler : InsertHandler<LookupElement> {
     val artifactInfo = item.`object` as? MavenRepositoryArtifactInfo ?: return
 
     doInsert(psiElement, parent, factory, artifactInfo, context)
-
   }
 
   abstract fun doInsert(psiElement: GrNamedArgument,

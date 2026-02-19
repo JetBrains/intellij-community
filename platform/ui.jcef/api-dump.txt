@@ -1,0 +1,15 @@
+a:com.intellij.ui.jcef.JBCefBrowserBase
+- runJavaScript(java.lang.String):V
+- runJavaScript(java.lang.String,java.lang.String,I):V
+com.intellij.ui.jcef.JBCefBrowserBase$ErrorPage
+- sf:DEFAULT:com.intellij.ui.jcef.JBCefBrowserBase$ErrorPage
+- a:create(org.cef.handler.CefLoadHandler$ErrorCode,java.lang.String,java.lang.String):java.lang.String
+c:com.intellij.ui.jcef.JBCefDefaultNativeBundleProvider
+- getNativeBundlePath():java.lang.String
+- isAvailable():Z
+com.intellij.ui.jcef.JBCefOSRHandlerFactory
+- sf:DEFAULT:com.intellij.ui.jcef.JBCefOSRHandlerFactory
+- createCefRenderHandler(javax.swing.JComponent):org.cef.handler.CefRenderHandler
+- createComponent(Z):javax.swing.JComponent
+- createScreenBoundsProvider():com.intellij.util.Function
+- s:getInstance():com.intellij.ui.jcef.JBCefOSRHandlerFactory

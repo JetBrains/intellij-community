@@ -1,0 +1,22 @@
+<!-- DO NOT EDIT: This file is auto-generated from Kotlin code -->
+<!-- To regenerate, run: `Generate Product Layouts` or `bazel run //platform/buildScripts:plugin-model-tool` -->
+<!-- Source: see moduleSet("libraries.ide") function in UltimateModuleSets.kt -->
+<!-- Note: Files are kept under VCS to support running products without dev mode (deprecated) -->
+<idea-plugin>
+  <content namespace="jetbrains">
+    <module name="intellij.libraries.jcef" loading="embedded"/>
+    <module name="intellij.libraries.jediterm.core" loading="embedded"/>
+    <module name="intellij.libraries.jediterm.ui" loading="embedded"/>
+    <module name="intellij.libraries.jgoodies.common" loading="embedded"/>
+    <module name="intellij.libraries.jgoodies.forms" loading="embedded"/>
+    <module name="intellij.libraries.miglayout.swing" loading="embedded"/>
+    <module name="intellij.libraries.pty4j" loading="embedded"/>
+    <module name="intellij.libraries.sshj" loading="embedded"/>
+    <module name="intellij.libraries.swingx" loading="embedded"/>
+    <module name="intellij.libraries.winp" loading="embedded"/>
+    <module name="intellij.libraries.rd.core" loading="embedded"/>
+    <module name="intellij.libraries.rd.framework" loading="embedded"/>
+    <module name="intellij.libraries.rd.swing" loading="embedded"/>
+    <module name="intellij.libraries.rd.text" loading="embedded"/>
+  </content>
+</idea-plugin>

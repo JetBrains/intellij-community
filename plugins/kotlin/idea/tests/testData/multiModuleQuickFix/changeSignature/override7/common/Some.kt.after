@@ -1,0 +1,3 @@
+<selection><caret></selection>open class A() {
+    fun c(a: Int, b: String, x: Int)
+}

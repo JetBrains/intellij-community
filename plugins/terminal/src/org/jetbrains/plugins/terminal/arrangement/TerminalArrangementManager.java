@@ -1,42 +1,40 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.terminal.arrangement;
 
-import com.intellij.openapi.application.PathManager;
-import com.intellij.openapi.components.*;
-import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.Service;
+import com.intellij.openapi.components.State;
+import com.intellij.openapi.components.Storage;
+import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.terminal.JBTerminalWidget;
+import com.intellij.terminal.ui.TerminalWidget;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManager;
-import com.intellij.util.PathUtil;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.terminal.AbstractTerminalRunner;
 import org.jetbrains.plugins.terminal.ShellTerminalWidget;
 import org.jetbrains.plugins.terminal.TerminalTabState;
-import org.jetbrains.plugins.terminal.TerminalView;
+import org.jetbrains.plugins.terminal.TerminalToolWindowManager;
 
-import java.io.File;
-import java.io.IOException;
 import java.util.List;
-import java.util.Set;
 
-@State(name = "TerminalArrangementManager", storages = {
-  @Storage(StoragePathMacros.PRODUCT_WORKSPACE_FILE)
-})
-public class TerminalArrangementManager implements PersistentStateComponent<TerminalArrangementState> {
-
-  private static final Logger LOG = Logger.getInstance(TerminalArrangementManager.class);
+@Service(Service.Level.PROJECT)
+@State(name = "TerminalArrangementManager", storages = @Storage(StoragePathMacros.PRODUCT_WORKSPACE_FILE))
+public final class TerminalArrangementManager implements PersistentStateComponent<TerminalArrangementState> {
 
   private final TerminalWorkingDirectoryManager myWorkingDirectoryManager;
+  private final Project myProject;
   private ToolWindow myTerminalToolWindow;
   private TerminalArrangementState myState;
-  private final Set<String> myTrackingCommandHistoryFileNames = ContainerUtil.newConcurrentSet();
 
-  public TerminalArrangementManager() {
+  public TerminalArrangementManager(@NotNull Project project) {
+    myProject = project;
     myWorkingDirectoryManager = new TerminalWorkingDirectoryManager();
   }
 
@@ -45,113 +43,61 @@ public class TerminalArrangementManager implements PersistentStateComponent<Term
     myWorkingDirectoryManager.init(terminalToolWindow);
   }
 
-  @Nullable
   @Override
-  public TerminalArrangementState getState() {
+  public @Nullable TerminalArrangementState getState() {
     if (!isAvailable() || myTerminalToolWindow == null) {
       // do not save state, reuse previously stored state
       return null;
     }
-    return calcArrangementState(myTerminalToolWindow);
+    TerminalArrangementState state = calcArrangementState(myTerminalToolWindow);
+    TerminalCommandHistoryManager.getInstance().retainCommandHistoryFiles(getCommandHistoryFileNames(state), myProject);
+    return state;
   }
 
   @Override
   public void loadState(@NotNull TerminalArrangementState state) {
     if (isAvailable()) {
       myState = state;
-      myTrackingCommandHistoryFileNames.addAll(getCommandHistoryFileNames(state));
     }
   }
 
-  @NotNull
-  private static List<String> getCommandHistoryFileNames(@NotNull TerminalArrangementState state) {
+  private static @NotNull List<String> getCommandHistoryFileNames(@NotNull TerminalArrangementState state) {
     return ContainerUtil.mapNotNull(state.myTabStates, tabState -> tabState.myCommandHistoryFileName);
   }
 
-  @Nullable
-  public TerminalArrangementState getArrangementState() {
+  public @Nullable TerminalArrangementState getArrangementState() {
     return myState;
   }
 
-  @NotNull
-  private TerminalArrangementState calcArrangementState(@NotNull ToolWindow terminalToolWindow) {
+  private @NotNull TerminalArrangementState calcArrangementState(@NotNull ToolWindow terminalToolWindow) {
     TerminalArrangementState arrangementState = new TerminalArrangementState();
     ContentManager contentManager = terminalToolWindow.getContentManager();
     for (Content content : contentManager.getContents()) {
-      JBTerminalWidget terminalWidget = TerminalView.getWidgetByContent(content);
+      AbstractTerminalRunner<?> runner = TerminalToolWindowManager.getRunnerByContent(content);
+      if (runner == null || !runner.isTerminalSessionPersistent()) {
+        continue;
+      }
+      TerminalWidget terminalWidget = TerminalToolWindowManager.findWidgetByContent(content);
       if (terminalWidget == null) continue;
       TerminalTabState tabState = new TerminalTabState();
       tabState.myTabName = content.getTabName();
+      tabState.myShellCommand = terminalWidget.getShellCommand();
+      tabState.myIsUserDefinedTabTitle = tabState.myTabName.equals(terminalWidget.getTerminalTitle().getUserDefinedTitle());
       tabState.myWorkingDirectory = myWorkingDirectoryManager.getWorkingDirectory(content);
-      String historyFilePath = ShellTerminalWidget.getCommandHistoryFilePath(terminalWidget);
-      tabState.myCommandHistoryFileName = historyFilePath != null ? PathUtil.getFileName(historyFilePath) : null;
+      JBTerminalWidget jbTerminalWidget = JBTerminalWidget.asJediTermWidget(terminalWidget);
+      ShellTerminalWidget shellTerminalWidget = ObjectUtils.tryCast(jbTerminalWidget, ShellTerminalWidget.class);
+      tabState.myCommandHistoryFileName = TerminalCommandHistoryManager.getFilename(
+        shellTerminalWidget != null ? shellTerminalWidget.getCommandHistoryFilePath() : null
+      );
       arrangementState.myTabStates.add(tabState);
     }
     Content selectedContent = contentManager.getSelectedContent();
     arrangementState.mySelectedTabIndex = selectedContent == null ? -1 : contentManager.getIndexOfContent(selectedContent);
-    deleteUnusedCommandHistoryFiles(getCommandHistoryFileNames(arrangementState));
     return arrangementState;
   }
 
-  public void register(@NotNull JBTerminalWidget terminalWidget, @Nullable TerminalTabState tabState) {
-    if (!isAvailable()) return;
-    File historyDir = getCommandHistoryDirectory();
-    if (!FileUtil.createDirectory(historyDir)) {
-      LOG.warn("No such directory " + historyDir.getAbsolutePath());
-      return;
-    }
-    File historyFile;
-    String historyFileName = tabState != null ? tabState.myCommandHistoryFileName : null;
-    if (historyFileName == null) {
-      try {
-        historyFile = FileUtil.createTempFile(historyDir, "history-", null, true, false);
-      }
-      catch (IOException e) {
-        LOG.error(e);
-        return;
-      }
-    }
-    else {
-      historyFile = new File(historyDir, historyFileName);
-      if (!historyFile.isFile()) {
-        try {
-          //noinspection ResultOfMethodCallIgnored
-          historyFile.createNewFile();
-        }
-        catch (IOException e) {
-          LOG.error(e);
-        }
-      }
-    }
-    myTrackingCommandHistoryFileNames.add(historyFile.getName());
-    if (terminalWidget instanceof ShellTerminalWidget) {
-      ((ShellTerminalWidget)terminalWidget).setCommandHistoryFilePath(historyFile.getAbsolutePath());
-    }
-  }
-
-  @NotNull
-  private static File getCommandHistoryDirectory() {
-    return PathManager.getConfigDir().resolve("terminal/history").toFile();
-  }
-
-  private void deleteUnusedCommandHistoryFiles(@NotNull List<String> keepCommandHistoryFileNames) {
-    myTrackingCommandHistoryFileNames.removeAll(keepCommandHistoryFileNames);
-    File historyDir = null;
-    for (String fileName : myTrackingCommandHistoryFileNames) {
-      if (historyDir == null) {
-        historyDir = getCommandHistoryDirectory();
-      }
-      File file = new File(historyDir, fileName);
-      if (file.exists() && !FileUtil.delete(file)) {
-        LOG.warn("Cannot delete " + file.getAbsolutePath());
-      }
-    }
-    myTrackingCommandHistoryFileNames.clear();
-  }
-
-  @NotNull
-  public static TerminalArrangementManager getInstance(@NotNull Project project) {
-    return ServiceManager.getService(project, TerminalArrangementManager.class);
+  public static @NotNull TerminalArrangementManager getInstance(@NotNull Project project) {
+    return project.getService(TerminalArrangementManager.class);
   }
 
   static boolean isAvailable() {

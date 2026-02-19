@@ -1,0 +1,37 @@
+<idea-plugin visibility="internal">
+  <dependencies>
+    <module name="intellij.java.remoteServers"/>
+    <module name="intellij.java.compiler.impl"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.ide.impl"/>
+    <module name="intellij.java.debugger.impl"/>
+    <module name="intellij.java.execution"/>
+    <module name="intellij.platform.lang.core"/>
+    <module name="intellij.platform.lang.impl"/>
+    <module name="intellij.java.debugger"/>
+    <module name="intellij.platform.projectModel"/>
+    <module name="intellij.java.impl"/>
+    <module name="intellij.java"/>
+    <module name="intellij.java.ui"/>
+    <module name="intellij.platform.core.ui"/>
+
+    <plugin id="com.intellij.modules.remoteServers"/>
+    <plugin id="com.intellij.modules.java-capable"/>
+  </dependencies>
+
+  <extensionPoints>
+    <extensionPoint qualifiedName="com.intellij.remoteServer.moduleBuilderContribution"
+                    interface="com.intellij.remoteServer.impl.module.CloudModuleBuilderContributionFactory"/>
+  </extensionPoints>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <applicationService serviceInterface="com.intellij.remoteServer.runtime.deployment.debug.JavaDebuggerLauncher"
+                        serviceImplementation="com.intellij.remoteServer.impl.runtime.deployment.debug.JavaDebuggerLauncherImpl"/>
+
+    <applicationService serviceInterface="com.intellij.remoteServer.configuration.deployment.JavaDeploymentSourceUtil"
+                        serviceImplementation="com.intellij.remoteServer.impl.configuration.deployment.JavaDeploymentSourceUtilImpl"/>
+    <remoteServer.deploymentSource.type implementation="com.intellij.remoteServer.impl.configuration.deployment.ArtifactDeploymentSourceType"/>
+    <moduleBuilder builderClass="com.intellij.remoteServer.impl.module.CloudModuleBuilder"/>
+  </extensions>
+
+</idea-plugin>

@@ -17,7 +17,11 @@
 package org.jetbrains.builtInWebServer.ssi;
 
 import java.text.SimpleDateFormat;
-import java.util.*;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.Locale;
+import java.util.Map;
+import java.util.TimeZone;
 
 /**
  * Converts dates to strings using the same format specifiers as strftime
@@ -37,12 +41,13 @@ import java.util.*;
  * @author Bip Thelin
  * @author Dan Sandberg
  */
-@SuppressWarnings("SpellCheckingInspection")
+@SuppressWarnings({"SpellCheckingInspection", "HardCodedStringLiteral"})
 public final class Strftime {
   private static final Map<String, String> translate = new HashMap<>();
   private final SimpleDateFormat simpleDateFormat;
 
   static {
+    //noinspection HardCodedStringLiteral
     translate.put("a", "EEE");
     translate.put("A", "EEEE");
     translate.put("b", "MMM");
@@ -188,7 +193,7 @@ public final class Strftime {
       }
     }
 
-    if (buf.length() > 0) {
+    if (!buf.isEmpty()) {
       char lastChar = buf.charAt(buf.length() - 1);
 
       if (lastChar != '\'' && inside) {

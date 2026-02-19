@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util;
 
 import com.intellij.ide.highlighter.ArchiveFileType;
@@ -21,24 +7,36 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.io.URLUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.io.File;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
-public class PathsList  {
+/**
+ * A list of unique paths consisting of three parts: First, Middle, Tail.
+ */
+public final class PathsList  {
   private final List<String> myPath = new ArrayList<>();
   private final List<String> myPathTail = new ArrayList<>();
   private final Set<String> myPathSet = new HashSet<>();
 
   private static final Function<String, VirtualFile> PATH_TO_LOCAL_VFILE =
-    (NullableFunction<String, VirtualFile>)path -> StandardFileSystems.local().findFileByPath(path.replace(File.separatorChar, '/'));
+    path -> StandardFileSystems.local().findFileByPath(path.replace(File.separatorChar, '/'));
 
   private static final Function<VirtualFile, String> LOCAL_PATH = file -> PathUtil.getLocalPath(file);
 
-  private static final Function<String, VirtualFile> PATH_TO_DIR = (NullableFunction<String, VirtualFile>)s -> {
+  private static final Function<String, VirtualFile> PATH_TO_DIR = s -> {
     VirtualFile file = PATH_TO_LOCAL_VFILE.fun(s);
     if (file == null) return null;
     if (!file.isDirectory() && FileTypeRegistry.getInstance().getFileTypeByFileName(file.getNameSequence()) == ArchiveFileType.INSTANCE) {
@@ -47,30 +45,61 @@ public class PathsList  {
     return file;
   };
 
+  /**
+   * @return whether there are paths inside this path list.
+   */
   public boolean isEmpty() {
     return myPathSet.isEmpty();
   }
 
-  public void add(String path) {
+  /**
+   * Adds the passed path to the middle part of the path list.
+   */
+  public void add(@Nullable String path) {
     addAllLast(chooseFirstTimeItems(path), myPath);
   }
 
+  /**
+   * Removes the path to this virtual file from the path list.
+   */
+  public void remove(@NotNull VirtualFile file) {
+    String path = LOCAL_PATH.fun(file);
+    remove(path);
+  }
+
+  /**
+   * Removes the passed path from this path list.
+   */
   public void remove(@NotNull String path) {
     myPath.remove(path);
     myPathTail.remove(path);
     myPathSet.remove(path);
   }
 
+  /**
+   * Clears all parts of this path list.
+   */
   public void clear() {
     myPath.clear();
     myPathTail.clear();
     myPathSet.clear();
   }
 
+  /**
+   * Adds the path to the passed virtual file to the middle part of the path list.
+   */
   public void add(VirtualFile file) {
-    add(LOCAL_PATH.fun(file));
+    String path = LOCAL_PATH.fun(file);
+    String trimmed = path != null ? path.trim() : "";
+    if (!trimmed.isEmpty() && myPathSet.add(trimmed)) {
+      myPath.add(trimmed);
+    }
   }
 
+  /**
+   * Adds the passed path to the first part of the path list.
+   * It is possible to pass multiple paths at once by separating them with {@link File#pathSeparator}.
+   */
   public void addFirst(String path) {
     int index = 0;
     for (String element : chooseFirstTimeItems(path)) {
@@ -80,11 +109,15 @@ public class PathsList  {
     }
   }
 
+  /**
+   * Adds the passed path to the tail part of the path list.
+   * It is possible to pass multiple paths at once by separating them with {@link File#pathSeparator}.
+   */
   public void addTail(String path) {
     addAllLast(chooseFirstTimeItems(path), myPathTail);
   }
 
-  private Iterable<String> chooseFirstTimeItems(String path) {
+  private @NotNull Iterable<String> chooseFirstTimeItems(@Nullable String path) {
     if (path == null) {
       return Collections.emptyList();
     }
@@ -103,63 +136,85 @@ public class PathsList  {
     }
   }
 
-  @NotNull
-  public String getPathsString() {
+  /**
+   * @return ll paths ordered by first, middle, tail concatenated by {@link File#pathSeparator} as a single String.
+   */
+  public @NotNull String getPathsString() {
     return StringUtil.join(getPathList(), File.pathSeparator);
   }
 
-  @NotNull
-  public List<String> getPathList() {
-    List<String> result = new ArrayList<>();
-    result.addAll(myPath);
-    result.addAll(myPathTail);
-    return result;
+  /**
+   * @return All paths ordered by first, middle, tail as a list of Strings.
+   */
+  public @NotNull @Unmodifiable List<String> getPathList() {
+    return ContainerUtil.concat(myPath, myPathTail);
   }
 
   /**
    * @return {@link VirtualFile}s on local file system (returns jars as files).
    */
-  public List<VirtualFile> getVirtualFiles() {
+  public @Unmodifiable List<VirtualFile> getVirtualFiles() {
     return JBIterable.from(getPathList()).filterMap(PATH_TO_LOCAL_VFILE).toList();
   }
 
   /**
    * @return The same as {@link #getVirtualFiles()} but returns jars as {@code JarFileSystem} roots.
    */
-  public List<VirtualFile> getRootDirs() {
+  public @Unmodifiable List<VirtualFile> getRootDirs() {
     return JBIterable.from(getPathList()).filterMap(PATH_TO_DIR).toList();
   }
 
+  /**
+   * Adds the path to the passed paths to the middle part of the path list.
+   */
   public void addAll(List<String> allClasspath) {
     for (String path : allClasspath) {
       add(path);
     }
   }
 
+  /**
+   * Adds the path to the passed files to the middle part of the path list.
+   */
   public void addAllFiles(File[] files) {
     addAllFiles(Arrays.asList(files));
   }
 
+  /**
+   * Adds the path to the passed files to the middle part of the path list.
+   */
   public void addAllFiles(List<? extends File> files) {
     for (File file : files) {
       add(file);
     }
   }
 
+  /**
+   * Adds the path to the passed file to the middle part of the path list.
+   */
   public void add(File file) {
     add(FileUtil.toCanonicalPath(file.getAbsolutePath()).replace('/', File.separatorChar));
   }
 
+  /**
+   * Adds the path to the passed file to the first part of the path list.
+   */
   public void addFirst(File file) {
     addFirst(FileUtil.toCanonicalPath(file.getAbsolutePath()).replace('/', File.separatorChar));
   }
 
+  /**
+   * Adds the path to the passed files to the middle part of the path list.
+   */
   public void addVirtualFiles(Collection<? extends VirtualFile> files) {
     for (VirtualFile file : files) {
       add(file);
     }
   }
 
+  /**
+   * Adds the path to the passed files to the middle part of the path list.
+   */
   public void addVirtualFiles(VirtualFile[] files) {
     addVirtualFiles(Arrays.asList(files));
   }

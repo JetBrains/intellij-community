@@ -1,12 +1,10 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.xml.impl;
 
 import com.intellij.ide.highlighter.DomSupportEnabled;
-import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectCoreUtil;
-import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -14,16 +12,20 @@ import com.intellij.openapi.vfs.VirtualFileWithId;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.PsiFileEx;
+import com.intellij.psi.impl.source.xml.XmlTagDelegate;
+import com.intellij.psi.impl.source.xml.XmlTagImpl;
 import com.intellij.psi.stubs.ObjectStubTree;
 import com.intellij.psi.stubs.StubTreeLoader;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.IdempotenceChecker;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.indexing.FileBasedIndex;
-import com.intellij.util.xml.*;
+import com.intellij.util.xml.DomFileDescription;
+import com.intellij.util.xml.EvaluatedXmlName;
+import com.intellij.util.xml.EvaluatedXmlNameImpl;
+import com.intellij.util.xml.XmlName;
 import com.intellij.util.xml.reflect.CustomDomChildrenDescription;
 import com.intellij.util.xml.reflect.DomChildrenDescription;
 import com.intellij.util.xml.reflect.DomCollectionChildDescription;
@@ -32,6 +34,7 @@ import com.intellij.util.xml.stubs.DomStub;
 import com.intellij.util.xml.stubs.ElementStub;
 import com.intellij.util.xml.stubs.FileStub;
 import com.intellij.xml.util.IncludedXmlTag;
+import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -42,19 +45,13 @@ import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.List;
 
-/**
- * @author peter
- */
 final class DomCreator {
 
-  @Nullable
-  static DomInvocationHandler createTagHandler(@NotNull XmlTag tag) {
+  static @Nullable DomInvocationHandler createTagHandler(@NotNull XmlTag tag) {
     PsiElement candidate = PhysicalDomParentStrategy.getParentTagCandidate(tag);
-    if (!(candidate instanceof XmlTag)) {
+    if (!(candidate instanceof XmlTag parentTag)) {
       return createRootHandler(tag);
     }
-
-    XmlTag parentTag = (XmlTag)candidate;
 
     DomInvocationHandler parent = getParentDom(parentTag);
     if (parent == null) return null;
@@ -75,8 +72,7 @@ final class DomCreator {
     return createCustomHandler(tag, parent, localName, info);
   }
 
-  @Nullable
-  private static DomInvocationHandler createRootHandler(XmlTag xmlTag) {
+  private static @Nullable DomInvocationHandler createRootHandler(XmlTag xmlTag) {
     PsiFile file = xmlTag.getContainingFile();
     DomFileElementImpl<?> element = file instanceof XmlFile ? DomManagerImpl.getDomManager(file.getProject()).getFileElement((XmlFile)file) : null;
     if (element != null) {
@@ -88,11 +84,10 @@ final class DomCreator {
     return null;
   }
 
-  @Nullable
-  private static DomInvocationHandler createIndexedHandler(DomInvocationHandler parent,
-                                                           String localName,
-                                                           String namespace,
-                                                           DomFixedChildDescription description, XmlTag tag) {
+  private static @Nullable DomInvocationHandler createIndexedHandler(DomInvocationHandler parent,
+                                                                     String localName,
+                                                                     String namespace,
+                                                                     DomFixedChildDescription description, XmlTag tag) {
     final int totalCount = description.getCount();
 
     int index = 0;
@@ -102,8 +97,7 @@ final class DomCreator {
       if (current == null) {
         break;
       }
-      if (current instanceof XmlTag) {
-        final XmlTag xmlTag = (XmlTag)current;
+      if (current instanceof XmlTag xmlTag) {
         if (localName.equals(xmlTag.getLocalName()) && namespace.equals(xmlTag.getNamespace())) {
           index++;
           if (index >= totalCount) {
@@ -118,29 +112,39 @@ final class DomCreator {
                                                new PhysicalDomParentStrategy(tag, myDomManager), myDomManager, null);
   }
 
-  @NotNull
-  private static CollectionElementInvocationHandler createCollectionHandler(XmlTag tag,
-                                                                            DomCollectionChildDescription description,
-                                                                            DomInvocationHandler parent,
-                                                                            XmlTag parentTag) {
+  private static @NotNull CollectionElementInvocationHandler createCollectionHandler(XmlTag tag,
+                                                                                     DomCollectionChildDescription description,
+                                                                                     DomInvocationHandler parent,
+                                                                                     XmlTag parentTag) {
     DomStub parentStub = parent.getStub();
     if (parentStub != null) {
       int index = JBIterable
-        .of(parentTag.findSubTags(tag.getName(), tag.getNamespace()))
+        .of(findSubTagsWithoutIncludes(parentTag, tag.getLocalName(), tag.getNamespace()))
         .filter(t -> !(t instanceof IncludedXmlTag))
         .indexOf(t -> t == tag);
-      ElementStub stub = parentStub.getElementStub(tag.getLocalName(), index);
+      ElementStub stub = parentStub.getElementStub(tag.getName(), index);
       if (stub != null) {
         XmlName name = description.getXmlName();
         EvaluatedXmlNameImpl evaluatedXmlName = EvaluatedXmlNameImpl.createEvaluatedXmlName(name, name.getNamespaceKey(), true);
-        return new CollectionElementInvocationHandler(evaluatedXmlName, (AbstractDomChildDescriptionImpl)description, parent.getManager(), stub);
+        return new CollectionElementInvocationHandler(evaluatedXmlName, (AbstractDomChildDescriptionImpl)description, parent.getManager(),
+                                                      stub);
       }
     }
-    return new CollectionElementInvocationHandler(description.getType(), tag, (AbstractCollectionChildDescription)description, parent, null);
+    return new CollectionElementInvocationHandler(description.getType(), tag, (AbstractCollectionChildDescription)description, parent,
+                                                  null);
   }
 
-  @Nullable
-  private static DomInvocationHandler createCustomHandler(XmlTag tag, DomInvocationHandler parent, String localName, DomGenericInfoEx info) {
+  private static XmlTag @NotNull [] findSubTagsWithoutIncludes(@NotNull XmlTag parentTag,
+                                                               @NlsSafe String localName,
+                                                               @Nullable @NlsSafe String namespace) {
+    return XmlTagDelegate.findSubTags(localName, namespace,
+                                      parentTag instanceof XmlTagImpl ? ((XmlTagImpl)parentTag).getSubTags(false) : parentTag.getSubTags());
+  }
+
+  private static @Nullable DomInvocationHandler createCustomHandler(XmlTag tag,
+                                                                    DomInvocationHandler parent,
+                                                                    String localName,
+                                                                    DomGenericInfoEx info) {
     List<? extends CustomDomChildrenDescription> customs = info.getCustomNameChildrenDescription();
     if (customs.isEmpty()) return null;
 
@@ -162,8 +166,7 @@ final class DomCreator {
     return null;
   }
 
-  @Nullable
-  static DomFileElementImpl<?> createFileElement(XmlFile xmlFile) {
+  static @Nullable DomFileElementImpl<?> createFileElement(XmlFile xmlFile) {
     VirtualFile file = xmlFile.getVirtualFile();
     if (!(xmlFile.getFileType() instanceof DomSupportEnabled) || file != null && ProjectCoreUtil.isProjectOrWorkspaceFile(file)) {
       IdempotenceChecker.logTrace("DOM unsupported");
@@ -185,7 +188,7 @@ final class DomCreator {
     FileStub stub = null;
     DomFileMetaData meta = DomApplicationComponent.getInstance().findMeta(description);
     if (meta != null && meta.hasStubs() && file instanceof VirtualFileWithId && !isFileParsed(xmlFile)) {
-      if (FileBasedIndex.getInstance().getFileBeingCurrentlyIndexed() == null) {
+      if (FileBasedIndex.getInstance().getFileBeingCurrentlyIndexed() == null && !XmlUtil.isStubBuilding()) {
         ObjectStubTree<?> stubTree = StubTreeLoader.getInstance().readFromVFile(xmlFile.getProject(), file);
         if (stubTree != null) {
           stub = (FileStub)stubTree.getRoot();
@@ -203,8 +206,7 @@ final class DomCreator {
     return myXmlFile instanceof PsiFileEx && ((PsiFileEx)myXmlFile).isContentsLoaded();
   }
 
-  @Nullable
-  private static DomFileDescription<?> findFileDescription(XmlFile file) {
+  static @Nullable DomFileDescription<?> findFileDescription(XmlFile file) {
     DomFileDescription<?> mockDescription = file.getUserData(DomManagerImpl.MOCK_DESCRIPTION);
     if (mockDescription != null) return mockDescription;
 
@@ -219,15 +221,10 @@ final class DomCreator {
       return element == null ? null : element.getFileDescription();
     }
 
-    Module module = ModuleUtilCore.findModuleForFile(file);
-    Condition<DomFileDescription<?>> condition = d -> d.isMyFile(file, module);
-    String rootTagLocalName = DomService.getInstance().getXmlFileHeader(file).getRootTagLocalName();
-    DomFileDescription<?> description = ContainerUtil.find(domManager.getFileDescriptions(rootTagLocalName), condition);
-    return description != null ? description : ContainerUtil.find(domManager.getAcceptingOtherRootTagNameDescriptions(), condition);
+    return DomApplicationComponent.getInstance().findDescription(file);
   }
 
-  @Nullable
-  static DomInvocationHandler getParentDom(@NotNull XmlTag tag) {
+  static @Nullable DomInvocationHandler getParentDom(@NotNull XmlTag tag) {
     LinkedHashSet<XmlTag> allParents = new LinkedHashSet<>();
     PsiElement each = tag;
     while (each instanceof XmlTag && allParents.add((XmlTag)each)) {
@@ -243,8 +240,7 @@ final class DomCreator {
     return manager.getDomHandler(tag);
   }
 
-  @Nullable
-  private static <T extends DomChildrenDescription> T findChildrenDescription(List<T> descriptions, XmlTag tag, DomInvocationHandler parent) {
+  private static @Nullable <T extends DomChildrenDescription> T findChildrenDescription(List<T> descriptions, XmlTag tag, DomInvocationHandler parent) {
     final XmlFile file = parent.getFile();
 
     //noinspection ForLoopReplaceableByForEach
@@ -257,8 +253,7 @@ final class DomCreator {
     return null;
   }
 
-  @Nullable
-  static AttributeChildInvocationHandler createAttributeHandler(@NotNull XmlAttribute attribute) {
+  static @Nullable AttributeChildInvocationHandler createAttributeHandler(@NotNull XmlAttribute attribute) {
     XmlTag tag = PhysicalDomParentStrategy.getParentTag(attribute);
     DomInvocationHandler handler = tag == null ? null : getParentDom(tag);
     if (handler == null) return null;

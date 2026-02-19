@@ -16,6 +16,7 @@
 package org.intellij.lang.xpath.xslt.associations.impl;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.ToggleAction;
@@ -44,8 +45,12 @@ class ToggleAssociationAction extends ToggleAction {
         myAssoc = assoc;
     }
 
-    @NlsSafe
-    private static String getPath(PsiFile assoc, PsiFile psiFile) {
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.BGT;
+    }
+
+    private static @NlsSafe String getPath(PsiFile assoc, PsiFile psiFile) {
         final VirtualFile virtualFile = assoc.getVirtualFile();
         assert virtualFile != null;
 
@@ -64,6 +69,6 @@ class ToggleAssociationAction extends ToggleAction {
     public void setSelected(@NotNull AnActionEvent e, boolean state) {
         assert !state;
         myFileAssociationsManager.removeAssociation(myPsiFile, myAssoc);
-        DaemonCodeAnalyzer.getInstance(AnAction.getEventProject(e)).restart();
+        DaemonCodeAnalyzer.getInstance(AnAction.getEventProject(e)).restart(this);
     }
 }

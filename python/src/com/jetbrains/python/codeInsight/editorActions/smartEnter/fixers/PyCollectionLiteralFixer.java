@@ -3,12 +3,22 @@ package com.jetbrains.python.codeInsight.editorActions.smartEnter.fixers;
 
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiComment;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiErrorElement;
+import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.util.ArrayUtil;
-import com.jetbrains.python.PyPsiBundle;
+import com.jetbrains.python.PyParsingBundle;
+import com.jetbrains.python.ast.impl.PyPsiUtilsCore;
 import com.jetbrains.python.codeInsight.editorActions.smartEnter.PySmartEnterProcessor;
 import com.jetbrains.python.codeInsight.editorActions.smartEnter.SmartEnterUtil;
-import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.PyDictLiteralExpression;
+import com.jetbrains.python.psi.PyDoubleStarExpression;
+import com.jetbrains.python.psi.PyExpression;
+import com.jetbrains.python.psi.PyKeyValueExpression;
+import com.jetbrains.python.psi.PySequenceExpression;
+import com.jetbrains.python.psi.PyTupleExpression;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
 import org.jetbrains.annotations.NotNull;
 
@@ -57,9 +67,9 @@ public class PyCollectionLiteralFixer extends PyFixer<PySequenceExpression> {
       return;
     }
 
-    PsiElement nextOnSameLine = PyPsiUtils.getNextNonWhitespaceSiblingOnSameLine(collectionItem);
+    PsiElement nextOnSameLine = PyPsiUtilsCore.getNextNonWhitespaceSiblingOnSameLine(collectionItem);
     if (nextOnSameLine != null && isMissingColonError(nextOnSameLine)) {
-      nextOnSameLine = PyPsiUtils.getNextNonWhitespaceSiblingOnSameLine(nextOnSameLine);
+      nextOnSameLine = PyPsiUtilsCore.getNextNonWhitespaceSiblingOnSameLine(nextOnSameLine);
     }
     if (nextOnSameLine == null || nextOnSameLine instanceof PsiComment) {
       int separatorOffset = collectionItem.getTextRange().getEndOffset();
@@ -83,6 +93,6 @@ public class PyCollectionLiteralFixer extends PyFixer<PySequenceExpression> {
 
   private static boolean isMissingColonError(@NotNull PsiElement element) {
     PsiErrorElement errorElement = as(element, PsiErrorElement.class);
-    return errorElement != null && PyPsiBundle.message("PARSE.expected.colon").equals(errorElement.getErrorDescription());
+    return errorElement != null && PyParsingBundle.message("PARSE.expected.colon").equals(errorElement.getErrorDescription());
   }
 }

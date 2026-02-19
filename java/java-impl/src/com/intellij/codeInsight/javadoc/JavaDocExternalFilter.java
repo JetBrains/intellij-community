@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.javadoc;
 
 import com.intellij.codeInsight.documentation.AbstractExternalFilter;
@@ -15,8 +15,10 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import com.intellij.util.Url;
 import com.intellij.util.Urls;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.builtInWebServer.BuiltInServerOptions;
 import org.jetbrains.builtInWebServer.WebServerPathToFileManager;
 
@@ -38,7 +40,7 @@ public class JavaDocExternalFilter extends AbstractExternalFilter {
   );
 
   private static final Pattern HREF_SELECTOR = Pattern.compile("<A.*?HREF=\"([^>\"]*)\"", Pattern.CASE_INSENSITIVE | Pattern.DOTALL);
-  private static final Pattern METHOD_HEADING = Pattern.compile("<H[34]>(.+?)</H[34]>", Pattern.CASE_INSENSITIVE | Pattern.DOTALL);
+  private static final Pattern METHOD_HEADING = Pattern.compile("<H[34].*>(.+?)</H[34]>", Pattern.CASE_INSENSITIVE | Pattern.DOTALL);
 
   private final RefConvertor[] myReferenceConverters = {
     new RefConvertor(HREF_SELECTOR) {
@@ -51,6 +53,25 @@ public class JavaDocExternalFilter extends AbstractExternalFilter {
         if (reference == null) {
           if (href.startsWith("#")) {
             return root + href;
+          }
+          else if (href.startsWith("//")) {
+            Url rootUrl = Urls.parse(root, false);
+            if (rootUrl == null) return href;
+            String scheme = rootUrl.getScheme();
+            if (scheme == null) return href;
+            String[] parts = href.substring(2).split("/", 2);
+            if (parts.length != 2) return href;
+            Url relativeUrl = Urls.newUrl(scheme, parts[0], '/' + parts[1]);
+            return relativeUrl.toDecodedForm();
+          }
+          else if (href.startsWith("/")) {
+            Url rootUrl = Urls.parse(root, false);
+            if (rootUrl == null) return href;
+            String scheme = rootUrl.getScheme();
+            String authority = rootUrl.getAuthority();
+            if (scheme == null || authority == null) return href;
+            Url relativeUrl = Urls.newUrl(scheme, authority, href);
+            return relativeUrl.toDecodedForm();
           }
           else {
             String nakedRoot = ourHtmlFileSuffix.matcher(root).replaceAll("/");
@@ -73,19 +94,18 @@ public class JavaDocExternalFilter extends AbstractExternalFilter {
     return myReferenceConverters;
   }
 
-  @Nullable
-  public static String filterInternalDocInfo(String text) {
+  public static @Nls @Nullable String filterInternalDocInfo(@Nls String text) {
     return text == null ? null : PlatformDocumentationUtil.fixupText(text);
   }
 
-  @Nullable
   @Override
-  public String getExternalDocInfoForElement(@NotNull String docURL, PsiElement element) throws Exception {
+  public @Nullable String getExternalDocInfoForElement(@NotNull String docURL, PsiElement element) throws Exception {
     String externalDoc = null;
     myElement = element;
 
+    String authority = "localhost:" + BuiltInServerOptions.getInstance().getEffectiveBuiltInServerPort();
     String projectPath = "/" + myProject.getName() + "/";
-    String builtInServer = "http://localhost:" + BuiltInServerOptions.getInstance().getEffectiveBuiltInServerPort() + projectPath;
+    String builtInServer = Urls.newHttpUrl(authority, projectPath).toExternalForm();
     if (docURL.startsWith(builtInServer)) {
       Url url = Urls.parseFromIdea(docURL);
       if (url != null) {
@@ -114,7 +134,8 @@ public class JavaDocExternalFilter extends AbstractExternalFilter {
           PsiClass aClass = ((PsiMethod)element).getContainingClass();
           if (aClass != null) {
             String qName = aClass.getQualifiedName();
-            return pair(qName, qName + JavaDocInfoGenerator.generateTypeParameters(aClass, true));
+            String typeParameters = JavaDocInfoGeneratorFactory.create(aClass.getProject(), null).generateTypeParameters(aClass, true);
+            return pair(qName, qName + typeParameters);
           }
           return null;
         }
@@ -129,9 +150,13 @@ public class JavaDocExternalFilter extends AbstractExternalFilter {
     return externalDoc;
   }
 
-  @NotNull
   @Override
-  protected ParseSettings getParseSettings(@NotNull String url) {
+  protected @NotNull ParseSettings getParseSettings(@NotNull String url) {
     return url.endsWith(JavaDocumentationProvider.PACKAGE_SUMMARY_FILE) ? ourPackageInfoSettings : super.getParseSettings(url);
+  }
+
+  @TestOnly
+  public void setElement(PsiElement element) {
+    myElement = element;
   }
 }

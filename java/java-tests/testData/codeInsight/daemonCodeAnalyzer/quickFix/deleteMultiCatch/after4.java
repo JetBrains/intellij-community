@@ -1,4 +1,4 @@
-// "Delete catch for 'java.lang.RuntimeException'" "true"
+// "Delete catch for 'java.lang.RuntimeException'" "true-preview"
 import java.io.*;
 
 class C {

@@ -1,23 +1,27 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.actions;
 
 import com.intellij.codeInsight.CodeInsightActionHandler;
 import com.intellij.codeInsight.actions.BaseCodeInsightAction;
 import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerEx;
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
-import com.intellij.openapi.editor.*;
+import com.intellij.openapi.editor.Caret;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.FoldRegion;
+import com.intellij.openapi.editor.FoldingModel;
+import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.editor.ex.MarkupModelEx;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiFile;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Comparator;
 
-/*package*/ abstract class GotoElementUnderCaretUsageBase extends BaseCodeInsightAction implements CodeInsightActionHandler {
-
-  @NotNull
-  private final Direction myDirection;
+@ApiStatus.Internal
+public abstract class GotoElementUnderCaretUsageBase extends BaseCodeInsightAction implements CodeInsightActionHandler {
+  private final @NotNull Direction myDirection;
 
   /**
    * @param direction defines direction for next usage searching.
@@ -26,20 +30,19 @@ import java.util.Comparator;
     myDirection = direction;
   }
 
-  @NotNull
   @Override
-  protected CodeInsightActionHandler getHandler() {
+  protected @NotNull CodeInsightActionHandler getHandler() {
     return this;
   }
 
   @Override
-  public void invoke(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
-    final Comparator<Integer> ordering = myDirection.ordering;
-    final int caretOffset = editor.getCaretModel().getOffset();
-    final int startOffset = file.getTextRange().getStartOffset();
-    final int endOffset = file.getTextRange().getEndOffset();
-    final Ref<Integer> first = new Ref<>();
-    final Ref<Integer> next = new Ref<>();
+  public void invoke(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile psiFile) {
+    Comparator<Integer> ordering = myDirection.ordering;
+    int caretOffset = editor.getCaretModel().getOffset();
+    int startOffset = psiFile.getTextRange().getStartOffset();
+    int endOffset = psiFile.getTextRange().getEndOffset();
+    Ref<Integer> first = new Ref<>();
+    Ref<Integer> next = new Ref<>();
     DaemonCodeAnalyzerEx.processHighlights(((MarkupModelEx)editor.getMarkupModel()), project, null, startOffset, endOffset, info -> {
       if (HighlightInfoType.ELEMENT_UNDER_CARET_READ.equals(info.type) || HighlightInfoType.ELEMENT_UNDER_CARET_WRITE.equals(info.type)) {
         if (ordering.compare(info.startOffset, caretOffset) > 0 && ordering.compare(info.endOffset, caretOffset) > 0) {

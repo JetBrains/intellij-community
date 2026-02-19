@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.application.options.codeStyle;
 
 import com.intellij.application.options.schemes.SchemeNameGenerator;
@@ -19,13 +19,21 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
 public final class CodeStyleSchemesModel implements SchemesModel<CodeStyleScheme> {
-  private final static Logger LOG = Logger.getInstance(CodeStyleSchemesModel.class);
+  private static final Logger LOG = Logger.getInstance(CodeStyleSchemesModel.class);
 
   private final List<CodeStyleScheme> mySchemes = new ArrayList<>();
   private CodeStyleScheme mySelectedScheme;
@@ -62,7 +70,7 @@ public final class CodeStyleSchemesModel implements SchemesModel<CodeStyleScheme
   }
 
   @Override
-  public void removeScheme(@NotNull final CodeStyleScheme scheme) {
+  public void removeScheme(final @NotNull CodeStyleScheme scheme) {
     mySchemes.remove(scheme);
     myDispatcher.getMulticaster().schemeListChanged();
     if (mySelectedScheme == scheme) {
@@ -70,8 +78,7 @@ public final class CodeStyleSchemesModel implements SchemesModel<CodeStyleScheme
     }
   }
 
-  @NotNull
-  public CodeStyleSettings getCloneSettings(final CodeStyleScheme scheme) {
+  public @NotNull CodeStyleSettings getCloneSettings(final CodeStyleScheme scheme) {
     if (!mySettingsToClone.containsKey(scheme)) {
       mySettingsToClone.put(scheme, ModelSettings.createFrom(scheme.getCodeStyleSettings()));
     }
@@ -105,7 +112,7 @@ public final class CodeStyleSchemesModel implements SchemesModel<CodeStyleScheme
     updateOverridingStatus();
   }
 
-  private void updateClonedSettings() {
+  public void updateClonedSettings() {
     for (Iterator<CodeStyleScheme> schemeIterator = mySettingsToClone.keySet().iterator(); schemeIterator.hasNext();) {
       CodeStyleScheme scheme = schemeIterator.next();
       if (!mySchemes.contains(scheme)) {
@@ -163,17 +170,8 @@ public final class CodeStyleSchemesModel implements SchemesModel<CodeStyleScheme
     }
   }
 
-  private @NotNull List<CodeStyleScheme> getIdeSchemes() {
+  private @Unmodifiable @NotNull List<CodeStyleScheme> getIdeSchemes() {
     return ContainerUtil.filter(mySchemes, scheme -> !(scheme instanceof ProjectScheme));
-  }
-
-  /**
-   * @deprecated Not used anymore.
-   */
-  @SuppressWarnings("unused")
-  @Deprecated
-  public static boolean cannotBeModified(CodeStyleScheme currentScheme) {
-    return false;
   }
 
   public void fireBeforeCurrentSettingsChanged() {
@@ -217,8 +215,7 @@ public final class CodeStyleSchemesModel implements SchemesModel<CodeStyleScheme
                                    parentScheme);
   }
 
-  @Nullable
-  private CodeStyleScheme findSchemeByName(final String name, boolean isProjectScheme) {
+  private @Nullable CodeStyleScheme findSchemeByName(final String name, boolean isProjectScheme) {
     for (CodeStyleScheme scheme : mySchemes) {
       if (isProjectScheme == isProjectScheme(scheme) && name.equals(scheme.getName())) return scheme;
     }
@@ -284,7 +281,7 @@ public final class CodeStyleSchemesModel implements SchemesModel<CodeStyleScheme
 
   private static final class ProjectScheme extends CodeStyleSchemeImpl {
     ProjectScheme(@NotNull Project project) {
-      super(CodeStyleScheme.PROJECT_SCHEME_NAME, false, CodeStyleSchemes.getInstance().getDefaultScheme());
+      super(PROJECT_SCHEME_NAME, false, CodeStyleSchemes.getInstance().getDefaultScheme());
 
       CodeStyleSettings perProjectSettings = CodeStyleSettingsManager.getInstance(project).getMainProjectCodeStyle();
       if (perProjectSettings != null) {
@@ -332,7 +329,7 @@ public final class CodeStyleSchemesModel implements SchemesModel<CodeStyleScheme
       try {
         myOverridingStatus.getLock().lock();
         List<CodeStyleSettingsModifier> modifiers = getOverridingModifiers();
-        if (modifiers.size() > 0) {
+        if (!modifiers.isEmpty()) {
           myOverridingStatus.update(modifiers);
         }
         else {
@@ -346,8 +343,7 @@ public final class CodeStyleSchemesModel implements SchemesModel<CodeStyleScheme
     });
   }
 
-  @Nullable
-  public OverridingStatus getOverridingStatus() {
+  public @Nullable OverridingStatus getOverridingStatus() {
     if (myOverridingStatus.getLock().tryLock()) {
       try {
         return !myOverridingStatus.isEmpty()? myOverridingStatus : null;
@@ -359,7 +355,7 @@ public final class CodeStyleSchemesModel implements SchemesModel<CodeStyleScheme
     return null;
   }
 
-  private List<CodeStyleSettingsModifier> getOverridingModifiers() {
+  private @Unmodifiable List<CodeStyleSettingsModifier> getOverridingModifiers() {
     return
       ContainerUtil.filter(
         CodeStyleSettingsModifier.EP_NAME.getExtensionList(),
@@ -384,7 +380,7 @@ public final class CodeStyleSchemesModel implements SchemesModel<CodeStyleScheme
     return myUiEventsEnabled;
   }
 
-  public static class ModelSettings extends CodeStyleSettings {
+  public static final class ModelSettings extends CodeStyleSettings {
     private volatile boolean myLocked;
 
     public ModelSettings() {
@@ -408,16 +404,14 @@ public final class CodeStyleSchemesModel implements SchemesModel<CodeStyleScheme
     }
   }
 
-  public static class OverridingStatus {
+  public static final class OverridingStatus {
     private final Lock myLock = new ReentrantLock();
 
-    private final static CodeStyleSettingsModifier[] EMPTY_MODIFIER_ARRAY = new CodeStyleSettingsModifier[0];
+    private static final CodeStyleSettingsModifier[] EMPTY_MODIFIER_ARRAY = new CodeStyleSettingsModifier[0];
 
-    @Nullable
-    private List<CodeStyleSettingsModifier> myModifiers;
+    private @Nullable List<CodeStyleSettingsModifier> myModifiers;
 
-    @NotNull
-    public Lock getLock() {
+    public @NotNull Lock getLock() {
       return myLock;
     }
 

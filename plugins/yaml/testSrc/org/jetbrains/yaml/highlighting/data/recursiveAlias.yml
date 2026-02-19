@@ -1,4 +1,0 @@
-x: &an
-  y: hello
-  z: *<error descr="Alias can't be recursive">an</error>
-k: *an #normal alias use

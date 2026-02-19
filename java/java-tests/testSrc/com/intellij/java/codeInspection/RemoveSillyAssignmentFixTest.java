@@ -1,24 +1,11 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.codeInspection;
 
 import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.sillyAssignment.SillyAssignmentInspection;
-import com.intellij.java.JavaBundle;
+import com.intellij.openapi.application.impl.NonBlockingReadActionImpl;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 
 /**
@@ -27,10 +14,13 @@ import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 public class RemoveSillyAssignmentFixTest extends LightJavaCodeInsightFixtureTestCase {
 
   public void testRemoveCompleteAssignment() { doTest(); }
+  public void testOperatorAssignment() { doTest(); }
   public void testKeepReference() { doTest(); }
   public void testFieldAssignsItself() { doTest(); }
   public void testFieldKeepInitializer() { doTest(); }
   public void testSillyButIncomplete() { doTest(); }
+  public void testArrayElement1() { doTest(); }
+  public void testArrayElement2() { doTest(); }
 
   public void testFinalField() { assertQuickfixNotAvailable(); }
   public void testFinalField2() { assertQuickfixNotAvailable(); }
@@ -38,16 +28,17 @@ public class RemoveSillyAssignmentFixTest extends LightJavaCodeInsightFixtureTes
   public void doTest() {
     myFixture.enableInspections(SillyAssignmentInspection.class);
     myFixture.configureByFile(getTestName(false) + ".java");
-    final IntentionAction intention = myFixture.findSingleIntention(JavaBundle.message("assignment.to.itself.quickfix.name"));
+    final IntentionAction intention = myFixture.findSingleIntention(InspectionsBundle.message("assignment.to.itself.quickfix.name"));
     assertNotNull(intention);
     myFixture.launchAction(intention);
+    NonBlockingReadActionImpl.waitForAsyncTaskCompletion();
     myFixture.checkResultByFile(getTestName(false) + ".after.java");
   }
 
   protected void assertQuickfixNotAvailable() {
     myFixture.enableInspections(SillyAssignmentInspection.class);
-    final String quickfixName = JavaBundle.message("assignment.to.itself.quickfix.name");
     myFixture.configureByFile(getTestName(false) + ".java");
+    final String quickfixName = InspectionsBundle.message("assignment.to.itself.quickfix.name");
     assertEmpty("Quickfix '" + quickfixName + "' is available unexpectedly", myFixture.filterAvailableIntentions(quickfixName));
   }
 

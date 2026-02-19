@@ -1,0 +1,74 @@
+[
+ {
+  matchedName: "css/class-list/foo-bar bar foo foo",
+  origin: "css-class-list@1.0 (<none>)",
+  complete: false,
+  priority: NORMAL,
+  segments: [
+   {
+    name-part: "foo-bar",
+    problem: UNKNOWN_SYMBOL,
+   },
+   {
+    name-part: " ",
+   },
+   {
+    name-part: "bar",
+    symbol: {
+     matchedName: "css/classes/bar",
+     origin: "css-class-list@1.0 (<none>)",
+     complete: true,
+     priority: NORMAL,
+     segments: [
+      {
+       name-part: "bar",
+       symbol: <self>,
+      },
+     ],
+    },
+   },
+   {
+    name-part: " ",
+   },
+   {
+    name-part: "foo",
+    symbol: {
+     matchedName: "css/classes/foo",
+     origin: "css-class-list@1.0 (<none>)",
+     complete: true,
+     priority: NORMAL,
+     segments: [
+      {
+       name-part: "foo",
+       symbol: <self>,
+      },
+     ],
+    },
+   },
+   {
+    name-part: " ",
+    problem: DUPLICATE,
+   },
+   {
+    name-part: "",
+    problem: DUPLICATE,
+   },
+   {
+    name-part: "foo",
+    problem: DUPLICATE,
+    symbol: {
+     matchedName: "css/classes/foo",
+     origin: "css-class-list@1.0 (<none>)",
+     complete: true,
+     priority: NORMAL,
+     segments: [
+      {
+       name-part: "foo",
+       symbol: <self>,
+      },
+     ],
+    },
+   },
+  ],
+ },
+]

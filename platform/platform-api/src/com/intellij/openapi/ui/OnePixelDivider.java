@@ -1,22 +1,35 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.ui;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.Application;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.client.ClientSystemInfo;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.Weighted;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.IdeGlassPane;
 import com.intellij.openapi.wm.IdeGlassPaneUtil;
 import com.intellij.ui.JBColor;
+import com.intellij.ui.JBSplitter;
 import com.intellij.ui.OnePixelSplitter;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.MathUtil;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JComponent;
+import javax.swing.SwingUtilities;
+import java.awt.AWTEvent;
+import java.awt.Color;
+import java.awt.Component;
+import java.awt.Cursor;
+import java.awt.Graphics;
+import java.awt.GridBagLayout;
+import java.awt.Insets;
+import java.awt.Point;
+import java.awt.Rectangle;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.function.Supplier;
@@ -25,10 +38,7 @@ import java.util.function.Supplier;
  * @author Konstantin Bulenkov
  */
 public class OnePixelDivider extends Divider {
-  public static final Color BACKGROUND = new JBColor(() -> {
-    final Color bg = UIManager.getColor("OnePixelDivider.background");
-    return bg != null ? bg : JBColor.border();
-  });
+  public static final Color BACKGROUND = JBColor.border();
 
   private boolean myVertical;
   private final Splittable mySplitter;
@@ -57,7 +67,7 @@ public class OnePixelDivider extends Divider {
       final Supplier<Insets> blindZone = ((OnePixelSplitter)mySplitter).getBlindZone();
       if (blindZone != null) {
         final Insets insets = blindZone.get();
-        if (insets != null) {
+        if (insets != null && bounds != null) {
           bounds.x += insets.left;
           bounds.y += insets.top;
           bounds.width -= insets.left + insets.right;
@@ -79,13 +89,14 @@ public class OnePixelDivider extends Divider {
 
   @Override
   public void removeNotify() {
-    super.removeNotify();
     if (myDisposable != null && !Disposer.isDisposed(myDisposable)) {
       Disposer.dispose(myDisposable);
     }
+    myGlassPane = null;
+    super.removeNotify();
   }
 
-  private boolean myDragging = false;
+  protected boolean myDragging = false;
 
   private void setDragging(boolean dragging) {
     if (myDragging != dragging) {
@@ -95,7 +106,7 @@ public class OnePixelDivider extends Divider {
   }
   private class MyMouseAdapter extends MouseAdapter implements Weighted {
     private boolean skipEventProcessing() {
-      if (isShowing()) {
+      if (isBothComponentsVisibleAndOneOfComponentsShowing()) {
         return false;
       }
       setDragging(false);
@@ -192,20 +203,40 @@ public class OnePixelDivider extends Divider {
     }
   }
 
-  @Nullable
-  private MouseEvent getTargetEvent(MouseEvent e) {
+  private boolean isBothComponentsVisibleAndOneOfComponentsShowing() {
+    if (isShowing()) return true;
+
+    if (mySplitter instanceof JBSplitter) {
+      JComponent first = ((JBSplitter)mySplitter).getFirstComponent();
+      JComponent second = ((JBSplitter)mySplitter).getSecondComponent();
+      if (first == null || second == null || !first.isVisible() || !second.isVisible()) return false;
+      if (first.isShowing()) return true;
+      if (second.isShowing()) return true;
+    }
+    return false;
+  }
+
+  private @Nullable MouseEvent getTargetEvent(MouseEvent e) {
     Component eventComponent = e.getComponent();
     if (eventComponent == null) return null;
     Component deepestComponentAt = UIUtil.getDeepestComponentAt(eventComponent, e.getX(), e.getY());
-    if (deepestComponentAt == null || !SwingUtilities.isDescendingFrom(deepestComponentAt, getParent())) {
+    if (noDeepestComponent(e, deepestComponentAt)) {
       return null;//Event is related to some top layer (for example Undock tool window) and we shouldn't process it here
     }
     return SwingUtilities.convertMouseEvent(eventComponent, e, this);
   }
 
+  protected boolean noDeepestComponent(@NotNull MouseEvent e, @Nullable Component deepestComponentAt) {
+    return deepestComponentAt == null || !SwingUtilities.isDescendingFrom(deepestComponentAt, getParent());
+  }
+
   private void init() {
     myGlassPane = IdeGlassPaneUtil.find(this);
     myDisposable = Disposer.newDisposable();
+    Application application = ApplicationManager.getApplication();
+    if (application != null) {
+      Disposer.register(application, myDisposable);
+    }
     myGlassPane.addMouseMotionPreprocessor(myListener, myDisposable);
     myGlassPane.addMousePreprocessor(myListener, myDisposable);
   }
@@ -225,22 +256,16 @@ public class OnePixelDivider extends Divider {
     if (MouseEvent.MOUSE_DRAGGED == e.getID() && myDragging) {
       myPoint = SwingUtilities.convertPoint(this, e.getPoint(), mySplitter.asComponent());
       float proportion;
-      final float firstMinProportion = mySplitter.getMinProportion(true);
-      final float secondMinProportion = mySplitter.getMinProportion(false);
-      if (isVertical()) {
-        if (getHeight() > 0) {
-          float ratio = (float)myPoint.y / (float)mySplitter.asComponent().getHeight();
-          proportion = MathUtil.clamp(Math.min(Math.max(firstMinProportion, ratio), 1 - secondMinProportion), 0f, 1f);
-          mySplitter.setProportion(proportion);
-        }
-      }
-      else {
-        if (getWidth() > 0) {
-          float ratio = (float)myPoint.x / (float)mySplitter.asComponent().getWidth();
-          proportion = MathUtil.clamp(Math.min(Math.max(firstMinProportion, ratio), 1 - secondMinProportion), 0f, 1f);
-          mySplitter.setProportion(proportion);
-        }
-      }
+      float firstMinProportion = mySplitter.getMinProportion(true);
+      float secondMinProportion = mySplitter.getMinProportion(false);
+      Component comp = mySplitter.asComponent();
+      float thickness = isVertical() ? comp.getHeight() : comp.getWidth();
+      if (thickness == 0) thickness = 1f;
+      float position = isVertical() ? myPoint.y : myPoint.x;
+      float ratio = position / thickness;
+      proportion = MathUtil.clamp(Math.min(Math.max(firstMinProportion, ratio), 1 - secondMinProportion), 0f, 1f);
+      mySplitter.setProportion(proportion);
+
       e.consume();
     }
   }
@@ -251,7 +276,7 @@ public class OnePixelDivider extends Divider {
     if (e.getID() == MouseEvent.MOUSE_CLICKED) {
       if (mySwitchOrientationEnabled
           && e.getClickCount() == 1
-          && SwingUtilities.isLeftMouseButton(e) && (SystemInfo.isMac ? e.isMetaDown() : e.isControlDown())) {
+          && SwingUtilities.isLeftMouseButton(e) && (ClientSystemInfo.isMac() ? e.isMetaDown() : e.isControlDown())) {
         mySplitter.setOrientation(!mySplitter.getOrientation());
       }
       if (myResizeEnabled && e.getClickCount() == 2) {

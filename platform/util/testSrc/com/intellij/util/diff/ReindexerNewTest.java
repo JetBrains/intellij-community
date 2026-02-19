@@ -17,7 +17,6 @@ package com.intellij.util.diff;
 
 import junit.framework.TestCase;
 
-import java.util.BitSet;
 import java.util.Random;
 
 public class ReindexerNewTest extends TestCase {
@@ -94,8 +93,8 @@ public class ReindexerNewTest extends TestCase {
 
       @Override
       public void addChange(int first, int second) {
-        reindexChanges[0].set(myIndex1, myIndex1 + first);
-        reindexChanges[1].set(myIndex2, myIndex2 + second);
+        reindexChanges[0].set(myIndex1, myIndex1 + first, true);
+        reindexChanges[1].set(myIndex2, myIndex2 + second, true);
 
         myIndex1 += first;
         myIndex2 += second;

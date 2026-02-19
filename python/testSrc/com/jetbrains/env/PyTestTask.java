@@ -57,12 +57,6 @@ public abstract class PyTestTask {
   public void doFinally() {
   }
 
-  public void useNormalTimeout() {
-  }
-
-  public void useLongTimeout() {
-  }
-
   public String getScriptName() {
     return myScriptName;
   }
@@ -86,7 +80,7 @@ public abstract class PyTestTask {
    */
   @NotNull
   public Set<String> getTags() {
-    return new HashSet<String>();
+    return new HashSet<>();
   }
 
   /**

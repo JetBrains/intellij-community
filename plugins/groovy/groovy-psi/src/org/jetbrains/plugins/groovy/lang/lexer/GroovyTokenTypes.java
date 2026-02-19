@@ -1,15 +1,160 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.plugins.groovy.lang.lexer;
 
 import com.intellij.psi.tree.IElementType;
 
-import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.*;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.DOLLAR_SLASHY_BEGIN;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.DOLLAR_SLASHY_CONTENT;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.DOLLAR_SLASHY_END;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.DOLLAR_SLASHY_LITERAL;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.GSTRING_BEGIN;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.GSTRING_CONTENT;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.GSTRING_END;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.IDENTIFIER;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.KW_ABSTRACT;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.KW_AS;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.KW_ASSERT;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.KW_BOOLEAN;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.KW_BREAK;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.KW_BYTE;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.KW_CASE;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.KW_CATCH;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.KW_CHAR;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.KW_CLASS;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.KW_CONTINUE;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.KW_DEF;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.KW_DEFAULT;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.KW_DO;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.KW_DOUBLE;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.KW_ELSE;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.KW_ENUM;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.KW_EXTENDS;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.KW_FALSE;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.KW_FINAL;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.KW_FINALLY;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.KW_FLOAT;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.KW_FOR;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.KW_IF;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.KW_IMPLEMENTS;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.KW_IMPORT;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.KW_IN;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.KW_INSTANCEOF;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.KW_INT;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.KW_INTERFACE;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.KW_LONG;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.KW_NATIVE;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.KW_NEW;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.KW_NON_SEALED;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.KW_NULL;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.KW_PACKAGE;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.KW_PERMITS;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.KW_PRIVATE;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.KW_PROTECTED;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.KW_PUBLIC;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.KW_RECORD;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.KW_RETURN;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.KW_SEALED;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.KW_SHORT;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.KW_STATIC;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.KW_STRICTFP;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.KW_SUPER;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.KW_SWITCH;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.KW_SYNCHRONIZED;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.KW_THIS;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.KW_THROW;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.KW_THROWS;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.KW_TRAIT;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.KW_TRANSIENT;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.KW_TRUE;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.KW_TRY;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.KW_VAR;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.KW_VOID;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.KW_VOLATILE;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.KW_WHILE;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.KW_YIELD;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.ML_COMMENT;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.NL;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.NUM_BIG_DECIMAL;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.NUM_BIG_INT;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.NUM_DOUBLE;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.NUM_FLOAT;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.NUM_INT;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.NUM_LONG;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.SH_COMMENT;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.SLASHY_BEGIN;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.SLASHY_CONTENT;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.SLASHY_END;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.SLASHY_LITERAL;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.SL_COMMENT;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.T_ARROW;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.T_ASSIGN;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.T_AT;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.T_BAND;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.T_BAND_ASSIGN;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.T_BNOT;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.T_BOR;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.T_BOR_ASSIGN;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.T_COLON;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.T_COMMA;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.T_COMPARE;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.T_DEC;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.T_DIV;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.T_DIV_ASSIGN;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.T_DOLLAR;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.T_DOT;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.T_ELLIPSIS;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.T_ELVIS;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.T_EQ;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.T_GE;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.T_GT;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.T_IMPL;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.T_INC;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.T_LAND;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.T_LBRACE;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.T_LBRACK;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.T_LE;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.T_LOR;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.T_LPAREN;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.T_LSH_ASSIGN;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.T_LT;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.T_METHOD_CLOSURE;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.T_MINUS;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.T_MINUS_ASSIGN;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.T_NEQ;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.T_NOT;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.T_NOT_IN;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.T_NOT_INSTANCEOF;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.T_PLUS;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.T_PLUS_ASSIGN;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.T_POW;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.T_POW_ASSIGN;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.T_Q;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.T_RANGE;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.T_RANGE_BOTH_OPEN;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.T_RANGE_LEFT_OPEN;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.T_RANGE_RIGHT_OPEN;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.T_RBRACE;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.T_RBRACK;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.T_REGEX_FIND;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.T_REGEX_MATCH;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.T_REM;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.T_REM_ASSIGN;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.T_RPAREN;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.T_RSHU_ASSIGN;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.T_RSH_ASSIGN;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.T_SAFE_CHAIN_DOT;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.T_SAFE_DOT;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.T_SEMI;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.T_SPREAD_DOT;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.T_STAR;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.T_STAR_ASSIGN;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.T_WRONG;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.T_XOR;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.T_XOR_ASSIGN;
 
 /**
  * Interface that contains all tokens returned by GroovyLexer
- *
- * @author ilyas
  */
 public interface GroovyTokenTypes {
 
@@ -52,9 +197,6 @@ public interface GroovyTokenTypes {
   /* **************************************************************************************************
  *  Strings & regular expressions
  * ****************************************************************************************************/
-
-  @Deprecated IElementType mSTRING_LITERAL = STRING_SQ;
-  @Deprecated IElementType mGSTRING_LITERAL = STRING_DQ;
 
   IElementType mGSTRING_BEGIN = GSTRING_BEGIN;
   IElementType mGSTRING_CONTENT = GSTRING_CONTENT;
@@ -116,16 +258,20 @@ public interface GroovyTokenTypes {
   IElementType mBOR = T_BOR;
   IElementType mBOR_ASSIGN = T_BOR_ASSIGN;
   IElementType mLOR = T_LOR;
+  IElementType mIMPL = T_IMPL;
   IElementType mBAND = T_BAND;
   IElementType mBAND_ASSIGN = T_BAND_ASSIGN;
   IElementType mLAND = T_LAND;
   IElementType mSEMI = T_SEMI;
   IElementType mDOLLAR = T_DOLLAR;
   IElementType mRANGE_INCLUSIVE = T_RANGE;
-  IElementType mRANGE_EXCLUSIVE = T_RANGE_EX;
+  IElementType mRANGE_EXCLUSIVE_LEFT = T_RANGE_LEFT_OPEN;
+  IElementType mRANGE_EXCLUSIVE_RIGHT = T_RANGE_RIGHT_OPEN;
+  IElementType mRANGE_EXCLUSIVE_BOTH = T_RANGE_BOTH_OPEN;
   IElementType mTRIPLE_DOT = T_ELLIPSIS;
   IElementType mSPREAD_DOT = T_SPREAD_DOT;
   IElementType mOPTIONAL_DOT = T_SAFE_DOT;
+  IElementType mOPTIONAL_CHAIN_DOT = T_SAFE_CHAIN_DOT;
   IElementType mMEMBER_POINTER = T_METHOD_CLOSURE;
   IElementType mREGEX_FIND = T_REGEX_FIND;
   IElementType mREGEX_MATCH = T_REGEX_MATCH;
@@ -172,12 +318,18 @@ public interface GroovyTokenTypes {
   IElementType kLONG = KW_LONG;
   IElementType kNATIVE = KW_NATIVE;
   IElementType kNEW = KW_NEW;
+  IElementType kNON_SEALED = KW_NON_SEALED;
+  IElementType kNOT_IN = T_NOT_IN;
+  IElementType kNOT_INSTANCEOF = T_NOT_INSTANCEOF;
   IElementType kNULL = KW_NULL;
   IElementType kPACKAGE = KW_PACKAGE;
+  IElementType kPERMITS = KW_PERMITS;
   IElementType kPRIVATE = KW_PRIVATE;
   IElementType kPROTECTED = KW_PROTECTED;
   IElementType kPUBLIC = KW_PUBLIC;
   IElementType kRETURN = KW_RETURN;
+  IElementType kRECORD = KW_RECORD;
+  IElementType kSEALED = KW_SEALED;
   IElementType kSHORT = KW_SHORT;
   IElementType kSTATIC = KW_STATIC;
   IElementType kSTRICTFP = KW_STRICTFP;
@@ -194,4 +346,5 @@ public interface GroovyTokenTypes {
   IElementType kVOID = KW_VOID;
   IElementType kVOLATILE = KW_VOLATILE;
   IElementType kWHILE = KW_WHILE;
+  IElementType kYIELD = KW_YIELD;
 }

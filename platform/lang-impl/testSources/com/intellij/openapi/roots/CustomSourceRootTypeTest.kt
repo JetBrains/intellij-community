@@ -10,7 +10,10 @@ import com.intellij.testFramework.rules.TempDirectory
 import org.assertj.core.api.Assertions.assertThat
 import org.jetbrains.jps.model.module.UnknownSourceRootType
 import org.jetbrains.jps.model.serialization.JpsModelSerializerExtension
-import org.junit.*
+import org.junit.Before
+import org.junit.ClassRule
+import org.junit.Rule
+import org.junit.Test
 
 class CustomSourceRootTypeTest {
   companion object {
@@ -65,8 +68,6 @@ class CustomSourceRootTypeTest {
 
   @Test
   fun `edit custom root properties`() {
-    Assume.assumeTrue("Editing of custom root properties isn't correctly implemented in the current project model",
-                      ProjectModelRule.isWorkspaceModelEnabled)
     TestCustomRootModelSerializerExtension.registerTestCustomSourceRootType(tempDirectory.newDirectory(), disposable.disposable)
     val srcDir = projectModel.baseProjectDir.newVirtualDirectory("src")
     val committed = run {

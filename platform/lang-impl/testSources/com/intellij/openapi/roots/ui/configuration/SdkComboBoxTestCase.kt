@@ -1,7 +1,8 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.roots.ui.configuration
 
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.project.Project
@@ -79,26 +80,9 @@ abstract class SdkComboBoxTestCase : SdkTestCase() {
    *  [SdkConfigurationUtil.selectSdkHome(SdkType, Component, Consumer<in String>)],
    *  [SdkComboBoxTestCase.TestProjectSdksModel]
    */
-  object CanarySdk : TestSdk("canary", "canary-home", "canary-version", TestSdkType) {
-    fun <R> replaceByTestSdk(action: () -> R): R {
-      return invokeAndWaitIfNeeded {
-        runWriteAction {
-          val projectSdkTable = ProjectJdkTable.getInstance()
-          projectSdkTable.addJdk(CanarySdk)
-          try {
-            action()
-          }
-          finally {
-            projectSdkTable.removeJdk(CanarySdk)
-          }
-        }
-      }
-    }
-  }
-
   class TestProjectSdksModel : ProjectSdksModel(), Disposable {
     override fun addSdk(type: SdkType, home: String, callback: com.intellij.util.Consumer<in Sdk>?) {
-      if (home == CanarySdk.homePath) {
+      if (home == "canary-home") {
         val sdk = TestSdkGenerator.createNextSdk()
         setupSdk(sdk, callback)
       }
@@ -107,7 +91,7 @@ abstract class SdkComboBoxTestCase : SdkTestCase() {
       }
     }
 
-    private fun setupSdk(newJdk: TestSdk, callback: com.intellij.util.Consumer<in Sdk>?) {
+    private fun setupSdk(newJdk: Sdk, callback: com.intellij.util.Consumer<in Sdk>?) {
       val sdkType = newJdk.sdkType as SdkType
       if (!sdkType.setupSdkPaths(newJdk, this)) return
       doAdd(newJdk, callback)
@@ -130,7 +114,7 @@ abstract class SdkComboBoxTestCase : SdkTestCase() {
   }
 
   companion object {
-    fun assertSdkItem(expected: TestSdk, item: SdkListItem.SdkItem) {
+    fun assertSdkItem(expected: Sdk, item: SdkListItem.SdkItem) {
       assertSdk(expected, item.sdk)
     }
 
@@ -164,18 +148,33 @@ abstract class SdkComboBoxTestCase : SdkTestCase() {
         }
       }
 
-    fun SdkComboBox.touchDownloadAction(): TestSdk {
+    fun SdkComboBox.touchDownloadAction(): Sdk {
       selectedItem = itemSequence
         .filterIsInstance<SdkListItem.ActionItem>()
         .first { it.role == SdkListItem.ActionRole.DOWNLOAD }
       return TestSdkGenerator.getCurrentSdk()
     }
 
-    fun SdkComboBox.touchAddAction(): TestSdk {
-      CanarySdk.replaceByTestSdk {
-        selectedItem = itemSequence
-          .filterIsInstance<SdkListItem.ActionItem>()
-          .first { it.role == SdkListItem.ActionRole.ADD }
+    fun SdkComboBox.touchAddAction(): Sdk {
+      val canarySdk: Sdk = ProjectJdkTable.getInstance().createSdk("canary", TestSdkType)
+      val sdkModificator = canarySdk.sdkModificator
+      sdkModificator.homePath = "canary-home"
+      sdkModificator.versionString = "canary-version"
+      ApplicationManager.getApplication().runWriteAction { sdkModificator.commitChanges() }
+
+      invokeAndWaitIfNeeded {
+        runWriteAction {
+          val projectSdkTable = ProjectJdkTable.getInstance()
+          projectSdkTable.addJdk(canarySdk)
+          try {
+            selectedItem = itemSequence
+              .filterIsInstance<SdkListItem.ActionItem>()
+              .first { it.role == SdkListItem.ActionRole.ADD }
+          }
+          finally {
+            projectSdkTable.removeJdk(canarySdk)
+          }
+        }
       }
       return TestSdkGenerator.getCurrentSdk()
     }
@@ -198,8 +197,8 @@ abstract class SdkComboBoxTestCase : SdkTestCase() {
         is SdkListItem.SdkReferenceItem -> "[reference] ${element.name}"
         is SdkListItem.SdkItem -> "[sdk] ${element.sdk.name}"
         is SdkListItem.SuggestedItem -> "[suggested] ${element.homePath}"
-        is SdkListItem.ActionItem -> "[action] ${element.myRole} ${element.myAction.sdkType.name}"
-        is SdkListItem.GroupItem -> "[group] {${element.mySubItems.joinToString { dumpToString(it) }}}"
+        is SdkListItem.ActionItem -> "[action] ${element.role} ${element.action.sdkType.name}"
+        is SdkListItem.GroupItem -> "[group] {${element.subItems.joinToString { dumpToString(it) }}}"
         null -> "null"
         else -> element::class.java.name
       }

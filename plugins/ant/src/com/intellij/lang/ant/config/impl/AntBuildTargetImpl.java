@@ -1,9 +1,15 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.ant.config.impl;
 
 import com.intellij.ide.util.PsiNavigationSupport;
 import com.intellij.lang.ant.AntSupport;
-import com.intellij.lang.ant.config.*;
+import com.intellij.lang.ant.config.AntBuildFile;
+import com.intellij.lang.ant.config.AntBuildFileBase;
+import com.intellij.lang.ant.config.AntBuildListener;
+import com.intellij.lang.ant.config.AntBuildModel;
+import com.intellij.lang.ant.config.AntBuildModelBase;
+import com.intellij.lang.ant.config.AntBuildTargetBase;
+import com.intellij.lang.ant.config.AntConfiguration;
 import com.intellij.lang.ant.config.execution.ExecutionHandler;
 import com.intellij.lang.ant.dom.AntDomElement;
 import com.intellij.lang.ant.dom.AntDomProject;
@@ -12,6 +18,7 @@ import com.intellij.lang.ant.dom.AntDomTarget;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -19,6 +26,8 @@ import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.util.xml.DomTarget;
+import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
@@ -33,7 +42,7 @@ public class AntBuildTargetImpl implements AntBuildTargetBase {
   private final int myHashCode;
   private final String myName;
   private final String myDisplayName;
-  private final String myDescription;
+  private final @Nls String myDescription;
   private final Project myProject;
   private final int myTextOffset;
 
@@ -59,18 +68,19 @@ public class AntBuildTargetImpl implements AntBuildTargetBase {
     }
 
     final String desc = target.getDescription().getRawText();
-    myDescription = (desc != null && desc.trim().length() > 0) ? desc : null;
+    myDescription = (desc != null && !desc.trim().isEmpty()) ? desc : null;
   }
 
+  @Override
   public int hashCode() {
     return myHashCode;
   }
 
+  @Override
   public boolean equals(Object obj) {
-    if (!(obj instanceof AntBuildTargetImpl)) {
+    if (!(obj instanceof AntBuildTargetImpl that)) {
       return false;
     }
-    final AntBuildTargetImpl that = (AntBuildTargetImpl)obj;
     return Objects.equals(myName, that.myName) && Comparing.equal(myFile, that.myFile);
   }
 
@@ -80,20 +90,17 @@ public class AntBuildTargetImpl implements AntBuildTargetBase {
   }
 
   @Override
-  @Nullable
-  public String getName() {
+  public @Nullable @NlsSafe String getName() {
     return myName;
   }
 
   @Override
-  @Nullable
-  public String getDisplayName() {
+  public @Nullable @NlsSafe String getDisplayName() {
     return myDisplayName;
   }
 
   @Override
-  @Nullable
-  public String getNotEmptyDescription() {
+  public @Nullable @Nls(capitalization = Nls.Capitalization.Sentence) String getNotEmptyDescription() {
     return myDescription;
   }
 
@@ -113,23 +120,34 @@ public class AntBuildTargetImpl implements AntBuildTargetBase {
   }
 
   @Override
-  @Nullable
-  public String getActionId() {
+  public @Nullable String getActionId() {
     final StringBuilder name = new StringBuilder();
     name.append(AntConfiguration.getActionIdPrefix(myModel.getBuildFile().getProject()));
 
     final String modelName = myModel.getName();
     if (!StringUtil.isEmptyOrSpaces(modelName)) {
-      name.append("_").append(modelName);
+      name.append("_").append(modelName.trim());
     }
 
     name.append('_').append(getName());
     return name.toString();
   }
 
+  public static @Nullable String parseBuildFileName(@Nullable Project project, @NotNull String actionId) {
+    // expected format antIdPrefix{_modelName}_targetName
+    String idPrefix = project != null? AntConfiguration.getActionIdPrefix(project) : AntConfiguration.ACTION_ID_PREFIX;
+    if (actionId.length() <= idPrefix.length() || !actionId.startsWith(idPrefix)) {
+      return null;
+    }
+    if (actionId.charAt(idPrefix.length()) != '_') {
+      return null;
+    }
+    int nextSeparatorIndex = actionId.indexOf('_', idPrefix.length() + 1);
+    return nextSeparatorIndex > idPrefix.length()? actionId.substring(idPrefix.length() + 1, nextSeparatorIndex) : null;
+  }
+
   @Override
-  @Nullable
-  public BuildTask findTask(final String taskName) {
+  public @Nullable BuildTask findTask(final String taskName) {
     final PsiFile psiFile = PsiManager.getInstance(myProject).findFile(myFile);
     final AntDomProject domProject = AntSupport.getAntDomProject(psiFile);
     if (domProject != null) {

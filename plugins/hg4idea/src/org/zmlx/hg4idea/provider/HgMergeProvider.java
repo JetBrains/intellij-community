@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.zmlx.hg4idea.provider;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -27,6 +27,8 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
+import static org.zmlx.hg4idea.HgNotificationIdsHolder.DEBUGANCESTOR_ERROR;
+
 /**
  * @author Kirill Likhodedov
  */
@@ -38,9 +40,8 @@ public class HgMergeProvider implements MergeProvider {
     myProject = project;
   }
 
-  @NotNull
   @Override
-  public MergeData loadRevisions(@NotNull final VirtualFile file) throws VcsException {
+  public @NotNull MergeData loadRevisions(final @NotNull VirtualFile file) throws VcsException {
     final MergeData mergeData = new MergeData();
 
     final HgWorkingCopyRevisionsCommand command = new HgWorkingCopyRevisionsCommand(myProject);
@@ -82,7 +83,7 @@ public class HgMergeProvider implements MergeProvider {
         if (parts.size() < 2) {
           LOG.info("Couldn't parse result of debugancestor command execution " + arguments);
           new HgCommandResultNotifier(myProject)
-            .notifyError("hg.debugancestor.error",
+            .notifyError(DEBUGANCESTOR_ERROR,
                          null,
                          HgBundle.message("hg4idea.error.debugancestor.command.execution"),
                          HgBundle.message("hg4idea.error.debugancestor.command.description"));
@@ -94,7 +95,7 @@ public class HgMergeProvider implements MergeProvider {
       else {
         LOG.info(HgBundle.message("hg4idea.error.debugancestor.command.execution") + arguments);
         new HgCommandResultNotifier(myProject)
-          .notifyError("hg.debugancestor.error",
+          .notifyError(DEBUGANCESTOR_ERROR,
                        null,
                        HgBundle.message("hg4idea.error.debugancestor.command.execution"),
                        HgBundle.message("hg4idea.error.debugancestor.command.description"));

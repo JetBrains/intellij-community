@@ -1,0 +1,3 @@
+// "Remove variable 'a' (may change semantics)" "true"
+fun test() {
+}

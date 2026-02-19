@@ -1,6 +1,7 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.changes;
 
+import com.intellij.openapi.components.Service;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
@@ -16,6 +17,7 @@ import git4idea.GitUtil;
 import git4idea.history.GitHistoryUtils;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -25,8 +27,10 @@ import java.util.List;
 import static com.intellij.util.Functions.identity;
 import static com.intellij.util.containers.ContainerUtil.map;
 
-public class GitOutgoingChangesProvider implements VcsOutgoingChangesProvider<CommittedChangeList> {
-  private final static Logger LOG = Logger.getInstance(GitOutgoingChangesProvider.class);
+@Service(Service.Level.PROJECT)
+@ApiStatus.Internal
+public final class GitOutgoingChangesProvider implements VcsOutgoingChangesProvider<CommittedChangeList> {
+  private static final Logger LOG = Logger.getInstance(GitOutgoingChangesProvider.class);
   private final Project myProject;
 
   public GitOutgoingChangesProvider(Project project) {
@@ -51,8 +55,7 @@ public class GitOutgoingChangesProvider implements VcsOutgoingChangesProvider<Co
   }
 
   @Override
-  @Nullable
-  public VcsRevisionNumber getMergeBaseNumber(final VirtualFile anyFileUnderRoot) throws VcsException {
+  public @Nullable VcsRevisionNumber getMergeBaseNumber(final VirtualFile anyFileUnderRoot) throws VcsException {
     LOG.debug("getMergeBaseNumber parameter: " + anyFileUnderRoot.getPath());
     final GitRepository repository = GitRepositoryManager.getInstance(myProject).getRepositoryForFile(anyFileUnderRoot);
     if (repository == null) {
@@ -75,8 +78,7 @@ public class GitOutgoingChangesProvider implements VcsOutgoingChangesProvider<Co
    *
    * @return the common commit or null if the there is no common commit
    */
-  @Nullable
-  private static GitRevisionNumber getMergeBase(@NotNull Project project, @NotNull VirtualFile root,
+  private static @Nullable GitRevisionNumber getMergeBase(@NotNull Project project, @NotNull VirtualFile root,
                                                 @NotNull GitBranch currentBranch, @NotNull GitBranch branch) throws VcsException {
     return GitHistoryUtils.getMergeBase(project, root, currentBranch.getFullName(), branch.getFullName());
   }

@@ -1,0 +1,16 @@
+<html>
+<body>
+Reports fields of type <code>java.lang.LazyConstant</code> that are not <code>final</code>.
+<p>
+  Per <a href="https://openjdk.org/jeps/526">JEP 526: Lazy Constants</a>, lazy constants must be stored in a <code>final</code> field to enable constant-folding optimizations by the JVM.
+</p>
+<p>Correct usage:</p>
+<pre><code>
+  private final LazyConstant&lt;Logger&gt; logger = LazyConstant.of(() -&gt; Logger.create(OrderController.class));
+</code></pre>
+<p>Incorrect usage (will be reported):</p>
+<pre><code>
+  private LazyConstant&lt;String&gt; x = LazyConstant.of(() -&gt; "expensive string");
+</code></pre>
+</body>
+</html>

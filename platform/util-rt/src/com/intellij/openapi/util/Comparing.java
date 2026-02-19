@@ -2,11 +2,18 @@
 package com.intellij.openapi.util;
 
 import com.intellij.openapi.util.text.StringUtilRt;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.AbstractSet;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Comparator;
+import java.util.HashSet;
+import java.util.Objects;
+import java.util.Set;
 
 /**
  * Null-safe {@code equal} methods.
@@ -31,12 +38,6 @@ public final class Comparing {
     return arg1.equals(arg2);
   }
 
-  /** @deprecated same as {@link Arrays#equals(Object[], Object[])} */
-  @Deprecated
-  public static <T> boolean equal(@Nullable T[] arr1, @Nullable T[] arr2) {
-    return Arrays.equals(arr1, arr2);
-  }
-
   @Contract(value = "null,!null -> false; !null,null -> false; null,null -> true", pure = true)
   public static boolean equal(CharSequence s1, CharSequence s2) {
     return StringUtilRt.equal(s1, s2, true);
@@ -53,7 +54,7 @@ public final class Comparing {
   @Deprecated
   @Contract(value = "null,!null -> false; !null,null -> false; null,null -> true", pure = true)
   public static boolean equal(@Nullable String arg1, @Nullable String arg2) {
-    return arg1 == null ? arg2 == null : arg1.equals(arg2);
+    return Objects.equals(arg1, arg2);
   }
 
   @Contract(value = "null,!null,_ -> false; !null,null,_ -> false; null,null,_ -> true", pure = true)
@@ -76,17 +77,13 @@ public final class Comparing {
       return false;
     }
 
-    Set<T> aSet = new HashSet<T>(a);
-    for (T t : b) {
-      if (!aSet.contains(t)) {
-        return false;
-      }
-    }
+    Set<T> aSet = new HashSet<>(a);
+    Set<T> bSet = new HashSet<>(b);
 
-    return true;
+    return aSet.equals(bSet);
   }
 
-  public static <T> boolean haveEqualElements(@Nullable T[] a, @Nullable T[] b) {
+  public static <T> boolean haveEqualElements(T @Nullable [] a, T @Nullable [] b) {
     if (a == null || b == null) {
       //noinspection ArrayEquality
       return a == b;
@@ -96,14 +93,7 @@ public final class Comparing {
       return false;
     }
 
-    Set<T> aSet = new HashSet<T>(Arrays.asList(a));
-    for (T t : b) {
-      if (!aSet.contains(t)) {
-        return false;
-      }
-    }
-
-    return true;
+    return haveEqualElements(Arrays.asList(a), Arrays.asList(b));
   }
 
   @SuppressWarnings("MethodNamesDifferingOnlyByCase")
@@ -128,27 +118,24 @@ public final class Comparing {
     return h;
   }
 
-  public static int compare(byte o1, byte o2) {
-    return o1 < o2 ? -1 : o1 == o2 ? 0 : 1;
-  }
-
+  /**
+   * @deprecated use {@link Boolean#compare(boolean, boolean)} instead
+   */
+  @ApiStatus.ScheduledForRemoval
+  @Deprecated
   public static int compare(boolean o1, boolean o2) {
-    return o1 == o2 ? 0 : o1 ? 1 : -1;
+    return Boolean.compare(o1, o2);
   }
 
+  /**
+   * @deprecated use {@link Integer#compare(int, int)} instead
+   */
+  @Deprecated
   public static int compare(int o1, int o2) {
-    return o1 < o2 ? -1 : o1 == o2 ? 0 : 1;
+    return Integer.compare(o1, o2);
   }
 
-  public static int compare(long o1, long o2) {
-    return o1 < o2 ? -1 : o1 == o2 ? 0 : 1;
-  }
-
-  public static int compare(double o1, double o2) {
-    return Double.compare(o1, o2);
-  }
-
-  public static int compare(@Nullable byte[] o1, @Nullable byte[] o2) {
+  public static int compare(byte @Nullable [] o1, byte @Nullable [] o2) {
     //noinspection ArrayEquality
     if (o1 == o2) return 0;
     if (o1 == null) return 1;
@@ -172,6 +159,11 @@ public final class Comparing {
     return o1.compareTo(o2);
   }
 
+  /**
+   * Performs null-safe comparison delegating to {@code notNullComparator} for not-null values. 
+   * Consider using {@code Comparator.nullsFirst} instead.
+   */
+  @ApiStatus.Obsolete
   public static <T> int compare(@Nullable T o1, @Nullable T o2, @NotNull Comparator<? super T> notNullComparator) {
     if (o1 == o2) return 0;
     if (o1 == null) return -1;

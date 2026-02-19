@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.history;
 
 import com.intellij.openapi.application.ReadAction;
@@ -15,6 +15,9 @@ import org.jetbrains.annotations.Nullable;
 import java.io.IOException;
 import java.util.Date;
 
+/**
+ * This is a synthetic revision representing the current state of the file in the working copy
+ */
 public class CurrentRevision implements VcsFileRevision {
   private static final Logger LOG = Logger.getInstance(CurrentRevision.class);
 
@@ -46,7 +49,7 @@ public class CurrentRevision implements VcsFileRevision {
     try {
       Document document = ReadAction.compute(() -> FileDocumentManager.getInstance().getDocument(myFile));
       if (document != null) {
-        return document.getText().getBytes(myFile.getCharset().name());
+        return document.getText().getBytes(myFile.getCharset());
       }
       else {
         return myFile.contentsToByteArray();
@@ -64,8 +67,7 @@ public class CurrentRevision implements VcsFileRevision {
   }
 
   @Override
-  @NotNull
-  public VcsRevisionNumber getRevisionNumber() {
+  public @NotNull VcsRevisionNumber getRevisionNumber() {
     return myRevisionNumber;
   }
 
@@ -74,9 +76,8 @@ public class CurrentRevision implements VcsFileRevision {
     return null;
   }
 
-  @Nullable
   @Override
-  public RepositoryLocation getChangedRepositoryPath() {
+  public @Nullable RepositoryLocation getChangedRepositoryPath() {
     return null;  // use initial url..
   }
 

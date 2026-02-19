@@ -1,35 +1,40 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.PsiTypeLookupItem;
+import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.patterns.ElementPattern;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiClassType;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementFactory;
+import com.intellij.psi.PsiSubstitutor;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypeParameter;
+import com.intellij.psi.PsiWildcardType;
 import com.intellij.psi.filters.getters.InstanceOfLeftPartTypeGetter;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.containers.ContainerUtil;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
 import static com.intellij.patterns.PlatformPatterns.psiElement;
 
-/**
- * @author peter
- */
 final class InstanceofTypeProvider {
-  static final ElementPattern<PsiElement> AFTER_INSTANCEOF = psiElement().afterLeaf(PsiKeyword.INSTANCEOF);
+  static final ElementPattern<PsiElement> AFTER_INSTANCEOF = psiElement().afterLeaf(JavaKeywords.INSTANCEOF);
 
   static void addCompletions(@NotNull CompletionParameters parameters, @NotNull CompletionResultSet result) {
     final PsiElement position = parameters.getPosition();
     final PsiType[] leftTypes = InstanceOfLeftPartTypeGetter.getLeftTypes(position);
     final Set<PsiClassType> expectedClassTypes = new LinkedHashSet<>();
-    final Set<PsiClass> parameterizedTypes = new THashSet<>();
+    final Set<PsiClass> parameterizedTypes = new HashSet<>();
     for (final PsiType type : leftTypes) {
-      if (type instanceof PsiClassType) {
-        final PsiClassType classType = (PsiClassType)type;
+      if (type instanceof PsiClassType classType) {
         if (!classType.isRaw()) {
           ContainerUtil.addIfNotNull(parameterizedTypes, classType.resolve());
         }

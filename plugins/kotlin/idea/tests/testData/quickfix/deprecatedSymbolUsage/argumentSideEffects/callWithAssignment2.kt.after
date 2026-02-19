@@ -1,0 +1,18 @@
+// "Replace with 'foo = E.B'" "true"
+class A {
+    var foo = E.A
+
+    @Deprecated("", ReplaceWith("foo = E.B"))
+    fun setLoading() {
+        foo = E.B
+    }
+
+    fun test() {
+        foo <caret>= E.B
+    }
+}
+
+enum class E { A, B }
+
+// IGNORE_K1
+// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.fixes.replaceWith.DeprecatedSymbolUsageFix

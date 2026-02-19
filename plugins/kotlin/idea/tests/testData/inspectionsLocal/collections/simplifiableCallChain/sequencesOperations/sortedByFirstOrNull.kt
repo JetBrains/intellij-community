@@ -1,0 +1,2 @@
+// WITH_STDLIB
+val x = sequenceOf("a" to 1, "c" to 3, "b" to 2).<caret>sortedBy { it.second }.firstOrNull()

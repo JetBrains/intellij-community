@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.packaging.impl.compiler;
 
 import com.intellij.compiler.impl.ModuleCompileScope;
@@ -14,11 +14,14 @@ import com.intellij.packaging.elements.PackagingElementResolvingContext;
 import com.intellij.packaging.impl.artifacts.ArtifactUtil;
 import com.intellij.packaging.impl.elements.ArtifactElementType;
 import com.intellij.packaging.impl.elements.ProductionModuleOutputElementType;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 public final class ArtifactCompileScope {
   private static final Key<Boolean> FORCE_ARTIFACT_BUILD = Key.create("force_artifact_build");
@@ -73,7 +76,7 @@ public final class ArtifactCompileScope {
     }
 
     Set<Artifact> artifacts = new HashSet<>();
-    final Set<Module> modules = ContainerUtil.set(compileScope.getAffectedModules());
+    final Set<Module> modules = Set.of(compileScope.getAffectedModules());
     final List<Module> allModules = Arrays.asList(ModuleManager.getInstance(project).getModules());
     for (Artifact artifact : artifactManager.getArtifacts()) {
       if (artifact.isBuildOnMake()) {
@@ -104,10 +107,9 @@ public final class ArtifactCompileScope {
                                                   }, context, true);
   }
 
-  @NotNull
-  private static Set<Artifact> addIncludedArtifacts(@NotNull Collection<? extends Artifact> artifacts,
-                                                    @NotNull PackagingElementResolvingContext context,
-                                                    final boolean withOutputPathOnly) {
+  private static @NotNull Set<Artifact> addIncludedArtifacts(@NotNull Collection<? extends Artifact> artifacts,
+                                                             @NotNull PackagingElementResolvingContext context,
+                                                             final boolean withOutputPathOnly) {
     Set<Artifact> result = new HashSet<>();
     for (Artifact artifact : artifacts) {
       collectIncludedArtifacts(artifact, context, new HashSet<>(), result, withOutputPathOnly);

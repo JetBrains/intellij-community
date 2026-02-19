@@ -7,16 +7,25 @@ import com.intellij.util.ui.JBDimension;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 
-import javax.swing.*;
+import javax.swing.JComponent;
+import javax.swing.SwingUtilities;
 import javax.swing.border.Border;
 import javax.swing.plaf.ComponentUI;
 import javax.swing.plaf.basic.BasicHTML;
 import javax.swing.plaf.basic.BasicToggleButtonUI;
 import javax.swing.text.View;
-import java.awt.*;
+import java.awt.Color;
+import java.awt.Dimension;
+import java.awt.Font;
+import java.awt.FontMetrics;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.Insets;
+import java.awt.Point;
+import java.awt.Rectangle;
 
 @SuppressWarnings("unused")
-public class WinOnOffButtonUI extends BasicToggleButtonUI {
+public final class WinOnOffButtonUI extends BasicToggleButtonUI {
   private static final Dimension TOGGLE_SIZE = new JBDimension(29, 16);
   private static final Dimension BUTTON_SIZE = new JBDimension(46, 18);
   private static final Border BUTTON_BORDER = JBUI.Borders.empty(1, 6);
@@ -47,9 +56,8 @@ public class WinOnOffButtonUI extends BasicToggleButtonUI {
   @SuppressWarnings("UseJBColor")
   @Override
   public void paint(Graphics g, JComponent c) {
-    if (!(c instanceof OnOffButton)) return;
+    if (!(c instanceof OnOffButton b)) return;
 
-    OnOffButton b = (OnOffButton)c;
     Graphics2D g2 = (Graphics2D)g.create();
 
     try {

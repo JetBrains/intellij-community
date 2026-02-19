@@ -24,44 +24,45 @@
  */
 package org.jetbrains.lang.manifest.highlighting;
 
+import com.intellij.codeInspection.AddToInspectionOptionListFix;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ProblemsHolder;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.profile.codeInspection.ProjectInspectionProfileManager;
+import com.intellij.codeInspection.options.OptPane;
+import com.intellij.modcommand.ActionContext;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.Presentation;
+import com.intellij.modcommand.PsiUpdateModCommandAction;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
-import com.intellij.psi.PsiFile;
 import com.intellij.spellchecker.engine.Suggestion;
-import com.intellij.ui.DocumentAdapter;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.text.CaseInsensitiveStringHashingStrategy;
 import com.intellij.util.text.EditDistance;
 import com.intellij.util.xmlb.annotations.XCollection;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.lang.manifest.ManifestBundle;
 import org.jetbrains.lang.manifest.header.HeaderParserRepository;
 import org.jetbrains.lang.manifest.psi.Header;
 
-import javax.swing.*;
-import javax.swing.event.DocumentEvent;
-import java.awt.*;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
-import java.util.*;
+import java.util.SortedSet;
+import java.util.TreeSet;
+
+import static com.intellij.codeInspection.options.OptPane.pane;
 
 /**
  * @author Robert F. Beeger (robert@beeger.net)
  */
-public class MisspelledHeaderInspection extends LocalInspectionTool {
+public final class MisspelledHeaderInspection extends LocalInspectionTool {
   private static final int MAX_SUGGESTIONS = 5;
   private static final int MAX_DISTANCE = 4;
   private static final int TYPO_DISTANCE = 2;
 
   @XCollection(elementName = "header")
-  public final Set<String> CUSTOM_HEADERS = new THashSet<>(CaseInsensitiveStringHashingStrategy.INSTANCE);
+  public final List<String> CUSTOM_HEADERS = new ArrayList<>();
 
   private final HeaderParserRepository myRepository;
 
@@ -69,14 +70,12 @@ public class MisspelledHeaderInspection extends LocalInspectionTool {
     myRepository = HeaderParserRepository.getInstance();
   }
 
-  @NotNull
   @Override
-  public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, boolean isOnTheFly) {
+  public @NotNull PsiElementVisitor buildVisitor(final @NotNull ProblemsHolder holder, boolean isOnTheFly) {
     return new PsiElementVisitor() {
       @Override
       public void visitElement(@NotNull PsiElement element) {
-        if (element instanceof Header) {
-          Header header = (Header)element;
+        if (element instanceof Header header) {
           String headerName = header.getName();
 
           SortedSet<Suggestion> matches = new TreeSet<>();
@@ -90,11 +89,13 @@ public class MisspelledHeaderInspection extends LocalInspectionTool {
 
           List<LocalQuickFix> fixes = new ArrayList<>();
           for (Suggestion match : matches) {
-            fixes.add(new HeaderRenameQuickFix(header, match.getWord()));
+            fixes.add(LocalQuickFix.from(new HeaderRenameQuickFix(header, match.getWord())));
             if (fixes.size() == MAX_SUGGESTIONS) break;
           }
           if (bestMatch == null || bestMatch.getMetrics() > TYPO_DISTANCE) {
-            fixes.add(new CustomHeaderQuickFix(header, CUSTOM_HEADERS));
+            fixes.add(new AddToInspectionOptionListFix<>(MisspelledHeaderInspection.this,
+                                                         ManifestBundle.message("inspection.header.remember.fix", headerName),
+                                                         headerName, inspection -> inspection.CUSTOM_HEADERS));
           }
           holder.registerProblem(
             header.getNameElement(), ManifestBundle.message("inspection.header.message"),
@@ -103,9 +104,9 @@ public class MisspelledHeaderInspection extends LocalInspectionTool {
         }
       }
 
-      private void addMatches(String headerName, Collection<String> headers, SortedSet<? super Suggestion> matches) {
+      private static void addMatches(String headerName, Collection<String> headers, SortedSet<? super Suggestion> matches) {
         for (String candidate : headers) {
-          int distance = EditDistance.optimalAlignment(headerName, candidate, false);
+          int distance = EditDistance.optimalAlignment(headerName, candidate, false, MAX_DISTANCE);
           if (distance <= MAX_DISTANCE) {
             matches.add(new Suggestion(candidate, distance));
           }
@@ -115,38 +116,11 @@ public class MisspelledHeaderInspection extends LocalInspectionTool {
   }
 
   @Override
-  public JComponent createOptionsPanel() {
-    return new OptionsPanel(CUSTOM_HEADERS);
+  public @NotNull OptPane getOptionsPane() {
+    return pane(OptPane.stringList("CUSTOM_HEADERS", ManifestBundle.message("inspection.header.ui.label")));
   }
 
-  private static class OptionsPanel extends JPanel {
-    OptionsPanel(final Set<? super String> headers) {
-      super(new BorderLayout(5, 5));
-
-      add(new JLabel(ManifestBundle.message("inspection.header.ui.label")), BorderLayout.NORTH);
-
-      final JTextArea area = new JTextArea("");
-      add(area, BorderLayout.CENTER);
-      if (!headers.isEmpty()) {
-        area.setText(StringUtil.join(new TreeSet<>(headers), "\n"));
-      }
-
-      area.getDocument().addDocumentListener(new DocumentAdapter() {
-        @Override
-        protected void textChanged(@NotNull DocumentEvent e) {
-          headers.clear();
-          for (String line : StringUtil.split(area.getText(), "\n")) {
-            String header = line.trim();
-            if (!header.isEmpty()) {
-              headers.add(header);
-            }
-          }
-        }
-      });
-    }
-  }
-
-  private static final class HeaderRenameQuickFix extends AbstractManifestQuickFix {
+  private static final class HeaderRenameQuickFix extends PsiUpdateModCommandAction<Header> {
     private final String myNewName;
 
     private HeaderRenameQuickFix(Header header, String newName) {
@@ -154,44 +128,19 @@ public class MisspelledHeaderInspection extends LocalInspectionTool {
       myNewName = newName;
     }
 
-    @NotNull
     @Override
-    public String getText() {
-      return ManifestBundle.message("inspection.header.rename.fix", myNewName);
+    public @NotNull String getFamilyName() {
+      return ManifestBundle.message("inspection.header.rename.fix.family.name");
     }
 
     @Override
-    public void invoke(@NotNull Project project, @NotNull PsiFile file, @NotNull PsiElement startElement, @NotNull PsiElement endElement) {
-      ((Header)startElement).setName(myNewName);
-    }
-  }
-
-  private static final class CustomHeaderQuickFix extends AbstractManifestQuickFix {
-    private final String myHeaderName;
-    private final Collection<? super String> myHeaders;
-
-    private CustomHeaderQuickFix(Header header, Collection<? super String> headers) {
-      super(header);
-      myHeaderName = header.getName();
-      myHeaders = headers;
-    }
-
-    @NotNull
-    @Override
-    public String getText() {
-      return ManifestBundle.message("inspection.header.remember.fix", myHeaderName);
+    protected @NotNull Presentation getPresentation(@NotNull ActionContext context, @NotNull Header element) {
+      return Presentation.of(ManifestBundle.message("inspection.header.rename.fix", myNewName));
     }
 
     @Override
-    public void invoke(@NotNull Project project, @NotNull PsiFile file, @NotNull PsiElement startElement, @NotNull PsiElement endElement) {
-      myHeaders.add(myHeaderName);
-
-      ProjectInspectionProfileManager.getInstance(project).fireProfileChanged();
-    }
-
-    @Override
-    public boolean startInWriteAction() {
-      return false;
+    protected void invoke(@NotNull ActionContext context, @NotNull Header header, @NotNull ModPsiUpdater updater) {
+      header.setName(myNewName);
     }
   }
 }

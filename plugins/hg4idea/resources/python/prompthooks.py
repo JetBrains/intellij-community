@@ -171,8 +171,15 @@ def find_user_password(self, realm, authuri):
     except error.Abort:
         def read_hgrc_authtoken(ui, authuri):
             from mercurial.httpconnection import readauthforuri
-            from inspect import getargspec
-            args, _, _, _ = getargspec(readauthforuri)
+            # Compatibility: inspect.getargspec was removed in Python 3.11.
+            # For Python < 3.11 (incl. Python 2), import it to preserve backward behavior.
+            try:
+                import sys
+                if sys.version_info < (3, 11):
+                    from inspect import getargspec  # noqa: F401
+            except Exception:
+                # Be conservative: failure to import here should not break auth flow
+                pass
             res = readauthforuri(self.ui, authuri, "")
             if res:
                 group, auth = res

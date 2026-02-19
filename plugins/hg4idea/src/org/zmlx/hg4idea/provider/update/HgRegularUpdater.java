@@ -23,9 +23,22 @@ import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.zmlx.hg4idea.*;
+import org.zmlx.hg4idea.HgBundle;
+import org.zmlx.hg4idea.HgChange;
+import org.zmlx.hg4idea.HgFileStatusEnum;
+import org.zmlx.hg4idea.HgRevisionNumber;
+import org.zmlx.hg4idea.HgVcs;
 import org.zmlx.hg4idea.action.HgCommandResultNotifier;
-import org.zmlx.hg4idea.command.*;
+import org.zmlx.hg4idea.command.HgCommandExitCode;
+import org.zmlx.hg4idea.command.HgCommitCommand;
+import org.zmlx.hg4idea.command.HgHeadsCommand;
+import org.zmlx.hg4idea.command.HgMergeCommand;
+import org.zmlx.hg4idea.command.HgMergePreviewCommand;
+import org.zmlx.hg4idea.command.HgPullCommand;
+import org.zmlx.hg4idea.command.HgRebaseCommand;
+import org.zmlx.hg4idea.command.HgStatusCommand;
+import org.zmlx.hg4idea.command.HgUpdateCommand;
+import org.zmlx.hg4idea.command.HgWorkingCopyRevisionsCommand;
 import org.zmlx.hg4idea.execution.HgCommandException;
 import org.zmlx.hg4idea.execution.HgCommandResult;
 import org.zmlx.hg4idea.repo.HgRepository;
@@ -36,15 +49,17 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
+import static org.zmlx.hg4idea.HgNotificationIdsHolder.REBASE_CONTINUE_ERROR;
+import static org.zmlx.hg4idea.HgNotificationIdsHolder.REBASE_ERROR;
 import static org.zmlx.hg4idea.provider.update.HgUpdateType.MERGE;
 import static org.zmlx.hg4idea.provider.update.HgUpdateType.ONLY_UPDATE;
 import static org.zmlx.hg4idea.util.HgErrorUtil.ensureSuccess;
 
 public class HgRegularUpdater implements HgUpdater {
 
-  @NotNull private final Project project;
-  @NotNull private final VirtualFile repoRoot;
-  @NotNull private final HgUpdateConfigurationSettings updateConfiguration;
+  private final @NotNull Project project;
+  private final @NotNull VirtualFile repoRoot;
+  private final @NotNull HgUpdateConfigurationSettings updateConfiguration;
   private static final Logger LOG = Logger.getInstance(HgRegularUpdater.class);
 
   public HgRegularUpdater(@NotNull Project project, @NotNull VirtualFile repository, @NotNull HgUpdateConfigurationSettings configuration) {
@@ -228,7 +243,7 @@ public class HgRegularUpdater implements HgUpdater {
     HgRebaseCommand rebaseCommand = new HgRebaseCommand(project, repository);
     HgCommandResult result = new HgRebaseCommand(project, repository).startRebase();
     if (HgErrorUtil.isCommandExecutionFailed(result)) {
-      new HgCommandResultNotifier(project).notifyError("hg.rebase.error",
+      new HgCommandResultNotifier(project).notifyError(REBASE_ERROR,
                                                        result,
                                                        HgBundle.message("hg4idea.hg.error"),
                                                        HgBundle.message("action.hg4idea.Rebase.error"));
@@ -242,7 +257,7 @@ public class HgRegularUpdater implements HgUpdater {
       }
       result = rebaseCommand.continueRebase();
       if (HgErrorUtil.isAbort(result)) {
-        new HgCommandResultNotifier(project).notifyError("hg.rebase.continue.error",
+        new HgCommandResultNotifier(project).notifyError(REBASE_CONTINUE_ERROR,
                                                          result,
                                                          HgBundle.message("hg4idea.hg.error"),
                                                          HgBundle.message("action.hg4idea.Rebase.Continue.error"));
@@ -254,7 +269,7 @@ public class HgRegularUpdater implements HgUpdater {
   }
 
   private void abortOnLocalChanges() throws VcsException {
-    if (getLocalChanges().size() != 0) {
+    if (!getLocalChanges().isEmpty()) {
       throw new VcsException(HgBundle.message("hg4idea.update.error.localchanges", repoRoot.getPath()));
     }
   }
@@ -315,21 +330,13 @@ public class HgRegularUpdater implements HgUpdater {
     for (HgChange change : changes) {
       HgFileStatusEnum status = change.getStatus();
       switch (status) {
-        case ADDED:
-          addToGroup(updatedFiles, change, FileGroup.CREATED_ID);
-          break;
-        case MODIFIED:
-          addToGroup(updatedFiles, change, FileGroup.UPDATED_ID);
-          break;
-        case DELETED:
-          addToGroup(updatedFiles, change, FileGroup.REMOVED_FROM_REPOSITORY_ID);
-          break;
-        case COPY:
-          addToGroup(updatedFiles, change, FileGroup.CHANGED_ON_SERVER_ID);
-          break;
-        default:
+        case ADDED -> addToGroup(updatedFiles, change, FileGroup.CREATED_ID);
+        case MODIFIED -> addToGroup(updatedFiles, change, FileGroup.UPDATED_ID);
+        case DELETED -> addToGroup(updatedFiles, change, FileGroup.REMOVED_FROM_REPOSITORY_ID);
+        case COPY -> addToGroup(updatedFiles, change, FileGroup.CHANGED_ON_SERVER_ID);
+        default -> {
           //do nothing
-          break;
+        }
       }
     }
   }

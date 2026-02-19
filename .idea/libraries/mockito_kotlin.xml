@@ -1,0 +1,18 @@
+<component name="libraryTable">
+  <library name="mockito-kotlin" type="repository">
+    <properties include-transitive-deps="false" maven-id="org.mockito.kotlin:mockito-kotlin:6.0.0">
+      <verification>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/mockito/kotlin/mockito-kotlin/6.0.0/mockito-kotlin-6.0.0.jar">
+          <sha256sum>34d626ffa4a27ec49e47de7d760f1df30223ecb8944b6472941f5c73ec68dfbd</sha256sum>
+        </artifact>
+      </verification>
+    </properties>
+    <CLASSES>
+      <root url="jar://$MAVEN_REPOSITORY$/org/mockito/kotlin/mockito-kotlin/6.0.0/mockito-kotlin-6.0.0.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES>
+      <root url="jar://$MAVEN_REPOSITORY$/org/mockito/kotlin/mockito-kotlin/6.0.0/mockito-kotlin-6.0.0-sources.jar!/" />
+    </SOURCES>
+  </library>
+</component>

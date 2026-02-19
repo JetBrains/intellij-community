@@ -1,0 +1,15 @@
+pip==25.0
+tox==4.24.1
+
+cachetools==5.5.1
+chardet==5.2.0
+colorama==0.4.6
+distlib==0.3.9
+filelock==3.16.1
+packaging==24.2
+platformdirs==4.3.6
+pluggy==1.5.0
+pyproject-api==1.8.0
+tomli==2.2.1
+typing_extensions==4.12.2
+virtualenv==20.29.1

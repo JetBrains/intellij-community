@@ -1,7 +1,14 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.resolve.impl
 
-import com.intellij.psi.*
+import com.intellij.psi.CommonClassNames
+import com.intellij.psi.JavaPsiFacade
+import com.intellij.psi.PsiClass
+import com.intellij.psi.PsiClassType
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiMethod
+import com.intellij.psi.PsiSubstitutor
+import com.intellij.psi.ResolveState
 import com.intellij.psi.scope.ElementClassHint
 import com.intellij.psi.scope.NameHint
 import com.intellij.psi.scope.ProcessorWithHints
@@ -9,13 +16,20 @@ import com.intellij.psi.util.InheritanceUtil
 import com.intellij.util.SmartList
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyMethodResult
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrRecordDefinition
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod
 import org.jetbrains.plugins.groovy.lang.psi.util.elementInfo
-import org.jetbrains.plugins.groovy.lang.resolve.*
+import org.jetbrains.plugins.groovy.lang.psi.util.isCompactConstructor
+import org.jetbrains.plugins.groovy.lang.resolve.BaseConstructorResolveResult
+import org.jetbrains.plugins.groovy.lang.resolve.ConstructorResolveResult
+import org.jetbrains.plugins.groovy.lang.resolve.ElementResolveResult
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil.processNonCodeMembers
 import org.jetbrains.plugins.groovy.lang.resolve.api.Argument
 import org.jetbrains.plugins.groovy.lang.resolve.api.Arguments
 import org.jetbrains.plugins.groovy.lang.resolve.api.GroovyConstructorResult
+import org.jetbrains.plugins.groovy.lang.resolve.getDefaultConstructor
 import org.jetbrains.plugins.groovy.lang.resolve.processors.GroovyResolveKind
+import org.jetbrains.plugins.groovy.lang.resolve.sorryCannotKnowElementKind
 
 fun getAllConstructorResults(type: PsiClassType, place: PsiElement): Collection<GroovyResolveResult> {
   val clazz = type.resolve() ?: return emptyList()
@@ -30,12 +44,17 @@ fun getAllConstructors(clazz: PsiClass, place: PsiElement): List<PsiMethod> {
 }
 
 private fun classConstructors(clazz: PsiClass): List<PsiMethod> {
-  val constructors = clazz.constructors
+  val constructors = if (clazz is GrRecordDefinition) {
+    clazz.constructors.filter { !(it is GrMethod && it.isCompactConstructor()) }
+  }
+  else {
+    clazz.constructors.asList()
+  }
   if (constructors.isEmpty() && !clazz.isInterface) {
     return listOf(getDefaultConstructor(clazz))
   }
   else {
-    return listOf(*constructors)
+    return constructors
   }
 }
 
@@ -55,7 +74,7 @@ private class ConstructorProcessor(private val name: String) : ProcessorWithHint
     hint(ElementClassHint.KEY, this)
   }
 
-  override fun getName(state: ResolveState): String? = name
+  override fun getName(state: ResolveState): String = name
 
   override fun shouldProcess(kind: GroovyResolveKind): Boolean = kind == GroovyResolveKind.METHOD
 

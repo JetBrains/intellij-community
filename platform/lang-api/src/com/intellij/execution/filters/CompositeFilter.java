@@ -1,21 +1,8 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.filters;
 
 import com.intellij.diagnostic.PluginException;
+import com.intellij.lang.LangBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -25,15 +12,19 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.Consumer;
+import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-@SuppressWarnings("ForLoopReplaceableByForEach")
 public class CompositeFilter implements Filter, FilterMixin, DumbAware {
   private static final Logger LOG = Logger.getInstance(CompositeFilter.class);
 
@@ -49,27 +40,29 @@ public class CompositeFilter implements Filter, FilterMixin, DumbAware {
   public CompositeFilter(@NotNull Project project, @NotNull List<? extends Filter> filters) {
     myDumbService = DumbService.getInstance(project);
     myFilters = new ArrayList<>(filters);
-    myFilters.forEach(filter -> myIsAnyHeavy |= filter instanceof FilterMixin);
+    myIsAnyHeavy = ContainerUtil.exists(filters, filter -> filter instanceof FilterMixin);
   }
 
-  protected CompositeFilter(@NotNull DumbService dumbService) {
+  @TestOnly
+  @ApiStatus.Internal
+  public CompositeFilter(@NotNull DumbService dumbService) {
     myDumbService = dumbService;
     myFilters = new ArrayList<>();
   }
 
   @Override
-  @Nullable
-  public Result applyFilter(@NotNull final String line, final int entireLength) {
+  public @Nullable Result applyFilter(@NotNull String line, int entireLength) {
     ApplicationManager.getApplication().assertReadAccessAllowed();
-    final boolean dumb = myDumbService.isDumb();
+    boolean dumb = myDumbService.isDumb();
     List<Filter> filters = myFilters;
     int count = filters.size();
 
     List<ResultItem> resultItems = null;
+    //noinspection ForLoopReplaceableByForEach
     for (int i = 0; i < count; i++) {
       ProgressManager.checkCanceled();
       Filter filter = filters.get(i);
-      if (!dumb || DumbService.isDumbAware(filter)) {
+      if (myDumbService.isUsableInCurrentContext(filter)) {
         long t0 = System.currentTimeMillis();
 
         Result result;
@@ -80,7 +73,7 @@ public class CompositeFilter implements Filter, FilterMixin, DumbAware {
           result = null;
         }
         catch (Throwable t) {
-          throw new RuntimeException("Error while applying " + filter + " to '" + line + "'", t);
+          throw new ApplyFilterException("Error while applying " + filter + " to '" + line + "'", t);
         }
         if (result != null) {
           resultItems = merge(resultItems, result, entireLength, filter);
@@ -101,12 +94,11 @@ public class CompositeFilter implements Filter, FilterMixin, DumbAware {
     return createFinalResult(resultItems);
   }
 
-  @NotNull
-  private static Result createFinalResult(@NotNull List<? extends ResultItem> resultItems) {
+  private static @NotNull Result createFinalResult(@NotNull List<? extends ResultItem> resultItems) {
     if (resultItems.size() == 1) {
       ResultItem resultItem = resultItems.get(0);
       return new Result(resultItem.getHighlightStartOffset(), resultItem.getHighlightEndOffset(), resultItem.getHyperlinkInfo(),
-                        resultItem.getHighlightAttributes(), resultItem.getFollowedHyperlinkAttributes()) {
+                        resultItem.getHighlightAttributes(), resultItem.getFollowedHyperlinkAttributes(), resultItem.getHoveredHyperlinkAttributes()) {
         @Override
         public int getHighlighterLayer() {
           return resultItem.getHighlighterLayer();
@@ -120,16 +112,17 @@ public class CompositeFilter implements Filter, FilterMixin, DumbAware {
     return result.getNextAction() == NextAction.EXIT && !forceUseAllFilters;
   }
 
-  @NotNull
-  private static List<ResultItem> merge(@Nullable List<ResultItem> resultItems, @NotNull Result newResult, int entireLength, @NotNull Filter filter) {
-    if (resultItems == null) {
-      resultItems = new ArrayList<>();
-    }
+  private static @NotNull List<ResultItem> merge(@Nullable List<ResultItem> resultItems, @NotNull Result newResult, int entireLength, @NotNull Filter filter) {
     List<ResultItem> newItems = newResult.getResultItems();
+    if (resultItems == null) {
+      resultItems = new ArrayList<>(newItems.size());
+    }
+    var allowOverlapping = Registry.is("execution.filters.with.hyperlinks.allow.overlapping", true);
+    //noinspection ForLoopReplaceableByForEach
     for (int i = 0; i < newItems.size(); i++) {
       ResultItem item = newItems.get(i);
-      if ((item.getHyperlinkInfo() == null || !
-        intersects(resultItems, item)) && checkOffsetsCorrect(item, entireLength, filter)) {
+      if ((allowOverlapping || item.getHyperlinkInfo() == null || !intersects(resultItems, item)) &&
+          checkOffsetsCorrect(item, entireLength, filter)) {
         resultItems.add(item);
       }
     }
@@ -147,9 +140,11 @@ public class CompositeFilter implements Filter, FilterMixin, DumbAware {
     return true;
   }
 
+  @ApiStatus.Internal
   protected static boolean intersects(@NotNull List<? extends ResultItem> items, @NotNull ResultItem newItem) {
     TextRange newItemTextRange = null;
 
+    //noinspection ForLoopReplaceableByForEach
     for (int i = 0; i < items.size(); i++) {
       ResultItem item = items.get(i);
       if (item.getHyperlinkInfo() != null) {
@@ -177,6 +172,7 @@ public class CompositeFilter implements Filter, FilterMixin, DumbAware {
     List<Filter> filters = myFilters;
     int count = filters.size();
 
+    //noinspection ForLoopReplaceableByForEach
     for (int i = 0; i < count; i++) {
       Filter filter = filters.get(i);
       if (filter instanceof FilterMixin && ((FilterMixin)filter).shouldRunHeavy()) {
@@ -185,13 +181,13 @@ public class CompositeFilter implements Filter, FilterMixin, DumbAware {
     }
   }
 
-  @NotNull
   @Override
-  public String getUpdateMessage() {
+  public @NotNull @Nls String getUpdateMessage() {
     List<Filter> filters = myFilters;
-    final List<String> updateMessage = new ArrayList<>();
+    List<String> updateMessage = new ArrayList<>();
     int count = filters.size();
 
+    //noinspection ForLoopReplaceableByForEach
     for (int i = 0; i < count; i++) {
       Filter filter = filters.get(i);
 
@@ -199,7 +195,7 @@ public class CompositeFilter implements Filter, FilterMixin, DumbAware {
         updateMessage.add(((FilterMixin)filter).getUpdateMessage());
       }
     }
-    return updateMessage.size() == 1 ? updateMessage.get(0) : "Updating...";
+    return updateMessage.size() == 1 ? updateMessage.get(0) : LangBundle.message("updating.filters");
   }
 
   public boolean isEmpty() {
@@ -215,8 +211,7 @@ public class CompositeFilter implements Filter, FilterMixin, DumbAware {
     myIsAnyHeavy |= filter instanceof FilterMixin;
   }
 
-  @NotNull
-  public List<Filter> getFilters() {
+  public @NotNull List<Filter> getFilters() {
     return Collections.unmodifiableList(myFilters);
   }
 
@@ -227,5 +222,11 @@ public class CompositeFilter implements Filter, FilterMixin, DumbAware {
   @Override
   public String toString() {
     return "CompositeFilter: " + myFilters;
+  }
+
+  public static class ApplyFilterException extends RuntimeException {
+    private ApplyFilterException(String message, Throwable cause) {
+      super(message, cause);
+    }
   }
 }

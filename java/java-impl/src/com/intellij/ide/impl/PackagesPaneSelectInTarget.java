@@ -1,11 +1,12 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.impl;
 
+import com.intellij.ide.IdeBundle;
 import com.intellij.ide.SelectInContext;
-import com.intellij.ide.SelectInManager;
 import com.intellij.ide.StandardTargetWeights;
 import com.intellij.ide.projectView.impl.PackageViewPane;
 import com.intellij.notebook.editor.BackedVirtualFile;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
@@ -13,13 +14,14 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.psi.util.PsiUtilCore;
 
-public class PackagesPaneSelectInTarget extends ProjectViewSelectInTarget {
+public class PackagesPaneSelectInTarget extends ProjectViewSelectInTarget implements DumbAware {
   public PackagesPaneSelectInTarget(Project project) {
     super(project);
   }
 
+  @Override
   public String toString() {
-    return SelectInManager.getPackages();
+    return IdeBundle.message("select.in.packages");
   }
 
   @Override

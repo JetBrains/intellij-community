@@ -1,27 +1,15 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.options;
 
 import com.intellij.openapi.util.NlsContexts.TabTitle;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.components.JBTabbedPane;
+import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JComponent;
+import javax.swing.JPanel;
+import javax.swing.JTabbedPane;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -35,7 +23,7 @@ public class GroupSettingsBuilder<T> implements CompositeSettingsBuilder<T> {
   }
 
   @Override
-  public Collection<SettingsEditor<T>> getEditors() {
+  public @NotNull Collection<SettingsEditor<T>> getEditors() {
     List<SettingsEditor<T>> result = new ArrayList<>();
     List<Pair<String,SettingsEditor<T>>> editors = myGroup.getEditors();
     for (int i = 0; i < editors.size(); i++) {
@@ -45,7 +33,7 @@ public class GroupSettingsBuilder<T> implements CompositeSettingsBuilder<T> {
   }
 
   @Override
-  public JComponent createCompoundEditor() {
+  public @NotNull JComponent createCompoundEditor() {
     if (myComponent == null) {
       myComponent = doCreateComponent();
     }
@@ -54,15 +42,13 @@ public class GroupSettingsBuilder<T> implements CompositeSettingsBuilder<T> {
 
   private JComponent doCreateComponent() {
     List<Pair<String,SettingsEditor<T>>> editors = myGroup.getEditors();
-    if (editors.size() == 0) return new JPanel();
+    if (editors.isEmpty()) return new JPanel();
     if (editors.size() == 1) return editors.get(0).getSecond().getComponent();
 
     JTabbedPane tabs = new JBTabbedPane();
     for (int i = 0; i < editors.size(); i++) {
       Pair<@TabTitle String, SettingsEditor<T>> pair = editors.get(i);
-      JPanel panel = new JPanel(new BorderLayout());
-      panel.add(pair.getSecond().getComponent(), BorderLayout.CENTER);
-      tabs.add(pair.getFirst(), panel);
+      tabs.add(pair.getFirst(), pair.getSecond().getComponent());
     }
 
     tabs.putClientProperty("JTabbedPane.hasFullBorder", Boolean.TRUE);

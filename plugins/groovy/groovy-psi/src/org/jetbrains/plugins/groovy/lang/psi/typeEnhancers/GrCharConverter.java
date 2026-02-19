@@ -1,9 +1,10 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.psi.typeEnhancers;
 
 import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.PsiPrimitiveType;
 import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypes;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
@@ -15,26 +16,20 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.ConversionResult;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 
-public class GrCharConverter extends GrTypeConverter {
+public final class GrCharConverter extends GrTypeConverter {
 
   @Override
-  public boolean isApplicableTo(@NotNull Position position) {
-    return position == Position.ASSIGNMENT || position == Position.RETURN_VALUE;
-  }
-
-  @Nullable
-  @Override
-  public ConversionResult isConvertible(@NotNull PsiType lType,
-                                        @NotNull PsiType rType,
-                                        @NotNull Position position,
-                                        @NotNull GroovyPsiElement context) {
-    if (!PsiType.CHAR.equals(TypesUtil.unboxPrimitiveTypeWrapper(lType))) return null;
-    if (PsiType.CHAR.equals(TypesUtil.unboxPrimitiveTypeWrapper(rType))) return ConversionResult.OK;
+  public @Nullable ConversionResult isConvertible(@NotNull PsiType lType,
+                                                  @NotNull PsiType rType,
+                                                  @NotNull Position position,
+                                                  @NotNull GroovyPsiElement context) {
+    if (!PsiTypes.charType().equals(TypesUtil.unboxPrimitiveTypeWrapper(lType))) return null;
+    if (PsiTypes.charType().equals(TypesUtil.unboxPrimitiveTypeWrapper(rType))) return ConversionResult.OK;
 
     // can assign numeric types to char
     if (TypesUtil.isNumericType(rType)) {
       if (rType instanceof PsiPrimitiveType || TypesUtil.unboxPrimitiveTypeWrapper(rType) instanceof PsiPrimitiveType) {
-        return PsiType.CHAR.equals(lType) ? ConversionResult.OK : ConversionResult.ERROR;
+        return PsiTypes.charType().equals(lType) ? ConversionResult.OK : ConversionResult.ERROR;
       }
       else {
         // BigDecimal && BigInteger
@@ -45,12 +40,10 @@ public class GrCharConverter extends GrTypeConverter {
 
     { // special case 'c = []' will throw RuntimeError
       final GrExpression rValue;
-      if (context instanceof GrAssignmentExpression) {
-        final GrAssignmentExpression assignmentExpression = (GrAssignmentExpression)context;
+      if (context instanceof GrAssignmentExpression assignmentExpression) {
         rValue = assignmentExpression.getRValue();
       }
-      else if (context instanceof GrVariable) {
-        final GrVariable assignmentExpression = (GrVariable)context;
+      else if (context instanceof GrVariable assignmentExpression) {
         rValue = assignmentExpression.getInitializerGroovy();
       }
       else {
@@ -61,14 +54,11 @@ public class GrCharConverter extends GrTypeConverter {
       }
     }
 
-    if (PsiType.BOOLEAN.equals(TypesUtil.unboxPrimitiveTypeWrapper(rType))) {
-      switch (position) {
-        case ASSIGNMENT:
-        case RETURN_VALUE:
-          return ConversionResult.WARNING;
-        default:
-          return null;
-      }
+    if (PsiTypes.booleanType().equals(TypesUtil.unboxPrimitiveTypeWrapper(rType))) {
+      return switch (position) {
+        case ASSIGNMENT, RETURN_VALUE -> ConversionResult.WARNING;
+        default -> null;
+      };
     }
 
     // one-symbol string-to-char conversion doesn't work with return value

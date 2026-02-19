@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.structuralsearch.plugin.ui.filters;
 
 import com.intellij.openapi.util.text.StringUtil;
@@ -16,8 +16,11 @@ import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.util.Function;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.GroupLayout;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
+import javax.swing.LayoutStyle;
+import java.awt.Dimension;
 import java.util.List;
 
 /**
@@ -27,6 +30,11 @@ class ScriptFilter extends FilterAction {
 
   ScriptFilter() {
     super(SSRBundle.messagePointer("script.filter.name"));
+  }
+
+  @Override
+  public @NotNull String getShortText(NamedScriptableDefinition variable) {
+    return variable.getScriptCodeConstraint().length() > 2 ? SSRBundle.message("script.tooltip.message") : "";
   }
 
   @Override
@@ -52,7 +60,7 @@ class ScriptFilter extends FilterAction {
 
   @Override
   public FilterEditor<NamedScriptableDefinition> getEditor() {
-    return new FilterEditor<NamedScriptableDefinition>(myTable.getVariable(), myTable.getConstraintChangedCallback()) {
+    return new FilterEditor<>(myTable.getVariable(), myTable.getConstraintChangedCallback()) {
 
       private final JLabel myLabel = new JLabel(SSRBundle.message("script.label"));
       private final EditorTextField myTextField = UIUtil.createScriptComponent("", myTable.getProject());
@@ -61,9 +69,8 @@ class ScriptFilter extends FilterAction {
       @Override
       protected void layoutComponents() {
         new ExpandableEditorSupport(myTextField) {
-          @NotNull
           @Override
-          protected Content prepare(@NotNull EditorTextField field, @NotNull Function<? super String, String> onShow) {
+          protected @NotNull Content prepare(@NotNull EditorTextField field, @NotNull Function<? super String, String> onShow) {
             final Content popup = super.prepare(field, onShow);
             popup.getContentComponent().setPreferredSize(new Dimension(600, 150));
             return popup;
@@ -85,16 +92,16 @@ class ScriptFilter extends FilterAction {
 
         layout.setHorizontalGroup(
           layout.createSequentialGroup()
-                .addComponent(myLabel)
-                .addComponent(myTextField)
-                .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED, 1, 1)
-                .addComponent(myHelpLabel)
+            .addComponent(myLabel)
+            .addComponent(myTextField)
+            .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED, 1, 1)
+            .addComponent(myHelpLabel)
         );
         layout.setVerticalGroup(
           layout.createParallelGroup(GroupLayout.Alignment.CENTER)
-                .addComponent(myLabel)
-                .addComponent(myTextField)
-                .addComponent(myHelpLabel)
+            .addComponent(myLabel)
+            .addComponent(myTextField)
+            .addComponent(myHelpLabel)
         );
       }
 
@@ -115,7 +122,7 @@ class ScriptFilter extends FilterAction {
 
       @Override
       public JComponent[] getFocusableComponents() {
-        return new JComponent[] {myTextField};
+        return new JComponent[]{myTextField};
       }
     };
   }

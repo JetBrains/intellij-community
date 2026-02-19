@@ -1,0 +1,52 @@
+### auto-generated section `build intellij.platform.concurrency` start
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+jvm_library(
+  name = "concurrency",
+  module_name = "intellij.platform.concurrency",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "//libraries/kotlinx/coroutines/core",
+    "//platform/util",
+    "//platform/core-api:core",
+    "//libraries/fastutil",
+    "//platform/diagnostic",
+    "//platform/util/coroutines",
+  ]
+)
+
+jvm_library(
+  name = "concurrency_test_lib",
+  visibility = ["//visibility:public"],
+  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java", "testSrc/**/*.form"], allow_empty = True),
+  associates = [":concurrency"],
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "//libraries/kotlinx/coroutines/core",
+    "//libraries/kotlinx/coroutines/core:core_test_lib",
+    "//platform/util",
+    "//platform/util:util_test_lib",
+    "//platform/core-api:core",
+    "//platform/core-api:core_test_lib",
+    "//libraries/fastutil",
+    "//libraries/fastutil:fastutil_test_lib",
+    "//platform/diagnostic",
+    "//platform/diagnostic:diagnostic_test_lib",
+    "//platform/util/coroutines",
+    "//platform/util/coroutines:coroutines_test_lib",
+    "@lib//:assert_j",
+    "@lib//:junit5",
+  ]
+)
+### auto-generated section `build intellij.platform.concurrency` end
+
+### auto-generated section `test intellij.platform.concurrency` start
+load("@community//build:tests-options.bzl", "jps_test")
+
+jps_test(
+  name = "concurrency_test",
+  runtime_deps = [":concurrency_test_lib"]
+)
+### auto-generated section `test intellij.platform.concurrency` end

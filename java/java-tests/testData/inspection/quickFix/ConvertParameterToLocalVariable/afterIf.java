@@ -1,4 +1,4 @@
-// "Convert to local" "true"
+// "Convert to local variable" "true"
 class Temp {
   public boolean flag;
 

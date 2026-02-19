@@ -1,0 +1,100 @@
+{
+  "inspections": [
+    {
+      "id": "HtmlUnknownBooleanAttribute",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "CheckXmlFileWithXercesValidator",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "XmlUnusedNamespaceDeclaration",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "CheckDtdRefs",
+      "codeQualityCategory": "Sanity"
+    },
+    {
+      "id": "CheckTagEmptyBody",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "CheckEmptyScriptTag",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "HtmlUnknownTarget",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "XmlWrongRootElement",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "HtmlUnknownAttribute",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "HtmlExtraClosingTag",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "XmlPathReference",
+      "codeQualityCategory": "Sanity"
+    },
+    {
+      "id": "HtmlMissingClosingTag",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "XmlInvalidId",
+      "codeQualityCategory": "Sanity"
+    },
+    {
+      "id": "XmlDeprecatedElement",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "XmlUnresolvedReference",
+      "codeQualityCategory": "Sanity"
+    },
+    {
+      "id": "HtmlUnknownTag",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "XmlHighlighting",
+      "codeQualityCategory": "Sanity"
+    },
+    {
+      "id": "HtmlWrongAttributeValue",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "HtmlUnknownAnchorTarget",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "XmlDuplicatedId",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "XmlUnboundNsPrefix",
+      "codeQualityCategory": "Sanity"
+    },
+    {
+      "id": "XmlDefaultAttributeValue",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "RequiredAttributes",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "CheckValidXmlInScriptTagBody",
+      "codeQualityCategory": "Sanity"
+    }
+  ]
+}

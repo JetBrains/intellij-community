@@ -1,0 +1,67 @@
+### auto-generated section `build intellij.python.syntax` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "syntax_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "syntax",
+  module_name = "intellij.python.syntax",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":syntax_resources"],
+  deps = [
+    "//platform/analysis-api:analysis",
+    "//platform/code-style-api:codeStyle",
+    "//platform/core-api:core",
+    "//platform/projectModel-api:projectModel",
+    "//python/python-parser:parser",
+    "//platform/editor-ui-api:editor-ui",
+    "//python/python-syntax-core:syntax-core",
+    "//platform/platform-impl:ide-impl",
+    "//python/python-ast:ast",
+    "//platform/lang-impl",
+    "//platform/editor-ui-ex:editor-ex",
+    "//platform/core-ui",
+    "//platform/forms_rt:java-guiForms-rt",
+    "//platform/code-style-impl:codeStyle-impl",
+    "//libraries/fastutil",
+    "//libraries/guava",
+    "//libraries/kotlinx/serialization/core",
+    "//platform/core-impl",
+    "//platform/lang-api:lang",
+  ]
+)
+
+jvm_library(
+  name = "syntax_test_lib",
+  module_name = "intellij.python.syntax",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    ":syntax",
+    "//platform/analysis-api:analysis_test_lib",
+    "//platform/code-style-api:codeStyle_test_lib",
+    "//platform/core-api:core_test_lib",
+    "//platform/projectModel-api:projectModel_test_lib",
+    "//python/python-parser:parser_test_lib",
+    "//platform/editor-ui-api:editor-ui_test_lib",
+    "//python/python-syntax-core:syntax-core_test_lib",
+    "//platform/platform-impl:ide-impl_test_lib",
+    "//python/python-ast:ast_test_lib",
+    "//platform/lang-impl:lang-impl_test_lib",
+    "//platform/editor-ui-ex:editor-ex_test_lib",
+    "//platform/core-ui:core-ui_test_lib",
+    "//platform/forms_rt:java-guiForms-rt_test_lib",
+    "//platform/code-style-impl:codeStyle-impl_test_lib",
+    "//libraries/fastutil:fastutil_test_lib",
+    "//libraries/guava:guava_test_lib",
+    "//libraries/kotlinx/serialization/core:core_test_lib",
+    "//platform/core-impl:core-impl_test_lib",
+    "//platform/lang-api:lang_test_lib",
+  ]
+)
+### auto-generated section `build intellij.python.syntax` end

@@ -1,0 +1,6 @@
+- name: dist.all/lib/intellij.libraries.cli.parser.jar
+  modules:
+  - name: intellij.libraries.cli.parser
+    libraries:
+      cli-parser:
+      - name: $MAVEN_REPOSITORY$/com/github/spullara/cli-parser/cli-parser/1/cli-parser-1.jar

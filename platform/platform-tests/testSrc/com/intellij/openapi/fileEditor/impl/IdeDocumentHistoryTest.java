@@ -1,18 +1,22 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileEditor.impl;
 
 import com.intellij.mock.Mock;
+import com.intellij.openapi.components.ComponentManagerEx;
 import com.intellij.openapi.fileEditor.FileEditor;
+import com.intellij.openapi.fileEditor.FileEditorComposite;
 import com.intellij.openapi.fileEditor.FileEditorProvider;
 import com.intellij.openapi.fileEditor.FileEditorState;
 import com.intellij.openapi.fileEditor.FileEditorStateLevel;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.fileEditor.ex.FileEditorWithProvider;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.HeavyPlatformTestCase;
+import kotlin.Pair;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class IdeDocumentHistoryTest extends HeavyPlatformTestCase {
   private IdeDocumentHistoryImpl myHistory;
@@ -32,8 +36,7 @@ public class IdeDocumentHistoryTest extends HeavyPlatformTestCase {
 
     mySelectedEditor = new Mock.MyFileEditor() {
       @Override
-      @NotNull
-      public FileEditorState getState(@NotNull FileEditorStateLevel level) {
+      public @NotNull FileEditorState getState(@NotNull FileEditorStateLevel level) {
         return myEditorState;
       }
 
@@ -41,10 +44,16 @@ public class IdeDocumentHistoryTest extends HeavyPlatformTestCase {
       public void setState(@NotNull FileEditorState state) {
         myEditorState = state;
       }
+
+      @Override
+      public @NotNull VirtualFile getFile() {
+        return mySelectedFile;
+      }
     };
 
     EditorManager editorManager = new EditorManager();
-    myHistory = new IdeDocumentHistoryImpl(getProject()) {
+    Project project = getProject();
+    myHistory = new IdeDocumentHistoryImpl(project, ((ComponentManagerEx)project).getCoroutineScope()) {
       @Override
       protected FileEditorManagerEx getFileEditorManager() {
         return editorManager;
@@ -56,8 +65,8 @@ public class IdeDocumentHistoryTest extends HeavyPlatformTestCase {
       }
 
       @Override
-      protected void executeCommand(Runnable runnable, String name, Object groupId) {
-        myHistory.onCommandStarted();
+      protected void executeCommand(@NotNull Runnable runnable, String name, Object groupId) {
+        myHistory.onCommandStarted(groupId);
         runnable.run();
         myHistory.onSelectionChanged();
         myHistory.onCommandFinished(getProject(), groupId);
@@ -68,8 +77,7 @@ public class IdeDocumentHistoryTest extends HeavyPlatformTestCase {
     myEditorState = new MyState(false, "start");
     myProvider = new Mock.MyFileEditorProvider() {
       @Override
-      @NotNull
-      public String getEditorTypeId() {
+      public @NotNull String getEditorTypeId() {
         return "EditorType";
       }
     };
@@ -97,7 +105,7 @@ public class IdeDocumentHistoryTest extends HeavyPlatformTestCase {
   }
 
   public void testNoHistoryRecording() {
-    myHistory.onCommandStarted();
+    myHistory.onCommandStarted(null);
     myHistory.onCommandFinished(getProject(), null);
 
     assertFalse(myHistory.isBackAvailable());
@@ -181,6 +189,37 @@ public class IdeDocumentHistoryTest extends HeavyPlatformTestCase {
     assertFalse(myHistory.isForwardAvailable());
   }
 
+  public void testRemoveOptionallyIncludedFiles() {
+    var file = new MyOptionallyIncludedFile();
+    mySelectedFile = file;
+
+    pushTwoStates();
+    assertTrue(myHistory.isBackAvailable());
+
+    file.myIsIncludedInDocumentHistory = false;
+    myHistory.removeInvalidFilesFromStacks();
+
+    assertFalse(myHistory.isBackAvailable());
+    assertFalse(myHistory.isForwardAvailable());
+  }
+
+  public void testOptionallyExcludedFileIsNotPushed() {
+    var file = new MyOptionallyIncludedFile();
+    file.myIsIncludedInDocumentHistory = false;
+    mySelectedFile = file;
+
+    pushTwoStates();
+    assertFalse(myHistory.isBackAvailable());
+    assertFalse(myHistory.isForwardAvailable());
+  }
+
+  public void testExcludedFileIsNotPushed() {
+    mySelectedFile = new MyAlwaysExcludedFile();
+
+    pushTwoStates();
+    assertFalse(myHistory.isBackAvailable());
+    assertFalse(myHistory.isForwardAvailable());
+  }
 
   private void pushTwoStates() {
     myState1 = new MyState(false, "state1");
@@ -193,22 +232,18 @@ public class IdeDocumentHistoryTest extends HeavyPlatformTestCase {
   }
 
   private void makeNavigationChange(MyState newState) {
-    myHistory.onCommandStarted();
+    myHistory.onCommandStarted(null);
     myHistory.onSelectionChanged();
     myHistory.onCommandFinished(getProject(), null);
     myEditorState = newState;
   }
 
-  private class EditorManager extends Mock.MyFileEditorManager {
+  private final class EditorManager extends Mock.MyFileEditorManager {
     @Override
-    public VirtualFile getFile(@NotNull FileEditor editor) {
-      return mySelectedFile;
-    }
-
-    @Override
-    @NotNull
-    public Pair<FileEditor[], FileEditorProvider[]> openFileWithProviders(@NotNull VirtualFile file, boolean focusEditor, boolean searchForSplitter) {
-      return Pair.create(new FileEditor[]{mySelectedEditor}, new FileEditorProvider[]{myProvider});
+    public @NotNull FileEditorComposite openFile(@NotNull VirtualFile file,
+                                                 @Nullable EditorWindow window,
+                                                 @NotNull FileEditorOpenOptions options) {
+      return FileEditorComposite.Companion.fromPair(new Pair<>(new FileEditor[]{mySelectedEditor}, new FileEditorProvider[]{myProvider}));
     }
 
     @Override
@@ -217,8 +252,7 @@ public class IdeDocumentHistoryTest extends HeavyPlatformTestCase {
     }
   }
 
-  private static class MyState implements FileEditorState {
-
+  private static final class MyState implements FileEditorState {
     private final boolean myCanBeMerged;
     private final String myName;
 
@@ -228,12 +262,25 @@ public class IdeDocumentHistoryTest extends HeavyPlatformTestCase {
     }
 
     @Override
-    public boolean canBeMergedWith(FileEditorState otherState, FileEditorStateLevel level) {
+    public boolean canBeMergedWith(@NotNull FileEditorState otherState, @NotNull FileEditorStateLevel level) {
       return myCanBeMerged;
     }
 
+    @Override
     public String toString() {
       return myName;
+    }
+  }
+
+  private static final class MyAlwaysExcludedFile extends Mock.MyVirtualFile implements IdeDocumentHistoryImpl.SkipFromDocumentHistory {
+  }
+
+  private static final class MyOptionallyIncludedFile extends Mock.MyVirtualFile implements IdeDocumentHistoryImpl.OptionallyIncluded {
+    boolean myIsIncludedInDocumentHistory = true;
+
+    @Override
+    public boolean isIncludedInDocumentHistory(@NotNull Project project) {
+      return myIsIncludedInDocumentHistory;
     }
   }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.svn.properties;
 
 import com.intellij.openapi.diagnostic.Attachment;
@@ -6,8 +6,17 @@ import com.intellij.openapi.diagnostic.Logger;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnUtil;
-import org.jetbrains.idea.svn.api.*;
-import org.jetbrains.idea.svn.commandLine.*;
+import org.jetbrains.idea.svn.api.BaseSvnClient;
+import org.jetbrains.idea.svn.api.Depth;
+import org.jetbrains.idea.svn.api.ErrorCode;
+import org.jetbrains.idea.svn.api.Revision;
+import org.jetbrains.idea.svn.api.Target;
+import org.jetbrains.idea.svn.api.Url;
+import org.jetbrains.idea.svn.commandLine.Command;
+import org.jetbrains.idea.svn.commandLine.CommandExecutor;
+import org.jetbrains.idea.svn.commandLine.CommandUtil;
+import org.jetbrains.idea.svn.commandLine.SvnBindException;
+import org.jetbrains.idea.svn.commandLine.SvnCommandName;
 import org.jetbrains.idea.svn.info.Info;
 
 import javax.xml.bind.JAXBException;
@@ -26,12 +35,11 @@ public class CmdPropertyClient extends BaseSvnClient implements PropertyClient {
 
   private static final Logger LOG = Logger.getInstance(CmdPropertyClient.class);
 
-  @Nullable
   @Override
-  public PropertyValue getProperty(@NotNull Target target,
-                                   @NotNull String property,
-                                   boolean revisionProperty,
-                                   @Nullable Revision revision)
+  public @Nullable PropertyValue getProperty(@NotNull Target target,
+                                             @NotNull String property,
+                                             boolean revisionProperty,
+                                             @Nullable Revision revision)
     throws SvnBindException {
     List<String> parameters = new ArrayList<>();
 
@@ -127,8 +135,7 @@ public class CmdPropertyClient extends BaseSvnClient implements PropertyClient {
     return e.contains(ErrorCode.BASE) && e.contains(ErrorCode.PROPERTY_NOT_FOUND);
   }
 
-  @NotNull
-  private PropertiesMap collectPropertiesToDelete(@NotNull File file) throws SvnBindException {
+  private @NotNull PropertiesMap collectPropertiesToDelete(@NotNull File file) throws SvnBindException {
     final PropertiesMap result = new PropertiesMap();
 
     list(Target.on(file), null, Depth.EMPTY, new PropertyConsumer() {
@@ -176,11 +183,11 @@ public class CmdPropertyClient extends BaseSvnClient implements PropertyClient {
     execute(myVcs, target, null, command, null);
   }
 
-  private void fillListParameters(@NotNull Target target,
-                                  @Nullable Revision revision,
-                                  @Nullable Depth depth,
-                                  @NotNull List<String> parameters,
-                                  boolean verbose) {
+  private static void fillListParameters(@NotNull Target target,
+                                         @Nullable Revision revision,
+                                         @Nullable Depth depth,
+                                         @NotNull List<String> parameters,
+                                         boolean verbose) {
     CommandUtil.put(parameters, target);
     CommandUtil.put(parameters, revision);
     CommandUtil.put(parameters, depth);
@@ -188,8 +195,7 @@ public class CmdPropertyClient extends BaseSvnClient implements PropertyClient {
     CommandUtil.put(parameters, verbose, "--verbose");
   }
 
-  @Nullable
-  private PropertyData parseSingleProperty(Target target, @NotNull CommandExecutor command) throws SvnBindException {
+  private static @Nullable PropertyData parseSingleProperty(Target target, @NotNull CommandExecutor command) throws SvnBindException {
     final PropertyData[] data = new PropertyData[1];
     PropertyConsumer handler = new PropertyConsumer() {
       @Override
@@ -257,8 +263,7 @@ public class CmdPropertyClient extends BaseSvnClient implements PropertyClient {
     }
   }
 
-  @Nullable
-  private static PropertyData create(@NotNull String property, @Nullable String value) {
+  private static @Nullable PropertyData create(@NotNull String property, @Nullable String value) {
     PropertyData result = null;
 
     // such behavior is required to compatibility with SVNKit as some logic in merge depends on
@@ -315,7 +320,7 @@ public class CmdPropertyClient extends BaseSvnClient implements PropertyClient {
     public List<Property> properties = new ArrayList<>();
 
     public long revisionNumber() {
-      return Long.valueOf(revision);
+      return Long.parseLong(revision);
     }
   }
 

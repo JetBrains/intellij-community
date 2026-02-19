@@ -1,0 +1,543 @@
+*:com.intellij.platform.eel.EelApi
+- *a:getDescriptor():com.intellij.platform.eel.EelDescriptor
+- *a:getExec():com.intellij.platform.eel.EelExecApi
+- a:getPlatform():com.intellij.platform.eel.EelPlatform
+- *a:getTunnels():com.intellij.platform.eel.EelTunnelsApi
+- *a:getUserInfo():com.intellij.platform.eel.EelUserInfo
+*:com.intellij.platform.eel.EelApi$Pid
+- a:getValue():J
+*a:com.intellij.platform.eel.EelConnectionError
+- java.io.IOException
+- com.intellij.platform.eel.EelNetworkError
+*c:com.intellij.platform.eel.EelConnectionError$ConnectionProblem
+- com.intellij.platform.eel.EelConnectionError
+- <init>(java.lang.String):V
+*c:com.intellij.platform.eel.EelConnectionError$ResolveFailure
+- com.intellij.platform.eel.EelConnectionError
+- <init>(java.lang.String):V
+*c:com.intellij.platform.eel.EelConnectionError$SocketAllocationError
+- com.intellij.platform.eel.EelConnectionError
+- <init>(java.lang.String):V
+*c:com.intellij.platform.eel.EelConnectionError$UnknownFailure
+- com.intellij.platform.eel.EelConnectionError
+- <init>(java.lang.String):V
+- <init>(java.lang.String,java.lang.Throwable):V
+*:com.intellij.platform.eel.EelDescriptor
+- *a:getName():java.lang.String
+- *a:getOsFamily():com.intellij.platform.eel.EelOsFamily
+*:com.intellij.platform.eel.EelError
+*f:com.intellij.platform.eel.EelError$Unknown
+- com.intellij.platform.eel.EelError
+- sf:INSTANCE:com.intellij.platform.eel.EelError$Unknown
+*Fa:com.intellij.platform.eel.EelException
+- java.io.IOException
+- com.intellij.platform.eel.EelError
+- <init>(com.intellij.platform.eel.EelError):V
+- <init>(com.intellij.platform.eel.EelError,java.lang.Throwable):V
+- getError():com.intellij.platform.eel.EelError
+*f:com.intellij.platform.eel.EelException$Unknown
+- com.intellij.platform.eel.EelException
+- <init>():V
+- <init>(java.lang.Throwable):V
+*:com.intellij.platform.eel.EelExecApi
+- *a:environmentVariables(com.intellij.platform.eel.EelExecApi$EnvironmentVariablesOptions):com.intellij.platform.eel.EelExecApi$EnvironmentVariablesDeferred
+- *:fetchLoginShellEnvVariables(kotlin.coroutines.Continuation):java.lang.Object
+- *a:findExeFilesInPath(java.lang.String,kotlin.coroutines.Continuation):java.lang.Object
+- *a:getDescriptor():com.intellij.platform.eel.EelDescriptor
+- *a:spawnProcess(com.intellij.platform.eel.EelExecApi$ExecuteProcessOptions,kotlin.coroutines.Continuation):java.lang.Object
+*f:com.intellij.platform.eel.EelExecApi$EnvironmentVariablesDeferred
+- *f:await(kotlin.coroutines.Continuation):java.lang.Object
+- *f:getDeferred():kotlinx.coroutines.Deferred
+*f:com.intellij.platform.eel.EelExecApi$EnvironmentVariablesException
+- java.io.IOException
+- com.intellij.platform.eel.EelError
+- <init>(java.lang.String):V
+- <init>(java.lang.String,java.lang.Throwable):V
+*:com.intellij.platform.eel.EelExecApi$EnvironmentVariablesOptions
+- getOnlyActual():Z
+*:com.intellij.platform.eel.EelExecApi$ExecuteProcessOptions
+- *:getArgs():java.util.List
+- *:getEnv():java.util.Map
+- *a:getExe():java.lang.String
+- *:getInteractionOptions():com.intellij.platform.eel.EelExecApi$InteractionOptions
+- getScope():kotlinx.coroutines.CoroutineScope
+- *:getWorkingDirectory():com.intellij.platform.eel.path.EelPath
+*:com.intellij.platform.eel.EelExecApi$InteractionOptions
+*f:com.intellij.platform.eel.EelExecApi$Pty
+- com.intellij.platform.eel.EelExecApi$InteractionOptions
+- *:<init>(I,I):V
+- f:getColumns():I
+- f:getRows():I
+*f:com.intellij.platform.eel.EelExecApi$RedirectStdErr
+- com.intellij.platform.eel.EelExecApi$InteractionOptions
+- <init>(com.intellij.platform.eel.EelExecApi$RedirectTo):V
+- f:getTo():com.intellij.platform.eel.EelExecApi$RedirectTo
+*e:com.intellij.platform.eel.EelExecApi$RedirectTo
+- java.lang.Enum
+- sf:NULL:com.intellij.platform.eel.EelExecApi$RedirectTo
+- sf:STDOUT:com.intellij.platform.eel.EelExecApi$RedirectTo
+- s:getEntries():kotlin.enums.EnumEntries
+- s:valueOf(java.lang.String):com.intellij.platform.eel.EelExecApi$RedirectTo
+- s:values():com.intellij.platform.eel.EelExecApi$RedirectTo[]
+*f:com.intellij.platform.eel.EelExecApiHelpers
+- sf:INSTANCE:com.intellij.platform.eel.EelExecApiHelpers
+*f:com.intellij.platform.eel.EelExecApiHelpers$EnvironmentVariables
+- <init>(com.intellij.platform.eel.EelExecApi):V
+- eelIt(kotlin.coroutines.Continuation):java.lang.Object
+- f:onlyActual(Z):com.intellij.platform.eel.EelExecApiHelpers$EnvironmentVariables
+*f:com.intellij.platform.eel.EelExecApiHelpers$SpawnProcess
+- <init>(com.intellij.platform.eel.EelExecApi,java.lang.String):V
+- *f:args(java.util.List):com.intellij.platform.eel.EelExecApiHelpers$SpawnProcess
+- f:args(java.lang.String[]):com.intellij.platform.eel.EelExecApiHelpers$SpawnProcess
+- eelIt(kotlin.coroutines.Continuation):java.lang.Object
+- *f:env(java.util.Map):com.intellij.platform.eel.EelExecApiHelpers$SpawnProcess
+- *f:exe(java.lang.String):com.intellij.platform.eel.EelExecApiHelpers$SpawnProcess
+- *f:interactionOptions(com.intellij.platform.eel.EelExecApi$InteractionOptions):com.intellij.platform.eel.EelExecApiHelpers$SpawnProcess
+- f:scope(kotlinx.coroutines.CoroutineScope):com.intellij.platform.eel.EelExecApiHelpers$SpawnProcess
+- *f:workingDirectory(com.intellij.platform.eel.path.EelPath):com.intellij.platform.eel.EelExecApiHelpers$SpawnProcess
+f:com.intellij.platform.eel.EelExecApiHelpersKt
+- *sf:environmentVariables(com.intellij.platform.eel.EelExecApi):com.intellij.platform.eel.EelExecApiHelpers$EnvironmentVariables
+- *sf:spawnProcess(com.intellij.platform.eel.EelExecApi,java.lang.String):com.intellij.platform.eel.EelExecApiHelpers$SpawnProcess
+f:com.intellij.platform.eel.EelExecApiKt
+- *sf:spawnProcess(com.intellij.platform.eel.EelExecApi,com.intellij.platform.eel.path.EelPath,java.lang.String[]):com.intellij.platform.eel.EelExecApiHelpers$SpawnProcess
+- *sf:spawnProcess(com.intellij.platform.eel.EelExecApi,java.lang.String,java.lang.String[]):com.intellij.platform.eel.EelExecApiHelpers$SpawnProcess
+- *sf:spawnProcess(com.intellij.platform.eel.EelExecPosixApi,java.lang.String,java.lang.String[]):com.intellij.platform.eel.EelExecPosixApiHelpers$SpawnProcess
+- *sf:spawnProcess(com.intellij.platform.eel.EelExecWindowsApi,java.lang.String,java.lang.String[]):com.intellij.platform.eel.EelExecWindowsApiHelpers$SpawnProcess
+- *sf:where(com.intellij.platform.eel.EelExecApi,java.lang.String,kotlin.coroutines.Continuation):java.lang.Object
+*:com.intellij.platform.eel.EelExecPosixApi
+- com.intellij.platform.eel.EelExecApi
+- *a:environmentVariables(com.intellij.platform.eel.EelExecApi$EnvironmentVariablesOptions):com.intellij.platform.eel.EelExecApi$EnvironmentVariablesDeferred
+- *a:spawnProcess(com.intellij.platform.eel.EelExecApi$ExecuteProcessOptions,kotlin.coroutines.Continuation):java.lang.Object
+*:com.intellij.platform.eel.EelExecPosixApi$PosixEnvironmentVariablesOptions
+- com.intellij.platform.eel.EelExecApi$EnvironmentVariablesOptions
+- getMode():com.intellij.platform.eel.EelExecPosixApi$PosixEnvironmentVariablesOptions$Mode
+*e:com.intellij.platform.eel.EelExecPosixApi$PosixEnvironmentVariablesOptions$Mode
+- java.lang.Enum
+- sf:DEFAULT:com.intellij.platform.eel.EelExecPosixApi$PosixEnvironmentVariablesOptions$Mode
+- sf:LOGIN_INTERACTIVE:com.intellij.platform.eel.EelExecPosixApi$PosixEnvironmentVariablesOptions$Mode
+- sf:LOGIN_NON_INTERACTIVE:com.intellij.platform.eel.EelExecPosixApi$PosixEnvironmentVariablesOptions$Mode
+- sf:MINIMAL:com.intellij.platform.eel.EelExecPosixApi$PosixEnvironmentVariablesOptions$Mode
+- s:getEntries():kotlin.enums.EnumEntries
+- s:valueOf(java.lang.String):com.intellij.platform.eel.EelExecPosixApi$PosixEnvironmentVariablesOptions$Mode
+- s:values():com.intellij.platform.eel.EelExecPosixApi$PosixEnvironmentVariablesOptions$Mode[]
+*f:com.intellij.platform.eel.EelExecPosixApiHelpers
+- sf:INSTANCE:com.intellij.platform.eel.EelExecPosixApiHelpers
+*f:com.intellij.platform.eel.EelExecPosixApiHelpers$EnvironmentVariables
+- <init>(com.intellij.platform.eel.EelExecPosixApi):V
+- f:default():com.intellij.platform.eel.EelExecPosixApiHelpers$EnvironmentVariables
+- eelIt(kotlin.coroutines.Continuation):java.lang.Object
+- f:loginInteractive():com.intellij.platform.eel.EelExecPosixApiHelpers$EnvironmentVariables
+- f:loginNonInteractive():com.intellij.platform.eel.EelExecPosixApiHelpers$EnvironmentVariables
+- f:minimal():com.intellij.platform.eel.EelExecPosixApiHelpers$EnvironmentVariables
+- f:mode(com.intellij.platform.eel.EelExecPosixApi$PosixEnvironmentVariablesOptions$Mode):com.intellij.platform.eel.EelExecPosixApiHelpers$EnvironmentVariables
+- f:onlyActual(Z):com.intellij.platform.eel.EelExecPosixApiHelpers$EnvironmentVariables
+*f:com.intellij.platform.eel.EelExecPosixApiHelpers$SpawnProcess
+- <init>(com.intellij.platform.eel.EelExecPosixApi,java.lang.String):V
+- *f:args(java.util.List):com.intellij.platform.eel.EelExecPosixApiHelpers$SpawnProcess
+- f:args(java.lang.String[]):com.intellij.platform.eel.EelExecPosixApiHelpers$SpawnProcess
+- eelIt(kotlin.coroutines.Continuation):java.lang.Object
+- *f:env(java.util.Map):com.intellij.platform.eel.EelExecPosixApiHelpers$SpawnProcess
+- *f:exe(java.lang.String):com.intellij.platform.eel.EelExecPosixApiHelpers$SpawnProcess
+- *f:interactionOptions(com.intellij.platform.eel.EelExecApi$InteractionOptions):com.intellij.platform.eel.EelExecPosixApiHelpers$SpawnProcess
+- f:scope(kotlinx.coroutines.CoroutineScope):com.intellij.platform.eel.EelExecPosixApiHelpers$SpawnProcess
+- *f:workingDirectory(com.intellij.platform.eel.path.EelPath):com.intellij.platform.eel.EelExecPosixApiHelpers$SpawnProcess
+f:com.intellij.platform.eel.EelExecPosixApiHelpersKt
+- *sf:environmentVariables(com.intellij.platform.eel.EelExecPosixApi):com.intellij.platform.eel.EelExecPosixApiHelpers$EnvironmentVariables
+- *sf:spawnProcess(com.intellij.platform.eel.EelExecPosixApi,java.lang.String):com.intellij.platform.eel.EelExecPosixApiHelpers$SpawnProcess
+*:com.intellij.platform.eel.EelExecWindowsApi
+- com.intellij.platform.eel.EelExecApi
+- *a:spawnProcess(com.intellij.platform.eel.EelExecApi$ExecuteProcessOptions,kotlin.coroutines.Continuation):java.lang.Object
+*f:com.intellij.platform.eel.EelExecWindowsApiHelpers
+- sf:INSTANCE:com.intellij.platform.eel.EelExecWindowsApiHelpers
+*f:com.intellij.platform.eel.EelExecWindowsApiHelpers$SpawnProcess
+- <init>(com.intellij.platform.eel.EelExecWindowsApi,java.lang.String):V
+- *f:args(java.util.List):com.intellij.platform.eel.EelExecWindowsApiHelpers$SpawnProcess
+- f:args(java.lang.String[]):com.intellij.platform.eel.EelExecWindowsApiHelpers$SpawnProcess
+- eelIt(kotlin.coroutines.Continuation):java.lang.Object
+- *f:env(java.util.Map):com.intellij.platform.eel.EelExecWindowsApiHelpers$SpawnProcess
+- *f:exe(java.lang.String):com.intellij.platform.eel.EelExecWindowsApiHelpers$SpawnProcess
+- *f:interactionOptions(com.intellij.platform.eel.EelExecApi$InteractionOptions):com.intellij.platform.eel.EelExecWindowsApiHelpers$SpawnProcess
+- f:scope(kotlinx.coroutines.CoroutineScope):com.intellij.platform.eel.EelExecWindowsApiHelpers$SpawnProcess
+- *f:workingDirectory(com.intellij.platform.eel.path.EelPath):com.intellij.platform.eel.EelExecWindowsApiHelpers$SpawnProcess
+f:com.intellij.platform.eel.EelExecWindowsApiHelpersKt
+- *sf:spawnProcess(com.intellij.platform.eel.EelExecWindowsApi,java.lang.String):com.intellij.platform.eel.EelExecWindowsApiHelpers$SpawnProcess
+*e:com.intellij.platform.eel.EelIpPreference
+- java.lang.Enum
+- sf:PREFER_V4:com.intellij.platform.eel.EelIpPreference
+- sf:PREFER_V6:com.intellij.platform.eel.EelIpPreference
+- sf:USE_SYSTEM_DEFAULT:com.intellij.platform.eel.EelIpPreference
+- s:getEntries():kotlin.enums.EnumEntries
+- s:valueOf(java.lang.String):com.intellij.platform.eel.EelIpPreference
+- s:values():com.intellij.platform.eel.EelIpPreference[]
+*:com.intellij.platform.eel.EelMachine
+- a:ownsPath(java.nio.file.Path):Z
+- *a:toEelApi(com.intellij.platform.eel.EelDescriptor,kotlin.coroutines.Continuation):java.lang.Object
+*:com.intellij.platform.eel.EelNetworkError
+- com.intellij.platform.eel.EelError
+*e:com.intellij.platform.eel.EelOsFamily
+- java.lang.Enum
+- sf:Posix:com.intellij.platform.eel.EelOsFamily
+- sf:Windows:com.intellij.platform.eel.EelOsFamily
+- s:getEntries():kotlin.enums.EnumEntries
+- s:valueOf(java.lang.String):com.intellij.platform.eel.EelOsFamily
+- s:values():com.intellij.platform.eel.EelOsFamily[]
+*:com.intellij.platform.eel.EelPathBoundDescriptor
+- com.intellij.platform.eel.EelDescriptor
+- a:getRootPath():java.nio.file.Path
+*:com.intellij.platform.eel.EelPlatform
+- *sf:Companion:com.intellij.platform.eel.EelPlatform$Companion
+- *a:getArch():com.intellij.platform.eel.EelPlatform$Arch
+- a:getOsFamily():com.intellij.platform.eel.EelOsFamily
+*:com.intellij.platform.eel.EelPlatform$Arch
+*f:com.intellij.platform.eel.EelPlatform$Arch$ARM_32
+- com.intellij.platform.eel.EelPlatform$Arch
+- sf:INSTANCE:com.intellij.platform.eel.EelPlatform$Arch$ARM_32
+- equals(java.lang.Object):Z
+- hashCode():I
+*f:com.intellij.platform.eel.EelPlatform$Arch$ARM_64
+- com.intellij.platform.eel.EelPlatform$Arch
+- sf:INSTANCE:com.intellij.platform.eel.EelPlatform$Arch$ARM_64
+- equals(java.lang.Object):Z
+- hashCode():I
+*f:com.intellij.platform.eel.EelPlatform$Arch$Unknown
+- com.intellij.platform.eel.EelPlatform$Arch
+- sf:INSTANCE:com.intellij.platform.eel.EelPlatform$Arch$Unknown
+- equals(java.lang.Object):Z
+- hashCode():I
+*f:com.intellij.platform.eel.EelPlatform$Arch$X86
+- com.intellij.platform.eel.EelPlatform$Arch
+- sf:INSTANCE:com.intellij.platform.eel.EelPlatform$Arch$X86
+- equals(java.lang.Object):Z
+- hashCode():I
+*f:com.intellij.platform.eel.EelPlatform$Arch$X86_64
+- com.intellij.platform.eel.EelPlatform$Arch
+- sf:INSTANCE:com.intellij.platform.eel.EelPlatform$Arch$X86_64
+- equals(java.lang.Object):Z
+- hashCode():I
+*f:com.intellij.platform.eel.EelPlatform$Companion
+*f:com.intellij.platform.eel.EelPlatform$Darwin
+- com.intellij.platform.eel.EelPlatform$Posix
+- <init>(com.intellij.platform.eel.EelPlatform$Arch):V
+- getArch():com.intellij.platform.eel.EelPlatform$Arch
+*f:com.intellij.platform.eel.EelPlatform$FreeBSD
+- com.intellij.platform.eel.EelPlatform$Posix
+- <init>(com.intellij.platform.eel.EelPlatform$Arch):V
+- getArch():com.intellij.platform.eel.EelPlatform$Arch
+*f:com.intellij.platform.eel.EelPlatform$Linux
+- com.intellij.platform.eel.EelPlatform$Posix
+- <init>(com.intellij.platform.eel.EelPlatform$Arch):V
+- getArch():com.intellij.platform.eel.EelPlatform$Arch
+*a:com.intellij.platform.eel.EelPlatform$Posix
+- com.intellij.platform.eel.EelPlatform
+- getOsFamily():com.intellij.platform.eel.EelOsFamily
+*f:com.intellij.platform.eel.EelPlatform$Windows
+- com.intellij.platform.eel.EelPlatform
+- <init>(com.intellij.platform.eel.EelPlatform$Arch):V
+- getArch():com.intellij.platform.eel.EelPlatform$Arch
+- getOsFamily():com.intellij.platform.eel.EelOsFamily
+f:com.intellij.platform.eel.EelPlatformKt
+- *sf:getDirectorySeparators(com.intellij.platform.eel.EelOsFamily):C[]
+- *sf:getPathSeparator(com.intellij.platform.eel.EelOsFamily):java.lang.String
+- *sf:isArm32(com.intellij.platform.eel.EelPlatform):Z
+- *sf:isArm64(com.intellij.platform.eel.EelPlatform):Z
+- *sf:isFreeBSD(com.intellij.platform.eel.EelPlatform):Z
+- *sf:isLinux(com.intellij.platform.eel.EelPlatform):Z
+- *sf:isMac(com.intellij.platform.eel.EelPlatform):Z
+- *sf:isPosix(com.intellij.platform.eel.EelOsFamily):Z
+- *sf:isPosix(com.intellij.platform.eel.EelPlatform):Z
+- *sf:isWindows(com.intellij.platform.eel.EelOsFamily):Z
+- *sf:isWindows(com.intellij.platform.eel.EelPlatform):Z
+- *sf:isX86(com.intellij.platform.eel.EelPlatform):Z
+- *sf:isX86_64(com.intellij.platform.eel.EelPlatform):Z
+*:com.intellij.platform.eel.EelPosixApi
+- com.intellij.platform.eel.EelApi
+- a:getExec():com.intellij.platform.eel.EelExecPosixApi
+- a:getPlatform():com.intellij.platform.eel.EelPlatform$Posix
+- a:getTunnels():com.intellij.platform.eel.EelTunnelsPosixApi
+- a:getUserInfo():com.intellij.platform.eel.EelUserPosixInfo
+*:com.intellij.platform.eel.EelPosixProcess
+- com.intellij.platform.eel.EelProcess
+- *a:terminate(kotlin.coroutines.Continuation):java.lang.Object
+*:com.intellij.platform.eel.EelProcess
+- *a:convertToJavaProcess():java.lang.Process
+- *a:getExitCode():kotlinx.coroutines.Deferred
+- *a:getPid():com.intellij.platform.eel.EelApi$Pid
+- *a:getStderr():com.intellij.platform.eel.channels.EelReceiveChannel
+- *a:getStdin():com.intellij.platform.eel.channels.EelSendChannel
+- *a:getStdout():com.intellij.platform.eel.channels.EelReceiveChannel
+- *a:interrupt(kotlin.coroutines.Continuation):java.lang.Object
+- *a:kill(kotlin.coroutines.Continuation):java.lang.Object
+- *a:resizePty(I,I,kotlin.coroutines.Continuation):java.lang.Object
+*a:com.intellij.platform.eel.EelProcess$ResizePtyError
+- java.lang.Exception
+*f:com.intellij.platform.eel.EelProcess$ResizePtyError$Errno
+- com.intellij.platform.eel.EelProcess$ResizePtyError
+- <init>(I,java.lang.String):V
+- f:component1():I
+- f:component2():java.lang.String
+- f:copy(I,java.lang.String):com.intellij.platform.eel.EelProcess$ResizePtyError$Errno
+- bs:copy$default(com.intellij.platform.eel.EelProcess$ResizePtyError$Errno,I,java.lang.String,I,java.lang.Object):com.intellij.platform.eel.EelProcess$ResizePtyError$Errno
+- equals(java.lang.Object):Z
+- f:getErrno():I
+- getMessage():java.lang.String
+- hashCode():I
+*f:com.intellij.platform.eel.EelProcess$ResizePtyError$NoPty
+- com.intellij.platform.eel.EelProcess$ResizePtyError
+- <init>():V
+*f:com.intellij.platform.eel.EelProcess$ResizePtyError$ProcessExited
+- com.intellij.platform.eel.EelProcess$ResizePtyError
+- <init>():V
+*:com.intellij.platform.eel.EelProxy
+- a:getAcceptor():com.intellij.platform.eel.EelTunnelsApi$ConnectionAcceptor
+- a:runForever(kotlin.coroutines.Continuation):java.lang.Object
+*f:com.intellij.platform.eel.EelProxyKt
+- *sf:eelProxy(com.intellij.platform.eel.EelTunnelsApiRunProxyOpts,kotlin.coroutines.Continuation):java.lang.Object
+f:com.intellij.platform.eel.EelProxyKtHelpersKt
+- *sf:eelProxy():com.intellij.platform.eel.eelProxyKtHelpers$EelProxy
+*:com.intellij.platform.eel.EelTunnelsApi
+- *a:getConnectionToRemotePort(com.intellij.platform.eel.EelTunnelsApi$GetConnectionToRemotePortArgs,kotlin.coroutines.Continuation):java.lang.Object
+- *a:listenOnUnixSocket(com.intellij.platform.eel.EelTunnelsApi$ListenOnUnixSocketTemporaryPathOptions,kotlin.coroutines.Continuation):java.lang.Object
+- *a:listenOnUnixSocket(com.intellij.platform.eel.path.EelPath,kotlin.coroutines.Continuation):java.lang.Object
+*:com.intellij.platform.eel.EelTunnelsApi$Connection
+- *a:close(kotlin.coroutines.Continuation):java.lang.Object
+- *a:getReceiveChannel():com.intellij.platform.eel.channels.EelReceiveChannel
+- *a:getSendChannel():com.intellij.platform.eel.channels.EelSendChannel
+*:com.intellij.platform.eel.EelTunnelsApi$ConnectionAcceptor
+- a:close(kotlin.coroutines.Continuation):java.lang.Object
+- a:getBoundAddress():com.intellij.platform.eel.EelTunnelsApi$ResolvedSocketAddress
+- a:getIncomingConnections():kotlinx.coroutines.channels.ReceiveChannel
+*:com.intellij.platform.eel.EelTunnelsApi$GetAcceptorForRemotePort
+- com.intellij.platform.eel.EelTunnelsApi$HostAddress
+- getConfigureServerSocket():kotlin.jvm.functions.Function1
+*:com.intellij.platform.eel.EelTunnelsApi$GetConnectionToRemotePortArgs
+- com.intellij.platform.eel.EelTunnelsApi$HostAddress
+*:com.intellij.platform.eel.EelTunnelsApi$HostAddress
+- *sf:Companion:com.intellij.platform.eel.EelTunnelsApi$HostAddress$Companion
+- *:getHostname():java.lang.String
+- *:getPort-Mh2AYeg():S
+- *:getProtocolPreference():com.intellij.platform.eel.EelIpPreference
+- *:getTimeout-UwyO8pc():J
+*:com.intellij.platform.eel.EelTunnelsApi$HostAddress$Builder
+- a:build():com.intellij.platform.eel.EelTunnelsApi$HostAddress
+- a:connectionTimeout-LRDsOJo(J):com.intellij.platform.eel.EelTunnelsApi$HostAddress$Builder
+- a:hostname(java.lang.String):com.intellij.platform.eel.EelTunnelsApi$HostAddress$Builder
+- a:preferIPv4():com.intellij.platform.eel.EelTunnelsApi$HostAddress$Builder
+- a:preferIPv6():com.intellij.platform.eel.EelTunnelsApi$HostAddress$Builder
+- a:preferOSDefault():com.intellij.platform.eel.EelTunnelsApi$HostAddress$Builder
+*f:com.intellij.platform.eel.EelTunnelsApi$HostAddress$Companion
+- *f:Builder():com.intellij.platform.eel.EelTunnelsApi$HostAddress$Builder
+- *f:Builder-xj2QHRw(S):com.intellij.platform.eel.EelTunnelsApi$HostAddress$Builder
+*:com.intellij.platform.eel.EelTunnelsApi$ListenOnUnixSocketResult
+- component1():com.intellij.platform.eel.path.EelPath
+- component2():com.intellij.platform.eel.channels.EelSendChannel
+- component3():com.intellij.platform.eel.channels.EelReceiveChannel
+- a:getRx():com.intellij.platform.eel.channels.EelReceiveChannel
+- a:getTx():com.intellij.platform.eel.channels.EelSendChannel
+- a:getUnixSocketPath():com.intellij.platform.eel.path.EelPath
+*:com.intellij.platform.eel.EelTunnelsApi$ListenOnUnixSocketTemporaryPathOptions
+- getParentDirectory():com.intellij.platform.eel.path.EelPath
+- getPrefix():java.lang.String
+- getSuffix():java.lang.String
+*:com.intellij.platform.eel.EelTunnelsApi$ResolvedSocketAddress
+- a:getPort-Mh2AYeg():S
+*:com.intellij.platform.eel.EelTunnelsApi$ResolvedSocketAddress$V4
+- com.intellij.platform.eel.EelTunnelsApi$ResolvedSocketAddress
+- a:getBits-pVg5ArA():I
+*:com.intellij.platform.eel.EelTunnelsApi$ResolvedSocketAddress$V6
+- com.intellij.platform.eel.EelTunnelsApi$ResolvedSocketAddress
+- a:getHigherBits-s-VKNKU():J
+- a:getLowerBits-s-VKNKU():J
+*f:com.intellij.platform.eel.EelTunnelsApiHelpers
+- sf:INSTANCE:com.intellij.platform.eel.EelTunnelsApiHelpers
+*f:com.intellij.platform.eel.EelTunnelsApiHelpers$GetConnectionToRemotePort
+- <init>(com.intellij.platform.eel.EelTunnelsApi):V
+- eelIt(kotlin.coroutines.Continuation):java.lang.Object
+- *f:hostname(java.lang.String):com.intellij.platform.eel.EelTunnelsApiHelpers$GetConnectionToRemotePort
+- *f:port-xj2QHRw(S):com.intellij.platform.eel.EelTunnelsApiHelpers$GetConnectionToRemotePort
+- f:preferV4():com.intellij.platform.eel.EelTunnelsApiHelpers$GetConnectionToRemotePort
+- f:preferV6():com.intellij.platform.eel.EelTunnelsApiHelpers$GetConnectionToRemotePort
+- *f:protocolPreference(com.intellij.platform.eel.EelIpPreference):com.intellij.platform.eel.EelTunnelsApiHelpers$GetConnectionToRemotePort
+- *f:timeout-LRDsOJo(J):com.intellij.platform.eel.EelTunnelsApiHelpers$GetConnectionToRemotePort
+- f:useSystemDefault():com.intellij.platform.eel.EelTunnelsApiHelpers$GetConnectionToRemotePort
+*f:com.intellij.platform.eel.EelTunnelsApiHelpers$ListenOnUnixSocket
+- <init>(com.intellij.platform.eel.EelTunnelsApi):V
+- eelIt(kotlin.coroutines.Continuation):java.lang.Object
+- f:parentDirectory(com.intellij.platform.eel.path.EelPath):com.intellij.platform.eel.EelTunnelsApiHelpers$ListenOnUnixSocket
+- f:prefix(java.lang.String):com.intellij.platform.eel.EelTunnelsApiHelpers$ListenOnUnixSocket
+- f:suffix(java.lang.String):com.intellij.platform.eel.EelTunnelsApiHelpers$ListenOnUnixSocket
+f:com.intellij.platform.eel.EelTunnelsApiHelpersKt
+- *sf:getConnectionToRemotePort(com.intellij.platform.eel.EelTunnelsApi):com.intellij.platform.eel.EelTunnelsApiHelpers$GetConnectionToRemotePort
+- *sf:listenOnUnixSocket(com.intellij.platform.eel.EelTunnelsApi):com.intellij.platform.eel.EelTunnelsApiHelpers$ListenOnUnixSocket
+f:com.intellij.platform.eel.EelTunnelsApiKt
+- *sf:withConnectionToRemotePort(com.intellij.platform.eel.EelTunnelsApiHelpers$GetConnectionToRemotePort,kotlin.jvm.functions.Function2,kotlin.jvm.functions.Function3,kotlin.coroutines.Continuation):java.lang.Object
+*:com.intellij.platform.eel.EelTunnelsApiRunProxyOpts
+- getAcceptorFactory():kotlin.jvm.functions.Function1
+- getConnectionFactory():kotlin.jvm.functions.Function1
+- getDebugLabel():java.lang.String
+- getOnConnection():kotlin.jvm.functions.Function1
+- getOnConnectionClosed():kotlin.jvm.functions.Function1
+- getOnConnectionError():kotlin.jvm.functions.Function1
+*f:com.intellij.platform.eel.EelTunnelsApiRunProxyOptsBuilder
+- <init>():V
+- f:acceptorFactory(kotlin.jvm.functions.Function1):com.intellij.platform.eel.EelTunnelsApiRunProxyOptsBuilder
+- f:build():com.intellij.platform.eel.EelTunnelsApiRunProxyOpts
+- f:connectionFactory(kotlin.jvm.functions.Function1):com.intellij.platform.eel.EelTunnelsApiRunProxyOptsBuilder
+- f:debugLabel(java.lang.String):com.intellij.platform.eel.EelTunnelsApiRunProxyOptsBuilder
+- f:onConnection(kotlin.jvm.functions.Function1):com.intellij.platform.eel.EelTunnelsApiRunProxyOptsBuilder
+- f:onConnectionClosed(kotlin.jvm.functions.Function1):com.intellij.platform.eel.EelTunnelsApiRunProxyOptsBuilder
+- f:onConnectionError(kotlin.jvm.functions.Function1):com.intellij.platform.eel.EelTunnelsApiRunProxyOptsBuilder
+*:com.intellij.platform.eel.EelTunnelsPosixApi
+- com.intellij.platform.eel.EelTunnelsApi
+*:com.intellij.platform.eel.EelTunnelsWindowsApi
+- com.intellij.platform.eel.EelTunnelsApi
+*:com.intellij.platform.eel.EelUserInfo
+- a:getHome():com.intellij.platform.eel.path.EelPath
+*:com.intellij.platform.eel.EelUserPosixInfo
+- com.intellij.platform.eel.EelUserInfo
+- a:getGid():I
+- a:getUid():I
+*:com.intellij.platform.eel.EelUserWindowsInfo
+- com.intellij.platform.eel.EelUserInfo
+*:com.intellij.platform.eel.EelWindowsApi
+- com.intellij.platform.eel.EelApi
+- a:getExec():com.intellij.platform.eel.EelExecWindowsApi
+- a:getPlatform():com.intellij.platform.eel.EelPlatform$Windows
+- a:getTunnels():com.intellij.platform.eel.EelTunnelsWindowsApi
+- a:getUserInfo():com.intellij.platform.eel.EelUserWindowsInfo
+*:com.intellij.platform.eel.EelWindowsProcess
+- com.intellij.platform.eel.EelProcess
+*f:com.intellij.platform.eel.EnvironmentVariablesOptionsBuilder
+- <init>():V
+- f:build():com.intellij.platform.eel.EelExecApi$EnvironmentVariablesOptions
+- f:onlyActual(Z):com.intellij.platform.eel.EnvironmentVariablesOptionsBuilder
+*f:com.intellij.platform.eel.ExecuteProcessException
+- java.io.IOException
+- com.intellij.platform.eel.EelError
+- <init>(I,java.lang.String):V
+- f:getErrno():I
+- getMessage():java.lang.String
+*f:com.intellij.platform.eel.ExecuteProcessOptionsBuilder
+- <init>(java.lang.String):V
+- *f:args(java.util.List):com.intellij.platform.eel.ExecuteProcessOptionsBuilder
+- f:args(java.lang.String[]):com.intellij.platform.eel.ExecuteProcessOptionsBuilder
+- f:build():com.intellij.platform.eel.EelExecApi$ExecuteProcessOptions
+- *f:env(java.util.Map):com.intellij.platform.eel.ExecuteProcessOptionsBuilder
+- *f:exe(java.lang.String):com.intellij.platform.eel.ExecuteProcessOptionsBuilder
+- *f:interactionOptions(com.intellij.platform.eel.EelExecApi$InteractionOptions):com.intellij.platform.eel.ExecuteProcessOptionsBuilder
+- f:scope(kotlinx.coroutines.CoroutineScope):com.intellij.platform.eel.ExecuteProcessOptionsBuilder
+- *f:workingDirectory(com.intellij.platform.eel.path.EelPath):com.intellij.platform.eel.ExecuteProcessOptionsBuilder
+*f:com.intellij.platform.eel.ExpandPathEnvVarKt
+- *sf:expandPathEnvVar(com.intellij.platform.eel.EelExecApi,kotlin.coroutines.Continuation):java.lang.Object
+- *sf:expandPathEnvVar(com.intellij.platform.eel.EelOsFamily,java.util.Map):java.lang.String
+*f:com.intellij.platform.eel.GetConnectionToRemotePortArgsBuilder
+- <init>():V
+- f:build():com.intellij.platform.eel.EelTunnelsApi$GetConnectionToRemotePortArgs
+- *f:hostname(java.lang.String):com.intellij.platform.eel.GetConnectionToRemotePortArgsBuilder
+- *f:port-xj2QHRw(S):com.intellij.platform.eel.GetConnectionToRemotePortArgsBuilder
+- f:preferV4():com.intellij.platform.eel.GetConnectionToRemotePortArgsBuilder
+- f:preferV6():com.intellij.platform.eel.GetConnectionToRemotePortArgsBuilder
+- *f:protocolPreference(com.intellij.platform.eel.EelIpPreference):com.intellij.platform.eel.GetConnectionToRemotePortArgsBuilder
+- *f:timeout-LRDsOJo(J):com.intellij.platform.eel.GetConnectionToRemotePortArgsBuilder
+- f:useSystemDefault():com.intellij.platform.eel.GetConnectionToRemotePortArgsBuilder
+*f:com.intellij.platform.eel.ListenOnUnixSocketTemporaryPathOptionsBuilder
+- <init>():V
+- f:build():com.intellij.platform.eel.EelTunnelsApi$ListenOnUnixSocketTemporaryPathOptions
+- f:parentDirectory(com.intellij.platform.eel.path.EelPath):com.intellij.platform.eel.ListenOnUnixSocketTemporaryPathOptionsBuilder
+- f:prefix(java.lang.String):com.intellij.platform.eel.ListenOnUnixSocketTemporaryPathOptionsBuilder
+- f:suffix(java.lang.String):com.intellij.platform.eel.ListenOnUnixSocketTemporaryPathOptionsBuilder
+*:com.intellij.platform.eel.LocalEelApi
+- com.intellij.platform.eel.EelApi
+*f:com.intellij.platform.eel.PosixEnvironmentVariablesOptionsBuilder
+- <init>():V
+- f:build():com.intellij.platform.eel.EelExecPosixApi$PosixEnvironmentVariablesOptions
+- f:default():com.intellij.platform.eel.PosixEnvironmentVariablesOptionsBuilder
+- f:loginInteractive():com.intellij.platform.eel.PosixEnvironmentVariablesOptionsBuilder
+- f:loginNonInteractive():com.intellij.platform.eel.PosixEnvironmentVariablesOptionsBuilder
+- f:minimal():com.intellij.platform.eel.PosixEnvironmentVariablesOptionsBuilder
+- f:mode(com.intellij.platform.eel.EelExecPosixApi$PosixEnvironmentVariablesOptions$Mode):com.intellij.platform.eel.PosixEnvironmentVariablesOptionsBuilder
+- f:onlyActual(Z):com.intellij.platform.eel.PosixEnvironmentVariablesOptionsBuilder
+*e:com.intellij.platform.eel.ReadResult
+- java.lang.Enum
+- *sf:Companion:com.intellij.platform.eel.ReadResult$Companion
+- sf:EOF:com.intellij.platform.eel.ReadResult
+- sf:NOT_EOF:com.intellij.platform.eel.ReadResult
+- s:getEntries():kotlin.enums.EnumEntries
+- s:valueOf(java.lang.String):com.intellij.platform.eel.ReadResult
+- s:values():com.intellij.platform.eel.ReadResult[]
+*f:com.intellij.platform.eel.ReadResult$Companion
+*a:com.intellij.platform.eel.channels.EelChannelException
+- java.io.IOException
+- com.intellij.platform.eel.EelError
+*:com.intellij.platform.eel.channels.EelReceiveChannel
+- a:available():I
+- a:closeForReceive(kotlin.coroutines.Continuation):java.lang.Object
+- a:getPrefersDirectBuffers():Z
+- a:receive(java.nio.ByteBuffer,kotlin.coroutines.Continuation):java.lang.Object
+*f:com.intellij.platform.eel.channels.EelReceiveChannelException
+- com.intellij.platform.eel.channels.EelChannelException
+- <init>(com.intellij.platform.eel.channels.EelReceiveChannel,java.lang.String):V
+- <init>(com.intellij.platform.eel.channels.EelReceiveChannel,java.lang.String,java.lang.Throwable):V
+- <init>(com.intellij.platform.eel.channels.EelReceiveChannel,java.lang.Throwable):V
+- f:getChannel():com.intellij.platform.eel.channels.EelReceiveChannel
+*:com.intellij.platform.eel.channels.EelSendChannel
+- *a:close(java.lang.Throwable,kotlin.coroutines.Continuation):java.lang.Object
+- a:getPrefersDirectBuffers():Z
+- *a:isClosed():Z
+*f:com.intellij.platform.eel.channels.EelSendChannelException
+- com.intellij.platform.eel.channels.EelChannelException
+- <init>(com.intellij.platform.eel.channels.EelSendChannel,java.lang.String):V
+- <init>(com.intellij.platform.eel.channels.EelSendChannel,java.lang.String,java.lang.Throwable):V
+- <init>(com.intellij.platform.eel.channels.EelSendChannel,java.lang.Throwable):V
+- f:getChannel():com.intellij.platform.eel.channels.EelSendChannel
+f:com.intellij.platform.eel.channels.EelSendChannelKt
+- *sf:sendWholeBuffer(com.intellij.platform.eel.channels.EelSendChannel,java.nio.ByteBuffer,kotlin.coroutines.Continuation):java.lang.Object
+*f:com.intellij.platform.eel.eelProxyKtHelpers
+- sf:INSTANCE:com.intellij.platform.eel.eelProxyKtHelpers
+*f:com.intellij.platform.eel.eelProxyKtHelpers$EelProxy
+- <init>():V
+- f:acceptorFactory(kotlin.jvm.functions.Function1):com.intellij.platform.eel.eelProxyKtHelpers$EelProxy
+- f:connectionFactory(kotlin.jvm.functions.Function1):com.intellij.platform.eel.eelProxyKtHelpers$EelProxy
+- f:debugLabel(java.lang.String):com.intellij.platform.eel.eelProxyKtHelpers$EelProxy
+- eelIt(kotlin.coroutines.Continuation):java.lang.Object
+- f:onConnection(kotlin.jvm.functions.Function1):com.intellij.platform.eel.eelProxyKtHelpers$EelProxy
+- f:onConnectionClosed(kotlin.jvm.functions.Function1):com.intellij.platform.eel.eelProxyKtHelpers$EelProxy
+- f:onConnectionError(kotlin.jvm.functions.Function1):com.intellij.platform.eel.eelProxyKtHelpers$EelProxy
+*f:com.intellij.platform.eel.fs.EelFileUtils
+- sf:INSTANCE:com.intellij.platform.eel.fs.EelFileUtils
+- sf:deleteRecursively(java.nio.file.Path):V
+*f:com.intellij.platform.eel.fs.EelFiles
+- sf:INSTANCE:com.intellij.platform.eel.fs.EelFiles
+- sf:readAllBytes(java.nio.file.Path):B[]
+- sf:readString(java.nio.file.Path):java.lang.String
+- sf:readString(java.nio.file.Path,java.nio.charset.Charset):java.lang.String
+*:com.intellij.platform.eel.path.EelPath
+- *sf:Companion:com.intellij.platform.eel.path.EelPath$Companion
+- a:endsWith(java.util.List):Z
+- a:getChild(java.lang.String):com.intellij.platform.eel.path.EelPath
+- a:getDescriptor():com.intellij.platform.eel.EelDescriptor
+- a:getFileName():java.lang.String
+- a:getName(I):java.lang.String
+- a:getNameCount():I
+- a:getParent():com.intellij.platform.eel.path.EelPath
+- a:getParts():java.util.List
+- a:getRoot():com.intellij.platform.eel.path.EelPath
+- a:normalize():com.intellij.platform.eel.path.EelPath
+- s:parse(java.lang.String,com.intellij.platform.eel.EelDescriptor):com.intellij.platform.eel.path.EelPath
+- a:resolve(java.lang.String):com.intellij.platform.eel.path.EelPath
+- a:startsWith(com.intellij.platform.eel.path.EelPath):Z
+- a:toDebugString():java.lang.String
+- a:toString():java.lang.String
+*f:com.intellij.platform.eel.path.EelPath$Companion
+- f:parse(java.lang.String,com.intellij.platform.eel.EelDescriptor):com.intellij.platform.eel.path.EelPath
+*e:com.intellij.platform.eel.path.EelPath$OS
+- java.lang.Enum
+- sf:UNIX:com.intellij.platform.eel.path.EelPath$OS
+- sf:WINDOWS:com.intellij.platform.eel.path.EelPath$OS
+- s:getEntries():kotlin.enums.EnumEntries
+- s:valueOf(java.lang.String):com.intellij.platform.eel.path.EelPath$OS
+- s:values():com.intellij.platform.eel.path.EelPath$OS[]
+*f:com.intellij.platform.eel.path.EelPathException
+- java.lang.RuntimeException
+- <init>(java.lang.String,java.lang.String):V
+- f:getRaw():java.lang.String
+- f:getReason():java.lang.String

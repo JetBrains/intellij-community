@@ -1,7 +1,8 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.memory.agent;
 
 import com.intellij.debugger.DebuggerContext;
+import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.debugger.ui.impl.watch.ValueDescriptorImpl;
 import com.intellij.openapi.project.Project;
@@ -16,9 +17,8 @@ public abstract class MemoryAgentSimpleReferringObject extends MemoryAgentReferr
     super(reference, isWeakSoftReachable);
   }
 
-  @NotNull
   @Override
-  public final ValueDescriptorImpl createValueDescription(@NotNull Project project, @NotNull Value referee) {
+  public final @NotNull ValueDescriptorImpl createValueDescription(@NotNull Project project, @NotNull Value referee) {
     return new ValueDescriptorImpl(project, myReference) {
       @Override
       public Value calcValue(EvaluationContextImpl evaluationContext) {
@@ -27,7 +27,7 @@ public abstract class MemoryAgentSimpleReferringObject extends MemoryAgentReferr
 
       @Override
       public String getName() {
-        return "Ref";
+        return JavaDebuggerBundle.message("ref");
       }
 
       @Override

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.ui.customization;
 
 import com.intellij.openapi.actionSystem.ActionGroup;
@@ -7,93 +7,164 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.Separator;
 import com.intellij.openapi.keymap.impl.ui.ActionsTreeUtil;
 import com.intellij.openapi.keymap.impl.ui.Group;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.DefaultJDOMExternalizer;
+import com.intellij.openapi.util.InvalidDataException;
+import com.intellij.openapi.util.JDOMExternalizable;
+import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.openapi.util.text.StringUtil;
+import org.intellij.lang.annotations.MagicConstant;
 import org.jdom.Element;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import javax.swing.tree.DefaultMutableTreeNode;
-import javax.swing.tree.TreePath;
 import java.util.ArrayList;
+import java.util.Objects;
 
-public class ActionUrl implements JDOMExternalizable {
+@ApiStatus.Internal
+public final class ActionUrl implements JDOMExternalizable {
   public static final int ADDED = 1;
   public static final int DELETED = -1;
-
-  //temp action only
   public static final int MOVE = 2;
 
-  private ArrayList<String> myGroupPath;
-  private Object myComponent;
+  private static final @NonNls String IS_GROUP = "is_group";
+  private static final @NonNls String SEPARATOR = "seperator";
+  private static final @NonNls String IS_ACTION = "is_action";
+  private static final @NonNls String VALUE = "value";
+  private static final @NonNls String PATH = "path";
+  private static final @NonNls String ACTION_TYPE = "action_type";
+  private static final @NonNls String POSITION = "position";
+  private static final @NonNls String FORCE_POPUP = "forse_popup";
+
+  private static final int TYPE_NONE = 0;
+  private static final int TYPE_SEPARATOR = 1;
+  private static final int TYPE_ACTION = 2;
+  private static final int TYPE_GROUP = 3;
+  private static final int TYPE_POPUP_GROUP = 4;
+
+  private @NotNull ArrayList<String> myGroupPath;
+  private @Nullable String myComponentId;
+  @MagicConstant(intValues = {TYPE_NONE, TYPE_SEPARATOR, TYPE_ACTION, TYPE_GROUP, TYPE_POPUP_GROUP})
+  private int myComponentType;
+  private @Nullable Object myComponent;
   private int myActionType;
   private int myAbsolutePosition;
-
-
-  public int myInitialPosition = -1;
-
-  @NonNls private static final String IS_GROUP = "is_group";
-  @NonNls private static final String SEPARATOR = "seperator";
-  @NonNls private static final String IS_ACTION = "is_action";
-  @NonNls private static final String VALUE = "value";
-  @NonNls private static final String PATH = "path";
-  @NonNls private static final String ACTION_TYPE = "action_type";
-  @NonNls private static final String POSITION = "position";
+  private int myInitialPosition = -1;
 
 
   public ActionUrl() {
     myGroupPath = new ArrayList<>();
   }
 
-  public ActionUrl(final ArrayList<String> groupPath,
-                   final Object component,
-                   final int actionType,
-                   final int position) {
+  public ActionUrl(@NotNull ArrayList<String> groupPath,
+                   @Nullable Object component,
+                   @MagicConstant(intValues = {ADDED, DELETED, MOVE}) int actionType,
+                   int position) {
     myGroupPath = groupPath;
-    myComponent = component;
+    setComponent(component);
     myActionType = actionType;
     myAbsolutePosition = position;
   }
 
-  public ArrayList<String> getGroupPath() {
+  private ActionUrl(@NotNull ArrayList<String> groupPath,
+                    @Nullable String componentId,
+                    int componentType,
+                    @Nullable Object component,
+                    int actionType,
+                    int absolutePosition,
+                    int initialPosition) {
+    myGroupPath = groupPath;
+    myComponentId = componentId;
+    myComponentType = componentType;
+    myComponent = component;
+    myActionType = actionType;
+    myAbsolutePosition = absolutePosition;
+    myInitialPosition = initialPosition;
+  }
+
+  public @NotNull ArrayList<String> getGroupPath() {
     return myGroupPath;
   }
 
-  public String getParentGroup(){
+  public void setGroupPath(@NotNull ArrayList<String> groupPath) {
+    myGroupPath = groupPath;
+  }
+
+  public String getParentGroup() {
     return myGroupPath.get(myGroupPath.size() - 1);
   }
 
   public String getRootGroup() {
-    return myGroupPath.size() >= 1 ? myGroupPath.get(1) : "";
+    return !myGroupPath.isEmpty() ? myGroupPath.get(1) : "";
   }
 
-  public Object getComponent() {
+  public @Nullable String getComponentId() {
+    return myComponentId;
+  }
+
+  // action or string, separator, group
+  public @Nullable Object getComponent() {
+    if (myComponent != null || myComponentType == TYPE_NONE) return myComponent;
+    switch (myComponentType) {
+      case TYPE_SEPARATOR -> myComponent = Separator.getInstance();
+      case TYPE_ACTION -> myComponent = myComponentId;
+      case TYPE_GROUP, TYPE_POPUP_GROUP -> {
+        Objects.requireNonNull(myComponentId);
+        AnAction action = ActionManager.getInstance().getActionOrStub(myComponentId);
+        //noinspection HardCodedStringLiteral
+        Group group = action instanceof ActionGroup o
+                      ? ActionsTreeUtil.createGroup(o, true, null)
+                      : new Group(myComponentId, myComponentId);
+        group.setForceShowAsPopup(myComponentType == TYPE_POPUP_GROUP);
+        myComponent = group;
+      }
+    }
     return myComponent;
   }
 
-  @Nullable
-  public AnAction getComponentAction(){
-    if (myComponent instanceof Separator){
-      return Separator.getInstance();
+  public void setComponent(@Nullable Object c) {
+    myComponent = c;
+    myComponentType =
+      c instanceof Separator ? TYPE_SEPARATOR :
+      c instanceof String || c instanceof AnAction ? TYPE_ACTION :
+      c instanceof Group o ? (o.isForceShowAsPopup() ? TYPE_POPUP_GROUP : TYPE_GROUP) :
+      TYPE_NONE;
+    myComponentId =
+      c instanceof String o ? o :
+      c instanceof Group o ? (StringUtil.isEmpty(o.getId()) ? o.getName() : o.getId()) :
+      null;
+  }
+
+  public @Nullable AnAction getComponentAction() {
+    AnAction action = calculateComponentAction();
+    return action instanceof NonCustomizableAction ? null : action;
+  }
+
+  private @Nullable AnAction calculateComponentAction() {
+    Object component = getComponent();
+    if (component instanceof Separator o) {
+      return o;
     }
-    if (myComponent instanceof String){
-      return ActionManager.getInstance().getAction((String)myComponent);
+    if (component instanceof String o) {
+      return ActionManager.getInstance().getAction(o);
     }
-    if (myComponent instanceof Group){
-      final String id = ((Group)myComponent).getId();
-      if (id == null || id.length() == 0){
-        return ((Group)myComponent).constructActionGroup(true);
+    if (component instanceof Group o) {
+      String id = o.getId();
+      if (StringUtil.isEmpty(id)) {
+        return o.constructActionGroup(true);
       }
       return ActionManager.getInstance().getAction(id);
     }
     return null;
   }
 
+  @MagicConstant(intValues = {ADDED, DELETED, MOVE})
   public int getActionType() {
     return myActionType;
   }
 
-  public void setActionType(final int actionType) {
+  public void setActionType(@MagicConstant(intValues = {ADDED, DELETED, MOVE}) int actionType) {
     myActionType = actionType;
   }
 
@@ -116,23 +187,18 @@ public class ActionUrl implements JDOMExternalizable {
   @Override
   public void readExternal(Element element) throws InvalidDataException {
     myGroupPath = new ArrayList<>();
-    for (Object o : element.getChildren(PATH)) {
-      myGroupPath.add(((Element)o).getAttributeValue(VALUE));
+    for (Element o : element.getChildren(PATH)) {
+      myGroupPath.add(o.getAttributeValue(VALUE));
     }
-    @NlsSafe final String attributeValue = element.getAttributeValue(VALUE);
-    if (element.getAttributeValue(IS_ACTION) != null) {
-      myComponent = attributeValue;
+    myComponentId = element.getAttributeValue(VALUE);
+    myComponentType = element.getAttributeValue(IS_ACTION) != null ? TYPE_ACTION :
+                      element.getAttributeValue(SEPARATOR) != null ? TYPE_SEPARATOR :
+                      element.getAttributeValue(IS_GROUP) != null ? TYPE_GROUP : TYPE_NONE;
+    if (myComponentType == TYPE_GROUP && Boolean.parseBoolean(element.getAttributeValue(FORCE_POPUP))) {
+      myComponentType = TYPE_POPUP_GROUP;
     }
-    else if (element.getAttributeValue(SEPARATOR) != null) {
-      myComponent = Separator.getInstance();
-    }
-    else if (element.getAttributeValue(IS_GROUP) != null) {
-      final AnAction action = ActionManager.getInstance().getAction(attributeValue);
-      myComponent = action instanceof ActionGroup
-                    ? ActionsTreeUtil.createGroup((ActionGroup)action, true, null)
-                    : new Group(attributeValue, attributeValue, null);
-    }
-    myActionType = Integer.parseInt(element.getAttributeValue(ACTION_TYPE));
+    String actionTypeString = element.getAttributeValue(ACTION_TYPE);
+    myActionType = actionTypeString == null ? -1 : Integer.parseInt(actionTypeString);
     myAbsolutePosition = Integer.parseInt(element.getAttributeValue(POSITION));
     DefaultJDOMExternalizer.readExternal(this, element);
   }
@@ -144,134 +210,70 @@ public class ActionUrl implements JDOMExternalizable {
       path.setAttribute(VALUE, s);
       element.addContent(path);
     }
-    if (myComponent instanceof String) {
-      element.setAttribute(VALUE, (String)myComponent);
-      element.setAttribute(IS_ACTION, Boolean.TRUE.toString());
-    }
-    else if (myComponent instanceof Separator) {
-      element.setAttribute(SEPARATOR, Boolean.TRUE.toString());
-    }
-    else if (myComponent instanceof Group) {
-      final String groupId = ((Group)myComponent).getId() != null && ((Group)myComponent).getId().length() != 0
-                             ? ((Group)myComponent).getId()
-                             : ((Group)myComponent).getName();
-      element.setAttribute(VALUE, groupId != null ? groupId : "");
-      element.setAttribute(IS_GROUP, Boolean.TRUE.toString());
+    switch (myComponentType) {
+      case TYPE_SEPARATOR ->
+        element.setAttribute(SEPARATOR, Boolean.TRUE.toString());
+      case TYPE_ACTION -> {
+        element.setAttribute(VALUE, StringUtil.notNullize(myComponentId));
+        element.setAttribute(IS_ACTION, Boolean.TRUE.toString());
+      }
+      case TYPE_GROUP, TYPE_POPUP_GROUP -> {
+        element.setAttribute(VALUE, StringUtil.notNullize(myComponentId));
+        element.setAttribute(IS_GROUP, Boolean.TRUE.toString());
+        element.setAttribute(FORCE_POPUP, Boolean.toString(myComponentType == TYPE_POPUP_GROUP));
+      }
     }
     element.setAttribute(ACTION_TYPE, Integer.toString(myActionType));
     element.setAttribute(POSITION, Integer.toString(myAbsolutePosition));
     DefaultJDOMExternalizer.writeExternal(this, element);
   }
 
-  public boolean isGroupContainsInPath(ActionGroup group){
-    for (String s : myGroupPath) {
-      if (s.equals(group.getTemplatePresentation().getText())) {
-        return true;
-      }
-    }
-    return false;
+  public @NotNull ActionUrl copy() {
+    return new ActionUrl(new ArrayList<>(myGroupPath), myComponentId, myComponentType, myComponent,
+                         myActionType, myAbsolutePosition, myInitialPosition);
   }
 
-  public static void changePathInActionsTree(JTree tree, ActionUrl url){
-     if (url.myActionType == ADDED){
-      addPathToActionsTree(tree, url);
-    } else if (url.myActionType == DELETED) {
-      removePathFromActionsTree(tree, url);
-    } else if (url.myActionType == MOVE){
-      movePathInActionsTree(tree, url);
+  public @NotNull ActionUrl getInverted() {
+    ActionUrl copy = copy();
+    if (myActionType == ADDED || myActionType == DELETED) {
+      copy.setActionType(-myActionType);
     }
-  }
-
-  private static void addPathToActionsTree(JTree tree, ActionUrl url) {
-    final TreePath treePath = CustomizationUtil.getTreePath(tree, url);
-    if (treePath == null) return;
-    DefaultMutableTreeNode node = (DefaultMutableTreeNode)treePath.getLastPathComponent();
-    final int absolutePosition = url.getAbsolutePosition();
-    if (node.getChildCount() >= absolutePosition && absolutePosition >= 0) {
-      if (url.getComponent() instanceof Group){
-        node.insert(ActionsTreeUtil.createNode((Group)url.getComponent()), absolutePosition);
-      } else {
-        node.insert(new DefaultMutableTreeNode(url.getComponent()), absolutePosition);
-      }
+    else {
+      copy.setInitialPosition(myAbsolutePosition);
+      copy.setAbsolutePosition(myInitialPosition);
     }
-  }
-
-  private static void removePathFromActionsTree(JTree tree, ActionUrl url) {
-    if (url.myComponent == null) return;
-    final TreePath treePath = CustomizationUtil.getTreePath(tree, url);
-    if (treePath == null) return;
-    DefaultMutableTreeNode node = (DefaultMutableTreeNode)treePath.getLastPathComponent();
-    final int absolutePosition = url.getAbsolutePosition();
-    if (node.getChildCount() > absolutePosition && absolutePosition >= 0) {
-      DefaultMutableTreeNode child = (DefaultMutableTreeNode)node.getChildAt(absolutePosition);
-      if (child.getUserObject().equals(url.getComponent())) {
-        node.remove(child);
-      }
-    }
-  }
-
-  private static void movePathInActionsTree(JTree tree, ActionUrl url){
-    final TreePath treePath = CustomizationUtil.getTreePath(tree, url);
-    if (treePath != null){
-      if (treePath.getLastPathComponent() != null){
-        final DefaultMutableTreeNode parent = ((DefaultMutableTreeNode)treePath.getLastPathComponent());
-        final int absolutePosition = url.getAbsolutePosition();
-        final int initialPosition = url.getInitialPosition();
-        if (parent.getChildCount() > absolutePosition && absolutePosition >= 0) {
-          if (parent.getChildCount() > initialPosition && initialPosition >= 0) {
-            final DefaultMutableTreeNode child = (DefaultMutableTreeNode)parent.getChildAt(initialPosition);
-            if (child.getUserObject().equals(url.getComponent())){
-              parent.remove(child);
-              parent.insert(child, absolutePosition);
-            }
-          }
-        }
-      }
-    }
-  }
-
-  public static ArrayList<String> getGroupPath(final TreePath treePath){
-    final ArrayList<String> result = new ArrayList<>();
-    for (int i = 0; i < treePath.getPath().length - 1; i++) {
-      Object o = ((DefaultMutableTreeNode)treePath.getPath()[i]).getUserObject();
-      if (o instanceof Group){
-        result.add(((Group)o).getName());
-      }
-    }
-    return result;
+    return copy;
   }
 
   @Override
-  public boolean equals(Object object){
-    if (!(object instanceof ActionUrl)){
-      return false;
-    }
-    ActionUrl url = (ActionUrl)object;
-    Object comp = myComponent instanceof Pair ? ((Pair)myComponent).first : myComponent;
-    Object thatComp = url.myComponent instanceof Pair ? ((Pair)url.myComponent).first : url.myComponent;
-    return Comparing.equal(comp, thatComp) && myGroupPath.equals(url.myGroupPath) && myAbsolutePosition == url.getAbsolutePosition();
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (!(o instanceof ActionUrl url)) return false;
+
+    return myComponentType == url.myComponentType &&
+           myActionType == url.myActionType &&
+           myAbsolutePosition == url.myAbsolutePosition &&
+           myInitialPosition == url.myInitialPosition &&
+           myGroupPath.equals(url.myGroupPath) &&
+           Objects.equals(myComponentId, url.myComponentId);
   }
 
   @Override
   public int hashCode() {
-    int result = myComponent != null ? myComponent.hashCode() : 0;
-    result += 29 * myGroupPath.hashCode();
+    int result = myGroupPath.hashCode();
+    result = 31 * result + Objects.hashCode(myComponentId);
+    result = 31 * result + myComponentType;
+    result = 31 * result + myActionType;
+    result = 31 * result + myAbsolutePosition;
+    result = 31 * result + myInitialPosition;
     return result;
   }
 
-  public void setComponent(final Object object) {
-    myComponent = object;
-  }
-
-  public void setGroupPath(final ArrayList<String> groupPath) {
-    myGroupPath = groupPath;
-  }
-
   @Override
-  @NonNls
   public String toString() {
-    return "ActionUrl{" +
-           "myGroupPath=" + myGroupPath +
+    return "ActionUrl{" + "myGroupPath=" + myGroupPath +
+           ", myComponentId='" + myComponentId + '\'' +
+           ", myComponentType=" + myComponentType +
            ", myComponent=" + myComponent +
            ", myActionType=" + myActionType +
            ", myAbsolutePosition=" + myAbsolutePosition +

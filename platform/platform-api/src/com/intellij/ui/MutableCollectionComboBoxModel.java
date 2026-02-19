@@ -1,14 +1,15 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui;
 
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.MutableComboBoxModel;
 import java.util.List;
 
 public class MutableCollectionComboBoxModel<T> extends CollectionComboBoxModel<T> implements MutableComboBoxModel<T> {
-
+  @Contract(mutates = "param1")
   public MutableCollectionComboBoxModel(@NotNull List<T> items) {
     super(items);
   }
@@ -17,6 +18,7 @@ public class MutableCollectionComboBoxModel<T> extends CollectionComboBoxModel<T
     super();
   }
 
+  @Contract(mutates = "param1")
   public MutableCollectionComboBoxModel(@NotNull List<T> items, @Nullable T selection) {
     super(items, selection);
   }

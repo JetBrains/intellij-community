@@ -1,11 +1,15 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.codeStyle;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiPackage;
+import com.intellij.psi.PsiResolveHelper;
 import com.intellij.psi.codeStyle.ReferenceAdjuster;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ArrayUtil;
@@ -13,7 +17,11 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.debugger.fragments.GroovyCodeFragment;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocComment;
-import org.jetbrains.plugins.groovy.lang.psi.*;
+import org.jetbrains.plugins.groovy.lang.psi.GrQualifiedReference;
+import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyRecursiveElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
@@ -29,7 +37,7 @@ import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 /**
  * @author Max Medvedev
  */
-public class GrReferenceAdjuster implements ReferenceAdjuster {
+public final class GrReferenceAdjuster implements ReferenceAdjuster {
 
   public static void shortenAllReferencesIn(@Nullable GroovyPsiElement newTypeElement) {
     if (newTypeElement != null) {
@@ -75,7 +83,7 @@ public class GrReferenceAdjuster implements ReferenceAdjuster {
                                  boolean useFqInJavadoc,
                                  boolean useFqInCode) {
     boolean result = false;
-    if (element instanceof GrQualifiedReference<?> && ((GrQualifiedReference)element).resolve() instanceof PsiClass) {
+    if (element instanceof GrQualifiedReference<?> && ((GrQualifiedReference<?>)element).resolve() instanceof PsiClass) {
       result = shortenReferenceInner((GrQualifiedReference<?>)element, addImports, incomplete, useFqInJavadoc, useFqInCode);
     }
     else if (element instanceof GrReferenceExpression && PsiUtil.isSuperReference(((GrReferenceExpression)element).getQualifier())) {
@@ -144,8 +152,7 @@ public class GrReferenceAdjuster implements ReferenceAdjuster {
       return false;
     }
 
-    if (resolved instanceof PsiClass) {
-      final PsiClass clazz = (PsiClass)resolved;
+    if (resolved instanceof PsiClass clazz) {
       final String qName = clazz.getQualifiedName();
       if (qName != null && addImports && checkIsInnerClass(clazz, ref) && mayInsertImport(ref)) {
         final GroovyFileBase file = (GroovyFileBase)ref.getContainingFile();
@@ -184,13 +191,12 @@ public class GrReferenceAdjuster implements ReferenceAdjuster {
            GroovyCodeStyleSettingsFacade.getInstance(containingClass.getProject()).insertInnerClassImports();
   }
 
-  @Nullable
-  private static <Qualifier extends PsiElement> PsiElement resolveRef(@NotNull GrQualifiedReference<Qualifier> ref, boolean incomplete) {
+  private static @Nullable <Qualifier extends PsiElement> PsiElement resolveRef(@NotNull GrQualifiedReference<Qualifier> ref, boolean incomplete) {
     if (!incomplete) return ref.resolve();
 
     PsiResolveHelper helper = JavaPsiFacade.getInstance(ref.getProject()).getResolveHelper();
     if (ref instanceof GrReferenceElement) {
-      final String classNameText = ((GrReferenceElement)ref).getQualifiedReferenceName();
+      final String classNameText = ((GrReferenceElement<?>)ref).getQualifiedReferenceName();
       if (classNameText == null) return null;
       return helper.resolveReferencedClass(classNameText, ref);
     }
@@ -199,8 +205,7 @@ public class GrReferenceAdjuster implements ReferenceAdjuster {
 
 
   @SuppressWarnings("unchecked")
-  @Nullable
-  private static <Qualifier extends PsiElement> GrQualifiedReference<Qualifier> getCopy(@NotNull GrQualifiedReference<Qualifier> ref) {
+  private static @Nullable <Qualifier extends PsiElement> GrQualifiedReference<Qualifier> getCopy(@NotNull GrQualifiedReference<Qualifier> ref) {
     if (ref.getParent() instanceof GrMethodCall) {
       final GrMethodCall copy = ((GrMethodCall)ref.getParent().copy());
       return (GrQualifiedReference<Qualifier>)copy.getInvokedExpression();
@@ -211,7 +216,7 @@ public class GrReferenceAdjuster implements ReferenceAdjuster {
   private static <Qualifier extends PsiElement> boolean shorteningIsMeaningfully(@NotNull GrQualifiedReference<Qualifier> ref,
                                                                                  boolean useFqInJavadoc, boolean useFqInCode) {
 
-    if (ref instanceof GrReferenceElementImpl && ((GrReferenceElementImpl)ref).isFullyQualified()) {
+    if (ref instanceof GrReferenceElementImpl && ((GrReferenceElementImpl<?>)ref).isFullyQualified()) {
       final GrDocComment doc = PsiTreeUtil.getParentOfType(ref, GrDocComment.class);
       if (doc != null) {
         if (useFqInJavadoc) return false;

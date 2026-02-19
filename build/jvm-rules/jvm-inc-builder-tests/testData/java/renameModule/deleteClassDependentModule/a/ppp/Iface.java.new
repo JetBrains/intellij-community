@@ -1,0 +1,5 @@
+package ppp;
+
+public interface Iface {
+   void foo();
+}

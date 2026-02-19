@@ -2,21 +2,24 @@
 package com.intellij.java.codeInsight.unwrap;
 
 import com.intellij.codeInsight.unwrap.UnwrapTestCase;
-import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.pom.java.LanguageLevel;
+import com.intellij.testFramework.IdeaTestUtil;
 
 public class UnwrapCatchTest extends UnwrapTestCase {
 
   public void testTryWithResources() {
-    LanguageLevelProjectExtension.getInstance(getProject()).setLanguageLevel(LanguageLevel.JDK_1_7);
-    assertUnwrapped("try (AutoCloseable r = null) {\n" +
-                    "    System.out.println();\n" +
-                    "} catch (ClassNotFoundException e) {\n" +
-                    "    <caret>System.out.println();\n"+
-                    "}",
+    IdeaTestUtil.setProjectLanguageLevel(getProject(), LanguageLevel.JDK_1_7);
+    assertUnwrapped("""
+                      try (AutoCloseable r = null) {
+                          System.out.println();
+                      } catch (ClassNotFoundException e) {
+                          <caret>System.out.println();
+                      }""",
 
-                    "try (AutoCloseable r = null) {\n" +
-                    "    System.out.println();\n" +
-                    "}\n");
+                    """
+                      try (AutoCloseable r = null) {
+                          System.out.println();
+                      }
+                      """);
   }
 }

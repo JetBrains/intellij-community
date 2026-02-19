@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.xml.impl;
 
 import com.intellij.util.SmartList;
@@ -6,17 +6,20 @@ import com.intellij.util.xml.XmlName;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 
-/**
- * @author peter
- */
 public final class ChildrenDescriptionsHolder<T extends DomChildDescriptionImpl> {
   private final Map<XmlName, T> myMap = new HashMap<>();
   private final ChildrenDescriptionsHolder<? extends T> myDelegate;
   private volatile List<T> myCached = null;
 
-  public ChildrenDescriptionsHolder(@Nullable final ChildrenDescriptionsHolder<? extends T> delegate) {
+  public ChildrenDescriptionsHolder(final @Nullable ChildrenDescriptionsHolder<? extends T> delegate) {
     myDelegate = delegate;
   }
 
@@ -24,40 +27,36 @@ public final class ChildrenDescriptionsHolder<T extends DomChildDescriptionImpl>
     this(null);
   }
 
-  final T addDescription(@NotNull T t) {
+  T addDescription(@NotNull T t) {
     myMap.put(t.getXmlName(), t);
     myCached = null;
     return t;
   }
 
-  final void addDescriptions(@NotNull Collection<? extends T> collection) {
+  void addDescriptions(@NotNull Collection<? extends T> collection) {
     for (final T t : collection) {
       addDescription(t);
     }
   }
 
-  @Nullable
-  final T getDescription(final XmlName name) {
+  @Nullable T getDescription(final XmlName name) {
     final T t = myMap.get(name);
     if (t != null) return t;
     return myDelegate != null ? myDelegate.getDescription(name) : null;
   }
 
-  @Nullable
-  final T getDescription(@NotNull final String localName, String namespaceKey) {
+  @Nullable T getDescription(final @NotNull String localName, String namespaceKey) {
     return getDescription(new XmlName(localName, namespaceKey));
   }
 
-  @Nullable
-  final T findDescription(@NotNull final String localName) {
+  @Nullable T findDescription(final @NotNull String localName) {
     for (final XmlName xmlName : myMap.keySet()) {
       if (xmlName.getLocalName().equals(localName)) return myMap.get(xmlName);
     }
     return myDelegate != null ? myDelegate.findDescription(localName) : null;
   }
 
-  @NotNull
-  final List<T> getDescriptions() {
+  @NotNull List<T> getDescriptions() {
     final List<T> result = new ArrayList<>();
     dumpDescriptions(result);
     return result;
@@ -80,7 +79,7 @@ public final class ChildrenDescriptionsHolder<T extends DomChildDescriptionImpl>
   }
 
 
-  final void dumpDescriptions(Collection<? super T> to) {
+  void dumpDescriptions(Collection<? super T> to) {
     to.addAll(getSortedDescriptions());
     if (myDelegate != null) {
       myDelegate.dumpDescriptions(to);
@@ -90,14 +89,9 @@ public final class ChildrenDescriptionsHolder<T extends DomChildDescriptionImpl>
   @Override
   public boolean equals(Object o) {
     if (this == o) return true;
-    if (!(o instanceof ChildrenDescriptionsHolder)) return false;
+    if (!(o instanceof ChildrenDescriptionsHolder<?> holder)) return false;
 
-    ChildrenDescriptionsHolder holder = (ChildrenDescriptionsHolder)o;
-
-    if (myDelegate != null ? !myDelegate.equals(holder.myDelegate) : holder.myDelegate != null) return false;
-    if (!myMap.equals(holder.myMap)) return false;
-
-    return true;
+    return Objects.equals(myDelegate, holder.myDelegate) && myMap.equals(holder.myMap);
   }
 
   @Override

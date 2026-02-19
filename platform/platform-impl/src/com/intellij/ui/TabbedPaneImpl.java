@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
 import com.intellij.openapi.actionSystem.ActionManager;
@@ -12,12 +12,14 @@ import org.intellij.lang.annotations.JdkConstants;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.JComponent;
+import javax.swing.SwingUtilities;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import javax.swing.plaf.TabbedPaneUI;
 import javax.swing.plaf.basic.BasicTabbedPaneUI;
-import java.awt.*;
+import java.awt.Component;
+import java.awt.Rectangle;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.lang.reflect.Field;
@@ -81,7 +83,7 @@ public class TabbedPaneImpl extends JBTabbedPane implements TabbedPane {
       }
 
       @Override
-      public void actionPerformed(@NotNull final AnActionEvent e) {
+      public void actionPerformed(final @NotNull AnActionEvent e) {
         int index = getSelectedIndex() + 1;
         if (index >= getTabCount()) {
           index = 0;
@@ -99,7 +101,7 @@ public class TabbedPaneImpl extends JBTabbedPane implements TabbedPane {
       }
 
       @Override
-      public void actionPerformed(@NotNull final AnActionEvent e) {
+      public void actionPerformed(final @NotNull AnActionEvent e) {
         int index = getSelectedIndex() - 1;
         if (index < 0) {
           index = getTabCount() - 1;
@@ -263,9 +265,9 @@ public class TabbedPaneImpl extends JBTabbedPane implements TabbedPane {
    */
   private final class ScrollableTabSupport{
     private final BasicTabbedPaneUI myUI;
-    @NonNls static final String TAB_SCROLLER_NAME = "tabScroller";
-    @NonNls static final String LEADING_TAB_INDEX_NAME = "leadingTabIndex";
-    @NonNls static final String SET_LEADING_TAB_INDEX_METHOD = "setLeadingTabIndex";
+    static final @NonNls String TAB_SCROLLER_NAME = "tabScroller";
+    static final @NonNls String LEADING_TAB_INDEX_NAME = "leadingTabIndex";
+    static final @NonNls String SET_LEADING_TAB_INDEX_METHOD = "setLeadingTabIndex";
 
     ScrollableTabSupport(final BasicTabbedPaneUI ui){
       myUI=ui;

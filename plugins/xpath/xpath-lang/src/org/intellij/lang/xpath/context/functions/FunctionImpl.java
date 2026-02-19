@@ -16,7 +16,6 @@
 package org.intellij.lang.xpath.context.functions;
 
 import com.intellij.openapi.util.text.StringUtil;
-
 import org.intellij.lang.xpath.psi.XPathType;
 import org.jetbrains.annotations.NotNull;
 
@@ -54,9 +53,9 @@ public class FunctionImpl implements Function {
 
   @Override
   public String buildSignature() {
-    final StringBuilder sb = new StringBuilder(getName()).append("(");
-    sb.append(StringUtil.join(Arrays.asList(parameters), StringUtil.createToStringFunction(Parameter.class), ", "));
-    return sb.append(")").toString();
+    return getName() + "(" +
+           StringUtil.join(Arrays.asList(parameters), ", ") +
+           ")";
   }
 
   @Override
@@ -86,9 +85,8 @@ public class FunctionImpl implements Function {
     return parameters;
   }
 
-  @NotNull
   @Override
-  public XPathType getReturnType() {
+  public @NotNull XPathType getReturnType() {
     return returnType;
   }
 

@@ -5,7 +5,11 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiNamedElement;
+import com.intellij.psi.PsiReference;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import org.jetbrains.annotations.NonNls;
@@ -54,6 +58,10 @@ public abstract class PyCommonResolveTestCase extends PythonCommonTestCase {
 
   protected <T extends PsiElement> T assertResolvesTo(final Class<T> aClass, final String name) {
     return assertResolvesTo(aClass, name, null);
+  }
+
+  protected void assertNotResolved() {
+    assertNull(doResolve());
   }
 
   protected <T extends PsiElement> T assertResolvesTo(final Class<T> aClass,

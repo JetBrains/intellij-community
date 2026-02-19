@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.paint;
 
 import com.intellij.ide.ui.UISettings;
@@ -13,7 +13,13 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
-import java.awt.*;
+import java.awt.AlphaComposite;
+import java.awt.BasicStroke;
+import java.awt.Color;
+import java.awt.Font;
+import java.awt.Graphics2D;
+import java.awt.Paint;
+import java.awt.RenderingHints;
 import java.awt.font.LineMetrics;
 import java.awt.geom.Path2D;
 import java.awt.geom.Rectangle2D;
@@ -257,7 +263,7 @@ public enum EffectPainter2D implements RegionPainter2D<Font> {
       }
     },
     WAVE_UNDERSCORE {
-      private final BasicStroke THIN_STROKE = new BasicStroke(.7f);
+      private static final BasicStroke THIN_STROKE = new BasicStroke(.7f);
 
       @Override
       double getPeriod(double height) {

@@ -1,0 +1,44 @@
+<idea-plugin>
+  <extensionPoints>
+    <extensionPoint qualifiedName="com.intellij.virtualFileManagerListener" interface="com.intellij.openapi.vfs.VirtualFileManagerListener" dynamic="true"/>
+
+    <extensionPoint qualifiedName="com.intellij.eelProvider"
+                    interface="com.intellij.platform.eel.provider.EelProvider" dynamic="true"/>
+
+    <extensionPoint qualifiedName="com.intellij.eelMachineResolver"
+                    interface="com.intellij.platform.eel.provider.EelMachineResolver" dynamic="true"/>
+
+    <extensionPoint qualifiedName="com.intellij.languageBundle" beanClass="com.intellij.DynamicBundle$LanguageBundleEP" dynamic="true"/>
+
+    <extensionPoint qualifiedName="com.intellij.multiverse.codeInsightContextProvider" interface="com.intellij.codeInsight.multiverse.CodeInsightContextProvider" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.multiverseEnabler" interface="com.intellij.codeInsight.multiverse.MultiverseEnabler" dynamic="false"/>
+
+    <extensionPoint qualifiedName="com.intellij.filetype.decompiler" beanClass="com.intellij.openapi.fileTypes.FileTypeExtensionPoint" dynamic="true">
+      <with attribute="implementationClass" implements="com.intellij.openapi.fileTypes.BinaryFileDecompiler"/>
+    </extensionPoint>
+
+    <extensionPoint qualifiedName="com.intellij.lang.commenter" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
+      <with attribute="implementationClass" implements="com.intellij.lang.Commenter"/>
+    </extensionPoint>
+
+    <extensionPoint qualifiedName="com.intellij.stubElementTypeHolder" beanClass="com.intellij.psi.stubs.StubElementTypeHolderEP" dynamic="true">
+      <with attribute="class" implements="com.intellij.psi.stubs.StubElementTypeHolderEP"/>
+    </extensionPoint>
+
+    <extensionPoint qualifiedName="com.intellij.iconProvider" interface="com.intellij.ide.IconProvider" dynamic="true"/>
+
+    <extensionPoint qualifiedName="com.intellij.metaLanguage" interface="com.intellij.lang.MetaLanguage" dynamic="true"/>
+
+    <extensionPoint qualifiedName="com.intellij.inspection.basicVisitor" beanClass="com.intellij.psi.BasicInspectionVisitorBean" dynamic="true">
+      <with attribute="class" implements="com.intellij.psi.PsiElementVisitor"/>
+    </extensionPoint>
+
+    <extensionPoint qualifiedName="com.intellij.lang.parserDefinition" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
+      <with attribute="implementationClass" implements="com.intellij.lang.ParserDefinition"/>
+    </extensionPoint>
+
+    <extensionPoint dynamic="true" qualifiedName="com.intellij.lang.substitutor" beanClass="com.intellij.lang.LanguageExtensionPoint">
+      <with attribute="implementationClass" implements="com.intellij.psi.LanguageSubstitutor"/>
+    </extensionPoint>
+  </extensionPoints>
+</idea-plugin>

@@ -1,0 +1,11 @@
+LineBreakpoint created at smartStepIntoVarargFun.kt:13
+LineBreakpoint created at smartStepIntoVarargFun.kt:23
+Run Java
+Connected to the target VM
+smartStepIntoVarargFun.kt:13
+smartStepIntoVarargFun.kt:6
+smartStepIntoVarargFun.kt:23
+smartStepIntoVarargFun.kt:18
+Disconnected from the target VM
+
+Process finished with exit code 0

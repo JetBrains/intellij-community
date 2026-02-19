@@ -1,0 +1,42 @@
+<html>
+<body>
+<p>Reports assignments where a value is assigned but never used later in the code.</p>
+<p><b>Example:</b></p>
+<pre><code>
+  fun foo(): Int = 42
+
+  fun example() {
+      var local = 0
+      print(local)
+      local = 42  // Assigned value is never read
+  }
+</code></pre>
+<ul>
+    <li>After the quick fix, the assignment is deleted:</li>
+</ul>
+<pre><code>
+  fun foo(): Int = 42
+
+  fun example() {
+      var local = 0
+      print(local)
+  }
+</code></pre>
+
+<ul>
+    <li>If the right-hand side (RHS) expression may have side effects, the quick fix will also suggest keeping the RHS expression to
+        preserve those side effects:
+    </li>
+</ul>
+<pre><code>
+  fun foo(): Int = 42
+
+  fun example() {
+      var local = 0
+      print(local)
+      foo()  // The function call is kept for its side effects
+  }
+</code></pre>
+<!-- tooltip end -->
+</body>
+</html>

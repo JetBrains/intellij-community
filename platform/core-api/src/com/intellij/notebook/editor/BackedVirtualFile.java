@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.notebook.editor;
 
 import com.intellij.openapi.vfs.VirtualFile;
@@ -24,8 +24,7 @@ public interface BackedVirtualFile {
   /**
    * Returns the {@link VirtualFile} with the original content if the file is Backed or the file in another case.
    */
-  @NotNull
-  static VirtualFile getOriginFileIfBacked(@NotNull VirtualFile file) {
+  static @NotNull VirtualFile getOriginFileIfBacked(@NotNull VirtualFile file) {
     if (file instanceof BackedVirtualFile) {
       return ((BackedVirtualFile)file).getOriginFile();
     }

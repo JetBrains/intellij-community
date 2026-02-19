@@ -103,13 +103,13 @@ public abstract class HgTest extends AbstractJunitVcsTestCase {
   @After
   public void after() throws Exception {
     EdtTestUtil.runInEdtAndWait(() -> {
-      new RunAll()
-        .append(() -> HgGlobalSettings.getInstance().setHgExecutable(null))
-        .append(() -> AsyncVfsEventsPostProcessorImpl.waitEventsProcessed())
-        .append(() -> myChangeListManager.peer.waitEverythingDoneInTestMode())
-        .append(() -> tearDownFixture())
-        .append(() -> tearDownRepositories())
-        .run();
+      new RunAll(
+        () -> HgGlobalSettings.getInstance().setHgExecutable(null),
+        () -> AsyncVfsEventsPostProcessorImpl.waitEventsProcessed(),
+        () -> myChangeListManager.peer.waitEverythingDoneInTestMode(),
+        () -> tearDownFixture(),
+        () -> tearDownRepositories()
+      ).run();
     });
   }
 
@@ -151,7 +151,6 @@ public abstract class HgTest extends AbstractJunitVcsTestCase {
    * for more details see https://www.mercurial-scm.org/pipermail/mercurial/2014-April/047031.html
    *
    * @param status status as returned by {@link #added(java.lang.String)} and other methods.
-   * @throws IOException
    */
   protected void verifyStatus(String... status) throws IOException {
     verifyStatus(myProjectDir, status);

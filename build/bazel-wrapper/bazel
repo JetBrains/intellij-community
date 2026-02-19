@@ -1,0 +1,7 @@
+#!/bin/bash
+
+set -e -u -o pipefail
+
+_bazel="$BAZEL_REAL"
+unset BAZEL_REAL BAZELISK_SKIP_WRAPPER
+exec "$_bazel" "$@"

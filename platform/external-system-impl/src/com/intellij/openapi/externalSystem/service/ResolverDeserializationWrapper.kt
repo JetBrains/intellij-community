@@ -4,7 +4,9 @@ package com.intellij.openapi.externalSystem.service
 import com.intellij.openapi.externalSystem.model.settings.ExternalSystemExecutionSettings
 import com.intellij.openapi.externalSystem.service.remote.CustomClassDeserializingResolver
 import com.intellij.openapi.externalSystem.service.remote.RemoteExternalSystemProjectResolver
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 class ResolverDeserializationWrapper<S : ExternalSystemExecutionSettings>(
   val delegate: RemoteExternalSystemFacade<S>)
   : RemoteExternalSystemFacade<S> by delegate {

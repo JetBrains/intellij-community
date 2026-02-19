@@ -20,7 +20,14 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiPolyVariantReference;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.PyArgumentList;
+import com.jetbrains.python.psi.PyAssignmentStatement;
+import com.jetbrains.python.psi.PyCallExpression;
+import com.jetbrains.python.psi.PyElement;
+import com.jetbrains.python.psi.PyExpression;
+import com.jetbrains.python.psi.PyRecursiveElementVisitor;
+import com.jetbrains.python.psi.PyReferenceExpression;
+import com.jetbrains.python.psi.PyTargetExpression;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -29,21 +36,33 @@ import org.jetbrains.annotations.NotNull;
  *
  * @author Ilya.Kazakevich
  */
-class DependencyVisitor extends PyRecursiveElementVisitor {
+final class DependencyVisitor extends PyRecursiveElementVisitor {
 
-  @NotNull
-  private final PyElement myElementToFind;
+  private final @NotNull PyElement myElementToFind;
   private boolean myDependencyFound;
 
   /**
    * @param elementToFind what to find
    */
-  DependencyVisitor(@NotNull final PyElement elementToFind) {
+  DependencyVisitor(final @NotNull PyElement elementToFind) {
     myElementToFind = elementToFind;
   }
 
   @Override
-  public void visitPyCallExpression(@NotNull final PyCallExpression node) {
+  public void visitPyTargetExpression(@NotNull PyTargetExpression node) {
+    var value = node.findAssignedValue();
+    if (value != null) {
+      var reference = value.getReference();
+      if (reference != null && reference.isReferenceTo(myElementToFind)) {
+        myDependencyFound = true;
+        return;
+      }
+    }
+    super.visitPyTargetExpression(node);
+  }
+
+  @Override
+  public void visitPyCallExpression(final @NotNull PyCallExpression node) {
     final PyExpression callee = node.getCallee();
     if (callee != null) {
       final PsiReference calleeReference = callee.getReference();

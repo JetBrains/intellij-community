@@ -1,14 +1,21 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.structuralsearch;
 
 import com.intellij.codeInsight.template.TemplateContextType;
-import com.intellij.dupLocator.util.NodeFilter;
 import com.intellij.lang.Language;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiCodeFragment;
+import com.intellij.psi.PsiComment;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.PsiErrorElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiFileFactory;
+import com.intellij.psi.PsiNamedElement;
+import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.structuralsearch.impl.matcher.CompiledPattern;
 import com.intellij.structuralsearch.impl.matcher.GlobalMatchingVisitor;
 import com.intellij.structuralsearch.impl.matcher.PatternTreeContext;
@@ -22,6 +29,7 @@ import com.intellij.structuralsearch.plugin.replace.impl.Replacer;
 import com.intellij.structuralsearch.plugin.ui.Configuration;
 import com.intellij.structuralsearch.plugin.ui.ConfigurationManager;
 import com.intellij.structuralsearch.plugin.ui.UIUtil;
+import com.intellij.util.ReflectionUtil;
 import com.intellij.util.SmartList;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NonNls;
@@ -34,13 +42,12 @@ import java.util.List;
 
 /**
  * Entry point for supporting a specific language in Structural Search.
- *
- * @author Eugene.Kudelevsky
  */
 public abstract class StructuralSearchProfile {
   public static final ExtensionPointName<StructuralSearchProfile> EP_NAME =
     ExtensionPointName.create("com.intellij.structuralsearch.profile");
-  @NonNls protected static final String PATTERN_PLACEHOLDER = "$$PATTERN_PLACEHOLDER$$";
+  protected static final @NonNls String PATTERN_PLACEHOLDER = "$$PATTERN_PLACEHOLDER$$";
+  private Boolean myReplaceSupported;
 
   /**
    * Creates the pattern PSI tree which is stored inside CompiledPattern.
@@ -63,23 +70,21 @@ public abstract class StructuralSearchProfile {
    * @param globalVisitor  the global matching visitor which the created matching visitor can use to e.g. retrieve the current element to match.
    * @return a language specific matching visitor
    */
-  @NotNull
-  public abstract PsiElementVisitor createMatchingVisitor(@NotNull GlobalMatchingVisitor globalVisitor);
+  public abstract @NotNull PsiElementVisitor createMatchingVisitor(@NotNull GlobalMatchingVisitor globalVisitor);
 
   /**
-   * Filter to filter out uninteresting elements that should not be matched. Usually white space and error elements.
+   * @return {@code true} for elements that should be matched. Usually {@code false} for white space and error elements.
    */
-  @NotNull
-  public abstract NodeFilter getLexicalNodesFilter();
+  public boolean isMatchNode(PsiElement element) {
+    return !(element instanceof PsiWhiteSpace) && !(element instanceof PsiErrorElement);
+  }
 
   /**
    * Creates language specific compiled pattern.
    */
-  @NotNull
-  public abstract CompiledPattern createCompiledPattern();
+  public abstract @NotNull CompiledPattern createCompiledPattern();
 
-  @NotNull
-  public List<MatchPredicate> getCustomPredicates(@NotNull MatchVariableConstraint constraint, @NotNull String name, @NotNull MatchOptions options) {
+  public @NotNull List<MatchPredicate> getCustomPredicates(@NotNull MatchVariableConstraint constraint, @NotNull String name, @NotNull MatchOptions options) {
     return Collections.emptyList();
   }
 
@@ -92,8 +97,7 @@ public abstract class StructuralSearchProfile {
    * Converts query text into PSI tree.
    * @param text  the text of the search query.
    */
-  @NotNull
-  public PsiElement @NotNull [] createPatternTree(@NotNull String text,
+  public @NotNull PsiElement @NotNull [] createPatternTree(@NotNull String text,
                                                   @NotNull PatternTreeContext context,
                                                   @NotNull LanguageFileType fileType,
                                                   @NotNull Language language,
@@ -103,13 +107,12 @@ public abstract class StructuralSearchProfile {
     return doCreatePatternTree(text, context, fileType, language, project, physical, getContext(text, language, contextId));
   }
 
-  @NotNull
-  public PsiElement @NotNull [] createPatternTree(@NotNull String text,
-                                                  @NotNull PatternContextInfo contextInfo,
-                                                  @NotNull LanguageFileType fileType,
-                                                  @NotNull Language language,
-                                                  @NotNull Project project,
-                                                  boolean physical) {
+  public @NotNull PsiElement @NotNull [] createPatternTree(@NotNull String text,
+                                                           @NotNull PatternContextInfo contextInfo,
+                                                           @NotNull LanguageFileType fileType,
+                                                           @NotNull Language language,
+                                                           @NotNull Project project,
+                                                           boolean physical) {
     String contextConstraint = contextInfo.getContextConstraint();
     if (StringUtil.isEmpty(contextConstraint)) {
       PatternContext patternContext = contextInfo.getPatternContext();
@@ -119,18 +122,17 @@ public abstract class StructuralSearchProfile {
     return doCreatePatternTree(text, contextInfo.getTreeContext(), fileType, language, project, physical, getContextByConstraint(contextConstraint, project));
   }
 
-  @NotNull
-  private PsiElement @NotNull [] doCreatePatternTree(@NotNull String text,
-                                                     @NotNull PatternTreeContext context,
-                                                     @NotNull LanguageFileType fileType,
-                                                     @NotNull Language language,
-                                                     @NotNull Project project,
-                                                     boolean physical,
-                                                     @NotNull String strContext) {
+  private @NotNull PsiElement @NotNull [] doCreatePatternTree(@NotNull String text,
+                                                              @NotNull PatternTreeContext context,
+                                                              @NotNull LanguageFileType fileType,
+                                                              @NotNull Language language,
+                                                              @NotNull Project project,
+                                                              boolean physical,
+                                                              @NotNull String strContext) {
     String placeholderName = getPlaceholderVarName();
     final String patternInContext = (context == PatternTreeContext.File) ? text : strContext.replace(placeholderName, text);
 
-    @NonNls final String name = "__dummy." + fileType.getDefaultExtension();
+    final @NonNls String name = "__dummy." + fileType.getDefaultExtension();
     final PsiFile file = PsiFileFactory.getInstance(project).createFileFromText(name, language, patternInContext, physical, true);
     if (file == null) {
       return PsiElement.EMPTY_ARRAY;
@@ -173,50 +175,45 @@ public abstract class StructuralSearchProfile {
     return result.toArray(PsiElement.EMPTY_ARRAY);
   }
 
-  @NotNull
-  public List<PatternContext> getPatternContexts() {
+  public @NotNull List<PatternContext> getPatternContexts() {
     return Collections.emptyList();
   }
 
-  @NotNull
-  protected String getPlaceholderVarName() {
+  protected @NotNull String getPlaceholderVarName() {
     return PATTERN_PLACEHOLDER;
   }
 
-  @NotNull
-  protected String getContext(@NotNull String pattern, @Nullable Language language, @Nullable String contextId) {
+  protected @NotNull String getContext(@NotNull String pattern, @Nullable Language language, @Nullable String contextId) {
     return getPlaceholderVarName();
   }
 
-  @NotNull
-  private String getContextByConstraint(@NotNull String contextConstraint, @NotNull Project project) {
+  private @NotNull String getContextByConstraint(@NotNull String contextConstraint, @NotNull Project project) {
     Configuration configuration = ConfigurationManager.getInstance(project).findConfigurationByName(contextConstraint);
     return configuration != null ? configuration.getMatchOptions().getSearchPattern() : getPlaceholderVarName();
   }
 
-  @Nullable
-  public PsiCodeFragment createCodeFragment(@NotNull Project project, @NotNull String text, @Nullable String contextId) {
+  public @Nullable PsiCodeFragment createCodeFragment(@NotNull Project project, @NotNull String text, @Nullable String contextId) {
     return null;
   }
 
   /**
    * This method is called while holding a read action.
    */
-  @NotNull
-  public String getCodeFragmentText(@NotNull PsiFile fragment) {
+  public @NotNull String getCodeFragmentText(@NotNull PsiFile fragment) {
     return fragment.getText();
   }
 
-  @NotNull
-  public abstract Class<? extends TemplateContextType> getTemplateContextTypeClass();
+  public @NotNull Class<? extends TemplateContextType> getTemplateContextTypeClass(Language dialect) {
+    return getTemplateContextTypeClass();
+  }
 
-  @Nullable
-  public LanguageFileType detectFileType(@NotNull PsiElement context) {
+  public abstract @NotNull Class<? extends TemplateContextType> getTemplateContextTypeClass();
+
+  public @Nullable LanguageFileType detectFileType(@NotNull PsiElement context) {
     return null;
   }
 
-  @Nullable
-  public StructuralReplaceHandler getReplaceHandler(@NotNull Project project, @NotNull ReplaceOptions replaceOptions) {
+  public @Nullable StructuralReplaceHandler getReplaceHandler(@NotNull Project project, @NotNull ReplaceOptions replaceOptions) {
     return null;
   }
 
@@ -237,8 +234,17 @@ public abstract class StructuralSearchProfile {
   public void checkSearchPattern(@NotNull CompiledPattern pattern) {}
 
   public void checkReplacementPattern(@NotNull Project project, @NotNull ReplaceOptions options) {
-    final String fileType = StringUtil.toLowerCase(options.getMatchOptions().getFileType().getName());
-    throw new UnsupportedPatternException(SSRBundle.message("replacement.not.supported.for.filetype", fileType));
+    if (isReplaceSupported()) return;
+    final LanguageFileType fileType = options.getMatchOptions().getFileType();
+    if (fileType == null) return;
+    final String fileTypeName = StringUtil.toLowerCase(fileType.getName());
+    throw new UnsupportedPatternException(SSRBundle.message("replacement.not.supported.for.filetype", fileTypeName));
+  }
+
+  private boolean isReplaceSupported() {
+    if (myReplaceSupported != null) return myReplaceSupported;
+    Class<?> declaringClass = ReflectionUtil.getMethodDeclaringClass(getClass(), "getReplaceHandler", Project.class, ReplaceOptions.class);
+    return myReplaceSupported = !StructuralSearchProfile.class.equals(declaringClass);
   }
 
   public boolean shouldShowProblem(@NotNull PsiErrorElement error) {
@@ -250,15 +256,13 @@ public abstract class StructuralSearchProfile {
     return false;
   }
 
-  @NotNull
-  public String getText(@NotNull PsiElement match, int start, int end) {
+  public @NotNull String getText(@NotNull PsiElement match, int start, int end) {
     final String matchText = match.getText();
     if (start == 0 && end == -1) return matchText;
     return matchText.substring(start, end == -1 ? matchText.length() : end);
   }
 
-  @NotNull
-  public String getTypedVarString(@NotNull PsiElement element) {
+  public @NotNull String getTypedVarString(@NotNull PsiElement element) {
     if (element instanceof PsiNamedElement) {
       final String name = ((PsiNamedElement)element).getName();
       if (name != null) {
@@ -276,19 +280,12 @@ public abstract class StructuralSearchProfile {
     return null;
   }
 
-  @NotNull
-  public PsiElement updateCurrentNode(@NotNull PsiElement node) {
+  public @NotNull PsiElement updateCurrentNode(@NotNull PsiElement node) {
     return node;
   }
 
-  @NotNull
-  public PsiElement extendMatchedByDownUp(@NotNull PsiElement node) {
+  public @NotNull PsiElement extendMatchedByDownUp(@NotNull PsiElement node) {
     return node;
-  }
-
-  @NotNull
-  public PsiElement extendMatchOnePsiFile(@NotNull PsiElement file) {
-    return file;
   }
 
   public LanguageFileType getDefaultFileType(@Nullable LanguageFileType fileType) {
@@ -312,7 +309,7 @@ public abstract class StructuralSearchProfile {
         for (final MatchResult matchResult : match.getChildren()) {
           final PsiElement currentElement = matchResult.getMatch();
 
-          if (buf.length() > 0) {
+          if (!buf.isEmpty()) {
             if (info.isArgumentContext()) {
               buf.append(',');
             }
@@ -350,6 +347,9 @@ public abstract class StructuralSearchProfile {
     else if (info.isHasCommaAfter()) {
       result.delete(info.getAfterDelimiterPos(), info.getAfterDelimiterPos() + 1);
     }
+    else if (info.getStartIndex() < result.length() && StringUtil.isLineBreak(result.charAt(info.getStartIndex()))) {
+      result.deleteCharAt(info.getStartIndex()); // delete line break when count filter matches nothing
+    }
   }
 
   @Contract("null -> false")
@@ -357,8 +357,7 @@ public abstract class StructuralSearchProfile {
     return false;
   }
 
-  @NotNull
-  public Collection<String> getReservedWords() {
+  public @NotNull Collection<String> getReservedWords() {
     return Collections.emptySet();
   }
 
@@ -366,9 +365,12 @@ public abstract class StructuralSearchProfile {
     return false;
   }
 
-  @NotNull
-  public PsiElement getPresentableElement(@NotNull PsiElement element) {
-    return isIdentifier(element) ? element.getParent() : element;
+  public @NotNull PsiElement getPresentableElement(@NotNull PsiElement element) {
+    if (isIdentifier(element)) {
+      final PsiElement parent = element.getParent();
+      if (parent != null) return parent;
+    }
+    return element;
   }
 
   /**
@@ -409,5 +411,17 @@ public abstract class StructuralSearchProfile {
 
   public boolean isApplicableContextConfiguration(@NotNull Configuration configuration) {
     return !configuration.isPredefined();
+  }
+
+  public boolean isReplacementTypedVariable(@NotNull String name) {
+    return name.length() > 1 && name.charAt(0) == '$' && name.charAt(name.length() - 1) == '$';
+  }
+
+  public @NotNull String compileReplacementTypedVariable(@NotNull String name) {
+    return "$" + name + "$";
+  }
+
+  public @NotNull String stripReplacementTypedVariableDecorations(@NotNull String name) {
+    return name.substring(1, name.length() - 1);
   }
 }

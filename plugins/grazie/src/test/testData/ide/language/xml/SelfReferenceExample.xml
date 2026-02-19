@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<shipOrder xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+           xsi:noNamespaceSchemaLocation="Example.xsd">
+
+  <ueberweisen>Tags are code. Sehenswürdigkeit, açúcar, <TYPO descr="Typo: In word 'acucar'">acucar</TYPO> and <TYPO descr="Typo: In word 'ueberweisen'">ueberweisen</TYPO>
+    <acucar/>
+  </ueberweisen>
+
+  <!-- <acucar>Comment 1, ueberweisen</acucar> -->
+  <!-- <ueberweisen>Comment 2</ueberweisen> -->
+  <!-- <ueberweisen/> -->
+</shipOrder>

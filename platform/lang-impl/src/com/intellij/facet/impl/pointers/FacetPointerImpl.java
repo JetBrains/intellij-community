@@ -1,22 +1,11 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.facet.impl.pointers;
 
-import com.intellij.facet.*;
+import com.intellij.facet.Facet;
+import com.intellij.facet.FacetManager;
+import com.intellij.facet.FacetType;
+import com.intellij.facet.FacetTypeRegistry;
 import com.intellij.facet.pointers.FacetPointer;
 import com.intellij.facet.pointers.FacetPointersManager;
 import com.intellij.openapi.Disposable;
@@ -30,7 +19,7 @@ import com.intellij.openapi.util.Disposer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class FacetPointerImpl<F extends Facet> implements FacetPointer<F> {
+public final class FacetPointerImpl<F extends Facet> implements FacetPointer<F> {
   private final FacetPointersManagerImpl myManager;
   private String myModuleName;
   private String myFacetTypeId;
@@ -88,8 +77,7 @@ public class FacetPointerImpl<F extends Facet> implements FacetPointer<F> {
   }
 
   @Override
-  @NotNull
-  public Project getProject() {
+  public @NotNull Project getProject() {
     return myManager.getProject();
   }
 
@@ -99,8 +87,7 @@ public class FacetPointerImpl<F extends Facet> implements FacetPointer<F> {
     return myFacet;
   }
 
-  @Nullable
-  private F findFacet() {
+  private @Nullable F findFacet() {
     final Module module = ModuleManager.getInstance(myManager.getProject()).findModuleByName(myModuleName);
     if (module == null) return null;
 
@@ -111,8 +98,7 @@ public class FacetPointerImpl<F extends Facet> implements FacetPointer<F> {
   }
 
   @Override
-  @Nullable
-  public F findFacet(@NotNull ModulesProvider modulesProvider, @NotNull FacetsProvider facetsProvider) {
+  public @Nullable F findFacet(@NotNull ModulesProvider modulesProvider, @NotNull FacetsProvider facetsProvider) {
     final Module module = modulesProvider.getModule(myModuleName);
     if (module == null) return null;
     final FacetType<F, ?> type = getFacetType();
@@ -121,32 +107,27 @@ public class FacetPointerImpl<F extends Facet> implements FacetPointer<F> {
   }
 
   @Override
-  @NotNull
-  public String getModuleName() {
+  public @NotNull String getModuleName() {
     return myModuleName;
   }
 
   @Override
-  @NotNull
-  public String getFacetName() {
+  public @NotNull String getFacetName() {
     return myFacetName;
   }
 
   @Override
-  @NotNull
-  public String getId() {
+  public @NotNull String getId() {
     return FacetPointersManager.constructId(myModuleName, myFacetTypeId, myFacetName);
   }
 
   @Override
-  @NotNull
-  public String getFacetTypeId() {
+  public @NotNull String getFacetTypeId() {
     return myFacetTypeId;
   }
 
   @Override
-  @NotNull
-  public String getModuleName(@Nullable ModifiableModuleModel moduleModel) {
+  public @NotNull String getModuleName(@Nullable ModifiableModuleModel moduleModel) {
     if (moduleModel != null && myFacet != null) {
       final String newName = moduleModel.getNewName(myFacet.getModule());
       if (newName != null) {
@@ -157,8 +138,7 @@ public class FacetPointerImpl<F extends Facet> implements FacetPointer<F> {
   }
 
   @Override
-  @NotNull
-  public String getFacetName(@NotNull ModulesProvider modulesProvider, @NotNull FacetsProvider facetsProvider) {
+  public @NotNull String getFacetName(@NotNull ModulesProvider modulesProvider, @NotNull FacetsProvider facetsProvider) {
     if (myFacet != null) {
       return modulesProvider.getFacetModel(myFacet.getModule()).getFacetName(myFacet);
     }
@@ -166,8 +146,7 @@ public class FacetPointerImpl<F extends Facet> implements FacetPointer<F> {
   }
 
   @Override
-  @Nullable
-  public FacetType<F, ?> getFacetType() {
+  public @Nullable FacetType<F, ?> getFacetType() {
     //noinspection unchecked
     return FacetTypeRegistry.getInstance().findFacetType(myFacetTypeId);
   }

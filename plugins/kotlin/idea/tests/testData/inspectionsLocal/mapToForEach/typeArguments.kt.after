@@ -1,0 +1,7 @@
+// FIX: Replace with 'forEach'
+
+fun foo() {
+    listOf(1, 2, 3).forEach { print(it) }
+}
+
+// IGNORE_K1

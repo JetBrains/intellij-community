@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.tooling.serialization;
 
 import com.amazon.ion.IonReader;
@@ -6,7 +6,16 @@ import com.amazon.ion.IonType;
 import com.amazon.ion.IonWriter;
 import com.amazon.ion.system.IonReaderBuilder;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.gradle.model.*;
+import org.jetbrains.plugins.gradle.model.DefaultGradleConfiguration;
+import org.jetbrains.plugins.gradle.model.DefaultGradleConvention;
+import org.jetbrains.plugins.gradle.model.DefaultGradleExtension;
+import org.jetbrains.plugins.gradle.model.DefaultGradleExtensions;
+import org.jetbrains.plugins.gradle.model.DefaultGradleProperty;
+import org.jetbrains.plugins.gradle.model.GradleConfiguration;
+import org.jetbrains.plugins.gradle.model.GradleConvention;
+import org.jetbrains.plugins.gradle.model.GradleExtension;
+import org.jetbrains.plugins.gradle.model.GradleExtensions;
+import org.jetbrains.plugins.gradle.model.GradleProperty;
 import org.jetbrains.plugins.gradle.tooling.util.IntObjectMap;
 import org.jetbrains.plugins.gradle.tooling.util.IntObjectMap.SimpleObjectFactory;
 import org.jetbrains.plugins.gradle.tooling.util.ObjectCollector;
@@ -16,7 +25,16 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-import static org.jetbrains.plugins.gradle.tooling.serialization.ToolingStreamApiUtils.*;
+import static org.jetbrains.plugins.gradle.tooling.serialization.ToolingStreamApiUtils.OBJECT_ID_FIELD;
+import static org.jetbrains.plugins.gradle.tooling.serialization.ToolingStreamApiUtils.assertNotNull;
+import static org.jetbrains.plugins.gradle.tooling.serialization.ToolingStreamApiUtils.createIonWriter;
+import static org.jetbrains.plugins.gradle.tooling.serialization.ToolingStreamApiUtils.readBoolean;
+import static org.jetbrains.plugins.gradle.tooling.serialization.ToolingStreamApiUtils.readInt;
+import static org.jetbrains.plugins.gradle.tooling.serialization.ToolingStreamApiUtils.readString;
+import static org.jetbrains.plugins.gradle.tooling.serialization.ToolingStreamApiUtils.readStringList;
+import static org.jetbrains.plugins.gradle.tooling.serialization.ToolingStreamApiUtils.writeBoolean;
+import static org.jetbrains.plugins.gradle.tooling.serialization.ToolingStreamApiUtils.writeString;
+import static org.jetbrains.plugins.gradle.tooling.serialization.ToolingStreamApiUtils.writeStrings;
 
 /**
  * @author Vladislav.Soroka
@@ -28,24 +46,16 @@ public final class GradleExtensionsSerializationService implements Serialization
   @Override
   public byte[] write(GradleExtensions gradleExtensions, Class<? extends GradleExtensions> modelClazz) throws IOException {
     ByteArrayOutputStream out = new ByteArrayOutputStream();
-    IonWriter writer = ToolingStreamApiUtils.createIonWriter().build(out);
-    try {
+    try (IonWriter writer = createIonWriter().build(out)) {
       write(writer, myWriteContext, gradleExtensions);
-    }
-    finally {
-      writer.close();
     }
     return out.toByteArray();
   }
 
   @Override
   public GradleExtensions read(byte[] object, Class<? extends GradleExtensions> modelClazz) throws IOException {
-    IonReader reader = IonReaderBuilder.standard().build(object);
-    try {
+    try (IonReader reader = IonReaderBuilder.standard().build(object)) {
       return read(reader, myReadContext);
-    }
-    finally {
-      reader.close();
     }
   }
 
@@ -100,6 +110,7 @@ public final class GradleExtensionsSerializationService implements Serialization
           writeString(writer, "description", configuration.getDescription());
           writeBoolean(writer, "visible", configuration.isVisible());
           writeBoolean(writer, "scriptClasspathConfiguration", configuration.isScriptClasspathConfiguration());
+          writeStrings(writer, "declarationAlternatives", configuration.getDeclarationAlternatives());
         }
         writer.stepOut();
       }
@@ -157,8 +168,7 @@ public final class GradleExtensionsSerializationService implements Serialization
     });
   }
 
-  @Nullable
-  private static GradleExtensions read(final IonReader reader, final ReadContext context) {
+  private static @Nullable GradleExtensions read(final IonReader reader, final ReadContext context) {
     if (reader.next() == null) return null;
     reader.stepIn();
 
@@ -181,7 +191,7 @@ public final class GradleExtensionsSerializationService implements Serialization
   }
 
   private static List<DefaultGradleConfiguration> readConfigurations(IonReader reader, ReadContext context) {
-    List<DefaultGradleConfiguration> list = new ArrayList<DefaultGradleConfiguration>();
+    List<DefaultGradleConfiguration> list = new ArrayList<>();
     reader.next();
     reader.stepIn();
     DefaultGradleConfiguration configuration;
@@ -192,8 +202,7 @@ public final class GradleExtensionsSerializationService implements Serialization
     return list;
   }
 
-  @Nullable
-  private static DefaultGradleConfiguration readConfiguration(final IonReader reader, ReadContext context) {
+  private static @Nullable DefaultGradleConfiguration readConfiguration(final IonReader reader, ReadContext context) {
     if (reader.next() == null) return null;
     reader.stepIn();
     DefaultGradleConfiguration configuration =
@@ -204,7 +213,8 @@ public final class GradleExtensionsSerializationService implements Serialization
             assertNotNull(readString(reader, "name")),
             readString(reader, "description"),
             readBoolean(reader, "visible"),
-            readBoolean(reader, "scriptClasspathConfiguration"));
+            readBoolean(reader, "scriptClasspathConfiguration"),
+            readStringList(reader, null));
         }
       });
     reader.stepOut();
@@ -212,7 +222,7 @@ public final class GradleExtensionsSerializationService implements Serialization
   }
 
   private static List<DefaultGradleConvention> readConventions(IonReader reader, ReadContext context) {
-    List<DefaultGradleConvention> list = new ArrayList<DefaultGradleConvention>();
+    List<DefaultGradleConvention> list = new ArrayList<>();
     reader.next();
     reader.stepIn();
     DefaultGradleConvention entry;
@@ -223,8 +233,7 @@ public final class GradleExtensionsSerializationService implements Serialization
     return list;
   }
 
-  @Nullable
-  private static DefaultGradleConvention readConvention(final IonReader reader, ReadContext context) {
+  private static @Nullable DefaultGradleConvention readConvention(final IonReader reader, ReadContext context) {
     if (reader.next() == null) return null;
     reader.stepIn();
     DefaultGradleConvention convention =
@@ -239,7 +248,7 @@ public final class GradleExtensionsSerializationService implements Serialization
   }
 
   private static List<DefaultGradleExtension> readExtensions(IonReader reader, ReadContext context) {
-    List<DefaultGradleExtension> list = new ArrayList<DefaultGradleExtension>();
+    List<DefaultGradleExtension> list = new ArrayList<>();
     reader.next();
     reader.stepIn();
     DefaultGradleExtension entry;
@@ -250,8 +259,7 @@ public final class GradleExtensionsSerializationService implements Serialization
     return list;
   }
 
-  @Nullable
-  private static DefaultGradleExtension readExtension(final IonReader reader, ReadContext context) {
+  private static @Nullable DefaultGradleExtension readExtension(final IonReader reader, ReadContext context) {
     if (reader.next() == null) return null;
     reader.stepIn();
     DefaultGradleExtension convention =
@@ -266,7 +274,7 @@ public final class GradleExtensionsSerializationService implements Serialization
   }
 
   private static List<DefaultGradleProperty> readGradleProperties(IonReader reader, ReadContext context) {
-    List<DefaultGradleProperty> list = new ArrayList<DefaultGradleProperty>();
+    List<DefaultGradleProperty> list = new ArrayList<>();
     reader.next();
     reader.stepIn();
     DefaultGradleProperty entry;
@@ -277,8 +285,7 @@ public final class GradleExtensionsSerializationService implements Serialization
     return list;
   }
 
-  @Nullable
-  private static DefaultGradleProperty readGradleProperty(final IonReader reader, ReadContext context) {
+  private static @Nullable DefaultGradleProperty readGradleProperty(final IonReader reader, ReadContext context) {
     if (reader.next() == null) return null;
     reader.stepIn();
     DefaultGradleProperty convention =
@@ -293,19 +300,19 @@ public final class GradleExtensionsSerializationService implements Serialization
   }
 
   private static class ReadContext {
-    private final IntObjectMap<DefaultGradleExtensions> objectMap = new IntObjectMap<DefaultGradleExtensions>();
-    private final IntObjectMap<DefaultGradleConfiguration> configurationsMap = new IntObjectMap<DefaultGradleConfiguration>();
-    private final IntObjectMap<DefaultGradleConvention> conventionsMap = new IntObjectMap<DefaultGradleConvention>();
-    private final IntObjectMap<DefaultGradleExtension> extensionsMap = new IntObjectMap<DefaultGradleExtension>();
-    private final IntObjectMap<DefaultGradleProperty> propertiesMap = new IntObjectMap<DefaultGradleProperty>();
+    private final IntObjectMap<DefaultGradleExtensions> objectMap = new IntObjectMap<>();
+    private final IntObjectMap<DefaultGradleConfiguration> configurationsMap = new IntObjectMap<>();
+    private final IntObjectMap<DefaultGradleConvention> conventionsMap = new IntObjectMap<>();
+    private final IntObjectMap<DefaultGradleExtension> extensionsMap = new IntObjectMap<>();
+    private final IntObjectMap<DefaultGradleProperty> propertiesMap = new IntObjectMap<>();
   }
 
   private static class WriteContext {
-    private final ObjectCollector<GradleExtensions, IOException> objectCollector = new ObjectCollector<GradleExtensions, IOException>();
+    private final ObjectCollector<GradleExtensions, IOException> objectCollector = new ObjectCollector<>();
     private final ObjectCollector<GradleConfiguration, IOException> configurationsCollector =
-      new ObjectCollector<GradleConfiguration, IOException>();
+      new ObjectCollector<>();
     private final ObjectCollector<GradleProperty, IOException> propertiesCollector =
-      new ObjectCollector<GradleProperty, IOException>();
+      new ObjectCollector<>();
   }
 }
 

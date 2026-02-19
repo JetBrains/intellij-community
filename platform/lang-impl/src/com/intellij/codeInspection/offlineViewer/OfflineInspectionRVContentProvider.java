@@ -1,28 +1,41 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInspection.offlineViewer;
 
 import com.intellij.codeInspection.CommonProblemDescriptor;
-import com.intellij.codeInspection.ex.*;
+import com.intellij.codeInspection.ex.GlobalInspectionContextImpl;
+import com.intellij.codeInspection.ex.InspectionRVContentProvider;
+import com.intellij.codeInspection.ex.InspectionToolWrapper;
+import com.intellij.codeInspection.ex.QuickFixAction;
+import com.intellij.codeInspection.ex.ScopeToolState;
+import com.intellij.codeInspection.ex.Tools;
 import com.intellij.codeInspection.offline.OfflineProblemDescriptor;
 import com.intellij.codeInspection.reference.RefElement;
 import com.intellij.codeInspection.reference.RefEntity;
-import com.intellij.codeInspection.ui.*;
+import com.intellij.codeInspection.ui.InspectionResultsView;
+import com.intellij.codeInspection.ui.InspectionToolPresentation;
+import com.intellij.codeInspection.ui.InspectionTree;
+import com.intellij.codeInspection.ui.InspectionTreeModel;
+import com.intellij.codeInspection.ui.InspectionTreeNode;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.util.containers.FactoryMap;
-import gnu.trove.THashMap;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.Set;
 import java.util.function.Function;
 
-public class OfflineInspectionRVContentProvider extends InspectionRVContentProvider {
+@ApiStatus.Internal
+public final class OfflineInspectionRVContentProvider extends InspectionRVContentProvider {
   private final Map<String, Map<String, Set<OfflineProblemDescriptor>>> myContent;
   private final Map<String, Map<OfflineProblemDescriptor, OfflineDescriptorResolveResult>> myResolvedDescriptor =
-    FactoryMap.create(key -> new THashMap<>());
+    FactoryMap.create(key -> new HashMap<>());
 
   public OfflineInspectionRVContentProvider(@NotNull Map<String, Map<String, Set<OfflineProblemDescriptor>>> content) {
     myContent = content;
@@ -30,21 +43,24 @@ public class OfflineInspectionRVContentProvider extends InspectionRVContentProvi
 
   @Override
   public boolean checkReportedProblems(@NotNull GlobalInspectionContextImpl context,
-                                       @NotNull final InspectionToolWrapper toolWrapper) {
+                                       final @NotNull InspectionToolWrapper toolWrapper) {
     final Map<String, Set<OfflineProblemDescriptor>> content = getFilteredContent(context, toolWrapper);
-    return content != null && !content.values().isEmpty();
+    return content != null && !content.isEmpty();
   }
 
   @Override
-  public Iterable<? extends ScopeToolState> getTools(Tools tools) {
+  public Iterable<ScopeToolState> getTools(Tools tools) {
     return Collections.singletonList(tools.getDefaultState());
   }
 
   @Override
-  public QuickFixAction @NotNull [] getCommonQuickFixes(@NotNull final InspectionToolWrapper toolWrapper, @NotNull final InspectionTree tree) {
+  public QuickFixAction @NotNull [] getCommonQuickFixes(final @NotNull InspectionToolWrapper toolWrapper,
+                                                        final @NotNull InspectionTree tree,
+                                                        CommonProblemDescriptor @NotNull [] descriptors,
+                                                        RefEntity @NotNull [] refElements) {
     GlobalInspectionContextImpl context = tree.getContext();
     InspectionToolPresentation presentation = context.getPresentation(toolWrapper);
-    return getCommonFixes(presentation, tree.getSelectedDescriptors());
+    return getCommonFixes(presentation, descriptors);
   }
 
   @Override
@@ -52,22 +68,22 @@ public class OfflineInspectionRVContentProvider extends InspectionRVContentProvi
     return false;
   }
 
+  @SuppressWarnings("Convert2Diamond")
   @Override
   public void appendToolNodeContent(@NotNull GlobalInspectionContextImpl context,
                                     @NotNull InspectionToolWrapper wrapper,
                                     @NotNull InspectionTreeNode parentNode,
                                     boolean showStructure,
-                                    boolean groupBySeverity, @NotNull final Map<String, Set<RefEntity>> contents,
+                                    boolean groupBySeverity, final @NotNull Map<String, Set<RefEntity>> contents,
                                     @NotNull Function<? super RefEntity, CommonProblemDescriptor[]> problems) {
     final Map<String, Set<OfflineProblemDescriptor>> filteredContent = getFilteredContent(context, wrapper);
     InspectionResultsView view = context.getView();
-    if (filteredContent != null && !filteredContent.values().isEmpty()) {
+    if (filteredContent != null && !filteredContent.isEmpty()) {
       buildTree(context, filteredContent, wrapper, descriptor -> {
                   final RefEntity element = descriptor.getRefElement(context.getRefManager());
                   return new RefEntityContainer<OfflineProblemDescriptor>(element, new OfflineProblemDescriptor[] {descriptor}) {
-                    @Nullable
                     @Override
-                    protected String getModuleName() {
+                    protected @Nullable String getModuleName() {
                       final String module = super.getModuleName();
                       return module == null ? descriptor.getModuleName() : module;
                     }
@@ -77,10 +93,9 @@ public class OfflineInspectionRVContentProvider extends InspectionRVContentProvi
     }
   }
 
-  @Nullable
-  @SuppressWarnings({"UnusedAssignment"})
-  private Map<String, Set<OfflineProblemDescriptor>> getFilteredContent(@NotNull GlobalInspectionContextImpl context,
-                                                                        @NotNull InspectionToolWrapper toolWrapper) {
+  @SuppressWarnings("UnusedAssignment")
+  private @Nullable Map<String, Set<OfflineProblemDescriptor>> getFilteredContent(@NotNull GlobalInspectionContextImpl context,
+                                                                                  @NotNull InspectionToolWrapper toolWrapper) {
     Map<String, Set<OfflineProblemDescriptor>> content = myContent.get(toolWrapper.getShortName());
     if (content == null) return null;
     if (context.getUIOptions().FILTER_RESOLVED_ITEMS) {
@@ -127,9 +142,9 @@ public class OfflineInspectionRVContentProvider extends InspectionRVContentProvi
 
   @Override
   protected void appendDescriptor(@NotNull GlobalInspectionContextImpl context,
-                                  @NotNull final InspectionToolWrapper toolWrapper,
-                                  @NotNull final RefEntityContainer container,
-                                  @NotNull final InspectionTreeNode parent) {
+                                  @NotNull InspectionToolWrapper toolWrapper,
+                                  @NotNull RefEntityContainer container,
+                                  @NotNull InspectionTreeNode parent) {
     InspectionToolPresentation presentation = context.getPresentation(toolWrapper);
     InspectionTreeModel model = context.getView().getTree().getInspectionTreeModel();
     for (OfflineProblemDescriptor descriptor : ((RefEntityContainer<OfflineProblemDescriptor>)container).getDescriptors()) {

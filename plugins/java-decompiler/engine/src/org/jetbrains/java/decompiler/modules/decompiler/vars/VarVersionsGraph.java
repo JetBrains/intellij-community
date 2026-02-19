@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.java.decompiler.modules.decompiler.vars;
 
 import org.jetbrains.java.decompiler.modules.decompiler.decompose.GenericDominatorEngine;
@@ -6,20 +6,27 @@ import org.jetbrains.java.decompiler.modules.decompiler.decompose.IGraph;
 import org.jetbrains.java.decompiler.modules.decompiler.decompose.IGraphNode;
 import org.jetbrains.java.decompiler.util.VBStyleCollection;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 public class VarVersionsGraph {
-  public final VBStyleCollection<VarVersionNode, VarVersionPair> nodes = new VBStyleCollection<>();
+  public final VBStyleCollection<VarVersionNode, VarVersion> nodes = new VBStyleCollection<>();
 
   private GenericDominatorEngine engine;
 
-  public VarVersionNode createNode(VarVersionPair ver) {
+  public VarVersionNode createNode(VarVersion ver) {
     VarVersionNode node;
     nodes.addWithKey(node = new VarVersionNode(ver.var, ver.version), ver);
     return node;
   }
 
-  public void addNodes(Collection<VarVersionNode> colnodes, Collection<VarVersionPair> colpaars) {
+  public void addNodes(Collection<VarVersionNode> colnodes, Collection<VarVersion> colpaars) {
     nodes.addAllWithKey(colnodes, colpaars);
   }
 
@@ -46,11 +53,11 @@ public class VarVersionsGraph {
           marked.add(nd);
         }
 
-        if (nd.preds.isEmpty()) {
+        if (nd.predecessors.isEmpty()) {
           return false;
         }
 
-        for (VarVersionEdge edge : nd.preds) {
+        for (VarVersionEdge edge : nd.predecessors) {
           VarVersionNode pred = edge.source;
           if (!marked.contains(pred) && !domnodes.contains(pred)) {
             lstNodes.add(pred);
@@ -66,7 +73,7 @@ public class VarVersionsGraph {
     Set<VarVersionNode> roots = new HashSet<>();
 
     for (VarVersionNode node : nodes) {
-      if (node.preds.isEmpty()) {
+      if (node.predecessors.isEmpty()) {
         roots.add(node);
       }
     }
@@ -113,7 +120,7 @@ public class VarVersionsGraph {
 
       setVisited.add(node);
 
-      List<VarVersionEdge> lstSuccs = mapNodeSuccs.computeIfAbsent(node, n -> new ArrayList<>(n.succs));
+      List<VarVersionEdge> lstSuccs = mapNodeSuccs.computeIfAbsent(node, n -> new ArrayList<>(n.successors));
       for (; index < lstSuccs.size(); index++) {
         VarVersionNode succ = lstSuccs.get(index).dest;
 

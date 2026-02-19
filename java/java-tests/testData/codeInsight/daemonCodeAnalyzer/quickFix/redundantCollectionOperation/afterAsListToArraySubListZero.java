@@ -1,4 +1,4 @@
-// "Replace with 'Arrays.copyOf()'" "true"
+// "Replace with 'Arrays.copyOf()'" "true-preview"
 import java.util.Arrays;
 
 class Test {

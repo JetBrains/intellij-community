@@ -19,7 +19,7 @@ abstract class ReplaceEndInsertHandler : InsertHandler<LookupElement> {
   override fun handleInsert(context: InsertionContext, item: LookupElement) {
     val element = getLiteral(context) ?: return
     val completed = getCompletedString(item) ?: return
-    val (suffix, quote) = item.getUserData(COMPLETION_DATA_KEY) ?: CompletionData("", '\'')
+    val (completionPrefix, suffix, quote) = item.getUserData(COMPLETION_DATA_KEY) ?: CompletionData("", "", '\'')
     val insertedSuffix = if (context.completionChar == Lookup.REPLACE_SELECT_CHAR) "" else suffix.orEmpty()
     val newText = completed + insertedSuffix
     element.updateText("${quote}$newText${quote}")

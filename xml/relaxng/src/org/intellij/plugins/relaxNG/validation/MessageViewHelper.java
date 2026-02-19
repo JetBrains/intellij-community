@@ -29,9 +29,13 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
-import com.intellij.ui.content.*;
+import com.intellij.ui.content.Content;
+import com.intellij.ui.content.ContentFactory;
+import com.intellij.ui.content.ContentManagerEvent;
+import com.intellij.ui.content.ContentManagerListener;
+import com.intellij.ui.content.ContentManagerUtil;
+import com.intellij.ui.content.MessageView;
 import com.intellij.util.ui.MessageCategory;
-import gnu.trove.THashSet;
 import org.intellij.plugins.relaxNG.RelaxngBundle;
 import org.jetbrains.annotations.NotNull;
 import org.xml.sax.SAXParseException;
@@ -39,6 +43,7 @@ import org.xml.sax.helpers.DefaultHandler;
 
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
 
@@ -47,7 +52,7 @@ public final class MessageViewHelper {
 
   private final Project myProject;
 
-  private final Set<String> myErrors = new THashSet<>();
+  private final Set<String> myErrors = new HashSet<>();
 
   private final @TabTitle String myContentName;
   private final Key<NewErrorTreeViewPanel> myKey;
@@ -76,7 +81,7 @@ public final class MessageViewHelper {
   }
 
   public synchronized void processError(final SAXParseException ex, final boolean warning) {
-    if (myErrors.size() == 0 && myErrorsView == null) {
+    if (myErrors.isEmpty() && myErrorsView == null) {
       myErrorsView = new NewErrorTreeViewPanel(myProject, null, true, true, null);
       myErrorsView.setProcessController(myProcessController);
       openMessageViewImpl();
@@ -115,8 +120,8 @@ public final class MessageViewHelper {
   private void openMessageViewImpl() {
     CommandProcessor commandProcessor = CommandProcessor.getInstance();
     commandProcessor.executeCommand(myProject, () -> {
-      MessageView messageView = MessageView.SERVICE.getInstance(myProject);
-      Content content = ContentFactory.SERVICE.getInstance().createContent(myErrorsView.getComponent(), myContentName, true);
+      MessageView messageView = MessageView.getInstance(myProject);
+      Content content = ContentFactory.getInstance().createContent(myErrorsView.getComponent(), myContentName, true);
       content.putUserData(myKey, myErrorsView);
       messageView.getContentManager().addContent(content);
       messageView.getContentManager().setSelectedContent(content);

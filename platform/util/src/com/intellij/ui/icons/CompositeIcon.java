@@ -3,12 +3,12 @@ package com.intellij.ui.icons;
 
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.Icon;
 
 /**
  * An icon composing and painting a number of icons.
  */
-public interface CompositeIcon extends Icon {
+public interface CompositeIcon extends Icon, ReplaceableIcon {
   /**
    * Returns the icon count.
    */

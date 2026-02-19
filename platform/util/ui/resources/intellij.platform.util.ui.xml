@@ -1,0 +1,19 @@
+<idea-plugin visibility="public">
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <module name="intellij.libraries.aalto.xml"/>
+    <module name="intellij.libraries.caffeine"/>
+    <module name="intellij.libraries.fastutil"/>
+    <module name="intellij.libraries.hash4j"/>
+    <module name="intellij.libraries.imgscalr"/>
+    <module name="intellij.libraries.jbr"/>
+    <module name="intellij.libraries.jsvg"/>
+    <module name="intellij.libraries.kotlinx.coroutines.core"/>
+    <module name="intellij.libraries.kotlinx.serialization.core"/>
+    <module name="intellij.libraries.kotlinx.serialization.protobuf"/>
+    <module name="intellij.libraries.mvstore"/>
+    <module name="intellij.libraries.netty.buffer"/>
+    <module name="intellij.platform.util.ex"/>
+  </dependencies>
+  <!-- endregion -->
+</idea-plugin>

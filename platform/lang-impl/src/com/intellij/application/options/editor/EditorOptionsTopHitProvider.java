@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.application.options.editor;
 
 import com.intellij.ide.ui.OptionsSearchTopHitProvider;
@@ -7,16 +7,14 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
 
-class EditorOptionsTopHitProvider implements OptionsSearchTopHitProvider.ApplicationLevelProvider {
-  @NotNull
+final class EditorOptionsTopHitProvider implements OptionsSearchTopHitProvider.ApplicationLevelProvider {
   @Override
-  public String getId() {
+  public @NotNull String getId() {
     return EditorOptionsPanel.ID;
   }
 
-  @NotNull
   @Override
-  public Collection<OptionDescription> getOptions() {
+  public @NotNull Collection<OptionDescription> getOptions() {
     return EditorOptionsPanelKt.getOptionDescriptors();
   }
 }

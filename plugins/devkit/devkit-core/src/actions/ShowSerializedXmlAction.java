@@ -1,8 +1,13 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.actions;
 
 import com.intellij.CommonBundle;
 import com.intellij.compiler.impl.FileSetCompileScope;
+import com.intellij.ide.ui.IdeUiService;
+import com.intellij.lang.jvm.JvmClass;
+import com.intellij.lang.jvm.source.JvmDeclarationSearch;
+import com.intellij.lang.jvm.util.JvmClassUtil;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.compiler.CompileContext;
@@ -18,17 +23,16 @@ import com.intellij.openapi.roots.OrderEnumerator;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.NlsSafe;
-import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.util.ClassUtil;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.serialization.MutableAccessor;
 import com.intellij.serialization.SerializationException;
 import com.intellij.util.ReflectionUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FList;
+import com.intellij.util.lang.PathClassLoader;
 import com.intellij.util.lang.UrlClassLoader;
 import com.intellij.util.xmlb.XmlSerializer;
 import com.intellij.util.xmlb.XmlSerializerUtil;
@@ -38,35 +42,57 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.DevKitBundle;
 
-import java.io.File;
 import java.lang.reflect.Array;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
-import java.net.MalformedURLException;
-import java.net.URL;
-import java.util.*;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
-public class ShowSerializedXmlAction extends DumbAwareAction {
+public final class ShowSerializedXmlAction extends DumbAwareAction {
   private static final Logger LOG = Logger.getInstance(ShowSerializedXmlAction.class);
 
   @Override
   public void update(@NotNull AnActionEvent e) {
-    e.getPresentation().setEnabled(getEventProject(e) != null && e.getData(CommonDataKeys.PSI_FILE) != null
-                                   && e.getData(CommonDataKeys.EDITOR) != null);
+    e.getPresentation().setEnabled(getEventProject(e) != null &&
+                                   e.getData(CommonDataKeys.PSI_FILE) != null &&
+                                   e.getData(CommonDataKeys.EDITOR) != null);
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
-    final PsiClass psiClass = getPsiClass(e);
-    if (psiClass == null) return;
+    Project project = getEventProject(e);
+    Editor editor = e.getData(CommonDataKeys.EDITOR);
+    PsiFile psiFile = e.getData(CommonDataKeys.PSI_FILE);
+    if (project == null || editor == null || psiFile == null) return;
 
-    final VirtualFile virtualFile = psiClass.getContainingFile().getVirtualFile();
-    final Module module = ModuleUtilCore.findModuleForPsiElement(psiClass);
-    if (module == null || virtualFile == null) return;
+    Pair<VirtualFile, String> fileAndClassName = getJvmFileAndClassName(editor, psiFile);
+    if (fileAndClassName == null) {
+      IdeUiService.getInstance().showErrorHint(editor, DevKitBundle.message("action.ShowSerializedXml.message.caret.must.be.at.class.identifier"));
+      return;
+    }
 
-    final String className = ClassUtil.getJVMClassName(psiClass);
+    VirtualFile virtualFile = fileAndClassName.first;
+    String className = fileAndClassName.second;
+    final Module module = ModuleUtilCore.findModuleForFile(virtualFile, project);
+    if (module == null) {
+      IdeUiService.getInstance().showErrorHint(editor, DevKitBundle.message("action.ShowSerializedXml.message.caret.must.be.at.class.identifier"));
+      return;
+    }
 
-    final Project project = getEventProject(e);
     CompilerManager.getInstance(project).make(new FileSetCompileScope(Collections.singletonList(virtualFile), new Module[]{module}), new CompileStatusNotification() {
       @Override
       public void finished(boolean aborted, int errors, int warnings, @NotNull CompileContext compileContext) {
@@ -77,22 +103,17 @@ public class ShowSerializedXmlAction extends DumbAwareAction {
   }
 
   private static void generateAndShowXml(final Module module, final String className) {
-    final List<URL> urls = new ArrayList<>();
+    final List<Path> files = new ArrayList<>();
     final List<String> list = OrderEnumerator.orderEntries(module).recursively().runtimeOnly().getPathsList().getPathList();
     for (String path : list) {
-      try {
-        urls.add(new File(FileUtil.toSystemIndependentName(path)).toURI().toURL());
-      }
-      catch (MalformedURLException e1) {
-        LOG.info(e1);
-      }
+      files.add(Paths.get(path));
     }
 
     final Project project = module.getProject();
-    UrlClassLoader loader = UrlClassLoader.build().urls(urls).parent(XmlSerializer.class.getClassLoader()).get();
+    PathClassLoader loader = new PathClassLoader(UrlClassLoader.build().files(files).parent(XmlSerializer.class.getClassLoader()));
     final Class<?> aClass;
     try {
-      aClass = Class.forName(className, true, loader);
+      aClass = loader.loadClass(className);
     }
     catch (ClassNotFoundException e) {
       Messages.showErrorDialog(project, DevKitBundle.message("action.ShowSerializedXml.message.cannot.find.class", className),
@@ -128,25 +149,27 @@ public class ShowSerializedXmlAction extends DumbAwareAction {
                                    new String[]{CommonBundle.getOkButtonText()}, 0, Messages.getInformationIcon(), null);
   }
 
-  @Nullable
-  private static PsiClass getPsiClass(AnActionEvent e) {
-    final PsiFile psiFile = e.getData(CommonDataKeys.PSI_FILE);
-    final Editor editor = e.getData(CommonDataKeys.EDITOR);
-    if (editor == null || psiFile == null) return null;
+  private static @Nullable Pair<@NotNull VirtualFile, @NotNull String> getJvmFileAndClassName(Editor editor, PsiFile psiFile) {
     final PsiElement element = psiFile.findElementAt(editor.getCaretModel().getOffset());
-    return PsiTreeUtil.getParentOfType(element, PsiClass.class);
+    if (element == null) return null;
+
+    JvmClass jvmClass = ContainerUtil.findInstance(JvmDeclarationSearch.getElementsByIdentifier(element), JvmClass.class);
+    if (jvmClass == null) return null;
+
+    VirtualFile virtualFile = psiFile.getVirtualFile();
+    String className = JvmClassUtil.getJvmClassName(jvmClass);
+    if (virtualFile == null || className == null) return null;
+    return new Pair<>(virtualFile, className);
   }
 
   private static class SampleObjectGenerator {
     private int myNum;
 
-    @Nullable
-    public Object createValue(Type type, final FList<Type> types) throws Exception {
+    public @Nullable Object createValue(Type type, final FList<Type> types) throws Exception {
       return createValue(type, types, Collections.emptyList());
     }
 
-    @Nullable
-    public Object createValue(Type type, final FList<Type> types, List<Type> elementTypes) throws Exception {
+    public @Nullable Object createValue(Type type, final FList<Type> types, List<Type> elementTypes) throws Exception {
       if (types.contains(type)) return null;
       FList<Type> processedTypes = types.prepend(type);
       final Class<?> valueClass = type instanceof Class ? (Class<Object>)type : (Class<Object>)((ParameterizedType)type).getRawType();
@@ -187,8 +210,7 @@ public class ShowSerializedXmlAction extends DumbAwareAction {
       }
     }
 
-    @NotNull
-    public Object createObject(@NotNull Class<?> aClass, FList<Type> processedTypes) throws Exception {
+    public @NotNull Object createObject(@NotNull Class<?> aClass, FList<Type> processedTypes) throws Exception {
       Object o = ReflectionUtil.newInstance(aClass);
       for (MutableAccessor accessor : XmlSerializerUtil.getAccessors(aClass)) {
         AbstractCollection abstractCollection = accessor.getAnnotation(AbstractCollection.class);
@@ -201,8 +223,7 @@ public class ShowSerializedXmlAction extends DumbAwareAction {
       return o;
     }
 
-    @Nullable
-    private Object createArray(Class<?> valueClass, FList<Type> processedTypes, List<Type> elementTypes) throws Exception {
+    private @NotNull Object createArray(Class<?> valueClass, FList<Type> processedTypes, List<Type> elementTypes) throws Exception {
       final Object[] array = (Object[])Array.newInstance(valueClass.getComponentType(), Math.max(elementTypes.size(), 2));
       for (int i = 0; i < array.length; i++) {
         Type type = elementTypes.isEmpty() ? valueClass.getComponentType() : elementTypes.get(i % elementTypes.size());
@@ -225,8 +246,7 @@ public class ShowSerializedXmlAction extends DumbAwareAction {
       return map;
     }
 
-    @Nullable
-    private Object createCollection(Class<?> aClass, ParameterizedType genericType, FList<Type> processedTypes, List<Type> elementTypes) throws Exception {
+    private @Nullable Object createCollection(Class<?> aClass, ParameterizedType genericType, FList<Type> processedTypes, List<Type> elementTypes) throws Exception {
       Collection<Object> o;
       if (List.class.isAssignableFrom(aClass)) {
         o = new ArrayList<>();

@@ -15,7 +15,8 @@
  */
 package com.intellij.designer.designSurface.feedbacks;
 
-import java.awt.*;
+import java.awt.Color;
+import java.awt.Graphics;
 
 /**
  * @author Alexander Lobas

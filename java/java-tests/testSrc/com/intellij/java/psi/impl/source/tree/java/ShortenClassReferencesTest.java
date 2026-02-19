@@ -18,16 +18,24 @@ package com.intellij.java.psi.impl.source.tree.java;
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.WriteCommandAction;
-import com.intellij.psi.*;
+import com.intellij.psi.CommonClassNames;
+import com.intellij.psi.PsiAnnotation;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiCodeBlock;
+import com.intellij.psi.PsiDeclarationStatement;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementFactory;
+import com.intellij.psi.PsiJavaCodeReferenceElement;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiParameter;
+import com.intellij.psi.PsiTypeElement;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.impl.JavaPsiFacadeEx;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 
-/**
- * @author dsl
- */
 public class ShortenClassReferencesTest extends LightJavaCodeInsightFixtureTestCase {
   private static final String BASE_PATH = PathManagerEx.getTestDataPath() + "/psi/shortenClassRefs";
 
@@ -41,9 +49,10 @@ public class ShortenClassReferencesTest extends LightJavaCodeInsightFixtureTestC
     JavaPsiFacadeEx facade = JavaPsiFacadeEx.getInstanceEx(getProject());
     PsiElementFactory factory = facade.getElementFactory();
     PsiClass aClass = factory.createClass("X");
-    PsiMethod methodFromText = factory.createMethodFromText("void method() {\n" +
-                                                            "    IntelliJIDEARulezz<\n" +
-                                                            "}", null);
+    PsiMethod methodFromText = factory.createMethodFromText("""
+                                                              void method() {
+                                                                  IntelliJIDEARulezz<>
+                                                              }""", null);
     PsiMethod method = (PsiMethod)aClass.add(methodFromText);
     PsiCodeBlock body = method.getBody();
     assertNotNull(body);
@@ -52,10 +61,11 @@ public class ShortenClassReferencesTest extends LightJavaCodeInsightFixtureTestC
     PsiClass javaUtilListClass = facade.findClass(CommonClassNames.JAVA_UTIL_LIST);
     assertNotNull(javaUtilListClass);
     PsiElement resultingElement = referenceElement.bindToElement(javaUtilListClass);
-    assertEquals("List<", resultingElement.getText());
-    assertEquals("void method() {\n" +
-                 "    List<\n" +
-                 "}", method.getText());
+    assertEquals("List<>", resultingElement.getText());
+    assertEquals("""
+                   void method() {
+                       List<>
+                   }""", method.getText());
   }
 
   public void testSCR37254() { doTest(); }
@@ -86,11 +96,12 @@ public class ShortenClassReferencesTest extends LightJavaCodeInsightFixtureTestC
     myFixture.addClass("package p2; public class Outer{}");
     myFixture.configureByText("a.java", "package p2; class Outer1 extends p1.Outer {}");
     doShortenRefs();
-    myFixture.checkResult("package p2;\n" +
-                          "\n" +
-                          "import p1.Outer;\n" +
-                          "\n" +
-                          "class Outer1 extends Outer {}");
+    myFixture.checkResult("""
+                            package p2;
+
+                            import p1.Outer;
+
+                            class Outer1 extends Outer {}""");
   }
 
   public void testWhiteSpaceForMovedTypeAnnotations() {
@@ -100,7 +111,7 @@ public class ShortenClassReferencesTest extends LightJavaCodeInsightFixtureTestC
     WriteCommandAction.runWriteCommandAction(getProject(),
                                              () -> {
                                                PsiTypeElement typeElement = (PsiTypeElement)JavaCodeStyleManager.getInstance(getProject()).shortenClassReferences(((PsiParameter)elementAtCaret).getTypeElement());
-                                               assertTrue(typeElement != null && typeElement.isValid());
+                                               assertTrue(typeElement.isValid());
                                                assertEquals("List<String>", typeElement.getText());
                                              });
 

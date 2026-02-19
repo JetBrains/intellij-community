@@ -15,71 +15,57 @@
  */
 package com.jetbrains.python.inspections;
 
-import com.intellij.codeInspection.InspectionProfile;
-import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.codeInspection.LocalInspectionToolSession;
 import com.intellij.codeInspection.ProblemsHolder;
-import com.intellij.codeInspection.ex.InspectionToolWrapper;
-import com.intellij.openapi.util.JDOMExternalizableStringList;
-import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.PsiElementVisitor;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.inspections.quickfix.ReplaceFunctionWithSetLiteralQuickFix;
-import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.PyCallExpression;
+import com.jetbrains.python.psi.PyElement;
+import com.jetbrains.python.psi.PyExpression;
+import com.jetbrains.python.psi.PyParenthesizedExpression;
+import com.jetbrains.python.psi.PySequenceExpression;
+import com.jetbrains.python.psi.PyStringLiteralExpression;
+import com.jetbrains.python.psi.PyTupleExpression;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
+import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * User: catherine
- *
+ * <p>
  * Inspection to find set built-in function and replace it with set literal
  * available if the selected language level supports set literals.
  */
-public class PySetFunctionToLiteralInspection extends PyInspection {
+public final class PySetFunctionToLiteralInspection extends PyInspection {
 
-  @NotNull
   @Override
-  public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder,
-                                        boolean isOnTheFly,
-                                        @NotNull LocalInspectionToolSession session) {
-    return new Visitor(holder, session);
+  public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder,
+                                                 boolean isOnTheFly,
+                                                 @NotNull LocalInspectionToolSession session) {
+    return new Visitor(holder, PyInspectionVisitor.getContext(session));
   }
 
   private static class Visitor extends PyInspectionVisitor {
-    Visitor(@Nullable ProblemsHolder holder, @NotNull LocalInspectionToolSession session) {
-      super(holder, session);
+    Visitor(@Nullable ProblemsHolder holder, @NotNull TypeEvalContext context) {
+      super(holder, context);
     }
 
     @Override
     public void visitPyCallExpression(final @NotNull PyCallExpression node) {
-      if (!isAvailable(node)) return;
       PyExpression callee = node.getCallee();
       if (node.isCalleeText(PyNames.SET) && callee != null && PyBuiltinCache.isInBuiltins(callee)) {
         PyExpression[] arguments = node.getArguments();
         if (arguments.length == 1) {
           PyElement[] elements = getSetCallArguments(node);
-          if (elements.length != 0)
-              registerProblem(node, PyPsiBundle.message("INSP.NAME.set.function.to.literal"),
-                              new ReplaceFunctionWithSetLiteralQuickFix());
-        }
-      }
-    }
-
-    private static boolean isAvailable(PyCallExpression node) {
-      final InspectionProfile profile = InspectionProjectProfileManager.getInstance(node.getProject()).getCurrentProfile();
-      final InspectionToolWrapper inspectionTool = profile.getInspectionTool("PyCompatibilityInspection", node.getProject());
-      if (inspectionTool != null) {
-        final InspectionProfileEntry inspection = inspectionTool.getTool();
-        if (inspection instanceof PyCompatibilityInspection) {
-          final JDOMExternalizableStringList versions = ((PyCompatibilityInspection)inspection).ourVersions;
-          for (String s : versions) {
-            if (!LanguageLevel.fromPythonVersion(s).supportsSetLiterals()) return false;
+          if (elements.length != 0) {
+            registerProblem(node, PyPsiBundle.message("INSP.NAME.set.function.to.literal"),
+                            new ReplaceFunctionWithSetLiteralQuickFix());
           }
         }
       }
-      return LanguageLevel.forElement(node).supportsSetLiterals();
     }
   }
 
@@ -89,13 +75,15 @@ public class PySetFunctionToLiteralInspection extends PyInspection {
       return PyElement.EMPTY_ARRAY;
     }
     if ((argument instanceof PySequenceExpression || (argument instanceof PyParenthesizedExpression &&
-                  ((PyParenthesizedExpression)argument).getContainedExpression() instanceof PyTupleExpression))) {
+                                                      ((PyParenthesizedExpression)argument).getContainedExpression() instanceof PyTupleExpression))) {
 
-      if (argument instanceof PySequenceExpression)
+      if (argument instanceof PySequenceExpression) {
         return ((PySequenceExpression)argument).getElements();
+      }
       PyExpression tuple = ((PyParenthesizedExpression)argument).getContainedExpression();
-      if (tuple instanceof PyTupleExpression)
+      if (tuple instanceof PyTupleExpression) {
         return ((PyTupleExpression)(tuple)).getElements();
+      }
     }
     return PyElement.EMPTY_ARRAY;
   }

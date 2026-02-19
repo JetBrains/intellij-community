@@ -1,8 +1,13 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.execution.ui.layout.impl;
 
-import com.intellij.openapi.components.*;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.RoamingType;
+import com.intellij.openapi.components.State;
+import com.intellij.openapi.components.Storage;
+import com.intellij.openapi.util.text.Strings;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 
@@ -14,17 +19,17 @@ import java.util.Map;
   name = "RunnerLayoutSettings",
   storages = @Storage(value = "runner.layout.xml", roamingType = RoamingType.DISABLED)
 )
-public class RunnerLayoutSettings implements PersistentStateComponent<Element> {
+public final class RunnerLayoutSettings implements PersistentStateComponent<Element> {
   public static final String NOT_PERSISTENT_ID = "not_persistent_id";
 
   public static RunnerLayoutSettings getInstance() {
-    return ServiceManager.getService(RunnerLayoutSettings.class);
+    return ApplicationManager.getApplication().getService(RunnerLayoutSettings.class);
   }
 
   private final Map<String, RunnerLayout> myRunnerId2Settings = new LinkedHashMap<>();
 
   public RunnerLayout getLayout(@NotNull String id) {
-    if (id == NOT_PERSISTENT_ID) return new RunnerLayout();
+    if (Strings.areSameInstance(id, NOT_PERSISTENT_ID)) return new RunnerLayout();
 
     RunnerLayout layout = myRunnerId2Settings.get(id);
     if (layout == null) {
@@ -49,7 +54,7 @@ public class RunnerLayoutSettings implements PersistentStateComponent<Element> {
   }
 
   @Override
-  public void loadState(@NotNull final Element state) {
+  public void loadState(final @NotNull Element state) {
     final List runners = state.getChildren("runner");
     for (Object each : runners) {
       Element eachRunnerElement = (Element)each;

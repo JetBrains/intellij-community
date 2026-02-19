@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.structureView.customRegions;
 
 import com.intellij.icons.AllIcons;
@@ -23,17 +9,15 @@ import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiElement;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.Icon;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-/**
- * @author Rustam Vishnyakov
- */
 public class CustomRegionTreeElement implements StructureViewTreeElement {
 
   private final PsiElement myStartElement;
@@ -43,6 +27,7 @@ public class CustomRegionTreeElement implements StructureViewTreeElement {
   private final CustomRegionTreeElement myParent;
   private List<CustomRegionTreeElement> mySubRegions;
 
+  @ApiStatus.Internal
   public CustomRegionTreeElement(@NotNull PsiElement startElement,
                                  @NotNull CustomFoldingProvider provider,
                                  @Nullable CustomRegionTreeElement parent) {
@@ -51,6 +36,7 @@ public class CustomRegionTreeElement implements StructureViewTreeElement {
     myParent = parent;
   }
 
+  @ApiStatus.Internal
   public CustomRegionTreeElement(@NotNull PsiElement startElement,
                                  @NotNull CustomFoldingProvider provider) {
     this(startElement, provider, null);
@@ -76,30 +62,22 @@ public class CustomRegionTreeElement implements StructureViewTreeElement {
     return canNavigate();
   }
 
-  @NotNull
   @Override
-  public ItemPresentation getPresentation() {
+  public @NotNull ItemPresentation getPresentation() {
     return new ItemPresentation() {
-      @Nullable
       @Override
-      public String getPresentableText() {
+      public @Nullable String getPresentableText() {
         return myProvider.getPlaceholderText(myStartElement.getText());
       }
 
-      @Nullable
       @Override
-      public String getLocationString() {
-        return null;
-      }
-
-      @Nullable
-      @Override
-      public Icon getIcon(boolean unused) {
+      public @NotNull Icon getIcon(boolean unused) {
         return AllIcons.Nodes.CustomRegion;
       }
     };
   }
 
+  @ApiStatus.Internal
   public void addChild(@NotNull StructureViewTreeElement childElement) {
     if (mySubRegions != null) {
       for (CustomRegionTreeElement subRegion : mySubRegions) {
@@ -128,6 +106,7 @@ public class CustomRegionTreeElement implements StructureViewTreeElement {
     return allElements;
   }
 
+  @ApiStatus.Internal
   public boolean containsElement(StructureViewTreeElement element) {
     Object o = element.getValue();
     if (o instanceof PsiElement) {
@@ -139,6 +118,12 @@ public class CustomRegionTreeElement implements StructureViewTreeElement {
     return false;
   }
 
+  @ApiStatus.Internal
+  public boolean containsOffset(int offset) {
+    return offset >= myStartElement.getTextRange().getStartOffset() && offset <= myEndOffset;
+  }
+
+  @ApiStatus.Internal
   public CustomRegionTreeElement createNestedRegion(@NotNull PsiElement element) {
     if (mySubRegions == null) mySubRegions = new ArrayList<>();
     CustomRegionTreeElement currSubRegion = new CustomRegionTreeElement(element, myProvider, this);
@@ -146,6 +131,7 @@ public class CustomRegionTreeElement implements StructureViewTreeElement {
     return currSubRegion;
   }
 
+  @ApiStatus.Internal
   public CustomRegionTreeElement endRegion(@NotNull PsiElement element) {
     myEndOffset = element.getTextRange().getEndOffset();
     return myParent;

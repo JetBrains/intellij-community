@@ -1,81 +1,85 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.history.core;
 
 import com.intellij.openapi.util.Clock;
 import com.intellij.openapi.util.Pair;
-import com.intellij.util.io.PagePool;
+import com.intellij.util.io.StorageLockContext;
 import com.intellij.util.io.storage.AbstractRecordsTable;
 import com.intellij.util.io.storage.AbstractStorage;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 import java.nio.file.Path;
 
+@ApiStatus.Internal
 public final class LocalHistoryStorage extends AbstractStorage {
+  private static final StorageLockContext STORAGE_LOCK_CONTEXT = new StorageLockContext();
+
   public LocalHistoryStorage(@NotNull Path storageFilePath) throws IOException {
-    super(storageFilePath, true);
+    super(storageFilePath, STORAGE_LOCK_CONTEXT);
   }
 
   @Override
-  protected AbstractRecordsTable createRecordsTable(PagePool pool, @NotNull Path recordsFile) throws IOException {
+  protected AbstractRecordsTable createRecordsTable(@NotNull StorageLockContext pool, @NotNull Path recordsFile) throws IOException {
     return new LocalHistoryRecordsTable(recordsFile, pool);
   }
 
-  public long getFSTimestamp() {
+  public long getFSTimestamp() throws IOException {
     return withReadLock(() -> {
       return ((LocalHistoryRecordsTable)myRecordsTable).getFSTimestamp();
     });
   }
 
-  public void setFSTimestamp(long timestamp) {
+  public void setFSTimestamp(long timestamp) throws IOException {
     withWriteLock(() -> {
       ((LocalHistoryRecordsTable)myRecordsTable).setFSTimestamp(timestamp);
     });
   }
 
-  public long getLastId() {
+  public long getLastId() throws IOException {
     return withReadLock(() -> {
       return ((LocalHistoryRecordsTable)myRecordsTable).getLastId();
     });
   }
 
-  public void setLastId(long lastId) {
+  public void setLastId(long lastId) throws IOException {
     withWriteLock(() -> {
       ((LocalHistoryRecordsTable)myRecordsTable).setLastId(lastId);
     });
   }
 
-  public int getFirstRecord() {
+  public int getFirstRecord() throws IOException {
     return withReadLock(() -> {
       return ((LocalHistoryRecordsTable)myRecordsTable).getFirstRecord();
     });
   }
 
-  public int getLastRecord() {
+  public int getLastRecord() throws IOException {
     return withReadLock(() -> {
       return ((LocalHistoryRecordsTable)myRecordsTable).getLastRecord();
     });
   }
 
-  public int getPrevRecord(int record) {
+  public int getPrevRecord(int record) throws IOException {
     return withReadLock(() -> {
       return ((LocalHistoryRecordsTable)myRecordsTable).getPrevRecord(record);
     });
   }
 
-  public int getNextRecord(int record) {
+  public int getNextRecord(int record) throws IOException {
     return withReadLock(() -> {
       return ((LocalHistoryRecordsTable)myRecordsTable).getNextRecord(record);
     });
   }
 
-  public long getTimestamp(int record) {
+  public long getTimestamp(int record) throws IOException {
     return withReadLock(() -> {
       return ((LocalHistoryRecordsTable)myRecordsTable).getTimestamp(record);
     });
   }
 
-  public Pair<Long, Integer> getOffsetAndSize(int id) {
+  public Pair<Long, Integer> getOffsetAndSize(int id) throws IOException {
     return withReadLock(() -> {
       return Pair.create(myRecordsTable.getAddress(id), myRecordsTable.getSize(id));
     });

@@ -17,8 +17,12 @@
 package com.intellij.openapi.roots.ui.componentsList.layout;
 
 
-import java.awt.*;
+import org.jetbrains.annotations.ApiStatus;
 
+import java.awt.Component;
+import java.awt.Dimension;
+
+@ApiStatus.Internal
 public interface SizeProperty {
   Dimension getSize(Component component);
 

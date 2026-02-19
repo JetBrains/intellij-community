@@ -10,11 +10,10 @@ class X {
     return null;
   }
 
-    @Nullable
-    private static String newMethod(String method, String testName) {
+    private static @Nullable String newMethod(String method, String testName) {
         String strings = method;
         if (strings != null && !strings.isEmpty()) {
-          return strings.substring(0) + testName;
+            return strings.substring(0) + testName;
         }
         return null;
     }

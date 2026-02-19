@@ -15,9 +15,12 @@
  */
 package com.intellij.externalDependencies;
 
+import org.jetbrains.annotations.ApiStatus;
+
 /**
  * Base interface for external dependencies of a project.
  * @see ExternalDependenciesManager
  */
+@ApiStatus.Internal
 public interface ProjectExternalDependency {
 }

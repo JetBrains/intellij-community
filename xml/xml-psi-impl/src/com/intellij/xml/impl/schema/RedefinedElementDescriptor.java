@@ -44,9 +44,11 @@ class RedefinedTypeDescriptor extends ComplexTypeDescriptor {
   @Override
   protected void processElements(XmlSchemaTagsProcessor processor, Map<String, XmlElementDescriptor> map) {
     String typeName = getTypeName();
-    TypeDescriptor descriptor = myOriginalNsDescriptor.getTypeDescriptor(typeName, myOriginalNsDescriptor.getTag());
-    if (descriptor instanceof ComplexTypeDescriptor) {
-      ((ComplexTypeDescriptor)descriptor).processElements(super.createProcessor(map, myOriginalNsDescriptor), map);
+    if (typeName != null) {
+      TypeDescriptor descriptor = myOriginalNsDescriptor.getTypeDescriptor(typeName, myOriginalNsDescriptor.getTag());
+      if (descriptor instanceof ComplexTypeDescriptor) {
+        ((ComplexTypeDescriptor)descriptor).processElements(super.createProcessor(map, myOriginalNsDescriptor), map);
+      }
     }
     super.processElements(createProcessor(map, myDocumentDescriptor), map);
   }

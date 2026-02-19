@@ -1,11 +1,20 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInsight.template.macro;
 
 import com.intellij.codeInsight.completion.CompletionPhase;
 import com.intellij.codeInsight.completion.impl.CompletionServiceImpl;
-import com.intellij.codeInsight.lookup.*;
-import com.intellij.codeInsight.template.*;
+import com.intellij.codeInsight.intention.impl.preview.IntentionPreviewEditor;
+import com.intellij.codeInsight.lookup.Lookup;
+import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.codeInsight.lookup.LookupEvent;
+import com.intellij.codeInsight.lookup.LookupListener;
+import com.intellij.codeInsight.lookup.LookupManager;
+import com.intellij.codeInsight.template.Expression;
+import com.intellij.codeInsight.template.ExpressionContext;
+import com.intellij.codeInsight.template.InvokeActionResult;
+import com.intellij.codeInsight.template.Macro;
+import com.intellij.codeInsight.template.Result;
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
 import com.intellij.codeInsight.template.impl.TemplateState;
 import com.intellij.openapi.application.ApplicationManager;
@@ -25,11 +34,11 @@ public abstract class BaseCompleteMacro extends Macro {
   private final String myName;
   private final boolean myCheckCompletionChar;
 
-  protected BaseCompleteMacro(@NonNls final String name) {
+  protected BaseCompleteMacro(final @NonNls String name) {
     this(name, true);
   }
 
-  protected BaseCompleteMacro(@NonNls final String name, final boolean checkCompletionChar) {
+  protected BaseCompleteMacro(final @NonNls String name, final boolean checkCompletionChar) {
     myName = name;
     myCheckCompletionChar = checkCompletionChar;
   }
@@ -40,13 +49,7 @@ public abstract class BaseCompleteMacro extends Macro {
   }
 
   @Override
-  public String getPresentableName() {
-    return myName + "()";
-  }
-
-  @Override
-  @NotNull
-  public String getDefaultValue() {
+  public @NotNull String getDefaultValue() {
     return "a";
   }
 
@@ -62,8 +65,9 @@ public abstract class BaseCompleteMacro extends Macro {
     final Editor editor = context.getEditor();
 
     final PsiFile psiFile = editor != null ? PsiUtilBase.getPsiFileInEditor(editor, project) : null;
+    if (psiFile == null || editor instanceof IntentionPreviewEditor) return;
     Runnable runnable = () -> {
-      if (project.isDisposed() || editor == null || editor.isDisposed() || psiFile == null || !psiFile.isValid()) return;
+      if (project.isDisposed() || editor.isDisposed() || !psiFile.isValid()) return;
 
       // it's invokeLater, so another completion could have started
       if (CompletionServiceImpl.getCompletionService().getCurrentCompletion() != null) return;
@@ -90,11 +94,11 @@ public abstract class BaseCompleteMacro extends Macro {
     UIUtil.dispatchAllInvocationEvents();
   }
 
-  private static class MyLookupListener implements LookupListener {
+  private static final class MyLookupListener implements LookupListener {
     private final ExpressionContext myContext;
     private final boolean myCheckCompletionChar;
 
-    MyLookupListener(@NotNull final ExpressionContext context, final boolean checkCompletionChar) {
+    MyLookupListener(final @NotNull ExpressionContext context, final boolean checkCompletionChar) {
       myContext = context;
       myCheckCompletionChar = checkCompletionChar;
     }

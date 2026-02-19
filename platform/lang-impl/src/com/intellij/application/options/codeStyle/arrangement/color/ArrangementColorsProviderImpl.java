@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.application.options.codeStyle.arrangement.color;
 
 import com.intellij.openapi.editor.colors.EditorColorsManager;
@@ -7,32 +7,31 @@ import com.intellij.psi.codeStyle.arrangement.std.ArrangementColorsAware;
 import com.intellij.psi.codeStyle.arrangement.std.ArrangementSettingsToken;
 import com.intellij.ui.JBColor;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.*;
+import java.awt.Color;
 import java.util.HashMap;
 import java.util.Map;
 
-/**
- * @author Denis Zhdanov
- */
-public class ArrangementColorsProviderImpl implements ArrangementColorsProvider {
+@ApiStatus.Internal
+public final class ArrangementColorsProviderImpl implements ArrangementColorsProvider {
 
-  @NotNull private final Map<ArrangementSettingsToken, TextAttributes> myNormalAttributesCache   =
+  private final @NotNull Map<ArrangementSettingsToken, TextAttributes> myNormalAttributesCache   =
     new HashMap<>();
-  @NotNull private final Map<ArrangementSettingsToken, TextAttributes> mySelectedAttributesCache =
+  private final @NotNull Map<ArrangementSettingsToken, TextAttributes> mySelectedAttributesCache =
     new HashMap<>();
 
-  @NotNull private final TextAttributes myDefaultNormalAttributes   = new TextAttributes();
-  @NotNull private final TextAttributes myDefaultSelectedAttributes = new TextAttributes();
-  @NotNull private final Color myDefaultNormalBorderColor;
-  @NotNull private final Color myDefaultSelectedBorderColor;
+  private final @NotNull TextAttributes myDefaultNormalAttributes   = new TextAttributes();
+  private final @NotNull TextAttributes myDefaultSelectedAttributes = new TextAttributes();
+  private final @NotNull Color myDefaultNormalBorderColor;
+  private final @NotNull Color myDefaultSelectedBorderColor;
 
-  @Nullable private final ArrangementColorsAware myColorsAware;
+  private final @Nullable ArrangementColorsAware myColorsAware;
 
-  @Nullable private Color myCachedNormalBorderColor;
-  @Nullable private Color myCachedSelectedBorderColor;
+  private @Nullable Color myCachedNormalBorderColor;
+  private @Nullable Color myCachedSelectedBorderColor;
 
   public ArrangementColorsProviderImpl(@Nullable ArrangementColorsAware colorsAware) {
     myColorsAware = colorsAware;
@@ -40,8 +39,8 @@ public class ArrangementColorsProviderImpl implements ArrangementColorsProvider 
     // Default settings.
     myDefaultNormalAttributes.setForegroundColor(UIUtil.getTreeForeground());
     myDefaultNormalAttributes.setBackgroundColor(UIUtil.getPanelBackground());
-    myDefaultSelectedAttributes.setForegroundColor(UIUtil.getTreeSelectionForeground());
-    myDefaultSelectedAttributes.setBackgroundColor(UIUtil.getTreeSelectionBackground());
+    myDefaultSelectedAttributes.setForegroundColor(UIUtil.getTreeSelectionForeground(true));
+    myDefaultSelectedAttributes.setBackgroundColor(UIUtil.getTreeSelectionBackground(true));
     myDefaultNormalBorderColor = JBColor.border();
     Color selectionBorderColor = UIUtil.getTreeSelectionBorderColor();
     if (selectionBorderColor == null) {
@@ -50,9 +49,8 @@ public class ArrangementColorsProviderImpl implements ArrangementColorsProvider 
     myDefaultSelectedBorderColor = selectionBorderColor;
   }
 
-  @NotNull
   @Override
-  public Color getBorderColor(boolean selected) {
+  public @NotNull Color getBorderColor(boolean selected) {
     final Color cached;
     if (selected) {
       cached = myCachedSelectedBorderColor;
@@ -80,9 +78,8 @@ public class ArrangementColorsProviderImpl implements ArrangementColorsProvider 
     return result;
   }
 
-  @NotNull
   @Override
-  public TextAttributes getTextAttributes(@NotNull ArrangementSettingsToken token, boolean selected) {
+  public @NotNull TextAttributes getTextAttributes(@NotNull ArrangementSettingsToken token, boolean selected) {
     final TextAttributes cached;
     if (selected) {
       cached = mySelectedAttributesCache.get(token);

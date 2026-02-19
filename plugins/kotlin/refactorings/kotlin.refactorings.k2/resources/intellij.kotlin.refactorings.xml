@@ -1,0 +1,114 @@
+<idea-plugin visibility="internal" package="org.jetbrains.kotlin.idea.k2.refactoring">
+  <resource-bundle>messages.KotlinBundle</resource-bundle>
+  <dependencies>
+    <module name="intellij.kotlin.searching"/>
+    <module name="intellij.kotlin.refactorings.move"/>
+  </dependencies>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <projectService
+            serviceInterface="org.jetbrains.kotlin.idea.refactoring.introduce.KotlinIntroduceVariableService"
+            serviceImplementation="org.jetbrains.kotlin.idea.k2.refactoring.introduce.introduceVariable.KotlinIntroduceVariableServiceK2Impl"
+    />
+
+    <applicationService serviceImplementation="org.jetbrains.kotlin.idea.k2.refactoring.KotlinFirRefactoringsSettings"/>
+    <applicationService serviceImplementation="org.jetbrains.kotlin.idea.k2.refactoring.K2CommonRefactoringSettings"
+                        serviceInterface="org.jetbrains.kotlin.idea.refactoring.KotlinCommonRefactoringSettings"/>
+    <applicationService serviceImplementation="org.jetbrains.kotlin.idea.k2.refactoring.memberInfo.K2MemberInfoSupport"
+                        serviceInterface="org.jetbrains.kotlin.idea.refactoring.memberInfo.KotlinMemberInfoSupport"/>
+    <applicationService serviceImplementation="org.jetbrains.kotlin.idea.k2.refactoring.K2ReferenceMutateService"
+                        serviceInterface="org.jetbrains.kotlin.idea.references.KtReferenceMutateService"/>
+    <applicationService
+            serviceInterface="org.jetbrains.kotlin.idea.refactoring.pushDown.KotlinPushDownProcessorProvider"
+            serviceImplementation="org.jetbrains.kotlin.idea.k2.refactoring.pushDown.K2PushDownProcessorProvider"/>
+    <refactoring.pullUpHelperFactory language="kotlin"
+                                     implementationClass="org.jetbrains.kotlin.idea.k2.refactoring.pullUp.K2PullUpHelperFactory"/>
+    <applicationService
+            serviceInterface="org.jetbrains.kotlin.idea.refactoring.pullUp.KotlinPullUpConflictSearcher"
+            serviceImplementation="org.jetbrains.kotlin.idea.k2.refactoring.pullUp.K2PullUpConflictSearcher"/>
+    <applicationService
+            serviceInterface="org.jetbrains.kotlin.idea.refactoring.memberInfo.KotlinMemberInfoStorageSupport"
+            serviceImplementation="org.jetbrains.kotlin.idea.k2.refactoring.pullUp.K2MemberInfoStorageSupport"/>
+    <applicationService
+            serviceInterface="org.jetbrains.kotlin.idea.refactoring.introduce.extractClass.KotlinExtractSuperConflictSearcher"
+            serviceImplementation="org.jetbrains.kotlin.idea.k2.refactoring.extractClass.K2ExtractSuperConflictSearcher"/>
+    <applicationService
+            serviceInterface="org.jetbrains.kotlin.idea.refactoring.introduce.extractClass.KotlinExtractSuperRefactoring"
+            serviceImplementation="org.jetbrains.kotlin.idea.k2.refactoring.extractClass.K2ExtractSuperRefactoring"/>
+    <lang.refactoringSupport language="kotlin"
+                             implementationClass="org.jetbrains.kotlin.idea.k2.refactoring.KotlinFirRefactoringSupportProvider"/>
+    <refactoring.safeDeleteProcessor
+            id="kotlinProcessor"
+            implementation="org.jetbrains.kotlin.idea.k2.refactoring.safeDelete.KotlinFirSafeDeleteProcessor"
+            order="before javaProcessor"/>
+    <refactoring.changeSignatureUsageProcessor
+            implementation="org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.KotlinChangeSignatureUsageProcessor"/>
+
+    <suggestedRefactoringSupport
+            language="kotlin"
+            implementationClass="org.jetbrains.kotlin.idea.k2.refactoring.suggested.KotlinSuggestedRefactoringSupport"/>
+
+    <refactoring.introduceParameterMethodUsagesProcessor
+            implementation="org.jetbrains.kotlin.idea.k2.refactoring.introduceParameter.KotlinIntroduceParameterMethodUsageProcessor"/>
+
+    <java.changeSignature.converter language="kotlin" implementationClass="org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.KotlinJavaChangeInfoConverter"/>
+    <changeSignature.usageProvider language="kotlin" implementationClass="org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.KotlinChangeSignatureUsageProvider"/>
+    <inlineActionHandler implementation="org.jetbrains.kotlin.idea.k2.refactoring.inline.KotlinInlinePropertyHandler"/>
+    <inlineActionHandler implementation="org.jetbrains.kotlin.idea.k2.refactoring.inline.KotlinInlineFunctionHandler"/>
+    <inlineActionHandler implementation="org.jetbrains.kotlin.idea.k2.refactoring.inline.KotlinInlineAnonymousFunctionHandler"/>
+    <inlineActionHandler implementation="org.jetbrains.kotlin.idea.k2.refactoring.inline.KotlinInlineTypeAliasHandler"/>
+    <refactoring.inlineHandler
+            language="kotlin"
+            implementationClass="org.jetbrains.kotlin.idea.k2.refactoring.inline.JavaToKotlinInlineHandler"/>
+
+    <refactoring.copyHandler
+            id="kotlinClass"
+            implementation="org.jetbrains.kotlin.idea.k2.refactoring.copy.CopyKotlinDeclarationsHandler"
+            order="first" />
+    <updateAddedFileProcessor implementation="org.jetbrains.kotlin.idea.k2.refactoring.copy.KotlinUpdateAddedFileProcessor" order="first"/>
+
+    <registryKey defaultValue="true" description="Show scope chooser for kotlin extract function refactoring"
+                 key="k2.extract.function.scope.chooser"/>
+  </extensions>
+
+  <extensions defaultExtensionNs="org.jetbrains.kotlin">
+    <codeinsight.quickfix.registrar implementation="org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.quickFix.ChangeSignatureQuickFixesRegistrar"/>
+  </extensions>
+
+  <extensionPoints>
+    <extensionPoint
+            qualifiedName="org.jetbrains.kotlin.extractFunctionDescriptorModifier"
+            interface="org.jetbrains.kotlin.idea.k2.refactoring.extractFunction.ExtractFunctionDescriptorModifier"
+            dynamic="true"/>
+    <extensionPoint
+            qualifiedName="org.jetbrains.kotlin.changeSignatureConflictFilter"
+            interface="org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.KotlinChangeSignatureConflictFilter"
+            dynamic="true"/>
+  </extensionPoints>
+
+  <actions>
+    <action class="org.jetbrains.kotlin.idea.k2.refactoring.internal.ShortenSelectionAction" internal="true">
+      <add-to-group group-id="KotlinInternalGroup"/>
+    </action>
+    <action id="ExtractFunction" class="org.jetbrains.kotlin.idea.k2.refactoring.extractFunction.ExtractK2FunctionAction"
+            use-shortcut-of="ExtractMethod">
+      <add-to-group group-id="IntroduceActionsGroup" anchor="after" relative-to-action="ExtractMethod"/>
+      <add-to-group group-id="Floating.CodeToolbar.Extract" anchor="first"/>
+    </action>
+    <action id="ExtractFunctionToScope" class="org.jetbrains.kotlin.idea.k2.refactoring.extractFunction.ExtractK2FunctionToScopeAction">
+      <keyboard-shortcut keymap="$default" first-keystroke="control alt shift M"/>
+      <add-to-group group-id="IntroduceActionsGroup" anchor="after" relative-to-action="ExtractFunction"/>
+    </action>
+    <action id="IntroduceProperty" class="org.jetbrains.kotlin.idea.k2.refactoring.introduceProperty.IntroduceK2PropertyAction"
+            use-shortcut-of="IntroduceField">
+      <add-to-group group-id="IntroduceActionsGroup" anchor="after" relative-to-action="IntroduceField"/>
+    </action>
+
+    <action id="IntroduceTypeAlias" class="org.jetbrains.kotlin.idea.k2.refactoring.introduceTypeAlias.IntroduceTypeAliasAction">
+      <keyboard-shortcut keymap="$default" first-keystroke="control alt shift A"/>
+      <add-to-group group-id="IntroduceActionsGroup" anchor="after" relative-to-action="IntroduceProperty"/>
+    </action>
+
+  </actions>
+</idea-plugin>
+

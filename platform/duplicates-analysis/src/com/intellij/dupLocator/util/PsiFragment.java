@@ -68,8 +68,7 @@ public abstract class PsiFragment {
                  : null;
   }
 
-  @NotNull
-  private static Language doGetLanguageForElement(@NotNull PsiElement element) {
+  private static @NotNull Language doGetLanguageForElement(@NotNull PsiElement element) {
     final DuplicatesProfile profile = DuplicatesProfile.findProfileForLanguage(element.getLanguage());
     if (profile == null) {
       return element.getLanguage();
@@ -134,8 +133,7 @@ public abstract class PsiFragment {
     return elements;
   }
 
-  @Nullable
-  public PsiFile getFile() {
+  public @Nullable PsiFile getFile() {
     return myElementAnchors.length > 0 ? myElementAnchors[0].getFile() : null;
   }
 
@@ -164,13 +162,12 @@ public abstract class PsiFragment {
     final int fEnd = f.getEndOffset();
 
     return
-      Comparing.equal(f.getFile(), getFile()) && (start <= fStart && end >= fEnd);
+      Comparing.equal(f.getFile(), getFile()) && start <= fStart && end >= fEnd;
   }
 
   public abstract boolean isEqual(PsiElement[] elements, int discardCost);
 
-  @Nullable
-  public UsageInfo getUsageInfo() {
+  public @Nullable UsageInfo getUsageInfo() {
     if (myElementAnchors.length == 1) {
       final PsiElement element = myElementAnchors[0].retrieve();
       if (element == null || !element.isValid()) return null;
@@ -189,6 +186,7 @@ public abstract class PsiFragment {
   }
 
   //debug only
+  @Override
   public String toString() {
     StringBuilder buffer = new StringBuilder();
 
@@ -203,17 +201,17 @@ public abstract class PsiFragment {
     return buffer.toString();
   }
 
+  @Override
   public boolean equals(Object o) {
     if (o == this) return true;
-    if (!(o instanceof PsiFragment)) return false;
-
-    PsiFragment other = ((PsiFragment)o);
+    if (!(o instanceof PsiFragment other)) return false;
 
     return other.getStartOffset() == getStartOffset() &&
            other.getEndOffset() == getEndOffset() &&
            Comparing.equal(other.getFile(), getFile());
   }
 
+  @Override
   public int hashCode() {
     int result = getStartOffset();
     result += 31 * result + getEndOffset();
@@ -242,8 +240,7 @@ public abstract class PsiFragment {
     return myElementAnchors.length > 1;
   }
 
-  @Nullable
-  public Language getLanguage() {
+  public @Nullable Language getLanguage() {
     return myLanguage;
   }
 }

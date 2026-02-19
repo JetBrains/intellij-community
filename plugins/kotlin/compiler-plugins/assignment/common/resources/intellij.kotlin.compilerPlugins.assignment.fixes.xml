@@ -1,0 +1,8 @@
+<idea-plugin package="org.jetbrains.kotlin.idea.compilerPlugin.assignment">
+  <dependencies>
+    <module name="intellij.kotlin.codeInsight.fixes"/>
+  </dependencies>
+  <extensions defaultExtensionNs="org.jetbrains.kotlin">
+    <codeinsight.quickfix.registrar implementation="org.jetbrains.kotlin.idea.compilerPlugin.assignment.FirAssignmentPluginQuickFixRegistrar"/>
+  </extensions>
+</idea-plugin>

@@ -3,6 +3,7 @@ package com.intellij.util.indexing;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Map;
@@ -10,8 +11,9 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
+@ApiStatus.Internal
 public final class IndexVersionRegistrationSink {
-  private final Map<ID<?, ?>, IndexingStamp.IndexVersionDiff> indexVersionDiffs = new ConcurrentHashMap<>();
+  private final Map<ID<?, ?>, IndexVersion.IndexVersionDiff> indexVersionDiffs = new ConcurrentHashMap<>();
 
   public boolean hasChangedIndexes() {
     return ContainerUtil.find(indexVersionDiffs.values(), diff -> isRebuildRequired(diff)) != null;
@@ -34,7 +36,7 @@ public final class IndexVersionRegistrationSink {
     }
   }
 
-  private @NotNull String buildString(@NotNull Predicate<? super IndexingStamp.IndexVersionDiff> condition) {
+  private @NotNull String buildString(@NotNull Predicate<? super IndexVersion.IndexVersionDiff> condition) {
     return indexVersionDiffs
       .entrySet()
       .stream()
@@ -44,15 +46,15 @@ public final class IndexVersionRegistrationSink {
   }
 
   private String initiallyBuiltIndices() {
-    return buildString(diff -> diff instanceof IndexingStamp.IndexVersionDiff.InitialBuild);
+    return buildString(diff -> diff instanceof IndexVersion.IndexVersionDiff.InitialBuild);
   }
 
-  public <K, V> void setIndexVersionDiff(@NotNull ID<K, V> name, @NotNull IndexingStamp.IndexVersionDiff diff) {
+  public <K, V> void setIndexVersionDiff(@NotNull ID<K, V> name, @NotNull IndexVersion.IndexVersionDiff diff) {
     indexVersionDiffs.put(name, diff);
   }
 
-  private static boolean isRebuildRequired(@NotNull IndexingStamp.IndexVersionDiff diff) {
-    return diff instanceof IndexingStamp.IndexVersionDiff.CorruptedRebuild ||
-           diff instanceof IndexingStamp.IndexVersionDiff.VersionChanged;
+  private static boolean isRebuildRequired(@NotNull IndexVersion.IndexVersionDiff diff) {
+    return diff instanceof IndexVersion.IndexVersionDiff.CorruptedRebuild ||
+           diff instanceof IndexVersion.IndexVersionDiff.VersionChanged;
   }
 }

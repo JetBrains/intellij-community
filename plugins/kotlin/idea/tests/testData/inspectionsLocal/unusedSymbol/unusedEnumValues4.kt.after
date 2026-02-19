@@ -1,0 +1,12 @@
+enum class SomeEnum {
+
+    companion object {
+        fun values(a: Int) {
+            return
+        }
+    }
+}
+
+fun main() {
+    SomeEnum.values(1)
+}

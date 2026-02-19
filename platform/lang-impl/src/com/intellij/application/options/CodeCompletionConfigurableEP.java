@@ -1,9 +1,10 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.application.options;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.options.ConfigurableEP;
 import com.intellij.openapi.options.UnnamedConfigurable;
+import org.jetbrains.annotations.ApiStatus;
 
 /**
  * To provide additional options in Editor | Code Completion section register implementation of
@@ -18,6 +19,10 @@ import com.intellij.openapi.options.UnnamedConfigurable;
  * If you need to add a section of code completion options, your UnnamedConfigurable should implement
  * {@link CodeCompletionOptionsCustomSection}
  */
-public class CodeCompletionConfigurableEP extends ConfigurableEP<UnnamedConfigurable> {
-  static final ExtensionPointName<CodeCompletionConfigurableEP> EP_NAME = ExtensionPointName.create("com.intellij.codeCompletionConfigurable");
+public final class CodeCompletionConfigurableEP extends ConfigurableEP<UnnamedConfigurable> {
+  static final ExtensionPointName<CodeCompletionConfigurableEP> EP_NAME = new ExtensionPointName<>("com.intellij.codeCompletionConfigurable");
+
+  @ApiStatus.Internal
+  public CodeCompletionConfigurableEP() {
+  }
 }

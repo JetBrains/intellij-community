@@ -18,12 +18,15 @@ package com.jetbrains.python.packaging;
 import com.google.common.collect.ImmutableMap;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.PyCallExpression;
 import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.PyFile;
+import com.jetbrains.python.sdk.SdksKt;
+import com.jetbrains.python.sdk.legacy.PythonSdkUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -39,6 +42,9 @@ public class PyPackageUtilTest extends PyTestCase {
     super.setUp();
 
     myFixture.copyDirectoryToProject("packaging/PyPackageUtil/" + getTestName(false), "");
+    Module module = myFixture.getModule();
+    Sdk sdk = PythonSdkUtil.findPythonSdk(module);
+    SdksKt.setAssociationToModuleAsync(sdk, module);
   }
 
   public void testAbsentSetupPyReading() {
@@ -134,7 +140,13 @@ public class PyPackageUtilTest extends PyTestCase {
         assertNotNull(PyPackageUtil.findSetupCall(module));
 
         if (requires) {
-          checkRequirements(PyPackageUtil.findSetupPyRequires(module));
+          if (extrasRequire) {
+            checkRequirements(PyPackageUtil.findSetupPyRequires(module), 0,
+                              PyRequirementParser.fromText("Markdown\nNewDjango==1.3.1\nnumpy\nmynose\nr1\nr2\nr3\nr4"));
+          }
+          else {
+            checkRequirements(PyPackageUtil.findSetupPyRequires(module));
+          }
         }
         else {
           final List<PyRequirement> requirements = PyPackageUtil.findSetupPyRequires(module);
@@ -146,9 +158,9 @@ public class PyPackageUtilTest extends PyTestCase {
           final Map<String, List<PyRequirement>> extrasRequirements = PyPackageUtil.findSetupPyExtrasRequire(module);
 
           final ImmutableMap<String, List<PyRequirement>> expected = ImmutableMap.of(
-            "e1", Collections.singletonList(PyRequirementsKt.pyRequirement("r1")),
-            "e2", Collections.singletonList(PyRequirementsKt.pyRequirement("r2")),
-            "e3", Arrays.asList(PyRequirementsKt.pyRequirement("r3"), PyRequirementsKt.pyRequirement("r4"))
+            "e1", Collections.singletonList(PyRequirementsKt.pyRequirement("r1", null)),
+            "e2", Collections.singletonList(PyRequirementsKt.pyRequirement("r2", null)),
+            "e3", Arrays.asList(PyRequirementsKt.pyRequirement("r3", null), PyRequirementsKt.pyRequirement("r4", null))
           );
 
           assertEquals(expected, extrasRequirements);
@@ -210,7 +222,11 @@ public class PyPackageUtilTest extends PyTestCase {
 
   private static void checkRequirements(@Nullable List<PyRequirement> actual, int fromIndex) {
     final List<PyRequirement> expected = PyRequirementParser.fromText("Markdown\nNewDjango==1.3.1\nnumpy\nmynose");
-    assertEquals(expected.subList(fromIndex, expected.size()), actual);
+    checkRequirements(actual, fromIndex, expected);
+  }
+
+  private static void checkRequirements(@Nullable List<PyRequirement> actual, int fromIndex, List<PyRequirement> expected) {
+    assertSameElements(expected.subList(fromIndex, expected.size()), actual);
   }
 
   private void doTestSetupPyRequiresIntroduction(@NotNull String keyword) {
@@ -248,7 +264,7 @@ public class PyPackageUtilTest extends PyTestCase {
 
     final List<PyRequirement> actual = PyPackageUtil.findSetupPyRequires(module);
     final List<PyRequirement> expected = PyRequirementParser.fromText("NewDjango==1.3.1\nMarkdown\nnumpy\nmynose");
-    assertEquals(expected, actual);
+    assertSameElements(expected, actual);
   }
 
   private static void checkSetupArgumentText(@NotNull Module module, @NotNull String keyword, @Nullable String text) {

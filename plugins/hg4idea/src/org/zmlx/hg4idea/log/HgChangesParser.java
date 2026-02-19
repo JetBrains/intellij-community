@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.zmlx.hg4idea.log;
 
 import com.intellij.openapi.project.Project;
@@ -17,7 +17,7 @@ import java.util.List;
 import static org.zmlx.hg4idea.log.HgHistoryUtil.createChange;
 
 class HgChangesParser implements VcsChangesLazilyParsedDetails.ChangesParser {
-  @NotNull private final HgRevisionNumber myRevisionNumber;
+  private final @NotNull HgRevisionNumber myRevisionNumber;
 
   HgChangesParser(@NotNull HgRevisionNumber revisionNumber) {
     myRevisionNumber = revisionNumber;
@@ -33,21 +33,15 @@ class HgChangesParser implements VcsChangesLazilyParsedDetails.ChangesParser {
       String filePath = info.getFirstPath();
       HgRevisionNumber parentRevision =
         myRevisionNumber.getParents().isEmpty() ? null : myRevisionNumber.getParents().get(parentIndex);
-      switch (info.getType()) {
-        case MODIFICATION:
-          result.add(createChange(project, commit.getRoot(), filePath, parentRevision, filePath, myRevisionNumber, FileStatus.MODIFIED));
-          break;
-        case NEW:
-          result.add(createChange(project, commit.getRoot(), null, null, filePath, myRevisionNumber, FileStatus.ADDED));
-          break;
-        case DELETED:
-          result.add(createChange(project, commit.getRoot(), filePath, parentRevision, null, myRevisionNumber, FileStatus.DELETED));
-          break;
-        case MOVED:
-          result.add(createChange(project, commit.getRoot(), filePath, parentRevision, info.getSecondPath(), myRevisionNumber,
-                                  HgChangeProvider.RENAMED));
-          break;
-      }
+      Change change = switch (info.getType()) {
+        case MODIFICATION ->
+          createChange(project, commit.getRoot(), filePath, parentRevision, filePath, myRevisionNumber, FileStatus.MODIFIED);
+        case NEW -> createChange(project, commit.getRoot(), null, null, filePath, myRevisionNumber, FileStatus.ADDED);
+        case DELETED -> createChange(project, commit.getRoot(), filePath, parentRevision, null, myRevisionNumber, FileStatus.DELETED);
+        case MOVED -> createChange(project, commit.getRoot(), filePath, parentRevision, info.getSecondPath(), myRevisionNumber,
+                                   HgChangeProvider.FileStatuses.RENAMED);
+      };
+      result.add(change);
     }
     return result;
   }

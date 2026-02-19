@@ -8,8 +8,16 @@ import org.codehaus.groovy.ast.AnnotatedNode;
 import org.codehaus.groovy.ast.ClassNode;
 import org.codehaus.groovy.ast.ModuleNode;
 import org.codehaus.groovy.classgen.GeneratorContext;
-import org.codehaus.groovy.control.*;
-import org.codehaus.groovy.control.messages.*;
+import org.codehaus.groovy.control.CompilationFailedException;
+import org.codehaus.groovy.control.CompilationUnit;
+import org.codehaus.groovy.control.ErrorCollector;
+import org.codehaus.groovy.control.MultipleCompilationErrorsException;
+import org.codehaus.groovy.control.SourceUnit;
+import org.codehaus.groovy.control.messages.ExceptionMessage;
+import org.codehaus.groovy.control.messages.Message;
+import org.codehaus.groovy.control.messages.SimpleMessage;
+import org.codehaus.groovy.control.messages.SyntaxErrorMessage;
+import org.codehaus.groovy.control.messages.WarningMessage;
 import org.codehaus.groovy.syntax.SyntaxException;
 import org.codehaus.groovy.tools.GroovyClass;
 import org.jetbrains.annotations.NotNull;
@@ -20,7 +28,12 @@ import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Iterator;
+import java.util.List;
+import java.util.SortedSet;
+import java.util.TreeSet;
 
 
 public class GroovyCompilerWrapper {
@@ -51,10 +64,7 @@ public class GroovyCompilerWrapper {
     catch (CompilationFailedException e) {
       processCompilationException(e);
     }
-    catch (IOException e) {
-      processException(e, "");
-    }
-    catch (GroovyBugError e) {
+    catch (IOException | GroovyBugError e) {
       processException(e, "");
     }
     catch (NoClassDefFoundError e) {
@@ -91,14 +101,14 @@ public class GroovyCompilerWrapper {
       return getStubOutputItems(compilationUnit, targetDirectory);
     }
 
-    final SortedSet<String> allClasses = new TreeSet<String>();
+    final SortedSet<String> allClasses = new TreeSet<>();
     //noinspection unchecked
     List<GroovyClass> listOfClasses = compilationUnit.getClasses();
     for (GroovyClass listOfClass : listOfClasses) {
       allClasses.add(listOfClass.getName());
     }
 
-    List<OutputItem> compiledFiles = new ArrayList<OutputItem>();
+    List<OutputItem> compiledFiles = new ArrayList<>();
     for (Iterator iterator = compilationUnit.iterator(); iterator.hasNext();) {
       SourceUnit sourceUnit = (SourceUnit) iterator.next();
       String fileName = sourceUnit.getName();
@@ -129,7 +139,7 @@ public class GroovyCompilerWrapper {
 
   @NotNull
   static List<OutputItem> getStubOutputItems(CompilationUnit compilationUnit, final File stubDirectory) {
-    final List<OutputItem> compiledFiles = new ArrayList<OutputItem>();
+    final List<OutputItem> compiledFiles = new ArrayList<>();
     compilationUnit.applyToPrimaryClassNodes(new CompilationUnit.PrimaryClassNodeOperation() {
       @Override
       public void call(SourceUnit source, GeneratorContext context, ClassNode classNode) throws CompilationFailedException {
@@ -146,6 +156,12 @@ public class GroovyCompilerWrapper {
         if (new File(item.outputPath).exists()) {
           compiledFiles.add(item);
         }
+      }
+
+      @Override
+      @SuppressWarnings("RedundantMethodOverride")
+      public void doPhaseOperation(CompilationUnit unit) throws CompilationFailedException {
+        super.doPhaseOperation(unit);
       }
     });
     return compiledFiles;

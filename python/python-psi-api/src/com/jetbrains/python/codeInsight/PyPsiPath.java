@@ -1,16 +1,23 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.codeInsight;
 
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.QualifiedName;
-import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.PyAssignmentStatement;
+import com.jetbrains.python.psi.PyCallExpression;
+import com.jetbrains.python.psi.PyClass;
+import com.jetbrains.python.psi.PyExpression;
+import com.jetbrains.python.psi.PyFile;
+import com.jetbrains.python.psi.PyFunction;
+import com.jetbrains.python.psi.PyPsiFacade;
+import com.jetbrains.python.psi.PyRecursiveElementVisitor;
+import com.jetbrains.python.psi.PyReferenceExpression;
+import com.jetbrains.python.psi.PyStringLiteralExpression;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author yole
- */
+
 public abstract class PyPsiPath {
 
   /**
@@ -20,8 +27,7 @@ public abstract class PyPsiPath {
    * @param resolveContext context to be used in resolve
    * @return resolved element
    */
-  @Nullable
-  public abstract PsiElement resolve(@NotNull PsiElement context, @NotNull PyResolveContext resolveContext);
+  public abstract @Nullable PsiElement resolve(@NotNull PsiElement context, @NotNull PyResolveContext resolveContext);
 
   public static class ToFile extends PyPsiPath {
     private final QualifiedName myQualifiedName;
@@ -30,9 +36,8 @@ public abstract class PyPsiPath {
       myQualifiedName = QualifiedName.fromDottedString(qualifiedName);
     }
 
-    @Nullable
     @Override
-    public PsiElement resolve(@NotNull PsiElement context, @NotNull PyResolveContext resolveContext) {
+    public @Nullable PsiElement resolve(@NotNull PsiElement context, @NotNull PyResolveContext resolveContext) {
       final PyPsiFacade facade = PyPsiFacade.getInstance(context.getProject());
       return facade.resolveQualifiedName(myQualifiedName, facade.createResolveContextFromFoothold(context))
         .stream().findFirst().orElse(null);
@@ -42,14 +47,13 @@ public abstract class PyPsiPath {
   public static class ToClassQName extends PyPsiPath {
     private final QualifiedName myQualifiedName;
 
-    public ToClassQName(@NotNull final String qualifiedName) {
+    public ToClassQName(final @NotNull String qualifiedName) {
       myQualifiedName = QualifiedName.fromDottedString(qualifiedName);
     }
 
-    @Nullable
     @Override
-    public PsiElement resolve(@NotNull PsiElement context, @NotNull PyResolveContext resolveContext) {
-      return PyPsiFacade.getInstance(context.getProject()).findClass(myQualifiedName.toString());
+    public @Nullable PsiElement resolve(@NotNull PsiElement context, @NotNull PyResolveContext resolveContext) {
+      return PyPsiFacade.getInstance(context.getProject()).createClassByQName(myQualifiedName.toString(), context);
     }
   }
 
@@ -69,7 +73,7 @@ public abstract class PyPsiPath {
         return null;
       }
       if (parent instanceof PyFile) {
-        return ((PyFile) parent).findTopLevelClass(myClassName);
+        return ((PyFile)parent).findTopLevelClass(myClassName);
       }
       if (resolveContext.getTypeEvalContext().maySwitchToAST(parent)) {
         if (parent instanceof PyClass) {
@@ -120,10 +124,10 @@ public abstract class PyPsiPath {
         return null;
       }
       if (parent instanceof PyFile) {
-        return ((PyFile) parent).findTopLevelFunction(myFunctionName);
+        return ((PyFile)parent).findTopLevelFunction(myFunctionName);
       }
       if (parent instanceof PyClass) {
-        return ((PyClass) parent).findMethodByName(myFunctionName, false, resolveContext.getTypeEvalContext());
+        return ((PyClass)parent).findMethodByName(myFunctionName, false, resolveContext.getTypeEvalContext());
       }
       if (resolveContext.getTypeEvalContext().maySwitchToAST(parent)) {
         for (PsiElement element : parent.getChildren()) {
@@ -235,14 +239,14 @@ public abstract class PyPsiPath {
 
       final PyExpression callee = node.getCallee();
       if (callee instanceof PyReferenceExpression) {
-        final String calleeName = ((PyReferenceExpression) callee).getReferencedName();
+        final String calleeName = ((PyReferenceExpression)callee).getReferencedName();
         if (myCallName.equals(calleeName)) {
           final PyExpression[] args = node.getArguments();
           if (myArgs.length <= args.length) {
             boolean argsMatch = true;
             for (int i = 0; i < myArgs.length; i++) {
               if (!(args[i] instanceof PyStringLiteralExpression) ||
-                  !myArgs [i].equals(((PyStringLiteralExpression)args[i]).getStringValue())) {
+                  !myArgs[i].equals(((PyStringLiteralExpression)args[i]).getStringValue())) {
                 argsMatch = false;
                 break;
               }
@@ -265,9 +269,8 @@ public abstract class PyPsiPath {
       myAssignee = assignee;
     }
 
-    @Nullable
     @Override
-    public PsiElement resolve(@NotNull PsiElement context, @NotNull PyResolveContext resolveContext) {
+    public @Nullable PsiElement resolve(@NotNull PsiElement context, @NotNull PyResolveContext resolveContext) {
       final PsiElement parent = myParent.resolve(context, resolveContext);
       if (parent == null || !resolveContext.getTypeEvalContext().maySwitchToAST(parent)) {
         return null;

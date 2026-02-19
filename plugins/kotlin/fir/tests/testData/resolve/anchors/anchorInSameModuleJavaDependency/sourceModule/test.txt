@@ -1,0 +1,3 @@
+// module: anchor
+// file: psi/Element.java
+// expected class: Element

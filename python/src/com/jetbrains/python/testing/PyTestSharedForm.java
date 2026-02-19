@@ -1,25 +1,10 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.testing;
 
 import com.google.common.collect.ObjectArrays;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
-import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -27,30 +12,52 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.TextAccessor;
+import com.intellij.ui.components.JBCheckBox;
+import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBRadioButton;
 import com.intellij.ui.components.JBTextField;
 import com.intellij.uiDesigner.core.GridConstraints;
+import com.intellij.uiDesigner.core.GridLayoutManager;
+import com.intellij.uiDesigner.core.Spacer;
 import com.intellij.util.ThreeState;
 import com.intellij.util.ui.JBUI;
-import com.jetbrains.PySymbolFieldWithBrowseButton;
-import com.jetbrains.extensions.ContextAnchor;
-import com.jetbrains.extensions.ModuleBasedContextAnchor;
-import com.jetbrains.extensions.ProjectSdkContextAnchor;
+import com.jetbrains.python.PySymbolFieldWithBrowseButton;
+import com.jetbrains.python.extensions.ContextAnchor;
+import com.jetbrains.python.extensions.ModuleBasedContextAnchor;
+import com.jetbrains.python.extensions.ProjectSdkContextAnchor;
 import com.jetbrains.python.psi.types.TypeEvalContext;
+import com.jetbrains.python.reflection.ReflectionUtilsKt;
+import com.jetbrains.python.reflection.SimplePropertiesProvider;
 import com.jetbrains.python.run.AbstractPyCommonOptionsForm;
 import com.jetbrains.python.run.PyBrowseActionListener;
 import com.jetbrains.python.run.PyCommonOptionsFormFactory;
 import com.jetbrains.python.run.targetBasedConfiguration.PyRunTargetVariant;
-import com.jetbrains.reflection.ReflectionUtilsKt;
-import com.jetbrains.reflection.SimplePropertiesProvider;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
-import java.util.*;
+import javax.swing.AbstractButton;
+import javax.swing.ButtonGroup;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.SwingConstants;
+import javax.swing.border.TitledBorder;
+import java.awt.FlowLayout;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
+import java.awt.Insets;
+import java.lang.reflect.Method;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Enumeration;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.regex.Pattern;
+import java.util.Locale;
+import java.util.Map;
+import java.util.ResourceBundle;
+
+import static com.jetbrains.python.run.PythonScriptCommandLineState.getExpandedWorkingDir;
 
 /**
  * Form to display run configuration.
@@ -61,20 +68,20 @@ import java.util.regex.Pattern;
  */
 public final class PyTestSharedForm implements SimplePropertiesProvider {
 
-  private JPanel myPanel;
+  private final JPanel myPanel;
   /**
    * Panel for test targets
    */
-  private JPanel myTargets;
+  private final JPanel myTargets;
   /**
    * Panel for environment options
    */
-  private JPanel myOptionsPanel;
+  private final JPanel myOptionsPanel;
   /**
    * Panel for custom options, specific for runner and for "Additional Arguments"al;sop
    */
-  private JPanel myCustomOptionsPanel;
-  private JPanel myPanelForTargetFields;
+  private final JPanel myCustomOptionsPanel;
+  private final JPanel myPanelForTargetFields;
   private final ButtonGroup myButtonGroup = new ButtonGroup();
   private AbstractPyCommonOptionsForm myOptionsForm;
 
@@ -87,25 +94,74 @@ public final class PyTestSharedForm implements SimplePropertiesProvider {
     return myPanel;
   }
 
-  @NotNull
   @Override
-  public List<String> getPropertyNames() {
+  public @NotNull List<String> getPropertyNames() {
     return new ArrayList<>(myCustomOptions.keySet());
   }
 
   @Override
-  public void setPropertyValue(@NotNull final String propertyName, @Nullable final String propertyValue) {
-    myCustomOptions.get(propertyName).myOptionValue.setText(propertyValue != null ? propertyValue : "");
+  public void setPropertyValue(final @NotNull String propertyName, final @Nullable Object propertyValue) {
+    myCustomOptions.get(propertyName).setValue(propertyValue);
   }
 
-  @Nullable
   @Override
-  public String getPropertyValue(@NotNull final String propertyName) {
-    return myCustomOptions.get(propertyName).myOptionValue.getText();
+  public @Nullable Object getPropertyValue(final @NotNull String propertyName) {
+    return myCustomOptions.get(propertyName).getValue();
   }
 
-  private PyTestSharedForm(@Nullable final Module module,
-                           @NotNull final PyAbstractTestConfiguration configuration) {
+  private PyTestSharedForm(final @Nullable Module module,
+                           final @NotNull PyAbstractTestConfiguration configuration) {
+    {
+      // GUI initializer generated by IntelliJ IDEA GUI Designer
+      // >>> IMPORTANT!! <<<
+      // DO NOT EDIT OR ADD ANY CODE HERE!
+      myPanel = new JPanel();
+      myPanel.setLayout(new GridLayoutManager(5, 1, new Insets(0, 0, 0, 0), -1, -1));
+      myPanel.setEnabled(false);
+      myPanel.putClientProperty("BorderFactoryClass", "com.intellij.ui.IdeBorderFactory$PlainSmallWithIndent");
+      myPanel.setBorder(IdeBorderFactory.PlainSmallWithIndent.createTitledBorder(null, this.$$$getMessageFromBundle$$$("messages/PyBundle",
+                                                                                                                       "form.test.shared.test"),
+                                                                                 TitledBorder.DEFAULT_JUSTIFICATION,
+                                                                                 TitledBorder.DEFAULT_POSITION, null, null));
+      final JPanel panel1 = new JPanel();
+      panel1.setLayout(new GridLayoutManager(1, 2, new Insets(0, 0, 0, 0), -1, -1));
+      myPanel.add(panel1, new GridConstraints(0, 0, 1, 1, GridConstraints.ANCHOR_NORTH, GridConstraints.FILL_HORIZONTAL,
+                                              GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
+                                              GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_WANT_GROW, null, null,
+                                              null, 0, false));
+      final JBLabel jBLabel1 = new JBLabel();
+      this.$$$loadLabelText$$$(jBLabel1, this.$$$getMessageFromBundle$$$("messages/PyBundle", "form.test.shared.target"));
+      panel1.add(jBLabel1,
+                 new GridConstraints(0, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_NONE, GridConstraints.SIZEPOLICY_FIXED,
+                                     GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
+      myTargets = new JPanel();
+      myTargets.setLayout(new FlowLayout(FlowLayout.CENTER, 5, 5));
+      panel1.add(myTargets, new GridConstraints(0, 1, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_VERTICAL,
+                                                GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
+                                                GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, null, null,
+                                                null, 0, false));
+      final Spacer spacer1 = new Spacer();
+      myPanel.add(spacer1, new GridConstraints(4, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_VERTICAL, 1,
+                                               GridConstraints.SIZEPOLICY_WANT_GROW, null, null, null, 0, false));
+      myOptionsPanel = new JPanel();
+      myOptionsPanel.setLayout(new GridLayoutManager(1, 1, new Insets(0, 0, 0, 0), -1, -1));
+      myPanel.add(myOptionsPanel, new GridConstraints(3, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_BOTH,
+                                                      GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
+                                                      GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, null,
+                                                      null, null, 0, false));
+      myCustomOptionsPanel = new JPanel();
+      myCustomOptionsPanel.setLayout(new GridBagLayout());
+      myPanel.add(myCustomOptionsPanel, new GridConstraints(2, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_BOTH,
+                                                            GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
+                                                            GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
+                                                            null, null, null, 0, true));
+      myPanelForTargetFields = new JPanel();
+      myPanelForTargetFields.setLayout(new GridBagLayout());
+      myPanel.add(myPanelForTargetFields, new GridConstraints(1, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_BOTH,
+                                                              GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
+                                                              GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
+                                                              null, null, null, 0, false));
+    }
     myPathTarget = new TextFieldWithBrowseButton();
     final Project project = configuration.getProject();
 
@@ -114,7 +170,8 @@ public final class PyTestSharedForm implements SimplePropertiesProvider {
     final ThreeState testClassRequired = configuration.isTestClassRequired();
 
 
-    ContextAnchor contentAnchor = (module != null ? new ModuleBasedContextAnchor(module) : new ProjectSdkContextAnchor(project, configuration.getSdk()));
+    ContextAnchor contentAnchor =
+      (module != null ? new ModuleBasedContextAnchor(module) : new ProjectSdkContextAnchor(project, configuration.getSdk()));
     myPythonTarget = new PySymbolFieldWithBrowseButton(contentAnchor,
                                                        element -> {
                                                          if (element instanceof PsiDirectory) {
@@ -128,14 +185,61 @@ public final class PyTestSharedForm implements SimplePropertiesProvider {
       if (StringUtil.isEmpty(workingDirectory)) {
         return null;
       }
-      return LocalFileSystem.getInstance().findFileByPath(workingDirectory);
+      return LocalFileSystem.getInstance().findFileByPath(getExpandedWorkingDir(configuration));
     });
   }
+
+  private static Method $$$cachedGetBundleMethod$$$ = null;
+
+  /** @noinspection ALL */
+  private String $$$getMessageFromBundle$$$(String path, String key) {
+    ResourceBundle bundle;
+    try {
+      Class<?> thisClass = this.getClass();
+      if ($$$cachedGetBundleMethod$$$ == null) {
+        Class<?> dynamicBundleClass = thisClass.getClassLoader().loadClass("com.intellij.DynamicBundle");
+        $$$cachedGetBundleMethod$$$ = dynamicBundleClass.getMethod("getBundle", String.class, Class.class);
+      }
+      bundle = (ResourceBundle)$$$cachedGetBundleMethod$$$.invoke(null, path, thisClass);
+    }
+    catch (Exception e) {
+      bundle = ResourceBundle.getBundle(path);
+    }
+    return bundle.getString(key);
+  }
+
+  /** @noinspection ALL */
+  private void $$$loadLabelText$$$(JLabel component, String text) {
+    StringBuffer result = new StringBuffer();
+    boolean haveMnemonic = false;
+    char mnemonic = '\0';
+    int mnemonicIndex = -1;
+    for (int i = 0; i < text.length(); i++) {
+      if (text.charAt(i) == '&') {
+        i++;
+        if (i == text.length()) break;
+        if (!haveMnemonic && text.charAt(i) != '&') {
+          haveMnemonic = true;
+          mnemonic = text.charAt(i);
+          mnemonicIndex = result.length();
+        }
+      }
+      result.append(text.charAt(i));
+    }
+    component.setText(result.toString());
+    if (haveMnemonic) {
+      component.setDisplayedMnemonic(mnemonic);
+      component.setDisplayedMnemonicIndex(mnemonicIndex);
+    }
+  }
+
+  /** @noinspection ALL */
+  public JComponent $$$getRootComponent$$$() { return myPanel; }
 
   /**
    * Titles border used among test run configurations
    */
-  public static void setBorderToPanel(@NotNull final JPanel panel, @NotNull final @NlsSafe String title) {
+  public static void setBorderToPanel(final @NotNull JPanel panel, final @NotNull @NlsSafe String title) {
     panel.setBorder(IdeBorderFactory.createTitledBorder(title, false));
   }
 
@@ -143,9 +247,8 @@ public final class PyTestSharedForm implements SimplePropertiesProvider {
    * @param configuration configuration to configure form on creation
    * @param customOptions additional option names this form shall support. Make sure your configuration has appropriate properties.
    */
-  @NotNull
-  public static PyTestSharedForm create(@NotNull final PyAbstractTestConfiguration configuration,
-                                        final PyTestCustomOption @NotNull ... customOptions) {
+  public static @NotNull PyTestSharedForm create(final @NotNull PyAbstractTestConfiguration configuration,
+                                                 final PyTestCustomOption @NotNull ... customOptions) {
     final PyTestSharedForm form = new PyTestSharedForm(configuration.getModule(), configuration);
 
     for (final PyRunTargetVariant testTargetType : PyRunTargetVariant.values()) {
@@ -178,9 +281,9 @@ public final class PyTestSharedForm implements SimplePropertiesProvider {
     if (customOptions.length == 0) {
       return;
     }
-    final Map<String, JBTextField> optionValueFields = new HashMap<>();
+    final Map<String, JComponent> optionValueFields = new HashMap<>();
     for (final PyTestCustomOption option : customOptions) {
-      final JBTextField textField = new JBTextField();
+      final JComponent textField = option.isBooleanType() ? new JBCheckBox() : new JBTextField();
       optionValueFields.put(option.getName(), textField);
     }
 
@@ -190,7 +293,7 @@ public final class PyTestSharedForm implements SimplePropertiesProvider {
     constraints.anchor = GridBagConstraints.LINE_START;
 
     for (final PyTestCustomOption option : customOptions) {
-      final JBTextField textField = optionValueFields.get(option.getName());
+      final JComponent field = optionValueFields.get(option.getName());
       final JLabel label = new JLabel(option.getLocalizedName()); // NON-NLS
       label.setHorizontalAlignment(SwingConstants.LEFT);
 
@@ -202,11 +305,15 @@ public final class PyTestSharedForm implements SimplePropertiesProvider {
       constraints.gridx = 1;
       constraints.weightx = 1.0;
       constraints.fill = GridBagConstraints.HORIZONTAL;
-      myCustomOptionsPanel.add(textField, constraints);
+      myCustomOptionsPanel.add(field, constraints);
 
       constraints.gridy++;
 
-      myCustomOptions.put(option.getName(), new OptionHolder(option, label, textField));
+      OptionHolder value = option.isBooleanType()
+                           ? new OptionHolder(option, label, (JBCheckBox)field)
+                           : new OptionHolder(option, label, (JBTextField)field);
+
+      myCustomOptions.put(option.getName(), value);
     }
   }
 
@@ -215,8 +322,7 @@ public final class PyTestSharedForm implements SimplePropertiesProvider {
     return myOptionsForm;
   }
 
-  @NotNull
-  public String getTarget() {
+  public @NotNull String getTarget() {
     // We should always use system-independent path because only this type of path is processed correctly
     // when stored (folder changed to macros to prevent hard code)
     final String targetText = getActiveTextField().getText().trim();
@@ -224,7 +330,7 @@ public final class PyTestSharedForm implements SimplePropertiesProvider {
   }
 
 
-  public void setTarget(@NotNull final String targetText) {
+  public void setTarget(final @NotNull String targetText) {
     getActiveTextField().setText(targetText);
   }
 
@@ -248,19 +354,18 @@ public final class PyTestSharedForm implements SimplePropertiesProvider {
     }
   }
 
-  @NotNull
-  private TextAccessor getActiveTextField() {
+  private @NotNull TextAccessor getActiveTextField() {
     return (getTargetType() == PyRunTargetVariant.PATH ? myPathTarget : myPythonTarget);
   }
 
-  @SuppressWarnings("WeakerAccess") // Accessor for property
-  @NotNull
-  public PyRunTargetVariant getTargetType() {
+  // Accessor for property
+  @SuppressWarnings("WeakerAccess")
+  public @NotNull PyRunTargetVariant getTargetType() {
     return PyRunTargetVariant.valueOf(myButtonGroup.getSelection().getActionCommand());
   }
 
   @SuppressWarnings("unused") // Mutator for property
-  public void setTargetType(@NotNull final PyRunTargetVariant target) {
+  public void setTargetType(final @NotNull PyRunTargetVariant target) {
     final Enumeration<AbstractButton> elements = myButtonGroup.getElements();
     while (elements.hasMoreElements()) {
       final AbstractButton button = elements.nextElement();
@@ -270,29 +375,5 @@ public final class PyTestSharedForm implements SimplePropertiesProvider {
       }
     }
     onTargetTypeChanged();
-  }
-
-
-  private static final class OptionHolder {
-    @NotNull
-    private final PyTestCustomOption myOption;
-    @NotNull
-    private final JLabel myOptionLabel;
-    @NotNull
-    private final JTextField myOptionValue;
-
-    private OptionHolder(@NotNull final PyTestCustomOption option,
-                         @NotNull final JLabel optionLabel,
-                         @NotNull final JTextField optionValue) {
-      myOption = option;
-      myOptionLabel = optionLabel;
-      myOptionValue = optionValue;
-    }
-
-    private void setType(@NotNull final PyRunTargetVariant type) {
-      final boolean visible = myOption.getMySupportedTypes().contains(type);
-      myOptionLabel.setVisible(visible);
-      myOptionValue.setVisible(visible);
-    }
   }
 }

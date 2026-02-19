@@ -1,0 +1,10 @@
+// COMPILER_ARGUMENTS: -Xcontext-parameters
+
+context(c1: String)
+fun foo(c2: Int) {
+}
+
+context(c1: String, c2: Int)
+fun bar() {
+    foo(c2)
+}

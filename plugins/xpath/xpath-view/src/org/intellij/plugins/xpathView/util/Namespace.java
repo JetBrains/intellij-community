@@ -15,7 +15,11 @@
  */
 package org.intellij.plugins.xpathView.util;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 public final class Namespace implements Cloneable, Copyable<Namespace> {
     public String prefix;
@@ -38,6 +42,7 @@ public final class Namespace implements Cloneable, Copyable<Namespace> {
         return uri;
     }
 
+    @Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
@@ -47,6 +52,7 @@ public final class Namespace implements Cloneable, Copyable<Namespace> {
         return !(uri != null ? !uri.equals(namespace.uri) : namespace.uri != null);
     }
 
+    @Override
     public int hashCode() {
         return (uri != null ? uri.hashCode() : 0);
     }

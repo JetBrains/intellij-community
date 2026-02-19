@@ -9,13 +9,11 @@ import org.jetbrains.annotations.PropertyKey;
 
 import java.util.function.Supplier;
 
-public final class GroovyBundle extends DynamicBundle {
-
+public final class GroovyBundle {
   public static final @NonNls String BUNDLE = "messages.GroovyBundle";
-  private static final GroovyBundle INSTANCE = new GroovyBundle();
+  private static final DynamicBundle INSTANCE = new DynamicBundle(GroovyBundle.class, BUNDLE);
 
   private GroovyBundle() {
-    super(BUNDLE);
   }
 
   public static @Nls @NotNull String message(@PropertyKey(resourceBundle = BUNDLE) @NotNull String key, Object @NotNull ... params) {

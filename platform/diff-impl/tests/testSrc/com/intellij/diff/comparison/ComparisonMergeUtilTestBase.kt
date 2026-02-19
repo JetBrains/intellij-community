@@ -9,14 +9,14 @@ import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.impl.DocumentImpl
 import com.intellij.openapi.util.Couple
 import com.intellij.util.IntPair
-import java.util.*
+import java.util.BitSet
 
 abstract class ComparisonMergeUtilTestBase : DiffTestCase() {
   private fun doCharTest(texts: Trio<Document>, expected: List<Change>?, matchings: Trio<BitSet>?) {
-    val iterable1 = ByChar.compare(texts.data2.charsSequence, texts.data1.charsSequence, INDICATOR)
-    val iterable2 = ByChar.compare(texts.data2.charsSequence, texts.data3.charsSequence, INDICATOR)
+    val iterable1 = ByCharRt.compare(texts.data2.charsSequence, texts.data1.charsSequence, CANCELLATION)
+    val iterable2 = ByCharRt.compare(texts.data2.charsSequence, texts.data3.charsSequence, CANCELLATION)
 
-    val fragments = ComparisonMergeUtil.buildSimple(iterable1, iterable2, INDICATOR)
+    val fragments = ComparisonMergeUtil.buildSimple(iterable1, iterable2, CANCELLATION)
     val actual = convertDiffFragments(fragments)
 
     checkConsistency(actual, texts)

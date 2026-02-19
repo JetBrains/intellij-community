@@ -21,7 +21,12 @@ import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.lang.Language;
 import org.intellij.lang.xpath.XPathFileType;
 import org.intellij.lang.xpath.XPathTokenTypes;
-import org.intellij.lang.xpath.psi.*;
+import org.intellij.lang.xpath.psi.PrefixedName;
+import org.intellij.lang.xpath.psi.XPathBinaryExpression;
+import org.intellij.lang.xpath.psi.XPathExpression;
+import org.intellij.lang.xpath.psi.XPathFunctionCall;
+import org.intellij.lang.xpath.psi.XPathPredicate;
+import org.intellij.lang.xpath.psi.XPathType;
 import org.intellij.lang.xpath.validation.ExpectedTypeUtil;
 import org.intellij.plugins.xpathView.XPathBundle;
 import org.jetbrains.annotations.NonNls;
@@ -34,9 +39,7 @@ public class IndexZeroPredicate extends XPathInspection {
     }
 
   @Override
-    @NotNull
-    @NonNls
-    public String getShortName() {
+  public @NotNull @NonNls String getShortName() {
         return "IndexZeroUsage";
     }
 
@@ -50,7 +53,7 @@ public class IndexZeroPredicate extends XPathInspection {
     return language == XPathFileType.XPATH.getLanguage() || language == XPathFileType.XPATH2.getLanguage();
   }
 
-  final static class MyVisitor extends Visitor {
+  static final class MyVisitor extends Visitor {
         MyVisitor(InspectionManager manager, boolean isOnTheFly) {
             super(manager, isOnTheFly);
         }
@@ -65,9 +68,8 @@ public class IndexZeroPredicate extends XPathInspection {
                       addProblem(myManager.createProblemDescriptor(expr, message, (LocalQuickFix)null,
                                                                    ProblemHighlightType.GENERIC_ERROR_OR_WARNING, myOnTheFly));
                     }
-                } else if (expr instanceof XPathBinaryExpression && expr.getType() == XPathType.BOOLEAN) {
-                    final XPathBinaryExpression expression = (XPathBinaryExpression)expr;
-                    if (!XPathTokenTypes.BOOLEAN_OPERATIONS.contains(expression.getOperator())) {
+                } else if (expr instanceof XPathBinaryExpression expression && expr.getType() == XPathType.BOOLEAN) {
+                  if (!XPathTokenTypes.BOOLEAN_OPERATIONS.contains(expression.getOperator())) {
                         return;
                     }
 
@@ -98,12 +100,11 @@ public class IndexZeroPredicate extends XPathInspection {
         private static boolean isPosition(XPathExpression expression) {
             expression = ExpectedTypeUtil.unparenthesize(expression);
 
-            if (!(expression instanceof XPathFunctionCall)) {
+            if (!(expression instanceof XPathFunctionCall call)) {
                 return false;
             }
 
-            final XPathFunctionCall call = (XPathFunctionCall)expression;
-            final PrefixedName qName = call.getQName();
+          final PrefixedName qName = call.getQName();
             if (qName.getPrefix() != null) return false;
             return "position".equals(qName.getLocalName());
         }

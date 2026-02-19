@@ -1,0 +1,16 @@
+// FIR_IDENTICAL
+abstract class C<A> {
+    abstract fun f(a: A)
+}
+
+fun f() {
+    class R
+
+    object : C<R>() {
+        override fun f(a: R) {
+            <selection><caret>TODO("Not yet implemented")</selection>
+        }
+    }
+}
+
+// MEMBER: "f(a: R): Unit"

@@ -20,7 +20,7 @@ class Base2:
 class Derived2(Base2):
     b = attr.ib(type=int, default=1)
 
-Derived2(<arg2>)
+Derived2(<arg2>) # non-working case
 
 
 @attr.s

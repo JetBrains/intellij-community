@@ -1,17 +1,24 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Factory;
 import com.intellij.openapi.util.Key;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaRecursiveElementWalkingVisitor;
+import com.intellij.psi.PsiCompiledElement;
+import com.intellij.psi.PsiConstantEvaluationHelper;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiLiteralExpression;
+import com.intellij.psi.PsiPrefixExpression;
+import com.intellij.psi.PsiVariable;
 import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.ObjectUtils;
-import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.CollectionFactory;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -75,19 +82,19 @@ public final class JavaConstantExpressionEvaluator extends JavaRecursiveElementW
   }
 
   private static final CachedValueProvider<ConcurrentMap<PsiElement,Object>> PROVIDER = () -> {
-    ConcurrentMap<PsiElement, Object> value = ContainerUtil.createConcurrentWeakMap();
+    ConcurrentMap<PsiElement, Object> value = CollectionFactory.createConcurrentWeakMap();
     return CachedValueProvider.Result.create(value, PsiModificationTracker.MODIFICATION_COUNT);
   };
 
   private Object getCached(@NotNull PsiExpression element) {
     return map().get(element);
   }
+
   private void cache(@NotNull PsiExpression element, @Nullable Object value) {
     ConcurrencyUtil.cacheOrGet(map(), element, value == null ? NO_VALUE : value);
   }
 
-  @NotNull
-  private ConcurrentMap<PsiElement, Object> map() {
+  private @NotNull ConcurrentMap<PsiElement, Object> map() {
     return myMapFactory.create();
   }
 

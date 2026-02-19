@@ -6,8 +6,10 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Contract;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.AbstractButton;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
+import java.awt.Component;
 
 public final class LabelTextReplacingUtil {
 
@@ -19,15 +21,13 @@ public final class LabelTextReplacingUtil {
    */
   public static void replaceText(JComponent component) {
     for (Component child : UIUtil.uiTraverser(component)) {
-      if (child instanceof JLabel) {
-        final JLabel label = (JLabel)child;
+      if (child instanceof JLabel label) {
         String oldText = label.getText();
         if (oldText != null) {
           label.setText(doReplace(oldText));
         }
       }
-      else if (child instanceof AbstractButton) {
-        AbstractButton button = (AbstractButton)child;
+      else if (child instanceof AbstractButton button) {
         String oldText = button.getText();
         if (oldText != null) {
           button.setText(doReplace(oldText));

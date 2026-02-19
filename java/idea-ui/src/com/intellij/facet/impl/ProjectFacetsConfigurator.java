@@ -1,22 +1,14 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.facet.impl;
 
-import com.intellij.facet.*;
+import com.intellij.facet.Facet;
+import com.intellij.facet.FacetInfo;
+import com.intellij.facet.FacetManager;
+import com.intellij.facet.FacetModel;
+import com.intellij.facet.FacetType;
+import com.intellij.facet.FacetTypeId;
+import com.intellij.facet.ModifiableFacetModel;
 import com.intellij.facet.impl.ui.FacetEditorImpl;
 import com.intellij.facet.impl.ui.FacetTreeModel;
 import com.intellij.facet.impl.ui.ProjectConfigurableContext;
@@ -28,6 +20,7 @@ import com.intellij.openapi.roots.ui.configuration.FacetsProvider;
 import com.intellij.openapi.roots.ui.configuration.ModuleConfigurationState;
 import com.intellij.openapi.roots.ui.configuration.ModuleEditor;
 import com.intellij.openapi.roots.ui.configuration.ModulesConfigurator;
+import com.intellij.openapi.roots.ui.configuration.ProjectStructureConfigurable;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesContainer;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesContainerFactory;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.StructureConfigurableContext;
@@ -36,8 +29,18 @@ import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.util.UserDataHolderBase;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 public class ProjectFacetsConfigurator implements FacetsProvider {
   private static final Logger LOG = Logger.getInstance(ProjectFacetsConfigurator.class);
@@ -160,8 +163,7 @@ public class ProjectFacetsConfigurator implements FacetsProvider {
     return model != null && model.isNewFacet(facet);
   }
 
-  @NotNull
-  public ModifiableFacetModel getOrCreateModifiableModel(final Module module) {
+  public @NotNull ModifiableFacetModel getOrCreateModifiableModel(final Module module) {
     ModifiableFacetModel model = myModifiableModels.get(module);
     if (model == null) {
       model = FacetManager.getInstance(module).createModifiableModel();
@@ -170,13 +172,11 @@ public class ProjectFacetsConfigurator implements FacetsProvider {
     return model;
   }
 
-  @Nullable
-  public FacetEditorImpl getEditor(Facet facet) {
+  public @Nullable FacetEditorImpl getEditor(Facet facet) {
     return myEditors.get(facet);
   }
 
-  @NotNull
-  public FacetEditorImpl getOrCreateEditor(Facet facet) {
+  public @NotNull FacetEditorImpl getOrCreateEditor(Facet facet) {
     FacetEditorImpl editor = myEditors.get(facet);
     if (editor == null) {
       final Facet underlyingFacet = facet.getUnderlyingFacet();
@@ -201,7 +201,7 @@ public class ProjectFacetsConfigurator implements FacetsProvider {
     }
 
     final ModuleConfigurationState state = moduleEditor.createModuleConfigurationState();
-    return new MyProjectConfigurableContext(facet, parentContext, state);
+    return new MyProjectConfigurableContext(facet, parentContext, state, modulesConfigurator.getProjectStructureConfigurable());
   }
 
   private UserDataHolder getSharedModuleData(final Module module) {
@@ -213,8 +213,7 @@ public class ProjectFacetsConfigurator implements FacetsProvider {
     return dataHolder;
   }
 
-  @NotNull
-  public FacetModel getFacetModel(Module module) {
+  public @NotNull FacetModel getFacetModel(Module module) {
     final ModifiableFacetModel model = myModifiableModels.get(module);
     if (model != null) {
       return model;
@@ -307,14 +306,12 @@ public class ProjectFacetsConfigurator implements FacetsProvider {
   }
 
   @Override
-  @NotNull
-  public <F extends Facet> Collection<F> getFacetsByType(final Module module, final FacetTypeId<F> type) {
+  public @NotNull @Unmodifiable <F extends Facet> Collection<F> getFacetsByType(final Module module, final FacetTypeId<F> type) {
     return getFacetModel(module).getFacetsByType(type);
   }
 
   @Override
-  @Nullable
-  public <F extends Facet> F findFacet(final Module module, final FacetTypeId<F> type, final String name) {
+  public @Nullable <F extends Facet> F findFacet(final Module module, final FacetTypeId<F> type, final String name) {
     return getFacetModel(module).findFacet(type, name);
   }
 
@@ -360,9 +357,12 @@ public class ProjectFacetsConfigurator implements FacetsProvider {
   private class MyProjectConfigurableContext extends ProjectConfigurableContext {
     private final LibrariesContainer myContainer;
 
-    MyProjectConfigurableContext(final Facet facet, final FacetEditorContext parentContext, final ModuleConfigurationState state) {
+    MyProjectConfigurableContext(final Facet facet,
+                                 final FacetEditorContext parentContext,
+                                 final ModuleConfigurationState state,
+                                 ProjectStructureConfigurable projectStructureConfigurable) {
       super(facet, ProjectFacetsConfigurator.this.isNewFacet(facet), parentContext, state,
-            ProjectFacetsConfigurator.this.getSharedModuleData(facet.getModule()), getProjectData());
+            ProjectFacetsConfigurator.this.getSharedModuleData(facet.getModule()), getProjectData(), projectStructureConfigurable);
       myContainer = LibrariesContainerFactory.createContainer(myContext);
     }
 

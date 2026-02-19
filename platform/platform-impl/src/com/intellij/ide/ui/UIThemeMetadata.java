@@ -1,16 +1,21 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.ui;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.ObjectReader;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.util.NlsSafe;
+import com.intellij.openapi.util.NotNullLazyValue;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.List;
 
-public class UIThemeMetadata {
+public final class UIThemeMetadata {
+  private static final NotNullLazyValue<ObjectReader> themeReader = NotNullLazyValue.lazy(() -> {
+    return new ObjectMapper().readerFor(UIThemeMetadata.class);
+  });
 
   private String name;
   private String pluginId;
@@ -19,13 +24,12 @@ public class UIThemeMetadata {
   private List<UIKeyMetadata> ui;
 
   static UIThemeMetadata loadFromJson(InputStream stream, PluginId pluginId) throws IOException {
-    UIThemeMetadata metadata = new ObjectMapper().readValue(stream, UIThemeMetadata.class);
+    UIThemeMetadata metadata = themeReader.getValue().readValue(stream);
     metadata.pluginId = pluginId.getIdString();
     return metadata;
   }
 
-  public static class UIKeyMetadata {
-
+  public static final class UIKeyMetadata {
     private String key;
     private String description;
     private String source;
@@ -42,18 +46,15 @@ public class UIThemeMetadata {
       return key;
     }
 
-    @Nullable
-    public @NlsSafe String getDescription() {
+    public @Nullable @NlsSafe String getDescription() {
       return description;
     }
 
-    @Nullable
-    public @NlsSafe String getSource() {
+    public @Nullable @NlsSafe String getSource() {
       return source;
     }
 
-    @Nullable
-    public @NlsSafe String getSince() {
+    public @Nullable @NlsSafe String getSince() {
       return since;
     }
 

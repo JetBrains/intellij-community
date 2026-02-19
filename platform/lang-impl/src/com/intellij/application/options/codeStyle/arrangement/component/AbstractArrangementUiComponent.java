@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.application.options.codeStyle.arrangement.component;
 
 import com.intellij.openapi.util.NotNullLazyValue;
@@ -9,70 +9,67 @@ import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JComponent;
+import javax.swing.JPanel;
+import java.awt.AlphaComposite;
+import java.awt.Component;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.GridBagLayout;
+import java.awt.Point;
+import java.awt.Rectangle;
 import java.awt.event.MouseEvent;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 
-/**
- * @author Denis Zhdanov
- */
 public abstract class AbstractArrangementUiComponent implements ArrangementUiComponent {
-
-  @NotNull private final NotNullLazyValue<JComponent> myComponent = new NotNullLazyValue<JComponent>() {
-    @NotNull
-    @Override
-    protected JComponent compute() {
-      JPanel result = new JPanel(new GridBagLayout()) {
-        @Override
-        protected void paintComponent(Graphics g) {
-          Point point = UIUtil.getLocationOnScreen(this);
-          if (point != null) {
-            Rectangle bounds = getBounds();
-            myScreenBounds = new Rectangle(point.x, point.y, bounds.width, bounds.height);
-          }
-          if (!myEnabled && g instanceof Graphics2D) {
-            ((Graphics2D)g).setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.3f));
-          }
-          super.paintComponent(g);
+  private final @NotNull Set<ArrangementSettingsToken> myAvailableTokens = new HashSet<>();
+  private @Nullable Listener  myListener;
+  private @Nullable Rectangle myScreenBounds;
+  private final @NotNull NotNullLazyValue<JComponent> myComponent = NotNullLazyValue.lazy(() -> {
+    JPanel result = new JPanel(new GridBagLayout()) {
+      @Override
+      protected void paintComponent(Graphics g) {
+        Point point = UIUtil.getLocationOnScreen(this);
+        if (point != null) {
+          Rectangle bounds = getBounds();
+          myScreenBounds = new Rectangle(point.x, point.y, bounds.width, bounds.height);
         }
+        if (!myEnabled && g instanceof Graphics2D) {
+          ((Graphics2D)g).setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.3f));
+        }
+        super.paintComponent(g);
+      }
 
-        @Override
-        public boolean isFocusOwner() {
-          Component[] components = getComponents();
-          if (components != null) {
-            for (Component component : components) {
-              if (component.isFocusOwner()) {
-                return true;
-              }
+      @Override
+      public boolean isFocusOwner() {
+        Component[] components = getComponents();
+        if (components != null) {
+          for (Component component : components) {
+            if (component.isFocusOwner()) {
+              return true;
             }
           }
-          return false;
         }
+        return false;
+      }
 
-        @Override
-        public boolean requestFocusInWindow() {
-          if (getComponentCount() > 0) {
-            return getComponent(0).requestFocusInWindow();
-          }
-          else {
-            return super.requestFocusInWindow();
-          }
+      @Override
+      public boolean requestFocusInWindow() {
+        if (getComponentCount() > 0) {
+          return getComponent(0).requestFocusInWindow();
         }
-      };
-      result.setOpaque(false);
-      result.add(doGetUiComponent(), new GridBag().fillCell());
-      return result;
-    }
-  };
-
-  @NotNull private final Set<ArrangementSettingsToken> myAvailableTokens = new HashSet<>();
-
-  @Nullable private Listener  myListener;
-  @Nullable private Rectangle myScreenBounds;
+        else {
+          return super.requestFocusInWindow();
+        }
+      }
+    };
+    result.setOpaque(false);
+    result.add(doGetUiComponent(), new GridBag().fillCell());
+    return result;
+  });
 
   private boolean myEnabled = true;
 
@@ -84,15 +81,13 @@ public abstract class AbstractArrangementUiComponent implements ArrangementUiCom
     myAvailableTokens.addAll(availableTokens);
   }
 
-  @NotNull
   @Override
-  public Set<ArrangementSettingsToken> getAvailableTokens() {
+  public @NotNull Set<ArrangementSettingsToken> getAvailableTokens() {
     return myAvailableTokens;
   }
 
-  @NotNull
   @Override
-  public final JComponent getUiComponent() {
+  public final @NotNull JComponent getUiComponent() {
     return myComponent.getValue();
   }
 
@@ -108,9 +103,8 @@ public abstract class AbstractArrangementUiComponent implements ArrangementUiCom
     myListener = listener;
   }
 
-  @Nullable
   @Override
-  public Rectangle getScreenBounds() {
+  public @Nullable Rectangle getScreenBounds() {
     return myScreenBounds;
   }
 
@@ -124,9 +118,8 @@ public abstract class AbstractArrangementUiComponent implements ArrangementUiCom
     myEnabled = enabled;
   }
 
-  @Nullable
   @Override
-  public Rectangle onMouseMove(@NotNull MouseEvent event) {
+  public @Nullable Rectangle onMouseMove(@NotNull MouseEvent event) {
     return null;
   }
 
@@ -134,15 +127,13 @@ public abstract class AbstractArrangementUiComponent implements ArrangementUiCom
   public void onMouseRelease(@NotNull MouseEvent event) {
   }
 
-  @Nullable
   @Override
-  public Rectangle onMouseExited() {
+  public @Nullable Rectangle onMouseExited() {
     return null;
   }
 
-  @Nullable
   @Override
-  public Rectangle onMouseEntered(@NotNull MouseEvent e) {
+  public @Nullable Rectangle onMouseEntered(@NotNull MouseEvent e) {
     return null;
   }
 

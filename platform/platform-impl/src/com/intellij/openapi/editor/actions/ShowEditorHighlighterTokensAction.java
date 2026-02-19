@@ -1,10 +1,9 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.actions;
 
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.hint.HintManagerImpl;
 import com.intellij.codeInsight.hint.HintUtil;
-import com.intellij.injected.editor.EditorWindow;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.editor.Caret;
@@ -24,6 +23,7 @@ import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.impl.source.tree.injected.InjectedLanguageEditorUtil;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.LightweightHint;
@@ -31,11 +31,12 @@ import com.intellij.util.Alarm;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.*;
+import java.awt.Font;
+import java.awt.Point;
 
 @SuppressWarnings("HardCodedStringLiteral")
 final class ShowEditorHighlighterTokensAction extends EditorAction {
-  private static class Holder {
+  private static final class Holder {
     private static final Key<String> TOKEN_NAME = Key.create("token.name");
     private static final Key<Boolean> LISTENER_ADDED = Key.create("token.mouse.listener.added");
     private static final TextAttributes OUR_TEXT_ATTRIBUTES = new TextAttributes(null, null,
@@ -50,13 +51,13 @@ final class ShowEditorHighlighterTokensAction extends EditorAction {
         LogicalPosition logicalPosition = e.getLogicalPosition();
         int offset = e.getOffset();
         for (RangeHighlighter highlighter : editor.getMarkupModel().getAllHighlighters()) {
-          String text = highlighter.getUserData(Holder.TOKEN_NAME);
+          String text = highlighter.getUserData(TOKEN_NAME);
           if (!StringUtil.isEmpty(text) && (highlighter.getStartOffset() < offset && highlighter.getEndOffset() > offset ||
                                             !logicalPosition.leansForward && highlighter.getEndOffset() == offset ||
                                             logicalPosition.leansForward && highlighter.getStartOffset() == offset)) {
             int hintOffset = highlighter.getStartOffset();
-            Holder.ourAlarm.cancelAllRequests();
-            Holder.ourAlarm.addRequest(() -> {
+            ourAlarm.cancelAllRequests();
+            ourAlarm.addRequest(() -> {
               LightweightHint hint = new LightweightHint(HintUtil.createInformationLabel(text));
               Point point = HintManagerImpl.getHintPosition(hint, editor,
                                                             editor.offsetToLogicalPosition(hintOffset).leanForward(true), HintManager.ABOVE);
@@ -80,13 +81,13 @@ final class ShowEditorHighlighterTokensAction extends EditorAction {
 
     @Override
     protected boolean isEnabledForCaret(@NotNull Editor editor, @NotNull Caret caret, DataContext dataContext) {
-      Editor hostEditor = editor instanceof EditorWindow ? ((EditorWindow)editor).getDelegate() : editor;
+      Editor hostEditor = InjectedLanguageEditorUtil.getTopLevelEditor(editor);
       return hostEditor.getUserData(Holder.LISTENER_ADDED) != null || myDelegate.isEnabled(editor, caret, dataContext);
     }
 
     @Override
     protected void doExecute(@NotNull Editor editor, @Nullable Caret caret, DataContext dataContext) {
-      Editor hostEditor = editor instanceof EditorWindow ? ((EditorWindow)editor).getDelegate() : editor;
+      Editor hostEditor = InjectedLanguageEditorUtil.getTopLevelEditor(editor);
       if (hostEditor.getUserData(Holder.LISTENER_ADDED) != null) {
         cleanup(hostEditor);
       }
@@ -107,7 +108,7 @@ final class ShowEditorHighlighterTokensAction extends EditorAction {
       protected void doExecute(@NotNull Editor editor, @Nullable Caret caret, DataContext dataContext) {
         if (editor.getUserData(Holder.LISTENER_ADDED) != null) cleanup(editor);
 
-        HighlighterIterator it = ((EditorEx)editor).getHighlighter().createIterator(0);
+        HighlighterIterator it = editor.getHighlighter().createIterator(0);
         while (!it.atEnd()) {
           RangeHighlighter h = editor.getMarkupModel().addRangeHighlighter(it.getStart(), it.getEnd(),
                                                                            0, Holder.OUR_TEXT_ATTRIBUTES, HighlighterTargetArea.EXACT_RANGE);

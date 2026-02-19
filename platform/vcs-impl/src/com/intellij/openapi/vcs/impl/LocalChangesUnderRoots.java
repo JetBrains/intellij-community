@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.impl;
 
 import com.intellij.openapi.project.Project;
@@ -8,7 +8,6 @@ import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.ChangesUtil;
-import com.intellij.openapi.vcs.changes.LocalChangeList;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -21,19 +20,9 @@ import java.util.Map;
 /**
  * Utility class to sort changes by roots.
  *
- * @author irengrig
  * @author Kirill Likhodedov
  */
 public final class LocalChangesUnderRoots {
-  public static @NotNull Map<String, Map<VirtualFile, Collection<Change>>> getChangesByLists(@NotNull Collection<? extends VirtualFile> rootsToSave, @NotNull Project project) {
-    Map<String, Map<VirtualFile, Collection<Change>>> result = new HashMap<>();
-    ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(project);
-    for (LocalChangeList list : ChangeListManager.getInstance(project).getChangeLists()) {
-      result.put(list.getName(), groupChanges(rootsToSave, list.getChanges(), vcsManager));
-    }
-    return result;
-  }
-
   /**
    * Sort all changes registered in the {@link ChangeListManager} by VCS roots,
    * filtering out any roots except the specified ones.
@@ -51,9 +40,9 @@ public final class LocalChangesUnderRoots {
     return groupChanges(rootsToSave, changeListManager.getAllChanges(), ProjectLevelVcsManager.getInstance(project));
   }
 
-  private @NotNull static Map<VirtualFile, Collection<Change>> groupChanges(@NotNull Collection<? extends VirtualFile> rootsToSave,
-                                                                           @NotNull Collection<? extends Change> allChanges,
-                                                                           @NotNull ProjectLevelVcsManager vcsManager) {
+  private static @NotNull Map<VirtualFile, Collection<Change>> groupChanges(@NotNull Collection<? extends VirtualFile> rootsToSave,
+                                                                            @NotNull Collection<? extends Change> allChanges,
+                                                                            @NotNull ProjectLevelVcsManager vcsManager) {
     Map<VirtualFile, Collection<Change>> result = new HashMap<>();
     for (Change change : allChanges) {
       VirtualFile root = getRootForChange(change, vcsManager);

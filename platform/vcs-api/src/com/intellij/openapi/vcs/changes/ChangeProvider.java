@@ -2,6 +2,7 @@
 
 package com.intellij.openapi.vcs.changes;
 
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -10,7 +11,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.List;
 
 /**
- * The provider of change information (from the point of view of VCS).
+ * The provider of the change information (from the point of view of VCS).
  */
 public interface ChangeProvider {
   /**
@@ -22,10 +23,10 @@ public interface ChangeProvider {
    * of the dirty scope, but if these changes are reported, they will be
    * ignored by the caller.</p>
    *
-   * @param dirtyScope a changes on the virtual file system
+   * @param dirtyScope a set of changes on the virtual file system
    * @param builder a builder of VCS changes
    * @param progress a current progress object
-   * @throws VcsException if there there is a VCS specific problem
+   * @throws VcsException if there is a VCS specific problem
    */
   void getChanges(@NotNull VcsDirtyScope dirtyScope,
                   @NotNull ChangelistBuilder builder,
@@ -35,6 +36,9 @@ public interface ChangeProvider {
   /**
    * Returns true if the initial unsaved modification of a document should cause dirty scope invalidation
    * for the file corresponding to the document.
+   * <p>
+   * Such implementations will need to check {@link FileDocumentManager#getUnsavedDocuments()} or {@link FileDocumentManager#isFileModified(VirtualFile)}
+   * to report {@link Change} for files with in-memory-only changes (that are yet unmodified on disk).
    *
    * @return true if document modification should mark the scope as dirty, false otherwise
    */

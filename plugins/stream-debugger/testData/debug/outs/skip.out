@@ -4,13 +4,13 @@ Connected to the target VM, address: '!HOST_NAME!:PORT_NAME!', transport: 'socke
 Skip.java:6
 Stream.of(1, 2, 3)
 .skip(2)
-.count()
+.toArray()
 skip
     before: 1,2,3
     after: 4
-count
+toArray
     before: 4
-    after: nothing
+    after: 5
 mappings for skip
   direct:
     1 -> nothing
@@ -18,11 +18,11 @@ mappings for skip
     3 -> 4
   reverse:
     3 <- 4
-mappings for count
+mappings for toArray
   direct:
-    4 -> nothing
+    4 -> 5
   reverse:
-    empty
+    4 <- 5
 Disconnected from the target VM, address: '!HOST_NAME!:PORT_NAME!', transport: 'socket'
 
 Process finished with exit code 0

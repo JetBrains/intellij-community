@@ -1,0 +1,5 @@
+<idea-plugin>
+  <extensions defaultExtensionNs="com.intellij">
+    <pluginSuggestionProvider implementation="com.intellij.vcs.github.ultimatePromo.GitHubUltimateSuggestionProvider"/>
+  </extensions>
+</idea-plugin>

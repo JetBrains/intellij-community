@@ -1,0 +1,3 @@
+UTypeReferenceExpression (name = Foo) -> USimpleNameReferenceExpression (identifier = Foo) -> Kotlin_Light_Class:interface Foo {
+    fun bar() = "Hello!"
+}: Foo

@@ -5,9 +5,16 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.python.community.helpersLocator.PythonHelpersLocator;
 import com.jetbrains.python.PyTokenTypes;
-import com.jetbrains.python.PythonHelpersLocator;
-import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.LanguageLevel;
+import com.jetbrains.python.psi.PyComprehensionForComponent;
+import com.jetbrains.python.psi.PyExceptPart;
+import com.jetbrains.python.psi.PyExpression;
+import com.jetbrains.python.psi.PyFinallyPart;
+import com.jetbrains.python.psi.PyListCompExpression;
+import com.jetbrains.python.psi.PyRaiseStatement;
+import com.jetbrains.python.psi.PyTupleExpression;
 import org.jetbrains.annotations.NotNull;
 import org.xml.sax.Attributes;
 import org.xml.sax.InputSource;
@@ -19,9 +26,13 @@ import org.xml.sax.helpers.XMLReaderFactory;
 import java.io.CharArrayWriter;
 import java.io.FileReader;
 import java.io.IOException;
-import java.util.*;
+import java.nio.charset.StandardCharsets;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 
-public class UnsupportedFeaturesUtil {
+public final class UnsupportedFeaturesUtil {
   public static final Map<LanguageLevel, Set<String>> BUILTINS = new HashMap<>();
   public static final Map<LanguageLevel, Set<String>> MODULES = new HashMap<>();
   public static final Map<String, Map<LanguageLevel, Set<String>>> CLASS_METHODS = new HashMap<>();
@@ -39,8 +50,8 @@ public class UnsupportedFeaturesUtil {
 
   private static void fillTestCaseMethods() throws IOException {
     final Logger log = Logger.getInstance(UnsupportedFeaturesUtil.class.getName());
-    final FileReader reader = new FileReader(PythonHelpersLocator.getHelperPath("/tools/class_method_versions.xml"));
-    try {
+    try (FileReader reader = new FileReader(PythonHelpersLocator.findPathStringInHelpers("/tools/class_method_versions.xml"),
+                                            StandardCharsets.UTF_8)) {
       final XMLReader xr = XMLReaderFactory.createXMLReader();
       final ClassMethodsParser parser = new ClassMethodsParser();
       xr.setContentHandler(parser);
@@ -49,15 +60,11 @@ public class UnsupportedFeaturesUtil {
     catch (SAXException e) {
       log.error("Improperly formed \"class_method_versions.xml\". " + e.getMessage());
     }
-    finally {
-      reader.close();
-    }
   }
 
   private static void fillMaps() throws IOException {
     Logger log = Logger.getInstance(UnsupportedFeaturesUtil.class.getName());
-    FileReader reader = new FileReader(PythonHelpersLocator.getHelperPath("/tools/versions.xml"));
-    try {
+    try (FileReader reader = new FileReader(PythonHelpersLocator.findPathStringInHelpers("/tools/versions.xml"), StandardCharsets.UTF_8)) {
       XMLReader xr = XMLReaderFactory.createXMLReader();
       VersionsParser parser = new VersionsParser();
       xr.setContentHandler(parser);
@@ -65,9 +72,6 @@ public class UnsupportedFeaturesUtil {
     }
     catch (SAXException e) {
       log.error("Improperly formed \"versions.xml\". " + e.getMessage());
-    }
-    finally {
-      reader.close();
     }
   }
 
@@ -118,10 +122,10 @@ public class UnsupportedFeaturesUtil {
     return false;
   }
 
-  public static boolean visitPyListCompExpression(final PyListCompExpression node, LanguageLevel versionToProcess) {
-    final List<PyComprehensionForComponent> forComponents = node.getForComponents();
+  public static boolean listComprehensionIteratesOverNonParenthesizedTuple(@NotNull PyListCompExpression node,
+                                                                           @NotNull LanguageLevel versionToProcess) {
     if (versionToProcess.isPy3K()) {
-      for (PyComprehensionForComponent forComponent : forComponents) {
+      for (PyComprehensionForComponent forComponent : node.getForComponents()) {
         final PyExpression iteratedList = forComponent.getIteratedList();
         if (iteratedList instanceof PyTupleExpression) {
           return true;
@@ -146,7 +150,7 @@ public class UnsupportedFeaturesUtil {
         MODULES.put(LanguageLevel.fromPythonVersion(attr.getValue("version")), new HashSet<>());
         myCurrentLevel = LanguageLevel.fromPythonVersion(attr.getValue("version"));
       }
-     }
+    }
 
     @Override
     public void endElement(String namespaceURI,
@@ -162,7 +166,7 @@ public class UnsupportedFeaturesUtil {
 
     @Override
     public void characters(char[] ch, int start, int length)
-                                          throws SAXException {
+      throws SAXException {
       myContent.write(ch, start, length);
     }
   }
@@ -182,15 +186,15 @@ public class UnsupportedFeaturesUtil {
         myClassName = attr.getValue("name");
         if (!CLASS_METHODS.containsKey(myClassName)) {
           CLASS_METHODS.put(myClassName, new HashMap<>());
-
         }
       }
       if (localName.equals("python")) {
         myCurrentLevel = LanguageLevel.fromPythonVersion(attr.getValue("version"));
         if (myClassName != null) {
           final Map<LanguageLevel, Set<String>> map = CLASS_METHODS.get(myClassName);
-          if (map != null)
+          if (map != null) {
             map.put(myCurrentLevel, new HashSet<>());
+          }
         }
       }
     }
@@ -203,8 +207,9 @@ public class UnsupportedFeaturesUtil {
         Map<LanguageLevel, Set<String>> levelSetMap = CLASS_METHODS.get(myClassName);
         if (levelSetMap != null) {
           final Set<String> set = levelSetMap.get(myCurrentLevel);
-          if (set != null)
+          if (set != null) {
             set.add(myContent.toString());
+          }
         }
       }
     }

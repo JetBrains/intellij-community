@@ -1,4 +1,4 @@
-// "Convert to ThreadLocal" "true"
+// "Convert to 'ThreadLocal'" "true"
 class X {
     private static final ThreadLocal<Integer> count = ThreadLocal.withInitial(() -> 0); // convert me
   private final int index;

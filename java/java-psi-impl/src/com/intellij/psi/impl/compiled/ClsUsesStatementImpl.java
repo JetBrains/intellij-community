@@ -2,8 +2,10 @@
 package com.intellij.psi.impl.compiled;
 
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.JavaElementVisitor;
 import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiClassType;
+import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiJavaCodeReferenceElement;
 import com.intellij.psi.PsiUsesStatement;
 import com.intellij.psi.impl.java.stubs.PsiUsesStatementStub;
@@ -19,6 +21,16 @@ public class ClsUsesStatementImpl extends ClsRepositoryPsiElement<PsiUsesStateme
   public ClsUsesStatementImpl(PsiUsesStatementStub stub) {
     super(stub);
     myClassReference = new ClsJavaCodeReferenceElementImpl(this, stub.getClassName());
+  }
+
+  @Override
+  public void accept(@NotNull PsiElementVisitor visitor) {
+    if (visitor instanceof JavaElementVisitor) {
+      ((JavaElementVisitor)visitor).visitUsesStatement(this);
+    }
+    else {
+      visitor.visitElement(this);
+    }
   }
 
   @Override
@@ -38,7 +50,7 @@ public class ClsUsesStatementImpl extends ClsRepositoryPsiElement<PsiUsesStateme
   }
 
   @Override
-  public void setMirror(@NotNull TreeElement element) throws InvalidMirrorException {
+  protected void setMirror(@NotNull TreeElement element) throws InvalidMirrorException {
     setMirrorCheckingType(element, JavaElementType.USES_STATEMENT);
     setMirror(getClassReference(), SourceTreeToPsiMap.<PsiUsesStatement>treeToPsiNotNull(element).getClassReference());
   }

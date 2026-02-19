@@ -1,0 +1,54 @@
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+
+package org.jetbrains.kotlin.idea.intentions
+
+import com.intellij.openapi.editor.Editor
+import org.jetbrains.kotlin.K1Deprecation
+import org.jetbrains.kotlin.idea.base.psi.replaced
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.caches.resolve.analyze
+import org.jetbrains.kotlin.idea.codeinsight.api.classic.intentions.SelfTargetingIntention
+import org.jetbrains.kotlin.lexer.KtTokens
+import org.jetbrains.kotlin.psi.KtBinaryExpression
+import org.jetbrains.kotlin.psi.KtConstantExpression
+import org.jetbrains.kotlin.psi.KtExpression
+import org.jetbrains.kotlin.psi.KtPsiFactory
+import org.jetbrains.kotlin.psi.KtPsiUtil
+import org.jetbrains.kotlin.psi.createExpressionByPattern
+import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
+import org.jetbrains.kotlin.types.TypeUtils
+import org.jetbrains.kotlin.types.typeUtil.isBooleanOrNullableBoolean
+
+@K1Deprecation
+class NullableBooleanEqualityCheckToElvisIntention : SelfTargetingIntention<KtBinaryExpression>(
+    KtBinaryExpression::class.java, KotlinBundle.messagePointer("convert.boolean.const.to.elvis")
+) {
+    override fun isApplicableTo(element: KtBinaryExpression, caretOffset: Int): Boolean {
+        if (element.operationToken != KtTokens.EQEQ && element.operationToken != KtTokens.EXCLEQ) return false
+        val lhs = element.left ?: return false
+        val rhs = element.right ?: return false
+        return isApplicable(lhs, rhs) || isApplicable(rhs, lhs)
+    }
+
+    private fun isApplicable(lhs: KtExpression, rhs: KtExpression): Boolean {
+        if (!KtPsiUtil.isBooleanConstant(rhs)) return false
+
+        val lhsType = lhs.analyze(BodyResolveMode.PARTIAL).getType(lhs) ?: return false
+        return TypeUtils.isNullableType(lhsType) && lhsType.isBooleanOrNullableBoolean()
+    }
+
+    override fun applyTo(element: KtBinaryExpression, editor: Editor?) {
+        val equality = element.operationToken == KtTokens.EQEQ
+        val constPart = element.left as? KtConstantExpression ?: element.right as? KtConstantExpression ?: return
+        val exprPart = (if (element.right == constPart) element.left else element.right) ?: return
+        val constValue = when {
+            KtPsiUtil.isTrueConstant(constPart) -> true
+            KtPsiUtil.isFalseConstant(constPart) -> false
+            else -> return
+        }
+
+        val psiFactory = KtPsiFactory(constPart.project)
+        val elvis = psiFactory.createExpressionByPattern("$0 ?: ${!constValue}", exprPart)
+        element.replaced(if (constValue == equality) elvis else psiFactory.createExpressionByPattern("!($0)", elvis))
+    }
+}

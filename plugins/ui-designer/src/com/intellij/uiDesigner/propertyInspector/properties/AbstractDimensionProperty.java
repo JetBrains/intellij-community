@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.uiDesigner.propertyInspector.properties;
 
 import com.intellij.uiDesigner.FormEditingUtil;
@@ -13,21 +13,18 @@ import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import java.awt.*;
+import java.awt.Dimension;
 
 /**
  * This class is a base for implementing such properties
  * as "minimum size", "preferred size" and "maximum size".
- *
- * @author Anton Katilin
- * @author Vladimir Kondratyev
  */
 public abstract class AbstractDimensionProperty<T extends RadComponent> extends Property<T, Dimension> {
   private final Property[] myChildren;
   private final DimensionRenderer myRenderer;
   private final IntRegexEditor<Dimension> myEditor;
 
-  public AbstractDimensionProperty(@NonNls final String name){
+  public AbstractDimensionProperty(final @NonNls String name){
     super(null, name);
     myChildren=new Property[]{
       new IntFieldProperty(this, "width", -1, JBUI.emptySize()),
@@ -43,8 +40,7 @@ public abstract class AbstractDimensionProperty<T extends RadComponent> extends 
   }
 
   @Override
-  @NotNull
-  public final PropertyRenderer<Dimension> getRenderer() {
+  public final @NotNull PropertyRenderer<Dimension> getRenderer() {
     return myRenderer;
   }
 

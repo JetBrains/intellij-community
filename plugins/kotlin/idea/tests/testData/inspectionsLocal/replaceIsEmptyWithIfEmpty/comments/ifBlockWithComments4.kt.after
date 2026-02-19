@@ -1,0 +1,7 @@
+// IGNORE_K1
+fun test(l: List<Int>) {
+    // Replace with 'ifEmpty {...}
+    // comment
+    // comment
+    l.ifEmpty { listOf() }
+}

@@ -15,7 +15,7 @@
  */
 package com.intellij.openapi.editor;
 
-import com.intellij.util.DeprecatedMethodException;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -35,21 +35,12 @@ public interface FoldingModel {
    * @param startOffset     the start offset of the region to fold.
    * @param endOffset       the end offset of the region to fold.
    * @param placeholderText the text to display instead of the region contents when the region is folded.
-   * @return the fold region, or {@code null} if folding is currently disabled or corresponding region cannot be added (e.g. if it
+   * @return the fold region, or {@code null} if folding is currently disabled or corresponding region cannot be added (e.g., if it
    * intersects with another existing region)
    */
   @Nullable
+  @RequiresEdt
   FoldRegion addFoldRegion(int startOffset, int endOffset, @NotNull String placeholderText);
-
-  /**
-   * @deprecated Does nothing
-   */
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020.2")
-  @Deprecated
-  default boolean addFoldRegion(@NotNull FoldRegion region) {
-    DeprecatedMethodException.report("Use addFoldRegion(int,int,String) instead");
-    return true;
-  }
 
   /**
    * Removes the specified fold region. This method must be called
@@ -57,19 +48,20 @@ public interface FoldingModel {
    *
    * @param region the region to remove.
    */
+  @RequiresEdt
   void removeFoldRegion(@NotNull FoldRegion region);
 
   /**
    * Gets the list of all fold regions in the specified editor.
-   * Returned array is sorted according to {@link RangeMarker#BY_START_OFFSET} comparator, i.e. first by start offset, then by end offset.
+   * Returned array is sorted according to {@link RangeMarker#BY_START_OFFSET} comparator, i.e., first by start offset, then by end offset.
    *
    * @return the array of fold regions, or an empty array if folding is currently disabled.
    */
-  FoldRegion @NotNull [] getAllFoldRegions();
+  @NotNull FoldRegion @NotNull [] getAllFoldRegions();
 
   /**
    * Checks if the specified offset in the document belongs to a folded region. The region must contain given offset or be located right
-   * after given offset, i.e. the following condition must hold: foldStartOffset <= offset < foldEndOffset.
+   * after given offset, i.e., the following condition must hold: foldStartOffset <= offset < foldEndOffset.
    * <br>
    * This method can return incorrect data if it's invoked in the context of {@link #runBatchFoldingOperation(Runnable)} invocation.
    *
@@ -103,16 +95,10 @@ public interface FoldingModel {
    *
    * @param operation the operation to execute.
    */
+  @RequiresEdt
   default void runBatchFoldingOperation(@NotNull Runnable operation) {
     runBatchFoldingOperation(operation, true, true);
   }
-
-  /**
-   * @deprecated Passing {@code false} for {@code moveCaretFromCollapsedRegion} might leave caret in an inconsistent state
-   * after the operation. Use {@link #runBatchFoldingOperation(Runnable)} instead.
-   */
-  @Deprecated
-  void runBatchFoldingOperation(@NotNull Runnable operation, boolean moveCaretFromCollapsedRegion);
 
   default void runBatchFoldingOperationDoNotCollapseCaret(@NotNull Runnable operation) {
     runBatchFoldingOperation(operation, false, true);
@@ -128,5 +114,22 @@ public interface FoldingModel {
    *                                  caret position will remain unchanged (if caret is not visible at operation start, top left corner
    *                                  of editor will be used as an anchor instead). If {@code false}, no scrolling adjustment will be done.
    */
+  @RequiresEdt
   void runBatchFoldingOperation(@NotNull Runnable operation, boolean allowMovingCaret, boolean keepRelativeCaretPosition);
+
+  /**
+   * Creates a fold region with custom representation (defined by the provided renderer). Created region spans whole document lines, and
+   * always remains in a collapsed state (it can be removed, but not expanded).
+   *
+   * @param startLine starting document line in a target line range to fold (inclusive)
+   * @param endLine ending document line in a target line range to fold (inclusive)
+   * @param renderer Renderer defining the representation of fold region (size and rendered content). One renderer can be re-used for
+   *                 multiple fold regions.
+   * @return resulting fold region, or {@code null} if it cannot be created (e.g., due to unsupported overlapping with already existing
+   * regions)
+   */
+  @ApiStatus.Experimental
+  default @Nullable CustomFoldRegion addCustomLinesFolding(int startLine, int endLine, @NotNull CustomFoldRegionRenderer renderer) {
+    return null;
+  }
 }

@@ -12,24 +12,16 @@ import org.jetbrains.idea.maven.execution.MavenSpyEventsBuffer;
 @ApiStatus.Experimental
 public class BuildToolConsoleProcessAdapter extends ProcessAdapter {
   private final MavenBuildEventProcessor myEventParser;
-  private final boolean myProcessText;
   private final AnsiEscapeDecoder myDecoder = new AnsiEscapeDecoder();
   private final MavenSpyEventsBuffer myMavenSpyEventsBuffer;
 
 
   /**
-   * @param eventParser
    * @param processText to be removed after IDEA-216278
    */
-  public BuildToolConsoleProcessAdapter(MavenBuildEventProcessor eventParser, @Deprecated boolean processText) {
+  public BuildToolConsoleProcessAdapter(MavenBuildEventProcessor eventParser) {
     myEventParser = eventParser;
-    myProcessText = processText;
-    if (processText) {
-      myMavenSpyEventsBuffer = new MavenSpyEventsBuffer((l, k) -> myDecoder.escapeText(l, k, myEventParser));
-    }
-    else {
-      myMavenSpyEventsBuffer = null;
-    }
+    myMavenSpyEventsBuffer = new MavenSpyEventsBuffer((l, k) -> myDecoder.escapeText(l, k, myEventParser));
   }
 
   @Override
@@ -39,9 +31,7 @@ public class BuildToolConsoleProcessAdapter extends ProcessAdapter {
 
   @Override
   public void onTextAvailable(@NotNull ProcessEvent event, @NotNull Key outputType) {
-    if (myProcessText) {
-      myMavenSpyEventsBuffer.addText(event.getText(), outputType);
-    }
+    myMavenSpyEventsBuffer.addText(event.getText(), outputType);
   }
 
   @Override

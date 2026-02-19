@@ -1,0 +1,12 @@
+<idea-plugin visibility="public">
+  <dependencies>
+    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+    <module name="intellij.libraries.commons.codec"/>
+    <module name="intellij.libraries.commons.lang3"/>
+    <module name="intellij.libraries.commons.logging"/>
+    <module name="intellij.libraries.http.client"/>
+    <module name="intellij.libraries.maven.resolver.provider"/>
+    <module name="intellij.libraries.plexus.utils"/>
+    <!-- endregion -->
+  </dependencies>
+</idea-plugin>

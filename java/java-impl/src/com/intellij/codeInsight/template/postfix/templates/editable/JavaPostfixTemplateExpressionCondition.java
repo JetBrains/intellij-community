@@ -1,11 +1,16 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.template.postfix.templates.editable;
 
 import com.intellij.codeInsight.template.postfix.util.JavaPostfixTemplatesUtils;
+import com.intellij.java.JavaBundle;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypes;
 import com.intellij.psi.util.InheritanceUtil;
 import org.jdom.Element;
+import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Objects;
@@ -13,16 +18,16 @@ import java.util.Objects;
 public interface JavaPostfixTemplateExpressionCondition extends PostfixTemplateExpressionCondition<PsiExpression> {
 
   class JavaPostfixTemplateExpressionFqnCondition implements JavaPostfixTemplateExpressionCondition {
-    public static final String ID = "fqn";
-    public static final String FQN_ATTR = "fqn";
+    public static final @NonNls String ID = "fqn";
+    public static final @NonNls String FQN_ATTR = "fqn";
 
-    private final String myFqn;
+    private final @NlsSafe String myFqn;
 
     public JavaPostfixTemplateExpressionFqnCondition(@NotNull String fqn) {
       myFqn = fqn;
     }
 
-    public String getFqn() {
+    public @NlsSafe String getFqn() {
       return myFqn;
     }
 
@@ -32,15 +37,13 @@ public interface JavaPostfixTemplateExpressionCondition extends PostfixTemplateE
       return type != null && InheritanceUtil.isInheritor(type, myFqn);
     }
 
-    @NotNull
     @Override
-    public String getId() {
+    public @NotNull String getId() {
       return ID;
     }
 
-    @NotNull
     @Override
-    public String getPresentableName() {
+    public @NotNull @Nls String getPresentableName() {
       return myFqn;
     }
 
@@ -65,24 +68,22 @@ public interface JavaPostfixTemplateExpressionCondition extends PostfixTemplateE
   }
 
   class JavaPostfixTemplateVoidExpressionCondition implements JavaPostfixTemplateExpressionCondition {
-    public static final String ID = "void";
+    public static final @NonNls String ID = "void";
 
     @Override
     public boolean value(@NotNull PsiExpression element) {
       PsiType type = element.getType();
-      return type != null && PsiType.VOID.equals(type);
+      return type != null && PsiTypes.voidType().equals(type);
     }
 
-    @NotNull
     @Override
-    public String getId() {
+    public @NotNull String getId() {
       return ID;
     }
 
-    @NotNull
     @Override
-    public String getPresentableName() {
-      return "void";
+    public @NotNull @Nls String getPresentableName() {
+      return JavaBundle.message("postfix.template.condition.void.name");
     }
 
     @Override
@@ -99,23 +100,21 @@ public interface JavaPostfixTemplateExpressionCondition extends PostfixTemplateE
 
 
   class JavaPostfixTemplateNonVoidExpressionCondition implements JavaPostfixTemplateExpressionCondition {
-    public static final String ID = "non void";
+    public static final @NonNls String ID = "non void";
 
     @Override
     public boolean value(@NotNull PsiExpression element) {
       return JavaPostfixTemplatesUtils.isNonVoid(element.getType());
     }
 
-    @NotNull
     @Override
-    public String getId() {
+    public @NotNull String getId() {
       return ID;
     }
 
-    @NotNull
     @Override
-    public String getPresentableName() {
-      return "non void";
+    public @NotNull @Nls String getPresentableName() {
+      return JavaBundle.message("postfix.template.condition.non.void.name");
     }
 
     @Override
@@ -131,23 +130,21 @@ public interface JavaPostfixTemplateExpressionCondition extends PostfixTemplateE
   }
 
   class JavaPostfixTemplateBooleanExpressionCondition implements JavaPostfixTemplateExpressionCondition {
-    public static final String ID = "boolean";
+    public static final @NonNls String ID = "boolean";
 
     @Override
     public boolean value(@NotNull PsiExpression element) {
       return JavaPostfixTemplatesUtils.isBoolean(element.getType());
     }
 
-    @NotNull
     @Override
-    public String getId() {
+    public @NotNull String getId() {
       return ID;
     }
 
-    @NotNull
     @Override
-    public String getPresentableName() {
-      return "boolean";
+    public @NotNull @Nls String getPresentableName() {
+      return JavaBundle.message("postfix.template.condition.boolean.name");
     }
 
     @Override
@@ -163,23 +160,21 @@ public interface JavaPostfixTemplateExpressionCondition extends PostfixTemplateE
   }
 
   class JavaPostfixTemplateNumberExpressionCondition implements JavaPostfixTemplateExpressionCondition {
-    public static final String ID = "number";
+    public static final @NonNls String ID = "number";
 
     @Override
     public boolean value(@NotNull PsiExpression element) {
       return JavaPostfixTemplatesUtils.isNumber(element.getType());
     }
 
-    @NotNull
     @Override
-    public String getId() {
+    public @NotNull String getId() {
       return ID;
     }
 
-    @NotNull
     @Override
-    public String getPresentableName() {
-      return "number";
+    public @NotNull @Nls String getPresentableName() {
+      return JavaBundle.message("postfix.template.condition.number.name");
     }
 
     @Override
@@ -195,23 +190,21 @@ public interface JavaPostfixTemplateExpressionCondition extends PostfixTemplateE
   }
 
   class JavaPostfixTemplateNotPrimitiveTypeExpressionCondition implements JavaPostfixTemplateExpressionCondition {
-    public static final String ID = "notPrimitive";
+    public static final @NonNls String ID = "notPrimitive";
 
     @Override
     public boolean value(@NotNull PsiExpression element) {
       return JavaPostfixTemplatesUtils.isNotPrimitiveTypeExpression(element);
     }
 
-    @NotNull
     @Override
-    public String getId() {
+    public @NotNull String getId() {
       return ID;
     }
 
-    @NotNull
     @Override
-    public String getPresentableName() {
-      return "not primitive type";
+    public @NotNull @Nls String getPresentableName() {
+      return JavaBundle.message("postfix.template.condition.not.primitive.type.name");
     }
 
     @Override
@@ -227,23 +220,51 @@ public interface JavaPostfixTemplateExpressionCondition extends PostfixTemplateE
   }
 
   class JavaPostfixTemplateArrayExpressionCondition implements JavaPostfixTemplateExpressionCondition {
-    public static final String ID = "array";
+    public static final @NonNls String ID = "array";
 
     @Override
     public boolean value(@NotNull PsiExpression element) {
       return JavaPostfixTemplatesUtils.isArray(element.getType());
     }
 
-    @NotNull
     @Override
-    public String getId() {
+    public @NotNull String getId() {
       return ID;
     }
 
-    @NotNull
     @Override
-    public String getPresentableName() {
-      return "array";
+    public @NotNull @Nls String getPresentableName() {
+      return JavaBundle.message("postfix.template.condition.array.name");
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) return true;
+      return o != null && getClass() == o.getClass();
+    }
+
+    @Override
+    public int hashCode() {
+      return getClass().hashCode();
+    }
+  }
+
+  class JavaPostfixTemplateArrayReferenceExpressionCondition implements JavaPostfixTemplateExpressionCondition {
+    public static final @NonNls String ID = "arrayReference";
+
+    @Override
+    public boolean value(@NotNull PsiExpression element) {
+      return JavaPostfixTemplatesUtils.isArrayReference(element.getType());
+    }
+
+    @Override
+    public @NotNull String getId() {
+      return ID;
+    }
+
+    @Override
+    public @NotNull @Nls String getPresentableName() {
+      return JavaBundle.message("postfix.template.condition.array.reference.name");
     }
 
     @Override

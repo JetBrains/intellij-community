@@ -1,0 +1,10 @@
+version = "0.7.*"
+upstream_repository = "https://sourceforge.net/p/raspberry-gpio-python/code/"
+
+[tool.stubtest]
+# This package is only supported on Raspberry Pi hardware, which identifies
+# itself as 'linux'. When run on other hardware, it raises a RuntimeError:
+# RPi.GPIO failed to import. RuntimeError: This module can only be run on a Raspberry Pi!
+# https://sourceforge.net/p/raspberry-gpio-python/code/ci/08048dd1894a6b09a104557b6eaa6bb68b6baac5/tree/source/py_gpio.c#l1008
+supported_platforms = []
+ci_platforms = []

@@ -22,7 +22,6 @@ package com.intellij.lang;
  *
  * @see com.intellij.psi.templateLanguages.TemplateLanguage
  * @see InjectableLanguage
- * @author peter
  */
 public interface DependentLanguage {
 }

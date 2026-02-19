@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.editorActions;
 
 import com.intellij.codeInsight.CodeInsightSettings;
@@ -10,15 +10,19 @@ import com.intellij.openapi.editor.highlighter.HighlighterIterator;
  * Implement this interface for {@link QuoteHandlerEP} to provide "Insert pair quote" functionality
  * for your language (controlled by {@link CodeInsightSettings#AUTOINSERT_PAIR_QUOTE}).
  * <p>
- * All the checks are triggered on typing/removal of a single quote and out of the box the aforementioned
- * functionality is supported only for ordinary strings enclosed in a single pair of quotes.
- * In order to support string literals that start and end with multiple quotes see {@link MultiCharQuoteHandler}
+ * All the checks are triggered on typing/removal of a single quote. Out of the box, the aforementioned
+ * functionality is supported only for ordinary strings enclosed in a single pair of quotes (see {@link SimpleTokenSetQuoteHandler}).
+ * </p>
+ * <p>
+ * To support string literals that start and end with multiple quotes see {@link MultiCharQuoteHandler}
  * and {@link BackspaceHandlerDelegate}.
+ * </p>
  *
  * @see CodeInsightSettings#AUTOINSERT_PAIR_QUOTE
  * @see QuoteHandlerEP
- * @see LanguageQuoteHandling
+ * @see SimpleTokenSetQuoteHandler
  * @see MultiCharQuoteHandler
+ * @see LanguageQuoteHandling
  */
 public interface QuoteHandler {
   /**
@@ -49,7 +53,7 @@ public interface QuoteHandler {
    * by inserting the respective closing one.
    * <p>
    * If both this method and {@link #isOpeningQuote(HighlighterIterator, int)}
-   * return true, the respective closing quote will be inserted automatically.
+   * return {@code true}, the respective closing quote will be inserted automatically.
    *
    * @param editor   an editor instance where the quote was inserted
    * @param iterator highlighting iterator at the state corresponding to the {@code offset}

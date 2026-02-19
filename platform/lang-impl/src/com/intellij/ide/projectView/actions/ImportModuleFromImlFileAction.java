@@ -1,9 +1,10 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.projectView.actions;
 
 import com.intellij.CommonBundle;
 import com.intellij.ide.highlighter.ModuleFileType;
 import com.intellij.lang.LangBundle;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
@@ -17,13 +18,15 @@ import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-public class ImportModuleFromImlFileAction extends AnAction {
+@ApiStatus.Internal
+public final class ImportModuleFromImlFileAction extends AnAction {
   private static final Logger LOG = Logger.getInstance(ImportModuleFromImlFileAction.class);
 
   @Override
@@ -42,8 +45,14 @@ public class ImportModuleFromImlFileAction extends AnAction {
     }
     catch (Exception ex) {
       LOG.info(ex);
-      Messages.showErrorDialog(project, LangBundle.message("dialog.message.cannot.import.module", ex.getMessage()), CommonBundle.getErrorTitle());
+      Messages.showErrorDialog(project, LangBundle.message("dialog.message.cannot.import.module", ex.getMessage()),
+                               CommonBundle.getErrorTitle());
     }
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 
   @Override

@@ -2,10 +2,23 @@
 package com.intellij.codeInsight.editorActions;
 
 import com.intellij.openapi.editor.Document;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.JavaTokenType;
+import com.intellij.psi.PsiBlockStatement;
+import com.intellij.psi.PsiCodeBlock;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementFactory;
+import com.intellij.psi.PsiErrorElement;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiIfStatement;
+import com.intellij.psi.PsiJavaToken;
+import com.intellij.psi.PsiStatement;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.siyeh.ig.psiutils.ControlFlowUtils;
 import com.siyeh.ig.psiutils.ParenthesesUtils;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Objects;
@@ -25,10 +38,16 @@ import static com.intellij.util.ObjectUtils.tryCast;
  * }
  * }</pre>
  */
-public class NestedIfJoinLinesHandler implements JoinLinesHandlerDelegate {
+public final class NestedIfJoinLinesHandler implements JoinRawLinesHandlerDelegate {
   @Override
-  public int tryJoinLines(@NotNull final Document document, @NotNull final PsiFile psiFile, final int start, final int end) {
-    PsiJavaToken elementAtStartLineEnd = tryCast(psiFile.findElementAt(start), PsiJavaToken.class);
+  public int tryJoinLines(@NotNull Document document, @NotNull PsiFile file, int start, int end) {
+    return CANNOT_JOIN;
+  }
+
+  @Override
+  public int tryJoinRawLines(@NotNull Document document, @NotNull PsiFile psiFile, int start, int end) {
+    if (start == 0) return CANNOT_JOIN;
+    PsiJavaToken elementAtStartLineEnd = tryCast(psiFile.findElementAt(start-1), PsiJavaToken.class);
     PsiElement nextLineElement = psiFile.findElementAt(end);
     if (elementAtStartLineEnd == null || nextLineElement == null) return CANNOT_JOIN;
     PsiIfStatement outerIf = null;
@@ -57,13 +76,45 @@ public class NestedIfJoinLinesHandler implements JoinLinesHandlerDelegate {
     PsiJavaToken rParenth = innerIf.getRParenth();
     if (lParenth == null || rParenth == null) return CANNOT_JOIN;
 
+    String outerPrefix = "", innerPrefix = "";
+    int outerIfOffset = outerIf.getTextRange().getStartOffset();
+    int innerIfOffset = innerIf.getTextRange().getStartOffset();
+    int outerIfLine = document.getLineNumber(outerIfOffset);
+    int innerIfLine = document.getLineNumber(innerIfOffset);
+    if (innerIfLine > outerIfLine) {
+      int outerLineStart = document.getLineStartOffset(outerIfLine);
+      int innerLineStart = document.getLineStartOffset(innerIfLine);
+      CharSequence sequence = document.getCharsSequence();
+      outerPrefix = sequence.subSequence(outerLineStart, outerIfOffset).toString();
+      innerPrefix = sequence.subSequence(innerLineStart, innerIfOffset).toString();
+      if (!innerPrefix.startsWith(outerPrefix) || !innerPrefix.isBlank()) {
+        outerPrefix = innerPrefix = "";
+      }
+    }
+
     String childConditionText = ParenthesesUtils.getText(innerCondition, ParenthesesUtils.OR_PRECEDENCE);
     String parentConditionText = ParenthesesUtils.getText(outerCondition, ParenthesesUtils.OR_PRECEDENCE);
 
     PsiElementFactory factory = JavaPsiFacade.getElementFactory(psiFile.getProject());
-    String condition = parentConditionText + " && " + childConditionText;
+    PsiElement lastChild = outerCondition.getLastChild();
+    String condition;
+    if (lastChild instanceof PsiErrorElement &&
+        PsiUtil.isJavaToken(PsiTreeUtil.skipWhitespacesAndCommentsBackward(lastChild), JavaTokenType.ANDAND)) {
+      // unterminated condition like if(a &&) -- reuse existing &&
+      condition = parentConditionText + " " + childConditionText;
+    } else {
+      condition = parentConditionText + " && " + childConditionText;
+    }
+    String innerIfBody = innerIf.getText().substring(rParenth.getTextRangeInParent().getStartOffset());
+    if (!innerPrefix.isEmpty()) {
+      String finalInnerPrefix = innerPrefix;
+      String finalOuterPrefix = outerPrefix;
+      innerIfBody = StreamEx.split(innerIfBody, '\n', false)
+        .map(s -> s.startsWith(finalInnerPrefix) ? finalOuterPrefix + s.substring(finalInnerPrefix.length()) : s)
+        .joining("\n");
+    }
     String resultText = outerIf.getText().substring(0, lParenth.getTextRangeInParent().getEndOffset())
-                    + condition + innerIf.getText().substring(rParenth.getTextRangeInParent().getStartOffset());
+                        + condition + innerIfBody;
     PsiStatement statement = factory.createStatementFromText(resultText, outerIf);
     PsiIfStatement result = (PsiIfStatement)outerIf.replace(statement);
     return Objects.requireNonNull(result.getCondition()).getTextRange().getStartOffset() +

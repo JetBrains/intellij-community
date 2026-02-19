@@ -1,39 +1,43 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.terminal.arrangement;
 
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.terminal.JBTerminalWidget;
+import com.intellij.terminal.ui.TerminalWidget;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManager;
 import com.intellij.ui.content.ContentManagerEvent;
 import com.intellij.ui.content.ContentManagerListener;
 import com.intellij.util.Alarm;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.TimeoutUtil;
 import com.jediterm.terminal.ProcessTtyConnector;
+import com.jediterm.terminal.TtyConnector;
+import kotlinx.coroutines.CompletableDeferred;
+import kotlinx.coroutines.future.FutureKt;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.terminal.TerminalView;
+import org.jetbrains.plugins.terminal.ShellTerminalWidget;
+import org.jetbrains.plugins.terminal.TerminalToolWindowManager;
 
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
+import java.nio.file.Files;
+import java.nio.file.InvalidPathException;
+import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Objects;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicReference;
 
-public class TerminalWorkingDirectoryManager {
+public final class TerminalWorkingDirectoryManager {
   private static final Logger LOG = Logger.getInstance(TerminalWorkingDirectoryManager.class);
   private static final int MERGE_WAIT_MILLIS = 500;
   private static final int FETCH_WAIT_MILLIS = 2000;
@@ -86,41 +90,48 @@ public class TerminalWorkingDirectoryManager {
     data.myWorkingDirectory = content.getUserData(INITIAL_CWD_KEY);
     content.putUserData(INITIAL_CWD_KEY, null);
     dataRef.set(data);
-    JBTerminalWidget widget = Objects.requireNonNull(TerminalView.getWidgetByContent(content));
-    widget.getTerminalPanel().addCustomKeyListener(listener);
-    Disposer.register(content, new Disposable() {
-      @Override
-      public void dispose() {
-        widget.getTerminalPanel().removeCustomKeyListener(listener);
-      }
-    });
+    JBTerminalWidget widget = TerminalToolWindowManager.getWidgetByContent(content);
+    if (widget != null) {
+      widget.getTerminalPanel().addCustomKeyListener(listener);
+      Disposer.register(content, () -> widget.getTerminalPanel().removeCustomKeyListener(listener));
+    }
     myDataByContentMap.put(content, data);
   }
 
   private static void updateWorkingDirectory(@NotNull Content content, @NotNull Data data) {
-    JBTerminalWidget widget = TerminalView.getWidgetByContent(content);
+    JBTerminalWidget widget = TerminalToolWindowManager.getWidgetByContent(content);
+    TerminalWidget newWidget = widget != null ? widget.asNewWidget() : null;
     if (widget != null) {
-      data.myWorkingDirectory = getWorkingDirectory(widget, data.myContentName);
+      data.myWorkingDirectory = getWorkingDirectory(newWidget);
     }
   }
 
-  @Nullable
-  public static String getWorkingDirectory(@NotNull JBTerminalWidget widget, @Nullable String name) {
-    ProcessTtyConnector connector = ObjectUtils.tryCast(widget.getTtyConnector(), ProcessTtyConnector.class);
+  public static @Nullable String getWorkingDirectory(@NotNull TerminalWidget widget) {
+    TtyConnector connector = widget.getTtyConnector();
     if (connector == null) return null;
+    return getWorkingDirectory(connector);
+  }
+
+  @ApiStatus.Internal
+  public static @Nullable String getWorkingDirectory(@NotNull TtyConnector connector) {
+    ProcessTtyConnector processConnector = ShellTerminalWidget.getProcessTtyConnector(connector);
+    if (processConnector == null) return null;
     try {
       long startNano = System.nanoTime();
-      Future<String> cwd = ProcessInfoUtil.getCurrentWorkingDirectory(connector.getProcess());
-      String result = cwd.get(FETCH_WAIT_MILLIS, TimeUnit.MILLISECONDS);
+      CompletableDeferred<String> cwdDeferred =
+        ProcessInfoUtil.getInstance().getCurrentWorkingDirectoryDeferred(processConnector.getProcess());
+      CompletableFuture<String> cwdFuture = FutureKt.asCompletableFuture(cwdDeferred);
+      String result = cwdFuture.get(FETCH_WAIT_MILLIS, TimeUnit.MILLISECONDS);
+      boolean exists = checkDirectory(result);
       if (LOG.isDebugEnabled()) {
-        LOG.debug("Cwd (" + result + ") fetched in " + TimeoutUtil.getDurationMillis(startNano) + " ms");
+        LOG.debug("Cwd (" + result + ", exists=" + exists + ") fetched in " + TimeoutUtil.getDurationMillis(startNano) + " ms");
       }
-      return result;
+      return exists ? result : null;
     }
     catch (InterruptedException ignored) {
     }
     catch (ExecutionException e) {
-      String message = "Failed to fetch cwd for " + name;
+      String message = "Failed to fetch cwd for " + connector;
       if (LOG.isDebugEnabled()) {
         LOG.warn(message, e);
       }
@@ -129,24 +140,42 @@ public class TerminalWorkingDirectoryManager {
       }
     }
     catch (TimeoutException e) {
-      LOG.warn("Timeout fetching cwd for " + name, e);
+      LOG.warn("Timeout fetching cwd for " + connector, e);
     }
     return null;
+  }
+
+  /**
+   * @deprecated use {@link #getWorkingDirectory(TerminalWidget)} instead
+   */
+  @Deprecated(forRemoval = true)
+  public static @Nullable String getWorkingDirectory(@NotNull JBTerminalWidget widget, @Nullable String name) {
+    return getWorkingDirectory(widget.asNewWidget());
+  }
+
+  private static boolean checkDirectory(@Nullable String directory) {
+    if (directory == null) return false;
+    try {
+      Path path = Path.of(directory);
+      return path.isAbsolute() && Files.isDirectory(path);
+    }
+    catch (InvalidPathException e) {
+      return false;
+    }
   }
 
   private void unwatchTab(@NotNull Content content) {
     Data data = getData(content);
     if (data != null) {
       myDataByContentMap.remove(content);
-      JBTerminalWidget widget = TerminalView.getWidgetByContent(content);
+      JBTerminalWidget widget = TerminalToolWindowManager.getWidgetByContent(content);
       if (widget != null) {
         widget.getTerminalPanel().removeCustomKeyListener(data.myKeyListener);
       }
     }
   }
 
-  @Nullable
-  private Data getData(@NotNull Content content) {
+  private @Nullable Data getData(@NotNull Content content) {
     Data data = myDataByContentMap.get(content);
     if (data == null) {
       LOG.error("No associated data");
@@ -154,9 +183,8 @@ public class TerminalWorkingDirectoryManager {
     return data;
   }
 
-  public static void setInitialWorkingDirectory(@NotNull Content content, @Nullable VirtualFile fileOrDir) {
-    VirtualFile dir = fileOrDir != null && !fileOrDir.isDirectory() ? fileOrDir.getParent() : fileOrDir;
-    content.putUserData(INITIAL_CWD_KEY, dir != null ? FileUtil.toSystemDependentName(dir.getPath()) : null);
+  public static void setInitialWorkingDirectory(@NotNull Content content, @Nullable String directory) {
+    content.putUserData(INITIAL_CWD_KEY, directory);
   }
 
   private static final class Data {

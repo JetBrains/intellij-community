@@ -1,6 +1,7 @@
 import sys
 import datetime
 import os
+
 helpers_dir = os.getenv("PYCHARM_HELPERS_DIR", sys.path[0])
 if sys.path[0] != helpers_dir:
     sys.path.insert(0, helpers_dir)
@@ -16,6 +17,32 @@ adjust_sys_path()
 re = import_system_module("re")
 doctest = import_system_module("doctest")
 traceback = import_system_module("traceback")
+argparse = import_system_module("argparse")
+
+_OPTIONFLAGS_BY_NAME = {}
+
+
+def _register_all_optionflags():
+    """
+    Needed for correct parsing docrunner.py arguments
+    See: https://github.com/python/cpython/blob/main/Lib/doctest.py
+    """
+    def _register_optionflag(name):
+        # Create a new flag unless `name` is already known.
+        return _OPTIONFLAGS_BY_NAME.setdefault(name, 1 << len(_OPTIONFLAGS_BY_NAME))
+
+    _register_optionflag('DONT_ACCEPT_TRUE_FOR_1')
+    _register_optionflag('DONT_ACCEPT_BLANKLINE')
+    _register_optionflag('NORMALIZE_WHITESPACE')
+    _register_optionflag('ELLIPSIS')
+    _register_optionflag('SKIP')
+    _register_optionflag('IGNORE_EXCEPTION_DETAIL')
+    _register_optionflag('REPORT_UDIFF')
+    _register_optionflag('REPORT_CDIFF')
+    _register_optionflag('REPORT_NDIFF')
+    _register_optionflag('REPORT_ONLY_FIRST_FAILURE')
+    _register_optionflag('FAIL_FAST')
+
 
 class TeamcityDocTestResult(TeamcityTestResult):
   """
@@ -84,8 +111,8 @@ class DocTestRunner(doctest.DocTestRunner):
   Special runner for doctests,
   overrides __run method to report results using TeamcityDocTestResult
   """
-  def __init__(self, verbose=None, optionflags=0):
-    doctest.DocTestRunner.__init__(self, verbose, optionflags)
+  def __init__(self, checker=None, verbose=None, optionflags=0):
+    doctest.DocTestRunner.__init__(self, checker=checker, verbose=verbose, optionflags=optionflags)
     self.stream = sys.stdout
     self.result = TeamcityDocTestResult(self.stream)
     #self.result.messages.testMatrixEntered()
@@ -199,17 +226,13 @@ class DocTestRunner(doctest.DocTestRunner):
 modules = {}
 
 
-
-runner = DocTestRunner()
-
-
 def _load_file(moduleName, fileName):
-  if sys.version_info >= (3, 3):
-      from importlib import machinery
-      return machinery.SourceFileLoader(moduleName, fileName).load_module()
-  else:
-    import imp
-    return imp.load_source(moduleName, fileName)
+    if sys.version_info >= (3, 5):
+        import importlib
+        return importlib.import_module(moduleName, fileName)
+    else:
+        import imp
+        return imp.load_source(moduleName, fileName)
 
 def loadSource(fileName):
   """
@@ -273,13 +296,43 @@ def testFilesInFolderUsingPattern(folder, pattern = ".*"):
 
     return modules
 
+def _parse_args():
+    _register_all_optionflags()
+    parser = argparse.ArgumentParser()
+
+    parser.add_argument('-v', '--verbose', action='store_true', default=False)
+    parser.add_argument('-o', '--option', action='append',
+                        choices=_OPTIONFLAGS_BY_NAME.keys(), default=[])
+    parser.add_argument('-f', '--fail-fast', action='store_true')
+
+    original_argv = sys.argv
+    sys.argv = original_argv[1:]
+    args = parser.parse_args()
+    sys.argv = original_argv
+
+    verbose = args.verbose
+
+    options = 0
+    for option in args.option:
+        options |= _OPTIONFLAGS_BY_NAME[option]
+    if args.fail_fast:
+        options |= _OPTIONFLAGS_BY_NAME['FAIL_FAST']
+
+    return verbose, options
+
+
 if __name__ == "__main__":
+  verbose, options = _parse_args()
+  runner = DocTestRunner(verbose=verbose, optionflags=options)
   finder = doctest.DocTestFinder()
 
   for arg in sys.argv[1:]:
     arg = arg.strip()
     if len(arg) == 0:
       continue
+
+    if arg.startswith("-") or arg in _OPTIONFLAGS_BY_NAME.keys():
+        continue
 
     a = arg.split("::")
     if len(a) == 1:

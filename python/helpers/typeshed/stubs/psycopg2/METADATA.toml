@@ -1,0 +1,3 @@
+version = "2.9.11"
+upstream_repository = "https://github.com/psycopg/psycopg2"
+partial_stub = false

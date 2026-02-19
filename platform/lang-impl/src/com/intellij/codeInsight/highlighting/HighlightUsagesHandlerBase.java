@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInsight.highlighting;
 
@@ -21,6 +7,7 @@ import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.EditorColors;
+import com.intellij.openapi.project.PossiblyDumbAware;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.wm.WindowManager;
@@ -29,25 +16,24 @@ import com.intellij.psi.PsiFile;
 import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * @author yole
- */
-public abstract class HighlightUsagesHandlerBase<T extends PsiElement> {
-  @NotNull protected final Editor myEditor;
-  @NotNull protected final PsiFile myFile;
 
-  protected List<TextRange> myReadUsages = new ArrayList<>();
-  protected List<TextRange> myWriteUsages = new ArrayList<>();
+public abstract class HighlightUsagesHandlerBase<T extends PsiElement> implements PossiblyDumbAware {
+  protected final @NotNull Editor myEditor;
+  protected final @NotNull PsiFile myFile;
+
+  protected final @NotNull List<@NotNull TextRange> myReadUsages = new ArrayList<>();
+  protected final @NotNull List<@NotNull TextRange> myWriteUsages = new ArrayList<>();
   protected @NlsContexts.StatusBarText String myStatusText;
   protected @NlsContexts.HintText String myHintText;
 
-  protected HighlightUsagesHandlerBase(@NotNull Editor editor, @NotNull PsiFile file) {
+  protected HighlightUsagesHandlerBase(@NotNull Editor editor, @NotNull PsiFile psiFile) {
     myEditor = editor;
-    myFile = file;
+    myFile = psiFile;
   }
 
   public void highlightUsages() {
@@ -60,9 +46,9 @@ public abstract class HighlightUsagesHandlerBase<T extends PsiElement> {
 
   private void performHighlighting() {
     boolean clearHighlights = HighlightUsagesHandler.isClearHighlights(myEditor);
-    HighlightUsagesHandler.highlightRanges(HighlightManager.getInstance(myEditor.getProject()),
+    HighlightUsagesHandler.highlightRanges(HighlightManager.getInstance(myFile.getProject()),
                                            myEditor, EditorColors.SEARCH_RESULT_ATTRIBUTES, clearHighlights, myReadUsages);
-    HighlightUsagesHandler.highlightRanges(HighlightManager.getInstance(myEditor.getProject()),
+    HighlightUsagesHandler.highlightRanges(HighlightManager.getInstance(myFile.getProject()),
                                            myEditor, EditorColors.WRITE_SEARCH_RESULT_ATTRIBUTES, clearHighlights, myWriteUsages);
     if (!clearHighlights) {
       WindowManager.getInstance().getStatusBar(myFile.getProject()).setInfo(myStatusText);
@@ -88,15 +74,13 @@ public abstract class HighlightUsagesHandlerBase<T extends PsiElement> {
     }
   }
 
-  @NotNull
-  public abstract List<T> getTargets();
+  public abstract @Unmodifiable @NotNull List<T> getTargets();
 
-  @Nullable
-  public String getFeatureId() {
+  public @Nullable String getFeatureId() {
     return null;
   }
 
-  protected abstract void selectTargets(@NotNull List<? extends T> targets, @NotNull Consumer<? super List<? extends T>> selectionConsumer);
+  protected abstract void selectTargets(@NotNull @Unmodifiable List<? extends T> targets, @NotNull Consumer<? super List<? extends T>> selectionConsumer);
 
   public abstract void computeUsages(@NotNull List<? extends T> targets);
 
@@ -108,19 +92,24 @@ public abstract class HighlightUsagesHandlerBase<T extends PsiElement> {
     }
   }
 
-  public List<TextRange> getReadUsages() {
+  public @NotNull List<@NotNull TextRange> getReadUsages() {
     return myReadUsages;
   }
 
-  public List<TextRange> getWriteUsages() {
+  public @NotNull List<@NotNull TextRange> getWriteUsages() {
     return myWriteUsages;
   }
 
   /**
    * In case of egoistic handler (highlightReferences = false) IdentifierHighlighterPass applies information only from this particular handler.
-   * Otherwise additional information would be collected from reference search as well. 
+   * Otherwise additional information would be collected from reference search as well.
    */
   public boolean highlightReferences() {
     return false;
+  }
+
+  @Override
+  public String toString() {
+    return super.toString() +" myReadUsages="+myReadUsages+"; myWriteUsages="+myWriteUsages;
   }
 }

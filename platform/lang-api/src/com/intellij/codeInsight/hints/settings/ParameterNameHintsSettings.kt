@@ -1,13 +1,15 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.hints.settings
 
 import com.intellij.lang.Language
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.PersistentStateComponent
-import com.intellij.openapi.components.ServiceManager
+import com.intellij.openapi.components.SettingsCategory
 import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
-import com.intellij.util.getAttributeBooleanValue
+import com.intellij.util.messages.Topic
 import org.jdom.Element
+import org.jetbrains.annotations.ApiStatus
 
 private object XmlTagHelper {
   const val BLACKLISTS = "blacklists"
@@ -42,7 +44,7 @@ class Diff(val added: Set<String>, val removed: Set<String>) {
   }
 }
 
-@State(name = "ParameterNameHintsSettings", storages = [(Storage("parameter.hints.xml"))])
+@State(name = "ParameterNameHintsSettings", storages = [(Storage("parameter.hints.xml"))], category = SettingsCategory.CODE)
 class ParameterNameHintsSettings : PersistentStateComponent<Element> {
   private val removedPatterns = hashMapOf<String, Set<String>>()
   private val addedPatterns = hashMapOf<String, Set<String>>()
@@ -54,14 +56,14 @@ class ParameterNameHintsSettings : PersistentStateComponent<Element> {
     setAddedPatterns(language, patternsBefore + pattern)
   }
 
-  fun getBlackListDiff(language: Language): Diff {
+  fun getExcludeListDiff(language: Language): Diff {
     val added = getAddedPatterns(language)
     val removed = getRemovedPatterns(language)
 
     return Diff(added, removed)
   }
 
-  fun setBlackListDiff(language: Language, diff: Diff) {
+  fun setExcludeListDiff(language: Language, diff: Diff) {
     setAddedPatterns(language, diff.added)
     setRemovedPatterns(language, diff.removed)
   }
@@ -151,11 +153,12 @@ class ParameterNameHintsSettings : PersistentStateComponent<Element> {
         disabledLanguages.add(languageId)
       }
     }
+    fireExcludeListChanged(null)
   }
 
   companion object {
     @JvmStatic
-    fun getInstance(): ParameterNameHintsSettings = ServiceManager.getService(ParameterNameHintsSettings::class.java)
+    fun getInstance(): ParameterNameHintsSettings = ApplicationManager.getApplication().getService(ParameterNameHintsSettings::class.java)
   }
 
   fun getOption(optionId: String): Boolean? {
@@ -184,11 +187,32 @@ class ParameterNameHintsSettings : PersistentStateComponent<Element> {
   private fun setRemovedPatterns(language: Language, removed: Set<String>) {
     val key = language.displayName
     removedPatterns[key] = removed
+    fireExcludeListChanged(language)
   }
 
   private fun setAddedPatterns(language: Language, added: Set<String>) {
     val key = language.displayName
     addedPatterns[key] = added
+    fireExcludeListChanged(language)
+  }
+
+  private fun fireExcludeListChanged(language: Language?) {
+    ApplicationManager.getApplication().messageBus.syncPublisher(ExcludeListListener.TOPIC).excludeListChanged(language)
+  }
+
+  @ApiStatus.Experimental
+  interface ExcludeListListener {
+    companion object {
+      @JvmField
+      @Topic.AppLevel
+      val TOPIC: Topic<ExcludeListListener> = Topic(ExcludeListListener::class.java)
+    }
+
+    /** Fired after the exclude list for [language] has changed.
+     *
+     * @param language The language whose exclude list has changed.
+     * `null` if the exclude list for all languages should be considered as changed. */
+    fun excludeListChanged(language: Language?)
   }
 
 }

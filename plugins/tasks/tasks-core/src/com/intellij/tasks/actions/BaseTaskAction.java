@@ -1,6 +1,7 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.tasks.actions;
 
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.DumbAware;
@@ -8,11 +9,10 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsActions;
 import com.intellij.tasks.LocalTask;
 import com.intellij.tasks.TaskManager;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.Icon;
 
 /**
  * @author Dmitry Avdeev
@@ -26,9 +26,9 @@ public abstract class BaseTaskAction extends AnAction implements DumbAware {
     super(text);
   }
 
-  protected BaseTaskAction(@Nullable @NlsActions.ActionText final String text,
-                           @Nullable @NlsActions.ActionDescription final String description,
-                           @Nullable final Icon icon) {
+  protected BaseTaskAction(final @Nullable @NlsActions.ActionText String text,
+                           final @Nullable @NlsActions.ActionDescription String description,
+                           final @Nullable Icon icon) {
     super(text, description, icon);
   }
 
@@ -37,13 +37,16 @@ public abstract class BaseTaskAction extends AnAction implements DumbAware {
     event.getPresentation().setEnabled(getProject(event) != null);
   }
 
-  @Nullable
-  public static Project getProject(@Nullable AnActionEvent event) {
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
+  }
+
+  public static @Nullable Project getProject(@Nullable AnActionEvent event) {
     return event == null ? null : event.getProject();
   }
 
-  @Nullable
-  public static TaskManager getTaskManager(AnActionEvent event) {
+  public static @Nullable TaskManager getTaskManager(AnActionEvent event) {
     Project project = getProject(event);
     if (project == null) {
       return null;
@@ -51,8 +54,7 @@ public abstract class BaseTaskAction extends AnAction implements DumbAware {
     return TaskManager.getManager(project);
   }
 
-  @Nullable
-  public static LocalTask getActiveTask(AnActionEvent event) {
+  public static @Nullable LocalTask getActiveTask(AnActionEvent event) {
     TaskManager manager = getTaskManager(event);
     return manager == null ? null : manager.getActiveTask();
   }

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.concurrency;
 
 import org.jetbrains.annotations.NotNull;
@@ -9,8 +9,9 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
 /**
- * Author: dmitrylomov
+ * @deprecated Use coroutines or CompletableFuture.
  */
+@Deprecated
 public final class AsyncUtil {
   private static final AsyncFuture<Boolean> TRUE = createConst(true);
   private static final AsyncFuture<Boolean> FALSE = createConst(false);
@@ -67,8 +68,7 @@ public final class AsyncUtil {
     };
   }
 
-  @NotNull
-  public static AsyncFuture<Boolean> wrapBoolean(boolean result) {
+  public static @NotNull AsyncFuture<Boolean> wrapBoolean(boolean result) {
     return result ? TRUE : FALSE;
   }
 }

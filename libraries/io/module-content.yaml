@@ -1,0 +1,7 @@
+- name: dist.all/lib/intellij.libraries.kotlinx.io.jar
+  modules:
+  - name: intellij.libraries.kotlinx.io
+  library: kotlinx-io-core
+  files:
+  - name: $MAVEN_REPOSITORY$/org/jetbrains/kotlinx/kotlinx-io-core-jvm/0/kotlinx-io-core-jvm-0.jar
+  - name: $MAVEN_REPOSITORY$/org/jetbrains/kotlinx/kotlinx-io-bytestring-jvm/0/kotlinx-io-bytestring-jvm-0.jar

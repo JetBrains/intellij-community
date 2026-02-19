@@ -1,8 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
-/*
- * @author max
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source;
 
 import com.intellij.extapi.psi.StubBasedPsiElementBase;
@@ -19,8 +15,8 @@ import com.intellij.psi.impl.source.tree.ChangeUtil;
 import com.intellij.psi.impl.source.tree.CompositeElement;
 import com.intellij.psi.impl.source.tree.SharedImplUtil;
 import com.intellij.psi.impl.source.tree.TreeElement;
-import com.intellij.psi.stubs.IStubElementType;
 import com.intellij.psi.stubs.StubElement;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -28,7 +24,7 @@ import org.jetbrains.annotations.Nullable;
 public abstract class JavaStubPsiElement<T extends StubElement> extends StubBasedPsiElementBase<T> implements StubBasedPsiElement<T> {
   private static final Logger LOG = Logger.getInstance(JavaStubPsiElement.class);
 
-  public JavaStubPsiElement(@NotNull T stub, @NotNull IStubElementType nodeType) {
+  public JavaStubPsiElement(@NotNull T stub, @NotNull IElementType nodeType) {
     super(stub, nodeType);
   }
 
@@ -37,8 +33,7 @@ public abstract class JavaStubPsiElement<T extends StubElement> extends StubBase
   }
 
   @Override
-  @NotNull
-  public Language getLanguage() {
+  public @NotNull Language getLanguage() {
     return JavaLanguage.INSTANCE;
   }
 
@@ -49,6 +44,11 @@ public abstract class JavaStubPsiElement<T extends StubElement> extends StubBase
 
   protected CompositeElement calcTreeElement() {
     return (CompositeElement)getNode();
+  }
+
+  @Override
+  public IElementType getIElementType() {
+    return getElementTypeImpl();
   }
 
   @Override
@@ -140,7 +140,7 @@ public abstract class JavaStubPsiElement<T extends StubElement> extends StubBase
   @Override
   public PsiElement @NotNull [] getChildren() {
     PsiElement psiChild = getFirstChild();
-    if (psiChild == null) return EMPTY_ARRAY;
+    if (psiChild == null) return PsiElement.EMPTY_ARRAY;
 
     int count = 0;
     while (psiChild != null) {
@@ -157,5 +157,5 @@ public abstract class JavaStubPsiElement<T extends StubElement> extends StubBase
     }
 
     return answer;
-  }  
+  }
 }

@@ -1,24 +1,31 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.codeInsight.completion;
 
 import com.intellij.JavaTestUtil;
+import com.intellij.application.options.CodeStyle;
 import com.intellij.codeInsight.completion.LightCompletionTestCase;
 import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.codeInsight.lookup.LookupElementPresentation;
 import com.intellij.lang.java.JavaLanguage;
+import com.intellij.openapi.util.registry.Registry;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiMethod;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
+import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.NeedsIndex;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.Arrays;
+import java.util.Objects;
+import java.util.Set;
 
 public class KeywordCompletionTest extends LightCompletionTestCase {
   private static final String BASE_PATH = "/codeInsight/completion/keywords/";
 
   private static final String[] CLASS_SCOPE_KEYWORDS = {
-    "public", "private", "protected", "import", "final", "class", "interface", "abstract", "enum", "default", null};
+    "public", "private", "protected", "import", "final", "class", "interface", "abstract", "enum", "default", "record", "sealed", "non-sealed", null};
   private static final String[] CLASS_SCOPE_KEYWORDS_2 = {
-    "package", "public", "private", "protected", "transient", "volatile", "static", "import", "final", "class", "interface", "abstract", "default"};
+    "package", "public", "private", "protected", "transient", "volatile", "static", "import", "final", "class", "interface", "abstract", "default", "record"};
   private static final String[] INTERFACE_SCOPE_KEYWORDS = {
     "package", "public", "private", "protected", "transient", "volatile", "static", "import", "final", "class", "interface", "abstract", "default"};
 
@@ -28,24 +35,57 @@ public class KeywordCompletionTest extends LightCompletionTestCase {
     return JavaTestUtil.getJavaTestDataPath();
   }
 
-  public void testFileScope1() {
-    doTest(8, "package", "public", "import", "final", "class", "interface", "abstract", "enum");
-    assertNotContainItems("private", "default");
+  public void testFileScopeWithoutPackage() {
+    setLanguageLevel(JavaFeature.IMPLICIT_CLASSES.getStandardLevel());
+    doTest(16, "package", "public", "import", "final", "class", "interface", "abstract", "enum",
+           "transient", "static", "private", "protected", "volatile", "synchronized", "sealed", "non-sealed");
+    assertNotContainItems("default", "strictfp");
   }
 
-  public void testFileScopeAfterComment() { doTest(4, "package", "class", "import", "public", "private"); }
-  public void testFileScopeAfterJavaDoc() { doTest(4, "package", "class", "import", "public", "private"); }
+  public void testFileScopeWithoutPackage2() {
+    setLanguageLevel(LanguageLevel.JDK_1_8);
+    doTest(9, "package", "public", "import", "final", "class", "interface", "abstract", "enum", "strictfp");
+    assertNotContainItems("default", "transient", "static", "private", "protected", "volatile", "synchronized", "sealed", "non-sealed");
+  }
+
+  public void testFileScopeAfterComment() { doTest(4, "package", "class", "import", "public"); }
+  public void testFileScopeAfterJavaDoc() { doTest(4, "package", "class", "import", "public"); }
   public void testFileScopeAfterJavaDocInsideModifierList() { doTest(2, "class", "public"); }
-  public void testFileScope2() { doTest(7, CLASS_SCOPE_KEYWORDS); }
-  public void testClassScope1() { doTest(5, CLASS_SCOPE_KEYWORDS); }
-  public void testClassScope2() { doTest(4, CLASS_SCOPE_KEYWORDS); }
+  public void testFileScopeWithPackage() {
+    setLanguageLevel(LanguageLevel.JDK_1_8);
+    doTest(7, "public", "import", "final", "class", "interface", "abstract", "enum", "record");
+    assertNotContainItems("default", "transient", "static", "private", "protected", "volatile", "synchronized", "sealed", "non-sealed");
+  }
+  public void testFileScopeWithPackage2() {
+    setLanguageLevel(JavaFeature.IMPLICIT_CLASSES.getStandardLevel());
+    doTest(10, "public", "import", "final", "class", "interface", "abstract", "enum", "record", "sealed", "non-sealed");
+    assertNotContainItems("default", "transient", "static", "private", "protected", "volatile", "synchronized");
+  }
+  public void testClassScope1() { doTestContains("final", "class", "interface", "abstract", "enum", "record", "sealed", "non-sealed"); }
+  public void testClassScope2() {
+    setLanguageLevel(JavaFeature.SEALED_CLASSES.getMinimumLevel());
+    doTestContains("public", "class", "interface", "enum", "record", "sealed", "non-sealed");
+    assertNotContainItems("default", "transient", "static", "private", "protected", "volatile", "synchronized");
+  }
   public void testClassScope3() { doTest(0, CLASS_SCOPE_KEYWORDS); }
-  public void testClassScope4() { doTest(10, CLASS_SCOPE_KEYWORDS_2); }
+  public void testClassScope4() { doTest(11, CLASS_SCOPE_KEYWORDS_2); }
+  public void testClassScope5() {
+    setLanguageLevel(JavaFeature.ALWAYS_STRICTFP.getMinimumLevel());
+    doTestContains("class", "interface", "enum", "record", "sealed", "non-sealed");
+    assertNotContainItems("default", "transient", "static", "private", "protected", "volatile", "synchronized", "strictfp");
+  }
+  public void testClassScope5WithStrictfp() {
+    setLanguageLevel(LanguageLevel.JDK_1_8);
+    doTestContains("class", "interface", "enum", "strictfp");
+  }
+  public void testInnerClassScope() {
+    doTest(11, CLASS_SCOPE_KEYWORDS_2); 
+  }
   public void testInterfaceScope() { setLanguageLevel(LanguageLevel.JDK_1_8); doTest(8, INTERFACE_SCOPE_KEYWORDS); }
-  public void testAfterAnnotations() { doTest(6, "public", "final", "class", "interface", "abstract", "enum", null); }
-  public void testAfterAnnotationsWithParams() { doTest(6, "public", "final", "class", "interface", "abstract", "enum", null); }
+  public void testAfterAnnotations() { doTest(9, "public", "final", "class", "interface", "abstract", "enum", "record", "non-sealed", "sealed"); }
+  public void testAfterAnnotationsWithParams() { doTest(9, "public", "final", "class", "interface", "abstract", "enum", "record", "non-sealed", "sealed"); }
   public void testAfterAnnotationsWithParamsInClass() { doTest(7, "public", "private", "final", "class", "interface", "abstract", "enum"); }
-  public void testExtends1() { doTest(2, "extends", "implements", null); }
+  public void testExtends1() { doTest(3, "extends", "implements", "permits", null); }
   public void testExtends2() { doTest(1, "extends", "implements", "AAA", "BBB", "instanceof"); }
   public void testExtends3() { doTest(2, "extends", "implements", "AAA", "BBB", "CCC", "instanceof"); }
   public void testExtends4() { doTest(2, "extends", "implements", "AAA", "BBB", "CCC", "instanceof"); }
@@ -62,7 +102,7 @@ public class KeywordCompletionTest extends LightCompletionTestCase {
   public void testSynchronized1() { doTest(); }
 
   public void testSynchronized2() {
-    CodeStyleSettingsManager.getSettings(getProject()).getCommonSettings(JavaLanguage.INSTANCE).SPACE_BEFORE_SYNCHRONIZED_PARENTHESES = false;
+    CodeStyle.getSettings(getProject()).getCommonSettings(JavaLanguage.INSTANCE).SPACE_BEFORE_SYNCHRONIZED_PARENTHESES = false;
     doTest();
   }
 
@@ -117,13 +157,9 @@ public class KeywordCompletionTest extends LightCompletionTestCase {
 
   public void testNewInCast() { doTest(2, "new", "null", "true", "false"); }
 
+  @NeedsIndex.ForStandardLibrary
   public void testNewInNegation() {
-    if (getIndexingMode() == IndexingMode.DUMB_EMPTY_INDEX) {
-      // Object's methods are not found in empty indices, so the only element is inserted
-      doTest();
-    } else {
-      doTest(1, "new", "null", "true", "false");
-    }
+    doTest(1, "new", "null", "true", "false");
   }
 
   public void testSpaceAfterInstanceof() { doTest(); }
@@ -138,6 +174,9 @@ public class KeywordCompletionTest extends LightCompletionTestCase {
     checkResultByTestName();
   }
 
+  @NeedsIndex.ForStandardLibrary
+  public void testNoExtraArrowMultiCaret() { doTest(); }
+
   public void testNoPrimitivesInBooleanAnnotationAttribute() { doTest(1, "true", "int", "boolean"); }
   public void testNoPrimitivesInIntAnnotationValueAttribute() { doTest(0, "true", "int", "boolean"); }
   public void testNoPrimitivesInEnumAnnotationAttribute() { doTest(0, "true", "int", "boolean"); }
@@ -147,12 +186,17 @@ public class KeywordCompletionTest extends LightCompletionTestCase {
   public void testPrimitivesInClassAnnotationAttribute() { doTest(3, "true", "int", "boolean"); }
   public void testPrimitivesInMethodReturningArray() { doTest(2, "true", "byte", "boolean"); }
   public void testPrimitivesInMethodReturningClass() { doTest(3, "byte", "boolean", "void"); }
-  public void testPrimitivesInRecordHeader() {setLanguageLevel(LanguageLevel.JDK_14_PREVIEW); doTest(2, "byte", "boolean"); }
+  public void testPrimitivesInRecordHeader() {setLanguageLevel(LanguageLevel.JDK_16); doTest(2, "byte", "boolean"); }
 
   public void testNoClassKeywordsInLocalArrayInitializer() { doTest(0, "class", "interface", "enum"); }
   public void testNoClassKeywordsInFieldArrayInitializer() { doTest(0, "class", "interface", "enum"); }
 
   public void testImportStatic() { doTest(1, "static"); }
+
+  public void testImportModule() {
+    setLanguageLevel(JavaFeature.MODULE_IMPORT_DECLARATIONS.getStandardLevel());
+    doTest(2, "static", "module");
+  }
   public void testAbstractInInterface() { doTest(1, "abstract"); }
   public void testCharInAnnotatedParameter() { doTest(1, "char"); }
   public void testReturnInTernary() { doTest(1, "return"); }
@@ -186,22 +230,43 @@ public class KeywordCompletionTest extends LightCompletionTestCase {
   public void testSuggestModifiersAfterUnfinishedMethod() { doTest(1, "public"); }
   public void testPrivateInJava9Interface() { setLanguageLevel(LanguageLevel.JDK_1_9); doTest(); }
   public void testQualifiedNew() { doTest(1, "new"); }
-  public void testRecord() {setLanguageLevel(LanguageLevel.JDK_14_PREVIEW);  doTest(); }
-  public void testRecordInFileScope() {setLanguageLevel(LanguageLevel.JDK_14_PREVIEW);  doTest(1, "record"); }
+  public void testRecord() {setLanguageLevel(LanguageLevel.JDK_16);  doTest(); }
+  public void testRecordInFileScope() {setLanguageLevel(LanguageLevel.JDK_16);  doTest(1, "record"); }
   public void testNoLocalInterfaceAt15() {
     setLanguageLevel(LanguageLevel.JDK_15);  doTest(0);
   }
   public void testLocalInterface() {
-    setLanguageLevel(LanguageLevel.JDK_15_PREVIEW);  doTest();
+    setLanguageLevel(LanguageLevel.JDK_16);  doTest();
   }
   public void testLocalEnum() {
-    setLanguageLevel(LanguageLevel.JDK_15_PREVIEW);  doTest();
+    setLanguageLevel(LanguageLevel.JDK_16);  doTest();
   }
-  public void testSealedModifier() {setLanguageLevel(LanguageLevel.JDK_15_PREVIEW);  doTest(1, "sealed"); }
-  public void testPermitsList() {setLanguageLevel(LanguageLevel.JDK_15_PREVIEW);  doTest(1, "permits"); }
-  public void testEnumPermitsList() {setLanguageLevel(LanguageLevel.JDK_15_PREVIEW);  doTest(0, "permits"); }
-  public void testInnerClassSealedModifier() {setLanguageLevel(LanguageLevel.JDK_15_PREVIEW);  doTest(1, "sealed");}
-  public void testInterfaceInnerClassSealedModifier() {setLanguageLevel(LanguageLevel.JDK_15_PREVIEW);  doTest(1, "sealed");}
+  public void testSealedModifier() {setLanguageLevel(LanguageLevel.JDK_17);  doTest(1, "sealed"); }
+  public void testNoSealedModifier() {setLanguageLevel(LanguageLevel.JDK_16);  doTest(1, "final"); }
+  public void testPermitsList() {setLanguageLevel(LanguageLevel.JDK_17);  doTest(1, "permits"); }
+  public void testPermitsListFinal() {
+    setLanguageLevel(LanguageLevel.JDK_17);
+    configureByTestName();
+    testByCount(0, "permits");
+    complete(2);
+    testByCount(1, "permits");
+  }
+  public void testPermitsListNoSealed() { setLanguageLevel(LanguageLevel.JDK_17); doTest(); }
+  public void testEnumPermitsList() {setLanguageLevel(LanguageLevel.JDK_17);  doTest(0, "permits"); }
+  public void testInnerClassSealedModifier() {setLanguageLevel(LanguageLevel.JDK_17);  doTest(1, "sealed");}
+  public void testInterfaceInnerClassSealedModifier() {setLanguageLevel(LanguageLevel.JDK_17);  doTest(1, "sealed");}
+  
+  public void testModuleKeyword() {
+    configureFromFileText("module-info.java", "m<caret>odule hello;");
+    complete();
+    assertContainsItems("module");
+  }
+
+  public void testImportKeywordModuleFile() {
+    configureFromFileText("module-info.java", "im<caret>port something");
+    complete();
+    assertContainsItems("import");
+  }
 
   public void testOverwriteCatch() {
     configureByTestName();
@@ -216,8 +281,7 @@ public class KeywordCompletionTest extends LightCompletionTestCase {
   @NeedsIndex.ForStandardLibrary
   public void testTryInExpression() {
     configureByTestName();
-    assertEquals("toString", myItems[0].getLookupString());
-    assertEquals("this", myItems[1].getLookupString());
+    assertEquals(Set.of("toString", "this"), Set.of(myItems[0].getLookupString(), myItems[1].getLookupString()));
   }
 
   public void testAfterPackageAnnotation() {
@@ -231,16 +295,70 @@ public class KeywordCompletionTest extends LightCompletionTestCase {
     assertStringItems("extends", "super");
   }
 
+  public void testImportKeyword() {
+    configureFromFileText("Test.java", """
+      import java.util.*;
+      <caret>import java.util.stream.Stream;
+      
+      class Main {}""");
+    complete();
+    assertContainsItems("import");
+  }
+
+  public void testPackageKeyword() {
+    configureFromFileText("Test.java", """
+      pa<caret>ckage hello.world;
+      """);
+    complete();
+    assertContainsItems("package");
+  }
+
+  public void testPackageKeywordNotInClass() {
+    configureFromFileText("Test.java", """
+      class Test {
+        <caret>
+      }
+      """);
+    complete();
+    assertNotContainItems("package");
+  }
+
+  public void testVoidAtBeginningImplicitClass() {
+    IdeaTestUtil.withLevel(getModule(), JavaFeature.IMPLICIT_CLASSES.getStandardLevel(), ()->{
+      configureFromFileText("Test.java", """
+      vo<caret>""");
+      complete();
+      assertContainsItems("void");
+    });
+  }
+
+  public void testNoVoidWithPackageStatement() {
+    IdeaTestUtil.withLevel(getModule(), JavaFeature.IMPLICIT_CLASSES.getStandardLevel(), ()->{
+      configureFromFileText("Test.java", """
+      package a;
+      vo<caret>""");
+      complete();
+      assertNotContainItems("void");
+    });
+  }
+  public void testNoPrimitivesAfterExpressions() { doTest(); }
+
+  public void testNoPrimitivesAfterExpressions2() { doTest(); }
+
+  public void testNoPrimitivesAfterExpressions3() { doTest(); }
+
+  public void testNoPrimitivesAfterExpressions4() { doTest(); }
+
   private void doTest() {
     configureByTestName();
     checkResultByTestName();
   }
 
-  private void configureByTestName() {
+  void configureByTestName() {
     configureByFile(BASE_PATH + getTestName(true) + ".java");
   }
 
-  private void checkResultByTestName() {
+  void checkResultByTestName() {
     checkResultByFile(BASE_PATH + getTestName(true) + "_after.java");
   }
 
@@ -249,4 +367,33 @@ public class KeywordCompletionTest extends LightCompletionTestCase {
     configureByTestName();
     testByCount(finalCount, values);
   }
+
+  protected void doTestContains(String... values) {
+    configureByTestName();
+    assertContainsItems(Arrays.stream(values).filter(Objects::nonNull).toArray(String[]::new));
+  }
+  
+  public static class ModCommandBasedTest extends KeywordCompletionTest {
+    @Override
+    protected void setUp() throws Exception {
+      super.setUp();
+      Registry.get("ide.completion.modcommand").setValue(true, getTestRootDisposable());
+    }
+
+    @Override
+    public void testNoExtraArrowMultiCaret() {
+      configureByTestName();
+      // Intermittently no-variants delegator appears here adding a second completion item 
+      // ResourceBundle (as it contains 'SO'), and now no-variants delegators 
+      // gets no information that we have no other variants.
+      selectItem(myItems[0]);
+      checkResultByTestName();
+    }
+
+    @Override
+    public void testInstanceofNegation() {
+      // skip; TODO: support custom completion chars
+    }
+  }
+
 }

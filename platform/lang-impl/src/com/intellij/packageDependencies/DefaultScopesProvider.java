@@ -1,14 +1,12 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.packageDependencies;
 
 import com.intellij.ide.scratch.ScratchesNamedScope;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.search.scope.NonProjectFilesScope;
-import com.intellij.psi.search.scope.ProblemsScope;
 import com.intellij.psi.search.scope.ProjectFilesScope;
 import com.intellij.psi.search.scope.packageSet.CustomScopesProviderEx;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
-import org.jetbrains.annotations.ApiStatus.ScheduledForRemoval;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
@@ -32,18 +30,7 @@ public final class DefaultScopesProvider extends CustomScopesProviderEx {
   }
 
   @Override
-  @NotNull
-  public List<NamedScope> getCustomScopes() {
+  public @NotNull List<NamedScope> getCustomScopes() {
     return myScopes;
-  }
-
-  /**
-   * @deprecated use {@link ProblemsScope#INSTANCE} instead
-   */
-  @ScheduledForRemoval(inVersion = "2022.2")
-  @Deprecated
-  @NotNull
-  public NamedScope getProblemsScope() {
-    return ProblemsScope.INSTANCE;
   }
 }

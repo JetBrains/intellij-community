@@ -1,18 +1,15 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.psi;
 
 import com.intellij.lang.Language;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.ApiStatus.ScheduledForRemoval;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author yole
- */
 public interface PsiParserFacade {
   /**
    * Creates an PsiWhiteSpace with the specified text.
@@ -48,12 +45,21 @@ public interface PsiParserFacade {
   @NotNull
   PsiComment createLineOrBlockCommentFromText(@NotNull Language language, @NotNull String text) throws IncorrectOperationException;
 
+  static PsiParserFacade getInstance(Project project) {
+    return project.getService(PsiParserFacade.class);
+  }
+
+  /**
+   * @deprecated use {@link PsiParserFacade#getInstance(Project)} instead
+   */
+  @ScheduledForRemoval
+  @Deprecated
   final class SERVICE {
     private SERVICE() {
     }
 
     public static PsiParserFacade getInstance(Project project) {
-      return ServiceManager.getService(project, PsiParserFacade.class);
+      return PsiParserFacade.getInstance(project);
     }
   }
 }

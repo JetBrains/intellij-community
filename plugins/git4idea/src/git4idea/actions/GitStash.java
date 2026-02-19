@@ -1,21 +1,16 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.actions;
 
-import com.intellij.dvcs.DvcsUtil;
-import com.intellij.openapi.application.AccessToken;
-import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vcs.VcsNotifier;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vfs.VirtualFile;
-import git4idea.GitUtil;
-import git4idea.commands.Git;
-import git4idea.commands.GitCommandResult;
 import git4idea.i18n.GitBundle;
-import git4idea.ui.GitStashDialog;
+import git4idea.stash.GitStashOperations;
+import git4idea.stash.GitStashUtils;
+import git4idea.stash.ui.GitStashDialog;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Collections;
 import java.util.List;
 
 public class GitStash extends GitRepositoryAction {
@@ -25,30 +20,20 @@ public class GitStash extends GitRepositoryAction {
     if (ChangeListManager.getInstance(project).isFreezedWithNotification(GitBundle.message("stash.error.can.not.stash.changes.now"))) {
       return;
     }
-    GitStashDialog d = new GitStashDialog(project, gitRoots, defaultRoot);
-    if (!d.showAndGet()) {
-      return;
-    }
+    GitStashDialog dialog = new GitStashDialog(project, gitRoots, defaultRoot);
+    if (!dialog.showAndGet()) return;
 
-    new Task.Backgroundable(project, GitBundle.message("stashing.progress.title"), false) {
-      @Override
-      public void run(@NotNull ProgressIndicator indicator) {
-        try (AccessToken ignored = DvcsUtil.workingTreeChangeStarted(project, getActionName())) {
-          GitCommandResult result = Git.getInstance().runCommand(d.handler());
-          if (result.success()) {
-            GitUtil.refreshVfsInRoot(d.getGitRoot());
-          }
-          else {
-            VcsNotifier.getInstance(project).notifyError("git.stash.failed", GitBundle.message("stash.error"), result.getErrorOutputAsHtmlString(), true);
-          }
-        }
-      }
-    }.queue();
+    VirtualFile selectedRoot = dialog.getSelectedRoot();
+    String message = dialog.getMessage();
+    boolean keepIndex = dialog.getKeepIndex();
+
+    GitStashOperations.runStashInBackground(project, Collections.singleton(selectedRoot), root -> {
+      return GitStashUtils.createStashHandler(project, root, keepIndex, message);
+    });
   }
 
   @Override
-  @NotNull
-  protected String getActionName() {
+  protected @NotNull String getActionName() {
     return GitBundle.message("stash.action.name");
   }
 }

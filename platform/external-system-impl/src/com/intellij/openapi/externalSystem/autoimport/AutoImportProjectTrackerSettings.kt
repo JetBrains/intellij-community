@@ -6,21 +6,21 @@ import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
 import com.intellij.openapi.components.StoragePathMacros.WORKSPACE_FILE
 import com.intellij.openapi.externalSystem.autoimport.ExternalSystemProjectTrackerSettings.AutoReloadType
-import com.intellij.openapi.observable.properties.AtomicLazyProperty
+import com.intellij.openapi.observable.properties.AtomicProperty
 import com.intellij.openapi.project.Project
 import org.jetbrains.annotations.ApiStatus
 
 @State(name = "AutoImportSettings", storages = [Storage(WORKSPACE_FILE)])
 class AutoImportProjectTrackerSettings : ExternalSystemProjectTrackerSettings, PersistentStateComponent<AutoImportProjectTrackerSettings.State> {
 
-  internal val autoReloadTypeProperty = AtomicLazyProperty { AutoReloadType.SELECTIVE }
+  internal val autoReloadTypeProperty = AtomicProperty(getDefaultAutoReloadType())
 
   override var autoReloadType by autoReloadTypeProperty
 
   override fun getState() = State(autoReloadType)
 
   override fun loadState(state: State) {
-    autoReloadType = state.autoReloadType ?: AutoReloadType.SELECTIVE
+    autoReloadType = state.autoReloadType ?: getDefaultAutoReloadType()
   }
 
   data class State(var autoReloadType: AutoReloadType? = null)
@@ -30,6 +30,10 @@ class AutoImportProjectTrackerSettings : ExternalSystemProjectTrackerSettings, P
     @ApiStatus.Internal
     fun getInstance(project: Project): AutoImportProjectTrackerSettings {
       return ExternalSystemProjectTrackerSettings.getInstance(project) as AutoImportProjectTrackerSettings
+    }
+
+    private fun getDefaultAutoReloadType(): AutoReloadType {
+      return DefaultAutoReloadTypeProvider.EP_NAME.extensionList.firstOrNull()?.getAutoReloadType() ?: AutoReloadType.SELECTIVE
     }
   }
 }

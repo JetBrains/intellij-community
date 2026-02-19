@@ -1,0 +1,25 @@
+<html>
+<body>
+
+Reports code statements are unreachable for execution.
+<p>
+    The quick-fix removes unreachable code.
+</p>
+
+<p><b>Example:</b></p>
+<pre><code>
+  fun value(): Int {
+      return 42
+      print("Hello, world !")
+  }
+</code></pre>
+<p>After the quick-fix is applied:</p>
+<pre><code>
+  fun value(): Int {
+      return 42
+  }
+</code></pre>
+
+<!-- tooltip end -->
+</body>
+</html>

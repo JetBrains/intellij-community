@@ -10,28 +10,29 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.PyTokenTypes;
-import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.LanguageLevel;
+import com.jetbrains.python.psi.PyBinaryExpression;
+import com.jetbrains.python.psi.PyElementGenerator;
+import com.jetbrains.python.psi.PyFile;
+import com.jetbrains.python.psi.PyIfPart;
+import com.jetbrains.python.psi.PyIfStatement;
+import com.jetbrains.python.psi.PyStatementList;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * Created by IntelliJ IDEA.
- * Author: Alexey.Ivanov
- */
-public class PySplitIfIntention extends PyBaseIntentionAction {
+public final class PySplitIfIntention extends PyBaseIntentionAction {
   @Override
-  @NotNull
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return PyPsiBundle.message("INTN.NAME.split.if");
   }
 
   @Override
-  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    if (!(file instanceof PyFile)) {
+  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile psiFile) {
+    if (!(psiFile instanceof PyFile)) {
       return false;
     }
 
-    PsiElement elementAtOffset = file.findElementAt(editor.getCaretModel().getOffset());
+    PsiElement elementAtOffset = psiFile.findElementAt(editor.getCaretModel().getOffset());
     if (elementAtOffset == null || elementAtOffset.getNode() == null) {
       return false;
     }
@@ -56,7 +57,7 @@ public class PySplitIfIntention extends PyBaseIntentionAction {
       element = element.getParent();
     }
     if (((PyBinaryExpression)element).getOperator() != PyTokenTypes.AND_KEYWORD
-        || ((PyBinaryExpression) element).getRightExpression() == null) {
+        || ((PyBinaryExpression)element).getRightExpression() == null) {
       return false;
     }
     final PsiElement parent = element.getParent();
@@ -88,19 +89,21 @@ public class PySplitIfIntention extends PyBaseIntentionAction {
     PyIfStatement ifStatement = PsiTreeUtil.getParentOfType(element, PyIfStatement.class);
     PyElementGenerator elementGenerator = PyElementGenerator.getInstance(project);
 
-    PyIfStatement subIf = (PyIfStatement) ifStatement.copy();
+    PyIfStatement subIf = (PyIfStatement)ifStatement.copy();
 
     subIf.getIfPart().getCondition().replace(element.getRightExpression());
     ifStatement.getIfPart().getCondition().replace(element.getLeftExpression());
-    PyStatementList statementList = elementGenerator.createFromText(LanguageLevel.getDefault(), PyIfStatement.class, "if a:\n    a = 1").getIfPart().getStatementList();
+    PyStatementList statementList =
+      elementGenerator.createFromText(LanguageLevel.getDefault(), PyIfStatement.class, "if a:\n    a = 1").getIfPart().getStatementList();
     statementList.getStatements()[0].replace(subIf);
     PyIfStatement newIf = elementGenerator.createFromText(LanguageLevel.getDefault(), PyIfStatement.class, "if a:\n    a = 1");
     newIf.getIfPart().getCondition().replace(ifStatement.getIfPart().getCondition());
     newIf.getIfPart().getStatementList().replace(statementList);
-    for (PyIfPart elif : ifStatement.getElifParts())
+    for (PyIfPart elif : ifStatement.getElifParts()) {
       newIf.add(elif);
+    }
     if (ifStatement.getElsePart() != null) {
-        newIf.add(ifStatement.getElsePart());
+      newIf.add(ifStatement.getElsePart());
     }
     ifStatement.replace(newIf);
   }

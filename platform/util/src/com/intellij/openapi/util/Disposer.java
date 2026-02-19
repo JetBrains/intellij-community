@@ -1,13 +1,18 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.util;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.util.objectTree.ReferenceDelegatingDisposableInternal;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.ObjectUtils;
-import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.VisibleForTesting;
 
-import java.util.Map;
+import java.util.function.Predicate;
 
 /**
  * <p>Manages a parent-child relation of chained objects requiring cleanup.</p>
@@ -15,7 +20,7 @@ import java.util.Map;
  * <p>A root node can be created via {@link #newDisposable()}, to which children are attached via subsequent calls to {@link #register(Disposable, Disposable)}.
  * Invoking {@link #dispose(Disposable)} will process all its registered children's {@link Disposable#dispose()} method.</p>
  * <p>
- * See <a href="https://www.jetbrains.org/intellij/sdk/docs/basics/disposers.html">Disposer and Disposable</a> in SDK Docs.
+ * @see <a href="https://plugins.jetbrains.com/docs/intellij/disposers.html">Disposer and Disposable</a> in SDK Docs.
  * @see Disposable
  */
 public final class Disposer {
@@ -29,16 +34,29 @@ public final class Disposer {
 
   private Disposer() { }
 
-  @NotNull
+  /**
+   * @return new {@link Disposable} unnamed instance
+   */
   @Contract(pure = true, value = "->new")
-  public static Disposable newDisposable() {
+  public static @NotNull Disposable newDisposable() {
     // must not be lambda because we care about identity in ObjectTree.myObject2NodeMap
-    return newDisposable("");
+    return new Disposable() {
+      @Override
+      public void dispose() { }
+
+      @Override
+      public String toString() {
+        return "newDisposable";
+      }
+    };
   }
 
-  @NotNull
+  /**
+   * @return new {@link Disposable} instance with the given name which is visible in its {@link Object#toString()}.
+   * Please be aware of increased memory consumption due to storing this name inside the object instance.
+   */
   @Contract(pure = true, value = "_->new")
-  public static Disposable newDisposable(@NotNull @NonNls String debugName) {
+  public static @NotNull Disposable newDisposable(@NotNull @NonNls String debugName) {
     // must not be lambda because we care about identity in ObjectTree.myObject2NodeMap
     return new Disposable() {
       @Override
@@ -51,6 +69,67 @@ public final class Disposer {
     };
   }
 
+  /**
+   * @return new {@link Disposable} instance which tracks its own invalidation.
+   * Please be aware of increased memory consumption due to storing an extra flag for tracking invalidation.
+   */
+  @Contract(pure = true, value = "->new")
+  public static @NotNull CheckedDisposable newCheckedDisposable() {
+    return new CheckedDisposableImpl();
+  }
+
+  static class CheckedDisposableImpl implements CheckedDisposable {
+    volatile boolean isDisposed;
+
+    @Override
+    public boolean isDisposed() {
+      return isDisposed;
+    }
+
+    @Override
+    public void dispose() {
+      isDisposed = true;
+    }
+
+    @Override
+    public String toString() {
+      return "CheckedDisposableImpl{isDisposed=" + isDisposed + "} "+super.toString();
+    }
+  }
+
+  /**
+   * @param debugName a name to render in this instance {@link Object#toString()}
+   * @return new {@link Disposable} instance which tracks its own invalidation
+   * <p>
+   * Please be aware of increased memory consumption due to storing the debug name
+   * and extra flag for tracking invalidation inside the object instance.
+   */
+  @Contract(pure = true, value = "_ -> new")
+  public static @NotNull CheckedDisposable newCheckedDisposable(@NotNull String debugName) {
+    return new NamedCheckedDisposable(debugName);
+  }
+
+  private static final class NamedCheckedDisposable extends CheckedDisposableImpl {
+
+    private final @NotNull String debugName;
+
+    NamedCheckedDisposable(@NotNull String debugName) {
+      this.debugName = debugName;
+    }
+
+    @Override
+    public String toString() {
+      return debugName + "{isDisposed=" + isDisposed + "}";
+    }
+  }
+
+  @Contract(pure = true, value = "_->new")
+  public static @NotNull Disposable newDisposable(@NotNull Disposable parentDisposable) {
+    Disposable disposable = newDisposable();
+    register(parentDisposable, disposable);
+    return disposable;
+  }
+
   @Contract(pure = true, value = "_,_->new")
   public static @NotNull Disposable newDisposable(@NotNull Disposable parentDisposable, @NotNull String debugName) {
     Disposable result = newDisposable(debugName);
@@ -58,96 +137,98 @@ public final class Disposer {
     return result;
   }
 
-  private static final Map<String, Disposable> ourKeyDisposables = ContainerUtil.createConcurrentWeakMap();
+  @Contract(pure = true, value = "_->new")
+  public static @NotNull CheckedDisposable newCheckedDisposable(@NotNull Disposable parentDisposable) {
+    CheckedDisposable disposable = newCheckedDisposable();
+    register(parentDisposable, disposable);
+    return disposable;
+  }
+
+  @Contract(pure = true, value = "_,_->new")
+  public static @NotNull CheckedDisposable newCheckedDisposable(@NotNull Disposable parentDisposable, @NotNull String debugName) {
+    CheckedDisposable disposable = newCheckedDisposable(debugName);
+    register(parentDisposable, disposable);
+    return disposable;
+  }
+  
+  private static Disposable dereferenceIfNeeded(@NotNull Disposable disposable) {
+    return disposable instanceof ReferenceDelegatingDisposableInternal
+           ? ((ReferenceDelegatingDisposableInternal)disposable).getDisposableDelegate() : disposable;
+  }
 
   /**
    * Registers {@code child} so it is disposed right before its {@code parent}. See {@link Disposer class JavaDoc} for more details.
-   * This overrides parent disposable for {@code child}, i.e. if {@code child} is already registered with {@code oldParent},
-   * it's unregistered from {@code oldParent} before registering with {@code parent}.
+   * This method overrides parent disposable for the {@code child}, i.e., if {@code child} is already registered with {@code oldParent},
+   * then it's unregistered from {@code oldParent} before registering with {@code parent}.
    *
-   * @throws com.intellij.util.IncorrectOperationException If {@code child} has been registered with {@code parent} before;
-   *                                                       if {@code parent} is being disposed or already disposed ({@link #isDisposed(Disposable)}.
+   * @throws IncorrectOperationException If {@code child} has been registered with {@code parent} before;
+   *                                     if {@code parent} is being disposed or already disposed, see {@link #isDisposed(Disposable)}.
    */
   public static void register(@NotNull Disposable parent, @NotNull Disposable child) throws IncorrectOperationException {
-    RuntimeException e = ourTree.register(parent, child);
-    if (e != null) throw e;
+    ourTree.register(dereferenceIfNeeded(parent), dereferenceIfNeeded(child));
   }
 
   /**
-   * Registers child disposable under parent unless the parent has already been disposed
+   * Registers child disposable under a parent unless the parent has already been disposed
    * @return whether the registration succeeded
    */
   public static boolean tryRegister(@NotNull Disposable parent, @NotNull Disposable child) {
-    return ourTree.register(parent, child) == null;
-  }
-
-  public static void register(@NotNull Disposable parent, @NotNull Disposable child, @NonNls @NotNull final String key) {
-    register(parent, child);
-    Disposable v = get(key);
-    if (v != null) throw new IllegalArgumentException("Key " + key + " already registered: " + v);
-    ourKeyDisposables.put(key, child);
-    register(child, new KeyDisposable(key));
-  }
-
-  private static class KeyDisposable implements Disposable {
-    @NotNull
-    private final String myKey;
-
-    KeyDisposable(@NotNull String key) {myKey = key;}
-
-    @Override
-    public void dispose() {
-      ourKeyDisposables.remove(myKey);
-    }
-
-    @Override
-    public String toString() {
-      return "KeyDisposable (" + myKey + ")";
-    }
+    return ourTree.tryRegister(dereferenceIfNeeded(parent), dereferenceIfNeeded(child));
   }
 
   /**
-   * @return true if {@code disposable} is disposed or being disposed (i.e. its {@link Disposable#dispose()} method is executing).
-   */
-  public static boolean isDisposed(@NotNull Disposable disposable) {
-    return ourTree.getDisposalInfo(disposable) != null;
-  }
-
-  /**
-   * @deprecated use {@link #isDisposed(Disposable)} instead
+   * @return true if {@code disposable} is disposed or being disposed (i.e., its {@link Disposable#dispose()} method is executing).
+   * @deprecated This method relies on relatively short-living diagnostic information which is cleared (to free up memory) on certain events,
+   * for example, on dynamic plugin unload or major GC run.<br/>
+   * Thus, it's not wise to rely on this method in your production-grade code.<br/>
+   * Instead, please
+   * <li>Avoid using this method by registering your disposable in the parent disposable hierarchy with {@link #register(Disposable, Disposable)}</li> or, failing that,
+   * <li>Use corresponding predicate inside the disposable object if available, i.e., {@link com.intellij.openapi.components.ComponentManager#isDisposed()} or</li>
+   * <li>Introduce boolean flag into your object like this:
+   * <pre> {@code class MyDisposable implements Disposable {
+   *   boolean isDisposed;
+   *   void dispose() {
+   *     isDisposed = true;
+   *   }
+   *   boolean isDisposed() {
+   *     return isDisposed;
+   *   }
+   * }}</pre> or</li>
+   * <li>Use {@link #newCheckedDisposable()} (but be aware of increased memory consumption due to storing extra flag for tracking invalidation)</li>
    */
   @Deprecated
-  public static boolean isDisposing(@NotNull Disposable disposable) {
-    return isDisposed(disposable);
-  }
-
-  public static Disposable get(@NotNull String key) {
-    return ourKeyDisposables.get(key);
+  public static boolean isDisposed(@NotNull Disposable disposable) {
+    return ourTree.isDisposed(dereferenceIfNeeded(disposable));
   }
 
   public static void dispose(@NotNull Disposable disposable) {
     dispose(disposable, true);
   }
 
+  /**
+   * {@code predicate} is used only for direct children.
+   */
   @ApiStatus.Internal
-  @ApiStatus.Experimental
-  public static void disposeChildren(@NotNull Disposable disposable) {
-    ourTree.executeAllChildren(disposable);
+  public static void disposeChildren(@NotNull Disposable disposable, @NotNull Predicate<? super Disposable> predicate) {
+    ourTree.executeAllChildren(dereferenceIfNeeded(disposable), predicate);
   }
 
   public static void dispose(@NotNull Disposable disposable, boolean processUnregistered) {
-    ourTree.executeAll(disposable, processUnregistered);
+    ourTree.executeAll(dereferenceIfNeeded(disposable), processUnregistered);
   }
 
-  @NotNull
-  public static ObjectTree getTree() {
+  @ApiStatus.Internal
+  @VisibleForTesting
+  public static @NotNull ObjectTree getTree() {
     return ourTree;
   }
 
+  @ApiStatus.Internal
   public static void assertIsEmpty() {
     assertIsEmpty(false);
   }
 
+  @ApiStatus.Internal
   public static void assertIsEmpty(boolean throwError) {
     if (ourDebugMode) {
       ourTree.assertIsEmpty(throwError);
@@ -170,16 +251,17 @@ public final class Disposer {
     return ourDebugMode;
   }
 
-  /**
-   * @return object registered on {@code parentDisposable} which is equal to object, or {@code null} if not found
-   */
-  @Nullable
-  public static <T extends Disposable> T findRegisteredObject(@NotNull Disposable parentDisposable, @NotNull T object) {
-    return ourTree.findRegisteredObject(parentDisposable, object);
+  public static Throwable getDisposalTrace(@NotNull Disposable disposable) {
+    return getTree().getDisposalTrace(dereferenceIfNeeded(disposable));
   }
 
-  public static Throwable getDisposalTrace(@NotNull Disposable disposable) {
-    return ObjectUtils.tryCast(getTree().getDisposalInfo(disposable), Throwable.class);
+  /**
+   * Returns stacktrace of the place where {@code disposable} was registered in {@code Disposer} or {@code null} if it's unknown. Works only
+   * if {@link #setDebugMode debug mode} was enabled when {@code disposable} was registered.
+   */
+  @TestOnly
+  public static @Nullable Throwable getRegistrationTrace(@NotNull Disposable disposable) {
+    return getTree().getRegistrationTrace(dereferenceIfNeeded(disposable));
   }
 
   @ApiStatus.Internal

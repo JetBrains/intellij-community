@@ -22,8 +22,8 @@ import com.intellij.codeInsight.template.TemplateBuilderFactory;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -33,10 +33,23 @@ import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.PythonUiService;
+import com.jetbrains.python.codeInsight.intentions.PyTypeHintGenerationUtil.AnnotationInfo;
+import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider;
 import com.jetbrains.python.debugger.PySignature;
 import com.jetbrains.python.debugger.PySignatureCacheManager;
-import com.jetbrains.python.psi.*;
+import com.jetbrains.python.documentation.PythonDocumentationProvider;
+import com.jetbrains.python.psi.LanguageLevel;
+import com.jetbrains.python.psi.PyAnnotation;
+import com.jetbrains.python.psi.PyElementGenerator;
+import com.jetbrains.python.psi.PyExpression;
+import com.jetbrains.python.psi.PyFunction;
+import com.jetbrains.python.psi.PyNamedParameter;
+import com.jetbrains.python.psi.PyParameter;
+import com.jetbrains.python.psi.PyUtil;
+import com.jetbrains.python.psi.impl.ParamHelper;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
+import com.jetbrains.python.psi.types.PyType;
+import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -44,17 +57,16 @@ import org.jetbrains.annotations.NotNull;
  * <p>
  * Helps to specify type  in annotations in python3
  */
-public class SpecifyTypeInPy3AnnotationsIntention extends TypeIntention {
+public final class SpecifyTypeInPy3AnnotationsIntention extends TypeIntention {
   @Override
-  @NotNull
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return PyPsiBundle.message("INTN.NAME.specify.type.in.annotation");
   }
 
   @Override
-  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    if (LanguageLevel.forElement(file).isPython2()) return false;
-    return super.isAvailable(project, editor, file);
+  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile psiFile) {
+    if (LanguageLevel.forElement(psiFile).isPython2()) return false;
+    return super.isAvailable(project, editor, psiFile);
   }
 
   @Override
@@ -92,7 +104,7 @@ public class SpecifyTypeInPy3AnnotationsIntention extends TypeIntention {
                                                    boolean createTemplate) {
     final PyExpression defaultParamValue = parameter.getDefaultValue();
 
-    final String paramName = StringUtil.notNullize(parameter.getName());
+    final String paramName = ParamHelper.getNameInSignature(parameter);
     final PyElementGenerator elementGenerator = PyElementGenerator.getInstance(project);
 
     final String defaultParamText = defaultParamValue == null ? null : defaultParamValue.getText();
@@ -123,6 +135,13 @@ public class SpecifyTypeInPy3AnnotationsIntention extends TypeIntention {
   static String parameterType(PyParameter parameter) {
     String paramType = PyNames.OBJECT;
 
+    if (parameter instanceof PyNamedParameter) {
+      PyAnnotation annotation = ((PyNamedParameter)parameter).getAnnotation();
+      if (annotation != null && annotation.getValue() != null) {
+        return annotation.getValue().getText();
+      }
+    }
+
     PyFunction function = PsiTreeUtil.getParentOfType(parameter, PyFunction.class);
     if (function != null) {
       final PySignature signature = PySignatureCacheManager.getInstance(parameter.getProject()).findSignature(
@@ -132,23 +151,40 @@ public class SpecifyTypeInPy3AnnotationsIntention extends TypeIntention {
         paramType = ObjectUtils.chooseNotNull(signature.getArgTypeQualifiedName(parameterName), paramType);
       }
     }
+
     return paramType;
   }
 
 
-  static String returnType(@NotNull PyFunction function) {
-    String returnType = PyNames.OBJECT;
+  static @NotNull AnnotationInfo returnType(@NotNull PyFunction function) {
+    if (function.getAnnotation() != null && function.getAnnotation().getValue() != null) {
+      return new AnnotationInfo(function.getAnnotation().getValue().getText());
+    }
+
     final PySignature signature = PySignatureCacheManager.getInstance(function.getProject()).findSignature(function);
     if (signature != null) {
-      returnType = ObjectUtils.chooseNotNull(signature.getReturnTypeQualifiedName(), returnType);
+      final String qualifiedName = signature.getReturnTypeQualifiedName();
+      if (qualifiedName != null) return new AnnotationInfo(qualifiedName);
     }
-    return returnType;
+
+    final TypeEvalContext context = TypeEvalContext.userInitiated(function.getProject(), function.getContainingFile());
+    PyType inferredType = context.getReturnType(function);
+    if (function.isAsync()) {
+      inferredType = Ref.deref(PyTypingTypeProvider.unwrapCoroutineReturnType(inferredType));
+    }
+    return new AnnotationInfo(
+      PythonDocumentationProvider.getTypeHint(inferredType, context),
+      PythonDocumentationProvider.getFullyQualifiedTypeHint(inferredType, context)
+    );
   }
 
   public static PyExpression annotateReturnType(Project project, PyFunction function, boolean createTemplate) {
-    String returnType = returnType(function);
+    AnnotationInfo returnTypeAnnotation = returnType(function);
 
-    final String annotationText = "-> " + returnType;
+    final String returnTypeText = returnTypeAnnotation.getAnnotationText();
+    final String annotationText = "-> " + returnTypeText;
+
+    PyTypeHintGenerationUtil.addImportsForTypeAnnotations(returnTypeAnnotation.getFullyQualifiedTypeHints(), function);
 
     PyFunction annotatedFunction = PyUtil.updateDocumentUnblockedAndCommitted(function, document -> {
       final PyAnnotation oldAnnotation = function.getAnnotation();
@@ -183,8 +219,9 @@ public class SpecifyTypeInPy3AnnotationsIntention extends TypeIntention {
       final int offset = annotationValue.getTextOffset();
 
       final TemplateBuilder builder = TemplateBuilderFactory.getInstance().createTemplateBuilder(annotationValue);
-      builder.replaceRange(TextRange.create(0, returnType.length()), returnType);
-      final Editor targetEditor = PythonUiService.getInstance().openTextEditor(project, annotatedFunction.getContainingFile().getVirtualFile(), offset);
+      builder.replaceRange(TextRange.create(0, returnTypeText.length()), returnTypeText);
+      final Editor targetEditor =
+        PythonUiService.getInstance().openTextEditor(project, annotatedFunction.getContainingFile().getVirtualFile(), offset);
       if (targetEditor != null) {
         builder.run(targetEditor, true);
       }
@@ -194,12 +231,15 @@ public class SpecifyTypeInPy3AnnotationsIntention extends TypeIntention {
 
   @Override
   protected boolean isParamTypeDefined(@NotNull PyNamedParameter parameter) {
-    return parameter.getAnnotation() != null;
+    if (parameter.getAnnotation() != null) return true;
+    if (parameter.getTypeComment() != null) return true;
+    PyFunction function = PsiTreeUtil.getParentOfType(parameter, PyFunction.class);
+    return function != null && function.getTypeComment() != null;
   }
 
   @Override
   protected boolean isReturnTypeDefined(@NotNull PyFunction function) {
-    return function.getAnnotation() != null;
+    return function.getAnnotation() != null || function.getTypeComment() != null;
   }
 
   @Override

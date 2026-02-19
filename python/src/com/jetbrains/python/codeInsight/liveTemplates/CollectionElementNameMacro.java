@@ -1,9 +1,14 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.codeInsight.liveTemplates;
 
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
-import com.intellij.codeInsight.template.*;
+import com.intellij.codeInsight.template.Expression;
+import com.intellij.codeInsight.template.ExpressionContext;
+import com.intellij.codeInsight.template.Macro;
+import com.intellij.codeInsight.template.Result;
+import com.intellij.codeInsight.template.TemplateContextType;
+import com.intellij.codeInsight.template.TextResult;
 import com.intellij.openapi.util.text.StringUtil;
 import com.jetbrains.python.PyNames;
 import org.jetbrains.annotations.NotNull;
@@ -11,23 +16,15 @@ import org.jetbrains.annotations.NotNull;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * @author yole
- */
-public class CollectionElementNameMacro extends Macro {
+
+public final class CollectionElementNameMacro extends Macro {
   @Override
   public String getName() {
     return "collectionElementName";
   }
 
   @Override
-  public String getPresentableName() {
-    return "collectionElementName()";
-  }
-
-  @Override
-  @NotNull
-  public String getDefaultValue() {
+  public @NotNull String getDefaultValue() {
     return "a";
   }
 
@@ -78,5 +75,10 @@ public class CollectionElementNameMacro extends Macro {
       return lookup.toArray(LookupElement.EMPTY_ARRAY);
     }
     return null;
+  }
+
+  @Override
+  public boolean isAcceptableInContext(TemplateContextType context) {
+    return context instanceof PythonTemplateContextType;
   }
 }

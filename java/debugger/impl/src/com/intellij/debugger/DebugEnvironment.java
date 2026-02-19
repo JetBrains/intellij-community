@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger;
 
 import com.intellij.execution.ExecutionException;
@@ -20,13 +20,11 @@ public interface DebugEnvironment {
   @NotNull
   GlobalSearchScope getSearchScope();
 
-  @Nullable
-  default Sdk getAlternativeJre() {
+  default @Nullable Sdk getAlternativeJre() {
     return null;
   }
 
-  @Nullable
-  default Sdk getRunJre() {
+  default @Nullable Sdk getRunJre() {
     return null;
   }
 

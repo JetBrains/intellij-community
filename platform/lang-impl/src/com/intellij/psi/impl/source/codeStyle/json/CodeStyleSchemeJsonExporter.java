@@ -1,8 +1,15 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.codeStyle.json;
 
-import com.google.gson.*;
-import com.intellij.application.options.codeStyle.properties.*;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonSerializationContext;
+import com.google.gson.JsonSerializer;
+import com.intellij.application.options.codeStyle.properties.AbstractCodeStylePropertyMapper;
+import com.intellij.application.options.codeStyle.properties.CodeStylePropertyAccessor;
 import com.intellij.openapi.options.SchemeExporter;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.codeStyle.CodeStyleScheme;
@@ -16,7 +23,7 @@ import java.lang.reflect.Type;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 
-public class CodeStyleSchemeJsonExporter extends SchemeExporter<CodeStyleScheme> {
+public final class CodeStyleSchemeJsonExporter extends SchemeExporter<CodeStyleScheme> {
 
   public static final String CODE_STYLE_JSON_EXT = "codestyle.json";
 

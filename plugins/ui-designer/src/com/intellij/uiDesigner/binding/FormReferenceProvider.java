@@ -1,22 +1,39 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.uiDesigner.binding;
 
 import com.intellij.ide.highlighter.XmlFileType;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.lang.properties.references.PropertyReferenceBase;
+import com.intellij.modcommand.ModCommand;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaDirectoryService;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiClassType;
+import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiFileFactory;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiPackage;
+import com.intellij.psi.PsiPlainTextFile;
+import com.intellij.psi.PsiReference;
+import com.intellij.psi.PsiReferenceProvider;
+import com.intellij.psi.PsiType;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.JavaClassReferenceProvider;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiReferenceProcessor;
-import com.intellij.psi.util.*;
+import com.intellij.psi.util.CachedValue;
+import com.intellij.psi.util.CachedValueProvider;
+import com.intellij.psi.util.CachedValuesManager;
+import com.intellij.psi.util.InheritanceUtil;
+import com.intellij.psi.util.PropertyUtilBase;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.xml.XmlFile;
@@ -33,9 +50,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-/**
- * @author yole
- */
+
 public class FormReferenceProvider extends PsiReferenceProvider {
   private static final Logger LOG = Logger.getInstance(FormReferenceProvider.class);
   private static class CachedFormData {
@@ -60,9 +75,8 @@ public class FormReferenceProvider extends PsiReferenceProvider {
   }
 
   @Override
-  public PsiReference @NotNull [] getReferencesByElement(@NotNull final PsiElement element, @NotNull final ProcessingContext context) {
-    if (element instanceof PsiPlainTextFile) {
-      PsiPlainTextFile plainTextFile = (PsiPlainTextFile) element;
+  public PsiReference @NotNull [] getReferencesByElement(final @NotNull PsiElement element, final @NotNull ProcessingContext context) {
+    if (element instanceof PsiPlainTextFile plainTextFile) {
       if (plainTextFile.getFileType().equals(GuiFormFileType.INSTANCE)) {
         return getCachedData(plainTextFile).myReferences;
       }
@@ -70,8 +84,7 @@ public class FormReferenceProvider extends PsiReferenceProvider {
     return PsiReference.EMPTY_ARRAY;
   }
 
-  @Nullable
-  public static PsiFile getFormFile(PsiField field) {
+  public static @Nullable PsiFile getFormFile(PsiField field) {
     PsiReference ref = getFormReference(field);
     if (ref != null) {
       return ref.getElement().getContainingFile();
@@ -79,8 +92,7 @@ public class FormReferenceProvider extends PsiReferenceProvider {
     return null;
   }
 
-  @Nullable
-  public static PsiReference getFormReference(PsiField field) {
+  public static @Nullable PsiReference getFormReference(PsiField field) {
     final PsiClass containingClass = field.getContainingClass();
     if (containingClass != null && containingClass.getQualifiedName() != null) {
       final List<PsiFile> forms = FormClassIndex.findFormsBoundToClass(containingClass.getProject(), containingClass);
@@ -103,15 +115,17 @@ public class FormReferenceProvider extends PsiReferenceProvider {
     return Pair.getFirst(typeRangePair);
   }
 
-  public static void setGUIComponentType(PsiPlainTextFile file, String fieldName, String typeText) {
+  public static ModCommand setGUIComponentType(PsiPlainTextFile file, String fieldName, String typeText) {
     final Map<String, Pair<PsiType, TextRange>> fieldNameToTypeMap = getCachedData(file).myFieldNameToTypeMap;
     final Pair<PsiType, TextRange> typeRangePair = fieldNameToTypeMap.get(fieldName);
     if (typeRangePair != null) {
       final TextRange range = typeRangePair.getSecond();
       if (range != null) {
-        PsiDocumentManager.getInstance(file.getProject()).getDocument(file).replaceString(range.getStartOffset(), range.getEndOffset(), typeText);
+        return ModCommand.psiUpdate(file, f -> f.getViewProvider().getDocument()
+          .replaceString(range.getStartOffset(), range.getEndOffset(), typeText));
       }
     }
+    return ModCommand.nop();
   }
 
   private static void processReferences(final PsiPlainTextFile file, final PsiReferenceProcessor processor) {
@@ -126,7 +140,7 @@ public class FormReferenceProvider extends PsiReferenceProvider {
       return;
     }
 
-    @NonNls final String name = rootTag.getName();
+    final @NonNls String name = rootTag.getName();
     if (!"form".equals(name)){
       return;
     }
@@ -272,16 +286,13 @@ public class FormReferenceProvider extends PsiReferenceProvider {
     if (valueAttribute != null) {
       PsiReference reference = ReadAction.compute(() -> {
         final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(file.getProject());
-        final Module module = ModuleUtilCore.findModuleForPsiElement(file);
-        if (module == null) return null;
-        final GlobalSearchScope scope = module.getModuleWithDependenciesAndLibrariesScope(false);
+        GlobalSearchScope scope = file.getResolveScope();
         PsiClass psiClass = psiFacade.findClass(className, scope);
         if (psiClass != null) {
           PsiMethod getter = PropertyUtilBase.findPropertyGetter(psiClass, tag.getName(), false, true);
           if (getter != null) {
             final PsiType returnType = getter.getReturnType();
-            if (returnType instanceof PsiClassType) {
-              PsiClassType propClassType = (PsiClassType)returnType;
+            if (returnType instanceof PsiClassType propClassType) {
               PsiClass propClass = propClassType.resolve();
               if (propClass != null) {
                 if (propClass.isEnum()) {
@@ -306,8 +317,7 @@ public class FormReferenceProvider extends PsiReferenceProvider {
     }
   }
 
-  @Nullable
-  public static String getBundleName(final PropertiesFile propertiesFile) {
+  public static @Nullable String getBundleName(final PropertiesFile propertiesFile) {
     final PsiDirectory directory = propertiesFile.getParent();
     if (directory == null) {
       return null;
@@ -323,7 +333,7 @@ public class FormReferenceProvider extends PsiReferenceProvider {
 
     String bundleName = propertiesFile.getResourceBundle().getBaseName();
 
-    if (packageName.length() > 0) {
+    if (!packageName.isEmpty()) {
       bundleName = packageName + '.' + bundleName;
     }
     bundleName = bundleName.replace('.', '/');
@@ -334,15 +344,15 @@ public class FormReferenceProvider extends PsiReferenceProvider {
     CachedValue<CachedFormData> data = element.getUserData(CACHED_DATA);
 
     if(data == null) {
-      data = CachedValuesManager.getManager(element.getProject()).createCachedValue(new CachedValueProvider<CachedFormData>() {
+      data = CachedValuesManager.getManager(element.getProject()).createCachedValue(new CachedValueProvider<>() {
         final Map<String, Pair<PsiType, TextRange>> map = new HashMap<>();
+
         @Override
         public Result<CachedFormData> compute() {
           final PsiReferenceProcessor.CollectElements processor = new PsiReferenceProcessor.CollectElements() {
             @Override
             public boolean execute(PsiReference ref) {
-              if (ref instanceof FieldFormReference) {
-                final FieldFormReference fieldRef = ((FieldFormReference)ref);
+              if (ref instanceof FieldFormReference fieldRef) {
                 final String componentClassName = fieldRef.getComponentClassName();
                 if (componentClassName != null) {
                   final PsiClassType type = JavaPsiFacade.getInstance(element.getProject()).getElementFactory()
@@ -369,8 +379,8 @@ public class FormReferenceProvider extends PsiReferenceProvider {
   public void projectClosed() {
   }
 
-  @NotNull @NonNls
-  public String getComponentName() {
+  public @NotNull
+  @NonNls String getComponentName() {
     return "FormReferenceProvider";
   }
 

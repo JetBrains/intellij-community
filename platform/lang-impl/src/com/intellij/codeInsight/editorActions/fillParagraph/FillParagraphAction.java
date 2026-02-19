@@ -1,3 +1,4 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.editorActions.fillParagraph;
 
 import com.intellij.codeInsight.CodeInsightActionHandler;
@@ -16,23 +17,22 @@ import org.jetbrains.annotations.NotNull;
  * <p>
  * The action came from Emacs users // PY-4775
  */
-public class FillParagraphAction extends BaseCodeInsightAction implements DumbAware {
-  @NotNull
+public final class FillParagraphAction extends BaseCodeInsightAction implements DumbAware {
   @Override
-  protected CodeInsightActionHandler getHandler() {
+  protected @NotNull CodeInsightActionHandler getHandler() {
     return new Handler();
   }
 
-  private static class Handler implements CodeInsightActionHandler {
+  private static final class Handler implements CodeInsightActionHandler {
     @Override
-    public void invoke(@NotNull final Project project, @NotNull final Editor editor, @NotNull final PsiFile file) {
-      ParagraphFillHandler paragraphFillHandler = LanguageFillParagraphExtension.INSTANCE.forLanguage(file.getLanguage());
+    public void invoke(final @NotNull Project project, final @NotNull Editor editor, final @NotNull PsiFile psiFile) {
+      ParagraphFillHandler paragraphFillHandler = LanguageFillParagraphExtension.INSTANCE.forLanguage(psiFile.getLanguage());
 
       int offset = editor.getCaretModel().getOffset();
-      PsiElement element = file.findElementAt(offset);
+      PsiElement element = psiFile.findElementAt(offset);
       if (element != null
           && paragraphFillHandler != null
-          && paragraphFillHandler.isAvailableForFile(file)
+          && paragraphFillHandler.isAvailableForFile(psiFile)
           && paragraphFillHandler.isAvailableForElement(element)) {
         paragraphFillHandler.performOnElement(element, editor);
       }
@@ -40,8 +40,8 @@ public class FillParagraphAction extends BaseCodeInsightAction implements DumbAw
   }
 
   @Override
-  protected boolean isValidForFile(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
-    ParagraphFillHandler handler = LanguageFillParagraphExtension.INSTANCE.forLanguage(file.getLanguage());
-    return handler != null && handler.isAvailableForFile(file);
+  protected boolean isValidForFile(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile psiFile) {
+    ParagraphFillHandler handler = LanguageFillParagraphExtension.INSTANCE.forLanguage(psiFile.getLanguage());
+    return handler != null && handler.isAvailableForFile(psiFile);
   }
 }

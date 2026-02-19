@@ -24,21 +24,41 @@ import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.Unmodifiable;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GrControlFlowOwner;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyRecursiveElementVisitor;
+import org.jetbrains.plugins.groovy.lang.psi.api.GrExpressionLambdaBody;
 import org.jetbrains.plugins.groovy.lang.psi.api.GrLambdaBody;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrCondition;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.*;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrBlockStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrCatchClause;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrClassInitializer;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrFinallyClause;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrForStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrIfStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrLabeledStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrLoopStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrSwitchStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrSynchronizedStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrTryCatchStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrWhileStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrCodeBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.*;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrAssertStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrBreakStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrContinueStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrReturnStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrThrowStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrYieldStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrCaseSection;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
@@ -48,20 +68,32 @@ import org.jetbrains.plugins.groovy.lang.psi.api.util.GrStatementOwner;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.AfterCallInstruction;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.Instruction;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.ReadWriteVariableInstruction;
-import org.jetbrains.plugins.groovy.lang.psi.controlFlow.VariableDescriptor;
-import org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.*;
+import org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.ControlFlowBuilder;
+import org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.GroovyControlFlow;
+import org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.IfEndInstruction;
+import org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.MaybeInterruptInstruction;
+import org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.MaybeReturnInstruction;
+import org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.MaybeYieldInstruction;
+import org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.ThrowingInstruction;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.DFAEngine;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.DfaInstance;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.Semilattice;
+import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyFileBaseImpl;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.blocks.GrBlockImpl;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
-import java.util.*;
-import java.util.function.Predicate;
-import java.util.stream.Collectors;
+import java.util.ArrayDeque;
+import java.util.ArrayList;
+import java.util.BitSet;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Queue;
+import java.util.Set;
 
 import static org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.VariableDescriptorFactory.createDescriptor;
 
-@SuppressWarnings({"OverlyComplexClass"})
+@SuppressWarnings("OverlyComplexClass")
 public final class ControlFlowUtils {
   private static final Logger LOG = Logger.getInstance(ControlFlowUtils.class);
 
@@ -72,6 +104,7 @@ public final class ControlFlowUtils {
     if (statement instanceof GrBreakStatement ||
         statement instanceof GrContinueStatement ||
         statement instanceof GrReturnStatement ||
+        statement instanceof GrYieldStatement ||
         statement instanceof GrThrowStatement) {
       return false;
     }
@@ -84,8 +117,7 @@ public final class ControlFlowUtils {
     else if (statement instanceof GrBlockStatement) {
       return blockMayCompleteNormally((GrBlockStatement)statement);
     }
-    else if (statement instanceof GrSynchronizedStatement) {
-      final GrSynchronizedStatement syncStatement = (GrSynchronizedStatement)statement;
+    else if (statement instanceof GrSynchronizedStatement syncStatement) {
       return openBlockMayCompleteNormally(syncStatement.getBody());
     }
     else if (statement instanceof GrLabeledStatement) {
@@ -247,8 +279,7 @@ public final class ControlFlowUtils {
 
 
   public static GrStatement stripBraces(@NotNull GrStatement branch) {
-    if (branch instanceof GrBlockStatement) {
-      final GrBlockStatement block = (GrBlockStatement)branch;
+    if (branch instanceof GrBlockStatement block) {
       final GrStatement[] statements = block.getBlock().getStatements();
       if (statements.length == 1) {
         return statements[0];
@@ -299,8 +330,7 @@ public final class ControlFlowUtils {
       if (container instanceof GrLoopStatement) {
         return false;
       }
-      else if (container instanceof GrCaseSection) {
-        final GrCaseSection caseSection = (GrCaseSection)container;
+      else if (container instanceof GrCaseSection caseSection) {
 
         if (!statementIsLastInBlock(caseSection, statementToCheck)) return false;
 
@@ -313,13 +343,11 @@ public final class ControlFlowUtils {
           return false;
         }
       }
-      else if (container instanceof GrOpenBlock) {
-        final GrOpenBlock block = (GrOpenBlock)container;
+      else if (container instanceof GrOpenBlock block) {
 
         if (!statementIsLastInBlock(block, statementToCheck)) return false;
         final PsiElement parent = block.getParent();
-        if (parent instanceof GrBlockStatement) {
-          final GrBlockStatement blockStatement = (GrBlockStatement)parent;
+        if (parent instanceof GrBlockStatement blockStatement) {
           if (blockStatement == body) return true;
         }
       }
@@ -403,13 +431,11 @@ public final class ControlFlowUtils {
     return element instanceof GrLoopStatement;
   }
 
-  @Nullable
-  private static GrStatement getContainingStatement(@NotNull GroovyPsiElement statement) {
+  private static @Nullable GrStatement getContainingStatement(@NotNull GroovyPsiElement statement) {
     return PsiTreeUtil.getParentOfType(statement, GrStatement.class);
   }
 
-  @Nullable
-  private static GroovyPsiElement getContainingStatementOrBlock(@NotNull GroovyPsiElement statement) {
+  private static @Nullable GroovyPsiElement getContainingStatementOrBlock(@NotNull GroovyPsiElement statement) {
     return PsiTreeUtil.getParentOfType(statement, GrStatement.class, GrCodeBlock.class);
   }
 
@@ -422,44 +448,72 @@ public final class ControlFlowUtils {
     return statement == lastStatement;
   }
 
-  @NotNull
-  public static List<GrStatement> collectReturns(@Nullable PsiElement element) {
+  public static @NotNull List<GrStatement> collectReturns(@Nullable GroovyPsiElement element) {
     return collectReturns(element, element instanceof GrCodeBlock || element instanceof GroovyFile || element instanceof GrLambdaBody);
   }
 
-  @NotNull
-  public static List<GrStatement> collectReturns(@Nullable PsiElement element, final boolean allExitPoints) {
+  public static @NotNull List<GrStatement> collectReturns(@Nullable GroovyPsiElement element, final boolean allExitPoints) {
     if (element == null) return Collections.emptyList();
 
-    final Instruction[] flow;
+    final GroovyControlFlow flow;
     if (element instanceof GrControlFlowOwner) {
-      flow = ((GrControlFlowOwner)element).getControlFlow();
+      flow = getGroovyControlFlow((GrControlFlowOwner)element);
     }
     else {
-      flow = new ControlFlowBuilder().buildControlFlow((GroovyPsiElement)element);
+      flow = ControlFlowBuilder.buildControlFlow(element);
     }
-    return collectReturns(flow, allExitPoints);
+    return collectReturns(flow.getFlow(), element, allExitPoints);
   }
 
-  @NotNull
-  public static List<GrStatement> collectReturns(Instruction @NotNull [] flow, final boolean allExitPoints) {
-    boolean[] visited = new boolean[flow.length];
-    final List<GrStatement> res = new ArrayList<>();
-    visitAllExitPointsInner(flow[flow.length - 1], flow[0], visited, new ExitPointVisitor() {
-      @Override
-      public boolean visitExitPoint(Instruction instruction, @Nullable GrExpression returnValue) {
-        final PsiElement element = instruction.getElement();
-        if (element instanceof GrReturnStatement || (allExitPoints && instruction instanceof MaybeReturnInstruction)) {
-          res.add((GrStatement)element);
-        }
-        return true;
+  // stateful class
+  private static final class ExitPointCollector implements ExitPointVisitor {
+    private final @Nullable Class<? extends Instruction> instructionFilter;
+    private final @Nullable Class<? extends GrStatement> statementFilter;
+    private final @NotNull List<GrStatement> collector;
+
+    private ExitPointCollector(@Nullable Class<? extends Instruction> instructionFilter,
+                               @Nullable Class<? extends GrStatement> statementFilter) {
+      this.instructionFilter = instructionFilter;
+      this.statementFilter = statementFilter;
+      this.collector = new ArrayList<>();
+    }
+
+    @Override
+    public boolean visitExitPoint(Instruction instruction,
+                                  @Nullable GrExpression returnValue) {
+      final PsiElement element = instruction.getElement();
+      if ((statementFilter != null && statementFilter.isInstance(element)) || (instructionFilter != null && instructionFilter.isInstance(instruction))) {
+        collector.add((GrStatement)element);
       }
-    });
-    return res;
+      return true;
+    }
+
+    private @NotNull List<GrStatement> getCollectedStatements() {
+      return collector;
+    }
   }
 
-  @Nullable
-  public static GrExpression extractReturnExpression(GrStatement returnStatement) {
+  public static @NotNull List<GrStatement> collectReturns(Instruction @NotNull [] flow, @NotNull GroovyPsiElement element, final boolean allExitPoints) {
+    boolean[] visited = new boolean[flow.length];
+    var collector = new ExitPointCollector(allExitPoints ? MaybeReturnInstruction.class : null, GrReturnStatement.class);
+    visitAllExitPointsInner(flow[flow.length - 1], flow[0], visited, collector);
+    return collector.getCollectedStatements();
+  }
+
+  public static @NotNull List<GrStatement> collectYields(Instruction @NotNull [] flow) {
+    boolean[] visited = new boolean[flow.length];
+    var collector = new ExitPointCollector(MaybeYieldInstruction.class, GrYieldStatement.class);
+    visitAllExitPointsInner(flow[flow.length - 1], flow[0], visited, collector);
+    return collector.getCollectedStatements();
+  }
+
+  public static Instruction @NotNull [] getCaseSectionInstructions(GrCaseSection caseSection) {
+    return CachedValuesManager.getCachedValue(caseSection, () -> {
+      return CachedValueProvider.Result.create(ControlFlowBuilder.buildControlFlow(caseSection).getFlow(), caseSection);
+    });
+  }
+
+  public static @Nullable GrExpression extractReturnExpression(GrStatement returnStatement) {
     if (returnStatement instanceof GrReturnStatement) return ((GrReturnStatement)returnStatement).getReturnValue();
     if (returnStatement instanceof GrExpression) return (GrExpression)returnStatement;
     return null;
@@ -475,17 +529,23 @@ public final class ControlFlowUtils {
     return false;
   }
 
-  public static String dumpControlFlow(Instruction[] instructions) {
+  public static String dumpControlFlow(GroovyControlFlow flow) {
     StringBuilder builder = new StringBuilder();
-    for (Instruction instruction : instructions) {
-      builder.append(instruction.toString()).append("\n");
+    for (Instruction instruction : flow.getFlow()) {
+      String repr;
+      if (instruction instanceof ReadWriteVariableInstruction) {
+        int descriptorId = ((ReadWriteVariableInstruction)instruction).getDescriptor();
+        repr = instruction.toString().replace(" " + descriptorId, " " + flow.getVarIndices()[descriptorId].getName());
+      } else {
+        repr = instruction.toString();
+      }
+      builder.append(repr).append("\n");
     }
 
     return builder.toString();
   }
 
-  @Nullable
-  public static ReadWriteVariableInstruction findRWInstruction(final GrReferenceExpression refExpr, final Instruction[] flow) {
+  public static @Nullable ReadWriteVariableInstruction findRWInstruction(final GrReferenceExpression refExpr, final Instruction[] flow) {
     for (Instruction instruction : flow) {
       if (instruction instanceof ReadWriteVariableInstruction && instruction.getElement() == refExpr) {
         return (ReadWriteVariableInstruction)instruction;
@@ -494,8 +554,7 @@ public final class ControlFlowUtils {
     return null;
   }
 
-  @Nullable
-  public static Instruction findNearestInstruction(PsiElement place, Instruction[] flow) {
+  public static @Nullable Instruction findNearestInstruction(PsiElement place, Instruction[] flow) {
     List<Instruction> applicable = new ArrayList<>();
     for (Instruction instruction : flow) {
       final PsiElement element = instruction.getElement();
@@ -617,7 +676,7 @@ public final class ControlFlowUtils {
     boolean visitExitPoint(Instruction instruction, @Nullable GrExpression returnValue);
   }
 
-  public static Set<GrExpression> getAllReturnValues(@NotNull final GrControlFlowOwner block) {
+  public static Set<GrExpression> getAllReturnValues(final @NotNull GrControlFlowOwner block) {
     return CachedValuesManager.getCachedValue(block, () -> {
       final Set<GrExpression> result = new HashSet<>();
       visitAllExitPoints(block, new ExitPointVisitor() {
@@ -645,16 +704,17 @@ public final class ControlFlowUtils {
 
   private static boolean visitAllExitPointsInner(Instruction last, Instruction first, boolean[] visited, ExitPointVisitor visitor) {
     if (first == last) return true;
+    var shift = first.num();
     if (last instanceof AfterCallInstruction) {
-      visited[last.num()] = true;
+      visited[last.num() - shift] = true;
       return visitAllExitPointsInner(((AfterCallInstruction)last).myCall, first, visited, visitor);
     }
 
-    if (last instanceof MaybeReturnInstruction) {
+    if (last instanceof MaybeInterruptInstruction) {
       return visitor.visitExitPoint(last, (GrExpression)last.getElement());
     }
     else if (last instanceof IfEndInstruction) {
-      visited[last.num()] = true;
+      visited[last.num() - shift] = true;
       for (Instruction instruction : last.allPredecessors()) {
         if (!visitAllExitPointsInner(instruction, first, visited, visitor)) return false;
       }
@@ -680,17 +740,16 @@ public final class ControlFlowUtils {
 
       return visitor.visitExitPoint(last, returnValue);
     }
-    visited[last.num()] = true;
+    visited[last.num() - shift] = true;
     for (Instruction pred : last.allPredecessors()) {
-      if (!visited[pred.num()]) {
+      if (!visited[pred.num() - shift]) {
         if (!visitAllExitPointsInner(pred, first, visited, visitor)) return false;
       }
     }
     return true;
   }
 
-  @Nullable
-  public static GrControlFlowOwner findControlFlowOwner(PsiElement place) {
+  public static @Nullable GrControlFlowOwner findControlFlowOwner(PsiElement place) {
     place = place.getContext();
     while (place != null) {
       if (place instanceof GrControlFlowOwner && ((GrControlFlowOwner)place).isTopControlFlowOwner()) return (GrControlFlowOwner)place;
@@ -715,16 +774,20 @@ public final class ControlFlowUtils {
     final GrControlFlowOwner owner = findControlFlowOwner(place);
     assert owner != null;
 
-    final Instruction cur = findInstruction(place, owner.getControlFlow());
+    GroovyControlFlow flow = getGroovyControlFlow(owner);
+    final Instruction cur = findInstruction(place, flow.getFlow());
 
     if (cur == null) {
       throw new IllegalArgumentException("place is not in the flow");
     }
 
-    return findAccess(local, ahead, writeAccessOnly, cur);
+    return findAccess(flow.getIndex(createDescriptor(local)), ahead, writeAccessOnly, cur);
   }
 
-  public static List<ReadWriteVariableInstruction> findAccess(GrVariable local, boolean ahead, boolean writeAccessOnly, Instruction cur) {
+  public static List<ReadWriteVariableInstruction> findAccess(int variableIndex, boolean ahead, boolean writeAccessOnly, Instruction cur) {
+    if (variableIndex == 0) {
+      return Collections.emptyList();
+    }
     final ArrayList<ReadWriteVariableInstruction> result = new ArrayList<>();
     final HashSet<Instruction> visited = new HashSet<>();
 
@@ -742,9 +805,8 @@ public final class ControlFlowUtils {
       Instruction instruction = queue.poll();
       if (instruction == null) break;
 
-      if (instruction instanceof ReadWriteVariableInstruction) {
-        ReadWriteVariableInstruction rw = (ReadWriteVariableInstruction)instruction;
-        if (createDescriptor(local).equals(rw.getDescriptor())) {
+      if (instruction instanceof ReadWriteVariableInstruction rw) {
+        if (variableIndex == rw.getDescriptor()) {
           if (rw.isWrite()) {
             result.add(rw);
             continue;
@@ -766,56 +828,44 @@ public final class ControlFlowUtils {
     return result;
   }
 
-  public static @NotNull @Unmodifiable Set<@NotNull ResolvedVariableDescriptor>
-  getForeignVariableDescriptors(@NotNull GrControlFlowOwner owner) {
-    return CachedValuesManager.getCachedValue(owner, () -> {
-      Set<ResolvedVariableDescriptor> foreignDescriptors = getForeignVariableDescriptors(owner, __ -> true);
-      return CachedValueProvider.Result.create(foreignDescriptors, owner);
-    });
-  }
-
-  public static @NotNull @Unmodifiable Set<@NotNull ResolvedVariableDescriptor>
-  getForeignVariableDescriptors(@NotNull GrControlFlowOwner owner,
-                                @NotNull Predicate<? super ReadWriteVariableInstruction> instructionFilter) {
-    Set<ResolvedVariableDescriptor> usedDescriptors = new LinkedHashSet<>();
-    for (Instruction instruction : owner.getControlFlow()) {
-      PsiElement element = instruction.getElement();
-      if (instruction instanceof ReadWriteVariableInstruction && instructionFilter.test((ReadWriteVariableInstruction)instruction)) {
-        VariableDescriptor immediateDescriptor = ((ReadWriteVariableInstruction)instruction).getDescriptor();
-        if (immediateDescriptor instanceof ResolvedVariableDescriptor) {
-          usedDescriptors.add((ResolvedVariableDescriptor)immediateDescriptor);
-        }
-      }
-      if (!(instruction instanceof ReadWriteVariableInstruction) && element instanceof GrControlFlowOwner) {
-        usedDescriptors.addAll(getForeignVariableDescriptors((GrControlFlowOwner)element, instructionFilter));
-      }
-    }
-    return usedDescriptors.stream()
-      .filter(descriptor -> descriptor.getVariable().getContext() != owner &&
-                            PsiTreeUtil.getParentOfType(descriptor.getVariable(), GrControlFlowOwner.class) != owner)
-      .collect(Collectors.toUnmodifiableSet());
-  }
-
-  @Nullable
-  public static Instruction findInstruction(final PsiElement place, Instruction[] controlFlow) {
+  public static @Nullable Instruction findInstruction(final PsiElement place, Instruction[] controlFlow) {
     return ContainerUtil.find(controlFlow, instruction -> instruction.getElement() == place);
   }
 
-  @NotNull
-  public static List<BitSet> inferWriteAccessMap(final Instruction[] flow, final GrVariable var) {
+  @Contract("null -> null")
+  public static @Nullable GrControlFlowOwner getTopmostOwner(@Nullable PsiElement place) {
+    if (place == null) {
+      return null;
+    }
+    var owner = findControlFlowOwner(place);
+    if ((place instanceof GrOpenBlock && owner instanceof GroovyFile) ||
+        place == owner ||
+        (owner == null && place instanceof GrControlFlowOwner)) {
+      return (GrControlFlowOwner)place;
+    }
+    else if (owner == null) {
+      return null;
+    }
+    else {
+      return getTopmostOwner(owner);
+    }
+  }
 
-    final Semilattice<BitSet> sem = new Semilattice<BitSet>() {
+  public static @NotNull List<@NotNull BitSet> inferWriteAccessMap(final GroovyControlFlow groovyFlow, final GrVariable var) {
 
-      @NotNull
+    BitSet neutral = new BitSet(groovyFlow.getFlow().length);
+
+    final Semilattice<BitSet> sem = new Semilattice<>() {
+
       @Override
-      public BitSet initial() {
-        return new BitSet(flow.length);
-      }
-
-      @NotNull
-      @Override
-      public BitSet join(@NotNull List<? extends BitSet> ins) {
-        BitSet result = new BitSet(flow.length);
+      public @NotNull BitSet join(@NotNull List<? extends BitSet> ins) {
+        if (ins.isEmpty()) {
+          return neutral;
+        }
+        if (ins.size() == 1) {
+          return ins.get(0);
+        }
+        BitSet result = new BitSet(groovyFlow.getFlow().length);
         for (BitSet set : ins) {
           result.or(set);
         }
@@ -823,30 +873,42 @@ public final class ControlFlowUtils {
       }
     };
 
-    DfaInstance<BitSet> dfa = new DfaInstance<BitSet>() {
+    DfaInstance<BitSet> dfa = new DfaInstance<>() {
       @Override
-      public void fun(@NotNull BitSet bitSet, @NotNull Instruction instruction) {
-        if (!(instruction instanceof ReadWriteVariableInstruction)) return;
-        if (!((ReadWriteVariableInstruction)instruction).isWrite()) return;
+      public BitSet fun(@NotNull BitSet bitSet, @NotNull Instruction instruction) {
+        if (!(instruction instanceof ReadWriteVariableInstruction)) return bitSet;
+        if (!((ReadWriteVariableInstruction)instruction).isWrite()) return bitSet;
 
         final PsiElement element = instruction.getElement();
-        if (element instanceof GrVariable && element != var) return;
-        if (element instanceof GrReferenceExpression) {
-          final GrReferenceExpression ref = (GrReferenceExpression)element;
+        if (element instanceof GrVariable && element != var) return bitSet;
+        if (element instanceof GrReferenceExpression ref) {
           if (ref.isQualified() || ref.resolve() != var) {
-            return;
+            return bitSet;
           }
         }
-        if (!((ReadWriteVariableInstruction)instruction).getDescriptor().equals(createDescriptor(var))) {
-          return;
+        if (!groovyFlow.getVarIndices()[((ReadWriteVariableInstruction)instruction).getDescriptor()].equals(createDescriptor(var))) {
+          return bitSet;
         }
-
-        bitSet.clear();
-        bitSet.set(instruction.num());
+        BitSet newResult = new BitSet(groovyFlow.getFlow().length);
+        newResult.set(instruction.num());
+        return newResult;
       }
     };
 
-    return new DFAEngine<>(flow, dfa, sem).performForceDFA();
+    return ContainerUtil.map(new DFAEngine<>(groovyFlow.getFlow(), dfa, sem).performForceDFA(), set -> set == null ? neutral : set);
+  }
+
+  public static @NotNull GroovyControlFlow getGroovyControlFlow(@NotNull GrControlFlowOwner owner) {
+    if (owner instanceof GroovyFileBaseImpl) {
+      return ((GroovyFileBaseImpl)owner).getGroovyControlFlow();
+    } else if (owner instanceof GrExpressionLambdaBody) {
+      return ControlFlowBuilder.buildControlFlow(owner);
+    } else if (owner instanceof GrBlockImpl) {
+      return ((GrBlockImpl)owner).getGroovyControlFlow();
+    } else {
+      LOG.error("Unrecognized control flow owner");
+      throw new IllegalStateException();
+    }
   }
 
 }

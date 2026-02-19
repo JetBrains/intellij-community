@@ -1,10 +1,10 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.codeinsight;
 
 import com.intellij.codeInsight.generation.surroundWith.JavaExpressionSurrounder;
-import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.debugger.DebuggerInvocationUtil;
 import com.intellij.debugger.DebuggerManagerEx;
+import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.debugger.engine.evaluation.DefaultCodeFragmentFactory;
 import com.intellij.debugger.impl.DebuggerContextImpl;
 import com.intellij.debugger.impl.DebuggerSession;
@@ -12,15 +12,23 @@ import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.util.ProgressWindow;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiCodeFragment;
+import com.intellij.psi.PsiElementFactory;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiParenthesizedExpression;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypeCastExpression;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.Nullable;
 
-public class JavaWithRuntimeCastSurrounder extends JavaExpressionSurrounder {
+import java.util.Objects;
+
+public final class JavaWithRuntimeCastSurrounder extends JavaExpressionSurrounder {
 
   @Override
   public String getTemplateDescription() {
@@ -44,10 +52,11 @@ public class JavaWithRuntimeCastSurrounder extends JavaExpressionSurrounder {
     DebuggerContextImpl debuggerContext = (DebuggerManagerEx.getInstanceEx(project)).getContext();
     DebuggerSession debuggerSession = debuggerContext.getDebuggerSession();
     if (debuggerSession != null) {
-      final ProgressWindow progressWindow = new ProgressWindow(true, expr.getProject());
-      SurroundWithCastWorker worker = new SurroundWithCastWorker(editor, expr, debuggerContext, progressWindow);
-      progressWindow.setTitle(JavaDebuggerBundle.message("title.evaluating"));
-      debuggerContext.getDebugProcess().getManagerThread().startProgress(worker, progressWindow);
+      Objects.requireNonNull(debuggerContext.getManagerThread()).startCommandWithModalProgress(
+        expr.getProject(), JavaDebuggerBundle.message("title.evaluating"),
+        (progressIndicator) -> {
+          return new SurroundWithCastWorker(editor, expr, debuggerContext, progressIndicator);
+        });
     }
     return null;
   }
@@ -61,7 +70,7 @@ public class JavaWithRuntimeCastSurrounder extends JavaExpressionSurrounder {
     }
 
     @Override
-    protected void typeCalculationFinished(@Nullable final PsiType type) {
+    protected void typeCalculationFinished(final @Nullable PsiType type) {
       if (type == null) {
         return;
       }
@@ -91,6 +100,5 @@ public class JavaWithRuntimeCastSurrounder extends JavaExpressionSurrounder {
         }
       }), myProgressIndicator.getModalityState());
     }
-
   }
 }

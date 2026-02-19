@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.svn;
 
 import com.intellij.openapi.progress.EmptyProgressIndicator;
@@ -42,7 +42,10 @@ import java.util.List;
 
 import static com.intellij.testFramework.UsefulTestCase.assertExists;
 import static org.jetbrains.idea.svn.SvnUtil.parseUrl;
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 
 @Ignore
 public class SvnProtocolsTest extends SvnTestCase {
@@ -128,7 +131,7 @@ public class SvnProtocolsTest extends SvnTestCase {
     };
     try {
       provider
-        .reportAppendableHistory(VcsContextFactory.SERVICE.getInstance().createFilePathOnNonLocal(s.toDecodedString(), true), partner);
+        .reportAppendableHistory(VcsContextFactory.getInstance().createFilePathOnNonLocal(s.toDecodedString(), true), partner);
     } catch (ProcessCanceledException e) {
       //ok
     }

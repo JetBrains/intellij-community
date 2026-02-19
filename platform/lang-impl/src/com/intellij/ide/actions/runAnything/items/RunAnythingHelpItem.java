@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions.runAnything.items;
 
 import com.intellij.openapi.util.NlsContexts;
@@ -6,27 +6,27 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.Icon;
+import javax.swing.JPanel;
+import java.awt.BorderLayout;
+import java.awt.Component;
 
-public class RunAnythingHelpItem extends RunAnythingItemBase {
-  @NotNull private final String myPlaceholder;
-  @Nullable private final @NlsContexts.DetailedDescription String myDescription;
-  @Nullable private final Icon myIcon;
+public final class RunAnythingHelpItem extends RunAnythingItemBase {
+  private final @NotNull @Nls String myPlaceholder;
+  private final @Nullable @NlsContexts.DetailedDescription String myDescription;
 
-  public RunAnythingHelpItem(@NotNull String placeholder, @NotNull String command, @Nullable @NlsContexts.DetailedDescription String description, @Nullable Icon icon) {
+  public RunAnythingHelpItem(@NotNull @Nls String placeholder, @NotNull String command, @Nullable @NlsContexts.DetailedDescription String description, @Nullable Icon icon) {
     super(command, icon);
     myPlaceholder = placeholder;
     myDescription = description;
-    myIcon = icon;
   }
 
-  @NotNull
   @Override
-  public Component createComponent(@Nullable String pattern, boolean isSelected, boolean hasFocus) {
+  public @NotNull Component createComponent(@Nullable String pattern, boolean isSelected, boolean hasFocus) {
     JPanel component = (JPanel)super.createComponent(pattern, isSelected, hasFocus);
 
     SimpleColoredComponent simpleColoredComponent = new SimpleColoredComponent();
@@ -39,7 +39,7 @@ public class RunAnythingHelpItem extends RunAnythingItemBase {
     return component;
   }
 
-  private static void parseAndApplyStyleToParameters(@NotNull SimpleColoredComponent component, @NotNull String placeholder) {
+  private static void parseAndApplyStyleToParameters(@NotNull SimpleColoredComponent component, @NotNull @Nls String placeholder) {
     int lt = StringUtil.indexOf(placeholder, "<");
     if (lt == -1) {
       component.append(placeholder);

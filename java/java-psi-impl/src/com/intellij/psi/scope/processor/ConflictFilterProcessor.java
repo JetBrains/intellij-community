@@ -2,7 +2,11 @@
 package com.intellij.psi.scope.processor;
 
 import com.intellij.openapi.util.Key;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaResolveResult;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiSubstitutor;
+import com.intellij.psi.ResolveState;
 import com.intellij.psi.filters.ElementFilter;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.scope.JavaScopeProcessorEvent;
@@ -96,10 +100,10 @@ public class ConflictFilterProcessor extends FilterScopeProcessor<CandidateInfo>
     myName = name;
   }
 
+  @SuppressWarnings("unchecked")
   @Override
   public <T> T getHint(@NotNull Key<T> hintKey) {
     if (hintKey == NameHint.KEY) {
-      //noinspection unchecked
       return myName != null ? (T)this : null;
     }
     return super.getHint(hintKey);

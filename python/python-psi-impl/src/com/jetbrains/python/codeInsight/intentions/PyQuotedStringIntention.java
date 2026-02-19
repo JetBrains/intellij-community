@@ -1,136 +1,105 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.codeInsight.intentions;
 
+import com.intellij.modcommand.ActionContext;
+import com.intellij.modcommand.ModCommandExecutor;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.Presentation;
+import com.intellij.modcommand.PsiUpdateModCommandAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyPsiBundle;
-import com.jetbrains.python.psi.*;
+import com.jetbrains.python.PyTokenTypes;
+import com.jetbrains.python.psi.PyDocStringOwner;
+import com.jetbrains.python.psi.PyExpression;
+import com.jetbrains.python.psi.PyFile;
+import com.jetbrains.python.psi.PyQuotesUtil;
+import com.jetbrains.python.psi.PyStringElement;
+import com.jetbrains.python.psi.PyStringLiteralExpression;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import static com.jetbrains.python.psi.PyUtil.as;
 
 /**
  * User: catherine
  * Intention to convert between single-quoted and double-quoted strings
  */
-public class PyQuotedStringIntention extends PyBaseIntentionAction {
+public final class PyQuotedStringIntention extends PsiUpdateModCommandAction<PsiElement> {
+  public PyQuotedStringIntention() {
+    super(PsiElement.class);
+  }
 
   @Override
-  @NotNull
-  public String getFamilyName() {
+  protected @Nullable Presentation getPresentation(@NotNull ActionContext context, @NotNull PsiElement element) {
+    if (!(context.file() instanceof PyFile)) {
+      return null;
+    }
+
+    PyStringElement stringElement = findConvertibleStringElementUnderCaret(element);
+    if (stringElement == null) return null;
+    PyStringLiteralExpression stringLiteral = as(stringElement.getParent(), PyStringLiteralExpression.class);
+    if (stringLiteral == null) return null;
+
+    final PyDocStringOwner docStringOwner = PsiTreeUtil.getParentOfType(stringLiteral, PyDocStringOwner.class);
+    if (docStringOwner != null && docStringOwner.getDocStringExpression() == stringLiteral) return null;
+
+    String currentQuote = stringElement.getQuote();
+    if (currentQuote.equals("'")) {
+      return Presentation.of(PyPsiBundle.message("INTN.quoted.string.single.to.double"));
+    }
+    else {
+      return Presentation.of(PyPsiBundle.message("INTN.quoted.string.double.to.single"));
+    }
+  }
+
+  @Override
+  public @NotNull String getFamilyName() {
     return PyPsiBundle.message("INTN.quoted.string");
   }
 
-  @Override
-  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    if (!(file instanceof PyFile)) {
-      return false;
-    }
-
-    PyStringLiteralExpression string = PsiTreeUtil.getParentOfType(file.findElementAt(editor.getCaretModel().getOffset()), PyStringLiteralExpression.class);
-    if (string != null) {
-      final PyDocStringOwner docStringOwner = PsiTreeUtil.getParentOfType(string, PyDocStringOwner.class);
-      if (docStringOwner != null) {
-        if (docStringOwner.getDocStringExpression() == string) return false;
-      }
-      String stringText = string.getText();
-      int prefixLength = PyStringLiteralUtil.getPrefixLength(stringText);
-      stringText = stringText.substring(prefixLength);
-
-      if (stringText.length() >= 6) {
-        if (stringText.startsWith("'''") && stringText.endsWith("'''") ||
-              stringText.startsWith("\"\"\"") && stringText.endsWith("\"\"\"")) return false;
-      }
-      if (stringText.length() > 2) {
-        if (stringText.startsWith("'") && stringText.endsWith("'")) {
-          setText(PyPsiBundle.message("INTN.quoted.string.single.to.double"));
-          return true;
-        }
-        if (stringText.startsWith("\"") && stringText.endsWith("\"")) {
-          setText(PyPsiBundle.message("INTN.quoted.string.double.to.single"));
-          return true;
-        }
-      }
-    }
-    return false;
+  private static @Nullable PyStringElement findConvertibleStringElementUnderCaret(@NotNull PsiElement element) {
+    IElementType elementType = element.getNode().getElementType();
+    if (!(PyTokenTypes.STRING_NODES.contains(elementType) || PyTokenTypes.FSTRING_TOKENS.contains(elementType))) return null;
+    PyStringElement stringElement = PsiTreeUtil.getParentOfType(element, PyStringElement.class, false, PyExpression.class);
+    return stringElement != null && PyQuotesUtil.canBeConverted(stringElement, true) ? stringElement : null;
   }
 
   @Override
-  public void doInvoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-    PyStringLiteralExpression string = PsiTreeUtil.getParentOfType(file.findElementAt(editor.getCaretModel().getOffset()), PyStringLiteralExpression.class);
-    PyElementGenerator elementGenerator = PyElementGenerator.getInstance(project);
-    if (string != null) {
-      final String stringText = string.getText();
-      int prefixLength = PyStringLiteralUtil.getPrefixLength(stringText);
-      final String text = stringText.substring(prefixLength);
+  protected void invoke(@NotNull ActionContext context, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
+    PyStringElement stringElement = PsiTreeUtil.getParentOfType(element, PyStringElement.class, false, PyExpression.class);
+    if (stringElement == null) return;
+    PyStringLiteralExpression stringLiteral = as(stringElement.getParent(), PyStringLiteralExpression.class);
+    if (stringLiteral == null) return;
 
-      if (text.startsWith("'") && text.endsWith("'")) {
-        String result = convertSingleToDoubleQuoted(stringText);
-        PyStringLiteralExpression st = elementGenerator.createStringLiteralAlreadyEscaped(result);
-        string.replace(st);
-      }
-      if (text.startsWith("\"") && text.endsWith("\"")) {
-        String result = convertDoubleToSingleQuoted(stringText);
-        PyStringLiteralExpression st = elementGenerator.createStringLiteralAlreadyEscaped(result);
-        string.replace(st);
-      }
+    String originalQuote = stringElement.getQuote();
+    boolean entireLiteralCanBeConverted = ContainerUtil.all(stringLiteral.getStringElements(),
+                                                            s -> s.getQuote().equals(originalQuote) &&
+                                                                 PyQuotesUtil.canBeConverted(s, true));
+    if (entireLiteralCanBeConverted) {
+      stringLiteral.getStringElements().forEach(PyQuotedStringIntention::convertStringElement);
+    }
+    else {
+      convertStringElement(stringElement);
     }
   }
 
-  private static String convertDoubleToSingleQuoted(String stringText) {
-    StringBuilder stringBuilder = new StringBuilder();
-
-    boolean skipNext = false;
-    char[] charArr = stringText.toCharArray();
-    for (int i = 0; i != charArr.length; ++i) {
-      char ch = charArr[i];
-      if (skipNext) {
-        skipNext = false;
-        continue;
-      }
-      if (ch == '"') {
-        stringBuilder.append('\'');
-      }
-      else if (ch == '\'') {
-        stringBuilder.append("\\'");
-      }
-      else if (ch == '\\' && charArr[i+1] == '\"' && !(i+2 == charArr.length)) {
-        skipNext = true;
-        stringBuilder.append(charArr[i+1]);
-      }
-      else {
-        stringBuilder.append(ch);
-      }
-    }
-
-    return stringBuilder.toString();
+  public boolean isAvailable(@NotNull Project project, @Nullable Editor editor, @NotNull PsiFile file) {
+    Presentation presentation = getPresentation(ActionContext.from(editor, file));
+    return presentation != null;
   }
 
-  private static String convertSingleToDoubleQuoted(String stringText) {
-    StringBuilder stringBuilder = new StringBuilder();
-    boolean skipNext = false;
-    char[] charArr = stringText.toCharArray();
-    for (int i = 0; i != charArr.length; ++i) {
-      char ch = charArr[i];
-      if (skipNext) {
-        skipNext = false;
-        continue;
-      }
-      if (ch == '\'') {
-        stringBuilder.append('"');
-      }
-      else if (ch == '"') {
-        stringBuilder.append("\\\"");
-      }
-      else if (ch == '\\' && charArr[i+1] == '\'' && !(i+2 == charArr.length)) {
-        skipNext = true;
-        stringBuilder.append(charArr[i+1]);
-      }
-      else {
-        stringBuilder.append(ch);
-      }
-    }
-    return stringBuilder.toString();
+  public void invoke(@NotNull Project project, @Nullable Editor editor, @NotNull PsiFile file) {
+    ActionContext context = ActionContext.from(editor, file);
+    ModCommandExecutor.executeInteractively(context, getFamilyName(), editor, () -> perform(context));
+  }
+
+  private static void convertStringElement(@NotNull PyStringElement stringElement) {
+    stringElement.replace(PyQuotesUtil.createCopyWithConvertedQuotes(stringElement));
   }
 }

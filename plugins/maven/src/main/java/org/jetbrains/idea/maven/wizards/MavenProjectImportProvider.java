@@ -1,8 +1,6 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.wizards;
 
-import com.intellij.ide.util.projectWizard.ModuleWizardStep;
-import com.intellij.ide.util.projectWizard.WizardContext;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.projectImport.ProjectImportBuilder;
@@ -16,11 +14,6 @@ public final class MavenProjectImportProvider extends ProjectImportProvider {
   @Override
   protected ProjectImportBuilder doGetBuilder() {
     return ProjectImportBuilder.EXTENSIONS_POINT_NAME.findExtensionOrFail(MavenProjectBuilder.class);
-  }
-
-  @Override
-  public ModuleWizardStep[] createSteps(final WizardContext wizardContext) {
-    return ModuleWizardStep.EMPTY_ARRAY;
   }
 
   @Override
@@ -39,9 +32,8 @@ public final class MavenProjectImportProvider extends ProjectImportProvider {
     return MavenUtil.isPomFileName(file.getName());
   }
 
-  @NotNull
   @Override
-  public String getFileSample() {
+  public @NotNull String getFileSample() {
     return MavenConfigurableBundle.message("maven.project.file.pom.xml");
   }
 }

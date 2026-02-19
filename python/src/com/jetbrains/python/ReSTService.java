@@ -1,13 +1,14 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python;
 
+import com.intellij.openapi.components.RoamingType;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.module.Module;
-import com.jetbrains.python.defaultProjectAwareService.PyDefaultProjectAwareService;
-import com.jetbrains.python.defaultProjectAwareService.PyDefaultProjectAwareServiceModuleConfigurator;
 import com.jetbrains.python.defaultProjectAwareService.PyDefaultProjectAwareModuleConfiguratorImpl;
+import com.jetbrains.python.defaultProjectAwareService.PyDefaultProjectAwareService;
 import com.jetbrains.python.defaultProjectAwareService.PyDefaultProjectAwareServiceClasses;
+import com.jetbrains.python.defaultProjectAwareService.PyDefaultProjectAwareServiceModuleConfigurator;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -32,8 +33,7 @@ public abstract class ReSTService extends PyDefaultProjectAwareService<
   }
 
 
-  @NotNull
-  public static PyDefaultProjectAwareServiceModuleConfigurator getConfigurator() {
+  public static @NotNull PyDefaultProjectAwareServiceModuleConfigurator getConfigurator() {
     return new PyDefaultProjectAwareModuleConfiguratorImpl<>(SERVICE_CLASSES);
   }
 
@@ -54,7 +54,7 @@ public abstract class ReSTService extends PyDefaultProjectAwareService<
     public boolean TXT_IS_RST = false;
   }
 
-  @State(name = "AppReSTService", storages = @Storage("ReSTService.xml"))
+  @State(name = "AppReSTService", storages = @Storage(value = "ReSTService.xml", roamingType = RoamingType.DISABLED))
   public static final class AppService extends ReSTService {
   }
 

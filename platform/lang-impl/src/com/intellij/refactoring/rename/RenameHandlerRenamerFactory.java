@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.rename;
 
 import com.intellij.ide.IdeEventQueue;
@@ -10,7 +10,9 @@ import com.intellij.psi.PsiCompiledElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.refactoring.actions.RenameElementAction;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -18,6 +20,7 @@ import java.util.Collections;
 import static com.intellij.refactoring.actions.BaseRefactoringAction.findRefactoringTargetInEditor;
 import static com.intellij.refactoring.actions.BaseRefactoringAction.getPsiElementArray;
 
+@ApiStatus.Internal
 public final class RenameHandlerRenamerFactory implements RenamerFactory {
 
   private static boolean isEnabledOnDataContext(@NotNull DataContext dataContext) {
@@ -45,7 +48,7 @@ public final class RenameHandlerRenamerFactory implements RenamerFactory {
   }
 
   @Override
-  public @NotNull Collection<? extends @NotNull Renamer> createRenamers(@NotNull DataContext dataContext) {
+  public @Unmodifiable @NotNull Collection<? extends @NotNull Renamer> createRenamers(@NotNull DataContext dataContext) {
     Project project = dataContext.getData(CommonDataKeys.PROJECT);
     if (project == null) {
       return Collections.emptyList();

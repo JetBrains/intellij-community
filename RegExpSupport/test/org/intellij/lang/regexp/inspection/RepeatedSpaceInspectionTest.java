@@ -9,7 +9,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author Bas Leijdekkers
  */
-@SuppressWarnings({"RegExpRepeatedSpace", "RegExpRedundantEscape"})
+@SuppressWarnings({"RegExpRepeatedSpace", "RegExpRedundantEscape", "RegExpDuplicateCharacterInClass"})
 public class RepeatedSpaceInspectionTest extends RegExpInspectionTestCase {
 
   public void testSimple() {
@@ -38,7 +38,7 @@ public class RepeatedSpaceInspectionTest extends RegExpInspectionTestCase {
 
   public void testEscapedWhitespace() {
     quickfixTest("<warning descr=\"3 consecutive spaces in RegExp\"><caret>\\   </warning>", " {3}", "Replace with ' {3}",
-                 new RegExpFileType(EcmaScriptRegexpLanguage.INSTANCE));
+                 RegExpFileType.forLanguage(EcmaScriptRegexpLanguage.INSTANCE));
   }
 
   public void testNoStringIndexOutOfBoundsException() {

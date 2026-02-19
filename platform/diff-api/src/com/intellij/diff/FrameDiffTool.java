@@ -1,30 +1,22 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diff;
 
 import com.intellij.diff.requests.DiffRequest;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 import java.util.List;
 
+/**
+ * Implements diff viewer that is embedded into the common diff panels.
+ * Such as used by {@link DiffManagerEx#showDiffBuiltin}, {@link DiffManager#createRequestPanel}
+ * and other {@link com.intellij.diff.impl.DiffRequestProcessor} implementations.
+ */
 public interface FrameDiffTool extends DiffTool {
   /**
    * Creates viewer for the given request. Clients should call {@link #canShow(DiffContext, DiffRequest)} first.
@@ -33,7 +25,15 @@ public interface FrameDiffTool extends DiffTool {
   @NotNull
   DiffViewer createComponent(@NotNull DiffContext context, @NotNull DiffRequest request);
 
+  default @NotNull DiffToolType getToolType() {
+    return DiffToolType.Default.INSTANCE;
+  }
+
   interface DiffViewer extends Disposable {
+    /**
+     * The component will be used for {@link com.intellij.openapi.actionSystem.ActionToolbar#setTargetComponent(JComponent)}
+     * and might want to implement {@link com.intellij.openapi.actionSystem.UiDataProvider} for {@link ToolbarComponents#toolbarActions}.
+     */
     @NotNull
     JComponent getComponent();
 
@@ -53,9 +53,15 @@ public interface FrameDiffTool extends DiffTool {
   }
 
   class ToolbarComponents {
-    @Nullable public List<AnAction> toolbarActions;
-    @Nullable public List<AnAction> popupActions;
-    @Nullable public JComponent statusPanel;
+    public @Nullable List<AnAction> toolbarActions;
+    public @Nullable List<AnAction> popupActions;
+    public @Nullable JComponent statusPanel;
+    public @Nullable DiffInfo diffInfo;
     public boolean needTopToolbarBorder = false;
+  }
+
+  @ApiStatus.Experimental
+  interface DiffInfo {
+    @NotNull JComponent getComponent();
   }
 }

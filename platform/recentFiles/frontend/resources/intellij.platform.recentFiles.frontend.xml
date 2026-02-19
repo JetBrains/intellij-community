@@ -1,0 +1,60 @@
+<idea-plugin visibility="internal">
+  <dependencies>
+    <module name="intellij.platform.rpc"/>
+    <module name="intellij.platform.frontend"/>
+    <module name="intellij.platform.recentFiles"/>
+  </dependencies>
+
+  <extensionPoints>
+    <extensionPoint interface="com.intellij.platform.recentFiles.frontend.RecentFilesAdvertisementProvider"
+                    name="recentFiles.advertisementProvider"
+                    dynamic="true"/>
+    <extensionPoint interface="com.intellij.platform.recentFiles.frontend.RecentFilesNavigator"
+                    name="recentFiles.navigator"
+                    dynamic="true"/>
+    <extensionPoint interface="com.intellij.platform.recentFiles.frontend.RecentFilesExcluder"
+                    name="recentFiles.excluder"
+                    dynamic="true"/>
+  </extensionPoints>
+  <extensions defaultExtensionNs="com.intellij">
+    <registryKey key="switcher.use.fallback.in.monolith" defaultValue="false"
+                 description="Use old Switcher/Recent Files implementation in the monolith mode that is not remove dev-native"/>
+    <registryKey key="switcher.typing.debounce.interval.ms" defaultValue="3000"
+                 description="A time period to skip typing events before requesting a switcher/recent files model update, measured in millis"/>
+
+    <postStartupActivity implementation="com.intellij.platform.recentFiles.frontend.model.RecentFileModelSynchronizer"/>
+  </extensions>
+  <actions>
+    <group id="SwitcherAndRecentFiles">
+      <action id="Switcher" class="com.intellij.platform.recentFiles.frontend.Switcher"/>
+      <action id="SwitcherForward" class="com.intellij.platform.recentFiles.frontend.ShowSwitcherForwardAction"/>
+      <action id="SwitcherBackward" class="com.intellij.platform.recentFiles.frontend.ShowSwitcherBackwardAction"/>
+      <action id="SwitcherNextProblem" use-shortcut-of="GotoNextError" class="com.intellij.platform.recentFiles.frontend.SwitcherNextProblemAction"/>
+      <action id="SwitcherPreviousProblem" use-shortcut-of="GotoPreviousError" class="com.intellij.platform.recentFiles.frontend.SwitcherPreviousProblemAction"/>
+      <action id="DeleteRecentFiles" use-shortcut-of="$Delete" class="com.intellij.openapi.actionSystem.EmptyAction"/>
+
+      <action id="SwitcherRecentEditedChangedToggleCheckBox"
+              class="com.intellij.platform.recentFiles.frontend.SwitcherToggleOnlyEditedFilesAction">
+        <add-to-group group-id="ViewRecentActions"/>
+      </action>
+      <action id="SwitcherIterateItems" class="com.intellij.platform.recentFiles.frontend.SwitcherIterateThroughItemsAction">
+        <add-to-group group-id="ViewRecentActions"/>
+      </action>
+      <action id="RecentFiles" class="com.intellij.platform.recentFiles.frontend.ShowRecentFilesAction">
+        <add-to-group group-id="ViewRecentActions"/>
+        <add-to-group group-id="EditorTabsEntryPoint" anchor="first"/>
+      </action>
+      <action id="RecentChangedFiles" class="com.intellij.platform.recentFiles.frontend.ShowRecentlyEditedFilesAction">
+        <add-to-group group-id="ViewRecentActions"/>
+      </action>
+      <add-to-group group-id="Other.KeymapGroup"/>
+    </group>
+  </actions>
+
+  <applicationListeners>
+    <listener class="com.intellij.platform.recentFiles.frontend.RecentlySelectedEditorListener"
+              topic="com.intellij.openapi.fileEditor.FileEditorManagerListener" activeInHeadlessMode="false"/>
+    <listener class="com.intellij.platform.recentFiles.frontend.RecentFilesEditorTypingListener" activeInHeadlessMode="false"
+              topic="com.intellij.openapi.actionSystem.ex.AnActionListener" activeInTestMode="true"/>
+  </applicationListeners>
+</idea-plugin>

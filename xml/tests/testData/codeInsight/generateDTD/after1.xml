@@ -1,0 +1,10 @@
+<!DOCTYPE div [
+        <!ELEMENT div (div)*>
+        <!ATTLIST div
+                id CDATA #IMPLIED
+                ref CDATA #IMPLIED>
+        ]>
+<div>
+  <div id="a"/>
+  <div ref="a"/>
+</div>

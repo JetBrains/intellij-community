@@ -1,0 +1,8 @@
+version = "4.0.*"
+upstream_repository = "https://github.com/paramiko/paramiko"
+# Requires a version of cryptography where cryptography.hazmat.primitives.ciphers.Cipher is generic
+requires = ["cryptography>=37.0.0"]
+
+[tool.stubtest]
+# linux and darwin are equivalent
+ci_platforms = ["linux", "win32"]

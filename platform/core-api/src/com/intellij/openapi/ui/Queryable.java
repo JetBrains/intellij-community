@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.ui;
 
 import org.jetbrains.annotations.NonNls;
@@ -9,10 +9,9 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 public interface Queryable {
+  void putInfo(@NotNull Map<? super String, ? super String> info);
 
-  void putInfo(@NotNull Map<String, String> info);
-
-  class PrintInfo {
+  final class PrintInfo {
     private final String[] myIdKeys;
     private final String[] myInfoKeys;
 
@@ -31,11 +30,10 @@ public interface Queryable {
   }
 
   final class Util {
-    @Nullable
-    public static @NonNls String print(@NotNull Queryable ui, @Nullable PrintInfo printInfo, @Nullable Contributor contributor) {
+    public static @NonNls @NotNull String print(@NotNull Queryable ui, @Nullable PrintInfo printInfo, @Nullable Contributor contributor) {
       PrintInfo print = printInfo != null ? printInfo : new PrintInfo();
 
-      LinkedHashMap<String, String> map = new LinkedHashMap<>();
+      Map<String, String> map = new LinkedHashMap<>();
       ui.putInfo(map);
 
       if (contributor != null) {
@@ -43,14 +41,6 @@ public interface Queryable {
       }
 
       String id = null;
-
-      //String[] names = print.myIdKeys != null ? print.myIdKeys : new String[] {"name"};
-      //for (String eachKey : names) {
-      //  String eachValue = map.get(eachKey);
-      //  if (eachValue != null) {
-      //    id = eachValue;
-      //  }
-      //}
 
       if (!map.isEmpty()) {
         id = map.values().iterator().next();
@@ -72,8 +62,7 @@ public interface Queryable {
       return id + (info.length() > 0 ? " " + info : "");
     }
 
-    @Nullable
-    public static @NonNls String print(@NotNull Queryable ui, @Nullable PrintInfo printInfo) {
+    public static @NonNls @NotNull String print(@NotNull Queryable ui, @Nullable PrintInfo printInfo) {
       return print(ui, printInfo, null);
     }
   }

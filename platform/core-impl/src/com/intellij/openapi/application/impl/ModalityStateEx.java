@@ -1,87 +1,160 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application.impl;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.WeakList;
+import kotlinx.coroutines.Job;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
+import org.jetbrains.annotations.VisibleForTesting;
 
+import java.awt.Dialog;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.CancellationException;
 
-public class ModalityStateEx extends ModalityState {
+public final class ModalityStateEx extends ModalityState {
+
   private final WeakList<Object> myModalEntities = new WeakList<>();
-  private static final Set<Object> ourTransparentEntities = Collections.newSetFromMap(ContainerUtil.createConcurrentWeakMap());
+  private static final Set<Object> ourTransparentEntities = Collections.newSetFromMap(CollectionFactory.createConcurrentWeakMap());
 
   @SuppressWarnings("unused")
   public ModalityStateEx() { } // used by reflection to initialize NON_MODAL
 
-  ModalityStateEx(Object @NotNull ... modalEntities) {
-    Collections.addAll(myModalEntities, modalEntities);
+  @VisibleForTesting
+  @ApiStatus.Internal
+  public ModalityStateEx(@NotNull List<?> modalEntities) {
+    if (modalEntities.contains(null)) {
+      throw new IllegalArgumentException("Must not pass null modality: " + modalEntities);
+    }
+    myModalEntities.addAll(modalEntities);
   }
 
-  List<Object> getModalEntities() {
+  private @NotNull @Unmodifiable List<@NotNull Object> getModalEntities() {
     return myModalEntities.toStrongList();
   }
 
-  @NotNull
-  public ModalityState appendProgress(@NotNull ProgressIndicator progress){
+  public @NotNull ModalityState appendProgress(@NotNull ProgressIndicator progress) {
     return appendEntity(progress);
   }
 
-  @NotNull
-  ModalityStateEx appendEntity(@NotNull Object anEntity){
-    List<Object> modalEntities = getModalEntities();
+  public @NotNull ModalityState appendJob(@NotNull Job job) {
+    return appendEntity(job);
+  }
+
+  @NotNull ModalityStateEx appendEntity(@NotNull Object anEntity) {
+    List<@NotNull Object> modalEntities = getModalEntities();
     List<Object> list = new ArrayList<>(modalEntities.size() + 1);
     list.addAll(modalEntities);
     list.add(anEntity);
-    return new ModalityStateEx(list.toArray());
+    return new ModalityStateEx(list);
   }
 
-  void forceModalEntities(List<Object> entities) {
+  void forceModalEntities(@NotNull ModalityStateEx other) {
+    List<@NotNull Object> otherEntities = other.getModalEntities();
     myModalEntities.clear();
-    myModalEntities.addAll(entities);
+    myModalEntities.addAll(otherEntities);
   }
 
   @Override
-  public boolean dominates(@NotNull ModalityState anotherState){
-    if (anotherState == ModalityState.any()) return false;
-    if (myModalEntities.isEmpty()) return false;
+  public boolean accepts(@NotNull ModalityState requestedModality) {
+    /*
+    modality1 {
+      modality2 {
+        invokeLater(modality2) {
+          // in next lines we are considering when this lambda is allowed to run
+        }
+        // Trivial case:
+        // this/current = [2,1]
+        // requested = [2,1]
+        // => OK.
 
-    List<Object> otherEntities = ((ModalityStateEx)anotherState).getModalEntities();
-    for (Object entity : getModalEntities()) {
-      if (!otherEntities.contains(entity) && !ourTransparentEntities.contains(entity)) return true; // I have entity which is absent in anotherState
+        modality3 {
+          // this/current = [3,2,1]
+          // requested = [2,1]
+          // => not OK because this is not a subset of requested
+        }
+      }
+
+      // this/current = [1] (2 had already ended)
+      // requested = [2,1]
+      // => OK.
+
+      modality4 {
+        // this/current = [4,1]
+        // requested = [2,1]
+        // => not OK because this is not a subset of requested
+      }
     }
-    return false;
+    */
+
+    // do not use ModalityState.any(), in case Application was already disposed
+    if (requestedModality == AnyModalityState.ANY) {
+      // Tasks with any modality can be run during this modality regardless of entities in this modality.
+      return true;
+    }
+    if (requestedModality == this) {
+      // Trivial case.
+      return true;
+    }
+    // All my entities are present in requested (computation) modality,
+    // i.e., requested modality is strictly nested in this (current) modality.
+    return ((ModalityStateEx)requestedModality).myModalEntities.containsAll(
+      myModalEntities,
+      entity -> !ourTransparentEntities.contains(entity)
+    );
   }
 
-  @NonNls
-  public String toString() {
+  void cancelAllEntities(@NonNls String reason) {
+    for (Object entity : myModalEntities) {
+      // DialogWrapperDialog is not accessible here
+      if (entity instanceof Dialog) {
+        Dialog dialog = (Dialog)entity;
+        Logger.getInstance(ModalityStateEx.class).info("Closing the dialog " + dialog + ". Cause: " + reason);
+
+        dialog.setVisible(false);
+        if (dialog instanceof Disposable) { // see com.intellij.openapi.ui.impl.AbstractDialog
+          Disposer.dispose((Disposable)dialog);
+        }
+      }
+      else if (entity instanceof ProgressIndicator) {
+        ProgressIndicator indicator = (ProgressIndicator)entity;
+        if (!indicator.isCanceled()) {
+          Logger.getInstance(ModalityStateEx.class).info("Cancelling indicator " + indicator + ". Cause: " + reason);
+          indicator.cancel();
+        }
+      }
+      else if (entity instanceof JobProvider) {
+        JobProvider jobProvider = (JobProvider)entity;
+        Job job = jobProvider.getJob();
+        if (!job.isCancelled()) {
+          Logger.getInstance(ModalityStateEx.class).info("Cancelling job " + jobProvider + ". Cause: " + reason);
+          job.cancel(new CancellationException("force leave modal"));
+        }
+      }
+    }
+  }
+
+  @Override
+  @SuppressWarnings("deprecation")
+  public @NonNls String toString() {
     return this == NON_MODAL
            ? "ModalityState.NON_MODAL"
            : "ModalityState:{" + StringUtil.join(getModalEntities(), it -> "[" + it + "]", ", ") + "}";
   }
 
-  void removeModality(Object modalEntity) {
+  void removeModality(@NotNull Object modalEntity) {
     myModalEntities.remove(modalEntity);
   }
 
@@ -91,5 +164,9 @@ public class ModalityStateEx extends ModalityState {
 
   static void unmarkTransparent(@NotNull Object modalEntity) {
     ourTransparentEntities.remove(modalEntity);
+  }
+
+  boolean contains(@NotNull Object modalEntity) {
+    return getModalEntities().contains(modalEntity);
   }
 }

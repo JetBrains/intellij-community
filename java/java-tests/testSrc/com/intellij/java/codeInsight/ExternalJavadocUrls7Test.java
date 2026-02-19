@@ -38,21 +38,12 @@ public class ExternalJavadocUrls7Test extends ExternalJavadocUrlsTest {
   }
 
   @Override
-  public void testVarargs() {
-    doTest("class Test {\n" +
-           "  void <caret>foo(Class<?>... cl) { }\n" +
-           "}",
-
-           "foo(java.lang.Class...)", "foo-java.lang.Class...-"
-    );
-  }
-
-  @Override
   public void testTypeParams() {
-    doTest("class Test {\n" +
-           "  <T> void <caret>sort(T[] a, Comparator<? super T> c) { }\n" +
-           "}\n" +
-           "class Comparator<X>{}",
+    doTest("""
+             class Test {
+               <T> void <caret>sort(T[] a, Comparator<? super T> c) { }
+             }
+             class Comparator<X>{}""",
 
            "sort(T[], Comparator)", "sort(T[],Comparator)", "sort-T:A-Comparator-"
     );
@@ -60,9 +51,10 @@ public class ExternalJavadocUrls7Test extends ExternalJavadocUrlsTest {
 
   @Override
   public void testConstructor() {
-    doTest("class Test {\n" +
-           "  Test<caret>() { }\n" +
-           "}",
+    doTest("""
+             class Test {
+               Test<caret>() { }
+             }""",
            "Test()", "<init>()", "Test--");
   }
 }

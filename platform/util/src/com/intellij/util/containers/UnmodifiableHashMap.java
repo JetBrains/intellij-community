@@ -1,14 +1,24 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.containers;
 
-import com.intellij.util.ArrayUtil;
-import gnu.trove.THashMap;
-import gnu.trove.TObjectHashingStrategy;
+import com.intellij.util.ArrayUtilRt;
+import it.unimi.dsi.fastutil.Hash;
+import it.unimi.dsi.fastutil.objects.Object2ObjectOpenCustomHashMap;
+import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
-import java.util.*;
+import java.util.AbstractCollection;
+import java.util.AbstractMap;
+import java.util.AbstractSet;
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.NoSuchElementException;
+import java.util.Objects;
+import java.util.Set;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
@@ -19,12 +29,15 @@ import java.util.function.Consumer;
  * @param <K> type of the map keys
  * @param <V> type of the map values
  *
- * @implNote internally this map is represented as an open-addressed hash-table which contains interleaved keys and values
+ * @implNote internally, this map is represented as an open-addressed hash-table which contains interleaved keys and values
  * and has exactly half empty entries, and up to three separate key/value pairs stored in the fields. This allows reusing the
- * same table when a new element is added. Thanks to this rehashing occurs only once in four additions.
+ * same table when a new element is added. Thanks to this, rehashing occurs only once in four additions.
  */
-public final class UnmodifiableHashMap<K, V> implements Map<K, V> {
-  private final @NotNull TObjectHashingStrategy<K> strategy;
+public final @Unmodifiable class UnmodifiableHashMap<K, V> implements Map<@NotNull K, V> {
+  private static final UnmodifiableHashMap<Object, Object> EMPTY
+    = new UnmodifiableHashMap<>(HashingStrategy.canonical(), ArrayUtilRt.EMPTY_OBJECT_ARRAY, null, null, null, null, null, null);
+
+  private final @NotNull HashingStrategy<K> strategy;
   private final Object @NotNull [] data;
   private final K k1;
   private final K k2;
@@ -34,17 +47,17 @@ public final class UnmodifiableHashMap<K, V> implements Map<K, V> {
   private final V v3;
   private final int size;
   private Set<K> keySet;
-  private Collection<V> values; 
+  private Collection<V> values;
 
   /**
    * Returns an empty {@code UnmodifiableHashMap} with canonical equals/hashCode strategy.
    * @param <K> type of map keys
    * @param <V> type of map values
    * @return an empty {@code UnmodifiableHashMap}.
-   * @see TObjectHashingStrategy#CANONICAL
    */
   public static @NotNull <K, V> UnmodifiableHashMap<K, V> empty() {
-    return empty(ContainerUtil.canonicalStrategy());
+    //noinspection unchecked
+    return (UnmodifiableHashMap<K, V>)EMPTY;
   }
 
   /**
@@ -54,8 +67,11 @@ public final class UnmodifiableHashMap<K, V> implements Map<K, V> {
    * @param <V> type of map values
    * @return an empty {@code UnmodifiableHashMap}.
    */
-  public static @NotNull <K, V> UnmodifiableHashMap<K, V> empty(TObjectHashingStrategy<K> strategy) {
-    return new UnmodifiableHashMap<>(strategy, ArrayUtil.EMPTY_OBJECT_ARRAY, null, null, null, null, null, null);
+  public static @NotNull <K, V> UnmodifiableHashMap<K, V> empty(@NotNull HashingStrategy<K> strategy) {
+    if (strategy == HashingStrategy.canonical()) {
+      return empty();
+    }
+    return new UnmodifiableHashMap<>(strategy, ArrayUtilRt.EMPTY_OBJECT_ARRAY, null, null, null, null, null, null);
   }
 
   /**
@@ -67,7 +83,7 @@ public final class UnmodifiableHashMap<K, V> implements Map<K, V> {
    * it's already an {@code UnmodifiableHashMap} which uses the same equals/hashCode strategy.
    */
   public static @NotNull <K, V> UnmodifiableHashMap<K, V> fromMap(@NotNull Map<? extends K, ? extends V> map) {
-    return fromMap(ContainerUtil.canonicalStrategy(), map);
+    return fromMap(HashingStrategy.canonical(), map);
   }
 
   /**
@@ -80,13 +96,16 @@ public final class UnmodifiableHashMap<K, V> implements Map<K, V> {
    * @return a pre-populated {@code UnmodifiableHashMap}. Map return the supplied map if
    * it's already an {@code UnmodifiableHashMap} which uses the same equals/hashCode strategy.
    */
-  public static @NotNull <K, V> UnmodifiableHashMap<K, V> fromMap(@NotNull TObjectHashingStrategy<K> strategy, @NotNull Map<? extends K, ? extends V> map) {
+  public static @NotNull <K, V> UnmodifiableHashMap<K, V> fromMap(@NotNull HashingStrategy<K> strategy, @NotNull Map<? extends K, ? extends V> map) {
     //noinspection unchecked
     if (map instanceof UnmodifiableHashMap && ((UnmodifiableHashMap<K, V>)map).strategy == strategy) {
       //noinspection unchecked
       return (UnmodifiableHashMap<K, V>)map;
     }
-    if (map.size() <= 3) {
+    else if (map.isEmpty()) {
+      return empty(strategy);
+    }
+    else if (map.size() <= 3) {
       K k1 = null;
       K k2 = null;
       K k3 = null;
@@ -110,14 +129,16 @@ public final class UnmodifiableHashMap<K, V> implements Map<K, V> {
           }
         }
       }
-      return new UnmodifiableHashMap<>(strategy, ArrayUtil.EMPTY_OBJECT_ARRAY, k1, v1, k2, v2, k3, v3);
+      return new UnmodifiableHashMap<>(strategy, ArrayUtilRt.EMPTY_OBJECT_ARRAY, k1, v1, k2, v2, k3, v3);
     }
-    Object[] newData = new Object[map.size() * 4];
-    map.forEach((k, v) -> insert(strategy, newData, Objects.requireNonNull(k), v));
-    return new UnmodifiableHashMap<>(strategy, newData, null, null, null, null, null, null);
+    else {
+      Object[] newData = new Object[map.size() * 4];
+      map.forEach((k, v) -> insert(strategy, newData, Objects.requireNonNull(k), v));
+      return new UnmodifiableHashMap<>(strategy, newData, null, null, null, null, null, null);
+    }
   }
 
-  private UnmodifiableHashMap(@NotNull TObjectHashingStrategy<K> strategy, Object @NotNull [] data, @Nullable K k1, @Nullable V v1,
+  private UnmodifiableHashMap(@NotNull HashingStrategy<K> strategy, Object @NotNull [] data, @Nullable K k1, @Nullable V v1,
                               @Nullable K k2, @Nullable V v2, @Nullable K k3, @Nullable V v3) {
     this.strategy = strategy;
     this.data = data;
@@ -181,7 +202,7 @@ public final class UnmodifiableHashMap<K, V> implements Map<K, V> {
    * @param key a key to add/replace
    * @param value a value to associate with the key
    * @return an {@code UnmodifiableHashMap} which contains all the entries as this map plus the supplied mapping.
-   * May return the same map if given key is already associated with the same value. Note however that if value is
+   * May return the same map if given key is already associated with the same value. Note, however, that if value is
    * not the same but equal object, the new map will be created as sometimes it's desired to replace the object with
    * another one which is equal to the old object.
    */
@@ -236,18 +257,61 @@ public final class UnmodifiableHashMap<K, V> implements Map<K, V> {
    * of the resulting map is the same as the strategy of this map.
    */
   public @NotNull UnmodifiableHashMap<K, V> withAll(@NotNull Map<? extends K, ? extends V> map) {
-    if (map.isEmpty()) return this;
-    if (map.size() == 1) {
+    if (map == this) return this;
+    if (isEmpty()) {
+      return fromMap(strategy, map);
+    }
+
+    int mapSize = map.size();
+    if (mapSize == 0) {
+      return this;
+    }
+    else if (mapSize == 1) {
       Entry<? extends K, ? extends V> entry = map.entrySet().iterator().next();
       return with(entry.getKey(), entry.getValue());
     }
-    // Could be optimized further for map.size() == 2 or 3.
-    THashMap<K, V> newMap = new THashMap<>(this, strategy);
-    newMap.putAll(map);
-    return fromMap(strategy, newMap);
+    Iterator<? extends Entry<? extends K, ? extends V>> iterator = map.entrySet().iterator();
+    Set<Entry<K, V>> myEntries = entrySet();
+    while (iterator.hasNext()) {
+      Entry<? extends K, ? extends V> entry = iterator.next();
+      if (!myEntries.contains(entry)) {
+        Map<K, V> newMap;
+        if (strategy == HashingStrategy.canonical()) {
+          //noinspection SSBasedInspection
+          newMap = new Object2ObjectOpenHashMap<>(mapSize + size);
+        }
+        else {
+          // Could be optimized further for map.size() == 2 or 3.
+          newMap = new Object2ObjectOpenCustomHashMap<>(mapSize + size, getFastutilHashingStrategy(strategy));
+        }
+
+        newMap.putAll(this);
+        newMap.put(entry.getKey(), entry.getValue());
+        while (iterator.hasNext()) {
+          entry = iterator.next();
+          newMap.put(entry.getKey(), entry.getValue());
+        }
+        return fromMap(strategy, newMap);
+      }
+    }
+    return this;
   }
 
-  private static <K> void insert(TObjectHashingStrategy<K> strategy, Object[] data, K k, Object v) {
+  private static @NotNull <K> Hash.Strategy<K> getFastutilHashingStrategy(@NotNull HashingStrategy<K> strategy) {
+    return new Hash.Strategy<K>() {
+      @Override
+      public int hashCode(@Nullable K o) {
+        return o == null ? 0 : strategy.hashCode(o);
+      }
+
+      @Override
+      public boolean equals(@Nullable K a, @Nullable K b) {
+        return a == b || (a != null && b != null && strategy.equals(a, b));
+      }
+    };
+  }
+
+  private static <K> void insert(HashingStrategy<K> strategy, Object[] data, K k, Object v) {
     int insertPos = tablePos(strategy, data, k);
     insertPos = ~insertPos;
     assert insertPos >= 0;
@@ -330,8 +394,8 @@ public final class UnmodifiableHashMap<K, V> implements Map<K, V> {
     return v;
   }
 
-  private static <K> int tablePos(TObjectHashingStrategy<K> strategy, Object[] data, K key) {
-    int pos = Math.floorMod(strategy.computeHashCode(key), data.length / 2) * 2;
+  private static <K> int tablePos(HashingStrategy<K> strategy, Object[] data, K key) {
+    int pos = Math.floorMod(strategy.hashCode(key), data.length / 2) * 2;
     while (true) {
       @SuppressWarnings("unchecked") K candidate = (K)data[pos];
       if (candidate == null) {
@@ -351,18 +415,18 @@ public final class UnmodifiableHashMap<K, V> implements Map<K, V> {
   public int hashCode() {
     int h = 0;
     if (k1 != null) {
-      h += strategy.computeHashCode(k1) ^ Objects.hashCode(v1);
+      h += strategy.hashCode(k1) ^ Objects.hashCode(v1);
       if (k2 != null) {
-        h += strategy.computeHashCode(k2) ^ Objects.hashCode(v2);
+        h += strategy.hashCode(k2) ^ Objects.hashCode(v2);
         if (k3 != null) {
-          h += strategy.computeHashCode(k3) ^ Objects.hashCode(v3);
+          h += strategy.hashCode(k3) ^ Objects.hashCode(v3);
         }
       }
     }
     for (int i = 0; i < data.length; i += 2) {
       @SuppressWarnings("unchecked") K key = (K)data[i];
       if (key != null) {
-        h += strategy.computeHashCode(key) ^ Objects.hashCode(data[i + 1]);
+        h += strategy.hashCode(key) ^ Objects.hashCode(data[i + 1]);
       }
     }
     return h;
@@ -624,6 +688,19 @@ public final class UnmodifiableHashMap<K, V> implements Map<K, V> {
   @Override
   public @NotNull Set<Entry<K, V>> entrySet() {
     return new AbstractSet<Entry<K, V>>() {
+      @Override
+      public boolean contains(Object o) {
+        if (!(o instanceof Entry)) return false;
+        Entry<?, ?> entry = (Entry<?, ?>)o;
+        Object key = entry.getKey();
+        if (key == null) return false;
+        V value = get(key);
+        if (value == null) {
+          return entry.getValue() == null && containsKey(key);
+        }
+        return value.equals(entry.getValue());
+      }
+
       @Override
       public @NotNull Iterator<Entry<K, V>> iterator() {
         return new MyIterator<Entry<K, V>>() {

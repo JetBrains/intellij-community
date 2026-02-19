@@ -1,0 +1,5 @@
+test.java.file
+  SWITCH_STATEMENT
+    SWITCH_KEYWORD
+    ERROR_ELEMENT
+      <empty list>

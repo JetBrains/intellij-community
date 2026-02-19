@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion.util;
 
 import com.intellij.codeInsight.completion.InsertionContext;
@@ -13,21 +13,17 @@ import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author peter
- */
 public class PsiTypeCanonicalLookupElement extends LookupElement {
   private final PsiType myType;
   private final String myPresentableText;
 
-  public PsiTypeCanonicalLookupElement(@NotNull final PsiType type) {
+  public PsiTypeCanonicalLookupElement(final @NotNull PsiType type) {
     myType = type;
     myPresentableText = myType.getPresentableText();
   }
 
-  @NotNull
   @Override
-  public Object getObject() {
+  public @NotNull Object getObject() {
     final PsiClass psiClass = getPsiClass();
     if (psiClass != null) {
       return psiClass;
@@ -35,8 +31,7 @@ public class PsiTypeCanonicalLookupElement extends LookupElement {
     return super.getObject();
   }
 
-  @Nullable
-  public PsiClass getPsiClass() {
+  public @Nullable PsiClass getPsiClass() {
     return PsiUtil.resolveClassInType(myType);
   }
 
@@ -50,8 +45,7 @@ public class PsiTypeCanonicalLookupElement extends LookupElement {
   }
 
   @Override
-  @NotNull
-  public String getLookupString() {
+  public @NotNull String getLookupString() {
     return myPresentableText;
   }
 
@@ -63,13 +57,7 @@ public class PsiTypeCanonicalLookupElement extends LookupElement {
   @Override
   public boolean equals(final Object o) {
     if (this == o) return true;
-    if (!(o instanceof PsiTypeCanonicalLookupElement)) return false;
-
-    final PsiTypeCanonicalLookupElement that = (PsiTypeCanonicalLookupElement)o;
-
-    if (!myType.equals(that.myType)) return false;
-
-    return true;
+    return o instanceof PsiTypeCanonicalLookupElement that && myType.equals(that.myType);
   }
 
   @Override
@@ -78,7 +66,7 @@ public class PsiTypeCanonicalLookupElement extends LookupElement {
   }
 
   @Override
-  public void renderElement(LookupElementPresentation presentation) {
+  public void renderElement(@NotNull LookupElementPresentation presentation) {
     final PsiClass psiClass = getPsiClass();
     if (psiClass != null) {
       presentation.setIcon(psiClass.getIcon(Iconable.ICON_FLAG_VISIBILITY));

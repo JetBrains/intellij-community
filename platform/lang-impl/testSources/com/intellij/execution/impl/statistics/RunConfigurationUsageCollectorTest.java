@@ -1,27 +1,34 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.impl.statistics;
 
 import com.intellij.execution.RunManager;
+import com.intellij.execution.RunManagerConfig;
 import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.configurations.ConfigurationFactory;
 import com.intellij.execution.impl.statistics.BaseTestConfigurationFactory.FirstBaseTestConfigurationFactory;
 import com.intellij.execution.impl.statistics.BaseTestConfigurationFactory.MultiFactoryLocalTestConfigurationFactory;
 import com.intellij.execution.impl.statistics.BaseTestConfigurationFactory.MultiFactoryRemoteTestConfigurationFactory;
 import com.intellij.execution.impl.statistics.BaseTestConfigurationFactory.SecondBaseTestConfigurationFactory;
+import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.internal.statistic.beans.MetricEvent;
 import com.intellij.internal.statistic.eventLog.FeatureUsageData;
-import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.testFramework.LightPlatformTestCase;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
-import java.util.concurrent.ExecutionException;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Objects;
+import java.util.Set;
+
+import static com.intellij.internal.statistic.FUCollectorTestCase.collectProjectStateCollectorEvents;
 
 public class RunConfigurationUsageCollectorTest extends LightPlatformTestCase {
 
   private void doTest(@NotNull List<? extends RunnerAndConfigurationSettings> configurations,
-                             @NotNull Set<? extends TestUsageDescriptor> expected, boolean withTemporary) {
+                      @NotNull Set<TestUsageDescriptor> expected,
+                      boolean withTemporary) {
     final Project project = getProject();
     final RunManager manager = RunManager.getInstance(project);
     try {
@@ -29,15 +36,7 @@ public class RunConfigurationUsageCollectorTest extends LightPlatformTestCase {
         manager.addConfiguration(configuration);
       }
 
-      final RunConfigurationTypeUsagesCollector collector = new RunConfigurationTypeUsagesCollector();
-
-      final Set<MetricEvent> usages;
-      try {
-        usages = collector.getMetrics(project, new EmptyProgressIndicator()).get();
-      }
-      catch (InterruptedException | ExecutionException e) {
-        throw new RuntimeException(e);
-      }
+      Set<MetricEvent> usages = collectProjectStateCollectorEvents(RunConfigurationTypeUsagesCollector.class, project);
       assertEquals(expected.size(), usages.size());
       assertEquals(expected, toTestUsageDescriptor(usages));
 
@@ -48,17 +47,17 @@ public class RunConfigurationUsageCollectorTest extends LightPlatformTestCase {
 
         final Set<TestUsageDescriptor> temporaryExpected = new HashSet<>();
         for (TestUsageDescriptor descriptor : expected) {
-          final FeatureUsageData data = descriptor.myData.copy().addData("temporary", true);
-          temporaryExpected.add(new TestUsageDescriptor(descriptor.myKey, data));
+          if (descriptor.myKey.equals("configured.in.project")) {
+            final FeatureUsageData data = descriptor.myData.copy().addData("temporary", true);
+            temporaryExpected.add(new TestUsageDescriptor(descriptor.myKey, data));
+          }
         }
+        temporaryExpected.add(createTotalCountUsageDescriptor(
+          configurations.size(),
+          (int)configurations.stream().filter(settings -> settings.isTemporary()).count()));
 
-        final Set<MetricEvent> temporaryUsages;
-        try {
-          temporaryUsages = collector.getMetrics(project, new EmptyProgressIndicator()).get();
-        }
-        catch (InterruptedException | ExecutionException e) {
-          throw new RuntimeException(e);
-        }
+        Set<MetricEvent> temporaryUsages = collectProjectStateCollectorEvents(RunConfigurationTypeUsagesCollector.class, project);
+
         assertEquals(temporaryExpected.size(), temporaryUsages.size());
         final Set<TestUsageDescriptor> actual = toTestUsageDescriptor(temporaryUsages);
         assertEquals(temporaryExpected, actual);
@@ -68,6 +67,8 @@ public class RunConfigurationUsageCollectorTest extends LightPlatformTestCase {
       for (RunnerAndConfigurationSettings configuration : configurations) {
         manager.removeConfiguration(configuration);
       }
+      RunManagerConfig config = new RunManagerConfig(PropertiesComponent.getInstance());
+      config.setRecentsLimit(RunManagerConfig.DEFAULT_RECENT_LIMIT);
     }
   }
 
@@ -81,6 +82,7 @@ public class RunConfigurationUsageCollectorTest extends LightPlatformTestCase {
       "configured.in.project", 1,
       create("FirstTestRunConfigurationType", false, false, false, false))
     );
+    expected.add(createTotalCountUsageDescriptor(1, 0));
     doTest(configurations, expected, true);
   }
 
@@ -96,6 +98,7 @@ public class RunConfigurationUsageCollectorTest extends LightPlatformTestCase {
       "configured.in.project", 3,
       create("FirstTestRunConfigurationType", false, false, false, false))
     );
+    expected.add(createTotalCountUsageDescriptor(3, 0));
     doTest(configurations, expected, true);
   }
 
@@ -109,6 +112,7 @@ public class RunConfigurationUsageCollectorTest extends LightPlatformTestCase {
       "configured.in.project", 1,
       create("FirstTestRunConfigurationType", true, false, false, false))
     );
+    expected.add(createTotalCountUsageDescriptor(1, 0));
     doTest(configurations, expected, false);
   }
 
@@ -122,6 +126,7 @@ public class RunConfigurationUsageCollectorTest extends LightPlatformTestCase {
       "configured.in.project", 1,
       create("FirstTestRunConfigurationType", false, true, false, false))
     );
+    expected.add(createTotalCountUsageDescriptor(1, 0));
     doTest(configurations, expected, true);
   }
 
@@ -135,6 +140,7 @@ public class RunConfigurationUsageCollectorTest extends LightPlatformTestCase {
       "configured.in.project", 1,
       create("FirstTestRunConfigurationType", false, false, true, false))
     );
+    expected.add(createTotalCountUsageDescriptor(1, 0));
     doTest(configurations, expected, true);
   }
 
@@ -148,6 +154,7 @@ public class RunConfigurationUsageCollectorTest extends LightPlatformTestCase {
       "configured.in.project", 1,
       create("FirstTestRunConfigurationType", false, false, false, true))
     );
+    expected.add(createTotalCountUsageDescriptor(1, 0));
     doTest(configurations, expected, true);
   }
 
@@ -166,6 +173,7 @@ public class RunConfigurationUsageCollectorTest extends LightPlatformTestCase {
       "configured.in.project", 1,
       create("SecondTestRunConfigurationType", false, false, false, false))
     );
+    expected.add(createTotalCountUsageDescriptor(2, 0));
     doTest(configurations, expected, true);
   }
 
@@ -185,6 +193,7 @@ public class RunConfigurationUsageCollectorTest extends LightPlatformTestCase {
       "configured.in.project", 2,
       create("FirstTestRunConfigurationType", true, false, false, false))
     );
+    expected.add(createTotalCountUsageDescriptor(3, 0));
     doTest(configurations, expected, false);
   }
 
@@ -206,6 +215,7 @@ public class RunConfigurationUsageCollectorTest extends LightPlatformTestCase {
       "configured.in.project", 2,
       create("FirstTestRunConfigurationType", false, false, false, false))
     );
+    expected.add(createTotalCountUsageDescriptor(5, 0));
     doTest(configurations, expected, true);
   }
 
@@ -225,6 +235,7 @@ public class RunConfigurationUsageCollectorTest extends LightPlatformTestCase {
       "configured.in.project", 2,
       create("FirstTestRunConfigurationType", false, false, false, false))
     );
+    expected.add(createTotalCountUsageDescriptor(3, 0));
     doTest(configurations, expected, false);
   }
 
@@ -244,6 +255,7 @@ public class RunConfigurationUsageCollectorTest extends LightPlatformTestCase {
       "configured.in.project", 2,
       create("FirstTestRunConfigurationType", false, false, false, true))
     );
+    expected.add(createTotalCountUsageDescriptor(3, 0));
     doTest(configurations, expected, false);
   }
 
@@ -265,6 +277,7 @@ public class RunConfigurationUsageCollectorTest extends LightPlatformTestCase {
       "configured.in.project", 3,
       create("SecondTestRunConfigurationType", false, false, false, false))
     );
+    expected.add(createTotalCountUsageDescriptor(5, 0));
     doTest(configurations, expected, true);
   }
 
@@ -310,6 +323,7 @@ public class RunConfigurationUsageCollectorTest extends LightPlatformTestCase {
       "configured.in.project", 1,
       create("SecondTestRunConfigurationType", false, false, false, false))
     );
+    expected.add(createTotalCountUsageDescriptor(9, 0));
     doTest(configurations, expected, false);
   }
 
@@ -340,6 +354,7 @@ public class RunConfigurationUsageCollectorTest extends LightPlatformTestCase {
       "configured.in.project", 1,
       create("SecondTestRunConfigurationType", false, true, true, true))
     );
+    expected.add(createTotalCountUsageDescriptor(6, 0));
     doTest(configurations, expected, true);
   }
 
@@ -354,6 +369,7 @@ public class RunConfigurationUsageCollectorTest extends LightPlatformTestCase {
       "configured.in.project", 1,
       create("MultiFactoryTestRunConfigurationType", false, false, false, true).addData("factory", "Local"))
     );
+    expected.add(createTotalCountUsageDescriptor(1, 0));
     doTest(configurations, expected, true);
   }
 
@@ -368,18 +384,128 @@ public class RunConfigurationUsageCollectorTest extends LightPlatformTestCase {
       "configured.in.project", 1,
       create("MultiFactoryTestRunConfigurationType", false, false, false, true).addData("factory", "Remote"))
     );
+    expected.add(createTotalCountUsageDescriptor(1, 0));
     doTest(configurations, expected, true);
+  }
+
+  private void testRunConfigurationCount(final int countOne, final int countTwo, final int countTemp,
+                                         final int expectedCount, final int expectedTempCount) {
+    final List<RunnerAndConfigurationSettings> configurations = new ArrayList<>();
+    final RunManager instance = RunManager.getInstance(getProject());
+
+    for (int i = 1; i <= countOne; i ++) {
+      final RunnerAndConfigurationSettings first = createFirst(instance, i, false, false, false, false);
+      configurations.add(first);
+    }
+    for (int i = countOne + 1; i <= countOne + countTwo; i ++) {
+      final RunnerAndConfigurationSettings second = createSecond(instance, i, false, false, false, false);
+      configurations.add(second);
+    }
+    for (int i = countOne + countTwo + 1; i <= countOne + countTwo + countTemp; i ++) {
+      final RunnerAndConfigurationSettings temp = createFirst(instance, i, false, false, false, false);
+      temp.setTemporary(true);
+      configurations.add(temp);
+    }
+
+    final Set<TestUsageDescriptor> expected = new HashSet<>();
+    if (countOne > 0) {
+      expected.add(new TestUsageDescriptor(
+        "configured.in.project", countOne,
+        create("FirstTestRunConfigurationType", false, false, false, false))
+      );
+    }
+    if (countTwo > 0) {
+      expected.add(new TestUsageDescriptor(
+        "configured.in.project", countTwo,
+        create("SecondTestRunConfigurationType", false, false, false, false))
+      );
+    }
+    if (countTemp > 0) {
+      expected.add(new TestUsageDescriptor(
+        "configured.in.project", expectedTempCount,
+        create("FirstTestRunConfigurationType", false, false, false, false, true))
+      );
+    }
+    expected.add(createTotalCountUsageDescriptor(expectedCount, expectedTempCount));
+    doTest(configurations, expected, false);
+  }
+
+  public void testRunConfigurationCountEmpty() {
+    testRunConfigurationCount(0, 0, 0, 0, 0);
+  }
+
+  public void testRunConfigurationCount() {
+    testRunConfigurationCount(256, 0, 0, 256, 0);
+  }
+
+  public void testRunConfigurationCountTwo() {
+    testRunConfigurationCount(200, 56, 0, 256, 0);
+  }
+
+  public void testRunConfigurationMaxCount() {
+    testRunConfigurationCount(550, 0, 0, 500, 0);
+  }
+
+  public void testRunConfigurationMaxCountTwo() {
+    testRunConfigurationCount(500, 50, 0, 500, 0);
+  }
+
+  public void testRunConfigurationOnlyTemporary() {
+    testRunConfigurationCount(0, 0, 10, 5, 5);
+  }
+
+  public void testRunConfigurationOnlyTemporaryCustomLimit() {
+    RunManagerConfig config = new RunManagerConfig(PropertiesComponent.getInstance());
+    config.setRecentsLimit(15);
+    testRunConfigurationCount(0, 0, 15, 15, 15);
+  }
+
+  public void testRunConfigurationMixWithTemporary() {
+    testRunConfigurationCount(10, 10, 10, 25, 5);
+  }
+
+  public void testRunConfigurationMixWithTemporaryCustomLimit() {
+    RunManagerConfig config = new RunManagerConfig(PropertiesComponent.getInstance());
+    config.setRecentsLimit(15);
+    testRunConfigurationCount(10, 10, 10, 30, 10);
+  }
+
+  public void testRunConfigurationMixWithTemporaryMaxCount() {
+    testRunConfigurationCount(300, 100, 50, 405, 5);
+  }
+
+  public void testRunConfigurationMixWithTemporaryMaxCountCustomLimit() {
+    RunManagerConfig config = new RunManagerConfig(PropertiesComponent.getInstance());
+    config.setRecentsLimit(501);
+    testRunConfigurationCount(200, 300, 501, 500, 501);
   }
 
   @NotNull
   private static FeatureUsageData create(@NotNull String id, boolean isShared, boolean isEditBeforeRun, boolean isActivate, boolean isParallel) {
+    return create(id, isShared, isEditBeforeRun, isActivate, isParallel, false);
+  }
+
+  @NotNull
+  private static FeatureUsageData create(@NotNull String id, boolean isShared, boolean isEditBeforeRun,
+                                         boolean isActivate, boolean isParallel, boolean temporary) {
     return new FeatureUsageData().
       addData("id", id).
       addData("edit_before_run", isEditBeforeRun).
       addData("activate_before_run", isActivate).
+      addData("focus_before_run", false).
       addData("shared", isShared).
       addData("parallel", isParallel).
-      addData("temporary", false);
+      addData("temporary", temporary);
+  }
+
+  private static FeatureUsageData createTotalCountData(int totalCount, int tempCount) {
+    return new FeatureUsageData().addData("total_count", totalCount).addData("temp_count", tempCount);
+  }
+
+  private static TestUsageDescriptor createTotalCountUsageDescriptor(int totalCount, int tempCount) {
+    return new TestUsageDescriptor(
+      "total.configurations.registered",
+      createTotalCountData(Math.min(totalCount, 500), tempCount));
   }
 
   @NotNull

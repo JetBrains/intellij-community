@@ -1,0 +1,5 @@
+version = "4.13.*"
+upstream_repository = "https://github.com/antlr/antlr4"
+
+[tool.stubtest]
+ci_platforms = ["linux", "win32"]

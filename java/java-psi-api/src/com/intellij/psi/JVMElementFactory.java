@@ -13,7 +13,6 @@ import java.util.Map;
 /**
  * @author Medvedev Max
  */
-@SuppressWarnings("UnusedDeclaration")
 public interface JVMElementFactory {
   /**
    * Creates an empty class with the specified name.
@@ -88,7 +87,7 @@ public interface JVMElementFactory {
    *
    * @throws IncorrectOperationException {@code name} is not a valid Java identifier or {@code type} represents an invalid type.
    */
-  PsiParameter createParameter(@NotNull String name, PsiType type, @Nullable PsiElement context) throws IncorrectOperationException;
+  PsiParameter createParameter(@NotNull String name, @NotNull PsiType type, @Nullable PsiElement context) throws IncorrectOperationException;
 
   /**
    * Creates a parameter list from the specified parameter names and types.

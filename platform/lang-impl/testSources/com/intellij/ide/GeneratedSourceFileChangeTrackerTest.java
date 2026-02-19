@@ -1,6 +1,7 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.GeneratedSourcesFilter;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -35,26 +36,33 @@ public class GeneratedSourceFileChangeTrackerTest extends CodeInsightFixtureTest
     super.tearDown();
   }
 
-  public void testChangeOrdinary() throws Exception {
+  @Override
+  protected boolean runInDispatchThread() {
+    return false;
+  }
+
+  public void testChangeOrdinary() {
     PsiFile file = myFixture.configureByText("Ordinary.txt", "");
     myFixture.type('a');
     assertFalse(isEditedGeneratedFile(file));
   }
 
-  public void testChangeGenerated() throws Exception {
+  public void testChangeGenerated() {
     PsiFile file = myFixture.configureByText("Gen.txt", "");
     myFixture.type('a');
     assertTrue(isEditedGeneratedFile(file));
   }
 
-  public void testChangeGeneratedExternally() throws Exception {
+  public void testChangeGeneratedExternally() {
     PsiFile file = myFixture.configureByText("Gen.txt", "");
     myFixture.saveText(file.getVirtualFile(), "abc");
-    PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
+    ApplicationManager.getApplication().invokeAndWait(() -> {
+      PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
+    });
     assertFalse(isEditedGeneratedFile(file));
   }
 
-  private boolean isEditedGeneratedFile(PsiFile file) throws Exception {
+  private boolean isEditedGeneratedFile(PsiFile file) {
     GeneratedSourceFileChangeTrackerImpl tracker = (GeneratedSourceFileChangeTrackerImpl)getTracker();
     tracker.waitForAlarm(10, TimeUnit.SECONDS);
     return tracker.isEditedGeneratedFile(file.getVirtualFile());

@@ -1,0 +1,48 @@
+{
+    "$schema": "https://raw.githubusercontent.com/microsoft/pyright/main/packages/vscode-pyright/schemas/pyrightconfig.schema.json",
+    "typeshedPath": ".",
+    "include": [
+        "stdlib",
+        "stubs",
+    ],
+    "exclude": [
+        // Stubs that don't work in all Python versions
+        "stubs/seaborn",
+        "stubs/shapely",
+        "stubs/geopandas",
+        // test cases use a custom config file
+        "**/@tests/test_cases",
+    ],
+    "typeCheckingMode": "strict",
+    // Allowed in base settings for incomplete stubs, checked in stricter settings
+    "reportIncompleteStub": "none",
+    "reportMissingParameterType": "none",
+    "reportUnknownMemberType": "none",
+    "reportUnknownParameterType": "none",
+    "reportUnknownVariableType": "none",
+    // Extra strict settings
+    "reportCallInDefaultInitializer": "error",
+    "reportUnnecessaryTypeIgnoreComment": "error",
+    // Leave "type: ignore" comments to mypy
+    "enableTypeIgnoreComments": false,
+    // No effect in stubs
+    "reportMissingSuperCall": "none",
+    "reportUninitializedInstanceVariable": "none",
+    // Stubs are allowed to use private variables
+    "reportPrivateUsage": "none",
+    // Stubs don't need the actual modules to be installed
+    "reportMissingModuleSource": "none",
+    // Incompatible overrides and property type mismatches are out of typeshed's control
+    // as they are inherited from the implementation.
+    "reportIncompatibleMethodOverride": "none",
+    "reportIncompatibleVariableOverride": "none",
+    "reportPropertyTypeMismatch": "none",
+    // Overlapping overloads are often necessary in a stub, meaning pyright's check
+    // (which is stricter than mypy's; see mypy issue #10143 and #10157)
+    // would cause many false positives and catch few bugs.
+    "reportOverlappingOverload": "none",
+    // The name of the self/cls parameter is out of typeshed's control.
+    "reportSelfClsParameterName": "none",
+    // Not actionable in typeshed
+    "reportDeprecated": "none",
+}

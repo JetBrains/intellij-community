@@ -1,6 +1,7 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python;
 
+import com.intellij.idea.TestFor;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.lexer.Lexer;
 import com.intellij.openapi.util.Pair;
@@ -13,15 +14,15 @@ import com.jetbrains.python.codeInsight.regexp.PythonVerboseRegexpLanguage;
 import com.jetbrains.python.codeInsight.regexp.PythonVerboseRegexpParserDefinition;
 import com.jetbrains.python.fixtures.PyLexerTestCase;
 import com.jetbrains.python.fixtures.PyTestCase;
-import org.intellij.lang.regexp.inspection.RedundantEscapeInspection;
+import com.jetbrains.python.psi.LanguageLevel;
+import org.intellij.lang.regexp.inspection.RegExpRedundantEscapeInspection;
+import org.intellij.lang.regexp.inspection.RegExpSimplifiableInspection;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-/**
- * @author yole
- */
+
 public class PyRegexpTest extends PyTestCase {
 
   public void testUnicodePy3() {
@@ -29,6 +30,7 @@ public class PyRegexpTest extends PyTestCase {
   }
 
   public void testCommentModeWhitespace() {
+    myFixture.enableInspections(new RegExpSimplifiableInspection());
     doTestHighlighting();
   }
 
@@ -36,17 +38,33 @@ public class PyRegexpTest extends PyTestCase {
     doTestHighlighting();
   }
 
+  public void testConditional() {
+    doTestHighlighting();
+  }
+  
+  public void testCharacterClasses() {
+    doTestHighlighting();
+  }
+
   public void testRedundantEscape() {
-    myFixture.enableInspections(new RedundantEscapeInspection());
+    myFixture.enableInspections(new RegExpRedundantEscapeInspection());
     doTestHighlighting();
   }
 
   public void testCountedQuantifier() {
+    myFixture.enableInspections(new RegExpSimplifiableInspection());
     doTestHighlighting();
   }
 
   public void testNotEmptyGroup() { // PY-14381
     doTestHighlighting();
+  }
+  
+  public void testNonSimplifiableCharacterClass() {
+    myFixture.enableInspections(new RegExpSimplifiableInspection());
+    doTestHighlighting("""
+                           import re
+                           re.compile("[[]")""");
   }
 
   public void testNestedCharacterClasses() {  // PY-2908
@@ -107,114 +125,135 @@ public class PyRegexpTest extends PyTestCase {
   }
 
   public void testSingleStringRegexpAutoInjection() {
-    doTestInjectedText("import re\n" +
-                        "\n" +
-                        "re.search('<caret>.*bar',\n" +
-                        "          'foobar')\n",
+    doTestInjectedText("""
+                         import re
+
+                         re.search('<caret>.*bar',
+                                   'foobar')
+                         """,
                        ".*bar");
   }
 
   // PY-11057
   public void testAdjacentStringRegexpAutoInjection() {
-    doTestInjectedText("import re\n" +
-                        "\n" +
-                        "re.search('<caret>.*()'\n" +
-                        "          'abc',\n" +
-                        "          'foo')\n",
+    doTestInjectedText("""
+                         import re
+
+                         re.search('<caret>.*()'
+                                   'abc',
+                                   'foo')
+                         """,
                        ".*()abc");
   }
 
   public void testParenthesizedStringRegexpAutoInjection() {
-    doTestInjectedText("import re\n" +
-                       "\n" +
-                       "re.search((('<caret>foo')), 'foobar')\n",
+    doTestInjectedText("""
+                         import re
+
+                         re.search((('<caret>foo')), 'foobar')
+                         """,
                        "foo");
   }
 
   public void testConcatStringRegexpAutoInjection() {
-    doTestInjectedText("import re\n" +
-                       "\n" +
-                       "re.search('<caret>(.*' + 'bar)' + 'baz', 'foobar')\n",
+    doTestInjectedText("""
+                         import re
+
+                         re.search('<caret>(.*' + 'bar)' + 'baz', 'foobar')
+                         """,
                        "(.*bar)baz");
   }
 
   public void testConcatStringWithValuesRegexpAutoInjection() {
-    doTestInjectedText("import re\n" +
-                       "\n" +
-                       "def f(x, y):\n" +
-                       "    re.search('<caret>.*(' + x + ')' + y, 'foo')\n",
+    doTestInjectedText("""
+                         import re
+
+                         def f(x, y):
+                             re.search('<caret>.*(' + x + ')' + y, 'foo')
+                         """,
                        ".*(missing_value)missing_value");
   }
 
   public void testPercentFormattingRegexpAutoInjection() {
-    doTestInjectedText("import re \n" +
-                       "\n" +
-                       "def f(x, y):\n" +
-                       "    re.search('<caret>.*%s-%d' % (x, y), 'foo')\n",
+    doTestInjectedText("""
+                         import re\s
+
+                         def f(x, y):
+                             re.search('<caret>.*%s-%d' % (x, y), 'foo')
+                         """,
                        ".*missing_value-missing_value");
   }
 
   public void testNewStyleFormattingRegexpAutoInjection() {
-    doTestInjectedText("import re\n" +
-                       "\n" +
-                       "def f(x, y):\n" +
-                       "    re.search('<caret>.*{foo}-{}'.format(x, foo=y), 'foo')\n",
+    doTestInjectedText("""
+                         import re
+
+                         def f(x, y):
+                             re.search('<caret>.*{foo}-{}'.format(x, foo=y), 'foo')
+                         """,
                        ".*missing_value-missing_value");
   }
 
   public void testNewStyleFormattingEndsWithConstant() {
-    doTestInjectedText("import re\n" +
-                       "\n" +
-                       "def f(**kwargs):" +
-                       "    re.search('<caret>(foo{bar}baz$)'.format(**kwargs), 'foo')\n",
+    doTestInjectedText("""
+                         import re
+
+                         def f(**kwargs):    re.search('<caret>(foo{bar}baz$)'.format(**kwargs), 'foo')
+                         """,
                        "(foomissing_valuebaz$)");
   }
 
   // PY-21493
   public void testFStringSingleStringRegexpFragmentFirst() {
-    doTestInjectedText("import re\n" +
-                       "\n" +
-                       "re.search(rf'{42}.<caret>*{42}', 'foo')", "missing_value.*missing_value");
+    doTestInjectedText("""
+                         import re
+
+                         re.search(rf'{42}.<caret>*{42}', 'foo')""", "missing_value.*missing_value");
   }
 
   // PY-21493
   public void testFStringSingleStringRegexpFirstFragmentInMiddle() {
-    doTestInjectedText("import re\n" +
-                       "\n" +
-                       "re.search(rf'<caret>.*{42}.*{42}', 'foo')", ".*missing_value.*missing_value");
+    doTestInjectedText("""
+                         import re
+
+                         re.search(rf'<caret>.*{42}.*{42}', 'foo')""", ".*missing_value.*missing_value");
   }
 
   // PY-21493
   public void testFStringMultiStringRegexp() {
-    doTestInjectedText("import re\n" +
-                       "\n" +
-                       "re.search(rf'<caret>.*{42}'\n" +
-                       "          r'.*{42}.*'\n" +
-                       "          rf'{42}.*', 'foo')", ".*missing_value.*{42}.*missing_value.*");
+    doTestInjectedText("""
+                         import re
+
+                         re.search(rf'<caret>.*{42}'
+                                   r'.*{42}.*'
+                                   rf'{42}.*', 'foo')""", ".*missing_value.*{42}.*missing_value.*");
   }
 
   // PY-21493
   public void testFStringSingleStringIncompleteFragment() {
-    doTestInjectedText("import re\n" +
-                       "\n" +
-                       "re.search(rf'<caret>.*{42.*', 'foo')", ".*missing_value");
+    doTestInjectedText("""
+                         import re
+
+                         re.search(rf'<caret>.*{42.*', 'foo')""", ".*missing_value");
   }
 
   // PY-21493
   public void testFStringSingleStringNestedFragments() {
-    doTestInjectedText("import re\n" +
-                       "\n" +
-                       "re.search(rf'<caret>.*{42:{42}}.*{42}', 'foo')", ".*missing_value.*missing_value");
+    doTestInjectedText("""
+                         import re
+
+                         re.search(rf'<caret>.*{42:{42}}.*{42}', 'foo')""", ".*missing_value.*missing_value");
   }
 
   // PY-18881
   public void testVerboseSyntaxWithShortFlag() {
     final PsiElement element =
-      doTestInjectedText("import re\n" +
-                         "\n" +
-                         "re.search(\"\"\"\n" +
-                         ".* # <caret>comment\n" +
-                         "\"\"\", re.I | re.M | re.X)",
+      doTestInjectedText("""
+                           import re
+
+                           re.search(""\"
+                           .* # <caret>comment
+                           ""\", re.I | re.M | re.X)""",
                          "\n.* # comment\n");
     assertEquals(PythonVerboseRegexpLanguage.INSTANCE, element.getLanguage());
   }
@@ -226,10 +265,64 @@ public class PyRegexpTest extends PyTestCase {
                        "\\w+");
   }
 
+  @TestFor(issues="PY-61777")
+  public void testPossessiveQuantifierSupportedPy3() {
+    runWithLanguageLevel(LanguageLevel.PYTHON311, () ->
+      doTestHighlighting("""
+                           import re
+                           re.compile("a++ b*+ c?+")""")
+    );
+  }
+
+  @TestFor(issues="PY-61777")
+  public void testPossessiveQuantifierUnsupportedPy3() {
+    runWithLanguageLevel(LanguageLevel.PYTHON310, () ->
+      doTestHighlighting("""
+                           import re
+                           re.compile("a+<error descr="Nested quantifier in regexp">+</error> b*<error descr="Nested quantifier in regexp">+</error> c?<error descr="Nested quantifier in regexp">+</error>")""")
+    );
+  }
+
+  @TestFor(issues="PY-61777")
+  public void testAtomicGroupSupportedPy3() {
+    runWithLanguageLevel(LanguageLevel.PYTHON311, () ->
+      doTestHighlighting("""
+                           import re
+                           re.compile("(?>a+)")""")
+    );
+  }
+
+  @TestFor(issues="PY-61777")
+  public void testAtomicGroupUnsupportedPy3() {
+    runWithLanguageLevel(LanguageLevel.PYTHON310, () ->
+      doTestHighlighting("""
+                           import re
+                           re.compile("<error descr="Atomic groups are not supported in this regex dialect">(?>a+)</error>")""")
+    );
+  }
+
+  @TestFor(issues="PY-35730")
+  public void testGroupNameIsValidIdentifier() {
+    //noinspection NonAsciiCharacters
+    doTestHighlighting(
+      """
+        import re
+        re.compile("(?P<水>水)")  # non-ascii is a valid group name, a warning will be reported by `NonAsciiCharactersInspection`
+        re.compile("(?P<𝕏>水)")  # ok character outside the BMP
+        
+        # broken case IJPL-217664
+        # re.compile("(?Perror descr="Invalid group name">😀</error>>水)")  # bad character outside the BMP
+        
+        re.compile("(?P<<error descr="Group name expected"> </error>a>水)")
+        re.compile("(?P<<error descr="Group name expected">0</error>a>水)")
+        re.compile("(?P<<error descr="Invalid group name">a$b</error>>水)")
+        """);
+  }
+
   @Nullable
   @Override
   protected LightProjectDescriptor getProjectDescriptor() {
-    return getName().endsWith("Py3") ? ourPy3Descriptor : super.getProjectDescriptor();
+    return getName().endsWith("Py3") ? super.getProjectDescriptor() : ourPy2Descriptor;
   }
 
   @NotNull
@@ -248,6 +341,11 @@ public class PyRegexpTest extends PyTestCase {
 
   private void doTestHighlighting() {
     myFixture.testHighlighting(true, false, true, "regexp/" + getTestName(true) + ".py");
+  }
+
+  private void doTestHighlighting(String text) {
+    myFixture.configureByText("test.py", text);
+    myFixture.testHighlighting(true, false, true, "test.py");
   }
 
   private void doTestLexer(final String text, String... expectedTokens) {

@@ -1,0 +1,6 @@
+// WITH_STDLIB
+fun foo() {
+    floatArrayOf(1.1F).forEach { x ->
+        println(x)
+    }
+}

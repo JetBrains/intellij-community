@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members;
 
@@ -14,8 +14,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrEnumConsta
 import org.jetbrains.plugins.groovy.lang.resolve.api.GroovyConstructorReference;
 
 /**
- * @author: Dmitry.Krasilschikov
- * @date: 06.04.2007
+ * @author Dmitry.Krasilschikov
  */
 public interface GrEnumConstant extends GrField, GrConstructorCall, PsiEnumConstant {
   GrEnumConstant[] EMPTY_ARRAY = new GrEnumConstant[0];
@@ -29,9 +28,8 @@ public interface GrEnumConstant extends GrField, GrConstructorCall, PsiEnumConst
   @Override
   GrArgumentList getArgumentList();
 
-  @Nullable
   @Override
-  default PsiMethod resolveMethod() {
+  default @Nullable PsiMethod resolveMethod() {
     return GrConstructorCall.super.resolveMethod();
   }
 

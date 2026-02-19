@@ -1,12 +1,15 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.codeInsight.daemon;
 
 import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.model.psi.PsiSymbolReference;
+import com.intellij.model.psi.PsiSymbolService;
+import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.PsiFile;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -25,7 +28,8 @@ public class JavaWebReferenceTest extends LightJavaCodeInsightFixtureTestCase {
   }
 
   public void testHighlighting() {
-    getReferences("class Hi { String url=\"<info descr=\"Open in browser (Ctrl+Click, Ctrl+B)\">http://foo</info>\"; }");
+    getReferences("class Hi { String url=\"<info descr=\"Open in browser (" +
+                  (SystemInfoRt.isMac ? "⌘Click, ⌘B" : "Ctrl+Click, Ctrl+B") + ")\">http://foo</info>\"; }");
     myFixture.testHighlighting(true, true, true);
   }
 
@@ -36,7 +40,7 @@ public class JavaWebReferenceTest extends LightJavaCodeInsightFixtureTestCase {
       return PlatformTestUtil.collectUrlReferences(file);
     }
     else {
-      return PlatformTestUtil.collectWebReferences(file);
+      return ContainerUtil.map(PlatformTestUtil.collectWebReferences(file), PsiSymbolService.getInstance()::asSymbolReference);
     }
   }
 }

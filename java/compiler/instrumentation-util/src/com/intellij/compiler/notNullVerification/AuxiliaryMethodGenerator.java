@@ -1,16 +1,45 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.compiler.notNullVerification;
 
-import org.jetbrains.org.objectweb.asm.*;
+import org.jetbrains.org.objectweb.asm.ClassReader;
+import org.jetbrains.org.objectweb.asm.ClassVisitor;
+import org.jetbrains.org.objectweb.asm.Label;
+import org.jetbrains.org.objectweb.asm.MethodVisitor;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
-import static org.jetbrains.org.objectweb.asm.Opcodes.*;
+import static org.jetbrains.org.objectweb.asm.Opcodes.AASTORE;
+import static org.jetbrains.org.objectweb.asm.Opcodes.ACC_INTERFACE;
+import static org.jetbrains.org.objectweb.asm.Opcodes.ACC_PRIVATE;
+import static org.jetbrains.org.objectweb.asm.Opcodes.ACC_STATIC;
+import static org.jetbrains.org.objectweb.asm.Opcodes.ACC_SYNTHETIC;
+import static org.jetbrains.org.objectweb.asm.Opcodes.ANEWARRAY;
+import static org.jetbrains.org.objectweb.asm.Opcodes.API_VERSION;
+import static org.jetbrains.org.objectweb.asm.Opcodes.ATHROW;
+import static org.jetbrains.org.objectweb.asm.Opcodes.BIPUSH;
+import static org.jetbrains.org.objectweb.asm.Opcodes.DUP;
+import static org.jetbrains.org.objectweb.asm.Opcodes.DUP_X1;
+import static org.jetbrains.org.objectweb.asm.Opcodes.GOTO;
+import static org.jetbrains.org.objectweb.asm.Opcodes.ICONST_0;
+import static org.jetbrains.org.objectweb.asm.Opcodes.ICONST_1;
+import static org.jetbrains.org.objectweb.asm.Opcodes.ICONST_2;
+import static org.jetbrains.org.objectweb.asm.Opcodes.ICONST_3;
+import static org.jetbrains.org.objectweb.asm.Opcodes.ICONST_4;
+import static org.jetbrains.org.objectweb.asm.Opcodes.ICONST_5;
+import static org.jetbrains.org.objectweb.asm.Opcodes.ILOAD;
+import static org.jetbrains.org.objectweb.asm.Opcodes.INVOKESPECIAL;
+import static org.jetbrains.org.objectweb.asm.Opcodes.INVOKESTATIC;
+import static org.jetbrains.org.objectweb.asm.Opcodes.NEW;
+import static org.jetbrains.org.objectweb.asm.Opcodes.SIPUSH;
+import static org.jetbrains.org.objectweb.asm.Opcodes.SWAP;
 
-/**
- * @author peter
- */
-class AuxiliaryMethodGenerator {
+final class AuxiliaryMethodGenerator {
   private static final String STRING_CLASS_NAME = "java/lang/String";
   private static final String OBJECT_CLASS_NAME = "java/lang/Object";
   private static final String CONSTRUCTOR_NAME = "<init>";
@@ -19,7 +48,7 @@ class AuxiliaryMethodGenerator {
 
   private final ClassReader myOriginalClass;
   private final boolean myIsInterface;
-  private final List<ReportingPlace> myReportingPlaces = new ArrayList<ReportingPlace>();
+  private final List<ReportingPlace> myReportingPlaces = new ArrayList<>();
   private String myReportingMethod;
   private int myMaxArgCount;
 
@@ -46,7 +75,7 @@ class AuxiliaryMethodGenerator {
   }
 
   private Set<String> populateExistingMethods() {
-    final Set<String> existingMethods = new HashSet<String>();
+    final Set<String> existingMethods = new HashSet<>();
     myOriginalClass.accept(new ClassVisitor(API_VERSION) {
       @Override
       public MethodVisitor visitMethod(int access, String name, String desc, String signature, String[] exceptions) {
@@ -192,7 +221,6 @@ class AuxiliaryMethodGenerator {
   }
 
   private abstract class SwitchGenerator<T> {
-
     void generateSwitch(MethodVisitor mv) {
       Label[] labels = getCaseLabels();
       if (labels == null) {
@@ -218,7 +246,7 @@ class AuxiliaryMethodGenerator {
     }
 
     private Map<Label, ReportingPlace> deduplicateLabels(Label[] labels) {
-      Map<Label, ReportingPlace> label2Place = new LinkedHashMap<Label, ReportingPlace>();
+      Map<Label, ReportingPlace> label2Place = new LinkedHashMap<>();
       for (int i = 0; i < labels.length; i++) {
         if (!label2Place.containsKey(labels[i])) {
           label2Place.put(labels[i], myReportingPlaces.get(i));
@@ -228,7 +256,7 @@ class AuxiliaryMethodGenerator {
     }
 
     private Label[] getCaseLabels() {
-      Map<T, Label> labelsByValue = new HashMap<T, Label>();
+      Map<T, Label> labelsByValue = new HashMap<>();
       Label[] labels = new Label[myReportingPlaces.size()];
       for (int i = 0; i < myReportingPlaces.size(); i++) {
         labels[i] = getOrCreateLabel(labelsByValue, getSwitchedValue(myReportingPlaces.get(i)));

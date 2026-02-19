@@ -1,40 +1,33 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots;
 
 import com.intellij.openapi.module.Module;
+import com.intellij.util.concurrency.annotations.RequiresReadLock;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * Interface for getting information about the contents and dependencies of a module.
  *
- * @author dsl
  * @see CompilerModuleExtension
  */
 @ApiStatus.NonExtendable
 public abstract class ModuleRootManager implements ModuleRootModel, ProjectModelElement {
   /**
    * Returns the module root manager instance for the specified module.
+   * It is recommended to wrap a call with a read action and check if module isn't disposed before calling this method.
+   * If module is disposed and read action is used, {@link com.intellij.serviceContainer.AlreadyDisposedException} will be thrown.
+   * Without read action, this method is a subject to a race condition, so any other exception could be thrown.
    *
    * @param module the module for which the root manager is requested.
    * @return the root manager instance.
+   * @throws com.intellij.serviceContainer.AlreadyDisposedException if module is disposed
    */
+  @RequiresReadLock(generateAssertion = false)
+  @NotNull
   public static ModuleRootManager getInstance(@NotNull Module module) {
-    return module.getComponent(ModuleRootManager.class);
+    ProjectRootManager projectRootManager = ProjectRootManager.getInstance(module.getProject());
+    return projectRootManager.getModuleRootManager(module);
   }
 
   /**
@@ -42,8 +35,7 @@ public abstract class ModuleRootManager implements ModuleRootModel, ProjectModel
    *
    * @return the file index instance.
    */
-  @NotNull
-  public abstract ModuleFileIndex getFileIndex();
+  public abstract @NotNull ModuleFileIndex getFileIndex();
 
   /**
    * Returns the interface for modifying the set of roots for this module. Must be called in a read action.
@@ -51,14 +43,13 @@ public abstract class ModuleRootManager implements ModuleRootModel, ProjectModel
    *
    * @return the modifiable root model.
    */
-  @NotNull
-  public abstract ModifiableRootModel getModifiableModel();
+  public abstract @NotNull ModifiableRootModel getModifiableModel();
 
   /**
    * Returns the list of modules on which the current module directly depends. The method does not traverse
    * the entire dependency structure - dependencies of dependency modules are not included in the returned list.
    *
-   * @return the list of module direct dependencies.
+   * @return the array of module direct dependencies.
    */
   public abstract Module @NotNull [] getDependencies();
 
@@ -67,7 +58,7 @@ public abstract class ModuleRootManager implements ModuleRootModel, ProjectModel
    * the entire dependency structure - dependencies of dependency modules are not included in the returned list.
    *
    * @param includeTests whether test-only dependencies should be included
-   * @return the list of module direct dependencies.
+   * @return the array of module direct dependencies.
    */
   public abstract Module @NotNull [] getDependencies(boolean includeTests);
 

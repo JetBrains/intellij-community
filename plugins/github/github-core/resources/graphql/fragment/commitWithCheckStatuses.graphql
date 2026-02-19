@@ -1,0 +1,17 @@
+fragment commitWithCheckStatuses on Commit {
+  ...commitHash
+  status {
+    contexts {
+      ...commitStatusContext
+    }
+  }
+
+  checkSuites(first: 100) {
+    pageInfo {
+      ...pageInfo
+    }
+    nodes {
+      ...checkSuite
+    }
+  }
+}

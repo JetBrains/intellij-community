@@ -1,0 +1,12 @@
+// COMPILER_ARGUMENTS: -Xnon-local-break-continue
+// IGNORE_K1
+
+class C {
+    init {
+        loop@ for (i in 0..10) {
+            while (true) {
+                break@loop
+            }
+        }
+    }
+}

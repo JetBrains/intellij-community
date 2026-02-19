@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.svn.dialogs;
 
 import com.intellij.openapi.application.ApplicationNamesInfo;
@@ -13,8 +13,15 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.WorkingCopyFormat;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.Action;
+import javax.swing.ButtonGroup;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JRadioButton;
+import java.awt.BorderLayout;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -56,12 +63,11 @@ public class UpgradeFormatDialog extends DialogWrapper  {
   }
 
   @Override
-  @NonNls
-  protected String getDimensionServiceKey() {
+  protected @NonNls String getDimensionServiceKey() {
     return "svn.upgradeDialog";
   }
 
-  public void setData(@NotNull final WorkingCopyFormat selectedFormat) {
+  public void setData(final @NotNull WorkingCopyFormat selectedFormat) {
     for (JRadioButton button : formatButtons) {
       if (selectedFormat == getFormat(button)) {
         button.setSelected(true);
@@ -100,21 +106,16 @@ public class UpgradeFormatDialog extends DialogWrapper  {
   }
 
   protected @NlsContexts.RadioButton @NotNull String getFormatText(@NotNull WorkingCopyFormat format) {
-    switch (format) {
-      case ONE_DOT_SIX:
-        return isVersioned ? message("radio.configure.upgrade.auto.16format") : message("radio.configure.create.auto.16format");
-      case ONE_DOT_SEVEN:
-        return isVersioned ? message("radio.configure.upgrade.auto.17format") : message("radio.configure.create.auto.17format");
-      case ONE_DOT_EIGHT:
-        return isVersioned ? message("radio.configure.upgrade.auto.18format") : message("radio.configure.create.auto.18format");
-      default:
-        throw new IllegalArgumentException("unsupported format " + format);
-    }
+    return message(switch (format) {
+      case ONE_DOT_SIX -> isVersioned ? "radio.configure.upgrade.auto.16format" : "radio.configure.create.auto.16format";
+      case ONE_DOT_SEVEN -> isVersioned ? "radio.configure.upgrade.auto.17format" : "radio.configure.create.auto.17format";
+      case ONE_DOT_EIGHT -> isVersioned ? "radio.configure.upgrade.auto.18format" : "radio.configure.create.auto.18format";
+      default -> throw new IllegalArgumentException("unsupported format " + format);
+    });
   }
 
   @Override
-  @Nullable
-  protected JComponent createCenterPanel() {
+  protected @Nullable JComponent createCenterPanel() {
     JPanel panel = new JPanel();
     panel.setLayout(new GridBagLayout());
 
@@ -164,8 +165,7 @@ public class UpgradeFormatDialog extends DialogWrapper  {
     formatButtons.add(button);
   }
 
-  @Nullable
-  protected JPanel getBottomAuxiliaryPanel() {
+  protected @Nullable JPanel getBottomAuxiliaryPanel() {
     return null;
   }
 
@@ -173,15 +173,13 @@ public class UpgradeFormatDialog extends DialogWrapper  {
     return true;
   }
 
-  @NotNull
-  private static WorkingCopyFormat getFormat(@NotNull JRadioButton button) {
+  private static @NotNull WorkingCopyFormat getFormat(@NotNull JRadioButton button) {
     Object format = button.getClientProperty("format");
 
     return format instanceof WorkingCopyFormat ? (WorkingCopyFormat)format : WorkingCopyFormat.UNKNOWN;
   }
 
-  @NotNull
-  public WorkingCopyFormat getUpgradeMode() {
+  public @NotNull WorkingCopyFormat getUpgradeMode() {
     WorkingCopyFormat result = WorkingCopyFormat.UNKNOWN;
 
     for (JRadioButton button : formatButtons) {

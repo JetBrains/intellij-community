@@ -1,9 +1,8 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.settings;
 
 import com.intellij.debugger.engine.JVMNameUtil;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
-import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.registry.Registry;
@@ -14,7 +13,6 @@ import com.intellij.psi.PsiParameter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
 
@@ -24,8 +22,7 @@ public final class CaptureSettingsProvider {
   private static final KeyProvider THIS_KEY = new StringKeyProvider("this");
   private static final String ANY = "*";
 
-  @NotNull
-  public static Properties getPointsProperties(@Nullable Project project) {
+  public static @NotNull Properties getPointsProperties(@Nullable Project project) {
     Properties res = new Properties();
     if (Registry.is("debugger.capture.points.agent.annotations")) {
       int idx = 0;
@@ -41,52 +38,46 @@ public final class CaptureSettingsProvider {
   }
 
   private static List<AgentPoint> getAnnotationPoints(@Nullable Project project) {
-    return ReadAction.compute(() -> {
-      List<AgentPoint> annotationPoints = new ArrayList<>();
-      CaptureConfigurable.processCaptureAnnotations(project, (capture, e, annotation) -> {
-        PsiMethod method;
-        KeyProvider keyProvider;
-        if (e instanceof PsiMethod) {
-          method = (PsiMethod)e;
-          keyProvider = THIS_KEY;
-        }
-        else if (e instanceof PsiParameter) {
-          PsiParameter psiParameter = (PsiParameter)e;
-          method = (PsiMethod)psiParameter.getDeclarationScope();
-          keyProvider = param(method.getParameterList().getParameterIndex(psiParameter));
-        }
-        else {
-          return;
-        }
-        String classVMName = JVMNameUtil.getClassVMName(method.getContainingClass());
-        if (classVMName == null) {
-          LOG.warn("Unable to find VM class name for annotated method: " + method.getName());
-          return;
-        }
-        String className = classVMName.replaceAll("\\.", "/");
-        String methodName = JVMNameUtil.getJVMMethodName(method);
-        String methodDesc = ANY;
-        try {
-          methodDesc = JVMNameUtil.getJVMSignature(method).getName(null);
-        }
-        catch (EvaluateException ex) {
-          LOG.error(ex);
-        }
+    return CaptureConfigurable.processCaptureAnnotations(project, (capture, e, annotation) -> {
+      PsiMethod method;
+      KeyProvider keyProvider;
+      if (e instanceof PsiMethod) {
+        method = (PsiMethod)e;
+        keyProvider = THIS_KEY;
+      }
+      else if (e instanceof PsiParameter psiParameter) {
+        method = (PsiMethod)psiParameter.getDeclarationScope();
+        keyProvider = param(method.getParameterList().getParameterIndex(psiParameter));
+      }
+      else {
+        return null;
+      }
+      String classVMName = JVMNameUtil.getClassVMName(method.getContainingClass());
+      if (classVMName == null) {
+        LOG.warn("Unable to find VM class name for annotated method: " + method.getName());
+        return null;
+      }
+      String className = classVMName.replaceAll("\\.", "/");
+      String methodName = JVMNameUtil.getJVMMethodName(method);
+      String methodDesc = ANY;
+      try {
+        methodDesc = JVMNameUtil.getJVMSignature(method).getName(null);
+      }
+      catch (EvaluateException ex) {
+        LOG.error(ex);
+      }
 
-        PsiAnnotationMemberValue keyExpressionValue = annotation.findAttributeValue("keyExpression");
-        if (keyExpressionValue != null && !"\"\"".equals(keyExpressionValue.getText())) {
-          keyProvider = new FieldKeyProvider(className, StringUtil.unquoteString(keyExpressionValue.getText())); //treat as a field
-        }
-        AgentPoint point = capture ?
-                           new AgentCapturePoint(className, methodName, methodDesc, keyProvider) :
-                           new AgentInsertPoint(className, methodName, methodDesc, keyProvider);
-        annotationPoints.add(point);
-      });
-      return annotationPoints;
+      PsiAnnotationMemberValue keyExpressionValue = annotation.findAttributeValue("keyExpression");
+      if (keyExpressionValue != null && !"\"\"".equals(keyExpressionValue.getText())) {
+        keyProvider = new FieldKeyProvider(className, StringUtil.unquoteString(keyExpressionValue.getText())); //treat as a field
+      }
+      return capture ?
+             new AgentCapturePoint(className, methodName, methodDesc, keyProvider) :
+             new AgentInsertPoint(className, methodName, methodDesc, keyProvider);
     });
   }
 
-  private static abstract class AgentPoint {
+  private abstract static class AgentPoint {
     public final String myClassName;
     public final String myMethodName;
     public final String myMethodDesc;

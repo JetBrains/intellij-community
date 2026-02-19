@@ -24,14 +24,16 @@ import java.util.Objects;
 
 import static com.intellij.util.containers.ContainerUtil.emptyList;
 import static java.util.Collections.singletonList;
+import static org.zmlx.hg4idea.HgNotificationIdsHolder.BOOKMARK_ERROR;
+import static org.zmlx.hg4idea.HgNotificationIdsHolder.BOOKMARK_NAME;
 import static org.zmlx.hg4idea.util.HgUtil.getRepositoryManager;
 
-public class HgBookmarkCommand {
+public final class HgBookmarkCommand {
 
   public static void createBookmarkAsynchronously(@NotNull List<? extends HgRepository> repositories, @NotNull @NlsSafe String name, boolean isActive) {
     final Project project = Objects.requireNonNull(ContainerUtil.getFirstItem(repositories)).getProject();
     if (StringUtil.isEmptyOrSpaces(name)) {
-      VcsNotifier.getInstance(project).notifyError("hg.bookmark.name.is.empty",
+      VcsNotifier.getInstance(project).notifyError(BOOKMARK_NAME,
                                                    HgBundle.message("hg4idea.hg.error"),
                                                    HgBundle.message("hg4idea.bookmark.name.empty"));
       return;
@@ -60,7 +62,7 @@ public class HgBookmarkCommand {
     getRepositoryManager(project).updateRepository(repositoryRoot);
     if (HgErrorUtil.hasErrorsInCommandExecution(result)) {
       new HgCommandResultNotifier(project)
-        .notifyError("hg.bookmark.error",
+        .notifyError(BOOKMARK_ERROR,
                      result,
                      HgBundle.message("hg4idea.hg.error"),
                      HgBundle.message("hg4idea.bookmark.cmd.failed", repositoryRoot.getName(), name));

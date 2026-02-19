@@ -1,29 +1,44 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source;
 
 import com.intellij.core.JavaPsiBundle;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaElementVisitor;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.JavaResolveResult;
+import com.intellij.psi.JavaTokenType;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiIdentifier;
+import com.intellij.psi.PsiImportStatement;
+import com.intellij.psi.PsiImportStaticReferenceElement;
+import com.intellij.psi.PsiImportStaticStatement;
+import com.intellij.psi.PsiJavaCodeReferenceElement;
+import com.intellij.psi.PsiJavaParserFacade;
+import com.intellij.psi.PsiMember;
+import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiModifierListOwner;
+import com.intellij.psi.PsiNamedElement;
+import com.intellij.psi.PsiReference;
+import com.intellij.psi.PsiReferenceParameterList;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.ResolveResult;
+import com.intellij.psi.ResolveState;
 import com.intellij.psi.filters.ClassFilter;
 import com.intellij.psi.impl.source.resolve.ResolveCache;
 import com.intellij.psi.impl.source.resolve.StaticImportResolveProcessor;
-import com.intellij.psi.impl.source.tree.*;
+import com.intellij.psi.impl.source.tree.ChildRole;
+import com.intellij.psi.impl.source.tree.CompositeElement;
+import com.intellij.psi.impl.source.tree.CompositePsiElement;
+import com.intellij.psi.impl.source.tree.Factory;
+import com.intellij.psi.impl.source.tree.JavaElementType;
+import com.intellij.psi.impl.source.tree.LeafElement;
+import com.intellij.psi.impl.source.tree.SharedImplUtil;
+import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.scope.processor.FilterScopeProcessor;
 import com.intellij.psi.scope.util.PsiScopesUtil;
@@ -33,10 +48,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author dsl
- */
-public class PsiImportStaticReferenceElementImpl extends CompositePsiElement implements PsiImportStaticReferenceElement {
+public final class PsiImportStaticReferenceElementImpl extends CompositePsiElement implements PsiImportStaticReferenceElement {
   private static final Logger LOG = Logger.getInstance(PsiImportStaticReferenceElementImpl.class);
   private volatile String myCanonicalText;
 
@@ -62,26 +74,26 @@ public class PsiImportStaticReferenceElementImpl extends CompositePsiElement imp
   }
 
   @Override
-  public final ASTNode findChildByRole(int role) {
+  public ASTNode findChildByRole(int role) {
     LOG.assertTrue(ChildRole.isUnique(role));
     switch (role) {
-      default:
-        return null;
-
       case ChildRole.REFERENCE_NAME:
         return findChildByType(JavaTokenType.IDENTIFIER);
 
       case ChildRole.QUALIFIER:
-        final TreeElement node = getFirstChildNode();
+        TreeElement node = getFirstChildNode();
         return node.getElementType() == JavaElementType.JAVA_CODE_REFERENCE ? node : null;
 
       case ChildRole.DOT:
         return findChildByType(JavaTokenType.DOT);
+
+      default:
+        return null;
     }
   }
 
   @Override
-  public final int getChildRole(@NotNull ASTNode child) {
+  public int getChildRole(@NotNull ASTNode child) {
     LOG.assertTrue(child.getTreeParent() == this);
     IElementType i = child.getElementType();
     if (i == JavaElementType.JAVA_CODE_REFERENCE) {
@@ -125,22 +137,22 @@ public class PsiImportStaticReferenceElementImpl extends CompositePsiElement imp
   }
 
   @Override
-  public PsiImportStaticStatement bindToTargetClass(final PsiClass aClass) throws IncorrectOperationException {
-    final String qualifiedName = aClass.getQualifiedName();
+  public PsiImportStaticStatement bindToTargetClass(PsiClass aClass) throws IncorrectOperationException {
+    String qualifiedName = aClass.getQualifiedName();
     if (qualifiedName == null) throw new IncorrectOperationException();
-    final PsiJavaParserFacade parserFacade = JavaPsiFacade.getInstance(getProject()).getParserFacade();
-    final CompositeElement newRef = (CompositeElement)parserFacade.createReferenceFromText(qualifiedName, null).getNode();
+    PsiJavaParserFacade parserFacade = JavaPsiFacade.getInstance(getProject()).getParserFacade();
+    CompositeElement newRef = (CompositeElement)parserFacade.createReferenceFromText(qualifiedName, null).getNode();
     if (getQualifier() != null) {
       replaceChildInternal(findChildByRole(ChildRole.QUALIFIER), newRef);
       return (PsiImportStaticStatement)getParent();
     }
     else {
-      final LeafElement dot = Factory.createSingleLeafElement(JavaTokenType.DOT, ".", 0, 1, SharedImplUtil.findCharTableByTree(newRef), getManager());
+      LeafElement dot = Factory.createSingleLeafElement(JavaTokenType.DOT, ".", 0, 1, SharedImplUtil.findCharTableByTree(newRef), getManager());
       newRef.rawInsertAfterMe(dot);
-      final CompositeElement errorElement = Factory.createErrorElement(
+      CompositeElement errorElement = Factory.createErrorElement(
         JavaPsiBundle.message("import.statement.identifier.or.asterisk.expected."));
       dot.rawInsertAfterMe(errorElement);
-      final CompositeElement parentComposite = (CompositeElement)SourceTreeToPsiMap.psiElementToTree(getParent());
+      CompositeElement parentComposite = (CompositeElement)SourceTreeToPsiMap.psiElementToTree(getParent());
       parentComposite.addInternal(newRef, errorElement, this, Boolean.TRUE);
       parentComposite.deleteChildInternal(this);
       return (PsiImportStaticStatement)SourceTreeToPsiMap.treeElementToPsi(parentComposite);
@@ -164,29 +176,26 @@ public class PsiImportStaticReferenceElementImpl extends CompositePsiElement imp
 
   @Override
   public String getReferenceName() {
-    final ASTNode childByRole = findChildByRole(ChildRole.REFERENCE_NAME);
+    ASTNode childByRole = findChildByRole(ChildRole.REFERENCE_NAME);
     if (childByRole == null) return "";
     return childByRole.getText();
   }
 
-  @NotNull
   @Override
-  public PsiElement getElement() {
+  public @NotNull PsiElement getElement() {
     return this;
   }
 
-  @NotNull
   @Override
-  public TextRange getRangeInElement() {
+  public @NotNull TextRange getRangeInElement() {
     TreeElement nameChild = (TreeElement)findChildByRole(ChildRole.REFERENCE_NAME);
     if (nameChild == null) return new TextRange(0, getTextLength());
-    final int startOffset = nameChild.getStartOffsetInParent();
+    int startOffset = nameChild.getStartOffsetInParent();
     return new TextRange(startOffset, startOffset + nameChild.getTextLength());
   }
 
   @Override
-  @NotNull
-  public String getCanonicalText() {
+  public @NotNull String getCanonicalText() {
     String canonicalText = myCanonicalText;
     if (canonicalText == null) {
       myCanonicalText = canonicalText = calcCanonicalText();
@@ -195,7 +204,7 @@ public class PsiImportStaticReferenceElementImpl extends CompositePsiElement imp
   }
 
   private String calcCanonicalText() {
-    final PsiJavaCodeReferenceElement referenceElement = (PsiJavaCodeReferenceElement)getQualifier();
+    PsiJavaCodeReferenceElement referenceElement = (PsiJavaCodeReferenceElement)getQualifier();
     if (referenceElement == null) {
       return getReferenceName();
     }
@@ -210,9 +219,8 @@ public class PsiImportStaticReferenceElementImpl extends CompositePsiElement imp
   }
 
   @Override
-  @NotNull
-  public JavaResolveResult advancedResolve(boolean incompleteCode) {
-    final JavaResolveResult[] results = multiResolve(incompleteCode);
+  public @NotNull JavaResolveResult advancedResolve(boolean incompleteCode) {
+    JavaResolveResult[] results = multiResolve(incompleteCode);
     if (results.length == 1) return results[0];
     return JavaResolveResult.EMPTY;
   }
@@ -229,12 +237,12 @@ public class PsiImportStaticReferenceElementImpl extends CompositePsiElement imp
     private static final OurGenericsResolver INSTANCE = new OurGenericsResolver();
 
     @Override
-    public JavaResolveResult @NotNull [] resolve(@NotNull final PsiImportStaticReferenceElementImpl referenceElement, final boolean incompleteCode) {
-      final PsiElement qualifier = referenceElement.getQualifier();
+    public JavaResolveResult @NotNull [] resolve(@NotNull PsiImportStaticReferenceElementImpl referenceElement, boolean incompleteCode) {
+      PsiElement qualifier = referenceElement.getQualifier();
       if (!(qualifier instanceof PsiJavaCodeReferenceElement)) return JavaResolveResult.EMPTY_ARRAY;
-      final PsiElement target = ((PsiJavaCodeReferenceElement)qualifier).resolve();
+      PsiElement target = ((PsiJavaCodeReferenceElement)qualifier).resolve();
       if (!(target instanceof PsiClass)) return JavaResolveResult.EMPTY_ARRAY;
-      final StaticImportResolveProcessor processor = new StaticImportResolveProcessor(referenceElement);
+      StaticImportResolveProcessor processor = new StaticImportResolveProcessor(referenceElement);
       target.processDeclarations(processor, ResolveState.initial(), referenceElement, referenceElement);
       return processor.getResults();
     }
@@ -252,8 +260,8 @@ public class PsiImportStaticReferenceElementImpl extends CompositePsiElement imp
 
   @Override
   public boolean isReferenceTo(@NotNull PsiElement element) {
-    final String name = getReferenceName();
-    if (name == null || !(element instanceof PsiNamedElement) || !name.equals(((PsiNamedElement)element).getName())) {
+    String name = getReferenceName();
+    if (!(element instanceof PsiNamedElement) || !name.equals(((PsiNamedElement)element).getName())) {
       return false;
     }
 
@@ -310,11 +318,11 @@ public class PsiImportStaticReferenceElementImpl extends CompositePsiElement imp
     return this;
   }
 
-  private PsiElement replaceWithRegularImport(final PsiClass psiClass) throws IncorrectOperationException {
+  private PsiElement replaceWithRegularImport(PsiClass psiClass) throws IncorrectOperationException {
     PsiImportStaticStatement baseStatement = PsiTreeUtil.getParentOfType(getElement(), PsiImportStaticStatement.class);
     PsiImportStatement statement = JavaPsiFacade.getElementFactory(getProject()).createImportStatement(psiClass);
     statement = (PsiImportStatement) baseStatement.replace(statement);
-    final PsiJavaCodeReferenceElement reference = statement.getImportReference();
+    PsiJavaCodeReferenceElement reference = statement.getImportReference();
     assert reference != null;
     return reference;
   }

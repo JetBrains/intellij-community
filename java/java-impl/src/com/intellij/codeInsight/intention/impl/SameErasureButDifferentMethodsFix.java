@@ -1,103 +1,86 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.intention.impl;
 
-import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement;
 import com.intellij.java.JavaBundle;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.project.Project;
-import com.intellij.psi.*;
+import com.intellij.modcommand.ActionContext;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.Presentation;
+import com.intellij.modcommand.PsiUpdateModCommandAction;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElementFactory;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiParameter;
+import com.intellij.psi.PsiSubstitutor;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypeElement;
+import com.intellij.psi.SmartPointerManager;
+import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.psi.util.JavaClassSupers;
 import com.intellij.psi.util.MethodSignature;
 import com.intellij.psi.util.MethodSignatureUtil;
-import com.intellij.refactoring.changeSignature.ChangeSignatureProcessor;
-import com.intellij.refactoring.changeSignature.ParameterInfoImpl;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 // @Override void f(List<String> p);   ->      @Override void f(List<? super String> p);
-public class SameErasureButDifferentMethodsFix extends LocalQuickFixAndIntentionActionOnPsiElement {
-  private final SmartPsiElementPointer<PsiMethod> methodPtr;
+public class SameErasureButDifferentMethodsFix extends PsiUpdateModCommandAction<PsiMethod> {
+  private final SmartPsiElementPointer<PsiMethod> superMethodPtr;
 
   public SameErasureButDifferentMethodsFix(@NotNull PsiMethod method, @NotNull PsiMethod superMethod) {
-    super(superMethod);
-    methodPtr = SmartPointerManager.getInstance(method.getProject()).createSmartPsiElementPointer(method);
+    super(method);
+    superMethodPtr = SmartPointerManager.createPointer(superMethod);
   }
 
   @Override
-  public void invoke(@NotNull Project project,
-                     @NotNull PsiFile file,
-                     @Nullable Editor editor,
-                     @NotNull PsiElement startElement,
-                     @NotNull PsiElement endElement) {
-    if (!isAvailable(project, file, startElement, endElement)) return;
-    PsiMethod superMethod = (PsiMethod)startElement;
-    PsiMethod method = methodPtr.getElement();
-    if (method == null || !method.isValid()) return;
+  protected void invoke(@NotNull ActionContext context, @NotNull PsiMethod method, @NotNull ModPsiUpdater updater) {
+    PsiMethod superMethod = superMethodPtr.getElement();
+    if (superMethod == null || !superMethod.isValid()) return;
     PsiClass containingClass = method.getContainingClass();
     PsiClass superContainingClass = superMethod.getContainingClass();
     if (containingClass == null || superContainingClass == null) return;
     PsiSubstitutor superSubstitutor = JavaClassSupers.getInstance()
       .getSuperClassSubstitutor(superContainingClass, containingClass, containingClass.getResolveScope(), PsiSubstitutor.EMPTY);
     if (superSubstitutor == null) return;
-
     PsiParameter[] parameters = method.getParameterList().getParameters();
     PsiParameter[] superParameters = superMethod.getParameterList().getParameters();
     if (parameters.length != superParameters.length) return;
-    ParameterInfoImpl[] infos = new ParameterInfoImpl[parameters.length];
+    updater.trackDeclaration(method);
+    PsiElementFactory factory = JavaPsiFacade.getElementFactory(context.project());
     for (int i = 0; i < parameters.length; i++) {
       PsiParameter parameter = parameters[i];
       PsiParameter superParameter = superParameters[i];
       PsiType superParameterType = superSubstitutor.substitute(superParameter.getType());
-      infos[i] = ParameterInfoImpl.create(i).withName(parameter.getName()).withType(superParameterType);
+
+      PsiTypeElement typeElement = parameter.getTypeElement();
+      if (typeElement != null && !superParameterType.equals(typeElement.getType())) {
+        typeElement.replace(factory.createTypeElement(superParameterType));
+      }
     }
-
-    ChangeSignatureProcessor processor =
-      new ChangeSignatureProcessor(project, method, false, null, method.getName(), method.getReturnType(), infos);
-
-    processor.run();
   }
 
   @Override
-  public boolean isAvailable(@NotNull Project project,
-                             @NotNull PsiFile file,
-                             @NotNull PsiElement startElement,
-                             @NotNull PsiElement endElement) {
-    PsiMethod superMethod = (PsiMethod)startElement;
-    PsiMethod method = methodPtr.getElement();
-    if (method == null || !method.isValid()) return false;
-    JavaPsiFacade facade = JavaPsiFacade.getInstance(project);
+  protected @Nullable Presentation getPresentation(@NotNull ActionContext context, @NotNull PsiMethod method) {
+    PsiMethod superMethod = superMethodPtr.getElement();
+    if (superMethod == null || !superMethod.isValid()) return null;
+    JavaPsiFacade facade = JavaPsiFacade.getInstance(context.project());
     PsiClass containingClass = method.getContainingClass();
     PsiClass superContainingClass = superMethod.getContainingClass();
-    if (containingClass == null || superContainingClass == null) return false;
-    if (!facade.getResolveHelper().isAccessible(superMethod, containingClass, null)) return false;
+    if (containingClass == null || superContainingClass == null) return null;
+    if (!facade.getResolveHelper().isAccessible(superMethod, containingClass, null)) return null;
 
     MethodSignature signature = method.getSignature(PsiSubstitutor.EMPTY);
     PsiSubstitutor superSubstitutor = JavaClassSupers.getInstance()
       .getSuperClassSubstitutor(superContainingClass, containingClass, containingClass.getResolveScope(), PsiSubstitutor.EMPTY);
-    if (superSubstitutor == null) return false;
+    if (superSubstitutor == null) return null;
     MethodSignature superSignature = superMethod.getSignature(superSubstitutor);
-    if (method.getParameterList().getParametersCount() != superMethod.getParameterList().getParametersCount()) return false;
-    return !signature.equals(superSignature) && MethodSignatureUtil.areSignaturesErasureEqual(signature, superSignature);
+    if (method.getParameterList().getParametersCount() != superMethod.getParameterList().getParametersCount()) return null;
+    if (signature.equals(superSignature) || !MethodSignatureUtil.areSignaturesErasureEqual(signature, superSignature)) return null;
+    return Presentation.of(JavaBundle.message("intention.text.fix.method.0.parameters.with.bounded.wildcards", method.getName()));
   }
 
-  @NotNull
   @Override
-  public String getText() {
-    PsiMethod method = methodPtr.getElement();
-    if (method == null || !method.isValid()) return getFamilyName();
-    return JavaBundle.message("intention.text.fix.method.0.parameters.with.bounded.wildcards", method.getName());
-  }
-
-  @Nls
-  @NotNull
-  @Override
-  public String getFamilyName() {
+  public @Nls @NotNull String getFamilyName() {
     return JavaBundle.message("intention.family.fix.bounded.wildcards");
-  }
-
-  @Override
-  public boolean startInWriteAction() {
-    return false;
   }
 }

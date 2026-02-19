@@ -1,22 +1,29 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.reference.SoftReference;
+import com.intellij.util.ui.EDT;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JComponent;
+import javax.swing.RepaintManager;
 import java.applet.Applet;
-import java.awt.*;
+import java.awt.Component;
+import java.awt.Image;
+import java.awt.Rectangle;
+import java.awt.Window;
 import java.lang.ref.WeakReference;
 import java.lang.reflect.Field;
 import java.util.List;
 
-public class AssertiveRepaintManager extends RepaintManager {
-  private final static Logger LOG = Logger.getInstance(AssertiveRepaintManager.class);
+@ApiStatus.Internal
+public final class AssertiveRepaintManager extends RepaintManager {
+  private static final Logger LOG = Logger.getInstance(AssertiveRepaintManager.class);
 
   private WeakReference<Component> myLastComponent;
 
@@ -118,7 +125,7 @@ public class AssertiveRepaintManager extends RepaintManager {
   }
 
   private void checkThreadViolations(@Nullable Component c) {
-    if (!SwingUtilities.isEventDispatchThread() && (c == null || c.isShowing())) {
+    if (!EDT.isCurrentThreadEdt() && (c == null || c.isShowing())) {
       final Exception exception = new Exception();
       StackTraceElement[] stackTrace = exception.getStackTrace();
 

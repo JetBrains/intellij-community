@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.structuralsearch.plugin.ui;
 
 import com.intellij.navigation.ItemPresentation;
@@ -10,9 +10,10 @@ import com.intellij.structuralsearch.MatchOptions;
 import com.intellij.structuralsearch.SSRBundle;
 import com.intellij.structuralsearch.plugin.replace.ui.ReplaceConfiguration;
 import com.intellij.usages.ConfigurableUsageTarget;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.Icon;
 
 /**
  * @author Bas Leijdekkers
@@ -29,15 +30,9 @@ class StructuralSearchUsageTarget implements ConfigurableUsageTarget, ItemPresen
     mySearchContext = searchContext;
   }
 
-  @NotNull
   @Override
-  public String getPresentableText() {
+  public @NotNull String getPresentableText() {
     return myConfiguration.getMatchOptions().getSearchPattern();
-  }
-
-  @Override
-  public String getLocationString() {
-    return null;
   }
 
   @Override
@@ -66,21 +61,6 @@ class StructuralSearchUsageTarget implements ConfigurableUsageTarget, ItemPresen
   }
 
   @Override
-  public void navigate(boolean requestFocus) {
-    throw new UnsupportedOperationException();
-  }
-
-  @Override
-  public boolean canNavigate() {
-    return false;
-  }
-
-  @Override
-  public boolean canNavigateToSource() {
-    return false;
-  }
-
-  @Override
   public void showSettings() {
     UIUtil.invokeAction(myConfiguration, mySearchContext);
   }
@@ -92,9 +72,8 @@ class StructuralSearchUsageTarget implements ConfigurableUsageTarget, ItemPresen
                                                            : "StructuralSearchPlugin.StructuralSearchAction");
   }
 
-  @NotNull
   @Override
-  public String getLongDescriptiveName() {
+  public @Nls @NotNull String getLongDescriptiveName() {
     final MatchOptions matchOptions = myConfiguration.getMatchOptions();
     final String pattern = matchOptions.getSearchPattern();
     final SearchScope scope = matchOptions.getScope();
@@ -102,8 +81,7 @@ class StructuralSearchUsageTarget implements ConfigurableUsageTarget, ItemPresen
     assert scope != null;
     final String scopeString = scope.getDisplayName();
     final String result;
-    if (myConfiguration instanceof ReplaceConfiguration) {
-      final ReplaceConfiguration replaceConfiguration = (ReplaceConfiguration)myConfiguration;
+    if (myConfiguration instanceof ReplaceConfiguration replaceConfiguration) {
       final String replacement = replaceConfiguration.getReplaceOptions().getReplacement();
       result = SSRBundle.message("replace.occurrences.of.0.with.1.in.2", pattern, replacement, scopeString);
     }

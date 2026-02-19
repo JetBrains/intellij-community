@@ -1,0 +1,26 @@
+# Stubtest doesn't recognize __ as indicating positional-only arg at runtime
+# https://github.com/python/mypy/issues/15302
+peewee.Model.insert
+peewee.Model.replace
+peewee.Model.update
+# Wrapped with @Node.copy which changes the signature to "def (self, *args, **kwargs)"
+peewee.DQ.__invert__
+peewee.Window.as_groups
+peewee.Window.as_range
+peewee.Window.as_rows
+# Wrapped with @database_required which sometimes injects the database argument
+peewee.BaseQuery.execute
+peewee.CompoundSelectQuery.exists
+peewee.SelectBase.count
+peewee.SelectBase.exists
+peewee.SelectBase.first
+peewee.SelectBase.get
+peewee.SelectBase.peek
+peewee.SelectBase.scalar
+peewee.SelectBase.scalars
+
+# Ignore missing playhouse modules and names we don't currently provide
+playhouse\.\w+?
+playhouse.flask_utils.PaginatedQuery
+playhouse.flask_utils.get_\w+
+playhouse.flask_utils.object_list

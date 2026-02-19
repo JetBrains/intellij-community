@@ -1,0 +1,12 @@
+<idea-plugin>
+  <dependencies>
+    <module name="intellij.platform.langInjection"/>
+    <module name="intellij.platform.backend"/>
+    <module name="intellij.platform.jps.build"/>
+    <module name="intellij.platform.jps.build.javac.rt"/>
+    <module name="intellij.java.compiler.instrumentationUtil"/>
+  </dependencies>
+  <extensions defaultExtensionNs="com.intellij">
+    <jps.plugin/>
+  </extensions>
+</idea-plugin>

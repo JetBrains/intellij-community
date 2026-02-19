@@ -1,19 +1,25 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.util.ActionCallback;
+import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.util.ui.JBInsets;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.accessibility.Accessible;
 import javax.accessibility.AccessibleContext;
 import javax.accessibility.AccessibleRole;
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JComponent;
+import javax.swing.JScrollPane;
+import javax.swing.JViewport;
+import java.awt.Component;
+import java.awt.Dimension;
+import java.awt.Rectangle;
 import java.util.IdentityHashMap;
 import java.util.Iterator;
 import java.util.Map.Entry;
@@ -42,20 +48,10 @@ public abstract class CardLayoutPanel<K, UI, V extends Component> extends JCompo
    * Creates a component view from the temporary object.
    * This method is usually called on the EDT.
    *
-   * @param ui
-   * @return
    */
   protected abstract V create(UI ui);
 
-  /**
-   * @deprecated override {@link #dispose(Object, Component)} instead
-   */
-  @Deprecated
-  protected void dispose(K key) {
-  }
-
   protected void dispose(K key, V value) {
-    dispose(key);
   }
 
   @Override
@@ -91,7 +87,7 @@ public abstract class CardLayoutPanel<K, UI, V extends Component> extends JCompo
     myKey = key;
     ActionCallback callback = new ActionCallback();
     if (now) {
-      select(callback, key, prepare(key));
+      selectNow(callback, key, prepare(key));
     }
     else {
       selectLater(callback, key);
@@ -108,8 +104,23 @@ public abstract class CardLayoutPanel<K, UI, V extends Component> extends JCompo
       if (value == null && !myContent.containsKey(key)) {
         value = createValue(key, ui);
       }
+      boolean wasFocused = UIUtil.isFocusAncestor(this);
       for (Component component : getComponents()) {
         component.setVisible(component == value);
+      }
+      if (value instanceof JScrollPane pane) {
+        JViewport viewport = pane.getViewport();
+        if (viewport != null) {
+          Component view = viewport.getView();
+          if (view != null) {
+            view.revalidate();
+            view.repaint();
+          }
+        }
+      }
+      if (wasFocused && value instanceof JComponent) {
+        JComponent focusable = IdeFocusManager.getGlobalInstance().getFocusTargetFor((JComponent)value);
+        if (focusable != null) focusable.requestFocusInWindow();
       }
       callback.setDone();
     }
@@ -129,6 +140,20 @@ public abstract class CardLayoutPanel<K, UI, V extends Component> extends JCompo
       }
       else callback.setRejected();
     });
+  }
+
+  private void selectNow(final ActionCallback callback, final K key, final UI ui) {
+    if (ApplicationManager.getApplication().isDispatchThread()) {
+      select(callback, key, ui);
+      return;
+    }
+    ModalityState modality = ModalityState.stateForComponent(this);
+    ApplicationManager.getApplication().invokeLater(() -> {
+      if (!myDisposed) {
+        select(callback, key, ui);
+      }
+      else callback.setRejected();
+    }, modality);
   }
 
   @Override
@@ -185,8 +210,7 @@ public abstract class CardLayoutPanel<K, UI, V extends Component> extends JCompo
     map.forEach(this::dispose);
   }
 
-  @Nullable
-  protected final V resetValue(@NotNull K key) {
+  protected final @Nullable V resetValue(@NotNull K key) {
     V content = myContent.remove(key);
     if (content != null) {
       for (Component component : getComponents()) {
@@ -222,7 +246,7 @@ public abstract class CardLayoutPanel<K, UI, V extends Component> extends JCompo
     return accessibleContext;
   }
 
-  protected class AccessibleCardLayoutPanel extends AccessibleJComponent {
+  protected final class AccessibleCardLayoutPanel extends AccessibleJComponent {
     @Override
     public AccessibleRole getAccessibleRole() {
       return AccessibleRole.PANEL;

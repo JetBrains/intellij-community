@@ -1,14 +1,12 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.service.project.manage
 
 import com.intellij.openapi.externalSystem.model.DataNode
-import com.intellij.openapi.externalSystem.model.ProjectKeys
 import com.intellij.openapi.externalSystem.model.project.ModuleData
 import com.intellij.openapi.externalSystem.model.project.ModuleSdkData
 import com.intellij.openapi.externalSystem.model.project.ProjectData
 import com.intellij.openapi.externalSystem.model.project.ProjectSdkData
 import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider
-import com.intellij.openapi.externalSystem.util.DisposeAwareProjectChange
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
 import com.intellij.openapi.externalSystem.util.ExternalSystemBundle
 import com.intellij.openapi.module.Module
@@ -16,11 +14,11 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.roots.ProjectRootManager
 
-class ProjectSdkDataService : AbstractProjectDataService<ProjectSdkData, Project?>() {
+internal class ProjectSdkDataService : AbstractProjectDataService<ProjectSdkData, Project?>() {
   override fun getTargetDataKey() = ProjectSdkData.KEY
 
   override fun importData(
-    toImport: MutableCollection<DataNode<ProjectSdkData>>,
+    toImport: Collection<DataNode<ProjectSdkData>>,
     projectData: ProjectData?,
     project: Project,
     modelsProvider: IdeModifiableModelsProvider
@@ -29,17 +27,15 @@ class ProjectSdkDataService : AbstractProjectDataService<ProjectSdkData, Project
     require(toImport.size == 1) { String.format("Expected to get a single project but got %d: %s", toImport.size, toImport) }
     if (!ExternalSystemApiUtil.isOneToOneMapping(project, projectData, modelsProvider.modules)) return
     for (sdkDataNode in toImport) {
-      ExternalSystemApiUtil.executeProjectChangeAction(object : DisposeAwareProjectChange(project) {
-        override fun execute() {
-          importProjectSdk(project, sdkDataNode.data)
-        }
-      })
+      ExternalSystemApiUtil.executeProjectChangeAction(project) {
+        importProjectSdk(project, sdkDataNode.data)
+      }
     }
   }
 
   private fun importProjectSdk(project: Project, sdkData: ProjectSdkData) {
     val sdkName = sdkData.sdkName ?: return
-    val projectJdkTable = ProjectJdkTable.getInstance()
+    val projectJdkTable = ProjectJdkTable.getInstance(project)
     val sdk = projectJdkTable.findJdk(sdkName)
     val projectRootManager = ProjectRootManager.getInstance(project)
     val projectSdk = projectRootManager.projectSdk
@@ -49,11 +45,11 @@ class ProjectSdkDataService : AbstractProjectDataService<ProjectSdkData, Project
   }
 }
 
-class ModuleSdkDataService : AbstractProjectDataService<ModuleSdkData, Project?>() {
+internal class ModuleSdkDataService : AbstractProjectDataService<ModuleSdkData, Project?>() {
   override fun getTargetDataKey() = ModuleSdkData.KEY
 
   override fun importData(
-    toImport: MutableCollection<DataNode<ModuleSdkData>>,
+    toImport: Collection<DataNode<ModuleSdkData>>,
     projectData: ProjectData?,
     project: Project,
     modelsProvider: IdeModifiableModelsProvider
@@ -68,7 +64,6 @@ class ModuleSdkDataService : AbstractProjectDataService<ModuleSdkData, Project?>
     }
   }
 
-
   private fun importModuleSdk(
     module: Module,
     sdkData: ModuleSdkData,
@@ -76,15 +71,14 @@ class ModuleSdkDataService : AbstractProjectDataService<ModuleSdkData, Project?>
     useDefaultsIfCan: Boolean
   ) {
     val moduleSdkName = sdkData.sdkName
-    val projectJdkTable = ProjectJdkTable.getInstance()
+    val projectJdkTable = ProjectJdkTable.getInstance(module.project)
     val sdk = moduleSdkName?.let { projectJdkTable.findJdk(moduleSdkName) }
     val modifiableRootModel = modelsProvider.getModifiableRootModel(module)
-    if (modifiableRootModel.sdk != null) return
     val projectRootManager = ProjectRootManager.getInstance(module.project)
     val projectSdk = projectRootManager.projectSdk
     when {
+      moduleSdkName == null -> modifiableRootModel.inheritSdk()
       useDefaultsIfCan && sdk == projectSdk -> modifiableRootModel.inheritSdk()
-      moduleSdkName == null && sdk == null -> modifiableRootModel.inheritSdk()
       sdk == null -> modifiableRootModel.setInvalidSdk(moduleSdkName, ExternalSystemBundle.message("unknown.sdk.type"))
       else -> modifiableRootModel.sdk = sdk
     }

@@ -16,6 +16,7 @@
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.modcompletion.ModCompletionItemProvider;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.paths.PsiDynaReference;
 import com.intellij.openapi.project.DumbAware;
@@ -25,6 +26,8 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
+import com.intellij.psi.PsiReferencesWrapper;
+import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.ReferenceRange;
 import com.intellij.psi.impl.source.resolve.reference.impl.PsiMultiReference;
 import com.intellij.util.PairConsumer;
@@ -34,9 +37,6 @@ import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
-/**
- * @author peter
- */
 public class LegacyCompletionContributor extends CompletionContributor implements DumbAware {
   private static final Logger LOG = Logger.getInstance(LegacyCompletionContributor.class);
 
@@ -45,6 +45,7 @@ public class LegacyCompletionContributor extends CompletionContributor implement
     if (parameters.getCompletionType() != CompletionType.BASIC) {
       return;
     }
+    if (ModCompletionItemProvider.modCommandCompletionEnabled()) return;
     CompletionData completionData = getCompletionData(parameters);
     if (completionData == null) return;
 
@@ -61,6 +62,17 @@ public class LegacyCompletionContributor extends CompletionContributor implement
     completionData.addKeywordVariants(keywordVariants, insertedElement, file);
     completionData.completeKeywordsBySet(lookupSet, keywordVariants);
     result.addAllElements(lookupSet);
+  }
+
+  @Override
+  public void beforeCompletion(@NotNull CompletionInitializationContext context) {
+    final PsiFile file = context.getFile();
+    PsiElement element = file.findElementAt(context.getStartOffset());
+    if (element instanceof PsiWhiteSpace &&
+        element.textContains('\n') &&
+        element.getTextRange().getStartOffset() == context.getStartOffset()) {
+      context.setReplacementOffset(context.getStartOffset());
+    }
   }
 
   public static boolean completeReference(final CompletionParameters parameters, final CompletionResultSet result) {
@@ -98,13 +110,20 @@ public class LegacyCompletionContributor extends CompletionContributor implement
                                        final PairConsumer<? super PsiReference, ? super CompletionResultSet> consumer) {
     final int startOffset = parameters.getOffset();
     final PsiReference ref = parameters.getPosition().getContainingFile().findReferenceAt(startOffset);
-    if (ref instanceof PsiMultiReference) {
-      for (final PsiReference reference : CompletionData.getReferences((PsiMultiReference)ref)) {
-        processReference(result, startOffset, consumer, reference);
+    if (ref instanceof PsiMultiReference multi) {
+      for (final PsiReference reference : CompletionData.getReferences(multi)) {
+        if (reference instanceof PsiReferencesWrapper wrapper) {
+          for (PsiReference r : wrapper.getReferences()) {
+            processReference(result, startOffset, consumer, r);
+          }
+        }
+        else {
+          processReference(result, startOffset, consumer, reference);
+        }
       }
     }
-    else if (ref instanceof PsiDynaReference) {
-      for (final PsiReference reference : ((PsiDynaReference<?>)ref).getReferences()) {
+    else if (ref instanceof PsiDynaReference<?> dyna) {
+      for (final PsiReference reference : dyna.getReferences()) {
         processReference(result, startOffset, consumer, reference);
       }
     }

@@ -1,0 +1,36 @@
+// AFTER-WARNING: Parameter 'any' is never used
+// AFTER-WARNING: The expression is unused
+interface E {
+    val foo: (String) -> Unit
+}
+
+class B : E {
+    override val foo: (String) -> Unit = { string -> doSmth(string) }
+}
+
+class C : E {
+    override val foo: (String) -> Unit = { string -> string.doSmth2() }
+        get() = { string ->
+            field
+            doSmth(string)
+        }
+}
+
+class D : E {
+    override val foo: (String) -> Unit
+        get() {
+            if (true) {
+                return { string -> string.doSmth2() }
+            }
+
+            return { string -> doSmth(string) }
+        }
+}
+
+fun doSmth(any: Any) {
+
+}
+
+fun <T> T.doSmth2() {
+
+}

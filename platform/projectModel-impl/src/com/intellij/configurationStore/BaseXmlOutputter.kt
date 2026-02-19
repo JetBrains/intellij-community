@@ -2,10 +2,11 @@
 package com.intellij.configurationStore
 
 import org.jdom.DocType
-import org.jdom.ProcessingInstruction
+import org.jetbrains.annotations.ApiStatus
 import java.io.IOException
 import java.io.Writer
 
+@ApiStatus.Internal
 abstract class BaseXmlOutputter(protected val lineSeparator: String) {
   companion object {
     fun doesNameSuggestSensitiveInformation(name: String): Boolean {
@@ -39,7 +40,7 @@ abstract class BaseXmlOutputter(protected val lineSeparator: String) {
     if (publicID != null) {
       out.write(" PUBLIC \"")
       out.write(publicID)
-      out.write('"'.toInt())
+      out.write('"'.code)
       hasPublic = true
     }
     if (systemID != null) {
@@ -50,26 +51,12 @@ abstract class BaseXmlOutputter(protected val lineSeparator: String) {
       out.write(systemID)
       out.write("\"")
     }
-    if (internalSubset != null && !internalSubset.isEmpty()) {
+    if (!internalSubset.isNullOrEmpty()) {
       out.write(" [")
       out.write(lineSeparator)
       out.write(docType.internalSubset)
       out.write("]")
     }
     out.write(">")
-  }
-
-  @Throws(IOException::class)
-  protected fun writeProcessingInstruction(out: Writer, pi: ProcessingInstruction, target: String) {
-    out.write("<?")
-    out.write(target)
-
-    val rawData = pi.data
-    if (rawData != null && !rawData.isEmpty()) {
-      out.write(" ")
-      out.write(rawData)
-    }
-
-    out.write("?>")
   }
 }

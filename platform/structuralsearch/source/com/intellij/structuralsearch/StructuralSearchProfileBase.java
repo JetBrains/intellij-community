@@ -1,20 +1,21 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.structuralsearch;
 
 import com.intellij.dupLocator.equivalence.EquivalenceDescriptor;
 import com.intellij.dupLocator.equivalence.EquivalenceDescriptorProvider;
-import com.intellij.dupLocator.iterators.FilteringNodeIterator;
 import com.intellij.dupLocator.iterators.NodeIterator;
 import com.intellij.dupLocator.util.DuplocatorUtil;
-import com.intellij.dupLocator.util.NodeFilter;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageParserDefinitions;
 import com.intellij.lang.ParserDefinition;
-import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiRecursiveElementVisitor;
+import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.impl.source.tree.LeafElement;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
@@ -22,7 +23,12 @@ import com.intellij.structuralsearch.impl.matcher.CompiledPattern;
 import com.intellij.structuralsearch.impl.matcher.GlobalMatchingVisitor;
 import com.intellij.structuralsearch.impl.matcher.MatchContext;
 import com.intellij.structuralsearch.impl.matcher.compiler.GlobalCompilingVisitor;
-import com.intellij.structuralsearch.impl.matcher.handlers.*;
+import com.intellij.structuralsearch.impl.matcher.handlers.DelegatingHandler;
+import com.intellij.structuralsearch.impl.matcher.handlers.LightTopLevelMatchingHandler;
+import com.intellij.structuralsearch.impl.matcher.handlers.MatchingHandler;
+import com.intellij.structuralsearch.impl.matcher.handlers.SkippingHandler;
+import com.intellij.structuralsearch.impl.matcher.handlers.SubstitutionHandler;
+import com.intellij.structuralsearch.impl.matcher.handlers.TopLevelMatchingHandler;
 import com.intellij.structuralsearch.impl.matcher.iterators.SsrFilteringNodeIterator;
 import com.intellij.structuralsearch.impl.matcher.strategies.MatchingStrategy;
 import com.intellij.structuralsearch.plugin.replace.ReplaceOptions;
@@ -34,14 +40,11 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.regex.Pattern;
 
-/**
- * @author Eugene.Kudelevsky
- */
 public abstract class StructuralSearchProfileBase extends StructuralSearchProfile {
   private static final String DELIMITER_CHARS = ",;.[]{}():";
 
   @Override
-  public void compile(PsiElement @NotNull [] elements, @NotNull final GlobalCompilingVisitor globalVisitor) {
+  public void compile(PsiElement @NotNull [] elements, final @NotNull GlobalCompilingVisitor globalVisitor) {
     final PsiElement topElement = elements[0].getParent();
     final PsiElement element = elements.length > 1 ? topElement : elements[0];
 
@@ -106,16 +109,14 @@ public abstract class StructuralSearchProfileBase extends StructuralSearchProfil
     });
   }
 
-  @NotNull
   @Override
-  public PsiElementVisitor createMatchingVisitor(@NotNull GlobalMatchingVisitor globalVisitor) {
+  public @NotNull PsiElementVisitor createMatchingVisitor(@NotNull GlobalMatchingVisitor globalVisitor) {
     return new MyMatchingVisitor(globalVisitor);
   }
 
-  @NotNull
   @Override
-  public NodeFilter getLexicalNodesFilter() {
-    return element -> DuplocatorUtil.isIgnoredNode(element);
+  public boolean isMatchNode(PsiElement element) {
+    return !DuplocatorUtil.isIgnoredNode(element);
   }
 
   private static boolean containsOnlyDelimiters(String s) {
@@ -129,14 +130,12 @@ public abstract class StructuralSearchProfileBase extends StructuralSearchProfil
 
   protected abstract String @NotNull [] getVarPrefixes();
 
-  @NotNull
   @Override
-  public CompiledPattern createCompiledPattern() {
+  public @NotNull CompiledPattern createCompiledPattern() {
     return new CompiledPattern() {
 
-      @NotNull
       @Override
-      protected SubstitutionHandler doCreateSubstitutionHandler(@NotNull String name, boolean target, int minOccurs, int maxOccurs, boolean greedy) {
+      protected @NotNull SubstitutionHandler doCreateSubstitutionHandler(@NotNull String name, boolean target, int minOccurs, int maxOccurs, boolean greedy) {
         return new MySubstitutionHandler(name, target, minOccurs, maxOccurs, greedy);
       }
 
@@ -155,9 +154,8 @@ public abstract class StructuralSearchProfileBase extends StructuralSearchProfil
         return false;
       }
 
-      @NotNull
       @Override
-      public String getTypedVarString(@NotNull PsiElement element) {
+      public @NotNull String getTypedVarString(@NotNull PsiElement element) {
         final PsiElement initialElement = element;
         PsiElement child = SkippingHandler.getOnlyNonWhitespaceChild(element);
 
@@ -169,14 +167,6 @@ public abstract class StructuralSearchProfileBase extends StructuralSearchProfil
       }
     };
   }
-
-  @Override
-  public boolean isMyLanguage(@NotNull Language language) {
-    return language.isKindOf(getFileType().getLanguage());
-  }
-
-  @NotNull
-  protected abstract LanguageFileType getFileType();
 
   @Override
   public void checkReplacementPattern(@NotNull Project project, @NotNull ReplaceOptions options) {}
@@ -290,11 +280,11 @@ public abstract class StructuralSearchProfileBase extends StructuralSearchProfil
       if (StringUtil.isQuotedString(value)) {
         if (mySubstitutionPatterns == null) {
           final String[] prefixes = myGlobalVisitor.getContext().getPattern().getTypedVarPrefixes();
-          mySubstitutionPatterns = StructuralSearchUtil.createPatterns(prefixes);
+          mySubstitutionPatterns = MatchUtil.createPatterns(prefixes);
         }
 
         for (Pattern substitutionPattern : mySubstitutionPatterns) {
-          @Nullable final MatchingHandler handler =
+          final @Nullable MatchingHandler handler =
             myGlobalVisitor.processPatternStringWithFragments(value, GlobalCompilingVisitor.OccurenceKind.LITERAL, substitutionPattern);
 
           if (handler != null) {
@@ -408,8 +398,8 @@ public abstract class StructuralSearchProfileBase extends StructuralSearchProfil
         final PsiElement patternChild = element.getFirstChild();
         final PsiElement matchedChild = myGlobalVisitor.getElement().getFirstChild();
 
-        final FilteringNodeIterator patternIterator = new SsrFilteringNodeIterator(patternChild);
-        final FilteringNodeIterator matchedIterator = new SsrFilteringNodeIterator(matchedChild);
+        final NodeIterator patternIterator = SsrFilteringNodeIterator.create(patternChild);
+        final NodeIterator matchedIterator = SsrFilteringNodeIterator.create(matchedChild);
 
         final boolean matched = myGlobalVisitor.matchSequentially(patternIterator, matchedIterator);
         myGlobalVisitor.setResult(matched);
@@ -418,7 +408,7 @@ public abstract class StructuralSearchProfileBase extends StructuralSearchProfil
 
     private void visitLiteral(PsiElement literal) {
       final PsiElement l2 = myGlobalVisitor.getElement();
-      final MatchingHandler handler = (MatchingHandler)literal.getUserData(CompiledPattern.HANDLER_KEY);
+      final MatchingHandler handler = literal.getUserData(CompiledPattern.HANDLER_KEY);
 
       if (handler instanceof SubstitutionHandler) {
         int offset = 0;

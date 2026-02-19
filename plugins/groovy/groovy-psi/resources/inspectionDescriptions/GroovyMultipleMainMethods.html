@@ -1,0 +1,21 @@
+<html>
+<body>
+Reports classes or files that contain multiple overloaded <code>main</code> methods in Groovy 5.
+<p>
+  When a class or file has several <code>main</code> methods with different signatures, it can be unclear which one serves as the
+  application's entry point because the invocation of the main method occurs at runtime based on the presence of arguments. Consider the following example:
+</p>
+<pre><code>
+class A {
+    void main(String[] args) {
+        println "1"
+    }
+
+    void main() {
+        println "2"
+    }
+}
+</code></pre>
+If no arguments are passed, then the <code>main()</code>, otherwise the <code>main(String[])</code> will be invoked.
+</body>
+</html>

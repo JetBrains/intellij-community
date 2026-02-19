@@ -1,0 +1,94 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package org.jetbrains.plugins.gradle.execution.target
+
+import com.intellij.execution.target.BrowsableTargetEnvironmentType
+import com.intellij.execution.target.TargetBrowserHints
+import com.intellij.execution.target.TargetEnvironmentConfiguration
+import com.intellij.execution.target.TargetEnvironmentType
+import com.intellij.execution.target.getRuntimeType
+import com.intellij.execution.target.getTargetType
+import com.intellij.execution.target.textFieldWithBrowseTargetButton
+import com.intellij.openapi.externalSystem.service.execution.ExternalSystemExecutionAware.Companion.getExtensions
+import com.intellij.openapi.externalSystem.service.execution.TargetEnvironmentConfigurationProvider
+import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory.createSingleFolderDescriptor
+import com.intellij.openapi.options.BoundConfigurable
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.guessProjectDir
+import com.intellij.openapi.ui.ComponentWithBrowseButton.BrowseFolderActionListener
+import com.intellij.openapi.ui.DialogPanel
+import com.intellij.openapi.ui.TextComponentAccessor.TEXT_FIELD_WHOLE_TEXT
+import com.intellij.openapi.util.NlsContexts
+import com.intellij.ui.dsl.builder.AlignX
+import com.intellij.ui.dsl.builder.bindText
+import com.intellij.ui.dsl.builder.panel
+import com.intellij.ui.dsl.builder.toMutableProperty
+import org.jetbrains.plugins.gradle.service.execution.GradleExecutionAware
+import org.jetbrains.plugins.gradle.util.GradleBundle.message
+import org.jetbrains.plugins.gradle.util.GradleConstants
+import java.awt.event.ActionListener
+import java.util.function.Supplier
+
+class GradleRuntimeTargetUI<C : TargetEnvironmentConfiguration>(private val config: GradleRuntimeTargetConfiguration,
+                                                                private val targetType: TargetEnvironmentType<C>,
+                                                                private val targetSupplier: Supplier<TargetEnvironmentConfiguration>,
+                                                                private val project: Project) :
+  BoundConfigurable(config.displayName, config.getRuntimeType().helpTopic) {
+
+  override fun createPanel(): DialogPanel {
+    return panel {
+      row(message("gradle.target.configurable.home.path.label")) {
+        if (targetType is BrowsableTargetEnvironmentType) {
+          textFieldWithBrowseTargetButton(targetType, targetSupplier,
+                                          project,
+                                          message("gradle.target.configurable.home.path.title"),
+                                          config::homePath.toMutableProperty())
+            .align(AlignX.FILL)
+            .comment(message("gradle.target.configurable.home.path.comment"))
+        }
+        else {
+          textField()
+            .bindText(config::homePath)
+            .align(AlignX.FILL)
+            .comment(message("gradle.target.configurable.home.path.comment"))
+        }
+      }
+    }
+  }
+
+  companion object {
+    @JvmStatic
+    fun targetPathFieldWithBrowseButton(project: Project, @NlsContexts.DialogTitle title: String): TargetPathFieldWithBrowseButton {
+      return TargetPathFieldWithBrowseButton().installActionListener(project, title)
+    }
+
+    @JvmStatic
+    fun TargetPathFieldWithBrowseButton.installActionListener(project: Project,
+                                                              @NlsContexts.DialogTitle title: String): TargetPathFieldWithBrowseButton {
+      val projectPath = project.guessProjectDir()?.path ?: return addLocalActionListener(project, title)
+      var configurationProvider: TargetEnvironmentConfigurationProvider?
+      for (executionAware in getExtensions(GradleConstants.SYSTEM_ID)) {
+        if (executionAware !is GradleExecutionAware) continue
+        configurationProvider = executionAware.getEnvironmentConfigurationProvider(projectPath, false, project)
+        if (configurationProvider != null) {
+          val configuration = configurationProvider.environmentConfiguration
+          val targetType = configuration.getTargetType() as? BrowsableTargetEnvironmentType ?: break
+          addTargetActionListener(configurationProvider.pathMapper,
+                                  targetType.createBrowser(project, title, TEXT_FIELD_WHOLE_TEXT, textField, { configuration }, TargetBrowserHints(true)))
+          return this
+        }
+      }
+      addLocalActionListener(project, title)
+      return this
+    }
+
+    private fun TargetPathFieldWithBrowseButton.addLocalActionListener(
+      project: Project,
+      title: @NlsContexts.DialogTitle String
+    ): TargetPathFieldWithBrowseButton {
+      addTargetActionListener(null, ActionListener(BrowseFolderActionListener(
+        this, project, createSingleFolderDescriptor().withTitle(title), TEXT_FIELD_WHOLE_TEXT
+      )::actionPerformed))
+      return this
+    }
+  }
+}

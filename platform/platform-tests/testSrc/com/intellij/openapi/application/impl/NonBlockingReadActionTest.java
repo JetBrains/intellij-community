@@ -1,9 +1,13 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application.impl;
 
 import com.intellij.ide.startup.ServiceNotReadyException;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.*;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.NonBlockingReadAction;
+import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.DefaultLogger;
 import com.intellij.openapi.editor.impl.DocumentImpl;
@@ -12,6 +16,7 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.util.ProgressIndicatorBase;
+import com.intellij.openapi.util.CheckedDisposable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
@@ -22,7 +27,11 @@ import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.testFramework.LeakHunter;
 import com.intellij.testFramework.LightPlatformTestCase;
 import com.intellij.testFramework.LoggedErrorProcessor;
+import com.intellij.testFramework.PerformanceUnitTest;
 import com.intellij.testFramework.PlatformTestUtil;
+import com.intellij.testFramework.TestLoggerKt;
+import com.intellij.tools.ide.metrics.benchmark.Benchmark;
+import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.TimeoutUtil;
 import com.intellij.util.concurrency.AppExecutorUtil;
@@ -31,24 +40,29 @@ import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.concurrency.SequentialTaskExecutor;
 import com.intellij.util.ui.UIUtil;
 import one.util.streamex.IntStreamEx;
-import org.apache.log4j.Logger;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.concurrency.CancellablePromise;
 import org.jetbrains.concurrency.Promise;
 
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.*;
+import java.util.Set;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Executor;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Consumer;
 
 import static com.intellij.testFramework.PlatformTestUtil.waitForPromise;
 
-/**
- * @author peter
- */
 public class NonBlockingReadActionTest extends LightPlatformTestCase {
 
   public void testCoalesceEqual() {
@@ -78,7 +92,7 @@ public class NonBlockingReadActionTest extends LightPlatformTestCase {
 
   public void testDoNotBlockExecutorThreadWhileWaitingForEdtFinish() throws Exception {
     Semaphore semaphore = new Semaphore(1);
-    ExecutorService executor = SequentialTaskExecutor.createSequentialApplicationPoolExecutor(getName());
+    ExecutorService executor = SequentialTaskExecutor.createSequentialApplicationPoolExecutor(StringUtil.capitalize(getName()));
     CancellablePromise<Void> promise = ReadAction
       .nonBlocking(() -> {})
       .finishOnUiThread(ModalityState.defaultModalityState(), __ -> semaphore.up())
@@ -162,29 +176,36 @@ public class NonBlockingReadActionTest extends LightPlatformTestCase {
   public void testProhibitCoalescingByCommonObjects() {
     NonBlockingReadAction<Void> ra = ReadAction.nonBlocking(() -> {});
     String shouldBeUnique = "Equality should be unique";
-    assertThrows(IllegalArgumentException.class, shouldBeUnique, () -> { ra.coalesceBy((Object)null); });
-    assertThrows(IllegalArgumentException.class, shouldBeUnique, () -> { ra.coalesceBy(getProject()); });
-    assertThrows(IllegalArgumentException.class, shouldBeUnique, () -> { ra.coalesceBy(new DocumentImpl("")); });
-    assertThrows(IllegalArgumentException.class, shouldBeUnique, () -> { ra.coalesceBy(PsiUtilCore.NULL_PSI_ELEMENT); });
-    assertThrows(IllegalArgumentException.class, shouldBeUnique, () -> { ra.coalesceBy(getClass()); });
-    assertThrows(IllegalArgumentException.class, shouldBeUnique, () -> { ra.coalesceBy(""); });
+    assertThrows(IllegalArgumentException.class, shouldBeUnique, () -> ra.coalesceBy((Object)null));
+    assertThrows(IllegalArgumentException.class, null, () -> ra.coalesceBy(this, null));
+    assertThrows(IllegalArgumentException.class, shouldBeUnique, () -> ra.coalesceBy(getProject()));
+    assertThrows(IllegalArgumentException.class, shouldBeUnique, () -> ra.coalesceBy(new DocumentImpl("")));
+    assertThrows(IllegalArgumentException.class, shouldBeUnique, () -> ra.coalesceBy(PsiUtilCore.NULL_PSI_ELEMENT));
+    assertThrows(IllegalArgumentException.class, shouldBeUnique, () -> ra.coalesceBy(getClass()));
+    assertThrows(IllegalArgumentException.class, shouldBeUnique, () -> ra.coalesceBy(""));
   }
 
-  public void testReportConflictForSameCoalesceFromDifferentPlaces() {
-    DefaultLogger.disableStderrDumping(getTestRootDisposable());
-    Object same = new Object();
-    class Inner {
-      void run() {
-        ReadAction.nonBlocking(() -> {}).coalesceBy(same).submit(AppExecutorUtil.getAppExecutorService());
-      }
-    }
+  public void testReportConflictForSameCoalesceFromDifferentPlaces() throws Exception {
+    //RC: current implementation treat lambdas from the same class as 'same place' -- i.e. they are OK to use
+    // with same .coalesceBy key. Hence the need to create the Inner class here -- to clearly show 'those 2 lambdas
+    // are of different origins':
 
-    Promise<?> p = WriteAction.compute(() -> {
-      Promise<?> p1 = ReadAction.nonBlocking(() -> {}).coalesceBy(same).submit(AppExecutorUtil.getAppExecutorService());
-      assertThrows(Throwable.class, "Same coalesceBy arguments", () -> new Inner().run());
-      return p1;
+    DefaultLogger.disableStderrDumping(getTestRootDisposable());
+    TestLoggerKt.rethrowLoggedErrorsIn(() -> {
+      Object same = new Object();
+      class Inner {
+        void run() {
+          ReadAction.nonBlocking(() -> { }).coalesceBy(same).submit(AppExecutorUtil.getAppExecutorService());
+        }
+      }
+
+      Promise<?> p = WriteAction.compute(() -> {
+        Promise<?> p1 = ReadAction.nonBlocking(() -> { }).coalesceBy(same).submit(AppExecutorUtil.getAppExecutorService());
+        assertThrows(Throwable.class, "Same coalesceBy arguments", () -> new Inner().run());
+        return p1;
+      });
+      waitForPromise(p);
     });
-    waitForPromise(p);
   }
 
   public void testDoNotBlockExecutorThreadDuringWriteAction() throws Exception {
@@ -203,33 +224,85 @@ public class NonBlockingReadActionTest extends LightPlatformTestCase {
   }
 
   public void testDoNotLeakFirstCancelledCoalescedAction() {
-    Object leak = new Object() {};
+    Object leak = new Object() {
+    };
     Disposable disposable = Disposer.newDisposable();
     Disposer.dispose(disposable);
-    CancellablePromise<String> p = ReadAction
-      .nonBlocking(() -> "a")
-      .expireWith(disposable)
-      .coalesceBy(leak)
-      .submit(AppExecutorUtil.getAppExecutorService());
-    assertTrue(p.isCancelled());
+    try {
+      CancellablePromise<String> p = ReadAction
+        .nonBlocking(() -> "a")
+        .expireWith(disposable)
+        .coalesceBy(leak)
+        .submit(AppExecutorUtil.getAppExecutorService());
+      assertTrue(p.isCancelled());
 
-    LeakHunter.checkLeak(NonBlockingReadActionImpl.getTasksByEquality(), leak.getClass());
+      LeakHunter.checkLeak(NonBlockingReadActionImpl.getTasksByEquality(), leak.getClass());
+
+      Disposer.disposeChildren(disposable, (child) -> {
+        throw new IllegalStateException(child.toString());
+      });
+    }
+    finally {
+      Disposer.dispose(disposable);
+    }
   }
 
   public void testDoNotLeakSecondCancelledCoalescedAction() throws Exception {
-    Executor executor = AppExecutorUtil.createBoundedApplicationPoolExecutor("TestDoNotLeakSecondCancelledCoalescedAction", 10);
+    Disposable disposable = Disposer.newDisposable();
+    try {
+      Executor executor = AppExecutorUtil.createBoundedApplicationPoolExecutor("TestDoNotLeakSecondCancelledCoalescedAction", 10);
 
-    Object leak = new Object(){};
-    CancellablePromise<String> p = ReadAction.nonBlocking(() -> "a").coalesceBy(leak).submit(executor);
-    WriteAction.run(() -> {
-      ReadAction.nonBlocking(() -> "b").coalesceBy(leak).submit(executor).cancel();
-    });
-    assertTrue(p.isDone());
+      Object leak = new Object() {
+      };
+      CancellablePromise<String> p = ReadAction.nonBlocking(() -> "a").coalesceBy(leak).submit(executor);
+      WriteAction.run(() -> {
+        ReadAction.nonBlocking(() -> "b")
+          .coalesceBy(leak)
+          .expireWith(disposable)
+          .submit(executor)
+          .cancel();
+      });
+      assertTrue(p.isDone());
 
-    ((BoundedTaskExecutor) executor).waitAllTasksExecuted(1, TimeUnit.SECONDS);
+      ((BoundedTaskExecutor)executor).waitAllTasksExecuted(1, TimeUnit.SECONDS);
 
-    LeakHunter.checkLeak(NonBlockingReadActionImpl.getTasksByEquality(), leak.getClass());
+      LeakHunter.checkLeak(NonBlockingReadActionImpl.getTasksByEquality(), leak.getClass());
+
+      Disposer.disposeChildren(disposable, (child) -> {
+        throw new IllegalStateException(child.toString());
+      });
+    }
+    finally {
+      Disposer.dispose(disposable);
+    }
   }
+
+  public void testDoNotLeakDisposablesOnCancelledIndicator() {
+    ProgressIndicator outerIndicator = new EmptyProgressIndicator();
+    Disposable disposable = Disposer.newDisposable();
+    try {
+      Future<?> future = ApplicationManager.getApplication().executeOnPooledThread(() -> {
+        assertThrows(ProcessCanceledException.class, () -> {
+          ReadAction.nonBlocking(() -> {
+              outerIndicator.cancel();
+              throw new ProcessCanceledException();
+            })
+            .expireWith(disposable)
+            .wrapProgress(outerIndicator)
+            .executeSynchronously();
+        });
+      });
+      waitForFuture(future);
+
+      Disposer.disposeChildren(disposable, (child) -> {
+        throw new IllegalStateException(child.toString());
+      });
+    }
+    finally {
+      Disposer.dispose(disposable);
+    }
+  }
+
   public void testSyncExecutionHonorsConstraints() {
     setupUncommittedDocument();
 
@@ -345,26 +418,24 @@ public class NonBlockingReadActionTest extends LightPlatformTestCase {
     }));
   }
 
+  @PerformanceUnitTest
   public void testCancellationPerformance() {
-    PlatformTestUtil.startPerformanceTest("NBRA cancellation", 500, () -> {
+    Benchmark.newBenchmark("NBRA cancellation", () -> {
       WriteAction.run(() -> {
         for (int i = 0; i < 100_000; i++) {
           ReadAction.nonBlocking(() -> {}).coalesceBy(this).submit(AppExecutorUtil.getAppExecutorService()).cancel();
         }
       });
-    }).assertTiming();
+    }).start();
   }
 
   public void testExceptionInsideAsyncComputationIsLogged() throws Exception {
     BoundedTaskExecutor executor = (BoundedTaskExecutor)AppExecutorUtil.createBoundedApplicationPoolExecutor("TestExceptionInsideAsyncComputationIsLogged", 10);
-
-    AtomicReference<Throwable> loggedError = watchLoggedExceptions();
-
     Callable<Object> throwUOE = () -> {
       throw new UnsupportedOperationException();
     };
 
-    try {
+    watchLoggedExceptions(loggedError -> {
       CancellablePromise<Object> promise = ReadAction.nonBlocking(throwUOE).submit(executor);
       assertLogsAndThrowsUOE(promise, loggedError, executor);
 
@@ -381,16 +452,11 @@ public class NonBlockingReadActionTest extends LightPlatformTestCase {
 
       promise = ReadAction.nonBlocking(throwUOE).submit(AppExecutorUtil.getAppExecutorService()).onError(__ -> {});
       assertLogsAndThrowsUOE(promise, loggedError, executor);
-    }
-    finally {
-      LoggedErrorProcessor.restoreDefaultProcessor();
-    }
+    });
   }
 
   public void testDoNotLogSyncExceptions() {
-    AtomicReference<Throwable> loggedError = watchLoggedExceptions();
-
-    try {
+    watchLoggedExceptions(loggedError -> {
       // unchecked is rethrown
       assertThrows(UnsupportedOperationException.class, () -> ReadAction.nonBlocking(() -> {
         throw new UnsupportedOperationException();
@@ -402,25 +468,22 @@ public class NonBlockingReadActionTest extends LightPlatformTestCase {
         throw new IOException();
       }).executeSynchronously());
       assertNull(loggedError.get());
-    }
-    finally {
-      LoggedErrorProcessor.restoreDefaultProcessor();
-    }
+    });
   }
 
-  private static AtomicReference<Throwable> watchLoggedExceptions() {
+  private static void watchLoggedExceptions(Consumer<? super AtomicReference<Throwable>> runnable) {
     AtomicReference<Throwable> loggedError = new AtomicReference<>();
-    LoggedErrorProcessor.setNewInstance(new LoggedErrorProcessor() {
+    LoggedErrorProcessor.executeWith(new LoggedErrorProcessor() {
       @Override
-      public void processError(String message, Throwable t, String[] details, @NotNull Logger logger) {
+      public @NotNull Set<Action> processError(@NotNull String category, @NotNull String message, String @NotNull [] details, @Nullable Throwable t) {
         assertNotNull(t);
         loggedError.set(t);
+        return Action.NONE;
       }
-    });
-    return loggedError;
+    }, ()->runnable.accept(loggedError));
   }
 
-  private static void assertLogsAndThrowsUOE(CancellablePromise<Object> promise, AtomicReference<Throwable> loggedError, BoundedTaskExecutor executor) throws Exception {
+  private static void assertLogsAndThrowsUOE(CancellablePromise<Object> promise, AtomicReference<Throwable> loggedError, BoundedTaskExecutor executor) {
     Throwable cause = null;
     try {
       waitForFuture(promise);
@@ -429,7 +492,12 @@ public class NonBlockingReadActionTest extends LightPlatformTestCase {
       cause = ExceptionUtil.getRootCause(e);
     }
     assertInstanceOf(cause, UnsupportedOperationException.class);
-    executor.waitAllTasksExecuted(1, TimeUnit.SECONDS);
+    try {
+      executor.waitAllTasksExecuted(1, TimeUnit.SECONDS);
+    }
+    catch (ExecutionException | InterruptedException | TimeoutException e) {
+      throw new RuntimeException(e);
+    }
     assertSame(cause, loggedError.getAndSet(null));
   }
 
@@ -453,13 +521,15 @@ public class NonBlockingReadActionTest extends LightPlatformTestCase {
     assertEquals(10, count.get());
   }
 
-  public void testReportTooManyUnboundedCalls() {
+  public void testReportTooManyUnboundedCalls() throws Exception {
     DefaultLogger.disableStderrDumping(getTestRootDisposable());
-    assertThrows(Throwable.class, SubmissionTracker.ARE_CURRENTLY_ACTIVE, () -> {
-      WriteAction.run(() -> {
-        for (int i = 0; i < 1000; i++) {
-          ReadAction.nonBlocking(() -> {}).submit(AppExecutorUtil.getAppExecutorService());
-        }
+    TestLoggerKt.rethrowLoggedErrorsIn(() -> {
+      assertThrows(Throwable.class, SubmissionTracker.ARE_CURRENTLY_ACTIVE, () -> {
+        WriteAction.run(() -> {
+          for (int i = 0; i < 1000; i++) {
+            ReadAction.nonBlocking(() -> { }).submit(AppExecutorUtil.getAppExecutorService());
+          }
+        });
       });
     });
   }
@@ -487,25 +557,121 @@ public class NonBlockingReadActionTest extends LightPlatformTestCase {
     }
   }
 
-  public void test_submit_doesNot_fail_without_readAction_when_parent_isDisposed() {
-    ExecutorService executor = AppExecutorUtil.createBoundedApplicationPoolExecutor(StringUtil.capitalize(getName()), 10);
+  public void test_submit_doesNot_fail_without_readAction_when_parent_isDisposed() throws Exception {
+    try (ExecutorService executor = AppExecutorUtil.createBoundedApplicationPoolExecutor(StringUtil.capitalize(getName()), 1000)) {
+      for (int i = 0; i < 50; i++) {
+        List<Disposable> parents = IntStreamEx.range(100).mapToObj(__ -> Disposer.newDisposable()).toList();
+        List<Future<?>> futures = new ArrayList<>();
+        for (Disposable parent : parents) {
+          futures.add(executor.submit(() -> ReadAction.nonBlocking(() -> {
+          }).expireWith(parent).submit(executor).get()));
+          futures.add(executor.submit(() -> {
+            try {
+              ReadAction.nonBlocking(() -> {
+              }).expireWith(parent).executeSynchronously();
+            }
+            catch (ProcessCanceledException ignore) {
+            }
+          }));
+        }
+        parents.forEach(Disposer::dispose);
 
-    for (int i = 0; i < 50; i++) {
-      List<Disposable> parents = IntStreamEx.range(100).mapToObj(__ -> Disposer.newDisposable()).toList();
-      List<Future<?>> futures = new ArrayList<>();
-      for (Disposable parent : parents) {
-        futures.add(executor.submit(() -> ReadAction.nonBlocking(() -> {}).expireWith(parent).submit(executor).get()));
-        futures.add(executor.submit(() -> {
-          try {
-            ReadAction.nonBlocking(() -> {}).expireWith(parent).executeSynchronously();
-          }
-          catch (ProcessCanceledException ignore) {
-          }
-        }));
+        ConcurrencyUtil.getAll(50, TimeUnit.SECONDS, futures);
       }
-      parents.forEach(Disposer::dispose);
+    }
+  }
 
-      futures.forEach(f -> PlatformTestUtil.waitForFuture(f, 50_000));
+  public void testSubmitDoesNotFailWhenParentsAreDisposedConcurrently() throws Exception {
+    try (ExecutorService executor = AppExecutorUtil.createBoundedApplicationPoolExecutor(StringUtil.capitalize(getName()), 1000)) {
+      for (int i = 0; i < 5000; i++) {
+        List<Future<?>> futures = new ArrayList<>();
+        for (int j = 0; j < 100; j++) {
+          CheckedDisposable parent = Disposer.newCheckedDisposable();
+          CheckedDisposable parent2 = Disposer.newCheckedDisposable();
+          futures.add(executor.submit(() -> ReadAction.nonBlocking(() -> {}).expireWith(parent).expireWith(parent2).submit(executor).get()));
+          futures.add(executor.submit(() -> {
+            try {
+              ReadAction.nonBlocking(() -> {}).expireWith(parent).expireWith(parent2).executeSynchronously();
+            }
+            catch (ProcessCanceledException ignore) {
+            }
+          }));
+          futures.add(executor.submit(() -> Disposer.dispose(parent)));
+          futures.add(executor.submit(() -> Disposer.dispose(parent2)));
+        }
+        ConcurrencyUtil.getAll(50, TimeUnit.SECONDS, futures);
+      }
+    }
+  }
+
+  public void test_executeSynchronously_doesNot_return_null_with_not_nullable_callable() {
+    try (ExecutorService executor = AppExecutorUtil.createBoundedApplicationPoolExecutor(StringUtil.capitalize(getName()), 1000)) {
+      for (int i = 0; i < 50; i++) {
+        List<Disposable> disposables = IntStreamEx.range(100).mapToObj(__ -> Disposer.newDisposable()).toList();
+        List<Future<?>> futuresList = new ArrayList<>();
+        for (Disposable disposable : disposables) {
+          futuresList.add(executor.submit(() -> {
+            try {
+              Boolean value = ReadAction.nonBlocking(() -> {
+                return Boolean.TRUE;
+              }).expireWith(disposable).executeSynchronously();
+              assertNotNull(value);
+            }
+            catch (ProcessCanceledException e) {
+              //valid outcome
+            }
+          }));
+        }
+        disposables.forEach(Disposer::dispose);
+
+        futuresList.forEach(f -> PlatformTestUtil.waitForFuture(f, 50_000));
+      }
+    }
+  }
+
+  public void testOurTasksByEqualityMapMustNotLeakItsTaskEvenWhenTheirEqualityObjectsHaveHorribleEqualsHashCode()
+    throws ExecutionException, InterruptedException {
+
+    class MyHorribleEquality {
+      private static final AtomicInteger screwYouHash = new AtomicInteger();
+      @Override
+      public int hashCode() {
+        return screwYouHash.incrementAndGet();
+      }
+
+      @Override
+      public boolean equals(Object obj) {
+        return false;
+      }
+    }
+
+    MyHorribleEquality equality = new MyHorribleEquality();
+    CancellablePromise<Void> f1 = ReadAction.nonBlocking(() -> {}).coalesceBy(equality).submit(AppExecutorUtil.getAppExecutorService());
+    CancellablePromise<Void> f2 = ReadAction.nonBlocking(() -> {}).coalesceBy(equality).submit(AppExecutorUtil.getAppExecutorService());
+    f2.get();
+    f1.get();
+    LeakHunter.checkLeak(NonBlockingReadActionImpl.getTasksByEquality(), MyHorribleEquality.class);
+  }
+
+  public void testNonBlockingReadActionDoesNotRunSynchronousReadActionOnCreationToAvoidDeadlock() {
+    AtomicReference<CancellablePromise<Integer>> promise = new AtomicReference<>();
+    AtomicReference<Future<?>> future = new AtomicReference<>();
+    ApplicationManager.getApplication().runWriteAction(() -> {
+      future.set(ApplicationManager.getApplication().executeOnPooledThread(() -> {
+        promise.set(ReadAction.nonBlocking(() -> 1)
+                      .expireWith(getTestRootDisposable())
+                      .submit(AppExecutorUtil.getAppExecutorService()));
+      }));
+      // must be able to schedule NBRA even when EDT is blocked
+      try {
+        future.get().get();
+      }
+      catch (Exception e) {
+        throw new RuntimeException(e);
+      }
+    });
+    while (!promise.get().isDone()) {
+      UIUtil.dispatchAllInvocationEvents(); // NBRA invokeLaters when sensed there's pending write action
     }
   }
 }

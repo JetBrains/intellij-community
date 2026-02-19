@@ -1,6 +1,24 @@
 <html>
 <body>
-Reports <b>switch</b> statements that are nested inside other
-<b>switch</b> statements. Such nested switch statements are confusing, and may result in unexpected behaviour.
+Reports <code>switch</code> statements that are nested inside other <code>switch</code> statements.
+Such nested switch statements are confusing, and may result in unexpected behaviour.
+<p><b>Example:</b></p>
+<pre>
+<code>
+switch (outer) {
+  case 1:
+    switch (inner) {
+      case 1:
+        print "inner 1"
+        break
+      default:
+        print "inner default"
+    }
+    break
+  default:
+    print "default"
+}
+</code>
+</pre>
 </body>
 </html>

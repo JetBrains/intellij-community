@@ -1,21 +1,46 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.extractMethod;
 
 import com.intellij.codeInsight.PsiEquivalenceUtil;
 import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.psi.*;
-import com.intellij.psi.controlFlow.*;
+import com.intellij.psi.JavaRecursiveElementVisitor;
+import com.intellij.psi.PsiBreakStatement;
+import com.intellij.psi.PsiContinueStatement;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiEllipsisType;
+import com.intellij.psi.PsiLoopStatement;
+import com.intellij.psi.PsiReference;
+import com.intellij.psi.PsiReferenceExpression;
+import com.intellij.psi.PsiReturnStatement;
+import com.intellij.psi.PsiStatement;
+import com.intellij.psi.PsiVariable;
+import com.intellij.psi.controlFlow.AnalysisCanceledException;
+import com.intellij.psi.controlFlow.ControlFlow;
+import com.intellij.psi.controlFlow.ControlFlowFactory;
+import com.intellij.psi.controlFlow.ControlFlowOptions;
+import com.intellij.psi.controlFlow.ControlFlowUtil;
+import com.intellij.psi.controlFlow.Instruction;
+import com.intellij.psi.controlFlow.LocalsControlFlowPolicy;
+import com.intellij.psi.controlFlow.WriteVariableInstruction;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.containers.ContainerUtil;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
+import it.unimi.dsi.fastutil.ints.IntList;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Set;
 
+@ApiStatus.Internal
 public final class ControlFlowWrapper {
   private static final Logger LOG = Logger.getInstance(ControlFlowWrapper.class);
 
@@ -26,7 +51,7 @@ public final class ControlFlowWrapper {
   private boolean myGenerateConditionalExit;
   private Collection<PsiStatement> myExitStatements;
   private PsiStatement myFirstExitStatementCopy;
-  private IntArrayList myExitPoints;
+  private IntList myExitPoints;
 
   public ControlFlowWrapper(PsiElement codeFragment, PsiElement[] elements) throws PrepareFailedException {
     try {
@@ -70,19 +95,42 @@ public final class ControlFlowWrapper {
     }
   }
 
-  PsiStatement getFirstExitStatementCopy() {
+  public PsiStatement getFirstExitStatementCopy() {
     return myFirstExitStatementCopy;
   }
 
-  public Collection<PsiStatement> prepareExitStatements(final PsiElement @NotNull [] elements,
-                                                        @NotNull final PsiElement enclosingCodeFragment)
+  public @NotNull Collection<PsiStatement> prepareAndCheckExitStatements(final PsiElement @NotNull [] elements,
+                                                                         final @NotNull PsiElement enclosingCodeFragment)
     throws ExitStatementsNotSameException {
-    myExitPoints = new IntArrayList();
-    myExitStatements = ControlFlowUtil
-      .findExitPointsAndStatements(myControlFlow, myFlowStart, myFlowEnd, myExitPoints, ControlFlowUtil.DEFAULT_EXIT_STATEMENTS_CLASSES);
+    prepareExitStatements(elements);
+    checkExitStatements(elements, enclosingCodeFragment);
+    return myExitStatements;
+  }
+
+  /**
+   * @param elements elements to extract
+   * @param enclosingCodeFragment code fragment that contains all the elements to extract
+   * @throws ExitStatementsNotSameException if there are many exit statements that cannot be deduplicated
+   */
+  public void checkExitStatements(PsiElement @NotNull [] elements, @NotNull PsiElement enclosingCodeFragment) 
+    throws ExitStatementsNotSameException {
     if (ControlFlowUtil.hasObservableThrowExitPoints(myControlFlow, myFlowStart, myFlowEnd, elements, enclosingCodeFragment)) {
       throw new ExitStatementsNotSameException();
     }
+    if (myExitPoints.size() != 1) {
+      areExitStatementsTheSame();
+    }
+  }
+
+  /**
+   * Initializes the wrapper
+   * @param elements elements to extract
+   * @return a collection of exit statements
+   */
+  public @NotNull Collection<PsiStatement> prepareExitStatements(PsiElement @NotNull [] elements) {
+    myExitPoints = new IntArrayList();
+    myExitStatements = ControlFlowUtil
+      .findExitPointsAndStatements(myControlFlow, myFlowStart, myFlowEnd, myExitPoints, ControlFlowUtil.DEFAULT_EXIT_STATEMENTS_CLASSES);
     if (LOG.isDebugEnabled()) {
       LOG.debug("exit points:");
       for (int i = 0; i < myExitPoints.size(); i++) {
@@ -100,7 +148,6 @@ public final class ControlFlowWrapper {
 
     if (myExitPoints.size() != 1) {
       myGenerateConditionalExit = true;
-      areExitStatementsTheSame();
     }
     return myExitStatements;
   }
@@ -124,11 +171,11 @@ public final class ControlFlowWrapper {
     myFirstExitStatementCopy = (PsiStatement)first.copy();
   }
 
-  boolean isGenerateConditionalExit() {
+  public boolean isGenerateConditionalExit() {
     return myGenerateConditionalExit;
   }
 
-  Collection<PsiStatement> getExitStatements() {
+  public Collection<PsiStatement> getExitStatements() {
     return myExitStatements;
   }
 
@@ -138,32 +185,40 @@ public final class ControlFlowWrapper {
 
   public static class ExitStatementsNotSameException extends Exception {}
 
-
-  public PsiVariable @NotNull [] getOutputVariables() {
-    return getOutputVariables(myGenerateConditionalExit);
+  /**
+   * Returns output variables up to the specified limit.
+   * Because processing is stopped after the limit is reached, this method avoids work.
+   *
+   * @param limit the maximum amount of output variables needed.
+   * @return the output variables, no more than the specified limit.
+   */
+  public PsiVariable @NotNull [] getOutputVariables(int limit) {
+    return getOutputVariables(myGenerateConditionalExit, limit);
   }
 
-  PsiVariable @NotNull [] getOutputVariables(boolean collectVariablesAtExitPoints) {
-    PsiVariable[] myOutputVariables = ControlFlowUtil.getOutputVariables(myControlFlow, myFlowStart, myFlowEnd, myExitPoints.toIntArray());
+  public PsiVariable @NotNull [] getOutputVariables() {
+    return getOutputVariables(myGenerateConditionalExit, Integer.MAX_VALUE);
+  }
+
+  public PsiVariable @NotNull [] getOutputVariables(boolean collectVariablesAtExitPoints, int limit) {
+    PsiVariable[] myOutputVariables =
+      ControlFlowUtil.getOutputVariables(myControlFlow, myFlowStart, myFlowEnd, myExitPoints.toIntArray(), limit);
     if (collectVariablesAtExitPoints) {
       //variables declared in selected block used in return statements are to be considered output variables when extracting guard methods
-      final Set<PsiVariable> outputVariables = ContainerUtil.set(myOutputVariables);
+      final Set<PsiVariable> outputVariables = ContainerUtil.newHashSet(myOutputVariables);
       for (PsiStatement statement : myExitStatements) {
         statement.accept(new JavaRecursiveElementVisitor() {
 
           @Override
-          public void visitReferenceExpression(PsiReferenceExpression expression) {
+          public void visitReferenceExpression(@NotNull PsiReferenceExpression expression) {
+            if (outputVariables.size() >= limit) return;
             super.visitReferenceExpression(expression);
-            final PsiElement resolved = expression.resolve();
-            if (resolved instanceof PsiVariable) {
-              final PsiVariable variable = (PsiVariable)resolved;
-              if (isWrittenInside(variable)) {
-                outputVariables.add(variable);
-              }
+            if (expression.resolve() instanceof PsiVariable variable && isWrittenInside(variable)) {
+              outputVariables.add(variable);
             }
           }
 
-          private boolean isWrittenInside(final PsiVariable variable) {
+          private boolean isWrittenInside(PsiVariable variable) {
             final List<Instruction> instructions = myControlFlow.getInstructions();
             for (int i = myFlowStart; i < myFlowEnd; i++) {
               Instruction instruction = instructions.get(i);
@@ -183,7 +238,7 @@ public final class ControlFlowWrapper {
     return myOutputVariables;
   }
 
-  boolean isReturnPresentBetween() {
+  public boolean isReturnPresentBetween() {
     return ControlFlowUtil.returnPresentBetween(myControlFlow, myFlowStart, myFlowEnd);
   }
 
@@ -192,7 +247,7 @@ public final class ControlFlowWrapper {
     Variables:
     for (Iterator<PsiVariable> iterator = inputVariables.iterator(); iterator.hasNext();) {
       PsiVariable variable = iterator.next();
-      for (PsiReference ref : ReferencesSearch.search(variable, scope)) {
+      for (PsiReference ref : ReferencesSearch.search(variable, scope).asIterable()) {
         PsiElement element = ref.getElement();
         int elementOffset = myControlFlow.getStartOffset(element);
         if (elementOffset == -1) {
@@ -258,8 +313,7 @@ public final class ControlFlowWrapper {
     return myInputVariables;
   }
 
-  PsiStatement getExitStatementCopy(PsiElement returnStatement,
-                                    final PsiElement[] elements) {
+  public PsiStatement getExitStatementCopy(PsiElement returnStatement, PsiElement[] elements) {
     PsiStatement exitStatementCopy = null;
     // replace all exit-statements such as break's or continue's with appropriate return
     for (PsiStatement exitStatement : myExitStatements) {
@@ -317,11 +371,11 @@ public final class ControlFlowWrapper {
     return ControlFlowUtil.getInitializedTwice(myControlFlow, start, myControlFlow.getSize());
   }
 
-  List<PsiVariable> getUsedVariables() {
+  public List<PsiVariable> getUsedVariables() {
     return getUsedVariables(myFlowEnd);
   }
 
-  List<PsiVariable> getUsedVariablesInBody(PsiElement codeFragment, PsiVariable[] outputVariables) {
+  public List<PsiVariable> getUsedVariablesInBody(PsiElement codeFragment, PsiVariable[] outputVariables) {
     final List<PsiVariable> variables = getUsedVariables(myFlowStart, myFlowEnd);
     if (skipVariablesFromExitStatements(outputVariables)) {
       removeParametersUsedInExitsOnly(codeFragment, variables);

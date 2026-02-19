@@ -10,8 +10,7 @@ class Test {
         return "default";
     }
 
-    @Nullable
-    private Integer newMethod(boolean condition, String f2) {
+    private @Nullable Integer newMethod(boolean condition, String f2) {
         int x = 42;
         if (condition) return null;
         if (!condition) return null;

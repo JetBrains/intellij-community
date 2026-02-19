@@ -1,0 +1,4 @@
+class Clazz():
+    def method(self): ...
+    
+Clazz().metINSERTEDhod()

@@ -1,25 +1,33 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.commit.message;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.codeInspection.LocalInspectionTool;
-import com.intellij.codeInspection.ex.*;
+import com.intellij.codeInspection.ex.InspectionProfileImpl;
+import com.intellij.codeInspection.ex.InspectionToolWrapper;
+import com.intellij.codeInspection.ex.InspectionToolsSupplier;
+import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
+import com.intellij.codeInspection.ex.Tools;
+import com.intellij.codeInspection.ex.ToolsImpl;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.PersistentStateComponent;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
+import com.intellij.openapi.diagnostic.Attachment;
+import com.intellij.openapi.diagnostic.RuntimeExceptionWithAttachments;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.VcsConfiguration;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.Topic;
 import com.intellij.util.xmlb.annotations.Tag;
 import com.intellij.util.xmlb.annotations.Transient;
 import org.jdom.Element;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Arrays;
 import java.util.EventListener;
 import java.util.List;
-import java.util.Objects;
+import java.util.stream.Collectors;
 
 @State(name = "CommitMessageInspectionProfile", storages = @Storage("vcs.xml"))
 public class CommitMessageInspectionProfile extends InspectionProfileImpl
@@ -28,21 +36,24 @@ public class CommitMessageInspectionProfile extends InspectionProfileImpl
   public static final @NotNull Topic<ProfileListener> TOPIC = Topic.create("commit message inspection changes", ProfileListener.class);
 
   private static final String PROFILE_NAME = "Commit Dialog"; // NON-NLS
-  public static final InspectionProfileImpl DEFAULT =
-    new InspectionProfileImpl(PROFILE_NAME, new CommitMessageInspectionToolSupplier(), (InspectionProfileImpl)null);
+
+  private static @NotNull InspectionProfileImpl createDefaultProfile() {
+    return new InspectionProfileImpl(PROFILE_NAME, new CommitMessageInspectionToolSupplier(), (InspectionProfileImpl)null);
+  }
 
   private final @NotNull Project myProject;
 
   public CommitMessageInspectionProfile(@NotNull Project project) {
-    super(PROFILE_NAME, new CommitMessageInspectionToolSupplier(), DEFAULT);
+    super(PROFILE_NAME, new CommitMessageInspectionToolSupplier(), createDefaultProfile());
 
     myProject = project;
   }
 
   public static @NotNull CommitMessageInspectionProfile getInstance(@NotNull Project project) {
-    return ServiceManager.getService(project, CommitMessageInspectionProfile.class);
+    return project.getService(CommitMessageInspectionProfile.class);
   }
 
+  @ApiStatus.Internal
   public static @NotNull BodyLimitSettings getBodyLimitSettings(@NotNull Project project) {
     VcsConfiguration configuration = VcsConfiguration.getInstance(project);
     CommitMessageInspectionProfile profile = getInstance(project);
@@ -75,9 +86,16 @@ public class CommitMessageInspectionProfile extends InspectionProfileImpl
   }
 
   public @NotNull <T extends LocalInspectionTool> T getTool(@NotNull Class<T> aClass) {
-    InspectionToolWrapper<?, ?> tool = getInspectionTool(InspectionProfileEntry.getShortName(aClass.getSimpleName()), myProject);
+    String className = aClass.getSimpleName();
+    InspectionToolWrapper<?, ?> toolWrapper = getInspectionTool(InspectionProfileEntry.getShortName(className), myProject);
+    if (toolWrapper == null) {
+      String allTools = getTools().stream().map(Tools::getShortName).collect(Collectors.joining("\n"));
+      throw new RuntimeExceptionWithAttachments("Could not find inspection tool " + aClass.getName() + " in project " + myProject,
+                                                new Attachment("allTools.txt", allTools));
+    }
+
     //noinspection unchecked
-    return (T)Objects.requireNonNull(tool).getTool();
+    return (T)toolWrapper.getTool();
   }
 
   public <T extends LocalInspectionTool> boolean isToolEnabled(@NotNull Class<T> aClass) {
@@ -128,12 +146,8 @@ public class CommitMessageInspectionProfile extends InspectionProfileImpl
   private static class CommitMessageInspectionToolSupplier extends InspectionToolsSupplier {
     @Override
     public @NotNull List<InspectionToolWrapper<?, ?>> createTools() {
-      return Arrays.asList(
-        new LocalInspectionToolWrapper(new SubjectBodySeparationInspection()),
-        new LocalInspectionToolWrapper(new SubjectLimitInspection()),
-        new LocalInspectionToolWrapper(new BodyLimitInspection()),
-        new LocalInspectionToolWrapper(new CommitMessageSpellCheckingInspection())
-      );
+      return ContainerUtil.map(CommitMessageInspectionEP.EP_NAME.getExtensionList(),
+                               it -> new LocalInspectionToolWrapper(it.createInstance(ApplicationManager.getApplication())));
     }
   }
 

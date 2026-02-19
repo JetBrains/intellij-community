@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.refactoring.rename;
 
@@ -11,23 +11,22 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class NonCodeUsageInfoFactory implements UsageInfoFactory {
-  private final PsiElement myElement;
+  private final PsiElement myPsiElement;
   private final String myStringToReplace;
 
-  public NonCodeUsageInfoFactory(final PsiElement element, final String stringToReplace) {
-    myElement = element;
+  public NonCodeUsageInfoFactory(@NotNull PsiElement psiElement, final String stringToReplace) {
+    myPsiElement = psiElement;
     myStringToReplace = stringToReplace;
   }
 
   @Override
-  @Nullable
-  public UsageInfo createUsageInfo(@NotNull PsiElement usage, int startOffset, int endOffset) {
+  public @Nullable UsageInfo createUsageInfo(@NotNull PsiElement usage, int startOffset, int endOffset) {
     final PsiElement namedElement = TargetElementUtilBase.getNamedElement(usage, startOffset);
     if (namedElement != null) {
       return null;
     }
 
     int start = usage.getTextRange().getStartOffset();
-    return NonCodeUsageInfo.create(usage.getContainingFile(), start + startOffset, start + endOffset, myElement, myStringToReplace);
+    return NonCodeUsageInfo.create(usage.getContainingFile(), start + startOffset, start + endOffset, myPsiElement, myStringToReplace);
   }
 }

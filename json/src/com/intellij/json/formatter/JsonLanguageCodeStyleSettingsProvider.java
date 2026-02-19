@@ -1,19 +1,24 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.json.formatter;
 
 import com.intellij.application.options.IndentOptionsEditor;
 import com.intellij.application.options.SmartIndentOptionsEditor;
+import com.intellij.application.options.codeStyle.properties.CodeStyleFieldAccessor;
+import com.intellij.application.options.codeStyle.properties.MagicIntegerConstAccessor;
 import com.intellij.json.JsonBundle;
 import com.intellij.json.JsonLanguage;
 import com.intellij.lang.Language;
+import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsCustomizable;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
+import com.intellij.psi.codeStyle.CustomCodeStyleSettings;
 import com.intellij.psi.codeStyle.LanguageCodeStyleSettingsProvider;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.lang.reflect.Field;
 import java.util.Arrays;
 
 import static com.intellij.psi.codeStyle.CodeStyleSettingsCustomizableOptions.getInstance;
@@ -21,8 +26,8 @@ import static com.intellij.psi.codeStyle.CodeStyleSettingsCustomizableOptions.ge
 /**
  * @author Mikhail Golubev
  */
-public class JsonLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSettingsProvider {
-  private static class Holder {
+public final class JsonLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSettingsProvider {
+  private static final class Holder {
     private static final String[] ALIGN_OPTIONS = Arrays.stream(JsonCodeStyleSettings.PropertyAlignment.values())
       .map(alignment -> alignment.getDescription())
       .toArray(value -> new String[value]);
@@ -31,14 +36,15 @@ public class JsonLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSett
       ArrayUtil.toIntArray(
         ContainerUtil.map(JsonCodeStyleSettings.PropertyAlignment.values(), alignment -> alignment.getId()));
 
-    private static final String SAMPLE = "{\n" +
-                                         "    \"json literals are\": {\n" +
-                                         "        \"strings\": [\"foo\", \"bar\", \"\\u0062\\u0061\\u0072\"],\n" +
-                                         "        \"numbers\": [42, 6.62606975e-34],\n" +
-                                         "        \"boolean values\": [true, false,],\n" +
-                                         "        \"objects\": {\"null\": null,\"another\": null,}\n" +
-                                         "    }\n" +
-                                         "}";
+    private static final String SAMPLE = """
+      {
+          "json literals are": {
+              "strings": ["foo", "bar", "\\u0062\\u0061\\u0072"],
+              "numbers": [42, 6.62606975e-34],
+              "boolean values": [true, false,],
+              "objects": {"null": null,"another": null,}
+          }
+      }""";
   }
   @Override
   public void customizeSettings(@NotNull CodeStyleSettingsCustomizable consumer, @NotNull SettingsType settingsType) {
@@ -89,15 +95,13 @@ public class JsonLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSett
     }
   }
 
-  @NotNull
   @Override
-  public Language getLanguage() {
+  public @NotNull Language getLanguage() {
     return JsonLanguage.INSTANCE;
   }
 
-  @Nullable
   @Override
-  public IndentOptionsEditor getIndentOptionsEditor() {
+  public @Nullable IndentOptionsEditor getIndentOptionsEditor() {
     return new SmartIndentOptionsEditor();
   }
 
@@ -112,5 +116,30 @@ public class JsonLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSett
     indentOptions.INDENT_SIZE = 2;
     // strip all blank lines by default
     commonSettings.KEEP_BLANK_LINES_IN_CODE = 0;
+  }
+
+  @Override
+  public @Nullable CodeStyleFieldAccessor getAccessor(@NotNull Object codeStyleObject, @NotNull Field field) {
+    if (codeStyleObject instanceof JsonCodeStyleSettings && field.getName().equals("PROPERTY_ALIGNMENT")) {
+      return new MagicIntegerConstAccessor(
+        codeStyleObject, field,
+        new int[] {
+          JsonCodeStyleSettings.PropertyAlignment.DO_NOT_ALIGN.getId(),
+          JsonCodeStyleSettings.PropertyAlignment.ALIGN_ON_VALUE.getId(),
+          JsonCodeStyleSettings.PropertyAlignment.ALIGN_ON_COLON.getId()
+        },
+        new String[] {
+          "do_not_align",
+          "align_on_value",
+          "align_on_colon"
+        }
+      );
+    }
+    return null;
+  }
+
+  @Override
+  public @NotNull CustomCodeStyleSettings createCustomSettings(@NotNull CodeStyleSettings settings) {
+    return new JsonCodeStyleSettings(settings);
   }
 }

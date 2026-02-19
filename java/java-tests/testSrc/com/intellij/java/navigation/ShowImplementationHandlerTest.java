@@ -6,10 +6,16 @@ import com.intellij.codeInsight.ShowImplementationsTestUtil;
 import com.intellij.codeInsight.TargetElementUtil;
 import com.intellij.pom.Navigatable;
 import com.intellij.pom.java.LanguageLevel;
-import com.intellij.psi.*;
+import com.intellij.psi.CommonClassNames;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiLambdaExpression;
+import com.intellij.psi.PsiMethod;
 import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
 
+/** See also {@link com.intellij.codeInsight.ShowImplementationsTest} */
 public class ShowImplementationHandlerTest extends JavaCodeInsightFixtureTestCase {
 
   @Override
@@ -19,12 +25,12 @@ public class ShowImplementationHandlerTest extends JavaCodeInsightFixtureTestCas
   }
 
   public void testMultipleImplsFromAbstractCall() {
-    PsiFile file = myFixture.addFileToProject("Foo.java", "public abstract class Hello {" +
-                                                          "    {" +
-                                                          "        Runnable r = () <caret>-> {};\n" +
-                                                          "    }\n" +
-                                                          "}\n" +
-                                                          "\n");
+    PsiFile file = myFixture.addFileToProject("Foo.java", """
+      public abstract class Hello {    {        Runnable r = () <caret>-> {};
+          }
+      }
+
+      """);
     myFixture.configureFromExistingVirtualFile(file.getVirtualFile());
 
     final PsiElement element =
@@ -35,12 +41,12 @@ public class ShowImplementationHandlerTest extends JavaCodeInsightFixtureTestCas
   }
 
   public void testDisableFunctionalInterfaceReferenceOnWhitespacesInside() {
-    PsiFile file = myFixture.addFileToProject("Foo.java", "public abstract class Hello {" +
-                                                          "    {" +
-                                                          "        Runnable r = ()<caret> -> {};\n" +
-                                                          "    }\n" +
-                                                          "}\n" +
-                                                          "\n");
+    PsiFile file = myFixture.addFileToProject("Foo.java", """
+      public abstract class Hello {    {        Runnable r = ()<caret> -> {};
+          }
+      }
+
+      """);
     myFixture.configureFromExistingVirtualFile(file.getVirtualFile());
 
     final PsiElement element =
@@ -51,12 +57,12 @@ public class ShowImplementationHandlerTest extends JavaCodeInsightFixtureTestCas
   public void testFunctionExpressionsOnReference() {
     myFixture.addClass("public interface I {void m();}");
     myFixture.addClass("public class Usage {{I i = () -> {};}}");
-    PsiFile file = myFixture.addFileToProject("Foo.java", "public abstract class Hello {" +
-                                                          "    void foo(I i) {" +
-                                                          "        i.<caret>m();\n" +
-                                                          "    }\n" +
-                                                          "}\n" +
-                                                          "\n");
+    PsiFile file = myFixture.addFileToProject("Foo.java", """
+      public abstract class Hello {    void foo(I i) {        i.<caret>m();
+          }
+      }
+
+      """);
     myFixture.configureFromExistingVirtualFile(file.getVirtualFile());
 
     final PsiElement[] implementations = ShowImplementationsTestUtil.getImplementations();

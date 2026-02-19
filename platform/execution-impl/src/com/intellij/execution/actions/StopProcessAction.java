@@ -20,20 +20,20 @@ import com.intellij.execution.KillableProcess;
 import com.intellij.execution.impl.ExecutionManagerImpl;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.icons.AllIcons;
-import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.project.DumbAwareAction;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.Icon;
 import java.util.function.Supplier;
 
 /**
  * @author Sergey Simonchik
  */
-public class StopProcessAction extends DumbAwareAction implements AnAction.TransparentUpdate {
+public class StopProcessAction extends DumbAwareAction {
   private ProcessHandler myProcessHandler;
 
   public StopProcessAction(@NotNull String text, @Nullable String description, @Nullable ProcessHandler processHandler) {
@@ -50,8 +50,13 @@ public class StopProcessAction extends DumbAwareAction implements AnAction.Trans
   }
 
   @Override
-  public void update(@NotNull final AnActionEvent e) {
+  public void update(final @NotNull AnActionEvent e) {
     update(e.getPresentation(), getTemplatePresentation(), myProcessHandler);
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.EDT;
   }
 
   public static void update(@NotNull Presentation presentation,
@@ -62,8 +67,7 @@ public class StopProcessAction extends DumbAwareAction implements AnAction.Trans
     String description = templatePresentation.getDescription();
     if (processHandler != null && !processHandler.isProcessTerminated()) {
       enable = true;
-      if (processHandler.isProcessTerminating() && processHandler instanceof KillableProcess) {
-        KillableProcess killableProcess = (KillableProcess) processHandler;
+      if (processHandler.isProcessTerminating() && processHandler instanceof KillableProcess killableProcess) {
         if (killableProcess.canKillProcess()) {
           // 'force quite' action presentation
           icon = AllIcons.Debugger.KillProcess;

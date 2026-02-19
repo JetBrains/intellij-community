@@ -1,8 +1,12 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.TailType;
-import com.intellij.codeInsight.lookup.*;
+import com.intellij.codeInsight.lookup.AutoCompletionPolicy;
+import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.codeInsight.lookup.LookupElementBuilder;
+import com.intellij.codeInsight.lookup.LookupElementDecorator;
+import com.intellij.codeInsight.lookup.TailTypeDecorator;
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.impl.source.xml.SchemaPrefixReference;
@@ -17,9 +21,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * @author yole
- */
+
 public class TagNameReferenceCompletionProvider extends CompletionProvider<CompletionParameters> {
   public static LookupElement[] getTagNameVariants(final @NotNull XmlTag tag, final String prefix) {
     List<LookupElement> elements = new ArrayList<>();
@@ -32,7 +34,7 @@ public class TagNameReferenceCompletionProvider extends CompletionProvider<Compl
   @Override
   protected void addCompletions(@NotNull CompletionParameters parameters,
                                 @NotNull ProcessingContext context,
-                                @NotNull final CompletionResultSet result) {
+                                final @NotNull CompletionResultSet result) {
     LegacyCompletionContributor.processReferences(parameters, result, (reference, set) -> {
       if (reference instanceof TagNameReference) {
         collectCompletionVariants((TagNameReference)reference, set);

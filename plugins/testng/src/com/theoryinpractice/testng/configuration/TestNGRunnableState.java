@@ -1,32 +1,26 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.theoryinpractice.testng.configuration;
 
-import com.beust.jcommander.JCommander;
+import com.intellij.execution.CantRunException;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.JavaTestFrameworkRunnableState;
+import com.intellij.execution.configurations.CompositeParameterTargetedValue;
 import com.intellij.execution.configurations.JavaParameters;
 import com.intellij.execution.configurations.ParametersList;
 import com.intellij.execution.runners.ExecutionEnvironment;
+import com.intellij.execution.target.TargetEnvironment;
+import com.intellij.execution.testframework.SearchForTestsTask;
 import com.intellij.execution.testframework.SourceScope;
 import com.intellij.execution.testframework.TestSearchScope;
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
+import com.intellij.openapi.projectRoots.JavaSdkVersion;
+import com.intellij.openapi.projectRoots.JavaSdkVersionUtil;
+import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.projectRoots.ex.JavaSdkUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
@@ -42,11 +36,16 @@ import com.theoryinpractice.testng.model.TestData;
 import com.theoryinpractice.testng.model.TestType;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.testng.CommandLineArgs;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
+import java.util.TreeMap;
 
 public class TestNGRunnableState extends JavaTestFrameworkRunnableState<TestNGConfiguration> {
   private static final Logger LOG = Logger.getInstance("TestNG Runner");
@@ -61,9 +60,8 @@ public class TestNGRunnableState extends JavaTestFrameworkRunnableState<TestNGCo
     //setModulesToCompile(ModuleManager.getInstance(config.getProject()).getModules());
   }
 
-  @NotNull
   @Override
-  protected String getFrameworkName() {
+  protected @NotNull String getFrameworkName() {
     return TESTNG_TEST_FRAMEWORK_NAME;
   }
 
@@ -73,15 +71,22 @@ public class TestNGRunnableState extends JavaTestFrameworkRunnableState<TestNGCo
   }
 
   @Override
-  protected void configureRTClasspath(JavaParameters javaParameters, Module module) {
+  protected void configureRTClasspath(JavaParameters javaParameters, Module module) throws CantRunException {
+    Sdk jdk = javaParameters.getJdk();
+    JavaSdkVersion jdkVersion = JavaSdkVersionUtil.getJavaSdkVersion(jdk);
+    if (jdkVersion != null && !JavaSdkUtil.isJdkAtLeast(jdk, JavaSdkVersion.JDK_1_8)) {
+      throw new CantRunException(JavaBundle.message("error.message.ide.does.not.support.starting.processes.using.old.java",
+                                                    jdkVersion.getDescription()));
+    }
     javaParameters.getClassPath().addFirst(PathUtil.getJarPathForClass(RemoteTestNGStarter.class));
-    javaParameters.getClassPath().addTail(PathUtil.getJarPathForClass(JCommander.class));
   }
 
   @Override
   protected JavaParameters createJavaParameters() throws ExecutionException {
     final JavaParameters javaParameters = super.createJavaParameters();
-    javaParameters.setMainClass("com.intellij.rt.testng.RemoteTestNGStarter");
+    if (javaParameters.getMainClass() == null) { // for custom main class, e.g. overridden by JUnitDevKitUnitTestingSettings.Companion#apply
+      javaParameters.setMainClass("com.intellij.rt.testng.RemoteTestNGStarter");
+    }
 
     try {
       port = NetUtils.findAvailableSocketPort();
@@ -98,12 +103,12 @@ public class TestNGRunnableState extends JavaTestFrameworkRunnableState<TestNGCo
 
     javaParameters.getProgramParametersList().add(CommandLineArgs.USE_DEFAULT_LISTENERS, String.valueOf(data.USE_DEFAULT_REPORTERS));
 
-    @NonNls final StringBuilder buf = new StringBuilder();
+    final @NonNls StringBuilder buf = new StringBuilder();
     if (data.TEST_LISTENERS != null && !data.TEST_LISTENERS.isEmpty()) {
       buf.append(StringUtil.join(data.TEST_LISTENERS, ";"));
     }
     collectListeners(javaParameters, buf, IDEATestNGListener.EP_NAME, ";");
-    if (buf.length() > 0) javaParameters.getProgramParametersList().add(CommandLineArgs.LISTENER, buf.toString());
+    if (!buf.isEmpty()) javaParameters.getProgramParametersList().add(CommandLineArgs.LISTENER, buf.toString());
 
     createServerSocket(javaParameters);
     createTempFiles(javaParameters);
@@ -121,15 +126,19 @@ public class TestNGRunnableState extends JavaTestFrameworkRunnableState<TestNGCo
     }
   }
 
-  @NotNull
   @Override
-  protected String getForkMode() {
+  protected @NotNull String getForkMode() {
     return "none";
   }
 
   @Override
-  public SearchingForTestsTask createSearchingForTestsTask() {
-    return new SearchingForTestsTask(myServerSocket, config, myTempFile) {
+  protected boolean isPrintAsyncStackTraceForExceptions() {
+    return getConfiguration().isPrintAsyncStackTraceForExceptions();
+  }
+
+  @Override
+  public @Nullable SearchForTestsTask createSearchingForTestsTask(@NotNull TargetEnvironment targetEnvironment) {
+    return new SearchingForTestsTask(getServerSocket(), config, myTempFile) {
       @Override
       protected void onFound() {
         super.onFound();
@@ -164,19 +173,18 @@ public class TestNGRunnableState extends JavaTestFrameworkRunnableState<TestNGCo
   }
 
   @Override
-  @NotNull
-  protected String getFrameworkId() {
+  protected @NotNull String getFrameworkId() {
     return "testng";
   }
 
   @Override
   protected void passTempFile(ParametersList parametersList, String tempFilePath) {
-    parametersList.add("-temp", tempFilePath);
+    parametersList.add(new CompositeParameterTargetedValue("-temp"));
+    parametersList.add(new CompositeParameterTargetedValue().addPathPart(tempFilePath));
   }
 
   @Override
-  @NotNull
-  public TestNGConfiguration getConfiguration() {
+  public @NotNull TestNGConfiguration getConfiguration() {
     return config;
   }
 

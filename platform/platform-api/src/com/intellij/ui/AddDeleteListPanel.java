@@ -1,18 +1,26 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.ui;
 
 import com.intellij.CommonBundle;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.ui.components.JBList;
+import com.intellij.ui.dsl.builder.DslComponentProperty;
+import com.intellij.ui.dsl.builder.VerticalComponentGap;
+import com.intellij.ui.dsl.gridLayout.UnscaledGaps;
 import com.intellij.util.ui.ComponentWithEmptyText;
+import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.StatusText;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import javax.swing.border.Border;
-import java.awt.*;
+import javax.swing.DefaultListCellRenderer;
+import javax.swing.DefaultListModel;
+import javax.swing.JButton;
+import javax.swing.JComponent;
+import javax.swing.ListCellRenderer;
+import javax.swing.border.CompoundBorder;
+import java.awt.BorderLayout;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -23,12 +31,12 @@ import java.util.List;
  * @author anna
  */
 public abstract class AddDeleteListPanel<T> extends PanelWithButtons implements ComponentWithEmptyText {
-  private final @NlsContexts.BorderTitle String myTitle;
+  private final @NlsContexts.Label @Nullable String myTitle;
 
   protected DefaultListModel<T> myListModel = new DefaultListModel<>();
   protected JBList<T> myList = new JBList<>(myListModel);
 
-  public AddDeleteListPanel(@NlsContexts.BorderTitle final String title, final List<T> initialList) {
+  public AddDeleteListPanel(@NlsContexts.Label @Nullable String title, List<T> initialList) {
     myTitle = title;
     for (T o : initialList) {
       if (o != null) {
@@ -37,6 +45,8 @@ public abstract class AddDeleteListPanel<T> extends PanelWithButtons implements 
     }
     myList.setCellRenderer(getListCellRenderer());
     initPanel();
+    putClientProperty(DslComponentProperty.VISUAL_PADDINGS, UnscaledGaps.EMPTY);
+    putClientProperty(DslComponentProperty.VERTICAL_COMPONENT_GAP, VerticalComponentGap.BOTH);
   }
 
   @Override
@@ -54,20 +64,18 @@ public abstract class AddDeleteListPanel<T> extends PanelWithButtons implements 
     setLayout(new BorderLayout());
     add(decorator.createPanel(), BorderLayout.CENTER);
     if (myTitle != null) {
-      setBorder(createTitledBorder(myTitle));
+      @SuppressWarnings("DialogTitleCapitalization") var outerBorder = IdeBorderFactory.createTitledBorder(
+        myTitle, false, JBInsets.emptyInsets()
+      ).setShowLine(false);
+      setBorder(new CompoundBorder(outerBorder, getBorder()));
     }
-  }
-
-  protected Border createTitledBorder(@NlsContexts.BorderTitle String title) {
-    return IdeBorderFactory.createTitledBorder(title, false);
   }
 
   protected void customizeDecorator(ToolbarDecorator decorator) {
   }
 
-  @NotNull
   @Override
-  public StatusText getEmptyText() {
+  public @NotNull StatusText getEmptyText() {
     return myList.getEmptyText();
   }
 
@@ -78,8 +86,7 @@ public abstract class AddDeleteListPanel<T> extends PanelWithButtons implements 
     }
   }
 
-  @Nullable
-  protected abstract T findItemToAdd();
+  protected abstract @Nullable T findItemToAdd();
 
   public Object [] getListItems(){
     List<Object> items = new ArrayList<>();

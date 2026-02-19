@@ -15,6 +15,6 @@
  */
 class C {
     {
-        System.out.println('<caret>aaa');
+        System.out.println('<caret>a');
     }
 }

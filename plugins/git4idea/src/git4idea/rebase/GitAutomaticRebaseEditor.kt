@@ -27,7 +27,9 @@ internal class GitAutomaticRebaseEditor(private val project: Project,
                                         private val entriesEditor: (List<GitRebaseEntry>) -> List<GitRebaseEntry>,
                                         private val plainTextEditor: (String) -> String
 ) : GitInteractiveRebaseEditorHandler(project, root) {
-  val LOG = logger<GitAutomaticRebaseEditor>()
+  companion object {
+    private val LOG = logger<GitAutomaticRebaseEditor>()
+  }
 
   override fun editCommits(file: File): Int {
     try {
@@ -39,10 +41,10 @@ internal class GitAutomaticRebaseEditor(private val project: Project,
         rebaseFile.save(entriesEditor(entries))
       }
       else {
-        val encoding = GitConfigUtil.getCommitEncoding(project, root)
+        val encoding = GitConfigUtil.getCommitEncodingCharset(project, root)
         val originalMessage = FileUtil.loadFile(file, encoding)
         val modifiedMessage = plainTextEditor(originalMessage)
-        FileUtil.writeToFile(file, modifiedMessage.toByteArray(charset(encoding)))
+        FileUtil.writeToFile(file, modifiedMessage.toByteArray(encoding))
       }
       return 0
     }

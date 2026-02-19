@@ -1,0 +1,69 @@
+### auto-generated section `build intellij.platform.ide.updateChecker` start
+load("//build:compiler-options.bzl", "create_kotlinc_options")
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+create_kotlinc_options(
+  name = "custom_update-checker",
+  opt_in = [
+    "kotlin.ExperimentalStdlibApi",
+    "com.intellij.openapi.util.IntellijInternalApi",
+  ]
+)
+
+jvm_library(
+  name = "update-checker",
+  module_name = "intellij.platform.ide.updateChecker",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  kotlinc_opts = ":custom_update-checker",
+  deps = [
+    "//platform/platform-impl:ide-impl",
+    "//platform/core-api:core",
+    "//platform/core-ui",
+    "//platform/core-impl",
+    "//platform/extensions",
+    "//platform/projectModel-api:projectModel",
+    "//platform/statistics",
+    "//platform/platform-util-io:ide-util-io",
+    "//platform/ide-core/plugins",
+    "//platform/util/jdom",
+    "//libraries/jackson/jackson",
+    "//platform/ide-core-impl",
+    "//libraries/jackson/databind",
+    "//libraries/kotlinx/coroutines/core",
+    "//platform/platform-impl/initial-config-import",
+    "//libraries/kotlinx/serialization/core",
+    "//libraries/kotlinx/serialization/json",
+    "//platform/forms_rt:java-guiForms-rt",
+  ]
+)
+
+jvm_library(
+  name = "update-checker_test_lib",
+  module_name = "intellij.platform.ide.updateChecker",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  kotlinc_opts = ":custom_update-checker",
+  runtime_deps = [
+    ":update-checker",
+    "//platform/platform-impl:ide-impl_test_lib",
+    "//platform/core-api:core_test_lib",
+    "//platform/core-ui:core-ui_test_lib",
+    "//platform/core-impl:core-impl_test_lib",
+    "//platform/extensions:extensions_test_lib",
+    "//platform/projectModel-api:projectModel_test_lib",
+    "//platform/statistics:statistics_test_lib",
+    "//platform/platform-util-io:ide-util-io_test_lib",
+    "//platform/ide-core/plugins:plugins_test_lib",
+    "//platform/util/jdom:jdom_test_lib",
+    "//libraries/jackson/jackson:jackson_test_lib",
+    "//platform/ide-core-impl:ide-core-impl_test_lib",
+    "//libraries/jackson/databind:databind_test_lib",
+    "//libraries/kotlinx/coroutines/core:core_test_lib",
+    "//platform/platform-impl/initial-config-import:initial-config-import_test_lib",
+    "//libraries/kotlinx/serialization/core:core_test_lib",
+    "//libraries/kotlinx/serialization/json:json_test_lib",
+    "//platform/forms_rt:java-guiForms-rt_test_lib",
+  ]
+)
+### auto-generated section `build intellij.platform.ide.updateChecker` end

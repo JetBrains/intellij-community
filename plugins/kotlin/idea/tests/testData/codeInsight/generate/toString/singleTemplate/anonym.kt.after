@@ -1,0 +1,10 @@
+// GENERATOR: SINGLE_TEMPLATE
+// GENERATE_SUPER_CALL
+
+interface I
+
+val p = object: I {
+    <selection><caret></selection>override fun toString(): String {
+        return "`<no name provided>`()"
+    }
+}

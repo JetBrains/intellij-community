@@ -3,7 +3,6 @@ package com.intellij.psi.impl.source.xml.stub;
 
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.xml.XmlAttribute;
-import org.jetbrains.annotations.Nullable;
 
 public interface XmlAttributeStub<T extends XmlAttribute> extends StubElement<T> {
 }

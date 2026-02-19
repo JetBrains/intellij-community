@@ -1,0 +1,2 @@
+// FIX: Simplify boolean expression
+fun foo(arg: Boolean): Boolean = arg || !arg

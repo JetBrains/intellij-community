@@ -1,0 +1,50 @@
+<idea-plugin>
+  <extensionPoints>
+    <extensionPoint
+            qualifiedName="org.jetbrains.kotlin.binaryExtension"
+            interface="org.jetbrains.kotlin.idea.base.projectStructure.KotlinBinaryExtension" 
+            dynamic="true"/>
+  </extensionPoints>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <applicationService
+            serviceInterface="org.jetbrains.kotlin.idea.KotlinIconProviderService"
+            serviceImplementation="org.jetbrains.kotlin.idea.KotlinIdeFileIconProviderService"/>
+    <applicationService
+            serviceInterface="org.jetbrains.kotlin.analysis.decompiler.psi.KotlinLabelProviderService"
+            serviceImplementation="org.jetbrains.kotlin.idea.base.psi.fileTypes.IdeKotlinLabelProviderService"/>
+
+    <lang.substitutor language="kotlin" order="last" implementationClass="org.jetbrains.kotlin.idea.KotlinLanguageSubstitutor"/>
+
+    <fileTypeUsageSchemaDescriptor
+            schema="Kotlin"
+            implementationClass="org.jetbrains.kotlin.idea.statistics.KotlinFileTypeSchemaDetector"/>
+    <fileTypeUsageSchemaDescriptor
+            schema="Kotlin Script"
+            implementationClass="org.jetbrains.kotlin.idea.statistics.KotlinScriptFileTypeSchemaDetector"/>
+    <fileTypeUsageSchemaDescriptor
+            schema="Gradle Script"
+            implementationClass="org.jetbrains.kotlin.idea.statistics.KotlinGradleScriptFileTypeSchemaDetector"/>
+    <fileTypeUsageSchemaDescriptor
+            schema="Main Script"
+            implementationClass="org.jetbrains.kotlin.idea.statistics.KotlinMainScriptFileTypeSchemaDetector"/>
+    <fileTypeUsageSchemaDescriptor
+            schema="Space Script"
+            implementationClass="org.jetbrains.kotlin.idea.statistics.KotlinSpaceScriptFileTypeSchemaDetector"/>
+    <fileTypeUsageSchemaDescriptor
+            schema="Custom Script"
+            implementationClass="org.jetbrains.kotlin.idea.statistics.KotlinCustomScriptFileTypeSchemaDetector"/>
+
+    <internalFileTemplate name="Kotlin File"/>
+    <internalFileTemplate name="Kotlin Annotation"/>
+    <internalFileTemplate name="Kotlin Class"/>
+    <internalFileTemplate name="Kotlin Interface"/>
+    <internalFileTemplate name="Kotlin Data Class"/>
+    <internalFileTemplate name="Kotlin Sealed Class"/>
+    <internalFileTemplate name="Kotlin Sealed Interface"/>
+    <internalFileTemplate name="Kotlin Enum"/>
+    <internalFileTemplate name="Kotlin Object"/>
+    <internalFileTemplate name="Kotlin Script"/>
+    <internalFileTemplate name="Kotlin Script MainKts"/>
+  </extensions>
+</idea-plugin>

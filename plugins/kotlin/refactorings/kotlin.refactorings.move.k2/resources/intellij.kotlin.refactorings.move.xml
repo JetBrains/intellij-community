@@ -1,0 +1,21 @@
+<idea-plugin visibility="internal" package="org.jetbrains.kotlin.idea.k2.refactoring.move">
+  <dependencies>
+    <module name="intellij.kotlin.searching"/>
+    <module name="intellij.kotlin.base.externalSystem"/>
+  </dependencies>
+  <extensions defaultExtensionNs="com.intellij">
+    <refactoring.moveHandler
+            id="kotlin.moveHandler" order="first"
+            implementation="org.jetbrains.kotlin.idea.k2.refactoring.move.K2MoveHandler"/>
+    <moveFileHandler
+            id="kotlin.moveFiles"
+            implementation="org.jetbrains.kotlin.idea.k2.refactoring.move.processor.K2MoveFilesHandler"/>
+    <refactoring.moveDirectoryWithClassesHelper
+            id="kotlin.moveDirectoryWithClasses"
+            implementation="org.jetbrains.kotlin.idea.k2.refactoring.move.processor.K2MoveDirectoryWithClassesHelper"/>
+    <registryKey
+            key="kotlin.move.show.move.to.class"
+            defaultValue="false"
+            description="Shows a selector for moving declarations into classes in the move dialog"/>
+  </extensions>
+</idea-plugin>

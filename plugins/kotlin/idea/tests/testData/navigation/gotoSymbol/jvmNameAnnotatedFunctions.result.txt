@@ -1,0 +1,35 @@
+NavigationItem:
+    name: null
+ItemPresentation:
+    presentableText: Int.renamedFooExtensionTest()
+    locationString: (jvmNameAnnotatedFunctions.kt in foo.bar)
+    icon: RowIcon(icons=[Function, Private])
+TargetElement: @JvmName("renamedFooExtensionTest")
+QualifiedName: renamedFooExtensionTest
+
+NavigationItem:
+    name: null
+ItemPresentation:
+    presentableText: renamedBarFunctionTest()
+    locationString: (foo.bar)
+    icon: RowIcon(icons=[Function, Public])
+TargetElement: @JvmName("renamedBarFunctionTest")
+QualifiedName: renamedBarFunctionTest
+
+NavigationItem:
+    name: renamed
+ItemPresentation:
+    presentableText: renamed()
+    locationString: (in foo.bar.JvmNameAnnotatedFunctionsKt)
+    icon: RowIcon(icons=[Function, Private])
+TargetElement: @JvmName("renamed")
+QualifiedName: foo.bar.JvmNameAnnotatedFunctionsKt.renamed
+
+NavigationItem:
+    name: renamed
+ItemPresentation:
+    presentableText: renamed()
+    locationString: (jvmNameAnnotatedFunctions.kt in foo.bar)
+    icon: RowIcon(icons=[Function, Private])
+TargetElement: @JvmName("renamed")
+QualifiedName: (jvmNameAnnotatedFunctions.kt in foo.bar).renamed

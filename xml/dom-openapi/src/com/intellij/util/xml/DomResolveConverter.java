@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.xml;
 
 import com.intellij.codeInsight.CodeInsightBundle;
@@ -22,24 +22,21 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * Converter which resolves {@link com.intellij.util.xml.DomElement}s by name in a defined scope. The scope is taken
- * from corresponding {@link com.intellij.util.xml.DomFileDescription#getResolveScope(GenericDomValue)}.
- *
- * @author peter
+ * Converter which resolves {@link DomElement}s by name in a defined scope. The scope is taken
+ * from corresponding {@link DomFileDescription#getResolveScope(GenericDomValue)}.
  */
 public final class DomResolveConverter<T extends DomElement> extends ResolvingConverter<T>{
   private static final Map<Class<? extends DomElement>, DomResolveConverter> ourCache =
     ConcurrentFactoryMap.createMap(key -> new DomResolveConverter(key));
   private final boolean myAttribute;
-  private final SoftFactoryMap<DomElement, CachedValue<Map<String, DomElement>>> myResolveCache = new SoftFactoryMap<DomElement, CachedValue<Map<String, DomElement>>>() {
+  private final SoftFactoryMap<DomElement, CachedValue<Map<String, DomElement>>> myResolveCache = new SoftFactoryMap<>() {
     @Override
-    @NotNull
-    protected CachedValue<Map<String, DomElement>> create(final DomElement scope) {
+    protected @NotNull CachedValue<Map<String, DomElement>> create(final @NotNull DomElement scope) {
       final DomManager domManager = scope.getManager();
       //noinspection ConstantConditions
       if (domManager == null) throw new AssertionError("Null DomManager for " + scope.getClass());
       final Project project = domManager.getProject();
-      return CachedValuesManager.getManager(project).createCachedValue(new CachedValueProvider<Map<String, DomElement>>() {
+      return CachedValuesManager.getManager(project).createCachedValue(new CachedValueProvider<>() {
         @Override
         public Result<Map<String, DomElement>> compute() {
           final Map<String, DomElement> map = new HashMap<>();
@@ -53,14 +50,13 @@ public final class DomResolveConverter<T extends DomElement> extends ResolvingCo
             if (name != null && !map.containsKey(name)) {
               map.put(name, element);
             }
-          } else {
+          }
+          else {
             for (final DomElement child : DomUtil.getDefinedChildren(element, true, myAttribute)) {
               visitDomElement(child, map);
             }
           }
-
         }
-
       }, false);
     }
   };
@@ -77,7 +73,7 @@ public final class DomResolveConverter<T extends DomElement> extends ResolvingCo
   }
 
   @Override
-  public final T fromString(final String s, final ConvertContext context) {
+  public T fromString(final String s, final @NotNull ConvertContext context) {
     if (s == null) return null;
     return (T) myResolveCache.get(getResolvingScope(context)).getValue().get(s);
   }
@@ -90,7 +86,7 @@ public final class DomResolveConverter<T extends DomElement> extends ResolvingCo
   }
 
   @Override
-  public boolean isReferenceTo(@NotNull PsiElement element, String stringValue, @Nullable T resolveResult, ConvertContext context) {
+  public boolean isReferenceTo(@NotNull PsiElement element, String stringValue, @Nullable T resolveResult, @NotNull ConvertContext context) {
     return resolveResult != null && element.getManager().areElementsEquivalent(element, resolveResult.getXmlElement());
   }
 
@@ -100,27 +96,26 @@ public final class DomResolveConverter<T extends DomElement> extends ResolvingCo
   }
 
   @Override
-  public String getErrorMessage(final String s, final ConvertContext context) {
+  public String getErrorMessage(final String s, final @NotNull ConvertContext context) {
 
     return CodeInsightBundle.message("error.cannot.resolve.0.1", TypePresentationService.getService().getTypePresentableName(myClass), s);
   }
 
   @Override
-  public final String toString(final T t, final ConvertContext context) {
+  public String toString(final T t, final @NotNull ConvertContext context) {
     if (t == null) return null;
     return ElementPresentationManager.getElementName(t);
   }
 
   @Override
-  @NotNull
-  public Collection<? extends T> getVariants(final ConvertContext context) {
+  public @NotNull Collection<? extends T> getVariants(final @NotNull ConvertContext context) {
     final DomElement reference = context.getInvocationElement();
     final DomElement scope = reference.getManager().getResolvingScope((GenericDomValue)reference);
     return (Collection<T>)myResolveCache.get(scope).getValue().values();
   }
 
   @Override
-  public LocalQuickFix[] getQuickFixes(final ConvertContext context) {
+  public LocalQuickFix[] getQuickFixes(final @NotNull ConvertContext context) {
     final DomElement element = context.getInvocationElement();
     final GenericDomValue value = element.createStableCopy();
     final String newName = value.getStringValue();

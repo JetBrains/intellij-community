@@ -1,8 +1,8 @@
-// "Create getter for 's'" "true"
+// "Create getter for 's'" "true-preview"
 class A {
   private String s;
 
-    public String getS() {
+    String getS() {
         return s;
     }
 }

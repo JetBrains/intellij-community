@@ -1,16 +1,26 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.propertyBased;
 
 import com.intellij.application.options.CodeStyle;
 import com.intellij.codeInsight.daemon.impl.quickfix.AddTypeCastFix;
+import com.intellij.extapi.psi.StubBasedPsiElementBase;
 import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.projectRoots.impl.JavaAwareProjectJdkTableImpl;
+import com.intellij.openapi.roots.ProjectFileIndex;
+import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.RecursionManager;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiDisjunctionType;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypeCastExpression;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.psi.impl.source.PsiEnumConstantImpl;
@@ -18,7 +28,15 @@ import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.SkipSlowTestLocally;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
-import com.intellij.testFramework.propertyBased.*;
+import com.intellij.testFramework.propertyBased.ActionOnFile;
+import com.intellij.testFramework.propertyBased.CheckHighlighterConsistency;
+import com.intellij.testFramework.propertyBased.DeleteRange;
+import com.intellij.testFramework.propertyBased.InsertLineComment;
+import com.intellij.testFramework.propertyBased.InvokeCompletion;
+import com.intellij.testFramework.propertyBased.InvokeIntention;
+import com.intellij.testFramework.propertyBased.MadTestingAction;
+import com.intellij.testFramework.propertyBased.MadTestingUtil;
+import com.intellij.testFramework.propertyBased.StripTestDataMarkup;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jetCheck.Generator;
 import org.jetbrains.jetCheck.PropertyChecker;
@@ -28,13 +46,11 @@ import java.util.List;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
-/**
- * @author peter
- */
 @SkipSlowTestLocally
 public class JavaCodeInsightSanityTest extends LightJavaCodeInsightFixtureTestCase {
   @Override
   protected void setUp() throws Exception {
+    Disposer.setDebugMode(false);
     super.setUp();
     RecursionManager.disableMissedCacheAssertions(getTestRootDisposable());
   }
@@ -55,7 +71,7 @@ public class JavaCodeInsightSanityTest extends LightJavaCodeInsightFixtureTestCa
 
   @Override
   protected @NotNull LightProjectDescriptor getProjectDescriptor() {
-    return JAVA_14;
+    return JAVA_15;
   }
 
   public void testRandomActivity() {
@@ -64,13 +80,14 @@ public class JavaCodeInsightSanityTest extends LightJavaCodeInsightFixtureTestCa
       file -> Generator.sampledFrom(new InvokeIntention(file, new JavaPreviewIntentionPolicy()),
                                     new InvokeCompletion(file, new JavaCompletionPolicy()),
                                     new StripTestDataMarkup(file),
-                                    new DeleteRange(file));
+                                    new DeleteRange(file),
+                                    new IntroduceVariableActionOnFile(file));
     PropertyChecker
       .checkScenarios(actionsOnJavaFiles(fileActions));
   }
 
   private void enableInspections() {
-    MadTestingUtil.enableAllInspections(getProject());
+    MadTestingUtil.enableAllInspections(getProject(), JavaLanguage.INSTANCE, "GrazieInspection", "GrazieStyle");
   }
 
   public void testPreserveComments() {
@@ -104,11 +121,15 @@ public class JavaCodeInsightSanityTest extends LightJavaCodeInsightFixtureTestCa
                                       }
                                     }, PsiTypeCastExpression.class, Function.identity()),
                                     new InsertTypeCastCommand(file));
-    PropertyChecker
+    PropertyChecker.customized()
+      .withIterationCount(50)
       .checkScenarios(actionsOnJavaFiles(fileActions));
   }
 
-  public void testParenthesesDontChangeIntention() {
+  /**
+   * The test is disabled, as we have no resources to monitor and fix the parentheses issues
+   */
+  public void _testParenthesesDontChangeIntention() {
     enableInspections();
     Function<PsiFile, Generator<? extends MadTestingAction>> fileActions =
       file -> Generator.sampledFrom(new InvokeIntention(file, new JavaParenthesesPolicy()), new StripTestDataMarkup(file));
@@ -117,7 +138,14 @@ public class JavaCodeInsightSanityTest extends LightJavaCodeInsightFixtureTestCa
   }
 
   private @NotNull Supplier<MadTestingAction> actionsOnJavaFiles(Function<PsiFile, Generator<? extends MadTestingAction>> fileActions) {
-    return MadTestingUtil.actionsOnFileContents(myFixture, PathManager.getHomePath(), f -> f.getName().endsWith(".java"), fileActions);
+    return MadTestingUtil.actionsOnFileContents(myFixture, PathManager.getHomePath(), f -> f.getName().endsWith(".java"),
+                                                f -> {
+                                                  ProjectFileIndex projectFileIndex =
+                                                    ProjectRootManager.getInstance(myFixture.getProject()).getFileIndex();
+                                                  return projectFileIndex.isInSource(f.getVirtualFile()) &&
+                                                         !f.getVirtualFile().getPath().contains("testData");
+                                                },
+                                                fileActions);
   }
 
   public void _testGenerator() {
@@ -138,7 +166,7 @@ public class JavaCodeInsightSanityTest extends LightJavaCodeInsightFixtureTestCa
     PropertyChecker.checkScenarios(actionsOnJavaFiles(
       MadTestingUtil.randomEditsWithPsiAccessorChecks(
         method ->
-          //method.getName().equals("getReferences") && method.getDeclaringClass().equals(PsiLiteralExpressionImpl.class) ||
+          method.getName().equals("getElementType") && method.getDeclaringClass().equals(StubBasedPsiElementBase.class) ||
           method.getName().equals("getOrCreateInitializingClass") && method.getDeclaringClass().equals(PsiEnumConstantImpl.class)
       )
     ));
@@ -167,7 +195,8 @@ public class JavaCodeInsightSanityTest extends LightJavaCodeInsightFixtureTestCa
                        StringUtil.escapeStringCharacters("(" + type.getCanonicalText() + ")") +
                        "' at " +
                        MadTestingUtil.getPositionDescription(expr.getTextOffset(), getDocument()));
-        WriteCommandAction.runWriteCommandAction(getProject(), () -> AddTypeCastFix.addTypeCast(getProject(), (PsiExpression)expr, type));
+        Runnable runnable = () -> AddTypeCastFix.addTypeCast(getProject(), (PsiExpression)expr, type);
+        WriteCommandAction.runWriteCommandAction(getProject(), runnable);
       }
     }
   }

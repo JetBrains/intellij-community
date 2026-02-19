@@ -22,7 +22,7 @@ public abstract class AbstractTreeHasher implements TreeHasher {
   }
 
   @Override
-  public final void hash(@NotNull final PsiElement root, @NotNull final NodeSpecificHasher hasher) {
+  public final void hash(final @NotNull PsiElement root, final @NotNull NodeSpecificHasher hasher) {
     hash(root, null, hasher);
   }
 
@@ -32,7 +32,7 @@ public abstract class AbstractTreeHasher implements TreeHasher {
    * Computes element hash using children hashes.
    * Creates only single PsiFragment.
    */
-  protected TreeHashResult computeElementHash(@NotNull final PsiElement root, final PsiFragment upper, final NodeSpecificHasher hasher) {
+  protected TreeHashResult computeElementHash(final @NotNull PsiElement root, final PsiFragment upper, final NodeSpecificHasher hasher) {
     if (myForIndexing) {
       return TreeHashingUtils.computeElementHashForIndexing(this, myCallBack, root, upper, hasher);
     }
@@ -77,7 +77,7 @@ public abstract class AbstractTreeHasher implements TreeHasher {
     return new TreeHashResult(h, c, fragment);
   }
 
-  protected TreePsiFragment buildFragment(NodeSpecificHasher hasher, PsiElement root,int cost) {
+  protected PsiFragment buildFragment(NodeSpecificHasher hasher, PsiElement root,int cost) {
     if (myForIndexing) {
       return new TreePsiFragment(hasher, root, cost) {
         @Override
@@ -94,7 +94,7 @@ public abstract class AbstractTreeHasher implements TreeHasher {
     return new TreePsiFragment(hasher, root, cost);
   }
 
-  protected TreePsiFragment buildFragment(NodeSpecificHasher hasher, List<? extends PsiElement> elements, int from, int to) {
+  protected PsiFragment buildFragment(NodeSpecificHasher hasher, List<? extends PsiElement> elements, int from, int to) {
     if (myForIndexing) {
       return new TreePsiFragment(hasher, elements, from, to) {
         @Override

@@ -1,25 +1,32 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.propertyBased;
 
+import com.intellij.codeInsight.completion.JavaCompletionContributor;
 import com.intellij.codeInsight.lookup.LookupElement;
-import com.intellij.lang.java.lexer.JavaLexer;
+import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.pom.java.LanguageLevel;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiAnnotation;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiJavaCodeReferenceElement;
+import com.intellij.psi.PsiJavaModule;
+import com.intellij.psi.PsiKeyword;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiModifierListOwner;
+import com.intellij.psi.PsiNameValuePair;
+import com.intellij.psi.PsiPackage;
+import com.intellij.psi.PsiPackageStatement;
+import com.intellij.psi.PsiReference;
+import com.intellij.psi.PsiTypes;
+import com.intellij.psi.PsiVariable;
+import com.intellij.psi.SyntaxTraverser;
+import com.intellij.psi.impl.compiled.ClsClassImpl;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReference;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -29,9 +36,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
 
-/**
- * @author peter
- */
 class JavaCompletionPolicy extends CompletionPolicy {
   @Nullable
   @Override
@@ -43,7 +47,17 @@ class JavaCompletionPolicy extends CompletionPolicy {
 
   @Override
   public boolean areDuplicatesOk(@NotNull LookupElement item1, @NotNull LookupElement item2) {
-    return areSameNamedFieldsInSameClass(item1.getObject(), item2.getObject()) || super.areDuplicatesOk(item1, item2);
+    return areSameNamedFieldsInSameClass(item1.getObject(), item2.getObject()) || brokenCompiledInnerClass(item1.getObject(), item2.getObject()) || super.areDuplicatesOk(item1, item2);
+  }
+
+  //workaround for broken compiled inner classes, it is not reproducible with IDEA
+  private static boolean brokenCompiledInnerClass(@NotNull Object o1, @NotNull Object o2) {
+    if (o1 instanceof ClsClassImpl c1 && o2 instanceof ClsClassImpl c2 &&
+        c1.getContainingClass() != null && c2.getContainingClass() != null &&
+        c1.getName().equals(c2.getName())) {
+      return true;
+    }
+    return false;
   }
 
   private static boolean areSameNamedFieldsInSameClass(Object o1, Object o2) {
@@ -81,7 +95,7 @@ class JavaCompletionPolicy extends CompletionPolicy {
     }
     if (refElement instanceof PsiNameValuePair &&
         PsiUtil.isAnnotationMethod(target) &&
-        PsiType.BOOLEAN.equals(((PsiMethod)target).getReturnType())) {
+        PsiTypes.booleanType().equals(((PsiMethod)target).getReturnType())) {
       return false; // they're suggested, but with true/false value text (IDEA-121071)
     }
     return super.shouldSuggestReferenceText(ref, target);
@@ -89,7 +103,6 @@ class JavaCompletionPolicy extends CompletionPolicy {
 
   private static boolean shouldSuggestJavaTarget(PsiJavaCodeReferenceElement ref, @NotNull PsiElement target) {
     if (PsiTreeUtil.getParentOfType(ref, PsiPackageStatement.class) != null) return false;
-
     PsiAnnotation anno = PsiTreeUtil.getParentOfType(ref, PsiAnnotation.class);
     if (!ref.isQualified() && target instanceof PsiPackage) return false;
     if (target instanceof PsiClass) {
@@ -114,6 +127,18 @@ class JavaCompletionPolicy extends CompletionPolicy {
     if (target instanceof PsiVariable && PsiTreeUtil.isAncestor(target, ref, false)) {
       return false;
     }
+    if (anno != null &&
+        ref.getParent() instanceof PsiNameValuePair &&
+        !JavaCompletionContributor.mayCompleteValueExpression(ref, anno.resolveAnnotationType())) {
+      return false;
+    }
+    if (ref.getParent() instanceof PsiJavaCodeReferenceElement parentReference &&
+        PsiTreeUtil.isAncestor(ref, parentReference.getQualifier(), false)) {
+      return false;
+    }
+    if (ref.getParent() instanceof PsiAnnotation && target instanceof PsiClass psiClass && !psiClass.isAnnotationType()) {
+      return false; // IDEA-384738
+    }
     return true;
   }
 
@@ -133,10 +158,10 @@ class JavaCompletionPolicy extends CompletionPolicy {
         return false;
       }
     }
-    if (leaf.textMatches(PsiKeyword.TRUE) || leaf.textMatches(PsiKeyword.FALSE)) {
+    if (leaf.textMatches(JavaKeywords.TRUE) || leaf.textMatches(JavaKeywords.FALSE)) {
       return false; // boolean literal presence depends on expected types, which can be missing in red files
     }
-    if (JavaLexer.isSoftKeyword(leaf.getText(), LanguageLevel.JDK_1_9) &&
+    if (PsiUtil.isSoftKeyword(leaf.getText(), LanguageLevel.JDK_1_9) &&
         !PsiJavaModule.MODULE_INFO_FILE.equals(leaf.getContainingFile().getName())) {
       return false;
     }

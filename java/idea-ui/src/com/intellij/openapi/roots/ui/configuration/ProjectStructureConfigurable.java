@@ -1,13 +1,18 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.ui.configuration;
 
 import com.intellij.compiler.server.BuildManager;
 import com.intellij.facet.Facet;
 import com.intellij.ide.JavaUiBundle;
 import com.intellij.ide.util.PropertiesComponent;
-import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.application.AccessToken;
-import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.Disposable;
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.ActionToolbar;
+import com.intellij.openapi.actionSystem.DataKey;
+import com.intellij.openapi.actionSystem.DataSink;
+import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.actionSystem.Presentation;
+import com.intellij.openapi.actionSystem.UiDataProvider;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.options.Configurable;
@@ -21,22 +26,31 @@ import com.intellij.openapi.roots.OrderEntry;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
 import com.intellij.openapi.roots.ui.configuration.artifacts.ArtifactsStructureConfigurable;
-import com.intellij.openapi.roots.ui.configuration.projectRoot.*;
+import com.intellij.openapi.roots.ui.configuration.projectRoot.BaseLibrariesConfigurable;
+import com.intellij.openapi.roots.ui.configuration.projectRoot.BaseStructureConfigurable;
+import com.intellij.openapi.roots.ui.configuration.projectRoot.FacetStructureConfigurable;
+import com.intellij.openapi.roots.ui.configuration.projectRoot.GlobalLibrariesConfigurable;
+import com.intellij.openapi.roots.ui.configuration.projectRoot.JdkListConfigurable;
+import com.intellij.openapi.roots.ui.configuration.projectRoot.ModuleStructureConfigurable;
+import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectLibrariesConfigurable;
+import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectSdksModel;
+import com.intellij.openapi.roots.ui.configuration.projectRoot.StructureConfigurableContext;
 import com.intellij.openapi.ui.DetailsComponent;
 import com.intellij.openapi.ui.MasterDetailsComponent;
 import com.intellij.openapi.util.ActionCallback;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy;
 import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.ui.JBSplitter;
 import com.intellij.ui.OnePixelSplitter;
+import com.intellij.ui.UIBundle;
 import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.ui.navigation.BackAction;
 import com.intellij.ui.navigation.ForwardAction;
 import com.intellij.ui.navigation.History;
 import com.intellij.ui.navigation.Place;
-import com.intellij.util.io.storage.HeavyProcessLatch;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nls;
@@ -44,22 +58,27 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.SwingConstants;
+import java.awt.BorderLayout;
+import java.awt.Dimension;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Objects;
 
 import static com.intellij.openapi.roots.ui.configuration.ProjectStructureConfigurableFilter.ConfigurableId;
 
 public class ProjectStructureConfigurable implements SearchableConfigurable, Place.Navigator,
-                                                                              Configurable.NoMargin, Configurable.NoScroll {
+                                                     Configurable.NoMargin, Configurable.NoScroll, Disposable {
   public static final DataKey<ProjectStructureConfigurable> KEY = DataKey.create("ProjectStructureConfiguration");
 
   protected final UIState myUiState = new UIState();
   private JBSplitter mySplitter;
   private JComponent myToolbarComponent;
-  @NonNls public static final String CATEGORY = "category";
+  public static final @NonNls String CATEGORY = "category";
   private JComponent myToFocus;
 
   public static class UIState {
@@ -73,11 +92,11 @@ public class ProjectStructureConfigurable implements SearchableConfigurable, Pla
   private final FacetStructureConfigurable myFacetStructureConfigurable;
   private final ArtifactsStructureConfigurable myArtifactsStructureConfigurable;
 
-  private History myHistory = new History(this);
+  private History myHistory;
   private SidePanel mySidePanel;
 
   private JPanel myComponent;
-  private final Wrapper myDetails = new Wrapper();
+  private Wrapper myDetails;
 
   private Configurable mySelectedConfigurable;
 
@@ -86,40 +105,44 @@ public class ProjectStructureConfigurable implements SearchableConfigurable, Pla
   private ProjectConfigurable myProjectConfig;
   private final ProjectLibrariesConfigurable myProjectLibrariesConfig;
   private final GlobalLibrariesConfigurable myGlobalLibrariesConfig;
-  private ModuleStructureConfigurable myModulesConfig;
+  private final ModuleStructureConfigurable myModulesConfig;
 
   private boolean myUiInitialized;
 
   private final List<Configurable> myName2Config = new ArrayList<>();
   private final StructureConfigurableContext myContext;
   private final ModulesConfigurator myModuleConfigurator;
-  private JdkListConfigurable myJdkListConfig;
+  private final JdkListConfigurable myJdkListConfig;
 
-  private final JLabel myEmptySelection = new JLabel(
-    JavaUiBundle.message("project.structure.empty.text"),
-    SwingConstants.CENTER);
+  private JLabel myEmptySelection;
 
   private final ObsoleteLibraryFilesRemover myObsoleteLibraryFilesRemover;
 
   public ProjectStructureConfigurable(@NotNull Project project) {
     myProject = project;
-    myFacetStructureConfigurable = FacetStructureConfigurable.getInstance(project);
-    myArtifactsStructureConfigurable = project.getService(ArtifactsStructureConfigurable.class);
+    myFacetStructureConfigurable = new FacetStructureConfigurable(this);
+    myArtifactsStructureConfigurable = new ArtifactsStructureConfigurable(this);
 
-    myModuleConfigurator = new ModulesConfigurator(myProject);
+    myModuleConfigurator = new ModulesConfigurator(project, this);
     myContext = new StructureConfigurableContext(myProject, myModuleConfigurator);
     myModuleConfigurator.setContext(myContext);
 
-    myProjectLibrariesConfig = ProjectLibrariesConfigurable.getInstance(project);
-    myGlobalLibrariesConfig = GlobalLibrariesConfigurable.getInstance(project);
-    myModulesConfig = ModuleStructureConfigurable.getInstance(project);
+    myProjectLibrariesConfig = new ProjectLibrariesConfigurable(this);
+    myGlobalLibrariesConfig = new GlobalLibrariesConfigurable(this);
+    myModulesConfig = new ModuleStructureConfigurable(this);
+
+    myJdkListConfig = new JdkListConfigurable(this);
 
     myProjectLibrariesConfig.init(myContext);
     myGlobalLibrariesConfig.init(myContext);
     myModulesConfig.init(myContext);
     myFacetStructureConfigurable.init(myContext);
+    myJdkListConfig.init(myContext);
     if (!project.isDefault()) {
       myArtifactsStructureConfigurable.init(myContext, myModulesConfig, myProjectLibrariesConfig, myGlobalLibrariesConfig);
+    }
+    else {
+      Disposer.register(this, myArtifactsStructureConfigurable);
     }
 
     final PropertiesComponent propertiesComponent = PropertiesComponent.getInstance(myProject);
@@ -131,30 +154,32 @@ public class ProjectStructureConfigurable implements SearchableConfigurable, Pla
     myObsoleteLibraryFilesRemover = new ObsoleteLibraryFilesRemover(project);
   }
 
+  public @NotNull Project getProject() {
+    return myProject;
+  }
+
   @Override
-  @NotNull
-  @NonNls
-  public String getId() {
+  public @NotNull @NonNls String getId() {
     return "project.structure";
   }
 
   @Override
-  @Nls
-  public String getDisplayName() {
+  public @Nls String getDisplayName() {
     return JavaUiBundle.message("project.settings.display.name");
   }
 
   @Override
-  @Nullable
-  @NonNls
-  public String getHelpTopic() {
-    return mySelectedConfigurable != null ? mySelectedConfigurable.getHelpTopic() : "";
+  public @Nullable @NonNls String getHelpTopic() {
+    String topic = mySelectedConfigurable != null ? mySelectedConfigurable.getHelpTopic() : null;
+    return Objects.requireNonNullElse(topic, "reference.settingsdialog.project.structure.general");
   }
 
   @Override
   public JComponent createComponent() {
     myComponent = new MyPanel();
-
+    myDetails = new Wrapper();
+    myHistory = new History(this);
+    myEmptySelection = new JLabel(JavaUiBundle.message("project.structure.empty.text"), SwingConstants.CENTER);
     mySplitter = new OnePixelSplitter(false, .15f);
     mySplitter.setSplitterProportionKey("ProjectStructure.TopLevelElements");
     mySplitter.setHonorComponentsMinimumSize(true);
@@ -190,6 +215,10 @@ public class ProjectStructureConfigurable implements SearchableConfigurable, Pla
     return myComponent;
   }
 
+  @Override
+  public void dispose() {
+  }
+
   private void initSidePanel() {
     boolean isDefaultProject = myProject == ProjectManager.getInstance().getDefaultProject();
 
@@ -212,6 +241,7 @@ public class ProjectStructureConfigurable implements SearchableConfigurable, Pla
 
     mySidePanel.addSeparator("--");
     addErrorPane();
+    mySidePanel.getList().getAccessibleContext().setAccessibleName(UIBundle.message("project.structure.categories.accessible.name"));
   }
 
   private void addArtifactsConfig() {
@@ -242,10 +272,6 @@ public class ProjectStructureConfigurable implements SearchableConfigurable, Pla
   }
 
   private void addJdkListConfig() {
-    if (myJdkListConfig == null) {
-      myJdkListConfig = JdkListConfigurable.getInstance(myProject);
-      myJdkListConfig.init(myContext);
-    }
     addConfigurable(myJdkListConfig, ConfigurableId.JDK_LIST);
   }
 
@@ -267,12 +293,14 @@ public class ProjectStructureConfigurable implements SearchableConfigurable, Pla
   }
 
   private void addModulesConfig() {
-    myModulesConfig = ModuleStructureConfigurable.getInstance(myProject);
     addConfigurable(myModulesConfig, ConfigurableId.MODULES);
   }
 
   @Override
   public boolean isModified() {
+    if (myProjectJdksModel.isModified()) {
+      return true;
+    }
     for (Configurable each : myName2Config) {
       if (each.isModified()) return true;
     }
@@ -282,6 +310,9 @@ public class ProjectStructureConfigurable implements SearchableConfigurable, Pla
 
   @Override
   public void apply() throws ConfigurationException {
+    if (myProjectJdksModel.isModified()) {
+      myProjectJdksModel.apply();
+    }
     for (Configurable each : myName2Config) {
       if (each instanceof BaseStructureConfigurable && each.isModified()) {
         ((BaseStructureConfigurable)each).checkCanApply();
@@ -310,43 +341,33 @@ public class ProjectStructureConfigurable implements SearchableConfigurable, Pla
 
   @Override
   public void reset() {
-    // need this to ensure VFS operations will not block because of storage flushing
-    // and other maintenance IO tasks run in background
-    AccessToken token = HeavyProcessLatch.INSTANCE.processStarted(JavaUiBundle.message("project.structure.configurable.reset.text"));
+    myContext.reset();
 
-    try {
+    myProjectJdksModel.reset(myProject);
 
-      myContext.reset();
-
-      myProjectJdksModel.reset(myProject);
-
-      Configurable toSelect = null;
-      for (Configurable each : myName2Config) {
-        if (myUiState.lastEditedConfigurable != null && myUiState.lastEditedConfigurable.equals(each.getDisplayName())) {
-          toSelect = each;
-        }
-        if (each instanceof MasterDetailsComponent) {
-          ((MasterDetailsComponent)each).setHistory(myHistory);
-        }
-        each.reset();
+    Configurable toSelect = null;
+    for (Configurable each : myName2Config) {
+      if (myUiState.lastEditedConfigurable != null && myUiState.lastEditedConfigurable.equals(each.getDisplayName())) {
+        toSelect = each;
       }
-
-      myHistory.clear();
-
-      if (toSelect == null && myName2Config.size() > 0) {
-        toSelect = myName2Config.iterator().next();
+      if (each instanceof MasterDetailsComponent) {
+        ((MasterDetailsComponent)each).setHistory(myHistory);
       }
-
-      removeSelected();
-
-      navigateTo(toSelect != null ? createPlaceFor(toSelect) : null, false);
-
-      if (myUiState.proportion > 0) {
-        mySplitter.setProportion(myUiState.proportion);
-      }
+      each.reset();
     }
-    finally {
-      token.finish();
+
+    myHistory.clear();
+
+    if (toSelect == null && !myName2Config.isEmpty()) {
+      toSelect = myName2Config.iterator().next();
+    }
+
+    removeSelected();
+
+    navigateTo(toSelect != null ? createPlaceFor(toSelect) : null, false);
+
+    if (myUiState.proportion > 0) {
+      mySplitter.setProportion(myUiState.proportion);
     }
   }
 
@@ -368,8 +389,15 @@ public class ProjectStructureConfigurable implements SearchableConfigurable, Pla
     myName2Config.clear();
 
     myModuleConfigurator.getFacetsConfigurator().clearMaps();
+    myHistory.clear();
 
     myUiInitialized = false;
+    myComponent = null;
+    mySplitter.removeAll();
+    mySplitter = null;
+    myToolbarComponent = null;
+    myDetails.removeAll();
+    mySidePanel = null;
   }
 
   public boolean isUiInitialized() {
@@ -386,7 +414,7 @@ public class ProjectStructureConfigurable implements SearchableConfigurable, Pla
   }
 
   @Override
-  public void queryPlace(@NotNull final Place place) {
+  public void queryPlace(final @NotNull Place place) {
     place.putPath(CATEGORY, mySelectedConfigurable);
     Place.queryFurther(mySelectedConfigurable, place);
   }
@@ -399,7 +427,7 @@ public class ProjectStructureConfigurable implements SearchableConfigurable, Pla
     return createPlaceFor(myProjectConfig);
   }
 
-  public ActionCallback select(@Nullable final String moduleToSelect, @Nullable String editorNameToSelect, final boolean requestFocus) {
+  public ActionCallback select(final @Nullable String moduleToSelect, @Nullable String editorNameToSelect, final boolean requestFocus) {
     Place place = createModulesPlace();
     if (moduleToSelect != null) {
       final Module module = ModuleManager.getInstance(myProject).findModuleByName(moduleToSelect);
@@ -417,7 +445,7 @@ public class ProjectStructureConfigurable implements SearchableConfigurable, Pla
     return createModulesPlace().putPath(MasterDetailsComponent.TREE_OBJECT, module);
   }
 
-  public ActionCallback select(@Nullable final Facet facetToSelect, final boolean requestFocus) {
+  public ActionCallback select(final @Nullable Facet facetToSelect, final boolean requestFocus) {
     Place place = createModulesPlace();
     if (facetToSelect != null) {
       place = place.putPath(MasterDetailsComponent.TREE_OBJECT, facetToSelect);
@@ -470,12 +498,12 @@ public class ProjectStructureConfigurable implements SearchableConfigurable, Pla
     return navigateTo(place, requestFocus);
   }
 
-  public ActionCallback selectOrderEntry(@NotNull final Module module, @Nullable final OrderEntry orderEntry) {
-    return ModuleStructureConfigurable.getInstance(myProject).selectOrderEntry(module, orderEntry);
+  public ActionCallback selectOrderEntry(final @NotNull Module module, final @Nullable OrderEntry orderEntry) {
+    return myModulesConfig.selectOrderEntry(module, orderEntry);
   }
 
   @Override
-  public ActionCallback navigateTo(@Nullable final Place place, final boolean requestFocus) {
+  public ActionCallback navigateTo(final @Nullable Place place, final boolean requestFocus) {
     final Configurable toSelect = (Configurable)place.getPath(CATEGORY);
 
     JComponent detailsContent = myDetails.getTargetComponent();
@@ -497,8 +525,7 @@ public class ProjectStructureConfigurable implements SearchableConfigurable, Pla
         myUiState.lastEditedConfigurable = mySelectedConfigurable.getDisplayName();
       }
 
-      if (toSelect instanceof MasterDetailsComponent) {
-        final MasterDetailsComponent masterDetails = (MasterDetailsComponent)toSelect;
+      if (toSelect instanceof MasterDetailsComponent masterDetails) {
         if (myUiState.sideProportion > 0) {
           masterDetails.getSplitter().setProportion(myUiState.sideProportion);
         }
@@ -558,12 +585,11 @@ public class ProjectStructureConfigurable implements SearchableConfigurable, Pla
     myDetails.add(myEmptySelection, BorderLayout.CENTER);
   }
 
-  public static ProjectStructureConfigurable getInstance(@NotNull final Project project) {
-    return ServiceManager.getService(project, ProjectStructureConfigurable.class);
+  public static ProjectStructureConfigurable getInstance(final @NotNull Project project) {
+    return project.getService(ProjectStructureConfigurable.class);
   }
 
-  @NotNull
-  public ProjectSdksModel getProjectJdksModel() {
+  public @NotNull ProjectSdksModel getProjectJdksModel() {
     return myProjectJdksModel;
   }
 
@@ -600,21 +626,15 @@ public class ProjectStructureConfigurable implements SearchableConfigurable, Pla
     return myContext;
   }
 
-  private class MyPanel extends JPanel implements DataProvider {
+  private class MyPanel extends JPanel implements UiDataProvider {
     MyPanel() {
       super(new BorderLayout());
     }
 
     @Override
-    @Nullable
-    public Object getData(@NotNull @NonNls final String dataId) {
-      if (KEY.is(dataId)) {
-        return ProjectStructureConfigurable.this;
-      } else if (History.KEY.is(dataId)) {
-        return getHistory();
-      } else {
-        return null;
-      }
+    public void uiDataSnapshot(@NotNull DataSink sink) {
+      sink.set(KEY, ProjectStructureConfigurable.this);
+      sink.set(History.KEY, getHistory());
     }
 
     @Override
@@ -631,8 +651,20 @@ public class ProjectStructureConfigurable implements SearchableConfigurable, Pla
     }
   }
 
+  public ProjectLibrariesConfigurable getProjectLibrariesConfigurable() {
+    return myProjectLibrariesConfig;
+  }
+
+  public GlobalLibrariesConfigurable getGlobalLibrariesConfigurable() {
+    return myGlobalLibrariesConfig;
+  }
+
+  public FacetStructureConfigurable getFacetStructureConfigurable() {
+    return myFacetStructureConfigurable;
+  }
+
   @Override
-  public JComponent getPreferredFocusedComponent() {
+  public @Nullable JComponent getPreferredFocusedComponent() {
     return myToFocus;
   }
 }

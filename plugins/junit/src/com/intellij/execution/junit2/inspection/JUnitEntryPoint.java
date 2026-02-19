@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.execution.junit2.inspection;
 
@@ -10,7 +10,12 @@ import com.intellij.execution.junit.JUnitUtil;
 import com.intellij.openapi.util.DefaultJDOMExternalizer;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiMember;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiModifier;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.psi.util.PsiClassUtil;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -20,12 +25,16 @@ import com.siyeh.ig.junit.JUnitCommonClassNames;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 
-public class JUnitEntryPoint extends EntryPointWithVisibilityLevel {
+import java.util.Arrays;
+import java.util.Collection;
+
+public final class JUnitEntryPoint extends EntryPointWithVisibilityLevel {
+  private static final Collection<String> FIELD_ANNOTATIONS = Arrays.asList(JUnitUtil.PARAMETRIZED_PARAMETER_ANNOTATION_NAME, 
+                                                                            JUnitCommonClassNames.ORG_JUNIT_JUPITER_API_EXTENSION_REGISTER_EXTENSION);
   public boolean ADD_JUNIT_TO_ENTRIES = true;
 
   @Override
-  @NotNull
-  public String getDisplayName() {
+  public @NotNull String getDisplayName() {
     return JUnitBundle.message("unused.declaration.junit.test.entry.point");
   }
 
@@ -36,8 +45,7 @@ public class JUnitEntryPoint extends EntryPointWithVisibilityLevel {
 
   @Override
   public boolean isEntryPoint(@NotNull PsiElement psiElement) {
-    if (psiElement instanceof PsiClass) {
-      final PsiClass aClass = (PsiClass)psiElement;
+    if (psiElement instanceof PsiClass aClass) {
       if (JUnitUtil.isTestClass(aClass, false, true)) {
         final boolean isJUnit5 = JUnitUtil.isJUnit5(aClass);
         if (!PsiClassUtil.isRunnableClass(aClass, !isJUnit5, true)) {
@@ -45,7 +53,7 @@ public class JUnitEntryPoint extends EntryPointWithVisibilityLevel {
           if (topLevelClass != null && PsiClassUtil.isRunnableClass(topLevelClass, !isJUnit5, true)) {
             return true;
           }
-          final CommonProcessors.FindProcessor<PsiClass> findProcessor = new CommonProcessors.FindProcessor<PsiClass>() {
+          final CommonProcessors.FindProcessor<PsiClass> findProcessor = new CommonProcessors.FindProcessor<>() {
             @Override
             protected boolean accept(PsiClass psiClass) {
               return !psiClass.hasModifierProperty(PsiModifier.ABSTRACT);
@@ -56,8 +64,7 @@ public class JUnitEntryPoint extends EntryPointWithVisibilityLevel {
         return true;
       }
     }
-    else if (psiElement instanceof PsiMethod) {
-      final PsiMethod method = (PsiMethod)psiElement;
+    else if (psiElement instanceof PsiMethod method) {
       if (method.isConstructor() && method.getParameterList().isEmpty()) {
         final PsiClass aClass = method.getContainingClass();
         return aClass != null && JUnitUtil.isTestClass(aClass);
@@ -65,7 +72,7 @@ public class JUnitEntryPoint extends EntryPointWithVisibilityLevel {
       if (JUnitUtil.isTestMethodOrConfig(method)) return true;
     }
     else if (psiElement instanceof PsiField) {
-      return AnnotationUtil.isAnnotated((PsiField)psiElement, JUnitUtil.PARAMETRIZED_PARAMETER_ANNOTATION_NAME, 0);
+      return AnnotationUtil.isAnnotated((PsiField)psiElement, FIELD_ANNOTATIONS, 0);
     }
     return false;
   }

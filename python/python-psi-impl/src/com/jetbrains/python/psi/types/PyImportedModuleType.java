@@ -26,22 +26,19 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
-/**
- * @author yole
- */
+
 public class PyImportedModuleType implements PyType {
-  @NotNull private final PyImportedModule myImportedModule;
+  private final @NotNull PyImportedModule myImportedModule;
 
   public PyImportedModuleType(@NotNull PyImportedModule importedModule) {
     myImportedModule = importedModule;
   }
 
-  @Nullable
   @Override
-  public List<? extends RatedResolveResult> resolveMember(@NotNull String name,
-                                                          @Nullable PyExpression location,
-                                                          @NotNull AccessDirection direction,
-                                                          @NotNull PyResolveContext resolveContext) {
+  public @Nullable List<? extends RatedResolveResult> resolveMember(@NotNull String name,
+                                                                    @Nullable PyExpression location,
+                                                                    @NotNull AccessDirection direction,
+                                                                    @NotNull PyResolveContext resolveContext) {
 
     final List<PsiElement> importedModuleCandidates = ResolveResultList.getElements(myImportedModule.multiResolve());
     final SmartList<RatedResolveResult> primaryResults = new SmartList<>();
@@ -89,8 +86,7 @@ public class PyImportedModuleType implements PyType {
 
         result.addAll(moduleType.getCompletionVariantsAsLookupElements(location, context, false, false, typeEvalContext));
       }
-      else if (resolveResult instanceof PsiDirectory) {
-        final PsiDirectory dir = (PsiDirectory)resolveResult;
+      else if (resolveResult instanceof PsiDirectory dir) {
         if (PyUtil.isPackage(dir, location)) {
           if (ResolveImportUtil.getPointInImport(location) != PointInImport.NONE) {
             result.addAll(PyModuleType.getSubModuleVariants(dir, location, null));
@@ -106,7 +102,7 @@ public class PyImportedModuleType implements PyType {
 
   @Override
   public String getName() {
-    return "imported module " + myImportedModule.getImportedPrefix().toString();
+    return myImportedModule.getImportedPrefix().toString();
   }
 
   @Override
@@ -118,8 +114,7 @@ public class PyImportedModuleType implements PyType {
   public void assertValid(String message) {
   }
 
-  @NotNull
-  public PyImportedModule getImportedModule() {
+  public @NotNull PyImportedModule getImportedModule() {
     return myImportedModule;
   }
 

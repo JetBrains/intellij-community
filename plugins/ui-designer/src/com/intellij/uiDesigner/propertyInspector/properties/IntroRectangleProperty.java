@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.uiDesigner.propertyInspector.properties;
 
 import com.intellij.uiDesigner.XmlWriter;
@@ -11,13 +11,9 @@ import com.intellij.uiDesigner.propertyInspector.renderers.RectangleRenderer;
 import com.intellij.uiDesigner.radComponents.RadComponent;
 import org.jetbrains.annotations.NotNull;
 
-import java.awt.*;
+import java.awt.Rectangle;
 import java.lang.reflect.Method;
 
-/**
- * @author Anton Katilin
- * @author Vladimir Kondratyev
- */
 public final class IntroRectangleProperty extends IntrospectedProperty<Rectangle> {
   private final RectangleRenderer myRenderer;
   private final Property[] myChildren;
@@ -49,8 +45,7 @@ public final class IntroRectangleProperty extends IntrospectedProperty<Rectangle
   }
 
   @Override
-  @NotNull
-  public PropertyRenderer<Rectangle> getRenderer() {
+  public @NotNull PropertyRenderer<Rectangle> getRenderer() {
     return myRenderer;
   }
 

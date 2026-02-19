@@ -1,15 +1,17 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.execution;
 
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 
-/**
- * @author ibessonov
- */
-public class MavenCommandLineOptions {
+public final class MavenCommandLineOptions {
 
   private static final Map<String, Option> ourOptionsIndexMap;
   private static final Set<Option> ourAllOptions;
@@ -65,8 +67,7 @@ public class MavenCommandLineOptions {
   public static class Option {
     private final String myName;
     private final String myLongName;
-    @Nls(capitalization = Nls.Capitalization.Sentence)
-    private final String myDescription;
+    private final @Nls(capitalization = Nls.Capitalization.Sentence) String myDescription;
 
     public Option(@NonNls String name, @NonNls String longName, @Nls(capitalization = Nls.Capitalization.Sentence) String description) {
       myName = name;
@@ -78,8 +79,7 @@ public class MavenCommandLineOptions {
       return longName? myLongName : myName;
     }
 
-    @Nls(capitalization = Nls.Capitalization.Sentence)
-    public String getDescription() {
+    public @Nls(capitalization = Nls.Capitalization.Sentence) String getDescription() {
       return myDescription;
     }
   }

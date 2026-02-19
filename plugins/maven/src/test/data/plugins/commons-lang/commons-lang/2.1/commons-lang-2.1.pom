@@ -1,0 +1,364 @@
+<project>
+  <modelVersion>4.0.0</modelVersion>
+  <groupId>commons-lang</groupId>
+  <artifactId>commons-lang</artifactId>
+  <name>Lang</name>
+  <version>2.1</version>
+  <description>Commons.Lang, a package of Java utility classes for the
+    classes that are in java.lang's hierarchy, or are considered to be so
+    standard as to justify existence in java.lang.</description>
+  <url>http://jakarta.apache.org/commons/${pom.artifactId.substring(8)}/</url>
+  <issueManagement>
+    <url>http://issues.apache.org/bugzilla/</url>
+  </issueManagement>
+  <ciManagement>
+    <notifiers>
+      <notifier>
+        <address>commons-dev@jakarta.apache.org</address>
+      </notifier>
+    </notifiers>
+  </ciManagement>
+  <inceptionYear>2001</inceptionYear>
+  <mailingLists>
+    <mailingList>
+      <name>Commons Dev List</name>
+      <subscribe>commons-dev-subscribe@jakarta.apache.org</subscribe>
+      <unsubscribe>commons-dev-unsubscribe@jakarta.apache.org</unsubscribe>
+      <archive>http://mail-archives.apache.org/eyebrowse/SummarizeList?listName=commons-dev@jakarta.apache.org</archive>
+    </mailingList>
+    <mailingList>
+      <name>Commons User List</name>
+      <subscribe>commons-user-subscribe@jakarta.apache.org</subscribe>
+      <unsubscribe>commons-user-unsubscribe@jakarta.apache.org</unsubscribe>
+      <archive>http://mail-archives.apache.org/eyebrowse/SummarizeList?listName=commons-user@jakarta.apache.org</archive>
+    </mailingList>
+  </mailingLists>
+  <developers>
+    <developer>
+      <id>dlr</id>
+      <name>Daniel Rall</name>
+      <email>dlr@finemaltcoding.com</email>
+      <organization>CollabNet, Inc.</organization>
+      <roles>
+        <role>Java Developer</role>
+      </roles>
+    </developer>
+    <developer>
+      <id>scolebourne</id>
+      <name>Stephen Colebourne</name>
+      <email>scolebourne@joda.org</email>
+      <organization>SITA ATS Ltd</organization>
+      <roles>
+        <role>Java Developer</role>
+      </roles>
+      <timezone>0</timezone>
+    </developer>
+    <developer>
+      <id>bayard</id>
+      <name>Henri Yandell</name>
+      <email>bayard@generationjava.com</email>
+      <organization></organization>
+      <roles>
+        <role>Java Developer</role>
+      </roles>
+    </developer>
+    <developer>
+      <id>scaswell</id>
+      <name>Steven Caswell</name>
+      <email>stevencaswell@apache.org</email>
+      <organization></organization>
+      <roles>
+        <role>Java Developer</role>
+      </roles>
+      <timezone>-5</timezone>
+    </developer>
+    <developer>
+      <id>rdonkin</id>
+      <name>Robert Burrell Donkin</name>
+      <email>rdonkin@apache.org</email>
+      <organization></organization>
+      <roles>
+        <role>Java Developer</role>
+      </roles>
+    </developer>
+    <developer>
+      <id>ggregory</id>
+      <name>Gary D. Gregory</name>
+      <email>ggregory@seagullsw.com</email>
+      <organization>Seagull Software</organization>
+      <roles>
+        <role>Java Developer</role>
+      </roles>
+      <timezone>-8</timezone>
+    </developer>
+    <developer>
+      <id>psteitz</id>
+      <name>Phil Steitz</name>
+      <email>phil@steitz.com</email>
+      <organization></organization>
+      <roles>
+        <role>Java Developer</role>
+      </roles>
+    </developer>
+    <developer>
+      <id>fredrik</id>
+      <name>Fredrik Westermarck</name>
+      <email></email>
+      <organization></organization>
+      <roles>
+        <role>Java Developer</role>
+      </roles>
+    </developer>
+  </developers>
+  <contributors>
+    <contributor>
+      <name>C. Scott Ananian</name>
+    </contributor>
+    <contributor>
+      <name>Chris Audley</name>
+    </contributor>
+    <contributor>
+      <name>Stephane Bailliez</name>
+    </contributor>
+    <contributor>
+      <name>Michael Becke</name>
+    </contributor>
+    <contributor>
+      <name>Ola Berg</name>
+    </contributor>
+    <contributor>
+      <name>Stefan Bodewig</name>
+    </contributor>
+    <contributor>
+      <name>Janek Bogucki</name>
+    </contributor>
+    <contributor>
+      <name>Mike Bowler</name>
+    </contributor>
+    <contributor>
+      <name>Sean Brown</name>
+    </contributor>
+    <contributor>
+      <name>Alexander Day Chaffee</name>
+    </contributor>
+    <contributor>
+      <name>Al Chou</name>
+    </contributor>
+    <contributor>
+      <name>Greg Coladonato</name>
+    </contributor>
+    <contributor>
+      <name>Maarten Coene</name>
+    </contributor>
+    <contributor>
+      <name>Justin Couch</name>
+    </contributor>
+    <contributor>
+      <name>Michael Davey</name>
+    </contributor>
+    <contributor>
+      <name>Norm Deane</name>
+    </contributor>
+    <contributor>
+      <name>Ringo De Smet</name>
+    </contributor>
+    <contributor>
+      <name>Russel Dittmar</name>
+    </contributor>
+    <contributor>
+      <name>Steve Downey</name>
+    </contributor>
+    <contributor>
+      <name>Matthias Eichel</name>
+    </contributor>
+    <contributor>
+      <name>Christopher Elkins</name>
+    </contributor>
+    <contributor>
+      <name>Chris Feldhacker</name>
+    </contributor>
+    <contributor>
+      <name>Pete Gieser</name>
+    </contributor>
+    <contributor>
+      <name>Jason Gritman</name>
+    </contributor>
+    <contributor>
+      <name>Matthew Hawthorne</name>
+    </contributor>
+    <contributor>
+      <name>Michael Heuer</name>
+    </contributor>
+    <contributor>
+      <name>Marc Johnson</name>
+    </contributor>
+    <contributor>
+      <name>Tetsuya Kaneuchi</name>
+    </contributor>
+    <contributor>
+      <name>Nissim Karpenstein</name>
+    </contributor>
+    <contributor>
+      <name>Ed Korthof</name>
+    </contributor>
+    <contributor>
+      <name>Holger Krauth</name>
+    </contributor>
+    <contributor>
+      <name>Rafal Krupinski</name>
+    </contributor>
+    <contributor>
+      <name>Rafal Krzewski</name>
+    </contributor>
+    <contributor>
+      <name>Craig R. McClanahan</name>
+    </contributor>
+    <contributor>
+      <name>Rand McNeely</name>
+    </contributor>
+    <contributor>
+      <name>Nikolay Metchev</name>
+    </contributor>
+    <contributor>
+      <name>Kasper Nielsen</name>
+    </contributor>
+    <contributor>
+      <name>Tim O'Brien</name>
+    </contributor>
+    <contributor>
+      <name>Brian S O'Neill</name>
+    </contributor>
+    <contributor>
+      <name>Andrew C. Oliver</name>
+    </contributor>
+    <contributor>
+      <name>Moritz Petersen</name>
+    </contributor>
+    <contributor>
+      <name>Dmitri Plotnikov</name>
+    </contributor>
+    <contributor>
+      <name>Neeme Praks</name>
+    </contributor>
+    <contributor>
+      <name>Eric Pugh</name>
+    </contributor>
+    <contributor>
+      <name>Travis Reeder</name>
+    </contributor>
+    <contributor>
+      <name>Antony Riley</name>
+    </contributor>
+    <contributor>
+      <name>Scott Sanders</name>
+    </contributor>
+    <contributor>
+      <name>Ralph Schaer</name>
+    </contributor>
+    <contributor>
+      <name>Henning P. Schmiedehausen</name>
+    </contributor>
+    <contributor>
+      <name>Sean Schofield</name>
+    </contributor>
+    <contributor>
+      <name>Ville Skytta</name>
+    </contributor>
+    <contributor>
+      <name>Jan Sorensen</name>
+    </contributor>
+    <contributor>
+      <name>Glen Stampoultzis</name>
+    </contributor>
+    <contributor>
+      <name>Scott Stanchfield</name>
+    </contributor>
+    <contributor>
+      <name>Jon S. Stevens</name>
+    </contributor>
+    <contributor>
+      <name>Sean C. Sullivan</name>
+    </contributor>
+    <contributor>
+      <name>Ashwin Suresh</name>
+    </contributor>
+    <contributor>
+      <name>Helge Tesgaard</name>
+    </contributor>
+    <contributor>
+      <name>Arun Mammen Thomas</name>
+    </contributor>
+    <contributor>
+      <name>Masato Tezuka</name>
+    </contributor>
+    <contributor>
+      <name>Jeff Varszegi</name>
+    </contributor>
+    <contributor>
+      <name>Chris Webb</name>
+    </contributor>
+    <contributor>
+      <name>Mario Winterer</name>
+    </contributor>
+  </contributors>
+  <licenses>
+    <license>
+      <name>The Apache Software License, Version 2.0</name>
+      <url>/LICENSE.txt</url>
+    </license>
+  </licenses>
+  <scm>
+    <connection>scm:svn:http://svn.apache.org/repos/asf/jakarta/commons/proper/${pom.artifactId.substring(8)}/trunk</connection>
+    <url>http://svn.apache.org/viewcvs/jakarta/commons/proper/${pom.artifactId.substring(8)}/trunk</url>
+  </scm>
+  <organization>
+    <name>The Apache Software Foundation</name>
+    <url>http://jakarta.apache.org</url>
+  </organization>
+  <build>
+    <sourceDirectory>src/java</sourceDirectory>
+    <testSourceDirectory>src/test</testSourceDirectory>
+    <testResources>
+      <testResource>
+        <directory>${pom.build.unitTestSourceDirectory}</directory>
+        <includes>
+          <include>**/*.xml</include>
+        </includes>
+      </testResource>
+    </testResources>
+    <plugins>
+      <plugin>
+        <artifactId>maven-surefire-plugin</artifactId>
+        <configuration>
+          <includes>
+            <include>**/*TestSuite.java</include>
+          </includes>
+          <excludes>
+            <exclude>**/AllLangTestSuite.java</exclude>
+            <exclude>org/apache/commons/lang/text/**/*.java</exclude>
+          </excludes>
+        </configuration>
+      </plugin>
+    </plugins>
+  </build>
+  <dependencies>
+    <dependency>
+      <groupId>junit</groupId>
+      <artifactId>junit</artifactId>
+      <version>3.8.1</version>
+      <scope>test</scope>
+    </dependency>
+  </dependencies>
+  <distributionManagement>
+    <repository>
+      <id>default</id>
+      <name>Default Repository</name>
+      <url>file:///www/jakarta.apache.org/builds/jakarta-commons/${pom.artifactId.substring(8)}/</url>
+    </repository>
+    <site>
+      <id>default</id>
+      <name>Default Site</name>
+      <url>scp://jakarta.apache.org//www/jakarta.apache.org/commons/${pom.artifactId.substring(8)}/</url>
+    </site>
+  </distributionManagement>
+</project>

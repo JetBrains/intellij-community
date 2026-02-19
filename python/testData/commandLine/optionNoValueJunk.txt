@@ -4,6 +4,6 @@ FILE
   PsiWhiteSpace(' ')
   CommandLineOptionImpl(OPTION)
     PsiElement(LONG_OPTION_NAME_TOKEN)('--bad_value')
-    PsiErrorElement:Space between argument and its value is unexpected
+    PsiErrorElement:Space between an argument and its value is unexpected
       <empty list>
     PsiElement(=)('=')

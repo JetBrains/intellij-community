@@ -1,19 +1,37 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileTypes.impl;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.ExtensionFileNameMatcher;
 import com.intellij.openapi.fileTypes.FileNameMatcher;
 import com.intellij.openapi.fileTypes.FileTypeManager;
+import com.intellij.openapi.util.InvalidDataException;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.MultiMap;
 import org.jdom.Element;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.VisibleForTesting;
 
-import java.util.*;
-import java.util.function.BiPredicate;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.Iterator;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
-final class RemovedMappingTracker {
-  static final class RemovedMapping {
+@ApiStatus.Internal
+public final class RemovedMappingTracker {
+  private static final Logger LOG = Logger.getInstance(RemovedMappingTracker.class);
+
+  @ApiStatus.Internal
+  public static final class RemovedMapping {
     private final FileNameMatcher myFileNameMatcher;
     private final String myFileTypeName;
     private final boolean myApproved;
@@ -24,44 +42,91 @@ final class RemovedMappingTracker {
       myApproved = approved;
     }
 
-    @NotNull
-    FileNameMatcher getFileNameMatcher() {
+    @VisibleForTesting
+    public @NotNull FileNameMatcher getFileNameMatcher() {
       return myFileNameMatcher;
     }
 
-    @NotNull
-    String getFileTypeName() {
+    @VisibleForTesting
+    public @NotNull String getFileTypeName() {
       return myFileTypeName;
     }
 
-    boolean isApproved() {
+    @VisibleForTesting
+    public boolean isApproved() {
       return myApproved;
+    }
+
+    @Override
+    public String toString() {
+      return "Removed mapping '" + myFileNameMatcher + "' -> " + myFileTypeName;
+    }
+
+    // must not look at myApproved
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+
+      RemovedMapping mapping = (RemovedMapping)o;
+
+      if (!myFileNameMatcher.equals(mapping.myFileNameMatcher)) return false;
+      return myFileTypeName.equals(mapping.myFileTypeName);
+    }
+
+    @Override
+    public int hashCode() {
+      int result = myFileNameMatcher.hashCode();
+      result = 31 * result + myFileTypeName.hashCode();
+      return result;
     }
   }
 
-  private final Map<FileNameMatcher, RemovedMapping> myRemovedMappings = new HashMap<>();
+  private final MultiMap<FileNameMatcher, RemovedMapping> myRemovedMappings = new MultiMap<>();
 
-  @NonNls private static final String ELEMENT_REMOVED_MAPPING = "removed_mapping";
+  private static final @NonNls String ELEMENT_REMOVED_MAPPING = "removed_mapping";
   /** Applied for removed mappings approved by user */
-  @NonNls private static final String ATTRIBUTE_APPROVED = "approved";
-  @NonNls private static final String ATTRIBUTE_TYPE = "type";
+  private static final @NonNls String ATTRIBUTE_APPROVED = "approved";
+  private static final @NonNls String ATTRIBUTE_TYPE = "type";
 
-  void clear() {
+  @VisibleForTesting
+  public void clear() {
     myRemovedMappings.clear();
   }
 
-  void add(@NotNull FileNameMatcher matcher, @NotNull String fileTypeName, boolean approved) {
-    myRemovedMappings.put(matcher, new RemovedMapping(matcher, fileTypeName, approved));
+  @VisibleForTesting
+  public @NotNull RemovedMapping add(@NotNull FileNameMatcher matcher, @NotNull String fileTypeName, boolean approved) {
+    RemovedMapping mapping = new RemovedMapping(matcher, fileTypeName, approved);
+    List<RemovedMapping> mappings = (List<RemovedMapping>)myRemovedMappings.getModifiable(matcher);
+    boolean found = false;
+    for (int i = 0; i < mappings.size(); i++) {
+      RemovedMapping removedMapping = mappings.get(i);
+      if (removedMapping.getFileTypeName().equals(fileTypeName)) {
+        mappings.set(i, mapping);
+        found = true;
+        break;
+      }
+    }
+    if (!found) {
+      mappings.add(mapping);
+    }
+    return mapping;
   }
 
   void load(@NotNull Element e) {
-    for (RemovedMapping mapping : readRemovedMappings(e)) {
-      myRemovedMappings.put(mapping.myFileNameMatcher, mapping);
+    List<RemovedMapping> removedMappings = readRemovedMappings(e);
+    Set<RemovedMapping> uniques = new LinkedHashSet<>(removedMappings.size());
+    for (RemovedMapping mapping : removedMappings) {
+      if (!uniques.add(mapping)) {
+        LOG.warn(new InvalidDataException("Duplicate <removed_mapping> tag for " + mapping));
+      }
+    }
+    for (RemovedMapping mapping : uniques) {
+      myRemovedMappings.putValue(mapping.myFileNameMatcher, mapping);
     }
   }
 
-  @NotNull
-  static List<RemovedMapping> readRemovedMappings(@NotNull Element e) {
+  static @NotNull List<RemovedMapping> readRemovedMappings(@NotNull Element e) {
     List<Element> children = e.getChildren(ELEMENT_REMOVED_MAPPING);
     if (children.isEmpty()) {
       return Collections.emptyList();
@@ -84,7 +149,9 @@ final class RemovedMappingTracker {
   }
 
   void save(@NotNull Element element) {
-    for (RemovedMapping mapping : myRemovedMappings.values()) {
+    List<RemovedMapping> removedMappings = new ArrayList<>(myRemovedMappings.values());
+    removedMappings.sort(Comparator.comparing((RemovedMapping mapping) -> mapping.getFileNameMatcher().getPresentableString()).thenComparing(RemovedMapping::getFileTypeName));
+    for (RemovedMapping mapping : removedMappings) {
       Element content = writeRemovedMapping(mapping.myFileTypeName, mapping.myFileNameMatcher, true, mapping.myApproved);
       if (content != null) {
         element.addContent(content);
@@ -92,9 +159,12 @@ final class RemovedMappingTracker {
     }
   }
 
-  void saveRemovedMappingsForFileType(@NotNull Element map, @NotNull String fileTypeName, @NotNull Set<? extends FileNameMatcher> associations, boolean specifyTypeName) {
+  void saveRemovedMappingsForFileType(@NotNull Element map,
+                                      @NotNull String fileTypeName,
+                                      @NotNull Collection<? extends FileNameMatcher> associations,
+                                      boolean specifyTypeName) {
     for (FileNameMatcher matcher : associations) {
-      Element content = writeRemovedMapping(fileTypeName, matcher, specifyTypeName, isApproved(matcher));
+      Element content = writeRemovedMapping(fileTypeName, matcher, specifyTypeName, isApproved(matcher, fileTypeName));
       if (content != null) {
         map.addContent(content);
       }
@@ -105,38 +175,52 @@ final class RemovedMappingTracker {
     return myRemovedMappings.containsKey(matcher);
   }
 
-  private boolean isApproved(@NotNull FileNameMatcher matcher) {
-    RemovedMapping mapping = myRemovedMappings.get(matcher);
+  private boolean isApproved(@NotNull FileNameMatcher matcher, @NotNull String fileTypeName) {
+    RemovedMapping mapping = ContainerUtil.find(myRemovedMappings.get(matcher), m -> m.getFileTypeName().equals(fileTypeName));
     return mapping != null && mapping.isApproved();
    }
 
-  @NotNull
-  List<RemovedMapping> getRemovedMappings() {
+  @VisibleForTesting
+  public @NotNull List<RemovedMapping> getRemovedMappings() {
     return new ArrayList<>(myRemovedMappings.values());
   }
 
-  @NotNull List<FileNameMatcher> getMappingsForFileType(@NotNull String fileTypeName) {
+  @VisibleForTesting
+  public @NotNull List<FileNameMatcher> getMappingsForFileType(@NotNull String fileTypeName) {
     return myRemovedMappings.values().stream()
       .filter(mapping -> mapping.myFileTypeName.equals(fileTypeName))
       .map(mapping -> mapping.myFileNameMatcher)
       .collect(Collectors.toList());
   }
 
-  void removeMatching(@NotNull BiPredicate<? super FileNameMatcher, ? super String> predicate) {
-    myRemovedMappings.entrySet().removeIf(next -> predicate.test(next.getValue().myFileNameMatcher, next.getValue().myFileTypeName));
-  }
-
-  @NotNull
-  List<RemovedMapping> deleteUnapprovedMappings() {
+  @VisibleForTesting
+  public @NotNull List<RemovedMapping> removeIf(@NotNull Predicate<? super RemovedMapping> predicate) {
     List<RemovedMapping> result = new ArrayList<>();
-    for (Iterator<Map.Entry<FileNameMatcher, RemovedMapping>> it = myRemovedMappings.entrySet().iterator(); it.hasNext(); ) {
-      Map.Entry<FileNameMatcher, RemovedMapping> next = it.next();
-      if (!next.getValue().isApproved()) {
-        result.add(next.getValue());
-        it.remove();
+    for (Iterator<Map.Entry<FileNameMatcher, Collection<RemovedMapping>>> iterator = myRemovedMappings.entrySet().iterator();
+         iterator.hasNext(); ) {
+      Map.Entry<FileNameMatcher, Collection<RemovedMapping>> entry = iterator.next();
+      Collection<RemovedMapping> mappings = entry.getValue();
+      mappings.removeIf(mapping -> {
+        boolean toRemove = predicate.test(mapping);
+        if (toRemove) {
+          result.add(mapping);
+        }
+        return toRemove;
+      });
+      if (mappings.isEmpty()) {
+        iterator.remove();
       }
     }
     return result;
+  }
+
+  void approveUnapprovedMappings() {
+    for (RemovedMapping mapping : new ArrayList<>(myRemovedMappings.values())) {
+      if (!mapping.isApproved()) {
+        myRemovedMappings.remove(mapping.getFileNameMatcher(), mapping);
+        myRemovedMappings.putValue(mapping.getFileNameMatcher(), new RemovedMapping(mapping.getFileNameMatcher(), mapping.getFileTypeName(), true));
+      }
+    }
   }
 
   private static Element writeRemovedMapping(@NotNull String fileTypeName,

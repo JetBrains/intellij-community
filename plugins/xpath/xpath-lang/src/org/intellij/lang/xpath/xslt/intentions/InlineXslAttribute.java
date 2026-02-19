@@ -34,23 +34,21 @@ import org.jetbrains.annotations.Nullable;
 
 public class InlineXslAttribute implements IntentionAction {
     @Override
-    @NotNull
-    public String getText() {
+    public @NotNull String getText() {
         return getFamilyName();
     }
 
     @Override
-    @NotNull
-    public String getFamilyName() {
+    public @NotNull String getFamilyName() {
         return XPathBundle.message("intention.family.name.inline.xsl.attribute");
     }
 
     @Override
-    public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-        if (!XsltSupport.isXsltFile(file)) return false;
+    public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile psiFile) {
+        if (!XsltSupport.isXsltFile(psiFile)) return false;
 
         final int offset = editor.getCaretModel().getOffset();
-        final PsiElement element = file.findElementAt(offset);
+        final PsiElement element = psiFile.findElementAt(offset);
       final XmlTag tag = PsiTreeUtil.getParentOfType(element, XmlTag.class, false);
         if (tag == null) {
             return false;
@@ -78,16 +76,14 @@ public class InlineXslAttribute implements IntentionAction {
         final XmlTag[] exprs = tag.findSubTags("value-of", XsltSupport.XSLT_NS);
         final PsiElement[] children = tag.getChildren();
         for (PsiElement child : children) {
-            if (child instanceof XmlText) {
-                final XmlText text = (XmlText)child;
-                if (text.getText().trim().length() == 0) {
+            if (child instanceof XmlText text) {
+              if (text.getText().trim().isEmpty()) {
                     if (texts.length == 0 && exprs.length == 0) {
                         return false;
                     }
                 }
-            } else if (child instanceof XmlTag) {
-                final XmlTag t = (XmlTag)child;
-                if (XsltSupport.isXsltTag(t)) {
+            } else if (child instanceof XmlTag t) {
+              if (XsltSupport.isXsltTag(t)) {
                     if ("text".equals(t.getLocalName())) {
 
                     } else if ("value-of".equals(t.getLocalName())) {
@@ -106,23 +102,21 @@ public class InlineXslAttribute implements IntentionAction {
     }
 
     @Override
-    public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
+    public void invoke(@NotNull Project project, Editor editor, PsiFile psiFile) throws IncorrectOperationException {
         final int offset = editor.getCaretModel().getOffset();
-        final PsiElement element = file.findElementAt(offset);
+        final PsiElement element = psiFile.findElementAt(offset);
       final XmlTag tag = PsiTreeUtil.getParentOfType(element, XmlTag.class, false);
         assert tag != null;
 
         final StringBuilder sb = new StringBuilder();
         final PsiElement[] children = tag.getChildren();
         for (PsiElement child : children) {
-            if (child instanceof XmlText) {
-                final XmlText text = (XmlText)child;
-                if (text.getText().trim().length() > 0) {
+            if (child instanceof XmlText text) {
+              if (!text.getText().trim().isEmpty()) {
                     sb.append(text.getText().replaceAll("\"", "&quot;"));
                 }
-            } else if (child instanceof XmlTag) {
-                final XmlTag t = (XmlTag)child;
-                if (XsltSupport.isXsltTag(t)) {
+            } else if (child instanceof XmlTag t) {
+              if (XsltSupport.isXsltTag(t)) {
                     if ("text".equals(t.getLocalName())) {
                         sb.append(t.getValue().getText().replaceAll("\"", "&quot;"));
                     } else if ("value-of".equals(t.getLocalName())) {
@@ -145,8 +139,7 @@ public class InlineXslAttribute implements IntentionAction {
         }
     }
 
-    @Nullable
-    private static XmlTag findParent(XmlTag tag) {
+    private static @Nullable XmlTag findParent(XmlTag tag) {
         XmlTag p = tag.getParentTag();
         if (p == null) {
             return null;

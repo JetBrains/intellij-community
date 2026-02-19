@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.util.projectWizard;
 
 import com.intellij.CommonBundle;
@@ -49,8 +49,7 @@ public final class ExistingModuleLoader extends ModuleBuilder {
   }
 
   @Override
-  @NotNull
-  public Module createModule(@NotNull ModifiableModuleModel moduleModel)
+  public @NotNull Module createModule(@NotNull ModifiableModuleModel moduleModel)
     throws IOException, ModuleWithNameAlreadyExists, JDOMException, ConfigurationException {
     LOG.assertTrue(getName() != null);
 
@@ -79,7 +78,7 @@ public final class ExistingModuleLoader extends ModuleBuilder {
     }
 
     Path file = Paths.get(moduleFilePath);
-    if (!Files.exists(file)) {
+    if (Files.notExists(file)) {
       Messages.showErrorDialog(currentProject, IdeBundle.message("title.module.file.does.not.exist", moduleFilePath),
                                CommonBundle.getErrorTitle());
       return false;
@@ -91,13 +90,13 @@ public final class ExistingModuleLoader extends ModuleBuilder {
       if (result != null && result.openingIsCanceled()) {
         return false;
       }
-      final Element root = JDOMUtil.load(file);
-      final Set<String> usedMacros = PathMacrosCollector.getMacroNames(root);
+      Element root = JDOMUtil.load(file);
+      Set<String> usedMacros = PathMacrosCollector.Companion.getMacroNames(root);
       usedMacros.remove(PathMacroUtil.DEPRECATED_MODULE_DIR);
       usedMacros.removeAll(PathMacros.getInstance().getAllMacroNames());
 
-      if (usedMacros.size() > 0) {
-        final boolean ok = ProjectMacrosUtil.showMacrosConfigurationDialog(currentProject, usedMacros);
+      if (!usedMacros.isEmpty()) {
+        boolean ok = ProjectMacrosUtil.showMacrosConfigurationDialog(currentProject, usedMacros);
         if (!ok) {
           return false;
         }

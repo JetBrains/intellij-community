@@ -28,6 +28,7 @@ import java.util.List;
  * @author Paul Speed
  * @author David Becker
  */
+@SuppressWarnings("HardCodedStringLiteral")
 public class SsiConditional implements SsiCommand {
   @SuppressWarnings("SpellCheckingInspection")
   @Override

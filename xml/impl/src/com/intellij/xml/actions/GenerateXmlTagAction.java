@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xml.actions;
 
 import com.intellij.codeInsight.CodeInsightUtilCore;
@@ -31,8 +17,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorModificationUtil;
-import com.intellij.openapi.editor.colors.EditorColorsManager;
-import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.EditorFontType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
@@ -47,7 +31,11 @@ import com.intellij.psi.impl.source.tree.LeafElement;
 import com.intellij.psi.impl.source.xml.XmlContentDFA;
 import com.intellij.psi.meta.PsiMetaData;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.xml.*;
+import com.intellij.psi.xml.XmlAttribute;
+import com.intellij.psi.xml.XmlAttributeValue;
+import com.intellij.psi.xml.XmlFile;
+import com.intellij.psi.xml.XmlTag;
+import com.intellij.psi.xml.XmlTokenType;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
@@ -59,24 +47,35 @@ import com.intellij.xml.impl.schema.XmlElementDescriptorImpl;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.BorderFactory;
+import javax.swing.JLabel;
+import javax.swing.JList;
+import javax.swing.JPanel;
+import javax.swing.ListCellRenderer;
+import javax.xml.XMLConstants;
+import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.Component;
+import java.awt.Font;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.*;
 
 /**
  * @author Dmitry Avdeev
  */
-public class GenerateXmlTagAction extends SimpleCodeInsightAction {
-
+public final class GenerateXmlTagAction extends SimpleCodeInsightAction {
   public static final ThreadLocal<String> TEST_THREAD_LOCAL = new ThreadLocal<>();
-  private final static Logger LOG = Logger.getInstance(GenerateXmlTagAction.class);
+  private static final Logger LOG = Logger.getInstance(GenerateXmlTagAction.class);
 
   @Override
-  public void invoke(@NotNull final Project project, @NotNull final Editor editor, @NotNull final PsiFile file) {
+  public void invoke(final @NotNull Project project, final @NotNull Editor editor, final @NotNull PsiFile psiFile) {
     if (!EditorModificationUtil.checkModificationAllowed(editor)) return;
     try {
-      final XmlTag contextTag = getContextTag(editor, file);
+      final XmlTag contextTag = getContextTag(editor, psiFile);
       if (contextTag == null) {
         throw new CommonRefactoringUtil.RefactoringErrorHintException("Caret should be positioned inside a tag");
       }
@@ -85,7 +84,7 @@ public class GenerateXmlTagAction extends SimpleCodeInsightAction {
       final XmlElementDescriptor[] descriptors = currentTagDescriptor.getElementsDescriptors(contextTag);
       Arrays.sort(descriptors, Comparator.comparing(PsiMetaData::getName));
       Consumer<XmlElementDescriptor> consumer = (selected) ->
-        WriteCommandAction.writeCommandAction(project, file).withName(XmlBundle.message("generate.xml.tag")).run(() -> {
+        WriteCommandAction.writeCommandAction(project, psiFile).withName(XmlBundle.message("generate.xml.tag")).run(() -> {
           if (selected == null) return;
           XmlTag newTag = createTag(contextTag, selected);
 
@@ -95,7 +94,7 @@ public class GenerateXmlTagAction extends SimpleCodeInsightAction {
             Document document = editor.getDocument();
             document.insertString(offset, newTag.getText());
             PsiDocumentManager.getInstance(project).commitDocument(document);
-            newTag = PsiTreeUtil.getParentOfType(file.findElementAt(offset + 1), XmlTag.class, false);
+            newTag = PsiTreeUtil.getParentOfType(psiFile.findElementAt(offset + 1), XmlTag.class, false);
           }
           else {
             newTag = (XmlTag)contextTag.addAfter(newTag, anchor);
@@ -111,7 +110,7 @@ public class GenerateXmlTagAction extends SimpleCodeInsightAction {
       }
       else {
         JBPopupFactory.getInstance()
-          .createPopupChooserBuilder(ContainerUtil.newArrayList(descriptors))
+          .createPopupChooserBuilder(List.of(descriptors))
           .setRenderer(new MyListCellRenderer())
           .setTitle(XmlBundle.message("choose.tag.name"))
           .setItemChosenCallback(consumer)
@@ -125,8 +124,7 @@ public class GenerateXmlTagAction extends SimpleCodeInsightAction {
     }
   }
 
-  @Nullable
-  private static XmlTag getAnchor(@NotNull XmlTag contextTag, Editor editor, XmlElementDescriptor selected) {
+  private static @Nullable XmlTag getAnchor(@NotNull XmlTag contextTag, Editor editor, XmlElementDescriptor selected) {
     XmlContentDFA contentDFA = XmlContentDFA.getContentDFA(contextTag);
     int offset = editor.getCaretModel().getOffset();
     if (contentDFA == null) {
@@ -165,18 +163,18 @@ public class GenerateXmlTagAction extends SimpleCodeInsightAction {
     XmlElementDescriptor selected = newTag.getDescriptor();
     if (selected == null) return;
     switch (selected.getContentType()) {
-      case XmlElementDescriptor.CONTENT_TYPE_EMPTY:
+      case XmlElementDescriptor.CONTENT_TYPE_EMPTY -> {
         newTag.collapseIfEmpty();
         ASTNode node = newTag.getNode();
         assert node != null;
         ASTNode elementEnd = node.findChildByType(XmlTokenType.XML_EMPTY_ELEMENT_END);
         if (elementEnd == null) {
-          LeafElement emptyTagEnd = Factory.createSingleLeafElement(XmlTokenType.XML_EMPTY_ELEMENT_END, "/>", 0, 2, null, newTag.getManager());
+          LeafElement emptyTagEnd =
+            Factory.createSingleLeafElement(XmlTokenType.XML_EMPTY_ELEMENT_END, "/>", 0, 2, null, newTag.getManager());
           node.addChild(emptyTagEnd);
         }
-        break;
-      case XmlElementDescriptor.CONTENT_TYPE_MIXED:
-        newTag.getValue().setText("");
+      }
+      case XmlElementDescriptor.CONTENT_TYPE_MIXED -> newTag.getValue().setText("");
     }
     for (XmlAttributeDescriptor descriptor : selected.getAttributesDescriptors(newTag)) {
       if (descriptor.isRequired()) {
@@ -236,8 +234,7 @@ public class GenerateXmlTagAction extends SimpleCodeInsightAction {
     return descriptor instanceof XmlElementDescriptorImpl ? ((XmlElementDescriptorImpl)descriptor).getNamespace() : "";
   }
 
-  @Nullable
-  private static XmlTag getContextTag(Editor editor, PsiFile file) {
+  private static @Nullable XmlTag getContextTag(Editor editor, PsiFile file) {
     PsiElement element = file.findElementAt(editor.getCaretModel().getOffset());
     XmlTag tag = null;
     if (element != null) {
@@ -253,10 +250,24 @@ public class GenerateXmlTagAction extends SimpleCodeInsightAction {
 
     if (group.getMinOccurs() < 1) return Collections.emptyList();
     switch (group.getGroupType()) {
-      case LEAF:
+      case LEAF -> {
         XmlElementDescriptor descriptor = group.getLeafDescriptor();
-        return descriptor == null ? Collections.emptyList() : Collections.singletonList(descriptor);
-      case CHOICE:
+        
+        if (descriptor == null) return Collections.emptyList();
+        
+        PsiElement declaration = descriptor.getDeclaration();
+        // don't add abstract elements to required sub tags list
+        if (declaration instanceof XmlTag) {
+          XmlTag tag = (XmlTag)descriptor.getDeclaration();
+          String abstractValue = tag.getAttributeValue("abstract", XMLConstants.W3C_XML_SCHEMA_NS_URI);
+          if ("true".equals(abstractValue)) {
+            return Collections.emptyList();
+          }
+        }
+        
+        return Collections.singletonList(descriptor);
+      }
+      case CHOICE -> {
         LinkedHashSet<XmlElementDescriptor> set = null;
         for (XmlElementsGroup subGroup : group.getSubGroups()) {
           List<XmlElementDescriptor> descriptors = computeRequiredSubTags(subGroup);
@@ -271,13 +282,14 @@ public class GenerateXmlTagAction extends SimpleCodeInsightAction {
           return Collections.singletonList(null); // placeholder for smart completion
         }
         return new ArrayList<>(set);
-
-      default:
+      }
+      default -> {
         ArrayList<XmlElementDescriptor> list = new ArrayList<>();
         for (XmlElementsGroup subGroup : group.getSubGroups()) {
           list.addAll(computeRequiredSubTags(subGroup));
         }
         return list;
+      }
     }
   }
 
@@ -286,10 +298,10 @@ public class GenerateXmlTagAction extends SimpleCodeInsightAction {
   }
 
   @Override
-  protected boolean isValidForFile(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
-    if (!(file instanceof XmlFile)) return false;
+  protected boolean isValidForFile(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile psiFile) {
+    if (!(psiFile instanceof XmlFile)) return false;
 
-    XmlTag contextTag = getContextTag(editor, file);
+    XmlTag contextTag = getContextTag(editor, psiFile);
     return contextTag != null && isInsideTagBody(contextTag, editor) && contextTag.getDescriptor() != null;
   }
 
@@ -313,8 +325,7 @@ public class GenerateXmlTagAction extends SimpleCodeInsightAction {
       myNSLabel = new JLabel();
       myPanel.add(myNSLabel, BorderLayout.EAST);
 
-      EditorColorsScheme scheme = EditorColorsManager.getInstance().getGlobalScheme();
-      Font font = scheme.getFont(EditorFontType.PLAIN);
+      Font font = EditorFontType.getGlobalPlainFont();
       myNameLabel.setFont(font);
       myNSLabel.setFont(font);
     }

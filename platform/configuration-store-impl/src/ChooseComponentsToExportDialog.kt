@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.configurationStore
 
 import com.intellij.ide.util.ElementsChooser
@@ -8,6 +8,7 @@ import com.intellij.openapi.application.ConfigImportHelper
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.fileChooser.FileChooser
 import com.intellij.openapi.fileChooser.FileChooserDescriptor
+import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.VerticalFlowLayout
 import com.intellij.openapi.util.NlsContexts
@@ -16,15 +17,17 @@ import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.FieldPanel
 import com.intellij.util.containers.CollectionFactory
-import org.jetbrains.concurrency.AsyncPromise
-import org.jetbrains.concurrency.Promise
 import java.awt.Component
 import java.awt.event.ActionEvent
 import java.io.File
 import java.nio.file.Path
 import java.nio.file.Paths
-import java.util.*
-import javax.swing.*
+import javax.swing.AbstractAction
+import javax.swing.Action
+import javax.swing.JComponent
+import javax.swing.JLabel
+import javax.swing.JPanel
+import javax.swing.JTextField
 
 private const val DEFAULT_FILE_NAME = "settings.zip"
 private val DEFAULT_PATH = FileUtil.toSystemDependentName(PathManager.getConfigPath() + "/") + DEFAULT_FILE_NAME
@@ -46,7 +49,7 @@ private fun addToExistingListElement(item: ExportableItem,
                                      itemToContainingListElement: MutableMap<ExportableItem, ComponentElementProperties>,
                                      fileToItem: Map<FileSpec, List<ExportableItem>>): Boolean {
   val list = fileToItem[item.fileSpec]
-  if (list == null || list.isEmpty()) {
+  if (list.isNullOrEmpty()) {
     return false
   }
 
@@ -68,43 +71,22 @@ private fun addToExistingListElement(item: ExportableItem,
   return file != null
 }
 
-fun chooseSettingsFile(oldPath: String?, parent: Component?, title: String, description: String): Promise<VirtualFile> {
-  val chooserDescriptor = object: FileChooserDescriptor(true, true, true, true, false, false) {
-    override fun isFileSelectable(file: VirtualFile?): Boolean {
-      if (file?.isDirectory == true) {
-        return file.fileSystem.getNioPath(file)?.let { path -> ConfigImportHelper.isConfigDirectory(path) } == true
-      }
-      return super.isFileSelectable(file)
-    }
-  }
-  chooserDescriptor.description = description
-  chooserDescriptor.isHideIgnored = false
-  chooserDescriptor.title = title
-  chooserDescriptor.withFileFilter { ConfigImportHelper.isSettingsFile(it) }
+internal fun chooseSettingsFile(descriptor: FileChooserDescriptor,
+                                initialPath: String?,
+                                parent: Component?,
+                                onFileChosen: (VirtualFile) -> Unit) {
+  FileChooser.chooseFile(descriptor, null, parent, getFileOrParent(initialPath), onFileChosen)
+}
 
-  var initialDir: VirtualFile?
-  if (oldPath != null) {
-    val oldFile = File(oldPath)
-    initialDir = LocalFileSystem.getInstance().findFileByIoFile(oldFile)
-    if (initialDir == null && oldFile.parentFile != null) {
-      initialDir = LocalFileSystem.getInstance().findFileByIoFile(oldFile.parentFile)
+private fun getFileOrParent(path: String?): VirtualFile? {
+  if (path != null) {
+    val oldFile = File(path)
+    val initialDir = LocalFileSystem.getInstance().findFileByIoFile(oldFile)
+    return initialDir ?: oldFile.parentFile?.let {
+      LocalFileSystem.getInstance().findFileByIoFile(it)
     }
   }
-  else {
-    initialDir = null
-  }
-  val result = AsyncPromise<VirtualFile>()
-  FileChooser.chooseFiles(chooserDescriptor, null, parent, initialDir, object : FileChooser.FileChooserConsumer {
-    override fun consume(files: List<VirtualFile>) {
-      val file = files[0]
-      result.setResult(file)
-    }
-
-    override fun cancelled() {
-      result.setError("")
-    }
-  })
-  return result
+  return null
 }
 
 internal class ChooseComponentsToExportDialog(fileToComponents: Map<FileSpec, List<ExportableItem>>,
@@ -143,7 +125,7 @@ internal class ChooseComponentsToExportDialog(fileToComponents: Map<FileSpec, Li
     for (componentElementProperty in LinkedHashSet(componentToContainingListElement.values)) {
       chooser.addElement(componentElementProperty, markedElementNames.isEmpty() || markedElementNames.contains(componentElementProperty.fileName), componentElementProperty)
     }
-    chooser.sort(Comparator.comparing<ComponentElementProperties, String> { it.toString() })
+    chooser.sort(Comparator.comparing { it.toString() })
 
     val exportPath = PropertiesComponent.getInstance().getValue("export.settings.path", DEFAULT_PATH)
     pathPanel.text = exportPath
@@ -155,12 +137,16 @@ internal class ChooseComponentsToExportDialog(fileToComponents: Map<FileSpec, Li
   }
 
   private fun browse() {
-    chooseSettingsFile(pathPanel.text, window, ConfigurationStoreBundle.message("title.export.file.location"),
-                       ConfigurationStoreBundle.message("prompt.choose.export.settings.file.path"))
-      .onSuccess { file ->
-        val path = if (file.isDirectory) "${file.path}/$DEFAULT_FILE_NAME" else file.path
-        pathPanel.text = FileUtil.toSystemDependentName(path)
-      }
+    val descriptor = FileChooserDescriptorFactory.createSingleLocalFileDescriptor().apply {
+      title = ConfigurationStoreBundle.message("title.export.file.location")
+      description = ConfigurationStoreBundle.message("prompt.choose.export.settings.file.path")
+      isHideIgnored = false
+      ConfigImportHelper.setSettingsFilter(this)
+    }
+    chooseSettingsFile(descriptor, pathPanel.text, window) { file ->
+      val path = if (file.isDirectory) "${file.path}/${DEFAULT_FILE_NAME}" else file.path
+      pathPanel.text = FileUtil.toSystemDependentName(path)
+    }
   }
 
   private fun updateControls() {

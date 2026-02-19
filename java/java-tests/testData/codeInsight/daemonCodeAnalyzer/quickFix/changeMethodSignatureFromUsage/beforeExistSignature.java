@@ -1,4 +1,4 @@
-// "Add 'int' as 1st parameter to method 'f'" "false"
+// "Add 'int' as 1st parameter to method 'f()'" "false"
 public class Foo {
     void foo(Bar f) {
         f.f<caret>(2);

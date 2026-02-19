@@ -1,43 +1,147 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
-import javax.swing.*;
-import java.awt.*;
+import com.intellij.openapi.application.impl.InternalUICustomization;
+import com.intellij.openapi.diagnostic.Logger;
+import org.intellij.lang.annotations.MagicConstant;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import javax.swing.Icon;
+import javax.swing.UIManager;
+import java.awt.Color;
+import java.awt.Component;
+import java.awt.Font;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.Insets;
+import java.awt.Point;
+import java.awt.Rectangle;
+import java.awt.RenderingHints;
 import java.awt.font.FontRenderContext;
 import java.awt.font.TextLayout;
+import java.awt.geom.AffineTransform;
+import java.awt.geom.NoninvertibleTransformException;
+import java.awt.geom.Point2D;
+import java.util.List;
 import java.util.Objects;
 
+import static com.intellij.ui.paint.RectanglePainter.DRAW;
 import static com.intellij.ui.paint.RectanglePainter.FILL;
+import static com.intellij.util.ui.UIUtil.getLcdContrastValue;
+import static java.lang.Math.min;
 
 public final class TextIcon implements Icon {
+  private static final Logger LOG = Logger.getInstance(TextIcon.class);
+
   @SuppressWarnings("UseDPIAwareInsets")
   private final Insets myInsets = new Insets(0, 0, 0, 0);
   private Integer myRound;
+  private Boolean withBorders;
   private Color myBackground;
   private Color myForeground;
+  private Color myBorderColor;
   private Font myFont;
   private String myText;
-  private Rectangle myTextBounds;
+  private Rectangle myStabilizedTextBounds;
   private FontRenderContext myContext;
+  private AffineTransform myFontTransform;
+  private List<String> myTextsForMinimumBounds;
+  private Rectangle myMinimumTextBounds;
+  private Rectangle myCurrentTextBounds;
+  private int myFontSize;
+  private @MagicConstant(intValues = {Font.PLAIN, Font.BOLD, Font.ITALIC}) int myFontStyle;
 
   private Rectangle getTextBounds() {
-    if (myTextBounds == null && myFont != null && myText != null && !myText.isEmpty()) {
-      Object aaHint = UIManager.get(RenderingHints.KEY_TEXT_ANTIALIASING);
-      if (aaHint == null) aaHint = RenderingHints.VALUE_TEXT_ANTIALIAS_DEFAULT;
-      Object fmHint = UIManager.get(RenderingHints.KEY_FRACTIONALMETRICS);
-      if (fmHint == null) fmHint = RenderingHints.VALUE_FRACTIONALMETRICS_DEFAULT;
-      myContext = new FontRenderContext(null, aaHint, fmHint);
-      myTextBounds = getPixelBounds(myFont, myText, myContext);
+    if (myStabilizedTextBounds != null && myFont != null) {
+      if (myFontSize != myFont.getSize() || myFontStyle != myFont.getStyle()) {
+        myMinimumTextBounds = null;
+        myCurrentTextBounds = null;
+        myStabilizedTextBounds = null;
+      }
     }
-    return myTextBounds;
+    if (myStabilizedTextBounds == null && myFont != null && myText != null && !myText.isEmpty()) {
+      myFontSize = myFont.getSize();
+      myFontStyle = myFont.getStyle();
+      myContext = createContext();
+      Font fnt = myFontTransform == null ? myFont : myFont.deriveFont(myFontTransform);
+      myCurrentTextBounds = getPixelBoundsWithPadding(fnt, myText, myContext);
+      myStabilizedTextBounds = myCurrentTextBounds;
+
+      if (myTextsForMinimumBounds != null) {
+        boolean debug = LOG.isDebugEnabled();
+        if (myMinimumTextBounds == null) {
+          for (String text : myTextsForMinimumBounds) {
+            Rectangle bounds = getPixelBoundsWithPadding(fnt, text, myContext);
+            if (debug) {
+              LOG.debug("Bounds for text \"" + text + "\" are: " + bounds);
+            }
+            myMinimumTextBounds = max(myMinimumTextBounds, bounds);
+          }
+        }
+        myStabilizedTextBounds = max(myMinimumTextBounds, myStabilizedTextBounds);
+        if (debug) {
+          LOG.debug("StabilizedTextBounds for text \"" + myText + "\" are: " + myStabilizedTextBounds);
+        }
+      }
+
+      if (myFontTransform != null) {
+        try {
+          AffineTransform reverseTransform = myFontTransform.createInverse();
+          myStabilizedTextBounds = applyTransform(myStabilizedTextBounds, reverseTransform);
+          myCurrentTextBounds = applyTransform(myCurrentTextBounds, reverseTransform);
+        }
+        catch (NoninvertibleTransformException e) {
+          LOG.error(e);
+        }
+      }
+    }
+    return myStabilizedTextBounds;
+  }
+
+  @NotNull
+  private static Rectangle max(@Nullable Rectangle one, @NotNull Rectangle other) {
+    if (one == null) return other;
+    if (LOG.isDebugEnabled() && ((one.x != other.x) || (one.y != other.y))) {
+      LOG.debug("Attention. Unequal starting points: " + one + ", other = " + other);
+    }
+    return new Rectangle(min(one.x, other.x),
+                         min(one.y, other.y),
+                         Math.max(one.width, other.width),
+                         Math.max(one.height, other.height));
   }
 
   public TextIcon(String text, Color foreground, Color background, int margin) {
-    setInsets(margin, margin, margin, margin);
-    setRound(margin * 4);
+    this(text, foreground, background, margin, false);
+  }
+
+  public TextIcon(String text, Color foreground, Color background, int margin, boolean withBorders) {
+    this(text, foreground, background, margin, withBorders, withBorders ? 255 : 0);
+  }
+
+  public TextIcon(String text, Color foreground, Color background, int margin, boolean withBorders, int borderAlpha) {
+    this(text, foreground, background, ColorUtil.toAlpha(background, borderAlpha), margin, withBorders);
+  }
+
+  public TextIcon(String text, Color foreground, Color background, Color borderColor, int margin, boolean withBorders) {
+    setWithBorders(withBorders);
     setBackground(background);
     setForeground(foreground);
+    setBorderColor(borderColor);
+    setInsets(margin, margin, margin, margin);
+    setRound(margin * 4);
     setText(text);
+  }
+
+  public AffineTransform getFontTransform() {
+    return myFontTransform;
+  }
+
+  public void setFontTransform(AffineTransform fontTransform) {
+    myFontTransform = fontTransform;
+    myMinimumTextBounds = null;
+    myStabilizedTextBounds = null;
+    myCurrentTextBounds = null;
   }
 
   public void setInsets(int top, int left, int bottom, int right) {
@@ -52,6 +156,10 @@ public final class TextIcon implements Icon {
     myRound = round;
   }
 
+  public void setWithBorders(boolean withBorders) {
+    this.withBorders = withBorders;
+  }
+
   public void setBackground(Color background) {
     myBackground = background;
   }
@@ -60,14 +168,59 @@ public final class TextIcon implements Icon {
     myForeground = foreground;
   }
 
+  public void setBorderColor(Color borderColor) {
+    myBorderColor = borderColor;
+  }
+
   public void setText(String text) {
-    myTextBounds = null;
+    myStabilizedTextBounds = null;
     myText = text;
+    myCurrentTextBounds = null;
   }
 
   public void setFont(Font font) {
     myFont = font;
-    myTextBounds = null;
+    myStabilizedTextBounds = null;
+    myMinimumTextBounds = null;
+    myCurrentTextBounds = null;
+  }
+
+  public void setTextsForMinimumBounds(List<String> textsForMinimumBounds) {
+    myTextsForMinimumBounds = textsForMinimumBounds;
+    myStabilizedTextBounds = null;
+    myMinimumTextBounds = null;
+  }
+
+  public Insets getInsets() {
+    return myInsets;
+  }
+
+  public Integer getRound() {
+    return myRound;
+  }
+
+  public Boolean getWithBorders() {
+    return withBorders;
+  }
+
+  public Color getBackground() {
+    return myBackground;
+  }
+
+  public Color getForeground() {
+    return myForeground;
+  }
+
+  public Color getBorderColor() {
+    return myBorderColor;
+  }
+
+  public Font getFont() {
+    return myFont;
+  }
+
+  public String getText() {
+    return myText;
   }
 
   @Override
@@ -84,20 +237,42 @@ public final class TextIcon implements Icon {
 
   @Override
   public void paintIcon(Component c, Graphics g, int x, int y) {
-    if (myBackground != null && g instanceof Graphics2D) {
-      g.setColor(myBackground);
-      FILL.paint((Graphics2D)g, x, y, getIconWidth(), getIconHeight(), myRound);
+    InternalUICustomization customization = InternalUICustomization.getInstance();
+    if (customization != null) {
+      g = customization.preserveGraphics(g);
+    }
+
+    if (g instanceof Graphics2D) {
+      if (myBackground != null) {
+        g.setColor(myBackground);
+        FILL.paint((Graphics2D)g, x, y, getIconWidth(), getIconHeight(), myRound);
+      }
+      if (withBorders && myBorderColor != null) {
+        g.setColor(myBorderColor);
+        DRAW.paint((Graphics2D)g, x, y, getIconWidth(), getIconHeight(), myRound);
+      }
     }
     Rectangle bounds = getTextBounds();
+    Rectangle currentTextBounds = myCurrentTextBounds;
     if (myForeground != null && bounds != null) {
-      Graphics2D g2d = (Graphics2D)g.create(myInsets.left + x, myInsets.top + y, bounds.width, bounds.height);
+      int widthDelta = (bounds.width - currentTextBounds.width) / 2;
+      int heightDelta = (bounds.height - currentTextBounds.height) / 2 ;
+      Graphics2D g2d = (Graphics2D)g.create(myInsets.left + x + widthDelta,
+                                            myInsets.top + y + heightDelta,
+                                            currentTextBounds.width, currentTextBounds.height);
       try {
+        Object textLcdContrast = UIManager.get(RenderingHints.KEY_TEXT_LCD_CONTRAST);
+        if (textLcdContrast == null) textLcdContrast = getLcdContrastValue(); // L&F is not properly updated
         g2d.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, myContext.getAntiAliasingHint());
-        g2d.setRenderingHint(RenderingHints.KEY_TEXT_LCD_CONTRAST, UIManager.get(RenderingHints.KEY_TEXT_LCD_CONTRAST));
+        g2d.setRenderingHint(RenderingHints.KEY_TEXT_LCD_CONTRAST, textLcdContrast);
         g2d.setRenderingHint(RenderingHints.KEY_FRACTIONALMETRICS, myContext.getFractionalMetricsHint());
         g2d.setColor(myForeground);
         g2d.setFont(myFont);
         g2d.drawString(myText, -bounds.x, -bounds.y);
+        if (LOG.isDebugEnabled()) {
+          LOG.debug("Drawing \"" + myText + "\" at " + x + ", " + y + ", insets " + myInsets + "," +
+                    " with bounds " + bounds + " and currentTextBounds " + currentTextBounds);
+        }
       }
       finally {
         g2d.dispose();
@@ -116,17 +291,46 @@ public final class TextIcon implements Icon {
            Objects.equals(myForeground, icon.myForeground) &&
            Objects.equals(myFont, icon.myFont) &&
            Objects.equals(myText, icon.myText) &&
-           Objects.equals(myTextBounds, icon.myTextBounds);
+           Objects.equals(myStabilizedTextBounds, icon.myStabilizedTextBounds) &&
+           Objects.equals(myTextsForMinimumBounds, icon.myTextsForMinimumBounds) &&
+           Objects.equals(withBorders, icon.withBorders) &&
+           Objects.equals(myBorderColor, icon.myBorderColor);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(myInsets, myRound, myBackground, myForeground, myFont, myText, myTextBounds);
+    return Objects.hash(myInsets, myRound, myBackground, myForeground, myFont, myText, myStabilizedTextBounds, myTextsForMinimumBounds,
+                        withBorders, myBorderColor);
   }
 
-  private static Rectangle getPixelBounds(Font font, String text, FontRenderContext context) {
-    return font.hasLayoutAttributes()
-           ? new TextLayout(text, font, context).getPixelBounds(context, 0, 0)
-           : font.createGlyphVector(context, text).getPixelBounds(context, 0, 0);
+  private static Rectangle applyTransform(Rectangle srcRect, AffineTransform at) {
+    Point2D leftTop = at.transform(new Point(srcRect.x, srcRect.y), null);
+    Point2D rightBottom = at.transform(new Point(srcRect.x + srcRect.width, srcRect.y + srcRect.height), null);
+    int left = (int)Math.floor(leftTop.getX());
+    int top = (int)Math.floor(leftTop.getY());
+    int right = (int)Math.ceil(rightBottom.getX());
+    int bottom = (int)Math.ceil(rightBottom.getY());
+    return new Rectangle(left, top, right - left, bottom - top);
+  }
+
+  // Returns rectangle with 1 padding around the text
+  private static Rectangle getPixelBoundsWithPadding(Font font, String text, FontRenderContext context) {
+    Rectangle rectangle = font.hasLayoutAttributes()
+                          ? new TextLayout(text, font, context).getPixelBounds(context, 0, 0)
+                          : font.createGlyphVector(context, text).getPixelBounds(context, 0, 0);
+    return new Rectangle(rectangle.x - 1, rectangle.y - 1, rectangle.width + 2, rectangle.height + 2);
+  }
+
+  private static FontRenderContext createContext() {
+    Object aaHint = UIManager.get(RenderingHints.KEY_TEXT_ANTIALIASING);
+    if (aaHint == null) aaHint = RenderingHints.VALUE_TEXT_ANTIALIAS_DEFAULT;
+    Object fmHint = UIManager.get(RenderingHints.KEY_FRACTIONALMETRICS);
+    if (fmHint == null) fmHint = RenderingHints.VALUE_FRACTIONALMETRICS_DEFAULT;
+    return new FontRenderContext(null, aaHint, fmHint);
+  }
+
+  public void uiSettingsChanged() {
+    myStabilizedTextBounds = null;
+    myMinimumTextBounds = null;
   }
 }

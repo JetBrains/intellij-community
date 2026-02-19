@@ -21,10 +21,10 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 /**
  * @author Max Medvedev
  */
-public class GroovyResolveScopeProvider extends ResolveScopeProvider {
+public final class GroovyResolveScopeProvider extends ResolveScopeProvider {
 
   @Override
-  public GlobalSearchScope getResolveScope(@NotNull VirtualFile file, Project project) {
+  public GlobalSearchScope getResolveScope(@NotNull VirtualFile file, @NotNull Project project) {
     FileType fileType = file.getFileType();
     if (!(fileType instanceof LanguageFileType) || ((LanguageFileType)fileType).getLanguage() != GroovyLanguage.INSTANCE) {
       return null;

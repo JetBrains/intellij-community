@@ -1,12 +1,26 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 import com.intellij.java.analysis.JavaAnalysisBundle;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.pom.java.JavaFeature;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaElementVisitor;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiAnonymousClass;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiClassType;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementFactory;
+import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.PsiExpressionList;
+import com.intellij.psi.PsiLambdaExpression;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiNewExpression;
+import com.intellij.psi.PsiReference;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.Nls;
@@ -14,9 +28,10 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
+import java.util.Set;
 import java.util.function.UnaryOperator;
 
-public class AnonymousHasLambdaAlternativeInspection extends AbstractBaseJavaLocalInspectionTool {
+public final class AnonymousHasLambdaAlternativeInspection extends AbstractBaseJavaLocalInspectionTool {
   public static final Logger LOG = Logger.getInstance(AnonymousHasLambdaAlternativeInspection.class);
 
   static final class AnonymousLambdaAlternative {
@@ -43,15 +58,16 @@ public class AnonymousHasLambdaAlternativeInspection extends AbstractBaseJavaLoc
                                    "new Thread(() -> {…})")
   };
 
-  @NotNull
   @Override
-  public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, boolean isOnTheFly) {
-    if (!JavaFeature.THREAD_LOCAL_WITH_INITIAL.isFeatureSupported(holder.getFile())) {
-      return PsiElementVisitor.EMPTY_VISITOR;
-    }
+  public @NotNull Set<@NotNull JavaFeature> requiredFeatures() {
+    return Set.of(JavaFeature.THREAD_LOCAL_WITH_INITIAL);
+  }
+
+  @Override
+  public @NotNull PsiElementVisitor buildVisitor(final @NotNull ProblemsHolder holder, boolean isOnTheFly) {
     return new JavaElementVisitor() {
       @Override
-      public void visitAnonymousClass(final PsiAnonymousClass aClass) {
+      public void visitAnonymousClass(final @NotNull PsiAnonymousClass aClass) {
         super.visitAnonymousClass(aClass);
         PsiExpressionList argumentList = aClass.getArgumentList();
         if (AnonymousCanBeLambdaInspection.isLambdaForm(aClass, Collections.emptySet()) &&
@@ -63,15 +79,14 @@ public class AnonymousHasLambdaAlternativeInspection extends AbstractBaseJavaLoc
             final PsiElement lBrace = aClass.getLBrace();
             LOG.assertTrue(lBrace != null);
             final TextRange rangeInElement = new TextRange(0, lBrace.getStartOffsetInParent() + aClass.getStartOffsetInParent() - 1);
-            holder.registerProblem(aClass.getParent(),
-                                   JavaAnalysisBundle.message("anonymous.ref.loc.can.be.replaced.with.0", alternative.myReplacementMessage),
-                                   ProblemHighlightType.LIKE_UNUSED_SYMBOL, rangeInElement, new ReplaceWithLambdaAlternativeFix(alternative));
+            holder.registerProblem(aClass.getParent(), rangeInElement,
+                                   JavaAnalysisBundle.message("anonymous.ref.loc.can.be.replaced.with.0", alternative.myReplacementMessage), new ReplaceWithLambdaAlternativeFix(alternative));
           }
         }
       }
 
       @Contract("null, _ -> null")
-      private AnonymousLambdaAlternative getAlternative(PsiClass type, PsiMethod method) {
+      private static AnonymousLambdaAlternative getAlternative(PsiClass type, PsiMethod method) {
         if(type == null) return null;
         for(AnonymousLambdaAlternative alternative : ALTERNATIVES) {
           if(alternative.myClassName.equals(type.getQualifiedName()) && alternative.myMethodName.equals(method.getName())) {
@@ -83,32 +98,27 @@ public class AnonymousHasLambdaAlternativeInspection extends AbstractBaseJavaLoc
     };
   }
 
-  static class ReplaceWithLambdaAlternativeFix implements LocalQuickFix {
+  static class ReplaceWithLambdaAlternativeFix extends PsiUpdateModCommandQuickFix {
     private final @NotNull AnonymousLambdaAlternative myAlternative;
 
     ReplaceWithLambdaAlternativeFix(@NotNull AnonymousLambdaAlternative alternative) {
       myAlternative = alternative;
     }
 
-    @Nls
-    @NotNull
     @Override
-    public String getName() {
+    public @Nls @NotNull String getName() {
       return JavaAnalysisBundle.message("replace.with.0", myAlternative.myReplacementMessage);
     }
 
-    @Nls
-    @NotNull
     @Override
-    public String getFamilyName() {
+    public @Nls @NotNull String getFamilyName() {
       return JavaAnalysisBundle.message("replace.anonymous.class.with.lambda.alternative");
     }
 
     @Override
-    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      PsiElement element = descriptor.getStartElement();
-      if(!(element instanceof PsiNewExpression)) return;
-      PsiAnonymousClass aClass = ((PsiNewExpression)element).getAnonymousClass();
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
+      if(!(element instanceof PsiNewExpression newExpression)) return;
+      PsiAnonymousClass aClass = newExpression.getAnonymousClass();
       if(aClass == null) return;
       PsiMethod[] methods = aClass.getMethods();
       if(methods.length != 1) return;

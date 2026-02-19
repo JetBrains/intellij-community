@@ -1,7 +1,10 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.inspections.quickfix;
 
-import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
+import com.intellij.codeInspection.IntentionAndQuickFixAction;
+import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.lang.LanguageExtensionPoint;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Editor;
@@ -16,15 +19,17 @@ import com.intellij.openapi.util.ClassExtensionPoint;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.SmartPointerManager;
+import com.intellij.psi.SmartPsiElementPointer;
+import com.intellij.psi.util.ClassUtil;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlTag;
-import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.KeyedLazyInstanceEP;
 import com.intellij.util.PsiNavigateUtil;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xml.DomFileElement;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.DevKitBundle;
 import org.jetbrains.idea.devkit.dom.Extension;
 import org.jetbrains.idea.devkit.dom.Extensions;
@@ -35,47 +40,53 @@ import java.util.ArrayList;
 import java.util.Map;
 import java.util.Set;
 
-public class RegisterExtensionFix implements IntentionAction {
-  private final PsiClass myExtensionClass;
+public class RegisterExtensionFix extends IntentionAndQuickFixAction {
+  private final SmartPsiElementPointer<PsiClass> myExtensionClassPointer;
   private final Set<? extends ExtensionPointCandidate> myEPCandidates;
 
   public RegisterExtensionFix(PsiClass extensionClass, Set<? extends ExtensionPointCandidate> epCandidates) {
-    myExtensionClass = extensionClass;
+    myExtensionClassPointer = SmartPointerManager.createPointer(extensionClass);
     myEPCandidates = epCandidates;
   }
 
-  @NotNull
   @Override
-  public String getText() {
+  public @NotNull String getText() {
     return DevKitBundle.message("register.extension.fix.name");
   }
 
-  @NotNull
   @Override
-  public String getFamilyName() {
+  public @IntentionName @NotNull String getName() {
     return getText();
   }
 
   @Override
-  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    return !DumbService.isDumb(project);
+  public @NotNull String getFamilyName() {
+    return getText();
   }
 
   @Override
-  public void invoke(@NotNull Project project, final Editor editor, PsiFile file) throws IncorrectOperationException {
-    PluginDescriptorChooser.show(project, editor, file, element -> doFix(editor, element));
+  public boolean isAvailable(@NotNull Project project, @Nullable Editor editor, PsiFile psiFile) {
+    return editor != null && !DumbService.isDumb(project);
+  }
+
+  @Override
+  public void applyFix(@NotNull Project project, PsiFile psiFile, @Nullable Editor editor) {
+    PluginDescriptorChooser.show(project, editor, psiFile, element -> doFix(editor, element));
   }
 
   private void doFix(Editor editor, final DomFileElement<IdeaPlugin> element) {
+    PsiClass extensionClass = myExtensionClassPointer.getElement();
+    if (extensionClass == null || !extensionClass.isValid()) return;
+
     if (myEPCandidates.size() == 1) {
-      registerExtension(element, myEPCandidates.iterator().next());
+      registerExtension(element, myEPCandidates.iterator().next(), extensionClass);
     }
     else {
       final BaseListPopupStep<ExtensionPointCandidate> popupStep =
         new BaseListPopupStep<>(DevKitBundle.message("register.extension.fix.popup.title"), new ArrayList<>(myEPCandidates)) {
           @Override
-          public PopupStep onChosen(ExtensionPointCandidate selectedValue, boolean finalChoice) {
-            registerExtension(element, selectedValue);
+          public PopupStep<?> onChosen(ExtensionPointCandidate selectedValue, boolean finalChoice) {
+            registerExtension(element, selectedValue, extensionClass);
             return FINAL_CHOICE;
           }
         };
@@ -83,23 +94,26 @@ public class RegisterExtensionFix implements IntentionAction {
     }
   }
 
-  private void registerExtension(final DomFileElement<IdeaPlugin> selectedValue, final ExtensionPointCandidate candidate) {
+  private static void registerExtension(final DomFileElement<IdeaPlugin> selectedValue,
+                                        final ExtensionPointCandidate candidate,
+                                        final PsiClass extensionClass) {
     PsiElement navTarget =
       WriteCommandAction.writeCommandAction(selectedValue.getFile().getProject(), selectedValue.getFile()).compute(() -> {
         Extensions extensions = PluginDescriptorChooser.findOrCreateExtensionsForEP(selectedValue, candidate.epName);
         Extension extension = extensions.addExtension(candidate.epName);
         XmlTag tag = extension.getXmlTag();
         PsiElement target = null;
-        String keyAttrName = KEY_MAP.get(candidate.beanClassName);
+        String keyAttrName = candidate.beanClassName==null?null:KEY_MAP.get(candidate.beanClassName);
         if (keyAttrName != null) {
           XmlAttribute attr = tag.setAttribute(keyAttrName, "");
           target = attr.getValueElement();
         }
+        String qualifiedName = ClassUtil.getJVMClassName(extensionClass);
         if (candidate.attributeName != null) {
-          tag.setAttribute(candidate.attributeName, myExtensionClass.getQualifiedName());
+          tag.setAttribute(candidate.attributeName, qualifiedName);
         }
         else {
-          XmlTag subTag = tag.createChildTag(candidate.tagName, null, myExtensionClass.getQualifiedName(), false);
+          XmlTag subTag = tag.createChildTag(candidate.tagName, null, qualifiedName, false);
           tag.addSubTag(subTag, false);
         }
         return target != null ? target : extension.getXmlTag();
@@ -107,18 +121,21 @@ public class RegisterExtensionFix implements IntentionAction {
     PsiNavigateUtil.navigate(navTarget);
   }
 
-  @NonNls
-  private static final Map<String, String> KEY_MAP = ContainerUtil.<String, String>immutableMapBuilder()
-    .put(KeyedFactoryEPBean.class.getName(), "key")
-    .put(KeyedLazyInstanceEP.class.getName(), "key")
-    .put(FileTypeExtensionPoint.class.getName(), "filetype")
-    .put(LanguageExtensionPoint.class.getName(), "language")
-    .put(ClassExtensionPoint.class.getName(), "forClass")
-    .build();
+  private static final @NonNls Map<String, String> KEY_MAP = Map.of(
+    KeyedFactoryEPBean.class.getName(), "key",
+    KeyedLazyInstanceEP.class.getName(), "key",
+    FileTypeExtensionPoint.class.getName(), "filetype",
+    LanguageExtensionPoint.class.getName(), "language",
+    ClassExtensionPoint.class.getName(), "forClass");
 
 
   @Override
   public boolean startInWriteAction() {
     return false;
+  }
+
+  @Override
+  public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull ProblemDescriptor previewDescriptor) {
+    return IntentionPreviewInfo.EMPTY;
   }
 }

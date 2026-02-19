@@ -1,0 +1,3 @@
+- name: dist.all/lib/intellij.platform.recentFiles.backend.jar
+  modules:
+  - name: intellij.platform.recentFiles.backend

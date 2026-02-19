@@ -1,13 +1,15 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xml.breadcrumbs;
 
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.util.Key;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
 
+@ApiStatus.Internal
 public final class BreadcrumbsForceShownSettings {
   private BreadcrumbsForceShownSettings() { }
 
@@ -19,8 +21,7 @@ public final class BreadcrumbsForceShownSettings {
     return !Objects.equals(old, selected);
   }
 
-  @Nullable
-  public static Boolean getForcedShown(@NotNull Editor editor) {
+  public static @Nullable Boolean getForcedShown(@NotNull Editor editor) {
     return editor.getUserData(FORCED_BREADCRUMBS);
   }
 }

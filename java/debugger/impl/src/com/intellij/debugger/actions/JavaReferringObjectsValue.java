@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.actions;
 
 import com.intellij.debugger.JavaDebuggerBundle;
@@ -9,9 +9,21 @@ import com.intellij.debugger.engine.SuspendContextImpl;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.debugger.engine.events.SuspendContextCommandImpl;
+import com.intellij.debugger.memory.agent.ui.PathsToClosestGcRootsDialog;
 import com.intellij.debugger.ui.impl.watch.NodeManagerImpl;
 import com.intellij.debugger.ui.impl.watch.ValueDescriptorImpl;
-import com.intellij.xdebugger.frame.*;
+import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.xdebugger.XDebugSession;
+import com.intellij.xdebugger.XSourcePosition;
+import com.intellij.xdebugger.frame.XCompositeNode;
+import com.intellij.xdebugger.frame.XReferrersProvider;
+import com.intellij.xdebugger.frame.XValue;
+import com.intellij.xdebugger.frame.XValueChildrenList;
+import com.intellij.xdebugger.frame.XValueModifier;
+import com.intellij.xdebugger.frame.XValueNode;
+import com.intellij.xdebugger.frame.XValuePlace;
+import com.intellij.xdebugger.impl.frame.XValueMarkers;
+import com.intellij.xdebugger.impl.ui.tree.actions.ShowReferringObjectsAction;
 import com.sun.jdi.ObjectCollectedException;
 import com.sun.jdi.ObjectReference;
 import com.sun.jdi.Value;
@@ -21,7 +33,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 import java.util.function.Function;
 
-public class JavaReferringObjectsValue extends JavaValue {
+public class JavaReferringObjectsValue extends JavaValue implements ShowReferringObjectsAction.ReferrersTreeCustomizer {
   private static final long MAX_REFERRING = 100;
   private final ReferringObjectsProvider myReferringObjectsProvider;
   private final Function<? super XValueNode, ? extends XValueNode> myNodeConfigurator;
@@ -45,9 +57,8 @@ public class JavaReferringObjectsValue extends JavaValue {
     myNodeConfigurator = nodeConfigurator;
   }
 
-  @Nullable
   @Override
-  public XReferrersProvider getReferrersProvider() {
+  public @Nullable XReferrersProvider getReferrersProvider() {
     return new XReferrersProvider() {
       @Override
       public XValue getReferringObjectsValue() {
@@ -57,7 +68,17 @@ public class JavaReferringObjectsValue extends JavaValue {
   }
 
   @Override
-  public void computeChildren(@NotNull final XCompositeNode node) {
+  public DialogWrapper getDialog(XDebugSession session, String nodeName, XSourcePosition position, XValueMarkers<?, ?> markers) {
+    return new PathsToClosestGcRootsDialog(session.getProject(),
+                                           session.getDebugProcess().getEditorsProvider(),
+                                           position,
+                                           nodeName,
+                                           this,
+                                           markers, session, false);
+  }
+
+  @Override
+  public void computeChildren(final @NotNull XCompositeNode node) {
     scheduleCommand(getEvaluationContext(), node, new SuspendContextCommandImpl(getEvaluationContext().getSuspendContext()) {
         @Override
         public Priority getPriority() {
@@ -105,13 +126,12 @@ public class JavaReferringObjectsValue extends JavaValue {
   }
 
   @Override
-  public void computePresentation(@NotNull final XValueNode node, @NotNull final XValuePlace place) {
+  public void computePresentation(final @NotNull XValueNode node, final @NotNull XValuePlace place) {
     super.computePresentation(myNodeConfigurator == null ? node : myNodeConfigurator.apply(node), place);
   }
 
-  @Nullable
   @Override
-  public XValueModifier getModifier() {
+  public @Nullable XValueModifier getModifier() {
     return null;
   }
 }

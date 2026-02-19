@@ -33,9 +33,9 @@ class Testcase {
   }
 
   void test() {
-    <error descr="Incompatible types. Found: 'null', required: 'int'">int x = null;</error>
+    int x = <error descr="Incompatible types. Found: 'null', required: 'int'">null;</error>
     Integer boxed = x;
-    if (<warning descr="Condition 'boxed == 5' is always 'false'">boxed == 5</warning>) {}
+    if (boxed == 5) {}
   }
 
   public void testUnboxObject(Object obj, int val) {
@@ -44,13 +44,13 @@ class Testcase {
       if (objVal == val) {}
     }
   }
-  
+
   int b;
-  
+
   public final Integer getKey() {
     return b;
   }
-  
+
   public void testInlineSmallMethod(java.util.Map.Entry<Object, Object> e) {
     if (getKey().equals(e.getKey())) {}
   }

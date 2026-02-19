@@ -1,4 +1,4 @@
 def list = [1, 2, 3]
-for (x<caret> in list) {
+for (<caret>x in list) {
     print x;
 }

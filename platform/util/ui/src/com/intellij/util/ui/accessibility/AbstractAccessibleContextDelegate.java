@@ -17,8 +17,20 @@ package com.intellij.util.ui.accessibility;
 
 import org.jetbrains.annotations.NotNull;
 
-import javax.accessibility.*;
-import java.awt.*;
+import javax.accessibility.Accessible;
+import javax.accessibility.AccessibleAction;
+import javax.accessibility.AccessibleComponent;
+import javax.accessibility.AccessibleContext;
+import javax.accessibility.AccessibleEditableText;
+import javax.accessibility.AccessibleIcon;
+import javax.accessibility.AccessibleRelationSet;
+import javax.accessibility.AccessibleRole;
+import javax.accessibility.AccessibleSelection;
+import javax.accessibility.AccessibleStateSet;
+import javax.accessibility.AccessibleTable;
+import javax.accessibility.AccessibleText;
+import javax.accessibility.AccessibleValue;
+import java.awt.IllegalComponentStateException;
 import java.beans.PropertyChangeListener;
 import java.util.Locale;
 
@@ -31,10 +43,9 @@ import java.util.Locale;
  */
 public abstract class AbstractAccessibleContextDelegate extends AccessibleContext {
   /**
-   * Sub-classes provide the {@link AccessibleContext} to forward calls to.
+   * Subclasses provide the {@link AccessibleContext} to forward calls to.
    */
-  @NotNull
-  protected abstract AccessibleContext getDelegate();
+  protected abstract @NotNull AccessibleContext getDelegate();
 
   @Override
   public void setAccessibleName(String s) {

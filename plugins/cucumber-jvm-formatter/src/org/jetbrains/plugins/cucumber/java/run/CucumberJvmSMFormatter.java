@@ -1,8 +1,16 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.cucumber.java.run;
 
 import gherkin.formatter.Formatter;
 import gherkin.formatter.Reporter;
-import gherkin.formatter.model.*;
+import gherkin.formatter.model.Background;
+import gherkin.formatter.model.Examples;
+import gherkin.formatter.model.Feature;
+import gherkin.formatter.model.Match;
+import gherkin.formatter.model.Result;
+import gherkin.formatter.model.Scenario;
+import gherkin.formatter.model.ScenarioOutline;
+import gherkin.formatter.model.Step;
 
 import java.io.File;
 import java.io.IOException;
@@ -11,7 +19,21 @@ import java.util.ArrayDeque;
 import java.util.List;
 import java.util.Queue;
 
-import static org.jetbrains.plugins.cucumber.java.run.CucumberJvmSMFormatterUtil.*;
+import static org.jetbrains.plugins.cucumber.java.run.CucumberJvmSMFormatterUtil.FILE_RESOURCE_PREFIX;
+import static org.jetbrains.plugins.cucumber.java.run.CucumberJvmSMFormatterUtil.TEMPLATE_ENTER_THE_MATRIX;
+import static org.jetbrains.plugins.cucumber.java.run.CucumberJvmSMFormatterUtil.TEMPLATE_SCENARIO_COUNTING_FINISHED;
+import static org.jetbrains.plugins.cucumber.java.run.CucumberJvmSMFormatterUtil.TEMPLATE_SCENARIO_COUNTING_STARTED;
+import static org.jetbrains.plugins.cucumber.java.run.CucumberJvmSMFormatterUtil.TEMPLATE_SCENARIO_FAILED;
+import static org.jetbrains.plugins.cucumber.java.run.CucumberJvmSMFormatterUtil.TEMPLATE_SCENARIO_FINISHED;
+import static org.jetbrains.plugins.cucumber.java.run.CucumberJvmSMFormatterUtil.TEMPLATE_SCENARIO_STARTED;
+import static org.jetbrains.plugins.cucumber.java.run.CucumberJvmSMFormatterUtil.TEMPLATE_TEST_FAILED;
+import static org.jetbrains.plugins.cucumber.java.run.CucumberJvmSMFormatterUtil.TEMPLATE_TEST_FINISHED;
+import static org.jetbrains.plugins.cucumber.java.run.CucumberJvmSMFormatterUtil.TEMPLATE_TEST_PENDING;
+import static org.jetbrains.plugins.cucumber.java.run.CucumberJvmSMFormatterUtil.TEMPLATE_TEST_STARTED;
+import static org.jetbrains.plugins.cucumber.java.run.CucumberJvmSMFormatterUtil.TEMPLATE_TEST_SUITE_FINISHED;
+import static org.jetbrains.plugins.cucumber.java.run.CucumberJvmSMFormatterUtil.TEMPLATE_TEST_SUITE_STARTED;
+import static org.jetbrains.plugins.cucumber.java.run.CucumberJvmSMFormatterUtil.escapeCommand;
+import static org.jetbrains.plugins.cucumber.java.run.CucumberJvmSMFormatterUtil.getCurrentTime;
 
 public class CucumberJvmSMFormatter implements Formatter, Reporter {
   public static final int MILLION = 1000000;
@@ -47,8 +69,8 @@ public class CucumberJvmSMFormatter implements Formatter, Reporter {
   @SuppressWarnings("UnusedDeclaration")
   public CucumberJvmSMFormatter(Appendable appendable) {
     this.appendable = System.out;
-    queue = new ArrayDeque<String>();
-    currentSteps = new ArrayDeque<Step>();
+    queue = new ArrayDeque<>();
+    currentSteps = new ArrayDeque<>();
     outCommand(TEMPLATE_ENTER_THE_MATRIX, getCurrentTime());
     outCommand(TEMPLATE_SCENARIO_COUNTING_STARTED, "0", getCurrentTime());
   }
@@ -62,7 +84,7 @@ public class CucumberJvmSMFormatter implements Formatter, Reporter {
     outCommand(TEMPLATE_TEST_SUITE_STARTED, getCurrentTime(), uri + ":" + feature.getLine(), currentFeatureName);
   }
 
-  private static boolean isRealScenario(final Scenario scenario) {
+  private static boolean isRealScenario(Scenario scenario) {
     return scenario.getKeyword().equals("Scenario");
   }
 
@@ -79,7 +101,7 @@ public class CucumberJvmSMFormatter implements Formatter, Reporter {
     beforeExampleSection = false;
     outCommand(TEMPLATE_TEST_SUITE_STARTED, getCurrentTime(), uri + ":" + scenario.getLine(), getName(currentScenario));
 
-    while (queue.size() > 0) {
+    while (!queue.isEmpty()) {
       printLine(queue.poll());
     }
   }

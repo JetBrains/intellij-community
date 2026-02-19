@@ -1,9 +1,18 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.folding.impl;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiClassInitializer;
+import com.intellij.psi.PsiDocCommentOwner;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiImportList;
+import com.intellij.psi.PsiJavaFile;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiNameHelper;
 import com.intellij.psi.javadoc.PsiDocComment;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -12,57 +21,104 @@ import java.util.NoSuchElementException;
 import java.util.StringTokenizer;
 
 @SuppressWarnings({"HardCodedStringLiteral"})
-public class JavaElementSignatureProvider extends AbstractElementSignatureProvider {
+public final class JavaElementSignatureProvider extends AbstractElementSignatureProvider {
   private static final Logger LOG = Logger.getInstance(JavaElementSignatureProvider.class);
 
   @Override
-  @Nullable
-  public String getSignature(@NotNull final PsiElement element) {
+  public @Nullable String getSignature(@NotNull PsiElement element) {
     PsiFile file = element.getContainingFile();
-    if (!(file instanceof PsiJavaFile)) {
+    if (!(file instanceof PsiJavaFile psiJavaFile)) {
       return null;
     }
-    if (element instanceof PsiImportList) {
-      if (element.equals(((PsiJavaFile)file).getImportList())) {
-        return "imports";
+    switch (element) {
+      case PsiImportList __ -> {
+        return element.equals(psiJavaFile.getImportList()) ? "imports" : null;
       }
-      else {
-        return null;
-      }
-    }
-    if (element instanceof PsiMethod) {
-      PsiMethod method = (PsiMethod)element;
-      PsiElement parent = method.getParent();
+      case PsiMethod psiMethod -> {
+        PsiElement parent = psiMethod.getParent();
 
-      StringBuilder buffer = new StringBuilder();
-      buffer.append("method").append(ELEMENT_TOKENS_SEPARATOR);
-      String name = method.getName();
-      buffer.append(name);
-      buffer.append(ELEMENT_TOKENS_SEPARATOR);
-      int childIndex = getChildIndex(method, parent, name, PsiMethod.class);
-      if (childIndex < 0) return null;
-      buffer.append(childIndex);
-
-      if (parent instanceof PsiClass) {
-        String parentSignature = getSignature(parent);
-        if (parentSignature == null) return null;
-        buffer.append(";");
-        buffer.append(parentSignature);
-      }
-
-      return buffer.toString();
-    }
-    if (element instanceof PsiClass) {
-      PsiClass aClass = (PsiClass)element;
-      PsiElement parent = aClass.getParent();
-
-      StringBuilder buffer = new StringBuilder();
-      buffer.append("class").append(ELEMENT_TOKENS_SEPARATOR);
-      if (parent instanceof PsiClass || parent instanceof PsiFile) {
-        String name = aClass.getName();
+        StringBuilder buffer = new StringBuilder();
+        buffer.append("method").append(ELEMENT_TOKENS_SEPARATOR);
+        String name = psiMethod.getName();
         buffer.append(name);
         buffer.append(ELEMENT_TOKENS_SEPARATOR);
-        int childIndex = getChildIndex(aClass, parent, name, PsiClass.class);
+        int childIndex = getChildIndex(psiMethod, parent, name, PsiMethod.class);
+        if (childIndex < 0) return null;
+        buffer.append(childIndex);
+
+        if (parent instanceof PsiClass) {
+          String parentSignature = getSignature(parent);
+          if (parentSignature == null) return null;
+          buffer.append(";");
+          buffer.append(parentSignature);
+        }
+
+        return buffer.toString();
+      }
+      case PsiClass aClass -> {
+        PsiElement parent = aClass.getParent();
+
+        StringBuilder buffer = new StringBuilder();
+        buffer.append("class").append(ELEMENT_TOKENS_SEPARATOR);
+        String name = aClass.getName();
+        if (name != null && (parent instanceof PsiClass || parent instanceof PsiFile)) {
+          buffer.append(name);
+          buffer.append(ELEMENT_TOKENS_SEPARATOR);
+          int childIndex = getChildIndex(aClass, parent, name, PsiClass.class);
+          if (childIndex < 0) return null;
+          buffer.append(childIndex);
+
+          if (parent instanceof PsiClass) {
+            String parentSignature = getSignature(parent);
+            if (parentSignature == null) return null;
+            buffer.append(ELEMENTS_SEPARATOR);
+            buffer.append(parentSignature);
+          }
+        }
+        else {
+          buffer.append(aClass.getTextRange().getStartOffset());
+          buffer.append(":");
+          buffer.append(aClass.getTextRange().getEndOffset());
+        }
+
+        return buffer.toString();
+      }
+      case PsiClassInitializer initializer -> {
+        PsiElement parent = initializer.getParent();
+
+        StringBuilder buffer = new StringBuilder();
+        buffer.append("initializer").append(ELEMENT_TOKENS_SEPARATOR);
+
+        int index = 0;
+        PsiElement[] children = parent.getChildren();
+        for (PsiElement child : children) {
+          if (child instanceof PsiClassInitializer) {
+            if (child.equals(initializer)) break;
+            index++;
+          }
+        }
+        buffer.append(ELEMENT_TOKENS_SEPARATOR);
+        buffer.append(index);
+
+        if (parent instanceof PsiClass) {
+          String parentSignature = getSignature(parent);
+          if (parentSignature == null) return null;
+          buffer.append(ELEMENTS_SEPARATOR);
+          buffer.append(parentSignature);
+        }
+
+        return buffer.toString();
+      }
+      case PsiField psiField -> { // needed for doc-comments only
+        PsiElement parent = psiField.getParent();
+
+        StringBuilder buffer = new StringBuilder();
+        buffer.append("field").append(ELEMENT_TOKENS_SEPARATOR);
+        String name = psiField.getName();
+        buffer.append(name);
+
+        buffer.append(ELEMENT_TOKENS_SEPARATOR);
+        int childIndex = getChildIndex(psiField, parent, name, PsiField.class);
         if (childIndex < 0) return null;
         buffer.append(childIndex);
 
@@ -72,81 +128,28 @@ public class JavaElementSignatureProvider extends AbstractElementSignatureProvid
           buffer.append(ELEMENTS_SEPARATOR);
           buffer.append(parentSignature);
         }
+
+        return buffer.toString();
       }
-      else {
-        buffer.append(aClass.getTextRange().getStartOffset());
-        buffer.append(":");
-        buffer.append(aClass.getTextRange().getEndOffset());
-      }
+      case PsiDocComment __ -> {
+        StringBuilder buffer = new StringBuilder();
+        buffer.append("docComment").append(ELEMENTS_SEPARATOR);
 
-      return buffer.toString();
-    }
-    if (element instanceof PsiClassInitializer) {
-      PsiClassInitializer initializer = (PsiClassInitializer)element;
-      PsiElement parent = initializer.getParent();
-
-      StringBuilder buffer = new StringBuilder();
-      buffer.append("initializer").append(ELEMENT_TOKENS_SEPARATOR);
-
-      int index = 0;
-      PsiElement[] children = parent.getChildren();
-      for (PsiElement child : children) {
-        if (child instanceof PsiClassInitializer) {
-          if (child.equals(initializer)) break;
-          index++;
+        PsiElement parent = element.getParent();
+        if (!(parent instanceof PsiClass) && !(parent instanceof PsiMethod) && !(parent instanceof PsiField)) {
+          return null;
         }
-      }
-      buffer.append(ELEMENT_TOKENS_SEPARATOR);
-      buffer.append(index);
-
-      if (parent instanceof PsiClass) {
+        if (!element.equals(((PsiDocCommentOwner)parent).getDocComment())) {
+          return null;
+        }
         String parentSignature = getSignature(parent);
         if (parentSignature == null) return null;
-        buffer.append(ELEMENTS_SEPARATOR);
         buffer.append(parentSignature);
+
+        return buffer.toString();
       }
-
-      return buffer.toString();
-    }
-    if (element instanceof PsiField) { // needed for doc-comments only
-      PsiField field = (PsiField)element;
-      PsiElement parent = field.getParent();
-
-      StringBuilder buffer = new StringBuilder();
-      buffer.append("field").append(ELEMENT_TOKENS_SEPARATOR);
-      String name = field.getName();
-      buffer.append(name);
-
-      buffer.append(ELEMENT_TOKENS_SEPARATOR);
-      int childIndex = getChildIndex(field, parent, name, PsiField.class);
-      if (childIndex < 0) return null;
-      buffer.append(childIndex);
-
-      if (parent instanceof PsiClass) {
-        String parentSignature = getSignature(parent);
-        if (parentSignature == null) return null;
-        buffer.append(ELEMENTS_SEPARATOR);
-        buffer.append(parentSignature);
+      default -> {
       }
-
-      return buffer.toString();
-    }
-    if (element instanceof PsiDocComment) {
-      StringBuilder buffer = new StringBuilder();
-      buffer.append("docComment").append(ELEMENTS_SEPARATOR);
-
-      PsiElement parent = element.getParent();
-      if (!(parent instanceof PsiClass) && !(parent instanceof PsiMethod) && !(parent instanceof PsiField)) {
-        return null;
-      }
-      if (!element.equals(((PsiDocCommentOwner)parent).getDocComment())) {
-        return null;
-      }
-      String parentSignature = getSignature(parent);
-      if (parentSignature == null) return null;
-      buffer.append(parentSignature);
-
-      return buffer.toString();
     }
     return null;
   }
@@ -156,110 +159,118 @@ public class JavaElementSignatureProvider extends AbstractElementSignatureProvid
                                                 @NotNull PsiElement parent,
                                                 @NotNull String type,
                                                 @NotNull StringTokenizer tokenizer,
-                                                @Nullable StringBuilder processingInfoStorage)
-  {
-    if (type.equals("imports")) {
-      return file instanceof PsiJavaFile ? ((PsiJavaFile)file).getImportList() : null;
-    }
-    else if (type.equals("method")) {
-      String name = tokenizer.nextToken();
-      try {
-        int index = Integer.parseInt(tokenizer.nextToken());
-        return restoreElementInternal(parent, name, index, PsiMethod.class);
-      }
-      catch (NumberFormatException e) {
-        LOG.error(e);
-        return null;
-      }
-    }
-    else if (type.equals("class")) {
-      String name = tokenizer.nextToken();
-
-      PsiNameHelper nameHelper = PsiNameHelper.getInstance(file.getProject());
-      if (nameHelper.isIdentifier(name)) {
-        int index = 0;
+                                                @Nullable StringBuilder processingInfoStorage) {
+    return switch (type) {
+      case "imports" -> file instanceof PsiJavaFile psiJavaFile ? psiJavaFile.getImportList() : null;
+      case "method" -> {
+        String name = tokenizer.nextToken();
         try {
-          index = Integer.parseInt(tokenizer.nextToken());
+          int index = Integer.parseInt(tokenizer.nextToken());
+          yield restoreElementInternal(parent, name, index, PsiMethod.class);
         }
-        catch (NoSuchElementException e) { //To read previous XML versions correctly
-        }
-
-        return restoreElementInternal(parent, name, index, PsiClass.class);
-      }
-      StringTokenizer tok1 = new StringTokenizer(name, ":");
-      int start = Integer.parseInt(tok1.nextToken());
-      int end = Integer.parseInt(tok1.nextToken());
-      PsiElement element = file.findElementAt(start);
-      if (element != null) {
-        TextRange range = element.getTextRange();
-        while (range != null && range.getEndOffset() < end) {
-          element = element.getParent();
-          range = element.getTextRange();
-        }
-
-        if (range != null && range.getEndOffset() == end && element instanceof PsiClass) {
-          return element;
+        catch (NumberFormatException e) {
+          LOG.error(e);
+          yield null;
         }
       }
+      case "class" -> {
+        String name = tokenizer.nextToken();
 
-      return null;
-    }
-    else if (type.equals("initializer")) {
-      try {
-        int index = Integer.parseInt(tokenizer.nextToken());
+        PsiNameHelper nameHelper = PsiNameHelper.getInstance(file.getProject());
+        if (nameHelper.isIdentifier(name)) {
+          int index = 0;
+          try {
+            index = Integer.parseInt(tokenizer.nextToken());
+          }
+          catch (NoSuchElementException e) { //To read previous XML versions correctly
+          }
+          catch (NumberFormatException e) {
+            LOG.error(e);
+            yield null;
+          }
 
-        PsiElement[] children = parent.getChildren();
-        for (PsiElement child : children) {
-          if (child instanceof PsiClassInitializer) {
-            if (index == 0) {
-              return child;
-            }
-            index--;
+          yield restoreElementInternal(parent, name, index, PsiClass.class);
+        }
+        StringTokenizer tok1 = new StringTokenizer(name, ":");
+        int start;
+        int end;
+        try {
+          start = Integer.parseInt(tok1.nextToken());
+          end = Integer.parseInt(tok1.nextToken());
+        }
+        catch (NumberFormatException e) {
+          LOG.error(e);
+          yield null;
+        }
+        PsiElement element = file.findElementAt(start);
+        if (element != null) {
+          TextRange range = element.getTextRange();
+          while (range != null && range.getEndOffset() < end) {
+            element = element.getParent();
+            range = element.getTextRange();
+          }
+
+          if (range != null && range.getEndOffset() == end && element instanceof PsiClass) {
+            yield element;
           }
         }
 
-        return null;
+        yield null;
       }
-      catch (NumberFormatException e) {
-        LOG.error(e);
-        return null;
-      }
-    }
-    else if (type.equals("field")) {
-      String name = tokenizer.nextToken();
-
-      try {
-        int index = 0;
+      case "initializer" -> {
         try {
-          index = Integer.parseInt(tokenizer.nextToken());
-        }
-        catch (NoSuchElementException e) { //To read previous XML versions correctly
-        }
+          int index = Integer.parseInt(tokenizer.nextToken());
 
-        return restoreElementInternal(parent, name, index, PsiField.class);
-      }
-      catch (NumberFormatException e) {
-        LOG.error(e);
-        return null;
-      }
+          PsiElement[] children = parent.getChildren();
+          for (PsiElement child : children) {
+            if (child instanceof PsiClassInitializer) {
+              if (index == 0) {
+                yield child;
+              }
+              index--;
+            }
+          }
 
-    }
-    else if (type.equals("docComment")) {
-      if (parent instanceof PsiClass) {
-        return ((PsiClass)parent).getDocComment();
+          yield null;
+        }
+        catch (NumberFormatException e) {
+          LOG.error(e);
+          yield null;
+        }
       }
-      else if (parent instanceof PsiMethod) {
-        return ((PsiMethod)parent).getDocComment();
+      case "field" -> {
+        String name = tokenizer.nextToken();
+
+        try {
+          int index = 0;
+          try {
+            index = Integer.parseInt(tokenizer.nextToken());
+          }
+          catch (NoSuchElementException e) { //To read previous XML versions correctly
+          }
+
+          yield restoreElementInternal(parent, name, index, PsiField.class);
+        }
+        catch (NumberFormatException e) {
+          LOG.error(e);
+          yield null;
+        }
       }
-      else if (parent instanceof PsiField) {
-        return ((PsiField)parent).getDocComment();
+      case "docComment" -> {
+        if (parent instanceof PsiClass psiClass) {
+          yield psiClass.getDocComment();
+        }
+        else if (parent instanceof PsiMethod psiMethod) {
+          yield psiMethod.getDocComment();
+        }
+        else if (parent instanceof PsiField psiField) {
+          yield psiField.getDocComment();
+        }
+        else {
+          yield null;
+        }
       }
-      else {
-        return null;
-      }
-    }
-    else {
-      return null;
-    }
+      default -> null;
+    };
   }
 }

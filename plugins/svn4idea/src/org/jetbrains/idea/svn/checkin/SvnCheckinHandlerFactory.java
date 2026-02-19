@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.svn.checkin;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -10,7 +10,11 @@ import com.intellij.openapi.vcs.CheckinProjectPanel;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsBundle;
-import com.intellij.openapi.vcs.changes.*;
+import com.intellij.openapi.vcs.changes.Change;
+import com.intellij.openapi.vcs.changes.ChangesUtil;
+import com.intellij.openapi.vcs.changes.CommitContext;
+import com.intellij.openapi.vcs.changes.CommitExecutor;
+import com.intellij.openapi.vcs.changes.LocalCommitExecutor;
 import com.intellij.openapi.vcs.checkin.CheckinHandler;
 import com.intellij.openapi.vcs.checkin.VcsCheckinHandlerFactory;
 import com.intellij.openapi.vcs.ui.RefreshableOnComponent;
@@ -21,7 +25,11 @@ import com.intellij.util.containers.MultiMap;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.svn.*;
+import org.jetbrains.idea.svn.RootUrlInfo;
+import org.jetbrains.idea.svn.SvnConfiguration;
+import org.jetbrains.idea.svn.SvnFileUrlMapping;
+import org.jetbrains.idea.svn.SvnVcs;
+import org.jetbrains.idea.svn.WorkingCopyFormat;
 import org.jetbrains.idea.svn.api.Url;
 import org.jetbrains.idea.svn.update.AutoSvnUpdater;
 
@@ -38,9 +46,8 @@ public class SvnCheckinHandlerFactory extends VcsCheckinHandlerFactory {
     super(SvnVcs.getKey());
   }
 
-  @NotNull
   @Override
-  protected CheckinHandler createVcsHandler(@NotNull CheckinProjectPanel panel, @NotNull CommitContext commitContext) {
+  protected @NotNull CheckinHandler createVcsHandler(@NotNull CheckinProjectPanel panel, @NotNull CommitContext commitContext) {
     final Project project = panel.getProject();
     return new CheckinHandler() {
       @Override
@@ -94,14 +101,13 @@ public class SvnCheckinHandlerFactory extends VcsCheckinHandlerFactory {
           ApplicationManager.getApplication().invokeLater(
             () -> AutoSvnUpdater
               .run(new AutoSvnUpdater(project, paths.toArray(new FilePath[0])), VcsBundle.message("action.name.update")),
-            ModalityState.NON_MODAL);
+            ModalityState.nonModal());
         }
       }
     };
   }
 
-  @NotNull
-  private static MultiMap<Url, WorkingCopyFormat> splitIntoCopies(@NotNull SvnVcs vcs, @NotNull Collection<Change> changes) {
+  private static @NotNull MultiMap<Url, WorkingCopyFormat> splitIntoCopies(@NotNull SvnVcs vcs, @NotNull Collection<Change> changes) {
     MultiMap<Url, WorkingCopyFormat> result = MultiMap.createSet();
     SvnFileUrlMapping mapping = vcs.getSvnFileUrlMapping();
 

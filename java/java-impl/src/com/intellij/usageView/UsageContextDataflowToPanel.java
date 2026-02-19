@@ -1,19 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.usageView;
 
 import com.intellij.analysis.AnalysisScope;
@@ -28,26 +13,35 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiJavaFile;
 import com.intellij.psi.PsiVariable;
-import com.intellij.slicer.*;
-import com.intellij.usages.*;
+import com.intellij.slicer.DuplicateMap;
+import com.intellij.slicer.JavaSliceUsage;
+import com.intellij.slicer.SliceAnalysisParams;
+import com.intellij.slicer.SlicePanel;
+import com.intellij.slicer.SliceRootNode;
+import com.intellij.usages.PsiElementUsageTarget;
+import com.intellij.usages.UsageContextPanel;
+import com.intellij.usages.UsageTarget;
+import com.intellij.usages.UsageView;
+import com.intellij.usages.UsageViewPresentation;
 import com.intellij.usages.impl.UsageContextPanelBase;
 import com.intellij.usages.impl.UsageViewImpl;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
+import javax.swing.SwingConstants;
+import java.awt.BorderLayout;
 import java.util.List;
 
 public class UsageContextDataflowToPanel extends UsageContextPanelBase {
-  @NotNull private final UsageViewPresentation myPresentation;
   private JComponent myPanel;
 
   public static class Provider implements UsageContextPanel.Provider {
-    @NotNull
     @Override
-    public UsageContextPanel create(@NotNull UsageView usageView) {
-      return new UsageContextDataflowToPanel(((UsageViewImpl)usageView).getProject(), usageView.getPresentation());
+    public @NotNull UsageContextPanel create(@NotNull UsageView usageView) {
+      return new UsageContextDataflowToPanel(usageView.getPresentation());
     }
 
     @Override
@@ -62,16 +56,14 @@ public class UsageContextDataflowToPanel extends UsageContextPanelBase {
       PsiFile file = element.getContainingFile();
       return file instanceof PsiJavaFile;
     }
-    @NotNull
     @Override
-    public String getTabTitle() {
+    public @NotNull String getTabTitle() {
       return JavaBundle.message("dataflow.to.here");
     }
   }
 
-  public UsageContextDataflowToPanel(@NotNull Project project, @NotNull UsageViewPresentation presentation) {
-    super(project, presentation);
-    myPresentation = presentation;
+  public UsageContextDataflowToPanel(@NotNull UsageViewPresentation presentation) {
+    super(presentation);
   }
 
   @Override
@@ -81,10 +73,10 @@ public class UsageContextDataflowToPanel extends UsageContextPanelBase {
   }
 
   @Override
-  public void updateLayoutLater(@Nullable final List<? extends UsageInfo> infos) {
-    if (infos == null) {
+  public void updateLayoutLater(final @Nullable List<? extends UsageInfo> infos) {
+    if (ContainerUtil.isEmpty(infos)) {
       removeAll();
-      JComponent titleComp = new JLabel(UsageViewBundle.message("select.the.usage.to.preview", myPresentation.getUsagesWord()), SwingConstants.CENTER);
+      JComponent titleComp = new JLabel(UsageViewBundle.message("select.the.usage.to.preview"), SwingConstants.CENTER);
       add(titleComp, BorderLayout.CENTER);
     }
     else {
@@ -93,6 +85,9 @@ public class UsageContextDataflowToPanel extends UsageContextPanelBase {
       if (myPanel != null) {
         Disposer.dispose((Disposable)myPanel);
       }
+
+      PsiElement restored = JavaSliceUsage.createRootUsage(element, createParams(element, isDataflowToThis())).getElement();
+      if (restored == null || restored.getContainingFile() == null) return;
 
       JComponent panel = createPanel(element, isDataflowToThis());
       myPanel = panel;
@@ -107,8 +102,7 @@ public class UsageContextDataflowToPanel extends UsageContextPanelBase {
     return true;
   }
 
-  @NotNull
-  private static SliceAnalysisParams createParams(PsiElement element, boolean dataFlowToThis) {
+  private static @NotNull SliceAnalysisParams createParams(PsiElement element, boolean dataFlowToThis) {
     SliceAnalysisParams params = new SliceAnalysisParams();
     params.scope = new AnalysisScope(element.getProject());
     params.dataFlowToThis = dataFlowToThis;
@@ -116,14 +110,14 @@ public class UsageContextDataflowToPanel extends UsageContextPanelBase {
     return params;
   }
 
-  @NotNull
-  protected JComponent createPanel(@NotNull PsiElement element, final boolean dataFlowToThis) {
-    ToolWindow toolWindow = ToolWindowManager.getInstance(myProject).getToolWindow(ToolWindowId.FIND);
+  protected @NotNull JComponent createPanel(@NotNull PsiElement element, final boolean dataFlowToThis) {
+    Project project = element.getProject();
+    ToolWindow toolWindow = ToolWindowManager.getInstance(project).getToolWindow(ToolWindowId.FIND);
     SliceAnalysisParams params = createParams(element, dataFlowToThis);
 
-    SliceRootNode rootNode = new SliceRootNode(myProject, new DuplicateMap(), JavaSliceUsage.createRootUsage(element, params));
+    SliceRootNode rootNode = new SliceRootNode(project, new DuplicateMap(), JavaSliceUsage.createRootUsage(element, params));
 
-    return new SlicePanel(myProject, dataFlowToThis, rootNode, false, toolWindow) {
+    return new SlicePanel(project, dataFlowToThis, rootNode, false, toolWindow) {
       @Override
       public boolean isToShowAutoScrollButton() {
         return false;

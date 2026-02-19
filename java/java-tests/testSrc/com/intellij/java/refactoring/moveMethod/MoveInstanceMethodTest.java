@@ -17,20 +17,17 @@ package com.intellij.java.refactoring.moveMethod;
 
 import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.TargetElementUtil;
-import com.intellij.java.refactoring.LightRefactoringTestCase;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiVariable;
 import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.move.moveInstanceMethod.MoveInstanceMethodHandler;
 import com.intellij.refactoring.move.moveInstanceMethod.MoveInstanceMethodProcessor;
+import com.intellij.testFramework.LightJavaCodeInsightTestCase;
 import com.intellij.util.VisibilityUtil;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author ven
- */
-public class MoveInstanceMethodTest extends LightRefactoringTestCase {
+public class MoveInstanceMethodTest extends LightJavaCodeInsightTestCase {
 
   public void testSimple() { doTest(true, 0); }
 
@@ -92,6 +89,10 @@ public class MoveInstanceMethodTest extends LightRefactoringTestCase {
     doTest(true, 0);
   }
 
+  public void testDefaultInClass() {
+    doTest(true, 0);
+  }
+
   public void testQualifyFieldAccess() {
     doTest(false, 0);
   }
@@ -101,6 +102,14 @@ public class MoveInstanceMethodTest extends LightRefactoringTestCase {
   }
 
   public void testUsageInAnonymousClass() {
+    doTest(true, 0);
+  }
+  
+  public void testInterfaceMethodIntoClass() {
+    doTest(true, 0);
+  }
+  
+  public void testInterfaceMethodIntoClass2() {
     doTest(true, 0);
   }
 

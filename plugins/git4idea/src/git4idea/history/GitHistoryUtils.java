@@ -1,9 +1,8 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.history;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.FileStatus;
@@ -20,21 +19,35 @@ import com.intellij.vcs.log.TimedVcsCommit;
 import com.intellij.vcs.log.VcsCommitMetadata;
 import com.intellij.vcs.log.VcsLogObjectsFactory;
 import com.intellij.vcsUtil.VcsUtil;
-import git4idea.*;
+import git4idea.GitBranch;
+import git4idea.GitCommit;
+import git4idea.GitRevisionNumber;
+import git4idea.GitUtil;
+import git4idea.branch.GitRebaseParams;
 import git4idea.commands.Git;
 import git4idea.commands.GitCommand;
 import git4idea.commands.GitCommandResult;
 import git4idea.commands.GitLineHandler;
-import git4idea.history.browser.SHAHash;
-import git4idea.i18n.GitBundle;
 import git4idea.repo.GitBranchTrackInfo;
 import git4idea.repo.GitRepository;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.Objects;
 
-import static git4idea.history.GitLogParser.GitLogOption.*;
+import static git4idea.history.GitLogParser.GitLogOption.AUTHOR_NAME;
+import static git4idea.history.GitLogParser.GitLogOption.BODY;
+import static git4idea.history.GitLogParser.GitLogOption.COMMITTER_NAME;
+import static git4idea.history.GitLogParser.GitLogOption.COMMIT_TIME;
+import static git4idea.history.GitLogParser.GitLogOption.HASH;
+import static git4idea.history.GitLogParser.GitLogOption.PARENTS;
+import static git4idea.history.GitLogParser.GitLogOption.RAW_BODY;
+import static git4idea.history.GitLogParser.GitLogOption.SUBJECT;
 
 /**
  * A collection of methods for retrieving history information from native Git.
@@ -60,7 +73,7 @@ public final class GitHistoryUtils {
                                  @NotNull VirtualFile root,
                                  @NotNull Consumer<? super GitCommit> commitConsumer,
                                  String @NotNull ... parameters) throws VcsException {
-    GitLogUtil.readFullDetails(project, root, commitConsumer, parameters);
+    GitLogUtil.readFullDetails(project, root, commitConsumer::consume, parameters);
   }
 
   /**
@@ -77,7 +90,7 @@ public final class GitHistoryUtils {
                                       @NotNull VirtualFile root,
                                       @NotNull Consumer<? super TimedVcsCommit> commitConsumer,
                                       String @NotNull ... parameters) throws VcsException {
-    GitLogUtil.readTimedCommits(project, root, Arrays.asList(parameters), null, null, commitConsumer);
+    GitLogUtil.readTimedCommits(project, root, Arrays.asList(parameters), null, null, commitConsumer::consume);
   }
 
   /**
@@ -88,11 +101,11 @@ public final class GitHistoryUtils {
    * @param root       git repository root
    * @param parameters additional parameters for `git log` command
    * @throws VcsException if there is a problem with running git
+   * @see GitHistoryUtils#formHashParameters(Project, Collection)
    */
-  @SuppressWarnings("unused")
-  public static List<? extends TimedVcsCommit> collectTimedCommits(@NotNull Project project,
-                                                                   @NotNull VirtualFile root,
-                                                                   String @NotNull ... parameters) throws VcsException {
+  public static @NotNull List<? extends TimedVcsCommit> collectTimedCommits(@NotNull Project project,
+                                                                            @NotNull VirtualFile root,
+                                                                            String @NotNull ... parameters) throws VcsException {
     List<TimedVcsCommit> commits = new ArrayList<>();
     loadTimedCommits(project, root, commits::add, parameters);
     return commits;
@@ -101,6 +114,8 @@ public final class GitHistoryUtils {
   /**
    * Collect commit information in a form of {@link VcsCommitMetadata} (containing commit details, but no changes)
    * for the specified hashes or references.
+   * <br/>
+   * Note: this method accepts a list of <em>hashes or references</em>, not arbitrary parameters.
    *
    * @param project context project
    * @param root    git repository root
@@ -108,13 +123,11 @@ public final class GitHistoryUtils {
    * @return a list of {@link VcsCommitMetadata} (one for each specified hash or reference) or null if something went wrong
    * @throws VcsException if there is a problem with running git
    */
-  @Nullable
-  public static List<? extends VcsCommitMetadata> collectCommitsMetadata(@NotNull Project project,
-                                                                         @NotNull VirtualFile root,
-                                                                         String @NotNull ... hashes)
+  public static @Nullable List<? extends VcsCommitMetadata> collectCommitsMetadata(@NotNull Project project,
+                                                                                   @NotNull VirtualFile root,
+                                                                                   String @NotNull ... hashes)
     throws VcsException {
-    List<? extends VcsCommitMetadata> result = GitLogUtil.collectMetadata(project, GitVcs.getInstance(project), root,
-                                                                          Arrays.asList(hashes));
+    List<? extends VcsCommitMetadata> result = GitLogUtil.collectMetadata(project, root, Arrays.asList(hashes));
     if (result.size() != hashes.length) return null;
     return result;
   }
@@ -122,6 +135,9 @@ public final class GitHistoryUtils {
   /**
    * Collect commit information in a form of {@link GitCommit} (containing commit details and changes to commit parents)
    * in the repository using `git log` command.
+   * If changes for commits are not needed, it is recommended to use other methods,
+   * such as {@link GitHistoryUtils#collectCommitsMetadata(Project, VirtualFile, String...)}
+   * or {@link GitHistoryUtils#collectTimedCommits(Project, VirtualFile, String...)}.
    * <br/>
    * Warning: this is method is efficient by speed, but don't query too much, because the whole log output is retrieved at once,
    * and it can occupy too much memory. The estimate is ~600Kb for 1000 commits.
@@ -131,9 +147,9 @@ public final class GitHistoryUtils {
    * @param parameters additional parameters for `git log` command
    * @return a list of {@link GitCommit}
    * @throws VcsException if there is a problem with running git
+   * @see GitHistoryUtils#formHashParameters(Project, Collection)
    */
-  @NotNull
-  public static List<GitCommit> history(@NotNull Project project, @NotNull VirtualFile root, String... parameters)
+  public static @NotNull List<GitCommit> history(@NotNull Project project, @NotNull VirtualFile root, String... parameters)
     throws VcsException {
     VcsLogObjectsFactory factory = GitLogUtil.getObjectsFactoryWithDisposeCheck(project);
     if (factory == null) {
@@ -156,15 +172,14 @@ public final class GitHistoryUtils {
   /**
    * Create a proper list of parameters for `git log` command from a list of hashes.
    *
-   * @param vcs    an instance of {@link GitVcs} class for the repository, could be obtained from the
-   *               corresponding {@link GitRepository} or from a project by calling {@code GitVcs.getInstance(project)}
-   * @param hashes a list of hashes to call `git log` for
-   * @return a list of parameters that could be fed to a `git log` command
+   * @param project a {@link Project} instance for which the command is going to be invoked. Used to get Git version.
+   * @param hashes  a list of hashes to call `git log` for
+   * @return a array of parameters that could be fed to a `git log` command
    */
-  public static String @NotNull [] formHashParameters(@NotNull GitVcs vcs, @NotNull Collection<String> hashes) {
+  public static String @NotNull [] formHashParameters(@NotNull Project project, @NotNull Collection<String> hashes) {
     List<String> parameters = new ArrayList<>();
 
-    parameters.add(GitLogUtil.getNoWalkParameter(vcs));
+    parameters.add(GitLogUtil.getNoWalkParameter(project));
     parameters.addAll(hashes);
 
     return ArrayUtilRt.toStringArray(parameters);
@@ -179,19 +194,19 @@ public final class GitHistoryUtils {
    * @return revision number or null if the file is unversioned or new
    * @throws VcsException if there is a problem with running git
    */
-  @Nullable
-  public static VcsRevisionNumber getCurrentRevision(@NotNull Project project, @NotNull FilePath filePath,
-                                                     @Nullable String branch) throws VcsException {
+  public static @Nullable VcsRevisionNumber getCurrentRevision(@NotNull Project project, @NotNull FilePath filePath,
+                                                               @Nullable String branch) throws VcsException {
     filePath = VcsUtil.getLastCommitPath(project, filePath);
-    GitLineHandler h = new GitLineHandler(project, GitUtil.getRootForFile(project, filePath), GitCommand.LOG);
+    GitRepository repository = GitUtil.getRepositoryForFile(project, filePath);
+    GitLineHandler h = new GitLineHandler(project, repository.getRoot(), GitCommand.LOG);
     GitLogParser<GitLogRecord> parser = GitLogParser.createDefaultParser(project, HASH, COMMIT_TIME);
     h.setSilent(true);
     h.addParameters("-n1", parser.getPretty());
-    h.addParameters(!StringUtil.isEmpty(branch) ? branch : "--all");
+    h.addParameters(!StringUtil.isEmpty(branch) && !repository.isFresh() ? branch : "--all");
     h.endOptions();
     h.addRelativePaths(filePath);
     String result = Git.getInstance().runCommand(h).getOutputOrThrow();
-    if (result.length() == 0) {
+    if (result.isEmpty()) {
       return null;
     }
     final GitLogRecord record = parser.parseOneRecord(result);
@@ -202,8 +217,7 @@ public final class GitHistoryUtils {
     return new GitRevisionNumber(record.getHash(), record.getDate());
   }
 
-  @Nullable
-  public static VcsRevisionDescription getCurrentRevisionDescription(@NotNull Project project, @NotNull FilePath filePath)
+  public static @Nullable VcsRevisionDescription getCurrentRevisionDescription(@NotNull Project project, @NotNull FilePath filePath)
     throws VcsException {
     filePath = VcsUtil.getLastCommitPath(project, filePath);
     GitLineHandler h = new GitLineHandler(project, GitUtil.getRootForFile(project, filePath), GitCommand.LOG);
@@ -216,7 +230,7 @@ public final class GitHistoryUtils {
     h.endOptions();
     h.addRelativePaths(filePath);
     String result = Git.getInstance().runCommand(h).getOutputOrThrow();
-    if (result.length() == 0) {
+    if (result.isEmpty()) {
       return null;
     }
     final GitLogRecord record = parser.parseOneRecord(result);
@@ -239,8 +253,7 @@ public final class GitHistoryUtils {
    * @return a revision number or null if the file is unversioned or new
    * @throws VcsException if there is problem with running git
    */
-  @Nullable
-  public static ItemLatestState getLastRevision(@NotNull Project project, @NotNull FilePath filePath) throws VcsException {
+  public static @Nullable ItemLatestState getLastRevision(@NotNull Project project, @NotNull FilePath filePath) throws VcsException {
     GitRepository repository = GitUtil.getRepositoryForFile(project, filePath);
     VirtualFile root = repository.getRoot();
     GitBranch c = repository.getCurrentBranch();
@@ -258,7 +271,7 @@ public final class GitHistoryUtils {
     h.endOptions();
     h.addRelativePaths(filePath);
     String result = Git.getInstance().runCommand(h).getOutputOrThrow();
-    if (result.length() == 0) {
+    if (result.isEmpty()) {
       return null;
     }
     GitLogFullRecord record = parser.parseOneRecord(result);
@@ -271,70 +284,39 @@ public final class GitHistoryUtils {
     return new ItemLatestState(new GitRevisionNumber(record.getHash(), record.getDate()), exists, false);
   }
 
-  @Nullable
-  public static GitRevisionNumber getMergeBase(@NotNull Project project, @NotNull VirtualFile root, @NotNull String first,
-                                               @NotNull String second) throws VcsException {
+  public static @Nullable String getNumberOfCommitsBetween(@NotNull GitRepository repository, @NotNull String from, @NotNull String to) {
+    GitLineHandler handler = new GitLineHandler(repository.getProject(), repository.getRoot(), GitCommand.REV_LIST);
+    handler.addParameters("--count", from + ".." + to);
+    handler.setSilent(true);
+    try {
+      return Git.getInstance().runCommand(handler).getOutputOrThrow().trim();
+    }
+    catch (VcsException e) {
+      LOG.debug(e.getMessage());
+      return null;
+    }
+  }
+
+  public static @Nullable GitRevisionNumber getMergeBase(@NotNull Project project, @NotNull VirtualFile root,
+                                                         @NotNull GitRebaseParams.RebaseUpstream base,
+                                                         @NotNull String branch) throws VcsException {
+    if (base instanceof GitRebaseParams.RebaseUpstream.Reference baseRef) {
+      return getMergeBase(project, root, baseRef.getRef(), branch);
+    }
+    else {
+      return null;
+    }
+  }
+
+  public static @Nullable GitRevisionNumber getMergeBase(@NotNull Project project, @NotNull VirtualFile root, @NotNull String first,
+                                                         @NotNull String second) throws VcsException {
     GitLineHandler h = new GitLineHandler(project, root, GitCommand.MERGE_BASE);
     h.setSilent(true);
     h.addParameters(first, second);
     GitCommandResult result = Git.getInstance().runCommand(h);
     if (!result.success()) return null;
     String output = result.getOutputAsJoinedString().trim();
-    if (output.length() == 0) return null;
+    if (output.isEmpty()) return null;
     return GitRevisionNumber.resolve(project, root, output);
-  }
-
-  public static long getAuthorTime(@NotNull Project project, @NotNull VirtualFile root, @NotNull String commitsId) throws VcsException {
-    GitLineHandler h = new GitLineHandler(project, root, GitCommand.SHOW);
-    GitLogParser<GitLogRecord> parser = GitLogParser.createDefaultParser(project, AUTHOR_TIME);
-    h.setSilent(true);
-    h.addParameters("-s", parser.getPretty(), "--encoding=UTF-8");
-    h.addParameters(commitsId);
-
-    String output = Git.getInstance().runCommand(h).getOutputOrThrow();
-    GitLogRecord logRecord = parser.parseOneRecord(output);
-    if (logRecord == null) throw new VcsException(GitBundle.message("log.parser.exception.message.could.not.parse.output", output));
-    return logRecord.getAuthorTimeStamp();
-  }
-
-  /**
-   * @deprecated use {@link GitHistoryUtils#collectTimedCommits(Project, VirtualFile, String...)}
-   */
-  @Deprecated
-  @SuppressWarnings("unused")
-  @NotNull
-  public static List<Pair<SHAHash, Date>> onlyHashesHistory(@NotNull Project project, @NotNull FilePath path, String... parameters)
-    throws VcsException {
-    final VirtualFile root = GitUtil.getRootForFile(project, path);
-    return onlyHashesHistory(project, path, root, parameters);
-  }
-
-  /**
-   * @deprecated use {@link GitHistoryUtils#collectTimedCommits(Project, VirtualFile, String...)}
-   */
-  @Deprecated
-  @NotNull
-  public static List<Pair<SHAHash, Date>> onlyHashesHistory(@NotNull Project project,
-                                                            @NotNull FilePath path,
-                                                            @NotNull VirtualFile root,
-                                                            String... parameters)
-    throws VcsException {
-    // adjust path using change manager
-    path = VcsUtil.getLastCommitPath(project, path);
-    GitLineHandler h = new GitLineHandler(project, root, GitCommand.LOG);
-    GitLogParser<GitLogRecord> parser = GitLogParser.createDefaultParser(project, HASH, COMMIT_TIME);
-    h.setStdoutSuppressed(true);
-    h.addParameters(parameters);
-    h.addParameters(parser.getPretty(), "--encoding=UTF-8");
-    h.endOptions();
-    h.addRelativePaths(path);
-    String output = Git.getInstance().runCommand(h).getOutputOrThrow();
-
-    final List<Pair<SHAHash, Date>> rc = new ArrayList<>();
-    for (GitLogRecord record : parser.parse(output)) {
-      record.setUsedHandler(h);
-      rc.add(Pair.create(new SHAHash(record.getHash()), record.getDate()));
-    }
-    return rc;
   }
 }

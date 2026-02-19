@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.tasks.impl;
 
 import com.google.gson.Gson;
@@ -15,29 +15,37 @@ import com.intellij.tasks.CommitPlaceholderProvider;
 import com.intellij.tasks.LocalTask;
 import com.intellij.tasks.Task;
 import com.intellij.tasks.TaskRepository;
-import com.intellij.util.NullableFunction;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.text.DateFormatUtil;
-import org.jdom.Element;
+import com.intellij.util.text.Matcher;
+import com.intellij.util.text.matching.MatchingMode;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
-import java.io.InputStream;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
-import java.text.ParseException;
-import java.util.*;
-import java.util.regex.Matcher;
+import java.time.Instant;
+import java.time.ZoneOffset;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
+import java.util.Arrays;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.StringTokenizer;
 import java.util.regex.Pattern;
+
+import static java.util.Objects.requireNonNullElse;
 
 /**
  * @author Dmitry Avdeev
  */
 public final class TaskUtil {
-
-  // Almost ISO-8601 strict except date parts may be separated by '/'
-  // and date only also allowed just in case
+  // Almost ISO-8601 strict, except that date components may be separated by '/', parts may be adjoined with space,
+  // and date-only strings are also allowed, just in case.
   private static final Pattern ISO8601_DATE_PATTERN = Pattern.compile(
     "(\\d{4}[/-]\\d{2}[/-]\\d{2})" +                   // date (1)
     "(?:[ T]" +
@@ -47,16 +55,17 @@ public final class TaskUtil {
     ")?)?"
   );
 
-
   private TaskUtil() {
     // empty
   }
 
   public static String formatTask(@NotNull Task task, String format) {
-
     Map<String, String> map = formatFromExtensions(task instanceof LocalTask ? (LocalTask)task : new LocalTaskImpl(task));
+    if (!task.isIssue()) {
+      map.put("id", ""); // clear fake id
+    }
     format = updateToVelocity(format);
-    return FileTemplateUtil.mergeTemplate(map, format, false);
+    return FileTemplateUtil.mergeTemplate(map, format, false).trim();
   }
 
   private static Map<String, String> formatFromExtensions(@NotNull LocalTask task) {
@@ -77,8 +86,7 @@ public final class TaskUtil {
     return getChangeListComment(task, false);
   }
 
-    @Nullable
-  public static String getChangeListComment(Task task, boolean forCommit) {
+  public static @Nullable String getChangeListComment(Task task, boolean forCommit) {
     final TaskRepository repository = task.getRepository();
     if (repository == null || !repository.isShouldFormatCommitMessage()) {
       return null;
@@ -97,45 +105,36 @@ public final class TaskUtil {
     return StringUtil.first(text, 60, true);
   }
 
-  @Nullable
-  public static Date parseDate(@NotNull String s) {
-    // SimpleDateFormat prior JDK7 doesn't support 'X' specifier for ISO 8601 timezone format.
-    // Because some bug trackers and task servers e.g. send dates ending with 'Z' (that stands for UTC),
-    // dates should be preprocessed before parsing.
-    Matcher m = ISO8601_DATE_PATTERN.matcher(s);
-    if (!m.matches()) {
-      return null;
-    }
-    String datePart = m.group(1).replace('/', '-');
-    String timePart = m.group(2);
-    if (timePart == null) {
-      timePart = "00:00:00";
-    }
-    String milliseconds = m.group(3);
-    milliseconds = milliseconds == null ? "000" : milliseconds.substring(1, 4);
-    String timezone = m.group(4);
-    if (timezone == null || timezone.equals("Z")) {
-      timezone = "+0000";
-    }
-    else if (timezone.length() == 3) {
-      // [+-]HH
-      timezone += "00";
-    }
-    else if (timezone.length() == 6) {
-      // [+-]HH:MM
-      timezone = timezone.substring(0, 3) + timezone.substring(4, 6);
-    }
-    String canonicalForm = String.format("%sT%s.%s%s", datePart, timePart, milliseconds, timezone);
+  public static @Nullable Date parseDate(@NotNull String s) {
+    s = s.replace('/', '-');
+
     try {
-      return DateFormatUtil.getIso8601Format().parse(canonicalForm);
+      return Date.from(Instant.from(DateTimeFormatter.ISO_OFFSET_DATE_TIME.parse(s)));
     }
-    catch (ParseException e) {
-      return null;
+    catch (DateTimeParseException ignored) { }
+
+    var matcher = ISO8601_DATE_PATTERN.matcher(s);
+    if (matcher.matches()) {
+      var date = matcher.group(1).replace('/', '-');
+      var time = requireNonNullElse(matcher.group(2), "00:00:00");
+      var millis = requireNonNullElse(matcher.group(3), ".000").substring(1);
+      var timezone = requireNonNullElse(matcher.group(4), "Z");
+      if (timezone.length() == 5) {
+        // [+-]HHmm, missing colon
+        timezone = timezone.substring(0, 3) + ':' + timezone.substring(3);
+      }
+      s = String.format("%sT%s.%s%s", date, time, millis, timezone);
+      try {
+        return Date.from(Instant.from(DateTimeFormatter.ISO_OFFSET_DATE_TIME.parse(s)));
+      }
+      catch (DateTimeParseException ignored) { }
     }
+
+    return null;
   }
 
   public static String formatDate(@NotNull Date date) {
-    return DateFormatUtil.getIso8601Format().format(date);
+    return DateTimeFormatter.ISO_OFFSET_DATE_TIME.format(date.toInstant().atZone(ZoneOffset.UTC));
   }
 
   /**
@@ -174,37 +173,12 @@ public final class TaskUtil {
   }
 
   /**
-   * Print pretty-formatted XML to {@code logger}, if its level is DEBUG or below.
-   */
-  public static void prettyFormatXmlToLog(@NotNull Logger logger, @NotNull Element element) {
-    if (logger.isDebugEnabled()) {
-      // alternatively
-      //new XMLOutputter(Format.getPrettyFormat()).outputString(root)
-      logger.debug("\n" + JDOMUtil.createOutputter("\n").outputString(element));
-    }
-  }
-
-  /**
-   * Parse and print pretty-formatted XML to {@code logger}, if its level is DEBUG or below.
-   */
-  public static void prettyFormatXmlToLog(@NotNull Logger logger, @NotNull InputStream xml) {
-    if (logger.isDebugEnabled()) {
-      try {
-        logger.debug("\n" + JDOMUtil.createOutputter("\n").outputString(JDOMUtil.load(xml)));
-      }
-      catch (Exception e) {
-        logger.debug(e);
-      }
-    }
-  }
-
-  /**
    * Parse and print pretty-formatted XML to {@code logger}, if its level is DEBUG or below.
    */
   public static void prettyFormatXmlToLog(@NotNull Logger logger, @NotNull String xml) {
     if (logger.isDebugEnabled()) {
       try {
-        logger.debug("\n" + JDOMUtil.createOutputter("\n").outputString(JDOMUtil.load(xml)));
+        logger.debug("\n" + JDOMUtil.write(JDOMUtil.load(xml)));
       }
       catch (Exception e) {
         logger.debug(e);
@@ -228,37 +202,21 @@ public final class TaskUtil {
   }
 
   /**
-   * Parse and print pretty-formatted Json to {@code logger}, if its level is DEBUG or below.
-   */
-  public static void prettyFormatJsonToLog(@NotNull Logger logger, @NotNull JsonElement json) {
-    if (logger.isDebugEnabled()) {
-      try {
-        Gson gson = new GsonBuilder().setPrettyPrinting().create();
-        logger.debug("\n" + gson.toJson(json));
-      }
-      catch (JsonSyntaxException e) {
-        logger.debug("Malformed JSON\n" + json);
-      }
-    }
-  }
-
-  /**
    * Perform standard {@code application/x-www-urlencoded} translation for string {@code s}.
    *
    * @return urlencoded string
    */
-  @NotNull
-  public static String encodeUrl(@NotNull String s) {
+  public static @NotNull String encodeUrl(@NotNull String s) {
     return URLEncoder.encode(s, StandardCharsets.UTF_8);
   }
 
-  public static List<Task> filterTasks(final String pattern, final List<? extends Task> tasks) {
-    final com.intellij.util.text.Matcher matcher = getMatcher(pattern);
+  public static @Unmodifiable List<Task> filterTasks(final String pattern, final List<? extends Task> tasks) {
+    final Matcher matcher = getMatcher(pattern);
     return ContainerUtil.mapNotNull(tasks,
-                                    (NullableFunction<Task, Task>)task -> matcher.matches(task.getPresentableId()) || matcher.matches(task.getSummary()) ? task : null);
+                                    task -> matcher.matches(task.getPresentableId()) || matcher.matches(task.getSummary()) ? task : null);
   }
 
-  private static com.intellij.util.text.Matcher getMatcher(String pattern) {
+  private static Matcher getMatcher(String pattern) {
     StringTokenizer tokenizer = new StringTokenizer(pattern, " ");
     StringBuilder builder = new StringBuilder();
     while (tokenizer.hasMoreTokens()) {
@@ -268,7 +226,7 @@ public final class TaskUtil {
       builder.append("* ");
     }
 
-    return NameUtil.buildMatcher(builder.toString(), NameUtil.MatchingCaseSensitivity.NONE);
+    return NameUtil.buildMatcher(builder.toString(), MatchingMode.IGNORE_CASE);
   }
 
   static String updateToVelocity(String format) {

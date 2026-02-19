@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.svn.integrate;
 
 import com.intellij.openapi.project.Project;
@@ -19,7 +19,7 @@ import static org.jetbrains.idea.svn.SvnUtil.isAncestor;
 
 public class SvnIntegrateChangesActionPerformer implements SelectBranchPopup.BranchSelectedCallback {
   private final SvnVcs myVcs;
-  @NotNull private final MergerFactory myMergerFactory;
+  private final @NotNull MergerFactory myMergerFactory;
 
   private final Url myCurrentBranch;
 
@@ -47,10 +47,9 @@ public class SvnIntegrateChangesActionPerformer implements SelectBranchPopup.Bra
     }
   }
 
-  @Nullable
-  private Pair<WorkingCopyInfo, Url> selectWorkingCopy(@NotNull Url url,
-                                                       @Nullable String selectedLocalBranchPath,
-                                                       @DialogTitle @Nullable String dialogTitle) {
+  private @Nullable Pair<WorkingCopyInfo, Url> selectWorkingCopy(@NotNull Url url,
+                                                                 @Nullable String selectedLocalBranchPath,
+                                                                 @DialogTitle @Nullable String dialogTitle) {
     return IntegratedSelectedOptionsDialog
       .selectWorkingCopy(myVcs.getProject(), myCurrentBranch, url, true, selectedLocalBranchPath, dialogTitle);
   }
@@ -67,8 +66,7 @@ public class SvnIntegrateChangesActionPerformer implements SelectBranchPopup.Bra
     }
   }
 
-  @Nullable
-  private Url correctSourceUrl(@NotNull Url targetUrl, @NotNull Url realTargetUrl) {
+  private @Nullable Url correctSourceUrl(@NotNull Url targetUrl, @NotNull Url realTargetUrl) {
     if (isAncestor(targetUrl, realTargetUrl)) {
       try {
         return myCurrentBranch.appendPath(getRelativeUrl(targetUrl, realTargetUrl), false);

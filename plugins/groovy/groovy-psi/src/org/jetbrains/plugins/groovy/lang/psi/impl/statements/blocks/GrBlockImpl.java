@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements.blocks;
 
@@ -13,7 +13,12 @@ import com.intellij.psi.impl.source.tree.LazyParseablePsiElement;
 import com.intellij.psi.impl.source.tree.LeafElement;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.util.*;
+import com.intellij.psi.util.CachedValue;
+import com.intellij.psi.util.CachedValueProvider;
+import com.intellij.psi.util.CachedValuesManager;
+import com.intellij.psi.util.PsiModificationTracker;
+import com.intellij.psi.util.PsiUtilCore;
+import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.profiling.ResolveProfiler;
 import org.jetbrains.annotations.NotNull;
@@ -29,17 +34,15 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameterList;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.Instruction;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.ControlFlowBuilder;
+import org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.GroovyControlFlow;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
 import static org.jetbrains.plugins.groovy.lang.resolve.ResolveUtilKt.processLocals;
 
-/**
- * @author ven
- */
 public abstract class GrBlockImpl extends LazyParseablePsiElement implements GrCodeBlock, GrControlFlowOwner {
-  private static final Key<CachedValue<Instruction[]>> CONTROL_FLOW = Key.create("Control flow");
+  private static final Key<CachedValue<GroovyControlFlow>> CONTROL_FLOW = Key.create("Control flow");
 
   protected GrBlockImpl(@NotNull IElementType type, CharSequence buffer) {
     super(type, buffer);
@@ -95,22 +98,23 @@ public abstract class GrBlockImpl extends LazyParseablePsiElement implements GrC
 
   @Override
   public Instruction[] getControlFlow() {
+    return getGroovyControlFlow().getFlow();
+  }
+
+  public @NotNull GroovyControlFlow getGroovyControlFlow() {
     PsiUtilCore.ensureValid(this);
-    CachedValue<Instruction[]> controlFlow = getUserData(CONTROL_FLOW);
-    if (controlFlow == null) {
-      controlFlow = CachedValuesManager.getManager(getProject()).createCachedValue(() -> {
+    CachedValue<GroovyControlFlow> controlFlow = ConcurrencyUtil.computeIfAbsent(this, CONTROL_FLOW, ()->
+    CachedValuesManager.getManager(getProject()).createCachedValue(() -> {
         try {
           ResolveProfiler.start();
-          final Instruction[] flow = new ControlFlowBuilder().buildControlFlow(this);
+          final GroovyControlFlow flow = ControlFlowBuilder.buildControlFlow(this);
           return CachedValueProvider.Result.create(flow, getContainingFile(), PsiModificationTracker.MODIFICATION_COUNT);
         }
         finally {
           final long time = ResolveProfiler.finish();
           ResolveProfiler.write("flow", this, time);
         }
-      }, false);
-      controlFlow = putUserDataIfAbsent(CONTROL_FLOW, controlFlow);
-    }
+      }, false));
     return controlFlow.getValue();
   }
 
@@ -129,8 +133,7 @@ public abstract class GrBlockImpl extends LazyParseablePsiElement implements GrC
   private boolean mayUseNewLinesAsSeparators() {
     PsiElement parent = this;
     while (parent != null) {
-      if (parent instanceof GrString) {
-        GrString grString = (GrString) parent;
+      if (parent instanceof GrString grString) {
         return !grString.isPlainString();
       }
       parent = parent.getParent();
@@ -144,8 +147,7 @@ public abstract class GrBlockImpl extends LazyParseablePsiElement implements GrC
   }
 
   @Override
-  @NotNull
-  public GrStatement addStatementBefore(@NotNull GrStatement element, @Nullable GrStatement anchor) throws IncorrectOperationException {
+  public @NotNull GrStatement addStatementBefore(@NotNull GrStatement element, @Nullable GrStatement anchor) throws IncorrectOperationException {
     if (anchor == null && getRBrace() == null) {
       throw new IncorrectOperationException();
     }
@@ -182,8 +184,7 @@ public abstract class GrBlockImpl extends LazyParseablePsiElement implements GrC
   }
 
   @Override
-  @Nullable
-  public PsiElement getRBrace() {
+  public @Nullable PsiElement getRBrace() {
     return findPsiChildByType(GroovyTokenTypes.mRCURLY);
   }
 

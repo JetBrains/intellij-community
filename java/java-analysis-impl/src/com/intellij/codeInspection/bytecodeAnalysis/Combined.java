@@ -1,9 +1,8 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.bytecodeAnalysis;
 
 import com.intellij.codeInspection.bytecodeAnalysis.asm.ASMUtils;
 import com.intellij.codeInspection.bytecodeAnalysis.asm.ControlFlowGraph;
-import com.intellij.util.SingletonSet;
 import one.util.streamex.EntryStream;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
@@ -11,19 +10,58 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.org.objectweb.asm.Handle;
 import org.jetbrains.org.objectweb.asm.Opcodes;
 import org.jetbrains.org.objectweb.asm.Type;
-import org.jetbrains.org.objectweb.asm.tree.*;
+import org.jetbrains.org.objectweb.asm.tree.AbstractInsnNode;
+import org.jetbrains.org.objectweb.asm.tree.FieldInsnNode;
+import org.jetbrains.org.objectweb.asm.tree.InsnList;
+import org.jetbrains.org.objectweb.asm.tree.InvokeDynamicInsnNode;
+import org.jetbrains.org.objectweb.asm.tree.JumpInsnNode;
+import org.jetbrains.org.objectweb.asm.tree.LdcInsnNode;
+import org.jetbrains.org.objectweb.asm.tree.MethodInsnNode;
+import org.jetbrains.org.objectweb.asm.tree.MethodNode;
+import org.jetbrains.org.objectweb.asm.tree.TypeInsnNode;
 import org.jetbrains.org.objectweb.asm.tree.analysis.AnalyzerException;
 import org.jetbrains.org.objectweb.asm.tree.analysis.BasicInterpreter;
 import org.jetbrains.org.objectweb.asm.tree.analysis.BasicValue;
 import org.jetbrains.org.objectweb.asm.tree.analysis.Frame;
 
-import java.util.*;
-import java.util.stream.Collectors;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
-import static com.intellij.codeInspection.bytecodeAnalysis.AbstractValues.*;
-import static com.intellij.codeInspection.bytecodeAnalysis.CombinedData.*;
-import static com.intellij.codeInspection.bytecodeAnalysis.Direction.*;
-import static org.jetbrains.org.objectweb.asm.Opcodes.*;
+import static com.intellij.codeInspection.bytecodeAnalysis.AbstractValues.CLASS_VALUE;
+import static com.intellij.codeInspection.bytecodeAnalysis.AbstractValues.FalseValue;
+import static com.intellij.codeInspection.bytecodeAnalysis.AbstractValues.METHOD_HANDLE_VALUE;
+import static com.intellij.codeInspection.bytecodeAnalysis.AbstractValues.METHOD_VALUE;
+import static com.intellij.codeInspection.bytecodeAnalysis.AbstractValues.NotNullValue;
+import static com.intellij.codeInspection.bytecodeAnalysis.AbstractValues.NthParamValue;
+import static com.intellij.codeInspection.bytecodeAnalysis.AbstractValues.STRING_VALUE;
+import static com.intellij.codeInspection.bytecodeAnalysis.AbstractValues.TrueValue;
+import static com.intellij.codeInspection.bytecodeAnalysis.CombinedData.ParamKey;
+import static com.intellij.codeInspection.bytecodeAnalysis.CombinedData.ThisValue;
+import static com.intellij.codeInspection.bytecodeAnalysis.CombinedData.Trackable;
+import static com.intellij.codeInspection.bytecodeAnalysis.CombinedData.TrackableCallValue;
+import static com.intellij.codeInspection.bytecodeAnalysis.CombinedData.TrackableNullValue;
+import static com.intellij.codeInspection.bytecodeAnalysis.CombinedData.TrackableValue;
+import static com.intellij.codeInspection.bytecodeAnalysis.Direction.In;
+import static com.intellij.codeInspection.bytecodeAnalysis.Direction.InOut;
+import static com.intellij.codeInspection.bytecodeAnalysis.Direction.InThrow;
+import static com.intellij.codeInspection.bytecodeAnalysis.Direction.NullableOut;
+import static com.intellij.codeInspection.bytecodeAnalysis.Direction.Out;
+import static com.intellij.codeInspection.bytecodeAnalysis.Direction.ParamValueBasedDirection;
+import static com.intellij.codeInspection.bytecodeAnalysis.Direction.Throw;
+import static org.jetbrains.org.objectweb.asm.Opcodes.ACC_STATIC;
+import static org.jetbrains.org.objectweb.asm.Opcodes.ARETURN;
+import static org.jetbrains.org.objectweb.asm.Opcodes.ATHROW;
+import static org.jetbrains.org.objectweb.asm.Opcodes.DRETURN;
+import static org.jetbrains.org.objectweb.asm.Opcodes.FRETURN;
+import static org.jetbrains.org.objectweb.asm.Opcodes.IFEQ;
+import static org.jetbrains.org.objectweb.asm.Opcodes.IFNE;
+import static org.jetbrains.org.objectweb.asm.Opcodes.IRETURN;
+import static org.jetbrains.org.objectweb.asm.Opcodes.LRETURN;
+import static org.jetbrains.org.objectweb.asm.Opcodes.RETURN;
 
 // additional data structures for combined analysis
 interface CombinedData {
@@ -93,8 +131,7 @@ interface CombinedData {
       Set<EKey> keys = new HashSet<>();
       for (int argI = 0; argI < this.args.size(); argI++) {
         BasicValue arg = this.args.get(argI);
-        if (arg instanceof NthParamValue) {
-          NthParamValue npv = (NthParamValue)arg;
+        if (arg instanceof NthParamValue npv) {
           if (npv.n == idx) {
             keys.add(new EKey(this.method, direction.withIndex(argI), this.stableCall));
           }
@@ -152,42 +189,39 @@ final class CombinedAnalysis {
     interpreter = new CombinedInterpreter(methodNode.instructions, Type.getArgumentTypes(methodNode.desc).length, staticFields);
   }
 
-  final void analyze() throws AnalyzerException {
+  void analyze() throws AnalyzerException {
     Frame<BasicValue> frame = createStartFrame();
     int insnIndex = 0;
 
     while (true) {
       AbstractInsnNode insnNode = methodNode.instructions.get(insnIndex);
       switch (insnNode.getType()) {
-        case AbstractInsnNode.LABEL:
-        case AbstractInsnNode.LINE:
-        case AbstractInsnNode.FRAME:
-          insnIndex = controlFlow.transitions[insnIndex][0];
-          break;
-        default:
+        case AbstractInsnNode.LABEL, AbstractInsnNode.LINE, AbstractInsnNode.FRAME -> insnIndex = controlFlow.transitions[insnIndex][0];
+        default -> {
           switch (insnNode.getOpcode()) {
-            case ATHROW:
+            case ATHROW -> {
               exception = true;
               return;
-            case ARETURN:
-            case IRETURN:
-            case LRETURN:
-            case FRETURN:
-            case DRETURN:
+            }
+            case ARETURN, IRETURN, LRETURN, FRETURN, DRETURN -> {
               returnValue = frame.pop();
               return;
-            case RETURN:
+            }
+            case RETURN -> {
               // nothing to return
               return;
-            default:
+            }
+            default -> {
               frame.execute(insnNode, interpreter);
               insnIndex = controlFlow.transitions[insnIndex][0];
+            }
           }
+        }
       }
     }
   }
 
-  final Equation notNullParamEquation(int i, boolean stable) {
+  Equation notNullParamEquation(int i, boolean stable) {
     final EKey key = new EKey(method, new In(i, false), stable);
     final Result result;
     if (interpreter.dereferencedParams[i]) {
@@ -203,13 +237,13 @@ final class CombinedAnalysis {
         for (ParamKey pk: calls) {
           keys.add(new EKey(pk.method, new In(pk.i, false), pk.stable));
         }
-        result = new Pending(new SingletonSet<>(new Component(Value.Top, keys)));
+        result = new Pending(Collections.singleton(new Component(Value.Top, keys)));
       }
     }
     return new Equation(key, result);
   }
 
-  final Equation nullableParamEquation(int i, boolean stable) {
+  Equation nullableParamEquation(int i, boolean stable) {
     final EKey key = new EKey(method, new In(i, true), stable);
     final Result result;
     if (interpreter.dereferencedParams[i] || interpreter.notNullableParams[i] || returnValue instanceof NthParamValue && ((NthParamValue)returnValue).n == i) {
@@ -231,8 +265,7 @@ final class CombinedAnalysis {
     return new Equation(key, result);
   }
 
-  @Nullable
-  final Equation contractEquation(int i, Value inValue, boolean stable) {
+  @Nullable Equation contractEquation(int i, Value inValue, boolean stable) {
     final InOut direction = new InOut(i, inValue);
     final EKey key = new EKey(method, direction, stable);
     final Result result;
@@ -254,8 +287,7 @@ final class CombinedAnalysis {
     else if (returnValue instanceof NthParamValue && ((NthParamValue)returnValue).n == i) {
       result = inValue;
     }
-    else if (returnValue instanceof TrackableCallValue) {
-      TrackableCallValue call = (TrackableCallValue)returnValue;
+    else if (returnValue instanceof TrackableCallValue call) {
       Set<EKey> keys = call.getKeysForParameter(i, direction);
       if (ASMUtils.isReferenceType(call.getType())) {
         keys.add(new EKey(call.method, Out, call.stableCall));
@@ -263,7 +295,7 @@ final class CombinedAnalysis {
       if (keys.isEmpty()) {
         return null;
       } else {
-        result = new Pending(new SingletonSet<>(new Component(Value.Top, keys)));
+        result = new Pending(Collections.singleton(new Component(Value.Top, keys)));
       }
     }
     else {
@@ -272,17 +304,18 @@ final class CombinedAnalysis {
     return new Equation(key, result);
   }
 
-  @Nullable
-  final Equation failEquation(boolean stable) {
+  @Nullable Equation failEquation(boolean stable) {
     final EKey key = new EKey(method, Throw, stable);
     final Result result;
     if (exception) {
       result = Value.Fail;
     }
     else if (!interpreter.calls.isEmpty()) {
-      Set<EKey> keys =
-        interpreter.calls.stream().map(call -> new EKey(call.method, Throw, call.stableCall)).collect(Collectors.toSet());
-      result = new Pending(new SingletonSet<>(new Component(Value.Top, keys)));
+      Set<EKey> keys = new HashSet<>();
+      for (TrackableCallValue call : interpreter.calls) {
+        keys.add(new EKey(call.method, Throw, call.stableCall));
+      }
+      result = new Pending(Collections.singleton(new Component(Value.Top, keys)));
     }
     else {
       return null;
@@ -290,8 +323,7 @@ final class CombinedAnalysis {
     return new Equation(key, result);
   }
 
-  @Nullable
-  final Equation failEquation(int i, Value inValue, boolean stable) {
+  @Nullable Equation failEquation(int i, Value inValue, boolean stable) {
     final InThrow direction = new InThrow(i, inValue);
     final EKey key = new EKey(method, direction, stable);
     final Result result;
@@ -304,7 +336,7 @@ final class CombinedAnalysis {
         keys.addAll(call.getKeysForParameter(i, direction));
         keys.add(new EKey(call.method, Throw, call.stableCall));
       }
-      result = new Pending(new SingletonSet<>(new Component(Value.Top, keys)));
+      result = new Pending(Collections.singleton(new Component(Value.Top, keys)));
     }
     else {
       return null;
@@ -312,12 +344,11 @@ final class CombinedAnalysis {
     return new Equation(key, result);
   }
 
-  @Nullable
-  final Equation outContractEquation(boolean stable) {
+  @Nullable Equation outContractEquation(boolean stable) {
     return outEquation(exception, method, returnValue, stable);
   }
 
-  final List<Equation> staticFieldEquations() {
+  List<Equation> staticFieldEquations() {
     return EntryStream.of(interpreter.staticFields)
       .removeValues(v -> v == BasicValue.UNINITIALIZED_VALUE)
       .mapKeyValue((field, value) -> outEquation(exception, field, value, true))
@@ -325,8 +356,7 @@ final class CombinedAnalysis {
       .toList();
   }
 
-  @Nullable
-  private static Equation outEquation(boolean exception, Member member, BasicValue returnValue, boolean stable) {
+  private static @Nullable Equation outEquation(boolean exception, Member member, BasicValue returnValue, boolean stable) {
     final EKey key = new EKey(member, Out, stable);
     final Result result;
     if (exception) {
@@ -344,11 +374,10 @@ final class CombinedAnalysis {
     else if (returnValue instanceof NotNullValue || returnValue == ThisValue) {
       result = Value.NotNull;
     }
-    else if (returnValue instanceof TrackableCallValue) {
-      TrackableCallValue call = (TrackableCallValue)returnValue;
+    else if (returnValue instanceof TrackableCallValue call) {
       EKey callKey = new EKey(call.method, Out, call.stableCall);
-      Set<EKey> keys = new SingletonSet<>(callKey);
-      result = new Pending(new SingletonSet<>(new Component(Value.Top, keys)));
+      Set<EKey> keys = Collections.singleton(callKey);
+      result = new Pending(Collections.singleton(new Component(Value.Top, keys)));
     }
     else {
       return null;
@@ -356,18 +385,17 @@ final class CombinedAnalysis {
     return new Equation(key, result);
   }
 
-  final Equation nullableResultEquation(boolean stable) {
+  Equation nullableResultEquation(boolean stable) {
     final EKey key = new EKey(method, NullableOut, stable);
     final Result result;
     if (exception ||
         returnValue instanceof Trackable && interpreter.dereferencedValues[((Trackable)returnValue).getOriginInsnIndex()]) {
       result = Value.Bot;
     }
-    else if (returnValue instanceof TrackableCallValue) {
-      TrackableCallValue call = (TrackableCallValue)returnValue;
+    else if (returnValue instanceof TrackableCallValue call) {
       EKey callKey = new EKey(call.method, NullableOut, call.stableCall || call.thisCall);
-      Set<EKey> keys = new SingletonSet<>(callKey);
-      result = new Pending(new SingletonSet<>(new Component(Value.Null, keys)));
+      Set<EKey> keys = Collections.singleton(callKey);
+      result = new Pending(Collections.singleton(new Component(Value.Null, keys)));
     }
     else if (returnValue instanceof TrackableNullValue) {
       result = Value.Null;
@@ -378,7 +406,7 @@ final class CombinedAnalysis {
     return new Equation(key, result);
   }
 
-  final Frame<BasicValue> createStartFrame() {
+  Frame<BasicValue> createStartFrame() {
     Frame<BasicValue> frame = new Frame<>(methodNode.maxLocals, methodNode.maxStack);
     Type returnType = Type.getReturnType(methodNode.desc);
     BasicValue returnValue = Type.VOID_TYPE.equals(returnType) ? null : new BasicValue(returnType);
@@ -447,45 +475,38 @@ final class CombinedInterpreter extends BasicInterpreter {
   @Override
   public BasicValue newOperation(AbstractInsnNode insn) throws AnalyzerException {
     int origin = insnIndex(insn);
-    switch (insn.getOpcode()) {
-      case ICONST_0:
-        return FalseValue;
-      case ICONST_1:
-        return TrueValue;
-      case ACONST_NULL:
-        return new TrackableNullValue(origin);
-      case LDC:
+    return switch (insn.getOpcode()) {
+      case ICONST_0 -> FalseValue;
+      case ICONST_1 -> TrueValue;
+      case ACONST_NULL -> new TrackableNullValue(origin);
+      case LDC -> {
         Object cst = ((LdcInsnNode)insn).cst;
-        if (cst instanceof Type) {
-          Type type = (Type)cst;
+        if (cst instanceof Type type) {
           if (type.getSort() == Type.OBJECT || type.getSort() == Type.ARRAY) {
-            return CLASS_VALUE;
+            yield CLASS_VALUE;
           }
           if (type.getSort() == Type.METHOD) {
-            return METHOD_VALUE;
+            yield METHOD_VALUE;
           }
         }
         else if (cst instanceof String) {
-          return STRING_VALUE;
+          yield STRING_VALUE;
         }
         else if (cst instanceof Handle) {
-          return METHOD_HANDLE_VALUE;
+          yield METHOD_HANDLE_VALUE;
         }
-        break;
-      case NEW:
-        return new NotNullValue(Type.getObjectType(((TypeInsnNode)insn).desc));
-      default:
-    }
-    return track(origin, super.newOperation(insn));
+        yield track(origin, super.newOperation(insn));
+      }
+      case NEW -> new NotNullValue(Type.getObjectType(((TypeInsnNode)insn).desc));
+      default -> track(origin, super.newOperation(insn));
+    };
   }
 
   @Override
   public BasicValue unaryOperation(AbstractInsnNode insn, BasicValue value) throws AnalyzerException {
     int origin = insnIndex(insn);
     switch (insn.getOpcode()) {
-      case GETFIELD:
-      case ARRAYLENGTH:
-      case MONITORENTER:
+      case GETFIELD, ARRAYLENGTH, MONITORENTER -> {
         if (value instanceof NthParamValue) {
           dereferencedParams[((NthParamValue)value).n] = true;
         }
@@ -493,22 +514,24 @@ final class CombinedInterpreter extends BasicInterpreter {
           dereferencedValues[((Trackable)value).getOriginInsnIndex()] = true;
         }
         return track(origin, super.unaryOperation(insn, value));
-      case PUTSTATIC:
+      }
+      case PUTSTATIC -> {
         if (!staticFields.isEmpty()) {
           FieldInsnNode node = (FieldInsnNode)insn;
           Member field = new Member(node.owner, node.name, node.desc);
           staticFields.computeIfPresent(field, (f, v) -> value);
         }
-        break;
-      case CHECKCAST:
+      }
+      case CHECKCAST -> {
         if (value instanceof NthParamValue) {
           return new NthParamValue(Type.getObjectType(((TypeInsnNode)insn).desc), ((NthParamValue)value).n);
         }
-        break;
-      case NEWARRAY:
-      case ANEWARRAY:
+      }
+      case NEWARRAY, ANEWARRAY -> {
         return new NotNullValue(super.unaryOperation(insn, value).getType());
-      default:
+      }
+      default -> {
+      }
     }
     return track(origin, super.unaryOperation(insn, value));
   }
@@ -516,7 +539,7 @@ final class CombinedInterpreter extends BasicInterpreter {
   @Override
   public BasicValue binaryOperation(AbstractInsnNode insn, BasicValue value1, BasicValue value2) throws AnalyzerException {
     switch (insn.getOpcode()) {
-      case PUTFIELD:
+      case PUTFIELD -> {
         if (value1 instanceof NthParamValue) {
           dereferencedParams[((NthParamValue)value1).n] = true;
         }
@@ -526,23 +549,15 @@ final class CombinedInterpreter extends BasicInterpreter {
         if (value2 instanceof NthParamValue) {
           notNullableParams[((NthParamValue)value2).n] = true;
         }
-        break;
-      case IALOAD:
-      case LALOAD:
-      case FALOAD:
-      case DALOAD:
-      case AALOAD:
-      case BALOAD:
-      case CALOAD:
-      case SALOAD:
+      }
+      case IALOAD, LALOAD, FALOAD, DALOAD, AALOAD, BALOAD, CALOAD, SALOAD -> {
         if (value1 instanceof NthParamValue) {
           dereferencedParams[((NthParamValue)value1).n] = true;
         }
         if (value1 instanceof Trackable) {
           dereferencedValues[((Trackable)value1).getOriginInsnIndex()] = true;
         }
-        break;
-      default:
+      }
     }
     return track(insnIndex(insn), super.binaryOperation(insn, value1, value2));
   }
@@ -550,21 +565,15 @@ final class CombinedInterpreter extends BasicInterpreter {
   @Override
   public BasicValue ternaryOperation(AbstractInsnNode insn, BasicValue value1, BasicValue value2, BasicValue value3) {
     switch (insn.getOpcode()) {
-      case IASTORE:
-      case LASTORE:
-      case FASTORE:
-      case DASTORE:
-      case BASTORE:
-      case CASTORE:
-      case SASTORE:
+      case IASTORE, LASTORE, FASTORE, DASTORE, BASTORE, CASTORE, SASTORE -> {
         if (value1 instanceof NthParamValue) {
           dereferencedParams[((NthParamValue)value1).n] = true;
         }
         if (value1 instanceof Trackable) {
           dereferencedValues[((Trackable)value1).getOriginInsnIndex()] = true;
         }
-        break;
-      case AASTORE:
+      }
+      case AASTORE -> {
         if (value1 instanceof NthParamValue) {
           dereferencedParams[((NthParamValue)value1).n] = true;
         }
@@ -574,8 +583,7 @@ final class CombinedInterpreter extends BasicInterpreter {
         if (value3 instanceof NthParamValue) {
           notNullableParams[((NthParamValue)value3).n] = true;
         }
-        break;
-      default:
+      }
     }
     return null;
   }
@@ -586,17 +594,14 @@ final class CombinedInterpreter extends BasicInterpreter {
     int origin = insnIndex(insn);
 
     switch (opCode) {
-      case INVOKESTATIC:
-      case INVOKESPECIAL:
-      case INVOKEVIRTUAL:
-      case INVOKEINTERFACE: {
+      case INVOKESTATIC, INVOKESPECIAL, INVOKEVIRTUAL, INVOKEINTERFACE -> {
         MethodInsnNode mNode = (MethodInsnNode)insn;
         Member method = new Member(mNode.owner, mNode.name, mNode.desc);
         TrackableCallValue value = methodCall(opCode, origin, method, values);
         calls.add(value);
         return value;
       }
-      case INVOKEDYNAMIC: {
+      case INVOKEDYNAMIC -> {
         InvokeDynamicInsnNode indy = (InvokeDynamicInsnNode)insn;
         if (ClassDataIndexer.STRING_CONCAT_FACTORY.equals(indy.bsm.getOwner())) {
           return new NotNullValue(Type.getReturnType(indy.desc));
@@ -608,20 +613,21 @@ final class CombinedInterpreter extends BasicInterpreter {
         methodCall(targetOpCode, origin, lambda.getMethod(), lambda.getLambdaMethodArguments(values, this::newValue));
         return new NotNullValue(lambda.getFunctionalInterfaceType());
       }
-      case MULTIANEWARRAY:
+      case MULTIANEWARRAY -> {
         return new NotNullValue(super.naryOperation(insn, values).getType());
-      default:
+      }
+      default -> {
+      }
     }
     return track(origin, super.naryOperation(insn, values));
   }
 
-  @NotNull
-  private TrackableCallValue methodCall(int opCode, int origin, Member method, List<? extends BasicValue> values) {
+  private @NotNull TrackableCallValue methodCall(int opCode, int origin, Member method, List<? extends BasicValue> values) {
     Type retType = Type.getReturnType(method.methodDesc);
     boolean stable = opCode == INVOKESTATIC || opCode == INVOKESPECIAL;
     boolean thisCall = false;
     if (opCode != INVOKESTATIC) {
-      BasicValue receiver = values.remove(0);
+      BasicValue receiver = values.removeFirst();
       if (receiver instanceof NthParamValue) {
         dereferencedParams[((NthParamValue)receiver).n] = true;
       }
@@ -679,22 +685,18 @@ final class NegationAnalysis {
     }
   }
 
-  final void analyze() throws AnalyzerException, NegationAnalysisFailedException {
+  void analyze() throws AnalyzerException, NegationAnalysisFailedException {
     Frame<BasicValue> frame = createStartFrame();
     int insnIndex = 0;
 
     while (true) {
       AbstractInsnNode insnNode = methodNode.instructions.get(insnIndex);
       switch (insnNode.getType()) {
-        case AbstractInsnNode.LABEL:
-        case AbstractInsnNode.LINE:
-        case AbstractInsnNode.FRAME:
+        case AbstractInsnNode.LABEL, AbstractInsnNode.LINE, AbstractInsnNode.FRAME ->
           insnIndex = controlFlow.transitions[insnIndex][0];
-          break;
-        default:
+        default -> {
           switch (insnNode.getOpcode()) {
-            case IFEQ:
-            case IFNE:
+            case IFEQ, IFNE -> {
               BasicValue conValue = popValue(frame);
               checkAssertion(conValue instanceof TrackableCallValue);
               frame.execute(insnNode, interpreter);
@@ -706,10 +708,13 @@ final class NegationAnalysis {
               checkAssertion(FalseValue == trueBranchValue);
               checkAssertion(TrueValue == falseBranchValue);
               return;
-            default:
+            }
+            default -> {
               frame.execute(insnNode, interpreter);
               insnIndex = controlFlow.transitions[insnIndex][0];
+            }
           }
+        }
       }
     }
   }
@@ -723,12 +728,8 @@ final class NegationAnalysis {
     while (true) {
       AbstractInsnNode insnNode = methodNode.instructions.get(insnIndex);
       switch (insnNode.getType()) {
-        case AbstractInsnNode.LABEL:
-        case AbstractInsnNode.LINE:
-        case AbstractInsnNode.FRAME:
-          insnIndex = controlFlow.transitions[insnIndex][0];
-          break;
-        default:
+        case AbstractInsnNode.LABEL, AbstractInsnNode.LINE, AbstractInsnNode.FRAME -> insnIndex = controlFlow.transitions[insnIndex][0];
+        default -> {
           if (insnNode.getOpcode() == IRETURN) {
             BasicValue returnValue = frame.pop();
             if (branchValue) {
@@ -744,32 +745,30 @@ final class NegationAnalysis {
             frame.execute(insnNode, interpreter);
             insnIndex = controlFlow.transitions[insnIndex][0];
           }
+        }
       }
     }
   }
 
-  final Equation contractEquation(int i, Value inValue, boolean stable) {
+  Equation contractEquation(int i, Value inValue, boolean stable) {
     final EKey key = new EKey(method, new InOut(i, inValue), stable);
     final Result result;
     HashSet<EKey> keys = new HashSet<>();
     for (int argI = 0; argI < conditionValue.args.size(); argI++) {
       BasicValue arg = conditionValue.args.get(argI);
-      if (arg instanceof NthParamValue) {
-        NthParamValue npv = (NthParamValue)arg;
-        if (npv.n == i) {
-          keys.add(new EKey(conditionValue.method, new InOut(argI, inValue), conditionValue.stableCall, true));
-        }
+      if (arg instanceof NthParamValue npv && npv.n == i) {
+        keys.add(new EKey(conditionValue.method, new InOut(argI, inValue), conditionValue.stableCall, true));
       }
     }
     if (keys.isEmpty()) {
       result = Value.Top;
     } else {
-      result = new Pending(new SingletonSet<>(new Component(Value.Top, keys)));
+      result = new Pending(Collections.singleton(new Component(Value.Top, keys)));
     }
     return new Equation(key, result);
   }
 
-  final Frame<BasicValue> createStartFrame() {
+  Frame<BasicValue> createStartFrame() {
     Frame<BasicValue> frame = new Frame<>(methodNode.maxLocals, methodNode.maxStack);
     Type returnType = Type.getReturnType(methodNode.desc);
     BasicValue returnValue = Type.VOID_TYPE.equals(returnType) ? null : new BasicValue(returnType);
@@ -808,14 +807,11 @@ final class NegationInterpreter extends BasicInterpreter {
 
   @Override
   public BasicValue newOperation(AbstractInsnNode insn) throws AnalyzerException {
-    switch (insn.getOpcode()) {
-      case ICONST_0:
-        return FalseValue;
-      case ICONST_1:
-        return TrueValue;
-      default:
-        return super.newOperation(insn);
-    }
+    return switch (insn.getOpcode()) {
+      case ICONST_0 -> FalseValue;
+      case ICONST_1 -> TrueValue;
+      default -> super.newOperation(insn);
+    };
   }
 
   @Override
@@ -824,11 +820,8 @@ final class NegationInterpreter extends BasicInterpreter {
     int shift = opCode == INVOKESTATIC ? 0 : 1;
     int origin = insns.indexOf(insn);
 
-    switch (opCode) {
-      case INVOKESTATIC:
-      case INVOKESPECIAL:
-      case INVOKEVIRTUAL:
-      case INVOKEINTERFACE:
+    return switch (opCode) {
+      case INVOKESTATIC, INVOKESPECIAL, INVOKEVIRTUAL, INVOKEINTERFACE -> {
         boolean stable = opCode == INVOKESTATIC || opCode == INVOKESPECIAL;
         MethodInsnNode mNode = (MethodInsnNode)insn;
         Member method = new Member(mNode.owner, mNode.name, mNode.desc);
@@ -838,9 +831,9 @@ final class NegationInterpreter extends BasicInterpreter {
           receiver = values.remove(0);
         }
         boolean thisCall = (opCode == INVOKEINTERFACE || opCode == INVOKEVIRTUAL) && receiver == ThisValue;
-        return new TrackableCallValue(origin, retType, method, values, stable, thisCall);
-      default:
-        return super.naryOperation(insn, values);
-    }
+        yield new TrackableCallValue(origin, retType, method, values, stable, thisCall);
+      }
+      default -> super.naryOperation(insn, values);
+    };
   }
 }

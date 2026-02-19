@@ -47,10 +47,10 @@ public interface XPathQuickFixFactory {
 
     @Override
     public void invoke(@NotNull Project project,
-                       @NotNull PsiFile file,
+                       @NotNull PsiFile psiFile,
                        Editor editor, @NotNull PsiElement startElement,
                        @NotNull PsiElement endElement) {
-      invokeImpl(project, file);
+      invokeImpl(project, psiFile);
     }
 
 

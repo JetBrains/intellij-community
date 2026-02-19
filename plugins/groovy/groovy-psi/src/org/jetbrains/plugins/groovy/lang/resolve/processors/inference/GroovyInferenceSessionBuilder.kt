@@ -1,10 +1,11 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.resolve.processors.inference
 
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiSubstitutor
 import com.intellij.psi.PsiType
 import com.intellij.psi.PsiTypeParameter
+import com.intellij.psi.impl.source.resolve.graphInference.InferenceSession
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.TypeConversionUtil
 import org.jetbrains.plugins.groovy.codeInspection.utils.ControlFlowUtils
@@ -19,13 +20,24 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaratio
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrReturnStatement
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrThrowStatement
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssignmentExpression
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrBinaryExpression
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrCall
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrNewExpression
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrOperatorExpression
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrSafeCastExpression
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrTupleAssignmentExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrCallExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrIndexProperty
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinitionBody
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrClassTypeElement
-import org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.GrTypeConverter.Position.*
+import org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.GrTypeConverter.Position.ASSIGNMENT
+import org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.GrTypeConverter.Position.METHOD_PARAMETER
+import org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.GrTypeConverter.Position.RETURN_VALUE
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil.skipParentheses
 import org.jetbrains.plugins.groovy.lang.resolve.MethodResolveResult
 import org.jetbrains.plugins.groovy.lang.resolve.api.Argument
@@ -33,7 +45,7 @@ import org.jetbrains.plugins.groovy.lang.resolve.api.ExpressionArgument
 import org.jetbrains.plugins.groovy.lang.resolve.api.GroovyMethodCandidate
 import org.jetbrains.plugins.groovy.lang.resolve.delegatesTo.getContainingCall
 
-open class GroovyInferenceSessionBuilder constructor(
+open class GroovyInferenceSessionBuilder(
   private val context: PsiElement,
   private val candidate: GroovyMethodCandidate,
   private val contextSubstitutor: PsiSubstitutor
@@ -80,14 +92,24 @@ open class GroovyInferenceSessionBuilder constructor(
   }
 }
 
+/**
+ * Since putAt and getAt share the same class (GrIndexProperty), we should carefully handle differences in inference for them
+ */
 fun buildTopLevelSession(place: PsiElement,
-                         session: GroovyInferenceSession = constructDefaultInferenceSession(place)): GroovyInferenceSession {
-  val expression = findExpression(place) ?: return session
+                         skipClosureBlock: Boolean = false,
+                         expressionPredicates: Set<ExpressionPredicate> = emptySet(),
+                         isOperatorPutAt : Boolean = false): GroovyInferenceSession {
+  return GroovyInferenceSession(PsiTypeParameter.EMPTY_ARRAY, PsiSubstitutor.EMPTY, place, skipClosureBlock, expressionPredicates)
+    .apply { addExpression(place, isOperatorPutAt) }
+  }
+
+fun InferenceSession.addExpression(place : PsiElement, isOperatorPutAt: Boolean = false) {
+  val expression = findExpression(place, isOperatorPutAt) ?: return
   val startConstraint = if (expression is GrBinaryExpression || expression is GrAssignmentExpression && expression.isOperatorAssignment) {
     OperatorExpressionConstraint(expression as GrOperatorExpression)
   }
   else if (expression is GrSafeCastExpression && expression.operand !is GrFunctionalExpression) {
-    val result = expression.reference.advancedResolve() as? GroovyMethodResult ?: return session
+    val result = expression.reference.advancedResolve() as? GroovyMethodResult ?: return
     MethodCallConstraint(null, result, expression)
   }
   else {
@@ -95,19 +117,14 @@ fun buildTopLevelSession(place: PsiElement,
     val typeAndPosition = getExpectedTypeAndPosition(mostTopLevelExpression)
     ExpressionConstraint(typeAndPosition, mostTopLevelExpression)
   }
-  session.addConstraint(startConstraint)
-  return session
+  addConstraint(startConstraint)
 }
 
-private fun constructDefaultInferenceSession(place: PsiElement): GroovyInferenceSession {
-  return GroovyInferenceSession(PsiTypeParameter.EMPTY_ARRAY, PsiSubstitutor.EMPTY, place, false)
-}
-
-fun findExpression(place: PsiElement): GrExpression? {
+fun findExpression(place: PsiElement, isOperatorPutAt: Boolean): GrExpression? {
   val parent = place.parent
   return when {
+    place is GrIndexProperty -> if (isOperatorPutAt && parent is GrExpression) parent else place
     parent is GrAssignmentExpression && parent.lValue === place -> parent
-    place is GrIndexProperty -> place
     parent is GrMethodCall -> parent
     parent is GrNewExpression -> parent
     parent is GrClassTypeElement -> parent.parent as? GrSafeCastExpression

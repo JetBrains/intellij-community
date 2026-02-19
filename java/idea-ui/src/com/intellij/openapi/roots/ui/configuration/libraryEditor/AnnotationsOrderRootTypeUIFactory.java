@@ -24,9 +24,9 @@ import com.intellij.openapi.projectRoots.ui.SdkPathEditor;
 import com.intellij.openapi.roots.AnnotationOrderRootType;
 import com.intellij.openapi.roots.ui.OrderRootTypeUIFactory;
 
-import javax.swing.*;
+import javax.swing.Icon;
 
-public class AnnotationsOrderRootTypeUIFactory implements OrderRootTypeUIFactory {
+public final class AnnotationsOrderRootTypeUIFactory implements OrderRootTypeUIFactory {
 
   @Override
   public Icon getIcon() {

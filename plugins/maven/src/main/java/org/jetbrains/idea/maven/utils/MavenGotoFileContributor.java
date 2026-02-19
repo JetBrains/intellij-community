@@ -18,13 +18,16 @@ import org.jetbrains.idea.maven.project.MavenProjectsManager;
 
 import java.util.Objects;
 
-public class MavenGotoFileContributor implements ChooseByNameContributorEx {
+public final class MavenGotoFileContributor implements ChooseByNameContributorEx {
   @Override
   public void processNames(@NotNull Processor<? super String> processor, @NotNull GlobalSearchScope scope, @Nullable IdFilter filter) {
     Project project = Objects.requireNonNull(scope.getProject());
-    for (MavenProject p : MavenProjectsManager.getInstance(project).getProjects()) {
-      String id = p.getMavenId().getArtifactId();
-      if (id != null && !processor.process(id)) return;
+    MavenProjectsManager manager = MavenProjectsManager.getInstance(project);
+    if (manager.isInitialized()) {
+      for (MavenProject p : manager.getProjects()) {
+        String id = p.getMavenId().getArtifactId();
+        if (id != null && !processor.process(id)) return;
+      }
     }
   }
 

@@ -1,12 +1,12 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.application.options.codeStyle.excludedFiles;
 
 import com.intellij.application.options.codeStyle.CodeStyleSchemesModel;
 import com.intellij.formatting.fileSet.FileSetDescriptor;
-import com.intellij.formatting.fileSet.NamedScopeDescriptor;
 import com.intellij.ide.util.scopeChooser.EditScopesDialog;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.packageDependencies.DependencyValidationManager;
 import com.intellij.psi.codeStyle.CodeStyleScheme;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
@@ -21,15 +21,16 @@ import com.intellij.ui.components.JBList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.DefaultListModel;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-public class ExcludedFilesList extends JBList<FileSetDescriptor> {
+public final class ExcludedFilesList extends JBList<FileSetDescriptor> {
 
   private final ToolbarDecorator myFileListDecorator;
   private DefaultListModel<FileSetDescriptor> myModel;
@@ -38,29 +39,30 @@ public class ExcludedFilesList extends JBList<FileSetDescriptor> {
   public ExcludedFilesList() {
     super();
     myFileListDecorator = ToolbarDecorator.createDecorator(this)
-      .setAddAction(
-        new AnActionButtonRunnable() {
-          @Override
-          public void run(AnActionButton button) {
-            addDescriptor();
-          }
-        })
       .setRemoveAction(
         new AnActionButtonRunnable() {
           @Override
           public void run(AnActionButton button) {
             removeDescriptor();
           }
-        })
-      .setEditAction(
-        new AnActionButtonRunnable() {
-          @Override
-          public void run(AnActionButton button) {
-            editDescriptor();
-          }
+        });
+
+    if (ExcludedScopesPanelKt.isScopeBasedFormattingUI()) {
+      myFileListDecorator.setAddAction(new AnActionButtonRunnable() {
+        @Override
+        public void run(AnActionButton button) {
+          // Just for testing purposes
+          NamedScopeDescriptor descriptor = new NamedScopeDescriptor("testScopeWithPattern" + myModel.size());
+          descriptor.setPattern("*.test");
+          myModel.addElement(descriptor);
+          myModel.addElement(new NamedScopeDescriptor("testScope" + myModel.size()));
         }
-      )
-      .disableUpDownActions();
+      });
+    }
+    else {
+      myFileListDecorator.disableUpDownActions();
+    }
+
     addListSelectionListener(new ListSelectionListener() {
       @Override
       public void valueChanged(ListSelectionEvent e) {
@@ -77,37 +79,46 @@ public class ExcludedFilesList extends JBList<FileSetDescriptor> {
   private void onSelectionChange() {
     int i = getSelectedIndex();
     AnActionButton removeButton = ToolbarDecorator.findRemoveButton(myFileListDecorator.getActionsPanel());
-    removeButton.setEnabled(i >= 0);
+    if (removeButton != null) {
+      removeButton.setEnabled(i >= 0);
+    }
   }
 
   public void reset(@NotNull CodeStyleSettings settings) {
     myModel.clear();
-    for (FileSetDescriptor descriptor : settings.getExcludedFiles().getDescriptors()) {
-      myModel.addElement(descriptor);
+    for (FileSetDescriptor descriptor : settings.getExcludedFiles().getDescriptors(NamedScopeDescriptor.NAMED_SCOPE_TYPE)) {
+      if (NamedScopeToGlobConverter.convert((NamedScopeDescriptor)descriptor) == null) {
+        myModel.addElement(descriptor);
+      }
     }
   }
 
   public void apply(@NotNull CodeStyleSettings settings) {
-    settings.getExcludedFiles().clear();
+    settings.getExcludedFiles().setDescriptors(NamedScopeDescriptor.NAMED_SCOPE_TYPE, getDescriptors());
+  }
+
+  private @NotNull List<FileSetDescriptor> getDescriptors() {
+    List<FileSetDescriptor> descriptors = new ArrayList<>();
     for (int i = 0; i < myModel.getSize(); i++) {
-      settings.getExcludedFiles().addDescriptor(myModel.get(i));
+      descriptors.add(myModel.get(i));
     }
+    Collections.sort(descriptors, (d1, d2) -> {
+      int result = StringUtil.compare(d1.getName(), d2.getName(), false);
+      if (result != 0) return result;
+      return StringUtil.compare(d1.getPattern(), d2.getPattern(), false);
+    });
+    return descriptors;
   }
 
   public boolean isModified(@NotNull CodeStyleSettings settings) {
-    if (myModel.size() != settings.getExcludedFiles().getDescriptors().size()) return true;
-    for (int i = 0; i < myModel.getSize(); i++) {
-      if (!myModel.get(i).equals(settings.getExcludedFiles().getDescriptors().get(i))) {
-        return true;
-      }
-    }
-    return false;
+    return !settings.getExcludedFiles().getDescriptors(NamedScopeDescriptor.NAMED_SCOPE_TYPE).equals(getDescriptors());
   }
 
   public ToolbarDecorator getDecorator() {
     return myFileListDecorator;
   }
 
+  @SuppressWarnings("unused")
   private void addDescriptor() {
     assert mySchemesModel != null;
     List<NamedScope> availableScopes = getAvailableScopes();
@@ -185,7 +196,7 @@ public class ExcludedFilesList extends JBList<FileSetDescriptor> {
     mySchemesModel = schemesModel;
   }
 
-  public void editScope(@Nullable final String selectedName) {
+  public void editScope(final @Nullable String selectedName) {
     assert mySchemesModel != null;
     EditScopesDialog scopesDialog = EditScopesDialog.showDialog(getScopeHolderProject(), selectedName);
     if (scopesDialog.isOK()) {
@@ -239,8 +250,7 @@ public class ExcludedFilesList extends JBList<FileSetDescriptor> {
     return mySchemesModel.isProjectScheme(scheme) ? mySchemesModel.getProject() : ProjectManager.getInstance().getDefaultProject();
   }
 
-  @Nullable
-  private FileSetDescriptor findDescriptor(@NotNull String name) {
+  private @Nullable FileSetDescriptor findDescriptor(@NotNull String name) {
     for (int i = 0; i < myModel.size(); i++) {
       if (name.equals(myModel.get(i).getName())) return myModel.get(i);
     }

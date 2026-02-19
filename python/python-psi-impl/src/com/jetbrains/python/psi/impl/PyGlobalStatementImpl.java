@@ -2,21 +2,25 @@
 package com.jetbrains.python.psi.impl;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiListLikeElement;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.util.ArrayUtil;
 import com.jetbrains.python.PyElementTypes;
-import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.LanguageLevel;
+import com.jetbrains.python.psi.PyElementGenerator;
+import com.jetbrains.python.psi.PyElementVisitor;
+import com.jetbrains.python.psi.PyGlobalStatement;
+import com.jetbrains.python.psi.PyTargetExpression;
+import com.jetbrains.python.psi.PyUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Arrays;
 import java.util.List;
 
-/**
- * @author yole
- */
-public class PyGlobalStatementImpl extends PyElementImpl implements PyGlobalStatement {
+
+public class PyGlobalStatementImpl extends PyElementImpl implements PyGlobalStatement, PsiListLikeElement {
   private static final TokenSet TARGET_EXPRESSION_SET = TokenSet.create(PyElementTypes.TARGET_EXPRESSION);
 
   public PyGlobalStatementImpl(ASTNode astNode) {
@@ -33,14 +37,7 @@ public class PyGlobalStatementImpl extends PyElementImpl implements PyGlobalStat
     return childrenToPsi(TARGET_EXPRESSION_SET, PyTargetExpression.EMPTY_ARRAY);
   }
 
-  @Override
-  @NotNull
-  public List<PsiNamedElement> getNamedElements() {
-    return Arrays.asList(getGlobals());
-  }
-
-  @Nullable
-  public PsiNamedElement getNamedElement(@NotNull final String the_name) {
+  public @Nullable PsiNamedElement getNamedElement(final @NotNull String the_name) {
     return PyUtil.IterHelper.findName(getNamedElements(), the_name);
   }
 
@@ -57,5 +54,10 @@ public class PyGlobalStatementImpl extends PyElementImpl implements PyGlobalStat
       PyPsiUtils.deleteAdjacentCommaWithWhitespaces(this, child.getPsi());
     }
     super.deleteChildInternal(child);
+  }
+
+  @Override
+  public @NotNull List<? extends PsiElement> getComponents() {
+    return getNamedElements();
   }
 }

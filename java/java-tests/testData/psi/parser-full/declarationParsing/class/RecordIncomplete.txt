@@ -1,0 +1,25 @@
+PsiJavaFile:RecordIncomplete.java
+  PsiImportList
+    <empty list>
+  PsiClass:A
+    PsiModifierList:
+      <empty list>
+    PsiKeyword:class('class')
+    PsiWhiteSpace(' ')
+    PsiIdentifier:A('A')
+    PsiTypeParameterList
+      <empty list>
+    PsiReferenceList
+      <empty list>
+    PsiReferenceList
+      <empty list>
+    PsiWhiteSpace(' ')
+    PsiJavaToken:LBRACE('{')
+    PsiWhiteSpace('\n  ')
+    PsiModifierList:
+      <empty list>
+    PsiKeyword:record('record')
+    PsiErrorElement:Identifier expected
+      <empty list>
+    PsiWhiteSpace('\n')
+    PsiJavaToken:RBRACE('}')

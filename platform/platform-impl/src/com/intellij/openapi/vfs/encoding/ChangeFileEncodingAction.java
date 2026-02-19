@@ -1,9 +1,15 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.encoding;
 
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.lightEdit.LightEditCompatible;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionGroup;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -26,7 +32,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 import java.io.IOException;
 import java.nio.charset.Charset;
 import java.util.Objects;
@@ -60,17 +66,21 @@ public class ChangeFileEncodingAction extends AnAction implements DumbAware, Lig
   }
 
   @Override
-  public final void actionPerformed(@NotNull final AnActionEvent e) {
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
+  }
+
+  @Override
+  public final void actionPerformed(final @NotNull AnActionEvent e) {
     DataContext dataContext = e.getDataContext();
 
-    ListPopup popup = createPopup(dataContext);
+    ListPopup popup = createPopup(dataContext, null);
     if (popup != null) {
       popup.showInBestPositionFor(dataContext);
     }
   }
 
-  @Nullable
-  public ListPopup createPopup(@NotNull DataContext dataContext) {
+  public @Nullable ListPopup createPopup(@NotNull DataContext dataContext, @Nullable ActionGroup extraActions) {
     final VirtualFile virtualFile = CommonDataKeys.VIRTUAL_FILE.getData(dataContext);
     if (virtualFile == null) return null;
     boolean enabled = checkEnabled(virtualFile);
@@ -88,35 +98,52 @@ public class ChangeFileEncodingAction extends AnAction implements DumbAware, Lig
       return null;
     }
     DefaultActionGroup group = createActionGroup(virtualFile, editor, document, bytes, null);
+    DefaultActionGroup popupGroup = new DefaultActionGroup();
+    if (extraActions != null) {
+      popupGroup.add(extraActions);
+      popupGroup.addSeparator();
+    }
+    popupGroup.add(group);
 
     return JBPopupFactory.getInstance().createActionGroupPopup(getTemplatePresentation().getText(),
-      group, dataContext, JBPopupFactory.ActionSelectionAid.SPEEDSEARCH, false);
+      popupGroup, dataContext, JBPopupFactory.ActionSelectionAid.SPEEDSEARCH, false);
   }
 
-  @NotNull
-  public DefaultActionGroup createActionGroup(@Nullable VirtualFile myFile,
-                                              Editor editor,
-                                              Document document,
-                                              byte[] bytes,
-                                              @Nullable @NlsActions.ActionText String clearItemText) {
-    return new ChooseFileEncodingAction(myFile) {
-     @Override
-     public void update(@NotNull final AnActionEvent e) {
-     }
+  public @NotNull DefaultActionGroup createActionGroup(@Nullable VirtualFile myFile,
+                                                       Editor editor,
+                                                       Document document,
+                                                       byte[] bytes,
+                                                       @Nullable @NlsActions.ActionText String clearItemText) {
+    final class MyAction extends ChooseFileEncodingAction {
+      MyAction(@Nullable VirtualFile virtualFile) {
+        super(virtualFile);
+      }
 
-     @NotNull
-     @Override
-     protected DefaultActionGroup createPopupActionGroup(JComponent button) {
-       return createCharsetsActionGroup(clearItemText, null, charset -> IdeBundle.message("action.text.change.encoding", charset.displayName()));
-       // no 'clear'
-     }
+      @Override
+      public void update(final @NotNull AnActionEvent e) {
+      }
+
+      @Override
+      public @NotNull ActionUpdateThread getActionUpdateThread() {
+        return ActionUpdateThread.BGT;
+      }
+
+      @Override
+      protected @NotNull DefaultActionGroup createPopupActionGroup(@NotNull JComponent button, @NotNull DataContext dataContext) {
+        return createMyActionGroup();
+      }
+
+      @NotNull DefaultActionGroup createMyActionGroup() {
+        return createCharsetsActionGroup(clearItemText, null,
+                                         charset -> IdeBundle.message("action.text.change.encoding", charset.displayName()));
+      }
 
       @Override
       protected void chosen(@Nullable VirtualFile virtualFile, @NotNull Charset charset) {
         ChangeFileEncodingAction.this.chosen(document, editor, virtualFile, bytes, charset);
       }
-   }
-   .createPopupActionGroup(null);
+    }
+    return new MyAction(myFile).createMyActionGroup();
   }
 
   // returns true if charset was changed, false if failed
@@ -176,14 +203,14 @@ public class ChangeFileEncodingAction extends AnAction implements DumbAware, Lig
       public void undo() {
         // invoke later because changing document inside undo/redo is not allowed
         Application application = ApplicationManager.getApplication();
-        application.invokeLater(undo, ModalityState.NON_MODAL, project.getDisposed());
+        application.invokeLater(undo, ModalityState.nonModal(), project.getDisposed());
       }
 
       @Override
       public void redo() {
         // invoke later because changing document inside undo/redo is not allowed
         Application application = ApplicationManager.getApplication();
-        application.invokeLater(redo, ModalityState.NON_MODAL, project.getDisposed());
+        application.invokeLater(redo, ModalityState.nonModal(), project.getDisposed());
       }
     };
 

@@ -1,0 +1,5 @@
+object Owner {
+}
+
+fun Owner.f() {}
+// IGNORE_K1

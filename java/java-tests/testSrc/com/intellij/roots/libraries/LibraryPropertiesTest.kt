@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.roots.libraries
 
 import com.intellij.openapi.Disposable
@@ -9,7 +9,11 @@ import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.openapi.roots.impl.libraries.LibraryEx
 import com.intellij.openapi.roots.impl.libraries.UnknownLibraryKind
-import com.intellij.openapi.roots.libraries.*
+import com.intellij.openapi.roots.libraries.LibraryProperties
+import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
+import com.intellij.openapi.roots.libraries.LibraryType
+import com.intellij.openapi.roots.libraries.NewLibraryConfiguration
+import com.intellij.openapi.roots.libraries.PersistentLibraryKind
 import com.intellij.openapi.roots.libraries.ui.LibraryEditorComponent
 import com.intellij.openapi.roots.libraries.ui.LibraryPropertiesEditor
 import com.intellij.openapi.util.Disposer
@@ -89,11 +93,19 @@ class LibraryPropertiesTest : ModuleRootManagerTestCase() {
     }
 
     assertEquals("2", getMockLibraryData())
+
+    ModuleRootModificationUtil.updateModel(myModule) {
+      val library = it.moduleLibraryTable.libraries.single()
+      val model = library.modifiableModel as LibraryEx.ModifiableModelEx
+      model.kind = null
+      runWriteAction { model.commit() }
+    }
+    assertNull(getMockLibraryData())
   }
 
-  private fun getMockLibraryData(): String {
+  private fun getMockLibraryData(): String? {
     val libEntries = ModuleRootManager.getInstance(myModule).orderEntries.filterIsInstance<LibraryOrderEntry>()
-    return ((libEntries.single().library as LibraryEx).properties as MockLibraryProperties).data
+    return ((libEntries.single().library as LibraryEx).properties as? MockLibraryProperties)?.data
   }
 
   private fun runWithRegisteredType(action: () -> Unit) {
@@ -114,13 +126,13 @@ class LibraryPropertiesTest : ModuleRootManagerTestCase() {
         Disposer.dispose(libraryTypeDisposable)
       }
     })
-    LibraryType.EP_NAME.getPoint().registerExtension(MockLibraryType(), libraryTypeDisposable)
+    LibraryType.EP_NAME.point.registerExtension(MockLibraryType(), libraryTypeDisposable)
   }
 
 }
 
 private class MockLibraryProperties(var data: String = "default") : LibraryProperties<MockLibraryProperties>() {
-  override fun getState(): MockLibraryProperties? = this
+  override fun getState(): MockLibraryProperties = this
 
   override fun loadState(state: MockLibraryProperties) {
     XmlSerializerUtil.copyBean(state, this)

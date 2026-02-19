@@ -8,4 +8,4 @@ class A:
     self.b= 1
 
 
-print <weak_warning descr="Access to a protected member _a of a class">A()._a</weak_warning>
+print(<weak_warning descr="Access to a protected member _a of a class">A()._a</weak_warning>)

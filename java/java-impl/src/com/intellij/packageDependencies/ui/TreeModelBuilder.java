@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.packageDependencies.ui;
 
 import com.intellij.codeInsight.CodeInsightBundle;
@@ -12,7 +12,13 @@ import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.*;
+import com.intellij.openapi.roots.ContentIterator;
+import com.intellij.openapi.roots.JdkOrderEntry;
+import com.intellij.openapi.roots.LibraryOrderEntry;
+import com.intellij.openapi.roots.OrderEntry;
+import com.intellij.openapi.roots.PackageIndex;
+import com.intellij.openapi.roots.ProjectFileIndex;
+import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.roots.libraries.LibraryUtil;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
@@ -25,6 +31,8 @@ import com.intellij.openapi.vfs.VirtualFileVisitor;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiPackage;
+import com.intellij.ui.IconManager;
+import com.intellij.ui.PlatformIcons;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -90,7 +98,7 @@ public class TreeModelBuilder {
     createMaps(ScopeType.TEST);
 
     if (myGroupByScopeType) {
-      mySourceRoot = new GeneralGroupNode(getProductionName(), AllIcons.Nodes.Package, project);
+      mySourceRoot = new GeneralGroupNode(getProductionName(), IconManager.getInstance().getPlatformIcon(PlatformIcons.Package), project);
       myTestRoot = new GeneralGroupNode(getTestName(), AllIcons.Nodes.TestSourceFolder, project);
       myLibsRoot = new GeneralGroupNode(getLibraryName(), AllIcons.Nodes.PpLibFolder, project);
       myRoot.add(mySourceRoot);
@@ -217,7 +225,8 @@ public class TreeModelBuilder {
     myTotalFileCount++;
     final ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
     if (indicator != null) {
-      ((PanelProgressIndicator)indicator).update(getScanningPackagesMessage(), true, 0);
+      indicator.setText(getScanningPackagesMessage());
+      indicator.setIndeterminate(true);
     }
   }
 
@@ -249,11 +258,11 @@ public class TreeModelBuilder {
     return new TreeModel(myRoot, myTotalFileCount, myMarkedFileCount);
   }
 
-  @Nullable
-  private PackageDependenciesNode buildFileNode(@NotNull VirtualFile file, @Nullable PackageDependenciesNode parent) {
+  private @Nullable PackageDependenciesNode buildFileNode(@NotNull VirtualFile file, @Nullable PackageDependenciesNode parent) {
     final ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
     if (indicator != null) {
-      ((PanelProgressIndicator)indicator).update(getScanningPackagesMessage(), false, ((double)myScannedFileCount++) / myTotalFileCount);
+      indicator.setText(getScanningPackagesMessage());
+      indicator.setFraction(((double)myScannedFileCount++) / myTotalFileCount);
     }
 
     boolean isMarked = myMarker != null && myMarker.isMarked(file);
@@ -276,10 +285,8 @@ public class TreeModelBuilder {
 
   public @Nullable PackageDependenciesNode getFileParentNode(VirtualFile vFile) {
     LOG.assertTrue(vFile != null);
-    final VirtualFile containingDirectory = vFile.getParent();
-    LOG.assertTrue(containingDirectory != null);
     PsiPackage aPackage = null;
-    final String packageName = myFileIndex.getPackageNameByDirectory(containingDirectory);
+    final String packageName = PackageIndex.getInstance(myProject).getPackageName(vFile);
     if (packageName != null) {
       aPackage = myJavaPsiFacade.findPackage(packageName);
     }
@@ -296,13 +303,12 @@ public class TreeModelBuilder {
   }
 
   private ScopeType getFileScopeType(VirtualFile file) {
-    if (myFileIndex.isLibraryClassFile(file) || myFileIndex.isInLibrarySource(file)) return ScopeType.LIB;
+    if (myFileIndex.isInLibraryClasses(file) || myFileIndex.isInLibrarySource(file)) return ScopeType.LIB;
     if (myFileIndex.isInTestSourceContent(file)) return ScopeType.TEST;
     return ScopeType.SOURCE;
   }
 
-  @Nullable
-  private OrderEntry getLibraryForFile(VirtualFile virtualFile) {
+  private @Nullable OrderEntry getLibraryForFile(VirtualFile virtualFile) {
     if (virtualFile == null) return null;
     List<OrderEntry> orders = myFileIndex.getOrderEntriesForFile(virtualFile);
     for (OrderEntry order : orders) {
@@ -365,8 +371,7 @@ public class TreeModelBuilder {
   }
 
 
-  @Nullable
-  private PackageDependenciesNode getModuleNode(Module module, ScopeType scopeType) {
+  private @NotNull PackageDependenciesNode getModuleNode(Module module, ScopeType scopeType) {
     if (module == null || !myShowModules) {
       return getRootNode(scopeType);
     }
@@ -429,8 +434,7 @@ public class TreeModelBuilder {
   }
 
 
-  @NotNull
-  private PackageDependenciesNode getRootNode(ScopeType scopeType) {
+  private @NotNull PackageDependenciesNode getRootNode(ScopeType scopeType) {
     if (!myGroupByScopeType) {
       return myRoot;
     }

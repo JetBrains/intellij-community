@@ -9,19 +9,13 @@ import org.jetbrains.annotations.Nullable;
  */
 public class SubmittedReportInfo {
   public enum SubmissionStatus {
-    /**
-     * Issue have been successfully created
-     */
+    /** Issue has been successfully created. */
     NEW_ISSUE,
 
-    /**
-     * Issue is actually a duplicate of existing one
-     */
+    /** Issue is actually a duplicate of the existing one. */
     DUPLICATE,
 
-    /**
-     * Submission failed (e.g. because of network problem)
-     */
+    /** Submission failed (e.g. because of network problem). */
     FAILED
   }
 

@@ -45,7 +45,6 @@ public class ProjectBuildException extends Exception{
 
   /**
    * Such exception is treated as an unexpected internal error, so the trace of the 'cause' will be shown in UI
-   * @param cause
    */
   public ProjectBuildException(Throwable cause) {
     super(cause);

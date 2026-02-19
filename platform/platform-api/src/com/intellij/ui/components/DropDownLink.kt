@@ -1,26 +1,30 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.components
 
-import com.intellij.icons.AllIcons
 import com.intellij.openapi.ui.popup.JBPopup
-import com.intellij.ui.popup.util.PopupState
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.ui.awt.RelativePoint
+import com.intellij.ui.popup.PopupState
 import com.intellij.ui.scale.JBUIScale.scale
 import com.intellij.util.ui.JBUI
-import com.intellij.util.ui.UIUtil
+import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.Nls
 import java.awt.Component
 import java.awt.Dimension
 import java.awt.Point
 import java.awt.event.ItemEvent
+import java.awt.event.KeyEvent
 import java.util.function.Consumer
 import javax.swing.DefaultListCellRenderer
 import javax.swing.JList
-import javax.swing.SwingConstants
+import javax.swing.KeyStroke.getKeyStroke
+import javax.swing.ListCellRenderer
 
-open class DropDownLink<T>(item: T, popupBuilder: (DropDownLink<T>) -> JBPopup) : ActionLink() {
+open class DropDownLink<T>(item: T, private val popupBuilder: (DropDownLink<T>) -> JBPopup) : ActionLink() {
 
-  val popupState = PopupState()
+  @Deprecated("Do not use popupState")
+  @ApiStatus.Internal
+  val popupState: PopupState<JBPopup> = PopupState.forPopup()
   var selectedItem: T = item
     set(newItem) {
       val oldItem = field
@@ -31,25 +35,27 @@ open class DropDownLink<T>(item: T, popupBuilder: (DropDownLink<T>) -> JBPopup) 
     }
 
   init {
-    text = item.toString()
-    icon = AllIcons.General.LinkDropTriangle
-    iconTextGap = scale(1)
-    horizontalTextPosition = SwingConstants.LEADING
+    text = itemToString(item)
+    setDropDownLinkIcon()
     addActionListener {
-      if (!popupState.isRecentlyHidden) {
-        val popup = popupBuilder(this)
-        val showPoint = Point(0, height + scale(4))
-        popup.addListener(popupState)
-        popup.show(RelativePoint(this, showPoint))
-      }
+      performAction()
     }
+    getInputMap(WHEN_FOCUSED)?.run {
+      put(getKeyStroke(KeyEvent.VK_DOWN, 0, false), "pressed")
+      put(getKeyStroke(KeyEvent.VK_DOWN, 0, true), "released")
+    }
+  }
+
+  protected open fun performAction() {
+    val popup = popupBuilder(this)
+    popup.show(RelativePoint(this, popupPoint()))
   }
 
   @JvmOverloads
   constructor(item: T, items: List<T>, onChoose: Consumer<T> = Consumer { }) : this(item, { link ->
     JBPopupFactory.getInstance()
       .createPopupChooserBuilder(items)
-      .setRenderer(LinkCellRenderer(link))
+      .setRenderer(link.createRenderer())
       .setItemChosenCallback {
         onChoose.accept(it)
         link.selectedItem = it
@@ -63,7 +69,7 @@ open class DropDownLink<T>(item: T, popupBuilder: (DropDownLink<T>) -> JBPopup) 
         @Suppress("UNCHECKED_CAST")
         (event.item as? T)?.let {
           onSelect.accept(it)
-          if (updateText) text = it.toString()
+          if (updateText) text = itemToString(it)
         }
       }
     }
@@ -76,6 +82,13 @@ open class DropDownLink<T>(item: T, popupBuilder: (DropDownLink<T>) -> JBPopup) 
   private fun fireItemStateChanged(item: T, state: Int) {
     itemListeners.forEach { it.itemStateChanged(ItemEvent(this, ItemEvent.ITEM_STATE_CHANGED, item, state)) }
   }
+
+  @Nls
+  protected open fun itemToString(item: T): String = item.toString()
+
+  protected open fun popupPoint(): Point = Point(0, height + scale(4))
+
+  open fun createRenderer(): ListCellRenderer<in T> = LinkCellRenderer(this)
 }
 
 
@@ -90,7 +103,6 @@ private class LinkCellRenderer(private val link: Component) : DefaultListCellRen
   override fun getPreferredSize() = coerce(super.getPreferredSize())
   override fun getListCellRendererComponent(list: JList<*>?, value: Any?, index: Int, selected: Boolean, focused: Boolean): Component {
     super.getListCellRendererComponent(list, value, index, selected, false)
-    if (!selected) background = UIUtil.getLabelBackground()
     border = JBUI.Borders.empty(0, 5, 0, 10)
     return this
   }

@@ -8,14 +8,18 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.PythonLanguage;
-import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.PyClass;
+import com.jetbrains.python.psi.PyContinueStatement;
+import com.jetbrains.python.psi.PyFunction;
+import com.jetbrains.python.psi.PyLoopStatement;
+import com.jetbrains.python.psi.PyStatement;
+import com.jetbrains.python.psi.PyUtil;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * Provides reaction on ctrl+click for {@code break} and {@code continue} statements.
- * @author dcheryasov
  */
-public class PyBreakContinueGotoProvider extends GotoDeclarationHandlerBase {
+public final class PyBreakContinueGotoProvider extends GotoDeclarationHandlerBase {
   @Override
   public PsiElement getGotoDeclarationTarget(@Nullable PsiElement source, Editor editor) {
     if (source != null && source.getLanguage() instanceof PythonLanguage) {

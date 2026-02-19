@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.openapi.projectRoots;
 
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
@@ -7,7 +7,9 @@ import com.intellij.util.lang.JavaVersion;
 import org.jetbrains.jps.model.java.JdkVersionDetector;
 import org.junit.Test;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
 public class JavaSdkVersionTest {
   @Test
@@ -21,7 +23,8 @@ public class JavaSdkVersionTest {
   @Test
   public void maxLanguageLevelSanity() {
     for (JavaSdkVersion version : JavaSdkVersion.values()) {
-      assertFalse("Fails for " + version.toString(), version.getMaxLanguageLevel().isPreview());
+      LanguageLevel languageLevel = version.getMaxLanguageLevel();
+      assertFalse("Fails for " + version, languageLevel.isPreview() && languageLevel != LanguageLevel.JDK_X);
     }
   }
 
@@ -37,6 +40,8 @@ public class JavaSdkVersionTest {
     assertEquals(JavaSdkVersion.JDK_1_9, JavaSdkVersion.fromVersionString("java version \"9-ea\""));
     assertEquals(JavaSdkVersion.JDK_1_9, JavaSdkVersion.fromVersionString("java version \"9.1.2\""));
     assertEquals(JavaSdkVersion.JDK_14, JavaSdkVersion.fromVersionString("java version \"14\""));
+
+    assertEquals(JavaSdkVersion.JDK_21, JavaSdkVersion.fromVersionString("GraalVM 23.1.2 - Java 21.0.2"));
   }
 
   @Test

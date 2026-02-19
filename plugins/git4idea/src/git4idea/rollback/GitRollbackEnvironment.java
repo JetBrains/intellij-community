@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.rollback;
 
 import com.intellij.dvcs.DvcsUtil;
@@ -6,6 +6,7 @@ import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.components.Service;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ContentRevision;
@@ -27,20 +28,22 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
 
-@Service
+@Service(Service.Level.PROJECT)
 public final class GitRollbackEnvironment implements RollbackEnvironment {
-  @NotNull private final Project myProject;
+  private final @NotNull Project myProject;
 
   public GitRollbackEnvironment(@NotNull Project project) {
     myProject = project;
   }
 
   @Override
-  @Nls(capitalization = Nls.Capitalization.Title)
-  @NotNull
-  public String getRollbackOperationName() {
+  public @Nls(capitalization = Nls.Capitalization.Title) @NotNull String getRollbackOperationName() {
     return GitBundle.message("git.rollback");
   }
 
@@ -59,11 +62,6 @@ public final class GitRollbackEnvironment implements RollbackEnvironment {
   }
 
   @Override
-  public void rollbackIfUnchanged(@NotNull VirtualFile file) {
-    // do nothing
-  }
-
-  @Override
   public void rollbackChanges(List<? extends Change> changes,
                               List<VcsException> exceptions,
                               @NotNull RollbackProgressListener listener) {
@@ -76,23 +74,19 @@ public final class GitRollbackEnvironment implements RollbackEnvironment {
     // collect changes to revert
     for (Change c : changes) {
       switch (c.getType()) {
-        case NEW:
+        case NEW ->
           // note that this the only change that could happen
           // for HEAD-less working directories.
           registerFile(toUnversion, c.getAfterRevision().getFile(), exceptions);
-          break;
-        case MOVED:
+        case MOVED -> {
           registerFile(toRevert, c.getBeforeRevision().getFile(), exceptions);
           registerFile(toUnindex, c.getAfterRevision().getFile(), exceptions);
           toDelete.add(c.getAfterRevision().getFile());
-          break;
-        case MODIFICATION:
+        }
+        case MODIFICATION ->
           // note that changes are also removed from index, if they got into index somehow
           registerFile(toRevert, c.getBeforeRevision().getFile(), exceptions);
-          break;
-        case DELETED:
-          registerFile(toRevert, c.getBeforeRevision().getFile(), exceptions);
-          break;
+        case DELETED -> registerFile(toRevert, c.getBeforeRevision().getFile(), exceptions);
       }
     }
     // unindex files
@@ -131,7 +125,7 @@ public final class GitRollbackEnvironment implements RollbackEnvironment {
       }
     }
     // revert files from HEAD
-    try (AccessToken ignore = DvcsUtil.workingTreeChangeStarted(myProject, getRollbackOperationName())) {
+    try (AccessToken ignore = DvcsUtil.workingTreeChangeStarted(myProject, VcsBundle.message("activity.name.rollback"))) {
       for (Map.Entry<VirtualFile, List<FilePath>> entry : toRevert.entrySet()) {
         listener.accept(entry.getValue());
         try {
@@ -193,10 +187,8 @@ public final class GitRollbackEnvironment implements RollbackEnvironment {
     if (toUnversioned) {
       GitRepository repo = GitUtil.getRepositoryManager(myProject).getRepositoryForRoot(root);
       GitUntrackedFilesHolder untrackedFilesHolder = (repo == null ? null : repo.getUntrackedFilesHolder());
-      for (FilePath path : files) {
-        if (untrackedFilesHolder != null) {
-          untrackedFilesHolder.add(path);
-        }
+      if (untrackedFilesHolder != null) {
+        untrackedFilesHolder.addUntracked(files);
       }
     }
   }
@@ -220,12 +212,5 @@ public final class GitRollbackEnvironment implements RollbackEnvironment {
     catch (VcsException e) {
       exceptions.add(e);
     }
-  }
-
-  public static void resetHardLocal(@NotNull Project project, @NotNull VirtualFile root) {
-    GitLineHandler handler = new GitLineHandler(project, root, GitCommand.RESET);
-    handler.addParameters("--hard");
-    handler.endOptions();
-    Git.getInstance().runCommand(handler);
   }
 }

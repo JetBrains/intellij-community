@@ -1,23 +1,8 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.refactoring.inline;
 
 import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.TargetElementUtil;
-import com.intellij.java.refactoring.LightRefactoringTestCase;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiCall;
 import com.intellij.psi.PsiClass;
@@ -25,17 +10,16 @@ import com.intellij.psi.PsiClassType;
 import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.inline.InlineToAnonymousClassHandler;
 import com.intellij.refactoring.inline.InlineToAnonymousClassProcessor;
+import com.intellij.testFramework.LightJavaCodeInsightTestCase;
 import com.intellij.usageView.UsageInfo;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Iterator;
+import java.util.Arrays;
 
-/**
- * @author yole
- */
-public class InlineToAnonymousClassTest extends LightRefactoringTestCase {
+public class InlineToAnonymousClassTest extends LightJavaCodeInsightTestCase {
   @NotNull
   @Override
   protected String getTestDataPath() {
@@ -110,6 +94,10 @@ public class InlineToAnonymousClassTest extends LightRefactoringTestCase {
     doTest(false, false);
   }
 
+  public void testInnerClassReference() {
+    doTest(false, false);
+  }
+
   public void testConstructorToInstanceInitializer() {
     doTest(false, false);
   }
@@ -169,6 +157,10 @@ public class InlineToAnonymousClassTest extends LightRefactoringTestCase {
   public void testChainedVarargConstructors() {
     doTest(false, false);
   }
+  
+  public void testChainedVarargConstructorsCalledWithArray() {
+    doTest(false, false);
+  }
 
   public void testInlineThisOnly() {
     doTest(true, false);
@@ -183,6 +175,10 @@ public class InlineToAnonymousClassTest extends LightRefactoringTestCase {
   }
 
   public void testArrayInitializer() {
+    doTest(false, false);
+  }
+
+  public void testArrayInitializer2() {
     doTest(false, false);
   }
 
@@ -271,13 +267,18 @@ public class InlineToAnonymousClassTest extends LightRefactoringTestCase {
     doTest(true, false);
   }
 
-  public void testSealed() {
-    setLanguageLevel(LanguageLevel.JDK_15_PREVIEW);
+  public void testStaticMembers() {
+    setLanguageLevel(LanguageLevel.JDK_16);
+    doTest(false, false);
+  }
+
+  public void testSealedNoMembers() {
+    setLanguageLevel(LanguageLevel.JDK_17);
     doTest(false, false);
   }
 
   public void testSealedParentChildWithMembers() {
-    setLanguageLevel(LanguageLevel.JDK_15_PREVIEW);
+    setLanguageLevel(LanguageLevel.JDK_17);
     doTestCanBeInvokedOnReference(false);
   }
 
@@ -295,6 +296,10 @@ public class InlineToAnonymousClassTest extends LightRefactoringTestCase {
 
   public void testNoInlineAnnotationType() {
     doTestNoInline("Annotation types cannot be inlined");
+  }
+  
+  public void testNoInlineRecordJava21() {
+    doTestNoInline("Record classes cannot be inlined");
   }
 
   public void testNoInlineMultipleInterfaces() {
@@ -386,12 +391,14 @@ public class InlineToAnonymousClassTest extends LightRefactoringTestCase {
   }
 
   public void testNoInlineRecursiveAccess() {
-    doTestConflict("Class cannot be inlined because a call to its member inside body", "Class cannot be inlined because a call to its member inside body");
+    doTestConflict("Class cannot be inlined because it accesses its own members on another instance", 
+                   "Class cannot be inlined because it accesses its own members on another instance",
+                   "Class cannot be inlined because it calls its own constructor");
   }
 
   public void testConflictInaccessibleOuterField() {
-    doTestConflict(
-      "Field <b><code>C2.a</code></b> that is used in inlined method is not accessible from call site(s) in method <b><code>C2User.test()</code></b>");
+    doTestConflict("Field <b><code>C2.a</code></b> will not be accessible when class <b><code>C2.C2Inner</code></b> " +
+                   "is inlined into method <b><code>C2User.test()</code></b>");
   }
 
   public void testGetClassConflict() {
@@ -401,30 +408,24 @@ public class InlineToAnonymousClassTest extends LightRefactoringTestCase {
   public void doTestConflict(final String... expected) {
     InlineToAnonymousClassProcessor processor = prepareProcessor();
     UsageInfo[] usages = processor.findUsages();
-    MultiMap<PsiElement,String> conflicts = processor.getConflicts(usages);
-    assertEquals(expected.length, conflicts.size());
-    final Iterator<? extends String> iterator = conflicts.values().iterator();
-    for (String s : expected) {
-      assertTrue(iterator.hasNext());
-      assertEquals(s, iterator.next());
+    String[] conflicts = ArrayUtil.toStringArray(processor.getConflicts(usages).values());
+    assertEquals(expected.length, conflicts.length);
+    Arrays.sort(conflicts); // get stable order
+    for (int i = 0; i < expected.length; i++) {
+      assertEquals(expected[i], conflicts[i]);
     }
   }
 
   private void doTestNoInline(final String expectedMessage) {
-    String name = getTestName(false);
-    @NonNls String fileName = "/refactoring/inlineToAnonymousClass/" + name + ".java";
+    @NonNls String fileName = "/refactoring/inlineToAnonymousClass/" + getTestName(false) + ".java";
     configureByFile(fileName);
-    PsiElement element = TargetElementUtil
-      .findTargetElement(getEditor(), TargetElementUtil.ELEMENT_NAME_ACCEPTED | TargetElementUtil.REFERENCED_ELEMENT_ACCEPTED);
-    assertInstanceOf(element, PsiClass.class);
-
-    String message = InlineToAnonymousClassHandler.getCannotInlineMessage((PsiClass) element);
+    PsiClass aClass = getClassToInline();
+    String message = InlineToAnonymousClassHandler.getCannotInlineMessage(aClass);
     assertEquals(expectedMessage, message);
   }
 
   private void doTest(final boolean inlineThisOnly, final boolean searchInNonJavaFiles) {
-    String name = getTestName(false);
-    @NonNls String fileName = "/refactoring/inlineToAnonymousClass/" + name + ".java";
+    @NonNls String fileName = "/refactoring/inlineToAnonymousClass/" + getTestName(false) + ".java";
     configureByFile(fileName);
     performAction(inlineThisOnly, searchInNonJavaFiles);
     checkResultByFile(null, fileName + ".after", true);
@@ -432,33 +433,23 @@ public class InlineToAnonymousClassTest extends LightRefactoringTestCase {
 
   private void doTestPreprocessUsages(final String expectedMessage) {
     configureByFile("/refactoring/inlineToAnonymousClass/" + getTestName(false) + ".java");
-    PsiElement element = TargetElementUtil.findTargetElement(getEditor(), TargetElementUtil
-                                                                         .ELEMENT_NAME_ACCEPTED |
-                                                                          TargetElementUtil.REFERENCED_ELEMENT_ACCEPTED);
-    assertInstanceOf(element, PsiClass.class);
-    final PsiClass psiClass = (PsiClass)element;
-    assertEquals(expectedMessage, InlineToAnonymousClassHandler.getCannotInlineMessage(psiClass));
+    final PsiClass aClass = getClassToInline();
+    assertEquals(expectedMessage, InlineToAnonymousClassHandler.getCannotInlineMessage(aClass));
   }
 
   private InlineToAnonymousClassProcessor prepareProcessor() {
-    String name = getTestName(false);
-    @NonNls String fileName = "/refactoring/inlineToAnonymousClass/" + name + ".java";
+    @NonNls String fileName = "/refactoring/inlineToAnonymousClass/" + getTestName(false) + ".java";
     configureByFile(fileName);
-    PsiElement element = TargetElementUtil.findTargetElement(getEditor(), TargetElementUtil
-                                                                         .ELEMENT_NAME_ACCEPTED |
-                                                                          TargetElementUtil.REFERENCED_ELEMENT_ACCEPTED);
-    assertInstanceOf(element, PsiClass.class);
-
-    assertEquals(null, InlineToAnonymousClassHandler.getCannotInlineMessage((PsiClass) element));
-    return new InlineToAnonymousClassProcessor(getProject(), (PsiClass) element, null, false, false, false);
+    PsiClass aClass = getClassToInline();
+    assertNull(InlineToAnonymousClassHandler.getCannotInlineMessage(aClass));
+    return new InlineToAnonymousClassProcessor(getProject(), aClass, null, false, false, false);
   }
 
   private void performAction(final boolean inlineThisOnly, final boolean searchInNonJavaFiles) {
-    PsiElement element = TargetElementUtil
-      .findTargetElement(getEditor(), TargetElementUtil.ELEMENT_NAME_ACCEPTED | TargetElementUtil.REFERENCED_ELEMENT_ACCEPTED);
     PsiCall callToInline = InlineToAnonymousClassHandler.findCallToInline(getEditor());
-    PsiClass classToInline = (PsiClass) element;
-    assertEquals(null, InlineToAnonymousClassHandler.getCannotInlineMessage(classToInline));
+    PsiClass classToInline = getClassToInline();
+    assertNull(InlineToAnonymousClassHandler.getCannotInlineMessage(classToInline));
+    assertTrue(new InlineToAnonymousClassHandler().canInlineElement(classToInline));
     final InlineToAnonymousClassProcessor processor = new InlineToAnonymousClassProcessor(getProject(), classToInline, callToInline, inlineThisOnly,
                                                                                           false, searchInNonJavaFiles);
     UsageInfo[] usages = processor.findUsages();
@@ -505,14 +496,19 @@ public class InlineToAnonymousClassTest extends LightRefactoringTestCase {
 
   private void doTestCanBeInvokedOnReference(boolean canBeInvokedOnReference) {
     configureByFile("/refactoring/inlineToAnonymousClass/" + getTestName(false) + ".java");
-    PsiElement element = TargetElementUtil
-      .findTargetElement(getEditor(), TargetElementUtil.ELEMENT_NAME_ACCEPTED | TargetElementUtil.REFERENCED_ELEMENT_ACCEPTED);
     PsiCall callToInline = InlineToAnonymousClassHandler.findCallToInline(getEditor());
-    PsiClass classToInline = (PsiClass) element;
-    assertEquals(null, InlineToAnonymousClassHandler.getCannotInlineMessage(classToInline));
+    PsiClass classToInline = getClassToInline();
+    assertNull(InlineToAnonymousClassHandler.getCannotInlineMessage(classToInline));
     final PsiClassType superType = InlineToAnonymousClassProcessor.getSuperType(classToInline);
-    assertTrue(superType != null);
+    assertNotNull(superType);
     assertEquals(canBeInvokedOnReference, InlineToAnonymousClassHandler.canBeInvokedOnReference(callToInline, superType));
+  }
+
+  private @NotNull PsiClass getClassToInline() {
+    int flags = TargetElementUtil.ELEMENT_NAME_ACCEPTED | TargetElementUtil.REFERENCED_ELEMENT_ACCEPTED;
+    PsiElement element = TargetElementUtil.findTargetElement(getEditor(), flags);
+    assertInstanceOf(element, PsiClass.class);
+    return (PsiClass)element;
   }
 
   @Override

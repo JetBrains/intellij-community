@@ -1,0 +1,4 @@
+<!HIGHLIGHTING("textAttributesKey='MARKDOWN_CODE_FENCE_MARKER'")!>```<!><!HIGHLIGHTING("textAttributesKey='MARKDOWN_CODE_FENCE_LANGUAGE'")!>kotlin<!>
+val x = 1
+println(x + y)
+<!HIGHLIGHTING("textAttributesKey='MARKDOWN_CODE_FENCE_MARKER'")!>```<!>

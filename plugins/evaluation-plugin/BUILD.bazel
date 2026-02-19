@@ -1,0 +1,138 @@
+### auto-generated section `build intellij.evaluationPlugin` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "evaluation-plugin_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "evaluation-plugin",
+  module_name = "intellij.evaluationPlugin",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":evaluation-plugin_resources"],
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "//plugins/evaluation-plugin/languages",
+    "//plugins/evaluation-plugin/core",
+    "//plugins/completion-ml-ranking",
+    "//libraries/io",
+    "//libraries/ktor/client",
+    "//platform/core-impl",
+    "//platform/analysis-api:analysis",
+    "//platform/code-style-api:codeStyle",
+    "//platform/util/concurrency",
+    "//platform/core-api:core",
+    "//platform/lang-api:lang",
+    "//platform/editor-ui-api:editor-ui",
+    "//platform/indexing-api:indexing",
+    "//jps/model-api:model",
+    "//platform/projectModel-api:projectModel",
+    "//plugins/stats-collector",
+    "//platform/ide-core-impl",
+    "//platform/platform-impl:ide-impl",
+    "//platform/lang-impl",
+    "//platform/core-ui",
+    "//platform/vcs-api:vcs",
+    "//platform/service-container",
+    "//platform/ml-api:ml",
+    "@lib//:clikt",
+    "//libraries/gson",
+    "//libraries/commons/text",
+    "//platform/warmup",
+    "//libraries/kotlinx/coroutines/core",
+    "@lib//:jetbrains-annotations",
+    "//platform/backend/observation",
+  ]
+)
+
+jvm_library(
+  name = "evaluation-plugin_test_lib",
+  module_name = "intellij.evaluationPlugin",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    ":evaluation-plugin",
+    "//plugins/evaluation-plugin/languages:languages_test_lib",
+    "//plugins/evaluation-plugin/core:core_test_lib",
+    "//plugins/completion-ml-ranking:completion-ml-ranking_test_lib",
+    "//libraries/io:io_test_lib",
+    "//libraries/ktor/client:client_test_lib",
+    "//platform/core-impl:core-impl_test_lib",
+    "//platform/analysis-api:analysis_test_lib",
+    "//platform/code-style-api:codeStyle_test_lib",
+    "//platform/util/concurrency:concurrency_test_lib",
+    "//platform/core-api:core_test_lib",
+    "//platform/lang-api:lang_test_lib",
+    "//platform/editor-ui-api:editor-ui_test_lib",
+    "//platform/indexing-api:indexing_test_lib",
+    "//jps/model-api:model_test_lib",
+    "//platform/projectModel-api:projectModel_test_lib",
+    "//plugins/stats-collector:stats-collector_test_lib",
+    "//platform/ide-core-impl:ide-core-impl_test_lib",
+    "//platform/platform-impl:ide-impl_test_lib",
+    "//platform/lang-impl:lang-impl_test_lib",
+    "//platform/core-ui:core-ui_test_lib",
+    "//platform/vcs-api:vcs_test_lib",
+    "//platform/service-container:service-container_test_lib",
+    "//platform/ml-api:ml_test_lib",
+    "//libraries/gson:gson_test_lib",
+    "//libraries/commons/text:text_test_lib",
+    "//platform/warmup:warmup_test_lib",
+    "//libraries/kotlinx/coroutines/core:core_test_lib",
+    "//platform/backend/observation:observation_test_lib",
+  ]
+)
+### auto-generated section `build intellij.evaluationPlugin` end
+
+### auto-generated section `build intellij.evaluationPlugin.tests` start
+jvm_library(
+  name = "evaluationPlugin-tests",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True)
+)
+
+jvm_library(
+  name = "evaluationPlugin-tests_test_lib",
+  module_name = "intellij.evaluationPlugin.tests",
+  visibility = ["//visibility:public"],
+  srcs = glob(["test/**/*.kt", "test/**/*.java", "test/**/*.form"], allow_empty = True),
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "//plugins/evaluation-plugin/core",
+    "//plugins/evaluation-plugin/core:core_test_lib",
+    "//plugins/evaluation-plugin",
+    "//plugins/evaluation-plugin:evaluation-plugin_test_lib",
+    "//platform/core-api:core",
+    "//platform/core-api:core_test_lib",
+    "//platform/platform-impl:ide-impl",
+    "//libraries/mockito",
+    "//libraries/mockito:mockito_test_lib",
+    "@lib//:junit5",
+    "//libraries/gson",
+    "//libraries/gson:gson_test_lib",
+    "//plugins/evaluation-plugin/languages",
+    "//plugins/evaluation-plugin/languages:languages_test_lib",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test_lib",
+    "//plugins/evaluation-plugin/languages/python",
+    "//plugins/evaluation-plugin/languages/python:python_test_lib",
+    "@lib//:mockito-kotlin",
+  ],
+  runtime_deps = [
+    ":evaluationPlugin-tests",
+    "//platform/platform-impl:ide-impl_test_lib",
+  ]
+)
+### auto-generated section `build intellij.evaluationPlugin.tests` end
+
+### auto-generated section `test intellij.evaluationPlugin.tests` start
+load("@community//build:tests-options.bzl", "jps_test")
+
+jps_test(
+  name = "evaluationPlugin-tests_test",
+  runtime_deps = [":evaluationPlugin-tests_test_lib"]
+)
+### auto-generated section `test intellij.evaluationPlugin.tests` end

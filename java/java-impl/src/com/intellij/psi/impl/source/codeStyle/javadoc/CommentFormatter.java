@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.codeStyle.javadoc;
 
 import com.intellij.application.options.CodeStyle;
@@ -9,7 +9,12 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.LineTokenizer;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiComment;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiMember;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
@@ -29,19 +34,13 @@ public class CommentFormatter {
   private final JDParser myParser;
   private final Project myProject;
 
-  /**
-   * @deprecated Use {@link ##CommentFormatter(PsiFile)} instead.
-   */
-  @Deprecated
-  public CommentFormatter(@NotNull Project project) {
-    mySettings = CodeStyle.getSettings(project);
-    myParser = new JDParser(mySettings);
-    myProject = project;
+  public CommentFormatter(@NotNull PsiFile file) {
+    this(file, null);
   }
 
-  public CommentFormatter(@NotNull PsiFile file) {
+  public CommentFormatter(@NotNull PsiFile file, @Nullable PsiDocComment oldComment) {
     mySettings = CodeStyle.getSettings(file);
-    myParser = new JDParser(mySettings);
+    myParser = new JDParser(mySettings, oldComment);
     myProject = file.getProject();
   }
 
@@ -119,8 +118,7 @@ public class CommentFormatter {
   /**
    * Used while formatting Javadoc. We need precise element indentation after formatting to wrap comments correctly.
    */
-  @NotNull
-  public String getIndent(@NotNull PsiElement element) {
+  public @NotNull String getIndent(@NotNull PsiElement element) {
     return StringUtil.repeatSymbol(' ', getIndentSpecial(element));
   }
 }

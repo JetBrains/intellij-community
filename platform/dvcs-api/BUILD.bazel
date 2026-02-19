@@ -1,0 +1,48 @@
+### auto-generated section `build intellij.platform.vcs.dvcs` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "vcs-dvcs_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "vcs-dvcs",
+  module_name = "intellij.platform.vcs.dvcs",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":vcs-dvcs_resources"],
+  deps = [
+    "//platform/core-ui",
+    "//platform/projectModel-api:projectModel",
+    "//platform/util-rt",
+    "//platform/core-api:core",
+    "//platform/vcs-api:vcs",
+    "//platform/extensions",
+    "//platform/platform-api:ide",
+    "//platform/vcs-log/api:vcs-log",
+    "@lib//:kotlin-stdlib",
+    "//platform/dvcs-impl/shared",
+  ]
+)
+
+jvm_library(
+  name = "vcs-dvcs_test_lib",
+  module_name = "intellij.platform.vcs.dvcs",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    ":vcs-dvcs",
+    "//platform/core-ui:core-ui_test_lib",
+    "//platform/projectModel-api:projectModel_test_lib",
+    "//platform/util-rt:util-rt_test_lib",
+    "//platform/core-api:core_test_lib",
+    "//platform/vcs-api:vcs_test_lib",
+    "//platform/extensions:extensions_test_lib",
+    "//platform/platform-api:ide_test_lib",
+    "//platform/vcs-log/api:vcs-log_test_lib",
+    "//platform/dvcs-impl/shared:shared_test_lib",
+  ]
+)
+### auto-generated section `build intellij.platform.vcs.dvcs` end

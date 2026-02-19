@@ -34,7 +34,7 @@ public class FilteringTask implements Runnable {
   public FilteringTask(@NotNull String className, @NotNull DebugProcessImpl debugProcess,
                        @NotNull XExpression expression, @NotNull ValuesList values,
                        @NotNull FilteringTaskCallback callback) {
-    myChecker = StringUtil.isEmptyOrSpaces(expression.getExpression())
+    myChecker = isEmptyFilter(expression)
                 ? ConditionChecker.ALL_MATCHED_CHECKER
                 : new ConditionCheckerImpl(debugProcess, expression, className);
     myValues = values;
@@ -56,18 +56,11 @@ public class FilteringTask implements Runnable {
     for (proceedCount = 0; proceedCount < myValues.size() && !myIsCancelled; proceedCount++) {
       JavaReferenceInfo info = myValues.get(proceedCount);
       CheckingResult result = myChecker.check(info.getObjectReference());
-      FilteringTaskCallback.Action action = FilteringTaskCallback.Action.CONTINUE;
-      switch (result.getResult()) {
-        case MATCH:
-          action = myCallback.matched(info);
-          break;
-        case NO_MATCH:
-          action = myCallback.notMatched(info);
-          break;
-        case ERROR:
-          action = myCallback.error(info, result.getFailureDescription());
-          break;
-      }
+      FilteringTaskCallback.Action action = switch (result.getResult()) {
+        case MATCH -> myCallback.matched(info);
+        case NO_MATCH -> myCallback.notMatched(info);
+        case ERROR -> myCallback.error(info, result.getFailureDescription());
+      };
 
       if (action == FilteringTaskCallback.Action.STOP) {
         break;
@@ -81,6 +74,10 @@ public class FilteringTask implements Runnable {
                                : FilteringResult.LIMIT_REACHED;
 
     myCallback.completed(reason);
+  }
+
+  public static boolean isEmptyFilter(@NotNull XExpression expression) {
+    return StringUtil.isEmptyOrSpaces(expression.getExpression());
   }
 
   public interface ValuesList {

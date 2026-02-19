@@ -1,36 +1,44 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.text;
 
-import com.intellij.util.Function;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Locale;
+import java.util.StringTokenizer;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
- * @author Leonid Shalupov
+ * Provides advanced version comparison functionality with support for various version formats.
+ * Superior to {@link com.intellij.openapi.util.text.StringUtil#compareVersionNumbers} by handling complex version patterns.
+ * <p>
+ * Used for comparing versions of TeamCity plugins and Ruby gems (and probably more).
  *
- * This versions comparator is much smarter than StringUtil.compareVersionNumbers
- * E.g: is used for TeamCity plugins and Ruby gems versions
+ * @author Leonid Shalupov
  */
 public final class VersionComparatorUtil {
+  public interface TokenPrioritizer {
+    int getPriority(String token);
+  }
   private static final Pattern WORDS_SPLITTER = Pattern.compile("\\d+|[^\\d]+");
+  private static final Pattern ZERO_PATTERN = Pattern.compile("0+");
+  private static final Pattern DIGITS_PATTERN = Pattern.compile("\\d+");
   private static final VersionTokenType[] VALUES = VersionTokenType.values();
 
-  public static final Comparator<String> COMPARATOR = new Comparator<String>() {
-    public int compare(String s1, String s2) {
-      return VersionComparatorUtil.compare(s1, s2);
-    }
-  };
+  public static final Comparator<String> COMPARATOR = VersionComparatorUtil::compare;
 
-  public static final Function<String, Integer> DEFAULT_TOKEN_PRIORITY_PROVIDER = new Function<String, Integer>() {
-    public Integer fun(String s) {
-      return VersionTokenType.lookup(s).getPriority();
+  private static final TokenPrioritizer DEFAULT_TOKEN_PRIORITIZER = new TokenPrioritizer() {
+    @Override
+    public int getPriority(String token) {
+      return VersionTokenType.lookup(token).getPriority();
     }
-  };
+  }; 
 
   private VersionComparatorUtil() {
   }
@@ -70,7 +78,7 @@ public final class VersionComparatorUtil {
       }
 
       str = str.trim();
-      if (str.length() == 0) {
+      if (str.isEmpty()) {
         return _WS;
       }
 
@@ -81,11 +89,11 @@ public final class VersionComparatorUtil {
         }
       }
 
-      if (str.matches("0+")) {
+      if (ZERO_PATTERN.matcher(str).matches()) {
         return _WS;
       }
 
-      if (str.matches("\\d+")) {
+      if (DIGITS_PATTERN.matcher(str).matches()) {
         return _DIGITS;
       }
 
@@ -97,9 +105,9 @@ public final class VersionComparatorUtil {
     }
   }
 
-  static List<String> splitVersionString(final String ver) {
+  public static List<String> splitVersionString(final String ver) {
     StringTokenizer st = new StringTokenizer(ver.trim(), "()._-;:/, +~");
-    List<String> result = new ArrayList<String>();
+    List<String> result = new ArrayList<>();
 
     while (st.hasMoreTokens()) {
       final Matcher matcher = WORDS_SPLITTER.matcher(st.nextToken());
@@ -120,10 +128,10 @@ public final class VersionComparatorUtil {
    * @return 0 if ver1 equals ver2, positive value if ver1 > ver2, negative value if ver1 < ver2
    */
   public static int compare(@Nullable @NonNls String ver1, @Nullable @NonNls String ver2) {
-    return compare(ver1, ver2, DEFAULT_TOKEN_PRIORITY_PROVIDER);
+    return compare(ver1, ver2, DEFAULT_TOKEN_PRIORITIZER);
   }
 
-  public static int compare(@Nullable @NonNls String ver1, @Nullable @NonNls String ver2, Function<? super String, Integer> tokenPriorityProvider) {
+  public static int compare(@Nullable @NonNls String ver1, @Nullable @NonNls String ver2, @NotNull TokenPrioritizer tokenPriorityProvider) {
     // todo duplicates com.intellij.openapi.util.text.StringUtil.compareVersionNumbers()
     // todo please refactor next time you make changes here
     if (ver1 == null) {
@@ -146,7 +154,7 @@ public final class VersionComparatorUtil {
       final String e2 = s2.get(i);
       final VersionTokenType t1 = VersionTokenType.lookup(e1);
 
-      res = comparePriorities(e1, e2, tokenPriorityProvider);
+      res = Integer.compare(tokenPriorityProvider.getPriority(e1), tokenPriorityProvider.getPriority(e2));
       if (res != 0) {
         return res;
       } else if (t1 == VersionTokenType._WORD) {
@@ -163,24 +171,17 @@ public final class VersionComparatorUtil {
     return 0;
   }
 
-  public static int comparePriorities(@NonNls String ver1, @NonNls String ver2, Function<? super String, Integer> tokenPriorityProvider) {
-    int priority1 = tokenPriorityProvider.fun(ver1);
-    int priority2 = tokenPriorityProvider.fun(ver2);
-
-    return Integer.signum(priority1 - priority2);
-  }
-
   private static int compareNumbers(String n1, String n2) {
     // trim leading zeros
-    while(n1.length() > 0 && n2.length() > 0 && n1.charAt(0) == '0' && n2.charAt(0) == '0') {
+    while(!n1.isEmpty() && !n2.isEmpty() && n1.charAt(0) == '0' && n2.charAt(0) == '0') {
       n1 = n1.substring(1);
       n2 = n2.substring(1);
     }
 
     // starts with zero => less
-    if (n1.length() > 0 && n1.charAt(0) == '0') {
+    if (!n1.isEmpty() && n1.charAt(0) == '0') {
       return -1;
-    } else if (n2.length() > 0 && n2.charAt(0) == '0') {
+    } else if (!n2.isEmpty() && n2.charAt(0) == '0') {
       return 1;
     }
 
@@ -208,4 +209,3 @@ public final class VersionComparatorUtil {
     }
   }
 }
-

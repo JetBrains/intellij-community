@@ -27,6 +27,7 @@ public class ThrowToInstruction extends BranchingInstruction {
     super(offset, Role.END);
   }
 
+  @Override
   public String toString() {
     return "THROW_TO " + offset;
   }

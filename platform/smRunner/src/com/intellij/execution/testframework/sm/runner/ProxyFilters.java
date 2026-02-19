@@ -18,10 +18,12 @@ package com.intellij.execution.testframework.sm.runner;
 import com.intellij.execution.testframework.AbstractTestProxy;
 import com.intellij.execution.testframework.Filter;
 import com.intellij.execution.testframework.sm.runner.states.TestStateInfo;
+import org.jetbrains.annotations.ApiStatus;
 
 /**
  * @author Roman Chernyatchik
  */
+@ApiStatus.Internal
 public interface ProxyFilters {
   Filter FILTER_PASSED = new Filter() {
     @Override

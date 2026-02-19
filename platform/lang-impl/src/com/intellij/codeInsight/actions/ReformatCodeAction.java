@@ -1,13 +1,25 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.actions;
 
+import com.intellij.CodeStyleBundle;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.find.impl.FindInProjectUtil;
-import com.intellij.formatting.FormattingModelBuilder;
+import com.intellij.formatting.service.CoreFormattingService;
+import com.intellij.formatting.service.FormattingService;
+import com.intellij.formatting.service.FormattingServiceUtil;
+import com.intellij.ide.lightEdit.LightEditCompatible;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.lang.LanguageFormatting;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.LangDataKeys;
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
+import com.intellij.openapi.actionSystem.Presentation;
+import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehavior;
+import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -17,27 +29,49 @@ import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Conditions;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.*;
+import com.intellij.platform.ide.core.permissions.Permission;
+import com.intellij.platform.ide.core.permissions.RequiresPermissions;
+import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiDirectoryContainer;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiManager;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.ArrayUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.regex.PatternSyntaxException;
 
-public class ReformatCodeAction extends AnAction implements DumbAware {
+import static com.intellij.openapi.vfs.FilePermissionsKt.getProjectFilesWrite;
+
+public class ReformatCodeAction extends AnAction implements DumbAware, LightEditCompatible, RequiresPermissions, ActionRemoteBehaviorSpecification {
   private static final Logger LOG = Logger.getInstance(ReformatCodeAction.class);
 
   private static ReformatFilesOptions myTestOptions;
 
   public ReformatCodeAction() {
+    setInjectedContext(true);
     setEnabledInModalContext(true);
+  }
+
+  @ApiStatus.Internal
+  @Override
+  public @NotNull ActionRemoteBehavior getBehavior() {
+    return Registry.is("reformat.action.execute.on.frontend")
+           ? ActionRemoteBehavior.FrontendOtherwiseBackend
+           : ActionRemoteBehavior.BackendOnly;
   }
 
   @Override
@@ -47,7 +81,6 @@ public class ReformatCodeAction extends AnAction implements DumbAware {
     if (project == null) {
       return;
     }
-    PsiDocumentManager.getInstance(project).commitAllDocuments();
     final Editor editor = CommonDataKeys.EDITOR.getData(dataContext);
     final VirtualFile[] files = CommonDataKeys.VIRTUAL_FILE_ARRAY.getData(dataContext);
 
@@ -86,7 +119,7 @@ public class ReformatCodeAction extends AnAction implements DumbAware {
       }
       return;
     }
-    else if (PlatformDataKeys.PROJECT_CONTEXT.getData(dataContext) != null || LangDataKeys.MODULE_CONTEXT.getData(dataContext) != null) {
+    else if (PlatformCoreDataKeys.PROJECT_CONTEXT.getData(dataContext) != null || LangDataKeys.MODULE_CONTEXT.getData(dataContext) != null) {
       Module moduleContext = LangDataKeys.MODULE_CONTEXT.getData(dataContext);
       ReformatFilesOptions selectedFlags = getLayoutProjectOptions(project, moduleContext);
       if (selectedFlags != null) {
@@ -120,6 +153,8 @@ public class ReformatCodeAction extends AnAction implements DumbAware {
 
     if (file == null || editor == null) return;
 
+    PsiDocumentManager.getInstance(project).commitDocument(editor.getDocument());
+
     LastRunReformatCodeOptionsProvider provider = new LastRunReformatCodeOptionsProvider(PropertiesComponent.getInstance());
     ReformatCodeRunOptions currentRunOptions = provider.getLastRunOptions(file);
 
@@ -140,12 +175,15 @@ public class ReformatCodeAction extends AnAction implements DumbAware {
     new FileInEditorProcessor(file, editor, currentRunOptions).processCode();
   }
 
+  @Override
+  public @NotNull Collection<@NotNull Permission> getRequiredPermissions() {
+    return Collections.singletonList(getProjectFilesWrite());
+  }
 
-  @Nullable
-  private static DirectoryFormattingOptions getDirectoryFormattingOptions(@NotNull Project project, @NotNull PsiDirectory dir) {
+  private static @Nullable DirectoryFormattingOptions getDirectoryFormattingOptions(@NotNull Project project, @NotNull PsiDirectory dir) {
     LayoutDirectoryDialog dialog = new LayoutDirectoryDialog(
       project,
-      CodeInsightBundle.message("process.reformat.code"),
+      CodeStyleBundle.message("process.reformat.code"),
       CodeInsightBundle.message("process.scope.directory", dir.getVirtualFile().getPath()),
       VcsFacade.getInstance().hasChanges(dir)
     );
@@ -163,6 +201,7 @@ public class ReformatCodeAction extends AnAction implements DumbAware {
   public static void reformatDirectory(@NotNull Project project,
                                        @NotNull PsiDirectory dir,
                                        @NotNull DirectoryFormattingOptions options) {
+    PsiDocumentManager.getInstance(project).commitAllDocuments();
     AbstractLayoutCodeProcessor processor = new ReformatCodeProcessor(
       project, dir, options.isIncludeSubdirectories(), options.getTextRangeType() == TextRangeType.VCS_CHANGED_TEXT
     );
@@ -189,11 +228,15 @@ public class ReformatCodeAction extends AnAction implements DumbAware {
     boolean shouldOptimizeImports = selectedFlags.isOptimizeImports() && !DumbService.getInstance(project).isDumb();
     boolean processOnlyChangedText = selectedFlags.getTextRangeType() == TextRangeType.VCS_CHANGED_TEXT;
 
+    PsiDocumentManager.getInstance(project).commitAllDocuments();
+
     AbstractLayoutCodeProcessor processor;
-    if (moduleContext != null)
+    if (moduleContext != null) {
       processor = new ReformatCodeProcessor(project, moduleContext, processOnlyChangedText);
-    else
+    }
+    else {
       processor = new ReformatCodeProcessor(project, processOnlyChangedText);
+    }
 
     registerScopeFilter(processor, selectedFlags.getSearchScope());
     registerFileMaskFilter(processor, selectedFlags.getFileTypeMask());
@@ -209,7 +252,7 @@ public class ReformatCodeAction extends AnAction implements DumbAware {
     processor.run();
   }
 
-  public static void registerScopeFilter(@NotNull AbstractLayoutCodeProcessor processor, @Nullable final SearchScope scope) {
+  public static void registerScopeFilter(@NotNull AbstractLayoutCodeProcessor processor, final @Nullable SearchScope scope) {
     if (scope == null) {
       return;
     }
@@ -225,8 +268,7 @@ public class ReformatCodeAction extends AnAction implements DumbAware {
     processor.addFileFilter(file -> patternCondition.value(file.getNameSequence()));
   }
 
-  @NotNull
-  private static Condition<CharSequence> getFileTypeMaskPattern(@Nullable String mask) {
+  private static @NotNull Condition<CharSequence> getFileTypeMaskPattern(@Nullable String mask) {
     try {
       return FindInProjectUtil.createFileMaskCondition(mask);
     }
@@ -242,7 +284,10 @@ public class ReformatCodeAction extends AnAction implements DumbAware {
     return PsiUtilCore.toPsiFileArray(list);
   }
 
-
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
+  }
 
   @Override
   public void update(@NotNull AnActionEvent event){
@@ -259,7 +304,7 @@ public class ReformatCodeAction extends AnAction implements DumbAware {
   private static boolean isActionAvailable(@NotNull AnActionEvent event) {
     DataContext dataContext = event.getDataContext();
     Project project = CommonDataKeys.PROJECT.getData(dataContext);
-    if (project == null){
+    if (project == null) {
       return false;
     }
 
@@ -267,25 +312,24 @@ public class ReformatCodeAction extends AnAction implements DumbAware {
 
     final VirtualFile[] files = CommonDataKeys.VIRTUAL_FILE_ARRAY.getData(dataContext);
 
-    if (editor != null){
+    if (editor != null) {
       PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
       if (file == null || file.getVirtualFile() == null) {
         return false;
       }
 
-      if (LanguageFormatting.INSTANCE.forContext(file) != null) {
+      if (canFormat(file)) {
         return true;
       }
     }
-    else if (files!= null && containsOnlyFiles(files)) {
+    else if (files != null && containsOnlyFiles(files)) {
       boolean anyFormatters = false;
       for (VirtualFile virtualFile : files) {
         final PsiFile psiFile = PsiManager.getInstance(project).findFile(virtualFile);
         if (psiFile == null) {
           return false;
         }
-        final FormattingModelBuilder builder = LanguageFormatting.INSTANCE.forContext(psiFile);
-        if (builder != null) {
+        if (canFormat(psiFile)) {
           anyFormatters = true;
           break;
         }
@@ -298,23 +342,31 @@ public class ReformatCodeAction extends AnAction implements DumbAware {
       // skip. Both directories and single files are supported.
     }
     else if (LangDataKeys.MODULE_CONTEXT.getData(dataContext) == null &&
-             PlatformDataKeys.PROJECT_CONTEXT.getData(dataContext) == null) {
+             PlatformCoreDataKeys.PROJECT_CONTEXT.getData(dataContext) == null) {
       PsiElement element = CommonDataKeys.PSI_ELEMENT.getData(dataContext);
       if (element == null) {
         return false;
       }
       if (!(element instanceof PsiDirectory)) {
         PsiFile file = element.getContainingFile();
-        if (file == null || LanguageFormatting.INSTANCE.forContext(file) == null) {
+        if (file == null || !canFormat(file)) {
           return false;
         }
       }
     }
+
     return true;
   }
 
-  @Nullable
-  private static ReformatFilesOptions getReformatFilesOptions(@NotNull Project project, VirtualFile @NotNull [] files) {
+  private static boolean canFormat(PsiFile psiFile) {
+    FormattingService service = FormattingServiceUtil.findService(psiFile, true, true);
+    if (service instanceof CoreFormattingService) {
+      return LanguageFormatting.INSTANCE.forContext(psiFile) != null;
+    }
+    return true;
+  }
+
+  private static @Nullable ReformatFilesOptions getReformatFilesOptions(@NotNull Project project, VirtualFile @NotNull [] files) {
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       return myTestOptions;
     }
@@ -325,8 +377,7 @@ public class ReformatCodeAction extends AnAction implements DumbAware {
     return dialog;
   }
 
-  @Nullable
-  private static ReformatFilesOptions getLayoutProjectOptions(@NotNull Project project, @Nullable Module module) {
+  private static @Nullable ReformatFilesOptions getLayoutProjectOptions(@NotNull Project project, @Nullable Module module) {
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       return myTestOptions;
     }
@@ -338,7 +389,7 @@ public class ReformatCodeAction extends AnAction implements DumbAware {
                                                                : VcsFacade.getInstance().hasChanges(project);
 
     LayoutProjectCodeDialog dialog =
-      new LayoutProjectCodeDialog(project, CodeInsightBundle.message("process.reformat.code"), text, enableOnlyVCSChangedRegions);
+      new LayoutProjectCodeDialog(project, CodeStyleBundle.message("process.reformat.code"), text, enableOnlyVCSChangedRegions);
     if (!dialog.showAndGet()) {
       return null;
     }
@@ -358,5 +409,3 @@ public class ReformatCodeAction extends AnAction implements DumbAware {
     return true;
   }
 }
-
-

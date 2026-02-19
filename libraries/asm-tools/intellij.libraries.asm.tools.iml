@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<module type="JAVA_MODULE" version="4">
+  <component name="NewModuleRootManager" LANGUAGE_LEVEL="JDK_1_8" inherit-compiler-output="true">
+    <exclude-output />
+    <content url="file://$MODULE_DIR$">
+      <sourceFolder url="file://$MODULE_DIR$/resources" type="java-resource" />
+    </content>
+    <orderEntry type="inheritedJdk" />
+    <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="module-library" exported="">
+      <library name="asm-tools" type="repository">
+        <properties maven-id="org.ow2.asm:asm-analysis:9.8">
+          <verification>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/ow2/asm/asm-analysis/9.8/asm-analysis-9.8.jar">
+              <sha256sum>e640732fbcd3c6271925a504f125e38384688f4dfbbf92c8622dfcee0d09edb9</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/ow2/asm/asm-tree/9.8/asm-tree-9.8.jar">
+              <sha256sum>14b7880cb7c85eed101e2710432fc3ffb83275532a6a894dc4c4095d49ad59f1</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/ow2/asm/asm/9.8/asm-9.8.jar">
+              <sha256sum>876eab6a83daecad5ca67eb9fcabb063c97b5aeb8cf1fca7a989ecde17522051</sha256sum>
+            </artifact>
+          </verification>
+        </properties>
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/org/ow2/asm/asm-analysis/9.8/asm-analysis-9.8.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/ow2/asm/asm-tree/9.8/asm-tree-9.8.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/ow2/asm/asm/9.8/asm-9.8.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES>
+          <root url="jar://$MAVEN_REPOSITORY$/org/ow2/asm/asm-analysis/9.8/asm-analysis-9.8-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/ow2/asm/asm-tree/9.8/asm-tree-9.8-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/ow2/asm/asm/9.8/asm-9.8-sources.jar!/" />
+        </SOURCES>
+      </library>
+    </orderEntry>
+  </component>
+</module>

@@ -1,8 +1,23 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.util.duplicates;
 
 import com.intellij.codeInsight.JavaPsiEquivalenceUtil;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.JavaTokenType;
+import com.intellij.psi.PsiAssignmentExpression;
+import com.intellij.psi.PsiConstantEvaluationHelper;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiExpressionList;
+import com.intellij.psi.PsiExpressionListStatement;
+import com.intellij.psi.PsiExpressionStatement;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiJavaCodeReferenceElement;
+import com.intellij.psi.PsiReferenceExpression;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypes;
+import com.intellij.psi.PsiUnaryExpression;
+import com.intellij.psi.PsiVariable;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -11,9 +26,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-/**
- * @author Pavel.Dolgov
- */
 public final class ExtractableExpressionPart {
   final PsiExpression myUsage;
   final PsiVariable myVariable;
@@ -27,13 +39,11 @@ public final class ExtractableExpressionPart {
     myType = type;
   }
 
-  @Nullable
-  static PsiType commonType(@NotNull ExtractableExpressionPart part1, @NotNull ExtractableExpressionPart part2) {
+  static @Nullable PsiType commonType(@NotNull ExtractableExpressionPart part1, @NotNull ExtractableExpressionPart part2) {
     return commonType(part1.myType, part2.myType);
   }
 
-  @Nullable
-  private static PsiType commonType(@NotNull PsiType type1, @NotNull PsiType type2) {
+  private static @Nullable PsiType commonType(@NotNull PsiType type1, @NotNull PsiType type2) {
     if (type1.isAssignableFrom(type2)) {
       return type1;
     }
@@ -60,10 +70,9 @@ public final class ExtractableExpressionPart {
     return usage1 != null && usage2 != null && JavaPsiEquivalenceUtil.areExpressionsEquivalent(usage1, usage2);
   }
 
-  @Nullable
-  static ExtractableExpressionPart match(@NotNull PsiExpression expression,
-                                         @NotNull List<? extends PsiElement> scope,
-                                         @Nullable ComplexityHolder complexityHolder) {
+  static @Nullable ExtractableExpressionPart match(@NotNull PsiExpression expression,
+                                                   @NotNull List<? extends PsiElement> scope,
+                                                   @Nullable ComplexityHolder complexityHolder) {
     if (expression instanceof PsiReferenceExpression) {
       return matchVariable((PsiReferenceExpression)expression, scope);
     }
@@ -86,8 +95,7 @@ public final class ExtractableExpressionPart {
     return null;
   }
 
-  @Nullable
-  private static ExtractableExpressionPart matchConstant(@NotNull PsiExpression expression) {
+  private static @Nullable ExtractableExpressionPart matchConstant(@NotNull PsiExpression expression) {
     PsiConstantEvaluationHelper constantHelper = JavaPsiFacade.getInstance(expression.getProject()).getConstantEvaluationHelper();
     Object value = constantHelper.computeConstantExpression(expression, false);
     if (value != null) {
@@ -99,14 +107,12 @@ public final class ExtractableExpressionPart {
     return null;
   }
 
-  @Nullable
-  static ExtractableExpressionPart matchVariable(@NotNull PsiReferenceExpression expression, @Nullable List<? extends PsiElement> scope) {
+  static @Nullable ExtractableExpressionPart matchVariable(@NotNull PsiReferenceExpression expression, @Nullable List<? extends PsiElement> scope) {
     PsiElement resolved = expression.resolve();
     if (resolved instanceof PsiField && isModification(expression)) {
       return null;
     }
-    if (resolved instanceof PsiVariable && (scope == null || !DuplicatesFinder.isUnder(resolved, scope))) {
-      PsiVariable variable = (PsiVariable)resolved;
+    if (resolved instanceof PsiVariable variable && (scope == null || !DuplicatesFinder.isUnder(resolved, scope))) {
       return new ExtractableExpressionPart(expression, variable, null, variable.getType());
     }
     return null;
@@ -114,14 +120,12 @@ public final class ExtractableExpressionPart {
 
   private static boolean isModification(@NotNull PsiReferenceExpression expression) {
     PsiElement parent = PsiUtil.skipParenthesizedExprUp(expression.getParent());
-    if (parent instanceof PsiAssignmentExpression) {
-      PsiAssignmentExpression assignment = (PsiAssignmentExpression)parent;
+    if (parent instanceof PsiAssignmentExpression assignment) {
       if (PsiTreeUtil.isAncestor(assignment.getLExpression(), expression, false)) {
         return true;
       }
     }
-    else if (parent instanceof PsiUnaryExpression) {
-      PsiUnaryExpression unary = (PsiUnaryExpression)parent;
+    else if (parent instanceof PsiUnaryExpression unary) {
       IElementType tokenType = unary.getOperationTokenType();
       if ((tokenType.equals(JavaTokenType.PLUSPLUS) || tokenType.equals(JavaTokenType.MINUSMINUS)) &&
           PsiTreeUtil.isAncestor(unary.getOperand(), expression, false)) {
@@ -131,22 +135,19 @@ public final class ExtractableExpressionPart {
     return false;
   }
 
-  @Nullable
-  private static ExtractableExpressionPart matchExpression(@NotNull PsiExpression expression) {
+  private static @Nullable ExtractableExpressionPart matchExpression(@NotNull PsiExpression expression) {
     PsiType type = expression.getType();
-    if (type != null && !PsiType.VOID.equals(type)) {
+    if (type != null && !PsiTypes.voidType().equals(type)) {
       return new ExtractableExpressionPart(expression, null, null, type);
     }
     return null;
   }
 
-  @NotNull
-  public PsiExpression getUsage() {
+  public @NotNull PsiExpression getUsage() {
     return myUsage;
   }
 
-  @NotNull
-  public static ExtractableExpressionPart fromUsage(@NotNull PsiExpression usage, @NotNull PsiType type) {
+  public static @NotNull ExtractableExpressionPart fromUsage(@NotNull PsiExpression usage, @NotNull PsiType type) {
     PsiType usageType;
     //noinspection AssertWithSideEffects
     assert (usageType = usage.getType()) == null || type.isAssignableFrom(usageType)

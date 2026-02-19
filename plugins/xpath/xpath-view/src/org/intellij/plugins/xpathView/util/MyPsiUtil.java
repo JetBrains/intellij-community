@@ -16,18 +16,29 @@
 package org.intellij.plugins.xpathView.util;
 
 import com.intellij.codeInsight.daemon.impl.AnnotationHolderImpl;
+import com.intellij.codeInsight.daemon.impl.AnnotationSessionImpl;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.LanguageAnnotators;
 import com.intellij.lang.annotation.Annotation;
-import com.intellij.lang.annotation.AnnotationSession;
 import com.intellij.lang.annotation.Annotator;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.psi.*;
-import com.intellij.psi.xml.*;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiErrorElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiRecursiveElementVisitor;
+import com.intellij.psi.PsiWhiteSpace;
+import com.intellij.psi.xml.XmlAttribute;
+import com.intellij.psi.xml.XmlDocument;
+import com.intellij.psi.xml.XmlElement;
+import com.intellij.psi.xml.XmlTag;
+import com.intellij.psi.xml.XmlToken;
+import com.intellij.psi.xml.XmlTokenType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.List;
 
 public final class MyPsiUtil {
     private static final Logger LOG = Logger.getInstance(MyPsiUtil.class);
@@ -35,8 +46,7 @@ public final class MyPsiUtil {
     private MyPsiUtil() {
     }
 
-    @Nullable
-    public static XmlElement findContextNode(@NotNull PsiFile psiFile, @NotNull Editor editor) {
+    public static @Nullable XmlElement findContextNode(@NotNull PsiFile psiFile, @NotNull Editor editor) {
         PsiElement contextNode = psiFile.findElementAt(editor.getCaretModel().getOffset());
         while (contextNode != null && !isValidContextNode(contextNode)) {
             contextNode = contextNode.getParent();
@@ -50,8 +60,7 @@ public final class MyPsiUtil {
         return contextNode instanceof XmlTag || contextNode instanceof XmlDocument;
     }
 
-    @NotNull
-    public static PsiElement getNameElement(@NotNull XmlTag tag) {
+    public static @NotNull PsiElement getNameElement(@NotNull XmlTag tag) {
         final PsiElement element = findNameElement(tag);
         if (element != null) {
             return element;
@@ -60,8 +69,7 @@ public final class MyPsiUtil {
         return tag;
     }
 
-    @Nullable
-    public static PsiElement findNameElement(@NotNull XmlTag tag) {
+    public static @Nullable PsiElement findNameElement(@NotNull XmlTag tag) {
         PsiElement[] children = tag.getChildren();
         for (PsiElement child : children) {
             if (isNameElement(child)) {
@@ -86,7 +94,7 @@ public final class MyPsiUtil {
       return false;
     }
 
-    public static String getAttributePrefix(@NotNull XmlAttribute attribute) {
+    public static @NotNull String getAttributePrefix(@NotNull XmlAttribute attribute) {
         final String name = attribute.getName();
         if (name.indexOf(':') == -1) {
             return "";
@@ -130,7 +138,7 @@ public final class MyPsiUtil {
      */
     public static boolean isInDeclaredNamespace(XmlTag context, String nsUri, String nsPrefix) {
 
-        if (nsUri == null || nsUri.length() == 0 || nsPrefix != null && nsPrefix.length() > 0) {
+        if (nsUri == null || nsUri.isEmpty() || nsPrefix != null && !nsPrefix.isEmpty()) {
             return true;
         }
 
@@ -156,15 +164,17 @@ public final class MyPsiUtil {
         file.accept(new PsiRecursiveElementVisitor() {
             @Override
             public void visitElement(@NotNull PsiElement element) {
-                AnnotationHolderImpl holder = new AnnotationHolderImpl(new AnnotationSession(file));
-                holder.runAnnotatorWithContext(element, annotator);
-                for (Annotation annotation : holder) {
-                    if (annotation.getSeverity() == HighlightSeverity.ERROR) {
-                        error[0] = annotation.getMessage();
-                        break;
-                    }
+              AnnotationSessionImpl.computeWithSession(file, false, annotator, annotationHolder -> {
+                ((AnnotationHolderImpl)annotationHolder).runAnnotatorWithContext(element);
+                for (Annotation annotation : (List<Annotation>)annotationHolder) {
+                  if (annotation.getSeverity() == HighlightSeverity.ERROR) {
+                    error[0] = annotation.getMessage();
+                    break;
+                  }
                 }
-                super.visitElement(element);
+                return null;
+              });
+              super.visitElement(element);
             }
         });
         return error[0];

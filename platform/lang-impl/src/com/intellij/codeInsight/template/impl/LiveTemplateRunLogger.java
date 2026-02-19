@@ -1,11 +1,16 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.template.impl;
 
-import com.intellij.internal.statistic.eventLog.FeatureUsageData;
+import com.intellij.internal.statistic.eventLog.EventLogGroup;
+import com.intellij.internal.statistic.eventLog.events.BooleanEventField;
+import com.intellij.internal.statistic.eventLog.events.EventFields;
+import com.intellij.internal.statistic.eventLog.events.EventPair;
+import com.intellij.internal.statistic.eventLog.events.StringEventField;
+import com.intellij.internal.statistic.eventLog.events.VarargEventId;
 import com.intellij.internal.statistic.eventLog.validator.ValidationResultType;
 import com.intellij.internal.statistic.eventLog.validator.rules.EventContext;
 import com.intellij.internal.statistic.eventLog.validator.rules.impl.CustomValidationRule;
-import com.intellij.internal.statistic.service.fus.collectors.FUCounterUsageLogger;
+import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector;
 import com.intellij.internal.statistic.utils.PluginInfo;
 import com.intellij.lang.Language;
 import com.intellij.openapi.project.Project;
@@ -14,18 +19,38 @@ import kotlin.Triple;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-final class LiveTemplateRunLogger {
-  private static final String GROUP = "live.templates";
+import java.util.ArrayList;
+import java.util.List;
+
+final class LiveTemplateRunLogger extends CounterUsagesCollector {
+  private static final EventLogGroup GROUP = new EventLogGroup("live.templates", 48);
+  private static final StringEventField TEMPLATE_GROUP = EventFields.StringValidatedByCustomRule("group", LiveTemplateValidator.class);
+  private static final StringEventField KEY = EventFields.StringValidatedByCustomRule("key", LiveTemplateValidator.class);
+  private static final BooleanEventField CHANGED_BY_USER = EventFields.Boolean("changedByUser");
+  private static final VarargEventId STARTED = registerLiveTemplateEvent(GROUP, "started");
+
+
+  @Override
+  public EventLogGroup getGroup() {
+    return GROUP;
+  }
+
+  public static VarargEventId registerLiveTemplateEvent(EventLogGroup group, String event) {
+    return group.registerVarargEvent(event, EventFields.Language,
+                                     TEMPLATE_GROUP,
+                                     EventFields.PluginInfo,
+                                     KEY,
+                                     CHANGED_BY_USER);
+  }
 
   static void log(@NotNull Project project, @NotNull TemplateImpl template, @NotNull Language language) {
-    final FeatureUsageData data = createTemplateData(template, language);
+    final List<EventPair<?>> data = createTemplateData(template, language);
     if (data != null) {
-      FUCounterUsageLogger.getInstance().logEvent(project, GROUP, "started", data);
+      STARTED.log(project, data);
     }
   }
 
-  @Nullable
-  static Triple<String, String, PluginInfo> getKeyGroupPluginToLog(@NotNull TemplateImpl template) {
+  static @Nullable Triple<String, String, PluginInfo> getKeyGroupPluginToLog(@NotNull TemplateImpl template) {
     String key = template.getKey();
     String groupName = template.getGroupName();
     if (isCreatedProgrammatically(key, groupName)) return null;
@@ -42,20 +67,21 @@ final class LiveTemplateRunLogger {
     return new Triple<>(key, groupName, plugin);
   }
 
-  @Nullable
-  static FeatureUsageData createTemplateData(@NotNull TemplateImpl template, @NotNull Language language) {
+  static @Nullable List<EventPair<?>> createTemplateData(@NotNull TemplateImpl template, @NotNull Language language) {
     Triple<String, String, PluginInfo> keyGroupPluginToLog = getKeyGroupPluginToLog(template);
     if (keyGroupPluginToLog == null) {
       return null;
     }
 
-    FeatureUsageData data = new FeatureUsageData().addLanguage(language).addData("group", keyGroupPluginToLog.getSecond());
+    List<EventPair<?>> data = new ArrayList<>();
+    data.add(EventFields.Language.with(language));
+    data.add(TEMPLATE_GROUP.with(keyGroupPluginToLog.getSecond()));
     PluginInfo plugin = keyGroupPluginToLog.getThird();
     if (plugin != null) {
-      data.addPluginInfo(plugin);
+      data.add(EventFields.PluginInfo.with(plugin));
     }
-    data.addData("key", keyGroupPluginToLog.getFirst());
-    data.addData("changedByUser", TemplateSettings.getInstance().differsFromDefault(template));
+    data.add(KEY.with(keyGroupPluginToLog.getFirst()));
+    data.add(CHANGED_BY_USER.with(TemplateSettings.getInstance().differsFromDefault(template)));
     return data;
   }
 
@@ -65,13 +91,17 @@ final class LiveTemplateRunLogger {
 
   public static class LiveTemplateValidator extends CustomValidationRule {
     @Override
-    public boolean acceptRuleId(@Nullable String ruleId) {
-      return "live_template".equals(ruleId) || "live_template_group".equals(ruleId) ;
+    public @NotNull String getRuleId() {
+      return "live_template";
     }
 
-    @NotNull
     @Override
-    protected ValidationResultType doValidate(@NotNull String data, @NotNull EventContext context) {
+    public boolean acceptRuleId(@Nullable String ruleId) {
+      return getRuleId().equals(ruleId) || "live_template_group".equals(ruleId) ;
+    }
+
+    @Override
+    protected @NotNull ValidationResultType doValidate(@NotNull String data, @NotNull EventContext context) {
       final String key = getEventDataField(context, "key");
       final String group = getEventDataField(context, "group");
       if (key == null || group == null || !isKeyOrGroup(data, key, group)) {
@@ -80,8 +110,7 @@ final class LiveTemplateRunLogger {
       return validateKeyGroup(key, group);
     }
 
-    @NotNull
-    public static ValidationResultType validateKeyGroup(String key, Object group) {
+    public static @NotNull ValidationResultType validateKeyGroup(String key, Object group) {
       if (group == null) return ValidationResultType.REJECTED;
       if ("user.defined.template".equals(key) && "user.defined.group".equals(group)) return ValidationResultType.ACCEPTED;
       if ("custom.plugin.template".equals(key) && "custom.plugin.group".equals(group)) return ValidationResultType.ACCEPTED;

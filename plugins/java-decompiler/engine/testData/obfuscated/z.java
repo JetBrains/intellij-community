@@ -9,7 +9,7 @@ public class z<P> {
    }
 
    public static <P> z<P> a(Class<P> var0) {
-      return new z(var0);
+      return new z<P>(var0);
    }
 
    public List<P> a() {

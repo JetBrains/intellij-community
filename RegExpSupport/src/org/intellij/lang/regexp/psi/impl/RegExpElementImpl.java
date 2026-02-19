@@ -24,7 +24,6 @@ import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.impl.source.tree.CompositeElement;
-import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.util.IncorrectOperationException;
 import org.intellij.lang.regexp.RegExpLanguage;
@@ -39,8 +38,7 @@ public abstract class RegExpElementImpl extends ASTWrapperPsiElement implements 
     }
 
     @Override
-    @NotNull
-    public Language getLanguage() {
+    public @NotNull Language getLanguage() {
         return RegExpLanguage.INSTANCE;
     }
 
@@ -58,9 +56,7 @@ public abstract class RegExpElementImpl extends ASTWrapperPsiElement implements 
         }
     }
 
-    public void accept(RegExpElementVisitor visitor) {
-        visitor.visitRegExpElement(this);
-    }
+    public abstract void accept(RegExpElementVisitor visitor);
 
     @Override
     public PsiElement replace(@NotNull PsiElement psiElement) throws IncorrectOperationException {
@@ -75,13 +71,8 @@ public abstract class RegExpElementImpl extends ASTWrapperPsiElement implements 
         getNode().getTreeParent().removeChild(getNode());
     }
 
-    @NotNull
     @Override
-    public final String getUnescapedText() {
-        if (InjectedLanguageUtil.isInInjectedLanguagePrefixSuffix(this)) {
-            // do not attempt to decode text if PsiElement is part of prefix/suffix
-            return getText();
-        }
+    public final @NotNull String getUnescapedText() {
         return InjectedLanguageManager.getInstance(getProject()).getUnescapedText(this);
     }
 

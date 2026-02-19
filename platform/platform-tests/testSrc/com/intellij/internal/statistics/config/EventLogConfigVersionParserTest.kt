@@ -1,11 +1,10 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistics.config
 
-import com.intellij.internal.statistic.config.bean.EventLogBucketRange
-import com.intellij.internal.statistic.config.bean.EventLogSendConfiguration
-import com.intellij.internal.statistic.eventLog.EventLogBuildType
-import com.intellij.internal.statistic.eventLog.EventLogBuildType.EAP
-import com.intellij.internal.statistic.eventLog.EventLogBuildType.RELEASE
+import com.intellij.internal.statistic.config.eventLog.EventLogBuildType
+import com.intellij.internal.statistic.config.eventLog.EventLogBuildType.EAP
+import com.intellij.internal.statistic.config.eventLog.EventLogBuildType.RELEASE
+import com.jetbrains.fus.reporting.model.config.v4.ConfigurationBucketRange
 import org.junit.Test
 
 class EventLogConfigVersionParserTest : EventLogConfigBaseParserTest() {
@@ -16,14 +15,14 @@ class EventLogConfigVersionParserTest : EventLogConfigBaseParserTest() {
   "productCode": "IU",
   "versions": [""" + versions + """]
 }"""
-    doTest(config, notExistingEndpoints = setOf("send", "whitelist"))
+    doTest(config, notExistingEndpoints = setOf("send", "metadata"))
   }
 
   private fun doTestVersion(versions: String, expected: Map<String, String>,
-                            expectedConfig: Map<EventLogBuildType, EventLogSendConfiguration>? = null) {
+                            expectedConfig: Map<EventLogBuildType, List<ConfigurationBucketRange>>? = null) {
     val buildConfig = expectedConfig ?: mapOf(
-      EAP to EventLogSendConfiguration(listOf(EventLogBucketRange(0, 256))),
-      RELEASE to EventLogSendConfiguration(listOf(EventLogBucketRange(0, 256)))
+      EAP to listOf(ConfigurationBucketRange(0, 256)),
+      RELEASE to listOf(ConfigurationBucketRange(0, 256))
     )
 
     val config = """
@@ -42,7 +41,7 @@ class EventLogConfigVersionParserTest : EventLogConfigBaseParserTest() {
   "releaseFilters": [{ "releaseType": "ALL", "from": 0, "to": 256 }],
   "endpoints": {
     "send": "https://send/endpoint",
-    "whitelist": "https://whitelist/endpoint/"
+    "metadata": "https://metadata/endpoint/"
   }
 }""")
   }
@@ -56,7 +55,7 @@ class EventLogConfigVersionParserTest : EventLogConfigBaseParserTest() {
   "releaseFilters": [{ "releaseType": "ALL", "from": 0, "to": 256 }],
   "endpoints": {
     "send": "https://send/endpoint",
-    "whitelist": "https://whitelist/endpoint/"
+    "metadata": "https://metadata/endpoint/"
   }
 }""")
   }
@@ -71,7 +70,7 @@ class EventLogConfigVersionParserTest : EventLogConfigBaseParserTest() {
   "releaseFilters": [{ "releaseType": "ALL", "from": 0, "to": 256 }],
   "endpoints": {
     "send": "https://send/endpoint",
-    "whitelist": "https://whitelist/endpoint/"
+    "metadata": "https://metadata/endpoint/"
   }
 }""")
   }
@@ -86,7 +85,7 @@ class EventLogConfigVersionParserTest : EventLogConfigBaseParserTest() {
   "releaseFilters": [{ "releaseType": "ALL", "from": 0, "to": 256 }],
   "endpoints": {
     "send": "https://send/endpoint",
-    "whitelist": "https://whitelist/endpoint/"
+    "metadata": "https://metadata/endpoint/"
   }
 }""")
   }
@@ -102,9 +101,9 @@ class EventLogConfigVersionParserTest : EventLogConfigBaseParserTest() {
   "releaseFilters": [{ "releaseType": "ALL", "from": 0, "to": 256 }],
   "endpoints": {
     "send": "https://send/endpoint",
-    "whitelist": "https://whitelist/endpoint/"
+    "metadata": "https://metadata/endpoint/"
   }
-}""", mapOf("send" to "https://send/endpoint", "whitelist" to "https://whitelist/endpoint/"))
+}""", mapOf("send" to "https://send/endpoint", "metadata" to "https://metadata/endpoint/"))
   }
 
   @Test
@@ -118,9 +117,9 @@ class EventLogConfigVersionParserTest : EventLogConfigBaseParserTest() {
   "releaseFilters": [{ "releaseType": "ALL", "from": 0, "to": 256 }],
   "endpoints": {
     "send": "https://send/endpoint",
-    "whitelist": "https://whitelist/endpoint/"
+    "metadata": "https://metadata/endpoint/"
   }
-}""", mapOf("send" to "https://send/endpoint", "whitelist" to "https://whitelist/endpoint/"))
+}""", mapOf("send" to "https://send/endpoint", "metadata" to "https://metadata/endpoint/"))
   }
 
   @Test
@@ -135,9 +134,9 @@ class EventLogConfigVersionParserTest : EventLogConfigBaseParserTest() {
   "releaseFilters": [{ "releaseType": "ALL", "from": 0, "to": 256 }],
   "endpoints": {
     "send": "https://send/endpoint",
-    "whitelist": "https://whitelist/endpoint/"
+    "metadata": "https://metadata/endpoint/"
   }
-}""", mapOf("send" to "https://send/endpoint", "whitelist" to "https://whitelist/endpoint/"))
+}""", mapOf("send" to "https://send/endpoint", "metadata" to "https://metadata/endpoint/"))
   }
 
   @Test
@@ -151,7 +150,7 @@ class EventLogConfigVersionParserTest : EventLogConfigBaseParserTest() {
   "releaseFilters": [{ "releaseType": "ALL", "from": 0, "to": 256 }],
   "endpoints": {
     "send": "https://send/endpoint",
-    "whitelist": "https://whitelist/endpoint/"
+    "metadata": "https://metadata/endpoint/"
   }
 }""")
   }
@@ -167,7 +166,7 @@ class EventLogConfigVersionParserTest : EventLogConfigBaseParserTest() {
   "releaseFilters": [{ "releaseType": "ALL", "from": 0, "to": 256 }],
   "endpoints": {
     "send": "https://send/endpoint",
-    "whitelist": "https://whitelist/endpoint/"
+    "metadata": "https://metadata/endpoint/"
   }
 }""")
   }
@@ -182,7 +181,7 @@ class EventLogConfigVersionParserTest : EventLogConfigBaseParserTest() {
   "releaseFilters": [{ "releaseType": "ALL", "from": 0, "to": 256 }],
   "endpoints": {
     "send": "https://send/endpoint",
-    "whitelist": "https://whitelist/endpoint/"
+    "metadata": "https://metadata/endpoint/"
   }
 }""")
   }
@@ -197,7 +196,7 @@ class EventLogConfigVersionParserTest : EventLogConfigBaseParserTest() {
   "releaseFilters": [{ "releaseType": "ALL", "from": 0, "to": 256 }],
   "endpoints": {
     "send": "https://send/endpoint",
-    "whitelist": "https://whitelist/endpoint/"
+    "metadata": "https://metadata/endpoint/"
   }
 }""")
   }
@@ -214,9 +213,9 @@ class EventLogConfigVersionParserTest : EventLogConfigBaseParserTest() {
   "releaseFilters": [{ "releaseType": "ALL", "from": 0, "to": 256 }],
   "endpoints": {
     "send": "https://send/endpoint",
-    "whitelist": "https://whitelist/endpoint/"
+    "metadata": "https://metadata/endpoint/"
   }
-}""", mapOf("send" to "https://send/endpoint", "whitelist" to "https://whitelist/endpoint/"))
+}""", mapOf("send" to "https://send/endpoint", "metadata" to "https://metadata/endpoint/"))
   }
 
   @Test
@@ -229,9 +228,9 @@ class EventLogConfigVersionParserTest : EventLogConfigBaseParserTest() {
   "releaseFilters": [{ "releaseType": "ALL", "from": 0, "to": 256 }],
   "endpoints": {
     "send": "https://send/endpoint",
-    "whitelist": "https://whitelist/endpoint/"
+    "metadata": "https://metadata/endpoint/"
   }
-}""", mapOf("send" to "https://send/endpoint", "whitelist" to "https://whitelist/endpoint/"))
+}""", mapOf("send" to "https://send/endpoint", "metadata" to "https://metadata/endpoint/"))
   }
 
   @Test
@@ -244,9 +243,9 @@ class EventLogConfigVersionParserTest : EventLogConfigBaseParserTest() {
   "releaseFilters": [{ "releaseType": "ALL", "from": 0, "to": 256 }],
   "endpoints": {
     "send": "https://send/endpoint",
-    "whitelist": "https://whitelist/endpoint/"
+    "metadata": "https://metadata/endpoint/"
   }
-}""", mapOf("send" to "https://send/endpoint", "whitelist" to "https://whitelist/endpoint/"))
+}""", mapOf("send" to "https://send/endpoint", "metadata" to "https://metadata/endpoint/"))
   }
 
   @Test
@@ -259,9 +258,9 @@ class EventLogConfigVersionParserTest : EventLogConfigBaseParserTest() {
   "releaseFilters": [{ "releaseType": "ALL", "from": 0, "to": 256 }],
   "endpoints": {
     "send": "https://send/endpoint",
-    "whitelist": "https://whitelist/endpoint/"
+    "metadata": "https://metadata/endpoint/"
   }
-}""", mapOf("send" to "https://send/endpoint", "whitelist" to "https://whitelist/endpoint/"))
+}""", mapOf("send" to "https://send/endpoint", "metadata" to "https://metadata/endpoint/"))
   }
 
   @Test
@@ -274,7 +273,7 @@ class EventLogConfigVersionParserTest : EventLogConfigBaseParserTest() {
   "releaseFilters": [{ "releaseType": "ALL", "from": 0, "to": 256 }],
   "endpoints": {
     "send": "https://send/endpoint",
-    "whitelist": "https://whitelist/endpoint/"
+    "metadata": "https://metadata/endpoint/"
   }
 }""")
   }
@@ -289,7 +288,7 @@ class EventLogConfigVersionParserTest : EventLogConfigBaseParserTest() {
   "releaseFilters": [{ "releaseType": "ALL", "from": 0, "to": 256 }],
   "endpoints": {
     "send": "https://send/endpoint",
-    "whitelist": "https://whitelist/endpoint/"
+    "metadata": "https://metadata/endpoint/"
   }
 }""")
   }
@@ -306,7 +305,7 @@ class EventLogConfigVersionParserTest : EventLogConfigBaseParserTest() {
   "releaseFilters": [{ "releaseType": "ALL", "from": 0, "to": 256 }],
   "endpoints": {
     "send": "https://send/endpoint",
-    "whitelist": "https://whitelist/endpoint/"
+    "metadata": "https://metadata/endpoint/"
   }
 }""")
   }
@@ -321,7 +320,7 @@ class EventLogConfigVersionParserTest : EventLogConfigBaseParserTest() {
   "releaseFilters": [{ "releaseType": "ALL", "from": 0, "to": 256 }],
   "endpoints": {
     "send": "https://send/endpoint",
-    "whitelist": "https://whitelist/endpoint/"
+    "metadata": "https://metadata/endpoint/"
   }
 }""")
   }
@@ -336,7 +335,7 @@ class EventLogConfigVersionParserTest : EventLogConfigBaseParserTest() {
   "releaseFilters": [{ "releaseType": "ALL", "from": 0, "to": 256 }],
   "endpoints": {
     "send": "https://send/endpoint",
-    "whitelist": "https://whitelist/endpoint/"
+    "metadata": "https://metadata/endpoint/"
   }
 }""")
   }
@@ -351,9 +350,9 @@ class EventLogConfigVersionParserTest : EventLogConfigBaseParserTest() {
   "releaseFilters": [{ "releaseType": "ALL", "from": 0, "to": 256 }],
   "endpoints": {
     "send": "https://send/endpoint",
-    "whitelist": "https://whitelist/endpoint/"
+    "metadata": "https://metadata/endpoint/"
   }
-}""", mapOf("send" to "https://send/endpoint", "whitelist" to "https://whitelist/endpoint/"))
+}""", mapOf("send" to "https://send/endpoint", "metadata" to "https://metadata/endpoint/"))
   }
 
   @Test
@@ -366,9 +365,9 @@ class EventLogConfigVersionParserTest : EventLogConfigBaseParserTest() {
   "releaseFilters": [{ "releaseType": "ALL", "from": 0, "to": 256 }],
   "endpoints": {
     "send": "https://send/endpoint",
-    "whitelist": "https://whitelist/endpoint/"
+    "metadata": "https://metadata/endpoint/"
   }
-}""", mapOf("send" to "https://send/endpoint", "whitelist" to "https://whitelist/endpoint/"))
+}""", mapOf("send" to "https://send/endpoint", "metadata" to "https://metadata/endpoint/"))
   }
   //endregion
 
@@ -384,9 +383,9 @@ class EventLogConfigVersionParserTest : EventLogConfigBaseParserTest() {
   "releaseFilters": [{ "releaseType": "ALL", "from": 0, "to": 256 }],
   "endpoints": {
     "send": "https://send/endpoint",
-    "whitelist": "https://whitelist/endpoint/"
+    "metadata": "https://metadata/endpoint/"
   }
-}""", mapOf("send" to "https://send/endpoint", "whitelist" to "https://whitelist/endpoint/"))
+}""", mapOf("send" to "https://send/endpoint", "metadata" to "https://metadata/endpoint/"))
   }
 
   @Test
@@ -400,9 +399,9 @@ class EventLogConfigVersionParserTest : EventLogConfigBaseParserTest() {
   "releaseFilters": [{ "releaseType": "ALL", "from": 0, "to": 256 }],
   "endpoints": {
     "send": "https://send/endpoint",
-    "whitelist": "https://whitelist/endpoint/"
+    "metadata": "https://metadata/endpoint/"
   }
-}""", mapOf("send" to "https://send/endpoint", "whitelist" to "https://whitelist/endpoint/"))
+}""", mapOf("send" to "https://send/endpoint", "metadata" to "https://metadata/endpoint/"))
   }
 
   @Test
@@ -416,7 +415,7 @@ class EventLogConfigVersionParserTest : EventLogConfigBaseParserTest() {
   "releaseFilters": [{ "releaseType": "ALL", "from": 0, "to": 256 }],
   "endpoints": {
     "send": "https://send/endpoint",
-    "whitelist": "https://whitelist/endpoint/"
+    "metadata": "https://metadata/endpoint/"
   }
 }""")
   }
@@ -432,9 +431,9 @@ class EventLogConfigVersionParserTest : EventLogConfigBaseParserTest() {
   "releaseFilters": [{ "releaseType": "ALL", "from": 0, "to": 256 }],
   "endpoints": {
     "send": "https://send/endpoint",
-    "whitelist": "https://whitelist/endpoint/"
+    "metadata": "https://metadata/endpoint/"
   }
-}""", mapOf("send" to "https://send/endpoint", "whitelist" to "https://whitelist/endpoint/"))
+}""", mapOf("send" to "https://send/endpoint", "metadata" to "https://metadata/endpoint/"))
   }
 
   @Test
@@ -448,7 +447,7 @@ class EventLogConfigVersionParserTest : EventLogConfigBaseParserTest() {
   "releaseFilters": [{ "releaseType": "ALL", "from": 0, "to": 256 }],
   "endpoints": {
     "send": "https://send/endpoint",
-    "whitelist": "https://whitelist/endpoint/"
+    "metadata": "https://metadata/endpoint/"
   }
 }""")
   }
@@ -464,9 +463,9 @@ class EventLogConfigVersionParserTest : EventLogConfigBaseParserTest() {
   "releaseFilters": [{ "releaseType": "ALL", "from": 0, "to": 256 }],
   "endpoints": {
     "send": "https://send/endpoint",
-    "whitelist": "https://whitelist/endpoint/"
+    "metadata": "https://metadata/endpoint/"
   }
-}""", mapOf("send" to "https://send/endpoint", "whitelist" to "https://whitelist/endpoint/"))
+}""", mapOf("send" to "https://send/endpoint", "metadata" to "https://metadata/endpoint/"))
   }
 
   @Test
@@ -480,7 +479,7 @@ class EventLogConfigVersionParserTest : EventLogConfigBaseParserTest() {
   "releaseFilters": [{ "releaseType": "ALL", "from": 0, "to": 256 }],
   "endpoints": {
     "send": "https://send/endpoint",
-    "whitelist": "https://whitelist/endpoint/"
+    "metadata": "https://metadata/endpoint/"
   }
 }""")
   }
@@ -496,7 +495,7 @@ class EventLogConfigVersionParserTest : EventLogConfigBaseParserTest() {
   "releaseFilters": [{ "releaseType": "ALL", "from": 0, "to": 256 }],
   "endpoints": {
     "send": "https://send/endpoint",
-    "whitelist": "https://whitelist/endpoint/"
+    "metadata": "https://metadata/endpoint/"
   }
 }""")
   }
@@ -512,7 +511,7 @@ class EventLogConfigVersionParserTest : EventLogConfigBaseParserTest() {
   "releaseFilters": [{ "releaseType": "ALL", "from": 0, "to": 256 }],
   "endpoints": {
     "send": "https://send/endpoint",
-    "whitelist": "https://whitelist/endpoint/"
+    "metadata": "https://metadata/endpoint/"
   }
 }""")
   }
@@ -530,7 +529,7 @@ class EventLogConfigVersionParserTest : EventLogConfigBaseParserTest() {
   "releaseFilters": [{ "releaseType": "ALL", "from": 0, "to": 256 }],
   "endpoints": {
     "send": "https://send/endpoint",
-    "whitelist": "https://whitelist/endpoint/"
+    "metadata": "https://metadata/endpoint/"
   }
 },
 {
@@ -541,15 +540,15 @@ class EventLogConfigVersionParserTest : EventLogConfigBaseParserTest() {
   "releaseFilters": [{ "releaseType": "ALL", "from": 32, "to": 64 }],
   "endpoints": {
     "send": "https://send/endpoint-last",
-    "whitelist": "https://whitelist/endpoint-last"
+    "metadata": "https://metadata/endpoint-last"
   }
-}""", mapOf("send" to "https://send/endpoint", "whitelist" to "https://whitelist/endpoint/"))
+}""", mapOf("send" to "https://send/endpoint", "metadata" to "https://metadata/endpoint/"))
   }
 
   @Test
   fun `test parse endpoint with last version applicable`() {
     val config = mapOf(
-      RELEASE to EventLogSendConfiguration(listOf(EventLogBucketRange(32, 64)))
+      RELEASE to listOf(ConfigurationBucketRange(32, 64))
     )
     doTestVersion("""
 {
@@ -560,7 +559,7 @@ class EventLogConfigVersionParserTest : EventLogConfigBaseParserTest() {
   "releaseFilters": [{ "releaseType": "ALL", "from": 0, "to": 256 }],
   "endpoints": {
     "send": "https://send/endpoint",
-    "whitelist": "https://whitelist/endpoint/"
+    "metadata": "https://metadata/endpoint/"
   }
 },
 {
@@ -570,15 +569,15 @@ class EventLogConfigVersionParserTest : EventLogConfigBaseParserTest() {
   "releaseFilters": [{ "releaseType": "ALL", "from": 32, "to": 64 }],
   "endpoints": {
     "send": "https://send/endpoint-last",
-    "whitelist": "https://whitelist/endpoint-last"
+    "metadata": "https://metadata/endpoint-last"
   }
-}""", mapOf("send" to "https://send/endpoint-last", "whitelist" to "https://whitelist/endpoint-last"), config)
+}""", mapOf("send" to "https://send/endpoint-last", "metadata" to "https://metadata/endpoint-last"), config)
   }
 
   @Test
   fun `test parse endpoint with middle version applicable`() {
     val config = mapOf(
-      RELEASE to EventLogSendConfiguration(listOf(EventLogBucketRange(32, 64)))
+      RELEASE to listOf(ConfigurationBucketRange(32, 64))
     )
     doTestVersion("""
 {
@@ -589,7 +588,7 @@ class EventLogConfigVersionParserTest : EventLogConfigBaseParserTest() {
   "releaseFilters": [{ "releaseType": "ALL", "from": 0, "to": 256 }],
   "endpoints": {
     "send": "https://send/endpoint",
-    "whitelist": "https://whitelist/endpoint/"
+    "metadata": "https://metadata/endpoint/"
   }
 },
 {
@@ -600,7 +599,7 @@ class EventLogConfigVersionParserTest : EventLogConfigBaseParserTest() {
   "releaseFilters": [{ "releaseType": "ALL", "from": 32, "to": 64 }],
   "endpoints": {
     "send": "https://send/endpoint-middle",
-    "whitelist": "https://whitelist/endpoint-middle"
+    "metadata": "https://metadata/endpoint-middle"
   }
 },
 {
@@ -610,9 +609,9 @@ class EventLogConfigVersionParserTest : EventLogConfigBaseParserTest() {
   "releaseFilters": [{ "releaseType": "ALL", "from": 32, "to": 64 }],
   "endpoints": {
     "send": "https://send/endpoint-last",
-    "whitelist": "https://whitelist/endpoint-last"
+    "metadata": "https://metadata/endpoint-last"
   }
-}""", mapOf("send" to "https://send/endpoint-middle", "whitelist" to "https://whitelist/endpoint-middle"), config)
+}""", mapOf("send" to "https://send/endpoint-middle", "metadata" to "https://metadata/endpoint-middle"), config)
   }
 
   @Test
@@ -625,7 +624,7 @@ class EventLogConfigVersionParserTest : EventLogConfigBaseParserTest() {
   "releaseFilters": [{ "releaseType": "ALL", "from": 0, "to": 256 }],
   "endpoints": {
     "send": "https://send/endpoint",
-    "whitelist": "https://whitelist/endpoint/"
+    "metadata": "https://metadata/endpoint/"
   }
 },
 {
@@ -635,7 +634,7 @@ class EventLogConfigVersionParserTest : EventLogConfigBaseParserTest() {
   "releaseFilters": [{ "releaseType": "ALL", "from": 32, "to": 64 }],
   "endpoints": {
     "send": "https://send/endpoint-last",
-    "whitelist": "https://whitelist/endpoint-last"
+    "metadata": "https://metadata/endpoint-last"
   }
 }""")
   }
@@ -651,7 +650,7 @@ class EventLogConfigVersionParserTest : EventLogConfigBaseParserTest() {
   "releaseFilters": [{ "releaseType": "ALL", "from": 0, "to": 256 }],
   "endpoints": {
     "send": "https://send/endpoint",
-    "whitelist": "https://whitelist/endpoint/"
+    "metadata": "https://metadata/endpoint/"
   }
 },
 {
@@ -661,15 +660,15 @@ class EventLogConfigVersionParserTest : EventLogConfigBaseParserTest() {
   "releaseFilters": [{ "releaseType": "ALL", "from": 32, "to": 64 }],
   "endpoints": {
     "send": "https://send/endpoint-last",
-    "whitelist": "https://whitelist/endpoint-last"
+    "metadata": "https://metadata/endpoint-last"
   }
-}""", mapOf("send" to "https://send/endpoint", "whitelist" to "https://whitelist/endpoint/"))
+}""", mapOf("send" to "https://send/endpoint", "metadata" to "https://metadata/endpoint/"))
   }
 
   @Test
   fun `test parse endpoint with two last versions applicable`() {
     val config = mapOf(
-      RELEASE to EventLogSendConfiguration(listOf(EventLogBucketRange(32, 64)))
+      RELEASE to listOf(ConfigurationBucketRange(32, 64))
     )
     doTestVersion("""
 {
@@ -680,7 +679,7 @@ class EventLogConfigVersionParserTest : EventLogConfigBaseParserTest() {
   "releaseFilters": [{ "releaseType": "ALL", "from": 0, "to": 256 }],
   "endpoints": {
     "send": "https://send/endpoint",
-    "whitelist": "https://whitelist/endpoint/"
+    "metadata": "https://metadata/endpoint/"
   }
 },
 {
@@ -690,7 +689,7 @@ class EventLogConfigVersionParserTest : EventLogConfigBaseParserTest() {
   "releaseFilters": [{ "releaseType": "ALL", "from": 32, "to": 64 }],
   "endpoints": {
     "send": "https://send/endpoint-middle",
-    "whitelist": "https://whitelist/endpoint-middle"
+    "metadata": "https://metadata/endpoint-middle"
   }
 },
 {
@@ -700,9 +699,9 @@ class EventLogConfigVersionParserTest : EventLogConfigBaseParserTest() {
   "releaseFilters": [{ "releaseType": "ALL", "from": 32, "to": 64 }],
   "endpoints": {
     "send": "https://send/endpoint-last",
-    "whitelist": "https://whitelist/endpoint-last"
+    "metadata": "https://metadata/endpoint-last"
   }
-}""", mapOf("send" to "https://send/endpoint-middle", "whitelist" to "https://whitelist/endpoint-middle"), config)
+}""", mapOf("send" to "https://send/endpoint-middle", "metadata" to "https://metadata/endpoint-middle"), config)
   }
   //endregion
 }

@@ -1,9 +1,11 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.model
 
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream
 import com.intellij.serialization.ObjectSerializer
+import com.intellij.util.ReflectionUtil
+import com.intellij.util.io.URLUtil
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.assertj.core.api.BDDAssertions.then
@@ -14,10 +16,22 @@ import java.lang.reflect.InvocationHandler
 import java.lang.reflect.Method
 import java.lang.reflect.Proxy
 import java.net.URLClassLoader
+import java.nio.file.Files
+import java.nio.file.StandardCopyOption
 
 class DataNodeTest {
   lateinit var classLoader: ClassLoader
-  private val libUrl = javaClass.classLoader.getResource("dataNodeTest/lib.jar")
+  private val libUrl by lazy {
+    val resource = "dataNodeTest/lib.jar"
+    var libUrl = javaClass.classLoader.getResource(resource)!!
+    if (libUrl.protocol == URLUtil.JAR_PROTOCOL) {
+      // jar in jar
+      val extracted = Files.createTempFile("extracted", ".jar")
+      Files.copy(libUrl.openStream(), extracted, StandardCopyOption.REPLACE_EXISTING)
+      libUrl = extracted.toUri().toURL()
+    }
+    libUrl
+  }
 
   @Before
   fun setUp() {
@@ -57,8 +71,7 @@ class DataNodeTest {
 
     val invocationHandler = InvocationHandler { _, _, _ -> 0 }
 
-    val proxyInstance = Proxy.newProxyInstance(classLoader, arrayOf(interfaceClass), invocationHandler)
-    @Suppress("UNCHECKED_CAST")
+    val proxyInstance = ReflectionUtil.proxy(interfaceClass, invocationHandler)
     val deserialized = wrapAndDeserialize(proxyInstance, URLClassLoader(arrayOf(libUrl)))
     assertThat(deserialized.data.javaClass.interfaces)
       .extracting("name")
@@ -86,7 +99,7 @@ class DataNodeTest {
   fun `proxy instance referenced from invocation handler (de-)serialized`() {
     val handler = object: InvocationHandler, Serializable {
       var counter: Int = 0
-      override fun invoke(proxy: Any?, method: Method?, args: Array<out Any>?): Any? {
+      override fun invoke(proxy: Any?, method: Method?, args: Array<out Any>?): Any {
         return when (method?.name) {
           "incrementAndGet" -> ++counter
           else -> Unit

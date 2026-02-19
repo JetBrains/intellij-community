@@ -1,22 +1,25 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diff.tools.fragmented;
 
+import com.intellij.diff.comparison.iterables.DiffIterable;
+import com.intellij.diff.comparison.iterables.DiffIterableUtil;
+import com.intellij.diff.util.Range;
 import com.intellij.util.SmartList;
-import gnu.trove.TIntFunction;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
+import java.util.function.IntUnaryOperator;
 
 public final class LineNumberConvertor {
   // Master -> Slave
-  @NotNull private final TreeMap<Integer, Data> myFragments;
+  private final @NotNull TreeMap<Integer, Data> myFragments;
 
   // Slave -> Master
-  @NotNull private final TreeMap<Integer, Data> myInvertedFragments;
+  private final @NotNull TreeMap<Integer, Data> myInvertedFragments;
 
-  @NotNull private final Corrector myCorrector = new Corrector();
+  private final @NotNull Corrector myCorrector = new Corrector();
 
   private LineNumberConvertor(@NotNull TreeMap<Integer, Data> fragments,
                               @NotNull TreeMap<Integer, Data> invertedFragments) {
@@ -44,8 +47,7 @@ public final class LineNumberConvertor {
   // Impl
   //
 
-  @NotNull
-  public TIntFunction createConvertor() {
+  public @NotNull IntUnaryOperator createConvertor() {
     return this::convert;
   }
 
@@ -95,8 +97,8 @@ public final class LineNumberConvertor {
   }
 
   public static class Builder {
-    @NotNull private final TreeMap<Integer, Data> myFragments = new TreeMap<>();
-    @NotNull private final TreeMap<Integer, Data> myInvertedFragments = new TreeMap<>();
+    private final @NotNull TreeMap<Integer, Data> myFragments = new TreeMap<>();
+    private final @NotNull TreeMap<Integer, Data> myInvertedFragments = new TreeMap<>();
 
     public void put(int masterStart, int slaveStart, int length) {
       put(masterStart, slaveStart, length, length);
@@ -107,10 +109,18 @@ public final class LineNumberConvertor {
       myInvertedFragments.put(slaveStart, new Data(slaveLength, masterStart, masterLength));
     }
 
-    @NotNull
-    public LineNumberConvertor build() {
+    public @NotNull LineNumberConvertor build() {
       return new LineNumberConvertor(myFragments, myInvertedFragments);
     }
+  }
+
+  public static @NotNull LineNumberConvertor fromIterable(@NotNull DiffIterable iterable) {
+    LineNumberConvertor.Builder builder = new LineNumberConvertor.Builder();
+    for (kotlin.Pair<Range, Boolean> pair : DiffIterableUtil.iterateAll(iterable)) {
+      Range range = pair.getFirst();
+      builder.put(range.start1, range.start2, range.end1 - range.start1, range.end2 - range.start2);
+    }
+    return builder.build();
   }
 
   private static class Data {
@@ -276,7 +286,7 @@ public final class LineNumberConvertor {
       }
     }
 
-    private int append(int value, int shift) {
+    private static int append(int value, int shift) {
       return value == -1 ? -1 : value + shift;
     }
   }

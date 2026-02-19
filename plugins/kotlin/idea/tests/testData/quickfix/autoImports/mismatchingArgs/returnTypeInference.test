@@ -1,0 +1,36 @@
+// FILE: first.before.kt
+// "Import function 'foo'" "true"
+// ERROR: No value passed for parameter 't'
+
+package main
+
+class Container<T>
+
+fun <T> foo(t: T): Container<T> = Container()
+
+fun usage(): Container<String> {
+    return <caret>foo()
+}
+
+// FILE: second.kt
+package other
+
+import main.Container
+
+fun <T> foo(): Container<T> = Container()
+
+// FILE: first.after.kt
+// "Import function 'foo'" "true"
+// ERROR: No value passed for parameter 't'
+
+package main
+
+import other.foo
+
+class Container<T>
+
+fun <T> foo(t: T): Container<T> = Container()
+
+fun usage(): Container<String> {
+    return <caret>foo()
+}

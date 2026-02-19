@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.components;
 
 import com.intellij.CommonBundle;
@@ -9,14 +9,20 @@ import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Pair;
 import com.intellij.ui.Gray;
 import com.intellij.ui.scale.JBUIScale;
+import com.intellij.util.ui.HTMLEditorKitBuilder;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.Action;
+import javax.swing.BorderFactory;
+import javax.swing.JComponent;
+import javax.swing.JEditorPane;
+import javax.swing.JPanel;
 import javax.swing.border.CompoundBorder;
-import java.awt.*;
+import java.awt.BorderLayout;
+import java.awt.Component;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -29,7 +35,7 @@ public final class LegalNoticeDialog extends DialogWrapper {
     private Project project;
     private Component parent;
     private @NlsContexts.Button String cancelText;
-    private Pair<String, Integer> customAction;
+    private Pair<@Nls String, Integer> customAction;
 
     private Builder(@NlsContexts.DialogTitle String title, @NlsContexts.DialogMessage String message) {
       this.title = title;
@@ -64,13 +70,11 @@ public final class LegalNoticeDialog extends DialogWrapper {
     }
   }
 
-  public static Builder build(@NotNull @NlsContexts.DialogTitle String title,
-                              @NotNull @NlsContexts.DialogMessage String message) {
+  public static Builder build(@NotNull @NlsContexts.DialogTitle String title, @NotNull @NlsContexts.DialogMessage String message) {
     return new Builder(title, message);
   }
 
   private final Builder myBuilder;
-  private JComponent myFocusedComponent;
 
   private LegalNoticeDialog(Builder builder) {
     super(builder.project, builder.parent, true, IdeModalityType.PROJECT);
@@ -88,12 +92,11 @@ public final class LegalNoticeDialog extends DialogWrapper {
     iconPanel.add(new JBLabel(AllIcons.General.WarningDialog), BorderLayout.NORTH);
 
     JEditorPane messageArea = new JEditorPane();
-    messageArea.setEditorKit(UIUtil.getHTMLEditorKit());
+    messageArea.setEditorKit(HTMLEditorKitBuilder.simple());
     messageArea.setEditable(false);
     messageArea.setPreferredSize(JBUI.size(500, 100));
     messageArea.setBorder(new CompoundBorder(BorderFactory.createLineBorder(Gray._200), JBUI.Borders.empty(3)));
     messageArea.setText(UIUtil.toHtml(myBuilder.message));
-    myFocusedComponent = messageArea;
 
     JPanel panel = new JPanel(new BorderLayout(JBUIScale.scale(3), 0));
     panel.add(iconPanel, BorderLayout.WEST);
@@ -110,10 +113,5 @@ public final class LegalNoticeDialog extends DialogWrapper {
     }
     actions.add(getCancelAction());
     return actions.toArray(new Action[0]);
-  }
-
-  @Override
-  public JComponent getPreferredFocusedComponent() {
-    return myFocusedComponent;
   }
 }

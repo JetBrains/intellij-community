@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testFramework;
 
 import com.intellij.util.MathUtil;
@@ -11,9 +11,6 @@ import javax.management.ObjectName;
 import java.lang.management.ManagementFactory;
 import java.math.BigInteger;
 
-/**
- * @author peter
- */
 final class CpuTimings {
 
   private static final Mandelbrot MANDELBROT = new Mandelbrot(765);
@@ -32,15 +29,15 @@ final class CpuTimings {
         minIteration = i;
       }
       else if (i - minIteration > 100) {
-        System.out.println("CPU timing: " + minTime + ", calculated in " + (System.currentTimeMillis() - start) + "ms");
+        System.out.println("CPU timing rating: " + minTime + " (calculated in " + (System.currentTimeMillis() - start) + "ms)");
         return minTime;
       }
     }
   }
 
   private static class Mandelbrot {
-    private final static double LIMIT_SQUARED = 4.0;
-    private final static int ITERATIONS = 50;
+    private static final double LIMIT_SQUARED = 4.0;
+    private static final int ITERATIONS = 50;
 
     Mandelbrot(int size) {
       this.size = size;

@@ -16,13 +16,8 @@
 package com.intellij.history.core;
 
 import com.intellij.history.core.changes.ChangeSet;
+import org.jetbrains.annotations.ApiStatus;
 
-public class ChangeSetHolder {
-  public final int id;
-  public final ChangeSet changeSet;
-
-  public ChangeSetHolder(int id, ChangeSet changeSet) {
-    this.id = id;
-    this.changeSet = changeSet;
-  }
+@ApiStatus.Internal
+public record ChangeSetHolder(int id, ChangeSet changeSet) {
 }

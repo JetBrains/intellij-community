@@ -3,6 +3,7 @@ package org.jetbrains.jps.cmdline;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.ParameterizedRunnable;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.JpsModel;
 import org.jetbrains.jps.model.serialization.JpsSerializationManager;
@@ -28,7 +29,7 @@ public final class JpsModelLoaderImpl implements JpsModelLoader {
   }
 
   @Override
-  public JpsModel loadModel() throws IOException {
+  public @NotNull JpsModel loadModel() throws IOException {
     final long start = System.nanoTime();
     LOG.info("Loading model: project path = " + myProjectPath + ", global options path = " + myGlobalOptionsPath);
     final JpsModel model = JpsSerializationManager.getInstance().loadModel(myProjectPath, myGlobalOptionsPath, myLoadUnloadedModules);

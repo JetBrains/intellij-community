@@ -32,7 +32,7 @@ import java.util.List;
 /**
  * @author Max Medvedev
  */
-public class GroovyStatementSelectioner extends ExtendWordSelectionHandlerBase {
+public final class GroovyStatementSelectioner extends ExtendWordSelectionHandlerBase {
   @Override
   public boolean canSelect(@NotNull PsiElement e) {
     return e instanceof GrExpression && PsiUtil.isExpressionStatement(e) ||

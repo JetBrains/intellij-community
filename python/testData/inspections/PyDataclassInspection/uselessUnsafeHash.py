@@ -1,7 +1,7 @@
 import dataclasses
 
 
-@dataclasses.dataclass(<error descr="'unsafe_hash' should be false if the class defines '__hash__'">unsafe_hash=True</error>)
+@dataclasses.dataclass(<error descr="'unsafe_hash' should be False if the class defines '__hash__'">unsafe_hash=True</error>)
 class A2:
     a: int = 1
 
@@ -19,7 +19,7 @@ class Derived2(Base2):
     d: int = 1
 
 
-@dataclasses.dataclass(<error descr="'unsafe_hash' should be false if the class defines '__hash__'">unsafe_hash=True</error>)
+@dataclasses.dataclass(<error descr="'unsafe_hash' should be False if the class defines '__hash__'">unsafe_hash=True</error>)
 class A1:
     a: int = 1
 

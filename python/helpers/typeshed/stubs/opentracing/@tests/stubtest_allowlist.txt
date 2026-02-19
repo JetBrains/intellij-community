@@ -1,0 +1,5 @@
+# They raise ModuleNotFoundError so they are not present at stubtest runtime:
+opentracing.harness.api_check
+opentracing.harness.scope_check
+opentracing.scope_managers.gevent
+opentracing.scope_managers.tornado

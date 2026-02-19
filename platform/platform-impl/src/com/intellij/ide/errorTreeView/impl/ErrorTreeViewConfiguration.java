@@ -1,19 +1,24 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.errorTreeView.impl;
 
-import com.intellij.openapi.components.*;
+import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.Service;
+import com.intellij.openapi.components.State;
+import com.intellij.openapi.components.Storage;
+import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.xmlb.XmlSerializerUtil;
 import org.jetbrains.annotations.NotNull;
 
+@Service(Service.Level.PROJECT)
 @State(name = "ErrorTreeViewConfiguration", storages = @Storage(StoragePathMacros.PRODUCT_WORKSPACE_FILE))
-public class ErrorTreeViewConfiguration implements PersistentStateComponent<ErrorTreeViewConfiguration> {
+public final class ErrorTreeViewConfiguration implements PersistentStateComponent<ErrorTreeViewConfiguration> {
   public boolean IS_AUTOSCROLL_TO_SOURCE = false;
   public boolean HIDE_WARNINGS = false;
   public boolean HIDE_INFO_MESSAGES = false;
 
   public static ErrorTreeViewConfiguration getInstance(Project project) {
-    return ServiceManager.getService(project, ErrorTreeViewConfiguration.class);
+    return project.getService(ErrorTreeViewConfiguration.class);
   }
 
   public boolean isAutoscrollToSource() {
@@ -46,7 +51,7 @@ public class ErrorTreeViewConfiguration implements PersistentStateComponent<Erro
   }
 
   @Override
-  public void loadState(@NotNull final ErrorTreeViewConfiguration state) {
+  public void loadState(final @NotNull ErrorTreeViewConfiguration state) {
     XmlSerializerUtil.copyBean(state, this);
   }
 }

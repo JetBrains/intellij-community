@@ -1,9 +1,11 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.ex;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
+import com.intellij.openapi.editor.impl.FilteringMarkupIterator;
+import com.intellij.openapi.editor.impl.RangeMarkerImpl;
 import com.intellij.openapi.editor.impl.event.MarkupModelListener;
 import com.intellij.openapi.editor.markup.HighlighterTargetArea;
 import com.intellij.openapi.editor.markup.MarkupModel;
@@ -11,6 +13,7 @@ import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.util.Consumer;
 import com.intellij.util.Processor;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -31,25 +34,25 @@ public interface MarkupModelEx extends MarkupModel {
   @Nullable
   RangeHighlighterEx addPersistentLineHighlighter(int lineNumber, int layer, @Nullable TextAttributes textAttributes);
 
-  void fireAttributesChanged(@NotNull RangeHighlighterEx segmentHighlighter, boolean renderersChanged, boolean fontStyleChanged);
-
-  void fireAfterAdded(@NotNull RangeHighlighterEx segmentHighlighter);
-
-  void fireBeforeRemoved(@NotNull RangeHighlighterEx segmentHighlighter);
-
+  /**
+   * @deprecated use {@code RangeHighlighterEx.setXXX()} methods to fire changes
+   */
+  @Deprecated
+  @ApiStatus.Internal
+  default void fireAttributesChanged(@NotNull RangeHighlighterEx highlighter, boolean renderersChanged, boolean fontStyleOrColorChanged) {}
+  
   boolean containsHighlighter(@NotNull RangeHighlighter highlighter);
-
-  void addRangeHighlighter(@NotNull RangeHighlighterEx marker,
-                           int start,
-                           int end,
-                           boolean greedyToLeft,
-                           boolean greedyToRight,
-                           int layer);
 
   void addMarkupModelListener(@NotNull Disposable parentDisposable, @NotNull MarkupModelListener listener);
 
   void setRangeHighlighterAttributes(@NotNull RangeHighlighter highlighter, @NotNull TextAttributes textAttributes);
 
+  /**
+   * process all highlighters intersecting with [start, end) interval by {@code processor}.
+   * You must not do any changes to the markup model in the processor.
+   * Moreover, no meaningful work should be performed in the {@code processor} because iteration happens under the MarkupModel lock.
+   * @return true if no invocations of the {@code processor} returned false
+   */
   boolean processRangeHighlightersOverlappingWith(int start, int end, @NotNull Processor<? super RangeHighlighterEx> processor);
   boolean processRangeHighlightersOutside(int start, int end, @NotNull Processor<? super RangeHighlighterEx> processor);
 
@@ -57,21 +60,21 @@ public interface MarkupModelEx extends MarkupModel {
   MarkupIterator<RangeHighlighterEx> overlappingIterator(int startOffset, int endOffset);
 
   /**
-   * @deprecated onlyRenderedInScrollBar doesn't affect anything
+   * makes an iterator which enumerates only error-stripe {@link RangeHighlighterEx}s,
+   * i.e. those for which {@link com.intellij.openapi.editor.impl.ErrorStripeMarkersModel#isErrorStripeHighlighter} returns true
    */
-  @Deprecated
   @NotNull
-  default MarkupIterator<RangeHighlighterEx> overlappingIterator(int startOffset,
-                                                         int endOffset,
-                                                         boolean onlyRenderedInGutter,
-                                                         boolean onlyRenderedInScrollBar) {
-    return overlappingIterator(startOffset, endOffset, onlyRenderedInGutter);
+  default MarkupIterator<RangeHighlighterEx> overlappingErrorStripeIterator(int startOffset, int endOffset) {
+    return new FilteringMarkupIterator<>(overlappingIterator(startOffset, endOffset), h->h.getErrorStripeMarkColor(null) != null);
   }
-
+  /**
+   * makes an iterator which enumerates only {@link RangeHighlighterEx}s shown on the gutter.
+   * i.e. those for which {@link RangeHighlighterEx#isRenderedInGutter()} returns true
+   */
   @NotNull
-  MarkupIterator<RangeHighlighterEx> overlappingIterator(int startOffset,
-                                                         int endOffset,
-                                                         boolean onlyRenderedInGutter);
+  default MarkupIterator<RangeHighlighterEx> overlappingGutterIterator(int startOffset, int endOffset) {
+    return new FilteringMarkupIterator<>(overlappingIterator(startOffset, endOffset), h->h.isRenderedInGutter());
+  }
 
   // optimization: creates highlighter and fires only one event: highlighterCreated
   @NotNull
@@ -84,14 +87,16 @@ public interface MarkupModelEx extends MarkupModel {
                                                             @Nullable Consumer<? super RangeHighlighterEx> changeAttributesAction);
 
   /**
-   * Consider using {@link #addRangeHighlighterAndChangeAttributes(TextAttributesKey, int, int, int, HighlighterTargetArea, boolean, Consumer)}
-   * unless it's really necessary.
+   * @param isPersistent use different logic to update range boundaries on document changes.
+   *                     See {@link RangeMarkerImpl#persistentHighlighterUpdate}.
+   *
+   * @deprecated use {@link #addRangeHighlighterAndChangeAttributes(TextAttributesKey, int, int, int, HighlighterTargetArea, boolean, Consumer)}
    * Creating a highlighter with hard-coded {@link TextAttributes} makes it stay the same in all {@link EditorColorsScheme}
    * An editor can provide a custom scheme different from the global one, also a user can change the global scheme explicitly.
    * Using the overload taking a {@link TextAttributesKey} will make the platform take care of all these cases.
    */
-  @NotNull
-  default RangeHighlighterEx addRangeHighlighterAndChangeAttributes(int startOffset,
+  @Deprecated
+  default @NotNull RangeHighlighterEx addRangeHighlighterAndChangeAttributes(int startOffset,
                                                                     int endOffset,
                                                                     int layer,
                                                                     TextAttributes textAttributes,
@@ -108,6 +113,6 @@ public interface MarkupModelEx extends MarkupModel {
     });
   }
 
-  // runs change attributes action and fires highlighterChanged event if there were changes
+  // run change attributes action and fire highlighterChanged event if there were changes
   void changeAttributesInBatch(@NotNull RangeHighlighterEx highlighter, @NotNull Consumer<? super RangeHighlighterEx> changeAttributesAction);
 }

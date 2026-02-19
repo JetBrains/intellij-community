@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testFramework.fixtures;
 
 import com.intellij.lang.Language;
@@ -9,20 +9,62 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.roots.LanguageLevelModuleExtension;
-import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.pom.java.AcceptedLanguageLevelsSettings;
 import com.intellij.pom.java.LanguageLevel;
-import com.intellij.psi.*;
-import com.intellij.testFramework.*;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiElementFactory;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiFileFactory;
+import com.intellij.psi.PsiManager;
+import com.intellij.testFramework.IdeaTestUtil;
+import com.intellij.testFramework.LightProjectDescriptor;
+import com.intellij.testFramework.PlatformTestUtil;
+import com.intellij.testFramework.PsiTestUtil;
+import com.intellij.testFramework.TestDataPath;
+import com.intellij.testFramework.TestIndexingModeSupporter;
+import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.testFramework.fixtures.impl.LightTempDirTestFixtureImpl;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 
 /**
- * @author peter
+ * A JUnit 3-compatible {@link UsefulTestCase} which is based around a {@link JavaCodeInsightTestFixture}.
+ * <p>
+ * This class is similar to {@link JavaCodeInsightFixtureTestCase}, but with some differences:
+ * <ul>
+ *   <li>Uses a lightweight project setup with {@link LightProjectDescriptor}
+ *   (and provides many predefined descriptors for different Java versions)</li>
+ *   <li>Creates a simpler in-memory project structure</li>
+ *   <li>Faster to initialize and run but with some limitations</li>
+ * </ul>
+ *
+ * <h3>Predefined Project Descriptors and Mock JDK Coverage</h3>
+ * <table border="1">
+ *   <caption>Project Descriptors with Mock JDK Versions and Class Coverage</caption>
+ *   <tr><th>Descriptor</th><th>Language Level</th><th>Mock JDK</th><th>java.nio.file.*</th></tr>
+ *   <tr><td>{@link #JAVA_1_7}</td><td>JDK_1_7</td><td>1.7</td><td>No</td></tr>
+ *   <tr><td>{@link #JAVA_8}</td><td>JDK_1_8</td><td>1.8</td><td>No</td></tr>
+ *   <tr><td>{@link #JAVA_11}</td><td>JDK_11</td><td>11</td><td>Yes</td></tr>
+ *   <tr><td>{@link #JAVA_17}</td><td>JDK_17</td><td>11 (mapped)</td><td>Yes</td></tr>
+ *   <tr><td>{@link #JAVA_21}</td><td>JDK_21</td><td>21</td><td>Yes</td></tr>
+ *   <tr><td>{@link #JAVA_LATEST}</td><td>HIGHEST</td><td><b>1.7!</b></td><td>No</td></tr>
+ *   <tr><td>{@link #JAVA_LATEST_WITH_LATEST_JDK}</td><td>HIGHEST</td><td>matches level</td><td>Yes</td></tr>
+ * </table>
+ *
+ * <p><b>Warning:</b> {@link #JAVA_LATEST} uses Mock JDK 1.7 despite having the highest
+ * language level. If you need modern JDK classes like {@code java.nio.file.Path},
+ * use {@link #JAVA_LATEST_WITH_LATEST_JDK} or {@link #JAVA_11} instead.
+ *
+ * <p>The {@code _ANNOTATED} variants (e.g., {@link #JAVA_11_ANNOTATED}) include JDK annotations
+ * for nullability and other contracts.
+ *
+ * @see IdeaTestUtil#getMockJdk(com.intellij.util.lang.JavaVersion) for mock JDK version mapping details
+ * @see LightJavaCodeInsightFixtureTestCase4
+ * @see LightJavaCodeInsightFixtureTestCase5
  */
+@TestDataPath("$CONTENT_ROOT/testData")
 public abstract class LightJavaCodeInsightFixtureTestCase extends UsefulTestCase implements TestIndexingModeSupporter {
   protected static class ProjectDescriptor extends DefaultLightProjectDescriptor {
     protected final LanguageLevel myLanguageLevel;
@@ -51,9 +93,22 @@ public abstract class LightJavaCodeInsightFixtureTestCase extends UsefulTestCase
       return myWithAnnotations ? PsiTestUtil.addJdkAnnotations(jdk) : jdk;
     }
 
+    /**
+     * Calculate the name of SDK without instantiation
+     */
+    public @NotNull String getSdkName() {
+      return IdeaTestUtil.getMockJdkName(myLanguageLevel.toJavaVersion());
+    }
+
     @Override
     public void configureModule(@NotNull Module module, @NotNull ModifiableRootModel model, @NotNull ContentEntry contentEntry) {
       model.getModuleExtension(LanguageLevelModuleExtension.class).setLanguageLevel(myLanguageLevel);
+      if (myLanguageLevel.isAtLeast(LanguageLevel.JDK_1_8)) {
+        addJetBrainsAnnotationsWithTypeUse(model);
+      }
+      else {
+        addJetBrainsAnnotations(model);
+      }
     }
   }
 
@@ -67,21 +122,56 @@ public abstract class LightJavaCodeInsightFixtureTestCase extends UsefulTestCase
   public static final @NotNull LightProjectDescriptor JAVA_8_ANNOTATED = new ProjectDescriptor(LanguageLevel.JDK_1_8, true);
   public static final @NotNull LightProjectDescriptor JAVA_9 = new ProjectDescriptor(LanguageLevel.JDK_1_9);
   public static final @NotNull LightProjectDescriptor JAVA_9_ANNOTATED = new ProjectDescriptor(LanguageLevel.JDK_1_9, true);
-  public static final @NotNull LightProjectDescriptor JAVA_10 = new ProjectDescriptor(LanguageLevel.JDK_10);
-  public static final @NotNull LightProjectDescriptor JAVA_10_ANNOTATED = new ProjectDescriptor(LanguageLevel.JDK_10, true);
+  /**
+   * Project descriptor with Java 11 language level and Mock JDK 11.
+   * <p>Use this when your test needs {@code java.nio.file.*} classes
+   * ({@code Path}, {@code Paths}, {@code Files}). Mock JDKs 1.7 and 1.8 do NOT contain these classes.
+   */
   public static final @NotNull LightProjectDescriptor JAVA_11 = new ProjectDescriptor(LanguageLevel.JDK_11);
+  /** Project descriptor with Java 11 and JDK annotations for nullability contracts. */
+  public static final @NotNull LightProjectDescriptor JAVA_11_ANNOTATED = new ProjectDescriptor(LanguageLevel.JDK_11, true);
   public static final @NotNull LightProjectDescriptor JAVA_12 = new ProjectDescriptor(LanguageLevel.JDK_12);
   public static final @NotNull LightProjectDescriptor JAVA_13 = new ProjectDescriptor(LanguageLevel.JDK_13);
-  public static final @NotNull LightProjectDescriptor JAVA_14 = new ProjectDescriptor(LanguageLevel.JDK_14_PREVIEW);
-  public static final @NotNull LightProjectDescriptor JAVA_15 = new ProjectDescriptor(LanguageLevel.JDK_15_PREVIEW);
+  public static final @NotNull LightProjectDescriptor JAVA_14 = new ProjectDescriptor(LanguageLevel.JDK_14);
+  public static final @NotNull LightProjectDescriptor JAVA_15 = new ProjectDescriptor(LanguageLevel.JDK_15);
+  public static final @NotNull LightProjectDescriptor JAVA_16 = new ProjectDescriptor(LanguageLevel.JDK_16);
+  public static final @NotNull LightProjectDescriptor JAVA_17 = new ProjectDescriptor(LanguageLevel.JDK_17);
+  public static final @NotNull LightProjectDescriptor JAVA_17_ANNOTATED = new ProjectDescriptor(LanguageLevel.JDK_17, true);
+  public static final @NotNull LightProjectDescriptor JAVA_18 = new ProjectDescriptor(LanguageLevel.JDK_18);
+  public static final @NotNull LightProjectDescriptor JAVA_19 = new ProjectDescriptor(LanguageLevel.JDK_19);
+  public static final @NotNull LightProjectDescriptor JAVA_20 = new ProjectDescriptor(LanguageLevel.JDK_20);
+  public static final @NotNull LightProjectDescriptor JAVA_21 = new ProjectDescriptor(LanguageLevel.JDK_21_PREVIEW);
+  public static final @NotNull LightProjectDescriptor JAVA_21_ANNOTATED = new ProjectDescriptor(LanguageLevel.JDK_21_PREVIEW, true);
+  public static final @NotNull LightProjectDescriptor JAVA_22 = new ProjectDescriptor(LanguageLevel.JDK_22_PREVIEW);
+  public static final @NotNull LightProjectDescriptor JAVA_23 = new ProjectDescriptor(LanguageLevel.JDK_23_PREVIEW);
+  public static final @NotNull LightProjectDescriptor JAVA_24 = new ProjectDescriptor(LanguageLevel.JDK_24);
+  public static final @NotNull LightProjectDescriptor JAVA_25 = new ProjectDescriptor(LanguageLevel.JDK_25);
+  public static final @NotNull LightProjectDescriptor JAVA_26 = new ProjectDescriptor(LanguageLevel.JDK_26_PREVIEW);
   public static final @NotNull LightProjectDescriptor JAVA_X = new ProjectDescriptor(LanguageLevel.JDK_X);
 
+  /**
+   * Project descriptor with highest language level but <b>Mock JDK 1.7 (Java 7)</b>.
+   * <p><b>Warning:</b> Despite the name, this uses Java 7 mock JDK which does NOT
+   * contain {@code java.nio.file.*} classes ({@code Path}, {@code Paths}, {@code Files}).
+   * If you need those classes, use {@link #JAVA_LATEST_WITH_LATEST_JDK} or {@link #JAVA_11} instead.
+   *
+   * @see #JAVA_LATEST_WITH_LATEST_JDK for descriptor with matching mock JDK
+   * @see #JAVA_11 for tests needing java.nio.file.* classes
+   */
   public static final @NotNull LightProjectDescriptor JAVA_LATEST = new ProjectDescriptor(LanguageLevel.HIGHEST) {
     @Override
     public Sdk getSdk() {
       return IdeaTestUtil.getMockJdk17();
     }
   };
+
+  /**
+   * Project descriptor with highest language level AND matching mock JDK.
+   * <p>Unlike {@link #JAVA_LATEST}, this descriptor uses a mock JDK that matches
+   * the language level, so {@code java.nio.file.*} classes ({@code Path}, {@code Paths}, {@code Files})
+   * are available.
+   */
+  public static final @NotNull LightProjectDescriptor JAVA_LATEST_WITH_LATEST_JDK = new ProjectDescriptor(LanguageLevel.HIGHEST);
 
   protected JavaCodeInsightTestFixture myFixture;
 
@@ -92,7 +182,7 @@ public abstract class LightJavaCodeInsightFixtureTestCase extends UsefulTestCase
     super.setUp();
 
     IdeaTestFixtureFactory factory = IdeaTestFixtureFactory.getFixtureFactory();
-    TestFixtureBuilder<IdeaProjectTestFixture> fixtureBuilder = factory.createLightFixtureBuilder(getProjectDescriptor());
+    TestFixtureBuilder<IdeaProjectTestFixture> fixtureBuilder = factory.createLightFixtureBuilder(getProjectDescriptor(), getTestName(false));
     IdeaProjectTestFixture fixture = fixtureBuilder.getFixture();
     myFixture = JavaTestFixtureFactory.getFixtureFactory().createCodeInsightFixture(fixture, getTempDirFixture());
     myFixture = JavaIndexingModeCodeInsightTestFixture.Companion.wrapFixture(myFixture, getIndexingMode());
@@ -100,11 +190,10 @@ public abstract class LightJavaCodeInsightFixtureTestCase extends UsefulTestCase
     myFixture.setTestDataPath(getTestDataPath());
     myFixture.setUp();
 
-    LanguageLevelProjectExtension.getInstance(getProject()).setLanguageLevel(LanguageLevel.JDK_1_6);
+    IdeaTestUtil.setProjectLanguageLevel(getProject(), LanguageLevel.JDK_1_6);
   }
 
-  @NotNull
-  protected TempDirTestFixture getTempDirFixture() {
+  protected @NotNull TempDirTestFixture getTempDirFixture() {
     IdeaTestExecutionPolicy policy = IdeaTestExecutionPolicy.current();
     return policy != null
            ? policy.createTempDirTestFixture()
@@ -114,7 +203,9 @@ public abstract class LightJavaCodeInsightFixtureTestCase extends UsefulTestCase
   @Override
   protected void tearDown() throws Exception {
     try {
-      myFixture.tearDown();
+      if (myFixture != null) {
+        myFixture.tearDown();
+      }
     }
     catch (Throwable e) {
       addSuppressedException(e);
@@ -132,8 +223,7 @@ public abstract class LightJavaCodeInsightFixtureTestCase extends UsefulTestCase
     return "";
   }
 
-  @NotNull
-  protected LightProjectDescriptor getProjectDescriptor() {
+  protected @NotNull LightProjectDescriptor getProjectDescriptor() {
     return JAVA_LATEST;
   }
 
@@ -184,5 +274,10 @@ public abstract class LightJavaCodeInsightFixtureTestCase extends UsefulTestCase
   @Override
   public @NotNull IndexingMode getIndexingMode() {
     return myIndexingMode;
+  }
+
+  protected void configureByJavaText(@NotNull String fileName,
+                                     @NotNull @org.intellij.lang.annotations.Language("Java") String text) {
+    myFixture.configureByText(fileName, text);
   }
 }

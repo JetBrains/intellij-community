@@ -1,0 +1,2 @@
+com.intellij.remoteServer.agent.util.log.TerminalListener$TtyResizeHandler
+- a:onTtyResizeRequest(I,I):V

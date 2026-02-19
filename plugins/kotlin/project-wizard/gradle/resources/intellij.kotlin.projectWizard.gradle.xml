@@ -1,0 +1,28 @@
+<idea-plugin package="org.jetbrains.kotlin.tools.projectWizard.gradle">
+
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <module name="intellij.kotlin.gradle.tooling"/>
+    <module name="intellij.gradle.java"/>
+    <module name="intellij.kotlin.gradle.codeInsight.common"/>
+    <module name="intellij.kotlin.projectWizard.idea"/>
+    <module name="kotlin.gradle.gradle-java"/>
+  </dependencies>
+  <!-- endregion -->
+
+  <extensions defaultExtensionNs="com.intellij">
+    <newProjectWizard.kotlin.buildSystem implementation="org.jetbrains.kotlin.tools.projectWizard.gradle.GradleKotlinNewProjectWizard"/>
+    <registryKey key="kotlin.wasm.wizard"
+                 description="New Wasm Project Wizard is enabled"
+                 defaultValue="false"
+                 restartRequired="true"/>
+    <registryKey key="kotlin.js.wizard"
+                 description="Deprecated Kotlin/JS templates are enabled"
+                 defaultValue="false"
+                 restartRequired="true"/>
+  </extensions>
+
+  <extensions defaultExtensionNs="org.jetbrains.kotlin.idea">
+    <ideaWizardService implementation="org.jetbrains.kotlin.tools.projectWizard.gradle.IdeaGradleWizardService"/>
+  </extensions>
+</idea-plugin>

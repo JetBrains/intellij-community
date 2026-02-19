@@ -1,8 +1,11 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions;
 
-import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.pom.Navigatable;
 import com.intellij.pom.NavigatableWithText;
 import com.intellij.pom.PomTargetPsiElement;
@@ -10,12 +13,17 @@ import com.intellij.util.OpenSourceUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public abstract class BaseNavigateToSourceAction extends AnAction implements DumbAware {
+public abstract class BaseNavigateToSourceAction extends DumbAwareAction {
   private final boolean myFocusEditor;
 
   protected BaseNavigateToSourceAction(boolean focusEditor) {
     myFocusEditor = focusEditor;
     setInjectedContext(true);
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 
   @Override
@@ -27,7 +35,7 @@ public abstract class BaseNavigateToSourceAction extends AnAction implements Dum
 
   @Override
   public void update(@NotNull AnActionEvent e) {
-    boolean inPopup = ActionPlaces.isPopupPlace(e.getPlace());
+    boolean inPopup = e.isFromContextMenu();
     Navigatable target = findTargetForUpdate(e.getDataContext());
     boolean enabled = target != null;
     if (inPopup && !(this instanceof OpenModuleSettingsAction) && OpenModuleSettingsAction.isModuleInProjectViewPopup(e)) {
@@ -39,13 +47,17 @@ public abstract class BaseNavigateToSourceAction extends AnAction implements Dum
                                    (myFocusEditor || !(target instanceof NavigatableWithText)));
     e.getPresentation().setEnabled(enabled);
 
-    String navigateActionText = myFocusEditor && target instanceof NavigatableWithText?
+    String navigateActionText = myFocusEditor && target instanceof NavigatableWithText ?
                                 ((NavigatableWithText)target).getNavigateActionText(true) : null;
-    e.getPresentation().setText(navigateActionText == null ? getTemplatePresentation().getText() : navigateActionText);
+    if (navigateActionText != null) {
+      e.getPresentation().setText(navigateActionText);
+    }
+    else {
+      e.getPresentation().setTextWithMnemonic(getTemplatePresentation().getTextWithPossibleMnemonic());
+    }
   }
 
-  @Nullable
-  private Navigatable findTargetForUpdate(@NotNull DataContext dataContext) {
+  private @Nullable Navigatable findTargetForUpdate(@NotNull DataContext dataContext) {
     Navigatable[] navigatables = getNavigatables(dataContext);
     if (navigatables == null) return null;
 

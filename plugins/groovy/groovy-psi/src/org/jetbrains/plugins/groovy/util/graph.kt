@@ -3,9 +3,8 @@ package org.jetbrains.plugins.groovy.util
 
 import com.intellij.util.graph.DFSTBuilder
 import com.intellij.util.graph.OutboundSemiGraph
-import gnu.trove.THashSet
 
-fun <T> mapGraph(map: Map<T, Collection<T>>): OutboundSemiGraph<T> = object : OutboundSemiGraph<T> {
+internal fun <T> mapGraph(map: Map<T, Collection<T>>): OutboundSemiGraph<T> = object : OutboundSemiGraph<T> {
   override fun getNodes(): Collection<T> = map.keys
   override fun getOut(n: T): Iterator<T> = map.getOrDefault(n, emptyList()).iterator()
 }
@@ -13,13 +12,12 @@ fun <T> mapGraph(map: Map<T, Collection<T>>): OutboundSemiGraph<T> = object : Ou
 /**
  * @return set of nodes outside of any cycles
  */
-fun <T> findNodesOutsideCycles(graph: OutboundSemiGraph<T>): Set<T> {
+internal fun <T> findNodesOutsideCycles(graph: OutboundSemiGraph<T>): Set<T> {
   val builder = DFSTBuilder(graph)
   val components = builder.components
-  val result = THashSet<T>()
+  val result = HashSet<T>()
   for (component in components) {
-    val node = component.singleOrNull() ?: continue
-    result.add(node)
+    result.add(component.singleOrNull() ?: continue)
   }
   return result
 }

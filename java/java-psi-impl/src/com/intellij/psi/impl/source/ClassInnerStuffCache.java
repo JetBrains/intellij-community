@@ -1,32 +1,74 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source;
 
+import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
-import com.intellij.pom.java.LanguageLevel;
-import com.intellij.psi.*;
+import com.intellij.pom.java.JavaFeature;
+import com.intellij.psi.ExternallyDefinedPsiElement;
+import com.intellij.psi.HierarchicalMethodSignature;
+import com.intellij.psi.JavaElementVisitor;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiAnonymousClass;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiClassType;
+import com.intellij.psi.PsiCodeBlock;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiIdentifier;
+import com.intellij.psi.PsiMember;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiModifierList;
+import com.intellij.psi.PsiParameterList;
+import com.intellij.psi.PsiRecordComponent;
+import com.intellij.psi.PsiRecordHeader;
+import com.intellij.psi.PsiReferenceList;
+import com.intellij.psi.PsiSubstitutor;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypeElement;
+import com.intellij.psi.PsiTypeParameter;
+import com.intellij.psi.PsiTypeParameterList;
+import com.intellij.psi.SyntheticElement;
 import com.intellij.psi.augment.PsiAugmentProvider;
 import com.intellij.psi.impl.PsiClassImplUtil;
 import com.intellij.psi.impl.PsiImplUtil;
-import com.intellij.psi.impl.light.LightMethod;
+import com.intellij.psi.impl.PsiSuperMethodImplUtil;
+import com.intellij.psi.impl.light.LightElement;
+import com.intellij.psi.impl.light.LightIdentifier;
+import com.intellij.psi.impl.light.LightModifierList;
+import com.intellij.psi.impl.light.LightParameter;
+import com.intellij.psi.impl.light.LightParameterListBuilder;
+import com.intellij.psi.impl.light.LightReferenceListBuilder;
+import com.intellij.psi.javadoc.PsiDocComment;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.CachedValuesManager;
+import com.intellij.psi.util.MethodSignature;
+import com.intellij.psi.util.MethodSignatureBackedByPsiMethod;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.containers.*;
-import gnu.trove.THashMap;
-import org.jetbrains.annotations.ApiStatus;
+import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.ConcurrentFactoryMap;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.Interner;
+import com.intellij.util.containers.JBIterable;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
 import static com.intellij.util.ObjectUtils.notNull;
 
-public class ClassInnerStuffCache {
+public final class ClassInnerStuffCache {
   private final PsiExtensibleClass myClass;
   private final Ref<Pair<Long, Interner<PsiMember>>> myInterner = Ref.create();
 
@@ -54,8 +96,7 @@ public class ClassInnerStuffCache {
     return copy(CachedValuesManager.getProjectPsiDependentCache(myClass, __ -> calcRecordComponents()));
   }
 
-  @Nullable
-  public PsiField findFieldByName(String name, boolean checkBases) {
+  public @Nullable PsiField findFieldByName(String name, boolean checkBases) {
     if (checkBases) {
       return PsiClassImplUtil.findFieldByName(myClass, name, true);
     }
@@ -73,8 +114,7 @@ public class ClassInnerStuffCache {
     }
   }
 
-  @Nullable
-  public PsiClass findInnerClassByName(String name, boolean checkBases) {
+  public @Nullable PsiClass findInnerClassByName(String name, boolean checkBases) {
     if (checkBases) {
       return PsiClassImplUtil.findInnerByName(myClass, name, true);
     }
@@ -91,11 +131,11 @@ public class ClassInnerStuffCache {
   }
 
   private boolean classNameIsSealed() {
-    return PsiUtil.getLanguageLevel(myClass).isAtLeast(LanguageLevel.JDK_15_PREVIEW) && PsiKeyword.SEALED.equals(myClass.getName());
+    return JavaKeywords.SEALED.equals(myClass.getName()) && PsiUtil.isAvailable(JavaFeature.SEALED_CLASSES, myClass);
   }
 
   @Nullable
-  private PsiMethod getValueOfMethod() {
+  PsiMethod getValueOfMethod() {
     return myClass.isEnum() && !isAnonymousClass()
            ? internMember(CachedValuesManager.getProjectPsiDependentCache(myClass, ClassInnerStuffCache::makeValueOfMethod))
            : null;
@@ -115,8 +155,7 @@ public class ClassInnerStuffCache {
     return ArrayUtil.mergeCollections(own, ext, PsiField.ARRAY_FACTORY);
   }
 
-  @NotNull
-  private <T extends PsiMember> List<T> internMembers(List<T> members) {
+  private @Unmodifiable @NotNull <T extends PsiMember> List<T> internMembers(List<T> members) {
     return ContainerUtil.map(members, this::internMember);
   }
 
@@ -155,9 +194,8 @@ public class ClassInnerStuffCache {
     return header == null ? PsiRecordComponent.EMPTY_ARRAY : header.getRecordComponents();
   }
 
-  @NotNull
-  private Map<String, PsiField> getFieldsMap() {
-    Map<String, PsiField> cachedFields = new THashMap<>();
+  private @NotNull Map<String, PsiField> getFieldsMap() {
+    Map<String, PsiField> cachedFields = new HashMap<>();
     for (PsiField field : myClass.getOwnFields()) {
       String name = field.getName();
       if (!cachedFields.containsKey(name)) {
@@ -171,8 +209,7 @@ public class ClassInnerStuffCache {
     });
   }
 
-  @NotNull
-  private Map<String, PsiMethod[]> getMethodsMap() {
+  private @NotNull Map<String, PsiMethod[]> getMethodsMap() {
     List<PsiMethod> ownMethods = myClass.getOwnMethods();
     return ConcurrentFactoryMap.createMap(name -> {
       return JBIterable
@@ -184,13 +221,12 @@ public class ClassInnerStuffCache {
     });
   }
 
-  @NotNull
-  private Map<String, PsiClass> getInnerClassesMap() {
-    Map<String, PsiClass> cachedInners = new THashMap<>();
+  private @NotNull Map<String, PsiClass> getInnerClassesMap() {
+    Map<String, PsiClass> cachedInners = new HashMap<>();
     for (PsiClass psiClass : myClass.getOwnInnerClasses()) {
       String name = psiClass.getName();
       if (name == null) {
-        Logger.getInstance(ClassInnerStuffCache.class).error(psiClass);
+        Logger.getInstance(ClassInnerStuffCache.class).error("getName() returned null for " + psiClass);
       }
       else if (!(psiClass instanceof ExternallyDefinedPsiElement) || !cachedInners.containsKey(name)) {
         cachedInners.put(name, psiClass);
@@ -204,29 +240,69 @@ public class ClassInnerStuffCache {
   }
 
   private static PsiMethod makeValuesMethod(PsiExtensibleClass enumClass) {
-    return new EnumSyntheticMethod(enumClass, "public static " + enumClass.getName() + "[] values() { }");
+    return new EnumSyntheticMethod(enumClass, EnumMethodKind.Values);
   }
 
   private static PsiMethod makeValueOfMethod(PsiExtensibleClass enumClass) {
-    return new EnumSyntheticMethod(enumClass, "public static " + enumClass.getName() + " valueOf(java.lang.String name) throws java.lang.IllegalArgumentException { }");
+    return new EnumSyntheticMethod(enumClass, EnumMethodKind.ValueOf);
   }
 
-  /**
-   * @deprecated does nothing
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020.3")
-  public void dropCaches() {
+  private enum EnumMethodKind {
+    ValueOf,
+    Values,
   }
 
-  private static class EnumSyntheticMethod extends LightMethod implements SyntheticElement {
+  private static class EnumSyntheticMethod extends LightElement implements PsiMethod, SyntheticElement {
     private final PsiClass myClass;
-    private final String myText;
+    private final EnumMethodKind myKind;
+    private final PsiType myReturnType;
+    private final LightParameterListBuilder myParameterList;
+    private final LightModifierList myModifierList;
 
-    EnumSyntheticMethod(@NotNull PsiClass enumClass, @NotNull String text) {
-      super(enumClass.getManager(), JavaPsiFacade.getElementFactory(enumClass.getProject()).createMethodFromText(text, enumClass), enumClass);
+    EnumSyntheticMethod(@NotNull PsiClass enumClass, EnumMethodKind kind) {
+      super(enumClass.getManager(), enumClass.getLanguage());
       myClass = enumClass;
-      myText = text;
+      myKind = kind;
+      myReturnType = createReturnType();
+      myParameterList = createParameterList();
+      myModifierList = createModifierList();
+    }
+
+    @Override
+    public void accept(@NotNull PsiElementVisitor visitor) {
+      if (visitor instanceof JavaElementVisitor) {
+        ((JavaElementVisitor)visitor).visitMethod(this);
+      }
+      else {
+        visitor.visitElement(this);
+      }
+    }
+    
+    private @NotNull PsiType createReturnType() {
+      PsiClassType type = JavaPsiFacade.getElementFactory(getProject()).createType(myClass);
+      if (myKind == EnumMethodKind.Values) {
+        return type.createArrayType();
+      }
+      return type;
+    }
+
+    private @NotNull LightModifierList createModifierList() {
+      return new LightModifierList(myManager, getLanguage(), PsiModifier.PUBLIC, PsiModifier.STATIC) {
+        @Override
+        public PsiElement getParent() {
+          return EnumSyntheticMethod.this;
+        }
+      };
+    }
+
+    private @NotNull LightParameterListBuilder createParameterList() {
+      LightParameterListBuilder parameters = new LightParameterListBuilder(myManager, getLanguage());
+      if (myKind == EnumMethodKind.ValueOf) {
+        PsiClassType string = PsiType.getJavaLangString(myManager, GlobalSearchScope.allScope(getProject()));
+        LightParameter parameter = new LightParameter("name", string, this, getLanguage(), false);
+        parameters.addParameter(parameter);
+      }
+      return parameters;
     }
 
     @Override
@@ -235,16 +311,164 @@ public class ClassInnerStuffCache {
     }
 
     @Override
+    public String toString() {
+      return "EnumSyntheticMethod:" + getName();
+    }
+
+    @Override
     public boolean equals(Object another) {
       return this == another ||
              another instanceof EnumSyntheticMethod &&
              myClass.equals(((EnumSyntheticMethod)another).myClass) &&
-             myText.equals(((EnumSyntheticMethod)another).myText);
+             myKind == ((EnumSyntheticMethod)another).myKind;
     }
 
     @Override
     public int hashCode() {
-      return Objects.hash(myText, myClass);
+      return Objects.hash(myClass, myKind);
+    }
+
+    @Override
+    public boolean isDeprecated() {
+      return false;
+    }
+
+    @Override
+    public @Nullable PsiDocComment getDocComment() {
+      return null;
+    }
+
+    @Override
+    public @Nullable PsiClass getContainingClass() {
+      return myClass;
+    }
+
+    @Override
+    public @Nullable PsiType getReturnType() {
+      return myReturnType;
+    }
+
+    @Override
+    public @Nullable PsiTypeElement getReturnTypeElement() {
+      return null;
+    }
+
+    @Override
+    public @NotNull PsiParameterList getParameterList() {
+      return myParameterList;
+    }
+
+    @Override
+    public @NotNull PsiReferenceList getThrowsList() {
+      LightReferenceListBuilder throwsList = new LightReferenceListBuilder(myManager, getLanguage(), PsiReferenceList.Role.THROWS_LIST);
+      if (myKind == EnumMethodKind.ValueOf) {
+        throwsList.addReference("java.lang.IllegalArgumentException");
+      }
+
+      return throwsList;
+    }
+
+    @Override
+    public @Nullable PsiCodeBlock getBody() {
+      return null;
+    }
+
+    @Override
+    public boolean isConstructor() {
+      return false;
+    }
+
+    @Override
+    public boolean isVarArgs() {
+      return false;
+    }
+
+    @Override
+    public @NotNull MethodSignature getSignature(@NotNull PsiSubstitutor substitutor) {
+      return MethodSignatureBackedByPsiMethod.create(this, substitutor);
+    }
+
+    @Override
+    public @Nullable PsiIdentifier getNameIdentifier() {
+      return new LightIdentifier(myManager, getName());
+    }
+
+    @Override
+    public @NotNull String getName() {
+      if (myKind == EnumMethodKind.ValueOf) {
+        return "valueOf";
+      }
+      return "values";
+    }
+
+    @Override
+    public PsiMethod @NotNull [] findSuperMethods() {
+      return PsiSuperMethodImplUtil.findSuperMethods(this);
+    }
+
+    @Override
+    public PsiMethod @NotNull [] findSuperMethods(boolean checkAccess) {
+      return PsiSuperMethodImplUtil.findSuperMethods(this, checkAccess);
+    }
+
+    @Override
+    public PsiMethod @NotNull [] findSuperMethods(PsiClass parentClass) {
+      return PsiSuperMethodImplUtil.findSuperMethods(this, parentClass);
+    }
+
+    @Override
+    public @NotNull List<MethodSignatureBackedByPsiMethod> findSuperMethodSignaturesIncludingStatic(boolean checkAccess) {
+      return PsiSuperMethodImplUtil.findSuperMethodSignaturesIncludingStatic(this, checkAccess);
+    }
+
+    @Override
+    public @Nullable PsiMethod findDeepestSuperMethod() {
+      return PsiSuperMethodImplUtil.findDeepestSuperMethod(this);
+    }
+
+    @Override
+    public PsiMethod @NotNull [] findDeepestSuperMethods() {
+      return PsiMethod.EMPTY_ARRAY;
+    }
+
+    @Override
+    public @NotNull PsiModifierList getModifierList() {
+      return myModifierList;
+    }
+
+    @Override
+    public boolean hasModifierProperty(@NonNls @NotNull String name) {
+      return name.equals(PsiModifier.PUBLIC) || name.equals(PsiModifier.STATIC);
+    }
+
+    @Override
+    public PsiElement setName(@NonNls @NotNull String name) throws IncorrectOperationException {
+      throw new IncorrectOperationException();
+    }
+
+    @Override
+    public @NotNull HierarchicalMethodSignature getHierarchicalMethodSignature() {
+      return PsiSuperMethodImplUtil.getHierarchicalMethodSignature(this);
+    }
+
+    @Override
+    public boolean hasTypeParameters() {
+      return false;
+    }
+
+    @Override
+    public @Nullable PsiTypeParameterList getTypeParameterList() {
+      return null;
+    }
+
+    @Override
+    public PsiFile getContainingFile() {
+      return myClass.getContainingFile();
+    }
+
+    @Override
+    public PsiTypeParameter @NotNull [] getTypeParameters() {
+      return PsiTypeParameter.EMPTY_ARRAY;
     }
   }
 }

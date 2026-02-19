@@ -1,4 +1,4 @@
-enum TestEnum { TEXT1, TEXT2 }
+enum TestEnum { MYVAL1, MYVAL2 }
 public @interface TestAnnotation { TestEnum value(); }
 
-@TestAnnotation(TestEnum.TEXT1<caret>)
+@TestAnnotation(TestEnum.MYVAL1<caret>)

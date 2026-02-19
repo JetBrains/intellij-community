@@ -1,0 +1,2 @@
+Text: (<highlight>keySelector: (T) -> K</highlight>), Disabled: false, Strikeout: false, Green: false
+Text: (<highlight>keySelector: (T) -> K</highlight>, valueTransform: (T) -> V), Disabled: false, Strikeout: false, Green: true

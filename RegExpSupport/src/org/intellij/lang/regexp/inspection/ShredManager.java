@@ -1,8 +1,9 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.intellij.lang.regexp.inspection;
 
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiLanguageInjectionHost;
 import com.intellij.psi.PsiLiteralValue;
@@ -14,7 +15,7 @@ import java.util.Iterator;
 import java.util.List;
 
 /**
- * Encapsulates a work with {@link com.intellij.psi.PsiLanguageInjectionHost.Shred}.
+ * Encapsulates a work with {@link PsiLanguageInjectionHost.Shred}.
  * An injection process overprints on the injected text which is considered as RegExp file.
  * This text may contain some bogus symbols which are needed to be deleted
  * to find a corresponding host element in the PSI Java file.
@@ -69,26 +70,27 @@ class ShredManager {
   }
 
   private int calculateElementOffset(@NotNull String text) {
-    String cutText = text.substring(0, myPsiElement.getTextOffset());
+    int offset = myPsiElement.getTextOffset();
+    if (offset > text.length()) return -1;
+    String cutText = text.substring(0, offset);
     String cutTextWithoutBogusWords = cutText.replaceAll(PSI_EXPR_MASK, "").replaceAll(PSI_CONDITIONAL_EXPR_MASK, "");
-    return myPsiElement.getTextOffset() - (cutText.length() - cutTextWithoutBogusWords.length());
+    return offset - (cutText.length() - cutTextWithoutBogusWords.length());
   }
 
-  @Nullable
-  private static String extractShredText(@NotNull PsiLanguageInjectionHost.Shred shred) {
+  private static @Nullable String extractShredText(@NotNull PsiLanguageInjectionHost.Shred shred) {
     PsiLiteralValue shredLiteralVal = ObjectUtils.tryCast(shred.getHost(), PsiLiteralValue.class);
     if (shredLiteralVal == null || shredLiteralVal.getValue() == null) return null;
     return String.valueOf(shredLiteralVal.getValue());
   }
 
   private static class ShredsIterator implements Iterator<ShredInfo> {
-    private final List<PsiLanguageInjectionHost.Shred> myShreds;
+    private final @NotNull List<? extends PsiLanguageInjectionHost.Shred> myShreds;
 
     private int myShredIndex = -1;
     private String myShredText;
     private int mySymbolIndex = -1;
 
-    private ShredsIterator(@NotNull List<PsiLanguageInjectionHost.Shred> shreds) {
+    private ShredsIterator(@NotNull List<? extends PsiLanguageInjectionHost.Shred> shreds) {
       myShreds = shreds;
       if (!shreds.isEmpty()) {
         myShredIndex = 0;
@@ -97,20 +99,19 @@ class ShredManager {
 
     @Override
     public boolean hasNext() {
-      return myShredIndex != -1 && extractShredText(myShreds.get(myShredIndex)) != null;
+      return myShredIndex != -1 && findFirstNonEmptyShredIndex() != -1;
     }
 
     @Override
-    @NotNull
-    public ShredInfo next() {
-      if (myShredIndex == -1) throw new IllegalStateException("Iterator doesn't contain any elements");
+    public @NotNull ShredInfo next() {
+      if (myShredIndex == -1) throw new IllegalStateException("Iterator doesn't contain any shreds");
+      myShredIndex = findFirstNonEmptyShredIndex();
+      if (myShredIndex == -1) throw new IllegalStateException("Iterator doesn't contain non-empty shreds");
 
       if (myShredText == null) {
         myShredText = extractShredText(myShreds.get(myShredIndex));
-        if (myShredText == null) throw new IllegalStateException("Iterator#hasNext() must be called before Iterator#next()");
-        if (myShredText.length() > 0) {
-          mySymbolIndex = 0;
-        }
+        if (StringUtil.isEmpty(myShredText)) throw new IllegalStateException("Current shred text is empty");
+        mySymbolIndex = 0;
       }
       int shredIndex = myShredIndex;
       char shredSymbol = myShredText.charAt(mySymbolIndex);
@@ -120,14 +121,21 @@ class ShredManager {
       return new ShredInfo(shredIndex, shredSymbol, symbolIndex, shred.getHost());
     }
 
+    private int findFirstNonEmptyShredIndex() {
+      for (int shredIndex = myShredIndex; shredIndex < myShreds.size(); shredIndex++) {
+        String shredText = extractShredText(myShreds.get(shredIndex));
+        if (!StringUtil.isEmpty(shredText)) return shredIndex;
+      }
+      return -1;
+    }
+
     private void updateIndexes() {
       if (mySymbolIndex < myShredText.length() - 1) {
         mySymbolIndex++;
       }
       else if (myShredIndex < myShreds.size() - 1) {
-        mySymbolIndex = 0;
         myShredIndex++;
-        myShredText = extractShredText(myShreds.get(myShredIndex));
+        myShredText = null;
       }
       else {
         myShredIndex = -1;

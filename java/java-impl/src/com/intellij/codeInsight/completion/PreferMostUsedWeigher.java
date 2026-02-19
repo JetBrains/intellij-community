@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.lookup.LookupElement;
@@ -7,7 +7,12 @@ import com.intellij.compiler.CompilerReferenceService;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.patterns.PsiMethodPattern;
 import com.intellij.patterns.StandardPatterns;
-import com.intellij.psi.*;
+import com.intellij.psi.CommonClassNames;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiMember;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiParameter;
+import com.intellij.psi.PsiType;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
@@ -39,9 +44,8 @@ final class PreferMostUsedWeigher extends LookupElementWeigher {
     return service.isActive() || UNIT_TEST_MODE ? new PreferMostUsedWeigher(service, JavaSmartCompletionContributor.AFTER_NEW.accepts(position)) : null;
   }
 
-  @Nullable
   @Override
-  public Integer weigh(@NotNull LookupElement element) {
+  public @Nullable Integer weigh(@NotNull LookupElement element) {
     final PsiElement psi = ObjectUtils.tryCast(element.getObject(), PsiElement.class);
     if (!(psi instanceof PsiMember)) {
       return null;
@@ -61,12 +65,10 @@ final class PreferMostUsedWeigher extends LookupElementWeigher {
 
   //Objects.requireNonNull is an example
   private static boolean looksLikeHelperMethodOrConst(@NotNull PsiElement element) {
-    if (!(element instanceof PsiMethod)) return false;
-    PsiMethod method = (PsiMethod)element;
+    if (!(element instanceof PsiMethod method)) return false;
     if (method.isConstructor()) return false;
     if (isRawDeepTypeEqualToObject(method.getReturnType())) return true;
     PsiParameter[] parameters = method.getParameterList().getParameters();
-    if (parameters.length == 0) return false;
     for (PsiParameter parameter : parameters) {
       PsiType paramType = parameter.getType();
       if (isRawDeepTypeEqualToObject(paramType)) {

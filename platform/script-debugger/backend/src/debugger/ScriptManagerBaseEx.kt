@@ -3,9 +3,11 @@ package org.jetbrains.debugger
 
 import com.intellij.util.Url
 import com.intellij.util.Urls
+import org.jetbrains.annotations.ApiStatus
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentMap
 
+@ApiStatus.Internal
 abstract class ScriptManagerBaseEx<SCRIPT : ScriptBase> : ScriptManagerBase<SCRIPT>() {
   protected val idToScript: ConcurrentMap<String, SCRIPT> = ConcurrentHashMap()
 

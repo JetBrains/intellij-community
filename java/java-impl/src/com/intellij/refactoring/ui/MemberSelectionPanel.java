@@ -22,8 +22,8 @@ import com.intellij.refactoring.util.classMembers.MemberInfo;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.SeparatorFactory;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JScrollPane;
+import java.awt.BorderLayout;
 import java.util.List;
 
 public class MemberSelectionPanel extends AbstractMemberSelectionPanel<PsiMember, MemberInfo> {

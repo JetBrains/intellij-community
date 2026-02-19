@@ -1,41 +1,41 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.util;
 
-import com.intellij.psi.*;
+import com.intellij.psi.ElementDescriptionLocation;
+import com.intellij.psi.ElementDescriptionProvider;
+import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.impl.file.PsiDirectoryFactory;
 import com.intellij.psi.meta.PsiMetaData;
 import com.intellij.psi.meta.PsiMetaOwner;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author yole
- */
+
 class DefaultNonCodeSearchElementDescriptionProvider implements ElementDescriptionProvider {
   static final DefaultNonCodeSearchElementDescriptionProvider INSTANCE = new DefaultNonCodeSearchElementDescriptionProvider();
 
   @Override
-  public String getElementDescription(@NotNull final PsiElement element, @NotNull final ElementDescriptionLocation location) {
-    if (!(location instanceof NonCodeSearchDescriptionLocation)) return null;
-    final NonCodeSearchDescriptionLocation ncdLocation = (NonCodeSearchDescriptionLocation)location;
+  public String getElementDescription(final @NotNull PsiElement element, final @NotNull ElementDescriptionLocation location) {
+    if (!(location instanceof NonCodeSearchDescriptionLocation ncdLocation)) return null;
 
-    if (element instanceof PsiDirectory) {
+    if (element instanceof PsiDirectory psiDirectory) {
       if (ncdLocation.isNonJava()) {
-        final String qName = PsiDirectoryFactory.getInstance(element.getProject()).getQualifiedName((PsiDirectory)element, false);
-        if (qName.length() > 0) return qName;
+        final String qName = PsiDirectoryFactory.getInstance(element.getProject()).getQualifiedName(psiDirectory, false);
+        if (!qName.isEmpty()) return qName;
         return null;
       }
-      return ((PsiDirectory) element).getName();
+      return psiDirectory.getName();
     }
 
-    if (element instanceof PsiMetaOwner) {
-      final PsiMetaOwner psiMetaOwner = (PsiMetaOwner)element;
+    if (element instanceof PsiMetaOwner psiMetaOwner) {
       final PsiMetaData metaData = psiMetaOwner.getMetaData();
       if (metaData != null) {
         return metaData.getName();
       }
     }
-    if (element instanceof PsiNamedElement) {
-      return ((PsiNamedElement)element).getName();
+    if (element instanceof PsiNamedElement namedElement) {
+      return namedElement.getName();
     }
     return null;
   }

@@ -1,9 +1,29 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.util;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaCodeFragment;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiAnnotation;
+import com.intellij.psi.PsiAnonymousClass;
+import com.intellij.psi.PsiArrayType;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiClassType;
+import com.intellij.psi.PsiDisjunctionType;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementFactory;
+import com.intellij.psi.PsiEllipsisType;
+import com.intellij.psi.PsiIntersectionType;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiPrimitiveType;
+import com.intellij.psi.PsiSubstitutor;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypeParameter;
+import com.intellij.psi.PsiTypeVisitor;
+import com.intellij.psi.PsiTypes;
+import com.intellij.psi.PsiWildcardType;
+import com.intellij.psi.TypeAnnotationProvider;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ObjectUtils;
@@ -17,9 +37,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
-/**
- * @author dsl
- */
 public final class CanonicalTypes {
   private CanonicalTypes() { }
 
@@ -30,8 +47,7 @@ public final class CanonicalTypes {
       return getType(context, context.getManager());
     }
 
-    @NonNls
-    public abstract String getTypeText();
+    public abstract @NonNls String getTypeText();
 
     public void addImportsTo(@NotNull JavaCodeFragment fragment) { }
 
@@ -44,7 +60,15 @@ public final class CanonicalTypes {
     protected final TypeAnnotationProvider myProvider;
 
     AnnotatedType(@NotNull TypeAnnotationProvider provider) {
-      PsiAnnotation[] annotations = ContainerUtil.map(provider.getAnnotations(), annotation -> (PsiAnnotation)annotation.copy(), PsiAnnotation.EMPTY_ARRAY);
+      PsiAnnotation[] annotations = ContainerUtil.map(
+        provider.getAnnotations(),
+        annotation -> {
+          PsiElement copy = annotation.copy();
+          if (copy instanceof PsiAnnotation) return (PsiAnnotation)copy;
+          // copy is not implemented (e.g., for KtUltraLightSimpleAnnotation)
+          return JavaPsiFacade.getElementFactory(annotation.getProject()).createAnnotationFromText(annotation.getText(), annotation);
+        },
+        PsiAnnotation.EMPTY_ARRAY);
       myProvider = TypeAnnotationProvider.Static.create(annotations);
     }
   }
@@ -64,7 +88,7 @@ public final class CanonicalTypes {
 
     @Override
     public String getTypeText() {
-      return myType.getPresentableText();
+      return myType.getPresentableText(true);
     }
   }
 
@@ -128,7 +152,7 @@ public final class CanonicalTypes {
       }
       else {
         PsiType boundType = myBound.getType(context, manager);
-        if (boundType.equals(PsiType.NULL)) {
+        if (boundType.equals(PsiTypes.nullType())) {
           throw new IncorrectOperationException("Bound type is null " + getTypeText());
         }
         if (boundType instanceof PsiWildcardType) {
@@ -229,6 +253,9 @@ public final class CanonicalTypes {
         if (type != null) {
           type.addImportsTo(fragment);
         }
+      }
+      for (PsiAnnotation annotation : myProvider.getAnnotations()) {
+        fragment.addImportsFromString(annotation.getQualifiedName());
       }
     }
   }

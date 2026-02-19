@@ -1,34 +1,46 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.actions;
 
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.lang.LanguageImportStatements;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.LangDataKeys;
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
+import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.EditorActivityManager;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.NlsContexts;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiDirectoryContainer;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiManager;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.FormBuilder;
+import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
-import javax.swing.*;
-import java.util.Arrays;
+import javax.swing.JCheckBox;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
 
-public class OptimizeImportsAction extends AnAction {
+@ApiStatus.Internal
+public final class OptimizeImportsAction extends AnAction {
   private static final @NonNls String HELP_ID = "editing.manageImports";
   private static boolean myProcessVcsChangedFilesInTests;
 
@@ -54,21 +66,17 @@ public class OptimizeImportsAction extends AnAction {
     PsiFile file = null;
     PsiDirectory dir;
 
-    if (editor != null){
+    if (editor != null) {
       file = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
       if (file == null) return;
       dir = file.getContainingDirectory();
     }
     else if (files != null && ReformatCodeAction.containsOnlyFiles(files)) {
-      final ReadonlyStatusHandler.OperationStatus operationStatus = ReadonlyStatusHandler.getInstance(project).ensureFilesWritable(
-        Arrays.asList(files));
-      if (!operationStatus.hasReadonlyFiles()) {
-        new OptimizeImportsProcessor(project, ReformatCodeAction.convertToPsiFiles(files, project), null).run();
-      }
+      new OptimizeImportsProcessor(project, ReformatCodeAction.convertToPsiFiles(files, project), null).run();
       return;
     }
     else {
-      Project projectContext = PlatformDataKeys.PROJECT_CONTEXT.getData(dataContext);
+      Project projectContext = PlatformCoreDataKeys.PROJECT_CONTEXT.getData(dataContext);
       Module moduleContext = LangDataKeys.MODULE_CONTEXT.getData(dataContext);
 
       if (projectContext != null || moduleContext != null) {
@@ -105,7 +113,7 @@ public class OptimizeImportsAction extends AnAction {
       else if (element instanceof PsiDirectory) {
         dir = (PsiDirectory)element;
       }
-      else{
+      else {
         file = element.getContainingFile();
         if (file == null) return;
         dir = file.getContainingDirectory();
@@ -125,7 +133,7 @@ public class OptimizeImportsAction extends AnAction {
       processOnlyVcsChangedFiles = dialog.isProcessOnlyVcsChangedFiles();
     }
 
-    if (processDirectory){
+    if (processDirectory) {
       new OptimizeImportsProcessor(project, dir, true, processOnlyVcsChangedFiles).run();
     }
     else {
@@ -136,15 +144,20 @@ public class OptimizeImportsAction extends AnAction {
           LayoutCodeInfoCollector collector = optimizer.getInfoCollector();
           if (collector != null) {
             String info = collector.getOptimizeImportsNotification();
-            if (!editor.isDisposed() && EditorActivityManager.getInstance().isVisible(editor)) {
+            if (!editor.isDisposed() && UIUtil.isShowing(editor.getContentComponent())) {
               String message = info != null ? info : CodeInsightBundle.message("hint.text.no.unused.imports.found");
-              FileInEditorProcessor.showHint(editor, StringUtil.capitalize(message), null);
+              FileInEditorProcessor.showHint(editor, message, null);
             }
           }
         });
       }
       optimizer.run();
     }
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 
   @Override
@@ -167,16 +180,16 @@ public class OptimizeImportsAction extends AnAction {
   private static boolean isActionAvailable(@NotNull AnActionEvent event) {
     DataContext dataContext = event.getDataContext();
     Project project = CommonDataKeys.PROJECT.getData(dataContext);
-    if (project == null){
+    if (project == null) {
       return false;
     }
 
     final VirtualFile[] files = CommonDataKeys.VIRTUAL_FILE_ARRAY.getData(dataContext);
 
     final Editor editor = BaseCodeInsightAction.getInjectedEditor(project, CommonDataKeys.EDITOR.getData(dataContext), false);
-    if (editor != null){
+    if (editor != null) {
       PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
-      if (file == null || !isOptimizeImportsAvailable(file)){
+      if (file == null || !isOptimizeImportsAvailable(file)) {
         return false;
       }
     }
@@ -200,15 +213,15 @@ public class OptimizeImportsAction extends AnAction {
       // skip. Both directories and single files are supported.
     }
     else if (LangDataKeys.MODULE_CONTEXT.getData(dataContext) == null &&
-             PlatformDataKeys.PROJECT_CONTEXT.getData(dataContext) == null) {
+             PlatformCoreDataKeys.PROJECT_CONTEXT.getData(dataContext) == null) {
       PsiElement element = CommonDataKeys.PSI_ELEMENT.getData(dataContext);
-      if (element == null){
+      if (element == null) {
         return false;
       }
 
-      if (!(element instanceof PsiDirectory)){
+      if (!(element instanceof PsiDirectory)) {
         PsiFile file = element.getContainingFile();
-        if (file == null || !isOptimizeImportsAvailable(file)){
+        if (file == null || !isOptimizeImportsAvailable(file)) {
           return false;
         }
       }
@@ -235,11 +248,11 @@ public class OptimizeImportsAction extends AnAction {
   }
 
   @TestOnly
-  protected static void setProcessVcsChangedFilesInTests(boolean value) {
+  public static void setProcessVcsChangedFilesInTests(boolean value) {
     myProcessVcsChangedFilesInTests = value;
   }
 
-  private static class OptimizeImportsDialog extends DialogWrapper {
+  private static final class OptimizeImportsDialog extends DialogWrapper {
     private final boolean myContextHasChanges;
 
     private final @NlsContexts.Label String myText;
@@ -260,25 +273,20 @@ public class OptimizeImportsAction extends AnAction {
       return myOnlyVcsCheckBox.isSelected();
     }
 
-    @Nullable
     @Override
-    protected JComponent createCenterPanel() {
-      JPanel panel = new JPanel();
-      BoxLayout layout = new BoxLayout(panel, BoxLayout.Y_AXIS);
-      panel.setLayout(layout);
-
-      panel.add(new JLabel(myText));
+    protected @Nullable JComponent createCenterPanel() {
       myOnlyVcsCheckBox = new JCheckBox(CodeInsightBundle.message("process.scope.changed.files"));
-      boolean lastRunVcsChangedTextEnabled = myLastRunOptions.getLastTextRangeType() == TextRangeType.VCS_CHANGED_TEXT;
-
       myOnlyVcsCheckBox.setEnabled(myContextHasChanges);
+      boolean lastRunVcsChangedTextEnabled = myLastRunOptions.getLastTextRangeType() == TextRangeType.VCS_CHANGED_TEXT;
       myOnlyVcsCheckBox.setSelected(myContextHasChanges && lastRunVcsChangedTextEnabled);
-      myOnlyVcsCheckBox.setBorder(JBUI.Borders.emptyLeft(10));
-      panel.add(myOnlyVcsCheckBox);
-      return panel;
+
+      return new FormBuilder()
+        .addComponent(new JLabel(myText))
+        .setVerticalGap(UIUtil.LARGE_VGAP)
+        .addComponent(myOnlyVcsCheckBox)
+        .getPanel();
     }
 
-    @Nullable
     @Override
     protected String getHelpId() {
       return HELP_ID;

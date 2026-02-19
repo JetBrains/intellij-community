@@ -1,14 +1,16 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.services;
 
 import com.intellij.openapi.vfs.VirtualFile;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
 
-@ApiStatus.Experimental
+/**
+ * @deprecated This interface is deprecated and marked for removal.
+ * For locating services in the service view, refer to {@link com.intellij.platform.execution.serviceView.backend.ServiceViewLocatableSearcher}.
+ */
+@Deprecated(forRemoval = true)
 public interface ServiceViewLocatableDescriptor {
-  @Nullable
-  default VirtualFile getVirtualFile() {
+  default @Nullable VirtualFile getVirtualFile() {
     return null;
   }
 }

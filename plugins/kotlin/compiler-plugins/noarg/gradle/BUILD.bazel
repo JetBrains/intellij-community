@@ -1,0 +1,47 @@
+### auto-generated section `build kotlin.compiler-plugins.noarg.gradle` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "gradle_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "gradle",
+  module_name = "kotlin.compiler-plugins.noarg.gradle",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":gradle_resources"],
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:kotlinc-kotlin-compiler-common",
+    "@lib//:kotlinc-kotlin-compiler-fe10",
+    "@lib//:kotlinc-noarg-compiler-plugin",
+    "//plugins/kotlin/base/plugin",
+    "//plugins/kotlin/base/jps",
+    "//plugins/kotlin/gradle/gradle-tooling/impl",
+    "//plugins/kotlin/gradle/gradle-java",
+    "//plugins/kotlin/compiler-plugins/compiler-plugin-support/common:kotlin-compilerPlugins-support",
+    "//plugins/kotlin/compiler-plugins/compiler-plugin-support/gradle",
+    "//plugins/gradle:gradle-common",
+  ]
+)
+
+jvm_library(
+  name = "gradle_test_lib",
+  module_name = "kotlin.compiler-plugins.noarg.gradle",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    ":gradle",
+    "//plugins/kotlin/base/plugin:plugin_test_lib",
+    "//plugins/kotlin/base/jps:jps_test_lib",
+    "//plugins/kotlin/gradle/gradle-tooling/impl:impl_test_lib",
+    "//plugins/kotlin/gradle/gradle-java:gradle-java_test_lib",
+    "//plugins/kotlin/compiler-plugins/compiler-plugin-support/common:kotlin-compilerPlugins-support_test_lib",
+    "//plugins/kotlin/compiler-plugins/compiler-plugin-support/gradle:gradle_test_lib",
+    "//plugins/gradle:gradle-common_test_lib",
+  ]
+)
+### auto-generated section `build kotlin.compiler-plugins.noarg.gradle` end

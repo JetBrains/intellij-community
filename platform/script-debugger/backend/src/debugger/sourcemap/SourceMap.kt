@@ -3,41 +3,55 @@ package org.jetbrains.debugger.sourcemap
 
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.Url
-import com.intellij.util.containers.isNullOrEmpty
+import org.jetbrains.annotations.ApiStatus
 
 // sources - is not originally specified, but canonicalized/normalized
 // lines and columns are zero-based according to specification
 interface SourceMap {
+  @get:ApiStatus.Internal
   val outFile: String?
 
   /**
    * note: Nested map returns only parent sources
    */
+  @get:ApiStatus.Internal
   val sources: Array<Url>
 
+  @get:ApiStatus.Internal
   val generatedMappings: Mappings
+
+  @get:ApiStatus.Internal
   val hasNameMappings: Boolean
+
+  @get:ApiStatus.Internal
   val sourceResolver: SourceResolver
 
+  @ApiStatus.Internal
   fun findSourceMappings(sourceIndex: Int): Mappings
 
+  @ApiStatus.Internal
   fun findSourceIndex(sourceUrl: Url, sourceFile: VirtualFile?, resolver: Lazy<SourceFileResolver?>?, localFileUrlOnly: Boolean): Int
 
+  @ApiStatus.Internal
   fun findSourceMappings(sourceUrl: Url, sourceFile: VirtualFile?, resolver: Lazy<SourceFileResolver?>?, localFileUrlOnly: Boolean): Mappings? {
     val sourceIndex = findSourceIndex(sourceUrl, sourceFile, resolver, localFileUrlOnly)
     return if (sourceIndex >= 0) findSourceMappings(sourceIndex) else null
   }
 
+  @ApiStatus.Internal
   fun getSourceLineByRawLocation(rawLine: Int, rawColumn: Int): Int = generatedMappings.get(rawLine, rawColumn)?.sourceLine ?: -1
 
+  @ApiStatus.Internal
   fun findSourceIndex(sourceFile: VirtualFile, localFileUrlOnly: Boolean): Int
 
   fun getSourceMappingsInLine(sourceIndex: Int, sourceLine: Int): Iterable<MappingEntry>
 
+  @ApiStatus.Internal
   fun processSourceMappingsInLine(sourceIndex: Int, sourceLine: Int, mappingProcessor: MappingsProcessorInLine): Boolean {
     return mappingProcessor.processIterable(getSourceMappingsInLine(sourceIndex, sourceLine))
   }
 
+  @ApiStatus.Internal
   fun getSourceMappingsInLine(sourceUrl: Url,
                               sourceLine: Int,
                               sourceFile: VirtualFile?,
@@ -47,15 +61,20 @@ interface SourceMap {
     return if (sourceIndex >= 0) getSourceMappingsInLine(sourceIndex, sourceLine) else emptyList()
   }
 
+  @ApiStatus.Internal
   fun getRawSource(entry: MappingEntry): String?
 
+  @ApiStatus.Internal
   fun getSourceContent(entry: MappingEntry): String?
 
+  @ApiStatus.Internal
   fun getSourceContent(sourceIndex: Int): String?
 }
 
-abstract class SourceMapBase(protected val sourceMapData: SourceMapData,
-                             override val sourceResolver: SourceResolver) : SourceMap {
+internal abstract class SourceMapBase(
+  protected val sourceMapData: SourceMapData,
+  override val sourceResolver: SourceResolver,
+) : SourceMap {
 
   override val outFile: String?
     get() = sourceMapData.file
@@ -101,7 +120,7 @@ abstract class SourceMapBase(protected val sourceMapData: SourceMapData,
     }
 
     val index = entry.source
-    return if (index < 0 || index >= sourcesContent!!.size) null else sourcesContent[index]
+    return if (index < 0 || index >= sourcesContent.size) null else sourcesContent[index]
   }
 
   override fun getSourceContent(sourceIndex: Int): String? {
@@ -109,12 +128,14 @@ abstract class SourceMapBase(protected val sourceMapData: SourceMapData,
     if (sourcesContent.isNullOrEmpty()) {
       return null
     }
-    return if (sourceIndex < 0 || sourceIndex >= sourcesContent!!.size) null else sourcesContent[sourceIndex]
+    return if (sourceIndex < 0 || sourceIndex >= sourcesContent.size) null else sourcesContent[sourceIndex]
   }
 }
 
-class OneLevelSourceMap(sourceMapDataEx: SourceMapDataEx,
-                        sourceResolver: SourceResolver)
+internal class OneLevelSourceMap(
+  sourceMapDataEx: SourceMapDataEx,
+  sourceResolver: SourceResolver,
+)
   : SourceMapBase(sourceMapDataEx.sourceMapData, sourceResolver) {
 
   override val sourceIndexToMappings: Array<MappingList?> = sourceMapDataEx.sourceIndexToMappings

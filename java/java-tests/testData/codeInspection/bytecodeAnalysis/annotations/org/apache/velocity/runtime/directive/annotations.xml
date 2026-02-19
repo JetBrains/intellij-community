@@ -30,7 +30,6 @@
         <annotation name='org.jetbrains.annotations.Contract'>
             <val name="pure" val="true"/>
         </annotation>
-        <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>
     <item name='org.apache.velocity.runtime.directive.BlockMacro BlockMacro(java.lang.String)'>
         <annotation name='org.jetbrains.annotations.Contract'>
@@ -152,7 +151,6 @@
     </item>
     <item name='org.apache.velocity.runtime.directive.Directive org.apache.velocity.runtime.directive.Scope makeScope(java.lang.Object)'>
         <annotation name='org.jetbrains.annotations.Contract'>
-            <val name="value" val="&quot;_-&gt;new&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
@@ -247,9 +245,6 @@
         </annotation>
     </item>
     <item name='org.apache.velocity.runtime.directive.Foreach.NullHolderContext NullHolderContext(java.lang.String, org.apache.velocity.context.InternalContextAdapter) 0'>
-        <annotation name='org.jetbrains.annotations.Nullable'/>
-    </item>
-    <item name='org.apache.velocity.runtime.directive.Foreach.NullHolderContext java.lang.Object get(java.lang.String)'>
         <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>
     <item name='org.apache.velocity.runtime.directive.ForeachScope ForeachScope(java.lang.Object, java.lang.Object)'>
@@ -535,6 +530,7 @@
     </item>
     <item name='org.apache.velocity.runtime.directive.Scope void stop()'>
         <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="value" val="&quot;-&gt;fail&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
     </item>
@@ -544,15 +540,6 @@
         </annotation>
     </item>
     <item name='org.apache.velocity.runtime.directive.Scope.Info Info(org.apache.velocity.runtime.directive.Scope, java.lang.Object) 1'>
-        <annotation name='org.jetbrains.annotations.Nullable'/>
-    </item>
-    <item name='org.apache.velocity.runtime.directive.Scope.Info java.lang.String getName()'>
-        <annotation name='org.jetbrains.annotations.Nullable'/>
-    </item>
-    <item name='org.apache.velocity.runtime.directive.Scope.Info java.lang.String getTemplate()'>
-        <annotation name='org.jetbrains.annotations.Nullable'/>
-    </item>
-    <item name='org.apache.velocity.runtime.directive.Scope.Info java.lang.String getType()'>
         <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>
     <item name='org.apache.velocity.runtime.directive.Scope.Info java.lang.String toString()'>
@@ -569,6 +556,11 @@
     <item name='org.apache.velocity.runtime.directive.Stop boolean isScopeProvided()'>
         <annotation name='org.jetbrains.annotations.Contract'>
             <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='org.apache.velocity.runtime.directive.Stop boolean render(org.apache.velocity.context.InternalContextAdapter, java.io.Writer, org.apache.velocity.runtime.parser.node.Node)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val val="&quot;_,_,_-&gt;fail&quot;"/>
         </annotation>
     </item>
     <item name='org.apache.velocity.runtime.directive.Stop boolean render(org.apache.velocity.context.InternalContextAdapter, java.io.Writer, org.apache.velocity.runtime.parser.node.Node) 1'>

@@ -1,12 +1,12 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.keymap.impl.ui;
 
 import com.intellij.openapi.options.ex.SingleConfigurableEditor;
 import com.intellij.openapi.project.Project;
 
-import javax.swing.*;
+import javax.swing.SwingUtilities;
 
-public class EditKeymapsDialog extends SingleConfigurableEditor {
+public final class EditKeymapsDialog extends SingleConfigurableEditor {
   private final String myActionToSelect;
 
   public EditKeymapsDialog(Project project, String actionToSelect, boolean showOnlyConflicts) {

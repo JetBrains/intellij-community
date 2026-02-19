@@ -3,7 +3,12 @@ package com.intellij.ide.actions;
 
 import com.intellij.ide.BrowserUtil;
 import com.intellij.ide.CopyProvider;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.util.text.StringUtil;
@@ -22,17 +27,27 @@ public class SearchWebAction extends AnAction implements DumbAware {
     }
     provider.performCopy(dataContext);
     String string = CopyPasteManager.getInstance().getContents(DataFlavor.stringFlavor);
-    if (StringUtil.isNotEmpty(string)) {
-      BrowserUtil.browse("http://www.google.com/search?q=" + URLUtil.encodeURIComponent(string));
+    search(string);
+  }
+
+  public static void search(String term) {
+    if (StringUtil.isNotEmpty(term)) {
+      BrowserUtil.browse("http://www.google.com/search?q=" + URLUtil.encodeURIComponent(term));
     }
   }
 
   @Override
   public void update(@NotNull AnActionEvent event) {
     Presentation presentation = event.getPresentation();
-    DataContext dataContext = event.getDataContext();
-    CopyProvider provider = PlatformDataKeys.COPY_PROVIDER.getData(dataContext);
-    boolean available = provider != null && provider.isCopyEnabled(dataContext) && provider.isCopyVisible(dataContext);
-    presentation.setEnabledAndVisible(available);
+    CopyAction.updateWithProvider(event, event.getData(PlatformDataKeys.COPY_PROVIDER), false, provider -> {
+      presentation.setEnabledAndVisible(provider != null &&
+                                        provider.isCopyEnabled(event.getDataContext()) &&
+                                        provider.isCopyVisible(event.getDataContext()));
+    });
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 }

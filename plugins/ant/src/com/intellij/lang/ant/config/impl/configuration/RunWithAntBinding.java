@@ -21,9 +21,10 @@ import com.intellij.lang.ant.config.impl.AntReference;
 import com.intellij.lang.ant.config.impl.GlobalAntConfiguration;
 import com.intellij.ui.ComboboxWithBrowseButton;
 import com.intellij.util.config.AbstractProperty;
-import com.intellij.util.containers.ConvertingIterator;
 
-import javax.swing.*;
+import javax.swing.ButtonGroup;
+import javax.swing.JComponent;
+import javax.swing.JRadioButton;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.util.ArrayList;
@@ -64,7 +65,7 @@ public class RunWithAntBinding extends UIPropertyBinding {
       }
     });
 
-    myAntsController = new ChooseAndEditComboBoxController<AntReference, AntReference>(myAnts, new ConvertingIterator.IdConvertor<>(), AntReference.COMPARATOR) {
+    myAntsController = new ChooseAndEditComboBoxController<>(myAnts, ref -> ref, AntReference.COMPARATOR) {
       @Override
       public Iterator<AntReference> getAllListItems() {
         return antConfiguration.getConfiguredAnts().keySet().iterator();

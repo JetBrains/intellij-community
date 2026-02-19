@@ -1,0 +1,42 @@
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package org.jetbrains.intellij.build
+
+import org.jetbrains.intellij.build.impl.ModuleItem
+import org.jetbrains.intellij.build.impl.PlatformLayout
+import org.jetbrains.intellij.build.impl.PluginLayout
+import org.jetbrains.intellij.build.impl.projectStructureMapping.DistributionFileEntry
+import java.nio.file.Path
+
+/**
+ * Implement this interface and pass the implementation to [ProprietaryBuildTools] constructor to support scrambling the product JAR files.
+ */
+interface ScrambleTool {
+  /**
+   * @return list of modules used by the tool which needs to be compiled before [scramble] method is invoked
+   */
+  val additionalModulesToCompile: List<String>
+
+  /**
+   * Scramble [PluginLayout.mainJarName] in "[BuildPaths.distAllDir]/lib" directory
+   */
+  suspend fun scramble(platformLayout: PlatformLayout, platformContent: List<DistributionFileEntry>, context: BuildContext)
+
+  suspend fun scramblePlugin(
+    pluginLayout: PluginLayout,
+    platformLayout: PlatformLayout,
+    platformContent: List<DistributionFileEntry>,
+    targetDir: Path,
+    additionalPluginDir: Path,
+    layouts: Collection<PluginLayout>,
+    context: BuildContext,
+  )
+
+  /**
+   * Returns list of module names which cannot be included in the product without scrambling.
+   */
+  val namesOfModulesRequiredToBeScrambled: List<String>
+
+  suspend fun validatePlatformLayout(modules: Collection<ModuleItem>, context: BuildContext)
+}
+
+internal class PluginScrambleTask(@JvmField val pluginLayout: PluginLayout, @JvmField val pluginDir: Path, @JvmField val targetDir: Path)

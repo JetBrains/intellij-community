@@ -1,18 +1,23 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.components.JBLabel;
+import com.intellij.ui.render.RenderingUtil;
 import com.intellij.util.Function;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import sun.swing.DefaultLookup;
 
-import javax.swing.*;
+import javax.swing.JList;
+import javax.swing.ListCellRenderer;
 import javax.swing.plaf.basic.BasicHTML;
-import java.awt.*;
+import java.awt.Color;
+import java.awt.Component;
+import java.awt.Dimension;
+import java.awt.Rectangle;
 
 /**
  * JBLabel-based (text and icon) list cell renderer.
@@ -22,10 +27,9 @@ import java.awt.*;
  * @author gregsh
  */
 public abstract class SimpleListCellRenderer<T> extends JBLabel implements ListCellRenderer<T> {
-
-  @NotNull
-  public static <T> SimpleListCellRenderer<T> create(@NotNull @NlsContexts.Label String nullValue, @NotNull Function<? super T, @NlsContexts.Label String> getText) {
-    return new SimpleListCellRenderer<T>() {
+  public static @NotNull <T> SimpleListCellRenderer<T> create(@NotNull @NlsContexts.Label String nullValue,
+                                                                        @NotNull Function<? super T, @NlsContexts.Label String> getText) {
+    return new SimpleListCellRenderer<>() {
       @Override
       public void customize(@NotNull JList<? extends T> list, T value, int index, boolean selected, boolean hasFocus) {
         setText(value == null ? nullValue : getText.fun(value));
@@ -33,9 +37,8 @@ public abstract class SimpleListCellRenderer<T> extends JBLabel implements ListC
     };
   }
 
-  @NotNull
-  public static <T> SimpleListCellRenderer<T> create(@NotNull Customizer<? super T> customizer) {
-    return new SimpleListCellRenderer<T>() {
+  public static @NotNull <T> SimpleListCellRenderer<T> create(@NotNull Customizer<? super T> customizer) {
+    return new SimpleListCellRenderer<>() {
       @Override
       public void customize(@NotNull JList<? extends T> list, T value, int index, boolean selected, boolean hasFocus) {
         customizer.customize(this, value, index);
@@ -55,8 +58,8 @@ public abstract class SimpleListCellRenderer<T> extends JBLabel implements ListC
       isSelected = true;
     }
     else {
-      bg = isSelected ? list.getSelectionBackground() : list.getBackground();
-      fg = isSelected ? list.getSelectionForeground() : list.getForeground();
+      bg = RenderingUtil.getBackground(list, isSelected);
+      fg = RenderingUtil.getForeground(list, isSelected);
     }
     setBackground(bg);
     setForeground(fg);
@@ -104,8 +107,8 @@ public abstract class SimpleListCellRenderer<T> extends JBLabel implements ListC
 
   @Override
   protected void firePropertyChange(String propertyName, Object oldValue, Object newValue) {
-    if (propertyName == "text"
-        || ((propertyName == "font" || propertyName == "foreground")
+    if ("text".equals(propertyName)
+        || (("font".equals(propertyName) || "foreground".equals(propertyName))
             && oldValue != newValue
             && getClientProperty(BasicHTML.propertyKey) != null)) {
       super.firePropertyChange(propertyName, oldValue, newValue);

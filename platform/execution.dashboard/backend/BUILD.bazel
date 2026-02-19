@@ -1,0 +1,72 @@
+### auto-generated section `build intellij.platform.execution.dashboard.backend` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "backend_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "backend",
+  module_name = "intellij.platform.execution.dashboard.backend",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":backend_resources"],
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "//libraries/kotlinx/serialization/core",
+    "//libraries/kotlinx/serialization/json",
+    "//platform/execution.dashboard",
+    "//platform/kernel/rpc.backend",
+    "//platform/kernel/backend",
+    "//libraries/kotlinx/coroutines/core",
+    "//platform/project/shared:project",
+    "//platform/core-api:core",
+    "//platform/execution",
+    "//platform/lang-api:lang",
+    "//platform/projectModel-api:projectModel",
+    "//platform/execution-impl",
+    "//platform/lang-impl",
+    "//platform/core-ui",
+    "//platform/editor-ui-api:editor-ui",
+    "//platform/execution.serviceView/backend",
+    "//platform/util/jdom",
+    "//platform/platform-impl:ide-impl",
+    "//platform/platform-impl/rpc",
+    "//platform/util/coroutines",
+    "//platform/execution.serviceView",
+  ]
+)
+
+jvm_library(
+  name = "backend_test_lib",
+  module_name = "intellij.platform.execution.dashboard.backend",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    ":backend",
+    "//libraries/kotlinx/serialization/core:core_test_lib",
+    "//libraries/kotlinx/serialization/json:json_test_lib",
+    "//platform/execution.dashboard:execution.dashboard_test_lib",
+    "//platform/kernel/rpc.backend:rpc.backend_test_lib",
+    "//platform/kernel/backend:backend_test_lib",
+    "//libraries/kotlinx/coroutines/core:core_test_lib",
+    "//platform/project/shared:project_test_lib",
+    "//platform/core-api:core_test_lib",
+    "//platform/execution:execution_test_lib",
+    "//platform/lang-api:lang_test_lib",
+    "//platform/projectModel-api:projectModel_test_lib",
+    "//platform/execution-impl:execution-impl_test_lib",
+    "//platform/lang-impl:lang-impl_test_lib",
+    "//platform/core-ui:core-ui_test_lib",
+    "//platform/editor-ui-api:editor-ui_test_lib",
+    "//platform/execution.serviceView/backend:backend_test_lib",
+    "//platform/util/jdom:jdom_test_lib",
+    "//platform/platform-impl:ide-impl_test_lib",
+    "//platform/platform-impl/rpc:rpc_test_lib",
+    "//platform/util/coroutines:coroutines_test_lib",
+    "//platform/execution.serviceView:execution.serviceView_test_lib",
+  ]
+)
+### auto-generated section `build intellij.platform.execution.dashboard.backend` end

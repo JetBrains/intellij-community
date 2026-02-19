@@ -1,5 +1,0 @@
-void m(int var) {
-  switch(var) {
-
-  }
-}

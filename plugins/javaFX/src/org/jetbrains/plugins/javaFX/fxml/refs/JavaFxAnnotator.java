@@ -1,7 +1,7 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.javaFX.fxml.refs;
 
-import com.intellij.codeInsight.intention.AddAnnotationFix;
+import com.intellij.codeInsight.intention.AddAnnotationModCommandAction;
 import com.intellij.codeInsight.intentions.XmlChooseColorIntentionAction;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.annotation.AnnotationBuilder;
@@ -15,13 +15,22 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiMember;
+import com.intellij.psi.PsiReference;
 import com.intellij.psi.presentation.java.SymbolPresentationUtil;
-import com.intellij.psi.xml.*;
+import com.intellij.psi.xml.XmlAttribute;
+import com.intellij.psi.xml.XmlAttributeValue;
+import com.intellij.psi.xml.XmlFile;
+import com.intellij.psi.xml.XmlTag;
+import com.intellij.psi.xml.XmlTagValue;
+import com.intellij.psi.xml.XmlTokenType;
 import com.intellij.ui.ColorUtil;
+import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.ui.ColorIcon;
-import com.intellij.util.ui.JBUI;
 import com.intellij.xml.util.ColorMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.javaFX.JavaFXBundle;
@@ -33,13 +42,13 @@ import org.jetbrains.plugins.javaFX.fxml.codeInsight.intentions.JavaFxInjectPage
 import org.jetbrains.plugins.javaFX.fxml.codeInsight.intentions.JavaFxWrapWithDefineIntention;
 import org.jetbrains.plugins.javaFX.fxml.descriptors.JavaFxBuiltInTagDescriptor;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.Icon;
+import java.awt.Color;
 import java.util.List;
 
-public class JavaFxAnnotator implements Annotator {
+public final class JavaFxAnnotator implements Annotator {
   @Override
-  public void annotate(@NotNull final PsiElement element, @NotNull AnnotationHolder holder) {
+  public void annotate(final @NotNull PsiElement element, @NotNull AnnotationHolder holder) {
     final PsiFile containingFile = holder.getCurrentAnnotationSession().getFile();
     if (!JavaFxFileTypeFactory.isFxml(containingFile)) return;
     if (element instanceof XmlAttributeValue) {
@@ -52,15 +61,15 @@ public class JavaFxAnnotator implements Annotator {
             continue;
           }
           final PsiElement resolve = reference.resolve();
-          if (resolve instanceof PsiMember) {
-            if (!JavaFxPsiUtil.isVisibleInFxml((PsiMember)resolve)) {
+          if (resolve instanceof PsiMember member) {
+            if (!JavaFxPsiUtil.isVisibleInFxml(member)) {
               final String symbolPresentation = "'" + SymbolPresentationUtil.getSymbolPresentableText(resolve) + "'";
               AnnotationBuilder builder = holder.newAnnotation(HighlightSeverity.ERROR, symbolPresentation +
                                                                                         (resolve instanceof PsiClass
                                                                                          ? JavaFXBundle.message("javafx.annotator.should.be.public")
                                                                                          : JavaFXBundle.message("javafx.annotator.should.be.public.or.fxml.annotated")));
               if (!(resolve instanceof PsiClass)) {
-                AddAnnotationFix fix = new AddAnnotationFix(JavaFxCommonNames.JAVAFX_FXML_ANNOTATION, (PsiMember)resolve,
+                var fix = new AddAnnotationModCommandAction(JavaFxCommonNames.JAVAFX_FXML_ANNOTATION, member,
                                                             ArrayUtilRt.EMPTY_STRING_ARRAY);
                 builder = builder.withFix(fix)
                   .newFix(fix).batch()
@@ -71,8 +80,7 @@ public class JavaFxAnnotator implements Annotator {
           }
         }
       }
-    } else if (element instanceof XmlAttribute) {
-      final XmlAttribute attribute = (XmlAttribute)element;
+    } else if (element instanceof XmlAttribute attribute) {
       final String attributeName = attribute.getName();
       if (!FxmlConstants.FX_BUILT_IN_ATTRIBUTES.contains(attributeName) &&
           !attribute.isNamespaceDeclaration() &&
@@ -125,7 +133,7 @@ public class JavaFxAnnotator implements Annotator {
         }
       }
       if (color != null) {
-        final ColorIcon icon = JBUI.scale(new ColorIcon(8, color));
+        final ColorIcon icon = JBUIScale.scaleIcon(new ColorIcon(8, color));
         holder.newSilentAnnotation(HighlightSeverity.INFORMATION).gutterIconRenderer(new ColorIconRenderer(icon, element)).create();
       }
     }
@@ -133,7 +141,7 @@ public class JavaFxAnnotator implements Annotator {
     }
   }
 
-  private static class ColorIconRenderer extends GutterIconRenderer implements DumbAware {
+  private static final class ColorIconRenderer extends GutterIconRenderer implements DumbAware {
     private final ColorIcon myIcon;
     private final PsiElement myElement;
 
@@ -142,9 +150,8 @@ public class JavaFxAnnotator implements Annotator {
       myElement = element;
     }
 
-    @NotNull
     @Override
-    public Icon getIcon() {
+    public @NotNull Icon getIcon() {
       return myIcon;
     }
 

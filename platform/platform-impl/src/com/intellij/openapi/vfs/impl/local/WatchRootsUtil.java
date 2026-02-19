@@ -1,12 +1,19 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.impl.local;
 
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.OSAgnosticPathUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.VisibleForTesting;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.Map;
+import java.util.NavigableMap;
+import java.util.NavigableSet;
+import java.util.TreeMap;
+import java.util.TreeSet;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 
@@ -14,7 +21,8 @@ import java.util.function.Predicate;
  * Unless stated otherwise, methods in the class are system-agnostic - i.e. capable to work with both OS and VFS paths.
  * Care should be taken though to make sure that within each call of a method parameters are of the same breed.
  */
-final class WatchRootsUtil {
+@ApiStatus.Internal
+public final class WatchRootsUtil {
   static boolean isCoveredRecursively(@NotNull NavigableSet<String> recursiveRoots, @NotNull String path) {
     String recursiveRoot = recursiveRoots.floor(path);
     return recursiveRoot != null && OSAgnosticPathUtil.startsWith(path, recursiveRoot);
@@ -57,7 +65,8 @@ final class WatchRootsUtil {
     consumer.test(path);
   }
 
-  static @NotNull NavigableSet<String> optimizeFlatRoots(@NotNull Collection<String> flatRoots, @NotNull NavigableSet<String> recursiveRoots,
+  static @NotNull NavigableSet<String> optimizeFlatRoots(@NotNull Collection<String> flatRoots,
+                                                         @NotNull NavigableSet<String> recursiveRoots,
                                                          boolean convertToForwardSlashes) {
     NavigableSet<String> result = createFileNavigableSet();
     if (convertToForwardSlashes) {
@@ -77,7 +86,8 @@ final class WatchRootsUtil {
     return result;
   }
 
-  static @NotNull NavigableSet<String> createFileNavigableSet() {
+  @VisibleForTesting
+  public static @NotNull NavigableSet<String> createFileNavigableSet() {
     return new TreeSet<>(OSAgnosticPathUtil.COMPARATOR);
   }
 
@@ -85,7 +95,8 @@ final class WatchRootsUtil {
     return new TreeMap<>(OSAgnosticPathUtil.COMPARATOR);
   }
 
-  static @NotNull NavigableSet<Pair<String, String>> createMappingsNavigableSet() {
+  @VisibleForTesting
+  public static @NotNull NavigableSet<Pair<String, String>> createMappingsNavigableSet() {
     return new TreeSet<>((a,b) -> OSAgnosticPathUtil.COMPARATOR.compare(a.first, b.first));
   }
 

@@ -2,9 +2,11 @@
 package org.jetbrains.plugins.gradle.tooling.serialization.internal.adapter;
 
 import org.gradle.tooling.model.idea.IdeaSourceDirectory;
+import org.jetbrains.annotations.ApiStatus;
 
 import java.io.File;
 
+@ApiStatus.Internal
 public final class InternalIdeaSourceDirectory implements IdeaSourceDirectory {
   private File directory;
   private boolean generated;
@@ -27,6 +29,7 @@ public final class InternalIdeaSourceDirectory implements IdeaSourceDirectory {
     this.generated = generated;
   }
 
+  @Override
   public String toString() {
     return "IdeaSourceDirectory{directory=" + this.directory + ", generated=" + this.generated + '}';
   }

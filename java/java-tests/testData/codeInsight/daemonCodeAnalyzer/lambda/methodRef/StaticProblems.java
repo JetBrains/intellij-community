@@ -57,10 +57,10 @@ class MyTest1 {
         I2 s2 = MyTest1 :: m2;
         call2(MyTest1::m2);
 
-        I2 s3 = MyTest1 :: <error descr="Cannot resolve method 'm3'">m3</error>;
-        call2(MyTest1::<error descr="Cannot resolve method 'm3'">m3</error>);
-        I2 s4 = MyTest1 ::<error descr="Cannot resolve method 'm4'">m4</error>;
-        call2(MyTest1::<error descr="Cannot resolve method 'm4'">m4</error>);
+        I2 s3 = MyTest1 :: <error descr="Reference to 'm3' is ambiguous, both 'm3(MyTest1, String)' and 'm3(String)' match">m3</error>;
+        call2(MyTest1::<error descr="Reference to 'm3' is ambiguous, both 'm3(MyTest1, String)' and 'm3(String)' match">m3</error>);
+        I2 s4 = MyTest1 ::<error descr="Reference to 'm4' is ambiguous, both 'm4(MyTest1, String)' and 'm4(String)' match">m4</error>;
+        call2(MyTest1::<error descr="Reference to 'm4' is ambiguous, both 'm4(MyTest1, String)' and 'm4(String)' match">m4</error>);
     }
 }
 
@@ -106,19 +106,19 @@ class MyTest2 {
         I2 s2 = MyTest2 :: m2;
         call2(MyTest2::m2);
 
-        I2 s3 = MyTest2 :: <error descr="Cannot resolve method 'm3'">m3</error>;
-        call2(MyTest2::<error descr="Cannot resolve method 'm3'">m3</error>);
-        I2 s4 = MyTest2 ::<error descr="Cannot resolve method 'm4'">m4</error>;
-        call2(MyTest2::<error descr="Cannot resolve method 'm4'">m4</error>);
+        I2 s3 = MyTest2 :: <error descr="Reference to 'm3' is ambiguous, both 'm3(MyTest2, String)' and 'm3(String)' match">m3</error>;
+        call2(MyTest2::<error descr="Reference to 'm3' is ambiguous, both 'm3(MyTest2, String)' and 'm3(String)' match">m3</error>);
+        I2 s4 = MyTest2 ::<error descr="Reference to 'm4' is ambiguous, both 'm4(MyTest2, String)' and 'm4(String)' match">m4</error>;
+        call2(MyTest2::<error descr="Reference to 'm4' is ambiguous, both 'm4(MyTest2, String)' and 'm4(String)' match">m4</error>);
     }
 
     static void call3(I1 s) {}
     static void call3(I2 s) {}
     static {
           call3(MyTest2::m1);
-          call3(MyTest2::<error descr="Cannot resolve method 'm2'">m2</error>);
+          call3(MyTest2::<error descr="Reference to 'm2' is ambiguous, both 'm2(MyTest2, String)' and 'm2(String)' match">m2</error>);
           call3(MyTest2::m3);
-          call3(MyTest2::<error descr="Cannot resolve method 'm4'">m4</error>);
+          call3(MyTest2::<error descr="Reference to 'm4' is ambiguous, both 'm4(MyTest2, String)' and 'm4(String)' match">m4</error>);
     }
 }
 

@@ -1,4 +1,4 @@
-// "Replace with 'findGetter'" "true"
+// "Replace with 'findGetter'" "true-preview"
 import java.lang.invoke.*;
 
 public class Main {

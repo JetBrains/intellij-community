@@ -13,6 +13,7 @@ import com.intellij.openapi.externalSystem.view.ExternalSystemNode;
 import com.intellij.openapi.externalSystem.view.ProjectNode;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -20,6 +21,7 @@ import java.util.List;
 /**
  * @author Vladislav.Soroka
  */
+@ApiStatus.Internal
 public class ExternalSystemSelectProjectDataToImportAction extends ExternalSystemAction {
 
   @Override

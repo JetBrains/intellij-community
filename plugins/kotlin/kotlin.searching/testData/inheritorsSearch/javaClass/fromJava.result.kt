@@ -1,0 +1,2 @@
+PsiClassImpl: B
+SymbolLightClassForClassOrObject: C

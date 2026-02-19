@@ -1,0 +1,9 @@
+PsiJavaFileStub [com.mylib]
+  PsiPackageStatementStub[com.mylib]
+    PsiModifierListStub[mask=0]
+      PsiAnnotationStub[@org.jspecify.annotations.NullMarked]
+  PsiClassStub[interface name=package-info fqn=com.mylib.package-info]
+    PsiModifierListStub[mask=5120]
+    PsiTypeParameterListStub
+    PsiRefListStub[EXTENDS_LIST:]
+    PsiRefListStub[IMPLEMENTS_LIST:]

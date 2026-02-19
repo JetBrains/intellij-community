@@ -15,12 +15,13 @@ import com.intellij.util.containers.JBIterable;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+import java.util.StringJoiner;
 import java.util.stream.Collectors;
 
-/**
- * @author irengrig
- */
 public class TodoCheckinHandlerWorkerTest extends HeavyPlatformTestCase {
   private VirtualFile myChildData;
   private String myNewText;
@@ -186,30 +187,31 @@ public class TodoCheckinHandlerWorkerTest extends HeavyPlatformTestCase {
     return new Change(new SimpleContentRevision(originalText, fp, "1"), new SimpleContentRevision(myNewText, fp, "2"));
   }
 
-  private final static String ourOldText = "package com.andthere;\n" +
-                                           "\n" +
-                                           "public class Essential {\n" +
-                                           " private final int i = 0; // todo check\n" +
-                                           " private final String myName;\n" +
-                                           "    \n" +
-                                           "    /* 12345\n" +
-                                           "    todo in the middle\n" +
-                                           "    abcde\n" +
-                                           "     */\n" +
-                                           "    \n" +
-                                           "    private void m() {\n" +
-                                           "        int i;  // TODO ? todo f\n" +
-                                           "    }\n" +
-                                           "    \n" +
-                                           "    private void method() {\n" +
-                                           "        for (Integer integer : new int[]{1, 2, 3}) {\n" +
-                                           "            System.out.println(integer);\n" +
-                                           "        }\n" +
-                                           "    }\n" +
-                                           "    \n" +
-                                           "    some \n" +
-                                           "            red todo\n" +
-                                           "    lines\n" +
-                                           "    // this ok todo ok\n" +
-                                           "}";
+  private final static String ourOldText = """
+    package com.andthere;
+
+    public class Essential {
+     private final int i = 0; // todo check
+     private final String myName;
+       \s
+        /* 12345
+        todo in the middle
+        abcde
+         */
+       \s
+        private void m() {
+            int i;  // TODO ? todo f
+        }
+       \s
+        private void method() {
+            for (Integer integer : new int[]{1, 2, 3}) {
+                System.out.println(integer);
+            }
+        }
+       \s
+        some\s
+                red todo
+        lines
+        // this ok todo ok
+    }""";
 }

@@ -1,9 +1,13 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.psi.impl.signatures;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.*;
+import com.intellij.psi.GenericsUtil;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiParameter;
+import com.intellij.psi.PsiSubstitutor;
+import com.intellij.psi.PsiType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.signatures.GrSignature;
@@ -21,9 +25,9 @@ public class GrImmediateClosureSignatureImpl implements GrSignature {
 
   private final boolean myIsVarargs;
   private final boolean myCurried;
-  @Nullable private final PsiType myReturnType;
+  private final @Nullable PsiType myReturnType;
   private final GrClosureParameter @NotNull [] myParameters;
-  @NotNull private final PsiSubstitutor mySubstitutor;
+  private final @NotNull PsiSubstitutor mySubstitutor;
 
   public GrImmediateClosureSignatureImpl(PsiParameter @NotNull [] parameters,
                                          @Nullable PsiType returnType,
@@ -61,22 +65,18 @@ public class GrImmediateClosureSignatureImpl implements GrSignature {
 
 
   @Override
-  @Nullable
-  public PsiType getReturnType() {
+  public @Nullable PsiType getReturnType() {
     return myReturnType;
   }
 
   @Override
-  @NotNull
-  public PsiSubstitutor getSubstitutor() {
+  public @NotNull PsiSubstitutor getSubstitutor() {
     return mySubstitutor;
   }
 
   @Override
   public GrClosureParameter @NotNull [] getParameters() {
-    GrClosureParameter[] result = new GrClosureParameter[myParameters.length];
-    System.arraycopy(myParameters, 0, result, 0, myParameters.length);
-    return result;
+    return myParameters.clone();
   }
 
   @Override
@@ -107,10 +107,9 @@ public class GrImmediateClosureSignatureImpl implements GrSignature {
     return myCurried;
   }
 
-  @Nullable
-  public static GrSignature getLeastUpperBound(@NotNull GrSignature signature1,
-                                               @NotNull GrSignature signature2,
-                                               @NotNull PsiManager manager) {
+  public static @Nullable GrSignature getLeastUpperBound(@NotNull GrSignature signature1,
+                                                         @NotNull GrSignature signature2,
+                                                         @NotNull PsiManager manager) {
     GrClosureParameter[] parameters1 = signature1.getParameters();
     GrClosureParameter[] parameters2 = signature2.getParameters();
 

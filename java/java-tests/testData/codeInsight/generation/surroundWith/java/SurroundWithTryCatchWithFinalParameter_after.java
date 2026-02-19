@@ -4,7 +4,7 @@ class ModuleATest {
         try {
             foo();
         } catch (final Smth ex1) {
-            ex1.printStackTrace();
+            throw new RuntimeException(ex1);
         }
         Exception ex1 = null; 
     }

@@ -1,17 +1,19 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.openapi.editor.ex.MarkupIterator;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.NoSuchElementException;
 import java.util.function.Predicate;
 
-public class FilteringMarkupIterator<T> implements MarkupIterator<T> {
-  @NotNull private final MarkupIterator<T> myDelegate;
-  @NotNull private final Predicate<? super T> myFilter;
+@ApiStatus.Internal
+public final class FilteringMarkupIterator<T> implements MarkupIterator<T> {
+  private final @NotNull MarkupIterator<? extends T> myDelegate;
+  private final @NotNull Predicate<? super T> myFilter;
 
-  public FilteringMarkupIterator(@NotNull MarkupIterator<T> delegate, @NotNull Predicate<? super T> filter) {
+  public FilteringMarkupIterator(@NotNull MarkupIterator<? extends T> delegate, @NotNull Predicate<? super T> filter) {
     myDelegate = delegate;
     myFilter = filter;
     skipUnrelated();

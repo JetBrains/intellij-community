@@ -11,7 +11,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.textmate.language.preferences.TextMateTextAttributes;
 
-import java.awt.*;
+import java.awt.Color;
+import java.awt.Font;
 
 public class TextMateTextAttributesAdapter {
   private final TextAttributes myTextAttributes;
@@ -33,16 +34,10 @@ public class TextMateTextAttributesAdapter {
     myBackgroundAlpha = background.second;
 
     switch (attributes.getFontStyle()) {
-      case PLAIN:
-        myTextAttributes.setFontType(Font.PLAIN);
-        break;
-      case ITALIC:
-        myTextAttributes.setFontType(Font.ITALIC);
-        break;
-      case BOLD:
-        myTextAttributes.setFontType(Font.BOLD);
-        break;
-      case UNDERLINE:
+      case PLAIN -> myTextAttributes.setFontType(Font.PLAIN);
+      case ITALIC -> myTextAttributes.setFontType(Font.ITALIC);
+      case BOLD -> myTextAttributes.setFontType(Font.BOLD);
+      case UNDERLINE -> {
         Color foregroundColor = myTextAttributes.getForegroundColor();
         Color effectColor;
         if (foregroundColor != null) {
@@ -54,7 +49,7 @@ public class TextMateTextAttributesAdapter {
         }
         myTextAttributes.setEffectColor(effectColor);
         myTextAttributes.setEffectType(EffectType.LINE_UNDERSCORE);
-        break;
+      }
     }
   }
 
@@ -78,8 +73,7 @@ public class TextMateTextAttributesAdapter {
     return TextAttributesKey.createTextAttributesKey("TextMateCustomRule_" + TextMateTheme.INSTANCE.getName() + myScopeName, result);
   }
 
-  @Nullable
-  private static Color mixBackground(@Nullable Color color, @Nullable Color defaultBackground, double alpha) {
+  private static @Nullable Color mixBackground(@Nullable Color color, @Nullable Color defaultBackground, double alpha) {
     if (color == null || defaultBackground == null || alpha < 0) {
       return null;
     }

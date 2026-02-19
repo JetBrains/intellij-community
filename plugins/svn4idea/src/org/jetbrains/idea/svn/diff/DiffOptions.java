@@ -15,9 +15,6 @@
  */
 package org.jetbrains.idea.svn.diff;
 
-/**
- * @author Konstantin Kolosovsky.
- */
 public class DiffOptions {
 
   private final boolean myIgnoreAllWhitespace;

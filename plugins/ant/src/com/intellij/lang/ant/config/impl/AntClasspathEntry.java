@@ -26,12 +26,12 @@ import com.intellij.util.config.Externalizer;
 import com.intellij.util.containers.ContainerUtil;
 import org.jdom.Element;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 import java.io.File;
 import java.util.List;
 
 public interface AntClasspathEntry {
-  Externalizer<AntClasspathEntry> EXTERNALIZER = new Externalizer<AntClasspathEntry>() {
+  Externalizer<AntClasspathEntry> EXTERNALIZER = new Externalizer<>() {
     @Override
     public AntClasspathEntry readValue(Element dataElement) {
       String pathUrl = dataElement.getAttributeValue(SinglePathEntry.PATH);

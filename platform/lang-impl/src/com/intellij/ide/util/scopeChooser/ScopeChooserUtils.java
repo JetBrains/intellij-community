@@ -7,7 +7,13 @@ import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.impl.OpenFilesScope;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.search.*;
+import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.GlobalSearchScopes;
+import com.intellij.psi.search.GlobalSearchScopesCore;
+import com.intellij.psi.search.PredefinedSearchScopeProvider;
+import com.intellij.psi.search.PredefinedSearchScopeProviderImpl;
+import com.intellij.psi.search.ProjectScope;
+import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.scope.ProjectFilesScope;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.psi.search.scope.packageSet.NamedScopesHolder;
@@ -31,8 +37,8 @@ public final class ScopeChooserUtils {
    * <li>if no known scope with the provided name found then empty scope is returned</li>
    * </ul>
    */
-  @NotNull
-  public static GlobalSearchScope findScopeByName(@NotNull Project project, @Nullable String scopePresentableName) {
+  public static @NotNull GlobalSearchScope findScopeByName(@NotNull Project project,
+                                                           @Nullable String scopePresentableName) {
     // logic here is similar to ScopeChooserCombo
 
     if (scopePresentableName == null) return GlobalSearchScope.EMPTY_SCOPE;
@@ -79,6 +85,49 @@ public final class ScopeChooserUtils {
       // Backward compatibility with previous File Watchers behavior.
       // It never worked correctly for scopes like "Module 'foo'" and always returned ProjectFilesScope in such cases.
       return ProjectScope.getContentScope(project);
+    }
+
+    return GlobalSearchScope.EMPTY_SCOPE;
+  }
+
+  public static @NotNull GlobalSearchScope findGlobalScopeByName(@NotNull Project project,
+                                                                 @Nullable String scopePresentableName) {
+    // logic here is similar to ScopeChooserCombo
+
+    if (scopePresentableName == null) return GlobalSearchScope.EMPTY_SCOPE;
+
+    if (OpenFilesScope.getNameText().equals(scopePresentableName)) {
+      return GlobalSearchScopes.openFilesScope(project);
+    }
+
+    if (PredefinedSearchScopeProviderImpl.getCurrentFileScopeName().equals(scopePresentableName)) {
+      VirtualFile[] array = FileEditorManager.getInstance(project).getSelectedFiles();
+      List<VirtualFile> files = ContainerUtil.createMaybeSingletonList(ArrayUtil.getFirstElement(array));
+      return GlobalSearchScope.filesScope(project, files, PredefinedSearchScopeProviderImpl.getCurrentFileScopeName());
+    }
+
+    PredefinedSearchScopeProvider scopeProvider = PredefinedSearchScopeProvider.getInstance();
+    for (SearchScope scope : scopeProvider.getPredefinedScopes(project, null, false, false, false, false, true)) {
+      if (scope instanceof GlobalSearchScope && scope.getDisplayName().equals(scopePresentableName)) {
+        return (GlobalSearchScope)scope;
+      }
+    }
+
+    for (FindInProjectExtension extension : FindInProjectExtension.EP_NAME.getExtensionList()) {
+      for (NamedScope scope : extension.getFilteredNamedScopes(project)) {
+        if (scope.getPresentableName().equals(scopePresentableName)) {
+          return GlobalSearchScopesCore.filterScope(project, scope);
+        }
+      }
+    }
+
+    for (NamedScopesHolder holder : NamedScopesHolder.getAllNamedScopeHolders(project)) {
+      final NamedScope[] scopes = holder.getEditableScopes();  // predefined scopes already included
+      for (NamedScope scope : scopes) {
+        if (scope.getScopeId().equals(scopePresentableName)) {
+          return GlobalSearchScopesCore.filterScope(project, scope);
+        }
+      }
     }
 
     return GlobalSearchScope.EMPTY_SCOPE;

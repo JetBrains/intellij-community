@@ -15,37 +15,50 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyPsiBundle;
-import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.LanguageLevel;
+import com.jetbrains.python.psi.PyAssertStatement;
+import com.jetbrains.python.psi.PyAssignmentStatement;
+import com.jetbrains.python.psi.PyCallExpression;
+import com.jetbrains.python.psi.PyComprehensionElement;
+import com.jetbrains.python.psi.PyElementGenerator;
+import com.jetbrains.python.psi.PyExpression;
+import com.jetbrains.python.psi.PyFile;
+import com.jetbrains.python.psi.PyGeneratorExpression;
+import com.jetbrains.python.psi.PyLambdaExpression;
+import com.jetbrains.python.psi.PyQualifiedExpression;
+import com.jetbrains.python.psi.PyReferenceExpression;
+import com.jetbrains.python.psi.PyStatement;
+import com.jetbrains.python.psi.PyStatementList;
+import com.jetbrains.python.psi.PyUtil;
+import com.jetbrains.python.psi.PyWithItem;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * User: ktisha
- *
+ * <p>
  * Helps to specify type by assertion
  */
-public class TypeAssertionIntention extends PyBaseIntentionAction {
+public final class TypeAssertionIntention extends PyBaseIntentionAction {
 
   @Override
-  @NotNull
-  public String getText() {
+  public @NotNull String getText() {
     return PyPsiBundle.message("INTN.insert.assertion");
   }
 
   @Override
-  @NotNull
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return PyPsiBundle.message("INTN.insert.assertion");
   }
 
   @Override
-  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    if (!(file instanceof PyFile)) {
+  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile psiFile) {
+    if (!(psiFile instanceof PyFile)) {
       return false;
     }
 
-    PsiElement elementAt = PyUtil.findNonWhitespaceAtOffset(file, editor.getCaretModel().getOffset());
+    PsiElement elementAt = PyUtil.findNonWhitespaceAtOffset(psiFile, editor.getCaretModel().getOffset());
     PyExpression problemElement = PsiTreeUtil.getParentOfType(elementAt, PyReferenceExpression.class);
     if (problemElement == null) return false;
     if (problemElement.getParent() instanceof PyWithItem) return false;
@@ -61,7 +74,7 @@ public class TypeAssertionIntention extends PyBaseIntentionAction {
         (reference != null && reference.resolve() == null)) {
       return false;
     }
-    final PyType type = TypeEvalContext.codeAnalysis(file.getProject(), file).getType(problemElement);
+    final PyType type = TypeEvalContext.codeAnalysis(psiFile.getProject(), psiFile).getType(problemElement);
     return type == null;
   }
 
@@ -76,8 +89,9 @@ public class TypeAssertionIntention extends PyBaseIntentionAction {
       final PyExpression qualifier = problemElement.getQualifier();
       if (qualifier != null && !qualifier.getText().equals(PyNames.CANONICAL_SELF)) {
         final String referencedName = problemElement.getReferencedName();
-        if (referencedName == null || PyNames.GETITEM.equals(referencedName))
+        if (referencedName == null || PyNames.GETITEM.equals(referencedName)) {
           name = qualifier.getText();
+        }
       }
 
       final String text = "assert isinstance(" + name + ", )";
@@ -99,20 +113,25 @@ public class TypeAssertionIntention extends PyBaseIntentionAction {
         if (statementList != null) {
           PsiElement statementListParent = PsiTreeUtil.getParentOfType(statementList, PyStatement.class);
           if (statementListParent != null && document.getLineNumber(statementList.getTextOffset()) ==
-              document.getLineNumber(statementListParent.getTextOffset())) {
+                                             document.getLineNumber(statementListParent.getTextOffset())) {
             final String substring =
-              TextRange.create(statementListParent.getTextRange().getStartOffset(), statementList.getTextOffset()).substring(document.getText());
+              TextRange.create(statementListParent.getTextRange().getStartOffset(), statementList.getTextOffset())
+                .substring(document.getText());
             final PyStatement foo =
-              elementGenerator.createFromText(LanguageLevel.forElement(problemElement), PyStatement.class, substring + "\n\t" +
-                                             text + "\n\t" + statementList.getText());
+              elementGenerator.createFromText(LanguageLevel.forElement(problemElement), PyStatement.class, substring +
+                                                                                                           "\n\t" +
+                                                                                                           text +
+                                                                                                           "\n\t" +
+                                                                                                           statementList.getText());
 
             statementListParent = statementListParent.replace(foo);
             statementList = PsiTreeUtil.findChildOfType(statementListParent, PyStatementList.class);
             assert statementList != null;
             element = statementList.getStatements()[0];
           }
-          else
+          else {
             element = parent.addBefore(assertStatement, parentStatement);
+          }
         }
         else {
           element = parent.addBefore(assertStatement, parentStatement);
@@ -124,7 +143,7 @@ public class TypeAssertionIntention extends PyBaseIntentionAction {
 
       element = CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement(element);
       final TemplateBuilder builder = TemplateBuilderFactory.getInstance().createTemplateBuilder(element);
-      builder.replaceRange(TextRange.create(text.length()-1, text.length()-1), PyNames.OBJECT);
+      builder.replaceRange(TextRange.create(text.length() - 1, text.length() - 1), PyNames.OBJECT);
       builder.run(editor, true);
     }
   }

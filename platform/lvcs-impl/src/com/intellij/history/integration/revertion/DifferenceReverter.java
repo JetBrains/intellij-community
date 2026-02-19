@@ -1,19 +1,4 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.history.integration.revertion;
 
 import com.intellij.history.core.Content;
@@ -24,35 +9,37 @@ import com.intellij.history.core.revisions.Revision;
 import com.intellij.history.core.tree.Entry;
 import com.intellij.history.integration.IdeaGateway;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
-import gnu.trove.THashSet;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.function.Supplier;
 
-public class DifferenceReverter extends Reverter {
-  private final IdeaGateway myGateway;
-  private final List<? extends Difference> myDiffs;
-  private final Revision myLeftRevision;
+public final class DifferenceReverter extends Reverter {
+  private final List<Difference> myDiffs;
 
-  public DifferenceReverter(Project p, LocalHistoryFacade vcs, IdeaGateway gw, List<? extends Difference> diffs, Revision leftRevision) {
-    super(p, vcs, gw);
-    myGateway = gw;
+  public DifferenceReverter(Project p,
+                            LocalHistoryFacade vcs,
+                            IdeaGateway gw,
+                            List<Difference> diffs,
+                            @NotNull Supplier<@NlsContexts.Command String> commandName) {
+    super(p, vcs, gw, commandName);
     myDiffs = diffs;
-    myLeftRevision = leftRevision;
+  }
+
+  public DifferenceReverter(Project p, LocalHistoryFacade vcs, IdeaGateway gw, List<Difference> diffs, Revision leftRevision) {
+    this(p, vcs, gw, diffs, () -> getRevertCommandName(leftRevision));
   }
 
   @Override
-  protected Revision getTargetRevision() {
-    return myLeftRevision;
-  }
-
-  @Override
-  protected List<VirtualFile> getFilesToClearROStatus() throws IOException {
+  protected @NotNull List<VirtualFile> getFilesToClearROStatus() {
     LinkedHashSet<VirtualFile> files = new LinkedHashSet<>();
     for (Difference each : myDiffs) {
       Entry l = each.getLeft();
@@ -72,7 +59,7 @@ public class DifferenceReverter extends Reverter {
   }
 
   public void doRevert(boolean revertContentChanges) throws IOException {
-    Set<String> vetoedFiles = new THashSet<>();
+    Set<String> vetoedFiles = new HashSet<>();
 
     for (Difference each : ContainerUtil.iterateBackward(myDiffs)) {
       Entry l = each.getLeft();
@@ -95,23 +82,23 @@ public class DifferenceReverter extends Reverter {
     }
   }
 
-  private void revertCreation(Entry r, Set<String> vetoedFiles) throws IOException {
+  private void revertCreation(@NotNull Entry r, @NotNull Set<String> vetoedFiles) throws IOException {
     String path = r.getPath();
     for (String each : vetoedFiles) {
       if (Paths.isParent(path, each)) return;
     }
-    
+
     VirtualFile f = myGateway.findVirtualFile(path);
     if (f != null) f.delete(this);
   }
 
-  private void revertDeletion(Entry l) throws IOException {
+  private void revertDeletion(@NotNull Entry l) throws IOException {
     VirtualFile f = myGateway.findOrCreateFileSafely(l.getPath(), l.isDirectory());
     if (l.isDirectory()) return;
     setContent(l, f);
   }
 
-  private void revertRename(Entry l, VirtualFile file) throws IOException {
+  private void revertRename(@NotNull Entry l, @NotNull VirtualFile file) throws IOException {
     String oldName = l.getName();
     if (!oldName.equals(file.getName())) {
       VirtualFile existing = file.getParent().findChild(oldName);
@@ -122,14 +109,14 @@ public class DifferenceReverter extends Reverter {
     }
   }
 
-  private void revertContentChange(Entry l, VirtualFile file) throws IOException {
+  private static void revertContentChange(@NotNull Entry l, VirtualFile file) throws IOException {
     if (l.isDirectory()) return;
     if (file.getTimeStamp() != l.getTimestamp()) {
       setContent(l, file);
     }
   }
 
-  private void setContent(Entry l, VirtualFile file) throws IOException {
+  private static void setContent(@NotNull Entry l, VirtualFile file) throws IOException {
     Content c = l.getContent();
     if (!c.isAvailable()) return;
     file.setBinaryContent(c.getBytes());

@@ -1,4 +1,4 @@
-// "Unwrap 'switch'" "true"
+// "Unwrap 'switch'" "true-preview"
 class X {
   String test(char c) {
     s<caret>witch (c) {

@@ -1,0 +1,3 @@
+- name: dist.all/lib/intellij.execution.process.elevation.jar
+  modules:
+  - name: intellij.execution.process.elevation

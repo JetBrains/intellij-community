@@ -7,7 +7,11 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.packaging.elements.CompositePackagingElement;
 import com.intellij.packaging.elements.PackagingElement;
-import com.intellij.packaging.impl.artifacts.*;
+import com.intellij.packaging.impl.artifacts.ArtifactUtil;
+import com.intellij.packaging.impl.artifacts.PackagingElementPath;
+import com.intellij.packaging.impl.artifacts.PackagingElementProcessor;
+import com.intellij.packaging.impl.artifacts.ParentElementProcessor;
+import com.intellij.packaging.impl.artifacts.PlainArtifactType;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -47,20 +51,26 @@ public class ArtifactUtilTest extends PackagingElementsTestCase {
     final MyParentElementProcessor processor = new MyParentElementProcessor();
 
     ArtifactUtil.processParents(exploded, getContext(), processor, 2);
-    assertEquals("war:dir\n" +
-                 "war:web.war/dir\n" +
-                 "ear:ear.ear/web.war/dir\n", processor.getLog());
+    assertEquals("""
+                   war:dir
+                   war:web.war/dir
+                   ear:ear.ear/web.war/dir
+                   """, processor.getLog());
 
     ArtifactUtil.processParents(exploded, getContext(), processor, 1);
-    assertEquals("war:dir\n" +
-                 "war:web.war/dir\n", processor.getLog());
+    assertEquals("""
+                   war:dir
+                   war:web.war/dir
+                   """, processor.getLog());
 
     ArtifactUtil.processParents(exploded, getContext(), processor, 0);
     assertEquals("war:dir\n", processor.getLog());
 
     ArtifactUtil.processParents(war, getContext(), processor, 2);
-    assertEquals("war:web.war\n" +
-                 "ear:ear.ear/web.war\n", processor.getLog());
+    assertEquals("""
+                   war:web.war
+                   ear:ear.ear/web.war
+                   """, processor.getLog());
 
   }
 

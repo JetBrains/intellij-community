@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.ui;
 
 import com.intellij.java.refactoring.JavaRefactoringBundle;
@@ -10,8 +10,12 @@ import com.intellij.openapi.util.NlsContexts;
 import com.intellij.refactoring.RefactoringBundle;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.Icon;
+import javax.swing.JCheckBox;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import java.awt.BorderLayout;
 
 public class YesNoPreviewUsagesDialog extends DialogWrapper {
   private JCheckBox myCbPreviewResults;
@@ -27,7 +31,6 @@ public class YesNoPreviewUsagesDialog extends DialogWrapper {
     myToPreviewUsages = previewUsages;
     setOKButtonText(RefactoringBundle.message("yes.button"));
     setCancelButtonText(RefactoringBundle.message("no.button"));
-    setButtonsAlignment(SwingConstants.CENTER);
     init();
   }
 
@@ -63,9 +66,8 @@ public class YesNoPreviewUsagesDialog extends DialogWrapper {
     return panel;
   }
 
-  @Nullable
   @Override
-  protected String getHelpId() {
+  protected @Nullable String getHelpId() {
     return myHelpID;
   }
 }

@@ -3,10 +3,12 @@ package com.intellij.util.indexing.diagnostic.dump
 
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
+import com.intellij.concurrency.ConcurrentCollectionFactory
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.roots.impl.PushedFilePropertiesUpdaterImpl
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.util.containers.ConcurrentBitSet
+import com.intellij.openapi.vfs.VirtualFileFilter
 import com.intellij.util.indexing.FileBasedIndex
 import com.intellij.util.indexing.FileBasedIndexImpl
 import com.intellij.util.indexing.IndexingBundle
@@ -14,13 +16,13 @@ import com.intellij.util.indexing.diagnostic.dump.paths.IndexedFilePath
 import com.intellij.util.indexing.diagnostic.dump.paths.IndexedFilePaths
 import com.intellij.util.indexing.diagnostic.dump.paths.PortableFilePaths
 import java.nio.file.Path
-import java.util.*
+import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.atomic.AtomicInteger
 
 class IndexContentDiagnosticBuilder(private val project: Project) {
-
-  val allIndexedFilePaths = arrayListOf<IndexedFilePath>()
-  val filesFromUnsupportedFileSystems = arrayListOf<IndexedFilePath>()
-  val projectIndexedFileProviderDebugNameToFileIds = hashMapOf<String, MutableSet<Int>>()
+  private val allIndexedFilePaths: MutableSet<IndexedFilePath> = ConcurrentCollectionFactory.createConcurrentSet()
+  private val filesFromUnsupportedFileSystems: MutableSet<IndexedFilePath> = ConcurrentCollectionFactory.createConcurrentSet()
+  private val projectIndexedFileProviderDebugNameToFileIds: MutableMap<String, MutableSet<Int>> = ConcurrentHashMap<String, MutableSet<Int>>()
 
   fun addFile(file: VirtualFile, providerName: String) {
     if (file.isDirectory) {
@@ -29,7 +31,7 @@ class IndexContentDiagnosticBuilder(private val project: Project) {
     val indexedFilePath = IndexedFilePaths.createIndexedFilePath(file, project)
     if (PortableFilePaths.isSupportedFileSystem(file)) {
       allIndexedFilePaths += indexedFilePath
-      projectIndexedFileProviderDebugNameToFileIds.getOrPut(providerName) { TreeSet() } += indexedFilePath.originalFileSystemId
+      projectIndexedFileProviderDebugNameToFileIds.getOrPut(providerName) { ConcurrentCollectionFactory.createConcurrentSet() } += indexedFilePath.originalFileSystemId
     }
     else {
       // TODO: consider not excluding any file systems.
@@ -38,9 +40,9 @@ class IndexContentDiagnosticBuilder(private val project: Project) {
   }
 
   fun build(): IndexContentDiagnostic = IndexContentDiagnostic(
-    allIndexedFilePaths,
-    filesFromUnsupportedFileSystems,
-    projectIndexedFileProviderDebugNameToFileIds
+    allIndexedFilePaths.toList(),
+    filesFromUnsupportedFileSystems.toList(),
+    projectIndexedFileProviderDebugNameToFileIds.mapValues { (_, ids) -> ids.toSortedSet() }
   )
 }
 
@@ -49,22 +51,26 @@ object IndexContentDiagnosticDumper {
   private val jacksonObjectMapper = jacksonObjectMapper()
 
   fun getIndexContentDiagnosticForProject(project: Project, indicator: ProgressIndicator): IndexContentDiagnostic {
-    val providers = (FileBasedIndex.getInstance() as FileBasedIndexImpl).getOrderedIndexableFilesProviders(project)
-    val visitedFiles = ConcurrentBitSet()
+    val providers = (FileBasedIndex.getInstance() as FileBasedIndexImpl).getIndexableFilesProviders(project)
 
     indicator.text = IndexingBundle.message("index.content.diagnostic.dumping")
     indicator.isIndeterminate = false
     indicator.fraction = 0.0
 
     val builder = IndexContentDiagnosticBuilder(project)
-    for ((index, provider) in providers.withIndex()) {
-      indicator.text2 = provider.debugName
-      provider.iterateFiles(project, { fileOrDir ->
-        builder.addFile(fileOrDir, provider.debugName)
-        true
-      }, visitedFiles)
-      indicator.fraction = (index + 1).toDouble() / providers.size
-    }
+    val processed = AtomicInteger()
+
+    PushedFilePropertiesUpdaterImpl.invokeConcurrentlyIfPossible(providers.map { provider ->
+      Runnable {
+        indicator.text2 = provider.debugName
+        provider.iterateFiles(project, { fileOrDir ->
+          builder.addFile(fileOrDir, provider.debugName)
+          true
+        }, VirtualFileFilter.ALL)
+        indicator.fraction = processed.incrementAndGet().toDouble() / providers.size
+      }
+    })
+
     return builder.build()
   }
 

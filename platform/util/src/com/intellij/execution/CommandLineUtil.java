@@ -1,16 +1,18 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.StringUtilRt;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.regex.Matcher;
@@ -24,7 +26,9 @@ public final class CommandLineUtil {
   private static final Pattern WIN_QUOTE_SPECIAL = Pattern.compile("[ \t\"*?\\[{}~()']");  // + glob [*?] + Cygwin glob [*?\[{}~] + [()']
   private static final Pattern WIN_QUIET_COMMAND = Pattern.compile("((?:@\\s*)++)(.*)", Pattern.CASE_INSENSITIVE);
 
-  private static final String SHELL_WHITELIST_CHARACTERS = "-._/@=";
+  private static final List<Character> SHELL_UNSAFE_CHARACTERS = Arrays.asList(
+    '|', '&', ';', '<', '>', '(', ')', '$', '`', '\\', '\"', '\'', ' ', '\t', '\n', '*', '?', '[', '#', '~', '=', '%'
+  );
 
   private static final char Q = '\"';
   private static final String QQ = "\"\"";
@@ -33,17 +37,21 @@ public final class CommandLineUtil {
     return quote(parameter, INESCAPABLE_QUOTE);
   }
 
-  public static @NotNull List<String> toCommandLine(@NotNull List<String> command) {
+  public static @NotNull List<String> toCommandLine(@NotNull List<@NotNull String> command) {
     assert !command.isEmpty();
     return toCommandLine(command.get(0), command.subList(1, command.size()));
   }
 
-  public static @NotNull List<String> toCommandLine(@NotNull String command, @NotNull List<String> parameters) {
+  public static @NotNull List<String> toCommandLine(@NotNull String command, @NotNull List<@NotNull String> parameters) {
     return toCommandLine(command, parameters, Platform.current());
   }
 
   // please keep an implementation in sync with [junit-rt] ProcessBuilder.createProcess()
-  public static @NotNull List<String> toCommandLine(@NotNull String command, @NotNull List<String> parameters, @NotNull Platform platform) {
+  public static @NotNull List<String> toCommandLine(
+    @NotNull String command,
+    @NotNull List<@NotNull String> parameters,
+    @NotNull Platform platform
+  ) {
     List<String> commandLine = new ArrayList<>(parameters.size() + 1);
 
     commandLine.add(FileUtilRt.toSystemDependentName(command, platform.fileSeparator));
@@ -203,7 +211,11 @@ public final class CommandLineUtil {
    *   http://stackoverflow.com/a/4095133/545027  How does the Windows Command Interpreter (CMD.EXE) parse scripts?
    *   https://blogs.msdn.microsoft.com/twistylittlepassagesallalike/2011/04/23/everyone-quotes-command-line-arguments-the-wrong-way/
    */
-  private static void addToWindowsCommandLine(String command, List<String> parameters, List<? super String> commandLine) {
+  private static void addToWindowsCommandLine(
+    @NotNull String command,
+    @NotNull List<@NotNull String> parameters,
+    @NotNull List<? super @NotNull String> commandLine
+  ) {
     boolean isCmdParam = isWinShell(command);
     int cmdInvocationDepth = isWinShellScript(command) ? 2 : isCmdParam ? 1 : 0;
 
@@ -490,20 +502,34 @@ public final class CommandLineUtil {
   /**
    * When necessary, quotes the specified argument with single quotes, according to the POSIX shell rules,
    * replacing single quotes with hardly readable but recursion-safe {@code '"'"'}.
+   * <p>
+   * For the reference see - <a href="https://pubs.opengroup.org/onlinepubs/009604499/utilities/xcu_chap02.html">specification</a>
    */
   public static @NotNull String posixQuote(@NotNull String argument) {
-    return shouldWrapWithQuotes(argument) ? "'" + StringUtil.replace(argument, "'", "'\"'\"'") + "'" : argument;
+    return posixQuote(argument, Collections.emptyList());
   }
 
-  private static boolean shouldWrapWithQuotes(@NotNull CharSequence argument) {
+  /**
+   * @param whiteListCharacters - list of characters that is safe to use as it is in a specific context
+   */
+  @ApiStatus.Internal
+  public static @NotNull String posixQuote(@NotNull String argument, @NotNull List<Character> whiteListCharacters) {
+    return shouldWrapWithQuotes(argument, whiteListCharacters) ?
+           "'" + StringUtil.replace(argument, "'", "'\"'\"'") + "'" :
+           argument;
+  }
+
+  private static boolean shouldWrapWithQuotes(@NotNull CharSequence argument, @NotNull List<Character> whiteListCharacters) {
     if (argument.length() == 0) {
       return true;
     }
     for (int i = 0; i < argument.length(); i++) {
       char c = argument.charAt(i);
-      if (!Character.isAlphabetic(c) &&
-          !Character.isDigit(c) &&
-          !StringUtil.containsChar(SHELL_WHITELIST_CHARACTERS, c)) {
+      if (whiteListCharacters.contains(c)) {
+        continue;
+      }
+
+      if (SHELL_UNSAFE_CHARACTERS.contains(c)) {
         return true;
       }
     }

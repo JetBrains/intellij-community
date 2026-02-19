@@ -1,2 +1,0 @@
-class TestCase(object):
-    pass

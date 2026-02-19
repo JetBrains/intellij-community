@@ -16,6 +16,7 @@
 package com.intellij.debugger.engine.evaluation.expression;
 
 import com.intellij.debugger.JavaDebuggerBundle;
+import com.intellij.debugger.engine.DebuggerUtils;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluateExceptionUtil;
 import com.intellij.debugger.engine.evaluation.EvaluationContext;
@@ -26,6 +27,7 @@ import com.sun.jdi.Value;
 public class ExpressionEvaluatorImpl implements ExpressionEvaluator {
   private static final Logger LOG = Logger.getInstance(ExpressionEvaluator.class);
   private final Evaluator myEvaluator;
+  private Modifier myModifier;
 
   public ExpressionEvaluatorImpl(Evaluator evaluator) {
     myEvaluator = evaluator;
@@ -34,7 +36,7 @@ public class ExpressionEvaluatorImpl implements ExpressionEvaluator {
   //call evaluate before
   @Override
   public Modifier getModifier() {
-    return myEvaluator.getModifier();
+    return myModifier;
   }
 
   // EvaluationContextImpl should be at the same stackFrame as it was in the call to EvaluatorBuilderImpl.build
@@ -48,13 +50,33 @@ public class ExpressionEvaluatorImpl implements ExpressionEvaluator {
         throw EvaluateExceptionUtil.NULL_STACK_FRAME;
       }
 
-      Object value = myEvaluator.evaluate((EvaluationContextImpl)context);
+      EvaluationContextImpl evaluationContextImpl = (EvaluationContextImpl)context;
+
+      final ModifiableValue modifiableValue;
+      if (evaluationContextImpl.isMayRetryEvaluation()) {
+        modifiableValue = DebuggerUtils.getInstance().processCollectibleValue(
+          () -> myEvaluator.evaluateModifiable(evaluationContextImpl),
+          r -> {
+            if (r.getValue() instanceof Value v) {
+              evaluationContextImpl.keep(v);
+            }
+            return r;
+          },
+          context
+        );
+      }
+      else {
+        modifiableValue = myEvaluator.evaluateModifiable(evaluationContextImpl);
+      }
+
+      Object value = modifiableValue.getValue();
 
       if (value != null && !(value instanceof Value)) {
         throw EvaluateExceptionUtil
           .createEvaluateException(JavaDebuggerBundle.message("evaluation.error.invalid.expression", ""));
       }
 
+      myModifier = modifiableValue.getModifier();
       return (Value)value;
     }
     catch (ReturnEvaluator.ReturnException r) {
@@ -69,5 +91,9 @@ public class ExpressionEvaluatorImpl implements ExpressionEvaluator {
         throw EvaluateExceptionUtil.createEvaluateException(e);
       }
     }
+  }
+
+  public boolean isExternalEvaluator() {
+    return myEvaluator instanceof ExternalExpressionEvaluator;
   }
 }

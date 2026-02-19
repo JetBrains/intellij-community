@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.history;
 
 import com.intellij.ui.dualView.DualView;
@@ -8,16 +8,17 @@ import com.intellij.util.ui.ColumnInfo;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JTable;
 import javax.swing.table.TableCellEditor;
 import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableColumn;
-import java.awt.*;
+import java.awt.Font;
+import java.awt.FontMetrics;
 import java.util.Comparator;
 import java.util.Enumeration;
 
 abstract class FileHistoryColumnWrapper<T> extends DualViewColumnInfo<TreeNodeOnVcsRevision, T> {
-  @NotNull private final ColumnInfo<VcsFileRevision, T> myBaseColumn;
+  private final @NotNull ColumnInfo<VcsFileRevision, T> myBaseColumn;
 
   FileHistoryColumnWrapper(@NotNull ColumnInfo<VcsFileRevision, T> additionalColumn) {
     super(additionalColumn.getName());
@@ -79,8 +80,7 @@ abstract class FileHistoryColumnWrapper<T> extends DualViewColumnInfo<TreeNodeOn
     return getMaxValue(myBaseColumn.getName());
   }
 
-  @Nullable
-  private String getMaxValue(@NotNull String columnHeader) {
+  private @Nullable String getMaxValue(@NotNull String columnHeader) {
     TableView table = getDualView().getFlatView();
     if (table.getRowCount() == 0) return null;
     final Enumeration<TableColumn> columns = table.getColumnModel().getColumns();

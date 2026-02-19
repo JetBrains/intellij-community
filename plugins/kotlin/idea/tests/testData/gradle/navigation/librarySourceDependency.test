@@ -1,0 +1,11 @@
+// FILE: build.gradle.kts
+// Library source has the original copyright marker
+// "EXPECTED-NAVIGATION-SUBSTRING": "Copyright 2009 the original author or authors."
+
+plugins {
+    id("org.jetbrains.kotlin.multiplatform") version "1.9.23"
+}
+
+repositories {
+    mave<caret>nCentral()
+}

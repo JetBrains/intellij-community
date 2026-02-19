@@ -1,22 +1,6 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.server;
 
-import com.intellij.openapi.util.Comparing;
-import gnu.trove.THashMap;
 import org.apache.maven.RepositoryUtils;
 import org.apache.maven.artifact.Artifact;
 import org.apache.maven.model.Model;
@@ -27,27 +11,37 @@ import org.eclipse.aether.util.graph.manager.DependencyManagerUtils;
 import org.eclipse.aether.util.graph.transformer.ConflictResolver;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.maven.model.*;
+import org.jetbrains.idea.maven.model.MavenArtifact;
+import org.jetbrains.idea.maven.model.MavenArtifactNode;
+import org.jetbrains.idea.maven.model.MavenArtifactState;
+import org.jetbrains.idea.maven.model.MavenId;
+import org.jetbrains.idea.maven.model.MavenModel;
+import org.jetbrains.idea.maven.model.MavenParent;
 
 import java.io.File;
 import java.rmi.RemoteException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Properties;
 
 /**
- * {@link Maven3AetherModelConverter} provides adapted methods of {@link MavenModelConverter} for aether models conversion
+ * {@link Maven3AetherModelConverter} provides adapted methods of {@link Maven3ModelConverter} for aether models conversion
  *
  * @author Vladislav.Soroka
  */
-public class Maven3AetherModelConverter extends MavenModelConverter {
-
-  @NotNull
-  public static MavenModel convertModelWithAetherDependencyTree(Model model,
-                                                                List<String> sources,
-                                                                List<String> testSources,
-                                                                Collection<? extends Artifact> dependencies,
-                                                                Collection<? extends DependencyNode> dependencyTree,
-                                                                Collection<? extends Artifact> extensions,
-                                                                File localRepository) throws RemoteException {
+public final class Maven3AetherModelConverter extends Maven3ModelConverter {
+  public static @NotNull MavenModel convertModelWithAetherDependencyTree(Model model,
+                                                                         List<String> sources,
+                                                                         List<String> testSources,
+                                                                         Collection<? extends Artifact> dependencies,
+                                                                         Collection<? extends DependencyNode> dependencyTree,
+                                                                         Collection<? extends Artifact> pluginArtifacts,
+                                                                         Collection<? extends Artifact> extensions,
+                                                                         File localRepository) throws RemoteException {
     MavenModel result = new MavenModel();
     result.setMavenId(new MavenId(model.getGroupId(), model.getArtifactId(), model.getVersion()));
 
@@ -59,14 +53,15 @@ public class Maven3AetherModelConverter extends MavenModelConverter {
     result.setPackaging(model.getPackaging());
     result.setName(model.getName());
     result.setProperties(model.getProperties() == null ? new Properties() : model.getProperties());
-    result.setPlugins(convertPlugins(model));
+    result.setPlugins(convertPlugins(model, pluginArtifacts));
 
-    Map<Artifact, MavenArtifact> convertedArtifacts = new THashMap<Artifact, MavenArtifact>();
+    Map<Artifact, MavenArtifact> convertedArtifacts = new HashMap<Artifact, MavenArtifact>();
     result.setExtensions(convertArtifacts(extensions, convertedArtifacts, localRepository));
     result.setDependencyTree(convertAetherDependencyNodes(null, dependencyTree, convertedArtifacts, localRepository));
     result.setDependencies(convertArtifacts(dependencies, convertedArtifacts, localRepository));
 
     result.setRemoteRepositories(convertRepositories(model.getRepositories()));
+    result.setRemotePluginRepositories(convertRepositories(model.getPluginRepositories()));
     result.setProfiles(convertProfiles(model.getProfiles()));
     result.setModules(model.getModules());
 
@@ -99,7 +94,7 @@ public class Maven3AetherModelConverter extends MavenModelConverter {
         Artifact winnerArtifact = toArtifact(winnerNode.getDependency());
         relatedArtifact = convertArtifact(winnerArtifact, nativeToConvertedMap, localRepository);
         nativeToConvertedMap.put(winnerArtifact, relatedArtifact);
-        if (!Comparing.equal(each.getVersion().toString(), winnerNode.getVersion().toString())) {
+        if (!Objects.equals(each.getVersion().toString(), winnerNode.getVersion().toString())) {
           state = MavenArtifactState.CONFLICT;
         }
         else {
@@ -116,8 +111,7 @@ public class Maven3AetherModelConverter extends MavenModelConverter {
     return result;
   }
 
-  @Nullable
-  public static Artifact toArtifact(@Nullable Dependency dependency) {
+  public static @Nullable Artifact toArtifact(@Nullable Dependency dependency) {
     if (dependency == null) {
       return null;
     }

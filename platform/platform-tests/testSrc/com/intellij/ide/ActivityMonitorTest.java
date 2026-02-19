@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide;
 
 import com.intellij.mock.MockProject;
@@ -9,11 +9,14 @@ import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.BusyObject;
 import com.intellij.testFramework.LightPlatformTestCase;
+import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.*;
+import java.awt.Dialog;
+import java.awt.GraphicsEnvironment;
+import java.awt.Window;
 
 import static org.junit.Assume.assumeFalse;
 
@@ -113,11 +116,11 @@ public class ActivityMonitorTest extends LightPlatformTestCase {
   public void testModalityState() {
     assumeFalse("Test cannot be run in headless environment", GraphicsEnvironment.isHeadless());
     assertTrue(ApplicationManager.getApplication().getClass().getName().contains("ApplicationImpl"));
-    assertTrue(ApplicationManager.getApplication().isDispatchThread());
+    ThreadingAssertions.assertEventDispatchThread();
 
     assertReady(null);
 
-    myMonitor.addActivity(new UiActivity("non_modal_1"), ModalityState.NON_MODAL);
+    myMonitor.addActivity(new UiActivity("non_modal_1"), ModalityState.nonModal());
     assertBusy(null);
 
     Dialog dialog = new Dialog(new Dialog((Window)null), "d", true);
@@ -125,7 +128,7 @@ public class ActivityMonitorTest extends LightPlatformTestCase {
     try {
       assertReady(null);
 
-      myMonitor.addActivity(new UiActivity("non_modal2"), ModalityState.NON_MODAL);
+      myMonitor.addActivity(new UiActivity("non_modal2"), ModalityState.nonModal());
       assertReady(null);
 
       ModalityState m1 = ApplicationManager.getApplication().getModalityStateForComponent(dialog);
@@ -137,7 +140,7 @@ public class ActivityMonitorTest extends LightPlatformTestCase {
       ModalityState m2 = ApplicationManager.getApplication().getModalityStateForComponent(popup);
       LaterInvocator.leaveModal(popup);
 
-      assertTrue("m1: "+m1+"; m2:"+m2, m2.dominates(m1));
+      assertFalse("m1: " + m1 + "; m2:" + m2, m2.accepts(m1));
 
       myMonitor.addActivity(new UiActivity("modal_2"), m2);
       assertBusy(null);

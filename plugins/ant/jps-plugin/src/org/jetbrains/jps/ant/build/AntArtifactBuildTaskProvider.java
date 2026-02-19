@@ -1,28 +1,15 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.ant.build;
 
 import com.intellij.execution.process.BaseOSProcessHandler;
-import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
+import com.intellij.execution.process.ProcessListener;
 import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.lang.ant.config.impl.BuildFileProperty;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.rt.ant.execution.AntMain2;
@@ -31,13 +18,18 @@ import com.intellij.util.SystemProperties;
 import com.intellij.util.execution.ParametersListUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.jps.ant.AntJpsBundle;
 import org.jetbrains.jps.ant.model.JpsAntBuildFileOptions;
 import org.jetbrains.jps.ant.model.JpsAntExtensionService;
 import org.jetbrains.jps.ant.model.JpsAntInstallation;
 import org.jetbrains.jps.ant.model.artifacts.JpsAntArtifactExtension;
 import org.jetbrains.jps.ant.model.impl.JpsAntInstallationImpl;
 import org.jetbrains.jps.builders.artifacts.ArtifactBuildTaskProvider;
-import org.jetbrains.jps.incremental.*;
+import org.jetbrains.jps.incremental.BuildTask;
+import org.jetbrains.jps.incremental.CompileContext;
+import org.jetbrains.jps.incremental.ExternalProcessUtil;
+import org.jetbrains.jps.incremental.ProjectBuildException;
+import org.jetbrains.jps.incremental.StopBuildException;
 import org.jetbrains.jps.incremental.messages.BuildMessage;
 import org.jetbrains.jps.incremental.messages.CompilerMessage;
 import org.jetbrains.jps.incremental.messages.ProgressMessage;
@@ -60,12 +52,11 @@ import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-public class AntArtifactBuildTaskProvider extends ArtifactBuildTaskProvider {
+public final class AntArtifactBuildTaskProvider extends ArtifactBuildTaskProvider {
   private static final Logger LOG = Logger.getInstance(AntArtifactBuildTaskProvider.class);
 
-  @NotNull
   @Override
-  public List<? extends BuildTask> createArtifactBuildTasks(@NotNull JpsArtifact artifact, @NotNull ArtifactBuildPhase buildPhase) {
+  public @NotNull List<? extends BuildTask> createArtifactBuildTasks(@NotNull JpsArtifact artifact, @NotNull ArtifactBuildPhase buildPhase) {
     JpsAntArtifactExtension extension = getBuildExtension(artifact, buildPhase);
     if (extension != null && extension.isEnabled() && !StringUtil.isEmpty(extension.getFileUrl())) {
       return Collections.singletonList(new AntArtifactBuildTask(extension));
@@ -73,8 +64,7 @@ public class AntArtifactBuildTaskProvider extends ArtifactBuildTaskProvider {
     return Collections.emptyList();
   }
 
-  @Nullable
-  private static JpsAntArtifactExtension getBuildExtension(JpsArtifact artifact, ArtifactBuildPhase buildPhase) {
+  private static @Nullable JpsAntArtifactExtension getBuildExtension(JpsArtifact artifact, ArtifactBuildPhase buildPhase) {
     switch (buildPhase) {
       case PRE_PROCESSING:
         return JpsAntExtensionService.getPreprocessingExtension(artifact);
@@ -85,8 +75,8 @@ public class AntArtifactBuildTaskProvider extends ArtifactBuildTaskProvider {
     }
   }
 
-  private static class AntArtifactBuildTask extends BuildTask {
-    public static final String BUILDER_NAME = "ant";
+  private static final class AntArtifactBuildTask extends BuildTask {
+    public static final @NlsSafe String BUILDER_NAME = "ant";
     private final JpsAntArtifactExtension myExtension;
 
     AntArtifactBuildTask(@NotNull JpsAntArtifactExtension extension) {
@@ -172,15 +162,18 @@ public class AntArtifactBuildTaskProvider extends ArtifactBuildTaskProvider {
         programParams.add(targetName);
       }
 
-      context.processMessage(new ProgressMessage("Running " + (targetName != null ? "'" + targetName + "'" : "default") + " Ant target from '" +
-                                                 PathUtilRt.getFileName(buildFilePath) + "' file..."));
+      @NlsSafe String buildFileName = PathUtilRt.getFileName(buildFilePath);
+
+      String targetDisplayName = targetName != null ? targetName : AntJpsBundle.message("ant.target.default.name");
+      context.processMessage(new ProgressMessage(AntJpsBundle.message("running.ant.target.from.file", targetDisplayName, buildFileName)));
       Iterable<AntBuildTaskListener> listeners = JpsServiceManager.getInstance().getExtensions(AntBuildTaskListener.class);
       for (AntBuildTaskListener listener : listeners) {
         listener.beforeAntBuildTaskStarted(myExtension, vmParams, programParams);
       }
 
-      List <String> commandLine = ExternalProcessUtil.buildJavaCommandLine(JpsJavaSdkType.getJavaExecutable(jdk), AntMain2.class.getName(),
-                                                                           Collections.emptyList(), classpath, vmParams, programParams, false);
+      List<String> commandLine = ExternalProcessUtil.buildJavaCommandLine(JpsJavaSdkType.getJavaExecutable(jdk), AntMain2.class.getName(),
+                                                                          Collections.emptyList(), classpath, vmParams, programParams,
+                                                                          false);
       try {
         Process process = new ProcessBuilder(commandLine).directory(new File(buildFilePath).getParentFile()).start();
         String commandLineString = StringUtil.join(commandLine, " ");
@@ -189,8 +182,8 @@ public class AntArtifactBuildTaskProvider extends ArtifactBuildTaskProvider {
         }
         BaseOSProcessHandler handler = new BaseOSProcessHandler(process, commandLineString, null);
         final AtomicBoolean hasErrors = new AtomicBoolean();
-        final StringBuilder errorOutput = new StringBuilder();
-        handler.addProcessListener(new ProcessAdapter() {
+        final @NlsSafe StringBuilder errorOutput = new StringBuilder();
+        handler.addProcessListener(new ProcessListener() {
           @Override
           public void onTextAvailable(@NotNull ProcessEvent event, @NotNull Key outputType) {
             if (outputType == ProcessOutputTypes.STDERR) {
@@ -203,9 +196,9 @@ public class AntArtifactBuildTaskProvider extends ArtifactBuildTaskProvider {
             int exitCode = event.getExitCode();
             if (exitCode != 0) {
               context.processMessage(new CompilerMessage(BUILDER_NAME, BuildMessage.Kind.ERROR, errorOutput.toString()));
-              context.processMessage(new CompilerMessage(BUILDER_NAME, BuildMessage.Kind.ERROR,
-                                                         "target '" +
-                                                         targetName + "' in '" + buildFilePath + "' finished with exit code " + exitCode));
+
+              String message = AntJpsBundle.message("target.finished.with.exit.code", targetName, buildFilePath, exitCode);
+              context.processMessage(new CompilerMessage(BUILDER_NAME, BuildMessage.Kind.ERROR, message));
               hasErrors.set(true);
             }
           }
@@ -221,9 +214,9 @@ public class AntArtifactBuildTaskProvider extends ArtifactBuildTaskProvider {
       }
     }
 
-    private void reportError(CompileContext context, final String text) {
+    private void reportError(CompileContext context, final @NlsSafe String text) {
       context.processMessage(new CompilerMessage(BUILDER_NAME, BuildMessage.Kind.ERROR,
-                                                 "Cannot run '" + myExtension.getTargetName() + "' target: " + text));
+                                                 AntJpsBundle.message("cannot.run.target", myExtension.getTargetName(), text)));
     }
   }
 }

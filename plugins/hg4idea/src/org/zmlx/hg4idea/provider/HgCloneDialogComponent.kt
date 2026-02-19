@@ -9,6 +9,7 @@ import com.intellij.openapi.vcs.CheckoutProvider
 import com.intellij.openapi.vcs.VcsBundle
 import com.intellij.openapi.vcs.VcsNotifier
 import com.intellij.openapi.vcs.ui.cloneDialog.VcsCloneDialogComponentStateListener
+import org.zmlx.hg4idea.HgNotificationIdsHolder.Companion.CLONE_DESTINATION_ERROR
 import org.zmlx.hg4idea.HgRememberedInputs
 import org.zmlx.hg4idea.util.HgUtil
 import java.nio.file.Paths
@@ -20,11 +21,11 @@ class HgCloneDialogComponent(project: Project, dialogStateListener: VcsCloneDial
                            dialogStateListener) {
   private val LOG = Logger.getInstance(HgCloneDialogComponent::class.java)
 
-  override fun doClone(project: Project, listener: CheckoutProvider.Listener) {
+  override fun doClone(listener: CheckoutProvider.Listener) {
     val validationInfo = CloneDvcsValidationUtils.createDestination(getDirectory())
     if (validationInfo != null) {
       LOG.error("Unable to create destination directory", validationInfo.message)
-      VcsNotifier.getInstance(project).notifyError("hg.clone.destination.error",
+      VcsNotifier.getInstance(project).notifyError(CLONE_DESTINATION_ERROR,
                                                    VcsBundle.message("clone.dialog.clone.failed.error"),
                                                    VcsBundle.message("clone.dialog.unable.create.destination.error"))
       return

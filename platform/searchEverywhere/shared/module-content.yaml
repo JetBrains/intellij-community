@@ -1,0 +1,3 @@
+- name: dist.all/lib/intellij.platform.searchEverywhere.jar
+  modules:
+  - name: intellij.platform.searchEverywhere

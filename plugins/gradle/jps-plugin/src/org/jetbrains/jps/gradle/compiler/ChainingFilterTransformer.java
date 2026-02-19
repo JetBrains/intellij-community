@@ -5,7 +5,8 @@ import com.intellij.openapi.util.Ref;
 import org.apache.tools.ant.Project;
 import org.apache.tools.ant.filters.ExpandProperties;
 import org.gradle.api.Transformer;
-import org.gradle.util.ConfigureUtil;
+import org.gradle.util.internal.ConfigureUtil;
+import org.jetbrains.jps.gradle.GradleJpsBundle;
 import org.jetbrains.jps.gradle.model.impl.ResourceRootFilter;
 import org.jetbrains.jps.incremental.CompileContext;
 import org.jetbrains.jps.incremental.messages.BuildMessage;
@@ -15,7 +16,11 @@ import java.io.File;
 import java.io.FilterReader;
 import java.io.Reader;
 import java.lang.reflect.Constructor;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.regex.Matcher;
 
 /**
@@ -72,8 +77,8 @@ public class ChainingFilterTransformer implements Transformer<Reader, Reader> {
       if (!FilterReader.class.isAssignableFrom(clazz)) {
         myContext.processMessage(
           new CompilerMessage(
-            GradleResourcesBuilder.BUILDER_NAME, BuildMessage.Kind.WARNING,
-            String.format("Error - Invalid filter specification for %s. It should extend java.io.FilterReader.", filter.filterType), null)
+            GradleJpsBundle.message("gradle.resources.compiler"), BuildMessage.Kind.WARNING,
+            GradleJpsBundle.message("error.invalid.filter.should.extend", filter.filterType), null)
         );
       }
       Constructor constructor = clazz.getConstructor(Reader.class);
@@ -95,8 +100,8 @@ public class ChainingFilterTransformer implements Transformer<Reader, Reader> {
     }
     catch (Throwable th) {
       myContext.processMessage(new CompilerMessage(
-                                 GradleResourcesBuilder.BUILDER_NAME, BuildMessage.Kind.WARNING,
-                                 String.format("Error - Failed to apply filter(%s): %s", filter.filterType, th.getMessage()), null)
+        GradleJpsBundle.message("gradle.resources.compiler"), BuildMessage.Kind.WARNING,
+        GradleJpsBundle.message("error.failed.to.apply.filter", filter.filterType, th.getMessage()), null)
       );
     }
     return original;

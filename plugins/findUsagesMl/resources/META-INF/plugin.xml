@@ -1,0 +1,39 @@
+<idea-plugin package="com.intellij.findUsagesMl">
+  <name>Machine Learning in Find Usages</name>
+  <description><![CDATA[
+    <p>The plugin is collecting anonymized data for training a machine learning model to improve the performance of the show usages
+    and find usages features. It will introduce this model for the 253 version.
+    </p>
+  ]]></description>
+  <vendor>JetBrains</vendor>
+  <category>Local AI/ML Tools</category>
+  <id>com.intellij.findusages.ml</id>
+
+  <dependencies>
+    <plugin id="com.intellij.modules.json"/>
+    <plugin id="com.intellij.modules.lang"/>
+    <module name="intellij.java.backend"/>
+    <module name="intellij.platform.ml.logs"/>
+    <module name="intellij.libraries.commons.text"/>
+  </dependencies>
+  <!--suppress PluginXmlValidity -->
+  <content namespace="jetbrains">
+    <!-- The implicit main module of the plugin depends on internal modules (intellij.platform.ml.logs), so it's required to set the namespace for it
+         todo: extract elements and dependencies to an explicit content module (see IJPL-212351) -->
+  </content>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <applicationService serviceInterface="com.intellij.psi.search.FileRankerMlService"
+                        serviceImplementation="com.intellij.findUsagesMl.FileRankerMlServiceImpl"/>
+
+    <statistics.counterUsagesCollector implementationClass="com.intellij.findUsagesMl.FindUsagesFileRankerFeatureCollector"/>
+    <registryKey defaultValue="true"
+                 description="When false, all functionality from the findUsagesMl plugin will be disabled."
+                 key="find.usages.ml.ranker.isEnabled"/>
+    <registryKey defaultValue="true"
+                 description="When true, the old implementation of find usages will be used and FileRankerMlService calls will be made,
+                 but the results of ordering will be ignored. When false, find usages will use the new implementation."
+                 key="find.usages.ml.ranker.useOldImplementation"/>
+  </extensions>
+
+</idea-plugin>

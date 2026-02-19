@@ -1,30 +1,45 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.env;
 
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.registry.Registry;
+import com.intellij.python.test.env.common.PredefinedPyEnvironments;
+import com.intellij.python.test.env.junit4.JUnit4FactoryHolder;
+import com.intellij.testFramework.TestApplicationManager;
 import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.ui.UIUtil;
-import com.jetbrains.LoggingRule;
-import com.jetbrains.TestEnv;
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.junit.*;
+import org.junit.After;
+import org.junit.Assume;
+import org.junit.Before;
+import org.junit.Rule;
 import org.junit.rules.TestName;
 import org.junit.rules.TestWatcher;
 
-import java.io.File;
-import java.io.IOException;
 import java.lang.reflect.Method;
-import java.util.*;
+import java.nio.file.Path;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
+import static com.intellij.python.test.env.common.PredefinedPyEnvironments.Companion;
+import static com.intellij.python.test.env.common.PredefinedPyEnvironments.VENV_2_7;
+import static com.intellij.python.test.env.common.PredefinedPyEnvironments.VENV_3_10;
+import static com.intellij.python.test.env.common.PredefinedPyEnvironments.VENV_3_11;
+import static com.intellij.python.test.env.common.PredefinedPyEnvironments.VENV_3_12;
+import static com.intellij.python.test.env.common.PredefinedPyEnvironments.VENV_3_12_DJANGO;
+import static com.intellij.python.test.env.common.PredefinedPyEnvironments.VENV_3_13;
+import static com.intellij.python.test.env.common.PredefinedPyEnvironments.VENV_3_14;
+import static com.intellij.python.test.env.common.PredefinedPyEnvironments.VENV_3_8_FULL;
+import static com.intellij.python.test.env.common.PredefinedPyEnvironments.VENV_3_9;
 import static com.intellij.testFramework.assertions.Assertions.assertThat;
 
 /**
@@ -32,17 +47,15 @@ import static com.intellij.testFramework.assertions.Assertions.assertThat;
  * All inheritors must be in {@link com.jetbrains.env}.*
  * <p>
  * See "community/python/setup-test-environment/build.gradle"
+ * {@link com.jetbrains.env.python.api.EnvTagsKt#loadEnvTags(Path)}
  *
  * @author traff
  */
 public abstract class PyEnvTestCase {
   private static final Logger LOG = Logger.getInstance(PyEnvTestCase.class.getName());
 
-  private static final String TAGS_FILE = "tags.txt";
-
   @NotNull
-  protected static final PyEnvTestSettings SETTINGS = new PyEnvTestSettings();
-
+  protected static final PyEnvTestSettings SETTINGS = PyEnvTestSettings.Companion.fromEnvVariables();
 
   /**
    * Rule used to capture debug logging and display it if test failed.
@@ -59,27 +72,40 @@ public abstract class PyEnvTestCase {
   private final String @Nullable [] myRequiredTags;
 
   /**
-   * Environments and tags they provide.
-   */
-  public static final Map<String, List<String>> envTags = new HashMap<>();
-
-  /**
    * TODO: Move to {@link EnvTestTagsRequired} as well?
    */
 
   @Rule public TestName myTestName = new TestName();
 
-  @Rule public final TestWatcher myWatcher = new TestWatcher(){};
+  @Rule public final TestWatcher myWatcher = new TestWatcher() {
+  };
 
   static {
-    LOG.warn("Using following config\n" + SETTINGS.reportConfiguration());
+    LOG.info("Using following config\n" + SETTINGS.reportConfiguration());
   }
+
+  /**
+   * All predefined environments used by PyEnvTestCase by default
+   */
+  public static final List<PredefinedPyEnvironments> ALL_ENVIRONMENTS = List.of(
+    VENV_2_7,
+    VENV_3_8_FULL,
+    VENV_3_9,
+    VENV_3_10,
+    VENV_3_11,
+    VENV_3_12,
+    VENV_3_12_DJANGO,
+    VENV_3_13,
+    VENV_3_14
+  );
+
 
   /**
    * Escape test output to prevent python test be processed as test result
    */
+  @NotNull
   public static String escapeTestMessage(@NotNull final String message) {
-    return message.replace("##", "from test: \\[sharp][sharp]");
+    return message.replace("##teamcity", "from test: \\[sharp][sharp]");
   }
 
   /**
@@ -91,6 +117,7 @@ public abstract class PyEnvTestCase {
    */
   protected PyEnvTestCase(final String @NotNull ... requiredTags) {
     myRequiredTags = requiredTags.length > 0 ? requiredTags.clone() : null;
+    TestApplicationManager.getInstance(); // init app explicitly
   }
 
   public static String norm(String testDataPath) {
@@ -113,35 +140,10 @@ public abstract class PyEnvTestCase {
   @NotNull
   private static Collection<String> getAvailableTags() {
     final Collection<String> allAvailableTags = new HashSet<>();
-    for (List<String> tags : envTags.values()) {
+    for (@NotNull Set<@NotNull String> tags : Companion.getENVIRONMENTS_TO_TAGS().values()) {
       allAvailableTags.addAll(tags);
     }
     return allAvailableTags;
-  }
-
-  @BeforeClass
-  public static void collectTagsForEnvs() {
-    for (final String pythonRoot : getPythonRoots()) {
-      envTags.put(pythonRoot, loadEnvTags(pythonRoot));
-    }
-  }
-
-  protected void invokeTestRunnable(@NotNull final Runnable runnable) {
-    if (runInWriteAction()) {
-      UIUtil.invokeAndWaitIfNeeded((Runnable)() -> ApplicationManager.getApplication().runWriteAction(runnable));
-    }
-    else {
-      runnable.run();
-    }
-  }
-
-
-  protected boolean runInDispatchThread() {
-    return false;
-  }
-
-  protected boolean runInWriteAction() {
-    return false;
   }
 
   /**
@@ -170,41 +172,23 @@ public abstract class PyEnvTestCase {
   private void runTest(@NotNull PyTestTask testTask, @NotNull String testName) {
     Assume.assumeFalse("Running under teamcity but not by Env configuration. Test seems to be launched by accident, skip it.",
                        UsefulTestCase.IS_UNDER_TEAMCITY && !SETTINGS.isEnvConfiguration());
-    List<String> roots = getPythonRoots();
-
-    /*
-     * <p>
-     * {@link org.junit.AssumptionViolatedException} here means this test must be <strong>skipped</strong>.
-     * TeamCity supports this (if not you should create and issue about that).
-     * Idea does not support it for JUnit 3, while JUnit 4 must be supported.
-     * </p>
-     *<p>
-     * It this error brakes your test, please <strong>do not</strong> revert. Instead, do the following:
-     * <ol>
-     *   <li>Make sure {@link com.jetbrains.env.python} tests are <strong>excluded</strong> from your configuration (unless you are
-     *   PyCharm developer)</li>
-     *   <li>Check that your environment supports {@link AssumptionViolatedException}.
-     *   JUnit 4 was created about 10 years ago, so fixing environment is much better approach than hacky "return;" here.
-     *   </li>
-     * </ol>
-     *</p>
-     */
-    Assume.assumeFalse(testName +
-                       ": environments are not defined. Skipping. \nChecks logs for settings that lead to this situation",
-                       roots.isEmpty());
-
-    doRunTests(testTask, testName, roots);
+    Registry.get("debugpy.dap.is.enable").setValue(false);
+    doRunTests(testTask, testName);
   }
 
-  protected void doRunTests(PyTestTask testTask, String testName, List<String> roots) {
+  protected void doRunTests(PyTestTask testTask, String testName) {
     Assume.assumeFalse("Tests launched in remote SDK mode, and this test is not remote", SETTINGS.useRemoteSdk());
 
-    PyEnvTaskRunner taskRunner = new PyEnvTaskRunner(roots, myLoggingRule);
+    PyEnvTaskRunner taskRunner = new PyEnvTaskRunner(JUnit4FactoryHolder.INSTANCE.getOrCreate(), SETTINGS.getPythonVersion(), myLoggingRule);
 
     final EnvTestTagsRequired classAnnotation = getClass().getAnnotation(EnvTestTagsRequired.class);
-    EnvTestTagsRequired methodAnnotation = null;
+    EnvTestTagsRequired methodAnnotation;
     try {
-      final Method method = getClass().getMethod(myTestName.getMethodName());
+      String methodName = myTestName.getMethodName();
+      if (methodName.contains("[")) {
+        methodName = methodName.substring(0, methodName.indexOf('['));
+      }
+      final Method method = getClass().getMethod(methodName);
       methodAnnotation = method.getAnnotation(EnvTestTagsRequired.class);
     }
     catch (final NoSuchMethodException e) {
@@ -217,7 +201,7 @@ public abstract class PyEnvTestCase {
 
 
     if (firstAnnotation != null) {
-      Assume.assumeFalse("Test skipped on this os", Arrays.stream(firstAnnotation.skipOnOSes()).anyMatch(TestEnv::isThisOs));
+      Assume.assumeFalse("Test skipped on this os", ContainerUtil.exists(firstAnnotation.skipOnOSes(), TestEnv::isThisOs));
       skipOnFlavors = firstAnnotation.skipOnFlavors();
     }
     else {
@@ -237,27 +221,6 @@ public abstract class PyEnvTestCase {
     else {
       return ArrayUtilRt.EMPTY_STRING_ARRAY;
     }
-  }
-
-  public static List<String> getPythonRoots() {
-    return ContainerUtil.map(SETTINGS.getPythons(), File::getAbsolutePath);
-  }
-
-
-  public static List<String> loadEnvTags(String env) {
-    List<String> envTags;
-
-    try {
-      File parent = new File(env);
-      if (parent.isFile()) {
-        parent = parent.getParentFile();
-      }
-      envTags = com.intellij.openapi.util.io.FileUtil.loadLines(new File(parent, TAGS_FILE));
-    }
-    catch (IOException e) {
-      envTags = new ArrayList<>();
-    }
-    return envTags;
   }
 
   private final Disposable myDisposable = Disposer.newDisposable();

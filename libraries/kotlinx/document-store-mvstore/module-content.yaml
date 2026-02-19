@@ -1,0 +1,7 @@
+- name: dist.all/lib/intellij.libraries.kotlinx.document.store.mvstore.jar
+  modules:
+  - name: intellij.libraries.kotlinx.document.store.mvstore
+    libraries:
+      kotlinx-document-store-mvstore:
+      - name: $MAVEN_REPOSITORY$/com/github/lamba92/kotlinx-document-store-mvstore/0/kotlinx-document-store-mvstore-0.jar
+      - name: $MAVEN_REPOSITORY$/com/github/lamba92/kotlinx-document-store-core-jvm/0/kotlinx-document-store-core-jvm-0.jar

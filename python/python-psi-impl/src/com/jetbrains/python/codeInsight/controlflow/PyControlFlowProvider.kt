@@ -7,9 +7,6 @@ import com.intellij.codeInsight.controlflow.Instruction
 import com.intellij.psi.PsiElement
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil
 
-/**
- * @author vlan
- */
 class PyControlFlowProvider : ControlFlowProvider {
   override fun getControlFlow(element: PsiElement): ControlFlow? {
     val scopeOwner = ScopeUtil.getScopeOwner(element) ?: return null
@@ -19,6 +16,7 @@ class PyControlFlowProvider : ControlFlowProvider {
   override fun getAdditionalInfo(instruction: Instruction): String? {
     return when (instruction) {
       is ReadWriteInstruction -> "${instruction.access} ${instruction.name}"
+      is RefutablePatternInstruction -> instruction.elementPresentation
       else -> null
     }
   }

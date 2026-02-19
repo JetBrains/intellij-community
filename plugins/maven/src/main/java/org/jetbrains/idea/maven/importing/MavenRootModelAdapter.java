@@ -1,23 +1,17 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.importing;
 
 import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.roots.*;
+import com.intellij.openapi.roots.DependencyScope;
+import com.intellij.openapi.roots.ExternalProjectSystemRegistry;
+import com.intellij.openapi.roots.JavadocOrderRootType;
+import com.intellij.openapi.roots.LibraryOrderEntry;
+import com.intellij.openapi.roots.ModifiableRootModel;
+import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.roots.OrderEntry;
+import com.intellij.openapi.roots.OrderRootType;
+import com.intellij.openapi.roots.ProjectModelExternalSource;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.pom.java.LanguageLevel;
@@ -25,10 +19,11 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.model.MavenArtifact;
 import org.jetbrains.idea.maven.project.MavenProject;
-import org.jetbrains.idea.maven.utils.Path;
+import org.jetbrains.idea.maven.utils.MavenPathWrapper;
 import org.jetbrains.jps.model.JpsElement;
 import org.jetbrains.jps.model.java.JavaSourceRootType;
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
+import org.jetbrains.jps.model.serialization.SerializationConstants;
 
 import java.io.File;
 
@@ -48,18 +43,8 @@ public class MavenRootModelAdapter implements MavenRootModelAdapterInterface {
   }
 
   @Override
-  public String @NotNull [] getSourceRootUrls(boolean includingTests) {
-    return myDelegate.getSourceRootUrls(includingTests);
-  }
-
-  @Override
   public Module getModule() {
     return myDelegate.getModule();
-  }
-
-  @Override
-  public void clearSourceFolders() {
-    myDelegate.clearSourceFolders();
   }
 
   @Override
@@ -69,24 +54,8 @@ public class MavenRootModelAdapter implements MavenRootModelAdapterInterface {
   }
 
   @Override
-  public void addGeneratedJavaSourceFolder(String path, JavaSourceRootType rootType, boolean ifNotEmpty) {
-    myDelegate.addGeneratedJavaSourceFolder(path, rootType, ifNotEmpty);
-  }
-
-  @Override
   public void addGeneratedJavaSourceFolder(String path, JavaSourceRootType rootType) {
     myDelegate.addGeneratedJavaSourceFolder(path, rootType);
-  }
-
-  @Override
-  public boolean hasRegisteredSourceSubfolder(@NotNull File f) {
-    return myDelegate.hasRegisteredSourceSubfolder(f);
-  }
-
-  @Override
-  @Nullable
-  public SourceFolder getSourceFolder(File folder) {
-    return myDelegate.getSourceFolder(folder);
   }
 
   @Override
@@ -115,7 +84,7 @@ public class MavenRootModelAdapter implements MavenRootModelAdapterInterface {
   }
 
   @Override
-  public Path toPath(String path) {
+  public MavenPathWrapper toPath(String path) {
     return myDelegate.toPath(path);
   }
 
@@ -125,8 +94,7 @@ public class MavenRootModelAdapter implements MavenRootModelAdapterInterface {
   }
 
   @Override
-  @Nullable
-  public Module findModuleByName(String moduleName) {
+  public @Nullable Module findModuleByName(String moduleName) {
     return myDelegate.findModuleByName(moduleName);
   }
 
@@ -153,7 +121,7 @@ public class MavenRootModelAdapter implements MavenRootModelAdapterInterface {
     myDelegate.setLanguageLevel(level);
   }
 
-  static boolean isChangedByUser(Library library) {
+  public static boolean isChangedByUser(Library library) {
     String[] classRoots = library.getUrls(
       OrderRootType.CLASSES);
     if (classRoots.length != 1) return true;
@@ -166,14 +134,10 @@ public class MavenRootModelAdapter implements MavenRootModelAdapterInterface {
     if (dotPos == -1) return true;
     String pathToJar = classes.substring(0, dotPos);
 
-    if (MavenRootModelAdapter
-      .hasUserPaths(OrderRootType.SOURCES, library, pathToJar)) {
+    if (hasUserPaths(OrderRootType.SOURCES, library, pathToJar)) {
       return true;
     }
-    if (MavenRootModelAdapter
-      .hasUserPaths(
-        JavadocOrderRootType
-          .getInstance(), library, pathToJar)) {
+    if (hasUserPaths(JavadocOrderRootType.getInstance(), library, pathToJar)) {
       return true;
     }
 
@@ -188,21 +152,15 @@ public class MavenRootModelAdapter implements MavenRootModelAdapterInterface {
     return false;
   }
 
-  @Deprecated
-  public static String makeLibraryName(@NotNull MavenArtifact artifact) {
-    return artifact.getLibraryName();
-  }
-
   public static boolean isMavenLibrary(@Nullable Library library) {
     return library != null && MavenArtifact.isMavenLibrary(library.getName());
   }
 
   public static ProjectModelExternalSource getMavenExternalSource() {
-    return ExternalProjectSystemRegistry.getInstance().getSourceById(ExternalProjectSystemRegistry.MAVEN_EXTERNAL_SOURCE_ID);
+    return ExternalProjectSystemRegistry.getInstance().getSourceById(SerializationConstants.MAVEN_EXTERNAL_SOURCE_ID);
   }
 
-  @Nullable
-  public static OrderEntry findLibraryEntry(@NotNull Module m, @NotNull MavenArtifact artifact) {
+  public static @Nullable OrderEntry findLibraryEntry(@NotNull Module m, @NotNull MavenArtifact artifact) {
     String name = artifact.getLibraryName();
     for (OrderEntry each : ModuleRootManager.getInstance(m).getOrderEntries()) {
       if (each instanceof LibraryOrderEntry && name.equals(((LibraryOrderEntry)each).getLibraryName())) {
@@ -212,8 +170,7 @@ public class MavenRootModelAdapter implements MavenRootModelAdapterInterface {
     return null;
   }
 
-  @Nullable
-  public static MavenArtifact findArtifact(@NotNull MavenProject project, @Nullable Library library) {
+  public static @Nullable MavenArtifact findArtifact(@NotNull MavenProject project, @Nullable Library library) {
     if (library == null) return null;
 
     String name = library.getName();

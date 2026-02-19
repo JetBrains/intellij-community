@@ -1,18 +1,27 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.engine;
 
 import com.intellij.debugger.ui.impl.watch.StackFrameDescriptorImpl;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.ColoredTextContainer;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.xdebugger.impl.ui.tree.ValueMarkup;
+import com.sun.jdi.Location;
 import com.sun.jdi.Method;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 final class JavaFramesListRenderer {
   public static void customizePresentation(StackFrameDescriptorImpl descriptor,
-                                    @NotNull ColoredTextContainer component,
-                                    @Nullable StackFrameDescriptorImpl selectedDescriptor) {
+                                           @NotNull ColoredTextContainer component,
+                                           @Nullable StackFrameDescriptorImpl selectedDescriptor) {
+    customizePresentation(descriptor, component, selectedDescriptor, true);
+  }
+
+  public static void customizePresentation(StackFrameDescriptorImpl descriptor,
+                                           @NotNull ColoredTextContainer component,
+                                           @Nullable StackFrameDescriptorImpl selectedDescriptor,
+                                           boolean includeRecursionCount) {
     component.setIcon(descriptor.getIcon());
 
     final ValueMarkup markup = descriptor.getValueMarkup();
@@ -20,7 +29,10 @@ final class JavaFramesListRenderer {
       component.append("[" + markup.getText() + "] ", new SimpleTextAttributes(SimpleTextAttributes.STYLE_BOLD, markup.getColor()));
     }
 
-    final String label = descriptor.getLabel();
+    Location location = descriptor.getLocation();
+    String offsetPrefix = location != null && Registry.is("debugger.show.offsets.in.frames") ? ("[" + location.codeIndex() + "]: ") : "";
+
+    final String label = offsetPrefix + descriptor.getLabel();
     final int openingBrace = label.indexOf("{");
     final int closingBrace = (openingBrace < 0) ? -1 : label.indexOf("}");
     final SimpleTextAttributes attributes = getAttributes(descriptor);
@@ -33,7 +45,7 @@ final class JavaFramesListRenderer {
       component.append(label.substring(closingBrace + 1), attributes);
     }
 
-    if (isOccurrenceOfSelectedFrame(selectedDescriptor, descriptor) && descriptor.isRecursiveCall()) {
+    if (includeRecursionCount && isOccurrenceOfSelectedFrame(selectedDescriptor, descriptor) && descriptor.isRecursiveCall()) {
       component.append(" [" + descriptor.getOccurrenceIndex() + "]", SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
     }
   }
@@ -45,7 +57,7 @@ final class JavaFramesListRenderer {
   }
 
   private static SimpleTextAttributes getAttributes(final StackFrameDescriptorImpl descriptor) {
-    if (descriptor.isSynthetic() || descriptor.isInLibraryContent()) {
+    if (descriptor.shouldHide()) {
       return SimpleTextAttributes.GRAYED_ATTRIBUTES;
     }
     return SimpleTextAttributes.SIMPLE_CELL_ATTRIBUTES;

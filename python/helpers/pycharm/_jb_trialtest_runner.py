@@ -2,7 +2,7 @@
 import os
 from pprint import pprint
 
-from _jb_runner_tools import jb_start_tests, jb_doc_args, PROJECT_DIR
+from _jb_runner_tools import jb_start_tests, jb_doc_args, PROJECT_DIR, jb_finish_tests
 from twisted.scripts import trial
 import sys
 
@@ -26,4 +26,7 @@ if __name__ == '__main__':
         sys.argv += targets
 
     jb_doc_args("trial", sys.argv[1:])
-    trial.run()
+    try:
+        trial.run()
+    finally:
+        jb_finish_tests()

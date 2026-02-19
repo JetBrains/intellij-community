@@ -1,23 +1,10 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInsight.template.impl;
 
 import com.intellij.codeInsight.template.Expression;
 import com.intellij.codeInsight.template.Template;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -26,14 +13,24 @@ public class Variable implements Cloneable {
   private final String myName;
   private boolean myAlwaysStopAt;
 
-  @Nullable private String myExpressionString;
+  private @Nullable String myExpressionString;
   private Expression myExpression = null;
 
   private String myDefaultValueString;
   private Expression myDefaultValueExpression;
   private final boolean mySkipOnStart;
 
-  public Variable(@NotNull String name, @Nullable Expression expression, @Nullable Expression defaultValueExpression, 
+  public Variable(@NotNull Variable from) {
+    myName = from.myName;
+    myExpression = from.myExpression;
+    myDefaultValueExpression = from.myDefaultValueExpression;
+    myExpressionString = from.myExpressionString;
+    myDefaultValueString = from.myDefaultValueString;
+    myAlwaysStopAt = from.myAlwaysStopAt;
+    mySkipOnStart = from.mySkipOnStart;
+  }
+
+  public Variable(@NotNull @NlsSafe String name, @Nullable Expression expression, @Nullable Expression defaultValueExpression,
                   boolean alwaysStopAt, boolean skipOnStart) {
     myName = name;
     myExpression = expression;
@@ -42,7 +39,10 @@ public class Variable implements Cloneable {
     mySkipOnStart = skipOnStart;
   }
 
-  public Variable(@NotNull String name, @Nullable String expression, @Nullable String defaultValueString, boolean alwaysStopAt) {
+  public Variable(@NotNull @NlsSafe String name,
+                  @Nullable @NlsSafe String expression,
+                  @Nullable @NlsSafe String defaultValueString,
+                  boolean alwaysStopAt) {
     myName = name;
     myExpressionString = StringUtil.notNullize(expression);
     myDefaultValueString = StringUtil.notNullize(defaultValueString);
@@ -50,8 +50,7 @@ public class Variable implements Cloneable {
     mySkipOnStart = false;
   }
 
-  @NotNull
-  public String getExpressionString() {
+  public @NotNull String getExpressionString() {
     return StringUtil.notNullize(myExpressionString);
   }
 
@@ -60,8 +59,7 @@ public class Variable implements Cloneable {
     myExpression = null;
   }
 
-  @NotNull
-  public Expression getExpression() {
+  public @NotNull Expression getExpression() {
     if (myExpression == null) {
       if (myName.equals(Template.SELECTION)) {
         myExpression = new SelectionNode();
@@ -73,8 +71,7 @@ public class Variable implements Cloneable {
     return myExpression;
   }
 
-  @NotNull
-  public String getDefaultValueString() {
+  public @NotNull String getDefaultValueString() {
     return StringUtil.notNullize(myDefaultValueString);
   }
 
@@ -83,8 +80,7 @@ public class Variable implements Cloneable {
     myDefaultValueExpression = null;
   }
 
-  @NotNull
-  public Expression getDefaultValueExpression() {
+  public @NotNull Expression getDefaultValueExpression() {
     if (myDefaultValueExpression == null) {
       myDefaultValueExpression = MacroParser.parse(myDefaultValueString);
     }
@@ -100,8 +96,7 @@ public class Variable implements Cloneable {
     }
   }
 
-  @NotNull
-  public String getName() {
+  public @NotNull String getName() {
     return myName;
   }
 
@@ -119,11 +114,10 @@ public class Variable implements Cloneable {
     return new Variable(myName, myExpressionString, myDefaultValueString, myAlwaysStopAt);
   }
 
+  @Override
   public boolean equals(Object o) {
     if (this == o) return true;
-    if (!(o instanceof Variable)) return false;
-
-    final Variable variable = (Variable) o;
+    if (!(o instanceof Variable variable)) return false;
 
     if (myAlwaysStopAt != variable.myAlwaysStopAt) return false;
     if (mySkipOnStart != variable.mySkipOnStart) return false;
@@ -134,6 +128,7 @@ public class Variable implements Cloneable {
     return true;
   }
 
+  @Override
   public int hashCode() {
     int result;
     result = myName.hashCode();

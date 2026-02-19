@@ -1,16 +1,18 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadActionProcessor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Comparator;
+import java.util.Iterator;
+import java.util.List;
 
-/**
- * @author peter
- */
 public abstract class AbstractQuery<Result> implements Query<Result> {
   private final ThreadLocal<Boolean> myIsProcessing = new ThreadLocal<>();
 
@@ -20,8 +22,7 @@ public abstract class AbstractQuery<Result> implements Query<Result> {
   private static final Comparator<Object> CRAZY_ORDER = (o1, o2) -> -Integer.compare(System.identityHashCode(o1), System.identityHashCode(o2));
 
   @Override
-  @NotNull
-  public Collection<Result> findAll() {
+  public @NotNull @Unmodifiable Collection<Result> findAll() {
     assertNotProcessing();
     List<Result> result = new ArrayList<>();
     Processor<Result> processor = Processors.cancelableCollectProcessor(result);
@@ -32,16 +33,14 @@ public abstract class AbstractQuery<Result> implements Query<Result> {
     return result;
   }
 
-  @NotNull
   @Override
-  public Iterator<Result> iterator() {
+  public @NotNull Iterator<Result> iterator() {
     assertNotProcessing();
-    return new UnmodifiableIterator<>(findAll().iterator());
+    return new UnmodifiableIterator<>(Query.super.iterator());
   }
 
   @Override
-  @Nullable
-  public Result findFirst() {
+  public @Nullable Result findFirst() {
     assertNotProcessing();
     final CommonProcessors.FindFirstProcessor<Result> processor = new CommonProcessors.FindFirstProcessor<>();
     forEach(processor);
@@ -53,16 +52,7 @@ public abstract class AbstractQuery<Result> implements Query<Result> {
   }
 
   @Override
-  public Result @NotNull [] toArray(Result @NotNull [] a) {
-    assertNotProcessing();
-
-    final Collection<Result> all = findAll();
-    return all.toArray(a);
-  }
-
-  @NotNull
-  @Override
-  public Query<Result> allowParallelProcessing() {
+  public @NotNull Query<Result> allowParallelProcessing() {
     return new AbstractQuery<Result>() {
       @Override
       protected boolean processResults(@NotNull Processor<? super Result> consumer) {
@@ -76,8 +66,7 @@ public abstract class AbstractQuery<Result> implements Query<Result> {
     };
   }
 
-  @NotNull
-  private Processor<Result> threadSafeProcessor(@NotNull Processor<? super Result> consumer) {
+  private @NotNull Processor<Result> threadSafeProcessor(@NotNull Processor<? super Result> consumer) {
     Object lock = ObjectUtils.sentinel("AbstractQuery lock");
     return e -> {
       synchronized (lock) {
@@ -118,8 +107,7 @@ public abstract class AbstractQuery<Result> implements Query<Result> {
     return query.forEach(consumer);
   }
 
-  @NotNull
-  public static <T> Query<T> wrapInReadAction(@NotNull final Query<? extends T> query) {
+  public static @NotNull <T> Query<T> wrapInReadAction(final @NotNull Query<? extends T> query) {
     return new AbstractQuery<T>() {
       @Override
       protected boolean processResults(@NotNull Processor<? super T> consumer) {

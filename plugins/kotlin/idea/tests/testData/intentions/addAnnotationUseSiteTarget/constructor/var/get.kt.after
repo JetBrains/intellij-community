@@ -1,0 +1,5 @@
+// CHOSEN_OPTION: PROPERTY_GETTER|Add use-site target 'get'
+
+annotation class A
+
+class Constructor(@get:A var foo: String)

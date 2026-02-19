@@ -1,4 +1,4 @@
-package p;
+package refactoring.introduceVariable;
 
 import org.checkerframework.checker.nullness.qual.Nullable;
 
@@ -7,6 +7,6 @@ class Test {
   String s;
   
   {
-      @Nullable String m = s;<caret>
+      @Nullable String <caret>m = s;
   }
 }

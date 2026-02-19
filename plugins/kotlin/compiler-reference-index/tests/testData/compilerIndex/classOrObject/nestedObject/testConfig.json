@@ -1,0 +1,9 @@
+{
+    "mainFile": "MainClass.kt",
+    "usages": [
+        "JavaAsCallUsage.java",
+        "JavaAsTypeUsage.java",
+        "UsageAsCall.kt",
+        "UsageAsType.kt"
+    ]
+}

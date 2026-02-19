@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.status;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -20,7 +20,11 @@ import git4idea.index.GitFileStatus;
 import git4idea.repo.GitRepository;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 /**
  * <p>
@@ -37,8 +41,8 @@ import java.util.*;
 final class GitChangesCollector {
   private static final Logger LOG = Logger.getInstance(GitChangesCollector.class);
 
-  @NotNull private final Project myProject;
-  @NotNull private final VirtualFile myVcsRoot;
+  private final @NotNull Project myProject;
+  private final @NotNull VirtualFile myVcsRoot;
 
   private final VcsRevisionNumber myHead;
   private final Collection<Change> myChanges = new HashSet<>();
@@ -47,8 +51,7 @@ final class GitChangesCollector {
    * Collects the changes from git command line and returns the instance of GitNewChangesCollector from which these changes can be retrieved.
    * This may be lengthy.
    */
-  @NotNull
-  static GitChangesCollector collect(@NotNull Project project,
+  static @NotNull GitChangesCollector collect(@NotNull Project project,
                                      @NotNull GitRepository repository,
                                      @NotNull List<GitFileStatus> changes) throws VcsException {
     VcsRevisionNumber head = getHead(repository);
@@ -84,7 +87,7 @@ final class GitChangesCollector {
       final FilePath oldFilepath = change.getOrigPath();
 
       switch (xStatus) {
-        case ' ':
+        case ' ' -> {
           if (yStatus == 'M') {
             reportModified(filepath);
           }
@@ -106,9 +109,8 @@ final class GitChangesCollector {
           else {
             throwStatus(xStatus, yStatus);
           }
-          break;
-
-        case 'M':
+        }
+        case 'M' -> {
           if (yStatus == 'M') {
             bothModifiedPaths.add(filepath); // schedule 'git diff HEAD' command to detect staged changes, that were reverted
           }
@@ -121,10 +123,8 @@ final class GitChangesCollector {
           else {
             throwStatus(xStatus, yStatus);
           }
-          break;
-
-        case 'C':
-        case 'A':
+        }
+        case 'C', 'A' -> {
           if (yStatus == 'M' || yStatus == ' ' || yStatus == 'T') {
             reportAdded(filepath);
           }
@@ -140,9 +140,8 @@ final class GitChangesCollector {
           else {
             throwStatus(xStatus, yStatus);
           }
-          break;
-
-        case 'D':
+        }
+        case 'D' -> {
           if (yStatus == 'M' || yStatus == ' ' || yStatus == 'T') {
             reportDeleted(filepath);
           }
@@ -165,9 +164,8 @@ final class GitChangesCollector {
           else {
             throwStatus(xStatus, yStatus);
           }
-          break;
-
-        case 'U':
+        }
+        case 'U' -> {
           if (yStatus == 'U' || yStatus == 'T') { // UU - unmerged, both modified
             reportConflict(filepath);
           }
@@ -180,9 +178,8 @@ final class GitChangesCollector {
           else {
             throwStatus(xStatus, yStatus);
           }
-          break;
-
-        case 'R':
+        }
+        case 'R' -> {
           if (yStatus == 'D') {
             reportDeleted(oldFilepath);
           }
@@ -192,9 +189,8 @@ final class GitChangesCollector {
           else {
             throwStatus(xStatus, yStatus);
           }
-          break;
-
-        case 'T':
+        }
+        case 'T' -> {
           if (yStatus == ' ' || yStatus == 'M') {
             reportTypeChanged(filepath);
           }
@@ -207,10 +203,8 @@ final class GitChangesCollector {
           else {
             throwStatus(xStatus, yStatus);
           }
-          break;
-
-        default:
-          throwStatus(xStatus, yStatus);
+        }
+        default -> throwStatus(xStatus, yStatus);
       }
     }
 
@@ -233,8 +227,7 @@ final class GitChangesCollector {
     }
   }
 
-  @NotNull
-  static VcsRevisionNumber getHead(@NotNull GitRepository repository) {
+  static @NotNull VcsRevisionNumber getHead(@NotNull GitRepository repository) {
     // we force update the GitRepository, because update is asynchronous, and thus the GitChangeProvider may be asked for changes
     // before the GitRepositoryUpdater has captures the current revision change and has updated the GitRepository.
     repository.update();

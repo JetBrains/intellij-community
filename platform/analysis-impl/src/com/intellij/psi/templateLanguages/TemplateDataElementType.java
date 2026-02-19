@@ -1,14 +1,17 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.templateLanguages;
 
-import com.intellij.lang.*;
+import com.intellij.lang.ASTFactory;
+import com.intellij.lang.ASTNode;
+import com.intellij.lang.Language;
+import com.intellij.lang.LanguageExtension;
+import com.intellij.lang.LanguageParserDefinitions;
 import com.intellij.lexer.Lexer;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.VolatileNotNullLazyValue;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.PsiFile;
@@ -33,20 +36,19 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.Icon;
 import java.util.function.Function;
 
-/**
- * @author peter
- */
 public class TemplateDataElementType extends IFileElementType implements ITemplateDataElementType {
   private static final Logger LOG = Logger.getInstance(TemplateDataElementType.class);
   private static final int CHECK_PROGRESS_AFTER_TOKENS = 1000;
+
+  @ApiStatus.Internal
   public static final LanguageExtension<TreePatcher> TREE_PATCHER =
     new LanguageExtension<>("com.intellij.lang.treePatcher", new SimpleTreePatcher());
 
-  @NotNull private final IElementType myTemplateElementType;
-  @NotNull final IElementType myOuterElementType;
+  private final @NotNull IElementType myTemplateElementType;
+  final @NotNull IElementType myOuterElementType;
 
   public TemplateDataElementType(@NonNls String debugName,
                                  Language language,
@@ -118,8 +120,8 @@ public class TemplateDataElementType extends IFileElementType implements ITempla
                                        final TemplateLanguageFileViewProvider viewProvider,
                                        @NotNull TemplateDataElementType.RangeCollector rangeCollector) {
     CharSequence templateSourceCode = createTemplateText(sourceCode, createBaseLexer(viewProvider), rangeCollector);
-    if (rangeCollector instanceof RangeCollectorImpl) {
-      ((RangeCollectorImpl)rangeCollector).prepareFileForParsing(templateLanguage, sourceCode, templateSourceCode);
+    if (rangeCollector instanceof RangeCollectorImpl impl) {
+      impl.prepareFileForParsing(templateLanguage, sourceCode, templateSourceCode);
     }
     return createPsiFileFromSource(templateLanguage, templateSourceCode, psiFile.getManager());
   }
@@ -147,7 +149,7 @@ public class TemplateDataElementType extends IFileElementType implements ITempla
     return ((RangeCollectorImpl)rangeCollector).applyTemplateDataModifications(sourceCode, modifications);
   }
 
-  private final NotNullLazyValue<Boolean> REQUIRES_OLD_CREATE_TEMPLATE_TEXT = VolatileNotNullLazyValue.createValue(() -> {
+  private final NotNullLazyValue<Boolean> REQUIRES_OLD_CREATE_TEMPLATE_TEXT = NotNullLazyValue.volatileLazy(() -> {
     Class<?> implementationClass = ReflectionUtil.getMethodDeclaringClass(
       getClass(), "appendCurrentTemplateToken", StringBuilder.class, CharSequence.class, Lexer.class, RangeCollector.class);
     return implementationClass != TemplateDataElementType.class;
@@ -207,7 +209,7 @@ public class TemplateDataElementType extends IFileElementType implements ITempla
         modifications.addAll(tokenModifications);
       }
       else {
-        modifications.addOuterRange(currentRange, getTemplateDataInsertionTokens().contains(baseLexer.getTokenType()));
+        modifications.addOuterRange(currentRange, isInsertionToken(baseLexer.getTokenType(), baseLexer.getTokenSequence()));
       }
       baseLexer.advance();
     }
@@ -216,8 +218,7 @@ public class TemplateDataElementType extends IFileElementType implements ITempla
   }
 
 
-  @NotNull
-  private static String getRangeDump(@NotNull TextRange range, @NotNull CharSequence sequence) {
+  private static @NotNull String getRangeDump(@NotNull TextRange range, @NotNull CharSequence sequence) {
     return "'" + StringUtil.escapeLineBreak(range.subSequence(sequence).toString()) + "' " + range;
   }
 
@@ -242,18 +243,26 @@ public class TemplateDataElementType extends IFileElementType implements ITempla
   }
 
   /**
-   * Returns token types of template elements which are expected to insert some strings into resulting file.
-   * It's fine to include only starting token of the whole insertion range. For example, if
-   * <code><?=$myVar?></code> has three tokens <code><?=</code>, <code>$myVar</code> and <code>?></code>, only type of <code><?=</code>
-   * may be included. Moreover, other tokens shouldn't be included if they can be a part of a non-insertion range like
-   * <code><?$myVar?></code>.
+   * @deprecated Use {@link #isInsertionToken(IElementType, CharSequence)} instead.
+   */
+  @Deprecated(forRemoval = true)
+  protected @NotNull TokenSet getTemplateDataInsertionTokens() {
+    return TokenSet.EMPTY;
+  }
+
+  /**
+   * Returns true if a string is expected to be inserted into resulting file in place of a current token.
+   *
+   * If insertion range contains several tokens, <code>true</code> may be returned only for the starting one. For example, if
+   * <code><?=$myVar?></code> has three tokens <code><?=</code>, <code>$myVar</code> and <code>?></code>, only <code><?=</code>
+   * may be an insertion token.
    *
    * Override this method when overriding {@link #collectTemplateModifications(CharSequence, Lexer)} is not required.
    *
    * @see RangeCollector#addOuterRange(TextRange, boolean)
    */
-  protected @NotNull TokenSet getTemplateDataInsertionTokens() {
-    return TokenSet.EMPTY;
+  protected boolean isInsertionToken(@Nullable IElementType tokenType, @NotNull CharSequence tokenSequence) {
+    return false;
   }
 
   /**
@@ -265,12 +274,12 @@ public class TemplateDataElementType extends IFileElementType implements ITempla
    * </ul>
    * @deprecated this method is going to be removed and com.intellij.lang.ASTFactory#leaf(com.intellij.psi.tree.IElementType, java.lang.CharSequence) going to be used instead
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   protected OuterLanguageElementImpl createOuterLanguageElement(@NotNull CharSequence internedTokenText,
                                                                 @NotNull IElementType outerElementType) {
     var factoryCreatedElement = ASTFactory.leaf(outerElementType, internedTokenText);
-    if (factoryCreatedElement instanceof OuterLanguageElementImpl) {
-      return (OuterLanguageElementImpl)factoryCreatedElement;
+    if (factoryCreatedElement instanceof OuterLanguageElementImpl outer) {
+      return outer;
     }
     LOG.error(
       "Wrong element created by ASTFactory. See method documentation for details. Here is what we have:" +
@@ -281,13 +290,12 @@ public class TemplateDataElementType extends IFileElementType implements ITempla
   }
 
   protected PsiFile createPsiFileFromSource(final Language language, CharSequence sourceCode, PsiManager manager) {
-    @NonNls final LightVirtualFile virtualFile =
+    final @NonNls LightVirtualFile virtualFile =
       new LightVirtualFile("foo", createTemplateFakeFileType(language), sourceCode, LocalTimeCounter.currentTime());
 
     FileViewProvider viewProvider = new SingleRootFileViewProvider(manager, virtualFile, false) {
       @Override
-      @NotNull
-      public Language getBaseLanguage() {
+      public @NotNull Language getBaseLanguage() {
         return language;
       }
     };
@@ -316,28 +324,22 @@ public class TemplateDataElementType extends IFileElementType implements ITempla
     }
 
     @Override
-    @NotNull
-    public String getDefaultExtension() {
+    public @NotNull String getDefaultExtension() {
       return "";
     }
 
     @Override
-    @NotNull
-    @NonNls
-    public String getDescription() {
+    public @NotNull @NonNls String getDescription() {
       return "fake for language" + myLanguage.getID();
     }
 
     @Override
-    @Nullable
     public Icon getIcon() {
       return null;
     }
 
     @Override
-    @NotNull
-    @NonNls
-    public String getName() {
+    public @NotNull @NonNls String getName() {
       return myLanguage.getID();
     }
   }
@@ -357,7 +359,7 @@ public class TemplateDataElementType extends IFileElementType implements ITempla
    *
    * @implNote Should be interface, but abstract class with empty method bodies for keeping binary compatibility with plugins.
    */
-  public static abstract class RangeCollector {
+  public abstract static class RangeCollector {
 
     /**
      * Adds range corresponding to the outer element inside original source code.

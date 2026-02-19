@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes.committed;
 
 import com.intellij.ide.util.treeView.TreeState;
@@ -20,21 +20,25 @@ import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcsUtil.VcsUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import javax.swing.event.TreeSelectionEvent;
 import javax.swing.event.TreeSelectionListener;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreePath;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
-/**
- * @author yole
- */
+
+@ApiStatus.Internal
 public class StructureFilteringStrategy implements ChangeListFilteringStrategy {
   private final List<ChangeListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
   private MyUI myUI;
@@ -45,19 +49,18 @@ public class StructureFilteringStrategy implements ChangeListFilteringStrategy {
     myProject = project;
   }
 
-  @NotNull
   @Override
-  public CommittedChangesFilterKey getKey() {
+  public @NotNull CommittedChangesFilterKey getKey() {
     return new CommittedChangesFilterKey(toString(), CommittedChangesFilterPriority.STRUCTURE);
   }
 
+  @Override
   public String toString() {
     return VcsBundle.message("filter.structure.name");
   }
 
   @Override
-  @Nullable
-  public JComponent getFilterUI() {
+  public @Nullable JComponent getFilterUI() {
     if (myUI == null) {
       myUI = new MyUI();
     }
@@ -95,9 +98,8 @@ public class StructureFilteringStrategy implements ChangeListFilteringStrategy {
   }
 
   @Override
-  @NotNull
-  public List<CommittedChangeList> filterChangeLists(@NotNull List<? extends CommittedChangeList> changeLists) {
-    if (mySelection.size() == 0) {
+  public @NotNull List<CommittedChangeList> filterChangeLists(@NotNull List<? extends CommittedChangeList> changeLists) {
+    if (mySelection.isEmpty()) {
       return new ArrayList<>(changeLists);
     }
     final ArrayList<CommittedChangeList> result = new ArrayList<>();
@@ -155,8 +157,7 @@ public class StructureFilteringStrategy implements ChangeListFilteringStrategy {
       myScrollPane = ScrollPaneFactory.createScrollPane(myStructureTree);
     }
 
-    @NotNull
-    private List<FilePath> getFilePathsUnder(@NotNull ChangesBrowserNode<?> node) {
+    private static @NotNull List<FilePath> getFilePathsUnder(@NotNull ChangesBrowserNode<?> node) {
       List<FilePath> result = Collections.emptyList();
       Object userObject = node.getUserObject();
 

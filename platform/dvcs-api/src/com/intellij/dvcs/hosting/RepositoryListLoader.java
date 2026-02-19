@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.dvcs.hosting;
 
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -8,7 +6,7 @@ import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.*;
+import java.awt.Component;
 import java.util.Collections;
 import java.util.List;
 
@@ -18,7 +16,10 @@ import java.util.List;
  * <p>
  * Implement either {@link #getAvailableRepositories(ProgressIndicator)} to load everything in a single request
  * or {@link #getAvailableRepositoriesFromMultipleSources(ProgressIndicator)} to load in several requests
+ *
+ * @deprecated deprecated with the removal of completion from an old clone dialog
  */
+@Deprecated(forRemoval = true)
 public interface RepositoryListLoader {
   /**
    * Check if this loader is configured (e.g. has necessary authentication data)
@@ -29,21 +30,14 @@ public interface RepositoryListLoader {
    * Prompt user for additional configuration (e.g. provide credentials)
    */
   default boolean enable(@Nullable Component parentComponent) {
-    return enable();
+    return false;
   }
-
-  /**
-   * @deprecated parent component is required for dialogs to not fall through on welcome screen
-   */
-  @Deprecated
-  default boolean enable() { return false; }
 
   /**
    * Load repository urls in a single requests
    */
   @RequiresBackgroundThread
-  @NotNull
-  default List<String> getAvailableRepositories(@NotNull ProgressIndicator progressIndicator) throws RepositoryListLoadingException {
+  default @NotNull List<String> getAvailableRepositories(@NotNull ProgressIndicator progressIndicator) throws RepositoryListLoadingException {
     return Collections.emptyList();
   }
 
@@ -51,8 +45,7 @@ public interface RepositoryListLoader {
    * Load repository urls in multiple requests with ability to show partial result
    */
   @RequiresBackgroundThread
-  @NotNull
-  default Result getAvailableRepositoriesFromMultipleSources(@NotNull ProgressIndicator progressIndicator) {
+  default @NotNull Result getAvailableRepositoriesFromMultipleSources(@NotNull ProgressIndicator progressIndicator) {
     try {
       return new Result(getAvailableRepositories(progressIndicator), Collections.emptyList());
     }
@@ -65,8 +58,8 @@ public interface RepositoryListLoader {
    * Result from multiple sources
    */
   class Result {
-    @NotNull private final List<String> myUrls;
-    @NotNull private final List<RepositoryListLoadingException> myErrors;
+    private final @NotNull List<String> myUrls;
+    private final @NotNull List<RepositoryListLoadingException> myErrors;
 
     public Result(@NotNull List<String> urls, @NotNull List<RepositoryListLoadingException> errors) {
       this.myUrls = urls;
@@ -76,16 +69,14 @@ public interface RepositoryListLoader {
     /**
      * @return all loaded urls (can contain duplicates)
      */
-    @NotNull
-    public List<String> getUrls() {
+    public @NotNull List<String> getUrls() {
       return myUrls;
     }
 
     /**
      * @return exceptions occurred during loading from some sources
      */
-    @NotNull
-    public List<RepositoryListLoadingException> getErrors() {
+    public @NotNull List<RepositoryListLoadingException> getErrors() {
       return myErrors;
     }
   }

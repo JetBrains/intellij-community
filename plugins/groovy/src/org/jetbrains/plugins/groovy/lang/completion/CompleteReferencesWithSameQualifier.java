@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.completion;
 
 import com.intellij.codeInsight.PsiEquivalenceUtil;
@@ -31,10 +31,9 @@ public final class CompleteReferencesWithSameQualifier {
     myQualifier = qualifier;
   }
 
-  @NotNull
-  public static Set<String> getVariantsWithSameQualifier(@NotNull GrReferenceExpression refExpr,
-                                                         @NotNull PrefixMatcher matcher,
-                                                         @Nullable GrExpression qualifier) {
+  public static @NotNull Set<String> getVariantsWithSameQualifier(@NotNull GrReferenceExpression refExpr,
+                                                                  @NotNull PrefixMatcher matcher,
+                                                                  @Nullable GrExpression qualifier) {
     return new CompleteReferencesWithSameQualifier(refExpr, matcher, qualifier).getVariantsWithSameQualifierImpl();
   }
 
@@ -50,8 +49,7 @@ public final class CompleteReferencesWithSameQualifier {
   }
 
   private void addVariantsWithSameQualifier(@NotNull PsiElement element, @NotNull Set<String> result) {
-    if (element instanceof GrReferenceExpression && element != myRefExpr && !PsiUtil.isLValue((GroovyPsiElement)element)) {
-      final GrReferenceExpression refExpr = (GrReferenceExpression)element;
+    if (element instanceof GrReferenceExpression refExpr && element != myRefExpr && !PsiUtil.isLValue((GroovyPsiElement)element)) {
       final String refName = refExpr.getReferenceName();
       if (refName != null && !result.contains(refName) && myMatcher.prefixMatches(refName)) {
         final GrExpression hisQualifier = refExpr.getQualifierExpression();

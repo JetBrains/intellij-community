@@ -1,19 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.reference;
 
 import com.intellij.codeInspection.SuppressionUtil;
@@ -24,40 +9,41 @@ import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.psi.SmartPointerManager;
 import com.intellij.psi.SmartPsiElementPointer;
-import com.intellij.util.ObjectUtils;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.Icon;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 
 public abstract class RefElementImpl extends RefEntityImpl implements RefElement, WritableRefElement {
-  protected static final Logger LOG = Logger.getInstance(RefElement.class);
+  protected static final Logger LOG = Logger.getInstance(RefElementImpl.class);
 
-  private static final int IS_ENTRY_MASK = 0x80;
-  private static final int IS_PERMANENT_ENTRY_MASK = 0x100;
+  private static final int IS_DELETED_MASK         = 0b10000; // 5th bit
+  private static final int IS_INITIALIZED_MASK     = 0b100000; // 6th bit
+  private static final int IS_REACHABLE_MASK       = 0b1000000; // 7th bit
+  private static final int IS_ENTRY_MASK           = 0b10000000; // 8th bit
+  private static final int IS_PERMANENT_ENTRY_MASK = 0b1_00000000; // 9th bit
+  private static final int REFERENCES_BUILT_MASK   = 0b10_00000000; // 10th bit
 
-
-  private final SmartPsiElementPointer myID;
+  private final SmartPsiElementPointer<?> myID;
 
   private List<RefElement> myOutReferences; // guarded by this
   private List<RefElement> myInReferences; // guarded by this
 
   private String[] mySuppressions;
 
-  private volatile boolean myIsDeleted;
-  protected static final int IS_REACHABLE_MASK = 0x40;
-
   protected RefElementImpl(@NotNull String name, @NotNull RefElement owner) {
     super(name, owner.getRefManager());
     myID = null;
-    myFlags = 0;
   }
 
   protected RefElementImpl(PsiFile file, RefManager manager) {
@@ -67,22 +53,21 @@ public abstract class RefElementImpl extends RefEntityImpl implements RefElement
   protected RefElementImpl(@NotNull String name, @NotNull PsiElement element, @NotNull RefManager manager) {
     super(name, manager);
     myID = SmartPointerManager.getInstance(manager.getProject()).createSmartPsiElementPointer(element);
-    myFlags = 0;
   }
 
   protected boolean isDeleted() {
-    return myIsDeleted;
+    return checkFlag(IS_DELETED_MASK);
   }
 
   @Override
   public boolean isValid() {
-    if (myIsDeleted) return false;
+    if (isDeleted()) return false;
     return ReadAction.compute(() -> {
       if (getRefManager().getProject().isDisposed()) return false;
 
-      final PsiFile file = myID.getContainingFile();
       //no need to check resolve in offline mode
       if (ApplicationManager.getApplication().isHeadlessEnvironment()) {
+        final PsiFile file = getContainingFile();
         return file != null && file.isPhysical();
       }
 
@@ -92,8 +77,7 @@ public abstract class RefElementImpl extends RefEntityImpl implements RefElement
   }
 
   @Override
-  @Nullable
-  public Icon getIcon(final boolean expanded) {
+  public @Nullable Icon getIcon(boolean expanded) {
     final PsiElement element = getPsiElement();
     if (element != null && element.isValid()) {
       return element.getIcon(Iconable.ICON_FLAG_VISIBILITY | Iconable.ICON_FLAG_READ_STATUS);
@@ -103,8 +87,7 @@ public abstract class RefElementImpl extends RefEntityImpl implements RefElement
 
   @Override
   public RefModule getModule() {
-    final RefEntity owner = getOwner();
-    return owner instanceof RefElement ? ((RefElement)owner).getModule() : null;
+    return getOwner() instanceof RefElement e ? e.getModule() : null;
   }
 
   @Override
@@ -113,13 +96,11 @@ public abstract class RefElementImpl extends RefEntityImpl implements RefElement
   }
 
   @Override
-  @Nullable
-  public PsiElement getPsiElement() {
+  public @Nullable PsiElement getPsiElement() {
     return myID.getElement();
   }
 
-  @Nullable
-  public PsiFile getContainingFile() {
+  public @Nullable PsiFile getContainingFile() {
     return myID.getContainingFile();
   }
 
@@ -128,11 +109,14 @@ public abstract class RefElementImpl extends RefEntityImpl implements RefElement
   }
 
   @Override
-  public SmartPsiElementPointer getPointer() {
+  public SmartPsiElementPointer<?> getPointer() {
     return myID;
   }
 
-  public void buildReferences() {
+  @Override
+  public synchronized @NotNull List<RefEntity> getChildren() {
+    LOG.assertTrue(isInitialized());
+    return super.getChildren();
   }
 
   @Override
@@ -145,8 +129,8 @@ public abstract class RefElementImpl extends RefEntityImpl implements RefElement
   }
 
   @Override
-  public boolean isReferenced() {
-    return !getInReferences().isEmpty();
+  public synchronized boolean isReferenced() {
+    return myInReferences != null;
   }
 
   public boolean hasSuspiciousCallers() {
@@ -158,21 +142,19 @@ public abstract class RefElementImpl extends RefEntityImpl implements RefElement
   }
 
   @Override
-  @NotNull
-  public synchronized Collection<RefElement> getOutReferences() {
-    return ObjectUtils.notNull(myOutReferences, ContainerUtil.emptyList());
+  public synchronized @NotNull Collection<RefElement> getOutReferences() {
+    return (myOutReferences == null) ? ContainerUtil.emptyList() : Collections.unmodifiableList(myOutReferences);
   }
 
   @Override
-  @NotNull
-  public synchronized Collection<RefElement> getInReferences() {
-    return ObjectUtils.notNull(myInReferences, ContainerUtil.emptyList());
+  public synchronized @NotNull Collection<RefElement> getInReferences() {
+    return (myInReferences == null) ? ContainerUtil.emptyList() : Collections.unmodifiableList(myInReferences);
   }
 
   @Override
   public synchronized void addInReference(RefElement refElement) {
     List<RefElement> inReferences = myInReferences;
-    if (inReferences == null){
+    if (inReferences == null) {
       myInReferences = inReferences = new ArrayList<>(1);
     }
     if (!inReferences.contains(refElement)) {
@@ -180,15 +162,36 @@ public abstract class RefElementImpl extends RefEntityImpl implements RefElement
     }
   }
 
+  private synchronized void removeInReference(RefElement refElement) {
+    if (myInReferences == null) return;
+    myInReferences.remove(refElement);
+    if (myInReferences.isEmpty()) {
+      myInReferences = null;
+    }
+  }
+
   @Override
   public synchronized void addOutReference(RefElement refElement) {
     List<RefElement> outReferences = myOutReferences;
-    if (outReferences == null){
+    if (outReferences == null) {
       myOutReferences = outReferences = new ArrayList<>(1);
     }
     if (!outReferences.contains(refElement)) {
       outReferences.add(refElement);
     }
+  }
+
+  private synchronized void removeOutReference(RefElement refElement) {
+    if (myOutReferences == null) return;
+    myOutReferences.remove(refElement);
+    if (myOutReferences.isEmpty()) {
+      myOutReferences = null;
+    }
+  }
+
+  @Override
+  public boolean areReferencesBuilt() {
+    return checkAndSetFlag(REFERENCES_BUILT_MASK);
   }
 
   public void setEntry(boolean entry) {
@@ -205,10 +208,8 @@ public abstract class RefElementImpl extends RefEntityImpl implements RefElement
     return checkFlag(IS_PERMANENT_ENTRY_MASK);
   }
 
-
   @Override
-  @NotNull
-  public RefElement getContainingEntry() {
+  public @NotNull RefElement getContainingEntry() {
     return this;
   }
 
@@ -221,50 +222,70 @@ public abstract class RefElementImpl extends RefEntityImpl implements RefElement
   }
 
   public void referenceRemoved() {
-    myIsDeleted = true;
+    setFlag(true, IS_DELETED_MASK);
     if (getOwner() != null) {
       getOwner().removeChild(this);
     }
 
     for (RefElement refCallee : getOutReferences()) {
-      refCallee.getInReferences().remove(this);
+      ((RefElementImpl)refCallee).removeInReference(this);
     }
 
     for (RefElement refCaller : getInReferences()) {
-      refCaller.getOutReferences().remove(this);
+      ((RefElementImpl)refCaller).removeOutReference(this);
     }
   }
 
-  @Nullable
-  public String getURL() {
+  public @Nullable String getURL() {
     final PsiElement element = getPsiElement();
     if (element == null || !element.isPhysical()) return null;
-    final PsiFile containingFile = element.getContainingFile();
+    final PsiFileSystemItem containingFile = element instanceof PsiFileSystemItem item ? item : element.getContainingFile();
     if (containingFile == null) return null;
     final VirtualFile virtualFile = containingFile.getVirtualFile();
     if (virtualFile == null) return null;
-    return virtualFile.getUrl() + "#" + element.getTextOffset();
+    return element instanceof PsiFileSystemItem
+           ? virtualFile.getUrl()
+           : virtualFile.getUrl() + "#" + element.getTextOffset();
   }
 
   protected abstract void initialize();
 
   @Override
-  public void addSuppression(final String text) {
+  public boolean isInitialized() {
+    return checkFlag(IS_INITIALIZED_MASK);
+  }
+
+  public synchronized void setInitialized(boolean initialized) {
+    setFlag(initialized, IS_INITIALIZED_MASK);
+  }
+
+  @Override
+  public final synchronized void initializeIfNeeded() {
+    if (isInitialized()) {
+      return;
+    }
+    initialize();
+    setInitialized(true);
+    getRefManager().fireNodeInitialized(this);
+  }
+
+  @Override
+  public void addSuppression(String text) {
     mySuppressions = text.split("[, ]");
   }
 
-  public boolean isSuppressed(String @NotNull ... toolId) {
+  @Override
+  public boolean isSuppressed(String @NotNull ... toolIds) {
     if (mySuppressions != null) {
       for (@NonNls String suppression : mySuppressions) {
-        for (String id : toolId) {
-          if (suppression.equals(id)) return true;
+        if (ArrayUtil.contains(suppression, toolIds)) {
+          return true;
         }
-        if (suppression.equalsIgnoreCase(SuppressionUtil.ALL)){
+        if (suppression.equalsIgnoreCase(SuppressionUtil.ALL)) {
           return true;
         }
       }
     }
-    final RefEntity entity = getOwner();
-    return entity instanceof RefElementImpl && ((RefElementImpl)entity).isSuppressed(toolId);
+    return getOwner() instanceof RefElementImpl e && e.isSuppressed(toolIds);
   }
 }

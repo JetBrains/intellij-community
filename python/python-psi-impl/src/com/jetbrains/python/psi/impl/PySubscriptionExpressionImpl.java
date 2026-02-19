@@ -16,55 +16,37 @@
 package com.jetbrains.python.psi.impl;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiPolyVariantReference;
 import com.intellij.psi.PsiReference;
-import com.intellij.psi.util.QualifiedName;
-import com.jetbrains.python.PyNames;
-import com.jetbrains.python.PyTokenTypes;
-import com.jetbrains.python.PythonDialectsTokenSetProvider;
-import com.jetbrains.python.psi.AccessDirection;
+import com.intellij.util.containers.ContainerUtil;
+import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider;
 import com.jetbrains.python.psi.PyElementVisitor;
 import com.jetbrains.python.psi.PyExpression;
+import com.jetbrains.python.psi.PySliceItem;
 import com.jetbrains.python.psi.PySubscriptionExpression;
 import com.jetbrains.python.psi.impl.references.PyOperatorReference;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
+import com.jetbrains.python.psi.types.PyClassType;
+import com.jetbrains.python.psi.types.PyCollectionType;
+import com.jetbrains.python.psi.types.PyLiteralType;
 import com.jetbrains.python.psi.types.PyTupleType;
 import com.jetbrains.python.psi.types.PyType;
+import com.jetbrains.python.psi.types.PyTypeUtil;
 import com.jetbrains.python.psi.types.PyTypedDictType;
+import com.jetbrains.python.psi.types.PyUnionType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Optional;
+import java.util.ArrayList;
+import java.util.List;
 
-/**
- * @author yole
- */
+
 public class PySubscriptionExpressionImpl extends PyElementImpl implements PySubscriptionExpression {
   public PySubscriptionExpressionImpl(ASTNode astNode) {
     super(astNode);
-  }
-
-  @Override
-  @NotNull
-  public PyExpression getOperand() {
-    return childToPsiNotNull(PythonDialectsTokenSetProvider.getInstance().getExpressionTokens(), 0);
-  }
-
-  @NotNull
-  @Override
-  public PyExpression getRootOperand() {
-    PyExpression operand = getOperand();
-    while (operand instanceof PySubscriptionExpression) {
-      operand = ((PySubscriptionExpression)operand).getOperand();
-    }
-    return operand;
-  }
-
-  @Override
-  @Nullable
-  public PyExpression getIndexExpression() {
-    return childToPsi(PythonDialectsTokenSetProvider.getInstance().getExpressionTokens(), 1);
   }
 
   @Override
@@ -72,74 +54,78 @@ public class PySubscriptionExpressionImpl extends PyElementImpl implements PySub
     pyVisitor.visitPySubscriptionExpression(this);
   }
 
-  @Nullable
   @Override
-  public PyType getType(@NotNull TypeEvalContext context, @NotNull TypeEvalContext.Key key) {
+  public @Nullable PyType getType(@NotNull TypeEvalContext context, @NotNull TypeEvalContext.Key key) {
     final PyExpression indexExpression = getIndexExpression();
-    final PyType type = indexExpression != null ? context.getType(getOperand()) : null;
-    if (type instanceof PyTupleType) {
-      final PyTupleType tupleType = (PyTupleType)type;
-      return Optional
-        .ofNullable(PyEvaluator.evaluate(indexExpression, Integer.class))
-        .map(tupleType::getElementType)
-        .orElse(null);
-    }
-    if (type instanceof PyTypedDictType) {
-      final PyTypedDictType typedDictType = (PyTypedDictType)type;
-      return Optional
-        .ofNullable(PyEvaluator.evaluate(indexExpression, String.class))
-        .map(typedDictType::getElementType)
-        .orElse(null);
+    if (indexExpression != null) {
+      final PyType operandType = context.getType(getOperand());
+      if (indexExpression instanceof PySliceItem) {
+        if (operandType instanceof PyTupleType) {
+          return ((PyTupleType)operandType).isHomogeneous() ? operandType : PyBuiltinCache.getInstance(this).getTupleType();
+        }
+      }
+      else {
+        if (operandType instanceof PyTupleType tupleType) {
+          List<Integer> indexPossibleValues = getIndexExpressionPossibleValues(indexExpression, context, Integer.class);
+          List<@Nullable PyType> possibleTypes = ContainerUtil.map(indexPossibleValues, index -> {
+            if (!tupleType.isHomogeneous() && index < 0) {
+              index += tupleType.getElementCount();
+            }
+            return tupleType.getElementType(index);
+          });
+          return PyUnionType.union(possibleTypes);
+        }
+        if (operandType instanceof PyTypedDictType typedDictType) {
+          List<String> indexPossibleValues = getIndexExpressionPossibleValues(indexExpression, context, String.class);
+          return PyUnionType.union(ContainerUtil.map(indexPossibleValues, typedDictType::getElementType));
+        }
+        if (operandType instanceof PyClassType) {
+          PyType parameterizedType = Ref.deref(PyTypingTypeProvider.getType(this, context));
+          if (parameterizedType instanceof PyCollectionType collectionType) {
+            return collectionType.toClass();
+          }
+        }
+      }
     }
     return PyCallExpressionHelper.getCallType(this, context, key);
   }
 
+  @ApiStatus.Internal
+  public static <T> @NotNull List<T> getIndexExpressionPossibleValues(@Nullable PyExpression indexExpression,
+                                                                      @NotNull TypeEvalContext context,
+                                                                      @NotNull Class<T> indexType) {
+    if (indexExpression == null) {
+      return List.of();
+    }
+    T indexExprValue = PyEvaluator.evaluate(indexExpression, indexType);
+    if (indexExprValue != null) {
+      return List.of(indexExprValue);
+    }
+    PyType type = context.getType(indexExpression);
+    if (type == null) {
+      return List.of();
+    }
+    List<T> result = new ArrayList<>();
+    for (PyType subType : PyTypeUtil.toStream(type)) {
+      if (!(subType instanceof PyLiteralType literalType)) {
+        return List.of();
+      }
+      T val = PyEvaluator.evaluateNoResolve(literalType.getExpression(), indexType);
+      if (val == null) {
+        return List.of();
+      }
+      result.add(val);
+    }
+    return result;
+  }
+
   @Override
   public PsiReference getReference() {
-    return getReference(PyResolveContext.defaultContext());
+    return getReference(PyResolveContext.defaultContext(TypeEvalContext.codeInsightFallback(getProject())));
   }
 
-  @NotNull
   @Override
-  public PsiPolyVariantReference getReference(@NotNull PyResolveContext context) {
+  public @NotNull PsiPolyVariantReference getReference(@NotNull PyResolveContext context) {
     return new PyOperatorReference(this, context);
-  }
-
-  @Override
-  public PyExpression getQualifier() {
-    return getOperand();
-  }
-
-  @Nullable
-  @Override
-  public QualifiedName asQualifiedName() {
-    return PyPsiUtils.asQualifiedName(this);
-  }
-
-  @Override
-  public boolean isQualified() {
-    return getQualifier() != null;
-  }
-
-  @Override
-  public String getReferencedName() {
-    String res = PyNames.GETITEM;
-    switch (AccessDirection.of(this)) {
-      case READ:
-        res = PyNames.GETITEM;
-        break;
-      case WRITE:
-        res = PyNames.SETITEM;
-        break;
-      case DELETE:
-        res = PyNames.DELITEM;
-        break;
-    }
-    return res;
-  }
-
-  @Override
-  public ASTNode getNameElement() {
-    return getNode().findChildByType(PyTokenTypes.LBRACKET);
   }
 }

@@ -1,460 +1,623 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-@file:Suppress("UsePropertyAccessSyntax")
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("UsePropertyAccessSyntax", "ReplaceGetOrSet")
 package com.intellij.ide.plugins
 
-import com.intellij.ide.plugins.cl.PluginClassLoader
-import com.intellij.openapi.extensions.PluginId
+import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.openapi.util.BuildNumber
-import com.intellij.openapi.util.SystemInfo
+import com.intellij.platform.pluginSystem.parser.impl.elements.ModuleLoadingRuleValue
+import com.intellij.platform.pluginSystem.parser.impl.elements.ModuleVisibilityValue
+import com.intellij.platform.runtime.product.ProductMode
+import com.intellij.platform.testFramework.loadDescriptorInTest
+import com.intellij.platform.testFramework.plugins.ContentModuleSpec
+import com.intellij.platform.testFramework.plugins.PluginPackagingConfig
+import com.intellij.platform.testFramework.plugins.buildDir
+import com.intellij.platform.testFramework.plugins.content
+import com.intellij.platform.testFramework.plugins.module
+import com.intellij.platform.testFramework.plugins.plugin
 import com.intellij.testFramework.PlatformTestUtil
-import com.intellij.testFramework.UsefulTestCase
+import com.intellij.testFramework.TestDataPath
 import com.intellij.testFramework.assertions.Assertions.assertThat
-import com.intellij.testFramework.rules.InMemoryFsRule
-import com.intellij.util.io.directoryStreamIfExists
+import com.intellij.testFramework.rules.InMemoryFsExtension
+import com.intellij.util.io.directoryContent
+import com.intellij.util.io.java.classFile
 import com.intellij.util.io.write
 import com.intellij.util.lang.UrlClassLoader
-import junit.framework.TestCase
+import org.assertj.core.api.Assertions
 import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.intellij.lang.annotations.Language
-import org.junit.Assume.assumeTrue
-import org.junit.Rule
-import org.junit.Test
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.extension.RegisterExtension
 import java.io.File
 import java.net.URL
 import java.net.URLClassLoader
-import java.nio.file.Files
 import java.nio.file.Path
-import java.nio.file.Paths
 import java.text.SimpleDateFormat
-import java.util.*
-import java.util.function.Supplier
+import java.util.Collections
+import java.util.Enumeration
+import java.util.Locale
+import kotlin.io.path.createParentDirectories
+import kotlin.io.path.name
 import kotlin.test.assertEquals
-import kotlin.test.assertFalse
-
-private fun loadDescriptors(dir: Path, buildNumber: BuildNumber, disabledPlugins: Set<PluginId> = emptySet()): DescriptorListLoadingContext {
-  val context = DescriptorListLoadingContext(0, disabledPlugins, PluginLoadingResult(emptyMap(), Supplier { buildNumber }))
-  context.usePluginClassLoader = true
-
-  // constant order in tests
-  lateinit var paths: List<Path>
-  Files.newDirectoryStream(dir).use { dirStream ->
-    paths = dirStream.sorted()
-  }
-  context.use {
-    for (file in paths) {
-      val descriptor = PluginDescriptorLoader.loadDescriptor(file, false, context) ?: continue
-      context.result.add(descriptor, false)
-    }
-  }
-  context.result.finishLoading()
-  return context
-}
-
-private fun loadAndInitDescriptors(dir: Path, buildNumber: BuildNumber, disabledPlugins: Set<PluginId> = emptySet()): PluginManagerState {
-  return PluginManagerCore.initializePlugins(loadDescriptors(dir, buildNumber, disabledPlugins), UrlClassLoader.build().get(), false)
-}
+import kotlin.test.assertNotEquals
 
 class PluginDescriptorTest {
-  @Rule
+  @TestDataPath("\$CONTENT_ROOT/testData/plugins/pluginDescriptor") @Suppress("unused")
+  private class TestDataRef // for easy navigation
+
+  init {
+    Logger.setUnitTestMode() // due to warnInProduction use in IdeaPluginDescriptorImpl
+    PluginManagerCore.isUnitTestMode = true // FIXME git rid of this IJPL-220869
+  }
+
+  @RegisterExtension
   @JvmField
-  val inMemoryFs = InMemoryFsRule()
+  val inMemoryFs = InMemoryFsExtension()
+
+  private val rootPath get() = inMemoryFs.fs.getPath("/")
+  private val pluginDirPath get() = rootPath.resolve("plugin")
 
   @Test
-  fun testDescriptorLoading() {
-    val descriptor = loadDescriptorInTest("asp.jar")
+  fun `asp descriptor loads`() {
+    val descriptor = loadDescriptorFromTestDataDir("asp.jar")
     assertThat(descriptor).isNotNull()
     assertThat(descriptor.pluginId.idString).isEqualTo("com.jetbrains.plugins.asp")
     assertThat(descriptor.name).isEqualTo("ASP")
   }
 
   @Test
-  fun testOptionalDescriptors() {
-    val descriptor = loadDescriptorInTest("family")
+  fun `descriptor with depends-optional loads`() {
+    val descriptor = loadDescriptorFromTestDataDir("dependsOptional")
     assertThat(descriptor).isNotNull()
-    assertThat(descriptor.pluginDependencies!!.size).isEqualTo(1)
+    assertThat(descriptor.dependencies)
+      .singleElement()
+      .extracting { it.isOptional }.isEqualTo(true)
   }
 
   @Test
-  fun testMultipleOptionalDescriptors() {
-    val descriptor = loadDescriptorInTest("multipleOptionalDescriptors")
+  fun `descriptor with multiple depends-optional loads`() {
+    val descriptor = loadDescriptorFromTestDataDir("multipleDependsOptional")
     assertThat(descriptor).isNotNull()
-    val pluginDependencies = descriptor.pluginDependencies!!
+    val pluginDependencies = descriptor.dependencies
     assertThat(pluginDependencies).hasSize(2)
-    assertThat(pluginDependencies.map { it.id.idString }).containsExactly("dep2", "dep1")
+    assertThat(pluginDependencies.map { it.isOptional }).allMatch { it == true }
+    assertThat(pluginDependencies.map { it.pluginId.idString }).containsExactly("dep2", "dep1")
   }
 
   @Test
-  fun testMalformedDescriptor() {
-    assertThatThrownBy { loadDescriptorInTest("malformed") }
-      .hasMessageContaining("Content is not allowed in prolog.")
+  fun `descriptor with multiple plugin dependencies loads`() {
+    val descriptor = loadDescriptorFromTestDataDir("multiplePluginDependencies")
+    assertThat(descriptor).isNotNull()
+    val pluginDependencies = descriptor.moduleDependencies.plugins
+    assertThat(pluginDependencies).hasSize(2)
+    assertThat(pluginDependencies.map { it.idString }).containsExactly("dep1", "dep2")
   }
 
   @Test
-  fun testAnonymousDescriptor() {
-    val descriptor = loadDescriptorInTest("anonymous")
-    assertThat(descriptor.pluginId).isNull()
-    assertThat(descriptor.name).isNull()
+  fun `malformed descriptor fails to load`() {
+    assertThatThrownBy { loadDescriptorFromTestDataDir("malformed") }
+      .hasMessageContaining("Unexpected character 'o' (code 111) in prolog")
   }
 
   @Test
-  fun testCyclicOptionalDeps() {
-    assertThatThrownBy { loadDescriptorInTest("cyclicOptionalDeps") }
+  fun `name is used as a substitute for id if id is missing`() {
+    val descriptor = loadDescriptorFromTestDataDir("noId")
+    assertThat(descriptor).isNotNull()
+    assertThat(descriptor.name).isEqualTo("Name")
+    assertThat(descriptor.pluginId.idString).isEqualTo("Name")
+  }
+
+  @Test
+  fun `id is used as a substitute for name if name is missing`() {
+    val descriptor = loadDescriptorFromTestDataDir("noName")
+    assertThat(descriptor).isNotNull()
+    assertThat(descriptor.pluginId.idString).isEqualTo("plugin.id")
+    assertThat(descriptor.name).isEqualTo("plugin.id")
+  }
+
+  @Test
+  fun `descriptor with cyclical optional depends config files fails to load`() {
+    assertThatThrownBy { loadDescriptorFromTestDataDir("cyclicOptionalDeps") }
       .hasMessageEndingWith(" optional descriptors form a cycle: a.xml, b.xml")
   }
 
   @Test
-  fun testFilteringDuplicates() {
-    val urls = arrayOf(
-      Paths.get(testDataPath, "duplicate1.jar").toUri().toURL(),
-      Paths.get(testDataPath, "duplicate2.jar").toUri().toURL()
-    )
-    assertThat(PluginManagerCore.testLoadDescriptorsFromClassPath(URLClassLoader(urls, null))).hasSize(1)
+  fun `descriptor with cyclical optional depends config files fails to load - 2`() {
+    assertThatThrownBy { loadDescriptorFromTestDataDir("cyclicOptionalDeps2") }
+      .hasMessageEndingWith(" optional descriptors form a cycle: a.xml, b.xml")
   }
 
   @Test
-  fun testProductionPlugins() {
-    assumeTrue(SystemInfo.isMac && !UsefulTestCase.IS_UNDER_TEAMCITY)
-    val descriptors = loadAndInitDescriptors(Paths.get("/Applications/Idea.app/Contents/plugins"), PluginManagerCore.getBuildNumber()).sortedPlugins
-    assertThat(descriptors).isNotEmpty()
-    assertThat(descriptors.find { it!!.pluginId.idString == "com.intellij.java" }).isNotNull
+  fun `multiple depends on the same plugin with both strict and optional`() {
+    val descriptor = loadDescriptorFromTestDataDir("duplicateDepends-strict")
+    assertThat(descriptor).isNotNull()
+    assertThat(descriptor.dependencies.map { it.pluginId.idString }).isEqualTo(listOf("foo", "foo", "foo"))
+    assertThat(descriptor.dependencies.map { it.isOptional }).isEqualTo(listOf(true, false, true))
   }
 
   @Test
-  fun testProductionProductLib() {
-    assumeTrue(SystemInfo.isMac && !UsefulTestCase.IS_UNDER_TEAMCITY)
-    val urls = ArrayList<URL>()
-    Paths.get("/Applications/Idea.app/Contents/lib").directoryStreamIfExists {
-      for (path in it) {
-        urls.add(path.toUri().toURL())
+  fun `multiple optional depends on the same plugin is allowed`() {
+    val descriptor = loadDescriptorFromTestDataDir("duplicateDepends-optional")
+    assertThat(descriptor).isNotNull()
+    assertThat(descriptor.dependencies.map { it.pluginId.idString }).isEqualTo(listOf("foo", "foo"))
+    assertThat(descriptor.dependencies.map { it.isOptional }).isEqualTo(listOf(true, true))
+  }
+
+  @Test
+  fun `directory with a plugin xml in (classes - META-INF) subdirectory is a plugin`() {
+    val tempDir = directoryContent {
+      dir("lib") {
+        zip("empty.jar") {}
       }
-    }
-    val descriptors = PluginManagerCore.testLoadDescriptorsFromClassPath(URLClassLoader(urls.toTypedArray(), null))
-    // core and com.intellij.workspace
-    assertThat(descriptors).hasSize(1)
+      dir("classes") {
+        dir("META-INF") {
+          file("plugin.xml",
+               """<idea-plugin>
+               |  <id>foo.bar</id>
+               |</idea-plugin>""".trimMargin())
+        }
+      }
+    }.generateInTempDir() // todo maybe make generateIn(path) to use rootPath here instead
+    val descriptor = loadDescriptorInTest(tempDir)
+    assertThat(descriptor).isNotNull
+    assertThat(descriptor.pluginId.idString).isEqualTo("foo.bar")
+    assertThat(descriptor.jarFiles).isNotNull()
+    assertThat(descriptor.jarFiles!!.map { it.name }).isEqualTo(listOf("classes", "empty.jar"))
   }
 
   @Test
-  fun testProduction2() {
-    assumeTrue(SystemInfo.isMac && !UsefulTestCase.IS_UNDER_TEAMCITY)
-    val descriptors = loadAndInitDescriptors(Paths.get("/Volumes/data/plugins"), PluginManagerCore.getBuildNumber()).sortedPlugins
-    assertThat(descriptors).isNotEmpty()
+  fun `directory with a plugin xml in (META-INF) subdirectory is a plugin`() {
+    val tempDir = directoryContent {
+      dir("classes") {
+        classFile("Empty") {}
+      }
+      dir("lib") {
+        zip("empty.jar") {}
+      }
+      dir("META-INF") {
+        file("plugin.xml",
+             """<idea-plugin>
+               |  <id>foo.bar</id>
+               |</idea-plugin>""".trimMargin())
+      }
+    }.generateInTempDir()
+    val descriptor = loadDescriptorInTest(tempDir)
+    assertThat(descriptor).isNotNull
+    assertThat(descriptor.pluginId.idString).isEqualTo("foo.bar")
+    assertThat(descriptor.jarFiles).isNotNull()
+    assertThat(descriptor.jarFiles!!.map { it.name }).isEqualTo(listOf("classes", "empty.jar"))
   }
 
   @Test
-  fun testDuplicateDependency() {
-    val descriptor = loadDescriptorInTest("duplicateDependency")
-    assertThat(descriptor).isNotNull()
-    assertThat(descriptor.pluginDependencies?.filter { it.isOptional }).isEmpty()
-    assertThat(descriptor.pluginDependencies?.map { it.id }).containsExactly(PluginId.getId("foo"))
-  }
-
-  @Test
-  fun testPluginNameAsId() {
-    val descriptor = loadDescriptorInTest("noId")
-    assertThat(descriptor).isNotNull()
-    assertThat(descriptor.pluginId.idString).isEqualTo(descriptor.name)
-  }
-
-  @Test
-  fun releaseDate() {
-    val pluginFile = inMemoryFs.fs.getPath("plugin/META-INF/plugin.xml")
-    pluginFile.write("""
-<idea-plugin>
-  <id>bar</id>
-  <vendor>JetBrains</vendor>
-  <product-descriptor code="IJ" release-date="20190811" release-version="42" optional="true"/>
-</idea-plugin>""")
-    val descriptor = loadDescriptorInTest(pluginFile.parent.parent)
-    assertThat(descriptor).isNotNull()
-    assertThat(descriptor.vendor).isEqualTo("JetBrains")
-    assertThat(SimpleDateFormat("yyyyMMdd", Locale.US).format(descriptor.releaseDate)).isEqualTo("20190811")
-    assertThat(descriptor.isLicenseOptional).isTrue()
-  }
-
-  @Suppress("PluginXmlValidity")
-  @Test
-  fun `use newer plugin`() {
-    val pluginDir = inMemoryFs.fs.getPath("/plugins")
-    writeDescriptor("foo_1-0", pluginDir, """
-      <idea-plugin>
-        <id>foo</id>
-        <vendor>JetBrains</vendor>
-        <version>1.0</version>
-      </idea-plugin>""")
-    writeDescriptor("foo_2-0", pluginDir, """
-      <idea-plugin>
-        <id>foo</id>
-        <vendor>JetBrains</vendor>
-        <version>2.0</version>
-      </idea-plugin>""")
-
-    val result = loadAndInitDescriptors(pluginDir, PluginManagerCore.getBuildNumber())
-    val plugins = result.sortedEnabledPlugins
-    assertThat(plugins).hasSize(1)
-    val foo = plugins[0]
-    assertThat(foo.version).isEqualTo("2.0")
-    assertThat(foo.pluginId.idString).isEqualTo("foo")
-
-    assertThat(result.idMap).containsOnlyKeys(foo.pluginId)
-    assertThat(result.idMap.get(foo.pluginId)).isSameAs(foo)
-  }
-
-  @Suppress("PluginXmlValidity")
-  @Test
-  fun `prefer bundled if custom is incompatible`() {
-    val pluginDir = inMemoryFs.fs.getPath("/plugins")
-    // names are important - will be loaded in alphabetical order
-    writeDescriptor("foo_1-0", pluginDir, """
-      <idea-plugin>
-        <id>foo</id>
-        <vendor>JetBrains</vendor>
-        <version>2.0</version>
-        <idea-version until-build="2"/>
-      </idea-plugin>""")
-    writeDescriptor("foo_2-0", pluginDir, """
-      <idea-plugin>
-        <id>foo</id>
-        <vendor>JetBrains</vendor>
-        <version>2.0</version>
-        <idea-version until-build="4"/>
-      </idea-plugin>""")
-
-    val result = loadDescriptors(pluginDir, BuildNumber.fromString("4.0")!!).result
-    assertThat(result.pluginErrors).isEmpty()
-    val plugins = result.enabledPlugins
-    assertThat(plugins).hasSize(1)
-    assertThat(result.duplicateModuleMap).isNull()
-    assertThat(result.incompletePlugins).isEmpty()
-    val foo = plugins[0]
-    assertThat(foo.version).isEqualTo("2.0")
-    assertThat(foo.pluginId.idString).isEqualTo("foo")
-
-    assertThat(result.idMap).containsOnlyKeys(foo.pluginId)
-    assertThat(result.idMap.get(foo.pluginId)).isSameAs(foo)
-  }
-
-  @Suppress("PluginXmlValidity")
-  @Test
-  fun `select compatible plugin if both versions provided`() {
-    val pluginDir = inMemoryFs.fs.getPath("/plugins")
-    writeDescriptor("foo_1-0", pluginDir, """
-      <idea-plugin>
-        <id>foo</id>
-        <vendor>JetBrains</vendor>
-        <version>1.0</version>
-        <idea-version since-build="1.*" until-build="2.*"/>
-      </idea-plugin>""")
-    writeDescriptor("foo_2-0", pluginDir, """
-      <idea-plugin>
-        <id>foo</id>
-        <vendor>JetBrains</vendor>
-        <version>2.0</version>
-        <idea-version since-build="2.0" until-build="4.*"/>
-      </idea-plugin>""")
-
-    val result = loadAndInitDescriptors(pluginDir, BuildNumber.fromString("3.12")!!)
-
-    val plugins = result.sortedEnabledPlugins
-    assertThat(plugins).hasSize(1)
-    val foo = plugins[0]
-    assertThat(foo.version).isEqualTo("2.0")
-    assertThat(foo.pluginId.idString).isEqualTo("foo")
-
-    assertThat(result.idMap).containsOnlyKeys(foo.pluginId)
-    assertThat(result.idMap[foo.pluginId]).isSameAs(foo)
-  }
-
-  @Suppress("PluginXmlValidity")
-  @Test
-  fun `use first plugin if both versions the same`() {
-    val pluginDir = inMemoryFs.fs.getPath("/plugins")
-    PluginBuilder().noDepends().id("foo").version("1.0").build(pluginDir.resolve("foo_1-0"))
-    PluginBuilder().noDepends().id("foo").version("1.0").build(pluginDir.resolve("foo_another"))
-
-    val result = loadAndInitDescriptors(pluginDir, PluginManagerCore.getBuildNumber())
-    val plugins = result.sortedEnabledPlugins
-    assertThat(plugins).hasSize(1)
-    val foo = plugins[0]
-    assertThat(foo.version).isEqualTo("1.0")
-    assertThat(foo.pluginId.idString).isEqualTo("foo")
-
-    assertThat(result.idMap).containsOnlyKeys(foo.pluginId)
-    assertThat(result.idMap.get(foo.pluginId)).isSameAs(foo)
-  }
-
-  @Suppress("PluginXmlValidity")
-  @Test
-  fun classLoader() {
-    val pluginDir = inMemoryFs.fs.getPath("/plugins")
-    PluginBuilder().noDepends().id("foo").depends("bar").build(pluginDir.resolve("foo"))
-    PluginBuilder().noDepends().id("bar").build(pluginDir.resolve("bar"))
-    checkClassLoader(pluginDir)
-  }
-
-  @Suppress("PluginXmlValidity")
-  @Test
-  fun `classLoader - optional dependency`() {
-    val pluginDir = inMemoryFs.fs.getPath("/plugins")
-    writeDescriptor("foo", pluginDir, """
-    <idea-plugin>
-      <id>foo</id>
-      <depends optional="true" config-file="stream-debugger.xml">bar</depends>
-      <vendor>JetBrains</vendor>
-    </idea-plugin>""")
-
-    pluginDir.resolve("foo/META-INF/stream-debugger.xml").write("""
-       <idea-plugin>
-        <actions>
-        </actions>
-      </idea-plugin>
-    """.trimIndent())
-
-    writeDescriptor("bar", pluginDir, """
+  fun `descriptor with vendor and release date loads`() {
+    val pluginFile = pluginDirPath.resolve(PluginManagerCore.PLUGIN_XML_PATH)
+    val descriptor = readDescriptorFromBytesForTest(pluginFile, false, """
     <idea-plugin>
       <id>bar</id>
       <vendor>JetBrains</vendor>
-    </idea-plugin>""")
-
-    checkClassLoader(pluginDir)
-  }
-
-  private fun checkClassLoader(pluginDir: Path) {
-    val list = loadAndInitDescriptors(pluginDir, PluginManagerCore.getBuildNumber()).sortedEnabledPlugins
-    assertThat(list).hasSize(2)
-
-    val bar = list[0]
-    assertThat(bar.pluginId.idString).isEqualTo("bar")
-
-    val foo = list[1]
-
-    assertThat(foo.dependentPluginIds).containsExactly(bar.pluginId)
-
-    assertThat(foo.pluginId.idString).isEqualTo("foo")
-    val fooClassLoader = foo.pluginClassLoader as PluginClassLoader
-    assertThat(fooClassLoader._getParents()).containsExactly(bar.pluginClassLoader)
-  }
-
-  @Test
-  fun componentConfig() {
-    val pluginFile = inMemoryFs.fs.getPath("/plugin/META-INF/plugin.xml")
-    pluginFile.write("<idea-plugin>\n  <id>bar</id>\n  <project-components>\n    <component>\n      <implementation-class>com.intellij.ide.favoritesTreeView.FavoritesManager</implementation-class>\n      <option name=\"workspace\" value=\"true\"/>\n    </component>\n\n    \n  </project-components>\n</idea-plugin>")
-    val descriptor = loadDescriptorInTest(pluginFile.parent.parent)
-    assertThat(descriptor).isNotNull
-    assertThat(descriptor.projectContainerDescriptor.components!![0].options).isEqualTo(Collections.singletonMap("workspace", "true"))
-  }
-
-  @Test
-  fun testPluginIdAsName() {
-    val descriptor = loadDescriptorInTest("noName")
+      <product-descriptor code="IJ" release-date="20190811" release-version="42" optional="true"/>
+    </idea-plugin>""".encodeToByteArray())
     assertThat(descriptor).isNotNull()
-    assertThat(descriptor.name).isEqualTo(descriptor.pluginId.idString)
+    assertThat(descriptor.vendor).isEqualTo("JetBrains")
+    assertThat(SimpleDateFormat("yyyyMMdd", Locale.US).format(descriptor.releaseDate)).isEqualTo("20190811")
+    assertThat(descriptor.releaseVersion).isEqualTo(42)
+    assertThat(descriptor.isLicenseOptional).isTrue()
   }
 
+  @Test
+  fun `descriptor with project components loads`() {
+    val pluginFile = pluginDirPath.resolve(PluginManagerCore.PLUGIN_XML_PATH)
+    pluginFile.write("""<idea-plugin>
+  <id>bar</id>
+  <project-components>
+    <component>
+      <implementation-class>com.intellij.ide.favoritesTreeView.FavoritesManager</implementation-class>
+      <option name="workspace" value="true"/>
+    </component>
+  </project-components>
+</idea-plugin>""")
+    val descriptor = loadDescriptorInTest(pluginDirPath)
+    assertThat(descriptor).isNotNull
+    assertThat(descriptor.projectContainerDescriptor.components[0].options).isEqualTo(Collections.singletonMap("workspace", "true"))
+  }
+
+  @Test
+  fun `descriptor with a v2 content module with a slash in its name loads if module descriptor file has a dot instead of a slash`() {
+    plugin("bar") {
+      content {
+        module("bar/module", loadingRule = ModuleLoadingRuleValue.REQUIRED) { packagePrefix = "bar.module" }
+      }
+    }.buildDir(pluginDirPath, object : PluginPackagingConfig() {
+      override val ContentModuleSpec.descriptorFilename: String get() = "bar.module.xml"
+    })
+    val descriptor = loadDescriptorInTest(pluginDirPath)
+    assertThat(descriptor).isNotNull
+      .isMarkedEnabled()
+      .hasExactlyEnabledContentModules("bar/module")
+  }
+
+  @Test
+  fun `descriptor with a v2 content module with a slash in its name does not load if module descriptor file is placed in a subdirectory`() {
+    plugin("bar") {
+      content {
+        module("bar/module", loadingRule = ModuleLoadingRuleValue.REQUIRED) { packagePrefix = "bar.module" }
+      }
+    }.buildDir(pluginDirPath, object : PluginPackagingConfig() {
+      override val ContentModuleSpec.descriptorFilename: String get() = "bar/module.xml"
+    })
+    assertThatThrownBy {
+      val descriptor = loadDescriptorInTest(pluginDirPath)
+      assertThat(descriptor).isNotNull
+        .isNotMarkedEnabled()
+        .doesNotHaveEnabledContentModules()
+    }.hasMessageContaining("Cannot resolve bar.module.xml")
+  }
+
+  @Test
+  fun `descriptor with a v2 content module with multiple slashes in its name does not load`() {
+    plugin("bar") {
+      content {
+        module("bar/module/sub", loadingRule = ModuleLoadingRuleValue.REQUIRED) { packagePrefix = "bar.module.sub" }
+      }
+    }.buildDir(pluginDirPath, object : PluginPackagingConfig() {
+      override val ContentModuleSpec.descriptorFilename: String get() = "bar.module.sub.xml"
+    })
+    assertThatThrownBy {
+      val descriptor = loadDescriptorInTest(pluginDirPath)
+      assertThat(descriptor).isNotNull
+        .isNotMarkedEnabled()
+        .doesNotHaveEnabledContentModules()
+    }.hasMessageContaining("Cannot resolve bar/module.sub.xml") // note that only the last slash is substituted
+  }
+
+  @Test
+  fun `descriptor with a v2 content module with multiple slashes in its name loads from a subdirectory`() { // FIXME
+    plugin("bar") {
+      content {
+        module("bar/module/sub", loadingRule = ModuleLoadingRuleValue.REQUIRED) { packagePrefix = "bar.module.sub" }
+      }
+    }.buildDir(pluginDirPath, object : PluginPackagingConfig() {
+      override val ContentModuleSpec.descriptorFilename: String get() = "bar/module.sub.xml"
+    })
+    val descriptor = loadDescriptorInTest(pluginDirPath)
+    assertThat(descriptor).isNotNull
+      .isMarkedEnabled()
+      .hasExactlyEnabledContentModules("bar/module/sub")
+  }
+
+  @Test
+  fun `module descriptor's text can be embedded inside the content module element`() {
+    pluginDirPath.resolve("META-INF/plugin.xml").writeXml("""
+      <idea-plugin>
+        <id>foo</id>
+        <content>
+          <module name="foo.module"><![CDATA[
+            <idea-plugin>
+                <extensions defaultExtensionNs="com.intellij">
+                    <applicationService serviceImplementation="foo.module.service"/>
+                </extensions>
+            </idea-plugin>          
+          ]]></module>
+        </content>
+      </idea-plugin>
+    """.trimIndent())
+    val descriptor = loadDescriptorInTest(pluginDirPath)
+    assertThat(descriptor).isNotNull
+      .isMarkedEnabled()
+      .hasExactlyEnabledContentModules("foo.module")
+    assertThat(descriptor.contentModules[0])
+      .isMarkedEnabled()
+      .hasExactlyApplicationServices("foo.module.service")
+  }
+
+  @Test
+  fun `id, version, name are inherited in content modules`() {
+    plugin("bar") {
+      name = "Bar"
+      version = "1.0.0"
+      content { module("bar.sub") { } }
+    }.buildDir(pluginDirPath, object : PluginPackagingConfig() {
+      override val ContentModuleSpec.packageToMainJar: Boolean get() = true
+    })
+    val descriptor = loadDescriptorInTest(pluginDirPath)
+    assertThat(descriptor).isNotNull
+    assertThat(descriptor.pluginId.idString).isEqualTo("bar")
+    assertThat(descriptor.name).isEqualTo("Bar")
+    assertThat(descriptor.version).isEqualTo("1.0.0")
+    assertThat(descriptor.contentModules).hasSize(1)
+    val subDesc = descriptor.contentModules[0]
+    assertThat(subDesc.pluginId.idString).isEqualTo("bar")
+    assertThat((subDesc as PluginDescriptor).name).isEqualTo("Bar")
+    assertThat(subDesc.version).isEqualTo("1.0.0")
+  }
+
+  @Test
+  fun `id, version, name can't overridden in submodules`() {
+    plugin("bar") {
+      name = "Bar"
+      version = "1.0.0"
+      content {
+        module("bar.sub") {
+          id = "bar2"
+          name = "Bar Sub"
+          version = "2.0.0"
+        }
+      }
+    }.buildDir(pluginDirPath, object : PluginPackagingConfig() {
+      override val ContentModuleSpec.packageToMainJar: Boolean get() = true
+    })
+    val (descriptor, errs) = runAndReturnWithLoggedErrors { loadDescriptorInTest(pluginDirPath) }
+    Assertions.assertThat(errs.joinToString { it.message ?: "" }).isNotNull
+      .contains("bar.sub", "element 'version'", "element 'name'", "element 'id'")
+    assertThat(descriptor).isNotNull
+    assertThat(descriptor.pluginId.idString).isEqualTo("bar")
+    assertThat(descriptor.name).isEqualTo("Bar")
+    assertThat(descriptor.version).isEqualTo("1.0.0")
+    assertThat(descriptor.contentModules).hasSize(1)
+    val subDesc = descriptor.contentModules[0]
+    assertThat(subDesc.pluginId.idString).isEqualTo("bar")
+    assertThat((subDesc as PluginDescriptor).name).isEqualTo("Bar")
+    assertThat(subDesc.version).isEqualTo("1.0.0")
+  }
+
+  @Test
+  fun `resource bundle is not inherited in content modules`() {
+    plugin("bar") {
+      resourceBundle = "resourceBundle"
+      content {
+        module("bar.opt", loadingRule = ModuleLoadingRuleValue.OPTIONAL) {}
+        module("bar.req", loadingRule = ModuleLoadingRuleValue.REQUIRED) {}
+        module("bar.emb", loadingRule = ModuleLoadingRuleValue.EMBEDDED) {}
+      }
+    }.buildDir(pluginDirPath, object : PluginPackagingConfig() {
+      override val ContentModuleSpec.packageToMainJar: Boolean get() = true
+    })
+    val descriptor = loadDescriptorInTest(pluginDirPath)
+    assertThat(descriptor).isNotNull
+    assertThat(descriptor.pluginId.idString).isEqualTo("bar")
+    assertThat(descriptor.resourceBundleBaseName).isEqualTo("resourceBundle")
+    assertThat(descriptor.contentModules).hasSize(3)
+    assertThat(descriptor.contentModules).allMatch { it.resourceBundleBaseName == null }
+  }
+
+  @Test
+  fun `resource bundle can be set in content modules`() {
+    plugin("bar") {
+      resourceBundle = "resourceBundle"
+      content {
+        module("bar.opt", loadingRule = ModuleLoadingRuleValue.OPTIONAL) { resourceBundle = "bar.opt" }
+        module("bar.req", loadingRule = ModuleLoadingRuleValue.REQUIRED) { resourceBundle = "bar.req" }
+        module("bar.emb", loadingRule = ModuleLoadingRuleValue.EMBEDDED) { resourceBundle = "bar.emb" }
+      }
+    }.buildDir(pluginDirPath, object : PluginPackagingConfig() {
+      override val ContentModuleSpec.packageToMainJar: Boolean get() = true
+    })
+    val descriptor = loadDescriptorInTest(pluginDirPath)
+    assertThat(descriptor).isNotNull
+    assertThat(descriptor.pluginId.idString).isEqualTo("bar")
+    assertThat(descriptor.resourceBundleBaseName).isEqualTo("resourceBundle")
+    assertThat(descriptor.contentModules).hasSize(3)
+    assertThat(descriptor.contentModules).allMatch { it.resourceBundleBaseName == it.moduleId.name }
+  }
+
+  @Test
+  fun `core plugin has implicit host and product mode plugin aliases`() {
+    plugin(PluginManagerCore.CORE_PLUGIN_ID) {}.buildDir(pluginDirPath)
+    val descriptor = loadDescriptorInTest(pluginDirPath)
+    assertThat(descriptor).isNotNull
+    val hostIds = IdeaPluginOsRequirement.getHostOsModuleIds()
+    if (hostIds.isEmpty()) {
+      logger<PluginDescriptorTest>().warn("No host OS plugin aliases")
+    }
+    val productAliases = productModeAliasesForCorePlugin()
+    if (productAliases.isEmpty()) {
+      logger<PluginDescriptorTest>().warn("No product mode plugin aliases")
+    }
+    assertThat(descriptor.pluginAliases)
+      .containsAll(hostIds)
+      .containsAll(productAliases)
+  }
+
+  @Test
+  fun `core plugin has implicit CPU arch mode plugin alias`() {
+    plugin(PluginManagerCore.CORE_PLUGIN_ID) {}.buildDir(pluginDirPath)
+    val descriptor = loadDescriptorInTest(pluginDirPath)
+    assertThat(descriptor).isNotNull
+    val hostIds = PluginCpuArchRequirement.getHostCpuArchModuleIds()
+    if (hostIds.isEmpty()) {
+      logger<PluginDescriptorTest>().warn("No host arch plugin aliases")
+    }
+    val productAliases = productModeAliasesForCorePlugin()
+    if (productAliases.isEmpty()) {
+      logger<PluginDescriptorTest>().warn("No product mode plugin aliases")
+    }
+    assertThat(descriptor.pluginAliases)
+      .containsAll(hostIds)
+      .containsAll(productAliases)
+  }
+
+  @Test
+  fun `content module's content modules are disregarded`() {
+    plugin("bar") {
+      content {
+        module("bar.module", loadingRule = ModuleLoadingRuleValue.REQUIRED) {
+          packagePrefix = "bar.module"
+          content {
+            module("bar.module.inner", loadingRule = ModuleLoadingRuleValue.REQUIRED) {
+              packagePrefix = "bar.module.inner"
+            }
+          }
+        }
+      }
+    }.buildDir(pluginDirPath)
+    val (bar, err) = runAndReturnWithLoggedError { loadDescriptorInTest(pluginDirPath) }
+    assertThat(err).hasMessageContainingAll("bar.module", "plugin 'bar'", "element 'content'")
+    assertThat(bar).isNotNull
+      .isMarkedEnabled()
+      .hasExactlyEnabledContentModules("bar.module")
+    val barModule = bar.contentModules[0]
+    assertThat(barModule).isNotNull
+      .isMarkedEnabled()
+      .doesNotHaveEnabledContentModules()
+    assertThat(barModule.contentModules).hasSize(0)
+  }
+
+  @Test
+  fun `namespace and visibility of content modules`() {
+    plugin("foo") {
+      namespace = "my.namespace"
+      content {
+        module("foo.internal") {
+          moduleVisibility = ModuleVisibilityValue.INTERNAL
+        }
+        module("foo.private") {
+          moduleVisibility = ModuleVisibilityValue.PRIVATE
+        }
+        module("foo.public") {
+          moduleVisibility = ModuleVisibilityValue.PUBLIC
+        }
+      }
+    }.buildDir(pluginDirPath)
+    val foo = loadDescriptorInTest(pluginDirPath)
+    assertThat(foo).hasExactlyEnabledContentModules("foo.internal", "foo.private", "foo.public")
+    val contentModules = foo.contentModules.sortedBy { it.moduleId.name }
+    assertThat(contentModules[0].visibility).isEqualTo(ModuleVisibility.INTERNAL)
+    assertThat(contentModules[1].visibility).isEqualTo(ModuleVisibility.PRIVATE)
+    assertThat(contentModules[2].visibility).isEqualTo(ModuleVisibility.PUBLIC)
+    assertThat(foo.namespace).isEqualTo("my.namespace")
+  }
+
+  @Test
+  fun `multiple namespaces in content tags`() {
+    val (plugin, errors) = runAndReturnWithLoggedErrors { loadDescriptorFromTestDataDir("multipleNamespaces") as PluginMainDescriptor }
+    assertThat(errors.joinToString { it.message ?: "" }).contains("already set namespace", "my.namespace.1", "my.namespace.2")
+    assertThat(plugin).hasExactlyEnabledContentModules("module1", "module2")
+    assertThat(plugin.namespace).isEqualTo("my.namespace.1")
+  }
+
+  @Test
+  fun `unexpected visibility value for content module`() {
+    val (plugin, errors) = runAndReturnWithLoggedErrors { loadDescriptorFromTestDataDir("unexpectedVisibility") as PluginMainDescriptor }
+    assertThat(errors.joinToString { it.message ?: "" }).contains("Unexpected", "visibility", "foo")
+    assertThat(plugin).hasExactlyEnabledContentModules("my.module")
+    assertThat(plugin.contentModules[0].visibility).isEqualTo(ModuleVisibility.PRIVATE)
+  }
+
+  @Test
+  fun `visibility is not allowed for plugin descriptor`() {
+    plugin {
+      moduleVisibility = ModuleVisibilityValue.PUBLIC
+    }.buildDir(pluginDirPath)
+    val (_, errors) = runAndReturnWithLoggedErrors { loadDescriptorInTest(pluginDirPath) }
+    assertThat(errors.joinToString { it.message ?: "" }).contains("visibility", "has no effect")
+  }
+
+  @Test
+  fun `strict-until-build attribute`() {
+    plugin {
+      strictUntilBuild = "253.0"
+    }.buildDir(pluginDirPath)
+    val plugin = loadDescriptorInTest(pluginDirPath)
+    assertThat(plugin.untilBuild).isEqualTo("253.0")
+  }
+
+  @Test
+  fun `strict-until-build attribute overrides until-build attribute`() {
+    plugin {
+      untilBuild = "252.0"
+      strictUntilBuild = "253.0"
+    }.buildDir(pluginDirPath)
+    val plugin = loadDescriptorInTest(pluginDirPath)
+    assertThat(plugin.untilBuild).isEqualTo("253.0")
+  }
+
+  // todo this is rather about plugin set loading, probably needs to be moved out
+  @Test
+  fun `only one instance of a plugin is loaded if it's duplicated`() {
+    val urls = arrayOf(
+      Path.of(testDataPath, "duplicate1.jar").toUri().toURL(),
+      Path.of(testDataPath, "duplicate2.jar").toUri().toURL()
+    )
+    val loader = URLClassLoader(urls, null)
+    val pluginList = loadDescriptorsFromClassPathInTest(loader)
+    val buildNumber = BuildNumber.fromString("2042.42")!!
+    val initContext = PluginInitializationContext.buildForTest(
+      essentialPlugins = emptySet(),
+      disabledPlugins = emptySet(),
+      expiredPlugins = emptySet(),
+      brokenPluginVersions = emptyMap(),
+      getProductBuildNumber = { buildNumber },
+      requirePlatformAliasDependencyForLegacyPlugins = false,
+      checkEssentialPlugins = false,
+      explicitPluginSubsetToLoad = null,
+      disablePluginLoadingCompletely = false,
+      currentProductModeId = ProductMode.MONOLITH.id,
+    )
+    val result = PluginLoadingResult()
+    result.initAndAddAll(
+      descriptorLoadingResult = PluginDescriptorLoadingResult.build(listOf(pluginList)),
+      initContext = initContext
+    )
+    assertThat(result.enabledPlugins).hasSize(1)
+  }
+
+  // todo this is rather about plugin set loading, probably needs to be moved out
   @Test
   fun testUrlTolerance() {
-    class SingleUrlEnumeration(private val myUrl: URL) : Enumeration<URL> {
-      private var hasMoreElements = true
-      override fun hasMoreElements(): Boolean {
-        return hasMoreElements
-      }
-
-      override fun nextElement(): URL {
-        if (!hasMoreElements) throw NoSuchElementException()
-        hasMoreElements = false
-        return myUrl
-      }
-
+    class EnumerationAdapter<T>(elements: List<T>) : Enumeration<T> {
+      val it = elements.iterator()
+      override fun hasMoreElements(): Boolean = it.hasNext()
+      override fun nextElement(): T = it.next()
     }
-
-    class TestLoader(prefix: String, suffix: String) : UrlClassLoader(build()) {
+    class TestLoader(prefix: String, suffix: String) : UrlClassLoader(build(), false) {
       private val url = URL(prefix + File(testDataPath).toURI().toURL().toString() + suffix + "META-INF/plugin.xml")
-
       override fun getResource(name: String) = null
-
-      override fun getResources(name: String) = SingleUrlEnumeration(url)
+      override fun getResources(name: String) = EnumerationAdapter(listOf(url))
     }
-
-    val loader1 = TestLoader("", "/spaces%20spaces/")
-    TestCase.assertEquals(1, PluginManagerCore.testLoadDescriptorsFromClassPath(loader1).size)
-    val loader2 = TestLoader("", "/spaces spaces/")
-    TestCase.assertEquals(1, PluginManagerCore.testLoadDescriptorsFromClassPath(loader2).size)
-    val loader3 = TestLoader("jar:", "/jar%20spaces.jar!/")
-    TestCase.assertEquals(1, PluginManagerCore.testLoadDescriptorsFromClassPath(loader3).size)
-    val loader4 = TestLoader("jar:", "/jar spaces.jar!/")
-    assertThat(PluginManagerCore.testLoadDescriptorsFromClassPath(loader4)).hasSize(1)
+    assertThat(loadDescriptorsFromClassPathInTest(TestLoader("", "/spaces%20spaces/")).plugins).hasSize(1)
+    assertThat(loadDescriptorsFromClassPathInTest(TestLoader("", "/spaces spaces/")).plugins).hasSize(1)
+    assertThat(loadDescriptorsFromClassPathInTest(TestLoader("jar:", "/jar%20spaces.jar!/")).plugins).hasSize(1)
+    assertThat(loadDescriptorsFromClassPathInTest(TestLoader("jar:", "/jar spaces.jar!/")).plugins).hasSize(1)
   }
 
+  // todo equals of IdeaPluginDescriptorImpl is also dependent on sub-descriptor location (depends optional)
   @Test
   fun testEqualityById() {
-    val fs = inMemoryFs.fs
-    val tempFile = fs.getPath("/", PluginManagerCore.PLUGIN_XML_PATH)
+    val tempFile = rootPath.resolve(PluginManagerCore.PLUGIN_XML_PATH)
     tempFile.write("""
 <idea-plugin>
   <id>ID</id>
   <name>A</name>
 </idea-plugin>""")
-    val impl1 = loadDescriptorInTest(fs.getPath("/"))
+    val impl1 = loadDescriptorInTest(rootPath)
+
     tempFile.write("""
 <idea-plugin>
   <id>ID</id>
   <name>B</name>
 </idea-plugin>""")
-    val impl2 = loadDescriptorInTest(fs.getPath("/"))
-    TestCase.assertEquals(impl1, impl2)
-    TestCase.assertEquals(impl1.hashCode(), impl2.hashCode())
-    TestCase.assertNotSame(impl1.name, impl2.name)
+    val impl2 = loadDescriptorInTest(rootPath)
+
+    assertEquals(impl1, impl2)
+    assertEquals(impl1.hashCode(), impl2.hashCode())
+    assertNotEquals(impl1.name, impl2.name)
   }
 
-  @Test
-  fun testLoadDisabledPlugin() {
-    val descriptor = loadDescriptorInTest("disabled", setOf(PluginId.getId("com.intellij.disabled")))
-    assertFalse(descriptor.isEnabled)
-    assertEquals("This is a disabled plugin", descriptor.description)
-    UsefulTestCase.assertOrderedEquals(arrayOf(PluginId.getId("com.intellij.modules.lang")), *descriptor.dependentPluginIds)
+  companion object {
+    private val testDataPath: String
+      get() = "${PlatformTestUtil.getPlatformTestDataPath()}plugins/pluginDescriptor"
+
+    private fun loadDescriptorFromTestDataDir(
+      dirName: String,
+    ): IdeaPluginDescriptorImpl {
+      return loadDescriptorInTest(
+        fileOrDir = Path.of(testDataPath, dirName),
+      )
+    }
+
+    private fun Path.writeXml(@Language("XML") text: String) {
+      createParentDirectories().write(text.encodeToByteArray())
+    }
   }
-
-  @Test
-  fun testLoadPluginWithDisabledDependency() {
-    val pluginDir = inMemoryFs.fs.getPath("/plugins")
-    PluginBuilder().noDepends().id("foo").depends("bar").build(pluginDir.resolve("foo"))
-    PluginBuilder().noDepends().id("bar").build(pluginDir.resolve("bar"))
-
-    val result = loadAndInitDescriptors(pluginDir, PluginManagerCore.getBuildNumber(), setOf(PluginId.getId("bar")))
-    assertThat(result.sortedEnabledPlugins).isEmpty()
-  }
-
-  @Test
-  fun testLoadPluginWithDisabledTransitiveDependency() {
-    val pluginDir = inMemoryFs.fs.getPath("/plugins")
-    PluginBuilder()
-      .noDepends()
-      .id("org.jetbrains.plugins.gradle.maven")
-      .implementationDetail()
-      .depends("org.jetbrains.plugins.gradle")
-      .build(pluginDir.resolve("intellij.gradle.java.maven"))
-    PluginBuilder()
-      .noDepends()
-      .id("org.jetbrains.plugins.gradle")
-      .depends("com.intellij.gradle")
-      .implementationDetail()
-      .build(pluginDir.resolve("intellij.gradle.java"))
-    PluginBuilder()
-      .noDepends()
-      .id("com.intellij.gradle")
-      .build(pluginDir.resolve("intellij.gradle"))
-
-    val result = loadAndInitDescriptors(pluginDir, PluginManagerCore.getBuildNumber(), setOf(PluginId.getId("com.intellij.gradle")))
-    assertThat(result.sortedEnabledPlugins).isEmpty()
-  }
-}
-
-private fun writeDescriptor(id: String, pluginDir: Path, @Language("xml") data: String) {
-  pluginDir.resolve("$id/META-INF/plugin.xml").write(data.trimIndent())
-}
-
-private val testDataPath: String
-  get() = PlatformTestUtil.getPlatformTestDataPath() + "plugins/pluginDescriptor"
-
-private fun loadDescriptorInTest(dirName: String, disabledPlugins: Set<PluginId> = emptySet()): IdeaPluginDescriptorImpl {
-  return loadDescriptorInTest(Paths.get(testDataPath, dirName), disabledPlugins)
 }

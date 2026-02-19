@@ -4,7 +4,28 @@ package com.intellij.psi.impl.source.resolve.graphInference.constraints;
 import com.intellij.codeInsight.daemon.impl.analysis.JavaGenericsUtil;
 import com.intellij.core.JavaPsiBundle;
 import com.intellij.openapi.util.Pair;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.JavaResolveResult;
+import com.intellij.psi.LambdaUtil;
+import com.intellij.psi.PsiCall;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiClassType;
+import com.intellij.psi.PsiConditionalExpression;
+import com.intellij.psi.PsiDiamondType;
+import com.intellij.psi.PsiDisjunctionType;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiExpressionList;
+import com.intellij.psi.PsiLambdaExpression;
+import com.intellij.psi.PsiLambdaParameterType;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiMethodReferenceExpression;
+import com.intellij.psi.PsiParameter;
+import com.intellij.psi.PsiParenthesizedExpression;
+import com.intellij.psi.PsiSubstitutor;
+import com.intellij.psi.PsiSwitchExpression;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypeParameter;
+import com.intellij.psi.PsiTypes;
 import com.intellij.psi.impl.source.resolve.graphInference.InferenceSession;
 import com.intellij.psi.impl.source.resolve.graphInference.InferenceVariable;
 import com.intellij.psi.impl.source.resolve.graphInference.PsiPolyExpressionUtil;
@@ -56,12 +77,15 @@ public class ExpressionCompatibilityConstraint extends InputOutputConstraintForm
         }
       }
 
-      if (exprType != null && exprType != PsiType.NULL) {
+      if (exprType != null && exprType != PsiTypes.nullType()) {
         if (exprType instanceof PsiDisjunctionType) {
           exprType = ((PsiDisjunctionType)exprType).getLeastUpperBound();
         }
 
         constraints.add(new TypeCompatibilityConstraint(myT, exprType));
+      }
+      if (myT instanceof PsiClassType && exprType == PsiTypes.nullType()) {
+        constraints.add(new StrictSubtypingConstraint(myT, exprType));
       }
       return true;
     }
@@ -175,7 +199,7 @@ public class ExpressionCompatibilityConstraint extends InputOutputConstraintForm
         }
         if (callSession.repeatInferencePhases()) {
 
-          if (PsiType.VOID.equals(targetType)) {
+          if (PsiTypes.voidType().equals(targetType)) {
             return callSession;
           }
 
@@ -242,7 +266,7 @@ public class ExpressionCompatibilityConstraint extends InputOutputConstraintForm
                                             PsiType returnType,
                                             Set<? super InferenceVariable> result) {
     if (psiExpression instanceof PsiLambdaExpression) {
-      if (!PsiType.VOID.equals(returnType)) {
+      if (!PsiTypes.voidType().equals(returnType)) {
         final List<PsiExpression> returnExpressions = LambdaUtil.getReturnExpressions((PsiLambdaExpression)psiExpression);
         for (PsiExpression expression : returnExpressions) {
           final Set<InferenceVariable> resultInputVars = createSelfConstraint(returnType, expression).getInputVariables(session);

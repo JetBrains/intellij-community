@@ -26,7 +26,7 @@ class C {
   void m0() {
     try { throw new FileNotFoundException(); }
     catch (FileNotFoundException e) { }
-    <warning descr="Unreachable section: exception 'java.io.FileNotFoundException' has already been caught">catch (IOException e) { }</warning>
+    <warning descr="Unreachable section: exception 'java.io.FileNotFoundException' has already been caught">catch</warning> (IOException e) { }
   }
 
   void m1() {

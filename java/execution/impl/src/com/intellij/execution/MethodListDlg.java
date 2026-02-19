@@ -1,23 +1,39 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution;
 
 import com.intellij.ide.structureView.impl.StructureNodeRenderer;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Condition;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiSubstitutor;
+import com.intellij.psi.SmartPointerManager;
+import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.psi.util.PsiFormatUtilBase;
-import com.intellij.ui.*;
+import com.intellij.ui.ColoredListCellRenderer;
+import com.intellij.ui.DoubleClickListener;
+import com.intellij.ui.ScrollPaneFactory;
+import com.intellij.ui.ScrollingUtil;
+import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.ui.SortedListModel;
+import com.intellij.ui.TreeUIHelper;
 import com.intellij.ui.components.JBList;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JComponent;
+import javax.swing.JList;
+import javax.swing.JPanel;
+import javax.swing.ListSelectionModel;
+import java.awt.BorderLayout;
 import java.awt.event.MouseEvent;
 import java.util.Comparator;
+import java.util.List;
 
 public class MethodListDlg extends DialogWrapper {
 
@@ -26,15 +42,16 @@ public class MethodListDlg extends DialogWrapper {
   private final SortedListModel<PsiMethod> myListModel = new SortedListModel<>(METHOD_NAME_COMPARATOR);
   private final JList<PsiMethod> myList = new JBList<>(myListModel);
   private final JPanel myWholePanel = new JPanel(new BorderLayout());
+  private final boolean myCreateMethodListSuccess;
 
   public MethodListDlg(@NotNull PsiClass psiClass, @NotNull Condition<? super PsiMethod> filter, @NotNull JComponent parent) {
     super(parent, false);
-    createList(psiClass.getAllMethods(), filter);
+    myCreateMethodListSuccess = createList(psiClass.getAllMethods(), filter);
     myWholePanel.add(ScrollPaneFactory.createScrollPane(myList));
     myList.setCellRenderer(new ColoredListCellRenderer<>() {
       @Override
-      protected void customizeCellRenderer(@NotNull final JList<? extends PsiMethod> list,
-                                           @NotNull final PsiMethod psiMethod,
+      protected void customizeCellRenderer(final @NotNull JList<? extends PsiMethod> list,
+                                           final @NotNull PsiMethod psiMethod,
                                            final int index,
                                            final boolean selected,
                                            final boolean hasFocus) {
@@ -65,10 +82,34 @@ public class MethodListDlg extends DialogWrapper {
     init();
   }
 
-  private void createList(final PsiMethod[] allMethods, final Condition<? super PsiMethod> filter) {
-    for (final PsiMethod method : allMethods) {
-      if (filter.value(method)) myListModel.add(method);
-    }
+  /**
+   * @return false if the progress dialog was cancelled by user, true otherwise
+   */
+  private boolean createList(final PsiMethod@NotNull [] allMethods, final Condition<? super PsiMethod> filter) {
+    if (allMethods.length == 0) return true;
+
+    final List<SmartPsiElementPointer<PsiMethod>> methodPointers = ContainerUtil.map(allMethods, SmartPointerManager::createPointer);
+
+    final Runnable filterMethods = () -> {
+      final List<SmartPsiElementPointer<PsiMethod>> methods = ReadAction.compute(() -> ContainerUtil.filter(methodPointers, e -> filter.value(e.getElement())));
+      ApplicationManager.getApplication().invokeLater(
+        () -> methods.stream()
+          .map(e -> e.dereference())
+          .forEach(myListModel::add)
+      );
+    };
+
+    final ProgressManager progressManager = ProgressManager.getInstance();
+    return progressManager.runProcessWithProgressSynchronously(filterMethods,
+                                                               ExecutionBundle.message("browse.method.dialog.looking.for.methods"),
+                                                               true,
+                                                               allMethods[0].getProject());
+  }
+
+  @Override
+  public void show() {
+    if (!myCreateMethodListSuccess) return;
+    super.show();
   }
 
   @Override
@@ -76,9 +117,8 @@ public class MethodListDlg extends DialogWrapper {
     return myWholePanel;
   }
 
-  @Nullable
   @Override
-  public JComponent getPreferredFocusedComponent() {
+  public @Nullable JComponent getPreferredFocusedComponent() {
     return myList;
   }
 

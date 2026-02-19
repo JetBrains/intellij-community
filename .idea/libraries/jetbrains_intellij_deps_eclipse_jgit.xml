@@ -1,0 +1,32 @@
+<component name="libraryTable">
+  <library name="jetbrains.intellij.deps.eclipse.jgit" type="repository">
+    <properties maven-id="org.jetbrains.intellij.deps:org.eclipse.jgit:6.6.1.202309021850-r-jb-202510311356">
+      <verification>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/org.eclipse.jgit/6.6.1.202309021850-r-jb-202510311356/org.eclipse.jgit-6.6.1.202309021850-r-jb-202510311356.jar">
+          <sha256sum>a36daede93f146973abf54462040963846e919e09a922302210c875337e36d3d</sha256sum>
+        </artifact>
+        <artifact url="file://$MAVEN_REPOSITORY$/com/googlecode/javaewah/JavaEWAH/1.2.3/JavaEWAH-1.2.3.jar">
+          <sha256sum>d65226949713c4c61a784f41c51167e7b0316f93764398ebba9e4336b3d954c2</sha256sum>
+        </artifact>
+      </verification>
+      <exclude>
+        <dependency maven-id="org.slf4j:slf4j-api" />
+      </exclude>
+    </properties>
+    <ANNOTATIONS>
+      <root url="file://$PROJECT_DIR$/lib/annotations/jgit" />
+    </ANNOTATIONS>
+    <CLASSES>
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/org.eclipse.jgit/6.6.1.202309021850-r-jb-202510311356/org.eclipse.jgit-6.6.1.202309021850-r-jb-202510311356.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/googlecode/javaewah/JavaEWAH/1.2.3/JavaEWAH-1.2.3.jar!/" />
+    </CLASSES>
+    <JAVADOC>
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/org.eclipse.jgit/6.6.1.202309021850-r-jb-202510311356/org.eclipse.jgit-6.6.1.202309021850-r-jb-202510311356-javadoc.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/googlecode/javaewah/JavaEWAH/1.2.3/JavaEWAH-1.2.3-javadoc.jar!/" />
+    </JAVADOC>
+    <SOURCES>
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/org.eclipse.jgit/6.6.1.202309021850-r-jb-202510311356/org.eclipse.jgit-6.6.1.202309021850-r-jb-202510311356-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/googlecode/javaewah/JavaEWAH/1.2.3/JavaEWAH-1.2.3-sources.jar!/" />
+    </SOURCES>
+  </library>
+</component>

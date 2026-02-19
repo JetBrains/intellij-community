@@ -17,7 +17,8 @@ package com.intellij.codeInspection;
 
 import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
-import com.intellij.util.containers.ContainerUtil;
+
+import java.util.List;
 
 /**
  * @author Dmitry Batkovich
@@ -41,7 +42,7 @@ public class SuspiciousLanguagesInspectionTest extends LightJavaCodeInsightFixtu
     myFixture.configureByFile(getTestName(true) + "/" + file2);
     final SuspiciousLocalesLanguagesInspection inspection = new SuspiciousLocalesLanguagesInspection();
     if (additionalLocales.length != 0) {
-      inspection.setAdditionalLanguages(ContainerUtil.newArrayList(additionalLocales));
+      inspection.setAdditionalLanguages(List.of(additionalLocales));
     }
     myFixture.enableInspections(inspection);
     myFixture.checkHighlighting();

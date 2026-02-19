@@ -1,9 +1,9 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.ui.impl.watch;
 
-import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.debugger.DebuggerContext;
 import com.intellij.debugger.DebuggerManagerEx;
+import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.debugger.engine.DebuggerManagerThreadImpl;
 import com.intellij.debugger.engine.DebuggerUtils;
 import com.intellij.debugger.engine.JavaValue;
@@ -12,6 +12,7 @@ import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluateExceptionUtil;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.debugger.impl.DebuggerContextImpl;
+import com.intellij.debugger.impl.DebuggerUtilsImpl;
 import com.intellij.debugger.impl.PositionUtil;
 import com.intellij.debugger.settings.NodeRendererSettings;
 import com.intellij.debugger.settings.ViewsGeneralSettings;
@@ -27,11 +28,21 @@ import com.intellij.psi.PsiExpression;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.xdebugger.XExpression;
 import com.intellij.xdebugger.frame.XValueModifier;
-import com.sun.jdi.*;
+import com.sun.jdi.ArrayReference;
+import com.sun.jdi.ClassLoaderReference;
+import com.sun.jdi.ClassNotLoadedException;
+import com.sun.jdi.ClassType;
+import com.sun.jdi.Field;
+import com.sun.jdi.InternalException;
+import com.sun.jdi.InvalidTypeException;
+import com.sun.jdi.ObjectCollectedException;
+import com.sun.jdi.ObjectReference;
+import com.sun.jdi.Type;
+import com.sun.jdi.Value;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class FieldDescriptorImpl extends ValueDescriptorImpl implements FieldDescriptor{
+public class FieldDescriptorImpl extends ValueDescriptorImpl implements FieldDescriptor {
   public static final String OUTER_LOCAL_VAR_FIELD_PREFIX = "val$";
   private final Field myField;
   private final ObjectReference myObject;
@@ -109,7 +120,7 @@ public class FieldDescriptorImpl extends ValueDescriptorImpl implements FieldDes
       return fieldValue;
     }
     catch (InternalException e) {
-      if (evaluationContext.getDebugProcess().getVirtualMachineProxy().canBeModified()) { // do not care in read only vms
+      if (evaluationContext.getVirtualMachineProxy().canBeModified()) { // do not care in read only vms
         LOG.debug(e);
       }
       else {
@@ -129,7 +140,7 @@ public class FieldDescriptorImpl extends ValueDescriptorImpl implements FieldDes
         ((ArrayReference)value).length() == 0 &&
         DebuggerUtils.instanceOf(myObject.type(), CommonClassNames.JAVA_LANG_THROWABLE)) {
       try {
-        invokeExceptionGetStackTrace(myObject, evaluationContext);
+        DebuggerUtilsImpl.invokeThrowableGetStackTrace(myObject, evaluationContext, false);
         return true;
       }
       catch (Throwable e) {
@@ -166,9 +177,8 @@ public class FieldDescriptorImpl extends ValueDescriptorImpl implements FieldDes
     }
   }
 
-  @Nullable
   @Override
-  public String getDeclaredType() {
+  public @Nullable String getDeclaredType() {
     return myField.typeName();
   }
 
@@ -176,14 +186,13 @@ public class FieldDescriptorImpl extends ValueDescriptorImpl implements FieldDes
   public PsiExpression getDescriptorEvaluation(DebuggerContext context) throws EvaluateException {
     PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(myProject);
     String fieldName;
-    if(isStatic()) {
+    if (isStatic()) {
       String typeName = myField.declaringType().name().replace('$', '.');
       typeName = DebuggerTreeNodeExpression.normalize(typeName, PositionUtil.getContextElement(context), myProject);
       fieldName = typeName + "." + getName();
     }
     else {
-      //noinspection HardCodedStringLiteral
-      fieldName = isOuterLocalVariableValue()? StringUtil.trimStart(getName(), OUTER_LOCAL_VAR_FIELD_PREFIX) : "this." + getName();
+      fieldName = isOuterLocalVariableValue() ? StringUtil.trimStart(getName(), OUTER_LOCAL_VAR_FIELD_PREFIX) : "this." + getName();
     }
     try {
       return elementFactory.createExpressionFromText(fieldName, null);
@@ -208,12 +217,8 @@ public class FieldDescriptorImpl extends ValueDescriptorImpl implements FieldDes
             setter = v -> object.setValue(field, v);
           }
         }
-        else {
-          ReferenceType refType = field.declaringType();
-          if (refType instanceof ClassType) {
-            ClassType classType = (ClassType)refType;
-            setter = v -> classType.setValue(field, v);
-          }
+        else if (field.declaringType() instanceof ClassType classType) {
+          setter = v -> classType.setValue(field, v);
         }
 
         if (setter != null) {
@@ -231,9 +236,8 @@ public class FieldDescriptorImpl extends ValueDescriptorImpl implements FieldDes
               return field.declaringType().classLoader();
             }
 
-            @NotNull
             @Override
-            public Type getLType() throws ClassNotLoadedException {
+            public @NotNull Type getLType() throws ClassNotLoadedException {
               return field.type();
             }
           });

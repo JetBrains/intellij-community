@@ -1,0 +1,20 @@
+<idea-plugin package="org.jetbrains.idea.devkit.kotlin.k1">
+
+  <dependencies>
+    <plugin id="com.intellij.modules.kotlin.k1"/>
+    <module name="intellij.kotlin.devkit"/>
+  </dependencies>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <applicationService
+      serviceInterface="org.jetbrains.idea.devkit.kotlin.inspections.CompanionObjectInExtensionInspectionSupport"
+      serviceImplementation="org.jetbrains.idea.devkit.kotlin.k1.K1CompanionObjectInExtensionInspectionSupport"/>
+  </extensions>
+
+  <extensions defaultExtensionNs="DevKit.lang">
+    <appServiceAsStaticFinalFieldOrPropertyVisitorProvider
+      language="kotlin"
+      implementationClass="org.jetbrains.idea.devkit.kotlin.k1.K1AppServiceAsStaticFinalFieldOrPropertyVisitorProvider"/>
+  </extensions>
+
+</idea-plugin>

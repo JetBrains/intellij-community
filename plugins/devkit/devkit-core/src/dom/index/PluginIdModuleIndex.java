@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.dom.index;
 
 import com.intellij.openapi.project.Project;
@@ -24,20 +24,25 @@ import org.jetbrains.idea.devkit.dom.IdeaPlugin;
 import org.jetbrains.idea.devkit.dom.PluginModule;
 import org.jetbrains.idea.devkit.util.DescriptorUtil;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
 
-public class PluginIdModuleIndex extends PluginXmlIndexBase<String, Void> {
+/**
+ * Plugin ID and {@code <module>} entries.
+ */
+public final class PluginIdModuleIndex extends PluginXmlIndexBase<String, Void> {
   private static final ID<String, Void> NAME = ID.create("PluginIdModuleIndex");
 
-  @NotNull
   @Override
-  public ID<String, Void> getName() {
+  public @NotNull ID<String, Void> getName() {
     return NAME;
   }
 
-  @NotNull
   @Override
-  public DataExternalizer<Void> getValueExternalizer() {
+  public @NotNull DataExternalizer<Void> getValueExternalizer() {
     return VoidDataExternalizer.INSTANCE;
   }
 
@@ -51,15 +56,14 @@ public class PluginIdModuleIndex extends PluginXmlIndexBase<String, Void> {
     return ContainerUtil.newHashMap(ids, Collections.nCopies(ids.size(), null));
   }
 
-  @NotNull
   @Override
-  public KeyDescriptor<String> getKeyDescriptor() {
+  public @NotNull KeyDescriptor<String> getKeyDescriptor() {
     return EnumeratorStringDescriptor.INSTANCE;
   }
 
   @Override
   public int getVersion() {
-    return 1;
+    return BASE_INDEX_VERSION + 2;
   }
 
   public static Collection<VirtualFile> getFiles(@NotNull Project project, @NotNull String idOrModule) {
@@ -70,6 +74,10 @@ public class PluginIdModuleIndex extends PluginXmlIndexBase<String, Void> {
 
   public static List<IdeaPlugin> findPlugins(@NotNull DomElement place, @NotNull String idOrModule) {
     Project project = place.getManager().getProject();
+    return findPlugins(idOrModule, project);
+  }
+
+  public static @NotNull List<IdeaPlugin> findPlugins(@NotNull String idOrModule, Project project) {
     Collection<VirtualFile> vFiles = getFiles(project, idOrModule);
     return JBIterable.from(vFiles)
       .map(PsiManager.getInstance(project)::findFile)

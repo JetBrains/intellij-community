@@ -1,6 +1,5 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16">
-  <g fill="none" fill-rule="evenodd">
-    <polygon fill="#F4AF3D" points="11.5 8.5 16 16 7 16"/>
-    <path fill="#3C3F41" d="M12,14 L12,15 L11,15 L11,14 L12,14 Z M12,10.5 L12,13 L11,13 L11,10.5 L12,10.5 Z"/>
-  </g>
+<!-- Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file. -->
+<svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+<path fill-rule="evenodd" clip-rule="evenodd" d="M11.5 8.5L16 16H7L11.5 8.5Z" fill="#F4AF3D"/>
+<path fill-rule="evenodd" clip-rule="evenodd" d="M12 14V15H11V14H12ZM12 10.5V13H11V10.5H12Z" fill="black" fill-opacity="0.8"/>
 </svg>

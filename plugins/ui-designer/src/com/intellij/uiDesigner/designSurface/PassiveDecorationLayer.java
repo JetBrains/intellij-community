@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.uiDesigner.designSurface;
 
 import com.intellij.uiDesigner.FormEditingUtil;
@@ -10,8 +10,11 @@ import com.intellij.uiDesigner.radComponents.RadRootContainer;
 import icons.UIDesignerIcons;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.Icon;
+import javax.swing.JComponent;
+import javax.swing.SwingUtilities;
+import java.awt.Graphics;
+import java.awt.Point;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
@@ -22,14 +25,11 @@ import java.util.Set;
  * It contains all necessary decorators. Decorators are:
  * - special borders to show component bounds and cell bounds inside grids
  * - special component which marks selected rectangle
- *
- * @author Anton Katilin
- * @author Vladimir Kondratyev
  */
 class PassiveDecorationLayer extends JComponent{
-  @NotNull private final GuiEditor myEditor;
+  private final @NotNull GuiEditor myEditor;
 
-  PassiveDecorationLayer(@NotNull final GuiEditor editor) {
+  PassiveDecorationLayer(final @NotNull GuiEditor editor) {
     myEditor = editor;
   }
 

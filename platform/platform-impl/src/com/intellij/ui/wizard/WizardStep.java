@@ -1,11 +1,12 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.wizard;
 
 import com.intellij.openapi.util.NlsContexts;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.Icon;
+import javax.swing.JComponent;
 
 public abstract class WizardStep<T extends WizardModel> {
 
@@ -69,8 +70,7 @@ public abstract class WizardStep<T extends WizardModel> {
     return true;
   }
 
-  @Nullable
-  public JComponent getPreferredFocusedComponent() {
+  public @Nullable JComponent getPreferredFocusedComponent() {
     return null;
   }
 
@@ -78,12 +78,11 @@ public abstract class WizardStep<T extends WizardModel> {
     return myIcon;
   }
 
-  @NonNls
-  public String getHelpId() {
+  public @NonNls String getHelpId() {
     return myHelpId;
   }
 
-  public static class Empty extends WizardStep {
+  public static final class Empty extends WizardStep {
     @Override
     public JComponent prepare(WizardNavigationState state) {
       return null;

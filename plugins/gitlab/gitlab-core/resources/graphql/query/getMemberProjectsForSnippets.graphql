@@ -1,0 +1,10 @@
+query($pageSize: Int = 100, $cursor: String) {
+  projects(membership: true, first: $pageSize, after: $cursor) {
+    pageInfo {
+      ...pageInfo
+    }
+    nodes {
+      ...projectForSnippets
+    }
+  }
+}

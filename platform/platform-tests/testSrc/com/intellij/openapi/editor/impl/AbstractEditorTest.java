@@ -16,16 +16,25 @@
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.openapi.command.WriteCommandAction;
-import com.intellij.openapi.editor.*;
+import com.intellij.openapi.editor.Caret;
+import com.intellij.openapi.editor.CustomFoldRegion;
+import com.intellij.openapi.editor.FoldRegion;
+import com.intellij.openapi.editor.Inlay;
+import com.intellij.openapi.editor.SoftWrap;
+import com.intellij.openapi.editor.VisualPosition;
 import com.intellij.openapi.editor.impl.view.FontLayoutService;
+import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.FileTypeManager;
+import com.intellij.openapi.fileTypes.PlainTextFileType;
 import com.intellij.testFramework.EditorTestUtil;
 import com.intellij.testFramework.LightPlatformCodeInsightTestCase;
 import com.intellij.testFramework.MockFontLayoutService;
-import com.intellij.testFramework.TestFileType;
 import com.intellij.testFramework.fixtures.EditorMouseFixture;
+import com.intellij.util.PathUtil;
 import com.intellij.util.ThrowableRunnable;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -38,15 +47,14 @@ import static org.junit.Assert.assertArrayEquals;
 /**
  * Base super class for tests that check various IJ editor functionality on managed document modification.
  * <p/>
- * It's main purpose is to provide utility methods like fold regions addition and setup; typing etc. 
- * 
- * @author Denis Zhdanov
+ * Its main purpose is to provide utility methods like fold regions addition and setup; typing etc.
  */
+@SuppressWarnings({"UnusedReturnValue", "SameParameterValue", "rawtypes"})
 public abstract class AbstractEditorTest extends LightPlatformCodeInsightTestCase {
   public static final int TEST_CHAR_WIDTH = 10; // char width matches the one in EditorTestUtil.configureSoftWraps
   public static final int TEST_LINE_HEIGHT = 10;
   public static final int TEST_DESCENT = 2;
-  
+
   public static final String LOREM_IPSUM =
     "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.";
 
@@ -74,15 +82,24 @@ public abstract class AbstractEditorTest extends LightPlatformCodeInsightTestCas
   }
 
   protected void initText(@NotNull @NonNls String fileText) {
-    init(fileText, TestFileType.TEXT);
-  }
-  
-  protected void init(@NotNull @NonNls String fileText, @NotNull TestFileType type) {
-    configureFromFileText(getFileName(type), fileText);
+    init(fileText, PlainTextFileType.INSTANCE);
   }
 
-  private String getFileName(TestFileType type) {
-    return getTestName(false) + type.getExtension();
+  protected void init(@NotNull @NonNls String fileText, @NotNull FileType type) {
+    String name = getFileName(type);
+    assertFileTypeResolved(type, name);
+    configureFromFileText(name, fileText);
+  }
+
+  private String getFileName(@NotNull FileType type) {
+    return getTestName(false) + "." + type.getDefaultExtension();
+  }
+
+  protected static void assertFileTypeResolved(@NotNull FileType type, @NotNull String path) {
+    String name = PathUtil.getFileName(path);
+    FileType fileType = FileTypeManager.getInstance().getFileTypeByFileName(name);
+    assertEquals(type + " file type must be in this test classpath, but only " + fileType + " was found by '" +
+                 name + "' file name (with default extension '" + fileType.getDefaultExtension() + "')", type, fileType);
   }
 
   protected FoldRegion addFoldRegion(final int startOffset, final int endOffset, final String placeholder) {
@@ -96,6 +113,18 @@ public abstract class AbstractEditorTest extends LightPlatformCodeInsightTestCas
     FoldRegion region = addFoldRegion(startOffset, endOffset, placeholder);
     toggleFoldRegionState(region, false);
     return region;
+  }
+
+  protected @Nullable CustomFoldRegion addCustomFoldRegion(int startLine, int endLine) {
+    return EditorTestUtil.addCustomFoldRegion(getEditor(), startLine, endLine);
+  }
+
+  protected @Nullable CustomFoldRegion addCustomFoldRegion(int startLine, int endLine, int heightInPixels) {
+    return EditorTestUtil.addCustomFoldRegion(getEditor(), startLine, endLine, heightInPixels);
+  }
+
+  protected @Nullable CustomFoldRegion addCustomFoldRegion(int startLine, int endLine, int widthInPixels, int heightInPixels) {
+    return EditorTestUtil.addCustomFoldRegion(getEditor(), startLine, endLine, widthInPixels, heightInPixels);
   }
 
   protected void toggleFoldRegionState(final FoldRegion foldRegion, final boolean expanded) {
@@ -132,7 +161,7 @@ public abstract class AbstractEditorTest extends LightPlatformCodeInsightTestCas
     int actualRangeCount = selectionStarts.length;
     int[][] actualRanges = new int[actualRangeCount][];
     for (int i = 0; i < actualRangeCount; i++) {
-      actualRanges[i] = new int[] {selectionStarts[i], selectionEnds[i]};
+      actualRanges[i] = new int[]{selectionStarts[i], selectionEnds[i]};
     }
     assertEquals("Wrong selected ranges", Arrays.deepToString(ranges), Arrays.deepToString(actualRanges));
   }
@@ -148,7 +177,7 @@ public abstract class AbstractEditorTest extends LightPlatformCodeInsightTestCas
   /**
    * Verifies visual positions of carets and their selection ranges. It's assumed that for each caret its position and selection range
    * are within the same visual line.
-   *
+   * <p>
    * For each caret its visual position and visual positions of selection start an and should be provided in the following order:
    * line, caretColumn, selectionStartColumn, selectionEndColumn
    */
@@ -176,8 +205,12 @@ public abstract class AbstractEditorTest extends LightPlatformCodeInsightTestCas
     assertEquals(state, Arrays.toString(getEditor().getFoldingModel().getAllFoldRegions()));
   }
 
-  protected void configureSoftWraps(int charCountToWrapAt) {
-    EditorTestUtil.configureSoftWraps(getEditor(), charCountToWrapAt);
+  protected final void configureSoftWraps(int charCountToWrapAt) {
+    configureSoftWraps(charCountToWrapAt, true);
+  }
+
+  protected void configureSoftWraps(int charCountToWrapAt, boolean useCustomSoftWrapIndent) {
+    EditorTestUtil.configureSoftWraps(getEditor(), charCountToWrapAt, useCustomSoftWrapIndent);
   }
 
   public Inlay addInlay(int offset) {
@@ -202,6 +235,10 @@ public abstract class AbstractEditorTest extends LightPlatformCodeInsightTestCas
 
   public Inlay addBlockInlay(int offset, boolean showAbove, int widthInPixels) {
     return EditorTestUtil.addBlockInlay(getEditor(), offset, false, showAbove, widthInPixels, null);
+  }
+
+  public Inlay addBlockInlay(int offset, boolean showAbove, boolean relatesToPrecedingText) {
+    return EditorTestUtil.addBlockInlay(getEditor(), offset, relatesToPrecedingText, showAbove, 0, null);
   }
 
   public Inlay addBlockInlay(int offset, boolean showAbove, int widthInPixels, int heightInPixels) {

@@ -1,12 +1,17 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.codeInsight.daemon.GutterMark;
 import com.intellij.ide.IdeBundle;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonShortcuts;
+import com.intellij.openapi.actionSystem.CustomShortcutSet;
+import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.KeyboardShortcut;
+import com.intellij.openapi.actionSystem.ShortcutSet;
 import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.TextAnnotationGutterProvider;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.editor.actionSystem.EditorActionManager;
 import com.intellij.openapi.editor.event.CaretEvent;
@@ -26,10 +31,28 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.accessibility.AccessibleContext;
-import javax.swing.*;
-import java.awt.*;
-import java.awt.event.*;
+import javax.swing.Icon;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.KeyStroke;
+import javax.swing.LayoutFocusTraversalPolicy;
+import java.awt.Color;
+import java.awt.Component;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.Point;
+import java.awt.Rectangle;
+import java.awt.event.ComponentAdapter;
+import java.awt.event.ComponentEvent;
+import java.awt.event.FocusAdapter;
+import java.awt.event.FocusEvent;
+import java.awt.event.FocusListener;
+import java.awt.event.InputEvent;
+import java.awt.event.KeyEvent;
+import java.awt.event.MouseEvent;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 
 import static com.intellij.util.ObjectUtils.notNull;
@@ -60,11 +83,11 @@ final class AccessibleGutterLine extends JPanel {
       new KeyboardShortcut(KeyStroke.getKeyStroke(KeyEvent.VK_TAB, InputEvent.SHIFT_DOWN_MASK), null));
   }
 
-  public static AccessibleGutterLine createAndActivate(@NotNull EditorGutterComponentImpl gutter) {
+  private static @NotNull AccessibleGutterLine createAndActivate(@NotNull EditorGutterComponentImpl gutter) {
     return new AccessibleGutterLine(gutter);
   }
 
-  public void escape(boolean requestFocusToEditor) {
+  void escape(boolean requestFocusToEditor) {
     myGutter.remove(this);
     myGutter.repaint();
     myGutter.setCurrentAccessibleLine(null);
@@ -78,7 +101,7 @@ final class AccessibleGutterLine extends JPanel {
     mySelectedElement.paint(g);
   }
 
-  public static void installListeners(@NotNull EditorGutterComponentImpl gutter) {
+  static void installListeners(@NotNull EditorGutterComponentImpl gutter) {
     if (!actionHandlerInstalled) {
       // [tav] todo: when the API is stable and open move it to ShowGutterIconTooltipAction
       actionHandlerInstalled = true;
@@ -115,7 +138,7 @@ final class AccessibleGutterLine extends JPanel {
     IdeFocusManager.getGlobalInstance().requestFocus(getFocusTraversalPolicy().getComponentAfter(this, mySelectedElement), true);
   }
 
-  static private @NotNull AnActionEvent convertAnActionEventToMouseAnActionEvent(@NotNull AnActionEvent e, @NotNull Component component) {
+  private static @NotNull AnActionEvent convertAnActionEventToMouseAnActionEvent(@NotNull AnActionEvent e, @NotNull Component component) {
     int x = component.getX() + component.getWidth() / 2;
     int y = component.getY() + component.getHeight() / 2;
     return new AnActionEvent(new MouseEvent(component, MouseEvent.MOUSE_CLICKED, 0, 0, x, y, 1, false),
@@ -131,13 +154,13 @@ final class AccessibleGutterLine extends JPanel {
     if (focusOwner instanceof AccessibleGutterElement) {
       ((AccessibleGutterElement)focusOwner).myAccessible.performAction(convertAnActionEventToMouseAnActionEvent(e, focusOwner));
     }
-      }
+  }
 
   private void moveLeft() {
     IdeFocusManager.getGlobalInstance().requestFocus(getFocusTraversalPolicy().getComponentBefore(this, mySelectedElement), true);
   }
 
-  public void showTooltipIfPresent() {
+  private void showTooltipIfPresent() {
     mySelectedElement.showTooltip();
   }
 
@@ -154,11 +177,11 @@ final class AccessibleGutterLine extends JPanel {
     /* line numbers */
     if (myGutter.isLineNumbersShown()) {
       addNewElement(new MySimpleAccessible() {
-        @NotNull
         @Override
-        public String getAccessibleName() {
-          return IdeBundle.message("accessible.name.line.0", myLogicalLineNum + 1);
+        public @NotNull String getAccessibleName() {
+          return IdeBundle.message("accessible.name.line", myLogicalLineNum + 1);
         }
+
         @Override
         public String getAccessibleTooltipText() {
           return null;
@@ -169,29 +192,29 @@ final class AccessibleGutterLine extends JPanel {
     /* annotations */
     if (myGutter.isAnnotationsShown()) {
       int x = myGutter.getAnnotationsAreaOffset();
-      int width = 0;
-      String tooltipText = null;
-      StringBuilder buf = new StringBuilder("annotation: ");
-      for (int i = 0; i < myGutter.myTextAnnotationGutters.size(); i++) {
-        TextAnnotationGutterProvider gutterProvider = myGutter.myTextAnnotationGutters.get(i);
-        if (tooltipText == null) tooltipText = gutterProvider.getToolTip(myLogicalLineNum, editor); // [tav] todo: take first non-null?
-        int annotationSize = myGutter.myTextAnnotationGutterSizes.getInt(i);
+      AtomicInteger width = new AtomicInteger();
+      AtomicReference<String> tooltipText = new AtomicReference<>();
+      StringBuilder buf = new StringBuilder();
+      myGutter.processTextAnnotationGutterProviders((gutterProvider, annotationSize) -> {
+        if (tooltipText.get() == null) {
+          tooltipText.set(gutterProvider.getToolTip(myLogicalLineNum, editor)); // [tav] todo: take first non-null?
+        }
         buf.append(notNull(gutterProvider.getLineText(myLogicalLineNum, editor), ""));
-        width += annotationSize;
-      }
-      if (buf.length() > 0) {
-        String tt = tooltipText;
+        width.getAndAdd(annotationSize);
+      });
+      if (!buf.isEmpty()) {
+        String tt = tooltipText.get();
         addNewElement(new MySimpleAccessible() {
-          @NotNull
           @Override
-          public String getAccessibleName() {
-            return buf.toString();
+          public @NotNull String getAccessibleName() {
+            return IdeBundle.message("accessible.name.annotation", buf.toString());
           }
+
           @Override
           public String getAccessibleTooltipText() {
             return tt;
           }
-        }, x, 0, width, lineHeight);
+        }, x, 0, width.get(), lineHeight);
       }
     }
 
@@ -201,20 +224,19 @@ final class AccessibleGutterLine extends JPanel {
       myGutter.processIconsRow(myVisualLineNum, row, (x, y, renderer) -> {
         Icon icon = myGutter.scaleIcon(renderer.getIcon());
         addNewElement(new MySimpleAccessible() {
-          AnAction myAction = ((GutterIconRenderer)renderer).getClickAction();
+          final AnAction myAction = ((GutterIconRenderer)renderer).getClickAction();
 
           @Override
           public void performAction(@NotNull AnActionEvent e) {
             myAction.actionPerformed(e);
           }
 
-          @NotNull
           @Override
-          public String getAccessibleName() {
+          public @NotNull String getAccessibleName() {
             if (renderer instanceof SimpleAccessible) {
               return ((SimpleAccessible)renderer).getAccessibleName();
             }
-            return IdeBundle.message("accessible.name.icon.0", renderer.getClass().getSimpleName());
+            return IdeBundle.message("accessible.name.icon", renderer.getClass().getSimpleName());
           }
           @Override
           public String getAccessibleTooltipText() {
@@ -228,17 +250,18 @@ final class AccessibleGutterLine extends JPanel {
     if (myGutter.isLineMarkersShown()) {
       int firstVisibleOffset = editor.visualLineStartOffset(myVisualLineNum);
       int lastVisibleOffset = editor.visualLineStartOffset(myVisualLineNum + 1);
-      myGutter.processRangeHighlighters(firstVisibleOffset, lastVisibleOffset, highlighter -> {
+      myGutter.processGutterRangeHighlighters(firstVisibleOffset, lastVisibleOffset, highlighter -> {
         LineMarkerRenderer renderer = highlighter.getLineMarkerRenderer();
         if (renderer instanceof ActiveGutterRenderer) {
           Rectangle rect = myGutter.getLineRendererRectangle(highlighter);
           if (rect != null) {
             Rectangle bounds = ((ActiveGutterRenderer)renderer).calcBounds(editor, myVisualLineNum, rect);
             if (bounds != null) {
-              addNewElement(new MySimpleAccessibleDelegat((ActiveGutterRenderer)renderer), bounds.x, 0, bounds.width, bounds.height);
+              addNewElement(new MySimpleAccessibleDelegate((ActiveGutterRenderer)renderer), bounds.x, 0, bounds.width, bounds.height);
             }
           }
         }
+        return true;
       });
     }
 
@@ -254,11 +277,11 @@ final class AccessibleGutterLine extends JPanel {
     if (mySelectedElement == null) {
       Rectangle b = getBounds(); // set above
       mySelectedElement = addNewElement(new MySimpleAccessible() {
-        @NotNull
         @Override
-        public String getAccessibleName() {
+        public @NotNull String getAccessibleName() {
           return IdeBundle.message("accessible.name.empty");
         }
+
         @Override
         public String getAccessibleTooltipText() {
           return null;
@@ -278,13 +301,13 @@ final class AccessibleGutterLine extends JPanel {
     DumbAwareAction.create(e -> action.run()).registerCustomShortcutSet(shortcut, this);
   }
 
+  @SuppressWarnings("SameParameterValue")
   private void installActionHandler(ShortcutSet shortcut, Consumer<? super AnActionEvent> action) {
     DumbAwareAction.create(e -> action.accept(e)).registerCustomShortcutSet(shortcut, this);
   }
 
   @SuppressWarnings("SameParameterValue")
-  @NotNull
-  private AccessibleGutterElement addNewElement(@NotNull MySimpleAccessible accessible, int x, int y, int width, int height) {
+  private @NotNull AccessibleGutterElement addNewElement(@NotNull MySimpleAccessible accessible, int x, int y, int width, int height) {
     AccessibleGutterElement obj = new AccessibleGutterElement(accessible, new Rectangle(x, y, width, height));
     add(obj);
     return obj;
@@ -314,7 +337,7 @@ final class AccessibleGutterLine extends JPanel {
     return this == myGutter.getCurrentAccessibleLine();
   }
 
-  public static boolean isAccessibleGutterElement(Object element) {
+  static boolean isAccessibleGutterElement(Object element) {
     return element instanceof MySimpleAccessible;
   }
 
@@ -326,8 +349,8 @@ final class AccessibleGutterLine extends JPanel {
    *
    * @author tav
    */
-  private class AccessibleGutterElement extends JLabel {
-    private @NotNull final MySimpleAccessible myAccessible;
+  private final class AccessibleGutterElement extends JLabel {
+    private final @NotNull MySimpleAccessible myAccessible;
 
     AccessibleGutterElement(@NotNull MySimpleAccessible accessible, @NotNull Rectangle bounds) {
       myAccessible = accessible;
@@ -371,7 +394,7 @@ final class AccessibleGutterLine extends JPanel {
       }
     }
 
-    public void showTooltip() {
+    void showTooltip() {
       if (myAccessible.getAccessibleTooltipText() != null) {
         Rectangle bounds = getBounds();
         Rectangle pBounds = getParent().getBounds();
@@ -396,23 +419,24 @@ final class AccessibleGutterLine extends JPanel {
   }
 
   /**
-   * The interface provides the ability to perform actions by clicking on the icon of the gutter
+   * The interface provides the ability to perform actions by clicking on the icon of the gutter.
+   *
    * @author ASemenov
    */
   private interface MySimpleAccessible extends SimpleAccessible {
     /**
-     * Performs the gutter icon action
+     * Performs the gutter icon action.
      */
     default void performAction(@NotNull AnActionEvent e) {}
   }
 
   /**
-   * This delegate implements wrapping over SimpleAccessible for active gutter rendorer
+   * This delegate implements wrapping over SimpleAccessible for active gutter renderer.
    */
-  private static final class MySimpleAccessibleDelegat implements MySimpleAccessible {
-    @NotNull private final SimpleAccessible simpleAccessible;
+  private static final class MySimpleAccessibleDelegate implements MySimpleAccessible {
+    private final @NotNull SimpleAccessible simpleAccessible;
 
-    private MySimpleAccessibleDelegat(@NotNull SimpleAccessible accessible) {
+    private MySimpleAccessibleDelegate(@NotNull SimpleAccessible accessible) {
       simpleAccessible = accessible;
     }
 

@@ -4,8 +4,11 @@ import com.intellij.openapi.util.NlsContexts;
 import com.intellij.ui.AnchorableComponent;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.Action;
+import javax.swing.Icon;
+import javax.swing.JComponent;
+import javax.swing.JRadioButton;
+import java.awt.Dimension;
 
 /**
  * @author evgeny.zakrevsky
@@ -51,7 +54,10 @@ public class JBRadioButton extends JRadioButton implements AnchorableComponent {
 
   @Override
   public void setAnchor(@Nullable JComponent anchor) {
-    this.myAnchor = anchor;
+    if (this.myAnchor != anchor) {
+      this.myAnchor = anchor;
+      invalidate();
+    }
   }
 
   @Override

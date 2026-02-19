@@ -1,45 +1,61 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.maven.compiler;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.io.FileFilters;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.io.FileUtilRt;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.builders.BuildOutputConsumer;
 import org.jetbrains.jps.builders.DirtyFilesHolder;
 import org.jetbrains.jps.builders.FileProcessor;
 import org.jetbrains.jps.builders.storage.BuildDataPaths;
 import org.jetbrains.jps.incremental.CompileContext;
+import org.jetbrains.jps.incremental.FSOperations;
 import org.jetbrains.jps.incremental.ProjectBuildException;
 import org.jetbrains.jps.incremental.StopBuildException;
 import org.jetbrains.jps.incremental.TargetBuilder;
 import org.jetbrains.jps.incremental.messages.BuildMessage;
 import org.jetbrains.jps.incremental.messages.CompilerMessage;
 import org.jetbrains.jps.incremental.messages.ProgressMessage;
+import org.jetbrains.jps.maven.MavenJpsBundle;
 import org.jetbrains.jps.maven.model.JpsMavenExtensionService;
-import org.jetbrains.jps.maven.model.impl.*;
+import org.jetbrains.jps.maven.model.impl.MavenFilteredJarConfiguration;
+import org.jetbrains.jps.maven.model.impl.MavenModuleResourceConfiguration;
+import org.jetbrains.jps.maven.model.impl.MavenProjectConfiguration;
+import org.jetbrains.jps.maven.model.impl.MavenResourceRootDescriptor;
+import org.jetbrains.jps.maven.model.impl.MavenResourcesTarget;
+import org.jetbrains.jps.maven.model.impl.MavenResourcesTargetType;
 
 import java.io.File;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import static org.jetbrains.jps.incremental.messages.CompilerMessage.getTextFromThrowable;
 
 /**
  * @author Eugene Zhuravlev
  */
-public class MavenResourcesBuilder extends TargetBuilder<MavenResourceRootDescriptor, MavenResourcesTarget> {
+public final class MavenResourcesBuilder extends TargetBuilder<MavenResourceRootDescriptor, MavenResourcesTarget> {
   private static final Logger LOG = Logger.getInstance(MavenResourcesBuilder.class);
-  public static final String BUILDER_NAME = "Maven Resources Compiler";
 
   public MavenResourcesBuilder() {
     super(Arrays.asList(MavenResourcesTargetType.PRODUCTION, MavenResourcesTargetType.TEST));
   }
 
   @Override
-  public void build(@NotNull final MavenResourcesTarget target, @NotNull final DirtyFilesHolder<MavenResourceRootDescriptor, MavenResourcesTarget> holder, @NotNull final BuildOutputConsumer outputConsumer, @NotNull final CompileContext context) throws ProjectBuildException, IOException {
+  public void build(final @NotNull MavenResourcesTarget target, final @NotNull DirtyFilesHolder<MavenResourceRootDescriptor, MavenResourcesTarget> holder, final @NotNull BuildOutputConsumer outputConsumer, final @NotNull CompileContext context) throws ProjectBuildException, IOException {
     final BuildDataPaths dataPaths = context.getProjectDescriptor().dataManager.getDataPaths();
     final MavenProjectConfiguration projectConfig = JpsMavenExtensionService.getInstance().getMavenProjectConfiguration(dataPaths);
     if (projectConfig == null) {
-      context.processMessage(new CompilerMessage(BUILDER_NAME, BuildMessage.Kind.ERROR, "Maven project configuration required for module '" + target.getModule().getName() + "' isn't available. Compilation of Maven projects is supported only if external build is started from an IDE."));
+      context.processMessage(new CompilerMessage(MavenJpsBundle.message("maven.resources.compiler"), BuildMessage.Kind.ERROR,
+                                                 MavenJpsBundle.message("maven.project.configuration.required", target.getModule().getName())));
       throw new StopBuildException();
     }
 
@@ -48,12 +64,14 @@ public class MavenResourcesBuilder extends TargetBuilder<MavenResourceRootDescri
       return;
     }
 
+    final List<MavenFilteredJarConfiguration> jarConfigurations = MavenFilteredJarModuleBuilder.getJarsConfig(context, target);
+
     final Map<MavenResourceRootDescriptor, List<File>> files = new HashMap<>();
 
     holder.processDirtyFiles(new FileProcessor<MavenResourceRootDescriptor, MavenResourcesTarget>() {
 
       @Override
-      public boolean apply(MavenResourcesTarget t, File file, MavenResourceRootDescriptor rd) throws IOException {
+      public boolean apply(@NotNull MavenResourcesTarget t, @NotNull File file, @NotNull MavenResourceRootDescriptor rd) throws IOException {
         assert target == t;
 
         List<File> fileList = files.get(rd);
@@ -89,7 +107,7 @@ public class MavenResourcesBuilder extends TargetBuilder<MavenResourceRootDescri
 
     MavenResourceFileProcessor fileProcessor = new MavenResourceFileProcessor(projectConfig, target.getModule().getProject(), config);
 
-    context.processMessage(new ProgressMessage("Copying resources... [" + target.getModule().getName() + "]"));
+    context.processMessage(new ProgressMessage(MavenJpsBundle.message("copying.resources", target.getModule().getName())));
     for (MavenResourceRootDescriptor rd : roots) {
       for (File file : files.get(rd)) {
 
@@ -104,20 +122,24 @@ public class MavenResourcesBuilder extends TargetBuilder<MavenResourceRootDescri
         }
         File outputFile = new File(outputDir, relPath);
         String sourcePath = file.getPath();
+
         try {
-          fileProcessor.copyFile(file, outputFile, rd.getConfiguration(), context, FileUtilRt.ALL_FILES);
+          fileProcessor.copyFile(file, outputFile, rd.getConfiguration(), context, FileFilters.EVERYTHING);
           outputConsumer.registerOutputFile(outputFile, Collections.singleton(sourcePath));
+          copyToAdditionalJars(jarConfigurations, outputDir, relPath, context, outputConsumer);
         }
         catch (UnsupportedEncodingException e) {
           context.processMessage(
-            new CompilerMessage(BUILDER_NAME, BuildMessage.Kind.INFO, "Resource was not copied: " + e.getMessage(), sourcePath));
+            new CompilerMessage(MavenJpsBundle.message("maven.resources.compiler"), BuildMessage.Kind.INFO,
+                                MavenJpsBundle.message("resource.was.not.copied", e.getMessage()), sourcePath));
         }
         catch (IOException e) {
-          context.processMessage(new CompilerMessage(BUILDER_NAME, BuildMessage.Kind.ERROR, "Failed to copy '" + sourcePath + "' to '" + outputFile.getAbsolutePath() + "': " + e.getMessage()));
+          context.processMessage(new CompilerMessage(MavenJpsBundle.message("maven.resources.compiler"), BuildMessage.Kind.ERROR,
+                                                     MavenJpsBundle.message("failed.to.copy.0.to.1.2", sourcePath, outputFile.getAbsolutePath(), getTextFromThrowable(e))));
           LOG.info(e);
         }
 
-        if (context.getCancelStatus().isCanceled()) {
+        if (context.isCanceled()) {
           return;
         }
       }
@@ -128,9 +150,26 @@ public class MavenResourcesBuilder extends TargetBuilder<MavenResourceRootDescri
     context.processMessage(new ProgressMessage(""));
   }
 
+  private void copyToAdditionalJars(List<MavenFilteredJarConfiguration> configurations,
+                                    File outputDir,
+                                    String relPath,
+                                    @NotNull CompileContext context,
+                                    @NotNull BuildOutputConsumer consumer) throws IOException {
+    if (configurations.isEmpty()) return;
+    var applicableConfigurations = ContainerUtil.filter(configurations,
+                                                        it -> FileUtil.filesEqual(outputDir, new File(it.originalOutput)));
+    for (MavenFilteredJarConfiguration config : applicableConfigurations) {
+      var filter = new MavenPatternFileFilter(config.includes, config.excludes);
+      if (filter.accept(relPath)) {
+        var from = new File(outputDir, relPath);
+        var to = new File(new File(config.jarOutput), relPath);
+        FSOperations.copy(from, to);
+      }
+    }
+  }
+
   @Override
-  @NotNull
-  public String getPresentableName() {
-    return BUILDER_NAME;
+  public @NotNull String getPresentableName() {
+    return MavenJpsBundle.message("maven.resources.compiler");
   }
 }

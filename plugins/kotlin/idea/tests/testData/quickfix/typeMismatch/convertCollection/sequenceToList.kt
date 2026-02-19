@@ -1,0 +1,10 @@
+// "Convert expression to 'List' by inserting '.toList()'" "true"
+// WITH_STDLIB
+
+fun foo(a: Sequence<String>) {
+    bar(a<caret>)
+}
+
+fun bar(a: List<String>) {}
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.ConvertCollectionFix
+// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.ConvertCollectionFix

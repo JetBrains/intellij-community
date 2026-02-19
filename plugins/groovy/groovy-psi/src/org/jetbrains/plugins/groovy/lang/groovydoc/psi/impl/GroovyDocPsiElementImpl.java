@@ -6,13 +6,10 @@ import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.impl.source.tree.CompositeElement;
 import com.intellij.psi.tree.TokenSet;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GroovyDocPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
-import org.jetbrains.annotations.NotNull;
 
-/**
- * @author ilyas
- */
 public abstract class GroovyDocPsiElementImpl extends GroovyPsiElementImpl implements GroovyDocPsiElement {
 
   public GroovyDocPsiElementImpl(@NotNull ASTNode node) {

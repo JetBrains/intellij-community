@@ -1,14 +1,19 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl.view;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.impl.FontInfo;
 import com.intellij.util.BitUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.VisibleForTesting;
 
-import java.awt.*;
+import java.awt.Color;
+import java.awt.Graphics2D;
+import java.awt.Shape;
 import java.awt.font.GlyphVector;
+import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
 import java.util.Arrays;
 import java.util.function.Consumer;
@@ -16,23 +21,68 @@ import java.util.function.Consumer;
 /**
  * GlyphVector-based text fragment. Used for non-Latin text or when ligatures are enabled
  */
-class ComplexTextFragment extends TextFragment {
+@ApiStatus.Internal
+public final class ComplexTextFragment extends TextFragment {
   private static final Logger LOG = Logger.getInstance(ComplexTextFragment.class);
   private static final double CLIP_MARGIN = 1e4;
 
-  @NotNull
-  private final GlyphVector myGlyphVector;
+  private final @NotNull GlyphVector myGlyphVector;
   private final short @Nullable [] myCodePoint2Offset; // Start offset of each Unicode code point in the fragment
                                             // (null if each code point takes one char).
                                             // We expect no more than 1025 chars in a fragment, so 'short' should be enough.
 
-  ComplexTextFragment(char @NotNull [] lineChars, int start, int end, boolean isRtl, @NotNull FontInfo fontInfo) {
-    super(end - start);
-    assert start >= 0;
-    assert end <= lineChars.length;
-    assert start < end;
-    myGlyphVector = FontLayoutService.getInstance().layoutGlyphVector(fontInfo.getFont(), fontInfo.getFontRenderContext(),
-                                                                      lineChars, start, end, isRtl);
+  @VisibleForTesting
+  public ComplexTextFragment(char @NotNull [] lineChars, int start, int end, boolean isRtl, @NotNull FontInfo fontInfo, @Nullable EditorView view) {
+    super(end - start, view);
+    assert start >= 0              : assertMessage(lineChars, start, end, isRtl, fontInfo);
+    assert end <= lineChars.length : assertMessage(lineChars, start, end, isRtl, fontInfo);
+    assert start < end             : assertMessage(lineChars, start, end, isRtl, fontInfo);
+
+    myGlyphVector = FontLayoutService.getInstance().layoutGlyphVector(
+      fontInfo.getFont(),
+      fontInfo.getFontRenderContext(),
+      lineChars,
+      start,
+      end,
+      isRtl
+    );
+    float[] alignments = null;
+    if (isGridCellAlignmentEnabled()) {
+      // This thing assumes that one glyph = one character.
+      // This seems to work "well enough" for the terminal
+      // (the only place where it's used at the moment of writing),
+      // but may need to be updated as unusual edge cases are discovered.
+      // PASS 1: store the original widths.
+      float[] originalWidths = new float[myGlyphVector.getNumGlyphs()];
+      alignments = new float[myGlyphVector.getNumGlyphs()];
+      for (int i = 0; i < myGlyphVector.getNumGlyphs(); i++) {
+        originalWidths[i] = (float)(myGlyphVector.getGlyphPosition(i + 1).getX() - myGlyphVector.getGlyphPosition(i).getX());
+      }
+      // PASS 2: use the original widths to calculate the new widths, update the positions to match the new widths.
+      double x = myGlyphVector.getGlyphPosition(0).getX();
+      for (int i = 0; i < myGlyphVector.getNumGlyphs(); i++) {
+        float originalWidth = originalWidths[i];
+        int charIndex = myGlyphVector.getGlyphCharIndex(i);
+        int codePoint = Character.codePointAt(lineChars, start + charIndex);
+        float adjustedWidth = adjustedWidth(codePoint);
+        x += isTooClose(adjustedWidth, originalWidth) ? originalWidth : adjustedWidth;
+        Point2D nextPos = myGlyphVector.getGlyphPosition(i + 1);
+        nextPos.setLocation(x, nextPos.getY());
+        myGlyphVector.setGlyphPosition(i + 1, nextPos);
+      }
+      // PASS 3: use the differences between the original and the new widths to center the characters.
+      for (int i = 0; i < myGlyphVector.getNumGlyphs(); i++) {
+        float originalWidth = originalWidths[i];
+        Point2D prevPos = myGlyphVector.getGlyphPosition(i);
+        Point2D nextPos = myGlyphVector.getGlyphPosition(i + 1);
+        double newWidth = nextPos.getX() - prevPos.getX();
+        if (newWidth < originalWidth + 0.001) continue;
+        double alignment = (newWidth - originalWidth) / 2;
+        alignments[i] = (float)alignment;
+        prevPos.setLocation(prevPos.getX() + alignment, prevPos.getY());
+        myGlyphVector.setGlyphPosition(i, prevPos);
+      }
+    }
     int numChars = end - start;
     int numGlyphs = myGlyphVector.getNumGlyphs();
     float totalWidth = (float)myGlyphVector.getGlyphPosition(numGlyphs).getX();
@@ -62,6 +112,9 @@ class ComplexTextFragment extends TextFragment {
             }
           }
           float newX = isRtl ? Math.min(lastX, (float)bounds.getMinX()) : Math.max(lastX, (float)bounds.getMaxX());
+          if (alignments != null) {
+            newX = isRtl ? newX - alignments[visualGlyphIndex] : newX + alignments[visualGlyphIndex];
+          }
           newX = Math.max(0, Math.min(totalWidth, newX));
           setCharPosition(charIndex, newX, isRtl, numChars);
           prevX = lastX;
@@ -128,10 +181,10 @@ class ComplexTextFragment extends TextFragment {
 
   @SuppressWarnings("AssignmentToStaticFieldFromInstanceMethod")
   @Override
-  public Consumer<Graphics2D> draw(float x, float y, int startColumn, int endColumn) {
-    assert startColumn >= 0;
-    assert endColumn <= myCharPositions.length;
-    assert startColumn < endColumn;
+  public @NotNull Consumer<Graphics2D> draw(float x, float y, int startColumn, int endColumn) {
+    assert startColumn >= 0                    : assertMessage(x, y, startColumn, endColumn);
+    assert endColumn <= myCharPositions.length : assertMessage(x, y, startColumn, endColumn);
+    assert startColumn < endColumn             : assertMessage(x, y, startColumn, endColumn);
 
     return g -> {
       Color color = g.getColor();
@@ -201,7 +254,7 @@ class ComplexTextFragment extends TextFragment {
   }
 
   @Override
-  public int[] xToVisualColumn(float startX, float x) {
+  public int @NotNull [] xToVisualColumn(float startX, float x) {
     float relX = x - startX;
     float prevPos = 0;
     int columnCount = getCodePointCount();
@@ -244,5 +297,30 @@ class ComplexTextFragment extends TextFragment {
       ourCharsProcessed = 0;
       ourGlyphsProcessed = 0;
     }
+  }
+
+  private @NotNull String assertMessage(char @NotNull [] lineChars, int start, int end, boolean isRtl, @NotNull FontInfo fontInfo) {
+    return String.join(
+      ", ",
+      "lineChars: '" + new String(lineChars) + "'",
+      "start: " + start,
+      "end: " + end,
+      "isRtl: " + isRtl,
+      "fontInfo: " + fontInfo,
+      "myCharPositions: " + Arrays.toString(myCharPositions),
+      "myCodePoint2Offset: " + Arrays.toString(myCodePoint2Offset)
+    );
+  }
+
+  private @NotNull String assertMessage(float x, float y, int startColumn, int endColumn) {
+    return String.join(
+      ", ",
+      "x: " + x,
+      "y: " + y,
+      "startColumn: " + startColumn,
+      "endColumn: " + endColumn,
+      "myCharPositions: " + Arrays.toString(myCharPositions),
+      "myCodePoint2Offset: " + Arrays.toString(myCodePoint2Offset)
+    );
   }
 }

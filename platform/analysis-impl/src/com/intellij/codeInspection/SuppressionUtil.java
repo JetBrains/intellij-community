@@ -1,7 +1,8 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInspection;
 
+import com.intellij.application.options.CodeStyle;
 import com.intellij.codeInspection.lang.InspectionExtensionsFactory;
 import com.intellij.lang.Commenter;
 import com.intellij.lang.Language;
@@ -12,7 +13,9 @@ import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiParserFacade;
+import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NonNls;
@@ -22,24 +25,23 @@ import org.jetbrains.annotations.Nullable;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-/**
- * @author yole
- */
+
 public final class SuppressionUtil extends SuppressionUtilCore {
+
+  public static final @NonNls String FILE_PREFIX = "file:";
+
   /**
    * Common part of regexp for suppressing in line comments for different languages.
    * Comment start prefix isn't included, e.g. add '//' for Java/C/JS or '#' for Ruby
    */
-  @NonNls
-  public static final String COMMON_SUPPRESS_REGEXP = "\\s*" + SUPPRESS_INSPECTIONS_TAG_NAME +
+  public static final @NonNls String COMMON_SUPPRESS_REGEXP = "\\s*" + SUPPRESS_INSPECTIONS_TAG_NAME +
                                                       "\\s+(" + LocalInspectionTool.VALID_ID_PATTERN +
                                                       "(\\s*,\\s*" + LocalInspectionTool.VALID_ID_PATTERN + ")*)\\s*\\w*";
 
-  @NonNls
-  public static final Pattern SUPPRESS_IN_LINE_COMMENT_PATTERN = Pattern.compile("//" + COMMON_SUPPRESS_REGEXP + ".*");  // for Java, C, JS line comments
+  public static final @NonNls Pattern SUPPRESS_IN_LINE_COMMENT_PATTERN = Pattern.compile("//" + COMMON_SUPPRESS_REGEXP + ".*");  // for Java, C, JS line comments
+  public static final Pattern SUPPRESS_IN_FILE_LINE_COMMENT_PATTERN = Pattern.compile("//" + FILE_PREFIX + COMMON_SUPPRESS_REGEXP + ".*");
 
-  @NonNls
-  public static final String ALL = "ALL";
+  public static final @NonNls String ALL = "ALL";
 
   private SuppressionUtil() {
   }
@@ -54,18 +56,16 @@ public final class SuppressionUtil extends SuppressionUtilCore {
     return false;
   }
 
-  @Nullable
-  public static PsiElement getStatementToolSuppressedIn(@NotNull PsiElement place,
-                                                        @NotNull String toolId,
-                                                        @NotNull Class<? extends PsiElement> statementClass) {
+  public static @Nullable PsiElement getStatementToolSuppressedIn(@NotNull PsiElement place,
+                                                                  @NotNull String toolId,
+                                                                  @NotNull Class<? extends PsiElement> statementClass) {
     return getStatementToolSuppressedIn(place, toolId, statementClass, SUPPRESS_IN_LINE_COMMENT_PATTERN);
   }
 
-  @Nullable
-  public static PsiElement getStatementToolSuppressedIn(@NotNull PsiElement place,
-                                                        @NotNull String toolId,
-                                                        @NotNull Class<? extends PsiElement> statementClass,
-                                                        @NotNull Pattern suppressInLineCommentPattern) {
+  public static @Nullable PsiElement getStatementToolSuppressedIn(@NotNull PsiElement place,
+                                                                  @NotNull String toolId,
+                                                                  @NotNull Class<? extends PsiElement> statementClass,
+                                                                  @NotNull Pattern suppressInLineCommentPattern) {
     PsiElement statement = PsiTreeUtil.getNonStrictParentOfType(place, statementClass);
     if (statement != null) {
       PsiElement prev = PsiTreeUtil.skipWhitespacesBackward(statement);
@@ -80,22 +80,20 @@ public final class SuppressionUtil extends SuppressionUtilCore {
     return null;
   }
 
-  public static boolean isSuppressedInStatement(@NotNull final PsiElement place,
-                                                @NotNull final String toolId,
-                                                @NotNull final Class<? extends PsiElement> statementClass) {
+  public static boolean isSuppressedInStatement(final @NotNull PsiElement place,
+                                                final @NotNull String toolId,
+                                                final @NotNull Class<? extends PsiElement> statementClass) {
     return ReadAction.compute(() -> getStatementToolSuppressedIn(place, toolId, statementClass)) != null;
   }
 
-  @NotNull
-  public static PsiComment createComment(@NotNull Project project,
-                                         @NotNull String commentText,
-                                         @NotNull Language language) {
-    final PsiParserFacade parserFacade = PsiParserFacade.SERVICE.getInstance(project);
+  public static @NotNull PsiComment createComment(@NotNull Project project,
+                                                  @NotNull String commentText,
+                                                  @NotNull Language language) {
+    final PsiParserFacade parserFacade = PsiParserFacade.getInstance(project);
     return parserFacade.createLineOrBlockCommentFromText(language, commentText);
   }
 
-  @Nullable
-  private static Couple<String> getBlockPrefixSuffixPair(@NotNull PsiElement comment) {
+  private static @Nullable Couple<String> getBlockPrefixSuffixPair(@NotNull PsiElement comment) {
     final Commenter commenter = LanguageCommenters.INSTANCE.forLanguage(comment.getLanguage());
     if (commenter != null) {
       final String prefix = commenter.getBlockCommentPrefix();
@@ -107,8 +105,7 @@ public final class SuppressionUtil extends SuppressionUtilCore {
     return null;
   }
 
-  @Nullable
-  public static String getLineCommentPrefix(@NotNull final PsiElement comment) {
+  public static @Nullable String getLineCommentPrefix(final @NotNull PsiElement comment) {
     final Commenter commenter = LanguageCommenters.INSTANCE.forLanguage(comment.getLanguage());
     return commenter == null ? null : commenter.getLineCommentPrefix();
   }
@@ -125,7 +122,7 @@ public final class SuppressionUtil extends SuppressionUtilCore {
            && commentText.endsWith(prefixSuffixPair.second);
   }
 
-  private static boolean startsWithSuppressionTag(String commentText, String prefix) {
+  private static boolean startsWithSuppressionTag(@NotNull String commentText, @NotNull String prefix) {
     if (!commentText.startsWith(prefix)) {
       return false;
     }
@@ -137,6 +134,11 @@ public final class SuppressionUtil extends SuppressionUtilCore {
                                                boolean replaceOtherSuppressionIds, @NotNull Language commentLanguage) {
     final String oldSuppressionCommentText = comment.getText();
     final String lineCommentPrefix = getLineCommentPrefix(comment);
+    if (!replaceOtherSuppressionIds &&
+        oldSuppressionCommentText.contains(id) &&
+        StringUtil.getWordsIn(oldSuppressionCommentText).contains(id)) {
+      return;
+    }
     Couple<String> blockPrefixSuffix = null;
     if (lineCommentPrefix == null) {
       blockPrefixSuffix = getBlockPrefixSuffixPair(comment);
@@ -166,7 +168,12 @@ public final class SuppressionUtil extends SuppressionUtilCore {
                                        @NotNull PsiElement container,
                                        @NotNull String id,
                                        @NotNull Language commentLanguage) {
-    final String text = SUPPRESS_INSPECTIONS_TAG_NAME + " " + id;
+    PsiFile file = container.getContainingFile();
+    Language language = container.getLanguage();
+    CommonCodeStyleSettings codeStyleSettings = CodeStyle.getSettings(file).getCommonSettings(language);
+    String indent = codeStyleSettings.LINE_COMMENT_ADD_SPACE_IN_SUPPRESSION ? " " : "";
+    final String text = indent + SUPPRESS_INSPECTIONS_TAG_NAME + " " + id;
+
     PsiComment comment = createComment(project, text, commentLanguage);
     container.getParent().addBefore(comment, container);
   }

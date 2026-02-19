@@ -17,7 +17,16 @@ import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.PythonTemplateRunner;
 import com.jetbrains.python.PythonUiService;
 import com.jetbrains.python.inspections.PyInspectionExtension;
-import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.PyArgumentList;
+import com.jetbrains.python.psi.PyCallExpression;
+import com.jetbrains.python.psi.PyExpression;
+import com.jetbrains.python.psi.PyFile;
+import com.jetbrains.python.psi.PyFromImportStatement;
+import com.jetbrains.python.psi.PyFunction;
+import com.jetbrains.python.psi.PyKeywordArgument;
+import com.jetbrains.python.psi.PyNamedParameter;
+import com.jetbrains.python.psi.PyQualifiedExpression;
+import com.jetbrains.python.psi.PyReferenceExpression;
 import com.jetbrains.python.psi.impl.ParamHelper;
 import com.jetbrains.python.psi.impl.PyFunctionBuilder;
 import com.jetbrains.python.psi.types.PyModuleType;
@@ -31,8 +40,6 @@ import static com.jetbrains.python.psi.PyUtil.sure;
 
 /**
  * Adds a missing top-level function to a module.
- * <br/>
- * User: dcheryasov
  *
  * @see AddMethodQuickFix AddMethodQuickFix
  */
@@ -47,14 +54,12 @@ public class AddFunctionQuickFix implements LocalQuickFix {
   }
 
   @Override
-  @NotNull
-  public String getName() {
+  public @NotNull String getName() {
     return PyPsiBundle.message("QFIX.create.function.in.module", myIdentifier, myModuleName);
   }
 
   @Override
-  @NotNull
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return PyPsiBundle.message("QFIX.NAME.create.function.in.module");
   }
 
@@ -92,8 +97,7 @@ public class AddFunctionQuickFix implements LocalQuickFix {
           if (arg instanceof PyKeywordArgument) { // foo(bar) -> def foo(bar_1)
             builder.parameter(((PyKeywordArgument)arg).getKeyword());
           }
-          else if (arg instanceof PyReferenceExpression) {
-            PyReferenceExpression refex = (PyReferenceExpression)arg;
+          else if (arg instanceof PyReferenceExpression refex) {
             builder.parameter(refex.getReferencedName());
           }
           else { // use a boring name
@@ -128,7 +132,7 @@ public class AddFunctionQuickFix implements LocalQuickFix {
     }
   }
 
-  private static void showTemplateBuilder(PyFunction method, @NotNull final PsiFile file) {
+  private static void showTemplateBuilder(PyFunction method, final @NotNull PsiFile file) {
     method = CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement(method);
 
     final TemplateBuilder builder = TemplateBuilderFactory.getInstance().createTemplateBuilder(method);

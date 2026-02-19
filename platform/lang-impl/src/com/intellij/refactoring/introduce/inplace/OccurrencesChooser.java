@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.introduce.inplace;
 
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.markup.HighlighterLayer;
@@ -10,17 +11,25 @@ import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.JBPopupListener;
 import com.intellij.openapi.ui.popup.LightweightWindowEvent;
+import com.intellij.openapi.ui.popup.ListItemDescriptorAdapter;
 import com.intellij.openapi.util.Pass;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.RefactoringBundle;
+import com.intellij.ui.popup.list.GroupedItemsListRenderer;
+import com.intellij.util.SlowOperations;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.*;
+import java.util.Map;
+import java.util.Set;
+import java.util.function.Consumer;
 
 // Please do not make this class concrete<PsiElement>.
 // This prevents languages with polyadic expressions or sequences
@@ -49,21 +58,17 @@ public abstract class OccurrencesChooser<T> {
 
     @Override
     public @Nls String formatDescription(int occurrencesCount) {
-      switch (this) {
-        case NO:
-          return RefactoringBundle.message("replace.this.occurrence.only");
-        case NO_WRITE:
-          return RefactoringBundle.message("replace.all.occurrences.but.write");
-        case ALL:
-          return RefactoringBundle.message("replace.all.occurrences", occurrencesCount);
-        default:
-          throw new IllegalStateException("Unexpected value: " + this);
-      }
+      return switch (this) {
+        case NO -> RefactoringBundle.message("replace.this.occurrence.only");
+        case NO_WRITE -> RefactoringBundle.message("replace.all.occurrences.but.write");
+        case ALL -> RefactoringBundle.message("replace.all.occurrences", occurrencesCount);
+        default -> throw new IllegalStateException("Unexpected value: " + this);
+      };
     }
   }
 
   public static <T extends PsiElement> OccurrencesChooser<T> simpleChooser(Editor editor) {
-    return new OccurrencesChooser<T>(editor) {
+    return new OccurrencesChooser<>(editor) {
       @Override
       protected TextRange getOccurrenceRange(T occurrence) {
         return occurrence.getTextRange();
@@ -80,47 +85,47 @@ public abstract class OccurrencesChooser<T> {
 
   public void showChooser(final T selectedOccurrence, final List<T> allOccurrences, final Pass<? super ReplaceChoice> callback) {
     if (allOccurrences.size() == 1) {
-      callback.pass(ReplaceChoice.ALL);
+      try (AccessToken ignore = SlowOperations.startSection(SlowOperations.ACTION_PERFORM)) {
+        callback.accept(ReplaceChoice.ALL);
+      }
     }
     else {
       Map<ReplaceChoice, List<T>> occurrencesMap = new LinkedHashMap<>();
       occurrencesMap.put(ReplaceChoice.NO, Collections.singletonList(selectedOccurrence));
       occurrencesMap.put(ReplaceChoice.ALL, allOccurrences);
-      showChooser(callback, occurrencesMap);
+      showChooser(occurrencesMap, callback);
     }
   }
 
+  /**
+   * use {@link #showChooser(Map, String, Consumer)}
+   */
+  @Deprecated
   public void showChooser(final Pass<? super ReplaceChoice> callback, final Map<ReplaceChoice, List<T>> occurrencesMap) {
-    showChooser(callback, occurrencesMap, RefactoringBundle.message("replace.multiple.occurrences.found"));
+    showChooser(occurrencesMap, RefactoringBundle.message("replace.multiple.occurrences.found"), callback);
+  }
+  public void showChooser(final Map<ReplaceChoice, List<T>> occurrencesMap, @NotNull Consumer<? super ReplaceChoice> callback) {
+    showChooser(occurrencesMap, RefactoringBundle.message("replace.multiple.occurrences.found"), callback);
   }
 
-  public <C extends BaseReplaceChoice> void showChooser(final Pass<? super C> callback,
-                          final Map<C, List<T>> occurrencesMap,
-                          @Nls String title) {
+  public <C extends BaseReplaceChoice> void showChooser(final Map<C, List<T>> occurrencesMap,
+                                                        @Nls String title,
+                                                        Consumer<? super C> callback) {
     if (occurrencesMap.size() == 1) {
-      callback.pass(occurrencesMap.keySet().iterator().next());
+      callback.accept(occurrencesMap.keySet().iterator().next());
       return;
     }
     List<C> model = new ArrayList<>(occurrencesMap.keySet());
 
     JBPopupFactory.getInstance()
       .createPopupChooserBuilder(model)
-      .setRenderer(new DefaultListCellRenderer() {
+      .setRenderer(new GroupedItemsListRenderer<C>(new ListItemDescriptorAdapter<C>() {
         @Override
-        public Component getListCellRendererComponent(final JList list,
-                                                      final Object value,
-                                                      final int index,
-                                                      final boolean isSelected,
-                                                      final boolean cellHasFocus) {
-          final Component rendererComponent = super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
-          @SuppressWarnings("unchecked") final C choices = (C)value;
-
-          if (choices != null) {
-            setText(choices.formatDescription(occurrencesMap.get(choices).size()));
-          }
-          return rendererComponent;
+        public @Nullable String getTextFor(C value) {
+          if (value == null) return "";
+          return value.formatDescription(occurrencesMap.get(value).size());
         }
-      })
+      }))
       .setItemSelectedCallback(value -> {
         if (value == null) return;
         dropHighlighters();
@@ -138,7 +143,7 @@ public abstract class OccurrencesChooser<T> {
       .setMovable(true)
       .setResizable(false)
       .setRequestFocus(true)
-      .setItemChosenCallback(callback::pass)
+      .setItemChosenCallback(t -> callback.accept(t))
       .addListener(new JBPopupListener() {
         @Override
         public void onClosed(@NotNull LightweightWindowEvent event) {

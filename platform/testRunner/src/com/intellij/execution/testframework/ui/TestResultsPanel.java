@@ -1,33 +1,47 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.testframework.ui;
 
 import com.intellij.execution.testframework.TestConsoleProperties;
 import com.intellij.execution.testframework.TestTreeView;
 import com.intellij.execution.testframework.ToolbarPanel;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.ActionToolbar;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.DataSink;
+import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.actionSystem.UiCompatibleDataProvider;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
+import com.intellij.openapi.ui.ComponentContainer;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener;
-import com.intellij.ui.*;
+import com.intellij.ui.ExperimentalUI;
+import com.intellij.ui.IdeBorderFactory;
+import com.intellij.ui.JBSplitter;
+import com.intellij.ui.OnePixelSplitter;
+import com.intellij.ui.ScrollPaneFactory;
+import com.intellij.ui.SideBorder;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.BorderFactory;
+import javax.swing.JComponent;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
 import javax.swing.border.CompoundBorder;
-import java.awt.*;
+import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.Dimension;
 
-/**
- * @author yole
- */
-public abstract class TestResultsPanel extends JPanel implements Disposable, DataProvider  {
+
+public abstract class TestResultsPanel extends JPanel implements Disposable, UiCompatibleDataProvider  {
   private JScrollPane myLeftPane;
   protected final JComponent myConsole;
   protected ToolbarPanel myToolbarPanel;
@@ -58,9 +72,12 @@ public abstract class TestResultsPanel extends JPanel implements Disposable, Dat
     properties.getProject().getMessageBus().connect(this).subscribe(ToolWindowManagerListener.TOPIC, listener);
   }
 
-  @NotNull
-  public TestStatusLine getStatusLine() {
+  public @NotNull TestStatusLine getStatusLine() {
     return myStatusLine;
+  }
+
+  protected void hideToolbar() {
+    myLeftPane.setBorder(JBUI.Borders.empty());
   }
 
   public void initUI() {
@@ -99,11 +116,14 @@ public abstract class TestResultsPanel extends JPanel implements Disposable, Dat
     myConsole.setBorder(new CompoundBorder(IdeBorderFactory.createBorder(SideBorder.RIGHT), new SideBorder(editorBackground, SideBorder.LEFT)));
     outputTab.add(myConsole, BorderLayout.CENTER);
     final ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar("TestRunnerResults", new DefaultActionGroup(myConsoleActions), false);
+    toolbar.setTargetComponent(myConsole instanceof ComponentContainer ? ((ComponentContainer)myConsole).getPreferredFocusableComponent() : myConsole);
     myToolbarComponent = toolbar.getComponent();
     outputTab.add(myToolbarComponent, BorderLayout.EAST);
     rightPanel.add(outputTab, BorderLayout.CENTER);
     mySplitter.setSecondComponent(rightPanel);
-    testTreeView.setBorder(BorderFactory.createEmptyBorder(0, 3, 0, 0));
+    if (!ExperimentalUI.isNewUI()) {
+      testTreeView.setBorder(BorderFactory.createEmptyBorder(0, 3, 0, 0));
+    }
     setLeftComponent(testTreeView);
   }
 
@@ -124,6 +144,7 @@ public abstract class TestResultsPanel extends JPanel implements Disposable, Dat
     return splitVertically;
   }
 
+  @ApiStatus.Internal
   protected ToolbarPanel createToolbarPanel() {
     return new ToolbarPanel(myProperties, this);
   }
@@ -134,27 +155,20 @@ public abstract class TestResultsPanel extends JPanel implements Disposable, Dat
 
   protected abstract JComponent createTestTreeView();
 
-  @Nullable
-  protected TestTreeView getTreeView() {
+  protected @Nullable TestTreeView getTreeView() {
     return null;
   }
 
-  @Nullable
   @Override
-  public Object getData(@NotNull @NonNls String dataId) {
-    final TestTreeView view = getTreeView();
-    if (view != null) {
-      return view.getData(dataId);
-    }
-    return null;
+  public void uiDataSnapshot(@NotNull DataSink sink) {
+    DataSink.uiDataSnapshot(sink, getTreeView());
   }
 
   @Override
   public void dispose() {
   }
 
-  @NotNull
-  protected static JBSplitter createSplitter(@NotNull String proportionProperty, float defaultProportion, boolean splitVertically) {
+  protected static @NotNull JBSplitter createSplitter(@NotNull String proportionProperty, float defaultProportion, boolean splitVertically) {
     JBSplitter splitter = new OnePixelSplitter(splitVertically, proportionProperty, defaultProportion);
     splitter.setHonorComponentsMinimumSize(true);
     return splitter;

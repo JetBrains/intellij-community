@@ -1,0 +1,25 @@
+package fleet.codepoints
+
+import fleet.util.multiplatform.Actual
+
+@Actual internal fun codepointsToStringNative(vararg codepoints: Int): String = MultiplatformCodepoints.codepointsToString(*codepoints)
+@Actual internal fun codepointOfNative(highSurrogate: Char, lowSurrogate: Char): Codepoint = MultiplatformCodepoints.codepointOf(highSurrogate, lowSurrogate)
+@Actual internal fun highSurrogateNative(codepoint: Int): Char = MultiplatformCodepoints.highSurrogate(codepoint)
+@Actual internal fun lowSurrogateNative(codepoint: Int): Char = MultiplatformCodepoints.lowSurrogate(codepoint)
+@Actual internal fun isLetterNative(codepoint: Int): Boolean = MultiplatformCodepoints.isLetter(codepoint)
+@Actual internal fun isDigitNative(codepoint: Int): Boolean = MultiplatformCodepoints.isDigit(codepoint)
+@Actual internal fun isLetterOrDigitNative(codepoint: Int): Boolean = MultiplatformCodepoints.isLetterOrDigit(codepoint)
+@Actual internal fun isUpperCaseNative(codepoint: Int): Boolean = MultiplatformCodepoints.isUpperCase(codepoint)
+@Actual internal fun isLowerCaseNative(codepoint: Int): Boolean = MultiplatformCodepoints.isLowerCase(codepoint)
+@Actual internal fun toLowerCaseNative(codepoint: Int): Int = MultiplatformCodepoints.toLowerCase(codepoint)
+@Actual internal fun toUpperCaseNative(codepoint: Int): Int = MultiplatformCodepoints.toUpperCase(codepoint)
+@Actual internal fun isSpaceCharNative(codepoint: Int): Boolean = MultiplatformCodepoints.isSpaceChar(codepoint)
+@Actual internal fun isWhitespaceNative(codepoint: Int): Boolean = MultiplatformCodepoints.isWhitespace(codepoint)
+@Actual internal fun isIdeographicNative(codepoint: Int): Boolean = MultiplatformCodepoints.isIdeographic(codepoint)
+@Actual internal fun isIdentifierIgnorableNative(codepoint: Int): Boolean = MultiplatformCodepoints.isIdentifierIgnorable(codepoint)
+@Actual internal fun isUnicodeIdentifierStartNative(codepoint: Int): Boolean = MultiplatformCodepoints.isUnicodeIdentifierStart(codepoint)
+@Actual internal fun isUnicodeIdentifierPartNative(codepoint: Int): Boolean = MultiplatformCodepoints.isUnicodeIdentifierPart(codepoint)
+@Actual internal fun isJavaIdentifierStartNative(codepoint: Int): Boolean = MultiplatformCodepoints.isJavaIdentifierStart(codepoint)
+@Actual internal fun isJavaIdentifierPartNative(codepoint: Int): Boolean = MultiplatformCodepoints.isJavaIdentifierPart(codepoint)
+@Actual internal fun isISOControlNative(codepoint: Int): Boolean = MultiplatformCodepoints.isISOControl(codepoint)
+@Actual internal fun getUnicodeScriptNative(codepoint: Int): UnicodeScript = MultiplatformCodepoints.getUnicodeScript(codepoint)

@@ -1,6 +1,7 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.inspections.quickfix;
 
+import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -23,27 +24,25 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @see com.intellij.psi.util.PsiEditorUtilBase#findEditorByPsiElement
  */
-public class PyRenameElementQuickFix extends LocalQuickFixAndIntentionActionOnPsiElement {
+public class PyRenameElementQuickFix extends LocalQuickFixAndIntentionActionOnPsiElement implements LocalQuickFix {
 
   public PyRenameElementQuickFix(@Nullable PsiElement element) {
     super(element);
   }
 
-  @NotNull
   @Override
-  public String getFamilyName() {
-    return PyBundle.message("QFIX.NAME.rename.element");
+  public @NotNull String getFamilyName() {
+    return PyBundle.message("QFIX.FAMILY.NAME.rename.element");
   }
 
-  @NotNull
   @Override
-  public String getText() {
+  public @NotNull String getText() {
     return PyBundle.message("QFIX.NAME.rename.element");
   }
 
   @Override
   public void invoke(@NotNull Project project,
-                     @NotNull PsiFile file,
+                     @NotNull PsiFile psiFile,
                      @Nullable Editor editor,
                      @NotNull PsiElement startElement,
                      @NotNull PsiElement endElement) {
@@ -65,8 +64,7 @@ public class PyRenameElementQuickFix extends LocalQuickFixAndIntentionActionOnPs
     }
   }
 
-  @Nullable
-  protected PsiElement checkLocalScope(PsiElement element) {
+  protected @Nullable PsiElement checkLocalScope(PsiElement element) {
     final SearchScope searchScope = PsiSearchHelper.getInstance(element.getProject()).getUseScope(element);
     if (searchScope instanceof LocalSearchScope) {
       final PsiElement[] elements = ((LocalSearchScope)searchScope).getScope();
@@ -81,9 +79,13 @@ public class PyRenameElementQuickFix extends LocalQuickFixAndIntentionActionOnPs
     return false;
   }
 
-  @Nullable
   @Override
-  public PsiElement getElementToMakeWritable(@NotNull PsiFile file) {
+  public boolean availableInBatchMode() {
+    return false;
+  }
+
+  @Override
+  public @Nullable PsiElement getElementToMakeWritable(@NotNull PsiFile file) {
     return file;
   }
 }

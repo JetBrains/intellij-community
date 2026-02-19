@@ -1,1 +1,1 @@
-<error descr="Duplicate modifier 'def'">def final def</error> foo = 44
+def final <error descr="Duplicate modifier 'def'">def</error> foo = 44

@@ -1,10 +1,11 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.remote;
 
 import com.intellij.application.options.ModuleDescriptionsComboBox;
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.configurations.RemoteConnection;
 import com.intellij.execution.ui.ConfigurationModuleSelector;
+import com.intellij.java.JavaPluginDisposable;
 import com.intellij.openapi.compiler.JavaCompilerBundle;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SettingsEditor;
@@ -24,14 +25,21 @@ import com.intellij.ui.JBColor;
 import com.intellij.ui.SideBorder;
 import com.intellij.ui.components.DropDownLink;
 import com.intellij.ui.components.JBCheckBox;
+import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UI;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.JComboBox;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JTextArea;
+import javax.swing.JTextField;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
-import java.awt.*;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
 import java.awt.event.FocusAdapter;
 import java.awt.event.FocusEvent;
 import java.util.Arrays;
@@ -69,7 +77,8 @@ public class RemoteConfigurable extends SettingsEditor<RemoteConfiguration> {
       String getLaunchCommandLine(RemoteConnection connection) {
         String commandLine = JDK5to8.getLaunchCommandLine(connection);
         if (connection.isUseSockets() && !connection.isServerMode()) {
-          commandLine = commandLine.replace(connection.getApplicationAddress(), "*:" + connection.getApplicationAddress());
+          String address = connection.getApplicationAddress();
+          commandLine = commandLine.replace("address=" + address, "address=*:" + address);
         }
         return commandLine;
       }
@@ -141,7 +150,7 @@ public class RemoteConfigurable extends SettingsEditor<RemoteConfiguration> {
     myTransportCombo.setSelectedItem(Transport.SOCKET);
 
     myPort.setMinimumSize(myPort.getPreferredSize());
-    new ComponentValidator(project).withValidator(() -> {
+    new ComponentValidator(JavaPluginDisposable.getInstance(project)).withValidator(() -> {
       String pt = myPort.getText();
       if (StringUtil.isNotEmpty(pt)) {
         try {
@@ -222,7 +231,7 @@ public class RemoteConfigurable extends SettingsEditor<RemoteConfiguration> {
 
     gc.gridy++;
     gc.fill = GridBagConstraints.REMAINDER;
-    gc.insets = JBUI.emptyInsets();
+    gc.insets = JBInsets.emptyInsets();
     gc.weighty = 1.0;
     mainPanel.add(new JPanel(), gc);
 
@@ -302,9 +311,8 @@ public class RemoteConfigurable extends SettingsEditor<RemoteConfiguration> {
     myModuleSelector.applyTo(rc);
   }
 
-  @NotNull
   @Override
-  protected JComponent createEditor() {
+  protected @NotNull JComponent createEditor() {
     return mainPanel;
   }
 
@@ -341,7 +349,7 @@ public class RemoteConfigurable extends SettingsEditor<RemoteConfiguration> {
     gc.gridwidth = 1;
     gc.weightx = 1.0;
     gc.fill = GridBagConstraints.HORIZONTAL;
-    gc.insets = JBUI.emptyInsets();
+    gc.insets = JBInsets.emptyInsets();
     panel.add(new JPanel(), gc);
 
     if (SystemInfo.isWindows) {
@@ -424,7 +432,7 @@ public class RemoteConfigurable extends SettingsEditor<RemoteConfiguration> {
     gc.gridx++;
     gc.weightx = 1.0;
     gc.fill = GridBagConstraints.HORIZONTAL;
-    gc.insets = JBUI.emptyInsets();
+    gc.insets = JBInsets.emptyInsets();
     panel.add(new JPanel(), gc);
 
     return panel;

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.execution.testframework.actions;
 
@@ -14,19 +14,18 @@ import org.jetbrains.annotations.NotNull;
 public final class TestFrameworkActions {
   public static void installFilterAction(final TestFrameworkRunningModel model) {
     final TestConsoleProperties properties = model.getProperties();
-    final TestFrameworkPropertyListener<Boolean> propertyListener = new TestFrameworkPropertyListener<Boolean>() {
-        @Override
-        public void onChanged(final Boolean value) {
-          model.setFilter(getFilter(properties));
-        }
-      };
+    final TestFrameworkPropertyListener<Boolean> propertyListener = new TestFrameworkPropertyListener<>() {
+      @Override
+      public void onChanged(final Boolean value) {
+        model.setFilter(getFilter(properties));
+      }
+    };
     addPropertyListener(TestConsoleProperties.HIDE_PASSED_TESTS, propertyListener, model, true);
     addPropertyListener(TestConsoleProperties.HIDE_IGNORED_TEST, propertyListener, model, true);
     addPropertyListener(TestConsoleProperties.HIDE_SUCCESSFUL_CONFIG, propertyListener, model, true);
   }
 
-  @NotNull
-  private static Filter getFilter(TestConsoleProperties properties) {
+  private static @NotNull Filter getFilter(TestConsoleProperties properties) {
     final boolean shouldFilterPassed = TestConsoleProperties.HIDE_PASSED_TESTS.value(properties);
     final Filter hidePassedFilter = shouldFilterPassed ? Filter.NOT_PASSED.or(Filter.DEFECT) : Filter.NO_FILTER;
 

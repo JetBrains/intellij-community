@@ -5,13 +5,12 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.IdeFrame;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.SwingUtilities;
+import java.awt.Component;
+import java.awt.Dialog;
+import java.awt.Window;
 import java.lang.reflect.Method;
 
-/**
- * @author Denis Fokin
- */
 public final class ModalityHelper {
   private static final Logger LOG = Logger.getInstance(ModalityHelper.class);
 

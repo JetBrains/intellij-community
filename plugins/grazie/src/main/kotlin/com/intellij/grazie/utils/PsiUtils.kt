@@ -1,14 +1,24 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.grazie.utils
 
+import com.intellij.codeInspection.SuppressionUtil
 import com.intellij.lang.ASTNode
 import com.intellij.openapi.progress.ProgressManager
-import com.intellij.psi.*
+import com.intellij.psi.ElementManipulators
+import com.intellij.psi.PsiComment
+import com.intellij.psi.PsiCompiledElement
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiRecursiveElementWalkingVisitor
+import com.intellij.psi.PsiWhiteSpace
+import com.intellij.psi.SmartPointerManager
+import com.intellij.psi.SmartPsiElementPointer
 import com.intellij.psi.impl.source.tree.TreeUtil
 import com.intellij.psi.search.PsiElementProcessor
 import com.intellij.psi.tree.IElementType
 import com.intellij.psi.tree.TokenSet
 import com.intellij.psi.util.PsiTreeUtil
+import com.intellij.psi.util.elementType
+import java.util.regex.Pattern
 
 internal typealias PsiPointer<E> = SmartPsiElementPointer<E>
 
@@ -76,4 +86,58 @@ fun IntRange.isAtEnd(element: PsiElement, skipWhitespace: Boolean = true): Boole
     end--
   }
   return end in this
+}
+
+/**
+ * Get all siblings of [element] that are accepted by [checkSibling]
+ * which are separated by whitespace containing at most one line break
+ */
+fun getNotSoDistantSimilarSiblings(element: PsiElement, checkSibling: (PsiElement) -> Boolean): List<PsiElement> {
+  return getNotSoDistantSimilarSiblings(element, TokenSet.EMPTY, checkSibling)
+}
+
+/**
+ * Get all siblings of [element] that are accepted by [checkSibling]
+ * which are separated by whitespace ([PsiWhiteSpace] or anything in [whitespaceTokens]) containing at most one line break
+ */
+fun getNotSoDistantSimilarSiblings(element: PsiElement, whitespaceTokens: TokenSet, checkSibling: (PsiElement) -> Boolean): List<PsiElement> {
+  require(checkSibling(element))
+  fun PsiElement.process(next: Boolean): List<PsiElement> {
+    val result = arrayListOf<PsiElement>()
+    var newLinesBetweenSiblingsCount = 0
+
+    var sibling: PsiElement = this@process
+    while (true) {
+      sibling = (if (next) sibling.nextSibling else sibling.prevSibling) ?: break
+      if (checkSibling(sibling)) {
+        if (isSuppressionComment(sibling)) {
+          break
+        }
+        newLinesBetweenSiblingsCount = 0
+        result.add(sibling)
+      } else if (sibling is PsiWhiteSpace || sibling.elementType in whitespaceTokens) {
+        newLinesBetweenSiblingsCount += sibling.text.count { char -> char == '\n' }
+        if (newLinesBetweenSiblingsCount > 1) break
+      } else break
+    }
+    return result
+  }
+
+  return buildList {
+    addAll(element.process(false).reversed())
+    if (!isSuppressionComment(element)) {
+      add(element)
+    }
+    addAll(element.process(true))
+  }
+}
+
+private val SUPPRESSION = Pattern.compile(SuppressionUtil.COMMON_SUPPRESS_REGEXP)
+
+private fun isSuppressionComment(element: PsiElement): Boolean {
+  if (element !is PsiComment) return false
+  val manipulator = ElementManipulators.getManipulator(element) ?: return false
+  val valueRange = manipulator.getRangeInElement(element)
+  val commentText = element.text.substring(valueRange.startOffset, valueRange.endOffset)
+  return SUPPRESSION.matcher(commentText).matches()
 }

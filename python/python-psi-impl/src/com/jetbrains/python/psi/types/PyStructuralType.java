@@ -18,7 +18,7 @@ package com.jetbrains.python.psi.types;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
-import com.intellij.util.PlatformIcons;
+import com.intellij.ui.IconManager;
 import com.intellij.util.ProcessingContext;
 import com.jetbrains.python.psi.AccessDirection;
 import com.jetbrains.python.psi.PyExpression;
@@ -27,26 +27,27 @@ import com.jetbrains.python.psi.resolve.RatedResolveResult;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Objects;
+import java.util.Set;
 
-/**
- * @author vlan
- */
 public class PyStructuralType implements PyType {
-  @NotNull private final Set<String> myAttributes;
+  private final @NotNull Set<String> myAttributes;
   private final boolean myInferredFromUsages;
 
   public PyStructuralType(@NotNull Set<String> attributes, boolean inferredFromUsages) {
-    myAttributes = attributes;
+    myAttributes = new LinkedHashSet<>(attributes);
     myInferredFromUsages = inferredFromUsages;
   }
 
-  @Nullable
   @Override
-  public List<? extends RatedResolveResult> resolveMember(@NotNull String name,
-                                                          @Nullable PyExpression location,
-                                                          @NotNull AccessDirection direction,
-                                                          @NotNull PyResolveContext resolveContext) {
+  public @Nullable List<? extends RatedResolveResult> resolveMember(@NotNull String name,
+                                                                    @Nullable PyExpression location,
+                                                                    @NotNull AccessDirection direction,
+                                                                    @NotNull PyResolveContext resolveContext) {
     return Collections.emptyList();
   }
 
@@ -55,15 +56,15 @@ public class PyStructuralType implements PyType {
     final List<Object> variants = new ArrayList<>();
     for (String attribute : myAttributes) {
       if (!attribute.equals(completionPrefix)) {
-        variants.add(LookupElementBuilder.create(attribute).withIcon(PlatformIcons.FIELD_ICON));
+        variants.add(LookupElementBuilder.create(attribute).withIcon(
+          IconManager.getInstance().getPlatformIcon(com.intellij.ui.PlatformIcons.Field)));
       }
     }
     return variants.toArray();
   }
 
-  @Nullable
   @Override
-  public String getName() {
+  public @Nullable String getName() {
     return "{" + StringUtil.join(myAttributes, ", ") + "}";
   }
 
@@ -85,7 +86,19 @@ public class PyStructuralType implements PyType {
     return myInferredFromUsages;
   }
 
-  public Set<String> getAttributeNames() {
-    return myAttributes;
+  public @NotNull Set<String> getAttributeNames() {
+    return Collections.unmodifiableSet(myAttributes);
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (o == null || getClass() != o.getClass()) return false;
+    PyStructuralType type = (PyStructuralType)o;
+    return myInferredFromUsages == type.myInferredFromUsages && Objects.equals(myAttributes, type.myAttributes);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(myAttributes, myInferredFromUsages);
   }
 }

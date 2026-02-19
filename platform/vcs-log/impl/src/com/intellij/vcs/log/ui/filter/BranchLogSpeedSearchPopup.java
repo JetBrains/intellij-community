@@ -1,31 +1,31 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.ui.filter;
 
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionGroup;
+import com.intellij.openapi.actionSystem.ActionGroupUtil;
+import com.intellij.openapi.actionSystem.ActionPlaces;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.actionSystem.Separator;
 import com.intellij.openapi.ui.popup.ListPopupStep;
 import com.intellij.openapi.vcs.ui.FlatSpeedSearchPopup;
 import com.intellij.ui.popup.WizardPopup;
 import com.intellij.util.ui.JBDimension;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
+import java.util.List;
+
+@ApiStatus.Internal
 public class BranchLogSpeedSearchPopup extends FlatSpeedSearchPopup {
   public BranchLogSpeedSearchPopup(@NotNull ActionGroup actionGroup, @NotNull DataContext dataContext) {
-    super(null, new DefaultActionGroup(actionGroup, createSpeedSearchActionGroup(actionGroup)), dataContext, null, false);
+    super(null, ActionGroupUtil.forceRecursiveUpdateInBackground(
+      new DefaultActionGroup(actionGroup, createSpeedSearchActionGroup(actionGroup))),
+          dataContext, ActionPlaces.getPopupPlace("VCS.Log.BranchWidget"), null, false);
     setMinimumSize(new JBDimension(250, 0));
   }
 
@@ -42,24 +42,30 @@ public class BranchLogSpeedSearchPopup extends FlatSpeedSearchPopup {
     return !getSpeedSearch().isHoldingFilter() || !(action instanceof ActionGroup);
   }
 
-  @NotNull
-  public static ActionGroup createSpeedSearchActionGroup(@NotNull ActionGroup actionGroup) {
-    DefaultActionGroup speedSearchActions = new DefaultActionGroup();
-    createSpeedSearchActions(actionGroup, speedSearchActions, true);
-    return speedSearchActions;
+  public static @NotNull ActionGroup createSpeedSearchActionGroup(@NotNull ActionGroup actionGroup) {
+    return new ActionGroup() {
+      @Override
+      public AnAction @NotNull [] getChildren(@Nullable AnActionEvent e) {
+        if (e == null) return EMPTY_ARRAY;
+        List<AnAction> speedSearchActions = new ArrayList<>();
+        createSpeedSearchActions(e, actionGroup, speedSearchActions, true);
+        return speedSearchActions.toArray(EMPTY_ARRAY);
+      }
+    };
   }
 
-  private static void createSpeedSearchActions(@NotNull ActionGroup actionGroup,
-                                               @NotNull DefaultActionGroup speedSearchActions,
+  private static void createSpeedSearchActions(@NotNull AnActionEvent e,
+                                               @NotNull ActionGroup actionGroup,
+                                               @NotNull List<? super AnAction> speedSearchActions,
                                                boolean isFirstLevel) {
-    if (!isFirstLevel) speedSearchActions.addSeparator(actionGroup.getTemplatePresentation().getText());
+    if (!isFirstLevel) speedSearchActions.add(Separator.create(actionGroup.getTemplatePresentation().getText()));
 
-    for (AnAction child : actionGroup.getChildren(null)) {
+    for (AnAction child : e.getUpdateSession().children(actionGroup)) {
       if (!isFirstLevel && !(child instanceof ActionGroup || child instanceof Separator || child instanceof SpeedsearchAction)) {
         speedSearchActions.add(createSpeedSearchWrapper(child));
       }
       else if (child instanceof ActionGroup) {
-        createSpeedSearchActions((ActionGroup)child, speedSearchActions, isFirstLevel && !((ActionGroup)child).isPopup());
+        createSpeedSearchActions(e, (ActionGroup)child, speedSearchActions, isFirstLevel && !((ActionGroup)child).isPopup());
       }
     }
   }

@@ -6,8 +6,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.fileEditor.FileEditor;
-import com.intellij.openapi.fileEditor.impl.CurrentEditorProvider;
+import com.intellij.openapi.fileEditor.impl.FocusBasedCurrentEditorProvider;
 import com.intellij.openapi.ui.TestDialog;
 import com.intellij.openapi.ui.TestDialogManager;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -33,12 +32,9 @@ public abstract class EditorUndoTestCase extends UndoTestCase {
 
     super.setUp();
 
-    myManager.setEditorProvider(new CurrentEditorProvider() {
-      @Override
-      public FileEditor getCurrentEditor() {
-        return getFileEditor(mySecondEditorSelected ? getSecondEditor() : getFirstEditor());
-      }
-    });
+    selectFirstEditor();
+    var productionLikeEditorProvider = new FocusBasedCurrentEditorProvider.TestProvider(() -> mySecondEditorSelected ? getSecondEditor() : getFirstEditor());
+    myManager.setOverriddenEditorProvider(productionLikeEditorProvider);
 
     WriteAction.runAndWait(() -> initEditors());
 
@@ -143,6 +139,10 @@ public abstract class EditorUndoTestCase extends UndoTestCase {
 
   protected Editor getSecondEditor() {
     return myEditors[1];
+  }
+
+  protected void selectFirstEditor() {
+    mySecondEditorSelected = false;
   }
 
   protected void selectSecondEditor() {

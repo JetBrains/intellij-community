@@ -1,8 +1,13 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.profile.codeInspection.ui.table;
 
+import com.intellij.application.options.colors.ColorAndFontOptions;
+import com.intellij.application.options.colors.ColorSettingsUtil;
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
+import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
+import com.intellij.codeInsight.daemon.impl.SeverityRegistrar;
+import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.ex.Descriptor;
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.codeInspection.ex.ScopeToolState;
@@ -11,49 +16,68 @@ import com.intellij.ide.DataManager;
 import com.intellij.lang.LangBundle;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.colors.TextAttributesKey;
+import com.intellij.openapi.options.OptionsBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
+import com.intellij.openapi.util.Pair;
 import com.intellij.profile.codeInspection.ui.ScopeOrderComparator;
 import com.intellij.profile.codeInspection.ui.ScopesChooser;
 import com.intellij.profile.codeInspection.ui.inspectionsTree.InspectionConfigTreeNode;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.psi.search.scope.packageSet.NamedScopesHolder;
 import com.intellij.ui.awt.RelativePoint;
+import com.intellij.ui.render.RenderingUtil;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.EditableModel;
+import com.intellij.util.ui.NamedColorUtil;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
-import javax.swing.*;
+import javax.swing.JTable;
+import javax.swing.ListSelectionModel;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.TableColumn;
 import javax.swing.table.TableColumnModel;
-import java.awt.*;
+import java.awt.Component;
+import java.awt.Point;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Comparator;
 import java.util.List;
-import java.util.*;
+import java.util.Objects;
 
+import static com.intellij.profile.codeInspection.ui.table.HighlightingRenderer.EDIT_HIGHLIGHTING;
 import static com.intellij.profile.codeInspection.ui.table.SeverityRenderer.EDIT_SEVERITIES;
 
 /**
  * @author Dmitry Batkovich
  */
-public class ScopesAndSeveritiesTable extends JBTable {
+@ApiStatus.Internal
+public final class ScopesAndSeveritiesTable extends JBTable {
   private static final Logger LOG = Logger.getInstance(ScopesAndSeveritiesTable.class);
 
   public static final HighlightSeverity MIXED_FAKE_SEVERITY = new HighlightSeverity("Mixed", -1);
   @SuppressWarnings("UnusedDeclaration")
   public static final HighlightDisplayLevel MIXED_FAKE_LEVEL = new HighlightDisplayLevel(MIXED_FAKE_SEVERITY, AllIcons.General.InspectionsMixed);
+  public static final TextAttributesKey MIXED_FAKE_KEY = TextAttributesKey.createTextAttributesKey("Mixed");
+  public static final TextAttributesKey INFORMATION_FAKE_KEY = TextAttributesKey.createTextAttributesKey("");
 
   private static final int SCOPE_ENABLED_COLUMN = 0;
   private static final int SCOPE_NAME_COLUMN = 1;
   private static final int SEVERITY_COLUMN = 2;
+  private static final int HIGHLIGHTING_COLUMN = 3;
 
   public ScopesAndSeveritiesTable(final TableSettings tableSettings) {
     super(new MyTableModel(tableSettings));
@@ -74,13 +98,20 @@ public class ScopesAndSeveritiesTable extends JBTable {
                                                      int row,
                                                      int column) {
         Component component = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+        component.setForeground(RenderingUtil.getForeground(table, isSelected));
+        component.setBackground(RenderingUtil.getBackground(table, isSelected));
         if (value instanceof String) {
           NamedScope namedScope = NamedScopesHolder.getScope(tableSettings.myProject, (String)value);
           if (namedScope != null) {
             setText(namedScope.getPresentableName());
           }
           else {
-            setText((String)value);
+            if (LangBundle.message("scopes.table.everywhere.else").equals(value)) {
+              setText((String) value);
+            } else {
+              setText(LangBundle.message("scopes.table.missing.scope", value));
+              component.setForeground(NamedColorUtil.getErrorForeground());
+            }
           }
         }
         return component;
@@ -88,9 +119,30 @@ public class ScopesAndSeveritiesTable extends JBTable {
     });
 
     final TableColumn severityColumn = columnModel.getColumn(SEVERITY_COLUMN);
-    SeverityRenderer renderer = new SeverityRenderer(tableSettings.getInspectionProfile(), tableSettings.getProject(), () -> tableSettings.onSettingsChanged(), this);
+    SeverityRenderer renderer = new SeverityRenderer(tableSettings.getInspectionProfile(), tableSettings.getProject(), () -> {}, this);
     severityColumn.setCellRenderer(renderer);
-    severityColumn.setCellEditor(renderer);
+    SeverityRenderer editor = new SeverityRenderer(tableSettings.getInspectionProfile(), tableSettings.getProject(), () -> tableSettings.onSettingsChanged(), this);
+    severityColumn.setCellEditor(editor);
+
+    final TableColumn highlightingColumn = columnModel.getColumn(HIGHLIGHTING_COLUMN);
+    var editorAttributesKeysAndNames = getEditorAttributesKeysAndNames(tableSettings.getInspectionProfile());
+    final HighlightingRenderer highlightingRenderer = new HighlightingRenderer(editorAttributesKeysAndNames) {
+      @Override
+      void openColorSettings() { } // not used for renderers
+    };
+    highlightingColumn.setCellRenderer(highlightingRenderer);
+    final HighlightingRenderer highlightingEditor = new HighlightingRenderer(editorAttributesKeysAndNames) {
+      @Override
+      void openColorSettings() {
+        final var dataContext = DataManager.getInstance().getDataContext(this);
+        ApplicationManager.getApplication().invokeLater(() -> {
+          ColorAndFontOptions.selectOrEditColor(dataContext,
+                                                OptionsBundle.message("options.java.attribute.descriptor.error").split("//")[0],
+                                                OptionsBundle.message("options.general.display.name"));
+        });
+      }
+    };
+    highlightingColumn.setCellEditor(highlightingEditor);
 
     setColumnSelectionAllowed(false);
     setRowSelectionAllowed(true);
@@ -111,7 +163,6 @@ public class ScopesAndSeveritiesTable extends JBTable {
     });
     setRowSelectionInterval(0, 0);
 
-    setStriped(true);
     setShowGrid(false);
 
     ((MyTableModel)getModel()).setTable(this);
@@ -145,35 +196,30 @@ public class ScopesAndSeveritiesTable extends JBTable {
       for(final InspectionConfigTreeNode.Tool node : nodes) {
         final HighlightDisplayKey key = node.getKey();
         myKeys.add(key);
-        myKeyNames.add(key.toString());
+        myKeyNames.add(key.getShortName());
       }
 
       myInspectionProfile = inspectionProfile;
       myProject = project;
     }
 
-    @NotNull
-    public List<HighlightDisplayKey> getKeys() {
+    public @NotNull List<HighlightDisplayKey> getKeys() {
       return myKeys;
     }
 
-    @NotNull
-    public List<String> getKeyNames() {
+    public @NotNull List<String> getKeyNames() {
       return myKeyNames;
     }
 
-    @NotNull
-    public Collection<InspectionConfigTreeNode.Tool> getNodes() {
+    public @NotNull Collection<InspectionConfigTreeNode.Tool> getNodes() {
       return myNodes;
     }
 
-    @NotNull
-    public InspectionProfileImpl getInspectionProfile() {
+    public @NotNull InspectionProfileImpl getInspectionProfile() {
       return myInspectionProfile;
     }
 
-    @NotNull
-    public Project getProject() {
+    public @NotNull Project getProject() {
       return myProject;
     }
 
@@ -183,13 +229,12 @@ public class ScopesAndSeveritiesTable extends JBTable {
 
     protected abstract void onScopeRemoved(final int scopesCount);
 
-    protected abstract void onScopeChosen(@NotNull final ScopeToolState scopeToolState);
+    protected abstract void onScopeChosen(final @NotNull ScopeToolState scopeToolState);
 
     protected abstract void onSettingsChanged();
   }
 
-  @NotNull
-  public static HighlightSeverity getSeverity(final List<? extends ScopeToolState> scopeToolStates) {
+  public static @NotNull HighlightSeverity getSeverity(final @NotNull List<? extends ScopeToolState> scopeToolStates) {
     HighlightSeverity previousValue = null;
     for (final ScopeToolState scopeToolState : scopeToolStates) {
       final HighlightSeverity currentValue = scopeToolState.getLevel().getSeverity();
@@ -203,12 +248,48 @@ public class ScopesAndSeveritiesTable extends JBTable {
     return previousValue;
   }
 
-  private static class MyTableModel extends AbstractTableModel implements EditableModel {
-    @NotNull
-    private final InspectionProfileImpl myInspectionProfile;
+  public static @NotNull TextAttributesKey getEditorAttributesKey(final @NotNull List<? extends ScopeToolState> scopeToolStates, @NotNull Project project) {
+    TextAttributesKey previousValue = null;
+    final SeverityRegistrar registrar = SeverityRegistrar.getSeverityRegistrar(project);
+    for (final ScopeToolState scopeToolState : scopeToolStates) {
+      TextAttributesKey key = scopeToolState.getEditorAttributesKey();
+      if (key == null) {
+        final var severity = scopeToolState.getLevel().getSeverity();
+        key = severity.equals(HighlightSeverity.INFORMATION) ? INFORMATION_FAKE_KEY
+                                                             : registrar.getHighlightInfoTypeBySeverity(severity).getAttributesKey();
+      }
+      if (previousValue == null) {
+        previousValue = key;
+      } else if (!previousValue.equals(key)){
+        return MIXED_FAKE_KEY;
+      }
+    }
+    return previousValue != null ? previousValue : MIXED_FAKE_KEY;
+  }
+
+  @NotNull
+  @Unmodifiable
+  private static List<Pair<TextAttributesKey, @Nls String>> getEditorAttributesKeysAndNames(InspectionProfileImpl profile) {
+    List<@NotNull Pair<TextAttributesKey, @Nls String>> textAttributes = new ArrayList<>(ColorSettingsUtil.getErrorTextAttributes());
+
+    Collection<HighlightInfoType> standardSeverities = SeverityRegistrar.standardSeverities();
+    SeverityRegistrar registrar = profile.getProfileManager().getSeverityRegistrar();
+    for (HighlightSeverity severity : registrar.getAllSeverities()) {
+      HighlightInfoType.HighlightInfoTypeImpl highlightInfoType = registrar.getHighlightInfoTypeBySeverity(severity);
+      if (!standardSeverities.contains(highlightInfoType)) {
+        TextAttributesKey attributes = registrar.getHighlightInfoTypeBySeverity(severity).getAttributesKey();
+        textAttributes.add(new Pair<>(attributes, severity.getDisplayName()));
+      }
+    }
+
+    textAttributes.add(new Pair<>(EDIT_HIGHLIGHTING, InspectionsBundle.message("inspection.edit.highlighting.action")));
+    return List.copyOf(textAttributes);
+  }
+
+  private static final class MyTableModel extends AbstractTableModel implements EditableModel {
+    private final @NotNull InspectionProfileImpl myInspectionProfile;
     private final List<String> myKeyNames;
-    @NotNull
-    private final Project myProject;
+    private final @NotNull Project myProject;
     private final TableSettings myTableSettings;
     private final List<HighlightDisplayKey> myKeys;
     private final Comparator<String> myScopeComparator;
@@ -237,7 +318,7 @@ public class ScopesAndSeveritiesTable extends JBTable {
       } else if (columnIndex == SCOPE_ENABLED_COLUMN) {
         return true;
       }
-      assert columnIndex == SEVERITY_COLUMN;
+      assert (columnIndex == SEVERITY_COLUMN || columnIndex == HIGHLIGHTING_COLUMN);
 
       if (Boolean.FALSE.equals(isEnabled(rowIndex))) {
         return false;
@@ -252,15 +333,19 @@ public class ScopesAndSeveritiesTable extends JBTable {
       return lastRowIndex() + 1;
     }
 
-    @Nullable
     @Override
-    public String getColumnName(final int column) {
-      return null;
+    public @Nullable String getColumnName(final int column) {
+      return switch (column) {
+        case SCOPE_NAME_COLUMN -> LangBundle.message("scopes.chooser.scope.column");
+        case SEVERITY_COLUMN -> LangBundle.message("scopes.chooser.scope.severity");
+        case HIGHLIGHTING_COLUMN -> LangBundle.message("scopes.chooser.scope.highlighting");
+        default -> null;
+      };
     }
 
     @Override
     public int getColumnCount() {
-      return 3;
+      return 4;
     }
 
     @Override
@@ -274,6 +359,9 @@ public class ScopesAndSeveritiesTable extends JBTable {
       if (SEVERITY_COLUMN == columnIndex) {
         return HighlightSeverity.class;
       }
+      if (HIGHLIGHTING_COLUMN == columnIndex) {
+        return TextAttributesKey.class;
+      }
       throw new IllegalArgumentException();
     }
 
@@ -282,16 +370,13 @@ public class ScopesAndSeveritiesTable extends JBTable {
       if (rowIndex < 0) {
         return null;
       }
-      switch (columnIndex) {
-        case SCOPE_ENABLED_COLUMN:
-          return isEnabled(rowIndex);
-        case SCOPE_NAME_COLUMN:
-          return rowIndex == lastRowIndex() ? LangBundle.message("scopes.table.everywhere.else") : getScopeName(rowIndex);
-        case SEVERITY_COLUMN:
-          return getSeverityState(rowIndex);
-        default:
-          throw new IllegalArgumentException("Invalid column index " + columnIndex);
-      }
+      return switch (columnIndex) {
+        case SCOPE_ENABLED_COLUMN -> isEnabled(rowIndex);
+        case SCOPE_NAME_COLUMN -> rowIndex == lastRowIndex() ? LangBundle.message("scopes.table.everywhere.else") : getScopeName(rowIndex);
+        case SEVERITY_COLUMN -> getSeverityState(rowIndex);
+        case HIGHLIGHTING_COLUMN -> getAttributesKey(rowIndex);
+        default -> throw new IllegalArgumentException("Invalid column index " + columnIndex);
+      };
     }
 
     private NamedScope getScope(final int rowIndex) {
@@ -302,8 +387,7 @@ public class ScopesAndSeveritiesTable extends JBTable {
       return getScopeToolState(rowIndex).getExistedStates().get(0).getScopeName();
     }
 
-    @NotNull
-    private HighlightSeverity getSeverityState(final int rowIndex) {
+    private @NotNull HighlightSeverity getSeverityState(final int rowIndex) {
       final ExistedScopesStatesAndNonExistNames existedScopesStatesAndNonExistNames = getScopeToolState(rowIndex);
       if (!existedScopesStatesAndNonExistNames.getNonExistNames().isEmpty()) {
         return MIXED_FAKE_SEVERITY;
@@ -311,8 +395,15 @@ public class ScopesAndSeveritiesTable extends JBTable {
       return getSeverity(existedScopesStatesAndNonExistNames.getExistedStates());
     }
 
-    @Nullable
-    private Boolean isEnabled(final int rowIndex) {
+    private TextAttributesKey getAttributesKey(final int rowIndex) {
+      final ExistedScopesStatesAndNonExistNames existedScopesStatesAndNonExistNames = getScopeToolState(rowIndex);
+      if (!existedScopesStatesAndNonExistNames.getNonExistNames().isEmpty()) {
+        return MIXED_FAKE_KEY;
+      }
+      return getEditorAttributesKey(existedScopesStatesAndNonExistNames.myExistedStates, myProject);
+    }
+
+    private @Nullable Boolean isEnabled(final int rowIndex) {
       Boolean previousValue = null;
       final ExistedScopesStatesAndNonExistNames existedScopesStatesAndNonExistNames = getScopeToolState(rowIndex);
       for (final ScopeToolState scopeToolState : existedScopesStatesAndNonExistNames.getExistedStates()) {
@@ -343,8 +434,7 @@ public class ScopesAndSeveritiesTable extends JBTable {
       return new ExistedScopesStatesAndNonExistNames(existedStates, nonExistNames);
     }
 
-    @Nullable
-    private ScopeToolState getScopeToolState(final String keyName, final int rowIndex) {
+    private @Nullable ScopeToolState getScopeToolState(final String keyName, final int rowIndex) {
       if (rowIndex == lastRowIndex()) {
         return myInspectionProfile.getToolDefaultState(keyName, myProject);
       }
@@ -364,9 +454,8 @@ public class ScopesAndSeveritiesTable extends JBTable {
       myScopeNames = myKeyNames.stream()
           .map(keyName -> myInspectionProfile.getNonDefaultTools(keyName, myProject))
           .flatMap(Collection::stream)
-          .map(state -> state.getScope(myProject))
-          .filter(Objects::nonNull)
-          .map(NamedScope::getScopeId)
+          .map(state -> state.getScopeName())
+          .distinct()
           .sorted(myScopeComparator)
           .toArray(String[]::new);
     }
@@ -390,6 +479,13 @@ public class ScopesAndSeveritiesTable extends JBTable {
         }
         final String scopeName = rowIndex == lastRowIndex() ? null : getScopeName(rowIndex);
         myInspectionProfile.setErrorLevel(myKeys, level, scopeName, myProject);
+        myInspectionProfile.setEditorAttributesKey(myKeys, null, scopeName, myProject);
+      }
+      else if (columnIndex == HIGHLIGHTING_COLUMN) {
+        if (value == EDIT_HIGHLIGHTING) return;
+        final TextAttributesKey key = (TextAttributesKey)value;
+        final String scopeName = rowIndex == lastRowIndex() ? null : getScopeName(rowIndex);
+        myInspectionProfile.setEditorAttributesKey(myKeys, key, scopeName, myProject);
       }
       else if (columnIndex == SCOPE_ENABLED_COLUMN) {
         final NamedScope scope = getScope(rowIndex);
@@ -397,15 +493,15 @@ public class ScopesAndSeveritiesTable extends JBTable {
           return;
         }
         if ((Boolean)value) {
-          for (final String keyName : myKeyNames) {
-            myInspectionProfile.enableTool(keyName, myProject);
-          }
           if (rowIndex == lastRowIndex()) {
             myInspectionProfile.enableToolsByDefault(myKeyNames, myProject);
           }
           else {
             //TODO create scopes states if not exist (need scope sorting)
             myInspectionProfile.enableTools(myKeyNames, scope, myProject);
+          }
+          for (final String keyName : myKeyNames) {
+            myInspectionProfile.enableTool(keyName, myProject);
           }
         }
         else {
@@ -444,6 +540,7 @@ public class ScopesAndSeveritiesTable extends JBTable {
           refreshAggregatedScopes();
           for (int i = 0; i < getRowCount(); i++) {
             if (getScopeName(i).equals(scopeName)) {
+              fireTableRowsInserted(i, i);
               myTable.clearSelection();
               myTable.setRowSelectionInterval(i, i);
             }
@@ -458,9 +555,9 @@ public class ScopesAndSeveritiesTable extends JBTable {
       DataContext dataContext = DataManager.getInstance().getDataContext(myTable);
       final ListPopup popup = JBPopupFactory.getInstance()
         .createActionGroupPopup(LangBundle.message("scopes.chooser.popup.title.select.scope.to.change.its.settings"),
-                                scopesChooser.createPopupActionGroup(myTable), dataContext,
+                                scopesChooser.createPopupActionGroup(myTable, dataContext), dataContext,
                                 JBPopupFactory.ActionSelectionAid.SPEEDSEARCH, false);
-      final RelativePoint point = new RelativePoint(myTable, new Point(myTable.getWidth() - popup.getContent().getPreferredSize().width, 0));
+      final RelativePoint point = new RelativePoint(myTable, new Point(0, 0));
       popup.show(point);
     }
 
@@ -474,7 +571,7 @@ public class ScopesAndSeveritiesTable extends JBTable {
     }
   }
 
-  private static class ExistedScopesStatesAndNonExistNames {
+  private static final class ExistedScopesStatesAndNonExistNames {
 
     private final List<ScopeToolState> myExistedStates;
     private final List<String> myNonExistNames;

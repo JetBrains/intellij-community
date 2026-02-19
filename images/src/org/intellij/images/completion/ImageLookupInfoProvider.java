@@ -25,9 +25,6 @@ import org.intellij.images.index.ImageInfoIndex;
 import org.intellij.images.util.ImageInfo;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author spleaner
- */
 public class ImageLookupInfoProvider extends FileLookupInfoProvider {
   @Override
   public Couple<String> getLookupInfo(@NotNull VirtualFile file, Project project) {

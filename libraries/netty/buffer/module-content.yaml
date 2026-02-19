@@ -1,0 +1,7 @@
+- name: dist.all/lib/intellij.libraries.netty.buffer.jar
+  modules:
+  - name: intellij.libraries.netty.buffer
+  library: netty-buffer
+  files:
+  - name: $MAVEN_REPOSITORY$/io/netty/netty-buffer/4/netty-buffer-4.jar
+  - name: $MAVEN_REPOSITORY$/io/netty/netty-common/4/netty-common-4.jar

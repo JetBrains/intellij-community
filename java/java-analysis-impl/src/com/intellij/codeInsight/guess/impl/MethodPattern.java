@@ -18,14 +18,8 @@ package com.intellij.codeInsight.guess.impl;
 
 import org.jetbrains.annotations.NonNls;
 
-class MethodPattern{
-  public final @NonNls String methodName;
-  public final int parameterCount;
-  public final int parameterIndex; // -1 for return type
-
-  MethodPattern(@NonNls String methodName, int parameterCount, int parameterIndex) {
-    this.methodName = methodName;
-    this.parameterCount = parameterCount;
-    this.parameterIndex = parameterIndex;
-  }
+/**
+ * @param parameterIndex -1 for return type
+ */
+record MethodPattern(@NonNls String methodName, int parameterCount, int parameterIndex) {
 }

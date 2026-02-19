@@ -1,14 +1,22 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.xml;
 
 import com.intellij.lang.ASTNode;
-import com.intellij.model.psi.PsiSymbolReference;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.navigation.ItemPresentationWithSeparator;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.paths.PsiDynaReference;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.*;
+import com.intellij.psi.HintedReferenceHost;
+import com.intellij.psi.LiteralTextEscaper;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.PsiLanguageInjectionHost;
+import com.intellij.psi.PsiReference;
+import com.intellij.psi.PsiReferenceService;
+import com.intellij.psi.XmlElementFactory;
+import com.intellij.psi.XmlElementVisitor;
 import com.intellij.psi.impl.CheckUtil;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry;
 import com.intellij.psi.impl.source.tree.injected.XmlAttributeLiteralEscaper;
@@ -28,9 +36,7 @@ import org.intellij.lang.regexp.psi.RegExpNamedGroupRef;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.util.Arrays;
-import java.util.Collections;
+import javax.swing.Icon;
 
 public class XmlAttributeValueImpl extends XmlElementImpl
   implements XmlAttributeValue, PsiLanguageInjectionHost, RegExpLanguageHost, PsiMetaOwner, PsiMetaData, HintedReferenceHost {
@@ -50,9 +56,8 @@ public class XmlAttributeValueImpl extends XmlElementImpl
     }
   }
 
-  @NotNull
   @Override
-  public String getValue() {
+  public @NotNull String getValue() {
     // it is more correct way to strip quotes since injected xml may have quotes encoded
     String text = getText();
     ASTNode startQuote = findChildByType(XmlTokenType.XML_ATTRIBUTE_VALUE_START_DELIMITER);
@@ -79,14 +84,13 @@ public class XmlAttributeValueImpl extends XmlElementImpl
   }
 
   @Override
-  public @NotNull Iterable<? extends @NotNull PsiSymbolReference> getOwnReferences() {
-    PsiReference[] references = getReferences();
-    return references.length == 0 ? Collections.emptyList() : Arrays.asList(references);
-  }
-
-  @Override
   public PsiReference @NotNull [] getReferences(PsiReferenceService.@NotNull Hints hints) {
-    return ReferenceProvidersRegistry.getReferencesFromProviders(this, hints);
+    PsiReference[] psiReferences = ReferenceProvidersRegistry.getReferencesFromProviders(this, hints);
+    Integer offset = hints.offsetInElement;
+    if (offset != null) {
+      return PsiDynaReference.filterByOffset(psiReferences, offset);
+    }
+    return psiReferences;
   }
 
   @Override
@@ -138,8 +142,7 @@ public class XmlAttributeValueImpl extends XmlElementImpl
   }
 
   @Override
-  @NotNull
-  public LiteralTextEscaper<XmlAttributeValueImpl> createLiteralTextEscaper() {
+  public @NotNull LiteralTextEscaper<XmlAttributeValueImpl> createLiteralTextEscaper() {
     return new XmlAttributeLiteralEscaper(this);
   }
 
@@ -188,7 +191,7 @@ public class XmlAttributeValueImpl extends XmlElementImpl
   }
 
   @Override
-  public boolean characterNeedsEscaping(char c) {
+  public boolean characterNeedsEscaping(char c, boolean isInClass) {
     return c == ']' || c == '}';
   }
 
@@ -243,9 +246,8 @@ public class XmlAttributeValueImpl extends XmlElementImpl
     return DefaultRegExpPropertiesProvider.getInstance().getAllKnownProperties();
   }
 
-  @Nullable
   @Override
-  public String getPropertyDescription(@Nullable String name) {
+  public @Nullable String getPropertyDescription(@Nullable String name) {
     return DefaultRegExpPropertiesProvider.getInstance().getPropertyDescription(name);
   }
 

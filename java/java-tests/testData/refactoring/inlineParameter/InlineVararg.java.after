@@ -1,0 +1,11 @@
+public enum InlineVararg {
+    A, B;
+
+    private static void toInline() {
+        System.out.println(Arrays.asList(InlineVararg.values()));
+    }
+
+    public static void call() {
+        toInline();
+    }
+}

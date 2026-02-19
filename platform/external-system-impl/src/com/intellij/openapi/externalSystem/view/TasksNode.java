@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.view;
 
 import com.intellij.icons.AllIcons;
@@ -54,15 +54,14 @@ public class TasksNode extends ExternalSystemNode<Object> {
     return super.isVisible() && hasChildren();
   }
 
-  @NotNull
   @Override
-  protected List<? extends ExternalSystemNode<?>> doBuildChildren() {
+  protected @NotNull List<? extends ExternalSystemNode<?>> doBuildChildren() {
     final List<ExternalSystemNode<?>> result = new ArrayList<>();
     final boolean isGroup = getExternalProjectsView().getGroupTasks();
     if (isGroup) {
       for (Map.Entry<String, Collection<TaskNode>> collectionEntry : myTasksMap.entrySet()) {
         final String group = ObjectUtils.notNull(collectionEntry.getKey(), "other");
-        final ExternalSystemNode<?> tasksGroupNode = new ExternalSystemNode<Object>(getExternalProjectsView(), null, null) {
+        final ExternalSystemNode<?> tasksGroupNode = new ExternalSystemNode<>(getExternalProjectsView(), null, null) {
 
           @Override
           protected void update(@NotNull PresentationData presentation) {
@@ -81,7 +80,7 @@ public class TasksNode extends ExternalSystemNode<Object> {
           }
 
           @Override
-          public int compareTo(@NotNull ExternalSystemNode node) {
+          public int compareTo(@NotNull ExternalSystemNode<?> node) {
             return "other".equals(group) ? 1 : super.compareTo(node);
           }
         };

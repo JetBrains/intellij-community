@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.ant.quickfix;
 
 import com.intellij.codeInsight.FileModificationService;
@@ -25,6 +11,7 @@ import com.intellij.lang.properties.IProperty;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiElement;
@@ -35,27 +22,26 @@ import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomUtil;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
 
 public class AntCreatePropertyFix implements LocalQuickFix {
-  private static final String PROPERTY = "property";
-  private static final String NAME_ATTR = "name";
-  private static final String VALUE_ATTR = "value";
-  private final String myCanonicalText;
-  @Nullable
-  private final PropertiesFile myPropFile;
+  private static final @NonNls String PROPERTY = "property";
+  private static final @NonNls String NAME_ATTR = "name";
+  private static final @NonNls String VALUE_ATTR = "value";
+  private final @NlsSafe String myCanonicalText;
+  private final @Nullable PropertiesFile myPropFile;
 
-  public AntCreatePropertyFix(String canonicalText, @Nullable PropertiesFile propertiesFile) {
+  public AntCreatePropertyFix(@NlsSafe String canonicalText, @Nullable PropertiesFile propertiesFile) {
     myCanonicalText = canonicalText;
     myPropFile = propertiesFile;
   }
 
   @Override
-  @NotNull
-  public String getName() {
+  public @NotNull String getName() {
     if (myPropFile != null) {
       return AntBundle.message("create.property.in.file.quickfix.name", myCanonicalText, myPropFile.getName());
     }
@@ -63,8 +49,7 @@ public class AntCreatePropertyFix implements LocalQuickFix {
   }
 
   @Override
-  @NotNull
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return AntBundle.message("ant.intention.create.property.family.name");
   }
 
@@ -104,8 +89,7 @@ public class AntCreatePropertyFix implements LocalQuickFix {
       });
     }
     else {
-      if (containingFile instanceof XmlFile) {
-        final XmlFile xmlFile = (XmlFile)containingFile;
+      if (containingFile instanceof XmlFile xmlFile) {
         final XmlTag rootTag = xmlFile.getRootTag();
         if (!modificationService.prepareFileForWrite(xmlFile)) {
           return;

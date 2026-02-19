@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.ex;
 
 import com.intellij.codeInspection.InspectionsReportConverter;
@@ -7,7 +7,11 @@ import com.intellij.openapi.util.io.FileUtilRt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.xml.transform.*;
+import javax.xml.transform.Source;
+import javax.xml.transform.Transformer;
+import javax.xml.transform.TransformerConfigurationException;
+import javax.xml.transform.TransformerException;
+import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.sax.SAXTransformerFactory;
 import javax.xml.transform.stream.StreamResult;
 import javax.xml.transform.stream.StreamSource;
@@ -24,7 +28,7 @@ import java.util.Map;
 public class XSLTReportConverter implements InspectionsReportConverter {
   private final String myXSLTSchemePath;
 
-  public XSLTReportConverter(@NotNull final String xsltSchemePath) {
+  public XSLTReportConverter(final @NotNull String xsltSchemePath) {
     myXSLTSchemePath = xsltSchemePath;
   }
 
@@ -39,16 +43,16 @@ public class XSLTReportConverter implements InspectionsReportConverter {
   }
 
   @Override
-  public void convert(@NotNull final String rawDataDirectoryPath,
-                      @Nullable final String outputPath,
-                      @NotNull final Map<String, Tools> tools,
-                      @NotNull final List<? extends File> inspectionsResults) throws InspectionsReportConverter.ConversionException {
+  public void convert(final @NotNull String rawDataDirectoryPath,
+                      final @Nullable String outputPath,
+                      final @NotNull Map<String, Tools> tools,
+                      final @NotNull List<? extends File> inspectionsResults) throws InspectionsReportConverter.ConversionException {
 
     if (outputPath == null) {
       throw new ConversionException("Output path isn't specified.");
     }
 
-    final SAXTransformerFactory transformerFactory = (SAXTransformerFactory)TransformerFactory.newInstance();
+    final SAXTransformerFactory transformerFactory = (SAXTransformerFactory)TransformerFactory.newDefaultInstance();
 
     final Source xslSource;
     final Transformer transformer;
@@ -104,7 +108,7 @@ public class XSLTReportConverter implements InspectionsReportConverter {
     }
   }
 
-  private void warn(@NotNull final String msg) {
+  private void warn(final @NotNull String msg) {
     System.err.println(msg);
   }
 }

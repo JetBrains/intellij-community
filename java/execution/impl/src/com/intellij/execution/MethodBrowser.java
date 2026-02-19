@@ -1,24 +1,12 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution;
 
 import com.intellij.codeInsight.completion.CompletionResultSet;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.execution.configuration.BrowseModuleValueActionListener;
 import com.intellij.execution.ui.ConfigurationModuleSelector;
+import com.intellij.openapi.actionSystem.ex.ActionUtil;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Condition;
@@ -28,7 +16,9 @@ import com.intellij.ui.EditorTextField;
 import com.intellij.util.TextFieldCompletionProvider;
 import org.jetbrains.annotations.NotNull;
 
-public abstract class MethodBrowser extends BrowseModuleValueActionListener {
+import javax.swing.JComponent;
+
+public abstract class MethodBrowser extends BrowseModuleValueActionListener<JComponent> {
 
   public MethodBrowser(final Project project) {
     super(project);
@@ -41,12 +31,13 @@ public abstract class MethodBrowser extends BrowseModuleValueActionListener {
   @Override
   protected String showDialog() {
     final String className = getClassName();
-    if (className.trim().length() == 0) {
+    if (className.trim().isEmpty()) {
       Messages.showMessageDialog(getField(), ExecutionBundle.message("set.class.name.message"),
                                  ExecutionBundle.message("cannot.browse.method.dialog.title"), Messages.getInformationIcon());
       return null;
     }
-    final PsiClass testClass = getModuleSelector().findClass(className);
+
+    final PsiClass testClass = getTestClass(className);
     if (testClass == null) {
       Messages.showMessageDialog(getField(), ExecutionBundle.message("class.does.not.exists.error.message", className),
                                  ExecutionBundle.message("cannot.browse.method.dialog.title"),
@@ -63,24 +54,34 @@ public abstract class MethodBrowser extends BrowseModuleValueActionListener {
     return null;
   }
 
+  private PsiClass getTestClass(String className) {
+    final ConfigurationModuleSelector selector = getModuleSelector();
+    return ActionUtil.underModalProgress(getProject(),
+                                  ExecutionBundle.message("browse.method.dialog.looking.for.class"),
+                                  () -> selector.findClass(className)
+    );
+  }
+
   public void installCompletion(EditorTextField field) {
-    new TextFieldCompletionProvider() {
-      @Override
-      protected void addCompletionVariants(@NotNull String text, int offset, @NotNull String prefix, @NotNull CompletionResultSet result) {
-        final String className = getClassName();
-        if (className.trim().length() == 0) {
-          return;
-        }
-        final PsiClass testClass = getModuleSelector().findClass(className);
-        if (testClass == null) return;
-        final Condition<PsiMethod> filter = getFilter(testClass);
-        for (PsiMethod psiMethod : testClass.getAllMethods()) {
-          if (filter.value(psiMethod)) {
-            result.addElement(LookupElementBuilder.create(psiMethod.getName()));
-          }
+    new MyTextFieldCompletionProvider().apply(field);
+  }
+
+  private class MyTextFieldCompletionProvider extends TextFieldCompletionProvider implements DumbAware {
+    @Override
+    protected void addCompletionVariants(@NotNull String text, int offset, @NotNull String prefix, @NotNull CompletionResultSet result) {
+      final String className = getClassName();
+      if (className.trim().isEmpty()) {
+        return;
+      }
+      final PsiClass testClass = getModuleSelector().findClass(className);
+      if (testClass == null) return;
+      final Condition<PsiMethod> filter = getFilter(testClass);
+      for (PsiMethod psiMethod : testClass.getAllMethods()) {
+        if (filter.value(psiMethod)) {
+          result.addElement(LookupElementBuilder.create(psiMethod.getName()));
         }
       }
-    }.apply(field);
+    }
   }
 
 }

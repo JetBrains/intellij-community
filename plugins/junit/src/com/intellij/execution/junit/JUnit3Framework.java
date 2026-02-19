@@ -1,38 +1,30 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.junit;
 
-import com.intellij.execution.configurations.ConfigurationType;
-import com.intellij.execution.junit2.info.MethodLocation;
-import com.intellij.icons.AllIcons;
 import com.intellij.ide.fileTemplates.FileTemplateDescriptor;
 import com.intellij.openapi.roots.ExternalLibraryDescriptor;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElementFactory;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiModifier;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.testIntegration.JavaTestFramework;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+public class JUnit3Framework extends JUnitTestFramework {
 
-public class JUnit3Framework extends JavaTestFramework {
   @Override
-  @NotNull
-  public String getName() {
+  public boolean isDumbAware() {
+    // Only Java is available in dumb mode, other language implementation might not support it.
+    // For example, Kotlin, because it relies on light classes which require resolve.
+    return this.getClass().isAssignableFrom(JUnit3Framework.class);
+  }
+
+  @Override
+  public @NotNull String getName() {
     return "JUnit3";
   }
 
@@ -48,23 +40,10 @@ public class JUnit3Framework extends JavaTestFramework {
 
   @Override
   public boolean isSuiteClass(PsiClass psiClass) {
-    return JUnitUtil.findSuiteMethod(psiClass) != null;
-  }
-
-  @Override
-  public boolean isTestMethod(PsiMethod method, PsiClass myClass) {
-    return JUnitUtil.isTestMethod(MethodLocation.elementInClass(method, myClass));
-  }
-
-  @Override
-  public boolean isMyConfigurationType(ConfigurationType type) {
-    return type instanceof JUnitConfigurationType;
-  }
-
-  @NotNull
-  @Override
-  public Icon getIcon() {
-    return AllIcons.RunConfigurations.Junit;
+    if (psiClass == null) return false;
+    return callWithAlternateResolver(psiClass.getProject(), () -> {
+      return JUnitUtil.findSuiteMethod(psiClass) != null;
+    }, false);
   }
 
   @Override
@@ -72,51 +51,52 @@ public class JUnit3Framework extends JavaTestFramework {
     return "junit.framework.TestCase";
   }
 
-  @Nullable
   @Override
-  public ExternalLibraryDescriptor getFrameworkLibraryDescriptor() {
+  public @Nullable ExternalLibraryDescriptor getFrameworkLibraryDescriptor() {
     return JUnitExternalLibraryDescriptor.JUNIT3;
   }
 
   @Override
-  @Nullable
-  public String getDefaultSuperClass() {
+  public @Nullable String getDefaultSuperClass() {
     return "junit.framework.TestCase";
   }
 
   @Override
   public boolean isTestClass(PsiClass clazz, boolean canBePotential) {
-    if (JUnitUtil.isJUnit3TestClass(clazz)) {
-      return true;
-    }
-    return JUnitUtil.findSuiteMethod(clazz) != null;
+    if (clazz == null) return false;
+    return callWithAlternateResolver(clazz.getProject(), () -> {
+      if (JUnitUtil.isJUnit3TestClass(clazz)) {
+        return true;
+      }
+      return JUnitUtil.findSuiteMethod(clazz) != null;
+    }, false);
   }
 
   @Override
-  @Nullable
-  protected PsiMethod findSetUpMethod(@NotNull PsiClass clazz) {
-    if (!JUnitUtil.isJUnit3TestClass(clazz)) return null;
+  protected @Nullable PsiMethod findSetUpMethod(@NotNull PsiClass clazz) {
+    return callWithAlternateResolver(clazz.getProject(), () -> {
+      if (!JUnitUtil.isJUnit3TestClass(clazz)) return null;
 
-    for (PsiMethod each : clazz.getMethods()) {
-      if (each.getName().equals("setUp")) return each;
-    }
-    return null;
+      for (PsiMethod each : clazz.getMethods()) {
+        if (each.getName().equals("setUp")) return each;
+      }
+      return null;
+    }, null);
   }
 
   @Override
-  @Nullable
-  protected PsiMethod findTearDownMethod(@NotNull PsiClass clazz) {
-    if (!JUnitUtil.isJUnit3TestClass(clazz)) return null;
-
-    for (PsiMethod each : clazz.getMethods()) {
-      if (each.getName().equals("tearDown")) return each;
-    }
-    return null;
+  protected @Nullable PsiMethod findTearDownMethod(@NotNull PsiClass clazz) {
+    return callWithAlternateResolver(clazz.getProject(), () -> {
+      if (!JUnitUtil.isJUnit3TestClass(clazz)) return null;
+      for (PsiMethod each : clazz.getMethods()) {
+        if (each.getName().equals("tearDown")) return each;
+      }
+      return null;
+    }, null);
   }
 
   @Override
-  @Nullable
-  protected PsiMethod findOrCreateSetUpMethod(PsiClass clazz) throws IncorrectOperationException {
+  protected @Nullable PsiMethod findOrCreateSetUpMethod(PsiClass clazz) throws IncorrectOperationException {
     final PsiManager manager = clazz.getManager();
     final PsiElementFactory factory = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory();
 
@@ -156,13 +136,7 @@ public class JUnit3Framework extends JavaTestFramework {
   }
 
   @Override
-  @NotNull
-  public FileTemplateDescriptor getTestMethodFileTemplateDescriptor() {
+  public @NotNull FileTemplateDescriptor getTestMethodFileTemplateDescriptor() {
     return new FileTemplateDescriptor("JUnit3 Test Method.java");
-  }
-
-  @Override
-  public boolean isTestMethod(PsiElement element, boolean checkAbstract) {
-    return element instanceof PsiMethod && JUnitUtil.getTestMethod(element, checkAbstract) != null;
   }
 }

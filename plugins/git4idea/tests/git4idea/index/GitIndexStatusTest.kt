@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.index
 
 import com.intellij.openapi.util.io.FileUtil
@@ -11,7 +11,7 @@ import git4idea.repo.GitRepository
 import git4idea.test.GitPlatformTest
 import git4idea.test.git
 import junit.framework.TestCase
-import org.apache.commons.lang.RandomStringUtils
+import org.apache.commons.lang3.RandomStringUtils
 
 class GitIndexStatusTest : GitPlatformTest() {
   private var _repository: GitRepository? = null
@@ -94,9 +94,16 @@ class GitIndexStatusTest : GitPlatformTest() {
   }
 
   override fun tearDown() {
-    repositoryFiles.clear()
-    _repository = null
-    super.tearDown()
+    try {
+      repositoryFiles.clear()
+      _repository = null
+    }
+    catch (e: Throwable) {
+      addSuppressedException(e)
+    }
+    finally {
+      super.tearDown()
+    }
   }
 
   private fun modify(file: FilePath) {

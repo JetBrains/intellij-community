@@ -1,10 +1,20 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.resolve.references
 
 import com.intellij.openapi.util.TextRange
-import org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.*
+import org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.T_BNOT
+import org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.T_DEC
+import org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.T_INC
+import org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.T_MINUS
+import org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.T_NOT
+import org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.T_PLUS
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrUnaryExpression
-import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.HardcodedGroovyMethodConstants.*
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.HardcodedGroovyMethodConstants.AS_BOOLEAN
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.HardcodedGroovyMethodConstants.BITWISE_NEGATE
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.HardcodedGroovyMethodConstants.NEGATIVE
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.HardcodedGroovyMethodConstants.NEXT
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.HardcodedGroovyMethodConstants.POSITIVE
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.HardcodedGroovyMethodConstants.PREVIOUS
 import org.jetbrains.plugins.groovy.lang.resolve.api.Argument
 import org.jetbrains.plugins.groovy.lang.resolve.api.Arguments
 import org.jetbrains.plugins.groovy.lang.resolve.api.ExpressionArgument
@@ -22,7 +32,7 @@ class GrUnaryOperatorReference(element: GrUnaryExpression) : GroovyMethodCallRef
       return unaryOperatorMethodNames[tokenType] ?: error("unexpected token type: $tokenType")
     }
 
-  override val arguments: Arguments? get() = emptyList()
+  override val arguments: Arguments get() = emptyList()
 
   companion object {
     private val unaryOperatorMethodNames = mapOf(

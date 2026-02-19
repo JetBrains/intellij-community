@@ -1,0 +1,10 @@
+PyFile:TypeAliasStatementWithoutTypeParameterList.py
+  PyTypeAliasStatement
+    PsiElement(Py:TYPE_KEYWORD)('type')
+    PsiWhiteSpace(' ')
+    PsiElement(Py:IDENTIFIER)('MyType')
+    PsiWhiteSpace(' ')
+    PsiElement(Py:EQ)('=')
+    PsiWhiteSpace(' ')
+    PyReferenceExpression: str
+      PsiElement(Py:IDENTIFIER)('str')

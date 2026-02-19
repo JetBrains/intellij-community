@@ -5,22 +5,30 @@ import com.intellij.extapi.psi.StubBasedPsiElementBase;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiComment;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiPolyVariantReference;
+import com.intellij.psi.PsiReference;
+import com.intellij.psi.ReferenceRange;
+import com.intellij.psi.StubBasedPsiElement;
 import com.intellij.psi.impl.source.resolve.reference.impl.PsiMultiReference;
 import com.intellij.psi.stubs.IStubElementType;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.templateLanguages.OuterLanguageElement;
-import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.tree.TokenSet;
 import com.jetbrains.python.PythonFileType;
 import com.jetbrains.python.PythonLanguage;
+import com.jetbrains.python.ast.PyAstElementVisitor;
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider;
-import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.PyElement;
+import com.jetbrains.python.psi.PyElementVisitor;
+import com.jetbrains.python.psi.PyReferenceOwner;
+import com.jetbrains.python.psi.PyTypeCommentOwner;
+import com.jetbrains.python.psi.PyUtil;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
-import com.jetbrains.python.psi.stubs.PyAnnotationOwnerStub;
 import com.jetbrains.python.psi.stubs.PyTypeCommentOwnerStub;
 import com.jetbrains.python.psi.types.TypeEvalContext;
-import com.jetbrains.python.pyi.PyiUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -37,9 +45,8 @@ public class PyBaseElementImpl<T extends StubElement> extends StubBasedPsiElemen
     super(node);
   }
 
-  @NotNull
   @Override
-  public PythonLanguage getLanguage() {
+  public @NotNull PythonLanguage getLanguage() {
     return (PythonLanguage)PythonFileType.INSTANCE.getLanguage();
   }
 
@@ -54,19 +61,14 @@ public class PyBaseElementImpl<T extends StubElement> extends StubBasedPsiElemen
     return className;
   }
 
-  @NotNull
-  @Override
-  public PsiElement getNavigationElement() {
-    // TODO: Limit to classes, functions, targets?
-    final PsiElement element = PyiUtil.getOriginalElement(this);
-    return element != null ? element : super.getNavigationElement();
-  }
-
   @Override
   public void accept(@NotNull PsiElementVisitor visitor) {
     PyUtil.verboseOnly(() -> PyPsiUtils.assertValid(this));
-    if (visitor instanceof PyElementVisitor) {
-      acceptPyVisitor(((PyElementVisitor)visitor));
+    if (visitor instanceof PyElementVisitor pyVisitor) {
+      acceptPyVisitor(pyVisitor);
+    }
+    else if (visitor instanceof PyAstElementVisitor pyVisitor) {
+      acceptPyVisitor(pyVisitor);
     }
     else {
       super.accept(visitor);
@@ -75,59 +77,6 @@ public class PyBaseElementImpl<T extends StubElement> extends StubBasedPsiElemen
 
   protected void acceptPyVisitor(PyElementVisitor pyVisitor) {
     pyVisitor.visitPyElement(this);
-  }
-
-  protected <T extends PyElement> T @NotNull [] childrenToPsi(TokenSet filterSet, T[] array) {
-    final ASTNode[] nodes = getNode().getChildren(filterSet);
-    return PyPsiUtils.nodesToPsi(nodes, array);
-  }
-
-  @Nullable
-  protected <T extends PyElement> T childToPsi(TokenSet filterSet, int index) {
-    final ASTNode[] nodes = getNode().getChildren(filterSet);
-    if (nodes.length <= index) {
-      return null;
-    }
-    //noinspection unchecked
-    return (T)nodes[index].getPsi();
-  }
-
-  @Nullable
-  protected <T extends PyElement> T childToPsi(IElementType elType) {
-    final ASTNode node = getNode().findChildByType(elType);
-    if (node == null) {
-      return null;
-    }
-
-    //noinspection unchecked
-    return (T)node.getPsi();
-  }
-
-  @Nullable
-  protected <T extends PyElement> T childToPsi(@NotNull TokenSet elTypes) {
-    final ASTNode node = getNode().findChildByType(elTypes);
-    //noinspection unchecked
-    return node != null ? (T)node.getPsi() : null;
-  }
-
-  @NotNull
-  protected <T extends PyElement> T childToPsiNotNull(TokenSet filterSet, int index) {
-    final PyElement child = childToPsi(filterSet, index);
-    if (child == null) {
-      throw new RuntimeException("child must not be null: expression text " + getText());
-    }
-    //noinspection unchecked
-    return (T)child;
-  }
-
-  @NotNull
-  protected <T extends PyElement> T childToPsiNotNull(IElementType elType) {
-    final PyElement child = childToPsi(elType);
-    if (child == null) {
-      throw new RuntimeException("child must not be null; expression text " + getText());
-    }
-    //noinspection unchecked
-    return (T)child;
   }
 
   /**
@@ -140,16 +89,37 @@ public class PyBaseElementImpl<T extends StubElement> extends StubBasedPsiElemen
    */
   @Override
   public PsiReference findReferenceAt(int offset) {
-    // copy/paste from SharedPsiElementImplUtil
-    PsiElement element = findElementAt(offset);
+    return findReferenceAt(this, offset);
+  }
+
+  protected static @Nullable <T extends StubBasedPsiElement<? extends PyTypeCommentOwnerStub> & PyTypeCommentOwner>
+  String getTypeCommentAnnotationFromStubOrPsi(@NotNull T elem) {
+    final PyTypeCommentOwnerStub stub = elem.getStub();
+    if (stub != null) {
+      return stub.getTypeComment();
+    }
+    final PsiComment comment = elem.getTypeComment();
+    if (comment != null) {
+      return PyTypingTypeProvider.getTypeCommentValue(comment.getText());
+    }
+    return null;
+  }
+
+  @Override
+  public <E extends PsiElement> @Nullable E getStubOrPsiParentOfType(@NotNull Class<E> parentClass) {
+    return super.getStubOrPsiParentOfType(parentClass);
+  }
+
+  static @Nullable PsiReference findReferenceAt(@NotNull PsiElement target, int offset) {
+    PsiElement element = target.findElementAt(offset);
     if (element == null || element instanceof OuterLanguageElement) return null;
-    offset = getTextRange().getStartOffset() + offset - element.getTextRange().getStartOffset();
+    offset = target.getTextRange().getStartOffset() + offset - element.getTextRange().getStartOffset();
 
     List<PsiReference> referencesList = new ArrayList<>();
     final PsiFile file = element.getContainingFile();
-    final PyResolveContext resolveContext = file != null ?
-                                     PyResolveContext.implicitContext().withTypeEvalContext(TypeEvalContext.codeAnalysis(file.getProject(), file)) :
-                                     PyResolveContext.implicitContext();
+    final var context =
+      file != null ? TypeEvalContext.codeAnalysis(file.getProject(), file) : TypeEvalContext.codeInsightFallback(element.getProject());
+    final PyResolveContext resolveContext = PyResolveContext.implicitContext(context);
     while (element != null) {
       addReferences(offset, element, referencesList, resolveContext);
       offset = element.getStartOffsetInParent() + offset;
@@ -163,12 +133,14 @@ public class PyBaseElementImpl<T extends StubElement> extends StubBasedPsiElemen
                                  referencesList.get(referencesList.size() - 1).getElement());
   }
 
-  private static void addReferences(int offset, PsiElement element, final Collection<PsiReference> outReferences,
-                                    PyResolveContext resolveContext) {
+  private static void addReferences(int offset,
+                                    @NotNull PsiElement element,
+                                    final @NotNull Collection<PsiReference> outReferences,
+                                    @NotNull PyResolveContext resolveContext) {
     final PsiReference[] references;
-    if (element instanceof PyReferenceOwner) {
-      final PsiPolyVariantReference reference = ((PyReferenceOwner)element).getReference(resolveContext);
-      references = reference == null ? PsiReference.EMPTY_ARRAY : new PsiReference[]{reference};
+    if (element instanceof PyReferenceOwner owner) {
+      final PsiPolyVariantReference reference = owner.getReference(resolveContext);
+      references = new PsiReference[]{reference};
     }
     else {
       references = element.getReferences();
@@ -181,41 +153,5 @@ public class PyBaseElementImpl<T extends StubElement> extends StubBasedPsiElemen
         }
       }
     }
-  }
-
-  @Nullable
-  protected static <T extends StubBasedPsiElement<? extends PyAnnotationOwnerStub> & PyAnnotationOwner>
-  String getAnnotationContentFromStubOrPsi(@NotNull T elem) {
-    final PyAnnotationOwnerStub stub = elem.getStub();
-    if (stub != null) {
-      return stub.getAnnotation();
-    }
-    return getAnnotationContentFromPsi(elem);
-  }
-
-  @Nullable
-  protected static <T extends PyAnnotationOwner> String getAnnotationContentFromPsi(@NotNull T elem) {
-    final PyAnnotation annotation = elem.getAnnotation();
-    if (annotation != null) {
-      final PyExpression annotationValue = annotation.getValue();
-      if (annotationValue != null) {
-        return annotationValue.getText();
-      }
-    }
-    return null;
-  }
-
-  @Nullable
-  protected static <T extends StubBasedPsiElement<? extends PyTypeCommentOwnerStub> & PyTypeCommentOwner>
-  String getTypeCommentAnnotationFromStubOrPsi(@NotNull T elem) {
-    final PyTypeCommentOwnerStub stub = elem.getStub();
-    if (stub != null) {
-      return stub.getTypeComment();
-    }
-    final PsiComment comment = elem.getTypeComment();
-    if (comment != null) {
-      return PyTypingTypeProvider.getTypeCommentValue(comment.getText());
-    }
-    return null;
   }
 }

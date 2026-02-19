@@ -6,7 +6,7 @@ import com.intellij.jarRepository.RemoteRepositoriesConfiguration
 import com.intellij.jarRepository.RemoteRepositoryDescription
 import com.intellij.openapi.externalSystem.model.DataNode
 import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider
-import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProviderImpl
+import com.intellij.openapi.externalSystem.service.project.ProjectDataManager
 import com.intellij.testFramework.LightIdeaTestCase
 import com.intellij.testFramework.UsefulTestCase
 import org.jetbrains.plugins.gradle.util.GradleConstants
@@ -18,7 +18,7 @@ class MavenRepositoriesDataServiceTest: LightIdeaTestCase() {
 
   override fun setUp() {
     super.setUp()
-    myModelsProvider = IdeModifiableModelsProviderImpl(getProject())
+    myModelsProvider = ProjectDataManager.getInstance().createModifiableModelsProvider(getProject())
   }
 
   override fun tearDown() {
@@ -26,7 +26,11 @@ class MavenRepositoriesDataServiceTest: LightIdeaTestCase() {
       val repositoriesConfiguration = RemoteRepositoriesConfiguration.getInstance(getProject())
       repositoriesConfiguration.resetToDefault()
       myModelsProvider.dispose()
-    } finally {
+    }
+    catch (e: Throwable) {
+      addSuppressedException(e)
+    }
+    finally {
       super.tearDown()
     }
   }
@@ -34,9 +38,9 @@ class MavenRepositoriesDataServiceTest: LightIdeaTestCase() {
   @Test
   fun testMavenRepositoriesDataApplied() {
     val service = MavenRepositoriesDataService()
-    val imported = mutableSetOf(DataNode<MavenRepositoryData>(MavenRepositoryData.KEY,
-                                                       MavenRepositoryData(GradleConstants.SYSTEM_ID, "repoName", "repoUrl"),
-                                                       null))
+    val imported = mutableSetOf(DataNode(MavenRepositoryData.KEY,
+                                         MavenRepositoryData(GradleConstants.SYSTEM_ID, "repoName", "repoUrl"),
+                                         null))
 
     service.onSuccessImport(imported, null, getProject(), myModelsProvider)
 
@@ -51,9 +55,9 @@ class MavenRepositoriesDataServiceTest: LightIdeaTestCase() {
     val instance = RemoteRepositoriesConfiguration.getInstance(getProject())
     instance.repositories = listOf(RemoteRepositoryDescription("repoId_original", "repoName_original", "repoUrl"))
 
-    val imported = mutableSetOf(DataNode<MavenRepositoryData>(MavenRepositoryData.KEY,
-                                                              MavenRepositoryData(GradleConstants.SYSTEM_ID, "repoName", "repoUrl"),
-                                                              null))
+    val imported = mutableSetOf(DataNode(MavenRepositoryData.KEY,
+                                         MavenRepositoryData(GradleConstants.SYSTEM_ID, "repoName", "repoUrl"),
+                                         null))
 
     service.onSuccessImport(imported, null, getProject(), myModelsProvider)
 

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.spi.psi;
 
 import com.intellij.extapi.psi.PsiFileBase;
@@ -21,7 +7,15 @@ import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.*;
+import com.intellij.psi.FileViewProvider;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiPackage;
+import com.intellij.psi.PsiReference;
+import com.intellij.psi.PsiReferenceBase;
+import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry;
 import com.intellij.psi.util.ClassUtil;
 import com.intellij.spi.SPIFileType;
 import com.intellij.util.IncorrectOperationException;
@@ -36,15 +30,17 @@ public class SPIFile extends PsiFileBase {
     super(viewProvider, SPILanguage.INSTANCE);
   }
 
-  @NotNull
   @Override
-  public PsiReference getReference() {
+  public @NotNull PsiReference getReference() {
     return new SPIFileName2ClassReference(this, ReadAction
       .compute(() -> ClassUtil.findPsiClass(getManager(), getName(), null, true, getResolveScope())));
   }
 
   @Override
   public PsiReference @NotNull [] getReferences() {
+    PsiReference[] references = ReferenceProvidersRegistry.getReferencesFromProviders(this);
+    if (references.length > 0) return references;
+
     return ReadAction.compute(() -> {
 
       final List<PsiReference> refs = new ArrayList<>();
@@ -54,18 +50,19 @@ public class SPIFile extends PsiFileBase {
       while ((d = fileName.indexOf(".", idx)) > -1) {
         final PsiPackage aPackage = JavaPsiFacade.getInstance(getProject()).findPackage(fileName.substring(0, d));
         if (aPackage != null) {
-          refs.add(new SPIFileName2PackageReference(SPIFile.this, aPackage));
+          refs.add(new SPIFileName2PackageReference(this, aPackage));
         }
         idx = d + 1;
       }
       final PsiReference reference = getReference();
       PsiElement resolve = reference.resolve();
       while (resolve instanceof PsiClass) {
-        resolve = ((PsiClass)resolve).getContainingClass();
+        PsiClass psiClass = (PsiClass)resolve;
+        resolve = psiClass.getContainingClass();
         if (resolve != null) {
-          final String jvmClassName = ClassUtil.getJVMClassName((PsiClass)resolve);
+          final String jvmClassName = ClassUtil.getJVMClassName(psiClass);
           if (jvmClassName != null) {
-            refs.add(new SPIFileName2PackageReference(SPIFile.this, resolve));
+            refs.add(new SPIFileName2PackageReference(this, resolve));
           }
         }
       }
@@ -74,9 +71,8 @@ public class SPIFile extends PsiFileBase {
     });
   }
 
-  @NotNull
   @Override
-  public FileType getFileType() {
+  public @NotNull FileType getFileType() {
     return SPIFileType.INSTANCE;
   }
   
@@ -88,9 +84,8 @@ public class SPIFile extends PsiFileBase {
       myClass = aClass;
     }
 
-    @Nullable
     @Override
-    public PsiElement resolve() {
+    public @Nullable PsiElement resolve() {
       return myClass;
     }
 
@@ -126,16 +121,14 @@ public class SPIFile extends PsiFileBase {
       myPackageOrContainingClass = psiPackage;
     }
 
-    @NotNull
     @Override
-    public String getCanonicalText() {
+    public @NotNull String getCanonicalText() {
       return myPackageOrContainingClass instanceof PsiPackage 
              ? ((PsiPackage)myPackageOrContainingClass).getQualifiedName() : ClassUtil.getJVMClassName((PsiClass)myPackageOrContainingClass);
     }
 
-    @Nullable
     @Override
-    public PsiElement resolve() {
+    public @Nullable PsiElement resolve() {
       return myPackageOrContainingClass;
     }
 

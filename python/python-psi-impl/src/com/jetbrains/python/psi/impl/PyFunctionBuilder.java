@@ -15,30 +15,41 @@
  */
 package com.jetbrains.python.psi.impl;
 
-import com.intellij.openapi.util.text.StringUtil;
+import com.google.common.base.Strings;
+import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyNames;
-import com.jetbrains.python.documentation.docstrings.DocStringFormat;
-import com.jetbrains.python.documentation.docstrings.DocStringUtil;
+import com.jetbrains.python.documentation.docstrings.DocStringParser;
 import com.jetbrains.python.documentation.docstrings.PyDocstringGenerator;
-import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.LanguageLevel;
+import com.jetbrains.python.psi.PyCallExpression;
+import com.jetbrains.python.psi.PyDecorator;
+import com.jetbrains.python.psi.PyDecoratorList;
+import com.jetbrains.python.psi.PyElementGenerator;
+import com.jetbrains.python.psi.PyFunction;
+import com.jetbrains.python.psi.PyIndentUtil;
+import com.jetbrains.python.psi.PyParameter;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
-/**
- * @author yole
- */
+
 public class PyFunctionBuilder {
   private final String myName;
   private final List<String> myParameters = new ArrayList<>();
+  private final Map<String, String> myParameterTypes = new HashMap<>();
   private final List<String> myStatements = new ArrayList<>();
   private final List<String> myDecorators = new ArrayList<>();
   private final PsiElement mySettingAnchor;
-  private String myAnnotation = null;
-  @NotNull
-  private final Map<String, String> myDecoratorValues = new HashMap<>();
+  private final @NotNull Map<String, String> myDecoratorValues = new HashMap<>();
+  private String myReturnType;
   private boolean myAsync = false;
   private PyDocstringGenerator myDocStringGenerator;
 
@@ -49,8 +60,8 @@ public class PyFunctionBuilder {
    * @param decoratorsToCopyIfExist list of decorator names to be copied to new function.
    * @return builder configured by this function
    */
-  @NotNull
-  public static PyFunctionBuilder copySignature(@NotNull final PyFunction source, final String @NotNull ... decoratorsToCopyIfExist) {
+  public static @NotNull PyFunctionBuilder copySignature(final @NotNull PyFunction source,
+                                                         final String @NotNull ... decoratorsToCopyIfExist) {
     final String name = source.getName();
     final PyFunctionBuilder functionBuilder = new PyFunctionBuilder((name != null) ? name : "", source);
     for (final PyParameter parameter : source.getParameterList().getParameters()) {
@@ -70,18 +81,21 @@ public class PyFunctionBuilder {
         }
       }
     }
+    if (source.isAsync()) {
+      functionBuilder.makeAsync();
+    }
     functionBuilder.myDocStringGenerator = PyDocstringGenerator.forDocStringOwner(source);
     return functionBuilder;
   }
 
   /**
-   * @param settingsAnchor any PSI element, presumably in the same file/module where generated function is going to be inserted.
-   *                       It's needed to detect configured docstring format and Python indentation size and, as result, 
-   *                       generate properly formatted docstring. 
+   * @param settingsAnchor any PSI element, presumably in the same file/module where the generated function is going to be inserted.
+   *                       It's necessary to detect configured docstring format and Python indentation size and, as a result,
+   *                       generate a properly formatted docstring.
    */
   public PyFunctionBuilder(@NotNull String name, @NotNull PsiElement settingsAnchor) {
     myName = name;
-    myDocStringGenerator = PyDocstringGenerator.create(DocStringUtil.getConfiguredDocStringFormatOrPlain(settingsAnchor), 
+    myDocStringGenerator = PyDocstringGenerator.create(DocStringParser.getConfiguredDocStringFormatOrPlain(settingsAnchor),
                                                        PyIndentUtil.getIndentFromSettings(settingsAnchor.getContainingFile()),
                                                        settingsAnchor);
     mySettingAnchor = settingsAnchor;
@@ -89,27 +103,21 @@ public class PyFunctionBuilder {
 
   /**
    * Adds param and its type to doc
+   *
    * @param name param name
    * @param type param type
    */
-  @NotNull
-  public PyFunctionBuilder parameterWithType(@NotNull String name, @NotNull String type) {
-    parameter(name);
+  public @NotNull PyFunctionBuilder parameterWithDocString(@NotNull String name, @NotNull String type) {
+    parameter(name, type);
     myDocStringGenerator.withParamTypedByName(name, type);
     return this;
   }
 
-  @NotNull
-  @Deprecated
-  public PyFunctionBuilder parameterWithType(@NotNull final String name,
-                                             @NotNull final String type,
-                                             @NotNull final DocStringFormat format) {
-    parameter(name);
-    myDocStringGenerator.withParamTypedByName(name, type);
-    return this;
+  public @NotNull PyFunctionBuilder parameter(@NotNull String baseName) {
+    return parameter(baseName, null);
   }
 
-  public PyFunctionBuilder parameter(String baseName) {
+  public @NotNull PyFunctionBuilder parameter(@NotNull String baseName, @Nullable String type) {
     String name = baseName;
     int uniqueIndex = 0;
     while (myParameters.contains(name)) {
@@ -117,38 +125,41 @@ public class PyFunctionBuilder {
       name = baseName + uniqueIndex;
     }
     myParameters.add(name);
+    if (!Strings.isNullOrEmpty(type)) {
+      myParameterTypes.put(name, type);
+    }
     return this;
   }
 
-  public PyFunctionBuilder annotation(String text) {
-    myAnnotation = text;
+  public @NotNull PyFunctionBuilder returnType(String returnType) {
+    myReturnType = returnType;
     return this;
   }
 
-  public PyFunctionBuilder makeAsync() {
+  public @NotNull PyFunctionBuilder makeAsync() {
     myAsync = true;
     return this;
   }
 
-  public PyFunctionBuilder statement(String text) {
+  public @NotNull PyFunctionBuilder statement(String text) {
     myStatements.add(text);
     return this;
   }
 
-  public PyFunction addFunction(PsiElement target) {
+  public @NotNull PyFunction addFunction(PsiElement target) {
     return (PyFunction)target.add(buildFunction());
   }
 
-  public PyFunction addFunctionAfter(PsiElement target, PsiElement anchor) {
+  public @NotNull PyFunction addFunctionAfter(PsiElement target, PsiElement anchor) {
     return (PyFunction)target.addAfter(buildFunction(), anchor);
   }
 
-  public PyFunction buildFunction() {
+  public @NotNull PyFunction buildFunction() {
     PyElementGenerator generator = PyElementGenerator.getInstance(mySettingAnchor.getProject());
     return generator.createFromText(LanguageLevel.forElement(mySettingAnchor), PyFunction.class, buildText(generator));
   }
 
-  private String buildText(PyElementGenerator generator) {
+  private @NotNull String buildText(PyElementGenerator generator) {
     StringBuilder builder = new StringBuilder();
     for (String decorator : myDecorators) {
       final StringBuilder decoratorAppender = builder.append('@' + decorator);
@@ -159,21 +170,15 @@ public class PyFunctionBuilder {
       }
       decoratorAppender.append("\n");
     }
-    if (myAsync) {
-      builder.append("async ");
-    }
-    builder.append("def ");
-    builder.append(myName).append("(");
-    builder.append(StringUtil.join(myParameters, ", "));
-    builder.append(")");
-    if (myAnnotation != null) {
-      builder.append(myAnnotation);
-    }
+    List<Pair<@NotNull String, @Nullable String>> parameters =
+      ContainerUtil.map(myParameters, paramName -> Pair.create(paramName, myParameterTypes.get(paramName)));
+
+    appendMethodSignature(builder, myAsync, myName, parameters, myReturnType);
     builder.append(":");
     List<String> statements = myStatements.isEmpty() ? Collections.singletonList(PyNames.PASS) : myStatements;
 
     final String indent = PyIndentUtil.getIndentFromSettings(mySettingAnchor.getContainingFile());
-    // There was original docstring or some parameters were added via parameterWithType()
+    // There was an original docstring or some parameters were added via parameterWithType()
     if (!myDocStringGenerator.isNewMode() || myDocStringGenerator.hasParametersToAdd()) {
       final String docstring = PyIndentUtil.changeIndent(myDocStringGenerator.buildDocString(), true, indent);
       builder.append('\n').append(indent).append(docstring);
@@ -190,12 +195,41 @@ public class PyFunctionBuilder {
    * @param decoratorName decorator name
    * @param value         its argument
    */
-  public void decorate(@NotNull final String decoratorName, @NotNull final String value) {
+  public void decorate(final @NotNull String decoratorName, final @NotNull String value) {
     decorate(decoratorName);
     myDecoratorValues.put(decoratorName, value);
   }
 
   public void decorate(String decoratorName) {
     myDecorators.add(decoratorName);
+  }
+
+  public static void appendMethodSignature(@NotNull StringBuilder builder, boolean isAsync, @NotNull String name,
+                                           @NotNull List<Pair<@NotNull String, @Nullable String>> parameters,
+                                           @Nullable String returnTypeName
+  ) {
+    if (isAsync) {
+      builder.append("async ");
+    }
+    builder.append("def ");
+    builder.append(name);
+    builder.append("(");
+    for (int i = 0; i < parameters.size(); i++) {
+      Pair<@NotNull String, @Nullable String> parameter = parameters.get(i);
+      if (i > 0) {
+        builder.append(", ");
+      }
+      builder.append(parameter.first);
+      if (parameter.second != null) {
+        builder.append(": ");
+        builder.append(parameter.second);
+      }
+    }
+    builder.append(")");
+    if (returnTypeName != null) {
+      builder.append(" -> ");
+      builder.append(returnTypeName);
+      builder.append(" ");
+    }
   }
 }

@@ -6,6 +6,7 @@ import com.intellij.openapi.util.NlsContexts.TabTitle;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.LanguageCodeStyleSettingsProvider;
 import com.intellij.psi.codeStyle.presentation.CodeStyleSettingPresentation;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -33,7 +34,7 @@ public class CodeStyleSpacesPanel extends OptionTreeWithPreviewPanel {
         initBooleanField(setting.getFieldName(), setting.getUiName(), groupName);
       }
     }
-    for (String customOptionsGroup : myCustomOptions.keySet()) {
+    for (@Nls String customOptionsGroup : myCustomOptions.keySet()) {
       initCustomOptions(customOptionsGroup);
     }
   }

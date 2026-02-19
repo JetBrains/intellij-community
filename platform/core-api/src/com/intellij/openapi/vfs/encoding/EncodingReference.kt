@@ -2,6 +2,7 @@
 package com.intellij.openapi.vfs.encoding
 
 import com.intellij.openapi.vfs.CharsetToolkit
+import com.intellij.openapi.vfs.encoding.EncodingReference.Companion.DEFAULT
 import java.nio.charset.Charset
 
 /**
@@ -22,6 +23,6 @@ data class EncodingReference(val charset: Charset?) {
 
   companion object {
     @JvmField
-    val DEFAULT = EncodingReference(charset = null)
+    val DEFAULT: EncodingReference = EncodingReference(charset = null)
   }
 }

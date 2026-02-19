@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.svn;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -8,7 +8,11 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
-import com.intellij.openapi.vcs.changes.*;
+import com.intellij.openapi.vcs.changes.Change;
+import com.intellij.openapi.vcs.changes.ChangelistBuilder;
+import com.intellij.openapi.vcs.changes.ChangesUtil;
+import com.intellij.openapi.vcs.changes.ContentRevision;
+import com.intellij.openapi.vcs.changes.CurrentContentRevision;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
@@ -40,17 +44,17 @@ import static org.jetbrains.idea.svn.SvnUtil.getRelativePath;
 class SvnChangeProviderContext implements StatusReceiver {
   private static final Logger LOG = Logger.getInstance(SvnChangeProviderContext.class);
 
-  @NotNull private final ChangelistBuilder myChangelistBuilder;
-  @NotNull private final List<SvnChangedFile> myCopiedFiles = new ArrayList<>();
-  @NotNull private final List<SvnChangedFile> myDeletedFiles = new ArrayList<>();
+  private final @NotNull ChangelistBuilder myChangelistBuilder;
+  private final @NotNull List<SvnChangedFile> myCopiedFiles = new ArrayList<>();
+  private final @NotNull List<SvnChangedFile> myDeletedFiles = new ArrayList<>();
   // for files moved in a subtree, which were the targets of merge (for instance).
-  @NotNull private final Map<String, Status> myTreeConflicted = new HashMap<>();
-  @NotNull private final Map<FilePath, Url> myCopyFromURLs = new HashMap<>();
-  @NotNull private final SvnVcs myVcs;
+  private final @NotNull Map<String, Status> myTreeConflicted = new HashMap<>();
+  private final @NotNull Map<FilePath, Url> myCopyFromURLs = new HashMap<>();
+  private final @NotNull SvnVcs myVcs;
   private final SvnBranchConfigurationManager myBranchConfigurationManager;
-  @NotNull private final List<File> filesToRefresh = new ArrayList<>();
+  private final @NotNull List<File> filesToRefresh = new ArrayList<>();
 
-  @Nullable private final ProgressIndicator myProgress;
+  private final @Nullable ProgressIndicator myProgress;
 
   SvnChangeProviderContext(@NotNull SvnVcs vcs, @NotNull ChangelistBuilder changelistBuilder, @Nullable ProgressIndicator progress) {
     myVcs = vcs;
@@ -60,7 +64,7 @@ class SvnChangeProviderContext implements StatusReceiver {
   }
 
   @Override
-  public void process(FilePath path, Status status) throws SvnBindException {
+  public void process(@NotNull FilePath path, Status status) throws SvnBindException {
     if (status != null) {
       processStatusFirstPass(path, status);
     }
@@ -77,11 +81,11 @@ class SvnChangeProviderContext implements StatusReceiver {
   }
 
   @Override
-  public void processCopyRoot(VirtualFile file, Url url, WorkingCopyFormat format, Url rootURL) {
+  public void processCopyRoot(@NotNull VirtualFile file, Url url, @NotNull WorkingCopyFormat format, Url rootURL) {
   }
 
   @Override
-  public void bewareRoot(VirtualFile vf, Url url) {
+  public void bewareRoot(@NotNull VirtualFile vf, Url url) {
   }
 
   @Override
@@ -89,8 +93,7 @@ class SvnChangeProviderContext implements StatusReceiver {
     LocalFileSystem.getInstance().refreshIoFiles(filesToRefresh, true, false, null);
   }
 
-  @NotNull
-  public ChangelistBuilder getBuilder() {
+  public @NotNull ChangelistBuilder getBuilder() {
     return myChangelistBuilder;
   }
 
@@ -98,18 +101,15 @@ class SvnChangeProviderContext implements StatusReceiver {
     myTreeConflicted.put(status.getFile().getAbsolutePath(), status);
   }
 
-  @Nullable
-  public Status getTreeConflictStatus(@NotNull File file) {
+  public @Nullable Status getTreeConflictStatus(@NotNull File file) {
     return myTreeConflicted.get(file.getAbsolutePath());
   }
 
-  @NotNull
-  public List<SvnChangedFile> getCopiedFiles() {
+  public @NotNull List<SvnChangedFile> getCopiedFiles() {
     return myCopiedFiles;
   }
 
-  @NotNull
-  public List<SvnChangedFile> getDeletedFiles() {
+  public @NotNull List<SvnChangedFile> getDeletedFiles() {
     return myDeletedFiles;
   }
 
@@ -134,8 +134,7 @@ class SvnChangeProviderContext implements StatusReceiver {
    * @param filePath the original filepath
    * @return the copy source url, or null if the file isn't a copy of anything
    */
-  @Nullable
-  public Url getParentCopyFromURL(@NotNull FilePath filePath) throws SvnBindException {
+  public @Nullable Url getParentCopyFromURL(@NotNull FilePath filePath) throws SvnBindException {
     Url result = null;
     FilePath parent = filePath;
 
@@ -166,7 +165,7 @@ class SvnChangeProviderContext implements StatusReceiver {
     if (filePath.isDirectory() && status.isWorkingCopyLocked()) {
       myChangelistBuilder.processLockedFolder(filePath.getVirtualFile());
     }
-    if (status.is(StatusType.STATUS_ADDED, StatusType.STATUS_MODIFIED) && status.getCopyFromUrl() != null) {
+    if (status.is(StatusType.STATUS_ADDED, StatusType.STATUS_MODIFIED, StatusType.STATUS_REPLACED) && isPossibleMove(filePath, status)) {
       addCopiedFile(filePath, status, status.getCopyFromUrl());
     }
     else if (status.is(StatusType.STATUS_DELETED)) {
@@ -181,6 +180,16 @@ class SvnChangeProviderContext implements StatusReceiver {
         processStatus(filePath, status);
       }
     }
+  }
+
+  private boolean isPossibleMove(@NotNull FilePath filePath, @NotNull Status status) {
+    WorkingCopyFormat format = myVcs.getWorkingCopyFormat(filePath.getIOFile());
+
+    if (format.isOrGreater(WorkingCopyFormat.ONE_DOT_EIGHT)) {
+      return status.getMovedFrom() != null && status.getCopyFromUrl() != null;
+    }
+
+    return status.getCopyFromUrl() != null;
   }
 
   void processStatus(@NotNull FilePath filePath, @NotNull Status status) {
@@ -318,11 +327,10 @@ class SvnChangeProviderContext implements StatusReceiver {
     return change;
   }
 
-  @NotNull
-  private Change createChange(@Nullable ContentRevision before,
-                              @Nullable ContentRevision after,
-                              @NotNull FileStatus fStatus,
-                              @NotNull Status svnStatus) {
+  private @NotNull Change createChange(@Nullable ContentRevision before,
+                                       @Nullable ContentRevision after,
+                                       @NotNull FileStatus fStatus,
+                                       @NotNull Status svnStatus) {
     ConflictedSvnChange change =
       new ConflictedSvnChange(before, after, fStatus, getState(svnStatus), after == null ? before.getFile() : after.getFile());
 
@@ -346,8 +354,7 @@ class SvnChangeProviderContext implements StatusReceiver {
     change.addAdditionalLayerElement(SvnChangeProvider.PROPERTY_LAYER, new Change(before, after, status));
   }
 
-  @Nullable
-  private PropertyRevision createBeforePropertyRevision(@NotNull Change change, @NotNull Status svnStatus, @Nullable Status deletedStatus) {
+  private @Nullable PropertyRevision createBeforePropertyRevision(@NotNull Change change, @NotNull Status svnStatus, @Nullable Status deletedStatus) {
     if (svnStatus.isProperty(StatusType.STATUS_ADDED) && deletedStatus == null) return null;
 
     ContentRevision before = change.getBeforeRevision();
@@ -359,8 +366,7 @@ class SvnChangeProviderContext implements StatusReceiver {
     return new SvnLazyPropertyContentRevision(myVcs, path, before.getRevisionNumber(), target);
   }
 
-  @Nullable
-  private PropertyRevision createAfterPropertyRevision(@NotNull Change change, @NotNull Status svnStatus) {
+  private @Nullable PropertyRevision createAfterPropertyRevision(@NotNull Change change, @NotNull Status svnStatus) {
     if (svnStatus.isProperty(StatusType.STATUS_DELETED)) return null;
 
     ContentRevision after = change.getAfterRevision();
@@ -371,8 +377,7 @@ class SvnChangeProviderContext implements StatusReceiver {
     return new SvnLazyPropertyContentRevision(myVcs, path, after.getRevisionNumber(), target);
   }
 
-  @NotNull
-  private ConflictState getState(@Nullable Status svnStatus) {
+  private @NotNull ConflictState getState(@Nullable Status svnStatus) {
     ConflictState result = svnStatus != null ? ConflictState.from(svnStatus) : ConflictState.none;
 
     if (result.isTree()) {

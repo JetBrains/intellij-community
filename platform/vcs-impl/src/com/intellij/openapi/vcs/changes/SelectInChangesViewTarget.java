@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes;
 
 import com.intellij.ide.SelectInContext;
@@ -10,12 +10,14 @@ import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindow;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
 
 import static com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager.LOCAL_CHANGES;
 import static com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager.getToolWindowFor;
 import static com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager.getToolWindowIdFor;
 
+@ApiStatus.Internal
 public class SelectInChangesViewTarget implements SelectInTarget, DumbAware {
   private final Project myProject;
 
@@ -23,8 +25,9 @@ public class SelectInChangesViewTarget implements SelectInTarget, DumbAware {
     myProject = project;
   }
 
+  @Override
   public String toString() {
-    return LOCAL_CHANGES;
+    return ChangesViewManager.getLocalChangesToolWindowName(myProject);
   }
 
   @Override
@@ -51,9 +54,8 @@ public class SelectInChangesViewTarget implements SelectInTarget, DumbAware {
     }
   }
 
-  @Nullable
   @Override
-  public String getToolWindowId() {
+  public @Nullable String getToolWindowId() {
     return getToolWindowIdFor(myProject, LOCAL_CHANGES);
   }
 

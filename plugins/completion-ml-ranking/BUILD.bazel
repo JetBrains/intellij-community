@@ -1,0 +1,139 @@
+### auto-generated section `build intellij.completionMlRanking` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "completion-ml-ranking_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "completion-ml-ranking",
+  module_name = "intellij.completionMlRanking",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":completion-ml-ranking_resources"],
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "//platform/analysis-api:analysis",
+    "//platform/core-api:core",
+    "//platform/editor-ui-api:editor-ui",
+    "//platform/platform-impl:ide-impl",
+    "//platform/lang-impl",
+    "//platform/analysis-impl",
+    "//platform/ml-impl",
+    "//platform/projectModel-api:projectModel",
+    "//platform/statistics",
+    "//platform/core-ui",
+    "//platform/platform-impl/codeinsight-inline:ide-codeinsight-inline",
+    "//libraries/caffeine",
+    "//libraries/jackson/jr-objects:libraries-jackson-jr-objects",
+    "//libraries/jackson/jackson",
+    "//libraries/kotlinx/serialization/json",
+    "//libraries/kotlinx/serialization/core",
+    "//libraries/kotlin/reflect",
+    "//platform/util/jdom",
+    "//platform/ml-api:ml",
+    "@lib//:opentelemetry",
+    "@lib//:opentelemetry-semconv",
+    "//platform/diagnostic/telemetry",
+    "//platform/platform-impl/internal",
+    "//platform/diagnostic/telemetry-impl",
+    "//platform/core-impl",
+    "//platform/lang-api:lang",
+    "//platform/vcs-api:vcs",
+    "//platform/vcs-impl",
+    "//platform/diff-impl",
+  ]
+)
+
+jvm_library(
+  name = "completion-ml-ranking_test_lib",
+  module_name = "intellij.completionMlRanking",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    ":completion-ml-ranking",
+    "//platform/analysis-api:analysis_test_lib",
+    "//platform/core-api:core_test_lib",
+    "//platform/editor-ui-api:editor-ui_test_lib",
+    "//platform/platform-impl:ide-impl_test_lib",
+    "//platform/lang-impl:lang-impl_test_lib",
+    "//platform/analysis-impl:analysis-impl_test_lib",
+    "//platform/ml-impl:ml-impl_test_lib",
+    "//platform/projectModel-api:projectModel_test_lib",
+    "//platform/statistics:statistics_test_lib",
+    "//platform/core-ui:core-ui_test_lib",
+    "//platform/platform-impl/codeinsight-inline:ide-codeinsight-inline_test_lib",
+    "//libraries/caffeine:caffeine_test_lib",
+    "//libraries/jackson/jr-objects:libraries-jackson-jr-objects_test_lib",
+    "//libraries/jackson/jackson:jackson_test_lib",
+    "//libraries/kotlinx/serialization/json:json_test_lib",
+    "//libraries/kotlinx/serialization/core:core_test_lib",
+    "//libraries/kotlin/reflect:reflect_test_lib",
+    "//platform/util/jdom:jdom_test_lib",
+    "//platform/ml-api:ml_test_lib",
+    "//platform/diagnostic/telemetry:telemetry_test_lib",
+    "//platform/platform-impl/internal:internal_test_lib",
+    "//platform/diagnostic/telemetry-impl:telemetry-impl_test_lib",
+    "//platform/core-impl:core-impl_test_lib",
+    "//platform/lang-api:lang_test_lib",
+    "//platform/vcs-api:vcs_test_lib",
+    "//platform/vcs-impl:vcs-impl_test_lib",
+    "//platform/diff-impl:diff-impl_test_lib",
+  ]
+)
+### auto-generated section `build intellij.completionMlRanking` end
+
+### auto-generated section `build intellij.completionMlRanking.tests` start
+jvm_library(
+  name = "completionMlRanking-tests",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = ["//platform/core-ui"]
+)
+
+jvm_library(
+  name = "completionMlRanking-tests_test_lib",
+  module_name = "intellij.completionMlRanking.tests",
+  visibility = ["//visibility:public"],
+  srcs = glob(["test/**/*.kt", "test/**/*.java", "test/**/*.form"], allow_empty = True),
+  deps = [
+    "//java/testFramework",
+    "//java/testFramework:testFramework_test_lib",
+    "@lib//:assert_j",
+    "//plugins/completion-ml-ranking",
+    "//plugins/completion-ml-ranking:completion-ml-ranking_test_lib",
+    "//platform/analysis-api:analysis",
+    "//platform/analysis-api:analysis_test_lib",
+    "//platform/core-api:core",
+    "//platform/core-api:core_test_lib",
+    "//platform/editor-ui-api:editor-ui",
+    "//platform/editor-ui-api:editor-ui_test_lib",
+    "//platform/projectModel-api:projectModel",
+    "//platform/projectModel-api:projectModel_test_lib",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test_lib",
+    "//platform/ml-impl",
+    "//platform/ml-impl:ml-impl_test_lib",
+    "//platform/core-ui",
+    "//platform/core-ui:core-ui_test_lib",
+    "//platform/platform-impl/internal",
+    "//platform/ml-api:ml",
+    "//platform/ml-api:ml_test_lib",
+  ],
+  runtime_deps = [
+    ":completionMlRanking-tests",
+    "//platform/platform-impl/internal:internal_test_lib",
+  ]
+)
+### auto-generated section `build intellij.completionMlRanking.tests` end
+
+### auto-generated section `test intellij.completionMlRanking.tests` start
+load("@community//build:tests-options.bzl", "jps_test")
+
+jps_test(
+  name = "completionMlRanking-tests_test",
+  runtime_deps = [":completionMlRanking-tests_test_lib"]
+)
+### auto-generated section `test intellij.completionMlRanking.tests` end

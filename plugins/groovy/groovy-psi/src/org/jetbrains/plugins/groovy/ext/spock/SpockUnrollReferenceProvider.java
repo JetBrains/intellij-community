@@ -1,9 +1,13 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.ext.spock;
 
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.*;
+import com.intellij.psi.ElementManipulators;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiReference;
+import com.intellij.psi.PsiReferenceBase;
+import com.intellij.psi.PsiReferenceProvider;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ProcessingContext;
 import org.jetbrains.annotations.NotNull;
@@ -19,14 +23,11 @@ import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-/**
- * @author Sergey Evdokimov
- */
 public class SpockUnrollReferenceProvider extends PsiReferenceProvider {
 
   private static final Pattern PATTERN = Pattern.compile("\\#([\\w_]+)");
-  @NlsSafe private static final String UNROLL = "Unroll";
-  @NlsSafe private static final String SPOCK_LANG_UNROLL = "spock.lang.Unroll";
+  private static final @NlsSafe String UNROLL = "Unroll";
+  private static final @NlsSafe String SPOCK_LANG_UNROLL = "spock.lang.Unroll";
 
   @Override
   public PsiReference @NotNull [] getReferencesByElement(@NotNull PsiElement element, @NotNull ProcessingContext context) {
@@ -39,9 +40,7 @@ public class SpockUnrollReferenceProvider extends PsiReferenceProvider {
     if (!(argumentList instanceof GrAnnotationArgumentList)) return PsiReference.EMPTY_ARRAY;
 
     PsiElement eAnnotation = argumentList.getParent();
-    if (!(eAnnotation instanceof GrAnnotation)) return PsiReference.EMPTY_ARRAY;
-
-    GrAnnotation annotation = (GrAnnotation)eAnnotation;
+    if (!(eAnnotation instanceof GrAnnotation annotation)) return PsiReference.EMPTY_ARRAY;
 
     String shortName = annotation.getShortName();
     if (!shortName.equals(UNROLL) && !shortName.equals(SPOCK_LANG_UNROLL)) return PsiReference.EMPTY_ARRAY;
@@ -50,9 +49,7 @@ public class SpockUnrollReferenceProvider extends PsiReferenceProvider {
     if (!(modifierList instanceof GrModifierList)) return PsiReference.EMPTY_ARRAY;
 
     PsiElement eMethod = modifierList.getParent();
-    if (!(eMethod instanceof GrMethod)) return PsiReference.EMPTY_ARRAY;
-
-    final GrMethod method = (GrMethod)eMethod;
+    if (!(eMethod instanceof GrMethod method)) return PsiReference.EMPTY_ARRAY;
 
     TextRange rangeInElement = ElementManipulators.getValueTextRange(element);
 

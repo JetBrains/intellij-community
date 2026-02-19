@@ -20,9 +20,17 @@ import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.util.ArrayUtil;
 import com.jetbrains.python.PyPsiBundle;
-import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.LanguageLevel;
+import com.jetbrains.python.psi.PyAssignmentStatement;
+import com.jetbrains.python.psi.PyCallExpression;
+import com.jetbrains.python.psi.PyExpression;
+import com.jetbrains.python.psi.PyNoneLiteralExpression;
+import com.jetbrains.python.psi.PyNumericLiteralExpression;
+import com.jetbrains.python.psi.PySequenceExpression;
+import com.jetbrains.python.psi.PyStarExpression;
+import com.jetbrains.python.psi.PyStringLiteralExpression;
+import com.jetbrains.python.psi.PyTupleExpression;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
-import com.jetbrains.python.psi.types.PyNoneType;
 import com.jetbrains.python.psi.types.PyTupleType;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
@@ -31,22 +39,20 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
 
-/**
- * @author Alexey.Ivanov
- */
-public class PyTupleAssignmentBalanceInspection extends PyInspection {
+import static com.jetbrains.python.psi.types.PyNoneTypeKt.isNoneType;
 
-  @NotNull
+public final class PyTupleAssignmentBalanceInspection extends PyInspection {
+
   @Override
-  public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder,
-                                        boolean isOnTheFly,
-                                        @NotNull LocalInspectionToolSession session) {
-    return new Visitor(holder, session);
+  public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder,
+                                                 boolean isOnTheFly,
+                                                 @NotNull LocalInspectionToolSession session) {
+    return new Visitor(holder, PyInspectionVisitor.getContext(session));
   }
 
   private static class Visitor extends PyInspectionVisitor {
-    Visitor(@Nullable ProblemsHolder holder, @NotNull LocalInspectionToolSession session) {
-      super(holder, session);
+    Visitor(@Nullable ProblemsHolder holder, @NotNull TypeEvalContext context) {
+      super(holder, context);
     }
 
     @Override
@@ -86,8 +92,7 @@ public class PyTupleAssignmentBalanceInspection extends PyInspection {
       else if (assignedValue instanceof PyNumericLiteralExpression || assignedValue instanceof PyNoneLiteralExpression) {
         return 1;
       }
-      else if (assignedValue instanceof PyCallExpression) {
-        final PyCallExpression call = (PyCallExpression)assignedValue;
+      else if (assignedValue instanceof PyCallExpression call) {
         if (call.isCalleeText("dict")) {
           return call.getArguments().length;
         }
@@ -103,7 +108,7 @@ public class PyTupleAssignmentBalanceInspection extends PyInspection {
       if (assignedType instanceof PyTupleType) {
         return ((PyTupleType)assignedType).getElementCount();
       }
-      else if (assignedType instanceof PyNoneType) {
+      else if (isNoneType(assignedType)) {
         return 1;
       }
 
@@ -112,7 +117,7 @@ public class PyTupleAssignmentBalanceInspection extends PyInspection {
 
     private static int countStarExpressions(PyExpression @NotNull [] expressions) {
       if (expressions.length != 0 && !LanguageLevel.forElement(expressions[0]).isPython2()) {
-        return (int) Arrays
+        return (int)Arrays
           .stream(expressions)
           .filter(PyStarExpression.class::isInstance)
           .count();

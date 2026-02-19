@@ -3,8 +3,9 @@ package com.jetbrains.python.testing
 
 import com.intellij.execution.lineMarker.RunLineMarkerContributor
 import com.intellij.icons.AllIcons
+import com.intellij.openapi.extensions.ExtensionPointName
+import com.intellij.openapi.project.DumbAware
 import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiNamedElement
 import com.intellij.psi.impl.source.tree.LeafPsiElement
 import com.intellij.util.ThreeState
 import com.jetbrains.python.PyTokenTypes
@@ -12,19 +13,38 @@ import com.jetbrains.python.psi.PyClass
 import com.jetbrains.python.psi.PyFunction
 import com.jetbrains.python.psi.types.TypeEvalContext
 
-object PyTestLineMarkerContributor : RunLineMarkerContributor() {
+class PyTestLineMarkerContributor : RunLineMarkerContributor(), DumbAware {
   override fun getInfo(element: PsiElement): Info? {
     if ((element !is LeafPsiElement) || element.elementType != PyTokenTypes.IDENTIFIER) {
       return null
     }
     val testElement = element.parent ?: return null
+    if (!PyTestLineMarkerContributorCustomizer.shouldProcessElement(testElement)) {
+      return null
+    }
+
+    // If pytest is selected as the runner, only show gutter in files that pytest would collect by default
+    val module = com.intellij.openapi.module.ModuleUtilCore.findModuleForPsiElement(testElement)
+    val pyFile = testElement.containingFile as? com.jetbrains.python.psi.PyFile
+    if (!PyTestDiscoveryUtil.isPyTestAllowedForFile(module, pyFile)) return null
 
     val typeEvalContext = TypeEvalContext.codeAnalysis(element.project, element.containingFile)
     if ((testElement is PyClass || testElement is PyFunction)
-        && (testElement is PsiNamedElement)
         && isTestElement(testElement, ThreeState.UNSURE, typeEvalContext)) {
-      return RunLineMarkerContributor.withExecutorActions(AllIcons.RunConfigurations.TestState.Run)
+      return withExecutorActions(AllIcons.RunConfigurations.TestState.Run)
     }
     return null
   }
+}
+
+interface PyTestLineMarkerContributorCustomizer {
+  companion object {
+    private val EP_NAME: ExtensionPointName<PyTestLineMarkerContributorCustomizer> =
+      ExtensionPointName.create("com.jetbrains.python.testing.pyTestLineMarkerContributorCustomizer")
+
+    @JvmStatic
+    fun shouldProcessElement(testElement: PsiElement): Boolean = EP_NAME.extensionList.all { it.isTestableElement(testElement) }
+  }
+
+  fun isTestableElement(testElement: PsiElement): Boolean = true
 }

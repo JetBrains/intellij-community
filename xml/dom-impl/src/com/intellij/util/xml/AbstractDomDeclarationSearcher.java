@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.xml;
 
 import com.intellij.pom.PomDeclarationSearcher;
@@ -7,7 +7,12 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiLanguageInjectionHost;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.xml.*;
+import com.intellij.psi.xml.XmlAttribute;
+import com.intellij.psi.xml.XmlAttributeValue;
+import com.intellij.psi.xml.XmlTag;
+import com.intellij.psi.xml.XmlText;
+import com.intellij.psi.xml.XmlToken;
+import com.intellij.psi.xml.XmlTokenType;
 import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -18,7 +23,7 @@ import org.jetbrains.annotations.Nullable;
 public abstract class AbstractDomDeclarationSearcher extends PomDeclarationSearcher {
 
   @Override
-  public void findDeclarationsAt(@NotNull PsiElement token, int offsetInElement, @NotNull Consumer<PomTarget> consumer) {
+  public void findDeclarationsAt(@NotNull PsiElement token, int offsetInElement, @NotNull Consumer<? super PomTarget> consumer) {
     if (!(token instanceof XmlToken)) return;
     final PsiElement element = token.getParent();
     if (element == null) return;
@@ -26,8 +31,7 @@ public abstract class AbstractDomDeclarationSearcher extends PomDeclarationSearc
     final PsiElement parentElement = element.getParent();
     final DomManager domManager = DomManager.getDomManager(token.getProject());
     final DomElement nameElement;
-    if (tokenType == XmlTokenType.XML_DATA_CHARACTERS && element instanceof XmlText && parentElement instanceof XmlTag) {
-      final XmlTag tag = (XmlTag)parentElement;
+    if (tokenType == XmlTokenType.XML_DATA_CHARACTERS && element instanceof XmlText && parentElement instanceof XmlTag tag) {
       for (XmlText text : tag.getValue().getTextElements()) {
         if (InjectedLanguageUtil.hasInjections((PsiLanguageInjectionHost)text)) {
           return;
@@ -63,6 +67,5 @@ public abstract class AbstractDomDeclarationSearcher extends PomDeclarationSearc
     }
   }
 
-  @Nullable
-  protected abstract DomTarget createDomTarget(DomElement parent, DomElement nameElement);
+  protected abstract @Nullable DomTarget createDomTarget(DomElement parent, DomElement nameElement);
 }

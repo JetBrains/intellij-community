@@ -15,48 +15,61 @@
  */
 package org.jetbrains.debugger
 
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.concurrency.Promise
 
+@ApiStatus.NonExtendable
 interface CallFrame {
   /**
    * @return the scopes known in this frame
    */
+  @get:ApiStatus.Internal
   val variableScopes: List<Scope>
 
+  @get:ApiStatus.Internal
   val hasOnlyGlobalScope: Boolean
 
   /**
    * receiver variable known in this frame ("this" variable)
    * Computed variable must be null if no receiver variable
    */
+  @get:ApiStatus.Internal
   val receiverVariable: Promise<Variable?>
 
+  @get:ApiStatus.Internal
   val line: Int
 
+  @get:ApiStatus.Internal
   val column: Int
 
   /**
    * @return the name of the current function of this frame
    */
+  @get:ApiStatus.Internal
   val functionName: String?
 
+  @get:ApiStatus.Internal
   val returnValue: Variable?
     get() = null
 
   /**
    * @return context for evaluating expressions in scope of this frame
    */
+  @get:ApiStatus.Internal
   val evaluateContext: EvaluateContext
 
   /**
    * @see com.intellij.xdebugger.frame.XStackFrame.getEqualityObject
    */
+  @get:ApiStatus.Internal
   val equalityObject: Any
 
   /**
    * Name of function which scheduled some handler for top frames of async stack.
    */
+  @get:ApiStatus.Internal
   val asyncFunctionName: String?
 
+  @get:ApiStatus.Internal
   val isFromAsyncStack: Boolean
 }

@@ -1,24 +1,33 @@
 {
-  '@id': 0,
-  bean: null,
-  list: [
+  '@id':0,
+  bean:null,
+  list:[
   ],
-  children: [
+  children:[
     {
-      '@id': 1,
-      bean: 0,
-      list: [
+      '@id':1,
+      bean:0,
+      list:[
       ],
-      children: [
+      children:[
+      ],
+      singletonSet:[
+        a
       ]
     },
     {
-      '@id': 2,
-      bean: null,
-      list: [
+      '@id':2,
+      bean:null,
+      list:[
       ],
-      children: [
+      children:[
+      ],
+      singletonSet:[
+        a
       ]
     }
+  ],
+  singletonSet:[
+    a
   ]
 }

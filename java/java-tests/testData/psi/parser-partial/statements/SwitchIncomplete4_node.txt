@@ -1,0 +1,10 @@
+test.java.file
+  SWITCH_STATEMENT
+    SWITCH_KEYWORD
+    LPARENTH
+    ERROR_ELEMENT
+      <empty list>
+    RPARENTH
+    CODE_BLOCK
+      LBRACE
+      RBRACE

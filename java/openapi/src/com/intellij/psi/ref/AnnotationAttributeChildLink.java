@@ -1,7 +1,12 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.ref;
 
-import com.intellij.psi.*;
+import com.intellij.java.syntax.parser.JavaKeywords;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiAnnotation;
+import com.intellij.psi.PsiAnnotationMemberValue;
+import com.intellij.psi.PsiChildLink;
+import com.intellij.psi.PsiExpression;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -9,9 +14,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
 
-/**
- * @author peter
-*/
 public class AnnotationAttributeChildLink extends PsiChildLink<PsiAnnotation, PsiAnnotationMemberValue> {
   private final String myAttributeName;
 
@@ -19,8 +21,7 @@ public class AnnotationAttributeChildLink extends PsiChildLink<PsiAnnotation, Ps
     myAttributeName = attributeName;
   }
 
-  @NotNull
-  public String getAttributeName() {
+  public @NotNull String getAttributeName() {
     return myAttributeName;
   }
 
@@ -32,9 +33,8 @@ public class AnnotationAttributeChildLink extends PsiChildLink<PsiAnnotation, Ps
   }
 
   @Override
-  @NotNull
-  public PsiAnnotationMemberValue createChild(@NotNull PsiAnnotation psiAnnotation) throws IncorrectOperationException {
-    final PsiExpression nullValue = JavaPsiFacade.getElementFactory(psiAnnotation.getProject()).createExpressionFromText(PsiKeyword.NULL, null);
+  public @NotNull PsiAnnotationMemberValue createChild(@NotNull PsiAnnotation psiAnnotation) throws IncorrectOperationException {
+    final PsiExpression nullValue = JavaPsiFacade.getElementFactory(psiAnnotation.getProject()).createExpressionFromText(JavaKeywords.NULL, null);
     psiAnnotation.setDeclaredAttributeValue(myAttributeName, nullValue);
     return Objects.requireNonNull(psiAnnotation.findDeclaredAttributeValue(myAttributeName));
   }

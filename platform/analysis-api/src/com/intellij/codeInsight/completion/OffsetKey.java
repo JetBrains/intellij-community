@@ -1,11 +1,9 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion;
 
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
-/**
- * @author peter
- */
 public final class OffsetKey {
   private final String myName; // for debug purposes only
   private final boolean myMovableToRight;
@@ -15,6 +13,7 @@ public final class OffsetKey {
     myMovableToRight = movableToRight;
   }
 
+  @Override
   public String toString() {
     return myName;
   }
@@ -23,11 +22,11 @@ public final class OffsetKey {
     return myMovableToRight;
   }
 
-  public static OffsetKey create(@NonNls String name) {
+  public static @NotNull OffsetKey create(@NonNls String name) {
     return create(name, true);
   }
 
-  public static OffsetKey create(@NonNls String name, final boolean movableToRight) {
+  public static @NotNull OffsetKey create(@NonNls String name, final boolean movableToRight) {
     return new OffsetKey(name, movableToRight);
   }
 }

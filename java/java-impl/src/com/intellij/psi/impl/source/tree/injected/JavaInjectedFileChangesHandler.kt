@@ -12,12 +12,24 @@ import com.intellij.openapi.editor.ex.DocumentEx
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.component1
 import com.intellij.openapi.util.component2
-import com.intellij.psi.*
+import com.intellij.psi.ElementManipulators
+import com.intellij.psi.JavaTokenType
+import com.intellij.psi.PsiDocumentManager
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiFile
+import com.intellij.psi.PsiJavaToken
+import com.intellij.psi.PsiLanguageInjectionHost
 import com.intellij.psi.PsiLanguageInjectionHost.Shred
+import com.intellij.psi.PsiPolyadicExpression
+import com.intellij.psi.PsiWhiteSpace
 import com.intellij.psi.codeStyle.CodeStyleManager
-import com.intellij.psi.impl.PsiDocumentManagerBase
+import com.intellij.psi.impl.PsiDocumentManagerEx
 import com.intellij.psi.impl.source.resolve.FileContextUtil
-import com.intellij.psi.impl.source.tree.injected.changesHandler.*
+import com.intellij.psi.impl.source.tree.injected.changesHandler.CommonInjectedFileChangesHandler
+import com.intellij.psi.impl.source.tree.injected.changesHandler.MarkersMapping
+import com.intellij.psi.impl.source.tree.injected.changesHandler.contentRange
+import com.intellij.psi.impl.source.tree.injected.changesHandler.getInjectionHostAtRange
+import com.intellij.psi.impl.source.tree.injected.changesHandler.union
 import com.intellij.psi.util.createSmartPointer
 import com.intellij.util.SmartList
 import com.intellij.util.containers.ContainerUtil
@@ -31,7 +43,7 @@ internal class JavaInjectedFileChangesHandler(shreds: List<Shred>, editor: Edito
     myHostDocument.addDocumentListener(object : DocumentListener {
       override fun documentChanged(event: DocumentEvent) {
         if (UndoManager.getInstance(myProject).isUndoInProgress) {
-          (PsiDocumentManager.getInstance(myProject) as PsiDocumentManagerBase).addRunOnCommit(myHostDocument) {
+          (PsiDocumentManager.getInstance(myProject) as PsiDocumentManagerEx).addRunOnCommit(myHostDocument) { thisDoc ->
             rebuildMarkers(markersWholeRange(markers) ?: failAndReport("can't get marker range in undo", event))
           }
         }
@@ -46,7 +58,7 @@ internal class JavaInjectedFileChangesHandler(shreds: List<Shred>, editor: Edito
     val affectedRange = TextRange.from(e.offset, max(e.newLength, e.oldLength))
     val affectedMarkers = markers.filter { affectedRange.intersects(it.fragmentMarker) }
 
-    val guardedRanges = guardedBlocks.mapTo(HashSet()) { it.range }
+    val guardedRanges = guardedBlocks.mapTo(HashSet()) { it.textRange }
     if (affectedMarkers.isEmpty() && guardedRanges.any { it.intersects(affectedRange) }) {
       // changed guarded blocks are on fragment document editor conscience, we just ignore them silently
       return
@@ -62,7 +74,7 @@ internal class JavaInjectedFileChangesHandler(shreds: List<Shred>, editor: Edito
     val markersToRemove = SmartList<MarkersMapping>()
     for ((affectedMarker, markerText) in distributeTextToMarkers(affectedMarkers, affectedRange, e.offset + e.newLength)
       .let(this::promoteLinesEnds)) {
-      val rangeInHost = affectedMarker.hostMarker.range
+      val rangeInHost = affectedMarker.hostMarker.textRange
 
       myHostEditor.caretModel.moveToOffset(rangeInHost.startOffset)
       val newText = CopyPastePreProcessor.EP_NAME.extensionList.fold(markerText) { newText, preProcessor ->
@@ -93,7 +105,7 @@ internal class JavaInjectedFileChangesHandler(shreds: List<Shred>, editor: Edito
 
     }
 
-    val wholeRange = markersWholeRange(affectedMarkers) union workingRange ?: failAndReport("no wholeRange", e)
+    val wholeRange = (markersWholeRange(affectedMarkers) union workingRange) ?: failAndReport("no wholeRange", e)
 
     CodeStyleManager.getInstance(myProject).reformatRange(
       hostPsiFile, wholeRange.startOffset, wholeRange.endOffset, true)
@@ -124,7 +136,7 @@ internal class JavaInjectedFileChangesHandler(shreds: List<Shred>, editor: Edito
     }
   }
 
-  private fun rebuildMarkers(contextRange: TextRange) {
+  override fun rebuildMarkers(contextRange: TextRange) {
     val psiDocumentManager = PsiDocumentManager.getInstance(myProject)
     psiDocumentManager.commitDocument(myHostDocument)
 
@@ -231,8 +243,6 @@ internal class JavaInjectedFileChangesHandler(shreds: List<Shred>, editor: Edito
   }
 
 }
-
-private infix fun TextRange?.union(another: TextRange?) = another?.let { this?.union(it) ?: it } ?: this
 
 private fun intermediateElement(psi: PsiElement) =
   psi is PsiWhiteSpace || (psi is PsiJavaToken && psi.tokenType == JavaTokenType.PLUS)

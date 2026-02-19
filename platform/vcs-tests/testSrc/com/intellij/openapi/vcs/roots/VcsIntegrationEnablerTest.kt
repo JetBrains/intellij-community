@@ -1,10 +1,15 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.roots
 
 import com.intellij.notification.Notification
 import com.intellij.notification.NotificationType
+import com.intellij.openapi.project.guessProjectDir
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.openapi.vcs.*
+import com.intellij.openapi.vcs.ProjectLevelVcsManager
+import com.intellij.openapi.vcs.TestVcsNotifier
+import com.intellij.openapi.vcs.VcsNotifier
+import com.intellij.openapi.vcs.VcsRoot
+import com.intellij.openapi.vcs.VcsTestUtil
 import com.intellij.openapi.vcs.changes.committed.MockAbstractVcs
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
@@ -104,6 +109,7 @@ class VcsIntegrationEnablerTest : VcsRootBaseTest() {
   }
 
   internal fun notification(content: String): Notification {
+    @Suppress("UnresolvedPluginConfigReference")
     return Notification("Test", "", content, NotificationType.INFORMATION)
   }
 
@@ -111,11 +117,11 @@ class VcsIntegrationEnablerTest : VcsRootBaseTest() {
     return FileUtil.toSystemDependentName(VcsTestUtil.toAbsolute(root, myProject))
   }
 
-  private class TestIntegrationEnabler(vcs: MockAbstractVcs) : VcsIntegrationEnabler(vcs) {
+  private class TestIntegrationEnabler(vcs: MockAbstractVcs) : VcsIntegrationEnabler(vcs, vcs.project.guessProjectDir()!!) {
 
-    override fun initOrNotifyError(projectDir: VirtualFile): Boolean {
-      val file = File(projectDir.path, DOT_MOCK)
-      VcsNotifier.getInstance(myProject).notifySuccess(null, "", "Created mock repository in " + projectDir.presentableUrl)
+    override fun initOrNotifyError(directory: VirtualFile): Boolean {
+      val file = File(directory.path, DOT_MOCK)
+      VcsNotifier.getInstance(myProject).notifySuccess(null, "", "Created mock repository in " + directory.presentableUrl)
       return file.mkdir()
     }
   }

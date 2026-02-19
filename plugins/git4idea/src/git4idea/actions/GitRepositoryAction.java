@@ -1,8 +1,8 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.actions;
 
 import com.intellij.dvcs.DvcsUtil;
-import com.intellij.openapi.actionSystem.ActionPlaces;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -14,17 +14,16 @@ import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.concurrency.annotations.RequiresEdt;
 import git4idea.GitUtil;
 import git4idea.GitVcs;
 import git4idea.branch.GitBranchUtil;
 import git4idea.i18n.GitBundle;
 import git4idea.repo.GitRepository;
-import git4idea.repo.GitRepositoryManager;
-import java.util.Collection;
-import java.util.List;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.Collection;
+import java.util.List;
 
 /**
  * Base class for actions that affect the entire git repository.
@@ -33,40 +32,17 @@ import org.jetbrains.annotations.Nullable;
 public abstract class GitRepositoryAction extends DumbAwareAction {
 
   @Override
-  public void actionPerformed(@NotNull final AnActionEvent e) {
+  public void actionPerformed(final @NotNull AnActionEvent e) {
     FileDocumentManager.getInstance().saveAllDocuments();
-    final Project project = e.getRequiredData(CommonDataKeys.PROJECT);
+    Project project = e.getData(CommonDataKeys.PROJECT);
+    if (project == null) return;
     GitVcs vcs = GitVcs.getInstance(project);
-    final List<VirtualFile> roots = getGitRoots(project, vcs);
-    if (roots == null) return;
+    List<VirtualFile> roots = getGitRoots(project, vcs);
+    if (roots == null || roots.isEmpty()) return;
 
-    final VirtualFile defaultRoot = getDefaultRoot(project, roots, e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY));
-
+    GitRepository selectedRepo = GitBranchUtil.guessRepositoryForOperation(project, e.getDataContext());
+    VirtualFile defaultRoot = selectedRepo != null ? selectedRepo.getRoot() : roots.get(0);
     perform(project, roots, defaultRoot);
-  }
-
-  @NotNull
-  @RequiresEdt
-  private static VirtualFile getDefaultRoot(@NotNull Project project, @NotNull List<? extends VirtualFile> roots, VirtualFile @Nullable [] vFiles) {
-    if (vFiles != null) {
-      for (VirtualFile file : vFiles) {
-        GitRepository repository = GitRepositoryManager.getInstance(project).getRepositoryForFileQuick(file);
-        if (repository != null) {
-          return repository.getRoot();
-        }
-      }
-    }
-    GitRepository currentRepository = GitBranchUtil.getCurrentRepository(project);
-    return currentRepository != null ? currentRepository.getRoot() : roots.get(0);
-  }
-
-  /**
-   * @deprecated "final tasks" are not called for all actions anymore.
-   * They should be called by certain actions manually if and when needed.
-   */
-  @Deprecated
-  protected boolean executeFinalTasksSynchronously() {
-    return true;
   }
 
   /**
@@ -75,8 +51,7 @@ public abstract class GitRepositoryAction extends DumbAwareAction {
    *
    * @return the list of the roots, or null
    */
-  @Nullable
-  public static List<VirtualFile> getGitRoots(Project project, GitVcs vcs) {
+  public static @Nullable List<VirtualFile> getGitRoots(Project project, GitVcs vcs) {
     try {
       VirtualFile[] contentRoots = ProjectLevelVcsManager.getInstance(project).getRootsUnderVcs(vcs);
       if (ArrayUtil.isEmpty(contentRoots)) {
@@ -101,34 +76,35 @@ public abstract class GitRepositoryAction extends DumbAwareAction {
    *
    * @return the name of action
    */
-  @NlsActions.ActionText
-  @NotNull
-  protected abstract String getActionName();
+  protected abstract @NlsActions.ActionText @NotNull String getActionName();
 
 
   /**
    * Perform action for some repositories
    *
-   * @param project       a context project
-   * @param gitRoots      a git roots that affect the current project (sorted by {@link VirtualFile#getPresentableUrl()})
-   * @param defaultRoot   a guessed default root (based on the currently selected file list)
-   * @throws VcsException if there is a problem with running git (this exception is considered to be added to the end of the exception list)
+   * @param project     a context project
+   * @param gitRoots    a git roots that affect the current project (sorted by {@link VirtualFile#getPresentableUrl()})
+   * @param defaultRoot a guessed default root (based on the currently selected file list)
    */
   protected abstract void perform(@NotNull Project project,
                                   @NotNull List<VirtualFile> gitRoots,
                                   @NotNull VirtualFile defaultRoot);
 
   @Override
-  public void update(@NotNull final AnActionEvent e) {
-    super.update(e);
+  public void update(final @NotNull AnActionEvent e) {
     boolean enabled = isEnabled(e);
     e.getPresentation().setEnabled(enabled);
-    if (ActionPlaces.isPopupPlace(e.getPlace())) {
+    if (e.isFromContextMenu()) {
       e.getPresentation().setVisible(enabled);
     }
     else {
       e.getPresentation().setVisible(true);
     }
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 
   protected boolean isEnabled(AnActionEvent e) {
@@ -138,9 +114,6 @@ public abstract class GitRepositoryAction extends DumbAwareAction {
     }
     GitVcs vcs = GitVcs.getInstance(project);
     final VirtualFile[] roots = ProjectLevelVcsManager.getInstance(project).getRootsUnderVcs(vcs);
-    if (roots == null || roots.length == 0) {
-      return false;
-    }
-    return true;
+    return roots.length != 0;
   }
 }

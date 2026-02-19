@@ -1,14 +1,18 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.template.impl;
 
 import com.intellij.codeInsight.template.Template;
 import com.intellij.java.JavaBundle;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.ModNavigator;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiCodeBlock;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiJavaFile;
+import com.intellij.psi.PsiJavaToken;
 import com.intellij.psi.impl.source.codeStyle.CodeEditUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilBase;
@@ -16,21 +20,16 @@ import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author peter
- */
-public class CodeBlockReformattingProcessor implements TemplateOptionalProcessor, DumbAware {
+public final class CodeBlockReformattingProcessor implements ModCommandAwareTemplateOptionalProcessor, DumbAware {
 
   @Override
-  public void processText(Project project,
-                          Template template,
-                          Document document,
-                          RangeMarker templateRange,
-                          Editor editor) {
+  public void processText(@NotNull Template template, @NotNull ModNavigator navigator, @NotNull RangeMarker templateRange) {
     if (!template.isToReformat()) return;
+    Project project = navigator.getProject();
+    Document document = navigator.getDocument();
 
     PsiDocumentManager.getInstance(project).commitDocument(document);
-    PsiFile file = PsiUtilBase.getPsiFileInEditor(editor, project);
+    PsiFile file = PsiUtilBase.getPsiFileInModNavigator(navigator);
     if (!(file instanceof PsiJavaFile)) return;
 
     CharSequence text = document.getImmutableCharSequence();
@@ -47,9 +46,8 @@ public class CodeBlockReformattingProcessor implements TemplateOptionalProcessor
     }
   }
 
-  @Nls
   @Override
-  public String getOptionName() {
+  public @Nls String getOptionName() {
     return JavaBundle.message("please.report.a.bug");
   }
 

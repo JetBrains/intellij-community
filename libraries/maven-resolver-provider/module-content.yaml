@@ -1,0 +1,18 @@
+- name: dist.all/lib/intellij.libraries.maven.resolver.provider.jar
+  modules:
+  - name: intellij.libraries.maven.resolver.provider
+  library: maven-resolver-provider
+  files:
+  - name: $MAVEN_REPOSITORY$/org/apache/maven/maven-resolver-provider/3/maven-resolver-provider-3.jar
+  - name: $MAVEN_REPOSITORY$/org/apache/maven/maven-model/3/maven-model-3.jar
+  - name: $MAVEN_REPOSITORY$/org/apache/maven/maven-model-builder/3/maven-model-builder-3.jar
+  - name: $MAVEN_REPOSITORY$/org/codehaus/plexus/plexus-interpolation/1/plexus-interpolation-1.jar
+  - name: $MAVEN_REPOSITORY$/org/apache/maven/maven-artifact/3/maven-artifact-3.jar
+  - name: $MAVEN_REPOSITORY$/org/apache/maven/maven-builder-support/3/maven-builder-support-3.jar
+  - name: $MAVEN_REPOSITORY$/org/eclipse/sisu/org.eclipse.sisu.inject/0/org.eclipse.sisu.inject-0.jar
+  - name: $MAVEN_REPOSITORY$/org/apache/maven/maven-repository-metadata/3/maven-repository-metadata-3.jar
+  - name: $MAVEN_REPOSITORY$/org/apache/maven/resolver/maven-resolver-api/1/maven-resolver-api-1.jar
+  - name: $MAVEN_REPOSITORY$/org/apache/maven/resolver/maven-resolver-spi/1/maven-resolver-spi-1.jar
+  - name: $MAVEN_REPOSITORY$/org/apache/maven/resolver/maven-resolver-util/1/maven-resolver-util-1.jar
+  - name: $MAVEN_REPOSITORY$/org/apache/maven/resolver/maven-resolver-impl/1/maven-resolver-impl-1.jar
+  - name: $MAVEN_REPOSITORY$/org/apache/maven/resolver/maven-resolver-named-locks/1/maven-resolver-named-locks-1.jar

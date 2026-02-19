@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.hints.settings
 
 import com.intellij.lang.Language
@@ -15,6 +15,8 @@ interface InlaySettingsProvider {
   /**
    * Returns list of hint provider models to be shown in Preferences | Editor | Inlay Hints
    * Languages are expected to be only from [getSupportedLanguages]
+   *
+   * WARNING! Make sure you are not creating Swing components inside. It is not guaranteed to run in EDT!
    */
   fun createModels(project: Project, language: Language): List<InlayProviderSettingsModel>
 
@@ -23,17 +25,13 @@ interface InlaySettingsProvider {
    */
   fun getSupportedLanguages(project: Project): Collection<Language>
 
-  @JvmDefault
   fun getDependencies(): Collection<BaseExtensionPointName<*>> {
     return emptyList()
   }
 
   object EP {
-    val EXTENSION_POINT_NAME =
-      ExtensionPointName.create<InlaySettingsProvider>("com.intellij.config.inlaySettingsProvider")
+    val EXTENSION_POINT_NAME: ExtensionPointName<InlaySettingsProvider> = ExtensionPointName("com.intellij.config.inlaySettingsProvider")
 
-    fun getExtensions(): Array<out InlaySettingsProvider> {
-      return EXTENSION_POINT_NAME.extensions
-    }
+    fun getExtensions(): List<InlaySettingsProvider> = EXTENSION_POINT_NAME.extensionList
   }
 }

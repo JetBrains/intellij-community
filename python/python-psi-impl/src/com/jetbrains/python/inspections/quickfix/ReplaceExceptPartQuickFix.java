@@ -15,9 +15,9 @@
  */
 package com.jetbrains.python.inspections.quickfix;
 
-import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.lang.ASTNode;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiWhiteSpace;
@@ -29,19 +29,14 @@ import com.jetbrains.python.psi.PyExceptPart;
 import com.jetbrains.python.psi.PyTryExceptStatement;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author Alexey.Ivanov
- */
-public class ReplaceExceptPartQuickFix implements LocalQuickFix {
-  @NotNull
+public class ReplaceExceptPartQuickFix extends PsiUpdateModCommandQuickFix {
   @Override
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return PyPsiBundle.message("INTN.convert.except.to");
   }
 
   @Override
-  public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-    PsiElement exceptPart = descriptor.getPsiElement();
+  public void applyFix(@NotNull Project project, @NotNull PsiElement exceptPart, @NotNull ModPsiUpdater updater) {
     if (exceptPart instanceof PyExceptPart) {
       PyElementGenerator elementGenerator = PyElementGenerator.getInstance(project);
       PsiElement element = ((PyExceptPart)exceptPart).getExceptClass().getNextSibling();
@@ -50,11 +45,11 @@ public class ReplaceExceptPartQuickFix implements LocalQuickFix {
       }
       assert element != null;
       PyTryExceptStatement newElement =
-        elementGenerator.createFromText(LanguageLevel.forElement(exceptPart), PyTryExceptStatement.class, "try:  pass except a as b:  pass");
+        elementGenerator.createFromText(LanguageLevel.forElement(exceptPart), PyTryExceptStatement.class,
+                                        "try:  pass except a as b:  pass");
       ASTNode node = newElement.getExceptParts()[0].getNode().findChildByType(PyTokenTypes.AS_KEYWORD);
       assert node != null;
       element.replace(node.getPsi());
     }
   }
-
 }

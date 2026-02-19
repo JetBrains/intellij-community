@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.editor;
 
 import com.intellij.application.options.CodeStyle;
@@ -27,10 +27,8 @@ import java.util.List;
  * Python-specific Emacs-like processing extension.
  * <p/>
  * Thread-safe.
- *
- * @author Denis Zhdanov
  */
-public class PyEmacsHandler implements EmacsProcessingHandler {
+public final class PyEmacsHandler implements EmacsProcessingHandler {
 
   private static final TokenSet COMPOUND_STATEMENT_TYPES = TokenSet.create(
     PyElementTypes.IF_STATEMENT, PyTokenTypes.IF_KEYWORD, PyTokenTypes.ELIF_KEYWORD, PyTokenTypes.ELSE_KEYWORD,
@@ -62,9 +60,8 @@ public class PyEmacsHandler implements EmacsProcessingHandler {
    * @return            {@link Result#STOP} if indentation level is changed and further processing should be stopped;
    *                    {@link Result#CONTINUE} otherwise
    */
-  @NotNull
   @Override
-  public Result changeIndent(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
+  public @NotNull Result changeIndent(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
     // The algorithm is as follows:
     //     1. Check if the editor has selection. Do nothing then as Emacs behaves so;
     //     2. Indent current line one level right if possible;
@@ -93,9 +90,13 @@ public class PyEmacsHandler implements EmacsProcessingHandler {
       return Result.STOP;
     }
     switch (tryToIndentToRight(context)) {
-      case STOP_SUCCESSFUL: return Result.STOP;
-      case STOP_UNSUCCESSFUL: return Result.CONTINUE;
-      case CONTINUE: break;
+      case STOP_SUCCESSFUL -> {
+        return Result.STOP;
+      }
+      case STOP_UNSUCCESSFUL -> {
+        return Result.CONTINUE;
+      }
+      case CONTINUE -> { }
     }
 
     if (tryToIndentToLeft(context)) {
@@ -277,9 +278,11 @@ public class PyEmacsHandler implements EmacsProcessingHandler {
     for (int i = start; i < end; i++) {
       char c = text.charAt(i);
       switch (c) {
-        case ' ': result++; break;
-        case '\t': result += context.getIndentOptions().TAB_SIZE; break;
-        default: return result;
+        case ' ' -> result++;
+        case '\t' -> result += context.getIndentOptions().TAB_SIZE;
+        default -> {
+          return result;
+        }
       }
     }
     return result;
@@ -304,10 +307,10 @@ public class PyEmacsHandler implements EmacsProcessingHandler {
   }
 
   private static final class ChangeIndentContext {
-    @NotNull public final Project  project;
-    @NotNull public final PsiFile  file;
-    @NotNull public final Editor   editor;
-    @NotNull public final Document document;
+    public final @NotNull Project  project;
+    public final @NotNull PsiFile  file;
+    public final @NotNull Editor   editor;
+    public final @NotNull Document document;
     public final          int      targetLine;
 
     private CommonCodeStyleSettings.IndentOptions myIndentOptions;

@@ -1,0 +1,27 @@
+<html>
+<body>
+Reports logging calls surrounded with a guard condition.
+This inspection can be used to adjust with a custom code style.
+<p><b>Example:</b></p>
+<pre><code lang="java">
+  public class TestObject {
+    void test(Object object) {
+      if(LOG.isDebugEnabled()){
+        LOG.debug("some logging " + expensiveCalculation(1));
+      }
+    }
+  }
+</code></pre>
+<p>After a quick-fix is applied:</p>
+<pre><code lang="java">
+  public class TestObject {
+    void test(Object object) {
+      LOG.debug("some logging " + expensiveCalculation(1));
+    }
+  }
+</code></pre>
+<p>This inspection supports <em>Log4j2</em> and the <em>SLF4J</em> logging frameworks (except builders).
+<!-- tooltip end -->
+<p><small>New in 2024.2</small></p>
+</body>
+</html>

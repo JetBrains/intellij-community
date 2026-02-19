@@ -1,0 +1,10 @@
+// FIR_IDENTICAL
+// FIR_COMPARISON
+import java.io.File.listRoots
+
+fun foo() {
+    listRoots()<caret>
+}
+
+// INVOCATION_COUNT: 1
+// ELEMENT_TEXT: "listRoots"

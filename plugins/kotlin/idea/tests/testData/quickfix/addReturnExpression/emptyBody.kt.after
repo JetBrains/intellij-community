@@ -1,0 +1,7 @@
+// "Add 'return' expression" "true"
+// WITH_STDLIB
+fun test(): Boolean {
+    return <selection>TODO("Provide the return value")</selection><caret>
+}
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.AddReturnExpressionFix
+// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.AddReturnExpressionFix

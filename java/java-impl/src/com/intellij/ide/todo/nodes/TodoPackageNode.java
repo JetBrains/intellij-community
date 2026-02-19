@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.todo.nodes;
 
 import com.intellij.ide.IdeBundle;
@@ -25,11 +25,15 @@ import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.Objects;
 
 public final class TodoPackageNode extends PackageElementNode {
   private final TodoTreeBuilder myBuilder;
-  @Nullable private final String myPresentationName;
+  private final @Nullable String myPresentationName;
 
   public TodoPackageNode(@NotNull Project project,
                          @NotNull PackageElement element,
@@ -152,8 +156,7 @@ public final class TodoPackageNode extends PackageElementNode {
   }
 
   @Override
-  @NotNull
-  public Collection<AbstractTreeNode<?>> getChildren() {
+  public @NotNull Collection<AbstractTreeNode<?>> getChildren() {
     ArrayList<AbstractTreeNode<?>> children = new ArrayList<>();
     final Project project = getProject();
     final ProjectFileIndex projectFileIndex = ProjectRootManager.getInstance(Objects.requireNonNull(project)).getFileIndex();
@@ -188,7 +191,10 @@ public final class TodoPackageNode extends PackageElementNode {
             PsiPackage _package = JavaDirectoryService.getInstance().getPackage(_dir);
             if (_package != null && psiPackage.equals(_package.getParentPackage())) {
               _package = TodoJavaTreeHelper.findNonEmptyPackage(_package, module, project, myBuilder, scope); //compact empty middle packages
-              final String name = psiPackage.equals(Objects.requireNonNull(_package).getParentPackage())
+              if (_package == null) {
+                break;
+              }
+              final String name = psiPackage.equals(_package.getParentPackage())
                                   ? null //non compacted
                                   : _package.getQualifiedName().substring(psiPackage.getQualifiedName().length() + 1);
               TodoPackageNode todoPackageNode = new TodoPackageNode(project, new PackageElement(module, _package, false), myBuilder, name);

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2010 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.tasks;
 
@@ -23,8 +9,11 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.Icon;
+import java.util.Collections;
 import java.util.Date;
+import java.util.List;
+import java.util.Map;
 
 /**
  * @author Dmitry Avdeev
@@ -37,9 +26,9 @@ public abstract class Task {
    * Global unique task identifier, e.g. IDEA-00001. It's important that its format is consistent with
    * {@link TaskRepository#extractId(String)}, because otherwise task won't be updated on its activation.
    * Note that this ID is used to find issues and to compare them, so (ideally) it has to be unique.
-   * 
+   *
    * In some cases task server doesn't offer such global ID (but, for instance, pair (project-name, per-project-id) instead) or it's not
-   * what users want to see in UI (e.g. notorious <tt>id</tt> and <tt>iid</tt> in Gitlab). In this case you should generate artificial ID 
+   * what users want to see in UI (e.g. notorious <tt>id</tt> and <tt>iid</tt> in Gitlab). In this case you should generate artificial ID
    * for internal usage and implement {@link #getPresentableId()}.
    *
    * @return unique global ID as described
@@ -48,8 +37,7 @@ public abstract class Task {
    * @see TaskRepository#extractId(String)
    * @see TaskManager#activateTask(Task, boolean)
    */
-  @NotNull
-  public abstract String getId();
+  public abstract @NotNull String getId();
 
 
   /**
@@ -69,49 +57,60 @@ public abstract class Task {
 
   public abstract Comment @NotNull [] getComments();
 
-  @NotNull
-  public abstract Icon getIcon();
+  public abstract @NotNull Icon getIcon();
 
-  @NotNull
-  public abstract TaskType getType();
+  public abstract @NotNull TaskType getType();
 
-  @Nullable
-  public abstract Date getUpdated();
+  public abstract @Nullable Date getUpdated();
 
-  @Nullable
-  public abstract Date getCreated();
+  public abstract @Nullable Date getCreated();
 
   public abstract boolean isClosed();
 
-  @Nullable
-  public String getCustomIcon() {
+  public @Nullable String getCustomIcon() {
     return null;
   }
 
   /**
-   * @return true if bugtracking issue is associated
+   * @return true if bugtracker issue is associated
    */
   public abstract boolean isIssue();
 
-  @Nullable
-  public abstract String getIssueUrl();
+  public abstract @Nullable String getIssueUrl();
 
   /**
    * @return null if no issue is associated
    * @see #isIssue()
    */
-  @Nullable
-  public TaskRepository getRepository() {
+  public @Nullable TaskRepository getRepository() {
     return null;
   }
 
-  @Nullable
-  public TaskState getState() {
+  public @Nullable TaskState getState() {
     return null;
+  }
+
+  /**
+   * Provides a list of custom task properties. Clients can use this to extract
+   * some additional information from a task.
+   *
+   * @return a map of property names and their values
+   */
+  public @NotNull Map<@NotNull String, @NotNull CustomTaskProperty> getCustomProperties() {
+    return Collections.emptyMap();
+  }
+
+  /**
+   * Provides a list of properties that should be shown in preview.
+   *
+   * @return a list of property names to be shown in preview
+   */
+  public @NotNull List<@NotNull String> getPropertiesToShowInPreview() {
+    return Collections.emptyList();
   }
 
   @Override
-  public final String toString() {
+  public final @NlsSafe String toString() {
     String text;
     if (isIssue()) {
       text = getPresentableId() + ": " + getSummary();
@@ -145,13 +144,11 @@ public abstract class Task {
    * @see #getId()
    * @see TaskRepository#getCommitMessageFormat()
    */
-  @NotNull
-  public String getNumber() {
+  public @NotNull String getNumber() {
     return extractNumberFromId(getId());
   }
 
-  @NotNull
-  protected static String extractNumberFromId(@NotNull String id) {
+  protected static @NotNull String extractNumberFromId(@NotNull String id) {
     int i = id.lastIndexOf('-');
     return i > 0 ? id.substring(i + 1) : id;
   }
@@ -166,13 +163,11 @@ public abstract class Task {
    * @see #getId()
    * @see TaskRepository#getCommitMessageFormat()
    */
-  @Nullable
-  public String getProject() {
+  public @Nullable String getProject() {
     return extractProjectFromId(getId());
   }
 
-  @Nullable
-  protected static String extractProjectFromId(@NotNull String id) {
+  protected static @Nullable String extractProjectFromId(@NotNull String id) {
     int i = id.lastIndexOf('-');
     return i > 0 ? id.substring(0, i) : null;
   }

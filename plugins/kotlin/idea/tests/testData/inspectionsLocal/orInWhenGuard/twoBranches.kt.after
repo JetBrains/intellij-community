@@ -1,0 +1,9 @@
+// COMPILER_ARGUMENTS: -Xwhen-guards
+
+fun test(param: Any) {
+    when (param) {
+        is Int if param < 0 || param > 10 -> println("foo")
+        is Double if (param < 0.0 || param > 10.0) -> println("baz")
+        else -> println("bar")
+    }
+}

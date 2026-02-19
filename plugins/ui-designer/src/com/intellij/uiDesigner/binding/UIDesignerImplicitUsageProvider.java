@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.uiDesigner.binding;
 
@@ -8,18 +8,14 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiMethod;
 import com.intellij.uiDesigner.compiler.AsmCodeGenerator;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.stream.Stream;
 
-/**
- * @author yole
- */
-public class UIDesignerImplicitUsageProvider implements ImplicitUsageProvider {
+public final class UIDesignerImplicitUsageProvider implements ImplicitUsageProvider {
   @Override
   public boolean isImplicitUsage(@NotNull PsiElement element) {
-    if (element instanceof PsiMethod) {
-      PsiMethod method = (PsiMethod) element;
+    if (element instanceof PsiMethod method) {
       if ((AsmCodeGenerator.CREATE_COMPONENTS_METHOD_NAME.equals(method.getName()) ||
            AsmCodeGenerator.GET_ROOT_COMPONENT_METHOD_NAME.equals(method.getName()) ||
            AsmCodeGenerator.SETUP_METHOD_NAME.equals(method.getName())) && method.getParameterList().isEmpty()) {
@@ -36,7 +32,7 @@ public class UIDesignerImplicitUsageProvider implements ImplicitUsageProvider {
 
   @Override
   public boolean isImplicitWrite(@NotNull PsiElement element) {
-    return element instanceof PsiField && FormReferenceProvider.getFormFile((PsiField)element) != null;
+    return element instanceof PsiField psiField && FormReferenceProvider.getFormFile(psiField) != null;
   }
 
   @Override
@@ -46,6 +42,6 @@ public class UIDesignerImplicitUsageProvider implements ImplicitUsageProvider {
 
   @Override
   public boolean isClassWithCustomizedInitialization(@NotNull PsiElement element) {
-    return element instanceof PsiClass && Stream.of(((PsiClass)element).getMethods()).anyMatch(this::isImplicitUsage);
+    return element instanceof PsiClass psiClass && ContainerUtil.or(psiClass.getMethods(), this::isImplicitUsage);
   }
 }

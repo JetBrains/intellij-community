@@ -1,0 +1,9 @@
+// "Convert function to property" "true"
+// PRIORITY: LOW
+package jvm
+
+import common.Foo
+
+class Bar : Foo {
+    override val foo<selection><caret></selection> get() = ""
+}

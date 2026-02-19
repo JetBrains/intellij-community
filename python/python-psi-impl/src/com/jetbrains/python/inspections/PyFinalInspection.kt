@@ -7,27 +7,63 @@ import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiElementVisitor
+import com.intellij.psi.util.PsiTreeUtil
+import com.intellij.util.containers.MultiMap
 import com.jetbrains.python.PyNames
 import com.jetbrains.python.PyPsiBundle
+import com.jetbrains.python.codeInsight.controlflow.ControlFlowCache
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil
 import com.jetbrains.python.codeInsight.functionTypeComments.psi.PyFunctionTypeAnnotation
 import com.jetbrains.python.codeInsight.functionTypeComments.psi.PyParameterTypeList
+import com.jetbrains.python.codeInsight.parseDataclassParameters
 import com.jetbrains.python.codeInsight.typeHints.PyTypeHintFile
-import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider.*
-import com.jetbrains.python.psi.*
+import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider
+import com.jetbrains.python.psi.PyAnnotation
+import com.jetbrains.python.psi.PyAnnotationOwner
+import com.jetbrains.python.psi.PyAugAssignmentStatement
+import com.jetbrains.python.psi.PyClass
+import com.jetbrains.python.psi.PyDecoratable
+import com.jetbrains.python.psi.PyExpression
+import com.jetbrains.python.psi.PyExpressionStatement
+import com.jetbrains.python.psi.PyForStatement
+import com.jetbrains.python.psi.PyFunction
+import com.jetbrains.python.psi.PyGlobalStatement
+import com.jetbrains.python.psi.PyImportStatementBase
+import com.jetbrains.python.psi.PyKnownDecoratorUtil
+import com.jetbrains.python.psi.PyLoopStatement
+import com.jetbrains.python.psi.PyNamedParameter
+import com.jetbrains.python.psi.PyNonlocalStatement
+import com.jetbrains.python.psi.PyQualifiedExpression
+import com.jetbrains.python.psi.PyRecursiveElementVisitor
+import com.jetbrains.python.psi.PyReferenceExpression
+import com.jetbrains.python.psi.PyReferenceOwner
+import com.jetbrains.python.psi.PyStatement
+import com.jetbrains.python.psi.PySubscriptionExpression
+import com.jetbrains.python.psi.PyTargetExpression
+import com.jetbrains.python.psi.PyTupleExpression
+import com.jetbrains.python.psi.PyTypeCommentOwner
+import com.jetbrains.python.psi.PyTypeDeclarationStatement
+import com.jetbrains.python.psi.PyUtil
+import com.jetbrains.python.psi.PyWhileStatement
 import com.jetbrains.python.psi.impl.PyClassImpl
 import com.jetbrains.python.psi.search.PySuperMethodsSearch
 import com.jetbrains.python.psi.types.PyClassType
+import com.jetbrains.python.psi.types.PyInstantiableType
+import com.jetbrains.python.psi.types.PySelfType
+import com.jetbrains.python.psi.types.TypeEvalContext
 import com.jetbrains.python.pyi.PyiUtil
+import com.jetbrains.python.refactoring.PyDefUseUtil
 
 class PyFinalInspection : PyInspection() {
 
-  override fun buildVisitor(holder: ProblemsHolder,
-                            isOnTheFly: Boolean,
-                            session: LocalInspectionToolSession): PsiElementVisitor = Visitor(holder, session)
+  override fun buildVisitor(
+    holder: ProblemsHolder,
+    isOnTheFly: Boolean,
+    session: LocalInspectionToolSession,
+  ): PsiElementVisitor = Visitor(holder, PyInspectionVisitor.getContext(session))
 
-  private class Visitor(holder: ProblemsHolder, session: LocalInspectionToolSession) : PyInspectionVisitor(holder, session) {
+  private class Visitor(holder: ProblemsHolder, context: TypeEvalContext) : PyInspectionVisitor(holder, context) {
 
     override fun visitPyClass(node: PyClass) {
       super.visitPyClass(node)
@@ -41,23 +77,11 @@ class PyFinalInspection : PyInspection() {
                                             superClassList, finalSuperClasses.size))
       }
 
-      if (PyiUtil.isInsideStub(node)) {
-        val visitedNames = mutableSetOf<String?>()
-
-        node.visitMethods(
-          { m ->
-            if (!visitedNames.add(m.name) && isFinal(m)) {
-              registerProblem(m.nameIdentifier, PyPsiBundle.message("INSP.final.final.should.be.placed.on.first.overload"))
-            }
-            true
-          },
-          false,
-          myTypeEvalContext
-        )
-      }
-      else {
+      if (!PyiUtil.isInsideStub(node)) {
         val (classLevelFinals, initAttributes) = getClassLevelFinalsAndInitAttributes(node)
-        checkClassLevelFinalsAreInitialized(classLevelFinals, initAttributes)
+        if (!isDataclass(node)) {
+          checkClassLevelFinalsAreInitialized(classLevelFinals, initAttributes)
+        }
         checkSameNameClassAndInstanceFinals(classLevelFinals, initAttributes)
       }
 
@@ -69,22 +93,23 @@ class PyFinalInspection : PyInspection() {
 
       val cls = node.containingClass
       if (cls != null) {
-        PySuperMethodsSearch
-          .search(node, myTypeEvalContext)
-          .asSequence()
-          .filterIsInstance<PyFunction>()
-          .firstOrNull { isFinal(it) }
-          ?.let {
-            @NlsSafe val qualifiedName = it.qualifiedName ?: it.containingClass?.name + "." + it.name
-            registerProblem(node.nameIdentifier,
-                            PyPsiBundle.message("INSP.final.method.marked.as.final.should.not.be.overridden", qualifiedName))
-          }
-
+        val isOverload = PyiUtil.isOverload(node, myTypeEvalContext)
+        if (!isOverload ||
+            PyiUtil.getImplementation(node, myTypeEvalContext) == null &&
+            PyiUtil.getOverloads(node, myTypeEvalContext).firstOrNull() === node) {
+          PySuperMethodsSearch
+            .search(node, myTypeEvalContext)
+            .asIterable()
+            .asSequence()
+            .filterIsInstance<PyFunction>()
+            .firstOrNull { isFinal(it) }
+            ?.let {
+              @NlsSafe val qualifiedName = it.qualifiedName ?: (it.containingClass?.name + "." + it.name)
+              registerProblem(node.nameIdentifier,
+                              PyPsiBundle.message("INSP.final.method.marked.as.final.should.not.be.overridden", qualifiedName))
+            }
+        }
         if (!PyiUtil.isInsideStub(node)) {
-          if (isFinal(node) && PyiUtil.isOverload(node, myTypeEvalContext)) {
-            registerProblem(node.nameIdentifier, PyPsiBundle.message("INSP.final.final.should.be.placed.on.implementation"))
-          }
-
           checkInstanceFinalsOutsideInit(node)
         }
 
@@ -107,14 +132,14 @@ class PyFinalInspection : PyInspection() {
         registerProblem(node.nameIdentifier, PyPsiBundle.message("INSP.final.non.method.function.could.not.be.marked.as.final"))
       }
 
-      getFunctionTypeAnnotation(node)?.let { comment ->
+      PyTypingTypeProvider.getFunctionTypeAnnotation(node)?.let { comment ->
         if (comment.parameterTypeList.parameterTypes.any { resolvesToFinal(if (it is PySubscriptionExpression) it.operand else it) }) {
           registerProblem(node.typeComment,
                           PyPsiBundle.message("INSP.final.final.could.not.be.used.in.annotations.for.function.parameters"))
         }
       }
 
-      getReturnTypeAnnotation(node, myTypeEvalContext)?.let {
+      PyTypingTypeProvider.getReturnTypeAnnotation(node, myTypeEvalContext)?.let {
         if (resolvesToFinal(if (it is PySubscriptionExpression) it.operand else it)) {
           registerProblem(node.typeComment ?: node.annotation,
                           PyPsiBundle.message("INSP.final.final.could.not.be.used.in.annotation.for.function.return.value"))
@@ -125,7 +150,10 @@ class PyFinalInspection : PyInspection() {
     override fun visitPyTargetExpression(node: PyTargetExpression) {
       super.visitPyTargetExpression(node)
 
-      if (!node.hasAssignedValue()) {
+      val parent = PsiTreeUtil.getParentOfType(node, PyStatement::class.java)
+      if (parent is PyImportStatementBase) return
+
+      if (parent is PyTypeDeclarationStatement || parent is PyGlobalStatement || parent is PyNonlocalStatement) {
         node.annotation?.value?.let {
           if (PyiUtil.isInsideStub(node) || ScopeUtil.getScopeOwner(node) is PyClass) {
             if (resolvesToFinal(it)) {
@@ -144,7 +172,9 @@ class PyFinalInspection : PyInspection() {
         checkFinalReassignment(node)
       }
 
-      if (isFinal(node) && PyUtil.multiResolveTopPriority(node, resolveContext).any { it != node }) {
+      if (isFinal(node) && PyUtil.multiResolveTopPriority(node, resolveContext).any {
+          it != node && !PyDefUseUtil.isDefinedBefore(node, it!!)
+        }) {
         registerProblem(node, PyPsiBundle.message("INSP.final.already.declared.name.could.not.be.redefined.as.final"))
       }
     }
@@ -162,6 +192,14 @@ class PyFinalInspection : PyInspection() {
       super.visitPyReferenceExpression(node)
 
       checkFinalIsOuterMost(node)
+    }
+
+    override fun visitPySubscriptionExpression(node: PySubscriptionExpression) {
+      if (!resolvesToFinal(node.operand)) return
+      val indexExpression = node.indexExpression ?: return
+      if (indexExpression is PyTupleExpression && indexExpression.elements.size > 1) {
+        registerProblem(indexExpression, PyPsiBundle.message("INSP.final.can.only.be.parameterized.with.one.type"))
+      }
     }
 
     override fun visitPyForStatement(node: PyForStatement) {
@@ -187,10 +225,10 @@ class PyFinalInspection : PyInspection() {
       val classLevelFinals = mutableMapOf<String?, PyTargetExpression>()
       cls.classAttributes.forEach { if (isFinal(it)) classLevelFinals[it.name] = it }
 
-      val initAttributes = mutableMapOf<String, PyTargetExpression>()
+      val initAttributes = MultiMap<String, PyTargetExpression>()
       cls.findMethodByName(PyNames.INIT, false, myTypeEvalContext)?.let { PyClassImpl.collectInstanceAttributes(it, initAttributes) }
 
-      return Pair(classLevelFinals, initAttributes)
+      return Pair(classLevelFinals, initAttributes.toHashMap().mapValues { it.value.first() })
     }
 
     private fun getDeclaredClassAndInstanceFinals(cls: PyClass): Pair<Map<String, PyTargetExpression>, Map<String, PyTargetExpression>> {
@@ -207,16 +245,19 @@ class PyFinalInspection : PyInspection() {
       }
 
       cls.findMethodByName(PyNames.INIT, false, myTypeEvalContext)?.let { init ->
-        val attributesInInit = mutableMapOf<String, PyTargetExpression>()
-        PyClassImpl.collectInstanceAttributes(init, attributesInInit, instanceFinals.keys)
-        instanceFinals += attributesInInit.filterValues { isFinal(it) }
+        val attributesInInit = MultiMap<String, PyTargetExpression>()
+        PyClassImpl.collectInstanceAttributes(init, attributesInInit)
+        attributesInInit.keySet().removeAll(instanceFinals.keys)
+        instanceFinals += attributesInInit.toHashMap().mapValues { it.value.first() }.filterValues { isFinal(it) }
       }
 
       return Pair(classFinals, instanceFinals)
     }
 
-    private fun checkClassLevelFinalsAreInitialized(classLevelFinals: Map<String?, PyTargetExpression>,
-                                                    initAttributes: Map<String, PyTargetExpression>) {
+    private fun checkClassLevelFinalsAreInitialized(
+      classLevelFinals: Map<String?, PyTargetExpression>,
+      initAttributes: Map<String, PyTargetExpression>,
+    ) {
       classLevelFinals.forEach { (name, psi) ->
         if (!psi.hasAssignedValue() && name !in initAttributes) {
           registerProblem(psi, PyPsiBundle.message("INSP.final.final.name.should.be.initialized.with.value"))
@@ -224,8 +265,10 @@ class PyFinalInspection : PyInspection() {
       }
     }
 
-    private fun checkSameNameClassAndInstanceFinals(classLevelFinals: Map<String?, PyTargetExpression>,
-                                                    initAttributes: Map<String, PyTargetExpression>) {
+    private fun checkSameNameClassAndInstanceFinals(
+      classLevelFinals: Map<String?, PyTargetExpression>,
+      initAttributes: Map<String, PyTargetExpression>,
+    ) {
       initAttributes.forEach { (name, initAttribute) ->
         val sameNameClassLevelFinal = classLevelFinals[name]
 
@@ -259,10 +302,12 @@ class PyFinalInspection : PyInspection() {
       }
     }
 
-    private fun checkOverridingInheritedFinalWithNewOne(newFinals: Map<String, PyTargetExpression>,
-                                                        inheritedFinals: Map<String, PyTargetExpression>,
-                                                        ancestorName: String?,
-                                                        notRegistered: MutableSet<String>) {
+    private fun checkOverridingInheritedFinalWithNewOne(
+      newFinals: Map<String, PyTargetExpression>,
+      inheritedFinals: Map<String, PyTargetExpression>,
+      ancestorName: String?,
+      notRegistered: MutableSet<String>,
+    ) {
       if (notRegistered.isEmpty()) return
 
       for (commonFinal in newFinals.keys.intersect(inheritedFinals.keys)) {
@@ -275,44 +320,75 @@ class PyFinalInspection : PyInspection() {
     private fun checkInstanceFinalsOutsideInit(method: PyFunction) {
       if (PyUtil.isInitMethod(method)) return
 
-      val instanceAttributes = mutableMapOf<String, PyTargetExpression>()
+      val instanceAttributes = MultiMap<String, PyTargetExpression>()
       PyClassImpl.collectInstanceAttributes(method, instanceAttributes)
-      instanceAttributes.values.forEach {
+      instanceAttributes.values().forEach {
         if (isFinal(it)) registerProblem(it, PyPsiBundle.message("INSP.final.final.attribute.should.be.declared.in.class.body.or.init"))
       }
     }
 
     private fun checkFinalReassignment(target: PyQualifiedExpression) {
       val qualifierType = target.qualifier?.let { myTypeEvalContext.getType(it) }
-      if (qualifierType is PyClassType && !qualifierType.isDefinition) {
-        checkInstanceFinalReassignment(target, qualifierType.pyClass)
-        return
+      if (qualifierType is PyInstantiableType<*>) {
+        val isDefinition = qualifierType.isDefinition
+        val cls = when (qualifierType) {
+          is PySelfType -> qualifierType.scopeClassType.pyClass
+          is PyClassType -> qualifierType.pyClass
+          else -> null
+        }
+        if (cls != null) {
+          if (isDefinition)
+            checkClassFinalReassignment(target, cls)
+          else
+            checkInstanceFinalReassignment(target, cls)
+          return
+        }
       }
 
       // TODO: revert back to PyUtil#multiResolveTopPriority when resolve into global statement is implemented
       val resolved = when (target) {
         is PyReferenceOwner -> target.getReference(resolveContext).multiResolve(false).mapNotNull { it.element }
         else -> PyUtil.multiResolveTopPriority(target, resolveContext)
+      }.toMutableList()
+
+      val scopeOwner = ScopeUtil.getScopeOwner(target)
+      if (!target.isQualified && scopeOwner != null) {
+        // multiResolve finds last assignments, but we need all earlier assignments
+        val scope = ControlFlowCache.getScope(scopeOwner)
+        resolved += scope.getNamedElements(target.referencedName, false)
+        target.name?.let { name ->
+          resolved += scope.importedNameDefiners.flatMap { it.multiResolveName(name).mapNotNull { it.element } }
+        }
       }
 
-      if (resolved.any { it is PyTargetExpression && isFinal(it) }) {
-        registerProblem(target, PyPsiBundle.message("INSP.final.final.target.could.not.be.reassigned", target.name))
-        return
-      }
 
-      for (e in resolved) {
-        if (myTypeEvalContext.maySwitchToAST(e) &&
-            e.parent.let { it is PyNonlocalStatement || it is PyGlobalStatement } &&
+      for (e in resolved.mapNotNull { it as? PyTargetExpression }) {
+        if (isFinal(e) && !PyDefUseUtil.isDefinedBefore(target, e)) {
+          registerProblem(target, PyPsiBundle.message("INSP.final.final.target.could.not.be.reassigned", target.name))
+          return
+        }
+        if (e.parent.let { it is PyNonlocalStatement || it is PyGlobalStatement } &&
             PyUtil.multiResolveTopPriority(e, resolveContext).any { it is PyTargetExpression && isFinal(it) }) {
           registerProblem(target, PyPsiBundle.message("INSP.final.final.target.could.not.be.reassigned", target.name))
           return
         }
       }
 
-      if (!target.isQualified) {
-        val scopeOwner = ScopeUtil.getScopeOwner(target)
-        if (scopeOwner is PyClass) {
-          checkInheritedClassFinalReassignmentOnClassLevel(target, scopeOwner)
+      if (!target.isQualified && scopeOwner is PyClass) {
+        checkInheritedClassFinalReassignmentOnClassLevel(target, scopeOwner)
+      }
+    }
+
+    private fun checkClassFinalReassignment(target: PyQualifiedExpression, cls: PyClass) {
+      val name = target.name ?: return
+      val classAttribute = cls.findClassAttribute(name, true, myTypeEvalContext)
+      if (classAttribute != null) {
+        var isFinal = isFinal(classAttribute)
+        if (!isFinal && isDataclass(cls)) {
+          isFinal = resolvesToClassVarFinal(classAttribute.annotation?.value)
+        }
+        if (isFinal) {
+          registerProblem(target, PyPsiBundle.message("INSP.final.final.target.could.not.be.reassigned", name))
         }
       }
     }
@@ -321,8 +397,9 @@ class PyFinalInspection : PyInspection() {
       val name = target.name ?: return
 
       val classAttribute = cls.findClassAttribute(name, false, myTypeEvalContext)
-      if (classAttribute != null && !classAttribute.hasAssignedValue() && isFinal(classAttribute)) {
-        if (target is PyTargetExpression &&
+      if (classAttribute != null && isFinal(classAttribute)) {
+        if (!classAttribute.hasAssignedValue() &&
+            target is PyTargetExpression &&
             ScopeUtil.getScopeOwner(target).let { it is PyFunction && PyUtil.turnConstructorIntoClass(it) == cls }) {
           return
         }
@@ -341,9 +418,9 @@ class PyFinalInspection : PyInspection() {
       for (current in (sequenceOf(cls) + cls.getAncestorClasses(myTypeEvalContext).asSequence())) {
         val init = current.findMethodByName(PyNames.INIT, false, myTypeEvalContext)
         if (init != null) {
-          val attributesInInit = mutableMapOf<String, PyTargetExpression>()
+          val attributesInInit = MultiMap<String, PyTargetExpression>()
           PyClassImpl.collectInstanceAttributes(init, attributesInInit)
-          if (attributesInInit[name]?.let { it != target && isFinal(it) } == true) {
+          if (attributesInInit[name].any { it != target && isFinal(it) }) {
             @NlsSafe val qualifiedName = (if (cls == current) "" else "${current.name}.") + name
             registerProblem(target, PyPsiBundle.message("INSP.final.final.target.could.not.be.reassigned", qualifiedName))
             break
@@ -354,6 +431,7 @@ class PyFinalInspection : PyInspection() {
 
     private fun checkInheritedClassFinalReassignmentOnClassLevel(target: PyQualifiedExpression, cls: PyClass) {
       val name = target.name ?: return
+      if (PyUtil.isClassPrivateName(name)) return
 
       for (ancestor in cls.getAncestorClasses(myTypeEvalContext)) {
         val ancestorClassAttribute = ancestor.findClassAttribute(name, false, myTypeEvalContext)
@@ -372,7 +450,13 @@ class PyFinalInspection : PyInspection() {
         if (it.operand == node && isTopLevelInAnnotationOrTypeComment(it)) return
       }
 
-      if (isInAnnotationOrTypeComment(node) && resolvesToFinal(node)) {
+      val scopeOwner = ScopeUtil.getScopeOwner(node)
+      if (scopeOwner is PyClass && isDataclass(scopeOwner)
+          && resolvesToClassVarFinal(node.parent.parent as? PyExpression)) {
+        return
+      }
+
+      if (PyTypingTypeProvider.isInsideTypeHint(node, myTypeEvalContext) && resolvesToFinal(node)) {
         registerProblem(node, PyPsiBundle.message("INSP.final.final.could.only.be.used.as.outermost.type"))
       }
     }
@@ -395,14 +479,37 @@ class PyFinalInspection : PyInspection() {
       )
     }
 
-    private fun isFinal(decoratable: PyDecoratable) = isFinal(decoratable, myTypeEvalContext)
+    private fun isFinal(decoratable: PyDecoratable) = PyTypingTypeProvider.isFinal(decoratable, myTypeEvalContext)
 
     private fun <T> isFinal(node: T): Boolean where T : PyAnnotationOwner, T : PyTypeCommentOwner {
-      return isFinal(node, myTypeEvalContext)
+      return PyTypingTypeProvider.isFinal(node, myTypeEvalContext)
     }
 
     private fun resolvesToFinal(expression: PyExpression?): Boolean {
-      return expression is PyReferenceExpression && eventuallyResolvesToFinal(expression, myTypeEvalContext)
+      return expression is PyReferenceExpression &&
+             PyTypingTypeProvider.resolveToQualifiedNames(expression, myTypeEvalContext)
+               .any { it == PyTypingTypeProvider.FINAL || it == PyTypingTypeProvider.FINAL_EXT }
+    }
+
+    private fun resolvesToClassVar(expression: PyExpression): Boolean {
+      return (expression is PyReferenceExpression) &&
+             PyTypingTypeProvider.resolveToQualifiedNames(expression, myTypeEvalContext).any { it == PyTypingTypeProvider.CLASS_VAR }
+    }
+
+    private fun resolvesToClassVarFinal(expression: PyExpression?): Boolean {
+      return (expression as? PySubscriptionExpression)?.let {
+        if (resolvesToClassVar(it.operand)) {
+          if (it.indexExpression is PySubscriptionExpression) {
+            return resolvesToFinal((it.indexExpression as PySubscriptionExpression).operand)
+          }
+          return resolvesToFinal(it.indexExpression)
+        }
+        return false
+      } ?: false
+    }
+
+    private fun isDataclass(cls: PyClass): Boolean {
+      return parseDataclassParameters(cls, myTypeEvalContext) != null
     }
 
     private fun isTopLevelInAnnotationOrTypeComment(node: PyExpression): Boolean {

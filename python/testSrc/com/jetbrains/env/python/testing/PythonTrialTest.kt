@@ -19,10 +19,12 @@ import com.jetbrains.env.EnvTestTagsRequired
 import com.jetbrains.env.ut.PyScriptTestProcessRunner
 import com.jetbrains.python.testing.PyTrialTestConfiguration
 import com.jetbrains.python.testing.PyTrialTestFactory
+import com.jetbrains.python.testing.PythonTestConfigurationType
 import org.junit.Assert
 import org.junit.Test
-import java.io.File
 import java.util.function.Function
+import kotlin.io.path.createTempDirectory
+import kotlin.io.path.pathString
 
 // Twisted trial test case
 @EnvTestTagsRequired(tags = ["twisted"])
@@ -33,7 +35,9 @@ internal class PythonTrialTest : PythonUnitTestingLikeTest<PyTrialTestProcessRun
     runPythonTest(object : PyUnitTestLikeProcessWithConsoleTestTask<PyTrialTestProcessRunner>(
       relativePathToTestData = "/testRunner/env/trial/",
       myScriptName = "test_exception.py",
-      processRunnerCreator = Function { createTestRunner(it) }) {
+      processRunnerCreator = Function { createTestRunner(it) },
+      isToFullPath = true) {
+
       override fun checkTestResults(runner: PyTrialTestProcessRunner, stdout: String, stderr: String, all: String, exitCode: Int) {
         Assert.assertEquals(
           "Exception broke test tree",
@@ -50,9 +54,9 @@ internal class PythonTrialTest : PythonUnitTestingLikeTest<PyTrialTestProcessRun
 
 class PyTrialTestProcessRunner(scriptName: String,
                                timesToRerunFailedTests: Int) : PyScriptTestProcessRunner<PyTrialTestConfiguration>(
-  PyTrialTestFactory(), PyTrialTestConfiguration::class.java, scriptName, timesToRerunFailedTests) {
+  PyTrialTestFactory(PythonTestConfigurationType.getInstance()), PyTrialTestConfiguration::class.java, scriptName, timesToRerunFailedTests) {
   override fun configurationCreatedAndWillLaunch(configuration: PyTrialTestConfiguration) {
     super.configurationCreatedAndWillLaunch(configuration)
-    configuration.additionalArguments = "--temp-directory=" + File(createTempDir(), "trial").path
+    configuration.additionalArguments = "--temp-directory=" + createTempDirectory().resolve("trial").pathString
   }
 }

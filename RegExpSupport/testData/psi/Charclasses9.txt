@@ -10,8 +10,8 @@ REGEXP_FILE
             RegExpCharImpl: <b>
               PsiElement(CHARACTER)('b')
             PsiElement(MINUS)('-')
-            PsiErrorElement:Illegal character range
-              <empty list>
+          PsiErrorElement:'&&' not allowed as end of range
+            <empty list>
           PsiElement(ANDAND)('&&')
           RegExpClassImpl: <[cd]>
             PsiElement(CLASS_BEGIN)('[')

@@ -5,12 +5,10 @@ Behave formatter that supports TC
 import datetime
 import traceback
 from collections import deque
-from distutils import version
 
 from behave.formatter.base import Formatter
 from behave.model import Step, Feature, Scenario
 from behave.model_core import Status
-from behave import __version__ as behave_version
 
 from teamcity.messages import TeamcityServiceMessages
 
@@ -35,7 +33,6 @@ class TeamcityFormatter(Formatter):
 
     def __init__(self, stream_opener, config):
         super(TeamcityFormatter, self).__init__(stream_opener, config)
-        assert version.LooseVersion(behave_version) >= version.LooseVersion("1.2.6"), "Only 1.2.6+ is supported"
         self._messages = TeamcityServiceMessages()
 
         self.__feature = None
@@ -95,9 +92,12 @@ class TeamcityFormatter(Formatter):
     def result(self, step):
         assert isinstance(step, Step)
         step_name = _step_name(step)
-        if step.status == Status.failed:
+        fail_statuses = [Status.failed]
+        if hasattr(Status, "error"):
+            fail_statuses.append(Status.error)
+        if step.status in fail_statuses:
             try:
-                error = traceback.format_exc(step.exc_traceback)
+                error = "".join(traceback.format_exception(step.exception))
                 if error != step.error_message:
                     self._messages.testStdErr(step_name, error)
             except Exception:

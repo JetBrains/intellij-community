@@ -4,20 +4,30 @@ package com.intellij.build;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.util.PropertiesComponent;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.DataSink;
+import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.actionSystem.Presentation;
+import com.intellij.openapi.actionSystem.ToggleAction;
+import com.intellij.openapi.actionSystem.Toggleable;
+import com.intellij.openapi.actionSystem.UiDataProvider;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.ui.ComponentContainer;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.wm.IdeFocusManager;
+import com.intellij.util.ui.update.Activatable;
+import com.intellij.util.ui.update.UiNotifyConnector;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JComponent;
+import javax.swing.JPanel;
+import java.awt.CardLayout;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -28,8 +38,9 @@ import java.util.concurrent.atomic.AtomicReference;
 /**
  * @author Vladislav.Soroka
  */
+@ApiStatus.Internal
 @ApiStatus.Experimental
-public class CompositeView<T extends ComponentContainer> extends JPanel implements ComponentContainer, DataProvider {
+public class CompositeView<T extends ComponentContainer> extends JPanel implements ComponentContainer, UiDataProvider {
   private final Map<String, T> myViewMap = new ConcurrentHashMap<>();
   private final @NonNls String mySelectionStateKey;
   private final AtomicReference<String> myVisibleViewRef = new AtomicReference<>();
@@ -52,18 +63,13 @@ public class CompositeView<T extends ComponentContainer> extends JPanel implemen
     Disposer.register(this, view);
   }
 
-  public void addViewAndShowIfNeeded(@NotNull T view, @NotNull String viewName, boolean showByDefault) {
+  public void addViewAndShowIfNeeded(@NotNull T view, @NotNull String viewName, boolean showByDefault, boolean requestFocus) {
     addView(view, viewName);
     String storedState = getStoredState();
     if (storedState != null && (storedState.equals(viewName)) ||
         storedState == null && showByDefault) {
-      showView(viewName);
+      showView(viewName, requestFocus);
     }
-  }
-
-  public void showView(@NotNull String viewName) {
-    showView(viewName, true);
-    setStoredState(viewName);
   }
 
   public void showView(@NotNull String viewName, boolean requestFocus) {
@@ -73,13 +79,15 @@ public class CompositeView<T extends ComponentContainer> extends JPanel implemen
       cl.show(this, viewName);
     }
     if (requestFocus) {
-      IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
-        ComponentContainer view = getView(viewName);
-        if (view != null) {
-          IdeFocusManager.getGlobalInstance().requestFocus(view.getPreferredFocusableComponent(), true);
+      ComponentContainer view = getView(viewName);
+      UiNotifyConnector.Once.installOn(view.getComponent(), new Activatable() {
+        @Override
+        public void showNotify() {
+          view.getPreferredFocusableComponent().requestFocusInWindow();
         }
       });
     }
+    setStoredState(viewName);
   }
 
   public boolean isViewVisible(String viewName) {
@@ -121,16 +129,10 @@ public class CompositeView<T extends ComponentContainer> extends JPanel implemen
   }
 
   @Override
-  public @Nullable Object getData(@NotNull @NonNls String dataId) {
+  public void uiDataSnapshot(@NotNull DataSink sink) {
     String visibleViewName = myVisibleViewRef.get();
-    if (visibleViewName != null) {
-      T visibleView = getView(visibleViewName);
-      if (visibleView instanceof DataProvider) {
-        Object data = ((DataProvider)visibleView).getData(dataId);
-        if (data != null) return data;
-      }
-    }
-    return null;
+    T visibleView = visibleViewName != null ? getView(visibleViewName) : null;
+    DataSink.uiDataSnapshot(sink, visibleView);
   }
 
   private void setStoredState(String viewName) {
@@ -161,6 +163,11 @@ public class CompositeView<T extends ComponentContainer> extends JPanel implemen
     }
 
     @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
+    }
+
+    @Override
     public boolean isSelected(final @NotNull AnActionEvent event) {
       String visibleViewName = myVisibleViewRef.get();
       if (visibleViewName == null) return true;
@@ -173,7 +180,7 @@ public class CompositeView<T extends ComponentContainer> extends JPanel implemen
       if (myViewMap.size() > 1) {
         List<String> names = new ArrayList<>(myViewMap.keySet());
         String viewName = flag ? names.get(0) : names.get(1);
-        showView(viewName);
+        showView(viewName, true);
         ApplicationManager.getApplication().invokeLater(() -> update(event));
       }
     }

@@ -19,7 +19,6 @@ package com.intellij.psi.impl.source.resolve.reference.impl.providers;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
 import com.intellij.util.ProcessingContext;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -32,13 +31,6 @@ import java.util.Map;
  */
 public interface CustomizableReferenceProvider {
 
-  /**
-   * @deprecated Please customize references in their respective reference-specific ways
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020.2")
-  void setOptions(@Nullable Map<CustomizationKey, Object> options);
-
   @Nullable
   Map<CustomizationKey, Object> getOptions();
 
@@ -46,13 +38,13 @@ public interface CustomizableReferenceProvider {
 
 
   final class CustomizationKey<T> {
-    
     private final String myOptionDescription;
 
     public CustomizationKey(@NonNls String optionDescription) {
       myOptionDescription = optionDescription;
     }
 
+    @Override
     public String toString() { return myOptionDescription; }
 
     /** @noinspection unchecked*/
@@ -65,7 +57,7 @@ public interface CustomizableReferenceProvider {
       return o != null && o.booleanValue();
     }
 
-    public void putValue(Map<CustomizationKey, Object> options, T value) {
+    public void putValue(@NotNull Map<CustomizationKey, Object> options, T value) {
       options.put(this, value);
     }
   }

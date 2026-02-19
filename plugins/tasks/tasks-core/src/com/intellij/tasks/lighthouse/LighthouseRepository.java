@@ -1,25 +1,16 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.tasks.lighthouse;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.tasks.*;
+import com.intellij.tasks.Comment;
+import com.intellij.tasks.Task;
+import com.intellij.tasks.TaskRepository;
+import com.intellij.tasks.TaskRepositoryType;
+import com.intellij.tasks.TaskType;
 import com.intellij.tasks.impl.BaseRepository;
 import com.intellij.tasks.impl.BaseRepositoryImpl;
 import com.intellij.util.NullableFunction;
@@ -31,11 +22,10 @@ import org.apache.commons.httpclient.HttpMethod;
 import org.apache.commons.httpclient.methods.GetMethod;
 import org.apache.commons.httpclient.methods.PostMethod;
 import org.jdom.Element;
-import org.jdom.input.SAXBuilder;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.Icon;
 import java.io.InputStream;
 import java.text.DateFormat;
 import java.text.ParseException;
@@ -50,7 +40,7 @@ import java.util.regex.Pattern;
  * @author Dennis.Ushakov
  */
 @Tag("Lighthouse")
-public class LighthouseRepository extends BaseRepositoryImpl {
+public final class LighthouseRepository extends BaseRepositoryImpl {
   private static final Logger LOG = Logger.getInstance(LighthouseRepository.class);
   private static final Pattern DATE_PATTERN = Pattern.compile("(\\d\\d\\d\\d\\-\\d\\d\\-\\d\\d).*(\\d\\d:\\d\\d:\\d\\d).*");
   private static final DateFormat DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
@@ -67,9 +57,8 @@ public class LighthouseRepository extends BaseRepositoryImpl {
     super(type);
   }
 
-  @NotNull
   @Override
-  public BaseRepository clone() {
+  public @NotNull BaseRepository clone() {
     return new LighthouseRepository(this);
   }
 
@@ -103,7 +92,7 @@ public class LighthouseRepository extends BaseRepositoryImpl {
     while (tasks.size() < max) {
       HttpMethod method = doREST(url + "&page=" + page, false, client);
       InputStream stream = method.getResponseBodyAsStream();
-      Element element = new SAXBuilder(false).build(stream).getRootElement();
+      Element element = JDOMUtil.load(stream);
       if ("nil-classes".equals(element.getName())) break;
       if (!"tickets".equals(element.getName())) {
         LOG.warn("Error fetching issues for: " + url + ", HTTP status code: " + method.getStatusCode());
@@ -120,8 +109,7 @@ public class LighthouseRepository extends BaseRepositoryImpl {
     return tasks.toArray(Task.EMPTY_ARRAY);
   }
 
-  @Nullable
-  private Task createIssue(Element element) {
+  private @Nullable Task createIssue(Element element) {
     final String id = element.getChildText("number");
     if (id == null) {
       return null;
@@ -154,15 +142,13 @@ public class LighthouseRepository extends BaseRepositoryImpl {
         return getUrl() + "/projects/" + myProjectId + "/tickets/" + getId() + ".xml";
       }
 
-      @NotNull
       @Override
-      public String getId() {
+      public @NotNull String getId() {
         return myProjectId + "-" + id;
       }
 
-      @NotNull
       @Override
-      public String getSummary() {
+      public @NotNull String getSummary() {
         return summary;
       }
 
@@ -176,15 +162,13 @@ public class LighthouseRepository extends BaseRepositoryImpl {
         return Comment.EMPTY_ARRAY;
       }
 
-      @NotNull
       @Override
-      public Icon getIcon() {
+      public @NotNull Icon getIcon() {
         return TasksCoreIcons.Lighthouse;
       }
 
-      @NotNull
       @Override
-      public TaskType getType() {
+      public @NotNull TaskType getType() {
         return TaskType.BUG;
       }
 
@@ -215,8 +199,7 @@ public class LighthouseRepository extends BaseRepositoryImpl {
     };
   }
 
-  @Nullable
-  private static Date parseDate(Element element, String name) throws ParseException {
+  private static @Nullable Date parseDate(Element element, String name) throws ParseException {
     final Matcher m = DATE_PATTERN.matcher(element.getChildText(name));
     if (m.find()) {
       return DATE_FORMAT.parse(m.group(1) + " " + m.group(2));
@@ -225,8 +208,7 @@ public class LighthouseRepository extends BaseRepositoryImpl {
   }
 
   @Override
-  @Nullable
-  public String extractId(@NotNull String taskName) {
+  public @Nullable String extractId(@NotNull String taskName) {
     Matcher matcher = myPattern.matcher(taskName);
     return matcher.find() ? matcher.group(1) : null;
   }
@@ -268,16 +250,15 @@ public class LighthouseRepository extends BaseRepositoryImpl {
     method.addRequestHeader("X-LighthouseToken", getPassword());
   }
 
-  @Nullable
   @Override
-  public Task findTask(@NotNull String id) throws Exception {
+  public @Nullable Task findTask(@NotNull String id) throws Exception {
     final String[] split = id.split("\\-");
     final String projectId = split[0];
     final String realId = split[1];
     if (!Comparing.strEqual(projectId, myProjectId)) return null;
     HttpMethod method = doREST("/projects/" + myProjectId + "/tickets/" + realId +".xml", false, login());
     InputStream stream = method.getResponseBodyAsStream();
-    Element element = new SAXBuilder(false).build(stream).getRootElement();
+    Element element = JDOMUtil.load(stream);
     return element.getName().equals("ticket") ? createIssue(element) : null;
   }
 
@@ -290,34 +271,11 @@ public class LighthouseRepository extends BaseRepositoryImpl {
     myPattern = Pattern.compile("(" + projectId + "\\-\\d+):\\s+");
   }
 
-  /**
-   * Don't use this getter, it's left only to preserve compatibility with existing settings.
-   * Actual API token is saved in Password Safe and accessible via {@link #getPassword()}.
-   *
-   * @deprecated Use {@link #getPassword()}
-   */
-  @Deprecated
-  public String getAPIKey() {
-    return null;
-  }
-
-  /**
-   * Don't use this getter, it's left only to preserve compatibility with existing settings.
-   * Actual API token is saved in Password Safe and accessible via {@link #getPassword()}.
-   *
-   * @deprecated Use {@link #setPassword(String)}
-   */
-  @Deprecated
-  public void setAPIKey(String APIKey) {
-    setPassword(APIKey);
-  }
-
   @Override
   public boolean equals(Object o) {
     if (!super.equals(o)) return false;
-    if (!(o instanceof LighthouseRepository)) return false;
+    if (!(o instanceof LighthouseRepository that)) return false;
 
-    LighthouseRepository that = (LighthouseRepository)o;
     if (getProjectId() != null ? !getProjectId().equals(that.getProjectId()) : that.getProjectId() != null) return false;
     return true;
   }

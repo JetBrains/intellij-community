@@ -3,53 +3,146 @@ View root() {
     Tasks() {
       build setup() {
         init()
+        updateDaemonJvm()
         wrapper()
       }
       help() {
+        artifactTransforms()
         buildEnvironment()
-        components()
         dependencies()
         dependencyInsight()
-        dependentComponents()
         help()
-        model()
+        javaToolchains()
+        outgoingVariants()
         projects()
         properties()
+        resolvableConfigurations()
         tasks()
+      }
+      other() {
+        prepareKotlinBuildScriptModel()
       }
     }
     buildSrc() {
+      Tasks() {
+        build() {
+          assemble()
+          build()
+          buildDependents()
+          buildNeeded()
+          classes()
+          clean()
+          jar()
+          testClasses()
+        }
+        build setup() {
+          init()
+          updateDaemonJvm()
+          wrapper()
+        }
+        documentation() {
+          groovydoc()
+          javadoc()
+        }
+        help() {
+          artifactTransforms()
+          buildEnvironment()
+          dependencies()
+          dependencyInsight()
+          help()
+          javaToolchains()
+          outgoingVariants()
+          projects()
+          properties()
+          resolvableConfigurations()
+          tasks()
+        }
+        other() {
+          compileGroovy()
+          compileJava()
+          compileTestGroovy()
+          compileTestJava()
+          prepareKotlinBuildScriptModel()
+          processResources()
+          processTestResources()
+        }
+        verification() {
+          check()
+          test()
+        }
+      }
       Dependencies() {
         compileClasspath() {
           Gradle API files()
-          groovy-all-1.0-2.5.4.jar()
+          groovy-4.0.29.jar()
+          groovy-ant-4.0.29.jar()
+          groovy-astbuilder-4.0.29.jar()
+          groovy-datetime-4.0.29.jar()
+          groovy-dateutil-4.0.29.jar()
+          groovy-groovydoc-4.0.29.jar()
+          groovy-json-4.0.29.jar()
+          groovy-nio-4.0.29.jar()
+          groovy-templates-4.0.29.jar()
+          groovy-xml-4.0.29.jar()
+          javaparser-core-3.27.1.jar()
         }
         runtimeClasspath() {
           Gradle API files()
-          groovy-all-1.0-2.5.4.jar()
+          groovy-4.0.29.jar()
+          groovy-ant-4.0.29.jar()
+          groovy-astbuilder-4.0.29.jar()
+          groovy-datetime-4.0.29.jar()
+          groovy-dateutil-4.0.29.jar()
+          groovy-groovydoc-4.0.29.jar()
+          groovy-json-4.0.29.jar()
+          groovy-nio-4.0.29.jar()
+          groovy-templates-4.0.29.jar()
+          groovy-xml-4.0.29.jar()
+          javaparser-core-3.27.1.jar()
         }
         testCompileClasspath() {
           Gradle API files()
-          groovy-all-1.0-2.5.4.jar()
+          groovy-4.0.29.jar()
+          groovy-ant-4.0.29.jar()
+          groovy-astbuilder-4.0.29.jar()
+          groovy-datetime-4.0.29.jar()
+          groovy-dateutil-4.0.29.jar()
+          groovy-groovydoc-4.0.29.jar()
+          groovy-json-4.0.29.jar()
+          groovy-nio-4.0.29.jar()
+          groovy-templates-4.0.29.jar()
+          groovy-xml-4.0.29.jar()
+          javaparser-core-3.27.1.jar()
         }
         testRuntimeClasspath() {
           Gradle API files()
-          groovy-all-1.0-2.5.4.jar()
+          groovy-4.0.29.jar()
+          groovy-ant-4.0.29.jar()
+          groovy-astbuilder-4.0.29.jar()
+          groovy-datetime-4.0.29.jar()
+          groovy-dateutil-4.0.29.jar()
+          groovy-groovydoc-4.0.29.jar()
+          groovy-json-4.0.29.jar()
+          groovy-nio-4.0.29.jar()
+          groovy-templates-4.0.29.jar()
+          groovy-xml-4.0.29.jar()
+          javaparser-core-3.27.1.jar()
         }
       }
     }
     child1() {
       Tasks() {
         help() {
+          artifactTransforms()
           buildEnvironment()
-          components()
           dependencies()
           dependencyInsight()
-          dependentComponents()
           help()
-          model()
+          javaToolchains()
+          outgoingVariants()
           projects()
           properties()
+          resolvableConfigurations()
           tasks()
         }
       }

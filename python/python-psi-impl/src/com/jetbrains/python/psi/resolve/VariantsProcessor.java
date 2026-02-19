@@ -9,7 +9,12 @@ import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.ResolveState;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.util.QualifiedName;
-import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.PyElement;
+import com.jetbrains.python.psi.PyFile;
+import com.jetbrains.python.psi.PyImportElement;
+import com.jetbrains.python.psi.PyImportedNameDefiner;
+import com.jetbrains.python.psi.PyReferenceExpression;
+import com.jetbrains.python.psi.PyUtil;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -22,19 +27,15 @@ public abstract class VariantsProcessor implements PsiScopeProcessor {
 
   protected final PsiElement myContext;
 
-  @Nullable
-  protected final Condition<PsiElement> myNodeFilter;
+  protected final @Nullable Condition<PsiElement> myNodeFilter;
 
-  @Nullable
-  protected final Condition<String> myNameFilter;
+  protected final @Nullable Condition<String> myNameFilter;
 
   protected final boolean myPlainNamesOnly; // if true, add insert handlers to known things like functions
 
-  @Nullable
-  private Set<String> myAllowedNames;
+  private @Nullable Set<String> myAllowedNames;
 
-  @NotNull
-  private final Set<String> mySeenNames = new HashSet<>();
+  private final @NotNull Set<String> mySeenNames = new HashSet<>();
 
   public VariantsProcessor(PsiElement context) {
     this(context, null, null, false);
@@ -57,15 +58,13 @@ public abstract class VariantsProcessor implements PsiScopeProcessor {
   @Override
   public boolean execute(@NotNull PsiElement element, @NotNull ResolveState substitutor) {
     if (myNodeFilter != null && !myNodeFilter.value(element)) return true; // skip whatever the filter rejects
-    if (element instanceof PsiNamedElement) {
-      final PsiNamedElement namedElement = (PsiNamedElement)element;
+    if (element instanceof PsiNamedElement namedElement) {
       final String name = PyUtil.getElementNameWithoutExtension(namedElement);
       if (nameIsAcceptable(name)) {
         addElement(name, namedElement);
       }
     }
-    else if (element instanceof PyReferenceExpression) {
-      final PyReferenceExpression referenceExpression = (PyReferenceExpression)element;
+    else if (element instanceof PyReferenceExpression referenceExpression) {
       final String name = referenceExpression.getReferencedName();
       if (nameIsAcceptable(name)) {
         addElement(name, referenceExpression);

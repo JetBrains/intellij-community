@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.util;
 
 import com.intellij.codeInsight.generation.GenerateMembersUtil;
@@ -9,7 +9,6 @@ import com.intellij.featureStatistics.ProductivityFeatureNames;
 import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.ide.fileTemplates.JavaTemplateUtil;
-import com.intellij.ide.util.MemberChooser;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
@@ -17,7 +16,17 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.*;
+import com.intellij.psi.CommonClassNames;
+import com.intellij.psi.PsiAnnotation;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiModifierList;
+import com.intellij.psi.PsiParameter;
+import com.intellij.psi.PsiSubstitutor;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypes;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.util.PsiTypesUtil;
 import org.jetbrains.annotations.NonNls;
@@ -37,7 +46,11 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrTraitMethod;
 import org.jetbrains.plugins.groovy.lang.psi.util.GrTraitUtil;
 
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
 
 public final class GroovyOverrideImplementUtil {
   private static final Logger LOG = Logger.getInstance(GroovyOverrideImplementUtil.class);
@@ -128,8 +141,7 @@ public final class GroovyOverrideImplementUtil {
   }
 
 
-  @Nullable
-  private static PsiType getSuperReturnType(@NotNull PsiMethod superMethod) {
+  private static @Nullable PsiType getSuperReturnType(@NotNull PsiMethod superMethod) {
     if (superMethod instanceof GrMethod) {
       final GrTypeElement element = ((GrMethod)superMethod).getReturnTypeElementGroovy();
       return element != null ? element.getType() : null;
@@ -149,11 +161,11 @@ public final class GroovyOverrideImplementUtil {
     if (returnType != null) {
       returnTypeText = returnType.getPresentableText();
     }
-    Properties properties = FileTemplateManager.getInstance(project).getDefaultProperties();
+    Map<String, Object> properties = FileTemplateManager.getInstance(project).getDefaultContextMap();
 
-    properties.setProperty(FileTemplate.ATTRIBUTE_RETURN_TYPE, returnTypeText);
-    properties.setProperty(FileTemplate.ATTRIBUTE_DEFAULT_RETURN_VALUE, PsiTypesUtil.getDefaultValueOfType(returnType));
-    properties.setProperty(FileTemplate.ATTRIBUTE_CALL_SUPER, callSuper(method, resultMethod));
+    properties.put(FileTemplate.ATTRIBUTE_RETURN_TYPE, returnTypeText);
+    properties.put(FileTemplate.ATTRIBUTE_DEFAULT_RETURN_VALUE, PsiTypesUtil.getDefaultValueOfType(returnType));
+    properties.put(FileTemplate.ATTRIBUTE_CALL_SUPER, callSuper(method, resultMethod));
     JavaTemplateUtil.setClassAndMethodNameProperties(properties, method.getContainingClass(), resultMethod);
 
     try {
@@ -209,8 +221,8 @@ public final class GroovyOverrideImplementUtil {
   }
 
   public static void chooseAndOverrideOrImplementMethods(@NotNull Project project,
-                                                         @NotNull final Editor editor,
-                                                         @NotNull final GrTypeDefinition aClass,
+                                                         final @NotNull Editor editor,
+                                                         final @NotNull GrTypeDefinition aClass,
                                                          boolean toImplement) {
     LOG.assertTrue(aClass.isValid());
     ApplicationManager.getApplication().assertReadAccessAllowed();
@@ -224,8 +236,7 @@ public final class GroovyOverrideImplementUtil {
       for (Iterator<CandidateInfo> iterator = candidates.iterator(); iterator.hasNext(); ) {
         CandidateInfo candidate = iterator.next();
         PsiElement element = candidate.getElement();
-        if (element instanceof GrMethod) {
-          GrMethod method = (GrMethod)element;
+        if (element instanceof GrMethod method) {
           if (GrTraitUtil.isTrait(method.getContainingClass()) && !GrTraitUtil.isMethodAbstract(method)) {
             iterator.remove();
             secondary.add(candidate);
@@ -234,22 +245,21 @@ public final class GroovyOverrideImplementUtil {
       }
     }
 
-    final MemberChooser<PsiMethodMember> chooser =
-      OverrideImplementUtil.showOverrideImplementChooser(editor, aClass, toImplement, candidates, secondary);
-    if (chooser == null) return;
-
-    final List<PsiMethodMember> selectedElements = chooser.getSelectedElements();
-    if (selectedElements == null || selectedElements.isEmpty()) return;
-
-    LOG.assertTrue(aClass.isValid());
-    WriteCommandAction.writeCommandAction(project, aClass.getContainingFile()).run(() -> OverrideImplementUtil.overrideOrImplementMethodsInRightPlace(editor, aClass, selectedElements, chooser.isCopyJavadoc(),
-                                                                                                                                                    chooser.isInsertOverrideAnnotation()));
+    OverrideImplementUtil.showJavaOverrideImplementChooser(editor, aClass, toImplement, candidates, secondary, chooser->{
+      if (chooser == null) return;
+      final List<PsiMethodMember> selectedElements = chooser.getSelectedElements();
+      if (selectedElements == null || selectedElements.isEmpty()) return;
+      LOG.assertTrue(aClass.isValid());
+      WriteCommandAction.writeCommandAction(project,
+                                            aClass.getContainingFile()).run(
+                                              () -> OverrideImplementUtil.overrideOrImplementMethodsInRightPlace(editor, aClass, selectedElements, chooser.isCopyJavadoc(),
+                                                                                                                                                        chooser.isInsertOverrideAnnotation()));
+    });
   }
 
-  @NotNull
-  private static String callSuper(PsiMethod superMethod, PsiMethod overriding) {
+  private static @NotNull String callSuper(PsiMethod superMethod, PsiMethod overriding) {
     @NonNls StringBuilder buffer = new StringBuilder();
-    if (!superMethod.isConstructor() && !PsiType.VOID.equals(superMethod.getReturnType())) {
+    if (!superMethod.isConstructor() && !PsiTypes.voidType().equals(superMethod.getReturnType())) {
       buffer.append("return ");
     }
     buffer.append("super");

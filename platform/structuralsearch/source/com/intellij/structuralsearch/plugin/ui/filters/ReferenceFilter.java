@@ -1,31 +1,52 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.structuralsearch.plugin.ui.filters;
 
-import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.actionSystem.IdeActions;
-import com.intellij.openapi.keymap.KeymapUtil;
+import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.structuralsearch.MatchVariableConstraint;
+import com.intellij.structuralsearch.NamedScriptableDefinition;
 import com.intellij.structuralsearch.SSRBundle;
+import com.intellij.structuralsearch.plugin.ui.Configuration;
 import com.intellij.structuralsearch.plugin.ui.ConfigurationManager;
 import com.intellij.structuralsearch.plugin.ui.UIUtil;
+import com.intellij.ui.CollectionComboBoxModel;
 import com.intellij.ui.ContextHelpLabel;
 import com.intellij.ui.SimpleColoredComponent;
-import com.intellij.ui.TextFieldWithAutoCompletion;
+import com.intellij.ui.SimpleListCellRenderer;
+import com.intellij.util.ui.CheckBox;
+import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-import java.util.Collections;
+import javax.swing.Box;
+import javax.swing.GroupLayout;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
+import javax.swing.JList;
+import java.awt.Component;
+import java.awt.Dimension;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
  * @author Bas Leijdekkers
  */
-@SuppressWarnings("ComponentNotRegistered")
-public class ReferenceFilter extends FilterAction {
+class ReferenceFilter extends FilterAction {
 
-  public ReferenceFilter() {
+  ReferenceFilter() {
     super(SSRBundle.messagePointer("reference.filter.name"));
+  }
+
+  @Override
+  public @NotNull String getShortText(NamedScriptableDefinition variable) {
+    if (!(variable instanceof MatchVariableConstraint constraint)) {
+      return "";
+    }
+    final String ref = constraint.getReferenceConstraint();
+    if (StringUtil.isEmpty(ref)) {
+      return "";
+    }
+    final String text = StringUtil.unquoteString(ref);
+    return SSRBundle.message("reference.target.tooltip.message", constraint.isInvertReference() ? 1 : 0, text);
   }
 
   @Override
@@ -40,6 +61,7 @@ public class ReferenceFilter extends FilterAction {
     if (variable == null) {
       return;
     }
+    variable.setReferenceConstraintName("");
     variable.setReferenceConstraint("");
     variable.setInvertReference(false);
   }
@@ -47,7 +69,7 @@ public class ReferenceFilter extends FilterAction {
   @Override
   public boolean isApplicable(List<? extends PsiElement> nodes, boolean completePattern, boolean target) {
     return myTable.getVariable() instanceof MatchVariableConstraint &&
-           myTable.getProfile().isApplicableConstraint(UIUtil.REFERENCE, nodes, completePattern, target);
+           isApplicableConstraint(UIUtil.REFERENCE, nodes, completePattern, target);
   }
 
   @Override
@@ -56,69 +78,98 @@ public class ReferenceFilter extends FilterAction {
     if (constraint == null) {
       return;
     }
-    final String value = constraint.isInvertReference() ? "!" + constraint.getReferenceConstraint() : constraint.getReferenceConstraint();
-    component.append(SSRBundle.message("reference.0.label", value));
+    final Configuration referencedConfiguration =
+      ConfigurationManager.getInstance(myTable.getProject()).findConfigurationByName(constraint.getReferenceConstraint());
+    if (referencedConfiguration != null) {
+      component
+        .append(SSRBundle.message("reference.0.label", (constraint.isInvertReference() ? "!" : "") + referencedConfiguration.getName()));
+    }
   }
 
   @Override
   public FilterEditor<MatchVariableConstraint> getEditor() {
-    return new FilterEditor<MatchVariableConstraint>(myTable.getMatchVariable(), myTable.getConstraintChangedCallback()) {
+    return new FilterEditor<>(myTable.getMatchVariable(), myTable.getConstraintChangedCallback()) {
 
       private final JLabel myLabel = new JLabel(SSRBundle.message("reference.label"));
-      private final TextFieldWithAutoCompletion<String> textField =
-        TextFieldWithAutoCompletion.create(myTable.getProject(), Collections.emptyList(), false, "");
-      private final String shortcut =
-        KeymapUtil.getFirstKeyboardShortcutText(ActionManager.getInstance().getAction(IdeActions.ACTION_CODE_COMPLETION));
-      private final ContextHelpLabel myHelpLabel = ContextHelpLabel.create(SSRBundle.message("reference.filter.help.text", shortcut));
+      private final @NotNull ComboBox<Configuration> myComboBox =
+        new ComboBox<>(new CollectionComboBoxModel<>(new ArrayList<>(ConfigurationManager.getInstance(myTable.getProject()).getAllConfigurations())));
+      private final SimpleListCellRenderer<Configuration> renderer = new SimpleListCellRenderer<>() {
+        @Override
+        public void customize(@NotNull JList list, Configuration value, int index, boolean selected, boolean hasFocus) {
+          setIcon(value.getIcon());
+          setText(value.getName());
+        }
+      };
+      private final ContextHelpLabel myHelpLabel = ContextHelpLabel.create(SSRBundle.message("reference.filter.help.text"));
+      private final CheckBox myCheckBox = new CheckBox(SSRBundle.message("invert.filter"), this, "inverseTemplate");
+      private final Component myGlue = Box.createGlue();
+      public boolean inverseTemplate = myConstraint.isInvertReference();
 
       @Override
       protected void layoutComponents() {
-        textField.setVariants(ConfigurationManager.getInstance(myTable.getProject()).getAllConfigurationNames());
+        myComboBox.setRenderer(renderer);
+        myComboBox.setPreferredSize(new Dimension(160, 28));
+        myComboBox.setSwingPopup(false);
+
         final GroupLayout layout = new GroupLayout(this);
         setLayout(layout);
         layout.setAutoCreateContainerGaps(true);
 
         layout.setHorizontalGroup(
-          layout.createSequentialGroup()
-                .addComponent(myLabel)
-                .addComponent(textField)
-                .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED, 1, 1)
-                .addComponent(myHelpLabel)
+          layout.createParallelGroup()
+            .addGroup(layout.createSequentialGroup()
+                        .addComponent(myLabel)
+                        .addComponent(myComboBox)
+            )
+            .addGroup(layout.createSequentialGroup()
+                        .addComponent(myCheckBox)
+                        .addComponent(myGlue)
+                        .addComponent(myHelpLabel)
+            )
         );
         layout.setVerticalGroup(
-          layout.createParallelGroup(GroupLayout.Alignment.CENTER)
-                .addComponent(myLabel)
-                .addComponent(textField)
-                .addComponent(myHelpLabel)
+          layout.createSequentialGroup()
+            .addGroup(layout.createParallelGroup(GroupLayout.Alignment.CENTER)
+                        .addComponent(myLabel)
+                        .addComponent(myComboBox)
+            )
+            .addGroup(layout.createParallelGroup(GroupLayout.Alignment.CENTER)
+                        .addComponent(myCheckBox)
+                        .addComponent(myGlue)
+                        .addComponent(myHelpLabel)
+            )
         );
       }
 
       @Override
       protected void loadValues() {
-        textField.setText((myConstraint.isInvertReference() ? "!" : "") + myConstraint.getReferenceConstraint());
+        inverseTemplate = myConstraint.isInvertReference();
+        myCheckBox.setSelected(inverseTemplate);
+        var referencedTemplate =
+          ConfigurationManager.getInstance(myTable.getProject()).findConfigurationByName(myConstraint.getReferenceConstraint());
+        if (referencedTemplate != null) {
+          myComboBox.setSelectedItem(referencedTemplate);
+        }
       }
 
       @Override
       protected void saveValues() {
-        final String text = textField.getText();
-        if (text.startsWith("!")) {
-          myConstraint.setReferenceConstraint(text.substring(1));
-          myConstraint.setInvertReference(true);
-        }
-        else {
-          myConstraint.setReferenceConstraint(text);
-          myConstraint.setInvertReference(false);
+        final Configuration item = myComboBox.getItem();
+        if (item != null) {
+          myConstraint.setReferenceConstraint(item.getRefName());
+          myConstraint.setReferenceConstraintName(item.getName());
+          myConstraint.setInvertReference(inverseTemplate);
         }
       }
 
       @Override
       public JComponent getPreferredFocusedComponent() {
-        return textField;
+        return myComboBox;
       }
 
       @Override
       public JComponent[] getFocusableComponents() {
-        return new JComponent[]{textField};
+        return new JComponent[]{myComboBox, myCheckBox};
       }
     };
   }

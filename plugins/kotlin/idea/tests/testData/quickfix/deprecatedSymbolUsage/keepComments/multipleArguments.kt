@@ -1,0 +1,18 @@
+// "Replace with 'newFun(this, p1, p2)'" "true"
+
+interface X {
+    @Deprecated("", ReplaceWith("newFun(this, p1, p2)"))
+    fun oldFun(p1: Int, p2: Int)
+}
+
+fun newFun(x: X, a: Int, b: Int){}
+
+fun foo(x: X) {
+    x/*receiver*/.<caret>oldFun(
+        1, // pass 1
+        2 // pass 2
+    )
+}
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.replaceWith.DeprecatedSymbolUsageFix
+// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.fixes.replaceWith.DeprecatedSymbolUsageFix

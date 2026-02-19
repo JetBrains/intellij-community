@@ -1,19 +1,4 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.htmlInspections;
 
 import com.intellij.codeInsight.intention.IntentionAction;
@@ -22,7 +7,6 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiErrorElement;
 import com.intellij.psi.PsiFile;
@@ -38,41 +22,36 @@ import com.intellij.xml.util.XmlTagUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author spleaner
- */
-public class RenameTagBeginOrEndIntentionAction implements IntentionAction {
+public final class RenameTagBeginOrEndIntentionAction implements IntentionAction {
   private final boolean myStart;
   private final String myTargetName;
   private final String mySourceName;
 
-  RenameTagBeginOrEndIntentionAction(@NotNull final String targetName, @NotNull final String sourceName, final boolean start) {
+  RenameTagBeginOrEndIntentionAction(final @NotNull String targetName, final @NotNull String sourceName, final boolean start) {
     myTargetName = targetName;
     mySourceName = sourceName;
     myStart = start;
   }
 
   @Override
-  @NotNull
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return getName();
   }
 
   @Override
-  @NotNull
-  public String getText() {
+  public @NotNull String getText() {
     return getName();
   }
 
   @Override
-  public boolean isAvailable(@NotNull final Project project, final Editor editor, final PsiFile file) {
+  public boolean isAvailable(final @NotNull Project project, final Editor editor, final PsiFile psiFile) {
     return true;
   }
 
   @Override
-  public void invoke(@NotNull final Project project, final Editor editor, final PsiFile file) throws IncorrectOperationException {
+  public void invoke(final @NotNull Project project, final Editor editor, final PsiFile psiFile) throws IncorrectOperationException {
     final int offset = editor.getCaretModel().getOffset();
-    PsiElement psiElement = file.findElementAt(offset);
+    PsiElement psiElement = psiFile.findElementAt(offset);
 
     if (psiElement == null) return;
 
@@ -97,7 +76,7 @@ public class RenameTagBeginOrEndIntentionAction implements IntentionAction {
       }
 
       if (target != null) {
-        final Document document = PsiDocumentManager.getInstance(project).getDocument(file);
+        final Document document = psiFile.getViewProvider().getDocument();
         if (document != null) {
           final TextRange textRange = target.getTextRange();
           document.replaceString(textRange.getStartOffset(), textRange.getEndOffset(), myTargetName);
@@ -107,8 +86,7 @@ public class RenameTagBeginOrEndIntentionAction implements IntentionAction {
     }
   }
 
-  @Nullable
-  public static PsiElement findOtherSide(PsiElement psiElement, final boolean start) {
+  public static @Nullable PsiElement findOtherSide(PsiElement psiElement, final boolean start) {
     PsiElement target = null;
     PsiElement parent = psiElement.getParent();
     if (parent instanceof PsiErrorElement) {
@@ -135,8 +113,7 @@ public class RenameTagBeginOrEndIntentionAction implements IntentionAction {
     return true;
   }
 
-  @NotNull
-  public @IntentionName String getName() {
+  public @NotNull @IntentionName String getName() {
     return myStart
            ? XmlAnalysisBundle.message("xml.intention.rename.start.tag", mySourceName, myTargetName)
            : XmlAnalysisBundle.message("xml.intention.rename.end.tag", mySourceName, myTargetName);

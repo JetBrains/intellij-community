@@ -25,7 +25,6 @@ public interface ValidityStateFactory {
   /**
    * Used for deserialization of ValidityState objects from compiler internal caches.
    * @see ValidityState
-   * @param in
    */ 
   ValidityState createValidityState(DataInput in) throws IOException;
 }

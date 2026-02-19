@@ -3,11 +3,13 @@ package com.intellij.openapi.editor.colors.impl;
 
 import com.intellij.openapi.editor.markup.EffectType;
 import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.testFramework.LightPlatformTestCase;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 
-import java.awt.*;
+import java.awt.Color;
+import java.awt.Font;
 
 import static com.intellij.ui.ColorUtil.toHex;
 
@@ -86,7 +88,9 @@ public final class TextAttributesReaderTest extends LightPlatformTestCase {
     assertEquals(EffectType.BOLD_LINE_UNDERSCORE, readEffectType("BOLD_LINE"));
     assertEquals(EffectType.BOLD_DOTTED_LINE, readEffectType("5"));
     assertEquals(EffectType.BOLD_DOTTED_LINE, readEffectType("BOLD_DOTTED_LINE"));
-    assertEquals(EffectType.BOXED, readEffectType("6"));
+    assertEquals(EffectType.FADED, readEffectType("6"));
+    assertEquals(EffectType.FADED, readEffectType("FADED"));
+    assertEquals(EffectType.BOXED, readEffectType("7"));
   }
 
   private EffectType readEffectType(Object value) throws Exception {
@@ -117,7 +121,8 @@ public final class TextAttributesReaderTest extends LightPlatformTestCase {
   }
 
   public void testTextAttributesCompatibility() throws Exception {
-    compare(null);
+    TextAttributes actual = read((Element)null);
+    assertEquals(new TextAttributes(), actual);
     compare(value());
     compare(value("UNSUPPORTED", null));
     compare(value("UNSUPPORTED", "OPTION"));
@@ -141,21 +146,19 @@ public final class TextAttributesReaderTest extends LightPlatformTestCase {
     }
   }
 
-  private TextAttributes read(String value) throws Exception {
-    return read(Option.element(value));
+  private TextAttributes read(@NotNull String value) throws Exception {
+    return read(JDOMUtil.load(value));
   }
 
   private TextAttributes read(Element element) {
     return myReader.read(TextAttributes.class, element);
   }
 
-  private void compare(String value) throws Exception {
-    Element element = Option.element(value);
-    TextAttributes expected = element == null ? new TextAttributes() : new TextAttributes(element);
+  private void compare(@NotNull String value) throws Exception {
+    Element element = JDOMUtil.load(value);
+    TextAttributes expected = new TextAttributes(element);
     TextAttributes actual = read(element);
     assertEquals(expected, actual);
-    // EditorColorsSchemeImplTest.testWriteInheritedFromDefault
-    // EditorColorsSchemeImplTest.testWriteInheritedFromDarcula
   }
 
   @NotNull

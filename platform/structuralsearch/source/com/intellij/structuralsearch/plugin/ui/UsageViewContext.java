@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.structuralsearch.plugin.ui;
 
 import com.intellij.ide.plugins.DynamicPluginListener;
@@ -13,17 +13,14 @@ import com.intellij.usages.UsageViewPresentation;
 import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.AbstractAction;
 import java.awt.event.ActionEvent;
 
 public class UsageViewContext {
 
-  @NotNull
-  protected final SearchContext mySearchContext;
-  @NotNull
-  protected final Configuration myConfiguration;
-  @NotNull
-  private final ConfigurableUsageTarget myTarget;
+  protected final @NotNull SearchContext mySearchContext;
+  protected final @NotNull Configuration myConfiguration;
+  private final @NotNull ConfigurableUsageTarget myTarget;
   protected UsageView myUsageView;
 
   protected UsageViewContext(@NotNull Configuration configuration, @NotNull SearchContext searchContext, @NotNull Runnable searchStarter) {
@@ -56,7 +53,6 @@ public class UsageViewContext {
     final String usagesString = SSRBundle.message("occurrences.of", pattern);
     presentation.setUsagesString(usagesString);
     presentation.setTabText(StringUtil.shortenTextWithEllipsis(usagesString, 60, 0, false));
-    presentation.setUsagesWord(SSRBundle.message("occurrence"));
     presentation.setCodeUsagesString(SSRBundle.message("found.occurrences", scopeText));
     presentation.setTargetsNodeText(SSRBundle.message("targets.node.text"));
     presentation.setCodeUsages(false);

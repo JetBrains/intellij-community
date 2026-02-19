@@ -1,22 +1,26 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testFramework;
 
 import com.intellij.openapi.util.Pair;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.ThrowableRunnable;
+import com.intellij.util.containers.CollectionFactory;
+import com.intellij.util.containers.HashingStrategy;
 import com.sun.management.OperatingSystemMXBean;
-import it.unimi.dsi.fastutil.longs.Long2LongMap;
-import it.unimi.dsi.fastutil.longs.Long2LongMaps;
-import it.unimi.dsi.fastutil.longs.Long2LongOpenHashMap;
-import it.unimi.dsi.fastutil.objects.Object2LongMap;
-import it.unimi.dsi.fastutil.objects.Object2LongMaps;
-import it.unimi.dsi.fastutil.objects.Object2LongOpenHashMap;
-import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 
-import java.lang.management.*;
+import java.lang.management.CompilationMXBean;
+import java.lang.management.GarbageCollectorMXBean;
+import java.lang.management.ManagementFactory;
+import java.lang.management.ThreadInfo;
+import java.lang.management.ThreadMXBean;
 import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 public final class CpuUsageData {
   private static final ThreadMXBean ourThreadMXBean = ManagementFactory.getThreadMXBean();
@@ -27,84 +31,104 @@ public final class CpuUsageData {
   public final long durationMs;
   private final FreeMemorySnapshot myMemStart;
   private final FreeMemorySnapshot myMemEnd;
-  private final long myCompilationTime;
-  private final long myProcessTime;
+  private final long myCompilationTimeMs;
+  private final long myProcessTimeMs;
   private final List<Pair<Long, String>> myGcTimes = new ArrayList<>();
   private final List<Pair<Long, String>> myThreadTimes = new ArrayList<>();
 
   private CpuUsageData(long durationMs,
-                       Object2LongMap<GarbageCollectorMXBean> gcTimes,
-                       Long2LongMap threadTimes,
-                       long compilationTime,
-                       long processTime,
-                       FreeMemorySnapshot memStart,
-                       FreeMemorySnapshot memEnd) {
+                       @NotNull Map<GarbageCollectorMXBean, Long> gcTimes,
+                       @NotNull Map<ThreadInfo, Long> threadTimes,
+                       long compilationTimeMs,
+                       long processTimeMs,
+                       @NotNull FreeMemorySnapshot memStart,
+                       @NotNull FreeMemorySnapshot memEnd) {
     this.durationMs = durationMs;
     myMemStart = memStart;
     myMemEnd = memEnd;
-    myCompilationTime = compilationTime;
-    myProcessTime = processTime;
-    Object2LongMaps.fastForEach(gcTimes, entry -> {
-      myGcTimes.add(Pair.create(entry.getLongValue(), entry.getKey().getName()));
-    });
-    Long2LongMaps.fastForEach(threadTimes, entry -> {
-      ThreadInfo info = ourThreadMXBean.getThreadInfo(entry.getLongKey());
-      myThreadTimes.add(Pair.create(toMillis(entry.getLongValue()), info == null ? "<unknown>" : info.getThreadName()));
-    });
+    myCompilationTimeMs = compilationTimeMs;
+    myProcessTimeMs = processTimeMs;
+    gcTimes.forEach((bean,value) -> myGcTimes.add(Pair.create(value, bean.getName())));
+    threadTimes.forEach((info, nanos) -> myThreadTimes.add(Pair.create(TimeUnit.NANOSECONDS.toMillis(nanos), info.getThreadName())));
+    assert durationMs >= 0 : durationMs;
+    assert compilationTimeMs >= 0 : compilationTimeMs;
+    assert processTimeMs >= 0 : processTimeMs;
   }
 
-  public String getGcStats() {
+  public @NotNull String getGcStats() {
     return printLongestNames(myGcTimes) + "; free " + myMemStart + " -> " + myMemEnd + " MB";
   }
 
+  @NotNull
   String getProcessCpuStats() {
     long gcTotal = myGcTimes.stream().mapToLong(p -> p.first).sum();
-    return myCompilationTime + "ms JITc " +
-           (gcTotal > 0 ? "and " + gcTotal + "ms GC " : "") +
-           "of " + myProcessTime + "ms total";
+    return myCompilationTimeMs + "ms (" + (myCompilationTimeMs * 100 / (myProcessTimeMs == 0 ? 1000000 : myProcessTimeMs)) + "%) compilation" +
+           (gcTotal > 0 ? " and " + gcTotal + "ms (" + (gcTotal*100/(myProcessTimeMs == 0 ? 1000000 : myProcessTimeMs)) + "%) GC" : "") +
+           " of " + myProcessTimeMs + "ms total";
   }
 
-  public String getThreadStats() {
+  public @NotNull String getThreadStats() {
     return printLongestNames(myThreadTimes);
   }
 
-  public String getSummary(String indent) {
+  public long getMemDelta() {
+    long usedBefore = myMemStart.total - myMemStart.free;
+    long usedAfter = myMemEnd.total - myMemEnd.free;
+    return usedAfter - usedBefore;
+  }
+
+  public @NotNull String getSummary(@NotNull String indent) {
     return indent + "GC: " + getGcStats() + "\n" +
            indent + "Threads: " + getThreadStats() + "\n" +
            indent + "Process: " + getProcessCpuStats();
   }
 
-  boolean hasAnyActivityBesides(Thread thread) {
-    return myCompilationTime > 0 ||
-           myThreadTimes.stream().anyMatch(pair -> pair.first > 0 && !pair.second.equals(thread.getName())) ||
+  boolean hasAnyActivityBesides(@NotNull Thread thread) {
+    return hasAnyActivityBesides(thread, 0);
+  }
+
+  boolean hasAnyActivityBesides(@NotNull Thread thread, long userMsThreshold) {
+    return myCompilationTimeMs > 0 ||
+           myThreadTimes.stream().anyMatch(pair -> pair.first > userMsThreshold && !pair.second.equals(thread.getName())) ||
            myGcTimes.stream().anyMatch(pair -> pair.first > 0);
   }
 
-  @NotNull
-  private static String printLongestNames(List<Pair<Long, String>> times) {
-    String stats = StreamEx.of(times)
-      .sortedBy(p -> -p.first)
-      .filter(p -> p.first > 10).limit(10)
+  private static @NotNull String printLongestNames(@NotNull List<? extends Pair<Long, String>> times) {
+    String stats = times.stream()
+      .sorted(Comparator.comparingLong((Pair<Long, String> p) -> p.first).reversed())
+      .filter(p -> p.first > 10)
+      .limit(10)
       .map(p -> "\"" + p.second + "\"" + " took " + p.first + "ms")
-      .joining(", ");
+      .collect(Collectors.joining(", "));
     return stats.isEmpty() ? "insignificant" : stats;
   }
 
-  private static long toMillis(long timeNs) {
-    return timeNs / 1_000_000;
-  }
-
-  public static <E extends Throwable> CpuUsageData measureCpuUsage(ThrowableRunnable<E> runnable) throws E {
+  public static @NotNull <E extends Throwable> CpuUsageData measureCpuUsage(@NotNull ThrowableRunnable<E> runnable) throws E {
     FreeMemorySnapshot memStart = new FreeMemorySnapshot();
 
-    Object2LongOpenHashMap<GarbageCollectorMXBean> gcTimes = new Object2LongOpenHashMap<>();
+    Map<GarbageCollectorMXBean, Long> gcTimes = new HashMap<>();
     for (GarbageCollectorMXBean bean : ourGcBeans) {
       gcTimes.put(bean, bean.getCollectionTime());
     }
 
-    Long2LongOpenHashMap threadTimes = new Long2LongOpenHashMap();
+    HashingStrategy<ThreadInfo> byId = new HashingStrategy<>() {
+      @Override
+      public int hashCode(ThreadInfo object) {
+        return (int)object.getThreadId();
+      }
+
+      @Override
+      public boolean equals(ThreadInfo o1, ThreadInfo o2) {
+        return o1==null||o2==null?o1==o2:o1.getThreadId() == o2.getThreadId();
+      }
+    };
+    Map<ThreadInfo, Long> startTimes = CollectionFactory.createCustomHashingStrategyMap(byId);
     for (long id : ourThreadMXBean.getAllThreadIds()) {
-      threadTimes.put(id, ourThreadMXBean.getThreadUserTime(id));
+      ThreadInfo threadInfo = ourThreadMXBean.getThreadInfo(id);
+      long start = ourThreadMXBean.getThreadUserTime(id);
+      if (threadInfo != null && start != -1) {
+        startTimes.put(threadInfo, start);
+      }
     }
 
     long compStart = getTotalCompilationMillis();
@@ -115,19 +139,27 @@ public final class CpuUsageData {
     long duration = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - start);
 
     long processTime = TimeUnit.NANOSECONDS.toMillis(ourOSBean.getProcessCpuTime() - processStart);
-    long compTime = getTotalCompilationMillis() - compStart;
+    long compilationTime = getTotalCompilationMillis() - compStart;
 
     FreeMemorySnapshot memEnd = new FreeMemorySnapshot();
 
+    Map<ThreadInfo, Long> threadTimes = CollectionFactory.createCustomHashingStrategyMap(startTimes.size(), byId);
     for (long id : ourThreadMXBean.getAllThreadIds()) {
-      threadTimes.put(id, ourThreadMXBean.getThreadUserTime(id) - threadTimes.get(id));
+      ThreadInfo info = ourThreadMXBean.getThreadInfo(id);
+      if (info == null) continue;
+      Long oldStart = startTimes.get(info);
+      long end = ourThreadMXBean.getThreadUserTime(id);
+      if (oldStart != null && end != -1) {
+        threadTimes.put(info, end - oldStart);
+      }
     }
 
     for (GarbageCollectorMXBean bean : ourGcBeans) {
-      gcTimes.put(bean, bean.getCollectionTime() - gcTimes.getLong(bean));
+      long time = ObjectUtils.notNull(gcTimes.get(bean), 0L);
+      gcTimes.put(bean, bean.getCollectionTime() - time);
     }
 
-    return new CpuUsageData(duration, gcTimes, threadTimes, compTime, processTime, memStart, memEnd);
+    return new CpuUsageData(duration, gcTimes, threadTimes, compilationTime, processTime, memStart, memEnd);
   }
 
   static long getTotalCompilationMillis() {

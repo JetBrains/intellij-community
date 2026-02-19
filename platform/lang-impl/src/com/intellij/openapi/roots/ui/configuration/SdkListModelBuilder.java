@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.ui.configuration;
 
 import com.google.common.collect.ImmutableList;
@@ -14,8 +14,17 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkType;
 import com.intellij.openapi.projectRoots.SdkTypeId;
 import com.intellij.openapi.projectRoots.SimpleJavaSdkType;
+import com.intellij.openapi.projectRoots.impl.jdkDownloader.JdkDownloaderLogger;
 import com.intellij.openapi.roots.ui.configuration.SdkDetector.DetectedSdkListener;
-import com.intellij.openapi.roots.ui.configuration.SdkListItem.*;
+import com.intellij.openapi.roots.ui.configuration.SdkListItem.ActionItem;
+import com.intellij.openapi.roots.ui.configuration.SdkListItem.ActionRole;
+import com.intellij.openapi.roots.ui.configuration.SdkListItem.GroupItem;
+import com.intellij.openapi.roots.ui.configuration.SdkListItem.InvalidSdkItem;
+import com.intellij.openapi.roots.ui.configuration.SdkListItem.NoneSdkItem;
+import com.intellij.openapi.roots.ui.configuration.SdkListItem.ProjectSdkItem;
+import com.intellij.openapi.roots.ui.configuration.SdkListItem.SdkItem;
+import com.intellij.openapi.roots.ui.configuration.SdkListItem.SdkReferenceItem;
+import com.intellij.openapi.roots.ui.configuration.SdkListItem.SuggestedItem;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectSdksModel;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectSdksModel.NewSdkAction;
 import com.intellij.openapi.util.Condition;
@@ -26,56 +35,77 @@ import com.intellij.util.Consumer;
 import com.intellij.util.EventDispatcher;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.jps.model.java.JdkVersionDetector;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 import java.io.File;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.EventListener;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.function.Predicate;
 
 public final class SdkListModelBuilder {
-  @Nullable private final Project myProject;
-  @NotNull private final ProjectSdksModel mySdkModel;
-  @NotNull private final Condition<? super Sdk> mySdkFilter;
-  @NotNull private final Condition<? super SdkTypeId> mySdkTypeFilter;
-  @NotNull private final Condition<? super SdkTypeId> mySdkTypeCreationFilter;
+  private final @Nullable Project myProject;
+  private final @NotNull ProjectSdksModel mySdkModel;
+  private final @NotNull Condition<? super Sdk> mySdkFilter;
+  private final @NotNull Condition<? super SdkTypeId> mySdkTypeFilter;
+  private final @NotNull Condition<? super SdkTypeId> mySdkTypeCreationFilter;
+  private final @NotNull Condition<? super SuggestedItem> mySuggestedItemsFilter;
+  private final @NotNull Condition<? super ActionRole> myActionRoleFilter;
 
-  @NotNull private final EventDispatcher<ModelListener> myModelListener = EventDispatcher.create(ModelListener.class);
+  private final @NotNull EventDispatcher<ModelListener> myModelListener = EventDispatcher.create(ModelListener.class);
 
   private boolean mySuggestedItemsConnected = false;
   private boolean myIsSdkDetectorInProgress = false;
 
-  private ImmutableList<SdkItem> myHead = ImmutableList.of();
-  private ImmutableList<ActionItem> myDownloadActions = ImmutableList.of();
-  private ImmutableList<ActionItem> myAddActions = ImmutableList.of();
-  private ImmutableList<SuggestedItem> mySuggestions = ImmutableList.of();
+  private List<SdkItem> myHead = Collections.emptyList();
+  private List<ActionItem> myDownloadActions = Collections.emptyList();
+  private List<ActionItem> myAddActions = Collections.emptyList();
+  private List<SuggestedItem> mySuggestions = Collections.emptyList();
   private ProjectSdkItem myProjectSdkItem = null;
   private NoneSdkItem myNoneSdkItem = null;
   private InvalidSdkItem myInvalidItem = null;
-  private ImmutableList<SdkReferenceItem> myReferenceItems = ImmutableList.of();
+  private List<SdkReferenceItem> myReferenceItems = Collections.emptyList();
 
   public SdkListModelBuilder(@Nullable Project project,
                              @NotNull ProjectSdksModel sdkModel,
                              @Nullable Condition<? super SdkTypeId> sdkTypeFilter,
                              @Nullable Condition<? super SdkTypeId> sdkTypeCreationFilter,
                              @Nullable Condition<? super Sdk> sdkFilter) {
+    this(project, sdkModel, sdkTypeFilter, sdkTypeCreationFilter, sdkFilter, null, null);
+  }
+
+  public SdkListModelBuilder(@Nullable Project project,
+                             @NotNull ProjectSdksModel sdkModel,
+                             @Nullable Predicate<? super SdkTypeId> sdkTypeFilter,
+                             @Nullable Predicate<? super SdkTypeId> sdkTypeCreationFilter,
+                             @Nullable Predicate<? super Sdk> sdkFilter,
+                             @Nullable Predicate<? super SuggestedItem> suggestedSdkFilter,
+                             @Nullable Predicate<? super ActionRole> actionRoleFilter) {
     myProject = project;
     mySdkModel = sdkModel;
 
-    mySdkTypeFilter = type -> type != null
-                              && (sdkTypeFilter == null || sdkTypeFilter.value(type));
+    mySdkTypeFilter = type -> type != null && (sdkTypeFilter == null || sdkTypeFilter.test(type));
 
-    Condition<SdkTypeId> simpleJavaTypeFix = SimpleJavaSdkType.notSimpleJavaSdkTypeIfAlternativeExists();
+    Predicate<SdkTypeId> simpleJavaTypeFix = SimpleJavaSdkType.notSimpleJavaSdkTypeIfAlternativeExists();
     mySdkTypeCreationFilter = type -> type != null
                                       && (!(type instanceof SdkType) || ((SdkType)type).allowCreationByUser())
                                       && mySdkTypeFilter.value(type)
-                                      && (sdkTypeCreationFilter == null || sdkTypeCreationFilter.value(type))
-                                      && simpleJavaTypeFix.value(type);
+                                      && (sdkTypeCreationFilter == null || sdkTypeCreationFilter.test(type))
+                                      && simpleJavaTypeFix.test(type);
 
     mySdkFilter = sdk -> sdk != null
                          && mySdkTypeFilter.value(sdk.getSdkType())
-                         && (sdkFilter == null || sdkFilter.value(sdk));
+                         && (sdkFilter == null || sdkFilter.test(sdk));
+
+    mySuggestedItemsFilter = item -> item != null
+                                     && mySdkTypeCreationFilter.value(item.sdkType)
+                                     && (suggestedSdkFilter == null || suggestedSdkFilter.test(item));
+
+    myActionRoleFilter = role -> actionRoleFilter == null || actionRoleFilter.test(role);
   }
 
   /**
@@ -99,11 +129,10 @@ public final class SdkListModelBuilder {
     myModelListener.removeListener(listener);
   }
 
-  @NotNull
-  public SdkReferenceItem addSdkReferenceItem(@NotNull SdkType type,
-                                              @NotNull String name,
-                                              @Nullable String versionString,
-                                              boolean isValid) {
+  public @NotNull SdkReferenceItem addSdkReferenceItem(@NotNull SdkType type,
+                                                       @NotNull String name,
+                                                       @Nullable String versionString,
+                                                       boolean isValid) {
     SdkReferenceItem element = new SdkReferenceItem(type, name, versionString, isValid);
     //similar element might already be included!
     removeSdkReferenceItem(element);
@@ -130,15 +159,13 @@ public final class SdkListModelBuilder {
     syncModel();
   }
 
-  @NotNull
-  private SdkListModel syncModel() {
+  private @NotNull SdkListModel syncModel() {
     SdkListModel model = buildModel();
     myModelListener.getMulticaster().syncModel(model);
     return model;
   }
 
-  @NotNull
-  public SdkListModel buildModel() {
+  public @NotNull SdkListModel buildModel() {
     ImmutableList.Builder<SdkListItem> newModel = ImmutableList.builder();
 
 
@@ -180,16 +207,15 @@ public final class SdkListModelBuilder {
   }
 
   private boolean isApplicableSuggestedItem(@NotNull SuggestedItem item) {
-    if (!mySdkTypeFilter.value(item.getSdkType())) return false;
+    if (!mySdkTypeFilter.value(item.sdkType)) return false;
 
     for (Sdk sdk : mySdkModel.getSdks()) {
-      if (FileUtil.pathsEqual(sdk.getHomePath(), item.getHomePath())) return false;
+      if (FileUtil.pathsEqual(sdk.getHomePath(), item.homePath)) return false;
     }
     return true;
   }
 
-  @NotNull
-  public SdkListItem showProjectSdkItem() {
+  public @NotNull SdkListItem showProjectSdkItem() {
     ProjectSdkItem projectSdkItem = new ProjectSdkItem();
     if (Objects.equals(myProjectSdkItem, projectSdkItem)) return myProjectSdkItem;
     myProjectSdkItem = projectSdkItem;
@@ -197,8 +223,7 @@ public final class SdkListModelBuilder {
     return myProjectSdkItem;
   }
 
-  @NotNull
-  public SdkListItem showNoneSdkItem() {
+  public @NotNull SdkListItem showNoneSdkItem() {
     NoneSdkItem noneSdkItem = new NoneSdkItem();
     if (Objects.equals(myNoneSdkItem, noneSdkItem)) return myNoneSdkItem;
     myNoneSdkItem = noneSdkItem;
@@ -206,8 +231,7 @@ public final class SdkListModelBuilder {
     return myNoneSdkItem;
   }
 
-  @NotNull
-  public SdkListItem showInvalidSdkItem(@NotNull String name) {
+  public @NotNull SdkListItem showInvalidSdkItem(@NotNull String name) {
     InvalidSdkItem invalidItem = new InvalidSdkItem(name);
     if (Objects.equals(myInvalidItem, invalidItem)) return myInvalidItem;
     myInvalidItem = invalidItem;
@@ -227,12 +251,11 @@ public final class SdkListModelBuilder {
     syncModel();
   }
 
-  @NotNull
-  private SdkItem newSdkItem(@NotNull Sdk sdk) {
+  private @NotNull SdkItem newSdkItem(@NotNull Sdk sdk) {
     return new SdkItem(sdk) {
       @Override
       boolean hasSameSdk(@NotNull Sdk value) {
-        return Objects.equals(getSdk(), value) || Objects.equals(mySdkModel.findSdk(getSdk()), value);
+        return Objects.equals(sdk, value) || Objects.equals(mySdkModel.findSdk(sdk), value);
       }
     };
   }
@@ -264,14 +287,13 @@ public final class SdkListModelBuilder {
     };
 
     if (item instanceof ActionItem) {
-      NewSdkAction action = ((ActionItem)item).myAction;
+      NewSdkAction action = ((ActionItem)item).action;
       action.actionPerformed(null, parent, onNewSdkAdded);
       return true;
     }
 
-    if (item instanceof SuggestedItem) {
-      SuggestedItem suggestedItem = (SuggestedItem)item;
-      String homePath = suggestedItem.getHomePath();
+    if (item instanceof SuggestedItem suggestedItem) {
+      String homePath = suggestedItem.homePath;
 
       ProgressManager.getInstance().run(new Task.Modal(myProject,
                                                        ProjectBundle.message("progress.title.jdk.combo.box.resolving.jdk.home"),
@@ -286,7 +308,9 @@ public final class SdkListModelBuilder {
         }
       });
 
-      mySdkModel.addSdk(suggestedItem.getSdkType(), homePath, onNewSdkAdded);
+      JdkDownloaderLogger.logDetected(JdkVersionDetector.getInstance().detectJdkVersionInfo(homePath));
+
+      mySdkModel.addSdk(suggestedItem.sdkType, homePath, onNewSdkAdded);
       return true;
     }
 
@@ -296,8 +320,7 @@ public final class SdkListModelBuilder {
   /**
    * Executes an action that is associated with the given {@param item}.
    * <br/>
-   * If there are no actions associated, the {@param onSelectableItem} callback
-   * is executed directly and the method returns,
+   * If there are no actions associated, the {@param onSelectableItem} callback is executed directly, and the method returns,
    * the {@param afterExecution} is NOT executed
    * <br/>
    * If there is action associated, it is scheduled for execution. The
@@ -319,7 +342,7 @@ public final class SdkListModelBuilder {
 
   public void reloadActions() {
     Map<SdkType, NewSdkAction> downloadActions = mySdkModel.createDownloadActions(mySdkTypeCreationFilter);
-    Map<SdkType, NewSdkAction> addActions = mySdkModel.createAddActions(mySdkTypeCreationFilter);
+    Map<SdkType, NewSdkAction> addActions = mySdkModel.createAddActions(myProject, mySdkTypeCreationFilter);
 
     myDownloadActions = createActions(ActionRole.DOWNLOAD, downloadActions);
     myAddActions = createActions(ActionRole.ADD, addActions);
@@ -340,8 +363,14 @@ public final class SdkListModelBuilder {
 
       @Override
       public void onSdkDetected(@NotNull SdkType type, @NotNull String version, @NotNull String home) {
-        SuggestedItem item = new SuggestedItem(type, version, home);
+        onSdkDetected(type, new SdkType.SdkEntry(version, home));
+      }
 
+      @Override
+      public void onSdkDetected(@NotNull SdkType type, @NotNull SdkType.SdkEntry entry) {
+        SuggestedItem item = new SuggestedItem(type, entry);
+
+        if (!mySuggestedItemsFilter.value(item)) return;
         mySuggestions = ImmutableList.<SuggestedItem>builder()
           .addAll(mySuggestions)
           .add(item)
@@ -358,9 +387,9 @@ public final class SdkListModelBuilder {
     });
   }
 
-  @NotNull
-  private static ImmutableList<ActionItem> createActions(@NotNull ActionRole role,
-                                                         @NotNull Map<SdkType, NewSdkAction> actions) {
+  private @NotNull ImmutableList<ActionItem> createActions(@NotNull ActionRole role,
+                                                           @NotNull Map<SdkType, NewSdkAction> actions) {
+    if (!myActionRoleFilter.value(role)) return ImmutableList.of();
     ImmutableList.Builder<ActionItem> builder = ImmutableList.builder();
     for (NewSdkAction action : actions.values()) {
       builder.add(new ActionItem(role, action, null));

@@ -8,18 +8,24 @@ import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.markup.HighlighterTargetArea;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.util.Consumer;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.*;
+import java.awt.Color;
 import java.util.Comparator;
 
 public interface RangeHighlighterEx extends RangeHighlighter, RangeMarkerEx {
   RangeHighlighterEx[] EMPTY_ARRAY = new RangeHighlighterEx[0];
   boolean isAfterEndOfLine();
   void setAfterEndOfLine(boolean value);
+
+  @ApiStatus.Internal
+  default void fireChanged(boolean renderersChanged, boolean fontStyleChanged, boolean foregroundColorChanged) {
+    throw new UnsupportedOperationException();
+  }
 
   int getAffectedAreaStartOffset();
 
@@ -35,7 +41,15 @@ public interface RangeHighlighterEx extends RangeHighlighter, RangeMarkerEx {
     return null;
   }
 
-  void setTextAttributes(@NotNull TextAttributes textAttributes);
+  /**
+   * Sets text attributes used for highlighting.
+   * Manually set attributes have priority over {@link #getTextAttributesKey()}
+   * during the calculation of {@link #getTextAttributes(EditorColorsScheme)}
+   *
+   * Can be also used to temporary hide the highlighter
+   * {@link TextAttributes#ERASE_MARKER }
+   */
+  void setTextAttributes(@Nullable TextAttributes textAttributes);
 
   /**
    * @see #isVisibleIfFolded()
@@ -44,7 +58,7 @@ public interface RangeHighlighterEx extends RangeHighlighter, RangeMarkerEx {
 
   /**
    * If {@code true}, there will be a visual indication that this highlighter is present inside a collapsed fold region.
-   * By default it won't happen, use {@link #setVisibleIfFolded(boolean)} to change it.
+   * By default, it's not visible, use {@link #setVisibleIfFolded(boolean)} to change it.
    *
    * @see FoldRegion#setInnerHighlightersMuted(boolean)
    */
@@ -62,15 +76,6 @@ public interface RangeHighlighterEx extends RangeHighlighter, RangeMarkerEx {
 
   default boolean isRenderedInGutter() {
     return getGutterIconRenderer() != null || getLineMarkerRenderer() != null;
-  }
-
-  /**
-   * @deprecated Use {@link #getErrorStripeMarkColor(EditorColorsScheme)} directly,
-   * it's impossible to tell if a highlighter should be rendered in a scroll bar since an editor can have a custom color scheme
-   */
-  @Deprecated
-  default boolean isRenderedInScrollBar() {
-    return getErrorStripeMarkColor(null) != null;
   }
 
   default void copyFrom(@NotNull RangeHighlighterEx other) {
@@ -102,4 +107,14 @@ public interface RangeHighlighterEx extends RangeHighlighter, RangeMarkerEx {
   }
 
   Comparator<RangeHighlighterEx> BY_AFFECTED_START_OFFSET = Comparator.comparingInt(RangeHighlighterEx::getAffectedAreaStartOffset);
+
+  @ApiStatus.Internal
+  default @NotNull String debugOffsets() {
+    TextRange range = getTextRange();
+    return (isGreedyToLeft() ? "[" : "(")
+           + range.getStartOffset()
+           + ","
+           + range.getEndOffset()
+           + (isGreedyToLeft() ? "]" : ")");
+  }
 }

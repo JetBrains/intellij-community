@@ -1,7 +1,6 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.inspections;
 
-import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemsHolder;
@@ -10,10 +9,22 @@ import com.intellij.lang.Language;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiClassType;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementFactory;
+import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiJavaCodeReferenceElement;
+import com.intellij.psi.PsiReferenceParameterList;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypeElement;
+import com.intellij.psi.PsiWildcardType;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.uast.UastHintedVisitorAdapter;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -32,11 +43,12 @@ import static com.intellij.util.ArrayUtil.getFirstElement;
 import static com.intellij.util.containers.ContainerUtil.exists;
 import static java.util.Arrays.asList;
 
+@ApiStatus.Internal
 public final class LeakableMapKeyInspection extends DevKitUastInspectionBase {
 
   @Override
   protected boolean isAllowed(@NotNull ProblemsHolder holder) {
-    return DevKitInspectionBase.isAllowedInPluginsOnly(holder);
+    return DevKitInspectionUtil.isAllowedInPluginsOnly(holder.getFile());
   }
 
   @Override
@@ -169,8 +181,6 @@ public final class LeakableMapKeyInspection extends DevKitUastInspectionBase {
     public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       PsiElement element = descriptor.getPsiElement();
       assert isJavaTypeElement(element);
-
-      if (!FileModificationService.getInstance().preparePsiElementForWrite(element)) return;
 
       PsiTypeElement stringTypeElement = PsiElementFactory.getInstance(project)
         .createTypeElementFromText(myText, element.getContext());

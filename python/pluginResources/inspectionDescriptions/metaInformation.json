@@ -1,0 +1,68 @@
+{
+  "inspections": [
+    {
+      "id": "PyPep8NamingInspection",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "PyPep8Inspection",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "PoetryPackageVersionsInspection",
+      "codeQualityCategory": "Unspecified"
+    },
+    {
+      "id": "UvPackageVersionsInspection",
+      "codeQualityCategory": "Sanity"
+    },
+    {
+      "id": "PyStubPackagesCompatibilityInspection",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "UnsatisfiedRequirementInspection",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "CommandLineInspection",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "PyStubPackagesAdvertiser",
+      "codeQualityCategory": "Unspecified"
+    },
+    {
+      "id": "PyRelativeImportInspection",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "PyShadowingBuiltinsInspection",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "RestRoleInspection",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "PyTestParametrizedInspection",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "PyTestUnpassedFixtureInspection",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "PyUnresolvedReferencesInspection",
+      "codeQualityCategory": "Sanity"
+    },
+    {
+      "id": "CythonUsageBeforeDeclarationInspection",
+      "codeQualityCategory": "Sanity"
+    },
+    {
+      "id": "OutdatedRequirementInspection",
+      "codeQualityCategory": "Reliability"
+    }
+  ]
+}

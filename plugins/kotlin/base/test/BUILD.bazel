@@ -1,0 +1,62 @@
+### auto-generated section `build kotlin.base.test` start
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+jvm_library(
+  name = "test",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  exports = ["//plugins/junit_rt:junit-rt"]
+)
+
+jvm_library(
+  name = "test_test_lib",
+  module_name = "kotlin.base.test",
+  visibility = ["//visibility:public"],
+  srcs = glob(["test/**/*.kt", "test/**/*.java", "test/**/*.form"], allow_empty = True),
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:kotlinc-kotlin-compiler-common",
+    "@lib//:kotlinc-analysis-api",
+    "@lib//:kotlinc-analysis-api-impl-base",
+    "@lib//:kotlinc-analysis-api-impl-base-tests",
+    "@lib//:kotlinc-kotlin-compiler-tests",
+    "//libraries/guava",
+    "//libraries/guava:guava_test_lib",
+    "//platform/analysis-api:analysis",
+    "//platform/analysis-api:analysis_test_lib",
+    "//platform/core-api:core",
+    "//platform/core-api:core_test_lib",
+    "//jps/model-api:model",
+    "//jps/model-api:model_test_lib",
+    "//platform/projectModel-api:projectModel",
+    "//platform/projectModel-api:projectModel_test_lib",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test_lib",
+    "//plugins/kotlin/base/frontend-agnostic",
+    "//plugins/kotlin/base/frontend-agnostic:frontend-agnostic_test_lib",
+    "//plugins/kotlin/base/plugin",
+    "//plugins/kotlin/base/plugin:plugin_test_lib",
+    "//java/testFramework",
+    "//java/testFramework:testFramework_test_lib",
+    "//plugins/junit_rt:junit-rt",
+    "//plugins/junit_rt:junit-rt_test_lib",
+    "@lib//:slf4j-api",
+    "//java/java-runtime:rt",
+    "//java/java-runtime:rt_test_lib",
+  ],
+  exports = [
+    "//plugins/junit_rt:junit-rt",
+    "//plugins/junit_rt:junit-rt_test_lib",
+  ],
+  runtime_deps = [":test"]
+)
+### auto-generated section `build kotlin.base.test` end
+
+### auto-generated section `test kotlin.base.test` start
+load("@community//build:tests-options.bzl", "jps_test")
+
+jps_test(
+  name = "test_test",
+  runtime_deps = [":test_test_lib"]
+)
+### auto-generated section `test kotlin.base.test` end

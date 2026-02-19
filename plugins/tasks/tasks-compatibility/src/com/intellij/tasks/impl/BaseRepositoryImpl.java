@@ -1,17 +1,22 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.tasks.impl;
 
 import com.intellij.tasks.TaskRepositoryType;
 import com.intellij.tasks.config.TaskSettings;
 import com.intellij.util.net.HttpConfigurable;
-import org.apache.commons.httpclient.*;
+import org.apache.commons.httpclient.Credentials;
+import org.apache.commons.httpclient.HttpClient;
+import org.apache.commons.httpclient.HttpMethod;
+import org.apache.commons.httpclient.MultiThreadedHttpConnectionManager;
+import org.apache.commons.httpclient.NTCredentials;
+import org.apache.commons.httpclient.UsernamePasswordCredentials;
 import org.apache.commons.httpclient.auth.AuthScope;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
+import java.util.Objects;
 
 /**
  * Base class for HTTP-based repositories functioning over Apache Commons HttpClient 3.1.
@@ -22,10 +27,10 @@ import java.nio.charset.StandardCharsets;
  * @author Dmitry Avdeev
  * @deprecated Upgrade your clients to use Apache HttpClient 4.x or other transport libraries.
  */
-@ApiStatus.ScheduledForRemoval(inVersion = "2019.3")
-@Deprecated
+@Deprecated(forRemoval = true)
 public abstract class BaseRepositoryImpl extends BaseRepository {
   private final HttpClient myClient;
+  private boolean myClientConfigured;
 
   protected BaseRepositoryImpl() {
     myClient = createClient();
@@ -46,6 +51,10 @@ public abstract class BaseRepositoryImpl extends BaseRepository {
   }
 
   protected HttpClient getHttpClient() {
+    if (!myClientConfigured) {
+      configureHttpClient(myClient);
+      myClientConfigured = true;
+    }
     return myClient;
   }
 
@@ -56,9 +65,7 @@ public abstract class BaseRepositoryImpl extends BaseRepository {
   }
 
   public final void reconfigureClient() {
-    synchronized (myClient) {
-      configureHttpClient(myClient);
-    }
+    myClientConfigured = false;
   }
 
   protected void configureHttpClient(HttpClient client) {
@@ -84,8 +91,7 @@ public abstract class BaseRepositoryImpl extends BaseRepository {
     }
   }
 
-  @Nullable
-  private static Credentials getCredentials(@NotNull String login, String password, String host) {
+  private static @Nullable Credentials getCredentials(@NotNull String login, String password, String host) {
     int domainIndex = login.indexOf("\\");
     if (domainIndex > 0) {
       // if the username is in the form "user\domain"
@@ -107,26 +113,6 @@ public abstract class BaseRepositoryImpl extends BaseRepository {
   protected void configureHttpMethod(HttpMethod method) {
   }
 
-  public abstract static class HttpTestConnection<T extends HttpMethod> extends CancellableConnection {
-    protected T myMethod;
-
-    public HttpTestConnection(T method) {
-      myMethod = method;
-    }
-
-    @Override
-    protected void doTest() throws Exception {
-      doTest(myMethod);
-    }
-
-    @Override
-    public void cancel() {
-      myMethod.abort();
-    }
-
-    protected abstract void doTest(T method) throws Exception;
-  }
-
   @Override
   public void setUseProxy(boolean useProxy) {
     if (useProxy != isUseProxy()) {
@@ -145,7 +131,8 @@ public abstract class BaseRepositoryImpl extends BaseRepository {
 
   @Override
   public void setPassword(String password) {
-    if (!password.equals(getPassword())) {
+    myPasswordLoaded = true;
+    if (!Objects.equals(password, getPassword())) {
       super.setPassword(password);
       reconfigureClient();
     }

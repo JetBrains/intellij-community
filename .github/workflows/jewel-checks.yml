@@ -1,0 +1,227 @@
+name: Jewel Checks
+
+on:
+  pull_request:
+    paths:
+      - "platform/jewel/**"
+
+defaults:
+  run:
+    working-directory: platform/jewel
+
+jobs:
+  checks:
+    name: CI code checks
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+        name: Check out repository
+
+      - name: Set up JBR 21
+        uses: actions/setup-java@v4
+        with:
+          java-version: 21
+          distribution: jetbrains
+          cache: gradle
+
+      - name: Grant execute permission to gradlew
+        run: chmod +x gradlew
+
+      - name: Run :check task
+        # Run checks for all modules except the IDE plugin sample, as that is bound to have missing APIs issues
+        run: ./gradlew check --continue --no-daemon
+
+      - name: Annotate JUnit test failures
+        uses: mikepenz/action-junit-report@v5
+        if: failure()
+        with:
+          report_paths: '**/build/test-results/test/TEST-*.xml'
+          annotate_only: true # A forked repo cannot write comments, so just do annotations
+
+      - name: Upload JUnit test reports
+        uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: junit-test-results
+          path: '**/build/test-results/test/TEST-*.xml'
+          retention-days: 7
+
+      - name: Run detekt tasks
+        # Run detekt checks for all modules except the IDE plugin sample, as that is bound to have missing APIs issues
+        run: ./gradlew detekt detektMain detektTest --continue --no-daemon
+
+  check_paths:
+    name: Check changed files
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: read
+    outputs:
+      run_formalities: ${{ steps.filter.outputs.run_formalities }}
+
+    steps:
+      - uses: actions/checkout@v4
+        name: Check out repository
+
+      - uses: dorny/paths-filter@v3
+        name: Check which files are changed
+        id: filter
+        with:
+          filters: |
+            run_formalities:
+              - '!all(platform/jewel/ui/generated/org/jetbrains/jewel/ui/icons/AllIconsKeys.java)'
+
+  formalities:
+    name: PR formalities
+    runs-on: ubuntu-latest
+    needs: check_paths
+    if: needs.check_paths.outputs.run_formalities == 'true'
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+        name: Check out repository
+
+      - name: Grant execute permission to validation scripts
+        run: chmod +x ./scripts/validate-commit-message.sh && chmod +x ./scripts/validate-pr-commits.sh
+
+      - name: Validate PR has single commit
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: ./scripts/validate-pr-commits.sh
+
+      - name: Validate commit message
+        env:
+          GH_TOKEN: ${{ github.token }}
+          JEWEL_YT_TOKEN: ${{ secrets.JEWEL_YT_TOKEN }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: ./scripts/validate-commit-message.sh
+
+  annotate_breaking_api_changes:
+    name: Annotate breaking API changes with IJP dumps
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # We need fetch-depth: '2' so we get HEAD~1 in case this is missing the PR token
+          fetch-depth: '2'
+        name: Check out repository
+
+      - name: Grant execute permission to the validation script
+        run: chmod +x ./scripts/annotate-api-dump-changes.main.kts
+
+      - name: Annotate breaking API changes
+        env:
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          GH_TOKEN: ${{ github.token }}
+        run: ./scripts/annotate-api-dump-changes.main.kts
+
+  check_ij_api_dumps:
+    name: Check that the IJP API dumps are up-to-date
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: .
+
+    steps:
+      - uses: actions/checkout@v4
+        name: Check out repository
+
+      - uses: actions/cache@v4
+        name: Cache for jps-bootstrap
+        with:
+          key: ${{ runner.os }}-jps-bootstrap-${{ hashFiles('platform/jps-bootstrap/**') }}
+          path: |
+            out
+            build/jps-bootstrap-work
+            build/download
+
+      - name: Grant execute permission to the validation script
+        run: chmod +x platform/jewel/scripts/check-api-dumps.main.kts
+
+      - name: Check that the IJP API dumps are up-to-date
+        run: ./scripts/check-api-dumps.main.kts
+        working-directory: platform/jewel
+
+  check_bazel_build:
+    name: Check that the Bazel build is up-to-date
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: .
+
+    steps:
+      - uses: actions/checkout@v4
+        name: Check out repository
+
+      - uses: actions/checkout@v4
+        name: Checkout JetBrains/android submodule
+        with:
+          repository: JetBrains/android
+          path: android
+          ref: master
+
+      - name: Set up JBR 21
+        uses: actions/setup-java@v4
+        with:
+          java-version: 21
+          distribution: jetbrains
+          cache: gradle
+
+      - name: Grant execute permission to the Bazel build generator script
+        run: chmod +x build/jpsModelToBazelCommunityOnly.cmd
+
+      - name: Run the Bazel build generator script
+        run: ./build/jpsModelToBazelCommunityOnly.cmd
+
+      - name: Check that the Bazel build is up-to-date (except android submodule)
+        run: |
+          # 1. Get all changed files
+          # 2. Filter for Bazel files (extensions .bzl, .bazel, or filenames BUILD, WORKSPACE)
+          # 3. Exclude the android submodule
+          # 4. Keep only relevant files:
+          #    - Top-level files (no slashes)
+          #    - build/BUILD.bazel
+          #    - Files in platform/jewel/
+          CHANGED_BAZEL_FILES=$(git diff --name-only HEAD \
+            | grep -E '\.(bzl|bazel)$|^BUILD|^WORKSPACE' \
+            | grep -v '^android/' \
+            | grep -E '^[^/]+$|^lib/(BUILD|MODULE).bazel$|^build/BUILD\.bazel$|^platform/jewel/' \
+            || true)
+          if [ -n "$CHANGED_BAZEL_FILES" ]; then
+            echo "Error: Bazel files need to be updated:"
+            echo "$CHANGED_BAZEL_FILES"
+            echo "Run the jpsModelToBazelCommunityOnly.cmd script and commit the changes outside of the android submodule."
+            exit 1
+          fi
+          echo "Bazel build files look up-to-date."
+
+  metalava:
+    name: Check for breaking API changes with Metalava
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+        name: Check out repository
+
+      - name: Set up JBR 21
+        uses: actions/setup-java@v4
+        with:
+          java-version: 21
+          distribution: jetbrains
+          cache: gradle
+
+      - name: Grant execute permission to the Metalava script
+        run: chmod +x ./scripts/metalava-signatures.main.kts
+
+      - name: Grant execute permission to gradlew
+        run: chmod +x gradlew
+
+      - name: Annotate breaking API changes
+        env:
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          GH_TOKEN: ${{ github.token }}
+        run: ./scripts/metalava-signatures.main.kts validate

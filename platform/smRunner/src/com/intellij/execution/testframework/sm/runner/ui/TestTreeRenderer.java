@@ -1,42 +1,52 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.testframework.sm.runner.ui;
 
 import com.intellij.execution.testframework.TestConsoleProperties;
 import com.intellij.execution.testframework.sm.runner.SMTRunnerNodeDescriptor;
 import com.intellij.execution.testframework.sm.runner.SMTestProxy;
+import com.intellij.ide.ui.UISettings;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.ui.ColoredTreeCellRenderer;
+import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.RelativeFont;
+import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.accessibility.AccessibleContext;
+import javax.swing.JTree;
 import javax.swing.tree.DefaultMutableTreeNode;
-import java.awt.*;
+import java.awt.Color;
+import java.awt.Dimension;
+import java.awt.FontMetrics;
+import java.awt.Graphics;
+import java.awt.Shape;
 
-import static com.intellij.ide.ui.UISettings.setupAntialiasing;
-import static com.intellij.ui.SimpleTextAttributes.GRAYED_ATTRIBUTES;
-import static com.intellij.util.ui.UIUtil.getTreeSelectionForeground;
-
-/**
- * @author: Roman Chernyatchik
- */
 public class TestTreeRenderer extends ColoredTreeCellRenderer {
-  @NonNls private static final String SPACE_STRING = " ";
+  private static final @NonNls String SPACE_STRING = " ";
 
   private final TestConsoleProperties myConsoleProperties;
   private SMRootTestProxyFormatter myAdditionalRootFormatter;
   private String myDurationText;
   private Color myDurationColor;
   private int myDurationWidth;
-  private int myDurationOffset;
+  private int myDurationLeftInset;
+  private int myDurationRightInset;
+
+  private @Nullable Computable<String> myAccessibleStatus = null;
 
   public TestTreeRenderer(final TestConsoleProperties consoleProperties) {
     myConsoleProperties = consoleProperties;
   }
 
   @Override
-  public void customizeCellRenderer(@NotNull final JTree tree,
+  public void customizeCellRenderer(final @NotNull JTree tree,
                                     final Object value,
                                     final boolean selected,
                                     final boolean expanded,
@@ -46,15 +56,14 @@ public class TestTreeRenderer extends ColoredTreeCellRenderer {
     myDurationText = null;
     myDurationColor = null;
     myDurationWidth = 0;
-    myDurationOffset = 0;
+    myDurationLeftInset = 0;
+    myDurationRightInset = 0;
     final DefaultMutableTreeNode node = (DefaultMutableTreeNode) value;
     final Object userObj = node.getUserObject();
-    if (userObj instanceof SMTRunnerNodeDescriptor) {
-      final SMTRunnerNodeDescriptor desc = (SMTRunnerNodeDescriptor)userObj;
+    if (userObj instanceof SMTRunnerNodeDescriptor desc) {
       final SMTestProxy testProxy = desc.getElement();
 
-      if (testProxy instanceof SMTestProxy.SMRootTestProxy) {
-        SMTestProxy.SMRootTestProxy rootTestProxy = (SMTestProxy.SMRootTestProxy) testProxy;
+      if (testProxy instanceof SMTestProxy.SMRootTestProxy rootTestProxy) {
         if (rootTestProxy.isLeaf()) {
           TestsPresentationUtil.formatRootNodeWithoutChildren(rootTestProxy, this);
         } else {
@@ -68,29 +77,38 @@ public class TestTreeRenderer extends ColoredTreeCellRenderer {
       }
 
       if (TestConsoleProperties.SHOW_INLINE_STATISTICS.value(myConsoleProperties)) {
-        myDurationText = testProxy.getDurationString(myConsoleProperties);
+        myDurationText = getDurationText(testProxy, myConsoleProperties);
         if (myDurationText != null) {
           FontMetrics metrics = getFontMetrics(RelativeFont.SMALL.derive(getFont()));
           myDurationWidth = metrics.stringWidth(myDurationText);
-          myDurationOffset = metrics.getHeight() / 2; // an empty area before and after the text
-          myDurationColor = selected ? getTreeSelectionForeground(hasFocus) : GRAYED_ATTRIBUTES.getFgColor();
+          myDurationLeftInset = metrics.getHeight() / 4;
+          myDurationRightInset = ExperimentalUI.isNewUI() ? tree.getInsets().right + JBUI.scale(4) : myDurationLeftInset;
+          myDurationColor = selected ? UIUtil.getTreeSelectionForeground(hasFocus) : SimpleTextAttributes.GRAYED_ATTRIBUTES.getFgColor();
         }
       }
-      //Done
+
       return;
     }
 
     //strange node
     final @NlsSafe String text = node.toString();
     //no icon
-    append(text != null ? text : SPACE_STRING, GRAYED_ATTRIBUTES);
+    append(text != null ? text : SPACE_STRING, SimpleTextAttributes.GRAYED_ATTRIBUTES);
   }
 
-  @NotNull
+  @Nls
+  @ApiStatus.Experimental
+  @ApiStatus.Internal
+  public @Nullable String getDurationText(@NotNull SMTestProxy testProxy, @NotNull TestConsoleProperties consoleProperties) {
+    return testProxy.getDurationString(myConsoleProperties);
+  }
+
   @Override
-  public Dimension getPreferredSize() {
-    final Dimension preferredSize = super.getPreferredSize();
-    if (myDurationWidth > 0) preferredSize.width += myDurationWidth + myDurationOffset;
+  public @NotNull Dimension getPreferredSize() {
+    Dimension preferredSize = super.getPreferredSize();
+    if (myDurationWidth > 0) {
+      preferredSize.width += myDurationWidth + myDurationLeftInset + myDurationRightInset;
+    }
     return preferredSize;
   }
 
@@ -108,7 +126,7 @@ public class TestTreeRenderer extends ColoredTreeCellRenderer {
 
   @Override
   protected void paintComponent(Graphics g) {
-    setupAntialiasing(g);
+    UISettings.setupAntialiasing(g);
     Shape clip = null;
     int width = getWidth();
     int height = getHeight();
@@ -118,11 +136,11 @@ public class TestTreeRenderer extends ColoredTreeCellRenderer {
       g.fillRect(0, 0, width, height);
     }
     if (myDurationWidth > 0) {
-      width -= myDurationWidth + myDurationOffset;
+      width -= myDurationWidth + myDurationLeftInset + myDurationRightInset;
       if (width > 0 && height > 0) {
         g.setColor(myDurationColor);
         g.setFont(RelativeFont.SMALL.derive(getFont()));
-        g.drawString(myDurationText, width + myDurationOffset / 2, getTextBaseLine(g.getFontMetrics(), height));
+        g.drawString(myDurationText, width + myDurationLeftInset, getTextBaseLine(g.getFontMetrics(), height));
         clip = g.getClip();
         g.clipRect(0, 0, width, height);
       }
@@ -130,5 +148,29 @@ public class TestTreeRenderer extends ColoredTreeCellRenderer {
     super.paintComponent(g);
     // restore clip area if needed
     if (clip != null) g.setClip(clip);
+  }
+
+  @ApiStatus.Experimental
+  public @Nullable @NlsSafe String getAccessibleStatus() {
+    if (myAccessibleStatus == null) return null;
+    return myAccessibleStatus.get();
+  }
+
+  @ApiStatus.Experimental
+  public void setAccessibleStatus(@Nullable Computable<String> accessibleStatus) {
+    myAccessibleStatus = accessibleStatus;
+  }
+
+  @Override
+  public AccessibleContext getAccessibleContext() {
+    if (accessibleContext == null) {
+      accessibleContext = new AccessibleColoredTreeCellRendererWithContextMenu(new AccessibleColoredTreeCellRenderer() {
+        @Override
+        protected String getOriginalAccessibleName() {
+          return getAccessibleNameWithoutIconTooltip();
+        }
+      });
+    }
+    return accessibleContext;
   }
 }

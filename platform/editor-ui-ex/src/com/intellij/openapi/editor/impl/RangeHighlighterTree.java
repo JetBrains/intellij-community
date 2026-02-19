@@ -1,84 +1,54 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl;
 
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.ex.MarkupIterator;
-import com.intellij.openapi.editor.ex.MarkupModelEx;
 import com.intellij.openapi.editor.ex.RangeHighlighterEx;
-import com.intellij.openapi.util.Getter;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-class RangeHighlighterTree extends RangeMarkerTree<RangeHighlighterEx> {
-  private final MarkupModelEx myMarkupModel;
+@ApiStatus.Internal
+public final class RangeHighlighterTree extends RangeMarkerTree<RangeHighlighterEx> {
+  static final byte ERROR_STRIPE_FLAG = nextAvailableTasteFlag();
+  static final byte RENDER_IN_GUTTER_FLAG = nextAvailableTasteFlag();
+  private final MarkupModelImpl myMarkupModel;
 
-  RangeHighlighterTree(@NotNull Document document, @NotNull MarkupModelEx markupModel) {
-    super(document);
+  RangeHighlighterTree(@NotNull MarkupModelImpl markupModel) {
+    super(markupModel.getDocument());
     myMarkupModel = markupModel;
   }
 
+  void dispose() {
+    dispose(myMarkupModel.getDocument());
+  }
+
   @Override
-  protected boolean keepIntervalsOnWeakReferences() {
+  protected boolean keepIntervalOnWeakReference(@NotNull RangeHighlighterEx interval) {
     return false;
   }
 
-  @NotNull
-  MarkupIterator<RangeHighlighterEx> overlappingIterator(@NotNull TextRangeInterval rangeInterval, boolean onlyRenderedInGutter) {
-    MarkupIterator<RangeHighlighterEx> iterator =
-      overlappingIterator(rangeInterval, node -> (!onlyRenderedInGutter || node.isFlagSet(RHNode.RENDERED_IN_GUTTER_FLAG)));
-
-    return new FilteringMarkupIterator<>(iterator, highlighter -> !onlyRenderedInGutter || highlighter.isRenderedInGutter());
-  }
-
-  void updateRenderedFlags(RangeHighlighterEx highlighter) {
-    RHNode node = (RHNode)lookupNode(highlighter);
-    if (node != null) node.recalculateRenderFlagsUp();
-  }
-
   @Override
-  void correctMax(@NotNull IntervalNode<RangeHighlighterEx> node, int deltaUpToRoot) {
-    super.correctMax(node, deltaUpToRoot);
-    ((RHNode)node).recalculateRenderFlags();
+  protected byte getTasteFlags(@NotNull RangeHighlighterEx highlighter) {
+    return (byte)((highlighter.getErrorStripeMarkColor(null) != null ? ERROR_STRIPE_FLAG : 0) |
+                 (highlighter.isRenderedInGutter() ? RENDER_IN_GUTTER_FLAG : 0));
   }
 
   @Override
   protected int compareEqualStartIntervals(@NotNull IntervalNode<RangeHighlighterEx> i1, @NotNull IntervalNode<RangeHighlighterEx> i2) {
-    RHNode o1 = (RHNode)i1;
-    RHNode o2 = (RHNode)i2;
-    int d = o2.myLayer - o1.myLayer;
-    if (d != 0) {
-      return d;
-    }
-    return super.compareEqualStartIntervals(i1, i2);
+    return ((RHNode)i1).compareTo((RHNode)i2);
   }
 
-  @NotNull
   @Override
-  protected RHNode createNewNode(@NotNull RangeHighlighterEx key, int start, int end, 
-                                 boolean greedyToLeft, boolean greedyToRight, boolean stickingToRight, int layer) {
+  protected @NotNull RMNode<RangeHighlighterEx> createNewNode(@NotNull RangeHighlighterEx key, int start, int end,
+                                                              boolean greedyToLeft, boolean greedyToRight, boolean stickingToRight, int layer) {
     return new RHNode(this, key, start, end, greedyToLeft, greedyToRight, stickingToRight, layer);
   }
 
-  static class RHNode extends RMNode<RangeHighlighterEx> {
-    private static final byte RENDERED_IN_GUTTER_FLAG = STICK_TO_RIGHT_FLAG << 1;
-
+  @ApiStatus.Internal
+  static final class RHNode extends RMNode<RangeHighlighterEx> implements Comparable<RMNode<?>> {
+    private static final byte IS_PERSISTENT = (byte)(STICK_TO_RIGHT_FLAG << 1);
     final int myLayer;
 
     RHNode(@NotNull RangeHighlighterTree rangeMarkerTree,
-           @NotNull final RangeHighlighterEx key,
+           final @NotNull RangeHighlighterEx key,
            int start,
            int end,
            boolean greedyToLeft,
@@ -87,54 +57,35 @@ class RangeHighlighterTree extends RangeMarkerTree<RangeHighlighterEx> {
            int layer) {
       super(rangeMarkerTree, key, start, end, greedyToLeft, greedyToRight, stickingToRight);
       myLayer = layer;
-    }
-
-    private void recalculateRenderFlags() {
-      boolean renderedInGutter = false;
-      for (Getter<RangeHighlighterEx> getter : intervals) {
-        RangeHighlighterEx h = getter.get();
-        renderedInGutter |= h.isRenderedInGutter();
-      }
-      Node<RangeHighlighterEx> left = getLeft();
-      if (left != null) {
-        renderedInGutter |= left.isFlagSet(RENDERED_IN_GUTTER_FLAG);
-      }
-      Node<RangeHighlighterEx> right = getRight();
-      if (right != null) {
-        renderedInGutter |= right.isFlagSet(RENDERED_IN_GUTTER_FLAG);
-      }
-      setFlag(RENDERED_IN_GUTTER_FLAG, renderedInGutter);
-    }
-
-    private void recalculateRenderFlagsUp() {
-      RHNode n = this;
-      while (n != null) {
-        boolean prevInGutter = n.isFlagSet(RENDERED_IN_GUTTER_FLAG);
-        n.recalculateRenderFlags();
-        if (n.isFlagSet(RENDERED_IN_GUTTER_FLAG) == prevInGutter) break;
-        n = (RHNode)n.getParent();
-      }
+      setFlag(IS_PERSISTENT, key.isPersistent());
     }
 
     @Override
-    void addInterval(@NotNull RangeHighlighterEx h) {
-      super.addInterval(h);
-      if (!isFlagSet(RENDERED_IN_GUTTER_FLAG) && h.isRenderedInGutter()) {
-        recalculateRenderFlagsUp();
+    public int compareTo(@NotNull RMNode o) {
+      RHNode o1 = this;
+      RHNode o2 = (RHNode)o;
+      int d = o2.myLayer - o1.myLayer;
+      if (d != 0) {
+        return d;
       }
-    }
+      int result = super.compareTo(o2);
+      if (result != 0) {
+        return result;
+      }
 
-    @Override
-    void removeIntervalInternal(int i) {
-      RangeHighlighterEx h = intervals.get(i).get();
-      boolean recalculateFlags = h.isRenderedInGutter();
-      super.removeIntervalInternal(i);
-      if (recalculateFlags) recalculateRenderFlagsUp();
+      boolean persistent1 = o1.isFlagSet(RHNode.IS_PERSISTENT);
+      boolean persistent2 = o2.isFlagSet(RHNode.IS_PERSISTENT);
+      return persistent1 == persistent2 ? 0 : persistent1 ? -1 : 1;
     }
   }
 
   @Override
-  void fireBeforeRemoved(@NotNull RangeHighlighterEx markerEx, @NotNull Object reason) {
-    myMarkupModel.fireBeforeRemoved(markerEx);
+  protected void fireBeforeRemoved(@NotNull RangeHighlighterEx marker) {
+    myMarkupModel.fireBeforeRemoved(marker);
+  }
+
+  @Override
+  protected void fireAfterRemoved(@NotNull RangeHighlighterEx marker) {
+    myMarkupModel.fireAfterRemoved(marker);
   }
 }

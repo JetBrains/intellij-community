@@ -1,49 +1,52 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
-import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
 import com.intellij.java.JavaBundle;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.*;
+import com.intellij.psi.CommonClassNames;
+import com.intellij.psi.PsiCallExpression;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiClassType;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiLocalVariable;
+import com.intellij.psi.PsiReferenceExpression;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.controlFlow.ControlFlowUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ObjectUtils;
 import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.ExpressionUtils;
-import com.siyeh.ig.psiutils.HighlightUtils;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class WrapWithMutableCollectionFix implements LocalQuickFix {
+public class WrapWithMutableCollectionFix extends PsiUpdateModCommandQuickFix {
   private final String myVariableName;
   private final String myCollectionName;
-  private final boolean myOnTheFly;
 
-  public WrapWithMutableCollectionFix(String variableName, String collectionName, boolean onTheFly) {
+  public WrapWithMutableCollectionFix(String variableName, String collectionName) {
     myVariableName = variableName;
     myCollectionName = collectionName;
-    myOnTheFly = onTheFly;
   }
 
-  @Nls(capitalization = Nls.Capitalization.Sentence)
-  @NotNull
   @Override
-  public String getName() {
+  public @Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String getName() {
     return JavaBundle.message("quickfix.text.wrap.0.with.1", myVariableName, StringUtil.getShortName(myCollectionName));
   }
 
-  @Nls(capitalization = Nls.Capitalization.Sentence)
-  @NotNull
   @Override
-  public String getFamilyName() {
+  public @Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String getFamilyName() {
     return JavaBundle.message("quickfix.family.wrap.with.mutable.collection");
   }
 
   @Override
-  public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-    PsiLocalVariable variable = getVariable(descriptor.getStartElement());
+  protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
+    PsiLocalVariable variable = getVariable(element);
     if (variable == null) return;
     PsiExpression initializer = variable.getInitializer();
     if (initializer == null) return;
@@ -66,13 +69,10 @@ public class WrapWithMutableCollectionFix implements LocalQuickFix {
     PsiElement replacement =
       ct.replaceAndRestoreComments(initializer, "new " + myCollectionName + typeParameters + "(" + ct.text(initializer) + ")");
     RemoveRedundantTypeArgumentsUtil.removeRedundantTypeArguments(replacement);
-    if (myOnTheFly) {
-      HighlightUtils.highlightElement(replacement);
-    }
+    updater.highlight(replacement);
   }
 
-  @Nullable
-  public static WrapWithMutableCollectionFix createFix(@NotNull PsiElement anchor, boolean onTheFly) {
+  public static @Nullable WrapWithMutableCollectionFix createFix(@NotNull PsiElement anchor) {
     PsiLocalVariable variable = getVariable(anchor);
     if (variable == null) return null;
     PsiExpression initializer = variable.getInitializer();
@@ -81,12 +81,11 @@ public class WrapWithMutableCollectionFix implements LocalQuickFix {
     if (wrapper == null) return null;
     PsiElement block = PsiUtil.getVariableCodeBlock(variable, null);
     if (block == null) return null;
-    if (!HighlightControlFlowUtil.isEffectivelyFinal(variable, block, null)) return null;
-    return new WrapWithMutableCollectionFix(variable.getName(), wrapper, onTheFly);
+    if (!ControlFlowUtil.isEffectivelyFinal(variable, block)) return null;
+    return new WrapWithMutableCollectionFix(variable.getName(), wrapper);
   }
 
-  @Nullable
-  private static PsiLocalVariable getVariable(@NotNull PsiElement anchor) {
+  private static @Nullable PsiLocalVariable getVariable(@NotNull PsiElement anchor) {
     if (anchor.getParent() instanceof PsiReferenceExpression && anchor.getParent().getParent() instanceof PsiCallExpression) {
       anchor = ((PsiReferenceExpression)anchor.getParent()).getQualifierExpression();
     }
@@ -95,21 +94,17 @@ public class WrapWithMutableCollectionFix implements LocalQuickFix {
   }
 
   @Contract("null -> null")
-  @Nullable
-  private static String getWrapperByType(PsiType type) {
+  private static @Nullable String getWrapperByType(PsiType type) {
     if(!(type instanceof PsiClassType)) return null;
     PsiClass aClass = ((PsiClassType)type).resolve();
     if (aClass == null) return null;
     String name = aClass.getQualifiedName();
-    if (name == null) return null;
-    switch (name) {
-      case CommonClassNames.JAVA_LANG_ITERABLE:
-      case CommonClassNames.JAVA_UTIL_COLLECTION:
-      case CommonClassNames.JAVA_UTIL_LIST: return CommonClassNames.JAVA_UTIL_ARRAY_LIST;
-      case CommonClassNames.JAVA_UTIL_SET: return CommonClassNames.JAVA_UTIL_HASH_SET;
-      case CommonClassNames.JAVA_UTIL_MAP:
-        return CommonClassNames.JAVA_UTIL_HASH_MAP;
-    }
-    return null;
+    return switch (name) {
+      case CommonClassNames.JAVA_LANG_ITERABLE, CommonClassNames.JAVA_UTIL_COLLECTION, CommonClassNames.JAVA_UTIL_LIST ->
+        CommonClassNames.JAVA_UTIL_ARRAY_LIST;
+      case CommonClassNames.JAVA_UTIL_SET -> CommonClassNames.JAVA_UTIL_HASH_SET;
+      case CommonClassNames.JAVA_UTIL_MAP -> CommonClassNames.JAVA_UTIL_HASH_MAP;
+      case null, default -> null;
+    };
   }
 }

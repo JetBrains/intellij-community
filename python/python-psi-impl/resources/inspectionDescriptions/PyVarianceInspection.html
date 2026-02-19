@@ -1,0 +1,16 @@
+<html>
+<body>
+<p>Reports incorrect use of Python type variables due to variance issues.
+</p>
+
+<p><b>Incompatible variance</b></p>
+<pre><code class="language-python">
+from typing import TypeVar, Generic
+T = TypeVar("T", covariant=True)
+class C(Generic[T]):
+    def method(self, t: T): # at 'T': Incompatible variance: expected contravariant but was covariant
+        pass
+</code></pre>
+
+</body>
+</html>

@@ -8,13 +8,15 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="module" module-name="intellij.platform.analysis.impl" exported="" />
-    <orderEntry type="module" module-name="intellij.platform.extensions" exported="" />
-    <orderEntry type="module" module-name="intellij.platform.util" exported="" />
-    <orderEntry type="module" module-name="intellij.platform.indexing" exported="" />
-    <orderEntry type="module" module-name="intellij.platform.projectModel" exported="" />
-    <orderEntry type="module" module-name="intellij.platform.projectModel.impl" exported="" />
-    <orderEntry type="library" name="XStream" level="project" />
-    <orderEntry type="library" name="fastutil-min" level="project" />
+    <orderEntry type="module" module-name="intellij.platform.analysis.impl" />
+    <orderEntry type="module" module-name="intellij.platform.core" />
+    <orderEntry type="module" module-name="intellij.platform.extensions" />
+    <orderEntry type="module" module-name="intellij.platform.util" />
+    <orderEntry type="module" module-name="intellij.platform.indexing" />
+    <orderEntry type="module" module-name="intellij.platform.projectModel" />
+    <orderEntry type="module" module-name="intellij.platform.projectModel.impl" />
+    <orderEntry type="module" module-name="intellij.libraries.fastutil" />
+    <orderEntry type="module" module-name="intellij.platform.util.jdom" />
+    <orderEntry type="module" module-name="intellij.platform.core.impl" />
   </component>
 </module>

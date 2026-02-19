@@ -1,0 +1,6 @@
+- name: dist.all/lib/intellij.platform.jewel.markdown.core.jar
+  modules:
+  - name: intellij.platform.jewel.markdown.core
+    libraries:
+      org.commonmark.commonmark:
+      - name: $MAVEN_REPOSITORY$/org/commonmark/commonmark/0/commonmark-0.jar

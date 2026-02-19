@@ -1,15 +1,27 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.theoryinpractice.testng.inspection;
 
-import com.intellij.codeInspection.*;
+import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool;
+import com.intellij.codeInspection.InspectionManager;
+import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.ProblemHighlightType;
+import com.intellij.codeInspection.options.OptPane;
+import com.intellij.codeInspection.options.OptionController;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.LabeledComponent;
 import com.intellij.openapi.util.JDOMExternalizableStringList;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.profile.codeInspection.ProjectInspectionProfileManager;
-import com.intellij.psi.*;
-import com.intellij.ui.DocumentAdapter;
+import com.intellij.psi.PsiAnnotation;
+import com.intellij.psi.PsiAnnotationMemberValue;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiNameValuePair;
+import com.intellij.psi.PsiReferenceExpression;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.containers.ContainerUtil;
 import com.theoryinpractice.testng.TestngBundle;
@@ -18,9 +30,6 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import javax.swing.event.DocumentEvent;
-import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Matcher;
@@ -31,17 +40,15 @@ public class DependsOnGroupsInspection extends AbstractBaseJavaLocalInspectionTo
   private static final Pattern PATTERN = Pattern.compile("\"([a-zA-Z0-9_\\-\\(\\)]*)\"");
 
   public JDOMExternalizableStringList groups = new JDOMExternalizableStringList();
-  @NonNls public static final String SHORT_NAME = "groupsTestNG";
+  public static final @NonNls String SHORT_NAME = "groupsTestNG";
 
-  @NotNull
   @Override
-  public String getGroupDisplayName() {
+  public @NotNull String getGroupDisplayName() {
     return TestNGUtil.TESTNG_GROUP_NAME;
   }
 
-  @NotNull
   @Override
-  public String getShortName() {
+  public @NotNull String getShortName() {
     return SHORT_NAME;
   }
 
@@ -51,25 +58,24 @@ public class DependsOnGroupsInspection extends AbstractBaseJavaLocalInspectionTo
   }
 
   @Override
-  @Nullable
-  public JComponent createOptionsPanel() {
-    final LabeledComponent<JTextField> definedGroups = new LabeledComponent<>();
-    definedGroups.setText(TestngBundle.message("inspection.depends.on.groups.defined.groups.panel.title"));
-    final JTextField textField = new JTextField(StringUtil.join(ArrayUtilRt.toStringArray(groups), ","));
-    textField.getDocument().addDocumentListener(new DocumentAdapter() {
-      @Override
-      protected void textChanged(@NotNull final DocumentEvent e) {
+  public @NotNull OptPane getOptionsPane() {
+    return OptPane.pane(
+      OptPane.string("groups", TestngBundle.message("inspection.depends.on.groups.defined.groups.panel.title"),
+                     30)
+    );
+  }
+
+  @Override
+  public @NotNull OptionController getOptionController() {
+    return super.getOptionController().onValue(
+      "groups",
+      () -> StringUtil.join(ArrayUtilRt.toStringArray(groups), ","),
+      value -> {
         groups.clear();
-        String text = textField.getText();
-        if (!StringUtil.isEmptyOrSpaces(text)) {
-          ContainerUtil.addAll(groups, text.split("[, ]"));
+        if (!StringUtil.isEmptyOrSpaces(value)) {
+          ContainerUtil.addAll(groups, value.split("[, ]"));
         }
-      }
-    });
-    definedGroups.setComponent(textField);
-    final JPanel optionsPanel = new JPanel(new BorderLayout());
-    optionsPanel.add(definedGroups, BorderLayout.NORTH);
-    return optionsPanel;
+      });
   }
 
   @Override
@@ -135,14 +141,12 @@ public class DependsOnGroupsInspection extends AbstractBaseJavaLocalInspectionTo
     }
 
     @Override
-    @NotNull
-    public String getName() {
+    public @NotNull String getName() {
       return TestngBundle.message("inspection.depends.on.groups.add.as.defined.test.group.fix", myGroupName);
     }
 
     @Override
-    @NotNull
-    public String getFamilyName() {
+    public @NotNull String getFamilyName() {
       return TestngBundle.message("inspection.depends.on.groups.family.name");
     }
 

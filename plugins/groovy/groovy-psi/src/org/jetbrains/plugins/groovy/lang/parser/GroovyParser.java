@@ -1,9 +1,8 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.parser;
 
 import com.intellij.lang.PsiBuilder;
 import com.intellij.psi.tree.IElementType;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import static org.jetbrains.plugins.groovy.lang.parser.GroovyGeneratedParserUtils.adapt_builder_;
@@ -16,21 +15,12 @@ public class GroovyParser extends GroovyGeneratedParser {
   }
 
   //gsp directives, scriptlets and such
-  protected boolean isExtendedSeparator(@Nullable final IElementType tokenType) {
+  protected boolean isExtendedSeparator(final @Nullable IElementType tokenType) {
     return false;
   }
 
   //gsp template statement, for example
   protected boolean parseExtendedStatement(PsiBuilder builder) {
-    return false;
-  }
-
-  @SuppressWarnings("unused")
-  @Deprecated
-  public boolean parseDeclaration(@NotNull PsiBuilder builder,
-                                  boolean isInClass,
-                                  boolean isInAnnotation,
-                                  @Nullable String typeDefinitionName) {
     return false;
   }
 

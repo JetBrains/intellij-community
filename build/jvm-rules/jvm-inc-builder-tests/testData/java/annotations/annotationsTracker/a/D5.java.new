@@ -1,0 +1,6 @@
+import org.jetbrains.jps.dependency.test.MockAnnotation;
+
+public interface D5 {
+  @MockAnnotation
+  public abstract Object method ();
+}

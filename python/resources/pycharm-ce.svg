@@ -1,75 +1,18 @@
-<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="64" height="64" viewBox="0 0 64 64">
-  <defs>
-    <linearGradient id="pycharm-ce-b" x1="60.958%" x2="33.882%" y1="100%" y2="57.698%">
-      <stop offset="0%" stop-color="#2773E7"/>
-      <stop offset="100%" stop-color="#FC801D"/>
-    </linearGradient>
-    <polygon id="pycharm-ce-a" points="0 52 14.5 49 23 24.5 0 18.5"/>
-    <linearGradient id="pycharm-ce-c" x1="56.288%" x2="26.808%" y1="30.518%" y2="106.868%">
-      <stop offset="0%" stop-color="#FE2857"/>
-      <stop offset="100%" stop-color="#9039D0"/>
-    </linearGradient>
-    <linearGradient id="pycharm-ce-d" x1="50%" x2="50%" y1="0%" y2="75.199%">
-      <stop offset="0%" stop-color="#2773E7"/>
-      <stop offset="100%" stop-color="#9039D0"/>
-    </linearGradient>
-    <linearGradient id="pycharm-ce-f" x1="32.339%" x2="62.824%" y1="11.236%" y2="54.987%">
-      <stop offset="0%" stop-color="#21D789"/>
-      <stop offset="100%" stop-color="#07C3F2"/>
-    </linearGradient>
-    <polygon id="pycharm-ce-e" points="31.8 32.2 41.6 32.2 56 39.5 56 0 40.5 0"/>
-    <linearGradient id="pycharm-ce-h" x1="50%" x2="105.347%" y1="26.504%" y2="58.411%">
-      <stop offset="0%" stop-color="#21D789"/>
-      <stop offset="100%" stop-color="#07C3F2"/>
-    </linearGradient>
-    <polygon id="pycharm-ce-g" points="0 0 0 44 0 48.5 8.9 45.8 18.099 41.9 18.401 35.299 22 16.2 40.5 0"/>
-    <linearGradient id="pycharm-ce-j" x1="16.751%" x2="127.338%" y1="86.95%" y2="16.01%">
-      <stop offset="0%" stop-color="#21D789"/>
-      <stop offset="100%" stop-color="#FCF84A"/>
-    </linearGradient>
-    <polygon id="pycharm-ce-i" points="0 42 0 56 28 56 28.5 46 9.5 31.5"/>
-    <linearGradient id="pycharm-ce-l" x1="17.087%" x2="109.484%" y1="100.104%" y2="7.363%">
-      <stop offset="0%" stop-color="#21D789"/>
-      <stop offset="100%" stop-color="#FCF84A"/>
-    </linearGradient>
-    <polygon id="pycharm-ce-k" points="42 0 37 0 22 16 45 12"/>
-    <linearGradient id="pycharm-ce-n" x1="-18.927%" x2="60.127%" y1="25.401%" y2="77.245%">
-      <stop offset="0%" stop-color="#21D789"/>
-      <stop offset="100%" stop-color="#FCF84A"/>
-    </linearGradient>
-    <polygon id="pycharm-ce-m" points="25 13.5 22 16.2 13.5 50 27 56 56 56 56 40.5 44 21.5 40.9 12"/>
-    <linearGradient id="pycharm-ce-p" x1="50%" x2="50%" y1="-11.618%" y2="60.589%">
-      <stop offset="0%" stop-color="#A6A5A5"/>
-      <stop offset="0%" stop-color="#989898" stop-opacity=".568"/>
-      <stop offset="100%"/>
-    </linearGradient>
-    <polygon id="pycharm-ce-o" points="0 40 40 40 40 0 0 0"/>
-  </defs>
-  <g fill="none" fill-rule="evenodd">
-    <g transform="translate(4 4)">
-      <use fill="#F97A12" xlink:href="#pycharm-ce-a"/>
-      <use fill="url(#pycharm-ce-b)" xlink:href="#pycharm-ce-a"/>
-      <polygon fill="#2773E7" points="9.5 56 56 56 56 43 56 0 24.5 0"/>
-      <polygon fill="url(#pycharm-ce-c)" points="0 0 0 21 10.5 27.5 0 48.5 0 56 12.5 56 46.5 24 25.5 0"/>
-      <polygon fill="url(#pycharm-ce-d)" points="40.5 29.5 56 15 56 0 25 0"/>
-    </g>
-    <g transform="translate(4 4)">
-      <use fill="#07C3F2" xlink:href="#pycharm-ce-e"/>
-      <use fill="url(#pycharm-ce-f)" xlink:href="#pycharm-ce-e"/>
-      <use fill="#21D789" xlink:href="#pycharm-ce-g"/>
-      <use fill="url(#pycharm-ce-h)" xlink:href="#pycharm-ce-g"/>
-      <use fill="#FCF84A" xlink:href="#pycharm-ce-i"/>
-      <use fill="url(#pycharm-ce-j)" xlink:href="#pycharm-ce-i"/>
-      <use fill="#21D789" xlink:href="#pycharm-ce-k"/>
-      <use fill="url(#pycharm-ce-l)" xlink:href="#pycharm-ce-k"/>
-      <use fill="#FCF84A" xlink:href="#pycharm-ce-m"/>
-      <use fill="url(#pycharm-ce-n)" xlink:href="#pycharm-ce-m"/>
-    </g>
-    <g transform="translate(12 12)">
-      <use fill="#000" xlink:href="#pycharm-ce-o"/>
-      <use fill="url(#pycharm-ce-p)" xlink:href="#pycharm-ce-o"/>
-      <polygon fill="#FFF" points="4 35 19 35 19 32.5 4 32.5"/>
-      <path fill="#FFF" d="M6.478 9.5732C8.285 9.5732 9.341 8.4562 9.341 6.9982L9.341 6.9502C9.341 5.2742 8.215 4.3762 6.407 4.3762L3.614 4.3762 3.614 9.5732 6.478 9.5732zM0 1.0002L6.713 1.0002C10.632 1.0002 13.002 3.4042 13.002 6.8772L13.002 6.9262C13.002 10.8592 10.045 12.9002 6.36 12.9002L3.614 12.9002 3.614 18.0002 0 18.0002 0 1.0002zM14.1938 9.5615L14.1938 9.5135C14.1938 4.8025 17.7448.9435 22.8358.9435 25.9608.9435 27.8318 1.9845 29.3698 3.4995L27.0498 6.1755C25.7718 5.0155 24.4698 4.3055 22.8118 4.3055 20.0188 4.3055 18.0058 6.6255 18.0058 9.4665L18.0058 9.5135C18.0058 12.3555 19.9708 14.7225 22.8118 14.7225 24.7058 14.7225 25.8658 13.9645 27.1678 12.7815L29.4888 15.1255C27.7838 16.9485 25.8898 18.0855 22.6938 18.0855 17.8168 18.0855 14.1938 14.3215 14.1938 9.5615" transform="translate(4 4)"/>
-    </g>
-  </g>
+<!-- Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license. -->
+<svg width="64" height="64" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+<g clip-path="url(#clip0_4372_11421)">
+<path d="M59.9273 0H24.9606C23.8807 0 22.8445 0.4288 22.0806 1.19273L1.19273 22.08C0.4288 22.8439 0 23.8796 0 24.96V59.9273C0 62.1766 1.82342 64 4.07273 64H39.0388C40.1199 64 41.1567 63.57 41.9206 62.8055L62.8073 41.895C63.57 41.1316 63.9983 40.096 63.9983 39.0167L64 4.07273C64 1.82342 62.1766 0 59.9273 0Z" fill="url(#paint0_radial_4372_11421)"/>
+<path d="M52 12H12V52H52V12Z" fill="black"/>
+<path d="M17.1001 16.9666H23.542C24.5922 16.9666 25.5178 17.1596 26.3183 17.5454C27.1187 17.9313 27.7331 18.4739 28.162 19.1744C28.5978 19.8749 28.816 20.6857 28.816 21.6073C28.816 22.5289 28.5944 23.3649 28.1517 24.0723C27.7159 24.7797 27.0906 25.3304 26.2758 25.7231C25.4685 26.109 24.5285 26.3019 23.457 26.3019H20.0274V31.9721H17.1012V16.9666H17.1001ZM23.3485 23.8696C23.8418 23.8696 24.2701 23.7801 24.6347 23.6015C25.0062 23.4154 25.2922 23.1553 25.492 22.8189C25.6918 22.4761 25.7923 22.0793 25.7923 21.6291C25.7923 21.1789 25.6924 20.7782 25.492 20.4503C25.2916 20.1138 25.0062 19.8566 24.6347 19.6786C24.2701 19.4925 23.8418 19.4001 23.3485 19.4001H20.0256V23.8696H23.3485ZM37.2895 32.23C35.8534 32.23 34.5528 31.8935 33.3878 31.2222C32.2228 30.543 31.3086 29.6145 30.6437 28.4357C29.9794 27.2499 29.6469 25.9276 29.6469 24.4697C29.6469 23.0118 29.9794 21.6934 30.6437 20.5146C31.3081 19.3289 32.2228 18.3993 33.3878 17.728C34.5523 17.0487 35.8528 16.71 37.2895 16.71C38.5039 16.71 39.619 16.935 40.6336 17.3852C41.6482 17.8354 42.4911 18.4676 43.1629 19.2824C43.8416 20.0903 44.2953 21.0187 44.5244 22.069H41.4587C41.2583 21.5263 40.9586 21.0509 40.5584 20.6432C40.1651 20.2292 39.6902 19.9105 39.1327 19.6895C38.5751 19.4684 37.9676 19.357 37.3107 19.357C36.4247 19.357 35.6243 19.5781 34.91 20.0214C34.1951 20.4646 33.6347 21.0756 33.227 21.8542C32.8268 22.6259 32.627 23.4981 32.627 24.4697C32.627 25.4412 32.8268 26.3174 33.227 27.0955C33.6341 27.8672 34.1951 28.4741 34.91 28.9174C35.6243 29.3607 36.4247 29.5818 37.3107 29.5818C37.9682 29.5818 38.5757 29.4704 39.1327 29.2493C39.6896 29.0282 40.1651 28.7136 40.5584 28.3059C40.9586 27.8919 41.2583 27.4124 41.4587 26.8698H44.5244C44.2958 27.92 43.8416 28.8525 43.1629 29.6673C42.4911 30.4752 41.6482 31.1034 40.6336 31.5536C39.619 32.0037 38.5039 32.2288 37.2895 32.2288V32.23Z" fill="white"/>
+<path d="M33 44H17V47H33V44Z" fill="white"/>
+</g>
+<defs>
+<radialGradient id="paint0_radial_4372_11421" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(60.4997 3.4997) rotate(135) scale(82.3779)">
+<stop offset="0.0566846" stop-color="#F0EB18"/>
+<stop offset="0.6" stop-color="#00C4F4"/>
+</radialGradient>
+<clipPath id="clip0_4372_11421">
+<rect width="64" height="64" fill="white"/>
+</clipPath>
+</defs>
 </svg>

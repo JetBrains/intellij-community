@@ -1,0 +1,626 @@
+c:com.intellij.find.FindModel
+- com.intellij.openapi.util.UserDataHolder
+- java.lang.Cloneable
+- sf:Companion:com.intellij.find.FindModel$Companion
+- <init>():V
+- b:<init>(I,java.lang.String,java.lang.String,Z,Z,Z,com.intellij.find.FindModel$SearchContext,Z,Z,Z,Z,I,Z,Z,Z,Z,Z,Z,Z,java.lang.String,java.lang.String,Z,java.lang.String,java.lang.String,java.lang.String,Z,Z,Z,Z,kotlinx.serialization.internal.SerializationConstructorMarker):V
+- f:addObserver(com.intellij.find.FindModel$FindModelObserver):V
+- clone():com.intellij.find.FindModel
+- f:compileRegExp():java.util.regex.Pattern
+- f:copyFrom(com.intellij.find.FindModel):V
+- equals(java.lang.Object):Z
+- f:getCopyableUserData(com.intellij.openapi.util.Key):java.lang.Object
+- f:getCustomScope():com.intellij.psi.search.SearchScope
+- f:getCustomScopeName():java.lang.String
+- f:getDirectoryName():java.lang.String
+- f:getFileFilter():java.lang.String
+- f:getModuleName():java.lang.String
+- f:getRegExpFlags():I
+- f:getSearchContext():com.intellij.find.FindModel$SearchContext
+- f:getStringToFind():java.lang.String
+- f:getStringToReplace():java.lang.String
+- getUserData(com.intellij.openapi.util.Key):java.lang.Object
+- f:hasStringToFind():Z
+- hashCode():I
+- sf:initStringToFind(com.intellij.find.FindModel,java.lang.String):V
+- f:isCaseSensitive():Z
+- f:isCustomScope():Z
+- f:isExceptComments():Z
+- f:isExceptCommentsAndStringLiterals():Z
+- f:isExceptStringLiterals():Z
+- f:isFindAll():Z
+- f:isFindAllEnabled():Z
+- f:isForward():Z
+- f:isFromCursor():Z
+- f:isGlobal():Z
+- f:isInCommentsOnly():Z
+- f:isInStringLiteralsOnly():Z
+- f:isMultiline():Z
+- f:isMultipleFiles():Z
+- f:isOpenInNewTabEnabled():Z
+- f:isPreserveCase():Z
+- f:isProjectScope():Z
+- f:isPromptOnReplace():Z
+- f:isRegularExpressions():Z
+- f:isReplaceAll():Z
+- f:isReplaceState():Z
+- f:isSearchHighlighters():Z
+- f:isSearchInProjectFiles():Z
+- f:isWholeWordsOnly():Z
+- f:isWithSubdirectories():Z
+- f:putCopyableUserData(com.intellij.openapi.util.Key,java.lang.Object):V
+- putUserData(com.intellij.openapi.util.Key,java.lang.Object):V
+- f:refresh():V
+- f:removeObserver(com.intellij.find.FindModel$FindModelObserver):V
+- f:setCaseSensitive(Z):V
+- f:setCustomScope(com.intellij.psi.search.SearchScope):V
+- f:setCustomScope(Z):V
+- f:setCustomScopeName(java.lang.String):V
+- f:setDirectoryName(java.lang.String):V
+- f:setFileFilter(java.lang.String):V
+- f:setFindAll(Z):V
+- f:setFindAllEnabled(Z):V
+- f:setForward(Z):V
+- f:setFromCursor(Z):V
+- f:setGlobal(Z):V
+- f:setInCommentsOnly(Z):V
+- f:setInStringLiteralsOnly(Z):V
+- f:setModuleName(java.lang.String):V
+- f:setMultiline(Z):V
+- f:setMultipleFiles(Z):V
+- f:setOpenInNewTab(Z):V
+- f:setOpenInNewTabEnabled(Z):V
+- f:setOpenInNewTabVisible(Z):V
+- f:setPreserveCase(Z):V
+- f:setProjectScope(Z):V
+- f:setPromptOnReplace(Z):V
+- f:setRegExpFlags(I):V
+- f:setRegularExpressions(Z):V
+- f:setReplaceAll(Z):V
+- f:setReplaceState(Z):V
+- f:setSearchContext(com.intellij.find.FindModel$SearchContext):V
+- f:setSearchHighlighters(Z):V
+- f:setSearchInProjectFiles(Z):V
+- f:setStringToFind(java.lang.String):V
+- f:setStringToReplace(java.lang.String):V
+- f:setWholeWordsOnly(Z):V
+- f:setWithSubdirectories(Z):V
+- bsf:write$Self(com.intellij.find.FindModel,kotlinx.serialization.encoding.CompositeEncoder,kotlinx.serialization.descriptors.SerialDescriptor):V
+bf:com.intellij.find.FindModel$$serializer
+- kotlinx.serialization.internal.GeneratedSerializer
+- sf:INSTANCE:com.intellij.find.FindModel$$serializer
+- f:childSerializers():kotlinx.serialization.KSerializer[]
+- f:deserialize(kotlinx.serialization.encoding.Decoder):com.intellij.find.FindModel
+- f:getDescriptor():kotlinx.serialization.descriptors.SerialDescriptor
+- f:serialize(kotlinx.serialization.encoding.Encoder,com.intellij.find.FindModel):V
+f:com.intellij.find.FindModel$Companion
+- f:initStringToFind(com.intellij.find.FindModel,java.lang.String):V
+- f:serializer():kotlinx.serialization.KSerializer
+com.intellij.find.FindModel$FindModelObserver
+- a:findModelChanged(com.intellij.find.FindModel):V
+e:com.intellij.find.FindModel$SearchContext
+- java.lang.Enum
+- sf:ANY:com.intellij.find.FindModel$SearchContext
+- sf:Companion:com.intellij.find.FindModel$SearchContext$Companion
+- sf:EXCEPT_COMMENTS:com.intellij.find.FindModel$SearchContext
+- sf:EXCEPT_COMMENTS_AND_STRING_LITERALS:com.intellij.find.FindModel$SearchContext
+- sf:EXCEPT_STRING_LITERALS:com.intellij.find.FindModel$SearchContext
+- sf:IN_COMMENTS:com.intellij.find.FindModel$SearchContext
+- sf:IN_STRING_LITERALS:com.intellij.find.FindModel$SearchContext
+- s:getEntries():kotlin.enums.EnumEntries
+- s:valueOf(java.lang.String):com.intellij.find.FindModel$SearchContext
+- s:values():com.intellij.find.FindModel$SearchContext[]
+f:com.intellij.find.FindModel$SearchContext$Companion
+- f:serializer():kotlinx.serialization.KSerializer
+c:com.intellij.lang.cacheBuilder.SimpleWordsScanner
+- com.intellij.lang.cacheBuilder.VersionedWordsScanner
+- <init>():V
+- processWords(java.lang.CharSequence,com.intellij.util.Processor):V
+a:com.intellij.lang.cacheBuilder.VersionedWordsScanner
+- com.intellij.lang.cacheBuilder.WordsScanner
+- <init>():V
+- getVersion():I
+f:com.intellij.lang.cacheBuilder.WordOccurrence
+- <init>(java.lang.CharSequence,I,I,com.intellij.lang.cacheBuilder.WordOccurrence$Kind):V
+- getBaseText():java.lang.CharSequence
+- getEnd():I
+- getKind():com.intellij.lang.cacheBuilder.WordOccurrence$Kind
+- getStart():I
+- init(java.lang.CharSequence,I,I,com.intellij.lang.cacheBuilder.WordOccurrence$Kind):V
+f:com.intellij.lang.cacheBuilder.WordOccurrence$Kind
+- sf:CODE:com.intellij.lang.cacheBuilder.WordOccurrence$Kind
+- sf:COMMENTS:com.intellij.lang.cacheBuilder.WordOccurrence$Kind
+- sf:FOREIGN_LANGUAGE:com.intellij.lang.cacheBuilder.WordOccurrence$Kind
+- sf:LITERALS:com.intellij.lang.cacheBuilder.WordOccurrence$Kind
+- getName():java.lang.String
+com.intellij.lang.cacheBuilder.WordsScanner
+- a:processWords(java.lang.CharSequence,com.intellij.util.Processor):V
+f:com.intellij.lang.findUsages.DescriptiveNameUtil
+- s:getDescriptiveName(com.intellij.psi.PsiElement):java.lang.String
+- s:getMetaDataName(com.intellij.psi.meta.PsiMetaData):java.lang.String
+c:com.intellij.lang.findUsages.EmptyFindUsagesProvider
+- com.intellij.lang.findUsages.FindUsagesProvider
+- <init>():V
+- canFindUsagesFor(com.intellij.psi.PsiElement):Z
+- getDescriptiveName(com.intellij.psi.PsiElement):java.lang.String
+- getHelpId(com.intellij.psi.PsiElement):java.lang.String
+- getNodeText(com.intellij.psi.PsiElement,Z):java.lang.String
+- getType(com.intellij.psi.PsiElement):java.lang.String
+com.intellij.lang.findUsages.FindUsagesProvider
+- a:canFindUsagesFor(com.intellij.psi.PsiElement):Z
+- a:getDescriptiveName(com.intellij.psi.PsiElement):java.lang.String
+- a:getHelpId(com.intellij.psi.PsiElement):java.lang.String
+- a:getNodeText(com.intellij.psi.PsiElement,Z):java.lang.String
+- a:getType(com.intellij.psi.PsiElement):java.lang.String
+- getWordsScanner():com.intellij.lang.cacheBuilder.WordsScanner
+c:com.intellij.lang.findUsages.LanguageFindUsages
+- com.intellij.lang.LanguageExtension
+- sf:INSTANCE:com.intellij.lang.findUsages.LanguageFindUsages
+- s:canFindUsagesFor(com.intellij.psi.PsiElement):Z
+- s:getDescriptiveName(com.intellij.psi.PsiElement):java.lang.String
+- s:getHelpId(com.intellij.psi.PsiElement):java.lang.String
+- s:getNodeText(com.intellij.psi.PsiElement,Z):java.lang.String
+- s:getType(com.intellij.psi.PsiElement):java.lang.String
+- s:getWordsScanner(com.intellij.lang.Language):com.intellij.lang.cacheBuilder.WordsScanner
+com.intellij.model.search.LeafOccurrence
+- component1():com.intellij.psi.PsiElement
+- component2():com.intellij.psi.PsiElement
+- component3():I
+- a:getOffsetInStart():I
+- a:getScope():com.intellij.psi.PsiElement
+- a:getStart():com.intellij.psi.PsiElement
+com.intellij.model.search.LeafOccurrenceMapper
+- sf:Companion:com.intellij.model.search.LeafOccurrenceMapper$Companion
+- a:mapOccurrence(com.intellij.model.search.LeafOccurrence):java.util.Collection
+- s:withPointer(com.intellij.model.Pointer,com.intellij.model.search.LeafOccurrenceMapper$Parameterized):com.intellij.model.search.LeafOccurrenceMapper
+f:com.intellij.model.search.LeafOccurrenceMapper$Companion
+- f:withPointer(com.intellij.model.Pointer,com.intellij.model.search.LeafOccurrenceMapper$Parameterized):com.intellij.model.search.LeafOccurrenceMapper
+com.intellij.model.search.LeafOccurrenceMapper$Parameterized
+- a:mapOccurrence(java.lang.Object,com.intellij.model.search.LeafOccurrence):java.util.Collection
+f:com.intellij.model.search.SearchContext
+- sf:IN_CODE:com.intellij.model.search.SearchContext
+- sf:IN_CODE_HOSTS:com.intellij.model.search.SearchContext
+- sf:IN_COMMENTS:com.intellij.model.search.SearchContext
+- sf:IN_STRINGS:com.intellij.model.search.SearchContext
+- s:inCode():com.intellij.model.search.SearchContext
+- s:inCodeHosts():com.intellij.model.search.SearchContext
+- s:inComments():com.intellij.model.search.SearchContext
+- s:inPlainText():com.intellij.model.search.SearchContext
+- s:inStrings():com.intellij.model.search.SearchContext
+com.intellij.model.search.SearchParameters
+- a:areValid():Z
+- a:getProject():com.intellij.openapi.project.Project
+com.intellij.model.search.SearchService
+- sf:Companion:com.intellij.model.search.SearchService$Companion
+- s:getInstance():com.intellij.model.search.SearchService
+- a:merge(java.util.List):com.intellij.util.Query
+- a:searchParameters(com.intellij.model.search.SearchParameters):com.intellij.util.Query
+- a:searchWord(com.intellij.openapi.project.Project,java.lang.String):com.intellij.model.search.SearchWordQueryBuilder
+f:com.intellij.model.search.SearchService$Companion
+- f:getInstance():com.intellij.model.search.SearchService
+com.intellij.model.search.SearchWordQueryBuilder
+- a:buildLeafOccurrenceQuery():com.intellij.util.Query
+- a:buildOccurrenceQuery():com.intellij.util.Query
+- a:buildQuery(com.intellij.model.search.LeafOccurrenceMapper):com.intellij.util.Query
+- a:caseSensitive(Z):com.intellij.model.search.SearchWordQueryBuilder
+- a:inContexts(com.intellij.model.search.SearchContext,com.intellij.model.search.SearchContext[]):com.intellij.model.search.SearchWordQueryBuilder
+- a:inContexts(java.util.Set):com.intellij.model.search.SearchWordQueryBuilder
+- a:inFilesWithLanguage(com.intellij.lang.Language):com.intellij.model.search.SearchWordQueryBuilder
+- a:inFilesWithLanguageOfKind(com.intellij.lang.Language):com.intellij.model.search.SearchWordQueryBuilder
+- a:inInjections():com.intellij.model.search.SearchWordQueryBuilder
+- a:inInjections(com.intellij.lang.Language):com.intellij.model.search.SearchWordQueryBuilder
+- a:inInjectionsOfKind(com.intellij.lang.Language):com.intellij.model.search.SearchWordQueryBuilder
+- a:inScope(com.intellij.psi.search.SearchScope):com.intellij.model.search.SearchWordQueryBuilder
+- a:includeInjections():com.intellij.model.search.SearchWordQueryBuilder
+- a:restrictFileTypes(com.intellij.openapi.fileTypes.FileType,com.intellij.openapi.fileTypes.FileType[]):com.intellij.model.search.SearchWordQueryBuilder
+- a:withContainerName(java.lang.String):com.intellij.model.search.SearchWordQueryBuilder
+com.intellij.model.search.Searcher
+- collectImmediateResults(com.intellij.model.search.SearchParameters):java.util.Collection
+- collectSearchRequest(com.intellij.model.search.SearchParameters):com.intellij.util.Query
+- collectSearchRequests(com.intellij.model.search.SearchParameters):java.util.Collection
+com.intellij.model.search.TextOccurrence
+- a:getElement():com.intellij.psi.PsiElement
+- a:getOffsetInElement():I
+- s:of(com.intellij.psi.PsiElement,I):com.intellij.model.search.TextOccurrence
+com.intellij.psi.impl.cache.CacheManager
+- a:getFilesWithWord(java.lang.String,S,com.intellij.psi.search.GlobalSearchScope,Z):com.intellij.psi.PsiFile[]
+- s:getInstance(com.intellij.openapi.project.Project):com.intellij.psi.impl.cache.CacheManager
+- a:getVirtualFilesWithWord(java.lang.String,S,com.intellij.psi.search.GlobalSearchScope,Z):com.intellij.openapi.vfs.VirtualFile[]
+- a:processFilesWithWord(com.intellij.util.Processor,java.lang.String,S,com.intellij.psi.search.GlobalSearchScope,Z):Z
+- a:processVirtualFilesWithAllWords(java.util.Collection,S,com.intellij.psi.search.GlobalSearchScope,Z,com.intellij.util.Processor):Z
+f:com.intellij.psi.impl.cache.CacheManager$SERVICE
+- s:getInstance(com.intellij.openapi.project.Project):com.intellij.psi.impl.cache.CacheManager
+f:com.intellij.psi.search.FileTypeIndex
+- s:containsFileOfType(com.intellij.openapi.fileTypes.FileType,com.intellij.psi.search.GlobalSearchScope):Z
+- s:getFiles(com.intellij.openapi.fileTypes.FileType,com.intellij.psi.search.GlobalSearchScope):java.util.Collection
+- s:getIndexedFileType(com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.project.Project):com.intellij.openapi.fileTypes.FileType
+- s:processFiles(com.intellij.openapi.fileTypes.FileType,com.intellij.util.Processor,com.intellij.psi.search.GlobalSearchScope):Z
+f:com.intellij.psi.search.FilenameIndex
+- s:getAllFilenames(com.intellij.openapi.project.Project):java.lang.String[]
+- s:getAllFilesByExt(com.intellij.openapi.project.Project,java.lang.String):java.util.Collection
+- s:getAllFilesByExt(com.intellij.openapi.project.Project,java.lang.String,com.intellij.psi.search.GlobalSearchScope):java.util.Collection
+- s:getFilesByName(com.intellij.openapi.project.Project,java.lang.String,com.intellij.psi.search.GlobalSearchScope):com.intellij.psi.PsiFile[]
+- s:getFilesByName(com.intellij.openapi.project.Project,java.lang.String,com.intellij.psi.search.GlobalSearchScope,Z):com.intellij.psi.PsiFileSystemItem[]
+- s:getVirtualFilesByName(com.intellij.openapi.project.Project,java.lang.String,com.intellij.psi.search.GlobalSearchScope):java.util.Collection
+- s:getVirtualFilesByName(com.intellij.openapi.project.Project,java.lang.String,Z,com.intellij.psi.search.GlobalSearchScope):java.util.Collection
+- s:getVirtualFilesByName(java.lang.String,com.intellij.psi.search.GlobalSearchScope):java.util.Collection
+- s:getVirtualFilesByName(java.lang.String,Z,com.intellij.psi.search.GlobalSearchScope):java.util.Collection
+- s:processAllFileNames(com.intellij.util.Processor,com.intellij.psi.search.GlobalSearchScope,com.intellij.util.indexing.IdFilter):V
+- s:processFilesByName(java.lang.String,Z,com.intellij.psi.search.GlobalSearchScope,com.intellij.util.Processor):Z
+- s:processFilesByName(java.lang.String,Z,com.intellij.util.Processor,com.intellij.psi.search.GlobalSearchScope,com.intellij.openapi.project.Project):Z
+- s:processFilesByName(java.lang.String,Z,com.intellij.util.Processor,com.intellij.psi.search.GlobalSearchScope,com.intellij.openapi.project.Project,com.intellij.util.indexing.IdFilter):Z
+- s:processFilesByNames(java.util.Set,Z,com.intellij.psi.search.GlobalSearchScope,com.intellij.util.indexing.IdFilter,com.intellij.util.Processor):Z
+f:com.intellij.psi.search.IndexPattern
+- sf:EMPTY_ARRAY:com.intellij.psi.search.IndexPattern[]
+- <init>(java.lang.String,Z):V
+- equals(java.lang.Object):Z
+- getOptimizedIndexingPattern():java.util.regex.Pattern
+- getPattern():java.util.regex.Pattern
+- getPatternString():java.lang.String
+- getWordsToFindFirst():java.util.List
+- hashCode():I
+- isCaseSensitive():Z
+- setCaseSensitive(Z):V
+- setPatternString(java.lang.String):V
+com.intellij.psi.search.IndexPatternOccurrence
+- getAdditionalTextRanges():java.util.List
+- a:getFile():com.intellij.psi.PsiFile
+- a:getPattern():com.intellij.psi.search.IndexPattern
+- a:getTextRange():com.intellij.openapi.util.TextRange
+com.intellij.psi.search.IndexPatternProvider
+- sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
+- sf:INDEX_PATTERNS_CHANGED:com.intellij.util.messages.Topic
+- sf:PROP_INDEX_PATTERNS:java.lang.String
+- a:getIndexPatterns():com.intellij.psi.search.IndexPattern[]
+c:com.intellij.psi.search.ProjectAndLibrariesScope
+- com.intellij.psi.search.GlobalSearchScope
+- pf:myProjectFileIndex:com.intellij.openapi.roots.ProjectFileIndex
+- <init>(com.intellij.openapi.project.Project):V
+- compare(com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.vfs.VirtualFile):I
+- contains(com.intellij.openapi.vfs.VirtualFile):Z
+- getDisplayName():java.lang.String
+- s:getNameText():java.lang.String
+- getUnloadedModulesBelongingToScope():java.util.Collection
+- isSearchInLibraries():Z
+- isSearchInModuleContent(com.intellij.openapi.module.Module):Z
+- setDisplayName(java.lang.String):V
+com.intellij.psi.search.PsiSearchHelper
+- a:findCommentsContainingIdentifier(java.lang.String,com.intellij.psi.search.SearchScope):com.intellij.psi.PsiElement[]
+- a:findFilesWithPlainTextWords(java.lang.String):com.intellij.psi.PsiFile[]
+- getCodeUsageScope(com.intellij.psi.PsiElement):com.intellij.psi.search.SearchScope
+- s:getInstance(com.intellij.openapi.project.Project):com.intellij.psi.search.PsiSearchHelper
+- a:getUseScope(com.intellij.psi.PsiElement):com.intellij.psi.search.SearchScope
+- isCheapEnoughToSearch(java.lang.String,com.intellij.psi.search.GlobalSearchScope,com.intellij.psi.PsiFile):com.intellij.psi.search.PsiSearchHelper$SearchCostResult
+- a:isCheapEnoughToSearch(java.lang.String,com.intellij.psi.search.GlobalSearchScope,com.intellij.psi.PsiFile,com.intellij.openapi.progress.ProgressIndicator):com.intellij.psi.search.PsiSearchHelper$SearchCostResult
+- a:processAllFilesWithWord(java.lang.String,com.intellij.psi.search.GlobalSearchScope,com.intellij.util.Processor,Z):Z
+- a:processAllFilesWithWordInComments(java.lang.String,com.intellij.psi.search.GlobalSearchScope,com.intellij.util.Processor):Z
+- a:processAllFilesWithWordInLiterals(java.lang.String,com.intellij.psi.search.GlobalSearchScope,com.intellij.util.Processor):Z
+- a:processAllFilesWithWordInText(java.lang.String,com.intellij.psi.search.GlobalSearchScope,com.intellij.util.Processor,Z):Z
+- a:processCandidateFilesForText(com.intellij.psi.search.GlobalSearchScope,S,Z,java.lang.String,com.intellij.util.Processor):Z
+- a:processCommentsContainingIdentifier(java.lang.String,com.intellij.psi.search.SearchScope,com.intellij.util.Processor):Z
+- a:processElementsWithWord(com.intellij.psi.search.TextOccurenceProcessor,com.intellij.psi.search.SearchScope,java.lang.String,S,Z):Z
+- a:processElementsWithWord(com.intellij.psi.search.TextOccurenceProcessor,com.intellij.psi.search.SearchScope,java.lang.String,S,Z,Z):Z
+- a:processElementsWithWordAsync(com.intellij.psi.search.TextOccurenceProcessor,com.intellij.psi.search.SearchScope,java.lang.String,S,Z):com.intellij.concurrency.AsyncFuture
+- a:processRequests(com.intellij.psi.search.SearchRequestCollector,com.intellij.util.Processor):Z
+- a:processRequestsAsync(com.intellij.psi.search.SearchRequestCollector,com.intellij.util.Processor):com.intellij.concurrency.AsyncFuture
+- a:processUsagesInNonJavaFiles(com.intellij.psi.PsiElement,java.lang.String,com.intellij.psi.search.PsiNonJavaFileReferenceProcessor,com.intellij.psi.search.GlobalSearchScope):Z
+- a:processUsagesInNonJavaFiles(java.lang.String,com.intellij.psi.search.PsiNonJavaFileReferenceProcessor,com.intellij.psi.search.GlobalSearchScope):Z
+f:com.intellij.psi.search.PsiSearchHelper$SERVICE
+- s:getInstance(com.intellij.openapi.project.Project):com.intellij.psi.search.PsiSearchHelper
+e:com.intellij.psi.search.PsiSearchHelper$SearchCostResult
+- java.lang.Enum
+- sf:FEW_OCCURRENCES:com.intellij.psi.search.PsiSearchHelper$SearchCostResult
+- sf:TOO_MANY_OCCURRENCES:com.intellij.psi.search.PsiSearchHelper$SearchCostResult
+- sf:ZERO_OCCURRENCES:com.intellij.psi.search.PsiSearchHelper$SearchCostResult
+- s:valueOf(java.lang.String):com.intellij.psi.search.PsiSearchHelper$SearchCostResult
+- s:values():com.intellij.psi.search.PsiSearchHelper$SearchCostResult[]
+c:com.intellij.psi.search.PsiSearchRequest
+- f:caseSensitive:Z
+- f:containerName:java.lang.String
+- f:processor:com.intellij.psi.search.RequestResultProcessor
+- f:searchContext:S
+- f:searchScope:com.intellij.psi.search.SearchScope
+- f:word:java.lang.String
+- equals(java.lang.Object):Z
+- getSearchSession():com.intellij.psi.search.SearchSession
+- hashCode():I
+com.intellij.psi.search.PsiTodoSearchHelper
+- a:findFilesWithTodoItems():com.intellij.psi.PsiFile[]
+- a:findTodoItems(com.intellij.psi.PsiFile):com.intellij.psi.search.TodoItem[]
+- a:findTodoItems(com.intellij.psi.PsiFile,I,I):com.intellij.psi.search.TodoItem[]
+- a:findTodoItemsLight(com.intellij.psi.PsiFile):com.intellij.psi.search.TodoItem[]
+- a:findTodoItemsLight(com.intellij.psi.PsiFile,I,I):com.intellij.psi.search.TodoItem[]
+- s:getInstance(com.intellij.openapi.project.Project):com.intellij.psi.search.PsiTodoSearchHelper
+- a:getTodoItemsCount(com.intellij.psi.PsiFile):I
+- a:getTodoItemsCount(com.intellij.psi.PsiFile,com.intellij.psi.search.TodoPattern):I
+- a:processFilesWithTodoItems(com.intellij.util.Processor):Z
+f:com.intellij.psi.search.PsiTodoSearchHelper$SERVICE
+- s:getInstance(com.intellij.openapi.project.Project):com.intellij.psi.search.PsiTodoSearchHelper
+f:com.intellij.psi.search.QuerySearchRequest
+- f:collector:com.intellij.psi.search.SearchRequestCollector
+- f:processor:com.intellij.util.Processor
+- f:query:com.intellij.util.Query
+- <init>(com.intellij.util.Query,com.intellij.psi.search.SearchRequestCollector,Z,com.intellij.util.PairProcessor):V
+- runQuery():Z
+a:com.intellij.psi.search.RequestResultProcessor
+- p:<init>(java.lang.Object[]):V
+- equals(java.lang.Object):Z
+- hashCode():I
+- a:processTextOccurrence(com.intellij.psi.PsiElement,I,com.intellij.util.Processor):Z
+com.intellij.psi.search.ScopeOptimizer
+- s:calculateOverallRestrictedUseScope(java.util.List,com.intellij.psi.PsiElement):com.intellij.psi.search.SearchScope
+- getRestrictedUseScope(com.intellij.psi.PsiElement):com.intellij.psi.search.SearchScope
+- getScopeToExclude(com.intellij.psi.PsiElement):com.intellij.psi.search.GlobalSearchScope
+c:com.intellij.psi.search.SearchRequestCollector
+- <init>(com.intellij.psi.search.SearchSession):V
+- getSearchSession():com.intellij.psi.search.SearchSession
+- searchCustom(com.intellij.util.Processor):V
+- searchQuery(com.intellij.psi.search.QuerySearchRequest):V
+- searchWord(java.lang.String,com.intellij.psi.search.SearchScope,S,Z,com.intellij.psi.PsiElement):V
+- searchWord(java.lang.String,com.intellij.psi.search.SearchScope,S,Z,com.intellij.psi.PsiElement,com.intellij.psi.search.RequestResultProcessor):V
+- searchWord(java.lang.String,com.intellij.psi.search.SearchScope,S,Z,com.intellij.psi.search.RequestResultProcessor):V
+- searchWord(java.lang.String,com.intellij.psi.search.SearchScope,Z,com.intellij.psi.PsiElement):V
+- takeCustomSearchActions():java.util.List
+- takeQueryRequests():java.util.List
+- takeSearchRequests():java.util.List
+c:com.intellij.psi.search.SearchRequestQuery
+- com.intellij.util.AbstractQuery
+- <init>(com.intellij.openapi.project.Project,com.intellij.psi.search.SearchRequestCollector):V
+- p:processResults(com.intellij.util.Processor):Z
+f:com.intellij.psi.search.SearchSession
+- com.intellij.openapi.util.UserDataHolderBase
+- <init>():V
+- <init>(com.intellij.psi.PsiElement[]):V
+- getTargetVirtualFiles():java.util.List
+f:com.intellij.psi.search.SingleTargetRequestResultProcessor
+- com.intellij.psi.search.RequestResultProcessor
+- <init>(com.intellij.psi.PsiElement):V
+- processTextOccurrence(com.intellij.psi.PsiElement,I,com.intellij.util.Processor):Z
+com.intellij.psi.search.TextOccurenceProcessor
+- a:execute(com.intellij.psi.PsiElement,I):Z
+f:com.intellij.psi.search.TodoAttributes
+- java.lang.Cloneable
+- clone():com.intellij.psi.search.TodoAttributes
+- equals(java.lang.Object):Z
+- getCustomizedTextAttributes():com.intellij.openapi.editor.markup.TextAttributes
+- getIcon():javax.swing.Icon
+- getTextAttributes():com.intellij.openapi.editor.markup.TextAttributes
+- hashCode():I
+- setIcon(javax.swing.Icon):V
+- setUseCustomTodoColor(Z,com.intellij.openapi.editor.markup.TextAttributes):V
+- shouldUseCustomTodoColor():Z
+- writeExternal(org.jdom.Element):V
+com.intellij.psi.search.TodoItem
+- sf:BY_START_OFFSET:java.util.Comparator
+- sf:EMPTY_ARRAY:com.intellij.psi.search.TodoItem[]
+- getAdditionalTextRanges():java.util.List
+- a:getFile():com.intellij.psi.PsiFile
+- a:getPattern():com.intellij.psi.search.TodoPattern
+- a:getTextRange():com.intellij.openapi.util.TextRange
+f:com.intellij.psi.search.TodoPattern
+- java.lang.Cloneable
+- <init>(java.lang.String,com.intellij.psi.search.TodoAttributes,Z):V
+- clone():com.intellij.psi.search.TodoPattern
+- equals(java.lang.Object):Z
+- getAttributes():com.intellij.psi.search.TodoAttributes
+- getIndexPattern():com.intellij.psi.search.IndexPattern
+- getPattern():java.util.regex.Pattern
+- getPatternString():java.lang.String
+- hashCode():I
+- isCaseSensitive():Z
+- setAttributes(com.intellij.psi.search.TodoAttributes):V
+- setCaseSensitive(Z):V
+- setPatternString(java.lang.String):V
+- writeExternal(org.jdom.Element):V
+com.intellij.psi.search.UsageSearchContext
+- sf:ANY:S
+- sf:IN_CODE:S
+- sf:IN_COMMENTS:S
+- sf:IN_FOREIGN_LANGUAGES:S
+- sf:IN_PLAIN_TEXT:S
+- sf:IN_STRINGS:S
+a:com.intellij.psi.search.UseScopeEnlarger
+- <init>():V
+- a:getAdditionalUseScope(com.intellij.psi.PsiElement):com.intellij.psi.search.SearchScope
+f:com.intellij.psi.search.searches.DefinitionsScopedSearch
+- com.intellij.psi.search.searches.ExtensibleQueryFactory
+- sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
+- sf:INSTANCE:com.intellij.psi.search.searches.DefinitionsScopedSearch
+- s:search(com.intellij.psi.PsiElement):com.intellij.util.Query
+- s:search(com.intellij.psi.PsiElement,com.intellij.psi.search.SearchScope):com.intellij.util.Query
+- s:search(com.intellij.psi.PsiElement,com.intellij.psi.search.SearchScope,Z):com.intellij.util.Query
+c:com.intellij.psi.search.searches.DefinitionsScopedSearch$SearchParameters
+- com.intellij.util.QueryParameters
+- <init>(com.intellij.psi.PsiElement):V
+- <init>(com.intellij.psi.PsiElement,com.intellij.psi.search.SearchScope,Z):V
+- getElement():com.intellij.psi.PsiElement
+- getProject():com.intellij.openapi.project.Project
+- getScope():com.intellij.psi.search.SearchScope
+- isCheckDeep():Z
+- isQueryValid():Z
+com.intellij.psi.search.searches.ReferenceSearcher
+- com.intellij.model.search.Searcher
+f:com.intellij.psi.search.searches.ReferencesSearch
+- com.intellij.psi.search.searches.ExtensibleQueryFactory
+- sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
+- s:search(com.intellij.psi.PsiElement):com.intellij.util.Query
+- s:search(com.intellij.psi.PsiElement,com.intellij.psi.search.SearchScope):com.intellij.util.Query
+- s:search(com.intellij.psi.PsiElement,com.intellij.psi.search.SearchScope,Z):com.intellij.util.Query
+- s:search(com.intellij.psi.search.searches.ReferencesSearch$SearchParameters):com.intellij.util.Query
+- s:searchOptimized(com.intellij.psi.PsiElement,com.intellij.psi.search.SearchScope,Z,com.intellij.psi.search.SearchRequestCollector,com.intellij.util.Processor):V
+- s:searchOptimized(com.intellij.psi.PsiElement,com.intellij.psi.search.SearchScope,Z,com.intellij.psi.search.SearchRequestCollector,Z,com.intellij.util.PairProcessor):V
+c:com.intellij.psi.search.searches.ReferencesSearch$SearchParameters
+- com.intellij.model.search.SearchParameters
+- com.intellij.openapi.application.DumbAwareSearchParameters
+- <init>(com.intellij.psi.PsiElement,com.intellij.psi.search.SearchScope,Z):V
+- <init>(com.intellij.psi.PsiElement,com.intellij.psi.search.SearchScope,Z,com.intellij.psi.search.SearchRequestCollector):V
+- f:areValid():Z
+- getEffectiveSearchScope():com.intellij.psi.search.SearchScope
+- getElementToSearch():com.intellij.psi.PsiElement
+- getOptimizer():com.intellij.psi.search.SearchRequestCollector
+- getProject():com.intellij.openapi.project.Project
+- getScopeDeterminedByUser():com.intellij.psi.search.SearchScope
+- isIgnoreAccessScope():Z
+- isQueryValid():Z
+a:com.intellij.psi.stubs.AbstractStubIndex
+- com.intellij.psi.stubs.StubIndexExtension
+- <init>():V
+- get(java.lang.Object,com.intellij.openapi.project.Project,com.intellij.psi.search.GlobalSearchScope):java.util.Collection
+- getAllKeys(com.intellij.openapi.project.Project):java.util.Collection
+- getCacheSize():I
+- processAllKeys(com.intellij.openapi.project.Project,com.intellij.util.Processor):Z
+a:com.intellij.psi.stubs.CharSequenceHashStubIndexExtension
+- com.intellij.psi.stubs.AbstractStubIndex
+- <init>():V
+- doesKeyMatchPsi(java.lang.CharSequence,com.intellij.psi.PsiElement):Z
+- f:getKeyDescriptor():com.intellij.util.io.KeyDescriptor
+- getVersion():I
+a:com.intellij.psi.stubs.IntStubIndexExtension
+- com.intellij.psi.stubs.AbstractStubIndex
+- <init>():V
+- getKeyDescriptor():com.intellij.util.io.KeyDescriptor
+- getVersion():I
+a:com.intellij.psi.stubs.StringStubIndexExtension
+- com.intellij.psi.stubs.AbstractStubIndex
+- <init>():V
+- getKeyDescriptor():com.intellij.util.io.KeyDescriptor
+- getVersion():I
+- traceKeyHashToVirtualFileMapping():Z
+a:com.intellij.psi.stubs.StubIndex
+- a:forceRebuild(java.lang.Throwable):V
+- a:getAllKeys(com.intellij.psi.stubs.StubIndexKey,com.intellij.openapi.project.Project):java.util.Collection
+- getContainingFiles(com.intellij.psi.stubs.StubIndexKey,java.lang.Object,com.intellij.openapi.project.Project,com.intellij.psi.search.GlobalSearchScope):java.util.Set
+- a:getContainingFilesIterator(com.intellij.psi.stubs.StubIndexKey,java.lang.Object,com.intellij.openapi.project.Project,com.intellij.psi.search.GlobalSearchScope):java.util.Iterator
+- s:getElements(com.intellij.psi.stubs.StubIndexKey,java.lang.Object,com.intellij.openapi.project.Project,com.intellij.psi.search.GlobalSearchScope,com.intellij.util.indexing.IdFilter,java.lang.Class):java.util.Collection
+- s:getElements(com.intellij.psi.stubs.StubIndexKey,java.lang.Object,com.intellij.openapi.project.Project,com.intellij.psi.search.GlobalSearchScope,java.lang.Class):java.util.Collection
+- s:getInstance():com.intellij.psi.stubs.StubIndex
+- processAllKeys(com.intellij.psi.stubs.StubIndexKey,com.intellij.openapi.project.Project,com.intellij.util.Processor):Z
+- processAllKeys(com.intellij.psi.stubs.StubIndexKey,com.intellij.util.Processor,com.intellij.psi.search.GlobalSearchScope):Z
+- processAllKeys(com.intellij.psi.stubs.StubIndexKey,com.intellij.util.Processor,com.intellij.psi.search.GlobalSearchScope,com.intellij.util.indexing.IdFilter):Z
+- processElements(com.intellij.psi.stubs.StubIndexKey,java.lang.Object,com.intellij.openapi.project.Project,com.intellij.psi.search.GlobalSearchScope,com.intellij.util.indexing.IdFilter,java.lang.Class,com.intellij.util.Processor):Z
+- processElements(com.intellij.psi.stubs.StubIndexKey,java.lang.Object,com.intellij.openapi.project.Project,com.intellij.psi.search.GlobalSearchScope,java.lang.Class,com.intellij.util.Processor):Z
+com.intellij.psi.stubs.StubIndexExtension
+- sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
+- a:getCacheSize():I
+- a:getKey():com.intellij.psi.stubs.StubIndexKey
+- a:getKeyDescriptor():com.intellij.util.io.KeyDescriptor
+- a:getVersion():I
+f:com.intellij.usageView.UsageViewTypeLocation
+- com.intellij.psi.ElementDescriptionLocation
+- sf:INSTANCE:com.intellij.usageView.UsageViewTypeLocation
+- getDefaultProvider():com.intellij.psi.ElementDescriptionProvider
+Fa:com.intellij.util.gist.GistManager
+- <init>():V
+- s:getInstance():com.intellij.util.gist.GistManager
+- a:invalidateData():V
+- a:invalidateData(com.intellij.openapi.vfs.VirtualFile):V
+- a:newPsiFileGist(java.lang.String,I,com.intellij.util.io.DataExternalizer,com.intellij.util.NullableFunction):com.intellij.util.gist.PsiFileGist
+- a:newVirtualFileGist(java.lang.String,I,com.intellij.util.io.DataExternalizer,com.intellij.util.gist.VirtualFileGist$GistCalculator):com.intellij.util.gist.VirtualFileGist
+com.intellij.util.gist.PsiFileGist
+- a:getFileData(com.intellij.psi.PsiFile):java.lang.Object
+com.intellij.util.gist.VirtualFileGist
+- a:getFileData(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile):java.lang.Object
+- a:getUpToDateOrNull(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile):java.util.function.Supplier
+com.intellij.util.gist.VirtualFileGist$GistCalculator
+- a:calcData(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile):java.lang.Object
+c:com.intellij.util.indexing.DefaultFileTypeSpecificInputFilter
+- com.intellij.util.indexing.FileBasedIndex$FileTypeSpecificInputFilter
+- <init>(com.intellij.openapi.fileTypes.FileType[]):V
+- acceptInput(com.intellij.openapi.vfs.VirtualFile):Z
+- registerFileTypesUsedForIndexing(com.intellij.util.Consumer):V
+e:com.intellij.util.indexing.DumbModeAccessType
+- java.lang.Enum
+- sf:RAW_INDEX_DATA_ACCEPTABLE:com.intellij.util.indexing.DumbModeAccessType
+- sf:RELIABLE_DATA_ONLY:com.intellij.util.indexing.DumbModeAccessType
+- ignoreDumbMode(com.intellij.openapi.util.ThrowableComputable):java.lang.Object
+- ignoreDumbMode(java.lang.Runnable):V
+- s:valueOf(java.lang.String):com.intellij.util.indexing.DumbModeAccessType
+- s:values():com.intellij.util.indexing.DumbModeAccessType[]
+Fa:com.intellij.util.indexing.FileBasedIndex
+- <init>():V
+- a:findFileById(com.intellij.openapi.project.Project,I):com.intellij.openapi.vfs.VirtualFile
+- a:getAllKeys(com.intellij.util.indexing.ID,com.intellij.openapi.project.Project):java.util.Collection
+- a:getContainingFiles(com.intellij.util.indexing.ID,java.lang.Object,com.intellij.psi.search.GlobalSearchScope):java.util.Collection
+- a:getFileBeingCurrentlyIndexed():com.intellij.openapi.vfs.VirtualFile
+- a:getFileData(com.intellij.util.indexing.ID,com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.project.Project):java.util.Map
+- s:getFileId(com.intellij.openapi.vfs.VirtualFile):I
+- a:getFilesWithKey(com.intellij.util.indexing.ID,java.util.Set,com.intellij.util.Processor,com.intellij.psi.search.GlobalSearchScope):Z
+- a:getIndexModificationStamp(com.intellij.util.indexing.ID,com.intellij.openapi.project.Project):J
+- s:getInstance():com.intellij.util.indexing.FileBasedIndex
+- a:getSingleEntryIndexData(com.intellij.util.indexing.ID,com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.project.Project):java.lang.Object
+- a:getValues(com.intellij.util.indexing.ID,java.lang.Object,com.intellij.psi.search.GlobalSearchScope):java.util.List
+- invalidateCaches():V
+- a:iterateIndexableFiles(com.intellij.openapi.roots.ContentIterator,com.intellij.openapi.project.Project,com.intellij.openapi.progress.ProgressIndicator):V
+- s:iterateRecursively(com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.roots.ContentIterator,com.intellij.openapi.progress.ProgressIndicator,java.util.Set,com.intellij.openapi.roots.ProjectFileIndex):V
+- a:processAllKeys(com.intellij.util.indexing.ID,com.intellij.util.Processor,com.intellij.openapi.project.Project):Z
+- processAllKeys(com.intellij.util.indexing.ID,com.intellij.util.Processor,com.intellij.psi.search.GlobalSearchScope,com.intellij.util.indexing.IdFilter):Z
+- a:processFilesContainingAllKeys(com.intellij.util.indexing.ID,java.util.Collection,com.intellij.psi.search.GlobalSearchScope,com.intellij.openapi.util.Condition,com.intellij.util.Processor):Z
+- a:processFilesContainingAnyKey(com.intellij.util.indexing.ID,java.util.Collection,com.intellij.psi.search.GlobalSearchScope,com.intellij.util.indexing.IdFilter,com.intellij.openapi.util.Condition,com.intellij.util.Processor):Z
+- a:processValues(com.intellij.util.indexing.ID,java.lang.Object,com.intellij.openapi.vfs.VirtualFile,com.intellij.util.indexing.FileBasedIndex$ValueProcessor,com.intellij.psi.search.GlobalSearchScope):Z
+- processValues(com.intellij.util.indexing.ID,java.lang.Object,com.intellij.openapi.vfs.VirtualFile,com.intellij.util.indexing.FileBasedIndex$ValueProcessor,com.intellij.psi.search.GlobalSearchScope,com.intellij.util.indexing.IdFilter):Z
+- requestRebuild(com.intellij.util.indexing.ID):V
+- a:requestRebuild(com.intellij.util.indexing.ID,java.lang.Throwable):V
+- a:requestReindex(com.intellij.openapi.vfs.VirtualFile):V
+- a:scheduleRebuild(com.intellij.util.indexing.ID,java.lang.Throwable):V
+com.intellij.util.indexing.FileBasedIndex$FileTypeSpecificInputFilter
+- com.intellij.util.indexing.FileBasedIndex$InputFilter
+- a:registerFileTypesUsedForIndexing(com.intellij.util.Consumer):V
+com.intellij.util.indexing.FileBasedIndex$InputFilter
+- a:acceptInput(com.intellij.openapi.vfs.VirtualFile):Z
+com.intellij.util.indexing.FileBasedIndex$ValueProcessor
+- a:process(com.intellij.openapi.vfs.VirtualFile,java.lang.Object):Z
+a:com.intellij.util.indexing.FileBasedIndexExtension
+- com.intellij.util.indexing.IndexExtension
+- sf:EXTENSION_POINT_NAME:com.intellij.openapi.extensions.ExtensionPointName
+- <init>():V
+- a:dependsOnFileContent():Z
+- getCacheSize():I
+- getFileTypesWithSizeLimitNotApplicable():java.util.Collection
+- a:getInputFilter():com.intellij.util.indexing.FileBasedIndex$InputFilter
+- a:getName():com.intellij.util.indexing.ID
+- hasSnapshotMapping():Z
+- indexDirectories():Z
+- traceKeyHashToVirtualFileMapping():Z
+a:com.intellij.util.indexing.IdFilter
+- sf:ACCEPT_ALL:com.intellij.util.indexing.IdFilter
+- <init>():V
+- a:containsFileId(I):Z
+- s:getProjectIdFilter(com.intellij.openapi.project.Project,Z):com.intellij.util.indexing.IdFilter
+a:com.intellij.util.indexing.IndexableSetContributor
+- sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
+- <init>():V
+- getAdditionalProjectRootsToIndex(com.intellij.openapi.project.Project):java.util.Set
+- a:getAdditionalRootsToIndex():java.util.Set
+- getDebugName():java.lang.String
+- s:getProjectRootsToIndex(com.intellij.util.indexing.IndexableSetContributor,com.intellij.openapi.project.Project):java.util.Set
+- s:getRootsToIndex(com.intellij.util.indexing.IndexableSetContributor):java.util.Set
+f:com.intellij.util.indexing.IndexingBundle
+- s:message(java.lang.String,java.lang.Object[]):java.lang.String
+- s:messagePointer(java.lang.String,java.lang.Object[]):java.util.function.Supplier
+a:com.intellij.util.indexing.ScalarIndexExtension
+- com.intellij.util.indexing.FileBasedIndexExtension
+- sf:VOID_DATA_EXTERNALIZER:com.intellij.util.io.DataExternalizer
+- <init>():V
+- f:getValueExternalizer():com.intellij.util.io.DataExternalizer
+a:com.intellij.util.indexing.SingleEntryFileBasedIndexExtension
+- com.intellij.util.indexing.FileBasedIndexExtension
+- <init>():V
+- dependsOnFileContent():Z
+- getCacheSize():I
+- a:getIndexer():com.intellij.util.indexing.SingleEntryIndexer
+- f:getKeyDescriptor():com.intellij.util.io.KeyDescriptor
+- keyIsUniqueForIndexedFile():Z
+a:com.intellij.util.indexing.SingleEntryIndexer
+- com.intellij.util.indexing.DataIndexer
+- p:<init>(Z):V
+- pa:computeValue(com.intellij.util.indexing.FileContent):java.lang.Object
+- f:map(com.intellij.util.indexing.FileContent):java.util.Map
+f:com.intellij.util.xml.XmlFileHeader
+- sf:EMPTY:com.intellij.util.xml.XmlFileHeader
+- <init>(java.lang.String,java.lang.String,java.lang.String,java.lang.String):V
+- equals(java.lang.Object):Z
+- getPublicId():java.lang.String
+- getRootTagLocalName():java.lang.String
+- getRootTagNamespace():java.lang.String
+- getSystemId():java.lang.String
+- hashCode():I

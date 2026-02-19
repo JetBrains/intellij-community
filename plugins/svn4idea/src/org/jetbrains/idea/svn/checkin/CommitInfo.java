@@ -1,11 +1,16 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.svn.checkin;
 
 import com.intellij.openapi.util.NlsSafe;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.svn.api.Revision;
 
-import javax.xml.bind.annotation.*;
+import javax.xml.bind.annotation.XmlAccessType;
+import javax.xml.bind.annotation.XmlAccessorType;
+import javax.xml.bind.annotation.XmlAttribute;
+import javax.xml.bind.annotation.XmlElement;
+import javax.xml.bind.annotation.XmlRootElement;
+import javax.xml.bind.annotation.XmlType;
 import java.util.Date;
 
 public final class CommitInfo {
@@ -13,7 +18,7 @@ public final class CommitInfo {
   public static final CommitInfo EMPTY = new CommitInfo.Builder().setRevisionNumber(-1).build();
 
   private final long myRevisionNumber;
-  @NotNull private final Revision myRevision;
+  private final @NotNull Revision myRevision;
   private final Date myDate;
   private final String myAuthor;
 
@@ -28,8 +33,7 @@ public final class CommitInfo {
     return myRevisionNumber;
   }
 
-  @NotNull
-  public Revision getRevision() {
+  public @NotNull Revision getRevision() {
     return myRevision;
   }
 
@@ -76,26 +80,22 @@ public final class CommitInfo {
       return date;
     }
 
-    @NotNull
-    public Builder setRevisionNumber(long revisionNumber) {
+    public @NotNull Builder setRevisionNumber(long revisionNumber) {
       this.revisionNumber = revisionNumber;
       return this;
     }
 
-    @NotNull
-    public Builder setAuthor(String author) {
+    public @NotNull Builder setAuthor(String author) {
       this.author = author;
       return this;
     }
 
-    @NotNull
-    public Builder setDate(Date date) {
+    public @NotNull Builder setDate(Date date) {
       this.date = date;
       return this;
     }
 
-    @NotNull
-    public CommitInfo build() {
+    public @NotNull CommitInfo build() {
       return new CommitInfo(this);
     }
   }

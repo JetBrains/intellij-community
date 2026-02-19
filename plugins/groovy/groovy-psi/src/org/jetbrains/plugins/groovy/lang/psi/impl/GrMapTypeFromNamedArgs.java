@@ -1,9 +1,9 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.psi.impl;
 
 import com.intellij.openapi.util.Couple;
+import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.RecursionManager;
-import com.intellij.openapi.util.VolatileNotNullLazyValue;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiType;
@@ -16,33 +16,18 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArg
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
-public class GrMapTypeFromNamedArgs extends GrMapType {
-
+public final class GrMapTypeFromNamedArgs extends GrMapType {
   private final @NotNull LinkedHashMap<String, GrExpression> myStringEntries;
   private final @NotNull List<Couple<GrExpression>> myOtherEntries;
 
-  private final VolatileNotNullLazyValue<List<Couple<PsiType>>> myTypesOfOtherEntries = new VolatileNotNullLazyValue<List<Couple<PsiType>>>() {
-    @NotNull
-    @Override
-    protected List<Couple<PsiType>> compute() {
-      return ContainerUtil.map(myOtherEntries, pair -> Couple.of(inferTypePreventingRecursion(pair.first), inferTypePreventingRecursion(pair.second)));
-    }
-  };
-
-  private final VolatileNotNullLazyValue<LinkedHashMap<String, PsiType>> myTypesOfStringEntries = new VolatileNotNullLazyValue<LinkedHashMap<String,PsiType>>() {
-    @NotNull
-    @Override
-    protected LinkedHashMap<String, PsiType> compute() {
-      LinkedHashMap<String, PsiType> result = new LinkedHashMap<>();
-      for (Map.Entry<String, GrExpression> entry : myStringEntries.entrySet()) {
-        result.put(entry.getKey(), inferTypePreventingRecursion(entry.getValue()));
-      }
-      return result;
-    }
-
-  };
+  private final NotNullLazyValue<List<Couple<PsiType>>> myTypesOfOtherEntries;
+  private final NotNullLazyValue<LinkedHashMap<String, PsiType>> myTypesOfStringEntries;
 
   public GrMapTypeFromNamedArgs(@NotNull PsiElement context, GrNamedArgument @NotNull [] namedArgs) {
     this(JavaPsiFacade.getInstance(context.getProject()), context.getResolveScope(), namedArgs);
@@ -71,18 +56,27 @@ public class GrMapTypeFromNamedArgs extends GrMapType {
         }
       }
     }
+    myTypesOfOtherEntries = NotNullLazyValue.volatileLazy(() -> {
+      return ContainerUtil
+        .map(myOtherEntries, pair -> Couple.of(inferTypePreventingRecursion(pair.first), inferTypePreventingRecursion(pair.second)));
+    });
+    myTypesOfStringEntries = NotNullLazyValue.volatileLazy(() -> {
+      LinkedHashMap<String, PsiType> result = new LinkedHashMap<>();
+      for (Map.Entry<String, GrExpression> entry : myStringEntries.entrySet()) {
+        result.put(entry.getKey(), inferTypePreventingRecursion(entry.getValue()));
+      }
+      return result;
+    });
   }
 
-  @Nullable
   @Override
-  public PsiType getTypeByStringKey(String key) {
+  public @Nullable PsiType getTypeByStringKey(String key) {
     GrExpression expression = myStringEntries.get(key);
     return expression != null ? inferTypePreventingRecursion(expression) : null;
   }
 
-  @NotNull
   @Override
-  public Set<String> getStringKeys() {
+  public @NotNull Set<String> getStringKeys() {
     return myStringEntries.keySet();
   }
 
@@ -91,21 +85,18 @@ public class GrMapTypeFromNamedArgs extends GrMapType {
     return myStringEntries.isEmpty() && myOtherEntries.isEmpty();
   }
 
-  @Nullable
-  private PsiType inferTypePreventingRecursion(final GrExpression expression) {
+  private @Nullable PsiType inferTypePreventingRecursion(final GrExpression expression) {
     return RecursionManager.doPreventingRecursion(expression, false,
                                                   () -> TypesUtil.boxPrimitiveType(expression.getType(), expression.getManager(), myScope));
   }
 
-  @NotNull
   @Override
-  protected List<Couple<PsiType>> getOtherEntries() {
+  protected @NotNull List<Couple<PsiType>> getOtherEntries() {
     return myTypesOfOtherEntries.getValue();
   }
 
-  @NotNull
   @Override
-  protected LinkedHashMap<String, PsiType> getStringEntries() {
+  protected @NotNull LinkedHashMap<String, PsiType> getStringEntries() {
     return myTypesOfStringEntries.getValue();
   }
 

@@ -1,10 +1,13 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.annotation;
 
 import com.intellij.lang.ASTNode;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiAnnotationMemberValue;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiIdentifier;
+import com.intellij.psi.PsiReference;
+import com.intellij.psi.StubBasedPsiElement;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.reference.SoftReference;
 import com.intellij.testFramework.LightVirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -18,6 +21,9 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.GrStubElementBase;
 import org.jetbrains.plugins.groovy.lang.psi.stubs.GrNameValuePairStub;
 
 import java.lang.ref.Reference;
+import java.lang.ref.SoftReference;
+
+import static com.intellij.reference.SoftReference.dereference;
 
 public class GrAnnotationNameValuePairImpl extends GrStubElementBase<GrNameValuePairStub>
   implements GrAnnotationNameValuePair, StubBasedPsiElement<GrNameValuePairStub> {
@@ -41,8 +47,7 @@ public class GrAnnotationNameValuePairImpl extends GrStubElementBase<GrNameValue
   }
 
   @Override
-  @Nullable
-  public String getName() {
+  public @Nullable String getName() {
     GrNameValuePairStub stub = getStub();
     if (stub != null) {
       return stub.getName();
@@ -57,8 +62,7 @@ public class GrAnnotationNameValuePairImpl extends GrStubElementBase<GrNameValue
   }
 
   @Override
-  @Nullable
-  public PsiElement getNameIdentifierGroovy() {
+  public @Nullable PsiElement getNameIdentifierGroovy() {
     PsiElement child = getFirstChild();
     if (child == null) return null;
 
@@ -76,15 +80,14 @@ public class GrAnnotationNameValuePairImpl extends GrStubElementBase<GrNameValue
   private volatile Reference<PsiAnnotationMemberValue> myDetachedValue;
 
   @Override
-  @Nullable
-  public PsiAnnotationMemberValue getDetachedValue() {
+  public @Nullable PsiAnnotationMemberValue getDetachedValue() {
     GrNameValuePairStub stub = getStub();
     if (stub != null) {
       String text = stub.getValue();
       if (text == null) {
         return null;
       }
-      PsiAnnotationMemberValue result = SoftReference.dereference(myDetachedValue);
+      PsiAnnotationMemberValue result = dereference(myDetachedValue);
       if (result == null) {
         GrAnnotationNameValuePair attribute = GroovyPsiElementFactory.getInstance(getProject()).createAnnotationAttribute(text, this);
         ((LightVirtualFile)attribute.getContainingFile().getViewProvider().getVirtualFile()).setWritable(false);
@@ -108,8 +111,7 @@ public class GrAnnotationNameValuePairImpl extends GrStubElementBase<GrNameValue
   }
 
   @Override
-  @NotNull
-  public PsiAnnotationMemberValue setValue(@NotNull PsiAnnotationMemberValue newValue) {
+  public @NotNull PsiAnnotationMemberValue setValue(@NotNull PsiAnnotationMemberValue newValue) {
     GrAnnotationMemberValue value = getValue();
     if (value == null) {
       return (PsiAnnotationMemberValue)add(newValue);

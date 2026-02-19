@@ -1,31 +1,42 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.uast
 
-import com.intellij.lang.Language
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.ModificationTracker
 import com.intellij.psi.PsiManager
-import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.uast.UastLanguagePlugin
 
-@Service
-@ApiStatus.Experimental
-class UastModificationTracker internal constructor(val project: Project) : ModificationTracker {
-  private val languagesTracker: ModificationTracker
+@Service(Service.Level.PROJECT)
+public class UastModificationTracker internal constructor(private val project: Project) : ModificationTracker, Disposable {
+  private var languageTrackers: List<ModificationTracker>
 
   init {
-    val language = Language.findInstance(UastMetaLanguage::class.java)
-    val psiManager = PsiManager.getInstance(project)
-    languagesTracker = psiManager.modificationTracker.forLanguages { language.matchesLanguage(it) }
+    languageTrackers = getLanguageTrackers(project)
+
+    UastLanguagePlugin.EP.addChangeListener(Runnable {
+      languageTrackers = getLanguageTrackers(project)
+    }, this)
   }
 
-  override fun getModificationCount(): Long = languagesTracker.modificationCount
+  override fun getModificationCount(): Long {
+    return languageTrackers.sumOf { it.modificationCount }
+  }
 
-  companion object {
+  override fun dispose() {
+    // do nothing
+  }
+
+  public companion object {
     @JvmStatic
-    @ApiStatus.Experimental
-    fun getInstance(project: Project) : UastModificationTracker {
+    public fun getInstance(project: Project): UastModificationTracker {
       return project.getService(UastModificationTracker::class.java)
+    }
+
+    private fun getLanguageTrackers(project: Project): List<ModificationTracker> {
+      val psiManager = PsiManager.getInstance(project)
+      return getUastMetaLanguages().map { psiManager.modificationTracker.forLanguage(it) }
     }
   }
 }

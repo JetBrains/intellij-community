@@ -1,16 +1,28 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.uiDesigner.propertyInspector.properties;
 
 import com.intellij.CommonBundle;
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiNameHelper;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -35,6 +47,7 @@ import com.intellij.uiDesigner.quickFixes.CreateFieldFix;
 import com.intellij.uiDesigner.radComponents.RadComponent;
 import com.intellij.uiDesigner.radComponents.RadRootContainer;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.SlowOperations;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -43,21 +56,17 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Pattern;
 
-/**
- * @author Anton Katilin
- * @author Vladimir Kondratyev
- */
 public final class BindingProperty extends Property<RadComponent, String> {
   private static final Logger LOG = Logger.getInstance(BindingProperty.class);
 
-  private final PropertyRenderer<String> myRenderer = new LabelPropertyRenderer<String>() {
+  private final PropertyRenderer<String> myRenderer = new LabelPropertyRenderer<>() {
     @Override
-    protected void customize(@NotNull final String value) {
+    protected void customize(final @NotNull @NlsSafe String value) {
       setText(value);
     }
   };
   private final BindingEditor myEditor;
-  @NonNls private static final String PREFIX_HTML = "<html>";
+  private static final @NonNls String PREFIX_HTML = "<html>";
 
   public BindingProperty(final Project project){
     super(null, "field name");
@@ -70,8 +79,7 @@ public final class BindingProperty extends Property<RadComponent, String> {
   }
 
   @Override
-  @NotNull
-  public PropertyRenderer<String> getRenderer(){
+  public @NotNull PropertyRenderer<String> getRenderer(){
     return myRenderer;
   }
 
@@ -86,7 +94,7 @@ public final class BindingProperty extends Property<RadComponent, String> {
       return;
     }
 
-    if (value.length() > 0 && !PsiNameHelper.getInstance(component.getProject()).isIdentifier(value)) {
+    if (!value.isEmpty() && !PsiNameHelper.getInstance(component.getProject()).isIdentifier(value)) {
       throw new Exception("Value '" + value + "' is not a valid identifier");
     }
 
@@ -95,7 +103,7 @@ public final class BindingProperty extends Property<RadComponent, String> {
 
     // Check that binding remains unique
 
-    if (value.length() > 0) {
+    if (!value.isEmpty()) {
       if (!FormEditingUtil.isBindingUnique(component, value, root)) {
         throw new Exception(UIDesignerBundle.message("error.binding.not.unique"));
       }
@@ -123,7 +131,7 @@ public final class BindingProperty extends Property<RadComponent, String> {
     if (classToBind == null) return;
 
     final Project project = root.getProject();
-    if (newName.length() == 0) {
+    if (newName.isEmpty()) {
       checkRemoveUnusedField(root, oldName, FormEditingUtil.getNextSaveUndoGroupId(project));
       return;
     }
@@ -176,8 +184,10 @@ public final class BindingProperty extends Property<RadComponent, String> {
       return;
     }
 
-    final RenameProcessor processor = new RenameProcessor(project, oldField, newName, true, true);
-    processor.run();
+    try (AccessToken ignore = SlowOperations.knownIssue("IDEA-307701, EA-337740")) {
+      final RenameProcessor processor = new RenameProcessor(project, oldField, newName, true, true);
+      processor.run();
+    }
   }
 
 
@@ -196,17 +206,18 @@ public final class BindingProperty extends Property<RadComponent, String> {
     return selection.size() == 1;
   }
 
-  @Nullable
-  public static PsiField findBoundField(@NotNull final RadRootContainer root, final String fieldName) {
+  public static @Nullable PsiField findBoundField(final @NotNull RadRootContainer root, final String fieldName) {
     final Project project = root.getProject();
     final String classToBind = root.getClassToBind();
     if (classToBind != null) {
-      final PsiManager manager = PsiManager.getInstance(project);
-      PsiClass aClass = JavaPsiFacade.getInstance(manager.getProject()).findClass(classToBind, GlobalSearchScope.allScope(project));
-      if (aClass != null) {
-        final PsiField oldBindingField = aClass.findFieldByName(fieldName, false);
-        if (oldBindingField != null) {
-          return oldBindingField;
+      try (AccessToken ignore = SlowOperations.knownIssue("IDEA-307701, EA-267358")) {
+        final PsiManager manager = PsiManager.getInstance(project);
+        PsiClass aClass = JavaPsiFacade.getInstance(manager.getProject()).findClass(classToBind, GlobalSearchScope.allScope(project));
+        if (aClass != null) {
+          final PsiField oldBindingField = aClass.findFieldByName(fieldName, false);
+          if (oldBindingField != null) {
+            return oldBindingField;
+          }
         }
       }
     }
@@ -220,7 +231,9 @@ public final class BindingProperty extends Property<RadComponent, String> {
     }
     final Project project = oldBindingField.getProject();
     final PsiClass aClass = oldBindingField.getContainingClass();
-    if (isFieldUnreferenced(oldBindingField)) {
+    Boolean result = checkFieldReferences(fieldName, oldBindingField, project);
+    if (result == null) return;
+    if (result) {
       if (!CommonRefactoringUtil.checkReadOnlyStatus(project, aClass)) {
         return;
       }
@@ -242,8 +255,26 @@ public final class BindingProperty extends Property<RadComponent, String> {
     }
   }
 
-  private static boolean isFieldUnreferenced(final PsiField field) {
+  private static Boolean checkFieldReferences(String fieldName, PsiField oldBindingField, Project project) {
+    Task.WithResult<Boolean, RuntimeException> task = new Task.WithResult<>(project, UIDesignerBundle.message("dialog.title.check.field.usages", fieldName), true) {
+      @Override
+      protected Boolean compute(@NotNull ProgressIndicator indicator) {
+        return isFieldUnreferenced(oldBindingField);
+      }
+    };
+    task.queue();
+    Boolean result;
     try {
+      result = task.getResult();
+    }
+    catch (ProcessCanceledException e) {
+      return null;
+    }
+    return result;
+  }
+
+  private static boolean isFieldUnreferenced(final PsiField field) {
+    try (AccessToken ignore = SlowOperations.knownIssue("IDEA-307701, EA-722024")) {
       return ReferencesSearch.search(field).forEach(t -> {
         PsiFile f = t.getElement().getContainingFile();
         if (f != null && f.getFileType().equals(GuiFormFileType.INSTANCE)) {
@@ -279,13 +310,12 @@ public final class BindingProperty extends Property<RadComponent, String> {
     }
   }
 
-  @Nullable
-  public static String suggestBindingFromText(final RadComponent component, String text) {
+  public static @Nullable String suggestBindingFromText(final RadComponent component, String text) {
     if (StringUtil.startsWithIgnoreCase(text, PREFIX_HTML)) {
       text = Pattern.compile("<.+?>").matcher(text).replaceAll("");
     }
     ArrayList<String> words = new ArrayList<>(StringUtil.getWordsIn(text));
-    if (words.size() > 0) {
+    if (!words.isEmpty()) {
       StringBuilder nameBuilder = new StringBuilder(StringUtil.decapitalize(words.get(0)));
       for(int i=1; i<words.size() && i < 4; i++) {
         nameBuilder.append(StringUtil.capitalize(words.get(i)));

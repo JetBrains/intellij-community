@@ -1,13 +1,22 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.xml;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.*;
-import com.intellij.psi.tree.ChildRoleBase;
+import com.intellij.psi.HintedReferenceHost;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.PsiReference;
+import com.intellij.psi.PsiReferenceService;
+import com.intellij.psi.XmlElementVisitor;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.xml.*;
+import com.intellij.psi.xml.XmlAttribute;
+import com.intellij.psi.xml.XmlAttributeValue;
+import com.intellij.psi.xml.XmlChildRole;
+import com.intellij.psi.xml.XmlElement;
+import com.intellij.psi.xml.XmlElementType;
+import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.xml.XmlAttributeDescriptor;
@@ -25,8 +34,7 @@ public class XmlAttributeImpl extends XmlElementImpl implements XmlAttribute, Hi
   private final int myHC = ourHC++;
 
   //cannot be final because of clone implementation
-  @Nullable
-  private volatile XmlAttributeDelegate myImpl;
+  private volatile @Nullable XmlAttributeDelegate myImpl;
 
   @Override
   public final int hashCode() {
@@ -41,8 +49,7 @@ public class XmlAttributeImpl extends XmlElementImpl implements XmlAttribute, Hi
     super(elementType);
   }
 
-  @NotNull
-  private XmlAttributeDelegate getImpl() {
+  private @NotNull XmlAttributeDelegate getImpl() {
     XmlAttributeDelegate impl = myImpl;
     if (impl != null) return impl;
     impl = createDelegate();
@@ -51,24 +58,8 @@ public class XmlAttributeImpl extends XmlElementImpl implements XmlAttribute, Hi
     return impl;
   }
 
-  @NotNull
-  protected XmlAttributeDelegate createDelegate() {
+  protected @NotNull XmlAttributeDelegate createDelegate() {
     return new XmlAttributeImplDelegate();
-  }
-
-  @Override
-  public int getChildRole(@NotNull ASTNode child) {
-    LOG.assertTrue(child.getTreeParent() == this);
-    IElementType i = child.getElementType();
-    if (i == XmlTokenType.XML_NAME) {
-      return XmlChildRole.XML_NAME;
-    }
-    else if (i == XmlElementType.XML_ATTRIBUTE_VALUE) {
-      return XmlChildRole.XML_ATTRIBUTE_VALUE;
-    }
-    else {
-      return ChildRoleBase.NONE;
-    }
   }
 
   @Override
@@ -82,33 +73,29 @@ public class XmlAttributeImpl extends XmlElementImpl implements XmlAttribute, Hi
   }
 
   @Override
-  public XmlElement getNameElement() {
+  public @Nullable XmlElement getNameElement() {
     ASTNode child = XmlChildRole.ATTRIBUTE_NAME_FINDER.findChild(this);
     return child == null ? null : (XmlElement)child.getPsi();
   }
 
   @Override
-  @NotNull
-  public String getNamespace() {
+  public @NotNull String getNamespace() {
     return getImpl().getNamespace();
   }
 
   @Override
-  @NonNls
-  @NotNull
-  public String getNamespacePrefix() {
+  public @NonNls @NotNull String getNamespacePrefix() {
     return XmlUtil.findPrefixByQualifiedName(getName());
   }
 
   @Override
-  public XmlTag getParent() {
+  public @Nullable XmlTag getParent() {
     final PsiElement parentTag = super.getParent();
     return parentTag instanceof XmlTag ? (XmlTag)parentTag : null; // Invalid elements might belong to DummyHolder instead.
   }
 
   @Override
-  @NotNull
-  public String getLocalName() {
+  public @NotNull String getLocalName() {
     return XmlUtil.findLocalNameByQualifiedName(getName());
   }
 
@@ -129,8 +116,7 @@ public class XmlAttributeImpl extends XmlElementImpl implements XmlAttribute, Hi
   }
 
   @Override
-  @Nullable
-  public String getDisplayValue() {
+  public @Nullable String getDisplayValue() {
     final XmlAttributeDelegate.VolatileState state = getImpl().getFreshState();
     return state == null ? null : state.myDisplayText;
   }
@@ -145,9 +131,8 @@ public class XmlAttributeImpl extends XmlElementImpl implements XmlAttribute, Hi
     return getImpl().displayToPhysical(displayIndex);
   }
 
-  @NotNull
   @Override
-  public TextRange getValueTextRange() {
+  public @NotNull TextRange getValueTextRange() {
     final XmlAttributeDelegate.VolatileState state = getImpl().getFreshState();
     return state == null ? TextRange.EMPTY_RANGE : state.myValueTextRange;
   }
@@ -159,21 +144,19 @@ public class XmlAttributeImpl extends XmlElementImpl implements XmlAttribute, Hi
   }
 
   @Override
-  @NotNull
-  public String getName() {
+  public @NotNull String getName() {
     XmlElement element = getNameElement();
     return element != null ? element.getText() : "";
   }
 
   @Override
   public boolean isNamespaceDeclaration() {
-    @NonNls final String name = getName();
+    final @NonNls String name = getName();
     return name.startsWith("xmlns:") || name.equals("xmlns");
   }
 
   @Override
-  @NotNull
-  public PsiElement setName(@NotNull final String nameText) throws IncorrectOperationException {
+  public @NotNull PsiElement setName(final @NotNull String nameText) throws IncorrectOperationException {
     return getImpl().setName(nameText);
   }
 
@@ -202,13 +185,11 @@ public class XmlAttributeImpl extends XmlElementImpl implements XmlAttribute, Hi
   }
 
   @Override
-  @Nullable
-  public XmlAttributeDescriptor getDescriptor() {
+  public @Nullable XmlAttributeDescriptor getDescriptor() {
     return getImpl().getDescriptor();
   }
 
-  @NotNull
-  public static String getRealName(@NotNull XmlAttribute attribute) {
+  public static @NotNull String getRealName(@NotNull XmlAttribute attribute) {
     final String name = attribute.getLocalName();
     return name.endsWith(DUMMY_IDENTIFIER_TRIMMED) ? name.substring(0, name.length() - DUMMY_IDENTIFIER_TRIMMED.length()) : name;
   }

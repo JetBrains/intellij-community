@@ -1,14 +1,17 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.ui.tree.render;
 
 import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.debugger.engine.DebuggerUtils;
 import com.intellij.debugger.engine.FullValueEvaluatorProvider;
-import com.sun.jdi.*;
+import com.sun.jdi.ClassType;
+import com.sun.jdi.Field;
+import com.sun.jdi.ObjectReference;
+import com.sun.jdi.ReferenceType;
+import com.sun.jdi.Type;
+import com.sun.jdi.Value;
 
-import javax.swing.*;
-
-public class GraphicsObjectRenderer extends CompoundRendererProvider {
+public final class GraphicsObjectRenderer extends AbstractImageRenderer {
   @Override
   protected String getName() {
     return "Graphics";
@@ -20,23 +23,18 @@ public class GraphicsObjectRenderer extends CompoundRendererProvider {
   }
 
   @Override
-  protected boolean isEnabled() {
-    return true;
-  }
-
-  @Override
   protected FullValueEvaluatorProvider getFullValueEvaluatorProvider() {
     return (evaluationContext, valueDescriptor) -> {
       try {
         ObjectReference value = (ObjectReference)valueDescriptor.getValue();
-        Field surfaceField = ((ClassType)value.type()).fieldByName("surfaceData");
+        Field surfaceField = DebuggerUtils.findField(((ClassType)value.type()), "surfaceData");
         if (surfaceField == null) return null;
         ObjectReference surfaceDataValue = (ObjectReference)value.getValue(surfaceField);
         if (surfaceDataValue == null) return null;
 
-        Field imgField = ((ReferenceType)surfaceDataValue.type()).fieldByName("bufImg"); // BufImgSurfaceData
+        Field imgField = DebuggerUtils.findField(((ReferenceType)surfaceDataValue.type()), "bufImg"); // BufImgSurfaceData
         if (imgField == null) {
-          imgField = ((ReferenceType)surfaceDataValue.type()).fieldByName("offscreenImage"); // CGLSurfaceData
+          imgField = DebuggerUtils.findField(((ReferenceType)surfaceDataValue.type()), "offscreenImage"); // CGLSurfaceData
         }
         if (imgField == null) return null;
 
@@ -45,12 +43,8 @@ public class GraphicsObjectRenderer extends CompoundRendererProvider {
         if (!(type instanceof ReferenceType) || !DebuggerUtils.instanceOf(type, "java.awt.Image")) {
           return null;
         }
-        return new ImageObjectRenderer.IconPopupEvaluator(JavaDebuggerBundle.message("message.node.show.image"), evaluationContext) {
-          @Override
-          protected Icon getData() {
-            return ImageObjectRenderer.getIcon(getEvaluationContext(), bufImgValue, "imageToBytes");
-          }
-        };
+        return createImagePopupEvaluator(JavaDebuggerBundle.message("message.node.show.image"), evaluationContext,
+                                         bufImgValue, "imageToBytes");
       }
       catch (Exception ignored) {
       }

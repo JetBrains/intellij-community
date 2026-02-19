@@ -1,9 +1,15 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.psi.impl.synthetic;
 
 import com.intellij.lang.Language;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaElementVisitor;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiParameter;
+import com.intellij.psi.PsiSubstitutor;
 import com.intellij.psi.impl.light.LightElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -13,10 +19,8 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameterLi
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
-/**
- * @author Sergey Evdokimov
- */
 public class GrLightParameterListBuilder extends LightElement implements GrParameterList {
   private final List<GrParameter> myParameters = new ArrayList<>();
   private GrParameter[] myCachedParameters;
@@ -67,21 +71,18 @@ public class GrLightParameterListBuilder extends LightElement implements GrParam
     return getParameterIndex(parameter);
   }
 
-  @Nullable
   @Override
-  public PsiElement getLParen() {
+  public @Nullable PsiElement getLParen() {
     return null;
   }
 
-  @Nullable
   @Override
-  public PsiElement getRParen() {
+  public @Nullable PsiElement getRParen() {
     return null;
   }
 
-  @NotNull
   @Override
-  public TextRange getParametersRange() {
+  public @NotNull TextRange getParametersRange() {
     throw new IllegalStateException();
   }
 
@@ -101,6 +102,9 @@ public class GrLightParameterListBuilder extends LightElement implements GrParam
     if (visitor instanceof JavaElementVisitor) {
       ((JavaElementVisitor) visitor).visitParameterList(this);
     }
+    else {
+      visitor.visitElement(this);
+    }
   }
 
   @Override
@@ -113,8 +117,7 @@ public class GrLightParameterListBuilder extends LightElement implements GrParam
 
   }
 
-  @NotNull
-  public GrParameter removeParameter(int index) {
+  public @NotNull GrParameter removeParameter(int index) {
     GrParameter removed = myParameters.remove(index);
     myCachedParameters = null;
     return removed;
@@ -123,5 +126,18 @@ public class GrLightParameterListBuilder extends LightElement implements GrParam
   public void clear() {
     myParameters.clear();
     myCachedParameters = null;
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+    GrLightParameterListBuilder builder = (GrLightParameterListBuilder)o;
+    return Objects.equals(myParameters, builder.myParameters);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(myParameters);
   }
 }

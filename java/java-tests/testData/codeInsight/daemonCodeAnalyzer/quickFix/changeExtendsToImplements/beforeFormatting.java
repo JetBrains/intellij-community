@@ -1,4 +1,4 @@
-// "Change 'implements b' to 'extends b'" "true"
+// "Change 'implements b' to 'extends b'" "true-preview"
 class a implements <caret>b<String, Integer> {
 }
 

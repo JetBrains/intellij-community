@@ -15,22 +15,25 @@
  */
 package com.jetbrains.python.psi.resolve;
 
-import com.intellij.openapi.vfs.*;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileCopyEvent;
+import com.intellij.openapi.vfs.VirtualFileEvent;
+import com.intellij.openapi.vfs.VirtualFileListener;
+import com.intellij.openapi.vfs.VirtualFileMoveEvent;
+import com.intellij.openapi.vfs.VirtualFilePropertyEvent;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.QualifiedName;
-import com.intellij.reference.SoftReference;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.lang.ref.SoftReference;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-/**
- * @author yole
- */
+
 public abstract class PythonPathCache {
   private final Map<QualifiedName, SoftReference<List<PsiElement>>> myCache = new ConcurrentHashMap<>();
   private final Map<String, List<QualifiedName>> myQNameCache = new ConcurrentHashMap<>();
@@ -49,7 +52,7 @@ public abstract class PythonPathCache {
       return null;
     }
     final List<PsiElement> elements = references.get();
-    if(elements != null && ! elements.stream().allMatch(PsiElement::isValid)) {
+    if (elements != null && !elements.stream().allMatch(PsiElement::isValid)) {
       // At least one element is invalid
       return null;
     }

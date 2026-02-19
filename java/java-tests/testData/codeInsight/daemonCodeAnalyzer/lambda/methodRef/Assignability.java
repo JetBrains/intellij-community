@@ -38,5 +38,5 @@ class Test2 {
 
     void foo(Integer i) {}
 
-    Object o = <error descr="Object is not a functional interface">Test2::foo</error>;
+    Object o = <error descr="java.lang.Object is not a functional interface">Test2::foo</error>;
 }

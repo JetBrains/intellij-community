@@ -1,0 +1,55 @@
+### auto-generated section `build intellij.platform.ijent.community.impl` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "impl_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "impl",
+  module_name = "intellij.platform.ijent.community.impl",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":impl_resources"],
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "//libraries/kotlinx/coroutines/core",
+    "//platform/util",
+    "@lib//:opentelemetry",
+    "//platform/core-api:core",
+    "//platform/core-nio-fs",
+    "//platform/diagnostic/telemetry",
+    "//platform/eel-impl",
+    "//platform/ijent",
+    "//platform/eel-provider",
+    "//platform/core-impl",
+  ]
+)
+
+jvm_library(
+  name = "impl_test_lib",
+  module_name = "intellij.platform.ijent.community.impl",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    ":impl",
+    "@lib//:junit5",
+    "@lib//:junit5Params",
+    "@lib//:kotlin-test",
+    "@lib//:kotlin-test-assertions-core-jvm",
+    "//libraries/kotlinx/coroutines/core:core_test_lib",
+    "//libraries/kotlinx/coroutines/test",
+    "//libraries/kotlinx/coroutines/test:test_test_lib",
+    "//platform/util:util_test_lib",
+    "//platform/core-api:core_test_lib",
+    "//platform/core-nio-fs:core-nio-fs_test_lib",
+    "//platform/diagnostic/telemetry:telemetry_test_lib",
+    "//platform/eel-impl:eel-impl_test_lib",
+    "//platform/ijent:ijent_test_lib",
+    "//platform/eel-provider:eel-provider_test_lib",
+    "//platform/core-impl:core-impl_test_lib",
+  ]
+)
+### auto-generated section `build intellij.platform.ijent.community.impl` end

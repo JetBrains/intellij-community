@@ -1,0 +1,55 @@
+<idea-plugin visibility="public">
+  <module value="com.intellij.modules.coverage"/>
+
+  <dependencies>
+    <module name="intellij.platform.coverage.agent"/>
+    <module name="intellij.platform.vcs"/>
+  </dependencies>
+
+  <extensionPoints>
+    <extensionPoint qualifiedName="com.intellij.coverageRunner" interface="com.intellij.coverage.CoverageRunner" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.coverageEngine" interface="com.intellij.coverage.CoverageEngine" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.coverageOptions" interface="com.intellij.coverage.CoverageOptions" area="IDEA_PROJECT" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.coverageModifiedFilesFilterFactory" interface="com.intellij.coverage.filters.ModifiedFilesFilterFactory" dynamic="true"/>
+  </extensionPoints>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <testActionProvider implementation="com.intellij.coverage.actions.TrackCoverageActionProvider"/>
+    <projectViewNodeDecorator implementation="com.intellij.coverage.CoverageProjectViewDirectoryNodeDecorator"/>
+    <projectConfigurable groupId="build" instance="com.intellij.coverage.CoverageOptionsConfigurable" id="coverage"
+                         bundle="messages.CoverageBundle" key="configurable.CoverageOptionsConfigurable.display.name"/>
+
+    <projectService serviceImplementation="com.intellij.coverage.CoverageOptionsProvider"/>
+    <projectService serviceImplementation="com.intellij.coverage.CoverageDataManagerImpl"/>
+    <executor implementation="com.intellij.coverage.CoverageExecutor" order="first,after debug"/>
+    <editorFactoryListener implementation="com.intellij.coverage.CoverageDataAnnotationsManager$CoverageEditorFactoryListener"/>
+    <selectInTarget implementation="com.intellij.coverage.view.SelectInCoverageView"/>
+
+    <statistics.counterUsagesCollector implementationClass="com.intellij.coverage.CoverageLogger"/>
+    <toolWindow id="Coverage"
+                anchor="right"
+                factoryClass="com.intellij.coverage.view.CoverageToolWindowFactory"
+                icon="AllIcons.Toolwindows.ToolWindowCoverage"
+                secondary="true"
+                canCloseContents="true"
+                doNotActivateOnStart="true" />
+  </extensions>
+  <applicationListeners>
+    <listener class="com.intellij.coverage.CoverageDataManagerImpl$CoverageProjectManagerListener" topic="com.intellij.openapi.project.ProjectCloseListener"/>
+  </applicationListeners>
+  <actions resource-bundle="messages.CoverageBundle">
+    <action id="ImportCoverage" class="com.intellij.coverage.actions.ExternalReportImportAction"
+            icon="AllIcons.ToolbarDecorator.Import"/>
+    <group id="CoverageMenu">
+      <action id="SwitchCoverage" class="com.intellij.coverage.actions.SwitchCoverageSuiteAction"/>
+      <action id="GenerateCoverageReport" class="com.intellij.coverage.actions.GenerateCoverageReportAction"
+              icon="AllIcons.ToolbarDecorator.Export"/>
+      <action id="HideCoverage" class="com.intellij.coverage.actions.HideCoverageInfoAction"/>
+      <separator/>
+    </group>
+    <group id="CoveragePlatformMenu" popup="false">
+      <reference ref="CoverageMenu"/>
+      <add-to-group group-id="RunTestGroup" anchor="last"/>
+    </group>
+  </actions>
+</idea-plugin>

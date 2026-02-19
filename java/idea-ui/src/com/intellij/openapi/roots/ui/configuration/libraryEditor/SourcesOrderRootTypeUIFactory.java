@@ -26,13 +26,13 @@ import com.intellij.openapi.roots.ui.configuration.LibrarySourceRootDetectorUtil
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.PlatformIcons;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.Icon;
+import java.awt.Component;
 
 /**
  * @author anna
  */
-public class SourcesOrderRootTypeUIFactory implements OrderRootTypeUIFactory {
+public final class SourcesOrderRootTypeUIFactory implements OrderRootTypeUIFactory {
   @Override
   public SdkPathEditor createPathEditor(final Sdk sdk) {
     FileChooserDescriptor descriptor = new FileChooserDescriptor(true, true, true, false, true, true);

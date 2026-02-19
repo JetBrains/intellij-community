@@ -1,85 +1,115 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.updateSettings.impl;
 
-import com.intellij.CommonBundle;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
+import com.intellij.ide.plugins.ListPluginModel;
+import com.intellij.ide.plugins.PluginDependencyImpl;
+import com.intellij.ide.plugins.PluginManagementPolicy;
 import com.intellij.ide.plugins.PluginManagerConfigurable;
-import com.intellij.ide.plugins.PluginManagerCore;
+import com.intellij.ide.plugins.PluginManagerConfigurablePanel;
 import com.intellij.ide.plugins.PluginManagerMain;
-import com.intellij.ide.plugins.newui.*;
+import com.intellij.ide.plugins.PluginNode;
+import com.intellij.ide.plugins.PluginsGroupType;
+import com.intellij.ide.plugins.newui.ListPluginComponent;
+import com.intellij.ide.plugins.newui.MultiSelectionEventHandler;
+import com.intellij.ide.plugins.newui.MyPluginModel;
+import com.intellij.ide.plugins.newui.PluginDetailsPageComponent;
+import com.intellij.ide.plugins.newui.PluginModelFacade;
+import com.intellij.ide.plugins.newui.PluginUiModel;
+import com.intellij.ide.plugins.newui.PluginUiModelAdapter;
+import com.intellij.ide.plugins.newui.PluginUpdatesService;
+import com.intellij.ide.plugins.newui.PluginsGroup;
+import com.intellij.ide.plugins.newui.PluginsGroupComponent;
+import com.intellij.ide.plugins.newui.UiPluginManager;
+import com.intellij.ide.plugins.newui.UpdateDialogPluginDetailsPageCustomizationStrategy;
+import com.intellij.notification.Notification;
+import com.intellij.notification.NotificationAction;
 import com.intellij.notification.NotificationType;
+import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
-import com.intellij.openapi.application.PathManager;
-import com.intellij.openapi.application.ex.ApplicationManagerEx;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.progress.PerformInBackgroundOption;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Divider;
-import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame;
+import com.intellij.platform.ide.CoreUiCoroutineScopeHolder;
 import com.intellij.ui.OnePixelSplitter;
+import com.intellij.ui.components.ActionLink;
+import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.labels.LinkListener;
+import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.components.panels.OpaquePanel;
-import com.intellij.util.LineSeparator;
+import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBDimension;
 import com.intellij.util.ui.JBUI;
+import kotlinx.coroutines.CoroutineScope;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JButton;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JRootPane;
+import java.awt.BorderLayout;
+import java.awt.Component;
+import java.awt.Dimension;
 import java.awt.event.ActionEvent;
-import java.io.File;
-import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.*;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Set;
+import java.util.function.Consumer;
+import java.util.stream.Collectors;
 
-/**
- * @author Alexander Lobas
- */
+@ApiStatus.Internal
 public class PluginUpdateDialog extends DialogWrapper {
-  private static final LinkListener<Object> NULL_LISTENER = (source, linkData) -> { };
-
-  private final Collection<PluginDownloader> myDownloaders;
-
   private final MyPluginModel myPluginModel;
   private final PluginsGroupComponent myPluginsPanel;
-  private final PluginsGroup myGroup;
+  private final PluginsGroup myGroup = new PluginsGroup("", PluginsGroupType.UPDATE);
   private final PluginDetailsPageComponent myDetailsPage;
+  private final JLabel myTotalLabel = new JLabel();
+  private final ActionLink myIgnoreAction;
+  private final JBCheckBox myAutoUpdateOption;
 
-  private final Action myIgnoreAction;
+  private @Nullable Runnable myFinishCallback;
 
-  public PluginUpdateDialog(@NotNull Collection<PluginDownloader> updatedPlugins,
-                            @NotNull Collection<IdeaPluginDescriptor> customRepositoryPlugins) {
-    super(true);
-    setTitle(IdeBundle.message("dialog.title.plugin.updates"));
+  public PluginUpdateDialog(@Nullable Project project,
+                            @NotNull Collection<PluginUiModel> updates,
+                            @Nullable Collection<PluginUiModel> customRepositoryPlugins,
+                            Map<PluginId, PluginUiModel> installedPlugins) {
+    super(project, true);
 
-    myDownloaders = updatedPlugins;
+    myIgnoreAction = new ActionLink(IdeBundle.message("updates.ignore.updates.button", updates.size()), e -> {
+      doIgnoreUpdateAction(e);
+    });
 
-    myIgnoreAction = new AbstractAction(IdeBundle.message("updates.ignore.updates.button", updatedPlugins.size())) {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        close(CANCEL_EXIT_CODE);
-        ignorePlugins(ContainerUtil.map(myGroup.ui.plugins, component -> component.myUpdateDescriptor));
-      }
-    };
+    myAutoUpdateOption =
+      new JBCheckBox(IdeBundle.message("updates.auto.update.title"), UpdateSettings.getInstance().getState().isPluginsAutoUpdateEnabled());
 
-    myPluginModel = new MyPluginModel() {
+    myPluginModel = new MyPluginModel(project) {
       @Override
       public void runRestartButton(@NotNull Component component) {
         doOKAction();
       }
 
       @Override
-      @NotNull
-      protected Collection<IdeaPluginDescriptor> getCustomRepoPlugins() {
+      protected @Nullable Collection<PluginUiModel> getCustomRepoPlugins() {
         return customRepositoryPlugins;
       }
     };
@@ -87,169 +117,296 @@ public class PluginUpdateDialog extends DialogWrapper {
     myPluginModel.setTopController(Configurable.TopComponentController.EMPTY);
     myPluginModel.setPluginUpdatesService(new PluginUpdatesService() {
       @Override
-      public void finishUpdate(@NotNull IdeaPluginDescriptor descriptor) {
-        updateButtons();
-      }
-
-      @Override
-      public void finishUpdate() {
-        updateButtons();
-      }
+      public void finishUpdate() { }
     });
 
-    myDetailsPage = new PluginDetailsPageComponent(myPluginModel, NULL_LISTENER, false) {
-      @Override
-      public void showProgress() { }
-    };
+    //noinspection unchecked
+    myDetailsPage = new PluginDetailsPageComponent(new PluginModelFacade(myPluginModel),
+                                                   LinkListener.NULL,
+                                                   true,
+                                                   UpdateDialogPluginDetailsPageCustomizationStrategy.INSTANCE);
     myDetailsPage.setOnlyUpdateMode();
 
     MultiSelectionEventHandler eventHandler = new MultiSelectionEventHandler();
 
-    myPluginsPanel = new PluginsGroupComponent(new PluginListLayout(), eventHandler, descriptor -> createListComponent(descriptor));
-    PluginManagerConfigurable.registerCopyProvider(myPluginsPanel);
-    myPluginsPanel.setSelectionListener(__ -> {
-      List<ListPluginComponent> selection = myPluginsPanel.getSelection();
-      int size = selection.size();
-      myDetailsPage.showPlugin(size == 1 ? selection.get(0) : null, size > 1);
-    });
+    myPluginsPanel = new PluginsGroupComponent(eventHandler) {
+      @Override
+      protected @NotNull ListPluginComponent createListComponent(@NotNull PluginUiModel model,
+                                                                 @NotNull PluginsGroup group,
+                                                                 @NotNull ListPluginModel listPluginModel) {
+        if (!(model.isFromMarketplace())) {
+          PluginNode node = new PluginNode(model.getPluginId(), model.getName(), "0");
+          node.setDescription(model.getDescription());
+          node.setChangeNotes(model.getChangeNotes());
+          node.setVersion(model.getVersion());
+          node.setVendor(model.getVendor());
+          node.setVendorDetails(model.getOrganization());
+          List<PluginDependencyImpl> dependencies =
+            ContainerUtil.map(model.getDependencies(), it -> new PluginDependencyImpl(it.getPluginId(), null, it.isOptional()));
+          node.setDependencies(dependencies);
+          model = new PluginUiModelAdapter(node);
+        }
+        CoroutineScope scope = ApplicationManager.getApplication().getService(CoreUiCoroutineScopeHolder.class).coroutineScope;
+        @SuppressWarnings("unchecked") ListPluginComponent component =
+          new ListPluginComponent(new PluginModelFacade(myPluginModel), model, group, listPluginModel, LinkListener.NULL, scope, true);
+        PluginUiModel plugin = installedPlugins.get(model.getPluginId());
+        component.setOnlyUpdateMode(plugin);
+        component.getChooseUpdateButton().addActionListener(e -> updateButtons());
+        return component;
+      }
+    };
+    PluginManagerConfigurablePanel.registerCopyProvider(myPluginsPanel);
+    myPluginsPanel.setSelectionListener(__ -> myDetailsPage.showPlugins(myPluginsPanel.getSelection()));
 
-    myGroup = new PluginsGroup(IdeBundle.message("title.plugin.updates.available"));
-    for (PluginDownloader plugin : updatedPlugins) {
-      myGroup.descriptors.add(plugin.getDescriptor());
+    for (PluginUiModel descriptor : updates) {
+      myGroup.addModel(descriptor);
     }
     myGroup.sortByName();
     myPluginsPanel.addGroup(myGroup);
 
-    setOKButtonText(false, false);
-    setCancelButtonText(IdeBundle.message("updates.remind.later.button"));
+    setOKButtonText(IdeBundle.message("plugins.configurable.update.button"));
+    updateButtons();
     init();
 
     JRootPane rootPane = getPeer().getRootPane();
     if (rootPane != null) {
       rootPane.setPreferredSize(new JBDimension(800, 600));
     }
+    setTitle(IdeBundle.message("dialog.title.plugin.updates"));
+  }
+
+  public static boolean showDialogAndUpdate(@NotNull Collection<PluginDownloader> downloaders, @NotNull PluginUpdateDialog dialog) {
+    if (dialog.showAndGet()) {
+      List<PluginUiModel> selectedPlugins = dialog.getSelectedPluginModels();
+      List<PluginDownloader> selectedDownloaders = findDownloadersForPlugins(downloaders, selectedPlugins);
+      runUpdateAll(selectedDownloaders, dialog.getContentPanel(), dialog.myFinishCallback, null);
+      return true;
+    }
+    return false;
+  }
+
+  public static List<PluginDownloader> getSelectedDownloaders(@NotNull Collection<PluginDownloader> downloaders,
+                                                              @NotNull PluginUpdateDialog dialog) {
+    return findDownloadersForPlugins(downloaders, dialog.getSelectedPluginModels());
+  }
+
+  private static @NotNull List<PluginDownloader> findDownloadersForPlugins(@NotNull Collection<PluginDownloader> downloaders,
+                                                                           @NotNull List<PluginUiModel> selectedPlugins) {
+    List<PluginDownloader> selectedDownloaders = new ArrayList<>();
+    Set<PluginId> selectedPluginIds = ContainerUtil.map2Set(selectedPlugins, PluginUiModel::getPluginId);
+
+    for (PluginDownloader downloader : downloaders) {
+      if (selectedPluginIds.contains(downloader.getDescriptor().getPluginId())) {
+        selectedDownloaders.add(downloader);
+      }
+    }
+
+    return selectedDownloaders;
+  }
+
+  protected void doIgnoreUpdateAction(ActionEvent e) {
+    close(CANCEL_EXIT_CODE);
+    UpdateCheckerFacade.getInstance()
+      .ignorePlugins(ContainerUtil.map(myGroup.ui.plugins, ListPluginComponent::getPluginDescriptor));
   }
 
   private void updateButtons() {
-    int count = myGroup.ui.plugins.size();
-    int restart = 0;
-    int progress = 0;
-    int updatedWithoutRestart = 0;
+    long total = 0;
+    int count = 0;
+
     for (ListPluginComponent plugin : myGroup.ui.plugins) {
-      if (plugin.isRestartEnabled()) {
-        restart++;
-      }
-      else if (plugin.underProgress()) {
-        progress++;
-      }
-      else if (plugin.isUpdatedWithoutRestart()) {
-        updatedWithoutRestart++;
+      if (plugin.getChooseUpdateButton().isSelected()) {
+        count++;
+
+        IdeaPluginDescriptor descriptor = plugin.getPluginDescriptor();
+        if (descriptor instanceof PluginNode) {
+          total += ((PluginNode)descriptor).getIntegerSize();
+        }
       }
     }
 
-    setOKButtonText(restart + progress > 0, updatedWithoutRestart == count);
-    getCancelAction().setEnabled(restart + updatedWithoutRestart < count);
-    myIgnoreAction.setEnabled(restart + progress + updatedWithoutRestart == 0);
+    myTotalLabel.setText(IdeBundle.message("plugin.update.dialog.total.label",
+                                           StringUtilRt.formatFileSize(total).toUpperCase(Locale.ENGLISH)));
+    myTotalLabel.setVisible(total > 0);
+    getOKAction().setEnabled(count > 0);
   }
 
-  private void setOKButtonText(boolean restart, boolean close) {
-    if (close) {
-      setOKButtonText(CommonBundle.getCloseButtonText());
+  public void setFinishCallback(@NotNull Runnable finishCallback) {
+    myFinishCallback = finishCallback;
+  }
+
+  public @Nullable Runnable getFinishCallback() {
+    return myFinishCallback;
+  }
+
+  public @NotNull List<PluginUiModel> getSelectedPluginModels() {
+    List<PluginUiModel> selectedPlugins = new ArrayList<>();
+    for (ListPluginComponent plugin : myGroup.ui.plugins) {
+      if (plugin.getChooseUpdateButton().isSelected()) {
+        selectedPlugins.add(plugin.getPluginModel());
+      }
     }
-    else {
-      setOKButtonText(IdeBundle.message("button.text.ide.restart.shutdown", restart ? 0 : 1,
-                                        ApplicationManager.getApplication().isRestartCapable() ? 0 : 1));
-    }
+    return selectedPlugins;
   }
 
   @Override
   protected void doOKAction() {
     super.doOKAction();
 
-    List<PluginDownloader> toDownloads = new ArrayList<>();
-    List<IdeaPluginDescriptor> toIgnore = new ArrayList<>();
-    int index = 0;
-    boolean restart = false;
-
-    for (PluginDownloader downloader : myDownloaders) {
-      ListPluginComponent component = myGroup.ui.plugins.get(index++);
-      if (component.isRestartEnabled() || component.underProgress()) {
-        restart = true;
-      }
-      else if (!component.isUpdatedWithoutRestart()) {
-        toDownloads.add(downloader);
-        toIgnore.add(component.myUpdateDescriptor);
+    if (PluginManagementPolicy.getInstance().isPluginAutoUpdateAllowed()) {
+      UpdateOptions state = UpdateSettings.getInstance().getState();
+      boolean selected = myAutoUpdateOption.isSelected();
+      if (state.isPluginsAutoUpdateEnabled() != selected) {
+        UiPluginManager.getInstance().setPluginsAutoUpdateEnabled(selected);
       }
     }
-
-    boolean background = myPluginModel.toBackground();
-
-    if (toDownloads.size() != myDownloaders.size() || background) {
-      if (!toIgnore.isEmpty()) {
-        ignorePlugins(toIgnore);
-      }
-      if (!background && restart) {
-        ApplicationManager.getApplication().invokeLater(() -> ApplicationManagerEx.getApplicationEx().restart(true));
-      }
-      return;
-    }
-
-    runUpdateAll(toDownloads, getContentPanel());
   }
 
-  public static void runUpdateAll(@NotNull Collection<PluginDownloader> toDownloads, @Nullable JComponent ownerComponent) {
+  public static void runUpdateAll(@NotNull Collection<PluginDownloader> toDownload,
+                                  @Nullable JComponent ownerComponent,
+                                  @Nullable Runnable finishCallback,
+                                  @Nullable Consumer<Boolean> customRestarter) {
     String message = IdeBundle.message("updates.notification.title", ApplicationNamesInfo.getInstance().getFullProductName());
     new Task.Backgroundable(null, message, true, PerformInBackgroundOption.DEAF) {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
-        List<PluginDownloader> downloaders = UpdateInstaller.downloadPluginUpdates(toDownloads, indicator);
-        if (!downloaders.isEmpty()) {
-          ApplicationManager.getApplication().invokeLater(() -> {
-            PluginUpdateResult result = UpdateInstaller.installDownloadedPluginUpdates(downloaders, ownerComponent, true);
-            if (result.getPluginsInstalled().size() > 0) {
-              if (result.getRestartRequired()) {
-                if (WelcomeFrame.getInstance() == null) {
-                  PluginManagerMain.notifyPluginsUpdated(null);
-                }
-                else {
-                  PluginManagerConfigurable.shutdownOrRestartApp();
-                }
-              }
-              else {
-                String message = PluginUpdateInfoDialog.notificationText(result);
-                UpdateChecker.getNotificationGroup().createNotification(message, NotificationType.INFORMATION).notify(myProject);
-              }
+        List<PluginDownloader> downloaders = downloadPluginUpdates(toDownload, indicator);
+        if (downloaders.isEmpty()) {
+          return;
+        }
+
+        ApplicationManager.getApplication().invokeLater(() -> {
+          List<IdeaPluginDescriptor> installedDescriptors = installPluginUpdates(downloaders);
+
+          boolean restartRequired = downloaders.size() != installedDescriptors.size();
+          if (customRestarter != null) {
+            customRestarter.accept(restartRequired);
+            return;
+          }
+          if (PluginManagementPolicy.getInstance().isPluginAutoUpdateAllowed() &&
+              !UpdateSettings.getInstance().getState().isPluginsAutoUpdateEnabled()) {
+            Notification notification =
+              UpdateCheckerFacade.getInstance().getNotificationGroupForPluginUpdateResults()
+                .createNotification(IdeBundle.message("updates.plugins.notification.title"),
+                                    IdeBundle.message("updates.plugins.autoupdate.notification.message"), NotificationType.INFORMATION)
+                .addAction(new NotificationAction(IdeBundle.message("updates.auto.update.title")) {
+                  @Override
+                  public void actionPerformed(@NotNull AnActionEvent e, @NotNull Notification notification) {
+                    UiPluginManager.getInstance().setPluginsAutoUpdateEnabled(true);
+                    notification.expire();
+                  }
+                })
+                .addAction(new NotificationAction(IdeBundle.message("label.dont.show")) {
+                  @Override
+                  public void actionPerformed(@NotNull AnActionEvent e, @NotNull Notification notification) {
+                    notification.setDoNotAskFor(null);
+                    notification.expire();
+                  }
+                });
+            notification.configureDoNotAskOption("updates.plugins.autoupdate.notification",
+                                                 IdeBundle.message("updates.plugins.autoupdate.notification.do.not.ask.display"));
+            notification.notify(myProject);
+          }
+          if (!restartRequired) {
+            UpdateCheckerFacade.getInstance().getNotificationGroupForPluginUpdateResults()
+              .createNotification(getUpdateNotificationMessage(installedDescriptors),
+                                  NotificationType.INFORMATION)
+              .setDisplayId("plugins.updated.without.restart")
+              .notify(myProject);
+          }
+          else if (WelcomeFrame.getInstance() == null) {
+            PluginManagerMain.notifyPluginsUpdated(null);
+          }
+          else {
+            PluginManagerConfigurable.shutdownOrRestartApp();
+          }
+        }, ownerComponent != null ? ModalityState.stateForComponent(ownerComponent) : ModalityState.defaultModalityState());
+      }
+
+      @Override
+      public void onFinished() {
+        if (finishCallback != null) {
+          finishCallback.run();
+        }
+      }
+
+      private @NotNull List<IdeaPluginDescriptor> installPluginUpdates(@NotNull List<PluginDownloader> downloaders) {
+        List<IdeaPluginDescriptor> installedDescriptors = new ArrayList<>();
+        for (PluginDownloader downloader : downloaders) {
+          try {
+            if (downloader.installDynamically(ownerComponent)) {
+              installedDescriptors.add(downloader.getDescriptor());
             }
-          });
+          }
+          catch (Exception e) {
+            Logger.getInstance(PluginUpdateDialog.class).info(e);
+          }
+        }
+        return installedDescriptors;
+      }
+
+      private static @NotNull @Nls String getUpdateNotificationMessage(@NotNull List<? extends IdeaPluginDescriptor> descriptors) {
+        if (descriptors.size() == 1) {
+          IdeaPluginDescriptor descriptor = descriptors.get(0);
+          return IdeBundle.message("notification.content.updated.plugin.to.version", descriptor.getName(), descriptor.getVersion());
+        }
+        else {
+          String names = descriptors.stream()
+            .map(IdeaPluginDescriptor::getName)
+            .collect(Collectors.joining(", "));
+          return IdeBundle.message("notification.content.updated.plugins", names);
         }
       }
     }.queue();
   }
 
-  @Override
-  public void doCancelAction() {
-    close(CANCEL_EXIT_CODE);
-
-    if (myPluginModel.toBackground()) {
-      return;
+  private static @NotNull List<PluginDownloader> downloadPluginUpdates(@NotNull Collection<PluginDownloader> toDownload,
+                                                                       @NotNull ProgressIndicator indicator) {
+    LinkedHashSet<@Nls String> errors = new LinkedHashSet<>();
+    try {
+      List<PluginDownloader> downloaders = ContainerUtil.map(toDownload,
+                                                             downloader -> downloader.withErrorsConsumer(errors::add));
+      return UpdateInstaller.downloadPluginUpdates(downloaders, indicator);
     }
-
-    for (ListPluginComponent plugin : myGroup.ui.plugins) {
-      if (plugin.isRestartEnabled()) {
-        ApplicationManager.getApplication().invokeLater(() -> PluginManagerConfigurable.shutdownOrRestartApp());
-        return;
+    finally {
+      if (!errors.isEmpty()) {
+        String text = String.join("\n\n", errors); //NON-NLS
+        PluginDownloader.showErrorDialog(text);
       }
     }
   }
 
   @Override
-  protected Action @NotNull [] createLeftSideActions() {
-    return ContainerUtil.ar(myIgnoreAction);
+  public void doCancelAction() {
+    close(CANCEL_EXIT_CODE);
   }
 
-  @NotNull
   @Override
-  protected DialogStyle getStyle() {
+  protected JPanel createSouthAdditionalPanel() {
+    JPanel panel = new Wrapper(myIgnoreAction);
+    panel.setBorder(JBUI.Borders.emptyLeft(10));
+    return panel;
+  }
+
+  @Override
+  protected @NotNull JPanel createButtonsPanel(@NotNull List<? extends JButton> buttons) {
+    JPanel panel = super.createButtonsPanel(buttons);
+    if (PluginManagementPolicy.getInstance().isPluginAutoUpdateAllowed()) {
+      JPanel buttonsPanel = new NonOpaquePanel(new BorderLayout(JBUI.scale(10), 0));
+      buttonsPanel.add(myAutoUpdateOption, BorderLayout.WEST);
+      buttonsPanel.add(panel);
+      return buttonsPanel;
+    }
+    return panel;
+  }
+
+  @Override
+  protected String getHelpId() {
+    return "plugin.update.dialog";
+  }
+
+  @Override
+  protected @NotNull DialogStyle getStyle() {
     return DialogStyle.COMPACT;
   }
 
@@ -258,25 +415,6 @@ public class PluginUpdateDialog extends DialogWrapper {
     return "#com.intellij.openapi.updateSettings.impl.PluginUpdateInfoDialog";
   }
 
-  @NotNull
-  private ListPluginComponent createListComponent(IdeaPluginDescriptor updateDescriptor) {
-    IdeaPluginDescriptor descriptor = PluginManagerCore.getPlugin(updateDescriptor.getPluginId());
-    assert descriptor != null : updateDescriptor;
-    ListPluginComponent component = new ListPluginComponent(myPluginModel, descriptor, NULL_LISTENER, false) {
-      @Override
-      public void updateErrors() { }
-
-      @Override
-      public void showProgress() {
-        super.showProgress();
-        updateButtons();
-      }
-    };
-    component.setOnlyUpdateMode(updateDescriptor);
-    return component;
-  }
-
-  @Nullable
   @Override
   protected JComponent createCenterPanel() {
     OnePixelSplitter splitter = new OnePixelSplitter(false, 0.45f) {
@@ -288,78 +426,22 @@ public class PluginUpdateDialog extends DialogWrapper {
       }
     };
 
+    myGroup.ui.panel.getParent().remove(myGroup.ui.panel);
+    myGroup.ui.panel.setPreferredSize(new Dimension());
+
     JPanel leftPanel = new JPanel(new BorderLayout());
-    leftPanel.add(PluginManagerConfigurable.createScrollPane(myPluginsPanel, true));
+    leftPanel.add(PluginManagerConfigurablePanel.createScrollPane(myPluginsPanel, true));
 
     OpaquePanel titlePanel = new OpaquePanel(new BorderLayout(), PluginManagerConfigurable.MAIN_BG_COLOR);
-    titlePanel.setBorder(JBUI.Borders.empty(6, 10));
+    titlePanel.setBorder(JBUI.Borders.empty(13, 12));
     leftPanel.add(titlePanel, BorderLayout.SOUTH);
 
-    JLabel titleComponent = new JLabel(IdeBundle.message("label.plugins.can.be.updated.later.in.0.plugins", CommonBundle.settingsTitle()));
-    titleComponent.setForeground(PluginsGroupComponent.SECTION_HEADER_FOREGROUND);
-    titlePanel.add(titleComponent);
-
-    ((JComponent)myGroup.ui.panel).setBorder(JBUI.Borders.empty(6, 10));
+    myTotalLabel.setForeground(PluginsGroupComponent.SECTION_HEADER_FOREGROUND);
+    titlePanel.add(myTotalLabel);
 
     splitter.setFirstComponent(leftPanel);
     splitter.setSecondComponent(myDetailsPage);
 
     return splitter;
-  }
-
-  private static Set<String> myIgnoredPluginsWithVersions;
-
-  @NotNull
-  private static File getDisabledUpdateFile() {
-    return new File(PathManager.getConfigPath(), "plugin_disabled_updates.txt");
-  }
-
-  @NotNull
-  private static Set<String> getIgnoredPlugins() {
-    if (myIgnoredPluginsWithVersions == null) {
-      myIgnoredPluginsWithVersions = new HashSet<>();
-
-      if (!ApplicationManager.getApplication().isUnitTestMode()) {
-        try {
-          File file = getDisabledUpdateFile();
-          if (file.isFile()) {
-            myIgnoredPluginsWithVersions.addAll(FileUtil.loadLines(file));
-          }
-        }
-        catch (IOException e) {
-          Logger.getInstance(UpdateChecker.class).error(e);
-        }
-      }
-    }
-    return myIgnoredPluginsWithVersions;
-  }
-
-  static void ignorePlugins(@NotNull List<IdeaPluginDescriptor> descriptors) {
-    Set<String> ignoredPlugins = getIgnoredPlugins();
-
-    for (IdeaPluginDescriptor descriptor : descriptors) {
-      ignoredPlugins.add(getIdVersionValue(descriptor));
-    }
-
-    try {
-      FileUtil
-        .writeToFile(getDisabledUpdateFile(), StringUtil.join(ignoredPlugins, LineSeparator.getSystemLineSeparator().getSeparatorString()));
-    }
-    catch (IOException e) {
-      Logger.getInstance(UpdateChecker.class).error(e);
-    }
-  }
-
-  public static boolean isIgnored(@NotNull IdeaPluginDescriptor descriptor) {
-    Set<String> plugins = getIgnoredPlugins();
-    if (plugins.isEmpty()) {
-      return false;
-    }
-    return plugins.contains(getIdVersionValue(descriptor));
-  }
-
-  @NotNull
-  private static String getIdVersionValue(@NotNull IdeaPluginDescriptor descriptor) {
-    return descriptor.getPluginId().getIdString() + "+" + descriptor.getVersion();
   }
 }

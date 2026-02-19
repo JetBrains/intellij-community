@@ -1,19 +1,28 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.options.newEditor;
 
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.util.ui.GraphicsUtil;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.ApiStatus;
 
-import javax.swing.*;
+import javax.swing.Icon;
+import javax.swing.JComponent;
 import javax.swing.border.Border;
-import java.awt.*;
+import java.awt.Color;
+import java.awt.Dimension;
+import java.awt.Font;
+import java.awt.FontMetrics;
+import java.awt.Graphics;
+import java.awt.Insets;
 
 /**
  * @author Konstantin Bulenkov
  */
-public class PreferenceButton extends JComponent {
+@ApiStatus.Internal
+public final class PreferenceButton extends JComponent {
   private final String myLabel;
   private final Icon myIcon;
 
@@ -23,7 +32,7 @@ public class PreferenceButton extends JComponent {
     if (SystemInfo.isMac) {
       setFont(new Font("Lucida Grande", Font.PLAIN, 11));
     } else {
-      setFont(UIUtil.getLabelFont());
+      setFont(StartupUiUtil.getLabelFont());
     }
     setPreferredSize(JBUI.size(100, 70));
     setOpaque(false);

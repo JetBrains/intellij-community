@@ -9,11 +9,82 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.JavaPsiFacade
 import com.intellij.psi.PsiModifier
 import com.intellij.psi.PsiType
+import com.intellij.psi.PsiTypes
 import com.intellij.psi.PsiVariable
-import org.jetbrains.uast.*
-import org.jetbrains.uast.values.*
+import org.jetbrains.uast.UBinaryExpression
+import org.jetbrains.uast.UBinaryExpressionWithType
+import org.jetbrains.uast.UBlockExpression
+import org.jetbrains.uast.UBreakExpression
+import org.jetbrains.uast.UCallExpression
+import org.jetbrains.uast.UClass
+import org.jetbrains.uast.UClassLiteralExpression
+import org.jetbrains.uast.UContinueExpression
+import org.jetbrains.uast.UDeclarationsExpression
+import org.jetbrains.uast.UDoWhileExpression
+import org.jetbrains.uast.UElement
+import org.jetbrains.uast.UEnumConstant
+import org.jetbrains.uast.UExpression
+import org.jetbrains.uast.UField
+import org.jetbrains.uast.UForEachExpression
+import org.jetbrains.uast.UForExpression
+import org.jetbrains.uast.UIfExpression
+import org.jetbrains.uast.ULabeledExpression
+import org.jetbrains.uast.ULambdaExpression
+import org.jetbrains.uast.ULiteralExpression
+import org.jetbrains.uast.ULoopExpression
+import org.jetbrains.uast.UMethod
+import org.jetbrains.uast.UObjectLiteralExpression
+import org.jetbrains.uast.UParameter
+import org.jetbrains.uast.UParenthesizedExpression
+import org.jetbrains.uast.UPolyadicExpression
+import org.jetbrains.uast.UPostfixExpression
+import org.jetbrains.uast.UPrefixExpression
+import org.jetbrains.uast.UQualifiedReferenceExpression
+import org.jetbrains.uast.UReferenceExpression
+import org.jetbrains.uast.UResolvable
+import org.jetbrains.uast.UReturnExpression
+import org.jetbrains.uast.USimpleNameReferenceExpression
+import org.jetbrains.uast.USwitchClauseExpressionWithBody
+import org.jetbrains.uast.USwitchExpression
+import org.jetbrains.uast.UThrowExpression
+import org.jetbrains.uast.UTryExpression
+import org.jetbrains.uast.UVariable
+import org.jetbrains.uast.UWhileExpression
+import org.jetbrains.uast.UYieldExpression
+import org.jetbrains.uast.UastBinaryExpressionWithTypeKind
+import org.jetbrains.uast.UastBinaryOperator
+import org.jetbrains.uast.UastLanguagePlugin
+import org.jetbrains.uast.UastPostfixOperator
+import org.jetbrains.uast.UastPrefixOperator
+import org.jetbrains.uast.UastQualifiedExpressionAccessType
+import org.jetbrains.uast.convertWithParent
+import org.jetbrains.uast.name
+import org.jetbrains.uast.resolveToUElement
+import org.jetbrains.uast.resolveToUElementOfType
+import org.jetbrains.uast.values.UBooleanConstant
+import org.jetbrains.uast.values.UCallResultValue
+import org.jetbrains.uast.values.UCharConstant
+import org.jetbrains.uast.values.UClassConstant
+import org.jetbrains.uast.values.UConstant
+import org.jetbrains.uast.values.UDependency
+import org.jetbrains.uast.values.UDependentValue
+import org.jetbrains.uast.values.UEnumEntryValueConstant
+import org.jetbrains.uast.values.UFloatConstant
+import org.jetbrains.uast.values.UIntConstant
+import org.jetbrains.uast.values.ULongConstant
+import org.jetbrains.uast.values.UNothingValue
 import org.jetbrains.uast.values.UNothingValue.JumpKind.BREAK
 import org.jetbrains.uast.values.UNothingValue.JumpKind.CONTINUE
+import org.jetbrains.uast.values.UNullConstant
+import org.jetbrains.uast.values.UNumericConstant
+import org.jetbrains.uast.values.UNumericType
+import org.jetbrains.uast.values.UPhiValue
+import org.jetbrains.uast.values.UStringConstant
+import org.jetbrains.uast.values.UUndeterminedValue
+import org.jetbrains.uast.values.UValue
+import org.jetbrains.uast.values.UValueBase
+import org.jetbrains.uast.values.UYieldResult
+import org.jetbrains.uast.values.ifUndetermined
 import org.jetbrains.uast.visitor.UastTypedVisitor
 
 class TreeBasedEvaluator(
@@ -57,7 +128,7 @@ class TreeBasedEvaluator(
   }
 
   override fun evaluateVariableByReference(variableReference: UReferenceExpression, state: UEvaluationState?): UValue {
-    val target = variableReference.resolveToUElement() as? UVariable ?: return UUndeterminedValue
+    val target = variableReference.resolveToUElementOfType<UVariable>() ?: return UUndeterminedValue
     return getEvaluationInfo(variableReference, state).state[target]
   }
 
@@ -129,20 +200,38 @@ class TreeBasedEvaluator(
       data: UEvaluationState
     ): UEvaluationInfo {
       storeState(node, data)
+
+      fun evaluateViaExtensionsIfUndetermined(resolvedElement: UVariable): UValue {
+        return data[resolvedElement].ifUndetermined {
+          node.evaluateViaExtensions { evaluateVariable(resolvedElement, data) }?.value ?: UUndeterminedValue
+        }
+      }
+
       return when (val resolvedElement = node.resolveToUElement()) {
         is UEnumConstant -> UEnumEntryValueConstant(resolvedElement, node)
-        is UField -> if (resolvedElement.hasModifierProperty(PsiModifier.FINAL)) {
-          data[resolvedElement].ifUndetermined {
-            val helper = JavaPsiFacade.getInstance(resolvedElement.project).constantEvaluationHelper
-            val evaluated = helper.computeConstantExpression(resolvedElement.initializer)
-            evaluated?.toConstant() ?: UUndeterminedValue
+        is UField -> {
+          if (resolvedElement.hasModifierProperty(PsiModifier.FINAL)) {
+            data[resolvedElement].ifUndetermined {
+              val helper = JavaPsiFacade.getInstance(resolvedElement.project).constantEvaluationHelper
+              val evaluated = helper.computeConstantExpression(resolvedElement.initializer)
+              evaluated?.toConstant() ?: UUndeterminedValue
+            }
+          }
+          else {
+            return super.visitSimpleNameReferenceExpression(node, data)
           }
         }
-        else {
-          return super.visitSimpleNameReferenceExpression(node, data)
+        is UParameter -> {
+          if (resolvedElement.sourcePsi == null && resolvedElement.uastParent is ULambdaExpression) {
+            // fake UParameter without sourcePsi from lambda, i.e., implicit lambda parameter `it`
+            return super.visitSimpleNameReferenceExpression(node, data)
+          }
+          else {
+            evaluateViaExtensionsIfUndetermined(resolvedElement)
+          }
         }
-        is UVariable -> data[resolvedElement].ifUndetermined {
-          node.evaluateViaExtensions { evaluateVariable(resolvedElement, data) }?.value ?: UUndeterminedValue
+        is UVariable -> {
+          evaluateViaExtensionsIfUndetermined(resolvedElement)
         }
         else -> return super.visitSimpleNameReferenceExpression(node, data)
       } to data storeResultFor node
@@ -216,7 +305,7 @@ class TreeBasedEvaluator(
         }
         else -> {
           return node.evaluateViaExtensions { evaluatePrefix(node.operator, operandValue, operandInfo.state) }
-                 ?: UUndeterminedValue to operandInfo.state storeResultFor node
+                 ?: (UUndeterminedValue to operandInfo.state storeResultFor node)
         }
       } to operandInfo.state storeResultFor node
     }
@@ -244,7 +333,7 @@ class TreeBasedEvaluator(
         }
         else -> {
           return node.evaluateViaExtensions { evaluatePostfix(node.operator, operandValue, operandInfo.state) }
-                 ?: UUndeterminedValue to operandInfo.state storeResultFor node
+                 ?: (UUndeterminedValue to operandInfo.state storeResultFor node)
         }
       } storeResultFor node
     }
@@ -295,7 +384,7 @@ class TreeBasedEvaluator(
       }
 
       return node.evaluateViaExtensions { evaluateBinary(node, leftInfo.value, rightInfo.value, rightInfo.state) }
-             ?: UUndeterminedValue to rightInfo.state storeResultFor node
+             ?: (UUndeterminedValue to rightInfo.state storeResultFor node)
     }
 
     override fun visitPolyadicExpression(node: UPolyadicExpression, data: UEvaluationState): UEvaluationInfo {
@@ -327,26 +416,21 @@ class TreeBasedEvaluator(
     private fun evaluateTypeCast(operandInfo: UEvaluationInfo, type: PsiType): UEvaluationInfo {
       val constant = operandInfo.value.toConstant() ?: return UUndeterminedValue to operandInfo.state
       val resultConstant = when (type) {
-                             PsiType.BOOLEAN -> {
+                             PsiTypes.booleanType() -> {
                                constant as? UBooleanConstant
                              }
-                             PsiType.CHAR -> when (constant) {
-                               // Join the following three in UNumericConstant
-                               // when https://youtrack.jetbrains.com/issue/KT-14868 is fixed
-                               is UIntConstant -> UCharConstant(constant.value.toChar())
-                               is ULongConstant -> UCharConstant(constant.value.toChar())
-                               is UFloatConstant -> UCharConstant(constant.value.toChar())
-
+                             PsiTypes.charType() -> when (constant) {
+                               is UNumericConstant -> UCharConstant(constant.value.toInt().toChar())
                                is UCharConstant -> constant
                                else -> null
                              }
-                             PsiType.LONG -> {
+                             PsiTypes.longType() -> {
                                (constant as? UNumericConstant)?.value?.toLong()?.let { value -> ULongConstant(value) }
                              }
-                             PsiType.BYTE, PsiType.SHORT, PsiType.INT -> {
+                             PsiTypes.byteType(), PsiTypes.shortType(), PsiTypes.intType() -> {
                                (constant as? UNumericConstant)?.value?.toInt()?.let { UIntConstant(it, type) }
                              }
-                             PsiType.FLOAT, PsiType.DOUBLE -> {
+                             PsiTypes.floatType(), PsiTypes.doubleType() -> {
                                (constant as? UNumericConstant)?.value?.toDouble()?.let { UFloatConstant.create(it, type) }
                              }
                              else -> when (type.name) {
@@ -365,10 +449,10 @@ class TreeBasedEvaluator(
     private fun evaluateTypeCheck(operandInfo: UEvaluationInfo, type: PsiType): UEvaluationInfo {
       val constant = operandInfo.value.toConstant() ?: return UUndeterminedValue to operandInfo.state
       val valid = when (type) {
-        PsiType.BOOLEAN -> constant is UBooleanConstant
-        PsiType.LONG -> constant is ULongConstant
-        PsiType.BYTE, PsiType.SHORT, PsiType.INT, PsiType.CHAR -> constant is UIntConstant
-        PsiType.FLOAT, PsiType.DOUBLE -> constant is UFloatConstant
+        PsiTypes.booleanType() -> constant is UBooleanConstant
+        PsiTypes.longType() -> constant is ULongConstant
+        PsiTypes.byteType(), PsiTypes.shortType(), PsiTypes.intType(), PsiTypes.charType() -> constant is UIntConstant
+        PsiTypes.floatType(), PsiTypes.doubleType() -> constant is UFloatConstant
         else -> when (type.name) {
           "java.lang.String" -> constant is UStringConstant
           else -> false
@@ -386,8 +470,8 @@ class TreeBasedEvaluator(
         return operandInfo storeResultFor node
       }
       return when (node.operationKind) {
-        UastBinaryExpressionWithTypeKind.TYPE_CAST -> evaluateTypeCast(operandInfo, node.type)
-        UastBinaryExpressionWithTypeKind.INSTANCE_CHECK -> evaluateTypeCheck(operandInfo, node.type)
+        UastBinaryExpressionWithTypeKind.TypeCast.INSTANCE -> evaluateTypeCast(operandInfo, node.type)
+        UastBinaryExpressionWithTypeKind.InstanceCheck.INSTANCE -> evaluateTypeCheck(operandInfo, node.type)
         else -> UUndeterminedValue to operandInfo.state
       } storeResultFor node
     }
@@ -417,8 +501,8 @@ class TreeBasedEvaluator(
 
       return (node.evaluateViaExtensions {
         node.resolve()?.let { method -> evaluateMethodCall(method, argumentValues, currentInfo.state) }
-        ?: UUndeterminedValue to currentInfo.state
-      } ?: UCallResultValue(node, argumentValues) to currentInfo.state) storeResultFor node
+        ?: (UUndeterminedValue to currentInfo.state)
+      } ?: (UCallResultValue(node, argumentValues) to currentInfo.state)) storeResultFor node
     }
 
     override fun visitQualifiedReferenceExpression(
@@ -438,7 +522,7 @@ class TreeBasedEvaluator(
         }
         else -> {
           return node.evaluateViaExtensions { evaluateQualified(node.accessType, currentInfo, selectorInfo) }
-                 ?: UUndeterminedValue to selectorInfo.state storeResultFor node
+                 ?: (UUndeterminedValue to selectorInfo.state storeResultFor node)
         }
       } storeResultFor node
     }
@@ -458,7 +542,7 @@ class TreeBasedEvaluator(
 
     override fun visitVariable(node: UVariable, data: UEvaluationState): UEvaluationInfo {
       val initializer = node.uastInitializer
-      val initializerInfo = initializer?.accept(chain, data) ?: UUndeterminedValue to data
+      val initializerInfo = initializer?.accept(chain, data) ?: (UUndeterminedValue to data)
       if (!initializerInfo.reachable) return initializerInfo
       return UUndeterminedValue to initializerInfo.state.assign(node, initializerInfo.value, node)
     }
@@ -484,9 +568,8 @@ class TreeBasedEvaluator(
       val elseInfo = node.elseExpression?.accept(chain, conditionInfo.state)
       val conditionValue = conditionInfo.value
       val defaultInfo = UUndeterminedValue to conditionInfo.state
-      val constantConditionValue = conditionValue.toConstant()
 
-      return when (constantConditionValue) {
+      return when (val constantConditionValue = conditionValue.toConstant()) {
         is UBooleanConstant -> {
           if (constantConditionValue.value) thenInfo ?: defaultInfo
           else elseInfo ?: defaultInfo
@@ -501,7 +584,7 @@ class TreeBasedEvaluator(
 
     override fun visitSwitchExpression(node: USwitchExpression, data: UEvaluationState): UEvaluationInfo {
       storeState(node, data)
-      val subjectInfo = node.expression?.accept(chain, data) ?: UUndeterminedValue to data
+      val subjectInfo = node.expression?.accept(chain, data) ?: (UUndeterminedValue to data)
       if (!subjectInfo.reachable) return subjectInfo storeResultFor node
 
       var resultInfo: UEvaluationInfo? = null
@@ -560,8 +643,7 @@ class TreeBasedEvaluator(
     }
 
     private fun getBreakResult(clauseInfo: UEvaluationInfo): UEvaluationInfo {
-      val clauseValue = clauseInfo.value
-      return when (clauseValue) {
+      return when (val clauseValue = clauseInfo.value) {
         is UYieldResult -> clauseValue.value to clauseInfo.state
         is UPhiValue -> UPhiValue.create(clauseValue.values.map {
           when (it) {
@@ -583,7 +665,7 @@ class TreeBasedEvaluator(
 
       fun evaluateCondition(inputState: UEvaluationState): UEvaluationInfo =
         condition?.accept(chain, inputState)
-        ?: (if (infinite) UBooleanConstant.True else UUndeterminedValue) to inputState
+        ?: ((if (infinite) UBooleanConstant.True else UUndeterminedValue) to inputState)
 
       var resultInfo = UUndeterminedValue to inputState
       var iterationsAllowed = loopIterationLimit

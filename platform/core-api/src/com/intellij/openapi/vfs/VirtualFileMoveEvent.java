@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs;
 
 import org.jetbrains.annotations.NotNull;
@@ -28,8 +28,7 @@ public class VirtualFileMoveEvent extends VirtualFileEvent {
    *
    * @return the parent of the file before the move.
    */
-  @NotNull
-  public VirtualFile getOldParent() {
+  public @NotNull VirtualFile getOldParent() {
     return myOldParent;
   }
 
@@ -38,8 +37,7 @@ public class VirtualFileMoveEvent extends VirtualFileEvent {
    *
    * @return the parent of the file after the move.
    */
-  @NotNull
-  public VirtualFile getNewParent() {
+  public @NotNull VirtualFile getNewParent() {
     return myNewParent;
   }
 }

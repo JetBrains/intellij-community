@@ -1,27 +1,32 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.analysis;
 
 import com.intellij.analysis.dialog.ModelScopeItem;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInspection.ui.InspectionResultsView;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionPlaces;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts.DialogTitle;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 import java.util.List;
 import java.util.function.Supplier;
 
 public abstract class BaseAnalysisAction extends AnAction {
-  private static final String DIMENSION_KEY_PREFIX = "ANALYSIS_DLG_";
-
   private final Supplier<@DialogTitle String> myTitle;
   private final Supplier<String> myAnalysisNoun;
 
@@ -34,6 +39,11 @@ public abstract class BaseAnalysisAction extends AnAction {
   protected BaseAnalysisAction(Supplier<String> title, Supplier<String> analysisNoun) {
     myTitle = title;
     myAnalysisNoun = analysisNoun;
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 
   @Override
@@ -57,22 +67,7 @@ public abstract class BaseAnalysisAction extends AnAction {
     AnalysisUIOptions uiOptions = AnalysisUIOptions.getInstance(project);
     PsiElement element = CommonDataKeys.PSI_ELEMENT.getData(dataContext);
     List<ModelScopeItem> items = BaseAnalysisActionDialog.standardItems(project, scope, module, element);
-    BaseAnalysisActionDialog dlg = new BaseAnalysisActionDialog(title, scopeTitle, project, items, uiOptions, rememberScope) {
-      @Override
-      protected String getDimensionServiceKey() {
-        return DIMENSION_KEY_PREFIX + getClass().getName();
-      }
-
-      @Override
-      protected JComponent getAdditionalActionSettings(Project project) {
-        return BaseAnalysisAction.this.getAdditionalActionSettings(project, this);
-      }
-
-      @Override
-      protected String getHelpId() {
-        return getHelpTopic();
-      }
-    };
+    BaseAnalysisActionDialog dlg = getAnalysisDialog(project, title, scopeTitle, rememberScope, uiOptions, items);
     if (!dlg.showAndGet()) {
       canceled();
       return;
@@ -89,6 +84,25 @@ public abstract class BaseAnalysisAction extends AnAction {
     analyze(project, scope);
   }
 
+  public @NotNull BaseAnalysisActionDialog getAnalysisDialog(Project project,
+                                                             @DialogTitle String title,
+                                                             @NlsSafe String scopeTitle,
+                                                             boolean rememberScope,
+                                                             AnalysisUIOptions uiOptions,
+                                                             List<? extends ModelScopeItem> items) {
+    return new BaseAnalysisActionDialog(title, scopeTitle, project, items, uiOptions, rememberScope) {
+      @Override
+      protected JComponent getAdditionalActionSettings(@NotNull Project project) {
+        return BaseAnalysisAction.this.getAdditionalActionSettings(project, this);
+      }
+
+      @Override
+      protected String getHelpId() {
+        return getHelpTopic();
+      }
+    };
+  }
+
   protected @NotNull @DialogTitle String getDialogTitle() {
     return CodeInsightBundle.message("specify.analysis.scope", myTitle.get());
   }
@@ -101,8 +115,7 @@ public abstract class BaseAnalysisAction extends AnAction {
 
   protected abstract void analyze(@NotNull Project project, @NotNull AnalysisScope scope);
 
-  @Nullable
-  private AnalysisScope getInspectionScope(@NotNull DataContext dataContext, @NotNull Project project) {
+  private @Nullable AnalysisScope getInspectionScope(@NotNull DataContext dataContext, @NotNull Project project) {
     return AnalysisActionUtils.getInspectionScope(dataContext, project, acceptNonProjectDirectories());
   }
 
@@ -110,13 +123,11 @@ public abstract class BaseAnalysisAction extends AnAction {
     return false;
   }
 
-  @Nullable
-  protected JComponent getAdditionalActionSettings(Project project, BaseAnalysisActionDialog dialog) {
+  protected @Nullable JComponent getAdditionalActionSettings(@NotNull Project project, BaseAnalysisActionDialog dialog) {
     return null;
   }
 
-  @Nullable
-  private static Module getModuleFromContext(@NotNull DataContext dataContext) {
+  private static @Nullable Module getModuleFromContext(@NotNull DataContext dataContext) {
     InspectionResultsView inspectionView = dataContext.getData(InspectionResultsView.DATA_KEY);
     if (inspectionView != null) {
       AnalysisScope scope = inspectionView.getScope();
@@ -124,6 +135,6 @@ public abstract class BaseAnalysisAction extends AnAction {
         return scope.getModule();
       }
     }
-    return dataContext.getData(LangDataKeys.MODULE);
+    return dataContext.getData(PlatformCoreDataKeys.MODULE);
   }
 }

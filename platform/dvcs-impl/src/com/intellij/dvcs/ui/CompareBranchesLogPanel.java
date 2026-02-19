@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.dvcs.ui;
 
 import com.intellij.dvcs.repo.Repository;
@@ -23,15 +9,17 @@ import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.HtmlBuilder;
 import com.intellij.openapi.util.text.HtmlChunk;
-import com.intellij.openapi.vcs.changes.ui.SimpleChangesBrowser;
+import com.intellij.openapi.vcs.changes.ui.SimpleAsyncChangesBrowser;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.vcs.log.VcsFullCommitDetails;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JComponent;
+import javax.swing.JPanel;
+import java.awt.BorderLayout;
+import java.awt.FlowLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
@@ -52,7 +40,7 @@ class CompareBranchesLogPanel extends JPanel {
   private CommitListPanel myBranchToHeadListPanel;
 
   CompareBranchesLogPanel(@NotNull CompareBranchesHelper helper, @NotNull String branchName, @NotNull String currentBranchName,
-                                 @NotNull CommitCompareInfo compareInfo, @NotNull Repository initialRepo) {
+                          @NotNull CommitCompareInfo compareInfo, @NotNull Repository initialRepo) {
     super(new BorderLayout(UIUtil.DEFAULT_HGAP, UIUtil.DEFAULT_VGAP));
     myHelper = helper;
     myBranchName = branchName;
@@ -65,7 +53,7 @@ class CompareBranchesLogPanel extends JPanel {
   }
 
   private JComponent createCenterPanel() {
-    final SimpleChangesBrowser changesBrowser = new SimpleChangesBrowser(myHelper.getProject(), false, true);
+    SimpleAsyncChangesBrowser changesBrowser = new SimpleAsyncChangesBrowser(myHelper.getProject(), false, true);
 
     myHeadToBranchListPanel = new CommitListPanel(
       getHeadToBranchCommits(myInitialRepo),
@@ -83,20 +71,16 @@ class CompareBranchesLogPanel extends JPanel {
     JPanel htb = layoutCommitListPanel(true);
     JPanel bth = layoutCommitListPanel(false);
 
-    JPanel listPanel = null;
-    switch (getInfoType()) {
-      case HEAD_TO_BRANCH:
-        listPanel = htb;
-        break;
-      case BRANCH_TO_HEAD:
-        listPanel = bth;
-        break;
-      case BOTH:
+    JPanel listPanel = switch (getInfoType()) {
+      case HEAD_TO_BRANCH -> htb;
+      case BRANCH_TO_HEAD -> bth;
+      case BOTH -> {
         Splitter lists = new Splitter(true, 0.5f);
         lists.setFirstComponent(htb);
         lists.setSecondComponent(bth);
-        listPanel = lists;
-    }
+        yield lists;
+      }
+    };
 
     Splitter rootPanel = new Splitter(false, 0.7f);
     rootPanel.setSecondComponent(changesBrowser);
@@ -144,8 +128,8 @@ class CompareBranchesLogPanel extends JPanel {
   }
 
   private static void addSelectionListener(@NotNull CommitListPanel sourcePanel,
-                                           @NotNull final CommitListPanel otherPanel,
-                                           @NotNull final SimpleChangesBrowser changesBrowser) {
+                                           @NotNull CommitListPanel otherPanel,
+                                           @NotNull SimpleAsyncChangesBrowser changesBrowser) {
     sourcePanel.addListMultipleSelectionListener(changes -> {
       changesBrowser.setChangesToDisplay(changes);
       otherPanel.clearSelection();
@@ -163,8 +147,7 @@ class CompareBranchesLogPanel extends JPanel {
     return bth;
   }
 
-  @NlsContexts.Label
-  private String makeDescription(boolean forward) {
+  private @NlsContexts.Label String makeDescription(boolean forward) {
     String firstBranch = forward ? myCurrentBranchName : myBranchName;
     String secondBranch = forward ? myBranchName : myCurrentBranchName;
     return new HtmlBuilder().appendRaw(

@@ -20,6 +20,6 @@ import com.intellij.application.options.ModulesComboBox;
 /**
  * @deprecated use {@link ModulesComboBox} instead
  */
-@Deprecated
+@Deprecated(forRemoval = true)
 public class ModulesCombobox extends ModulesComboBox {
 }

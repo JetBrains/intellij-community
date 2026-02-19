@@ -10,7 +10,11 @@ import com.intellij.psi.PsiFileFactory;
 import com.intellij.psi.XmlElementFactory;
 import com.intellij.psi.impl.source.codeStyle.CodeEditUtil;
 import com.intellij.psi.impl.source.xml.XmlAttributeValueImpl;
-import com.intellij.psi.xml.*;
+import com.intellij.psi.xml.XmlAttribute;
+import com.intellij.psi.xml.XmlElement;
+import com.intellij.psi.xml.XmlFile;
+import com.intellij.psi.xml.XmlTag;
+import com.intellij.psi.xml.XmlText;
 import com.intellij.testFramework.LightJavaCodeInsightTestCase;
 import org.intellij.lang.annotations.Language;
 
@@ -79,11 +83,12 @@ public class XmlTextTest extends LightJavaCodeInsightTestCase {
 
   public void testXmlAttributeEscaperCalculatesDisplayToPhysicalCorrectlyInPresenseOfXmlEntities() {
     @Language("HTML")
-    String xml = "<!DOCTYPE html>\n" +
-                 "<html xmlns=\"http://www.w3.org/1999/xhtml\"\n" +
-                 "\txmlns:th=\"http://www.thymeleaf.org\">\n" +
-                 "  <td style=\"text-align: right\" th:utext=\"'&euro; ' + ${{item.netPrice}}\">XXX</td>\n" +
-                 "</html>";
+    String xml = """
+      <!DOCTYPE html>
+      <html xmlns="http://www.w3.org/1999/xhtml"
+      \txmlns:th="http://www.thymeleaf.org">
+        <td style="text-align: right" th:utext="'&euro; ' + ${{item.netPrice}}">XXX</td>
+      </html>""";
     XmlFile file = (XmlFile)PsiFileFactory.getInstance(getProject()).createFileFromText("foo.xml", XmlFileType.INSTANCE, xml);
     XmlTag root = file.getDocument().getRootTag();
     XmlTag tag = root.findFirstSubTag("td");

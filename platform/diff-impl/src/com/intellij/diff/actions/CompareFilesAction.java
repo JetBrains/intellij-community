@@ -1,82 +1,83 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diff.actions;
 
 import com.intellij.diff.chains.DiffRequestChain;
 import com.intellij.diff.chains.SimpleDiffRequestChain;
 import com.intellij.diff.requests.DiffRequest;
+import com.intellij.diff.tools.util.DiffDataKeys;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.ide.highlighter.ArchiveFileType;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.idea.ActionsBundle;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataKey;
+import com.intellij.openapi.diff.DiffBundle;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Arrays;
+import java.util.Set;
+
+/**
+ * Consider using {@link BaseShowDiffAction} instead.
+ */
 public class CompareFilesAction extends BaseShowDiffAction {
+
+  /**
+   * @deprecated use generic {@link DiffDataKeys#DIFF_REQUEST_TO_COMPARE}
+   */
+  @Deprecated
   public static final DataKey<DiffRequest> DIFF_REQUEST = DataKey.create("CompareFilesAction.DiffRequest");
 
-  @NonNls public static final String LAST_USED_FILE_KEY = "two.files.diff.last.used.file";
-  @NonNls public static final String LAST_USED_FOLDER_KEY = "two.files.diff.last.used.folder";
+  public static final @NonNls String LAST_USED_FILE_KEY = "two.files.diff.last.used.file";
+  public static final @NonNls String LAST_USED_FOLDER_KEY = "two.files.diff.last.used.folder";
 
   @Override
   public void update(@NotNull AnActionEvent e) {
     super.update(e);
 
-    VirtualFile[] files = e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY);
-
     String text = ActionsBundle.message("action.compare.files.text");
-    if (files != null && files.length == 1) {
-      text = ActionsBundle.message("action.compare.with.text");
-    }
-    else if (files != null && files.length == 2) {
-      Type type1 = getType(files[0]);
-      Type type2 = getType(files[1]);
 
-      if (type1 != type2) {
-        text = ActionsBundle.message("action.compare.text");
+    VirtualFile[] files = e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY);
+    if (files != null) {
+      if (files.length == 1) {
+        text = ActionsBundle.message("action.compare.with.text");
       }
-      else {
-        switch (type1) {
-          case FILE:
-            text = ActionsBundle.message("action.compare.files.text");
-            break;
-          case DIRECTORY:
-            text = ActionsBundle.message("action.CompareDirs.text");
-            break;
-          case ARCHIVE:
-            text = ActionsBundle.message("action.compare.archives.text");
-            break;
+      else if (files.length == 2 || files.length == 3) {
+        Set<Type> types = ContainerUtil.map2Set(files, CompareFilesAction::getType);
+        if (types.size() != 1) {
+          text = ActionsBundle.message("action.compare.text");
+        }
+        else {
+          text = ActionsBundle.message(switch (types.iterator().next()) {
+            case FILE -> "action.compare.files.text";
+            case DIRECTORY -> "action.CompareDirs.text";
+            case ARCHIVE -> "action.compare.archives.text";
+          });
         }
       }
     }
+
     e.getPresentation().setText(text);
   }
 
   @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
+  }
+
+  @Override
   protected boolean isAvailable(@NotNull AnActionEvent e) {
-    DiffRequest request = e.getData(DIFF_REQUEST);
+    DiffRequest request = e.getData(DiffDataKeys.DIFF_REQUEST_TO_COMPARE);
     if (request != null) {
       return true;
     }
@@ -86,25 +87,24 @@ public class CompareFilesAction extends BaseShowDiffAction {
       return false;
     }
 
-    if (files.length == 1) {
-      return hasContent(files[0]);
+    if (files.length == 0 || files.length > 3) return false;
+    boolean hasContent = ContainerUtil.all(Arrays.asList(files), BaseShowDiffAction::hasContent);
+    if (!hasContent) return false;
+
+    if (files.length == 3) {
+      Set<Type> types = ContainerUtil.map2Set(files, CompareFilesAction::getType);
+      if (types.contains(Type.DIRECTORY) || types.contains(Type.ARCHIVE)) return false;
     }
-    else if (files.length == 2) {
-      return hasContent(files[0]) && hasContent(files[1]);
-    }
-    else {
-      return false;
-    }
+
+    return true;
   }
 
-  @Nullable
-  protected DiffRequest getDiffRequest(@NotNull AnActionEvent e) {
-    return e.getData(DIFF_REQUEST);
+  protected @Nullable DiffRequest getDiffRequest(@NotNull AnActionEvent e) {
+    return e.getData(DiffDataKeys.DIFF_REQUEST_TO_COMPARE);
   }
 
-  @Nullable
   @Override
-  protected DiffRequestChain getDiffRequestChain(@NotNull AnActionEvent e) {
+  protected @Nullable DiffRequestChain getDiffRequestChain(@NotNull AnActionEvent e) {
     Project project = e.getProject();
     DiffRequest diffRequest = getDiffRequest(e);
     if (diffRequest != null) {
@@ -113,30 +113,38 @@ public class CompareFilesAction extends BaseShowDiffAction {
 
     VirtualFile file1;
     VirtualFile file2;
+    VirtualFile baseFile = null;
 
-    VirtualFile[] data = e.getRequiredData(CommonDataKeys.VIRTUAL_FILE_ARRAY);
-    if (data.length == 1) {
-      file1 = data[0];
+    VirtualFile[] files = e.getRequiredData(CommonDataKeys.VIRTUAL_FILE_ARRAY);
+    if (files.length == 1) {
+      file1 = files[0];
       file2 = getOtherFile(project, file1);
       if (file2 == null || !hasContent(file2)) return null;
     }
+    else if (files.length == 2) {
+      file1 = files[0];
+      file2 = files[1];
+    }
     else {
-      file1 = data[0];
-      file2 = data[1];
+      file1 = files[0];
+      baseFile = files[1];
+      file2 = files[2];
     }
 
-    if (!file1.isValid() || !file2.isValid()) return null; // getOtherFile() shows dialog that can invalidate files
+    // getOtherFile() shows dialog that can invalidate files
+    if (!file1.isValid() || !file2.isValid() || (baseFile != null && !baseFile.isValid())) return null;
 
-    Type type1 = getType(file1);
-    Type type2 = getType(file2);
-    if (type1 == Type.DIRECTORY || type2 == Type.DIRECTORY) FeatureUsageTracker.getInstance().triggerFeatureUsed("dir.diff");
-    if (type1 == Type.ARCHIVE || type2 == Type.ARCHIVE) FeatureUsageTracker.getInstance().triggerFeatureUsed("jar.diff");
+    Set<Type> types = ContainerUtil.map2Set(files, CompareFilesAction::getType);
+    if (types.contains(Type.DIRECTORY)) FeatureUsageTracker.getInstance().triggerFeatureUsed("dir.diff");
+    if (types.contains(Type.ARCHIVE)) FeatureUsageTracker.getInstance().triggerFeatureUsed("jar.diff");
+    if ("ipynb".equals(file1.getExtension()) && "ipynb".equals(file2.getExtension())) {
+      FeatureUsageTracker.getInstance().triggerFeatureUsed("jupyter.compare.notebooks");
+    }
 
-    return createMutableChainFromFiles(project, file1, file2);
+    return createMutableChainFromFiles(project, file1, file2, baseFile);
   }
 
-  @Nullable
-  private static VirtualFile getOtherFile(@Nullable Project project, @NotNull VirtualFile file) {
+  private static @Nullable VirtualFile getOtherFile(@Nullable Project project, @NotNull VirtualFile file) {
     FileChooserDescriptor descriptor;
     String key;
 
@@ -150,13 +158,12 @@ public class CompareFilesAction extends BaseShowDiffAction {
       key = LAST_USED_FILE_KEY;
     }
     VirtualFile selectedFile = getDefaultSelection(project, key, file);
-    VirtualFile otherFile = FileChooser.chooseFile(descriptor, project, selectedFile);
+    VirtualFile otherFile = FileChooser.chooseFile(descriptor.withTitle(DiffBundle.message("select.file.to.compare")), project, selectedFile);
     if (otherFile != null) updateDefaultSelection(project, key, otherFile);
     return otherFile;
   }
 
-  @NotNull
-  private static VirtualFile getDefaultSelection(@Nullable Project project, @NotNull String key, @NotNull VirtualFile file) {
+  private static @NotNull VirtualFile getDefaultSelection(@Nullable Project project, @NotNull String key, @NotNull VirtualFile file) {
     if (project == null) return file;
     final String path = PropertiesComponent.getInstance(project).getValue(key);
     if (path == null) return file;
@@ -169,8 +176,7 @@ public class CompareFilesAction extends BaseShowDiffAction {
     PropertiesComponent.getInstance(project).setValue(key, file.getPath());
   }
 
-  @NotNull
-  private static Type getType(@Nullable VirtualFile file) {
+  private static @NotNull Type getType(@Nullable VirtualFile file) {
     if (file == null) return Type.FILE;
     if (file.getFileType() instanceof ArchiveFileType) return Type.ARCHIVE;
     if (file.isDirectory()) return Type.DIRECTORY;

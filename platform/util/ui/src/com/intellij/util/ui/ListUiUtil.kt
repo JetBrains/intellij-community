@@ -3,13 +3,18 @@ package com.intellij.util.ui
 
 import com.intellij.ui.JBColor
 import java.awt.Color
-import java.awt.event.*
+import java.awt.event.FocusAdapter
+import java.awt.event.FocusEvent
+import java.awt.event.FocusListener
+import java.awt.event.MouseAdapter
+import java.awt.event.MouseEvent
+import java.awt.event.MouseListener
 import javax.swing.JList
 import javax.swing.SwingUtilities
 
 object ListUiUtil {
   object WithTallRow {
-    private val selectionBackground: JBColor = JBColor(0xE9EEF5, 0x464A4D)
+    private val selectionBackground: JBColor = JBColor(0xEDF6FE, 0x464A4D)
     private val unfocusedSelectionBackground: JBColor = JBColor(0xF5F5F5, 0x464A4D)
     private val alternativeRowBackground: JBColor = JBColor(0xFFFFFF, 0x313335)
 
@@ -22,9 +27,9 @@ object ListUiUtil {
       else JBColor.namedColor("Table.foreground", default)
     }
 
-    fun secondaryForeground(list: JList<*>, isSelected: Boolean): Color {
+    fun secondaryForeground(isSelected: Boolean, hasFocus: Boolean): Color {
       return if (isSelected) {
-        foreground(true, list.hasFocus())
+        foreground(true, hasFocus)
       }
       else JBColor.namedColor("Component.infoForeground", UIUtil.getContextHelpForeground())
     }

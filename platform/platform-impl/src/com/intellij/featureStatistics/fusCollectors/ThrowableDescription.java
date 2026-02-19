@@ -1,45 +1,36 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.featureStatistics.fusCollectors;
 
 import com.intellij.diagnostic.PluginException;
 import com.intellij.internal.statistic.utils.PluginInfo;
 import com.intellij.internal.statistic.utils.PluginInfoDetectorKt;
+import com.intellij.openapi.diagnostic.UntraceableException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 public final class ThrowableDescription {
-  private static final String UNKNOWN = "unknown";
   private static final String THIRD_PARTY = "third.party";
 
-  @Nullable private final Throwable myThrowable;
+  private final @NotNull Throwable myThrowable;
   private final StackTraceElement @Nullable [] myStacktrace;
 
-  public ThrowableDescription(@Nullable Throwable throwable) {
-    myThrowable = throwable != null ? getCause(throwable) : null;
-    myStacktrace = myThrowable != null ? getStacktrace(myThrowable) : null;
+  public ThrowableDescription(@NotNull Throwable throwable) {
+    myThrowable = getCause(throwable);
+    myStacktrace = getStacktrace(myThrowable);
   }
 
   private static StackTraceElement @Nullable [] getStacktrace(@NotNull Throwable throwable) {
-    try {
-      return throwable.getStackTrace();
-    }
-    catch (Throwable e) {
-      // Kotlin internals might throw an exception and it doesn't support retrieving a stacktrace
-      return null;
-    }
+    return throwable instanceof UntraceableException ? null : throwable.getStackTrace();
   }
 
-  @NotNull
-  public String getClassName() {
-    if (myThrowable == null) {
-      return UNKNOWN;
-    }
-
-    final Class<?> throwableClass = myThrowable.getClass();
-    final PluginInfo throwableLocation = PluginInfoDetectorKt.getPluginInfo(throwableClass);
-    return (throwableLocation.isSafeToReport()) ? throwableClass.getName() : THIRD_PARTY;
+  public @NotNull Class<?> getThrowableClass() {
+    return myThrowable.getClass();
   }
 
   public int getSize() {
@@ -50,8 +41,7 @@ public final class ThrowableDescription {
     return myStacktrace.length;
   }
 
-  @NotNull
-  public List<String> getLastFrames(int frameCount) {
+  public @NotNull List<String> getLastFrames(int frameCount) {
     if (myStacktrace == null) {
       return Collections.emptyList();
     }
@@ -80,8 +70,7 @@ public final class ThrowableDescription {
     return result;
   }
 
-  @NotNull
-  private static Throwable getCause(@NotNull Throwable throwable) {
+  private static @NotNull Throwable getCause(@NotNull Throwable throwable) {
     final boolean isPluginException = throwable instanceof PluginException && throwable.getCause() != null;
     return isPluginException ? throwable.getCause() : throwable;
   }

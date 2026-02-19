@@ -1,54 +1,37 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.dataFlow.types;
 
+import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeBinOp;
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
+import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeType;
 import com.intellij.psi.PsiPrimitiveType;
-import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypes;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-public interface DfLongType extends DfIntegralType {
+public interface DfLongType extends DfJvmIntegralType {
   @Override
   @NotNull
   LongRangeSet getRange();
 
-  @NotNull
   @Override
-  default DfType join(@NotNull DfType other) {
-    if (!(other instanceof DfLongType)) return DfTypes.TOP;
-    return DfTypes.longRange(((DfLongType)other).getRange().unite(getRange()));
-  }
-
-  @NotNull
-  @Override
-  default DfType meet(@NotNull DfType other) {
-    if (other == DfTypes.TOP) return this;
-    if (!(other instanceof DfLongType)) return DfTypes.BOTTOM;
-    return DfTypes.longRange(((DfLongType)other).getRange().intersect(getRange()));
-  }
-
-  @NotNull
-  @Override
-  default DfType meetRange(@NotNull LongRangeSet range) {
-    return meet(DfTypes.longRange(range));
-  }
-
-  @NotNull
-  @Override
-  default PsiPrimitiveType getPsiType() {
-    return PsiType.LONG;
+  default @NotNull DfType eval(@NotNull DfType other, @NotNull LongRangeBinOp op) {
+    if (!(other instanceof DfLongType || other instanceof DfIntType && op.isShift())) return DfTypes.LONG;
+    LongRangeSet result = op.eval(getRange(), ((DfIntegralType)other).getRange(), getLongRangeType());
+    LongRangeSet wideResult = op.evalWide(getWideRange(), ((DfIntegralType)other).getWideRange(), getLongRangeType());
+    return DfTypes.longRange(result, wideResult);
   }
 
   @Override
-  @Nullable
-  default DfType tryNegate() {
-    LongRangeSet range = getRange();
-    LongRangeSet res = LongRangeSet.all().subtract(range);
-    return res.intersects(range) ? null : DfTypes.longRange(res);
+  default @NotNull PsiPrimitiveType getPsiType() {
+    return PsiTypes.longType();
   }
 
-  @NotNull
-  static LongRangeSet extractRange(@NotNull DfType type) {
+  static @NotNull LongRangeSet extractRange(@NotNull DfType type) {
     return type instanceof DfIntegralType ? ((DfIntegralType)type).getRange() : LongRangeSet.all();
+  }
+
+  @Override
+  default @NotNull LongRangeType getLongRangeType() {
+    return LongRangeType.INT64;
   }
 }

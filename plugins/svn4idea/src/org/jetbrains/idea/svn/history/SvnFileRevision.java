@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.svn.history;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -25,32 +25,19 @@ import static com.intellij.openapi.progress.ProgressManager.progress;
 import static com.intellij.vcsUtil.VcsUtil.getFilePathOnNonLocal;
 import static org.jetbrains.idea.svn.SvnBundle.message;
 import static org.jetbrains.idea.svn.SvnUtil.getFileContents;
-import static org.jetbrains.idea.svn.SvnUtil.parseUrl;
 
 public class SvnFileRevision implements VcsFileRevision {
-  private final static Logger LOG = Logger.getInstance(SvnFileRevision.class);
+  private static final Logger LOG = Logger.getInstance(SvnFileRevision.class);
 
   private final Date myDate;
   private String myCommitMessage;
   private final String myAuthor;
-  @NotNull private final SvnRevisionNumber myRevisionNumber;
-  @NotNull private final SvnVcs myVCS;
-  @NotNull private final Url myURL;
+  private final @NotNull SvnRevisionNumber myRevisionNumber;
+  private final @NotNull SvnVcs myVCS;
+  private final @NotNull Url myURL;
   private final Revision myPegRevision;
   private final String myCopyFromPath;
-  @NotNull private final List<SvnFileRevision> myMergeSources = new ArrayList<>();
-
-  @Deprecated // Required for compatibility with external plugins.
-  public SvnFileRevision(@NotNull SvnVcs vcs,
-                         Revision pegRevision,
-                         @NotNull Revision revision,
-                         @NotNull String url,
-                         String author,
-                         Date date,
-                         String commitMessage,
-                         String copyFromPath) {
-    this(vcs, pegRevision, revision, parseUrl(url, false), author, date, commitMessage, copyFromPath);
-  }
+  private final @NotNull List<SvnFileRevision> myMergeSources = new ArrayList<>();
 
   public SvnFileRevision(@NotNull SvnVcs vcs,
                          Revision pegRevision,
@@ -85,13 +72,11 @@ public class SvnFileRevision implements VcsFileRevision {
     myURL = url;
   }
 
-  @NotNull
-  public CommitInfo getCommitInfo() {
+  public @NotNull CommitInfo getCommitInfo() {
     return new CommitInfo.Builder(myRevisionNumber.getRevision().getNumber(), myDate, myAuthor).build();
   }
 
-  @NotNull
-  public Url getURL() {
+  public @NotNull Url getURL() {
     return myURL;
   }
 
@@ -100,8 +85,7 @@ public class SvnFileRevision implements VcsFileRevision {
   }
 
   @Override
-  @NotNull
-  public SvnRevisionNumber getRevisionNumber() {
+  public @NotNull SvnRevisionNumber getRevisionNumber() {
     return myRevisionNumber;
   }
 
@@ -110,9 +94,8 @@ public class SvnFileRevision implements VcsFileRevision {
     return null;
   }
 
-  @Nullable
   @Override
-  public SvnRepositoryLocation getChangedRepositoryPath() {
+  public @Nullable SvnRepositoryLocation getChangedRepositoryPath() {
     return new SvnRepositoryLocation(myURL);
   }
 
@@ -135,8 +118,7 @@ public class SvnFileRevision implements VcsFileRevision {
     myMergeSources.add(source);
   }
 
-  @NotNull
-  public List<SvnFileRevision> getMergeSources() {
+  public @NotNull List<SvnFileRevision> getMergeSources() {
     return myMergeSources;
   }
 
@@ -219,8 +201,7 @@ public class SvnFileRevision implements VcsFileRevision {
     }
   }
 
-  @NotNull
-  public Revision getRevision() {
+  public @NotNull Revision getRevision() {
     return myRevisionNumber.getRevision();
   }
 }

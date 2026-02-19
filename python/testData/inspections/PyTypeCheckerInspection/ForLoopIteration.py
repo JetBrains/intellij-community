@@ -5,7 +5,7 @@ def test(p1):
     for x in <warning descr="Expected type 'collections.Iterable', got 'int' instead">42</warning>:
         pass
 
-    for x in f('foo', p1):
+    for x in <warning descr="Expected type 'collections.Iterable', got 'Union[int, Any]' instead">f('foo', p1)</warning>:
         pass
 
 

@@ -11,7 +11,7 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.Icon;
 
 public final class ChangeListScope extends FilteredNamedScope implements WeighedItem {
   private static final Icon ICON = new OffsetIcon(AllIcons.Scope.ChangedFiles);
@@ -34,8 +34,7 @@ public final class ChangeListScope extends FilteredNamedScope implements Weighed
   @Override
   public boolean equals(Object object) {
     if (object == this) return true;
-    if (object instanceof ChangeListScope) {
-      ChangeListScope scope = (ChangeListScope)object;
+    if (object instanceof ChangeListScope scope) {
       return scope.getIcon() == getIcon() && scope.getScopeId().equals(getScopeId());
     }
     return false;

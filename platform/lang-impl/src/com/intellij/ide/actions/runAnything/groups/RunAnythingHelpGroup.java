@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions.runAnything.groups;
 
 import com.intellij.ide.actions.runAnything.activity.RunAnythingProvider;
@@ -6,6 +6,7 @@ import com.intellij.ide.actions.runAnything.items.RunAnythingItem;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
@@ -22,10 +23,10 @@ import java.util.stream.Collectors;
 public class RunAnythingHelpGroup<P extends RunAnythingProvider> extends RunAnythingGroupBase {
   public static final ExtensionPointName<RunAnythingGroup> EP_NAME = ExtensionPointName.create("com.intellij.runAnything.helpGroup");
 
-  @NotNull private String myTitle = "undefined";
-  @NotNull private List<P> myProviders = ContainerUtil.emptyList();
+  private @NotNull @Nls(capitalization = Nls.Capitalization.Title) String myTitle = "undefined"; //NON-NLS
+  private @NotNull List<P> myProviders = ContainerUtil.emptyList();
 
-  public RunAnythingHelpGroup(@NotNull String title, @NotNull List<P> providers) {
+  public RunAnythingHelpGroup(@NotNull @Nls(capitalization = Nls.Capitalization.Title) String title, @NotNull List<P> providers) {
     myTitle = title;
     myProviders = providers;
   }
@@ -33,12 +34,11 @@ public class RunAnythingHelpGroup<P extends RunAnythingProvider> extends RunAnyt
   /**
    * @deprecated API compatibility
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public RunAnythingHelpGroup() { }
 
-  @NotNull
   @Override
-  public String getTitle() {
+  public @NotNull String getTitle() {
     return myTitle;
   }
 
@@ -47,15 +47,13 @@ public class RunAnythingHelpGroup<P extends RunAnythingProvider> extends RunAnyt
    * See also {@code RunAnythingProviderBase.getHelp*()} methods.
    * @deprecated please use {@link RunAnythingProvider#getHelpGroupTitle()} instead
    */
-  @Deprecated
-  @NotNull
-  public Collection<P> getProviders() {
+  @Deprecated(forRemoval = true)
+  public @NotNull Collection<P> getProviders() {
     return myProviders;
   }
 
-  @NotNull
   @Override
-  public Collection<RunAnythingItem> getGroupItems(@NotNull DataContext dataContext, @NotNull String pattern) {
+  public @NotNull Collection<RunAnythingItem> getGroupItems(@NotNull DataContext dataContext, @NotNull String pattern) {
     return getProviders()
       .stream()
       .map(provider -> provider.getHelpItem(dataContext))

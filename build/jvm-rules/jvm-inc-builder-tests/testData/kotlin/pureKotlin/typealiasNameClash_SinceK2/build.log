@@ -1,0 +1,18 @@
+================ Step #1 =================
+Cleaning output files:
+  META-INF/kotlin_pureKotlin_typealiasNameClash_SinceK2-a.kotlin_module
+End of files
+Compiling files:
+  kotlin/pureKotlin/typealiasNameClash_SinceK2/a/Foo.kt
+End of files
+Cleaning output files:
+  AliasKt.class
+  Foo.class
+  META-INF/kotlin_pureKotlin_typealiasNameClash_SinceK2-a.kotlin_module
+End of files
+Compiling files:
+  kotlin/pureKotlin/typealiasNameClash_SinceK2/a/Foo.kt
+  kotlin/pureKotlin/typealiasNameClash_SinceK2/a/alias.kt
+End of files
+------------------------------------------
+Exit code: ERROR

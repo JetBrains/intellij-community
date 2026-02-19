@@ -1,0 +1,4 @@
+@org.testng.annotations.DataProvider(name = "${NAME}")
+fun ${NAME}(): Array<Array<Any>> {
+  ${BODY}
+}

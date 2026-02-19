@@ -1,0 +1,65 @@
+### auto-generated section `build intellij.platform.testFramework.core` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_provided_library", "resourcegroup")
+
+resourcegroup(
+  name = "core_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_provided_library(
+  name = "libraries_junit4_provided",
+  lib = "//libraries/junit4"
+)
+
+jvm_library(
+  name = "core",
+  module_name = "intellij.platform.testFramework.core",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":core_resources"],
+  deps = [
+    "//platform/util",
+    "//platform/util-class-loader:util-classLoader",
+    "//platform/boot",
+    "//platform/testFramework/bootstrap:tools-testsBootstrap",
+    "@lib//:opentest4j",
+    "@lib//:junit5-provided",
+    "//java/java-runtime:rt",
+    "@lib//:kotlin-stdlib",
+    "//libraries/kotlinx/coroutines/core",
+    "//libraries/jackson/jackson",
+    "//libraries/jackson/databind",
+    "//libraries/jackson/module-kotlin:libraries-jackson-module-kotlin",
+    "//libraries/http-client",
+    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
+    "//platform/testFramework/teamCity",
+    ":libraries_junit4_provided",
+  ]
+)
+
+jvm_library(
+  name = "core_test_lib",
+  module_name = "intellij.platform.testFramework.core",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    ":core",
+    "//platform/util:util_test_lib",
+    "//platform/util-class-loader:util-classLoader_test_lib",
+    "//platform/boot:boot_test_lib",
+    "//platform/testFramework/bootstrap:tools-testsBootstrap_test_lib",
+    "//libraries/junit4",
+    "//libraries/junit4:junit4_test_lib",
+    "@lib//:junit5-provided",
+    "//java/java-runtime:rt_test_lib",
+    "//libraries/kotlinx/coroutines/core:core_test_lib",
+    "//libraries/jackson/jackson:jackson_test_lib",
+    "//libraries/jackson/databind:databind_test_lib",
+    "//libraries/jackson/module-kotlin:libraries-jackson-module-kotlin_test_lib",
+    "//libraries/http-client:http-client_test_lib",
+    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
+    "//platform/testFramework/teamCity:teamCity_test_lib",
+  ]
+)
+### auto-generated section `build intellij.platform.testFramework.core` end

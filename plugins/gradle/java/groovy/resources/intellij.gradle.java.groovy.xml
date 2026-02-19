@@ -1,0 +1,142 @@
+<idea-plugin visibility="public">
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <plugin id="org.intellij.groovy"/>
+    <module name="intellij.gradle.java"/>
+    <module name="intellij.java.compiler.impl"/>
+    <module name="intellij.java.execution"/>
+    <module name="intellij.java.execution.impl"/>
+    <module name="intellij.java.impl"/>
+    <module name="intellij.java.indexing"/>
+    <module name="intellij.java.psi"/>
+    <module name="intellij.java.ui"/>
+    <module name="intellij.properties.psi"/>
+  </dependencies>
+  <!-- endregion -->
+  <extensionPoints>
+    <extensionPoint qualifiedName="org.jetbrains.plugins.gradle.resolve.contributor" interface="com.intellij.gradle.java.groovy.service.resolve.GradleMethodContextContributor"
+                    dynamic="true"/>
+    <extensionPoint qualifiedName="org.jetbrains.plugins.gradle.pluginDescriptions" interface="org.jetbrains.plugins.gradle.codeInsight.GradlePluginDescriptionsExtension"
+                    dynamic="true"/>
+  </extensionPoints>
+
+  <extensions defaultExtensionNs="org.jetbrains.plugins.gradle">
+    <resolve.contributor implementation="com.intellij.gradle.java.groovy.service.resolve.GradleProjectContributor"/>
+    <resolve.contributor implementation="com.intellij.gradle.java.groovy.service.resolve.GradleConfigurationsContributor"/>
+    <resolve.contributor implementation="com.intellij.gradle.java.groovy.service.resolve.GradleBuildScriptContributor"/>
+    <resolve.contributor implementation="com.intellij.gradle.java.groovy.service.resolve.GradleDistributionsContributor"/>
+    <resolve.contributor implementation="com.intellij.gradle.java.groovy.service.resolve.GradleIdeaPluginScriptContributor"/>
+    <resolve.contributor implementation="com.intellij.gradle.java.groovy.service.resolve.GradleRepositoriesContributor"/>
+    <resolve.contributor implementation="com.intellij.gradle.java.groovy.service.resolve.GradleDependenciesContributor"/>
+    <resolve.contributor implementation="com.intellij.gradle.java.groovy.service.resolve.GradleArtifactsContributor"/>
+    <resolve.contributor implementation="com.intellij.gradle.java.groovy.service.resolve.GradleJavaContributor"/>
+    <resolve.contributor implementation="com.intellij.gradle.java.groovy.service.resolve.GradleMiscContributor"/>
+    <pluginDescriptions implementation="org.jetbrains.plugins.gradle.codeInsight.GradlePluginDescriptions"/>
+    <executionEnvironmentProvider implementation="com.intellij.gradle.java.groovy.execution.build.GroovyGradleApplicationEnvironmentProvider"/>
+    <frameworkSupport implementation="com.intellij.gradle.java.groovy.frameworkSupport.GradleGroovyFrameworkSupportProvider"/>
+    <kotlinDslFrameworkSupport implementation="com.intellij.gradle.java.groovy.frameworkSupport.KotlinDslGradleGroovyFrameworkSupportProvider" />
+  </extensions>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <fileType name="Gradle"
+              extensions="gradle"
+              patterns="*.gradle"
+              implementationClass="com.intellij.gradle.java.groovy.config.GradleFileType" fieldName="INSTANCE"/>
+    <resolveScopeEnlarger implementation="org.jetbrains.plugins.gradle.config.GradleBuildClasspathResolveScopeEnlarger"/>
+    <useScopeEnlarger implementation="org.jetbrains.plugins.gradle.config.GradleUseScopeEnlarger"/>
+    <implicitUsageProvider implementation="com.intellij.gradle.java.groovy.config.GradleImplicitUsageProvider"/>
+    <java.elementFinder implementation="org.jetbrains.plugins.gradle.config.GradleClassFinder"/>
+    <gotoDeclarationHandler implementation="com.intellij.gradle.java.groovy.service.navigation.GradleVersionCatalogGotoDeclarationHandler"/>
+    <externalSystemTaskNotificationListener implementation="org.jetbrains.plugins.gradle.codeInspection.suppression.GradleSuppressHighlightingListener"/>
+    <trafficLightRendererContributor implementation="com.intellij.gradle.java.groovy.codeInspection.suppression.GradleGroovyTrafficLightRendererContributor"/>
+
+    <lang.documentationProvider language="Groovy"
+                                implementationClass="com.intellij.gradle.java.groovy.documentation.GradleDocumentationProvider" order="first"/>
+    <annotator language="Groovy" implementationClass="com.intellij.gradle.java.groovy.service.resolve.dsl.GradleDslAnnotator"/>
+    <localInspection language="Groovy" groupPath="Gradle" shortName="MultipleRepositoryUrls"
+                     bundle="messages.GradleInspectionBundle"
+                     key="multiple.repository.urls" groupKey="group.names.probable.bugs" groupBundle="messages.InspectionsBundle" enabledByDefault="true" level="WARNING"
+                     implementationClass="com.intellij.gradle.java.groovy.codeInspection.MultipleRepositoryUrlsInspection"/>
+
+    <localInspection language="Groovy" groupPath="Gradle" shortName="BintrayPublishingPlugin"
+                     bundle="messages.GradleInspectionBundle"
+                     key="bintray.publishing.plugin" groupKey="group.names.probable.bugs" groupBundle="messages.InspectionsBundle"
+                     enabledByDefault="true" level="WARNING"
+                     implementationClass="com.intellij.gradle.java.groovy.codeInspection.BintrayPublishingPluginInspection"/>
+
+    <localInspection language="Groovy" groupPath="Gradle" shortName="JCenterRepository"
+                     bundle="messages.GradleInspectionBundle"
+                     key="jcenter.repository" groupKey="group.names.probable.bugs" groupBundle="messages.InspectionsBundle"
+                     enabledByDefault="true" level="WARNING"
+                     implementationClass="com.intellij.gradle.java.groovy.codeInspection.JCenterRepositoryInspection"/>
+
+    <runConfigurationProducer implementation="com.intellij.gradle.java.groovy.execution.GradleGroovyScriptRunConfigurationProducer"
+                              order="last"/>
+    <runLineMarkerContributor language="Groovy" id="gradleGroovyRunLineMarkerProvider"
+                              implementationClass="com.intellij.gradle.java.groovy.execution.GradleGroovyRunLineMarkerProvider"/>
+
+    <fileTypeUsageSchemaDescriptor schema="Gradle" implementationClass="com.intellij.gradle.java.groovy.config.GradleScriptTypeDetector"/>
+    <psi.symbolReferenceProvider hostLanguage="Groovy"
+                                 hostElementClass="org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral"
+                                 targetClass="org.jetbrains.plugins.gradle.service.resolve.GradleProjectSymbol"
+                                 implementationClass="com.intellij.gradle.java.groovy.service.resolve.GradleProjectReferenceProvider"/>
+    <psi.symbolReferenceProvider hostLanguage="Groovy"
+                                 hostElementClass="org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral"
+                                 targetClass="org.jetbrains.plugins.gradle.service.resolve.GradlePluginSymbol"
+                                 implementationClass="com.intellij.gradle.java.groovy.service.resolve.GradlePluginReferenceProvider"/>
+    <methodReferencesSearch implementation="com.intellij.gradle.java.groovy.service.resolve.GradleManagedPropertySetterReferenceSearcher"/>
+    <searcher forClass="com.intellij.find.usages.api.UsageSearchParameters"
+              implementationClass="com.intellij.gradle.java.groovy.service.resolve.GradleProjectUsageSearcher"/>
+    <searcher forClass="com.intellij.refactoring.rename.api.RenameUsageSearchParameters"
+              implementationClass="com.intellij.gradle.java.groovy.service.resolve.GradleProjectRenameUsageSearcher"/>
+
+    <newProjectWizard.groovy.buildSystem implementation="com.intellij.gradle.java.groovy.service.project.wizard.GradleGroovyNewProjectWizard"/>
+
+    <buildProcess.parametersProvider implementation="com.intellij.gradle.java.groovy.compiler.GradleBuildProcessParametersProvider"/>
+    <externalSystemNotificationExtension implementation="com.intellij.gradle.java.groovy.service.notification.GradleNotificationJavaExtension"/>
+
+    <applicationService serviceInterface="org.jetbrains.plugins.gradle.groovy.LegacyGroovyService"
+                    serviceImplementation="com.intellij.gradle.java.groovy.LegacyGroovyServiceImpl"/>
+
+  </extensions>
+
+  <extensions defaultExtensionNs="org.intellij.groovy">
+    <positionManagerDelegate implementation="com.intellij.gradle.java.groovy.config.GradlePositionManager"/>
+    <scriptTypeDetector implementation="com.intellij.gradle.java.groovy.config.GradleScriptTypeDetector"/>
+    <importContributor implementation="com.intellij.gradle.java.groovy.config.GradleDefaultImportContributor"/>
+    <variableEnhancer order="first" implementation="com.intellij.gradle.java.groovy.service.resolve.GradleClosureSamParameterEnhancer"/>
+    <variableEnhancer implementation="com.intellij.gradle.java.groovy.service.resolve.GradleClosureParameterEnhancer"/>
+    <membersContributor implementation="com.intellij.gradle.java.groovy.service.resolve.GradleSettingsScriptContributor"/>
+    <membersContributor implementation="com.intellij.gradle.java.groovy.service.resolve.GradleScriptMembersContributor"/>
+    <membersContributor implementation="com.intellij.gradle.java.groovy.service.resolve.GradleProjectExtensionContributor"/>
+    <membersContributor implementation="com.intellij.gradle.java.groovy.service.resolve.GradleSyntheticSetterMemberContributor"/>
+    <membersContributor implementation="com.intellij.gradle.java.groovy.service.resolve.GradleConfigurableCallContributor"/>
+    <membersContributor implementation="com.intellij.gradle.java.groovy.service.resolve.GradleActionToClosureMemberContributor"/>
+    <membersContributor implementation="com.intellij.gradle.java.groovy.service.resolve.GradleProjectMembersContributor"/>
+    <membersContributor implementation="com.intellij.gradle.java.groovy.service.resolve.GradleDependencyHandlerContributor"/>
+    <membersContributor implementation="com.intellij.gradle.java.groovy.service.resolve.GradleScriptContributor"/>
+    <membersContributor implementation="com.intellij.gradle.java.groovy.service.resolve.GradleSetterAsMethodContributor"/>
+    <membersContributor implementation="com.intellij.gradle.java.groovy.service.resolve.GradleArtifactHandlerContributor"/>
+    <membersContributor implementation="com.intellij.gradle.java.groovy.service.resolve.GradleTaskContainerContributor"/>
+    <membersContributor implementation="com.intellij.gradle.java.groovy.service.resolve.GradleNamedDomainCollectionContributor"/>
+    <membersContributor implementation="com.intellij.gradle.java.groovy.service.resolve.GradleExtensionMembersContributor"/>
+    <callTypeCalculator implementation="com.intellij.gradle.java.groovy.service.resolve.GradleProjectCallTypeCalculator"/>
+    <callTypeCalculator implementation="com.intellij.gradle.java.groovy.service.resolve.GradleArtifactCallTypeCalculator"/>
+    <delegatesToProvider implementation="com.intellij.gradle.java.groovy.service.resolve.GradleTaskDeclarationClosureDelegateProvider"/>
+    <delegatesToProvider implementation="com.intellij.gradle.java.groovy.service.resolve.GradleDelegatesToProvider"/>
+    <elementFilter implementation="com.intellij.gradle.java.groovy.service.resolve.GradleTaskDeclarationElementFilter"/>
+    <typeCalculator forClass="org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression"
+                    implementationClass="com.intellij.gradle.java.groovy.service.resolve.GradleTaskDeclarationTypeCalculator"/>
+    <unresolvedHighlightFilter implementation="com.intellij.gradle.java.groovy.service.resolve.GradleUnresolvedReferenceFilter"/>
+    <inlayHintFilter implementation="com.intellij.gradle.java.groovy.dsl.GradleInlayHintFilter"/>
+    <completionCustomizer implementation="com.intellij.gradle.java.groovy.service.completion.GradleCompletionCustomizer"/>
+    <inspectionDisabler filetype="Gradle" implementationClass="com.intellij.gradle.java.groovy.codeInspection.GradleFileTypeInspectionDisabler"/>
+  </extensions>
+
+  <actions>
+    <group id="GenerateGradleDslGroup">
+      <action id="AddGradleDslPluginAction" class="com.intellij.gradle.java.groovy.codeInsight.actions.AddGradleDslPluginAction"/>
+      <add-to-group group-id="Gradle.GenerateGroup" anchor="first"/>
+    </group>
+  </actions>
+</idea-plugin>

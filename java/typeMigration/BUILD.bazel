@@ -1,0 +1,86 @@
+### auto-generated section `build intellij.java.typeMigration` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "typeMigration_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "typeMigration",
+  module_name = "intellij.java.typeMigration",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":typeMigration_resources"],
+  deps = [
+    "//platform/analysis-api:analysis",
+    "//platform/code-style-api:codeStyle",
+    "//platform/core-api:core",
+    "//platform/editor-ui-api:editor-ui",
+    "//platform/refactoring",
+    "//platform/util",
+    "//platform/lang-api:lang",
+    "//platform/lang-impl",
+    "//java/openapi:java",
+    "//platform/structuralsearch:structuralSearch",
+    "//java/java-impl:impl",
+    "//java/java-impl-refactorings:impl-refactorings",
+    "//java/codeserver/highlighting",
+  ]
+)
+
+jvm_library(
+  name = "typeMigration_test_lib",
+  visibility = ["//visibility:public"],
+  srcs = glob(["test/**/*.kt", "test/**/*.java", "test/**/*.form"], allow_empty = True),
+  associates = [":typeMigration"],
+  deps = [
+    "//platform/analysis-api:analysis",
+    "//platform/analysis-api:analysis_test_lib",
+    "//platform/code-style-api:codeStyle",
+    "//platform/code-style-api:codeStyle_test_lib",
+    "//platform/core-api:core",
+    "//platform/core-api:core_test_lib",
+    "//platform/core-ui",
+    "//platform/core-ui:core-ui_test_lib",
+    "//platform/editor-ui-api:editor-ui",
+    "//platform/editor-ui-api:editor-ui_test_lib",
+    "//platform/refactoring",
+    "//platform/refactoring:refactoring_test_lib",
+    "//platform/util",
+    "//platform/util:util_test_lib",
+    "//platform/lang-api:lang",
+    "//platform/lang-api:lang_test_lib",
+    "//platform/lang-impl",
+    "//platform/lang-impl:lang-impl_test_lib",
+    "//java/openapi:java",
+    "//java/openapi:java_test_lib",
+    "//platform/structuralsearch:structuralSearch",
+    "//platform/structuralsearch:structuralSearch_test_lib",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test_lib",
+    "//java/java-impl:impl",
+    "//java/java-impl:impl_test_lib",
+    "//java/testFramework",
+    "//java/testFramework:testFramework_test_lib",
+    "//platform/code-style-impl:codeStyle-impl",
+    "//platform/code-style-impl:codeStyle-impl_test_lib",
+    "//java/java-impl-refactorings:impl-refactorings",
+    "//java/java-impl-refactorings:impl-refactorings_test_lib",
+    "//java/codeserver/highlighting",
+    "//java/codeserver/highlighting:highlighting_test_lib",
+    "//platform/projectModel-api:projectModel",
+    "//platform/projectModel-api:projectModel_test_lib",
+  ]
+)
+### auto-generated section `build intellij.java.typeMigration` end
+
+### auto-generated section `test intellij.java.typeMigration` start
+load("@community//build:tests-options.bzl", "jps_test")
+
+jps_test(
+  name = "typeMigration_test",
+  runtime_deps = [":typeMigration_test_lib"]
+)
+### auto-generated section `test intellij.java.typeMigration` end

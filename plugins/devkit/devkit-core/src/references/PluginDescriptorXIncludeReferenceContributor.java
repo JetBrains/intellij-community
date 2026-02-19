@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.references;
 
 import com.intellij.codeInsight.completion.CompletionUtil;
@@ -6,7 +6,12 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.patterns.PatternCondition;
 import com.intellij.patterns.XmlAttributeValuePattern;
 import com.intellij.patterns.XmlPatterns;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiFileSystemItem;
+import com.intellij.psi.PsiReference;
+import com.intellij.psi.PsiReferenceContributor;
+import com.intellij.psi.PsiReferenceRegistrar;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReferenceSet;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.XmlBaseReferenceProvider;
 import com.intellij.psi.xml.XmlAttributeValue;
@@ -21,7 +26,7 @@ import org.jetbrains.idea.devkit.util.PsiUtil;
  * This class along with {@link PluginDescriptorXIncludeFileReferenceHelper} provides the way
  * to resolve 'href's in 'include' tags relatively to module resource roots.
  */
-public class PluginDescriptorXIncludeReferenceContributor extends PsiReferenceContributor {
+final class PluginDescriptorXIncludeReferenceContributor extends PsiReferenceContributor {
   @Override
   public void registerReferenceProviders(@NotNull PsiReferenceRegistrar registrar) {
     registrar.registerReferenceProvider(getPattern(), new XIncludeReferenceProvider(), PsiReferenceRegistrar.HIGHER_PRIORITY);
@@ -30,7 +35,7 @@ public class PluginDescriptorXIncludeReferenceContributor extends PsiReferenceCo
   private static XmlAttributeValuePattern getPattern() {
     return XmlPatterns.xmlAttributeValue().withLocalName("href")
       .withSuperParent(2, XmlPatterns.xmlTag().withLocalName("include").withNamespace(XmlUtil.XINCLUDE_URI))
-      .with(new PatternCondition<XmlAttributeValue>("XInclude inside plugin.xml") {
+      .with(new PatternCondition<>("XInclude inside plugin.xml") {
         @Override
         public boolean accepts(@NotNull XmlAttributeValue value, ProcessingContext context) {
           return PsiUtil.isPluginXmlPsiElement(value);

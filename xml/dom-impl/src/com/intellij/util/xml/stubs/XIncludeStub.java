@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.xml.stubs;
 
 import com.intellij.openapi.fileTypes.PlainTextLanguage;
@@ -8,7 +8,12 @@ import com.intellij.psi.PsiFileFactory;
 import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReferenceSet;
-import com.intellij.psi.stubs.*;
+import com.intellij.psi.stubs.IndexSink;
+import com.intellij.psi.stubs.ObjectStubBase;
+import com.intellij.psi.stubs.ObjectStubSerializer;
+import com.intellij.psi.stubs.Stub;
+import com.intellij.psi.stubs.StubInputStream;
+import com.intellij.psi.stubs.StubOutputStream;
 import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
@@ -40,9 +45,8 @@ public final class XIncludeStub extends ObjectStubBase<ElementStub> {
     parent.addChild(this);
   }
 
-  @NotNull
   @Override
-  public List<? extends Stub> getChildrenStubs() {
+  public @NotNull List<? extends Stub> getChildrenStubs() {
     return Collections.emptyList();
   }
 
@@ -68,15 +72,15 @@ public final class XIncludeStub extends ObjectStubBase<ElementStub> {
   }
 
   private static void processChildrenWithLocalName(DomElement parent, String localName, Processor<? super DomElement> processor) {
-    parent.acceptChildren(element -> {
-      if (element.getXmlElementName().equals(localName)) {
+    parent.acceptChildren(new DomInvocationHandler.DomLocalNameElementVisitor(localName) {
+      @Override
+      public void visitDomElement(DomElement element) {
         processor.process(element);
       }
     });
   }
 
-  @Nullable
-  private DomElement computeValue(DomInvocationHandler parent) {
+  private @Nullable DomElement computeValue(DomInvocationHandler parent) {
     if (StringUtil.isEmpty(myHref) || StringUtil.isEmpty(myXpointer)) {
       return null;
     }
@@ -119,9 +123,8 @@ public final class XIncludeStub extends ObjectStubBase<ElementStub> {
 
   static class XIncludeStubSerializer implements ObjectStubSerializer<XIncludeStub, ElementStub> {
 
-    @NotNull
     @Override
-    public String getExternalId() {
+    public @NotNull String getExternalId() {
       return "xml.XIncludeStub";
     }
 
@@ -131,9 +134,8 @@ public final class XIncludeStub extends ObjectStubBase<ElementStub> {
       dataStream.writeUTFFast(StringUtil.notNullize(stub.myXpointer));
     }
 
-    @NotNull
     @Override
-    public XIncludeStub deserialize(@NotNull StubInputStream dataStream, ElementStub parentStub) throws IOException {
+    public @NotNull XIncludeStub deserialize(@NotNull StubInputStream dataStream, ElementStub parentStub) throws IOException {
       return new XIncludeStub(parentStub, dataStream.readUTFFast(), dataStream.readUTFFast());
     }
 

@@ -1,9 +1,13 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.intellij.lang.regexp;
 
 import com.intellij.mock.MockSmartPointerManager;
 import com.intellij.openapi.application.ex.PathManagerEx;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiComment;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.SmartPointerManager;
+import com.intellij.psi.SmartPsiElementPointer;
+import com.intellij.psi.SyntaxTraverser;
 import com.intellij.psi.impl.source.resolve.FileContextUtil;
 import com.intellij.testFramework.ParsingTestCase;
 
@@ -24,7 +28,7 @@ public class RegExpParsingTest extends ParsingTestCase {
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    myProject.registerService(SmartPointerManager.class, new MockSmartPointerManager());
+    project.registerService(SmartPointerManager.class, new MockSmartPointerManager(project));
   }
 
   @Override
@@ -152,6 +156,7 @@ public class RegExpParsingTest extends ParsingTestCase {
   public void testCharClasses71() throws IOException { doCodeTest("[a-\\Qz\\E]"); }
   public void testCharClasses72() throws IOException { doCodeTest("([\\^])"); }
   public void testCharClasses73() throws IOException { doCodeTest("[i-[:]]*"); }
+  public void testCharClasses74() throws IOException { doCodeTest("[\\w-z]"); }
 
   public void testGroups1() throws IOException { doCodeTest("()ef"); }
   public void testGroups2() throws IOException { doCodeTest("()*"); }
@@ -227,6 +232,7 @@ public class RegExpParsingTest extends ParsingTestCase {
   public void testEscapes28() throws IOException { doCodeTest("[a\\]]"); }
   public void testEscapes29() throws IOException { doCodeTest("[^a\\]]"); }
   public void testEscapes30() throws IOException { doCodeTest("\\[\\]$"); }
+  public void testEscapes31() throws IOException { doCodeTest("\\ud800"); }
 
   public void testAnchors1() throws IOException { doCodeTest("^*"); }
   public void testAnchors2() throws IOException { doCodeTest("$*"); }

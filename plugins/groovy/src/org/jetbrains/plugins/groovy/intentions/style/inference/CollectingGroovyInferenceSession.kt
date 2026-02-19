@@ -1,12 +1,18 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.intentions.style.inference
 
 import com.intellij.openapi.util.RecursionManager
 import com.intellij.openapi.util.component1
 import com.intellij.openapi.util.component2
-import com.intellij.psi.*
+import com.intellij.psi.PsiClassType
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiSubstitutor
+import com.intellij.psi.PsiType
+import com.intellij.psi.PsiTypeMapper
+import com.intellij.psi.PsiTypeParameter
 import com.intellij.psi.impl.source.resolve.graphInference.InferenceBound
 import com.intellij.psi.impl.source.resolve.graphInference.InferenceVariable
+import com.intellij.psi.impl.source.resolve.graphInference.constraints.ConstraintFormula
 import com.intellij.psi.util.parentOfType
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyMethodResult
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult
@@ -18,7 +24,14 @@ import org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.GrTypeConverter.Posit
 import org.jetbrains.plugins.groovy.lang.resolve.api.ArgumentMapping
 import org.jetbrains.plugins.groovy.lang.resolve.api.ExpressionArgument
 import org.jetbrains.plugins.groovy.lang.resolve.api.PsiCallParameter
-import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.*
+import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.ExpectedType
+import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.ExpressionConstraint
+import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.GroovyInferenceSession
+import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.MethodCallConstraint
+import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.TypeConstraint
+import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.addExpression
+import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.findExpression
+import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.type
 
 class CollectingGroovyInferenceSession(
   private val typeParams: Array<PsiTypeParameter>,
@@ -39,13 +52,14 @@ class CollectingGroovyInferenceSession(
     fun getContextSubstitutor(resolveResult: GroovyMethodResult,
                               nearestCall: GrCall): PsiSubstitutor = RecursionManager.doPreventingRecursion(resolveResult, true) {
       val collectingSession = CollectingGroovyInferenceSession(nearestCall.parentOfType<GrMethod>()!!.typeParameters, nearestCall)
-      buildTopLevelSession(nearestCall, collectingSession).inferSubst(resolveResult)
+      findExpression(nearestCall, false)?.let { collectingSession.addExpression(it, false) }
+      collectingSession.inferSubst(resolveResult)
     } ?: PsiSubstitutor.EMPTY
   }
 
   private fun substituteForeignTypeParameters(type: PsiType?): PsiType? {
     return type?.accept(object : PsiTypeMapper() {
-      override fun visitClassType(classType: PsiClassType): PsiType? {
+      override fun visitClassType(classType: PsiClassType): PsiType {
         if (classType.isTypeParameter()) {
           return myInferenceVariables.find { it.delegate.name == classType.canonicalText }?.type() ?: classType
         }
@@ -54,6 +68,16 @@ class CollectingGroovyInferenceSession(
         }
       }
     })
+  }
+
+  override fun addConstraint(constraint: ConstraintFormula?) {
+    if (constraint is MethodCallConstraint) {
+      val method = constraint.result.candidate?.method ?: return
+      if (method.returnTypeElement == null) {
+        return super.addConstraint(MethodCallConstraint(null, constraint.result, constraint.context))
+      }
+    }
+    return super.addConstraint(constraint)
   }
 
   override fun substituteWithInferenceVariables(type: PsiType?): PsiType? =

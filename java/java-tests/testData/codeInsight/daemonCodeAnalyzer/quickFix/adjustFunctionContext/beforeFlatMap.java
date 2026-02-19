@@ -1,4 +1,4 @@
-// "Replace 'flatMap()' with 'flatMapToDouble()'" "true"
+// "Replace 'flatMap()' with 'flatMapToDouble()'" "true-preview"
 import java.util.*;
 import java.util.stream.*;
 

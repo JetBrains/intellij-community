@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins;
 
 import com.intellij.ide.IdeBundle;
@@ -11,7 +11,11 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.ui.ValidationInfo;
-import com.intellij.openapi.ui.cellvalidators.*;
+import com.intellij.openapi.ui.cellvalidators.CellComponentProvider;
+import com.intellij.openapi.ui.cellvalidators.CellTooltipManager;
+import com.intellij.openapi.ui.cellvalidators.StatefulValidatingCellEditor;
+import com.intellij.openapi.ui.cellvalidators.ValidatingTableCellRendererWrapper;
+import com.intellij.openapi.ui.cellvalidators.ValidationUtils;
 import com.intellij.openapi.updateSettings.impl.UpdateSettings;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsSafe;
@@ -26,6 +30,7 @@ import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.io.URLUtil;
 import com.intellij.util.ui.ColumnInfo;
+import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.ListTableModel;
 import com.intellij.util.ui.UIUtil;
@@ -33,16 +38,23 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.DefaultCellEditor;
+import javax.swing.JComponent;
+import javax.swing.JTable;
+import javax.swing.ListSelectionModel;
 import javax.swing.border.Border;
 import javax.swing.event.ChangeEvent;
-import java.awt.*;
+import java.awt.Dimension;
+import java.awt.Graphics;
+import java.awt.Insets;
+import java.awt.Point;
+import java.awt.Rectangle;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-public class PluginHostsConfigurable implements Configurable.NoScroll, Configurable {
-  private final ListTableModel<UrlInfo> myModel = new ListTableModel<UrlInfo>() {
+public final class PluginHostsConfigurable implements Configurable.NoScroll, Configurable, Configurable.SingleEditorConfiguration {
+  private final ListTableModel<UrlInfo> myModel = new ListTableModel<>() {
     @Override
     public void addRow() {
       addRow(new UrlInfo(""));
@@ -102,13 +114,11 @@ public class PluginHostsConfigurable implements Configurable.NoScroll, Configura
     }
   };
 
-  @Nullable
   @Override
-  public JComponent createComponent() {
+  public @Nullable JComponent createComponent() {
     myModel.setColumnInfos(new ColumnInfo[]{new ColumnInfo<UrlInfo, String>("") {
-      @Nullable
       @Override
-      public String valueOf(UrlInfo info) {
+      public @Nullable String valueOf(UrlInfo info) {
         return info.name;
       }
 
@@ -145,7 +155,8 @@ public class PluginHostsConfigurable implements Configurable.NoScroll, Configura
     myTable.setDefaultEditor(Object.class, editor);
 
     myTable.setDefaultRenderer(Object.class, new ValidatingTableCellRendererWrapper(new ColoredTableCellRenderer() {
-        { setIpad(JBUI.emptyInsets());}
+        {
+          setIpad(JBInsets.emptyInsets());}
 
         @Override
         protected void customizeCellRenderer(@NotNull JTable table, @Nullable Object value, boolean selected, boolean hasFocus, int row, int column) {
@@ -202,7 +213,7 @@ public class PluginHostsConfigurable implements Configurable.NoScroll, Configura
       public void run(@NotNull ProgressIndicator indicator) {
         for (int i = 0, size = infos.size(); i < size; i++) {
           try {
-            if (RepositoryHelper.loadPlugins(infos.get(i).name, indicator).size() == 0) {
+            if (RepositoryHelper.loadPlugins(infos.get(i).name, null, indicator).isEmpty()) {
               results.set(i, IdeBundle.message("error.no.plugins.found"));
             }
           }
@@ -279,15 +290,19 @@ public class PluginHostsConfigurable implements Configurable.NoScroll, Configura
     }
   }
 
-  @NotNull
-  private static String correctRepositoryRule(@NotNull String input) {
+  @Override
+  public @NotNull Dimension getDialogInitialSize() {
+    return JBUI.DialogSizes.medium();
+  }
+
+  private static @NotNull String correctRepositoryRule(@NotNull String input) {
     if (VirtualFileManager.extractProtocol(input) == null) {
       return VirtualFileManager.constructUrl(URLUtil.HTTP_PROTOCOL, input);
     }
     return input;
   }
 
-  private static class UrlInfo {
+  private static final class UrlInfo {
     @NlsSafe String name;
     boolean progress;
     @Nls String errorTooltip;

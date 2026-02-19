@@ -10,18 +10,25 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.magicLiteral.PyMagicLiteralExtensionPoint;
 import com.jetbrains.python.magicLiteral.PyMagicLiteralTools;
-import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.PyClass;
+import com.jetbrains.python.psi.PyFunction;
+import com.jetbrains.python.psi.PyImportElement;
+import com.jetbrains.python.psi.PyKeywordArgument;
+import com.jetbrains.python.psi.PyNamedParameter;
+import com.jetbrains.python.psi.PyParameter;
+import com.jetbrains.python.psi.PyReferenceExpression;
+import com.jetbrains.python.psi.PyStringLiteralExpression;
+import com.jetbrains.python.psi.PyTargetExpression;
+import com.jetbrains.python.psi.StringLiteralExpression;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * TODO: Create strategies instead of chain of instanceof
- *
- * @author yole
  */
 public class PythonFindUsagesProvider implements FindUsagesProvider {
   @Override
-  public boolean canFindUsagesFor(@NotNull final PsiElement psiElement) {
+  public boolean canFindUsagesFor(final @NotNull PsiElement psiElement) {
     if (PyMagicLiteralTools.couldBeMagicLiteral(psiElement)) {
       return true;
     }
@@ -43,8 +50,7 @@ public class PythonFindUsagesProvider implements FindUsagesProvider {
   }
 
   @Override
-  @NotNull
-  public String getType(@NotNull PsiElement element) {
+  public @NotNull String getType(@NotNull PsiElement element) {
     String literalString = tryFindMagicLiteralString(element, false);
     if (literalString != null) {
       return literalString;
@@ -73,8 +79,7 @@ public class PythonFindUsagesProvider implements FindUsagesProvider {
   }
 
   @Override
-  @NotNull
-  public String getDescriptiveName(@NotNull PsiElement element) {
+  public @NotNull String getDescriptiveName(@NotNull PsiElement element) {
     String literalString = tryFindMagicLiteralString(element, true);
     if (literalString != null) {
       return literalString;
@@ -95,8 +100,7 @@ public class PythonFindUsagesProvider implements FindUsagesProvider {
   }
 
   @Override
-  @NotNull
-  public String getNodeText(@NotNull PsiElement element, boolean useFullName) {
+  public @NotNull String getNodeText(@NotNull PsiElement element, boolean useFullName) {
     return getDescriptiveName(element);
   }
 
@@ -112,9 +116,7 @@ public class PythonFindUsagesProvider implements FindUsagesProvider {
    * @param obtainValue display element value (will display element type otherwise)
    * @return text (if found) or null
    */
-  @Nullable
-  @NlsSafe
-  private static String tryFindMagicLiteralString(@NotNull final PsiElement element, final boolean obtainValue) {
+  private static @Nullable @NlsSafe String tryFindMagicLiteralString(final @NotNull PsiElement element, final boolean obtainValue) {
     if (element instanceof PyStringLiteralExpression) {
       final PyMagicLiteralExtensionPoint point = PyMagicLiteralTools.getPoint((PyStringLiteralExpression)element);
       if (point != null) {

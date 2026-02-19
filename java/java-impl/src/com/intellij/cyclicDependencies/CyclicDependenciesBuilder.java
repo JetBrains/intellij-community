@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.cyclicDependencies;
 
 import com.intellij.analysis.AnalysisScope;
@@ -25,16 +11,31 @@ import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.packageDependencies.DependenciesBuilder;
 import com.intellij.packageDependencies.ForwardDependenciesBuilder;
-import com.intellij.psi.*;
-import com.intellij.util.graph.*;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiJavaFile;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiPackage;
+import com.intellij.psi.PsiRecursiveElementVisitor;
+import com.intellij.util.graph.CachingSemiGraph;
+import com.intellij.util.graph.Graph;
+import com.intellij.util.graph.GraphAlgorithms;
+import com.intellij.util.graph.GraphGenerator;
+import com.intellij.util.graph.InboundSemiGraph;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 public class CyclicDependenciesBuilder{
-  @NotNull
-  private final Project myProject;
+  private final @NotNull Project myProject;
   private final AnalysisScope myScope;
   private final Map<String, PsiPackage> myPackages = new HashMap<>();
   private Graph<PsiPackage> myGraph;
@@ -63,8 +64,7 @@ public class CyclicDependenciesBuilder{
     };
   }
 
-  @NotNull
-  private @Nls String getRootNodeNameInUsageView() {
+  private @NotNull @Nls String getRootNodeNameInUsageView() {
     return myRootNodeNameInUsageView;
   }
 
@@ -72,18 +72,15 @@ public class CyclicDependenciesBuilder{
     myRootNodeNameInUsageView = rootNodeNameInUsageView;
   }
 
-  @NotNull
-  public Project getProject() {
+  public @NotNull Project getProject() {
     return myProject;
   }
 
-  @NotNull
-  public AnalysisScope getScope() {
+  public @NotNull AnalysisScope getScope() {
     return myScope;
   }
 
-  @NotNull
-  public DependenciesBuilder getForwardBuilder() {
+  public @NotNull DependenciesBuilder getForwardBuilder() {
     return myForwardBuilder;
   }
 
@@ -91,8 +88,7 @@ public class CyclicDependenciesBuilder{
     final ProjectFileIndex projectFileIndex = ProjectRootManager.getInstance(getProject()).getFileIndex();
     getScope().accept(new PsiRecursiveElementVisitor() {
       @Override public void visitFile(@NotNull PsiFile file) {
-        if (file instanceof PsiJavaFile) {
-          PsiJavaFile psiJavaFile = (PsiJavaFile)file;
+        if (file instanceof PsiJavaFile psiJavaFile) {
           if (getScope().contains(psiJavaFile)) {
             final PsiPackage aPackage = findPackage(psiJavaFile.getPackageName());
             if (aPackage != null) {
@@ -145,10 +141,10 @@ public class CyclicDependenciesBuilder{
     myCyclicDependencies = getCycles(myPackages.values());
   }
 
-  private void constractFilesInDependenciesPackagesMap(final PsiPackage pack,
-                                                       final PsiPackage depPackage,
-                                                       final PsiFile file,
-                                                       final Map<PsiPackage, Map<PsiPackage, Set<PsiFile>>> filesInDependentPackages) {
+  private static void constractFilesInDependenciesPackagesMap(final PsiPackage pack,
+                                                              final PsiPackage depPackage,
+                                                              final PsiFile file,
+                                                              final Map<PsiPackage, Map<PsiPackage, Set<PsiFile>>> filesInDependentPackages) {
     Map<PsiPackage, Set<PsiFile>> dependentPackages2Files = filesInDependentPackages.get(pack);
     if (dependentPackages2Files == null) {
       dependentPackages2Files = new HashMap<>();
@@ -218,9 +214,8 @@ public class CyclicDependenciesBuilder{
     if (myPackages.isEmpty()) {
       final PsiManager psiManager = PsiManager.getInstance(getProject());
       getScope().accept(new PsiRecursiveElementVisitor() {
-        @Override public void visitFile(@NotNull PsiFile file) {
-          if (file instanceof PsiJavaFile) {
-            PsiJavaFile psiJavaFile = (PsiJavaFile)file;
+        @Override public void visitFile(@NotNull PsiFile psiFile) {
+          if (psiFile instanceof PsiJavaFile psiJavaFile) {
             final PsiPackage aPackage = JavaPsiFacade.getInstance(psiManager.getProject()).findPackage(psiJavaFile.getPackageName());
             if (aPackage != null) {
               myPackages.put(aPackage.getQualifiedName(), aPackage);
@@ -235,14 +230,12 @@ public class CyclicDependenciesBuilder{
   private Graph<PsiPackage> buildGraph() {
     return GraphGenerator.generate(CachingSemiGraph.cache(new InboundSemiGraph<>() {
       @Override
-      @NotNull
-      public Collection<PsiPackage> getNodes() {
+      public @NotNull Collection<PsiPackage> getNodes() {
         return getAllScopePackages().values();
       }
 
-      @NotNull
       @Override
-      public Iterator<PsiPackage> getIn(PsiPackage psiPack) {
+      public @NotNull Iterator<PsiPackage> getIn(PsiPackage psiPack) {
         final Set<PsiPackage> psiPackages = myPackageDependencies.get(psiPack);
         if (psiPackages == null) {     //for packs without java classes
           return Collections.emptyIterator();
@@ -252,8 +245,7 @@ public class CyclicDependenciesBuilder{
     }));
   }
 
-  @NotNull
-  private Set<PsiPackage> getPackageHierarchy(@NotNull String packageName) {
+  private @NotNull Set<PsiPackage> getPackageHierarchy(@NotNull String packageName) {
     final Set<PsiPackage> result = new HashSet<>();
     PsiPackage psiPackage = findPackage(packageName);
     if (psiPackage != null) {

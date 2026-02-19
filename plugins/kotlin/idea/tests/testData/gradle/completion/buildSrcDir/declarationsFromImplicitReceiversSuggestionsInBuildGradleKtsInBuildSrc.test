@@ -1,0 +1,12 @@
+// FILE: buildSrc/build.gradle.kts
+// "EXPECTED-SUGGESTION": "Project"
+plugins {
+    id("java")
+}
+
+org.gradle.api.Pr<caret>
+
+repositories {
+    mavenCentral()
+}
+

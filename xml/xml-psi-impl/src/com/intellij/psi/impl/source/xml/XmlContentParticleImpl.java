@@ -21,13 +21,16 @@ import com.intellij.psi.impl.source.resolve.reference.impl.providers.DtdResolveU
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.xml.XmlContentParticle;
 import com.intellij.psi.xml.XmlToken;
-import com.intellij.psi.xml.XmlTokenType;
 import com.intellij.xml.XmlElementDescriptor;
+
+import static com.intellij.psi.xml.XmlTokenType.XML_PLUS;
+import static com.intellij.psi.xml.XmlTokenType.XML_QUESTION;
+import static com.intellij.psi.xml.XmlTokenType.XML_STAR;
 
 /**
  * @author Dmitry Avdeev
  */
-public class XmlContentParticleImpl implements XmlContentParticle, XmlTokenType {
+public class XmlContentParticleImpl implements XmlContentParticle {
 
   private final XmlToken myToken;
 

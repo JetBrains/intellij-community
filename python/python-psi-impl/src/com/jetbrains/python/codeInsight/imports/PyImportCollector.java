@@ -4,22 +4,49 @@ package com.jetbrains.python.codeInsight.imports;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtilRt;
-import com.intellij.psi.*;
-import com.intellij.psi.search.FilenameIndex;
+import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiFileSystemItem;
+import com.intellij.psi.PsiNamedElement;
+import com.intellij.psi.PsiReference;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.QualifiedName;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.codeInsight.PyCodeInsightSettings;
-import com.jetbrains.python.psi.*;
+import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider;
+import com.jetbrains.python.inspections.unresolvedReference.PyCommonImportAliasesKt;
+import com.jetbrains.python.psi.PyArgumentList;
+import com.jetbrains.python.psi.PyCallExpression;
+import com.jetbrains.python.psi.PyClass;
+import com.jetbrains.python.psi.PyDecorator;
+import com.jetbrains.python.psi.PyElement;
+import com.jetbrains.python.psi.PyFile;
+import com.jetbrains.python.psi.PyFromImportStatement;
+import com.jetbrains.python.psi.PyFunction;
+import com.jetbrains.python.psi.PyImportElement;
+import com.jetbrains.python.psi.PyQualifiedNameOwner;
+import com.jetbrains.python.psi.PyReferenceExpression;
+import com.jetbrains.python.psi.PyTargetExpression;
+import com.jetbrains.python.psi.PyTypeAliasStatement;
+import com.jetbrains.python.psi.PyUtil;
 import com.jetbrains.python.psi.impl.PyFileImpl;
 import com.jetbrains.python.psi.resolve.QualifiedNameFinder;
 import com.jetbrains.python.psi.search.PySearchUtilBase;
 import com.jetbrains.python.psi.stubs.PyClassNameIndex;
 import com.jetbrains.python.psi.stubs.PyFunctionNameIndex;
+import com.jetbrains.python.psi.stubs.PyModuleNameIndex;
+import com.jetbrains.python.psi.stubs.PyTypeAliasNameIndex;
 import com.jetbrains.python.psi.stubs.PyVariableNameIndex;
+import com.jetbrains.python.psi.types.TypeEvalContext;
+import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 import static com.jetbrains.python.psi.PyUtil.as;
 
@@ -28,16 +55,13 @@ public class PyImportCollector {
   private final PyElement myNode;
   private final PsiReference myReference;
   private final String myRefText;
-  private final String myAlias;
   private final AutoImportQuickFix fix;
   private final Set<String> seenCandidateNames;
 
-  public PyImportCollector(PyElement node, PsiReference reference, String refText, String alias) {
+  public PyImportCollector(PyElement node, PsiReference reference, String refText) {
     myNode = node;
     myReference = reference;
     myRefText = refText;
-    myAlias = alias;
-
 
     boolean qualify = !PyCodeInsightSettings.getInstance().PREFER_FROM_IMPORT;
     fix = new AutoImportQuickFix(node, reference.getClass(), refText, qualify);
@@ -62,8 +86,7 @@ public class PyImportCollector {
   private PsiFile addCandidatesFromExistingImports() {
     PsiFile existingImportFile = null; // if there's a matching existing import, this is the file it imports
     PsiFile file = myNode.getContainingFile();
-    if (file instanceof PyFile) {
-      PyFile pyFile = (PyFile)file;
+    if (file instanceof PyFile pyFile) {
       for (PyImportElement importElement : pyFile.getImportTargets()) {
         existingImportFile = addImportViaElement(existingImportFile, importElement, importElement.resolve());
       }
@@ -72,7 +95,7 @@ public class PyImportCollector {
     return existingImportFile;
   }
 
-  PsiFile addCandidatesViaFromImports(PsiFile existingImportFile, PyFile pyFile) {
+  protected PsiFile addCandidatesViaFromImports(PsiFile existingImportFile, PyFile pyFile) {
     for (PyFromImportStatement fromImportStatement : pyFile.getFromImports()) {
       if (!fromImportStatement.isStarImport() && fromImportStatement.getImportElements().length > 0) {
         PsiElement source = fromImportStatement.resolveImportSource();
@@ -86,16 +109,17 @@ public class PyImportCollector {
     PyFile sourceFile = as(PyUtil.turnDirIntoInit(source), PyFile.class);
     if (sourceFile instanceof PyFileImpl) {
 
-      PsiElement res = sourceFile.findExportedName(myRefText);
-      final String name = res instanceof PyQualifiedNameOwner ? ((PyQualifiedNameOwner)res).getQualifiedName() : null;
+      PsiElement variant = sourceFile.findExportedName(myRefText);
+      final String name = variant instanceof PyQualifiedNameOwner ? ((PyQualifiedNameOwner)variant).getQualifiedName() : null;
       if (name != null && seenCandidateNames.contains(name)) {
         return existingImportFile;
       }
+      PsiNamedElement definition = as(variant, PsiNamedElement.class);
       // allow importing from this source if it either declares the name itself or represents a higher-level package that reexports the name
-      if (res != null && !(res instanceof PyFile) && !(res instanceof PyImportElement) && res.getContainingFile() != null &&
-          PsiTreeUtil.isAncestor(source, res.getContainingFile(), false)) {
+      if (definition != null && !(definition instanceof PyFile || definition instanceof PyImportElement) &&
+          definition.getContainingFile() != null && PsiTreeUtil.isAncestor(source, definition.getContainingFile(), false)) {
         existingImportFile = sourceFile;
-        fix.addImport(res, sourceFile, importElement);
+        fix.addImport(definition, sourceFile, importElement);
         if (name != null) {
           seenCandidateNames.add(name);
         }
@@ -106,41 +130,48 @@ public class PyImportCollector {
 
   private void addSymbolImportCandidates(PsiFile existingImportFile) {
     Project project = myNode.getProject();
-    List<PsiElement> symbols = new ArrayList<>(PyClassNameIndex.find(myRefText, project, true));
-    GlobalSearchScope scope = PySearchUtilBase.excludeSdkTestsScope(myNode);
+    GlobalSearchScope scope = PySearchUtilBase.defaultSuggestionScope(myNode);
+    TypeEvalContext context = TypeEvalContext.codeAnalysis(project, myNode.getContainingFile());
+
+    List<PsiNamedElement> symbols = new ArrayList<>(PyClassNameIndex.find(myRefText, project, scope));
     if (!isQualifier()) {
       symbols.addAll(PyFunctionNameIndex.find(myRefText, project, scope));
     }
     symbols.addAll(PyVariableNameIndex.find(myRefText, project, scope));
-    if (isPossibleModuleReference()) {
-      symbols.addAll(findImportableModules(project, scope));
+    if (PyTypingTypeProvider.isInsideTypeHint(myNode, context)) {
+      symbols.addAll(PyTypeAliasNameIndex.find(myRefText, project, scope));
     }
-    if (!symbols.isEmpty()) {
-      for (PsiElement symbol : symbols) {
-        if (isIndexableTopLevel(symbol)) { // we only want top-level symbols
-          PsiFileSystemItem srcfile =
-            symbol instanceof PsiFileSystemItem ? ((PsiFileSystemItem)symbol).getParent() : symbol.getContainingFile();
-          if (srcfile != null && isAcceptableForImport(existingImportFile, srcfile)) {
-            QualifiedName importPath = QualifiedNameFinder.findCanonicalImportPath(symbol, myNode);
-            if (importPath == null) {
-              continue;
-            }
-            if (symbol instanceof PsiFileSystemItem) {
-              importPath = importPath.removeTail(1);
-            }
-            final String symbolImportQName = importPath.append(myRefText).toString();
-            if (!seenCandidateNames.contains(symbolImportQName)) {
-              // a new, valid hit
-              fix.addImport(symbol, srcfile, importPath, myAlias);
-              seenCandidateNames.add(symbolImportQName);
-            }
+    if (isPossibleModuleReference()) {
+      symbols.addAll(findImportableModules(myRefText, false, scope));
+      String packageQName = PyCommonImportAliasesKt.PY_COMMON_IMPORT_ALIASES.get(myRefText);
+      if (packageQName != null) {
+        symbols.addAll(findImportableModules(packageQName, true, scope));
+      }
+    }
+    for (PsiNamedElement symbol : symbols) {
+      if (isIndexableTopLevel(symbol)) { // we only want top-level symbols
+        PsiFileSystemItem srcfile =
+          symbol instanceof PsiFileSystemItem ? ((PsiFileSystemItem)symbol).getParent() : symbol.getContainingFile();
+        if (srcfile != null && isAcceptableForImport(existingImportFile, srcfile)) {
+          QualifiedName importPath = QualifiedNameFinder.findCanonicalImportPath(symbol, myNode);
+          if (importPath == null) {
+            continue;
+          }
+          if (symbol instanceof PsiFileSystemItem) {
+            importPath = importPath.removeTail(1);
+          }
+          String name = PyUtil.getElementNameWithoutExtension(symbol);
+          final String symbolImportQName = importPath.append(name).toString();
+          if (seenCandidateNames.add(symbolImportQName)) {
+            String alias = name.equals(myRefText) ? null : myRefText;
+            fix.addImport(symbol, srcfile, importPath, alias);
           }
         }
       }
     }
   }
 
-  PyElement getNode() {
+  protected PyElement getNode() {
     return myNode;
   }
 
@@ -174,10 +205,8 @@ public class PyImportCollector {
       // getArgumentList() still returns empty (but not null) element in this case
       return decorator != null && !decorator.hasArgumentList();
     }
-    if (myNode.getParent() instanceof PyArgumentList) {
-      final PyArgumentList argumentList = (PyArgumentList)myNode.getParent();
-      if (argumentList.getParent() instanceof PyClass) {
-        final PyClass pyClass = (PyClass)argumentList.getParent();
+    if (myNode.getParent() instanceof PyArgumentList argumentList) {
+      if (argumentList.getParent() instanceof PyClass pyClass) {
         if (pyClass.getSuperClassExpressionList() == argumentList) {
           return false;
         }
@@ -186,26 +215,19 @@ public class PyImportCollector {
     return true;
   }
 
-  private Collection<PsiElement> findImportableModules(Project project, GlobalSearchScope scope) {
-    List<PsiElement> result = new ArrayList<>();
-    // Add packages
-    FilenameIndex.processFilesByName(myRefText, true, item -> {
-      ProgressManager.checkCanceled();
-      final PsiDirectory candidatePackageDir = as(item, PsiDirectory.class);
-      if (candidatePackageDir != null && candidatePackageDir.findFile(PyNames.INIT_DOT_PY) != null) {
-        result.add(candidatePackageDir);
+  private @NotNull Collection<PsiFileSystemItem> findImportableModules(@NotNull String name,
+                                                                       boolean matchQualifiedName,
+                                                                       @NotNull GlobalSearchScope scope) {
+    List<PsiFileSystemItem> result = new ArrayList<>();
+    QualifiedName qualifiedName = QualifiedName.fromDottedString(name);
+    List<PyFile> matchingModules = matchQualifiedName ? PyModuleNameIndex.findByQualifiedName(qualifiedName, myNode.getProject(), scope)
+                                                      : PyModuleNameIndex.findByShortName(name, myNode.getProject(), scope);
+    for (PyFile module : matchingModules) {
+      PsiFileSystemItem candidate = as(PyUtil.turnInitIntoDir(module), PsiFileSystemItem.class);
+      if (candidate != null && PyUtil.isImportable(myNode.getContainingFile(), candidate)) {
+        result.add(candidate);
       }
-      return true;
-    }, scope, project, null);
-    // Add modules
-    FilenameIndex.processFilesByName(myRefText + ".py", false, true, item -> {
-      ProgressManager.checkCanceled();
-      if (PyUtil.isImportable(myNode.getContainingFile(), item)) {
-        result.add(item);
-      }
-      return true;
-    }, scope, project, null);
-
+    }
     return result;
   }
 
@@ -216,7 +238,7 @@ public class PyImportCollector {
     if (symbol instanceof PyClass || symbol instanceof PyFunction) {
       return PyUtil.isTopLevel(symbol);
     }
-    // only top-level target expressions are included in VariableNameIndex
-    return symbol instanceof PyTargetExpression;
+    // only top-level target expressions and type aliases are included in VariableNameIndex and TypeAliasNameIndex, respectively
+    return symbol instanceof PyTargetExpression || symbol instanceof PyTypeAliasStatement;
   }
 }

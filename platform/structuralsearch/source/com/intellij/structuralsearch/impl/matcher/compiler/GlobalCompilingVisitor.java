@@ -1,12 +1,14 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.structuralsearch.impl.matcher.compiler;
 
 import com.intellij.dupLocator.util.NodeFilter;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.structuralsearch.MalformedPatternException;
+import com.intellij.structuralsearch.MatchUtil;
 import com.intellij.structuralsearch.StructuralSearchProfile;
 import com.intellij.structuralsearch.StructuralSearchUtil;
+import com.intellij.structuralsearch.impl.matcher.CompiledPattern;
 import com.intellij.structuralsearch.impl.matcher.filters.CompositeNodeFilter;
 import com.intellij.structuralsearch.impl.matcher.filters.LexicalNodesFilter;
 import com.intellij.structuralsearch.impl.matcher.handlers.LiteralWithSubstitutionHandler;
@@ -27,7 +29,7 @@ import java.util.regex.Pattern;
  * @author maxim
  */
 public class GlobalCompilingVisitor {
-  @NonNls private static final String SUBSTITUTION_PATTERN_STR = "\\b(__\\$_\\w+)\\b";
+  private static final @NonNls String SUBSTITUTION_PATTERN_STR = "\\b(__\\$_\\w+)\\b";
   private static final Pattern ourSubstitutionPattern = Pattern.compile(SUBSTITUTION_PATTERN_STR);
   private static final NodeFilter ourFilter = LexicalNodesFilter.getInstance();
 
@@ -35,8 +37,7 @@ public class GlobalCompilingVisitor {
   private final List<PsiElement> myLexicalNodes = new SmartList<>();
   private int myCodeBlockLevel;
 
-  @NotNull
-  public static NodeFilter getFilter() {
+  public static @NotNull NodeFilter getFilter() {
     return ourFilter;
   }
 
@@ -58,17 +59,21 @@ public class GlobalCompilingVisitor {
         context.getPattern().isRealTypedVar(element) &&
         context.getPattern().getHandlerSimple(element) == null
       ) {
-      String name = context.getPattern().getTypedVarString(element);
+      final CompiledPattern pattern = context.getPattern();
+      String name = pattern.getTypedVarString(element);
       // name is the same for named element (clazz,methods, etc) and token (name of ... itself)
       // @todo need fix this
 
-      final SubstitutionHandler handler = (SubstitutionHandler)context.getPattern().getHandler(name);
+      final SubstitutionHandler handler = (SubstitutionHandler)pattern.getHandler(name);
       if (handler == null) return;
-      context.getPattern().setHandler(element, handler);
+      pattern.setHandler(element, handler);
 
       if (context.getOptions().getVariableConstraint(handler.getName()).isPartOfSearchResults()) {
         handler.setTarget(true);
-        context.getPattern().setTargetNode(element);
+        final PsiElement targetNode = pattern.getTargetNode();
+        if (targetNode == null || targetNode == element.getParent()) {
+          pattern.setTargetNode(element);
+        }
       }
     }
   }
@@ -99,8 +104,7 @@ public class GlobalCompilingVisitor {
     context.getPattern().getHandler(element).setFilter(filter);
   }
 
-  @NotNull
-  public List<PsiElement> getLexicalNodes() {
+  public @NotNull List<PsiElement> getLexicalNodes() {
     return myLexicalNodes;
   }
 
@@ -114,8 +118,7 @@ public class GlobalCompilingVisitor {
     }
     myCodeBlockLevel = 0;
     this.context = context;
-    final StructuralSearchProfile profile =
-      StructuralSearchUtil.getProfileByFileType(context.getOptions().getFileType());
+    final StructuralSearchProfile profile = StructuralSearchUtil.getProfileByFileType(context.getOptions().getFileType());
     assert profile != null;
     profile.compile(elements, this);
 
@@ -126,19 +129,18 @@ public class GlobalCompilingVisitor {
     return ourSubstitutionPattern.matcher(pattern).find();
   }
 
-  @Nullable
-  public MatchingHandler processPatternStringWithFragments(@NotNull String pattern, @NotNull OccurenceKind kind) {
+  public @Nullable MatchingHandler processPatternStringWithFragments(@NotNull String pattern, @NotNull OccurenceKind kind) {
     return processPatternStringWithFragments(pattern, kind, ourSubstitutionPattern);
   }
 
-  @Nullable
-  public MatchingHandler processPatternStringWithFragments(@NotNull String pattern, @NotNull OccurenceKind kind, @NotNull Pattern substitutionPattern) {
+  public @Nullable MatchingHandler processPatternStringWithFragments(@NotNull String pattern, @NotNull OccurenceKind kind,
+                                                                     @NotNull Pattern substitutionPattern) {
     String content;
 
     if (kind == OccurenceKind.LITERAL) {
       content = pattern.substring(1, pattern.length() - 1);
     }
-    else if (kind == OccurenceKind.COMMENT) {
+    else if (kind == OccurenceKind.COMMENT || kind == OccurenceKind.TEXT) {
       content = pattern;
     }
     else {
@@ -158,7 +160,7 @@ public class GlobalCompilingVisitor {
       word = content.substring(start, matcher.start());
       if (!word.isEmpty()) {
         hasLiteralContent = true;
-        buf.append(StructuralSearchUtil.makeExtremeSpacesOptional(StructuralSearchUtil.shieldRegExpMetaChars(word)));
+        buf.append(MatchUtil.makeExtremeSpacesOptional(MatchUtil.shieldRegExpMetaChars(word)));
 
         processTokenizedName(word, kind);
       }
@@ -167,7 +169,7 @@ public class GlobalCompilingVisitor {
       if (handler == null) throw new MalformedPatternException();
 
       handlers.add(handler);
-      RegExpPredicate predicate = handler.findRegExpPredicate();
+      RegExpPredicate predicate = handler.findPredicate(RegExpPredicate.class);
 
       if (predicate == null || !predicate.isWholeWords()) {
         buf.append("(.*?)");
@@ -187,7 +189,7 @@ public class GlobalCompilingVisitor {
 
     if (!word.isEmpty()) {
       hasLiteralContent = true;
-      buf.append(StructuralSearchUtil.makeExtremeSpacesOptional(StructuralSearchUtil.shieldRegExpMetaChars(word)));
+      buf.append(MatchUtil.makeExtremeSpacesOptional(MatchUtil.shieldRegExpMetaChars(word)));
 
       processTokenizedName(word, kind);
     }

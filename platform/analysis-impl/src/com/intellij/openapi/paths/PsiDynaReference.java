@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.openapi.paths;
 
@@ -20,29 +6,37 @@ import com.intellij.analysis.AnalysisBundle;
 import com.intellij.codeInsight.daemon.EmptyResolveMessageProvider;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.LocalQuickFixProvider;
-import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.*;
-import com.intellij.psi.impl.source.resolve.reference.impl.PsiMultiReference;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementResolveResult;
+import com.intellij.psi.PsiPolyVariantReference;
+import com.intellij.psi.PsiReference;
+import com.intellij.psi.PsiReferenceBase;
+import com.intellij.psi.PsiReferenceRegistrar;
+import com.intellij.psi.PsiReferencesWrapper;
+import com.intellij.psi.ResolveResult;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReference;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReferenceOwner;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.PsiFileReference;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.LinkedHashSet;
 import java.util.List;
 
 /**
  * @author Dmitry Avdeev
  */
 public class PsiDynaReference<T extends PsiElement> extends PsiReferenceBase<T>
-  implements FileReferenceOwner, PsiPolyVariantReference, LocalQuickFixProvider, EmptyResolveMessageProvider {
+  implements FileReferenceOwner, PsiPolyVariantReference, LocalQuickFixProvider, EmptyResolveMessageProvider, PsiReferencesWrapper {
 
   private final List<PsiReference> myReferences = new ArrayList<>();
-  private int myChosenOne = -1;
   private ResolveResult[] myCachedResult;
 
   public PsiDynaReference(final T psiElement) {
@@ -51,60 +45,40 @@ public class PsiDynaReference<T extends PsiElement> extends PsiReferenceBase<T>
 
   public void addReferences(Collection<? extends PsiReference> references) {
     myReferences.addAll(references);
-    for (PsiReference reference : references) {
-      if (!reference.isSoft()) mySoft = false;
-    }
   }
 
-  public List<PsiReference> getReferences() {
-    return myReferences;
+  @Override
+  public @Unmodifiable @NotNull List<PsiReference> getReferences() {
+    return ContainerUtil.concat(myReferences,
+                                it -> it instanceof PsiReferencesWrapper wrapper ?
+                                      wrapper.getReferences() :
+                                      Collections.singleton(it)
+    );
   }
 
   public void addReference(PsiReference reference) {
     myReferences.add(reference);
-    if (!reference.isSoft()) mySoft = false;
-  }
-
-  @NotNull
-  @Override
-  public TextRange getRangeInElement() {
-
-    PsiReference resolved = null;
-    PsiReference reference = myReferences.get(0);
-
-    if (reference.resolve() != null) {
-      resolved = reference;
-    }
-
-    final TextRange range = reference.getRangeInElement();
-    int start = range.getStartOffset();
-    int end = range.getEndOffset();
-    for (int i = 1; i < myReferences.size(); i++) {
-      reference = myReferences.get(i);
-      TextRange textRange = PsiMultiReference.getReferenceRange(reference, myElement);
-      start = Math.min(start, textRange.getStartOffset());
-      if (resolved == null) {
-        end = Math.max(end, textRange.getEndOffset());
-      }
-    }
-    return new TextRange(start, end);
   }
 
   @Override
-  public PsiElement resolve(){
+  public PsiElement resolve() {
     final ResolveResult[] resolveResults = multiResolve(false);
     return resolveResults.length == 1 ? resolveResults[0].getElement() : null;
   }
 
   @Override
-  @NotNull
-  public String getCanonicalText(){
+  public boolean isSoft() {
+    return ContainerUtil.and(myReferences, it -> it.isSoft());
+  }
+
+  @Override
+  public @NotNull String getCanonicalText() {
     final PsiReference reference = chooseReference();
     return reference == null ? myReferences.get(0).getCanonicalText() : reference.getCanonicalText();
   }
 
   @Override
-  public PsiElement handleElementRename(@NotNull String newElementName) throws IncorrectOperationException{
+  public PsiElement handleElementRename(@NotNull String newElementName) throws IncorrectOperationException {
     final PsiReference reference = chooseReference();
     if (reference != null) {
       return reference.handleElementRename(newElementName);
@@ -123,7 +97,7 @@ public class PsiDynaReference<T extends PsiElement> extends PsiReferenceBase<T>
   }
 
   @Override
-  public boolean isReferenceTo(@NotNull PsiElement element){
+  public boolean isReferenceTo(@NotNull PsiElement element) {
     for (PsiReference reference : myReferences) {
       if (reference.isReferenceTo(element)) return true;
     }
@@ -140,10 +114,10 @@ public class PsiDynaReference<T extends PsiElement> extends PsiReferenceBase<T>
   }
 
   protected ResolveResult[] innerResolve(final boolean incompleteCode) {
-    List<ResolveResult> result = new ArrayList<>();
+    LinkedHashSet<ResolveResult> result = new LinkedHashSet<>();
     for (PsiReference reference : myReferences) {
-      if (reference instanceof PsiPolyVariantReference) {
-        for (ResolveResult rr: ((PsiPolyVariantReference)reference).multiResolve(incompleteCode)) {
+      if (reference instanceof PsiPolyVariantReference poly) {
+        for (ResolveResult rr : poly.multiResolve(incompleteCode)) {
           if (rr.isValidResult()) {
             result.add(rr);
           }
@@ -160,61 +134,70 @@ public class PsiDynaReference<T extends PsiElement> extends PsiReferenceBase<T>
     return result.toArray(ResolveResult.EMPTY_ARRAY);
   }
 
-  @Nullable
-  private PsiReference chooseReference(){
-    if(myChosenOne != -1){
-      return myReferences.get(myChosenOne);
-    }
-    boolean flag = false;
-    for(int i = 0; i < myReferences.size(); i++){
-      final PsiReference reference = myReferences.get(i);
-      if(reference.isSoft() && flag) continue;
-      if(!reference.isSoft() && !flag){
-        myChosenOne = i;
-        flag = true;
-        continue;
-      }
-      if(reference.resolve() != null){
-        myChosenOne = i;
-      }
-    }
-    return myChosenOne >= 0 ? myReferences.get(myChosenOne) : null;
+  private @Nullable PsiReference chooseReference() {
+    if (myReferences.isEmpty()) return null;
+
+    ContainerUtil.sort(myReferences, (o1, o2) -> {
+      final int byPriority = Double.compare(getPriority(o2), getPriority(o1));
+      if (byPriority != 0) return byPriority;
+
+      final int bySoftness = Boolean.compare(o2.isSoft(), o1.isSoft());
+      if (bySoftness != 0) return bySoftness;
+
+      return Boolean.compare(o2 instanceof FileReference, o1 instanceof FileReference);  // by ref type
+    });
+
+    return myReferences.get(0);
   }
 
-  @NotNull
+  private static double getPriority(@NotNull PsiReference o1) {
+    if (o1 instanceof PriorityReference priority) return priority.getPriority();
+    return PsiReferenceRegistrar.DEFAULT_PRIORITY;
+  }
+
   @Override
-  @SuppressWarnings({"UnresolvedPropertyKey"})
-  public String getUnresolvedMessagePattern() {
+  @SuppressWarnings("UnresolvedPropertyKey")
+  public @NotNull String getUnresolvedMessagePattern() {
     final PsiReference reference = chooseReference();
 
-    return reference instanceof EmptyResolveMessageProvider ?
-           ((EmptyResolveMessageProvider)reference).getUnresolvedMessagePattern() :
-            AnalysisBundle.message("cannot.resolve.symbol");
+    return reference instanceof EmptyResolveMessageProvider empty ?
+           empty.getUnresolvedMessagePattern() :
+           AnalysisBundle.message("cannot.resolve.symbol");
   }
 
   @Override
-  public LocalQuickFix[] getQuickFixes() {
+  public @NotNull LocalQuickFix @Nullable [] getQuickFixes() {
     final ArrayList<LocalQuickFix> list = new ArrayList<>();
-    for (Object ref: myReferences) {
-      if (ref instanceof LocalQuickFixProvider) {
-        ContainerUtil.addAll(list, ((LocalQuickFixProvider)ref).getQuickFixes());
+    for (Object ref : myReferences) {
+      if (ref instanceof LocalQuickFixProvider provider) {
+        ContainerUtil.addAll(list, provider.getQuickFixes());
       }
     }
     return list.toArray(LocalQuickFix.EMPTY_ARRAY);
   }
 
+  @Override
   public String toString() {
     //noinspection HardCodedStringLiteral
-    return "PsiDynaReference containing " + myReferences.toString();
+    return "PsiDynaReference containing " + myReferences;
   }
 
   @Override
   public PsiFileReference getLastFileReference() {
     for (PsiReference reference : myReferences) {
-      if (reference instanceof FileReferenceOwner) {
-        return ((FileReferenceOwner)reference).getLastFileReference();
+      if (reference instanceof FileReferenceOwner owner) {
+        return owner.getLastFileReference();
       }
     }
     return null;
+  }
+
+  public static PsiReference[] filterByOffset(PsiReference[] references, int offset) {
+    return StreamEx.of(references)
+      .flatMap(ref ->
+                 ref instanceof PsiDynaReference<?> dyna
+                 ? StreamEx.of(dyna.myReferences).filter(it -> it.getRangeInElement().contains(offset))
+                 : StreamEx.of(ref)
+      ).toArray(PsiReference.EMPTY_ARRAY);
   }
 }

@@ -1,25 +1,27 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.ex;
 
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.impl.Interval;
+import com.intellij.openapi.util.Pair;
 import com.intellij.util.containers.ContainerUtil;
 import kotlin.Unit;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import java.awt.*;
+import java.awt.Rectangle;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
 public class VisibleRangeMerger<T> {
-  @NotNull private final Editor myEditor;
-  @NotNull private final FlagsProvider<T> myFlagsProvider;
+  private final @NotNull Editor myEditor;
+  private final @NotNull FlagsProvider<T> myFlagsProvider;
 
-  @NotNull private ChangesBlock<T> myBlock = new ChangesBlock<>();
+  private @NotNull ChangesBlock<T> myBlock = new ChangesBlock<>();
 
-  @NotNull private final List<ChangesBlock<T>> myResult = new ArrayList<>();
+  private final @NotNull List<ChangesBlock<T>> myResult = new ArrayList<>();
 
   private VisibleRangeMerger(@NotNull Editor editor, @NotNull FlagsProvider<T> flagsProvider) {
     myEditor = editor;
@@ -39,8 +41,7 @@ public class VisibleRangeMerger<T> {
     return new VisibleRangeMerger<>(editor, flagsProvider).run(ranges, clip);
   }
 
-  @NotNull
-  private List<ChangesBlock<T>> run(@NotNull List<? extends Range> ranges, @NotNull Rectangle clip) {
+  private @NotNull List<ChangesBlock<T>> run(@NotNull List<? extends Range> ranges, @NotNull Rectangle clip) {
     int visibleLinesStart = EditorUtil.yToLogicalLineRange(myEditor, clip.y).intervalStart();
     int visibleLinesEnd = EditorUtil.yToLogicalLineRange(myEditor, clip.y + Math.max(clip.height - 1, 0)).intervalEnd() + 1;
 
@@ -73,13 +74,15 @@ public class VisibleRangeMerger<T> {
   }
 
   private void processLine(@NotNull Range range, int start, int end, byte type, @NotNull T flags) {
-    Interval interval1 = EditorUtil.logicalLineToYRange(myEditor, start);
-    int visualStart = interval1.intervalStart();
+    Pair<@NotNull Interval, @Nullable Interval> pair1 = EditorUtil.logicalLineToYRange(myEditor, start);
+    int visualStart = pair1.first.intervalStart();
 
-    int sharedPrefixHeight = 0;
-    if (start > 0) {
-      Interval intervalBefore = EditorUtil.logicalLineToYRange(myEditor, start - 1);
-      sharedPrefixHeight = Math.max(0, intervalBefore.intervalEnd() - interval1.intervalStart());
+    int sharedPrefixHeight;
+    if (pair1.second == null) {
+      sharedPrefixHeight = pair1.first.intervalEnd() - pair1.first.intervalStart();
+    }
+    else {
+      sharedPrefixHeight = pair1.second.intervalStart() - pair1.first.intervalStart();
     }
 
     if (start == end) {
@@ -91,11 +94,16 @@ public class VisibleRangeMerger<T> {
       }
     }
     else {
-      Interval interval2 = EditorUtil.logicalLineToYRange(myEditor, end - 1);
-      int visualEnd = interval2.intervalEnd() + 1;
+      Pair<@NotNull Interval, @Nullable Interval> pair2 = EditorUtil.logicalLineToYRange(myEditor, end - 1);
+      int visualEnd = pair2.first.intervalEnd();
 
-      Interval intervalAfter = EditorUtil.logicalLineToYRange(myEditor, end);
-      int sharedSuffixHeight = Math.max(0, interval2.intervalEnd() - intervalAfter.intervalStart());
+      int sharedSuffixHeight;
+      if (pair2.second == null) {
+        sharedSuffixHeight = pair2.first.intervalEnd() - pair2.first.intervalStart();
+      }
+      else {
+        sharedSuffixHeight = pair2.first.intervalEnd() - pair2.second.intervalEnd();
+      }
 
       if (type == Range.EQUAL || type == Range.MODIFIED) {
         appendChange(range, new ChangedLines<>(visualStart, visualEnd, type, flags));
@@ -198,7 +206,7 @@ public class VisibleRangeMerger<T> {
     }
 
 
-    FlagsProvider<Unit> EMPTY = new FlagsProvider<Unit>() {
+    FlagsProvider<Unit> EMPTY = new FlagsProvider<>() {
       @Override
       public @NotNull Unit getFlags(@NotNull Range range) {
         return Unit.INSTANCE;

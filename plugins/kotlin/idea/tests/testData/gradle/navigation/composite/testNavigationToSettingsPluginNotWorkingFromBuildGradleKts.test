@@ -1,0 +1,5 @@
+// FILE: build.gradle.kts
+// "EXPECTED-NAVIGATION-SUBSTRING": "println("custom")"
+plugins {
+    id("custom<caret>.settings")
+}

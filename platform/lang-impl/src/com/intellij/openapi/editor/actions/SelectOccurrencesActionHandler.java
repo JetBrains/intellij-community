@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.actions;
 
 import com.intellij.codeInsight.editorActions.SelectWordUtil;
@@ -15,17 +15,15 @@ import com.intellij.openapi.editor.impl.EditorLastActionTracker;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.ui.LightweightHint;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Set;
 
-abstract public class SelectOccurrencesActionHandler extends EditorActionHandler {
+public abstract class SelectOccurrencesActionHandler extends EditorActionHandler {
   private static final Key<Boolean> NOT_FOUND = Key.create("select.next.occurence.not.found");
   private static final Key<Boolean> WHOLE_WORDS = Key.create("select.next.occurence.whole.words");
 
-  private static final Set<String> SELECT_ACTIONS = ContainerUtil
-    .set(IdeActions.ACTION_SELECT_NEXT_OCCURENCE, IdeActions.ACTION_UNSELECT_PREVIOUS_OCCURENCE, IdeActions.ACTION_FIND_NEXT,
+  private static final Set<String> SELECT_ACTIONS = Set.of(IdeActions.ACTION_SELECT_NEXT_OCCURENCE, IdeActions.ACTION_UNSELECT_PREVIOUS_OCCURENCE, IdeActions.ACTION_FIND_NEXT,
          IdeActions.ACTION_FIND_PREVIOUS);
 
   protected static void setSelection(Editor editor, Caret caret, TextRange selectionRange) {
@@ -63,8 +61,7 @@ abstract public class SelectOccurrencesActionHandler extends EditorActionHandler
     return value != null;
   }
 
-  @Nullable
-  protected static TextRange getSelectionRange(Editor editor, Caret caret) {
+  protected static @Nullable TextRange getSelectionRange(Editor editor, Caret caret) {
     return SelectWordUtil.getWordSelectionRange(editor.getDocument().getCharsSequence(),
                                                 caret.getOffset(),
                                                 SelectWordUtil.JAVA_IDENTIFIER_PART_CONDITION);
@@ -76,7 +73,7 @@ abstract public class SelectOccurrencesActionHandler extends EditorActionHandler
 
   protected static boolean isRepeatedActionInvocation() {
     String lastActionId = EditorLastActionTracker.getInstance().getLastActionId();
-    return SELECT_ACTIONS.contains(lastActionId);
+    return lastActionId != null && SELECT_ACTIONS.contains(lastActionId);
   }
 
   protected static FindModel getFindModel(String text, boolean wholeWords) {

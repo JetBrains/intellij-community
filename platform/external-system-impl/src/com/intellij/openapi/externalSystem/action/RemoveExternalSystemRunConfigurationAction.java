@@ -3,6 +3,7 @@ package com.intellij.openapi.externalSystem.action;
 
 import com.intellij.execution.RunManager;
 import com.intellij.execution.RunnerAndConfigurationSettings;
+import com.intellij.execution.impl.statistics.RunConfigurationOptionUsagesCollector;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.externalSystem.model.ExternalSystemDataKeys;
 import com.intellij.openapi.externalSystem.statistics.ExternalSystemActionsCollector;
@@ -11,6 +12,7 @@ import com.intellij.openapi.externalSystem.view.ExternalSystemNode;
 import com.intellij.openapi.externalSystem.view.RunConfigurationNode;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -18,6 +20,7 @@ import java.util.List;
 /**
  * @author Vladislav.Soroka
  */
+@ApiStatus.Internal
 public class RemoveExternalSystemRunConfigurationAction extends ExternalSystemAction {
 
   @Override
@@ -44,6 +47,7 @@ public class RemoveExternalSystemRunConfigurationAction extends ExternalSystemAc
                                        ExternalSystemBundle.message("confirmation"), Messages.getQuestionIcon());
     if (res == Messages.YES) {
       RunManager.getInstance(project).removeConfiguration(settings);
+      RunConfigurationOptionUsagesCollector.logRemove(project, settings.getFactory().getType().getId(), e.getPlace());
     }
   }
 }

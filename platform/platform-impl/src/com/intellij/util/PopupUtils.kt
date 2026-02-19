@@ -1,16 +1,16 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util
 
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataContext
-import com.intellij.openapi.actionSystem.PlatformDataKeys
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys
 import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.editor.LogicalPosition
 import com.intellij.openapi.editor.VisualPosition
 import com.intellij.openapi.editor.ex.EditorGutterComponentEx
 import com.intellij.openapi.editor.ex.EditorGutterComponentEx.ICON_CENTER_POSITION
 import com.intellij.openapi.editor.ex.EditorGutterComponentEx.LOGICAL_LINE_AT_CURSOR
 import com.intellij.openapi.editor.ex.util.EditorUtil.getDefaultCaretWidth
-import com.intellij.openapi.editor.ex.util.EditorUtil.logicalToVisualLine
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.wm.WindowManager
 import com.intellij.ui.awt.RelativePoint
@@ -22,7 +22,8 @@ import javax.swing.JComponent
 import javax.swing.JList
 import javax.swing.JTable
 import javax.swing.JTree
-
+import kotlin.math.max
+import kotlin.math.min
 
 fun getBestPopupPosition(context: DataContext): RelativePoint {
   return getBestPopupPositionInsideGutter(context)
@@ -56,16 +57,16 @@ private fun getBestPositionInsideGutter(context: DataContext, location: Rectangl
   val logicalLine = context.getData(LOGICAL_LINE_AT_CURSOR) ?: return null
   val iconCenterPosition = context.getData(ICON_CENTER_POSITION) ?: return null
   val renderer = component.getGutterRenderer(iconCenterPosition) ?: return null
-  val visualLine = logicalToVisualLine(editor, logicalLine)
   val visibleArea = component.visibleRect
   val x = iconCenterPosition.x - renderer.icon.iconWidth / 2
-  val rect = Rectangle(x, visualLine * editor.lineHeight, renderer.icon.iconWidth, editor.lineHeight)
+  val linePoint = editor.logicalPositionToXY(LogicalPosition(logicalLine,0))
+  val rect = Rectangle(x, linePoint.y, renderer.icon.iconWidth, editor.lineHeight)
   if (!visibleArea.contains(rect)) component.scrollRectToVisible(rect)
   return RelativePoint(component, rect.location())
 }
 
 private fun getBestBalloonPositionInsideEditor(context: DataContext): RelativePoint? {
-  val component = PlatformDataKeys.CONTEXT_COMPONENT.getData(context)
+  val component = PlatformCoreDataKeys.CONTEXT_COMPONENT.getData(context)
   val editor = CommonDataKeys.EDITOR.getData(context) ?: return null
   val contentComponent = editor.contentComponent
   if (contentComponent !== component) return null
@@ -113,7 +114,7 @@ private fun getBestBalloonPositionInsideTree(context: DataContext): RelativePoin
   val distance = { it: Int -> visibleCenter.distance(component.getRowBounds(it).center()) }
   val nearestRow = selectionRows.sortedBy(distance).firstOrNull() ?: return null
   val rowBounds = component.getRowBounds(nearestRow)
-  val dimension = Dimension(Math.min(visibleRect.width, rowBounds.width), rowBounds.height)
+  val dimension = Dimension(min(visibleRect.width, rowBounds.width), rowBounds.height)
   component.scrollRectToVisible(Rectangle(rowBounds.position(), dimension))
   return RelativePoint(component, rowBounds.topCenter())
 }
@@ -122,7 +123,7 @@ private fun getBestBalloonPositionInsideTable(context: DataContext): RelativePoi
   val component = getFocusComponent<JTable>(context) ?: return null
   val visibleRect = component.visibleRect
   val column = component.columnModel.selectionModel.leadSelectionIndex
-  val row = Math.max(component.selectionModel.leadSelectionIndex, component.selectionModel.anchorSelectionIndex)
+  val row = max(component.selectionModel.leadSelectionIndex, component.selectionModel.anchorSelectionIndex)
   val rect = component.getCellRect(row, column, false)
   if (!visibleRect.intersects(rect)) component.scrollRectToVisible(rect)
   return RelativePoint(component, rect.position())
@@ -134,7 +135,7 @@ private fun getBestBalloonPositionInsideComponent(context: DataContext): Relativ
 }
 
 private inline fun <reified C : JComponent> getFocusComponent(context: DataContext): C? {
-  val component = PlatformDataKeys.CONTEXT_COMPONENT.getData(context)
+  val component = PlatformCoreDataKeys.CONTEXT_COMPONENT.getData(context)
   if (component is C) return component
   val project = CommonDataKeys.PROJECT.getData(context)
   val frame = project?.let { WindowManager.getInstance().getFrame(it) }

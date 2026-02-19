@@ -1,13 +1,22 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.packaging;
 
-import com.google.gson.*;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.InstanceCreator;
+import com.google.gson.JsonDeserializationContext;
+import com.google.gson.JsonDeserializer;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonIOException;
+import com.google.gson.JsonParseException;
+import com.google.gson.JsonSyntaxException;
 import com.google.gson.annotations.SerializedName;
 import com.google.gson.reflect.TypeToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import one.util.streamex.StreamEx;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -28,6 +37,8 @@ import java.util.TreeMap;
 /**
  * @author Mikhail Golubev
  */
+@ApiStatus.Internal
+
 public abstract class PyAbstractPackageCache {
   private static final Logger LOG = Logger.getInstance(PyPIPackageCache.class);
 
@@ -42,7 +53,7 @@ public abstract class PyAbstractPackageCache {
                     @Override
                     public PackageInfo deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context)
                             throws JsonParseException {
-                      if (json.isJsonObject() && json.getAsJsonObject().size() == 0) {
+                      if (json.isJsonObject() && json.getAsJsonObject().isEmpty()) {
                         return PackageInfo.EMPTY;
                       }
                       return defaultGson.fromJson(json, typeOfT);
@@ -57,10 +68,9 @@ public abstract class PyAbstractPackageCache {
   }
 
 
-  @NotNull
-  protected static <T extends PyAbstractPackageCache> T load(@NotNull Class<T> classToken,
-                                                             @NotNull T fallbackValue,
-                                                             @NotNull Path cacheFilePath) {
+  protected static @NotNull <T extends PyAbstractPackageCache> T load(@NotNull Class<T> classToken,
+                                                                      @NotNull T fallbackValue,
+                                                                      @NotNull Path cacheFilePath) {
     T cache = fallbackValue;
     try (Reader reader = Files.newBufferedReader(cacheFilePath, StandardCharsets.UTF_8)) {
       cache = ourGson.fromJson(reader, classToken);
@@ -71,7 +81,16 @@ public abstract class PyAbstractPackageCache {
         LOG.info("Package cache " + cacheFilePath + " was not found");
       }
     }
-    catch (IOException exception) {
+    catch (JsonSyntaxException exception) {
+      LOG.warn("Corrupted package cache " + cacheFilePath, exception);
+      try {
+        // It will be rebuilt on the next startup or displaying packaging UI
+        Files.deleteIfExists(cacheFilePath);
+      }
+      catch (IOException ignored) {
+      }
+    }
+    catch (IOException | JsonIOException exception) {
       LOG.warn("Cannot load package cache " + cacheFilePath, exception);
     }
     return cache;
@@ -85,21 +104,19 @@ public abstract class PyAbstractPackageCache {
         ourGson.toJson(newValue, writer);
       }
     }
-    catch (IOException exception) {
-      LOG.warn("Cannot save " + cacheFileName + " package cache to the filesystem", exception);
+    catch (IOException | JsonIOException exception) {
+      LOG.error("Cannot save " + cacheFileName + " package cache to the filesystem", exception);
     }
   }
 
-  @NotNull
-  protected static Path getDefaultCachePath(@NotNull String cacheFileName) {
+  protected static @NotNull Path getDefaultCachePath(@NotNull String cacheFileName) {
     return Paths.get(PathManager.getSystemPath(), "python_packages", cacheFileName);
   }
 
   /**
    * Returns a case-insensitive set of packages names available in the cache.
    */
-  @NotNull
-  public Set<String> getPackageNames() {
+  public @NotNull Set<String> getPackageNames() {
     return Collections.unmodifiableSet(myPackages.keySet());
   }
 
@@ -115,19 +132,6 @@ public abstract class PyAbstractPackageCache {
    */
   public boolean containsPackage(@NotNull String name) {
     return myPackages.containsKey(name);
-  }
-
-  /**
-   * Returns available package versions sorted in the reversed order using
-   * {@link com.intellij.webcore.packaging.PackageVersionComparator} so that the latest version is the first on the list
-   * or {@code null} if the given package is not contained in the cache or this feature is not available.
-   *
-   * @param packageName case-insensitive name of a package
-   */
-  @Nullable
-  public List<String> getVersions(@NotNull String packageName) {
-    final PackageInfo packageInfo = myPackages.get(packageName);
-    return packageInfo != null ? packageInfo.getVersions() : null;
   }
 
   @Override
@@ -150,8 +154,8 @@ public abstract class PyAbstractPackageCache {
     public PackageInfo() {
     }
 
-    @Nullable
-    public List<String> getVersions() {
+
+    public @Nullable List<String> getVersions() {
       return myVersions != null ? Collections.unmodifiableList(myVersions) : null;
     }
   }

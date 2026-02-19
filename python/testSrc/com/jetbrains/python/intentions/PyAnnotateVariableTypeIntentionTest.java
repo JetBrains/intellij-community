@@ -164,11 +164,11 @@ public class PyAnnotateVariableTypeIntentionTest extends PyIntentionTestCase {
   }
 
   public void testAnnotationImportTypingUnion() {
-    doMultiFileAnnotationTest();
+    doMultiFileAnnotationTest(LanguageLevel.PYTHON36);
   }
 
   public void testAnnotationImportTypingOptional() {
-    doMultiFileAnnotationTest();
+    doMultiFileAnnotationTest(LanguageLevel.PYTHON36);
   }
 
   public void testAnnotationImportClassName() {
@@ -188,6 +188,11 @@ public class PyAnnotateVariableTypeIntentionTest extends PyIntentionTestCase {
   }
 
   public void testNotSuggestedForUnresolvedAugmentedAssignmentTarget() {
+    doNegativeTest();
+  }
+
+  // EA-240096
+  public void testNotSuggestedForCyclicAugmentedAssignmentNotHavingPrecedingTarget() {
     doNegativeTest();
   }
 
@@ -231,6 +236,22 @@ public class PyAnnotateVariableTypeIntentionTest extends PyIntentionTestCase {
     doAnnotationTest();
   }
 
+  public void testAnnotationCallableTypeWithEmptyParameterList() {
+    doAnnotationTest();
+  }
+
+  public void testAnnotationCallableTypeWithPositionalOnlyParameters() {
+    doAnnotationTest();
+  }
+
+  public void testAnnotationCallableTypeInferredFromTypeHint() {
+    doAnnotationTest();
+  }
+
+  public void testAnnotationCallableTypeInferredFromFunctionWithIllegalSignature() {
+    doAnnotationTest();
+  }
+
   public void testAnnotationTypingNamedTupleInOtherFile() {
     doMultiFileAnnotationTest();
   }
@@ -256,7 +277,7 @@ public class PyAnnotateVariableTypeIntentionTest extends PyIntentionTestCase {
   }
 
   public void testConflictWithAnnotationFunctionTypeIntention() {
-    doTest(LanguageLevel.PYTHON36);
+    doAnnotationTest();
   }
 
   // PY-28715
@@ -274,8 +295,54 @@ public class PyAnnotateVariableTypeIntentionTest extends PyIntentionTestCase {
     doAnnotationTest();
   }
 
-  private void doAnnotationTest() {
+  // PY-83066
+  public void testAnnotationLiteralEnumType() {
+    doMultiFileAnnotationTest(LanguageLevel.getLatest());
+  }
+
+  // PY-46546
+  public void testAnnotationGenericBuiltinList() {
+    doTest(LanguageLevel.getLatest());
+  }
+
+  // PY-46546
+  public void testAnnotationGenericBuiltinTuple() {
+    doTest(LanguageLevel.getLatest());
+  }
+
+  // PY-76642
+  public void testAnnotationDeclaredTypedDict() {
+    doMultiFileAnnotationTest();
+  }
+
+  // PY-76642
+  public void testAnnotationInferredTypedDict() {
+    // builtin dict and "|" operator will be used
+    doAnnotationTest();
+  }
+
+  // PY-76642
+  public void testAnnotationInferredTypedDictPre39() {
+    // typing.Dict and typing.Union will be used
     doTest(LanguageLevel.PYTHON36);
+  }
+
+  public void testAnnotationLiteralTypeWithIllegalHtmlCharacters() {
+    doAnnotationTest();
+  }
+
+  // PY-85948
+  public void testSelfType() {
+    doAnnotationTest();
+  }
+
+  // PY-76922
+  public void testIntersectionTypeIsNotDenotable() {
+    doAnnotationTest();
+  }
+
+  private void doAnnotationTest() {
+    doTest(LanguageLevel.getLatest());
   }
 
   private void doTypeCommentTest() {
@@ -283,11 +350,15 @@ public class PyAnnotateVariableTypeIntentionTest extends PyIntentionTestCase {
   }
 
   private void doNegativeTest() {
-    runWithLanguageLevel(LanguageLevel.PYTHON36, () -> doNegativeTest(PyPsiBundle.message("INTN.NAME.add.type.hint.for.variable")));
+    runWithLanguageLevel(LanguageLevel.getLatest(), () -> doNegativeTest(PyPsiBundle.message("INTN.NAME.add.type.hint.for.variable")));
   }
 
   public void doMultiFileAnnotationTest() {
-    runWithLanguageLevel(LanguageLevel.PYTHON36, () -> doMultiFileTest(PyPsiBundle.message("INTN.NAME.add.type.hint.for.variable")));
+    runWithLanguageLevel(LanguageLevel.getLatest(), () -> doMultiFileTest(PyPsiBundle.message("INTN.NAME.add.type.hint.for.variable")));
+  }
+
+  public void doMultiFileAnnotationTest(LanguageLevel languageLevel) {
+    runWithLanguageLevel(languageLevel, () -> doMultiFileTest(PyPsiBundle.message("INTN.NAME.add.type.hint.for.variable")));
   }
 
   private void doMultiFileTest(@NotNull String hint) {

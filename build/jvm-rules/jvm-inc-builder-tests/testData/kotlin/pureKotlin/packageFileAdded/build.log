@@ -1,0 +1,9 @@
+================ Step #1 =================
+Cleaning output files:
+  META-INF/kotlin_pureKotlin_packageFileAdded-a.kotlin_module
+End of files
+Compiling files:
+  kotlin/pureKotlin/packageFileAdded/a/b.kt
+End of files
+------------------------------------------
+Exit code: OK

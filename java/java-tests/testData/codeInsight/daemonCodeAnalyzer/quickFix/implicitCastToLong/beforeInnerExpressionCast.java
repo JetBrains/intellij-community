@@ -1,4 +1,4 @@
-// "Fix all 'Integer multiplication or shift implicitly cast to long' problems in file" "true"
+// "Fix all 'Integer multiplication or shift implicitly cast to 'long'' problems in file" "true"
 class Test {
   void test(int a, int b) {
     long c = a * (<caret>a * b);

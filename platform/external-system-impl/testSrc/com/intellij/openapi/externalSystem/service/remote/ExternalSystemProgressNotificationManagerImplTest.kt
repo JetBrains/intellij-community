@@ -3,7 +3,7 @@ package com.intellij.openapi.externalSystem.service.remote
 
 import com.intellij.openapi.externalSystem.model.ProjectSystemId
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId
-import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListenerAdapter
+import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListener
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskType
 import com.intellij.openapi.externalSystem.service.internal.AbstractExternalSystemTask
 import com.intellij.openapi.externalSystem.service.notification.ExternalSystemProgressNotificationManager
@@ -16,7 +16,6 @@ import com.intellij.testFramework.UsefulTestCase
 import com.intellij.testFramework.fixtures.IdeaProjectTestFixture
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory
 import com.intellij.util.ThrowableRunnable
-import junit.framework.TestCase
 import org.assertj.core.api.Assertions.assertThat
 
 class ExternalSystemProgressNotificationManagerImplTest : UsefulTestCase() {
@@ -42,6 +41,7 @@ class ExternalSystemProgressNotificationManagerImplTest : UsefulTestCase() {
   }
 
   fun `test listener cleanup`() {
+    val existingListeners = getListeners()
     val disposable = Disposer.newDisposable(testRootDisposable, "test task listener cleanup")
     notificationManager.addNotificationListener(DummyTaskNotificationListener(), disposable)
 
@@ -65,16 +65,16 @@ class ExternalSystemProgressNotificationManagerImplTest : UsefulTestCase() {
     assertEquals("start ${task1.id};end ${task1.id};", taskListener.logger.toString())
 
     Disposer.dispose(disposable)
-    assertListenersReleased()
+    assertListenersReleased(existingListeners)
   }
 
-  private class DummyTaskNotificationListener() : ExternalSystemTaskNotificationListenerAdapter() {
+  private class DummyTaskNotificationListener : ExternalSystemTaskNotificationListener {
     val logger = java.lang.StringBuilder()
-    override fun onStart(id: ExternalSystemTaskId, workingDir: String?) {
+    override fun onStart(projectPath: String, id: ExternalSystemTaskId) {
       logger.append("start $id;")
     }
 
-    override fun onEnd(id: ExternalSystemTaskId) {
+    override fun onEnd(projectPath: String, id: ExternalSystemTaskId) {
       logger.append("end $id;")
     }
   }
@@ -83,11 +83,7 @@ class ExternalSystemProgressNotificationManagerImplTest : UsefulTestCase() {
     override fun doCancel(): Boolean = true
 
     override fun doExecute() {
-      ExternalSystemProgressNotificationManagerImpl.getInstanceImpl().run {
-        onStart(id, "")
-        actionBeforeTaskFinish.invoke(this@MyTestTask)
-        onEnd(id)
-      }
+      actionBeforeTaskFinish.invoke(this@MyTestTask)
     }
   }
 }

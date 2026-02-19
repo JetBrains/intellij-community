@@ -4,15 +4,15 @@ class Test {
   Object o;
 
   void field() {
-    o.<warning descr="Method invocation 'hashCode' may produce 'NullPointerException'">hashCode</warning>();
+    o.<warning descr="Method invocation 'hashCode' may produce 'NullPointerException' (unknown nullability)">hashCode</warning>();
   }
 
   void parameter(Object o) {
-    o.<warning descr="Method invocation 'hashCode' may produce 'NullPointerException'">hashCode</warning>();
+    o.<warning descr="Method invocation 'hashCode' may produce 'NullPointerException' (unknown nullability)">hashCode</warning>();
   }
 
   void callUnknownMethod() {
-    unknownObject().<warning descr="Method invocation 'hashCode' may produce 'NullPointerException'">hashCode</warning>();
+    unknownObject().<warning descr="Method invocation 'hashCode' may produce 'NullPointerException' (unknown nullability)">hashCode</warning>();
   }
 
   void callNotNullMethod() {

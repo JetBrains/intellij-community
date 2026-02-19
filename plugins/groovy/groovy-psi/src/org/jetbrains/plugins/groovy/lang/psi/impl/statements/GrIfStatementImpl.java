@@ -1,9 +1,12 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.ResolveState;
+import com.intellij.psi.scope.PatternResolveState;
+import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -19,9 +22,9 @@ import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * @autor: ilyas
- */
+import static org.jetbrains.plugins.groovy.lang.resolve.ResolveUtilKt.shouldProcessLocals;
+import static org.jetbrains.plugins.groovy.lang.resolve.ResolveUtilKt.shouldProcessPatternVariables;
+
 public class GrIfStatementImpl extends GroovyPsiElementImpl implements GrIfStatement {
   public GrIfStatementImpl(@NotNull ASTNode node) {
     super(node);
@@ -38,8 +41,7 @@ public class GrIfStatementImpl extends GroovyPsiElementImpl implements GrIfState
   }
 
   @Override
-  @Nullable
-  public GrExpression getCondition() {
+  public @Nullable GrExpression getCondition() {
     PsiElement lParenth = getLParenth();
 
     if (lParenth == null) return null;
@@ -51,8 +53,7 @@ public class GrIfStatementImpl extends GroovyPsiElementImpl implements GrIfState
   }
 
   @Override
-  @Nullable
-  public GrStatement getThenBranch() {
+  public @Nullable GrStatement getThenBranch() {
     List<GrStatement> statements = new ArrayList<>();
     for (PsiElement cur = getFirstChild(); cur != null; cur = cur.getNextSibling()) {
       if (cur instanceof GrStatement) statements.add((GrStatement)cur);
@@ -64,8 +65,7 @@ public class GrIfStatementImpl extends GroovyPsiElementImpl implements GrIfState
   }
 
   @Override
-  @Nullable
-  public GrStatement getElseBranch() {
+  public @Nullable GrStatement getElseBranch() {
     List<GrStatement> statements = new ArrayList<>();
     for (PsiElement cur = getFirstChild(); cur != null; cur = cur.getNextSibling()) {
       if (cur instanceof GrStatement) statements.add((GrStatement)cur);
@@ -92,14 +92,41 @@ public class GrIfStatementImpl extends GroovyPsiElementImpl implements GrIfState
   }
 
   @Override
-  @NotNull
-  public <T extends GrStatement> T replaceThenBranch(@NotNull T newBranch) throws IncorrectOperationException {
+  public boolean processDeclarations(@NotNull PsiScopeProcessor processor,
+                                     @NotNull ResolveState state,
+                                     PsiElement lastParent,
+                                     @NotNull PsiElement place) {
+    if (!shouldProcessLocals(processor) || !shouldProcessPatternVariables(state)) return true;
+    GrExpression condition = getCondition();
+    if (condition != null) {
+      GrStatement thenBranch = getThenBranch();
+      GrStatement elseBranch = getElseBranch();
+      if (lastParent == null) {
+        // Scenario happens in the situations when reference is resolved for a variable that is located in the later statements
+        // but in the same scope. For example:
+        // String s = null;
+        // if (!(s instanceof Object obj)) { return }
+        // println obj.toString()
+        //
+        // Such cases are not supported by Groovy.
+        return true;
+      }
+      if (lastParent == thenBranch) {
+        condition.processDeclarations(processor, PatternResolveState.WHEN_TRUE.putInto(state), null, place);
+      } else if (lastParent == elseBranch) {
+        return true;
+      }
+    }
+    return true;
+  }
+
+  @Override
+  public @NotNull <T extends GrStatement> T replaceThenBranch(@NotNull T newBranch) throws IncorrectOperationException {
     return PsiImplUtil.replaceBody(newBranch, getThenBranch(), getNode(), getProject());
   }
 
   @Override
-  @NotNull
-  public <T extends GrStatement> T replaceElseBranch(@NotNull T newBranch) throws IncorrectOperationException {
+  public @NotNull <T extends GrStatement> T replaceElseBranch(@NotNull T newBranch) throws IncorrectOperationException {
     return PsiImplUtil.replaceBody(newBranch, getElseBranch(), getNode(), getProject());
   }
 

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInsight.editorActions.moveUpDown;
 
@@ -20,7 +6,13 @@ import com.intellij.codeInsight.folding.CodeFoldingManager;
 import com.intellij.diagnostic.PluginException;
 import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.*;
+import com.intellij.openapi.editor.CaretModel;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.FoldRegion;
+import com.intellij.openapi.editor.RangeMarker;
+import com.intellij.openapi.editor.ScrollType;
+import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.project.Project;
@@ -34,14 +26,14 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-class MoverWrapper {
+final class MoverWrapper {
   private static final Logger LOGGER = Logger.getInstance(MoverWrapper.class);
-  
-  protected final boolean myIsDown;
+
+  private final boolean myIsDown;
   private final StatementUpDownMover myMover;
   private final StatementUpDownMover.MoveInfo myInfo;
 
-  protected MoverWrapper(@NotNull final StatementUpDownMover mover, @NotNull final StatementUpDownMover.MoveInfo info, final boolean isDown) {
+  MoverWrapper(final @NotNull StatementUpDownMover mover, final @NotNull StatementUpDownMover.MoveInfo info, final boolean isDown) {
     myMover = mover;
     myIsDown = isDown;
 
@@ -52,7 +44,7 @@ class MoverWrapper {
     return myInfo;
   }
 
-  public final void move(@NotNull Editor editor, @Nullable PsiFile file) {
+  public void move(@NotNull Editor editor, @Nullable PsiFile file) {
     assert myInfo.toMove2 != null;
     myMover.beforeMove(editor, myInfo, myIsDown);
     final Document document = editor.getDocument();
@@ -146,8 +138,6 @@ class MoverWrapper {
           }
         }
 
-        PsiDocumentManager.getInstance(project).commitAllDocuments();
-
         // Swap fold regions status if necessary.
         if (topRegion != null && bottomRegion != null) {
           CodeFoldingManager.getInstance(project).updateFoldRegions(editor);
@@ -172,8 +162,11 @@ class MoverWrapper {
       }
     }
     if (file != null) {
-      myMover.afterMove(editor, file, myInfo, myIsDown);
       PsiDocumentManager.getInstance(project).commitDocument(document);
+      myMover.afterMove(editor, file, myInfo, myIsDown);
+      if (myInfo.indentTarget || myInfo.indentSource) {
+        PsiDocumentManager.getInstance(project).commitDocument(document);
+      }
       if (myInfo.indentTarget) {
         indentLinesIn(editor, file, document, project, myInfo.range2);
       }
@@ -198,7 +191,7 @@ class MoverWrapper {
   private static FoldRegion findTopLevelRegionInRange(Editor editor, RangeMarker range) {
     FoldRegion result = null;
     for (FoldRegion foldRegion : editor.getFoldingModel().getAllFoldRegions()) {
-      if (foldRegion.isValid() && contains(range, foldRegion) && !contains(result, foldRegion)) {
+      if (foldRegion.isValid() && contains(range, foldRegion) && (result==null||!contains(result, foldRegion))) {
         result = foldRegion;
       }
     }
@@ -214,21 +207,7 @@ class MoverWrapper {
    *                      of the given fold region; {@code false} otherwise
    */
   private static boolean contains(@NotNull RangeMarker rangeMarker, @NotNull FoldRegion foldRegion) {
-    return rangeMarker.getStartOffset() <= foldRegion.getStartOffset() && rangeMarker.getEndOffset() >= foldRegion.getEndOffset();
-  }
-
-  /**
-   * Allows to check if given {@code 'region2'} is nested to {@code 'region1'}
-   *
-   * @param region1   'outer' region candidate
-   * @param region2   'inner' region candidate
-   * @return          {@code true} if 'region2' is nested to 'region1'; {@code false} otherwise
-   */
-  private static boolean contains(@Nullable FoldRegion region1, @NotNull FoldRegion region2) {
-    if (region1 == null) {
-      return false;
-    }
-    return region1.getStartOffset() <= region2.getStartOffset() && region1.getEndOffset() >= region2.getEndOffset();
+    return rangeMarker.getTextRange().contains(foldRegion.getTextRange());
   }
 
   private static void indentLinesIn(final Editor editor, final PsiFile file, final Document document, final Project project, RangeMarker range) {
@@ -251,7 +230,7 @@ class MoverWrapper {
     int lineStartOffset = document.getLineStartOffset(line);
     int lineEndOffset = document.getLineEndOffset(line);
     @NonNls String text = document.getCharsSequence().subSequence(lineStartOffset, lineEndOffset).toString();
-    return text.trim().length() != 0;
+    return !text.trim().isEmpty();
   }
 
   private static void restoreSelection(Editor editor,

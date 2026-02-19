@@ -1,31 +1,32 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.editorActions;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.JavaTokenType;
+import com.intellij.psi.PsiAssignmentExpression;
+import com.intellij.psi.PsiComment;
+import com.intellij.psi.PsiDeclarationStatement;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiExpressionStatement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiJavaToken;
+import com.intellij.psi.PsiLocalVariable;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiReferenceExpression;
+import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiPrecedenceUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.ExpressionUtils;
@@ -34,39 +35,32 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
 
-public class DeclarationJoinLinesHandler implements JoinLinesHandlerDelegate {
+public final class DeclarationJoinLinesHandler implements JoinLinesHandlerDelegate {
   private static final Logger LOG = Logger.getInstance(DeclarationJoinLinesHandler.class);
 
   @Override
-  public int tryJoinLines(@NotNull final Document document, @NotNull final PsiFile file, final int start, final int end) {
+  public int tryJoinLines(final @NotNull Document document, final @NotNull PsiFile file, final int start, final int end) {
     PsiElement elementAtStartLineEnd = file.findElementAt(start);
     PsiElement elementAtNextLineStart = file.findElementAt(end);
     if (elementAtStartLineEnd == null || elementAtNextLineStart == null) return -1;
 
     // first line.
-    if (!(elementAtStartLineEnd instanceof PsiJavaToken)) return -1;
-    PsiJavaToken lastFirstLineToken = (PsiJavaToken)elementAtStartLineEnd;
-    if (lastFirstLineToken.getTokenType() != JavaTokenType.SEMICOLON) return -1;
-    if (!(lastFirstLineToken.getParent() instanceof PsiLocalVariable)) return -1;
-    PsiLocalVariable var = (PsiLocalVariable)lastFirstLineToken.getParent();
+    if (!PsiUtil.isJavaToken(elementAtStartLineEnd, JavaTokenType.SEMICOLON)) return -1;
+    PsiLocalVariable var = ObjectUtils.tryCast(elementAtStartLineEnd.getParent(), PsiLocalVariable.class);
+    if (var == null) return -1;
 
-    if (!(var.getParent() instanceof PsiDeclarationStatement)) return -1;
-    PsiDeclarationStatement decl = (PsiDeclarationStatement)var.getParent();
+    if (!(var.getParent() instanceof PsiDeclarationStatement decl)) return -1;
     if (decl.getDeclaredElements().length > 1) return -1;
 
     //second line.
-    if (!(elementAtNextLineStart instanceof PsiJavaToken)) return -1;
-    PsiJavaToken firstNextLineToken = (PsiJavaToken)elementAtNextLineStart;
-    if (firstNextLineToken.getTokenType() != JavaTokenType.IDENTIFIER) return -1;
-    if (!(firstNextLineToken.getParent() instanceof PsiReferenceExpression)) return -1;
-    PsiReferenceExpression ref = (PsiReferenceExpression)firstNextLineToken.getParent();
+    if (!PsiUtil.isJavaToken(elementAtNextLineStart, JavaTokenType.IDENTIFIER)) return -1;
+    if (!(elementAtNextLineStart.getParent() instanceof PsiReferenceExpression ref)) return -1;
     PsiElement refResolved = ref.resolve();
 
     PsiManager psiManager = ref.getManager();
     if (!psiManager.areElementsEquivalent(refResolved, var)) return -1;
-    if (!(ref.getParent() instanceof PsiAssignmentExpression)) return -1;
-    PsiAssignmentExpression assignment = (PsiAssignmentExpression)ref.getParent();
-    if (!(assignment.getParent() instanceof PsiExpressionStatement)) return -1;
+    if (!(ref.getParent() instanceof PsiAssignmentExpression assignment)) return -1;
+    if (!(assignment.getParent() instanceof PsiExpressionStatement statement)) return -1;
 
     PsiExpression rExpression = assignment.getRExpression();
     if (rExpression == null) return -1;
@@ -77,8 +71,6 @@ public class DeclarationJoinLinesHandler implements JoinLinesHandlerDelegate {
 
     final PsiExpression initializerExpression = getInitializerExpression(var, assignment);
     if (initializerExpression == null) return -1;
-
-    PsiExpressionStatement statement = (PsiExpressionStatement)assignment.getParent();
 
     int startOffset = decl.getTextRange().getStartOffset();
     try {
@@ -117,14 +109,12 @@ public class DeclarationJoinLinesHandler implements JoinLinesHandlerDelegate {
    * @param assignment assignment to merge into the initializer
    * @return updated initializer or null if operation cannot be performed (e.g. code is incomplete)
    */
-  @Nullable
-  public static PsiExpression getInitializerExpression(PsiLocalVariable var,
+  public static @Nullable PsiExpression getInitializerExpression(PsiLocalVariable var,
                                                        PsiAssignmentExpression assignment) {
     return getInitializerExpression(var.getInitializer(), assignment);
   }
 
-  @Nullable
-  public static PsiExpression getInitializerExpression(PsiExpression initializer, PsiAssignmentExpression assignment) {
+  public static @Nullable PsiExpression getInitializerExpression(PsiExpression initializer, PsiAssignmentExpression assignment) {
     PsiExpression initializerExpression;
     PsiJavaToken sign = assignment.getOperationSign();
     final IElementType compoundOp = assignment.getOperationTokenType();
@@ -140,9 +130,10 @@ public class DeclarationJoinLinesHandler implements JoinLinesHandlerDelegate {
     final Project project = assignment.getProject();
     final String rightText = rExpression.getText();
     String initializerText;
-    if ("+".equals(opSign) && ExpressionUtils.isZero(initializer) ||
-        "*".equals(opSign) && ExpressionUtils.isOne(initializer)) {
+    if (isIdentity(initializer, opSign)) {
       initializerText = rightText;
+    } else if (isIdentity(rExpression, opSign)) {
+      initializerText = initializer.getText();
     } else {
       boolean parenthesesForLhs = PsiPrecedenceUtil.getPrecedence(initializer) > PsiPrecedenceUtil.getPrecedenceForOperator(simpleOp);
       boolean parenthesesForRhs = PsiPrecedenceUtil.areParenthesesNeeded(sign, rExpression);
@@ -153,8 +144,15 @@ public class DeclarationJoinLinesHandler implements JoinLinesHandlerDelegate {
     return (PsiExpression)CodeStyleManager.getInstance(project).reformat(initializerExpression);
   }
 
-  @Nullable
-  public static PsiLocalVariable copyVarWithInitializer(PsiLocalVariable origVar, PsiExpression initializer) {
+  private static boolean isIdentity(PsiExpression operand, String opSign) {
+    return "+".equals(opSign) && ExpressionUtils.isZero(operand) ||
+           "*".equals(opSign) && ExpressionUtils.isOne(operand) ||
+           "^".equals(opSign) && ExpressionUtils.isLiteral(operand, false) ||
+           "|".equals(opSign) && ExpressionUtils.isLiteral(operand, false) ||
+           "&".equals(opSign) && ExpressionUtils.isLiteral(operand, true);
+  }
+
+  public static @Nullable PsiLocalVariable copyVarWithInitializer(PsiLocalVariable origVar, PsiExpression initializer) {
     // Don't normalize the original declaration: it may declare many variables
     PsiElement declCopy = origVar.getParent().copy();
     PsiLocalVariable varCopy = (PsiLocalVariable)ContainerUtil.find(

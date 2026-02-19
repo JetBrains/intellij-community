@@ -1,0 +1,24 @@
+LineBreakpoint created at suspendLambda.kt:12
+Run Java
+Connected to the target VM
+suspendLambda.kt:12
+Thread stack trace:
+	KotlinStackFrame nextSequence:!LINE_NUMBER!, SuspendLambdaKt (continuation)
+		(terms, terms1)
+	CoroutinePreflightFrame invokeSuspend:!LINE_NUMBER!, SuspendLambdaKt$fibonacci$1 (continuation)
+		($result, $this$sequence, step, terms, this)
+	InlineStackFrame lambda 'with' in 'resumeWith':!LINE_NUMBER!, BaseContinuationImpl (kotlin.coroutines.jvm.internal)
+		($i$a$-with-BaseContinuationImpl$resumeWith$1, $this$resumeWith_u24lambda_u240, completion, current, param, result, this)
+	KotlinStackFrame resumeWith:!LINE_NUMBER!, BaseContinuationImpl (kotlin.coroutines.jvm.internal)
+		($i$a$-with-BaseContinuationImpl$resumeWith$1, $this$resumeWith_u24lambda_u240, completion, current, param, result, this)
+	KotlinStackFrame hasNext:!LINE_NUMBER!, SequenceBuilderIterator (kotlin.sequences)
+		(step, this)
+	KotlinStackFrame hasNext:!LINE_NUMBER!, TakeSequence$iterator$1 (kotlin.sequences)
+		(this)
+	KotlinStackFrame toList:!LINE_NUMBER!, SequencesKt___SequencesKt (kotlin.sequences)
+		($this$toList, dst, element, it)
+	KotlinStackFrame main:!LINE_NUMBER!, SuspendLambdaKt (continuation)
+		(a)
+Disconnected from the target VM
+
+Process finished with exit code 0

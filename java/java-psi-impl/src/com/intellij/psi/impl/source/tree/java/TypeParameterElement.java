@@ -4,7 +4,9 @@ package com.intellij.psi.impl.source.tree.java;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.JavaTokenType;
-import com.intellij.psi.impl.source.tree.*;
+import com.intellij.psi.impl.source.tree.ChildRole;
+import com.intellij.psi.impl.source.tree.CompositeElement;
+import com.intellij.psi.impl.source.tree.JavaElementType;
 import com.intellij.psi.tree.ChildRoleBase;
 import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
@@ -36,14 +38,14 @@ public class TypeParameterElement extends CompositeElement {
     LOG.assertTrue(ChildRole.isUnique(role));
 
     switch (role) {
-      default:
-        return null;
-
       case ChildRole.NAME:
         return findChildByType(JavaTokenType.IDENTIFIER);
 
       case ChildRole.EXTENDS_LIST:
         return findChildByType(JavaElementType.EXTENDS_BOUND_LIST);
+
+      default:
+        return null;
     }
   }
 }

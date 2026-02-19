@@ -15,7 +15,12 @@
  */
 package org.jetbrains.plugins.groovy.lang.resolve;
 
-import com.intellij.psi.*;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiReference;
+import com.intellij.psi.PsiReferenceContributor;
+import com.intellij.psi.PsiReferenceProvider;
+import com.intellij.psi.PsiReferenceRegistrar;
 import com.intellij.util.ProcessingContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.extensions.GroovyMethodInfo;
@@ -31,9 +36,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrRefere
 import org.jetbrains.plugins.groovy.lang.psi.patterns.GroovyPatterns;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
-/**
- * @author Sergey Evdokimov
- */
 public final class GroovyMethodArgumentReferenceContributor extends PsiReferenceContributor {
 
   @Override
@@ -67,8 +69,7 @@ public final class GroovyMethodArgumentReferenceContributor extends PsiReference
         return createReferencesForNamedArgument(element, (GrNamedArgument)parent, context);
       }
 
-      if (parent instanceof GrArgumentList) {
-        GrArgumentList argumentList = (GrArgumentList)parent;
+      if (parent instanceof GrArgumentList argumentList) {
         int index = argumentList.getExpressionArgumentIndex(argument);
 
         PsiElement call = argumentList.getParent();
@@ -100,9 +101,7 @@ public final class GroovyMethodArgumentReferenceContributor extends PsiReference
 
       for (GroovyResolveResult result : ((GrReferenceExpression)invokedExpression).multiResolve(false)) {
         PsiElement eMethod = result.getElement();
-        if (!(eMethod instanceof PsiMethod)) continue;
-
-        PsiMethod method = (PsiMethod)eMethod;
+        if (!(eMethod instanceof PsiMethod method)) continue;
 
         for (GroovyMethodInfo info : GroovyMethodInfo.getInfos(method)) {
           Object referenceProvider = info.getNamedArgReferenceProvider(labelName);

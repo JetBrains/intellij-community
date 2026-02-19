@@ -1,0 +1,9 @@
+// "Make 'Private' public" "true"
+// PRIORITY: HIGH
+
+private interface I2 {
+    private class Private
+    fun <caret>pp() = Private()
+}
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.ChangeVisibilityFix$ChangeToPublicFix
+// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.fixes.ChangeVisibilityFixFactories$ChangeToPublicModCommandAction

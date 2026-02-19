@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs
 
 import com.intellij.openapi.application.AccessToken
@@ -9,23 +9,35 @@ import com.intellij.openapi.editor.Document
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.progress.ProgressIndicator
-import com.intellij.openapi.progress.util.BackgroundTaskUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.LineStatusTrackerTestUtil.parseInput
-import com.intellij.openapi.vcs.changes.*
+import com.intellij.openapi.vcs.changes.Change
+import com.intellij.openapi.vcs.changes.ChangeListManagerGate
+import com.intellij.openapi.vcs.changes.ChangeListManagerImpl
+import com.intellij.openapi.vcs.changes.ChangeProvider
+import com.intellij.openapi.vcs.changes.ChangelistBuilder
+import com.intellij.openapi.vcs.changes.ContentRevision
+import com.intellij.openapi.vcs.changes.CurrentContentRevision
+import com.intellij.openapi.vcs.changes.LocalChangeList
+import com.intellij.openapi.vcs.changes.SimpleContentRevision
+import com.intellij.openapi.vcs.changes.VcsDirtyScope
+import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager
+import com.intellij.openapi.vcs.changes.VcsDirtyScopeManagerImpl
+import com.intellij.openapi.vcs.changes.VcsFreezingProcess
 import com.intellij.openapi.vcs.changes.committed.MockAbstractVcs
 import com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl
 import com.intellij.openapi.vcs.impl.projectlevelman.AllVcsesI
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.platform.vcs.changes.ChangesUtil
 import com.intellij.testFramework.LightPlatformTestCase
-import com.intellij.testFramework.RunAll
-import com.intellij.util.ThrowableRunnable
+import com.intellij.testFramework.common.runAll
 import com.intellij.util.io.createDirectories
 import com.intellij.util.ui.UIUtil
 import com.intellij.vcsUtil.VcsUtil
-import org.mockito.Mockito
+import org.mockito.kotlin.mock
+import org.mockito.kotlin.whenever
 import java.nio.file.Paths
 import java.util.concurrent.Semaphore
 import java.util.concurrent.TimeUnit
@@ -35,9 +47,9 @@ abstract class BaseChangeListsTest : LightPlatformTestCase() {
     val DEFAULT = LocalChangeList.getDefaultName()
 
     fun createMockFileEditor(document: Document): FileEditor {
-      val editor = Mockito.mock(FileEditor::class.java, Mockito.withSettings().extraInterfaces(DocumentReferenceProvider::class.java))
+      val editor = mock<FileEditor>(extraInterfaces = arrayOf(DocumentReferenceProvider::class))
       val references = listOf(DocumentReferenceManager.getInstance().create(document))
-      Mockito.`when`((editor as DocumentReferenceProvider).documentReferences).thenReturn(references)
+      whenever((editor as DocumentReferenceProvider).documentReferences).thenReturn(references)
       return editor
     }
   }
@@ -83,14 +95,14 @@ abstract class BaseChangeListsTest : LightPlatformTestCase() {
   }
 
   override fun tearDown() {
-    RunAll.runAll(
-      ThrowableRunnable { resetSettings() },
-      ThrowableRunnable { resetChanges() },
-      ThrowableRunnable { resetChangelists() },
-      ThrowableRunnable { vcsManager.directoryMappings = emptyList() },
-      ThrowableRunnable { project.getServiceIfCreated(AllVcsesI::class.java)?.unregisterManually(vcs) },
-      ThrowableRunnable { runWriteAction { testRoot.delete(this) } },
-      ThrowableRunnable { super.tearDown() }
+    runAll(
+      { resetSettings() },
+      { resetChanges() },
+      { resetChangelists() },
+      { vcsManager.directoryMappings = emptyList() },
+      { project.getServiceIfCreated(AllVcsesI::class.java)?.unregisterManually(vcs) },
+      { runWriteAction { testRoot.delete(this) } },
+      { super.tearDown() }
     )
   }
 
@@ -126,16 +138,24 @@ abstract class BaseChangeListsTest : LightPlatformTestCase() {
   }
 
 
-  protected fun addLocalFile(name: String, content: String): VirtualFile {
-    val file = runWriteAction {
+  protected fun addLocalFile(name: String, content: String, baseContent: String? = null): VirtualFile {
+    val file = createLocalFile(name, content)
+    assertFalse(changeProvider.files.contains(file))
+    changeProvider.files.add(file)
+
+    if (baseContent != null) {
+      setBaseVersion(name, baseContent)
+    }
+
+    return file
+  }
+
+  protected fun createLocalFile(name: String, content: String): VirtualFile {
+    return runWriteAction {
       val file = testRoot.createChildData(this, name)
       VfsUtil.saveText(file, parseInput(content))
       file
     }
-
-    assertFalse(changeProvider.files.contains(file))
-    changeProvider.files.add(file)
-    return file
   }
 
   protected fun removeLocalFile(name: String) {
@@ -199,12 +219,12 @@ abstract class BaseChangeListsTest : LightPlatformTestCase() {
 
 
   fun runBatchFileChangeOperation(task: () -> Unit) {
-    BackgroundTaskUtil.syncPublisher(project, VcsFreezingProcess.Listener.TOPIC).onFreeze()
+    project.messageBus.syncPublisher(VcsFreezingProcess.Listener.TOPIC).onFreeze()
     try {
       task()
     }
     finally {
-      BackgroundTaskUtil.syncPublisher(project, VcsFreezingProcess.Listener.TOPIC).onUnfreeze()
+      project.messageBus.syncPublisher(VcsFreezingProcess.Listener.TOPIC).onUnfreeze()
     }
   }
 
@@ -243,23 +263,30 @@ abstract class BaseChangeListsTest : LightPlatformTestCase() {
     val changes = mutableMapOf<FilePath, ContentRevision?>()
     val files = mutableSetOf<VirtualFile>()
 
-    override fun getChanges(dirtyScope: VcsDirtyScope,
-                            builder: ChangelistBuilder,
-                            progress: ProgressIndicator,
-                            addGate: ChangeListManagerGate) {
+    override fun getChanges(
+      dirtyScope: VcsDirtyScope,
+      builder: ChangelistBuilder,
+      progress: ProgressIndicator,
+      addGate: ChangeListManagerGate,
+    ) {
       markerSemaphore.release()
       semaphore.acquireOrThrow()
       try {
-        for ((filePath, beforeRevision) in changes) {
-          val file = files.find { VcsUtil.getFilePath(it) == filePath }
-          val afterContent: ContentRevision? = when (file) {
-            null -> null
-            else -> CurrentContentRevision(filePath)
+        val changesToProcess = changes.map { (filePath, beforeRevision) ->
+          val afterContent: ContentRevision? =
+            if (files.find { VcsUtil.getFilePath(it) == filePath } == null)
+              null
+            else CurrentContentRevision(filePath)
+          Change(beforeRevision, afterContent)
+        }
+
+        changesToProcess.forEach { change -> builder.processChange(change, MockAbstractVcs.getKey()) }
+
+        for (file in files) {
+          val path = VcsUtil.getFilePath(file)
+          if (changesToProcess.none { ChangesUtil.matches(it, path) }) {
+            builder.processUnversionedFile(path)
           }
-
-          val change = Change(beforeRevision, afterContent)
-
-          builder.processChange(change, MockAbstractVcs.getKey())
         }
       }
       finally {
@@ -279,7 +306,6 @@ abstract class BaseChangeListsTest : LightPlatformTestCase() {
       semaphore.acquireOrThrow()
 
       dirtyScopeManager.markEverythingDirty()
-      clm.scheduleUpdate()
 
       markerSemaphore.acquireOrThrow()
       markerSemaphore.release()

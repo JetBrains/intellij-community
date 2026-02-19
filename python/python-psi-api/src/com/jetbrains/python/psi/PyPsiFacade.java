@@ -1,21 +1,6 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.psi;
 
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
@@ -29,37 +14,24 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collection;
 import java.util.List;
 
-/**
- * @author yole
- */
+
 public abstract class PyPsiFacade {
   public static PyPsiFacade getInstance(Project project) {
-    return ServiceManager.getService(project, PyPsiFacade.class);
+    return project.getService(PyPsiFacade.class);
   }
 
-  @NotNull
-  public abstract List<PsiElement> resolveQualifiedName(@NotNull QualifiedName name, @NotNull PyQualifiedNameResolveContext context);
+  public abstract @NotNull List<PsiElement> resolveQualifiedName(@NotNull QualifiedName name,
+                                                                 @NotNull PyQualifiedNameResolveContext context);
 
-  @NotNull
-  public abstract PyQualifiedNameResolveContext createResolveContextFromFoothold(@NotNull PsiElement foothold);
-  /**
-   * @deprecated use {@link #createClassByQName(String, PsiElement)} or skeleton may be found
-   */
-  @Deprecated
-  @Nullable
-  public abstract PyClass findClass(String qName);
+  public abstract @NotNull PyQualifiedNameResolveContext createResolveContextFromFoothold(@NotNull PsiElement foothold);
 
-  @NotNull
-  public abstract PyClassType createClassType(@NotNull PyClass pyClass, boolean isDefinition);
+  public abstract @NotNull PyClassType createClassType(@NotNull PyClass pyClass, boolean isDefinition);
 
-  @Nullable
-  public abstract PyType createUnionType(@NotNull Collection<PyType> members);
+  public abstract @Nullable PyType createUnionType(@NotNull Collection<PyType> members);
 
-  @Nullable
-  public abstract PyType createTupleType(@NotNull List<PyType> members, @NotNull PsiElement anchor);
+  public abstract @Nullable PyType createTupleType(@NotNull List<PyType> members, @NotNull PsiElement anchor);
 
-  @Nullable
-  public abstract PyType parseTypeAnnotation(@NotNull String annotation, @NotNull PsiElement anchor);
+  public abstract @Nullable PyType parseTypeAnnotation(@NotNull String annotation, @NotNull PsiElement anchor);
 
   /**
    * Retrieve a top-level class by its qualified name. The name provided is supposed to be <em>fully qualified absolute name</em>
@@ -73,12 +45,13 @@ public abstract class PyPsiFacade {
    * @param qName  qualified name of the required class
    * @param anchor arbitrary element located in the same module/SDK as the required class
    */
-  @Nullable
-  public abstract PyClass createClassByQName(@NotNull String qName, @NotNull PsiElement anchor);
+  public abstract @Nullable PyClass createClassByQName(@NotNull String qName, @NotNull PsiElement anchor);
 
-  @Nullable
-  public abstract String findShortestImportableName(@NotNull VirtualFile targetFile, @NotNull PsiElement anchor);
+  public abstract @Nullable String findShortestImportableName(@NotNull VirtualFile targetFile, @NotNull PsiElement anchor);
 
-  @NotNull
-  public abstract LanguageLevel getLanguageLevel(@NotNull PsiElement element);
+  /**
+   * @deprecated Use {@link LanguageLevel#forElement(PsiElement)}
+   */
+  @Deprecated(forRemoval = true)
+  public abstract @NotNull LanguageLevel getLanguageLevel(@NotNull PsiElement element);
 }

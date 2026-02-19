@@ -30,8 +30,7 @@ class HgCurrentContentRevision extends CurrentContentRevision {
   }
 
   @Override
-  @NotNull
-  public VcsRevisionNumber getRevisionNumber() {
+  public @NotNull VcsRevisionNumber getRevisionNumber() {
     return revisionNumber;
   }
 

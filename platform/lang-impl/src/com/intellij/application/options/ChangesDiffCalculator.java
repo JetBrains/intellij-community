@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.application.options;
 
 import com.intellij.diff.comparison.ComparisonManager;
@@ -10,6 +10,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.progress.DumbProgressIndicator;
 import com.intellij.openapi.util.TextRange;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -19,6 +20,7 @@ import java.util.List;
 /**
  * Allows to calculate difference between two versions of document (before and after code style setting value change).
  */
+@ApiStatus.Internal
 public final class ChangesDiffCalculator {
   private static final Logger LOG = Logger.getInstance(ChangesDiffCalculator.class);
 
@@ -64,8 +66,7 @@ public final class ChangesDiffCalculator {
    * Thus, when comparing whitespace sequences of different length, we always highlight rightmost whitespaces
    * (while general algorithm gives no warranty on this case, and usually highlights leftmost whitespaces).
    */
-  @NotNull
-  private static TextRange calculateChangeHighlightRange(@NotNull CharSequence text, int startOffset, int endOffset) {
+  private static @NotNull TextRange calculateChangeHighlightRange(@NotNull CharSequence text, int startOffset, int endOffset) {
     if (startOffset == endOffset) {
       while (startOffset < text.length() && text.charAt(startOffset) == ' ') {
         startOffset++;

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.xml;
 
 import com.intellij.openapi.application.ReadAction;
@@ -24,7 +10,12 @@ import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.actions.validate.ErrorReporter;
 import com.intellij.xml.actions.validate.ValidateXmlActionHandler;
 import org.apache.xerces.impl.Constants;
-import org.apache.xerces.impl.xs.*;
+import org.apache.xerces.impl.xs.SchemaGrammar;
+import org.apache.xerces.impl.xs.SubstitutionGroupHandler;
+import org.apache.xerces.impl.xs.XSComplexTypeDecl;
+import org.apache.xerces.impl.xs.XSElementDecl;
+import org.apache.xerces.impl.xs.XSElementDeclHelper;
+import org.apache.xerces.impl.xs.XSGrammarBucket;
 import org.apache.xerces.impl.xs.models.CMBuilder;
 import org.apache.xerces.impl.xs.models.CMNodeFactory;
 import org.apache.xerces.impl.xs.models.XSCMValidator;
@@ -50,15 +41,13 @@ import java.util.List;
 /**
  * @author Dmitry Avdeev
  */
-class XsContentDFA extends XmlContentDFA {
-
+final class XsContentDFA extends XmlContentDFA {
   private final XSCMValidator myContentModel;
   private final SubstitutionGroupHandler myHandler;
   private final int[] myState;
   private final XmlElementDescriptor[] myElementDescriptors;
 
-  @Nullable
-  public static XmlContentDFA createContentDFA(@NotNull XmlTag parentTag) {
+  public static @Nullable XmlContentDFA createContentDFA(@NotNull XmlTag parentTag) {
     final PsiFile file = parentTag.getContainingFile().getOriginalFile();
     if (!(file instanceof XmlFile)) return null;
     XSModel xsModel = ReadAction.compute(() -> getXSModel((XmlFile)file));
@@ -90,8 +79,7 @@ class XsContentDFA extends XmlContentDFA {
     final List vector = myContentModel.whatCanGoHere(myState);
     ArrayList<XmlElementDescriptor> list = new ArrayList<>();
     for (Object o : vector) {
-      if (o instanceof XSElementDecl) {
-        final XSElementDecl elementDecl = (XSElementDecl)o;
+      if (o instanceof XSElementDecl elementDecl) {
         XmlElementDescriptor descriptor = ContainerUtil.find(myElementDescriptors,
                                                              elementDescriptor -> elementDecl.getName().equals(elementDescriptor.getName()));
         ContainerUtil.addIfNotNull(list, descriptor);
@@ -114,8 +102,7 @@ class XsContentDFA extends XmlContentDFA {
                      namespace.isEmpty() ? null : namespace.intern());
   }
 
-  @Nullable
-  private static XSElementDeclaration getElementDeclaration(XmlTag tag, XSModel xsModel) {
+  private static @Nullable XSElementDeclaration getElementDeclaration(XmlTag tag, XSModel xsModel) {
 
     List<XmlTag> ancestors = new ArrayList<>();
     for (XmlTag t = tag; t != null; t = t.getParentTag()) {
@@ -153,8 +140,7 @@ class XsContentDFA extends XmlContentDFA {
     return declaration;
   }
 
-  @Nullable
-  private static XSModel getXSModel(XmlFile file) {
+  private static @Nullable XSModel getXSModel(XmlFile file) {
 
     ValidateXmlActionHandler handler = new ValidateXmlActionHandler(false) {
       @Override

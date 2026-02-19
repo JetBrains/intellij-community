@@ -1,74 +1,43 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.target.java
 
-import com.intellij.execution.target.LanguageRuntimeType.VolumeDescriptor
+import com.intellij.execution.ExecutionBundle.message
+import com.intellij.execution.target.LanguageRuntimeConfigurable
 import com.intellij.execution.target.TargetEnvironmentConfiguration
-import com.intellij.execution.target.TargetEnvironmentType.TargetSpecificVolumeContributionUI
-import com.intellij.execution.target.getRuntimeType
-import com.intellij.execution.target.getTargetType
-import com.intellij.openapi.options.BoundConfigurable
+import com.intellij.execution.target.TargetEnvironmentType
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogPanel
-import com.intellij.ui.layout.*
-import com.intellij.util.text.nullize
+import com.intellij.ui.dsl.builder.AlignX
+import com.intellij.ui.dsl.builder.TopGap
+import com.intellij.ui.dsl.builder.bindText
+import com.intellij.ui.dsl.builder.panel
+import com.intellij.ui.dsl.builder.toMutableProperty
+import org.jetbrains.annotations.ApiStatus
+import java.util.function.Supplier
 
-class JavaLanguageRuntimeUI(private val config: JavaLanguageRuntimeConfiguration, private val target: TargetEnvironmentConfiguration) :
-  BoundConfigurable(config.displayName, config.getRuntimeType().helpTopic) {
-
-  private val targetVolumeContributions = mutableMapOf<VolumeDescriptor, TargetSpecificVolumeContributionUI>()
+@ApiStatus.Internal
+class JavaLanguageRuntimeUI(private val config: JavaLanguageRuntimeConfiguration,
+                            targetType: TargetEnvironmentType<*>,
+                            targetProvider: Supplier<out TargetEnvironmentConfiguration>,
+                            project: Project) :
+  LanguageRuntimeConfigurable(config, targetType, targetProvider, project) {
 
   override fun createPanel(): DialogPanel {
     return panel {
-      row("JDK home path:") {
-        textField(config::homePath)
-          .comment("The path to the JDK on the target")
+      row(message("java.language.runtime.jdk.home.path")) {
+        browsableTextField(message("java.language.runtime.jdk.home.path.title"), config::homePath.toMutableProperty())
+          .comment(message("java.language.runtime.text.path.to.jdk.on.target"))
       }
-      row("JDK version:") {
-        textField(config::javaVersionString)
+      row(message("java.language.runtime.jdk.version")) {
+        textField()
+          .align(AlignX.FILL)
+          .bindText(config::javaVersionString)
       }
 
-      addVolumeUI(JavaLanguageRuntimeType.APPLICATION_FOLDER_VOLUME)
-
-      hideableRow("Advanced Volume Settings") {
-        subRowIndent = 0
-        addVolumeUI(JavaLanguageRuntimeType.CLASS_PATH_VOLUME)
-        addVolumeUI(JavaLanguageRuntimeType.AGENTS_VOLUME)
-      }
+      collapsibleGroup(message("java.language.runtime.separator.advanced.volume.settings")) {
+        addVolumeUI(JavaLanguageRuntimeTypeConstants.CLASS_PATH_VOLUME)
+        addVolumeUI(JavaLanguageRuntimeTypeConstants.AGENTS_VOLUME)
+      }.topGap(TopGap.NONE)
     }
-  }
-
-  override fun apply() {
-    super.apply()
-    targetVolumeContributions.forEach { (volume, contribution) ->
-      config.setTargetSpecificData(volume, contribution.getConfiguredValue())
-    }
-  }
-
-  override fun reset() {
-    super.reset()
-    targetVolumeContributions.forEach { (volume, contribution) ->
-      contribution.resetFrom(volume)
-    }
-  }
-
-  private fun RowBuilder.addVolumeUI(volumeDescriptor: VolumeDescriptor) {
-    row(volumeDescriptor.wizardLabel) {
-      textField(getter = { config.getTargetPathValue(volumeDescriptor).nullize(true) ?: volumeDescriptor.defaultPath },
-                setter = { config.setTargetPath(volumeDescriptor, it.nullize(true)) })
-        .comment(volumeDescriptor.description)
-    }
-
-    target.getTargetType().createVolumeContributionUI()?.let {
-      targetVolumeContributions[volumeDescriptor] = it
-      val component = it.createComponent()
-      it.resetFrom(volumeDescriptor)
-      row("") {
-        component()
-        largeGapAfter()
-      }
-    }
-  }
-
-  private fun TargetSpecificVolumeContributionUI.resetFrom(volume: VolumeDescriptor) {
-    this.resetFrom(config.getTargetSpecificData(volume)?.toStorableMap() ?: emptyMap())
   }
 }

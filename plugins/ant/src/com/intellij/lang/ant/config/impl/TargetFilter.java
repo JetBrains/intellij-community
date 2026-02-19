@@ -1,23 +1,25 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.ant.config.impl;
 
 import com.intellij.lang.ant.config.AntBuildTarget;
 import com.intellij.openapi.util.JDOMExternalizable;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.util.config.Externalizer;
 import org.jdom.Element;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 public final class TargetFilter implements JDOMExternalizable, Externalizer.SkippableValue {
-  @NonNls private static final String FILTER_TARGET_NAME = "targetName";
-  @NonNls private static final String FILTER_IS_VISIBLE = "isVisible";
-  private String myTargetName;
+  private static final @NonNls String FILTER_TARGET_NAME = "targetName";
+  private static final @NonNls String FILTER_IS_VISIBLE = "isVisible";
+  private @NlsSafe String myTargetName;
   private boolean myVisible;
-  private String myDescription = "";
+  private @Nls String myDescription = "";
 
   public TargetFilter() {}
 
-  public TargetFilter(String targetName, boolean isVisible) {
+  public TargetFilter(@Nls String targetName, boolean isVisible) {
     myTargetName = targetName;
     myVisible = isVisible;
   }
@@ -37,7 +39,7 @@ public final class TargetFilter implements JDOMExternalizable, Externalizer.Skip
   @Override
   public void readExternal(Element element) {
     myTargetName = element.getAttributeValue(FILTER_TARGET_NAME);
-    myVisible = Boolean.valueOf(element.getAttributeValue(FILTER_IS_VISIBLE));
+    myVisible = Boolean.parseBoolean(element.getAttributeValue(FILTER_IS_VISIBLE));
   }
 
   @Override
@@ -59,8 +61,7 @@ public final class TargetFilter implements JDOMExternalizable, Externalizer.Skip
     myDescription = target.getNotEmptyDescription();
   }
 
-  @NotNull
-  public static TargetFilter fromTarget(AntBuildTarget target) {
+  public static @NotNull TargetFilter fromTarget(AntBuildTarget target) {
     TargetFilter filter = new TargetFilter(target.getName(), target.isDefault());
     filter.myDescription = target.getNotEmptyDescription();
     filter.myVisible = (filter.myDescription != null);

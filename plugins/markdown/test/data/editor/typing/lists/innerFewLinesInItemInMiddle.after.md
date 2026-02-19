@@ -1,4 +1,4 @@
 * item
     * item
-      <caret>
+    * <caret>
       other line

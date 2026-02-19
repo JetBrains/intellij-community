@@ -1,5 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.facet.mock;
 
 import com.intellij.facet.FacetConfiguration;
@@ -10,17 +9,23 @@ import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileManager;
 import org.jdom.Element;
 
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-public class MockFacetConfiguration implements FacetConfiguration {
-  private final List<VirtualFile> myRoots = new ArrayList<>();
+public final class MockFacetConfiguration implements FacetConfiguration {
+  private final List<String> myRootUrls = new ArrayList<>();
   private String myData = "";
   private MockFacetEditorTab myEditor;
+
+  public MockFacetConfiguration(String data) {
+    myData = data;
+  }
+
+  public MockFacetConfiguration() {
+  }
 
   @Override
   public FacetEditorTab[] createEditorTabs(final FacetEditorContext editorContext, final FacetValidatorsManager validatorsManager) {
@@ -33,11 +38,15 @@ public class MockFacetConfiguration implements FacetConfiguration {
   }
 
   public void addRoot(VirtualFile root) {
-    myRoots.add(root);
+    myRootUrls.add(root.getUrl());
+  }
+
+  public void addRoot(String url) {
+    myRootUrls.add(url);
   }
 
   public void removeRoot(VirtualFile root) {
-    myRoots.remove(root);
+    myRootUrls.remove(root.getUrl());
   }
 
   public void setData(final String data) {
@@ -51,9 +60,10 @@ public class MockFacetConfiguration implements FacetConfiguration {
   @Override
   public void readExternal(Element element) throws InvalidDataException {
     myData = StringUtil.notNullize(element.getAttributeValue("data"));
+    myRootUrls.clear();
     final List<Element> children = element.getChildren("root");
     for (Element child : children) {
-      myRoots.add(VirtualFileManager.getInstance().findFileByUrl(child.getAttributeValue("url")));
+      myRootUrls.add(child.getAttributeValue("url"));
     }
   }
 
@@ -62,12 +72,12 @@ public class MockFacetConfiguration implements FacetConfiguration {
     if (!myData.isEmpty()) {
       element.setAttribute("data", myData);
     }
-    for (VirtualFile root : myRoots) {
-      element.addContent(new Element("root").setAttribute("url", root.getUrl()));
+    for (String url : myRootUrls) {
+      element.addContent(new Element("root").setAttribute("url", url));
     }
   }
 
-  public Collection<VirtualFile> getRoots() {
-    return myRoots;
+  public Collection<String> getRootUrls() {
+    return myRootUrls;
   }
 }

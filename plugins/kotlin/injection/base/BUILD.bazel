@@ -1,0 +1,86 @@
+### auto-generated section `build kotlin.base.injection` start
+load("//build:compiler-options.bzl", "create_kotlinc_options")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_provided_library", "resourcegroup")
+
+create_kotlinc_options(
+  name = "custom_kotlin-base-injection",
+  opt_in = ["org.jetbrains.kotlin.analysis.api.permissions.KaAllowProhibitedAnalyzeFromWriteAction"],
+  x_context_parameters = True
+)
+
+resourcegroup(
+  name = "kotlin-base-injection_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_provided_library(
+  name = "plugins_IntelliLang_backend_provided",
+  lib = "//plugins/IntelliLang/backend"
+)
+
+jvm_library(
+  name = "kotlin-base-injection",
+  module_name = "kotlin.base.injection",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":kotlin-base-injection_resources"],
+  kotlinc_opts = ":custom_kotlin-base-injection",
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:kotlinc-kotlin-compiler-common",
+    "//libraries/guava",
+    "//platform/analysis-api:analysis",
+    "//platform/core-api:core",
+    "//platform/editor-ui-api:editor-ui",
+    "//platform/indexing-api:indexing",
+    "//platform/projectModel-api:projectModel",
+    "//plugins/kotlin/base/frontend-agnostic",
+    "//plugins/kotlin/base/util",
+    "//platform/core-impl",
+    "//platform/lang-impl",
+    "//platform/util-ex",
+    "//java/java-psi-api:psi",
+    "//platform/code-style-api:codeStyle",
+    "@lib//:jetbrains-annotations",
+    "//plugins/IntelliLang:langInjection",
+    "//plugins/kotlin/base/project-structure",
+    "//java/langInjection",
+    "//plugins/kotlin/base/psi",
+    "@lib//:kotlinc-analysis-api",
+    "//plugins/kotlin/base/analysis",
+    ":plugins_IntelliLang_backend_provided",
+  ]
+)
+
+jvm_library(
+  name = "kotlin-base-injection_test_lib",
+  module_name = "kotlin.base.injection",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  kotlinc_opts = ":custom_kotlin-base-injection",
+  runtime_deps = [
+    ":kotlin-base-injection",
+    "//libraries/guava:guava_test_lib",
+    "//platform/analysis-api:analysis_test_lib",
+    "//platform/core-api:core_test_lib",
+    "//platform/editor-ui-api:editor-ui_test_lib",
+    "//platform/indexing-api:indexing_test_lib",
+    "//platform/projectModel-api:projectModel_test_lib",
+    "//plugins/kotlin/base/frontend-agnostic:frontend-agnostic_test_lib",
+    "//plugins/kotlin/base/util:util_test_lib",
+    "//platform/core-impl:core-impl_test_lib",
+    "//platform/lang-impl:lang-impl_test_lib",
+    "//platform/util-ex:util-ex_test_lib",
+    "//java/java-psi-api:psi_test_lib",
+    "//platform/code-style-api:codeStyle_test_lib",
+    "//plugins/IntelliLang:langInjection_test_lib",
+    "//plugins/kotlin/base/project-structure:project-structure_test_lib",
+    "//java/langInjection:langInjection_test_lib",
+    "//plugins/kotlin/base/psi:psi_test_lib",
+    "//plugins/kotlin/base/analysis:analysis_test_lib",
+    "//plugins/IntelliLang/backend",
+    "//plugins/IntelliLang/backend:backend_test_lib",
+  ]
+)
+### auto-generated section `build kotlin.base.injection` end

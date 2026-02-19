@@ -1,13 +1,19 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.updater;
 
-import java.io.*;
+import java.io.DataInputStream;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.LinkOption;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 import java.util.zip.ZipOutputStream;
+
+import static com.intellij.updater.Runner.LOG;
 
 public class CreateAction extends PatchAction {
   public CreateAction(Patch patch, String path) {
@@ -45,17 +51,17 @@ public class CreateAction extends PatchAction {
   }
 
   @Override
-  public ValidationResult validate(File toDir) {
+  public ValidationResult validate(File toDir) throws IOException {
     File toFile = getFile(toDir);
     ValidationResult result = doValidateAccess(toFile, ValidationResult.Action.CREATE, true);
     if (result != null) return result;
 
-    if (toFile.exists()) {
+    if (!isOptional() && toFile.exists()) {
       ValidationResult.Option[] options = myPatch.isStrict()
                                           ? new ValidationResult.Option[]{ValidationResult.Option.REPLACE}
                                           : new ValidationResult.Option[]{ValidationResult.Option.REPLACE, ValidationResult.Option.KEEP};
-      return new ValidationResult(
-        ValidationResult.Kind.CONFLICT, getPath(), ValidationResult.Action.CREATE, ValidationResult.ALREADY_EXISTS_MESSAGE, options);
+      String message = UpdaterUI.message("file.exists"), details = "checksum 0x" + Long.toHexString(myPatch.digestFile(toFile));
+      return new ValidationResult(ValidationResult.Kind.CONFLICT, getPath(), ValidationResult.Action.CREATE, message, details, options);
     }
     return null;
   }
@@ -67,7 +73,7 @@ public class CreateAction extends PatchAction {
 
   @Override
   protected void doApply(ZipFile patchFile, File backupDir, File toFile) throws IOException {
-    Runner.logger().info("Create action. File: " + toFile.getAbsolutePath());
+    LOG.info("Create action. File: " + toFile.getAbsolutePath());
     prepareToWriteFile(toFile);
 
     ZipEntry entry = Utils.getZipEntry(patchFile, getPath());

@@ -1,33 +1,38 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistic.uploader;
 
 import com.intellij.internal.statistic.eventLog.DataCollectorDebugLogger;
-import org.apache.log4j.FileAppender;
-import org.apache.log4j.Level;
-import org.apache.log4j.Logger;
-import org.apache.log4j.PatternLayout;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.io.StringWriter;
+import java.util.logging.ConsoleHandler;
+import java.util.logging.FileHandler;
+import java.util.logging.Formatter;
+import java.util.logging.Handler;
+import java.util.logging.Level;
+import java.util.logging.LogRecord;
+import java.util.logging.Logger;
 
 public class ExternalDataCollectorLogger implements DataCollectorDebugLogger {
-  @NonNls private final Logger myLogger;
+  @SuppressWarnings("NonConstantLogger") private final @NonNls Logger myLogger;
 
   public ExternalDataCollectorLogger() {
     myLogger = Logger.getLogger("com.intellij.internal.statistic.uploader");
 
     String logDirectory = findDirectory(1_000_000L);
     if (logDirectory != null) {
-      String directory = new File(logDirectory, "idea_statistics_uploader.log").getAbsolutePath();
-      myLogger.addAppender(newAppender(directory));
+      String logPath = new File(logDirectory, "idea_statistics_uploader.log").getAbsolutePath();
+      myLogger.addHandler(newAppender(logPath));
       myLogger.setLevel(Level.ALL);
     }
   }
 
-  @Nullable
-  public static String findDirectory(long requiredFreeSpace) {
+  public static @Nullable String findDirectory(long requiredFreeSpace) {
     String dir = System.getProperty("java.io.tmpdir");
     if (dir != null && isValidDir(dir, requiredFreeSpace)) {
       return dir;
@@ -40,15 +45,37 @@ public class ExternalDataCollectorLogger implements DataCollectorDebugLogger {
     return dir.isDirectory() && dir.canWrite() && dir.getUsableSpace() >= space;
   }
 
-  @NotNull
-  private static FileAppender newAppender(@NotNull String directory) {
-    @NonNls FileAppender appender = new FileAppender();
-    appender.setFile(directory);
-    appender.setLayout(new PatternLayout("%d{dd/MM HH:mm:ss} %-5p %C - %m%n"));
-    appender.setThreshold(Level.ALL);
-    appender.setAppend(false);
-    appender.activateOptions();
-    return appender;
+  private static @NotNull Handler newAppender(@NotNull String logPath) {
+    try {
+      @NonNls FileHandler appender = new FileHandler(logPath, false);
+      appender.setLevel(Level.ALL);
+      appender.setFormatter(new Formatter() {
+        @Override
+        public String format(LogRecord record) {
+          String level = record.getLevel() == Level.WARNING ? "WARN" : record.getLevel().toString();
+          String result =  String.format("%1$td/%1$tm %1$tT %2$5s %3$s - %4$s%5$s",
+                                         record.getMillis(),
+                                         level,
+                                         record.getLoggerName(),
+                                         record.getMessage(),
+                                         System.lineSeparator());
+          Throwable thrown = record.getThrown();
+          if (thrown != null) {
+            StringWriter sw = new StringWriter();
+            PrintWriter pw = new PrintWriter(sw);
+            thrown.printStackTrace(pw);
+            return result + sw;
+          }
+          return result;
+        }
+      });
+      return appender;
+    }
+    catch (IOException e) {
+      //noinspection UseOfSystemOutOrSystemErr
+      System.err.println("Error creating log file: " + e.getMessage());
+      return new ConsoleHandler();
+    }
   }
 
   @Override
@@ -58,26 +85,26 @@ public class ExternalDataCollectorLogger implements DataCollectorDebugLogger {
 
   @Override
   public void info(String message, Throwable t) {
-    myLogger.info(message, t);
+    myLogger.log(Level.INFO, message, t);
   }
 
   @Override
   public void warn(String message) {
-    myLogger.warn(message);
+    myLogger.warning(message);
   }
 
   @Override
   public void warn(String message, Throwable t) {
-    myLogger.warn(message, t);
+    myLogger.log(Level.WARNING, message, t);
   }
 
   @Override
   public void trace(String message) {
-    myLogger.trace(message);
+    myLogger.finer(message);
   }
 
   @Override
   public boolean isTraceEnabled() {
-    return myLogger.isTraceEnabled();
+    return myLogger.isLoggable(Level.FINER);
   }
 }

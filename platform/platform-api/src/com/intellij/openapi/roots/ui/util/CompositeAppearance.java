@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.ui.util;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -9,13 +9,14 @@ import com.intellij.openapi.util.NlsSafe;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.PlatformIcons;
+import com.intellij.util.ui.EDT;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.Icon;
+import java.awt.Font;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -46,15 +47,14 @@ public class CompositeAppearance implements ModifiableCellAppearanceEx {
   }
 
   @Override
-  public void setIcon(@Nullable final Icon icon) {
+  public void setIcon(final @Nullable Icon icon) {
     synchronized (mySections) {
       myIcon = icon;
     }
   }
 
   @Override
-  @NotNull
-  public String getText() {
+  public @NotNull String getText() {
     synchronized (mySections) {
       @Nls StringBuilder buffer = new StringBuilder();
       for (TextSection section : mySections) {
@@ -64,11 +64,11 @@ public class CompositeAppearance implements ModifiableCellAppearanceEx {
     }
   }
 
+  @Override
   public boolean equals(Object obj) {
     synchronized (mySections) {
-      if (!(obj instanceof CompositeAppearance)) return false;
-      CompositeAppearance appearance = (CompositeAppearance)obj;
-      if (SwingUtilities.isEventDispatchThread()) {
+      if (!(obj instanceof CompositeAppearance appearance)) return false;
+      if (EDT.isCurrentThreadEdt()) {
         return appearance.mySections.equals(mySections);
       }
       else {
@@ -77,6 +77,7 @@ public class CompositeAppearance implements ModifiableCellAppearanceEx {
     }
   }
 
+  @Override
   public int hashCode() {
     return getText().hashCode();
   }
@@ -154,12 +155,13 @@ public class CompositeAppearance implements ModifiableCellAppearanceEx {
       return ATTRIBUTES;
     }
 
+    @Override
     public boolean equals(Object obj) {
-      if (!(obj instanceof TextSection)) return false;
-      TextSection section = (TextSection)obj;
+      if (!(obj instanceof TextSection section)) return false;
       return section.ATTRIBUTES.equals(ATTRIBUTES) && section.TEXT.equals(TEXT);
     }
 
+    @Override
     public int hashCode() {
       return TEXT.hashCode();
     }

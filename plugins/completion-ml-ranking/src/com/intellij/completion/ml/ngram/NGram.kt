@@ -2,7 +2,7 @@
 package com.intellij.completion.ml.ngram
 
 import com.intellij.codeInsight.completion.CompletionParameters
-import com.intellij.completion.ml.CompletionMLPolicy
+import com.intellij.completion.ml.features.CompletionFeaturesPolicy
 import com.intellij.completion.ngram.slp.modeling.ngram.JMModel
 import com.intellij.completion.ngram.slp.modeling.runners.ModelRunner
 import com.intellij.lang.Language
@@ -13,6 +13,8 @@ import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.SyntaxTraverser
+import com.intellij.psi.impl.source.tree.LazyParseableElement
+import java.util.Locale
 import kotlin.math.max
 import kotlin.math.min
 
@@ -65,8 +67,8 @@ object NGram {
     return modelRunner?.let { runner -> Scorer(NGRAM_RECENT_FILES_SCORER_NAME, { runner.score(it) }, prefix) }
   }
 
-  internal fun isSupported(language: Language): Boolean = language.id.toLowerCase() in SUPPORTED_LANGUAGES
-                                                          || CompletionMLPolicy.useNgramModel(language)
+  internal fun isSupported(language: Language): Boolean = language.id.lowercase(Locale.getDefault()) in SUPPORTED_LANGUAGES ||
+                                                          CompletionFeaturesPolicy.useNgramModel(language)
 
   fun getNGramPrefix(parameters: CompletionParameters, order: Int): Array<String> {
     val precedingTokens = SyntaxTraverser.revPsiTraverser()
@@ -78,7 +80,7 @@ object NGram {
       .reversed()
     if (precedingTokens.isEmpty()) return emptyArray()
     return with(precedingTokens) {
-      if (last() == parameters.originalPosition?.text ?: "") dropLast(1) else drop(1)
+      if (last() == (parameters.originalPosition?.text ?: "")) dropLast(1) else drop(1)
     }.toTypedArray()
   }
 
@@ -93,7 +95,7 @@ object NGram {
       .reversed()
     if (followingTokens.isEmpty()) return emptyArray()
     return with(followingTokens) {
-      if (last() == parameters.originalPosition?.text ?: "") dropLast(1) else drop(1)
+      if (last() == (parameters.originalPosition?.text ?: "")) dropLast(1) else drop(1)
     }.toTypedArray()
   }
 
@@ -116,15 +118,25 @@ object NGram {
     return SyntaxTraverser.psiTraverser()
       .withRoot(file)
       .onRange(TextRange(0, textRange))
+      .expand { shouldExpand(it) }
       .filter { shouldLex(it) }
       .toList()
       .map { it.text }
   }
 
+  private fun shouldExpand(element: PsiElement): Boolean {
+    return element.isParsed()
+  }
+
   private fun shouldLex(element: PsiElement): Boolean {
-    return element.firstChild == null // is leaf
-           && !element.text.isBlank()
+    return element.isParsed()
+           && element.firstChild == null // is leaf
+           && element.text.isNotBlank()
            && element !is PsiComment
+  }
+
+  private fun PsiElement.isParsed(): Boolean {
+    return this !is LazyParseableElement || isParsed
   }
 
   internal class Scorer(val name: String, private val scoringFunction: (List<String>) -> Double, prefix: Array<String>) {

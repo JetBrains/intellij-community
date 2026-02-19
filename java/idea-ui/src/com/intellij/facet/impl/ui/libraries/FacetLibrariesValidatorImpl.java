@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.facet.impl.ui.libraries;
 
@@ -22,7 +22,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -53,14 +53,13 @@ public class FacetLibrariesValidatorImpl extends FacetLibrariesValidator {
   }
 
   @Override
-  public void setDescription(@NotNull final FacetLibrariesValidatorDescription description) {
+  public void setDescription(final @NotNull FacetLibrariesValidatorDescription description) {
     myDescription = description;
     onChange();
   }
 
   @Override
-  @NotNull
-  public ValidationResult check() {
+  public @NotNull ValidationResult check() {
     if (myRequiredLibraries == null) {
       return ValidationResult.OK;
     }

@@ -1,30 +1,34 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileEditor.impl.text;
 
-import com.intellij.codeHighlighting.BackgroundEditorHighlighter;
 import com.intellij.ide.IdeBundle;
-import com.intellij.ide.structureView.StructureViewBuilder;
 import com.intellij.openapi.application.Experiments;
-import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.fileEditor.FileEditor;
-import com.intellij.openapi.fileEditor.FileEditorLocation;
 import com.intellij.openapi.fileEditor.FileEditorState;
 import com.intellij.openapi.fileEditor.FileEditorStateLevel;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.SingleRootFileViewProvider;
-import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
+import javax.swing.SwingConstants;
 import java.beans.PropertyChangeListener;
 
+import static com.intellij.openapi.fileEditor.impl.text.TextEditorImplKt.createAsyncEditorLoader;
+import static com.intellij.openapi.fileEditor.impl.text.TextEditorImplKt.createEditorImpl;
+
 public final class LargeFileEditorProvider extends TextEditorProvider {
+  static final Key<Boolean> IS_LARGE = Key.create("IS_LARGE");
+
   @Override
   public boolean accept(@NotNull Project project, @NotNull VirtualFile file) {
-    return TextEditorProvider.isTextFile(file)
+    return isTextFile(file)
            && SingleRootFileViewProvider.isTooLargeForContentLoading(file)
            && !(Experiments.getInstance().isFeatureEnabled("new.large.text.file.viewer")
                 && !file.getFileType().isBinary()
@@ -32,40 +36,36 @@ public final class LargeFileEditorProvider extends TextEditorProvider {
   }
 
   @Override
-  @NotNull
-  public FileEditor createEditor(@NotNull Project project, @NotNull final VirtualFile file) {
-    return file.getFileType().isBinary() ?
-           new LargeBinaryFileEditor(file) :
-           new LargeTextFileEditor(project, file, this);
+  public @NotNull FileEditor createEditor(@NotNull Project project, @NotNull VirtualFile file) {
+    if (file.getFileType().isBinary()) {
+      return new LargeBinaryFileEditor(file);
+    }
+    else {
+      AsyncEditorLoader asyncLoader = createAsyncEditorLoader(this, project, file, null);
+      EditorImpl editor = createEditorImpl(project, file, asyncLoader).getFirst();
+      editor.setViewer(true);
+
+      TextEditorImpl testEditor = new TextEditorImpl(project, file, new TextEditorComponent(file, editor), asyncLoader, true);
+      testEditor.putUserData(IS_LARGE, true);
+      return testEditor;
+    }
   }
 
   @Override
-  @NotNull
-  public String getEditorTypeId() {
+  public @NotNull String getEditorTypeId() {
     return "LargeFileEditor";
   }
 
-  public static class LargeTextFileEditor extends TextEditorImpl {
-    LargeTextFileEditor(@NotNull Project project,
-                        @NotNull VirtualFile file,
-                        @NotNull TextEditorProvider provider) {
-      super(project, file, provider);
-      ObjectUtils.consumeIfCast(getEditor(), EditorEx.class, editorEx -> editorEx.setViewer(true));
-    }
-  }
-
-  private static class LargeBinaryFileEditor extends UserDataHolderBase implements FileEditor {
-    private final VirtualFile myFile;
+  private static final class LargeBinaryFileEditor extends UserDataHolderBase implements FileEditor {
+    private final VirtualFile file;
 
     LargeBinaryFileEditor(VirtualFile file) {
-      myFile = file;
+      this.file = file;
     }
 
-    @NotNull
     @Override
-    public JComponent getComponent() {
-      JLabel label = new JLabel(
-        IdeBundle.message("label.binary.file.0.is.too.large.1", myFile.getPath(), StringUtil.formatFileSize(myFile.getLength())));
+    public @NotNull JComponent getComponent() {
+      JLabel label = new JLabel(IdeBundle.message("binary.file.too.large", file.getPath(), StringUtil.formatFileSize(file.getLength())));
       label.setHorizontalAlignment(SwingConstants.CENTER);
       return label;
     }
@@ -75,21 +75,18 @@ public final class LargeFileEditorProvider extends TextEditorProvider {
       return null;
     }
 
-    @NotNull
     @Override
-    public String getName() {
-      return "Large file editor";
+    public @NotNull String getName() {
+      return IdeBundle.message("large.file.editor.name");
     }
 
-    @NotNull
     @Override
-    public FileEditorState getState(@NotNull FileEditorStateLevel level) {
+    public @NotNull FileEditorState getState(@NotNull FileEditorStateLevel level) {
       return new TextEditorState();
     }
 
     @Override
-    public void setState(@NotNull FileEditorState state) {
-    }
+    public void setState(@NotNull FileEditorState state) { }
 
     @Override
     public boolean isModified() {
@@ -98,42 +95,21 @@ public final class LargeFileEditorProvider extends TextEditorProvider {
 
     @Override
     public boolean isValid() {
-      return myFile.isValid();
+      return file.isValid();
     }
 
     @Override
-    public void selectNotify() {
+    public void addPropertyChangeListener(@NotNull PropertyChangeListener listener) { }
+
+    @Override
+    public void removePropertyChangeListener(@NotNull PropertyChangeListener listener) { }
+
+    @Override
+    public @NotNull VirtualFile getFile() {
+      return file;
     }
 
     @Override
-    public void deselectNotify() {
-    }
-
-    @Override
-    public void addPropertyChangeListener(@NotNull PropertyChangeListener listener) {
-    }
-
-    @Override
-    public void removePropertyChangeListener(@NotNull PropertyChangeListener listener) {
-    }
-
-    @Override
-    public BackgroundEditorHighlighter getBackgroundHighlighter() {
-      return null;
-    }
-
-    @Override
-    public FileEditorLocation getCurrentLocation() {
-      return null;
-    }
-
-    @Override
-    public StructureViewBuilder getStructureViewBuilder() {
-      return null;
-    }
-
-    @Override
-    public void dispose() {
-    }
+    public void dispose() { }
   }
 }

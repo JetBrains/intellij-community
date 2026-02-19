@@ -1,17 +1,27 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.uiDesigner.radComponents;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
-import com.intellij.uiDesigner.*;
+import com.intellij.openapi.util.NlsSafe;
+import com.intellij.uiDesigner.ModuleProvider;
+import com.intellij.uiDesigner.StringDescriptorManager;
+import com.intellij.uiDesigner.SwingProperties;
+import com.intellij.uiDesigner.UIFormXmlConstants;
+import com.intellij.uiDesigner.XmlWriter;
 import com.intellij.uiDesigner.compiler.Utils;
 import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.uiDesigner.core.Util;
 import com.intellij.uiDesigner.designSurface.EventProcessor;
 import com.intellij.uiDesigner.designSurface.GuiEditor;
-import com.intellij.uiDesigner.designSurface.InsertComponentProcessor;
-import com.intellij.uiDesigner.lw.*;
+import com.intellij.uiDesigner.lw.ComponentVisitor;
+import com.intellij.uiDesigner.lw.IComponent;
+import com.intellij.uiDesigner.lw.IContainer;
+import com.intellij.uiDesigner.lw.IProperty;
+import com.intellij.uiDesigner.lw.LwComponent;
+import com.intellij.uiDesigner.lw.LwIntrospectedProperty;
+import com.intellij.uiDesigner.lw.StringDescriptor;
 import com.intellij.uiDesigner.palette.ComponentItem;
 import com.intellij.uiDesigner.palette.Palette;
 import com.intellij.uiDesigner.propertyInspector.IntrospectedProperty;
@@ -19,15 +29,16 @@ import com.intellij.uiDesigner.propertyInspector.Property;
 import com.intellij.uiDesigner.propertyInspector.properties.ClientPropertiesProperty;
 import com.intellij.uiDesigner.propertyInspector.properties.ClientPropertyProperty;
 import com.intellij.uiDesigner.propertyInspector.properties.IntroStringProperty;
-import com.intellij.uiDesigner.snapShooter.SnapshotContext;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ArrayUtilRt;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JComponent;
+import java.awt.Dimension;
+import java.awt.Point;
+import java.awt.Rectangle;
 import java.awt.event.MouseEvent;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
@@ -35,10 +46,6 @@ import java.lang.reflect.Constructor;
 import java.util.ArrayList;
 import java.util.HashSet;
 
-/**
- * @author Anton Katilin
- * @author Vladimir Kondratyev
- */
 public abstract class RadComponent implements IComponent {
   private static final Logger LOG = Logger.getInstance(RadComponent.class);
 
@@ -50,27 +57,25 @@ public abstract class RadComponent implements IComponent {
    * Using this constant as client property of the Swing component
    * you can find corresponding {@code RadComponent}
    */
-  @NonNls
-  public static final String CLIENT_PROP_RAD_COMPONENT = "radComponent";
+  public static final @NonNls String CLIENT_PROP_RAD_COMPONENT = "radComponent";
 
-  @NonNls
-  public static final String CLIENT_PROP_LOAD_TIME_LOCALE = "LoadTimeLocaleKey";
+  public static final @NonNls String CLIENT_PROP_LOAD_TIME_LOCALE = "LoadTimeLocaleKey";
 
   /**
    * Whether the component selected or not. Value is java.lang.Boolean
    */
-  @NonNls public static final String PROP_SELECTED = "selected";
+  public static final @NonNls String PROP_SELECTED = "selected";
 
   /**
    * Change notification for this property is fired when the constraints of a component
    * change.
    */
-  @NonNls public static final String PROP_CONSTRAINTS = "constraints";
+  public static final @NonNls String PROP_CONSTRAINTS = "constraints";
 
   /**
    * Component id is unique per RadRootContainer.
    */
-  @NotNull private final String myId;
+  private final @NotNull String myId;
   /**
    * @see #getBinding()
    */
@@ -80,12 +85,12 @@ public abstract class RadComponent implements IComponent {
 
   private final ModuleProvider myModule;
 
-  @NotNull private final Class myClass;
+  private final @NotNull Class myClass;
   /**
    * Delegee is the JComponent which really represents the
    * component in UI.
    */
-  @NotNull private final JComponent myDelegee;
+  private final @NotNull JComponent myDelegee;
   /**
    * Parent RadContainer. This field is always not {@code null}
    * is the component is in hierarchy. But the root of hierarchy
@@ -97,7 +102,7 @@ public abstract class RadComponent implements IComponent {
    */
   private boolean mySelected;
 
-  @NotNull private final GridConstraints myConstraints;
+  private final @NotNull GridConstraints myConstraints;
 
   private Object myCustomLayoutConstraints;
 
@@ -121,7 +126,7 @@ public abstract class RadComponent implements IComponent {
    * @param id     id of the compoent inside the form. {@code id}
    *               should be a unique atring inside the form.
    */
-  public RadComponent(final ModuleProvider module, @NotNull final Class aClass, @NotNull final String id) {
+  public RadComponent(final ModuleProvider module, final @NotNull Class aClass, final @NotNull String id) {
     myModule = module;
     myClass = aClass;
     myId = id;
@@ -155,7 +160,7 @@ public abstract class RadComponent implements IComponent {
     myDelegee.putClientProperty(CLIENT_PROP_RAD_COMPONENT, this);
   }
 
-  public RadComponent(final ModuleProvider module, @NotNull final Class aClass, @NotNull final String id, final Palette palette) {
+  public RadComponent(final ModuleProvider module, final @NotNull Class aClass, final @NotNull String id, final Palette palette) {
     this(module, aClass, id);
     myPalette = palette;
   }
@@ -190,11 +195,11 @@ public abstract class RadComponent implements IComponent {
    * Initializes introspected properties into default values and
    * sets default component's constraints.
    */
-  public void init(final GuiEditor editor, @NotNull final ComponentItem item) {
+  public void init(final GuiEditor editor, final @NotNull ComponentItem item) {
     initDefaultProperties(item);
   }
 
-  public void initDefaultProperties(@NotNull final ComponentItem item) {
+  public void initDefaultProperties(final @NotNull ComponentItem item) {
     final IntrospectedProperty[] properties = getPalette().getIntrospectedProperties(this);
     for (final IntrospectedProperty property : properties) {
       final Object initialValue = item.getInitialValue(property);
@@ -216,13 +221,12 @@ public abstract class RadComponent implements IComponent {
    * @return the component's id. It is unique within the form.
    */
   @Override
-  @NotNull
-  public final String getId() {
+  public final @NotNull String getId() {
     return myId;
   }
 
   @Override
-  public final String getBinding() {
+  public final @NlsSafe String getBinding() {
     return myBinding;
   }
 
@@ -248,8 +252,7 @@ public abstract class RadComponent implements IComponent {
    * @return Swing delegee component. The {@code RadComponent} has the same
    *         delegee during all its life.
    */
-  @NotNull
-  public final JComponent getDelegee() {
+  public final @NotNull JComponent getDelegee() {
     return myDelegee;
   }
 
@@ -264,18 +267,15 @@ public abstract class RadComponent implements IComponent {
    *         any inplace property. Please not the method can return different
    *         instances of the property for each invokation.
    */
-  @Nullable
-  public Property getInplaceProperty(final int x, final int y) {
+  public @Nullable Property getInplaceProperty(final int x, final int y) {
     return getDefaultInplaceProperty();
   }
 
-  @Nullable
-  public Property getDefaultInplaceProperty() {
+  public @Nullable Property getDefaultInplaceProperty() {
     return getPalette().getInplaceProperty(this);
   }
 
-  @Nullable
-  public Rectangle getDefaultInplaceEditorBounds() {
+  public @Nullable Rectangle getDefaultInplaceEditorBounds() {
     return null;
   }
 
@@ -288,19 +288,17 @@ public abstract class RadComponent implements IComponent {
    * @return area where editor component is located. This is the hint to the
    *         designer.  Designer can use or not this rectangle.
    */
-  @Nullable
-  public Rectangle getInplaceEditorBounds(@NotNull final Property property, final int x, final int y) {
+  public @Nullable Rectangle getInplaceEditorBounds(final @NotNull Property property, final int x, final int y) {
     return null;
   }
 
-  @NotNull
-  public final Class getComponentClass() {
+  public final @NotNull Class getComponentClass() {
     return myClass;
   }
 
   @Override
-  @NotNull
-  public String getComponentClassName() {
+  public @NotNull
+  @NlsSafe String getComponentClassName() {
     return myClass.getName();
   }
 
@@ -384,7 +382,7 @@ public abstract class RadComponent implements IComponent {
   }
 
   protected final void firePropertyChanged(
-    @NotNull final String propertyName,
+    final @NotNull String propertyName,
     final Object oldValue,
     final Object newValue
   ) {
@@ -395,8 +393,7 @@ public abstract class RadComponent implements IComponent {
    * @return component's constarints.
    */
   @Override
-  @NotNull
-  public final GridConstraints getConstraints() {
+  public final @NotNull GridConstraints getConstraints() {
     return myConstraints;
   }
 
@@ -424,7 +421,7 @@ public abstract class RadComponent implements IComponent {
    * @see JComponent#getClientProperty(Object)
    */
   @Override
-  public final Object getClientProperty(@NotNull final Object key) {
+  public final Object getClientProperty(final @NotNull Object key) {
     return myDelegee.getClientProperty(key);
   }
 
@@ -432,7 +429,7 @@ public abstract class RadComponent implements IComponent {
    * @see JComponent#putClientProperty(Object, Object)
    */
   @Override
-  public final void putClientProperty(@NotNull final Object key, final Object value) {
+  public final void putClientProperty(final @NotNull Object key, final Object value) {
     myDelegee.putClientProperty(key, value);
   }
 
@@ -537,8 +534,7 @@ public abstract class RadComponent implements IComponent {
   public void processMouseEvent(final MouseEvent event) {
   }
 
-  @Nullable
-  public EventProcessor getEventProcessor(final MouseEvent event) {
+  public @Nullable EventProcessor getEventProcessor(final MouseEvent event) {
     return null;
   }
 
@@ -706,96 +702,8 @@ public abstract class RadComponent implements IComponent {
   public void doneLoadingFromLw() {
   }
 
-  @Nullable
-  public static RadComponent createSnapshotComponent(final SnapshotContext context, final JComponent component) {
-    String id = context.newId();
-    RadComponent result;
-
-    Class componentClass = component.getClass();
-    if (componentClass.isAnonymousClass()) {
-      componentClass = componentClass.getSuperclass();
-    }
-    if (component instanceof JPanel && !isCompositeComponent(component)) {
-      RadContainer container = new RadContainer(componentClass, id, context.getPalette());
-      final RadLayoutManager manager = LayoutManagerRegistry.createFromLayout(component.getLayout());
-      if (manager == null) {
-        return null;
-      }
-      container.setLayoutManager(manager);
-      result = container;
-    }
-    else if (component instanceof Box.Filler) {
-      Box.Filler filler = (Box.Filler)component;
-      if (filler.getMaximumSize().height == Short.MAX_VALUE) {
-        result = new RadVSpacer(null, id);
-        result.getConstraints().setVSizePolicy(GridConstraints.SIZEPOLICY_CAN_GROW | GridConstraints.SIZEPOLICY_WANT_GROW);
-      }
-      else {
-        result = new RadHSpacer(null, id);
-        result.getConstraints().setHSizePolicy(GridConstraints.SIZEPOLICY_CAN_GROW | GridConstraints.SIZEPOLICY_WANT_GROW);
-      }
-    }
-    else {
-      final RadComponentFactory factory = InsertComponentProcessor.getRadComponentFactory(componentClass);
-      if (factory == null) {
-        result = new RadAtomicComponent(componentClass, id, context.getPalette());
-      }
-      else {
-        result = factory.newInstance(componentClass, id, context.getPalette());
-      }
-    }
-
-    context.registerComponent(component, result);
-    result.importSnapshotComponent(context, component);
-
-    final IntrospectedProperty[] properties = context.getPalette().getIntrospectedProperties(component.getClass(),
-                                                                                             result.getDelegee().getClass());
-    for (IntrospectedProperty prop : properties) {
-      if (component instanceof AbstractButton) {
-        AbstractButton btn = (AbstractButton)component;
-        if (prop.getName().equals(SwingProperties.LABEL) && btn.getLabel().equals(btn.getText())) {
-          continue;
-        }
-        if (prop.getName().equals(SwingProperties.ACTION_COMMAND) && btn.getActionCommand().equals(btn.getText())) {
-          continue;
-        }
-      }
-      prop.importSnapshotValue(context, component, result);
-    }
-
-    if (component instanceof AbstractButton) {
-      AbstractButton btn = (AbstractButton)component;
-      if (btn.getModel() instanceof DefaultButtonModel) {
-        DefaultButtonModel model = (DefaultButtonModel)btn.getModel();
-        if (model.getGroup() != null) {
-          context.registerButtonGroup(model.getGroup());
-        }
-      }
-    }
-
-    return result;
-  }
-
-  private static boolean isCompositeComponent(final JComponent component) {
-    if (component.getComponentCount() == 0) {
-      return false;
-    }
-
-    JComponent instance;
-    try {
-      instance = component.getClass().newInstance();
-    }
-    catch (Exception ex) {
-      return false;
-    }
-    return instance.getComponentCount() == component.getComponentCount();
-  }
-
-  protected void importSnapshotComponent(final SnapshotContext context, final JComponent component) {
-  }
-
-  @Nullable
-  public String getComponentTitle() {
+  public @Nullable
+  @NlsSafe String getComponentTitle() {
     Palette palette = Palette.getInstance(getProject());
     IntrospectedProperty[] props = palette.getIntrospectedProperties(this);
     for (IntrospectedProperty prop : props) {
@@ -807,8 +715,7 @@ public abstract class RadComponent implements IComponent {
       }
     }
 
-    if (this instanceof RadContainer) {
-      RadContainer container = (RadContainer)this;
+    if (this instanceof RadContainer container) {
       StringDescriptor descriptor = container.getBorderTitle();
       if (descriptor != null) {
         if (descriptor.getResolvedValue() == null) {
@@ -818,8 +725,7 @@ public abstract class RadComponent implements IComponent {
       }
     }
 
-    if (getParent() instanceof RadTabbedPane) {
-      RadTabbedPane parentTabbedPane = (RadTabbedPane)getParent();
+    if (getParent() instanceof RadTabbedPane parentTabbedPane) {
       final StringDescriptor descriptor = parentTabbedPane.getChildTitle(this);
       if (descriptor != null) {
         if (descriptor.getResolvedValue() == null) {

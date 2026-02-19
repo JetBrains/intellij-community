@@ -1,0 +1,4 @@
+// AFTER-WARNING: Variable 's' is never used
+fun test() {
+    val s = "a${(x@{ return@x })}"
+}

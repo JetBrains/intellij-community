@@ -1,39 +1,36 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.tools.sdkTools;
 
+import com.intellij.execution.ExecutionException;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectManager;
+import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkModificator;
 import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil;
 import com.intellij.openapi.roots.OrderRootType;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.jetbrains.python.sdk.*;
-import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
+import com.jetbrains.python.sdk.InvalidSdkException;
+import com.jetbrains.python.sdk.PySdkExtKt;
+import com.jetbrains.python.sdk.PyTargetsIntrospectionFacade;
+import com.jetbrains.python.sdk.PythonSdkType;
+import com.jetbrains.python.sdk.legacy.PythonSdkUtil;
 import com.jetbrains.python.sdk.skeletons.PySkeletonRefresher;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.junit.Assert;
 
-import java.io.IOException;
+import static com.jetbrains.python.sdk.ModuleExKt.setPythonSdk;
+
 
 /**
  * Engine to create SDK for tests.
@@ -56,24 +53,36 @@ public final class PySdkTools {
    * @param sdkCreationType SDK creation strategy (see {@link SdkCreationType} doc)
    * @return sdk
    */
-  @NotNull
-  public static Sdk createTempSdk(@NotNull final VirtualFile sdkHome,
-                                  @NotNull final SdkCreationType sdkCreationType,
-                                  @Nullable final Module module
+  public static @NotNull Sdk createTempSdk(final @NotNull VirtualFile sdkHome,
+                                  final @NotNull SdkCreationType sdkCreationType,
+                                  final @Nullable Module module,
+                                  @Nullable Disposable parentDisposable
   )
     throws InvalidSdkException {
     final Ref<Sdk> ref = Ref.create();
     ApplicationManager.getApplication().invokeAndWait(() -> {
       // sdkHome guarantees SDK name uniqueness. SdkUtil can't do that since no current SDK are provided.
-      final Sdk sdk = SdkConfigurationUtil.setupSdk(NO_SDK, sdkHome, PythonSdkType.getInstance(), true, null, sdkHome.getPath());
+      final Sdk sdk = SdkConfigurationUtil.setupSdk(NO_SDK, sdkHome, PythonSdkType.getInstance(), null, sdkHome.getPath());
       Assert.assertNotNull("Failed to create SDK on " + sdkHome, sdk);
+
       ref.set(sdk);
     });
+
     final Sdk sdk = ref.get();
-    if (sdkCreationType != SdkCreationType.EMPTY_SDK) {
-      generateTempSkeletonsOrPackages(sdk, sdkCreationType == SdkCreationType.SDK_PACKAGES_AND_SKELETONS, module);
+    if (sdk != null) {
+      ApplicationManager.getApplication().invokeAndWait(() -> SdkConfigurationUtil.addSdk(sdk));
+      if (parentDisposable != null) {
+        Disposer.register(parentDisposable, () -> WriteAction.runAndWait(() -> ProjectJdkTable.getInstance().removeJdk(sdk)));
+      }
     }
-    ApplicationManager.getApplication().invokeAndWait(() -> SdkConfigurationUtil.addSdk(sdk));
+    if (sdkCreationType != SdkCreationType.EMPTY_SDK) {
+      try {
+        generateTempSkeletonsOrPackages(sdk, sdkCreationType == SdkCreationType.SDK_PACKAGES_AND_SKELETONS, module);
+      }
+      catch (ExecutionException e) {
+        throw new InvalidSdkException("Can't generate skeleton packages", e);
+      }
+    }
     return sdk;
   }
 
@@ -85,41 +94,58 @@ public final class PySdkTools {
    * @param addSkeletons add skeletons or only packages
    * @param module       module to associate with (if provided)
    * @throws InvalidSdkException bas sdk
-   * @throws IOException         failed to read eggs
    */
-  public static void generateTempSkeletonsOrPackages(@NotNull final Sdk sdk,
+  public static void generateTempSkeletonsOrPackages(final @NotNull Sdk sdk,
                                                      final boolean addSkeletons,
-                                                     @Nullable final Module module)
-    throws InvalidSdkException {
+                                                     final @Nullable Module module)
+    throws InvalidSdkException, ExecutionException {
     Project project = null;
 
     if (module != null) {
       project = module.getProject();
 
       PySdkExtKt.setPythonSdk(project, sdk);
-      PySdkExtKt.setPythonSdk(module, sdk);
+      setPythonSdk(module, sdk);
+    }
+    if (project == null) {
+      project = ProjectManager.getInstance().getDefaultProject();
     }
 
 
     final SdkModificator modificator = sdk.getSdkModificator();
 
-    modificator.setSdkAdditionalData(new PythonSdkAdditionalData(PythonSdkFlavor.getFlavor(sdk)));
-
-    for (final String path : PythonSdkType.getSysPathsFromScript(sdk)) {
+    for (final String path : new PyTargetsIntrospectionFacade(sdk, project).getInterpreterPaths(new EmptyProgressIndicator())) {
       addTestSdkRoot(modificator, path);
     }
     if (!addSkeletons) {
-      ApplicationManager.getApplication().invokeAndWait(modificator::commitChanges);
+      commitChangesObeyWriteAction(modificator);
       return;
     }
 
     final String skeletonsPath = PythonSdkUtil.getSkeletonsPath(PathManager.getSystemPath(), sdk.getHomePath());
     addTestSdkRoot(modificator, skeletonsPath);
 
-    ApplicationManager.getApplication().invokeAndWait(modificator::commitChanges);
+    commitChangesObeyWriteAction(modificator);
 
     PySkeletonRefresher
-      .refreshSkeletonsOfSdk(project, null, skeletonsPath, sdk);
+      .refreshSkeletonsOfSdk(project, skeletonsPath, sdk);
+  }
+
+  /**
+   * {@link SdkModificator#commitChanges()} is marked with {@link com.intellij.util.concurrency.annotations.RequiresWriteLock} and can't be called without it
+   */
+  private static void commitChangesObeyWriteAction(@NotNull SdkModificator modificator) {
+    var app = ApplicationManager.getApplication();
+    app.invokeAndWait(() -> {
+      if (app.isWriteAccessAllowed()) {
+        modificator.commitChanges();
+      }
+      else {
+        WriteAction.run(() -> {
+          modificator.commitChanges();
+        });
+      }
+    });
   }
 
   public static void addTestSdkRoot(@NotNull SdkModificator sdkModificator, @NotNull String path) {

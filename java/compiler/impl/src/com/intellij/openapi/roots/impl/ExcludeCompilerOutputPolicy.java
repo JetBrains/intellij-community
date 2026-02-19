@@ -40,6 +40,7 @@ final class ExcludeCompilerOutputPolicy implements DirectoryIndexExcludePolicy {
     if (extension.isCompilerOutputPathInherited()) {
       CompilerProjectExtension projectExtension = CompilerProjectExtension.getInstance(myProject);
       if (projectExtension != null) {
+        // usage of the obsolete method will be fixed by IJPL-16028
         ContainerUtil.addIfNotNull(result, projectExtension.getCompilerOutputPointer());
       }
     }

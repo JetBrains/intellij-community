@@ -25,6 +25,13 @@ import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+/**
+ * This extension point allows codeinsight subsystem to highlight and navigate braces in your language.
+ * Brace matching is based on lexer (provided by {@link HighlighterIterator}) which supplies pairs of {@link IElementType} for corresponding braces.
+ *
+ * For example, {@link com.intellij.xml.impl.XmlBraceMatcher} defines several brace types,
+ * e.g. {@link com.intellij.psi.xml.XmlTokenType#XML_CDATA_START} and {@link com.intellij.psi.xml.XmlTokenType#XML_CDATA_END} to match.
+ */
 public interface BraceMatcher {
   ExtensionPointName<FileTypeExtensionPoint<BraceMatcher>> EP_NAME = new ExtensionPointName<>("com.intellij.braceMatcher");
 
@@ -40,9 +47,9 @@ public interface BraceMatcher {
    * Returns the start offset of the code construct which owns the opening structural brace at the specified offset. For example,
    * if the opening brace belongs to an 'if' statement, returns the start offset of the 'if' statement.
    *
-   * @param file the file in which brace matching is performed.
+   * @param psiFile the file in which brace matching is performed.
    * @param openingBraceOffset the offset of an opening structural brace.
    * @return the offset of corresponding code construct, or the same offset if not defined.
    */
-  int getCodeConstructStart(@NotNull PsiFile file, int openingBraceOffset);
+  int getCodeConstructStart(@NotNull PsiFile psiFile, int openingBraceOffset);
 }

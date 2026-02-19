@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.codeInspection.changeToOperator.transformations;
 
 import org.jetbrains.annotations.NotNull;
@@ -9,9 +9,13 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethod
 
 import static org.jetbrains.plugins.groovy.codeInspection.GrInspectionUtil.replaceExpression;
 import static org.jetbrains.plugins.groovy.lang.psi.impl.utils.BoolUtils.isNegation;
-import static org.jetbrains.plugins.groovy.lang.psi.impl.utils.ParenthesesUtils.*;
+import static org.jetbrains.plugins.groovy.lang.psi.impl.utils.ParenthesesUtils.EQUALITY_PRECEDENCE;
+import static org.jetbrains.plugins.groovy.lang.psi.impl.utils.ParenthesesUtils.checkPrecedence;
+import static org.jetbrains.plugins.groovy.lang.psi.impl.utils.ParenthesesUtils.checkPrecedenceForBinaryOps;
+import static org.jetbrains.plugins.groovy.lang.psi.impl.utils.ParenthesesUtils.getPrecedence;
+import static org.jetbrains.plugins.groovy.lang.psi.impl.utils.ParenthesesUtils.parenthesize;
 
-public class EqualsTransformation extends BinaryTransformation {
+final class EqualsTransformation extends BinaryTransformation {
   @Override
   public void apply(@NotNull GrMethodCall methodCall, @NotNull Options options) {
     GrExpression rhs = getRhs(methodCall);

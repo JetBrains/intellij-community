@@ -13,8 +13,7 @@ public class A {
         }
     }
 
-    @NotNull
-    private String newMethod(String s) {
+    private @NotNull String newMethod(String s) {
         if (r()) throw new RuntimeException();
         s = "b";
         return s;

@@ -9,11 +9,12 @@ public class JavaOffsetsElementSignatureProviderTest extends LightJavaCodeInsigh
 
   public void testJavaStringLiteral() {
     String text =
-      "class Test {\n" +
-      "    void test() {\n" +
-      "        bundle.getMessage(\"this.is.my.key\");\n" +
-      "    }\n" +
-      "}";
+      """
+        class Test {
+            void test() {
+                bundle.getMessage("this.is.my.key");
+            }
+        }""";
     myFixture.configureByText("test.java", text);
 
     int startOffset = text.indexOf('"');

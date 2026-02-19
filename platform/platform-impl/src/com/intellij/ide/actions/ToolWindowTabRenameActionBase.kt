@@ -1,11 +1,13 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions
 
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.actionSystem.PlatformDataKeys
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.Balloon
 import com.intellij.openapi.ui.popup.JBPopupFactory
-import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.ui.popup.JBPopupListener
+import com.intellij.openapi.ui.popup.LightweightWindowEvent
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.openapi.wm.ToolWindow
@@ -17,8 +19,9 @@ import com.intellij.ui.awt.RelativePoint
 import com.intellij.ui.components.JBLabel
 import com.intellij.ui.content.Content
 import com.intellij.util.ui.JBUI
+import com.intellij.util.ui.StartupUiUtil
 import com.intellij.util.ui.SwingHelper
-import com.intellij.util.ui.UIUtil
+import org.jetbrains.annotations.Nls
 import java.awt.Font
 import java.awt.Point
 import java.awt.event.FocusAdapter
@@ -33,7 +36,6 @@ private const val OUTLINE_PROPERTY = "JComponent.outline"
 private const val ERROR_VALUE = "error"
 
 
-@Suppress("ComponentNotRegistered")
 open class ToolWindowTabRenameActionBase(val toolWindowId: String, @NlsContexts.Label val labelText: String) : ToolWindowContextMenuActionBase() {
   override fun update(e: AnActionEvent, toolWindow: ToolWindow, selectedContent: Content?) {
     val id = toolWindow.id
@@ -41,18 +43,20 @@ open class ToolWindowTabRenameActionBase(val toolWindowId: String, @NlsContexts.
   }
 
   override fun actionPerformed(e: AnActionEvent, toolWindow: ToolWindow, content: Content?) {
-    val contextComponent = e.getData(PlatformDataKeys.CONTEXT_COMPONENT)
+    val contextComponent = e.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT)
     val tabLabel = if (contextComponent is BaseLabel) contextComponent else e.getData(ToolWindowContentUi.SELECTED_CONTENT_TAB_LABEL)
     val tabLabelContent = tabLabel?.content ?: return
-    showContentRenamePopup(tabLabel, tabLabelContent)
+    val project = e.project ?: return
+    showContentRenamePopup(tabLabel, tabLabelContent, project)
   }
 
-  private fun showContentRenamePopup(baseLabel: BaseLabel, content: Content) {
-    val textField = JTextField(content.displayName)
+  private fun showContentRenamePopup(baseLabel: BaseLabel, content: Content, project: Project) {
+    val defaultPopupValue = getContentDisplayNameToEdit(content, project)
+    val textField = JTextField(defaultPopupValue)
     textField.selectAll()
 
     val label = JBLabel(labelText)
-    label.font = UIUtil.getLabelFont().deriveFont(Font.BOLD)
+    label.font = StartupUiUtil.labelFont.deriveFont(Font.BOLD)
 
     val panel = SwingHelper.newLeftAlignedVerticalPanel(label, Box.createVerticalStrut(JBUI.scale(2)), textField)
     panel.addFocusListener(object : FocusAdapter() {
@@ -75,14 +79,12 @@ open class ToolWindowTabRenameActionBase(val toolWindowId: String, @NlsContexts.
     textField.addKeyListener(object : KeyAdapter() {
       override fun keyPressed(e: KeyEvent?) {
         if (e != null && e.keyCode == KeyEvent.VK_ENTER) {
-          if (!Disposer.isDisposed(content)) {
-            if (textField.text.isEmpty()) {
-              textField.putClientProperty(OUTLINE_PROPERTY, ERROR_VALUE)
-              textField.repaint()
-              return
-            }
-            content.displayName = textField.text
+          if (textField.text.isEmpty()) {
+            textField.putClientProperty(OUTLINE_PROPERTY, ERROR_VALUE)
+            textField.repaint()
+            return
           }
+          applyContentDisplayName(content, project, textField.text)
           balloon.hide()
         }
       }
@@ -99,5 +101,16 @@ open class ToolWindowTabRenameActionBase(val toolWindowId: String, @NlsContexts.
     })
 
     balloon.show(RelativePoint(baseLabel, Point(baseLabel.width / 2, 0)), Balloon.Position.above)
+    balloon.addListener(object : JBPopupListener {
+      override fun onClosed(event: LightweightWindowEvent) {
+        IdeFocusManager.findInstance().requestFocus(content.preferredFocusableComponent ?: content.component, false)
+      }
+    })
+  }
+
+  open fun getContentDisplayNameToEdit(content: Content, project: Project): @NlsContexts.TabTitle String = content.displayName
+
+  open fun applyContentDisplayName(content: Content, project: Project, @Nls newContentName: String) {
+    content.displayName = newContentName
   }
 }

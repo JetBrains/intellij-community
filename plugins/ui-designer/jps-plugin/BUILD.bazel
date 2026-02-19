@@ -1,0 +1,51 @@
+### auto-generated section `build intellij.java.guiForms.jps` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "java-guiForms-jps_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "java-guiForms-jps",
+  module_name = "intellij.java.guiForms.jps",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":java-guiForms-jps_resources"],
+  kotlinc_opts = "@community//:k11",
+  deps = [
+    "//platform/util",
+    "//jps/model-api:model",
+    "//jps/model-serialization",
+    "//jps/jps-builders:build",
+    "@community//build:build-javac-rt",
+    "//java/compiler/instrumentation-util",
+    "//java/compiler/forms-compiler:java-guiForms-compiler",
+    "//platform/forms_rt:java-guiForms-rt",
+    "//libraries/asm",
+    "//platform/util/jdom",
+  ]
+)
+
+jvm_library(
+  name = "java-guiForms-jps_test_lib",
+  module_name = "intellij.java.guiForms.jps",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  kotlinc_opts = "@community//:k11",
+  runtime_deps = [
+    ":java-guiForms-jps",
+    "//platform/util:util_test_lib",
+    "//jps/model-api:model_test_lib",
+    "//jps/model-serialization:model-serialization_test_lib",
+    "//jps/jps-builders:build_test_lib",
+    "@community//build:build-javac-rt_test_lib",
+    "//java/compiler/instrumentation-util:instrumentation-util_test_lib",
+    "//java/compiler/forms-compiler:java-guiForms-compiler_test_lib",
+    "//platform/forms_rt:java-guiForms-rt_test_lib",
+    "//libraries/asm:asm_test_lib",
+    "//platform/util/jdom:jdom_test_lib",
+  ]
+)
+### auto-generated section `build intellij.java.guiForms.jps` end

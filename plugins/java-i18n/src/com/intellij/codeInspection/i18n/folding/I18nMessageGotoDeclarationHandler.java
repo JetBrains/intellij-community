@@ -2,45 +2,55 @@
 package com.intellij.codeInspection.i18n.folding;
 
 import com.intellij.codeInsight.navigation.actions.GotoDeclarationHandlerBase;
+import com.intellij.codeInspection.i18n.JavaI18nUtil;
+import com.intellij.lang.properties.psi.Property;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.FoldRegion;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.impl.source.tree.LeafPsiElement;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.uast.UCallExpression;
+import org.jetbrains.uast.UElement;
+import org.jetbrains.uast.UExpression;
+import org.jetbrains.uast.ULiteralExpression;
+import org.jetbrains.uast.UQualifiedReferenceExpression;
+import org.jetbrains.uast.UastContextKt;
+import org.jetbrains.uast.expressions.UInjectionHost;
 
 /**
  * @author Konstantin Bulenkov
  */
-public class I18nMessageGotoDeclarationHandler extends GotoDeclarationHandlerBase {
+public final class I18nMessageGotoDeclarationHandler extends GotoDeclarationHandlerBase {
 
   @Override
   public PsiElement getGotoDeclarationTarget(@Nullable PsiElement element, Editor editor) {
-    if (!(element instanceof PsiJavaToken)) return null;
+    if (!(element instanceof LeafPsiElement)) return null;
     FoldRegion region = editor.getFoldingModel().getCollapsedRegionAtOffset(element.getTextRange().getStartOffset());
     if (region == null) return null;
 
     PsiElement editableElement = EditPropertyValueAction.getEditableElement(region);
+    UElement uElement = UastContextKt.toUElement(editableElement);
     //case: "literalAnnotatedWithPropertyKey"
-    if (editableElement instanceof PsiLiteralExpression) {
-      return resolve(editableElement);
+    if (uElement instanceof ULiteralExpression) {
+      return JavaI18nUtil.resolveProperty((ULiteralExpression)uElement);
+    }
+
+    if (uElement instanceof UQualifiedReferenceExpression) {
+      uElement = ((UQualifiedReferenceExpression)uElement).getSelector();
     }
 
     //case: MyBundle.message("literalAnnotatedWithPropertyKey", param1, param2)
-    if (editableElement instanceof PsiMethodCallExpression) {
-      final PsiMethodCallExpression methodCall = (PsiMethodCallExpression)editableElement;
-      for (PsiExpression expression : methodCall.getArgumentList().getExpressions()) {
-        if (expression instanceof PsiLiteralExpression && PropertyFoldingBuilder.isI18nProperty((PsiLiteralExpression)expression)) {
-          return resolve(expression);
+    if (uElement instanceof UCallExpression call) {
+      for (UExpression expression : call.getValueArguments()) {
+        if (expression instanceof UInjectionHost injectionHost && PropertyFoldingBuilder.isI18nProperty(injectionHost)) {
+          Property property = JavaI18nUtil.resolveProperty(expression);
+          if (property != null) {
+            return property;
+          }
         }
       }
     }
 
     return null;
-  }
-
-  @Nullable
-  private static PsiElement resolve(PsiElement element) {
-    if (element == null) return null;
-    final PsiReference[] references = element.getReferences();
-    return references.length == 0 ? null : references[0].resolve();
   }
 }

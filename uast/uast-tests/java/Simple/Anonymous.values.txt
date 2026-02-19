@@ -9,6 +9,7 @@ UFile (package = ) [public class Anonymous {...]
                     ULocalVariable (name = runnable) [var runnable: java.lang.Runnable = anonymous Runnable() {...        }]
                         UObjectLiteralExpression [anonymous Runnable() {...        }] = Undetermined
                             UClass (name = null) [final class null : java.lang.Runnable {...}]
+                                UMethod (name = <anon-init>) [fun <anon-init>() = UastEmptyExpression]
                                 UMethod (name = run) [public fun run() : void {...}]
                                     UBlockExpression [{...}] = (var variable = 24)
                                         UDeclarationsExpression [var variable: int = 24] = Undetermined

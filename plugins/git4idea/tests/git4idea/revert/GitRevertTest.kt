@@ -15,16 +15,12 @@
  */
 package git4idea.revert
 
-import com.intellij.openapi.vcs.changes.Change
+import com.intellij.ide.IdeBundle
 import com.intellij.vcs.log.VcsFullCommitDetails
-import com.intellij.vcs.log.util.VcsLogUtil
-import com.intellij.vcsUtil.VcsUtil.getFilePath
-import git4idea.GitContentRevision.createRevision
-import git4idea.GitRevisionNumber
-import git4idea.history.GitHistoryUtils
-import git4idea.history.GitLogUtil
-import git4idea.test.*
-import java.nio.charset.Charset
+import git4idea.i18n.GitBundle
+import git4idea.test.GitSingleRepoTest
+import git4idea.test.assertLatestSubjects
+import git4idea.test.last
 
 /**
  * Revert works in two modes: revert & commit immediately, and show the commit dialog.
@@ -55,7 +51,7 @@ class GitRevertTest : GitSingleRepoTest() {
 
     assertErrorNotification("Revert failed", """
       ${commit.id.toShortString()} ${commit.subject}
-      Your local changes would be overwritten by revert. Commit your changes or stash them to proceed.""")
+      """ + GitBundle.message("warning.your.local.changes.would.be.overwritten.by", "revert", "shelve"))
     assertEquals("File content shouldn't change", "initial\nsecond\n", file.read())
     assertEquals("No new commits should have been created", commit.id.asString(), last())
   }
@@ -93,9 +89,9 @@ class GitRevertTest : GitSingleRepoTest() {
     revertAutoCommit(commit2, commit1)
 
     assertErrorNotification("Revert failed","""
-      ${commit1.id.toShortString()} ${commit1.subject} Your local changes would be overwritten by revert.
-      Commit your changes or stash them to proceed.
-      However revert succeeded for the following commit:
+      ${commit1.id.toShortString()} ${commit1.subject}
+      """ + GitBundle.message("warning.your.local.changes.would.be.overwritten.by", "revert", "shelve") + """
+      """ + GitBundle.message("apply.changes.operation.successful.for.commits", "revert", 1) + """
       ${commit2.id.toShortString()} ${commit2.subject}""")
     assertFalse("File should have been deleted", rFile.exists())
     repo.assertLatestSubjects("Revert \"${commit2.subject}\"")
@@ -148,9 +144,14 @@ class GitRevertTest : GitSingleRepoTest() {
 
     revertAutoCommit(commitToRevert)
 
-    assertWarningNotification("Revert performed with conflicts", """
+    val notification = assertWarningNotification(GitBundle.message("apply.changes.operation.performed.with.conflicts", "Revert"), """
       ${commitToRevert.id.toShortString()} ${commitToRevert.subject}
-      Unresolved conflicts remain in the working tree. <a href='resolve'>Resolve them.<a/>""")
+      There are unresolved conflicts in the working tree.""")
+    assertEquals(2, notification.actions.size)
+    assertEquals(GitBundle.message("apply.changes.unresolved.conflicts.notification.resolve.action.text"),
+                 notification.actions[0].templateText)
+    assertEquals(GitBundle.message("apply.changes.unresolved.conflicts.notification.abort.action.text", "Revert"),
+                 notification.actions[1].templateText)
   }
 
   fun `test revert with conflicts resolve in chain`() {
@@ -176,83 +177,17 @@ class GitRevertTest : GitSingleRepoTest() {
     )
   }
 
-  fun `test reverting added file`() {
-    val file = file("r.txt")
-    val commit = file.create("initial\n").addCommit("Created r.txt").details()
+  fun `test staged changes prevent revert with auto-commit`() {
+    val commit = file("a.txt").create().addCommit("fix #1").details()
+    file("c.txt").create().add()
 
-    vcsHelper.onCommit { msg ->
-      git("commit -am '$msg'")
-      true
-    }
+    revertAutoCommit(commit)
 
-    `revert without auto-commit`(commit)
-
-    assertSuccessfulNotification("Revert successful", "${commit.id.toShortString()} ${commit.subject}")
-    assertFalse("File should have been deleted", file.exists())
-
-    val changes = VcsLogUtil.getDetails(logProvider, projectRoot, listOf("HEAD")).first().changes
-    val beforeRevision = createRevision(getFilePath(file.file), GitRevisionNumber.HEAD, project, Charset.defaultCharset())
-    assertOrderedEquals("Incorrect reverting commit", changes, Change(beforeRevision, null))
-  }
-
-  fun `test default commit message proposed on revert`() {
-    val file = file("r.txt")
-    file.create("initial\n").addCommit("Created r.txt")
-    val commit = file.append("second\n").addCommit("Append something").details()
-
-    var actualMessage = ""
-    vcsHelper.onCommit { msg ->
-      actualMessage = msg
-      true
-    }
-
-    `revert without auto-commit`(commit)
-
-    `assert commit dialog was shown`()
-    assertEquals("Commit message is incorrect", commitMessageForRevert(commit), actualMessage)
-  }
-
-  fun `test reverting commit doesn't preserve authorship of the original commit`() {
-    file("a.txt").create("initial\n").add()
-    git("commit --author='Original Author <original@example.com>' -m original_commit")
-    val commit = GitHistoryUtils.history(project, projectRoot, "-1").first()
-
-    vcsHelper.onCommit { false }
-
-    `revert without auto-commit`(commit)
-
-    val comment = commitMessageForRevert(commit)
-    val list = changeListManager.assertChangeListExists(comment)
-    val data = list.data
-    assertNull("There should be no author information in the changelist: $data", data)
-  }
-
-  fun `test revert commit which was renamed later`() {
-    val initialName = "a.txt"
-    file(initialName).create("initial\n").addCommit("create $initialName")
-    val commit = file(initialName).append("more\n").addCommit("add content").details()
-    val renamed = "renamed.txt"
-    git("mv $initialName $renamed")
-    commit("Rename $initialName to $renamed")
-
-    vcsHelper.onCommit { msg ->
-      git("commit -am '$msg'")
-      true
-    }
-
-    `revert without auto-commit`(commit)
-
-    assertSuccessfulNotification("Revert successful", "${commit.id.toShortString()} ${commit.subject}")
-    repo.assertCommitted {
-      modified(renamed)
-    }
-  }
-
-  private fun commitMessageForRevert(commit: VcsFullCommitDetails): String {
-    return """
-        Revert "${commit.subject}"
-
-        This reverts commit ${commit.id.toShortString()}""".trimIndent()
+    assertErrorNotification("Revert failed",
+                            GitBundle.message("warning.your.local.changes.would.be.overwritten.by", "revert", "shelve"),
+                            listOf(IdeBundle.message("action.show.files"),
+                                   GitBundle.message("apply.changes.save.and.retry.operation", "Shelve"))
+    )
   }
 
   private fun prepareRevertConflict(fileName: String) : VcsFullCommitDetails {
@@ -264,11 +199,6 @@ class GitRevertTest : GitSingleRepoTest() {
 
   private fun revertAutoCommit(vararg commit: VcsFullCommitDetails) {
     updateChangeListManager()
-    GitRevertOperation(project, listOf(*commit), true).execute()
-  }
-
-  private fun `revert without auto-commit`(commit: VcsFullCommitDetails) {
-    updateChangeListManager()
-    GitRevertOperation(project, listOf(commit), false).execute()
+    GitRevertProcess(project, listOf(*commit)).execute()
   }
 }

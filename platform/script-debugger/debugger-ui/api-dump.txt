@@ -1,0 +1,100 @@
+c:com.intellij.javascript.debugger.execution.DebuggableProgramRunner
+- com.intellij.execution.runners.AsyncProgramRunner
+- <init>():V
+- canRun(java.lang.String,com.intellij.execution.configurations.RunProfile):Z
+- p:execute(com.intellij.execution.runners.ExecutionEnvironment,com.intellij.execution.configurations.RunProfileState):org.jetbrains.concurrency.Promise
+- getRunnerId():java.lang.String
+org.jetbrains.debugger.DebuggableRunConfiguration
+- com.intellij.execution.configurations.RunConfiguration
+- canRun(java.lang.String,com.intellij.execution.configurations.RunProfile):Z
+- computeDebugAddress(com.intellij.execution.configurations.RunProfileState):java.net.InetSocketAddress
+- computeDebugAddressAsync(com.intellij.execution.configurations.RunProfileState):org.jetbrains.concurrency.Promise
+- a:createDebugProcess(java.net.InetSocketAddress,com.intellij.xdebugger.XDebugSession,com.intellij.execution.ExecutionResult,com.intellij.execution.runners.ExecutionEnvironment):com.intellij.xdebugger.XDebugProcess
+f:org.jetbrains.debugger.ProcessHandlerWrapper
+- com.intellij.execution.process.ProcessHandler
+- com.intellij.execution.KillableProcess
+- <init>(com.intellij.xdebugger.XDebugProcess,com.intellij.execution.process.ProcessHandler):V
+- addProcessListener(com.intellij.execution.process.ProcessListener):V
+- addProcessListener(com.intellij.execution.process.ProcessListener,com.intellij.openapi.Disposable):V
+- canKillProcess():Z
+- detachIsDefault():Z
+- getProcessInput():java.io.OutputStream
+- isSilentlyDestroyOnClose():Z
+- killProcess():V
+- removeProcessListener(com.intellij.execution.process.ProcessListener):V
+- startNotify():V
+f:org.jetbrains.debugger.PsiVisitors
+- <init>():V
+a:org.jetbrains.debugger.PsiVisitors$FilteringPsiRecursiveElementWalkingVisitor
+- com.intellij.psi.PsiRecursiveElementWalkingVisitor
+- <init>():V
+- visitComment(com.intellij.psi.PsiComment):V
+- visitElement(com.intellij.psi.PsiElement):V
+- visitOuterLanguageElement(com.intellij.psi.templateLanguages.OuterLanguageElement):V
+- visitWhiteSpace(com.intellij.psi.PsiWhiteSpace):V
+a:org.jetbrains.debugger.RemoteDebugConfiguration
+- com.intellij.execution.configurations.LocatableConfigurationBase
+- com.intellij.execution.runners.RunConfigurationWithSuppressedDefaultRunAction
+- org.jetbrains.debugger.DebuggableRunConfiguration
+- <init>(com.intellij.openapi.project.Project,com.intellij.execution.configurations.ConfigurationFactory,java.lang.String,I):V
+- clone():com.intellij.execution.configurations.RunConfiguration
+- computeDebugAddress(com.intellij.execution.configurations.RunProfileState):java.net.InetSocketAddress
+- getConfigurationEditor():com.intellij.openapi.options.SettingsEditor
+- getHost():java.lang.String
+- getPort():I
+- getState(com.intellij.execution.Executor,com.intellij.execution.runners.ExecutionEnvironment):com.intellij.execution.configurations.RunProfileState
+- readExternal(org.jdom.Element):V
+- setHost(java.lang.String):V
+- setPort(I):V
+- writeExternal(org.jdom.Element):V
+f:org.jetbrains.debugger.SourceInfo
+- com.intellij.xdebugger.XSourcePosition
+- <init>(com.intellij.openapi.vfs.VirtualFile,I):V
+- <init>(com.intellij.openapi.vfs.VirtualFile,I,I):V
+- <init>(com.intellij.openapi.vfs.VirtualFile,I,I,I):V
+- <init>(com.intellij.openapi.vfs.VirtualFile,I,I,I,java.lang.String):V
+- <init>(com.intellij.openapi.vfs.VirtualFile,I,I,I,java.lang.String,com.intellij.util.Url):V
+- b:<init>(com.intellij.openapi.vfs.VirtualFile,I,I,I,java.lang.String,com.intellij.util.Url,I,kotlin.jvm.internal.DefaultConstructorMarker):V
+- createNavigatable(com.intellij.openapi.project.Project):com.intellij.openapi.fileEditor.OpenFileDescriptor
+- f:getColumn():I
+- getFile():com.intellij.openapi.vfs.VirtualFile
+- f:getFunctionName():java.lang.String
+- getLine():I
+- getOffset():I
+- f:getUrl():com.intellij.util.Url
+a:org.jetbrains.debugger.connection.RemoteVmConnection
+- org.jetbrains.debugger.connection.VmConnection
+- <init>():V
+- p:connectedAddressToPresentation(java.net.InetSocketAddress,org.jetbrains.debugger.Vm):java.lang.String
+- pf:connectionSucceeded(org.jetbrains.debugger.Vm,java.net.InetSocketAddress):V
+- a:createBootstrap(java.net.InetSocketAddress,org.jetbrains.concurrency.AsyncPromise):io.netty.bootstrap.Bootstrap
+- detachAndClose():org.jetbrains.concurrency.Promise
+- p:doOpen(org.jetbrains.concurrency.AsyncPromise,java.net.InetSocketAddress,com.intellij.openapi.util.Condition):V
+- f:getAddress():java.net.InetSocketAddress
+- f:open(java.net.InetSocketAddress):org.jetbrains.concurrency.Promise
+- f:open(java.net.InetSocketAddress,com.intellij.openapi.util.Condition):org.jetbrains.concurrency.Promise
+- bs:open$default(org.jetbrains.debugger.connection.RemoteVmConnection,java.net.InetSocketAddress,com.intellij.openapi.util.Condition,I,java.lang.Object):org.jetbrains.concurrency.Promise
+- f:setAddress(java.net.InetSocketAddress):V
+f:org.jetbrains.debugger.connection.RemoteVmConnectionKt
+- sf:chooseDebuggee(java.util.Collection,I,kotlin.jvm.functions.Function2):org.jetbrains.concurrency.Promise
+- sf:open(org.jetbrains.debugger.connection.RemoteVmConnection,java.net.InetSocketAddress,com.intellij.execution.process.ProcessHandler):org.jetbrains.concurrency.Promise
+a:org.jetbrains.debugger.connection.VmConnection
+- com.intellij.openapi.Disposable
+- <init>():V
+- f:addDebugListener(org.jetbrains.debugger.DebugEventListener):V
+- f:close(java.lang.String,com.intellij.util.io.socketConnection.ConnectionStatus):V
+- detachAndClose():org.jetbrains.concurrency.Promise
+- dispose():V
+- f:executeOnStart(kotlin.jvm.functions.Function1):V
+- getBrowser():com.intellij.ide.browsers.WebBrowser
+- pf:getDebugEventListener():org.jetbrains.debugger.DebugEventListener
+- p:getDispatcher():com.intellij.util.EventDispatcher
+- f:getState():com.intellij.util.io.socketConnection.ConnectionState
+- f:getVm():org.jetbrains.debugger.Vm
+- f:opened():org.jetbrains.concurrency.Promise
+- pf:setState(com.intellij.util.io.socketConnection.ConnectionStatus,java.lang.String,javax.swing.event.HyperlinkListener):V
+- bs:setState$default(org.jetbrains.debugger.connection.VmConnection,com.intellij.util.io.socketConnection.ConnectionStatus,java.lang.String,javax.swing.event.HyperlinkListener,I,java.lang.Object):V
+- pf:setVm(org.jetbrains.debugger.Vm):V
+- shouldDisposeOnClose():Z
+- p:startProcessing():V
+- f:stateChanged(kotlin.jvm.functions.Function1):V

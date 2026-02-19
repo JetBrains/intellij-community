@@ -24,15 +24,19 @@ import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiManager
 import com.jetbrains.python.PyNames
 import com.jetbrains.python.PythonRuntimeService
+import com.jetbrains.python.psi.impl.PyExpressionCodeFragmentImpl
 
-data class PyQualifiedNameResolveContextImpl(private val psiManager: PsiManager, private val module: Module?,
-                                             private val foothold: PsiElement?, private val sdk: Sdk?,
-                                             private val relativeLevel : Int = -1,
-                                             private val withoutRoots : Boolean = false,
-                                             private val withoutForeign: Boolean = false,
-                                             private val withMembers : Boolean = false,
-                                             private val withPlainDirectories : Boolean = false,
-                                             private val withoutStubs: Boolean = false) : PyQualifiedNameResolveContext {
+data class PyQualifiedNameResolveContextImpl(
+  private val psiManager: PsiManager, private val module: Module?,
+  private val foothold: PsiElement?, private val sdk: Sdk?,
+  private val relativeLevel: Int = -1,
+  private val withoutRoots: Boolean = false,
+  private val withoutForeign: Boolean = false,
+  // withMembers means that re-imports from __init__.py file will be handled correctly.
+  private val withMembers: Boolean = false,
+  private val withPlainDirectories: Boolean = false,
+  private val withoutStubs: Boolean = false,
+) : PyQualifiedNameResolveContext {
   override fun getFoothold(): PsiElement? = foothold
 
   override fun getRelativeLevel(): Int = relativeLevel
@@ -55,7 +59,8 @@ data class PyQualifiedNameResolveContextImpl(private val psiManager: PsiManager,
 
   override fun getWithoutStubs(): Boolean = withoutStubs
 
-  override fun getEffectiveSdk(): Sdk? = if (visitAllModules && foothold != null) PythonRuntimeService.getInstance().getConsoleSdk(foothold) else sdk
+  override fun getEffectiveSdk(): Sdk? =
+    if (visitAllModules && foothold != null) PythonRuntimeService.getInstance().getConsoleSdk(foothold) else sdk
 
   override fun isValid(): Boolean = footholdFile?.isValid ?: true
 
@@ -65,7 +70,7 @@ data class PyQualifiedNameResolveContextImpl(private val psiManager: PsiManager,
 
   override fun copyWithPlainDirectories(): PyQualifiedNameResolveContextImpl = copy(withPlainDirectories = true)
 
-  override fun copyWithRelative(relativeLevel : Int): PyQualifiedNameResolveContextImpl = copy(relativeLevel = relativeLevel)
+  override fun copyWithRelative(relativeLevel: Int): PyQualifiedNameResolveContextImpl = copy(relativeLevel = relativeLevel)
 
   override fun copyWithoutRoots(): PyQualifiedNameResolveContextImpl = copy(withoutRoots = true)
 
@@ -85,7 +90,8 @@ data class PyQualifiedNameResolveContextImpl(private val psiManager: PsiManager,
 
   override fun getVisitAllModules(): Boolean {
     val file = foothold
-    return file != null && (PythonRuntimeService.getInstance().isInPydevConsole(file) || PythonRuntimeService.getInstance().isInScratchFile(
-      file))
+    return file != null && (PythonRuntimeService.getInstance().isInPydevConsole(file) ||
+                            PythonRuntimeService.getInstance().isInScratchFile(file) ||
+                            file is PyExpressionCodeFragmentImpl)
   }
 }

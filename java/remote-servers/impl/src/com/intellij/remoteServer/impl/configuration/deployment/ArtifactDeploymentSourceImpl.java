@@ -1,3 +1,4 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.remoteServer.impl.configuration.deployment;
 
 import com.intellij.openapi.util.io.FileUtil;
@@ -9,7 +10,7 @@ import com.intellij.remoteServer.configuration.deployment.ArtifactDeploymentSour
 import com.intellij.remoteServer.configuration.deployment.DeploymentSourceType;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.Icon;
 import java.io.File;
 
 public class ArtifactDeploymentSourceImpl implements ArtifactDeploymentSource {
@@ -19,9 +20,8 @@ public class ArtifactDeploymentSourceImpl implements ArtifactDeploymentSource {
     myPointer = pointer;
   }
 
-  @NotNull
   @Override
-  public ArtifactPointer getArtifactPointer() {
+  public @NotNull ArtifactPointer getArtifactPointer() {
     return myPointer;
   }
 
@@ -57,9 +57,8 @@ public class ArtifactDeploymentSourceImpl implements ArtifactDeploymentSource {
     return null;
   }
 
-  @NotNull
   @Override
-  public String getPresentableName() {
+  public @NotNull String getPresentableName() {
     return myPointer.getArtifactName();
   }
 
@@ -94,9 +93,8 @@ public class ArtifactDeploymentSourceImpl implements ArtifactDeploymentSource {
     return myPointer.hashCode();
   }
 
-  @NotNull
   @Override
-  public DeploymentSourceType<?> getType() {
+  public @NotNull DeploymentSourceType<?> getType() {
     return DeploymentSourceType.EP_NAME.findExtension(ArtifactDeploymentSourceType.class);
   }
 }

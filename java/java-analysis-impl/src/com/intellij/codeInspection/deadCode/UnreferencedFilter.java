@@ -1,25 +1,19 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInspection.deadCode;
 
 import com.intellij.codeInspection.GlobalInspectionContext;
 import com.intellij.codeInspection.GlobalInspectionTool;
 import com.intellij.codeInspection.ex.GlobalInspectionContextBase;
-import com.intellij.codeInspection.reference.*;
+import com.intellij.codeInspection.reference.RefClass;
+import com.intellij.codeInspection.reference.RefElement;
+import com.intellij.codeInspection.reference.RefElementImpl;
+import com.intellij.codeInspection.reference.RefField;
+import com.intellij.codeInspection.reference.RefFile;
+import com.intellij.codeInspection.reference.RefJavaElement;
+import com.intellij.codeInspection.reference.RefMethod;
+import com.intellij.codeInspection.reference.RefParameter;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 public class UnreferencedFilter extends RefUnreachableFilter {
@@ -35,8 +29,7 @@ public class UnreferencedFilter extends RefUnreachableFilter {
     if (!(refElement instanceof RefMethod || refElement instanceof RefClass || refElement instanceof RefField)) return 0;
     if (!((GlobalInspectionContextBase)myContext).isToCheckMember(refElement, myTool)) return 0;
 
-    if (refElement instanceof RefField && !isExternallyReferenced(refElement)) {
-      RefField refField = (RefField) refElement;
+    if (refElement instanceof RefField refField && !isExternallyReferenced(refElement)) {
       if (refField.isUsedForReading() && !refField.isUsedForWriting()) return 1;
       if (refField.isUsedForWriting() && !refField.isUsedForReading()) return 1;
     }
@@ -46,6 +39,6 @@ public class UnreferencedFilter extends RefUnreachableFilter {
   }
 
   public static boolean isExternallyReferenced(RefElement element) {
-    return element.getInReferences().stream().anyMatch(reference -> reference instanceof RefFile);
+    return ContainerUtil.exists(element.getInReferences(), reference -> reference instanceof RefFile);
   }
 }

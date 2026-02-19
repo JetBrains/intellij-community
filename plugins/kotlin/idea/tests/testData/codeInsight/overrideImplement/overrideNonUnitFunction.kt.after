@@ -1,0 +1,15 @@
+// FIR_IDENTICAL
+interface A {
+    fun foo(value : String) : Int = 0
+}
+
+class C : A {
+    override fun foo(value: String): Int {
+        <selection><caret>return super.foo(value)</selection>
+    }
+}
+
+// MEMBER: "foo(value: String): Int"
+// MEMBER: "equals(other: Any?): Boolean"
+// MEMBER: "hashCode(): Int"
+// MEMBER: "toString(): String"

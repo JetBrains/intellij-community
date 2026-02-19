@@ -19,7 +19,7 @@ import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.throwIfNotEmpty
 import org.assertj.core.api.Assertions.assertThat
 import org.jetbrains.concurrency.Promise
-import java.util.*
+import java.util.Collections
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
@@ -68,7 +68,7 @@ fun assertConcurrentPromises(vararg runnables: () -> Promise<String>, maxTimeout
     val allExecutorThreadsReady = CountDownLatch(numThreads)
     val afterInitBlocker = CountDownLatch(1)
     val allDone = CountDownLatch(numThreads)
-    val promises: MutableList<Promise<String>> = Collections.synchronizedList(ArrayList<Promise<String>>())
+    val promises: MutableList<Promise<String>> = Collections.synchronizedList(ArrayList())
     for (submittedTestRunnable in runnables) {
       threadPool.submit {
         allExecutorThreadsReady.countDown()

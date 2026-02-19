@@ -1,9 +1,17 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.idea;
 
-import java.io.*;
+import org.jetbrains.annotations.ApiStatus;
+
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.PrintStream;
+import java.io.Reader;
 import java.nio.charset.StandardCharsets;
 
+@ApiStatus.Internal
 public final class Launcher {
   private Launcher() {
   }
@@ -24,7 +32,7 @@ public final class Launcher {
         System.out.println("Launcher exited");
     }
 
-    private static class Redirector implements Runnable {
+    private static final class Redirector implements Runnable {
         private final InputStream myInput;
         private final PrintStream myOutput;
 

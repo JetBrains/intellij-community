@@ -1,15 +1,22 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.structureView.impl.java;
 
 import com.intellij.ide.structureView.StructureViewTreeElement;
 import com.intellij.ide.util.treeView.smartTree.SortableTreeElement;
-import com.intellij.openapi.editor.colors.CodeInsightColors;
-import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaRecursiveElementWalkingVisitor;
+import com.intellij.psi.PsiAnonymousClass;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiCompiledElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiSubstitutor;
+import com.intellij.psi.PsiTypeElement;
+import com.intellij.psi.PsiTypeParameter;
+import com.intellij.psi.SyntheticElement;
 import com.intellij.psi.impl.light.LightElement;
 import com.intellij.psi.search.searches.SuperMethodsSearch;
 import com.intellij.psi.util.MethodSignatureBackedByPsiMethod;
@@ -22,7 +29,10 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
-import static com.intellij.psi.util.PsiFormatUtilBase.*;
+import static com.intellij.psi.util.PsiFormatUtilBase.SHOW_NAME;
+import static com.intellij.psi.util.PsiFormatUtilBase.SHOW_PARAMETERS;
+import static com.intellij.psi.util.PsiFormatUtilBase.SHOW_TYPE;
+import static com.intellij.psi.util.PsiFormatUtilBase.TYPE_AFTER;
 
 public class PsiMethodTreeElement extends JavaClassTreeElementBase<PsiMethod> implements SortableTreeElement {
 
@@ -31,8 +41,7 @@ public class PsiMethodTreeElement extends JavaClassTreeElementBase<PsiMethod> im
   }
 
   @Override
-  @NotNull
-  public Collection<StructureViewTreeElement> getChildrenBase() {
+  public @NotNull Collection<StructureViewTreeElement> getChildrenBase() {
     final List<StructureViewTreeElement> emptyResult = Collections.emptyList();
     final PsiMethod element = getElement();
     if (element == null || element instanceof SyntheticElement || element instanceof LightElement) return emptyResult;
@@ -43,7 +52,7 @@ public class PsiMethodTreeElement extends JavaClassTreeElementBase<PsiMethod> im
     final ArrayList<StructureViewTreeElement> result = new ArrayList<>();
 
     element.accept(new JavaRecursiveElementWalkingVisitor(){
-      @Override public void visitClass(PsiClass aClass) {
+      @Override public void visitClass(@NotNull PsiClass aClass) {
         if (!(aClass instanceof PsiAnonymousClass) && !(aClass instanceof PsiTypeParameter)) {
           result.add(new JavaClassTreeElement(aClass, isInherited()));
         }
@@ -54,14 +63,13 @@ public class PsiMethodTreeElement extends JavaClassTreeElementBase<PsiMethod> im
 
   @Override
   public String getPresentableText() {
-    final PsiMethod psiMethod = getElement();
-    if (psiMethod == null) return "";
-    final boolean dumb = DumbService.isDumb(psiMethod.getProject());
-    String method = PsiFormatUtil.formatMethod(psiMethod,
-                                               PsiSubstitutor.EMPTY,
-                                               SHOW_NAME | TYPE_AFTER | SHOW_PARAMETERS | (dumb ? 0 : SHOW_TYPE),
-                                               dumb ? SHOW_NAME : SHOW_TYPE);
-    return StringUtil.replace(method, ":", ": ");
+    final PsiMethod method = getElement();
+    if (method == null) return "";
+    final boolean dumb = DumbService.isDumb(method.getProject());
+    return PsiFormatUtil.formatMethod(method,
+                                      PsiSubstitutor.EMPTY,
+                                      SHOW_NAME | TYPE_AFTER | SHOW_PARAMETERS | (dumb ? 0 : SHOW_TYPE),
+                                      dumb ? SHOW_NAME : SHOW_TYPE);
   }
 
 
@@ -100,19 +108,12 @@ public class PsiMethodTreeElement extends JavaClassTreeElementBase<PsiMethod> im
     return StringUtil.isEmpty(myLocation) ? null : myLocation;
   }
 
-  @Override
-  public TextAttributesKey getTextAttributesKey() {
-    if (isInherited()) return CodeInsightColors.NOT_USED_ELEMENT_ATTRIBUTES;
-    return super.getTextAttributesKey();
-  }
-
   public PsiMethod getMethod() {
     return getElement();
   }
 
-  @NotNull
   @Override
-  public String getAlphaSortKey() {
+  public @NotNull String getAlphaSortKey() {
     final PsiMethod method = getElement();
     if (method != null) {
       return method.getName() + " " + StringUtil.join(method.getParameterList().getParameters(), psiParameter -> {

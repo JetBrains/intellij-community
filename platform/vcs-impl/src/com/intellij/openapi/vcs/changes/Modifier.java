@@ -1,48 +1,48 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes;
 
-import com.intellij.openapi.vcs.changes.local.*;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.vcs.changes.local.AddList;
+import com.intellij.openapi.vcs.changes.local.ChangeListCommand;
+import com.intellij.openapi.vcs.changes.local.EditComment;
+import com.intellij.openapi.vcs.changes.local.EditData;
+import com.intellij.openapi.vcs.changes.local.EditName;
+import com.intellij.openapi.vcs.changes.local.MoveChanges;
+import com.intellij.openapi.vcs.changes.local.RemoveList;
+import com.intellij.openapi.vcs.changes.local.SetDefault;
+import com.intellij.openapi.vcs.changes.local.SetReadOnly;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
 
-/** synchronization aspect is external for this class; only logic here
+/**
+ * synchronization aspect is external for this class; only logic here
  * have internal command queue; applies commands to another copy of change lists (ChangeListWorker) and sends notifications
  * (after update is done)
  */
+@ApiStatus.Internal
 public class Modifier {
+  private static final Logger LOG = Logger.getInstance(Modifier.class);
+
   private final ChangeListWorker myWorker;
   private volatile boolean myInsideUpdate;
   private final List<ChangeListCommand> myCommandQueue;
   private final DelayedNotificator myNotificator;
 
-  public Modifier(ChangeListWorker worker, DelayedNotificator notificator) {
+  public Modifier(@NotNull ChangeListWorker worker, @NotNull DelayedNotificator notificator) {
     myWorker = worker;
     myNotificator = notificator;
     myCommandQueue = new ArrayList<>();
   }
 
-  @NotNull
-  public LocalChangeList addChangeList(@NotNull String name, @Nullable String comment, @Nullable ChangeListData data) {
+  public @NotNull LocalChangeList addChangeList(@NotNull String name, @Nullable String comment, @Nullable ChangeListData data) {
     AddList command = new AddList(name, comment, data);
     impl(command);
-    return command.getNewListCopy();
+    LocalChangeList newList = command.getNewListCopy();
+    return newList != null ? newList : myWorker.getDefaultList();
   }
 
   public void setDefault(@NotNull String name, boolean automatic) {
@@ -55,7 +55,7 @@ public class Modifier {
     impl(command);
   }
 
-  public void moveChangesTo(@NotNull String name, Change @NotNull [] changes) {
+  public void moveChangesTo(@NotNull String name, @NotNull List<? extends Change> changes) {
     MoveChanges command = new MoveChanges(name, changes);
     impl(command);
   }
@@ -72,8 +72,7 @@ public class Modifier {
     return command.isResult();
   }
 
-  @Nullable
-  public String editComment(@NotNull String fromName, @NotNull String newComment) {
+  public @Nullable String editComment(@NotNull String fromName, @NotNull String newComment) {
     EditComment command = new EditComment(fromName, newComment);
     impl(command);
     return command.getOldComment();
@@ -87,6 +86,10 @@ public class Modifier {
 
 
   private void impl(@NotNull ChangeListCommand command) {
+    if (!myWorker.areChangeListsEnabled()) {
+      LOG.warn("Changelists are disabled, command ignored", new Throwable());
+      return;
+    }
     if (myInsideUpdate) {
       // apply command and store it to be applied again when update is finished
       // notification about this invocation might be sent later if the update is cancelled
@@ -111,6 +114,12 @@ public class Modifier {
 
   public void finishUpdate(@Nullable ChangeListWorker updatedWorker) {
     myInsideUpdate = false;
+
+    if (!myWorker.areChangeListsEnabled()) {
+      if (!myCommandQueue.isEmpty()) LOG.warn("Changelists are disabled, commands ignored: " + myCommandQueue);
+      myCommandQueue.clear();
+      return;
+    }
 
     if (updatedWorker != null) {
       for (ChangeListCommand command : myCommandQueue) {

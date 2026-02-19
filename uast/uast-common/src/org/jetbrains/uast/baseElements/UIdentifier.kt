@@ -17,6 +17,7 @@
 package org.jetbrains.uast
 
 import com.intellij.psi.PsiElement
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.uast.internal.log
 
 open class UIdentifier(
@@ -32,6 +33,9 @@ open class UIdentifier(
   override fun asLogString(): String = log("Identifier ($name)")
 
   @Suppress("OverridingDeprecatedMember")
+  @get:ApiStatus.ScheduledForRemoval
+  @get:Deprecated("see the base property description")
+  @Deprecated("see the base property description", ReplaceWith("sourcePsi"))
   override val psi: PsiElement?
     get() = sourcePsi
 
@@ -39,8 +43,23 @@ open class UIdentifier(
     get() = null
 }
 
-open class LazyParentUIdentifier(psi: PsiElement?, private val givenParent: UElement?) : UIdentifier(psi, givenParent) {
+open class LazyParentUIdentifier(psi: PsiElement?, givenParent: UElement?) : UIdentifier(psi, givenParent) {
+  private var uastParentValue: Any? = givenParent ?: UNINITIALIZED_UAST_PART
 
-  override val uastParent: UElement? by lazy { givenParent ?: sourcePsi?.parent?.toUElement() }
+  override val uastParent: UElement?
+    get() {
+      val currentValue = uastParentValue
+      if (currentValue != UNINITIALIZED_UAST_PART) {
+        return currentValue as UElement?
+      }
 
+      val newValue = computeParent()
+      this.uastParentValue = newValue
+
+      return newValue
+    }
+
+  protected open fun computeParent(): UElement? {
+    return sourcePsi?.parent?.toUElement()
+  }
 }

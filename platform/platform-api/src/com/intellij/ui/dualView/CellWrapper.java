@@ -15,8 +15,8 @@
  */
 package com.intellij.ui.dualView;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JTable;
+import java.awt.Component;
 
 /**
  * author: lesya

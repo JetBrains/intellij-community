@@ -1,36 +1,23 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.run;
 
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.util.Disposer;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JComponent;
+import javax.swing.JPanel;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
+import java.util.Objects;
 
-/**
- * @author Alexander Koshevoy
- */
 public class PythonExtendedConfigurationEditor<T extends AbstractPythonRunConfiguration<T>> extends SettingsEditor<T> {
-  @NotNull private final SettingsEditor<T> myMainSettingsEditor;
+  private final @NotNull SettingsEditor<T> myMainSettingsEditor;
 
-  private PyRunConfigurationEditorExtension myCurrentEditor;
-  private SettingsEditor<AbstractPythonRunConfiguration> myCurrentSettingsEditor;
+  private @Nullable PyRunConfigurationEditorFactory myCurrentEditorFactory;
+  private @Nullable SettingsEditor<AbstractPythonRunConfiguration<?>> myCurrentSettingsEditor;
   private JComponent myCurrentSettingsEditorComponent;
 
   private JPanel mySettingsPlaceholder;
@@ -65,8 +52,12 @@ public class PythonExtendedConfigurationEditor<T extends AbstractPythonRunConfig
   }
 
   private boolean updateCurrentEditor(T s) {
-    PyRunConfigurationEditorExtension newEditor = PyRunConfigurationEditorExtension.Factory.getExtension(s);
-    if (myCurrentEditor != newEditor) {
+    PyRunConfigurationEditorFactory newEditorFactory = PyRunConfigurationEditorExtension.EP_NAME.getExtensionList().stream()
+      .map(extension -> extension.accepts(s))
+      .filter(Objects::nonNull)
+      .findFirst()
+      .orElse(null);
+    if (!Objects.equals(myCurrentEditorFactory, newEditorFactory)) {
       // discard previous
       if (myCurrentSettingsEditorComponent != null) {
         mySettingsPlaceholder.remove(myCurrentSettingsEditorComponent);
@@ -75,11 +66,11 @@ public class PythonExtendedConfigurationEditor<T extends AbstractPythonRunConfig
         Disposer.dispose(myCurrentSettingsEditor);
       }
       // set current editor
-      myCurrentEditor = newEditor;
+      myCurrentEditorFactory = newEditorFactory;
       myCurrentSettingsEditor = null;
       // add new
-      if (newEditor != null) {
-        myCurrentSettingsEditor = newEditor.createEditor(s);
+      if (newEditorFactory != null) {
+        myCurrentSettingsEditor = newEditorFactory.createEditor(s);
         myCurrentSettingsEditorComponent = myCurrentSettingsEditor.getComponent();
         GridBagConstraints constraints = new GridBagConstraints();
         constraints.gridy = 1;
@@ -95,9 +86,8 @@ public class PythonExtendedConfigurationEditor<T extends AbstractPythonRunConfig
     return false;
   }
 
-  @NotNull
   @Override
-  protected JComponent createEditor() {
+  protected @NotNull JComponent createEditor() {
     JComponent mainEditorComponent = myMainSettingsEditor.getComponent();
     mySettingsPlaceholder = new JPanel(new GridBagLayout());
     GridBagConstraints constraints = new GridBagConstraints();
@@ -107,8 +97,7 @@ public class PythonExtendedConfigurationEditor<T extends AbstractPythonRunConfig
     return mySettingsPlaceholder;
   }
 
-  @NotNull
-  public static <T extends AbstractPythonRunConfiguration<T>> PythonExtendedConfigurationEditor<T> create(@NotNull SettingsEditor<T> editor) {
+  public static @NotNull <T extends AbstractPythonRunConfiguration<T>> PythonExtendedConfigurationEditor<T> create(@NotNull SettingsEditor<T> editor) {
     return new PythonExtendedConfigurationEditor<>(editor);
   }
 }

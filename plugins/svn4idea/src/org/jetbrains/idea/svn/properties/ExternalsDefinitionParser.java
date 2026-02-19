@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.svn.properties;
 
 import com.intellij.openapi.util.NlsContexts.DialogMessage;
@@ -12,18 +12,14 @@ import java.util.Map;
 
 import static org.jetbrains.idea.svn.SvnBundle.message;
 
-/**
- * @author Konstantin Kolosovsky.
- */
-public class ExternalsDefinitionParser {
+public final class ExternalsDefinitionParser {
 
   /**
    * Parses "svn:externals" property in format starting from svn 1.5.
    *
    * @return map of externals definitions: key - relative directory, value - corresponding complete externals definition.
    */
-  @NotNull
-  public static Map<String, String> parseExternalsProperty(@NotNull String externals) throws SvnBindException {
+  public static @NotNull Map<String, String> parseExternalsProperty(@NotNull String externals) throws SvnBindException {
     HashMap<String, String> map = new HashMap<>();
 
     for (String external : StringUtil.splitByLines(externals, true)) {
@@ -39,8 +35,7 @@ public class ExternalsDefinitionParser {
    * - could be quoted with '"' char
    * - certain chars could be escaped with '\' char
    */
-  @NotNull
-  public static String parseRelativeDirectory(@NotNull String s) throws SvnBindException {
+  public static @NotNull String parseRelativeDirectory(@NotNull String s) throws SvnBindException {
     s = s.trim();
 
     int length = s.length();
@@ -66,8 +61,7 @@ public class ExternalsDefinitionParser {
     }
   }
 
-  @NotNull
-  private static String unescape(@NotNull String s) {
+  private static @NotNull String unescape(@NotNull String s) {
     return s.replace("\\", "");
   }
 

@@ -15,66 +15,61 @@
  */
 package com.intellij.util.xml;
 
-import com.intellij.idea.HardwareAgentRequired;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.impl.PsiManagerImpl;
+import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.xml.XmlFile;
-import com.intellij.testFramework.PlatformTestUtil;
-import com.intellij.util.ThrowableRunnable;
+import com.intellij.testFramework.PerformanceUnitTest;
+import com.intellij.tools.ide.metrics.benchmark.Benchmark;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 import java.util.List;
 
-/**
- * @author peter
- */
-@HardwareAgentRequired
+@PerformanceUnitTest
 public class DomPerformanceTest extends DomHardCoreTestCase {
   public void testVisitorPerformance() {
-    MyElement element = createElement("<root xmlns=\"http://www.w3.org/1999/xhtml\"/>", MyElement.class);
+    Ref<MyElement> ref = new Ref<>();
 
-    final MyElement child = element.addChildElement();
-    child.getAttr().setValue("239");
-    child.getChild239().getAttr().setValue("42");
-    child.getChild().getAttr().setValue("42xx");
-    child.getChild2().getAttr().setValue("42yy");
-    child.addChildElement().getChild().addFooChild().getAttr().setValue("xxx");
-    child.addChildElement().addFooChild().getAttr().setValue("yyy");
-    child.addChildElement().addFooChild().addBarChild().addBarChild().addChildElement().getChild().getAttr().setValue("xxx");
-    child.addChildElement().addBarComposite().setValue("ssss");
-    child.addBarChild().getChild2().getAttr().setValue("234178956023");
+    Benchmark.newBenchmark("creating", () -> ApplicationManager.getApplication().runWriteAction(() -> {
+        MyElement element = createElement("<root xmlns=\"http://www.w3.org/1999/xhtml\"/>", MyElement.class);
+        MyElement child = element.addChildElement();
+        child.getAttr().setValue("239");
+        child.getChild239().getAttr().setValue("42");
+        child.getChild().getAttr().setValue("42xx");
+        child.getChild2().getAttr().setValue("42yy");
+        child.addChildElement().getChild().addFooChild().getAttr().setValue("xxx");
+        child.addChildElement().addFooChild().getAttr().setValue("yyy");
+        child.addChildElement().addFooChild().addBarChild().addBarChild().addChildElement().getChild().getAttr().setValue("xxx");
+        child.addChildElement().addBarComposite().setValue("ssss");
+        child.addBarChild().getChild2().getAttr().setValue("234178956023");
+        for (int i = 0; i < 239; i++) {
+          element.addChildElement().copyFrom(child);
+        }
+        ref.set(element);
+    }))
+      .startAsSubtest();
 
-    PlatformTestUtil.startPerformanceTest("creating", 40_000, () -> ApplicationManager.getApplication().runWriteAction(() -> {
-      for (int i = 0; i < 239; i++) {
-        element.addChildElement().copyFrom(child);
-      }
-    })).attempts(1).assertTiming();
+    MyElement newElement = createElement(DomUtil.getFile(ref.get()).getText(), MyElement.class);
 
-    final MyElement newElement = createElement(DomUtil.getFile(element).getText(), MyElement.class);
-
-    PlatformTestUtil.startPerformanceTest("visiting", 450, new ThrowableRunnable() {
-      @Override
-      public void run() {
-        newElement.acceptChildren(new DomElementVisitor() {
-          @Override
-          public void visitDomElement(DomElement element) {
-            element.acceptChildren(this);
-          }
-        });
-      }
-    }).assertTiming();
+    Benchmark.newBenchmark("visiting", () ->
+      newElement.acceptChildren(new DomElementVisitor() {
+        @Override
+        public void visitDomElement(DomElement element) {
+          element.acceptChildren(this);
+        }
+      })).startAsSubtest();
   }
 
   public void testShouldntParseNonDomFiles() throws Throwable {
     for (int i = 0; i < 420; i++) {
-      getDomManager().registerFileDescription(new DomFileDescription<MyChildElement>(MyChildElement.class, "foo") {
+      getDomManager().registerFileDescription(new DomFileDescription<>(MyChildElement.class, "foo") {
 
         @Override
         public boolean isMyFile(@NotNull final XmlFile file, final Module module) {
@@ -82,7 +77,7 @@ public class DomPerformanceTest extends DomHardCoreTestCase {
           return super.isMyFile(file, module);
         }
       }, getTestRootDisposable());
-      getDomManager().registerFileDescription(new DomFileDescription<MyChildElement>(MyChildElement.class, "bar") {
+      getDomManager().registerFileDescription(new DomFileDescription<>(MyChildElement.class, "bar") {
 
         @Override
         public boolean isMyFile(@NotNull final XmlFile file, final Module module) {
@@ -100,11 +95,11 @@ public class DomPerformanceTest extends DomHardCoreTestCase {
       return null;
     });
 
-    ((PsiManagerImpl)getPsiManager()).cleanupForNextTest();
+    ((PsiManagerEx)getPsiManager()).cleanupForNextTest();
     final XmlFile file = (XmlFile)getPsiManager().findFile(virtualFile);
     assertFalse(file.getNode().isParsed());
     assertTrue(StringUtil.isNotEmpty(file.getText()));
-    PlatformTestUtil.startPerformanceTest("DOM parsing", 10, () -> assertNull(getDomManager().getFileElement(file))).assertTiming();
+    Benchmark.newBenchmark("DOM parsing", () -> assertNull(getDomManager().getFileElement(file))).start();
   }
 
   public void testDontParseNamespacedDomFiles() throws Exception {

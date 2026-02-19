@@ -1,12 +1,13 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.compiler;
 
 import com.intellij.CommonBundle;
-import com.intellij.ProjectTopics;
 import com.intellij.compiler.impl.javaCompiler.BackendCompiler;
 import com.intellij.compiler.impl.javaCompiler.eclipse.EclipseCompiler;
 import com.intellij.compiler.impl.javaCompiler.javac.JavacCompiler;
 import com.intellij.compiler.server.BuildManager;
+import com.intellij.compiler.server.CompilerConfigurationUtils;
+import com.intellij.java.JavaPluginDisposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.compiler.JavaCompilerBundle;
@@ -26,8 +27,12 @@ import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.ui.InputValidator;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.*;
-import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.Couple;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.JDOMUtil;
+import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -41,7 +46,11 @@ import com.intellij.util.execution.ParametersListUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.xmlb.SkipDefaultValuesSerializationFilters;
 import com.intellij.util.xmlb.XmlSerializer;
-import org.apache.oro.text.regex.*;
+import org.apache.oro.text.regex.MatchResult;
+import org.apache.oro.text.regex.Pattern;
+import org.apache.oro.text.regex.PatternCompiler;
+import org.apache.oro.text.regex.Perl5Compiler;
+import org.apache.oro.text.regex.Perl5Matcher;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -56,15 +65,26 @@ import org.jetbrains.jps.model.serialization.java.compiler.AnnotationProcessorPr
 import org.jetbrains.jps.model.serialization.java.compiler.JpsJavaCompilerConfigurationSerializer;
 
 import java.io.File;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
+import java.util.StringTokenizer;
 import java.util.stream.Collectors;
 
-import static com.intellij.compiler.ExternalCompilerConfigurationStorageKt.*;
+import static com.intellij.compiler.ExternalCompilerConfigurationStorageKt.getFilteredModuleNameList;
+import static com.intellij.compiler.ExternalCompilerConfigurationStorageKt.readByteTargetLevel;
+import static com.intellij.compiler.ExternalCompilerConfigurationStorageKt.writeBytecodeTarget;
 import static org.jetbrains.jps.model.java.impl.compiler.ResourcePatterns.normalizeWildcards;
 import static org.jetbrains.jps.model.serialization.java.compiler.JpsJavaCompilerConfigurationSerializer.DEFAULT_WILDCARD_PATTERNS;
 
 @State(name = "CompilerConfiguration", storages = @Storage("compiler.xml"))
-public class CompilerConfigurationImpl extends CompilerConfiguration implements PersistentStateComponent<Element> {
+public final class CompilerConfigurationImpl extends CompilerConfiguration implements PersistentStateComponent<Element> {
   private static final Logger LOG = Logger.getInstance(CompilerConfiguration.class);
 
   public static final String TESTS_EXTERNAL_COMPILER_HOME_PROPERTY_NAME = "tests.external.compiler.home";
@@ -80,6 +100,7 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
   private final List<CompiledPattern> myCompiledPatterns = new ArrayList<>();
   private final List<CompiledPattern> myNegatedCompiledPatterns = new ArrayList<>();
   private boolean myWildcardPatternsInitialized = false;
+  private boolean myParallelCompilationOptionSetExplicitly = false;
   private final Project myProject;
   private final ExcludedEntriesConfiguration myExcludesConfiguration;
 
@@ -98,8 +119,7 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
   // the map is calculated by module processor profiles list for faster access to module settings
   private Map<Module, ProcessorConfigProfile> myProcessorsProfilesMap = null;
 
-  @Nullable
-  private String myBytecodeTargetLevel = null;  // null means same as effective language level
+  private @Nullable String myBytecodeTargetLevel = null;  // null means same as effective language level
   private final Map<String, String> myModuleBytecodeTarget = new HashMap<>();
 
   public CompilerConfigurationImpl(@NotNull Project project) {
@@ -107,21 +127,22 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
     myExcludesConfiguration = createExcludedEntriesConfiguration(project);
     JAVAC_EXTERNAL_BACKEND = new JavacCompiler(myProject);
     MessageBusConnection connection = project.getMessageBus().connect();
-    connection.subscribe(ProjectTopics.MODULES, new ModuleListener() {
+    connection.subscribe(ModuleListener.TOPIC, new ModuleListener() {
       @Override
       public void beforeModuleRemoved(@NotNull Project project, @NotNull Module module) {
         getAnnotationProcessingConfiguration(module).removeModuleName(module.getName());
       }
 
       @Override
-      public void moduleAdded(@NotNull Project project, @NotNull Module module) {
-        myProcessorsProfilesMap = null; // clear cache
+      public void modulesAdded(@NotNull Project project, @NotNull List<? extends Module> modules) {
+        // clear cache
+        myProcessorsProfilesMap = null;
       }
 
       @Override
       public void modulesRenamed(@NotNull Project project,
-                                 @NotNull List<Module> modules,
-                                 @NotNull Function<Module, String> oldNameProvider) {
+                                 @NotNull List<? extends Module> modules,
+                                 @NotNull Function<? super Module, String> oldNameProvider) {
         updateModuleNames(modules.stream().collect(Collectors.toMap(oldNameProvider::fun, Module::getName)));
       }
     });
@@ -134,14 +155,12 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
     }
     BackendCompiler.EP_NAME.getPoint(project).addChangeListener(() -> {
       myRegisteredCompilers = collectCompilers();
-    }, project);
+    }, JavaPluginDisposable.getInstance(project));
   }
 
-  // Overridden in Upsource
-  @NotNull
-  protected ExcludedEntriesConfiguration createExcludedEntriesConfiguration(@NotNull Project project) {
+  private static @NotNull ExcludedEntriesConfiguration createExcludedEntriesConfiguration(@NotNull Project project) {
     final ExcludedEntriesConfiguration cfg = new ExcludedEntriesConfiguration(project.getMessageBus().syncPublisher(ExcludedEntriesListener.TOPIC));
-    Disposer.register(project, cfg);
+    Disposer.register(JavaPluginDisposable.getInstance(project), cfg);
     project.getMessageBus().connect().subscribe(ExcludedEntriesListener.TOPIC, new ExcludedEntriesListener() {
       @Override
       public void onEntryAdded(@NotNull ExcludeEntryDescription description) {
@@ -155,7 +174,7 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
 
       private void clearState() {
         if (project.isOpen()) {
-          BuildManager.getInstance().clearState(project);
+          clearBuildManagerState(project);
         }
       }
     });
@@ -167,11 +186,15 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
     public int BUILD_PROCESS_HEAP_SIZE = DEFAULT_BUILD_PROCESS_HEAP_SIZE;
     public String BUILD_PROCESS_ADDITIONAL_VM_OPTIONS = "";
     public boolean USE_RELEASE_OPTION = true;
+    public @Nullable ParallelCompilationOption PARALLEL_COMPILATION_OPTION = null;
   }
 
   @Override
   public Element getState() {
     Element state = new Element("state");
+    if (!myParallelCompilationOptionSetExplicitly) {
+      myState.PARALLEL_COMPILATION_OPTION = null;
+    }
     XmlSerializer.serializeInto(myState, state, new SkipDefaultValuesSerializationFilters());
 
     if (!myAddNotNullAssertions) {
@@ -285,7 +308,7 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
     }
 
     if (updated) {
-      BuildManager.getInstance().clearState(myProject);
+      clearBuildManagerState(myProject);
     }
   }
 
@@ -293,14 +316,66 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
   public void setProjectBytecodeTarget(@Nullable String level) {
     final String previous = myBytecodeTargetLevel;
     myBytecodeTargetLevel = level;
-    if (!myProject.isDefault() && !Objects.equals(previous, level)) {
-      BuildManager.getInstance().clearState(myProject);
+    if (!Objects.equals(previous, level)) {
+      clearBuildManagerState(myProject);
+    }
+  }
+
+  private void migrateParallelCompilationOption() {
+    if (isOldParallelCompilationEnabled()) myState.PARALLEL_COMPILATION_OPTION = ParallelCompilationOption.ENABLED;
+    else myState.PARALLEL_COMPILATION_OPTION = ParallelCompilationOption.AUTOMATIC;
+  }
+
+  private boolean isOldParallelCompilationEnabled() {
+    // returns parallel compilation flag first by looking into workspace.xml and then intellij.yaml
+
+    //noinspection deprecation
+    Boolean workspaceParallelCompilation = CompilerWorkspaceConfiguration.getInstance(myProject).PARALLEL_COMPILATION;
+    if (workspaceParallelCompilation != null) {
+      return workspaceParallelCompilation;
+    }
+
+    return CompilerConfigurationSettings.Companion.getInstance(myProject).isParallelCompilationEnabled();
+  }
+
+  @Override
+  public boolean isParallelCompilationEnabled() {
+    return switch (getParallelCompilationOption()) {
+        case ENABLED -> true;
+        case AUTOMATIC -> CompilerConfigurationUtils.isParallelCompilationAllowedWithCurrentSpecs();
+        case DISABLED -> false;
+      };
+  }
+
+  @Override
+  public void setParallelCompilationEnabled(boolean enabled) {
+    ParallelCompilationOption option;
+    if (enabled) {
+      option = ParallelCompilationOption.ENABLED;
+    } else {
+      option = ParallelCompilationOption.DISABLED;
+    }
+
+    setParallelCompilationOption(option);
+  }
+
+  @Override
+  public @NotNull ParallelCompilationOption getParallelCompilationOption() {
+    if (myState.PARALLEL_COMPILATION_OPTION == null) migrateParallelCompilationOption();
+    return myState.PARALLEL_COMPILATION_OPTION;
+  }
+
+  @Override
+  public void setParallelCompilationOption(@NotNull ParallelCompilationOption option) {
+    ParallelCompilationOption oldOption = getParallelCompilationOption();
+    if (oldOption != option) {
+      myParallelCompilationOptionSetExplicitly = true;
+      myState.PARALLEL_COMPILATION_OPTION = option;
     }
   }
 
   @Override
-  @Nullable
-  public String getProjectBytecodeTarget() {
+  public @Nullable String getProjectBytecodeTarget() {
     return myBytecodeTargetLevel;
   }
 
@@ -315,11 +390,11 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
   }
 
   public void setModulesBytecodeTargetMap(@NotNull Map<String, String> mapping) {
-    final boolean shouldNotify = !myProject.isDefault() && !myModuleBytecodeTarget.equals(mapping);
+    final boolean shouldNotify = !myModuleBytecodeTarget.equals(mapping);
     myModuleBytecodeTarget.clear();
     myModuleBytecodeTarget.putAll(mapping);
     if (shouldNotify) {
-      BuildManager.getInstance().clearState(myProject);
+      clearBuildManagerState(myProject);
     }
   }
 
@@ -337,16 +412,12 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
       previous = myModuleBytecodeTarget.put(module.getName(), level);
     }
     if (!Objects.equals(previous, level)) {
-      final Project project = module.getProject();
-      if (!project.isDefault()) {
-        BuildManager.getInstance().clearState(project);
-      }
+      clearBuildManagerState(module.getProject());
     }
   }
 
   @Override
-  @Nullable
-  public String getBytecodeTargetLevel(Module module) {
+  public @Nullable String getBytecodeTargetLevel(Module module) {
     final String level = myModuleBytecodeTarget.get(module.getName());
     if (level != null) {
       return level.isEmpty() ? null : level;
@@ -368,9 +439,33 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
     }
   }
 
-  @NotNull
   @Override
-  public List<String> getAdditionalOptions(@NotNull Module module) {
+  public @NotNull List<String> getAdditionalOptions() {
+    JpsJavaCompilerOptions settings = getJavaCompilerSettings();
+    if (settings != null) {
+      String options = settings.ADDITIONAL_OPTIONS_STRING;
+      if (!StringUtil.isEmptyOrSpaces(options)) {
+        return ParametersListUtil.parse(options);
+      }
+    }
+    return Collections.emptyList();
+  }
+
+  @Override
+  public void setAdditionalOptions(@NotNull List<String> options) {
+    JpsJavaCompilerOptions settings = getJavaCompilerSettings();
+    if (settings != null) {
+      String previous = settings.ADDITIONAL_OPTIONS_STRING;
+      String newValue = ParametersListUtil.join(options);
+      if (!newValue.equals(previous)) {
+        settings.ADDITIONAL_OPTIONS_STRING = newValue;
+        clearBuildManagerState(myProject);
+      }
+    }
+  }
+
+  @Override
+  public @NotNull List<String> getAdditionalOptions(@NotNull Module module) {
     JpsJavaCompilerOptions settings = getJavaCompilerSettings();
     if (settings != null) {
       String options = settings.ADDITIONAL_OPTIONS_OVERRIDE.getOrDefault(module.getName(), settings.ADDITIONAL_OPTIONS_STRING);
@@ -394,7 +489,18 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
     String newValue = ParametersListUtil.join(options);
     if (!newValue.equals(previous)) {
       settings.ADDITIONAL_OPTIONS_OVERRIDE.put(module.getName(), newValue);
-      BuildManager.getInstance().clearState(myProject);
+      clearBuildManagerState(myProject);
+    }
+  }
+
+  @Override
+  public void removeAdditionalOptions(@NotNull Module module) {
+    JpsJavaCompilerOptions settings = getJavaCompilerSettings();
+    if (settings != null) {
+      String previous = settings.ADDITIONAL_OPTIONS_OVERRIDE.remove(module.getName());
+      if (previous != null) {
+        clearBuildManagerState(myProject);
+      }
     }
   }
 
@@ -431,8 +537,7 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
     return JAVAC_EXTERNAL_BACKEND;
   }
 
-  @NotNull
-  private List<BackendCompiler> collectCompilers() {
+  private @NotNull List<BackendCompiler> collectCompilers() {
     final List<BackendCompiler> compilers = new ArrayList<>();
     compilers.add(JAVAC_EXTERNAL_BACKEND);
     if (EclipseCompiler.isInitialized() || ApplicationManager.getApplication().isUnitTestMode()) {
@@ -514,8 +619,7 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
     myAddNotNullAssertions = enabled;
   }
 
-  @NotNull
-  public ProcessorConfigProfile getDefaultProcessorProfile() {
+  public @NotNull ProcessorConfigProfile getDefaultProcessorProfile() {
     return myDefaultProcessorsProfile;
   }
 
@@ -523,8 +627,7 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
     myDefaultProcessorsProfile.initFrom(profile);
   }
 
-  @NotNull
-  public List<ProcessorConfigProfile> getModuleProcessorProfiles() {
+  public @NotNull List<ProcessorConfigProfile> getModuleProcessorProfiles() {
     return Collections.unmodifiableList(myModuleProcessorProfiles);
   }
 
@@ -536,8 +639,7 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
     myProcessorsProfilesMap = null;
   }
 
-  @Nullable
-  public ProcessorConfigProfile findModuleProcessorProfile(@NotNull String name) {
+  public @Nullable ProcessorConfigProfile findModuleProcessorProfile(@NotNull String name) {
     for (ProcessorConfigProfile profile : myModuleProcessorProfiles) {
       if (name.equals(profile.getName())) {
         return profile;
@@ -558,8 +660,14 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
   }
 
   @Override
-  @NotNull
-  public ProcessorConfigProfile getAnnotationProcessingConfiguration(Module module) {
+  public @NotNull ProcessorConfigProfile addNewProcessorProfile(@NotNull String profileName) {
+    ProcessorConfigProfileImpl profile = new ProcessorConfigProfileImpl(profileName);
+    addModuleProcessorProfile(profile);
+    return profile;
+  }
+
+  @Override
+  public @NotNull ProcessorConfigProfile getAnnotationProcessingConfiguration(Module module) {
     Map<Module, ProcessorConfigProfile> map = myProcessorsProfilesMap;
     if (map == null) {
       map = new HashMap<>();
@@ -596,7 +704,7 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
     return false;
   }
 
-  private void addWildcardResourcePattern(@NonNls final String wildcardPattern) throws MalformedPatternException {
+  private void addWildcardResourcePattern(final @NonNls String wildcardPattern) throws MalformedPatternException {
     final CompiledPattern pattern = convertToRegexp(wildcardPattern);
     myWildcardPatterns.add(wildcardPattern);
     if (isPatternNegated(wildcardPattern)) {
@@ -626,7 +734,7 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
       wildcardPattern = wildcardPattern.substring(1);
     }
 
-    wildcardPattern = FileUtil.toSystemIndependentName(wildcardPattern);
+    wildcardPattern = FileUtilRt.toSystemIndependentName(wildcardPattern);
 
     String srcRoot = null;
     int colon = wildcardPattern.indexOf(":");
@@ -734,22 +842,20 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
   @Override
   public void loadState(@NotNull Element parentNode) {
     myState = XmlSerializer.deserialize(parentNode, State.class);
+    if (myState.PARALLEL_COMPILATION_OPTION != null) {
+      myParallelCompilationOptionSetExplicitly = true;
+    }
     if (!myProject.isDefault()) {
       for (Element option : parentNode.getChildren("option")) {
         if ("DEFAULT_COMPILER".equals(option.getAttributeValue("name"))) {
           break;
         }
       }
-      if (myState.BUILD_PROCESS_HEAP_SIZE == DEFAULT_BUILD_PROCESS_HEAP_SIZE) {
-        final CompilerWorkspaceConfiguration workspace = CompilerWorkspaceConfiguration.getInstance(myProject);
-        // older version compatibility: as a fallback load this setting from workspace
-        myState.BUILD_PROCESS_HEAP_SIZE = workspace.COMPILER_PROCESS_HEAP_SIZE;
-      }
     }
 
     final Element notNullAssertions = parentNode.getChild(JpsJavaCompilerConfigurationSerializer.ADD_NOTNULL_ASSERTIONS);
     if (notNullAssertions != null) {
-      myAddNotNullAssertions = Boolean.valueOf(notNullAssertions.getAttributeValue(JpsJavaCompilerConfigurationSerializer.ENABLED, "true"));
+      myAddNotNullAssertions = Boolean.parseBoolean(notNullAssertions.getAttributeValue(JpsJavaCompilerConfigurationSerializer.ENABLED, "true"));
     }
 
     Element node = parentNode.getChild(JpsJavaCompilerConfigurationSerializer.EXCLUDE_FROM_COMPILE);
@@ -761,8 +867,7 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
       removeRegexpPatterns();
       node = parentNode.getChild(JpsJavaCompilerConfigurationSerializer.RESOURCE_EXTENSIONS);
       if (node != null) {
-        for (final Object o : node.getChildren(JpsJavaCompilerConfigurationSerializer.ENTRY)) {
-          Element element = (Element)o;
+        for (final Element element : node.getChildren(JpsJavaCompilerConfigurationSerializer.ENTRY)) {
           String pattern = element.getAttributeValue(JpsJavaCompilerConfigurationSerializer.NAME);
           if (!StringUtil.isEmpty(pattern)) {
             addRegexpPattern(pattern);
@@ -841,19 +946,17 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
     final Set<String> processors = new HashSet<>();
     final List<Couple<String>> modulesToProcess = new ArrayList<>();
 
-    for (Object child : processing.getChildren("processorPath")) {
-      final Element pathElement = (Element)child;
+    for (Element pathElement : processing.getChildren("processorPath")) {
       final String path = pathElement.getAttributeValue("value", (String)null);
       if (path != null) {
-        if (processorPath.length() > 0) {
+        if (!processorPath.isEmpty()) {
           processorPath.append(File.pathSeparator);
         }
         processorPath.append(path);
       }
     }
 
-    for (Object child : processing.getChildren("processor")) {
-      final Element processorElement = (Element)child;
+    for (Element processorElement : processing.getChildren("processor")) {
       final String proc = processorElement.getAttributeValue(JpsJavaCompilerConfigurationSerializer.NAME, (String)null);
       if (proc != null) {
         processors.add(proc);
@@ -865,8 +968,7 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
       }
     }
 
-    for (Object child : processing.getChildren("processModule")) {
-      final Element moduleElement = (Element)child;
+    for (Element moduleElement : processing.getChildren("processModule")) {
       final String name = moduleElement.getAttributeValue(JpsJavaCompilerConfigurationSerializer.NAME, (String)null);
       if (name == null) {
         continue;
@@ -877,7 +979,7 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
 
     myDefaultProcessorsProfile.setEnabled(false);
     myDefaultProcessorsProfile.setObtainProcessorsFromClasspath(isUseClasspath);
-    if (processorPath.length() > 0) {
+    if (!processorPath.isEmpty()) {
       myDefaultProcessorsProfile.setProcessorPath(processorPath.toString());
     }
     if (!optionPairs.isEmpty()) {
@@ -979,7 +1081,7 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
               }
             }
 
-            if (malformedPatterns.length() > 0) {
+            if (!malformedPatterns.isEmpty()) {
               Messages.showErrorDialog(JavaCompilerBundle.message("error.bad.resource.patterns", malformedPatterns.toString()),
                                        JavaCompilerBundle.message("bad.resource.patterns.dialog.title"));
               removeWildcardPatterns();
@@ -1054,16 +1156,13 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
     return artifacts.isEmpty();
   }
 
-  private static final class CompiledPattern {
-    @NotNull final Pattern fileName;
-    @Nullable final Pattern dir;
-    @Nullable final Pattern srcRoot;
-
-    private CompiledPattern(@NotNull Pattern fileName, @Nullable Pattern dir, @Nullable Pattern srcRoot) {
-      this.fileName = fileName;
-      this.dir = dir;
-      this.srcRoot = srcRoot;
+  private static void clearBuildManagerState(Project project) {
+    if (!project.isDefault()) {
+      BuildManager.getInstance().clearState(project);
     }
+  }
+
+  private record CompiledPattern(@NotNull Pattern fileName, @Nullable Pattern dir, @Nullable Pattern srcRoot) {
   }
 
   private static Element addChild(Element parent, final String childName) {

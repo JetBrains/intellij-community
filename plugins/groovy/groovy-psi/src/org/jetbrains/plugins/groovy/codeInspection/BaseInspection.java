@@ -15,8 +15,12 @@
  */
 package org.jetbrains.plugins.groovy.codeInspection;
 
+import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.LocalInspectionToolSession;
+import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.codeInspection.options.OptPane;
+import com.intellij.codeInspection.options.OptionController;
 import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
@@ -24,17 +28,20 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyBundle;
+import org.jetbrains.plugins.groovy.codeInspection.utils.GrInspectionUIUtil;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementVisitor;
 
-public abstract class BaseInspection extends GroovySuppressableInspectionTool {
-  /**
-   * @deprecated Use {@link #getProbableBugs()} instead
-   */
-  @Deprecated public static final String PROBABLE_BUGS = getProbableBugs();
+import java.util.HashSet;
+import java.util.Set;
 
-  @Nullable
-  @InspectionMessage
-  protected String buildErrorString(Object... args) {
+/**
+ * For new inspections, please use {@link GroovyLocalInspectionTool}.
+ */
+public abstract class BaseInspection extends LocalInspectionTool {
+
+  public @NotNull Set<String> explicitlyEnabledFileTypes = new HashSet<>();
+
+  protected @Nullable @InspectionMessage String buildErrorString(Object... args) {
     return null;
   }
 
@@ -42,26 +49,45 @@ public abstract class BaseInspection extends GroovySuppressableInspectionTool {
     return false;
   }
 
-  @Nullable
-  protected GroovyFix buildFix(@NotNull PsiElement location) {
+  @Override
+  public final @NotNull OptPane getOptionsPane() {
+    OptPane pane = getGroovyOptionsPane();
+    return GrInspectionUIUtil.enhanceInspectionToolPanel(this, pane);
+  }
+
+  @Override
+  public @NotNull OptionController getOptionController() {
+    return super.getOptionController().onPrefix(
+      "fileType", GrInspectionUIUtil.getFileTypeController(explicitlyEnabledFileTypes));
+  }
+
+  protected @NotNull OptPane getGroovyOptionsPane() {
+    return OptPane.EMPTY;
+  }
+
+  protected @Nullable LocalQuickFix buildFix(@NotNull PsiElement location) {
     return null;
   }
 
-  @NotNull
   @Override
-  public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder,
-                                        boolean isOnTheFly,
-                                        @NotNull LocalInspectionToolSession session) {
+  public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder,
+                                                 boolean isOnTheFly,
+                                                 @NotNull LocalInspectionToolSession session) {
     BaseInspectionVisitor visitor = buildVisitor();
     visitor.initialize(this, holder, isOnTheFly);
-    return new GroovyPsiElementVisitor(visitor);
+    return new GroovyPsiElementVisitor(visitor) {
+      @Override
+      public void visitElement(@NotNull PsiElement element) {
+        if (GrInspectionUIUtil.checkInspectionEnabledByFileType(BaseInspection.this, element, explicitlyEnabledFileTypes)) {
+          super.visitElement(element);
+        }
+      }
+    };
   }
 
-  @NotNull
-  protected abstract BaseInspectionVisitor buildVisitor();
+  protected abstract @NotNull BaseInspectionVisitor buildVisitor();
 
-  @Nls(capitalization = Nls.Capitalization.Sentence)
-  public static String getProbableBugs() {
+  public static @Nls(capitalization = Nls.Capitalization.Sentence) String getProbableBugs() {
     return GroovyBundle.message("inspection.bugs");
   }
 }

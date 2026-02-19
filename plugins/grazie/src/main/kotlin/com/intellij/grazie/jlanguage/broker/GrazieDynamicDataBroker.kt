@@ -5,9 +5,9 @@ import com.intellij.grazie.GrazieDynamic
 import org.languagetool.broker.ResourceDataBroker
 import java.io.InputStream
 import java.net.URL
-import java.util.*
+import java.util.Locale
 
-object GrazieDynamicDataBroker : ResourceDataBroker {
+internal object GrazieDynamicDataBroker : ResourceDataBroker {
   override fun getAsURL(path: String) = GrazieDynamic.getResource(path)
 
   override fun getAsStream(path: String) = GrazieDynamic.getResourceAsStream(path)
@@ -16,18 +16,14 @@ object GrazieDynamicDataBroker : ResourceDataBroker {
 
   override fun getFromResourceDirAsStream(path: String): InputStream {
     val completePath = getCompleteResourceUrl(path)
-    val resourceAsStream = getAsStream(completePath)
-    require(resourceAsStream != null) { "Path $path not found in class path at $completePath" }
-    return resourceAsStream
+    return getAsStream(completePath) ?: throw IllegalArgumentException("Path $path not found in class path at $completePath")
   }
 
-  override fun getFromResourceDirAsLines(path: String): MutableList<String> {
+  override fun getFromResourceDirAsLines(path: String): List<String> {
     val lines: MutableList<String> = ArrayList()
-
     getFromResourceDirAsStream(path).use { stream ->
       stream.bufferedReader().useLines { lines.addAll(it) }
     }
-
     return lines
   }
 
@@ -48,7 +44,7 @@ object GrazieDynamicDataBroker : ResourceDataBroker {
   }
 
   override fun getRulesDir(): String {
-    return ResourceDataBroker.RULES_DIR;
+    return ResourceDataBroker.RULES_DIR
   }
 
   override fun getFromResourceDirAsUrls(path: String): MutableList<URL> {
@@ -92,6 +88,6 @@ object GrazieDynamicDataBroker : ResourceDataBroker {
   override fun ruleFileExists(path: String) = getAsURL(getCompleteRulesUrl(path)) != null
 
   override fun getResourceDir(): String {
-    return ResourceDataBroker.RESOURCE_DIR;
+    return ResourceDataBroker.RESOURCE_DIR
   }
 }

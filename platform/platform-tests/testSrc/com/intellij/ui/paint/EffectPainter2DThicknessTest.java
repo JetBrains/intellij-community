@@ -1,22 +1,24 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.paint;
 
 import com.intellij.ui.RestoreScaleRule;
 import com.intellij.ui.paint.PaintUtil.RoundingMode;
 import com.intellij.ui.scale.JBUIScale;
+import com.intellij.ui.scale.Scale;
 import com.intellij.ui.scale.ScaleContext;
+import com.intellij.ui.scale.TestScaleHelper;
 import com.intellij.util.ui.StartupUiUtil;
-import com.intellij.util.ui.TestScaleHelper;
 import org.junit.Assert;
 import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.rules.ExternalResource;
 
-import java.awt.*;
+import java.awt.Font;
+import java.awt.Graphics2D;
 
 import static com.intellij.ui.scale.ScaleType.SYS_SCALE;
 import static com.intellij.ui.scale.ScaleType.USR_SCALE;
-import static com.intellij.util.ui.TestScaleHelper.overrideJreHiDPIEnabled;
+import static com.intellij.ui.scale.TestScaleHelper.overrideJreHiDPIEnabled;
 
 /**
  * Tests {@link EffectPainter2D#maybeScaleFontMetricsThickness(double, Graphics2D, Font)}
@@ -33,13 +35,13 @@ public class EffectPainter2DThicknessTest {
 
     overrideJreHiDPIEnabled(false);
     for (int usrScale : new int[] {1, 2, 3}) {
-      test(ScaleContext.create(SYS_SCALE.of(1), USR_SCALE.of(usrScale)));
+      test(ScaleContext.Companion.of(new Scale[]{SYS_SCALE.of(1), USR_SCALE.of(usrScale)}));
     }
 
     overrideJreHiDPIEnabled(true);
     for (int sysScale : new int[] {1, 2, 3}) {
       for (int usrScale : new int[] {1, 2, 3}) {
-        test(ScaleContext.create(SYS_SCALE.of(sysScale), USR_SCALE.of(usrScale)));
+        test(ScaleContext.Companion.of(new Scale[]{SYS_SCALE.of(sysScale), USR_SCALE.of(usrScale)}));
       }
     }
   }

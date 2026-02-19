@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.eclipse.conversion;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -26,15 +26,7 @@ public final class DotProjectFileHelper {
 
   public static void saveDotProjectFile(@NotNull Module module, @NotNull String storageRoot) throws IOException {
     try {
-      Element rootElement;
-      if (ModuleType.get(module) instanceof JavaModuleType) {
-        rootElement = JDOMUtil.load(DotProjectFileHelper.class.getResource("template.project.xml"));
-      }
-      else {
-        rootElement = JDOMUtil.load(DotProjectFileHelper.class.getResource("template.empty.project.xml"));
-      }
-
-      rootElement.getChild(EclipseXml.NAME_TAG).setText(module.getName());
+      Element rootElement = generateProjectFileContent(ModuleType.get(module), module.getName());
 
       final File projectFile = new File(storageRoot, EclipseXml.PROJECT_FILE);
       if (!FileUtil.createIfDoesntExist(projectFile)) {
@@ -49,5 +41,18 @@ public final class DotProjectFileHelper {
     catch (JDOMException e) {
       LOG.error(e);
     }
+  }
+
+  public static @NotNull Element generateProjectFileContent(@NotNull ModuleType<?> moduleType, @NotNull String moduleName) throws JDOMException, IOException {
+    Element rootElement;
+    if (moduleType instanceof JavaModuleType) {
+      rootElement = JDOMUtil.load(DotProjectFileHelper.class.getResource("template.project.xml"));
+    }
+    else {
+      rootElement = JDOMUtil.load(DotProjectFileHelper.class.getResource("template.empty.project.xml"));
+    }
+
+    rootElement.getChild(EclipseXml.NAME_TAG).setText(moduleName);
+    return rootElement;
   }
 }

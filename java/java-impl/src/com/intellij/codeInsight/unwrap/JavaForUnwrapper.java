@@ -16,7 +16,11 @@
 package com.intellij.codeInsight.unwrap;
 
 import com.intellij.codeInsight.CodeInsightBundle;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiForStatement;
+import com.intellij.psi.PsiForeachStatement;
+import com.intellij.psi.PsiLoopStatement;
+import com.intellij.psi.PsiStatement;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
@@ -40,12 +44,12 @@ public class JavaForUnwrapper extends JavaUnwrapper {
     context.delete(element);
   }
 
-  private void unwrapInitializer(PsiElement element, Context context) throws IncorrectOperationException {
+  private static void unwrapInitializer(PsiElement element, Context context) throws IncorrectOperationException {
     PsiStatement init = ((PsiForStatement)element).getInitialization();
     context.extractFromBlockOrSingleStatement(init, element);
   }
 
-  private void unwrapBody(PsiElement element, Context context) throws IncorrectOperationException {
+  private static void unwrapBody(PsiElement element, Context context) throws IncorrectOperationException {
     PsiStatement body = ((PsiLoopStatement)element).getBody();
     context.extractFromBlockOrSingleStatement(body, element);
   }

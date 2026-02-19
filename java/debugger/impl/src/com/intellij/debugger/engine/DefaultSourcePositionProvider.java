@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.engine;
 
 import com.intellij.debugger.SourcePosition;
@@ -15,24 +15,32 @@ import com.intellij.debugger.ui.tree.LocalVariableDescriptor;
 import com.intellij.debugger.ui.tree.NodeDescriptor;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiVariable;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.containers.ContainerUtil;
-import com.sun.jdi.*;
+import com.sun.jdi.AbsentInformationException;
+import com.sun.jdi.ClassNotPreparedException;
+import com.sun.jdi.Location;
+import com.sun.jdi.Method;
+import com.sun.jdi.ReferenceType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.List;
 
-public class DefaultSourcePositionProvider extends SourcePositionProvider {
-  @Nullable
+public final class DefaultSourcePositionProvider extends SourcePositionProvider {
   @Override
-  protected SourcePosition computeSourcePosition(@NotNull NodeDescriptor descriptor,
-                                                 @NotNull Project project,
-                                                 @NotNull DebuggerContextImpl context,
-                                                 boolean nearest) {
+  protected @Nullable SourcePosition computeSourcePosition(@NotNull NodeDescriptor descriptor,
+                                                           @NotNull Project project,
+                                                           @NotNull DebuggerContextImpl context,
+                                                           boolean nearest) {
     StackFrameProxyImpl frame = context.getFrameProxy();
     if (frame == null) {
       return null;
@@ -59,11 +67,10 @@ public class DefaultSourcePositionProvider extends SourcePositionProvider {
     return null;
   }
 
-  @Nullable
-  private static SourcePosition getSourcePositionForField(@NotNull FieldDescriptor descriptor,
-                                                          @NotNull Project project,
-                                                          @NotNull DebuggerContextImpl context,
-                                                          boolean nearest) {
+  private static @Nullable SourcePosition getSourcePositionForField(@NotNull FieldDescriptor descriptor,
+                                                                    @NotNull Project project,
+                                                                    @NotNull DebuggerContextImpl context,
+                                                                    boolean nearest) {
     final ReferenceType type = descriptor.getField().declaringType();
     final String fieldName = descriptor.getField().name();
     if (fieldName.startsWith(FieldDescriptorImpl.OUTER_LOCAL_VAR_FIELD_PREFIX)) {
@@ -99,8 +106,8 @@ public class DefaultSourcePositionProvider extends SourcePositionProvider {
           // important: use the last location to be sure the position will be within the anonymous class
           // and do not use type.allLineLocations as it fetches line tables for all methods
           List<Method> methods = type.methods();
-          for (int i = methods.size() - 1; i >= 0; i--) {
-            List<Location> locations = methods.get(i).allLineLocations();
+          for (Method m : methods.reversed()) {
+            List<Location> locations = m.allLineLocations();
             if (!locations.isEmpty()) {
               aClass = JVMNameUtil.getClassAt(debugProcess.getPositionManager().getSourcePosition(ContainerUtil.getLastItem(locations)));
               break;
@@ -129,11 +136,10 @@ public class DefaultSourcePositionProvider extends SourcePositionProvider {
     }
   }
 
-  @Nullable
-  private static SourcePosition getSourcePositionForLocalVariable(String name,
-                                                                  @NotNull Project project,
-                                                                  @NotNull DebuggerContextImpl context,
-                                                                  boolean nearest) {
+  private static @Nullable SourcePosition getSourcePositionForLocalVariable(String name,
+                                                                            @NotNull Project project,
+                                                                            @NotNull DebuggerContextImpl context,
+                                                                            boolean nearest) {
     PsiElement place = PositionUtil.getContextElement(context);
     if (place == null) return null;
 
@@ -141,7 +147,7 @@ public class DefaultSourcePositionProvider extends SourcePositionProvider {
     if (psiVariable == null) return null;
 
     PsiFile containingFile = psiVariable.getContainingFile();
-    if(containingFile == null) return null;
+    if (containingFile == null) return null;
     try {
       if (nearest) {
         return DebuggerContextUtil.findNearest(context, psiVariable, containingFile);

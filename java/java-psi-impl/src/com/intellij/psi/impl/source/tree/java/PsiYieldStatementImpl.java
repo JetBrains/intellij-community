@@ -1,7 +1,11 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.tree.java;
 
-import com.intellij.psi.*;
+import com.intellij.psi.JavaElementVisitor;
+import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiSwitchExpression;
+import com.intellij.psi.PsiYieldStatement;
 import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.impl.source.tree.CompositePsiElement;
 import com.intellij.psi.impl.source.tree.ElementType;
@@ -19,9 +23,8 @@ public class PsiYieldStatementImpl extends CompositePsiElement implements PsiYie
     return (PsiExpression)findPsiChildByType(ElementType.EXPRESSION_BIT_SET);
   }
 
-  @Nullable
   @Override
-  public PsiSwitchExpression findEnclosingExpression() {
+  public @Nullable PsiSwitchExpression findEnclosingExpression() {
     return PsiImplUtil.findEnclosingSwitchExpression(this);
   }
 

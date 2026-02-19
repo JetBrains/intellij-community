@@ -19,7 +19,7 @@ import com.intellij.history.core.revisions.Revision;
 
 import java.util.LinkedList;
 
-public class RevisionItem {
+public final class RevisionItem {
   public final Revision revision;
   public final LinkedList<Revision> labels = new LinkedList<>();
 

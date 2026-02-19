@@ -1,17 +1,19 @@
 package com.intellij.tools.launch
 
+import org.jetbrains.intellij.build.dependencies.BuildDependenciesCommunityRoot
+import org.jetbrains.intellij.build.dependencies.JdkDownloader
+import org.jetbrains.intellij.build.dependencies.TeamCityHelper
+import org.jetbrains.intellij.build.getMavenRepositoryPath
 import java.io.File
-import com.intellij.openapi.util.SystemInfo
-import com.intellij.util.SystemProperties
 
 interface PathsProvider {
   val productId: String
-  val projectRootFolder: File
+  val sourcesRootFolder: File
   val communityRootFolder: File
   val outputRootFolder: File
 
   val tempFolder: File
-    get() = TeamCityHelper.tempDirectory ?: projectRootFolder.resolve("out").resolve("tmp")
+    get() = resolveTempFolder(sourcesRootFolder)
 
   val launcherFolder: File
     get() = tempFolder.resolve("launcher").resolve(productId)
@@ -22,15 +24,35 @@ interface PathsProvider {
   val configFolder: File
     get() = launcherFolder.resolve("config")
 
+  val configBackupFolder: File
+    get() = launcherFolder.resolve("config-backup")
+
   val systemFolder: File
     get() = launcherFolder.resolve("system")
 
-  private val javaHomeFolder: File
-    get() = File(SystemProperties.getJavaHome())
+  val javaHomeFolder: File
+    get() = JdkDownloader.blockingGetJdkHomeAndLog(BuildDependenciesCommunityRoot(communityRootFolder.toPath())).normalize().toFile()
+
+  val mavenRepositoryFolder: File
+    get() = File(getMavenRepositoryPath())
+
+  val communityBinFolder: File
+    get() = communityRootFolder.resolve("bin")
+
+  val ultimateRootMarker: File
+    get() = sourcesRootFolder.resolve(".ultimate.root.marker")
 
   val javaExecutable: File
-    get() = when {
-      SystemInfo.isWindows -> javaHomeFolder.resolve("bin").resolve("java.exe")
-      else -> javaHomeFolder.resolve("bin").resolve("java")
-    }
+    get() = JdkDownloader.getJavaExecutable(javaHomeFolder.toPath()).normalize().toFile()
+
+  val dockerVolumesToWritable: Map<File, Boolean>
+    get() = emptyMap()
+
+  val pluginsFolder: File
+    get() = configFolder.resolve("plugins")
+
+  companion object {
+    fun resolveTempFolder(sourcesRootFolder: File) = TeamCityHelper.tempDirectory?.toFile()
+                                                     ?: sourcesRootFolder.resolve("out").resolve("tmp")
+  }
 }

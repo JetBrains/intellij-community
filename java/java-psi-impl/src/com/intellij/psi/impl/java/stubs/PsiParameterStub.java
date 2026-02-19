@@ -14,7 +14,7 @@ public interface PsiParameterStub extends NamedStub<PsiParameter> {
   boolean isParameterTypeEllipsis();
 
   @NotNull
-  TypeInfo getType(boolean doResolve);
+  TypeInfo getType();
 
   PsiModifierListStub getModList();
 }

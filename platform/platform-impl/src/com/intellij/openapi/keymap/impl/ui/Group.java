@@ -1,23 +1,30 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.keymap.impl.ui;
 
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionGroup;
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.actionSystem.Separator;
 import com.intellij.openapi.actionSystem.ex.QuickList;
 import com.intellij.openapi.keymap.KeymapGroup;
 import com.intellij.openapi.util.NlsActions;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.Icon;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.function.Supplier;
 
-public class Group implements KeymapGroup {
+import static com.intellij.ide.ui.search.SearchableOptionsRegistrar.SETTINGS_GROUP_SEPARATOR;
+
+public final class Group implements KeymapGroup {
   private Group myParent;
   private final @NlsActions.ActionText String myName;
   private final String myId;
-  private final Icon myIcon;
+  private final @Nullable Supplier<? extends @Nullable Icon> icon;
   /**
    * Group or action id (String) or Separator or QuickList or Hyperlink
    */
@@ -25,15 +32,31 @@ public class Group implements KeymapGroup {
 
   private final Set<String> myIds = new HashSet<>();
 
+  private boolean myForceShowAsPopup;
+
   public Group(@NlsActions.ActionText String name, String id, Icon icon) {
     myName = name;
     myId = id;
-    myIcon = icon;
+    this.icon = icon == null ? null : () -> icon;
     myChildren = new ArrayList<>();
   }
 
-  public Group(final @NlsActions.ActionText String name, final Icon icon) {
-    this(name, null, icon);
+  public Group(@NlsActions.ActionText String name, String id) {
+    myName = name;
+    myId = id;
+    this.icon = null;
+    myChildren = new ArrayList<>();
+  }
+
+  public Group(@NlsActions.ActionText String name, String id, @Nullable Supplier<? extends @Nullable Icon> icon) {
+    myName = name;
+    myId = id;
+    this.icon = icon;
+    myChildren = new ArrayList<>();
+  }
+
+  public Group(final @NlsActions.ActionText String name) {
+    this(name, null, (Icon)null);
   }
 
   public @NlsActions.ActionText String getName() {
@@ -41,12 +64,19 @@ public class Group implements KeymapGroup {
   }
 
   public Icon getIcon() {
-    return myIcon;
+    return icon == null ? null : icon.get();
   }
 
-  @Nullable
-  public String getId() {
+  public @Nullable String getId() {
     return myId;
+  }
+
+  public boolean isForceShowAsPopup() {
+    return myForceShowAsPopup;
+  }
+
+  public void setForceShowAsPopup(boolean forceShowAsPopup) {
+    myForceShowAsPopup = forceShowAsPopup;
   }
 
   @Override
@@ -65,7 +95,7 @@ public class Group implements KeymapGroup {
 
   @Override
   public void addGroup(KeymapGroup keymapGroup) {
-    Group group = (Group) keymapGroup;
+    Group group = (Group)keymapGroup;
     if (myChildren.contains(group)) return;
     myChildren.add(group);
     group.myParent = this;
@@ -79,7 +109,7 @@ public class Group implements KeymapGroup {
     return myIds.contains(id);
   }
 
-  public Set<String> initIds(){
+  public Set<String> initIds() {
     for (Object child : myChildren) {
       if (child instanceof String) {
         myIds.add((String)child);
@@ -87,10 +117,11 @@ public class Group implements KeymapGroup {
       else if (child instanceof QuickList) {
         myIds.add(((QuickList)child).getActionId());
       }
-      else if (child instanceof Group) {
-        Group childGroup = (Group)child;
+      else if (child instanceof Group childGroup) {
         myIds.addAll(childGroup.initIds());
-        if (childGroup.myId != null) myIds.add(childGroup.myId);
+        if (childGroup.myId != null) {
+          myIds.add(childGroup.myId);
+        }
       }
     }
     return myIds;
@@ -105,15 +136,15 @@ public class Group implements KeymapGroup {
   }
 
   public void normalizeSeparators() {
-    while (myChildren.size() > 0 && myChildren.get(0) instanceof Separator) {
+    while (!myChildren.isEmpty() && (myChildren.get(0) instanceof Separator s) && s.getText() != null) {
       myChildren.remove(0);
     }
 
-    while (myChildren.size() > 0 && myChildren.get(myChildren.size() - 1) instanceof Separator) {
+    while (!myChildren.isEmpty() && myChildren.get(myChildren.size() - 1) instanceof Separator) {
       myChildren.remove(myChildren.size() - 1);
     }
 
-    for (int i=1; i < myChildren.size() - 1; i++) {
+    for (int i = 1; i < myChildren.size() - 1; i++) {
       if (myChildren.get(i) instanceof Separator && myChildren.get(i + 1) instanceof Separator) {
         myChildren.remove(i);
         i--;
@@ -121,17 +152,17 @@ public class Group implements KeymapGroup {
     }
   }
 
-  public String getActionQualifiedPath(String id) {
+  public String getActionQualifiedPath(String id, boolean presentable) {
     Group cur = myParent;
     StringBuilder answer = new StringBuilder();
 
     while (cur != null && !cur.isRoot()) {
-      answer.insert(0, cur.getName() + " | ");
+      answer.insert(0, cur.getName(presentable) + SETTINGS_GROUP_SEPARATOR);
 
       cur = cur.myParent;
     }
 
-    String suffix = calcActionQualifiedPath(id);
+    String suffix = calcActionQualifiedPath(id, presentable);
     if (StringUtil.isEmpty(suffix)) return null;
 
     answer.append(suffix);
@@ -139,9 +170,9 @@ public class Group implements KeymapGroup {
     return answer.toString();
   }
 
-  private String calcActionQualifiedPath(String id) {
+  private String calcActionQualifiedPath(String id, boolean presentable) {
     if (!isRoot() && StringUtil.equals(id, myId)) {
-      return getName();
+      return getName(presentable);
     }
     for (Object child : myChildren) {
       if (child instanceof QuickList) {
@@ -149,37 +180,38 @@ public class Group implements KeymapGroup {
       }
       if (child instanceof String) {
         if (id.equals(child)) {
-          AnAction action = ActionManager.getInstance().getActionOrStub(id);
-          String path;
-          if (action != null) {
-            path = action.getTemplatePresentation().getText();
-          }
-          else {
+          AnAction action = presentable ? ActionManager.getInstance().getActionOrStub(id) : null;
+          String path = action != null ? action.getTemplatePresentation().getText() : null;
+          if (StringUtil.isEmpty(path)) {
             path = id;
           }
-          return !isRoot() ? getName() + " | " + path : path;
+          return !isRoot() ? getName(presentable) + SETTINGS_GROUP_SEPARATOR + path : path;
         }
       }
       else if (child instanceof Group) {
-        String path = ((Group)child).calcActionQualifiedPath(id);
+        String path = ((Group)child).calcActionQualifiedPath(id, presentable);
         if (path != null) {
-          return !isRoot() ? getName() + " | " + path : path;
+          return !isRoot() ? getName(presentable) + SETTINGS_GROUP_SEPARATOR + path : path;
         }
       }
     }
     return null;
   }
 
+  private @Nullable String getName(boolean presentable) {
+    return presentable ? getName() : getId();
+  }
+
   public boolean isRoot() {
     return myParent == null;
   }
 
-  public String getQualifiedPath() {
+  public String getQualifiedPath(boolean presentable) {
     StringBuilder path = new StringBuilder(64);
     Group group = this;
     while (group != null && !group.isRoot()) {
-      if (path.length() > 0) path.insert(0, " | ");
-      path.insert(0, group.getName());
+      if (!path.isEmpty()) path.insert(0, SETTINGS_GROUP_SEPARATOR);
+      path.insert(0, group.getName(presentable));
       group = group.myParent;
     }
     return path.toString();
@@ -200,20 +232,24 @@ public class Group implements KeymapGroup {
         addSeparator();
       }
     }
+    if (group.myId != null) {
+      myIds.add(group.myId);
+    }
   }
 
-  public ActionGroup constructActionGroup(final boolean popup){
+  public ActionGroup constructActionGroup(final boolean popup) {
     ActionManager actionManager = ActionManager.getInstance();
     DefaultActionGroup group = new DefaultActionGroup(getName(), popup);
     AnAction groupToRestorePresentation = null;
-    if (getName() != null){
+    if (getName() != null) {
       groupToRestorePresentation = actionManager.getAction(getName());
-    } else {
-      if (getId() != null){
+    }
+    else {
+      if (getId() != null) {
         groupToRestorePresentation = actionManager.getAction(getId());
       }
     }
-    if (groupToRestorePresentation != null){
+    if (groupToRestorePresentation != null) {
       group.copyFrom(groupToRestorePresentation);
     }
     for (Object o : myChildren) {
@@ -233,18 +269,17 @@ public class Group implements KeymapGroup {
 
   @Override
   public boolean equals(Object object) {
-    if (!(object instanceof Group)) return false;
-    final Group group = ((Group)object);
-    if (group.getName() != null && getName() != null){
+    if (!(object instanceof Group group)) return false;
+    if (group.getName() != null && getName() != null) {
       return group.getName().equals(getName());
     }
-    if (getChildren() != null && group.getChildren() != null){
-      if (getChildren().size() != group.getChildren().size()){
+    if (getChildren() != null && group.getChildren() != null) {
+      if (getChildren().size() != group.getChildren().size()) {
         return false;
       }
 
       for (int i = 0; i < getChildren().size(); i++) {
-        if (!getChildren().get(i).equals(group.getChildren().get(i))){
+        if (!getChildren().get(i).equals(group.getChildren().get(i))) {
           return false;
         }
       }

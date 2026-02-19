@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.command.impl;
 
 import com.intellij.openapi.application.WriteAction;
@@ -6,21 +6,29 @@ import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.EditorFactory;
-import com.intellij.openapi.fileEditor.*;
+import com.intellij.openapi.fileEditor.DocumentsEditor;
+import com.intellij.openapi.fileEditor.FileEditor;
+import com.intellij.openapi.fileEditor.FileEditorState;
+import com.intellij.openapi.fileEditor.FileEditorStateLevel;
 import com.intellij.openapi.fileEditor.impl.CurrentEditorProvider;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.UserDataHolderBase;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.LightPlatformTestCase;
+import com.intellij.testFramework.LightVirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JComponent;
+import javax.swing.JPanel;
 import java.beans.PropertyChangeListener;
 
 public class PlatformUndoTest extends LightPlatformTestCase {
   public void testIncorrectFileEditorDoesNotCauseHanging() {
+    LightVirtualFile file = new LightVirtualFile(getTestName(false));
     Document d1 = EditorFactory.getInstance().createDocument("");
     Document d2 = EditorFactory.getInstance().createDocument("");
-    FileEditor fileEditor = new IncorrectFileEditor(d1, d2);
+    FileEditor fileEditor = new IncorrectFileEditor(file, d1, d2);
     runWithCurrentEditor(fileEditor, () -> {
       WriteAction.run(() -> {
         CommandProcessor.getInstance().runUndoTransparentAction(() -> d1.insertString(0, " "));
@@ -34,20 +42,24 @@ public class PlatformUndoTest extends LightPlatformTestCase {
 
   private void undo() {
     UndoManagerImpl undoManager = getUndoManager();
-    FileEditor fileEditor = undoManager.getEditorProvider().getCurrentEditor();
+    FileEditor fileEditor = undoManager.getEditorProvider().getCurrentEditor(getProject());
     assertTrue(undoManager.isUndoAvailable(fileEditor));
     undoManager.undo(fileEditor);
   }
 
   private void runWithCurrentEditor(FileEditor currentEditor, Runnable task) {
     UndoManagerImpl undoManager = getUndoManager();
-    CurrentEditorProvider savedProvider = undoManager.getEditorProvider();
     try {
-      undoManager.setEditorProvider(() -> currentEditor);
+      undoManager.setOverriddenEditorProvider(new CurrentEditorProvider() {
+        @Override
+        public @Nullable FileEditor getCurrentEditor(@Nullable Project project) {
+          return currentEditor;
+        }
+      });
       task.run();
     }
     finally {
-      undoManager.setEditorProvider(savedProvider);
+      undoManager.setOverriddenEditorProvider(null);
     }
   }
 
@@ -57,12 +69,20 @@ public class PlatformUndoTest extends LightPlatformTestCase {
 
   private static final class IncorrectFileEditor extends UserDataHolderBase implements DocumentsEditor {
     private final JComponent myComponent = new JPanel();
+    private final VirtualFile myFile;
     private final Document[] myDocuments;
 
-    private IncorrectFileEditor(Document @NotNull ... documents) {myDocuments = documents;}
+    private IncorrectFileEditor(VirtualFile file, @NotNull Document @NotNull ... documents) {
+      myFile = file;
+      myDocuments = documents;
+    }
 
     @Override
-    public Document @NotNull [] getDocuments() {
+    public @NotNull VirtualFile getFile() {
+      return myFile;
+    }
+    @Override
+    public @NotNull Document @NotNull [] getDocuments() {
       return myDocuments;
     }
 
@@ -106,16 +126,11 @@ public class PlatformUndoTest extends LightPlatformTestCase {
     public void removePropertyChangeListener(@NotNull PropertyChangeListener listener) {}
 
     @Override
-    public @Nullable FileEditorLocation getCurrentLocation() {
-      return null;
-    }
-
-    @Override
     public void dispose() {}
 
     private static class State implements FileEditorState {
       @Override
-      public boolean canBeMergedWith(FileEditorState otherState, FileEditorStateLevel level) {
+      public boolean canBeMergedWith(@NotNull FileEditorState otherState, @NotNull FileEditorStateLevel level) {
         return false;
       }
     }

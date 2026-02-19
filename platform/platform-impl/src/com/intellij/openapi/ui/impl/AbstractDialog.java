@@ -18,10 +18,17 @@ package com.intellij.openapi.ui.impl;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.wm.IdeFocusManager;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JDialog;
+import javax.swing.JRootPane;
+import java.awt.Component;
+import java.awt.Container;
+import java.awt.Dialog;
+import java.awt.Dimension;
+import java.awt.Point;
+import java.awt.Window;
 import java.awt.event.KeyListener;
 import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
@@ -41,6 +48,7 @@ interface AbstractDialog extends Disposable {
   /**
    * @deprecated use {@link #setModalityType(Dialog.ModalityType)}
    */
+  @ApiStatus.Internal
   @Deprecated
   void setModal(boolean b);
 
@@ -96,6 +104,7 @@ interface AbstractDialog extends Disposable {
   /**
    * @deprecated use {@link #getModalityType()}
    */
+  @ApiStatus.Internal
   @Deprecated
   boolean isModal();
 

@@ -28,13 +28,11 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.testFramework.IndexingTestUtil;
 import com.intellij.testFramework.JavaProjectTestCase;
 
 import java.util.Arrays;
 
-/**
- * @author dsl
- */
 public class ProjectLibrariesTest extends JavaProjectTestCase {
   private VirtualFile myRoot;
   private Library myLib;
@@ -64,6 +62,7 @@ public class ProjectLibrariesTest extends JavaProjectTestCase {
     ApplicationManager.getApplication().runWriteAction(() -> {
       model.addRoot(myRoot, OrderRootType.CLASSES);
       model.commit();
+      IndexingTestUtil.waitUntilIndexesAreReady(myProject);
     });
 
     assertNotNull(getJavaFacade().findClass("pack.MyClass", GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(myModule)));
@@ -80,13 +79,17 @@ public class ProjectLibrariesTest extends JavaProjectTestCase {
       ApplicationManager.getApplication().runWriteAction(() -> {
         libModel.addRoot(myRoot, OrderRootType.CLASSES);
         libModel.commit();
+        IndexingTestUtil.waitUntilIndexesAreReady(myProject);
       });
 
       assertNotNull(getJavaFacade().findClass("pack.MyClass", GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(myModule)));
       assertTrue(Arrays.asList(moduleModel.orderEntries().librariesOnly().classes().getRoots()).contains(myRoot));
     }
     finally {
-      ApplicationManager.getApplication().runWriteAction(() -> moduleModel.commit());
+      ApplicationManager.getApplication().runWriteAction(() -> {
+        moduleModel.commit();
+        IndexingTestUtil.waitUntilIndexesAreReady(myProject);
+      });
     }
 
     assertNotNull(getJavaFacade().findClass("pack.MyClass", GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(myModule)));

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor;
 
 import com.intellij.openapi.application.ex.PathManagerEx;
@@ -17,12 +17,14 @@ import com.intellij.openapi.editor.markup.HighlighterTargetArea;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.platform.testFramework.core.FileComparisonFailedError;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.rt.execution.junit.FileComparisonFailure;
 import com.intellij.testFramework.EditorTestUtil;
 import com.intellij.testFramework.MockFontLayoutService;
 import com.intellij.testFramework.RunAll;
 import com.intellij.testFramework.TestDataFile;
+import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.Graphics2DDelegate;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.scale.JBUIScale;
@@ -30,8 +32,13 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.imageio.ImageIO;
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JComponent;
+import java.awt.Color;
+import java.awt.Dimension;
+import java.awt.Font;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.Rectangle;
 import java.awt.font.GlyphVector;
 import java.awt.image.BufferedImage;
 import java.awt.image.RenderedImage;
@@ -53,15 +60,19 @@ public abstract class EditorPaintingTestCase extends AbstractEditorTest {
 
   @Override
   protected void tearDown() {
-    new RunAll()
-      .append(() -> JBUIScale.setUserScaleFactorForTest(oldUserScaleFactor))
-      .append(() -> FontLayoutService.setInstance(null))
-      .append(() -> super.tearDown())
-      .run();
+    new RunAll(
+      () -> JBUIScale.setUserScaleFactorForTest(oldUserScaleFactor),
+      () -> FontLayoutService.setInstance(null),
+      () -> super.tearDown()
+    ).run();
   }
 
   protected void checkResult() throws IOException {
     checkResult(getFileName(), false);
+  }
+
+  protected void checkResultWithGutterForNewUI() throws IOException {
+    checkResult((ExperimentalUI.isNewUI() ? "new.ui/" : "") + getFileName(), true);
   }
 
   protected void checkResultWithGutter() throws IOException {
@@ -72,8 +83,8 @@ public abstract class EditorPaintingTestCase extends AbstractEditorTest {
     BufferedImage originalImage = paintEditor(false, null, null);
     BufferedImage updatedImage = createImageForPainting(originalImage.getWidth(), originalImage.getHeight());
     originalImage.copyData(updatedImage.getRaster());
-    paintEditor(false, updatedImage,
-                new Rectangle(0, getEditor().visualLineToY(visualLine), updatedImage.getWidth(), getEditor().getLineHeight()));
+    int[] yRange = getEditor().visualLineToYRange(visualLine);
+    paintEditor(false, updatedImage, new Rectangle(0, yRange[0], updatedImage.getWidth(), yRange[1] - yRange[0]));
     assertImagesEqual(originalImage, updatedImage, null);
   }
 
@@ -107,10 +118,10 @@ public abstract class EditorPaintingTestCase extends AbstractEditorTest {
   }
 
   @Override
-  protected void configureSoftWraps(int charCountToWrapAt) {
+  protected void configureSoftWraps(int charCountToWrapAt, boolean useCustomSoftWrapIndent) {
     int charWidthInPixels = BitmapFont.CHAR_WIDTH;
     // we're adding 1 to charCountToWrapAt, to account for wrap character width, and 1 to overall width to overcome wrapping logic subtleties
-    EditorTestUtil.configureSoftWraps(getEditor(), (charCountToWrapAt + 1) * charWidthInPixels + 1, charWidthInPixels);
+    EditorTestUtil.configureSoftWraps(getEditor(), (charCountToWrapAt + 1) * charWidthInPixels + 1, 1000, charWidthInPixels, useCustomSoftWrapIndent);
     ((SoftWrapModelImpl)getEditor().getSoftWrapModel()).setSoftWrapPainter(new SoftWrapPainter() {
       @Override
       public int paint(@NotNull Graphics g, @NotNull SoftWrapDrawingType drawingType, int x, int y, int lineHeight) {
@@ -120,14 +131,14 @@ public abstract class EditorPaintingTestCase extends AbstractEditorTest {
         int yStart = y + lineHeight / 4;
         int yEnd = y + lineHeight * 3 / 4;
         switch (drawingType) {
-          case BEFORE_SOFT_WRAP_LINE_FEED:
+          case BEFORE_SOFT_WRAP_LINE_FEED -> {
             g.drawLine(xEnd, yStart, xEnd, yEnd);
             g.drawLine(xStart, yEnd, xEnd, yEnd);
-            break;
-          case AFTER_SOFT_WRAP:
+          }
+          case AFTER_SOFT_WRAP -> {
             g.drawLine(xStart, yStart, xStart, yEnd);
             g.drawLine(xStart, yEnd, xEnd, yEnd);
-            break;
+          }
         }
         return charWidthInPixels;
       }
@@ -256,15 +267,17 @@ public abstract class EditorPaintingTestCase extends AbstractEditorTest {
                     @NotNull BufferedImage expectedImage,
                     @NotNull BufferedImage actualImage) throws IOException {
     File savedImage = saveTmpImage(actualImage, "actual");
+    System.out.println("##teamcity[publishArtifacts '" + savedImage.getAbsolutePath() + "']");
     if (expectedResultsFile == null) {
       expectedResultsFile = saveTmpImage(expectedImage, "expected");
     }
-    throw new FileComparisonFailure(message, expectedResultsFile.getAbsolutePath(), savedImage.getAbsolutePath(),
-                                    expectedResultsFile.getAbsolutePath(), savedImage.getAbsolutePath());
+    throw new FileComparisonFailedError(message, expectedResultsFile.getAbsolutePath(), savedImage.getAbsolutePath(),
+                                        expectedResultsFile.getAbsolutePath(), savedImage.getAbsolutePath());
   }
 
   private File saveTmpImage(RenderedImage image, String nameSuffix) throws IOException {
     File savedImage = FileUtil.createTempFile(getName() + "-" + nameSuffix, ".png", false);
+    addTmpFileToKeep(savedImage.toPath());
     ImageIO.write(image, "png", savedImage);
     return savedImage;
   }
@@ -315,7 +328,7 @@ public abstract class EditorPaintingTestCase extends AbstractEditorTest {
     }
 
     private void drawChar(char c, int x, int y) {
-      (((getFont().getStyle() & Font.BOLD) == 0) ? myPlainFont : myBoldFont).draw(myDelegate, c, x, y);
+      (StringUtil.containsIgnoreCase(getFont().getFontName(), "bold") ? myBoldFont : myPlainFont).draw(myDelegate, c, x, y);
     }
   }
 

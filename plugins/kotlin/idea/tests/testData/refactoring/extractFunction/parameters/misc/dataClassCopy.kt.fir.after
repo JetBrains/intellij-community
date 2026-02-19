@@ -1,0 +1,10 @@
+// PARAM_DESCRIPTOR: value-parameter item: Item defined in a
+// PARAM_TYPES: Item
+
+data class Item(val sellByDate: Int, val quality: Int)
+
+fun a(item: Item): Item {
+    return item1(item)
+}
+
+private fun item1(item: Item): Item = item.copy(quality = item.quality - 1)

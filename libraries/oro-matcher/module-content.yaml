@@ -1,0 +1,6 @@
+- name: dist.all/lib/intellij.libraries.oro.matcher.jar
+  modules:
+  - name: intellij.libraries.oro.matcher
+    libraries:
+      OroMatcher:
+      - name: $MAVEN_REPOSITORY$/oro/oro/2/oro-2.jar

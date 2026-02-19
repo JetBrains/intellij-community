@@ -1,36 +1,37 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes.committed;
 
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.actionSystem.ex.ComboBoxAction;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import java.awt.BorderLayout;
 
-/**
- * @author yole
- */
+
 public abstract class LabeledComboBoxAction extends ComboBoxAction {
 
-  @NotNull private final @NlsContexts.Label String myLabel;
+  private final @NotNull @NlsContexts.Label String myLabel;
 
   protected LabeledComboBoxAction(@NlsContexts.Label @NotNull String label) {
     myLabel = label;
   }
 
-  @NotNull
   @Override
-  public JComponent createCustomComponent(@NotNull Presentation presentation, @NotNull String place) {
-    JPanel panel = new JPanel(new BorderLayout());
+  public @NotNull JComponent createCustomComponent(@NotNull Presentation presentation, @NotNull String place) {
+    ComboBoxButton button = createComboBoxButton(presentation);
 
-    panel.add(new JLabel(myLabel), BorderLayout.WEST);
-    panel.add(super.createCustomComponent(presentation, place), BorderLayout.CENTER);
-    UIUtil.addInsets(panel, JBUI.insets(0, 6, 0, 0));
+    JLabel label = new JLabel(myLabel);
+    label.setLabelFor(button);
 
+    JPanel panel = new JPanel(new BorderLayout(JBUI.scale(3), 0));
+    panel.add(BorderLayout.WEST, label);
+    panel.add(BorderLayout.CENTER, button);
+    panel.setBorder(JBUI.Borders.empty(0, 6, 0, 3));
     return panel;
   }
 }

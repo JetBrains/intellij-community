@@ -1,0 +1,32 @@
+interface Simple {
+    val prop: String?
+}
+
+fun Simple.test(text: String): String {
+    return buildString {
+        append(text)
+
+
+        __dummyTestFun__(this@buildString, text, this@test)
+    }
+}
+
+private fun __dummyTestFun__(builder: StringBuilder, text: String, simple: Simple) {
+    builder.append("Start")
+
+    when {
+        text.isEmpty() -> builder.append(" empty")
+        else -> builder.append(" not empty")
+    }
+
+    val value = simple.prop
+    if (value != null) {
+        builder.append(" with ")
+        builder.append(value)
+    } else {
+        builder.append(" without value")
+    }
+
+    builder.append(".")
+}
+// IGNORE_K1

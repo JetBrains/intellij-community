@@ -1,0 +1,11 @@
+[target.'cfg(target_os = "windows")']
+rustflags = ["-C", "target-feature=+crt-static", "-C", "link-arg=/MANIFEST:EMBED", "-C", "link-arg=/MANIFESTUAC"]
+
+[target.'cfg(all(target_os = "macos", target_arch = "aarch64"))']
+rustflags = ["-C", "link-arg=-mmacosx-version-min=11.0"]
+
+[target.'cfg(all(target_os = "macos", target_arch = "x86_64"))']
+rustflags = ["-C", "link-arg=-mmacosx-version-min=10.15"]
+
+[target.'cfg(target_os = "linux")']
+rustflags = ["-C", "target-feature=+crt-static", "-C", "strip=symbols"]

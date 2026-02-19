@@ -1,25 +1,36 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.miscGenerics;
 
-import com.intellij.codeInspection.*;
+import com.intellij.codeInspection.InspectionManager;
+import com.intellij.codeInspection.InspectionsBundle;
+import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.ProblemHighlightType;
+import com.intellij.codeInspection.compiler.JavacQuirksInspectionVisitor;
 import com.intellij.java.analysis.JavaAnalysisBundle;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.JavaRecursiveElementWalkingVisitor;
+import com.intellij.psi.JavaResolveResult;
+import com.intellij.psi.PsiCallExpression;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiClassType;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementFactory;
+import com.intellij.psi.PsiExpressionList;
+import com.intellij.psi.PsiJavaCodeReferenceElement;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiMethodCallExpression;
+import com.intellij.psi.PsiMethodReferenceExpression;
+import com.intellij.psi.PsiNewExpression;
+import com.intellij.psi.PsiReferenceParameterList;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypeElement;
+import com.intellij.psi.PsiTypeParameter;
+import com.intellij.psi.PsiTypeParameterListOwner;
 import com.intellij.psi.impl.PsiDiamondTypeUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -30,65 +41,40 @@ import org.jetbrains.annotations.NotNull;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * @author ven
- */
-public class RedundantTypeArgsInspection extends GenericsInspectionToolBase {
+public final class RedundantTypeArgsInspection extends GenericsInspectionToolBase {
   private static final Logger LOG = Logger.getInstance(RedundantTypeArgsInspection.class);
 
   private static final LocalQuickFix ourQuickFixAction = new MyQuickFixAction();
   public static final String SHORT_NAME = "RedundantTypeArguments";
 
   @Override
-  @NotNull
-  public String getGroupDisplayName() {
+  public @NotNull String getGroupDisplayName() {
     return InspectionsBundle.message("group.names.verbose.or.redundant.code.constructs");
   }
 
   @Override
-  @NotNull
-  public String getShortName() {
+  public @NotNull String getShortName() {
     return SHORT_NAME;
   }
 
-
-
   @Override
-  public ProblemDescriptor[] checkMethod(@NotNull PsiMethod psiMethod, @NotNull InspectionManager manager, boolean isOnTheFly) {
-    final PsiCodeBlock body = psiMethod.getBody();
-    if (body != null) {
-      return getDescriptions(body, manager, isOnTheFly);
-    }
-    return null;
-  }
-
-  @Override
-  public ProblemDescriptor[] getDescriptions(@NotNull PsiElement place, @NotNull final InspectionManager inspectionManager, boolean isOnTheFly) {
+  public ProblemDescriptor[] getDescriptions(@NotNull PsiElement place, final @NotNull InspectionManager inspectionManager, boolean isOnTheFly) {
     final List<ProblemDescriptor> problems = new ArrayList<>();
     place.accept(new JavaRecursiveElementWalkingVisitor() {
       @Override
-      public void visitMethodCallExpression(PsiMethodCallExpression expression) {
+      public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {
         super.visitMethodCallExpression(expression);
-        final PsiType[] typeArguments = expression.getTypeArguments();
-        if (typeArguments.length > 0) {
-          checkCallExpression(expression.getMethodExpression(), typeArguments, expression, inspectionManager, problems, isOnTheFly);
-        }
+        checkCallExpression(expression, inspectionManager, problems, isOnTheFly);
       }
 
       @Override
-      public void visitNewExpression(PsiNewExpression expression) {
+      public void visitNewExpression(@NotNull PsiNewExpression expression) {
         super.visitNewExpression(expression);
-        final PsiType[] typeArguments = expression.getTypeArguments();
-        if (typeArguments.length > 0) {
-          final PsiJavaCodeReferenceElement classReference = expression.getClassReference();
-          if (classReference != null) {
-            checkCallExpression(classReference, typeArguments, expression, inspectionManager, problems, isOnTheFly);
-          }
-        }
+        checkCallExpression(expression, inspectionManager, problems, isOnTheFly);
       }
 
       @Override
-      public void visitMethodReferenceExpression(PsiMethodReferenceExpression expression) {
+      public void visitMethodReferenceExpression(@NotNull PsiMethodReferenceExpression expression) {
         super.visitMethodReferenceExpression(expression);
         checkMethodReference(expression, inspectionManager, problems, isOnTheFly);
       }
@@ -98,29 +84,37 @@ public class RedundantTypeArgsInspection extends GenericsInspectionToolBase {
     return problems.toArray(ProblemDescriptor.EMPTY_ARRAY);
   }
 
-  private static void checkCallExpression(final PsiJavaCodeReferenceElement reference,
-                                          final PsiType[] typeArguments,
-                                          PsiCallExpression expression,
+  private static void checkCallExpression(PsiCallExpression expression,
                                           final InspectionManager inspectionManager,
                                           final List<? super ProblemDescriptor> problems, boolean isOnTheFly) {
+    final PsiType[] typeArguments = expression.getTypeArguments();
+    if (typeArguments.length == 0) return;
     PsiExpressionList argumentList = expression.getArgumentList();
     if (argumentList == null) return;
-    final JavaResolveResult resolveResult = reference.advancedResolve(false);
-
+    PsiReferenceParameterList typeArgumentList = expression.getTypeArgumentList();
+    for (PsiTypeElement typeElement : typeArgumentList.getTypeParameterElements()) {
+      if (typeElement.hasAnnotations()) {
+        return;
+      }
+    }
+    final JavaResolveResult resolveResult = expression.resolveMethodGenerics();
     final PsiElement element = resolveResult.getElement();
-    if (element instanceof PsiMethod && resolveResult.isValidResult()) {
-      PsiMethod method = (PsiMethod)element;
+    if (element instanceof PsiMethod method && resolveResult.isValidResult()) {
       final PsiTypeParameter[] typeParameters = method.getTypeParameters();
+      if (typeParameters.length > 0 &&
+          JavacQuirksInspectionVisitor.isSuspicious(expression.getArgumentList().getExpressions(), method)) {
+        return;
+      }
       if (typeParameters.length == typeArguments.length &&
           PsiDiamondTypeUtil.areTypeArgumentsRedundant(typeArguments, expression, false, method, typeParameters) ||
           typeParameters.length == 0) {
-        String key = typeParameters.length == 0 ? "inspection.redundant.type.no.generics.problem.descriptor" 
+        String key = typeParameters.length == 0 ? "inspection.redundant.type.no.generics.problem.descriptor"
                                                 : "inspection.redundant.type.problem.descriptor";
-        final ProblemDescriptor descriptor = 
-          inspectionManager.createProblemDescriptor(expression.getTypeArgumentList(),
+        final ProblemDescriptor descriptor =
+          inspectionManager.createProblemDescriptor(typeArgumentList,
                                                     JavaAnalysisBundle.message(key),
                                                     ourQuickFixAction,
-                                                    ProblemHighlightType.LIKE_UNUSED_SYMBOL, isOnTheFly);
+                                                    ProblemHighlightType.GENERIC_ERROR_OR_WARNING, isOnTheFly);
         problems.add(descriptor);
       }
     }
@@ -145,8 +139,13 @@ public class RedundantTypeArgsInspection extends GenericsInspectionToolBase {
             LOG.assertTrue(referenceElement != null, qualifierTypeElement);
             final PsiReferenceParameterList parameterList = referenceElement.getParameterList();
             LOG.assertTrue(parameterList != null);
+            for (PsiTypeElement typeElement : parameterList.getTypeParameterElements()) {
+              if (typeElement.hasAnnotations()) {
+                return;
+              }
+            }
             final ProblemDescriptor descriptor = inspectionManager.createProblemDescriptor(parameterList, JavaAnalysisBundle
-              .message("inspection.redundant.type.problem.descriptor"), ourQuickFixAction, ProblemHighlightType.LIKE_UNUSED_SYMBOL, isOnTheFly);
+              .message("inspection.redundant.type.problem.descriptor"), ourQuickFixAction, ProblemHighlightType.GENERIC_ERROR_OR_WARNING, isOnTheFly);
             problems.add(descriptor);
           }
         }
@@ -160,37 +159,34 @@ public class RedundantTypeArgsInspection extends GenericsInspectionToolBase {
         if (resolve == null) return;
         PsiTypeParameter[] typeParameters = resolve instanceof PsiClass ? PsiTypeParameter.EMPTY_ARRAY : ((PsiMethod)resolve).getTypeParameters();
         if (typeParameters.length == 0 ||
-            typeParameters.length == typeArguments.length && 
+            typeParameters.length == typeArguments.length &&
             PsiDiamondTypeUtil.areTypeArgumentsRedundant(typeArguments, expression, false, (PsiMethod)resolve, typeParameters)) {
           String key = typeParameters.length == 0 ? "inspection.redundant.type.no.generics.method.reference.problem.descriptor"
                                                   : "inspection.redundant.type.problem.descriptor";
           final ProblemDescriptor descriptor =
             inspectionManager.createProblemDescriptor(parameterList,
                                                       JavaAnalysisBundle.message(key),
-                                                      new MyQuickFixAction(), ProblemHighlightType.LIKE_UNUSED_SYMBOL, isOnTheFly);
-            problems.add(descriptor);
+                                                      new MyQuickFixAction(), ProblemHighlightType.GENERIC_ERROR_OR_WARNING, isOnTheFly);
+          problems.add(descriptor);
         }
       }
     }
   }
 
-  private static class MyQuickFixAction implements LocalQuickFix {
+  private static class MyQuickFixAction extends PsiUpdateModCommandQuickFix {
     @Override
-    @NotNull
-    public String getFamilyName() {
+    public @NotNull String getFamilyName() {
       return JavaAnalysisBundle.message("inspection.redundant.type.remove.quickfix");
     }
 
     @Override
-    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      final PsiElement element = descriptor.getPsiElement();
-      if (!(element instanceof PsiReferenceParameterList)) return;
-      final PsiReferenceParameterList typeArgumentList = (PsiReferenceParameterList)element;
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
+      if (!(element instanceof PsiReferenceParameterList typeArgumentList)) return;
       try {
         PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(project);
         PsiMethodReferenceExpression ref = PsiTreeUtil.getParentOfType(typeArgumentList, PsiMethodReferenceExpression.class);
         PsiTypeElement qualifierType = ref != null ? ref.getQualifierType() : null;
-        if (qualifierType != null && PsiTreeUtil.isAncestor(qualifierType, typeArgumentList, false)) {
+        if (PsiTreeUtil.isAncestor(qualifierType, typeArgumentList, false)) {
           PsiClass targetClass = PsiUtil.resolveClassInType(qualifierType.getType());
           if (targetClass != null) {
             new CommentTracker().replaceAndRestoreComments(qualifierType, elementFactory.createReferenceExpression(targetClass));

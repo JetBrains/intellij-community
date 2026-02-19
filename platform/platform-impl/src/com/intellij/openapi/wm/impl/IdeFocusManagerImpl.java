@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl;
 
 import com.intellij.openapi.actionSystem.DataContext;
@@ -11,13 +11,17 @@ import com.intellij.openapi.wm.IdeFrame;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JComponent;
+import java.awt.Component;
+import java.awt.Window;
 
+/**
+ * @deprecated Use {@link IdeFocusManager}'s methods directly.
+ */
+@Deprecated
 public final class IdeFocusManagerImpl extends IdeFocusManager {
   @Override
-  @NotNull
-  public ActionCallback requestFocus(@NotNull final Component c, final boolean forced) {
+  public @NotNull ActionCallback requestFocus(final @NotNull Component c, final boolean forced) {
     return getGlobalInstance().requestFocus(c, forced);
   }
 
@@ -27,12 +31,12 @@ public final class IdeFocusManagerImpl extends IdeFocusManager {
   }
 
   @Override
-  public JComponent getFocusTargetFor(@NotNull final JComponent comp) {
+  public JComponent getFocusTargetFor(final @NotNull JComponent comp) {
     return getGlobalInstance().getFocusTargetFor(comp);
   }
 
   @Override
-  public void doWhenFocusSettlesDown(@NotNull final Runnable runnable) {
+  public void doWhenFocusSettlesDown(final @NotNull Runnable runnable) {
     getGlobalInstance().doWhenFocusSettlesDown(runnable);
   }
 
@@ -47,24 +51,13 @@ public final class IdeFocusManagerImpl extends IdeFocusManager {
   }
 
   @Override
-  @Nullable
-  public Component getFocusedDescendantFor(@NotNull final Component comp) {
+  public @Nullable Component getFocusedDescendantFor(final @NotNull Component comp) {
     return getGlobalInstance().getFocusedDescendantFor(comp);
-  }
-
-  @Override
-  public void typeAheadUntil(@NotNull ActionCallback callback, @NotNull String cause) {
-    getGlobalInstance().typeAheadUntil(callback, cause);
   }
 
   @Override
   public boolean isFocusTransferEnabled() {
     return getGlobalInstance().isFocusTransferEnabled();
-  }
-
-  @Override
-  public void setTypeaheadEnabled(boolean enabled) {
-    getGlobalInstance().setTypeaheadEnabled(enabled);
   }
 
   @Override
@@ -87,9 +80,8 @@ public final class IdeFocusManagerImpl extends IdeFocusManager {
     return getGlobalInstance().getLastFocusedFrame();
   }
 
-  @Nullable
   @Override
-  public Window getLastFocusedIdeWindow() {
+  public @Nullable Window getLastFocusedIdeWindow() {
     return getGlobalInstance().getLastFocusedIdeWindow();
   }
 

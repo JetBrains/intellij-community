@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.changeSignature;
 
 import com.intellij.psi.PsiMethod;
@@ -9,14 +9,14 @@ import com.intellij.psi.util.AccessModifier;
 import com.intellij.util.VisibilityUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.ArrayList;
 import java.util.List;
 
 public class JavaMethodDescriptor implements MethodDescriptor<ParameterInfoImpl, String> {
 
-  @NotNull
-  private final PsiMethod myMethod;
+  private final @NotNull PsiMethod myMethod;
 
   public JavaMethodDescriptor(@NotNull PsiMethod method) {
     myMethod = method;
@@ -55,12 +55,11 @@ public class JavaMethodDescriptor implements MethodDescriptor<ParameterInfoImpl,
     return myMethod.getParameterList().getParametersCount();
   }
 
-  @Nullable
-  public String getReturnTypeText() {
+  public @Nullable String getReturnTypeText() {
     final PsiTypeElement typeElement = myMethod.getReturnTypeElement();
     if (typeElement != null) {
       PsiType type = typeElement.getType();
-      if (type.getAnnotations().length > 0) {
+      if (type.hasAnnotations()) {
         return type.getPresentableText(true);
       }
       return typeElement.getText();
@@ -88,7 +87,7 @@ public class JavaMethodDescriptor implements MethodDescriptor<ParameterInfoImpl,
     return !myMethod.isConstructor();
   }
 
-  public List<AccessModifier> getAllowedModifiers() {
+  @Unmodifiable List<AccessModifier> getAllowedModifiers() {
     return AccessModifier.getAvailableModifiers(myMethod);
   }
 }

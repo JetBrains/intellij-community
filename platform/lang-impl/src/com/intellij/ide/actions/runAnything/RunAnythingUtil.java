@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions.runAnything;
 
 import com.intellij.ide.IdeBundle;
@@ -6,10 +6,9 @@ import com.intellij.ide.actions.runAnything.activity.RunAnythingProvider;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.KeyboardShortcut;
-import com.intellij.openapi.actionSystem.LangDataKeys;
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.keymap.KeymapUtil;
-import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NlsContexts;
@@ -20,13 +19,21 @@ import com.intellij.ui.JBColor;
 import com.intellij.ui.ScrollingUtil;
 import com.intellij.ui.SeparatorComponent;
 import com.intellij.ui.components.JBList;
+import com.intellij.util.SlowOperations;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.ListModel;
+import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.Font;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -38,7 +45,7 @@ public final class RunAnythingUtil {
   private static final Key<Collection<Pair<String, String>>> RUN_ANYTHING_WRAPPED_COMMANDS = Key.create("RUN_ANYTHING_WRAPPED_COMMANDS");
 
   static Font getTitleFont() {
-    return UIUtil.getLabelFont().deriveFont(UIUtil.getFontSize(UIUtil.FontSize.SMALL));
+    return StartupUiUtil.getLabelFont().deriveFont(UIUtil.getFontSize(UIUtil.FontSize.SMALL));
   }
 
   static JComponent createTitle(@NlsContexts.PopupTitle @NotNull String titleText, @NotNull Color background) {
@@ -75,8 +82,7 @@ public final class RunAnythingUtil {
     }
   }
 
-  @NotNull
-  public static Collection<Pair<String, String>> getOrCreateWrappedCommands(@NotNull Project project) {
+  public static @NotNull Collection<Pair<String, String>> getOrCreateWrappedCommands(@NotNull Project project) {
     Collection<Pair<String, String>> list = project.getUserData(RUN_ANYTHING_WRAPPED_COMMANDS);
     if (list == null) {
       list = new ArrayList<>();
@@ -85,24 +91,19 @@ public final class RunAnythingUtil {
     return list;
   }
 
-  @NotNull
-  public static Project fetchProject(@NotNull DataContext dataContext) {
+  public static @NotNull Project fetchProject(@NotNull DataContext dataContext) {
     return Objects.requireNonNull(CommonDataKeys.PROJECT.getData(dataContext));
   }
 
   public static void executeMatched(@NotNull DataContext dataContext, @NotNull String pattern) {
     List<String> commands = RunAnythingCache.getInstance(fetchProject(dataContext)).getState().getCommands();
-
-    Module module = LangDataKeys.MODULE.getData(dataContext);
-    if (module == null) {
-      LOG.info("RunAnything: module hasn't been found, command will be executed in context of 'null' module.");
-    }
-
-    for (RunAnythingProvider provider : RunAnythingProvider.EP_NAME.getExtensions()) {
+    //noinspection unchecked
+    for (RunAnythingProvider<Object> provider : RunAnythingProvider.EP_NAME.getExtensions()) {
       Object value = provider.findMatchingValue(dataContext, pattern);
       if (value != null) {
-        //noinspection unchecked
-        provider.execute(dataContext, value);
+        try (AccessToken ignore = SlowOperations.startSection(SlowOperations.ACTION_PERFORM)) {
+          provider.execute(dataContext, value);
+        }
         commands.remove(pattern);
         commands.add(pattern);
         break;
@@ -110,21 +111,20 @@ public final class RunAnythingUtil {
     }
   }
 
-  @Nullable
-  public static RunAnythingSearchListModel getSearchingModel(@NotNull JBList list) {
+  public static @Nullable RunAnythingSearchListModel getSearchingModel(@NotNull JBList list) {
     ListModel model = list.getModel();
     return model instanceof RunAnythingSearchListModel ? (RunAnythingSearchListModel)model : null;
   }
 
-  public static String getAdDebugText() {
+  public static @Nls String getAdDebugText() {
     return IdeBundle.message("run.anything.ad.run.with.debug", SHIFT_SHORTCUT_TEXT);
   }
 
-  public static String getAdDeleteCommandText() {
+  public static @Nls String getAdDeleteCommandText() {
     return IdeBundle.message("run.anything.ad.command.delete", KeymapUtil.getShortcutText(KeyboardShortcut.fromString("shift BACK_SPACE")));
   }
 
-  public static String getAdContextText() {
+  public static @Nls String getAdContextText() {
     return IdeBundle.message("run.anything.ad.run.in.context", KeymapUtil.getShortcutText(KeyboardShortcut.fromString("pressed ALT")));
   }
 }

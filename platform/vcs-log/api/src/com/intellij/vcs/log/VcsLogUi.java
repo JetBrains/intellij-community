@@ -33,6 +33,4 @@ public interface VcsLogUi {
   void addLogListener(@NotNull VcsLogListener listener);
 
   void removeLogListener(@NotNull VcsLogListener listener);
-
-  boolean isHighlighterEnabled(@NotNull String id);
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.ui;
 
 import com.intellij.openapi.util.ScalableIcon;
@@ -13,8 +13,8 @@ import static com.intellij.ui.scale.ScaleType.OBJ_SCALE;
  * @author tav
  * @author Aleksey Pivovarov
  */
-public abstract class JBCachingScalableIcon<T extends JBCachingScalableIcon> extends JBUI.JBIcon implements CopyableIcon {
-  private T myScaledIconCache;
+public abstract class JBCachingScalableIcon<T extends JBCachingScalableIcon> extends JBScalableIcon implements CopyableIcon {
+  private T scaledIconCache;
 
   protected JBCachingScalableIcon() {}
 
@@ -26,25 +26,23 @@ public abstract class JBCachingScalableIcon<T extends JBCachingScalableIcon> ext
    * @return a new scaled copy of this icon, or the cached instance of the provided scale
    */
   @Override
-  @NotNull
-  public T scale(float scale) {
+  public @NotNull T scale(float scale) {
     if (scale == getScale()) {
       //noinspection unchecked
       return (T)this;
     }
 
-    if (myScaledIconCache == null || myScaledIconCache.getScale() != scale) {
-      myScaledIconCache = copy();
-      myScaledIconCache.setScale(OBJ_SCALE.of(scale));
+    if (scaledIconCache == null || scaledIconCache.getScale() != scale) {
+      scaledIconCache = copy();
+      scaledIconCache.setScale(OBJ_SCALE.of(scale));
     }
-    return myScaledIconCache;
+    return scaledIconCache;
   }
 
   protected void clearCachedScaledValue() {
-    myScaledIconCache = null;
+    scaledIconCache = null;
   }
 
-  @NotNull
   @Override
-  public abstract T copy();
+  public abstract @NotNull T copy();
 }

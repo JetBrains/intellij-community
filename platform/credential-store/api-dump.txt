@@ -1,0 +1,96 @@
+f:com.intellij.credentialStore.CredentialAttributes
+- <init>(java.lang.String):V
+- <init>(java.lang.String,java.lang.String):V
+- <init>(java.lang.String,java.lang.String,java.lang.Class):V
+- <init>(java.lang.String,java.lang.String,java.lang.Class,Z):V
+- <init>(java.lang.String,java.lang.String,java.lang.Class,Z,I,kotlin.jvm.internal.DefaultConstructorMarker):V
+- <init>(java.lang.String,java.lang.String,java.lang.Class,Z,Z):V
+- <init>(java.lang.String,java.lang.String,Z):V
+- <init>(java.lang.String,java.lang.String,Z,Z):V
+- f:component1():java.lang.String
+- f:component2():java.lang.String
+- f:component3():Z
+- f:component4():Z
+- f:copy(java.lang.String,java.lang.String,Z,Z):com.intellij.credentialStore.CredentialAttributes
+- bs:copy$default(com.intellij.credentialStore.CredentialAttributes,java.lang.String,java.lang.String,Z,Z,I,java.lang.Object):com.intellij.credentialStore.CredentialAttributes
+- equals(java.lang.Object):Z
+- f:getCacheDeniedItems():Z
+- f:getServiceName():java.lang.String
+- f:getUserName():java.lang.String
+- hashCode():I
+- f:isPasswordMemoryOnly():Z
+f:com.intellij.credentialStore.CredentialAttributesKt
+- sf:SERVICE_NAME_PREFIX:java.lang.String
+- sf:generateServiceName(java.lang.String,java.lang.String):java.lang.String
+- sf:getACCESS_TO_KEY_CHAIN_DENIED():com.intellij.credentialStore.Credentials
+- sf:getCANNOT_UNLOCK_KEYCHAIN():com.intellij.credentialStore.Credentials
+- sf:hasOnlyUserName(com.intellij.credentialStore.Credentials):Z
+- sf:isEmpty(com.intellij.credentialStore.Credentials):Z
+- sf:isFulfilled(com.intellij.credentialStore.Credentials):Z
+f:com.intellij.credentialStore.CredentialRequestResult
+- <init>(com.intellij.credentialStore.Credentials,Z):V
+- f:component1():com.intellij.credentialStore.Credentials
+- f:component2():Z
+- f:copy(com.intellij.credentialStore.Credentials,Z):com.intellij.credentialStore.CredentialRequestResult
+- bs:copy$default(com.intellij.credentialStore.CredentialRequestResult,com.intellij.credentialStore.Credentials,Z,I,java.lang.Object):com.intellij.credentialStore.CredentialRequestResult
+- equals(java.lang.Object):Z
+- f:getCredentials():com.intellij.credentialStore.Credentials
+- hashCode():I
+- f:isRemember():Z
+com.intellij.credentialStore.CredentialStore
+- a:get(com.intellij.credentialStore.CredentialAttributes):com.intellij.credentialStore.Credentials
+- getPassword(com.intellij.credentialStore.CredentialAttributes):java.lang.String
+- a:set(com.intellij.credentialStore.CredentialAttributes,com.intellij.credentialStore.Credentials):V
+- setPassword(com.intellij.credentialStore.CredentialAttributes,java.lang.String):V
+com.intellij.credentialStore.CredentialStoreManager
+- sf:Companion:com.intellij.credentialStore.CredentialStoreManager$Companion
+- a:availableProviders():java.util.List
+- a:defaultProvider():com.intellij.credentialStore.ProviderType
+- s:getInstance():com.intellij.credentialStore.CredentialStoreManager
+- a:isSupported(com.intellij.credentialStore.ProviderType):Z
+f:com.intellij.credentialStore.CredentialStoreManager$Companion
+- f:getInstance():com.intellij.credentialStore.CredentialStoreManager
+f:com.intellij.credentialStore.Credentials
+- <init>(java.lang.String):V
+- <init>(java.lang.String,com.intellij.credentialStore.OneTimeString):V
+- <init>(java.lang.String,com.intellij.credentialStore.OneTimeString,I,kotlin.jvm.internal.DefaultConstructorMarker):V
+- <init>(java.lang.String,java.lang.String):V
+- <init>(java.lang.String,B[]):V
+- <init>(java.lang.String,C[]):V
+- equals(java.lang.Object):Z
+- f:getPassword():com.intellij.credentialStore.OneTimeString
+- f:getPasswordAsString():java.lang.String
+- f:getUserName():java.lang.String
+- hashCode():I
+e:com.intellij.credentialStore.ProviderType
+- java.lang.Enum
+- sf:DO_NOT_STORE:com.intellij.credentialStore.ProviderType
+- sf:KEEPASS:com.intellij.credentialStore.ProviderType
+- sf:KEYCHAIN:com.intellij.credentialStore.ProviderType
+- sf:MEMORY_ONLY:com.intellij.credentialStore.ProviderType
+- sf:REMOTE:com.intellij.credentialStore.ProviderType
+- s:getEntries():kotlin.enums.EnumEntries
+- s:valueOf(java.lang.String):com.intellij.credentialStore.ProviderType
+- s:values():com.intellij.credentialStore.ProviderType[]
+a:com.intellij.ide.passwordSafe.PasswordSafe
+- com.intellij.credentialStore.CredentialStore
+- com.intellij.ide.passwordSafe.PasswordStorage
+- sf:Companion:com.intellij.ide.passwordSafe.PasswordSafe$Companion
+- <init>():V
+- sf:getInstance():com.intellij.ide.passwordSafe.PasswordSafe
+- a:isMemoryOnly():Z
+- a:isPasswordStoredOnlyInMemory(com.intellij.credentialStore.CredentialAttributes,com.intellij.credentialStore.Credentials):Z
+- a:isRememberPasswordByDefault():Z
+- a:set(com.intellij.credentialStore.CredentialAttributes,com.intellij.credentialStore.Credentials,Z):V
+- a:setRememberPasswordByDefault(Z):V
+f:com.intellij.ide.passwordSafe.PasswordSafe$Companion
+- f:getInstance():com.intellij.ide.passwordSafe.PasswordSafe
+c:com.intellij.ide.passwordSafe.PasswordSafeException
+- java.lang.RuntimeException
+- <init>(java.lang.String):V
+- <init>(java.lang.String,java.lang.Throwable):V
+com.intellij.ide.passwordSafe.PasswordStorage
+- a:get(com.intellij.credentialStore.CredentialAttributes):com.intellij.credentialStore.Credentials
+- getPassword(com.intellij.openapi.project.Project,java.lang.Class,java.lang.String):java.lang.String
+- a:set(com.intellij.credentialStore.CredentialAttributes,com.intellij.credentialStore.Credentials):V
+- storePassword(com.intellij.openapi.project.Project,java.lang.Class,java.lang.String,java.lang.String):V

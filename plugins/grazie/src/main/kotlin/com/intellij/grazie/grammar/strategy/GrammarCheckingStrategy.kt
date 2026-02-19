@@ -1,15 +1,17 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+@file:Suppress("DEPRECATION")
+
 package com.intellij.grazie.grammar.strategy
 
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.grazie.GraziePlugin
-import com.intellij.grazie.grammar.Typo
-import com.intellij.grazie.grammar.strategy.GrammarCheckingStrategy.ElementBehavior.*
-import com.intellij.grazie.grammar.strategy.GrammarCheckingStrategy.TextDomain.*
+import com.intellij.grazie.grammar.strategy.GrammarCheckingStrategy.ElementBehavior.ABSORB
+import com.intellij.grazie.grammar.strategy.GrammarCheckingStrategy.ElementBehavior.STEALTH
+import com.intellij.grazie.grammar.strategy.GrammarCheckingStrategy.ElementBehavior.TEXT
+import com.intellij.grazie.grammar.strategy.GrammarCheckingStrategy.TextDomain.PLAIN_TEXT
 import com.intellij.grazie.grammar.strategy.impl.ReplaceCharRule
 import com.intellij.grazie.grammar.strategy.impl.RuleGroup
 import com.intellij.grazie.utils.LinkedSet
-import com.intellij.grazie.utils.orTrue
 import com.intellij.lang.Language
 import com.intellij.lang.LanguageParserDefinitions
 import com.intellij.lang.ParserDefinition
@@ -17,13 +19,14 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.psi.PsiElement
 import com.intellij.psi.tree.TokenSet
-import org.jetbrains.annotations.ApiStatus
 
 /**
  * Strategy extracting elements for grammar checking used by Grazie plugin
  *
  * You need to implement [isMyContextRoot] and add com.intellij.grazie.grammar.strategy extension in your .xml config
  */
+@Deprecated("Use TextExtractor and ProblemFilter instead")
+@JvmDefaultWithCompatibility
 interface GrammarCheckingStrategy {
 
   /**
@@ -81,7 +84,6 @@ interface GrammarCheckingStrategy {
    *
    * @return name of this strategy
    */
-  @JvmDefault
   @NlsSafe
   fun getName(): String {
     val extension = StrategyUtils.getStrategyExtensionPoint(this)
@@ -95,7 +97,6 @@ interface GrammarCheckingStrategy {
    *
    * @return unique ID
    */
-  @JvmDefault
   fun getID(): String {
     val extension = StrategyUtils.getStrategyExtensionPoint(this)
     return "${extension.pluginDescriptor.pluginId}:${extension.language}"
@@ -115,7 +116,6 @@ interface GrammarCheckingStrategy {
    *
    * @return [TokenSet] of whitespace tokens
    */
-  @JvmDefault
   fun getWhiteSpaceTokens(): TokenSet {
     val extension = StrategyUtils.getStrategyExtensionPoint(this)
     val language = Language.findLanguageByID(extension.language) ?: return TokenSet.WHITE_SPACE
@@ -134,7 +134,6 @@ interface GrammarCheckingStrategy {
    * @param root root element previously selected in [isMyContextRoot]
    * @return list of root elements that should be considered as a continuous text with [getWhiteSpaceTokens] elements
    */
-  @JvmDefault
   fun getRootsChain(root: PsiElement): List<PsiElement> = listOf(root)
 
   /**
@@ -142,8 +141,7 @@ interface GrammarCheckingStrategy {
    *
    * @return true if enabled else false
    */
-  @JvmDefault
-  fun isEnabledByDefault(): Boolean = !GraziePlugin.isBundled || ApplicationManager.getApplication()?.isUnitTestMode.orTrue()
+  fun isEnabledByDefault(): Boolean = !GraziePlugin.isBundled || ApplicationManager.getApplication()?.isUnitTestMode ?: true
 
   /**
    * Determine root PsiElement domain @see [TextDomain].
@@ -151,8 +149,7 @@ interface GrammarCheckingStrategy {
    * @param root root element previously selected in [isMyContextRoot]
    * @return [TextDomain] for [root] element
    */
-  @JvmDefault
-  fun getContextRootTextDomain(root: PsiElement) = StrategyUtils.getTextDomainOrDefault(root, default = PLAIN_TEXT)
+  fun getContextRootTextDomain(root: PsiElement) = StrategyUtils.getTextDomainOrDefault(this, root, default = PLAIN_TEXT)
 
   /**
    * Determine PsiElement behavior @see [ElementBehavior].
@@ -182,8 +179,6 @@ interface GrammarCheckingStrategy {
    * @param ruleRange range of elements needed for rule to find typo
    * @return true if typo should be accepted
    */
-  @Deprecated("Use isTypoAccepted(PsiElement, List<PsiElement>, IntRange, IntRange)")
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
   fun isTypoAccepted(root: PsiElement, typoRange: IntRange, ruleRange: IntRange) = true
 
   /**
@@ -195,19 +190,7 @@ interface GrammarCheckingStrategy {
    * @param ruleRange range of elements needed for rule to find typo
    * @return true if typo should be accepted
    */
-  @JvmDefault
   fun isTypoAccepted(parent: PsiElement, roots: List<PsiElement>, typoRange: IntRange, ruleRange: IntRange) = true
-
-  /**
-   * Get ignored typo categories for [child] element @see [Typo.Category].
-   *
-   * @param root root element previously selected in [isMyContextRoot]
-   * @param child current checking element for which ignored categories are specified
-   * @return set of the ignored categories for [child]
-   */
-  @Deprecated("Use getIgnoredRuleGroup() or getContextRootDomain()")
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020.2")
-  fun getIgnoredTypoCategories(root: PsiElement, child: PsiElement): Set<Typo.Category>? = null
 
 
   /**
@@ -226,7 +209,5 @@ interface GrammarCheckingStrategy {
    * @param root root element previously selected in [isMyContextRoot]
    * @return list of char replacement rules for whole root context
    */
-  @Deprecated("Use getStealthyRanges() if you don't need some chars")
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020.2")
   fun getReplaceCharRules(root: PsiElement): List<ReplaceCharRule> = emptyList()
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.plugins.groovy.refactoring.introduce.variable;
 
@@ -23,8 +23,14 @@ import org.jetbrains.plugins.groovy.refactoring.introduce.GrIntroduceDialog;
 import org.jetbrains.plugins.groovy.refactoring.ui.GrTypeComboBox;
 import org.jetbrains.plugins.groovy.settings.GroovyApplicationSettings;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JCheckBox;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import java.awt.BorderLayout;
+import java.awt.FlowLayout;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
 import java.util.LinkedHashSet;
 
 public class GroovyIntroduceVariableDialog extends DialogWrapper implements GrIntroduceDialog<GroovyIntroduceVariableSettings> {
@@ -78,8 +84,7 @@ public class GroovyIntroduceVariableDialog extends DialogWrapper implements GrIn
   }
 
   @Override
-  @Nullable
-  protected JComponent createCenterPanel() {
+  protected @Nullable JComponent createCenterPanel() {
     JPanel contentPane = new JPanel(new BorderLayout());
     contentPane.add(createNamePanel(), BorderLayout.CENTER);
     contentPane.add(createCBPanel(), BorderLayout.SOUTH);
@@ -134,8 +139,7 @@ public class GroovyIntroduceVariableDialog extends DialogWrapper implements GrIn
     return namePanel;
   }
 
-  @Nullable
-  protected String getEnteredName() {
+  protected @Nullable String getEnteredName() {
     return myNameField.getEnteredName();
   }
 
@@ -147,8 +151,7 @@ public class GroovyIntroduceVariableDialog extends DialogWrapper implements GrIn
     return myCbIsFinal.isSelected();
   }
 
-  @Nullable
-  private PsiType getSelectedType() {
+  private @Nullable PsiType getSelectedType() {
     return myTypeComboBox.getSelectedType();
   }
 
@@ -186,9 +189,8 @@ public class GroovyIntroduceVariableDialog extends DialogWrapper implements GrIn
     return new MyGroovyIntroduceVariableSettings(this);
   }
 
-  @NotNull
   @Override
-  public LinkedHashSet<String> suggestNames() {
+  public @NotNull LinkedHashSet<String> suggestNames() {
     return new GrVariableNameSuggester(myContext, myValidator).suggestNames();
   }
 

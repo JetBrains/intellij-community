@@ -1,0 +1,16 @@
+<component name="libraryTable">
+  <library name="javapoet" type="repository">
+    <properties maven-id="com.squareup:javapoet:1.13.0">
+      <verification>
+        <artifact url="file://$MAVEN_REPOSITORY$/com/squareup/javapoet/1.13.0/javapoet-1.13.0.jar">
+          <sha256sum>4c7517e848a71b36d069d12bb3bf46a70fd4cda3105d822b0ed2e19c00b69291</sha256sum>
+        </artifact>
+      </verification>
+    </properties>
+    <CLASSES>
+      <root url="jar://$MAVEN_REPOSITORY$/com/squareup/javapoet/1.13.0/javapoet-1.13.0.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>

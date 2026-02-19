@@ -1,0 +1,24 @@
+### auto-generated section `build intellij.mps.resources` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "mps-resources_resources",
+  srcs = glob(["src/**/*"]),
+  strip_prefix = "src"
+)
+
+jvm_library(
+  name = "mps-resources",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  resources = [":mps-resources_resources"]
+)
+
+jvm_library(
+  name = "mps-resources_test_lib",
+  module_name = "intellij.mps.resources",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [":mps-resources"]
+)
+### auto-generated section `build intellij.mps.resources` end

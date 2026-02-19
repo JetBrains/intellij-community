@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.presentation.java;
 
 import com.intellij.navigation.ItemPresentation;
@@ -10,6 +10,7 @@ import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.psi.PsiNamedElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -32,8 +33,7 @@ public final class SymbolPresentationUtil {
     return element.getText();
   }
 
-  @Nullable
-  public static @NlsSafe String getSymbolContainerText(PsiElement element) {
+  public static @Nullable @NlsSafe String getSymbolContainerText(PsiElement element) {
     if (element instanceof NavigationItem) {
       final ItemPresentation presentation = ((NavigationItem)element).getPresentation();
       if (presentation != null){
@@ -51,8 +51,12 @@ public final class SymbolPresentationUtil {
   }
 
   public static @NlsSafe String getFilePathPresentation(PsiFile psiFile) {
-    ProjectFileIndex index = ProjectRootManager.getInstance(psiFile.getProject()).getFileIndex();
-    VirtualFile file = psiFile.getOriginalFile().getVirtualFile();
+    return getFilePathPresentation((PsiFileSystemItem)psiFile);
+  }
+
+  public static @NlsSafe String getFilePathPresentation(PsiFileSystemItem item) {
+    ProjectFileIndex index = ProjectRootManager.getInstance(item.getProject()).getFileIndex();
+    VirtualFile file = (item instanceof PsiFile ? ((PsiFile)item).getOriginalFile() : item).getVirtualFile();
     VirtualFile rootForFile = file != null ? index.getContentRootForFile(file):null;
 
     if (rootForFile != null) {
@@ -60,6 +64,6 @@ public final class SymbolPresentationUtil {
       if (relativePath != null) return relativePath;
     }
 
-    return psiFile.getName();
+    return item.getName();
   }
 }

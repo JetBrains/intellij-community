@@ -2,6 +2,8 @@
 package com.intellij.openapi.editor.ex.util;
 
 import com.intellij.psi.tree.IElementType;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NotNull;
 
 import static com.intellij.openapi.editor.ex.util.SegmentArray.INITIAL_SIZE;
 
@@ -9,6 +11,7 @@ import static com.intellij.openapi.editor.ex.util.SegmentArray.INITIAL_SIZE;
  * SegmentArrayWithData storage based on the int array. It allows to store one int per segment.
  * It allows to pack {@link IElementType} index and state of the lexer for segment.
  */
+@ApiStatus.Internal
 public class IntBasedStorage implements DataStorage {
   int[] myData;
 
@@ -34,13 +37,13 @@ public class IntBasedStorage implements DataStorage {
   }
 
   @Override
-  public void replace(DataStorage storage, int startOffset, int len) {
+  public void replace(@NotNull DataStorage storage, int startOffset, int len) {
     assert storage instanceof IntBasedStorage;
     System.arraycopy(((IntBasedStorage)storage).myData, 0, myData, startOffset, len);
   }
 
   @Override
-  public void insert(DataStorage storageToInsert, int startIndex, int segmentCountToInsert, int segmentCount) {
+  public void insert(@NotNull DataStorage storageToInsert, int startIndex, int segmentCountToInsert, int segmentCount) {
     assert storageToInsert instanceof IntBasedStorage;
     myData = SegmentArray.insert(myData, ((IntBasedStorage)storageToInsert).myData, startIndex, segmentCountToInsert, segmentCount);
   }
@@ -51,7 +54,7 @@ public class IntBasedStorage implements DataStorage {
   }
 
   @Override
-  public int packData(IElementType tokenType, int state, boolean isRestartableState) {
+  public int packData(@NotNull IElementType tokenType, int state, boolean isRestartableState) {
     return ((state & 0xFFFF) << 16) | (tokenType.getIndex() & 0xffff);
   }
 
@@ -61,17 +64,17 @@ public class IntBasedStorage implements DataStorage {
   }
 
   @Override
-  public IElementType unpackTokenFromData(int data) {
+  public @NotNull IElementType unpackTokenFromData(int data) {
     return IElementType.find((short)(data & 0xffff));
   }
 
   @Override
-  public DataStorage copy() {
+  public @NotNull DataStorage copy() {
     return new IntBasedStorage(myData);
   }
 
   @Override
-  public DataStorage createStorage() {
+  public @NotNull DataStorage createStorage() {
     return new IntBasedStorage();
   }
 }

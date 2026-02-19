@@ -5,8 +5,8 @@ class Test8 {
 
     static class B {
 
+        private final Test8 anObject;
         int c;
-        private Test8 anObject;
 
         public B(Test8 anObject) {
             this.anObject = anObject;

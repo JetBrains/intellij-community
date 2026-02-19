@@ -1,11 +1,11 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.settings;
 
 import com.intellij.openapi.externalSystem.model.project.ModuleData;
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import gnu.trove.THashMap;
-import gnu.trove.TObjectHashingStrategy;
+import com.intellij.util.containers.CollectionFactory;
+import com.intellij.util.containers.HashingStrategy;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.model.data.GradleSourceSetData;
 
@@ -19,13 +19,13 @@ import java.util.Map;
 /**
  * @author Vladislav.Soroka
  */
-public class GradleBuildParticipant implements Serializable {
+public final class GradleBuildParticipant implements Serializable {
   private static final long serialVersionUID = 1L;
 
   private final String myProjectPath;
-  private final Map<File, ModuleData> moduleArtifactMap = new THashMap<>(new TObjectHashingStrategy<File>() {
+  private final Map<File, ModuleData> moduleArtifactMap = CollectionFactory.createCustomHashingStrategyMap(new HashingStrategy<>() {
     @Override
-    public int computeHashCode(File file) {
+    public int hashCode(File file) {
       return ExternalSystemUtil.fileHashCode(file);
     }
 
@@ -58,8 +58,7 @@ public class GradleBuildParticipant implements Serializable {
     }
   }
 
-  @Nullable
-  public ModuleData findModuleDataByArtifacts(Collection<? extends File> artifacts) {
+  public @Nullable ModuleData findModuleDataByArtifacts(Collection<? extends File> artifacts) {
     ModuleData moduleData = null;
     for (File artifact : artifacts) {
       moduleData = moduleArtifactMap.get(artifact);
@@ -68,8 +67,7 @@ public class GradleBuildParticipant implements Serializable {
     return moduleData;
   }
 
-  @Nullable
-  public ModuleData findModuleDataByName(String moduleName) {
+  public @Nullable ModuleData findModuleDataByName(String moduleName) {
     return moduleNameMap.get(moduleName);
   }
 }

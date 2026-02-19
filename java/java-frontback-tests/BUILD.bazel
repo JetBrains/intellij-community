@@ -1,0 +1,96 @@
+### auto-generated section `build intellij.java.frontback.tests` start
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+jvm_library(
+  name = "frontback-tests",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  exports = [
+    "@lib//:easymock",
+    "@lib//:mockito",
+    "@lib//:assert_j",
+    "@lib//:kotlin-test",
+    "//platform/testFramework",
+    "//platform/testFramework/junit5",
+    "//platform/platform-tests:tests",
+  ],
+  runtime_deps = [
+    "//platform/ide-core-impl",
+    "//java/java-frontback-psi-impl:frontback-psi-impl",
+  ]
+)
+
+jvm_library(
+  name = "frontback-tests_test_lib",
+  module_name = "intellij.java.frontback.tests",
+  visibility = ["//visibility:public"],
+  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java", "testSrc/**/*.form"], allow_empty = True),
+  deps = [
+    "@lib//:easymock",
+    "@lib//:mockito",
+    "@lib//:assert_j",
+    "@lib//:kotlin-test",
+    "//platform/analysis-api:analysis",
+    "//platform/analysis-api:analysis_test_lib",
+    "//platform/code-style-api:codeStyle",
+    "//platform/code-style-api:codeStyle_test_lib",
+    "//platform/core-api:core",
+    "//platform/core-api:core_test_lib",
+    "//platform/core-ui",
+    "//platform/core-ui:core-ui_test_lib",
+    "//platform/editor-ui-api:editor-ui",
+    "//platform/editor-ui-api:editor-ui_test_lib",
+    "//platform/projectModel-api:projectModel",
+    "//platform/projectModel-api:projectModel_test_lib",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test_lib",
+    "//platform/ide-core-impl",
+    "//java/java-frontback-psi-impl:frontback-psi-impl",
+    "//java/java-frontback-psi-impl:frontback-psi-impl_test_lib",
+    "//platform/testFramework/junit5",
+    "//platform/testFramework/junit5:junit5_test_lib",
+    "//platform/backend/workspace",
+    "//platform/backend/workspace:workspace_test_lib",
+    "//java/java-frontback-impl:frontback-impl",
+    "//java/java-frontback-impl:frontback-impl_test_lib",
+    "//platform/platform-tests:tests",
+    "//platform/platform-tests:tests_test_lib",
+    "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark",
+    "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark_test_lib",
+    "//java/testFramework/shared",
+    "//java/testFramework/shared:shared_test_lib",
+    "//platform/syntax/syntax-psi:psi",
+    "//platform/syntax/syntax-psi:psi_test_lib",
+    "//java/java-syntax:syntax",
+    "//java/java-syntax:syntax_test_lib",
+    "//platform/syntax/syntax-tree:tree",
+    "//platform/syntax/syntax-tree:tree_test_lib",
+    "@lib//:jet_check",
+  ],
+  exports = [
+    "@lib//:easymock",
+    "@lib//:mockito",
+    "@lib//:assert_j",
+    "@lib//:kotlin-test",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test_lib",
+    "//platform/testFramework/junit5",
+    "//platform/testFramework/junit5:junit5_test_lib",
+    "//platform/platform-tests:tests",
+    "//platform/platform-tests:tests_test_lib",
+  ],
+  runtime_deps = [
+    ":frontback-tests",
+    "//platform/ide-core-impl:ide-core-impl_test_lib",
+  ]
+)
+### auto-generated section `build intellij.java.frontback.tests` end
+
+### auto-generated section `test intellij.java.frontback.tests` start
+load("@community//build:tests-options.bzl", "jps_test")
+
+jps_test(
+  name = "frontback-tests_test",
+  runtime_deps = [":frontback-tests_test_lib"]
+)
+### auto-generated section `test intellij.java.frontback.tests` end

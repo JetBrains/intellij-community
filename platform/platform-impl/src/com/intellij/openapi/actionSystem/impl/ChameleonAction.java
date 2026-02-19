@@ -1,54 +1,50 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.actionSystem.impl;
 
 import com.intellij.openapi.actionSystem.ActionStub;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectType;
 import com.intellij.openapi.project.ProjectTypeService;
+import kotlin.jvm.functions.Function1;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
 
 import java.util.HashMap;
 import java.util.Map;
 
-/**
- * @author Dmitry Avdeev
- */
-public class ChameleonAction extends AnAction {
-
+@ApiStatus.Internal
+public final class ChameleonAction extends AnAction {
+  private final @NotNull String myActionId;
   private final Map<ProjectType, AnAction> myActions = new HashMap<>();
 
-  public ChameleonAction(@NotNull AnAction first, ProjectType projectType) {
-    addAction(first, projectType);
+  public ChameleonAction(@NotNull String actionId,
+                         @NotNull AnAction first,
+                         @Nullable ProjectType projectType,
+                         @NotNull Function1<? super String, ? extends AnAction> actionSupplier) {
+    myActionId = actionId;
+    addAction(first, projectType, actionSupplier);
     copyFrom(myActions.values().iterator().next());
   }
 
-  public AnAction addAction(AnAction action, ProjectType projectType) {
-    if (action instanceof ActionStub) {
-      String type = ((ActionStub)action).getProjectType();
-      action = ActionManagerImpl.convertStub((ActionStub)action);
-      if (action == null) return null;
+  /**
+   * @return true on success, false on an action conflict
+   */
+  boolean addAction(@NotNull AnAction action,
+                    @Nullable ProjectType projectType,
+                    @NotNull Function1<? super String, ? extends AnAction> actionSupplier) {
+    if (action instanceof ActionStub actionStub) {
+      action = ActionManagerImplKt.convertStub(actionStub, actionSupplier);
+      if (action == null) {
+        return true;
+      }
 
-      projectType = type == null ? null : new ProjectType(type);
+      projectType = actionStub.getProjectType();
     }
-    return myActions.put(projectType, action);
+    return myActions.putIfAbsent(projectType, action) == null;
   }
 
   @Override
@@ -61,26 +57,33 @@ public class ChameleonAction extends AnAction {
   @Override
   public void update(@NotNull AnActionEvent e) {
     AnAction action = getAction(e);
-    if (action != null) {
-      e.getPresentation().setVisible(true);
+    boolean visible = action != null;
+    e.getPresentation().setVisible(visible);
+    if (visible) {
       action.update(e);
-    }
-    else {
-      e.getPresentation().setVisible(false);
     }
   }
 
-  @Nullable
-  private AnAction getAction(@NotNull AnActionEvent e) {
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    AnAction action = myActions.get(null);
+    if (action == null) action = myActions.values().iterator().next();
+    return action == null ? ActionUpdateThread.BGT : action.getActionUpdateThread();
+  }
+
+  private @Nullable AnAction getAction(@NotNull AnActionEvent e) {
     Project project = e.getProject();
     ProjectType projectType = ProjectTypeService.getProjectType(project);
     AnAction action = myActions.get(projectType);
-    if (action == null) action = myActions.get(null);
-    return action;
+    return action != null ? action : myActions.get(null);
   }
 
-  @TestOnly
+
   public Map<ProjectType, AnAction> getActions() {
     return myActions;
+  }
+
+  public @NotNull String getActionId() {
+    return myActionId;
   }
 }

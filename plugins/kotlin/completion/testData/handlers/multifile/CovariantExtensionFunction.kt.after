@@ -1,0 +1,10 @@
+package bar
+
+import foo.Foo
+import foo.foo
+
+data class Holder<T>(val value: T)
+
+fun test(holder: Holder<out Foo>) {
+    holder.value.foo()<caret>
+}

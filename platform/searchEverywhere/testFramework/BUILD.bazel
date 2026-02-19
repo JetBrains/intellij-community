@@ -1,0 +1,52 @@
+### auto-generated section `build intellij.platform.searchEverywhere.testFramework` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "testFramework_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "testFramework",
+  module_name = "intellij.platform.searchEverywhere.testFramework",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":testFramework_resources"],
+  deps = [
+    "//platform/searchEverywhere/shared:searchEverywhere",
+    "//platform/searchEverywhere/backend",
+    "//platform/searchEverywhere/frontend",
+    "@lib//:jetbrains-annotations",
+    "@lib//:kotlin-stdlib",
+    "//libraries/kotlinx/coroutines/core",
+  ],
+  exports = [
+    "//platform/searchEverywhere/shared:searchEverywhere",
+    "//platform/searchEverywhere/backend",
+    "//platform/searchEverywhere/frontend",
+  ]
+)
+
+jvm_library(
+  name = "testFramework_test_lib",
+  module_name = "intellij.platform.searchEverywhere.testFramework",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  exports = [
+    "//platform/searchEverywhere/shared:searchEverywhere",
+    "//platform/searchEverywhere/shared:searchEverywhere_test_lib",
+    "//platform/searchEverywhere/backend",
+    "//platform/searchEverywhere/backend:backend_test_lib",
+    "//platform/searchEverywhere/frontend",
+    "//platform/searchEverywhere/frontend:frontend_test_lib",
+  ],
+  runtime_deps = [
+    ":testFramework",
+    "//platform/searchEverywhere/shared:searchEverywhere_test_lib",
+    "//platform/searchEverywhere/backend:backend_test_lib",
+    "//platform/searchEverywhere/frontend:frontend_test_lib",
+    "//libraries/kotlinx/coroutines/core:core_test_lib",
+  ]
+)
+### auto-generated section `build intellij.platform.searchEverywhere.testFramework` end

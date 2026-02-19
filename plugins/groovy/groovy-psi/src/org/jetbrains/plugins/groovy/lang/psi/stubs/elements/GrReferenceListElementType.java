@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.psi.stubs.elements;
 
 import com.intellij.openapi.util.text.StringUtil;
@@ -19,17 +19,13 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * @author ilyas
- */
-public abstract class GrReferenceListElementType<T extends GrReferenceList> extends GrStubElementType<GrReferenceListStub, T> {
+public class GrReferenceListElementType<T extends GrReferenceList> extends GrStubElementType<GrReferenceListStub, T> {
   public GrReferenceListElementType(final String debugName) {
     super(debugName);
   }
 
-  @NotNull
   @Override
-  public GrReferenceListStub createStub(@NotNull T psi, StubElement<?> parentStub) {
+  public @NotNull GrReferenceListStub createStub(@NotNull T psi, StubElement<?> parentStub) {
     List<String> refNames = new ArrayList<>();
     for (GrCodeReferenceElement element : psi.getReferenceElementsGroovy()) {
       final String name = GrStubUtils.getReferenceName(element);
@@ -47,8 +43,7 @@ public abstract class GrReferenceListElementType<T extends GrReferenceList> exte
   }
 
   @Override
-  @NotNull
-  public GrReferenceListStub deserialize(@NotNull StubInputStream dataStream, StubElement parentStub) throws IOException {
+  public @NotNull GrReferenceListStub deserialize(@NotNull StubInputStream dataStream, StubElement parentStub) throws IOException {
     return new GrReferenceListStub(parentStub, this, GrStubUtils.readStringArray(dataStream));
   }
 
@@ -59,6 +54,11 @@ public abstract class GrReferenceListElementType<T extends GrReferenceList> exte
         sink.occurrence(GrDirectInheritorsIndex.KEY, PsiNameHelper.getShortClassName(name));
       }
     }
+  }
+
+  @Override
+  public T createPsi(@NotNull GrReferenceListStub stub) {
+    throw new AssertionError();
   }
 
   @Override

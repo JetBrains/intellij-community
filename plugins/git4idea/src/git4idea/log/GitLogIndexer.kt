@@ -1,40 +1,35 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.log
 
+import com.intellij.dvcs.repo.getRepositoryUnlessFresh
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.VcsException
 import com.intellij.openapi.vcs.VcsKey
 import com.intellij.openapi.vcs.changes.Change
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.ArrayUtil
-import com.intellij.util.Consumer
 import com.intellij.vcs.log.VcsCommitMetadata
 import com.intellij.vcs.log.impl.VcsLogIndexer
 import git4idea.GitVcs
 import git4idea.history.GitCommitRequirements
 import git4idea.history.GitCommitRequirements.DiffInMergeCommits
-import git4idea.history.GitCommitRequirements.DiffRenameLimit
+import git4idea.history.GitCommitRequirements.DiffRenames
 import git4idea.history.GitCompressedDetailsCollector
 import git4idea.history.GitLogUtil
-import git4idea.log.GitLogProvider.isRepositoryReady
-import git4idea.log.GitLogProvider.shouldIncludeRootChanges
+import git4idea.log.GitLogProvider.Companion.shouldIncludeRootChanges
+import git4idea.repo.GitRepository
 import git4idea.repo.GitRepositoryManager
-import gnu.trove.TIntIntHashMap
-import gnu.trove.TIntObjectHashMap
+import it.unimi.dsi.fastutil.ints.Int2IntMap
+import it.unimi.dsi.fastutil.ints.Int2ObjectMap
 
 class GitLogIndexer(private val project: Project,
                     private val repositoryManager: GitRepositoryManager) : VcsLogIndexer {
-
   @Throws(VcsException::class)
   override fun readAllFullDetails(root: VirtualFile, encoder: VcsLogIndexer.PathsEncoder,
-                                  commitConsumer: Consumer<in VcsLogIndexer.CompressedDetails>) {
-    if (!isRepositoryReady(repositoryManager, root)) {
-      return
-    }
-
-    val requirements = GitCommitRequirements(shouldIncludeRootChanges(repositoryManager, root), DiffRenameLimit.REGISTRY,
-                                             DiffInMergeCommits.DIFF_TO_PARENTS)
-    GitCompressedDetailsCollector(project, root, encoder).readFullDetails(commitConsumer, requirements, true,
+                                  commitConsumer: com.intellij.util.Consumer<in VcsLogIndexer.CompressedDetails>) {
+    val repository = repositoryManager.getRepositoryUnlessFresh(root) ?: return
+    val requirements = getGitCommitRequirements(repository)
+    GitCompressedDetailsCollector(project, root, encoder).readFullDetails(commitConsumer::consume, requirements, true,
                                                                           *ArrayUtil.toStringArray(GitLogUtil.LOG_ALL))
   }
 
@@ -42,14 +37,14 @@ class GitLogIndexer(private val project: Project,
   override fun readFullDetails(root: VirtualFile,
                                hashes: List<String>,
                                encoder: VcsLogIndexer.PathsEncoder,
-                               commitConsumer: Consumer<in VcsLogIndexer.CompressedDetails>) {
-    if (!isRepositoryReady(repositoryManager, root)) {
-      return
-    }
+                               commitConsumer: com.intellij.util.Consumer<in VcsLogIndexer.CompressedDetails>) {
+    val repository = repositoryManager.getRepositoryUnlessFresh(root) ?: return
+    val requirements = getGitCommitRequirements(repository)
+    GitCompressedDetailsCollector(project, root, encoder).readFullDetailsForHashes(hashes, requirements, true, commitConsumer::consume)
+  }
 
-    val requirements = GitCommitRequirements(shouldIncludeRootChanges(repositoryManager, root), DiffRenameLimit.REGISTRY,
-                                             DiffInMergeCommits.DIFF_TO_PARENTS)
-    GitCompressedDetailsCollector(project, root, encoder).readFullDetailsForHashes(hashes, requirements, true, commitConsumer)
+  private fun getGitCommitRequirements(repository: GitRepository): GitCommitRequirements {
+    return GitCommitRequirements(shouldIncludeRootChanges(repository), DiffRenames.Limit.Exact, DiffInMergeCommits.DIFF_TO_PARENTS)
   }
 
   override fun getSupportedVcs(): VcsKey {
@@ -57,15 +52,10 @@ class GitLogIndexer(private val project: Project,
   }
 }
 
-class GitCompressedDetails(private val metadata: VcsCommitMetadata,
-                           private val changes: List<TIntObjectHashMap<Change.Type>>,
-                           private val renames: List<TIntIntHashMap>) : VcsCommitMetadata by metadata, VcsLogIndexer.CompressedDetails {
+internal class GitCompressedDetails(private val metadata: VcsCommitMetadata,
+                           private val changes: List<Int2ObjectMap<Change.Type>>,
+                           private val renames: List<Int2IntMap>) : VcsCommitMetadata by metadata, VcsLogIndexer.CompressedDetails {
+  override fun getModifiedPaths(parent: Int) = changes[parent]
 
-  override fun getModifiedPaths(parent: Int): TIntObjectHashMap<Change.Type> {
-    return changes[parent]
-  }
-
-  override fun getRenamedPaths(parent: Int): TIntIntHashMap {
-    return renames[parent]
-  }
+  override fun getRenamedPaths(parent: Int) = renames[parent]
 }

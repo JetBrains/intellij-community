@@ -1,7 +1,8 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.designer.palette;
 
 import com.intellij.designer.AbstractToolWindowManager;
+import com.intellij.designer.DesignerBundle;
 import com.intellij.designer.DesignerCustomizations;
 import com.intellij.designer.DesignerEditorPanelFacade;
 import com.intellij.designer.LightToolWindow;
@@ -89,9 +90,8 @@ public class PaletteToolWindowManager extends AbstractToolWindowManager {
     }
   }
 
-  @NotNull
   @Override
-  public String getComponentName() {
+  public @NotNull String getComponentName() {
     return "PaletteToolWindowManager";
   }
 
@@ -108,7 +108,7 @@ public class PaletteToolWindowManager extends AbstractToolWindowManager {
 
     return createContent(designer,
                          palettePanel,
-                         "Palette",
+                         DesignerBundle.message("palette.toolwindow.title"),
                          AllIcons.Toolwindows.ToolWindowPalette,
                          palettePanel,
                          palettePanel,

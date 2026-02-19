@@ -2,9 +2,10 @@
 package com.intellij.application.options;
 
 import com.intellij.psi.codeStyle.PredefinedCodeStyle;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.EventListener;
 
 public interface PredefinedCodeStyleListener extends EventListener {
-  void styleApplied(PredefinedCodeStyle style);
+  void styleApplied(@NotNull PredefinedCodeStyle style);
 }

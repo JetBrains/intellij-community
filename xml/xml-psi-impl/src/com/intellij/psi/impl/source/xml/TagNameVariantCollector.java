@@ -3,7 +3,6 @@ package com.intellij.psi.impl.source.xml;
 
 import com.intellij.html.impl.RelaxedHtmlFromSchemaElementDescriptor;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.html.HtmlTag;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlDocument;
@@ -20,7 +19,13 @@ import com.intellij.xml.util.HtmlUtil;
 import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 public final class TagNameVariantCollector {
 
@@ -32,11 +37,10 @@ public final class TagNameVariantCollector {
     String elementNamespace = element.getNamespacePrefix().isEmpty() ? null : element.getNamespace();
 
     final Map<String, XmlElementDescriptor> descriptorsMap = new HashMap<>();
-    PsiElement context = element.getParent();
-    PsiElement curElement = element.getParent();
+    XmlTag context = element.getParentTag();
+    XmlTag declarationTag = context;
 
-    while(curElement instanceof XmlTag){
-      final XmlTag declarationTag = (XmlTag)curElement;
+    while(declarationTag != null){
       final String namespace = declarationTag.getNamespace();
 
       if(!descriptorsMap.containsKey(namespace)) {
@@ -52,7 +56,7 @@ public final class TagNameVariantCollector {
           }
         }
       }
-      curElement = curElement.getContext();
+      declarationTag = declarationTag.getParentTag();
     }
 
     final Set<XmlNSDescriptor> visited = new HashSet<>();
@@ -61,7 +65,7 @@ public final class TagNameVariantCollector {
     for (final String namespace: namespaces) {
       final int initialSize = variants.size();
       processVariantsInNamespace(namespace, element, variants, elementDescriptor, elementNamespace, descriptorsMap, visited,
-                                 context instanceof XmlTag ? (XmlTag)context : element, extension);
+                                 context != null ? context : element, extension);
       if (nsInfo != null) {
         for (int i = initialSize; i < variants.size(); i++) {
           XmlElementDescriptor descriptor = variants.get(i);
@@ -161,7 +165,9 @@ public final class TagNameVariantCollector {
     if (XmlUtil.nsFromTemplateFramework(childNamespace)) return true;
     if (parentTag == null) return true;
     if (parentDescriptor == null) return false;
-    final XmlTag childTag = parentTag.createChildTag(childDescriptor.getName(), childNamespace, null, false);
+    String name = childDescriptor.getName();
+    if (name == null) return false;
+    final XmlTag childTag = parentTag.createChildTag(name, childNamespace, null, false);
     childTag.putUserData(XmlElement.INCLUDING_ELEMENT, parentTag);
     XmlElementDescriptor descriptor = parentDescriptor.getElementDescriptor(childTag, parentTag);
     return descriptor != null && (!strict || !(descriptor instanceof AnyXmlElementDescriptor));

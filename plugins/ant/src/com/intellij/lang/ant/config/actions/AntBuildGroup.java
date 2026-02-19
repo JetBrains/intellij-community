@@ -1,14 +1,32 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.lang.ant.config.actions;
 
-import com.intellij.lang.ant.config.*;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.lang.ant.config.AntBuildFile;
+import com.intellij.lang.ant.config.AntBuildModelBase;
+import com.intellij.lang.ant.config.AntBuildTarget;
+import com.intellij.lang.ant.config.AntBuildTargetBase;
+import com.intellij.lang.ant.config.AntConfiguration;
+import com.intellij.lang.ant.config.AntConfigurationBase;
+import com.intellij.openapi.actionSystem.ActionGroup;
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+
+import static com.intellij.openapi.util.NlsActions.ActionDescription;
+import static com.intellij.openapi.util.NlsActions.ActionText;
 
 public final class AntBuildGroup extends ActionGroup implements DumbAware {
 
@@ -17,6 +35,11 @@ public final class AntBuildGroup extends ActionGroup implements DumbAware {
     Project project = e.getProject();
     Presentation presentation = e.getPresentation();
     presentation.setEnabledAndVisible(project != null);
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 
   @Override
@@ -29,7 +52,7 @@ public final class AntBuildGroup extends ActionGroup implements DumbAware {
     final AntConfigurationBase antConfiguration = AntConfigurationBase.getInstance(project);
     for (final AntBuildFile buildFile : antConfiguration.getBuildFileList()) {
       final String name = buildFile.getPresentableName();
-      DefaultActionGroup subgroup = DefaultActionGroup.createUserDataAwareGroup(getTemplateText());
+      DefaultActionGroup subgroup = new DefaultActionGroup();
       subgroup.getTemplatePresentation().setText(name, false);
       subgroup.setPopup(true);
       fillGroup(buildFile, subgroup, antConfiguration);
@@ -77,9 +100,9 @@ public final class AntBuildGroup extends ActionGroup implements DumbAware {
   }
 
   private static AnAction getOrCreateAction(final AntBuildFile buildFile,
-                                            final String displayName,
+                                            final @ActionText String displayName,
                                             final List<String> targets,
-                                            final String targetDescription,
+                                            final @ActionDescription String targetDescription,
                                             final String actionId) {
     AnAction action = null;
     if (actionId != null) {
@@ -89,10 +112,5 @@ public final class AntBuildGroup extends ActionGroup implements DumbAware {
       action = new TargetAction(buildFile, displayName, targets, targetDescription);
     }
     return action;
-  }
-
-  @Override
-  public String getTemplateText() {
-    return "Ant Build Group";
   }
 }

@@ -1,8 +1,8 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.model;
 
+import com.google.common.base.Objects;
 import org.gradle.api.artifacts.Dependency;
-import org.gradle.internal.impldep.com.google.common.base.Objects;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -24,12 +24,18 @@ public class DefaultExternalProjectDependency extends AbstractExternalDependency
 
   public DefaultExternalProjectDependency(ExternalProjectDependency dependency) {
     super(dependency);
+
     projectPath = dependency.getProjectPath();
     configurationName = dependency.getConfigurationName();
+
     projectDependencyArtifacts =
       dependency.getProjectDependencyArtifacts() == null
-      ? new ArrayList<File>(0)
-      : new ArrayList<File>(dependency.getProjectDependencyArtifacts());
+      ? new ArrayList<>(0)
+      : new ArrayList<>(dependency.getProjectDependencyArtifacts());
+    projectDependencyArtifactsSources =
+      dependency.getProjectDependencyArtifactsSources() == null
+      ? new ArrayList<>(0)
+      : new ArrayList<>(dependency.getProjectDependencyArtifactsSources());
   }
 
   @Override

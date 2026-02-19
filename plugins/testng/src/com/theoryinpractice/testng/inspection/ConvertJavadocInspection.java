@@ -1,7 +1,8 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.theoryinpractice.testng.inspection;
 
 import com.intellij.codeInsight.FileModificationService;
+import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
@@ -11,7 +12,19 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaDocTokenType;
+import com.intellij.psi.JavaElementVisitor;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiAnnotation;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.PsiMember;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiModifierList;
+import com.intellij.psi.PsiPrimitiveType;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.javadoc.PsiDocTag;
@@ -28,27 +41,22 @@ import org.jetbrains.annotations.NotNull;
  * @author Hani Suleiman
  */
 public class ConvertJavadocInspection extends AbstractBaseJavaLocalInspectionTool {
-  @NonNls private static final String TESTNG_PREFIX = "testng.";
+  private static final @NonNls String TESTNG_PREFIX = "testng.";
 
   @Override
-  @Nls
-  @NotNull
-  public String getGroupDisplayName() {
+  public @Nls @NotNull String getGroupDisplayName() {
     return TestNGUtil.TESTNG_GROUP_NAME;
   }
 
   @Override
-  @NonNls
-  @NotNull
-  public String getShortName() {
+  public @NonNls @NotNull String getShortName() {
     return "ConvertJavadoc";
   }
 
   @Override
-  @NotNull
-  public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, final boolean isOnTheFly) {
+  public @NotNull PsiElementVisitor buildVisitor(final @NotNull ProblemsHolder holder, final boolean isOnTheFly) {
     return new JavaElementVisitor() {
-      @Override public void visitDocTag(final PsiDocTag tag) {
+      @Override public void visitDocTag(final @NotNull PsiDocTag tag) {
         if (tag.getName().startsWith(TESTNG_PREFIX)) {
           holder.registerProblem(tag, TestngBundle.message("inspection.message.testng.javadoc.can.be.converted.to.annotations"), new ConvertJavadocQuickfix());
         }
@@ -60,14 +68,20 @@ public class ConvertJavadocInspection extends AbstractBaseJavaLocalInspectionToo
     private static final Logger LOG = Logger.getInstance(ConvertJavadocQuickfix.class);
 
     @Override
-    @NotNull
-    public String getFamilyName() {
+    public @NotNull String getFamilyName() {
       return TestngBundle.message("intention.family.name.convert.testng.javadoc.to.annotations");
     }
 
     @Override
     public boolean startInWriteAction() {
       return false;
+    }
+
+    @Override
+    public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull ProblemDescriptor previewDescriptor) {
+      final PsiDocTag tag = (PsiDocTag)previewDescriptor.getPsiElement();
+      doFix(project, tag);
+      return IntentionPreviewInfo.DIFF;
     }
 
     @Override
@@ -155,8 +169,7 @@ public class ConvertJavadocInspection extends AbstractBaseJavaLocalInspectionToo
         for (PsiElement element : docComment.getChildren()) {
           //if it's anything other than a doc token, then it must stay
           if (element instanceof PsiWhiteSpace) continue;
-          if (!(element instanceof PsiDocToken)) return;
-          PsiDocToken docToken = (PsiDocToken)element;
+          if (!(element instanceof PsiDocToken docToken)) return;
           if (docToken.getTokenType() == JavaDocTokenType.DOC_COMMENT_DATA && !docToken.getText().trim().isEmpty()) {
             return;
           }

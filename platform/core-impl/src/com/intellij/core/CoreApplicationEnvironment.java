@@ -1,13 +1,22 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.core;
 
 import com.intellij.DynamicBundle;
 import com.intellij.codeInsight.folding.CodeFoldingSettings;
-import com.intellij.concurrency.Job;
+import com.intellij.codeInsight.multiverse.CodeInsightContextProvider;
+import com.intellij.codeInsight.multiverse.MultiverseEnabler;
 import com.intellij.concurrency.JobLauncher;
-import com.intellij.ide.plugins.DisabledPluginsState;
+import com.intellij.ide.plugins.IdeaPluginDescriptorImpl;
+import com.intellij.ide.plugins.PluginDescriptorLoader;
+import com.intellij.ide.plugins.PluginEnabler;
 import com.intellij.ide.plugins.PluginManagerCore;
-import com.intellij.lang.*;
+import com.intellij.lang.DefaultASTFactory;
+import com.intellij.lang.DefaultASTFactoryImpl;
+import com.intellij.lang.Language;
+import com.intellij.lang.LanguageExtension;
+import com.intellij.lang.LanguageParserDefinitions;
+import com.intellij.lang.ParserDefinition;
+import com.intellij.lang.PsiBuilderFactory;
 import com.intellij.lang.impl.PsiBuilderFactoryImpl;
 import com.intellij.mock.MockApplication;
 import com.intellij.mock.MockFileDocumentManagerImpl;
@@ -18,11 +27,15 @@ import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.impl.CoreCommandProcessor;
 import com.intellij.openapi.editor.impl.DocumentImpl;
-import com.intellij.openapi.extensions.*;
+import com.intellij.openapi.extensions.ExtensionPoint;
+import com.intellij.openapi.extensions.ExtensionPointDescriptor;
+import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.extensions.ExtensionsArea;
+import com.intellij.openapi.extensions.impl.ExtensionsAreaImpl;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeExtension;
-import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.impl.CoreProgressManager;
 import com.intellij.openapi.util.ClassExtension;
@@ -41,35 +54,33 @@ import com.intellij.psi.PsiReferenceServiceImpl;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistryImpl;
 import com.intellij.psi.stubs.CoreStubTreeLoader;
+import com.intellij.psi.stubs.StubElementRegistryService;
+import com.intellij.psi.stubs.StubElementRegistryServiceImpl;
+import com.intellij.psi.stubs.StubElementRegistryServiceImplKt;
+import com.intellij.psi.stubs.StubRegistryExtension;
 import com.intellij.psi.stubs.StubTreeLoader;
-import com.intellij.util.Consumer;
 import com.intellij.util.KeyedLazyInstanceEP;
-import com.intellij.util.Processor;
 import com.intellij.util.graph.GraphAlgorithms;
 import com.intellij.util.graph.impl.GraphAlgorithmsImpl;
+import com.intellij.util.pico.DefaultPicoContainer;
+import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.picocontainer.MutablePicoContainer;
 
 import java.lang.reflect.Modifier;
 import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.List;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.Future;
 
-/**
- * @author yole
- */
+@Internal
 public class CoreApplicationEnvironment {
   private final CoreFileTypeRegistry myFileTypeRegistry;
-  protected final MockApplication myApplication;
+  protected final MockApplication application;
   private final CoreLocalFileSystem myLocalFileSystem;
-  @NotNull
-  protected final VirtualFileSystem myJarFileSystem;
+  protected final @NotNull VirtualFileSystem myJarFileSystem;
   private final VirtualFileSystem myJrtFileSystem;
-  @NotNull private final Disposable myParentDisposable;
+  private final @NotNull Disposable myParentDisposable;
   private final boolean myUnitTestMode;
 
   public CoreApplicationEnvironment(@NotNull Disposable parentDisposable) {
@@ -80,21 +91,19 @@ public class CoreApplicationEnvironment {
     myParentDisposable = parentDisposable;
     myUnitTestMode = unitTestMode;
 
-    DisabledPluginsState.dontLoadDisabledPlugins();
+    boolean wasIgnoredDisabledPlugins = PluginEnabler.HEADLESS.isIgnoredDisabledPlugins();
+    Disposer.register(parentDisposable, () -> PluginEnabler.HEADLESS.setIgnoredDisabledPlugins(wasIgnoredDisabledPlugins));
+    PluginEnabler.HEADLESS.setIgnoredDisabledPlugins(true);
 
+    application = createApplication(parentDisposable);
+    ApplicationManager.setApplication(application, parentDisposable);
     myFileTypeRegistry = new CoreFileTypeRegistry();
-
-    myApplication = createApplication(myParentDisposable);
-    ApplicationManager.setApplication(myApplication,
-                                      () -> myFileTypeRegistry,
-                                      myParentDisposable);
+    FileTypeRegistry.setInstanceSupplier(() -> myFileTypeRegistry, parentDisposable);
     myLocalFileSystem = createLocalFileSystem();
     myJarFileSystem = createJarFileSystem();
     myJrtFileSystem = createJrtFileSystem();
 
-    registerApplicationService(FileDocumentManager.class, new MockFileDocumentManagerImpl(charSequence -> {
-      return new DocumentImpl(charSequence);
-    }, null));
+    registerApplicationService(FileDocumentManager.class, new MockFileDocumentManagerImpl(null, DocumentImpl::new));
 
     registerApplicationExtensionPoint(new ExtensionPointName<>("com.intellij.virtualFileManagerListener"), VirtualFileManagerListener.class);
     List<VirtualFileSystem> fs = myJrtFileSystem != null
@@ -102,8 +111,11 @@ public class CoreApplicationEnvironment {
                              : Arrays.asList(myLocalFileSystem, myJarFileSystem);
     registerApplicationService(VirtualFileManager.class, new VirtualFileManagerImpl(fs));
 
-    //fake EP for cleaning resources after area disposing (otherwise KeyedExtensionCollector listener will be copied to the next area)
+    // fake EP for cleaning resources after area disposing (otherwise KeyedExtensionCollector listener will be copied to the next area)
     registerApplicationExtensionPoint(new ExtensionPointName<>("com.intellij.virtualFileSystem"), KeyedLazyInstanceEP.class);
+
+    registerApplicationExtensionPoint(new ExtensionPointName<>("com.intellij.multiverseEnabler"), MultiverseEnabler.class);
+    registerApplicationExtensionPoint(new ExtensionPointName<>("com.intellij.multiverse.codeInsightContextProvider"), CodeInsightContextProvider.class);
 
     registerApplicationService(EncodingManager.class, new CoreEncodingRegistry());
     registerApplicationService(VirtualFilePointerManager.class, createVirtualFilePointerManager());
@@ -118,22 +130,23 @@ public class CoreApplicationEnvironment {
     registerApplicationService(CommandProcessor.class, new CoreCommandProcessor());
     registerApplicationService(GraphAlgorithms.class, new GraphAlgorithmsImpl());
 
-    myApplication.registerService(ApplicationInfo.class, ApplicationInfoImpl.class);
+    registerApplicationExtensionPoint(StubElementRegistryServiceImplKt.STUB_REGISTRY_EP, StubRegistryExtension.class);
+    registerApplicationService(StubElementRegistryService.class, new StubElementRegistryServiceImpl(application.getCoroutineScope()));
+
+    application.registerService(ApplicationInfo.class, ApplicationInfoImpl.class);
 
     registerApplicationExtensionPoint(DynamicBundle.LanguageBundleEP.EP_NAME, DynamicBundle.LanguageBundleEP.class);
   }
 
   public <T> void registerApplicationService(@NotNull Class<T> serviceInterface, @NotNull T serviceImplementation) {
-    myApplication.registerService(serviceInterface, serviceImplementation);
+    application.registerService(serviceInterface, serviceImplementation);
   }
 
-  @NotNull
-  protected VirtualFilePointerManager createVirtualFilePointerManager() {
+  protected @NotNull VirtualFilePointerManager createVirtualFilePointerManager() {
     return new CoreVirtualFilePointerManager();
   }
 
-  @NotNull
-  protected MockApplication createApplication(@NotNull Disposable parentDisposable) {
+  protected @NotNull MockApplication createApplication(@NotNull Disposable parentDisposable) {
     return new MockApplication(parentDisposable) {
       @Override
       public boolean isUnitTestMode() {
@@ -142,68 +155,39 @@ public class CoreApplicationEnvironment {
     };
   }
 
-  @NotNull
-  protected JobLauncher createJobLauncher() {
-    return new JobLauncher() {
-      @Override
-      public <T> boolean invokeConcurrentlyUnderProgress(@NotNull List<? extends T> things,
-                                                         ProgressIndicator progress,
-                                                         boolean runInReadAction,
-                                                         boolean failFastOnAcquireReadAction,
-                                                         @NotNull Processor<? super T> thingProcessor) {
-        for (T thing : things) {
-          if (!thingProcessor.process(thing))
-            return false;
-        }
-        return true;
-      }
-
-      @NotNull
-      @Override
-      public Job<Void> submitToJobThread(@NotNull Runnable action, Consumer<? super Future<?>> onDoneCallback) {
-        action.run();
-        if (onDoneCallback != null) {
-          onDoneCallback.consume(CompletableFuture.completedFuture(null));
-        }
-        return Job.NULL_JOB;
-      }
-    };
+  protected @NotNull JobLauncher createJobLauncher() {
+    return new CoreJobLauncher();
   }
 
-  @NotNull
-  protected ProgressManager createProgressIndicatorProvider() {
+  protected @NotNull ProgressManager createProgressIndicatorProvider() {
     return new CoreProgressManager();
   }
 
-  @NotNull
-  protected VirtualFileSystem createJarFileSystem() {
+  protected @NotNull VirtualFileSystem createJarFileSystem() {
     return new CoreJarFileSystem();
   }
 
-  @NotNull
-  protected CoreLocalFileSystem createLocalFileSystem() {
+  protected @NotNull CoreLocalFileSystem createLocalFileSystem() {
     return new CoreLocalFileSystem();
   }
 
-  @Nullable
-  protected VirtualFileSystem createJrtFileSystem() {
+  protected @Nullable VirtualFileSystem createJrtFileSystem() {
     return null;
   }
 
-  @NotNull
-  public MockApplication getApplication() {
-    return myApplication;
+  public @NotNull MockApplication getApplication() {
+    return application;
   }
 
-  @NotNull
-  public Disposable getParentDisposable() {
+  public @NotNull Disposable getParentDisposable() {
     return myParentDisposable;
   }
 
+  @SuppressWarnings("unused")
   public <T> void registerApplicationComponent(@NotNull Class<T> interfaceClass, @NotNull T implementation) {
-    registerComponentInstance(myApplication.getPicoContainer(), interfaceClass, implementation);
+    registerComponentInstance(application.getPicoContainer(), interfaceClass, implementation);
     if (implementation instanceof Disposable) {
-      Disposer.register(myApplication, (Disposable)implementation);
+      Disposer.register(application, (Disposable)implementation);
     }
   }
 
@@ -215,7 +199,7 @@ public class CoreApplicationEnvironment {
     addExplicitExtension(LanguageParserDefinitions.INSTANCE, definition.getFileNodeType().getLanguage(), definition);
   }
 
-  public static <T> void registerComponentInstance(@NotNull MutablePicoContainer container, @NotNull Class<T> key, @NotNull T implementation) {
+  public static <T> void registerComponentInstance(@NotNull DefaultPicoContainer container, @NotNull Class<T> key, @NotNull T implementation) {
     container.unregisterComponent(key);
     container.registerComponentInstance(key, implementation);
   }
@@ -228,18 +212,17 @@ public class CoreApplicationEnvironment {
     addExplicitExtension(LanguageParserDefinitions.INSTANCE, language, parserDefinition);
   }
 
-  public <T> void addExplicitExtension(@NotNull final FileTypeExtension<T> instance, @NotNull final FileType fileType, @NotNull final T object) {
+  public <T> void addExplicitExtension(@NotNull FileTypeExtension<T> instance, @NotNull FileType fileType, @NotNull T object) {
     instance.addExplicitExtension(fileType, object, myParentDisposable);
   }
 
-  public <T> void addExplicitExtension(@NotNull final ClassExtension<T> instance, @NotNull final Class aClass, @NotNull final T object) {
+  public <T> void addExplicitExtension(@NotNull ClassExtension<T> instance, @NotNull Class<?> aClass, @NotNull T object) {
     instance.addExplicitExtension(aClass, object, myParentDisposable);
   }
 
-  public <T> void addExtension(@NotNull ExtensionPointName<T> name, @NotNull final T extension) {
-    final ExtensionPoint<T> extensionPoint = Extensions.getRootArea().getExtensionPoint(name);
+  public <T> void addExtension(@NotNull ExtensionPointName<T> name, @NotNull T extension) {
     //noinspection TestOnlyProblems
-    extensionPoint.registerExtension(extension, myParentDisposable);
+    ApplicationManager.getApplication().getExtensionArea().getExtensionPoint(name).registerExtension(extension, myParentDisposable);
   }
 
   public static <T> void registerExtensionPoint(@NotNull ExtensionsArea area,
@@ -248,59 +231,55 @@ public class CoreApplicationEnvironment {
     registerExtensionPoint(area, extensionPointName.getName(), aClass);
   }
 
-  public static <T> void registerExtensionPoint(@NotNull ExtensionsArea area,
-                                                @NotNull BaseExtensionPointName extensionPointName,
-                                                @NotNull Class<? extends T> aClass) {
-    registerExtensionPoint(area, extensionPointName.getName(), aClass);
-  }
-
   public static <T> void registerExtensionPoint(@NotNull ExtensionsArea area, @NotNull String name, @NotNull Class<? extends T> aClass) {
     registerExtensionPoint(area, name, aClass, false);
   }
 
-  public static <T> void registerDynamicExtensionPoint(@NotNull ExtensionsArea area, @NotNull String name, @NotNull Class<? extends T> aClass) {
-    registerExtensionPoint(area, name, aClass, true);
-  }
-
-  @SuppressWarnings("TestOnlyProblems")
-  private static <T> void registerExtensionPoint(@NotNull ExtensionsArea area, @NotNull String name, @NotNull Class<? extends T> aClass, boolean dymanic) {
+  private static <T> void registerExtensionPoint(@NotNull ExtensionsArea area,
+                                                 @NotNull String name,
+                                                 @NotNull Class<? extends T> aClass,
+                                                 boolean isDynamic) {
     if (!area.hasExtensionPoint(name)) {
       ExtensionPoint.Kind kind = aClass.isInterface() || Modifier.isAbstract(aClass.getModifiers()) ? ExtensionPoint.Kind.INTERFACE : ExtensionPoint.Kind.BEAN_CLASS;
-      if (dymanic) {
-        area.registerDynamicExtensionPoint(name, aClass.getName(), kind);
-      }
-      else {
-        area.registerExtensionPoint(name, aClass.getName(), kind);
-      }
+      //noinspection TestOnlyProblems
+      area.registerExtensionPoint(name, aClass.getName(), kind, isDynamic);
     }
   }
 
-  @SuppressWarnings("deprecation")
   public static <T> void registerApplicationExtensionPoint(@NotNull ExtensionPointName<T> extensionPointName, @NotNull Class<? extends T> aClass) {
-    registerExtensionPoint(Extensions.getRootArea(), extensionPointName, aClass);
+    registerExtensionPoint(ApplicationManager.getApplication().getExtensionArea(), extensionPointName.getName(), aClass);
   }
 
-  @SuppressWarnings("deprecation")
   public static <T> void registerApplicationDynamicExtensionPoint(@NotNull String extensionPointName, @NotNull Class<? extends T> aClass) {
-    registerDynamicExtensionPoint(Extensions.getRootArea(), extensionPointName, aClass);
+    registerExtensionPoint(ApplicationManager.getApplication().getExtensionArea(), extensionPointName, aClass, true);
   }
 
+  @SuppressWarnings("unused")
   public static void registerExtensionPointAndExtensions(@NotNull Path pluginRoot, @NotNull String fileName, @NotNull ExtensionsArea area) {
-    PluginManagerCore.registerExtensionPointAndExtensions(pluginRoot, fileName, area);
+    IdeaPluginDescriptorImpl descriptor = PluginDescriptorLoader.loadForCoreEnv(pluginRoot, fileName);
+    if (descriptor == null) {
+      PluginManagerCore.getLogger().error("Cannot load " + fileName + " from " + pluginRoot);
+      return;
+    }
+
+    List<ExtensionPointDescriptor> extensionPoints = descriptor.getAppContainerDescriptor().extensionPoints;
+    ExtensionsAreaImpl areaImpl = (ExtensionsAreaImpl)area;
+    if (!extensionPoints.isEmpty()) {
+      areaImpl.registerExtensionPoints(extensionPoints, descriptor);
+    }
+    areaImpl.registerExtensions(descriptor.getExtensions(), descriptor, null);
   }
 
-  @NotNull
-  public CoreLocalFileSystem getLocalFileSystem() {
+  public @NotNull CoreLocalFileSystem getLocalFileSystem() {
     return myLocalFileSystem;
   }
 
-  @NotNull
-  public VirtualFileSystem getJarFileSystem() {
+  public @NotNull VirtualFileSystem getJarFileSystem() {
     return myJarFileSystem;
   }
 
-  @Nullable
-  public VirtualFileSystem getJrtFileSystem() {
+  @SuppressWarnings("unused")
+  public @Nullable VirtualFileSystem getJrtFileSystem() {
     return myJrtFileSystem;
   }
 }

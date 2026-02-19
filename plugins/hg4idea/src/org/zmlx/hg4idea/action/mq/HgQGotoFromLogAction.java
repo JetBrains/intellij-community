@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.zmlx.hg4idea.action.mq;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -23,7 +9,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.Hash;
 import com.intellij.vcs.log.VcsFullCommitDetails;
-import com.intellij.vcs.log.VcsLog;
+import com.intellij.vcs.log.VcsLogCommitSelection;
 import com.intellij.vcs.log.VcsLogDataKeys;
 import org.jetbrains.annotations.NotNull;
 import org.zmlx.hg4idea.HgBundle;
@@ -36,7 +22,7 @@ import java.util.List;
 
 public class HgQGotoFromLogAction extends HgMqAppliedPatchAction {
 
-  protected void actionPerformed(@NotNull final HgRepository repository, @NotNull final VcsFullCommitDetails commit) {
+  protected void actionPerformed(final @NotNull HgRepository repository, final @NotNull VcsFullCommitDetails commit) {
     final Project project = repository.getProject();
     List<Hash> parents = commit.getParents();
     final Hash parentHash = parents.isEmpty() ? null : parents.get(0);
@@ -71,10 +57,12 @@ public class HgQGotoFromLogAction extends HgMqAppliedPatchAction {
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
-    final Project project = e.getRequiredData(CommonDataKeys.PROJECT);
-    VcsLog log = e.getRequiredData(VcsLogDataKeys.VCS_LOG);
+    Project project = e.getData(CommonDataKeys.PROJECT);
+    if (project == null) return;
+    VcsLogCommitSelection selection = e.getData(VcsLogDataKeys.VCS_LOG_COMMIT_SELECTION);
+    if (selection == null) return;
 
-    log.requestSelectedDetails(selectedDetails -> {
+    selection.requestFullDetails(selectedDetails -> {
       VcsFullCommitDetails fullCommitDetails = ContainerUtil.getFirstItem(selectedDetails);
 
       assert fullCommitDetails != null;

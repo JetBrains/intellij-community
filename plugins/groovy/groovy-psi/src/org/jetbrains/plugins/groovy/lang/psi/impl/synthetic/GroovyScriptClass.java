@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.psi.impl.synthetic;
 
 import com.intellij.navigation.ItemPresentation;
@@ -6,7 +6,14 @@ import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaElementVisitor;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiClassType;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.ResolveState;
+import com.intellij.psi.SyntheticElement;
 import com.intellij.psi.impl.ElementPresentationUtil;
 import com.intellij.psi.impl.JavaPsiImplementationHelper;
 import com.intellij.psi.scope.PsiScopeProcessor;
@@ -26,7 +33,7 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef.GrTypeDefin
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef.code.FileCodeMembersProvider;
 import org.jetbrains.plugins.groovy.lang.psi.util.GrClassImplUtil;
 
-import javax.swing.*;
+import javax.swing.Icon;
 
 import static org.jetbrains.plugins.groovy.lang.resolve.ResolveUtilKt.shouldProcessMethods;
 import static org.jetbrains.plugins.groovy.lang.resolve.ResolveUtilKt.shouldProcessProperties;
@@ -47,6 +54,9 @@ public final class GroovyScriptClass extends GrLightTypeDefinitionBase implement
     if (visitor instanceof JavaElementVisitor) {
       ((JavaElementVisitor)visitor).visitClass(this);
     }
+    else {
+      visitor.visitElement(this);
+    }
   }
 
   @Override
@@ -54,9 +64,8 @@ public final class GroovyScriptClass extends GrLightTypeDefinitionBase implement
     return new GroovyScriptClass(myFile);
   }
 
-  @NotNull
   @Override
-  public GroovyFile getContainingFile() {
+  public @NotNull GroovyFile getContainingFile() {
     return myFile;
   }
 
@@ -75,9 +84,8 @@ public final class GroovyScriptClass extends GrLightTypeDefinitionBase implement
     return myFile.isValid() && myFile.isScript();
   }
 
-  @NotNull
   @Override
-  public String getQualifiedName() {
+  public @NotNull String getQualifiedName() {
     return StringUtil.getQualifiedName(myFile.getPackageName(), getName());
   }
 
@@ -153,9 +161,7 @@ public final class GroovyScriptClass extends GrLightTypeDefinitionBase implement
   }
 
   @Override
-  @NotNull
-  @NlsSafe
-  public String getName() {
+  public @NotNull @NlsSafe String getName() {
     return FileUtilRt.getNameWithoutExtension(myFile.getName());
   }
 
@@ -166,8 +172,8 @@ public final class GroovyScriptClass extends GrLightTypeDefinitionBase implement
   }
 
   @Override
-  public boolean processDeclarations(@NotNull final PsiScopeProcessor processor,
-                                     @NotNull final ResolveState state,
+  public boolean processDeclarations(final @NotNull PsiScopeProcessor processor,
+                                     final @NotNull ResolveState state,
                                      @Nullable PsiElement lastParent,
                                      @NotNull PsiElement place) {
     if (shouldProcessMethods(processor) || shouldProcessProperties(processor)) {

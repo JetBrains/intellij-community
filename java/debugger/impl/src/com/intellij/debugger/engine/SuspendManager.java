@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.engine;
 
 import com.intellij.debugger.jdi.ThreadReferenceProxyImpl;
@@ -24,27 +10,44 @@ import java.util.List;
 
 public interface SuspendManager {
   @NotNull
-  SuspendContextImpl pushSuspendContext(EventSet eventSet);
+  SuspendContextImpl pushSuspendContext(@NotNull EventSet eventSet);
+
   @NotNull
   SuspendContextImpl pushSuspendContext(int suspendAll, int i);
 
-  void resume(SuspendContextImpl suspendContext);
+  void resume(@NotNull SuspendContextImpl suspendContext);
 
-  //replaces current context with new one at the same location and fires 'paused' event
-  void popFrame(SuspendContextImpl suspendContext);
+  /**
+   * Replaces current context with new one at the same location and fires 'paused' event.
+   */
+  void popFrame(@NotNull SuspendContextImpl suspendContext);
 
+  /**
+   * Get first of paused contexts or {@code null} if there are no ones.
+   */
   SuspendContextImpl getPausedContext();
-  boolean isFrozen(ThreadReferenceProxyImpl thread);
-  boolean isSuspended(ThreadReferenceProxyImpl thread) throws ObjectCollectedException;
 
-  void freezeThread(ThreadReferenceProxyImpl invokeThread);
-  void unfreezeThread(ThreadReferenceProxyImpl thread);
+  /**
+   * Get all paused contexts.
+   */
+  @NotNull
+  List<SuspendContextImpl> getPausedContexts();
 
-  void resumeThread(SuspendContextImpl suspendContext, @NotNull ThreadReferenceProxyImpl invokeThread);
-  void suspendThread(SuspendContextImpl suspendContext, ThreadReferenceProxyImpl invokeThread);
+  boolean isFrozen(@NotNull ThreadReferenceProxyImpl thread);
 
-  void voteResume(SuspendContextImpl suspendContext);
-  void voteSuspend(SuspendContextImpl suspendContext);
+  boolean isSuspended(@NotNull ThreadReferenceProxyImpl thread) throws ObjectCollectedException;
+
+  void freezeThread(@NotNull ThreadReferenceProxyImpl invokeThread);
+
+  void unfreezeThread(@NotNull ThreadReferenceProxyImpl thread);
+
+  void resumeThread(@NotNull SuspendContextImpl suspendContext, @NotNull ThreadReferenceProxyImpl invokeThread);
+
+  void suspendThread(@NotNull SuspendContextImpl suspendContext, @NotNull ThreadReferenceProxyImpl invokeThread);
+
+  void voteResume(@NotNull SuspendContextImpl suspendContext);
+
+  void voteSuspend(@NotNull SuspendContextImpl suspendContext);
 
   List<SuspendContextImpl> getEventContexts();
 }

@@ -1,0 +1,368 @@
+a:com.intellij.coverage.AbstractCoverageProjectViewNodeDecorator
+- com.intellij.ide.projectView.ProjectViewNodeDecorator
+- p:<init>():V
+- <init>(com.intellij.openapi.project.Project):V
+- ps:appendCoverageInfo(com.intellij.ui.ColoredTreeCellRenderer,java.lang.String):V
+- pf:getCoverageDataManager(com.intellij.openapi.project.Project):com.intellij.coverage.CoverageDataManager
+a:com.intellij.coverage.BaseCoverageAnnotator
+- com.intellij.coverage.CoverageAnnotator
+- <init>(com.intellij.openapi.project.Project):V
+- pa:createRenewRequest(com.intellij.coverage.CoverageSuitesBundle,com.intellij.coverage.CoverageDataManager):java.lang.Runnable
+- getProject():com.intellij.openapi.project.Project
+- onSuiteChosen(com.intellij.coverage.CoverageSuitesBundle):V
+c:com.intellij.coverage.BaseCoverageAnnotator$DirCoverageInfo
+- com.intellij.coverage.BaseCoverageAnnotator$FileCoverageInfo
+- coveredFilesCount:I
+- totalFilesCount:I
+- <init>():V
+c:com.intellij.coverage.BaseCoverageAnnotator$FileCoverageInfo
+- coveredLineCount:I
+- totalLineCount:I
+- <init>():V
+a:com.intellij.coverage.BaseCoverageSuite
+- com.intellij.coverage.CoverageSuite
+- com.intellij.openapi.util.JDOMExternalizable
+- p:<init>():V
+- <init>(java.lang.String,com.intellij.coverage.CoverageFileProvider,J,Z,Z,Z,com.intellij.coverage.CoverageRunner,com.intellij.openapi.project.Project):V
+- <init>(java.lang.String,com.intellij.openapi.project.Project,com.intellij.coverage.CoverageRunner,com.intellij.coverage.CoverageFileProvider,J):V
+- equals(java.lang.Object):Z
+- getConfiguration():com.intellij.execution.configurations.RunConfigurationBase
+- getCoverageData():com.intellij.rt.coverage.data.ProjectData
+- getCoverageData(com.intellij.coverage.CoverageDataManager):com.intellij.rt.coverage.data.ProjectData
+- getCoverageDataFileName():java.lang.String
+- getCoverageDataFileProvider():com.intellij.coverage.CoverageFileProvider
+- getLastCoverageTimeStamp():J
+- getPresentableName():java.lang.String
+- getProject():com.intellij.openapi.project.Project
+- getRunner():com.intellij.coverage.CoverageRunner
+- hashCode():I
+- isBranchCoverage():Z
+- isTrackTestFolders():Z
+- isValid():Z
+- p:loadProjectInfo():com.intellij.rt.coverage.data.ProjectData
+- readExternal(org.jdom.Element):V
+- setConfiguration(com.intellij.execution.configurations.RunConfigurationBase):V
+- setCoverageData(com.intellij.rt.coverage.data.ProjectData):V
+- writeExternal(org.jdom.Element):V
+com.intellij.coverage.CoverageAnnotator
+- getDirCoverageInformationString(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile,com.intellij.coverage.CoverageSuitesBundle,com.intellij.coverage.CoverageDataManager):java.lang.String
+- getDirCoverageInformationString(com.intellij.psi.PsiDirectory,com.intellij.coverage.CoverageSuitesBundle,com.intellij.coverage.CoverageDataManager):java.lang.String
+- getFileCoverageInformationString(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile,com.intellij.coverage.CoverageSuitesBundle,com.intellij.coverage.CoverageDataManager):java.lang.String
+- getFileCoverageInformationString(com.intellij.psi.PsiFile,com.intellij.coverage.CoverageSuitesBundle,com.intellij.coverage.CoverageDataManager):java.lang.String
+- a:onSuiteChosen(com.intellij.coverage.CoverageSuitesBundle):V
+- a:renewCoverageData(com.intellij.coverage.CoverageSuitesBundle,com.intellij.coverage.CoverageDataManager):V
+f:com.intellij.coverage.CoverageBundle
+- s:message(java.lang.String,java.lang.Object[]):java.lang.String
+- s:messagePointer(java.lang.String,java.lang.Object[]):java.util.function.Supplier
+a:com.intellij.coverage.CoverageDataManager
+- a:activeSuites():java.util.Collection
+- a:addCoverageSuite(com.intellij.execution.configurations.coverage.CoverageEnabledConfiguration):com.intellij.coverage.CoverageSuite
+- a:addCoverageSuite(java.lang.String,com.intellij.coverage.CoverageFileProvider,java.lang.String[],J,java.lang.String,com.intellij.coverage.CoverageRunner,Z,Z):com.intellij.coverage.CoverageSuite
+- f:addExternalCoverageSuite(java.io.File,com.intellij.coverage.CoverageRunner):com.intellij.coverage.CoverageSuite
+- a:addSuiteListener(com.intellij.coverage.CoverageSuiteListener,com.intellij.openapi.Disposable):V
+- a:attachToProcess(com.intellij.execution.process.ProcessHandler,com.intellij.execution.configurations.RunConfigurationBase,com.intellij.execution.configurations.RunnerSettings):V
+- a:chooseSuitesBundle(com.intellij.coverage.CoverageSuitesBundle):V
+- a:closeSuitesBundle(com.intellij.coverage.CoverageSuitesBundle):V
+- coverageDataCalculated(com.intellij.coverage.CoverageSuitesBundle):V
+- a:coverageGathered(com.intellij.coverage.CoverageSuite):V
+- a:doInReadActionIfProjectOpen(com.intellij.openapi.util.Computable):java.lang.Object
+- a:getCurrentSuitesBundle():com.intellij.coverage.CoverageSuitesBundle
+- s:getInstance(com.intellij.openapi.project.Project):com.intellij.coverage.CoverageDataManager
+- a:getSuites():com.intellij.coverage.CoverageSuite[]
+- a:processGatheredCoverage(com.intellij.execution.configurations.RunConfigurationBase,com.intellij.execution.configurations.RunnerSettings):V
+- a:removeCoverageSuite(com.intellij.coverage.CoverageSuite):V
+- a:triggerPresentationUpdate():V
+- a:unregisterCoverageSuite(com.intellij.coverage.CoverageSuite):V
+a:com.intellij.coverage.CoverageEngine
+- sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
+- <init>():V
+- acceptedByFilters(com.intellij.psi.PsiFile,com.intellij.coverage.CoverageSuitesBundle):Z
+- coverageEditorHighlightingApplicableTo(com.intellij.psi.PsiFile):Z
+- a:createCoverageEnabledConfiguration(com.intellij.execution.configurations.RunConfigurationBase):com.intellij.execution.configurations.coverage.CoverageEnabledConfiguration
+- createCoverageSuite(com.intellij.coverage.CoverageRunner,java.lang.String,com.intellij.coverage.CoverageFileProvider,com.intellij.execution.configurations.coverage.CoverageEnabledConfiguration):com.intellij.coverage.CoverageSuite
+- createCoverageSuite(com.intellij.coverage.CoverageRunner,java.lang.String,com.intellij.coverage.CoverageFileProvider,java.lang.String[],J,java.lang.String,Z,Z,Z,com.intellij.openapi.project.Project):com.intellij.coverage.CoverageSuite
+- F:createCoverageSuite(com.intellij.execution.configurations.coverage.CoverageEnabledConfiguration):com.intellij.coverage.CoverageSuite
+- createCoverageSuite(java.lang.String,com.intellij.openapi.project.Project,com.intellij.coverage.CoverageRunner,com.intellij.coverage.CoverageFileProvider,J):com.intellij.coverage.CoverageSuite
+- createCoverageSuite(java.lang.String,com.intellij.openapi.project.Project,com.intellij.coverage.CoverageRunner,com.intellij.coverage.CoverageFileProvider,J,com.intellij.execution.configurations.coverage.CoverageEnabledConfiguration):com.intellij.coverage.CoverageSuite
+- createCoverageViewExtension(com.intellij.openapi.project.Project,com.intellij.coverage.CoverageSuitesBundle):com.intellij.coverage.view.CoverageViewExtension
+- createCoverageViewExtension(com.intellij.openapi.project.Project,com.intellij.coverage.CoverageSuitesBundle,com.intellij.coverage.view.CoverageViewManager$StateBean):com.intellij.coverage.view.CoverageViewExtension
+- a:createEmptyCoverageSuite(com.intellij.coverage.CoverageRunner):com.intellij.coverage.CoverageSuite
+- generateReport(com.intellij.openapi.project.Project,com.intellij.openapi.actionSystem.DataContext,com.intellij.coverage.CoverageSuitesBundle):V
+- a:getCoverageAnnotator(com.intellij.openapi.project.Project):com.intellij.coverage.CoverageAnnotator
+- a:getPresentableText():java.lang.String
+- getQualifiedNames(com.intellij.psi.PsiFile):java.util.Set
+- a:isApplicableTo(com.intellij.execution.configurations.RunConfigurationBase):Z
+- isInLibraryClasses(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile):Z
+- isReportGenerationAvailable(com.intellij.openapi.project.Project,com.intellij.openapi.actionSystem.DataContext,com.intellij.coverage.CoverageSuitesBundle):Z
+c:com.intellij.coverage.CoverageExecutor
+- com.intellij.execution.Executor
+- sf:EXECUTOR_ID:java.lang.String
+- <init>():V
+- getActionName():java.lang.String
+- getContextActionId():java.lang.String
+- getDescription():java.lang.String
+- getDisabledIcon():javax.swing.Icon
+- getHelpId():java.lang.String
+- getIcon():javax.swing.Icon
+- getId():java.lang.String
+- getStartActionText():java.lang.String
+- getStartActionText(java.lang.String):java.lang.String
+- getToolWindowIcon():javax.swing.Icon
+- getToolWindowId():java.lang.String
+- isSupportedOnTarget():Z
+com.intellij.coverage.CoverageFileProvider
+- a:ensureFileExists():Z
+- a:getCoverageDataFilePath():java.lang.String
+- a:isValid():Z
+f:com.intellij.coverage.CoverageHelper
+- s:attachToProcess(com.intellij.execution.configurations.RunConfigurationBase,com.intellij.execution.process.ProcessHandler,com.intellij.execution.configurations.RunnerSettings):V
+- s:resetCoverageSuit(com.intellij.execution.configurations.RunConfigurationBase):V
+com.intellij.coverage.CoverageLoadErrorReporter
+- a:reportError(java.lang.Exception):V
+- a:reportError(java.lang.String):V
+- a:reportWarning(java.lang.Exception):V
+- a:reportWarning(java.lang.String,java.lang.Exception):V
+- bs:reportWarning$default(com.intellij.coverage.CoverageLoadErrorReporter,java.lang.String,java.lang.Exception,I,java.lang.Object):V
+a:com.intellij.coverage.CoverageLoadingResult
+- f:getProjectData():com.intellij.rt.coverage.data.ProjectData
+com.intellij.coverage.CoverageOptions
+- com.intellij.openapi.options.UnnamedConfigurable
+- sf:EP_NAME:com.intellij.openapi.extensions.ProjectExtensionPointName
+a:com.intellij.coverage.CoverageRunner
+- sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
+- <init>():V
+- a:acceptsCoverageEngine(com.intellij.coverage.CoverageEngine):Z
+- canBeLoaded(java.io.File):Z
+- a:getDataFileExtension():java.lang.String
+- getDataFileExtensions():java.lang.String[]
+- a:getId():java.lang.String
+- s:getInstance(java.lang.Class):com.intellij.coverage.CoverageRunner
+- a:getPresentableName():java.lang.String
+- loadCoverageData(java.io.File,com.intellij.coverage.CoverageSuite):com.intellij.rt.coverage.data.ProjectData
+- p:loadCoverageData(java.io.File,com.intellij.coverage.CoverageSuite,com.intellij.coverage.CoverageLoadErrorReporter):com.intellij.coverage.CoverageLoadingResult
+- f:loadCoverageDataWithReporting(java.io.File,com.intellij.coverage.CoverageSuite):com.intellij.rt.coverage.data.ProjectData
+c:com.intellij.coverage.CoverageRunnerData
+- com.intellij.execution.configurations.RunnerSettings
+- <init>():V
+- readExternal(org.jdom.Element):V
+- writeExternal(org.jdom.Element):V
+com.intellij.coverage.CoverageSuite
+- com.intellij.openapi.util.JDOMExternalizable
+- canRemove():Z
+- deleteCachedCoverageData():V
+- a:getCoverageData(com.intellij.coverage.CoverageDataManager):com.intellij.rt.coverage.data.ProjectData
+- a:getCoverageDataFileName():java.lang.String
+- a:getCoverageDataFileProvider():com.intellij.coverage.CoverageFileProvider
+- a:getCoverageEngine():com.intellij.coverage.CoverageEngine
+- a:getLastCoverageTimeStamp():J
+- a:getPresentableName():java.lang.String
+- a:getProject():com.intellij.openapi.project.Project
+- a:getRunner():com.intellij.coverage.CoverageRunner
+- a:isBranchCoverage():Z
+- a:isTrackTestFolders():Z
+- a:isValid():Z
+- a:setCoverageData(com.intellij.rt.coverage.data.ProjectData):V
+com.intellij.coverage.CoverageSuiteListener
+- afterSuiteChosen():V
+- beforeSuiteChosen():V
+- coverageDataCalculated(com.intellij.coverage.CoverageSuitesBundle):V
+- coverageGathered(com.intellij.coverage.CoverageSuite):V
+c:com.intellij.coverage.CoverageSuitesBundle
+- <init>(com.intellij.coverage.CoverageSuite):V
+- <init>(com.intellij.coverage.CoverageSuite[]):V
+- contains(com.intellij.coverage.CoverageSuite):Z
+- getAnnotator(com.intellij.openapi.project.Project):com.intellij.coverage.CoverageAnnotator
+- getCoverageData():com.intellij.rt.coverage.data.ProjectData
+- getCoverageEngine():com.intellij.coverage.CoverageEngine
+- getLastCoverageTimeStamp():J
+- getPresentableName():java.lang.String
+- getProject():com.intellij.openapi.project.Project
+- getRunConfiguration():com.intellij.execution.configurations.RunConfigurationBase
+- getSuites():com.intellij.coverage.CoverageSuite[]
+- isBranchCoverage():Z
+- isTrackTestFolders():Z
+- isValid():Z
+- setCoverageData(com.intellij.rt.coverage.data.ProjectData):V
+- setShouldActivateToolWindow(Z):V
+- shouldActivateToolWindow():Z
+f:com.intellij.coverage.DefaultCoverageFileProvider
+- com.intellij.coverage.CoverageFileProvider
+- <init>(java.io.File):V
+- <init>(java.io.File,java.lang.String):V
+- <init>(java.lang.String):V
+- ensureFileExists():Z
+- getCoverageDataFilePath():java.lang.String
+- getSourceProvider():java.lang.String
+- isValid():Z
+f:com.intellij.coverage.FailedCoverageLoadingResult
+- com.intellij.coverage.CoverageLoadingResult
+- <init>(java.lang.Exception,Z):V
+- <init>(java.lang.Exception,Z,com.intellij.rt.coverage.data.ProjectData):V
+- <init>(java.lang.String):V
+- <init>(java.lang.String,java.lang.Exception):V
+- <init>(java.lang.String,java.lang.Exception,com.intellij.rt.coverage.data.ProjectData):V
+- f:getException():java.lang.Exception
+- f:getReason():java.lang.String
+c:com.intellij.coverage.RemappingCoverageAnnotator
+- com.intellij.coverage.SimpleCoverageAnnotator
+- <init>(com.intellij.openapi.project.Project):V
+- p:annotate(com.intellij.openapi.vfs.VirtualFile,com.intellij.coverage.CoverageSuitesBundle,com.intellij.coverage.CoverageDataManager,com.intellij.rt.coverage.data.ProjectData,com.intellij.openapi.project.Project,com.intellij.coverage.SimpleCoverageAnnotator$CoverageAnnotatorRunner):V
+a:com.intellij.coverage.SimpleCoverageAnnotator
+- com.intellij.coverage.BaseCoverageAnnotator
+- <init>(com.intellij.openapi.project.Project):V
+- p:annotate(com.intellij.openapi.vfs.VirtualFile,com.intellij.coverage.CoverageSuitesBundle,com.intellij.coverage.CoverageDataManager,com.intellij.rt.coverage.data.ProjectData,com.intellij.openapi.project.Project,com.intellij.coverage.SimpleCoverageAnnotator$CoverageAnnotatorRunner):V
+- ps:calcCoveragePercentage(com.intellij.coverage.BaseCoverageAnnotator$FileCoverageInfo):I
+- p:collectBaseFileCoverage(com.intellij.openapi.vfs.VirtualFile,com.intellij.coverage.SimpleCoverageAnnotator$CoverageAnnotatorRunner,com.intellij.rt.coverage.data.ProjectData,java.util.Map):com.intellij.coverage.BaseCoverageAnnotator$FileCoverageInfo
+- p:collectFolderCoverage(com.intellij.openapi.vfs.VirtualFile,com.intellij.coverage.CoverageDataManager,com.intellij.coverage.SimpleCoverageAnnotator$CoverageAnnotatorRunner,com.intellij.rt.coverage.data.ProjectData,Z,com.intellij.openapi.roots.ProjectFileIndex,com.intellij.coverage.CoverageEngine,java.util.Set,java.util.Map):com.intellij.coverage.BaseCoverageAnnotator$DirCoverageInfo
+- p:createRenewRequest(com.intellij.coverage.CoverageSuitesBundle,com.intellij.coverage.CoverageDataManager):java.lang.Runnable
+- p:fileInfoForCoveredFile(com.intellij.rt.coverage.data.ClassData):com.intellij.coverage.BaseCoverageAnnotator$FileCoverageInfo
+- p:fillInfoForUncoveredFile(java.io.File):com.intellij.coverage.BaseCoverageAnnotator$FileCoverageInfo
+- ps:getClassData(java.lang.String,com.intellij.rt.coverage.data.ProjectData,java.util.Map):com.intellij.rt.coverage.data.ClassData
+- p:getDirCoverageInfo(com.intellij.openapi.vfs.VirtualFile,com.intellij.coverage.CoverageSuitesBundle):com.intellij.coverage.BaseCoverageAnnotator$DirCoverageInfo
+- getDirCoverageInformationString(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile,com.intellij.coverage.CoverageSuitesBundle,com.intellij.coverage.CoverageDataManager):java.lang.String
+- getFileCoverageInformationString(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile,com.intellij.coverage.CoverageSuitesBundle,com.intellij.coverage.CoverageDataManager):java.lang.String
+- s:getFilePath(java.lang.String):java.lang.String
+- p:getFilesCoverageInformationString(com.intellij.coverage.BaseCoverageAnnotator$DirCoverageInfo):java.lang.String
+- p:getLinesCoverageInformationString(com.intellij.coverage.BaseCoverageAnnotator$FileCoverageInfo):java.lang.String
+- ps:normalizeFilePath(java.lang.String):java.lang.String
+- onSuiteChosen(com.intellij.coverage.CoverageSuitesBundle):V
+- p:processLineData(com.intellij.coverage.BaseCoverageAnnotator$FileCoverageInfo,com.intellij.rt.coverage.data.LineData):V
+- p:shouldCollectCoverageInsideLibraryDirs():Z
+p:com.intellij.coverage.SimpleCoverageAnnotator$CoverageAnnotatorRunner
+- a:annotateFile(java.lang.String,com.intellij.coverage.BaseCoverageAnnotator$FileCoverageInfo):V
+- a:annotateSourceDirectory(java.lang.String,com.intellij.coverage.BaseCoverageAnnotator$DirCoverageInfo):V
+- a:annotateTestDirectory(java.lang.String,com.intellij.coverage.BaseCoverageAnnotator$DirCoverageInfo):V
+f:com.intellij.coverage.SuccessCoverageLoadingResult
+- com.intellij.coverage.CoverageLoadingResult
+- <init>(com.intellij.rt.coverage.data.ProjectData):V
+c:com.intellij.coverage.lcov.LcovCoverageReport
+- <init>():V
+- getInfo():java.util.Map
+- mergeFileReport(java.lang.String,java.util.List):V
+c:com.intellij.coverage.lcov.LcovCoverageReport$LineHits
+- java.lang.Comparable
+- <init>(I,I,java.lang.String):V
+- addHits(I):V
+- compareTo(com.intellij.coverage.lcov.LcovCoverageReport$LineHits):I
+- getFunctionName():java.lang.String
+- getHits():I
+- getLineNumber():I
+f:com.intellij.coverage.lcov.LcovSerializationUtils
+- <init>():V
+- s:convertToProjectData(com.intellij.coverage.lcov.LcovCoverageReport,java.util.function.Function):com.intellij.rt.coverage.data.ProjectData
+- s:readLCOV(java.util.List):com.intellij.coverage.lcov.LcovCoverageReport
+c:com.intellij.coverage.view.CoverageListNode
+- com.intellij.ide.util.treeView.AbstractTreeNode
+- pf:myBundle:com.intellij.coverage.CoverageSuitesBundle
+- pf:myStateBean:com.intellij.coverage.view.CoverageViewManager$StateBean
+- <init>(com.intellij.openapi.project.Project,com.intellij.psi.PsiNamedElement,com.intellij.coverage.CoverageSuitesBundle):V
+- <init>(com.intellij.openapi.project.Project,com.intellij.psi.PsiNamedElement,com.intellij.coverage.CoverageSuitesBundle,com.intellij.coverage.view.CoverageViewManager$StateBean):V
+- <init>(com.intellij.openapi.project.Project,com.intellij.psi.PsiNamedElement,com.intellij.coverage.CoverageSuitesBundle,com.intellij.coverage.view.CoverageViewManager$StateBean,Z):V
+- canNavigate():Z
+- canNavigateToSource():Z
+- p:computeBackgroundColor():java.awt.Color
+- getChildren():java.util.List
+- getFileStatus():com.intellij.openapi.vcs.FileStatus
+- getWeight():I
+- navigate(Z):V
+- p:shouldPostprocess():Z
+- p:update(com.intellij.ide.projectView.PresentationData):V
+c:com.intellij.coverage.view.CoverageListRootNode
+- com.intellij.coverage.view.CoverageListNode
+- <init>(com.intellij.openapi.project.Project,com.intellij.psi.PsiNamedElement,com.intellij.coverage.CoverageSuitesBundle):V
+- <init>(com.intellij.openapi.project.Project,com.intellij.psi.PsiNamedElement,com.intellij.coverage.CoverageSuitesBundle,com.intellij.coverage.view.CoverageViewManager$StateBean):V
+c:com.intellij.coverage.view.CoverageView
+- com.intellij.util.ui.components.BorderLayoutPanel
+- com.intellij.openapi.Disposable
+- com.intellij.openapi.actionSystem.UiDataProvider
+- <init>(com.intellij.openapi.project.Project,com.intellij.coverage.CoverageSuitesBundle):V
+- dispose():V
+- uiDataSnapshot(com.intellij.openapi.actionSystem.DataSink):V
+a:com.intellij.coverage.view.CoverageViewExtension
+- pf:myCoverageDataManager:com.intellij.coverage.CoverageDataManager
+- pf:myProject:com.intellij.openapi.project.Project
+- pf:myStateBean:com.intellij.coverage.view.CoverageViewManager$StateBean
+- pf:mySuitesBundle:com.intellij.coverage.CoverageSuitesBundle
+- <init>(com.intellij.openapi.project.Project,com.intellij.coverage.CoverageSuitesBundle):V
+- <init>(com.intellij.openapi.project.Project,com.intellij.coverage.CoverageSuitesBundle,com.intellij.coverage.view.CoverageViewManager$StateBean):V
+- canSelectInCoverageView(java.lang.Object):Z
+- a:createColumnInfos():com.intellij.util.ui.ColumnInfo[]
+- a:createRootNode():com.intellij.ide.util.treeView.AbstractTreeNode
+- a:getChildrenNodes(com.intellij.ide.util.treeView.AbstractTreeNode):java.util.List
+- getElementsCapitalisedName():java.lang.String
+- getElementsName():java.lang.String
+- a:getParentElement(com.intellij.psi.PsiElement):com.intellij.psi.PsiElement
+- a:getPercentage(I,com.intellij.ide.util.treeView.AbstractTreeNode):java.lang.String
+- getSummaryForNode(com.intellij.ide.util.treeView.AbstractTreeNode):java.lang.String
+- getSummaryForRootNode(com.intellij.ide.util.treeView.AbstractTreeNode):java.lang.String
+f:com.intellij.coverage.view.CoverageViewManager
+- com.intellij.openapi.Disposable$Default
+- com.intellij.openapi.components.PersistentStateComponent
+- sf:Companion:com.intellij.coverage.view.CoverageViewManager$Companion
+- sf:TOOLWINDOW_ID:java.lang.String
+- <init>(com.intellij.openapi.project.Project):V
+- f:activateToolwindow(com.intellij.coverage.view.CoverageView):V
+- f:activateToolwindow(com.intellij.coverage.view.CoverageView,Z):V
+- f:closeView(com.intellij.coverage.CoverageSuitesBundle):V
+- f:createView(com.intellij.coverage.CoverageSuitesBundle,Z):V
+- sf:getInstance(com.intellij.openapi.project.Project):com.intellij.coverage.view.CoverageViewManager
+- sf:getInstanceIfCreated(com.intellij.openapi.project.Project):com.intellij.coverage.view.CoverageViewManager
+- f:getOpenedSuite():com.intellij.coverage.CoverageSuitesBundle
+- getState():com.intellij.coverage.view.CoverageViewManager$StateBean
+- f:getStateBean():com.intellij.coverage.view.CoverageViewManager$StateBean
+- f:getToolwindow(com.intellij.coverage.CoverageSuitesBundle):com.intellij.coverage.view.CoverageView
+- f:getView(com.intellij.coverage.CoverageSuitesBundle):com.intellij.coverage.view.CoverageView
+- loadState(com.intellij.coverage.view.CoverageViewManager$StateBean):V
+f:com.intellij.coverage.view.CoverageViewManager$Companion
+- f:getInstance(com.intellij.openapi.project.Project):com.intellij.coverage.view.CoverageViewManager
+- f:getInstanceIfCreated(com.intellij.openapi.project.Project):com.intellij.coverage.view.CoverageViewManager
+f:com.intellij.coverage.view.CoverageViewManager$StateBean
+c:com.intellij.coverage.view.DirectoryCoverageViewExtension
+- com.intellij.coverage.view.CoverageViewExtension
+- pf:myAnnotator:com.intellij.coverage.CoverageAnnotator
+- <init>(com.intellij.openapi.project.Project,com.intellij.coverage.CoverageAnnotator,com.intellij.coverage.CoverageSuitesBundle):V
+- <init>(com.intellij.openapi.project.Project,com.intellij.coverage.CoverageAnnotator,com.intellij.coverage.CoverageSuitesBundle,com.intellij.coverage.view.CoverageViewManager$StateBean):V
+- createColumnInfos():com.intellij.util.ui.ColumnInfo[]
+- createRootNode():com.intellij.ide.util.treeView.AbstractTreeNode
+- p:extractFile(com.intellij.ide.util.treeView.AbstractTreeNode):com.intellij.openapi.vfs.VirtualFile
+- getChildrenNodes(com.intellij.ide.util.treeView.AbstractTreeNode):java.util.List
+- getParentElement(com.intellij.psi.PsiElement):com.intellij.psi.PsiElement
+- getPercentage(I,com.intellij.ide.util.treeView.AbstractTreeNode):java.lang.String
+f:com.intellij.coverage.view.ElementColumnInfo
+- com.intellij.util.ui.ColumnInfo
+- <init>():V
+- getComparator():java.util.Comparator
+- valueOf(com.intellij.ide.util.treeView.NodeDescriptor):java.lang.String
+f:com.intellij.coverage.view.PercentageCoverageColumnInfo
+- com.intellij.util.ui.ColumnInfo
+- <init>(I,java.lang.String,com.intellij.coverage.CoverageSuitesBundle):V
+- getComparator():java.util.Comparator
+- valueOf(com.intellij.ide.util.treeView.NodeDescriptor):java.lang.String
+a:com.intellij.execution.configurations.coverage.CoverageEnabledConfiguration
+- com.intellij.openapi.util.JDOMExternalizable
+- sf:COVERAGE_KEY:com.intellij.openapi.util.Key
+- <init>(com.intellij.execution.configurations.RunConfigurationBase):V
+- <init>(com.intellij.execution.configurations.RunConfigurationBase,com.intellij.coverage.CoverageRunner):V
+- p:coverageFileNameSeparator():java.lang.String
+- p:createCoverageFile():java.lang.String
+- createFileProvider():com.intellij.coverage.CoverageFileProvider
+- createSuiteName():java.lang.String
+- createTimestamp():J
+- getConfiguration():com.intellij.execution.configurations.RunConfigurationBase
+- getCoverageFilePath():java.lang.String
+- getCurrentCoverageSuite():com.intellij.coverage.CoverageSuite
+- getName():java.lang.String
+- s:getOrCreate(com.intellij.execution.configurations.RunConfigurationBase):com.intellij.execution.configurations.coverage.CoverageEnabledConfiguration
+- s:getOrCreateIfApplicable(com.intellij.execution.configurations.RunConfigurationBase):com.intellij.execution.configurations.coverage.CoverageEnabledConfiguration
+- s:isApplicableTo(com.intellij.execution.configurations.RunConfigurationBase):Z
+- isBranchCoverageEnabled():Z
+- isCoverageEnabled():Z
+- isTrackPerTestCoverage():Z
+- isTrackTestFolders():Z
+- readExternal(org.jdom.Element):V
+- setBranchCoverage(Z):V
+- setCoverageEnabled(Z):V
+- setCoverageRunner(com.intellij.coverage.CoverageRunner):V
+- setCurrentCoverageSuite(com.intellij.coverage.CoverageSuite):V
+- setTrackTestFolders(Z):V
+- writeExternal(org.jdom.Element):V

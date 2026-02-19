@@ -1,38 +1,30 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diff.impl;
 
 import com.intellij.CommonBundle;
 import com.intellij.diff.chains.DiffRequestProducer;
 import com.intellij.diff.chains.DiffRequestProducerException;
-import com.intellij.diff.requests.*;
+import com.intellij.diff.lang.DiffLanguage;
+import com.intellij.diff.requests.ContentDiffRequest;
+import com.intellij.diff.requests.DiffRequest;
+import com.intellij.diff.requests.ErrorDiffRequest;
+import com.intellij.diff.requests.LoadingDiffRequest;
+import com.intellij.diff.requests.NoDiffRequest;
+import com.intellij.diff.requests.OperationCanceledDiffRequest;
 import com.intellij.diff.tools.util.SoftHardCacheMap;
 import com.intellij.diff.util.DiffTaskQueue;
 import com.intellij.diff.util.DiffUserDataKeys;
 import com.intellij.diff.util.DiffUserDataKeysEx.ScrollToPolicy;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.util.ProgressWindow;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.UserDataHolder;
+import com.intellij.ui.progress.ProgressUIUtil;
+import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import org.jetbrains.annotations.Nls;
@@ -40,14 +32,18 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
+import java.util.Objects;
 
 public abstract class CacheDiffRequestProcessor<T> extends DiffRequestProcessor {
   private static final Logger LOG = Logger.getInstance(CacheDiffRequestProcessor.class);
 
-  @NotNull private final SoftHardCacheMap<T, DiffRequest> myRequestCache =
+  private final @NotNull SoftHardCacheMap<T, DiffRequest> myRequestCache =
     new SoftHardCacheMap<>(5, 5);
 
-  @NotNull private final DiffTaskQueue myQueue = new DiffTaskQueue();
+  private final @NotNull DiffTaskQueue myQueue = new DiffTaskQueue();
+
+  private @Nullable T myQueuedProvider = null;
+  private boolean myValidateQueuedProvider = false;
 
   public CacheDiffRequestProcessor(@Nullable Project project) {
     super(project);
@@ -65,15 +61,12 @@ public abstract class CacheDiffRequestProcessor<T> extends DiffRequestProcessor 
   // Abstract
   //
 
-  @Nls
-  @Nullable
-  protected abstract String getRequestName(@NotNull T provider);
+  protected abstract @Nls @Nullable String getRequestName(@NotNull T provider);
 
   protected abstract T getCurrentRequestProvider();
 
-  @NotNull
   @RequiresBackgroundThread
-  protected abstract DiffRequest loadRequest(@NotNull T provider, @NotNull ProgressIndicator indicator)
+  protected abstract @NotNull DiffRequest loadRequest(@NotNull T provider, @NotNull ProgressIndicator indicator)
     throws ProcessCanceledException, DiffRequestProducerException;
 
   //
@@ -87,52 +80,87 @@ public abstract class CacheDiffRequestProcessor<T> extends DiffRequestProcessor 
 
   @Override
   @RequiresEdt
-  public void updateRequest(final boolean force, @Nullable final ScrollToPolicy scrollToChangePolicy) {
+  public void updateRequest(final boolean force, final @Nullable ScrollToPolicy scrollToChangePolicy) {
     updateRequest(force, true, scrollToChangePolicy);
   }
 
   @RequiresEdt
-  public void updateRequest(final boolean force, boolean useCache, @Nullable final ScrollToPolicy scrollToChangePolicy) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+  public void updateRequest(final boolean force, boolean useCache, final @Nullable ScrollToPolicy scrollToChangePolicy) {
+    ThreadingAssertions.assertEventDispatchThread();
     if (isDisposed()) return;
-    myQueue.abort();
 
     final T requestProvider = getCurrentRequestProvider();
     if (requestProvider == null) {
-      applyRequest(NoDiffRequest.INSTANCE, force, scrollToChangePolicy);
+      myQueue.abort();
+      finishUpdate(NoDiffRequest.INSTANCE, force, scrollToChangePolicy);
       return;
     }
 
     DiffRequest cachedRequest = useCache ? loadRequestFast(requestProvider) : null;
     if (cachedRequest != null) {
-      applyRequest(cachedRequest, force, scrollToChangePolicy);
+      myQueue.abort();
+      finishUpdate(cachedRequest, force, scrollToChangePolicy);
       return;
     }
+
+    if (useCache && !force && Objects.equals(myQueuedProvider, requestProvider)) {
+      // Let the ongoing computation to finish - high chance, it will be up-to-date with our request.
+      // Schedule double-check in case 'loadRequestFast' implements additional validation.
+      myValidateQueuedProvider = true;
+      return;
+    }
+
+    myQueuedProvider = requestProvider;
+    myValidateQueuedProvider = false;
 
     myQueue.executeAndTryWait(
       indicator -> {
         final DiffRequest request = doLoadRequest(requestProvider, indicator);
-        return () -> {
-          myRequestCache.put(requestProvider, request);
-          applyRequest(request, force, scrollToChangePolicy);
-        };
+        if (request instanceof ContentDiffRequest contentDiffRequest) {
+          contentDiffRequest.getContents().forEach(content -> DiffLanguage.computeAndCacheLanguage(content, getProject()));
+        }
+        return () -> finishRequestLoading(request, force, scrollToChangePolicy, requestProvider);
       },
       () -> applyRequest(new LoadingDiffRequest(getRequestName(requestProvider)), force, scrollToChangePolicy),
       getFastLoadingTimeMillis()
     );
   }
 
-  protected int getFastLoadingTimeMillis() {
-    return ProgressWindow.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS;
+  @RequiresEdt
+  private void finishRequestLoading(@NotNull DiffRequest request,
+                                    boolean force,
+                                    @Nullable ScrollToPolicy scrollToChangePolicy,
+                                    @NotNull T requestProvider) {
+    boolean shouldValidate = myValidateQueuedProvider;
+
+    myRequestCache.put(requestProvider, request);
+    finishUpdate(request, force, scrollToChangePolicy);
+
+    if (shouldValidate) {
+      updateRequest();
+    }
   }
 
-  @Nullable
-  protected DiffRequest loadRequestFast(@NotNull T provider) {
+  @RequiresEdt
+  private void finishUpdate(@NotNull DiffRequest request, boolean force, @Nullable ScrollToPolicy scrollToChangePolicy) {
+    myQueuedProvider = null;
+    myValidateQueuedProvider = false;
+    applyRequest(request, force, scrollToChangePolicy);
+  }
+
+  protected long getFastLoadingTimeMillis() {
+    return ProgressUIUtil.DEFAULT_PROGRESS_DELAY_MILLIS;
+  }
+
+  /**
+   * NB: Method may be overridden to check if cached request is up-to-date, or needs to be updated.
+   * Ex: if a reasonable `T.equals()` cannot be implemented.
+   */
+  protected @Nullable DiffRequest loadRequestFast(@NotNull T provider) {
     return myRequestCache.get(provider);
   }
 
-  @NotNull
-  private DiffRequest doLoadRequest(@NotNull T provider, @NotNull ProgressIndicator indicator) {
+  private @NotNull DiffRequest doLoadRequest(@NotNull T provider, @NotNull ProgressIndicator indicator) {
     String name = getRequestName(provider);
     try {
       return loadRequest(provider, indicator);
@@ -168,7 +196,7 @@ public abstract class CacheDiffRequestProcessor<T> extends DiffRequestProcessor 
   //
 
   protected class ReloadRequestAction extends DumbAwareAction {
-    @NotNull private final T myProducer;
+    private final @NotNull T myProducer;
 
     public ReloadRequestAction(@NotNull T provider) {
       super(CommonBundle.message("action.text.reload"), null, AllIcons.Actions.Refresh);
@@ -182,7 +210,7 @@ public abstract class CacheDiffRequestProcessor<T> extends DiffRequestProcessor 
     }
   }
 
-  public static abstract class Simple extends CacheDiffRequestProcessor<DiffRequestProducer> {
+  public abstract static class Simple extends CacheDiffRequestProcessor<DiffRequestProducer> {
     protected Simple(@Nullable Project project) {
       super(project);
     }
@@ -195,15 +223,13 @@ public abstract class CacheDiffRequestProcessor<T> extends DiffRequestProcessor 
       super(project, context);
     }
 
-    @Nullable
     @Override
-    protected String getRequestName(@NotNull DiffRequestProducer provider) {
+    protected @Nullable String getRequestName(@NotNull DiffRequestProducer provider) {
       return provider.getName();
     }
 
-    @NotNull
     @Override
-    protected DiffRequest loadRequest(@NotNull DiffRequestProducer provider, @NotNull ProgressIndicator indicator)
+    protected @NotNull DiffRequest loadRequest(@NotNull DiffRequestProducer provider, @NotNull ProgressIndicator indicator)
       throws ProcessCanceledException, DiffRequestProducerException {
       return provider.process(getContext(), indicator);
     }

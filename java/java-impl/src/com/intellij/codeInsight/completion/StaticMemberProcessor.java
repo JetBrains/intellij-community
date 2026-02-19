@@ -1,7 +1,7 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion;
 
-import com.intellij.codeInsight.daemon.impl.quickfix.StaticImportMemberFix;
+import com.intellij.codeInsight.JavaProjectCodeInsightSettings;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.java.JavaBundle;
 import com.intellij.openapi.actionSystem.IdeActions;
@@ -9,67 +9,92 @@ import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiMember;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiResolveHelper;
 import com.intellij.psi.impl.java.stubs.index.JavaStaticMemberNameIndex;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.PairConsumer;
 import com.intellij.util.containers.ContainerUtil;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
-/**
-* @author peter
-*/
 public abstract class StaticMemberProcessor {
   private final Set<PsiClass> myStaticImportedClasses = new HashSet<>();
+  private final Set<PsiMember> myStaticImportedMembers = new HashSet<>();
   private final PsiElement myPosition;
   private final Project myProject;
   private final PsiResolveHelper myResolveHelper;
   private boolean myHintShown;
   private final boolean myPackagedContext;
-
-  public StaticMemberProcessor(final PsiElement position) {
+  private final JavaProjectCodeInsightSettings codeInsightSettings;
+  protected StaticMemberProcessor(@NotNull PsiElement position) {
     myPosition = position;
     myProject = myPosition.getProject();
     myResolveHelper = JavaPsiFacade.getInstance(myProject).getResolveHelper();
     myPackagedContext = JavaCompletionUtil.inSomePackage(position);
+    codeInsightSettings = JavaProjectCodeInsightSettings.getSettings(position.getProject());
   }
 
-  public void importMembersOf(@Nullable PsiClass psiClass) {
-    ContainerUtil.addIfNotNull(myStaticImportedClasses, psiClass);
+  public void importMembersOf(@NotNull PsiClass psiClass) {
+    myStaticImportedClasses.add(psiClass);
   }
 
-  public void processStaticMethodsGlobally(final PrefixMatcher matcher, Consumer<? super LookupElement> consumer) {
-    final GlobalSearchScope scope = myPosition.getResolveScope();
+  public void importMember(@NotNull PsiMember member) {
+    myStaticImportedMembers.add(member);
+  }
+
+  public void processStaticMethodsGlobally(@NotNull PrefixMatcher matcher, @NotNull Consumer<? super LookupElement> consumer) {
+    GlobalSearchScope scope = myPosition.getResolveScope();
     Collection<String> memberNames = JavaStaticMemberNameIndex.getInstance().getAllKeys(myProject);
-    for (final String memberName : matcher.sortMatching(memberNames)) {
-      Set<PsiClass> classes = new THashSet<>();
-      for (final PsiMember member : JavaStaticMemberNameIndex.getInstance().getStaticMembers(memberName, myProject, scope)) {
-        if (isStaticallyImportable(member)) {
-          final PsiClass containingClass = member.getContainingClass();
-          assert containingClass != null : member.getName() + "; " + member + "; " + member.getClass();
+    for (String memberName : matcher.sortMatching(memberNames)) {
+      Set<PsiClass> classes = new HashSet<>();
+      for (PsiMember member : JavaStaticMemberNameIndex.getInstance().getStaticMembers(memberName, myProject, scope)) {
+        processStaticMember(consumer, member, classes);
+      }
+    }
+  }
 
-          if (JavaCompletionUtil.isSourceLevelAccessible(myPosition, containingClass, myPackagedContext)) {
-            if (member instanceof PsiMethod && !classes.add(containingClass)) continue;
+  protected void processStaticMember(@NotNull Consumer<? super LookupElement> consumer, PsiMember member, Set<PsiClass> classesToSkip) {
+    if (isStaticallyImportable(member)) {
+      PsiClass containingClass = member.getContainingClass();
+      assert containingClass != null : member.getName() + "; " + member + "; " + member.getClass();
 
-            final boolean shouldImport = myStaticImportedClasses.contains(containingClass);
-            showHint(shouldImport);
-            LookupElement item = member instanceof PsiMethod ? createItemWithOverloads((PsiMethod)member, containingClass, shouldImport) :
-                                 member instanceof PsiField ? createLookupElement(member, containingClass, shouldImport) :
-                                 null;
-            if (item != null) consumer.consume(item);
-          }
+      if (JavaCompletionUtil.isSourceLevelAccessible(myPosition, containingClass, myPackagedContext)) {
+        if (member instanceof PsiMethod && !classesToSkip.add(containingClass)) return;
+        if(!additionalFilter(member)) return;
+        boolean shouldImport = myStaticImportedClasses.contains(containingClass) || myStaticImportedMembers.contains(member);
+        if (!codeInsightSettings.isStaticAutoImportName(containingClass.getQualifiedName() + "." + member.getName())) {
+          showHint(shouldImport);
+        }
+        LookupElement item = member instanceof PsiMethod ? createItemWithOverloads((PsiMethod)member, containingClass, shouldImport) :
+                             member instanceof PsiField ? createLookupElement(member, containingClass, shouldImport) :
+                             null;
+        if (item != null) {
+          consumer.consume(item);
         }
       }
     }
   }
 
-  @Nullable
-  private LookupElement createItemWithOverloads(PsiMethod method, PsiClass containingClass, boolean shouldImport) {
+  protected boolean additionalFilter(PsiMember member) {
+    return true;
+  }
+
+  private @Nullable LookupElement createItemWithOverloads(@NotNull PsiMethod method, @NotNull PsiClass containingClass, boolean shouldImport) {
     List<PsiMethod> overloads = ContainerUtil.findAll(containingClass.findMethodsByName(method.getName(), true),
                                                       this::isStaticallyImportable);
 
@@ -80,14 +105,15 @@ public abstract class StaticMemberProcessor {
     }
 
     if (overloads.get(0).getParameterList().isEmpty()) {
-      overloads.add(0, overloads.remove(1));
+      overloads = new ArrayList<>(overloads);
+      ContainerUtil.swapElements(overloads, 0, 1);
     }
     return createLookupElement(overloads, containingClass, shouldImport);
   }
 
   private void showHint(boolean shouldImport) {
     if (!myHintShown && !shouldImport) {
-      final String shortcut = KeymapUtil.getFirstKeyboardShortcutText(IdeActions.ACTION_SHOW_INTENTION_ACTIONS);
+      String shortcut = KeymapUtil.getFirstKeyboardShortcutText(IdeActions.ACTION_SHOW_INTENTION_ACTIONS);
       if (StringUtil.isNotEmpty(shortcut)) {
         CompletionService.getCompletionService().setAdvertisementText(
           JavaBundle.message("to.import.a.method.statically.press.0", shortcut));
@@ -96,17 +122,17 @@ public abstract class StaticMemberProcessor {
     }
   }
 
-  public List<PsiMember> processMembersOfRegisteredClasses(Condition<? super String> nameCondition, PairConsumer<? super PsiMember, ? super PsiClass> consumer) {
-    final ArrayList<PsiMember> result = new ArrayList<>();
-    for (final PsiClass psiClass : myStaticImportedClasses) {
-      for (final PsiMethod method : psiClass.getAllMethods()) {
+  public void processMembersOfRegisteredClasses(@NotNull Condition<? super String> nameCondition, @NotNull PairConsumer<? super PsiMember, ? super PsiClass> consumer) {
+    for (PsiClass psiClass : myStaticImportedClasses) {
+      for (PsiMethod method : psiClass.getAllMethods()) {
         if (nameCondition.value(method.getName())) {
           if (isStaticallyImportable(method)) {
             consumer.consume(method, psiClass);
           }
         }
       }
-      for (final PsiField field : psiClass.getAllFields()) {
+
+      for (PsiField field : psiClass.getAllFields()) {
         if (nameCondition.value(field. getName())) {
           if (isStaticallyImportable(field)) {
             consumer.consume(field, psiClass);
@@ -114,24 +140,35 @@ public abstract class StaticMemberProcessor {
         }
       }
     }
-    return result;
+
+    for (PsiMember member : myStaticImportedMembers) {
+      if (nameCondition.value(member. getName())) {
+        if (isStaticallyImportable(member)) {
+          consumer.consume(member, member.getContainingClass());
+        }
+      }
+    }
   }
 
-
-  private boolean isStaticallyImportable(final PsiMember member) {
-    return member.hasModifierProperty(PsiModifier.STATIC) && isAccessible(member) && !StaticImportMemberFix.isExcluded(member);
+  protected boolean isStaticallyImportable(@NotNull PsiMember member) {
+    return member.hasModifierProperty(PsiModifier.STATIC) && isAccessible(member) && !isExcluded(member);
   }
+
+  private static boolean isExcluded(@NotNull PsiMember method) {
+    String name = PsiUtil.getMemberQualifiedName(method);
+    return name != null && JavaProjectCodeInsightSettings.getSettings(method.getProject()).isExcluded(name);
+  }
+
 
   public PsiElement getPosition() {
     return myPosition;
   }
 
-  protected boolean isAccessible(PsiMember member) {
+  protected boolean isAccessible(@NotNull PsiMember member) {
     return myResolveHelper.isAccessible(member, myPosition, null);
   }
 
-  @Nullable
-  protected abstract LookupElement createLookupElement(@NotNull PsiMember member, @NotNull PsiClass containingClass, boolean shouldImport);
+  protected abstract @Nullable LookupElement createLookupElement(@NotNull PsiMember member, @NotNull PsiClass containingClass, boolean shouldImport);
 
   protected abstract LookupElement createLookupElement(@NotNull List<? extends PsiMethod> overloads, @NotNull PsiClass containingClass, boolean shouldImport);
 }

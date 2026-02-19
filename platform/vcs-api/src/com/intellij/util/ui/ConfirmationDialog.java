@@ -1,7 +1,8 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.ui;
 
 import com.intellij.CommonBundle;
+import com.intellij.ide.IdeCoreBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsActions.ActionText;
 import com.intellij.openapi.util.NlsContexts;
@@ -9,11 +10,10 @@ import com.intellij.openapi.util.NlsContexts.Checkbox;
 import com.intellij.openapi.util.NlsContexts.DialogMessage;
 import com.intellij.openapi.util.NlsContexts.DialogTitle;
 import com.intellij.openapi.vcs.VcsShowConfirmationOption;
-import com.intellij.ui.UIBundle;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.Icon;
 
 public class ConfirmationDialog extends OptionsMessageDialog {
   private final VcsShowConfirmationOption myOption;
@@ -38,12 +38,7 @@ public class ConfirmationDialog extends OptionsMessageDialog {
                                                @Nullable @ActionText String cancelActionName) {
     if (option.getValue() == VcsShowConfirmationOption.Value.DO_NOTHING_SILENTLY) return false;
     final ConfirmationDialog dialog = new ConfirmationDialog(project, message, title, icon, option, okActionName, cancelActionName);
-    if (!option.isPersistent()) {
-      dialog.setDoNotAskOption(null);
-    }
-    else {
-      dialog.setDoNotShowAgainMessage(UIBundle.message("dialog.options.do.not.ask"));
-    }
+    dialog.setDoNotShowAgainMessage(IdeCoreBundle.message("dialog.options.do.not.ask"));
     return dialog.showAndGet();
   }
 
@@ -74,9 +69,8 @@ public class ConfirmationDialog extends OptionsMessageDialog {
     myCheckBoxDoNotShowDialog.setText(doNotShowAgainMessage);
   }
 
-  @NotNull
   @Override
-  protected String getDoNotShowMessage() {
+  protected @NotNull String getDoNotShowMessage() {
     return myDoNotShowAgainMessage == null ? super.getDoNotShowMessage() : myDoNotShowAgainMessage;
   }
 
@@ -96,15 +90,22 @@ public class ConfirmationDialog extends OptionsMessageDialog {
   }
 
   @Override
+  protected boolean canBeHidden() {
+    return myOption.isPersistent();
+  }
+
+  @Override
   protected void setToBeShown(boolean value, boolean onOk) {
     final VcsShowConfirmationOption.Value optionValue;
 
     if (value) {
       optionValue = VcsShowConfirmationOption.Value.SHOW_CONFIRMATION;
-    } else {
+    }
+    else {
       if (onOk) {
         optionValue = VcsShowConfirmationOption.Value.DO_ACTION_SILENTLY;
-      } else {
+      }
+      else {
         optionValue = VcsShowConfirmationOption.Value.DO_NOTHING_SILENTLY;
       }
     }

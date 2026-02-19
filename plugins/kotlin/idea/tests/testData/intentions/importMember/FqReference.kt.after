@@ -1,0 +1,11 @@
+import java.util.ArrayList
+
+// INTENTION_TEXT: "Add import for 'java.util.ArrayList'"
+// WITH_STDLIB
+
+fun test() {
+    val myList = <caret>ArrayList<Int>()
+    val otherList = ArrayList<String>()
+}
+
+// IGNORE_K1

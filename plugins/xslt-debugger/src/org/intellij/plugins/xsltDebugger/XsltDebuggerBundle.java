@@ -11,24 +11,20 @@ import java.util.function.Supplier;
 
 /**
  * (c) 2020 Silent Forest AB
- * created: 06 August 2020
  */
-public class XsltDebuggerBundle extends DynamicBundle {
-  @NonNls private static final String BUNDLE = "messages.XsltDebuggerBundle";
-  private static final XsltDebuggerBundle INSTANCE = new XsltDebuggerBundle();
+public final class XsltDebuggerBundle {
+  private static final @NonNls String BUNDLE = "messages.XsltDebuggerBundle";
+  private static final DynamicBundle INSTANCE = new DynamicBundle(XsltDebuggerBundle.class, BUNDLE);
 
   private XsltDebuggerBundle() {
-    super(BUNDLE);
   }
 
-  @NotNull
-  public static @Nls String message(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, Object @NotNull ... params) {
+  public static @NotNull @Nls String message(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, Object @NotNull ... params) {
     return INSTANCE.getMessage(key, params);
   }
 
-  @NotNull
-  public static Supplier<@Nls String> messagePointer(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key,
-                                                     Object @NotNull ... params) {
+  public static @NotNull Supplier<@Nls String> messagePointer(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key,
+                                                              Object @NotNull ... params) {
     return INSTANCE.getLazyMessage(key, params);
   }
 }

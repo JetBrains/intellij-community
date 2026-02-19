@@ -1,103 +1,86 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins;
 
 import com.intellij.CommonBundle;
 import com.intellij.core.CoreBundle;
+import com.intellij.diagnostic.LoadingState;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.plugins.marketplace.MarketplacePluginDownloadService;
-import com.intellij.ide.startup.StartupActionScriptManager;
-import com.intellij.ide.util.PropertiesComponent;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.ide.plugins.marketplace.PluginSignatureChecker;
+import com.intellij.ide.plugins.marketplace.statistics.PluginManagerUsageCollector;
+import com.intellij.ide.plugins.marketplace.statistics.enums.InstallationSourceEnum;
+import com.intellij.ide.plugins.newui.PluginManagerSession;
+import com.intellij.ide.plugins.newui.PluginManagerSessionService;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.extensions.PluginId;
-import com.intellij.openapi.fileChooser.FileChooser;
-import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.Task;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ex.MessagesEx;
-import com.intellij.openapi.updateSettings.impl.UpdateSettings;
-import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.io.FileUtilRt;
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.io.NioFiles;
+import com.intellij.openapi.util.registry.RegistryManager;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.VfsUtil;
-import com.intellij.openapi.vfs.VfsUtilCore;
-import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.SystemProperties;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.Decompressor;
+import com.intellij.util.io.zip.JBZipFile;
+import com.intellij.util.ui.IoErrorText;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
-import java.io.File;
+import javax.swing.JComponent;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
+import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
-import java.util.*;
+import java.util.Set;
 import java.util.function.Consumer;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipFile;
 
-/**
- * @author stathik
- */
+import static com.intellij.ide.plugins.BrokenPluginFileKt.isBrokenPlugin;
+import static com.intellij.ide.startup.StartupActionScriptManager.ActionCommand;
+import static com.intellij.ide.startup.StartupActionScriptManager.CopyCommand;
+import static com.intellij.ide.startup.StartupActionScriptManager.DeleteCommand;
+import static com.intellij.ide.startup.StartupActionScriptManager.UnzipCommand;
+import static com.intellij.ide.startup.StartupActionScriptManager.addActionCommands;
+import static com.intellij.ide.startup.StartupActionScriptManager.addActionCommandsToBeginning;
+
 public final class PluginInstaller {
   private static final Logger LOG = Logger.getInstance(PluginInstaller.class);
+  private static final boolean DROP_DISABLED_FLAG_OF_REINSTALLED_PLUGINS =
+    SystemProperties.getBooleanProperty("plugins.drop-disabled-flag-of-uninstalled-plugins", true);
 
   public static final String UNKNOWN_HOST_MARKER = "__unknown_repository__";
 
   static final Object ourLock = new Object();
-  private static final String PLUGINS_PRESELECTION_PATH = "plugins.preselection.path";
 
   private PluginInstaller() { }
-
-  public static boolean prepareToInstall(List<PluginNode> pluginsToInstall,
-                                         List<? extends IdeaPluginDescriptor> customOrAllPlugins,
-                                         boolean allowInstallWithoutRestart,
-                                         PluginManagerMain.PluginEnabler pluginEnabler,
-                                         Runnable onSuccess,
-                                         @NotNull ProgressIndicator indicator) {
-    //TODO: `PluginInstallOperation` expects only `customPlugins`, but it can take `allPlugins` too
-    PluginInstallOperation operation = new PluginInstallOperation(pluginsToInstall, customOrAllPlugins, pluginEnabler, indicator);
-    operation.setAllowInstallWithoutRestart(allowInstallWithoutRestart);
-    operation.run();
-    boolean success = operation.isSuccess();
-    if (success) {
-      ApplicationManager.getApplication().invokeLater(() -> {
-        if (allowInstallWithoutRestart) {
-          for (PendingDynamicPluginInstall install : operation.getPendingDynamicPluginInstalls()) {
-            installAndLoadDynamicPlugin(install.getFile(), null, install.getPluginDescriptor());
-          }
-        }
-        if (onSuccess != null) {
-          onSuccess.run();
-        }
-      });
-    }
-    return success;
-  }
 
   /**
    * @return true if restart is needed
    */
-  public static boolean prepareToUninstall(@NotNull IdeaPluginDescriptor pluginDescriptor) throws IOException {
+  @ApiStatus.Internal
+  public static boolean prepareToUninstall(@NotNull IdeaPluginDescriptorImpl pluginDescriptor) throws IOException {
     synchronized (ourLock) {
       if (PluginManagerCore.isPluginInstalled(pluginDescriptor.getPluginId())) {
         if (pluginDescriptor.isBundled()) {
-          LOG.error("Plugin is bundled: " + pluginDescriptor.getPluginId());
+          throw new IllegalArgumentException("Plugin is bundled: " + pluginDescriptor.getPluginId());
         }
         else {
-          boolean needRestart = !DynamicPlugins.allowLoadUnloadWithoutRestart((IdeaPluginDescriptorImpl)pluginDescriptor);
+          var needRestart = pluginDescriptor.isEnabled() && !DynamicPlugins.allowLoadUnloadWithoutRestart(pluginDescriptor);
           if (needRestart) {
             uninstallAfterRestart(pluginDescriptor);
           }
-
           PluginStateManager.fireState(pluginDescriptor, false);
           return needRestart;
         }
@@ -106,22 +89,44 @@ public final class PluginInstaller {
     return false;
   }
 
-  private static void uninstallAfterRestart(IdeaPluginDescriptor pluginDescriptor) throws IOException {
-    StartupActionScriptManager.addActionCommand(new StartupActionScriptManager.DeleteCommand(pluginDescriptor.getPluginPath()));
+  @ApiStatus.Internal
+  public static void uninstallAfterRestart(@NotNull IdeaPluginDescriptor pluginDescriptor) throws IOException {
+    if (pluginDescriptor.isBundled()) {
+      throw new IllegalArgumentException("Plugin is bundled: " + pluginDescriptor.getPluginId());
+    }
+    LOG.debug("Scheduling uninstallation of plugin " + pluginDescriptor + " after restart");
+    // Make sure this method does not interfere with installAfterRestart by adding the DeleteCommand to the beginning of the script.
+    // This way plugin installation always takes place after plugin uninstallation.
+    addActionCommandsToBeginning(List.of(new DeleteCommand(pluginDescriptor.getPluginPath())));
   }
 
-  public static boolean uninstallDynamicPlugin(@Nullable JComponent parentComponent, IdeaPluginDescriptor pluginDescriptor, boolean isUpdate) {
-    DynamicPlugins.UnloadPluginOptions options = new DynamicPlugins.UnloadPluginOptions()
-      .withUpdate(isUpdate)
-      .withWaitForClassloaderUnload(true);
+  @ApiStatus.Internal
+  public static boolean unloadDynamicPlugin(
+    @Nullable JComponent parentComponent,
+    @NotNull PluginMainDescriptor pluginDescriptor,
+    boolean isUpdate
+  ) {
+    var options = new DynamicPlugins.UnloadPluginOptions().withDisable(false).withWaitForClassloaderUnload(true).withUpdate(isUpdate);
+    return parentComponent != null ?
+           DynamicPlugins.INSTANCE.unloadPluginWithProgress(null, parentComponent, pluginDescriptor, options) :
+           DynamicPlugins.INSTANCE.unloadPlugin(pluginDescriptor, options);
+  }
 
-    boolean uninstalledWithoutRestart = parentComponent != null
-      ? DynamicPlugins.unloadPluginWithProgress(null, parentComponent, (IdeaPluginDescriptorImpl)pluginDescriptor, options)
-      : DynamicPlugins.unloadPlugin((IdeaPluginDescriptorImpl)pluginDescriptor, options);
+  @ApiStatus.Internal
+  public static boolean uninstallDynamicPlugin(
+    @Nullable JComponent parentComponent,
+    @NotNull PluginMainDescriptor pluginDescriptor,
+    boolean isUpdate
+  ) {
+    if (pluginDescriptor.isBundled()) {
+      throw new IllegalArgumentException("Plugin is bundled: " + pluginDescriptor.getPluginId());
+    }
 
+    var uninstalledWithoutRestart = !pluginDescriptor.isEnabled() || unloadDynamicPlugin(parentComponent, pluginDescriptor, isUpdate);
     if (uninstalledWithoutRestart) {
       try {
-        FileUtil.delete(pluginDescriptor.getPluginPath());
+        LOG.debug("Deleting dynamic plugin from disk: " + pluginDescriptor.getPluginPath());
+        NioFiles.deleteRecursively(pluginDescriptor.getPluginPath());
       }
       catch (IOException e) {
         LOG.info("Failed to delete jar of dynamic plugin", e);
@@ -140,89 +145,95 @@ public final class PluginInstaller {
     return uninstalledWithoutRestart;
   }
 
-  /**
-   * @deprecated Use {@link #installAfterRestart(File, boolean, Path, IdeaPluginDescriptor)}
-   */
-  @Deprecated
-  public static void installAfterRestart(@NotNull File sourceFile,
-                                         boolean deleteSourceFile,
-                                         @Nullable File existingPlugin,
-                                         @NotNull IdeaPluginDescriptor descriptor) throws IOException {
-
+  @ApiStatus.Internal
+  public static void installAfterRestartAndKeepIfNecessary(
+    @NotNull IdeaPluginDescriptor newDescriptor,
+    @NotNull Path newPluginPath,
+    @Nullable Path oldPluginPath
+  ) throws IOException {
+    installAfterRestart(newDescriptor, newPluginPath, oldPluginPath, !keepArchive());
   }
 
-  public static void installAfterRestart(@NotNull Path sourceFile,
-                                         boolean deleteSourceFile,
-                                         @Nullable Path existingPlugin,
-                                         @NotNull IdeaPluginDescriptor descriptor) throws IOException {
-    List<StartupActionScriptManager.ActionCommand> commands = new ArrayList<>();
+  @ApiStatus.Internal
+  public static void installAfterRestart(
+    @NotNull IdeaPluginDescriptor descriptor,
+    @NotNull Path sourceFile,
+    @Nullable Path existingPlugin,
+    boolean deleteSourceFile
+  ) throws IOException {
+    LOG.debug("Scheduling installation of plugin " + descriptor + " after restart");
+    var commands = new ArrayList<ActionCommand>();
 
     if (existingPlugin != null) {
-      commands.add(new StartupActionScriptManager.DeleteCommand(existingPlugin));
+      commands.add(new DeleteCommand(existingPlugin));
     }
 
-    Path pluginsPath = Paths.get(PathManager.getPluginsPath());
+    var pluginsPath = getPluginsPath();
     if (sourceFile.getFileName().toString().endsWith(".jar")) {
-      commands.add(new StartupActionScriptManager.CopyCommand(sourceFile, pluginsPath.resolve(sourceFile.getFileName())));
+      commands.add(new CopyCommand(sourceFile, pluginsPath.resolve(sourceFile.getFileName())));
     }
     else {
       // drops stale directory
-      commands.add(new StartupActionScriptManager.DeleteCommand(pluginsPath.resolve(rootEntryName(sourceFile))));
-      commands.add(new StartupActionScriptManager.UnzipCommand(sourceFile, pluginsPath));
+      commands.add(new DeleteCommand(pluginsPath.resolve(rootEntryName(sourceFile))));
+      commands.add(new UnzipCommand(sourceFile, pluginsPath));
     }
 
     if (deleteSourceFile) {
-      commands.add(new StartupActionScriptManager.DeleteCommand(sourceFile));
+      commands.add(new DeleteCommand(sourceFile));
     }
 
-    StartupActionScriptManager.addActionCommands(commands);
+    addActionCommands(commands);
 
     PluginStateManager.fireState(descriptor, true);
   }
 
-  private static @Nullable Path installWithoutRestart(@NotNull Path sourceFile, IdeaPluginDescriptorImpl descriptor, Component parent) {
-    Ref<Throwable> ref = new Ref<>();
-    Ref<Path> refTarget = new Ref<>();
-    String pluginName = descriptor.getName();
-    ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
-      try {
-        refTarget.set(unpackPlugin(sourceFile, Paths.get(PathManager.getPluginsPath())));
-      }
-      catch (Throwable e) {
-        LOG.warn("Plugin " + descriptor + " failed to install without restart. " + e.getMessage(), e);
-        ref.set(e);
-      }
-    }, IdeBundle.message("progress.title.installing.plugin", pluginName), false, null, parent instanceof JComponent ? (JComponent)parent : null);
-    Throwable exception = ref.get();
+  private static @Nullable Path installWithoutRestart(Path sourceFile, IdeaPluginDescriptorImpl descriptor, @Nullable JComponent parent) {
+    Path result;
+    try {
+      @SuppressWarnings("UsagesOfObsoleteApi")
+      Task.WithResult<Path, IOException> task =
+        new Task.WithResult<>(null, parent, IdeBundle.message("progress.title.installing.plugin", descriptor.getName()), false) {
+          @Override
+          protected Path compute(@NotNull ProgressIndicator indicator) throws IOException {
+            return unpackPlugin(sourceFile, getPluginsPath());
+          }
+        };
+      result = ProgressManager.getInstance().run(task);
+    }
+    catch (Throwable throwable) {
+      LOG.warn("Plugin " + descriptor + " failed to install without restart. " + throwable.getMessage(), throwable);
+      result = null;
+    }
     PluginStateManager.fireState(descriptor, true);
-    return exception != null ? null : refTarget.get();
+    return result;
   }
 
   public static @NotNull Path unpackPlugin(@NotNull Path sourceFile, @NotNull Path targetPath) throws IOException {
+    LOG.debug("Unpacking " + sourceFile + " to " + targetPath);
     Path target;
     if (sourceFile.getFileName().toString().endsWith(".jar")) {
-      target = targetPath.resolve(sourceFile.getFileName());
-      FileUtilRt.copy(sourceFile.toFile(), target.toFile());
+      target = targetPath.resolve(sourceFile.getFileName().toString());
+      NioFiles.createDirectories(targetPath);
+      Files.copy(sourceFile, target, StandardCopyOption.REPLACE_EXISTING);
     }
     else {
       target = targetPath.resolve(rootEntryName(sourceFile));
-      FileUtilRt.delete(target.toFile());
-      new Decompressor.Zip(sourceFile).extract(targetPath);
+      NioFiles.deleteRecursively(target);
+      new Decompressor.Zip(sourceFile).withZipExtensions().extract(targetPath);
     }
     return target;
   }
 
   public static String rootEntryName(@NotNull Path zip) throws IOException {
-    try (ZipFile zipFile = new ZipFile(zip.toFile())) {
-      Enumeration<? extends ZipEntry> entries = zipFile.entries();
-      while (entries.hasMoreElements()) {
-        ZipEntry zipEntry = entries.nextElement();
+    try (var zipFile = new JBZipFile(zip)) {
+      for (var zipEntry : zipFile.getEntries()) {
         // we do not necessarily get a separate entry for the subdirectory when the file
-        // in the ZIP archive is placed in a subdirectory, so we need to check if the slash
-        // is found anywhere in the path
-        String name = zipEntry.getName();
-        int i = name.indexOf('/');
-        if (i > 0) return name.substring(0, i);
+        // in the ZIP archive is placed in a subdirectory, so we need to check if the slash is found anywhere in the path
+        var name = zipEntry.getName();
+        var i = name.indexOf('/');
+        if (i > 0) {
+          return name.substring(0, i);
+        }
       }
     }
 
@@ -233,172 +244,265 @@ public final class PluginInstaller {
     PluginStateManager.addStateListener(listener);
   }
 
-  public static boolean installFromDisk(@NotNull InstalledPluginsTableModel model,
-                                        @NotNull Path file,
-                                        @NotNull Consumer<? super PluginInstallCallbackData> callback,
-                                        @Nullable Component parent) {
+  @RequiresEdt
+  static void installFromDisk(
+    @NotNull InstalledPluginsTableModel model,
+    @NotNull PluginEnabler pluginEnabler,
+    @NotNull Path file,
+    @Nullable Project project,
+    @Nullable JComponent parent,
+    @NotNull Consumer<? super PluginInstallCallbackData> callback
+  ) {
     try {
-      IdeaPluginDescriptorImpl pluginDescriptor = PluginDescriptorLoader.loadDescriptorFromArtifact(file, null);
+      var pluginDescriptor = ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
+        return PluginDescriptorLoader.loadDescriptorFromArtifact(file, null);
+      }, IdeBundle.message("action.InstallFromDiskAction.progress.text"), true, project);
+
       if (pluginDescriptor == null) {
-        MessagesEx.showErrorDialog(parent, IdeBundle.message("dialog.message.fail.to.load.plugin.descriptor.from.file", file.getFileName().toString()), CommonBundle.getErrorTitle());
-        return false;
+        MessagesEx.showErrorDialog(parent, IdeBundle.message("dialog.message.fail.to.load.plugin.descriptor.from.file", file.getFileName()),
+                                   CommonBundle.getErrorTitle());
+        return;
+      }
+
+      if (!PluginManagerMain.checkThirdPartyPluginsAllowed(List.of(pluginDescriptor))) {
+        return;
+      }
+
+      if (!PluginManagementPolicy.getInstance().canInstallPlugin(pluginDescriptor)) {
+        var message = IdeBundle.message("dialog.message.plugin.is.not.allowed", pluginDescriptor.getName());
+        MessagesEx.showWarningDialog(parent, message, IdeBundle.message("dialog.title.install.plugin"));
+        return;
       }
 
       InstalledPluginsState ourState = InstalledPluginsState.getInstance();
-
       if (ourState.wasInstalled(pluginDescriptor.getPluginId())) {
-        String message = IdeBundle.message("dialog.message.plugin.was.already.installed", pluginDescriptor.getName());
+        var message = IdeBundle.message("dialog.message.plugin.was.already.installed", pluginDescriptor.getName());
         MessagesEx.showWarningDialog(parent, message, IdeBundle.message("dialog.title.install.plugin"));
-        return false;
+        return;
       }
 
-      PluginLoadingError error = PluginManagerCore.checkBuildNumberCompatibility(pluginDescriptor, PluginManagerCore.getBuildNumber());
+      var error = PluginManagerCore.checkBuildNumberCompatibility(pluginDescriptor, PluginManagerCore.getBuildNumber());
       if (error != null) {
         MessagesEx.showErrorDialog(parent, error.getDetailedMessage(), CommonBundle.getErrorTitle());
-        return false;
+        return;
       }
-      if (PluginManagerCore.isBrokenPlugin(pluginDescriptor)) {
-        String message = CoreBundle.message("plugin.loading.error.long.marked.as.broken", pluginDescriptor.getName(), pluginDescriptor.getVersion());
+      if (isBrokenPlugin(pluginDescriptor)) {
+        var message =
+          CoreBundle.message("plugin.loading.error.long.marked.as.broken", pluginDescriptor.getName(), pluginDescriptor.getVersion());
         MessagesEx.showErrorDialog(parent, message, CommonBundle.getErrorTitle());
-        return false;
+        return;
       }
 
-      IdeaPluginDescriptor installedPlugin = PluginManagerCore.getPlugin(pluginDescriptor.getPluginId());
+      var installedPlugin = PluginManagerCore.getPlugin(pluginDescriptor.getPluginId());
       if (installedPlugin != null && ApplicationInfoEx.getInstanceEx().isEssentialPlugin(installedPlugin.getPluginId())) {
-        String message = IdeBundle
+        var message = IdeBundle
           .message("dialog.message.plugin.core.part", pluginDescriptor.getName(), ApplicationNamesInfo.getInstance().getFullProductName());
         MessagesEx.showErrorDialog(parent, message, CommonBundle.getErrorTitle());
-        return false;
+        return;
       }
 
-      PluginManagerMain.PluginEnabler pluginEnabler = model instanceof PluginManagerMain.PluginEnabler
-                                                      ? (PluginManagerMain.PluginEnabler)model
-                                                      : new PluginManagerMain.PluginEnabler.HEADLESS();
-      Ref<Boolean> cancel = Ref.create(false);
-      Ref<IdeaPluginDescriptor> toDisable = new Ref<>();
-      Ref<Boolean> dependenciesRequireRestart = Ref.create(false);
-      Set<PluginInstallCallbackData> installedDependencies = new HashSet<>();
-      boolean success = ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
-        PluginInstallOperation dependencyInstallOperation = new PluginInstallOperation(
-          Collections.emptyList(),
-          CustomPluginRepositoryService.getInstance().getCustomRepositoryPlugins(),
-          pluginEnabler,
-          ProgressManager.getInstance().getProgressIndicator());
-        dependencyInstallOperation.setAllowInstallWithoutRestart(true);
-        Ref<IdeaPluginDescriptor> ref = dependencyInstallOperation.checkDependenciesAndReplacements(pluginDescriptor, null);
-        if (ref == null) {
-          cancel.set(true);
+      var previousVersion = installedPlugin != null ? installedPlugin.getVersion() : null;
+      PluginManagerUsageCollector.pluginInstallationStarted(pluginDescriptor, InstallationSourceEnum.FROM_DISK, previousVersion);
+
+      if (!PluginSignatureChecker.verifyIfRequired(pluginDescriptor, file, false, true)) {
+        return;
+      }
+
+      @SuppressWarnings("UsagesOfObsoleteApi")
+      Task.WithResult<Pair<PluginInstallOperation, ? extends IdeaPluginDescriptor>, RuntimeException> task =
+        new Task.WithResult<>(null, parent, IdeBundle.message("progress.title.checking.plugin.dependencies"), true) {
+          @Override
+          protected @NotNull Pair<PluginInstallOperation, ? extends IdeaPluginDescriptor> compute(@NotNull ProgressIndicator indicator) {
+            var repositoryPlugins = CustomPluginRepositoryService.getInstance().getCustomRepositoryPlugins();
+            var operation = new PluginInstallOperation(List.of(), repositoryPlugins, indicator, pluginEnabler);
+            operation.setAllowInstallWithoutRestart(true);
+            return operation.checkMissingDependencies(pluginDescriptor, null) ?
+                   new Pair<>(operation, operation.checkDependenciesAndReplacements(pluginDescriptor)) : Pair.empty();
+          }
+        };
+
+      @SuppressWarnings("UsagesOfObsoleteApi")
+      var pair = ProgressManager.getInstance().run(task);
+      var operation = pair.getFirst();
+      if (operation == null) {
+        return;
+      }
+
+      var oldFile = installedPlugin != null && !installedPlugin.isBundled() ? installedPlugin.getPluginPath() : null;
+      var isRestartRequired = oldFile != null ||
+                              !DynamicPlugins.allowLoadUnloadWithoutRestart(pluginDescriptor) ||
+                              operation.isRestartRequired();
+      for (PendingDynamicPluginInstall dynamicPluginInstall : operation.getPendingDynamicPluginInstalls()) {
+        var installed = installAndLoadDynamicPlugin(dynamicPluginInstall.getFile(), parent, dynamicPluginInstall.getPluginDescriptor());
+        if (!installed) {
+          isRestartRequired = true;
         }
-        else {
-          dependenciesRequireRestart.set(dependencyInstallOperation.isRestartRequired());
-          installedDependencies.addAll(dependencyInstallOperation.getInstalledDependentPlugins());
-          toDisable.set(ref.get());
-        }
-      }, IdeBundle.message("progress.title.checking.plugin.dependencies"), true, null, (JComponent) parent);
-
-      if (!success || cancel.get()) return false;
-
-      Path oldFile = null;
-      if (installedPlugin != null && !installedPlugin.isBundled()) {
-        oldFile = installedPlugin.getPluginPath();
       }
 
-      boolean installWithoutRestart = oldFile == null && DynamicPlugins.allowLoadUnloadWithoutRestart(pluginDescriptor) && !dependenciesRequireRestart.get();
-      if (!installWithoutRestart) {
-        installAfterRestart(file, false, oldFile, pluginDescriptor);
+      if (isRestartRequired) {
+        installAfterRestart(pluginDescriptor, file, oldFile, false);
       }
-      ourState.onPluginInstall(pluginDescriptor, installedPlugin != null, !installWithoutRestart);
-      if (!toDisable.isNull()) {
+      ourState.onPluginInstall(pluginDescriptor, installedPlugin != null, isRestartRequired);
+
+      var toDisable = pair.getSecond();
+      if (toDisable != null) {
         // TODO[yole] unload and check for restart
-        pluginEnabler.disablePlugins(Collections.singleton(toDisable.get()));
+        pluginEnabler.disable(Set.of(toDisable));
       }
 
-      List<IdeaPluginDescriptor> installedPlugins = new ArrayList<>();
+      var installedDependencies = operation.getInstalledDependentPlugins();
+      var installedPlugins = new ArrayList<IdeaPluginDescriptor>();
       installedPlugins.add(pluginDescriptor);
-      for (PluginInstallCallbackData plugin : installedDependencies) {
+      for (var plugin : installedDependencies) {
         installedPlugins.add(plugin.getPluginDescriptor());
       }
-      checkInstalledPluginDependencies(model, pluginDescriptor, parent, ContainerUtil.map2Set(installedPlugins, (descriptor) -> descriptor.getPluginId()));
+
+      var installedDependencyIds = ContainerUtil.map2Set(installedPlugins, PluginDescriptor::getPluginId);
+      var notInstalled = findNotInstalledPluginDependencies(pluginDescriptor.getDependencies(), model, installedDependencyIds);
+      if (!notInstalled.isEmpty()) {
+        var message = IdeBundle.message("dialog.message.plugin.depends.on.unknown.plugin",
+                                        pluginDescriptor.getName(),
+                                        notInstalled.size(),
+                                        StringUtil.join(notInstalled, ", "));
+        MessagesEx.showWarningDialog(parent, message, IdeBundle.message("dialog.title.install.plugin"));
+      }
+
       PluginManagerMain.suggestToEnableInstalledDependantPlugins(pluginEnabler, installedPlugins);
 
-      callback.accept(new PluginInstallCallbackData(file, pluginDescriptor, !installWithoutRestart));
-      for (PluginInstallCallbackData callbackData: installedDependencies) {
+      if (!isRestartRequired) {
+        PluginManagerSession session = PluginManagerSessionService.getInstance().getSession(model.mySessionId.toString());
+        if (session != null) {
+          session.getDynamicPluginsToInstall().put(pluginDescriptor.getPluginId(), new PendingDynamicPluginInstall(file, pluginDescriptor));
+        }
+      }
+      callback.accept(new PluginInstallCallbackData(file, pluginDescriptor, isRestartRequired));
+      for (var callbackData : installedDependencies) {
         if (!callbackData.getPluginDescriptor().getPluginId().equals(pluginDescriptor.getPluginId())) {
           callback.accept(callbackData);
         }
       }
 
-      if (file.toString().endsWith(".zip") && UpdateSettings.getInstance().isKeepPluginsArchive()) {
-        File tempFile = MarketplacePluginDownloadService.INSTANCE.getPluginTempFile();
-        FileUtil.copy(file.toFile(), tempFile);
-        MarketplacePluginDownloadService.INSTANCE.renameFileToZipRoot(tempFile);
+      if (file.toString().endsWith(".zip") && keepArchive()) {
+        var tempFile = MarketplacePluginDownloadService.getPluginTempFile();
+        Files.copy(file, tempFile, StandardCopyOption.REPLACE_EXISTING);
+        MarketplacePluginDownloadService.renameFileToZipRoot(tempFile);
       }
-      return true;
     }
     catch (IOException ex) {
-      MessagesEx.showErrorDialog(parent, ex.getMessage(), CommonBundle.getErrorTitle());
+      LOG.error(ex);
+      MessagesEx.showErrorDialog(parent, IoErrorText.message(ex), CommonBundle.getErrorTitle());
     }
-    return false;
+  }
+
+  public static boolean installAndLoadDynamicPlugin(@NotNull Path file, @NotNull IdeaPluginDescriptorImpl descriptor) {
+    return installAndLoadDynamicPlugin(file, null, descriptor);
   }
 
   /**
-   * @return true if plugin was successfully installed without restart, false if restart is required
+   * @return {@code true} if plugin was successfully installed without a restart, {@code false} if restart is required
    */
-  public static boolean installAndLoadDynamicPlugin(@NotNull Path file,
-                                                    @Nullable Component parent,
-                                                    IdeaPluginDescriptorImpl pluginDescriptor) {
-    Path targetFile = installWithoutRestart(file, pluginDescriptor, parent);
-    if (targetFile != null) {
-      IdeaPluginDescriptorImpl targetDescriptor = PluginManager.loadDescriptor(targetFile, PluginManagerCore.PLUGIN_XML);
-      if (targetDescriptor != null) {
-        return DynamicPlugins.loadPlugin(targetDescriptor);
+  public static boolean installAndLoadDynamicPlugin(
+    @NotNull Path file,
+    @Nullable JComponent parent,
+    @NotNull IdeaPluginDescriptorImpl descriptor
+  ) {
+    var targetFile = installWithoutRestart(file, descriptor, parent);
+    if (targetFile == null) {
+      return false;
+    }
+
+    var targetDescriptor = PluginDescriptorLoader.loadDescriptor(targetFile, false, PluginXmlPathResolver.DEFAULT_PATH_RESOLVER);
+    if (targetDescriptor == null) {
+      return false;
+    }
+
+    var targetPluginId = targetDescriptor.getPluginId();
+
+    // FIXME this is a bad place to do this IJPL-190806; bundled plugin may be not unloaded at this point
+    var loadedPlugin = PluginManagerCore.findPlugin(targetPluginId);
+    if (loadedPlugin != null && PluginManagerCore.isLoaded(loadedPlugin)) {
+      LOG.warn("Plugin " + loadedPlugin + " is still loaded, restart is required"); // FIXME IJPL-193781
+      return false;
+    }
+
+    var pluginSet = PluginManagerCore.getPluginSet();
+    var contentModuleIdMap = pluginSet.buildContentModuleIdMap();
+    var pluginMap = pluginSet.buildPluginIdMap();
+
+    if (PluginManagerCoreKt.pluginRequiresUltimatePluginButItsDisabled(targetDescriptor, pluginMap, contentModuleIdMap)) {
+      LOG.warn("Plugin " + targetPluginId + " requires Ultimate plugin, but it's disabled");
+      return false;
+    }
+
+    if (DROP_DISABLED_FLAG_OF_REINSTALLED_PLUGINS && PluginEnabler.HEADLESS.isDisabled(targetPluginId)) {
+      var wasInstalledBefore = pluginSet.isPluginInstalled(targetPluginId);
+      if (!wasInstalledBefore) {
+        // FIXME can't drop the disabled flag first because it's implementation filters ids against the current plugin set;
+        //  so load first, then enable
+        targetDescriptor.setMarkedForLoading(true);
+        var result = DynamicPlugins.INSTANCE.loadPlugin(targetDescriptor);
+        PluginEnabler.HEADLESS.enable(Set.of(targetDescriptor));
+        return result;
       }
     }
-    return false;
+
+    return PluginEnabler.HEADLESS.isDisabled(targetPluginId) || DynamicPlugins.INSTANCE.loadPlugin(targetDescriptor);
   }
 
-  private static void checkInstalledPluginDependencies(@NotNull InstalledPluginsTableModel model,
-                                                       @NotNull IdeaPluginDescriptorImpl pluginDescriptor,
-                                                       @Nullable Component parent,
-                                                       Set<PluginId> installedDependencies) {
-    final Set<PluginId> notInstalled = new HashSet<>();
-    for (IdeaPluginDependency dep : pluginDescriptor.getDependencies()) {
-      if (dep.isOptional()) continue;
-      PluginId id = dep.getPluginId();
-      if (installedDependencies.contains(id)) continue;
-      final boolean disabled = model.isDisabled(id);
-      final boolean enabled = model.isEnabled(id);
-      if (!enabled && !disabled && !PluginManagerCore.isModuleDependency(id)) {
-        notInstalled.add(id);
+  private static boolean keepArchive() {
+    return !LoadingState.COMPONENTS_LOADED.isOccurred() || RegistryManager.getInstance().is("ide.plugins.keep.archive");
+  }
+
+  private static Set<String> findNotInstalledPluginDependencies(
+    List<? extends IdeaPluginDependency> dependencies,
+    InstalledPluginsTableModel model,
+    Set<PluginId> installedDependencies
+  ) {
+    var notInstalled = new HashSet<String>();
+
+    for (var dependency : dependencies) {
+      if (dependency.isOptional()) continue;
+
+      var pluginId = dependency.getPluginId();
+      if (installedDependencies.contains(pluginId) ||
+          model.isLoaded(pluginId) ||
+          PluginManagerCore.looksLikePlatformPluginAlias(pluginId) ||
+          PluginManagerCore.findPluginByPlatformAlias(pluginId) != null) {
+        continue;
       }
+
+      notInstalled.add(pluginId.getIdString());
     }
-    if (!notInstalled.isEmpty()) {
-      String deps = StringUtil.join(notInstalled, PluginId::toString, ", ");
-      String message =
-        IdeBundle.message("dialog.message.plugin.depends.on.unknown.plugin", pluginDescriptor.getName(), notInstalled.size(), deps);
-      MessagesEx.showWarningDialog(parent, message, IdeBundle.message("dialog.title.install.plugin"));
+
+    return notInstalled;
+  }
+
+  private static Path getPluginsPath() {
+    return Path.of(PathManager.getPluginsPath());
+  }
+
+  @RequiresEdt
+  static void installPluginFromCallbackData(@NotNull PluginInstallCallbackData callbackData) {
+    if (callbackData.getPluginDescriptor() instanceof IdeaPluginDescriptorImpl descriptor && callbackData.getFile() != null) {
+      if (callbackData.getRestartNeeded()) {
+        shutdownOrRestartAppAfterInstall(descriptor);
+      }
+      else {
+        var loaded = installAndLoadDynamicPlugin(callbackData.getFile(), descriptor);
+        if (!loaded) {
+          shutdownOrRestartAppAfterInstall(descriptor);
+        }
+      }
     }
   }
 
-  static void chooseAndInstall(@NotNull InstalledPluginsTableModel model,
-                               @Nullable Component parent,
-                               @NotNull Consumer<? super PluginInstallCallbackData> callback) {
-    final FileChooserDescriptor descriptor = new FileChooserDescriptor(false, false, true, true, false, false) {
-      @Override
-      public boolean isFileSelectable(VirtualFile file) {
-        final String extension = file.getExtension();
-        return Comparing.strEqual(extension, "jar") || Comparing.strEqual(extension, "zip");
-      }
-    };
-    descriptor.setTitle(IdeBundle.message("chooser.title.plugin.file"));
-    descriptor.setDescription(IdeBundle.message("chooser.description.jar.and.zip.archives.are.accepted"));
-    String oldPath = PropertiesComponent.getInstance().getValue(PLUGINS_PRESELECTION_PATH);
-    VirtualFile toSelect =
-      oldPath == null ? null : VfsUtil.findFileByIoFile(new File(FileUtilRt.toSystemDependentName(oldPath)), false);
-    FileChooser.chooseFile(descriptor, null, parent, toSelect, virtualFile -> {
-      Path file = VfsUtilCore.virtualToIoFile(virtualFile).toPath();
-      PropertiesComponent.getInstance().setValue(PLUGINS_PRESELECTION_PATH, FileUtilRt.toSystemIndependentName(file.getParent().toString()));
-      installFromDisk(model, file, callback, parent);
-    });
+  private static void shutdownOrRestartAppAfterInstall(IdeaPluginDescriptorImpl descriptor) {
+    PluginManagerConfigurable.shutdownOrRestartAppAfterInstall(
+      PluginManagerConfigurable.getUpdatesDialogTitle(),
+      action -> IdeBundle.message("plugin.installed.ide.restart.required.message",
+                                  descriptor.getName(),
+                                  action,
+                                  ApplicationNamesInfo.getInstance()
+                                    .getFullProductName()));
   }
 }

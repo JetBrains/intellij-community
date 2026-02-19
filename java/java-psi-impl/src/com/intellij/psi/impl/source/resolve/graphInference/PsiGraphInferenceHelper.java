@@ -1,8 +1,20 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.resolve.graphInference;
 
 import com.intellij.pom.java.LanguageLevel;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiArrayType;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiClassType;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiInferenceHelper;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiParameter;
+import com.intellij.psi.PsiSubstitutor;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypeParameter;
+import com.intellij.psi.PsiTypeParameterListOwner;
+import com.intellij.psi.PsiTypes;
 import com.intellij.psi.impl.source.resolve.ParameterTypeInferencePolicy;
 import com.intellij.psi.infos.MethodCandidateInfo;
 import com.intellij.psi.util.PsiUtil;
@@ -42,36 +54,33 @@ public class PsiGraphInferenceHelper implements PsiInferenceHelper {
     return substitutor.substitute(typeParameter);
   }
 
-  @NotNull
   @Override
-  public PsiSubstitutor inferTypeArguments(PsiTypeParameter @NotNull [] typeParameters,
-                                           PsiParameter @NotNull [] parameters,
-                                           PsiExpression @NotNull [] arguments,
-                                           @Nullable MethodCandidateInfo currentMethod, @NotNull PsiSubstitutor partialSubstitutor,
-                                           @NotNull PsiElement parent,
-                                           @NotNull ParameterTypeInferencePolicy policy,
-                                           @NotNull LanguageLevel languageLevel) {
+  public @NotNull PsiSubstitutor inferTypeArguments(PsiTypeParameter @NotNull [] typeParameters,
+                                                    PsiParameter @NotNull [] parameters,
+                                                    PsiExpression @NotNull [] arguments,
+                                                    @Nullable MethodCandidateInfo currentMethod, @NotNull PsiSubstitutor partialSubstitutor,
+                                                    @NotNull PsiElement parent,
+                                                    @NotNull ParameterTypeInferencePolicy policy,
+                                                    @NotNull LanguageLevel languageLevel) {
     if (typeParameters.length == 0) return partialSubstitutor;
 
     return InferenceSessionContainer.infer(typeParameters, parameters, arguments, partialSubstitutor, parent, policy, currentMethod);
   }
 
-  @NotNull
   @Override
-  public PsiSubstitutor inferTypeArguments(PsiTypeParameter @NotNull [] typeParameters,
-                                           PsiType @NotNull [] leftTypes,
-                                           PsiType @NotNull [] rightTypes,
-                                           @NotNull LanguageLevel languageLevel) {
+  public @NotNull PsiSubstitutor inferTypeArguments(PsiTypeParameter @NotNull [] typeParameters,
+                                                    PsiType @NotNull [] leftTypes,
+                                                    PsiType @NotNull [] rightTypes,
+                                                    @NotNull LanguageLevel languageLevel) {
     return inferTypeArguments(typeParameters, leftTypes, rightTypes, PsiSubstitutor.EMPTY, languageLevel);
   }
 
-  @NotNull
   @Override
-  public PsiSubstitutor inferTypeArguments(PsiTypeParameter @NotNull [] typeParameters,
-                                           PsiType @NotNull [] leftTypes,
-                                           PsiType @NotNull [] rightTypes,
-                                           @NotNull PsiSubstitutor partialSubstitutor,
-                                           @NotNull LanguageLevel languageLevel) {
+  public @NotNull PsiSubstitutor inferTypeArguments(PsiTypeParameter @NotNull [] typeParameters,
+                                                    PsiType @NotNull [] leftTypes,
+                                                    PsiType @NotNull [] rightTypes,
+                                                    @NotNull PsiSubstitutor partialSubstitutor,
+                                                    @NotNull LanguageLevel languageLevel) {
     if (typeParameters.length == 0) return PsiSubstitutor.EMPTY;
     InferenceSession session = new InferenceSession(typeParameters, leftTypes, rightTypes, partialSubstitutor, myManager, null);
     for (PsiType leftType : leftTypes) {
@@ -93,14 +102,18 @@ public class PsiGraphInferenceHelper implements PsiInferenceHelper {
                                                  PsiType arg,
                                                  boolean isContraVariantPosition,
                                                  LanguageLevel languageLevel) {
-    if (PsiType.VOID.equals(arg) || PsiType.VOID.equals(param)) return PsiType.NULL;
+    if (PsiTypes.voidType().equals(arg) || PsiTypes.voidType().equals(param)) return PsiTypes.nullType();
     if (param instanceof PsiArrayType && arg instanceof PsiArrayType) {
       return getSubstitutionForTypeParameter(typeParam, ((PsiArrayType)param).getComponentType(), ((PsiArrayType)arg).getComponentType(), isContraVariantPosition, languageLevel);
     } 
 
-    if (!(param instanceof PsiClassType)) return PsiType.NULL;
+    if (!(param instanceof PsiClassType)) return PsiTypes.nullType();
     if (arg == null) {
-      return PsiType.NULL;
+      return PsiTypes.nullType();
+    }
+    PsiClass paramClass = ((PsiClassType)param).resolve();
+    if (!(paramClass instanceof PsiTypeParameter) && !arg.isAssignableFrom(((PsiClassType)param).rawType())) {
+      return PsiTypes.nullType();
     }
     final PsiType[] leftTypes;
     final PsiType[] rightTypes;
@@ -125,7 +138,7 @@ public class PsiGraphInferenceHelper implements PsiInferenceHelper {
         }
       }
       if (!proceed) {
-        return PsiType.NULL;
+        return PsiTypes.nullType();
       }
     }
     final PsiSubstitutor substitutor = inferenceSession.infer();

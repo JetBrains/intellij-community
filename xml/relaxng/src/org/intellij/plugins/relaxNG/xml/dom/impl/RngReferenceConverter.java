@@ -23,7 +23,13 @@ import com.intellij.psi.PsiReferenceBase;
 import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.util.ArrayUtilRt;
-import com.intellij.util.xml.*;
+import com.intellij.util.xml.ConvertContext;
+import com.intellij.util.xml.CustomReferenceConverter;
+import com.intellij.util.xml.DomElement;
+import com.intellij.util.xml.DomFileElement;
+import com.intellij.util.xml.DomUtil;
+import com.intellij.util.xml.GenericAttributeValue;
+import com.intellij.util.xml.GenericDomValue;
 import org.intellij.plugins.relaxNG.model.Define;
 import org.intellij.plugins.relaxNG.model.resolve.DefinitionResolver;
 import org.intellij.plugins.relaxNG.xml.dom.RngDefine;
@@ -47,47 +53,47 @@ public class RngReferenceConverter implements CustomReferenceConverter {
       }
 
       return new PsiReference[]{
-              new PsiReferenceBase<XmlAttributeValue>(value, true) {
-                @Override
-                public PsiElement resolve() {
-//                  final XmlTag tag = PsiTreeUtil.getParentOfType(value, XmlTag.class);
-//                  final XmlTag include = getAncestorTag(tag, "include", ProjectLoader.RNG_NAMESPACE);
-//                  final XmlTag grammar = getAncestorTag(tag, "grammar", ProjectLoader.RNG_NAMESPACE);
-//
-//                  if (include != null && (grammar == null || PsiTreeUtil.isAncestor(grammar, include, true))) {
-//                    final ResolveResult[] e = new DefinitionReference(getElement(), false).multiResolve(false);
-//                  }
-                  return myElement.getParent().getParent();
+        new PsiReferenceBase<>(value, true) {
+          @Override
+          public PsiElement resolve() {
+            //                  final XmlTag tag = PsiTreeUtil.getParentOfType(value, XmlTag.class);
+            //                  final XmlTag include = getAncestorTag(tag, "include", ProjectLoader.RNG_NAMESPACE);
+            //                  final XmlTag grammar = getAncestorTag(tag, "grammar", ProjectLoader.RNG_NAMESPACE);
+            //
+            //                  if (include != null && (grammar == null || PsiTreeUtil.isAncestor(grammar, include, true))) {
+            //                    final ResolveResult[] e = new DefinitionReference(getElement(), false).multiResolve(false);
+            //                  }
+            return myElement.getParent().getParent();
+          }
+
+          @Override
+          public Object @NotNull [] getVariants() {
+            final RngInclude include = e.getParentOfType(RngInclude.class, true);
+            final RngGrammar scope = e.getParentOfType(RngGrammar.class, true);
+            if (scope != null && include != null && DomUtil.isAncestor(scope, include, true)) {
+              final XmlFile file = include.getIncludedFile().getValue();
+              if (file != null) {
+                final DomFileElement<DomElement> fileElement = scope.getManager().getFileElement(file, DomElement.class);
+                if (fileElement == null) {
+                  return EMPTY_ARRAY;
                 }
 
-                @Override
-                public Object @NotNull [] getVariants() {
-                  final RngInclude include = e.getParentOfType(RngInclude.class, true);
-                  final RngGrammar scope = e.getParentOfType(RngGrammar.class, true);
-                  if (scope != null && include != null && DomUtil.isAncestor(scope, include, true)) {
-                    final XmlFile file = include.getIncludedFile().getValue();
-                    if (file != null) {
-                      final DomFileElement<DomElement> fileElement = scope.getManager().getFileElement(file, DomElement.class);
-                      if (fileElement == null) {
-                        return EMPTY_ARRAY;
-                      }
-
-                      final Ref<Object[]> ref = new Ref<>(ArrayUtilRt.EMPTY_STRING_ARRAY);
-                      fileElement.acceptChildren(new RngDomVisitor(){
-                        @Override
-                        public void visit(RngGrammar grammar) {
-                          final Map<String, Set<Define>> map = DefinitionResolver.getAllVariants(grammar);
-                          if (map != null) {
-                            ref.set(map.keySet().toArray());
-                          }
-                        }
-                      });
-                      return ref.get();
+                final Ref<Object[]> ref = new Ref<>(ArrayUtilRt.EMPTY_STRING_ARRAY);
+                fileElement.acceptChildren(new RngDomVisitor() {
+                  @Override
+                  public void visit(RngGrammar grammar) {
+                    final Map<String, Set<Define>> map = DefinitionResolver.getAllVariants(grammar);
+                    if (map != null) {
+                      ref.set(map.keySet().toArray());
                     }
                   }
-                  return ArrayUtilRt.EMPTY_STRING_ARRAY; // TODO: look for unresolved refs;
-                }
+                });
+                return ref.get();
               }
+            }
+            return ArrayUtilRt.EMPTY_STRING_ARRAY; // TODO: look for unresolved refs;
+          }
+        }
       };
     }
 

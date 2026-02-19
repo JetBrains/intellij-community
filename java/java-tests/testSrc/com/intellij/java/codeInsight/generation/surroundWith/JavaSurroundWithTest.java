@@ -1,7 +1,25 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.codeInsight.generation.surroundWith;
 
-import com.intellij.codeInsight.generation.surroundWith.*;
+import com.intellij.codeInsight.generation.surroundWith.JavaExpressionSurroundDescriptor;
+import com.intellij.codeInsight.generation.surroundWith.JavaWithBlockSurrounder;
+import com.intellij.codeInsight.generation.surroundWith.JavaWithCastSurrounder;
+import com.intellij.codeInsight.generation.surroundWith.JavaWithDoWhileSurrounder;
+import com.intellij.codeInsight.generation.surroundWith.JavaWithForSurrounder;
+import com.intellij.codeInsight.generation.surroundWith.JavaWithIfElseExpressionSurrounder;
+import com.intellij.codeInsight.generation.surroundWith.JavaWithIfElseSurrounder;
+import com.intellij.codeInsight.generation.surroundWith.JavaWithIfExpressionSurrounder;
+import com.intellij.codeInsight.generation.surroundWith.JavaWithIfSurrounder;
+import com.intellij.codeInsight.generation.surroundWith.JavaWithNotSurrounder;
+import com.intellij.codeInsight.generation.surroundWith.JavaWithNullCheckSurrounder;
+import com.intellij.codeInsight.generation.surroundWith.JavaWithParenthesesSurrounder;
+import com.intellij.codeInsight.generation.surroundWith.JavaWithRunnableSurrounder;
+import com.intellij.codeInsight.generation.surroundWith.JavaWithSynchronizedSurrounder;
+import com.intellij.codeInsight.generation.surroundWith.JavaWithTryCatchFinallySurrounder;
+import com.intellij.codeInsight.generation.surroundWith.JavaWithTryCatchSurrounder;
+import com.intellij.codeInsight.generation.surroundWith.JavaWithTryFinallySurrounder;
+import com.intellij.codeInsight.generation.surroundWith.JavaWithWhileSurrounder;
+import com.intellij.codeInsight.generation.surroundWith.SurroundWithHandler;
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
 import com.intellij.codeInsight.template.impl.TemplateState;
 import com.intellij.ide.fileTemplates.FileTemplate;
@@ -19,7 +37,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
-import com.intellij.refactoring.introduceVariable.IntroduceVariableBase;
+import com.intellij.refactoring.IntroduceVariableUtil;
 import com.intellij.testFramework.LightJavaCodeInsightTestCase;
 import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -28,13 +46,10 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-/**
- * @author Denis Zhdanov
- */
 public class JavaSurroundWithTest extends LightJavaCodeInsightTestCase {
   private static final String BASE_PATH = "/codeInsight/generation/surroundWith/java/";
 
-  @SuppressWarnings({"UnusedDeclaration"})
+  @SuppressWarnings("UnusedDeclaration")
   private enum SurroundType {
     IF(new JavaWithIfSurrounder()),
     IF_ELSE(new JavaWithIfElseSurrounder()),
@@ -87,6 +102,18 @@ public class JavaSurroundWithTest extends LightJavaCodeInsightTestCase {
       doTest(String.format(template, StringUtil.capitalize(type.toFileName())), type.getSurrounder());
     }
   }
+  
+  public void testSurroundCompleteLineWithIf() {
+    doTest(new JavaWithIfSurrounder());
+  }
+
+  public void testSurroundCompleteLineWithIfElse() {
+    doTest(new JavaWithIfElseSurrounder());
+  }
+  
+  public void testSurroundCompleteLineWithTryFinally() {
+    doTest(new JavaWithTryFinallySurrounder());
+  }
 
   public void testSurroundWithStatementWithoutSelection() {
     doTest(new JavaWithIfSurrounder());
@@ -135,39 +162,29 @@ public class JavaSurroundWithTest extends LightJavaCodeInsightTestCase {
     doTest(new JavaWithCastSurrounder());
   }
 
-  public void testSurroundWithNotNullCheck() {
-    TemplateManagerImpl.setTemplateTesting(getTestRootDisposable());
-    doTest(new JavaWithNullCheckSurrounder());
-  }
-
-  public void testSurroundExpressionWithIf() {
-    TemplateManagerImpl.setTemplateTesting(getTestRootDisposable());
-    doTest(new JavaWithIfExpressionSurrounder());
-  }
-
-  public void testSurroundExpressionWithIfForBoxedBooleans() {
-    TemplateManagerImpl.setTemplateTesting(getTestRootDisposable());
-    doTest(new JavaWithIfExpressionSurrounder());
-  }
-
-  public void testSurroundExpressionWithNotForBoxedBooleans() {
-    TemplateManagerImpl.setTemplateTesting(getTestRootDisposable());
-    doTest(new JavaWithNotSurrounder());
-  }
-
-  public void testSurroundExpressionWithElseIf() {
-    TemplateManagerImpl.setTemplateTesting(getTestRootDisposable());
-    doTest(new JavaWithIfExpressionSurrounder());
-  }
-
-  public void testSurroundExpressionWithElseIfElse() {
-    TemplateManagerImpl.setTemplateTesting(getTestRootDisposable());
-    doTest(new JavaWithIfElseExpressionSurrounder());
-  }
+  public void testSurroundWithNotNullCheck() { doTest(new JavaWithNullCheckSurrounder()); }
+  public void testSurroundExpressionWithIf() { doTest(new JavaWithIfExpressionSurrounder()); }
+  public void testSurroundExpressionWithIfForBoxedBooleans() { doTest(new JavaWithIfExpressionSurrounder()); }
+  public void testSurroundExpressionWithNotForBoxedBooleans() { doTest(new JavaWithNotSurrounder()); }
+  public void testSurroundExpressionWithElseIf() { doTest(new JavaWithIfExpressionSurrounder()); }
+  public void testSurroundExpressionWithElseIfElse() { doTest(new JavaWithIfElseExpressionSurrounder()); }
+  public void testCaseBlockWithIf() { doTest(new JavaWithIfSurrounder()); }
+  public void testCaseResultWithIf() { doTest(new JavaWithIfSurrounder()); }
+  public void testCaseResultWithSynchronized() { doTest(new JavaWithSynchronizedSurrounder()); }
+  public void testCaseThrowWithBlock() { doTest(new JavaWithBlockSurrounder()); }
+  public void testCaseThrowWithIf() { doTest(new JavaWithIfSurrounder()); }
+  public void testCaseThrowWithTryCatch() { doTest(new JavaWithTryCatchSurrounder()); }
+  public void testCatchBlockWithFor() { doTest(new JavaWithForSurrounder()); }
+  public void testCatchResultWithFor() { doTest(new JavaWithForSurrounder()); }
+  public void testDefaultBlockWithDoWhile() { doTest(new JavaWithDoWhileSurrounder()); }
+  public void testDefaultBlockWithTryFinally() { doTest(new JavaWithTryFinallySurrounder()); }
+  public void testDefaultResultWithRunnable() { doTest(new JavaWithRunnableSurrounder()); }
+  public void testDefaultResultWithTryCatchFinally() { doTest(new JavaWithTryCatchFinallySurrounder()); }
+  public void testDefaultResultWithWhile() { doTest(new JavaWithWhileSurrounder()); }
+  public void testDefaultThrowWithIfElse() { doTest(new JavaWithIfElseSurrounder()); }
 
   public void testSurroundWithTryFinallyUsingIndents() {
     CommonCodeStyleSettings.IndentOptions indentOptions = getCurrentCodeStyleSettings().getIndentOptions(JavaFileType.INSTANCE);
-    boolean oldUseTabs = indentOptions.USE_TAB_CHARACTER;
     indentOptions.USE_TAB_CHARACTER = true;
     doTest(new JavaWithTryFinallySurrounder());
   }
@@ -266,13 +283,14 @@ public class JavaSurroundWithTest extends LightJavaCodeInsightTestCase {
 
   public void testInvokingSurroundInOneLineFoldedMethod() {
     configureFromFileText("a.java",
-                          "class Foo {\n" +
-                          " void bar() {\n" +
-                          "  Sy<caret>stem.out.println();\n" +
-                          " }\n" +
-                          "}");
+                          """
+                            class Foo {
+                             void bar() {
+                              Sy<caret>stem.out.println();
+                             }
+                            }""");
     JavaFoldingTestCase.performInitialFolding(getEditor());
-    List<AnAction> actions = SurroundWithHandler.buildSurroundActions(getProject(), getEditor(), getFile(), null);
+    List<AnAction> actions = SurroundWithHandler.buildSurroundActions(getProject(), getEditor(), getFile());
     assertSize(2, ContainerUtil.findAll(actions, a -> {
       String text = a.getTemplatePresentation().getText();
       return text != null && text.contains("while");
@@ -281,14 +299,15 @@ public class JavaSurroundWithTest extends LightJavaCodeInsightTestCase {
 
   public void testExcludeVoidExpressions() {
     configureFromFileText("a.java",
-                          "class Foo {\n" +
-                          " void bar() {\n" +
-                          "  <selection>System.out.println()</selection>;\n" +
-                          " }\n" +
-                          "}");
+                          """
+                            class Foo {
+                             void bar() {
+                              <selection>System.out.println()</selection>;
+                             }
+                            }""");
     SelectionModel model = getEditor().getSelectionModel();
     PsiExpression expr =
-      IntroduceVariableBase.getSelectedExpression(getFile().getProject(), getFile(), model.getSelectionStart(), model.getSelectionEnd());
+      IntroduceVariableUtil.getSelectedExpression(getFile().getProject(), getFile(), model.getSelectionStart(), model.getSelectionEnd());
     assertNotNull(expr);
     assertFalse(new JavaWithParenthesesSurrounder().isApplicable(expr));
     assertFalse(new JavaWithCastSurrounder().isApplicable(expr));
@@ -296,12 +315,12 @@ public class JavaSurroundWithTest extends LightJavaCodeInsightTestCase {
 
   public void testExcludeNonVoidStatements() {
     configureFromFileText("a.java",
-                          "class Foo {\n" +
-                          " int bar() {return 1;}\n" +
-                          " {" +
-                          "   <selection>bar();</selection>\n" +
-                          " }\n" +
-                          "}");
+                          """
+                            class Foo {
+                             int bar() {return 1;}
+                             {   <selection>bar();</selection>
+                             }
+                            }""");
     SelectionModel model = getEditor().getSelectionModel();
     PsiElement[] elements =
       new JavaExpressionSurroundDescriptor().getElementsToSurround(getFile(), model.getSelectionStart(), model.getSelectionEnd());

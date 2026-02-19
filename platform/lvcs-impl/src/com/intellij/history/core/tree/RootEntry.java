@@ -20,21 +20,19 @@ import com.intellij.history.core.Paths;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.DataOutput;
-import java.io.IOException;
 
-public class RootEntry extends DirectoryEntry {
+public final class RootEntry extends DirectoryEntry {
   public RootEntry() {
     super("");
   }
 
   @Override
-  public void write(DataOutput out) throws IOException {
+  public void write(DataOutput out) {
     throw new UnsupportedOperationException();
   }
 
-  @NotNull
   @Override
-  public RootEntry copy() {
+  public @NotNull RootEntry copy() {
     return (RootEntry)super.copy();
   }
 

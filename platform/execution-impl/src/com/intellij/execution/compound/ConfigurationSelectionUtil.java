@@ -8,12 +8,17 @@ import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.impl.RunManagerImpl;
 import com.intellij.execution.impl.RunnerAndConfigurationSettingsImpl;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.popup.*;
+import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.ui.popup.ListPopup;
+import com.intellij.openapi.ui.popup.ListSeparator;
+import com.intellij.openapi.ui.popup.MultiSelectionListPopupStep;
+import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
+import com.intellij.openapi.util.NlsSafe;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.Icon;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedHashSet;
@@ -21,8 +26,7 @@ import java.util.List;
 import java.util.function.BiConsumer;
 
 public final class ConfigurationSelectionUtil {
-  @NotNull
-  public static String getDisplayText(@NotNull RunConfiguration configuration, @Nullable ExecutionTarget target) {
+  public static @NotNull @NlsSafe String getDisplayText(@NotNull RunConfiguration configuration, @Nullable ExecutionTarget target) {
     return configuration.getType().getDisplayName() + " '" + configuration.getName() +
            "'" + (target != null && target != DefaultExecutionTarget.INSTANCE && !target.isExternallyManaged() ?
            " | " + target.getDisplayName() : "");
@@ -34,9 +38,8 @@ public final class ConfigurationSelectionUtil {
                                       @NotNull List<? extends RunConfiguration> configurations,
                                       @NotNull BiConsumer<? super List<RunConfiguration>, ? super ExecutionTarget> onSelected) {
     return JBPopupFactory.getInstance().createListPopup(new MultiSelectionListPopupStep<RunConfiguration>(null, configurations) {
-      @Nullable
       @Override
-      public ListSeparator getSeparatorAbove(RunConfiguration value) {
+      public @Nullable ListSeparator getSeparatorAbove(RunConfiguration value) {
         int i = configurations.indexOf(value);
         if (i < 1) return null;
         RunConfiguration previous = configurations.get(i - 1);
@@ -53,9 +56,8 @@ public final class ConfigurationSelectionUtil {
         return true;
       }
 
-      @NotNull
       @Override
-      public String getTextFor(RunConfiguration value) {
+      public @NotNull String getTextFor(RunConfiguration value) {
         return value.getName();
       }
 
@@ -66,7 +68,7 @@ public final class ConfigurationSelectionUtil {
           return FINAL_CHOICE;
         }
         else {
-          return new BaseListPopupStep<ExecutionTarget>(null, getTargets(selectedConfigs)) {
+          return new BaseListPopupStep<>(null, getTargets(selectedConfigs)) {
             @Override
             public boolean isSpeedSearchEnabled() {
               return true;
@@ -77,14 +79,13 @@ public final class ConfigurationSelectionUtil {
               return value.getIcon();
             }
 
-            @NotNull
             @Override
-            public String getTextFor(ExecutionTarget value) {
+            public @NotNull String getTextFor(ExecutionTarget value) {
               return value.getDisplayName();
             }
 
             @Override
-            public PopupStep onChosen(ExecutionTarget selectedTarget, boolean finalChoice) {
+            public PopupStep<?> onChosen(ExecutionTarget selectedTarget, boolean finalChoice) {
               onSelected.accept(selectedConfigs, selectedTarget);
               return FINAL_CHOICE;
             }
@@ -97,8 +98,7 @@ public final class ConfigurationSelectionUtil {
         return !getTargets(selectedValues).isEmpty();
       }
 
-      @NotNull
-      public List<ExecutionTarget> getTargets(List<? extends RunConfiguration> selectedValues) {
+      public @NotNull List<ExecutionTarget> getTargets(List<? extends RunConfiguration> selectedValues) {
         LinkedHashSet<ExecutionTarget> intersection = new LinkedHashSet<>();
         for (int i = 0; i < selectedValues.size(); i++) {
           RunConfiguration config = selectedValues.get(i);

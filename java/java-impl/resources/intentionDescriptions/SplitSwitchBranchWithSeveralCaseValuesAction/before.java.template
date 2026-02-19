@@ -1,0 +1,6 @@
+switch (n) {
+  case 1:
+  case 2:
+    s = "x";
+    break;
+}

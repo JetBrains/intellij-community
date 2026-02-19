@@ -1,82 +1,127 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.commit
 
+import com.intellij.notification.NotificationAction
+import com.intellij.notification.NotificationType
+import com.intellij.openapi.actionSystem.CommonDataKeys
+import com.intellij.openapi.actionSystem.impl.SimpleDataContext
 import com.intellij.openapi.util.NlsContexts
-import com.intellij.openapi.util.text.StringUtil.*
+import com.intellij.openapi.util.text.HtmlBuilder
+import com.intellij.openapi.util.text.HtmlChunk
+import com.intellij.openapi.util.text.StringUtil.isEmpty
 import com.intellij.openapi.vcs.VcsBundle.message
 import com.intellij.openapi.vcs.VcsException
+import com.intellij.openapi.vcs.VcsNotificationIdsHolder.Companion.COMMIT_CANCELED
+import com.intellij.openapi.vcs.VcsNotificationIdsHolder.Companion.COMMIT_FAILED
+import com.intellij.openapi.vcs.VcsNotificationIdsHolder.Companion.COMMIT_FINISHED
+import com.intellij.openapi.vcs.VcsNotificationIdsHolder.Companion.COMMIT_FINISHED_INITIAL
+import com.intellij.openapi.vcs.VcsNotificationIdsHolder.Companion.COMMIT_FINISHED_WITH_WARNINGS
 import com.intellij.openapi.vcs.VcsNotifier
-import com.intellij.openapi.vcs.changes.CommitResultHandler
-import com.intellij.util.ui.UIUtil
-import com.intellij.vcs.commit.AbstractCommitter.Companion.collectErrors
-import org.jetbrains.annotations.Nls
+import com.intellij.openapi.vcs.changes.Change
+import com.intellij.openapi.vcs.changes.ui.ShareProjectActionProvider
+import com.intellij.vcs.commit.Committer.Companion.collectErrors
 
-private val FROM = listOf("<", ">") // NON-NLS // NON-NLS
-private val TO = listOf("&lt;", "&gt;") // NON-NLS // NON-NLS
-
-/*
-  Commit message is passed to NotificationManagerImpl#doNotify and displayed as HTML.
-  Thus HTML tag braces (< and >) should be escaped,
-  but only they since the text is passed directly to HTML <BODY> tag and is not a part of an attribute or else.
- */
-private fun escape(s: String) = replace(s, FROM, TO)
-
-private fun hasOnlyWarnings(exceptions: List<VcsException>) = exceptions.all { it.isWarning }
-
-class ShowNotificationCommitResultHandler(private val committer: AbstractCommitter) : CommitResultHandler {
+class ShowNotificationCommitResultHandler(private val committer: VcsCommitter) : CommitterResultHandler {
   private val notifier = VcsNotifier.getInstance(committer.project)
 
-  override fun onSuccess(commitMessage: String) = reportResult()
+  override fun onSuccess(): Unit = reportResult()
+
   override fun onCancel() {
-    notifier.notifyMinorWarning("vcs.commit.canceled", "", message("vcs.commit.canceled"))
+    notifier.notifyMinorWarning(COMMIT_CANCELED, "", message("vcs.commit.canceled"))
   }
-  override fun onFailure(errors: List<VcsException>) = reportResult()
+
+  override fun onFailure(): Unit = reportResult()
 
   private fun reportResult() {
-    val allExceptions = committer.exceptions
-    val errors = collectErrors(allExceptions)
-    val errorsSize = errors.size
-    val warningsSize = allExceptions.size - errorsSize
     val message = getCommitSummary()
 
-    when {
-      errorsSize > 0 -> {
-        val title = message("message.text.commit.failed.with.error", errorsSize)
-        notifier.notifyError("vcs.commit.failed", title, message)
-      }
-      warningsSize > 0 -> {
-        val title = message("message.text.commit.finished.with.warning", warningsSize)
-        notifier.notifyImportantWarning("vcs.commit.finished.with.warnings", title, message)
-      }
-      else -> notifier.notifySuccess("vcs.commit.finished", "", message)
+    val commitExceptions = committer.exceptions
+    val commitErrors = collectErrors(commitExceptions)
+    val warningsSize = commitExceptions.size - commitErrors.size
+
+    val changesCommitted =
+      committer.changes.countChangesIgnoringChangeLists() - committer.failedToCommitChanges.countChangesIgnoringChangeLists()
+
+    val freshRoot = committer.commitContext.freshUnhostedRoots?.singleOrNull()
+
+    val type = when {
+      commitErrors.isNotEmpty() -> CommitNotificationType.Failed
+      commitExceptions.isNotEmpty() -> CommitNotificationType.SuccessfulWithWarnings
+      freshRoot != null -> CommitNotificationType.SuccessfulInitial
+      else -> CommitNotificationType.Successful
     }
+
+    val title: @NlsContexts.NotificationTitle String = when (type) {
+      CommitNotificationType.Failed -> message("message.text.commit.failed.with.error", commitErrors.size)
+      CommitNotificationType.SuccessfulWithWarnings -> message("message.text.commit.finished.with.warning", warningsSize)
+      CommitNotificationType.Successful, CommitNotificationType.SuccessfulInitial -> message("vcs.commit.files.committed", changesCommitted)
+    }
+
+    val notificationActions = commitExceptions.filterIsInstance<CommitExceptionWithActions>().flatMap { it.actions }
+
+    val notification = CommitNotification(VcsNotifier.importantNotification().displayId, title, message, type.notificationType).apply {
+      setDisplayId(type.displayId)
+
+      if (commitExceptions.isNotEmpty()) {
+
+        notificationActions.forEach(this::addAction)
+        VcsNotifier.addShowDetailsAction(committer.project, this)
+      }
+
+      if (commitErrors.isEmpty()) {
+        addActions(CommitSuccessNotificationActionProvider.EP_NAME.extensionList.flatMap { it.getActions(committer, this) }
+        )
+      }
+
+      if (freshRoot != null && commitErrors.isEmpty()) {
+        ShareProjectActionProvider.EP_NAME.extensionList
+          .filter { it.isApplicableForRoot(committer.project, freshRoot) }
+          .forEachIndexed { index, ep ->
+            addAction(NotificationAction.create(
+              if (index == 0) message("vcs.commit.notification.shareProjectOn",
+                                      ep.hostServiceName)
+              else message("vcs.commit.notification.shareProjectOn.orOn", ep.hostServiceName)
+            ) { e, _ ->
+              ep.action.actionPerformed(e.withDataContext(
+                SimpleDataContext.getSimpleContext(CommonDataKeys.VIRTUAL_FILE, freshRoot, e.dataContext)
+              ))
+            })
+          }
+      }
+    }
+
+    notification.expirePreviousAndNotify(committer.project)
   }
 
   @NlsContexts.NotificationContent
-  private fun getCommitSummary() = StringBuilder(getFileSummaryReport()).apply {
+  private fun getCommitSummary() = HtmlBuilder().apply {
     val commitMessage = committer.commitMessage
     if (!isEmpty(commitMessage)) {
-      append(": ").append(escape(commitMessage)) // NON-NLS
+      append(commitMessage) // NON-NLS
     }
     val feedback = committer.feedback
     if (feedback.isNotEmpty()) {
-      append(UIUtil.BR)
-      append(join(feedback, UIUtil.BR))
+      if (!this@apply.isEmpty) br()
+      appendWithSeparators(HtmlChunk.br(), feedback.map(HtmlChunk::text))
     }
     val exceptions = committer.exceptions
     if (!hasOnlyWarnings(exceptions)) {
-      append(UIUtil.BR)
-      append(join(exceptions, { it.message }, UIUtil.BR))
+      if (!this@apply.isEmpty) br()
+      appendWithSeparators(HtmlChunk.br(), exceptions.map { HtmlChunk.text(it.message) })
     }
   }.toString()
 
-  private fun getFileSummaryReport(): @Nls String {
-    val failed = committer.failedToCommitChanges.size
-    val committed = committer.changes.size - failed
-
-    if (failed > 0) {
-      return message("vcs.commit.files.committed.and.files.failed.to.commit", committed, failed)
-    }
-    return message("vcs.commit.files.committed", committed)
+  private enum class CommitNotificationType(
+    val displayId: String,
+    val notificationType: NotificationType,
+  ) {
+    Successful(COMMIT_FINISHED, NotificationType.INFORMATION),
+    SuccessfulInitial(COMMIT_FINISHED_INITIAL, NotificationType.INFORMATION),
+    SuccessfulWithWarnings(COMMIT_FINISHED_WITH_WARNINGS, NotificationType.WARNING),
+    Failed(COMMIT_FAILED, NotificationType.ERROR);
   }
+
+  private fun Collection<Change>.countChangesIgnoringChangeLists() = HashSet(this).size
 }
+
+private fun hasOnlyWarnings(exceptions: List<VcsException>) = exceptions.all { it.isWarning }

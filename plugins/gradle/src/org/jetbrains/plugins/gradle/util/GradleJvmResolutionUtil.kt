@@ -5,20 +5,29 @@ package org.jetbrains.plugins.gradle.util
 
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemJdkUtil
+import com.intellij.openapi.externalSystem.service.execution.getLocalJavaHomeIfMatchesEel
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.roots.ui.configuration.SdkLookupProvider
 import com.intellij.openapi.roots.ui.configuration.SdkLookupProvider.Id
+import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.util.lang.JavaVersion
 import org.gradle.util.GradleVersion
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.plugins.gradle.jvmcompat.GradleJvmSupportMatrix
+import org.jetbrains.plugins.gradle.properties.GradlePropertiesFile
+import org.jetbrains.plugins.gradle.service.execution.GradleDaemonJvmHelper
 import org.jetbrains.plugins.gradle.settings.GradleProjectSettings
 import org.jetbrains.plugins.gradle.settings.GradleSettings
+import org.jetbrains.plugins.gradle.util.JavaHomeValidationStatus.Invalid
 import org.jetbrains.plugins.gradle.util.JavaHomeValidationStatus.Success
+import org.jetbrains.plugins.gradle.util.JavaHomeValidationStatus.Undefined
+import org.jetbrains.plugins.gradle.util.JavaHomeValidationStatus.Unsupported
 import java.nio.file.Path
 import java.nio.file.Paths
+import kotlin.io.path.pathString
 
 private data class GradleJvmProviderId(val projectSettings: GradleProjectSettings) : Id
 
@@ -26,7 +35,12 @@ fun getGradleJvmLookupProvider(project: Project, projectSettings: GradleProjectS
   SdkLookupProvider.getInstance(project, GradleJvmProviderId(projectSettings))
 
 fun setupGradleJvm(project: Project, projectSettings: GradleProjectSettings, gradleVersion: GradleVersion) {
-  val resolutionContext = GradleJvmResolutionContext(project, Paths.get(projectSettings.externalProjectPath), gradleVersion)
+  val projectPath = Paths.get(projectSettings.externalProjectPath)
+  // Projects using Daemon JVM criteria with a compatible Gradle version will skip the
+  // Gradle JVM setup since this will be delegated to Gradle
+  if (GradleDaemonJvmHelper.isProjectUsingDaemonJvmCriteria(projectPath, gradleVersion)) return
+
+  val resolutionContext = GradleJvmResolutionContext(project, projectPath, gradleVersion)
   projectSettings.gradleJvm = resolutionContext.findGradleJvm()
   if (projectSettings.gradleJvm != null) {
     return
@@ -38,7 +52,14 @@ fun setupGradleJvm(project: Project, projectSettings: GradleProjectSettings, gra
     resolutionContext.canUseJavaHomeJdk() -> projectSettings.gradleJvm = ExternalSystemJdkUtil.USE_JAVA_HOME
     else -> getGradleJvmLookupProvider(project, projectSettings)
       .newLookupBuilder()
-      .withVersionFilter { isSupported(gradleVersion, it) }
+      .withProject(project)
+      .withLookupReason(GradleBundle.message("gradle.jvm.resolution.lookup.reason", gradleVersion.version))
+      .withVersionFilter {
+        val javaVersion = JavaVersion.tryParse(it)
+        javaVersion != null &&
+        GradleJvmSupportMatrix.isJavaSupportedByIdea(javaVersion) &&
+        GradleJvmSupportMatrix.isSupported(gradleVersion, javaVersion)
+      }
       .withSdkType(ExternalSystemJdkUtil.getJavaSdkType())
       .withSdkHomeFilter { ExternalSystemJdkUtil.isValidJdk(it) }
       .onSdkNameResolved { sdk ->
@@ -55,7 +76,7 @@ fun setupGradleJvm(project: Project, projectSettings: GradleProjectSettings, gra
          * This code allows to avoid some irregular conflicts
          * For example: strange duplications in SdkComboBox or unexpected modifications of gradleJvm
          */
-        val fakeSdk = sdk?.let(::findRegisteredSdk)
+        val fakeSdk = sdk?.let { findRegisteredSdk(project, it) }
         if (fakeSdk != null && projectSettings.gradleJvm == null) {
           projectSettings.gradleJvm = fakeSdk.name
         }
@@ -76,36 +97,8 @@ fun updateGradleJvm(project: Project, externalProjectPath: String) {
   val projectRootManager = ProjectRootManager.getInstance(project)
   val projectSdk = projectRootManager.projectSdk ?: return
   if (projectSdk.name != gradleJvm) return
+  if (GradleDaemonJvmHelper.isProjectUsingDaemonJvmCriteria(projectSettings)) return
   projectSettings.gradleJvm = ExternalSystemJdkUtil.USE_PROJECT_JDK
-}
-
-fun suggestGradleVersion(project: Project): GradleVersion? {
-  val gradleVersion = findGradleVersion(project)
-  if (gradleVersion != null) return gradleVersion
-  val projectJdk = resolveProjectJdk(project) ?: return null
-  if (!ExternalSystemJdkUtil.isValidJdk(projectJdk)) return null
-  val javaVersion = JavaVersion.tryParse(projectJdk.versionString) ?: return null
-  return suggestGradleVersion(javaVersion)
-}
-
-/**
- * @see org.jetbrains.plugins.gradle.util.isSupported
- */
-private fun suggestGradleVersion(javaVersion: JavaVersion): GradleVersion? {
-  return when {
-    isSupported(GradleVersion.current(), javaVersion) -> GradleVersion.current()
-    javaVersion.feature >= 8 /* ..14 */ -> GradleVersion.version("6.5")
-    javaVersion.feature == 7 -> GradleVersion.version("4.1")
-    javaVersion.feature == 6 -> GradleVersion.version("3.0")
-    else -> null
-  }
-}
-
-private fun findGradleVersion(project: Project): GradleVersion? {
-  val settings = GradleSettings.getInstance(project)
-  return settings.linkedProjectsSettings.asSequence()
-    .mapNotNull { it.resolveGradleVersion() }
-    .firstOrNull()
 }
 
 private class GradleJvmResolutionContext(
@@ -115,16 +108,24 @@ private class GradleJvmResolutionContext(
 )
 
 private fun GradleJvmResolutionContext.canUseGradleJavaHomeJdk(): Boolean {
-  val properties = getGradleProperties(externalProjectPath)
+  val properties = GradlePropertiesFile.getProperties(project, externalProjectPath)
   val javaHome = properties.javaHomeProperty?.value
-  val validationStatus = validateGradleJavaHome(gradleVersion, javaHome)
+  val validationStatus = validateGradleJavaHome(project, gradleVersion, javaHome)
   return validationStatus is Success
 }
 
 private fun GradleJvmResolutionContext.canUseJavaHomeJdk(): Boolean {
-  val javaHome = ExternalSystemJdkUtil.getJavaHome()
-  val validationStatus = validateGradleJavaHome(gradleVersion, javaHome)
-  return validationStatus is Success
+  /**
+   * This is a temporary solution:
+   * at the moment it's impossible to use a real environment from EEL due to this code being executed in a WriteAction on EDT.
+   * See IDEA-375312 for more details.
+   */
+  val localJavaHome = getLocalJavaHomeIfMatchesEel(project.getEelDescriptor())
+  val validationStatus = validateGradleJavaHome(project, gradleVersion, localJavaHome?.pathString)
+  return when (validationStatus) {
+    Invalid, Undefined, is Unsupported -> false
+    is Success -> true
+  }
 }
 
 private fun GradleJvmResolutionContext.findGradleJvm(): String? {
@@ -135,20 +136,20 @@ private fun GradleJvmResolutionContext.findGradleJvm(): String? {
 }
 
 private fun GradleJvmResolutionContext.canUseProjectSdk(): Boolean {
-  val projectJdk = resolveProjectJdk(project) ?: return false
-  if (!ExternalSystemJdkUtil.isValidJdk(projectJdk)) return false
-  val versionString = projectJdk.versionString ?: return false
-  return isSupported(gradleVersion, versionString)
+  return project.resolveProjectJdk() != null
 }
 
-private fun resolveProjectJdk(project: Project): Sdk? {
-  val projectRootManager = ProjectRootManager.getInstance(project)
+internal fun Project.resolveProjectJdk(): Sdk? {
+  val projectRootManager = ProjectRootManager.getInstance(this)
   val projectSdk = projectRootManager.projectSdk ?: return null
-  return ExternalSystemJdkUtil.resolveDependentJdk(projectSdk)
+  val resolvedSdk = ExternalSystemJdkUtil.resolveDependentJdk(projectSdk)
+  if (ExternalSystemJdkUtil.isValidJdk(resolvedSdk)) {
+    return resolvedSdk
+  }
+  return null
 }
 
-
-private fun findRegisteredSdk(sdk: Sdk): Sdk? = runReadAction {
-  val projectJdkTable = ProjectJdkTable.getInstance()
+private fun findRegisteredSdk(project: Project, sdk: Sdk): Sdk? = runReadAction {
+  val projectJdkTable = ProjectJdkTable.getInstance(project)
   projectJdkTable.findJdk(sdk.name, sdk.sdkType.name)
 }

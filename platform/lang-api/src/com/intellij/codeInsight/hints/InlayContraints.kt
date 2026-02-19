@@ -1,7 +1,8 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.hints
 
 import com.intellij.codeInsight.hints.presentation.RootInlayPresentation
+import org.jetbrains.annotations.ApiStatus
 
 /**
  * Presentation with constraints to the place where it should be placed
@@ -33,7 +34,10 @@ data class HorizontalConstrainedPresentation<Content : Any>(
 
 class BlockConstraints(
   val relatesToPrecedingText: Boolean,
-  val priority: Int
+  val priority: Int,
+
+  @ApiStatus.Experimental val group: Int? = null,
+  @ApiStatus.Experimental val column: Int? = null
 )
 
 

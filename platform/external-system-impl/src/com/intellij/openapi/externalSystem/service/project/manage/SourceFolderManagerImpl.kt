@@ -1,56 +1,84 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.service.project.manage
 
-import com.intellij.ProjectTopics
-import com.intellij.ide.projectView.actions.MarkRootActionBase
+import com.intellij.ide.projectView.actions.MarkRootsManager
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
 import com.intellij.openapi.components.StoragePathMacros
-import com.intellij.openapi.externalSystem.util.PathPrefixTreeMap
+import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.ModuleListener
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.roots.ModuleRootModificationUtil
+import com.intellij.openapi.project.ProjectManager
+import com.intellij.openapi.roots.ModifiableRootModel
+import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.SourceFolder
+import com.intellij.openapi.roots.impl.RootConfigurationAccessor
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.io.CanonicalPathPrefixTree
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.vfs.newvfs.BulkFileListener
 import com.intellij.openapi.vfs.newvfs.events.VFileCreateEvent
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
+import com.intellij.platform.backend.workspace.WorkspaceModel
+import com.intellij.platform.workspace.storage.MutableEntityStorage
+import com.intellij.platform.workspace.storage.toBuilder
+import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.containers.CollectionFactory
 import com.intellij.util.containers.MultiMap
 import com.intellij.util.xmlb.annotations.XCollection
+import com.intellij.workspaceModel.ide.impl.legacyBridge.RootConfigurationAccessorForWorkspaceModel
+import com.intellij.workspaceModel.ide.impl.legacyBridge.module.roots.ModuleRootComponentBridge
+import com.intellij.workspaceModel.ide.legacyBridge.ModifiableRootModelBridge
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.async
+import kotlinx.coroutines.future.asCompletableFuture
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes
 import org.jetbrains.jps.model.java.JavaResourceRootType
 import org.jetbrains.jps.model.java.JavaSourceRootType
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType
+import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.Future
 
-@State(name = "sourceFolderManager",  storages = [Storage(StoragePathMacros.CACHE_FILE)])
-class SourceFolderManagerImpl(private val project: Project) : SourceFolderManager, Disposable, PersistentStateComponent<SourceFolderManagerState> {
+@ApiStatus.Internal
+@State(name = "sourceFolderManager", storages = [Storage(StoragePathMacros.CACHE_FILE)])
+class SourceFolderManagerImpl(
+  private val project: Project,
+  private val coroutineScope: CoroutineScope,
+) : SourceFolderManager, PersistentStateComponent<SourceFolderManagerState>, Disposable {
   private val moduleNamesToSourceFolderState: MultiMap<String, SourceFolderModelState> = MultiMap.create()
   private var isDisposed = false
   private val mutex = Any()
-  private var sourceFolders = PathPrefixTreeMap<SourceFolderModel>()
+  private var sourceFolders = CanonicalPathPrefixTree.createMap<SourceFolderModel>()
   private var sourceFoldersByModule = HashMap<String, ModuleModel>()
 
-  private val operationsStates = mutableListOf<Future<*>>()
+  private val operationsStates = ConcurrentLinkedQueue<Future<*>>()
+
+  @OptIn(ExperimentalCoroutinesApi::class)
+  private val refreshFilesDispatcher = Dispatchers.IO.limitedParallelism(3)
 
   override fun addSourceFolder(module: Module, url: String, type: JpsModuleSourceRootType<*>) {
     synchronized(mutex) {
       sourceFolders[url] = SourceFolderModel(module, url, type)
       addUrlToModuleModel(module, url)
     }
-    ApplicationManager.getApplication().invokeLater(Runnable {
+    coroutineScope.launch(refreshFilesDispatcher) {
       VirtualFileManager.getInstance().refreshAndFindFileByUrl(url)
-    }, project.disposed)
+    }
   }
 
   override fun setSourceFolderPackagePrefix(url: String, packagePrefix: String?) {
@@ -80,11 +108,13 @@ class SourceFolderManagerImpl(private val project: Project) : SourceFolderManage
   }
 
   @TestOnly
-  fun isDisposed() = isDisposed
+  fun isDisposed(): Boolean = isDisposed
 
   @TestOnly
-  fun getSourceFolders(moduleName: String) = synchronized(mutex) {
-    sourceFoldersByModule[moduleName]?.sourceFolders
+  fun getSourceFolders(moduleName: String): MutableSet<String>? {
+    return synchronized(mutex) {
+      sourceFoldersByModule[moduleName]?.sourceFolders
+    }
   }
 
   private fun removeSourceFolder(url: String) {
@@ -100,62 +130,62 @@ class SourceFolderManagerImpl(private val project: Project) : SourceFolderManage
     }
   }
 
-  private data class SourceFolderModel(
-    val module: Module,
-    val url: String,
-    val type: JpsModuleSourceRootType<*>,
-    var packagePrefix: String? = null,
-    var generated: Boolean = false
-  )
-
-  private data class ModuleModel(
-    val module: Module,
-    val sourceFolders: MutableSet<String> = CollectionFactory.createFilePathSet()
-  )
-
-  init {
-    project.messageBus.connect().subscribe(VirtualFileManager.VFS_CHANGES, object : BulkFileListener {
-      override fun after(events: List<VFileEvent>) {
-        val sourceFoldersToChange = HashMap<Module, ArrayList<Pair<VirtualFile, SourceFolderModel>>>()
-        val virtualFileManager = VirtualFileManager.getInstance()
-
-        for (event in events) {
-          if (event !is VFileCreateEvent) {
-            continue
-          }
-          val allDescendantValues = synchronized(mutex) { sourceFolders.getAllDescendantValues(VfsUtilCore.pathToUrl(event.path)) }
-          for (sourceFolder in allDescendantValues) {
-            val sourceFolderFile = virtualFileManager.refreshAndFindFileByUrl(sourceFolder.url)
-            if (sourceFolderFile != null && sourceFolderFile.isValid) {
-              sourceFoldersToChange.computeIfAbsent(sourceFolder.module) { ArrayList() }.add(Pair(event.file!!, sourceFolder))
-              removeSourceFolder(sourceFolder.url)
-            }
-          }
-        }
-
-        val application = ApplicationManager.getApplication()
-        val future = application.executeOnPooledThread { updateSourceFolders(sourceFoldersToChange) }
-        if (application.isUnitTestMode) {
-          ApplicationManager.getApplication().assertIsDispatchThread()
-          operationsStates.removeIf { it.isDone }
-          operationsStates.add(future)
-        }
-      }
-    })
-
-    project.messageBus.connect().subscribe(ProjectTopics.MODULES, object : ModuleListener {
-      override fun moduleAdded(project: Project, module: Module) {
-        synchronized(mutex) {
-          moduleNamesToSourceFolderState[module.name].forEach {
-            loadSourceFolderState(it, module)
-          }
-          moduleNamesToSourceFolderState.remove(module.name)
-        }
-      }
-    })
+  @Suppress("unused") // todo fix warning
+  private class ModuleListenerImpl : ModuleListener {
+    override fun modulesAdded(project: Project, modules: List<Module>) {
+      (SourceFolderManager.getInstance(project) as SourceFolderManagerImpl).modulesAdded(modules)
+    }
   }
 
-  fun rescanAndUpdateSourceFolders() {
+  internal fun filesCreated(fileCreateEvents: List<VFileCreateEvent>) {
+    val sourceFoldersToChange = mutableMapOf<Module, ArrayList<Pair<VirtualFile, SourceFolderModel>>>()
+    val virtualFileManager = VirtualFileManager.getInstance()
+
+    for (event in fileCreateEvents) {
+      val allDescendantValues = synchronized(mutex) {
+        sourceFolders.getDescendantValues(VfsUtilCore.pathToUrl(event.path))
+      }
+
+      for (sourceFolder in allDescendantValues) {
+        val sourceFolderFile = virtualFileManager.refreshAndFindFileByUrl(sourceFolder.url)
+        if (sourceFolderFile != null && sourceFolderFile.isValid) {
+          sourceFoldersToChange.computeIfAbsent(sourceFolder.module) { ArrayList() }.add(Pair(event.file!!, sourceFolder))
+          removeSourceFolder(sourceFolder.url)
+        }
+      }
+    }
+
+    val job = coroutineScope.async {
+      val workspaceModel = project.serviceAsync<WorkspaceModel>()
+      for ((key, values) in sourceFoldersToChange.keys.groupBy { it.project }) {
+        withContext(Dispatchers.EDT) {
+          batchUpdateModelsInEdt(key, values, workspaceModel) { model ->
+            modifyModel(sourceFoldersToChange, model)
+          }
+        }
+      }
+    }
+
+    if (ApplicationManager.getApplication().isUnitTestMode) {
+      val completableFuture = job.asCompletableFuture()
+      operationsStates.add(completableFuture)
+      job.invokeOnCompletion {
+        operationsStates.remove(completableFuture)
+      }
+    }
+  }
+
+  private fun modulesAdded(modules: List<Module>) {
+    synchronized(mutex) {
+      for (module in modules) {
+        moduleNamesToSourceFolderState.remove(module.name)!!.forEach {
+          loadSourceFolderState(it, module)
+        }
+      }
+    }
+  }
+
+  override fun rescanAndUpdateSourceFolders() {
     val sourceFoldersToChange = HashMap<Module, ArrayList<Pair<VirtualFile, SourceFolderModel>>>()
     val virtualFileManager = VirtualFileManager.getInstance()
 
@@ -171,40 +201,83 @@ class SourceFolderManagerImpl(private val project: Project) : SourceFolderManage
   }
 
   private fun updateSourceFolders(sourceFoldersToChange: Map<Module, List<Pair<VirtualFile, SourceFolderModel>>>) {
-    for ((module, p) in sourceFoldersToChange) {
-      ModuleRootModificationUtil.updateModel(module) { model ->
-        for ((eventFile, sourceFolders) in p) {
-          val (_, url, type, packagePrefix, generated) = sourceFolders
-          val contentEntry = MarkRootActionBase.findContentEntry(model, eventFile)
-                             ?: model.addContentEntry(url)
-          val sourceFolder = contentEntry.addSourceFolder(url, type)
-          if (packagePrefix != null && packagePrefix.isNotEmpty()) {
-            sourceFolder.packagePrefix = packagePrefix
-          }
-          setForGeneratedSources(sourceFolder, generated)
+    val workspaceModel = WorkspaceModel.getInstance(project)
+    for ((key, values) in sourceFoldersToChange.keys.groupBy { it.project }) {
+      ApplicationManager.getApplication().invokeAndWait {
+        batchUpdateModelsInEdt(key, values, workspaceModel) { model ->
+          modifyModel(sourceFoldersToChange, model)
         }
       }
     }
   }
 
-  private fun setForGeneratedSources(folder: SourceFolder, generated: Boolean) {
-    val jpsElement = folder.jpsElement
-    val properties = jpsElement.getProperties(JavaModuleSourceRootTypes.SOURCES)
-    if (properties != null) properties.isForGeneratedSources = generated
+  private fun modifyModel(
+    sourceFoldersToChange: Map<Module, List<Pair<VirtualFile, SourceFolderModel>>>,
+    model: ModifiableRootModel,
+  ) {
+    val p = sourceFoldersToChange[model.module] ?: error("Value for the module ${model.module.name} should be available")
+    for ((eventFile, sourceFolders) in p) {
+      val (_, url, type, packagePrefix, generated) = sourceFolders
+      val contentEntry = MarkRootsManager.findContentEntry(model, eventFile) ?: model.addContentEntry(url, true)
+      val sourceFolder = contentEntry.addSourceFolder(url, type, true)
+      if (!packagePrefix.isNullOrEmpty()) {
+        sourceFolder.packagePrefix = packagePrefix
+      }
+      setForGeneratedSources(sourceFolder, generated)
+    }
   }
 
-  override fun getState(): SourceFolderManagerState? {
+  @RequiresEdt
+  private fun batchUpdateModelsInEdt(
+    project: Project,
+    modules: Collection<Module>,
+    workspaceModel: WorkspaceModel,
+    modifier: (ModifiableRootModel) -> Unit,
+  ) {
+    val diffBuilder = workspaceModel.currentSnapshot.toBuilder()
+    val modifiableRootModels = modules.asSequence().filter { !it.isDisposed }.map { module ->
+      val moduleRootComponentBridge = ModuleRootManager.getInstance(module) as ModuleRootComponentBridge
+      val modifiableRootModel = moduleRootComponentBridge.getModifiableModelForMultiCommit(ExternalSystemRootConfigurationAccessor(diffBuilder),
+                                                                                           false)
+      modifiableRootModel as ModifiableRootModelBridge
+      modifier.invoke(modifiableRootModel)
+      modifiableRootModel.prepareForCommit()
+      modifiableRootModel
+    }.toList()
+
+    WriteAction.run<RuntimeException> {
+      if (project.isDisposed) {
+        return@run
+      }
+
+      workspaceModel.updateProjectModel("Source folder manager: batch update models") { updater ->
+        updater.applyChangesFrom(diffBuilder)
+      }
+      modifiableRootModels.forEach { it.postCommit() }
+    }
+  }
+
+  private fun setForGeneratedSources(folder: SourceFolder, generated: Boolean) {
+    val properties = folder.jpsElement.getProperties(JavaModuleSourceRootTypes.SOURCES)
+    if (properties != null) {
+      properties.isForGeneratedSources = generated
+    }
+  }
+
+  override fun getState(): SourceFolderManagerState {
     synchronized(mutex) {
-      return SourceFolderManagerState(sourceFolders.valueSequence
-                                        .mapNotNull { model ->
-                                          val modelTypeName = dictionary.entries.find { it.value == model.type }?.key ?: return@mapNotNull null
-                                          SourceFolderModelState(model.module.name,
-                                                                 model.url,
-                                                                 modelTypeName,
-                                                                 model.packagePrefix,
-                                                                 model.generated)
-                                        }
-                                        .toList())
+      return SourceFolderManagerState(
+        sourceFolders.values.mapNotNull { model ->
+          val modelTypeName = dictionary.entries.find { it.value == model.type }?.key ?: return@mapNotNull null
+          SourceFolderModelState(
+            moduleName = model.module.name,
+            url = model.url,
+            type = modelTypeName,
+            packagePrefix = model.packagePrefix,
+            generated = model.generated,
+          )
+        },
+      )
     }
   }
 
@@ -214,17 +287,23 @@ class SourceFolderManagerImpl(private val project: Project) : SourceFolderManage
       if (isDisposed) {
         return
       }
-      sourceFolders = PathPrefixTreeMap()
+
+      sourceFolders = CanonicalPathPrefixTree.createMap()
       sourceFoldersByModule = HashMap()
+
+      if (state.sourceFolders.isEmpty()) {
+        return
+      }
 
       val moduleManager = ModuleManager.getInstance(project)
 
-      state.sourceFolders.forEach { model ->
+      for (model in state.sourceFolders) {
         val module = moduleManager.findModuleByName(model.moduleName)
         if (module == null) {
           listenToModuleAdded(model)
-          return@forEach
+          continue
         }
+
         loadSourceFolderState(model, module)
       }
     }
@@ -233,16 +312,24 @@ class SourceFolderManagerImpl(private val project: Project) : SourceFolderManage
   private fun resetModuleAddedListeners() = moduleNamesToSourceFolderState.clear()
   private fun listenToModuleAdded(model: SourceFolderModelState) = moduleNamesToSourceFolderState.putValue(model.moduleName, model)
 
-  private fun loadSourceFolderState(model: SourceFolderModelState,
-                                    module: Module) {
+  private fun loadSourceFolderState(
+    model: SourceFolderModelState,
+    module: Module,
+  ) {
     val rootType: JpsModuleSourceRootType<*> = dictionary[model.type] ?: return
     val url = model.url
-    sourceFolders[url] = SourceFolderModel(module, url, rootType, model.packagePrefix, model.generated)
+    sourceFolders[url] = SourceFolderModel(
+      module = module,
+      url = url,
+      type = rootType,
+      packagePrefix = model.packagePrefix,
+      generated = model.generated,
+    )
     addUrlToModuleModel(module, url)
   }
 
   private fun addUrlToModuleModel(module: Module, url: String) {
-    val moduleModel = sourceFoldersByModule.getOrPut(module.name) {
+    val moduleModel = sourceFoldersByModule.computeIfAbsent(module.name) {
       ModuleModel(module).also {
         Disposer.register(module, Disposable {
           removeSourceFolders(module)
@@ -253,33 +340,67 @@ class SourceFolderManagerImpl(private val project: Project) : SourceFolderManage
   }
 
   @TestOnly
-  @Throws(Exception::class)
+  @RequiresEdt
   fun consumeBulkOperationsState(stateConsumer: (Future<*>) -> Unit) {
-    ApplicationManager.getApplication().assertIsDispatchThread()
     assert(ApplicationManager.getApplication().isUnitTestMode)
-    for (operationsState in operationsStates) {
-      stateConsumer.invoke(operationsState)
+    do {
+      val operation = operationsStates.poll() ?: break
+      stateConsumer.invoke(operation)
     }
-  }
-
-  companion object {
-    val dictionary = mapOf<String, JpsModuleSourceRootType<*>>(
-      "SOURCE" to JavaSourceRootType.SOURCE,
-      "TEST_SOURCE" to JavaSourceRootType.TEST_SOURCE,
-      "RESOURCE" to JavaResourceRootType.RESOURCE,
-      "TEST_RESOURCE" to JavaResourceRootType.TEST_RESOURCE
-    )
+    while (true)
   }
 }
 
-data class SourceFolderManagerState(@get:XCollection(style = XCollection.Style.v2) val sourceFolders: Collection<SourceFolderModelState>) {
+private data class ModuleModel(
+  @JvmField val module: Module,
+  @JvmField val sourceFolders: MutableSet<String> = CollectionFactory.createFilePathSet(),
+)
+
+private data class SourceFolderModel(
+  @JvmField val module: Module,
+  @JvmField val url: String,
+  @JvmField val type: JpsModuleSourceRootType<*>,
+  @JvmField var packagePrefix: String? = null,
+  @JvmField var generated: Boolean = false,
+)
+
+private val dictionary = mapOf<String, JpsModuleSourceRootType<*>>(
+  "SOURCE" to JavaSourceRootType.SOURCE,
+  "TEST_SOURCE" to JavaSourceRootType.TEST_SOURCE,
+  "RESOURCE" to JavaResourceRootType.RESOURCE,
+  "TEST_RESOURCE" to JavaResourceRootType.TEST_RESOURCE
+)
+
+@ApiStatus.Internal
+class ExternalSystemRootConfigurationAccessor(
+  override val actualDiffBuilder: MutableEntityStorage,
+) : RootConfigurationAccessor(), RootConfigurationAccessorForWorkspaceModel
+
+@ApiStatus.Internal
+data class SourceFolderManagerState(
+  @get:XCollection(style = XCollection.Style.v2) val sourceFolders: Collection<SourceFolderModelState>,
+) {
   constructor() : this(mutableListOf())
 }
 
-data class SourceFolderModelState(var moduleName: String,
-                                  var url: String,
-                                  var type: String,
-                                  var packagePrefix: String?,
-                                  var generated: Boolean) {
-  constructor(): this("", "", "", null, false)
+@ApiStatus.Internal
+data class SourceFolderModelState(
+  var moduleName: String,
+  var url: String,
+  var type: String,
+  var packagePrefix: String?,
+  var generated: Boolean,
+) {
+  constructor() : this("", "", "", null, false)
+}
+
+private class SourceFolderManagerImplBulkFileListener : BulkFileListener {
+  override fun after(events: List<VFileEvent>) {
+    val fileCreateEvents = events.filterIsInstance<VFileCreateEvent>()
+    if (fileCreateEvents.isEmpty()) return
+
+    for (project in ProjectManager.getInstance().openProjects) {
+      (SourceFolderManager.getInstance(project) as SourceFolderManagerImpl).filesCreated(fileCreateEvents)
+    }
+  }
 }

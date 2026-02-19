@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.svn.dialogs.browserCache;
 
 import com.intellij.util.NotNullFunction;
@@ -7,7 +7,12 @@ import org.jetbrains.idea.svn.dialogs.RepositoryBrowserComponent;
 import org.jetbrains.idea.svn.dialogs.RepositoryTreeNode;
 
 import javax.swing.tree.TreeNode;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Enumeration;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 public class KeepingExpandedExpander implements Expander {
   private final Expander mySelectionExpander;
@@ -35,8 +40,7 @@ public class KeepingExpandedExpander implements Expander {
     final Enumeration<TreeNode> children = node.children();
     while (children.hasMoreElements()) {
       final TreeNode treeNode = children.nextElement();
-      if (treeNode instanceof RepositoryTreeNode) {
-        final RepositoryTreeNode repositoryNode = (RepositoryTreeNode) treeNode;
+      if (treeNode instanceof RepositoryTreeNode repositoryNode) {
         final List<TreeNode> thirdLevelChildren = repositoryNode.getAllAlreadyLoadedChildren();
 
         final String nodeName = repositoryNode.getSVNDirEntry().getName();
@@ -77,8 +81,7 @@ public class KeepingExpandedExpander implements Expander {
 
   public static class Factory implements NotNullFunction<RepositoryBrowserComponent, Expander> {
     @Override
-    @NotNull
-    public Expander fun(final RepositoryBrowserComponent repositoryBrowserComponent) {
+    public @NotNull Expander fun(final RepositoryBrowserComponent repositoryBrowserComponent) {
       return new KeepingExpandedExpander(repositoryBrowserComponent);
     }
   }

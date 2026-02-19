@@ -6,19 +6,20 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.usages.rules.UsageInFile;
 import com.intellij.usages.rules.UsageInFiles;
 import com.intellij.util.containers.ContainerUtil;
-import gnu.trove.THashSet;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.HashSet;
 import java.util.Set;
 
+@ApiStatus.Internal
 public final class UsageDataUtil {
   public static VirtualFile @Nullable [] provideVirtualFileArray(Usage[] usages, UsageTarget[] usageTargets) {
     if (usages == null && usageTargets == null) {
       return null;
     }
 
-    final Set<VirtualFile> result = new THashSet<>();
-
+    Set<VirtualFile> result = new HashSet<>();
     if (usages != null) {
       for (Usage usage : usages) {
         if (usage instanceof UsageInFile) {

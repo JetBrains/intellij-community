@@ -1,4 +1,4 @@
-// "Create local variable 'x'" "true"
+// "Create local variable 'x'" "true-preview"
 class other {
   public int method1() { return 1;}
   public String field1;

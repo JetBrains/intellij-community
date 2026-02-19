@@ -1,0 +1,26 @@
+<idea-plugin package="org.jetbrains.kotlin.idea.codeInsight.lineMarkers">
+  <dependencies>
+    <module name="intellij.kotlin.searching"/>
+    <module name="intellij.kotlin.codeInsight"/>
+    <module name="intellij.kotlin.highlighting"/>
+  </dependencies>
+
+  <extensions defaultExtensionNs="com.intellij">
+
+    <codeInsight.lineMarkerProvider
+            language="kotlin"
+            implementationClass="org.jetbrains.kotlin.idea.codeInsight.lineMarkers.KotlinSuspendCallLineMarkerProvider"/>
+    <codeInsight.lineMarkerProvider
+            language="kotlin"
+            implementationClass="org.jetbrains.kotlin.idea.codeInsight.lineMarkers.KotlinRecursiveCallLineMarkerProvider"/>
+
+    <codeInsight.lineMarkerProvider
+            language="kotlin"
+            implementationClass="org.jetbrains.kotlin.idea.codeInsight.lineMarkers.KotlinLineMarkerProvider"/>
+    <gotoTargetPresentationProvider implementation="org.jetbrains.kotlin.idea.codeInsight.lineMarkers.KotlinGotoTargetPresentationProvider"/>
+
+    <codeInsight.lineMarkerProvider
+            language="kotlin"
+            implementationClass="org.jetbrains.kotlin.idea.codeInsight.lineMarkers.KotlinExpectActualLineMarkerProvider"/>
+  </extensions>
+</idea-plugin>

@@ -1,11 +1,17 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl.welcomeScreen;
 
-import com.intellij.ide.*;
+import com.intellij.filename.UniqueNameBuilder;
+import com.intellij.ide.ProjectGroup;
+import com.intellij.ide.ProjectGroupActionGroup;
+import com.intellij.ide.RecentProjectsManager;
+import com.intellij.ide.RecentProjectsManagerBase;
+import com.intellij.ide.ReopenProjectAction;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.ui.panel.ComponentPanelBuilder;
-import com.intellij.openapi.util.io.UniqueNameBuilder;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.ComponentUtil;
 import com.intellij.ui.ListActions;
@@ -13,23 +19,51 @@ import com.intellij.ui.components.JBList;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.speedSearch.ListWithFilter;
-import com.intellij.ui.speedSearch.NameFilteringListModel;
 import com.intellij.util.IconUtil;
 import com.intellij.util.PathUtil;
-import com.intellij.util.ui.*;
+import com.intellij.util.ui.JBDimension;
+import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.NamedColorUtil;
+import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.accessibility.AccessibleContextUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.AbstractAction;
+import javax.swing.GrayFilter;
+import javax.swing.Icon;
+import javax.swing.ImageIcon;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
+import javax.swing.JList;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.ListCellRenderer;
+import javax.swing.SwingConstants;
+import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.Component;
+import java.awt.Dimension;
+import java.awt.FocusTraversalPolicy;
+import java.awt.Font;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.GraphicsConfiguration;
+import java.awt.GraphicsDevice;
+import java.awt.GraphicsEnvironment;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
+import java.awt.Image;
 import java.awt.event.ActionEvent;
+import java.awt.image.BufferedImage;
 import java.util.List;
 
 /**
  * @author Konstantin Bulenkov
  */
-public class NewRecentProjectPanel extends RecentProjectPanel {
+@ApiStatus.Internal
+public final class NewRecentProjectPanel extends RecentProjectPanel {
 
   public NewRecentProjectPanel(@NotNull Disposable parentDisposable) {
     this(parentDisposable, true);
@@ -38,18 +72,29 @@ public class NewRecentProjectPanel extends RecentProjectPanel {
   public NewRecentProjectPanel(@NotNull Disposable parentDisposable, boolean withSpeedSearch) {
     super(parentDisposable, withSpeedSearch);
     setBorder(JBUI.Borders.empty());
-    setBackground(WelcomeScreenUIManager.getProjectsBackground());
     JScrollPane scrollPane = UIUtil.findComponentOfType(this, JScrollPane.class);
     if (scrollPane != null) {
-      scrollPane.setBackground(WelcomeScreenUIManager.getProjectsBackground());
       JBDimension size = JBUI.size(300, 460);
       scrollPane.setSize(size);
       scrollPane.setMinimumSize(size);
       scrollPane.setPreferredSize(size);
     }
+    setBackground(WelcomeScreenUIManager.getProjectsBackground());
+  }
+
+  @Override
+  public void setBackground(Color bg) {
+    super.setBackground(bg);
+    JScrollPane scrollPane = UIUtil.findComponentOfType(this, JScrollPane.class);
+    if (scrollPane != null) {
+      scrollPane.setBackground(bg);
+    }
     ListWithFilter panel = UIUtil.findComponentOfType(this, ListWithFilter.class);
     if (panel != null) {
-      panel.setBackground(WelcomeScreenUIManager.getProjectsBackground());
+      panel.setBackground(bg);
+    }
+    if (myList != null) {
+      myList.setBackground(bg);
     }
   }
 
@@ -72,7 +117,7 @@ public class NewRecentProjectPanel extends RecentProjectPanel {
   protected JBList<AnAction> createList(AnAction[] recentProjectActions, Dimension size) {
     final JBList<AnAction> list = super.createList(recentProjectActions, size);
 
-    list.setBackground(WelcomeScreenUIManager.getProjectsBackground());
+    list.setBackground(getBackground());
     list.getActionMap().put(ListActions.Right.ID, new AbstractAction() {
       @Override
       public void actionPerformed(ActionEvent e) {
@@ -85,9 +130,7 @@ public class NewRecentProjectPanel extends RecentProjectPanel {
         if (group != null) {
           if (!group.isExpanded()) {
             group.setExpanded(true);
-            ListModel model = ((NameFilteringListModel)list.getModel()).getOriginalModel();
             int index = list.getSelectedIndex();
-            RecentProjectsWelcomeScreenActionBase.rebuildRecentProjectDataModel((DefaultListModel)model);
             list.setSelectedIndex(group.getProjects().isEmpty() ? index : index + 1);
           }
         } else {
@@ -116,8 +159,6 @@ public class NewRecentProjectPanel extends RecentProjectPanel {
         if (group != null && group.isExpanded()) {
           group.setExpanded(false);
           int index = list.getSelectedIndex();
-          ListModel model = ((NameFilteringListModel)list.getModel()).getOriginalModel();
-          RecentProjectsWelcomeScreenActionBase.rebuildRecentProjectDataModel((DefaultListModel)model);
           list.setSelectedIndex(index);
         }
       }
@@ -139,7 +180,6 @@ public class NewRecentProjectPanel extends RecentProjectPanel {
       private void initConstraints () {
         nameCell = new GridBagConstraints();
         pathCell = new GridBagConstraints();
-        GridBagConstraints rightButtonCell = new GridBagConstraints();
 
         nameCell.gridx = 0;
         nameCell.gridy = 0;
@@ -148,27 +188,16 @@ public class NewRecentProjectPanel extends RecentProjectPanel {
         nameCell.anchor = GridBagConstraints.FIRST_LINE_START;
         nameCell.insets = JBUI.insets(6, 5, 1, 5);
 
-
-
         pathCell.gridx = 0;
         pathCell.gridy = 1;
 
         pathCell.insets = JBUI.insets(1, 5, 6, 5);
         pathCell.anchor = GridBagConstraints.LAST_LINE_START;
-
-
-        rightButtonCell.gridx = 1;
-        rightButtonCell.gridy = 0;
-        rightButtonCell.anchor = GridBagConstraints.FIRST_LINE_END;
-        rightButtonCell.insets = JBUI.insets(7, 7, 7, 7);
-        rightButtonCell.gridheight = 2;
-
-        //rightButtonCell.anchor = GridBagConstraints.WEST;
       }
 
       @Override
       protected Color getListBackground(boolean isSelected, boolean hasFocus) {
-        return isSelected ? WelcomeScreenUIManager.getProjectsSelectionBackground(hasFocus) : WelcomeScreenUIManager.getProjectsBackground();
+        return isSelected ? WelcomeScreenUIManager.getProjectsSelectionBackground(hasFocus) : NewRecentProjectPanel.this.getBackground();
       }
 
       @Override
@@ -197,7 +226,7 @@ public class NewRecentProjectPanel extends RecentProjectPanel {
         final JLabel name = new JLabel();
         final JLabel path = ComponentPanelBuilder.createNonWrappingCommentComponent("");
         name.setForeground(fore);
-        path.setForeground(UIUtil.getInactiveTextColor());
+        path.setForeground(NamedColorUtil.getInactiveTextColor());
 
         setBackground(back);
 
@@ -232,15 +261,16 @@ public class NewRecentProjectPanel extends RecentProjectPanel {
               add(name);
             } else if (value instanceof ReopenProjectAction) {
               final NonOpaquePanel p = new NonOpaquePanel(new BorderLayout());
-              name.setText(((ReopenProjectAction)value).getProjectName());
+              name.setText(((ReopenProjectAction)value).getProjectNameToDisplay());
               final String realPath = PathUtil.toSystemDependentName(((ReopenProjectAction)value).getProjectPath());
               int i = isInsideGroup ? 80 : 60;
               path.setText(getTitle2Text((ReopenProjectAction)value, path, JBUIScale.scale(i)));
               if (!realPath.equals(path.getText())) {
                 projectsWithLongPaths.add((ReopenProjectAction)value);
               }
-              if (!isPathValid((((ReopenProjectAction)value).getProjectPath()))) {
-                name.setForeground(UIUtil.getInactiveTextColor());
+              boolean isValid = !isPathValid((((ReopenProjectAction)value).getProjectPath()));
+              if (isValid) {
+                name.setForeground(NamedColorUtil.getInactiveTextColor());
               }
               p.add(name, BorderLayout.NORTH);
               p.add(path, BorderLayout.SOUTH);
@@ -248,23 +278,27 @@ public class NewRecentProjectPanel extends RecentProjectPanel {
 
               String projectPath = ((ReopenProjectAction)value).getProjectPath();
               RecentProjectsManagerBase recentProjectsManage = RecentProjectsManagerBase.getInstanceEx();
-              Icon icon = recentProjectsManage.getProjectIcon(projectPath, StartupUiUtil.isUnderDarcula());
-              if (icon == null) {
-                if (StartupUiUtil.isUnderDarcula()) {
-                  //No dark icon for this project
-                  icon = recentProjectsManage.getProjectIcon(projectPath, false);
-                }
-              }
-              if (icon == null) {
-                icon = EmptyIcon.ICON_16;
-              }
-
+              Icon icon = recentProjectsManage.getProjectIcon(projectPath, true);
               final JLabel projectIcon = new JLabel("", icon, SwingConstants.LEFT) {
                 @Override
                 protected void paintComponent(Graphics g) {
-                  getIcon().paintIcon(this, g, 0, 0);
+                  Icon icon = isEnabled() ? getIcon() : getDisabledIcon();
+                  icon.paintIcon(this, g, 0, 0);
                 }
               };
+              ApplicationManager.getApplication().executeOnPooledThread(() -> {
+                // IconUtil.desaturate eagerly evaluates `icon` which
+                // may take unbound amount of time on a network share
+                Icon disabledIcon = IconUtil.desaturate(icon);
+                ApplicationManager.getApplication().invokeLater(() -> {
+                  if (projectIcon.isValid()) {
+                    projectIcon.setDisabledIcon(disabledIcon);
+                  }
+                }, ModalityState.any());
+              });
+              if (isValid) {
+                projectIcon.setEnabled(false);
+              }
               projectIcon.setBorder(JBUI.Borders.emptyRight(8));
               projectIcon.setVerticalAlignment(SwingConstants.CENTER);
               final NonOpaquePanel panel = new NonOpaquePanel(new BorderLayout());
@@ -276,6 +310,20 @@ public class NewRecentProjectPanel extends RecentProjectPanel {
             AccessibleContextUtil.setCombinedDescription(this, name, " - ", path);
           }
 
+          private static Icon getGray(Icon icon) {
+            final int w = icon.getIconWidth();
+            final int h = icon.getIconHeight();
+            GraphicsEnvironment ge =
+              GraphicsEnvironment.getLocalGraphicsEnvironment();
+            GraphicsDevice gd = ge.getDefaultScreenDevice();
+            GraphicsConfiguration gc = gd.getDefaultConfiguration();
+            BufferedImage image = gc.createCompatibleImage(w, h);
+            Graphics2D g2d = image.createGraphics();
+            icon.paintIcon(null, g2d, 0, 0);
+            Image gray = GrayFilter.createDisabledImage(image);
+            return new ImageIcon(gray);
+          }
+
           @Override
           public Dimension getPreferredSize() {
             return new Dimension(super.getPreferredSize().width, JBUIScale.scale(value instanceof ProjectGroupActionGroup ? 32 : 50));
@@ -285,9 +333,8 @@ public class NewRecentProjectPanel extends RecentProjectPanel {
     };
   }
 
-  @Nullable
   @Override
-  protected JPanel createTitle() {
+  protected @Nullable JPanel createTitle() {
     return null;
   }
 }

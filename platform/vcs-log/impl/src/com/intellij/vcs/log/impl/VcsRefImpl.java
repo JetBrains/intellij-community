@@ -1,53 +1,48 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.impl;
 
+import com.intellij.openapi.vcs.VcsRefNamesInterner;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.containers.Interner;
 import com.intellij.vcs.log.Hash;
 import com.intellij.vcs.log.VcsRef;
 import com.intellij.vcs.log.VcsRefType;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * @author erokhins
  */
+@ApiStatus.Internal
 public final class VcsRefImpl implements VcsRef {
-  private static final Interner<String> ourNames = Interner.createWeakInterner();
-  @NotNull private final Hash myCommitHash;
-  @NotNull private final String myName;
-  @NotNull private final VcsRefType myType;
-  @NotNull private final VirtualFile myRoot;
+  private final @NotNull Hash myCommitHash;
+  private final @NotNull String myName;
+  private final @NotNull VcsRefType myType;
+  private final @NotNull VirtualFile myRoot;
 
   public VcsRefImpl(@NotNull Hash commitHash, @NotNull String name, @NotNull VcsRefType type, @NotNull VirtualFile root) {
     myCommitHash = commitHash;
     myType = type;
     myRoot = root;
-    synchronized (ourNames) {
-      myName = ourNames.intern(name);
-    }
+    myName = VcsRefNamesInterner.get(name);
   }
 
   @Override
-  @NotNull
-  public VcsRefType getType() {
+  public @NotNull VcsRefType getType() {
     return myType;
   }
 
   @Override
-  @NotNull
-  public Hash getCommitHash() {
+  public @NotNull Hash getCommitHash() {
     return myCommitHash;
   }
 
   @Override
-  @NotNull
-  public String getName() {
+  public @NotNull String getName() {
     return myName;
   }
 
   @Override
-  @NotNull
-  public VirtualFile getRoot() {
+  public @NotNull VirtualFile getRoot() {
     return myRoot;
   }
 

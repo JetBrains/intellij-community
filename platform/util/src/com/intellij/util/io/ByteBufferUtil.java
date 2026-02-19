@@ -1,10 +1,8 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.io;
 
 import com.intellij.ReviseWhenPortedToJDK;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.SystemInfoRt;
-import com.intellij.util.concurrency.AtomicFieldUpdater;
 import org.jetbrains.annotations.NotNull;
 
 import java.lang.invoke.MethodHandle;
@@ -13,42 +11,50 @@ import java.lang.invoke.MethodType;
 import java.nio.ByteBuffer;
 
 public final class ByteBufferUtil {
+  private static final Logger LOG = Logger.getInstance(ByteBufferUtil.class);
+
+  private static final MethodHandle cleanerHandle;
+  private static final MethodHandle cleanerCleanHandle;
+
   /**
    * Please use with care. In most cases leaving the job to the GC is enough.
    */
   @ReviseWhenPortedToJDK("11")
   public static boolean cleanBuffer(@NotNull ByteBuffer buffer) {
     if (!buffer.isDirect()) return true;
-
-    if (SystemInfoRt.IS_AT_LEAST_JAVA9) {
-      // in Java 9+, the "official" dispose method is sun.misc.Unsafe#invokeCleaner
-      Object unsafe = AtomicFieldUpdater.getUnsafe();
-      try {
-        MethodType type = MethodType.methodType(void.class, ByteBuffer.class);
-        MethodHandle handle = MethodHandles.lookup().findVirtual(unsafe.getClass(), "invokeCleaner", type);
-        handle.invoke(unsafe, buffer);
+    try {
+      //noinspection JavaLangInvokeHandleSignature
+      Object cleaner = cleanerHandle.invoke(buffer);
+      if (cleaner != null) {
+        cleanerCleanHandle.invoke(cleaner);
         return true;
-      }
-      catch (Throwable t) {
-        Logger.getInstance(ByteBufferUtil.class).warn(t);
-        return false;
       }
     }
-    else {
-      //used in Kotlin and JPS
-      try {
-        Class<?> directBufferClass = Class.forName("sun.nio.ch.DirectBuffer");
-        Class<?> cleanerClass = Class.forName("sun.misc.Cleaner");
-        Object cleaner = directBufferClass.getDeclaredMethod("cleaner").invoke(buffer);
-        if (cleaner != null) {
-          cleanerClass.getDeclaredMethod("clean").invoke(cleaner);  // already cleaned otherwise
-        }
-        return true;
-      }
-      catch (Exception e) {
-        Logger.getInstance(ByteBufferUtil.class).warn(e);
-        return false;
-      }
+    catch (Throwable e) {
+      LOG.warn(e);
+    }
+    return false;
+  }
+
+  public static void copyMemory(@NotNull ByteBuffer src, int index, byte[] dst, int dstIndex, int length) {
+    ByteBuffer buf = src.duplicate();
+    buf.position(index);
+    buf.get(dst, dstIndex, length);
+  }
+
+  static {
+    try {
+      MethodHandles.Lookup lookup = MethodHandles.lookup();
+      Class<?> directBufferClass = Class.forName("sun.nio.ch.DirectBuffer");
+      Class<?> cleanerClass = directBufferClass.getDeclaredMethod("cleaner").getReturnType();
+      cleanerHandle = lookup.findVirtual(directBufferClass, "cleaner", MethodType.methodType(cleanerClass));
+      cleanerCleanHandle = lookup.findVirtual(cleanerClass, "clean", MethodType.methodType(Void.TYPE));
+    }
+    catch (Error | RuntimeException e) {
+      throw e;
+    }
+    catch (Throwable e) {
+      throw new IllegalStateException(e);
     }
   }
 }

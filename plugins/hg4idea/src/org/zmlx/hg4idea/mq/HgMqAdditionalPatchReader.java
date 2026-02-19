@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.zmlx.hg4idea.mq;
 
 import com.intellij.dvcs.DvcsUtil;
@@ -27,15 +27,13 @@ public class HgMqAdditionalPatchReader {
   private static final @NonNls String USER = "# User ";
   private static final @NonNls String DIFF_INFO = "diff -";
 
-  @NotNull
-  public static MqPatchDetails readMqPatchInfo(@Nullable VirtualFile root, @Nullable File patchFile) {
+  public static @NotNull MqPatchDetails readMqPatchInfo(@Nullable VirtualFile root, @Nullable File patchFile) {
     if (patchFile == null) return MqPatchDetails.EMPTY_PATCH_DETAILS;
     String context = DvcsUtil.tryLoadFileOrReturn(patchFile, "");
     return parseAdditionalMqInfo(root == null ? HgUtil.getNearestHgRoot(VfsUtil.findFileByIoFile(patchFile, true)) : root, context);
   }
 
-  @NotNull
-  private static MqPatchDetails parseAdditionalMqInfo(@Nullable VirtualFile root, @NotNull String context) {
+  private static @NotNull MqPatchDetails parseAdditionalMqInfo(@Nullable VirtualFile root, @NotNull String context) {
     String[] lines = StringUtil.splitByLines(context, false);
     String user = null;
     Date date = null;
@@ -70,13 +68,11 @@ public class HgMqAdditionalPatchReader {
     return new MqPatchDetails(nodeId, parent, date, root, branch, StringUtil.join(messageLines, "\n"), user);
   }
 
-  @NotNull
-  private static String extractField(@NotNull String line, @NotNull String prefix) {
+  private static @NotNull String extractField(@NotNull String line, @NotNull String prefix) {
     return line.substring(prefix.length()).trim();
   }
 
-  @Nullable
-  private static Date tryParseDate(@NotNull String substring) {
+  private static @Nullable Date tryParseDate(@NotNull String substring) {
     try {
       return new Date(NumberFormat.getInstance().parse(substring).longValue() * 1000);
     }

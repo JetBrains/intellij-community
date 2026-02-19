@@ -1,56 +1,81 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 /*
  * @author Eugene Zhuravlev
  */
 package com.intellij.debugger.jdi;
 
-import com.intellij.Patches;
-import com.intellij.debugger.engine.DebugProcess;
 import com.intellij.debugger.engine.DebugProcessImpl;
 import com.intellij.debugger.engine.DebuggerManagerThreadImpl;
 import com.intellij.debugger.engine.DebuggerUtils;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
+import com.intellij.debugger.engine.evaluation.EvaluationContext;
+import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.debugger.engine.jdi.VirtualMachineProxy;
-import com.intellij.debugger.impl.DebuggerUtilsImpl;
-import com.intellij.debugger.impl.PrioritizedTask;
+import com.intellij.debugger.impl.DebugUtilsKt;
+import com.intellij.debugger.impl.DebuggerUtilsAsync;
+import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.impl.attach.SAJDWPRemoteConnection;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.ThrowableComputable;
+import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.ReflectionUtil;
-import com.intellij.util.ThreeState;
-import com.sun.jdi.*;
-import com.sun.jdi.event.EventQueue;
+import com.intellij.util.containers.ContainerUtil;
+import com.jetbrains.jdi.ReferenceTypeImpl;
+import com.jetbrains.jdi.ThreadReferenceImpl;
+import com.sun.jdi.BooleanValue;
+import com.sun.jdi.ByteValue;
+import com.sun.jdi.CharValue;
+import com.sun.jdi.ClassLoaderReference;
+import com.sun.jdi.DoubleValue;
+import com.sun.jdi.FloatValue;
+import com.sun.jdi.IntegerValue;
+import com.sun.jdi.LongValue;
+import com.sun.jdi.Method;
+import com.sun.jdi.ObjectCollectedException;
+import com.sun.jdi.ObjectReference;
+import com.sun.jdi.ReferenceType;
+import com.sun.jdi.ShortValue;
+import com.sun.jdi.StringReference;
+import com.sun.jdi.ThreadGroupReference;
+import com.sun.jdi.ThreadReference;
+import com.sun.jdi.VirtualMachine;
+import com.sun.jdi.VoidValue;
 import com.sun.jdi.request.EventRequestManager;
-import one.util.streamex.StreamEx;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.Unmodifiable;
 
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.RejectedExecutionException;
 
-public class VirtualMachineProxyImpl implements JdiTimer, VirtualMachineProxy {
+public class VirtualMachineProxyImpl extends UserDataHolderBase implements JdiTimer, VirtualMachineProxy {
   private static final Logger LOG = Logger.getInstance(VirtualMachineProxyImpl.class);
   private final DebugProcessImpl myDebugProcess;
   private final VirtualMachine myVirtualMachine;
   private int myTimeStamp = 0;
-  private int myPausePressedCount = 0;
+  private int myModelSuspendCount = 0;
 
   private final Map<String, StringReference> myStringLiteralCache = new HashMap<>();
 
-  @NotNull
-  private final Map<ThreadReference, ThreadReferenceProxyImpl> myAllThreads = new ConcurrentHashMap<>();
+  private final @NotNull Map<ThreadReference, ThreadReferenceProxyImpl> myAllThreads = new ConcurrentHashMap<>();
   private final Map<ThreadGroupReference, ThreadGroupReferenceProxyImpl> myThreadGroups = new HashMap<>();
   private boolean myAllThreadsDirty = true;
   private List<ReferenceType> myAllClasses;
   private Map<ReferenceType, List<ReferenceType>> myNestedClassesCache = new HashMap<>();
 
-  public final Throwable mySuspendLogger = new Throwable();
   private final boolean myVersionHigher_15;
   private final boolean myVersionHigher_14;
 
@@ -63,33 +88,17 @@ public class VirtualMachineProxyImpl implements JdiTimer, VirtualMachineProxy {
     myVersionHigher_14 = myVersionHigher_15 || versionHigher("1.4");
 
     // avoid lazy-init for some properties: the following will pre-calculate values
-    canRedefineClasses();
-    canWatchFieldModification();
-    canPopFrames();
+    canRedefineClasses(); // fetch capabilitiesNew
+    canWatchFieldModification(); // fetch capabilities
 
     if (canBeModified()) { // no need to spend time here for read only sessions
-      try {
-        // this will cache classes inside JDI and enable faster search of classes later
-        virtualMachine.allClasses();
-      }
-      catch (VMDisconnectedException e) {
-        throw e;
-      }
-      catch (Throwable e) {
-        // catch all exceptions in order not to break vm attach process
-        // Example:
-        // java.lang.IllegalArgumentException: Invalid JNI signature character ';'
-        //  caused by some bytecode "optimizers" which break type signatures as a side effect.
-        //  solution if you are using JAX-WS: add -Dcom.sun.xml.bind.v2.bytecode.ClassTailor.noOptimize=true to JVM args
-        LOG.info(e);
-      }
+      DebugUtilsKt.preloadAllClasses(virtualMachine);
     }
 
     virtualMachine.topLevelThreadGroups().forEach(this::threadGroupCreated);
   }
 
-  @NotNull
-  public VirtualMachine getVirtualMachine() {
+  public @NotNull VirtualMachine getVirtualMachine() {
     return myVirtualMachine;
   }
 
@@ -125,7 +134,7 @@ public class VirtualMachineProxyImpl implements JdiTimer, VirtualMachineProxy {
         final ClassLoaderReference outerLoader = refType.classLoader();
         for (ReferenceType nested : list) {
           try {
-            if (outerLoader == null? nested.classLoader() == null : outerLoader.equals(nested.classLoader())) {
+            if (Objects.equals(outerLoader, nested.classLoader())) {
               candidates.add(nested);
             }
           }
@@ -135,9 +144,10 @@ public class VirtualMachineProxyImpl implements JdiTimer, VirtualMachineProxy {
 
         if (!candidates.isEmpty()) {
           // keep only direct nested types
+          // do not traverse all classes in vm, only the candidates list
           final Set<ReferenceType> nested2 = new HashSet<>();
           for (final ReferenceType candidate : candidates) {
-            nested2.addAll(nestedTypes(candidate));
+            addNestedTypes(candidate, candidates, nested2);
           }
           candidates.removeAll(nested2);
         }
@@ -152,6 +162,25 @@ public class VirtualMachineProxyImpl implements JdiTimer, VirtualMachineProxy {
     return nestedTypes;
   }
 
+  /**
+   * Check {@link ReferenceTypeImpl#nestedTypes()}
+   */
+  @ApiStatus.Internal
+  public static void addNestedTypes(ReferenceType base, Collection<ReferenceType> classes, Collection<ReferenceType> nested) {
+    String baseName = base.name();
+    int baseLength = baseName.length();
+    classes.forEach(type -> {
+      String name = type.name();
+      int length = name.length();
+      if (length > baseLength && name.startsWith(baseName)) {
+        char c = name.charAt(baseLength);
+        if (c == '$' || c == '#') {
+          nested.add(type);
+        }
+      }
+    });
+  }
+
   @Override
   public List<ReferenceType> allClasses() {
     List<ReferenceType> allClasses = myAllClasses;
@@ -161,6 +190,7 @@ public class VirtualMachineProxyImpl implements JdiTimer, VirtualMachineProxy {
     return allClasses;
   }
 
+  @Override
   public String toString() {
     return myVirtualMachine.toString();
   }
@@ -184,16 +214,36 @@ public class VirtualMachineProxyImpl implements JdiTimer, VirtualMachineProxy {
       myAllThreadsDirty = false;
 
       for (ThreadReference threadReference : myVirtualMachine.allThreads()) {
-        getThreadReferenceProxy(threadReference); // add a proxy
+        getThreadReferenceProxy(threadReference, true); // add a proxy
       }
     }
 
     return new ArrayList<>(myAllThreads.values());
   }
 
+  @TestOnly
+  @ApiStatus.Internal
+  public @NotNull Collection<ThreadReferenceProxyImpl> getEvenDirtyAllThreads() {
+    return myAllThreads.values();
+  }
+
+  public CompletableFuture<Collection<ThreadReferenceProxyImpl>> allThreadsAsync() {
+    DebuggerManagerThreadImpl.assertIsManagerThread();
+    if (myAllThreadsDirty) {
+      return DebuggerUtilsAsync.allThreads(myVirtualMachine).thenApply(threads -> {
+        DebuggerManagerThreadImpl.assertIsManagerThread();
+        threads.forEach(thread -> getThreadReferenceProxy(thread, true)); // add proxies
+        myAllThreadsDirty = false;
+        return new ArrayList<>(myAllThreads.values());
+      });
+    }
+
+    return CompletableFuture.completedFuture(new ArrayList<>(myAllThreads.values()));
+  }
+
   public void threadStarted(ThreadReference thread) {
     DebuggerManagerThreadImpl.assertIsManagerThread();
-    getThreadReferenceProxy(thread); // add a proxy
+    getThreadReferenceProxy(thread, true); // add a proxy
   }
 
   public void threadStopped(ThreadReference thread) {
@@ -206,9 +256,9 @@ public class VirtualMachineProxyImpl implements JdiTimer, VirtualMachineProxy {
       return;
     }
     DebuggerManagerThreadImpl.assertIsManagerThread();
-    myPausePressedCount++;
-    myVirtualMachine.suspend();
-    clearCaches();
+    myModelSuspendCount++;
+    DebuggerUtilsAsync.suspend(myVirtualMachine)
+      .thenRun(this::clearCaches);
   }
 
   public void resume() {
@@ -216,39 +266,39 @@ public class VirtualMachineProxyImpl implements JdiTimer, VirtualMachineProxy {
       return;
     }
     DebuggerManagerThreadImpl.assertIsManagerThread();
-    if (myPausePressedCount > 0) {
-      myPausePressedCount--;
+    if (myModelSuspendCount <= 0) {
+      myDebugProcess.logError("Negative global suspend count number!");
+    }
+    if (myModelSuspendCount > 0) {
+      myModelSuspendCount--;
     }
     clearCaches();
     LOG.debug("before resume VM");
-    try {
-      myVirtualMachine.resume();
-    }
-    catch (InternalException e) {
-      // ok to ignore. Although documentation says it is safe to invoke resume() on running VM,
-      // sometimes this leads to com.sun.jdi.InternalException: Unexpected JDWP Error: 13 (THREAD_NOT_SUSPENDED)
-      LOG.info(e);
-    }
-    LOG.debug("VM resumed");
+    DebuggerUtilsAsync.resume(myVirtualMachine).whenComplete((unused, throwable) -> {
+      if (throwable != null && !(DebuggerUtilsAsync.unwrap(throwable) instanceof RejectedExecutionException)) {
+        myDebugProcess.logError("Error on resume", throwable);
+      }
+      LOG.debug("VM resumed");
+    });
     //logThreads();
   }
 
   /**
    * @return a list of threadGroupProxies
    */
-  public List<ThreadGroupReferenceProxyImpl> topLevelThreadGroups() {
-    return StreamEx.of(getVirtualMachine().topLevelThreadGroups()).map(this::getThreadGroupReferenceProxy).toList();
+  public @Unmodifiable List<ThreadGroupReferenceProxyImpl> topLevelThreadGroups() {
+    return ContainerUtil.map(getVirtualMachine().topLevelThreadGroups(), this::getThreadGroupReferenceProxy);
   }
 
-  public void threadGroupCreated(ThreadGroupReference threadGroupReference){
+  public void threadGroupCreated(ThreadGroupReference threadGroupReference) {
     DebuggerManagerThreadImpl.assertIsManagerThread();
-    if(!isJ2ME()) {
+    if (!isJ2ME()) {
       ThreadGroupReferenceProxyImpl proxy = new ThreadGroupReferenceProxyImpl(this, threadGroupReference);
       myThreadGroups.put(threadGroupReference, proxy);
     }
   }
 
-  public boolean isJ2ME() {
+  private boolean isJ2ME() {
     return isJ2ME(getVirtualMachine());
   }
 
@@ -256,25 +306,13 @@ public class VirtualMachineProxyImpl implements JdiTimer, VirtualMachineProxy {
     return virtualMachine.version().startsWith("1.0");
   }
 
-  public void threadGroupRemoved(ThreadGroupReference threadGroupReference){
+  public void threadGroupRemoved(ThreadGroupReference threadGroupReference) {
     DebuggerManagerThreadImpl.assertIsManagerThread();
     myThreadGroups.remove(threadGroupReference);
   }
 
-  public EventQueue eventQueue() {
-    return myVirtualMachine.eventQueue();
-  }
-
   public EventRequestManager eventRequestManager() {
     return myVirtualMachine.eventRequestManager();
-  }
-
-  /**
-   * @deprecated use {@link #mirrorOfVoid()} instead
-   */
-  @Deprecated
-  public VoidValue mirrorOf() throws EvaluateException {
-    return mirrorOfVoid();
   }
 
   public VoidValue mirrorOfVoid() {
@@ -313,23 +351,39 @@ public class VirtualMachineProxyImpl implements JdiTimer, VirtualMachineProxy {
     return myVirtualMachine.mirrorOf(v);
   }
 
+  /**
+   * Avoid using directly, as the result may be garbage collected immediately -
+   * use {@link com.intellij.debugger.impl.DebuggerUtilsEx#mirrorOfString(String, EvaluationContext)} instead
+   */
+  @ApiStatus.Obsolete
   public StringReference mirrorOf(String s) {
     return myVirtualMachine.mirrorOf(s);
   }
 
-  public StringReference mirrorOfStringLiteral(String s, ThrowableComputable<StringReference, EvaluateException> generator)
+  @ApiStatus.Internal
+  public StringReference mirrorOfStringLiteral(String s, EvaluationContextImpl context)
     throws EvaluateException {
     StringReference reference = myStringLiteralCache.get(s);
-    if (reference != null && !reference.isCollected()) {
-      return reference;
+    if (reference != null) {
+      try {
+        context.keep(reference);
+        return reference;
+      }
+      catch (ObjectCollectedException ignored) {
+      }
     }
-    reference = generator.compute();
+
+    reference = DebuggerUtilsEx.mirrorOfString(s, context);
+
+    if (Registry.is("debugger.intern.string.literals") && versionHigher("1.7")) {
+      Method internMethod = DebuggerUtils.findMethod(reference.referenceType(), "intern", "()Ljava/lang/String;");
+      if (internMethod != null) {
+        reference = (StringReference)context.getDebugProcess().invokeMethod(context, reference, internMethod, Collections.emptyList());
+      }
+    }
+
     myStringLiteralCache.put(s, reference);
     return reference;
-  }
-
-  public Process process() {
-    return myVirtualMachine.process();
   }
 
   public void dispose() {
@@ -339,208 +393,68 @@ public class VirtualMachineProxyImpl implements JdiTimer, VirtualMachineProxy {
     catch (UnsupportedOperationException e) {
       LOG.info(e);
     }
-    finally {
-      if (Patches.JDK_BUG_EVENT_CONTROLLER_LEAK) {
-        // Memory leak workaround, see IDEA-163334
-        Object target = ReflectionUtil.getField(myVirtualMachine.getClass(), myVirtualMachine, null, "target");
-        if (target != null) {
-          Thread controller = ReflectionUtil.getField(target.getClass(), target, Thread.class, "eventController");
-          if (controller != null) {
-            controller.stop();
-          }
-        }
-      }
-    }
   }
 
   public void exit(int i) {
     myVirtualMachine.exit(i);
   }
 
-  private final Capability myWatchFielsModification = new Capability() {
-    @Override
-    protected boolean calcValue() {
-      return myVirtualMachine.canWatchFieldModification();
-    }
-  };
   @Override
   public boolean canWatchFieldModification() {
-    return myWatchFielsModification.isAvailable();
+    return myVirtualMachine.canWatchFieldModification();
   }
 
-  private final Capability myWatchFieldAccess = new Capability() {
-    @Override
-    protected boolean calcValue() {
-      return myVirtualMachine.canWatchFieldAccess();
-    }
-  };
   @Override
   public boolean canWatchFieldAccess() {
-    return myWatchFieldAccess.isAvailable();
+    return myVirtualMachine.canWatchFieldAccess();
   }
 
-  private final Capability myIsJ2ME = new Capability() {
-    @Override
-    protected boolean calcValue() {
-      return isJ2ME();
-    }
-  };
   @Override
   public boolean canInvokeMethods() {
-    return !myIsJ2ME.isAvailable();
+    return !isJ2ME();
   }
 
-  private final Capability myGetBytecodes = new Capability() {
-    @Override
-    protected boolean calcValue() {
-      return myVirtualMachine.canGetBytecodes();
-    }
-  };
   @Override
   public boolean canGetBytecodes() {
-    return myGetBytecodes.isAvailable();
+    return myVirtualMachine.canGetBytecodes();
   }
 
-  private final Capability myGetConstantPool = new Capability() {
-    @Override
-    protected boolean calcValue() {
-      return myVirtualMachine.canGetConstantPool();
-    }
-  };
   public boolean canGetConstantPool() {
-    return myGetConstantPool.isAvailable();
+    return myVirtualMachine.canGetConstantPool();
   }
 
-  private final Capability myGetSyntheticAttribute = new Capability() {
-    @Override
-    protected boolean calcValue() {
-      return myVirtualMachine.canGetSyntheticAttribute();
-    }
-  };
+  public boolean canGetSourceDebugExtension() { return myVirtualMachine.canGetSourceDebugExtension(); }
+
   public boolean canGetSyntheticAttribute() {
-    return myGetSyntheticAttribute.isAvailable();
+    return myVirtualMachine.canGetSyntheticAttribute();
   }
 
-  private final Capability myGetOwnedMonitorInfo = new Capability() {
-    @Override
-    protected boolean calcValue() {
-      return myVirtualMachine.canGetOwnedMonitorInfo();
-    }
-  };
   public boolean canGetOwnedMonitorInfo() {
-    return myGetOwnedMonitorInfo.isAvailable();
+    return myVirtualMachine.canGetOwnedMonitorInfo();
   }
 
-  private final Capability myGetMonitorFrameInfo = new Capability() {
-    @Override
-    protected boolean calcValue() {
-      return myVirtualMachine.canGetMonitorFrameInfo();
-    }
-  };
   public boolean canGetMonitorFrameInfo() {
-      return myGetMonitorFrameInfo.isAvailable();
+    return myVirtualMachine.canGetMonitorFrameInfo();
   }
 
-  private final Capability myGetCurrentContendedMonitor = new Capability() {
-    @Override
-    protected boolean calcValue() {
-      return myVirtualMachine.canGetCurrentContendedMonitor();
-    }
-  };
   public boolean canGetCurrentContendedMonitor() {
-    return myGetCurrentContendedMonitor.isAvailable();
+    return myVirtualMachine.canGetCurrentContendedMonitor();
   }
 
-  private final Capability myGetMonitorInfo = new Capability() {
-    @Override
-    protected boolean calcValue() {
-      return myVirtualMachine.canGetMonitorInfo();
-    }
-  };
   public boolean canGetMonitorInfo() {
-    return myGetMonitorInfo.isAvailable();
+    return myVirtualMachine.canGetMonitorInfo();
   }
 
-  private final Capability myUseInstanceFilters = new Capability() {
-    @Override
-    protected boolean calcValue() {
-      return myVersionHigher_14 && myVirtualMachine.canUseInstanceFilters();
-    }
-  };
-  public boolean canUseInstanceFilters() {
-    return myUseInstanceFilters.isAvailable();
-  }
-
-  private final Capability myRedefineClasses = new Capability() {
-    @Override
-    protected boolean calcValue() {
-      return myVersionHigher_14 && myVirtualMachine.canRedefineClasses();
-    }
-  };
   public boolean canRedefineClasses() {
-    return myRedefineClasses.isAvailable();
+    return myVersionHigher_14 && myVirtualMachine.canRedefineClasses();
   }
 
-  private final Capability myAddMethod = new Capability() {
-    @Override
-    protected boolean calcValue() {
-      return myVersionHigher_14 && myVirtualMachine.canAddMethod();
-    }
-  };
-  public boolean canAddMethod() {
-    return myAddMethod.isAvailable();
-  }
-
-  private final Capability myUnrestrictedlyRedefineClasses = new Capability() {
-    @Override
-    protected boolean calcValue() {
-      return myVersionHigher_14 && myVirtualMachine.canUnrestrictedlyRedefineClasses();
-    }
-  };
-  public boolean canUnrestrictedlyRedefineClasses() {
-    return myUnrestrictedlyRedefineClasses.isAvailable();
-  }
-
-  private final Capability myPopFrames = new Capability() {
-    @Override
-    protected boolean calcValue() {
-      return myVersionHigher_14 && myVirtualMachine.canPopFrames();
-    }
-  };
   public boolean canPopFrames() {
-    return myPopFrames.isAvailable();
+    return myVersionHigher_14 && myVirtualMachine.canPopFrames();
   }
 
-  private final Capability myForceEarlyReturn = new Capability() {
-    @Override
-    protected boolean calcValue() {
-      return myVirtualMachine.canForceEarlyReturn();
-    }
-  };
   public boolean canForceEarlyReturn() {
-    return myForceEarlyReturn.isAvailable();
-  }
-
-  private final Capability myCanGetInstanceInfo = new Capability() {
-    @Override
-    protected boolean calcValue() {
-      if (!myVersionHigher_15) {
-        return false;
-      }
-      try {
-        final Method method = VirtualMachine.class.getMethod("canGetInstanceInfo");
-        return (Boolean)method.invoke(myVirtualMachine);
-      }
-      catch (NoSuchMethodException ignored) {
-      }
-      catch (IllegalAccessException | InvocationTargetException e) {
-        LOG.error(e);
-      }
-      return false;
-    }
-  };
-  public boolean canGetInstanceInfo() {
-    return myCanGetInstanceInfo.isAvailable();
+    return myVirtualMachine.canForceEarlyReturn();
   }
 
   public boolean canBeModified() {
@@ -552,48 +466,12 @@ public class VirtualMachineProxyImpl implements JdiTimer, VirtualMachineProxy {
     return myVirtualMachine.version().compareTo(version) >= 0;
   }
 
-  private final Capability myGetSourceDebugExtension = new Capability() {
-    @Override
-    protected boolean calcValue() {
-      return myVersionHigher_14 && myVirtualMachine.canGetSourceDebugExtension();
-    }
-  };
-  public boolean canGetSourceDebugExtension() {
-    return myGetSourceDebugExtension.isAvailable();
-  }
-
-  private final Capability myRequestVMDeathEvent = new Capability() {
-    @Override
-    protected boolean calcValue() {
-      return myVersionHigher_14 && myVirtualMachine.canRequestVMDeathEvent();
-    }
-  };
-  public boolean canRequestVMDeathEvent() {
-    return myRequestVMDeathEvent.isAvailable();
-  }
-
-  private final Capability myGetMethodReturnValues = new Capability() {
-    @Override
-    protected boolean calcValue() {
-      if (myVersionHigher_15) {
-        //return myVirtualMachine.canGetMethodReturnValues();
-        try {
-          final Method method = VirtualMachine.class.getDeclaredMethod("canGetMethodReturnValues");
-          final Boolean rv = (Boolean)method.invoke(myVirtualMachine);
-          return rv.booleanValue();
-        }
-        catch (NoSuchMethodException | InvocationTargetException | IllegalAccessException ignored) {
-        }
-      }
-      return false;
-    }
-  };
   public boolean canGetMethodReturnValues() {
-    return myGetMethodReturnValues.isAvailable();
+    return myVersionHigher_15 && myVirtualMachine.canGetMethodReturnValues();
   }
 
-  public String getDefaultStratum() {
-    return myVersionHigher_14 ? myVirtualMachine.getDefaultStratum() : null;
+  public boolean canUseSourceNameFilters() {
+    return myVirtualMachine.canUseSourceNameFilters();
   }
 
   public String description() {
@@ -608,30 +486,38 @@ public class VirtualMachineProxyImpl implements JdiTimer, VirtualMachineProxy {
     return myVirtualMachine.name();
   }
 
-  public void setDebugTraceMode(int i) {
-    myVirtualMachine.setDebugTraceMode(i);
+  @Contract("null -> null; !null -> !null")
+  public @Nullable ThreadReferenceProxyImpl getThreadReferenceProxy(@Nullable ThreadReference thread) {
+    return getThreadReferenceProxy(thread, false);
   }
 
-  @Nullable
-  @Contract("null -> null; !null -> !null")
-  public ThreadReferenceProxyImpl getThreadReferenceProxy(@Nullable ThreadReference thread) {
+  private ThreadReferenceProxyImpl getThreadReferenceProxy(@Nullable ThreadReference thread, boolean forceCache) {
     DebuggerManagerThreadImpl.assertIsManagerThread();
     if (thread == null) {
       return null;
     }
-
-    return myAllThreads.computeIfAbsent(thread, t -> new ThreadReferenceProxyImpl(this, t));
+    ThreadReferenceProxyImpl proxy = myAllThreads.computeIfAbsent(thread, t -> {
+      // do not cache virtual threads
+      if (!forceCache && thread instanceof ThreadReferenceImpl && thread.isVirtual()) {
+        return null;
+      }
+      return new ThreadReferenceProxyImpl(this, t);
+    });
+    if (proxy == null) { // not cached
+      proxy = new ThreadReferenceProxyImpl(this, thread);
+    }
+    return proxy;
   }
 
   public ThreadGroupReferenceProxyImpl getThreadGroupReferenceProxy(ThreadGroupReference group) {
     DebuggerManagerThreadImpl.assertIsManagerThread();
-    if(group == null) {
+    if (group == null) {
       return null;
     }
 
     ThreadGroupReferenceProxyImpl proxy = myThreadGroups.get(group);
-    if(proxy == null) {
-      if(!myIsJ2ME.isAvailable()) {
+    if (proxy == null) {
+      if (!isJ2ME()) {
         proxy = new ThreadGroupReferenceProxyImpl(this, group);
         myThreadGroups.put(group, proxy);
       }
@@ -640,11 +526,13 @@ public class VirtualMachineProxyImpl implements JdiTimer, VirtualMachineProxy {
     return proxy;
   }
 
+  @Override
   public boolean equals(Object obj) {
     LOG.assertTrue(obj instanceof VirtualMachineProxyImpl);
     return myVirtualMachine.equals(((VirtualMachineProxyImpl)obj).getVirtualMachine());
   }
 
+  @Override
   public int hashCode() {
     return myVirtualMachine.hashCode();
   }
@@ -659,10 +547,6 @@ public class VirtualMachineProxyImpl implements JdiTimer, VirtualMachineProxy {
     }
     //myAllThreadsDirty = true;
     myTimeStamp++;
-
-    if (Registry.is("debugger.types.preload")) {
-      scheduleTypesDataPreload();
-    }
   }
 
   @Override
@@ -671,7 +555,7 @@ public class VirtualMachineProxyImpl implements JdiTimer, VirtualMachineProxy {
   }
 
   @Override
-  public DebugProcess getDebugProcess() {
+  public DebugProcessImpl getDebugProcess() {
     return myDebugProcess;
   }
 
@@ -685,89 +569,34 @@ public class VirtualMachineProxyImpl implements JdiTimer, VirtualMachineProxy {
     return false;
   }
 
-  public String getResumeStack() {
-    return StringUtil.getThrowableText(mySuspendLogger);
-  }
-
   public boolean isPausePressed() {
-    return myPausePressedCount > 0;
+    return myModelSuspendCount > 0;
   }
 
   public boolean isSuspended() {
-    return allThreads().stream().anyMatch(thread -> thread.getSuspendCount() != 0);
+    return ContainerUtil.exists(allThreads(), thread -> thread.getSuspendCount() != 0);
   }
 
-  public void logThreads() {
-    if (LOG.isDebugEnabled()) {
-      for (ThreadReferenceProxyImpl thread : allThreads()) {
-        if (!thread.isCollected()) {
-          LOG.debug("suspends " + thread + " " + thread.getSuspendCount() + " " + thread.isSuspended());
-        }
-      }
-    }
+  public int getModelSuspendCount() {
+    return myModelSuspendCount;
   }
 
-
-  private abstract static class Capability {
-    private ThreeState myValue = ThreeState.UNSURE;
-
-    public final boolean isAvailable() {
-      if (myValue == ThreeState.UNSURE) {
-        try {
-          myValue = ThreeState.fromBoolean(calcValue());
-        }
-        catch (VMDisconnectedException e) {
-          LOG.info(e);
-          myValue = ThreeState.NO;
-        }
-      }
-      return myValue.toBoolean();
-    }
-
-    protected abstract boolean calcValue();
+  public void addedSuspendAllContext() {
+    myModelSuspendCount++;
   }
 
-  private long myLastTypesCheckTime;
-  private int myLastTypesSize;
-
-  // Preload all supertypes information for faster queries (especially for emulated method breakpoints)
-  private void scheduleTypesDataPreload() {
-    if (DebuggerUtilsImpl.isRemote(myDebugProcess)) {
-      return;
+  public void resumedSuspendAllContext() {
+    if (myModelSuspendCount <= 0) {
+      myDebugProcess.logError("Negative global suspend count number!");
     }
-    DebuggerManagerThreadImpl.assertIsManagerThread();
-    long time = System.currentTimeMillis();
-    if (time > myLastTypesCheckTime + 10000) {
-      List<ReferenceType> types = allClasses();
-      if (time > myLastTypesCheckTime + 60000 || Math.abs(types.size() - myLastTypesSize) > 1000) {
-        scheduleTypesDataPreload(types.iterator());
-        myLastTypesCheckTime = time;
-        myLastTypesSize = types.size();
-      }
-    }
+    myModelSuspendCount--;
   }
 
-  private void scheduleTypesDataPreload(Iterator<ReferenceType> iterator) {
-    if (iterator.hasNext()) {
-      myDebugProcess.getManagerThread().schedule(PrioritizedTask.Priority.LOWEST, () -> {
-        long start = System.currentTimeMillis();
-        do {
-          ReferenceType type = iterator.next();
-          if (type.isPrepared()) {
-            try {
-              DebuggerUtilsImpl.supertypes(type);
-            }
-            catch (ObjectCollectedException ignored) {
-            }
-          }
-          if (System.currentTimeMillis() - start > 50) { // batch process for 50ms
-            // schedule here to allow other LOWEST priority commands to be processed
-            scheduleTypesDataPreload(iterator);
-            return;
-          }
-        }
-        while (iterator.hasNext());
-      });
-    }
+  /**
+   * Should be called in the debugger manager thread only.
+   */
+  @ApiStatus.Internal
+  public static @NotNull VirtualMachineProxyImpl getCurrent() {
+    return (VirtualMachineProxyImpl)VirtualMachineProxy.getCurrent();
   }
 }

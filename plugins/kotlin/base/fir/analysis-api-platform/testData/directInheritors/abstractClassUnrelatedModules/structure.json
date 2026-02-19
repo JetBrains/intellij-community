@@ -1,0 +1,11 @@
+{
+    "modules": [
+        { "name": "dependency" },
+        { "name": "module1", "dependencies": ["dependency"] },
+        { "name": "module2", "dependencies": ["dependency"] }
+    ],
+    "targets": [
+        { "module": "module1", "file": "main.kt" },
+        { "module": "module2", "file": "main.kt" }
+    ]
+}

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.intentions.conversions;
 
 import com.intellij.codeInsight.intention.impl.CreateClassDialog;
@@ -12,7 +12,13 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiParameter;
+import com.intellij.psi.PsiType;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
@@ -57,7 +63,7 @@ import java.util.Map;
 /**
  * @author Maxim.Medvedev
  */
-public class ConvertMapToClassIntention extends Intention {
+public final class ConvertMapToClassIntention extends Intention {
   private static final Logger LOG = Logger.getInstance(ConvertMapToClassIntention.class);
 
   @Override
@@ -66,7 +72,7 @@ public class ConvertMapToClassIntention extends Intention {
   }
 
   @Override
-  protected void processIntention(@NotNull PsiElement element, @NotNull final Project project, Editor editor) throws IncorrectOperationException {
+  protected void processIntention(@NotNull PsiElement element, final @NotNull Project project, Editor editor) throws IncorrectOperationException {
     final GrListOrMap map = (GrListOrMap)element;
     final GrNamedArgument[] namedArguments = map.getNamedArguments();
     LOG.assertTrue(map.getInitializers().length == 0);
@@ -174,21 +180,15 @@ public class ConvertMapToClassIntention extends Intention {
     return false;
   }
 
-  @Nullable
-  private static GrParameter getParameterByArgument(GrExpression arg) {
+  private static @Nullable GrParameter getParameterByArgument(GrExpression arg) {
     PsiElement parent = PsiUtil.skipParentheses(arg.getParent(), true);
-    if (!(parent instanceof GrArgumentList)) return null;
-    final GrArgumentList argList = (GrArgumentList)parent;
+    if (!(parent instanceof final GrArgumentList argList)) return null;
 
     parent = parent.getParent();
-    if (!(parent instanceof GrMethodCall)) return null;
+    if (!(parent instanceof final GrMethodCall methodCall)) return null;
+    if (!(methodCall.getInvokedExpression() instanceof GrReferenceExpression ref)) return null;
 
-    final GrMethodCall methodCall = (GrMethodCall)parent;
-    final GrExpression expression = methodCall.getInvokedExpression();
-    if (!(expression instanceof GrReferenceExpression)) return null;
-
-    final GroovyResolveResult resolveResult = ((GrReferenceExpression)expression).advancedResolve();
-    if (resolveResult == null) return null;
+    final GroovyResolveResult resolveResult = ref.advancedResolve();
 
     GrClosableBlock[] closures = methodCall.getClosureArguments();
     final Map<GrExpression, Pair<PsiParameter, PsiType>> mapToParams = GrClosureSignatureUtil
@@ -201,13 +201,11 @@ public class ConvertMapToClassIntention extends Intention {
     return parameter instanceof GrParameter? ((GrParameter)parameter):null;
   }
 
-  @Nullable
-  public static GrParameter checkForMethodParameter(GrExpression map) {
+  public static @Nullable GrParameter checkForMethodParameter(GrExpression map) {
     final GrParameter parameter = getParameterByArgument(map);
     if (parameter == null) return null;
     final PsiElement parent = parameter.getParent().getParent();
-    if (!(parent instanceof PsiMethod)) return null;
-    final PsiMethod method = (PsiMethod)parent;
+    if (!(parent instanceof PsiMethod method)) return null;
     if (ApplicationManager.getApplication().isUnitTestMode() || Messages.showYesNoDialog(
       map.getProject(),
       GroovyBundle.message("do.you.want.to.change.type.of.parameter.in.method", parameter.getName(), method.getName()),
@@ -243,9 +241,8 @@ public class ConvertMapToClassIntention extends Intention {
     return GroovyPsiElementFactory.getInstance(project).createTypeDefinition(classText.toString());
   }
 
-  @NotNull
   @Override
-  protected PsiElementPredicate getElementPredicate() {
+  protected @NotNull PsiElementPredicate getElementPredicate() {
     return new MyPredicate();
   }
 }
@@ -253,8 +250,7 @@ public class ConvertMapToClassIntention extends Intention {
 class MyPredicate implements PsiElementPredicate {
   @Override
   public boolean satisfiedBy(@NotNull PsiElement element) {
-    if (!(element instanceof GrListOrMap)) return false;
-    final GrListOrMap map = (GrListOrMap)element;
+    if (!(element instanceof GrListOrMap map)) return false;
     final GrNamedArgument[] namedArguments = map.getNamedArguments();
     final GrExpression[] initializers = map.getInitializers();
     if (initializers.length != 0) return false;

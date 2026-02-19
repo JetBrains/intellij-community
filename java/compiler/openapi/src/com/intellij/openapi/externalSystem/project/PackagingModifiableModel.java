@@ -2,16 +2,6 @@
 package com.intellij.openapi.externalSystem.project;
 
 import com.intellij.openapi.externalSystem.service.project.ModifiableModel;
-import com.intellij.packaging.artifacts.ModifiableArtifactModel;
-import com.intellij.packaging.elements.PackagingElementResolvingContext;
-import org.jetbrains.annotations.NotNull;
 
-public interface PackagingModifiableModel extends ModifiableModel {
-  @NotNull
-  ModifiableArtifactModel getModifiableArtifactModel();
-
-  @NotNull
-  PackagingElementResolvingContext getPackagingElementResolvingContext();
-
-  ArtifactExternalDependenciesImporter getArtifactExternalDependenciesImporter();
+public interface PackagingModifiableModel extends ModifiableModel, PackagingModel {
 }

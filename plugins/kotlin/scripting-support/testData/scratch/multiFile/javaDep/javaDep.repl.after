@@ -1,0 +1,6 @@
+// REPL_MODE: true
+// COMPILER_ARGUMENTS: -Xallow-any-scripts-in-source-roots
+
+import myTest.MyJavaClass
+
+MyJavaClass().test()         // RESULT: res1: kotlin.Int = 1

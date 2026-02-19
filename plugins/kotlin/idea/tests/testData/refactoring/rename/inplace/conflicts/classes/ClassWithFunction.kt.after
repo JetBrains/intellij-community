@@ -1,0 +1,10 @@
+// NEW_NAME: f
+// RENAME: member
+
+class <caret>f(i: Int)
+fun f() {}
+
+fun test() {
+    f()
+    val fClass = f(0)
+}

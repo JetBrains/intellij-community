@@ -1,0 +1,2 @@
+deprecated: specialVar.svg; to be removed (use AllIcons.Debugger.SpecialVar)
+deprecated: stepIntoMyCode.svg; to be removed (use AllIcons.Debugger.StepIntoMyCode)

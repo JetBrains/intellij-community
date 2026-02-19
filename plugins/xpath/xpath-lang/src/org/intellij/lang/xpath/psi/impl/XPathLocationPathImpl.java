@@ -17,7 +17,12 @@ package org.intellij.lang.xpath.psi.impl;
 
 import com.intellij.lang.ASTNode;
 import org.intellij.lang.xpath.context.XPathVersion;
-import org.intellij.lang.xpath.psi.*;
+import org.intellij.lang.xpath.psi.XPath2Type;
+import org.intellij.lang.xpath.psi.XPathElementVisitor;
+import org.intellij.lang.xpath.psi.XPathExpression;
+import org.intellij.lang.xpath.psi.XPathLocationPath;
+import org.intellij.lang.xpath.psi.XPathStep;
+import org.intellij.lang.xpath.psi.XPathType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -27,8 +32,7 @@ public class XPathLocationPathImpl extends XPathElementImpl implements XPathLoca
     }
 
     @Override
-    @NotNull
-    public XPathType getType() {
+    public @NotNull XPathType getType() {
       final XPathStep step = getFirstStep();
       if (step != null) {
         final XPathExpression expr = step.getStep();
@@ -41,8 +45,7 @@ public class XPathLocationPathImpl extends XPathElementImpl implements XPathLoca
     }
 
     @Override
-    @Nullable
-    public XPathStep getFirstStep() {
+    public @Nullable XPathStep getFirstStep() {
       return findChildByClass(XPathStep.class);
     }
 

@@ -1,22 +1,12 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.java.parser;
 
 import org.jetbrains.annotations.NotNull;
 
+/**
+ * @deprecated Use {@link com.intellij.java.syntax.parser.JavaParser} instead
+ */
+@Deprecated
 public class JavaParser {
   public static final JavaParser INSTANCE = new JavaParser();
 
@@ -26,6 +16,7 @@ public class JavaParser {
   private final StatementParser myStatementParser;
   private final ExpressionParser myExpressionParser;
   private final ReferenceParser myReferenceParser;
+  private final PatternParser myPatternParser;
 
   public JavaParser() {
     myFileParser = new FileParser(this);
@@ -34,35 +25,34 @@ public class JavaParser {
     myStatementParser = new StatementParser(this);
     myExpressionParser = new ExpressionParser(this);
     myReferenceParser = new ReferenceParser(this);
+    myPatternParser = new PatternParser(this);
   }
 
-  @NotNull
-  public FileParser getFileParser() {
+  public @NotNull FileParser getFileParser() {
     return myFileParser;
   }
 
-  @NotNull
-  public ModuleParser getModuleParser() {
+  public @NotNull ModuleParser getModuleParser() {
     return myModuleParser;
   }
 
-  @NotNull
-  public DeclarationParser getDeclarationParser() {
+  public @NotNull DeclarationParser getDeclarationParser() {
     return myDeclarationParser;
   }
 
-  @NotNull
-  public StatementParser getStatementParser() {
+  public @NotNull StatementParser getStatementParser() {
     return myStatementParser;
   }
 
-  @NotNull
-  public ExpressionParser getExpressionParser() {
+  public @NotNull ExpressionParser getExpressionParser() {
     return myExpressionParser;
   }
 
-  @NotNull
-  public ReferenceParser getReferenceParser() {
+  public @NotNull ReferenceParser getReferenceParser() {
     return myReferenceParser;
+  }
+
+  public @NotNull PatternParser getPatternParser() {
+    return myPatternParser;
   }
 }

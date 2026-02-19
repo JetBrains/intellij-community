@@ -1,0 +1,86 @@
+### auto-generated section `build intellij.jvm.analysis.kotlin.tests.shared` start
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+jvm_library(
+  name = "analysis-kotlin-tests-shared",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  exports = [
+    "//plugins/kotlin/plugin/common",
+    "//jvm/jvm-analysis-internal-testFramework:analysis-internal-testFramework",
+    "//java/java-tests:tests",
+    "//java/java-impl-inspections:impl-inspections",
+    "//platform/testFramework/junit5",
+    "//plugins/kotlin/base/plugin",
+  ]
+)
+
+jvm_library(
+  name = "analysis-kotlin-tests-shared_test_lib",
+  module_name = "intellij.jvm.analysis.kotlin.tests.shared",
+  visibility = ["//visibility:public"],
+  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java", "testSrc/**/*.form"], allow_empty = True),
+  deps = [
+    "//platform/analysis-api:analysis",
+    "//platform/analysis-api:analysis_test_lib",
+    "//platform/core-api:core",
+    "//platform/core-api:core_test_lib",
+    "//platform/editor-ui-api:editor-ui",
+    "//platform/editor-ui-api:editor-ui_test_lib",
+    "//jps/model-api:model",
+    "//jps/model-api:model_test_lib",
+    "//platform/projectModel-api:projectModel",
+    "//platform/projectModel-api:projectModel_test_lib",
+    "//plugins/kotlin/plugin/common",
+    "//plugins/kotlin/plugin/common:common_test_lib",
+    "//jvm/jvm-analysis-internal-testFramework:analysis-internal-testFramework",
+    "//jvm/jvm-analysis-internal-testFramework:analysis-internal-testFramework_test_lib",
+    "//java/java-tests:tests",
+    "//java/java-tests:tests_test_lib",
+    "//java/java-impl-inspections:impl-inspections",
+    "//java/java-impl-inspections:impl-inspections_test_lib",
+    "//platform/testFramework/junit5",
+    "//platform/testFramework/junit5:junit5_test_lib",
+    "//plugins/kotlin/base/plugin",
+    "//plugins/kotlin/base/plugin:plugin_test_lib",
+    "//plugins/kotlin/base/test",
+    "//plugins/kotlin/base/test:test_test_lib",
+    "//jvm/jvm-analysis-testFramework:analysis-testFramework",
+    "//jvm/jvm-analysis-testFramework:analysis-testFramework_test_lib",
+    "//java/java-impl-refactorings:impl-refactorings",
+    "//java/java-impl-refactorings:impl-refactorings_test_lib",
+    "//java/testFramework",
+    "//java/testFramework:testFramework_test_lib",
+    "//jvm/jvm-analysis-impl:analysis-impl",
+    "//jvm/jvm-analysis-impl:analysis-impl_test_lib",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test_lib",
+    "//plugins/kotlin/test-framework",
+    "//plugins/kotlin/test-framework:test-framework_test_lib",
+  ],
+  exports = [
+    "//plugins/kotlin/plugin/common",
+    "//plugins/kotlin/plugin/common:common_test_lib",
+    "//jvm/jvm-analysis-internal-testFramework:analysis-internal-testFramework",
+    "//jvm/jvm-analysis-internal-testFramework:analysis-internal-testFramework_test_lib",
+    "//java/java-tests:tests",
+    "//java/java-tests:tests_test_lib",
+    "//java/java-impl-inspections:impl-inspections",
+    "//java/java-impl-inspections:impl-inspections_test_lib",
+    "//platform/testFramework/junit5",
+    "//platform/testFramework/junit5:junit5_test_lib",
+    "//plugins/kotlin/base/plugin",
+    "//plugins/kotlin/base/plugin:plugin_test_lib",
+  ],
+  runtime_deps = [":analysis-kotlin-tests-shared"]
+)
+### auto-generated section `build intellij.jvm.analysis.kotlin.tests.shared` end
+
+### auto-generated section `test intellij.jvm.analysis.kotlin.tests.shared` start
+load("@community//build:tests-options.bzl", "jps_test")
+
+jps_test(
+  name = "analysis-kotlin-tests-shared_test",
+  runtime_deps = [":analysis-kotlin-tests-shared_test_lib"]
+)
+### auto-generated section `test intellij.jvm.analysis.kotlin.tests.shared` end

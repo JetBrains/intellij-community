@@ -1,11 +1,20 @@
 // Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.streams.trace.dsl.impl.java
 
-import com.intellij.debugger.streams.trace.dsl.Types
-import com.intellij.debugger.streams.trace.impl.handler.type.*
+import com.intellij.debugger.streams.core.trace.dsl.Types
+import com.intellij.debugger.streams.core.trace.impl.handler.type.ArrayType
+import com.intellij.debugger.streams.core.trace.impl.handler.type.ArrayTypeImpl
+import com.intellij.debugger.streams.core.trace.impl.handler.type.ClassTypeImpl
+import com.intellij.debugger.streams.core.trace.impl.handler.type.GenericType
+import com.intellij.debugger.streams.core.trace.impl.handler.type.GenericTypeImpl
+import com.intellij.debugger.streams.core.trace.impl.handler.type.ListType
+import com.intellij.debugger.streams.core.trace.impl.handler.type.ListTypeImpl
+import com.intellij.debugger.streams.core.trace.impl.handler.type.MapType
+import com.intellij.debugger.streams.core.trace.impl.handler.type.MapTypeImpl
 import com.intellij.psi.CommonClassNames
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiType
+import com.intellij.psi.PsiTypes
 import com.intellij.psi.util.InheritanceUtil
 import com.intellij.psi.util.TypeConversionUtil
 import one.util.streamex.StreamEx
@@ -15,35 +24,37 @@ import org.jetbrains.annotations.Contract
  * @author Vitaliy.Bibaev
  */
 object JavaTypes : Types {
-  override val ANY: GenericType = ClassTypeImpl("java.lang.Object", "new java.lang.Object()")
+  override val ANY: GenericType = ClassTypeImpl(CommonClassNames.JAVA_LANG_OBJECT, "new java.lang.Object()")
 
-  override val INT: GenericType = GenericTypeImpl("int", "java.lang.Integer", "0")
+  override val INT: GenericType = GenericTypeImpl("int", CommonClassNames.JAVA_LANG_INTEGER, "0")
 
-  override val BOOLEAN: GenericType = GenericTypeImpl("boolean", "java.lang.Boolean", "false")
-  override val DOUBLE: GenericType = GenericTypeImpl("double", "java.lang.Double", "0.")
-  override val EXCEPTION: GenericType = ClassTypeImpl("java.lang.Throwable")
-  override val VOID: GenericType = GenericTypeImpl("void", "java.lang.Void", "null")
+  override val BOOLEAN: GenericType = GenericTypeImpl("boolean", CommonClassNames.JAVA_LANG_BOOLEAN, "false")
+  override val DOUBLE: GenericType = GenericTypeImpl("double", CommonClassNames.JAVA_LANG_DOUBLE, "0.")
+  override val EXCEPTION: GenericType = ClassTypeImpl(CommonClassNames.JAVA_LANG_THROWABLE)
+  override val VOID: GenericType = GenericTypeImpl("void", CommonClassNames.JAVA_LANG_VOID, "null")
 
   override val TIME: GenericType = ClassTypeImpl("java.util.concurrent.atomic.AtomicInteger",
                                                  "new java.util.concurrent.atomic.AtomicInteger()")
-  override val STRING: GenericType = ClassTypeImpl("java.lang.String", "\"\"")
-  override val LONG: GenericType = GenericTypeImpl("long", "java.lang.Long", "0L")
+  override val STRING: GenericType = ClassTypeImpl(CommonClassNames.JAVA_LANG_STRING, "\"\"")
+  override val LONG: GenericType = GenericTypeImpl("long", CommonClassNames.JAVA_LANG_LONG, "0L")
 
   override fun array(elementType: GenericType): ArrayType =
     ArrayTypeImpl(elementType, { "$it[]" }, { "new ${elementType.variableTypeName}[$it]" })
 
+  private fun mapEntryType(keys: String, values: String) : String = "java.util.Map.Entry<$keys, $values>"
+
   override fun map(keyType: GenericType, valueType: GenericType): MapType =
-    MapTypeImpl(keyType, valueType, { keys, values -> "java.util.Map<$keys, $values>" }, "new java.util.HashMap<>()")
+    MapTypeImpl(keyType, valueType, { keys, values -> "java.util.Map<$keys, $values>" }, "new java.util.HashMap<>()", ::mapEntryType)
 
   override fun linkedMap(keyType: GenericType, valueType: GenericType): MapType =
-    MapTypeImpl(keyType, valueType, { keys, values -> "java.util.Map<$keys, $values>" }, "new java.util.LinkedHashMap<>()")
+    MapTypeImpl(keyType, valueType, { keys, values -> "java.util.Map<$keys, $values>" }, "new java.util.LinkedHashMap<>()", ::mapEntryType)
 
   override fun list(elementsType: GenericType): ListType =
     ListTypeImpl(elementsType, { "java.util.List<$it>" }, "new java.util.ArrayList<>()")
 
   override fun nullable(typeSelector: Types.() -> GenericType): GenericType = this.typeSelector()
 
-  private val optional: GenericType = ClassTypeImpl("java.util.Optional")
+  private val optional: GenericType = ClassTypeImpl(CommonClassNames.JAVA_UTIL_OPTIONAL)
   private val optionalInt: GenericType = ClassTypeImpl("java.util.OptionalInt")
   private val optionalLong: GenericType = ClassTypeImpl("java.util.OptionalLong")
   private val optionalDouble: GenericType = ClassTypeImpl("java.util.OptionalDouble")
@@ -55,7 +66,7 @@ object JavaTypes : Types {
       InheritanceUtil.isInheritor(streamPsiType, CommonClassNames.JAVA_UTIL_STREAM_INT_STREAM) -> INT
       InheritanceUtil.isInheritor(streamPsiType, CommonClassNames.JAVA_UTIL_STREAM_LONG_STREAM) -> LONG
       InheritanceUtil.isInheritor(streamPsiType, CommonClassNames.JAVA_UTIL_STREAM_DOUBLE_STREAM) -> DOUBLE
-      PsiType.VOID == streamPsiType -> VOID
+      PsiTypes.voidType() == streamPsiType -> VOID
       else -> ANY
     }
   }
@@ -71,11 +82,11 @@ object JavaTypes : Types {
 
   fun fromPsiType(type: PsiType): GenericType {
     return when (type) {
-      PsiType.VOID -> VOID
-      PsiType.INT -> INT
-      PsiType.DOUBLE -> DOUBLE
-      PsiType.LONG -> LONG
-      PsiType.BOOLEAN -> BOOLEAN
+      PsiTypes.voidType() -> VOID
+      PsiTypes.intType() -> INT
+      PsiTypes.doubleType() -> DOUBLE
+      PsiTypes.longType() -> LONG
+      PsiTypes.booleanType() -> BOOLEAN
       else -> ClassTypeImpl(TypeConversionUtil.erasure(type).canonicalText)
     }
   }

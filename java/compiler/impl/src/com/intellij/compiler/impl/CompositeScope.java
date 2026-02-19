@@ -1,21 +1,7 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 /*
- * @author: Eugene Zhuravlev
+ * @author Eugene Zhuravlev
  */
 package com.intellij.compiler.impl;
 
@@ -29,12 +15,17 @@ import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.SmartHashSet;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Set;
 
-public class CompositeScope extends ExportableUserDataHolderBase implements CompileScope{
+public final class CompositeScope extends ExportableUserDataHolderBase implements CompileScope{
   private final List<CompileScope> myScopes = new ArrayList<>();
 
   public CompositeScope(@NotNull CompileScope scope1, @NotNull CompileScope scope2) {
@@ -49,8 +40,7 @@ public class CompositeScope extends ExportableUserDataHolderBase implements Comp
   }
 
   private void addScope(@NotNull CompileScope scope) {
-    if (scope instanceof CompositeScope) {
-      final CompositeScope compositeScope = (CompositeScope)scope;
+    if (scope instanceof CompositeScope compositeScope) {
       for (CompileScope childScope : compositeScope.myScopes) {
         addScope(childScope);
       }
@@ -62,7 +52,7 @@ public class CompositeScope extends ExportableUserDataHolderBase implements Comp
 
   @Override
   public VirtualFile @NotNull [] getFiles(FileType fileType, boolean inSourceOnly) {
-    Set<VirtualFile> allFiles = new THashSet<>();
+    Set<VirtualFile> allFiles = new HashSet<>();
     for (CompileScope scope : myScopes) {
       final VirtualFile[] files = scope.getFiles(fileType, inSourceOnly);
       if (files.length > 0) {
@@ -100,9 +90,8 @@ public class CompositeScope extends ExportableUserDataHolderBase implements Comp
     return sets;
   }
 
-  @NotNull
   @Override
-  public Collection<String> getAffectedUnloadedModules() {
+  public @NotNull Collection<String> getAffectedUnloadedModules() {
     Set<String> unloadedModules = new LinkedHashSet<>();
     for (final CompileScope compileScope : myScopes) {
       unloadedModules.addAll(compileScope.getAffectedUnloadedModules());
@@ -121,8 +110,7 @@ public class CompositeScope extends ExportableUserDataHolderBase implements Comp
     return super.getUserData(key);
   }
 
-  @NotNull
-  public Collection<CompileScope> getScopes() {
+  public @NotNull Collection<CompileScope> getScopes() {
     return Collections.unmodifiableList(myScopes);
   }
 }

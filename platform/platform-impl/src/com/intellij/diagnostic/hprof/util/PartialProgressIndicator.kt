@@ -17,7 +17,9 @@ package com.intellij.diagnostic.hprof.util
 
 import com.intellij.ide.util.DelegatingProgressIndicator
 import com.intellij.openapi.progress.ProgressIndicator
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 class PartialProgressIndicator(indicator: ProgressIndicator,
                                private val start: Double,
                                private val duration: Double) : DelegatingProgressIndicator(indicator) {

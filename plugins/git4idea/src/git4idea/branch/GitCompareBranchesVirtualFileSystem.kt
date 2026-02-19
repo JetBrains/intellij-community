@@ -1,7 +1,14 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.branch
 
-import com.google.gson.*
+import com.google.gson.GsonBuilder
+import com.google.gson.JsonDeserializationContext
+import com.google.gson.JsonDeserializer
+import com.google.gson.JsonElement
+import com.google.gson.JsonObject
+import com.google.gson.JsonParseException
+import com.google.gson.JsonSerializationContext
+import com.google.gson.JsonSerializer
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.LocalFileSystem
@@ -20,14 +27,14 @@ internal class GitCompareBranchesVirtualFileSystem : ComplexPathVirtualFileSyste
 ) {
   override fun getProtocol(): String = PROTOCOL
 
-  override fun findFile(project: Project, path: ComplexPath): VirtualFile? {
-    return GitCompareBranchesFilesManager.getInstance(project).findFile(path)
+  override fun findOrCreateFile(project: Project, path: ComplexPath): VirtualFile? {
+    return GitCompareBranchesFilesManager.getInstance(project).findOrCreateFile(path)
   }
 
   data class ComplexPath(override val sessionId: String,
                          override val projectHash: String,
                          val ranges: List<VcsLogRangeFilter.RefRange>,
-                         val root: Collection<VirtualFile>?) : ComplexPathVirtualFileSystem.ComplexPath
+                         val roots: Collection<VirtualFile>?) : ComplexPathVirtualFileSystem.ComplexPath
 
   companion object {
     private const val PROTOCOL = "git-compare-branches"

@@ -1,23 +1,24 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.ignore
 
-import com.intellij.configurationStore.saveComponentManager
-import com.intellij.dvcs.ignore.VcsRepositoryIgnoredFilesHolderBase
-import com.intellij.openapi.application.invokeAndWaitIfNeeded
-import com.intellij.openapi.application.runWriteAction
+import com.intellij.configurationStore.saveSettings
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.writeAction
 import com.intellij.openapi.module.ModuleType
+import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.roots.CompilerProjectExtension
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vcs.VcsApplicationSettings
 import com.intellij.openapi.vcs.changes.VcsIgnoreManagerImpl
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.PsiTestUtil
-import com.intellij.util.TimeoutUtil
 import com.intellij.vcsUtil.VcsImplUtil
 import com.intellij.vfs.AsyncVfsEventsPostProcessorImpl
 import git4idea.repo.GitRepositoryFiles.GITIGNORE
 import git4idea.test.GitSingleRepoTest
+import kotlinx.coroutines.runBlocking
 import java.io.File
+import java.util.concurrent.TimeUnit
 
 class ConvertExcludedToGitIgnoredTest : GitSingleRepoTest() {
   private lateinit var moduleContentRoot: VirtualFile
@@ -35,18 +36,21 @@ class ConvertExcludedToGitIgnoredTest : GitSingleRepoTest() {
 
   override fun setUpProject() {
     super.setUpProject()
-    invokeAndWaitIfNeeded { saveComponentManager(project) } //will create .idea directory
+    // will create .idea directory
+    runBlockingMaybeCancellable {
+      saveSettings(project)
+    }
   }
 
   override fun setUpModule() {
-    runWriteAction {
+    ApplicationManager.getApplication().runWriteAction {
       myModule = createMainModule()
       moduleContentRoot = getOrCreateProjectBaseDir()
       myModule.addContentRoot(moduleContentRoot)
     }
   }
 
-  fun testExcludedFolder() {
+  fun testExcludedFolder() = runBlocking {
     val excluded = createChildDirectory(moduleContentRoot, "exc")
     createChildData(excluded, "excluded.txt") //Don't mark empty directories like ignored since versioning such directories not supported in Git
     PsiTestUtil.addExcludedRoot(myModule, excluded)
@@ -61,7 +65,7 @@ class ConvertExcludedToGitIgnoredTest : GitSingleRepoTest() {
     assertTrue(changeListManager.isIgnoredFile(excluded))
   }
 
-  fun testModuleOutput() {
+  fun testModuleOutput() = runBlocking {
     val output = createChildDirectory(moduleContentRoot, "out")
     PsiTestUtil.setCompilerOutputPath(myModule, output.url, false)
     createChildData(output, "out.class")
@@ -76,10 +80,14 @@ class ConvertExcludedToGitIgnoredTest : GitSingleRepoTest() {
     assertTrue(changeListManager.isIgnoredFile(output))
   }
 
-  fun testProjectOutput() {
+  fun testProjectOutput() = runBlocking {
     val output = createChildDirectory(projectRoot, "projectOutput")
     createChildData(output, "out.class")
-    CompilerProjectExtension.getInstance(project)!!.compilerOutputUrl = output.url
+    CompilerProjectExtension.getInstance(project)!!.apply {
+      writeAction {
+        compilerOutputUrl = output.url
+      }
+    }
 
     generateIgnoreFileAndWaitHoldersUpdate()
     assertGitignoreValid(gitIgnore, """
@@ -90,10 +98,14 @@ class ConvertExcludedToGitIgnoredTest : GitSingleRepoTest() {
     assertTrue(changeListManager.isIgnoredFile(output))
   }
 
-  fun testModuleOutputUnderProjectOutput() {
+  fun testModuleOutputUnderProjectOutput() = runBlocking {
     val output = createChildDirectory(projectRoot, "projectOutput")
     createChildData(output, "out.class")
-    CompilerProjectExtension.getInstance(project)!!.compilerOutputUrl = output.url
+    CompilerProjectExtension.getInstance(project)!!.apply {
+      writeAction {
+        compilerOutputUrl = output.url
+      }
+    }
     val moduleOutput = createChildDirectory(output, "module")
     PsiTestUtil.setCompilerOutputPath(myModule, moduleOutput.url, false)
 
@@ -107,7 +119,7 @@ class ConvertExcludedToGitIgnoredTest : GitSingleRepoTest() {
     assertTrue(changeListManager.isIgnoredFile(moduleOutput))
   }
 
-  fun testModuleOutputUnderExcluded() {
+  fun testModuleOutputUnderExcluded() = runBlocking {
     val excluded = createChildDirectory(moduleContentRoot, "target")
     createChildData(excluded, "out.class")
     PsiTestUtil.addExcludedRoot(myModule, excluded)
@@ -134,20 +146,16 @@ class ConvertExcludedToGitIgnoredTest : GitSingleRepoTest() {
     assertFalse(changeListManager.isIgnoredFile(inner))
   }
 
-  private fun generateIgnoreFileAndWaitHoldersUpdate() {
+  private suspend fun generateIgnoreFileAndWaitHoldersUpdate() {
     AsyncVfsEventsPostProcessorImpl.waitEventsProcessed()
     flushIgnoreHoldersQueue()
-    val waiter = (repo.ignoredFilesHolder as VcsRepositoryIgnoredFilesHolderBase<*>).createWaiter()
     VcsImplUtil.generateIgnoreFileIfNeeded(project, vcs, projectRoot)
-    waiter.waitFor()
+    AsyncVfsEventsPostProcessorImpl.waitEventsProcessed()
+    repo.untrackedFilesHolder.invalidate()
+    repo.untrackedFilesHolder.awaitNotBusy()
   }
 
   private fun flushIgnoreHoldersQueue() {
-    with(VcsIgnoreManagerImpl.getInstanceImpl(project).ignoreRefreshQueue) {
-      flush()
-      while (isFlushing) {
-        TimeoutUtil.sleep(100)
-      }
-    }
+    VcsIgnoreManagerImpl.getInstanceImpl(project).ignoreRefreshQueue.waitForAllExecuted(10, TimeUnit.MINUTES)
   }
 }

@@ -2,7 +2,7 @@
 package com.intellij.openapi.vcs.ui.cloneDialog
 
 import org.jetbrains.annotations.Nls
-import java.util.*
+import java.util.EventListener
 
 /**
  * Informs the parent dialog about need to update its state regarding to the state of internal component

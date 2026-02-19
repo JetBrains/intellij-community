@@ -15,84 +15,86 @@
  */
 package com.jetbrains.python.psi.types;
 
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Ref;
+import com.intellij.psi.PsiElement;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.documentation.PythonDocumentationProvider;
 import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.PyNamedParameter;
 import com.jetbrains.python.psi.PyParameter;
+import com.jetbrains.python.psi.PySingleStarParameter;
+import com.jetbrains.python.psi.PySlashParameter;
 import com.jetbrains.python.psi.PyUtil;
 import com.jetbrains.python.psi.impl.ParamHelper;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
 import java.util.function.Predicate;
 
-/**
- * @author vlan
- */
 public final class PyCallableParameterImpl implements PyCallableParameter {
-  @Nullable private final String myName;
-  @Nullable private final Ref<PyType> myType;
-  @Nullable private final PyExpression myDefaultValue;
-  @Nullable private final PyParameter myElement;
+  private final @Nullable @NlsSafe String myName;
+  private final @Nullable Ref<PyType> myType;
+  private final @Nullable PyExpression myDefaultValue;
+  private final @Nullable PyParameter myElement;
+  private final @Nullable PsiElement myDeclarationElement;
   private final boolean myIsPositional;
   private final boolean myIsKeyword;
 
-  private PyCallableParameterImpl(@Nullable String name,
-                                  @Nullable Ref<PyType> type,
-                                  @Nullable PyExpression defaultValue,
-                                  @Nullable PyParameter element,
-                                  boolean isPositional,
-                                  boolean isKeyword) {
+  PyCallableParameterImpl(@Nullable String name,
+                          @Nullable Ref<PyType> type,
+                          @Nullable PyExpression defaultValue,
+                          @Nullable PyParameter element,
+                          boolean isPositional,
+                          boolean isKeyword,
+                          @Nullable PsiElement declarationElement) {
     myName = name;
     myType = type;
     myDefaultValue = defaultValue;
     myElement = element;
     myIsPositional = isPositional;
     myIsKeyword = isKeyword;
+    myDeclarationElement = declarationElement;
   }
 
-  @NotNull
-  public static PyCallableParameter nonPsi(@Nullable PyType type) {
+  public static @NotNull PyCallableParameter nonPsi(@Nullable PyType type) {
     return nonPsi(null, type);
   }
 
-  @NotNull
-  public static PyCallableParameter nonPsi(@Nullable String name, @Nullable PyType type) {
+  public static @NotNull PyCallableParameter nonPsi(@Nullable String name, @Nullable PyType type) {
     return nonPsi(name, type, null);
   }
 
-  @NotNull
-  public static PyCallableParameter nonPsi(@Nullable String name, @Nullable PyType type, @Nullable PyExpression defaultValue) {
-    return new PyCallableParameterImpl(name, Ref.create(type), defaultValue, null, false, false);
+  public static @NotNull PyCallableParameter nonPsi(@Nullable String name, @Nullable PyType type, @Nullable PyExpression defaultValue) {
+    return new PyCallableParameterImpl(name, Ref.create(type), defaultValue, null, false, false, null);
   }
 
-  @NotNull
-  public static PyCallableParameter positionalNonPsi(@Nullable String name, @Nullable PyType type) {
-    return new PyCallableParameterImpl(name, Ref.create(type), null, null, true, false);
+  public static @NotNull PyCallableParameter nonPsi(@Nullable String name, @Nullable PyType type, @Nullable PyExpression defaultValue,
+                                                    @NotNull PsiElement declarationElement) {
+    return new PyCallableParameterImpl(name, Ref.create(type), defaultValue, null, false, false, declarationElement);
   }
 
-  @NotNull
-  public static PyCallableParameter keywordNonPsi(@Nullable String name, @Nullable PyType type) {
-    return new PyCallableParameterImpl(name, Ref.create(type), null, null, false, true);
+  public static @NotNull PyCallableParameter positionalNonPsi(@Nullable String name, @Nullable PyType type) {
+    return new PyCallableParameterImpl(name, Ref.create(type), null, null, true, false, null);
   }
 
-  @NotNull
-  public static PyCallableParameter psi(@NotNull PyParameter parameter) {
-    return new PyCallableParameterImpl(null, null, null, parameter, false, false);
+  public static @NotNull PyCallableParameter keywordNonPsi(@Nullable String name, @Nullable PyType type) {
+    return new PyCallableParameterImpl(name, Ref.create(type), null, null, false, true, null);
   }
 
-  @NotNull
-  public static PyCallableParameter psi(@NotNull PyParameter parameter, @Nullable PyType type) {
-    return new PyCallableParameterImpl(null, Ref.create(type), null, parameter, false, false);
+  public static @NotNull PyCallableParameter psi(@NotNull PyParameter parameter) {
+    return new PyCallableParameterImpl(null, null, null, parameter, false, false, null);
   }
 
-  @Nullable
+  public static @NotNull PyCallableParameter psi(@NotNull PyParameter parameter, @Nullable PyType type) {
+    return new PyCallableParameterImpl(null, Ref.create(type), null, parameter, false, false, null);
+  }
+
   @Override
-  public String getName() {
+  public @Nullable @Nls String getName() {
     if (myName != null) {
       return myName;
     }
@@ -102,9 +104,8 @@ public final class PyCallableParameterImpl implements PyCallableParameter {
     return null;
   }
 
-  @Nullable
   @Override
-  public PyType getType(@NotNull TypeEvalContext context) {
+  public @Nullable PyType getType(@NotNull TypeEvalContext context) {
     if (myType != null) {
       return myType.get();
     }
@@ -114,15 +115,19 @@ public final class PyCallableParameterImpl implements PyCallableParameter {
     return null;
   }
 
-  @Nullable
   @Override
-  public PyParameter getParameter() {
+  public @Nullable PyParameter getParameter() {
     return myElement;
   }
 
-  @Nullable
   @Override
-  public PyExpression getDefaultValue() {
+  public @Nullable PsiElement getDeclarationElement() {
+    if (myDeclarationElement != null) return myDeclarationElement;
+    return getParameter();
+  }
+
+  @Override
+  public @Nullable PyExpression getDefaultValue() {
     return myElement == null ? myDefaultValue : myElement.getDefaultValue();
   }
 
@@ -131,9 +136,8 @@ public final class PyCallableParameterImpl implements PyCallableParameter {
     return myElement == null ? myDefaultValue != null : myElement.hasDefaultValue();
   }
 
-  @Nullable
   @Override
-  public String getDefaultValueText() {
+  public @Nullable String getDefaultValueText() {
     if (myElement != null) return myElement.getDefaultValueText();
     return myDefaultValue == null ? null : myDefaultValue.getText();
   }
@@ -156,19 +160,28 @@ public final class PyCallableParameterImpl implements PyCallableParameter {
 
   @Override
   public boolean isSelf() {
-    final PyParameter parameter = PyUtil.as(myElement, PyParameter.class);
-    return parameter != null && parameter.isSelf();
+    return myElement != null && myElement.isSelf();
   }
 
-  @NotNull
   @Override
-  public String getPresentableText(boolean includeDefaultValue, @Nullable TypeEvalContext context) {
+  public boolean isPositionOnlySeparator() {
+    return myElement instanceof PySlashParameter;
+  }
+
+  @Override
+  public boolean isKeywordOnlySeparator() {
+    return myElement instanceof PySingleStarParameter;
+  }
+
+  @Override
+  public @NotNull String getPresentableText(boolean includeDefaultValue, @Nullable TypeEvalContext context) {
     return getPresentableText(includeDefaultValue, context, Objects::isNull);
   }
 
-  @NotNull
   @Override
-  public String getPresentableText(boolean includeDefaultValue, @Nullable TypeEvalContext context, @NotNull Predicate<PyType> typeFilter) {
+  public @NotNull String getPresentableText(boolean includeDefaultValue,
+                                            @Nullable TypeEvalContext context,
+                                            @NotNull Predicate<PyType> typeFilter) {
     if (myElement instanceof PyNamedParameter || myElement == null) {
       final StringBuilder sb = new StringBuilder();
 
@@ -179,7 +192,7 @@ public final class PyCallableParameterImpl implements PyCallableParameter {
         final PyType argumentType = getArgumentType(context);
         if (!typeFilter.test(argumentType)) {
           sb.append(": ");
-          sb.append(PythonDocumentationProvider.getTypeDescription(argumentType, context));
+          sb.append(PythonDocumentationProvider.getTypeName(argumentType, context));
           renderedAsTyped = true;
         }
       }
@@ -194,20 +207,22 @@ public final class PyCallableParameterImpl implements PyCallableParameter {
     return PyUtil.getReadableRepr(myElement, false);
   }
 
-  @Nullable
   @Override
-  public PyType getArgumentType(@NotNull TypeEvalContext context) {
+  public @Nullable PyType getArgumentType(@NotNull TypeEvalContext context) {
     final PyType parameterType = getType(context);
 
-    if (parameterType instanceof PyCollectionType) {
-      final PyCollectionType collectionType = (PyCollectionType)parameterType;
-
-      if (isPositionalContainer()) {
-        return collectionType.getIteratedItemType();
+    if (isPositionalContainer() && parameterType instanceof PyTupleType tupleType) {
+      // *args: str is equivalent to *args: *tuple[str, ...]
+      // *args: *Ts is equivalent to *args: *tuple[*Ts]
+      // Convert its type to a more general form of an unpacked tuple
+      PyUnpackedTupleType unpackedTupleType = tupleType.asUnpackedTupleType();
+      if (unpackedTupleType.isUnbound()) {
+        return unpackedTupleType.getElementTypes().get(0);
       }
-      else if (isKeywordContainer()) {
-        return ContainerUtil.getOrElse(collectionType.getElementTypes(), 1, null);
-      }
+      return unpackedTupleType;
+    }
+    else if (isKeywordContainer() && parameterType instanceof PyCollectionType dictType) {
+      return ContainerUtil.getOrElse(dictType.getElementTypes(), 1, null);
     }
 
     return parameterType;

@@ -1,0 +1,154 @@
+com.intellij.execution.CommonProgramRunConfigurationParameters
+- a:getEnvs():java.util.Map
+- a:getProgramParameters():java.lang.String
+- a:getProject():com.intellij.openapi.project.Project
+- a:getWorkingDirectory():java.lang.String
+- a:isPassParentEnvs():Z
+- a:setEnvs(java.util.Map):V
+- a:setPassParentEnvs(Z):V
+- a:setProgramParameters(java.lang.String):V
+- a:setWorkingDirectory(java.lang.String):V
+com.intellij.execution.ConfigurationWithCommandLineShortener
+- a:getProject():com.intellij.openapi.project.Project
+- a:getShortenCommandLine():com.intellij.execution.ShortenCommandLine
+- a:setShortenCommandLine(com.intellij.execution.ShortenCommandLine):V
+com.intellij.execution.EnvFilesOptions
+- a:getEnvFilePaths():java.util.List
+- a:setEnvFilePaths(java.util.List):V
+com.intellij.execution.InputRedirectAware
+- com.intellij.execution.configurations.RunConfiguration
+- s:getInputFile(com.intellij.execution.configurations.RunConfiguration):java.io.File
+- a:getInputRedirectOptions():com.intellij.execution.InputRedirectAware$InputRedirectOptions
+- s:getInputRedirectOptions(com.intellij.execution.configurations.RunConfiguration):com.intellij.execution.InputRedirectAware$InputRedirectOptions
+com.intellij.execution.InputRedirectAware$InputRedirectOptions
+- a:getRedirectInputPath():java.lang.String
+- a:isRedirectInput():Z
+- a:setRedirectInput(Z):V
+- a:setRedirectInputPath(java.lang.String):V
+com.intellij.execution.RunConfigurationConverter
+- a:convertRunConfigurationOnDemand(org.jdom.Element):Z
+f:com.intellij.execution.actions.ChooseRunConfigurationManager
+- <init>():V
+- s:createFlatSettingsList(com.intellij.openapi.project.Project):java.util.List
+- s:createSettingsList(com.intellij.execution.impl.RunManagerImpl,com.intellij.execution.actions.ExecutorProvider,Z,Z,com.intellij.openapi.actionSystem.DataContext):java.util.List
+- s:createSettingsList(com.intellij.openapi.project.Project,com.intellij.execution.actions.ExecutorProvider,com.intellij.openapi.actionSystem.DataContext,Z):java.util.List
+- s:deleteConfiguration(com.intellij.openapi.project.Project,com.intellij.execution.RunnerAndConfigurationSettings,com.intellij.openapi.ui.popup.JBPopup):V
+com.intellij.execution.actions.ExecutorProvider
+- a:getExecutor():com.intellij.execution.Executor
+c:com.intellij.execution.actions.StopAction
+- com.intellij.platform.ide.core.permissions.RequiresPermissions
+- getRequiredPermissions():java.util.Collection
+com.intellij.execution.configuration.CompatibilityAwareRunProfile
+- com.intellij.execution.configurations.RunProfile
+- a:mustBeStoppedToRun(com.intellij.execution.configurations.RunConfiguration):Z
+com.intellij.execution.configuration.PersistentAwareRunConfiguration
+- com.intellij.execution.configurations.RunConfiguration
+- a:needsToBeMigrated():Z
+- a:readPersistent(org.jdom.Element):V
+- a:setTemplate(Z):V
+- a:writePersistent(org.jdom.Element):V
+com.intellij.execution.filters.HyperlinkWithHoverInfo
+- com.intellij.execution.filters.HyperlinkInfo
+- a:onMouseEntered(javax.swing.JComponent,java.awt.Rectangle):V
+- a:onMouseExited():V
+com.intellij.execution.filters.HyperlinkWithPopupMenuInfo
+- com.intellij.execution.filters.HyperlinkInfo
+- a:getPopupMenuGroup(java.awt.event.MouseEvent):com.intellij.openapi.actionSystem.ActionGroup
+com.intellij.execution.impl.BeforeRunTaskAwareConfiguration
+- useRunExecutor():Z
+com.intellij.execution.impl.RunConfigurationBeforeRunProviderDelegate
+- sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
+- a:beforeRun(com.intellij.execution.runners.ExecutionEnvironment):V
+com.intellij.execution.impl.statistics.FusAwareRunConfiguration
+- a:getAdditionalUsageData():java.util.List
+com.intellij.execution.runners.DebuggableRunProfileState
+- com.intellij.execution.configurations.RunProfileState
+- a:execute(I):org.jetbrains.concurrency.Promise
+com.intellij.execution.runners.RunConfigurationWithSuppressedDefaultRunAction
+com.intellij.execution.target.TargetEnvironmentWizard$ValidationCallbackConsumer
+- java.util.function.Consumer
+- a:doValidateAll():java.util.List
+com.intellij.execution.ui.TargetAwareRunConfigurationEditor
+- a:targetChanged(java.lang.String):V
+com.intellij.openapi.module.WorkingDirectoryProvider
+- a:getWorkingDirectoryPath(com.intellij.openapi.module.Module):java.lang.String
+c:com.intellij.terminal.JBTerminalWidget
+- p:getCurrentDirectory():java.lang.String
+com.intellij.terminal.JBTerminalWidgetListener
+- canMoveTabLeft():Z
+- canMoveTabRight():Z
+- canSplit(Z):Z
+- gotoNextSplitTerminal(Z):V
+- isGotoNextSplitTerminalAvailable():Z
+- moveTabLeft():V
+- moveTabRight():V
+- a:onNewSession():V
+- a:onNextTabSelected():V
+- a:onPreviousTabSelected():V
+- a:onSessionClosed():V
+- a:onTerminalStarted():V
+- a:showTabs():V
+- split(Z):V
+c:com.intellij.terminal.ProcessHandlerTtyConnector
+- f:getProcess():java.lang.Process
+c:com.intellij.terminal.TerminalExecutionConsole
+- com.intellij.execution.ui.ConsoleView
+- com.intellij.execution.ui.ObservableConsoleView
+- <init>(com.intellij.openapi.project.Project,I,I,com.intellij.execution.process.ProcessHandler):V
+- <init>(com.intellij.openapi.project.Project,I,I,com.intellij.execution.process.ProcessHandler,com.intellij.terminal.JBTerminalSystemSettingsProviderBase):V
+- <init>(com.intellij.openapi.project.Project,com.intellij.execution.process.ProcessHandler):V
+- <init>(com.intellij.openapi.project.Project,com.intellij.execution.process.ProcessHandler,com.intellij.terminal.JBTerminalSystemSettingsProviderBase):V
+- addChangeListener(com.intellij.execution.ui.ObservableConsoleView$ChangeListener,com.intellij.openapi.Disposable):V
+- addMessageFilter(com.intellij.execution.filters.Filter):V
+- allowHeavyFilters():V
+- attachToProcess(com.intellij.execution.process.ProcessHandler):V
+- f:attachToProcess(com.intellij.execution.process.ProcessHandler,com.jediterm.terminal.TtyConnector,Z):V
+- pf:attachToProcess(com.intellij.execution.process.ProcessHandler,Z):V
+- canPause():Z
+- clear():V
+- createConsoleActions():com.intellij.openapi.actionSystem.AnAction[]
+- dispose():V
+- getComponent():javax.swing.JComponent
+- getContentSize():I
+- getPreferredFocusableComponent():javax.swing.JComponent
+- getTerminalWidget():com.intellij.terminal.JBTerminalWidget
+- hasDeferredOutput():Z
+- s:isAcceptable(com.intellij.execution.process.ProcessHandler):Z
+- isOutputPaused():Z
+- performWhenNoDeferredOutput(java.lang.Runnable):V
+- print(java.lang.String,com.intellij.execution.ui.ConsoleViewContentType):V
+- printHyperlink(java.lang.String,com.intellij.execution.filters.HyperlinkInfo):V
+- scrollTo(I):V
+- setHelpId(java.lang.String):V
+- setOutputPaused(Z):V
+- withConvertLfToCrlfForNonPtyProcess(Z):com.intellij.terminal.TerminalExecutionConsole
+- withEnterKeyDefaultCodeEnabled(Z):com.intellij.terminal.TerminalExecutionConsole
+f:com.intellij.terminal.TerminalExecutionConsoleBuilder
+- <init>(com.intellij.openapi.project.Project):V
+- f:build():com.intellij.terminal.TerminalExecutionConsole
+- f:convertLfToCrlfForProcessWithoutPty(Z):com.intellij.terminal.TerminalExecutionConsoleBuilder
+- f:initialTermSize(com.jediterm.core.util.TermSize):com.intellij.terminal.TerminalExecutionConsoleBuilder
+- f:settingsProvider(com.intellij.terminal.JBTerminalSystemSettingsProviderBase):com.intellij.terminal.TerminalExecutionConsoleBuilder
+com.intellij.terminal.TerminalShellCommandHandler
+- sf:Companion:com.intellij.terminal.TerminalShellCommandHandler$Companion
+- a:execute(com.intellij.openapi.project.Project,java.lang.String,Z,java.lang.String,com.intellij.execution.Executor):Z
+- a:matches(com.intellij.openapi.project.Project,java.lang.String,Z,java.lang.String):Z
+com.intellij.terminal.ui.TerminalWidget
+- com.intellij.openapi.ui.ComponentContainer
+- a:addNotification(javax.swing.JComponent,com.intellij.openapi.Disposable):V
+- a:addTerminationCallback(java.lang.Runnable,com.intellij.openapi.Disposable):V
+- a:connectToTty(com.jediterm.terminal.TtyConnector,com.jediterm.core.util.TermSize):V
+- a:getShellCommand():java.util.List
+- a:getTermSize():com.jediterm.core.util.TermSize
+- a:getTerminalTitle():com.intellij.terminal.TerminalTitle
+- getTtyConnector():com.jediterm.terminal.TtyConnector
+- a:getTtyConnectorAccessor():com.intellij.terminal.ui.TtyConnectorAccessor
+- a:hasFocus():Z
+- a:requestFocus():V
+- a:sendCommandToExecute(java.lang.String):V
+- a:setCursorVisible(Z):V
+- a:setShellCommand(java.util.List):V
+- a:writePlainMessage(java.lang.String):V
+com.intellij.testIntegration.TestLocationProvider
+- sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
+- a:getLocation(java.lang.String,java.lang.String,com.intellij.openapi.project.Project):java.util.List

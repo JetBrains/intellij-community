@@ -1,0 +1,6 @@
+version = "~=3.0.1"
+upstream_repository = "https://github.com/Pylons/waitress"
+
+[tool.stubtest]
+# linux and darwin are equivalent
+ci_platforms = ["linux", "win32"]

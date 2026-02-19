@@ -19,14 +19,14 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.IncorrectOperationException;
 import com.jetbrains.python.codeInsight.editorActions.smartEnter.PySmartEnterProcessor;
-import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.PyDictLiteralExpression;
+import com.jetbrains.python.psi.PyElement;
+import com.jetbrains.python.psi.PyListLiteralExpression;
+import com.jetbrains.python.psi.PySetLiteralExpression;
+import com.jetbrains.python.psi.PySubscriptionExpression;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * Created by IntelliJ IDEA.
- * Author: Alexey.Ivanov
- */
 public class PyMissingBracesFixer extends PyFixer<PyElement> {
   public PyMissingBracesFixer() {
     super(PyElement.class);
@@ -42,7 +42,6 @@ public class PyMissingBracesFixer extends PyFixer<PyElement> {
       }
     }
     else if (psiElement instanceof PyListLiteralExpression ||
-             psiElement instanceof PySliceExpression ||
              psiElement instanceof PySubscriptionExpression) {
       final PsiElement lastChild = PyPsiUtils.getPrevNonCommentSibling(psiElement.getLastChild(), false);
       if (lastChild != null && !"]".equals(lastChild.getText())) {

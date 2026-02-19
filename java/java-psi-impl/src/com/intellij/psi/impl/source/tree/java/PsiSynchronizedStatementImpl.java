@@ -17,12 +17,16 @@ package com.intellij.psi.impl.source.tree.java;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaElementVisitor;
+import com.intellij.psi.PsiCodeBlock;
+import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiSynchronizedStatement;
+import com.intellij.psi.impl.source.Constants;
 import com.intellij.psi.impl.source.tree.ChildRole;
 import com.intellij.psi.impl.source.tree.CompositePsiElement;
-import com.intellij.psi.impl.source.Constants;
-import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.ChildRoleBase;
+import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
 
 public class PsiSynchronizedStatementImpl extends CompositePsiElement implements PsiSynchronizedStatement, Constants {
@@ -46,9 +50,6 @@ public class PsiSynchronizedStatementImpl extends CompositePsiElement implements
   public ASTNode findChildByRole(int role) {
     LOG.assertTrue(ChildRole.isUnique(role));
     switch(role){
-      default:
-        return null;
-
       case ChildRole.SYNCHRONIZED_KEYWORD:
         return findChildByType(SYNCHRONIZED_KEYWORD);
 
@@ -63,6 +64,9 @@ public class PsiSynchronizedStatementImpl extends CompositePsiElement implements
 
       case ChildRole.BLOCK:
         return findChildByType(CODE_BLOCK);
+
+      default:
+        return null;
     }
   }
 

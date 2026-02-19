@@ -15,14 +15,13 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.impl.source.tree.LeafElement;
 import com.intellij.psi.tree.IElementType;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * @author Eugene.Kudelevsky
- */
+@ApiStatus.Internal
 public class NodeSpecificHasherBase extends NodeSpecificHasher {
   private final TreeHasherBase myTreeHasher;
   private final DuplocatorSettings mySettings;
@@ -41,13 +40,13 @@ public class NodeSpecificHasherBase extends NodeSpecificHasher {
            !myDuplicatesProfile.getDuplocatorState(myDuplicatesProfile.getLanguage(element)).distinguishLiterals();
   }
 
-  public NodeSpecificHasherBase(@NotNull final DuplocatorSettings settings,
+  public NodeSpecificHasherBase(final @NotNull DuplocatorSettings settings,
                                 @NotNull FragmentsCollector callback,
                                 @NotNull DuplicatesProfileBase duplicatesProfile) {
     this(settings, callback, duplicatesProfile, false);
   }
 
-  public NodeSpecificHasherBase(@NotNull final DuplocatorSettings settings,
+  public NodeSpecificHasherBase(final @NotNull DuplocatorSettings settings,
                                 @NotNull FragmentsCollector callback,
                                 @NotNull DuplicatesProfileBase duplicatesProfile,
                                 boolean forIndexing) {
@@ -57,8 +56,7 @@ public class NodeSpecificHasherBase extends NodeSpecificHasher {
     myForIndexing = forIndexing;
   }
 
-  @NotNull
-  public NodeFilter getNodeFilter() {
+  public @NotNull NodeFilter getNodeFilter() {
     return myNodeFilter;
   }
 
@@ -99,7 +97,7 @@ public class NodeSpecificHasherBase extends NodeSpecificHasher {
   public List<PsiElement> getNodeChildren(PsiElement node) {
     final List<PsiElement> result = new ArrayList<>();
 
-    final FilteringNodeIterator it = new FilteringNodeIterator(new SiblingNodeIterator(node.getFirstChild()), myNodeFilter);
+    final FilteringNodeIterator it = new FilteringNodeIterator(SiblingNodeIterator.create(node.getFirstChild()), myNodeFilter);
     while (it.hasNext()) {
       result.add(it.current());
       it.advance();
@@ -121,8 +119,7 @@ public class NodeSpecificHasherBase extends NodeSpecificHasher {
     return new DuplicatesMatchingVisitor(this, myNodeFilter, discardCost).match(root1, root2);
   }
 
-  @NotNull
-  public DuplicatesProfileBase getDuplicatesProfile() {
+  public @NotNull DuplicatesProfileBase getDuplicatesProfile() {
     return myDuplicatesProfile;
   }
 

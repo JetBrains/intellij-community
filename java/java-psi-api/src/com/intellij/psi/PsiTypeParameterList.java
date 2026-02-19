@@ -19,8 +19,6 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * Represents a list of generic type parameters for a class or method.
- *
- * @author dsl
  */
 public interface PsiTypeParameterList extends PsiElement {
   /**
@@ -36,5 +34,5 @@ public interface PsiTypeParameterList extends PsiElement {
    * @param typeParameter the parameter to find.
    * @return the index of the parameter.
    */
-  int getTypeParameterIndex (PsiTypeParameter typeParameter);
+  int getTypeParameterIndex(@NotNull PsiTypeParameter typeParameter);
 }

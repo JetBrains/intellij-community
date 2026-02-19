@@ -1,6 +1,7 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.uiDesigner.actions;
 
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
@@ -12,21 +13,17 @@ import com.intellij.uiDesigner.designSurface.GuiEditor;
 import com.intellij.uiDesigner.propertyInspector.DesignerToolWindowManager;
 import com.intellij.uiDesigner.radComponents.RadComponent;
 import com.intellij.uiDesigner.radComponents.RadContainer;
+import com.intellij.util.containers.Stack;
 import org.jetbrains.annotations.NotNull;
-
-import java.util.Stack;
 
 /**
  * For each component selects all non selected siblings (if any). If
  * all component's siblings are already selected then selects component's
  * parent (if any).
- *
- * @author Anton Katilin
- * @author Vladimir Kondratyev
  */
 public final class ExpandSelectionAction extends AnAction{
   @Override
-  public void actionPerformed(@NotNull final AnActionEvent e) {
+  public void actionPerformed(final @NotNull AnActionEvent e) {
     final GuiEditor editor = FormEditingUtil.getEditorFromContext(e.getDataContext());
     assert editor != null;
     final SelectionState selectionState = editor.getSelectionState();
@@ -80,11 +77,16 @@ public final class ExpandSelectionAction extends AnAction{
   }
 
   @Override
-  public void update(@NotNull final AnActionEvent e) {
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.EDT;
+  }
+
+  @Override
+  public void update(final @NotNull AnActionEvent e) {
     final Presentation presentation = e.getPresentation();
     final GuiEditor editor = FormEditingUtil.getEditorFromContext(e.getDataContext());
 
-    if(editor == null){
+    if (editor == null) {
       presentation.setEnabled(false);
       return;
     }

@@ -133,7 +133,7 @@ public class StreamInlining {
 
   String blockLambda(List<String> list) {
     return list == null ? "" : list.stream().map(s -> {
-      return s.equals("abc") ? null : s;
+      return s.equals("abc") ? <warning descr="Function may return null, but it's not allowed here">null</warning> : s;
     }).findFirst().orElse("");
   }
 
@@ -163,10 +163,6 @@ public class StreamInlining {
     }
   }
 
-  Optional<String> testOptionalOfNullable(List<String> list) {
-    return list.stream().filter(Objects::isNull).map(Optional::<warning descr="Passing 'null' argument to 'Optional'">ofNullable</warning>).findFirst().orElse(Optional.empty());
-  }
-
   void testGenerate() {
     List<String> list1 = Stream.generate(() -> Math.random() > 0.5 ? "foo" : "baz")
       .limit(10).filter((xyz -> <warning descr="Result of '\"bar\".equals(xyz)' is always 'false'">"bar".equals(xyz)</warning>)).collect(Collectors.toList());
@@ -190,6 +186,18 @@ public class StreamInlining {
   void testReduce() {
     List<Double> input = new ArrayList<>();
     input.add(0.0);
+    Optional<Double> result = input.stream().reduce((a, b) -> {
+      throw new IllegalStateException("Multiple entries found: " + a + " and " + b);
+    });
+    Double res = result.orElse(null);
+    if (<warning descr="Condition 'res != null' is always 'true'">res != null</warning>) {
+      System.out.println(res);
+    } else {
+      System.out.println("Huh?");
+    }
+  }
+
+  void testReduce2(List<Double> input) {
     Optional<Double> result = input.stream().reduce((a, b) -> {
       throw new IllegalStateException("Multiple entries found: " + a + " and " + b);
     });
@@ -285,16 +293,17 @@ public class StreamInlining {
     if (<warning descr="Condition 'count6 < 0' is always 'false'">count6 < 0</warning>) {}
     if (count6 > 4) {}
     
-    long count7 = Stream.of("foo", "bar").filter(x -> <warning descr="Condition '!x.isEmpty()' is always 'true'">!<warning descr="Result of 'x.isEmpty()' is always 'false'">x.isEmpty()</warning></warning>).count();
-    if (<warning descr="Condition 'count7 == 0' is always 'false'">count7 == 0</warning>) {}
-    if (<warning descr="Condition 'count7 == 1 || count7 == 2' is always 'true'">count7 == 1 || <warning descr="Condition 'count7 == 2' is always 'true' when reached">count7 == 2</warning></warning>) {}
+    long count7 = Stream.of("foo", "bar").filter(x -> <warning descr="Condition '!x.isEmpty()' is always 'true'">!x.isEmpty()</warning>).count();
+    if (<warning descr="Condition 'count7 == 0 || count7 == 1 || count7 == 2' is always 'true'">count7 == 0 || count7 == 1 || <warning descr="Condition 'count7 == 2' is always 'true'">count7 == 2</warning></warning>) {}
     long count8 = <warning descr="Result of 'Stream.of(\"foo\", \"bar\").filter(x -> x.isEmpty()).count()' is always '0'">Stream.of("foo", "bar").filter(x -> <warning descr="Result of 'x.isEmpty()' is always 'false'">x.isEmpty()</warning>).count()</warning>;
     if (<warning descr="Condition 'count8 == 0' is always 'true'">count8 == 0</warning>) {}
     long count9 = list.stream().map(String::trim).count();
     if (count9 == 0) {}
     if (list.isEmpty()) return;
     long count10 = list.stream().map(String::trim).count();
-    if (<warning descr="Condition 'count10 == 0' is always 'false'">count10 == 0</warning>) {}
+    if (count10 == 0) {}
+    long count = <warning descr="Result of 'Stream.<String>of().filter(String::isEmpty).count()' is always '0'">Stream.<String>of().filter(String::isEmpty).count()</warning>;
+    if (<warning descr="Condition 'count == 0' is always 'true'">count == 0</warning>) { }
   }
 
   void testFlatMapUnresolvedSymbol() {
@@ -308,5 +317,11 @@ public class StreamInlining {
     int[] count = {0};
     list.stream().forEach(l -> count[0]++);
     System.out.println(count[0]);
+  }
+  
+  void testFromArray(String[] data) {
+    if (data.length != 0) return;
+    long result = <warning descr="Result of 'Arrays.asList(data).stream().count()' is always '0'">Arrays.asList(data).stream().count()</warning>;
+    if (<warning descr="Condition 'result == 0' is always 'true'">result == 0</warning>) {}
   }
 }

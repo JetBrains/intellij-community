@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.psi.impl.source;
 
@@ -7,11 +7,23 @@ import com.intellij.lang.FileASTNode;
 import com.intellij.lang.Language;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.*;
-import com.intellij.psi.impl.*;
+import com.intellij.psi.FileViewProvider;
+import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiFileSystemItem;
+import com.intellij.psi.PsiInvalidElementAccessException;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiReference;
+import com.intellij.psi.impl.CheckUtil;
+import com.intellij.psi.impl.PsiElementBase;
+import com.intellij.psi.impl.PsiFileEx;
+import com.intellij.psi.impl.SharedPsiElementImplUtil;
 import com.intellij.psi.impl.file.PsiFileImplUtil;
 import com.intellij.psi.impl.source.resolve.FileContextUtil;
 import com.intellij.psi.search.PsiElementProcessor;
@@ -27,12 +39,12 @@ public abstract class LightPsiFileImpl extends PsiElementBase implements PsiFile
   private boolean myExplicitlySetAsValid = false;
   private boolean myInvalidated = false;
   private final FileViewProvider myViewProvider;
-  private final PsiManagerImpl myManager;
+  private final PsiManager myManager;
   private final Language myLanguage;
 
   public LightPsiFileImpl(@NotNull FileViewProvider provider, @NotNull Language language) {
     myViewProvider = provider;
-    myManager = (PsiManagerImpl)provider.getManager();
+    myManager = provider.getManager();
     myLanguage = language;
   }
 
@@ -42,7 +54,7 @@ public abstract class LightPsiFileImpl extends PsiElementBase implements PsiFile
   }
 
   @Override
-  public boolean processChildren(@NotNull final PsiElementProcessor<PsiFileSystemItem> processor) {
+  public boolean processChildren(final @NotNull PsiElementProcessor<? super PsiFileSystemItem> processor) {
     return true;
   }
 
@@ -94,8 +106,7 @@ public abstract class LightPsiFileImpl extends PsiElementBase implements PsiFile
   }
 
   @Override
-  @NotNull
-  public String getName() {
+  public @NotNull String getName() {
     return getViewProvider().getVirtualFile().getName();
   }
 
@@ -124,8 +135,7 @@ public abstract class LightPsiFileImpl extends PsiElementBase implements PsiFile
     return getManager().findDirectory(parentFile);
   }
 
-  @Nullable
-  public PsiDirectory getParentDirectory() {
+  public @Nullable PsiDirectory getParentDirectory() {
     return getContainingDirectory();
   }
 
@@ -148,8 +158,7 @@ public abstract class LightPsiFileImpl extends PsiElementBase implements PsiFile
   }
 
   @Override
-  @NotNull
-  public PsiFile getOriginalFile() {
+  public @NotNull PsiFile getOriginalFile() {
     return myOriginalFile == null ? this : myOriginalFile;
   }
 
@@ -168,15 +177,18 @@ public abstract class LightPsiFileImpl extends PsiElementBase implements PsiFile
   }
 
   @Override
-  @NotNull
-  public Language getLanguage() {
+  public @NotNull Language getLanguage() {
     return myLanguage;
   }
 
   @Override
-  @NotNull
-  public FileViewProvider getViewProvider() {
+  public @NotNull FileViewProvider getViewProvider() {
     return myViewProvider;
+  }
+
+  @Override
+  public final @NotNull Document getFileDocument() {
+    return PsiFileEx.super.getFileDocument();
   }
 
   @Override
@@ -185,8 +197,7 @@ public abstract class LightPsiFileImpl extends PsiElementBase implements PsiFile
   }
 
   @Override
-  @NotNull
-  public Project getProject() {
+  public @NotNull Project getProject() {
     final PsiManager manager = getManager();
     if (manager == null) throw new PsiInvalidElementAccessException(this);
 

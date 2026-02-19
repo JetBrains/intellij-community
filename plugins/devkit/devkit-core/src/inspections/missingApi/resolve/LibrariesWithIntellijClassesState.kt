@@ -1,7 +1,12 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.inspections.missingApi.resolve
 
-import com.intellij.openapi.components.*
+import com.intellij.openapi.components.BaseState
+import com.intellij.openapi.components.Service
+import com.intellij.openapi.components.SimplePersistentStateComponent
+import com.intellij.openapi.components.State
+import com.intellij.openapi.components.Storage
+import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import org.jetbrains.idea.devkit.projectRoots.IntelliJPlatformProduct
 
@@ -14,66 +19,49 @@ import org.jetbrains.idea.devkit.projectRoots.IntelliJPlatformProduct
  * and `kotlin.build:java:<version>`. Kotlin project may supplement the storage.xml with coordinates of all
  * libraries containing IntelliJ classes.
  */
+@Service(Service.Level.PROJECT)
 @State(name = "libraries-with-intellij-classes", storages = [Storage("libraries-with-intellij-classes.xml")])
-class LibrariesWithIntellijClassesSetting : SimplePersistentStateComponent<LibrariesWithIntellijClassesState>(defaultState) {
-
+internal class LibrariesWithIntellijClassesSetting : SimplePersistentStateComponent<LibrariesWithIntellijClassesState>(createDefaultState()) {
   companion object {
-    val defaultState = LibrariesWithIntellijClassesState().also {
-      getKnownIntellijLibrariesCoordinates()
-        .mapTo(it.intellijApiContainingLibraries) { (groupId, artifactId) ->
-          val state = LibraryCoordinatesState()
-          state.groupId = groupId
-          state.artifactId = artifactId
-          state
-        }
-    }
-
-    fun getInstance(project: Project): LibrariesWithIntellijClassesSetting =
-      ServiceManager.getService(project, LibrariesWithIntellijClassesSetting::class.java)
+    fun getInstance(project: Project): LibrariesWithIntellijClassesSetting = project.service()
   }
+
+  val intellijApiContainingLibraries: List<LibraryCoordinatesState>
+    get() = state.intellijApiContainingLibraries
 }
 
-class LibrariesWithIntellijClassesState : BaseState() {
-  var intellijApiContainingLibraries by list<LibraryCoordinatesState>()
+internal class LibrariesWithIntellijClassesState : BaseState() {
+  val intellijApiContainingLibraries by list<LibraryCoordinatesState>()
 }
 
-class LibraryCoordinatesState : BaseState() {
+internal class LibraryCoordinatesState : BaseState() {
   var groupId by string()
   var artifactId by string()
 }
 
 private fun getKnownIntellijLibrariesCoordinates(): List<Pair<String, String>> {
-  val result = arrayListOf<Pair<String, String>>()
-  IntelliJPlatformProduct.values().mapNotNull { product ->
-    getMavenCoordinatesOfProduct(product)
-  }.forEach { (groupId, artifactId) ->
-    //Original coordinates of the product.
-    result += groupId to artifactId
+  val result = mutableListOf<Pair<String, String>>()
 
-    //Coordinates used in the 'gradle-intellij-plugin' to specify IDE dependency
-    result += "com.jetbrains" to artifactId
+  IntelliJPlatformProduct.entries.forEach {
+    it.mavenCoordinates?.split(":")?.let { (groupId,artifactId) ->
+      // original coordinates of the product.
+      result.add(groupId to artifactId)
+
+      // coordinates used in the 'gradle-intellij-plugin' 1.x to specify IDE dependency; obsolete in IntelliJ Platform Gradle Plugin 2.x
+      result.add("com.jetbrains" to artifactId)
+    }
   }
   return result
 }
 
-@Suppress("HardCodedStringLiteral")
-private fun getMavenCoordinatesOfProduct(product: IntelliJPlatformProduct): Pair<String, String>? = when (product) {
-  IntelliJPlatformProduct.IDEA -> "com.jetbrains.intellij.idea" to "ideaIU"
-  IntelliJPlatformProduct.IDEA_IC -> "com.jetbrains.intellij.idea" to "ideaIC"
-  IntelliJPlatformProduct.CLION -> "com.jetbrains.intellij.clion" to "clion"
-  IntelliJPlatformProduct.PYCHARM -> "com.jetbrains.intellij.pycharm" to "pycharmPY"
-  IntelliJPlatformProduct.PYCHARM_PC -> "com.jetbrains.intellij.pycharm" to "pycharmPC"
-  IntelliJPlatformProduct.RIDER -> "com.jetbrains.intellij.rider" to "riderRD"
-
-  IntelliJPlatformProduct.RUBYMINE,
-  IntelliJPlatformProduct.PYCHARM_DS,
-  IntelliJPlatformProduct.PYCHARM_EDU,
-  IntelliJPlatformProduct.PHPSTORM,
-  IntelliJPlatformProduct.WEBSTORM,
-  IntelliJPlatformProduct.APPCODE,
-  IntelliJPlatformProduct.DBE,
-  IntelliJPlatformProduct.GOIDE,
-  IntelliJPlatformProduct.ANDROID_STUDIO,
-  IntelliJPlatformProduct.INTELLIJ_CLIENT,
-  IntelliJPlatformProduct.IDEA_IE -> null
+private fun createDefaultState(): LibrariesWithIntellijClassesState {
+  val result = LibrariesWithIntellijClassesState()
+  getKnownIntellijLibrariesCoordinates()
+    .mapTo(result.intellijApiContainingLibraries) { (groupId, artifactId) ->
+      val state = LibraryCoordinatesState()
+      state.groupId = groupId
+      state.artifactId = artifactId
+      state
+    }
+  return result
 }

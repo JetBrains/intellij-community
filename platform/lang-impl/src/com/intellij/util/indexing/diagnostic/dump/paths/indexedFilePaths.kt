@@ -6,17 +6,17 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.impl.FilePropertyPusher
 import com.intellij.openapi.util.io.FileTooBigException
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.util.Base64
 import com.intellij.util.indexing.FileBasedIndex
 import com.intellij.util.indexing.FileContentImpl
 import com.intellij.util.indexing.IndexedHashesSupport
 import com.intellij.util.indexing.SubstitutedFileType
+import java.util.Base64
 
 object IndexedFilePaths {
 
-  const val TOO_LARGE_FILE = "<TOO LARGE>"
+  private const val TOO_LARGE_FILE = "<TOO LARGE>"
 
-  const val FAILED_TO_LOAD = "<FAILED TO LOAD: %s>"
+  private const val FAILED_TO_LOAD = "<FAILED TO LOAD: %s>"
 
   fun createIndexedFilePath(fileOrDir: VirtualFile, project: Project): IndexedFilePath {
     val fileId = FileBasedIndex.getFileId(fileOrDir)
@@ -32,10 +32,11 @@ object IndexedFilePaths {
     }
     val (contentHash, indexedHash) = try {
       val fileContent = FileContentImpl.createByFile(fileOrDir) as FileContentImpl
+      val encoder = Base64.getEncoder()
       runReadAction {
         val contentHash = IndexedHashesSupport.getBinaryContentHash(fileContent.content)
         val indexedHash = IndexedHashesSupport.calculateIndexedHash(fileContent, contentHash)
-        Base64.encode(contentHash) to Base64.encode(indexedHash)
+        encoder.encodeToString(contentHash) to encoder.encodeToString(indexedHash)
       }
     }
     catch (e: FileTooBigException) {
@@ -48,9 +49,10 @@ object IndexedFilePaths {
 
     val fileSize = if (fileOrDir.isDirectory) null else fileOrDir.length
     val portableFilePath = PortableFilePaths.getPortableFilePath(fileOrDir, project)
-    val resolvedFile = PortableFilePaths.findFileByPath(portableFilePath, project)
-    val allPusherValues = dumpFilePropertyPusherValues(fileOrDir, project).mapValues { it.value?.toString() ?: "<null-value>" }
-    val indexedFilePath = IndexedFilePath(
+    val allPusherValues = runReadAction {
+      dumpFilePropertyPusherValues(fileOrDir, project).mapValues { it.value?.toString() ?: "<null-value>" }
+    }
+    return IndexedFilePath(
       fileId,
       fileType,
       substitutedFileType,
@@ -58,18 +60,9 @@ object IndexedFilePaths {
       fileUrl,
       portableFilePath,
       allPusherValues,
-      indexedHash,
-      contentHash
+      contentHash = contentHash,
+      indexedFileHash = indexedHash
     )
-    check(fileUrl == resolvedFile?.url) {
-      buildString {
-        appendln("File cannot be resolved")
-        appendln("Original URL: $fileUrl")
-        appendln("Resolved URL: ${resolvedFile?.url}")
-        appendln(indexedFilePath.toString())
-      }
-    }
-    return indexedFilePath
   }
 
   private fun dumpFilePropertyPusherValues(file: VirtualFile, project: Project): Map<String, Any?> {

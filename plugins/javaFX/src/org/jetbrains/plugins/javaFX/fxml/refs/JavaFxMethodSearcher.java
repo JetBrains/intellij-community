@@ -1,11 +1,17 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.javaFX.fxml.refs;
 
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiReference;
+import com.intellij.psi.XmlRecursiveElementVisitor;
 import com.intellij.psi.impl.cache.CacheManager;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.LocalSearchScope;
@@ -24,19 +30,15 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.javaFX.fxml.JavaFxFileTypeFactory;
 import org.jetbrains.plugins.javaFX.refactoring.JavaFxPropertyElement;
 
-/**
- * @author Pavel.Dolgov
- */
-public class JavaFxMethodSearcher implements QueryExecutor<PsiReference, ReferencesSearch.SearchParameters> {
+public final class JavaFxMethodSearcher implements QueryExecutor<PsiReference, ReferencesSearch.SearchParameters> {
   @Override
-  public boolean execute(@NotNull final ReferencesSearch.SearchParameters queryParameters,
-                         @NotNull final Processor<? super PsiReference> consumer) {
+  public boolean execute(final @NotNull ReferencesSearch.SearchParameters queryParameters,
+                         final @NotNull Processor<? super PsiReference> consumer) {
     final PsiElement elementToSearch = queryParameters.getElementToSearch();
     if (elementToSearch instanceof PsiMethod) {
       searchMethod((PsiMethod)elementToSearch, queryParameters, consumer);
     }
-    if (elementToSearch instanceof JavaFxPropertyElement) {
-      final JavaFxPropertyElement propertyElement = (JavaFxPropertyElement)elementToSearch;
+    if (elementToSearch instanceof JavaFxPropertyElement propertyElement) {
       final JavaFxPropertyReference propertyReference = propertyElement.getPropertyReference();
       final PsiMethod staticSetter = propertyReference.getStaticSetter();
       if (staticSetter != null) {
@@ -78,9 +80,12 @@ public class JavaFxMethodSearcher implements QueryExecutor<PsiReference, Referen
         CacheManager.getInstance(project).getVirtualFilesWithWord(className, UsageSearchContext.IN_PLAIN_TEXT, fxmlScope, true));
       if (ArrayUtil.isEmpty(filteredFiles)) return;
 
-      final GlobalSearchScope filteredScope = GlobalSearchScope.filesScope(project, ContainerUtil.newHashSet(filteredFiles));
-      ReadAction.run(() -> CacheManager.getInstance(project).processFilesWithWord(
-        file -> searchMethodInFile(psiMethod, file, consumer), propertyName, UsageSearchContext.IN_PLAIN_TEXT, filteredScope, true));
+      ReadAction.run(() -> {
+        GlobalSearchScope filteredScope = GlobalSearchScope.filesScope(project, ContainerUtil.newHashSet(filteredFiles));
+        CacheManager.getInstance(project).processFilesWithWord(
+          file -> searchMethodInFile(psiMethod, file, consumer), propertyName, UsageSearchContext.IN_PLAIN_TEXT, filteredScope, true
+        );
+      });
     }
   }
 
@@ -90,13 +95,13 @@ public class JavaFxMethodSearcher implements QueryExecutor<PsiReference, Referen
     final Ref<Boolean> stopped = new Ref<>(false);
     file.accept(new XmlRecursiveElementVisitor() {
       @Override
-      public void visitXmlElement(XmlElement element) {
+      public void visitXmlElement(@NotNull XmlElement element) {
         if (stopped.get()) return;
         super.visitXmlElement(element);
       }
 
       @Override
-      public void visitXmlAttribute(XmlAttribute attribute) {
+      public void visitXmlAttribute(@NotNull XmlAttribute attribute) {
         if (stopped.get()) return;
         final PsiReference[] references = attribute.getReferences();
         for (PsiReference reference : references) {

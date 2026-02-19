@@ -1,15 +1,22 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.annotation;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiAnnotation;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiListLikeElement;
+import com.intellij.psi.PsiNameValuePair;
+import com.intellij.psi.StubBasedPsiElement;
+import com.intellij.psi.impl.source.tree.Factory;
+import com.intellij.psi.impl.source.tree.SharedImplUtil;
 import com.intellij.psi.stubs.EmptyStub;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyEmptyStubElementTypes;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyStubElementTypes;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotationArgumentList;
@@ -48,7 +55,7 @@ public class GrAnnotationArgumentListImpl extends GrStubElementBase<EmptyStub>
   }
 
   @Override
-  public ASTNode addInternal(ASTNode first, ASTNode last, ASTNode anchor, Boolean before) {
+  public ASTNode addInternal(@NotNull ASTNode first, @NotNull ASTNode last, ASTNode anchor, Boolean before) {
     if (first.getElementType() == GroovyStubElementTypes.ANNOTATION_MEMBER_VALUE_PAIR && last.getElementType() ==
                                                                                          GroovyStubElementTypes.ANNOTATION_MEMBER_VALUE_PAIR) {
       ASTNode lparenth = getNode().getFirstChildNode();
@@ -75,17 +82,22 @@ public class GrAnnotationArgumentListImpl extends GrStubElementBase<EmptyStub>
         }
       }
 
+
       if (anchor == null && before != null) {
         anchor = before.booleanValue() ? getNode().getLastChildNode() : getNode().getFirstChildNode();
+      }
+
+      if (nodes.length > 0) {
+        var comma = Factory.createSingleLeafElement(GroovyElementTypes.T_COMMA, ",", 0, 1, SharedImplUtil.findCharTableByTree(first), getManager());
+        super.addInternal(comma, comma, anchor, before);
       }
     }
 
     return super.addInternal(first, last, anchor, before);
   }
 
-  @NotNull
   @Override
-  public List<? extends PsiElement> getComponents() {
+  public @NotNull List<? extends PsiElement> getComponents() {
     return Arrays.asList(getAttributes());
   }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.completion.scope.CompletionElement;
@@ -7,7 +7,12 @@ import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementDecorator;
 import com.intellij.codeInsight.lookup.LookupElementPresentation;
 import com.intellij.openapi.util.Condition;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiAnonymousClass;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiJavaCodeReferenceElement;
+import com.intellij.psi.PsiJavaReference;
+import com.intellij.psi.PsiReferenceExpression;
 import com.intellij.psi.filters.ElementFilter;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -17,15 +22,12 @@ import java.util.LinkedHashSet;
 import java.util.Objects;
 import java.util.Set;
 
-/**
- * @author peter
- */
 final class SuperCalls {
-  static Set<LookupElement> suggestQualifyingSuperCalls(PsiElement element,
-                                                        PsiJavaReference javaReference,
-                                                        ElementFilter elementFilter,
-                                                        JavaCompletionProcessor.Options options,
-                                                        Condition<? super String> nameCondition) {
+  static @NotNull Set<LookupElement> suggestQualifyingSuperCalls(@NotNull PsiElement element,
+                                                                 @NotNull PsiJavaReference javaReference,
+                                                                 @NotNull ElementFilter elementFilter,
+                                                                 @NotNull JavaCompletionProcessor.Options options,
+                                                                 @NotNull Condition<? super String> nameCondition) {
     Set<LookupElement> set = new LinkedHashSet<>();
     for (final String className : getContainingClassNames(element)) {
       PsiReferenceExpression fakeSuper = JavaCompletionUtil.createReference(className + ".super.rulez", element);
@@ -43,12 +45,11 @@ final class SuperCalls {
     return set;
   }
 
-  @NotNull
-  private static LookupElement withQualifiedSuper(final String className, LookupElement item) {
+  private static @NotNull LookupElement withQualifiedSuper(final String className, LookupElement item) {
     return PrioritizedLookupElement.withExplicitProximity(new LookupElementDecorator<>(item) {
 
       @Override
-      public void renderElement(LookupElementPresentation presentation) {
+      public void renderElement(@NotNull LookupElementPresentation presentation) {
         super.renderElement(presentation);
         presentation.setItemText(className + ".super." + presentation.getItemText());
       }
@@ -67,7 +68,7 @@ final class SuperCalls {
     }, -1);
   }
 
-  private static Set<String> getContainingClassNames(PsiElement position) {
+  private static @NotNull Set<String> getContainingClassNames(@NotNull PsiElement position) {
     Set<String> result = new LinkedHashSet<>();
     boolean add = false;
     while (position != null) {

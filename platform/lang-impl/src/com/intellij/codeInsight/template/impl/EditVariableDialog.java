@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.template.impl;
 
 import com.intellij.CommonBundle;
@@ -10,27 +10,34 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.ui.ToolbarDecorator;
 import com.intellij.ui.table.JBTable;
-import com.intellij.util.ArrayUtilRt;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.ComboBoxCellEditor;
 import com.intellij.util.ui.EditableModel;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.DefaultCellEditor;
+import javax.swing.JComponent;
+import javax.swing.JTextField;
+import javax.swing.ListSelectionModel;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.TableCellEditor;
 import javax.swing.table.TableModel;
-import java.awt.*;
+import java.awt.Component;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.*;
+import java.util.Set;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-class EditVariableDialog extends DialogWrapper {
+final class EditVariableDialog extends DialogWrapper {
   private final ArrayList<Variable> myVariables;
   private JBTable myTable;
   private final Editor myEditor;
@@ -83,26 +90,33 @@ class EditVariableDialog extends DialogWrapper {
     // Create the table
     myTable = new JBTable(dataModel);
     myTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-    myTable.setPreferredScrollableViewportSize(JBUI.size(500, -1));
+    myTable.setPreferredScrollableViewportSize(JBUI.size(600, -1));
     myTable.setVisibleRowCount(8);
-    myTable.getColumn(names[0]).setPreferredWidth(120);
-    myTable.getColumn(names[1]).setPreferredWidth(200);
-    myTable.getColumn(names[2]).setPreferredWidth(200);
+    myTable.getColumn(names[0]).setPreferredWidth(100);
+    myTable.getColumn(names[1]).setPreferredWidth(300);
+    myTable.getColumn(names[2]).setPreferredWidth(100);
     myTable.getColumn(names[3]).setPreferredWidth(100);
-    if (myVariables.size() > 0) {
+    if (!myVariables.isEmpty()) {
       myTable.getSelectionModel().setSelectionInterval(0, 0);
     }
 
-    Predicate<Macro> isAcceptableInContext = macro -> myContextTypes.isEmpty() || myContextTypes.stream().anyMatch(macro::isAcceptableInContext);
+    Predicate<Macro> isAcceptableInContext = macro -> myContextTypes.isEmpty() || ContainerUtil.exists(myContextTypes, macro::isAcceptableInContext);
     Stream<String> availableMacroNames = Arrays.stream(MacroFactory.getMacros()).filter(isAcceptableInContext).map(Macro::getPresentableName).sorted();
     Set<String> uniqueNames = availableMacroNames.collect(Collectors.toCollection(LinkedHashSet::new));
 
-    ComboBox<String> comboField = new ComboBox<>(ArrayUtilRt.toStringArray(uniqueNames));
-    comboField.setEditable(true);
-    DefaultCellEditor cellEditor = new DefaultCellEditor(comboField);
+    DefaultCellEditor cellEditor = new ComboBoxCellEditor() {
+      @Override
+      protected List<String> getComboBoxItems() {
+        return new ArrayList<>(uniqueNames);
+      }
+
+      @Override
+      protected boolean isComboboxEditable() {
+        return true;
+      }
+    };
     cellEditor.setClickCountToStart(1);
     myTable.getColumn(names[1]).setCellEditor(cellEditor);
-    myTable.setRowHeight(comboField.getPreferredSize().height);
 
     JTextField textField = new JTextField();
 
@@ -142,7 +156,7 @@ class EditVariableDialog extends DialogWrapper {
     }, null, null));
   }
 
-  private class VariablesModel extends AbstractTableModel implements EditableModel {
+  private final class VariablesModel extends AbstractTableModel implements EditableModel {
     private final String[] myNames;
 
     VariablesModel(String[] names) {
@@ -176,15 +190,13 @@ class EditVariableDialog extends DialogWrapper {
       }
     }
 
-    @NotNull
     @Override
-    public String getColumnName(int column) {
+    public @NotNull String getColumnName(int column) {
       return myNames[column];
     }
 
-    @NotNull
     @Override
-    public Class getColumnClass(int c) {
+    public @NotNull Class<?> getColumnClass(int c) {
       if (c <= 2) {
         return String.class;
       }

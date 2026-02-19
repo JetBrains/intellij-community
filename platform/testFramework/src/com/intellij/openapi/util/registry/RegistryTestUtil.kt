@@ -2,8 +2,19 @@
 @file:JvmName("RegistryTestUtil")
 package com.intellij.openapi.util.registry
 
-fun RegistryValue.withValue(tempValue: Boolean, block: () -> Unit) {
+inline fun RegistryValue.withValue(tempValue: Boolean, crossinline block: () -> Unit) {
   val currentValue = asBoolean()
+  try {
+    setValue(tempValue)
+    block()
+  }
+  finally {
+    setValue(currentValue)
+  }
+}
+
+inline fun RegistryValue.withValue(tempValue: String, crossinline block: () -> Unit) {
+  val currentValue = asString()
   try {
     setValue(tempValue)
     block()

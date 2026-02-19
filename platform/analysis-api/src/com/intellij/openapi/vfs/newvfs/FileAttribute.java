@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs;
 
 import com.intellij.openapi.util.io.FileUtil;
@@ -10,40 +10,84 @@ import org.jetbrains.annotations.Nullable;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
-import java.util.Collections;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
+/**
+ * Identifies a file attribute in {@link ManagingFS}. Conceptually, every file in {@link ManagingFS} has a set of attributes,
+ * identified by {@link FileAttribute}.
+ * Attribute has a name and a version.
+ * Version is used to identify changes in attribute content's binary format: if attribute's version is different from the
+ * stored one, stored attribute content is treated as non-existent.
+ * <br/>
+ * This class ctor prohibit creation of >1 instances with the same id.
+ * In general, objects of this class should be created as static final constants -- i.e. it should be limited number of
+ * instances, and no chance of occasionally creating duplicates.
+ *
+ * @see ManagingFS#readAttribute(VirtualFile, FileAttribute)
+ * @see ManagingFS#writeAttribute(VirtualFile, FileAttribute)
+ */
 public class FileAttribute {
-  private static final Set<String> ourRegisteredIds = Collections.newSetFromMap(new ConcurrentHashMap<>());
   private static final int UNDEFINED_VERSION = -1;
-  private final String myId;
-  private final int myVersion;
-  private final boolean myFixedSize;
+
+  private static final Set<String> registeredAttributeIds = ConcurrentHashMap.newKeySet();
+
+  private final String id;
+  private final int version;
+
+  /**
+   * Indicates that attribute content ({@link #writeAttributeBytes(VirtualFile, byte[])}) are of fixed size.
+   * This serves as a hint for storage allocation: for fixed-size attributes space could be allocated
+   * without reserve for future extension.
+   */
+  private final boolean fixedSize;
 
   public FileAttribute(@NonNls @NotNull String id) {
-    this(id, UNDEFINED_VERSION, false);
+    this(id, UNDEFINED_VERSION, false, false);
   }
 
   public FileAttribute(@NonNls @NotNull String id, int version, boolean fixedSize) {
+    this(id, version, fixedSize, false);
+  }
+
+  /** @deprecated use {@link FileAttribute#FileAttribute(String, int, boolean)} -- shouldEnumerate is ignored (was never implemented) */
+  @Deprecated(forRemoval = true)
+  public FileAttribute(@NonNls @NotNull String id,
+                       int version,
+                       boolean fixedSize,
+                       @SuppressWarnings("unused") boolean shouldEnumerate) {
     this(version, fixedSize, id);
-    boolean added = ourRegisteredIds.add(id);
-    assert added : "Attribute id='" + id+ "' is not unique";
+    boolean added = registeredAttributeIds.add(id);
+    assert added : "Attribute id='" + id + "' is not unique";
   }
 
-  private FileAttribute(int version, boolean fixedSize,@NotNull String id) {
-    myId = id;
-    myVersion = version;
-    myFixedSize = fixedSize;
+  private FileAttribute(int version, boolean fixedSize, @NotNull String id) {
+    this.id = id;
+    this.version = version;
+    this.fixedSize = fixedSize;
   }
 
-  @Nullable
-  public DataInputStream readAttribute(@NotNull VirtualFile file) {
+  /**
+   * @deprecated use {@link FileAttribute#readFileAttribute(VirtualFile)}
+   */
+  @Deprecated
+  public @Nullable DataInputStream readAttribute(@NotNull VirtualFile file) {
     return ManagingFS.getInstance().readAttribute(file, this);
   }
 
-  @NotNull
-  public DataOutputStream writeAttribute(@NotNull VirtualFile file) {
+  /**
+   * @deprecated use {@link FileAttribute#writeFileAttribute(VirtualFile)}
+   */
+  @Deprecated
+  public @NotNull DataOutputStream writeAttribute(@NotNull VirtualFile file) {
+    return ManagingFS.getInstance().writeAttribute(file, this);
+  }
+
+  public @Nullable AttributeInputStream readFileAttribute(@NotNull VirtualFile file) {
+    return ManagingFS.getInstance().readAttribute(file, this);
+  }
+
+  public @NotNull AttributeOutputStream writeFileAttribute(@NotNull VirtualFile file) {
     return ManagingFS.getInstance().writeAttribute(file, this);
   }
 
@@ -66,25 +110,35 @@ public class FileAttribute {
     }
   }
 
-  @NotNull
-  public String getId() {
-    return myId;
+  public @NotNull String getId() {
+    return id;
   }
 
   public boolean isFixedSize() {
-    return myFixedSize;
+    return fixedSize;
   }
 
-  @NotNull
-  public FileAttribute newVersion(int newVersion) {
-    return new FileAttribute(newVersion, myFixedSize, myId);
+  public @NotNull FileAttribute newVersion(int newVersion) {
+    return new FileAttribute(newVersion, fixedSize, id);
   }
 
   public int getVersion() {
-    return myVersion;
+    return version;
   }
 
   public boolean isVersioned() {
-    return myVersion != UNDEFINED_VERSION;
+    return version != UNDEFINED_VERSION;
+  }
+
+  public static void resetRegisteredIds() {
+    registeredAttributeIds.clear();
+  }
+
+  @Override
+  public String toString() {
+    return "FileAttribute[" + id + "]" +
+           "{version: " + version +
+           ", fixedSize: " + fixedSize +
+           '}';
   }
 }

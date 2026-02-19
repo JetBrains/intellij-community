@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.psi.search;
 
 import com.intellij.JavaTestUtil;
@@ -15,21 +15,33 @@ import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.*;
+import com.intellij.psi.CommonClassNames;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiFileFactory;
+import com.intellij.psi.PsiFileSystemItem;
+import com.intellij.psi.PsiReference;
 import com.intellij.psi.impl.JavaPsiFacadeEx;
-import com.intellij.psi.impl.PsiManagerImpl;
-import com.intellij.psi.impl.cache.impl.todo.TodoIndex;
-import com.intellij.psi.impl.cache.impl.todo.TodoIndexEntry;
+import com.intellij.psi.impl.PsiManagerEx;
+import com.intellij.psi.impl.cache.impl.id.IdIndex;
+import com.intellij.psi.impl.cache.impl.id.IdIndexEntry;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageManagerImpl;
-import com.intellij.psi.search.*;
+import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.PsiSearchHelper;
+import com.intellij.psi.search.PsiTodoSearchHelper;
+import com.intellij.psi.search.TodoAttributesUtil;
+import com.intellij.psi.search.TodoPattern;
 import com.intellij.psi.search.searches.ReferencesSearch;
+import com.intellij.testFramework.IndexingTestUtil;
 import com.intellij.testFramework.JavaPsiTestCase;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.indexing.FileBasedIndex;
-import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -37,7 +49,14 @@ import java.io.File;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class UpdateCacheTest extends JavaPsiTestCase {
   @Override
@@ -46,7 +65,7 @@ public class UpdateCacheTest extends JavaPsiTestCase {
   }
 
   private void loadAndSetupProject(@NotNull Path path) {
-    myProject = PlatformTestUtil.loadAndOpenProject(path);
+    myProject = PlatformTestUtil.loadAndOpenProject(path, getTestRootDisposable());
 
     setUpModule();
 
@@ -75,6 +94,7 @@ public class UpdateCacheTest extends JavaPsiTestCase {
     String newFilePath = root.getPresentableUrl() + File.separatorChar + "New.java";
     FileUtil.writeToFile(new File(newFilePath), "class A{ Object o;}".getBytes(StandardCharsets.UTF_8));
     VirtualFile file = LocalFileSystem.getInstance().refreshAndFindFileByPath(newFilePath.replace(File.separatorChar, '/'));
+    IndexingTestUtil.waitUntilIndexesAreReady(myProject); // wait for indexes after VFS refresh
     assertNotNull(file);
     PsiDocumentManager.getInstance(myProject).commitAllDocuments();
 
@@ -114,10 +134,10 @@ public class UpdateCacheTest extends JavaPsiTestCase {
     PsiClass objectClass = myJavaFacade.findClass(CommonClassNames.JAVA_LANG_OBJECT, GlobalSearchScope.allScope(getProject()));
     assertNotNull(objectClass);
     checkUsages(objectClass, ArrayUtil.EMPTY_STRING_ARRAY);
-    FileBasedIndex.getInstance().getContainingFiles(TodoIndex.NAME, new TodoIndexEntry("todo", true), GlobalSearchScope.allScope(getProject()));
+    ensureCachesAreUpToDate();
 
     String projectLocation = myProject.getPresentableUrl();
-    assert projectLocation != null : myProject;
+    assertNotNull(projectLocation);
     PlatformTestUtil.saveProject(myProject);
     VirtualFile content = ModuleRootManager.getInstance(getModule()).getContentRoots()[0];
     Project project = myProject;
@@ -135,22 +155,31 @@ public class UpdateCacheTest extends JavaPsiTestCase {
     root.refresh(false, true);
 
     LocalFileSystem.getInstance().refresh(false);
+    Set<String> rootChildren = Stream.of(root.getChildren()).map(f -> f.getName()).collect(Collectors.toSet());
+    assertTrue(rootChildren.contains("1.java"));
 
-    myProject = PlatformTestUtil.loadAndOpenProject(Paths.get(projectLocation));
+    myProject = PlatformTestUtil.loadAndOpenProject(Paths.get(projectLocation), getTestRootDisposable());
     InjectedLanguageManagerImpl.pushInjectors(getProject());
 
     setUpModule();
     setUpJdk();
-    UIUtil.dispatchAllInvocationEvents(); // startup activities
+    PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue(); // startup activities
 
     PsiTestUtil.addSourceContentToRoots(getModule(), content);
 
     assertNotNull(myProject);
-    myPsiManager = (PsiManagerImpl) PsiManager.getInstance(myProject);
+    myPsiManager = PsiManagerEx.getInstanceEx(myProject);
     myJavaFacade = JavaPsiFacadeEx.getInstanceEx(myProject);
 
-    objectClass = myJavaFacade.findClass(CommonClassNames.JAVA_LANG_OBJECT, GlobalSearchScope.allScope(getProject()));
+    GlobalSearchScope scope = GlobalSearchScope.allScope(getProject());
+    objectClass = myJavaFacade.findClass(CommonClassNames.JAVA_LANG_OBJECT, scope);
     assertNotNull(objectClass);
+
+    Set<String> filesWithObject = FileBasedIndex.getInstance().getContainingFiles(
+        IdIndex.NAME, new IdIndexEntry("Object", true), scope)
+      .stream().map(f -> f.getName()).collect(Collectors.toSet());
+    assertTrue(filesWithObject.contains("1.java"));
+
     checkUsages(objectClass, new String[]{"1.java"});
   }
 
@@ -161,6 +190,7 @@ public class UpdateCacheTest extends JavaPsiTestCase {
     LOG.assertTrue(new File(newFilePath).getParentFile().mkdir());
     FileUtil.writeToFile(new File(newFilePath), "class A{ Object o;}".getBytes(StandardCharsets.UTF_8));
     VirtualFile file = LocalFileSystem.getInstance().refreshAndFindFileByPath(newFilePath.replace(File.separatorChar, '/'));
+    IndexingTestUtil.waitUntilIndexesAreReady(myProject); // wait for indexes after VFS refresh
     assertNotNull(file);
     PsiDocumentManager.getInstance(myProject).commitAllDocuments();
 
@@ -188,18 +218,20 @@ public class UpdateCacheTest extends JavaPsiTestCase {
     checkTodos(new String[]{"2.java"});
 
     TodoConfiguration.getInstance().setTodoPatterns(new TodoPattern[]{pattern});
+    PlatformTestUtil.dispatchAllEventsInIdeEventQueue();
 
     try{
       checkTodos(new String[]{"1.java"});
     }
     finally{
       TodoConfiguration.getInstance().setTodoPatterns(oldPatterns);
+      PlatformTestUtil.dispatchAllEventsInIdeEventQueue();
       checkTodos(new String[]{"2.java"});
     }
   }
 
   public void testAddExcludeRoot() {
-    PsiTodoSearchHelper.SERVICE.getInstance(myProject).findFilesWithTodoItems(); // to initialize caches
+    ensureCachesAreUpToDate();
 
     ProjectRootManagerEx rootManager = (ProjectRootManagerEx)ProjectRootManager.getInstance(myProject);
     final VirtualFile root = rootManager.getContentRoots()[0];
@@ -229,7 +261,7 @@ public class UpdateCacheTest extends JavaPsiTestCase {
 
     PsiTestUtil.addExcludedRoot(myModule, dir);
 
-    PsiTodoSearchHelper.SERVICE.getInstance(myProject).findFilesWithTodoItems(); // to initialize caches
+    ensureCachesAreUpToDate();
 
     WriteCommandAction.writeCommandAction(getProject()).run(() -> {
       VirtualFile newFile = createChildData(dir, "New.java");
@@ -238,7 +270,7 @@ public class UpdateCacheTest extends JavaPsiTestCase {
 
     PsiDocumentManager.getInstance(myProject).commitAllDocuments();
 
-    PsiTodoSearchHelper.SERVICE.getInstance(myProject).findFilesWithTodoItems(); // to update caches
+    ensureCachesAreUpToDate();
 
     PsiTestUtil.removeExcludedRoot(myModule, dir);
 
@@ -263,7 +295,7 @@ public class UpdateCacheTest extends JavaPsiTestCase {
 
     PsiDocumentManager.getInstance(myProject).commitAllDocuments();
 
-    PsiTodoSearchHelper.SERVICE.getInstance(myProject).findFilesWithTodoItems(); // to initialize caches
+    ensureCachesAreUpToDate();
 
     PsiTestUtil.addSourceRoot(myModule, root);
 
@@ -276,7 +308,7 @@ public class UpdateCacheTest extends JavaPsiTestCase {
   public void testRemoveSourceRoot() {
     final VirtualFile root = ModuleRootManager.getInstance(myModule).getContentRoots()[0];
 
-    PsiTodoSearchHelper.SERVICE.getInstance(myProject).findFilesWithTodoItems(); // to initialize caches
+    ensureCachesAreUpToDate();
 
     WriteCommandAction.writeCommandAction(getProject()).run(() -> {
       VirtualFile newFile = createChildData(root, "New.java");
@@ -285,7 +317,7 @@ public class UpdateCacheTest extends JavaPsiTestCase {
 
     PsiDocumentManager.getInstance(myProject).commitAllDocuments();
 
-    PsiTodoSearchHelper.SERVICE.getInstance(myProject).findFilesWithTodoItems(); // to update caches
+    ensureCachesAreUpToDate();
 
     VirtualFile[] sourceRoots = ModuleRootManager.getInstance(myModule).getSourceRoots();
     LOG.assertTrue(sourceRoots.length == 1);
@@ -333,7 +365,7 @@ public class UpdateCacheTest extends JavaPsiTestCase {
     ProjectRootManagerEx rootManager = (ProjectRootManagerEx)ProjectRootManager.getInstance(myProject);
     final VirtualFile root = rootManager.getContentRoots()[0];
 
-    PsiTodoSearchHelper.SERVICE.getInstance(myProject).findFilesWithTodoItems(); // to initialize caches
+    ensureCachesAreUpToDate();
 
     WriteCommandAction.writeCommandAction(getProject()).run(() -> {
       VirtualFile newFile = createChildData(root, "New.java");
@@ -342,7 +374,7 @@ public class UpdateCacheTest extends JavaPsiTestCase {
 
     PsiDocumentManager.getInstance(myProject).commitAllDocuments();
 
-    PsiTodoSearchHelper.SERVICE.getInstance(myProject).findFilesWithTodoItems(); // to update caches
+    ensureCachesAreUpToDate();
 
     PsiTestUtil.addExcludedRoot(myModule, root);
 
@@ -364,7 +396,7 @@ public class UpdateCacheTest extends JavaPsiTestCase {
       }
     }
 
-    assertEquals(expectedFiles.length, files.size());
+    assertEquals(Arrays.toString(expectedFiles) + ".length != " + files + ".size()", expectedFiles.length, files.size());
 
     Collections.sort(files, Comparator.comparing(PsiFileSystemItem::getName));
     Arrays.sort(expectedFiles);
@@ -376,20 +408,20 @@ public class UpdateCacheTest extends JavaPsiTestCase {
     }
   }
 
-  private void checkTodos(@NonNls String[] expectedFiles){
-    PsiTodoSearchHelper helper = PsiTodoSearchHelper.SERVICE.getInstance(myProject);
+  private void checkTodos(@NonNls String[] expectedFiles) {
+    List<String> names = new ArrayList<>();
+    PsiTodoSearchHelper.getInstance(myProject).processFilesWithTodoItems(o -> {
+      names.add(o.getName());
+      return true;
+    });
+    assertEquals(expectedFiles.length, names.size());
 
-    PsiFile[] files = helper.findFilesWithTodoItems();
-
-    assertEquals(expectedFiles.length, files.length);
-
-    Arrays.sort(files, Comparator.comparing(PsiFileSystemItem::getName));
+    Collections.sort(names);
     Arrays.sort(expectedFiles);
+    assertEquals(Arrays.asList(expectedFiles), names);
+  }
 
-    for(int i = 0; i < expectedFiles.length; i++){
-      String name = expectedFiles[i];
-      PsiFile file = files[i];
-      assertEquals(name, file.getName());
-    }
+  private void ensureCachesAreUpToDate() {
+    FileBasedIndex.getInstance().ensureUpToDate(IdIndex.NAME, myProject, GlobalSearchScope.allScope(myProject));
   }
 }

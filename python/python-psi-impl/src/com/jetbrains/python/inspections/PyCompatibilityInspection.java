@@ -20,14 +20,23 @@ import com.intellij.codeInspection.InspectionProfile;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.codeInspection.options.OptCheckbox;
+import com.intellij.codeInspection.options.OptPane;
+import com.intellij.codeInspection.options.OptionController;
 import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.JDOMExternalizableStringList;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiNameIdentifierOwner;
+import com.intellij.psi.PsiReference;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.QualifiedName;
 import com.intellij.util.ArrayUtil;
@@ -35,30 +44,58 @@ import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.PythonUiService;
-import com.jetbrains.python.psi.*;
+import com.jetbrains.python.inspections.quickfix.WrapExceptTupleInParenthesesQuickFix;
+import com.jetbrains.python.psi.LanguageLevel;
+import com.jetbrains.python.psi.PyArgumentList;
+import com.jetbrains.python.psi.PyCallExpression;
+import com.jetbrains.python.psi.PyClass;
+import com.jetbrains.python.psi.PyExceptPart;
+import com.jetbrains.python.psi.PyExpression;
+import com.jetbrains.python.psi.PyFromImportStatement;
+import com.jetbrains.python.psi.PyFunction;
+import com.jetbrains.python.psi.PyIfStatement;
+import com.jetbrains.python.psi.PyImportElement;
+import com.jetbrains.python.psi.PyKeywordArgument;
+import com.jetbrains.python.psi.PyQualifiedExpression;
+import com.jetbrains.python.psi.PyReferenceExpression;
+import com.jetbrains.python.psi.PyStatement;
+import com.jetbrains.python.psi.PyTargetExpression;
+import com.jetbrains.python.psi.PyTryExceptStatement;
+import com.jetbrains.python.psi.PyTupleExpression;
+import com.jetbrains.python.psi.PyUtil;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.types.PyClassType;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.PyTypeChecker;
 import com.jetbrains.python.psi.types.TypeEvalContext;
-import com.jetbrains.python.validation.CompatibilityVisitor;
+import com.jetbrains.python.validation.PyCompatibilityVisitor;
 import com.jetbrains.python.validation.UnsupportedFeaturesUtil;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
+import java.util.TreeSet;
+
+import static com.intellij.codeInspection.options.OptPane.checkbox;
+import static com.intellij.codeInspection.options.OptPane.group;
+import static com.intellij.codeInspection.options.OptPane.pane;
 
 /**
  * User: catherine
- *
+ * <p>
  * Inspection to detect code incompatibility with python versions
  */
-public class PyCompatibilityInspection extends PyInspection {
+public final class PyCompatibilityInspection extends PyInspection {
 
-  @NotNull
-  public static final List<String> BACKPORTED_PACKAGES = ImmutableList.<String>builder()
+  public static final @NotNull List<String> BACKPORTED_PACKAGES = ImmutableList.<String>builder()
     .add("enum")
     .add("typing")
     .add("dataclasses")
@@ -68,22 +105,20 @@ public class PyCompatibilityInspection extends PyInspection {
 
   public static final int LATEST_INSPECTION_VERSION = 3;
 
-  @NotNull
-  public static final List<LanguageLevel> DEFAULT_PYTHON_VERSIONS = ImmutableList.of(LanguageLevel.PYTHON27, LanguageLevel.getLatest());
+  public static final @NotNull List<LanguageLevel> DEFAULT_PYTHON_VERSIONS =
+    ImmutableList.of(LanguageLevel.PYTHON27, LanguageLevel.getLatest());
 
-  @NotNull
-  public static final List<LanguageLevel> SUPPORTED_LEVELS = StreamEx
+  public static final @NotNull List<LanguageLevel> SUPPORTED_LEVELS = StreamEx
     .of(LanguageLevel.values())
-    .filter(v -> v.isPython2() && v.isAtLeast(LanguageLevel.PYTHON26) || v.isAtLeast(LanguageLevel.PYTHON34))
+    .filter(v -> v == LanguageLevel.PYTHON27 || v.isAtLeast(LanguageLevel.PYTHON37))
     .toImmutableList();
 
-  @NotNull
-  private static final List<String> SUPPORTED_IN_SETTINGS = ContainerUtil.map(SUPPORTED_LEVELS, LanguageLevel::toString);
+  private static final @NotNull List<@NlsSafe String> SUPPORTED_IN_SETTINGS = ContainerUtil.map(SUPPORTED_LEVELS, LanguageLevel::toString);
 
   // Legacy DefaultJDOMExternalizer requires public fields for proper serialization
   public JDOMExternalizableStringList ourVersions = new JDOMExternalizableStringList();
 
-  public PyCompatibilityInspection () {
+  public PyCompatibilityInspection() {
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       ourVersions.addAll(SUPPORTED_IN_SETTINGS);
     }
@@ -91,17 +126,11 @@ public class PyCompatibilityInspection extends PyInspection {
       ourVersions.addAll(ContainerUtil.map(DEFAULT_PYTHON_VERSIONS, LanguageLevel::toString));
     }
   }
-  
-  @Nullable
-  public static PyCompatibilityInspection getInstance(@NotNull PsiElement element) {
+
+  public static @Nullable PyCompatibilityInspection getInstance(@NotNull PsiElement element) {
     final InspectionProfile inspectionProfile = InspectionProjectProfileManager.getInstance(element.getProject()).getCurrentProfile();
     final String toolName = PyCompatibilityInspection.class.getSimpleName();
     return (PyCompatibilityInspection)inspectionProfile.getUnwrappedTool(toolName, element);
-  }
-
-  @Override
-  public boolean isEnabledByDefault() {
-    return false;
   }
 
   private List<LanguageLevel> updateVersionsToProcess() {
@@ -117,17 +146,33 @@ public class PyCompatibilityInspection extends PyInspection {
   }
 
   @Override
-  public JComponent createOptionsPanel() {
-    return PythonUiService.getInstance().createCompatibilityInspectionOptionsPanel(SUPPORTED_IN_SETTINGS, ourVersions);
+  public @NotNull OptPane getOptionsPane() {
+    @SuppressWarnings("LanguageMismatch") OptCheckbox[] versionCheckboxes =
+      ContainerUtil.map2Array(SUPPORTED_IN_SETTINGS, OptCheckbox.class, ver -> checkbox(ver, ver));
+    return pane(group(PyPsiBundle.message("INSP.compatibility.check.for.compatibility.with.python.versions"), versionCheckboxes));
   }
 
-  @NotNull
   @Override
-  public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
+  public @NotNull OptionController getOptionController() {
+    return OptionController.of(
+      ourVersions::contains,
+      (bindId, value) -> {
+        boolean checked = (boolean)value;
+        if (!checked) {
+          ourVersions.remove(bindId);
+        }
+        else if (!ourVersions.contains(bindId)) {
+          ourVersions.add(bindId);
+        }
+      });
+  }
+
+  @Override
+  public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
     return new Visitor(holder, updateVersionsToProcess());
   }
 
-  private static class Visitor extends CompatibilityVisitor {
+  private static class Visitor extends PyCompatibilityVisitor {
     private final ProblemsHolder myHolder;
     private final Set<String> myUsedImports = Collections.synchronizedSet(new HashSet<>());
     private final Set<String> myFromCompatibilityLibs = Collections.synchronizedSet(new HashSet<>());
@@ -141,19 +186,14 @@ public class PyCompatibilityInspection extends PyInspection {
     protected void registerProblem(@NotNull PsiElement element,
                                    @NotNull TextRange range,
                                    @NotNull @InspectionMessage String message,
-                                   @Nullable LocalQuickFix quickFix,
-                                   boolean asError) {
+                                   boolean asError,
+                                   LocalQuickFix @NotNull ... fixes) {
       if (element.getTextLength() == 0) {
         return;
       }
 
       range = range.shiftRight(-element.getTextRange().getStartOffset());
-      if (quickFix != null) {
-        myHolder.registerProblem(element, range, message, quickFix);
-      }
-      else {
-        myHolder.registerProblem(element, range, message);
-      }
+      myHolder.registerProblem(element, range, message, fixes);
     }
 
     @Override
@@ -164,17 +204,18 @@ public class PyCompatibilityInspection extends PyInspection {
         return;
       }
 
+      final TypeEvalContext context = TypeEvalContext.codeAnalysis(node.getProject(), node.getContainingFile());
       final PsiElement resolvedCallee = Optional
         .ofNullable(callee)
         .map(PyExpression::getReference)
         .map(PsiReference::resolve)
+        .map(e -> e instanceof PyClass ? ((PyClass)e).findInitOrNew(false, context) : e)
         .orElse(null);
 
-      if (resolvedCallee instanceof PyFunction) {
-        final PyFunction function = (PyFunction)resolvedCallee;
+      if (resolvedCallee instanceof PyFunction function) {
         final PyClass containingClass = function.getContainingClass();
 
-        final String functionName = PyUtil.isInitOrNewMethod(function) ? callee.getText() : function.getName();
+        final String functionName = PyUtil.isConstructorLikeMethod(function) ? callee.getText() : function.getName();
 
         if (containingClass != null) {
           final String className = containingClass.getName();
@@ -197,8 +238,7 @@ public class PyCompatibilityInspection extends PyInspection {
                                          node);
         }
       }
-      else if (resolvedCallee instanceof PyTargetExpression) {
-        final PyTargetExpression target = (PyTargetExpression)resolvedCallee;
+      else if (resolvedCallee instanceof PyTargetExpression target) {
 
         if (!target.isQualified() &&
             PyNames.TYPE_LONG.equals(target.getName()) &&
@@ -234,14 +274,14 @@ public class PyCompatibilityInspection extends PyInspection {
         }
         final String moduleName = qName.toString();
 
-        registerForAllMatchingVersions(level -> UnsupportedFeaturesUtil.MODULES.get(level).contains(moduleName) && !BACKPORTED_PACKAGES.contains(moduleName),
-                                       PyPsiBundle.message("INSP.compatibility.feature.have.module", moduleName),
-                                       importElement);
+        registerForAllMatchingVersions(
+          level -> UnsupportedFeaturesUtil.MODULES.get(level).contains(moduleName) && !BACKPORTED_PACKAGES.contains(moduleName),
+          PyPsiBundle.message("INSP.compatibility.feature.have.module", moduleName),
+          importElement);
       }
     }
 
-    @Nullable
-    private static QualifiedName getImportedFullyQName(@NotNull PyImportElement importElement) {
+    private static @Nullable QualifiedName getImportedFullyQName(@NotNull PyImportElement importElement) {
       final QualifiedName importedQName = importElement.getImportedQName();
       if (importedQName == null) return null;
 
@@ -264,9 +304,10 @@ public class PyCompatibilityInspection extends PyInspection {
       if (name != null && source != null) {
         final String moduleName = name.toString();
 
-        registerForAllMatchingVersions(level -> UnsupportedFeaturesUtil.MODULES.get(level).contains(moduleName) && !BACKPORTED_PACKAGES.contains(moduleName),
-                                       PyPsiBundle.message("INSP.compatibility.feature.have.module", name),
-                                       source);
+        registerForAllMatchingVersions(
+          level -> UnsupportedFeaturesUtil.MODULES.get(level).contains(moduleName) && !BACKPORTED_PACKAGES.contains(moduleName),
+          PyPsiBundle.message("INSP.compatibility.feature.have.module", name),
+          source);
       }
     }
 
@@ -274,7 +315,7 @@ public class PyCompatibilityInspection extends PyInspection {
     public void visitPyArgumentList(final @NotNull PyArgumentList node) { //PY-5588
       if (node.getParent() instanceof PyClass) {
         final boolean isPython2 = LanguageLevel.forElement(node).isPython2();
-        if (isPython2 || myVersionsToProcess.stream().anyMatch(LanguageLevel::isPython2)) {
+        if (isPython2 || ContainerUtil.exists(myVersionsToProcess, LanguageLevel::isPython2)) {
           Arrays
             .stream(node.getArguments())
             .filter(PyKeywordArgument.class::isInstance)
@@ -291,7 +332,7 @@ public class PyCompatibilityInspection extends PyInspection {
     public void visitPyReferenceExpression(@NotNull PyReferenceExpression node) {
       super.visitPyElement(node);
 
-      if (myVersionsToProcess.stream().anyMatch(LanguageLevel::isPy3K)) {
+      if (ContainerUtil.exists(myVersionsToProcess, LanguageLevel::isPy3K)) {
         final String nodeText = node.getText();
 
         if (nodeText.endsWith("iteritems") || nodeText.endsWith("iterkeys") || nodeText.endsWith("itervalues")) {
@@ -322,6 +363,42 @@ public class PyCompatibilityInspection extends PyInspection {
               //noinspection DialogTitleCapitalization
               registerProblem(node, PyPsiBundle.message("INSP.compatibility.basestring.type.not.available.in.py3"));
             }
+          }
+        }
+      }
+    }
+
+    @Override
+    public void visitPyExceptBlock(@NotNull PyExceptPart exceptExpr) {
+      super.visitPyExceptBlock(exceptExpr);
+
+      // TreeSet is used to sort versions
+      TreeSet<LanguageLevel> allVersions = new TreeSet<>(myVersionsToProcess); // compatible-with versions
+      allVersions.add(LanguageLevel.forElement(exceptExpr)); // dev version
+
+      boolean hasBelow300 = ContainerUtil.exists(allVersions, level -> level.isOlderThan(LanguageLevel.PYTHON30));
+      boolean hasBelow314 = ContainerUtil.exists(allVersions, level -> level.isOlderThan(LanguageLevel.PYTHON314));
+      String allVersionsStr = StringUtil.join(allVersions, LanguageLevel::toString, ", ");
+
+      PyExpression exceptClass = exceptExpr.getExceptClass();
+      PyExpression target = exceptExpr.getTarget();
+      if (exceptClass == null) return;
+
+      if (LanguageLevel.forElement(exceptExpr).isAtLeast(LanguageLevel.PYTHON314)) { // see #StatementParsing.parseExceptPart()
+        if (exceptClass instanceof PyTupleExpression tuple && tuple.getElements().length > 1) {
+          if (target != null) {
+            // see INSP.except.clause.missing.parens
+          }
+          else if (hasBelow300) {
+            // different semantics in versions <300 vs. >=314
+            registerProblem(exceptClass, PyPsiBundle.message("INSP.compatibility.except.clause.different.semantics", allVersionsStr));
+          }
+          else if (hasBelow314) {
+            // we have: `except expr1, expr2`
+            // versions <314 require parentheses, versions >=314 not (only if the target is specified, but irrelevant here)
+            LocalQuickFix quickFix = LocalQuickFix.from(new WrapExceptTupleInParenthesesQuickFix(tuple));
+            registerForAllMatchingVersions(level -> level.isAtLeast(LanguageLevel.PYTHON30) && level.isOlderThan(LanguageLevel.PYTHON314),
+                                           PyPsiBundle.message("INSP.compatibility.except.clause.missing.parens"), exceptClass, quickFix);
           }
         }
       }
@@ -365,7 +442,7 @@ public class PyCompatibilityInspection extends PyInspection {
 
     private boolean importedFromCompatibilityLibs(@NotNull PyExpression callee) {
       if (callee instanceof PyQualifiedExpression) {
-        QualifiedName qualifiedName = ((PyQualifiedExpression) callee).asQualifiedName();
+        QualifiedName qualifiedName = ((PyQualifiedExpression)callee).asQualifiedName();
         return qualifiedName != null && myFromCompatibilityLibs.contains(qualifiedName.getFirstComponent());
       }
       return myFromCompatibilityLibs.contains(callee.getName());

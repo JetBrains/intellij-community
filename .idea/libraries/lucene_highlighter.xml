@@ -1,0 +1,20 @@
+<component name="libraryTable">
+  <library name="lucene-highlighter" type="repository">
+    <properties include-transitive-deps="false" maven-id="org.apache.lucene:lucene-highlighter:10.3.0">
+      <verification>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/apache/lucene/lucene-highlighter/10.3.0/lucene-highlighter-10.3.0.jar">
+          <sha256sum>acbf67631c42197791363ce8e8f155f62aeef51ade809e0847a89eba44785c7d</sha256sum>
+        </artifact>
+      </verification>
+    </properties>
+    <CLASSES>
+      <root url="jar://$MAVEN_REPOSITORY$/org/apache/lucene/lucene-highlighter/10.3.0/lucene-highlighter-10.3.0.jar!/" />
+    </CLASSES>
+    <JAVADOC>
+      <root url="jar://$MAVEN_REPOSITORY$/org/apache/lucene/lucene-highlighter/10.3.0/lucene-highlighter-10.3.0-javadoc.jar!/" />
+    </JAVADOC>
+    <SOURCES>
+      <root url="jar://$MAVEN_REPOSITORY$/org/apache/lucene/lucene-highlighter/10.3.0/lucene-highlighter-10.3.0-sources.jar!/" />
+    </SOURCES>
+  </library>
+</component>

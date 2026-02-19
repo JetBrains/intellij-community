@@ -1,0 +1,23 @@
+<component name="libraryTable">
+  <library name="Java-WebSocket" type="repository">
+    <properties maven-id="org.java-websocket:Java-WebSocket:1.6.0">
+      <verification>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/java-websocket/Java-WebSocket/1.6.0/Java-WebSocket-1.6.0.jar">
+          <sha256sum>eae29213e4f16515639c28957200f011b3967fffcada1962cf0255d24919c22f</sha256sum>
+        </artifact>
+      </verification>
+      <exclude>
+        <dependency maven-id="org.slf4j:slf4j-api" />
+      </exclude>
+    </properties>
+    <CLASSES>
+      <root url="jar://$MAVEN_REPOSITORY$/org/java-websocket/Java-WebSocket/1.6.0/Java-WebSocket-1.6.0.jar!/" />
+    </CLASSES>
+    <JAVADOC>
+      <root url="jar://$MAVEN_REPOSITORY$/org/java-websocket/Java-WebSocket/1.6.0/Java-WebSocket-1.6.0-javadoc.jar!/" />
+    </JAVADOC>
+    <SOURCES>
+      <root url="jar://$MAVEN_REPOSITORY$/org/java-websocket/Java-WebSocket/1.6.0/Java-WebSocket-1.6.0-sources.jar!/" />
+    </SOURCES>
+  </library>
+</component>

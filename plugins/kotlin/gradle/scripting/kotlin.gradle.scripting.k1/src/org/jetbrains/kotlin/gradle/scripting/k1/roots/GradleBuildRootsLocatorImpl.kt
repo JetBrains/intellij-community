@@ -1,0 +1,361 @@
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package org.jetbrains.kotlin.gradle.scripting.k1.roots
+
+import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
+import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.runReadAction
+import com.intellij.openapi.application.writeIntentReadAction
+import com.intellij.openapi.fileEditor.FileEditorManager
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.psi.PsiManager
+import com.intellij.ui.EditorNotifications
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import org.jetbrains.kotlin.K1Deprecation
+import org.jetbrains.kotlin.gradle.scripting.k1.GradleScriptDefinitionsContributor
+import org.jetbrains.kotlin.gradle.scripting.k1.roots.GradleScriptingSupport.Companion.isApplicable
+import org.jetbrains.kotlin.gradle.scripting.shared.definition.getFullDefinitionsClasspath
+import org.jetbrains.kotlin.gradle.scripting.shared.definition.toGradleHomePath
+import org.jetbrains.kotlin.gradle.scripting.shared.importing.KotlinDslScriptModel
+import org.jetbrains.kotlin.gradle.scripting.shared.kotlinDslScriptsModelImportSupported
+import org.jetbrains.kotlin.gradle.scripting.shared.roots.AbstractGradleBuildRootDataSerializer
+import org.jetbrains.kotlin.gradle.scripting.shared.roots.GradleBuildRoot
+import org.jetbrains.kotlin.gradle.scripting.shared.roots.GradleBuildRootData
+import org.jetbrains.kotlin.gradle.scripting.shared.roots.GradleBuildRootsLocator
+import org.jetbrains.kotlin.gradle.scripting.shared.roots.GradleScriptInfo
+import org.jetbrains.kotlin.gradle.scripting.shared.roots.Imported
+import org.jetbrains.kotlin.gradle.scripting.shared.roots.Legacy
+import org.jetbrains.kotlin.gradle.scripting.shared.roots.New
+import org.jetbrains.kotlin.gradle.scripting.shared.roots.StandaloneScriptsUpdater
+import org.jetbrains.kotlin.gradle.scripting.shared.runPartialGradleImport
+import org.jetbrains.kotlin.idea.core.script.k1.ScriptConfigurationManager
+import org.jetbrains.kotlin.idea.core.script.k1.configuration.DefaultScriptingSupport
+import org.jetbrains.kotlin.idea.core.script.k1.configuration.ScriptingSupport
+import org.jetbrains.kotlin.idea.core.script.k1.ucache.ScriptClassRootsBuilder
+import org.jetbrains.kotlin.idea.core.script.v1.scriptingInfoLog
+import org.jetbrains.kotlin.idea.core.script.v1.settings.KotlinScriptingSettings
+import org.jetbrains.kotlin.psi.KtFile
+import org.jetbrains.kotlin.scripting.definitions.ScriptDefinition
+import org.jetbrains.kotlin.scripting.definitions.findScriptDefinition
+import org.jetbrains.kotlin.scripting.resolve.VirtualFileScriptSource
+import org.jetbrains.plugins.gradle.service.GradleInstallationManager
+import org.jetbrains.plugins.gradle.settings.GradleProjectSettings
+import java.nio.file.Path
+import java.util.concurrent.ConcurrentLinkedQueue
+import java.util.concurrent.atomic.AtomicBoolean
+import kotlin.io.path.invariantSeparatorsPathString
+
+/**
+ * [org.jetbrains.kotlin.gradle.scripting.shared.roots.GradleBuildRoot] is a linked gradle build (don't confuse with gradle project and included build).
+ * Each [org.jetbrains.kotlin.gradle.scripting.shared.roots.GradleBuildRoot] may have it's own Gradle version, Java home and other settings.
+ *
+ * Typically, IntelliJ project have no more than one [org.jetbrains.kotlin.gradle.scripting.shared.roots.GradleBuildRoot].
+ *
+ * This manager allows to find related Gradle build by the Gradle Kotlin script file path.
+ * Each imported build have info about all of it's Kotlin Build Scripts.
+ * It is populated by calling [update], stored in FS and will be loaded from FS on next project opening
+ *
+ * It also used to show related notification and floating actions depending on root kind, state and script state itself.
+ *
+ * Roots may be:
+ * - [org.jetbrains.kotlin.gradle.scripting.shared.roots.GradleBuildRoot] - Linked project, that may be itself:
+ *   - [org.jetbrains.kotlin.gradle.scripting.shared.roots.Legacy] - Gradle build with old Gradle version (<6.0)
+ *   - [org.jetbrains.kotlin.gradle.scripting.shared.roots.New] - not yet imported
+ *   - [org.jetbrains.kotlin.gradle.scripting.shared.roots.Imported] - imported
+ */
+@K1Deprecation
+class GradleBuildRootsLocatorImpl(val project: Project, private val coroutineScope: CoroutineScope) : GradleBuildRootsLocator(project) {
+    private val modifiedFilesCheckScheduled = AtomicBoolean()
+    private val modifiedFiles = ConcurrentLinkedQueue<String>()
+
+    fun fileChanged(filePath: String, ts: Long = System.currentTimeMillis()) {
+        findAffectedFileRoot(filePath)?.fileChanged(filePath, ts)
+        scheduleModifiedFilesCheck(filePath)
+    }
+
+    fun getAllRoots(): Collection<GradleBuildRoot> = roots.list
+
+    private fun scheduleModifiedFilesCheck(filePath: String) {
+        modifiedFiles.add(filePath)
+        if (modifiedFilesCheckScheduled.compareAndSet(false, true)) {
+            coroutineScope.launch {
+                if (modifiedFilesCheckScheduled.compareAndSet(true, false)) {
+                    checkModifiedFiles()
+                }
+            }
+        }
+    }
+
+    private fun checkModifiedFiles() {
+        updateNotifications(restartAnalyzer = false) { true }
+
+        roots.list.forEach {
+            it.saveLastModifiedFiles()
+        }
+
+        // process modifiedFiles queue
+        while (true) {
+            val file = modifiedFiles.poll() ?: break
+
+            // detect gradle version change
+            val buildDir = findGradleWrapperPropertiesBuildDir(file)
+            if (buildDir != null) {
+                actualizeBuildRoot(buildDir, null)
+            }
+        }
+    }
+
+    private val manager: ScriptConfigurationManager
+        get() = ScriptConfigurationManager.getInstance(project)
+
+    private val updater
+        get() = manager.updater
+
+    var enabled: Boolean = true
+        set(value) {
+            if (value != field) {
+                field = value
+                roots.list.toList().forEach {
+                    reloadBuildRoot(it.externalProjectPath, null)
+                }
+            }
+        }
+
+    override fun getScriptInfo(localPath: String): GradleScriptInfo? =
+        manager.getLightScriptInfo(localPath) as? GradleScriptInfo
+
+    override fun updateStandaloneScripts(update: StandaloneScriptsUpdater.() -> Unit) {
+        val changes = StandaloneScriptsUpdater.collectChanges(delegate = roots, update)
+
+        updateNotifications { it in changes.new || it in changes.removed }
+        loadStandaloneScriptConfigurations(changes.new)
+    }
+
+    override fun loadLinkedRoot(settings: GradleProjectSettings, version: String): GradleBuildRoot {
+        if (!enabled) {
+            return Legacy(settings)
+        }
+
+        val supported = kotlinDslScriptsModelImportSupported(version)
+
+        return if (supported) {
+            tryLoadFromFsCache(settings, version) ?: New(settings)
+        } else {
+            Legacy(settings)
+        }
+    }
+
+    override fun add(newRoot: GradleBuildRoot) {
+        val old = roots.add(newRoot)
+        if (old is Imported && newRoot !is Imported) {
+            removeData(old.externalProjectPath)
+        }
+        if (old !is Legacy || newRoot !is Legacy) {
+            updater.invalidateAndCommit()
+        }
+
+        updateNotifications { it.startsWith(newRoot.externalProjectPath) }
+    }
+
+    private fun tryLoadFromFsCache(settings: GradleProjectSettings, version: String): Imported? {
+        return tryCreateImportedRoot(settings.externalProjectPath) {
+            AbstractGradleBuildRootDataSerializer.getInstance().read(it)?.let { data ->
+                val gradleHome = data.gradleHome
+                if (gradleHome.isNotBlank() && GradleInstallationManager.getGradleVersion(Path.of(gradleHome)) != version) return@let null
+
+                addFromSettings(data, settings)
+            }
+        }
+    }
+
+    private fun addFromSettings(
+        data: GradleBuildRootData,
+        settings: GradleProjectSettings
+    ) = data.copy(projectRoots = data.projectRoots.toSet() + settings.modules)
+
+    override fun remove(rootPath: String) {
+        val removed = roots.remove(rootPath)
+        if (removed is Imported) {
+            removeData(rootPath)
+            updater.invalidateAndCommit()
+        }
+
+        updateNotifications { it.startsWith(rootPath) }
+    }
+
+    override fun updateNotifications(
+        restartAnalyzer: Boolean,
+        shouldUpdatePath: (String) -> Boolean
+    ) {
+        if (!project.isOpen) return
+
+        // import notification is a balloon, so should be shown only for selected editor
+        FileEditorManager.getInstance(project).selectedEditor?.file?.let {
+            if (shouldUpdatePath(it.path) && maybeAffectedGradleProjectFile(it.path)) {
+                updateFloatingAction(it)
+            }
+        }
+
+        val openedScripts = FileEditorManager.getInstance(project).selectedEditors
+            .mapNotNull { it.file }
+            .filter {
+                shouldUpdatePath(it.path) && maybeAffectedGradleProjectFile(it.path)
+            }
+
+        if (openedScripts.isEmpty()) return
+
+        coroutineScope.launch(Dispatchers.EDT) {
+            //maybe readaction
+          writeIntentReadAction {
+            if (project.isDisposed) return@writeIntentReadAction
+
+            openedScripts.forEach {
+              if (isApplicable(it, project)) {
+                DefaultScriptingSupport.getInstance(project).ensureNotificationsRemoved(it)
+              }
+
+              if (restartAnalyzer) {
+                val kotlinCodeBlockModificationListenerClass = Class.forName(
+                  "org.jetbrains.kotlin.idea.caches.trackers.KotlinCodeBlockModificationListener")
+                kotlinCodeBlockModificationListenerClass
+                  .getMethod("incModificationCount")
+                  .invoke(
+                    @Suppress("IncorrectServiceRetrieving")
+                    project.getService(kotlinCodeBlockModificationListenerClass),
+                  )
+
+                // this required only for "pause" state
+                PsiManager.getInstance(project).findFile(it)?.let { ktFile ->
+                  DaemonCodeAnalyzer.getInstance(project).restart(ktFile, this)
+                }
+
+              }
+
+              EditorNotifications.getInstance(project).updateAllNotifications()
+            }
+          }
+        }
+    }
+
+    private fun updateFloatingAction(file: VirtualFile) {
+        if (isConfigurationOutOfDate(file) && autoReloadScriptConfigurations(project, file)) {
+            getInstance(project).getScriptInfo(file)?.buildRoot?.let {
+                runPartialGradleImport(project, it)
+            }
+        }
+    }
+
+
+    private fun autoReloadScriptConfigurations(project: Project, file: VirtualFile): Boolean {
+        val definition = file.findScriptDefinition(project) ?: return false
+
+        return KotlinScriptingSettings.getInstance(project).autoReloadConfigurations(definition)
+    }
+
+    private fun loadStandaloneScriptConfigurations(files: MutableSet<String>) {
+      runReadAction {
+        files.forEach {
+          val virtualFile = LocalFileSystem.getInstance().findFileByPath(it)
+          if (virtualFile != null) {
+            val ktFile = PsiManager.getInstance(project).findFile(virtualFile) as? KtFile
+            if (ktFile != null) {
+              DefaultScriptingSupport.getInstance(project)
+                .ensureUpToDatedConfigurationSuggested(ktFile, skipNotification = true)
+            }
+          }
+        }
+      }
+    }
+}
+
+@K1Deprecation
+class GradleScriptingSupport(val project: Project) : ScriptingSupport {
+    private val manager: GradleBuildRootsLocator
+        get() = GradleBuildRootsLocator.getInstance(project)
+
+    override fun isApplicable(file: VirtualFile): Boolean {
+        with(manager) {
+            val scriptUnderRoot = findScriptBuildRoot(file) ?: return false
+            if (scriptUnderRoot.nearest is Legacy) return false
+            if (roots.isStandaloneScript(file.path)) return false
+            return true
+        }
+    }
+
+    override fun isConfigurationLoadingInProgress(file: KtFile): Boolean {
+        with(manager) {
+            return findScriptBuildRoot(file.originalFile.virtualFile)?.nearest?.isImportingInProgress() ?: return false
+        }
+    }
+
+    override fun collectConfigurations(builder: ScriptClassRootsBuilder) {
+        with(manager) {
+            roots.list.forEach { root ->
+                if (root is Imported) {
+                    root.collectConfigurations(builder)
+                }
+            }
+        }
+    }
+
+    override fun afterUpdate() {
+        with(manager) {
+            roots.list.forEach { root ->
+                if (root.importing.compareAndSet(GradleBuildRoot.ImportingStatus.updatingCaches, GradleBuildRoot.ImportingStatus.updated)) {
+                    updateNotifications { it.startsWith(root.externalProjectPath) }
+                }
+            }
+        }
+    }
+
+    fun Imported.collectConfigurations(builder: ScriptClassRootsBuilder) {
+        javaHome?.let { builder.sdks.addSdk(it) }
+
+        val definitions = GradleScriptDefinitionsContributor.getDefinitions(builder.project, externalProjectPath, data.gradleHome, data.javaHome)
+        if (definitions == null) {
+            // needed to recreate classRoots if correct script definitions weren't loaded at this moment
+            // in this case classRoots will be recreated after script definitions update
+            builder.useCustomScriptDefinition()
+        }
+
+        builder.addTemplateClassesRoots(getDefinitionsTemplateClasspath(data.gradleHome))
+
+        data.models.forEach { script ->
+            val definition = definitions?.let { selectScriptDefinition(script, it) }
+
+            builder.addCustom(
+                script.file,
+                script.classPath,
+                script.sourcePath,
+                GradleScriptInfo(this, definition, script, builder.project)
+            )
+        }
+    }
+
+    private fun selectScriptDefinition(
+        script: KotlinDslScriptModel,
+        definitions: List<ScriptDefinition>
+    ): ScriptDefinition? {
+        val file = LocalFileSystem.getInstance().findFileByPath(script.file) ?: return null
+        val scriptSource = VirtualFileScriptSource(file)
+        return definitions.firstOrNull { it.isScript(scriptSource) }
+    }
+
+    private fun getDefinitionsTemplateClasspath(gradleHome: String?): List<String> = try {
+        getFullDefinitionsClasspath(gradleHome.toGradleHomePath()).map { it.invariantSeparatorsPathString }
+    } catch (e: Throwable) {
+        scriptingInfoLog("cannot get gradle classpath for Gradle Kotlin DSL scripts: ${e.message}")
+
+        emptyList()
+    }
+
+    companion object {
+        fun isApplicable(file: VirtualFile, project: Project): Boolean {
+            val support = ScriptingSupport.EP_NAME.findExtension(GradleScriptingSupport::class.java, project) ?: return false
+            return support.isApplicable(file)
+        }
+    }
+}

@@ -1,0 +1,58 @@
+### auto-generated section `build intellij.gradle.dependencyUpdater` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "dependencyUpdater_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "dependencyUpdater",
+  module_name = "intellij.gradle.dependencyUpdater",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":dependencyUpdater_resources"],
+  deps = [
+    "//plugins/gradle",
+    "//plugins/gradle:gradle-common",
+    "//platform/core-api:core",
+    "//platform/editor-ui-api:editor-ui",
+    "//platform/lang-api:lang",
+    "//platform/lang-impl",
+    "//platform/external-system-api/dependency-updater",
+    "//android/gradle-dsl",
+    "//platform/core-ui",
+    "@lib//:kotlin-stdlib",
+  ],
+  runtime_deps = [
+    "//android/gradle-dsl-kotlin",
+    "//android/gradle-dsl-toml",
+    "//android/gradle-dsl-declarative",
+    "//android/gradle-dsl-groovy",
+  ]
+)
+
+jvm_library(
+  name = "dependencyUpdater_test_lib",
+  module_name = "intellij.gradle.dependencyUpdater",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    ":dependencyUpdater",
+    "//plugins/gradle:gradle_test_lib",
+    "//plugins/gradle:gradle-common_test_lib",
+    "//platform/core-api:core_test_lib",
+    "//platform/editor-ui-api:editor-ui_test_lib",
+    "//platform/lang-api:lang_test_lib",
+    "//platform/lang-impl:lang-impl_test_lib",
+    "//platform/external-system-api/dependency-updater:dependency-updater_test_lib",
+    "//android/gradle-dsl:gradle-dsl_test_lib",
+    "//android/gradle-dsl-kotlin:gradle-dsl-kotlin_test_lib",
+    "//android/gradle-dsl-toml:gradle-dsl-toml_test_lib",
+    "//android/gradle-dsl-declarative:gradle-dsl-declarative_test_lib",
+    "//android/gradle-dsl-groovy:gradle-dsl-groovy_test_lib",
+    "//platform/core-ui:core-ui_test_lib",
+  ]
+)
+### auto-generated section `build intellij.gradle.dependencyUpdater` end

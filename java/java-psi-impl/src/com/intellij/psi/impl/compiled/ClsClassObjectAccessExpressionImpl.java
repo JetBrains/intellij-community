@@ -1,21 +1,24 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.compiled;
 
-import com.intellij.psi.*;
+import com.intellij.java.syntax.parser.JavaKeywords;
+import com.intellij.psi.JavaElementVisitor;
+import com.intellij.psi.PsiClassObjectAccessExpression;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypeElement;
 import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.ui.IconManager;
+import com.intellij.ui.PlatformIcons;
 import com.intellij.ui.icons.RowIcon;
-import com.intellij.util.PlatformIcons;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.Icon;
 
-/**
- * @author ven
- */
-public class ClsClassObjectAccessExpressionImpl extends ClsElementImpl implements PsiClassObjectAccessExpression {
+public final class ClsClassObjectAccessExpressionImpl extends ClsElementImpl implements PsiClassObjectAccessExpression {
   private final ClsElementImpl myParent;
   private final ClsTypeElementImpl myTypeElement;
 
@@ -27,11 +30,11 @@ public class ClsClassObjectAccessExpressionImpl extends ClsElementImpl implement
   @Override
   public void appendMirrorText(int indentLevel, @NotNull StringBuilder buffer) {
     myTypeElement.appendMirrorText(0, buffer);
-    buffer.append('.').append(PsiKeyword.CLASS);
+    buffer.append('.').append(JavaKeywords.CLASS);
   }
 
   @Override
-  public void setMirror(@NotNull TreeElement element) throws InvalidMirrorException {
+  protected void setMirror(@NotNull TreeElement element) throws InvalidMirrorException {
     setMirrorCheckingType(element, null);
     setMirror(getOperand(), SourceTreeToPsiMap.<PsiClassObjectAccessExpression>treeToPsiNotNull(element).getOperand());
   }
@@ -57,14 +60,12 @@ public class ClsClassObjectAccessExpressionImpl extends ClsElementImpl implement
   }
 
   @Override
-  @NotNull
-  public PsiTypeElement getOperand() {
+  public @NotNull PsiTypeElement getOperand() {
     return myTypeElement;
   }
 
-  @NotNull
   @Override
-  public PsiType getType() {
+  public @NotNull PsiType getType() {
     return PsiImplUtil.getType(this);
   }
 
@@ -77,8 +78,9 @@ public class ClsClassObjectAccessExpressionImpl extends ClsElementImpl implement
 
   @Override
   public Icon getElementIcon(final int flags) {
-    RowIcon rowIcon = IconManager.getInstance().createLayeredIcon(this, PlatformIcons.FIELD_ICON, 0);
-    rowIcon.setIcon(PlatformIcons.PUBLIC_ICON, 1);
+    IconManager iconManager = IconManager.getInstance();
+    RowIcon rowIcon = iconManager.createLayeredIcon(this, iconManager.getPlatformIcon(PlatformIcons.Field), 0);
+    rowIcon.setIcon(iconManager.getPlatformIcon(PlatformIcons.Public), 1);
     return rowIcon;
   }
 }

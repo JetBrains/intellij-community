@@ -16,12 +16,12 @@
 package com.intellij.lang.java.parser;
 
 import com.intellij.core.JavaPsiBundle;
+import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.lang.PsiBuilder;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.psi.JavaTokenType;
-import com.intellij.psi.PsiKeyword;
+import com.intellij.psi.impl.source.OldParserWhiteSpaceAndCommentSetHolder;
 import com.intellij.psi.impl.source.tree.ElementType;
-import com.intellij.psi.impl.source.tree.JavaElementType;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -32,38 +32,51 @@ import java.util.Set;
 import static com.intellij.lang.PsiBuilderUtil.expect;
 import static com.intellij.lang.java.parser.JavaParserUtil.error;
 import static com.intellij.lang.java.parser.JavaParserUtil.semicolon;
+import static com.intellij.psi.impl.source.tree.JavaElementType.EXPORTS_STATEMENT;
+import static com.intellij.psi.impl.source.tree.JavaElementType.MODIFIER_LIST;
+import static com.intellij.psi.impl.source.tree.JavaElementType.MODULE;
+import static com.intellij.psi.impl.source.tree.JavaElementType.MODULE_REFERENCE;
+import static com.intellij.psi.impl.source.tree.JavaElementType.OPENS_STATEMENT;
+import static com.intellij.psi.impl.source.tree.JavaElementType.PROVIDES_STATEMENT;
+import static com.intellij.psi.impl.source.tree.JavaElementType.PROVIDES_WITH_LIST;
+import static com.intellij.psi.impl.source.tree.JavaElementType.REQUIRES_STATEMENT;
+import static com.intellij.psi.impl.source.tree.JavaElementType.USES_STATEMENT;
 
+/**
+ * @deprecated Use the new Java syntax library instead.
+ * See {@link com.intellij.java.syntax.parser.JavaParser}
+ */
+@Deprecated
 public class ModuleParser {
   private static final Set<String> STATEMENT_KEYWORDS =
-    ContainerUtil.newHashSet(PsiKeyword.REQUIRES, PsiKeyword.EXPORTS, PsiKeyword.USES, PsiKeyword.PROVIDES);
-
+    ContainerUtil.newHashSet(JavaKeywords.REQUIRES, JavaKeywords.EXPORTS, JavaKeywords.USES, JavaKeywords.PROVIDES);
   private final JavaParser myParser;
+  private final OldParserWhiteSpaceAndCommentSetHolder myWhiteSpaceAndCommentSetHolder = OldParserWhiteSpaceAndCommentSetHolder.INSTANCE;
 
   public ModuleParser(@NotNull JavaParser parser) {
-    myParser = parser;
+    this.myParser = parser;
   }
 
-  @Nullable
-  public PsiBuilder.Marker parse(@NotNull PsiBuilder builder) {
+  public @Nullable PsiBuilder.Marker parse(@NotNull PsiBuilder builder) {
     PsiBuilder.Marker module = builder.mark();
 
     PsiBuilder.Marker firstAnnotation = myParser.getDeclarationParser().parseAnnotations(builder);
 
     IElementType type = builder.getTokenType();
     String text = type == JavaTokenType.IDENTIFIER ? builder.getTokenText() : null;
-    if (!(PsiKeyword.OPEN.equals(text) || PsiKeyword.MODULE.equals(text))) {
+    if (!(JavaKeywords.OPEN.equals(text) || JavaKeywords.MODULE.equals(text))) {
       module.rollbackTo();
       return null;
     }
 
     PsiBuilder.Marker modifierList = firstAnnotation != null ? firstAnnotation.precede() : builder.mark();
-    if (PsiKeyword.OPEN.equals(text)) {
+    if (JavaKeywords.OPEN.equals(text)) {
       mapAndAdvance(builder, JavaTokenType.OPEN_KEYWORD);
       text = builder.getTokenText();
     }
-    JavaParserUtil.done(modifierList, JavaElementType.MODIFIER_LIST);
+    JavaParserUtil.done(modifierList, MODIFIER_LIST, builder, myWhiteSpaceAndCommentSetHolder);
 
-    if (PsiKeyword.MODULE.equals(text)) {
+    if (JavaKeywords.MODULE.equals(text)) {
       mapAndAdvance(builder, JavaTokenType.MODULE_KEYWORD);
     }
     else {
@@ -95,7 +108,7 @@ public class ModuleParser {
       parseModuleContent(builder);
     }
 
-    JavaParserUtil.done(module, JavaElementType.MODULE);
+    JavaParserUtil.done(module, MODULE, builder, myWhiteSpaceAndCommentSetHolder);
 
     if (builder.getTokenType() != null) {
       parseExtras(builder, JavaPsiBundle.message("unexpected.tokens"));
@@ -104,7 +117,7 @@ public class ModuleParser {
     return module;
   }
 
-  private static PsiBuilder.Marker parseName(PsiBuilder builder) {
+  public PsiBuilder.Marker parseName(PsiBuilder builder) {
     PsiBuilder.Marker nameElement = builder.mark();
     boolean empty = true;
 
@@ -119,14 +132,16 @@ public class ModuleParser {
         if (idExpected) error(builder, JavaPsiBundle.message("expected.identifier"));
         idExpected = true;
       }
-      else break;
+      else {
+        break;
+      }
       builder.advanceLexer();
       empty = false;
     }
 
     if (!empty) {
       if (idExpected) error(builder, JavaPsiBundle.message("expected.identifier"));
-      nameElement.done(JavaElementType.MODULE_REFERENCE);
+      nameElement.done(MODULE_REFERENCE);
       return nameElement;
     }
     else {
@@ -175,28 +190,28 @@ public class ModuleParser {
 
   private PsiBuilder.Marker parseStatement(PsiBuilder builder) {
     String kw = builder.getTokenText();
-    if (PsiKeyword.REQUIRES.equals(kw)) return parseRequiresStatement(builder);
-    if (PsiKeyword.EXPORTS.equals(kw)) return parseExportsStatement(builder);
-    if (PsiKeyword.OPENS.equals(kw)) return parseOpensStatement(builder);
-    if (PsiKeyword.USES.equals(kw)) return parseUsesStatement(builder);
-    if (PsiKeyword.PROVIDES.equals(kw)) return parseProvidesStatement(builder);
+    if (JavaKeywords.REQUIRES.equals(kw)) return parseRequiresStatement(builder);
+    if (JavaKeywords.EXPORTS.equals(kw)) return parseExportsStatement(builder);
+    if (JavaKeywords.OPENS.equals(kw)) return parseOpensStatement(builder);
+    if (JavaKeywords.USES.equals(kw)) return parseUsesStatement(builder);
+    if (JavaKeywords.PROVIDES.equals(kw)) return parseProvidesStatement(builder);
     return null;
   }
 
-  private static PsiBuilder.Marker parseRequiresStatement(PsiBuilder builder) {
+  private PsiBuilder.Marker parseRequiresStatement(PsiBuilder builder) {
     PsiBuilder.Marker statement = builder.mark();
     mapAndAdvance(builder, JavaTokenType.REQUIRES_KEYWORD);
 
     PsiBuilder.Marker modifierList = builder.mark();
     while (true) {
       if (expect(builder, ElementType.MODIFIER_BIT_SET)) continue;
-      if (builder.getTokenType() == JavaTokenType.IDENTIFIER && PsiKeyword.TRANSITIVE.equals(builder.getTokenText())) {
+      if (builder.getTokenType() == JavaTokenType.IDENTIFIER && JavaKeywords.TRANSITIVE.equals(builder.getTokenText())) {
         mapAndAdvance(builder, JavaTokenType.TRANSITIVE_KEYWORD);
         continue;
       }
       break;
     }
-    JavaParserUtil.done(modifierList, JavaElementType.MODIFIER_LIST);
+    JavaParserUtil.done(modifierList, MODIFIER_LIST, builder, myWhiteSpaceAndCommentSetHolder);
 
     if (parseNameRef(builder) != null) {
       semicolon(builder);
@@ -205,28 +220,27 @@ public class ModuleParser {
       expect(builder, JavaTokenType.SEMICOLON);
     }
 
-    statement.done(JavaElementType.REQUIRES_STATEMENT);
+    statement.done(REQUIRES_STATEMENT);
     return statement;
   }
 
   private PsiBuilder.Marker parseExportsStatement(PsiBuilder builder) {
     PsiBuilder.Marker statement = builder.mark();
     mapAndAdvance(builder, JavaTokenType.EXPORTS_KEYWORD);
-    return parsePackageStatement(builder, statement, JavaElementType.EXPORTS_STATEMENT);
+    return parsePackageStatement(builder, statement, EXPORTS_STATEMENT);
   }
 
   private PsiBuilder.Marker parseOpensStatement(PsiBuilder builder) {
     PsiBuilder.Marker statement = builder.mark();
     mapAndAdvance(builder, JavaTokenType.OPENS_KEYWORD);
-    return parsePackageStatement(builder, statement, JavaElementType.OPENS_STATEMENT);
+    return parsePackageStatement(builder, statement, OPENS_STATEMENT);
   }
 
-  @NotNull
-  private PsiBuilder.Marker parsePackageStatement(PsiBuilder builder, PsiBuilder.Marker statement, IElementType type) {
+  private @NotNull PsiBuilder.Marker parsePackageStatement(PsiBuilder builder, PsiBuilder.Marker statement, IElementType type) {
     boolean hasError = false;
 
     if (parseClassOrPackageRef(builder) != null) {
-      if (PsiKeyword.TO.equals(builder.getTokenText())) {
+      if (JavaKeywords.TO.equals(builder.getTokenText())) {
         mapAndAdvance(builder, JavaTokenType.TO_KEYWORD);
 
         while (true) {
@@ -266,7 +280,7 @@ public class ModuleParser {
       expect(builder, JavaTokenType.SEMICOLON);
     }
 
-    statement.done(JavaElementType.USES_STATEMENT);
+    statement.done(USES_STATEMENT);
     return statement;
   }
 
@@ -280,9 +294,10 @@ public class ModuleParser {
       hasError = true;
     }
 
-    if (PsiKeyword.WITH.equals(builder.getTokenText())) {
+    if (JavaKeywords.WITH.equals(builder.getTokenText())) {
       builder.remapCurrentToken(JavaTokenType.WITH_KEYWORD);
-      hasError = myParser.getReferenceParser().parseReferenceList(builder, JavaTokenType.WITH_KEYWORD, JavaElementType.PROVIDES_WITH_LIST, JavaTokenType.COMMA);
+      hasError = myParser.getReferenceParser()
+        .parseReferenceList(builder, JavaTokenType.WITH_KEYWORD, PROVIDES_WITH_LIST, JavaTokenType.COMMA);
     }
     else if (!hasError) {
       IElementType next = builder.getTokenType();
@@ -304,16 +319,20 @@ public class ModuleParser {
       expect(builder, JavaTokenType.SEMICOLON);
     }
 
-    statement.done(JavaElementType.PROVIDES_STATEMENT);
+    statement.done(PROVIDES_STATEMENT);
     return statement;
   }
 
-  private static PsiBuilder.Marker parseNameRef(PsiBuilder builder) {
+  private PsiBuilder.Marker parseNameRef(PsiBuilder builder) {
     PsiBuilder.Marker name = parseName(builder);
     if (name == null) {
       error(builder, JavaPsiBundle.message("expected.identifier"));
     }
     return name;
+  }
+
+  private PsiBuilder.Marker parseClassOrPackageRef(PsiBuilder builder) {
+    return myParser.getReferenceParser().parseJavaCodeReference(builder, true, false, false, false);
   }
 
   private static void mapAndAdvance(PsiBuilder builder, IElementType keyword) {
@@ -325,9 +344,5 @@ public class ModuleParser {
     PsiBuilder.Marker extras = builder.mark();
     while (builder.getTokenType() != null) builder.advanceLexer();
     extras.error(message);
-  }
-
-  private PsiBuilder.Marker parseClassOrPackageRef(PsiBuilder builder) {
-    return myParser.getReferenceParser().parseJavaCodeReference(builder, true, false, false, false);
   }
 }

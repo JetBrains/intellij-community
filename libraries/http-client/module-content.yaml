@@ -1,0 +1,8 @@
+- name: dist.all/lib/intellij.libraries.http.client.jar
+  modules:
+  - name: intellij.libraries.http.client
+  library: http-client
+  files:
+  - name: $MAVEN_REPOSITORY$/org/apache/httpcomponents/httpmime/4/httpmime-4.jar
+  - name: $MAVEN_REPOSITORY$/org/apache/httpcomponents/httpclient/4/httpclient-4.jar
+  - name: $MAVEN_REPOSITORY$/org/apache/httpcomponents/httpcore/4/httpcore-4.jar

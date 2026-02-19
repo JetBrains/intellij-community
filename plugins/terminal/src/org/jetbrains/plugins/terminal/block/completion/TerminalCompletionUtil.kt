@@ -1,0 +1,132 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package org.jetbrains.plugins.terminal.block.completion
+
+import com.intellij.icons.AllIcons
+import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.fileTypes.FileTypeRegistry
+import com.intellij.openapi.fileTypes.UnknownFileType
+import com.intellij.terminal.completion.ShellDataGeneratorsExecutor
+import com.intellij.terminal.completion.spec.ShellArgumentSpec
+import com.intellij.terminal.completion.spec.ShellCommandSpec
+import com.intellij.terminal.completion.spec.ShellCompletionSuggestion
+import com.intellij.terminal.completion.spec.ShellFileInfo
+import com.intellij.terminal.completion.spec.ShellName
+import com.intellij.terminal.completion.spec.ShellOptionSpec
+import com.intellij.terminal.completion.spec.ShellRuntimeContext
+import com.intellij.terminal.completion.spec.ShellRuntimeDataGenerator
+import com.intellij.terminal.completion.spec.ShellSuggestionType
+import com.intellij.terminal.completion.spec.ShellSuggestionType.ARGUMENT
+import com.intellij.terminal.completion.spec.ShellSuggestionType.COMMAND
+import com.intellij.terminal.completion.spec.ShellSuggestionType.FILE
+import com.intellij.terminal.completion.spec.ShellSuggestionType.FOLDER
+import com.intellij.terminal.completion.spec.ShellSuggestionType.OPTION
+import kotlinx.coroutines.CancellationException
+import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.plugins.terminal.TerminalIcons
+import org.jetbrains.plugins.terminal.util.ShellType
+import javax.swing.Icon
+
+@ApiStatus.Internal
+object TerminalCompletionUtil {
+  fun getNextSuggestionsString(suggestion: ShellCompletionSuggestion): String {
+    var separator: String? = null
+    val result = when (suggestion) {
+      is ShellCommandSpec -> getNextOptionsAndArgumentsString(suggestion)
+      is ShellOptionSpec -> {
+        separator = suggestion.separator
+        getNextArgumentsString(suggestion.arguments)
+      }
+      else -> ""
+    }
+    return if (result.isNotEmpty()) "${separator ?: " "}$result" else ""
+  }
+
+  /** Returns required options and all arguments */
+  private fun getNextOptionsAndArgumentsString(spec: ShellCommandSpec): String {
+    return buildString {
+      // Search required options only from static options.
+      // Searching all the options requires running ShellRuntimeDataGenerator, that can be slow.
+      for (option in spec.options.filter { it.isRequired }) {
+        append(option.name)
+        val arguments = getNextArgumentsString(option.arguments)
+        if (arguments.isNotEmpty()) {
+          append(' ')
+          append(arguments)
+        }
+        append(' ')
+      }
+      append(getNextArgumentsString(spec.arguments))
+    }.trim()
+  }
+
+  private fun getNextArgumentsString(args: List<ShellArgumentSpec>): String {
+    val argStrings = args.mapIndexed { index, arg -> arg.asSuggestionString(index) }
+    return argStrings.joinToString(" ")
+  }
+
+  private fun ShellArgumentSpec.asSuggestionString(index: Int): String {
+    val name = displayName ?: "arg${index + 1}"
+    return if (isOptional) "[$name]" else "<$name>"
+  }
+
+  fun findIconForSuggestion(name: String, type: ShellSuggestionType): Icon {
+    return when (type) {
+      COMMAND -> TerminalIcons.Command
+      OPTION -> TerminalIcons.Option
+      FOLDER -> AllIcons.Nodes.Folder
+      FILE -> getFileIcon(name)
+      ARGUMENT -> TerminalIcons.Other
+    }
+  }
+
+  fun getFileIcon(fileName: String): Icon {
+    val fileType = FileTypeRegistry.getInstance().getFileTypeByFileName(fileName)
+    val fileIcon = fileType.icon ?: TerminalIcons.OtherFile
+    return if (fileType is UnknownFileType) TerminalIcons.OtherFile else fileIcon
+  }
+
+  fun ShellType.toShellName(): ShellName {
+    return ShellName(this.toString().lowercase())
+  }
+
+  fun String.toShellFileInfo(fileSeparator: Char): ShellFileInfo {
+    return if (endsWith(fileSeparator)) {
+      ShellFileInfo.create(removeSuffix(fileSeparator.toString()), ShellFileInfo.Type.DIRECTORY)
+    }
+    else ShellFileInfo.create(this, ShellFileInfo.Type.FILE)
+  }
+
+  suspend fun <T : Any> doExecuteGenerator(context: ShellRuntimeContext, generator: ShellRuntimeDataGenerator<T>): T? {
+    return try {
+      generator.generate(context)
+    }
+    catch (ce: CancellationException) {
+      throw ce
+    }
+    catch (e: UnsupportedOperationException) {
+      logger<ShellDataGeneratorsExecutor>().debug(e)
+      null
+    }
+    catch (e: Exception) {
+      logger<ShellDataGeneratorsExecutor>().error("Failed to execute generator: $generator in context: $context", e)
+      null
+    }
+  }
+
+  fun throwUnsupportedInExpTerminalException(): Nothing {
+    throw UnsupportedOperationException("This API is not supported in Experimental 2024 Terminal")
+  }
+
+  /**
+   * [tokens] - the words of the command text.
+   * Considers the last token as the currently typed prefix without starting quotes.
+   */
+  fun getTypedPrefix(tokens: List<String>): String {
+    check(tokens.isNotEmpty()) { "tokens should not be empty" }
+    val last = tokens.last()
+    return if (last.startsWith("'") || last.startsWith('"')) {
+      last.drop(1)
+    }
+    else last
+  }
+}

@@ -1,15 +1,23 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source;
 
 import com.intellij.lang.ASTNode;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaElementVisitor;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.PsiJavaModuleReference;
+import com.intellij.psi.PsiJavaModuleReferenceElement;
+import com.intellij.psi.PsiModifierList;
+import com.intellij.psi.PsiRequiresStatement;
 import com.intellij.psi.impl.java.stubs.JavaStubElementTypes;
 import com.intellij.psi.impl.java.stubs.PsiRequiresStatementStub;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.reference.SoftReference;
 import org.jetbrains.annotations.NotNull;
 
+import java.lang.ref.SoftReference;
+
 import static com.intellij.openapi.util.text.StringUtil.nullize;
+import static com.intellij.reference.SoftReference.dereference;
 
 public class PsiRequiresStatementImpl extends JavaStubPsiElement<PsiRequiresStatementStub> implements PsiRequiresStatement {
   private SoftReference<PsiJavaModuleReference> myReference;
@@ -45,7 +53,7 @@ public class PsiRequiresStatementImpl extends JavaStubPsiElement<PsiRequiresStat
     if (stub != null) {
       String refText = nullize(stub.getModuleName());
       if (refText == null) return null;
-      PsiJavaModuleReference ref = SoftReference.dereference(myReference);
+      PsiJavaModuleReference ref = dereference(myReference);
       if (ref == null) {
         ref = JavaPsiFacade.getInstance(getProject()).getParserFacade().createModuleReferenceFromText(refText, this).getReference();
         myReference = new SoftReference<>(ref);
@@ -61,7 +69,7 @@ public class PsiRequiresStatementImpl extends JavaStubPsiElement<PsiRequiresStat
 
   @Override
   public PsiModifierList getModifierList() {
-    return getStubOrPsiChild(JavaStubElementTypes.MODIFIER_LIST);
+    return getStubOrPsiChild(JavaStubElementTypes.MODIFIER_LIST, PsiModifierList.class);
   }
 
   @Override

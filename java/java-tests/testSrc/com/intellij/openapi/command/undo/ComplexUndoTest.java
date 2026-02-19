@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.command.undo;
 
 import com.intellij.openapi.command.WriteCommandAction;
@@ -8,13 +8,11 @@ import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.encoding.EncodingManager;
 import com.intellij.openapi.vfs.encoding.EncodingProjectManager;
+import com.intellij.testFramework.EditorTestUtil;
 import com.intellij.testFramework.PlatformTestUtil;
-import com.intellij.util.ui.UIUtil;
 
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
-
-import static com.intellij.testFramework.utils.EncodingManagerUtilKt.doEncodingTest;
 
 public class ComplexUndoTest extends EditorUndoTestCase {
   private static final Charset WINDOWS_1251 = Charset.forName("windows-1251");
@@ -38,7 +36,7 @@ public class ComplexUndoTest extends EditorUndoTestCase {
       fail("Exception expected");
     }
     catch (Exception e) {
-      assertStartsWith("Following files affected by this action have been already changed:", e.getMessage());
+      assertStartsWith("The following files affected by this action have been already changed:", e.getMessage());
     }
   }
 
@@ -77,15 +75,14 @@ public class ComplexUndoTest extends EditorUndoTestCase {
 
   public void testDoesNotLoseCharset() {
     char utf8character = '\u00e9';
-    doEncodingTest(myProject, null, WINDOWS_1251.name(), () -> PlatformTestUtil.withEncoding(WINDOWS_1251.name(), () -> {
+    EditorTestUtil.saveEncodingsIn(myProject, null, WINDOWS_1251, () -> PlatformTestUtil.withEncoding(WINDOWS_1251, () -> {
       assertEquals(CharsetToolkit.UTF8, EncodingManager.getInstance().getDefaultCharsetName());
-      assertEquals(WINDOWS_1251, Charset.defaultCharset());
       VirtualFile virtualFile = createFileInCommand("f.java");
       VirtualFile virtualFile2 = createFileInCommand("g.java");
       assertEquals(WINDOWS_1251, virtualFile.getCharset());
       assertEquals(WINDOWS_1251, virtualFile2.getCharset());
       EncodingProjectManager.getInstance(myProject).setEncoding(virtualFile, StandardCharsets.UTF_8);
-      UIUtil.dispatchAllInvocationEvents();
+      PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
       assertEquals(StandardCharsets.UTF_8, virtualFile.getCharset());
       assertEquals(WINDOWS_1251, virtualFile2.getCharset());
       Editor editor = getEditor(virtualFile);
@@ -95,11 +92,11 @@ public class ComplexUndoTest extends EditorUndoTestCase {
       typeInText(editor2, string);
       WriteCommandAction.runWriteCommandAction(getProject(), () -> editor.getDocument().deleteString(0, editor.getDocument().getTextLength()));
       undo(editor);
-      UIUtil.dispatchAllInvocationEvents();
+      PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
       assertEquals(utf8character, (int)editor.getDocument().getText().charAt(0));
       WriteCommandAction.runWriteCommandAction(getProject(), () -> editor2.getDocument().deleteString(0, editor2.getDocument().getTextLength()));
       undo(editor2);
-      UIUtil.dispatchAllInvocationEvents();
+      PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
       assertEquals(utf8character, (int)editor2.getDocument().getText().charAt(0));
     }));
   }

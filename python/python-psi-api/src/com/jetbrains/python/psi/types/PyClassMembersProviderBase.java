@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.psi.types;
 
 import com.intellij.psi.PsiElement;
@@ -10,26 +10,22 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collection;
 import java.util.Collections;
 
-/**
- * @author yole
- */
+
 public class PyClassMembersProviderBase implements PyClassMembersProvider {
 
   /**
    * Get members for this class type only: no need to read its ancestors since it is duty of this method client
    */
-  @NotNull
   @Override
-  public Collection<PyCustomMember> getMembers(PyClassType clazz, PsiElement location, @NotNull TypeEvalContext context) {
+  public @NotNull Collection<PyCustomMember> getMembers(PyClassType clazz, PsiElement location, @NotNull TypeEvalContext context) {
     return Collections.emptyList();
   }
 
   @Override
-  @Nullable
-  public PsiElement resolveMember(@NotNull PyClassType type,
-                                  @NotNull String name,
-                                  @Nullable PsiElement location,
-                                  @NotNull PyResolveContext resolveContext) {
+  public @Nullable PsiElement resolveMember(@NotNull PyClassType type,
+                                            @NotNull String name,
+                                            @Nullable PsiElement location,
+                                            @NotNull PyResolveContext resolveContext) {
     final Collection<PyCustomMember> members = getMembers(type, location, resolveContext.getTypeEvalContext());
     return resolveMemberByName(members, name, type.getPyClass(), resolveContext);
   }
@@ -42,11 +38,10 @@ public class PyClassMembersProviderBase implements PyClassMembersProvider {
    * @param context psi element to be used as psi context
    * @return found member or null
    */
-  @Nullable
-  public static PsiElement resolveMemberByName(@NotNull Collection<? extends PyCustomMember> members,
-                                               @NotNull String name,
-                                               @NotNull PsiElement context,
-                                               @NotNull PyResolveContext resolveContext) {
+  public static @Nullable PsiElement resolveMemberByName(@NotNull Collection<? extends PyCustomMember> members,
+                                                         @NotNull String name,
+                                                         @NotNull PsiElement context,
+                                                         @NotNull PyResolveContext resolveContext) {
     for (PyCustomMember member : members) {
       if (member.getName().equals(name)) {
         return member.resolve(context, resolveContext);

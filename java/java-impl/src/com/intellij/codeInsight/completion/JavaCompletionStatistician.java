@@ -1,79 +1,84 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.ExpectedTypeInfo;
 import com.intellij.codeInsight.ExpectedTypeInfoImpl;
 import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.patterns.ElementPattern;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiKeyword;
+import com.intellij.psi.PsiLocalVariable;
+import com.intellij.psi.PsiMember;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiNameValuePair;
+import com.intellij.psi.PsiParameter;
+import com.intellij.psi.PsiThisExpression;
+import com.intellij.psi.PsiType;
 import com.intellij.psi.statistics.JavaStatisticsManager;
 import com.intellij.psi.statistics.StatisticsInfo;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.function.Function;
+
 import static com.intellij.patterns.PsiJavaPatterns.psiElement;
 
-/**
- * @author peter
- */
-public class JavaCompletionStatistician extends CompletionStatistician{
-  private static final ElementPattern<PsiElement> SUPER_CALL = psiElement().afterLeaf(psiElement().withText(".").afterLeaf(PsiKeyword.SUPER));
+public final class JavaCompletionStatistician extends CompletionStatistician{
+  private static final ElementPattern<PsiElement> SUPER_CALL = psiElement().afterLeaf(psiElement().withText(".").afterLeaf(JavaKeywords.SUPER));
 
   @Override
-  public StatisticsInfo serialize(@NotNull final LookupElement element, @NotNull final CompletionLocation location) {
-    Object o = element.getObject();
-
-    if (o instanceof PsiLocalVariable || o instanceof PsiParameter || 
-        o instanceof PsiThisExpression || o instanceof PsiKeyword || 
-        element.getUserData(JavaCompletionUtil.SUPER_METHOD_PARAMETERS) != null ||
-        FunctionalExpressionCompletionProvider.isFunExprItem(element) ||
-        element.as(StreamConversion.StreamMethodInvocation.class) != null) {
-      return StatisticsInfo.EMPTY;
-    }
-
-    if (!(o instanceof PsiMember)) {
-      return null;
-    }
-
-    PsiElement position = location.getCompletionParameters().getPosition();
+  public @NotNull Function<@NotNull LookupElement, @Nullable StatisticsInfo> forLocation(@NotNull CompletionLocation location) {
+    PsiElement position = location.getBaseCompletionParameters().getPosition();
     if (SUPER_CALL.accepts(position) ||
         JavaCompletionContributor.IN_SWITCH_LABEL.accepts(position) ||
         PreferByKindWeigher.isComparisonRhs(position)) {
-      return StatisticsInfo.EMPTY;
+      return EMPTY_SERIALIZER;
     }
 
     ExpectedTypeInfo firstInfo = getExpectedTypeInfo(location);
     if (firstInfo != null && isInEnumAnnotationParameter(position, firstInfo)) {
-      return StatisticsInfo.EMPTY;
+      return EMPTY_SERIALIZER;
     }
-    
-    if (o instanceof PsiClass) {
-      return getClassInfo((PsiClass)o, position, firstInfo);
-    }
-    return getFieldOrMethodInfo((PsiMember)o, element, firstInfo);
+
+    return element -> {
+      Object o = element.getObject();
+
+      if (o instanceof PsiLocalVariable || o instanceof PsiParameter ||
+          o instanceof PsiThisExpression || o instanceof PsiKeyword ||
+          element.getUserData(JavaCompletionUtil.SUPER_METHOD_PARAMETERS) != null ||
+          FunctionalExpressionCompletionProvider.isFunExprItem(element) ||
+          element.as(StreamConversion.StreamMethodInvocation.class) != null) {
+        return StatisticsInfo.EMPTY;
+      }
+
+      if (o instanceof CustomStatisticsInfoProvider) {
+        return ((CustomStatisticsInfoProvider)o).getStatisticsInfo();
+      }
+
+      if (o instanceof PsiClass) {
+        return getClassInfo((PsiClass)o, position, firstInfo);
+      }
+      if (o instanceof PsiField || o instanceof PsiMethod) {
+        return getFieldOrMethodInfo((PsiMember)o, element, firstInfo);
+      }
+      return null;
+    };
+  }
+
+  @Override
+  public StatisticsInfo serialize(final @NotNull LookupElement element, final @NotNull CompletionLocation location) {
+    return forLocation(location).apply(element);
   }
 
   private static boolean isInEnumAnnotationParameter(PsiElement position, ExpectedTypeInfo firstInfo) {
     return PsiTreeUtil.getParentOfType(position, PsiNameValuePair.class) != null && PreferByKindWeigher.isEnumClass(firstInfo);
   }
 
-  @Nullable
-  private static ExpectedTypeInfo getExpectedTypeInfo(CompletionLocation location) {
+  private static @Nullable ExpectedTypeInfo getExpectedTypeInfo(CompletionLocation location) {
     ExpectedTypeInfo[] infos = JavaCompletionUtil.EXPECTED_TYPES.getValue(location);
     return infos != null && infos.length > 0 ? infos[0] : null;
   }
@@ -91,8 +96,7 @@ public class JavaCompletionStatistician extends CompletionStatistician{
     return new StatisticsInfo(context, JavaStatisticsManager.getMemberUseKey2(psiClass));
   }
 
-  @Nullable
-  private static StatisticsInfo getFieldOrMethodInfo(PsiMember member, LookupElement item, @Nullable ExpectedTypeInfo firstInfo) {
+  private static @Nullable StatisticsInfo getFieldOrMethodInfo(PsiMember member, LookupElement item, @Nullable ExpectedTypeInfo firstInfo) {
     PsiClass containingClass = member.getContainingClass();
     if (containingClass == null) return null;
 
@@ -107,5 +111,15 @@ public class JavaCompletionStatistician extends CompletionStatistician{
     }
 
     return new StatisticsInfo(contextPrefix, JavaStatisticsManager.getMemberUseKey2(member));
+  }
+
+  /**
+   * An interface for LookupElement objects that provide custom StatisticsInfo
+   */
+  public interface CustomStatisticsInfoProvider {
+    /**
+     * @return a statistics info for the current object; null if the statistics should not be collected for this item.
+     */
+    @Nullable StatisticsInfo getStatisticsInfo();
   }
 }

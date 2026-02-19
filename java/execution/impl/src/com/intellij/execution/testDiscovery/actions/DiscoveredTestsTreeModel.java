@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.testDiscovery.actions;
 
 import com.intellij.ide.util.JavaAnonymousClassesHelper;
@@ -7,7 +7,12 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiAnonymousClass;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiMember;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.SmartPointerManager;
+import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.psi.util.ClassUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -15,13 +20,24 @@ import com.intellij.ui.tree.BaseTreeModel;
 import com.intellij.util.Function;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
+import com.intellij.util.concurrency.Invoker;
+import com.intellij.util.concurrency.InvokerSupplier;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.util.*;
+import javax.swing.Icon;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
 
-final class DiscoveredTestsTreeModel extends BaseTreeModel<Object> {
+final class DiscoveredTestsTreeModel extends BaseTreeModel<Object> implements InvokerSupplier {
+  private final Invoker myInvoker = Invoker.forBackgroundThreadWithReadAction(this);
+
   private final Object myRoot = ObjectUtils.NULL;
 
   private final List<Node.Clazz> myTestClasses = new SmartList<>();
@@ -94,8 +110,13 @@ final class DiscoveredTestsTreeModel extends BaseTreeModel<Object> {
     treeStructureChanged(null, null, null);
   }
 
-  @Nullable
-  public static String getClassName(@NotNull PsiClass c) {
+  @Override
+  public @NotNull Invoker getInvoker() {
+    return myInvoker;
+  }
+
+  // TODO: this method can be replaced with ClassUtil.getBinaryClassName so it handles local classes.
+  public static @Nullable String getClassName(@NotNull PsiClass c) {
     if (c instanceof PsiAnonymousClass) {
       PsiClass containingClass = PsiTreeUtil.getParentOfType(c, PsiClass.class);
       if (containingClass != null) {
@@ -121,9 +142,8 @@ final class DiscoveredTestsTreeModel extends BaseTreeModel<Object> {
     return myTests.size();
   }
 
-  public static abstract class Node<Psi extends PsiMember> {
-    @NotNull
-    private final SmartPsiElementPointer<Psi> myPointer;
+  public abstract static class Node<Psi extends PsiMember> {
+    private final @NotNull SmartPsiElementPointer<Psi> myPointer;
     private final String myName;
     private final Icon myIcon;
 
@@ -167,8 +187,7 @@ final class DiscoveredTestsTreeModel extends BaseTreeModel<Object> {
       myIcon = psi.getIcon(Iconable.ICON_FLAG_READ_STATUS);
     }
 
-    @NotNull
-    public SmartPsiElementPointer<Psi> getPointer() {
+    public @NotNull SmartPsiElementPointer<Psi> getPointer() {
       return myPointer;
     }
 

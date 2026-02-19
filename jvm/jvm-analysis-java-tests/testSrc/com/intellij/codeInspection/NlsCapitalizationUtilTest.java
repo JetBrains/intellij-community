@@ -60,8 +60,9 @@ public class NlsCapitalizationUtilTest extends TestCase {
     assertNotCapitalization("Four Upper Case Words two lowercase", Nls.Capitalization.Sentence);
   }
 
-  public void testiOSDoesntNeedCapitalization() {
+  public void testAppleOSDoesntNeedCapitalization() {
     assertTitle("iOS");
+    assertTitle("macOS");
   }
 
   public void testTitle() {
@@ -97,5 +98,47 @@ public class NlsCapitalizationUtilTest extends TestCase {
 
   private static void assertNotCapitalization(String value, Nls.Capitalization capitalization) {
     assertFalse("'" + value + "' should not satisfy " + capitalization, isCapitalizationSatisfied(value, capitalization));
+  }
+
+  public void testTitleCapitalizationArticles() {
+    assertTitle("Compare with the Latest Repository Version");
+    assertTitle("A Good Example");
+    assertTitle("An Important Message");
+  }
+
+  public void testTitleCapitalizationConjunctions() {
+    assertTitle("Search and Replace");
+    assertTitle("Save or Discard Changes");
+    assertTitle("This but Not That");
+  }
+
+  public void testTitleCapitalizationPrepositions() {
+    assertTitle("Compare with Latest Version");
+    assertTitle("Search in Files");
+    assertTitle("Go to Declaration");
+    assertTitle("Copy from Here");
+    assertTitle("Paste as Plain Text");
+    assertTitle("Open In…");
+  }
+
+  public void testTitleCapitalizationFirstAndLastWords() {
+    assertTitle("Compare With");
+    assertTitle("The First Word");
+    assertTitle("Go to the End");
+  }
+
+  public void testTitleCapitalizationNotSatisfied() {
+    assertNotCapitalization("Compare With The Latest Repository Version", Nls.Capitalization.Title);
+    assertNotCapitalization("Search And Replace", Nls.Capitalization.Title);
+    assertNotCapitalization("compare with Latest Version", Nls.Capitalization.Title);
+    assertNotCapitalization("Compare With Latest Version", Nls.Capitalization.Title);
+    assertNotCapitalization("Compare with", Nls.Capitalization.Title);
+    assertNotCapitalization("Save Current Layout As New", Nls.Capitalization.Title);
+    assertNotCapitalization("Compare with…", Nls.Capitalization.Title);
+    assertNotCapitalization("Open in…", Nls.Capitalization.Title);
+  }
+
+  public void testFixValueTitleWithArticles() {
+    assertEquals("Compare with the Latest Version", NlsCapitalizationUtil.fixValue("Compare With The Latest Version", Nls.Capitalization.Title));
   }
 }

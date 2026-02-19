@@ -1,24 +1,18 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.plugins.groovy.annotator.intentions.dynamic;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.ToolWindowManager;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiClassType;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiType;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.ProjectScope;
@@ -38,13 +32,10 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrDynamicImplicitEle
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrImplicitVariableImpl;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
-import javax.swing.*;
+import javax.swing.Icon;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreePath;
 
-/**
- * @author ilyas
- */
 public class GrDynamicImplicitProperty extends GrImplicitVariableImpl implements GrDynamicImplicitElement, PsiField {
   private final String myContainingClassName;
   private final Project myProject;
@@ -57,8 +48,7 @@ public class GrDynamicImplicitProperty extends GrImplicitVariableImpl implements
   }
 
   @Override
-  @Nullable
-  public PsiClass getContainingClassElement() {
+  public @Nullable PsiClass getContainingClassElement() {
     final PsiClassType containingClassType = JavaPsiFacade.getInstance(getProject()).getElementFactory().
         createTypeByFQClassName(myContainingClassName, ProjectScope.getAllScope(getProject()));
 
@@ -90,14 +80,7 @@ public class GrDynamicImplicitProperty extends GrImplicitVariableImpl implements
   }
 
   @Override
-  @Nullable
-  public String getLocationString() {
-    return null;
-  }
-
-  @Override
-  @NotNull
-  public SearchScope getUseScope() {
+  public @NotNull SearchScope getUseScope() {
     return GlobalSearchScope.projectScope(myProject);
   }
 
@@ -114,9 +97,8 @@ public class GrDynamicImplicitProperty extends GrImplicitVariableImpl implements
 
       Object root = model.getRoot();
 
-      if (!(root instanceof DefaultMutableTreeNode)) return;
+      if (!(root instanceof DefaultMutableTreeNode treeRoot)) return;
 
-      DefaultMutableTreeNode treeRoot = ((DefaultMutableTreeNode) root);
       final PsiClass psiClass = getContainingClassElement();
       if (psiClass == null) return;
 
@@ -169,8 +151,7 @@ public class GrDynamicImplicitProperty extends GrImplicitVariableImpl implements
   }
 
   @Override
-  @Nullable
-  public Icon getIcon(boolean open) {
+  public @Nullable Icon getIcon(boolean open) {
     return JetgroovyIcons.Groovy.Property;
   }
 
@@ -199,9 +180,8 @@ public class GrDynamicImplicitProperty extends GrImplicitVariableImpl implements
     throw new IncorrectOperationException();
   }
 
-  @NotNull
   @Override
-  public PsiType getType() {
+  public @NotNull PsiType getType() {
     PsiType type = super.getType();
     if (type instanceof PsiClassType && ((PsiClassType)type).resolve() == null) {
       return TypesUtil.getJavaLangObject(this);

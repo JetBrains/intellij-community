@@ -9,11 +9,12 @@ import org.jetbrains.plugins.groovy.lang.resolve.api.Argument;
 
 import java.util.EnumSet;
 
-import static com.intellij.psi.scope.ElementClassHint.DeclarationKind.*;
+import static com.intellij.psi.scope.ElementClassHint.DeclarationKind.CLASS;
+import static com.intellij.psi.scope.ElementClassHint.DeclarationKind.ENUM_CONST;
+import static com.intellij.psi.scope.ElementClassHint.DeclarationKind.FIELD;
+import static com.intellij.psi.scope.ElementClassHint.DeclarationKind.METHOD;
+import static com.intellij.psi.scope.ElementClassHint.DeclarationKind.VARIABLE;
 
-/**
- * @author ven
- */
 public interface ClassHint {
   Key<PsiElement> RESOLVE_CONTEXT = Key.create("RESOLVE_CONTEXT");
   Key<Argument> RECEIVER = Key.create("groovy.resolve.receiver");

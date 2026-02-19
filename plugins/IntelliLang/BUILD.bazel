@@ -1,0 +1,67 @@
+### auto-generated section `build intellij.platform.langInjection` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "langInjection_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "langInjection",
+  module_name = "intellij.platform.langInjection",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":langInjection_resources"],
+  deps = [
+    "//platform/analysis-api:analysis",
+    "//platform/code-style-api:codeStyle",
+    "//platform/editor-ui-api:editor-ui",
+    "//platform/platform-impl:ide-impl",
+    "//platform/lang-core",
+    "//platform/lang-impl",
+    "//platform/projectModel-api:projectModel",
+    "//RegExpSupport:regexp",
+    "//platform/platform-api:ide",
+    "//libraries/stream",
+    "//platform/core-api:core",
+    "//platform/core-ui",
+    "//platform/editor-ui-ex:editor-ex",
+    "//xml/xml-parser:parser",
+    "//libraries/fastutil",
+    "//platform/util/jdom",
+    "//platform/analysis-impl",
+    "//platform/core-impl",
+    "//platform/forms_rt:java-guiForms-rt",
+  ]
+)
+
+jvm_library(
+  name = "langInjection_test_lib",
+  module_name = "intellij.platform.langInjection",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    ":langInjection",
+    "//platform/analysis-api:analysis_test_lib",
+    "//platform/code-style-api:codeStyle_test_lib",
+    "//platform/editor-ui-api:editor-ui_test_lib",
+    "//platform/platform-impl:ide-impl_test_lib",
+    "//platform/lang-core:lang-core_test_lib",
+    "//platform/lang-impl:lang-impl_test_lib",
+    "//platform/projectModel-api:projectModel_test_lib",
+    "//RegExpSupport:regexp_test_lib",
+    "//platform/platform-api:ide_test_lib",
+    "//libraries/stream:stream_test_lib",
+    "//platform/core-api:core_test_lib",
+    "//platform/core-ui:core-ui_test_lib",
+    "//platform/editor-ui-ex:editor-ex_test_lib",
+    "//xml/xml-parser:parser_test_lib",
+    "//libraries/fastutil:fastutil_test_lib",
+    "//platform/util/jdom:jdom_test_lib",
+    "//platform/analysis-impl:analysis-impl_test_lib",
+    "//platform/core-impl:core-impl_test_lib",
+    "//platform/forms_rt:java-guiForms-rt_test_lib",
+  ]
+)
+### auto-generated section `build intellij.platform.langInjection` end

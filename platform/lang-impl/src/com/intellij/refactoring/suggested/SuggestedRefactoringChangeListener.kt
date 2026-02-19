@@ -10,14 +10,23 @@ import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.editor.ProjectDisposeAwareDocumentListener
 import com.intellij.openapi.editor.RangeMarker
+import com.intellij.openapi.editor.asTextRange
 import com.intellij.openapi.editor.event.DocumentEvent
 import com.intellij.openapi.editor.event.DocumentListener
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
-import com.intellij.psi.*
+import com.intellij.psi.PsiBinaryFile
+import com.intellij.psi.PsiCodeFragment
+import com.intellij.psi.PsiDocumentManager
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiFile
+import com.intellij.psi.PsiManager
+import com.intellij.psi.PsiTreeChangeAdapter
+import com.intellij.psi.PsiTreeChangeEvent
 import com.intellij.psi.impl.PsiTreeChangeEventImpl
 import com.intellij.psi.impl.source.PsiFileImpl
 import com.intellij.psi.util.hasErrorElementInRange
+import com.intellij.util.SlowOperations
 
 class SuggestedRefactoringChangeListener(
   private val project: Project,
@@ -49,6 +58,7 @@ class SuggestedRefactoringChangeListener(
   }
 
   fun reset(withNewIdentifiers: Boolean = false) {
+    project.messageBus.syncPublisher(SuggestedRefactoringAvailabilityListener.TOPIC).reset()
     if (editingState != null) {
       editingState!!.signatureRangeMarker.dispose()
       editingState!!.importRangeMarker?.dispose()
@@ -63,9 +73,9 @@ class SuggestedRefactoringChangeListener(
   }
 
   fun undoToState(state: SuggestedRefactoringState, signatureRange: TextRange) {
-    val psiFile = state.declaration.containingFile
+    val psiFile = state.anchor.containingFile
     val document = PsiDocumentManager.getInstance(psiFile.project).getDocument(psiFile)!!
-    editingState = createEditingState(document, state.declaration, signatureRange, state.refactoringSupport)
+    editingState = createEditingState(document, state.anchor, signatureRange, state.refactoringSupport)
   }
 
   fun suppressForCurrentDeclaration() {
@@ -108,38 +118,38 @@ class SuggestedRefactoringChangeListener(
       return
     }
 
-    fun declarationByOffsetInSignature(offset: Int): PsiElement? {
-      val declaration = refactoringSupport.declarationByOffset(psiFile, offset) ?: return null
-      val signatureRange = refactoringSupport.signatureRange(declaration) ?: return null
-      return declaration.takeIf { offset in signatureRange }
+    fun anchorByOffsetInSignature(offset: Int): PsiElement? {
+      val anchor = refactoringSupport.anchorByOffset(psiFile, offset) ?: return null
+      val signatureRange = refactoringSupport.signatureRange(anchor) ?: return null
+      return anchor.takeIf { offset in signatureRange }
     }
 
     val truncatedChangeRange = changeRange.stripWhitespace(document.charsSequence)
     val offset = truncatedChangeRange.startOffset
-    var declaration = declarationByOffsetInSignature(offset)
-    if (declaration == null && changeRange.isEmpty) { // for text insertion we might need to look to the left and to the right
+    var anchor = anchorByOffsetInSignature(offset)
+    if (anchor == null && changeRange.isEmpty) { // for text insertion we might need to look to the left and to the right
       val whitespaceRange = TextRange(offset, offset).extendWithWhitespace(document.charsSequence)
-      val leftDeclaration = if (whitespaceRange.startOffset > 0)
-        declarationByOffsetInSignature(whitespaceRange.startOffset - 1)
+      val leftAnchor = if (whitespaceRange.startOffset > 0)
+        anchorByOffsetInSignature(whitespaceRange.startOffset - 1)
       else
         null
-      val rightDeclaration = if (whitespaceRange.endOffset > offset)
-        declarationByOffsetInSignature(whitespaceRange.endOffset)
+      val rightAnchor = if (whitespaceRange.endOffset > offset)
+        anchorByOffsetInSignature(whitespaceRange.endOffset)
       else
         null
-      declaration = leftDeclaration ?: rightDeclaration
+      anchor = leftAnchor ?: rightAnchor
       //TODO: support tracking both declarations for a while
     }
-    if (declaration == null) return
+    if (anchor == null) return
 
-    if (refactoringSupport.hasSyntaxError(declaration)) return
+    if (refactoringSupport.hasSyntaxError(anchor)) return
 
-    val signatureRange = refactoringSupport.signatureRange(declaration) ?: return
+    val signatureRange = refactoringSupport.signatureRange(anchor) ?: return
     val extendedSignatureRange = signatureRange.union(truncatedChangeRange)
 
-    editingState = createEditingState(document, declaration, extendedSignatureRange, refactoringSupport)
+    editingState = createEditingState(document, anchor, extendedSignatureRange, refactoringSupport)
     if (!editingState!!.isRefactoringSuppressed) {
-      watcher.editingStarted(declaration, refactoringSupport)
+      watcher.editingStarted(anchor, refactoringSupport)
     }
   }
 
@@ -148,7 +158,7 @@ class SuggestedRefactoringChangeListener(
     declaration: PsiElement,
     signatureRange: TextRange,
     refactoringSupport: SuggestedRefactoringSupport
-  ): SignatureEditingState? {
+  ): SignatureEditingState {
     val signatureRangeMarker = document.createRangeMarker(signatureRange).apply {
       isGreedyToLeft = true
       isGreedyToRight = true
@@ -219,8 +229,8 @@ class SuggestedRefactoringChangeListener(
       if (state.signatureRangeMarker.document != event.document) return true
       if (state.importRangeMarker != null && !state.importRangeMarker.isValid) return true
 
-      val signatureRange = state.signatureRangeMarker.range!!
-      val importRange = state.importRangeMarker?.range
+      val signatureRange = state.signatureRangeMarker.asTextRange!!
+      val importRange = state.importRangeMarker?.asTextRange
 
       if (event.oldRange !in signatureRange && (importRange == null || event.oldRange !in importRange)) {
         return event.oldFragment.isNotBlank() || event.newFragment.isNotBlank()
@@ -255,7 +265,7 @@ class SuggestedRefactoringChangeListener(
       isActionOnAllCommittedScheduled = false
 
       val editingState = editingState ?: return
-      val watchedRange = editingState.signatureRangeMarker.range
+      val watchedRange = editingState.signatureRangeMarker.asTextRange
       if (watchedRange == null) {
         reset()
         return
@@ -267,10 +277,10 @@ class SuggestedRefactoringChangeListener(
 
       val chars = document.charsSequence
       val strippedWatchedRange = watchedRange.stripWhitespace(chars)
-      val declaration = refactoringSupport.declarationByOffset(psiFile, strippedWatchedRange.startOffset)
-      val signatureRange = declaration?.let { refactoringSupport.signatureRange(it) }
+      val anchor = refactoringSupport.anchorByOffset(psiFile, strippedWatchedRange.startOffset)
+      val signatureRange = anchor?.let { refactoringSupport.signatureRange(it) }
 
-      if (declaration == null || signatureRange == null || strippedWatchedRange != signatureRange.stripWhitespace(chars)) {
+      if (anchor == null || signatureRange == null || strippedWatchedRange != signatureRange.stripWhitespace(chars)) {
         val watchedRangeExtended = watchedRange.extendWithWhitespace(document.charsSequence)
         val range = signatureRange?.union(watchedRangeExtended) ?: watchedRangeExtended
         if (psiFile.hasErrorElementInRange(range)) {
@@ -285,7 +295,9 @@ class SuggestedRefactoringChangeListener(
       }
 
       if (!editingState.isRefactoringSuppressed) {
-        watcher.nextSignature(declaration, refactoringSupport)
+        SlowOperations.knownIssue("IDEA-322957, EA-765399").use {
+          watcher.nextSignature(anchor, refactoringSupport)
+        }
       }
     }
   }
@@ -340,7 +352,7 @@ class SuggestedRefactoringChangeListener(
 
 interface SuggestedRefactoringSignatureWatcher {
   fun editingStarted(declaration: PsiElement, refactoringSupport: SuggestedRefactoringSupport)
-  fun nextSignature(declaration: PsiElement, refactoringSupport: SuggestedRefactoringSupport)
+  fun nextSignature(anchor: PsiElement, refactoringSupport: SuggestedRefactoringSupport)
   fun inconsistentState()
   fun reset()
 }

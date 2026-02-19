@@ -26,11 +26,6 @@ import com.intellij.psi.xml.XmlText;
 public class XHtmlDocumentationProvider extends HtmlDocumentationProvider {
 
   @Override
-  protected String generateDocForHtml(PsiElement element, XmlTag context, PsiElement originalElement) {
-    return super.generateDocForHtml(element, context, originalElement);
-  }
-
-  @Override
   protected XmlTag findTagContext(PsiElement context) {
     XmlTag tagBeforeWhiteSpace = findTagBeforeWhiteSpace(context);
     if (tagBeforeWhiteSpace != null) return tagBeforeWhiteSpace;

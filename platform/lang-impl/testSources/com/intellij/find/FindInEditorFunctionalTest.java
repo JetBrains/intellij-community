@@ -1,22 +1,23 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.find;
 
 import com.intellij.find.editorHeaderActions.AddOccurrenceAction;
 import com.intellij.find.editorHeaderActions.RemoveOccurrenceAction;
-import com.intellij.find.editorHeaderActions.ToggleSelectionOnlyAction;
-import com.intellij.ide.DataManager;
-import com.intellij.ide.impl.HeadlessDataManager;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.find.editorHeaderActions.ToggleFindInSelectionAction;
+import com.intellij.openapi.actionSystem.ActionButtonComponent;
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.IdeActions;
+import com.intellij.openapi.actionSystem.Shortcut;
+import com.intellij.openapi.actionSystem.ShortcutSet;
 import com.intellij.openapi.actionSystem.impl.ActionButton;
-import com.intellij.openapi.application.Application;
+import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
 import com.intellij.openapi.application.ApplicationBundle;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.util.text.TextWithMnemonic;
-import com.intellij.testFramework.ServiceContainerUtil;
+import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.TestApplicationManager;
-import com.intellij.ui.ComponentUtil;
+import com.intellij.ui.ExperimentalUI;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.ComponentWithEmptyText;
@@ -25,8 +26,7 @@ import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JComponent;
 import java.util.Map;
 import java.util.function.Function;
 
@@ -34,16 +34,6 @@ public class FindInEditorFunctionalTest extends AbstractFindInEditorTest {
   @Override
   protected void setUp() throws Exception {
     TestApplicationManager.getInstance();
-    Application application = ApplicationManager.getApplication();
-    // Necessary to properly update button states
-    ServiceContainerUtil.replaceService(application, DataManager.class, new HeadlessDataManager() {
-      @NotNull
-      @Override
-      public DataContext getDataContext(Component component) {
-        SearchReplaceComponent searchReplace = ComponentUtil.getParentOfType(SearchReplaceComponent.class, component);
-        return searchReplace != null ? searchReplace::getData : super.getDataContext(component);
-      }
-    }, getTestRootDisposable());
     super.setUp();
   }
 
@@ -58,12 +48,20 @@ public class FindInEditorFunctionalTest extends AbstractFindInEditorTest {
         model.setCaseSensitive(false);
       }
     }
+    catch (Throwable e) {
+      addSuppressedException(e);
+    }
     finally {
       super.tearDown();
     }
   }
 
-  public void testFindInSelection() {
+  public <T extends JComponent> void testFindInSelection() {
+    if (ExperimentalUI.isNewUI()) {
+      // in new ui EditorSearchSession contains another actions
+      // TODO: rewrite test
+      return;
+    }
     String origText = "first foo\n<selection>foo bar baz\nbaz bar foo</selection>\nlast foo";
     init(origText);
     initFind();
@@ -72,27 +70,33 @@ public class FindInEditorFunctionalTest extends AbstractFindInEditorTest {
     SearchReplaceComponent component = session.getComponent();
     Editor editor = getEditor();
     assertSame(editor, session.getEditor());
+    for (ActionToolbarImpl toolbar : UIUtil.findComponentsOfType(component, ActionToolbarImpl.class)) {
+      PlatformTestUtil.waitForFuture(toolbar.updateActionsAsync());
+    }
     Map<Class<?>, ActionButton> actions = StreamEx.of(UIUtil.findComponentsOfType(component, ActionButton.class))
       .toMap(button -> button.getAction().getClass(), Function.identity(), (a, b) -> null);
     model.setGlobal(false);// 'Find' action puts multiline text in search field (in contrast to 'Replace' action)
     assertFalse(model.isGlobal()); // multiline selection = no-global
-    assertEquals(ActionButtonComponent.PUSHED, actions.get(ToggleSelectionOnlyAction.class).getPopState());
+    assertEquals(ActionButtonComponent.PUSHED, actions.get(ToggleFindInSelectionAction.class).getPopState());
     assertFalse(actions.get(AddOccurrenceAction.class).isEnabled());
     assertFalse(actions.get(RemoveOccurrenceAction.class).isEnabled());
-    ShortcutSet shortcuts = actions.get(ToggleSelectionOnlyAction.class).getAction().getShortcutSet();
+    ShortcutSet shortcuts = actions.get(ToggleFindInSelectionAction.class).getAction().getShortcutSet();
     assertEquals(ActionManager.getInstance().getAction(IdeActions.ACTION_TOGGLE_FIND_IN_SELECTION_ONLY).getShortcutSet(), shortcuts);
 
     model.setStringToFind("foo");
-    assertEquals(ApplicationBundle.message("editorsearch.matches", 2), component.getStatusText());
+    assertEquals(ApplicationBundle.message("editorsearch.current.cursor.position", 1, 2), component.getStatusText());
     checkResultByText(origText);
 
     model.setGlobal(true);
-    assertEquals(ActionButtonComponent.NORMAL, actions.get(ToggleSelectionOnlyAction.class).getPopState());
+    assertEquals(ActionButtonComponent.NORMAL, actions.get(ToggleFindInSelectionAction.class).getPopState());
     assertTrue(actions.get(AddOccurrenceAction.class).isEnabled());
     assertTrue(actions.get(RemoveOccurrenceAction.class).isEnabled());
     assertEquals(ApplicationBundle.message("editorsearch.current.cursor.position", 2, 4), component.getStatusText());
-    checkResultByText("first foo\n<selection>foo</selection> bar baz\n" +
-                      "baz bar foo\nlast foo");
+    checkResultByText("""
+                        first foo
+                        <selection>foo</selection> bar baz
+                        baz bar foo
+                        last foo""");
     model.setGlobal(false); // restore selection
     checkResultByText(origText);
     assertEquals(ApplicationBundle.message("editorsearch.current.cursor.position", 1, 2), component.getStatusText());
@@ -210,7 +214,7 @@ public class FindInEditorFunctionalTest extends AbstractFindInEditorTest {
 
     model.setRegularExpressions(true);
     assertTrue(actionButton.isSelected());
-    assertEquals(SearchSession.INCORRECT_REGEX_MESSAGE, component.getStatusText());
+    assertEquals(FindBundle.message(SearchSession.INCORRECT_REGEXP_MESSAGE_KEY), component.getStatusText());
     model.setStringToFind("|");
     assertEquals(ApplicationBundle.message("editorsearch.empty.string.matches"), component.getStatusText());
     model.setStringToFind("ba.?");

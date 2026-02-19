@@ -1,0 +1,7 @@
+- name: dist.all/lib/intellij.libraries.ktor.network.tls.jar
+  modules:
+  - name: intellij.libraries.ktor.network.tls
+  library: ktor-network-tls
+  files:
+  - name: $MAVEN_REPOSITORY$/io/ktor/ktor-network-tls-jvm/3/ktor-network-tls-jvm-3.jar
+  - name: $MAVEN_REPOSITORY$/io/ktor/ktor-network-jvm/3/ktor-network-jvm-3.jar

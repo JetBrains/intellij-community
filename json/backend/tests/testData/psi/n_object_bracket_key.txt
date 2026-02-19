@@ -1,0 +1,14 @@
+JsonFile: n_object_bracket_key.json
+  JsonObject
+    PsiElement({)('{')
+    PsiErrorElement:<property> or '}' expected, got '['
+      <empty list>
+  JsonArray
+    PsiElement([)('[')
+    PsiErrorElement:<value> expected, got ':'
+      PsiElement(:)(':')
+  PsiWhiteSpace(' ')
+  JsonStringLiteral
+    PsiElement(DOUBLE_QUOTED_STRING)('"x"')
+  PsiErrorElement:<value> expected, got '}'
+    PsiElement(})('}')

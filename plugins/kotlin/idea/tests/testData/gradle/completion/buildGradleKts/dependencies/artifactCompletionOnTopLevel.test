@@ -1,0 +1,32 @@
+// FILE: build.gradle.kts
+// "EXPECTED-SUGGESTION": implementation("myGroup1:myArtifact1:myVersion1")
+// "EXPECTED-SUGGESTION": implementation("myGroup2:myArtifact2:myVersion2")
+// "EXPECTED-SUGGESTION": implementation("myGroup3:myArtifact3:myVersion3")
+// "OTHER-SUGGESTIONS-ARE-NOT-EXPECTED"
+// "SUGGESTION-INDEX-TO-APPLY": 1
+// "COMPLETION-RESULT-PATH": build.gradle.after.kts
+plugins {
+    id("java")
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    myGrou<caret>
+}
+
+// FILE: build.gradle.after.kts
+plugins {
+    id("java")
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    implementation("myGroup2:myArtifact2:myVersion2")
+}
+

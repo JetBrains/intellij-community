@@ -1,20 +1,27 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+
 package com.intellij.codeInsight.navigation.impl
 
 import com.intellij.codeInsight.TargetElementUtil
-import com.intellij.codeInsight.navigation.CtrlMouseInfo
-import com.intellij.codeInsight.navigation.MultipleTargetElementsInfo
-import com.intellij.codeInsight.navigation.PsiElementTargetPopupPresentation
-import com.intellij.codeInsight.navigation.SingleTargetElementInfo
-import com.intellij.codeInsight.navigation.action.GotoDeclarationUtil.findTargetElementsFromProviders
+import com.intellij.codeInsight.navigation.CtrlMouseData
+import com.intellij.codeInsight.navigation.actions.GotoDeclarationHandler
+import com.intellij.codeInsight.navigation.getReferenceRanges
+import com.intellij.codeInsight.navigation.impl.NavigationActionResult.SingleTarget
+import com.intellij.codeInsight.navigation.multipleTargetsCtrlMouseData
+import com.intellij.codeInsight.navigation.psiCtrlMouseData
+import com.intellij.codeInsight.navigation.targetPresentation
 import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.project.IndexNotReadyException
 import com.intellij.openapi.project.Project
-import com.intellij.pom.Navigatable
+import com.intellij.openapi.util.ThrowableComputable
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
-import com.intellij.util.SmartList
+import com.intellij.util.indexing.DumbModeAccessType
+import org.jetbrains.annotations.ApiStatus.Internal
+import kotlin.coroutines.cancellation.CancellationException
 
-internal fun fromGTDProviders(project: Project, editor: Editor, offset: Int): GTDActionData? {
+@Internal
+fun fromGTDProviders(project: Project, editor: Editor, offset: Int): GTDActionData? {
   return processInjectionThenHost(editor, offset) { _editor, _offset ->
     fromGTDProvidersInner(project, _editor, _offset)
   }
@@ -28,48 +35,69 @@ private fun fromGTDProvidersInner(project: Project, editor: Editor, offset: Int)
   val file = PsiDocumentManager.getInstance(project).getPsiFile(document) ?: return null
   val adjustedOffset: Int = TargetElementUtil.adjustOffset(file, document, offset)
   val leafElement: PsiElement = file.findElementAt(adjustedOffset) ?: return null
-  val fromProviders: Array<out PsiElement>? = findTargetElementsFromProviders(leafElement, adjustedOffset, editor)
-  if (fromProviders.isNullOrEmpty()) {
-    return null
-  }
-  return GTDProviderData(leafElement, fromProviders.toList())
+
+  return DumbModeAccessType.RELIABLE_DATA_ONLY.ignoreDumbMode(ThrowableComputable {
+    for (handler in GotoDeclarationHandler.EP_NAME.extensionList) {
+      val fromProvider: Array<out PsiElement>? = try {
+        handler.getGotoDeclarationTargets(leafElement, offset, editor)
+      }
+      catch (ce: CancellationException) {
+        throw ce
+      }
+      catch (inre: IndexNotReadyException) {
+        throw inre // clients should catch and either show dumb mode notification or ignore
+      }
+      catch (t: Throwable) {
+        LOG.error(t)
+        null
+      }
+      if (fromProvider.isNullOrEmpty()) {
+        continue
+      }
+      return@ThrowableComputable GTDProviderData(leafElement, fromProvider.toList(), handler)
+    }
+    return@ThrowableComputable null
+  })
 }
 
 private class GTDProviderData(
   private val leafElement: PsiElement,
-  private val targetElements: Collection<PsiElement>
+  private val targetElements: Collection<PsiElement>,
+  private val navigationProvider: GotoDeclarationHandler
 ) : GTDActionData {
 
   init {
     require(targetElements.isNotEmpty())
   }
 
-  override fun ctrlMouseInfo(): CtrlMouseInfo {
+  override fun ctrlMouseData(): CtrlMouseData {
     val singleTarget = targetElements.singleOrNull()
-    return if (singleTarget == null) {
-      MultipleTargetElementsInfo(leafElement)
+    if (singleTarget == null) {
+      return multipleTargetsCtrlMouseData(getReferenceRanges(leafElement))
     }
     else {
-      SingleTargetElementInfo(leafElement, singleTarget)
+      return psiCtrlMouseData(leafElement, singleTarget)
     }
   }
 
-  override fun result(): GTDActionResult? {
-    val singleTarget = targetElements.singleOrNull()
-    if (singleTarget != null) {
-      return gtdTargetNavigatable(singleTarget)?.let(GTDActionResult::SingleTarget)
-    }
-    val result: List<Pair<Navigatable, PsiElement>> = targetElements.mapNotNullTo(SmartList()) { targetElement ->
-      psiNavigatable(targetElement)?.let { navigatable ->
-        Pair(navigatable, targetElement)
-      }
-    }
-    return when (result.size) {
+  override fun result(): NavigationActionResult? {
+    return when (targetElements.size) {
       0 -> null
-      1 -> GTDActionResult.SingleTarget(result.single().first)
-      else -> GTDActionResult.MultipleTargets(result.map { (navigatable, targetElement) ->
-        Pair(navigatable, PsiElementTargetPopupPresentation(targetElement))
-      })
+      1 -> {
+        targetElements.single().gtdTargetNavigatable()?.navigationRequest()?.let { request ->
+          SingleTarget({ request }, navigationProvider)
+        }
+      }
+      else -> {
+        val targets = targetElements.map { targetElement ->
+          LazyTargetWithPresentation(
+            { targetElement.psiNavigatable()?.navigationRequest() },
+            targetPresentation(targetElement),
+            navigationProvider
+          )
+        }
+        NavigationActionResult.MultipleTargets(targets)
+      }
     }
   }
 }

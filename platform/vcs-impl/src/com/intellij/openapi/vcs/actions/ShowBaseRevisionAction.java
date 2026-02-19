@@ -1,12 +1,16 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.actions;
 
-import com.intellij.openapi.actionSystem.Presentation;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
@@ -21,40 +25,45 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.BrowserHyperlinkListener;
 import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-import java.awt.*;
-import java.util.Objects;
+import javax.swing.JEditorPane;
+import javax.swing.JPanel;
+import java.awt.BorderLayout;
+import java.awt.Color;
 
-public class ShowBaseRevisionAction extends AbstractVcsAction {
+import static java.util.Objects.requireNonNull;
+
+final class ShowBaseRevisionAction extends DumbAwareAction {
   @Override
-  protected void actionPerformed(@NotNull VcsContext vcsContext) {
-    Project project = Objects.requireNonNull(vcsContext.getProject());
-    VirtualFile file = vcsContext.getSelectedFiles()[0];
-    AbstractVcs vcs = Objects.requireNonNull(ChangesUtil.getVcsForFile(file, project));
+  public void actionPerformed(@NotNull AnActionEvent e) {
+    Project project = requireNonNull(e.getProject());
+    VirtualFile file = requireNonNull(VcsContextUtil.selectedFile(e.getDataContext()));
+    AbstractVcs vcs = requireNonNull(ChangesUtil.getVcsForFile(file, project));
+    Editor editor = e.getData(CommonDataKeys.EDITOR);
 
-    ProgressManager.getInstance().run(new MyTask(file, vcs, vcsContext));
+    ProgressManager.getInstance().run(new MyTask(project, file, vcs, editor));
   }
 
   private static final class MyTask extends Task.Backgroundable {
     private final AbstractVcs vcs;
     private final VirtualFile selectedFile;
     private VcsRevisionDescription myDescription;
-    private final VcsContext vcsContext;
+    private final Editor editor;
 
-    private MyTask(VirtualFile selectedFile, AbstractVcs vcs, VcsContext vcsContext) {
-      super(vcsContext.getProject(), VcsBundle.message("progress.title.loading.current.revision"), true);
+    private MyTask(Project project, VirtualFile selectedFile, AbstractVcs vcs, Editor editor) {
+      super(project, VcsBundle.message("progress.title.loading.current.revision"), true);
       this.selectedFile = selectedFile;
       this.vcs = vcs;
-      this.vcsContext = vcsContext;
+      this.editor = editor;
     }
 
     @Override
     public void run(@NotNull ProgressIndicator indicator) {
-      myDescription = Objects.requireNonNull((DiffMixin)vcs.getDiffProvider()).getCurrentRevisionDescription(selectedFile);
+      myDescription = requireNonNull((DiffMixin)vcs.getDiffProvider()).getCurrentRevisionDescription(selectedFile);
     }
 
     @Override
@@ -65,8 +74,8 @@ public class ShowBaseRevisionAction extends AbstractVcsAction {
         NotificationPanel panel = new NotificationPanel();
         panel.setText(createMessage(myProject, myDescription, selectedFile));
         final JBPopup message = JBPopupFactory.getInstance().createComponentPopupBuilder(panel, panel.getLabel()).createPopup();
-        if (vcsContext.getEditor() != null) {
-          message.showInBestPositionFor(vcsContext.getEditor());
+        if (editor != null && editor.getComponent().isShowing()) {
+          message.showInBestPositionFor(editor);
         }
         else {
           message.showCenteredInCurrentWindow(myProject);
@@ -75,8 +84,7 @@ public class ShowBaseRevisionAction extends AbstractVcsAction {
     }
   }
 
-  @Nls
-  private static String createMessage(@NotNull Project project, @NotNull VcsRevisionDescription description, @NotNull VirtualFile vf) {
+  private static @Nls String createMessage(@NotNull Project project, @NotNull VcsRevisionDescription description, @NotNull VirtualFile vf) {
     String commitMessage = IssueLinkHtmlRenderer.formatTextWithLinks(project, StringUtil.notNullize(description.getCommitMessage()));
     String message = VcsBundle.message("current.version.text",
                                        description.getAuthor(),
@@ -84,12 +92,18 @@ public class ShowBaseRevisionAction extends AbstractVcsAction {
                                        commitMessage,
                                        description.getRevisionNumber().asString(),
                                        vf.getName());
-    return "<html><head>" + UIUtil.getCssFontDeclaration(UIUtil.getLabelFont()) + "</head><body>" + message + "</body></html>"; //NON-NLS
+    return "<html><head>" + UIUtil.getCssFontDeclaration(StartupUiUtil.getLabelFont()) + "</head><body>" + message + "</body></html>"; //NON-NLS
   }
 
   @Override
-  protected void update(@NotNull VcsContext vcsContext, @NotNull Presentation presentation) {
-    presentation.setEnabled(AbstractShowDiffAction.isEnabled(vcsContext, false));
+  public void update(@NotNull AnActionEvent e) {
+    boolean isEnabled = AbstractShowDiffAction.isEnabled(e.getDataContext(), false);
+    e.getPresentation().setEnabled(isEnabled);
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 
   static class NotificationPanel extends JPanel {

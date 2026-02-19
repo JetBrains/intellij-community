@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.runner;
 
 import com.intellij.execution.CantRunException;
@@ -51,9 +51,7 @@ public class DefaultGroovyScriptRunner extends GroovyScriptRunner {
 
   @Override
   public void configureCommandLine(JavaParameters params, @Nullable Module module, boolean tests, VirtualFile script, GroovyScriptRunConfiguration configuration) throws CantRunException {
-    configureGenericGroovyRunner(params, module, "groovy.ui.GroovyMain", false, tests, configuration.isAddClasspathToTheRunner(), true);
-
-    //addClasspathFromRootModel(module, tests, params, true);
+    configureGenericGroovyRunner(params, module, "groovy.ui.GroovyMain", false, tests, configuration.isAddClasspathToTheRunner());
 
     params.getVMParametersList().addParametersString(configuration.getVMParameters());
 
@@ -73,7 +71,7 @@ public class DefaultGroovyScriptRunner extends GroovyScriptRunner {
                                                   @NotNull String mainClass,
                                                   boolean useBundled,
                                                   boolean tests) throws CantRunException {
-    configureGenericGroovyRunner(params, module, mainClass, useBundled, tests, true, true);
+    configureGenericGroovyRunner(params, module, mainClass, useBundled, tests, true);
   }
 
   public static void configureGenericGroovyRunner(@NotNull JavaParameters params,
@@ -81,11 +79,10 @@ public class DefaultGroovyScriptRunner extends GroovyScriptRunner {
                                                   @NotNull String mainClass,
                                                   boolean useBundled,
                                                   boolean tests,
-                                                  boolean addClasspathToRunner,
-                                                  boolean addClassPathToStarter) throws CantRunException {
+                                                  boolean addClasspathToRunner) throws CantRunException {
     final VirtualFile groovyJar = findGroovyJar(module);
     if (useBundled) {
-      params.getClassPath().add(getBundledGroovyFile());
+      params.getClassPath().add(getBundledGroovyFile().get());
     }
     else if (groovyJar != null) {
       params.getClassPath().add(groovyJar);
@@ -97,7 +94,7 @@ public class DefaultGroovyScriptRunner extends GroovyScriptRunner {
 
     setToolsJar(params);
 
-    String groovyHome = useBundled ? FileUtil.toCanonicalPath(getBundledGroovyFile().getParentFile().getParent()) : LibrariesUtil.getGroovyHomePath(module);
+    String groovyHome = useBundled ? FileUtil.toCanonicalPath(getBundledGroovyFile().get().getParentFile().getParent()) : LibrariesUtil.getGroovyHomePath(module);
     String groovyHomeDependentName = groovyHome != null ? FileUtil.toSystemDependentName(groovyHome) : null;
 
     if (groovyHomeDependentName != null) {
@@ -117,10 +114,6 @@ public class DefaultGroovyScriptRunner extends GroovyScriptRunner {
 
     params.getProgramParametersList().add("--main");
     params.getProgramParametersList().add(mainClass);
-
-    if (addClassPathToStarter) {
-      addClasspathFromRootModel(module, tests, params, true);
-    }
 
     if (params.getVMParametersList().getPropertyValue(GroovycOutputParser.GRAPE_ROOT) == null) {
       String sysRoot = System.getProperty(GroovycOutputParser.GRAPE_ROOT);

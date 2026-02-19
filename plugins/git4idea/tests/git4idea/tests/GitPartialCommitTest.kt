@@ -1,18 +1,14 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.tests
 
-import com.intellij.openapi.application.invokeAndWaitIfNeeded
-import com.intellij.openapi.application.runReadAction
-import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.vcs.Executor.child
 import com.intellij.openapi.vcs.changes.ChangesUtil
 import com.intellij.openapi.vcs.changes.LocalChangeList
+import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager
 import com.intellij.openapi.vcs.ex.PartialLocalLineStatusTracker
-import com.intellij.openapi.vcs.impl.LineStatusTrackerManager
 import com.intellij.openapi.vfs.LocalFileSystem
-import com.intellij.util.ui.UIUtil
 import git4idea.test.GitSingleRepoTest
 import git4idea.test.assertCommitted
 import git4idea.test.gitAsBytes
@@ -99,6 +95,8 @@ class GitPartialCommitTest : GitSingleRepoTest() {
   fun `test partial commit with changelists & don't commit staged change`() {
     tac("a.java", "A\nB\nC")
     tac("b.java", "A\nB\nC")
+    VcsDirtyScopeManager.getInstance(project).markEverythingDirty()
+    changeListManager.ensureUpToDate()
 
     val testChangeList = changeListManager.addChangeList("Test", null)
 
@@ -189,6 +187,62 @@ class GitPartialCommitTest : GitSingleRepoTest() {
 
     assertCommittedContent("a.java", "A\r\nB\r\nZ")
     assertCommittedContent("a.java", "A\r\nB\r\nZ", true)
+  }
+
+  fun `test partial commit with multiple changelists 1`() {
+    tac("a.java", "A\nB\nC")
+
+    val testChangeList = changeListManager.addChangeList("Test", null)
+
+    withTrackedDocument("a.java", "X\nB\nZ") { document, tracker ->
+      val ranges = tracker.getRanges()!!
+      tracker.moveToChangelist(ranges[1], testChangeList)
+    }
+
+    assertChanges {
+      modified("a.java")
+    }
+
+    val changes = changeListManager.findChangeList("Test")!!.changes +
+                  changeListManager.findChangeList(LocalChangeList.getDefaultName())!!.changes
+    commit(changes)
+
+    assertNoChanges()
+    repo.assertCommitted {
+      modified("a.java")
+    }
+
+    assertCommittedContent("a.java", "X\nB\nZ")
+  }
+
+  fun `test partial commit with multiple changelists 2`() {
+    tac("a.java", "A\nB\nC\nD\nE")
+
+    val testChangeList1 = changeListManager.addChangeList("Test 1", null)
+    val testChangeList2 = changeListManager.addChangeList("Test 2", null)
+
+    withTrackedDocument("a.java", "X\nB\nZ\nD\nY") { document, tracker ->
+      val ranges = tracker.getRanges()!!
+      tracker.moveToChangelist(ranges[1], testChangeList1)
+      tracker.moveToChangelist(ranges[2], testChangeList2)
+    }
+
+    assertChanges {
+      modified("a.java")
+    }
+
+    val changes = changeListManager.findChangeList("Test 1")!!.changes +
+                  changeListManager.findChangeList("Test 2")!!.changes
+    commit(changes)
+
+    assertChanges {
+      modified("a.java")
+    }
+    repo.assertCommitted {
+      modified("a.java")
+    }
+
+    assertCommittedContent("a.java", "A\nB\nZ\nD\nY")
   }
 
 

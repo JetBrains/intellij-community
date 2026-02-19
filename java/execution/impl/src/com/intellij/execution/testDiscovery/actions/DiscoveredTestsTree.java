@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.testDiscovery.actions;
 
 import com.intellij.execution.ExecutionBundle;
@@ -6,13 +6,19 @@ import com.intellij.ide.CommonActionsManager;
 import com.intellij.ide.DefaultTreeExpander;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.DataProvider;
+import com.intellij.openapi.actionSystem.DataSink;
 import com.intellij.openapi.actionSystem.LangDataKeys;
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
+import com.intellij.openapi.actionSystem.UiDataProvider;
 import com.intellij.openapi.compiler.JavaCompilerBundle;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.ui.popup.util.PopupUtil;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiMember;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.TreeUIHelper;
@@ -30,7 +36,7 @@ import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JTree;
 import javax.swing.event.TreeModelEvent;
 import javax.swing.tree.TreeModel;
 import javax.swing.tree.TreePath;
@@ -41,7 +47,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-class DiscoveredTestsTree extends Tree implements DataProvider, Disposable {
+class DiscoveredTestsTree extends Tree implements UiDataProvider, Disposable {
   private final DiscoveredTestsTreeModel myModel;
 
   DiscoveredTestsTree(String title) {
@@ -65,8 +71,7 @@ class DiscoveredTestsTree extends Tree implements DataProvider, Disposable {
                                         boolean leaf,
                                         int row,
                                         boolean hasFocus) {
-        if (value instanceof DiscoveredTestsTreeModel.Node) {
-          DiscoveredTestsTreeModel.Node node = (DiscoveredTestsTreeModel.Node)value;
+        if (value instanceof DiscoveredTestsTreeModel.Node node) {
           setIcon(node.getIcon());
           String name = node.getName();
           assert name != null;
@@ -77,7 +82,7 @@ class DiscoveredTestsTree extends Tree implements DataProvider, Disposable {
               append(FontUtil.spaceAndThinSpace() + packageName, SimpleTextAttributes.GRAYED_ATTRIBUTES);
             }
             int testMethodCount = myModel.getChildren(value).size();
-            append(" / " + (testMethodCount != 1 ? (testMethodCount + " tests") : "1 test"), SimpleTextAttributes.GRAYED_ATTRIBUTES);
+            append(JavaCompilerBundle.message("affected.tests.counts", testMethodCount, testMethodCount == 1 ? 0 : 1), SimpleTextAttributes.GRAYED_ATTRIBUTES);
           }
           else if (node instanceof DiscoveredTestsTreeModel.Node.Method) {
             boolean isParametrized = !((DiscoveredTestsTreeModel.Node.Method)node).getParameters().isEmpty();
@@ -118,8 +123,7 @@ class DiscoveredTestsTree extends Tree implements DataProvider, Disposable {
     myModel.addTest(testClass, testMethod, parameter);
   }
 
-  @NotNull
-  public Set<Module> getContainingModules() {
+  public @NotNull Set<Module> getContainingModules() {
     return myModel.getTestClasses().stream()
                   .map(element -> {
                     SmartPsiElementPointer<PsiClass> pointer = element.getPointer();
@@ -133,14 +137,12 @@ class DiscoveredTestsTree extends Tree implements DataProvider, Disposable {
     return myModel.getTestMethods();
   }
 
-  @Nullable
-  public PsiElement getSelectedElement() {
+  public @Nullable PsiElement getSelectedElement() {
     TreePath path = getSelectionModel().getSelectionPath();
     return obj2psi(path == null ? null : path.getLastPathComponent());
   }
 
-  @Nullable
-  private static PsiElement obj2psi(@Nullable Object obj) {
+  private static @Nullable PsiElement obj2psi(@Nullable Object obj) {
     return Optional.ofNullable(ObjectUtils.tryCast(obj, DiscoveredTestsTreeModel.Node.class))
                    .map(n -> n.getPointer())
                    .map(p -> p.getElement())
@@ -155,11 +157,16 @@ class DiscoveredTestsTree extends Tree implements DataProvider, Disposable {
     return myModel.getTestClassesCount();
   }
 
-  @Nullable
   @Override
-  public Object getData(@NotNull String dataId) {
-    if (LangDataKeys.PSI_ELEMENT_ARRAY.is(dataId)) {
-      TreePath[] paths = getSelectionModel().getSelectionPaths();
+  public void uiDataSnapshot(@NotNull DataSink sink) {
+    TreePath[] paths = getSelectionPaths();
+    sink.set(LangDataKeys.POSITION_ADJUSTER_POPUP, PopupUtil.getPopupContainerFor(this));
+
+    if (paths == null || paths.length == 0) return;
+    sink.lazy(CommonDataKeys.PSI_ELEMENT, () -> {
+      return obj2psi(paths[0].getLastPathComponent());
+    });
+    sink.lazy(PlatformCoreDataKeys.PSI_ELEMENT_ARRAY, () -> {
       List<PsiElement> result = new SmartList<>();
       TreeModel model = getModel();
       for (TreePath p : paths) {
@@ -181,13 +188,6 @@ class DiscoveredTestsTree extends Tree implements DataProvider, Disposable {
         }
       }
       return result.toArray(PsiElement.EMPTY_ARRAY);
-    }
-    if (CommonDataKeys.PSI_ELEMENT.is(dataId)) {
-      return getSelectedElement();
-    }
-    else if (LangDataKeys.POSITION_ADJUSTER_POPUP.is(dataId)) {
-      return PopupUtil.getPopupContainerFor(this);
-    }
-    return null;
+    });
   }
 }

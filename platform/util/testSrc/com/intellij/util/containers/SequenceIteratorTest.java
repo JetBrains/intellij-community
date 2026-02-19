@@ -13,26 +13,28 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.intellij.util.containers;
 
-import com.intellij.util.Assertion;
 import junit.framework.TestCase;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Iterator;
+import java.util.List;
+
+import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
 
 public class SequenceIteratorTest extends TestCase {
-  private final Assertion CHECK = new Assertion();
-
   public void testOneIterator() {
     Iterator<Object> iterator = iterate("1", "2");
     Iterator<Object> seq = ContainerUtil.concatIterators(iterator);
-    CHECK.compareAll(new Object[]{"1", "2"}, ContainerUtil.collect(seq));
+    assertThat(ContainerUtil.collect(seq)).containsExactly("1", "2");
   }
 
   public void testTwoNotEmpties() {
     Iterator<Object> seq = ContainerUtil.concatIterators(iterate("1", "2"), iterate("3", "4"));
-    CHECK.compareAll(new Object[]{"1", "2", "3", "4"}, ContainerUtil.collect(seq));
+    assertThat(ContainerUtil.collect(seq)).containsExactly("1", "2", "3", "4");
   }
 
   public void testAllEmpty() {
@@ -42,12 +44,12 @@ public class SequenceIteratorTest extends TestCase {
 
   public void testIntermediateEmpty() {
     Iterator<Object> seq = ContainerUtil.concatIterators(iterate("1", "2"), empty(), iterate("3", "4"));
-    CHECK.compareAll(new Object[]{"1", "2", "3", "4"}, ContainerUtil.collect(seq));
+    assertThat(ContainerUtil.collect(seq)).containsExactly("1", "2", "3", "4");
   }
 
   public void testFirstEmpty() {
     Iterator<Object> seq = ContainerUtil.concatIterators(empty(), iterate("1", "2"));
-    CHECK.compareAll(new Object[]{"1", "2"}, ContainerUtil.collect(seq));
+    assertThat(ContainerUtil.collect(seq)).containsExactly("1", "2");
   }
 
   private static Iterator<Object> iterate(String first, String second) {

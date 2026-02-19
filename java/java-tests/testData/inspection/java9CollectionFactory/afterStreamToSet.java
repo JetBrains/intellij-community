@@ -1,4 +1,4 @@
-// "Replace with 'Set.of' call" "true"
+// "Replace with 'Set.of()' call" "true"
 import java.util.Collections;
 import java.util.Set;
 import java.util.stream.Collectors;

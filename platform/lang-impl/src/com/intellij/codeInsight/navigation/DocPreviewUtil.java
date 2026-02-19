@@ -1,16 +1,22 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.navigation;
 
 import com.intellij.codeInsight.documentation.DocumentationManagerProtocol;
 import com.intellij.lang.documentation.DocumentationProvider;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
-import gnu.trove.TIntHashSet;
+import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
+import it.unimi.dsi.fastutil.ints.IntSet;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -18,12 +24,10 @@ import java.util.regex.Pattern;
  * Provides utility methods for building documentation preview.
  * <p/>
  * Thread-safe.
- *
- * @author Denis Zhdanov
  */
+@ApiStatus.Internal
 public final class DocPreviewUtil {
-
-  private static final TIntHashSet ALLOWED_LINK_SEPARATORS = new TIntHashSet();
+  private static final IntSet ALLOWED_LINK_SEPARATORS = new IntOpenHashSet();
   static {
     ALLOWED_LINK_SEPARATORS.add(',');
     ALLOWED_LINK_SEPARATORS.add(' ');
@@ -45,7 +49,7 @@ public final class DocPreviewUtil {
    * There is a possible situation then that we have two replacements where one key is a simple name and another one is a fully qualified
    * one. We want to apply {@code 'from fully qualified name'} replacement first then.
    */
-  private static final Comparator<String> REPLACEMENTS_COMPARATOR = new Comparator<String>() {
+  private static final Comparator<String> REPLACEMENTS_COMPARATOR = new Comparator<>() {
     @Override
     public int compare(@NotNull String o1, @NotNull String o2) {
       String shortName1 = extractShortName(o1);
@@ -64,7 +68,7 @@ public final class DocPreviewUtil {
       }
     }
 
-    private String extractShortName(@NotNull String s) {
+    private static String extractShortName(@NotNull String s) {
       int i = s.lastIndexOf('.');
       return i > 0 && i < s.length() - 1 ? s.substring(i + 1) : s;
     }
@@ -84,10 +88,9 @@ public final class DocPreviewUtil {
    *                                   element with the given qualified name is added to the preview's end if the qName is provided then
    * @param fullText                   full documentation text (if available)
    */
-  @NotNull
-  public static @Nls String buildPreview(@NotNull @Nls final String header,
-                                         @Nullable final String qName,
-                                         @Nullable @Nls final String fullText) {
+  public static @NotNull @Nls String buildPreview(final @NotNull @Nls String header,
+                                         final @Nullable String qName,
+                                         final @Nullable @Nls String fullText) {
     if (fullText == null) {
       return header;
     }
@@ -133,8 +136,7 @@ public final class DocPreviewUtil {
    * @param name  name to process
    * @return      short name derived from the given full name if possible; {@code null} otherwise
    */
-  @Nullable
-  private static String parseShortName(@NotNull String name) {
+  private static @Nullable String parseShortName(@NotNull String name) {
     int i = name.lastIndexOf('.');
     return i > 0 && i < name.length() - 1 ? name.substring(i + 1) : null;
   }
@@ -148,8 +150,7 @@ public final class DocPreviewUtil {
    * @param address     address to process
    * @return            long name derived from the given arguments (if any); {@code null} otherwise
    */
-  @Nullable
-  private static String parseLongName(@NotNull String shortName, @NotNull String address) {
+  private static @Nullable String parseLongName(@NotNull String shortName, @NotNull String address) {
     String pureAddress = address;
     int i = pureAddress.lastIndexOf("//");
     if (i > 0 && i < pureAddress.length() - 2) {
@@ -216,7 +217,7 @@ public final class DocPreviewUtil {
     for (; i < text.length(); i++) {
       char c = text.charAt(i);
       switch (state) {
-        case TEXT:
+        case TEXT -> {
           if (c == '<') {
             if (i > dataStartOffset) {
               if (!callback.onText(text.substring(dataStartOffset, i).replace("&nbsp;", " "))) {
@@ -233,8 +234,8 @@ public final class DocPreviewUtil {
               tagNameStartOffset = i + 1;
             }
           }
-          break;
-        case INSIDE_OPEN_TAG:
+        }
+        case INSIDE_OPEN_TAG -> {
           if (c == ' ') {
             tagName = text.substring(tagNameStartOffset, i);
           }
@@ -249,7 +250,6 @@ public final class DocPreviewUtil {
               tagName = null;
               state = State.TEXT;
               dataStartOffset = ++i + 1;
-              break;
             }
           }
           else if (c == '>') {
@@ -263,12 +263,10 @@ public final class DocPreviewUtil {
             state = State.TEXT;
             dataStartOffset = i + 1;
           }
-          break;
-        case INSIDE_CLOSE_TAG:
+        }
+        case INSIDE_CLOSE_TAG -> {
           if (c == '>') {
-            if (tagName == null) {
-              tagName = text.substring(tagNameStartOffset, i);
-            }
+            tagName = text.substring(tagNameStartOffset, i);
             if (!callback.onCloseTag(tagName, text.substring(dataStartOffset, i + 1))) {
               return dataStartOffset;
             }
@@ -276,6 +274,7 @@ public final class DocPreviewUtil {
             state = State.TEXT;
             dataStartOffset = i + 1;
           }
+        }
       }
     }
 
@@ -293,11 +292,11 @@ public final class DocPreviewUtil {
     boolean onText(@NotNull String text);
   }
 
-  private static class LinksCollector implements Callback {
+  private static final class LinksCollector implements Callback {
 
     private static final Pattern HREF_PATTERN = Pattern.compile("href=[\"']([^\"']+)");
 
-    @NotNull private final Map<String, String> myLinks;
+    private final @NotNull Map<String, String> myLinks;
     private                String              myHref;
 
     LinksCollector(@NotNull Map<String, String> links) {

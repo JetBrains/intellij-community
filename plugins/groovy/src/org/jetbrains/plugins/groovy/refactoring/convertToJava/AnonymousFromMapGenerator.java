@@ -1,7 +1,11 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.refactoring.convertToJava;
 
-import com.intellij.psi.*;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiClassType;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiSubstitutor;
+import com.intellij.psi.PsiType;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrListOrMap;
 import org.jetbrains.plugins.groovy.lang.psi.api.signatures.GrSignature;
@@ -47,9 +51,8 @@ public final class AnonymousFromMapGenerator {
     for (GrNamedArgument arg : operand.getNamedArguments()) {
       final String name = arg.getLabelName();
       final GrExpression expression = arg.getExpression();
-      if (name == null || !(expression instanceof GrClosableBlock)) continue;
+      if (name == null || !(expression instanceof GrClosableBlock closure)) continue;
 
-      final GrClosableBlock closure = (GrClosableBlock)expression;
       final GrParameter[] allParameters = closure.getAllParameters();
       List<GrParameter> actual = new ArrayList<>(Arrays.asList(allParameters));
       final PsiType clReturnType = context.typeProvider.getReturnType(closure);

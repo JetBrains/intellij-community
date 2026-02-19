@@ -20,7 +20,8 @@ import com.intellij.openapi.util.Comparing;
 import org.intellij.plugins.xpathView.HistoryElement;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.AbstractListModel;
+import javax.swing.ComboBoxModel;
 import java.util.Arrays;
 
 class HistoryModel extends AbstractListModel implements ComboBoxModel, MultilineEditor.EditorModel {
@@ -49,8 +50,7 @@ class HistoryModel extends AbstractListModel implements ComboBoxModel, Multiline
     }
 
     @Override
-    @Nullable
-    public HistoryElement getSelectedItem() {
+    public @Nullable HistoryElement getSelectedItem() {
         if (selectedItem != null) {
             if (Comparing.equal(selectedItem.expression, myDocument.getCharsSequence())) {
                 return selectedItem;

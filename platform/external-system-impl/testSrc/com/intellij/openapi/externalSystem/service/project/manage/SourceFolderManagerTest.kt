@@ -1,16 +1,21 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.service.project.manage
 
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
-import com.intellij.openapi.module.ModuleTypeId
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VfsUtilCore
+import com.intellij.platform.backend.workspace.WorkspaceModel
+import com.intellij.platform.backend.workspace.WorkspaceModelChangeListener
+import com.intellij.platform.backend.workspace.WorkspaceModelTopics
+import com.intellij.platform.backend.workspace.impl.WorkspaceModelInternal
+import com.intellij.platform.workspace.storage.VersionedStorageChange
 import com.intellij.testFramework.HeavyPlatformTestCase
 import com.intellij.testFramework.PlatformTestUtil
+import com.intellij.workspaceModel.ide.legacyBridge.impl.java.JAVA_MODULE_ENTITY_TYPE_ID_NAME
 import org.assertj.core.api.BDDAssertions.then
 import org.jetbrains.jps.model.java.JavaSourceRootType
 import java.io.File
@@ -66,12 +71,44 @@ class SourceFolderManagerTest: HeavyPlatformTestCase() {
       .containsExactly(folderUrl)
   }
 
-  private fun createModuleWithContentRoot(dir: File): Module {
+  fun `test update source folders execute within single storage diff`() {
+    val manager = SourceFolderManager.getInstance(project) as SourceFolderManagerImpl
+    val firstModuleFolder = createTempDir("foo")
+    val firstModule = createModuleWithContentRoot(firstModuleFolder, "foo")
+    val secondModuleFolder = createTempDir("bar")
+    val secondModule = createModuleWithContentRoot(secondModuleFolder, "bar")
+
+    var folderFile = File(firstModuleFolder, "newFolder")
+    FileUtil.createDirectory(folderFile)
+    val firstFolderUrl = VfsUtilCore.pathToUrl(folderFile.absolutePath)
+    manager.addSourceFolder(firstModule, firstFolderUrl, JavaSourceRootType.SOURCE)
+
+    folderFile = File(secondModuleFolder, "newFolder")
+    FileUtil.createDirectory(folderFile)
+    val secondFolderUrl = VfsUtilCore.pathToUrl(folderFile.absolutePath)
+    manager.addSourceFolder(secondModule, secondFolderUrl, JavaSourceRootType.SOURCE)
+
+    var notificationsCount = 0
+    val version = (WorkspaceModel.getInstance(project) as WorkspaceModelInternal).entityStorage.version
+    project.messageBus.connect().subscribe(WorkspaceModelTopics.CHANGED, object : WorkspaceModelChangeListener {
+      override fun changed(event: VersionedStorageChange) {
+        notificationsCount++
+      }
+    })
+    LocalFileSystem.getInstance().refresh(false)
+    manager.consumeBulkOperationsState { PlatformTestUtil.waitForFuture(it, 1000)}
+    then(notificationsCount).isEqualTo(1)
+    then((WorkspaceModel.getInstance(project) as WorkspaceModelInternal).entityStorage.version)
+      .describedAs("Check that storage version increased by 1")
+      .isEqualTo(version + 1)
+  }
+
+  private fun createModuleWithContentRoot(dir: File, moduleName: String = "topModule"): Module {
     val moduleManager = ModuleManager.getInstance(project)
-    val modifiableModel = moduleManager.modifiableModel
+    val modifiableModel = moduleManager.getModifiableModel()
     val newModule: Module =
       try {
-        modifiableModel.newModule(dir.toPath().resolve("topModule").toAbsolutePath(), ModuleTypeId.JAVA_MODULE)
+        modifiableModel.newModule(dir.toPath().resolve(moduleName).toAbsolutePath(), JAVA_MODULE_ENTITY_TYPE_ID_NAME)
       }
       finally {
         runWriteAction {

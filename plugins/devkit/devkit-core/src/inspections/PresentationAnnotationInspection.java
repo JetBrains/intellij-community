@@ -1,17 +1,27 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.inspections;
 
 import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.codeInspection.deprecation.DeprecationInspectionBase;
 import com.intellij.ide.presentation.Presentation;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiReference;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.uast.*;
+import org.jetbrains.annotations.VisibleForTesting;
+import org.jetbrains.uast.UAnnotation;
+import org.jetbrains.uast.UClass;
+import org.jetbrains.uast.UExpression;
+import org.jetbrains.uast.ULiteralExpression;
+import org.jetbrains.uast.UastLiteralUtils;
 
-public class PresentationAnnotationInspection extends DevKitUastInspectionBase {
+@VisibleForTesting
+@ApiStatus.Internal
+public final class PresentationAnnotationInspection extends DevKitUastInspectionBase {
 
   public PresentationAnnotationInspection() {
     super(UClass.class);
@@ -37,8 +47,15 @@ public class PresentationAnnotationInspection extends DevKitUastInspectionBase {
     ProblemsHolder holder = new ProblemsHolder(manager, iconExpressionPsi.getContainingFile(), isOnTheFly);
     PsiReference[] references = iconExpressionPsi.getReferences();
     for (PsiReference reference : references) {
-      if (reference.resolve() == null) {
+      final PsiElement resolve = reference.resolve();
+      if (resolve == null) {
         holder.registerProblem(reference);
+      }
+      else {
+        assert resolve instanceof PsiField;
+        DeprecationInspectionBase.checkDeprecated((PsiField)resolve, iconExpressionPsi, reference.getRangeInElement(), false,
+                                                  false, true, false,
+                                                  holder, false);
       }
     }
     return holder.getResultsArray();

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.eclipse.model;
 
 import com.intellij.openapi.components.ExpandMacroToPathMap;
@@ -8,22 +8,43 @@ import com.intellij.openapi.util.text.StringUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.eclipse.*;
+import org.jetbrains.idea.eclipse.AbstractEclipseClasspathReader;
+import org.jetbrains.idea.eclipse.ConversionException;
+import org.jetbrains.idea.eclipse.EPathCommonUtil;
+import org.jetbrains.idea.eclipse.EclipseModuleManager;
+import org.jetbrains.idea.eclipse.EclipseProjectFinder;
+import org.jetbrains.idea.eclipse.EclipseXml;
 import org.jetbrains.jps.model.JpsElementFactory;
-import org.jetbrains.jps.model.java.*;
+import org.jetbrains.jps.model.java.JavaSourceRootType;
+import org.jetbrains.jps.model.java.JpsJavaDependencyExtension;
+import org.jetbrains.jps.model.java.JpsJavaExtensionService;
+import org.jetbrains.jps.model.java.JpsJavaLibraryType;
+import org.jetbrains.jps.model.java.JpsJavaModuleExtension;
+import org.jetbrains.jps.model.java.JpsJavaSdkType;
 import org.jetbrains.jps.model.library.JpsLibrary;
 import org.jetbrains.jps.model.library.JpsLibraryReference;
 import org.jetbrains.jps.model.library.JpsOrderRootType;
-import org.jetbrains.jps.model.module.*;
+import org.jetbrains.jps.model.module.JpsDependenciesList;
+import org.jetbrains.jps.model.module.JpsDependencyElement;
+import org.jetbrains.jps.model.module.JpsLibraryDependency;
+import org.jetbrains.jps.model.module.JpsModule;
+import org.jetbrains.jps.model.module.JpsModuleDependency;
+import org.jetbrains.jps.model.module.JpsSdkDependency;
 import org.jetbrains.jps.model.serialization.JpsMacroExpander;
 import org.jetbrains.jps.model.serialization.library.JpsLibraryTableSerializer;
 
 import java.io.File;
 import java.io.FilenameFilter;
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
-class JpsEclipseClasspathReader extends AbstractEclipseClasspathReader<JpsModule> {
+final class JpsEclipseClasspathReader extends AbstractEclipseClasspathReader<JpsModule> {
   private static final Logger LOG = Logger.getInstance(JpsEclipseClasspathReader.class);
   private final Map<String, String> myLibLevels;
 
@@ -189,10 +210,10 @@ class JpsEclipseClasspathReader extends AbstractEclipseClasspathReader<JpsModule
                             Element classpathElement, JpsMacroExpander expander) throws IOException {
     LOG.debug("start loading classpath for " + model.getName());
     final HashSet<String> libs = new HashSet<>();
-    for (Object o : classpathElement.getChildren(EclipseXml.CLASSPATHENTRY_TAG)) {
+    for (Element o : classpathElement.getChildren(EclipseXml.CLASSPATHENTRY_TAG)) {
       try {
         readClasspathEntry(model, new ArrayList<>(), new ArrayList<>(), new HashSet<>(),
-                           testPattern, (Element)o, 0, null, expander.getExpandMacroMap(), libs);
+                           testPattern, o, 0, null, expander.getExpandMacroMap(), libs);
       }
       catch (ConversionException e) {
         throw new IOException(e);
@@ -218,8 +239,7 @@ class JpsEclipseClasspathReader extends AbstractEclipseClasspathReader<JpsModule
     }
   }
 
-  @Nullable
-  private String expandLinkedResourcesPath(final String path, ExpandMacroToPathMap expander) {
+  private @Nullable String expandLinkedResourcesPath(final String path, ExpandMacroToPathMap expander) {
     final EclipseProjectFinder.LinkedResource linkedResource = EclipseProjectFinder.findLinkedResource(myRootPath, path);
     if (linkedResource != null) {
       if (linkedResource.containsPathVariable()) {

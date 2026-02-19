@@ -1,4 +1,4 @@
-// "Add explicit type arguments" "true"
+// "Add explicit type arguments" "true-preview"
 class X<A1, A2, R> { }
 
 class D<R> {

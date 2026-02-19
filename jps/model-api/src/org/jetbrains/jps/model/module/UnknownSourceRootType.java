@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.model.module;
 
 import org.jetbrains.annotations.NotNull;
@@ -20,13 +20,7 @@ public final class UnknownSourceRootType extends JpsElementTypeBase<UnknownSourc
   }
 
   @Override
-  public boolean isForTests() {
-    return false;
-  }
-
-  @NotNull
-  @Override
-  public UnknownSourceRootTypeProperties<?> createDefaultProperties() {
+  public @NotNull UnknownSourceRootTypeProperties<?> createDefaultProperties() {
     return new UnknownSourceRootTypeProperties<>(null);
   }
 

@@ -1,9 +1,16 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.scope.processor;
 
 import com.intellij.openapi.util.Key;
 import com.intellij.pom.java.LanguageLevel;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiCallExpression;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiExpressionList;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiSubstitutor;
+import com.intellij.psi.PsiType;
 import com.intellij.psi.filters.ElementFilter;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.scope.ElementClassFilter;
@@ -43,8 +50,7 @@ public abstract class MethodsProcessor extends ConflictFilterProcessor implement
     myArgumentList = argList;
   }
 
-  @NotNull
-  public LanguageLevel getLanguageLevel() {
+  public @NotNull LanguageLevel getLanguageLevel() {
     return myLanguageLevel;
   }
 
@@ -85,6 +91,10 @@ public abstract class MethodsProcessor extends ConflictFilterProcessor implement
     return myIsConstructor;
   }
 
+  public PsiElement getCurrentFileContext() {
+    return myCurrentFileContext;
+  }
+
   public void setIsConstructor(boolean myIsConstructor) {
     this.myIsConstructor = myIsConstructor;
   }
@@ -93,6 +103,7 @@ public abstract class MethodsProcessor extends ConflictFilterProcessor implement
     add(new CandidateInfo(method, PsiSubstitutor.EMPTY, false, false, myCurrentFileContext));
   }
 
+  @SuppressWarnings("unchecked")
   @Override
   public <T> T getHint(@NotNull Key<T> hintKey) {
     if (hintKey == ElementClassHint.KEY) {

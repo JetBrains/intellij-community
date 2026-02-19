@@ -1,0 +1,10 @@
+// REPLACE_SINGLE_OCCURRENCE
+fun foo(flag: Boolean): String = when (true) {
+    false -> {
+        val string = "1"
+        (string)
+    }
+    true -> "1"
+}
+
+// IGNORE_K1

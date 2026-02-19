@@ -16,10 +16,11 @@
 
 package org.intellij.plugins.relaxNG.inspections;
 
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.util.xml.highlighting.BasicDomElementsInspection;
 import org.intellij.plugins.relaxNG.xml.dom.RngDomElement;
 
-public class RngDomInspection extends BasicDomElementsInspection<RngDomElement> {
+public class RngDomInspection extends BasicDomElementsInspection<RngDomElement> implements DumbAware {
   public RngDomInspection() {
     super(RngDomElement.class);
   }

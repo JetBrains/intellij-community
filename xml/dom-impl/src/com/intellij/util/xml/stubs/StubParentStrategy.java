@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.xml.stubs;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -21,7 +7,11 @@ import com.intellij.psi.stubs.Stub;
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
-import com.intellij.util.xml.impl.*;
+import com.intellij.util.xml.impl.DomInvocationHandler;
+import com.intellij.util.xml.impl.DomManagerImpl;
+import com.intellij.util.xml.impl.DomParentStrategy;
+import com.intellij.util.xml.impl.PhysicalDomParentStrategy;
+import com.intellij.util.xml.impl.VirtualDomParentStrategy;
 import com.intellij.xml.util.IncludedXmlTag;
 import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.NotNull;
@@ -34,14 +24,14 @@ import java.util.List;
  */
 public class StubParentStrategy implements DomParentStrategy {
 
-  private final static Logger LOG = Logger.getInstance(StubParentStrategy.class);
+  private static final Logger LOG = Logger.getInstance(StubParentStrategy.class);
   protected final DomStub myStub;
 
   public StubParentStrategy(@NotNull DomStub stub) {
     myStub = stub;
   }
 
-  public static StubParentStrategy createAttributeStrategy(@Nullable AttributeStub stub, @NotNull final DomStub parent) {
+  public static StubParentStrategy createAttributeStrategy(@Nullable AttributeStub stub, final @NotNull DomStub parent) {
     if (stub == null) {
       return new Empty(parent);
     }
@@ -103,21 +93,18 @@ public class StubParentStrategy implements DomParentStrategy {
     return null;
   }
 
-  @NotNull
   @Override
-  public DomParentStrategy refreshStrategy(DomInvocationHandler handler) {
+  public @NotNull DomParentStrategy refreshStrategy(DomInvocationHandler handler) {
     return this;
   }
 
-  @NotNull
   @Override
-  public DomParentStrategy setXmlElement(@NotNull XmlElement element) {
+  public @NotNull DomParentStrategy setXmlElement(@NotNull XmlElement element) {
     return new PhysicalDomParentStrategy(element, DomManagerImpl.getDomManager(element.getProject()));
   }
 
-  @NotNull
   @Override
-  public DomParentStrategy clearXmlElement() {
+  public @NotNull DomParentStrategy clearXmlElement() {
     final DomInvocationHandler parent = getParentHandler();
     assert parent != null : "write operations should be performed on the DOM having a parent, your DOM may be not very fresh";
     return new VirtualDomParentStrategy(parent);
@@ -140,13 +127,12 @@ public class StubParentStrategy implements DomParentStrategy {
 
   @Override
   public boolean equals(Object obj) {
-    if (!(obj instanceof StubParentStrategy)) {
+    if (!(obj instanceof StubParentStrategy other)) {
       return PhysicalDomParentStrategy.strategyEquals(this, obj);
     }
 
     if (obj == this) return true;
 
-    StubParentStrategy other = (StubParentStrategy)obj;
     if (!other.getClass().equals(getClass())) return false;
 
     if (!other.myStub.equals(myStub)) return false;

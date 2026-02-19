@@ -5,18 +5,32 @@ import com.google.common.collect.FluentIterable;
 import com.google.common.collect.ImmutableList;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiFileSystemItem;
+import com.intellij.psi.PsiListLikeElement;
+import com.intellij.psi.ResolveState;
 import com.intellij.psi.scope.DelegatingScopeProcessor;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.stubs.IStubElementType;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.QualifiedName;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyElementTypes;
-import com.jetbrains.python.PyNames;
+import com.jetbrains.python.PyStubElementTypes;
 import com.jetbrains.python.PyTokenTypes;
-import com.jetbrains.python.PythonDialectsTokenSetProvider;
-import com.jetbrains.python.psi.*;
+import com.jetbrains.python.ast.impl.ValueHolder;
+import com.jetbrains.python.psi.PyElement;
+import com.jetbrains.python.psi.PyElementGenerator;
+import com.jetbrains.python.psi.PyElementType;
+import com.jetbrains.python.psi.PyElementVisitor;
+import com.jetbrains.python.psi.PyFile;
+import com.jetbrains.python.psi.PyFromImportStatement;
+import com.jetbrains.python.psi.PyImportElement;
+import com.jetbrains.python.psi.PyStarImportElement;
+import com.jetbrains.python.psi.PyUtil;
 import com.jetbrains.python.psi.resolve.RatedResolveResult;
 import com.jetbrains.python.psi.resolve.ResolveImportUtil;
 import com.jetbrains.python.psi.stubs.PyFromImportStatementStub;
@@ -24,21 +38,23 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
 import static com.jetbrains.python.psi.PyUtil.as;
 
-/**
- * @author yole
- */
-public class PyFromImportStatementImpl extends PyBaseElementImpl<PyFromImportStatementStub> implements PyFromImportStatement{
+
+public class PyFromImportStatementImpl extends PyBaseElementImpl<PyFromImportStatementStub>
+  implements PyFromImportStatement, PsiListLikeElement {
+  private volatile @Nullable ValueHolder<QualifiedName> myImportSourceQName;
+
   public PyFromImportStatementImpl(ASTNode astNode) {
     super(astNode);
   }
 
   public PyFromImportStatementImpl(PyFromImportStatementStub stub) {
-    this(stub, PyElementTypes.FROM_IMPORT_STATEMENT);
+    this(stub, PyStubElementTypes.FROM_IMPORT_STATEMENT);
   }
 
   public PyFromImportStatementImpl(PyFromImportStatementStub stub, IStubElementType nodeType) {
@@ -51,18 +67,21 @@ public class PyFromImportStatementImpl extends PyBaseElementImpl<PyFromImportSta
   }
 
   @Override
-  public boolean isStarImport() {
-    return getStarImportElement() != null;
+  public void subtreeChanged() {
+    super.subtreeChanged();
+    myImportSourceQName = null;
   }
 
   @Override
-  @Nullable
-  public PyReferenceExpression getImportSource() {
-    return childToPsi(PythonDialectsTokenSetProvider.getInstance().getReferenceExpressionTokens(), 0);
+  public @Nullable QualifiedName getImportSourceQName() {
+    ValueHolder<QualifiedName> result = myImportSourceQName;
+    if (result == null) {
+      myImportSourceQName = result = new ValueHolder<>(doGetImportSourceQName());
+    }
+    return result.value;
   }
 
-  @Override
-  public QualifiedName getImportSourceQName() {
+  private @Nullable QualifiedName doGetImportSourceQName() {
     final PyFromImportStatementStub stub = getStub();
     if (stub != null) {
       final QualifiedName qName = stub.getImportSourceQName();
@@ -72,11 +91,7 @@ public class PyFromImportStatementImpl extends PyBaseElementImpl<PyFromImportSta
       return qName;
     }
 
-    final PyReferenceExpression importSource = getImportSource();
-    if (importSource == null) {
-      return null;
-    }
-    return importSource.asQualifiedName();
+    return PyFromImportStatement.super.getImportSourceQName();
   }
 
   @Override
@@ -84,7 +99,7 @@ public class PyFromImportStatementImpl extends PyBaseElementImpl<PyFromImportSta
     return getImportElements(PyElementTypes.IMPORT_ELEMENT, PyTokenTypes.IMPORT_KEYWORD);
   }
 
-  final protected PyImportElement @NotNull [] getImportElements(
+  protected final PyImportElement @NotNull [] getImportElements(
     @NotNull IElementType importElementType,
     @NotNull PyElementType importKeywordToken) {
     final PyFromImportStatementStub stub = getStub();
@@ -104,51 +119,20 @@ public class PyFromImportStatementImpl extends PyBaseElementImpl<PyFromImportSta
   }
 
   @Override
-  @Nullable
-  public PyStarImportElement getStarImportElement() {
-    return getStubOrPsiChild(PyElementTypes.STAR_IMPORT_ELEMENT);
-  }
-
-  @Override
   public int getRelativeLevel() {
     final PyFromImportStatementStub stub = getStub();
     if (stub != null) {
       return stub.getRelativeLevel();
     }
 
-    int result = 0;
-    ASTNode seeker = getNode().getFirstChildNode();
-    while (seeker != null && (seeker.getElementType() == PyTokenTypes.FROM_KEYWORD || seeker.getElementType() == TokenType.WHITE_SPACE)) {
-      seeker = seeker.getTreeNext();
-    }
-    while (seeker != null && seeker.getElementType() == PyTokenTypes.DOT) {
-      result++;
-      seeker = seeker.getTreeNext();
-    }
-    return result;
+    return PyFromImportStatement.super.getRelativeLevel();
   }
 
   @Override
-  public boolean isFromFuture() {
-    final QualifiedName qName = getImportSourceQName();
-    return qName != null && qName.matches(PyNames.FUTURE_MODULE);
-  }
-
-  @Override
-  public PsiElement getLeftParen() {
-    return findChildByType(PyTokenTypes.LPAR);
-  }
-
-  @Override
-  public PsiElement getRightParen() {
-    return findChildByType(PyTokenTypes.RPAR);
-  }
-
-  @Override
-  public boolean processDeclarations(@NotNull final PsiScopeProcessor processor,
-                                     @NotNull final ResolveState state,
+  public boolean processDeclarations(final @NotNull PsiScopeProcessor processor,
+                                     final @NotNull ResolveState state,
                                      final PsiElement lastParent,
-                                     @NotNull final PsiElement place) {
+                                     final @NotNull PsiElement place) {
     // import is per-file
     if (place.getContainingFile() != getContainingFile()) {
       return true;
@@ -186,7 +170,7 @@ public class PyFromImportStatementImpl extends PyBaseElementImpl<PyFromImportSta
   }
 
   @Override
-  public ASTNode addInternal(ASTNode first, ASTNode last, ASTNode anchor, Boolean before) {
+  public ASTNode addInternal(@NotNull ASTNode first, @NotNull ASTNode last, ASTNode anchor, Boolean before) {
     boolean addingNewName = first == last &&
                             first.getElementType() == PyElementTypes.IMPORT_ELEMENT &&
                             (anchor == null || anchor.getElementType() == PyElementTypes.IMPORT_ELEMENT);
@@ -233,52 +217,36 @@ public class PyFromImportStatementImpl extends PyBaseElementImpl<PyFromImportSta
   }
 
   @Override
-  @Nullable
-  public PsiFileSystemItem resolveImportSource() {
+  public @Nullable PyStarImportElement getStarImportElement() {
+    return getStubOrPsiChild(PyStubElementTypes.STAR_IMPORT_ELEMENT);
+  }
+
+  @Override
+  public @Nullable PsiFileSystemItem resolveImportSource() {
     return FluentIterable.from(resolveImportSourceCandidates()).filter(PsiFileSystemItem.class).first().orNull();
   }
 
-  @NotNull
   @Override
-  public List<PsiElement> resolveImportSourceCandidates() {
+  public @NotNull List<PsiElement> resolveImportSourceCandidates() {
     final QualifiedName qName = getImportSourceQName();
     if (qName == null) {
       final int level = getRelativeLevel();
       if (level > 0) {
         final PsiDirectory upper = ResolveImportUtil.stepBackFrom(getContainingFile().getOriginalFile(), level);
-        return upper == null ? Collections.emptyList() : Collections.singletonList(upper);
+        return ContainerUtil.createMaybeSingletonList(upper);
       }
     }
     return ResolveImportUtil.resolveFromImportStatementSource(this, qName);
   }
 
-  @NotNull
   @Override
-  public List<String> getFullyQualifiedObjectNames() {
-    final QualifiedName source = getImportSourceQName();
-
-    final String prefix = (source != null) ? (source.join(".") + '.') : "";
-
-    final List<String> unqualifiedNames = PyImportStatementImpl.getImportElementNames(getImportElements());
-
-    final List<String> result = new ArrayList<>(unqualifiedNames.size());
-
-    for (final String unqualifiedName : unqualifiedNames) {
-      result.add(prefix + unqualifiedName);
-    }
-    return result;
-  }
-
-  @NotNull
-  @Override
-  public Iterable<PyElement> iterateNames() {
+  public @NotNull Iterable<PyElement> iterateNames() {
     final PyElement resolved = as(resolveImplicitSubModule(), PyElement.class);
     return resolved != null ? ImmutableList.of(resolved) : Collections.emptyList();
   }
 
-  @NotNull
   @Override
-  public List<RatedResolveResult> multiResolveName(@NotNull String name) {
+  public @NotNull List<RatedResolveResult> multiResolveName(@NotNull String name) {
     final QualifiedName importSourceQName = getImportSourceQName();
     if (importSourceQName != null && importSourceQName.endsWith(name)) {
       final PsiElement element = resolveImplicitSubModule();
@@ -291,11 +259,10 @@ public class PyFromImportStatementImpl extends PyBaseElementImpl<PyFromImportSta
 
   /**
    * The statement 'from pkg1.m1 import ...' makes 'm1' available as a local name in the package 'pkg1'.
-   *
+   * <p>
    * http://stackoverflow.com/questions/6048786/from-module-import-in-init-py-makes-module-name-visible
    */
-  @Nullable
-  private PsiElement resolveImplicitSubModule() {
+  private @Nullable PsiElement resolveImplicitSubModule() {
     final QualifiedName importSourceQName = getImportSourceQName();
     if (importSourceQName != null) {
       final String name = importSourceQName.getLastComponent();
@@ -308,5 +275,10 @@ public class PyFromImportStatementImpl extends PyBaseElementImpl<PyFromImportSta
       }
     }
     return null;
+  }
+
+  @Override
+  public @NotNull List<? extends PsiElement> getComponents() {
+    return Arrays.asList(getImportElements());
   }
 }

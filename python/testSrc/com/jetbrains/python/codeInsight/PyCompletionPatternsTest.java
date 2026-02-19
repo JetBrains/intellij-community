@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.codeInsight;
 
 import com.intellij.patterns.ElementPattern;
@@ -8,9 +8,7 @@ import com.jetbrains.python.codeInsight.completion.PyKeywordCompletionContributo
 import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.psi.LanguageLevel;
 
-/**
- * @author yole
- */
+
 public class PyCompletionPatternsTest extends PyTestCase {
   public void testInFromImportAfterRef() {
     assertTrue(doTest("from . im", PyKeywordCompletionContributor.IN_FROM_IMPORT_AFTER_REF));

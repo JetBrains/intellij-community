@@ -2,7 +2,15 @@
 package org.jetbrains.plugins.groovy.swingBuilder;
 
 import com.intellij.openapi.util.Pair;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiParameter;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypes;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTypesUtil;
 import org.jetbrains.annotations.NotNull;
@@ -18,9 +26,6 @@ import org.jetbrains.plugins.groovy.lang.psi.util.GroovyPropertyUtils;
 import java.util.HashMap;
 import java.util.Map;
 
-/**
- * @author Sergey Evdokimov
- */
 public class SwingBuilderNamedArgumentProvider extends GroovyNamedArgumentProvider {
 
   @Override
@@ -48,7 +53,7 @@ public class SwingBuilderNamedArgumentProvider extends GroovyNamedArgumentProvid
         if (argumentName != null && !argumentName.equals(propertyName)) continue;
 
         PsiType methodReturnType = method.getReturnType();
-        if (methodReturnType != null && !PsiType.VOID.equals(methodReturnType)) continue;
+        if (methodReturnType != null && !PsiTypes.voidType().equals(methodReturnType)) continue;
 
         PsiParameter[] parameters = method.getParameterList().getParameters();
 

@@ -15,6 +15,11 @@
  */
 package com.intellij.openapi.editor.colors;
 
+import org.jetbrains.annotations.NotNull;
+
 public interface EditorSchemeAttributeDescriptorWithPath extends EditorSchemeAttributeDescriptor {
-  String NAME_SEPARATOR = "//";
+
+  static @NotNull String getNameSeparator() {
+    return "//";
+  }
 }

@@ -1,9 +1,10 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.structuralsearch.impl.matcher;
 
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.SmartPointerManager;
+import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.structuralsearch.MatchResult;
-import com.intellij.structuralsearch.plugin.util.SmartPsiPointer;
 import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -13,7 +14,7 @@ import java.util.List;
 
 public final class MatchResultImpl extends MatchResult {
   private String name;
-  private SmartPsiPointer matchRef;
+  private SmartPsiElementPointer<?> matchRef;
   private int start;
   private int end = -1;
   private String matchImage;
@@ -24,15 +25,19 @@ public final class MatchResultImpl extends MatchResult {
   private boolean myMultipleMatch;
   private MatchResultImpl parent;
 
-  MatchResultImpl() {
-  }
+  MatchResultImpl() {}
 
-  public MatchResultImpl(@NotNull String name, @Nullable String image, @NotNull SmartPsiPointer ref, boolean target) {
-    this(name, image, ref, 0, -1, target);
-  }
-
-  public MatchResultImpl(@NotNull String name, @Nullable String image, @NotNull SmartPsiPointer ref, int start, int end, boolean target) {
+  public MatchResultImpl(@NotNull String name, @Nullable String image, @NotNull SmartPsiElementPointer<?> ref, int start, int end, boolean target) {
     matchRef = ref;
+    this.name = name;
+    matchImage = image;
+    this.target = target;
+    this.start = start;
+    this.end = end;
+  }
+
+  public MatchResultImpl(@NotNull String name, @Nullable String image, @NotNull PsiElement match, int start, int end, boolean target) {
+    matchRef = SmartPointerManager.getInstance(match.getProject()).createSmartPsiElementPointer(match);
     this.name = name;
     matchImage = image;
     this.target = target;
@@ -46,7 +51,7 @@ public final class MatchResultImpl extends MatchResult {
   }
 
   @Override
-  public SmartPsiPointer getMatchRef() {
+  public SmartPsiElementPointer<?> getMatchRef() {
     return matchRef;
   }
 
@@ -58,8 +63,12 @@ public final class MatchResultImpl extends MatchResult {
     return matchRef.getElement();
   }
 
-  public void setMatchRef(@NotNull SmartPsiPointer matchStart) {
+  public void setMatchRef(@NotNull SmartPsiElementPointer<?> matchStart) {
     matchRef = matchStart;
+  }
+
+  public void setMatch(PsiElement element) {
+    matchRef = SmartPointerManager.getInstance(element.getProject()).createSmartPsiElementPointer(element);
   }
 
   @Override
@@ -101,8 +110,7 @@ public final class MatchResultImpl extends MatchResult {
     myChildren.clear();
   }
 
-  @NotNull
-  public MatchResult removeLastChild() {
+  public @NotNull MatchResult removeLastChild() {
     return myChildren.remove(myChildren.size() - 1);
   }
 
@@ -114,7 +122,7 @@ public final class MatchResultImpl extends MatchResult {
     myMultipleMatch = multipleMatch;
   }
 
-  public MatchResultImpl findChild(@NotNull String name) {
+  public MatchResultImpl getChild(@NotNull String name) {
     // @todo this could be performance bottleneck, replace with hash lookup!
     for (final MatchResult match : myChildren) {
       final MatchResultImpl res = (MatchResultImpl)match;
@@ -126,12 +134,12 @@ public final class MatchResultImpl extends MatchResult {
     return null;
   }
 
-  public static MatchResultImpl findChildDeep(@NotNull MatchResult match, @NotNull String name) {
-    for (MatchResult child : match.getChildren()) {
+  public MatchResult findChild(@NotNull String name) {
+    for (MatchResult child : myChildren) {
       if (name.equals(child.getName())) {
-        return (MatchResultImpl)child;
+        return child;
       }
-      final MatchResultImpl deep = findChildDeep(child, name);
+      final MatchResult deep = ((MatchResultImpl)child).findChild(name);
       if (deep != null) {
         return deep;
       }

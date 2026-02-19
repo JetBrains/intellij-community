@@ -1,21 +1,19 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.ui.actions;
 
+import com.intellij.codeInspection.ex.InspectionProfileImpl;
+import com.intellij.codeInspection.ex.InspectionToolWrapper;
 import com.intellij.codeInspection.ui.InspectionResultsView;
-import com.intellij.ide.DataManager;
+import com.intellij.codeInspection.ui.InspectionTree;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
 import com.intellij.openapi.actionSystem.Presentation;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.wm.ToolWindow;
-import com.intellij.openapi.wm.ToolWindowId;
-import com.intellij.openapi.wm.ToolWindowManager;
-import com.intellij.ui.content.Content;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.Icon;
 import java.util.function.Supplier;
 
 public abstract class InspectionViewActionBase extends AnAction {
@@ -28,7 +26,7 @@ public abstract class InspectionViewActionBase extends AnAction {
   }
 
   @Override
-  public final void update(@NotNull AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     final InspectionResultsView view = getView(e);
     final boolean enabled = view != null && isEnabled(view, e);
     final Presentation presentation = e.getPresentation();
@@ -39,24 +37,31 @@ public abstract class InspectionViewActionBase extends AnAction {
     return true;
   }
 
-  @Nullable
-  public static InspectionResultsView getView(@Nullable AnActionEvent event) {
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
+  }
+
+  public static @Nullable InspectionResultsView getView(@Nullable AnActionEvent event) {
     if (event == null) {
       return null;
     }
     InspectionResultsView view = event.getData(InspectionResultsView.DATA_KEY);
-    if (view == null) {
-      Project project = event.getProject();
-      if (project == null) return null;
-      ToolWindowManager twManager = ToolWindowManager.getInstance(project);
-      ToolWindow window = twManager.getToolWindow(ToolWindowId.INSPECTION);
-      if (window == null) return null;
-      Content selectedContent = window.getContentManager().getSelectedContent();
-      if (selectedContent == null) return null;
-      DataContext twContext = DataManager.getInstance().getDataContext(selectedContent.getComponent());
-      view = InspectionResultsView.DATA_KEY.getData(twContext);
-      if (view == null) return null;
+    return view != null && view.isDisposed() ? null : view;
+  }
+
+  protected static @Nullable InspectionToolWrapper<?, ?> getToolWrapper(AnActionEvent e) {
+    Object[] selectedNode = e.getData(PlatformCoreDataKeys.SELECTED_ITEMS);
+    if (selectedNode == null) return null;
+
+    InspectionResultsView view = getView(e);
+    if (view != null && view.isSingleInspectionRun()) {
+      InspectionProfileImpl profile = view.getCurrentProfile();
+      String singleToolName = profile.getSingleTool();
+      if (singleToolName != null) {
+        return profile.getInspectionTool(singleToolName, e.getProject());
+      }
     }
-    return view.isDisposed() ? null : view;
+    return InspectionTree.findWrapper(selectedNode);
   }
 }

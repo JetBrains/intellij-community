@@ -19,7 +19,8 @@ package com.intellij.util.xml.ui;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomElementNavigationProvider;
 
-import java.awt.*;
+import java.awt.Component;
+import java.awt.KeyboardFocusManager;
 import java.util.List;
 
 public class DomUINavigationProvider extends DomElementNavigationProvider {
@@ -64,8 +65,7 @@ public class DomUINavigationProvider extends DomElementNavigationProvider {
   public static DomElement findDomElement(final CompositeCommittable compositCommitable, final Component component) {
     final List<Committable> list = compositCommitable.getChildren();
     for (Committable committable : list) {
-      if (committable instanceof DomUIControl) {
-        final DomUIControl uiControl = (DomUIControl)committable;
+      if (committable instanceof DomUIControl uiControl) {
         if (uiControl.getComponent().isAncestorOf(component)) {
           return uiControl.getDomElement();
         }
@@ -81,7 +81,7 @@ public class DomUINavigationProvider extends DomElementNavigationProvider {
     final List<Committable> list = compositCommitable.getChildren();
     for (Committable committable : list) {
       if (committable instanceof DomUIControl) {
-          if(((DomUIControl)committable).canNavigate(domElement)) {
+          if(((DomUIControl<?>)committable).canNavigate(domElement)) {
             return (DomUIControl)committable;
           }
       } else if (committable instanceof CompositeCommittable) {

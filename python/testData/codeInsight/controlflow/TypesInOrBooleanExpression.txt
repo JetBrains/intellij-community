@@ -1,0 +1,32 @@
+0(1) element: null
+1(2) element: PyClass: A
+2(3) WRITE ACCESS: A
+3(4) element: PyClass: B
+4(5) WRITE ACCESS: B
+5(6) element: PyIfStatement
+6(7) READ ACCESS: isinstance
+7(8) READ ACCESS: var
+8(9) READ ACCESS: A
+9(10,12) element: PyCallExpression: isinstance
+10(11) element: null. Condition: isinstance(var, A):false
+11(31) ASSERTTYPE ACCESS: var
+12(13) element: null. Condition: isinstance(var, A):true
+13(14) ASSERTTYPE ACCESS: var
+14(15) element: PyStatementList
+15(16) element: PyIfStatement
+16(17) element: PyBinaryExpression
+17(18) READ ACCESS: isinstance
+18(19) READ ACCESS: var
+19(20) READ ACCESS: B
+20(21,23) element: PyCallExpression: isinstance
+21(22) element: null. Condition: isinstance(var, B):false
+22(25) ASSERTTYPE ACCESS: var
+23(24) element: null. Condition: isinstance(var, B):true
+24(29) ASSERTTYPE ACCESS: var
+25(26,27) READ ACCESS: var
+26(31) element: null. Condition: var:false
+27(28) element: null. Condition: var:true
+28(29) ASSERTTYPE ACCESS: var
+29(30) element: PyStatementList
+30(31) element: PyPassStatement
+31() element: null

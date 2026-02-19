@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.svn.dialogs;
 
 import com.intellij.openapi.project.Project;
@@ -11,8 +11,14 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.idea.svn.auth.AcceptResult;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.Action;
+import javax.swing.BoxLayout;
+import javax.swing.JCheckBox;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JTextField;
+import java.awt.BorderLayout;
 
 public class ServerSSHDialog extends DialogWrapper {
   private AcceptResult myResult;
@@ -24,8 +30,8 @@ public class ServerSSHDialog extends DialogWrapper {
 
   public ServerSSHDialog(Project project,
                          boolean store,
-                         @NotNull final String host,
-                         @Nullable final String algorithm,
+                         final @NotNull String host,
+                         final @Nullable String algorithm,
                          @NlsSafe @NotNull String fingerprints) {
     super(project, true);
     myStore = store;

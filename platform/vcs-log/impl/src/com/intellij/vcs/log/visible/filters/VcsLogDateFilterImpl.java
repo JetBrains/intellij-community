@@ -1,18 +1,24 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.visible.filters;
 
+import com.intellij.util.text.DateFormatUtil;
 import com.intellij.vcs.log.VcsCommitMetadata;
+import com.intellij.vcs.log.VcsLogBundle;
 import com.intellij.vcs.log.VcsLogDateFilter;
 import com.intellij.vcs.log.VcsLogDetailsFilter;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Date;
 import java.util.Objects;
 
+/**
+ * @see VcsLogFilterObject#fromDates
+ */
 class VcsLogDateFilterImpl implements VcsLogDateFilter, VcsLogDetailsFilter {
-  @Nullable private final Date myAfter;
-  @Nullable private final Date myBefore;
+  private final @Nullable Date myAfter;
+  private final @Nullable Date myBefore;
 
   VcsLogDateFilterImpl(@Nullable Date after, @Nullable Date before) {
     myAfter = after;
@@ -33,15 +39,47 @@ class VcsLogDateFilterImpl implements VcsLogDateFilter, VcsLogDetailsFilter {
   }
 
   @Override
-  @Nullable
-  public Date getAfter() {
+  public @Nullable Date getAfter() {
     return myAfter;
   }
 
   @Override
-  @Nullable
-  public Date getBefore() {
+  public @Nullable Date getBefore() {
     return myBefore;
+  }
+
+
+  @Override
+  public @NotNull String getDisplayText() {
+    if (getBefore() != null && getAfter() != null) {
+      String after = DateFormatUtil.formatDate(getAfter());
+      String before = DateFormatUtil.formatDate(getBefore());
+      return VcsLogBundle.message("vcs.log.filter.date.display.name.between", after, before);
+    }
+    else if (getAfter() != null) {
+      return VcsLogBundle.message("vcs.log.filter.date.display.name.after", DateFormatUtil.formatDate(getAfter()));
+    }
+    else if (getBefore() != null) {
+      return VcsLogBundle.message("vcs.log.filter.date.display.name.before", DateFormatUtil.formatDate(getBefore()));
+    }
+    return "";
+  }
+
+  static @Nls @NotNull String getDisplayTextWithPrefix(@NotNull VcsLogDateFilter filter) {
+    if (filter.getBefore() != null && filter.getAfter() != null) {
+      String after = DateFormatUtil.formatDate(filter.getAfter());
+      String before = DateFormatUtil.formatDate(filter.getBefore());
+      return VcsLogBundle.message("vcs.log.filter.date.presentation.with.prefix.made.between", after, before);
+    }
+    else if (filter.getAfter() != null) {
+      return VcsLogBundle.message("vcs.log.filter.date.presentation.with.prefix.made.after",
+                                  DateFormatUtil.formatDate(filter.getAfter()));
+    }
+    else if (filter.getBefore() != null) {
+      return VcsLogBundle.message("vcs.log.filter.date.presentation.with.prefix.made.before",
+                                  DateFormatUtil.formatDate(filter.getBefore()));
+    }
+    return "";
   }
 
   @Override

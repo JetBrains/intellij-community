@@ -1,10 +1,10 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.intellij.plugins.xsltDebugger;
 
+import com.intellij.ide.highlighter.XmlFileType;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
@@ -20,7 +20,7 @@ import org.intellij.lang.xpath.xslt.impl.XsltChecker;
 import org.intellij.plugins.xsltDebugger.impl.XsltDebuggerEditorsProvider;
 import org.jetbrains.annotations.NotNull;
 
-public class XsltBreakpointType extends XLineBreakpointType<XBreakpointProperties> {
+public final class XsltBreakpointType extends XLineBreakpointType<XBreakpointProperties> {
   private final XsltDebuggerEditorsProvider myMyEditorsProvider1 = new XsltDebuggerEditorsProvider(XsltChecker.LanguageLevel.V1);
   private final XsltDebuggerEditorsProvider myMyEditorsProvider2 = new XsltDebuggerEditorsProvider(XsltChecker.LanguageLevel.V2);
 
@@ -38,7 +38,7 @@ public class XsltBreakpointType extends XLineBreakpointType<XBreakpointPropertie
       return false;
     }
     final FileType fileType = psiFile.getFileType();
-    if (fileType != StdFileTypes.XML || !XsltSupport.isXsltFile(psiFile)) {
+    if (fileType != XmlFileType.INSTANCE || !XsltSupport.isXsltFile(psiFile)) {
       return false;
     }
     return true;

@@ -22,7 +22,7 @@ import com.intellij.psi.impl.source.resolve.reference.impl.providers.JavaClassRe
 /**
  * @author Dmitry Avdeev
  */
-public class CommonReferenceProviderTypesImpl extends CommonReferenceProviderTypes {
+public final class CommonReferenceProviderTypesImpl extends CommonReferenceProviderTypes {
 
   private final JavaClassReferenceProvider myProvider;
 

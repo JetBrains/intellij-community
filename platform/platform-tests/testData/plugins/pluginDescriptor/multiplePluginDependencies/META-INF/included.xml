@@ -1,0 +1,5 @@
+<idea-plugin>
+  <dependencies>
+    <plugin id="dep2"/>
+  </dependencies>
+</idea-plugin>

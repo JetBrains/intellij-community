@@ -1,36 +1,65 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.uast.java
 
-import com.intellij.psi.*
+import com.intellij.psi.PsiBlockStatement
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiExpression
+import com.intellij.psi.PsiStatement
+import com.intellij.psi.PsiSwitchBlock
+import com.intellij.psi.PsiSwitchLabelStatement
+import com.intellij.psi.PsiSwitchLabelStatementBase
+import com.intellij.psi.PsiSwitchLabeledRuleStatement
 import com.intellij.psi.impl.source.tree.ChildRole
-import org.jetbrains.uast.*
+import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.uast.UAnnotation
+import org.jetbrains.uast.UElement
+import org.jetbrains.uast.UExpression
+import org.jetbrains.uast.UExpressionList
+import org.jetbrains.uast.UIdentifier
+import org.jetbrains.uast.USwitchClauseExpressionWithBody
+import org.jetbrains.uast.USwitchExpression
+import org.jetbrains.uast.UYieldExpression
+import org.jetbrains.uast.UastLazyPart
+import org.jetbrains.uast.UastSpecialExpressionKind
+import org.jetbrains.uast.getOrBuild
 import org.jetbrains.uast.java.expressions.JavaUExpressionList
 import org.jetbrains.uast.java.kinds.JavaSpecialExpressionKinds
+import org.jetbrains.uast.withMargin
 
+@ApiStatus.Internal
 class JavaUSwitchExpression(
   override val sourcePsi: PsiSwitchBlock,
   givenParent: UElement?
 ) : JavaAbstractUExpression(givenParent), USwitchExpression {
-  override val expression: UExpression by lz { JavaConverter.convertOrEmpty(sourcePsi.expression, this) }
 
-  override val body: JavaUSwitchEntryList by lz { JavaUSwitchEntryList(sourcePsi, this) }
+  private val expressionPart = UastLazyPart<UExpression>()
+  private val bodyPart = UastLazyPart<JavaUSwitchEntryList>()
+
+  override val expression: UExpression
+    get() = expressionPart.getOrBuild { JavaConverter.convertOrEmpty(sourcePsi.expression, this) }
+
+  override val body: JavaUSwitchEntryList
+    get() = bodyPart.getOrBuild { JavaUSwitchEntryList(sourcePsi, this) }
 
   override val switchIdentifier: UIdentifier
     get() = UIdentifier(sourcePsi.getChildByRole(ChildRole.SWITCH_KEYWORD), this)
 
 }
 
-class JavaUSwitchEntryList(override val sourcePsi: PsiSwitchBlock, override val uastParent: JavaUSwitchExpression) :
-  JavaAbstractUExpression(uastParent), UExpressionList {
+@ApiStatus.Internal
+class JavaUSwitchEntryList(
+  override val sourcePsi: PsiSwitchBlock,
+  override val uastParent: JavaUSwitchExpression
+) : JavaAbstractUExpression(uastParent), UExpressionList {
 
   override val kind: UastSpecialExpressionKind
     get() = JavaSpecialExpressionKinds.SWITCH
 
-  override fun asRenderString() = expressions.joinToString("\n") {
+  override fun asRenderString(): String = expressions.joinToString("\n") {
     it.asRenderString().withMargin
   }
 
-  private val switchEntries: Lazy<List<JavaUSwitchEntry>> = lazy {
+  private val switchEntries: Lazy<List<JavaUSwitchEntry>> = lazy(LazyThreadSafetyMode.NONE) {
     val statements = sourcePsi.body?.statements ?: return@lazy emptyList<JavaUSwitchEntry>()
     var currentLabels = listOf<PsiSwitchLabelStatementBase>()
     var currentBody = listOf<PsiStatement>()
@@ -53,7 +82,7 @@ class JavaUSwitchEntryList(override val sourcePsi: PsiSwitchBlock, override val 
         else if (currentLabels.isNotEmpty()) {
           result += JavaUSwitchEntry(currentLabels, currentBody, this)
           currentLabels = listOf(statement)
-          currentBody = listOf<PsiStatement>()
+          currentBody = listOf()
         }
       }
       else {
@@ -64,12 +93,12 @@ class JavaUSwitchEntryList(override val sourcePsi: PsiSwitchBlock, override val 
       result += JavaUSwitchEntry(currentLabels, currentBody, this)
     }
     result
-
   }
 
-  override val expressions: List<JavaUSwitchEntry> get() = switchEntries.value
+  override val expressions: List<UExpression>
+    get() = switchEntries.value
 
-  fun findUSwitchEntryForLabel(switchLabelStatement: PsiSwitchLabelStatementBase): JavaUSwitchEntry? {
+  internal fun findUSwitchEntryForLabel(switchLabelStatement: PsiSwitchLabelStatementBase): JavaUSwitchEntry? {
     if (switchEntries.isInitialized()) return switchEntries.value.find { it.labels.contains(switchLabelStatement) }
 
     if (switchLabelStatement is PsiSwitchLabeledRuleStatement) {
@@ -83,7 +112,7 @@ class JavaUSwitchEntryList(override val sourcePsi: PsiSwitchBlock, override val 
     return JavaUSwitchEntry(labels, body, this)
   }
 
-  fun findUSwitchEntryForBodyStatementMember(psi: PsiElement): JavaUSwitchEntry? {
+  internal fun findUSwitchEntryForBodyStatementMember(psi: PsiElement): JavaUSwitchEntry? {
     if (switchEntries.isInitialized()) return switchEntries.value.find { it.body.expressions.any { it.sourcePsi == psi } }
 
     val statement = psi as? PsiStatement ?: // PsiBreakStatement for instance
@@ -92,61 +121,88 @@ class JavaUSwitchEntryList(override val sourcePsi: PsiSwitchBlock, override val 
     val psiSwitchLabelStatement = statement.prevSiblings.filterIsInstance<PsiSwitchLabelStatement>().firstOrNull() ?: return null
     return findUSwitchEntryForLabel(psiSwitchLabelStatement)
   }
-
 }
 
 private val PsiElement.nextSiblings: Sequence<PsiElement> get() = generateSequence(this) { it.nextSibling }
 private val PsiElement.prevSiblings: Sequence<PsiElement> get() = generateSequence(this) { it.prevSibling }
 
-
+@ApiStatus.Internal
 class JavaUSwitchEntry(
   val labels: List<PsiSwitchLabelStatementBase>,
   val statements: List<PsiStatement>,
   givenParent: UElement?,
   private val addDummyBreak: Boolean = false
 ) : JavaAbstractUExpression(givenParent), USwitchClauseExpressionWithBody {
-  override val sourcePsi: PsiSwitchLabelStatementBase = labels.first()
 
-  override val caseValues: List<UExpression> by lz {
-    labels.flatMap {
-      if (it.isDefaultCase) {
-        listOf(JavaUDefaultCaseExpression(it, this))
-      }
-      else {
-        it.caseValues?.expressions.orEmpty().map { JavaConverter.convertOrEmpty(it, this) }
+  private val caseValuesPart = UastLazyPart<List<UExpression>>()
+  private val bodyPart = UastLazyPart<UExpressionList>()
+  private val guardPart = UastLazyPart<UExpression?>()
+
+  override val sourcePsi: PsiSwitchLabelStatementBase
+    get() = labels.first()
+
+  override val caseValues: List<UExpression>
+    get() = caseValuesPart.getOrBuild {
+      labels.flatMap {
+        if (it.isDefaultCase) {
+          listOf(JavaUDefaultCaseExpression(it, this))
+        }
+        else {
+          it.caseLabelElementList?.elements.orEmpty().map { element ->
+            JavaConverter.convertPsiElement(element, this, UExpression::class.java) as? UExpression ?: UnknownJavaExpression(element, this)
+          }
+        }
       }
     }
-  }
 
-  override val body: UExpressionList by lz {
-    object : JavaUExpressionList(sourcePsi, JavaSpecialExpressionKinds.SWITCH_ENTRY, this) {
+  override val guard: UExpression?
+    get() = guardPart.getOrBuild {
+      val expression = labels.singleOrNull() ?: return@getOrBuild null
+      val guard = expression.guardExpression ?: return@getOrBuild null
+      JavaConverter.convertPsiElement(guard, this, UExpression::class.java) as? UExpression ?: UnknownJavaExpression(guard, this)
+    }
 
-      override val expressions: List<UExpression>
+  override val body: UExpressionList
+    get() = bodyPart.getOrBuild {
+      object : JavaUExpressionList(sourcePsi, JavaSpecialExpressionKinds.SWITCH_ENTRY, this) {
+        override val expressions: List<UExpression>
 
-      init {
-        val expressions = ArrayList<UExpression>(this@JavaUSwitchEntry.statements.size)
-        for (statement in this@JavaUSwitchEntry.statements) {
-          expressions.add(JavaConverter.convertOrEmpty(statement, this))
+        init {
+          val expressions = ArrayList<UExpression>(this@JavaUSwitchEntry.statements.size)
+          for (statement in this@JavaUSwitchEntry.statements) {
+            expressions.add(JavaConverter.convertOrEmpty(statement, this))
+          }
+          if (addDummyBreak) {
+            val lastValueExpressionPsi = expressions.lastOrNull()?.sourcePsi as? PsiExpression
+            if (lastValueExpressionPsi != null)
+              expressions[expressions.size - 1] = DummyYieldExpression(lastValueExpressionPsi, this,
+                                                                       this@JavaUSwitchEntry.sourcePsi.enclosingSwitchBlock)
+          }
+
+          this.expressions = expressions
         }
-        if (addDummyBreak) {
-          val lastValueExpressionPsi = expressions.lastOrNull()?.sourcePsi as? PsiExpression
-          if (lastValueExpressionPsi != null)
-            expressions[expressions.size - 1] = DummyYieldExpression(lastValueExpressionPsi, this)
+
+        override fun asRenderString() = buildString {
+          appendLine("{")
+          expressions.forEach { appendLine(it.asRenderString().withMargin) }
+          appendLine("}")
         }
-
-        this.expressions = expressions
-      }
-
-      override fun asRenderString() = buildString {
-        appendln("{")
-        expressions.forEach { appendln(it.asRenderString().withMargin) }
-        appendln("}")
       }
     }
-  }
+
+  override fun asRenderString(): String = caseValues.joinToString { it.asRenderString() } +
+                                          (guard?.let { " when " + it.asRenderString() } ?: "") +
+                                          " -> " + body.asRenderString()
 }
 
-internal class DummyYieldExpression(val expressionPsi: PsiExpression, override val uastParent: UElement?) : UYieldExpression {
+internal class DummyYieldExpression(
+  val expressionPsi: PsiExpression,
+  override val uastParent: UElement?,
+  private val enclosingSwitchBlock: PsiSwitchBlock?
+) : UYieldExpression {
+
+  private val expressionPart = UastLazyPart<UExpression?>()
+
   override val javaPsi: PsiElement? = null
   override val sourcePsi: PsiElement? = null
   override val psi: PsiElement?
@@ -156,7 +212,8 @@ internal class DummyYieldExpression(val expressionPsi: PsiExpression, override v
   override val uAnnotations: List<UAnnotation>
     get() = emptyList()
 
-  override val expression: UExpression? by lazy { JavaConverter.convertExpression(expressionPsi, this) }
+  override val expression: UExpression?
+    get() = expressionPart.getOrBuild { JavaConverter.convertExpression(expressionPsi, this, UExpression::class.java) }
 
   override fun equals(other: Any?): Boolean {
     if (this === other) return true
@@ -167,10 +224,16 @@ internal class DummyYieldExpression(val expressionPsi: PsiExpression, override v
   }
 
   override fun hashCode(): Int = expressionPsi.hashCode()
+
+  override val jumpTarget: UElement?
+    get() = enclosingSwitchBlock?.let { JavaConverter.convertPsiElement(it, null, UElement::class.java) }
 }
 
-class JavaUDefaultCaseExpression(override val sourcePsi: PsiElement?, givenParent: UElement?)
-  : JavaAbstractUExpression(givenParent), UElement {
+@ApiStatus.Internal
+class JavaUDefaultCaseExpression(
+  override val sourcePsi: PsiElement?,
+  givenParent: UElement?
+) : JavaAbstractUExpression(givenParent), UElement {
 
   override val uAnnotations: List<UAnnotation>
     get() = emptyList()

@@ -1,4 +1,4 @@
-// "Replace with getter" "true"
+// "Replace with getter" "true-preview"
 class Test {
   private int i;
 

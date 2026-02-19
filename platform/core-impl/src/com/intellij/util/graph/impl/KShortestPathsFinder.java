@@ -8,15 +8,27 @@ import com.intellij.util.containers.FList;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.graph.Graph;
 import com.intellij.util.graph.InboundSemiGraph;
+import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.ArrayDeque;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Deque;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.PriorityQueue;
 
 /**
  * Algorithm to search k shortest paths between two vertices in unweighted directed graph.
  * Based on article "Finding the k shortest paths" by D. Eppstein, 1997.
  */
+@ApiStatus.Internal
 public final class KShortestPathsFinder<Node> {
   private static final Logger LOG = Logger.getInstance(KShortestPathsFinder.class);
   private final InboundSemiGraph<Node> myGraph;
@@ -47,7 +59,7 @@ public final class KShortestPathsFinder<Node> {
     myNonTreeEdges = new MultiMap<>();
     mySortedNodes = new ArrayList<>();
     myNextNodes = new HashMap<>();
-    Object2IntOpenHashMap<Node> distances = new Object2IntOpenHashMap<>();
+    Object2IntMap<Node> distances = new Object2IntOpenHashMap<>();
     Deque<Node> nodes = new ArrayDeque<>();
     nodes.addLast(myFinish);
     distances.put(myFinish, 0);
@@ -87,7 +99,6 @@ public final class KShortestPathsFinder<Node> {
           root = heapNode;
         }
       }
-      LOG.assertTrue(root != null);
       heapNodes.remove(root);
       myOutRoots.put(node, root);
       if (!heapNodes.isEmpty()) {
@@ -167,7 +178,7 @@ public final class KShortestPathsFinder<Node> {
 
       final Heap<Node> heap = myHeaps.get(myStart);
       if (heap != null) {
-        queue.add(new Sidetracks<>(0, FList.<HeapNode<Node>>emptyList().prepend(heap.getRoot())));
+        queue.add(new Sidetracks<>(0, FList.singleton(heap.getRoot())));
         for (int i = 2; i <= k; i++) {
           if (queue.isEmpty()) break;
           myProgressIndicator.checkCanceled();

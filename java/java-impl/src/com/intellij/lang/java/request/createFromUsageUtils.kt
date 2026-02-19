@@ -1,16 +1,29 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.java.request
 
+import com.intellij.java.syntax.parser.JavaKeywords
 import com.intellij.lang.jvm.JvmClass
 import com.intellij.lang.jvm.JvmClassKind
 import com.intellij.lang.jvm.JvmModifier
 import com.intellij.openapi.project.Project
-import com.intellij.psi.*
+import com.intellij.psi.PsiClass
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiExpression
+import com.intellij.psi.PsiExpressionList
+import com.intellij.psi.PsiMember
+import com.intellij.psi.PsiMethod
+import com.intellij.psi.PsiMethodCallExpression
+import com.intellij.psi.PsiModifier
+import com.intellij.psi.PsiModifierListOwner
+import com.intellij.psi.PsiTypeParameter
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings
-import com.intellij.psi.util.*
-import java.util.*
-import kotlin.collections.ArrayList
+import com.intellij.psi.util.InheritanceUtil
+import com.intellij.psi.util.PsiTreeUtil
+import com.intellij.psi.util.parentOfType
+import com.intellij.psi.util.parents
+import com.intellij.psi.util.parentsOfType
+import java.util.LinkedList
 
 internal fun PsiExpression.isInStaticContext(): Boolean {
   return isWithinStaticMember() || isWithinConstructorCall()
@@ -39,11 +52,11 @@ internal fun PsiExpression.isWithinConstructorCall(): Boolean {
   val owner = parentOfType<PsiModifierListOwner>() as? PsiMethod ?: return false
   if (!owner.isConstructor) return false
 
-  val parent = parentsWithSelf.firstOrNull { it !is PsiExpression } as? PsiExpressionList ?: return false
+  val parent = parents(true).firstOrNull { it !is PsiExpression } as? PsiExpressionList ?: return false
   val grandParent = parent.parent as? PsiMethodCallExpression ?: return false
 
   val calleText = grandParent.methodExpression.text
-  return calleText == PsiKeyword.SUPER || calleText == PsiKeyword.THIS
+  return calleText == JavaKeywords.SUPER || calleText == JavaKeywords.THIS
 }
 
 internal fun computeVisibility(project: Project, ownerClass: PsiClass?, targetClass: JvmClass): JvmModifier? {
@@ -59,8 +72,7 @@ internal fun computeVisibility(project: Project, ownerClass: PsiClass?, targetCl
       }
     }
   }
-  val setting = CodeStyleSettingsManager.getSettings(project).getCustomSettings(JavaCodeStyleSettings::class.java).VISIBILITY
-  return when (setting) {
+  return when (CodeStyleSettingsManager.getSettings(project).getCustomSettings(JavaCodeStyleSettings::class.java).VISIBILITY) {
     PsiModifier.PUBLIC -> JvmModifier.PUBLIC
     PsiModifier.PROTECTED -> JvmModifier.PROTECTED
     PsiModifier.PACKAGE_LOCAL -> JvmModifier.PACKAGE_LOCAL

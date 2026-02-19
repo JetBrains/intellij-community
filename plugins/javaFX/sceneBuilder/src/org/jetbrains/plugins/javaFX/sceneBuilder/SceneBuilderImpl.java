@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.javaFX.sceneBuilder;// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 import com.intellij.openapi.application.ReadAction;
@@ -10,12 +10,18 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.openapi.projectRoots.JavaSdkVersionUtil;
 import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.roots.*;
+import com.intellij.openapi.roots.JdkOrderEntry;
+import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.roots.OrderEntry;
+import com.intellij.openapi.roots.OrderEnumerator;
+import com.intellij.openapi.roots.ProjectFileIndex;
+import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.roots.libraries.LibraryUtil;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.StreamUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.platform.workspace.jps.serialization.impl.LibraryNameGenerator;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
@@ -27,22 +33,25 @@ import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.psi.util.PsiUtilCore;
+import com.intellij.util.CurrentJavaVersion;
 import com.intellij.util.Query;
-import com.intellij.util.lang.JavaVersion;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xml.NanoXmlBuilder;
 import com.intellij.util.xml.NanoXmlUtil;
 import com.oracle.javafx.scenebuilder.kit.editor.EditorController;
 import com.oracle.javafx.scenebuilder.kit.editor.selection.AbstractSelectionGroup;
 import com.oracle.javafx.scenebuilder.kit.editor.selection.ObjectSelectionGroup;
-import com.oracle.javafx.scenebuilder.kit.fxom.*;
+import com.oracle.javafx.scenebuilder.kit.fxom.FXOMDocument;
+import com.oracle.javafx.scenebuilder.kit.fxom.FXOMInstance;
+import com.oracle.javafx.scenebuilder.kit.fxom.FXOMObject;
+import com.oracle.javafx.scenebuilder.kit.fxom.FXOMProperty;
+import com.oracle.javafx.scenebuilder.kit.fxom.FXOMPropertyC;
 import com.oracle.javafx.scenebuilder.kit.library.LibraryItem;
 import com.oracle.javafx.scenebuilder.kit.metadata.util.PropertyName;
-import gnu.trove.THashMap;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 import java.io.File;
 import java.io.IOException;
 import java.io.Reader;
@@ -50,7 +59,15 @@ import java.io.StringReader;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
 import java.util.function.Predicate;
 
 /// Warning!
@@ -71,7 +88,7 @@ public class SceneBuilderImpl implements SceneBuilder {
   private Object myListener;
   private Object mySelectionListener;
   private List<List<SelectionNode>> mySelectionState;
-  @NotNull protected final ClassLoader myParentClassLoader;
+  protected final @NotNull ClassLoader myParentClassLoader;
 
   public SceneBuilderImpl(URL url, Project project, EditorCallback editorCallback, @NotNull ClassLoader loader) {
     myFileURL = url;
@@ -147,8 +164,8 @@ public class SceneBuilderImpl implements SceneBuilder {
     if (myProject.isDisposed()) {
       return Collections.emptyList();
     }
-    final PsiClass nodeClass = JavaPsiFacade.getInstance(myProject)
-      .findClass("javafx.scene.Node", GlobalSearchScope.allScope(myProject));
+     PsiClass nodeClass = JavaPsiFacade.getInstance(myProject).findClass("javafx.scene.Node", GlobalSearchScope.allScope(myProject));
+
     if (nodeClass == null) {
       return Collections.emptyList();
     }
@@ -157,11 +174,11 @@ public class SceneBuilderImpl implements SceneBuilder {
       // Take custom components from libraries, but not from the project modules, because org.jetbrains.plugins.javaFX.sceneBuilder.SceneBuilder instantiates the components' classes.
       // Modules might be not compiled or may change since last compile, it's too expensive to keep track of that.
       final GlobalSearchScope scope = ProjectScope.getLibrariesScope(nodeClass.getProject());
-      final JavaSdkVersion ideJdkVersion = JavaSdkVersion.fromJavaVersion(JavaVersion.current());
+      final JavaSdkVersion ideJdkVersion = JavaSdkVersion.fromJavaVersion(CurrentJavaVersion.currentJavaVersion());
       final LanguageLevel ideLanguageLevel = ideJdkVersion != null ? ideJdkVersion.getMaxLanguageLevel() : null;
       final Query<PsiClass> query = ClassInheritorsSearch.search(nodeClass, scope, true, true, false);
-      final Set<PsiClass> result = new THashSet<>();
-      query.forEach(psiClass -> {
+      final Set<PsiClass> result = new HashSet<>();
+      query.asIterable().forEach(psiClass -> {
         if (psiClass.hasModifierProperty(PsiModifier.PUBLIC) &&
             !psiClass.hasModifierProperty(PsiModifier.ABSTRACT) &&
             !isBuiltInComponent(psiClass) &&
@@ -178,8 +195,7 @@ public class SceneBuilderImpl implements SceneBuilder {
     return prepareCustomComponents(psiClasses);
   }
 
-  @NotNull
-  private List<JavaFXPlatformHelper.CustomComponent> prepareCustomComponents(Collection<PsiClass> psiClasses) {
+  private @NotNull List<JavaFXPlatformHelper.CustomComponent> prepareCustomComponents(Collection<PsiClass> psiClasses) {
     final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(myProject);
     final GlobalSearchScope scope = GlobalSearchScope.allScope(myProject);
     final Map<String, BuiltinComponent> builtinComponents =
@@ -206,8 +222,7 @@ public class SceneBuilderImpl implements SceneBuilder {
     return customComponents;
   }
 
-  @Nullable
-  private String getComponentModuleName(@NotNull PsiClass psiClass) {
+  private @Nullable String getComponentModuleName(@NotNull PsiClass psiClass) {
     final VirtualFile vFile = PsiUtilCore.getVirtualFile(psiClass);
     if (vFile == null) return null;
     final Module module = ProjectRootManager.getInstance(myProject).getFileIndex().getModuleForFile(vFile);
@@ -215,12 +230,10 @@ public class SceneBuilderImpl implements SceneBuilder {
       return module.getName();
     }
     else {
-      final OrderEntry entry = LibraryUtil.findLibraryEntry(vFile, myProject);
-      if (entry instanceof LibraryOrderEntry) {
-        final String libraryName = ((LibraryOrderEntry)entry).getLibraryName();
-        if (libraryName != null) {
-          return libraryName;
-        }
+      var libraryEntity = ContainerUtil.getFirstItem(ProjectFileIndex.getInstance(myProject).findContainingLibraries(vFile));
+      final String libraryName = LibraryNameGenerator.INSTANCE.getLegacyLibraryName(libraryEntity.getSymbolicId());
+      if (libraryName != null) {
+        return libraryName;
       }
     }
     return null;
@@ -237,7 +250,9 @@ public class SceneBuilderImpl implements SceneBuilder {
 
     final Collection<JavaFXPlatformHelper.CustomComponent> customComponents = DumbService.getInstance(myProject)
       .runReadActionInSmartMode(this::collectCustomComponents);
-    if (!new THashSet<>(myCustomComponents).equals(new THashSet<>(customComponents))) return false;
+    if (!new HashSet<>(myCustomComponents).equals(new HashSet<>(customComponents))) {
+      return false;
+    }
 
     JavaFXPlatformHelper.javafxInvokeLater(() -> {
       if (myEditorController != null) {
@@ -359,8 +374,7 @@ public class SceneBuilderImpl implements SceneBuilder {
     return true;
   }
 
-  @NotNull
-  private static URLClassLoader createProjectContentClassLoader(Project project, @NotNull ClassLoader parentClassLoader) {
+  private static @NotNull URLClassLoader createProjectContentClassLoader(Project project, @NotNull ClassLoader parentClassLoader) {
     final List<String> pathList = ReadAction.compute(() ->
                                                        OrderEnumerator.orderEntries(project).productionOnly().withoutSdk().recursively()
                                                          .getPathsList().getPathList());
@@ -405,13 +419,12 @@ public class SceneBuilderImpl implements SceneBuilder {
     return Collections.emptyList();
   }
 
-  @NotNull
-  private static Map<String, BuiltinComponent> loadBuiltinComponents(Predicate<String> psiClassExists) {
-    final Map<String, BuiltinComponent> components = new THashMap<>();
+  private static @NotNull Map<String, BuiltinComponent> loadBuiltinComponents(Predicate<? super String> psiClassExists) {
+    final Map<String, BuiltinComponent> components = new HashMap<>();
     for (LibraryItem item : JavaFXPlatformHelper.getBuiltinLibraryItems()) {
       final Ref<String> refQualifiedName = new Ref<>();
       final List<String> imports = new ArrayList<>();
-      final Map<String, String> attributes = new THashMap<>();
+      final Map<String, String> attributes = new HashMap<>();
       final Ref<Boolean> rootTagProcessed = new Ref<>(false);
       NanoXmlUtil.parse(new StringReader(item.getFxmlText()), new NanoXmlBuilder() {
         @Override
@@ -479,9 +492,8 @@ public class SceneBuilderImpl implements SceneBuilder {
     @Override
     public boolean equals(Object o) {
       if (this == o) return true;
-      if (!(o instanceof SelectionNode)) return false;
+      if (!(o instanceof SelectionNode node)) return false;
 
-      SelectionNode node = (SelectionNode)o;
       return indexInParent == node.indexInParent && Objects.equals(qualifiedName, node.qualifiedName);
     }
 

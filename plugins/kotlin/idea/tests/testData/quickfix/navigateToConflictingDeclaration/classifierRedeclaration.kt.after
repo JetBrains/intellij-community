@@ -1,0 +1,11 @@
+// "Show conflicting 'MyClass' declarations" "true"
+// SHOULD_BE_AVAILABLE_AFTER_EXECUTION
+// K2_AFTER_ERROR: Redeclaration:<br>class MyClass : Any
+// K2_AFTER_ERROR: Redeclaration:<br>class MyClass : Any
+// IGNORE_K1
+package test
+
+class MyClass {}
+
+class <selection><caret>MyClass</selection> {}
+// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.fixes.ShowConflictingDeclarationsAction

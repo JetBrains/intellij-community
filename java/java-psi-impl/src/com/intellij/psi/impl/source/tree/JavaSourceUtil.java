@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.tree;
 
 import com.intellij.lang.ASTFactory;
@@ -6,7 +6,14 @@ import com.intellij.lang.ASTNode;
 import com.intellij.lang.LighterAST;
 import com.intellij.lang.LighterASTNode;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.JavaTokenType;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiJavaCodeReferenceElement;
+import com.intellij.psi.PsiJavaParserFacade;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiReferenceExpression;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.impl.source.DummyHolder;
@@ -64,8 +71,7 @@ public final class JavaSourceUtil {
     }
   }
 
-  @NotNull
-  public static String getReferenceText(@NotNull PsiJavaCodeReferenceElement ref) {
+  public static @NotNull String getReferenceText(@NotNull PsiJavaCodeReferenceElement ref) {
     final StringBuilder buffer = new StringBuilder();
 
     ((TreeElement)ref.getNode()).acceptTree(new RecursiveTreeElementWalkingVisitor() {
@@ -95,13 +101,11 @@ public final class JavaSourceUtil {
     return buffer.toString();
   }
 
-  @NotNull
-  public static String getReferenceText(@NotNull LighterAST tree, @NotNull LighterASTNode node) {
+  public static @NotNull String getReferenceText(@NotNull LighterAST tree, @NotNull LighterASTNode node) {
     return LightTreeUtil.toFilteredString(tree, node, REF_FILTER);
   }
 
-  @NotNull
-  public static TreeElement addParenthToReplacedChild(@NotNull ASTNode child, @NotNull TreeElement newChild, @NotNull PsiManager manager) {
+  public static @NotNull TreeElement addParenthToReplacedChild(@NotNull ASTNode child, @NotNull TreeElement newChild, @NotNull PsiManager manager) {
     boolean needParenth = ElementType.EXPRESSION_BIT_SET.contains(child.getElementType()) &&
                           ElementType.EXPRESSION_BIT_SET.contains(newChild.getElementType()) &&
                           ReplaceExpressionUtil.isNeedParenthesis(child, newChild);

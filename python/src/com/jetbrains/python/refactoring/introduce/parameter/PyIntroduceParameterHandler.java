@@ -1,17 +1,30 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.refactoring.introduce.parameter;
 
 import com.intellij.codeInsight.CodeInsightUtilCore;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNamedElement;
-import com.intellij.psi.PsiReference;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.introduce.inplace.InplaceVariableIntroducer;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.codeInsight.controlflow.ControlFlowCache;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
-import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.PyAssignmentStatement;
+import com.jetbrains.python.psi.PyElementGenerator;
+import com.jetbrains.python.psi.PyExpression;
+import com.jetbrains.python.psi.PyForPart;
+import com.jetbrains.python.psi.PyFunction;
+import com.jetbrains.python.psi.PyGlobalStatement;
+import com.jetbrains.python.psi.PyImportStatement;
+import com.jetbrains.python.psi.PyNamedParameter;
+import com.jetbrains.python.psi.PyNonlocalStatement;
+import com.jetbrains.python.psi.PyParameterList;
+import com.jetbrains.python.psi.PyRecursiveElementVisitor;
+import com.jetbrains.python.psi.PyReferenceExpression;
+import com.jetbrains.python.psi.PyStatement;
+import com.jetbrains.python.psi.PyStatementList;
+import com.jetbrains.python.psi.PyTargetExpression;
 import com.jetbrains.python.refactoring.PyReplaceExpressionUtil;
 import com.jetbrains.python.refactoring.introduce.IntroduceHandler;
 import com.jetbrains.python.refactoring.introduce.IntroduceOperation;
@@ -32,11 +45,10 @@ public class PyIntroduceParameterHandler extends IntroduceHandler {
     return "python.reference.introduceParameter";
   }
 
-  @Nullable
   @Override
-  protected PsiElement addDeclaration(@NotNull PsiElement expression,
-                                      @NotNull PsiElement declaration,
-                                      @NotNull IntroduceOperation operation) {
+  protected @Nullable PsiElement addDeclaration(@NotNull PsiElement expression,
+                                                @NotNull PsiElement declaration,
+                                                @NotNull IntroduceOperation operation) {
     return doIntroduceParameter(expression, (PyAssignmentStatement)declaration);
   }
 
@@ -52,9 +64,8 @@ public class PyIntroduceParameterHandler extends IntroduceHandler {
     return null;
   }
 
-  @Nullable
   @Override
-  protected PsiElement replaceExpression(PsiElement expression, PyExpression newExpression, IntroduceOperation operation) {
+  protected @Nullable PsiElement replaceExpression(PsiElement expression, PyExpression newExpression, IntroduceOperation operation) {
     return PyReplaceExpressionUtil.replaceExpression(expression, newExpression);
   }
 
@@ -110,11 +121,10 @@ public class PyIntroduceParameterHandler extends IntroduceHandler {
   }
 
   private static boolean isResolvedToParameter(PsiElement element) {
-    while (element instanceof PyReferenceExpression) {
-      final PsiReference reference = element.getReference();
-      if (reference != null && reference.resolve() instanceof PyNamedParameter)
+    while (element instanceof PyReferenceExpression ref) {
+      if (ref.getReference().resolve() instanceof PyNamedParameter)
         return true;
-      element = ((PyReferenceExpression)element).getQualifier();
+      element = ref.getQualifier();
     }
     return false;
   }

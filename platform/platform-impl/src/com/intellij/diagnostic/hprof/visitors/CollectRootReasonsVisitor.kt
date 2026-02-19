@@ -23,7 +23,7 @@ import it.unimi.dsi.fastutil.longs.Long2ObjectMap
 import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap
 
 class CollectRootReasonsVisitor(private val threadsMap: Long2ObjectMap<ThreadInfo>) : HProfVisitor() {
-  val roots = Long2ObjectOpenHashMap<RootReason>()
+  val roots: Long2ObjectOpenHashMap<RootReason> = Long2ObjectOpenHashMap<RootReason>()
 
   override fun preVisit() {
     disableAll()
@@ -51,14 +51,18 @@ class CollectRootReasonsVisitor(private val threadsMap: Long2ObjectMap<ThreadInf
   }
 
   override fun visitRootJavaFrame(objectId: Long, threadSerialNumber: Long, frameNumber: Long) {
+    val threadInfo = threadsMap[threadSerialNumber]
     val rootReason =
-      if (frameNumber >= 0) {
-        RootReason.createJavaFrameReason(threadsMap[threadSerialNumber].frames[frameNumber.toInt()])
+      if (frameNumber >= 0 && threadInfo != null) {
+        RootReason.createJavaFrameReason(threadInfo.frames[frameNumber.toInt()])
       }
       else {
         RootReason.createJavaFrameReason("Unknown location")
       }
-    roots.put(objectId, rootReason)
+    // Java frame has a lower priority - if won't override any other GC-root reasons.
+    if (!roots.containsKey(objectId)) {
+      roots.put(objectId, rootReason)
+    }
   }
 
   override fun visitRootNativeStack(objectId: Long, threadSerialNumber: Long) {

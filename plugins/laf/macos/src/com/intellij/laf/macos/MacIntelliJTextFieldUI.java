@@ -6,19 +6,21 @@ import com.intellij.ide.ui.laf.darcula.ui.DarculaEditorTextFieldBorder;
 import com.intellij.ide.ui.laf.darcula.ui.DarculaTextFieldUI;
 import com.intellij.ui.ComponentUtil;
 import com.intellij.util.ui.JBInsets;
+import com.intellij.util.ui.JBUI;
 
-import javax.swing.*;
+import javax.swing.JComponent;
+import javax.swing.JSpinner;
 import javax.swing.plaf.ComponentUI;
-import java.awt.*;
+import java.awt.Component;
+import java.awt.Insets;
 
 import static com.intellij.ide.ui.laf.darcula.DarculaUIUtil.isCompact;
 import static com.intellij.laf.macos.MacIntelliJTextBorder.BW;
-import static com.intellij.laf.macos.MacIntelliJTextBorder.MINIMUM_HEIGHT;
 
 /**
  * @author Konstantin Bulenkov
  */
-public class MacIntelliJTextFieldUI extends DarculaTextFieldUI {
+public final class MacIntelliJTextFieldUI extends DarculaTextFieldUI {
   @SuppressWarnings({"MethodOverridesStaticMethodOfSuperclass", "UnusedDeclaration"})
   public static ComponentUI createUI(final JComponent c) {
     return new MacIntelliJTextFieldUI();
@@ -31,7 +33,7 @@ public class MacIntelliJTextFieldUI extends DarculaTextFieldUI {
     return DarculaEditorTextFieldBorder.isComboBoxEditor(c) ||
            ComponentUtil.getParentOfType((Class<? extends JSpinner>)JSpinner.class, c) != null ||
            isCompact(c) ?
-           textHeight : MINIMUM_HEIGHT.get() + i.top + i.bottom;
+           textHeight : JBUI.CurrentTheme.TextField.minimumSize().height + i.top + i.bottom;
   }
 
   @Override

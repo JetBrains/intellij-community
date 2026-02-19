@@ -1,8 +1,9 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.navigation;
 
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.application.WriteIntentReadAction;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
@@ -16,33 +17,34 @@ import com.intellij.usages.UsageView;
 import com.intellij.usages.impl.UsageViewImpl;
 import com.intellij.util.Alarm;
 import com.intellij.util.SmartList;
+import com.intellij.util.concurrency.ThreadingAssertions;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Comparator;
+import java.util.List;
+import java.util.TreeSet;
 
+@ApiStatus.Internal
 public abstract class BackgroundUpdaterTaskBase<T> extends Task.Backgroundable {
   protected JBPopup myPopup;
   private GenericListComponentUpdater<T> myUpdater;
   private Ref<? extends UsageView> myUsageView;
-  private final Collection<T> myData;
+  protected final Collection<T> myData;
 
-  private final Alarm myAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
+  private final Alarm myAlarm = new Alarm();
   private final Object lock = new Object();
 
   private volatile boolean myCanceled;
   private volatile boolean myFinished;
   private volatile ProgressIndicator myIndicator;
 
-  public BackgroundUpdaterTaskBase(@Nullable Project project, @ProgressTitle @NotNull String title, @Nullable Comparator<T> comparator) {
+  public BackgroundUpdaterTaskBase(@Nullable Project project, @ProgressTitle @NotNull String title, @Nullable Comparator<? super T> comparator) {
     super(project, title);
     myData = comparator == null ? new SmartList<>() : new TreeSet<>(comparator);
-  }
-
-  @TestOnly
-  public GenericListComponentUpdater<T> getUpdater() {
-    return myUpdater;
   }
 
   public void init(@NotNull JBPopup popup, @NotNull GenericListComponentUpdater<T> updater, @NotNull Ref<? extends UsageView> usageView) {
@@ -51,10 +53,9 @@ public abstract class BackgroundUpdaterTaskBase<T> extends Task.Backgroundable {
     myUsageView = usageView;
   }
 
-  public abstract @PopupTitle String getCaption(int size);
+  public abstract @Nullable @PopupTitle String getCaption(int size);
 
-  @Nullable
-  protected abstract Usage createUsage(T element);
+  protected abstract @Nullable Usage createUsage(@NotNull T element);
 
   protected void replaceModel(@NotNull List<? extends T> data) {
     myUpdater.replaceModel(data);
@@ -77,8 +78,9 @@ public abstract class BackgroundUpdaterTaskBase<T> extends Task.Backgroundable {
   /**
    * @deprecated Use {@link #BackgroundUpdaterTaskBase(Project, String, Comparator)} and {@link #updateComponent(T)} instead
    */
-  @Deprecated
-  public boolean updateComponent(@NotNull T element, @Nullable Comparator comparator) {
+  @ApiStatus.Internal
+  @Deprecated(forRemoval = true)
+  protected boolean updateComponent(@NotNull T element, @Nullable Comparator comparator) {
     if (tryAppendUsage(element)) return true;
     if (myCanceled) return false;
 
@@ -103,13 +105,20 @@ public abstract class BackgroundUpdaterTaskBase<T> extends Task.Backgroundable {
   private boolean tryAppendUsage(@NotNull T element) {
     final UsageView view = myUsageView.get();
     if (view != null && !((UsageViewImpl)view).isDisposed()) {
-      Usage usage = createUsage(element);
-      if (usage == null)
-        return false;
-      ApplicationManager.getApplication().runReadAction(() -> view.appendUsage(usage));
-      return true;
+      return ReadAction.compute(() -> {
+        Usage usage = createUsage(element);
+        if (usage == null) {
+          return false;
+        }
+        view.appendUsage(usage);
+        return true;
+      });
     }
     return false;
+  }
+
+  protected boolean addElementToMyData(T element) {
+    return myData.add(element);
   }
 
   public boolean updateComponent(@NotNull T element) {
@@ -119,18 +128,18 @@ public abstract class BackgroundUpdaterTaskBase<T> extends Task.Backgroundable {
     if (myPopup.isDisposed()) return false;
 
     synchronized (lock) {
-      if (!myData.add(element)) return true;
+      if (!addElementToMyData(element)) return true;
     }
 
-    myAlarm.addRequest(() -> {
+    myAlarm.addRequest(() -> WriteIntentReadAction.run(() -> {
       myAlarm.cancelAllRequests();
       refreshModelImmediately();
-    }, 200, ModalityState.stateForComponent(myPopup.getContent()));
+    }), 200, ModalityState.stateForComponent(myPopup.getContent()));
     return true;
   }
 
   private void refreshModelImmediately() {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     if (myCanceled) return;
     if (myPopup.isDisposed()) return;
     List<T> data;
@@ -138,7 +147,10 @@ public abstract class BackgroundUpdaterTaskBase<T> extends Task.Backgroundable {
       data = new ArrayList<>(myData);
     }
     replaceModel(data);
-    myPopup.setCaption(getCaption(getCurrentSize()));
+    String caption = getCaption(getCurrentSize());
+    if (caption != null) {
+      myPopup.setCaption(caption);
+    }
     myPopup.pack(true, true);
   }
 
@@ -167,8 +179,7 @@ public abstract class BackgroundUpdaterTaskBase<T> extends Task.Backgroundable {
     myFinished = true;
   }
 
-  @Nullable
-  protected T getTheOnlyOneElement() {
+  protected @Nullable T getTheOnlyOneElement() {
     synchronized (lock) {
       if (myData.size() == 1) {
         return myData.iterator().next();
@@ -177,6 +188,11 @@ public abstract class BackgroundUpdaterTaskBase<T> extends Task.Backgroundable {
     return null;
   }
 
+  public Collection<T> getItems() {
+    synchronized (lock) {
+      return new ArrayList<>(myData);
+    }
+  }
   public boolean isFinished() {
     return myFinished;
   }

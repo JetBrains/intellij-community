@@ -1,4 +1,4 @@
-// "Replace with 'getOrDefault' method call" "true"
+// "Replace with 'getOrDefault()' call" "true"
 import java.util.Map;
 
 public class Main {

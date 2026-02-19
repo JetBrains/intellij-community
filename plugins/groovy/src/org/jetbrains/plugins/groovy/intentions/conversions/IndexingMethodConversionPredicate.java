@@ -33,22 +33,20 @@ import org.jetbrains.plugins.groovy.lang.psi.util.ErrorUtil;
 class IndexingMethodConversionPredicate implements PsiElementPredicate {
   @Override
   public boolean satisfiedBy(@NotNull PsiElement element) {
-    if (!(element instanceof GrMethodCallExpression)) {
+    if (!(element instanceof GrMethodCallExpression callExpression)) {
       return false;
     }
 
     if (ErrorUtil.containsError(element)) {
       return false;
     }
-    final GrMethodCallExpression callExpression = (GrMethodCallExpression) element;
     final GrArgumentList argList = callExpression.getArgumentList();
     final GrExpression[] arguments = argList.getExpressionArguments();
 
     final GrExpression invokedExpression = callExpression.getInvokedExpression();
-    if (!(invokedExpression instanceof GrReferenceExpression)) {
+    if (!(invokedExpression instanceof GrReferenceExpression referenceExpression)) {
       return false;
     }
-    final GrReferenceExpression referenceExpression = (GrReferenceExpression) invokedExpression;
     final GrExpression qualifier = referenceExpression.getQualifierExpression();
     if (qualifier == null) {
       return false;

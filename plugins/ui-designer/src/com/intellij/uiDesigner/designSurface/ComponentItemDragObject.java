@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.uiDesigner.designSurface;
 
@@ -9,15 +9,14 @@ import com.intellij.uiDesigner.radComponents.RadContainer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.*;
+import java.awt.Dimension;
+import java.awt.Point;
 
-/**
- * @author yole
- */
+
 public class ComponentItemDragObject implements ComponentDragObject {
   private final ComponentItem myItem;
 
-  public ComponentItemDragObject(@NotNull final ComponentItem item) {
+  public ComponentItemDragObject(final @NotNull ComponentItem item) {
     myItem = item;
   }
 
@@ -61,14 +60,12 @@ public class ComponentItemDragObject implements ComponentDragObject {
   }
 
   @Override
-  @Nullable
-  public Point getDelta(int componentIndex) {
+  public @Nullable Point getDelta(int componentIndex) {
     return null;
   }
 
   @Override
-  @NotNull
-  public Dimension getInitialSize(final RadContainer targetContainer) {
+  public @NotNull Dimension getInitialSize(final RadContainer targetContainer) {
     final ClassLoader loader = LoaderFactory.getInstance(targetContainer.getProject()).getLoader(targetContainer.getModule());
     return myItem.getInitialSize(targetContainer.getDelegee(), loader);
   }

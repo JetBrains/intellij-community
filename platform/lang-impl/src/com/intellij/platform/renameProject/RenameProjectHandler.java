@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.renameProject;
 
 import com.intellij.ide.IdeBundle;
@@ -13,6 +13,7 @@ import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleWithNameAlreadyExists;
+import com.intellij.openapi.module.PrimaryModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ex.ProjectEx;
 import com.intellij.openapi.ui.InputValidator;
@@ -27,7 +28,7 @@ import com.intellij.refactoring.rename.RenameHandler;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class RenameProjectHandler implements RenameHandler, TitledHandler {
+public final class RenameProjectHandler implements RenameHandler, TitledHandler {
   private static final Logger LOG = Logger.getInstance(RenameProjectHandler.class);
 
   @Override
@@ -63,9 +64,9 @@ public class RenameProjectHandler implements RenameHandler, TitledHandler {
   }
 
 
-  protected static class MyInputValidator implements InputValidator {
+  protected static final class MyInputValidator implements InputValidator {
     private final ProjectEx myProject;
-    @Nullable private final Module myModule;
+    private final @Nullable Module myModule;
 
     public MyInputValidator(ProjectEx project, @Nullable Module module) {
       myProject = project;
@@ -74,7 +75,7 @@ public class RenameProjectHandler implements RenameHandler, TitledHandler {
 
     @Override
     public boolean checkInput(String inputString) {
-      return inputString != null && inputString.length() > 0;
+      return inputString != null && !inputString.isEmpty();
     }
 
     @Override
@@ -121,6 +122,6 @@ public class RenameProjectHandler implements RenameHandler, TitledHandler {
       return module == ModuleAttachProcessor.getPrimaryModule(project);
     }
 
-    return module == ModuleAttachProcessor.findModuleInBaseDir(project);
+    return module == PrimaryModuleManager.findPrimaryModule(project);
   }
 }

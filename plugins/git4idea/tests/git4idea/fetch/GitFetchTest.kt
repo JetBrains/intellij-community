@@ -3,9 +3,15 @@ package git4idea.fetch
 
 import com.intellij.openapi.vcs.Executor.cd
 import git4idea.fetch.GitFetchSupport.fetchSupport
+import git4idea.i18n.GitBundle
 import git4idea.repo.GitRemote
 import git4idea.repo.GitRepository
-import git4idea.test.*
+import git4idea.test.GitPlatformTest
+import git4idea.test.cd
+import git4idea.test.createRepository
+import git4idea.test.git
+import git4idea.test.log
+import git4idea.test.tac
 import java.nio.file.Path
 
 class GitFetchTest : GitPlatformTest() {
@@ -33,7 +39,7 @@ class GitFetchTest : GitPlatformTest() {
 
     cd(repo)
     assertEquals("The latest commit on origin/master is incorrect", hash, log("--pretty=%H -1 origin/master"))
-    assertSuccessfulNotification("<b>Fetch Successful</b>")
+    assertNotification()
   }
 
   fun `test fetch specific remote`() {
@@ -48,7 +54,7 @@ class GitFetchTest : GitPlatformTest() {
 
     cd(repo)
     assertEquals("The latest commit on second/master is incorrect", hash1, log("--pretty=%H -1 second/master"))
-    assertSuccessfulNotification("<b>Fetch Successful</b>")
+    assertNotification()
   }
 
   fun `test fetch all remotes`() {
@@ -64,7 +70,11 @@ class GitFetchTest : GitPlatformTest() {
     cd(repo)
     assertEquals("The latest commit on second/master is incorrect", hash1, log("--pretty=%H -1 second/master"))
     assertEquals("The latest commit on origin/master is incorrect", hash2, log("--pretty=%H -1 origin/master"))
-    assertSuccessfulNotification("<b>Fetch Successful</b>")
+    assertNotification()
+  }
+
+  private fun assertNotification() {
+    assertSuccessfulNotification("Fetch successful", GitBundle.message("auto.fetch.notification.suggestion.message"))
   }
 
   private fun prepareSecondRemote() : GitRemote {

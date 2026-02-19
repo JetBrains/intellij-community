@@ -1,0 +1,9 @@
+// API_VERSION: 1.9
+// WITH_STDLIB
+enum class EnumClass
+
+fun <T> functionWithGenericArg(a: T) {}
+
+fun foo() {
+    functionWithGenericArg(EnumClass.entries.toTypedArray())
+}

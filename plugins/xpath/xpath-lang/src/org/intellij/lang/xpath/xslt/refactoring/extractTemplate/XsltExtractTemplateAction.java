@@ -24,12 +24,22 @@ import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiReference;
+import com.intellij.psi.PsiWhiteSpace;
+import com.intellij.psi.XmlElementFactory;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.xml.*;
+import com.intellij.psi.xml.XmlAttribute;
+import com.intellij.psi.xml.XmlComment;
+import com.intellij.psi.xml.XmlElement;
+import com.intellij.psi.xml.XmlTag;
+import com.intellij.psi.xml.XmlToken;
+import com.intellij.psi.xml.XmlTokenType;
 import com.intellij.util.Query;
 import org.intellij.lang.xpath.psi.XPathVariable;
 import org.intellij.lang.xpath.psi.XPathVariableReference;
@@ -157,13 +167,12 @@ public class XsltExtractTemplateAction extends XsltRefactoringActionBase {
 
         PsiElement e = start;
         while (e != null) {
-            if (e instanceof XmlTag) {
-                final XmlTag tag = (XmlTag)e;
-                if (XsltSupport.isVariable(tag)) {
+            if (e instanceof XmlTag tag) {
+              if (XsltSupport.isVariable(tag)) {
                     final XsltVariable variable = XsltElementFactory.getInstance().wrapElement(tag, XsltVariable.class);
                     final LocalSearchScope searchScope = new LocalSearchScope(parentScope);
                     final Query<PsiReference> query = ReferencesSearch.search(variable, searchScope);
-                    for (PsiReference reference : query) {
+                    for (PsiReference reference : query.asIterable()) {
                         final XmlElement context = PsiTreeUtil.getContextOfType(reference.getElement(), XmlElement.class, true);
                         if (context == null || context.getTextRange().getStartOffset() > endOffset) {
                             return false;
@@ -253,8 +262,7 @@ public class XsltExtractTemplateAction extends XsltRefactoringActionBase {
     }
 
     @Override
-    @Nullable
-    public String getErrorMessage(Editor editor, PsiFile file, XmlAttribute context) {
+    public @Nullable String getErrorMessage(Editor editor, PsiFile file, XmlAttribute context) {
         if (!editor.getSelectionModel().hasSelection()) {
             return XPathBundle.message("notification.content.please.select.code.that.should.be.extracted");
         }

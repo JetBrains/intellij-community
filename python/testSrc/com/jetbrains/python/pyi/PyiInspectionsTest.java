@@ -16,21 +16,27 @@
 package com.jetbrains.python.pyi;
 
 import com.intellij.codeInspection.LocalInspectionTool;
+import com.intellij.idea.TestFor;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.jetbrains.python.PythonLanguage;
 import com.jetbrains.python.fixtures.PyTestCase;
-import com.jetbrains.python.inspections.*;
+import com.jetbrains.python.inspections.PyCompatibilityInspection;
+import com.jetbrains.python.inspections.PyMissingConstructorInspection;
+import com.jetbrains.python.inspections.PyMissingOrEmptyDocstringInspection;
+import com.jetbrains.python.inspections.PyPropertyDefinitionInspection;
+import com.jetbrains.python.inspections.PyProtectedMemberInspection;
+import com.jetbrains.python.inspections.PyStatementEffectInspection;
+import com.jetbrains.python.inspections.PyTypeCheckerInspection;
+import com.jetbrains.python.inspections.PyUnboundLocalVariableInspection;
+import com.jetbrains.python.inspections.PyUnusedImportsInspection;
 import com.jetbrains.python.inspections.unresolvedReference.PyUnresolvedReferencesInspection;
 import com.jetbrains.python.inspections.unusedLocal.PyUnusedLocalInspection;
 import com.jetbrains.python.psi.PythonVisitorFilter;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author vlan
- */
 public class PyiInspectionsTest extends PyTestCase {
 
   private Disposable myRootsDisposable;
@@ -82,6 +88,7 @@ public class PyiInspectionsTest extends PyTestCase {
     doPyTest(PyUnresolvedReferencesInspection.class);
   }
 
+  // PY-78185
   public void testHiddenPyiImports() {
     doPyTest(PyUnresolvedReferencesInspection.class);
   }
@@ -125,7 +132,8 @@ public class PyiInspectionsTest extends PyTestCase {
     doPyiTest(PyUnresolvedReferencesInspection.class);
   }
 
-  public void testPyiTopLevelUnresolvedForwardReferencesInAnnotations() {
+  // PY-49004
+  public void testPyiTopLevelResolvedForwardReferencesInAnnotations() {
     doPyiTest(PyUnresolvedReferencesInspection.class);
   }
 
@@ -134,7 +142,7 @@ public class PyiInspectionsTest extends PyTestCase {
   }
 
   public void testPyiUnusedImports() {
-    doPyiTest(PyUnresolvedReferencesInspection.class);
+    doPyiTest(PyUnusedImportsInspection.class);
   }
 
   public void testPyiRelativeImports() {
@@ -151,4 +159,7 @@ public class PyiInspectionsTest extends PyTestCase {
   public void testMissedSuperInitCall() {
     doPyiTest(PyMissingConstructorInspection.class);
   }
+
+  @TestFor(issues = "PY-16477")
+  public void testAccessProtectedProperty() { doPyTest(PyProtectedMemberInspection.class); }
 }

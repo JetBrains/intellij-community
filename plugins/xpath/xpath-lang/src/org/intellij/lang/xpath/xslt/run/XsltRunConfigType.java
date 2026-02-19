@@ -25,7 +25,7 @@ import icons.XpathIcons;
 import org.intellij.plugins.xpathView.XPathBundle;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.Icon;
 
 public final class XsltRunConfigType implements ConfigurationType {
   private final ConfigurationFactory myFactory;
@@ -33,8 +33,7 @@ public final class XsltRunConfigType implements ConfigurationType {
   public XsltRunConfigType() {
     myFactory = new ConfigurationFactory(this) {
       @Override
-      @NotNull
-      public RunConfiguration createTemplateConfiguration(@NotNull final Project project) {
+      public @NotNull RunConfiguration createTemplateConfiguration(final @NotNull Project project) {
         return new XsltRunConfiguration(project, this);
       }
 
@@ -49,15 +48,13 @@ public final class XsltRunConfigType implements ConfigurationType {
     return ConfigurationTypeUtil.findConfigurationType(XsltRunConfigType.class);
   }
 
-  @NotNull
   @Override
-  public String getDisplayName() {
+  public @NotNull String getDisplayName() {
     return getId();
   }
 
   @Override
-  @NotNull
-  public @NlsSafe String getId() {
+  public @NotNull @NlsSafe String getId() {
     return "XSLT";
   }
 

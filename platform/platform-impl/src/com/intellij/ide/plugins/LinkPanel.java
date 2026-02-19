@@ -1,32 +1,44 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins;
 
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.BrowserUtil;
 import com.intellij.ide.plugins.newui.ListPluginComponent;
+import com.intellij.openapi.application.IdeUrlTrackingParametersProvider;
 import com.intellij.ui.components.labels.LinkLabel;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.SwingConstants;
+import java.util.function.Supplier;
 
 /**
  * @author Alexander Lobas
  */
-public class LinkPanel {
+public final class LinkPanel {
   private final JLabel myTextLabel = new JLabel();
   private final JLabel myLinkLabel;
   private Runnable myRunnable;
 
-  public LinkPanel(@NotNull JPanel parent, boolean icon, @Nullable Object labelConstraints, @Nullable Object linkConstraints) {
+  public LinkPanel(@NotNull JPanel parent, boolean icon, boolean tiny, @Nullable Object labelConstraints, @Nullable Object linkConstraints) {
     myLinkLabel = createLink(icon);
     myTextLabel.setForeground(ListPluginComponent.GRAY_COLOR);
+    if (tiny) {
+      PluginManagerConfigurable.setTinyFont(myLinkLabel);
+      PluginManagerConfigurable.setTinyFont(myTextLabel);
+    }
     parent.add(myTextLabel, labelConstraints);
     parent.add(myLinkLabel, linkConstraints);
   }
 
-  @NotNull
-  private JLabel createLink(boolean icon) {
+  public LinkPanel(@NotNull JPanel parent, boolean tiny) {
+    this(parent, true, tiny, null, null);
+  }
+
+  private @NotNull JLabel createLink(boolean icon) {
     LinkLabel<Object> linkLabel = new LinkLabel<>(null, icon ? AllIcons.Ide.External_link_arrow : null, (__, ___) -> myRunnable.run());
     linkLabel.setIconTextGap(0);
     linkLabel.setHorizontalTextPosition(SwingConstants.LEFT);
@@ -48,6 +60,22 @@ public class LinkPanel {
       myLinkLabel.setText(text);
       myLinkLabel.setVisible(true);
     }
+  }
+
+  public void showWithBrowseUrl(@NotNull @Nls String text, boolean addAugments, @NotNull Supplier<String> urlProvider) {
+    show(text, () -> {
+      String url = urlProvider.get();
+      BrowserUtil.browse(addAugments ? IdeUrlTrackingParametersProvider.getInstance().augmentUrl(url) : url);
+    });
+  }
+
+  public void showWithBrowseUrl(@NotNull @Nls String text,
+                                @NotNull @Nls String linkText,
+                                boolean addAugments,
+                                @NotNull Supplier<String> urlProvider) {
+    showWithBrowseUrl(linkText, addAugments, urlProvider);
+    myTextLabel.setText(text);
+    myTextLabel.setVisible(true);
   }
 
   public void hide() {

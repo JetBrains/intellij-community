@@ -1,0 +1,13 @@
+LineBreakpoint created at composeSideEffects.kt:17
+LineBreakpoint created at composeSideEffects.kt:28
+LineBreakpoint created at composeSideEffects.kt:44
+LineBreakpoint created at composeSideEffects.kt:52
+Run Java
+Connected to the target VM
+composeSideEffects.kt:52
+composeSideEffects.kt:28
+composeSideEffects.kt:44
+composeSideEffects.kt:17
+Disconnected from the target VM
+
+Process finished with exit code 0

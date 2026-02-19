@@ -1,8 +1,17 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.ui;
 
-import com.intellij.codeInspection.*;
-import com.intellij.codeInspection.ex.*;
+import com.intellij.codeInspection.CommonProblemDescriptor;
+import com.intellij.codeInspection.DefaultInspectionToolResultExporter;
+import com.intellij.codeInspection.GlobalInspectionTool;
+import com.intellij.codeInspection.InspectionProfileEntry;
+import com.intellij.codeInspection.QuickFix;
+import com.intellij.codeInspection.ex.DescriptorComposer;
+import com.intellij.codeInspection.ex.GlobalInspectionContextImpl;
+import com.intellij.codeInspection.ex.HTMLComposerImpl;
+import com.intellij.codeInspection.ex.InspectionToolWrapper;
+import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
+import com.intellij.codeInspection.ex.QuickFixAction;
 import com.intellij.codeInspection.reference.RefElement;
 import com.intellij.codeInspection.reference.RefEntity;
 import com.intellij.openapi.application.ApplicationManager;
@@ -16,16 +25,16 @@ public class DefaultInspectionToolPresentation extends DefaultInspectionToolResu
   private DescriptorComposer myComposer;
   private volatile boolean isDisposed;
 
-  @NotNull protected GlobalInspectionContextImpl myContext;
+  protected @NotNull GlobalInspectionContextImpl myContext;
 
-  public DefaultInspectionToolPresentation(@NotNull InspectionToolWrapper toolWrapper, @NotNull GlobalInspectionContextImpl context) {
+  public DefaultInspectionToolPresentation(@NotNull InspectionToolWrapper<?,?> toolWrapper, @NotNull GlobalInspectionContextImpl context) {
     super(toolWrapper, context);
     myContext = context;
   }
 
   @Override
   public boolean isSuppressed(RefEntity element) {
-    return mySuppressedElements.containsKey(element);
+    return mySuppressedElements.containsKey(element) && !myProblemElements.containsKey(element);
   }
 
   @Override
@@ -38,28 +47,22 @@ public class DefaultInspectionToolPresentation extends DefaultInspectionToolResu
     return mySuppressedElements.getOrDefault(entity, CommonProblemDescriptor.EMPTY_ARRAY);
   }
 
-
-  @NotNull
   @Override
-  public GlobalInspectionContextImpl getContext() {
+  public @NotNull GlobalInspectionContextImpl getContext() {
     return myContext;
   }
-
 
   protected boolean isDisposed() {
     return isDisposed;
   }
-
 
   @Override
   public void cleanup() {
     isDisposed = true;
   }
 
-
-  @NotNull
   @Override
-  public HTMLComposerImpl getComposer() {
+  public @NotNull HTMLComposerImpl getComposer() {
     if (myComposer == null) {
       myComposer = new DescriptorComposer(this);
     }
@@ -72,17 +75,14 @@ public class DefaultInspectionToolPresentation extends DefaultInspectionToolResu
   }
 
   @Override
-  @Nullable
-  public QuickFix findQuickFixes(@NotNull final CommonProblemDescriptor problemDescriptor,
-                                 RefEntity entity,
-                                 final String hint) {
+  public @Nullable QuickFix<?> findQuickFixes(@NotNull CommonProblemDescriptor problemDescriptor, RefEntity entity, String hint) {
     InspectionProfileEntry tool = getToolWrapper().getTool();
     return !(tool instanceof GlobalInspectionTool) ? null : ((GlobalInspectionTool)tool).getQuickFix(hint);
   }
 
   @Override
   public CommonProblemDescriptor @Nullable [] getDescriptions(@NotNull RefEntity refEntity) {
-    final CommonProblemDescriptor[] problems = getProblemElements().getOrDefault(refEntity, null);
+    CommonProblemDescriptor[] problems = getProblemElements().getOrDefault(refEntity, null);
     if (problems == null) return null;
 
     if (!refEntity.isValid()) {
@@ -93,9 +93,8 @@ public class DefaultInspectionToolPresentation extends DefaultInspectionToolResu
     return problems;
   }
 
-
   @Override
-  public void ignoreElement(@NotNull final RefEntity refEntity) {
+  public void ignoreElement(@NotNull RefEntity refEntity) {
     myProblemElements.remove(refEntity);
   }
 
@@ -105,7 +104,7 @@ public class DefaultInspectionToolPresentation extends DefaultInspectionToolResu
                                 CommonProblemDescriptor @NotNull ... descriptors) {
     super.addProblemElement(refElement, filterSuppressed, descriptors);
 
-    final GlobalInspectionContextImpl context = getContext();
+    GlobalInspectionContextImpl context = getContext();
     if (context.isViewClosed() || !(refElement instanceof RefElement)) {
       return;
     }

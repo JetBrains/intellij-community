@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.memory.ui;
 
 import com.intellij.debugger.engine.DebugProcessImpl;
@@ -12,66 +12,91 @@ import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.frame.XStackFrame;
 import com.intellij.xdebugger.impl.frame.XDebuggerFramesList;
 import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
+import javax.swing.event.ListSelectionEvent;
+import javax.swing.event.ListSelectionListener;
 import java.util.List;
 
 class StackFrameList extends XDebuggerFramesList {
   private static final MyOpenFilesState myEditorState = new MyOpenFilesState();
 
-  private final DebugProcessImpl myDebugProcess;
-
-  StackFrameList(DebugProcessImpl debugProcess) {
-    super(debugProcess.getProject());
-    myDebugProcess = debugProcess;
-  }
-
-  void setFrameItems(@NotNull List<? extends StackFrameItem> items) {
-    setFrameItems(items, null);
-  }
-
-  void setFrameItems(@NotNull List<? extends StackFrameItem> items, Runnable onDone) {
-    clear();
-    if (!items.isEmpty()) {
-      myDebugProcess.getManagerThread().schedule(new DebuggerCommandImpl() {
-        @Override
-        protected void action() {
-          boolean separator = false;
-          for (StackFrameItem frameInfo : items) {
-            if (frameInfo == null) {
-              separator = true;
-            }
-            else {
-              XStackFrame frame = frameInfo.createFrame(myDebugProcess);
-              StackFrameItem.setWithSeparator(frame, separator);
-              DebuggerUIUtil.invokeLater(() -> getModel().add(frame));
-              separator = false;
-            }
-          }
-          if (onDone != null) {
-            onDone.run();
-          }
+  StackFrameList(Project project) {
+    super(project);
+    getSelectionModel().addListSelectionListener(new ListSelectionListener() {
+      @Override
+      public void valueChanged(final ListSelectionEvent e) {
+        if (!e.getValueIsAdjusting()) {
+          DebuggerUIUtil.invokeLater(() -> {
+            navigateToSelectedValue(false);
+          });
         }
-      });
+      }
+    });
+  }
+
+  void clearFrameItems() {
+    clear();
+  }
+
+  /**
+   * @param items can contain null values treated as separator (e.g., async stack trace separator)
+   */
+  void setFrameItems(@NotNull List<@Nullable StackFrameItem> items, @NotNull DebugProcessImpl debugProcess) {
+    setFrameItems(items, debugProcess, null);
+  }
+
+  /**
+   * @param items can contain null values treated as separator (e.g., async stack trace separator)
+   */
+  void setFrameItems(@NotNull List<@Nullable StackFrameItem> items, @NotNull DebugProcessImpl debugProcess, @Nullable Runnable onDone) {
+    debugProcess.getManagerThread().schedule(new DebuggerCommandImpl() {
+      @Override
+      protected void action() {
+        setFrameItems(
+          ContainerUtil.map(items,
+                            info -> info == null ? null : info.createFrame(debugProcess)),
+          onDone
+        );
+      }
+    });
+  }
+
+  /**
+   * @param frames can contain null values treated as separator (e.g., async stack trace separator)
+   */
+  void setFrameItems(@NotNull List<@Nullable XStackFrame> frames, @Nullable Runnable onDone) {
+    clear();
+    if (!frames.isEmpty()) {
+      boolean separator = false;
+      for (XStackFrame frame : frames) {
+        if (frame == null) {
+          separator = true;
+        }
+        else {
+          if (separator) {
+            StackFrameItem.setWithSeparator(frame);
+            separator = false;
+          }
+          DebuggerUIUtil.invokeLater(() -> getModel().add(frame));
+        }
+      }
+      if (onDone != null) {
+        onDone.run();
+      }
     }
   }
 
-  @Override
-  protected void onFrameChanged(Object selectedValue) {
-    navigateTo(selectedValue, false);
-  }
-
   void navigateToSelectedValue(boolean focusOnEditor) {
-    navigateTo(getSelectedValue(), focusOnEditor);
-  }
-
-  private void navigateTo(Object frame, boolean focusOnEditor) {
-    if (frame instanceof XStackFrame) {
-      navigateToFrame((XStackFrame)frame, focusOnEditor);
+    XStackFrame frame = getSelectedFrame();
+    if (frame != null) {
+      navigateToFrame(frame, focusOnEditor);
     }
   }
 
@@ -82,7 +107,7 @@ class StackFrameList extends XDebuggerFramesList {
     VirtualFile file = position.getFile();
     int line = position.getLine();
 
-    Project project = myDebugProcess.getProject();
+    Project project = getProject();
 
     OpenFileHyperlinkInfo info = new OpenFileHyperlinkInfo(project, file, line);
     OpenFileDescriptor descriptor = info.getDescriptor();

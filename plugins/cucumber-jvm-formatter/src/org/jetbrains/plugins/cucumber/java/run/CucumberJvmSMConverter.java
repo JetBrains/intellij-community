@@ -8,12 +8,24 @@ import java.io.PrintStream;
 import java.util.HashMap;
 import java.util.Map;
 
-import static org.jetbrains.plugins.cucumber.java.run.CucumberJvmSMFormatterUtil.*;
+import static org.jetbrains.plugins.cucumber.java.run.CucumberJvmSMFormatterUtil.TEMPLATE_COMPARISON_TEST_FAILED;
+import static org.jetbrains.plugins.cucumber.java.run.CucumberJvmSMFormatterUtil.TEMPLATE_ENTER_THE_MATRIX;
+import static org.jetbrains.plugins.cucumber.java.run.CucumberJvmSMFormatterUtil.TEMPLATE_SCENARIO_COUNTING_STARTED;
+import static org.jetbrains.plugins.cucumber.java.run.CucumberJvmSMFormatterUtil.TEMPLATE_SCENARIO_FINISHED;
+import static org.jetbrains.plugins.cucumber.java.run.CucumberJvmSMFormatterUtil.TEMPLATE_SCENARIO_STARTED;
+import static org.jetbrains.plugins.cucumber.java.run.CucumberJvmSMFormatterUtil.TEMPLATE_TEST_FAILED;
+import static org.jetbrains.plugins.cucumber.java.run.CucumberJvmSMFormatterUtil.TEMPLATE_TEST_FINISHED;
+import static org.jetbrains.plugins.cucumber.java.run.CucumberJvmSMFormatterUtil.TEMPLATE_TEST_PENDING;
+import static org.jetbrains.plugins.cucumber.java.run.CucumberJvmSMFormatterUtil.TEMPLATE_TEST_STARTED;
+import static org.jetbrains.plugins.cucumber.java.run.CucumberJvmSMFormatterUtil.TEMPLATE_TEST_SUITE_FINISHED;
+import static org.jetbrains.plugins.cucumber.java.run.CucumberJvmSMFormatterUtil.TEMPLATE_TEST_SUITE_STARTED;
+import static org.jetbrains.plugins.cucumber.java.run.CucumberJvmSMFormatterUtil.escapeCommand;
+import static org.jetbrains.plugins.cucumber.java.run.CucumberJvmSMFormatterUtil.getFeatureName;
 
 public class CucumberJvmSMConverter {
   private static final String EXAMPLES_CAPTION = "Examples:";
   private static final String SCENARIO_OUTLINE_CAPTION = "Scenario: Line: ";
-  private final Map<String, String> pathToDescription = new HashMap<String, String>();
+  private final Map<String, String> pathToDescription = new HashMap<>();
   private String currentFilePath;
   private int currentScenarioOutlineLine;
   private String currentScenarioOutlineName;

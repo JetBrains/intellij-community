@@ -1,7 +1,11 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.refactoring.classMembers;
 
-import com.intellij.psi.*;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiClassType;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiSubstitutor;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.psi.util.PsiFormatUtilBase;
 import com.intellij.refactoring.RefactoringBundle;
@@ -29,8 +33,7 @@ public class GrMemberInfo extends MemberInfoBase<GrMember> {
     super(member);
     LOG.assertTrue(member.isValid());
     mySourceReferenceList = sourceReferenceList;
-    if (member instanceof GrMethod) {
-      GrMethod method = (GrMethod)member;
+    if (member instanceof GrMethod method) {
       displayName = PsiFormatUtil.formatMethod(method, PsiSubstitutor.EMPTY, PsiFormatUtilBase.SHOW_NAME |
                                                                              PsiFormatUtilBase.SHOW_TYPE |
                                                                              PsiFormatUtilBase.TYPE_AFTER |
@@ -46,15 +49,13 @@ public class GrMemberInfo extends MemberInfoBase<GrMember> {
 
       isStatic = method.hasModifierProperty(PsiModifier.STATIC);
     }
-    else if (member instanceof GrField) {
-      GrField field = (GrField)member;
+    else if (member instanceof GrField field) {
       displayName = PsiFormatUtil
         .formatVariable(field, PsiFormatUtilBase.SHOW_NAME | PsiFormatUtilBase.SHOW_TYPE | PsiFormatUtilBase.TYPE_AFTER, PsiSubstitutor.EMPTY);
       isStatic = field.hasModifierProperty(PsiModifier.STATIC);
       overrides = null;
     }
-    else if (member instanceof GrTypeDefinition) {
-      GrTypeDefinition aClass = (GrTypeDefinition)member;
+    else if (member instanceof GrTypeDefinition aClass) {
 
       if (isSuperClass) {
         if (aClass.isInterface()) {

@@ -29,7 +29,7 @@ import com.intellij.util.xml.reflect.DomChildrenDescription;
 import com.intellij.util.xml.stubs.AttributeStub;
 import com.intellij.util.xml.stubs.ElementStub;
 import com.intellij.util.xml.stubs.XIncludeStub;
-import com.intellij.xml.util.XmlIncludeHandler;
+import com.intellij.xml.util.XmlPsiUtil;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -46,7 +46,7 @@ class DomStubBuilderVisitor {
   
   void visitXmlElement(XmlElement element, ElementStub parent, int index) {
 
-    if (XmlIncludeHandler.isXInclude(element)) {
+    if (XmlPsiUtil.isXInclude(element)) {
       XmlTag tag = (XmlTag)element;
       new XIncludeStub(parent, tag.getAttributeValue("href"), tag.getAttributeValue("xpointer"));
       return;
@@ -57,9 +57,7 @@ class DomStubBuilderVisitor {
 
     AbstractDomChildrenDescription description = handler.getChildDescription();
     String nsKey = description instanceof DomChildrenDescription ? ((DomChildrenDescription)description).getXmlName().getNamespaceKey() : "";
-    if (element instanceof XmlTag) {
-      XmlTag tag = (XmlTag)element;
-
+    if (element instanceof XmlTag tag) {
       String elementClass = null;
       if (handler.getAnnotation(StubbedOccurrence.class) != null) {
         elementClass = ((Class<?>)description.getType()).getName();
@@ -83,10 +81,10 @@ class DomStubBuilderVisitor {
         visitXmlElement(subTag, stub, i);
         indices.put(name, i);
       }
-    } else if (element instanceof XmlAttribute) {
-      new AttributeStub(parent, ((XmlAttribute)element).getLocalName(),
+    } else if (element instanceof XmlAttribute xmlAttribute) {
+      new AttributeStub(parent, xmlAttribute.getLocalName(),
                         StringUtil.notNullize(nsKey),
-                        StringUtil.notNullize(((XmlAttribute)element).getValue()));
+                        StringUtil.notNullize(xmlAttribute.getValue()));
     }
   }
 

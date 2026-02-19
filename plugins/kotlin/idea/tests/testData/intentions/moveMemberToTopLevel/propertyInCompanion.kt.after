@@ -1,0 +1,6 @@
+// WITH_STDLIB
+
+class A {
+}
+
+val foo: Int = 1

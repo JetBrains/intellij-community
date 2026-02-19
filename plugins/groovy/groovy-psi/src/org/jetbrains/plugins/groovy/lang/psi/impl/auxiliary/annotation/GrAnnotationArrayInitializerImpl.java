@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.annotation;
 
 import com.intellij.lang.ASTNode;
@@ -16,8 +16,7 @@ import java.util.Arrays;
 import java.util.List;
 
 /**
- * @author: Dmitry.Krasilschikov
- * @date: 04.04.2007
+ * @author Dmitry.Krasilschikov
  */
 public class GrAnnotationArrayInitializerImpl extends GroovyPsiElementImpl implements GrAnnotationArrayInitializer, PsiListLikeElement {
 
@@ -45,7 +44,24 @@ public class GrAnnotationArrayInitializerImpl extends GroovyPsiElementImpl imple
   }
 
   @Override
-  public ASTNode addInternal(ASTNode first, ASTNode last, ASTNode anchor, Boolean before) {
+  public int getInitializerCount() {
+    int count = 0;
+    for (PsiElement cur = getFirstChild(); cur != null; cur = cur.getNextSibling()) {
+      if (cur instanceof GrAnnotationMemberValue) count++;
+    }
+    return count;
+  }
+
+  @Override
+  public boolean isEmpty() {
+    for (PsiElement cur = getFirstChild(); cur != null; cur = cur.getNextSibling()) {
+      if (cur instanceof GrAnnotationMemberValue) return false;
+    }
+    return true;
+  }
+
+  @Override
+  public ASTNode addInternal(@NotNull ASTNode first, @NotNull ASTNode last, ASTNode anchor, Boolean before) {
     final GrAnnotationMemberValue[] initializers = getInitializers();
     if (initializers.length == 0) {
       return super.addInternal(first, last, getNode().getFirstChildNode(), false);
@@ -55,9 +71,8 @@ public class GrAnnotationArrayInitializerImpl extends GroovyPsiElementImpl imple
     return super.addInternal(first, last, lastChild.getTreePrev(), false);
   }
 
-  @NotNull
   @Override
-  public List<? extends PsiElement> getComponents() {
+  public @NotNull List<? extends PsiElement> getComponents() {
     return Arrays.asList(getInitializers());
   }
 }

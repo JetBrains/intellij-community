@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.html;
 
 import com.intellij.openapi.util.Key;
@@ -11,7 +11,12 @@ import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
-import com.intellij.psi.xml.*;
+import com.intellij.psi.xml.XmlAttribute;
+import com.intellij.psi.xml.XmlDocument;
+import com.intellij.psi.xml.XmlFile;
+import com.intellij.psi.xml.XmlTag;
+import com.intellij.psi.xml.XmlTagChild;
+import com.intellij.util.PlatformUtils;
 import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.util.HtmlPsiUtil;
 import com.intellij.xml.util.HtmlUtil;
@@ -40,6 +45,8 @@ public final class ScriptSupportUtil {
                                             ResolveState state,
                                             PsiElement lastParent,
                                             PsiElement place) {
+    if (PlatformUtils.isJetBrainsClient()) return true; //FileReferenceUtil.findFile possible indexes, and the whole thing seems cross-project-file
+
     CachedValue<XmlTag[]> myCachedScriptTags = element.getUserData(CachedScriptTagsKey);
     if (myCachedScriptTags == null) {
       myCachedScriptTags = CachedValuesManager.getManager(element.getProject())
@@ -50,9 +57,8 @@ public final class ScriptSupportUtil {
             if (document != null) {
               PsiElementProcessor psiElementProcessor = new PsiElementProcessor() {
                 @Override
-                public boolean execute(@NotNull final PsiElement element1) {
-                  if (element1 instanceof XmlTag) {
-                    final XmlTag tag = (XmlTag)element1;
+                public boolean execute(final @NotNull PsiElement element1) {
+                  if (element1 instanceof XmlTag tag) {
 
                     if (HtmlUtil.SCRIPT_TAG_NAME.equalsIgnoreCase(tag.getName())) {
                       final XmlElementDescriptor descriptor = tag.getDescriptor();
@@ -99,7 +105,7 @@ public final class ScriptSupportUtil {
       }
     }
     finally {
-      ProcessingDeclarationsFlag.set(null);
+      ProcessingDeclarationsFlag.remove();
     }
 
     return true;

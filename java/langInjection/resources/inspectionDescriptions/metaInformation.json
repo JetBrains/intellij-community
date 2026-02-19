@@ -1,0 +1,28 @@
+{
+  "inspections": [
+    {
+      "id": "InjectionNotApplicable",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "PatternNotApplicable",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "UnknownLanguage",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "LanguageMismatch",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "PatternOverriddenByNonAnnotatedMethod",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "PatternValidation",
+      "codeQualityCategory": "Reliability"
+    }
+  ]
+}

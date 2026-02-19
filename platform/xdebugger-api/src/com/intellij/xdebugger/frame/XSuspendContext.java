@@ -1,10 +1,13 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xdebugger.frame;
 
 import com.intellij.xdebugger.Obsolescent;
+import kotlinx.coroutines.CoroutineScope;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -17,8 +20,7 @@ public abstract class XSuspendContext {
    * Returned execution stack will be selected by default in 'Frames' panel of 'Debug' tool window. Also it will be used to obtain current
    * stack frame to perform 'Evaluate' action, for example
    */
-  @Nullable
-  public XExecutionStack getActiveExecutionStack() {
+  public @Nullable XExecutionStack getActiveExecutionStack() {
     return null;
   }
 
@@ -31,7 +33,40 @@ public abstract class XSuspendContext {
     container.addExecutionStack(Arrays.asList(getExecutionStacks()), true);
   }
 
+  /**
+   * Returns coroutine scope tied to the lifetime of this suspend context.
+   * <p>
+   * The scope is canceled when this suspend context is resumed.
+   */
+  @ApiStatus.Internal
+  public @Nullable CoroutineScope getCoroutineScope() {
+    return null;
+  }
+
   public interface XExecutionStackContainer extends XValueCallback, Obsolescent {
     void addExecutionStack(@NotNull List<? extends XExecutionStack> executionStacks, final boolean last);
+  }
+
+  @ApiStatus.Internal
+  public interface XExecutionStackGroupContainer extends XExecutionStackContainer {
+    default void addExecutionStackGroups(@NotNull List<? extends XExecutionStackGroup> executionStackGroups, final boolean last) {
+      addExecutionStack(flattenGroups(executionStackGroups), last);
+    }
+
+    private static List<XExecutionStack> flattenGroups(List<? extends XExecutionStackGroup> groups) {
+      List<XExecutionStack> result = new ArrayList<>();
+      collectStacks(groups, result);
+      return result;
+    }
+
+    private static void collectStacks(List<? extends XExecutionStackGroup> groups, List<XExecutionStack> result) {
+      for (XExecutionStackGroup group : groups) {
+        result.addAll(group.getStacks());
+        var subGroups = group.getGroups();
+        if (!subGroups.isEmpty()) {
+          collectStacks(subGroups, result);
+        }
+      }
+    }
   }
 }

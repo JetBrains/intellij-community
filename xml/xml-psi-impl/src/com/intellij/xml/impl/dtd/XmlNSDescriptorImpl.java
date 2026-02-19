@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xml.impl.dtd;
 
 import com.intellij.codeInsight.daemon.Validator;
@@ -14,54 +14,66 @@ import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
-import com.intellij.psi.xml.*;
+import com.intellij.psi.xml.XmlDoctype;
+import com.intellij.psi.xml.XmlDocument;
+import com.intellij.psi.xml.XmlElement;
+import com.intellij.psi.xml.XmlElementDecl;
+import com.intellij.psi.xml.XmlFile;
+import com.intellij.psi.xml.XmlProlog;
+import com.intellij.psi.xml.XmlTag;
 import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.XmlNSDescriptorEx;
-import com.intellij.xml.impl.ExternalDocumentValidator;
+import com.intellij.xml.impl.ExternalDocumentValidatorService;
 import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 public final class XmlNSDescriptorImpl implements XmlNSDescriptorEx,Validator<XmlDocument>, DumbAware {
   private XmlElement myElement;
   private XmlFile myDescriptorFile;
 
   private static final SimpleFieldCache<CachedValue<Map<String, XmlElementDescriptor>>, XmlNSDescriptorImpl> myCachedDeclsCache = new
-    SimpleFieldCache<CachedValue<Map<String, XmlElementDescriptor>>, XmlNSDescriptorImpl>() {
-    @Override
-    protected final CachedValue<Map<String, XmlElementDescriptor>> compute(final XmlNSDescriptorImpl xmlNSDescriptor) {
-      return xmlNSDescriptor.doBuildDeclarationMap();
-    }
+    SimpleFieldCache<>() {
+      @Override
+      protected CachedValue<Map<String, XmlElementDescriptor>> compute(final XmlNSDescriptorImpl xmlNSDescriptor) {
+        return xmlNSDescriptor.doBuildDeclarationMap();
+      }
 
-    @Override
-    protected final CachedValue<Map<String, XmlElementDescriptor>> getValue(final XmlNSDescriptorImpl xmlNSDescriptor) {
-      return xmlNSDescriptor.myCachedDecls;
-    }
+      @Override
+      protected CachedValue<Map<String, XmlElementDescriptor>> getValue(final XmlNSDescriptorImpl xmlNSDescriptor) {
+        return xmlNSDescriptor.myCachedDecls;
+      }
 
-    @Override
-    protected final void putValue(final CachedValue<Map<String, XmlElementDescriptor>> cachedValue, final XmlNSDescriptorImpl xmlNSDescriptor) {
-      xmlNSDescriptor.myCachedDecls = cachedValue;
-    }
-  };
+      @Override
+      protected void putValue(final CachedValue<Map<String, XmlElementDescriptor>> cachedValue,
+                              final XmlNSDescriptorImpl xmlNSDescriptor) {
+        xmlNSDescriptor.myCachedDecls = cachedValue;
+      }
+    };
 
   private volatile CachedValue<Map<String, XmlElementDescriptor>> myCachedDecls;
-  private static final XmlUtil.DuplicationInfoProvider<XmlElementDecl> XML_ELEMENT_DECL_PROVIDER = new XmlUtil.DuplicationInfoProvider<XmlElementDecl>() {
+  private static final XmlUtil.DuplicationInfoProvider<XmlElementDecl> XML_ELEMENT_DECL_PROVIDER = new XmlUtil.DuplicationInfoProvider<>() {
     @Override
-    public String getName(@NotNull final XmlElementDecl psiElement) {
+    public String getName(final @NotNull XmlElementDecl psiElement) {
       return psiElement.getName();
     }
 
     @Override
-    @NotNull
-    public String getNameKey(@NotNull final XmlElementDecl psiElement, @NotNull final String name) {
+    public @NotNull String getNameKey(final @NotNull XmlElementDecl psiElement, final @NotNull String name) {
       return name;
     }
 
     @Override
-    @NotNull
-    public PsiElement getNodeForMessage(@NotNull final XmlElementDecl psiElement) {
+    public @NotNull PsiElement getNodeForMessage(final @NotNull XmlElementDecl psiElement) {
       return psiElement.getNameElement();
     }
   };
@@ -116,7 +128,7 @@ public final class XmlNSDescriptorImpl implements XmlNSDescriptorEx,Validator<Xm
   }
 
   @Override
-  public XmlElementDescriptor @NotNull [] getRootElementsDescriptors(@Nullable final XmlDocument document) {
+  public XmlElementDescriptor @NotNull [] getRootElementsDescriptors(final @Nullable XmlDocument document) {
     // Suggest more appropriate variant if DOCTYPE <element_name> exists
     final XmlProlog prolog = document != null ? document.getProlog():null;
 
@@ -137,7 +149,7 @@ public final class XmlNSDescriptorImpl implements XmlNSDescriptorEx,Validator<Xm
     return getElements();
   }
 
-  public final XmlElementDescriptor getElementDescriptor(String name){
+  public XmlElementDescriptor getElementDescriptor(String name){
     return buildDeclarationMap().get(name);
   }
 
@@ -178,7 +190,7 @@ public final class XmlNSDescriptorImpl implements XmlNSDescriptorEx,Validator<Xm
 
       XmlUtil.processXmlElements(document, new PsiElementProcessor() {
         @Override
-        public boolean execute(@NotNull final PsiElement element) {
+        public boolean execute(final @NotNull PsiElement element) {
           if (element instanceof XmlElementDecl) decls.add((XmlElementDecl)element);
           return true;
         }
@@ -191,7 +203,7 @@ public final class XmlNSDescriptorImpl implements XmlNSDescriptorEx,Validator<Xm
       );
       return;
     }
-    ExternalDocumentValidator.doValidation(document,host);
+    ExternalDocumentValidatorService.getInstance().doValidation(document, host);
   }
 
   @Override

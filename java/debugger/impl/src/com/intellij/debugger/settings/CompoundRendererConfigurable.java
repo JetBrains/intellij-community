@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.settings;
 
 import com.intellij.debugger.JavaDebuggerBundle;
@@ -10,22 +10,37 @@ import com.intellij.debugger.engine.evaluation.TextWithImportsImpl;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.impl.DebuggerUtilsImpl;
 import com.intellij.debugger.ui.JavaDebuggerSupport;
-import com.intellij.debugger.ui.tree.render.*;
+import com.intellij.debugger.ui.tree.render.ChildrenRenderer;
+import com.intellij.debugger.ui.tree.render.CompoundReferenceRenderer;
+import com.intellij.debugger.ui.tree.render.EnumerationChildrenRenderer;
+import com.intellij.debugger.ui.tree.render.ExpressionChildrenRenderer;
+import com.intellij.debugger.ui.tree.render.LabelRenderer;
+import com.intellij.debugger.ui.tree.render.NodeRenderer;
+import com.intellij.debugger.ui.tree.render.ValueLabelRenderer;
+import com.intellij.java.JavaPluginDisposable;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComponentValidator;
 import com.intellij.openapi.ui.ValidationInfo;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaCodeFragment;
+import com.intellij.psi.PsiClass;
 import com.intellij.psi.impl.source.PsiTypeCodeFragmentImpl;
-import com.intellij.ui.*;
+import com.intellij.ui.AnActionButton;
+import com.intellij.ui.AnActionButtonRunnable;
+import com.intellij.ui.EditorTextField;
+import com.intellij.ui.ReferenceEditorWithBrowseButton;
+import com.intellij.ui.TableUtil;
+import com.intellij.ui.ToolbarDecorator;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.table.JBTable;
+import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.ui.AbstractTableCellEditor;
+import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 import com.intellij.xdebugger.impl.breakpoints.XExpressionImpl;
 import com.intellij.xdebugger.impl.ui.XDebuggerExpressionEditor;
@@ -33,12 +48,27 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.java.debugger.JavaDebuggerEditorsProvider;
 
-import javax.swing.*;
+import javax.swing.ButtonGroup;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JRadioButton;
+import javax.swing.JTable;
+import javax.swing.KeyStroke;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.TableColumn;
-import java.awt.*;
-import java.awt.event.*;
+import java.awt.CardLayout;
+import java.awt.Component;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.FocusAdapter;
+import java.awt.event.FocusEvent;
+import java.awt.event.ItemEvent;
+import java.awt.event.ItemListener;
+import java.awt.event.KeyEvent;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -61,8 +91,8 @@ class CompoundRendererConfigurable extends JPanel {
   private final JLabel myExpandedLabel;
   private JBTable myTable;
   private final JBCheckBox myAppendDefaultChildren;
-  @NonNls private static final String EMPTY_PANEL_ID = "EMPTY";
-  @NonNls private static final String DATA_PANEL_ID = "DATA";
+  private static final @NonNls String EMPTY_PANEL_ID = "EMPTY";
+  private static final @NonNls String DATA_PANEL_ID = "DATA";
   private static final int NAME_TABLE_COLUMN = 0;
   private static final int EXPRESSION_TABLE_COLUMN = 1;
   private static final int ONDEMAND_TABLE_COLUMN = 2;
@@ -70,9 +100,7 @@ class CompoundRendererConfigurable extends JPanel {
   CompoundRendererConfigurable(@NotNull Disposable parentDisposable) {
     super(new CardLayout());
 
-    if (myProject == null) {
-      myProject = JavaDebuggerSupport.getContextProjectForEditorFieldsInDebuggerConfigurables();
-    }
+    myProject = JavaDebuggerSupport.getContextProjectForEditorFieldsInDebuggerConfigurables();
 
     myRbDefaultLabel = new JRadioButton(JavaDebuggerBundle.message("label.compound.renderer.configurable.use.default.renderer"));
     myRbExpressionLabel = new JRadioButton(JavaDebuggerBundle.message("label.compound.renderer.configurable.use.expression"));
@@ -114,7 +142,7 @@ class CompoundRendererConfigurable extends JPanel {
         PsiClass psiClass = DebuggerUtils.getInstance()
           .chooseClassDialog(JavaDebuggerBundle.message("title.compound.renderer.configurable.choose.renderer.reference.type"), myProject);
         if (psiClass != null) {
-          String qName = JVMNameUtil.getNonAnonymousClassName(psiClass);
+          String qName = JVMNameUtil.getClassVMName(psiClass);
           myClassNameField.setText(qName);
           updateContext(qName);
         }
@@ -127,7 +155,7 @@ class CompoundRendererConfigurable extends JPanel {
         updateContext(myClassNameField.getText());
       }
     });
-    ComponentValidator validator = new ComponentValidator(myProject).withValidator(() -> {
+    ComponentValidator validator = new ComponentValidator(JavaPluginDisposable.getInstance(myProject)).withValidator(() -> {
       String text = myClassNameField.getText();
       if (StringUtil.containsAnyChar(text, "<>")) {
         return new ValidationInfo(JavaDebuggerBundle.message("error.compound.renderer.configurable.fqn.generic"), editorTextField);
@@ -146,7 +174,7 @@ class CompoundRendererConfigurable extends JPanel {
     JPanel panel = new JPanel(new GridBagLayout());
     panel.add(new JLabel(JavaDebuggerBundle.message("label.compound.renderer.configurable.apply.to")),
               new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE,
-                                     JBUI.emptyInsets(), 0, 0));
+                                     JBInsets.emptyInsets(), 0, 0));
     panel.add(myClassNameField, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.NORTHWEST,
                                                        GridBagConstraints.HORIZONTAL, JBUI.insetsTop(4), 0, 0));
 
@@ -212,19 +240,21 @@ class CompoundRendererConfigurable extends JPanel {
   }
 
   private void updateContext(final String qName) {
-    ApplicationManager.getApplication().runReadAction(() -> {
-      Project project = myProject;
-      if (project != null) {
-        Pair<PsiElement, PsiType>pair = DebuggerUtilsImpl.getPsiClassAndType(qName, project);
-        PsiElement context = pair.first;
-        if (context != null) {
-          myLabelEditor.setContext(context);
-          myChildrenEditor.setContext(context);
-          myChildrenExpandedEditor.setContext(context);
-          myListChildrenEditor.setContext(context);
-        }
-      }
-    });
+    if (myProject != null) {
+      ReadAction.nonBlocking(() -> DebuggerUtilsImpl.getPsiClassAndType(qName, myProject).first)
+        .inSmartMode(myProject)
+        .coalesceBy(this)
+        // the containing dialog may be not visible yet
+        .finishOnUiThread(ModalityState.any(), context -> {
+          if (context != null) {
+            myLabelEditor.setContext(context);
+            myChildrenEditor.setContext(context);
+            myChildrenExpandedEditor.setContext(context);
+            myListChildrenEditor.setContext(context);
+          }
+        })
+        .submit(AppExecutorUtil.getAppExecutorService());
+    }
   }
 
   private void updateEnabledState() {
@@ -245,6 +275,7 @@ class CompoundRendererConfigurable extends JPanel {
   private JComponent createChildrenListEditor(JavaDebuggerEditorsProvider editorsProvider) {
     final MyTableModel tableModel = new MyTableModel();
     myTable = new JBTable(tableModel);
+    myTable.setShowGrid(false);
     myListChildrenEditor = new XDebuggerExpressionEditor(myProject, editorsProvider, "NamedChildrenConfigurable", null, XExpressionImpl.EMPTY_EXPRESSION, false, false, false);
     JComponent editorComponent = myListChildrenEditor.getComponent();
 
@@ -261,21 +292,20 @@ class CompoundRendererConfigurable extends JPanel {
       }
     };
     editorComponent.registerKeyboardAction(e -> editor.stopCellEditing(), KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0),
-                           JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
+                                           JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
     editorComponent.registerKeyboardAction(e -> editor.cancelCellEditing(), KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0),
-                           JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
+                                           JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
 
     TableColumn exprColumn = myTable.getColumnModel().getColumn(EXPRESSION_TABLE_COLUMN);
     exprColumn.setCellEditor(editor);
     exprColumn.setCellRenderer(new DefaultTableCellRenderer() {
-      @NotNull
       @Override
-      public Component getTableCellRendererComponent(@NotNull JTable table,
-                                                     Object value,
-                                                     boolean isSelected,
-                                                     boolean hasFocus,
-                                                     int row,
-                                                     int column) {
+      public @NotNull Component getTableCellRendererComponent(@NotNull JTable table,
+                                                              Object value,
+                                                              boolean isSelected,
+                                                              boolean hasFocus,
+                                                              int row,
+                                                              int column) {
         final TextWithImports textWithImports = (TextWithImports)value;
         final String text = (textWithImports != null) ? textWithImports.getText() : "";
         return super.getTableCellRendererComponent(table, text, isSelected, hasFocus, row, column);
@@ -389,9 +419,8 @@ class CompoundRendererConfigurable extends JPanel {
       myChildrenEditor.setExpression(TextWithImportsImpl.toXExpression(emptyExpressionFragment));
       myChildrenExpandedEditor.setExpression(TextWithImportsImpl.toXExpression(emptyExpressionFragment));
     }
-    else if (childrenRenderer instanceof ExpressionChildrenRenderer) {
+    else if (childrenRenderer instanceof ExpressionChildrenRenderer exprRenderer) {
       myRbExpressionChildrenRenderer.setSelected(true);
-      final ExpressionChildrenRenderer exprRenderer = (ExpressionChildrenRenderer)childrenRenderer;
       myChildrenEditor.setExpression(TextWithImportsImpl.toXExpression(exprRenderer.getChildrenExpression()));
       myChildrenExpandedEditor.setExpression(TextWithImportsImpl.toXExpression(exprRenderer.getChildrenExpandable()));
     }
@@ -399,8 +428,7 @@ class CompoundRendererConfigurable extends JPanel {
       myRbListChildrenRenderer.setSelected(true);
       myChildrenEditor.setExpression(TextWithImportsImpl.toXExpression(emptyExpressionFragment));
       myChildrenExpandedEditor.setExpression(TextWithImportsImpl.toXExpression(emptyExpressionFragment));
-      if (childrenRenderer instanceof EnumerationChildrenRenderer) {
-        EnumerationChildrenRenderer enumerationRenderer = (EnumerationChildrenRenderer)childrenRenderer;
+      if (childrenRenderer instanceof EnumerationChildrenRenderer enumerationRenderer) {
         getTableModel().init(enumerationRenderer.getChildren());
         myAppendDefaultChildren.setSelected(enumerationRenderer.isAppendDefaultChildren());
       }
@@ -442,19 +470,14 @@ class CompoundRendererConfigurable extends JPanel {
       return true;
     }
 
-    @NotNull
     @Override
-    public Class getColumnClass(int columnIndex) {
-      switch (columnIndex) {
-        case NAME_TABLE_COLUMN:
-          return String.class;
-        case EXPRESSION_TABLE_COLUMN:
-          return TextWithImports.class;
-        case ONDEMAND_TABLE_COLUMN:
-          return Boolean.class;
-        default:
-          return super.getColumnClass(columnIndex);
-      }
+    public @NotNull Class<?> getColumnClass(int columnIndex) {
+      return switch (columnIndex) {
+        case NAME_TABLE_COLUMN -> String.class;
+        case EXPRESSION_TABLE_COLUMN -> TextWithImports.class;
+        case ONDEMAND_TABLE_COLUMN -> Boolean.class;
+        default -> super.getColumnClass(columnIndex);
+      };
     }
 
     @Override
@@ -463,16 +486,12 @@ class CompoundRendererConfigurable extends JPanel {
         return null;
       }
       final EnumerationChildrenRenderer.ChildInfo row = myData.get(rowIndex);
-      switch (columnIndex) {
-        case NAME_TABLE_COLUMN:
-          return row.myName;
-        case EXPRESSION_TABLE_COLUMN:
-          return row.myExpression;
-        case ONDEMAND_TABLE_COLUMN:
-          return row.myOnDemand;
-        default:
-          return null;
-      }
+      return switch (columnIndex) {
+        case NAME_TABLE_COLUMN -> row.myName;
+        case EXPRESSION_TABLE_COLUMN -> row.myExpression;
+        case ONDEMAND_TABLE_COLUMN -> row.myOnDemand;
+        default -> null;
+      };
     }
 
     @Override
@@ -482,31 +501,20 @@ class CompoundRendererConfigurable extends JPanel {
       }
       final EnumerationChildrenRenderer.ChildInfo row = myData.get(rowIndex);
       switch (columnIndex) {
-        case NAME_TABLE_COLUMN:
-          row.myName = (String)aValue;
-          break;
-        case EXPRESSION_TABLE_COLUMN:
-          row.myExpression = (TextWithImports)aValue;
-          break;
-        case ONDEMAND_TABLE_COLUMN:
-          row.myOnDemand = (Boolean)aValue;
-          break;
+        case NAME_TABLE_COLUMN -> row.myName = (String)aValue;
+        case EXPRESSION_TABLE_COLUMN -> row.myExpression = (TextWithImports)aValue;
+        case ONDEMAND_TABLE_COLUMN -> row.myOnDemand = (Boolean)aValue;
       }
     }
 
-    @NotNull
     @Override
-    public String getColumnName(int columnIndex) {
-      switch (columnIndex) {
-        case NAME_TABLE_COLUMN:
-          return JavaDebuggerBundle.message("label.compound.renderer.configurable.table.header.name");
-        case EXPRESSION_TABLE_COLUMN:
-          return JavaDebuggerBundle.message("label.compound.renderer.configurable.table.header.expression");
-        case ONDEMAND_TABLE_COLUMN:
-          return JavaDebuggerBundle.message("label.compound.renderer.configurable.table.header.ondemand");
-        default:
-          return "";
-      }
+    public @NotNull String getColumnName(int columnIndex) {
+      return switch (columnIndex) {
+        case NAME_TABLE_COLUMN -> JavaDebuggerBundle.message("label.compound.renderer.configurable.table.header.name");
+        case EXPRESSION_TABLE_COLUMN -> JavaDebuggerBundle.message("label.compound.renderer.configurable.table.header.expression");
+        case ONDEMAND_TABLE_COLUMN -> JavaDebuggerBundle.message("label.compound.renderer.configurable.table.header.ondemand");
+        default -> "";
+      };
     }
 
     public void addRow(final String name, final TextWithImports expressionWithImports) {
@@ -530,16 +538,6 @@ class CompoundRendererConfigurable extends JPanel {
     public List<EnumerationChildrenRenderer.ChildInfo> getExpressions() {
       return myData;
     }
-
-    private static final class Row {
-      public String name;
-      public TextWithImports value;
-
-      Row(final String name, final TextWithImports value) {
-        this.name = name;
-        this.value = value;
-      }
-    }
   }
 
   private static final class ClassNameEditorWithBrowseButton extends ReferenceEditorWithBrowseButton {
@@ -553,7 +551,7 @@ class CompoundRendererConfigurable extends JPanel {
                 }
               };
               fragment.setVisibilityChecker(JavaCodeFragment.VisibilityChecker.EVERYTHING_VISIBLE);
-              return PsiDocumentManager.getInstance(project).getDocument(fragment);
+              return fragment.getViewProvider().getDocument();
             }, "");
     }
   }

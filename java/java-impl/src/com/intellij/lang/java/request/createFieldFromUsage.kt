@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:JvmName("CreateFieldFromUsage")
 
 package com.intellij.lang.java.request
@@ -13,16 +13,30 @@ import com.intellij.lang.jvm.JvmModifier
 import com.intellij.lang.jvm.actions.CreateFieldRequest
 import com.intellij.lang.jvm.actions.EP_NAME
 import com.intellij.lang.jvm.actions.groupActionsByType
-import com.intellij.psi.*
+import com.intellij.psi.PsiAnnotation
+import com.intellij.psi.PsiAnnotationMethod
+import com.intellij.psi.PsiCaseLabelElementList
+import com.intellij.psi.PsiClass
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiExpression
+import com.intellij.psi.PsiJavaCodeReferenceElement
+import com.intellij.psi.PsiJavaFile
+import com.intellij.psi.PsiMember
+import com.intellij.psi.PsiMethodCallExpression
+import com.intellij.psi.PsiNameValuePair
+import com.intellij.psi.PsiReferenceExpression
 import com.intellij.psi.impl.PsiImplUtil
+import com.intellij.psi.util.PsiTreeUtil
+import com.intellij.psi.util.PsiUtil
 import com.intellij.psi.util.PsiUtil.resolveClassInClassTypeOnly
 import com.intellij.psi.util.PsiUtilCore
 import com.intellij.psi.util.parentOfType
+import com.intellij.psi.util.parentOfTypes
 
-fun generateActions(ref: PsiReferenceExpression): List<IntentionAction> {
+public fun generateActions(ref: PsiReferenceExpression): List<IntentionAction> {
   if (!checkReference(ref)) return emptyList()
   val fieldRequests = CreateFieldRequests(ref).collectRequests()
-  val extensions = EP_NAME.extensions
+  val extensions = EP_NAME.extensionList
   return fieldRequests.flatMap { (clazz, request) ->
     extensions.flatMap { ext ->
       ext.createAddFieldActions(clazz, request)
@@ -68,7 +82,7 @@ private class CreateFieldRequests(val myRef: PsiReferenceExpression) {
       }
     }
     else {
-      val baseClass = resolveClassInClassTypeOnly(PsiImplUtil.getSwitchLabel(myRef)?.enclosingSwitchStatement?.expression?.type)
+      val baseClass = resolveClassInClassTypeOnly(PsiImplUtil.getSwitchLabel(myRef)?.enclosingSwitchBlock?.expression?.type)
       if (baseClass != null) {
         processHierarchy(baseClass)
       }
@@ -85,6 +99,9 @@ private class CreateFieldRequests(val myRef: PsiReferenceExpression) {
   }
 
   private fun processOuterAndImported() {
+    val parent = myRef.parentOfTypes(PsiMember::class, PsiAnnotation::class)
+    // unresolved writable reference inside annotation: creating field will not help
+    if (parent is PsiAnnotation && PsiUtil.isAccessedForWriting(myRef)) return
     val inStaticContext = myRef.isInStaticContext()
     for (outerClass in collectOuterClasses(myRef)) {
       processClass(outerClass, inStaticContext)
@@ -115,8 +132,8 @@ private class CreateFieldRequests(val myRef: PsiReferenceExpression) {
     val request = CreateFieldFromJavaUsageRequest(
       modifiers = modifiers,
       reference = myRef,
-      useAnchor = target.toJavaClassOrNull() == ownerClass,
-      isConstant = false
+      useAnchor = ownerClass != null && PsiTreeUtil.isAncestor(target.toJavaClassOrNull(), ownerClass, false),
+      isConstant = shouldCreateConstant(myRef)
     )
     addRequest(target, request)
   }
@@ -142,4 +159,8 @@ private fun collectOnDemandImported(place: PsiElement): List<JvmClass> {
 private fun shouldCreateFinalField(ref: PsiReferenceExpression, targetClass: JvmClass): Boolean {
   val javaClass = targetClass.toJavaClassOrNull() ?: return false
   return CreateFieldFromUsageFix.shouldCreateFinalMember(ref, javaClass)
+}
+private fun shouldCreateConstant(ref: PsiReferenceExpression): Boolean {
+  val parent = PsiTreeUtil.skipParentsOfType(ref, PsiExpression::class.java)
+  return parent is PsiNameValuePair || parent is PsiCaseLabelElementList || parent is PsiAnnotationMethod;
 }

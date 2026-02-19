@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util;
 
 import org.jetbrains.annotations.Contract;
@@ -28,9 +28,10 @@ public final class ArrayUtilRt {
   public static final Collection[] EMPTY_COLLECTION_ARRAY = new Collection[0];
   public static final File[] EMPTY_FILE_ARRAY = new File[0];
 
-  @NotNull
+  private ArrayUtilRt() { }
+
   @Contract(pure=true)
-  public static String[] toStringArray(@Nullable Collection<String> collection) {
+  public static String @NotNull [] toStringArray(@Nullable Collection<String> collection) {
     return collection == null || collection.isEmpty()
            ? EMPTY_STRING_ARRAY : collection.toArray(EMPTY_STRING_ARRAY);
   }
@@ -44,12 +45,12 @@ public final class ArrayUtilRt {
    *         these elements.
    */
   @Contract(pure = true)
-  public static <T> int find(@NotNull T[] src, @Nullable T obj) {
+  public static <T> int find(T @NotNull [] src, @Nullable T obj) {
     return indexOf(src, obj, 0, src.length);
   }
 
   @Contract(pure = true)
-  public static <T> int indexOf(@NotNull T[] src, @Nullable T obj, int start, int end) {
+  public static <T> int indexOf(T @NotNull [] src, @Nullable T obj, int start, int end) {
     if (obj == null) {
       for (int i = start; i < end; i++) {
         if (src[i] == null) return i;

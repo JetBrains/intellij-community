@@ -1,19 +1,21 @@
-<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="16" height="16" viewBox="0 0 16 16">
-  <defs>
-    <polygon id="diffwithclipboard_dark-a" points="0 0 11 0 11 4 3 4 3 15 0 15"/>
-  </defs>
-  <g fill="none" fill-rule="evenodd">
-    <g transform="translate(0 1)">
-      <mask id="diffwithclipboard_dark-b" fill="#fff">
-        <use xlink:href="#diffwithclipboard_dark-a"/>
-      </mask>
-      <g mask="url(#diffwithclipboard_dark-b)">
-        <path fill="#AFB1B3" d="M3,1 L3,0 L7,0 L7,1 L10,1 L10,13 L0,13 L0,1 L3,1 Z M4,1 L4,2 L6,2 L6,1 L4,1 Z M2,4 L2,11 L8,11 L8,4 L2,4 Z" transform="translate(1)"/>
-      </g>
-    </g>
-    <g fill="#389FD6" transform="translate(4 3)">
-      <path d="M9.40000027,4.39999992 L12.5999999,4.39999992 L8.4000001,8.59999973 L4.20000029,4.39999992 L7.40000027,4.39999992 L7.40000027,1.39999992 L9.40000027,1.39999992 L9.40000027,4.39999992 Z" transform="rotate(90 8.4 5)"/>
-      <path d="M4.5999999,8.4000001 L7.79999971,8.4000001 L3.5999999,12.5999999 L-0.599999905,8.4000001 L2.5999999,8.4000001 L2.5999999,5.4000001 L4.5999999,5.4000001 L4.5999999,8.4000001 Z" transform="matrix(0 1 1 0 -5.4 5.4)"/>
-    </g>
-  </g>
+<!-- Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file. -->
+<svg width="16" height="17" viewBox="0 0 16 17" fill="none" xmlns="http://www.w3.org/2000/svg">
+<g id="diffWithClipboard_dark">
+<g id="actions/menu-paste">
+<mask id="mask0" maskUnits="userSpaceOnUse" x="0" y="1" width="11" height="15">
+<path id="Mask" fill-rule="evenodd" clip-rule="evenodd" d="M0 1H11V5H3V16H0V1Z" fill="white"/>
+</mask>
+<g mask="url(#mask0)">
+<g id="actions/menu-paste_2">
+<g id="paste_dark">
+<path id="Shape" fill-rule="evenodd" clip-rule="evenodd" d="M4 2V1H8V2H11V14H1V2H4ZM5 2V3H7V2H5ZM3 5V12H9V5H3Z" fill="#AFB1B3"/>
+</g>
+</g>
+</g>
+</g>
+<g id="Group">
+<path id="Combined Shape" fill-rule="evenodd" clip-rule="evenodd" d="M16 9V7H13V3.8L8.8 8L13 12.2V9H16Z" fill="#3592C4"/>
+<path id="Combined Shape_2" fill-rule="evenodd" clip-rule="evenodd" d="M4 13L4 11H7V7.8L11.2 12L7 16.2V13H4Z" fill="#3592C4"/>
+</g>
+</g>
 </svg>

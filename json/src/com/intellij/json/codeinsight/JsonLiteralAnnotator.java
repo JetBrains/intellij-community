@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.json.codeinsight;
 
 import com.intellij.codeInspection.util.InspectionMessage;
@@ -19,13 +19,13 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-/**
- * @author Mikhail Golubev
- */
-public class JsonLiteralAnnotator implements Annotator {
+final class JsonLiteralAnnotator implements Annotator {
 
-  private static class Holder {
-    private static final boolean DEBUG = ApplicationManager.getApplication().isUnitTestMode();
+  private final boolean isDebug = ApplicationManager.getApplication().isUnitTestMode();
+
+  @Override
+  public boolean isDumbAware() {
+    return true;
   }
 
   @Override
@@ -34,8 +34,7 @@ public class JsonLiteralAnnotator implements Annotator {
     if (element instanceof JsonReferenceExpression) {
       highlightPropertyKey(element, holder);
     }
-    else if (element instanceof JsonStringLiteral) {
-      final JsonStringLiteral stringLiteral = (JsonStringLiteral)element;
+    else if (element instanceof JsonStringLiteral stringLiteral) {
       final int elementOffset = element.getTextOffset();
       highlightPropertyKey(element, holder);
       final String text = JsonPsiUtil.getElementTextWithoutHostEscaping(element);
@@ -60,7 +59,7 @@ public class JsonLiteralAnnotator implements Annotator {
     }
     else if (element instanceof JsonNumberLiteral) {
       String text = null;
-      for (JsonLiteralChecker checker: extensions) {
+      for (JsonLiteralChecker checker : extensions) {
         if (!checker.isApplicable(element)) continue;
         if (text == null) {
           text = JsonPsiUtil.getElementTextWithoutHostEscaping(element);
@@ -73,9 +72,9 @@ public class JsonLiteralAnnotator implements Annotator {
     }
   }
 
-  private static void highlightPropertyKey(@NotNull PsiElement element, @NotNull AnnotationHolder holder) {
+  private void highlightPropertyKey(@NotNull PsiElement element, @NotNull AnnotationHolder holder) {
     if (JsonPsiUtil.isPropertyKey(element)) {
-      if (Holder.DEBUG) {
+      if (isDebug) {
         holder.newAnnotation(HighlightSeverity.INFORMATION, JsonBundle.message("annotation.property.key")).textAttributes(JsonSyntaxHighlighterFactory.JSON_PROPERTY_KEY).create();
       }
       else {

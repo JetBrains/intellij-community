@@ -1,6 +1,8 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.zmlx.hg4idea.action;
 
+import com.intellij.ide.trustedProjects.TrustedProjects;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.progress.util.BackgroundTaskUtil;
@@ -25,6 +27,8 @@ import org.zmlx.hg4idea.util.HgUtil;
 
 import static com.intellij.util.ObjectUtils.notNull;
 import static java.util.Objects.requireNonNull;
+import static org.zmlx.hg4idea.HgNotificationIdsHolder.REPO_CREATED;
+import static org.zmlx.hg4idea.HgNotificationIdsHolder.REPO_CREATION_ERROR;
 
 /**
  * Action for initializing a Mercurial repository.
@@ -33,6 +37,17 @@ import static java.util.Objects.requireNonNull;
 public class HgInit extends DumbAwareAction {
 
   private Project myProject;
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
+  }
+
+  @Override
+  public void update(@NotNull AnActionEvent e) {
+    Project project = e.getProject();
+    e.getPresentation().setEnabledAndVisible(project == null || project.isDefault() || TrustedProjects.isProjectTrusted(project));
+  }
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
@@ -91,18 +106,18 @@ public class HgInit extends DumbAwareAction {
     }
   }
 
-  public static boolean createRepository(@NotNull Project project, @NotNull final VirtualFile selectedRoot) {
-    HgCommandResult result = new HgInitCommand(project).execute(selectedRoot.getPath());
+  public static boolean createRepository(@NotNull Project project, final @NotNull VirtualFile selectedRoot) {
+    HgCommandResult result = new HgInitCommand(project).execute(selectedRoot.toNioPath());
     if (!HgErrorUtil.hasErrorsInCommandExecution(result)) {
       VcsNotifier.getInstance(project)
-        .notifySuccess("hg.repository.created",
+        .notifySuccess(REPO_CREATED,
                        HgBundle.message("hg4idea.init.created.notification.title"),
                        HgBundle.message("hg4idea.init.created.notification.description", selectedRoot.getPresentableUrl()));
       return true;
     }
     else {
       new HgCommandResultNotifier(project.isDefault() ? null : project)
-        .notifyError("hg.repo.creation.error",
+        .notifyError(REPO_CREATION_ERROR,
                      result,
                      HgBundle.message("hg4idea.init.error.title"),
                      HgBundle.message("hg4idea.init.error.description", selectedRoot.getPresentableUrl()));

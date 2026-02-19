@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.slicer;
 
 import com.intellij.concurrency.ConcurrentCollectionFactory;
@@ -28,24 +14,27 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
+import com.intellij.util.Function;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.PairProcessor;
 import com.intellij.util.WalkingState;
 import com.intellij.util.containers.ConcurrentFactoryMap;
-import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.HashingStrategy;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
-public class SliceLeafAnalyzer {
+public final class SliceLeafAnalyzer {
   private static final Logger LOG = Logger.getInstance(SliceLeafAnalyzer.class);
 
-  @NotNull
-  private final SliceLeafEquality myLeafEquality;
+  private final @NotNull SliceLeafEquality myLeafEquality;
 
-  @NotNull
-  private final SliceLanguageSupportProvider myProvider;
+  private final @NotNull SliceLanguageSupportProvider myProvider;
 
   public SliceLeafAnalyzer(@NotNull SliceLeafEquality leafEquality, @NotNull SliceLanguageSupportProvider provider) {
     myLeafEquality = leafEquality;
@@ -85,10 +74,9 @@ public class SliceLeafAnalyzer {
     SliceManager.getInstance(root.getProject()).createToolWindow(true, root, true, description);
   }
 
-  @NotNull
-  public SliceRootNode createTreeGroupedByValues(@NotNull Collection<? extends PsiElement> leaves,
-                                                        @NotNull SliceRootNode oldRoot,
-                                                        @NotNull Map<SliceNode, Collection<PsiElement>> map) {
+  public @NotNull SliceRootNode createTreeGroupedByValues(@NotNull Collection<? extends PsiElement> leaves,
+                                                          @NotNull SliceRootNode oldRoot,
+                                                          @NotNull Map<SliceNode, Collection<PsiElement>> map) {
     SliceNode oldRootStart = oldRoot.myCachedChildren.get(0);
     SliceRootNode root = oldRoot.copy();
     root.setChanged();
@@ -119,7 +107,7 @@ public class SliceLeafAnalyzer {
     return root;
   }
 
-  public void startAnalyzeValues(@NotNull final AbstractTreeStructure treeStructure, @NotNull final Runnable finish) {
+  public void startAnalyzeValues(final @NotNull AbstractTreeStructure treeStructure, final @NotNull Runnable finish) {
     final SliceRootNode root = (SliceRootNode)treeStructure.getRootElement();
     final Ref<Collection<PsiElement>> leafExpressions = Ref.create(null);
 
@@ -129,7 +117,7 @@ public class SliceLeafAnalyzer {
     ProgressManager.getInstance().run(new Task.Backgroundable(
       root.getProject(), LangBundle.message("progress.title.expanding.all.nodes", encouragementPiece), true) {
       @Override
-      public void run(@NotNull final ProgressIndicator indicator) {
+      public void run(final @NotNull ProgressIndicator indicator) {
         Collection<PsiElement> l = calcLeafExpressions(root, treeStructure, map);
         leafExpressions.set(l);
       }
@@ -161,11 +149,23 @@ public class SliceLeafAnalyzer {
   }
 
   public Map<SliceNode, Collection<PsiElement>> createMap() {
-    return ConcurrentFactoryMap.create(k -> ConcurrentCollectionFactory.createConcurrentSet(myLeafEquality),
-                                          () -> ConcurrentCollectionFactory.createMap(ContainerUtil.identityStrategy()));
+    Function<SliceNode, Collection<PsiElement>> function = k -> {
+      return ConcurrentCollectionFactory.createConcurrentSet(new HashingStrategy<>() {
+        @Override
+        public int hashCode(PsiElement object) {
+          return myLeafEquality.hashCode(object);
+        }
+
+        @Override
+        public boolean equals(PsiElement o1, PsiElement o2) {
+          return myLeafEquality.equals(o1, o2);
+        }
+      });
+    };
+    return ConcurrentFactoryMap.create(function, ConcurrentCollectionFactory::createConcurrentIdentityMap);
   }
 
-  public static class SliceNodeGuide implements WalkingState.TreeGuide<SliceNode> {
+  public static final class SliceNodeGuide implements WalkingState.TreeGuide<SliceNode> {
     private final AbstractTreeStructure myTreeStructure;
     // use tree structure because it's setting 'parent' fields in the process
 
@@ -175,17 +175,17 @@ public class SliceLeafAnalyzer {
 
     @Override
     public SliceNode getNextSibling(@NotNull SliceNode element) {
-      AbstractTreeNode parent = element.getParent();
+      AbstractTreeNode<?> parent = element.getParent();
       if (parent == null) return null;
 
-      return element.getNext((List)parent.getChildren());
+      return element.getNext((List<? extends AbstractTreeNode<?>>)parent.getChildren());
     }
 
     @Override
     public SliceNode getPrevSibling(@NotNull SliceNode element) {
-      AbstractTreeNode parent = element.getParent();
+      AbstractTreeNode<?> parent = element.getParent();
       if (parent == null) return null;
-      return element.getPrev((List)parent.getChildren());
+      return element.getPrev((List<? extends AbstractTreeNode<?>>)parent.getChildren());
     }
 
     @Override
@@ -196,23 +196,22 @@ public class SliceLeafAnalyzer {
 
     @Override
     public SliceNode getParent(@NotNull SliceNode element) {
-      AbstractTreeNode parent = element.getParent();
+      AbstractTreeNode<?> parent = element.getParent();
       return parent instanceof SliceNode ? (SliceNode)parent : null;
     }
   }
 
-  private static Collection<PsiElement> node(SliceNode node, Map<SliceNode, Collection<PsiElement>> map) {
+  private static Collection<PsiElement> node(@NotNull SliceNode node, @NotNull Map<SliceNode, Collection<PsiElement>> map) {
     return map.get(node);
   }
 
-  @NotNull
-  public Collection<PsiElement> calcLeafExpressions(@NotNull final SliceNode root,
-                                                           @NotNull AbstractTreeStructure treeStructure,
-                                                           @NotNull final Map<SliceNode, Collection<PsiElement>> map) {
+  public @NotNull Collection<PsiElement> calcLeafExpressions(final @NotNull SliceNode root,
+                                                             @NotNull AbstractTreeStructure treeStructure,
+                                                             final @NotNull Map<SliceNode, Collection<PsiElement>> map) {
     final SliceNodeGuide guide = new SliceNodeGuide(treeStructure);
     AtomicInteger depth = new AtomicInteger();
     boolean printToLog = LOG.isTraceEnabled();
-    WalkingState<SliceNode> walkingState = new WalkingState<SliceNode>(guide) {
+    WalkingState<SliceNode> walkingState = new WalkingState<>(guide) {
       @Override
       public void elementStarted(@NotNull SliceNode element) {
         depth.incrementAndGet();
@@ -220,7 +219,7 @@ public class SliceLeafAnalyzer {
       }
 
       @Override
-      public void visit(@NotNull final SliceNode element) {
+      public void visit(final @NotNull SliceNode element) {
         element.calculateDupNode();
         node(element, map).clear();
         SliceNode duplicate = element.getDuplicate();
@@ -239,7 +238,7 @@ public class SliceLeafAnalyzer {
             if (children.isEmpty() && sliceUsage != null && sliceUsage.canBeLeaf()) {
               PsiElement value = sliceUsage.getElement();
               if (value != null) {
-                node(element, map).addAll(ContainerUtil.singleton(value, myLeafEquality));
+                node(element, map).add(value);
               }
             }
           });

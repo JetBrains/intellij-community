@@ -1,3 +1,4 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.tasks.pivotal;
 
 import com.intellij.openapi.project.Project;
@@ -8,7 +9,9 @@ import com.intellij.util.Consumer;
 import com.intellij.util.ui.FormBuilder;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JComponent;
+import javax.swing.JTextField;
+import javax.swing.SwingConstants;
 
 /**
  * @author Dennis.Ushakov
@@ -34,9 +37,8 @@ public class PivotalTrackerRepositoryEditor extends BaseRepositoryEditor<Pivotal
     myRepository.setProjectId(myProjectId.getText().trim());
   }
 
-  @Nullable
   @Override
-  protected JComponent createCustomPanel() {
+  protected @Nullable JComponent createCustomPanel() {
     myProjectIDLabel = new JBLabel(TaskBundle.message("label.project.id"), SwingConstants.RIGHT);
     myProjectId = new JTextField();
     installListener(myProjectId);
@@ -46,7 +48,7 @@ public class PivotalTrackerRepositoryEditor extends BaseRepositoryEditor<Pivotal
   }
 
   @Override
-  public void setAnchor(@Nullable final JComponent anchor) {
+  public void setAnchor(final @Nullable JComponent anchor) {
     super.setAnchor(anchor);
     myProjectIDLabel.setAnchor(anchor);
   }

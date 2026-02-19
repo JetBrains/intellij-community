@@ -20,6 +20,7 @@ import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.List;
 
@@ -49,10 +50,19 @@ public interface QuickFixTestCase {
 
   void invoke(@NotNull IntentionAction action);
 
+  /**
+   * @param action action to check
+   * @param previewFilePath file path for preview. If absent, it's assumed that the action generates diff-preview
+   *                        which is identical to the file content after action execution
+   */
+  void checkPreviewAndInvoke(@NotNull IntentionAction action, @NotNull String previewFilePath);
+
   @NotNull
+  @Unmodifiable
   List<HighlightInfo> doHighlighting();
 
   @NotNull
+  @Unmodifiable
   List<IntentionAction> getAvailableActions();
 
   void bringRealEditorBack();

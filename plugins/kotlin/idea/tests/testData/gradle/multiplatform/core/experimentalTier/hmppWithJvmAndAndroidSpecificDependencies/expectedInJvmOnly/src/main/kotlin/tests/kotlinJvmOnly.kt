@@ -1,0 +1,3 @@
+package tests
+
+fun kotlinJvmOnly() { }

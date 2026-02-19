@@ -1,36 +1,61 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
-import com.intellij.openapi.util.IconLoader;
+import com.intellij.ui.icons.CachedImageIcon;
+import com.intellij.ui.icons.CompositeIcon;
 import com.intellij.util.TimeoutUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.Icon;
+import javax.swing.JLabel;
+import java.awt.Color;
+import java.awt.Font;
+import java.awt.FontMetrics;
+import java.awt.Graphics;
+import java.awt.Image;
+import java.awt.Rectangle;
+import java.awt.Shape;
 import java.awt.image.ImageObserver;
 import java.text.AttributedCharacterIterator;
 import java.util.Collections;
 import java.util.List;
 
 public final class IconTestUtil {
-  @Nullable
-  public static String getIconPath(Icon icon) {
+  public static @Nullable String getIconPath(@NotNull Icon icon) {
     icon = unwrapRetrievableIcon(icon);
-    return ((IconLoader.CachedImageIcon)icon).getOriginalPath();
+    if (icon instanceof CachedImageIcon) {
+      return ((CachedImageIcon)icon).getOriginalPath();
+    }
+    else {
+      // DummyIcon
+      return icon.toString();
+    }
   }
 
-  public static Icon unwrapRetrievableIcon(Icon icon) {
+  public static @NotNull Icon unwrapRetrievableIcon(@NotNull Icon icon) {
     while (icon instanceof RetrievableIcon) {
       icon = ((RetrievableIcon)icon).retrieveIcon();
     }
     return icon;
   }
 
-  @NotNull
-  static List<Icon> autopsyIconsFrom(@NotNull Icon icon) {
+  public static @NotNull Icon unwrapIcon(@NotNull Icon icon) {
+    while (icon instanceof CompositeIcon compositeIcon) {
+      if (compositeIcon.getIconCount() == 0) {
+        break;
+      }
+
+      icon = compositeIcon.getIcon(0);
+    }
+    assert icon != null;
+    return unwrapRetrievableIcon(icon);
+  }
+
+  static @NotNull @Unmodifiable List<Icon> autopsyIconsFrom(@NotNull Icon icon) {
     if (icon instanceof RetrievableIcon) {
       return autopsyIconsFrom(((RetrievableIcon)icon).retrieveIcon());
     }
@@ -43,8 +68,7 @@ public final class IconTestUtil {
     return Collections.singletonList(icon);
   }
 
-  @NotNull
-  public static List<Icon> renderDeferredIcon(Icon icon) {
+  public static @NotNull @Unmodifiable List<Icon> renderDeferredIcon(Icon icon) {
     icon.paintIcon(new JLabel(), createMockGraphics(), 0, 0);  // force to eval
     TimeoutUtil.sleep(1000); // give chance to evaluate
     UIUtil.dispatchAllInvocationEvents();
@@ -53,8 +77,7 @@ public final class IconTestUtil {
     return autopsyIconsFrom(icon);
   }
 
-  @NotNull
-  public static Graphics createMockGraphics() {
+  public static @NotNull Graphics createMockGraphics() {
     return new Graphics() {
         @Override
         public Graphics create() {

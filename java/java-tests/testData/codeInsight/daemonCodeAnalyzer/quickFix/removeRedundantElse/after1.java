@@ -1,4 +1,4 @@
-// "Remove redundant 'else'" "true"
+// "Remove redundant 'else'" "true-preview"
 class a {
   void foo() {
     int a = 0;

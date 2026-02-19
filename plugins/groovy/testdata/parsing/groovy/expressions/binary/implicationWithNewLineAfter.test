@@ -1,0 +1,12 @@
+true ==>
+ false
+-----
+Groovy script
+  Logical expression
+    Literal
+      PsiElement(true)('true')
+    PsiWhiteSpace(' ')
+    PsiElement(==>)('==>')
+    PsiElement(new line)('\n ')
+    Literal
+      PsiElement(false)('false')

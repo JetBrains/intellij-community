@@ -1,7 +1,7 @@
-<error descr="Missing argument for node kind test">schema-element()</error> |
+<error descr="Missing argument for node type test">schema-element()</error> |
 schema-element(x, <error descr="Too many arguments">y</error>) |
 
-<error descr="Missing argument for node kind test">schema-attribute()</error> |
+<error descr="Missing argument for node type test">schema-attribute()</error> |
 schema-attribute(x, <error descr="Too many arguments">y</error>) |
 
 attribute(x, xs:integer, <error descr="Too many arguments">y</error>) |

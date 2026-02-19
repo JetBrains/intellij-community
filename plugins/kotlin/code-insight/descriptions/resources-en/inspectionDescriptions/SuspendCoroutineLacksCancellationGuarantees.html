@@ -1,0 +1,26 @@
+<html>
+<body>
+Reports usages of <code>kotlin.coroutines.suspendCoroutine</code> and suggests replacing them with
+<code>kotlinx.coroutines.suspendCancellableCoroutine</code> when the <code>kotlinx.coroutines</code> dependency is present.
+<p>
+    The <code>suspendCancellableCoroutine</code> variant provides built-in cancellation support that is important
+    for structured concurrency and proper resource management.
+</p>
+<p><b>Example:</b></p>
+<pre><code>
+    suspend fun usage(): String {
+        return suspendCoroutine { continuation ->
+            continuation.resume("Hello!")
+        }
+    }
+</code></pre>
+<p>After the quick-fix is applied:</p>
+<pre><code>
+    suspend fun usage(): String {
+        return suspendCancellableCoroutine { continuation ->
+            continuation.resume("Hello!")
+        }
+    }
+</code></pre>
+</body>
+</html>

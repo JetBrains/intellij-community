@@ -20,6 +20,7 @@ import com.intellij.psi.xml.XmlFile;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomFileElement;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.List;
 import java.util.Set;
@@ -33,11 +34,12 @@ public interface DomModel<T extends DomElement> {
    * @deprecated Using this method may result in a large memory usage, since it will keep all the DOM and PSI for all the config files
    */
   @NotNull
-  @Deprecated
+  @Deprecated(forRemoval = true)
   T getMergedModel();
 
   @NotNull
   Set<XmlFile> getConfigFiles();
   
+  @Unmodifiable
   List<DomFileElement<T>> getRoots();
 }

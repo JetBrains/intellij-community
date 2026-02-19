@@ -11,6 +11,7 @@ import com.intellij.util.containers.ContainerUtil;
 import java.util.Arrays;
 
 /**
+ * See also {@link com.intellij.java.navigation.ShowImplementationHandlerTest}
  * @author Dmitry AJvdeev
  */
 public class ShowImplementationsTest extends JavaCodeInsightFixtureTestCase {
@@ -27,7 +28,7 @@ public class ShowImplementationsTest extends JavaCodeInsightFixtureTestCase {
     myFixture.configureByFiles("Bundles.java", "bundle.properties", "bundle_fr.properties");
     LookupElement[] elements = myFixture.completeBasic();
     assertNotNull(elements);
-    assertTrue(ContainerUtil.find(elements, element -> element.getObject() instanceof Property) != null);
+    assertNotNull(ContainerUtil.find(elements, element -> element.getObject() instanceof Property));
     PsiElement[] implementations = ShowImplementationsTestUtil.getImplementations();
     assertNotNull(implementations);
     assertEquals(Arrays.asList(implementations).toString(), 1, implementations.length);

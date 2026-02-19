@@ -1,0 +1,8 @@
+- name: dist.all/lib/intellij.platform.jewel.ui.jar
+  modules:
+  - name: intellij.platform.jewel.ui
+    libraries:
+      org.jetbrains.compose.components.components.resources:
+      - name: $MAVEN_REPOSITORY$/org/jetbrains/compose/components/components-resources/1/components-resources-1.jar
+      org.jetbrains.compose.components.components.resources.desktop:
+      - name: $MAVEN_REPOSITORY$/org/jetbrains/compose/components/components-resources-desktop/1/components-resources-desktop-1.jar

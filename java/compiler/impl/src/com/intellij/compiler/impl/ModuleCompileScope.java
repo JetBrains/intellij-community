@@ -1,41 +1,38 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
-/*
- * @author: Eugene Zhuravlev
- */
 package com.intellij.compiler.impl;
 
+import com.intellij.compiler.ModuleSourceSet;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.UnloadedModuleDescription;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.*;
+import com.intellij.openapi.roots.FileIndex;
+import com.intellij.openapi.roots.ModuleOrderEntry;
+import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.roots.OrderEnumerationHandler;
+import com.intellij.openapi.roots.OrderEnumerator;
+import com.intellij.openapi.roots.ProjectFileIndex;
+import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
-import com.intellij.util.CommonProcessors;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 
 public class ModuleCompileScope extends FileIndexCompileScope {
   private final Project myProject;
+  private final Set<Module> myTestSourcesModules;
   private final Set<Module> myScopeModules;
   private final Module[] myModules;
   private final Collection<String> myIncludedUnloadedModules;
@@ -53,19 +50,40 @@ public class ModuleCompileScope extends FileIndexCompileScope {
   }
 
   public ModuleCompileScope(Project project, final Collection<? extends Module> modules, Collection<String> includedUnloadedModules, boolean includeDependentModules, boolean includeRuntimeDeps) {
+    this(project, modules, includedUnloadedModules, includeDependentModules, includeRuntimeDeps, true);
+  }
+  
+  public ModuleCompileScope(Project project, final Collection<? extends Module> modules, Collection<String> includedUnloadedModules, boolean includeDependentModules, boolean includeRuntimeDeps, boolean includeTests) {
     myProject = project;
     myIncludedUnloadedModules = includedUnloadedModules;
+    myTestSourcesModules = new HashSet<>();
     myScopeModules = new HashSet<>();
     for (Module module : modules) {
       if (module == null) {
         continue; // prevent NPE
+      }
+      if (includeTests) {
+        myTestSourcesModules.add(module);
       }
       if (includeDependentModules) {
         OrderEnumerator enumerator = ModuleRootManager.getInstance(module).orderEntries().recursively();
         if (!includeRuntimeDeps) {
           enumerator = enumerator.compileOnly();
         }
-        enumerator.forEachModule(new CommonProcessors.CollectProcessor<>(myScopeModules));
+        boolean collectTestModules = includeTests && shouldIncludeTestsFromDependentModulesToTestClasspath(module);
+        enumerator.forEachModule(m -> {
+          myScopeModules.add(m);
+          if (collectTestModules) {
+            myTestSourcesModules.add(m);
+          }
+          return true;
+        });
+        enumerator.forEach(orderEntry -> {
+          if (orderEntry instanceof ModuleOrderEntry moduleEntry && moduleEntry.isProductionOnTestDependency() && myScopeModules.contains(moduleEntry.getModule())) {
+            myTestSourcesModules.add(moduleEntry.getModule());
+          }
+          return true;
+        });
       }
       else {
         myScopeModules.add(module);
@@ -79,9 +97,22 @@ public class ModuleCompileScope extends FileIndexCompileScope {
     return myScopeModules.toArray(Module.EMPTY_ARRAY);
   }
 
-  @NotNull
   @Override
-  public Collection<String> getAffectedUnloadedModules() {
+  public Collection<ModuleSourceSet> getAffectedSourceSets() {
+    return ContainerUtil.filter(super.getAffectedSourceSets(), set -> !set.getType().isTest() || myTestSourcesModules.contains(set.getModule()));
+  }
+
+  public static boolean shouldIncludeTestsFromDependentModulesToTestClasspath(@NotNull Module module) {
+    for (OrderEnumerationHandler.Factory factory : OrderEnumerationHandler.EP_NAME.getExtensionList()) {
+      if (factory.isApplicable(module) && !factory.createHandler(module).shouldIncludeTestsFromDependentModulesToTestClasspath()) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  @Override
+  public @NotNull Collection<String> getAffectedUnloadedModules() {
     return Collections.unmodifiableCollection(myIncludedUnloadedModules);
   }
 
@@ -96,7 +127,7 @@ public class ModuleCompileScope extends FileIndexCompileScope {
   }
 
   @Override
-  public boolean belongs(@NotNull final String url) {
+  public boolean belongs(final @NotNull String url) {
     if (myScopeModules.isEmpty() && myIncludedUnloadedModules.isEmpty()) {
       return false; // optimization
     }

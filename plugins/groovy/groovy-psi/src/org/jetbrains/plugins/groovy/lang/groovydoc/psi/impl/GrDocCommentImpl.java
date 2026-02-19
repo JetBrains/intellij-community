@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.plugins.groovy.lang.groovydoc.psi.impl;
 
@@ -23,9 +23,6 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 
 import java.util.ArrayList;
 
-/**
- * @author ilyas
- */
 public class GrDocCommentImpl extends LazyParseablePsiElement implements GrDocComment {
   public GrDocCommentImpl(CharSequence text) {
     super(GroovyDocElementTypes.GROOVY_DOC_COMMENT, text);
@@ -36,9 +33,8 @@ public class GrDocCommentImpl extends LazyParseablePsiElement implements GrDocCo
     return "GrDocComment";
   }
 
-  @NotNull
   @Override
-  public IElementType getTokenType() {
+  public @NotNull IElementType getTokenType() {
     return getElementType();
   }
 
@@ -71,8 +67,7 @@ public class GrDocCommentImpl extends LazyParseablePsiElement implements GrDocCo
   }
 
   @Override
-  @Nullable
-  public GrDocTag findTagByName(@NonNls String name) {
+  public @Nullable GrDocTag findTagByName(@NonNls String name) {
     if (!getText().contains(name)) return null;
     for (PsiElement e = getFirstChild(); e != null; e = e.getNextSibling()) {
       if (e instanceof GrDocTag && ((GrDocTag)e).getName().equals(name)) {

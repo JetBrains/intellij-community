@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.devkit.model.impl;
 
 import com.intellij.openapi.util.JDOMExternalizerUtil;
@@ -18,16 +18,14 @@ import org.jetbrains.jps.model.serialization.module.JpsModulePropertiesSerialize
 import java.util.Collections;
 import java.util.List;
 
-public class JpsDevKitModelSerializerExtension extends JpsModelSerializerExtension {
-  @NotNull
+public final class JpsDevKitModelSerializerExtension extends JpsModelSerializerExtension {
   @Override
-  public List<? extends JpsModulePropertiesSerializer<?>> getModulePropertiesSerializers() {
+  public @NotNull List<? extends JpsModulePropertiesSerializer<?>> getModulePropertiesSerializers() {
     return Collections.singletonList(new JpsPluginModulePropertiesSerializer());
   }
 
-  @NotNull
   @Override
-  public List<? extends JpsSdkPropertiesSerializer<?>> getSdkPropertiesSerializers() {
+  public @NotNull List<? extends JpsSdkPropertiesSerializer<?>> getSdkPropertiesSerializers() {
     return Collections.singletonList(new JpsIdeaSdkPropertiesSerializer());
   }
 
@@ -39,9 +37,8 @@ public class JpsDevKitModelSerializerExtension extends JpsModelSerializerExtensi
       super("IDEA JDK", JpsIdeaSdkType.INSTANCE);
     }
 
-    @NotNull
     @Override
-    public JpsSimpleElement<JpsIdeaSdkProperties> loadProperties(@Nullable Element propertiesElement) {
+    public @NotNull JpsSimpleElement<JpsIdeaSdkProperties> loadProperties(@Nullable Element propertiesElement) {
       String sandboxHome = null;
       String jdkName = null;
       if (propertiesElement != null) {

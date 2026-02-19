@@ -1,14 +1,23 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.resolve.graphInference;
 
-import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypes;
 import com.intellij.util.containers.ContainerUtil;
-import gnu.trove.THashMap;
+import com.intellij.util.containers.Stack;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
-
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 public final class InferenceVariablesOrder {
   public static List<InferenceVariable> resolveOrder(List<InferenceVariable> vars,
@@ -20,17 +29,16 @@ public final class InferenceVariablesOrder {
     return InferenceGraphNode.merge(tarjan(allNodes, 1).get(0), allNodes).getValue();
   }
 
-  @Nullable
-  private static InferenceVariable resolveOrderFast(List<InferenceVariable> vars,
-                                                          Map<InferenceVariable, Set<InferenceVariable>> depMap) {
+  private static @Nullable InferenceVariable resolveOrderFast(List<InferenceVariable> vars,
+                                                              Map<InferenceVariable, Set<InferenceVariable>> depMap) {
     // Fast-path to find the first resolve group if it consists of single var
     InferenceVariable var = vars.get(0);
-    if (var.getInstantiation() != PsiType.NULL || depMap.get(var).isEmpty()) {
+    if (var.getInstantiation() != PsiTypes.nullType() || depMap.get(var).isEmpty()) {
       return var;
     }
     Set<InferenceVariable> visited = new HashSet<>();
     while (visited.add(var)) {
-      if (var.getInstantiation() != PsiType.NULL) {
+      if (var.getInstantiation() != PsiTypes.nullType()) {
         return var;
       }
       Set<InferenceVariable> deps = depMap.get(var);
@@ -55,22 +63,20 @@ public final class InferenceVariablesOrder {
   public static Map<InferenceVariable, Set<InferenceVariable>> getDependencies(
     Collection<? extends InferenceVariable> vars, InferenceSession session) {
 
-    Map<InferenceVariable, Set<InferenceVariable>> map = new THashMap<>();
+    Map<InferenceVariable, Set<InferenceVariable>> map = new HashMap<>();
     for (InferenceVariable var : vars) {
       map.put(var, var.getDependencies(session));
     }
     return map;
   }
 
-  @NotNull
-  private static Map<InferenceVariable, InferenceGraphNode<InferenceVariable>> buildInferenceGraph(
+  private static @NotNull Map<InferenceVariable, InferenceGraphNode<InferenceVariable>> buildInferenceGraph(
     Collection<? extends InferenceVariable> vars, InferenceSession session) {
 
     return buildInferenceGraph(vars, getDependencies(vars, session));
   }
 
-  @NotNull
-  private static Map<InferenceVariable, InferenceGraphNode<InferenceVariable>> buildInferenceGraph(
+  private static @NotNull Map<InferenceVariable, InferenceGraphNode<InferenceVariable>> buildInferenceGraph(
     Collection<? extends InferenceVariable> vars, Map<InferenceVariable, Set<InferenceVariable>> depMap) {
 
     Map<InferenceVariable, InferenceGraphNode<InferenceVariable>> nodes = new LinkedHashMap<>(vars.size()*4/3);
@@ -80,7 +86,7 @@ public final class InferenceVariablesOrder {
 
     for (Map.Entry<InferenceVariable, InferenceGraphNode<InferenceVariable>> entry : nodes.entrySet()) {
       InferenceVariable var = entry.getKey();
-      if (var.getInstantiation() != PsiType.NULL) continue;
+      if (var.getInstantiation() != PsiTypes.nullType()) continue;
       final InferenceGraphNode<InferenceVariable> node = entry.getValue();
       final Set<InferenceVariable> dependencies = depMap.get(var);
       for (InferenceVariable dependentVariable : dependencies) {
@@ -168,7 +174,7 @@ public final class InferenceVariablesOrder {
       boolean includeSelfDependency = false;
       for (Iterator<InferenceGraphNode<T>> iterator = myDependencies.iterator(); iterator.hasNext(); ) {
         InferenceGraphNode<T> d = iterator.next();
-        assert d.myValue.size() >= 1;
+        assert !d.myValue.isEmpty();
         final T initialNodeValue = d.myValue.get(0);
         if (myValue.contains(initialNodeValue)) {
           includeSelfDependency = true;

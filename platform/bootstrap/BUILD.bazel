@@ -1,0 +1,58 @@
+### auto-generated section `build intellij.platform.bootstrap` start
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+jvm_library(
+  name = "bootstrap",
+  module_name = "intellij.platform.bootstrap",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  deps = [
+    "//platform/core-api:core",
+    "//platform/projectModel-api:projectModel",
+    "//platform/util",
+    "//platform/util-class-loader:util-classLoader",
+    "//libraries/kotlinx/coroutines/core",
+    "//platform/service-container",
+    "//platform/core-impl",
+    "//platform/platform-impl:ide-impl",
+    "//platform/platform-impl/bootstrap",
+    "//platform/boot",
+    "//platform/ide-core-impl",
+    "//libraries/jbr",
+    "//platform/runtime/product",
+    "//platform/diagnostic",
+    "//platform/runtime/repository",
+    "//platform/diagnostic/telemetry-impl",
+    "//platform/pluginSystem/parser/impl",
+  ],
+  runtime_deps = ["//platform/bootstrap/coroutine"]
+)
+
+jvm_library(
+  name = "bootstrap_test_lib",
+  module_name = "intellij.platform.bootstrap",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    ":bootstrap",
+    "//platform/bootstrap/coroutine:coroutine_test_lib",
+    "//platform/core-api:core_test_lib",
+    "//platform/projectModel-api:projectModel_test_lib",
+    "//platform/util:util_test_lib",
+    "//platform/util-class-loader:util-classLoader_test_lib",
+    "//libraries/kotlinx/coroutines/core:core_test_lib",
+    "//platform/service-container:service-container_test_lib",
+    "//platform/core-impl:core-impl_test_lib",
+    "//platform/platform-impl:ide-impl_test_lib",
+    "//platform/platform-impl/bootstrap:bootstrap_test_lib",
+    "//platform/boot:boot_test_lib",
+    "//platform/ide-core-impl:ide-core-impl_test_lib",
+    "//libraries/jbr:jbr_test_lib",
+    "//platform/runtime/product:product_test_lib",
+    "//platform/diagnostic:diagnostic_test_lib",
+    "//platform/runtime/repository:repository_test_lib",
+    "//platform/diagnostic/telemetry-impl:telemetry-impl_test_lib",
+    "//platform/pluginSystem/parser/impl:impl_test_lib",
+  ]
+)
+### auto-generated section `build intellij.platform.bootstrap` end

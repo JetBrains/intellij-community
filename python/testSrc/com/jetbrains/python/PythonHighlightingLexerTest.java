@@ -19,53 +19,72 @@ import com.jetbrains.python.fixtures.PyLexerTestCase;
 import com.jetbrains.python.highlighting.PyHighlighter;
 import com.jetbrains.python.lexer.PythonHighlightingLexer;
 import com.jetbrains.python.psi.LanguageLevel;
+import org.junit.jupiter.api.Test;
+
+import static com.jetbrains.python.fixtures.PyTestCase.fixme;
 
 /**
  * user : catherine
  */
 public class PythonHighlightingLexerTest extends PyLexerTestCase {
 
+  @Test
   public void testFromFutureUnicode() {
-    doTest(LanguageLevel.PYTHON26, "from __future__ import unicode_literals\n\n" +
-                                   "s = \"some string\"",
+    doTest(LanguageLevel.PYTHON26, """
+             from __future__ import unicode_literals
+
+             s = "some string\"""",
            "Py:FROM_KEYWORD", "Py:SPACE", "Py:IDENTIFIER", "Py:SPACE", "Py:IMPORT_KEYWORD", "Py:SPACE", "Py:IDENTIFIER",
            "Py:LINE_BREAK", "Py:LINE_BREAK", "Py:IDENTIFIER", "Py:SPACE", "Py:EQ", "Py:SPACE", "Py:SINGLE_QUOTED_UNICODE");
   }
 
+  @Test
   public void testFromFutureUnicodeDocstring() {
-    doTest(LanguageLevel.PYTHON26, "\"\"\"docstring\"\"\"\n" +
-                                   "from __future__ import unicode_literals\n\n" +
-                                   "s = \"some string\"",
+    doTest(LanguageLevel.PYTHON26, """
+             ""\"docstring""\"
+             from __future__ import unicode_literals
+
+             s = "some string\"""",
            "Py:DOCSTRING", "Py:LINE_BREAK",
            "Py:FROM_KEYWORD", "Py:SPACE", "Py:IDENTIFIER", "Py:SPACE", "Py:IMPORT_KEYWORD", "Py:SPACE", "Py:IDENTIFIER",
            "Py:LINE_BREAK", "Py:LINE_BREAK", "Py:IDENTIFIER", "Py:SPACE", "Py:EQ", "Py:SPACE", "Py:SINGLE_QUOTED_UNICODE");
   }
 
+  @Test
   public void testFromFutureUnicodeWithBackslash() {
-    doTest(LanguageLevel.PYTHON26, "from __future__ \\\nimport unicode_literals\n\n" +
-                                   "s = \"some string\"",
+    doTest(LanguageLevel.PYTHON26, """
+             from __future__ \\
+             import unicode_literals
+
+             s = "some string\"""",
            "Py:FROM_KEYWORD", "Py:SPACE", "Py:IDENTIFIER", "Py:SPACE", "Py:BACKSLASH", "Py:LINE_BREAK",
            "Py:IMPORT_KEYWORD", "Py:SPACE", "Py:IDENTIFIER", "Py:LINE_BREAK",
            "Py:LINE_BREAK", "Py:IDENTIFIER", "Py:SPACE", "Py:EQ", "Py:SPACE", "Py:SINGLE_QUOTED_UNICODE");
   }
 
+  @Test
   public void testFromFutureUnicodeWithBrace() {
-    doTest(LanguageLevel.PYTHON26, "from __future__ import (unicode_literals)\n\n" +
-                                   "s = \"some string\"",
+    doTest(LanguageLevel.PYTHON26, """
+             from __future__ import (unicode_literals)
+
+             s = "some string\"""",
            "Py:FROM_KEYWORD", "Py:SPACE", "Py:IDENTIFIER", "Py:SPACE",
            "Py:IMPORT_KEYWORD", "Py:SPACE", "Py:LPAR", "Py:IDENTIFIER", "Py:RPAR", "Py:LINE_BREAK",
            "Py:LINE_BREAK", "Py:IDENTIFIER", "Py:SPACE", "Py:EQ", "Py:SPACE", "Py:SINGLE_QUOTED_UNICODE");
   }
 
+  @Test
   public void testFromFutureUnicodeComment() {
-    doTest(LanguageLevel.PYTHON26, "#one comment\n" +
-                                   "from __future__ import ((unicode_literals))\n" +
-                                   "s = \"some string\"",
+    doTest(LanguageLevel.PYTHON26, """
+             #one comment
+             from __future__ import ((unicode_literals))
+             s = "some string\"""",
            "Py:END_OF_LINE_COMMENT", "Py:LINE_BREAK", "Py:FROM_KEYWORD", "Py:SPACE", "Py:IDENTIFIER", "Py:SPACE",
            "Py:IMPORT_KEYWORD", "Py:SPACE", "Py:LPAR", "Py:LPAR", "Py:IDENTIFIER", "Py:RPAR", "Py:RPAR",
            "Py:LINE_BREAK", "Py:IDENTIFIER", "Py:SPACE", "Py:EQ", "Py:SPACE", "Py:SINGLE_QUOTED_STRING");
   }
 
+  @Test
   public void testFromFutureBytes() {
     doTest(LanguageLevel.PYTHON26, "from __future__ import unicode_literals\n" +
                                    "s = b\"some string\"",
@@ -74,16 +93,19 @@ public class PythonHighlightingLexerTest extends PyLexerTestCase {
            "Py:LINE_BREAK", "Py:IDENTIFIER", "Py:SPACE", "Py:EQ", "Py:SPACE", "Py:SINGLE_QUOTED_STRING");
   }
 
+  @Test
   public void testBytes30() {
     doTest(LanguageLevel.PYTHON34, "s = b\"some string\"",
                             "Py:IDENTIFIER", "Py:SPACE", "Py:EQ", "Py:SPACE", "Py:SINGLE_QUOTED_STRING");
   }
 
+  @Test
   public void testBytes() {
     doTest(LanguageLevel.PYTHON26, "s = b\"some string\"",
                             "Py:IDENTIFIER", "Py:SPACE", "Py:EQ", "Py:SPACE", "Py:SINGLE_QUOTED_STRING");
   }
 
+  @Test
   public void testFromFutureUnicodeWithBraceFail() {
     doTest(LanguageLevel.PYTHON26, "from __future__ import ((unicode_literals))\n" +
                                    "s = \"some string\"",
@@ -92,16 +114,20 @@ public class PythonHighlightingLexerTest extends PyLexerTestCase {
            "Py:LINE_BREAK", "Py:IDENTIFIER", "Py:SPACE", "Py:EQ", "Py:SPACE", "Py:SINGLE_QUOTED_STRING");
   }
 
+  @Test
   public void testDoubleFromFutureUnicode() {
-    doTest(LanguageLevel.PYTHON26, "from __future__ import absolute_import\n" +
-                                   "from __future__ import (unicode_literals)\n\n" +
-                                   "s = \"some string\"",
+    doTest(LanguageLevel.PYTHON26, """
+             from __future__ import absolute_import
+             from __future__ import (unicode_literals)
+
+             s = "some string\"""",
            "Py:FROM_KEYWORD", "Py:SPACE", "Py:IDENTIFIER", "Py:SPACE", "Py:IMPORT_KEYWORD", "Py:SPACE", "Py:IDENTIFIER",
            "Py:LINE_BREAK", "Py:FROM_KEYWORD", "Py:SPACE", "Py:IDENTIFIER", "Py:SPACE",
            "Py:IMPORT_KEYWORD", "Py:SPACE", "Py:LPAR", "Py:IDENTIFIER", "Py:RPAR", "Py:LINE_BREAK",
            "Py:LINE_BREAK", "Py:IDENTIFIER", "Py:SPACE", "Py:EQ", "Py:SPACE", "Py:SINGLE_QUOTED_UNICODE");
   }
 
+  @Test
   public void testDoubleFromFutureUnicodeWithComma() {
     doTest(LanguageLevel.PYTHON26, "from __future__ import absolute_import, unicode_literals\n" +
                                    "s = \"some string\"",
@@ -110,6 +136,7 @@ public class PythonHighlightingLexerTest extends PyLexerTestCase {
            "Py:LINE_BREAK", "Py:IDENTIFIER", "Py:SPACE", "Py:EQ", "Py:SPACE", "Py:SINGLE_QUOTED_UNICODE");
   }
 
+  @Test
   public void testDoubleFromFutureUnicodeWithCommaFail() {
     doTest(LanguageLevel.PYTHON26, "from __future__ import absolute_import, (unicode_literals)\n" +
                                    "s = \"some string\"",
@@ -118,15 +145,19 @@ public class PythonHighlightingLexerTest extends PyLexerTestCase {
            "Py:LINE_BREAK", "Py:IDENTIFIER", "Py:SPACE", "Py:EQ", "Py:SPACE", "Py:SINGLE_QUOTED_STRING");
   }
 
+  @Test
   public void testFromFutureUnicodeFail() {
-    doTest(LanguageLevel.PYTHON26, "a = 2\n" +
-                                   "from __future__ import unicode_literals\n\n" +
-                                   "s = \"some string\"",
-           "Py:IDENTIFIER", "Py:SPACE", "Py:EQ", "Py:SPACE","Py:INTEGER_LITERAL", "Py:LINE_BREAK",
+    doTest(LanguageLevel.PYTHON26, """
+             a = 2
+             from __future__ import unicode_literals
+
+             s = "some string\"""",
+           "Py:IDENTIFIER", "Py:SPACE", "Py:EQ", "Py:SPACE", "Py:INTEGER_LITERAL", "Py:LINE_BREAK",
            "Py:FROM_KEYWORD", "Py:SPACE", "Py:IDENTIFIER", "Py:SPACE", "Py:IMPORT_KEYWORD", "Py:SPACE", "Py:IDENTIFIER",
            "Py:LINE_BREAK", "Py:LINE_BREAK", "Py:IDENTIFIER", "Py:SPACE", "Py:EQ", "Py:SPACE", "Py:SINGLE_QUOTED_STRING");
   }
 
+  @Test
   public void testFromFuturePrint() {
     doTest(LanguageLevel.PYTHON27, "from __future__ import print_function\n" +
                                    "print(1)",
@@ -134,10 +165,12 @@ public class PythonHighlightingLexerTest extends PyLexerTestCase {
            "Py:IDENTIFIER", "Py:LPAR", "Py:INTEGER_LITERAL", "Py:RPAR");
   }
 
+  @Test
   public void testWithoutFromFuturePrint() {
     doTest(LanguageLevel.PYTHON27, "print(1)", "Py:PRINT_KEYWORD", "Py:LPAR", "Py:INTEGER_LITERAL", "Py:RPAR");
   }
 
+  @Test
   public void testFromFuturePrintAndUnicode() {
     doTest(LanguageLevel.PYTHON27, "from __future__ import unicode_literals, print_function\n" +
                                    "print(\"some string\")",
@@ -145,60 +178,189 @@ public class PythonHighlightingLexerTest extends PyLexerTestCase {
            "Py:IDENTIFIER", "Py:LPAR", "Py:SINGLE_QUOTED_UNICODE", "Py:RPAR");
   }
 
+  @Test
   public void testFromFuturePrintNotFirstFail() {
-    doTest(LanguageLevel.PYTHON27, "a = 2\n" +
-                                   "from __future__ import print_function\n" +
-                                   "print(1)",
-           "Py:IDENTIFIER", "Py:SPACE", "Py:EQ", "Py:SPACE","Py:INTEGER_LITERAL", "Py:LINE_BREAK",
+    doTest(LanguageLevel.PYTHON27, """
+             a = 2
+             from __future__ import print_function
+             print(1)""",
+           "Py:IDENTIFIER", "Py:SPACE", "Py:EQ", "Py:SPACE", "Py:INTEGER_LITERAL", "Py:LINE_BREAK",
            "Py:FROM_KEYWORD", "Py:SPACE", "Py:IDENTIFIER", "Py:SPACE", "Py:IMPORT_KEYWORD", "Py:SPACE", "Py:IDENTIFIER", "Py:LINE_BREAK",
            "Py:PRINT_KEYWORD", "Py:LPAR", "Py:INTEGER_LITERAL", "Py:RPAR");
   }
 
+  @Test
   public void testUnicode30() {
     doTest(LanguageLevel.PYTHON34, "s = \"some string\"",
                       "Py:IDENTIFIER", "Py:SPACE", "Py:EQ", "Py:SPACE", "Py:SINGLE_QUOTED_UNICODE");
   }
 
+  @Test
   public void testString() {
     doTest(LanguageLevel.PYTHON27, "s = \"some string\"",
                       "Py:IDENTIFIER", "Py:SPACE", "Py:EQ", "Py:SPACE", "Py:SINGLE_QUOTED_STRING");
   }
 
+  @Test
   public void testUnicode() {
     doTest(LanguageLevel.PYTHON27, "s = u\"some string\"",
                       "Py:IDENTIFIER", "Py:SPACE", "Py:EQ", "Py:SPACE", "Py:SINGLE_QUOTED_UNICODE");
   }
 
+  @Test
   public void testDocString() {
     doTest(LanguageLevel.PYTHON27, "\"\"\"one docstrings \"\"\"\n",
                       "Py:DOCSTRING", "Py:LINE_BREAK");
   }
 
+  @Test
+  public void testMetaClass() {
+    doTest(LanguageLevel.getLatest(), """
+               class IOBase(metaclass=abc.ABCMeta):
+                 pass""",
+           "Py:CLASS_KEYWORD", "Py:SPACE", "Py:IDENTIFIER", "Py:LPAR", "Py:IDENTIFIER", "Py:EQ", "Py:IDENTIFIER", "Py:DOT", "Py:IDENTIFIER", "Py:RPAR", "Py:COLON", "Py:LINE_BREAK",
+           "Py:SPACE", "Py:SPACE", "Py:PASS_KEYWORD");
+  }
+
+  @Test
   public void testSingleDocStringWithBackslash() {
     doTest(LanguageLevel.PYTHON27, "\"one docstring \" \\\n\"new line of docstring\"\n",
                       "Py:DOCSTRING", "Py:SPACE", "Py:BACKSLASH", "Py:LINE_BREAK", "Py:DOCSTRING", "Py:LINE_BREAK");
   }
 
+  @Test
   public void testSingleDocstringFunction() {
-    doTest(LanguageLevel.PYTHON27, "def foo():\n" +
-                                   "  \"\"\"function foo\"\"\"\n" +
-                                   "  a = \"string\"",
-                      "Py:DEF_KEYWORD", "Py:SPACE", "Py:IDENTIFIER", "Py:LPAR", "Py:RPAR", "Py:COLON", "Py:LINE_BREAK",
-                      "Py:SPACE", "Py:SPACE", "Py:DOCSTRING", "Py:LINE_BREAK", "Py:SPACE", "Py:SPACE", "Py:IDENTIFIER", "Py:SPACE", "Py:EQ", "Py:SPACE",
-                      "Py:SINGLE_QUOTED_STRING");
+    doTest(LanguageLevel.PYTHON27, """
+             def foo():
+               ""\"function foo""\"
+               a = "string\"""",
+           "Py:DEF_KEYWORD", "Py:SPACE", "Py:IDENTIFIER", "Py:LPAR", "Py:RPAR", "Py:COLON", "Py:LINE_BREAK",
+           "Py:SPACE", "Py:SPACE", "Py:DOCSTRING", "Py:LINE_BREAK", "Py:SPACE", "Py:SPACE", "Py:IDENTIFIER", "Py:SPACE", "Py:EQ", "Py:SPACE",
+           "Py:SINGLE_QUOTED_STRING");
   }
 
+  @Test
   public void testNotDocstring() { // PY-4481
-      doTest(LanguageLevel.PYTHON27, "d = {\n" +
-                                     " 'abc': 'def',\n" +
-                                     " 'ghi': 'jkl'\n" +
-                                     " }",
+      doTest(LanguageLevel.PYTHON27, """
+               d = {
+                'abc': 'def',
+                'ghi': 'jkl'
+                }""",
              "Py:IDENTIFIER", "Py:SPACE", "Py:EQ", "Py:SPACE", "Py:LBRACE", "Py:LINE_BREAK", "Py:SPACE", "Py:SINGLE_QUOTED_STRING",
              "Py:COLON", "Py:SPACE", "Py:SINGLE_QUOTED_STRING", "Py:COMMA", "Py:LINE_BREAK", "Py:SPACE", "Py:SINGLE_QUOTED_STRING",
              "Py:COLON", "Py:SPACE", "Py:SINGLE_QUOTED_STRING", "Py:LINE_BREAK", "Py:SPACE", "Py:RBRACE");
     }
 
+  @Test
+  public void testDocstringAtModule() {
+    doTest(LanguageLevel.getLatest(), """
+             ""\" module docstring ""\"
+             """,
+           "Py:DOCSTRING", "Py:LINE_BREAK");
+  }
+
+  @Test
+  public void testDocstringAtModuleWithTrailingComment() {
+    doTest(LanguageLevel.getLatest(), """
+             ""\" module docstring ""\" # trailing comment
+             """,
+           "Py:DOCSTRING", "Py:SPACE", "Py:END_OF_LINE_COMMENT", "Py:LINE_BREAK");
+  }
+
+  @Test
+  public void testDocstringAtClass() {
+    doTest(LanguageLevel.getLatest(), """
+             class C:
+                 ""\" class docstring ""\"
+             """,
+           "Py:CLASS_KEYWORD", "Py:SPACE", "Py:IDENTIFIER", "Py:COLON", "Py:LINE_BREAK",
+           "Py:SPACE", "Py:SPACE", "Py:SPACE", "Py:SPACE", "Py:DOCSTRING", "Py:LINE_BREAK");
+  }
+
+  @Test
+  public void testDocstringAtClassWithTrailingComment() {
+    doTest(LanguageLevel.getLatest(), """
+             class C:
+                 ""\" class docstring ""\" # trailing comment
+             """,
+           "Py:CLASS_KEYWORD", "Py:SPACE", "Py:IDENTIFIER", "Py:COLON", "Py:LINE_BREAK",
+           "Py:SPACE", "Py:SPACE", "Py:SPACE", "Py:SPACE", "Py:DOCSTRING", "Py:SPACE", "Py:END_OF_LINE_COMMENT", "Py:LINE_BREAK");
+  }
+
+  @Test
+  public void testDocstringAtFunction() {
+    doTest(LanguageLevel.getLatest(), """
+             def fun():
+                 ""\" function docstring ""\"
+             """,
+           "Py:DEF_KEYWORD", "Py:SPACE", "Py:IDENTIFIER", "Py:LPAR", "Py:RPAR", "Py:COLON", "Py:LINE_BREAK",
+           "Py:SPACE", "Py:SPACE", "Py:SPACE", "Py:SPACE", "Py:DOCSTRING", "Py:LINE_BREAK");
+  }
+
+  @Test
+  public void testDocstringAtFunctionWithTrailingComment() {
+    doTest(LanguageLevel.getLatest(), """
+             def fun():
+                 ""\" function docstring ""\" # trailing comment
+             """,
+           "Py:DEF_KEYWORD", "Py:SPACE", "Py:IDENTIFIER", "Py:LPAR", "Py:RPAR", "Py:COLON", "Py:LINE_BREAK",
+           "Py:SPACE", "Py:SPACE", "Py:SPACE", "Py:SPACE", "Py:DOCSTRING", "Py:SPACE", "Py:END_OF_LINE_COMMENT", "Py:LINE_BREAK");
+  }
+
+  // PY-40634
+  @Test
+  public void testDocstringAtVariableDeclaration() {
+    fixme("PY-40634", AssertionError.class, () -> doTest(LanguageLevel.getLatest(), """
+             VAR = 2
+                 ""\" variable declaration docstring ""\"
+             """,
+           "Py:IDENTIFIER", "Py:SPACE", "Py:EQ", "Py:SPACE", "Py:INTEGER_LITERAL", "Py:LINE_BREAK",
+           "Py:SPACE", "Py:SPACE", "Py:SPACE", "Py:SPACE", "Py:DOCSTRING", "Py:LINE_BREAK"));
+  }
+
+  // PY-40634
+  @Test
+  public void testDocstringAtVariableDeclarationWithTrailingComment() {
+    fixme("PY-40634", AssertionError.class, () -> doTest(LanguageLevel.getLatest(), """
+             VAR = 2
+                 ""\" variable declaration docstring ""\" # trailing comment
+             """,
+           "Py:IDENTIFIER", "Py:SPACE", "Py:EQ", "Py:SPACE", "Py:INTEGER_LITERAL", "Py:LINE_BREAK",
+           "Py:SPACE", "Py:SPACE", "Py:SPACE", "Py:SPACE", "Py:DOCSTRING", "Py:SPACE", "Py:END_OF_LINE_COMMENT", "Py:LINE_BREAK"));
+  }
+
+  // PY-40634
+  @Test
+  public void testDocstringAtClassVariableDeclaration() {
+    fixme("PY-40634", AssertionError.class, () -> doTest(LanguageLevel.getLatest(), """
+             class C:
+               def __init__(self):
+                   self.thing = 42
+                   ""\" class variable declaration docstring ""\"
+             """,
+           "Py:CLASS_KEYWORD", "Py:SPACE", "Py:IDENTIFIER", "Py:COLON", "Py:LINE_BREAK",
+           "Py:SPACE", "Py:SPACE", "Py:DEF_KEYWORD", "Py:SPACE", "Py:IDENTIFIER", "Py:LPAR", "Py:IDENTIFIER", "Py:RPAR", "Py:COLON", "Py:LINE_BREAK",
+           "Py:SPACE", "Py:SPACE", "Py:SPACE", "Py:SPACE", "Py:SPACE", "Py:SPACE", "Py:IDENTIFIER", "Py:DOT", "Py:IDENTIFIER", "Py:SPACE", "Py:EQ", "Py:SPACE", "Py:INTEGER_LITERAL", "Py:LINE_BREAK",
+           "Py:SPACE", "Py:SPACE", "Py:SPACE", "Py:SPACE", "Py:SPACE", "Py:SPACE", "Py:DOCSTRING", "Py:LINE_BREAK"));
+  }
+
+  // PY-40634
+  @Test
+  public void testDocstringAtClassVariableDeclarationWithTrailingComment() {
+    fixme("PY-40634", AssertionError.class, () -> doTest(LanguageLevel.getLatest(), """
+             class C:
+               def __init__(self):
+                   self.thing = 42
+                   ""\" class variable declaration docstring ""\" # trailing comment
+             """,
+           "Py:CLASS_KEYWORD", "Py:SPACE", "Py:IDENTIFIER", "Py:COLON", "Py:LINE_BREAK",
+           "Py:SPACE", "Py:SPACE", "Py:DEF_KEYWORD", "Py:SPACE", "Py:IDENTIFIER", "Py:LPAR", "Py:IDENTIFIER", "Py:RPAR", "Py:COLON", "Py:LINE_BREAK",
+           "Py:SPACE", "Py:SPACE", "Py:SPACE", "Py:SPACE", "Py:SPACE", "Py:SPACE", "Py:IDENTIFIER", "Py:DOT", "Py:IDENTIFIER", "Py:SPACE", "Py:EQ", "Py:SPACE", "Py:INTEGER_LITERAL", "Py:LINE_BREAK",
+           "Py:SPACE", "Py:SPACE", "Py:SPACE", "Py:SPACE", "Py:SPACE", "Py:SPACE", "Py:DOCSTRING", "Py:SPACE", "Py:END_OF_LINE_COMMENT", "Py:LINE_BREAK"));
+  }
+
   // PY-29665
+  @Test
   public void testRawBytesLiteral() {
     doTest(LanguageLevel.PYTHON27, "expr = br'raw bytes'", "Py:IDENTIFIER", "Py:SPACE", "Py:EQ", "Py:SPACE", "Py:SINGLE_QUOTED_STRING");
     doTest(LanguageLevel.PYTHON34, "expr = rb'raw bytes'", "Py:IDENTIFIER", "Py:SPACE", "Py:EQ", "Py:SPACE", "Py:SINGLE_QUOTED_STRING");
@@ -206,6 +368,7 @@ public class PythonHighlightingLexerTest extends PyLexerTestCase {
   }
 
   // PY-31758
+  @Test
   public void testFStringEscapeSequences() {
     doTestStringHighlighting(LanguageLevel.PYTHON36, "f'foo\\nbar'",
                              "Py:FSTRING_START", "Py:FSTRING_TEXT", "VALID_STRING_ESCAPE_TOKEN", "Py:FSTRING_TEXT", "Py:FSTRING_END");
@@ -247,6 +410,7 @@ public class PythonHighlightingLexerTest extends PyLexerTestCase {
   }
 
   // PY-32123
+  @Test
   public void testRawFStringEscapeSequences() {
     doTestStringHighlighting(LanguageLevel.PYTHON36, "rf'foo\\nbar'",
                              "Py:FSTRING_START", "Py:FSTRING_RAW_TEXT", "Py:FSTRING_RAW_TEXT", "Py:FSTRING_RAW_TEXT", "Py:FSTRING_END");

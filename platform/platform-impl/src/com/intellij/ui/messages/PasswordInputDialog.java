@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.messages;
 
 import com.intellij.openapi.project.Project;
@@ -9,11 +9,12 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.Icon;
+import javax.swing.JPasswordField;
 import javax.swing.text.JTextComponent;
-import java.awt.*;
+import java.awt.Component;
 
-class PasswordInputDialog extends Messages.InputDialog {
+final class PasswordInputDialog extends Messages.InputDialog {
   PasswordInputDialog(@NlsContexts.DialogMessage String message,
                       @Nls(capitalization = Nls.Capitalization.Title) String title,
                       @Nullable Icon icon,

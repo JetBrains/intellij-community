@@ -1,38 +1,39 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.file;
 
 import com.intellij.java.JavaBundle;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.PackageIndex;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.*;
-import com.intellij.psi.impl.PsiManagerImpl;
+import com.intellij.psi.JavaDirectoryService;
+import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiDirectoryContainer;
+import com.intellij.psi.PsiNameHelper;
+import com.intellij.psi.PsiPackage;
+import com.intellij.psi.impl.PsiManagerEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes;
 
-/**
- * @author yole
- */
+
 public final class PsiJavaDirectoryFactory extends PsiDirectoryFactory {
-  private final PsiManagerImpl myManager;
+  private final PsiManagerEx myManager;
 
   public PsiJavaDirectoryFactory(@NotNull Project project) {
-    myManager = (PsiManagerImpl)PsiManager.getInstance(project);
+    myManager = PsiManagerEx.getInstanceEx(project);
   }
 
-  @NotNull
   @Override
-  public PsiDirectory createDirectory(@NotNull final VirtualFile file) {
+  public @NotNull PsiDirectory createDirectory(final @NotNull VirtualFile file) {
     return new PsiJavaDirectoryImpl(myManager, file);
   }
 
   @Override
-  @NotNull
-  public String getQualifiedName(@NotNull final PsiDirectory directory, final boolean presentable) {
+  public @NotNull String getQualifiedName(final @NotNull PsiDirectory directory, final boolean presentable) {
     final PsiPackage aPackage = JavaDirectoryService.getInstance().getPackage(directory);
     if (aPackage != null) {
       final String qualifiedName = aPackage.getQualifiedName();
@@ -45,9 +46,8 @@ public final class PsiJavaDirectoryFactory extends PsiDirectoryFactory {
     return presentable ? StringUtil.notNullize(FileUtil.getLocationRelativeToUserHome(directory.getVirtualFile().getPresentableUrl())) : "";
   }
 
-  @Nullable
   @Override
-  public PsiDirectoryContainer getDirectoryContainer(@NotNull PsiDirectory directory) {
+  public @Nullable PsiDirectoryContainer getDirectoryContainer(@NotNull PsiDirectory directory) {
     return JavaDirectoryService.getInstance().getPackage(directory);
   }
 
@@ -55,7 +55,9 @@ public final class PsiJavaDirectoryFactory extends PsiDirectoryFactory {
   public boolean isPackage(@NotNull PsiDirectory directory) {
     ProjectFileIndex fileIndex = ProjectRootManager.getInstance(myManager.getProject()).getFileIndex();
     VirtualFile virtualFile = directory.getVirtualFile();
-    return fileIndex.isUnderSourceRootOfType(virtualFile, JavaModuleSourceRootTypes.SOURCES) && fileIndex.getPackageNameByDirectory(virtualFile) != null;
+    PackageIndex packageIndex = PackageIndex.getInstance(myManager.getProject());
+    return fileIndex.isUnderSourceRootOfType(virtualFile, JavaModuleSourceRootTypes.SOURCES) 
+           && packageIndex.getPackageNameByDirectory(virtualFile) != null;
   }
 
   @Override

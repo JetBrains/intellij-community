@@ -1,0 +1,326 @@
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+package com.jetbrains.python.refactoring.classes.membersManager;
+
+import com.google.common.base.Function;
+import com.google.common.base.Preconditions;
+import com.google.common.base.Predicate;
+import com.google.common.collect.Collections2;
+import com.intellij.psi.PsiElement;
+import com.intellij.util.ArrayUtil;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.MultiMap;
+import com.jetbrains.python.NotNullPredicate;
+import com.jetbrains.python.psi.PyClass;
+import com.jetbrains.python.psi.PyElement;
+import com.jetbrains.python.refactoring.classes.PyDependenciesComparator;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.stream.Collectors;
+
+/**
+ * Moves members between classes via its plugins (managers).
+ * To move members use {@link #getAllMembersCouldBeMoved(PyClass)}   and {@link #moveAllMembers(Collection, PyClass, PyClass...)}
+ * To add new manager, extend this class and add it to {@link #MANAGERS}
+ *
+ * @author Ilya.Kazakevich
+ */
+public abstract class MembersManager<T extends PyElement> implements Function<T, PyMemberInfo<T>> {
+  /**
+   * List of managers. Class delegates all logic to them.
+   */
+  private static final Collection<? extends MembersManager<? extends PyElement>> MANAGERS =
+    Arrays.asList(new MethodsManager(),
+                  new SuperClassesManager(),
+                  new ClassFieldsManager(),
+                  new InstanceFieldsManager(),
+                  new PropertiesManager());
+
+  private final @NotNull Class<T> myExpectedClass;
+
+  protected MembersManager(final @NotNull Class<T> expectedClass) {
+    myExpectedClass = expectedClass;
+  }
+
+  /**
+   * Get all members that could be moved out of certain class
+   *
+   * @param pyClass class to find members
+   * @return list of members could be moved
+   */
+  public static @NotNull List<PyMemberInfo<PyElement>> getAllMembersCouldBeMoved(final @NotNull PyClass pyClass) {
+    final List<PyMemberInfo<PyElement>> result = new ArrayList<>();
+
+    for (final MembersManager<? extends PyElement> manager : MANAGERS) {
+      result.addAll(transformSafely(pyClass, manager));
+    }
+    return result;
+  }
+
+
+  /**
+   * Transforms elements, manager says it could move to appropriate {@link PyMemberInfo}.
+   * Types are checked at runtime.
+   *
+   * @param pyClass class whose members we want to move
+   * @param manager manager that should check class and report list of members
+   * @return member infos
+   */
+  //TODO: Move to  TypeSafeMovingStrategy
+  //We check type at runtime
+  @SuppressWarnings({"unchecked", "rawtypes"})
+  private static @NotNull Collection<PyMemberInfo<PyElement>> transformSafely(final @NotNull PyClass pyClass,
+                                                                              final @NotNull MembersManager<?> manager) {
+    final List<? extends PyElement> membersCouldBeMoved = manager.getMembersCouldBeMoved(pyClass);
+    manager.checkElementTypes((Iterable)membersCouldBeMoved);
+    return (Collection<PyMemberInfo<PyElement>>)Collections2.transform(membersCouldBeMoved, (Function)manager);
+  }
+
+
+  /**
+   * Moves members from one class to another
+   *
+   * @param memberInfos members to move
+   * @param from        source
+   * @param to          destination
+   */
+  public static void moveAllMembers(
+    final @NotNull Collection<? extends PyMemberInfo<PyElement>> memberInfos,
+    final @NotNull PyClass from,
+    final PyClass @NotNull ... to
+  ) {
+    List<PyMemberInfo<PyElement>> memberInfosSorted = new ArrayList<>(memberInfos);
+
+
+    memberInfosSorted.sort((o1, o2) -> PyDependenciesComparator.INSTANCE.compareAndStoreDependency(o1.getElementToStoreDependency(),
+                                                                                                   o2.getElementToStoreDependency()));
+
+    for (PyMemberInfo<PyElement> info : memberInfosSorted) {
+      TypeSafeMovingStrategy.moveCheckingTypesAtRunTime(from, info.getMembersManager(), Collections.singleton(info), to);
+    }
+
+    PyDependenciesComparator.clearDependencyInfo(ContainerUtil.map(memberInfos, o -> o.getElementToStoreDependency()));
+  }
+
+
+  /**
+   * Checks that all elements has allowed type for manager
+   *
+   * @param elements elements to check against manager
+   */
+  void checkElementTypes(final @NotNull Iterable<T> elements) {
+    for (final PyElement pyElement : elements) {
+      Preconditions.checkArgument(myExpectedClass.isAssignableFrom(pyElement.getClass()),
+                                  String.format("Manager %s expected %s but got %s", this, myExpectedClass, pyElement));
+    }
+  }
+
+  /**
+   * Finds member by predicate
+   *
+   * @param members   where to find
+   * @param predicate what to find
+   * @return member or null if not found
+   */
+  public static @Nullable PyMemberInfo<PyElement> findMember(final @NotNull Collection<? extends PyMemberInfo<PyElement>> members,
+                                                             final @NotNull Predicate<? super PyMemberInfo<PyElement>> predicate) {
+    for (final PyMemberInfo<PyElement> pyMemberInfo : members) {
+      if (predicate.apply(pyMemberInfo)) {
+        return pyMemberInfo;
+      }
+    }
+    return null;
+  }
+
+  /**
+   * Finds member of class by predicate
+   *
+   * @param predicate what to find
+   * @param pyClass   class to find members
+   * @return member or null if not found
+   */
+  public static @Nullable PyMemberInfo<PyElement> findMember(final @NotNull PyClass pyClass,
+                                                             final @NotNull Predicate<? super PyMemberInfo<PyElement>> predicate) {
+    return findMember(getAllMembersCouldBeMoved(pyClass), predicate);
+  }
+
+  /**
+   * Finds member in class.
+   *
+   * @param pyClass   class to find member in
+   * @param pyElement element to find
+   * @return member info with element
+   */
+  public static @NotNull PyMemberInfo<PyElement> findMember(final @NotNull PyClass pyClass, final @NotNull PyElement pyElement) {
+    final PyMemberInfo<PyElement> result = findMember(pyClass, new FindByElement(pyElement));
+    if (result != null) {
+      return result;
+    }
+    throw new IllegalArgumentException(String.format("Element %s not found in class %s or can't be moved", pyElement, pyClass));
+  }
+
+  /**
+   * Get list of elements certain plugin could move out of the class
+   *
+   * @param pyClass class with members
+   * @return list of members
+   */
+  protected abstract @NotNull List<? extends PyElement> getMembersCouldBeMoved(@NotNull PyClass pyClass);
+
+
+  /**
+   * Returns list of elements that may require reference storing aid from {@link com.jetbrains.python.refactoring.classes.PyClassRefactoringUtil#rememberNamedReferences(PsiElement, String...)}
+   *
+   * @param elements members chosen by user. In most cases members their selves could be stored, but different managers may support other strategies
+   * @return elements to store
+   * @see #moveAllMembers(Collection, PyClass, PyClass...)
+   */
+  protected Collection<? extends PyElement> getElementsToStoreReferences(final @NotNull Collection<T> elements) {
+    return elements;
+  }
+
+  /**
+   * Moves element from one class to another. Returns members that may require reference restoring aid from
+   * ({@link com.jetbrains.python.refactoring.classes.PyClassRefactoringUtil#restoreNamedReferences(PsiElement)})
+   * Sort members according to their dependencies, before calling this method
+   *
+   * @see #getElementsToStoreReferences(Collection)
+   */
+  protected abstract Collection<PyElement> moveMembers(
+    @NotNull PyClass from,
+    @NotNull Collection<PyMemberInfo<T>> members,
+    PyClass @NotNull ... to);
+
+
+  /**
+   * Creates {@link PyMemberInfo} from {@link PyElement}
+   * This process is plugin-specific and should be implemented in each plugin
+   *
+   * @param input element
+   * @return member info
+   */
+  //IDEA-120100
+  @SuppressWarnings("NullableProblems")
+  @Override
+  public abstract @NotNull PyMemberInfo<T> apply(@NotNull T input);
+
+  /**
+   * Deletes all elements
+   *
+   * @param pyElementsToDelete elements to delete
+   */
+  protected static void deleteElements(final @NotNull Collection<? extends PsiElement> pyElementsToDelete) {
+    for (final PsiElement element : pyElementsToDelete) {
+      element.delete();
+    }
+  }
+
+  /**
+   * Fetches elements from member info.
+   *
+   * @param memberInfos member info to fetch elements from
+   * @param <T>         type of element
+   * @return list of elements
+   */
+  protected static @NotNull <T extends PyElement> Collection<T> fetchElements(final @NotNull Collection<? extends PyMemberInfo<T>> memberInfos) {
+    return memberInfos.stream().map(o -> o.getMember()).filter(o -> o != null).collect(Collectors.toList());
+  }
+
+  /**
+   * Checks if moving certain member to certain class may lead to conflict (actually that means
+   * that class already has this member)
+   *
+   * @param member member to check
+   * @param aClass class where this member wanna be moved
+   * @return true if conflict exists.
+   */
+  public abstract boolean hasConflict(@NotNull T member, @NotNull PyClass aClass);
+
+  /**
+   * Returns all elements this member depends on.
+   *
+   * @param classWhereMemberDeclared class where member declared
+   * @param member                   member itself
+   * @param destinationClass         where this member would be moved (or null if new class is unknown)
+   * @return collection of elements this member depends on excluding those, would be available in destination class
+   */
+  public static @NotNull Collection<? extends PyElement> getAllDependencies(
+    final @NotNull PyClass classWhereMemberDeclared,
+    final @NotNull PyElement member,
+    final @Nullable PyClass destinationClass) {
+    final PyMemberInfo<PyElement> memberInfo = findMember(classWhereMemberDeclared, member);
+
+
+    final Collection<? extends PyElement> elementsToCheckDependency =
+      memberInfo.getMembersManager().getElementsToStoreReferences(Collections.singleton(member));
+
+    final MultiMap<PyClass, PyElement> dependencies = new MultiMap<>();
+
+    final Collection<PyElement> result = new HashSet<>();
+    for (final MembersManager<? extends PyElement> manager : MANAGERS) {
+      for (final PyElement elementToCheckDependency : elementsToCheckDependency) {
+        dependencies.putAllValues(manager.getDependencies(elementToCheckDependency));
+      }
+    }
+
+    if (destinationClass != null) {
+      final Iterator<PyClass> classesIterator = dependencies.keySet().iterator();
+      while (classesIterator.hasNext()) {
+        final PyClass memberClass = classesIterator.next();
+        if (memberClass.equals(destinationClass) ||
+            ArrayUtil.contains(memberClass, destinationClass.getSuperClasses(null))) { // IF still would be available
+          classesIterator.remove();
+        }
+      }
+    }
+
+    for (final MembersManager<? extends PyElement> manager : MANAGERS) {
+      result.addAll(manager.getDependencies(dependencies));
+    }
+    result.addAll(dependencies.values());
+    return result;
+  }
+
+  /**
+   * Fetch dependencies this element depends on.
+   * Manager should return them in format "class, where member declared" -- "member itself".
+   * For example: if parameter is function, and this function uses field "foo" declared in class "bar", then manager (responsible for fields)
+   * returns "bar" -] reference to "foo"
+   *
+   * @param member member to check dependencies for
+   * @return dependencies
+   */
+  protected abstract @NotNull MultiMap<PyClass, PyElement> getDependencies(@NotNull PyElement member);
+
+  /**
+   * Get dependencies by members and classes they declared in (obtained from {@link #getDependencies(PyElement)})
+   * For example manager, responsible for "extends SomeClass" members may return list of classes
+   *
+   * @param usedElements class-to-element dependencies
+   * @return dependencies
+   */
+  protected abstract @NotNull Collection<PyElement> getDependencies(@NotNull MultiMap<PyClass, PyElement> usedElements);
+
+
+  private static final class FindByElement extends NotNullPredicate<PyMemberInfo<PyElement>> {
+    private final PyElement myPyElement;
+
+    private FindByElement(final PyElement pyElement) {
+      myPyElement = pyElement;
+    }
+
+    @Override
+    public boolean applyNotNull(final @NotNull PyMemberInfo<PyElement> input) {
+      return input.getMember().equals(myPyElement);
+    }
+  }
+}
+
+

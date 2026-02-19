@@ -1,4 +1,4 @@
-// "Use 'Collectors.toConcurrentMap' collector" "true"
+// "Use 'Collectors.toConcurrentMap()' collector" "true"
 import java.util.*;
 import java.util.function.BinaryOperator;
 import java.util.function.Function;

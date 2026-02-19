@@ -1,0 +1,323 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "title": "Custom Debug Adapter Protocol",
+  "description": "Extension to the DAP to support additional features.",
+  "type": "object",
+  "definitions": {
+    "GetTableRequest": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/Request"
+        },
+        {
+          "type": "object",
+          "description": "Retrieve tabular data (e.g., DataFrame, numpy array, polars) from a variable/expression in the debuggee. Proxies to pydevd InternalTableCommand.",
+          "properties": {
+            "command": {
+              "type": "string",
+              "enum": [
+                "getTable"
+              ]
+            },
+            "arguments": {
+              "$ref": "#/definitions/GetTableArguments"
+            }
+          },
+          "required": [
+            "command",
+            "arguments"
+          ]
+        }
+      ]
+    },
+    "GetTableArguments": {
+      "type": "object",
+      "description": [
+        "Arguments for 'getTable' request.",
+        "Values are evaluated in the context of the given thread/frame.",
+        "The 'command' (initCommand in server) is a Python expression that evaluates to a supported table-like object.",
+        "The 'commandType' selects the operation (DF_INFO, DF_DESCRIBE, VISUALIZATION_DATA, SLICE, SLICE_CSV)."
+      ],
+      "properties": {
+        "threadId": {
+          "type": [
+            "string",
+            "integer"
+          ],
+          "description": "Thread identifier where the frame/expression should be evaluated."
+        },
+        "frameId": {
+          "type": [
+            "string",
+            "integer"
+          ],
+          "description": "Frame identifier within the given thread."
+        },
+        "command": {
+          "type": "string",
+          "description": "Python expression that evaluates to the table-like object (e.g., variable name or expression)."
+        },
+        "commandType": {
+          "type": "string",
+          "enum": [
+            "DF_INFO",
+            "SLICE",
+            "SLICE_CSV",
+            "DF_DESCRIBE",
+            "VISUALIZATION_DATA",
+            "IMAGE_START_CHUNK_LOAD",
+            "IMAGE_CHUNK_LOAD",
+            "INSPECTIONS"
+          ]
+        },
+        "parametersJson": {
+          "$ref": "#/definitions/GetTableOptionalParameters"
+        }
+      },
+      "required": [
+        "threadId",
+        "frameId",
+        "commandType"
+      ]
+    },
+    "GetTableOptionalParameters": {
+      "type": "object",
+      "description": "Optional parameters for 'getTable' / 'getTableImage' operations.",
+      "properties": {
+        "start": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "description": "Optional start row index (inclusive) for slice operations."
+        },
+        "end": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "description": "Optional end row index (exclusive) for slice operations."
+        },
+        "format": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Optional backend-specific format hint (e.g., 'json', 'csv', dtype/precision hints)."
+        },
+        "offset": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "description": "Optional offset for image operations."
+        },
+        "imageId": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Optional image id for image operations."
+        }
+      },
+      "additionalProperties": true
+    },
+    "GetTableResponse": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/Response"
+        },
+        {
+          "type": "object",
+          "description": "Response to 'getTable' request.",
+          "properties": {
+            "command": {
+              "type": "string",
+              "enum": [
+                "getTable"
+              ]
+            },
+            "body": {
+              "type": "object",
+              "properties": {
+                "result": {
+                  "type": "string",
+                  "description": "Opaque string payload with the result of the getTable operation."
+                }
+              }
+            }
+          },
+          "required": [
+            "body"
+          ]
+        }
+      ]
+    },
+    "GetTableImageRequest": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/Request"
+        },
+        {
+          "type": "object",
+          "description": "Retrieve tabular data as an image",
+          "properties": {
+            "command": {
+              "type": "string",
+              "enum": [
+                "getTableImage"
+              ]
+            },
+            "arguments": {
+              "$ref": "#/definitions/GetTableArguments"
+            }
+          },
+          "required": [
+            "command",
+            "arguments"
+          ]
+        }
+      ]
+    },
+    "GetTableImageResponse": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/Response"
+        },
+        {
+          "type": "object",
+          "description": "Response to 'getTableImage' request.",
+          "properties": {
+            "command": {
+              "type": "string",
+              "enum": [
+                "getTableImage"
+              ]
+            },
+            "body": {
+              "type": "object",
+              "properties": {
+                "result": {
+                  "type": "string",
+                  "description": "Opaque string payload with the result of the getTableImage operation."
+                }
+              }
+            }
+          },
+          "required": [
+            "body"
+          ]
+        }
+      ]
+    },
+    "GetArrayRequest": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/Request"
+        },
+        {
+          "type": "object",
+          "description": "Retrieve array data from a variable/expression in the debuggee. Proxies to pydevd InternalArrayCommand.",
+          "properties": {
+            "command": {
+              "type": "string",
+              "enum": [
+                "getArray"
+              ]
+            },
+            "arguments": {
+              "$ref": "#/definitions/GetArrayArguments"
+            }
+          },
+          "required": [
+            "command",
+            "arguments"
+          ]
+        }
+      ]
+    },
+    "GetArrayArguments": {
+      "type": "object",
+      "description": "Arguments for 'getArray' request.",
+      "properties": {
+        "threadId": {
+          "type": [
+            "string",
+            "integer"
+          ],
+          "description": "Thread identifier where the frame/expression should be evaluated."
+        },
+        "frameId": {
+          "type": [
+            "string",
+            "integer"
+          ],
+          "description": "Frame identifier within the given thread."
+        },
+        "rowOffset": {
+          "type": "integer",
+          "description": "Row offset"
+        },
+        "colOffset": {
+          "type": "integer",
+          "description": "Col offset"
+        },
+        "rows": {
+          "type": "integer",
+          "description": "Rows"
+        },
+        "cols": {
+          "type": "integer",
+          "description": "Columns"
+        },
+        "format": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Optional backend-specific format hint (e.g., 'json', 'csv', dtype/precision hints)."
+        },
+        "variableName": {
+          "type": "string",
+          "description": "Array variable name"
+        }
+      },
+      "required": [
+        "threadId",
+        "frameId",
+        "commandType"
+      ]
+    },
+    "GetArrayResponse": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/Response"
+        },
+        {
+          "type": "object",
+          "description": "Response to 'getTable' request.",
+          "properties": {
+            "command": {
+              "type": "string",
+              "enum": [
+                "getArray"
+              ]
+            },
+            "body": {
+              "type": "object",
+              "properties": {
+                "result": {
+                  "type": "string",
+                  "description": "Opaque string payload with the result of the requested operation."
+                }
+              }
+            }
+          },
+          "required": [
+            "body"
+          ]
+        }
+      ]
+    }
+  }
+}

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.javaee;
 
 import com.intellij.openapi.Disposable;
@@ -13,9 +13,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-/**
- * @author yole
- */
+
 public final class CoreExternalResourceManager extends ExternalResourceManagerEx {
   @Override
   public void removeResource(String url, @NotNull Project project) {
@@ -46,11 +44,6 @@ public final class CoreExternalResourceManager extends ExternalResourceManagerEx
   }
 
   @Override
-  public void addIgnoredResource(@NotNull String url) {
-    throw new UnsupportedOperationException();
-  }
-
-  @Override
   public void addIgnoredResources(@NotNull List<String> urls, @Nullable Disposable disposable) {
     throw new UnsupportedOperationException();
   }
@@ -75,21 +68,18 @@ public final class CoreExternalResourceManager extends ExternalResourceManagerEx
     return false;
   }
 
-  @Nullable
   @Override
-  public String getUserResource(Project project, String url, String version) {
+  public @Nullable String getUserResource(Project project, String url, String version) {
     throw new UnsupportedOperationException();
   }
 
-  @Nullable
   @Override
-  public String getStdResource(@NotNull String url, @Nullable String version) {
+  public @Nullable String getStdResource(@NotNull String url, @Nullable String version) {
     throw new UnsupportedOperationException();
   }
 
-  @NotNull
   @Override
-  public String getDefaultHtmlDoctype(@NotNull Project project) {
+  public @NotNull String getDefaultHtmlDoctype(@NotNull Project project) {
     throw new UnsupportedOperationException();
   }
 
@@ -163,9 +153,8 @@ public final class CoreExternalResourceManager extends ExternalResourceManagerEx
     throw new UnsupportedOperationException();
   }
 
-  @Nullable
   @Override
-  public PsiFile getResourceLocation(@NotNull @NonNls String url, @NotNull PsiFile baseFile, String version) {
+  public @Nullable PsiFile getResourceLocation(@NotNull @NonNls String url, @NotNull PsiFile baseFile, String version) {
     throw new UnsupportedOperationException();
   }
 

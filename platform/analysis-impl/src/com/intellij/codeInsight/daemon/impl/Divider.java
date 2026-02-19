@@ -1,20 +1,24 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl;
 
-import com.intellij.lang.Language;
+import com.intellij.concurrency.ConcurrentCollectionFactory;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.ProperTextRange;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.TextRangeScalarUtil;
+import com.intellij.openapi.util.UserDataHolderEx;
 import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.reference.SoftReference;
 import com.intellij.util.Processor;
+import com.intellij.util.containers.ConcurrentLongObjectMap;
 import com.intellij.util.containers.Stack;
-import gnu.trove.TIntStack;
+import it.unimi.dsi.fastutil.ints.IntArrayList;
+import it.unimi.dsi.fastutil.ints.IntStack;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -23,60 +27,68 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Predicate;
 
+/**
+ * Internal class for collecting PSI elements inside the file for highlighting purposes.
+ * Optimized for repeated requests (caches the result in the PSI user data).
+ * Since this caching is highly highlighting-specific and full of peculiarities, do not use.
+ * Instead, see {@link CollectHighlightsUtil#getElementsInRange(PsiElement, int, int)} for more strait-forward algorithm.
+ */
+@ApiStatus.Internal
 public final class Divider {
   private static final int STARTING_TREE_HEIGHT = 10;
 
-  public static final class DividedElements {
-    private final long modificationStamp;
-    private final @NotNull TextRange restrictRange;
-    private final @NotNull TextRange priorityRange;
-    public final List<PsiElement> inside = new ArrayList<>();
-    final List<ProperTextRange> insideRanges = new ArrayList<>();
-    public final List<PsiElement> outside = new ArrayList<>();
-    final List<ProperTextRange> outsideRanges = new ArrayList<>();
-    public final List<PsiElement> parents = new ArrayList<>();
-    final List<ProperTextRange> parentRanges = new ArrayList<>();
-
-    private DividedElements(long modificationStamp, @NotNull TextRange restrictRange, @NotNull TextRange priorityRange) {
-      this.modificationStamp = modificationStamp;
-      this.restrictRange = restrictRange;
-      this.priorityRange = priorityRange;
-    }
+  public record DividedElements(@NotNull PsiFile psiRoot, long priorityRange,
+                                @NotNull List<? extends @NotNull PsiElement> inside,
+                                @NotNull List<? extends @NotNull PsiElement> outside,
+                                @NotNull List<? extends @NotNull PsiElement> parents
+                                ) {
   }
 
-  private static final Key<Reference<DividedElements>> DIVIDED_ELEMENTS_KEY = Key.create("DIVIDED_ELEMENTS");
+  // psiRoot user data stores PSI modification stamp, map(restrictRange -> DividedElements
+  private record CachedStampedMap(long modificationStamp, @NotNull ConcurrentLongObjectMap<Reference<DividedElements>> elements) {}
+  private static final Key<CachedStampedMap> CACHED_DIVIDED_ELEMENTS_KEY = Key.create("CACHED_DIVIDED_ELEMENTS");
 
-  public static void divideInsideAndOutsideAllRoots(@NotNull PsiFile file,
-                                                     @NotNull TextRange restrictRange,
-                                                     @NotNull TextRange priorityRange,
-                                                     @Nullable Predicate<? super PsiFile> rootFilter,
-                                                     @NotNull Processor<? super DividedElements> processor) {
-    FileViewProvider viewProvider = file.getViewProvider();
-    for (Language language : viewProvider.getLanguages()) {
-      PsiFile root = viewProvider.getPsi(language);
+  public static void divideInsideAndOutsideAllRoots(@NotNull PsiFile psiFile,
+                                                    @NotNull TextRange restrictRange,
+                                                    @NotNull TextRange priorityRange,
+                                                    @Nullable Predicate<? super PsiFile> rootFilter,
+                                                    @NotNull Processor<? super DividedElements> processor) {
+    FileViewProvider viewProvider = psiFile.getViewProvider();
+    for (PsiFile root : viewProvider.getAllFiles()) {
       if (rootFilter == null || !rootFilter.test(root)) {
         continue;
       }
-      divideInsideAndOutsideInOneRoot(root, restrictRange, priorityRange, processor);
+      divideInsideAndOutsideInOneRoot(root, TextRangeScalarUtil.toScalarRange(restrictRange), TextRangeScalarUtil.toScalarRange(priorityRange), processor);
     }
   }
 
-  static void divideInsideAndOutsideInOneRoot(@NotNull PsiFile root,
-                                              @NotNull TextRange restrictRange,
-                                              @NotNull TextRange priorityRange,
+  @ApiStatus.Internal
+  public static void divideInsideAndOutsideInOneRoot(@NotNull PsiFile root,
+                                              long restrictRange,
+                                              long priorityRange,
                                               @NotNull Processor<? super DividedElements> processor) {
     long modificationStamp = root.getModificationStamp();
-    DividedElements cached = SoftReference.dereference(root.getUserData(DIVIDED_ELEMENTS_KEY));
+    ConcurrentLongObjectMap<Reference<DividedElements>> cachedMap;
+    while (true) {
+      CachedStampedMap cache = root.getUserData(CACHED_DIVIDED_ELEMENTS_KEY);
+      if (cache != null && cache.modificationStamp == modificationStamp) {
+        cachedMap = cache.elements();
+        break;
+      }
+      ((UserDataHolderEx)root).replace(CACHED_DIVIDED_ELEMENTS_KEY, cache, new CachedStampedMap(modificationStamp, ConcurrentCollectionFactory.createConcurrentLongObjectMap()));
+    }
+    DividedElements cached = SoftReference.dereference(cachedMap.get(restrictRange));
     DividedElements elements;
-    if (cached == null || cached.modificationStamp != modificationStamp || !cached.restrictRange.equals(restrictRange) || !cached.priorityRange.contains(priorityRange)) {
-      elements = new DividedElements(modificationStamp, restrictRange, priorityRange);
-      divideInsideAndOutsideInOneRoot(root, restrictRange, priorityRange, elements.inside, elements.insideRanges, elements.outside,
-                                      elements.outsideRanges, elements.parents,
-                                      elements.parentRanges, true);
-      root.putUserData(DIVIDED_ELEMENTS_KEY, new java.lang.ref.SoftReference<>(elements));
+    if (cached != null && TextRangeScalarUtil.contains(cached.priorityRange, priorityRange)) {
+      elements = cached;
     }
     else {
-      elements = cached;
+      List<PsiElement> inside = new ArrayList<>();
+      List<PsiElement> outside = new ArrayList<>();
+      List<PsiElement> parents = new ArrayList<>();
+      divideInsideAndOutsideInOneRoot(root, restrictRange, priorityRange, inside, outside, parents);
+      elements = new DividedElements(root, priorityRange, inside, outside, parents);
+      cachedMap.put(restrictRange, new java.lang.ref.SoftReference<>(elements));
     }
     processor.process(elements);
   }
@@ -84,21 +96,17 @@ public final class Divider {
   private static final PsiElement HAVE_TO_GET_CHILDREN = PsiUtilCore.NULL_PSI_ELEMENT;
 
   private static void divideInsideAndOutsideInOneRoot(@NotNull PsiFile root,
-                                                      @NotNull TextRange restrictRange,
-                                                      @NotNull TextRange priorityRange,
+                                                      long restrictRange,
+                                                      long priorityRange,
                                                       @NotNull List<PsiElement> inside,
-                                                      @NotNull List<? super ProperTextRange> insideRanges,
                                                       @NotNull List<PsiElement> outside,
-                                                      @NotNull List<? super ProperTextRange> outsideRanges,
-                                                      @NotNull List<? super PsiElement> outParents,
-                                                      @NotNull List<? super ProperTextRange> outParentRanges,
-                                                      boolean includeParents) {
-    int startOffset = restrictRange.getStartOffset();
-    int endOffset = restrictRange.getEndOffset();
+                                                      @NotNull List<? super PsiElement> outParents) {
+    int startOffset = TextRangeScalarUtil.startOffset(restrictRange);
+    int endOffset = TextRangeScalarUtil.endOffset(restrictRange);
 
-    Condition<PsiElement>[] filters = CollectHighlightsUtil.EP_NAME.getExtensions();
+    List<Condition<PsiElement>> filters = CollectHighlightsUtil.EP_NAME.getExtensionList();
 
-    TIntStack starts = new TIntStack(STARTING_TREE_HEIGHT);
+    IntStack starts = new IntArrayList(STARTING_TREE_HEIGHT);
     starts.push(startOffset);
     Stack<PsiElement> elements = new Stack<>(STARTING_TREE_HEIGHT);
     Stack<PsiElement> children = new Stack<>(STARTING_TREE_HEIGHT);
@@ -132,15 +140,13 @@ public final class Divider {
           offset += element.getTextLength();
         }
 
-        int start = starts.pop();
+        int start = starts.popInt();
         if (startOffset <= start && offset <= endOffset) {
-          if (priorityRange.containsRange(start, offset)) {
+          if (TextRangeScalarUtil.containsRange(priorityRange, start, offset)) {
             inside.add(element);
-            insideRanges.add(new ProperTextRange(start, offset));
           }
           else {
             outside.add(element);
-            outsideRanges.add(new ProperTextRange(start, offset));
           }
         }
 
@@ -159,23 +165,16 @@ public final class Divider {
       }
     }
 
-    if (includeParents) {
-      PsiElement parent = !outside.isEmpty() ? outside.get(outside.size() - 1) :
-                          !inside.isEmpty() ? inside.get(inside.size() - 1) :
-                          CollectHighlightsUtil.findCommonParent(root, startOffset, endOffset);
-      while (parent != null && !(parent instanceof PsiFile)) {
-        parent = parent.getParent();
-        if (parent != null) {
-          outParents.add(parent);
-          TextRange textRange = parent.getTextRange();
-          assert textRange != null : "Text range for " + parent + " is null. " + parent.getClass() +"; root: "+root+": "+root.getVirtualFile();
-          outParentRanges.add(ProperTextRange.create(textRange));
-        }
+    PsiElement parent = !outside.isEmpty() ? outside.getLast() :
+                        !inside.isEmpty() ? inside.getLast() :
+                        CollectHighlightsUtil.findCommonParent(root, startOffset, endOffset);
+    while (parent != null && !(parent instanceof PsiFile)) {
+      parent = parent.getParent();
+      if (parent != null) {
+        outParents.add(parent);
+        TextRange textRange = parent.getTextRange();
+        assert textRange != null : "Text range for " + parent + " is null. " + parent.getClass() +"; root: "+root+": "+root.getVirtualFile();
       }
     }
-
-    assert inside.size() == insideRanges.size();
-    assert outside.size() == outsideRanges.size();
-    assert outParents.size() == outParentRanges.size();
   }
 }

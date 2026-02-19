@@ -1,13 +1,35 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.refactoring.memberPullUp;
 
 import com.intellij.codeInsight.AnnotationUtil;
-import com.intellij.codeInsight.intention.AddAnnotationFix;
+import com.intellij.codeInsight.intention.AddAnnotationPsiFix;
 import com.intellij.lang.Language;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
-import com.intellij.psi.*;
+import com.intellij.pom.java.JavaFeature;
+import com.intellij.psi.CommonClassNames;
+import com.intellij.psi.JVMElementFactories;
+import com.intellij.psi.PsiAnnotation;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiClassType;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiMember;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiModifierListOwner;
+import com.intellij.psi.PsiNameValuePair;
+import com.intellij.psi.PsiNamedElement;
+import com.intellij.psi.PsiQualifiedReferenceElement;
+import com.intellij.psi.PsiReference;
+import com.intellij.psi.PsiReferenceList;
+import com.intellij.psi.PsiSubstitutor;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypeElement;
+import com.intellij.psi.PsiTypeParameter;
+import com.intellij.psi.TokenType;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.psi.search.LocalSearchScope;
@@ -46,7 +68,12 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.refactoring.classMembers.GrClassMemberReferenceVisitor;
 import org.jetbrains.plugins.groovy.util.GroovyChangeContextUtil;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import static org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil.getNewName;
 
@@ -121,7 +148,7 @@ public class GrPullUpHelper implements PullUpHelper<MemberInfo> {
         super.visitCodeReferenceElement(refElement);
       }
 
-      private boolean processRef(@NotNull GrReferenceElement<? extends GroovyPsiElement> refElement) {
+      private static boolean processRef(@NotNull GrReferenceElement<? extends GroovyPsiElement> refElement) {
         final PsiElement qualifier = refElement.getQualifier();
         if (qualifier != null) {
           final Boolean preserveQualifier = qualifier.getCopyableUserData(PRESERVE_QUALIFIER);
@@ -194,7 +221,7 @@ public class GrPullUpHelper implements PullUpHelper<MemberInfo> {
   }
 
   private static boolean willBeUsedInSubclass(PsiElement member, Set<? extends PsiMember> movedMembers, PsiClass superclass, PsiClass subclass) {
-    for (PsiReference ref : ReferencesSearch.search(member, new LocalSearchScope(subclass), false)) {
+    for (PsiReference ref : ReferencesSearch.search(member, new LocalSearchScope(subclass), false).asIterable()) {
       PsiElement element = ref.getElement();
       if (!RefactoringHierarchyUtil.willBeInTargetClass(element, movedMembers, superclass, false)) {
         return true;
@@ -239,10 +266,9 @@ public class GrPullUpHelper implements PullUpHelper<MemberInfo> {
         anchor != null ? (GrMethod)myTargetSuperClass.addBefore(methodCopy, anchor) : (GrMethod)myTargetSuperClass.add(methodCopy);
       JavaCodeStyleSettings styleSettings = JavaCodeStyleSettings.getInstance(method.getContainingFile());
       if (styleSettings.INSERT_OVERRIDE_ANNOTATION) {
-        if (PsiUtil.isLanguageLevel5OrHigher(mySourceClass) && !myTargetSuperClass.isInterface() ||
-            PsiUtil.isLanguageLevel6OrHigher(mySourceClass)) {
-          new AddAnnotationFix(CommonClassNames.JAVA_LANG_OVERRIDE, method)
-            .invoke(method.getProject(), null, mySourceClass.getContainingFile());
+        if (PsiUtil.isAvailable(JavaFeature.ANNOTATIONS, mySourceClass) && !myTargetSuperClass.isInterface() ||
+            PsiUtil.isAvailable(JavaFeature.OVERRIDE_INTERFACE, mySourceClass)) {
+          AddAnnotationPsiFix.addPhysicalAnnotationIfAbsent(CommonClassNames.JAVA_LANG_OVERRIDE, PsiNameValuePair.EMPTY_ARRAY, method.getModifierList());
         }
       }
 
@@ -319,7 +345,7 @@ public class GrPullUpHelper implements PullUpHelper<MemberInfo> {
       PsiType type = substitutedType != null ? substitutedType : TypeConversionUtil.erasure(factory.createType(parameter));
 
       PsiElement scopeElement = member instanceof GrField ? member.getParent() : member;
-      for (PsiReference reference : ReferencesSearch.search(parameter, new LocalSearchScope(scopeElement))) {
+      for (PsiReference reference : ReferencesSearch.search(parameter, new LocalSearchScope(scopeElement)).asIterable()) {
         final PsiElement element = reference.getElement();
         final PsiElement parent = element.getParent();
         if (parent instanceof PsiTypeElement) {
@@ -427,8 +453,7 @@ public class GrPullUpHelper implements PullUpHelper<MemberInfo> {
 
     private boolean shouldFixSuper(PsiMethod method) {
       for (PsiMember element : myMembersAfterMove) {
-        if (element instanceof PsiMethod) {
-          PsiMethod member = (PsiMethod)element;
+        if (element instanceof PsiMethod member) {
           // if there is such member among moved members, super qualifier
           // should not be removed
           final PsiManager manager = method.getManager();

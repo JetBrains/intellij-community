@@ -22,9 +22,6 @@ import com.intellij.psi.PsiTypeParameterListOwner;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author ilyas
- */
 public interface GrTypeParameterListOwner extends PsiTypeParameterListOwner {
 
   @Override

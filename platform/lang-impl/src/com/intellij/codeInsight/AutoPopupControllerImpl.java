@@ -1,21 +1,22 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight;
 
 import com.intellij.codeInsight.completion.CompletionProgressIndicator;
 import com.intellij.codeInsight.completion.CompletionType;
 import com.intellij.codeInsight.completion.impl.CompletionServiceImpl;
 import com.intellij.codeInsight.editorActions.CompletionAutoPopupHandler;
+import com.intellij.codeInsight.hint.EditorHintListener;
 import com.intellij.codeInsight.hint.ShowParameterInfoHandler;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.PowerSaveMode;
+import com.intellij.lang.documentation.ide.impl.DocumentationPopupListener;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.ex.AnActionListener;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.EditorActivityManager;
-import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
@@ -24,23 +25,32 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.testFramework.TestModeFlags;
+import com.intellij.ui.HintHint;
+import com.intellij.ui.LightweightHint;
 import com.intellij.util.Alarm;
+import com.intellij.util.concurrency.AppExecutorUtil;
+import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.LockSupport;
 
-import static com.intellij.codeInsight.completion.CompletionPhase.*;
+import static com.intellij.codeInsight.completion.CompletionPhase.CommittingDocuments;
+import static com.intellij.codeInsight.completion.CompletionPhase.EmptyAutoPopup;
+import static com.intellij.codeInsight.completion.CompletionPhase.NoCompletion;
 
-public class AutoPopupControllerImpl extends AutoPopupController {
+@ApiStatus.Internal
+class AutoPopupControllerImpl extends AutoPopupController {
   private final Project myProject;
   private final Alarm myAlarm;
 
-  public AutoPopupControllerImpl(@NotNull Project project) {
+  AutoPopupControllerImpl(@NotNull Project project) {
     myProject = project;
 
     myAlarm = new Alarm(myProject);
@@ -48,9 +58,12 @@ public class AutoPopupControllerImpl extends AutoPopupController {
   }
 
   private void setupListeners() {
-    ApplicationManager.getApplication().getMessageBus().connect(myProject).subscribe(AnActionListener.TOPIC, new AnActionListener() {
+    var applicationBus = ApplicationManager.getApplication().getMessageBus().connect(myProject);
+    var projectBus = myProject.getMessageBus().connect(myProject);
+
+    applicationBus.subscribe(AnActionListener.TOPIC, new AnActionListener() {
       @Override
-      public void beforeActionPerformed(@NotNull AnAction action, @NotNull DataContext dataContext, @NotNull AnActionEvent event) {
+      public void beforeActionPerformed(@NotNull AnAction action, @NotNull AnActionEvent event) {
         cancelAllRequests();
       }
 
@@ -60,24 +73,58 @@ public class AutoPopupControllerImpl extends AutoPopupController {
       }
     });
 
-    IdeEventQueue.getInstance().addActivityListener(this::cancelAllRequests, myProject);
+    AtomicInteger skipCancelEvents = new AtomicInteger(0);
+
+    // Detect and ignore activity notification for any hints, including LookupImpl hint
+    applicationBus.subscribe(EditorHintListener.TOPIC, new EditorHintListener() {
+      @Override
+      public void hintShown(@NotNull Editor editor, @NotNull LightweightHint hint, int flags, @NotNull HintHint hintInfo) {
+        skipCancelEvents.incrementAndGet();
+      }
+    });
+
+    // Detect and ignore activity notification for a lookup documentation popup
+    projectBus.subscribe(DocumentationPopupListener.TOPIC, new DocumentationPopupListener() {
+      @Override
+      public void contentsScrolled() { }
+
+      @Override
+      public void popupShown() {
+        skipCancelEvents.incrementAndGet();
+      }
+    });
+
+    IdeEventQueue.getInstance().addActivityListener(() -> {
+      if (skipCancelEvents.get() == 0) {
+        cancelAllRequests();
+      }
+      else {
+        skipCancelEvents.decrementAndGet();
+      }
+    }, myProject);
   }
 
   @Override
-  public void autoPopupMemberLookup(final Editor editor, @Nullable final Condition<? super PsiFile> condition){
-    autoPopupMemberLookup(editor, CompletionType.BASIC, condition);
+  public void autoPopupMemberLookup(@NotNull Editor editor, @Nullable Condition<? super PsiFile> condition) {
+    scheduleAutoPopup(editor, condition);
   }
 
   @Override
-  public void autoPopupMemberLookup(final Editor editor, CompletionType completionType, @Nullable final Condition<? super PsiFile> condition){
+  public void autoPopupMemberLookup(@NotNull Editor editor,
+                                    @NotNull CompletionType completionType,
+                                    @Nullable Condition<? super PsiFile> condition) {
     scheduleAutoPopup(editor, completionType, condition);
   }
 
   @Override
-  public void scheduleAutoPopup(@NotNull Editor editor, @NotNull CompletionType completionType, @Nullable final Condition<? super PsiFile> condition) {
+  public void scheduleAutoPopup(@NotNull Editor editor,
+                                @NotNull CompletionType completionType,
+                                @Nullable Condition<? super PsiFile> condition) {
     if (ApplicationManager.getApplication().isUnitTestMode() && !TestModeFlags.is(CompletionAutoPopupHandler.ourTestingAutopopup)) {
       return;
     }
+
+    ThreadingAssertions.assertEventDispatchThread();
 
     boolean alwaysAutoPopup = Boolean.TRUE.equals(editor.getUserData(ALWAYS_AUTO_POPUP));
     if (!CodeInsightSettings.getInstance().AUTO_POPUP_COMPLETION_LOOKUP && !alwaysAutoPopup) {
@@ -91,7 +138,7 @@ public class AutoPopupControllerImpl extends AutoPopupController {
       return;
     }
 
-    final CompletionProgressIndicator currentCompletion = CompletionServiceImpl.getCurrentCompletionProgressIndicator();
+    CompletionProgressIndicator currentCompletion = CompletionServiceImpl.getCurrentCompletionProgressIndicator();
     if (currentCompletion != null) {
       currentCompletion.closeAndFinish(true);
     }
@@ -100,56 +147,55 @@ public class AutoPopupControllerImpl extends AutoPopupController {
   }
 
   @Override
-  public void scheduleAutoPopup(final Editor editor) {
-    scheduleAutoPopup(editor, CompletionType.BASIC, null);
-  }
-
-  private void addRequest(final Runnable request, final int delay) {
-    ApplicationManager.getApplication().invokeLater(() -> {
-      if (!myAlarm.isDisposed()) myAlarm.addRequest(request, delay);
-    });
-  }
-
-  @Override
   public void cancelAllRequests() {
     myAlarm.cancelAllRequests();
   }
 
   @Override
-  public void autoPopupParameterInfo(@NotNull final Editor editor, @Nullable final PsiElement highlightedMethod){
-    if (DumbService.isDumb(myProject)) return;
+  public void autoPopupParameterInfo(@NotNull Editor editor, @Nullable PsiElement highlightedElement) {
     if (PowerSaveMode.isEnabled()) return;
 
-    ApplicationManager.getApplication().assertIsDispatchThread();
-    final CodeInsightSettings settings = CodeInsightSettings.getInstance();
-    if (settings.AUTO_POPUP_PARAMETER_INFO) {
-      final PsiDocumentManager documentManager = PsiDocumentManager.getInstance(myProject);
-      PsiFile file = documentManager.getPsiFile(editor.getDocument());
-      if (file == null) return;
+    ThreadingAssertions.assertEventDispatchThread();
+    CodeInsightSettings settings = CodeInsightSettings.getInstance();
+    if (!settings.AUTO_POPUP_PARAMETER_INFO) {
+      return;
+    }
 
-      if (!documentManager.isUncommited(editor.getDocument())) {
-        file = documentManager.getPsiFile(InjectedLanguageUtil.getEditorForInjectedLanguageNoCommit(editor, file).getDocument());
+    AtomicInteger offset = new AtomicInteger(-1);
+    ReadAction.nonBlocking(() -> {
+        offset.set(editor.getCaretModel().getOffset());
+        PsiDocumentManager documentManager = PsiDocumentManager.getInstance(myProject);
+        PsiFile file = documentManager.getPsiFile(editor.getDocument());
         if (file == null) return;
-      }
 
-      Runnable request = () -> {
-        if (!myProject.isDisposed() && !DumbService.isDumb(myProject) && !editor.isDisposed() &&
-            (EditorActivityManager.getInstance().isVisible(editor))) {
-          int lbraceOffset = editor.getCaretModel().getOffset() - 1;
-          try {
-            PsiFile file1 = PsiDocumentManager.getInstance(myProject).getPsiFile(editor.getDocument());
-            if (file1 != null) {
-              ShowParameterInfoHandler.invoke(myProject, editor, file1, lbraceOffset, highlightedMethod, false,
-                                              true, null, e -> { });
+        if (!documentManager.isUncommited(editor.getDocument())) {
+          file = documentManager.getPsiFile(InjectedLanguageUtil.getEditorForInjectedLanguageNoCommit(editor, file).getDocument());
+          if (file == null) return;
+        }
+
+        Runnable request = () -> {
+          if (!myProject.isDisposed() && !editor.isDisposed() && UIUtil.isShowing(editor.getContentComponent())) {
+            int lbraceOffset = offset.get() - 1;
+            try {
+              PsiFile file1 = PsiDocumentManager.getInstance(myProject).getPsiFile(editor.getDocument());
+              if (file1 != null) {
+                ShowParameterInfoHandler.invoke(myProject, editor, file1, lbraceOffset, highlightedElement, false,
+                                                true, null);
+              }
+            }
+            catch (IndexNotReadyException ignored) { //anything can happen on alarm
             }
           }
-          catch (IndexNotReadyException ignored) { //anything can happen on alarm
-          }
-        }
-      };
+        };
 
-      addRequest(() -> documentManager.performLaterWhenAllCommitted(request), settings.PARAMETER_INFO_DELAY);
-    }
+        myAlarm.addRequest(() -> documentManager.performLaterWhenAllCommitted(request), settings.PARAMETER_INFO_DELAY);
+      }).expireWith(myAlarm)
+      .coalesceBy(this, editor)
+      .expireWhen(() -> {
+        int initialOffset = offset.get();
+        return editor.isDisposed() || initialOffset != -1 && editor.getCaretModel().getOffset() != initialOffset;
+      })
+      .submit(AppExecutorUtil.getAppExecutorService());
   }
 
   @Override

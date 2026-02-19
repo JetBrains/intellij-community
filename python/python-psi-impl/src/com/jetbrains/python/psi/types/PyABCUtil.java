@@ -20,9 +20,6 @@ import com.jetbrains.python.psi.PyClass;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author vlan
- */
 public final class PyABCUtil {
   private PyABCUtil() {
   }
@@ -39,7 +36,10 @@ public final class PyABCUtil {
     return isSubclass(subClass, superClassName, true, context);
   }
 
-  public static boolean isSubclass(@NotNull PyClass subClass, @NotNull String superClassName, boolean inherited, @Nullable TypeEvalContext context) {
+  public static boolean isSubclass(@NotNull PyClass subClass,
+                                   @NotNull String superClassName,
+                                   boolean inherited,
+                                   @Nullable TypeEvalContext context) {
     if (PyNames.CALLABLE.equals(superClassName)) {
       return hasMethod(subClass, PyNames.CALL, inherited, context);
     }
@@ -53,7 +53,8 @@ public final class PyABCUtil {
     }
     if (PyNames.ITERATOR.equals(superClassName)) {
       return (hasIter && (hasMethod(subClass, PyNames.NEXT, inherited, context) || hasMethod(subClass,
-                                                                                          PyNames.DUNDER_NEXT, inherited, context))) || hasGetItem;
+                                                                                             PyNames.DUNDER_NEXT, inherited, context))) ||
+             hasGetItem;
     }
     final boolean isSized = hasMethod(subClass, PyNames.LEN, inherited, context);
     if (PyNames.SIZED.equals(superClassName)) {
@@ -100,8 +101,11 @@ public final class PyABCUtil {
     if (PyNames.AWAITABLE.equals(superClassName)) {
       return hasMethod(subClass, PyNames.DUNDER_AWAIT, inherited, context);
     }
-    if (PyNames.BUILTIN_PATH_LIKE.equals(superClassName)) {
-      return hasMethod(subClass, PyNames.FSPATH, inherited, context);
+    if (PyNames.ABSTRACT_CONTEXT_MANAGER.equals(superClassName)) {
+      return hasMethod(subClass, PyNames.ENTER, inherited, context) && hasMethod(subClass, PyNames.EXIT, inherited, context);
+    }
+    if (PyNames.ABSTRACT_ASYNC_CONTEXT_MANAGER.equals(superClassName)) {
+      return hasMethod(subClass, PyNames.AENTER, inherited, context) && hasMethod(subClass, PyNames.AEXIT, inherited, context);
     }
     return false;
   }
@@ -111,13 +115,11 @@ public final class PyABCUtil {
       // TODO: Convert abc types to structural types and check them properly
       return true;
     }
-    if (type instanceof PyClassType) {
-      final PyClassType classType = (PyClassType)type;
+    if (type instanceof PyClassType classType) {
       final PyClass pyClass = classType.getPyClass();
       if (classType.isDefinition()) {
         final PyClassLikeType metaClassType = classType.getMetaClassType(context, true);
-        if (metaClassType instanceof PyClassType) {
-          final PyClassType metaClass = (PyClassType)metaClassType;
+        if (metaClassType instanceof PyClassType metaClass) {
           return isSubclass(metaClass.getPyClass(), superClassName, true, context);
         }
       }
@@ -126,15 +128,16 @@ public final class PyABCUtil {
       }
     }
     if (type instanceof PyUnionType) {
-      final PyUnionType unionType = (PyUnionType)type;
-      for (PyType m : unionType.getMembers()) {
-        if (m != null) {
-          if (isSubtype(m, superClassName, context)) {
-            return true;
-          }
-        }
+      if (!PyUnionType.isStrictSemanticsEnabled()) {
+        return PyTypeUtil.toStream(type).nonNull().anyMatch(it -> isSubtype(it, superClassName, context));
       }
-      return false;
+      return PyTypeUtil.toStream(type).nonNull().allMatch(it -> isSubtype(it, superClassName, context));
+    }
+    if (type instanceof PyUnsafeUnionType) {
+      return PyTypeUtil.toStream(type).nonNull().anyMatch(it -> isSubtype(it, superClassName, context));
+    }
+    if (type instanceof PyIntersectionType) {
+      return PyTypeUtil.toStream(type).nonNull().anyMatch(it -> isSubtype(it, superClassName, context));
     }
     return false;
   }

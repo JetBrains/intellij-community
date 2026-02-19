@@ -3,12 +3,33 @@ package com.intellij.java.psi.resolve;
 
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.ide.highlighter.JavaFileType;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaCodeFragment;
+import com.intellij.psi.JavaCodeFragmentFactory;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.JavaRecursiveElementWalkingVisitor;
+import com.intellij.psi.JavaResolveResult;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiCodeBlock;
+import com.intellij.psi.PsiCodeFragment;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementFactory;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiFileFactory;
+import com.intellij.psi.PsiJavaFile;
+import com.intellij.psi.PsiLocalVariable;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiNewExpression;
+import com.intellij.psi.PsiParameter;
+import com.intellij.psi.PsiReference;
+import com.intellij.psi.PsiReferenceExpression;
 import com.intellij.psi.impl.PsiElementFactoryImpl;
 import com.intellij.psi.impl.search.JavaSourceFilterScope;
 import com.intellij.psi.impl.source.tree.java.PsiReferenceExpressionImpl;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.testFramework.LightResolveTestCase;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.function.Consumer;
 
@@ -27,7 +48,7 @@ public class ResolveInCodeFragmentTest extends LightResolveTestCase {
 
     PsiExpression expr = (PsiExpression) fileContent[0];
     expr.accept(new JavaRecursiveElementWalkingVisitor() {
-      @Override public void visitReferenceExpression(PsiReferenceExpression expression) {
+      @Override public void visitReferenceExpression(@NotNull PsiReferenceExpression expression) {
         assertEquals(iRef.resolve(),
                      expression.resolve());
       }
@@ -103,11 +124,12 @@ public class ResolveInCodeFragmentTest extends LightResolveTestCase {
 
   public void testClassHierarchyInNonPhysicalFile() {
     PsiFile file = PsiFileFactory.getInstance(getProject()).createFileFromText("a.java", JavaFileType.INSTANCE,
-                                                                            "class Parent { void foo( ); }\n" +
-                                                                            "class Child extends Parent { }\n" +
-                                                                            "class User {\n" +
-                                                                            "    void caller() { new Child().foo(); }\n" +
-                                                                            "}", 0, true);
+                                                                               """
+                                                                                 class Parent { void foo( ); }
+                                                                                 class Child extends Parent { }
+                                                                                 class User {
+                                                                                     void caller() { new Child().foo(); }
+                                                                                 }""", 0, true);
     PsiReference ref = file.findReferenceAt(file.getText().indexOf("foo()"));
     assertNotNull(ref);
     assertTrue(ref.getElement().getResolveScope().contains(file.getViewProvider().getVirtualFile()));

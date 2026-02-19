@@ -1,0 +1,21 @@
+<html>
+<body>
+Reports usages of <code>Thread.ofVirtual</code> instead of <code>IntelliJVirtualThreads.ofVirtual</code>.
+<p>
+  <code>Thread.ofVirtual</code> is a generic Java API for creation of virtual threads that is not suitable for IntelliJ Platform needs.
+</p>
+<p>
+  Quick fix performs replacement with <code>IntelliJVirtualThreads.ofVirtual</code>.
+</p>
+<p>
+  Example:
+</p>
+<pre><code lang="java">
+// bad:
+Thread thread = Thread.ofVirtual().start();
+
+//good
+Thread thread = IntelliJVirtualThreads.ofVirtual().start();
+</code></pre>
+</body>
+</html>

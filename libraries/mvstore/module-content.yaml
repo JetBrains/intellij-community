@@ -1,0 +1,6 @@
+- name: dist.all/lib/intellij.libraries.mvstore.jar
+  modules:
+  - name: intellij.libraries.mvstore
+    libraries:
+      mvstore:
+      - name: $MAVEN_REPOSITORY$/com/h2database/h2-mvstore/2/h2-mvstore-2.jar

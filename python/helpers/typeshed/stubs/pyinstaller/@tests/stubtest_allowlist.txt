@@ -1,0 +1,54 @@
+# fake module, only exists once the app is frozen
+pyi_splash
+
+# Undocumented and clearly not meant to be exposed
+PyInstaller\..+?\.logger
+PyInstaller.__main__.generate_parser
+PyInstaller.__main__.run_build
+PyInstaller.__main__.run_makespec
+PyInstaller.utils.hooks.conda.lib_dir
+
+# A mix of modules meant to be private, and shallow incomplete type references for other modules
+PyInstaller\.building\.build_main\..*
+PyInstaller.building.datastruct.unique_name
+PyInstaller\.depend\.analysis\..*
+PyInstaller\.isolated\._parent\..*
+PyInstaller\.lib\.modulegraph\.modulegraph\.\w+?
+
+# Most modules are not meant to be used, yet are not marked as private
+PyInstaller\.archive(\.\w+)*
+PyInstaller.building.icon
+PyInstaller.building.makespec
+PyInstaller.building.osx
+PyInstaller.building.splash_templates
+PyInstaller.building.templates
+PyInstaller.building.utils
+PyInstaller.config
+PyInstaller.configure
+PyInstaller.depend.bindepend
+PyInstaller.depend.bytecode
+PyInstaller.depend.dylib
+PyInstaller.depend.imphook
+PyInstaller.depend.utils
+PyInstaller.exceptions
+PyInstaller\.hooks(\.[\w-]+)*  # weird hyphens in runtime module names
+PyInstaller.lib.modulegraph.__main__
+PyInstaller.lib.modulegraph.find_modules
+PyInstaller.lib.modulegraph.util
+PyInstaller\.loader(\.\w+)*
+PyInstaller.log
+PyInstaller\.utils\.cliutils(\.\w+)*
+PyInstaller.utils.conftest
+PyInstaller.utils.hooks.django
+PyInstaller.utils.hooks.gi
+PyInstaller.utils.hooks.qt
+PyInstaller.utils.hooks.setuptools
+PyInstaller.utils.hooks.tcl_tk
+PyInstaller.utils.misc
+PyInstaller.utils.osx
+PyInstaller.utils.run_tests
+PyInstaller.utils.tests
+PyInstaller.utils.win32.icon
+PyInstaller.utils.win32.winmanifest
+PyInstaller.utils.win32.winresource
+PyInstaller.utils.win32.winutils

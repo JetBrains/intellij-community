@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<module type="JAVA_MODULE" version="4">
+  <component name="NewModuleRootManager" inherit-compiler-output="true">
+    <exclude-output />
+    <content url="file://$MODULE_DIR$">
+      <sourceFolder url="file://$MODULE_DIR$/resources" type="java-resource" />
+    </content>
+    <orderEntry type="inheritedJdk" />
+    <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="module" module-name="intellij.python.parser" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.python.ast" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.python.syntax.core" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.python.syntax" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.python.psi" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.python.psi.impl" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.python.sdk" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.python.sdk.ui" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.python.pyproject" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.python.community.core.impl" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.python.community.helpersLocator" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.python.community" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.python.community.impl" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.python.community.execService" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.python.community.execService.python" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.python.community.impl.installer" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.python.pydev" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.python.venv" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.python.hatch" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.python.community.services.internal.impl" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.python.community.services.shared" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.python.community.services.systemPython" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.python.community.interpreters" scope="RUNTIME" />
+  </component>
+</module>

@@ -1,0 +1,61 @@
+### auto-generated section `build intellij.kotlin.uast` start
+load("//build:compiler-options.bzl", "create_kotlinc_options")
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+create_kotlinc_options(
+  name = "custom_kotlin-uast",
+  jvm_target = "11",
+  opt_in = [
+    "com.intellij.openapi.util.IntellijInternalApi",
+    "org.jetbrains.kotlin.analysis.api.KaIdeApi",
+    "org.jetbrains.kotlin.analysis.api.KaContextParameterApi",
+    "org.jetbrains.kotlin.analysis.api.permissions.KaAllowProhibitedAnalyzeFromWriteAction",
+  ],
+  x_context_parameters = True
+)
+
+jvm_library(
+  name = "kotlin-uast",
+  module_name = "intellij.kotlin.uast",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  kotlinc_opts = ":custom_kotlin-uast",
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:kotlinc-kotlin-compiler-common",
+    "//libraries/asm",
+    "//plugins/kotlin/uast/uast-kotlin-base:kotlin-uast-base",
+    "@lib//:kotlinc-analysis-api",
+    "@lib//:kotlinc-analysis-api-k2",
+    "@lib//:kotlinc-analysis-api-impl-base",
+    "//uast/uast-common:uast",
+    "//platform/core-api:core",
+    "//platform/util",
+    "//java/java-psi-impl:psi-impl",
+    "//uast/uast-java:java-uast",
+    "@lib//:kotlinc-low-level-api-fir",
+    "@lib//:kotlinc-analysis-api-platform-interface",
+    "@lib//:kotlinc-symbol-light-classes",
+  ]
+)
+
+jvm_library(
+  name = "kotlin-uast_test_lib",
+  module_name = "intellij.kotlin.uast",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  kotlinc_opts = ":custom_kotlin-uast",
+  runtime_deps = [
+    ":kotlin-uast",
+    "//libraries/asm:asm_test_lib",
+    "//plugins/kotlin/uast/uast-kotlin-base:kotlin-uast-base_test_lib",
+    "//plugins/kotlin/base/test",
+    "//plugins/kotlin/base/test:test_test_lib",
+    "//uast/uast-common:uast_test_lib",
+    "//platform/core-api:core_test_lib",
+    "//platform/util:util_test_lib",
+    "//java/java-psi-impl:psi-impl_test_lib",
+    "//uast/uast-java:java-uast_test_lib",
+  ]
+)
+### auto-generated section `build intellij.kotlin.uast` end

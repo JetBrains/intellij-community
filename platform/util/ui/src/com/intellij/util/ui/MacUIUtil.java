@@ -6,16 +6,18 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.mac.foundation.Foundation;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.SwingUtilities;
 import javax.swing.tree.TreePath;
-import java.awt.*;
+import java.awt.Cursor;
+import java.awt.Image;
+import java.awt.Point;
+import java.awt.Toolkit;
 import java.awt.event.InputEvent;
 import java.awt.event.MouseEvent;
 
 public final class MacUIUtil {
   public static final boolean USE_QUARTZ = "true".equals(System.getProperty("apple.awt.graphics.UseQuartz"));
   public static final String MAC_FILL_BORDER = "MAC_FILL_BORDER";
-  public static final int MAC_COMBO_BORDER_V_OFFSET = 1;
   private static Cursor INVERTED_TEXT_CURSOR;
 
   private MacUIUtil() {}
@@ -28,11 +30,17 @@ public final class MacUIUtil {
     }
   }
 
-  @NotNull
-  public static Cursor getInvertedTextCursor() {
+  /**
+   * @deprecated The inverted text cursor is not needed for macOS 10.14 Mojave and later, because the default I-beam cursor
+   * now has a thick white border and is visible on a dark background.
+   * The inverted cursor also doesn't adjust to color customization in the System Settings, so its usage should be avoided.
+   */
+  @Deprecated
+  public static @NotNull Cursor getInvertedTextCursor() {
     if (INVERTED_TEXT_CURSOR == null) {
-      final Toolkit toolkit = Toolkit.getDefaultToolkit();
-      Image cursorImage = toolkit.getImage(MacUIUtil.class.getClassLoader().getResource("/mac/text.png")); // will also load text@2x.png
+      Toolkit toolkit = Toolkit.getDefaultToolkit();
+      // will also load text@2x.png
+      Image cursorImage = toolkit.getImage(MacUIUtil.class.getClassLoader().getResource("mac/text.png"));
       INVERTED_TEXT_CURSOR = toolkit.createCustomCursor(cursorImage, new Point(15, 13), "InvertedTextCursor");
     }
     return INVERTED_TEXT_CURSOR;

@@ -1,0 +1,18 @@
+MODULES
+project
+
+project.main
+    languageLevel = {{MINIMAL_SUPPORTED}}
+    apiLevel = {{MINIMAL_SUPPORTED}}
+    compilerSettings = -opt-in OptInAnnotation
+    targetPlatform = JVM (11)
+
+project.test
+    languageLevel = {{MINIMAL_SUPPORTED}}
+    apiLevel = {{MINIMAL_SUPPORTED}}
+    compilerSettings = -opt-in OptInAnnotation
+    targetPlatform = JVM (11)
+
+
+Test configuration:
+- showing only following facet fields: languageLevel, apiLevel, compilerSettings, targetPlatform

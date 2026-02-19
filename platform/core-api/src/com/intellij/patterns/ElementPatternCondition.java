@@ -1,72 +1,57 @@
-/*
- * Copyright 2000-2019 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.patterns;
 
-import com.intellij.util.SmartList;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-/**
- * @author peter
- */
-@SuppressWarnings("ForLoopReplaceableByForEach")
 public final class ElementPatternCondition<T> {
+  private final InitialPatternCondition<T> initialCondition;
+  private final List<PatternCondition<? super T>> conditions;
 
-  private final InitialPatternCondition<T> myInitialCondition;
-  private final List<PatternCondition<? super T>> myConditions;
-
-  public ElementPatternCondition(final InitialPatternCondition<T> startCondition) {
-    myInitialCondition = startCondition;
-    myConditions = Collections.emptyList();
+  public ElementPatternCondition(@NotNull InitialPatternCondition<T> startCondition) {
+    initialCondition = startCondition;
+    conditions = Collections.emptyList();
   }
 
-  ElementPatternCondition(InitialPatternCondition<T> initialCondition, List<PatternCondition<? super T>> conditions) {
-    myInitialCondition = initialCondition;
-    myConditions = conditions;
+  ElementPatternCondition(@NotNull InitialPatternCondition<T> initialCondition, @NotNull List<PatternCondition<? super T>> conditions) {
+    this.initialCondition = initialCondition;
+    this.conditions = conditions;
   }
 
-  private ElementPatternCondition(ElementPatternCondition<T> original, PatternCondition<? super T> condition) {
-    myInitialCondition = original.getInitialCondition();
-    myConditions = new SmartList<>(original.getConditions());
-    myConditions.add(condition);
+  private ElementPatternCondition(@NotNull ElementPatternCondition<T> original, PatternCondition<? super T> condition) {
+    initialCondition = original.getInitialCondition();
+    conditions = new ArrayList<>(original.conditions.size() + 1);
+    conditions.addAll(original.conditions);
+    conditions.add(condition);
   }
 
-  public final String toString() {
+  @Override
+  public String toString() {
     StringBuilder builder = new StringBuilder();
     append(builder, "");
     return builder.toString();
   }
 
   public void append(StringBuilder builder, String indent) {
-    myInitialCondition.append(builder, indent);
-    final int conditionSize = myConditions.size();
+    initialCondition.append(builder, indent);
+    int conditionSize = conditions.size();
 
-    for (int i = 0; i < conditionSize; ++i) { // for each is slower
-      final PatternCondition<? super T> condition = myConditions.get(i);
-      condition.append(builder.append(".\n").append(indent), indent);
+    // for each it is slower
+    for (int i = 0; i < conditionSize; ++i) {
+      conditions.get(i).append(builder.append(".\n").append(indent), indent);
     }
   }
 
-  public List<PatternCondition<? super T>> getConditions() {
-    return myConditions;
+  public @Unmodifiable List<PatternCondition<? super T>> getConditions() {
+    return conditions;
   }
 
   public InitialPatternCondition<T> getInitialCondition() {
-    return myInitialCondition;
+    return initialCondition;
   }
 
   public ElementPatternCondition<T> append(PatternCondition<? super T> condition) {

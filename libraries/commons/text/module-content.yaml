@@ -1,0 +1,6 @@
+- name: dist.all/lib/intellij.libraries.commons.text.jar
+  modules:
+  - name: intellij.libraries.commons.text
+    libraries:
+      commons-text:
+      - name: $MAVEN_REPOSITORY$/org/apache/commons/commons-text/1/commons-text-1.jar

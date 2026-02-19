@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.ui.popup;
 
 import com.intellij.openapi.Disposable;
@@ -6,7 +6,9 @@ import com.intellij.openapi.util.NlsContexts.PopupTitle;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.*;
+import java.awt.Color;
+import java.awt.Dimension;
+import java.awt.Insets;
 import java.awt.event.ActionListener;
 
 /**
@@ -85,11 +87,13 @@ public interface BalloonBuilder {
   @NotNull
   BalloonBuilder setRequestFocus(boolean requestFocus);
 
-  @NotNull
-  default BalloonBuilder setPointerSize(Dimension size) { return this; }
+  default @NotNull BalloonBuilder setPointerSize(Dimension size) { return this; }
 
-  @NotNull
-  default BalloonBuilder setCornerToPointerDistance(int distance) { return this; }
+  default @NotNull BalloonBuilder setCornerToPointerDistance(int distance) { return this; }
+
+  default BalloonBuilder setCornerRadius(int radius) { return this; }
+
+  default BalloonBuilder setPointerShiftedToStart(boolean pointerShiftedToStart) { return this; }
 
   BalloonBuilder setHideOnCloseClick(boolean hideOnCloseClick);
 

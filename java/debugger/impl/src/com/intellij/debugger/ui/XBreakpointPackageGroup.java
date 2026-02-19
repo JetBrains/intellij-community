@@ -1,15 +1,16 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.ui;
 
 import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.PlatformIcons;
+import com.intellij.ui.IconManager;
+import com.intellij.ui.PlatformIcons;
 import com.intellij.xdebugger.breakpoints.ui.XBreakpointGroup;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.Icon;
 
 public class XBreakpointPackageGroup extends XBreakpointGroup {
   private final String myPackageName;
@@ -20,24 +21,20 @@ public class XBreakpointPackageGroup extends XBreakpointGroup {
 
   @Override
   public Icon getIcon(boolean isOpen) {
-    return PlatformIcons.PACKAGE_ICON;
+    return IconManager.getInstance().getPlatformIcon(PlatformIcons.Package);
   }
 
-  @NotNull
   @Override
-  public String getName() {
+  public @NotNull String getName() {
     String packageName = getPackageName();
     return StringUtil.isEmpty(packageName) ? getDefaultPackageName() : packageName;
   }
 
-  @NotNull
-  @NlsSafe
-  public String getPackageName() {
+  public @NotNull @NlsSafe String getPackageName() {
     return myPackageName;
   }
 
-  @Nls
-  private static String getDefaultPackageName() {
+  private static @Nls String getDefaultPackageName() {
     return JavaDebuggerBundle.message("default.package.name");
   }
 }

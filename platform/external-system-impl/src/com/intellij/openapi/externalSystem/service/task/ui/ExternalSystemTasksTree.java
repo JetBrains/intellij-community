@@ -1,50 +1,57 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.service.task.ui;
 
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.model.execution.ExternalSystemTaskExecutionSettings;
 import com.intellij.openapi.externalSystem.model.execution.ExternalTaskExecutionInfo;
+import com.intellij.openapi.externalSystem.service.execution.ProgressExecutionMode;
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil;
 import com.intellij.openapi.project.Project;
-import com.intellij.ui.TreeSpeedSearch;
+import com.intellij.ui.TreeUIHelper;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.Alarm;
 import com.intellij.util.ui.tree.TreeModelAdapter;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.AbstractAction;
+import javax.swing.KeyStroke;
 import javax.swing.event.TreeExpansionEvent;
 import javax.swing.event.TreeModelEvent;
 import javax.swing.event.TreeWillExpandListener;
 import javax.swing.tree.TreePath;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.function.Supplier;
 
-/**
- * @author Denis Zhdanov
- */
+@ApiStatus.Internal
 public class ExternalSystemTasksTree extends Tree implements Supplier<ExternalTaskExecutionInfo> {
 
   private static final int COLLAPSE_STATE_PROCESSING_DELAY_MILLIS = 200;
 
-  @NotNull private static final Comparator<TreePath> PATH_COMPARATOR = (o1, o2) -> o2.getPathCount() - o1.getPathCount();
+  private static final @NotNull Comparator<TreePath> PATH_COMPARATOR = (o1, o2) -> o2.getPathCount() - o1.getPathCount();
 
-  @NotNull private final Alarm myCollapseStateAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
+  private final @NotNull Alarm myCollapseStateAlarm = new Alarm();
 
   /** Holds list of paths which 'expand/collapse' state should be restored. */
-  @NotNull private final Set<TreePath> myPathsToProcessCollapseState = new HashSet<>();
+  private final @NotNull Set<TreePath> myPathsToProcessCollapseState = new HashSet<>();
 
-  @NotNull private final Map<String/*tree path*/, Boolean/*expanded*/> myExpandedStateHolder;
+  private final @NotNull Map<String/*tree path*/, Boolean/*expanded*/> myExpandedStateHolder;
 
   private boolean mySuppressCollapseTracking;
 
   public ExternalSystemTasksTree(@NotNull ExternalSystemTasksTreeModel model,
                                  @NotNull Map<String/*tree path*/, Boolean/*expanded*/> expandedStateHolder,
-                                 @NotNull final Project project,
-                                 @NotNull final ProjectSystemId externalSystemId)
+                                 final @NotNull Project project,
+                                 final @NotNull ProjectSystemId externalSystemId)
   {
     super(model);
     myExpandedStateHolder = expandedStateHolder;
@@ -77,7 +84,7 @@ public class ExternalSystemTasksTree extends Tree implements Supplier<ExternalTa
         scheduleCollapseStateAppliance(e.getTreePath());
       }
     });
-    new TreeSpeedSearch(this);
+    TreeUIHelper.getInstance().installTreeSpeedSearch(this);
 
     getInputMap().put(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), "Enter");
     getActionMap().put("Enter", new AbstractAction() {
@@ -87,7 +94,8 @@ public class ExternalSystemTasksTree extends Tree implements Supplier<ExternalTa
         if (task == null) {
           return;
         }
-        ExternalSystemUtil.runTask(task.getSettings(), task.getExecutorId(), project, externalSystemId);
+        ExternalSystemUtil.runTask(task.getSettings(), task.getExecutorId(), project, externalSystemId, null,
+                                   ProgressExecutionMode.NO_PROGRESS_ASYNC);
       }
     });
   }
@@ -146,8 +154,7 @@ public class ExternalSystemTasksTree extends Tree implements Supplier<ExternalTa
     }
   }
 
-  @NotNull
-  private static String getPath(@NotNull TreePath path) {
+  private static @NotNull String getPath(@NotNull TreePath path) {
     StringBuilder buffer = new StringBuilder();
     for (TreePath current = path; current != null; current = current.getParentPath()) {
       buffer.append(current.getLastPathComponent().toString()).append('/');
@@ -156,9 +163,8 @@ public class ExternalSystemTasksTree extends Tree implements Supplier<ExternalTa
     return buffer.toString();
   }
 
-  @Nullable
   @Override
-  public ExternalTaskExecutionInfo get() {
+  public @Nullable ExternalTaskExecutionInfo get() {
     TreePath[] selectionPaths = getSelectionPaths();
     if (selectionPaths == null || selectionPaths.length == 0) {
       return null;
@@ -172,8 +178,7 @@ public class ExternalSystemTasksTree extends Tree implements Supplier<ExternalTa
       }
 
       Object element = ((ExternalSystemNode)component).getDescriptor().getElement();
-      if (element instanceof ExternalTaskExecutionInfo) {
-        ExternalTaskExecutionInfo taskExecutionInfo = (ExternalTaskExecutionInfo)element;
+      if (element instanceof ExternalTaskExecutionInfo taskExecutionInfo) {
         ExternalSystemTaskExecutionSettings executionSettings = taskExecutionInfo.getSettings();
         String key = executionSettings.getExternalSystemIdString() + executionSettings.getExternalProjectPath() + executionSettings.getVmOptions();
         ExternalTaskExecutionInfo executionInfo = map.get(key);
@@ -193,7 +198,7 @@ public class ExternalSystemTasksTree extends Tree implements Supplier<ExternalTa
     }
 
     // Disable tasks execution if it comes from different projects
-    if(map.values().size() != 1) return null;
+    if(map.size() != 1) return null;
     return map.values().iterator().next();
   }
 }

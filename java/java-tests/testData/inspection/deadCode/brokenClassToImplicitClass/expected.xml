@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<problems>
+  <problem>
+    <file>Test.java</file>
+    <line>4</line>
+    <highlighted_element>t1</highlighted_element>
+    <problem_class id="unused" severity="WARNING" attribute_key="NOT_USED_ELEMENT_ATTRIBUTES">unused declaration</problem_class>
+    <description>Method is never used.</description>
+  </problem>
+  <problem>
+    <file>Test.java</file>
+    <line>5</line>
+    <highlighted_element>t2</highlighted_element>
+    <problem_class id="unused" severity="WARNING" attribute_key="NOT_USED_ELEMENT_ATTRIBUTES">unused declaration</problem_class>
+    <description>Method is never used.</description>
+  </problem>
+  <problem>
+    <file>Test.java</file>
+    <line>6</line>
+    <highlighted_element>t3</highlighted_element>
+    <problem_class id="unused" severity="WARNING" attribute_key="NOT_USED_ELEMENT_ATTRIBUTES">unused declaration</problem_class>
+    <description>Method is never used.</description>
+  </problem>
+  <problem>
+    <file>Test.java</file>
+    <line>7</line>
+    <highlighted_element>t4</highlighted_element>
+    <problem_class id="unused" severity="WARNING" attribute_key="NOT_USED_ELEMENT_ATTRIBUTES">unused declaration</problem_class>
+    <description>Method is never used.</description>
+  </problem>
+  <problem>
+    <file>Test.java</file>
+    <line>10</line>
+    <highlighted_element>t5</highlighted_element>
+    <problem_class id="unused" severity="WARNING" attribute_key="NOT_USED_ELEMENT_ATTRIBUTES">unused declaration</problem_class>
+    <description>Method is never used.</description>
+  </problem>
+  <problem>
+    <file>Test.java</file>
+    <line>11</line>
+    <highlighted_element>t6</highlighted_element>
+    <problem_class id="unused" severity="WARNING" attribute_key="NOT_USED_ELEMENT_ATTRIBUTES">unused declaration</problem_class>
+    <description>Method is never used.</description>
+  </problem>
+  <problem>
+    <file>Test.java</file>
+    <line>3</line>
+    <highlighted_element>Demo</highlighted_element>
+    <problem_class id="unused" severity="WARNING" attribute_key="NOT_USED_ELEMENT_ATTRIBUTES">unused declaration</problem_class>
+    <description>Class is never used.</description>
+  </problem>
+</problems>
+

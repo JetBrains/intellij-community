@@ -1,9 +1,12 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.incremental.artifacts.instructions;
 
+import com.dynatrace.hash4j.hashing.HashSink;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.io.FileFilters;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.builders.BuildOutputConsumer;
 import org.jetbrains.jps.builders.logging.ProjectBuilderLogger;
@@ -14,15 +17,18 @@ import org.jetbrains.jps.incremental.artifacts.ArtifactBuildTarget;
 import org.jetbrains.jps.incremental.artifacts.ArtifactOutputToSourceMapping;
 import org.jetbrains.jps.incremental.artifacts.IncArtifactBuilder;
 import org.jetbrains.jps.incremental.artifacts.impl.JpsArtifactPathUtil;
+import org.jetbrains.jps.incremental.messages.BuildMessage;
+import org.jetbrains.jps.incremental.messages.CompilerMessage;
 import org.jetbrains.jps.incremental.relativizer.PathRelativizerService;
 
 import java.io.File;
 import java.io.FileFilter;
 import java.io.IOException;
-import java.io.PrintWriter;
+import java.nio.file.Path;
 import java.util.Collections;
 
-public class FileBasedArtifactRootDescriptor extends ArtifactRootDescriptor {
+@ApiStatus.Internal
+public final class FileBasedArtifactRootDescriptor extends ArtifactRootDescriptor {
   private static final Logger LOG = Logger.getInstance(FileBasedArtifactRootDescriptor.class);
   private final FileCopyingHandler myCopyingHandler;
 
@@ -35,10 +41,8 @@ public class FileBasedArtifactRootDescriptor extends ArtifactRootDescriptor {
     myCopyingHandler = copyingHandler;
   }
 
-  @NotNull
-  private static SourceFileFilter createCompositeFilter(@NotNull final SourceFileFilter baseFilter, @NotNull final FileFilter filter) {
-    if (filter.equals(FileUtilRt.ALL_FILES)) return baseFilter;
-    return new CompositeSourceFileFilter(baseFilter, filter);
+  private static SourceFileFilter createCompositeFilter(SourceFileFilter baseFilter, FileFilter filter) {
+    return filter == FileFilters.EVERYTHING ? baseFilter : new CompositeSourceFileFilter(baseFilter, filter);
   }
 
   @Override
@@ -47,9 +51,9 @@ public class FileBasedArtifactRootDescriptor extends ArtifactRootDescriptor {
   }
 
   @Override
-  public void writeConfiguration(PrintWriter out, PathRelativizerService relativizer) {
-    super.writeConfiguration(out, relativizer);
-    myCopyingHandler.writeConfiguration(out);
+  public void writeConfiguration(@NotNull HashSink hash, PathRelativizerService relativizer) {
+    super.writeConfiguration(hash, relativizer);
+    myCopyingHandler.writeConfiguration(hash);
   }
 
   @Override
@@ -61,9 +65,10 @@ public class FileBasedArtifactRootDescriptor extends ArtifactRootDescriptor {
     if (!file.exists()) return;
     String targetPath;
     if (!FileUtil.filesEqual(file, getRootFile())) {
-      final String relativePath = FileUtil.getRelativePath(FileUtil.toSystemIndependentName(getRootFile().getPath()), filePath, '/');
+      Path rootFile = getFile();
+      String relativePath = FileUtil.getRelativePath(FileUtilRt.toSystemIndependentName(rootFile.toString()), filePath, '/');
       if (relativePath == null || relativePath.startsWith("..")) {
-        throw new ProjectBuildException(new AssertionError(filePath + " is not under " + getRootFile().getPath()));
+        throw new ProjectBuildException(new AssertionError(filePath + " is not under " + rootFile));
       }
       targetPath = JpsArtifactPathUtil.appendToPath(outputPath, relativePath);
     }
@@ -82,7 +87,15 @@ public class FileBasedArtifactRootDescriptor extends ArtifactRootDescriptor {
       if (logger.isEnabled()) {
         logger.logCompiledFiles(Collections.singletonList(file), IncArtifactBuilder.BUILDER_ID, "Copying file:");
       }
-      myCopyingHandler.copyFile(file, targetFile, context);
+
+      try {
+        myCopyingHandler.copyFile(file, targetFile, context);
+      }
+      catch (IOException e) {
+        context.processMessage(new CompilerMessage(IncArtifactBuilder.getBuilderName(), BuildMessage.Kind.ERROR, CompilerMessage.getTextFromThrowable(e)));
+        return;
+      }
+
       outputConsumer.registerOutputFile(targetFile, Collections.singletonList(filePath));
     }
     else if (LOG.isDebugEnabled()) {
@@ -91,7 +104,7 @@ public class FileBasedArtifactRootDescriptor extends ArtifactRootDescriptor {
     outSrcMapping.appendData(targetPath, rootIndex, filePath);
   }
 
-  private static class CompositeSourceFileFilter extends SourceFileFilter {
+  private static final class CompositeSourceFileFilter extends SourceFileFilter {
     private final SourceFileFilter myBaseFilter;
     private final FileFilter myFilter;
 

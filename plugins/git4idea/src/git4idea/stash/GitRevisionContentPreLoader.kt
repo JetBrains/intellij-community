@@ -7,7 +7,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.ProjectLevelVcsManager
 import com.intellij.openapi.vcs.changes.Change
-import com.intellij.openapi.vfs.CharsetToolkit.UTF8_CHARSET
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.ArrayUtil
 import com.intellij.vcsUtil.VcsFileUtil
@@ -21,6 +20,7 @@ import git4idea.commands.GitHandlerInputProcessorUtil
 import git4idea.index.GitIndexUtil
 import git4idea.repo.GitRepositoryManager
 import git4idea.util.GitFileUtils.addTextConvParameters
+import java.nio.charset.StandardCharsets
 
 
 private val LOG = logger<GitRevisionContentPreLoader>()
@@ -34,8 +34,13 @@ class GitRevisionContentPreLoader(val project: Project) {
     val head = GitChangeUtils.resolveReference(project, root, "HEAD")
     for (change in changes) {
       val beforeRevision = change.beforeRevision
-      if (beforeRevision !is GitContentRevision || beforeRevision.getRevisionNumber() != head) {
-        LOG.info("Skipping change $change because beforeRevision is '${beforeRevision?.revisionNumber?.toString()}'")
+      if (beforeRevision !is GitContentRevision) {
+        LOG.warn("Skipping unsupported change $change: revision: ${beforeRevision?.javaClass?.name}, " +
+                 "revisionNumber: ${beforeRevision?.revisionNumber?.javaClass?.name}")
+        continue
+      }
+      if (beforeRevision.getRevisionNumber() != head) {
+        LOG.warn("Skipping change $change because beforeRevision does not match: '${beforeRevision.revisionNumber}' vs '${head}'")
         continue
       }
 
@@ -56,11 +61,11 @@ class GitRevisionContentPreLoader(val project: Project) {
     h.setInputProcessor(GitHandlerInputProcessorUtil.writeLines(
       // we need to pass '<hash> <path>', otherwise --filters parameter doesn't work
       hashesAndPaths.map { "${it.hash} ${it.relativePath}" },
-      UTF8_CHARSET))
+      StandardCharsets.UTF_8))
 
     val output: ByteArray
     try {
-      output = h.run() 
+      output = h.run()
     }
     catch (e: Exception) {
       LOG.error("Couldn't get git cat-file for $hashesAndPaths", e)
@@ -79,8 +84,7 @@ class GitRevisionContentPreLoader(val project: Project) {
 
   private fun calcBlobHashesWithPaths(root: VirtualFile, toPreload: Map<FilePath, Change>): List<HashAndPath>? {
     val repository = GitRepositoryManager.getInstance(project).getRepositoryForRoot(root)!!
-    val trees: List<GitIndexUtil.StagedFileOrDirectory>
-    trees = GitIndexUtil.listTree(repository, toPreload.keys, HEAD)
+    val trees: List<GitIndexUtil.StagedFileOrDirectory> = GitIndexUtil.listTree(repository, toPreload.keys, HEAD)
     if (trees.size != toPreload.size) {
       LOG.warn("Incorrect number of trees ${trees.size} != ${toPreload.size}")
       return emptyList()
@@ -127,7 +131,7 @@ class GitRevisionContentPreLoader(val project: Project) {
         return null
       }
 
-      val content   = output.copyOfRange(startIndex, endIndex - 1) // -1 because the content is followed by a newline
+      val content = output.copyOfRange(startIndex, endIndex - 1) // -1 because the content is followed by a newline
       result[path] = content
       currentPosition = endIndex
     }

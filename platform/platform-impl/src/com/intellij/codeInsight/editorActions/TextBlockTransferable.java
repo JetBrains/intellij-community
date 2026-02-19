@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInsight.editorActions;
 
@@ -8,6 +8,8 @@ import com.intellij.openapi.ide.Sizeable;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.text.Strings;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -17,9 +19,13 @@ import java.awt.datatransfer.Transferable;
 import java.awt.datatransfer.UnsupportedFlavorException;
 import java.io.IOException;
 import java.io.StringReader;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
 
-public class TextBlockTransferable implements Transferable, Sizeable {
+public final class TextBlockTransferable implements Transferable, Sizeable {
   private final Collection<? extends TextBlockTransferableData> myExtraData;
   private final RawText myRawText;
   private final String myText;
@@ -51,14 +57,13 @@ public class TextBlockTransferable implements Transferable, Sizeable {
   @Override
   public int getSize() {
     int size = myText.length();
-    if (myRawText != null && myRawText.rawText != myText) {
+    if (myRawText != null && !Strings.areSameInstance(myRawText.rawText, myText)) {
       size += StringUtil.length(myRawText.rawText);
     }
     return size;
   }
 
-  @NotNull
-  private static String cleanFromNullsIfNeeded(@NotNull String text) {
+  private static @NotNull String cleanFromNullsIfNeeded(@NotNull String text) {
     // Clipboard on Windows and Linux works with null-terminated strings, on Mac nulls are not treated in a special way.
     return SystemInfo.isMac ? text : text.replace('\000', ' ');
   }
@@ -71,12 +76,7 @@ public class TextBlockTransferable implements Transferable, Sizeable {
   @Override
   public boolean isDataFlavorSupported(DataFlavor flavor) {
     DataFlavor[] flavors = getTransferDataFlavors();
-    for (DataFlavor flavor1 : flavors) {
-      if (flavor.equals(flavor1)) {
-        return true;
-      }
-    }
-    return false;
+    return ArrayUtil.contains(flavor, flavors);
   }
 
   @Override
@@ -103,14 +103,12 @@ public class TextBlockTransferable implements Transferable, Sizeable {
     throw new UnsupportedFlavorException(flavor);
   }
 
-  @NotNull
-  public static String convertLineSeparators(@NotNull Editor editor, @NotNull String input) {
+  public static @NotNull String convertLineSeparators(@NotNull Editor editor, @NotNull String input) {
     return convertLineSeparators(editor, input, Collections.emptyList());
   }
 
-  @NotNull
-  public static String convertLineSeparators(@NotNull Editor editor, @NotNull String input,
-                                             @NotNull Collection<? extends TextBlockTransferableData> itemsToUpdate) {
+  public static @NotNull String convertLineSeparators(@NotNull Editor editor, @NotNull String input,
+                                                      @NotNull Collection<? extends TextBlockTransferableData> itemsToUpdate) {
     // converting line separators to spaces matches the behavior of Swing text components on paste
     return convertLineSeparators(input, editor.isOneLineMode() ? " " : "\n", itemsToUpdate);
   }
@@ -118,7 +116,7 @@ public class TextBlockTransferable implements Transferable, Sizeable {
   public static String convertLineSeparators(String text,
                                              String newSeparator,
                                              Collection<? extends TextBlockTransferableData> itemsToUpdate) {
-    if (itemsToUpdate.size() > 0){
+    if (!itemsToUpdate.isEmpty()){
       int size = 0;
       for(TextBlockTransferableData data: itemsToUpdate) {
         size += data.getOffsetCount();
@@ -130,7 +128,7 @@ public class TextBlockTransferable implements Transferable, Sizeable {
         index = data.getOffsets(offsets, index);
       }
 
-      text = StringUtil.convertLineSeparators(text, newSeparator, offsets);
+      text = Strings.convertLineSeparators(text, newSeparator, offsets);
 
       index = 0;
       for(TextBlockTransferableData data: itemsToUpdate) {
@@ -144,13 +142,6 @@ public class TextBlockTransferable implements Transferable, Sizeable {
     }
   }
 
-  private static final class DataFlavorWithPriority {
-    private final DataFlavor flavor;
-    private final int priority;
-
-    private DataFlavorWithPriority(DataFlavor flavor, int priority) {
-      this.flavor = flavor;
-      this.priority = priority;
-    }
+  private record DataFlavorWithPriority(DataFlavor flavor, int priority) {
   }
 }

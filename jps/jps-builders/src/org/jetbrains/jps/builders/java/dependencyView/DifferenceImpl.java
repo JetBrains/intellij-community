@@ -1,11 +1,8 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.builders.java.dependencyView;
 
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author Eugene Zhuravlev
- */
 class DifferenceImpl extends Difference{
 
   private final Difference myDelegate;
@@ -27,6 +24,11 @@ class DifferenceImpl extends Difference{
   @Override
   public boolean accessRestricted() {
     return myDelegate.accessRestricted();
+  }
+
+  @Override
+  public boolean accessExpanded() {
+    return myDelegate.accessExpanded();
   }
 
   @Override

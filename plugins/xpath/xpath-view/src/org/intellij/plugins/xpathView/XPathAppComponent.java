@@ -20,8 +20,9 @@ import com.intellij.codeInsight.hint.HintManagerImpl;
 import com.intellij.codeInsight.hint.HintUtil;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.IdeActions;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.PersistentStateComponent;
-import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.components.SettingsCategory;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.editor.Caret;
@@ -38,9 +39,12 @@ import org.intellij.plugins.xpathView.util.HighlighterUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.BorderFactory;
+import javax.swing.JLabel;
+import javax.swing.SwingUtilities;
 import javax.swing.border.BevelBorder;
-import java.awt.*;
+import java.awt.Font;
+import java.awt.Point;
 import java.util.List;
 
 /**
@@ -50,13 +54,12 @@ import java.util.List;
  * <p/>
  * Also used to manage highlighters.
  */
-@State(name = "XPathView.XPathViewPlugin", storages = @Storage("xpath.xml"))
+@State(name = "XPathView.XPathViewPlugin", storages = @Storage("xpath.xml"), category = SettingsCategory.CODE)
 public final class XPathAppComponent implements PersistentStateComponent<Config> {
   private Config configuration = new Config();
 
-  @Nullable
   @Override
-  public Config getState() {
+  public @Nullable Config getState() {
     return configuration;
   }
 
@@ -71,8 +74,7 @@ public final class XPathAppComponent implements PersistentStateComponent<Config>
    * @return the configuration object
    * @see Config
    */
-  @NotNull
-  public Config getConfig() {
+  public @NotNull Config getConfig() {
     return configuration;
   }
 
@@ -81,7 +83,7 @@ public final class XPathAppComponent implements PersistentStateComponent<Config>
   }
 
   public static XPathAppComponent getInstance() {
-    return ServiceManager.getService(XPathAppComponent.class);
+    return ApplicationManager.getApplication().getService(XPathAppComponent.class);
   }
 
   static class MyFindHandler extends EditorActionHandler {
@@ -145,14 +147,14 @@ public final class XPathAppComponent implements PersistentStateComponent<Config>
     }
   }
 
-  public static class FindNextHandler extends MyFindHandler {
-    public FindNextHandler(EditorActionHandler origHandler) {
+  static final class FindNextHandler extends MyFindHandler {
+    FindNextHandler(EditorActionHandler origHandler) {
       super(origHandler, false);
     }
   }
 
-  public static class FindPreviousHandler extends MyFindHandler {
-    public FindPreviousHandler(EditorActionHandler origHandler) {
+  static final class FindPreviousHandler extends MyFindHandler {
+    FindPreviousHandler(EditorActionHandler origHandler) {
       super(origHandler, true);
     }
   }

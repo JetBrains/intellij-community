@@ -28,27 +28,25 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author Mikhail Golubev
  */
-public class PyFunctionTypeAnnotationParserDefinition extends PythonParserDefinition {
+public final class PyFunctionTypeAnnotationParserDefinition extends PythonParserDefinition {
 
-  @NotNull
   @Override
-  public TokenSet getCommentTokens() {
+  public @NotNull TokenSet getCommentTokens() {
     return TokenSet.EMPTY;
   }
 
   @Override
-  public PsiFile createFile(FileViewProvider viewProvider) {
+  public @NotNull PsiFile createFile(@NotNull FileViewProvider viewProvider) {
     return new PyFunctionTypeAnnotationFile(viewProvider);
   }
 
   @Override
-  public IFileElementType getFileNodeType() {
+  public @NotNull IFileElementType getFileNodeType() {
     return PyFunctionTypeAnnotationFileElementType.INSTANCE;
   }
 
-  @NotNull
   @Override
-  public PsiParser createParser(Project project) {
+  public @NotNull PsiParser createParser(Project project) {
     return new PyFunctionTypeAnnotationParser();
   }
 }

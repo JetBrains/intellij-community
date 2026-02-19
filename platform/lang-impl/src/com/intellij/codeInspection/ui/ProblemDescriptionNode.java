@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.ui;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
@@ -12,13 +12,14 @@ import com.intellij.codeInspection.ex.InspectionToolWrapper;
 import com.intellij.codeInspection.reference.RefElement;
 import com.intellij.codeInspection.reference.RefEntity;
 import com.intellij.lang.annotation.HighlightSeverity;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.util.Pair;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.Interner;
 import com.intellij.xml.util.XmlStringUtil;
-import gnu.trove.TObjectIntHashMap;
+import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -29,6 +30,7 @@ public class ProblemDescriptionNode extends SuppressableInspectionTreeNode {
   private final HighlightDisplayLevel myLevel;
   protected final int myLineNumber;
   protected final RefEntity myElement;
+  private @Nullable String myMessage = null;
 
   public ProblemDescriptionNode(RefEntity element,
                                 @NotNull CommonProblemDescriptor descriptor,
@@ -76,17 +78,20 @@ public class ProblemDescriptionNode extends SuppressableInspectionTreeNode {
     }
   }
 
-  @Nullable
-  public String getToolTipText() {
+  public boolean needCalculateTooltip() {
+    return myMessage == null;
+  }
+
+  public @Nullable String getToolTipText() {
     if (!isValid()) return null;
+    if (myMessage != null) return myMessage;
     CommonProblemDescriptor descriptor = getDescriptor();
     if (descriptor == null) return null;
+
     PsiElement element = descriptor instanceof ProblemDescriptor ? ((ProblemDescriptor)descriptor).getPsiElement() : null;
-    String message = ProblemDescriptorUtil.renderDescriptionMessage(descriptor, element, false);
-    if (XmlStringUtil.isWrappedInHtml(message)) {
-      return message;
-    }
-    return XmlStringUtil.wrapInHtml(XmlStringUtil.escapeString(message));
+    String message = ProblemDescriptorUtil.renderDescriptor(descriptor, element, ProblemDescriptorUtil.NONE).getTooltip();
+    myMessage = XmlStringUtil.isWrappedInHtml(message) ? message : XmlStringUtil.wrapInHtml(XmlStringUtil.escapeString(message));
+    return myMessage;
   }
 
   @Override
@@ -103,19 +108,16 @@ public class ProblemDescriptionNode extends SuppressableInspectionTreeNode {
     return super.canSuppress() && !isQuickFixAppliedFromView();
   }
 
-  @NotNull
-  public InspectionToolWrapper<?, ?> getToolWrapper() {
+  public @NotNull InspectionToolWrapper<?, ?> getToolWrapper() {
     return getPresentation().getToolWrapper();
   }
 
   @Override
-  @Nullable
-  public RefEntity getElement() {
+  public @Nullable RefEntity getElement() {
     return myElement;
   }
 
-  @Nullable
-  public CommonProblemDescriptor getDescriptor() {
+  public @Nullable CommonProblemDescriptor getDescriptor() {
     return myDescriptor;
   }
 
@@ -125,6 +127,7 @@ public class ProblemDescriptionNode extends SuppressableInspectionTreeNode {
     if (descriptor != null) {
       getPresentation().exclude(descriptor);
     }
+    dropProblemCountCaches();
   }
 
   @Override
@@ -133,12 +136,13 @@ public class ProblemDescriptionNode extends SuppressableInspectionTreeNode {
     if (descriptor != null) {
       getPresentation().amnesty(descriptor);
     }
+    dropProblemCountCaches();
   }
 
   @Override
-  protected void visitProblemSeverities(@NotNull TObjectIntHashMap<HighlightDisplayLevel> counter) {
+  protected void visitProblemSeverities(@NotNull Object2IntMap<HighlightDisplayLevel> counter) {
     if (isValid() && !isExcluded() && !isQuickFixAppliedFromView() && !isAlreadySuppressedFromView()) {
-      counter.put(myLevel, counter.get(myLevel) + 1);
+      counter.put(myLevel, counter.getInt(myLevel) + 1);
     }
   }
 
@@ -161,13 +165,14 @@ public class ProblemDescriptionNode extends SuppressableInspectionTreeNode {
 
   private static final Interner<String> NAME_INTERNER = Interner.createWeakInterner();
 
-  @NotNull
   @Override
-  protected String calculatePresentableName() {
+  protected @NotNull String calculatePresentableName() {
     CommonProblemDescriptor descriptor = getDescriptor();
     if (descriptor == null) return "";
-    PsiElement element = descriptor instanceof ProblemDescriptor ? ((ProblemDescriptor)descriptor).getPsiElement() : null;
-    String name = ProblemDescriptorUtil.renderDescriptionMessage(descriptor, element, ProblemDescriptorUtil.TRIM_AT_TREE_END);
+    String name = ReadAction.compute(() -> {
+      PsiElement element = descriptor instanceof ProblemDescriptor ? ((ProblemDescriptor)descriptor).getPsiElement() : null;
+      return ProblemDescriptorUtil.renderDescriptionMessage(descriptor, element, ProblemDescriptorUtil.TRIM_AT_TREE_END);
+    });
     return NAME_INTERNER.intern(name);
   }
 
@@ -176,16 +181,14 @@ public class ProblemDescriptionNode extends SuppressableInspectionTreeNode {
     return myDescriptor != null && getPresentation().isProblemResolved(myDescriptor) && !isAlreadySuppressedFromView();
   }
 
-  @Nullable
   @Override
-  public String getTailText() {
+  public @Nullable String getTailText() {
     final String text = super.getTailText();
     return text == null ? "" : text;
   }
 
-  @NotNull
   @Override
-  public Pair<PsiElement, CommonProblemDescriptor> getSuppressContent() {
+  public @NotNull Pair<PsiElement, CommonProblemDescriptor> getSuppressContent() {
     RefEntity refElement = getElement();
     CommonProblemDescriptor descriptor = getDescriptor();
     PsiElement element = descriptor instanceof ProblemDescriptor

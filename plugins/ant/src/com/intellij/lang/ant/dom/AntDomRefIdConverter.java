@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.ant.dom;
 
 import com.intellij.lang.ant.AntBundle;
@@ -9,7 +9,11 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ArrayUtilRt;
-import com.intellij.util.xml.*;
+import com.intellij.util.xml.ConvertContext;
+import com.intellij.util.xml.Converter;
+import com.intellij.util.xml.CustomReferenceConverter;
+import com.intellij.util.xml.DomTarget;
+import com.intellij.util.xml.GenericDomValue;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -23,7 +27,7 @@ import java.util.Set;
 public class AntDomRefIdConverter extends Converter<AntDomElement> implements CustomReferenceConverter<AntDomElement>{
 
   @Override
-  public AntDomElement fromString(@Nullable @NonNls String s, ConvertContext context) {
+  public AntDomElement fromString(@Nullable @NonNls String s, @NotNull ConvertContext context) {
     if (s != null) {
       final AntDomElement element = AntSupport.getInvocationAntDomElement(context);
       if (element != null) {
@@ -34,7 +38,7 @@ public class AntDomRefIdConverter extends Converter<AntDomElement> implements Cu
   }
 
   @Override
-  public String toString(@Nullable AntDomElement antDomElement, ConvertContext context) {
+  public String toString(@Nullable AntDomElement antDomElement, @NotNull ConvertContext context) {
     return antDomElement != null? antDomElement.getId().getRawText() : null;
   }
 
@@ -70,7 +74,7 @@ public class AntDomRefIdConverter extends Converter<AntDomElement> implements Cu
             super.visitAntDomElement(element);
           }
         });
-        return variants.size() > 0 ? ArrayUtil.toObjectArray(variants) : ArrayUtilRt.EMPTY_OBJECT_ARRAY;
+        return !variants.isEmpty() ? ArrayUtil.toObjectArray(variants) : ArrayUtilRt.EMPTY_OBJECT_ARRAY;
       }
 
       @Override
@@ -80,8 +84,7 @@ public class AntDomRefIdConverter extends Converter<AntDomElement> implements Cu
     }};
   }
 
-  @Nullable
-  private static AntDomElement findElementById(AntDomElement from, final String id, final boolean skipCustomTags) {
+  private static @Nullable AntDomElement findElementById(AntDomElement from, final String id, final boolean skipCustomTags) {
     if (id.equals(from.getId().getRawText())) {
       return from;
     }

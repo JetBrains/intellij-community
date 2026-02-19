@@ -1,31 +1,26 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.xml.ui;
 
 import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.ide.actions.ContextHelpAction;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.ActionPlaces;
+import com.intellij.openapi.actionSystem.ActionToolbar;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.DataSink;
+import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
+import com.intellij.openapi.actionSystem.Separator;
+import com.intellij.openapi.actionSystem.UiDataProvider;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.ui.ComponentUtil;
+import com.intellij.ui.IconManager;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.PopupHandler;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.table.TableView;
 import com.intellij.util.EventDispatcher;
-import com.intellij.util.PlatformIcons;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.ListTableModel;
@@ -36,7 +31,13 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.BorderFactory;
+import javax.swing.JComponent;
+import javax.swing.JPanel;
+import javax.swing.JTable;
+import javax.swing.JViewport;
+import javax.swing.ListSelectionModel;
+import javax.swing.ToolTipManager;
 import javax.swing.border.MatteBorder;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
@@ -44,7 +45,10 @@ import javax.swing.event.TableModelEvent;
 import javax.swing.event.TableModelListener;
 import javax.swing.table.JTableHeader;
 import javax.swing.table.TableCellRenderer;
-import java.awt.*;
+import java.awt.BorderLayout;
+import java.awt.CardLayout;
+import java.awt.Color;
+import java.awt.Component;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseMotionAdapter;
@@ -52,19 +56,16 @@ import java.util.ArrayList;
 import java.util.EventListener;
 import java.util.List;
 
-/**
- * @author peter
- */
-public abstract class AbstractTableView<T> extends JPanel implements TypeSafeDataProvider {
+public abstract class AbstractTableView<T> extends JPanel implements UiDataProvider {
   private final MyTableView myTable = new MyTableView();
-  @NonNls private final String myHelpID;
-  @Nls(capitalization = Nls.Capitalization.Sentence) private final String myEmptyPaneText;
+  private final @NonNls String myHelpID;
+  private final @Nls(capitalization = Nls.Capitalization.Sentence) String myEmptyPaneText;
   private final JPanel myInnerPanel;
   private final Project myProject;
   private TableCellRenderer[][] myCachedRenderers;
   private EmptyPane myEmptyPane;
-  @NonNls private static final String TREE = "Tree";
-  @NonNls private static final String EMPTY_PANE = "EmptyPane";
+  private static final @NonNls String TREE = "Tree";
+  private static final @NonNls String EMPTY_PANE = "EmptyPane";
   private final EventDispatcher<ChangeListener> myDispatcher = EventDispatcher.create(ChangeListener.class);
   private final MyListTableModel myTableModel = new MyListTableModel();
 
@@ -73,8 +74,8 @@ public abstract class AbstractTableView<T> extends JPanel implements TypeSafeDat
   }
 
   public AbstractTableView(final Project project,
-                           @Nls(capitalization = Nls.Capitalization.Sentence) @Nullable final String emptyPaneText,
-                           @NonNls @Nullable final String helpID) {
+                           final @Nls(capitalization = Nls.Capitalization.Sentence) @Nullable String emptyPaneText,
+                           final @NonNls @Nullable String helpID) {
     super(new BorderLayout());
     myProject = project;
     myTableModel.setSortable(false);
@@ -99,7 +100,7 @@ public abstract class AbstractTableView<T> extends JPanel implements TypeSafeDat
     });
     header.setReorderingAllowed(false);
 
-    myTable.setRowHeight(PlatformIcons.CLASS_ICON.getIconHeight());
+    myTable.setRowHeight(IconManager.getInstance().getPlatformIcon(com.intellij.ui.PlatformIcons.Class).getIconHeight());
     myTable.setPreferredScrollableViewportSize(JBUI.size(-1, 150));
     myTable.setSelectionMode(allowMultipleRowsSelection() ? ListSelectionModel.MULTIPLE_INTERVAL_SELECTION : ListSelectionModel.SINGLE_SELECTION);
 
@@ -116,11 +117,11 @@ public abstract class AbstractTableView<T> extends JPanel implements TypeSafeDat
     ToolTipManager.sharedInstance().registerComponent(myTable);
   }
   protected TableCellRenderer getTableCellRenderer(final int row, final int column, final TableCellRenderer superRenderer, final Object value) {
-    return getTableModel().getColumnInfos()[column].getCustomizedRenderer(value, new StripeTableCellRenderer(superRenderer));
+    return getTableModel().getColumnInfos()[column].getCustomizedRenderer(value, superRenderer);
   }
 
   protected final void installPopup(final String place, final DefaultActionGroup group) {
-    PopupHandler.installPopupHandler(myTable, group, place, ActionManager.getInstance());
+    PopupHandler.installPopupMenu(myTable, group, place);
   }
 
   public final void setToolbarActions(final AnAction... actions) {
@@ -158,7 +159,7 @@ public abstract class AbstractTableView<T> extends JPanel implements TypeSafeDat
       myEmptyPane.getComponent().setBackground(empty ? UIUtil.getTreeBackground() : BaseControl.ERROR_BACKGROUND);
       myEmptyPane.getComponent().setToolTipText(tooltipText);
     }
-    final JViewport viewport = (JViewport)myTable.getParent();
+    final JViewport viewport = ComponentUtil.getViewport(myTable);
     final Color tableBackground = empty ? UIUtil.getTableBackground() : BaseControl.ERROR_BACKGROUND;
     viewport.setBackground(tableBackground);
     viewport.setToolTipText(tooltipText);
@@ -203,8 +204,7 @@ public abstract class AbstractTableView<T> extends JPanel implements TypeSafeDat
     return width;
   }
 
-  @Nls(capitalization = Nls.Capitalization.Sentence)
-  protected String getEmptyPaneText() {
+  protected @Nls(capitalization = Nls.Capitalization.Sentence) String getEmptyPaneText() {
     return myEmptyPaneText;
   }
 
@@ -231,10 +231,8 @@ public abstract class AbstractTableView<T> extends JPanel implements TypeSafeDat
   }
 
   @Override
-  public void calcData(@NotNull DataKey key, @NotNull DataSink sink) {
-    if (PlatformDataKeys.HELP_ID.equals(key)) {
-      sink.put(PlatformDataKeys.HELP_ID, getHelpId());
-    }
+  public void uiDataSnapshot(@NotNull DataSink sink) {
+    sink.set(PlatformCoreDataKeys.HELP_ID, getHelpId());
   }
 
   private String getHelpId() {

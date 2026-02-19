@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.uiDesigner.propertyInspector.properties;
 
 import com.intellij.openapi.util.Condition;
@@ -13,22 +13,18 @@ import com.intellij.uiDesigner.propertyInspector.renderers.ComponentRenderer;
 import com.intellij.uiDesigner.radComponents.RadComponent;
 import com.intellij.uiDesigner.radComponents.RadRootContainer;
 import com.intellij.uiDesigner.radComponents.RadScrollPane;
-import com.intellij.uiDesigner.snapShooter.SnapshotContext;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-import java.awt.*;
 import java.lang.reflect.Method;
 
 /**
  * The value of the property is the string ID of the referenced component.
- * @author yole
  */
 public class IntroComponentProperty extends IntrospectedProperty<String> {
   private final ComponentRenderer myRenderer = new ComponentRenderer();
   private ComponentEditor myEditor;
-  @NonNls private static final String CLIENT_PROPERTY_KEY_PREFIX = "IntroComponentProperty_";
+  private static final @NonNls String CLIENT_PROPERTY_KEY_PREFIX = "IntroComponentProperty_";
   private final Class myPropertyType;
   private final Condition<? super RadComponent> myFilter;
 
@@ -44,7 +40,7 @@ public class IntroComponentProperty extends IntrospectedProperty<String> {
   }
 
   @Override
-  @NotNull public PropertyRenderer<String> getRenderer() {
+  public @NotNull PropertyRenderer<String> getRenderer() {
     return myRenderer;
   }
 
@@ -87,18 +83,5 @@ public class IntroComponentProperty extends IntrospectedProperty<String> {
   @Override public void resetValue(RadComponent component) throws Exception {
     setValue(component, null);
     markTopmostModified(component, false);
-  }
-
-  @Override public void importSnapshotValue(final SnapshotContext context, final JComponent component, final RadComponent radComponent) {
-    Component value;
-    try {
-      value = (Component) myReadMethod.invoke(component, EMPTY_OBJECT_ARRAY);
-    }
-    catch (Exception e) {
-      return;
-    }
-    if (value instanceof JComponent) {
-      context.registerComponentProperty(component, getName(), (JComponent) value);
-    }
   }
 }

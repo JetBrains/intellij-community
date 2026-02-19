@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.codeInsight.completion;
 
 import com.intellij.JavaTestUtil;
@@ -6,13 +6,14 @@ import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.completion.CompletionType;
 import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.compiler.CompilerReferenceService;
 import com.intellij.compiler.chainsSearch.ChainRelevance;
 import com.intellij.compiler.chainsSearch.ChainSearchMagicConstants;
 import com.intellij.compiler.chainsSearch.completion.MethodChainCompletionContributor;
 import com.intellij.compiler.chainsSearch.completion.lookup.JavaRelevantChainLookupElement;
-import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.pom.java.LanguageLevel;
+import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.NeedsIndex;
 import com.intellij.testFramework.SkipSlowTestLocally;
 import com.intellij.util.SmartList;
@@ -21,7 +22,7 @@ import java.io.IOException;
 import java.util.List;
 
 @SkipSlowTestLocally
-@NeedsIndex.ForStandardLibrary
+@NeedsIndex.Full
 public class MethodChainsCompletionTest extends AbstractCompilerAwareTest {
   private final static String TEST_INDEX_FILE_NAME = "TestIndex.java";
   private final static String TEST_COMPLETION_FILE_NAME = "TestCompletion.java";
@@ -36,7 +37,8 @@ public class MethodChainsCompletionTest extends AbstractCompilerAwareTest {
     Registry.get(MethodChainCompletionContributor.REGISTRY_KEY).setValue(true, myFixture.getTestRootDisposable());
     myDefaultAutoCompleteOnCodeCompletion = CodeInsightSettings.getInstance().AUTOCOMPLETE_ON_CODE_COMPLETION;
     CodeInsightSettings.getInstance().AUTOCOMPLETE_ON_SMART_TYPE_COMPLETION = false;
-    LanguageLevelProjectExtension.getInstance(getProject()).setLanguageLevel(LanguageLevel.JDK_1_8);
+    IdeaTestUtil.setProjectLanguageLevel(getProject(), LanguageLevel.JDK_1_8);
+    CompilerReferenceService.getInstanceIfEnabled(getProject());
   }
 
   @Override

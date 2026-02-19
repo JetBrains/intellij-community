@@ -1,0 +1,22 @@
+// FIR_IDENTICAL
+// COPY_DOC
+abstract class A {
+    /**
+     * @see TEST
+     */
+    abstract fun foo()
+}
+
+class B : A() {
+    /**
+     * @see TEST
+     */
+    override fun foo() {
+        <selection><caret>TODO("Not yet implemented")</selection>
+    }
+}
+
+// MEMBER: "foo(): Unit"
+// MEMBER: "equals(other: Any?): Boolean"
+// MEMBER: "hashCode(): Int"
+// MEMBER: "toString(): String"

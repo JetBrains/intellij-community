@@ -1,35 +1,27 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.impl;
 
 import com.intellij.vcs.log.VcsLogProviderRequirementsEx;
-import com.intellij.vcs.log.VcsRef;
+import com.intellij.vcs.log.VcsRefsContainer;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Collection;
-
+@ApiStatus.Internal
 public class RequirementsImpl implements VcsLogProviderRequirementsEx {
 
   private final int myCommitCount;
   private final boolean myRefresh;
-  @NotNull private final Collection<VcsRef> myPreviousRefs;
+  private final @NotNull VcsRefsContainer myPreviousRefs;
+  private final boolean myIsRefreshRefs;
 
-  public RequirementsImpl(int count, boolean refresh, @NotNull Collection<VcsRef> previousRefs) {
+  public RequirementsImpl(int count, boolean refresh, @NotNull VcsRefsContainer previousRefs) {
+    this(count, refresh, previousRefs, true);
+  }
+
+  public RequirementsImpl(int count, boolean refresh, @NotNull VcsRefsContainer previousRefs, boolean isRefreshRefs) {
     myCommitCount = count;
     myRefresh = refresh;
+    myIsRefreshRefs = isRefreshRefs;
     myPreviousRefs = previousRefs;
   }
 
@@ -43,9 +35,23 @@ public class RequirementsImpl implements VcsLogProviderRequirementsEx {
     return myRefresh;
   }
 
-  @NotNull
   @Override
-  public Collection<VcsRef> getPreviousRefs() {
+  public boolean isRefreshRefs() {
+    return myIsRefreshRefs;
+  }
+
+  @Override
+  public @NotNull VcsRefsContainer getPreviousRefs() {
     return myPreviousRefs;
+  }
+
+  @Override
+  public String toString() {
+    return "RequirementsImpl{" +
+           "myCommitCount=" + myCommitCount +
+           ", myRefresh=" + myRefresh +
+           ", myPreviousRefs=" + myPreviousRefs +
+           ", myIsRefreshRefs=" + myIsRefreshRefs +
+           '}';
   }
 }

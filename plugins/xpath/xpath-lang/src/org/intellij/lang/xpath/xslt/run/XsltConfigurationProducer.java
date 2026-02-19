@@ -1,13 +1,10 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.intellij.lang.xpath.xslt.run;
 
-import com.intellij.execution.RunManager;
-import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.actions.ConfigurationContext;
 import com.intellij.execution.actions.LazyRunConfigurationProducer;
 import com.intellij.execution.configurations.ConfigurationFactory;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -28,10 +25,7 @@ public class XsltConfigurationProducer extends LazyRunConfigurationProducer<Xslt
     if (file == null) {
       return false;
     }
-    final Project project = file.getProject();
-    final RunnerAndConfigurationSettings settings =
-      RunManager.getInstance(project).createConfiguration(file.getName(), getConfigurationFactory());
-    ((XsltRunConfiguration)settings.getConfiguration()).initFromFile(file);
+    configuration.initFromFile(file);
     return true;
   }
 
@@ -41,8 +35,7 @@ public class XsltConfigurationProducer extends LazyRunConfigurationProducer<Xslt
     return file != null && file.getVirtualFile().getPath().replace('/', File.separatorChar).equals(configuration.getXsltFile());
   }
 
-  @Nullable
-  private static XmlFile getXsltFile(ConfigurationContext context) {
+  private static @Nullable XmlFile getXsltFile(ConfigurationContext context) {
     final XmlFile file = PsiTreeUtil.getParentOfType(context.getPsiLocation(), XmlFile.class, false);
     if (file != null && file.isPhysical() && XsltSupport.isXsltFile(file)) {
       return file;
@@ -50,9 +43,8 @@ public class XsltConfigurationProducer extends LazyRunConfigurationProducer<Xslt
     return null;
   }
 
-  @NotNull
   @Override
-  public ConfigurationFactory getConfigurationFactory() {
+  public @NotNull ConfigurationFactory getConfigurationFactory() {
     return XsltRunConfigType.getInstance().getConfigurationFactories()[0];
   }
 }

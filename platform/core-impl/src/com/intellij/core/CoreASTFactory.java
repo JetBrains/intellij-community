@@ -8,6 +8,6 @@ import org.jetbrains.annotations.ApiStatus;
  * @deprecated Please use DefaultASTFactoryImpl directly
  */
 @Deprecated
-@ApiStatus.ScheduledForRemoval(inVersion = "2020.3")
+@ApiStatus.ScheduledForRemoval
 public class CoreASTFactory extends DefaultASTFactoryImpl {
 }

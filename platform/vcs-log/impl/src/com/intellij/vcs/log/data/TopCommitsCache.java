@@ -1,8 +1,9 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.data;
 
 import com.google.common.collect.Iterators;
 import com.google.common.collect.PeekingIterator;
+import com.intellij.concurrency.ConcurrentCollectionFactory;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.IntObjectMap;
@@ -16,9 +17,10 @@ import java.util.List;
 
 public class TopCommitsCache {
   private static final Logger LOG = Logger.getInstance(TopCommitsCache.class);
-  @NotNull private final VcsLogStorage myStorage;
-  @NotNull private final IntObjectMap<VcsCommitMetadata> myCache = ContainerUtil.createConcurrentIntObjectMap();
-  @NotNull private List<VcsCommitMetadata> mySortedDetails = new ArrayList<>();
+  private final @NotNull VcsLogStorage myStorage;
+  private final @NotNull IntObjectMap<VcsCommitMetadata> myCache =
+    ConcurrentCollectionFactory.createConcurrentIntObjectMap();
+  private volatile @NotNull List<VcsCommitMetadata> mySortedDetails = new ArrayList<>();
 
   public TopCommitsCache(@NotNull VcsLogStorage storage) {
     myStorage = storage;
@@ -28,7 +30,7 @@ public class TopCommitsCache {
     return myStorage.getCommitIndex(metadata.getId(), metadata.getRoot());
   }
 
-  public void storeDetails(@NotNull List<? extends VcsCommitMetadata> sortedDetails) {
+  public synchronized void storeDetails(@NotNull List<? extends VcsCommitMetadata> sortedDetails) {
     List<VcsCommitMetadata> newDetails = ContainerUtil.filter(sortedDetails, metadata -> !myCache.containsValue(metadata));
     if (newDetails.isEmpty()) return;
     Iterator<VcsCommitMetadata> it = new MergingIterator(mySortedDetails, newDetails);
@@ -42,7 +44,7 @@ public class TopCommitsCache {
         isBroken = true;
         continue; // means some error happened (and reported) earlier, nothing we can do here
       }
-      if (result.size() < VcsLogData.RECENT_COMMITS_COUNT * 2) {
+      if (result.size() < VcsLogData.getRecentCommitsCount() * 2) {
         result.add(detail);
         myCache.put(index, detail);
       }
@@ -55,12 +57,11 @@ public class TopCommitsCache {
     mySortedDetails = result;
   }
 
-  @Nullable
-  public VcsCommitMetadata get(int index) {
+  public @Nullable VcsCommitMetadata get(int index) {
     return myCache.get(index);
   }
 
-  public void clear() {
+  public synchronized void clear() {
     myCache.clear();
     mySortedDetails.clear();
   }

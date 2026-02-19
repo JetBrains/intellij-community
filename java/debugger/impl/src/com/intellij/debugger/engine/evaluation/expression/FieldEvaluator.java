@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 /*
  * Class FieldEvaluator
@@ -7,6 +7,7 @@
 package com.intellij.debugger.engine.evaluation.expression;
 
 import com.intellij.debugger.JavaDebuggerBundle;
+import com.intellij.debugger.engine.DebuggerUtils;
 import com.intellij.debugger.engine.JVMNameUtil;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluateExceptionUtil;
@@ -19,20 +20,29 @@ import com.intellij.psi.PsiArrayType;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.util.PsiUtil;
-import com.sun.jdi.*;
+import com.sun.jdi.ArrayReference;
+import com.sun.jdi.ArrayType;
+import com.sun.jdi.ClassNotLoadedException;
+import com.sun.jdi.ClassType;
+import com.sun.jdi.Field;
+import com.sun.jdi.InterfaceType;
+import com.sun.jdi.InvalidTypeException;
+import com.sun.jdi.ObjectReference;
+import com.sun.jdi.ReferenceType;
+import com.sun.jdi.Type;
+import com.sun.jdi.Value;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class FieldEvaluator implements Evaluator {
+public class FieldEvaluator implements ModifiableEvaluator {
   private final Evaluator myObjectEvaluator;
   private final TargetClassFilter myTargetClassFilter;
   private final String myFieldName;
-  private Object myEvaluatedQualifier;
-  private Field myEvaluatedField;
 
   public interface TargetClassFilter {
     TargetClassFilter ALL = refType -> true;
+
     boolean acceptClass(ReferenceType refType);
   }
 
@@ -42,9 +52,8 @@ public class FieldEvaluator implements Evaluator {
     myTargetClassFilter = filter;
   }
 
-  @NotNull
-  public static TargetClassFilter createClassFilter(@Nullable PsiType psiType) {
-    if(psiType == null || psiType instanceof PsiArrayType) {
+  public static @NotNull TargetClassFilter createClassFilter(@Nullable PsiType psiType) {
+    if (psiType == null || psiType instanceof PsiArrayType) {
       return TargetClassFilter.ALL;
     }
     PsiClass psiClass = PsiUtil.resolveClassInType(psiType);
@@ -61,16 +70,14 @@ public class FieldEvaluator implements Evaluator {
     if (PsiUtil.isLocalClass(psiClass)) {
       return new LocalClassFilter(psiClass.getName());
     }
-    final String name = JVMNameUtil.getNonAnonymousClassName(psiClass);
-    return name != null? new FQNameClassFilter(name) : TargetClassFilter.ALL;
+    final String name = JVMNameUtil.getClassVMName(psiClass);
+    return name != null ? new FQNameClassFilter(name) : TargetClassFilter.ALL;
   }
 
-  @Nullable
-  private Field findField(@Nullable Type t) {
-    if(t instanceof ClassType) {
-      ClassType cls = (ClassType) t;
-      if(myTargetClassFilter.acceptClass(cls)) {
-        return cls.fieldByName(myFieldName);
+  private @Nullable Field findField(@Nullable Type t) {
+    if (t instanceof ClassType cls) {
+      if (myTargetClassFilter.acceptClass(cls)) {
+        return DebuggerUtils.findField(cls, myFieldName);
       }
       for (final InterfaceType interfaceType : cls.interfaces()) {
         final Field field = findField(interfaceType);
@@ -80,10 +87,9 @@ public class FieldEvaluator implements Evaluator {
       }
       return findField(cls.superclass());
     }
-    else if(t instanceof InterfaceType) {
-      InterfaceType iface = (InterfaceType) t;
-      if(myTargetClassFilter.acceptClass(iface)) {
-        return iface.fieldByName(myFieldName);
+    else if (t instanceof InterfaceType iface) {
+      if (myTargetClassFilter.acceptClass(iface)) {
+        return DebuggerUtils.findField(iface, myFieldName);
       }
       for (final InterfaceType interfaceType : iface.superinterfaces()) {
         final Field field = findField(interfaceType);
@@ -96,32 +102,22 @@ public class FieldEvaluator implements Evaluator {
   }
 
   @Override
-  public Object evaluate(EvaluationContextImpl context) throws EvaluateException {
-    myEvaluatedField = null;
-    myEvaluatedQualifier = null;
+  public @NotNull ModifiableValue evaluateModifiable(@NotNull EvaluationContextImpl context) throws EvaluateException {
     Object object = myObjectEvaluator.evaluate(context);
 
-    return evaluateField(object, context);
-
-  }
-
-  private Object evaluateField(Object object, EvaluationContextImpl context) throws EvaluateException {
-    if (object instanceof ReferenceType) {
-      ReferenceType refType = (ReferenceType)object;
+    if (object instanceof ReferenceType refType) {
       Field field = findField(refType);
       if (field == null || !field.isStatic()) {
-        field = refType.fieldByName(myFieldName);
+        field = DebuggerUtils.findField(refType, myFieldName);
       }
       if (field == null || !field.isStatic()) {
         throw EvaluateExceptionUtil.createEvaluateException(JavaDebuggerBundle.message("evaluation.error.no.static.field", myFieldName));
       }
-      myEvaluatedField = field;
-      myEvaluatedQualifier = refType;
-      return refType.getValue(field);
+      MyModifier modifier = new MyModifier(refType, field);
+      return new ModifiableValue(refType.getValue(field), modifier);
     }
 
-    if (object instanceof ObjectReference) {
-      ObjectReference objRef = (ObjectReference)object;
+    if (object instanceof ObjectReference objRef) {
       ReferenceType refType = objRef.referenceType();
       if (!(refType instanceof ClassType || refType instanceof ArrayType)) {
         throw EvaluateExceptionUtil.createEvaluateException(
@@ -130,71 +126,27 @@ public class FieldEvaluator implements Evaluator {
 
       // expressions like 'array.length' must be treated separately
       if (objRef instanceof ArrayReference && "length".equals(myFieldName)) {
-        return context.getDebugProcess().getVirtualMachineProxy().mirrorOf(((ArrayReference)objRef).length());
+        return new ModifiableValue(context.getVirtualMachineProxy().mirrorOf(((ArrayReference)objRef).length()), null);
       }
 
       Field field = findField(refType);
       if (field == null) {
-        field = refType.fieldByName(myFieldName);
+        field = DebuggerUtils.findField(refType, myFieldName);
       }
 
       if (field == null) {
         throw EvaluateExceptionUtil.createEvaluateException(JavaDebuggerBundle.message("evaluation.error.no.instance.field", myFieldName));
       }
-      myEvaluatedQualifier = field.isStatic() ? refType : objRef;
-      myEvaluatedField = field;
-      return field.isStatic()? refType.getValue(field) : objRef.getValue(field);
+      Object qualifier = field.isStatic() ? refType : objRef;
+      MyModifier modifier = new MyModifier(qualifier, field);
+      return new ModifiableValue(field.isStatic() ? refType.getValue(field) : objRef.getValue(field), modifier);
     }
 
-    if(object == null) {
+    if (object == null) {
       throw EvaluateExceptionUtil.createEvaluateException(new NullPointerException());
     }
 
     throw EvaluateExceptionUtil.createEvaluateException(JavaDebuggerBundle.message("evaluation.error.evaluating.field", myFieldName));
-  }
-
-  @Override
-  public Modifier getModifier() {
-    Modifier modifier = null;
-    if (myEvaluatedField != null && (myEvaluatedQualifier instanceof ClassType || myEvaluatedQualifier instanceof ObjectReference)) {
-      modifier = new Modifier() {
-        @Override
-        public boolean canInspect() {
-          return myEvaluatedQualifier instanceof ObjectReference;
-        }
-
-        @Override
-        public boolean canSetValue() {
-          return true;
-        }
-
-        @Override
-        public void setValue(Value value) throws ClassNotLoadedException, InvalidTypeException {
-          if (myEvaluatedQualifier instanceof ReferenceType) {
-            ClassType classType = (ClassType)myEvaluatedQualifier;
-            classType.setValue(myEvaluatedField, value);
-          }
-          else {
-            ObjectReference objRef = (ObjectReference)myEvaluatedQualifier;
-            objRef.setValue(myEvaluatedField, value);
-          }
-        }
-
-        @Override
-        public Type getExpectedType() throws ClassNotLoadedException {
-          return myEvaluatedField.type();
-        }
-
-        @Override
-        public NodeDescriptorImpl getInspectItem(Project project) {
-          if(myEvaluatedQualifier instanceof ObjectReference) {
-            return new FieldDescriptorImpl(project, (ObjectReference)myEvaluatedQualifier, myEvaluatedField);
-          } else
-            return null;
-        }
-      };
-    }
-    return modifier;
   }
 
   @Override
@@ -215,7 +167,7 @@ public class FieldEvaluator implements Evaluator {
     }
   }
 
-  private static final class LocalClassFilter implements TargetClassFilter{
+  private static final class LocalClassFilter implements TargetClassFilter {
     private final String myLocalClassShortName;
 
     private LocalClassFilter(String localClassShortName) {
@@ -239,6 +191,52 @@ public class FieldEvaluator implements Evaluator {
         }
       }
       return false;
+    }
+  }
+
+  private static class MyModifier implements Modifier {
+    private final Object myEvaluatedQualifier;
+    private final Field myEvaluatedField;
+
+    private MyModifier(Object qualifier, Field field) {
+      myEvaluatedQualifier = qualifier;
+      myEvaluatedField = field; }
+
+    @Override
+    public boolean canInspect() {
+      return myEvaluatedQualifier instanceof ObjectReference;
+    }
+
+    @Override
+    public boolean canSetValue() {
+      return true;
+    }
+
+    @Override
+    public void setValue(Value value) throws ClassNotLoadedException, InvalidTypeException {
+      if (myEvaluatedQualifier instanceof ReferenceType) {
+        ClassType classType = (ClassType)myEvaluatedQualifier;
+        classType.setValue(myEvaluatedField, value);
+      }
+      else {
+        ObjectReference objRef = (ObjectReference)myEvaluatedQualifier;
+        objRef.setValue(myEvaluatedField, value);
+      }
+    }
+
+    @Override
+    public Type getExpectedType() throws ClassNotLoadedException {
+      return myEvaluatedField.type();
+    }
+
+    @Override
+    public NodeDescriptorImpl getInspectItem(Project project) {
+      if (myEvaluatedQualifier instanceof ObjectReference) {
+        return new FieldDescriptorImpl(project, (ObjectReference)myEvaluatedQualifier, myEvaluatedField);
+      }
+      else {
+        return null;
+      }
     }
   }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.json.editor;
 
 import com.intellij.codeInsight.CodeInsightSettings;
@@ -6,25 +6,34 @@ import com.intellij.codeInsight.editorActions.TypedHandlerDelegate;
 import com.intellij.codeInsight.editorActions.smartEnter.SmartEnterProcessor;
 import com.intellij.json.JsonDialectUtil;
 import com.intellij.json.JsonElementTypes;
-import com.intellij.json.psi.*;
+import com.intellij.json.psi.JsonArray;
+import com.intellij.json.psi.JsonFile;
+import com.intellij.json.psi.JsonObject;
+import com.intellij.json.psi.JsonProperty;
+import com.intellij.json.psi.JsonReferenceExpression;
+import com.intellij.json.psi.JsonStringLiteral;
+import com.intellij.json.psi.JsonValue;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiErrorElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import org.jetbrains.annotations.NotNull;
 
-public class JsonTypedHandler extends TypedHandlerDelegate {
+public final class JsonTypedHandler extends TypedHandlerDelegate {
 
   private boolean myWhitespaceAdded;
 
-  @NotNull
   @Override
-  public Result charTyped(char c, @NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
+  public @NotNull Result charTyped(char c, @NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
     if (file instanceof JsonFile) {
       processPairedBracesComma(c, editor, file);
       addWhiteSpaceAfterColonIfNeeded(c, editor, file);
@@ -102,13 +111,12 @@ public class JsonTypedHandler extends TypedHandlerDelegate {
     myWhitespaceAdded = false;
   }
 
-  @NotNull
   @Override
-  public Result beforeCharTyped(char c,
-                                @NotNull Project project,
-                                @NotNull Editor editor,
-                                @NotNull PsiFile file,
-                                @NotNull FileType fileType) {
+  public @NotNull Result beforeCharTyped(char c,
+                                         @NotNull Project project,
+                                         @NotNull Editor editor,
+                                         @NotNull PsiFile file,
+                                         @NotNull FileType fileType) {
     if (file instanceof JsonFile) {
       addPropertyNameQuotesIfNeeded(c, editor, file);
     }
@@ -139,7 +147,7 @@ public class JsonTypedHandler extends TypedHandlerDelegate {
     final ASTNode colon = children[0];
     final ASTNode next = colon.getTreeNext();
     final String text = next.getText();
-    if (text.length() == 0 || !StringUtil.isEmptyOrSpaces(text) || StringUtil.isLineBreak(text.charAt(0))) {
+    if (text.isEmpty() || !StringUtil.isEmptyOrSpaces(text) || StringUtil.isLineBreak(text.charAt(0))) {
       final int insOffset = colon.getStartOffset() + 1;
       editor.getDocument().insertString(insOffset, " ");
       editor.getCaretModel().moveToOffset(insOffset + 1);

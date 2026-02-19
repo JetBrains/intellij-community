@@ -8,13 +8,14 @@ import com.intellij.openapi.module.impl.ModuleConfigurationStateImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.roots.ModuleRootModel;
 import com.intellij.testFramework.LightPlatformTestCase;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JComponent;
+import java.awt.Component;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -33,10 +34,15 @@ public class ClasspathEditorTest extends LightPlatformTestCase {
     final ModifiableRootModel uiRootModel = ModuleRootManager.getInstance(module).getModifiableModel();
     disposeOnTearDown(() -> uiRootModel.dispose());
 
-    ClasspathEditor e = new ClasspathEditor(new ModuleConfigurationStateImpl(project, new DefaultModulesProvider(project)) {
-      @Nullable
+    ModulesConfigurator modulesConfigurator = ProjectStructureConfigurable.getInstance(project).getContext().getModulesConfigurator();
+    ClasspathEditor e = new ClasspathEditor(new ModuleConfigurationStateImpl(project, modulesConfigurator) {
       @Override
-      public ModifiableRootModel getRootModel() {
+      public ModifiableRootModel getModifiableRootModel() {
+        return uiRootModel;
+      }
+
+      @Override
+      public ModuleRootModel getCurrentRootModel() {
         return uiRootModel;
       }
     });

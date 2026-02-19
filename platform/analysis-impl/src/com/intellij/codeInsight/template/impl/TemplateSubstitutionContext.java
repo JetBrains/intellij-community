@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.template.impl;
 
 import com.intellij.openapi.editor.Document;
@@ -6,17 +6,17 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Objects;
 
 public final class TemplateSubstitutionContext {
-  @NotNull
-  private final Project myProject;
-  @NotNull
-  private final Editor myEditor;
+  private final @NotNull Project myProject;
+  private final @NotNull Editor myEditor;
 
-  TemplateSubstitutionContext(@NotNull Project project, @NotNull Editor editor) {
+  @ApiStatus.Internal
+  public TemplateSubstitutionContext(@NotNull Project project, @NotNull Editor editor) {
     myProject = project;
     myEditor = editor;
   }

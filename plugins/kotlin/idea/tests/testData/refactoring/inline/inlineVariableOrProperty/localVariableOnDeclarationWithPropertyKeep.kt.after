@@ -1,0 +1,5 @@
+// INLINE_PROPERTY_KEEP: true
+
+fun simpleFun(): String {
+    return "string"
+}

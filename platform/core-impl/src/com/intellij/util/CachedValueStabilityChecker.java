@@ -1,15 +1,14 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util;
 
 import com.intellij.diagnostic.PluginException;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.impl.ApplicationInfoImpl;
+import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.util.containers.ConcurrentFactoryMap;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -20,6 +19,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.function.Supplier;
 
@@ -61,7 +61,7 @@ import java.util.function.Supplier;
  */
 final class CachedValueStabilityChecker {
   private static final Logger LOG = Logger.getInstance(CachedValueStabilityChecker.class);
-  private static final Set<String> ourReportedKeys = ContainerUtil.newConcurrentSet();
+  private static final Set<String> ourReportedKeys = ConcurrentHashMap.newKeySet();
   private static final ConcurrentMap<Class<?>, List<Field>> ourFieldCache = ConcurrentFactoryMap.createMap(ReflectionUtil::collectFields);
   private static final boolean DO_CHECKS = shouldDoChecks();
 
@@ -71,7 +71,7 @@ final class CachedValueStabilityChecker {
   }
 
   static void checkProvidersEquivalent(CachedValueProvider<?> p1, CachedValueProvider<?> p2, Key<?> key) {
-    if (p1 == p2 || !DO_CHECKS || ApplicationInfoImpl.isInStressTest()) return;
+    if (p1 == p2 || !DO_CHECKS || ApplicationManagerEx.isInStressTest()) return;
 
     if (p1.getClass() != p2.getClass()) {
       if (!seemConcurrentlyCreatedLambdas(p1.getClass(), p2.getClass())) {
@@ -149,13 +149,12 @@ final class CachedValueStabilityChecker {
     return false;
   }
 
-  @NotNull
-  private static @NonNls String nonEquivalence(Class<?> objectClass, Field field, @Nullable Object v1, @Nullable Object v2) {
-    return "Incorrect CachedValue use: same CV with different captured context, this can cause unstable results and invalid PSI access." +
+  private static @NotNull @NonNls String nonEquivalence(Class<?> objectClass, Field field, @Nullable Object v1, @Nullable Object v2) {
+    return "Incorrect CachedValue use: same CachedValue with different captured context, this can cause unstable results and invalid PSI access." +
            "\nField " + field.getName() + " in " + objectClass + " has non-equivalent values:" +
            "\n  " + v1 + (v1 == null ? "" : " (" + v1.getClass().getName() + ")") + " and" +
            "\n  " + v2 + (v2 == null ? "" : " (" + v2.getClass().getName() + ")") +
-           "\nEither make `equals()` hold for these values, or avoid this dependency, e.g. by extracting CV provider into a static method.";
+           "\nEither make `equals()` hold for these values, or avoid this dependency, e.g. by extracting CachedValueProvider into a static method.";
   }
 
   private static void complain(@NonNls String message, String key, @NotNull Class<?> pluginClass) {
@@ -172,7 +171,7 @@ final class CachedValueStabilityChecker {
     Class<?> superclass = clazz.getSuperclass();
     if (superclass == null) return false;
 
-    if ((o instanceof Supplier || o instanceof Function || o instanceof java.util.function.Function) &&
+    if ((o instanceof kotlin.Function || o instanceof Supplier || o instanceof java.util.function.Function) &&
         Object.class.equals(clazz.getSuperclass())) {
       return true;
     }

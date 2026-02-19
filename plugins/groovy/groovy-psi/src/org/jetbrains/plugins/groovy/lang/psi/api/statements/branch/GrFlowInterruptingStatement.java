@@ -8,9 +8,6 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrLabeledStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 
-/**
- * @author ilyas
- */
 public interface GrFlowInterruptingStatement extends GrStatement {
   @Nullable
   PsiElement getLabelIdentifier();

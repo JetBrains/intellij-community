@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.ui.configuration.artifacts;
 
 import com.intellij.openapi.ui.VerticalFlowLayout;
@@ -16,13 +16,14 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.util.*;
+import javax.swing.JPanel;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 public class ArtifactPropertiesEditors {
-  private static final List<String> STANDARD_TABS_ORDER = Arrays.asList(
-    ArtifactPropertiesEditor.VALIDATION_TAB, ArtifactPropertiesEditor.PRE_PROCESSING_TAB, ArtifactPropertiesEditor.POST_PROCESSING_TAB
-  );
   private final Map<@Nls(capitalization = Nls.Capitalization.Sentence) String, JPanel> myMainPanels;
   private final ArtifactEditorContext myContext;
   private final Artifact myOriginalArtifact;
@@ -55,12 +56,18 @@ public class ArtifactPropertiesEditors {
   }
 
   public void addTabs(TabbedPaneWrapper tabbedPane) {
+    final List<String> standardTabsOrder = Arrays.asList(
+      ArtifactPropertiesEditor.VALIDATION_TAB_POINTER.get(),
+      ArtifactPropertiesEditor.PRE_PROCESSING_TAB_POINTER.get(),
+      ArtifactPropertiesEditor.POST_PROCESSING_TAB_POINTER.get()
+    );
+
     List<@NlsContexts.TabTitle String> sortedTabs = new ArrayList<>(myMainPanels.keySet());
     sortedTabs.sort((o1, o2) -> {
-      int i1 = STANDARD_TABS_ORDER.indexOf(o1);
-      if (i1 == -1) i1 = STANDARD_TABS_ORDER.size();
-      int i2 = STANDARD_TABS_ORDER.indexOf(o2);
-      if (i2 == -1) i2 = STANDARD_TABS_ORDER.size();
+      int i1 = standardTabsOrder.indexOf(o1);
+      if (i1 == -1) i1 = standardTabsOrder.size();
+      int i2 = standardTabsOrder.indexOf(o2);
+      if (i2 == -1) i2 = standardTabsOrder.size();
       if (i1 != i2) {
         return i1 - i2;
       }
@@ -91,15 +98,14 @@ public class ArtifactPropertiesEditors {
     }
   }
 
-  @Nullable
-  public String getHelpId(String title) {
-    if (ArtifactPropertiesEditor.VALIDATION_TAB.equals(title)) {
+  public @Nullable String getHelpId(String title) {
+    if (ArtifactPropertiesEditor.VALIDATION_TAB_POINTER.get().equals(title)) {
       return "reference.project.structure.artifacts.validation";
     }
-    else if (ArtifactPropertiesEditor.PRE_PROCESSING_TAB.equals(title)) {
+    else if (ArtifactPropertiesEditor.PRE_PROCESSING_TAB_POINTER.get().equals(title)) {
       return "reference.project.structure.artifacts.preprocessing";
     }
-    else if (ArtifactPropertiesEditor.POST_PROCESSING_TAB.equals(title)) {
+    else if (ArtifactPropertiesEditor.POST_PROCESSING_TAB_POINTER.get().equals(title)) {
       return "reference.project.structure.artifacts.postprocessing";
     }
     for (PropertiesEditorInfo editorInfo : myEditors) {
@@ -109,6 +115,12 @@ public class ArtifactPropertiesEditors {
       }
     }
     return null;
+  }
+
+  public void disposeUIResources() {
+    for (PropertiesEditorInfo editor : myEditors) {
+      editor.myEditor.disposeUIResources();
+    }
   }
 
   private final class PropertiesEditorInfo {

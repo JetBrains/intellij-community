@@ -16,8 +16,7 @@
 package com.intellij.lang.ant.segments;
 
 import com.intellij.openapi.diagnostic.Logger;
-
-import java.awt.*;
+import com.intellij.util.ui.EDT;
 
 public class DeferredActionsQueueImpl implements DeferredActionsQueue {
   private static final Logger LOG = Logger.getInstance(DeferredActionsQueueImpl.class);
@@ -39,7 +38,7 @@ public class DeferredActionsQueueImpl implements DeferredActionsQueue {
     myCounter++;
     if (myCounter > 127) {
       myCounter = 0;
-      LOG.assertTrue(EventQueue.isDispatchThread());
+      LOG.assertTrue(EDT.isCurrentThreadEdt());
     }
   }
 

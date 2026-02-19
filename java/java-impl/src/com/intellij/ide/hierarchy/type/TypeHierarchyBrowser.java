@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.hierarchy.type;
 
 import com.intellij.ide.hierarchy.HierarchyNodeDescriptor;
@@ -16,10 +16,12 @@ import com.intellij.psi.PsiAnonymousClass;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.presentation.java.ClassPresentationUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JPanel;
+import javax.swing.JTree;
 import java.text.MessageFormat;
 import java.util.Comparator;
 import java.util.Map;
@@ -27,7 +29,7 @@ import java.util.Map;
 public class TypeHierarchyBrowser extends TypeHierarchyBrowserBase {
   private static final Logger LOG = Logger.getInstance(TypeHierarchyBrowser.class);
 
-  public TypeHierarchyBrowser(final Project project, final PsiClass psiClass) {
+  public TypeHierarchyBrowser(Project project, PsiClass psiClass) {
     super(project, psiClass);
   }
 
@@ -37,7 +39,7 @@ public class TypeHierarchyBrowser extends TypeHierarchyBrowserBase {
   }
 
   @Override
-  protected void createTrees(@NotNull Map<String, JTree> trees) {
+  protected void createTrees(@NotNull Map<? super @Nls String, ? super JTree> trees) {
     createTreeAndSetupCommonActions(trees, IdeActions.GROUP_TYPE_HIERARCHY_POPUP);
   }
 
@@ -64,13 +66,12 @@ public class TypeHierarchyBrowser extends TypeHierarchyBrowserBase {
   }
 
   @Override
-  @Nullable
-  protected JPanel createLegendPanel() {
+  protected @Nullable JPanel createLegendPanel() {
     return null;
   }
 
   @Override
-  protected boolean isApplicableElement(@NotNull final PsiElement element) {
+  protected boolean isApplicableElement(@NotNull PsiElement element) {
     return element instanceof PsiClass;
   }
 
@@ -86,7 +87,7 @@ public class TypeHierarchyBrowser extends TypeHierarchyBrowserBase {
   }
 
   @Override
-  protected HierarchyTreeStructure createHierarchyTreeStructure(@NotNull final String typeName, @NotNull final PsiElement psiElement) {
+  protected HierarchyTreeStructure createHierarchyTreeStructure(@NotNull String typeName, @NotNull PsiElement psiElement) {
     if (getSupertypesHierarchyType().equals(typeName)) {
       return new SupertypesHierarchyTreeStructure(myProject, (PsiClass)psiElement);
     }
@@ -103,12 +104,12 @@ public class TypeHierarchyBrowser extends TypeHierarchyBrowserBase {
   }
 
   @Override
-  protected boolean canBeDeleted(final PsiElement psiElement) {
+  protected boolean canBeDeleted(PsiElement psiElement) {
     return psiElement instanceof PsiClass && !(psiElement instanceof PsiAnonymousClass);
   }
 
   @Override
-  protected String getQualifiedName(final PsiElement psiElement) {
+  protected String getQualifiedName(PsiElement psiElement) {
     if (psiElement instanceof PsiClass) {
       return ((PsiClass)psiElement).getQualifiedName();
     }

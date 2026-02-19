@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.filters.getters;
 
 import com.intellij.codeInsight.completion.InsertionContext;
@@ -7,20 +7,26 @@ import com.intellij.codeInsight.lookup.LookupElementPresentation;
 import com.intellij.codeInsight.lookup.TypedLookupItem;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiClassType;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.SmartPointerManager;
+import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author peter
- */
 class ClassLiteralLookupElement extends LookupElement implements TypedLookupItem {
-  @NonNls private static final String DOT_CLASS = ".class";
-  @Nullable private final SmartPsiElementPointer<PsiClass> myClass;
+  private static final @NonNls String DOT_CLASS = ".class";
+  private final @Nullable SmartPsiElementPointer<PsiClass> myClass;
   private final PsiExpression myExpr;
   private final String myPresentableText;
   private final String myCanonicalText;
@@ -34,14 +40,13 @@ class ClassLiteralLookupElement extends LookupElement implements TypedLookupItem
     myExpr = JavaPsiFacade.getElementFactory(context.getProject()).createExpressionFromText(myCanonicalText + DOT_CLASS, context);
   }
 
-  @NotNull
   @Override
-  public String getLookupString() {
+  public @NotNull String getLookupString() {
     return myPresentableText + ".class";
   }
 
   @Override
-  public void renderElement(LookupElementPresentation presentation) {
+  public void renderElement(@NotNull LookupElementPresentation presentation) {
     presentation.setItemText(getLookupString());
     presentation.setIcon(myExpr.getIcon(0));
     String pkg = StringUtil.getPackageName(myCanonicalText);
@@ -50,15 +55,13 @@ class ClassLiteralLookupElement extends LookupElement implements TypedLookupItem
     }
   }
 
-  @Nullable
   @Override
-  public PsiElement getPsiElement() {
+  public @Nullable PsiElement getPsiElement() {
     return myClass == null ? null : myClass.getElement();
   }
 
-  @NotNull
   @Override
-  public Object getObject() {
+  public @NotNull Object getObject() {
     return myExpr;
   }
 
@@ -83,9 +86,15 @@ class ClassLiteralLookupElement extends LookupElement implements TypedLookupItem
   @Override
   public void handleInsert(@NotNull InsertionContext context) {
     final Document document = context.getEditor().getDocument();
-    document.replaceString(context.getStartOffset(), context.getTailOffset(), myCanonicalText + DOT_CLASS);
+    int offset = context.getTailOffset();
+    String replacement = myCanonicalText + DOT_CLASS;
+    if (document.getTextLength() > offset + DOT_CLASS.length() &&
+        document.getText(TextRange.from(offset, DOT_CLASS.length())).equals(DOT_CLASS)) {
+      replacement = myCanonicalText;
+    }
+    document.replaceString(context.getStartOffset(), offset, replacement);
     final Project project = context.getProject();
     PsiDocumentManager.getInstance(project).commitDocument(document);
-    JavaCodeStyleManager.getInstance(project).shortenClassReferences(context.getFile(), context.getStartOffset(), context.getTailOffset());
+    JavaCodeStyleManager.getInstance(project).shortenClassReferences(context.getFile(), context.getStartOffset(), offset);
   }
 }

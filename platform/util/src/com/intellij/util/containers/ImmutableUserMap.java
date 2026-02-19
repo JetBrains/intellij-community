@@ -1,16 +1,13 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.containers;
 
 import com.intellij.openapi.util.Key;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author peter
- */
 public abstract class ImmutableUserMap {
   public static final ImmutableUserMap EMPTY = new ImmutableUserMap() {
     @Override
-    public <T> T get(@NotNull final Key<T> key) {
+    public <T> T get(final @NotNull Key<T> key) {
       return null;
     }
   };
@@ -20,7 +17,7 @@ public abstract class ImmutableUserMap {
 
   public abstract <T> T get(@NotNull Key<T> key);
 
-  public final <T> ImmutableUserMap put(@NotNull final Key<T> key, final T value) {
+  public final <T> ImmutableUserMap put(final @NotNull Key<T> key, final T value) {
     return new ImmutableUserMapImpl<>(key, value, this);
   }
 
@@ -36,7 +33,7 @@ public abstract class ImmutableUserMap {
     }
 
     @Override
-    public <T> T get(@NotNull final Key<T> key) {
+    public <T> T get(final @NotNull Key<T> key) {
       if (key.equals(myKey)) return (T)myValue;
       return myNext.get(key);
     }

@@ -15,55 +15,45 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.textmate.TextMateLanguage;
 
 public class TextMateParserDefinition implements ParserDefinition {
-  private final static IFileElementType FILE_ELEMENT_TYPE = new IFileElementType("TextMate", TextMateLanguage.LANGUAGE);
+  private static final IFileElementType FILE_ELEMENT_TYPE = new IFileElementType("TextMate", TextMateLanguage.LANGUAGE);
 
-  @NotNull
   @Override
-  public Lexer createLexer(Project project) {
+  public @NotNull Lexer createLexer(Project project) {
     return new EmptyLexer();
   }
 
   @Override
-  public PsiParser createParser(Project project) {
+  public @NotNull PsiParser createParser(Project project) {
     return new TextMateParser();
   }
 
   @Override
-  public IFileElementType getFileNodeType() {
+  public @NotNull IFileElementType getFileNodeType() {
     return FILE_ELEMENT_TYPE;
   }
 
-  @NotNull
   @Override
-  public TokenSet getWhitespaceTokens() {
-    return TokenSet.WHITE_SPACE;
-  }
-
-  @NotNull
-  @Override
-  public TokenSet getCommentTokens() {
+  public @NotNull TokenSet getCommentTokens() {
     return TokenSet.EMPTY;
   }
 
-  @NotNull
   @Override
-  public TokenSet getStringLiteralElements() {
+  public @NotNull TokenSet getStringLiteralElements() {
     return TokenSet.EMPTY;
   }
 
-  @NotNull
   @Override
-  public PsiElement createElement(ASTNode node) {
+  public @NotNull PsiElement createElement(ASTNode node) {
     return new TextMatePsiElement(node.getElementType());
   }
 
   @Override
-  public PsiFile createFile(FileViewProvider viewProvider) {
+  public @NotNull PsiFile createFile(@NotNull FileViewProvider viewProvider) {
     return new TextMateFile(viewProvider);
   }
 
   @Override
-  public SpaceRequirements spaceExistenceTypeBetweenTokens(ASTNode left, ASTNode right) {
+  public @NotNull SpaceRequirements spaceExistenceTypeBetweenTokens(ASTNode left, ASTNode right) {
     return SpaceRequirements.MAY;
   }
 }

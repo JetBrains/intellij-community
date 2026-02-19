@@ -1,0 +1,13 @@
+// FIR_COMPARISON
+// FIR_IDENTICAL
+package one
+
+import two.Nest
+
+class Outer {
+    fun t(n: Nest) {
+    }
+}
+
+// ELEMENT: Nest
+// TAIL_TEXT: " (two)"

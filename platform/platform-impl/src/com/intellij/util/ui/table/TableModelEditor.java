@@ -1,27 +1,38 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.ui.table;
 
 import com.intellij.ide.IdeBundle;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonShortcuts;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
-import com.intellij.ui.*;
+import com.intellij.ui.AnActionButton;
+import com.intellij.ui.AnActionButtonRunnable;
+import com.intellij.ui.AnActionButtonUpdater;
+import com.intellij.ui.TableSpeedSearch;
+import com.intellij.ui.TableUtil;
+import com.intellij.ui.ToolbarDecorator;
 import com.intellij.ui.table.JBTable;
 import com.intellij.ui.table.TableView;
 import com.intellij.util.Function;
 import com.intellij.util.FunctionUtil;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.ui.*;
+import com.intellij.util.ui.CollectionItemEditor;
+import com.intellij.util.ui.CollectionModelEditor;
+import com.intellij.util.ui.ColumnInfo;
+import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.ListTableModel;
 import com.intellij.util.xmlb.XmlSerializer;
 import org.jdom.Element;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 import javax.swing.event.TableModelEvent;
 import javax.swing.event.TableModelListener;
 import javax.swing.table.TableModel;
@@ -52,15 +63,16 @@ public class TableModelEditor<T> extends CollectionModelEditor<T, CollectionItem
 
     model = new MyListTableModel(columns, new ArrayList<>(items));
     table = new TableView<>(model);
+    table.setShowGrid(false);
     table.setDefaultEditor(Enum.class, ComboBoxTableCellEditor.INSTANCE);
-    table.setStriped(true);
     table.setEnableAntialiasing(true);
     table.setPreferredScrollableViewportSize(JBUI.size(200, -1));
     table.setVisibleRowCount(JBTable.PREFERRED_SCROLLABLE_VIEWPORT_HEIGHT_IN_ROWS);
-    new TableSpeedSearch(table);
+    TableSpeedSearch.installOn(table);
     ColumnInfo firstColumn = columns[0];
     if ((firstColumn.getColumnClass() == boolean.class || firstColumn.getColumnClass() == Boolean.class) && firstColumn.getName().isEmpty()) {
       TableUtil.setupCheckboxColumn(table.getColumnModel().getColumn(0), 0);
+      JBTable.setupCheckboxShortcut(table, 0);
     }
 
    boolean needTableHeader = false;
@@ -104,7 +116,7 @@ public class TableModelEditor<T> extends CollectionModelEditor<T, CollectionItem
       return item != null && ((DialogItemEditor<T>)itemEditor).isEditable(item);
     });
 
-    if (((DialogItemEditor)itemEditor).isUseDialogToAdd()) {
+    if (((DialogItemEditor<?>)itemEditor).isUseDialogToAdd()) {
       toolbarDecorator.setAddAction(button -> {
         T item = createElement();
         ((DialogItemEditor<T>)itemEditor).edit(item, item1 -> {
@@ -115,19 +127,21 @@ public class TableModelEditor<T> extends CollectionModelEditor<T, CollectionItem
     }
   }
 
-  @NotNull
-  public TableModelEditor<T> disableUpDownActions() {
+  public @NotNull TableModelEditor<T> disableUpDownActions() {
     toolbarDecorator.disableUpDownActions();
     return this;
   }
 
-  @NotNull
-  public TableModelEditor<T> enabled(boolean value) {
+  public void setShowGrid(boolean v) {
+    table.setShowGrid(v);
+  }
+
+  public @NotNull TableModelEditor<T> enabled(boolean value) {
     table.setEnabled(value);
     return this;
   }
 
-  public static abstract class DataChangedListener<T> implements TableModelListener {
+  public abstract static class DataChangedListener<T> implements TableModelListener {
     public abstract void dataChanged(@NotNull ColumnInfo<T, ?> columnInfo, int rowIndex);
 
     @Override
@@ -141,13 +155,12 @@ public class TableModelEditor<T> extends CollectionModelEditor<T, CollectionItem
     return this;
   }
 
-  @NotNull
-  public ListTableModel<T> getModel() {
+  public @NotNull ListTableModel<T> getModel() {
     return model;
   }
 
   public interface DialogItemEditor<T> extends CollectionItemEditor<T> {
-    void edit(@NotNull T item, @NotNull Function<T, T> mutator, boolean isAdd);
+    void edit(@NotNull T item, @NotNull Function<? super T, ? extends T> mutator, boolean isAdd);
 
     void applyEdited(@NotNull T oldItem, @NotNull T newItem);
 
@@ -224,37 +237,51 @@ public class TableModelEditor<T> extends CollectionModelEditor<T, CollectionItem
     }
   }
 
-  @NotNull
-  public JComponent createComponent() {
-    return toolbarDecorator.addExtraAction(
-      new ToolbarDecorator.ElementActionButton(IdeBundle.message("button.copy"), PlatformIcons.COPY_ICON) {
-        @Override
-        public void actionPerformed(@NotNull AnActionEvent e) {
-          TableUtil.stopEditing(table);
+  public @NotNull JComponent createComponent() {
+    AnActionButton copyAction = new AnActionButton(IdeBundle.message("button.copy"), PlatformIcons.COPY_ICON) {
+      @Override
+      public void actionPerformed(@NotNull AnActionEvent e) {
+        TableUtil.stopEditing(table);
 
-          List<T> selectedItems = table.getSelectedObjects();
-          if (selectedItems.isEmpty()) {
-            return;
-          }
-
-          for (T item : selectedItems) {
-            model.addRow(itemEditor.clone(item, false));
-          }
-
-          IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(table, true));
-          TableUtil.updateScroller(table);
+        List<T> selectedItems = table.getSelectedObjects();
+        if (selectedItems.isEmpty()) {
+          return;
         }
+
+        for (T item : selectedItems) {
+          model.addRow(itemEditor.clone(item, false));
+        }
+
+        table.clearSelection();
+        TableUtil.selectRows(table, new int[]{table.getRowCount() - selectedItems.size()});
+        TableUtil.scrollSelectionToVisible(table);
       }
-    ).createPanel();
+
+      @Override
+      public void updateButton(@NotNull AnActionEvent e) {
+        e.getPresentation().setEnabled(!table.getSelectedObjects().isEmpty());
+      }
+
+      @Override
+      public @NotNull ActionUpdateThread getActionUpdateThread() {
+        return ActionUpdateThread.EDT;
+      }
+
+      @Override
+      public boolean isDumbAware() {
+        return true;
+      }
+    };
+    copyAction.setShortcut(CommonShortcuts.getDuplicate());
+    return toolbarDecorator.addExtraAction(copyAction).createPanel();
   }
 
-  @NotNull
   @Override
-  protected List<T> getItems() {
+  protected @NotNull List<T> getItems() {
     return model.items;
   }
 
-  public void selectItem(@NotNull final T item) {
+  public void selectItem(final @NotNull T item) {
     table.clearSelection();
 
     Ref<T> ref;
@@ -274,8 +301,7 @@ public class TableModelEditor<T> extends CollectionModelEditor<T, CollectionItem
     table.addSelection(ref == null || ref.isNull() ? item : ref.get());
   }
 
-  @NotNull
-  public List<T> apply() {
+  public @NotNull List<T> apply() {
     if (helper.hasModifiedItems()) {
       @SuppressWarnings("unchecked")
       final ColumnInfo<T, Object>[] columns = model.getColumnInfos();
@@ -305,7 +331,7 @@ public class TableModelEditor<T> extends CollectionModelEditor<T, CollectionItem
     model.setItems(new ArrayList<>(items));
   }
 
-  private class MyRemoveAction implements AnActionButtonRunnable, AnActionButtonUpdater, TableUtil.ItemChecker {
+  private final class MyRemoveAction implements AnActionButtonRunnable, AnActionButtonUpdater, TableUtil.ItemChecker {
     @Override
     public void run(AnActionButton button) {
       if (TableUtil.doRemoveSelectedItems(table, model, this)) {

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.properties.editor;
 
 import com.intellij.lang.properties.IProperty;
@@ -16,19 +16,32 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FactoryMap;
-import com.intellij.util.graph.*;
-import gnu.trove.THashMap;
+import com.intellij.util.graph.CachingSemiGraph;
+import com.intellij.util.graph.DFSTBuilder;
+import com.intellij.util.graph.Graph;
+import com.intellij.util.graph.GraphGenerator;
+import com.intellij.util.graph.InboundSemiGraph;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
+import it.unimi.dsi.fastutil.ints.IntList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
 
 /**
  * @author Dmitry Batkovich
  */
 public final class ResourceBundlePropertiesUpdateManager {
-  private final static Logger LOG = Logger.getInstance(ResourceBundlePropertiesUpdateManager.class);
+  private static final Logger LOG = Logger.getInstance(ResourceBundlePropertiesUpdateManager.class);
 
   private final ResourceBundle myResourceBundle;
   private final CodeStyleManager myCodeStyleManager;
@@ -151,16 +164,14 @@ public final class ResourceBundlePropertiesUpdateManager {
     }
   }
 
-  @Nullable
-  private static Pair<List<String>, Boolean> keysOrder(final ResourceBundle resourceBundle) {
+  private static @Nullable Pair<List<String>, Boolean> keysOrder(final ResourceBundle resourceBundle) {
     final List<PropertiesOrder> propertiesOrders =
       ContainerUtil.map(resourceBundle.getPropertiesFiles(), PropertiesOrder::new);
 
     final boolean[] isAlphaSorted = new boolean[]{true};
-    final Graph<String> generator = GraphGenerator.generate(CachingSemiGraph.cache(new InboundSemiGraph<String>() {
-      @NotNull
+    final Graph<String> generator = GraphGenerator.generate(CachingSemiGraph.cache(new InboundSemiGraph<>() {
       @Override
-      public Collection<String> getNodes() {
+      public @NotNull Collection<String> getNodes() {
         final Set<String> nodes = new LinkedHashSet<>();
         for (PropertiesOrder order : propertiesOrders) {
           nodes.addAll(order.myKeys);
@@ -168,9 +179,8 @@ public final class ResourceBundlePropertiesUpdateManager {
         return nodes;
       }
 
-      @NotNull
       @Override
-      public Iterator<String> getIn(String n) {
+      public @NotNull Iterator<String> getIn(String n) {
         final Collection<String> siblings = new LinkedHashSet<>();
 
         for (PropertiesOrder order : propertiesOrders) {
@@ -186,16 +196,16 @@ public final class ResourceBundlePropertiesUpdateManager {
       }
     }));
     DFSTBuilder<String> dfstBuilder = new DFSTBuilder<>(generator);
-    final boolean acyclic = dfstBuilder.isAcyclic();
+    boolean acyclic = dfstBuilder.isAcyclic();
     if (acyclic) {
+      List<String> sortedNodes = new ArrayList<>(generator.getNodes());
       if (isAlphaSorted[0]) {
-        final List<String> sortedNodes = new ArrayList<>(generator.getNodes());
         sortedNodes.sort(String.CASE_INSENSITIVE_ORDER);
-        return Pair.create(sortedNodes, true);
-      } else {
-        final List<String> dfsNodes = dfstBuilder.getSortedNodes();
-        Collections.reverse(dfsNodes);
-        return Pair.create(dfsNodes, false);
+        return new Pair<>(sortedNodes, true);
+      }
+      else {
+        sortedNodes.sort(dfstBuilder.comparator().reversed());
+        return new Pair<>(sortedNodes, false);
       }
     }
     else {
@@ -213,12 +223,12 @@ public final class ResourceBundlePropertiesUpdateManager {
 
   private static class PropertiesOrder {
     List<String> myKeys;
-    Map<String, IntArrayList> myKeyIndices;
+    Map<String, IntList> myKeyIndices;
 
     PropertiesOrder(@NotNull PropertiesFile file) {
       final List<IProperty> properties = file.getProperties();
       myKeys = new ArrayList<>(properties.size());
-      myKeyIndices = FactoryMap.createMap(k->new IntArrayList(1),()->new THashMap<>(properties.size()));
+      myKeyIndices = FactoryMap.createMap(k -> new IntArrayList(1), () -> new HashMap<>(properties.size()));
 
       int index = 0;
       for (IProperty property : properties) {
@@ -231,11 +241,10 @@ public final class ResourceBundlePropertiesUpdateManager {
       }
     }
 
-    @NotNull
-    public List<String> getNext(@NotNull String key) {
+    public @NotNull List<String> getNext(@NotNull String key) {
       List<String> nextProperties = null;
       if (myKeyIndices.containsKey(key)) {
-        final IntArrayList indices = myKeyIndices.get(key);
+        final IntList indices = myKeyIndices.get(key);
         for (int i = 0; i < indices.size(); i++) {
           final int searchIdx = indices.getInt(i) + 1;
           if (searchIdx < myKeys.size()) {

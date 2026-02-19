@@ -24,7 +24,9 @@ import org.intellij.plugins.relaxNG.RelaxngBundle;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.AbstractAction;
+import javax.swing.Action;
+import javax.swing.JComponent;
 import java.awt.event.ActionEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
@@ -51,7 +53,7 @@ public class ConvertSchemaDialog extends DialogWrapper implements PropertyChange
 
     init();
 
-    getOKAction().setEnabled(mySettings.getOutputDestination().trim().length() > 0);
+    getOKAction().setEnabled(!mySettings.getOutputDestination().trim().isEmpty());
   }
 
   @Override
@@ -67,8 +69,7 @@ public class ConvertSchemaDialog extends DialogWrapper implements PropertyChange
   }
 
   @Override
-  @Nullable
-  protected JComponent createCenterPanel() {
+  protected @Nullable JComponent createCenterPanel() {
     return mySettings.getRoot();
   }
 
@@ -81,7 +82,7 @@ public class ConvertSchemaDialog extends DialogWrapper implements PropertyChange
     if (ConvertSchemaSettingsImpl.OUTPUT_TYPE.equals(evt.getPropertyName())) {
       myAdvancedAction.setEnabled(mySettings.hasAdvancedSettings());
     } else if (ConvertSchemaSettingsImpl.OUTPUT_PATH.equals(evt.getPropertyName())) {
-      getOKAction().setEnabled(((String)evt.getNewValue()).trim().length() > 0);
+      getOKAction().setEnabled(!((String)evt.getNewValue()).trim().isEmpty());
     }
   }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.ui.configuration;
 
 import com.intellij.openapi.ui.GraphicsConfig;
@@ -9,11 +9,15 @@ import com.intellij.util.ui.GraphicsUtil;
 import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
 
-import javax.swing.*;
+import javax.swing.JLabel;
 import javax.swing.border.Border;
-import java.awt.*;
+import java.awt.Color;
+import java.awt.Component;
+import java.awt.Font;
+import java.awt.Graphics;
+import java.awt.Insets;
 
-public class SidePanelCountLabel extends JLabel {
+public final class SidePanelCountLabel extends JLabel {
   private boolean mySelected;
 
   public SidePanelCountLabel() {
@@ -54,7 +58,7 @@ public class SidePanelCountLabel extends JLabel {
     final GraphicsConfig config = GraphicsUtil.setupAAPainting(g);
     g.fillRoundRect(0, 3, getWidth() - 6 - 1, getHeight() - 6, getHeight() - 6, getHeight() - 6);
     config.restore();
-    setForeground(isSelected() ? deepBlue.darker() : UIUtil.getListForeground(true));
+    setForeground(isSelected() ? deepBlue.darker() : UIUtil.getListForeground(true, true));
 
     super.paintComponent(g);
   }

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2010 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.ant.dom;
 
 import com.intellij.codeInspection.LocalQuickFix;
@@ -35,35 +21,38 @@ import com.intellij.util.xml.DomUtil;
 import com.intellij.util.xml.GenericDomValue;
 import com.intellij.util.xml.highlighting.DomElementAnnotationHolder;
 import com.intellij.util.xml.highlighting.DomHighlightingHelper;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Set;
 
-public class AntResolveInspection extends AntInspection {
-
+public final class AntResolveInspection extends AntInspection {
   public static final String SHORT_NAME = "AntResolveInspection";
 
   @Override
-  @NotNull
-  public String getShortName() {
+  public @NotNull String getShortName() {
     return SHORT_NAME;
   }
 
   @Override
-  protected void checkDomElement(DomElement element, DomElementAnnotationHolder holder, DomHighlightingHelper helper) {
+  protected void checkDomElement(@NotNull DomElement element, @NotNull DomElementAnnotationHolder holder, @NotNull DomHighlightingHelper helper) {
     if (element instanceof GenericDomValue) {
-      final XmlElement valueElement = DomUtil.getValueElement(((GenericDomValue)element));
+      final XmlElement valueElement = DomUtil.getValueElement(((GenericDomValue<?>)element));
       if (valueElement != null) {
         checkReferences(valueElement, holder, element);
       }
     }
-    else if (element instanceof AntDomTypeDef) {
-      final AntDomTypeDef typeDef = (AntDomTypeDef)element;
+    else if (element instanceof AntDomTypeDef typeDef) {
       final List<String> errors = typeDef.getErrorDescriptions();
       if (!errors.isEmpty()) {
-        final StringBuilder builder = new StringBuilder();
+        final @Nls StringBuilder builder = new StringBuilder();
         builder.append(AntBundle.message("failed.to.load.types")).append(":");
         for (String error : errors) {
           builder.append("\n").append(error);
@@ -71,8 +60,7 @@ public class AntResolveInspection extends AntInspection {
         holder.createProblem(typeDef, builder.toString());
       }
     }
-    else if (element instanceof AntDomCustomElement) {
-      final AntDomCustomElement custom = (AntDomCustomElement)element;
+    else if (element instanceof AntDomCustomElement custom) {
       if (custom.getDefinitionClass() == null) {
         final AntDomNamedElement declaringElement = custom.getDeclaringElement();
         if (declaringElement instanceof AntDomTypeDef) {
@@ -94,10 +82,9 @@ public class AntResolveInspection extends AntInspection {
     Set<PsiReference> processed = null;
     Collection<PropertiesFile> propertyFiles = null; // to be initialized lazily
     for (final PsiReference ref : xmlElement.getReferences()) {
-      if (!(ref instanceof AntDomReference)) {
+      if (!(ref instanceof AntDomReference antDomRef)) {
         continue;
       }
-      final AntDomReference antDomRef = (AntDomReference)ref;
       if (antDomRef.shouldBeSkippedByAnnotator()) {
         continue;
       }
@@ -154,8 +141,7 @@ public class AntResolveInspection extends AntInspection {
     return false;
   }
 
-  @NotNull
-  private static Collection<PropertiesFile> getPropertyFiles(@Nullable AntDomProject antDomProject, @NotNull XmlElement stopElement) {
+  private static @NotNull Collection<PropertiesFile> getPropertyFiles(@Nullable AntDomProject antDomProject, @NotNull XmlElement stopElement) {
     if (antDomProject == null) {
       return Collections.emptyList();
     }
@@ -168,8 +154,7 @@ public class AntResolveInspection extends AntInspection {
       if (xmlElement != null && xmlElement.getTextOffset() >= stopOffset) {
         break; // no need to offer to add properties to files that are imported after the property reference
       }
-      if (child instanceof AntDomProperty) {
-        final AntDomProperty property = (AntDomProperty)child;
+      if (child instanceof AntDomProperty property) {
         final PropertiesFile file = property.getPropertiesFile();
         if (file != null) {
           files.add(file);

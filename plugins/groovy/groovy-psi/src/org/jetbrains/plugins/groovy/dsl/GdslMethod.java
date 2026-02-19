@@ -17,9 +17,6 @@ package org.jetbrains.plugins.groovy.dsl;
 
 import com.intellij.psi.PsiMethod;
 
-/**
- * @author peter
- */
 public class GdslMethod {
   public final PsiMethod psiMethod;
 

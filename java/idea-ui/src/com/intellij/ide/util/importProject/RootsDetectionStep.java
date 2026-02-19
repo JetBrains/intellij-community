@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.util.importProject;
 
 import com.intellij.ide.JavaUiBundle;
@@ -15,8 +15,15 @@ import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.Icon;
+import javax.swing.JButton;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import java.awt.BorderLayout;
+import java.awt.CardLayout;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
 import java.io.File;
 import java.util.Collections;
 import java.util.LinkedHashSet;
@@ -120,7 +127,7 @@ public class RootsDetectionStep extends AbstractStepWithProgress<List<DetectedRo
   @Override
   protected void onFinished(final List<DetectedRootData> foundRoots, final boolean canceled) {
     final CardLayout layout = (CardLayout)myResultPanel.getLayout();
-    if (!foundRoots.isEmpty() && !canceled) {
+    if (foundRoots != null && !foundRoots.isEmpty() && !canceled) {
       myCurrentBaseProjectPath = getBaseProjectPath();
       myDetectedRootsChooser.setElements(foundRoots);
       updateSelectedTypes();
@@ -144,8 +151,7 @@ public class RootsDetectionStep extends AbstractStepWithProgress<List<DetectedRo
   }
 
 
-  @Nullable
-  private String getBaseProjectPath() {
+  private @Nullable String getBaseProjectPath() {
     return myBuilder.getBaseProjectPath();
   }
 

@@ -1,0 +1,82 @@
+*:com.intellij.find.TextSearchService
+- s:getInstance():com.intellij.find.TextSearchService
+- a:isInSearchableScope(com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.project.Project):Z
+- a:processFilesWithText(java.lang.String,com.intellij.util.Processor,com.intellij.psi.search.GlobalSearchScope):com.intellij.find.TextSearchService$TextSearchResult
+*e:com.intellij.find.TextSearchService$TextSearchResult
+- java.lang.Enum
+- sf:FINISHED:com.intellij.find.TextSearchService$TextSearchResult
+- sf:NO_TRIGRAMS:com.intellij.find.TextSearchService$TextSearchResult
+- sf:STOPPED:com.intellij.find.TextSearchService$TextSearchResult
+- s:valueOf(java.lang.String):com.intellij.find.TextSearchService$TextSearchResult
+- s:values():com.intellij.find.TextSearchService$TextSearchResult[]
+f:com.intellij.psi.search.FileTypeIndex
+- *sf:INDEX_CHANGE_TOPIC:com.intellij.util.messages.Topic
+*:com.intellij.psi.search.FileTypeIndex$IndexChangeListener
+- a:onChangedForFileType(com.intellij.openapi.fileTypes.FileType):V
+f:com.intellij.psi.search.FilenameIndex
+- *s:firstVirtualFileWithName(java.lang.String,Z,com.intellij.psi.search.GlobalSearchScope,com.intellij.util.indexing.IdFilter):com.intellij.openapi.vfs.VirtualFile
+- *s:hasVirtualFileWithName(java.lang.String,Z,com.intellij.psi.search.GlobalSearchScope,com.intellij.util.indexing.IdFilter):Z
+f:com.intellij.psi.search.IndexPattern
+- *:getWordToHighlight():java.lang.String
+a:com.intellij.psi.stubs.StubIndex
+- *a:getMaxContainingFileCount(com.intellij.psi.stubs.StubIndexKey,java.lang.Object,com.intellij.openapi.project.Project,com.intellij.psi.search.GlobalSearchScope):I
+*Fa:com.intellij.util.indexing.BuildableRootsChangeRescanningInfo
+- com.intellij.openapi.project.RootsChangeRescanningInfo
+- a:addInheritedSdk():com.intellij.util.indexing.BuildableRootsChangeRescanningInfo
+- a:addLibrary(com.intellij.openapi.roots.libraries.Library):com.intellij.util.indexing.BuildableRootsChangeRescanningInfo
+- a:addSdk(com.intellij.openapi.projectRoots.Sdk):com.intellij.util.indexing.BuildableRootsChangeRescanningInfo
+- a:buildInfo():com.intellij.openapi.project.RootsChangeRescanningInfo
+- s:newInstance():com.intellij.util.indexing.BuildableRootsChangeRescanningInfo
+*:com.intellij.util.indexing.CompositeDataIndexer
+- com.intellij.util.indexing.DataIndexer
+- a:calculateSubIndexer(com.intellij.util.indexing.IndexedFile):java.lang.Object
+- a:getSubIndexerVersion(java.lang.Object):java.lang.Object
+- a:getSubIndexerVersionDescriptor():com.intellij.util.io.KeyDescriptor
+- map(com.intellij.util.indexing.FileContent):java.util.Map
+- a:map(com.intellij.util.indexing.FileContent,java.lang.Object):java.util.Map
+- requiresContentForSubIndexerEvaluation(com.intellij.util.indexing.IndexedFile):Z
+*c:com.intellij.util.indexing.DefaultFileTypeSpecificWithProjectInputFilter
+- com.intellij.util.indexing.FileBasedIndex$FileTypeSpecificInputFilter
+- com.intellij.util.indexing.FileBasedIndex$ProjectSpecificInputFilter
+- <init>(com.intellij.openapi.fileTypes.FileType[]):V
+- acceptInput(com.intellij.util.indexing.IndexedFile):Z
+- registerFileTypesUsedForIndexing(com.intellij.util.Consumer):V
+Fa:com.intellij.util.indexing.FileBasedIndex
+- *a:getContainingFilesIterator(com.intellij.util.indexing.ID,java.lang.Object,com.intellij.psi.search.GlobalSearchScope):java.util.Iterator
+- *:ignoreDumbMode(com.intellij.util.indexing.DumbModeAccessType,com.intellij.openapi.util.ThrowableComputable):java.lang.Object
+- *:ignoreDumbMode(com.intellij.util.indexing.DumbModeAccessType,java.lang.Runnable):V
+- *a:iterateNonIndexableFiles(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFileFilter,com.intellij.openapi.roots.ContentIterator):Z
+- *:processFilesContainingAllKeys(java.util.Collection,com.intellij.psi.search.GlobalSearchScope,com.intellij.util.Processor):Z
+*f:com.intellij.util.indexing.FileBasedIndex$AllKeysQuery
+- <init>(com.intellij.util.indexing.ID,java.util.Collection,com.intellij.openapi.util.Condition):V
+- getDataKeys():java.util.Collection
+- getIndexId():com.intellij.util.indexing.ID
+- getValueChecker():com.intellij.openapi.util.Condition
+*:com.intellij.util.indexing.FileBasedIndex$ProjectSpecificInputFilter
+- com.intellij.util.indexing.FileBasedIndex$InputFilter
+- acceptInput(com.intellij.openapi.vfs.VirtualFile):Z
+- a:acceptInput(com.intellij.util.indexing.IndexedFile):Z
+a:com.intellij.util.indexing.FileBasedIndexExtension
+- com.intellij.util.indexing.IndexExtension
+- *:canBeShared():Z
+a:com.intellij.util.indexing.IndexableSetContributor
+- *:acceptFile(com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.project.Project):Z
+*:com.intellij.util.indexing.hints.FileTypeIndexingHint
+- a:acceptsFileTypeFastPath(com.intellij.openapi.fileTypes.FileType):com.intellij.util.ThreeState
+- a:slowPathIfFileTypeHintUnsure(com.intellij.util.indexing.IndexedFile):Z
+*:com.intellij.util.indexing.roots.IndexableFilesContributor
+- a:getIndexableFiles(com.intellij.openapi.project.Project):java.util.List
+- a:getOwnFilePredicate(com.intellij.openapi.project.Project):java.util.function.Predicate
+*:com.intellij.util.indexing.roots.IndexableFilesIterator
+- a:getDebugName():java.lang.String
+- a:getIndexingProgressText():java.lang.String
+- a:getOrigin():com.intellij.util.indexing.roots.kind.IndexableSetOrigin
+- a:getRootUrls(com.intellij.openapi.project.Project):java.util.Set
+- a:getRootsScanningProgressText():java.lang.String
+- a:iterateFiles(com.intellij.openapi.project.Project,com.intellij.openapi.roots.ContentIterator,com.intellij.openapi.vfs.VirtualFileFilter):Z
+*:com.intellij.util.indexing.roots.kind.ContentOrigin
+- com.intellij.util.indexing.roots.kind.IndexableSetOrigin
+*:com.intellij.util.indexing.roots.kind.IndexableSetOrigin
+*:com.intellij.util.indexing.roots.kind.ProjectFileOrDirOrigin
+- com.intellij.util.indexing.roots.kind.IndexableSetOrigin
+- a:getFileOrDir():com.intellij.openapi.vfs.VirtualFile

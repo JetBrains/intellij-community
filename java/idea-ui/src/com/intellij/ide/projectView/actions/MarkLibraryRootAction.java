@@ -1,6 +1,7 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.projectView.actions;
 
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
@@ -20,6 +21,8 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import static com.intellij.openapi.vfs.newvfs.NewVirtualFile.asCacheAvoiding;
+
 public class MarkLibraryRootAction extends AnAction {
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
@@ -33,8 +36,7 @@ public class MarkLibraryRootAction extends AnAction {
     new CreateLibraryFromFilesDialog(project, roots).show();
   }
 
-  @NotNull
-  private static List<VirtualFile> getRoots(@NotNull AnActionEvent e) {
+  private static @NotNull List<VirtualFile> getRoots(@NotNull AnActionEvent e) {
     final Project project = getEventProject(e);
     final VirtualFile[] files = e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY);
     if (project == null || files == null || files.length == 0) return Collections.emptyList();
@@ -61,6 +63,7 @@ public class MarkLibraryRootAction extends AnAction {
     if (project != null && ModuleManager.getInstance(project).getModules().length > 0) {
       final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
       for (VirtualFile root : getRoots(e)) {
+        root = asCacheAvoiding(root);
         if (!root.isInLocalFileSystem() && FileUtilRt.extensionEquals(root.getName(), "jar") && !fileIndex.isInLibraryClasses(root)) {
           visible = true;
           break;
@@ -80,5 +83,10 @@ public class MarkLibraryRootAction extends AnAction {
     }
 
     e.getPresentation().setEnabledAndVisible(visible);
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 }

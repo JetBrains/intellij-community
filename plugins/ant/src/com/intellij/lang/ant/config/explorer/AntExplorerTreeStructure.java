@@ -1,10 +1,15 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.ant.config.explorer;
 
 import com.intellij.ide.util.treeView.AbstractTreeStructure;
 import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.lang.ant.AntBundle;
-import com.intellij.lang.ant.config.*;
+import com.intellij.lang.ant.config.AntBuildFile;
+import com.intellij.lang.ant.config.AntBuildFileBase;
+import com.intellij.lang.ant.config.AntBuildModel;
+import com.intellij.lang.ant.config.AntBuildTarget;
+import com.intellij.lang.ant.config.AntBuildTargetBase;
+import com.intellij.lang.ant.config.AntConfiguration;
 import com.intellij.lang.ant.config.impl.MetaTarget;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -12,6 +17,7 @@ import com.intellij.openapi.util.ActionCallback;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.ui.JBColor;
 import com.intellij.util.ArrayUtilRt;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -27,9 +33,9 @@ final class AntExplorerTreeStructure extends AbstractTreeStructure {
   private boolean myFilteredTargets = false;
   private static final Comparator<AntBuildTarget> ourTargetComparator = (target1, target2) -> {
     final String name1 = target1.getDisplayName();
-    if (name1 == null) return Integer.MIN_VALUE;
+    if (name1 == null) return -1;
     final String name2 = target2.getDisplayName();
-    if (name2 == null) return Integer.MAX_VALUE;
+    if (name2 == null) return 1;
     return name1.compareToIgnoreCase(name2);
   };
 
@@ -38,7 +44,7 @@ final class AntExplorerTreeStructure extends AbstractTreeStructure {
   }
 
   @Override
-  public boolean isToBuildChildrenInBackground(@NotNull final Object element) {
+  public boolean isToBuildChildrenInBackground(final @NotNull Object element) {
     return true;
   }
 
@@ -48,8 +54,7 @@ final class AntExplorerTreeStructure extends AbstractTreeStructure {
   }
 
   @Override
-  @NotNull
-  public AntNodeDescriptor createDescriptor(@NotNull Object element, NodeDescriptor parentDescriptor) {
+  public @NotNull AntNodeDescriptor createDescriptor(@NotNull Object element, NodeDescriptor parentDescriptor) {
     if (element == myRoot) {
       return new RootNodeDescriptor(myProject, parentDescriptor);
     }
@@ -75,20 +80,19 @@ final class AntExplorerTreeStructure extends AbstractTreeStructure {
     final AntConfiguration configuration = AntConfiguration.getInstance(myProject);
     if (element == myRoot) {
       if (!configuration.isInitialized()) {
-        return new Object[] {AntBundle.message("loading.ant.config.progress")};
+        return new Object[] {AntBundle.message("progress.text.loading.ant.config")};
       }
-      return configuration.getBuildFileList().isEmpty() ? new Object[]{AntBundle.message("ant.tree.structure.no.build.files.message")} : configuration.getBuildFiles();
+      return configuration.getBuildFiles();
     }
 
-    if (element instanceof AntBuildFile) {
-      final AntBuildFile buildFile = (AntBuildFile)element;
+    if (element instanceof AntBuildFile buildFile) {
       final AntBuildModel model = buildFile.getModel();
 
       final List<AntBuildTarget> targets =
         new ArrayList<>(Arrays.asList(myFilteredTargets ? model.getFilteredTargets() : model.getTargets()));
       targets.sort(ourTargetComparator);
 
-      final List<AntBuildTarget> metaTargets = Arrays.asList(configuration.getMetaTargets(buildFile));
+      final List<AntBuildTarget> metaTargets = new ArrayList<>(Arrays.asList(configuration.getMetaTargets(buildFile)));
       metaTargets.sort(ourTargetComparator);
       targets.addAll(metaTargets);
 
@@ -99,8 +103,7 @@ final class AntExplorerTreeStructure extends AbstractTreeStructure {
   }
 
   @Override
-  @Nullable
-  public Object getParentElement(@NotNull Object element) {
+  public @Nullable Object getParentElement(@NotNull Object element) {
     if (element instanceof AntBuildTarget) {
       if (element instanceof MetaTarget) {
         return ((MetaTarget)element).getBuildFile();
@@ -125,15 +128,13 @@ final class AntExplorerTreeStructure extends AbstractTreeStructure {
     return PsiDocumentManager.getInstance(myProject).hasUncommitedDocuments();
   }
 
-  @NotNull
   @Override
-  public ActionCallback asyncCommit() {
+  public @NotNull ActionCallback asyncCommit() {
     return asyncCommitDocuments(myProject);
   }
 
-  @NotNull
   @Override
-  public Object getRootElement() {
+  public @NotNull Object getRootElement() {
     return myRoot;
   }
 
@@ -159,7 +160,7 @@ final class AntExplorerTreeStructure extends AbstractTreeStructure {
   }
 
   private static final class TextInfoNodeDescriptor extends AntNodeDescriptor {
-    TextInfoNodeDescriptor(Project project, NodeDescriptor parentDescriptor, String text) {
+    TextInfoNodeDescriptor(Project project, NodeDescriptor parentDescriptor, @Nls String text) {
       super(project, parentDescriptor);
       myName = text;
       myColor = JBColor.blue;

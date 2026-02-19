@@ -1,0 +1,71 @@
+{
+  "inspections": [
+    {
+      "id": "MismatchedStringCase",
+      "cweIds": [
+        597
+      ],
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "ObjectsEqualsCanBeSimplified",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "JavacQuirks",
+      "codeQualityCategory": "Performance"
+    },
+    {
+      "id": "ReplacePrintlnWithLogging",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "IncorrectFormatting",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "ReassignedToPlainText",
+      "codeQualityCategory": "Unspecified"
+    },
+    {
+      "id": "LossyEncoding",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "RedundantSuppression",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "TodoComment",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "EmptyDirectory",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "NonAsciiCharacters",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "IgnoreFileDuplicateEntry",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "InconsistentLineSeparators",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "ProblematicWhitespace",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "LongLine",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "Annotator",
+      "codeQualityCategory": "Sanity"
+    }
+  ]
+}

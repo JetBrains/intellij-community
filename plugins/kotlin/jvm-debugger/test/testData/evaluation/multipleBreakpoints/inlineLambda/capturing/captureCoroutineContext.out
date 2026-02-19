@@ -1,0 +1,11 @@
+LineBreakpoint created at captureCoroutineContext.kt:13
+LineBreakpoint created at captureCoroutineContext.kt:20
+Run Java
+Connected to the target VM
+captureCoroutineContext.kt:13
+Compile bytecode for block()
+captureCoroutineContext.kt:20
+Compile bytecode for block()
+Disconnected from the target VM
+
+Process finished with exit code 0

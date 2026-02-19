@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang;
 
 import com.intellij.openapi.util.NlsContexts;
@@ -7,6 +7,8 @@ import com.intellij.psi.tree.TokenSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.List;
 
 public interface SyntaxTreeBuilder {
   /**
@@ -43,8 +45,22 @@ public interface SyntaxTreeBuilder {
    * Slightly easier way to what {@link ITokenTypeRemapper} does (i.e. it just remaps current token to a given type).
    *
    * @param type new type for the current token.
+   * @see #remapCurrentTokenAndRestoreOnRollback
    */
-  void remapCurrentToken(IElementType type);
+  void remapCurrentToken(@NotNull IElementType type);
+
+  /**
+   * Similar to {@link #remapCurrentToken(IElementType)}, but records the original token type,
+   * which will be restored if any marker encompassing the current token is rolled back.
+   * <br/><br/>
+   * If invoked multiple times on the same token, then on marker rollback the token type
+   * that existed before the first invocation will be restored.
+   *
+   * @param type the new type for the current token
+   */
+  default void remapCurrentTokenAndRestoreOnRollback(@NotNull IElementType type) {
+    throw new UnsupportedOperationException();
+  }
 
   /**
    * Subscribe for notification on default whitespace and comments skipped events.
@@ -56,7 +72,7 @@ public interface SyntaxTreeBuilder {
   /**
    * See what token type is in {@code steps} ahead.
    *
-   * @param steps 0 is current token (i.e. the same {@link PsiBuilder#getTokenType()} returns)
+   * @param steps 0 is current token (i.e., the same {@link PsiBuilder#getTokenType()} returns)
    * @return type element which {@link #getTokenType()} will return if we call advance {@code steps} times in a row
    */
   @Nullable
@@ -65,7 +81,7 @@ public interface SyntaxTreeBuilder {
   /**
    * See what token type is in {@code steps} ahead/behind.
    *
-   * @param steps 0 is current token (i.e. the same {@link PsiBuilder#getTokenType()} returns)
+   * @param steps 0 is current token (i.e., the same {@link PsiBuilder#getTokenType()} returns)
    * @return type element ahead or behind, including whitespace/comment tokens
    */
   @Nullable
@@ -74,7 +90,7 @@ public interface SyntaxTreeBuilder {
   /**
    * See what token type is in {@code steps} ahead/behind current position.
    *
-   * @param steps 0 is current token (i.e. the same {@link #getTokenType()} returns)
+   * @param steps 0 is current token (i.e., the same {@link #getTokenType()} returns)
    * @return offset type element ahead or behind, including whitespace/comment tokens, -1 if first token,
    * {@code getOriginalText().getLength()} at end
    */
@@ -95,6 +111,28 @@ public interface SyntaxTreeBuilder {
   @NonNls
   @Nullable
   String getTokenText();
+
+  /**
+   * Advance lexer by {@code steps} tokens (including whitespace or comments tokens) ahead of current position.
+   * Afterward, any whitespace or comment tokens will be skipped. This method used together with {@link #rawLookup(int)} may
+   * bring performance benefits when collapsing large code blocks with
+   * {@link com.intellij.psi.tree.IReparseableElementType} tokens.
+   * <br/><br/>
+   * The default implementation does not bring any performance benefits over {@link #advanceLexer()} method and should be overridden.
+   *
+   * @param steps a positive integer
+   */
+  default void rawAdvanceLexer(int steps) {
+    if (steps < 0) {
+      throw new IllegalArgumentException("Steps must be a positive integer - lexer can only be advanced. " +
+                                         "Use Marker.rollbackTo if you want to rollback PSI building.");
+    }
+    if (steps == 0) return;
+    int offset = rawTokenTypeStart(steps);
+    while (!eof() && getCurrentOffset() < offset) {
+      advanceLexer();
+    }
+  }
 
   /**
    * Returns the start offset of the current token, or the file length when the token stream is over.
@@ -128,7 +166,7 @@ public interface SyntaxTreeBuilder {
 
   /**
    * Enables or disables the builder debug mode. In debug mode, the builder will print stack trace
-   * to marker allocation position if one is not done when calling {@link #getTreeBuilt()}.
+   * to marker allocation position if one is not done when calling {@link PsiBuilder#getTreeBuilt()}.
    *
    * @param dbgMode the debug mode value.
    */
@@ -139,11 +177,47 @@ public interface SyntaxTreeBuilder {
   /**
    * @return latest left done node for context dependent parsing.
    */
-  @Nullable
-  LighterASTNode getLatestDoneMarker();
+  @Nullable LighterASTNode getLatestDoneMarker();
+
+  default @NotNull List<? extends Production> getProductions() {
+    throw new UnsupportedOperationException("not implemented for this kind of Builder");
+  }
 
   default boolean isWhitespaceOrComment(@NotNull IElementType elementType) {
     return false;
+  }
+
+  interface Production extends LighterASTNode {
+    @Override
+    default IElementType getTokenType() {
+      throw new UnsupportedOperationException("not implemented for this kind of markers");
+    }
+
+    @Override
+    default int getStartOffset() {
+      throw new UnsupportedOperationException("not implemented for this kind of markers");
+    }
+
+    @Override
+    default int getEndOffset() {
+      throw new UnsupportedOperationException("not implemented for this kind of markers");
+    }
+
+    default int getStartIndex() {
+      throw new UnsupportedOperationException("not implemented for this kind of markers");
+    }
+
+    default int getEndIndex() {
+      throw new UnsupportedOperationException("not implemented for this kind of markers");
+    }
+
+    default @NlsContexts.DetailedDescription @Nullable String getErrorMessage() {
+      return null;
+    }
+
+    default boolean isCollapsed() {
+      return false;
+    }
   }
 
   /**
@@ -151,7 +225,7 @@ public interface SyntaxTreeBuilder {
    * tree. The ranges defined by markers within the text range of the current marker
    * become child nodes of the node defined by the current marker.
    */
-  interface Marker {
+  interface Marker extends Production {
     /**
      * Creates and returns a new marker starting immediately before the start of
      * this marker and extending after its end. Can be called on a completed or

@@ -20,7 +20,6 @@ import org.intellij.plugins.xsltDebugger.rt.engine.Debugger;
 import org.intellij.plugins.xsltDebugger.rt.engine.Value;
 import org.intellij.plugins.xsltDebugger.rt.engine.local.LocalDebugger;
 
-import javax.rmi.PortableRemoteObject;
 import javax.xml.transform.Result;
 import javax.xml.transform.Source;
 import javax.xml.transform.Transformer;
@@ -32,9 +31,10 @@ import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
+import java.rmi.server.UnicastRemoteObject;
 import java.util.List;
 
-public final class DebuggerServer extends PortableRemoteObject implements RemoteDebugger {
+public final class DebuggerServer extends UnicastRemoteObject implements RemoteDebugger {
   private static final String XSLT_DEBUGGER = "XsltDebugger";
   private static final int PORT = 34275;
 

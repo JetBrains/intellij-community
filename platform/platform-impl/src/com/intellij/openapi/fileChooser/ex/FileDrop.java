@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileChooser.ex;
 
 import com.intellij.ide.dnd.FileCopyPasteUtil;
@@ -6,13 +6,18 @@ import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 
-import javax.swing.*;
-import java.awt.dnd.*;
+import javax.swing.JComponent;
+import javax.swing.TransferHandler;
+import java.awt.dnd.DropTarget;
+import java.awt.dnd.DropTargetDragEvent;
+import java.awt.dnd.DropTargetDropEvent;
+import java.awt.dnd.DropTargetEvent;
+import java.awt.dnd.DropTargetListener;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
-public class FileDrop {
+public final class FileDrop {
   public FileDrop(JComponent c, final Target target) {
     final DropTargetListener listener = new DropTargetListener() {
       @Override
@@ -47,7 +52,7 @@ public class FileDrop {
           }
         }
 
-        if (files.size() > 0) {
+        if (!files.isEmpty()) {
           target.dropFiles(files);
         }
       }
@@ -59,6 +64,6 @@ public class FileDrop {
   public interface Target {
     FileChooserDescriptor getDescriptor();
     boolean isHiddenShown();
-    void dropFiles(List<VirtualFile> files);
+    void dropFiles(List<? extends VirtualFile> files);
   }
 }
