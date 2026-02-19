@@ -23,10 +23,10 @@ import com.intellij.util.ui.JBUI
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import org.jetbrains.plugins.terminal.DetectedShellInfo
-import org.jetbrains.plugins.terminal.block.reworked.session.rpc.TerminalShellsDetectorApi
+import org.jetbrains.plugins.terminal.shellDetection.TerminalShellsDetectionApi
 import org.jetbrains.plugins.terminal.fus.TerminalOpeningWay
 import org.jetbrains.plugins.terminal.fus.TerminalStartupFusInfo
+import org.jetbrains.plugins.terminal.shellDetection.DetectedShellInfo
 import org.jetbrains.plugins.terminal.ui.OpenPredefinedTerminalActionProvider
 import org.jetbrains.plugins.terminal.util.terminalProjectScope
 import java.awt.Point
@@ -92,7 +92,7 @@ internal class TerminalNewPredefinedSessionAction : DumbAwareAction() {
 
   private suspend fun detectShells(project: Project): List<OpenShellAction> {
     // Fetch shells from the backend
-    return TerminalShellsDetectorApi.getInstance()
+    return TerminalShellsDetectionApi.getInstance()
       .detectShells(project.projectId())
       .groupByTo(LinkedHashMap(), DetectedShellInfo::name)
       .values

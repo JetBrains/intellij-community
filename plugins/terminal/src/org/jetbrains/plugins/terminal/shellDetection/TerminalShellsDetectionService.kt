@@ -1,5 +1,5 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.plugins.terminal
+package org.jetbrains.plugins.terminal.shellDetection
 
 import com.intellij.execution.wsl.WSLDistribution
 import com.intellij.execution.wsl.WslDistributionManager
@@ -27,7 +27,7 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.terminal.runner.LocalTerminalStartCommandBuilder
 
 @ApiStatus.Internal
-object TerminalShellsDetector {
+object TerminalShellsDetectionService {
   private val UNIX_BINARIES_DIRECTORIES = listOf(
     "/bin",
     "/usr/bin",
@@ -36,7 +36,6 @@ object TerminalShellsDetector {
   )
 
   private val UNIX_SHELL_NAMES = listOf("bash", "zsh", "fish", "pwsh")
-
   /**
    * Finds available shells in the local file system using some heuristics.
    */
@@ -145,16 +144,3 @@ object TerminalShellsDetector {
     return stat(path).justResolve().eelIt().getOrNull()?.type is EelFileInfo.Type.Regular
   }
 }
-
-@ApiStatus.Internal
-@Serializable
-data class DetectedShellInfo(
-  /** Name of the shell, for example, zsh or Windows PowerShell */
-  val name: @NlsSafe String,
-  /** Absolute path of the shell executable */
-  val path: String,
-  /** Additional command line options that should be used to start this shell */
-  val options: List<String> = emptyList(),
-  @Transient
-  val eelDescriptor: EelDescriptor = LocalEelDescriptor,
-)

@@ -92,6 +92,7 @@ import org.jetbrains.plugins.terminal.runner.LocalShellIntegrationInjector
 import org.jetbrains.plugins.terminal.runner.LocalTerminalStartCommandBuilder
 import org.jetbrains.plugins.terminal.settings.TerminalApplicationTitleShowingMode
 import org.jetbrains.plugins.terminal.settings.TerminalSettingsProvider
+import org.jetbrains.plugins.terminal.shellDetection.TerminalShellsDetectionService
 import org.jetbrains.plugins.terminal.util.updateActionShortcut
 import java.awt.Color
 import java.awt.Component
@@ -470,7 +471,7 @@ internal class TerminalOptionsConfigurable(private val project: Project) : Bound
       historyProvider = {
         // Use shells detector directly because this code is executed on backend.
         // But in any other cases, shell should be fetched from backend using TerminalShellsDetectorApi.
-        TerminalShellsDetector.detectShells().map { shellInfo ->
+        TerminalShellsDetectionService.detectShells().map { shellInfo ->
           val filteredOptions = shellInfo.options.filter {
             // Do not show login and interactive options in the UI.
             // They anyway will be substituted implicitly in the shell starting logic.
