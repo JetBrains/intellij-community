@@ -590,4 +590,15 @@ public class Py3UnresolvedReferencesInspectionTest extends PyInspectionTestCase 
     assertSdkRootsNotParsed(aPy);
     Reference.reachabilityFence(cPyNode);
   }
+
+  // PY-87343
+  public void testNewTypeUnion() {
+    doTestByText("""
+                   from typing import NewType
+                   
+                   MyId = NewType("MyId", int)
+                   
+                   val: MyId | None = None
+                   """);
+  }
 }
