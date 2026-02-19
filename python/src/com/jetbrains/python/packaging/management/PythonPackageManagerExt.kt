@@ -3,10 +3,12 @@
 
 package com.jetbrains.python.packaging.management
 
+import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.jetbrains.python.NON_INTERACTIVE_ROOT_TRACE_CONTEXT
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.errorProcessing.PyResult
+import com.jetbrains.python.orLogException
 import com.jetbrains.python.packaging.PyPackageName
 import com.jetbrains.python.packaging.PyRequirement
 import com.jetbrains.python.packaging.common.PythonPackage
@@ -31,7 +33,7 @@ fun PythonPackageManager.waitInitBlocking() {
 fun PythonPackageManager.reloadPackagesBlocking() {
   runBlockingMaybeCancellable {
     withContext(NON_INTERACTIVE_ROOT_TRACE_CONTEXT) {
-      reloadPackages().orThrow()
+      reloadPackages().orLogException(thisLogger())
     }
   }
 }
