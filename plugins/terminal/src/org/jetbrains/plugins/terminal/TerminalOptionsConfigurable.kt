@@ -34,6 +34,7 @@ import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.text.Strings
 import com.intellij.platform.eel.provider.LocalEelDescriptor
+import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.platform.rpc.topics.broadcast
 import com.intellij.terminal.TerminalUiSettingsManager
 import com.intellij.ui.DocumentAdapter
@@ -469,17 +470,8 @@ internal class TerminalOptionsConfigurable(private val project: Project) : Bound
       project,
       FileChooserDescriptorFactory.singleFile().withDescription(message("settings.terminal.shell.executable.path.browseFolder.description")),
       historyProvider = {
-        // Use shells detector directly because this code is executed on backend.
-        // But in any other cases, shell should be fetched from backend using TerminalShellsDetectorApi.
-        TerminalShellsDetectionService.detectShells().map { shellInfo ->
-          val filteredOptions = shellInfo.options.filter {
-            // Do not show login and interactive options in the UI.
-            // They anyway will be substituted implicitly in the shell starting logic.
-            // So, there is no need to specify them in the settings.
-            it != LocalTerminalStartCommandBuilder.INTERACTIVE_CLI_OPTION && !LocalTerminalDirectRunner.LOGIN_CLI_OPTIONS.contains(it)
-          }
-          val shellCommand = (listOf(shellInfo.path) + filteredOptions)
-          ParametersListUtil.join(shellCommand)
+        runWithModalProgressBlocking(project, "") {
+          detectAvailableShellCommandLines(project)
         }
       },
     )
@@ -489,6 +481,21 @@ internal class TerminalOptionsConfigurable(private val project: Project) : Bound
       }
     })
     return shellPathField
+  }
+
+  private suspend fun detectAvailableShellCommandLines(project: Project): List<String> {
+    // Use shells detector directly because this code is executed on the backend.
+    // But in any other cases, shells should be fetched from the backend using TerminalShellsDetectionApi.
+    return TerminalShellsDetectionService.detectShells(project).map { shellInfo ->
+      val filteredOptions = shellInfo.options.filter {
+        // Do not show login and interactive options in the UI.
+        // They anyway will be substituted implicitly in the shell starting logic.
+        // So, there is no need to specify them in the settings.
+        it != LocalTerminalStartCommandBuilder.INTERACTIVE_CLI_OPTION && !LocalTerminalDirectRunner.LOGIN_CLI_OPTIONS.contains(it)
+      }
+      val shellCommand = (listOf(shellInfo.path) + filteredOptions)
+      ParametersListUtil.join(shellCommand)
+    }
   }
 }
 
