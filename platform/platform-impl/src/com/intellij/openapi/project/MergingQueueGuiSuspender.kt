@@ -4,8 +4,8 @@ package com.intellij.openapi.project
 import com.intellij.ide.IdeBundle
 import com.intellij.openapi.application.AccessToken
 import com.intellij.openapi.diagnostic.Logger
-import com.intellij.openapi.progress.impl.ProgressSuspender
 import com.intellij.openapi.util.NlsContexts
+import com.intellij.platform.ide.progress.suspender.TaskSuspender
 import com.intellij.util.containers.ContainerUtil
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.coroutineScope
@@ -17,7 +17,7 @@ import java.util.function.Supplier
 @VisibleForTesting
 class MergingQueueGuiSuspender {
   @Volatile
-  private var myCurrentSuspender: ProgressSuspender? = null
+  private var myCurrentSuspender: TaskSuspender? = null
   private val myRequestedSuspensions: MutableList<@NlsContexts.ProgressText String> = ContainerUtil.createConcurrentList()
 
   fun suspendAndRun(activityName: @NlsContexts.ProgressText String, activity: Runnable) {
@@ -46,12 +46,12 @@ class MergingQueueGuiSuspender {
 
   fun resumeProgressIfPossible() {
     val suspender = myCurrentSuspender
-    if (suspender != null && suspender.isSuspended) {
-      suspender.resumeProcess()
+    if (suspender != null && suspender.isPaused()) {
+      suspender.resume()
     }
   }
 
-  fun <T> setCurrentSuspenderAndSuspendIfRequested(suspender: ProgressSuspender?, runnable: Supplier<T>): T {
+  fun <T> setCurrentSuspenderAndSuspendIfRequested(suspender: TaskSuspender?, runnable: Supplier<T>): T {
     if (suspender == null) return runnable.get()
 
     LOG.assertTrue(myCurrentSuspender == null, "Already suspended in another thread, or recursive invocation.")
@@ -68,24 +68,24 @@ class MergingQueueGuiSuspender {
 
   private fun resumeAutoSuspendedTask(reason: @NlsContexts.ProgressText String) {
     val currentSuspender = myCurrentSuspender
-    if (currentSuspender != null && currentSuspender.isSuspended && reason == currentSuspender.suspendedText) {
-      currentSuspender.resumeProcess()
+    if (currentSuspender != null && currentSuspender.isPaused()) {
+      currentSuspender.resume()
       suspendIfRequested(currentSuspender) // take the following reason from the queue (if any)
     }
   }
 
-  private fun suspendIfRequested(suspender: ProgressSuspender) {
+  private fun suspendIfRequested(suspender: TaskSuspender) {
     var suspendedReason: String?
     synchronized(myRequestedSuspensions) { suspendedReason = myRequestedSuspensions.lastOrNull() }
     if (suspendedReason != null) {
-      suspender.suspendProcess(suspendedReason)
+      suspender.pause(suspendedReason)
     }
   }
 
   private fun suspendCurrentTask(reason: @NlsContexts.ProgressText String) {
     val currentSuspender = myCurrentSuspender
-    if (currentSuspender != null && !currentSuspender.isSuspended) {
-      currentSuspender.suspendProcess(reason)
+    if (currentSuspender != null && !currentSuspender.isPaused()) {
+      currentSuspender.pause(reason)
     }
   }
 

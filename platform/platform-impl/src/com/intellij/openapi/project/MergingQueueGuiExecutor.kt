@@ -108,7 +108,7 @@ open class MergingQueueGuiExecutor<T : MergeableQueueTask<T>> protected construc
 
   open fun processTasksWithProgress(reporter: RawProgressReporter,
                                     activity: StructuredIdeActivity?): SubmissionReceipt? {
-    return guiSuspender.setCurrentSuspenderAndSuspendIfRequested(TODO(), Supplier<SubmissionReceipt?> {
+    return guiSuspender.setCurrentSuspenderAndSuspendIfRequested(TaskSuspender.getContextSuspender(), Supplier<SubmissionReceipt?> {
       while (true) {
         if (project.isDisposed) return@Supplier null
 

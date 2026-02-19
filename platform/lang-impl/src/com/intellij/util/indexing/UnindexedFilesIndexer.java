@@ -17,6 +17,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.Strings;
 import com.intellij.platform.diagnostic.telemetry.TelemetryManager;
 import com.intellij.platform.diagnostic.telemetry.helpers.TraceKt;
+import com.intellij.platform.ide.progress.suspender.TaskSuspender;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.gist.GistManager;
@@ -142,8 +143,8 @@ public final class UnindexedFilesIndexer extends DumbModeTask {
 
     ProgressIndicator indicator = ProgressIndicatorProvider.getGlobalProgressIndicator();
     indicator.setIndeterminate(false);
-    var originalSuspender = ProgressSuspender.getSuspender(unwrapAll(indicator));
-    Function0<Boolean> pauseCondition = originalSuspender == null ? () -> false : originalSuspender::isSuspended;
+    var suspender = TaskSuspender.getContextSuspender();
+    Function0<Boolean> pauseCondition = suspender == null ? () -> false : suspender::isPaused;
 
     QueuedFiles queuedFiles = getExplicitlyRequestedFiles();
     projectDumbIndexingHistory.setScanningIds(queuedFiles.getScanningIds());
