@@ -112,4 +112,16 @@ class PyTypingNewType(
 class PyTypingNewTypeFactoryType(type: PyTypingNewType)
   : PyCallableTypeImpl(listOf(PyCallableParameterImpl.nonPsi(type.classType.toInstance())), type.toInstance()) {
   override val name: String = type.name
+
+  override fun resolveMember(
+    name: String,
+    location: PyExpression?,
+    direction: AccessDirection,
+    resolveContext: PyResolveContext,
+  ): List<RatedResolveResult>? {
+    if (name == "__or__") {
+      return listOf(RatedResolveResult(RatedResolveResult.RATE_NORMAL, null))
+    }
+    return super.resolveMember(name, location, direction, resolveContext)
+  }
 }
