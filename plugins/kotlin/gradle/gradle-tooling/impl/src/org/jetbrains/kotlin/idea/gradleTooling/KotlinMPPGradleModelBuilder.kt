@@ -120,7 +120,9 @@ class KotlinMPPGradleModelBuilder : AbstractModelBuilderService() {
     ): List<KotlinSourceSetImpl> {
         val sourceSetBuilder = KotlinSourceSetBuilder(importingContext)
         return importingContext.kotlinExtensionReflection.sourceSets
-            .mapNotNull { sourceSetReflection -> sourceSetBuilder.buildKotlinSourceSet(sourceSetReflection) }
+            .mapNotNull { sourceSetReflection ->
+                sourceSetBuilder.buildKotlinSourceSet(sourceSetReflection, importingContext.kotlinGradlePluginVersion)
+            }
     }
 
     private fun buildTargets(
