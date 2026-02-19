@@ -7,14 +7,20 @@ import org.gradle.api.Project
 import org.jetbrains.kotlin.idea.gradleTooling.reflect.KotlinSourceSetReflection
 import java.nio.file.Path
 
-internal fun Project.getKotlinSourceSetGeneratedSourceRoots(): List<Path> {
+// KotlinSourceSet.generatedKotlin was introduced in Kotlin Gradle plugin 2.3.0
+private const val MIN_KOTLIN_PLUGIN_VERSION = "2.3.0"
+
+internal fun Project.getKotlinSourceSetGeneratedSourceRoots(
+    kotlinPluginVersion: KotlinGradlePluginVersion?
+): List<Path> {
+    if (kotlinPluginVersion == null || kotlinPluginVersion < MIN_KOTLIN_PLUGIN_VERSION) return emptyList()
+
     val kotlinExtension = project.extensions.findByName("kotlin") ?: return emptyList()
     val kotlinExtensionClass = kotlinExtension.javaClass
     val getSourceSets = kotlinExtensionClass.getMethodOrNull("getSourceSets") ?: return emptyList()
     val sourceSets = getSourceSets.invoke(kotlinExtension) as NamedDomainObjectCollection<*>
-    val generatedSourceRoots = sourceSets.map { it as Named }.fold(mutableListOf<Path>()) { acc, named ->
-        named.getKotlinSourceSetGeneratedSourceRoots()?.let { acc.addAll(it) }
-        acc
+    val generatedSourceRoots = sourceSets.map { it as Named }.flatMap {
+        it.getKotlinSourceSetGeneratedSourceRoots() ?: emptyList()
     }
     return generatedSourceRoots.toList()
 }
