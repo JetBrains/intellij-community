@@ -331,7 +331,7 @@ private class JavaVirtualThreadContainerItem(private val containerName: String, 
   override val stackTrace: @NlsSafe String
     get() = ""
   override val interestLevel: Int
-    get() = 100 // todo dependent on the number of children, for now kept on top
+    get() = Int.MAX_VALUE // todo dependent on the number of children, for now kept on top
   override val icon: Icon
     get() = IconsCache.getIconWithVirtualOverlay(AllIcons.Debugger.ThreadGroup)
   override val iconToolTip: @Nls String

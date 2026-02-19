@@ -159,7 +159,7 @@ private object CoroutineRootDumpItem : MergeableDumpItem {
 
     override val stackTrace: String = ""
 
-    override val interestLevel: Int = 100 // for now kept on top
+    override val interestLevel: Int = Int.MAX_VALUE // for now kept on top
 
     override val isDeadLocked: Boolean
         get() = false
