@@ -105,6 +105,12 @@ interface MergeableToken {
   override fun hashCode(): Int
 
   val item: DumpItem
+
+  /** This token corresponds to a unique item which cannot be merged with others. */
+  class Unique(override val item: DumpItem) : MergeableToken {
+    override fun equals(other: Any?): Boolean = super.equals(other)
+    override fun hashCode(): Int = super.hashCode()
+  }
 }
 
 @ApiStatus.Internal
@@ -336,11 +342,7 @@ private class JavaVirtualThreadContainerItem(private val containerName: String, 
   override val awaitingDumpItems: Set<DumpItem>
     get() = emptySet()
 
-  override val mergeableToken: MergeableToken = object : MergeableToken {
-    override fun equals(other: Any?) = super.equals(other)
-    override fun hashCode() = super.hashCode()
-    override val item = this@JavaVirtualThreadContainerItem
-  }
+  override val mergeableToken: MergeableToken = MergeableToken.Unique(this)
 
   companion object {
     // see jdk.internal.vm.ThreadContainers.RootContainer.name
@@ -357,12 +359,6 @@ private class JavaVirtualThreadContainerItem(private val containerName: String, 
 }
 
 class InfoDumpItem(private val title: @Nls String, private val details: @NlsSafe String) : MergeableDumpItem {
-  override val mergeableToken: MergeableToken = object : MergeableToken {
-    override fun equals(other: Any?) = super.equals(other)
-    override fun hashCode() = super.hashCode()
-    override val item = this@InfoDumpItem
-  }
-
   override val name: @NlsSafe String
     get() = title
   override val stateDesc: @NlsSafe String
@@ -392,5 +388,7 @@ class InfoDumpItem(private val title: @Nls String, private val details: @NlsSafe
 
   override val parentTreeId: Long?
     get() = null
+
+  override val mergeableToken: MergeableToken = MergeableToken.Unique(this)
 }
 

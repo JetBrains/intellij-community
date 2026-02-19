@@ -176,9 +176,5 @@ private object CoroutineRootDumpItem : MergeableDumpItem {
 
     override val canBeHidden: Boolean get() = true
 
-    override val mergeableToken: MergeableToken get() = object : MergeableToken {
-        override val item get() = this@CoroutineRootDumpItem
-        override fun equals(other: Any?) = other is MergeableToken && item == other.item
-        override fun hashCode() = item.hashCode()
-    }
+    override val mergeableToken: MergeableToken = MergeableToken.Unique(this)
 }
