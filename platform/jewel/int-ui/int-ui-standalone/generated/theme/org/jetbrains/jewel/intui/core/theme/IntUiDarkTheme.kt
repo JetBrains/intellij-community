@@ -238,6 +238,7 @@ public object IntUiDarkTheme : ThemeDescriptor {
                     "Teal11" to Color(0xFF9BDDD6),
                     "Teal12" to Color(0xFFB9EBE6),
                 ),
+            isIslands = false,
         )
 
     override val iconData: ThemeIconData =
