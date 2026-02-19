@@ -6,7 +6,7 @@ package com.intellij.platform.ijent
 import com.intellij.platform.eel.EelDescriptor
 import com.intellij.platform.eel.EelPlatform
 
-interface IjentSession<T : IjentApi> {
+interface IjentSession {
   val isRunning: Boolean
   val platform: EelPlatform
   val remotePathToBinary: String  // TODO Use IjentPath.Absolute.
@@ -15,9 +15,17 @@ interface IjentSession<T : IjentApi> {
 
   fun close()
 
-  fun getIjentInstance(descriptor: EelDescriptor): T
+  fun getIjentInstance(descriptor: EelDescriptor): IjentApi
 
   enum class LogLevel {
     INFO, DEBUG, TRACE
+  }
+
+  interface Posix : IjentSession {
+    override fun getIjentInstance(descriptor: EelDescriptor): IjentPosixApi
+  }
+
+  interface Windows : IjentSession {
+    override fun getIjentInstance(descriptor: EelDescriptor): IjentWindowsApi
   }
 }
