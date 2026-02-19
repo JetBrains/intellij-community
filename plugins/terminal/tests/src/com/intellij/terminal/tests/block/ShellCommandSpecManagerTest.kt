@@ -134,6 +134,31 @@ internal class ShellCommandSpecManagerTest : BasePlatformTestCase() {
   }
 
   @Test
+  fun `override replacing spec`() = runBlocking {
+    val replacingSpec = ShellCommandSpec(commandName) {
+      subcommands {
+        subcommand("firstCmd")
+        subcommand("secondCmd")
+      }
+    }
+    val overrideSpec = ShellCommandSpec(commandName) {
+      subcommands {
+        subcommand("thirdCmd")
+      }
+    }
+
+    val specsProvider = TestCommandSpecsProvider(
+      ShellCommandSpecInfo.create(replacingSpec, ShellCommandSpecConflictStrategy.REPLACE),
+      ShellCommandSpecInfo.create(overrideSpec, ShellCommandSpecConflictStrategy.OVERRIDE),
+    )
+    mockCommandSpecProviders(specsProvider)
+
+    val spec = commandSpecsManager.getCommandSpec(commandName) ?: error("Failed to load $commandName command spec")
+    val subcommands = spec.subcommandsGenerator.generate(runtimeContext)
+    assertSameElements(subcommands.map { it.name }, listOf("firstCmd", "secondCmd", "thirdCmd"))
+  }
+
+  @Test
   fun `override not fully loaded json-based spec`() = runBlocking {
     val overrideSpec = ShellCommandSpec(commandName) {
       subcommands {
