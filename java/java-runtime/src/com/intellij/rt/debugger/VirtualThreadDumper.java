@@ -17,6 +17,7 @@ public final class VirtualThreadDumper {
   private final MethodHandle containersRootHandle;
   private final MethodHandle containerChildrenHandle;
   private final MethodHandle containerThreadsHandle;
+  private final MethodHandle containerNameHandle;
 
   private final MethodHandle threadIsVirtualHandle;
   private final MethodHandle threadThreadState;
@@ -35,6 +36,7 @@ public final class VirtualThreadDumper {
     containersRootHandle = lookup.findStatic(threadContainersClass, "root", MethodType.methodType(threadContainerClass));
     containerChildrenHandle = lookup.findVirtual(threadContainerClass, "children", MethodType.methodType(Stream.class));
     containerThreadsHandle = lookup.findVirtual(threadContainerClass, "threads", MethodType.methodType(Stream.class));
+    containerNameHandle = lookup.findVirtual(threadContainerClass, "name", MethodType.methodType(String.class));
 
     // VirtualThread & Co., since Java 21
     threadIsVirtualHandle = lookup.findVirtual(Thread.class, "isVirtual", MethodType.methodType(boolean.class));
@@ -142,7 +144,7 @@ public final class VirtualThreadDumper {
   private int saveContainerInfo(Object container, int parentContainerOrdinal) throws Throwable {
     assert containerNames.size() == containerParentOrdinals.size();
     int ordinal = containerNames.size();
-    containerNames.add(container.toString());
+    containerNames.add((String)containerNameHandle.invoke(container));
     containerReferences.add(container);
     containerParentOrdinals.add(parentContainerOrdinal);
     return ordinal;
