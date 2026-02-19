@@ -603,6 +603,7 @@ private fun assembleWorkspace(): TWorkspace = workspace(KotlinPluginMode.K1) {
                     "convertToStringTemplateInterpolationPrefix",
                     "addAnnotationUseSiteTarget/allTarget",
                     "contextParameters",
+                    "replaceRepeatWithForLoop"
                     // end K2-only features
                 )
             )

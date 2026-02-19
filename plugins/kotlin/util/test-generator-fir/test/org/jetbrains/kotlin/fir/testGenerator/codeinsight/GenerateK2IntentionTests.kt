@@ -185,6 +185,7 @@ internal fun MutableTWorkspace.generateK2IntentionTests() {
             model("${idea}intentions/removeSingleExpressionStringTemplate", pattern = pattern, isIgnored = true)
             model("${idea}intentions/convertToConcatenatedStringMultiDollarPrefix", pattern = pattern)
             model("${idea}intentions/contextParameters", pattern = pattern)
+            model("${idea}intentions/replaceRepeatWithForLoop", pattern = pattern)
         }
 
         testClass<AbstractK2IntentionInInjectionTest> {

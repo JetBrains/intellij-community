@@ -5768,6 +5768,11 @@ public abstract class K1IntentionTestGenerated extends AbstractK1IntentionTest {
                 runTest("testData/intentions/convertForEachToForLoop/returnFromNestedForLoop.kt");
             }
 
+            @TestMetadata("returnFromNestedLambda.kt")
+            public void testReturnFromNestedLambda() throws Exception {
+                runTest("testData/intentions/convertForEachToForLoop/returnFromNestedLambda.kt");
+            }
+
             @TestMetadata("simple.kt")
             public void testSimple() throws Exception {
                 runTest("testData/intentions/convertForEachToForLoop/simple.kt");

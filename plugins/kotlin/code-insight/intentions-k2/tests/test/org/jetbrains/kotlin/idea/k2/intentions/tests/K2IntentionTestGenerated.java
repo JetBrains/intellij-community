@@ -5056,6 +5056,11 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
                 runTest("../../../idea/tests/testData/intentions/convertForEachToForLoop/returnFromNestedForLoop.kt");
             }
 
+            @TestMetadata("returnFromNestedLambda.kt")
+            public void testReturnFromNestedLambda() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/convertForEachToForLoop/returnFromNestedLambda.kt");
+            }
+
             @TestMetadata("simple.kt")
             public void testSimple() throws Exception {
                 runTest("../../../idea/tests/testData/intentions/convertForEachToForLoop/simple.kt");
@@ -16235,6 +16240,120 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
             public void testSingleParameter() throws Exception {
                 runTest("../../../idea/tests/testData/intentions/contextParameters/regularParameterToContextParameter/singleParameter.kt");
             }
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../../idea/tests/testData/intentions/replaceRepeatWithForLoop")
+    public static class ReplaceRepeatWithForLoop extends AbstractK2IntentionTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K2;
+        }
+
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("comments.kt")
+        public void testComments() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/replaceRepeatWithForLoop/comments.kt");
+        }
+
+        @TestMetadata("emptyReplace.kt")
+        public void testEmptyReplace() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/replaceRepeatWithForLoop/emptyReplace.kt");
+        }
+
+        @TestMetadata("explicitParameter.kt")
+        public void testExplicitParameter() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/replaceRepeatWithForLoop/explicitParameter.kt");
+        }
+
+        @TestMetadata("expressionCount.kt")
+        public void testExpressionCount() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/replaceRepeatWithForLoop/expressionCount.kt");
+        }
+
+        @TestMetadata("itParameter.kt")
+        public void testItParameter() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/replaceRepeatWithForLoop/itParameter.kt");
+        }
+
+        @TestMetadata("namedParameter.kt")
+        public void testNamedParameter() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/replaceRepeatWithForLoop/namedParameter.kt");
+        }
+
+        @TestMetadata("nestedRepeat.kt")
+        public void testNestedRepeat() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/replaceRepeatWithForLoop/nestedRepeat.kt");
+        }
+
+        @TestMetadata("nonLocalReturn.kt")
+        public void testNonLocalReturn() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/replaceRepeatWithForLoop/nonLocalReturn.kt");
+        }
+
+        @TestMetadata("qualifiedRepeat.kt")
+        public void testQualifiedRepeat() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/replaceRepeatWithForLoop/qualifiedRepeat.kt");
+        }
+
+        @TestMetadata("returnFromNestedForLoop.kt")
+        public void testReturnFromNestedForLoop() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/replaceRepeatWithForLoop/returnFromNestedForLoop.kt");
+        }
+
+        @TestMetadata("returnFromNestedLambda.kt")
+        public void testReturnFromNestedLambda() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/replaceRepeatWithForLoop/returnFromNestedLambda.kt");
+        }
+
+        @TestMetadata("shadowedIt.kt")
+        public void testShadowedIt() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/replaceRepeatWithForLoop/shadowedIt.kt");
+        }
+
+        @TestMetadata("simpleReplace.kt")
+        public void testSimpleReplace() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/replaceRepeatWithForLoop/simpleReplace.kt");
+        }
+
+        @TestMetadata("tripleNestedRepeat.kt")
+        public void testTripleNestedRepeat() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/replaceRepeatWithForLoop/tripleNestedRepeat.kt");
+        }
+
+        @TestMetadata("underscoredParameter.kt")
+        public void testUnderscoredParameter() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/replaceRepeatWithForLoop/underscoredParameter.kt");
+        }
+
+        @TestMetadata("userDefinedRepeat.kt")
+        public void testUserDefinedRepeat() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/replaceRepeatWithForLoop/userDefinedRepeat.kt");
+        }
+
+        @TestMetadata("variableCount.kt")
+        public void testVariableCount() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/replaceRepeatWithForLoop/variableCount.kt");
+        }
+
+        @TestMetadata("withNestedReturn.kt")
+        public void testWithNestedReturn() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/replaceRepeatWithForLoop/withNestedReturn.kt");
+        }
+
+        @TestMetadata("withReturn.kt")
+        public void testWithReturn() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/replaceRepeatWithForLoop/withReturn.kt");
+        }
+
+        @TestMetadata("zero.kt")
+        public void testZero() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/replaceRepeatWithForLoop/zero.kt");
         }
     }
 }
