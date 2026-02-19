@@ -4,8 +4,7 @@ package com.intellij.openapi.project;
 import com.intellij.internal.statistic.StructuredIdeActivity;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPointName;
-import com.intellij.openapi.progress.util.ProgressIndicatorBase;
-import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
+import kotlinx.coroutines.Job;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -43,15 +42,15 @@ public final class DumbServiceMergingTaskQueue extends MergingTaskQueue<DumbMode
   }
 
   @Override
-  protected QueuedDumbModeTask wrapTask(DumbModeTask task, ProgressIndicatorBase indicator) {
-    return new QueuedDumbModeTask(task, indicator);
+  protected QueuedDumbModeTask wrapTask(DumbModeTask task, Job taskJob) {
+    return new QueuedDumbModeTask(task, taskJob);
   }
 
   @ApiStatus.Internal
   public final class QueuedDumbModeTask extends MergingTaskQueue.QueuedTask<DumbModeTask> {
     QueuedDumbModeTask(@NotNull DumbModeTask task,
-                       @NotNull ProgressIndicatorEx progress) {
-      super(task, progress);
+                       @NotNull Job taskJob) {
+      super(task, taskJob);
     }
 
     @Override
