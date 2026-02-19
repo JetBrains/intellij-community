@@ -145,32 +145,31 @@ class CompoundDumpItem<T : DumpItem>(
 
 @ApiStatus.Internal
 fun toDumpItems(threadStates: List<ThreadState>): List<MergeableDumpItem> =
-  toDumpItems(threadStates, emptyList(), emptyList(), emptyList())
+  toDumpItems(threadStates, emptyList())
 
 @ApiStatus.Internal
-fun toDumpItems(threadStates: List<ThreadState>, threadContainerNames: List<String>, threadContainerRefs: List<ObjectReference>, parentContainerOrdinals: List<Int>): List<MergeableDumpItem> {
-  val dumpItems = threadStates.map(::JavaThreadDumpItem)
+fun toDumpItems(threadStates: List<ThreadState>, threadContainerDescriptors: List<JavaThreadContainerDesc>): List<MergeableDumpItem> {
+  val threadDumpItems = threadStates.map(::JavaThreadDumpItem)
 
-  val statesToItems = threadStates.zip(dumpItems).toMap()
+  val statesToItems = threadStates.zip(threadDumpItems).toMap()
 
   for ((threadState, dumpItem) in statesToItems) {
     val awaitingItems = threadState.awaitingThreads.mapNotNull { statesToItems[it] }.toSet()
     dumpItem.setAwaitingItems(awaitingItems)
   }
 
-  val threadContainers = threadContainerNames.withIndex().map { (index, name) ->
-    val id = threadContainerRefs[index].uniqueID()
-    val parentOrdinal = parentContainerOrdinals[index]
-    if (parentOrdinal == -1) {
-      JavaVirtualThreadContainerItem(name, id, null)
-    } else {
-      val parentId = threadContainerRefs[parentOrdinal].uniqueID()
-      JavaVirtualThreadContainerItem(name, id, parentId)
-    }
+  val threadContainerDumpItems = threadContainerDescriptors.map {
+    JavaVirtualThreadContainerItem(it.name, it.containerRef.uniqueID(), it.parentContainerRef?.uniqueID())
   }
-
-  return dumpItems + threadContainers
+  return threadDumpItems + threadContainerDumpItems
 }
+
+@ApiStatus.Internal
+data class JavaThreadContainerDesc(
+  val name: String,
+  val containerRef: ObjectReference,
+  val parentContainerRef: ObjectReference?
+)
 
 private class JavaThreadDumpItem(private val threadState: ThreadState) : MergeableDumpItem {
   override val name: String = threadState.name

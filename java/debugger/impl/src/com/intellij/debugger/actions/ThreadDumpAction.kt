@@ -30,6 +30,7 @@ import com.intellij.rt.debugger.VirtualThreadDumper
 import com.intellij.threadDumpParser.ThreadDumpParser
 import com.intellij.threadDumpParser.ThreadState
 import com.intellij.unscramble.InfoDumpItem
+import com.intellij.unscramble.JavaThreadContainerDesc
 import com.intellij.unscramble.MergeableDumpItem
 import com.intellij.unscramble.toDumpItems
 import com.intellij.util.lang.JavaVersion
@@ -613,7 +614,13 @@ internal class JavaVirtualThreadsProvider : ThreadDumpItemsProviderFactory() {
       require(threadContainerNames.size == parentContainerOrdinals.size) { "The number of thread container names should be equal the number of corresponding parent container ordinals." }
 
       val threadStates = buildVirtualThreadStates(packedThreadsAndStackTraces, threadIds, threadContainerRefs)
-      return toDumpItems(threadStates, threadContainerNames, threadContainerRefs, parentContainerOrdinals)
+
+      val threadContainerDescriptors = threadContainerNames.indices.map { i ->
+        val parentOrdinal = parentContainerOrdinals[i]
+        val parentContainerRef = if (parentOrdinal == -1) null else threadContainerRefs[parentOrdinal]
+        JavaThreadContainerDesc(threadContainerNames[i], threadContainerRefs[i], parentContainerRef)
+      }
+      return toDumpItems(threadStates, threadContainerDescriptors)
     }
 
     private fun buildVirtualThreadStates(packedThreadsAndStackTraces: List<Value?>, threadIds: List<Value?>, threadContainerRefs: List<ObjectReference>): List<ThreadState> {
