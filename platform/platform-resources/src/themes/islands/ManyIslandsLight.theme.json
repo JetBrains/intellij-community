@@ -260,6 +260,7 @@
     "feedback-warning-border": "accent-warning-border-secondary",
     "feedback-error-bg": "accent-error-bg-secondary",
     "feedback-error-border": "accent-error-border-secondary",
+    "feedback-control-border": "control-border",
 
     "selection-bg-active": "blue-140",
     "selection-bg-active-muted": "blue-150",
@@ -272,6 +273,14 @@
     "tab-selected-border-inactive": "gray-130",
     "tab-bg-hovered": "core-bg-transparent-hovered",
     "tab-file-color-mask-bg": "#FFFFFF80",
+
+    "got-it-bg": "feedback-bg",
+    "got-it-border": "feedback-border",
+    "got-it-text-link": "text-link",
+    "got-it-text-step": "gray-90",
+    "got-it-shortcut-bg": "control-bg-small",
+    "got-it-code-border": "inlay-border",
+    "got-it-contrast-button-bg": "control-brand-bg",
 
     "inlay-bg": "transparent-black-20",
     "inlay-border": "transparent-black-50",
@@ -771,7 +780,7 @@
       "iconHoverBackground": "toolbar-bg-hovered",
       "Button": {
         "background": "feedback-bg",
-        "borderColor": "control-border-raised",
+        "borderColor": "feedback-control-border",
         "foreground": "text-default"
       },
       "MoreButton": {
@@ -988,29 +997,33 @@
     },
 
     "GotItTooltip": {
-      "background": "feedback-bg",
-      "borderColor": "feedback-border",
+      "background": "got-it-bg",
+      "borderColor": "got-it-border",
+
       "foreground": "text-default",
-      "stepForeground": "text-secondary",
-      "secondaryActionForeground": "text-link",
       "Header.foreground": "text-default",
-      "shortcutForeground": "text-default",
-      "shortcutBackground": "control-bg-small",
-      "codeForeground": "text-default",
-      "codeBackground": "feedback-bg",
-      "codeBorderColor": "control-border-raised",
-      "linkForeground": "text-link",
-      "linkUnderlineHoveredColor": "text-link",
+      "secondaryActionForeground": "got-it-text-link",
+      "linkForeground": "got-it-text-link",
       "linkUnderlineDefaultColor": "transparent",
+      "linkUnderlineHoveredColor": "got-it-text-link",
+      "stepForeground": "got-it-text-step",
+
+      "shortcutForeground": "text-default",
+      "shortcutBackground": "got-it-shortcut-bg",
+      "codeForeground": "text-default",
+      "codeBackground": "got-it-bg",
+      "codeBorderColor": "control-border-raised",
+
       "imageBorderColor": "control-border",
-      "animationBackground": "control-bg-small",
+      "animationBackground": "gray-140",
+
       "Button": {
         "foreground": "text-default",
         "startBackground": "control-bg",
         "endBackground": "control-bg",
-        "startBorderColor": "control-border-small",
-        "endBorderColor": "control-border-small",
-        "contrastBackground": "control-brand-bg"
+        "startBorderColor": "feedback-control-border",
+        "endBorderColor": "feedback-control-border",
+        "contrastBackground": "got-it-contrast-button-bg"
       }
     },
 

@@ -141,7 +141,7 @@
     "transparent-white-20": "#FFFFFF17",
     "transparent-white-30":  "#FFFFFF21",
     "transparent-white-40": "#FFFFFF29",
-    "transparent-white-50":  "#FFFFFF45",
+    "transparent-white-50":  "#FFFFFF3B",
     "transparent-black-10": "#00000008",
     "transparent-black-20": "#00000012",
     "transparent-black-30":  "#00000020",
@@ -260,6 +260,7 @@
     "feedback-warning-border": "accent-warning-border-secondary",
     "feedback-error-bg": "accent-error-bg-secondary",
     "feedback-error-border": "accent-error-border-secondary",
+    "feedback-control-border": "control-border-over-accent",
 
     "selection-bg-active": "blue-50",
     "selection-bg-active-muted": "blue-40",
@@ -274,7 +275,12 @@
     "tab-file-color-mask-bg": "#1E1F2280",
 
     "got-it-bg": "blue-60",
+    "got-it-border": "blue-60",
     "got-it-text-link": "blue-110",
+    "got-it-text-step": "gray-90",
+    "got-it-shortcut-bg": "accent-brand-bg-secondary",
+    "got-it-code-border": "#FFFFFF70",
+    "got-it-contrast-button-bg": "accent-brand-bg-secondary",
 
     "inlay-bg": "transparent-white-30",
     "inlay-border": "transparent-white-50",
@@ -748,7 +754,7 @@
       "iconHoverBackground": "toolbar-bg-hovered",
       "Button": {
         "background": "feedback-bg",
-        "borderColor": "control-border-raised",
+        "borderColor": "feedback-control-border",
         "foreground": "text-default"
       },
       "MoreButton": {
@@ -1004,30 +1010,34 @@
 
     "GotItTooltip": {
       "background": "got-it-bg",
-      "borderColor": "got-it-bg",
+      "borderColor": "got-it-border",
+
       "foreground": "text-default",
       "Header.foreground": "text-default",
-      "stepForeground": "blue-100",
       "secondaryActionForeground": "got-it-text-link",
-      "shortcutForeground": "text-default",
-      "shortcutBackground": "accent-brand-bg-secondary",
-      "codeForeground": "text-default",
-      "codeBackground": "got-it-bg",
-      "codeBorderColor": "#FFFFFF70",
       "linkForeground": "got-it-text-link",
       "linkUnderlineDefaultColor": "got-it-text-link",
       "linkUnderlineHoveredColor": "got-it-text-link",
-      "imageBorderColor": "feedback-border",
-      "animationBackground": "#1E1F22",
+      "stepForeground": "got-it-text-step",
+
+      "shortcutForeground": "text-default",
+      "shortcutBackground": "got-it-shortcut-bg",
+      "codeForeground": "text-default",
+      "codeBackground": "got-it-bg",
+      "codeBorderColor": "got-it-code-border",
       "iconFillColor": "got-it-bg",
       "iconBorderColor": "icon-over-accent",
+
+      "imageBorderColor": "got-it-bg",
+      "animationBackground": "gray-20",
+
       "Button": {
         "foreground": "text-default",
         "startBackground": "transparent",
         "endBackground": "transparent",
-        "startBorderColor": "control-border-over-accent",
-        "endBorderColor": "control-border-over-accent",
-        "contrastBackground": "accent-brand-bg-secondary"
+        "startBorderColor": "feedback-control-border",
+        "endBorderColor": "feedback-control-border",
+        "contrastBackground": "got-it-contrast-button-bg"
       }
     },
 
