@@ -315,9 +315,7 @@ internal class SaveAndSyncHandlerImpl(private val coroutineScope: CoroutineScope
 
   private fun saveDocumentsInBackgroundWriteAction() {
     coroutineScope.launch(CoroutineName("Saving documents on frame deactivation") + NonCancellable) {
-      backgroundWriteAction {
-        (FileDocumentManager.getInstance() as FileDocumentManagerImpl).saveAllDocuments(false)
-      }
+      (FileDocumentManager.getInstance() as FileDocumentManagerImpl).saveAllDocuments(false)
     }
   }
 
