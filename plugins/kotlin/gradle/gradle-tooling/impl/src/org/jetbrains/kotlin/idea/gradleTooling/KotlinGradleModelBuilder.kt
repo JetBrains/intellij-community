@@ -239,6 +239,8 @@ class KotlinGradleModelBuilder : AbstractKotlinGradleModelBuilder(), ModelBuilde
         val extraProperties = HashMap<String, KotlinTaskProperties>()
         val generatedSources = mutableSetOf<String>()
 
+        val kotlinPluginVersion = project.getKotlinPluginVersion()?.let { KotlinGradlePluginVersion.parse(it) }
+
         val kotlinCompileTasks = target?.let { it.compilations ?: emptyList() }
             ?.mapNotNull { compilation -> compilation.getCompileKotlinTaskName(project) }
             ?: (project.getAllTasks(false)[project]?.filter { it.javaClass.name in kotlinCompileTaskClasses } ?: emptyList())
@@ -254,7 +256,7 @@ class KotlinGradleModelBuilder : AbstractKotlinGradleModelBuilder(), ModelBuilde
             extraProperties.acknowledgeTask(compileTask, null)
         }
 
-        generatedSources.addAll(project.getKotlinSourceSetGeneratedSourceRoots().map { it.absolutePathString() })
+        generatedSources.addAll(project.getKotlinSourceSetGeneratedSourceRoots(kotlinPluginVersion).map { it.absolutePathString() })
 
         val platform = platformPluginId ?: pluginToPlatform.entries.singleOrNull { project.plugins.findPlugin(it.key) != null }?.value
 
