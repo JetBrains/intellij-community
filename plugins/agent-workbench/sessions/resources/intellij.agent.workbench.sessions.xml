@@ -43,6 +43,21 @@
       <action id="AgentWorkbenchSessions.Refresh" class="com.intellij.agent.workbench.sessions.AgentSessionsRefreshAction"/>
     </group>
     <action
+      id="AgentWorkbenchSessions.OpenThreadInAgentThreads"
+      class="com.intellij.agent.workbench.sessions.AgentSessionsOpenThreadInToolWindowAction">
+      <add-to-group group-id="EditorTabPopupMenu" anchor="after" relative-to-action="CopyPaths"/>
+    </action>
+    <action
+      id="AgentWorkbenchSessions.ArchiveThreadFromEditorTab"
+      class="com.intellij.agent.workbench.sessions.AgentSessionsArchiveThreadFromEditorTabAction">
+      <add-to-group group-id="EditorTabPopupMenu" anchor="after" relative-to-action="AgentWorkbenchSessions.OpenThreadInAgentThreads"/>
+    </action>
+    <action
+      id="AgentWorkbenchSessions.CopyThreadIdFromEditorTab"
+      class="com.intellij.agent.workbench.sessions.AgentSessionsCopyThreadIdFromEditorTabAction">
+      <add-to-group group-id="EditorTabPopupMenu" anchor="after" relative-to-action="AgentWorkbenchSessions.ArchiveThreadFromEditorTab"/>
+    </action>
+    <action
       id="AgentWorkbenchSessions.ActivateWithProjectShortcut"
       class="com.intellij.agent.workbench.sessions.AgentSessionsActivateWithProjectShortcutAction"
       use-shortcut-of="ActivateProjectToolWindow"/>

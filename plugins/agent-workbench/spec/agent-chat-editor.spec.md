@@ -8,6 +8,8 @@ targets:
   - ../plugin/resources/META-INF/plugin.xml
   - ../plugin-content.yaml
   - ../sessions/src/*.kt
+  - ../sessions/resources/intellij.agent.workbench.sessions.xml
+  - ../sessions/resources/messages/AgentSessionsBundle.properties
   - ../sessions/testSrc/*.kt
 ---
 
@@ -55,6 +57,13 @@ Define how thread/sub-agent selections open chat editor tabs. Routing honors ded
 - The editor tab title must use the thread title (fallback to `Agent Chat` when blank).
 - Editor tab title must be provided via `EditorTabTitleProvider` and must not depend on virtual file name mutations.
 - Reopening an already open chat tab for the same identity with a newer thread title must update the existing tab title.
+- Editor-tab popup actions for the selected Agent chat tab must include:
+  - `Open in Agent Threads`;
+  - `Archive Thread` (enabled only when provider supports archive);
+  - `Copy Thread ID`.
+- `Open in Agent Threads` from editor-tab popup must ensure thread visibility (`ensureThreadVisible`) before activating Agent Threads tool window.
+- `Archive Thread` from editor-tab popup must delegate to the same archive service flow used by Agent Threads tree actions.
+- Session entity labels must use `Thread`; `Chat` naming is limited to editor-tab/file surface.
 - The shell command used to start chat sessions is provider-specific:
   - Codex: `codex resume <threadId>`
   - Claude: `claude --resume <threadId>`
@@ -62,6 +71,8 @@ Define how thread/sub-agent selections open chat editor tabs. Routing honors ded
 
 [@test] ../sessions/testSrc/AgentSessionsOpenModeRoutingTest.kt
 [@test] ../sessions/testSrc/AgentSessionsToolWindowTest.kt
+[@test] ../sessions/testSrc/AgentSessionsEditorTabActionsTest.kt
+[@test] ../sessions/testSrc/AgentSessionsGearActionsTest.kt
 [@test] ../chat/testSrc/AgentChatEditorServiceTest.kt
 [@test] ../chat/testSrc/AgentChatFileEditorProviderTest.kt
 [@test] ../chat/testSrc/AgentChatTabSelectionServiceTest.kt
@@ -70,6 +81,7 @@ Define how thread/sub-agent selections open chat editor tabs. Routing honors ded
 - Single click on a thread row opens the chat editor.
 - Single click on a sub-agent row opens a separate chat editor tab for that sub-agent.
 - Editor tab name is the thread title; editor icon uses an Agent/communication glyph.
+- Editor-tab popup exposes thread lifecycle/navigation actions (`Open in Agent Threads`, `Archive Thread`, `Copy Thread ID`) for selected chat tabs.
 - By default, chat editor opens in a dedicated frame.
 - Users can disable dedicated-frame mode from Advanced Settings to restore current-project-frame behavior.
 - After restart, all previously open chat tabs are restored in their prior project frame context.

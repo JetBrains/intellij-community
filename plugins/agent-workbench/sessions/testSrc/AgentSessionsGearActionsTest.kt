@@ -49,6 +49,19 @@ class AgentSessionsGearActionsTest {
   }
 
   @Test
+  fun editorTabActionsAreRegisteredInEditorTabPopupMenu() {
+    val descriptor = checkNotNull(javaClass.classLoader.getResource("intellij.agent.workbench.sessions.xml")) {
+      "Module descriptor intellij.agent.workbench.sessions.xml is missing"
+    }.readText()
+
+    assertThat(descriptor)
+      .contains("id=\"AgentWorkbenchSessions.OpenThreadInAgentThreads\"")
+      .contains("id=\"AgentWorkbenchSessions.ArchiveThreadFromEditorTab\"")
+      .contains("id=\"AgentWorkbenchSessions.CopyThreadIdFromEditorTab\"")
+      .contains("group-id=\"EditorTabPopupMenu\"")
+  }
+
+  @Test
   fun refreshActionTriggersSessionsRefresh() {
     var refreshInvocations = 0
     val refreshAction = AgentSessionsRefreshAction(

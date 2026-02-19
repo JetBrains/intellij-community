@@ -15,6 +15,8 @@ targets:
   - ../sessions/testSrc/AgentSessionsServiceConcurrencyIntegrationTest.kt
   - ../sessions/testSrc/AgentSessionsServiceArchiveIntegrationTest.kt
   - ../sessions/testSrc/AgentSessionsServiceIntegrationTestSupport.kt
+  - ../sessions/testSrc/AgentSessionsEditorTabActionsTest.kt
+  - ../sessions/testSrc/AgentSessionsGearActionsTest.kt
   - ../sessions/testSrc/AgentSessionsToolWindowTest.kt
   - ../sessions/testSrc/AgentSessionsTreeUiStateServiceTest.kt
   - ../sessions/testSrc/CodexAppServerClientTest.kt
@@ -69,6 +71,12 @@ Define required test coverage for the multi-provider Agent Threads stack: source
   - `More (N)` rendering for exact count,
   - persisted collapsed state blocking default auto-expand,
   - collapsed-state persistence across content refresh/recreation when persistent tree UI state is used.
+- Editor-tab action tests must cover:
+  - action registration in `EditorTabPopupMenu`,
+  - action visibility/enablement for selected Agent chat tab context,
+  - `Open in Agent Threads` invoking visibility synchronization and tool-window activation,
+  - `Archive Thread` delegating to archive flow,
+  - `Copy Thread ID` using selected tab thread id.
 - Tree UI state service tests must cover:
   - collapsed/visible-count/open-preview state round-trip,
   - preview provider identity persistence,
@@ -100,6 +108,8 @@ Primary ownership is singular by design to avoid overlap-heavy tests and keep fa
 - Paging loop/no-progress guards: `CodexSessionsPagingLogicTest`
 - App-server protocol contract (mock required, real optional): `CodexAppServerClientTest`
 - Tree rendering and `More` state behavior: `AgentSessionsToolWindowTest`
+- Editor-tab action behavior: `AgentSessionsEditorTabActionsTest`
+- Editor-tab action registration in plugin descriptor: `AgentSessionsGearActionsTest`
 - Tree UI persisted state round-trip/backward compatibility: `AgentSessionsTreeUiStateServiceTest`
 
 [@test] ../sessions/testSrc/AgentSessionLoadAggregationTest.kt
@@ -107,6 +117,8 @@ Primary ownership is singular by design to avoid overlap-heavy tests and keep fa
 [@test] ../sessions/testSrc/AgentSessionsServiceOnDemandIntegrationTest.kt
 [@test] ../sessions/testSrc/AgentSessionsServiceConcurrencyIntegrationTest.kt
 [@test] ../sessions/testSrc/AgentSessionsServiceArchiveIntegrationTest.kt
+[@test] ../sessions/testSrc/AgentSessionsEditorTabActionsTest.kt
+[@test] ../sessions/testSrc/AgentSessionsGearActionsTest.kt
 [@test] ../sessions/testSrc/AgentSessionsToolWindowTest.kt
 [@test] ../sessions/testSrc/AgentSessionsTreeUiStateServiceTest.kt
 [@test] ../codex/sessions/testSrc/CodexRolloutSessionBackendTest.kt
